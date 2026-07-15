@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useMemo } from 'react';
+import React, { useState, useMemo, useEffect } from 'react';
 import {
   Package,
   Star,
@@ -60,6 +60,7 @@ import { usePluginStore } from '@/store/pluginStore';
 import { useNotificationStore } from '@/store';
 import { PageContainer } from '@/components/common';
 import { logger } from '@/utils/logger';
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 
 type SortOption = 'popular' | 'rating' | 'newest' | 'price';
 type ViewMode = 'grid' | 'list';
@@ -258,37 +259,54 @@ const PluginDetailModal: React.FC<{
 }> = ({ plugin, onClose }) => {
   const { installPlugin, isPluginInstalled } = usePluginStore();
   const addNotification = useNotificationStore((state) => state.addNotification);
-  const [reviews, setReviews] = useState<PluginReview[]>([]);
-  const [versions, setVersions] = useState<PluginVersion[]>([]);
   const [rating, setRating] = useState(0);
   const [reviewTitle, setReviewTitle] = useState('');
   const [reviewContent, setReviewContent] = useState('');
-  const [isSubmitting, setIsSubmitting] = useState(false);
   const [isInstalling, setIsInstalling] = useState(false);
   const installed = isPluginInstalled(plugin.code);
+  const queryClient = useQueryClient();
+
+  const reviewsQuery = useQuery({
+    queryKey: ['plugin-reviews', plugin.code],
+    queryFn: async () => {
+      const res = await getPluginReviews(plugin.code);
+      if (res.success && res.data) {
+        return res.data.reviews;
+      }
+      return [];
+    },
+  });
+
+  const versionsQuery = useQuery({
+    queryKey: ['plugin-versions', plugin.code],
+    queryFn: async () => {
+      const res = await getPluginVersions(plugin.code);
+      if (res.success && res.data) {
+        return res.data;
+      }
+      return [];
+    },
+  });
 
   useEffect(() => {
-    getPluginReviews(plugin.code).then((res) => {
-      if (res.success && res.data) {
-        setReviews(res.data.reviews);
-      }
-    });
-    getPluginVersions(plugin.code).then((res) => {
-      if (res.success && res.data) {
-        setVersions(res.data);
-      }
-    });
-  }, [plugin.code]);
+    if (reviewsQuery.isError && reviewsQuery.error) {
+      logger.error('加载评论失败:', reviewsQuery.error);
+    }
+  }, [reviewsQuery.isError, reviewsQuery.error]);
 
-  const handleSubmitReview = async () => {
-    if (rating === 0) return;
-    setIsSubmitting(true);
-    try {
-      await submitPluginReview(plugin.code, {
-        rating,
-        title: reviewTitle || undefined,
-        content: reviewContent || undefined,
-      });
+  useEffect(() => {
+    if (versionsQuery.isError && versionsQuery.error) {
+      logger.error('加载版本失败:', versionsQuery.error);
+    }
+  }, [versionsQuery.isError, versionsQuery.error]);
+
+  const reviews = reviewsQuery.data || [];
+  const versions = versionsQuery.data || [];
+
+  const submitReviewMutation = useMutation({
+    mutationFn: (data: { rating: number; title?: string; content?: string }) =>
+      submitPluginReview(plugin.code, data),
+    onSuccess: () => {
       addNotification({
         title: '评价成功',
         message: '感谢您的评价',
@@ -297,21 +315,26 @@ const PluginDetailModal: React.FC<{
       setRating(0);
       setReviewTitle('');
       setReviewContent('');
-      getPluginReviews(plugin.code).then((res) => {
-        if (res.success && res.data) {
-          setReviews(res.data.reviews);
-        }
-      });
-    } catch (error: unknown) {
+      queryClient.invalidateQueries({ queryKey: ['plugin-reviews', plugin.code] });
+    },
+    onError: (error: unknown) => {
+      logger.error('提交评价失败:', error);
       const err = error as { message?: string };
       addNotification({
         title: '评价失败',
         message: err.message || '无法提交评价',
         type: 'error',
       });
-    } finally {
-      setIsSubmitting(false);
-    }
+    },
+  });
+
+  const handleSubmitReview = async () => {
+    if (rating === 0) return;
+    await submitReviewMutation.mutateAsync({
+      rating,
+      title: reviewTitle || undefined,
+      content: reviewContent || undefined,
+    });
   };
 
   const handleInstall = async () => {
@@ -677,9 +700,9 @@ const PluginDetailModal: React.FC<{
                     variant='contained'
                     fullWidth
                     onClick={handleSubmitReview}
-                    disabled={rating === 0 || isSubmitting}
+                    disabled={rating === 0 || submitReviewMutation.isPending}
                   >
-                    {isSubmitting ? '提交中...' : '提交评价'}
+                    {submitReviewMutation.isPending ? '提交中...' : '提交评价'}
                   </Button>
                 </Box>
               </CardContent>
@@ -695,8 +718,6 @@ const PluginMarketplacePage: React.FC = () => {
   const {
     marketplacePlugins,
     healthStatus,
-    loading,
-    error,
     searchQuery,
     setSearchQuery,
     fetchMarketplacePlugins,
@@ -708,20 +729,44 @@ const PluginMarketplacePage: React.FC = () => {
   const [selectedPlugin, setSelectedPlugin] = useState<Plugin | null>(null);
   const addNotification = useNotificationStore((state) => state.addNotification);
 
+  const pluginsQuery = useQuery({
+    queryKey: ['marketplace-plugins'],
+    queryFn: async () => {
+      await fetchMarketplacePlugins();
+      return marketplacePlugins;
+    },
+    initialData: marketplacePlugins,
+    staleTime: 5 * 60 * 1000,
+  });
+
+  const healthQuery = useQuery({
+    queryKey: ['marketplace-health'],
+    queryFn: async () => {
+      await fetchHealthStatus();
+      return healthStatus;
+    },
+    initialData: healthStatus,
+    staleTime: 5 * 60 * 1000,
+  });
+
   useEffect(() => {
-    const fetchData = async () => {
-      try {
-        await Promise.all([fetchMarketplacePlugins(), fetchHealthStatus()]);
-      } catch (err: unknown) {
-        logger.error('Failed to load marketplace data:', err);
-      }
-    };
-    fetchData();
-  }, [fetchMarketplacePlugins, fetchHealthStatus]);
+    if (pluginsQuery.isError && pluginsQuery.error) {
+      logger.error('加载市场插件失败:', pluginsQuery.error);
+    }
+  }, [pluginsQuery.isError, pluginsQuery.error]);
+
+  useEffect(() => {
+    if (healthQuery.isError && healthQuery.error) {
+      logger.error('加载健康状态失败:', healthQuery.error);
+    }
+  }, [healthQuery.isError, healthQuery.error]);
+
+  const loading = pluginsQuery.isLoading;
+  const plugins = pluginsQuery.data || [];
 
   const handleRefresh = () => {
-    fetchMarketplacePlugins(true);
-    fetchHealthStatus(true);
+    pluginsQuery.refetch();
+    healthQuery.refetch();
     addNotification({
       title: '刷新成功',
       message: '插件列表已更新',
@@ -730,7 +775,7 @@ const PluginMarketplacePage: React.FC = () => {
   };
 
   const filteredPlugins = useMemo(() => {
-    let result = [...marketplacePlugins];
+    let result = [...plugins];
 
     if (searchQuery) {
       const term = searchQuery.toLowerCase();
@@ -764,7 +809,7 @@ const PluginMarketplacePage: React.FC = () => {
     }
 
     return result;
-  }, [marketplacePlugins, searchQuery, selectedSuite, sortBy]);
+  }, [plugins, searchQuery, selectedSuite, sortBy]);
 
   if (loading) {
     return (
@@ -806,17 +851,6 @@ const PluginMarketplacePage: React.FC = () => {
             </Typography>
           </Box>
         </Box>
-
-        {error && (
-          <Box sx={{ maxWidth: '1200px', mx: 'auto', px: 6, py: 4 }}>
-            <Alert
-              severity='error'
-              onClose={() => {}}
-            >
-              {error}
-            </Alert>
-          </Box>
-        )}
 
         <Box sx={{ maxWidth: '1200px', mx: 'auto', px: 6, py: 8 }}>
           <Box sx={{ display: 'flex', flexDirection: { xs: 'column', lg: 'row' }, gap: 6, mb: 8 }}>

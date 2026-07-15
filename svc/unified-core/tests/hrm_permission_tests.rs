@@ -12,19 +12,6 @@ use serde_json::{json, Value};
 
 const API_URL: &str = "http://localhost:8000";
 
-/// 检查 API 服务是否可用
-async fn ensure_api_available() -> bool {
-    reqwest::Client::builder()
-        .timeout(std::time::Duration::from_secs(2))
-        .build()
-        .unwrap()
-        .get(format!("{}/api/core/iam/auth/login", API_URL))
-        .send()
-        .await
-        .map(|resp| !resp.status().is_server_error())
-        .unwrap_or(false)
-}
-
 fn create_client() -> Client {
     Client::new()
 }
@@ -33,7 +20,7 @@ async fn login(username: &str, password: &str) -> Result<String, String> {
     let client = create_client();
 
     let response = client
-        .post(format!("{}/api/core/iam/auth/login", API_URL))
+        .post(format!("{}/api/core/iam/v1/auth/login", API_URL))
         .json(&json!({ "username": username, "password": password }))
         .send()
         .await
@@ -98,11 +85,8 @@ async fn auth_request(
 // ==================== HRM-001: 查看员工列表 ====================
 
 #[tokio::test]
+#[ignore]
 async fn test_hrm_001_list_employees() {
-    if !ensure_api_available().await {
-        eprintln!("⏭ 跳过: API服务未运行 ({})", API_URL);
-        return;
-    }
     tracing::info!("测试 HRM-001: 查看员工列表");
 
     let token = login("admin", "admin123").await.expect("管理员登录失败");
@@ -125,11 +109,8 @@ async fn test_hrm_001_list_employees() {
 // ==================== HRM-002: 创建员工 ====================
 
 #[tokio::test]
+#[ignore]
 async fn test_hrm_002_create_employee() {
-    if !ensure_api_available().await {
-        eprintln!("⏭ 跳过: API服务未运行 ({})", API_URL);
-        return;
-    }
     tracing::info!("测试 HRM-002: 创建员工");
 
     let token = login("admin", "admin123").await.expect("管理员登录失败");
@@ -172,11 +153,8 @@ async fn test_hrm_002_create_employee() {
 // ==================== HRM-003: 更新员工信息 ====================
 
 #[tokio::test]
+#[ignore]
 async fn test_hrm_003_update_employee() {
-    if !ensure_api_available().await {
-        eprintln!("⏭ 跳过: API服务未运行 ({})", API_URL);
-        return;
-    }
     tracing::info!("测试 HRM-003: 更新员工信息");
 
     let token = login("admin", "admin123").await.expect("管理员登录失败");
@@ -223,11 +201,8 @@ async fn test_hrm_003_update_employee() {
 // ==================== HRM-004: 删除员工 ====================
 
 #[tokio::test]
+#[ignore]
 async fn test_hrm_004_delete_employee() {
-    if !ensure_api_available().await {
-        eprintln!("⏭ 跳过: API服务未运行 ({})", API_URL);
-        return;
-    }
     tracing::info!("测试 HRM-004: 删除员工");
 
     let token = login("admin", "admin123").await.expect("管理员登录失败");
@@ -286,11 +261,8 @@ async fn test_hrm_004_delete_employee() {
 // ==================== HRM-005: 查看部门列表 ====================
 
 #[tokio::test]
+#[ignore]
 async fn test_hrm_005_list_departments() {
-    if !ensure_api_available().await {
-        eprintln!("⏭ 跳过: API服务未运行 ({})", API_URL);
-        return;
-    }
     tracing::info!("测试 HRM-005: 查看部门列表");
 
     let token = login("admin", "admin123").await.expect("管理员登录失败");
@@ -313,11 +285,8 @@ async fn test_hrm_005_list_departments() {
 // ==================== HRM-006: 创建部门 ====================
 
 #[tokio::test]
+#[ignore]
 async fn test_hrm_006_create_department() {
-    if !ensure_api_available().await {
-        eprintln!("⏭ 跳过: API服务未运行 ({})", API_URL);
-        return;
-    }
     tracing::info!("测试 HRM-006: 创建部门");
 
     let token = login("admin", "admin123").await.expect("管理员登录失败");
@@ -357,11 +326,8 @@ async fn test_hrm_006_create_department() {
 // ==================== HRM-007: 查看考勤记录 ====================
 
 #[tokio::test]
+#[ignore]
 async fn test_hrm_007_list_attendance() {
-    if !ensure_api_available().await {
-        eprintln!("⏭ 跳过: API服务未运行 ({})", API_URL);
-        return;
-    }
     tracing::info!("测试 HRM-007: 查看考勤记录");
 
     let token = login("admin", "admin123").await.expect("管理员登录失败");
@@ -384,11 +350,8 @@ async fn test_hrm_007_list_attendance() {
 // ==================== HRM-008: 打卡 ====================
 
 #[tokio::test]
+#[ignore]
 async fn test_hrm_008_check_in() {
-    if !ensure_api_available().await {
-        eprintln!("⏭ 跳过: API服务未运行 ({})", API_URL);
-        return;
-    }
     tracing::info!("测试 HRM-008: 打卡");
 
     let token = login("admin", "admin123").await.expect("管理员登录失败");
@@ -420,11 +383,8 @@ async fn test_hrm_008_check_in() {
 // ==================== HRM-009: 查看薪资 ====================
 
 #[tokio::test]
+#[ignore]
 async fn test_hrm_009_view_payroll() {
-    if !ensure_api_available().await {
-        eprintln!("⏭ 跳过: API服务未运行 ({})", API_URL);
-        return;
-    }
     tracing::info!("测试 HRM-009: 查看薪资");
 
     let token = login("admin", "admin123").await.expect("管理员登录失败");
@@ -447,11 +407,8 @@ async fn test_hrm_009_view_payroll() {
 // ==================== HRM-010: 查看他人薪资 ====================
 
 #[tokio::test]
+#[ignore]
 async fn test_hrm_010_view_others_payroll() {
-    if !ensure_api_available().await {
-        eprintln!("⏭ 跳过: API服务未运行 ({})", API_URL);
-        return;
-    }
     tracing::info!("测试 HRM-010: 查看他人薪资");
 
     match login("test_employee", "admin123").await {
@@ -488,11 +445,8 @@ async fn test_hrm_010_view_others_payroll() {
 // ==================== HRM-011: 请假申请 ====================
 
 #[tokio::test]
+#[ignore]
 async fn test_hrm_011_leave_application() {
-    if !ensure_api_available().await {
-        eprintln!("⏭ 跳过: API服务未运行 ({})", API_URL);
-        return;
-    }
     tracing::info!("测试 HRM-011: 请假申请");
 
     let token = login("admin", "admin123").await.expect("管理员登录失败");
@@ -526,11 +480,8 @@ async fn test_hrm_011_leave_application() {
 // ==================== HRM-012: 审批请假 ====================
 
 #[tokio::test]
+#[ignore]
 async fn test_hrm_012_approve_leave() {
-    if !ensure_api_available().await {
-        eprintln!("⏭ 跳过: API服务未运行 ({})", API_URL);
-        return;
-    }
     tracing::info!("测试 HRM-012: 审批请假");
 
     let token = login("admin", "admin123").await.expect("管理员登录失败");
@@ -578,11 +529,8 @@ async fn test_hrm_012_approve_leave() {
 // ==================== HRM-013: 绩效评估 ====================
 
 #[tokio::test]
+#[ignore]
 async fn test_hrm_013_performance_eval() {
-    if !ensure_api_available().await {
-        eprintln!("⏭ 跳过: API服务未运行 ({})", API_URL);
-        return;
-    }
     tracing::info!("测试 HRM-013: 绩效评估");
 
     let token = login("admin", "admin123").await.expect("管理员登录失败");
@@ -616,11 +564,8 @@ async fn test_hrm_013_performance_eval() {
 // ==================== HRM-014: 跨公司访问员工 ====================
 
 #[tokio::test]
+#[ignore]
 async fn test_hrm_014_cross_company_access() {
-    if !ensure_api_available().await {
-        eprintln!("⏭ 跳过: API服务未运行 ({})", API_URL);
-        return;
-    }
     tracing::info!("测试 HRM-014: 跨公司访问员工");
 
     let token = login("admin", "admin123").await.expect("管理员登录失败");
@@ -654,11 +599,8 @@ async fn test_hrm_014_cross_company_access() {
 // ==================== 测试总结 ====================
 
 #[tokio::test]
+#[ignore]
 async fn run_all_hrm_tests_summary() {
-    if !ensure_api_available().await {
-        eprintln!("⏭ 跳过: API服务未运行 ({})", API_URL);
-        return;
-    }
     tracing::info!("========================================");
     tracing::info!("  HRM 权限测试套件");
     tracing::info!("========================================");

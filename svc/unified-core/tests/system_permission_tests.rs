@@ -12,19 +12,6 @@ use serde_json::{json, Value};
 
 const API_URL: &str = "http://localhost:8000";
 
-/// 检查 API 服务是否可用
-async fn ensure_api_available() -> bool {
-    reqwest::Client::builder()
-        .timeout(std::time::Duration::from_secs(2))
-        .build()
-        .unwrap()
-        .get(format!("{}/api/core/iam/auth/login", API_URL))
-        .send()
-        .await
-        .map(|resp| !resp.status().is_server_error())
-        .unwrap_or(false)
-}
-
 fn create_client() -> Client {
     Client::new()
 }
@@ -32,7 +19,7 @@ fn create_client() -> Client {
 async fn login(username: &str, password: &str) -> Result<String, String> {
     let client = create_client();
     let response = client
-        .post(format!("{}/api/core/iam/auth/login", API_URL))
+        .post(format!("{}/api/core/iam/v1/auth/login", API_URL))
         .json(&json!({ "username": username, "password": password }))
         .send()
         .await
@@ -86,11 +73,8 @@ async fn auth_request(
 // ==================== SYS-001: 查看系统设置 ====================
 
 #[tokio::test]
+#[ignore]
 async fn test_sys_001_view_settings() {
-    if !ensure_api_available().await {
-        eprintln!("⏭ 跳过: API服务未运行 ({})", API_URL);
-        return;
-    }
     tracing::info!("测试 SYS-001: 查看系统设置");
     let token = login("admin", "admin123").await.expect("管理员登录失败");
     let client = create_client();
@@ -107,11 +91,8 @@ async fn test_sys_001_view_settings() {
 // ==================== SYS-002: 更新系统设置 ====================
 
 #[tokio::test]
+#[ignore]
 async fn test_sys_002_update_settings() {
-    if !ensure_api_available().await {
-        eprintln!("⏭ 跳过: API服务未运行 ({})", API_URL);
-        return;
-    }
     tracing::info!("测试 SYS-002: 更新系统设置");
     let token = login("admin", "admin123").await.expect("管理员登录失败");
     let client = create_client();
@@ -138,11 +119,8 @@ async fn test_sys_002_update_settings() {
 // ==================== SYS-003: 普通用户查看系统设置 ====================
 
 #[tokio::test]
+#[ignore]
 async fn test_sys_003_employee_view_settings() {
-    if !ensure_api_available().await {
-        eprintln!("⏭ 跳过: API服务未运行 ({})", API_URL);
-        return;
-    }
     tracing::info!("测试 SYS-003: 普通用户查看系统设置");
     match login("test_employee", "admin123").await {
         Ok(token) => {
@@ -162,11 +140,8 @@ async fn test_sys_003_employee_view_settings() {
 // ==================== SYS-004: 查看系统监控 ====================
 
 #[tokio::test]
+#[ignore]
 async fn test_sys_004_view_monitoring() {
-    if !ensure_api_available().await {
-        eprintln!("⏭ 跳过: API服务未运行 ({})", API_URL);
-        return;
-    }
     tracing::info!("测试 SYS-004: 查看系统监控");
     let token = login("admin", "admin123").await.expect("管理员登录失败");
     let client = create_client();
@@ -183,11 +158,8 @@ async fn test_sys_004_view_monitoring() {
 // ==================== SYS-005: 查看审计日志 ====================
 
 #[tokio::test]
+#[ignore]
 async fn test_sys_005_view_audit_logs() {
-    if !ensure_api_available().await {
-        eprintln!("⏭ 跳过: API服务未运行 ({})", API_URL);
-        return;
-    }
     tracing::info!("测试 SYS-005: 查看审计日志");
     let token = login("admin", "admin123").await.expect("管理员登录失败");
     let client = create_client();
@@ -204,11 +176,8 @@ async fn test_sys_005_view_audit_logs() {
 // ==================== SYS-006: 查看在线用户 ====================
 
 #[tokio::test]
+#[ignore]
 async fn test_sys_006_view_online_users() {
-    if !ensure_api_available().await {
-        eprintln!("⏭ 跳过: API服务未运行 ({})", API_URL);
-        return;
-    }
     tracing::info!("测试 SYS-006: 查看在线用户");
     let token = login("admin", "admin123").await.expect("管理员登录失败");
     let client = create_client();
@@ -225,11 +194,8 @@ async fn test_sys_006_view_online_users() {
 // ==================== SYS-007: 查看系统健康状态 ====================
 
 #[tokio::test]
+#[ignore]
 async fn test_sys_007_health_check() {
-    if !ensure_api_available().await {
-        eprintln!("⏭ 跳过: API服务未运行 ({})", API_URL);
-        return;
-    }
     tracing::info!("测试 SYS-007: 查看系统健康状态");
     let token = login("admin", "admin123").await.expect("管理员登录失败");
     let client = create_client();
@@ -246,11 +212,8 @@ async fn test_sys_007_health_check() {
 // ==================== SYS-008: 强制用户下线 ====================
 
 #[tokio::test]
+#[ignore]
 async fn test_sys_008_force_logout() {
-    if !ensure_api_available().await {
-        eprintln!("⏭ 跳过: API服务未运行 ({})", API_URL);
-        return;
-    }
     tracing::info!("测试 SYS-008: 强制用户下线");
     let token = login("admin", "admin123").await.expect("管理员登录失败");
     let client = create_client();
@@ -291,11 +254,8 @@ async fn test_sys_008_force_logout() {
 // ==================== SYS-009: 查看数据字典 ====================
 
 #[tokio::test]
+#[ignore]
 async fn test_sys_009_view_dictionaries() {
-    if !ensure_api_available().await {
-        eprintln!("⏭ 跳过: API服务未运行 ({})", API_URL);
-        return;
-    }
     tracing::info!("测试 SYS-009: 查看数据字典");
     let token = login("admin", "admin123").await.expect("管理员登录失败");
     let client = create_client();
@@ -312,11 +272,8 @@ async fn test_sys_009_view_dictionaries() {
 // ==================== SYS-010: 更新数据字典 ====================
 
 #[tokio::test]
+#[ignore]
 async fn test_sys_010_update_dictionary() {
-    if !ensure_api_available().await {
-        eprintln!("⏭ 跳过: API服务未运行 ({})", API_URL);
-        return;
-    }
     tracing::info!("测试 SYS-010: 更新数据字典");
     let token = login("admin", "admin123").await.expect("管理员登录失败");
     let client = create_client();
@@ -357,11 +314,8 @@ async fn test_sys_010_update_dictionary() {
 // ==================== 测试总结 ====================
 
 #[tokio::test]
+#[ignore]
 async fn run_all_system_tests_summary() {
-    if !ensure_api_available().await {
-        eprintln!("⏭ 跳过: API服务未运行 ({})", API_URL);
-        return;
-    }
     tracing::info!("========================================");
     tracing::info!("  System 权限测试套件 (10个用例)");
     tracing::info!("========================================");

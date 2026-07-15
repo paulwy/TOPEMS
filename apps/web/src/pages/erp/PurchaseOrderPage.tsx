@@ -15,7 +15,7 @@ import {
   Button,
 } from '@mui/material';
 import { PageContainer } from '@/components/common';
-import React, { useState, useMemo, useCallback, useEffect } from 'react';
+import React, { useState, useMemo, useCallback } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import type {
   PurchaseOrder,
@@ -59,7 +59,7 @@ const PurchaseOrderPage: React.FC = () => {
   const { addNotification } = useNotificationStore();
   const queryClient = useQueryClient();
 
-  const ordersQuery = useQuery({
+  const ordersQuery = useQuery<{ orders: PurchaseOrder[]; total: number }>({
     queryKey: ['erp-purchase-orders', searchTerm, statusFilter, currentPage, pageSize],
     queryFn: async () => {
       const params: Record<string, unknown> = {
@@ -81,7 +81,7 @@ const PurchaseOrderPage: React.FC = () => {
   const total = ordersQuery.data?.total || 0;
   const loading = ordersQuery.isLoading;
 
-  useEffect(() => {
+  React.useEffect(() => {
     if (ordersQuery.isError) {
       apiLogger.error('加载采购订单列表失败:', ordersQuery.error);
       addNotification({
@@ -90,7 +90,7 @@ const PurchaseOrderPage: React.FC = () => {
         message: '无法加载采购订单列表',
       });
     }
-  }, [ordersQuery.isError, ordersQuery.error]);
+  }, [ordersQuery.isError, ordersQuery.error, apiLogger, addNotification]);
 
   const createOrderMutation = useMutation({
     mutationFn: (data: CreatePurchaseOrderRequest) => erpApi.purchaseOrders.create(data),
@@ -206,54 +206,49 @@ const PurchaseOrderPage: React.FC = () => {
     }
   };
 
-  const handleBatchApprove = useCallback(
-    async (orders: PurchaseOrder[]) => {
-      const pendingOrders = orders.filter((o) => o.status === 'pending');
-      if (pendingOrders.length === 0) {
+  const handleBatchApprove = useCallback(async (orders: PurchaseOrder[]) => {
+    const pendingOrders = orders.filter((o) => o.status === 'pending');
+    if (pendingOrders.length === 0) {
+      addNotification({
+        type: 'warning',
+        title: '没有可审批的订单',
+        message: '请选择待审批状态的订单',
+      });
+      return;
+    }
+
+    try {
+      const results = await Promise.allSettled(
+        pendingOrders.map((order) => erpApi.purchaseOrders.approve(order.id))
+      );
+
+      const successCount = results.filter((r) => r.status === 'fulfilled' && r.value.success).length;
+      const failureCount = results.length - successCount;
+
+      if (successCount > 0) {
         addNotification({
-          type: 'warning',
-          title: '没有可审批的订单',
-          message: '请选择待审批状态的订单',
+          type: 'success',
+          title: '批量审批完成',
+          message: `成功审批 ${successCount} 个订单${failureCount > 0 ? `，失败 ${failureCount} 个` : ''}`,
         });
-        return;
       }
-
-      try {
-        const results = await Promise.allSettled(
-          pendingOrders.map((order) => erpApi.purchaseOrders.approve(order.id))
-        );
-
-        const successCount = results.filter(
-          (r) => r.status === 'fulfilled' && r.value.success
-        ).length;
-        const failureCount = results.length - successCount;
-
-        if (successCount > 0) {
-          addNotification({
-            type: 'success',
-            title: '批量审批完成',
-            message: `成功审批 ${successCount} 个订单${failureCount > 0 ? `，失败 ${failureCount} 个` : ''}`,
-          });
-        }
-        if (failureCount > 0) {
-          addNotification({
-            type: 'error',
-            title: '部分审批失败',
-            message: `有 ${failureCount} 个订单审批失败`,
-          });
-        }
-        queryClient.invalidateQueries({ queryKey: ['erp-purchase-orders'] });
-      } catch (error: unknown) {
-        apiLogger.error('批量审批失败:', error);
+      if (failureCount > 0) {
         addNotification({
           type: 'error',
-          title: '批量审批失败',
-          message: '批量审批过程中发生错误',
+          title: '部分审批失败',
+          message: `有 ${failureCount} 个订单审批失败`,
         });
       }
-    },
-    [addNotification, queryClient]
-  );
+      queryClient.invalidateQueries({ queryKey: ['erp-purchase-orders'] });
+    } catch (error: unknown) {
+      apiLogger.error('批量审批失败:', error);
+      addNotification({
+        type: 'error',
+        title: '批量审批失败',
+        message: '批量审批过程中发生错误',
+      });
+    }
+  }, [addNotification, queryClient]);
 
   const getStatusText = (status: string) => {
     const statusMap: Record<string, string> = {

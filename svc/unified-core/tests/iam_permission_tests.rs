@@ -14,19 +14,6 @@ use serde_json::{json, Value};
 
 const API_URL: &str = "http://localhost:8000";
 
-/// 检查 API 服务是否可用
-async fn ensure_api_available() -> bool {
-    reqwest::Client::builder()
-        .timeout(std::time::Duration::from_secs(2))
-        .build()
-        .unwrap()
-        .get(format!("{}/api/core/iam/auth/login", API_URL))
-        .send()
-        .await
-        .map(|resp| !resp.status().is_server_error())
-        .unwrap_or(false)
-}
-
 // ==================== 测试辅助函数 ====================
 
 /// 创建 HTTP 客户端
@@ -39,7 +26,7 @@ async fn login(username: &str, password: &str) -> Result<String, String> {
     let client = create_client();
 
     let response = client
-        .post(format!("{}/api/core/iam/auth/login", API_URL))
+        .post(format!("{}/api/core/iam/v1/auth/login", API_URL))
         .json(&json!({
             "username": username,
             "password": password
@@ -110,17 +97,14 @@ async fn auth_request(
 // ==================== IAM-001: 超级管理员查看用户列表 ====================
 
 #[tokio::test]
+#[ignore]
 async fn test_iam_001_superuser_list_users() {
-    if !ensure_api_available().await {
-        eprintln!("⏭ 跳过: API服务未运行 ({})", API_URL);
-        return;
-    }
     tracing::info!("测试 IAM-001: 超级管理员查看用户列表");
 
     let token = login("admin", "admin123").await.expect("管理员登录失败");
     let client = create_client();
 
-    let (status, body) = auth_request(&client, &token, "GET", "/api/iam/users", None)
+    let (status, body) = auth_request(&client, &token, "GET", "/api/core/iam/v1/users", None)
         .await
         .expect("请求失败");
 
@@ -145,11 +129,8 @@ async fn test_iam_001_superuser_list_users() {
 // ==================== IAM-002: 普通用户查看用户列表 ====================
 
 #[tokio::test]
+#[ignore]
 async fn test_iam_002_employee_list_users() {
-    if !ensure_api_available().await {
-        eprintln!("⏭ 跳过: API服务未运行 ({})", API_URL);
-        return;
-    }
     tracing::info!("测试 IAM-002: 普通用户查看用户列表");
 
     // 尝试使用测试员工账号登录
@@ -157,9 +138,10 @@ async fn test_iam_002_employee_list_users() {
         Ok(token) => {
             let client = create_client();
 
-            let (status, body) = auth_request(&client, &token, "GET", "/api/iam/users", None)
-                .await
-                .expect("请求失败");
+            let (status, body) =
+                auth_request(&client, &token, "GET", "/api/core/iam/v1/users", None)
+                    .await
+                    .expect("请求失败");
 
             // 可能返回 200（有限数据）或 403（无权限）
             if status == 200 {
@@ -180,11 +162,8 @@ async fn test_iam_002_employee_list_users() {
 // ==================== IAM-003: 管理员创建用户 ====================
 
 #[tokio::test]
+#[ignore]
 async fn test_iam_003_admin_create_user() {
-    if !ensure_api_available().await {
-        eprintln!("⏭ 跳过: API服务未运行 ({})", API_URL);
-        return;
-    }
     tracing::info!("测试 IAM-003: 管理员创建用户");
 
     let token = login("admin", "admin123").await.expect("管理员登录失败");
@@ -202,9 +181,15 @@ async fn test_iam_003_admin_create_user() {
         "full_name": "API测试用户"
     });
 
-    let (status, body) = auth_request(&client, &token, "POST", "/api/iam/users", Some(new_user))
-        .await
-        .expect("请求失败");
+    let (status, body) = auth_request(
+        &client,
+        &token,
+        "POST",
+        "/api/core/iam/v1/users",
+        Some(new_user),
+    )
+    .await
+    .expect("请求失败");
 
     assert!(
         status == 200 || status == 201,
@@ -220,11 +205,8 @@ async fn test_iam_003_admin_create_user() {
 // ==================== IAM-004: 无权限用户创建用户 ====================
 
 #[tokio::test]
+#[ignore]
 async fn test_iam_004_unauthorized_create_user() {
-    if !ensure_api_available().await {
-        eprintln!("⏭ 跳过: API服务未运行 ({})", API_URL);
-        return;
-    }
     tracing::info!("测试 IAM-004: 无权限用户创建用户");
 
     // 尝试使用测试员工账号
@@ -238,10 +220,15 @@ async fn test_iam_004_unauthorized_create_user() {
                 "password": "Test@123456"
             });
 
-            let (status, _) =
-                auth_request(&client, &token, "POST", "/api/iam/users", Some(new_user))
-                    .await
-                    .expect("请求失败");
+            let (status, _) = auth_request(
+                &client,
+                &token,
+                "POST",
+                "/api/core/iam/v1/users",
+                Some(new_user),
+            )
+            .await
+            .expect("请求失败");
 
             assert_eq!(status, 403, "状态码应为 403 Forbidden");
             tracing::info!("IAM-004 测试通过: 无权限用户被正确拒绝");
@@ -255,11 +242,8 @@ async fn test_iam_004_unauthorized_create_user() {
 // ==================== IAM-005: 管理员删除用户 ====================
 
 #[tokio::test]
+#[ignore]
 async fn test_iam_005_admin_delete_user() {
-    if !ensure_api_available().await {
-        eprintln!("⏭ 跳过: API服务未运行 ({})", API_URL);
-        return;
-    }
     tracing::info!("测试 IAM-005: 管理员删除用户");
 
     let token = login("admin", "admin123").await.expect("管理员登录失败");
@@ -267,7 +251,7 @@ async fn test_iam_005_admin_delete_user() {
 
     // 使用已存在的测试用户进行删除测试
     // 先查询用户列表获取一个用户ID
-    let (_, list_body) = auth_request(&client, &token, "GET", "/api/iam/users", None)
+    let (_, list_body) = auth_request(&client, &token, "GET", "/api/core/iam/v1/users", None)
         .await
         .expect("获取用户列表失败");
 
@@ -296,7 +280,7 @@ async fn test_iam_005_admin_delete_user() {
             &client,
             &token,
             "DELETE",
-            &format!("/api/iam/users/{}", user_id),
+            &format!("/api/core/iam/v1/users/{}", user_id),
             None,
         )
         .await
@@ -317,18 +301,15 @@ async fn test_iam_005_admin_delete_user() {
 // ==================== IAM-006: 超级管理员分配角色 ====================
 
 #[tokio::test]
+#[ignore]
 async fn test_iam_006_superuser_assign_role() {
-    if !ensure_api_available().await {
-        eprintln!("⏭ 跳过: API服务未运行 ({})", API_URL);
-        return;
-    }
     tracing::info!("测试 IAM-006: 超级管理员分配角色");
 
     let token = login("admin", "admin123").await.expect("管理员登录失败");
     let client = create_client();
 
     // 获取角色列表
-    let (_, roles_body) = auth_request(&client, &token, "GET", "/api/iam/roles", None)
+    let (_, roles_body) = auth_request(&client, &token, "GET", "/api/core/iam/v1/roles", None)
         .await
         .expect("获取角色列表失败");
 
@@ -344,9 +325,10 @@ async fn test_iam_006_superuser_assign_role() {
             let role_id = role["id"].as_str().expect("角色ID不存在");
 
             // 获取用户列表，找一个测试用户
-            let (_, list_body) = auth_request(&client, &token, "GET", "/api/iam/users", None)
-                .await
-                .expect("获取用户列表失败");
+            let (_, list_body) =
+                auth_request(&client, &token, "GET", "/api/core/iam/v1/users", None)
+                    .await
+                    .expect("获取用户列表失败");
 
             let users = if list_body["data"]["users"].is_array() {
                 list_body["data"]["users"].as_array().unwrap().clone()
@@ -374,7 +356,7 @@ async fn test_iam_006_superuser_assign_role() {
                     &client,
                     &token,
                     "PUT",
-                    &format!("/api/iam/users/{}/roles", user_id),
+                    &format!("/api/core/iam/v1/users/{}/roles", user_id),
                     Some(role_assignment),
                 )
                 .await;
@@ -402,11 +384,8 @@ async fn test_iam_006_superuser_assign_role() {
 // ==================== IAM-007: 跨租户用户访问 ====================
 
 #[tokio::test]
+#[ignore]
 async fn test_iam_007_cross_tenant_access() {
-    if !ensure_api_available().await {
-        eprintln!("⏭ 跳过: API服务未运行 ({})", API_URL);
-        return;
-    }
     tracing::info!("测试 IAM-007: 跨租户用户访问");
 
     let token = login("admin", "admin123").await.expect("管理员登录失败");
@@ -419,7 +398,7 @@ async fn test_iam_007_cross_tenant_access() {
         &client,
         &token,
         "GET",
-        &format!("/api/iam/users/{}", fake_user_id),
+        &format!("/api/core/iam/v1/users/{}", fake_user_id),
         None,
     )
     .await
@@ -443,11 +422,8 @@ async fn test_iam_007_cross_tenant_access() {
 // ==================== IAM-008: 用户修改自己密码 ====================
 
 #[tokio::test]
+#[ignore]
 async fn test_iam_008_user_change_own_password() {
-    if !ensure_api_available().await {
-        eprintln!("⏭ 跳过: API服务未运行 ({})", API_URL);
-        return;
-    }
     tracing::info!("测试 IAM-008: 用户修改自己密码");
 
     // 使用测试员工账号
@@ -456,9 +432,10 @@ async fn test_iam_008_user_change_own_password() {
             let client = create_client();
 
             // 获取当前用户信息
-            let (_, me_body) = auth_request(&client, &token, "GET", "/api/iam/users/me", None)
-                .await
-                .expect("获取用户信息失败");
+            let (_, me_body) =
+                auth_request(&client, &token, "GET", "/api/core/iam/v1/users/me", None)
+                    .await
+                    .expect("获取用户信息失败");
 
             if let Some(user_id) = me_body["data"]["id"].as_str() {
                 // 尝试修改密码
@@ -471,7 +448,7 @@ async fn test_iam_008_user_change_own_password() {
                     &client,
                     &token,
                     "PUT",
-                    &format!("/api/iam/users/{}/password", user_id),
+                    &format!("/api/core/iam/v1/users/{}/password", user_id),
                     Some(password_change),
                 )
                 .await
@@ -493,11 +470,8 @@ async fn test_iam_008_user_change_own_password() {
 // ==================== IAM-009: 用户修改他人密码 ====================
 
 #[tokio::test]
+#[ignore]
 async fn test_iam_009_user_change_others_password() {
-    if !ensure_api_available().await {
-        eprintln!("⏭ 跳过: API服务未运行 ({})", API_URL);
-        return;
-    }
     tracing::info!("测试 IAM-009: 用户修改他人密码");
 
     // 使用测试员工账号
@@ -516,7 +490,7 @@ async fn test_iam_009_user_change_others_password() {
                 &client,
                 &token,
                 "PUT",
-                &format!("/api/iam/users/{}/password", other_user_id),
+                &format!("/api/core/iam/v1/users/{}/password", other_user_id),
                 Some(password_change),
             )
             .await
@@ -534,17 +508,14 @@ async fn test_iam_009_user_change_others_password() {
 // ==================== 角色管理测试 ====================
 
 #[tokio::test]
+#[ignore]
 async fn test_iam_list_roles() {
-    if !ensure_api_available().await {
-        eprintln!("⏭ 跳过: API服务未运行 ({})", API_URL);
-        return;
-    }
     tracing::info!("测试: 查看角色列表");
 
     let token = login("admin", "admin123").await.expect("管理员登录失败");
     let client = create_client();
 
-    let (status, body) = auth_request(&client, &token, "GET", "/api/iam/roles", None)
+    let (status, body) = auth_request(&client, &token, "GET", "/api/core/iam/v1/roles", None)
         .await
         .expect("请求失败");
 
@@ -559,17 +530,14 @@ async fn test_iam_list_roles() {
 }
 
 #[tokio::test]
+#[ignore]
 async fn test_iam_list_permissions() {
-    if !ensure_api_available().await {
-        eprintln!("⏭ 跳过: API服务未运行 ({})", API_URL);
-        return;
-    }
     tracing::info!("测试: 查看权限列表");
 
     let token = login("admin", "admin123").await.expect("管理员登录失败");
     let client = create_client();
 
-    let (status, body) = auth_request(&client, &token, "GET", "/api/iam/permissions", None)
+    let (status, body) = auth_request(&client, &token, "GET", "/api/core/iam/v1/permissions", None)
         .await
         .expect("请求失败");
 
@@ -586,11 +554,8 @@ async fn test_iam_list_permissions() {
 // ==================== 测试运行器 ====================
 
 #[tokio::test]
+#[ignore]
 async fn run_all_iam_tests_summary() {
-    if !ensure_api_available().await {
-        eprintln!("⏭ 跳过: API服务未运行 ({})", API_URL);
-        return;
-    }
     tracing::info!("========================================");
     tracing::info!("  IAM 权限测试套件");
     tracing::info!("========================================");

@@ -4,8 +4,8 @@ import { MessageSquare, Users, Bell, Search, Plus, ChevronLeft, User } from 'luc
 import { useNavigate } from 'react-router-dom';
 import type { ChatRoom, ChatMessage, Friend } from '../../api/im';
 import { imApi } from '../../api/im';
-import type { WsMessage } from '../../hooks/useWebSocket';
-import { useWebSocket } from '../../hooks/useWebSocket';
+import type { ImWsMessage } from '../../hooks/useImWebSocket';
+import { useImWebSocket } from '../../hooks/useImWebSocket';
 import { ChatRoomItem } from './ChatRoomItem';
 import { MessageBubble } from './MessageBubble';
 import { ChatInput } from './ChatInput';
@@ -38,16 +38,17 @@ export const ChatInterface: React.FC = () => {
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
   const handleWsMessage = useCallback(
-    (message: WsMessage) => {
-      if (selectedRoom && message.chat_id === selectedRoom.id) {
+    (message: string | ImWsMessage) => {
+      const parsedMessage = typeof message === 'string' ? JSON.parse(message) : message;
+      if (selectedRoom && parsedMessage.chat_id === selectedRoom.id) {
         const newMessage: ChatMessage = {
           id: Date.now().toString(),
-          chat_id: message.chat_id!,
-          sender_id: message.sender_id,
-          sender_name: message.sender_name,
+          chat_id: parsedMessage.chat_id!,
+          sender_id: parsedMessage.sender_id,
+          sender_name: parsedMessage.sender_name,
           message_type: 'text',
-          content: message.content,
-          created_at: message.timestamp,
+          content: parsedMessage.content,
+          created_at: parsedMessage.timestamp,
           is_read: false,
         };
         setMessages((prev) => [...prev, newMessage]);
@@ -72,11 +73,10 @@ export const ChatInterface: React.FC = () => {
     });
   }, [addNotification]);
 
-  const { isConnected, connect, disconnect, send } = useWebSocket({
+  const { isConnected, connect, disconnect, send } = useImWebSocket({
     onMessage: handleWsMessage,
     onOpen: handleWsOpen,
     onClose: handleWsClose,
-    wsPath: '/ws/core/im',
   });
 
   useEffect(() => {
@@ -365,7 +365,7 @@ export const ChatInterface: React.FC = () => {
 
     try {
       if (type === 'text' && isConnected) {
-        const wsMessage: WsMessage = {
+        const wsMessage: ImWsMessage = {
           msg_type: 'chat',
           chat_id: selectedRoom.id,
           sender_id: 'current-user',

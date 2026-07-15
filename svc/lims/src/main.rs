@@ -35,8 +35,8 @@ use sqlx::PgPool;
 
 use topems_shared::{
     auth_middleware, create_cors_layer, create_database_pool, get_api_info_handler, init_telemetry,
-    rls_middleware, simple_health_check, telemetry_middleware, ApiResponse, AuthState,
-    DatabaseConfig, ServiceHealth, SimpleHealthConfig,
+    rls_middleware, simple_health_check, telemetry_middleware, wrap_group2_router, ApiResponse,
+    AuthState, DatabaseConfig, RouteCompatConfig, ServiceHealth, SimpleHealthConfig,
 };
 
 pub use shared::*;
@@ -262,6 +262,9 @@ async fn main() {
         .layer(cors)
         .layer(prometheus_layer)
         .with_state(state);
+
+    let cfg = RouteCompatConfig::new("lims", "/api/core/lims", &[]);
+    let app = wrap_group2_router(app, cfg);
 
     let port = std::env::var("LIMS_PORT")
         .unwrap_or_else(|_| "8051".to_string())

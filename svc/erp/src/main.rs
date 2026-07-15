@@ -24,8 +24,9 @@ use modules::ApiState;
 use topems_shared::{
     auth_middleware, check_http_health, create_api_info_router, create_cors_layer,
     create_database_pool, create_hrm_client, init_telemetry, rls_middleware, telemetry_middleware,
-    ApiResponse, AuthState, DatabaseConfig, DependencyHealth, FieldEncryptionService, HealthStatus,
-    KeyManager, NotificationServiceClient, ServiceHealth, SystemMetrics,
+    wrap_group2_router, ApiResponse, AuthState, DatabaseConfig, DependencyHealth,
+    FieldEncryptionService, HealthStatus, KeyManager, NotificationServiceClient, RouteCompatConfig,
+    ServiceHealth, SystemMetrics,
 };
 
 lazy_static::lazy_static! {
@@ -458,6 +459,9 @@ async fn main() -> Result<()> {
         .layer(axum::middleware::from_fn(telemetry_middleware))
         .layer(prometheus_layer)
         .layer(cors);
+
+    let cfg = RouteCompatConfig::new("erp", "/api/core/erp", &[]);
+    let app = wrap_group2_router(app, cfg);
 
     let port = env::var("ERP_PORT")
         .or_else(|_| env::var("SERVER_PORT"))

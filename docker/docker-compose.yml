@@ -692,6 +692,107 @@ services:
       start_period: 30s
     restart: unless-stopped
 
+  finance:
+    build:
+      context: ../svc/finance
+      dockerfile: Dockerfile
+    container_name: topems-finance
+    environment:
+      - DATABASE_URL=postgres://${POSTGRES_USER:-topems}:${POSTGRES_PASSWORD:-topems_secret}@postgres:5432/${POSTGRES_DB:-topems}
+      - FINANCE_PORT=8011
+      - CORE_URL=http://unified-core:8000
+      - CONSUL_URL=http://consul:8500
+      - ERP_URL=http://erp:8010
+    ports:
+      - "${FINANCE_PORT:-8011}:8011"
+    volumes:
+      - ../svc/finance:/app
+    networks:
+      - topems-network
+    depends_on:
+      consul:
+        condition: service_healthy
+      unified-core:
+        condition: service_healthy
+      erp:
+        condition: service_healthy
+      postgres:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8011/health"]
+      interval: 10s
+      timeout: 5s
+      retries: 3
+      start_period: 30s
+    restart: unless-stopped
+
+  doc:
+    build:
+      context: ../svc/doc
+      dockerfile: Dockerfile
+    container_name: topems-doc
+    environment:
+      - DATABASE_URL=postgres://${POSTGRES_USER:-topems}:${POSTGRES_PASSWORD:-topems_secret}@postgres:5432/${POSTGRES_DB:-topems}
+      - DOC_PORT=8012
+      - CORE_URL=http://unified-core:8000
+      - CONSUL_URL=http://consul:8500
+      - REDIS_URL=redis://redis:6379
+    ports:
+      - "${DOC_PORT:-8012}:8012"
+    volumes:
+      - ../svc/doc:/app
+    networks:
+      - topems-network
+    depends_on:
+      consul:
+        condition: service_healthy
+      unified-core:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+      postgres:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8012/health"]
+      interval: 10s
+      timeout: 5s
+      retries: 3
+      start_period: 30s
+    restart: unless-stopped
+
+  report:
+    build:
+      context: ..
+      dockerfile: svc/report/Dockerfile
+    container_name: topems-report
+    environment:
+      - DATABASE_URL=postgres://${POSTGRES_USER:-topems}:${POSTGRES_PASSWORD:-topems_secret}@postgres:5432/${POSTGRES_DB:-topems}
+      - REPORT_PORT=8061
+      - CORE_URL=http://unified-core:8000
+      - CONSUL_URL=http://consul:8500
+      - BI_URL=http://bi:8060
+      - RUST_LOG=info
+    ports:
+      - "${REPORT_PORT:-8061}:8061"
+    networks:
+      - topems-network
+    depends_on:
+      consul:
+        condition: service_healthy
+      postgres:
+        condition: service_healthy
+      unified-core:
+        condition: service_healthy
+      bi:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://localhost:8061/health"]
+      interval: 30s
+      timeout: 3s
+      retries: 3
+      start_period: 10s
+    restart: unless-stopped
+
   # ================================================
   # AI服务
   # ================================================
@@ -872,6 +973,12 @@ services:
       rs:
         condition: service_healthy
       bi:
+        condition: service_healthy
+      finance:
+        condition: service_healthy
+      doc:
+        condition: service_healthy
+      report:
         condition: service_healthy
       monitor:
         condition: service_healthy

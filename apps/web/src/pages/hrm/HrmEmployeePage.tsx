@@ -24,7 +24,8 @@ import {
   Chip,
   Button,
 } from '@mui/material';
-import { StatusBadge, ConfirmDialog } from '@topems/shared-components';
+import { StatusBadge, ConfirmDialog, Hidden } from '@topems/shared-components';
+import { useResponsive } from '@/hooks/useResponsive';
 import { apiLogger } from '@/utils/logger';
 import {
   Users,
@@ -106,7 +107,8 @@ type ViewMode = 'list' | 'tree';
 const HrmEmployeePage: React.FC = () => {
   const navigate = useNavigate();
   const theme = useTheme();
-  const isMobile = useMediaQuery(theme.breakpoints.down('md'));
+  const { isMobile, isTablet } = useResponsive();
+  const isMdOrSmaller = useMediaQuery(theme.breakpoints.down('md'));
   const addNotification = useNotificationStore((state) => state.addNotification);
   const queryClient = useQueryClient();
 
@@ -612,17 +614,17 @@ const HrmEmployeePage: React.FC = () => {
 
   // 表格列定义
   const columns = useMemo<ColumnDef<Employee>[]>(
-    () => [
-      {
+    () => {
+      const nameColumn = {
         id: 'name',
         label: '员工信息',
-        minWidth: 200,
-        render: (row) => (
-          <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5 }}>
+        minWidth: isMobile ? 120 : 200,
+        render: (row: Employee) => (
+          <Box sx={{ display: 'flex', alignItems: 'center', gap: isMobile ? 1 : 1.5 }}>
             <Avatar
               sx={{
-                width: 40,
-                height: 40,
+                width: isMobile ? 32 : 40,
+                height: isMobile ? 32 : 40,
                 bgcolor: 'primary.light',
                 color: 'primary.main',
                 fontSize: '0.875rem',
@@ -648,67 +650,98 @@ const HrmEmployeePage: React.FC = () => {
             </Box>
           </Box>
         ),
-      },
-      {
-        id: 'department_id',
-        label: '所属部门',
-        minWidth: 150,
-        render: (row) => {
-          const dept = departments.find((d) => d.id === row.department_id);
-          return (
-            <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-              <Building2 sx={{ width: 16, height: 16, color: 'text.secondary' }} />
-              <Typography variant='body2'>{dept?.name || '-'}</Typography>
-            </Box>
-          );
-        },
-      },
-      {
-        id: 'position',
-        label: '职位',
-        minWidth: 120,
-        render: (row) => (
-          <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-            <Briefcase sx={{ width: 16, height: 16, color: 'text.secondary' }} />
-            <Typography variant='body2'>{row.position || '-'}</Typography>
-          </Box>
-        ),
-      },
-      {
-        id: 'email',
-        label: '邮箱',
-        minWidth: 180,
-        render: (row) => (
-          <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-            <Mail sx={{ width: 16, height: 16, color: 'text.secondary' }} />
-            <Typography
-              variant='body2'
-              sx={{ fontSize: '0.8125rem' }}
-            >
-              {row.email || '-'}
-            </Typography>
-          </Box>
-        ),
-      },
-      {
-        id: 'phone',
-        label: '电话',
-        minWidth: 130,
-        render: (row) => (
-          <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-            <Phone sx={{ width: 16, height: 16, color: 'text.secondary' }} />
-            <Typography variant='body2'>{row.phone || '-'}</Typography>
-          </Box>
-        ),
-      },
-      {
+      };
+
+      const statusColumn = {
         id: 'status',
         label: '状态',
-        width: 100,
-        render: (row) => getStatusBadge(row.status),
-      },
-    ],
-    [departments, getStatusBadge]
+        width: isMobile ? 80 : 100,
+        render: (row: Employee) => getStatusBadge(row.status),
+      };
+
+      if (isMobile) {
+        return [nameColumn, statusColumn];
+      }
+
+      if (isTablet) {
+        return [
+          nameColumn,
+          {
+            id: 'department_id',
+            label: '所属部门',
+            minWidth: 100,
+            render: (row: Employee) => {
+              const dept = departments.find((d) => d.id === row.department_id);
+              return (
+                <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                  <Building2 sx={{ width: 16, height: 16, color: 'text.secondary' }} />
+                  <Typography variant='body2'>{dept?.name || '-'}</Typography>
+                </Box>
+              );
+            },
+          },
+          statusColumn,
+        ];
+      }
+
+      return [
+        nameColumn,
+        {
+          id: 'department_id',
+          label: '所属部门',
+          minWidth: 150,
+          render: (row: Employee) => {
+            const dept = departments.find((d) => d.id === row.department_id);
+            return (
+              <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                <Building2 sx={{ width: 16, height: 16, color: 'text.secondary' }} />
+                <Typography variant='body2'>{dept?.name || '-'}</Typography>
+              </Box>
+            );
+          },
+        },
+        {
+          id: 'position',
+          label: '职位',
+          minWidth: 120,
+          render: (row: Employee) => (
+            <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+              <Briefcase sx={{ width: 16, height: 16, color: 'text.secondary' }} />
+              <Typography variant='body2'>{row.position || '-'}</Typography>
+            </Box>
+          ),
+        },
+        {
+          id: 'email',
+          label: '邮箱',
+          minWidth: 180,
+          render: (row: Employee) => (
+            <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+              <Mail sx={{ width: 16, height: 16, color: 'text.secondary' }} />
+              <Typography
+                variant='body2'
+                sx={{ fontSize: '0.8125rem' }}
+              >
+                {row.email || '-'}
+              </Typography>
+            </Box>
+          ),
+        },
+        {
+          id: 'phone',
+          label: '电话',
+          minWidth: 130,
+          render: (row: Employee) => (
+            <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+              <Phone sx={{ width: 16, height: 16, color: 'text.secondary' }} />
+              <Typography variant='body2'>{row.phone || '-'}</Typography>
+            </Box>
+          ),
+        },
+        statusColumn,
+      ];
+    },
+    [departments, getStatusBadge, isMobile, isTablet]
   );
 
   // 导出字段配置
@@ -1044,7 +1077,7 @@ const HrmEmployeePage: React.FC = () => {
         <Box
           sx={{
             display: 'grid',
-            gridTemplateColumns: { md: '1fr 2fr' },
+            gridTemplateColumns: { xs: '1fr', md: '1fr 2fr' },
             gap: 3,
           }}
         >

@@ -7,19 +7,6 @@ use serde_json::{json, Value};
 
 const API_URL: &str = "http://localhost:8000";
 
-/// 检查 API 服务是否可用
-async fn ensure_api_available() -> bool {
-    reqwest::Client::builder()
-        .timeout(std::time::Duration::from_secs(2))
-        .build()
-        .unwrap()
-        .get(format!("{}/api/core/iam/auth/login", API_URL))
-        .send()
-        .await
-        .map(|resp| !resp.status().is_server_error())
-        .unwrap_or(false)
-}
-
 fn create_client() -> Client {
     Client::new()
 }
@@ -27,7 +14,7 @@ fn create_client() -> Client {
 async fn login(username: &str, password: &str) -> Result<String, String> {
     let client = create_client();
     let response = client
-        .post(format!("{}/api/core/iam/auth/login", API_URL))
+        .post(format!("{}/api/core/iam/v1/auth/login", API_URL))
         .json(&json!({ "username": username, "password": password }))
         .send()
         .await
@@ -79,11 +66,8 @@ async fn auth_request(
 }
 
 #[tokio::test]
+#[ignore]
 async fn test_wms_001_view_inventory() {
-    if !ensure_api_available().await {
-        eprintln!("⏭ 跳过: API服务未运行 ({})", API_URL);
-        return;
-    }
     tracing::info!("测试 WMS-001: 查看库存");
     let token = login("admin", "admin123").await.expect("管理员登录失败");
     let client = create_client();
@@ -98,11 +82,8 @@ async fn test_wms_001_view_inventory() {
 }
 
 #[tokio::test]
+#[ignore]
 async fn test_wms_002_create_warehouse() {
-    if !ensure_api_available().await {
-        eprintln!("⏭ 跳过: API服务未运行 ({})", API_URL);
-        return;
-    }
     tracing::info!("测试 WMS-002: 创建仓库");
     let token = login("admin", "admin123").await.expect("管理员登录失败");
     let client = create_client();
@@ -132,11 +113,8 @@ async fn test_wms_002_create_warehouse() {
 }
 
 #[tokio::test]
+#[ignore]
 async fn test_wms_003_view_warehouse() {
-    if !ensure_api_available().await {
-        eprintln!("⏭ 跳过: API服务未运行 ({})", API_URL);
-        return;
-    }
     tracing::info!("测试 WMS-003: 查看仓库列表");
     let token = login("admin", "admin123").await.expect("管理员登录失败");
     let client = create_client();
@@ -151,11 +129,8 @@ async fn test_wms_003_view_warehouse() {
 }
 
 #[tokio::test]
+#[ignore]
 async fn test_wms_004_inbound() {
-    if !ensure_api_available().await {
-        eprintln!("⏭ 跳过: API服务未运行 ({})", API_URL);
-        return;
-    }
     tracing::info!("测试 WMS-004: 入库操作");
     let token = login("admin", "admin123").await.expect("管理员登录失败");
     let client = create_client();
@@ -181,11 +156,8 @@ async fn test_wms_004_inbound() {
 }
 
 #[tokio::test]
+#[ignore]
 async fn test_wms_005_outbound() {
-    if !ensure_api_available().await {
-        eprintln!("⏭ 跳过: API服务未运行 ({})", API_URL);
-        return;
-    }
     tracing::info!("测试 WMS-005: 出库操作");
     let token = login("admin", "admin123").await.expect("管理员登录失败");
     let client = create_client();
@@ -211,11 +183,8 @@ async fn test_wms_005_outbound() {
 }
 
 #[tokio::test]
+#[ignore]
 async fn test_wms_006_transfer() {
-    if !ensure_api_available().await {
-        eprintln!("⏭ 跳过: API服务未运行 ({})", API_URL);
-        return;
-    }
     tracing::info!("测试 WMS-006: 库存调拨");
     let token = login("admin", "admin123").await.expect("管理员登录失败");
     let client = create_client();
@@ -241,11 +210,8 @@ async fn test_wms_006_transfer() {
 }
 
 #[tokio::test]
+#[ignore]
 async fn test_wms_007_view_transactions() {
-    if !ensure_api_available().await {
-        eprintln!("⏭ 跳过: API服务未运行 ({})", API_URL);
-        return;
-    }
     tracing::info!("测试 WMS-007: 查看库存交易记录");
     let token = login("admin", "admin123").await.expect("管理员登录失败");
     let client = create_client();
@@ -260,11 +226,8 @@ async fn test_wms_007_view_transactions() {
 }
 
 #[tokio::test]
+#[ignore]
 async fn run_all_wms_tests_summary() {
-    if !ensure_api_available().await {
-        eprintln!("⏭ 跳过: API服务未运行 ({})", API_URL);
-        return;
-    }
     tracing::info!("========================================");
     tracing::info!("  WMS 权限测试套件");
     tracing::info!("========================================");

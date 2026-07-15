@@ -65,7 +65,7 @@ const LeaveManagementPage: React.FC = () => {
   } | null>(null);
 
   // React Query - 请假申请列表
-  const leaveRequestsQuery = useQuery({
+  const leaveRequestsQuery = useQuery<PaginatedResult<LeaveRequest>>({
     queryKey: ['hrm-leave-requests-list', searchText, statusFilter, typeFilter, employeeFilter],
     queryFn: async () => {
       const params: ListParams = {};
@@ -85,7 +85,7 @@ const LeaveManagementPage: React.FC = () => {
   const loading = leaveRequestsQuery.isLoading;
 
   // React Query - 员工列表
-  const employeesQuery = useQuery({
+  const employeesQuery = useQuery<{ id: string; name: string }[]>({
     queryKey: ['hrm-leave-employees'],
     queryFn: async () => {
       const response = await employeeApi.list();

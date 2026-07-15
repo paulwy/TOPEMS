@@ -1,6 +1,18 @@
 import { OfflineService, type OfflineRecord } from './offlineService';
-import { NetworkService } from './networkService';
 import { apiClient } from '../api/client';
+import NetInfo from '@react-native-community/netinfo';
+
+/**
+ * 路由契约（与 apps/web V9.0 保持一致）
+ * Group1 = unified-core 虚拟服务（/api/core 前缀）
+ * Group2 = 独立进程服务（/api/{svc}，不带 /core）
+ */
+const GROUP2_INDEPENDENT_SERVICES = new Set([
+  'erp', 'finance', 'doc', 'ai', 'hrm', 'pm', 'crm', 'mes', 'pdm',
+  'scm', 'wms', 'srm', 'qms', 'lims', 'ehs', 'rd', 'rs', 'bi',
+  'analytics', 'report', 'monitor', 'portal', 'mobile', 'gis',
+  'integration',
+]);
 
 export type SyncStatus = 'idle' | 'syncing' | 'error' | 'completed';
 
@@ -16,8 +28,6 @@ export class SyncService {
   private static syncInProgress = false;
   private static maxRetryAttempts = 3;
   private static syncDelay = 5000;
-  private static syncTimeout: ReturnType<typeof setTimeout> | null = null;
-  private static networkListenerUnsubscribe: (() => void) | null = null;
 
   static getStatus(): SyncStatus {
     return this.syncStatus;
@@ -29,11 +39,6 @@ export class SyncService {
 
   static async syncAll(): Promise<SyncResult> {
     if (this.syncInProgress) {
-      return { success: 0, failed: 0, skipped: 0, errors: [] };
-    }
-
-    if (NetworkService.isOffline()) {
-      console.log('[SyncService] Cannot sync while offline');
       return { success: 0, failed: 0, skipped: 0, errors: [] };
     }
 
@@ -52,11 +57,6 @@ export class SyncService {
         if (record.syncAttempts >= this.maxRetryAttempts) {
           skipped++;
           continue;
-        }
-
-        if (NetworkService.isOffline()) {
-          console.log('[SyncService] Network lost during sync, stopping');
-          break;
         }
 
         try {
@@ -82,94 +82,69 @@ export class SyncService {
 
   private static async syncRecord(record: OfflineRecord): Promise<void> {
     const data = JSON.parse(record.data);
-    
-    const url = (data as Record<string, unknown>).url as string || '';
-    const method = ((data as Record<string, unknown>).method as string || 'POST').toUpperCase();
-    const body = (data as Record<string, unknown>).data as Record<string, unknown> || {};
+    const endpoint = this.getEndpoint(record.module, record.action);
 
-    switch (method) {
-      case 'POST':
-        await apiClient.post(url, body);
+    switch (record.action) {
+      case 'create':
+        await apiClient.post(endpoint, data);
         break;
-      case 'PUT':
-        await apiClient.put(url, body);
+      case 'update':
+        await apiClient.put(endpoint, data);
         break;
-      case 'DELETE':
-        await apiClient.delete(url, { data: body });
-        break;
-      case 'PATCH':
-        await apiClient.patch(url, body);
+      case 'delete':
+        await apiClient.delete(endpoint, { data });
         break;
       default:
-        await apiClient.post(url, body);
+        await apiClient.post(endpoint, data);
     }
+  }
+
+  private static getEndpoint(module: string, action: string): string {
+    const endpoints: Record<string, Record<string, string>> = {
+      attendance: {
+        create: '/api/hrm/attendance',
+        update: '/api/hrm/attendance',
+        delete: '/api/hrm/attendance',
+      },
+      task: {
+        create: '/api/pm/tasks',
+        update: '/api/pm/tasks',
+        delete: '/api/pm/tasks',
+      },
+      approval: {
+        create: '/api/core/workflow/approvals',
+        update: '/api/core/workflow/approvals',
+        delete: '/api/core/workflow/approvals',
+      },
+    };
+
+    const fallback = GROUP2_INDEPENDENT_SERVICES.has(module)
+      ? `/api/${module}/${action}`
+      : `/api/core/${module}/${action}`;
+
+    return endpoints[module]?.[action] || fallback;
   }
 
   static async startAutoSync(): Promise<void> {
-    if (this.networkListenerUnsubscribe) {
-      this.networkListenerUnsubscribe();
-    }
-
-    this.networkListenerUnsubscribe = NetworkService.addListener(async (state) => {
-      if (state.status === 'online') {
-        const pendingCount = await OfflineService.getPendingCount();
-        if (pendingCount > 0) {
-          console.log(`[SyncService] Network restored, syncing ${pendingCount} pending records`);
-          await this.delaySync();
-        }
-      }
-    });
-
-    this.schedulePeriodicSync();
-  }
-
-  private static delaySync(): Promise<void> {
-    if (this.syncTimeout) {
-      clearTimeout(this.syncTimeout);
-    }
-
-    return new Promise((resolve) => {
-      this.syncTimeout = setTimeout(async () => {
+    NetInfo.addEventListener(async (state) => {
+      if (state.isConnected && state.isInternetReachable) {
         await this.syncAll();
-        resolve();
-      }, 2000);
+      }
     });
   }
 
-  private static schedulePeriodicSync(): void {
-    if (this.syncTimeout) {
-      clearTimeout(this.syncTimeout);
-    }
-
-    this.syncTimeout = setTimeout(async () => {
-      if (!this.syncInProgress && NetworkService.isOnline()) {
-        const pendingCount = await OfflineService.getPendingCount();
-        if (pendingCount > 0) {
-          await this.syncAll();
-        }
+  static async scheduleSync(): Promise<void> {
+    setTimeout(async () => {
+      const state = await NetInfo.fetch();
+      if (state.isConnected && state.isInternetReachable) {
+        await this.syncAll();
       }
-      this.schedulePeriodicSync();
+      this.scheduleSync();
     }, this.syncDelay);
-  }
-
-  static stopAutoSync(): void {
-    if (this.networkListenerUnsubscribe) {
-      this.networkListenerUnsubscribe();
-      this.networkListenerUnsubscribe = null;
-    }
-    if (this.syncTimeout) {
-      clearTimeout(this.syncTimeout);
-      this.syncTimeout = null;
-    }
   }
 
   static async syncModule(module: string): Promise<SyncResult> {
     if (this.syncInProgress) {
-      return { success: 0, failed: 0, skipped: 0, errors: [] };
-    }
-
-    if (NetworkService.isOffline()) {
-      console.log('[SyncService] Cannot sync while offline');
       return { success: 0, failed: 0, skipped: 0, errors: [] };
     }
 
@@ -188,10 +163,6 @@ export class SyncService {
         if (record.syncAttempts >= this.maxRetryAttempts) {
           skipped++;
           continue;
-        }
-
-        if (NetworkService.isOffline()) {
-          break;
         }
 
         try {
@@ -228,9 +199,10 @@ export class SyncService {
   static async handleOfflineAction(
     module: string,
     action: string,
-    data: Record<string, unknown>,
+    data: Record<string, unknown>
   ): Promise<{ offlineId: string; isOffline: boolean }> {
-    const isOffline = NetworkService.isOffline();
+    const state = await NetInfo.fetch();
+    const isOffline = !state.isConnected || !state.isInternetReachable;
 
     if (isOffline) {
       const offlineId = await OfflineService.saveOfflineAction(module, action, data);

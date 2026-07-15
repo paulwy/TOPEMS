@@ -51,12 +51,13 @@ import {
   getSortedRowModel,
   getFilteredRowModel,
   type ColumnDef,
+  type Row,
   type SortingState,
   type ColumnFiltersState,
   type PaginationState,
   type VisibilityState,
 } from '@tanstack/react-table';
-import { List } from 'react-window';
+import { List, type RowComponentProps } from 'react-window';
 import { useNotificationStore } from '@/store';
 import { useExportData } from '@/hooks/useDataTable';
 import { useResponsive } from '@/hooks/useResponsive';
@@ -78,6 +79,136 @@ export interface AdvancedFilter {
   options?: { value: string; label: string }[];
   value?: string;
   onChange?: (_value: string) => void;
+}
+
+// ============ 虚拟滚动行数据 ============
+/* eslint-disable @typescript-eslint/no-explicit-any */
+
+interface VirtualRowData {
+  rows: Row<any>[];
+  getRowKey: (data: any) => string;
+  onRowClick?: (data: any) => void;
+  isSelected: string[];
+  handleSelectRow: (data: any) => void;
+  renderRowNumber: (index: number) => React.ReactNode;
+  handleRowExpand: (data: any) => void;
+  showSelection: boolean;
+  showRowNumber: boolean;
+  enableRowExpansion: boolean;
+  compact: boolean;
+  striped: boolean;
+}
+/* eslint-enable @typescript-eslint/no-explicit-any */
+
+function DataTableVirtualRow({
+  index,
+  style,
+  ...data
+}: RowComponentProps<VirtualRowData>) {
+  const {
+    rows,
+    getRowKey,
+    onRowClick,
+    isSelected,
+    handleSelectRow,
+    renderRowNumber,
+    handleRowExpand,
+    showSelection,
+    showRowNumber,
+    enableRowExpansion,
+    compact,
+    striped,
+  } = data;
+
+  const row = rows[index];
+  if (!row) return null;
+  const rowKey = getRowKey(row.original);
+
+  return (
+    <div style={style}>
+      <TableRow
+        key={row.id}
+        onClick={() => onRowClick?.(row.original)}
+        sx={{
+          cursor: onRowClick ? 'pointer' : 'default',
+          '&:hover': {
+            backgroundColor: onRowClick ? 'action.hover' : 'inherit',
+          },
+          '&:last-child td': { borderBottom: 0 },
+          bgcolor: striped && row.index % 2 === 0 ? 'action.hover' : 'inherit',
+          ...(compact && { fontSize: '0.875rem' }),
+        }}
+      >
+        {showSelection && (
+          <TableCell
+            padding='checkbox'
+            sx={{
+              position: 'sticky',
+              left: 0,
+              zIndex: 1,
+              bgcolor: 'inherit',
+              width: 40,
+            }}
+          >
+            <Checkbox
+              checked={isSelected.includes(rowKey)}
+              onChange={() => handleSelectRow(row.original)}
+              onClick={(e) => e.stopPropagation()}
+            />
+          </TableCell>
+        )}
+        {showRowNumber && (
+          <TableCell
+            sx={{
+              whiteSpace: 'nowrap',
+              fontSize: 14,
+              fontWeight: 500,
+              position: showSelection ? 'sticky' : 'relative',
+              left: showSelection ? 56 : 0,
+              zIndex: 1,
+              bgcolor: 'inherit',
+            }}
+          >
+            {renderRowNumber(index)}
+          </TableCell>
+        )}
+        {enableRowExpansion && (
+          <TableCell
+            sx={{
+              whiteSpace: 'nowrap',
+              fontSize: 14,
+              position: showSelection || showRowNumber ? 'sticky' : 'relative',
+              left: (showSelection ? 56 : 0) + (showRowNumber ? 64 : 0),
+              zIndex: 1,
+              bgcolor: 'inherit',
+            }}
+          >
+            <IconButton
+              size='small'
+              onClick={(e) => {
+                e.stopPropagation();
+                handleRowExpand(row.original);
+              }}
+            >
+              <ChevronDown sx={{ width: 18, height: 18 }} />
+            </IconButton>
+          </TableCell>
+        )}
+        {row.getVisibleCells().map((cell) => (
+          <TableCell
+            key={cell.id}
+            sx={{
+              whiteSpace: 'nowrap',
+              fontSize: 14,
+              ...(compact && { py: 1 }),
+            }}
+          >
+            {flexRender(cell.column.columnDef.cell, cell.getContext())}
+          </TableCell>
+        ))}
+      </TableRow>
+    </div>
+  );
 }
 
 /**
@@ -355,10 +486,9 @@ export function DataTable<TData, TValue>({
     pageSize,
   });
   const theme = useTheme();
-  const { isMobile, isTablet } = useResponsive();
+  const { isMobile } = useResponsive();
   const shouldUseMobileCard =
     isMobile && (Boolean(mobileCardRender) || Boolean(mobileCardTitleKey));
-  const isTabletMode = isTablet;
   const [localSearch, setLocalSearch] = useState('');
   const [showAdvancedFilterDialog, setShowAdvancedFilterDialog] = useState(false);
   const [exportAnchorEl, setExportAnchorEl] = useState<null | HTMLElement>(null);
@@ -733,7 +863,7 @@ export function DataTable<TData, TValue>({
         </MenuItem>
       </Menu>
 
-      {/* 数据区域：移动端使用卡片视图，Tablet 端可选择紧凑模式或卡片视图，桌面端使用表格视图 */}
+      {/* 数据区域：移动端使用卡片视图，桌面端使用表格视图 */}
       {shouldUseMobileCard ? (
         <Box
           sx={{
@@ -774,18 +904,12 @@ export function DataTable<TData, TValue>({
             border: '1px solid',
             borderColor: 'divider',
             bgcolor: 'background.paper',
-            ...(isTabletMode && {
-              boxShadow: '0 2px 8px rgba(0, 0, 0, 0.06)',
-            }),
           }}
         >
           <Box sx={{ overflowX: responsive ? 'auto' : 'hidden' }}>
             <Table
               sx={{
-                minWidth: isTabletMode ? 768 : 640,
-                ...(isTabletMode && {
-                  fontSize: '0.875rem',
-                }),
+                minWidth: 640,
                 ...(enableStickyHeader && {
                   thead: {
                     position: 'sticky',
@@ -866,12 +990,10 @@ export function DataTable<TData, TValue>({
                         sx={{
                           whiteSpace: 'nowrap',
                           fontWeight: 600,
-                          fontSize: isTabletMode ? 11 : 12,
+                          fontSize: 12,
                           textTransform: 'uppercase',
                           letterSpacing: 0.5,
                           color: 'text.secondary',
-                          px: isTabletMode ? 1.5 : 2,
-                          py: isTabletMode ? 1 : 1.5,
                         }}
                       >
                         {header.isPlaceholder
@@ -933,100 +1055,21 @@ export function DataTable<TData, TValue>({
                           defaultHeight={400}
                           rowCount={table.getRowModel().rows.length}
                           rowHeight={rowHeight}
-                          rowProps={{}}
-                          rowComponent={({ index, style }) => {
-                            const row = table.getRowModel().rows[index];
-                            const rowKey = getRowKey(row.original);
-
-                            return (
-                              <div style={style}>
-                                <TableRow
-                                  key={row.id}
-                                  onClick={() => onRowClick?.(row.original)}
-                                  sx={{
-                                    cursor: onRowClick ? 'pointer' : 'default',
-                                    '&:hover': {
-                                      backgroundColor: onRowClick ? 'action.hover' : 'inherit',
-                                    },
-                                    '&:last-child td': { borderBottom: 0 },
-                                    bgcolor:
-                                      striped && row.index % 2 === 0 ? 'action.hover' : 'inherit',
-                                    ...(compact && { fontSize: '0.875rem' }),
-                                  }}
-                                >
-                                  {showSelection && (
-                                    <TableCell
-                                      padding='checkbox'
-                                      sx={{
-                                        position: 'sticky',
-                                        left: 0,
-                                        zIndex: 1,
-                                        bgcolor: 'inherit',
-                                        width: 40,
-                                      }}
-                                    >
-                                      <Checkbox
-                                        checked={isSelected.includes(rowKey)}
-                                        onChange={() => handleSelectRow(row.original)}
-                                        onClick={(e) => e.stopPropagation()}
-                                      />
-                                    </TableCell>
-                                  )}
-                                  {showRowNumber && (
-                                    <TableCell
-                                      sx={{
-                                        whiteSpace: 'nowrap',
-                                        fontSize: 14,
-                                        fontWeight: 500,
-                                        position: showSelection ? 'sticky' : 'relative',
-                                        left: showSelection ? 56 : 0,
-                                        zIndex: 1,
-                                        bgcolor: 'inherit',
-                                      }}
-                                    >
-                                      {renderRowNumber(index)}
-                                    </TableCell>
-                                  )}
-                                  {enableRowExpansion && (
-                                    <TableCell
-                                      sx={{
-                                        whiteSpace: 'nowrap',
-                                        fontSize: 14,
-                                        position:
-                                          showSelection || showRowNumber ? 'sticky' : 'relative',
-                                        left: (showSelection ? 56 : 0) + (showRowNumber ? 64 : 0),
-                                        zIndex: 1,
-                                        bgcolor: 'inherit',
-                                      }}
-                                    >
-                                      <IconButton
-                                        size='small'
-                                        onClick={(e) => {
-                                          e.stopPropagation();
-                                          handleRowExpand(row.original);
-                                        }}
-                                      >
-                                        <ChevronDown sx={{ width: 18, height: 18 }} />
-                                      </IconButton>
-                                    </TableCell>
-                                  )}
-                                  {row.getVisibleCells().map((cell) => (
-                                    <TableCell
-                                      key={cell.id}
-                                      sx={{
-                                        whiteSpace: 'nowrap',
-                                        fontSize: isTabletMode ? 13 : 14,
-                                        px: isTabletMode ? 1.5 : 2,
-                                        py: isTabletMode ? 1 : 1.5,
-                                        ...(compact && { py: 1 }),
-                                      }}
-                                    >
-                                      {flexRender(cell.column.columnDef.cell, cell.getContext())}
-                                    </TableCell>
-                                  ))}
-                                </TableRow>
-                              </div>
-                            );
+                          style={{ width: '100%', height: 400 }}
+                          rowComponent={DataTableVirtualRow}
+                          rowProps={{
+                            rows: table.getRowModel().rows,
+                            getRowKey,
+                            onRowClick,
+                            isSelected,
+                            handleSelectRow,
+                            renderRowNumber,
+                            handleRowExpand,
+                            showSelection,
+                            showRowNumber,
+                            enableRowExpansion,
+                            compact,
+                            striped,
                           }}
                         />
                       </TableCell>
@@ -1115,9 +1158,7 @@ export function DataTable<TData, TValue>({
                                 key={cell.id}
                                 sx={{
                                   whiteSpace: 'nowrap',
-                                  fontSize: isTabletMode ? 13 : 14,
-                                  px: isTabletMode ? 1.5 : 2,
-                                  py: isTabletMode ? 1 : 1.5,
+                                  fontSize: 14,
                                   ...(compact && { py: 1 }),
                                 }}
                               >

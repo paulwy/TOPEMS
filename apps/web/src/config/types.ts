@@ -41,6 +41,7 @@ export interface ServicesConfig {
   ehs: string;
   bi: string;
   report: string;
+  monitor: string;
   // 统一核心服务
   core: string;
   finance: string;

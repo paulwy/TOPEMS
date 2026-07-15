@@ -1,21 +1,23 @@
-import React, { useState, useMemo, useCallback } from 'react';
+import React, { useState, useMemo, useEffect } from 'react';
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import {
   Bell,
   Check,
   Trash2,
+  Filter,
   Archive,
   Settings,
   Volume2,
   VolumeX,
   Monitor,
   Search,
+  ChevronLeft,
+  ChevronRight,
   BarChart3,
   FileText,
-  Eye,
 } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
-import { Box, Typography, Chip, Button, Tooltip, IconButton } from '@mui/material';
-import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { Box, Typography, Dialog, DialogTitle, DialogContent } from '@mui/material';
 import type { Notification, NotificationTypeEnum } from '@/api/notification';
 import {
   getNotifications,
@@ -30,10 +32,9 @@ import NotificationSettings from '@/components/notifications/NotificationSetting
 import useNotificationSettings from '@/hooks/useNotificationSettings';
 import { apiLogger } from '@/utils/logger';
 import { PageContainer } from '@/components';
-import { ListPageTemplate, type ColumnDef } from '@/components/templates';
 import { NOTIFICATION_PATHS } from '@/modules/notification/config';
 import { designTokens } from '@/theme/tokens';
-import { QUERY_KEYS } from '@/lib/reactQuery';
+import { useNotificationStore } from '@/store';
 
 const ct = designTokens.colors;
 
@@ -42,21 +43,21 @@ type NotificationFilterType = 'all' | NotificationTypeEnum;
 const NotificationCenter: React.FC = () => {
   const navigate = useNavigate();
   const queryClient = useQueryClient();
+  const { addNotification } = useNotificationStore();
+
   const [activeFilter, setActiveFilter] = useState<NotificationFilterType>('all');
   const [showSettings, setShowSettings] = useState(false);
-  const [page, setPage] = useState(0);
+  const [page, setPage] = useState(1);
   const [selectedNotifications, setSelectedNotifications] = useState<Set<string>>(new Set());
   const [searchQuery, setSearchQuery] = useState('');
-  const [detailOpen, setDetailOpen] = useState(false);
-  const [selectedNotification, setSelectedNotification] = useState<Notification | null>(null);
 
   const { settings, toggleSetting } = useNotificationSettings();
 
-  const notificationsQuery = useQuery({
-    queryKey: [...QUERY_KEYS.NOTIFICATION.NOTIFICATIONS, activeFilter, page],
+  const { data, isError, error, isLoading } = useQuery({
+    queryKey: ['notifications', activeFilter, page],
     queryFn: async () => {
       const typeParam = activeFilter === 'all' ? undefined : activeFilter;
-      const response = await getNotifications(page + 1, 20, typeParam);
+      const response = await getNotifications(page, 20, typeParam);
       if (response.success && response.data) {
         return {
           notifications: response.data.notifications,
@@ -64,22 +65,134 @@ const NotificationCenter: React.FC = () => {
           unread_count: response.data.unread_count,
         };
       }
-      return { notifications: [] as Notification[], total: 0, unread_count: 0 };
+      return { notifications: [], total: 0, unread_count: 0 };
+    },
+    staleTime: 5 * 60 * 1000,
+  });
+
+  useEffect(() => {
+    if (isError && error) {
+      apiLogger.error('Failed to fetch notifications:', error);
+      addNotification({
+        type: 'error',
+        title: '加载失败',
+        message: '无法加载通知列表',
+      });
+    }
+  }, [isError, error]);
+
+  const markAsReadMutation = useMutation({
+    mutationFn: (id: string) => markAsRead(id),
+    onSuccess: (response) => {
+      if (response.success && response.data) {
+        queryClient.setQueryData<{ notifications: Notification[]; total: number; unread_count: number }>(
+          ['notifications', activeFilter, page],
+          (prev) => {
+            if (!prev) return prev;
+            return {
+              ...prev,
+              notifications: prev.notifications.map((n) =>
+                n.id === response.data!.id ? response.data! : n
+              ),
+              unread_count: Math.max(0, prev.unread_count - 1),
+            };
+          }
+        );
+      }
+    },
+    onError: (error) => {
+      apiLogger.error('Failed to mark as read:', error);
+      addNotification({
+        type: 'error',
+        title: '操作失败',
+        message: '标记已读失败',
+      });
     },
   });
 
-  const notifications = notificationsQuery.data?.notifications ?? [];
-  const total = notificationsQuery.data?.total ?? 0;
-  const unreadCount = notificationsQuery.data?.unread_count ?? 0;
-  const loading = notificationsQuery.isLoading;
+  const markAllAsReadMutation = useMutation({
+    mutationFn: () => markAllAsRead(),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['notifications'] });
+    },
+    onError: (error) => {
+      apiLogger.error('Failed to mark all as read:', error);
+      addNotification({
+        type: 'error',
+        title: '操作失败',
+        message: '全部标记已读失败',
+      });
+    },
+  });
 
-  const fetchNotifications = useCallback(() => {
-    notificationsQuery.refetch();
-  }, [notificationsQuery]);
+  const deleteMutation = useMutation({
+    mutationFn: (id: string) => deleteNotification(id),
+    onSuccess: (_, id) => {
+      queryClient.setQueryData<{ notifications: Notification[]; total: number; unread_count: number }>(
+        ['notifications', activeFilter, page],
+        (prev) => {
+          if (!prev) return prev;
+          const notification = prev.notifications.find((n) => n.id === id);
+          return {
+            ...prev,
+            notifications: prev.notifications.filter((n) => n.id !== id),
+            total: prev.total - 1,
+            unread_count: notification && !notification.is_read ? Math.max(0, prev.unread_count - 1) : prev.unread_count,
+          };
+        }
+      );
+      setSelectedNotifications((prev) => {
+        const newSet = new Set(prev);
+        newSet.delete(id);
+        return newSet;
+      });
+    },
+    onError: (error) => {
+      apiLogger.error('Failed to delete notification:', error);
+      addNotification({
+        type: 'error',
+        title: '操作失败',
+        message: '删除通知失败',
+      });
+    },
+  });
 
-  const invalidateNotifications = useCallback(() => {
-    queryClient.invalidateQueries({ queryKey: QUERY_KEYS.NOTIFICATION.NOTIFICATIONS });
-  }, [queryClient]);
+  const bulkDeleteMutation = useMutation({
+    mutationFn: (ids: string[]) => bulkDeleteNotifications(ids),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['notifications'] });
+      setSelectedNotifications(new Set());
+    },
+    onError: (error) => {
+      apiLogger.error('Failed to bulk delete:', error);
+      addNotification({
+        type: 'error',
+        title: '操作失败',
+        message: '批量删除失败',
+      });
+    },
+  });
+
+  const bulkMarkAsReadMutation = useMutation({
+    mutationFn: (ids: string[]) => bulkMarkAsRead(ids),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['notifications'] });
+      setSelectedNotifications(new Set());
+    },
+    onError: (error) => {
+      apiLogger.error('Failed to bulk mark as read:', error);
+      addNotification({
+        type: 'error',
+        title: '操作失败',
+        message: '批量标记已读失败',
+      });
+    },
+  });
+
+  const notifications = data?.notifications || [];
+  const total = data?.total || 0;
+  const unreadCount = data?.unread_count || 0;
+  const loading = isLoading;
 
   const filteredNotifications = useMemo(() => {
     if (!searchQuery.trim()) return notifications;
@@ -89,90 +202,45 @@ const NotificationCenter: React.FC = () => {
     );
   }, [notifications, searchQuery]);
 
-  const markAsReadMutation = useMutation({
-    mutationFn: async (id: string) => markAsRead(id),
-    onSuccess: () => {
-      invalidateNotifications();
-    },
-    onError: (error: unknown) => {
-      apiLogger.error('Failed to mark as read:', error);
-    },
-  });
+  const handleMarkAsRead = (notification: Notification) => {
+    markAsReadMutation.mutate(notification.id);
+  };
 
-  const markAllAsReadMutation = useMutation({
-    mutationFn: async () => markAllAsRead(),
-    onSuccess: () => {
-      invalidateNotifications();
-    },
-    onError: (error: unknown) => {
-      apiLogger.error('Failed to mark all as read:', error);
-    },
-  });
-
-  const deleteMutation = useMutation({
-    mutationFn: async (id: string) => deleteNotification(id),
-    onSuccess: () => {
-      invalidateNotifications();
-    },
-    onError: (error: unknown) => {
-      apiLogger.error('Failed to delete notification:', error);
-    },
-  });
-
-  const bulkDeleteMutation = useMutation({
-    mutationFn: async (ids: string[]) => bulkDeleteNotifications(ids),
-    onSuccess: () => {
-      invalidateNotifications();
-      setSelectedNotifications(new Set());
-    },
-    onError: (error: unknown) => {
-      apiLogger.error('Failed to bulk delete:', error);
-    },
-  });
-
-  const bulkMarkAsReadMutation = useMutation({
-    mutationFn: async (ids: string[]) => bulkMarkAsRead(ids),
-    onSuccess: () => {
-      invalidateNotifications();
-      setSelectedNotifications(new Set());
-    },
-    onError: (error: unknown) => {
-      apiLogger.error('Failed to bulk mark as read:', error);
-    },
-  });
-
-  const handleMarkAsRead = useCallback(
-    (notification: Notification) => {
-      markAsReadMutation.mutate(notification.id);
-    },
-    [markAsReadMutation]
-  );
-
-  const handleMarkAllAsRead = useCallback(() => {
+  const handleMarkAllAsRead = () => {
     markAllAsReadMutation.mutate();
-  }, [markAllAsReadMutation]);
+  };
 
-  const handleDelete = useCallback(
-    (id: string) => {
-      deleteMutation.mutate(id);
-      setSelectedNotifications((prev) => {
-        const newSet = new Set(prev);
-        newSet.delete(id);
-        return newSet;
-      });
-    },
-    [deleteMutation]
-  );
+  const handleDelete = (id: string) => {
+    deleteMutation.mutate(id);
+  };
 
-  const handleBulkDelete = useCallback(() => {
+  const handleBulkDelete = () => {
     const ids = Array.from(selectedNotifications);
     bulkDeleteMutation.mutate(ids);
-  }, [bulkDeleteMutation, selectedNotifications]);
+  };
 
-  const handleBulkMarkAsRead = useCallback(() => {
+  const handleBulkMarkAsRead = () => {
     const ids = Array.from(selectedNotifications);
     bulkMarkAsReadMutation.mutate(ids);
-  }, [bulkMarkAsReadMutation, selectedNotifications]);
+  };
+
+  const toggleSelect = (id: string) => {
+    const newSelected = new Set(selectedNotifications);
+    if (newSelected.has(id)) {
+      newSelected.delete(id);
+    } else {
+      newSelected.add(id);
+    }
+    setSelectedNotifications(newSelected);
+  };
+
+  const toggleSelectAll = () => {
+    if (selectedNotifications.size === filteredNotifications.length) {
+      setSelectedNotifications(new Set());
+    } else {
+      setSelectedNotifications(new Set(filteredNotifications.map((n) => n.id)));
+    }
+  };
 
   const getFilterLabel = (filter: NotificationFilterType) => {
     switch (filter) {
@@ -193,230 +261,7 @@ const NotificationCenter: React.FC = () => {
     }
   };
 
-  const getTypeIcon = (type: NotificationTypeEnum) => {
-    switch (type) {
-      case 'system':
-        return <Settings size={16} />;
-      case 'workflow':
-        return <FileText size={16} />;
-      case 'reminder':
-        return <Bell size={16} />;
-      case 'alert':
-        return <Bell size={16} />;
-      case 'message':
-        return <Bell size={16} />;
-      default:
-        return <Bell size={16} />;
-    }
-  };
-
-  const getTypeColor = (type: NotificationTypeEnum) => {
-    switch (type) {
-      case 'system':
-        return 'info';
-      case 'workflow':
-        return 'success';
-      case 'reminder':
-        return 'warning';
-      case 'alert':
-        return 'error';
-      case 'message':
-        return 'primary';
-      default:
-        return 'default';
-    }
-  };
-
-  const columns: ColumnDef<Notification>[] = useMemo(
-    () => [
-      {
-        id: 'type',
-        label: '类型',
-        width: 100,
-        render: (row) => (
-          <Chip
-            size='small'
-            color={getTypeColor(row.notification_type) as any}
-            label={getFilterLabel(row.notification_type)}
-            variant='outlined'
-            icon={getTypeIcon(row.notification_type)}
-          />
-        ),
-      },
-      {
-        id: 'title',
-        label: '标题',
-        minWidth: 200,
-        render: (row) => (
-          <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-            <Typography
-              variant='body2'
-              sx={{
-                fontWeight: 500,
-                color: row.is_read ? 'text.primary' : 'text.secondary',
-                textDecoration: row.is_read ? 'none' : 'none',
-              }}
-            >
-              {row.title}
-            </Typography>
-            {!row.is_read && (
-              <Box
-                sx={{
-                  width: 8,
-                  height: 8,
-                  borderRadius: '50%',
-                  bgcolor: 'primary.main',
-                }}
-              />
-            )}
-            <Tooltip title='查看详情'>
-              <IconButton
-                size='small'
-                onClick={(e) => {
-                  e.stopPropagation();
-                  setSelectedNotification(row);
-                  setDetailOpen(true);
-                }}
-              >
-                <Eye size={14} />
-              </IconButton>
-            </Tooltip>
-          </Box>
-        ),
-      },
-      {
-        id: 'content',
-        label: '内容',
-        minWidth: 250,
-        render: (row) => (
-          <Typography
-            variant='body2'
-            color='text.secondary'
-            sx={{
-              overflow: 'hidden',
-              textOverflow: 'ellipsis',
-              whiteSpace: 'nowrap',
-              maxWidth: 300,
-            }}
-          >
-            {row.content}
-          </Typography>
-        ),
-      },
-      {
-        id: 'created_at',
-        label: '时间',
-        width: 160,
-        render: (row) => {
-          const date = new Date(row.created_at);
-          const now = new Date();
-          const diff = now.getTime() - date.getTime();
-          const minutes = Math.floor(diff / 60000);
-          const hours = Math.floor(diff / 3600000);
-          const days = Math.floor(diff / 86400000);
-
-          if (minutes < 1) return '刚刚';
-          if (minutes < 60) return `${minutes}分钟前`;
-          if (hours < 24) return `${hours}小时前`;
-          if (days < 7) return `${days}天前`;
-          return date.toLocaleDateString('zh-CN');
-        },
-      },
-      {
-        id: 'actions',
-        label: '操作',
-        align: 'right',
-        width: 150,
-        render: (row) => (
-          <Box sx={{ display: 'flex', gap: 0.5 }}>
-            {!row.is_read && (
-              <Tooltip title='标记已读'>
-                <Button
-                  size='small'
-                  variant='outlined'
-                  color='primary'
-                  startIcon={<Check size={14} />}
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    handleMarkAsRead(row);
-                  }}
-                >
-                  已读
-                </Button>
-              </Tooltip>
-            )}
-            <Tooltip title='删除'>
-              <Button
-                size='small'
-                variant='outlined'
-                color='error'
-                startIcon={<Trash2 size={14} />}
-                onClick={(e) => {
-                  e.stopPropagation();
-                  handleDelete(row.id);
-                }}
-              >
-                删除
-              </Button>
-            </Tooltip>
-          </Box>
-        ),
-      },
-    ],
-    []
-  );
-
-  const filters = useMemo(
-    () => [
-      {
-        id: 'type',
-        label: '通知类型',
-        type: 'select' as const,
-        options: [
-          { label: '全部', value: 'all' },
-          { label: '系统通知', value: 'system' },
-          { label: '审批通知', value: 'workflow' },
-          { label: '提醒通知', value: 'reminder' },
-          { label: '告警通知', value: 'alert' },
-          { label: '消息通知', value: 'message' },
-        ],
-      },
-    ],
-    []
-  );
-
-  const handleFilterChange = (filters: Record<string, unknown>) => {
-    if (typeof filters.type === 'string') {
-      setActiveFilter(filters.type as NotificationFilterType);
-    }
-    setPage(0);
-  };
-
-  const handleSelectionChange = (selection: (string | number)[]) => {
-    setSelectedNotifications(new Set(selection.map(String)));
-  };
-
-  const headerContent = (
-    <>
-      {showSettings && (
-        <Box sx={{ px: { xs: 2, sm: 3 }, pb: 3 }}>
-          <NotificationSettings />
-        </Box>
-      )}
-      {unreadCount > 0 && (
-        <Box sx={{ px: { xs: 2, sm: 3 }, pb: 3 }}>
-          <Button
-            variant='outlined'
-            color='primary'
-            startIcon={<Check size={16} />}
-            onClick={handleMarkAllAsRead}
-          >
-            全部标记已读 ({unreadCount})
-          </Button>
-        </Box>
-      )}
-    </>
-  );
+  const totalPages = Math.max(1, Math.ceil(total / 20));
 
   return (
     <PageContainer
@@ -426,268 +271,168 @@ const NotificationCenter: React.FC = () => {
       subtitle={`共 ${total} 条通知，${unreadCount} 条未读`}
       headerProps={{
         pageIcon: (
-          <Bell
-            size={24}
-            color={ct.primary.dark}
-          />
+          <Bell size={20} />
         ),
-        pageColor: 'primary.100',
-        customToolbar: (
-          <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-            <Box
-              component='button'
-              onClick={() => navigate(NOTIFICATION_PATHS.statistics)}
-              sx={{
-                p: 1,
-                borderRadius: 3,
-                bgcolor: 'grey.200',
-                color: 'grey.600',
-                '&:hover': { bgcolor: 'grey.300' },
-                transition: 'background-color 0.2s',
-              }}
-              title='统计'
-            >
-              <BarChart3 size={20} />
-            </Box>
-            <Box
-              component='button'
-              onClick={() => navigate(NOTIFICATION_PATHS.templates)}
-              sx={{
-                p: 1,
-                borderRadius: 3,
-                bgcolor: 'grey.200',
-                color: 'grey.600',
-                '&:hover': { bgcolor: 'grey.300' },
-                transition: 'background-color 0.2s',
-              }}
-              title='模板管理'
-            >
-              <FileText size={20} />
-            </Box>
-            <Box
-              component='button'
-              onClick={() => navigate(NOTIFICATION_PATHS.archive)}
-              sx={{
-                p: 1,
-                borderRadius: 3,
-                bgcolor: 'grey.200',
-                color: 'grey.600',
-                '&:hover': { bgcolor: 'grey.300' },
-                transition: 'background-color 0.2s',
-              }}
-              title='归档管理'
-            >
-              <Archive size={20} />
-            </Box>
-            <Box
-              component='button'
-              onClick={() => toggleSetting('enableSound')}
-              sx={{
-                p: 1,
-                borderRadius: 3,
-                bgcolor: settings.enableSound ? 'primary.50' : 'grey.200',
-                color: settings.enableSound ? 'primary.main' : 'grey.600',
-                '&:hover': {
-                  bgcolor: settings.enableSound ? 'primary.100' : 'grey.300',
-                },
-                transition: 'background-color 0.2s',
-              }}
-              title={settings.enableSound ? '关闭声音' : '开启声音'}
-            >
-              {settings.enableSound ? <Volume2 size={20} /> : <VolumeX size={20} />}
-            </Box>
-            <Box
-              component='button'
-              onClick={() => toggleSetting('enableDesktop')}
-              sx={{
-                p: 1,
-                borderRadius: 3,
-                bgcolor: settings.enableDesktop ? 'primary.50' : 'grey.200',
-                color: settings.enableDesktop ? 'primary.main' : 'grey.600',
-                '&:hover': {
-                  bgcolor: settings.enableDesktop ? 'primary.100' : 'grey.300',
-                },
-                transition: 'background-color 0.2s',
-              }}
-              title={settings.enableDesktop ? '关闭桌面通知' : '开启桌面通知'}
-            >
-              <Monitor size={20} />
-            </Box>
-            <Box
-              component='button'
-              onClick={() => setShowSettings(!showSettings)}
-              sx={{
-                p: 1,
-                borderRadius: 3,
-                bgcolor: showSettings ? 'primary.50' : 'grey.200',
-                color: showSettings ? 'primary.main' : 'grey.600',
-                '&:hover': {
-                  bgcolor: showSettings ? 'primary.100' : 'grey.300',
-                },
-                transition: 'background-color 0.2s',
-              }}
-              title='通知设置'
-            >
-              <Settings size={20} />
-            </Box>
-          </Box>
-        ),
-        showDivider: true,
+        pageGradient: `linear-gradient(135deg, ${ct.primary.main}, ${ct.primary.dark})`,
       }}
     >
-      <Box sx={{ minHeight: '100vh', bgcolor: 'grey.100' }}>
-        <Box sx={{ maxWidth: 1400, mx: 'auto', px: 2, py: 4 }}>
-          <ListPageTemplate
-            title=''
-            subtitle=''
-            columns={columns}
-            data={filteredNotifications}
-            loading={loading}
-            searchable
-            searchPlaceholder='搜索通知标题或内容...'
-            searchValue={searchQuery}
-            onSearch={setSearchQuery}
-            filters={filters}
-            filtersValue={{
-              type: activeFilter,
-            }}
-            onFilterChange={handleFilterChange}
-            pagination={{
-              page,
-              pageSize: 20,
-              total: total,
-              onPageChange: setPage,
-            }}
-            selectable
-            selection={{
-              selected: Array.from(selectedNotifications),
-              onChange: handleSelectionChange,
-            }}
-            actions={[
-              {
-                label: '批量标记已读',
-                icon: <Check size={16} />,
-                onClick: handleBulkMarkAsRead,
-                variant: 'outlined',
-              },
-              {
-                label: '批量删除',
-                icon: <Trash2 size={16} />,
-                onClick: handleBulkDelete,
-                variant: 'outlined',
-              },
-            ]}
-            onRefresh={fetchNotifications}
-            headerContent={headerContent}
-            emptyMessage={
-              searchQuery
-                ? '未找到匹配的通知'
-                : activeFilter === 'all'
-                  ? '暂无通知'
-                  : `暂无${getFilterLabel(activeFilter)}`
-            }
-            getRowId={(row) => row.id}
-          />
+      <Box sx={{ display: 'flex', flexDirection: 'column', height: '100%', bgcolor: 'background.default' }}>
+        <Box sx={{ p: 3, borderBottom: 1, borderColor: 'divider', bgcolor: 'background.paper' }}>
+          <Box sx={{ maxWidth: 600, mx: 'auto', position: 'relative' }}>
+            <Search sx={{ position: 'absolute', left: 16, top: '50%', transform: 'translateY(-50%)', color: 'text.disabled' }} />
+            <input
+              type='text'
+              placeholder='搜索通知...'
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              style={{
+                width: '100%',
+                padding: '12px 16px 12px 48px',
+                borderRadius: '12px',
+                border: '1px solid',
+                borderColor: 'rgba(0,0,0,0.12)',
+                fontSize: '14px',
+                outline: 'none',
+              }}
+            />
+          </Box>
+        </Box>
+
+        <Box sx={{ display: 'flex', gap: 2, p: 3, borderBottom: 1, borderColor: 'divider', overflowX: 'auto' }}>
+          {(['all', 'system', 'workflow', 'reminder', 'alert', 'message'] as NotificationFilterType[]).map((filter) => (
+            <button
+              key={filter}
+              onClick={() => {
+                setActiveFilter(filter);
+                setPage(1);
+              }}
+              style={{
+                padding: '8px 16px',
+                borderRadius: '20px',
+                border: 'none',
+                backgroundColor: activeFilter === filter ? ct.primary.main : 'rgba(0,0,0,0.04)',
+                color: activeFilter === filter ? '#fff' : 'inherit',
+                fontSize: '13px',
+                cursor: 'pointer',
+                whiteSpace: 'nowrap',
+              }}
+            >
+              {getFilterLabel(filter)}
+            </button>
+          ))}
+        </Box>
+
+        <Box sx={{ flex: 1, overflowY: 'auto' }}>
+          {loading ? (
+            <Box sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '200px' }}>
+              <div className='animate-spin rounded-full h-8 w-8 border-b-2 border-primary'></div>
+            </Box>
+          ) : filteredNotifications.length === 0 ? (
+            <Box sx={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', py: 12, color: 'text.disabled' }}>
+              <Bell size={48} strokeWidth={1} />
+              <Typography variant='h6' sx={{ mt: 2 }}>暂无通知</Typography>
+              <Typography variant='body2'>您还没有任何通知消息</Typography>
+            </Box>
+          ) : (
+            <div>
+              {selectedNotifications.size > 0 && (
+                <Box sx={{ p: 2, borderBottom: 1, borderColor: 'divider', bgcolor: 'background.paper', display: 'flex', gap: 2 }}>
+                  <button
+                    onClick={toggleSelectAll}
+                    style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '8px 16px', border: 'none', backgroundColor: 'transparent', cursor: 'pointer' }}
+                  >
+                    <input
+                      type='checkbox'
+                      checked={selectedNotifications.size === filteredNotifications.length}
+                      onChange={() => toggleSelectAll()}
+                    />
+                    <span>全选</span>
+                  </button>
+                  <div style={{ flex: 1 }}></div>
+                  <button
+                    onClick={handleBulkMarkAsRead}
+                    disabled={bulkMarkAsReadMutation.isPending}
+                    style={{ padding: '8px 16px', borderRadius: '8px', border: '1px solid', borderColor: ct.primary.main, color: ct.primary.main, cursor: 'pointer' }}
+                  >
+                    标记已读
+                  </button>
+                  <button
+                    onClick={handleBulkDelete}
+                    disabled={bulkDeleteMutation.isPending}
+                    style={{ padding: '8px 16px', borderRadius: '8px', backgroundColor: ct.error.main, color: '#fff', border: 'none', cursor: 'pointer' }}
+                  >
+                    删除
+                  </button>
+                </Box>
+              )}
+
+              {filteredNotifications.map((notification) => (
+                <div
+                  key={notification.id}
+                  onClick={() => toggleSelect(notification.id)}
+                  style={{ cursor: 'pointer', borderBottom: 1, borderColor: 'divider' }}
+                >
+                  <NotificationItem
+                    notification={notification}
+                    onUpdate={() => handleMarkAsRead(notification)}
+                    onDelete={() => handleDelete(notification.id)}
+                  />
+                </div>
+              ))}
+            </div>
+          )}
+        </Box>
+
+        <Box sx={{ p: 3, borderTop: 1, borderColor: 'divider', bgcolor: 'background.paper', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+          <Typography variant='body2' color='text.disabled'>
+            第 {page} / {totalPages} 页
+          </Typography>
+          <Box sx={{ display: 'flex', gap: 1 }}>
+            <button
+              onClick={() => setPage((prev) => Math.max(1, prev - 1))}
+              disabled={page === 1}
+              style={{ padding: '8px 12px', borderRadius: '8px', border: '1px solid', borderColor: 'divider', cursor: page === 1 ? 'not-allowed' : 'pointer' }}
+            >
+              <ChevronLeft size={16} />
+            </button>
+            <button
+              onClick={() => setPage((prev) => Math.min(totalPages, prev + 1))}
+              disabled={page === totalPages}
+              style={{ padding: '8px 12px', borderRadius: '8px', border: '1px solid', borderColor: 'divider', cursor: page === totalPages ? 'not-allowed' : 'pointer' }}
+            >
+              <ChevronRight size={16} />
+            </button>
+          </Box>
         </Box>
       </Box>
 
-      {detailOpen && selectedNotification && (
-        <Box
-          sx={{
-            position: 'fixed',
-            inset: 0,
-            bgcolor: 'rgba(0,0,0,0.5)',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            zIndex: 1000,
-            p: 2,
-          }}
-          onClick={() => setDetailOpen(false)}
+      <Box sx={{ position: 'fixed', bottom: 24, right: 24, display: 'flex', flexDirection: 'column', gap: 2 }}>
+        <button
+          onClick={handleMarkAllAsRead}
+          disabled={markAllAsReadMutation.isPending}
+          style={{ padding: '12px', borderRadius: '50%', backgroundColor: ct.primary.main, color: '#fff', border: 'none', cursor: 'pointer', boxShadow: '0 4px 12px rgba(0,0,0,0.15)' }}
         >
-          <Box
-            sx={{
-              bgcolor: 'background.paper',
-              borderRadius: 3,
-              maxWidth: 600,
-              width: '100%',
-              maxHeight: '80vh',
-              overflow: 'auto',
-              p: 4,
-            }}
-            onClick={(e) => e.stopPropagation()}
-          >
-            <Box sx={{ display: 'flex', alignItems: 'center', gap: 2, mb: 3 }}>
-              <Chip
-                size='small'
-                color={getTypeColor(selectedNotification.notification_type) as any}
-                label={getFilterLabel(selectedNotification.notification_type)}
-                icon={getTypeIcon(selectedNotification.notification_type)}
-              />
-              {!selectedNotification.is_read && (
-                <Box
-                  sx={{
-                    width: 8,
-                    height: 8,
-                    borderRadius: '50%',
-                    bgcolor: 'primary.main',
-                  }}
-                />
-              )}
-            </Box>
-            <Typography
-              variant='h6'
-              sx={{ fontWeight: 600, mb: 2 }}
-            >
-              {selectedNotification.title}
-            </Typography>
-            <Typography
-              variant='body1'
-              color='text.secondary'
-              sx={{ whiteSpace: 'pre-wrap' }}
-            >
-              {selectedNotification.content}
-            </Typography>
-            {selectedNotification.data && (
-              <Box sx={{ mt: 3, p: 2, bgcolor: 'grey.100', borderRadius: 1 }}>
-                <Typography
-                  variant='caption'
-                  color='text.secondary'
-                  sx={{ display: 'block', mb: 1 }}
-                >
-                  附加信息
-                </Typography>
-                <Typography variant='body2'>
-                  {typeof selectedNotification.data === 'object'
-                    ? JSON.stringify(selectedNotification.data, null, 2)
-                    : selectedNotification.data}
-                </Typography>
-              </Box>
-            )}
-            <Box sx={{ mt: 4, display: 'flex', gap: 2, justifyContent: 'flex-end' }}>
-              {!selectedNotification.is_read && (
-                <Button
-                  variant='outlined'
-                  color='primary'
-                  startIcon={<Check size={16} />}
-                  onClick={() => {
-                    handleMarkAsRead(selectedNotification);
-                    setDetailOpen(false);
-                  }}
-                >
-                  标记已读
-                </Button>
-              )}
-              <Button
-                variant='contained'
-                onClick={() => setDetailOpen(false)}
-              >
-                关闭
-              </Button>
-            </Box>
-          </Box>
-        </Box>
-      )}
+          <Check size={20} />
+        </button>
+        <button
+          onClick={() => setShowSettings(true)}
+          style={{ padding: '12px', borderRadius: '50%', backgroundColor: 'background.paper', color: 'inherit', border: 'none', cursor: 'pointer', boxShadow: '0 4px 12px rgba(0,0,0,0.15)' }}
+        >
+          <Settings size={20} />
+        </button>
+      </Box>
+
+      <Dialog
+        open={showSettings}
+        onClose={() => setShowSettings(false)}
+        maxWidth='sm'
+        fullWidth
+      >
+        <DialogTitle>通知设置</DialogTitle>
+        <DialogContent>
+          <NotificationSettings />
+        </DialogContent>
+      </Dialog>
     </PageContainer>
   );
 };

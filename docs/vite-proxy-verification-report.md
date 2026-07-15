@@ -81,8 +81,9 @@
 | `/ws/core/notifications` | ws://localhost:8000 | 通知服务WebSocket（新统一路径） |
 | `/ws/core/im` | ws://localhost:8000 | IM服务WebSocket（新统一路径） |
 | `/ws/core` | ws://localhost:8000 | Core WebSocket代理规则（覆盖所有子路径） |
-| `/mes/ws/dashboard` | ws://localhost:8030 | MES仪表盘WebSocket |
-| `/gis/ws` | ws://localhost:8071 | GIS服务WebSocket（重写为/api/gis/ws） |
+| `/ws/mes/dashboard` | ws://localhost:8030 | MES仪表盘WebSocket |
+| `/ws/bi/dashboard/{id}` | ws://localhost:8060 | BI仪表盘WebSocket |
+| `/ws/gis` | ws://localhost:8071 | GIS服务WebSocket |
 
 **路径规范**: 所有Core WebSocket路由统一为 `/ws/core/{feature}` 格式
 

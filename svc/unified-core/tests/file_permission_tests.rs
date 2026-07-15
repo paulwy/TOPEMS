@@ -12,19 +12,6 @@ use serde_json::{json, Value};
 
 const API_URL: &str = "http://localhost:8000";
 
-/// 检查 API 服务是否可用
-async fn ensure_api_available() -> bool {
-    reqwest::Client::builder()
-        .timeout(std::time::Duration::from_secs(2))
-        .build()
-        .unwrap()
-        .get(format!("{}/api/core/iam/auth/login", API_URL))
-        .send()
-        .await
-        .map(|resp| !resp.status().is_server_error())
-        .unwrap_or(false)
-}
-
 fn create_client() -> Client {
     Client::new()
 }
@@ -33,7 +20,7 @@ async fn login(username: &str, password: &str) -> Result<String, String> {
     let client = create_client();
 
     let response = client
-        .post(format!("{}/api/core/iam/auth/login", API_URL))
+        .post(format!("{}/api/core/iam/v1/auth/login", API_URL))
         .json(&json!({ "username": username, "password": password }))
         .send()
         .await
@@ -98,11 +85,8 @@ async fn auth_request(
 // ==================== FILE-001: 上传文件 ====================
 
 #[tokio::test]
+#[ignore]
 async fn test_file_001_upload_file() {
-    if !ensure_api_available().await {
-        eprintln!("⏭ 跳过: API服务未运行 ({})", API_URL);
-        return;
-    }
     tracing::info!("测试 FILE-001: 上传文件");
 
     let token = login("admin", "admin123").await.expect("管理员登录失败");
@@ -136,11 +120,8 @@ async fn test_file_001_upload_file() {
 // ==================== FILE-002: 批量上传文件 ====================
 
 #[tokio::test]
+#[ignore]
 async fn test_file_002_batch_upload() {
-    if !ensure_api_available().await {
-        eprintln!("⏭ 跳过: API服务未运行 ({})", API_URL);
-        return;
-    }
     tracing::info!("测试 FILE-002: 批量上传文件");
 
     let token = login("admin", "admin123").await.expect("管理员登录失败");
@@ -174,11 +155,8 @@ async fn test_file_002_batch_upload() {
 // ==================== FILE-003: 下载文件 ====================
 
 #[tokio::test]
+#[ignore]
 async fn test_file_003_download_file() {
-    if !ensure_api_available().await {
-        eprintln!("⏭ 跳过: API服务未运行 ({})", API_URL);
-        return;
-    }
     tracing::info!("测试 FILE-003: 下载文件");
 
     let token = login("admin", "admin123").await.expect("管理员登录失败");
@@ -226,11 +204,8 @@ async fn test_file_003_download_file() {
 // ==================== FILE-004: 下载他人私有文件 ====================
 
 #[tokio::test]
+#[ignore]
 async fn test_file_004_download_private_file() {
-    if !ensure_api_available().await {
-        eprintln!("⏭ 跳过: API服务未运行 ({})", API_URL);
-        return;
-    }
     tracing::info!("测试 FILE-004: 下载他人私有文件");
 
     // 使用普通员工账号
@@ -269,11 +244,8 @@ async fn test_file_004_download_private_file() {
 // ==================== FILE-005: 删除文件 ====================
 
 #[tokio::test]
+#[ignore]
 async fn test_file_005_delete_file() {
-    if !ensure_api_available().await {
-        eprintln!("⏭ 跳过: API服务未运行 ({})", API_URL);
-        return;
-    }
     tracing::info!("测试 FILE-005: 删除文件");
 
     let token = login("admin", "admin123").await.expect("管理员登录失败");
@@ -334,11 +306,8 @@ async fn test_file_005_delete_file() {
 // ==================== FILE-006: 移动文件 ====================
 
 #[tokio::test]
+#[ignore]
 async fn test_file_006_move_file() {
-    if !ensure_api_available().await {
-        eprintln!("⏭ 跳过: API服务未运行 ({})", API_URL);
-        return;
-    }
     tracing::info!("测试 FILE-006: 移动文件");
 
     let token = login("admin", "admin123").await.expect("管理员登录失败");
@@ -386,11 +355,8 @@ async fn test_file_006_move_file() {
 // ==================== FILE-007: 创建文件夹 ====================
 
 #[tokio::test]
+#[ignore]
 async fn test_file_007_create_folder() {
-    if !ensure_api_available().await {
-        eprintln!("⏭ 跳过: API服务未运行 ({})", API_URL);
-        return;
-    }
     tracing::info!("测试 FILE-007: 创建文件夹");
 
     let token = login("admin", "admin123").await.expect("管理员登录失败");
@@ -427,11 +393,8 @@ async fn test_file_007_create_folder() {
 // ==================== FILE-008: 删除文件夹 ====================
 
 #[tokio::test]
+#[ignore]
 async fn test_file_008_delete_folder() {
-    if !ensure_api_available().await {
-        eprintln!("⏭ 跳过: API服务未运行 ({})", API_URL);
-        return;
-    }
     tracing::info!("测试 FILE-008: 删除文件夹");
 
     let token = login("admin", "admin123").await.expect("管理员登录失败");
@@ -492,11 +455,8 @@ async fn test_file_008_delete_folder() {
 // ==================== 测试总结 ====================
 
 #[tokio::test]
+#[ignore]
 async fn run_all_file_tests_summary() {
-    if !ensure_api_available().await {
-        eprintln!("⏭ 跳过: API服务未运行 ({})", API_URL);
-        return;
-    }
     tracing::info!("========================================");
     tracing::info!("  File 权限测试套件");
     tracing::info!("========================================");

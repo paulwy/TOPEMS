@@ -1,7 +1,6 @@
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import { useQuery } from '@tanstack/react-query';
-import { QUERY_KEYS } from '@/lib/reactQuery';
 import { useAuth } from '@/hooks/useAuth';
+import { useDashboardWebSocket } from '@/hooks/useDashboardWebSocket';
 import { MES_PATHS } from '@/modules/mes/config';
 import {
   Box,
@@ -1020,38 +1019,51 @@ const ProductionGantt: React.FC<{
 // ============== 主页 ==============
 export const ProductionDashboardPage: React.FC = () => {
   const { token } = useAuth();
+  const [loading, setLoading] = useState(true);
+  const [refreshStatus, setRefreshStatus] = useState<RefreshStatus>('idle');
   const [autoRefresh, setAutoRefresh] = useState(true);
+  const [lastUpdated, setLastUpdated] = useState<Date | null>(null);
+
+  const [orders, setOrders] = useState<ProductionOrder[]>([]);
+  const [records, setRecords] = useState<ProductionRecord[]>([]);
+  const [workStations, setWorkStations] = useState<WorkStation[]>([]);
+  const [equipment, setEquipment] = useState<Equipment[]>([]);
+  const [schedules, setSchedules] = useState<ProductionSchedule[]>([]);
   const [alarms, setAlarms] = useState<RealtimeAlarm[]>([]);
 
-  const [wsConnected, setWsConnected] = useState(false);
   const [wsSupported] = useState(typeof window !== 'undefined' && 'WebSocket' in window);
-  const [wsReconnectCount, setWsReconnectCount] = useState(0);
-  const [wsStatus, setWsStatus] = useState<
-    'disconnected' | 'connecting' | 'connected' | 'reconnecting'
-  >('disconnected');
 
-  const wsRef = useRef<WebSocket | null>(null);
-  const wsReconnectRef = useRef<ReturnType<typeof setTimeout> | null>(null);
-  const wsConnectTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
-  const wsConnectingRef = useRef(false);
-  const wsReconnectAttemptRef = useRef(0);
-  const wsInitRef = useRef(false);
-  const MAX_RECONNECT_ATTEMPTS = 10;
-  const MIN_RECONNECT_DELAY = 1000;
-  const MAX_RECONNECT_DELAY = 30000;
-  const CONNECTION_TIMEOUT = 15000;
+  const refreshTimerRef = useRef<ReturnType<typeof setInterval> | null>(null);
+
+  const {
+    isConnected: wsConnected,
+    connectionStatus: wsStatus,
+    reconnectCount: wsReconnectCount,
+    connect: connectWs,
+    disconnect: disconnectWs,
+  } = useDashboardWebSocket({
+    module: 'mes',
+    reconnectAttempts: 10,
+    maxReconnectDelay: 30000,
+    minReconnectDelay: 1000,
+    connectionTimeout: 15000,
+    enabled: autoRefresh && wsSupported && !!token,
+    onMessage: (message) => {
+      try {
+        const payload = typeof message === 'string' ? JSON.parse(message) : message;
+        if (payload?.type === 'alarms' && payload.data?.alarms) {
+          setAlarms(payload.data.alarms);
+        }
+      } catch (err) {
+        apiLogger.warn('解析 MES WS 消息失败', err);
+      }
+    },
+  });
 
   // ============== 数据加载 ==============
-  const {
-    data: dashboardData,
-    isLoading: loading,
-    isFetching: isRefreshing,
-    error: queryError,
-    dataUpdatedAt,
-    refetch,
-  } = useQuery({
-    queryKey: QUERY_KEYS.MES.PRODUCTION_DASHBOARD,
-    queryFn: async () => {
+  const loadAll = useCallback(async () => {
+    setRefreshStatus('loading');
+    try {
       const [orderRes, recordRes, workStationRes, equipmentStatsRes, scheduleRes] =
         await Promise.allSettled([
           productionOrderApi.list({ page: 1, pagesize: 200 }),
@@ -1065,11 +1077,13 @@ export const ProductionDashboardPage: React.FC = () => {
         orderRes.status === 'fulfilled' && orderRes.value.success && orderRes.value.data
           ? (orderRes.value.data as { orders?: ProductionOrder[] }).orders || []
           : [];
+      setOrders(orderData);
 
       const recordData =
         recordRes.status === 'fulfilled' && recordRes.value.success && recordRes.value.data
           ? (recordRes.value.data as { records?: ProductionRecord[] }).records || []
           : [];
+      setRecords(recordData);
 
       const workStationData =
         workStationRes.status === 'fulfilled' &&
@@ -1077,6 +1091,7 @@ export const ProductionDashboardPage: React.FC = () => {
         workStationRes.value.data
           ? (workStationRes.value.data as { workstations?: WorkStation[] }).workstations || []
           : [];
+      setWorkStations(workStationData);
 
       // 加载设备列表以获取状态分布
       const equipmentListData: Equipment[] = [];
@@ -1089,94 +1104,76 @@ export const ProductionDashboardPage: React.FC = () => {
       } catch (err) {
         apiLogger.warn('加载设备列表失败，使用统计数据', err);
       }
+      setEquipment(equipmentListData);
 
       const scheduleData =
         scheduleRes.status === 'fulfilled' && scheduleRes.value.success && scheduleRes.value.data
           ? (scheduleRes.value.data as { schedules?: ProductionSchedule[] }).schedules || []
           : [];
+      setSchedules(scheduleData);
 
+      // 依据设备统计生成报警
       const stats =
         equipmentStatsRes.status === 'fulfilled' &&
         equipmentStatsRes.value.success &&
         equipmentStatsRes.value.data
           ? equipmentStatsRes.value.data
           : null;
-
-      return {
-        orders: orderData,
-        records: recordData,
-        workStations: workStationData,
-        equipment: equipmentListData,
-        schedules: scheduleData,
-        stats,
-      };
-    },
-    refetchInterval: autoRefresh ? REFRESH_INTERVAL_MS : false,
-  });
-
-  const orders = dashboardData?.orders || [];
-  const records = dashboardData?.records || [];
-  const workStations = dashboardData?.workStations || [];
-  const equipment = dashboardData?.equipment || [];
-  const schedules = dashboardData?.schedules || [];
-  const stats = dashboardData?.stats || null;
-
-  const refreshStatus: RefreshStatus = queryError
-    ? 'error'
-    : isRefreshing
-      ? 'loading'
-      : dashboardData
-        ? 'success'
-        : 'idle';
-  const lastUpdated = dataUpdatedAt ? new Date(dataUpdatedAt) : null;
-
-  // 根据查询数据生成报警
-  useEffect(() => {
-    if (!dashboardData) return;
-    const generatedAlarms: RealtimeAlarm[] = [];
-    if (stats) {
-      if (safeNumber(stats.maintenance) > 0) {
-        generatedAlarms.push({
-          id: 'eq-maint',
-          level: 'warning',
-          source: '设备管理',
-          message: `${stats.maintenance} 台设备处于维护状态，请关注维护进度。`,
-          timestamp: new Date().toISOString(),
-        });
+      const generatedAlarms: RealtimeAlarm[] = [];
+      if (stats) {
+        if (safeNumber(stats.maintenance) > 0) {
+          generatedAlarms.push({
+            id: 'eq-maint',
+            level: 'warning',
+            source: '设备管理',
+            message: `${stats.maintenance} 台设备处于维护状态，请关注维护进度。`,
+            timestamp: new Date().toISOString(),
+          });
+        }
+        if (safeNumber(stats.pending_repairs) > 0) {
+          generatedAlarms.push({
+            id: 'eq-repair',
+            level: 'critical',
+            source: '设备管理',
+            message: `${stats.pending_repairs} 台设备待维修，存在生产风险。`,
+            timestamp: new Date().toISOString(),
+          });
+        }
       }
-      if (safeNumber(stats.pending_repairs) > 0) {
+      // 异常工单
+      const abnormalOrders = orderData.filter(
+        (o) => o.status === 'abnormal' || o.status === 'error' || o.status === 'delayed'
+      );
+      if (abnormalOrders.length > 0) {
         generatedAlarms.push({
-          id: 'eq-repair',
+          id: 'order-abnormal',
           level: 'critical',
-          source: '设备管理',
-          message: `${stats.pending_repairs} 台设备待维修，存在生产风险。`,
+          source: '生产工单',
+          message: `检测到 ${abnormalOrders.length} 个异常工单，需要立即处理。`,
           timestamp: new Date().toISOString(),
         });
       }
+      // 模拟心跳报警
+      if (generatedAlarms.length === 0) {
+        generatedAlarms.push({
+          id: 'heartbeat',
+          level: 'info',
+          source: '系统',
+          message: 'MES 服务运行正常，采集频率 10s。',
+          timestamp: new Date().toISOString(),
+        });
+      }
+      setAlarms(generatedAlarms);
+
+      setLastUpdated(new Date());
+      setRefreshStatus('success');
+    } catch (err) {
+      apiLogger.error('加载生产看板数据失败:', err);
+      setRefreshStatus('error');
+    } finally {
+      setLoading(false);
     }
-    const abnormalOrders = orders.filter(
-      (o) => o.status === 'abnormal' || o.status === 'error' || o.status === 'delayed'
-    );
-    if (abnormalOrders.length > 0) {
-      generatedAlarms.push({
-        id: 'order-abnormal',
-        level: 'critical',
-        source: '生产工单',
-        message: `检测到 ${abnormalOrders.length} 个异常工单，需要立即处理。`,
-        timestamp: new Date().toISOString(),
-      });
-    }
-    if (generatedAlarms.length === 0) {
-      generatedAlarms.push({
-        id: 'heartbeat',
-        level: 'info',
-        source: '系统',
-        message: 'MES 服务运行正常，采集频率 10s。',
-        timestamp: new Date().toISOString(),
-      });
-    }
-    setAlarms(generatedAlarms);
-  }, [dashboardData, stats, orders]);
+  }, []);
 
   // ============== 派生数据 ==============
   const todayKey = useMemo(() => new Date().toISOString().slice(0, 10), []);
@@ -1280,194 +1277,29 @@ export const ProductionDashboardPage: React.FC = () => {
     return total / workStationUtilization.length;
   }, [workStationUtilization]);
 
-  // ============== WebSocket ==============
-  const setupWebSocket = useCallback(
-    (isReconnecting = false) => {
-      if (!wsSupported) {
-        apiLogger.warn('WebSocket 不支持');
-        return;
-      }
-      if (wsRef.current && wsRef.current.readyState === WebSocket.OPEN) {
-        apiLogger.warn('WebSocket 已连接');
-        return;
-      }
-      if (wsConnectingRef.current) {
-        apiLogger.warn('WebSocket 正在连接中');
-        return;
-      }
-      if (!isReconnecting && wsInitRef.current) {
-        apiLogger.info('WebSocket 已初始化，跳过重复连接');
-        return;
-      }
-
-      try {
-        if (wsRef.current) {
-          wsRef.current.close(1000, '重新连接');
-          wsRef.current = null;
-        }
-
-        wsConnectingRef.current = true;
-        const isReconnecting = wsReconnectAttemptRef.current > 0;
-        if (isReconnecting) {
-          setWsStatus('reconnecting');
-          apiLogger.info(
-            `WebSocket 重连尝试 ${wsReconnectAttemptRef.current}/${MAX_RECONNECT_ATTEMPTS}`
-          );
-        } else {
-          setWsStatus('connecting');
-        }
-
-        const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
-        const wsHost = window.location.host;
-        const tokenParam = token ? `?token=${encodeURIComponent(token)}` : '';
-        const wsUrl = `${protocol}//${wsHost}/mes/ws/dashboard${tokenParam}`;
-        apiLogger.info(`正在建立 WebSocket 连接: ${wsUrl}`);
-        const ws = new WebSocket(wsUrl);
-        wsRef.current = ws;
-
-        wsConnectTimeoutRef.current = setTimeout(() => {
-          if (ws.readyState === WebSocket.CONNECTING) {
-            apiLogger.warn(`WebSocket 连接超时 (${CONNECTION_TIMEOUT}ms)，正在关闭连接`);
-            try {
-              ws.close(1006, 'Connection timeout');
-            } catch (err) {
-              apiLogger.error('关闭超时连接失败:', err);
-            }
-            wsRef.current = null;
-          }
-        }, CONNECTION_TIMEOUT);
-
-        ws.onopen = () => {
-          if (wsConnectTimeoutRef.current) {
-            clearTimeout(wsConnectTimeoutRef.current);
-            wsConnectTimeoutRef.current = null;
-          }
-          wsConnectingRef.current = false;
-          wsInitRef.current = true;
-          wsReconnectAttemptRef.current = 0;
-          setWsReconnectCount(0);
-          setWsStatus('connected');
-          setWsConnected(true);
-          apiLogger.info('WebSocket 连接成功');
-
-          const authMessage = JSON.stringify({ type: 'authenticate' });
-          apiLogger.info(`WebSocket 发送认证消息: ${authMessage}`);
-          ws.send(authMessage);
-        };
-
-        ws.onmessage = (event) => {
-          try {
-            apiLogger.info(`WebSocket 收到消息: ${event.data.substring(0, 200)}`);
-            const payload = JSON.parse(event.data) as {
-              type?: string;
-              data?: { alarms?: RealtimeAlarm[] };
-              message?: string;
-            };
-            if (payload?.type === 'connected') {
-              apiLogger.info('WebSocket 收到连接确认消息');
-              setWsConnected(true);
-            }
-            if (payload?.type === 'alarms' && payload.data?.alarms) {
-              setAlarms(payload.data.alarms);
-            }
-          } catch (err) {
-            apiLogger.warn('解析 MES WS 消息失败', err);
-          }
-        };
-
-        ws.onclose = (event) => {
-          if (wsConnectTimeoutRef.current) {
-            clearTimeout(wsConnectTimeoutRef.current);
-            wsConnectTimeoutRef.current = null;
-          }
-          wsConnectingRef.current = false;
-          setWsConnected(false);
-          setWsStatus('disconnected');
-          wsRef.current = null;
-
-          const code = event.code;
-          const wasClean = event.wasClean;
-          apiLogger.info(
-            `WebSocket 连接关闭: code=${code}, reason=${event.reason}, wasClean=${wasClean}`
-          );
-
-          if (!autoRefresh) {
-            apiLogger.info('自动刷新已关闭，不进行重连');
-            return;
-          }
-
-          if (code === 1000 || code === 1001) {
-            apiLogger.info('连接正常关闭，不进行重连');
-            return;
-          }
-
-          if (wsReconnectAttemptRef.current >= MAX_RECONNECT_ATTEMPTS) {
-            apiLogger.error(`WebSocket 重连尝试已达最大次数 (${MAX_RECONNECT_ATTEMPTS})，停止重连`);
-            wsReconnectAttemptRef.current = 0;
-            return;
-          }
-
-          wsReconnectAttemptRef.current += 1;
-          const attempt = wsReconnectAttemptRef.current;
-          const delay =
-            Math.min(MIN_RECONNECT_DELAY * Math.pow(2, attempt - 1), MAX_RECONNECT_DELAY) +
-            Math.random() * 1000;
-
-          setWsReconnectCount(attempt);
-          apiLogger.info(
-            `WebSocket 重连尝试 ${attempt}/${MAX_RECONNECT_ATTEMPTS}，延迟 ${Math.round(delay)}ms`
-          );
-
-          wsReconnectRef.current = setTimeout(() => setupWebSocket(), delay);
-        };
-
-        ws.onerror = (event) => {
-          if (wsConnectTimeoutRef.current) {
-            clearTimeout(wsConnectTimeoutRef.current);
-            wsConnectTimeoutRef.current = null;
-          }
-          wsConnectingRef.current = false;
-          apiLogger.error('WebSocket 连接错误:', event);
-          setWsConnected(false);
-
-          if (ws.readyState === WebSocket.CONNECTING || ws.readyState === WebSocket.OPEN) {
-            try {
-              ws.close(1011, 'WebSocket error occurred');
-            } catch (e) {
-              apiLogger.error('关闭错误连接失败:', e);
-            }
-          }
-        };
-      } catch (err) {
-        wsConnectingRef.current = false;
-        apiLogger.warn('MES WebSocket 连接失败，将使用轮询模式', err);
-        setWsConnected(false);
-      }
-    },
-    [wsSupported, autoRefresh, token]
-  );
-
   // ============== 副作用 ==============
   useEffect(() => {
-    if (autoRefresh && wsSupported && token) {
-      setupWebSocket();
+    void loadAll();
+  }, [loadAll]);
+
+  useEffect(() => {
+    if (!autoRefresh) {
+      if (refreshTimerRef.current) {
+        clearInterval(refreshTimerRef.current);
+        refreshTimerRef.current = null;
+      }
+      return;
     }
+    refreshTimerRef.current = setInterval(() => {
+      void loadAll();
+    }, REFRESH_INTERVAL_MS);
     return () => {
-      if (wsReconnectRef.current) {
-        clearTimeout(wsReconnectRef.current);
-        wsReconnectRef.current = null;
+      if (refreshTimerRef.current) {
+        clearInterval(refreshTimerRef.current);
+        refreshTimerRef.current = null;
       }
-      if (wsConnectTimeoutRef.current) {
-        clearTimeout(wsConnectTimeoutRef.current);
-        wsConnectTimeoutRef.current = null;
-      }
-      if (wsRef.current && wsRef.current.readyState !== WebSocket.CLOSED) {
-        wsRef.current.close(1000, '组件卸载');
-        wsRef.current = null;
-      }
-      wsInitRef.current = false;
     };
-  }, [autoRefresh, wsSupported, token]);
+  }, [autoRefresh, loadAll]);
 
   // ============== 渲染 ==============
   const runningEquipmentCount = equipmentBuckets
@@ -1550,7 +1382,10 @@ export const ProductionDashboardPage: React.FC = () => {
               size='small'
               variant='outlined'
               startIcon={<RefreshCw size={14} />}
-              onClick={() => refetch()}
+              onClick={() => {
+                setLoading(true);
+                void loadAll();
+              }}
               disabled={refreshStatus === 'loading'}
             >
               立即刷新

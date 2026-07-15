@@ -1,13 +1,29 @@
-use axum::{http::StatusCode, Json};
+//! 多租户隔离集成测试
+//!
+//! 覆盖测试用例：租户间数据隔离、跨租户访问控制、租户 ID 校验等场景
+//!
+//! ⚠️ 集成测试说明：
+//! 本测试文件为集成测试，需要先启动 unified-core 服务（默认监听 localhost:8000），
+//! 并完成管理员账号（admin/admin123、system/system123）的种子数据初始化。
+//!
+//! 运行方式：
+//! ```bash
+//! # 1. 配置环境变量并启动服务
+//! #    set -a && source .env && set +a
+//! #    cargo run -p unified-core-service --bin unified-core-service
+//! # 2. 运行被忽略的集成测试
+//! cargo test --package unified-core-service --test tenant_isolation_test -- --ignored --test-threads=1
+//! ```
+
+use axum::http::StatusCode;
 use serde_json::json;
-use std::collections::HashMap;
 
 mod common {
     use axum::http::StatusCode;
     use serde_json::json;
     use std::time::Duration;
 
-    pub const TEST_BASE_URL: &str = "http://localhost:3000";
+    pub const TEST_BASE_URL: &str = "http://localhost:8000";
 
     /// 检查统一核心服务是否可用，不可用则返回 false
     pub async fn service_available() -> bool {
@@ -236,6 +252,7 @@ mod common {
 use common::*;
 
 #[tokio::test]
+#[ignore = "集成测试：需先启动 unified-core 服务并初始化种子数据，运行时加 --ignored"]
 async fn tenant_isolation_user_access() {
     if !service_available().await {
         eprintln!("⏭ 跳过: 统一核心服务未运行 ({})", TEST_BASE_URL);
@@ -273,6 +290,7 @@ async fn tenant_isolation_user_access() {
 }
 
 #[tokio::test]
+#[ignore = "集成测试：需先启动 unified-core 服务并初始化种子数据，运行时加 --ignored"]
 async fn tenant_isolation_role_access() {
     if !service_available().await {
         eprintln!("⏭ 跳过: 统一核心服务未运行 ({})", TEST_BASE_URL);
@@ -308,6 +326,7 @@ async fn tenant_isolation_role_access() {
 }
 
 #[tokio::test]
+#[ignore = "集成测试：需先启动 unified-core 服务并初始化种子数据，运行时加 --ignored"]
 async fn tenant_isolation_permission_access() {
     if !service_available().await {
         eprintln!("⏭ 跳过: 统一核心服务未运行 ({})", TEST_BASE_URL);
@@ -349,6 +368,7 @@ async fn tenant_isolation_permission_access() {
 }
 
 #[tokio::test]
+#[ignore = "集成测试：需先启动 unified-core 服务并初始化种子数据，运行时加 --ignored"]
 async fn tenant_isolation_menu_access() {
     if !service_available().await {
         eprintln!("⏭ 跳过: 统一核心服务未运行 ({})", TEST_BASE_URL);
@@ -386,6 +406,7 @@ async fn tenant_isolation_menu_access() {
 }
 
 #[tokio::test]
+#[ignore = "集成测试：需先启动 unified-core 服务并初始化种子数据，运行时加 --ignored"]
 async fn tenant_isolation_tenant_access() {
     if !service_available().await {
         eprintln!("⏭ 跳过: 统一核心服务未运行 ({})", TEST_BASE_URL);
@@ -408,6 +429,7 @@ async fn tenant_isolation_tenant_access() {
 }
 
 #[tokio::test]
+#[ignore = "集成测试：需先启动 unified-core 服务并初始化种子数据，运行时加 --ignored"]
 async fn tenant_isolation_cross_tenant_user_list() {
     if !service_available().await {
         eprintln!("⏭ 跳过: 统一核心服务未运行 ({})", TEST_BASE_URL);
@@ -450,6 +472,7 @@ async fn tenant_isolation_cross_tenant_user_list() {
 }
 
 #[tokio::test]
+#[ignore = "集成测试：需先启动 unified-core 服务并初始化种子数据，运行时加 --ignored"]
 async fn tenant_isolation_invalid_tenant_id() {
     if !service_available().await {
         eprintln!("⏭ 跳过: 统一核心服务未运行 ({})", TEST_BASE_URL);

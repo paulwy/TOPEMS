@@ -128,19 +128,21 @@ describe('LimsTaskPage', () => {
     global.fetch = vi.fn().mockResolvedValue({ ok: true }) as any;
   });
 
-  it('should render without crashing', () => {
+describe('LimsTaskPage', () => {
+it('should render without crashing', () => {
     const { container } = render(
       <BrowserRouter>
         <LimsTaskPage />
       </BrowserRouter>
     );
     expect(container).toBeDefined();
-  });
+});
 
-  it('should have task API methods defined', () => {
+it('should have task API methods defined', () => {
     expect(limsApi.listTasks).toBeDefined();
     expect(limsApi.createTask).toBeDefined();
     expect(limsApi.getTask).toBeDefined();
     expect(limsApi.updateTask).toBeDefined();
-  });
+});
+;
 });

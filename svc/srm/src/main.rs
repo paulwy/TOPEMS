@@ -31,8 +31,8 @@ use axum_prometheus::PrometheusMetricLayer;
 use prometheus::{default_registry, Gauge};
 use topems_shared::{
     auth_middleware, build_health_response, create_api_info_router, create_cors_layer,
-    create_database_pool, init_telemetry, rls_middleware, telemetry_middleware, ApiResponse,
-    AuthState, DatabaseConfig, ServiceHealth,
+    create_database_pool, init_telemetry, rls_middleware, telemetry_middleware, wrap_group2_router,
+    ApiResponse, AuthState, DatabaseConfig, RouteCompatConfig, ServiceHealth,
 };
 
 static START_TIME: std::sync::OnceLock<Instant> = std::sync::OnceLock::new();
@@ -170,6 +170,9 @@ async fn main() -> Result<()> {
         .layer(axum::middleware::from_fn(telemetry_middleware))
         .layer(cors)
         .layer(prometheus_layer);
+
+    let cfg = RouteCompatConfig::new("srm", "/api/core/srm", &[]);
+    let app = wrap_group2_router(app, cfg);
 
     let port = env::var("SRM_PORT")
         .or_else(|_| env::var("SERVER_PORT"))

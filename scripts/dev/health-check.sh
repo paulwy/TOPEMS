@@ -151,7 +151,7 @@ fi
 # 10. 测试管理员登录
 echo ""
 echo "10. 测试管理员登录..."
-LOGIN_RESULT=$(curl -s -X POST http://localhost:8000/api/auth/login \
+LOGIN_RESULT=$(curl -s -X POST http://localhost:8000/api/core/iam/auth/login \
     -H "Content-Type: application/json" \
     -d '{"username":"admin","password":"admin123"}' 2>/dev/null)
 

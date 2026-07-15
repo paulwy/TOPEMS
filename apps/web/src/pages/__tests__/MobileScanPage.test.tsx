@@ -103,14 +103,13 @@ vi.mock('@/store', () => ({
   useSetSidebarCollapsed: vi.fn(),
 }));
 
-const renderWithProviders = (ui: React.ReactElement) => render(<BrowserRouter>{ui}</BrowserRouter>);
-
 describe('MobileScanPage', () => {
-  it('should render page title', async () => {
+it('should render page title', async () => {
     renderWithProviders(<MobileScanPage />);
     await waitFor(() => {
       const titles = screen.getAllByText('扫码');
       expect(titles.length).toBeGreaterThan(0);
-    });
   });
+});
+;
 });

@@ -29,8 +29,8 @@ use sqlx::PgPool;
 
 use topems_shared::{
     auth_middleware, create_cors_layer, get_api_info_handler, init_telemetry, rls_middleware,
-    simple_health_check, telemetry_middleware, ApiResponse, AuthState, ServiceHealth,
-    SimpleHealthConfig,
+    simple_health_check, telemetry_middleware, wrap_group2_router, ApiResponse, AuthState,
+    RouteCompatConfig, ServiceHealth, SimpleHealthConfig,
 };
 
 // ==================== 应用状态 ====================
@@ -128,6 +128,9 @@ async fn main() {
         .layer(cors)
         .layer(prometheus_layer)
         .with_state(state);
+
+    let cfg = RouteCompatConfig::new("pdm", "/api/core/pdm", &[]);
+    let app = wrap_group2_router(app, cfg);
 
     let port = std::env::var("PDM_PORT")
         .unwrap_or_else(|_| "8031".to_string())

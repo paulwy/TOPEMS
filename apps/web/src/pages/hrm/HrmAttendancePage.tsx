@@ -59,7 +59,7 @@ const HrmAttendancePage: React.FC = () => {
   } | null>(null);
 
   // React Query - 考勤记录
-  const recordsQuery = useQuery({
+  const recordsQuery = useQuery<AttendanceRecord[]>({
     queryKey: ['hrm-attendance-records', selectedDate],
     queryFn: async () => {
       const res = await attendanceApi.list({ date: selectedDate, pagesize: 100 });
@@ -75,7 +75,7 @@ const HrmAttendancePage: React.FC = () => {
   const loadingRecords = recordsQuery.isLoading;
 
   // React Query - 请假申请
-  const leavesQuery = useQuery({
+  const leavesQuery = useQuery<LeaveRequest[]>({
     queryKey: ['hrm-leave-requests'],
     queryFn: async () => {
       const res = await leaveApi.list({ pagesize: 100 });
@@ -97,7 +97,7 @@ const HrmAttendancePage: React.FC = () => {
   const approveLeaveMutation = useMutation({
     mutationFn: ({ id, action }: { id: string; action: 'approve' | 'reject' }) =>
       leaveApi.approve(id, action),
-    onSuccess: (_data, variables) => {
+    onSuccess: (_, variables) => {
       addNotification({
         title: '成功',
         message: variables.action === 'approve' ? '已批准' : '已拒绝',
@@ -167,7 +167,7 @@ const HrmAttendancePage: React.FC = () => {
     r.employee_name?.toLowerCase().includes(searchQuery.toLowerCase())
   );
 
-  const filteredLeaves = leaves.filter((l: LeaveRequest) =>
+  const filteredLeaves = leaves.filter((l) =>
     l.employee_name?.toLowerCase().includes(searchQuery.toLowerCase())
   );
 
@@ -191,7 +191,7 @@ const HrmAttendancePage: React.FC = () => {
       totalAbsent,
       presentRate,
       avgWorkHours,
-      pendingLeaves: leaves.filter((l: LeaveRequest) => l.status === 'pending').length,
+      pendingLeaves: leaves.filter((l) => l.status === 'pending').length,
     };
   }, [records, leaves]);
 
@@ -495,9 +495,7 @@ const HrmAttendancePage: React.FC = () => {
               searchPlaceholder='搜索员工姓名...'
               searchValue={searchQuery}
               onSearch={setSearchQuery}
-              onRefresh={() =>
-                queryClient.invalidateQueries({ queryKey: ['hrm-attendance-records'] })
-              }
+              onRefresh={() => queryClient.invalidateQueries({ queryKey: ['hrm-attendance-records'] })}
               exportable
               exportFileName='考勤记录'
               persistFilters

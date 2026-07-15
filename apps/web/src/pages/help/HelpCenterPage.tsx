@@ -1,5 +1,4 @@
-import React, { useState, useEffect } from 'react';
-import { useQuery } from '@tanstack/react-query';
+import React, { useState } from 'react';
 import {
   Box,
   Typography,
@@ -26,17 +25,6 @@ import {
   Clock,
   Users,
   Rocket,
-  Building2,
-  Briefcase,
-  Package,
-  Factory,
-  ClipboardList,
-  Truck,
-  Award,
-  Target,
-  Globe,
-  Heart,
-  Bookmark,
 } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { PageContainer } from '@/components/common';
@@ -44,146 +32,64 @@ import { useTranslation } from 'react-i18next';
 import { DASHBOARD_PATHS } from '@/routes/dashboard';
 import { helpApi } from '@/api';
 import type { Faq, Guide } from '@/api/help';
-import { QUERY_KEYS } from '@/lib/reactQuery';
+import { useQuery } from '@tanstack/react-query';
+import { useNotificationStore } from '@/store';
+import { apiLogger } from '@/utils/logger';
 
-const MODULE_CATEGORIES = [
+const HELP_CATEGORIES = [
   {
-    id: 'iam',
-    title: 'IAM身份管理',
-    description: '用户管理、角色权限、认证授权',
-    icon: Users,
+    id: 'getting-started',
+    title: '快速入门',
+    description: '新用户必读，快速了解系统基础功能',
+    icon: Rocket,
     color: 'primary',
-    count: 6,
-    docs: [
-      '用户创建与管理',
-      '角色与权限配置',
-      '认证方式设置',
-      '单点登录配置',
-      '审计日志查看',
-      '组织架构管理',
-    ],
-  },
-  {
-    id: 'workflow',
-    title: 'Workflow工作流',
-    description: '流程设计、审批流转、任务管理',
-    icon: Clock,
-    color: 'info',
-    count: 7,
-    docs: [
-      '流程设计器使用',
-      '审批流程创建',
-      '流程节点配置',
-      '审批委托设置',
-      '流程监控与追踪',
-      '流程统计分析',
-      '流程版本管理',
-    ],
-  },
-  {
-    id: 'crm',
-    title: 'CRM客户管理',
-    description: '客户档案、商机追踪、销售管理',
-    icon: Building2,
-    color: 'success',
-    count: 6,
-    docs: [
-      '客户信息录入',
-      '商机创建与跟踪',
-      '销售漏斗管理',
-      '联系人管理',
-      '客户跟进记录',
-      '销售报表分析',
-    ],
-  },
-  {
-    id: 'erp',
-    title: 'ERP企业资源',
-    description: '财务、采购、销售、库存一体化',
-    icon: Briefcase,
-    color: 'warning',
-    count: 8,
-    docs: [
-      '采购订单管理',
-      '销售订单处理',
-      '应收应付管理',
-      '总账凭证录入',
-      '预算编制与控制',
-      '成本核算',
-      '财务报表生成',
-      '多币种管理',
-    ],
-  },
-  {
-    id: 'wms',
-    title: 'WMS仓储管理',
-    description: '入库、出库、库位、盘点管理',
-    icon: Package,
-    color: 'error',
-    count: 6,
-    docs: ['入库作业流程', '出库作业流程', '库位管理', '库存盘点', '库存调拨', '库存预警设置'],
-  },
-  {
-    id: 'mes',
-    title: 'MES生产制造',
-    description: '生产计划、工序管理、设备监控',
-    icon: Factory,
-    color: 'secondary',
-    count: 7,
-    docs: [
-      '生产订单创建',
-      '工单下达与报工',
-      '工序流转',
-      '设备管理',
-      '质量检验',
-      '生产进度追踪',
-      '产能分析',
-    ],
+    count: 5,
+    items: ['系统登录与注册', '首页功能概览', '个人信息设置', '角色权限说明', '快捷键指南'],
   },
   {
     id: 'hrm',
-    title: 'HRM人力资源',
-    description: '员工管理、考勤、薪酬、绩效',
+    title: '人力资源',
+    description: '员工管理、考勤、休假等HR相关功能',
     icon: Users,
-    color: 'primary',
-    count: 8,
-    docs: [
-      '员工入职流程',
-      '考勤打卡管理',
-      '请假申请审批',
-      '薪资核算',
-      '绩效评估',
-      '培训管理',
-      '招聘流程',
-      '合同管理',
-    ],
-  },
-  {
-    id: 'qms',
-    title: 'QMS质量管理',
-    description: '质量管控、审核、不合格品处理',
-    icon: Award,
     color: 'success',
-    count: 6,
-    docs: ['质量检验流程', '不合格品管理', '纠正措施', '内部审核', '文档控制', '质量报表'],
+    count: 8,
+    items: ['员工入职流程', '考勤打卡指南', '请假申请流程', '薪资查询', '绩效评估'],
   },
   {
-    id: 'pm',
-    title: 'PM项目管理',
-    description: '项目立项、任务分配、进度跟踪',
-    icon: Target,
+    id: 'finance',
+    title: '财务管理',
+    description: '凭证、报表、预算等财务相关功能',
+    icon: FileText,
     color: 'warning',
-    count: 5,
-    docs: ['项目创建与规划', '任务分配与跟踪', '里程碑管理', '项目预算控制', '风险识别与应对'],
+    count: 12,
+    items: ['凭证录入', '报表生成', '预算管理', '费用报销', '应收应付'],
   },
   {
-    id: 'scm',
-    title: 'SCM供应链',
-    description: '供应商、采购、物流协同',
-    icon: Truck,
+    id: 'workflow',
+    title: '审批流程',
+    description: '流程设计、审批操作、委托设置',
+    icon: Clock,
     color: 'info',
-    count: 5,
-    docs: ['供应商管理', '采购计划', '订单协同', '物流追踪', '供应链报表'],
+    count: 6,
+    items: ['新建审批流程', '审批操作指南', '流程委托', '流程监控', '审批统计'],
+  },
+  {
+    id: 'security',
+    title: '安全与权限',
+    description: '数据安全、权限管理、审计日志',
+    icon: Shield,
+    color: 'error',
+    count: 4,
+    items: ['密码安全', '权限申请', '审计日志', '数据备份'],
+  },
+  {
+    id: 'ai',
+    title: 'AI智能助手',
+    description: 'AI辅助功能使用指南',
+    icon: MessageCircle,
+    color: 'secondary',
+    count: 3,
+    items: ['AI问答使用', '文档分析', '代码生成'],
   },
 ];
 
@@ -197,74 +103,57 @@ export const HelpCenterPage: React.FC = () => {
   const { t } = useTranslation();
   const theme = useTheme();
   const navigate = useNavigate();
+  const { addNotification } = useNotificationStore();
   const [searchQuery, setSearchQuery] = useState('');
-  const [debouncedSearch, setDebouncedSearch] = useState('');
 
-  useEffect(() => {
-    const timer = setTimeout(() => {
-      setDebouncedSearch(searchQuery);
-    }, 300);
-    return () => clearTimeout(timer);
-  }, [searchQuery]);
-
-  const { data: faqs = [], isLoading: faqsLoading } = useQuery<Faq[]>({
-    queryKey: [...QUERY_KEYS.HELP.FAQS, 'home', 4],
+  const faqsQuery = useQuery<Faq[]>({
+    queryKey: ['help-center-faqs'],
     queryFn: async () => {
       const response = await helpApi.listFaqs({ page: 1, page_size: 4 });
       if (response.success && response.data) {
-        return response.data.items;
+        return response.data.items || [];
       }
       return [];
     },
+    staleTime: 5 * 60 * 1000,
   });
+  const faqs = faqsQuery.data || [];
 
-  const { data: guides = [], isLoading: guidesLoading } = useQuery<Guide[]>({
-    queryKey: [...QUERY_KEYS.HELP.GUIDES, 'home', 6],
+  const guidesQuery = useQuery<Guide[]>({
+    queryKey: ['help-center-guides'],
     queryFn: async () => {
       const response = await helpApi.listGuides({ page: 1, page_size: 6 });
       if (response.success && response.data) {
-        return response.data.items;
+        return response.data.items || [];
       }
       return [];
     },
+    staleTime: 5 * 60 * 1000,
   });
+  const guides = guidesQuery.data || [];
+  const loading = faqsQuery.isLoading || guidesQuery.isLoading;
 
-  const { data: searchFaqResults = [], isLoading: searchingFaqs } = useQuery<Faq[]>({
-    queryKey: [...QUERY_KEYS.HELP.FAQS, 'search', debouncedSearch],
-    queryFn: async () => {
-      if (!debouncedSearch.trim()) return [];
-      const response = await helpApi.listFaqs({ keyword: debouncedSearch, page: 1, page_size: 10 });
-      if (response.success && response.data) {
-        return response.data.items;
-      }
-      return [];
-    },
-    enabled: !!debouncedSearch.trim(),
-  });
-
-  const { data: searchGuideResults = [], isLoading: searchingGuides } = useQuery<Guide[]>({
-    queryKey: [...QUERY_KEYS.HELP.GUIDES, 'search', debouncedSearch],
-    queryFn: async () => {
-      if (!debouncedSearch.trim()) return [];
-      const response = await helpApi.listGuides({
-        keyword: debouncedSearch,
-        page: 1,
-        page_size: 10,
+  React.useEffect(() => {
+    if (faqsQuery.isError) {
+      apiLogger.error('获取FAQ列表失败:', faqsQuery.error);
+      addNotification({
+        type: 'error',
+        title: '加载失败',
+        message: '无法加载FAQ列表',
       });
-      if (response.success && response.data) {
-        return response.data.items;
-      }
-      return [];
-    },
-    enabled: !!debouncedSearch.trim(),
-  });
+    }
+  }, [faqsQuery.isError, faqsQuery.error, apiLogger, addNotification]);
 
-  const loading = faqsLoading || guidesLoading;
-  const isSearching = searchingFaqs || searchingGuides;
-  const searchResults = {
-    faqs: searchFaqResults,
-    guides: searchGuideResults,
-  };
+  React.useEffect(() => {
+    if (guidesQuery.isError) {
+      apiLogger.error('获取指南列表失败:', guidesQuery.error);
+      addNotification({
+        type: 'error',
+        title: '加载失败',
+        message: '无法加载指南列表',
+      });
+    }
+  }, [guidesQuery.isError, guidesQuery.error, apiLogger, addNotification]);
 
   const handleSearch = (e: React.ChangeEvent<HTMLInputElement>) => {
     setSearchQuery(e.target.value);
@@ -299,15 +188,7 @@ export const HelpCenterPage: React.FC = () => {
     >
       <Box sx={{ mb: 6 }}>
         <Box sx={{ maxWidth: 600, mx: 'auto', position: 'relative' }}>
-          <Search
-            sx={{
-              position: 'absolute',
-              left: 16,
-              top: '50%',
-              transform: 'translateY(-50%)',
-              color: theme.palette.text.disabled,
-            }}
-          />
+          <Search sx={{ position: 'absolute', left: 16, top: '50%', transform: 'translateY(-50%)', color: theme.palette.text.disabled }} />
           <TextField
             fullWidth
             placeholder={t('help_center.search_placeholder')}
@@ -318,138 +199,16 @@ export const HelpCenterPage: React.FC = () => {
         </Box>
       </Box>
 
-      {searchQuery.trim() && (
-        <Box sx={{ mb: 8 }}>
-          {isSearching ? (
-            <Box sx={{ textAlign: 'center', py: 8 }}>
-              <CircularProgress />
-            </Box>
-          ) : (
-            <Box>
-              <Typography
-                variant='h5'
-                sx={{ fontWeight: 600, mb: 4 }}
-              >
-                搜索结果："{searchQuery}"
-              </Typography>
-              {searchResults.faqs.length > 0 && (
-                <Box sx={{ mb: 6 }}>
-                  <Typography
-                    variant='h6'
-                    sx={{ fontWeight: 600, mb: 3 }}
-                  >
-                    常见问题 ({searchResults.faqs.length})
-                  </Typography>
-                  <Stack spacing={2}>
-                    {searchResults.faqs.map((faq) => (
-                      <Card
-                        key={faq.id}
-                        sx={{
-                          borderRadius: 1,
-                          cursor: 'pointer',
-                          transition: 'box-shadow 0.2s',
-                          '&:hover': { boxShadow: theme.shadows[2] },
-                        }}
-                      >
-                        <CardContent>
-                          <Typography variant='body1'>{faq.question}</Typography>
-                        </CardContent>
-                      </Card>
-                    ))}
-                  </Stack>
-                </Box>
-              )}
-              {searchResults.guides.length > 0 && (
-                <Box sx={{ mb: 6 }}>
-                  <Typography
-                    variant='h6'
-                    sx={{ fontWeight: 600, mb: 3 }}
-                  >
-                    操作指南 ({searchResults.guides.length})
-                  </Typography>
-                  <Grid
-                    container
-                    spacing={3}
-                  >
-                    {searchResults.guides.slice(0, 4).map((guide) => (
-                      <Grid
-                        size={{ xs: 12, md: 6 }}
-                        key={guide.id}
-                      >
-                        <Card
-                          sx={{
-                            height: '100%',
-                            borderRadius: 1,
-                            cursor: 'pointer',
-                            transition: 'box-shadow 0.2s',
-                            '&:hover': { boxShadow: theme.shadows[2] },
-                          }}
-                        >
-                          <CardContent>
-                            <Typography
-                              variant='body1'
-                              sx={{ fontWeight: 600 }}
-                            >
-                              {guide.title}
-                            </Typography>
-                            <Typography
-                              variant='body2'
-                              color='text.secondary'
-                              sx={{ mt: 1 }}
-                            >
-                              {guide.description}
-                            </Typography>
-                          </CardContent>
-                        </Card>
-                      </Grid>
-                    ))}
-                  </Grid>
-                </Box>
-              )}
-              {searchResults.faqs.length === 0 && searchResults.guides.length === 0 && (
-                <Box sx={{ textAlign: 'center', py: 8 }}>
-                  <Search
-                    size={48}
-                    sx={{ color: theme.palette.text.disabled, mx: 'auto', mb: 3 }}
-                  />
-                  <Typography
-                    variant='h6'
-                    sx={{ mb: 2 }}
-                  >
-                    未找到相关内容
-                  </Typography>
-                  <Typography
-                    variant='body2'
-                    color='text.secondary'
-                  >
-                    尝试更换关键词或选择其他分类
-                  </Typography>
-                </Box>
-              )}
-            </Box>
-          )}
-        </Box>
-      )}
-
       <Box sx={{ mb: 8 }}>
-        <Typography
-          variant='h5'
-          sx={{ fontWeight: 600, mb: 4 }}
-        >
+        <Typography variant='h5' sx={{ fontWeight: 600, mb: 4 }}>
           {t('help_center.categories')}
         </Typography>
-        <Grid
-          container
-          spacing={3}
-        >
-          {MODULE_CATEGORIES.map((category) => {
+        <Grid container spacing={3}>
+          {HELP_CATEGORIES.map((category) => {
             const colors = getCategoryColor(category.color);
             const Icon = category.icon;
             return (
-              <Grid
-                size={{ xs: 12, sm: 6, lg: 4 }}
-                key={category.id}
-              >
+              <Grid size={{ xs: 12, sm: 6, lg: 4 }} key={category.id}>
                 <Card
                   sx={{
                     height: '100%',
@@ -457,7 +216,6 @@ export const HelpCenterPage: React.FC = () => {
                     transition: 'transform 0.2s, box-shadow 0.2s',
                     '&:hover': { transform: 'translateY(-4px)', boxShadow: theme.shadows[4] },
                   }}
-                  onClick={() => navigate(`${DASHBOARD_PATHS.helpGuide}?category=${category.id}`)}
                 >
                   <CardContent>
                     <Box sx={{ display: 'flex', gap: 3, mb: 3 }}>
@@ -475,37 +233,26 @@ export const HelpCenterPage: React.FC = () => {
                         <Icon sx={{ width: 24, height: 24, color: colors.icon }} />
                       </Box>
                       <Box>
-                        <Typography
-                          variant='h6'
-                          sx={{ fontWeight: 600 }}
-                        >
+                        <Typography variant='h6' sx={{ fontWeight: 600 }}>
                           {category.title}
                         </Typography>
-                        <Typography
-                          variant='body2'
-                          color='text.secondary'
-                        >
+                        <Typography variant='body2' color='text.secondary'>
                           {category.description}
                         </Typography>
                       </Box>
                     </Box>
                     <Stack spacing={1.5}>
-                      {category.docs.slice(0, 3).map((doc, index) => (
+                      {category.items.slice(0, 3).map((item, index) => (
                         <Typography
                           key={index}
                           variant='body2'
-                          sx={{
-                            color: 'text.secondary',
-                            display: 'flex',
-                            alignItems: 'center',
-                            gap: 1,
-                          }}
+                          sx={{ color: 'text.secondary', display: 'flex', alignItems: 'center', gap: 1 }}
                         >
                           <ChevronRight size={14} />
-                          {doc}
+                          {item}
                         </Typography>
                       ))}
-                      {category.docs.length > 3 && (
+                      {category.items.length > 3 && (
                         <Typography
                           variant='body2'
                           sx={{
@@ -520,10 +267,7 @@ export const HelpCenterPage: React.FC = () => {
                     </Stack>
                   </CardContent>
                   <CardActions sx={{ p: 2, pt: 0 }}>
-                    <Button
-                      size='small'
-                      sx={{ textTransform: 'none' }}
-                    >
+                    <Button size='small' sx={{ textTransform: 'none' }}>
                       浏览 {category.title}
                       <ChevronRight size={16} />
                     </Button>
@@ -535,15 +279,9 @@ export const HelpCenterPage: React.FC = () => {
         </Grid>
       </Box>
 
-      <Grid
-        container
-        spacing={6}
-      >
+      <Grid container spacing={6}>
         <Grid size={{ xs: 12, lg: 8 }}>
-          <Typography
-            variant='h5'
-            sx={{ fontWeight: 600, mb: 4 }}
-          >
+          <Typography variant='h5' sx={{ fontWeight: 600, mb: 4 }}>
             {t('help_center.faq')}
           </Typography>
           {loading ? (
@@ -563,36 +301,20 @@ export const HelpCenterPage: React.FC = () => {
                       '&:hover': { boxShadow: theme.shadows[2] },
                     }}
                   >
-                    <CardContent
-                      sx={{
-                        display: 'flex',
-                        justifyContent: 'space-between',
-                        alignItems: 'center',
-                      }}
-                    >
+                    <CardContent sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                       <Typography variant='body1'>{faq.question}</Typography>
                       <Box sx={{ display: 'flex', gap: 2, alignItems: 'center' }}>
-                        <Typography
-                          variant='body2'
-                          color='text.secondary'
-                        >
+                        <Typography variant='body2' color='text.secondary'>
                           查看 {faq.views.toLocaleString()}
                         </Typography>
-                        <ChevronRight
-                          size={16}
-                          sx={{ color: theme.palette.text.disabled }}
-                        />
+                        <ChevronRight size={16} sx={{ color: theme.palette.text.disabled }} />
                       </Box>
                     </CardContent>
                   </Card>
                 ))}
               </Stack>
               <Box sx={{ mt: 4, textAlign: 'right' }}>
-                <Button
-                  size='small'
-                  sx={{ textTransform: 'none' }}
-                  onClick={() => navigate(DASHBOARD_PATHS.helpFaq)}
-                >
+                <Button size='small' sx={{ textTransform: 'none' }} onClick={() => navigate(DASHBOARD_PATHS.helpFaq)}>
                   查看全部FAQ
                   <ChevronRight size={16} />
                 </Button>
@@ -602,10 +324,7 @@ export const HelpCenterPage: React.FC = () => {
         </Grid>
 
         <Grid size={{ xs: 12, lg: 4 }}>
-          <Typography
-            variant='h5'
-            sx={{ fontWeight: 600, mb: 4 }}
-          >
+          <Typography variant='h5' sx={{ fontWeight: 600, mb: 4 }}>
             {t('help_center.latest_updates')}
           </Typography>
           <Stack spacing={3}>
@@ -618,17 +337,11 @@ export const HelpCenterPage: React.FC = () => {
                     color={getTypeChip(update.type).color as any}
                     sx={{ fontWeight: 500 }}
                   />
-                  <Typography
-                    variant='body2'
-                    color='text.secondary'
-                  >
+                  <Typography variant='body2' color='text.secondary'>
                     {update.date}
                   </Typography>
                 </Box>
-                <Typography
-                  variant='body1'
-                  sx={{ fontWeight: 500 }}
-                >
+                <Typography variant='body1' sx={{ fontWeight: 500 }}>
                   {update.title}
                 </Typography>
               </Box>
@@ -652,32 +365,16 @@ export const HelpCenterPage: React.FC = () => {
                   <MessageCircle sx={{ width: 24, height: 24, color: 'primary.main' }} />
                 </Box>
                 <Box>
-                  <Typography
-                    variant='h6'
-                    sx={{ fontWeight: 600 }}
-                  >
-                    在线客服
-                  </Typography>
-                  <Typography
-                    variant='body2'
-                    color='text.secondary'
-                  >
+                  <Typography variant='h6' sx={{ fontWeight: 600 }}>在线客服</Typography>
+                  <Typography variant='body2' color='text.secondary'>
                     遇到问题？联系我们的技术支持团队
                   </Typography>
                 </Box>
               </Box>
-              <Button
-                fullWidth
-                variant='contained'
-                sx={{ textTransform: 'none', borderRadius: 1 }}
-              >
+              <Button fullWidth variant='contained' sx={{ textTransform: 'none', borderRadius: 1 }}>
                 联系客服
               </Button>
-              <Typography
-                variant='body2'
-                color='text.secondary'
-                sx={{ mt: 2, textAlign: 'center' }}
-              >
+              <Typography variant='body2' color='text.secondary' sx={{ mt: 2, textAlign: 'center' }}>
                 工作时间：周一至周五 9:00-18:00
               </Typography>
             </CardContent>
@@ -688,72 +385,26 @@ export const HelpCenterPage: React.FC = () => {
       <Box sx={{ mt: 8 }}>
         <Card sx={{ borderRadius: 2 }}>
           <CardContent>
-            <Grid
-              container
-              spacing={4}
-            >
-              <Grid
-                size={{ xs: 12, sm: 4 }}
-                onClick={() => navigate(DASHBOARD_PATHS.helpGuide)}
-                sx={{ cursor: 'pointer' }}
-              >
+            <Grid container spacing={4}>
+              <Grid size={{ xs: 12, sm: 4 }} onClick={() => navigate(DASHBOARD_PATHS.helpGuide)} sx={{ cursor: 'pointer' }}>
                 <Box sx={{ textAlign: 'center' }}>
-                  <BookOpen
-                    size={32}
-                    sx={{ color: theme.palette.primary.main, mb: 2 }}
-                  />
-                  <Typography
-                    variant='body1'
-                    sx={{ fontWeight: 600, mb: 1 }}
-                  >
-                    操作指南
-                  </Typography>
-                  <Typography
-                    variant='body2'
-                    color='text.secondary'
-                  >
-                    完整的用户手册和操作教程
-                  </Typography>
+                  <BookOpen size={32} sx={{ color: theme.palette.primary.main, mb: 2 }} />
+                  <Typography variant='body1' sx={{ fontWeight: 600, mb: 1 }}>操作指南</Typography>
+                  <Typography variant='body2' color='text.secondary'>完整的用户手册和操作教程</Typography>
                 </Box>
               </Grid>
               <Grid size={{ xs: 12, sm: 4 }}>
                 <Box sx={{ textAlign: 'center' }}>
-                  <Video
-                    size={32}
-                    sx={{ color: theme.palette.success.main, mb: 2 }}
-                  />
-                  <Typography
-                    variant='body1'
-                    sx={{ fontWeight: 600, mb: 1 }}
-                  >
-                    视频教程
-                  </Typography>
-                  <Typography
-                    variant='body2'
-                    color='text.secondary'
-                  >
-                    直观的操作演示视频
-                  </Typography>
+                  <Video size={32} sx={{ color: theme.palette.success.main, mb: 2 }} />
+                  <Typography variant='body1' sx={{ fontWeight: 600, mb: 1 }}>视频教程</Typography>
+                  <Typography variant='body2' color='text.secondary'>直观的操作演示视频</Typography>
                 </Box>
               </Grid>
               <Grid size={{ xs: 12, sm: 4 }}>
                 <Box sx={{ textAlign: 'center' }}>
-                  <MessageCircle
-                    size={32}
-                    sx={{ color: theme.palette.info.main, mb: 2 }}
-                  />
-                  <Typography
-                    variant='body1'
-                    sx={{ fontWeight: 600, mb: 1 }}
-                  >
-                    社区论坛
-                  </Typography>
-                  <Typography
-                    variant='body2'
-                    color='text.secondary'
-                  >
-                    与其他用户交流经验
-                  </Typography>
+                  <MessageCircle size={32} sx={{ color: theme.palette.info.main, mb: 2 }} />
+                  <Typography variant='body1' sx={{ fontWeight: 600, mb: 1 }}>社区论坛</Typography>
+                  <Typography variant='body2' color='text.secondary'>与其他用户交流经验</Typography>
                 </Box>
               </Grid>
             </Grid>

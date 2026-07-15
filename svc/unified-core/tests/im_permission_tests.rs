@@ -12,19 +12,6 @@ use serde_json::{json, Value};
 
 const API_URL: &str = "http://localhost:8000";
 
-/// 检查 API 服务是否可用
-async fn ensure_api_available() -> bool {
-    reqwest::Client::builder()
-        .timeout(std::time::Duration::from_secs(2))
-        .build()
-        .unwrap()
-        .get(format!("{}/api/core/iam/auth/login", API_URL))
-        .send()
-        .await
-        .map(|resp| !resp.status().is_server_error())
-        .unwrap_or(false)
-}
-
 fn create_client() -> Client {
     Client::new()
 }
@@ -33,7 +20,7 @@ async fn login(username: &str, password: &str) -> Result<String, String> {
     let client = create_client();
 
     let response = client
-        .post(format!("{}/api/core/iam/auth/login", API_URL))
+        .post(format!("{}/api/core/iam/v1/auth/login", API_URL))
         .json(&json!({ "username": username, "password": password }))
         .send()
         .await
@@ -98,11 +85,8 @@ async fn auth_request(
 // ==================== IM-001: 查看聊天室列表 ====================
 
 #[tokio::test]
+#[ignore]
 async fn test_im_001_list_rooms() {
-    if !ensure_api_available().await {
-        eprintln!("⏭ 跳过: API服务未运行 ({})", API_URL);
-        return;
-    }
     tracing::info!("测试 IM-001: 查看聊天室列表");
 
     let token = login("admin", "admin123").await.expect("管理员登录失败");
@@ -125,11 +109,8 @@ async fn test_im_001_list_rooms() {
 // ==================== IM-002: 创建聊天室 ====================
 
 #[tokio::test]
+#[ignore]
 async fn test_im_002_create_room() {
-    if !ensure_api_available().await {
-        eprintln!("⏭ 跳过: API服务未运行 ({})", API_URL);
-        return;
-    }
     tracing::info!("测试 IM-002: 创建聊天室");
 
     let token = login("admin", "admin123").await.expect("管理员登录失败");
@@ -167,11 +148,8 @@ async fn test_im_002_create_room() {
 // ==================== IM-003: 发送消息 ====================
 
 #[tokio::test]
+#[ignore]
 async fn test_im_003_send_message() {
-    if !ensure_api_available().await {
-        eprintln!("⏭ 跳过: API服务未运行 ({})", API_URL);
-        return;
-    }
     tracing::info!("测试 IM-003: 发送消息");
 
     let token = login("admin", "admin123").await.expect("管理员登录失败");
@@ -232,11 +210,8 @@ async fn test_im_003_send_message() {
 // ==================== IM-004: 查看聊天记录 ====================
 
 #[tokio::test]
+#[ignore]
 async fn test_im_004_view_history() {
-    if !ensure_api_available().await {
-        eprintln!("⏭ 跳过: API服务未运行 ({})", API_URL);
-        return;
-    }
     tracing::info!("测试 IM-004: 查看聊天记录");
 
     let token = login("admin", "admin123").await.expect("管理员登录失败");
@@ -284,11 +259,8 @@ async fn test_im_004_view_history() {
 // ==================== IM-005: 非成员查看聊天记录 ====================
 
 #[tokio::test]
+#[ignore]
 async fn test_im_005_non_member_view_history() {
-    if !ensure_api_available().await {
-        eprintln!("⏭ 跳过: API服务未运行 ({})", API_URL);
-        return;
-    }
     tracing::info!("测试 IM-005: 非成员查看聊天记录");
 
     // 使用普通员工账号
@@ -327,18 +299,15 @@ async fn test_im_005_non_member_view_history() {
 // ==================== IM-006: 添加联系人 ====================
 
 #[tokio::test]
+#[ignore]
 async fn test_im_006_add_contact() {
-    if !ensure_api_available().await {
-        eprintln!("⏭ 跳过: API服务未运行 ({})", API_URL);
-        return;
-    }
     tracing::info!("测试 IM-006: 添加联系人");
 
     let token = login("admin", "admin123").await.expect("管理员登录失败");
     let client = create_client();
 
     // 获取用户列表找一个用户作为联系人
-    let users_result = auth_request(&client, &token, "GET", "/api/iam/users", None).await;
+    let users_result = auth_request(&client, &token, "GET", "/api/core/iam/v1/users", None).await;
 
     match users_result {
         Ok((_, body)) => {
@@ -389,18 +358,15 @@ async fn test_im_006_add_contact() {
 // ==================== IM-007: 查看在线状态 ====================
 
 #[tokio::test]
+#[ignore]
 async fn test_im_007_view_online_status() {
-    if !ensure_api_available().await {
-        eprintln!("⏭ 跳过: API服务未运行 ({})", API_URL);
-        return;
-    }
     tracing::info!("测试 IM-007: 查看在线状态");
 
     let token = login("admin", "admin123").await.expect("管理员登录失败");
     let client = create_client();
 
     // 获取用户列表
-    let users_result = auth_request(&client, &token, "GET", "/api/iam/users", None).await;
+    let users_result = auth_request(&client, &token, "GET", "/api/core/iam/v1/users", None).await;
 
     match users_result {
         Ok((_, body)) => {
@@ -441,11 +407,8 @@ async fn test_im_007_view_online_status() {
 // ==================== 测试总结 ====================
 
 #[tokio::test]
+#[ignore]
 async fn run_all_im_tests_summary() {
-    if !ensure_api_available().await {
-        eprintln!("⏭ 跳过: API服务未运行 ({})", API_URL);
-        return;
-    }
     tracing::info!("========================================");
     tracing::info!("  IM 权限测试套件");
     tracing::info!("========================================");

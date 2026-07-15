@@ -111,20 +111,20 @@ vi.mock('@/store', () => ({
 }));
 
 describe('ProductionRecordPage', () => {
-  it('should render without crashing', () => {
+it('should render without crashing', () => {
     const { container } = render(
       <BrowserRouter>
         <ProductionRecordPage />
       </BrowserRouter>
     );
     expect(container).toBeDefined();
-  });
-  describe('ProductionRecordPage', () => {
-    it('should have production record API methods defined', () => {
-      expect(mesApi.productionRecords.list).toBeDefined();
-      expect(mesApi.productionRecords.create).toBeDefined();
-      expect(mesApi.productionRecords.get).toBeDefined();
-      expect(mesApi.productionRecords.update).toBeDefined();
-    });
-  });
+});
+
+it('should have production record API methods defined', () => {
+    expect(mesApi.productionRecords.list).toBeDefined();
+    expect(mesApi.productionRecords.create).toBeDefined();
+    expect(mesApi.productionRecords.get).toBeDefined();
+    expect(mesApi.productionRecords.update).toBeDefined();
+});
+;
 });

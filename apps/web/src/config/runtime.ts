@@ -1,23 +1,27 @@
 import { API_TIMEOUT, WS_TIMEOUT } from '@topems/shared-constants';
 import type { RuntimeConfig } from './types';
 
-export function getEnv(key: string, defaultValue: string = ''): string {
+function getImportMetaEnvSafe(): Record<string, string | boolean | undefined> {
+  try {
+    // 必须直接写 import.meta.env（不能用 new Function 包装字符串——
+    // 因为 import.meta 只允许出现在真正的 ESM 模块源码中，动态字符串会触发 SyntaxError）
+    if (typeof import.meta !== 'undefined' && import.meta.env) {
+      return import.meta.env as unknown as Record<string, string | boolean | undefined>;
+    }
+  } catch {
+    // ignore
+  }
+  return {};
+}
+
+function getEnv(key: string, defaultValue: string = ''): string {
   if (typeof globalThis !== 'undefined' && (globalThis as any).import?.meta?.env) {
     return (globalThis as any).import.meta.env[key] || defaultValue;
   }
 
-  try {
-    const getImportMetaEnv = new Function(
-      'return typeof import.meta !== "undefined" && import.meta.env'
-    );
-    const hasImportMetaEnv = getImportMetaEnv();
-    if (hasImportMetaEnv) {
-      const getEnvValue = new Function('key', 'return import.meta.env[key]');
-      const value = getEnvValue(key);
-      return value || defaultValue;
-    }
-  } catch {
-    // ignore
+  const env = getImportMetaEnvSafe();
+  if (env && typeof env[key] !== 'undefined') {
+    return String(env[key]);
   }
 
   return defaultValue;
@@ -41,56 +45,51 @@ const config: RuntimeConfig = {
   },
   ws: {
     reconnectInterval: getEnvNumber('VITE_WS_RECONNECT_INTERVAL', WS_TIMEOUT.RECONNECT_DELAY),
-    maxReconnectAttempts: getEnvNumber(
-      'VITE_WS_MAX_RECONNECT_ATTEMPTS',
-      WS_TIMEOUT.MAX_RECONNECT_ATTEMPTS
-    ),
+    maxReconnectAttempts: getEnvNumber('VITE_WS_MAX_RECONNECT_ATTEMPTS', WS_TIMEOUT.MAX_RECONNECT_ATTEMPTS),
   },
   services: {
-    iam: getEnv('VITE_IAM_SERVICE_URL', '/iam/api'),
-    pm: getEnv('VITE_PM_SERVICE_URL', '/pm/api'),
-    portal: getEnv('VITE_PORTAL_SERVICE_URL', '/portal/api'),
-    workflow: getEnv('VITE_FLOW_SERVICE_URL', '/flow/api'),
-    integration: getEnv('VITE_INTEGRATION_SERVICE_URL', '/integration/api'),
-    erp: getEnv('VITE_ERP_SERVICE_URL', '/erp/api'),
-    hrm: getEnv('VITE_HRM_SERVICE_URL', '/hrm/api'),
-    crm: getEnv('VITE_CRM_SERVICE_URL', '/crm/api'),
-    rd: getEnv('VITE_RD_SERVICE_URL', '/rd/api'),
-    doc: getEnv('VITE_DOC_SERVICE_URL', '/doc/api'),
-    scm: getEnv('VITE_SCM_SERVICE_URL', '/scm/api'),
-    srm: getEnv('VITE_SRM_SERVICE_URL', '/srm/api'),
-    wms: getEnv('VITE_WMS_SERVICE_URL', '/wms/api'),
-    file: getEnv('VITE_FILE_SERVICE_URL', '/file/api'),
-    gis: getEnv('VITE_GIS_SERVICE_URL', '/gis/api'),
-    ai: getEnv('VITE_AI_SERVICE_URL', '/ai/api'),
-    mobile: getEnv('VITE_MOBILE_SERVICE_URL', '/mobile/api'),
-    migration: getEnv('VITE_MIGRATION_SERVICE_URL', '/migration/api'),
+    // === Group 1: core 虚拟服务（unified-core 承载，8000 端口） ===
+    iam: getEnv('VITE_IAM_SERVICE_URL', '/api/core/iam'),
+    workflow: getEnv('VITE_FLOW_SERVICE_URL', '/api/core/flow'),
+    file: getEnv('VITE_FILE_SERVICE_URL', '/api/core/file'),
+    mail: getEnv('VITE_MAIL_SERVICE_URL', '/api/core/mail'),
+    im: getEnv('VITE_IM_SERVICE_URL', '/api/core/im'),
+    notification: getEnv('VITE_NOTIFICATION_SERVICE_URL', '/api/core/notification'),
+    master: getEnv('VITE_MASTER_SERVICE_URL', '/api/core/master'),
+    migration: getEnv('VITE_MIGRATION_SERVICE_URL', '/api/core/migration'),
+    communication: getEnv('VITE_COMMUNICATION_SERVICE_URL', '/api/core/comm'),
+
+    // === Group 2: 独立进程服务（独立 deployment/port，/api/{svc}/ 开头） ===
+    erp: getEnv('VITE_ERP_SERVICE_URL', '/api/erp'),
+    finance: getEnv('VITE_FINANCE_SERVICE_URL', '/api/finance'),
+    doc: getEnv('VITE_DOC_SERVICE_URL', '/api/doc'),
+    ai: getEnv('VITE_AI_SERVICE_URL', '/api/ai'),
+    hrm: getEnv('VITE_HRM_SERVICE_URL', '/api/hrm'),
+    pm: getEnv('VITE_PM_SERVICE_URL', '/api/pm'),
+    crm: getEnv('VITE_CRM_SERVICE_URL', '/api/crm'),
+    mes: getEnv('VITE_MES_SERVICE_URL', '/api/mes'),
+    manufacturing: getEnv('VITE_MANUFACTURING_SERVICE_URL', '/api/mes'),
+    pdm: getEnv('VITE_PDM_SERVICE_URL', '/api/pdm'),
+    scm: getEnv('VITE_SCM_SERVICE_URL', '/api/scm'),
+    wms: getEnv('VITE_WMS_SERVICE_URL', '/api/wms'),
+    srm: getEnv('VITE_SRM_SERVICE_URL', '/api/srm'),
+    qms: getEnv('VITE_QMS_SERVICE_URL', '/api/qms'),
+    qualityAssurance: getEnv('VITE_QUALITY_ASSURANCE_SERVICE_URL', '/api/qms'),
+    lims: getEnv('VITE_LIMS_SERVICE_URL', '/api/lims'),
+    ehs: getEnv('VITE_EHS_SERVICE_URL', '/api/ehs'),
+    rd: getEnv('VITE_RD_SERVICE_URL', '/api/rd'),
+    bi: getEnv('VITE_BI_SERVICE_URL', '/api/bi'),
+    analytics: getEnv('VITE_ANALYTICS_SERVICE_URL', '/api/bi'),
+    report: getEnv('VITE_REPORT_SERVICE_URL', '/api/report'),
+    monitor: getEnv('VITE_MONITOR_SERVICE_URL', '/api/monitor'),
+    portal: getEnv('VITE_PORTAL_SERVICE_URL', '/api/portal'),
+    mobile: getEnv('VITE_MOBILE_SERVICE_URL', '/api/mobile'),
+    gis: getEnv('VITE_GIS_SERVICE_URL', '/api/gis'),
+    integration: getEnv('VITE_INTEGRATION_SERVICE_URL', '/api/integration'),
+
+    // === 顶层辅助服务 ===
+    core: getEnv('VITE_CORE_SERVICE_URL', '/api/core'),
     jaeger: getEnv('VITE_JAEGER_SERVICE_URL', 'http://localhost:14268'),
-
-    // ========== [已整合] 统一服务 ==========
-    communication: getEnv('VITE_COMMUNICATION_SERVICE_URL', '/comm/api'),
-    manufacturing: getEnv('VITE_MANUFACTURING_SERVICE_URL', '/mes/api'),
-    qualityAssurance: getEnv('VITE_QUALITY_ASSURANCE_SERVICE_URL', '/qms/api'),
-    analytics: getEnv('VITE_ANALYTICS_SERVICE_URL', '/bi/api'),
-
-    // ========== 独立服务路径 ==========
-    mes: getEnv('VITE_MES_SERVICE_URL', '/mes/api'),
-    pdm: getEnv('VITE_PDM_SERVICE_URL', '/pdm/api'),
-    qms: getEnv('VITE_QMS_SERVICE_URL', '/qms/api'),
-    lims: getEnv('VITE_LIMS_SERVICE_URL', '/lims/api'),
-    ehs: getEnv('VITE_EHS_SERVICE_URL', '/ehs/api'),
-    bi: getEnv('VITE_BI_SERVICE_URL', '/bi/api'),
-    report: getEnv('VITE_REPORT_SERVICE_URL', '/report/api'),
-
-    // ========== 统一核心服务（unified-core） ==========
-    core: getEnv('VITE_CORE_SERVICE_URL', '/core/api'),
-    finance: getEnv('VITE_FINANCE_SERVICE_URL', '/finance/api'),
-
-    // ========== 通信与通知服务 ==========
-    im: getEnv('VITE_IM_SERVICE_URL', '/im/api'),
-    notification: getEnv('VITE_NOTIFICATION_SERVICE_URL', '/notification/api'),
-    mail: getEnv('VITE_MAIL_SERVICE_URL', '/mail/api'),
-    master: getEnv('VITE_MASTER_SERVICE_URL', '/master/api'),
   },
   features: {
     debugMode: getEnvBool('VITE_ENABLE_DEBUG_MODE', false),

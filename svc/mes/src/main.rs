@@ -12,8 +12,8 @@ use axum_prometheus::PrometheusMetricLayer;
 
 use topems_shared::{
     auth_middleware, create_cors_layer, get_api_info_handler, init_telemetry, rls_middleware,
-    simple_health_check, telemetry_middleware, ApiResponse, AuthState, ServiceHealth,
-    SimpleHealthConfig,
+    simple_health_check, telemetry_middleware, wrap_group2_router, ApiResponse, AuthState,
+    RouteCompatConfig, ServiceHealth, SimpleHealthConfig,
 };
 
 #[tokio::main]
@@ -80,11 +80,7 @@ async fn main() {
             get(move || async move { metric_handle.render() }),
         )
         .route(
-            "/api/mes/ws/dashboard",
-            axum::routing::get(modules::dashboard_ws::dashboard_websocket),
-        )
-        .route(
-            "/mes/ws/dashboard",
+            "/ws/mes/dashboard",
             axum::routing::get(modules::dashboard_ws::dashboard_websocket),
         );
 
@@ -107,6 +103,9 @@ async fn main() {
         .layer(axum::middleware::from_fn(telemetry_middleware))
         .layer(prometheus_layer)
         .with_state(state);
+
+    let cfg = RouteCompatConfig::new("mes", "/api/core/mes", &[]);
+    let app = wrap_group2_router(app, cfg);
 
     let port = std::env::var("MES_PORT")
         .or_else(|_| std::env::var("SERVER_PORT"))

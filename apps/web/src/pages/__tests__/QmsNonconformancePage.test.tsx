@@ -109,19 +109,20 @@ vi.mock('@/store', () => ({
 }));
 
 describe('QmsNonconformancePage', () => {
-  it('should render without crashing', () => {
+it('should render without crashing', () => {
     const { container } = render(
       <BrowserRouter>
         <QmsNonconformancePage />
       </BrowserRouter>
     );
     expect(container).toBeDefined();
-  });
+});
 
-  it('should have nonconformance API methods defined', () => {
+it('should have nonconformance API methods defined', () => {
     expect(qmsApi.listIssues).toBeDefined();
     expect(qmsApi.createIssue).toBeDefined();
     expect(qmsApi.updateIssue).toBeDefined();
     expect(qmsApi.deleteIssue).toBeDefined();
-  });
+});
+;
 });

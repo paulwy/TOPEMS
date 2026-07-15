@@ -47,7 +47,7 @@ if __name__ == "__main__":
     import argparse
     
     parser = argparse.ArgumentParser(description="Test MES Dashboard WebSocket connection")
-    parser.add_argument("--url", default="ws://localhost:3000/mes/ws/dashboard", help="WebSocket URL")
+    parser.add_argument("--url", default="ws://localhost:3000/ws/mes/dashboard", help="WebSocket URL")
     parser.add_argument("--duration", type=int, default=60, help="Test duration in seconds")
     parser.add_argument("--token", help="JWT token for authentication")
     

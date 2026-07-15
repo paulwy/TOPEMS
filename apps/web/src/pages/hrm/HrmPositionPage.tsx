@@ -1,6 +1,4 @@
 import React, { useState, useMemo } from 'react';
-import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { QUERY_KEYS } from '@/lib/reactQuery';
 import { Typography, Box, Button, DialogContent, DialogActions, useTheme } from '@mui/material';
 import { Briefcase, Plus, Edit, Trash2, Eye, Users, CheckCircle, XCircle } from 'lucide-react';
 import {
@@ -22,12 +20,14 @@ import {
   StatusBadge,
   Dialog,
 } from '@/components/common';
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { apiLogger } from '@/utils/logger';
 
 interface PositionManagementPageProps {}
 
 const PositionManagementPage: React.FC<PositionManagementPageProps> = () => {
   const theme = useTheme();
-  const addNotification = useNotificationStore((state) => state.addNotification);
+  const { addNotification } = useNotificationStore();
   const queryClient = useQueryClient();
 
   const [searchText, setSearchText] = useState('');
@@ -41,13 +41,14 @@ const PositionManagementPage: React.FC<PositionManagementPageProps> = () => {
 
   const [formData, setFormData] = useState<Partial<Position>>({});
 
-  const positionsQuery = useQuery<PaginatedResult<Position>>({
-    queryKey: [...QUERY_KEYS.HRM.POSITION, { searchText, statusFilter, departmentFilter }],
+  const positionsQuery = useQuery<{ items: Position[]; total: number; page: number; pagesize: number }>({
+    queryKey: ['hrm-positions', searchText, statusFilter, departmentFilter],
     queryFn: async () => {
       const params: ListParams = {};
-      if (statusFilter && statusFilter !== 'all') {
-        params.status = statusFilter;
-      }
+      if (searchText) params.search = searchText;
+      if (statusFilter && statusFilter !== 'all') params.status = statusFilter;
+      if (departmentFilter && departmentFilter !== 'all') params.department_id = departmentFilter;
+
       const response = await positionApi.list(params);
       if (response.code === 200 && response.data) {
         const data = response.data as any;
@@ -60,10 +61,11 @@ const PositionManagementPage: React.FC<PositionManagementPageProps> = () => {
       }
       return { items: [], total: 0, page: 1, pagesize: 10 };
     },
+    staleTime: 5 * 60 * 1000,
   });
 
   const departmentsQuery = useQuery<{ id: string; name: string }[]>({
-    queryKey: QUERY_KEYS.HRM.DEPARTMENTS,
+    queryKey: ['hrm-departments'],
     queryFn: async () => {
       const response = await departmentApi.list();
       if (response.code === 200 && response.data) {
@@ -72,20 +74,95 @@ const PositionManagementPage: React.FC<PositionManagementPageProps> = () => {
       }
       return [];
     },
+    staleTime: 5 * 60 * 1000,
   });
 
+  const data = positionsQuery.data || { items: [], total: 0, page: 1, pagesize: 10 };
   const loading = positionsQuery.isLoading;
-  const data: PaginatedResult<Position> = positionsQuery.data || {
-    items: [],
-    total: 0,
-    page: 1,
-    pagesize: 10,
-  };
   const departments = departmentsQuery.data || [];
 
-  const fetchPositions = () => {
-    positionsQuery.refetch();
-  };
+  React.useEffect(() => {
+    if (positionsQuery.isError) {
+      apiLogger.error('加载岗位列表失败:', positionsQuery.error);
+      addNotification({
+        title: '加载失败',
+        message: (positionsQuery.error as { message?: string })?.message || '获取岗位列表失败',
+        type: 'error',
+      });
+    }
+  }, [positionsQuery.isError, positionsQuery.error, apiLogger, addNotification]);
+
+  React.useEffect(() => {
+    if (departmentsQuery.isError) {
+      apiLogger.error('加载部门列表失败:', departmentsQuery.error);
+      addNotification({
+        title: '加载失败',
+        message: (departmentsQuery.error as { message?: string })?.message || '获取部门列表失败',
+        type: 'error',
+      });
+    }
+  }, [departmentsQuery.isError, departmentsQuery.error, apiLogger, addNotification]);
+
+  const createPositionMutation = useMutation({
+    mutationFn: (data: Partial<Position>) => positionApi.create(data),
+    onSuccess: () => {
+      addNotification({
+        title: '成功',
+        message: '岗位创建成功',
+        type: 'success',
+      });
+      queryClient.invalidateQueries({ queryKey: ['hrm-positions'] });
+    },
+    onError: (error: unknown) => {
+      apiLogger.error('创建岗位失败:', error);
+      addNotification({
+        title: '失败',
+        message: (error as { message?: string }).message || '创建岗位失败',
+        type: 'error',
+      });
+    },
+  });
+
+  const updatePositionMutation = useMutation({
+    mutationFn: ({ id, data }: { id: string; data: Partial<Position> }) =>
+      positionApi.update(id, data),
+    onSuccess: () => {
+      addNotification({
+        title: '成功',
+        message: '岗位更新成功',
+        type: 'success',
+      });
+      queryClient.invalidateQueries({ queryKey: ['hrm-positions'] });
+    },
+    onError: (error: unknown) => {
+      apiLogger.error('更新岗位失败:', error);
+      addNotification({
+        title: '失败',
+        message: (error as { message?: string }).message || '更新岗位失败',
+        type: 'error',
+      });
+    },
+  });
+
+  const deletePositionMutation = useMutation({
+    mutationFn: (id: string) => positionApi.delete(id),
+    onSuccess: () => {
+      addNotification({
+        title: '成功',
+        message: '岗位删除成功',
+        type: 'success',
+      });
+      queryClient.invalidateQueries({ queryKey: ['hrm-positions'] });
+    },
+    onError: (error: unknown) => {
+      apiLogger.error('删除岗位失败:', error);
+      addNotification({
+        title: '失败',
+        message: (error as { message?: string }).message || '删除岗位失败',
+        type: 'error',
+      });
+    },
+  });
 
   const handleAdd = () => {
     setSelectedPosition(null);
@@ -104,105 +181,24 @@ const PositionManagementPage: React.FC<PositionManagementPageProps> = () => {
     setShowViewModal(true);
   };
 
-  const deleteMutation = useMutation({
-    mutationFn: async (id: string) => positionApi.delete(id),
-    onSuccess: (response) => {
-      if (response.code === 200) {
-        addNotification({
-          title: '成功',
-          message: '岗位删除成功',
-          type: 'success',
-        });
-        queryClient.invalidateQueries({ queryKey: QUERY_KEYS.HRM.POSITION });
-      } else {
-        addNotification({
-          title: '失败',
-          message: '删除岗位失败',
-          type: 'error',
-        });
-      }
-    },
-    onError: (error: unknown) => {
-      addNotification({
-        title: '失败',
-        message: (error as { message?: string }).message || '删除岗位失败',
-        type: 'error',
-      });
-    },
-  });
-
-  const handleDelete = (id: string) => {
-    deleteMutation.mutate(id);
+  const handleDelete = async (id: string) => {
+    if (!confirm('确定要删除这个岗位吗？')) return;
+    await deletePositionMutation.mutateAsync(id);
   };
 
-  const createMutation = useMutation({
-    mutationFn: async (data: Partial<Position>) => positionApi.create(data),
-    onSuccess: (response) => {
-      if (response.code === 200) {
-        addNotification({
-          title: '成功',
-          message: '岗位创建成功',
-          type: 'success',
-        });
-        setShowCreateModal(false);
-        setFormData({});
-        queryClient.invalidateQueries({ queryKey: QUERY_KEYS.HRM.POSITION });
-      } else {
-        addNotification({
-          title: '失败',
-          message: '创建岗位失败',
-          type: 'error',
-        });
-      }
-    },
-    onError: (error: unknown) => {
-      addNotification({
-        title: '失败',
-        message: (error as { message?: string }).message || '创建岗位失败',
-        type: 'error',
-      });
-    },
-  });
-
-  const updateMutation = useMutation({
-    mutationFn: async (args: { id: string; data: Partial<Position> }) =>
-      positionApi.update(args.id, args.data),
-    onSuccess: (response) => {
-      if (response.code === 200) {
-        addNotification({
-          title: '成功',
-          message: '岗位更新成功',
-          type: 'success',
-        });
-        setShowEditModal(false);
-        setSelectedPosition(null);
-        queryClient.invalidateQueries({ queryKey: QUERY_KEYS.HRM.POSITION });
-      } else {
-        addNotification({
-          title: '失败',
-          message: '更新岗位失败',
-          type: 'error',
-        });
-      }
-    },
-    onError: (error: unknown) => {
-      addNotification({
-        title: '失败',
-        message: (error as { message?: string }).message || '更新岗位失败',
-        type: 'error',
-      });
-    },
-  });
-
-  const handleCreate = (e: React.FormEvent) => {
+  const handleCreate = async (e: React.FormEvent) => {
     e.preventDefault();
-    createMutation.mutate(formData);
+    await createPositionMutation.mutateAsync(formData);
+    setShowCreateModal(false);
+    setFormData({});
   };
 
-  const handleUpdate = (e: React.FormEvent) => {
+  const handleUpdate = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!selectedPosition) return;
-    updateMutation.mutate({ id: selectedPosition.id, data: formData });
+    await updatePositionMutation.mutateAsync({ id: selectedPosition.id, data: formData });
+    setShowEditModal(false);
+    setSelectedPosition(null);
   };
 
   const handleInputChange = (field: string, value: string | number | string[]) => {
@@ -230,7 +226,6 @@ const PositionManagementPage: React.FC<PositionManagementPageProps> = () => {
     );
   };
 
-  // 计算统计数据
   const stats = useMemo(() => {
     const totalPositions = data.total;
     const activePositions = data.items.filter((item) => item.status === 'active').length;
@@ -372,7 +367,6 @@ const PositionManagementPage: React.FC<PositionManagementPageProps> = () => {
     },
   ];
 
-  // 导出字段配置
   const exportFields = useMemo(
     () => [
       { key: 'name', title: '岗位名称' },
@@ -388,7 +382,6 @@ const PositionManagementPage: React.FC<PositionManagementPageProps> = () => {
 
   return (
     <Box sx={{ minHeight: '100vh', bgcolor: 'grey.50' }}>
-      {/* 列表页模板 */}
       <Box sx={{ maxWidth: 1280, mx: 'auto', px: 3, py: 3 }}>
         <ListPageTemplate
           title='岗位管理'
@@ -402,7 +395,15 @@ const PositionManagementPage: React.FC<PositionManagementPageProps> = () => {
             page: data.page - 1,
             pageSize: data.pagesize,
             total: data.total,
-            onPageChange: (page: number) => fetchPositions(),
+            onPageChange: (page: number) => {
+              queryClient.setQueryData<PaginatedResult<Position>>(
+                ['hrm-positions', searchText, statusFilter, departmentFilter],
+                (prev) => prev ? ({
+                  ...prev,
+                  page: page + 1,
+                }) : prev
+              );
+            },
           }}
           searchable
           searchPlaceholder='搜索岗位名称或编码'
@@ -437,9 +438,7 @@ const PositionManagementPage: React.FC<PositionManagementPageProps> = () => {
             {
               label: '导出',
               icon: <Briefcase style={{ width: 18, height: 18 }} />,
-              onClick: () => {
-                // 导出功能通过 DataExport 组件实现
-              },
+              onClick: () => {},
               variant: 'outlined',
             },
             {
@@ -449,7 +448,7 @@ const PositionManagementPage: React.FC<PositionManagementPageProps> = () => {
               variant: 'contained',
             },
           ]}
-          onRefresh={() => fetchPositions()}
+          onRefresh={() => queryClient.invalidateQueries({ queryKey: ['hrm-positions'] })}
           emptyMessage='暂无岗位数据'
           emptyIcon={
             <Briefcase style={{ width: 48, height: 48, color: theme.palette.text.disabled }} />
@@ -477,7 +476,6 @@ const PositionManagementPage: React.FC<PositionManagementPageProps> = () => {
         />
       </Box>
 
-      {/* 创建对话框 */}
       <Dialog
         open={showCreateModal}
         onClose={() => setShowCreateModal(false)}
@@ -488,6 +486,7 @@ const PositionManagementPage: React.FC<PositionManagementPageProps> = () => {
         confirmButton={{
           label: '创建',
           onClick: () => handleCreate({ preventDefault: () => {} } as React.FormEvent),
+          disabled: createPositionMutation.isPending,
         }}
       >
         <DialogContent>
@@ -607,15 +606,15 @@ const PositionManagementPage: React.FC<PositionManagementPageProps> = () => {
               <Button
                 type='submit'
                 variant='contained'
+                disabled={createPositionMutation.isPending}
               >
-                创建
+                {createPositionMutation.isPending ? '创建中...' : '创建'}
               </Button>
             </DialogActions>
           </form>
         </DialogContent>
       </Dialog>
 
-      {/* 编辑对话框 */}
       <Dialog
         open={showEditModal}
         onClose={() => setShowEditModal(false)}
@@ -632,6 +631,7 @@ const PositionManagementPage: React.FC<PositionManagementPageProps> = () => {
         confirmButton={{
           label: '保存',
           onClick: () => handleUpdate({ preventDefault: () => {} } as React.FormEvent),
+          disabled: updatePositionMutation.isPending,
         }}
       >
         {selectedPosition && (
@@ -743,7 +743,6 @@ const PositionManagementPage: React.FC<PositionManagementPageProps> = () => {
         )}
       </Dialog>
 
-      {/* 查看对话框 */}
       <Dialog
         open={showViewModal}
         onClose={() => setShowViewModal(false)}

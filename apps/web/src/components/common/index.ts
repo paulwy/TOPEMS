@@ -182,3 +182,16 @@ export { PercentField, type PercentFieldProps } from './NumberFields';
 
 // ErrorBoundary - 错误边界组件
 export { ErrorBoundary } from './ErrorBoundary';
+
+// TouchButton - 触控按钮组件
+export { TouchButton, TouchRipple } from './TouchButton';
+
+// TouchComponents - 触控交互组件扩展
+export {
+  TouchIconButton,
+  TouchCard,
+  TouchListItem,
+  TouchChip,
+  TouchSwitch,
+  type TouchFeedbackOptions,
+} from './TouchComponents';

@@ -15,7 +15,12 @@ import {
   Stack,
   Button,
   IconButton,
+  useTheme,
+  useMediaQuery,
 } from '@mui/material';
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { useResponsive } from '@/hooks/useResponsive';
+import { Hidden } from '@topems/shared-components';
 import {
   ListPageTemplate,
   type ColumnDef,
@@ -37,8 +42,6 @@ import { Plus, Edit, Trash2, Eye, Download, Check, Package, ClipboardCheck } fro
 import { apiLogger } from '@/utils/logger';
 import { ConfirmDialog, PageContainer, StatusBadge } from '@/components/common';
 import { designTokens } from '@/theme/tokens';
-import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { QUERY_KEYS } from '@/lib/reactQuery';
 
 const ct = designTokens.colors;
 
@@ -64,6 +67,9 @@ const orderTypeConfig: Record<string, string> = {
 
 const InboundPage: React.FC = () => {
   const { addNotification } = useNotificationStore();
+  const queryClient = useQueryClient();
+  const { isMobile, isTablet } = useResponsive();
+  const theme = useTheme();
 
   const [searchTerm, setSearchTerm] = useState('');
   const [statusFilter, setStatusFilter] = useState<string>('');
@@ -71,16 +77,13 @@ const InboundPage: React.FC = () => {
   const [currentPage, setCurrentPage] = useState(1);
   const [pageSize] = useState(10);
 
-  // Dialog states
   const [showCreateDialog, setShowCreateDialog] = useState(false);
   const [showDetailDialog, setShowDetailDialog] = useState(false);
   const [showReceiveDialog, setShowReceiveDialog] = useState(false);
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
   const [selectedOrder, setSelectedOrder] = useState<InboundOrder | null>(null);
-  const [orderItems, setOrderItems] = useState<InboundOrderItem[]>([]);
   const [deleteOrderId, setDeleteOrderId] = useState<string | null>(null);
 
-  // Form states
   const [newItem, setNewItem] = useState<CreateInboundOrderRequest>({
     order_number: '',
     order_type: 'purchase',
@@ -91,22 +94,10 @@ const InboundPage: React.FC = () => {
     items: [],
   });
 
-  // Receive dialog state
   const [receiveItems, setReceiveItems] = useState<ReceiveItemRequest[]>([]);
 
-  const queryClient = useQueryClient();
-
-  const ordersQueryKey = [
-    QUERY_KEYS.WMS.INBOUND_ORDERS,
-    currentPage,
-    pageSize,
-    searchTerm,
-    statusFilter,
-    warehouseFilter,
-  ];
-
-  const { data: ordersResponse, isLoading: loading } = useQuery({
-    queryKey: ordersQueryKey,
+  const ordersQuery = useQuery({
+    queryKey: ['wms-inbound-orders', searchTerm, statusFilter, warehouseFilter, currentPage, pageSize],
     queryFn: async () => {
       const params: Record<string, unknown> = {
         page: currentPage,
@@ -117,134 +108,181 @@ const InboundPage: React.FC = () => {
       if (warehouseFilter) params.warehouse_id = warehouseFilter;
 
       const response = await wmsApi.inboundOrders.list(params as any);
-      if (!response.success) {
-        throw new Error('Failed to fetch inbound orders');
+      if (response.success && response.data) {
+        return { items: response.data.items || [], total: response.data.total || 0 };
       }
-      return response.data;
+      return { items: [], total: 0 };
     },
   });
 
-  const orders = ordersResponse?.items || [];
-  const total = ordersResponse?.total || 0;
+  useEffect(() => {
+    if (ordersQuery.isError && ordersQuery.error) {
+      apiLogger.error('获取入库单列表失败:', ordersQuery.error);
+      addNotification({
+        type: 'error',
+        title: '加载失败',
+        message: '无法加载入库单列表',
+      });
+    }
+  }, [ordersQuery.isError, ordersQuery.error, addNotification]);
 
-  const { data: warehousesData } = useQuery({
-    queryKey: [QUERY_KEYS.WMS.WAREHOUSES],
+  const warehousesQuery = useQuery({
+    queryKey: ['wms-warehouses'],
     queryFn: async () => {
       const response = await wmsApi.warehouses.list({ page: 1, pagesize: 100 });
-      if (!response.success) {
-        throw new Error('Failed to fetch warehouses');
+      if (response.success && response.data) {
+        return response.data.items || [];
       }
-      return response.data;
+      return [];
     },
   });
 
-  const warehouses = warehousesData?.items || [];
-
-  const fetchOrderItems = async (orderId: string) => {
-    try {
-      const response = await wmsApi.inboundOrders.listItems(orderId);
-      if (response.success && response.data) {
-        setOrderItems(response.data.items || []);
-        setReceiveItems(
-          (response.data.items || []).map((item) => ({
-            item_id: item.id,
-            received_quantity: item.expected_quantity - item.received_quantity,
-          }))
-        );
-      }
-    } catch (error: unknown) {
-      apiLogger.error('获取入库单明细失败:', error);
+  useEffect(() => {
+    if (warehousesQuery.isError && warehousesQuery.error) {
+      apiLogger.error('获取仓库列表失败:', warehousesQuery.error);
     }
-  };
+  }, [warehousesQuery.isError, warehousesQuery.error]);
 
-  const invalidateOrders = () => {
-    queryClient.invalidateQueries({ queryKey: [QUERY_KEYS.WMS.INBOUND_ORDERS] });
-  };
+  const [orderItems, setOrderItems] = useState<InboundOrderItem[]>([]);
+
+  const orderItemsQuery = useQuery({
+    queryKey: ['wms-inbound-order-items', selectedOrder?.id],
+    queryFn: async () => {
+      if (!selectedOrder) return [];
+      const response = await wmsApi.inboundOrders.listItems(selectedOrder.id);
+      if (response.success && response.data) {
+        return response.data.items || [];
+      }
+      return [];
+    },
+    enabled: !!selectedOrder,
+  });
+
+  useEffect(() => {
+    if (orderItemsQuery.data) {
+      const items = orderItemsQuery.data;
+      setOrderItems(items);
+      setReceiveItems(
+        items.map((item) => ({
+          item_id: item.id,
+          received_quantity: item.expected_quantity - item.received_quantity,
+        }))
+      );
+    }
+  }, [orderItemsQuery.data]);
+
+  useEffect(() => {
+    if (orderItemsQuery.isError && orderItemsQuery.error) {
+      apiLogger.error('获取入库单明细失败:', orderItemsQuery.error);
+    }
+  }, [orderItemsQuery.isError, orderItemsQuery.error]);
 
   const createMutation = useMutation({
-    mutationFn: async (data: CreateInboundOrderRequest) => {
-      const response = await wmsApi.inboundOrders.create(data);
-      if (!response.success) {
-        throw new Error('Failed to create inbound order');
-      }
-      return response;
-    },
+    mutationFn: (data: CreateInboundOrderRequest) => wmsApi.inboundOrders.create(data),
     onSuccess: () => {
-      invalidateOrders();
+      addNotification({
+        type: 'success',
+        title: '创建成功',
+        message: '入库单已创建',
+      });
       setShowCreateDialog(false);
       resetNewItem();
+      queryClient.invalidateQueries({ queryKey: ['wms-inbound-orders'] });
     },
     onError: (error) => {
       apiLogger.error('创建入库单失败:', error);
+      addNotification({
+        type: 'error',
+        title: '创建失败',
+        message: '创建入库单失败',
+      });
     },
   });
 
   const confirmMutation = useMutation({
-    mutationFn: async (id: string) => {
-      const response = await wmsApi.inboundOrders.confirm(id);
-      if (!response.success) {
-        throw new Error('Failed to confirm inbound order');
-      }
-      return response;
-    },
+    mutationFn: (id: string) => wmsApi.inboundOrders.confirm(id),
     onSuccess: () => {
-      invalidateOrders();
+      addNotification({
+        type: 'success',
+        title: '确认成功',
+        message: '入库单已确认',
+      });
+      queryClient.invalidateQueries({ queryKey: ['wms-inbound-orders'] });
     },
     onError: (error) => {
       apiLogger.error('确认入库单失败:', error);
+      addNotification({
+        type: 'error',
+        title: '确认失败',
+        message: '确认入库单失败',
+      });
     },
   });
 
   const receiveMutation = useMutation({
-    mutationFn: async ({ id, items }: { id: string; items: ReceiveItemRequest[] }) => {
-      const response = await wmsApi.inboundOrders.receive(id, items);
-      if (!response.success) {
-        throw new Error('Failed to receive inbound order');
-      }
-      return response;
-    },
+    mutationFn: ({ id, items }: { id: string; items: ReceiveItemRequest[] }) => 
+      wmsApi.inboundOrders.receive(id, items),
     onSuccess: () => {
-      invalidateOrders();
+      addNotification({
+        type: 'success',
+        title: '收货成功',
+        message: '入库单已收货',
+      });
       setShowReceiveDialog(false);
+      queryClient.invalidateQueries({ queryKey: ['wms-inbound-orders'] });
     },
     onError: (error) => {
       apiLogger.error('收货失败:', error);
+      addNotification({
+        type: 'error',
+        title: '收货失败',
+        message: '收货失败',
+      });
     },
   });
 
   const completeMutation = useMutation({
-    mutationFn: async (id: string) => {
-      const response = await wmsApi.inboundOrders.complete(id);
-      if (!response.success) {
-        throw new Error('Failed to complete inbound order');
-      }
-      return response;
-    },
+    mutationFn: (id: string) => wmsApi.inboundOrders.complete(id),
     onSuccess: () => {
-      invalidateOrders();
+      addNotification({
+        type: 'success',
+        title: '完成成功',
+        message: '入库单已完成',
+      });
+      queryClient.invalidateQueries({ queryKey: ['wms-inbound-orders'] });
     },
     onError: (error) => {
       apiLogger.error('完成入库单失败:', error);
+      addNotification({
+        type: 'error',
+        title: '完成失败',
+        message: '完成入库单失败',
+      });
     },
   });
 
   const deleteMutation = useMutation({
-    mutationFn: async (id: string) => {
-      const response = await wmsApi.inboundOrders.delete(id);
-      if (!response.success) {
-        throw new Error('Failed to delete inbound order');
-      }
-      return response;
-    },
+    mutationFn: (id: string) => wmsApi.inboundOrders.delete(id),
     onSuccess: () => {
-      invalidateOrders();
+      addNotification({
+        type: 'success',
+        title: '删除成功',
+        message: '入库单已删除',
+      });
+      setShowDeleteConfirm(false);
+      queryClient.invalidateQueries({ queryKey: ['wms-inbound-orders'] });
     },
     onError: (error) => {
       apiLogger.error('删除入库单失败:', error);
+      addNotification({
+        type: 'error',
+        title: '删除失败',
+        message: '删除入库单失败',
+      });
     },
   });
 
-  const handleCreate = async () => {
+  const handleCreate = () => {
     if (!newItem.order_number || !newItem.warehouse_id) {
       addNotification({
         type: 'warning',
@@ -253,27 +291,25 @@ const InboundPage: React.FC = () => {
       });
       return;
     }
-
-    await createMutation.mutateAsync(newItem);
+    createMutation.mutate(newItem);
   };
 
-  const handleConfirm = async (id: string) => {
-    await confirmMutation.mutateAsync(id);
+  const handleConfirm = (id: string) => {
+    confirmMutation.mutate(id);
   };
 
-  const handleReceiveClick = async (order: InboundOrder) => {
+  const handleReceiveClick = (order: InboundOrder) => {
     setSelectedOrder(order);
-    await fetchOrderItems(order.id);
     setShowReceiveDialog(true);
   };
 
-  const handleReceive = async () => {
+  const handleReceive = () => {
     if (!selectedOrder) return;
-    await receiveMutation.mutateAsync({ id: selectedOrder.id, items: receiveItems });
+    receiveMutation.mutate({ id: selectedOrder.id, items: receiveItems });
   };
 
-  const handleComplete = async (id: string) => {
-    await completeMutation.mutateAsync(id);
+  const handleComplete = (id: string) => {
+    completeMutation.mutate(id);
   };
 
   const handleDeleteClick = (id: string) => {
@@ -281,14 +317,13 @@ const InboundPage: React.FC = () => {
     setShowDeleteConfirm(true);
   };
 
-  const handleDelete = useCallback(async () => {
+  const handleDelete = () => {
     if (!deleteOrderId) return;
-    await deleteMutation.mutateAsync(deleteOrderId);
-  }, [deleteMutation, deleteOrderId]);
+    deleteMutation.mutate(deleteOrderId);
+  };
 
-  const handleViewDetail = async (order: InboundOrder) => {
+  const handleViewDetail = (order: InboundOrder) => {
     setSelectedOrder(order);
-    await fetchOrderItems(order.id);
     setShowDetailDialog(true);
   };
 
@@ -319,33 +354,61 @@ const InboundPage: React.FC = () => {
 
   const getWarehouseName = useMemo(() => {
     return (warehouseId: string) => {
-      return warehouses.find((w) => w.id === warehouseId)?.name || warehouseId;
+      return warehousesQuery.data?.find((w) => w.id === warehouseId)?.name || warehouseId;
     };
-  }, [warehouses]);
+  }, [warehousesQuery.data]);
+
+  const orders = ordersQuery.data?.items || [];
+  const total = ordersQuery.data?.total || 0;
+  const warehouses = warehousesQuery.data || [];
+  const loading = ordersQuery.isLoading;
 
   const columns: ColumnDef<InboundOrder>[] = useMemo(
-    () => [
-      { id: 'order_number', label: '入库单号', sortable: true },
-      {
-        id: 'order_type',
-        label: '入库类型',
-        render: (row) => orderTypeConfig[row.order_type] || row.order_type,
-      },
-      {
-        id: 'warehouse_id',
-        label: '仓库',
-        render: (row) => getWarehouseName(row.warehouse_id),
-      },
-      { id: 'supplier_name', label: '供应商' },
-      { id: 'total_quantity', label: '总数量' },
-      { id: 'expected_date', label: '预计日期' },
-      {
-        id: 'status',
-        label: '状态',
-        render: (row) => getStatusBadge(row.status),
-      },
-    ],
-    [getWarehouseName]
+    () => {
+      const baseColumns = [
+        { id: 'order_number', label: '入库单号', sortable: true },
+        { id: 'total_quantity', label: '总数量' },
+        {
+          id: 'status',
+          label: '状态',
+          render: (row: InboundOrder) => getStatusBadge(row.status),
+        },
+      ];
+
+      if (isMobile) {
+        return baseColumns;
+      }
+
+      if (isTablet) {
+        return [
+          ...baseColumns.slice(0, 1),
+          {
+            id: 'order_type',
+            label: '入库类型',
+            render: (row: InboundOrder) => orderTypeConfig[row.order_type] || row.order_type,
+          },
+          ...baseColumns.slice(1),
+        ];
+      }
+
+      return [
+        ...baseColumns.slice(0, 1),
+        {
+          id: 'order_type',
+          label: '入库类型',
+          render: (row: InboundOrder) => orderTypeConfig[row.order_type] || row.order_type,
+        },
+        {
+          id: 'warehouse_id',
+          label: '仓库',
+          render: (row: InboundOrder) => getWarehouseName(row.warehouse_id),
+        },
+        { id: 'supplier_name', label: '供应商' },
+        ...baseColumns.slice(1),
+        { id: 'expected_date', label: '预计日期' },
+      ];
+    },
+    [getWarehouseName, isMobile, isTablet]
   );
 
   const filters: FilterConfig[] = useMemo(
@@ -582,12 +645,11 @@ const InboundPage: React.FC = () => {
         }}
       />
 
-      {/* 新增对话框 */}
       <Dialog
         open={showCreateDialog}
         onClose={() => setShowCreateDialog(false)}
-        maxWidth='md'
-        fullWidth
+        maxWidth={isMobile ? 'sm' : 'md'}
+        fullWidth={isMobile}
       >
         <DialogTitle>新增入库单</DialogTitle>
         <DialogContent>
@@ -682,18 +744,18 @@ const InboundPage: React.FC = () => {
           <Button
             variant='contained'
             onClick={handleCreate}
+            disabled={createMutation.isPending}
           >
             创建
           </Button>
         </DialogActions>
       </Dialog>
 
-      {/* 详情对话框 */}
       <Dialog
         open={showDetailDialog}
         onClose={() => setShowDetailDialog(false)}
-        maxWidth='md'
-        fullWidth
+        maxWidth={isMobile ? 'sm' : 'md'}
+        fullWidth={isMobile}
       >
         <DialogTitle>入库单详情</DialogTitle>
         <DialogContent>
@@ -793,7 +855,6 @@ const InboundPage: React.FC = () => {
                 </Box>
               </Box>
 
-              {/* 明细列表 */}
               <Box sx={{ mt: 2 }}>
                 <Typography
                   variant='subtitle2'
@@ -868,12 +929,11 @@ const InboundPage: React.FC = () => {
         </DialogActions>
       </Dialog>
 
-      {/* 收货对话框 */}
       <Dialog
         open={showReceiveDialog}
         onClose={() => setShowReceiveDialog(false)}
-        maxWidth='md'
-        fullWidth
+        maxWidth={isMobile ? 'sm' : 'md'}
+        fullWidth={isMobile}
       >
         <DialogTitle>入库收货</DialogTitle>
         <DialogContent>
@@ -945,20 +1005,21 @@ const InboundPage: React.FC = () => {
           <Button
             variant='contained'
             onClick={handleReceive}
+            disabled={receiveMutation.isPending}
           >
             确认收货
           </Button>
         </DialogActions>
       </Dialog>
 
-      {/* 删除确认对话框 */}
       <ConfirmDialog
         isOpen={showDeleteConfirm}
         onClose={() => setShowDeleteConfirm(false)}
-        onConfirm={handleDelete}
         title='确认删除'
-        message='确定要删除这个入库单吗？此操作不可撤销。'
-        danger
+        message='确定要删除此入库单吗？此操作无法撤销。'
+        onConfirm={handleDelete}
+        confirmLabel='删除'
+        confirmColor='error'
       />
     </PageContainer>
   );

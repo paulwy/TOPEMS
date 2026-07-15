@@ -117,17 +117,16 @@ vi.mock('@/store', () => ({
 }));
 
 describe('CrmOpportunityManagementPage', () => {
-  it('should render without crashing', () => {
+it('should render without crashing', () => {
     const { container } = render(
       <BrowserRouter>
         <OpportunityManagementPage />
       </BrowserRouter>
     );
     expect(container).toBeDefined();
-  });
 });
-describe('CrmOpportunityManagementPage', () => {
-  it('should have opportunity API methods defined', async () => {
+
+it('should have opportunity API methods defined', async () => {
     render(
       <BrowserRouter>
         <OpportunityManagementPage />
@@ -140,14 +139,15 @@ describe('CrmOpportunityManagementPage', () => {
     expect(crmApi.opportunities.delete).toBeDefined();
     expect(crmApi.opportunities.convert).toBeDefined();
     expect(crmApi.opportunities.close).toBeDefined();
-  });
+});
 
-  it('should call opportunity list API on mount', async () => {
+it('should call opportunity list API on mount', async () => {
     render(
       <BrowserRouter>
         <OpportunityManagementPage />
       </BrowserRouter>
     );
     expect(crmApi.opportunities.list).toHaveBeenCalled();
-  });
+});
+;
 });

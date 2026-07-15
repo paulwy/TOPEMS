@@ -25,6 +25,8 @@ export { useDataTable, useExportData } from './useDataTable';
 export type { UseDataTableOptions, UseDataTableResult } from './useDataTable';
 export { useImportExport } from './useImportExport';
 export { useWebSocket } from './useWebSocket';
+export { useDashboardWebSocket } from './useDashboardWebSocket';
+export type { WsConnectionStatus } from './useWebSocket';
 export { usePerformanceMonitor } from './usePerformanceMonitor';
 export { useResponsive } from './useResponsive';
 export type { Breakpoint } from './useResponsive';
@@ -46,6 +48,9 @@ export type { WindowConfig, WindowState } from './useWindowManager';
 export { useDebounce, useDebouncedValue, useDebouncedCallback } from '@topems/shared-hooks';
 export { useThrottle, useThrottledValue, useThrottledCallback } from './useThrottle';
 export { useIntersectionObserver, useInView } from './useIntersectionObserver';
+export { useOfflineQuery, useOfflineMutation } from './useOfflineQuery';
+export { useOfflineSync } from './useOfflineSync';
+export type { SyncStatus, OfflineRequest } from './useOfflineSync';
 export type {
   UseIntersectionObserverOptions,
   UseIntersectionObserverResult,

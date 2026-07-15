@@ -2,6 +2,7 @@ import React from 'react';
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { render, screen, waitFor, fireEvent, act } from '@testing-library/react';
 import { BrowserRouter } from 'react-router-dom';
+import { renderWithProviders } from '@/__tests__/test-utils';
 import BIComparisonPage from '../bi/BIComparisonPage';
 import { getComparisonResult, runComparison, listComparisons } from '@/api/bi';
 import { useNotificationStore, useAuthStore } from '@/store';
@@ -98,44 +99,7 @@ vi.mock('@/store', () => ({
   useSetSidebarCollapsed: vi.fn(),
 }));
 
-const mockAddNotification = vi.fn();
-
-const mockComparisonResult = {
-  success: true,
-  data: {
-    id: 'cmp-001',
-    comparison_id: 'cmp-001',
-    status: 'success' as const,
-    data: [{ indicator: '销售额', value_a: 1000, value_b: 800, difference: 200, change_rate: 25 }],
-    generated_at: '2024-01-01T00:00:00Z',
-  },
-};
-
-const mockComparisonsResult = {
-  success: true,
-  data: {
-    items: [{ id: 'cmp-001', name: '销售额', metric: '销售额' }],
-  },
-};
-
-function renderWithProviders(ui: React.ReactElement) {
-  return render(<BrowserRouter>{ui}</BrowserRouter>);
-}
-
 describe('BIComparisonPage', () => {
-  beforeEach(() => {
-    vi.clearAllMocks();
-    (useNotificationStore as vi.Mock).mockReturnValue({
-      addNotification: mockAddNotification,
-      notifications: [],
-      removeNotification: vi.fn(),
-      clearNotifications: vi.fn(),
-    });
-    (getComparisonResult as vi.Mock).mockResolvedValue(mockComparisonResult);
-    (runComparison as vi.Mock).mockResolvedValue(mockComparisonResult);
-    (listComparisons as vi.Mock).mockResolvedValue(mockComparisonsResult);
-  });
-
   it('should render page title', async () => {
     renderWithProviders(<BIComparisonPage />);
     await waitFor(() => {
@@ -146,7 +110,7 @@ describe('BIComparisonPage', () => {
   it('should render comparison list', async () => {
     renderWithProviders(<BIComparisonPage />);
     await waitFor(() => {
-      expect(screen.getAllByText('销售额').length).toBeGreaterThan(0);
+      expect(screen.getByText('销售额')).toBeInTheDocument();
     });
   });
 

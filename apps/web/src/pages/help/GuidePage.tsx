@@ -1,5 +1,4 @@
-import React, { useState, useEffect, useMemo } from 'react';
-import { useQuery } from '@tanstack/react-query';
+import React, { useState } from 'react';
 import {
   Box,
   Typography,
@@ -12,7 +11,6 @@ import {
   LinearProgress,
   useTheme,
   CircularProgress,
-  IconButton,
 } from '@mui/material';
 import {
   BookOpen,
@@ -23,55 +21,39 @@ import {
   Award,
   Lightbulb,
   ArrowLeft,
-  Bookmark,
-  BookmarkCheck,
-  Building2,
-  Briefcase,
-  Package,
-  Factory,
-  ClipboardList,
-  Truck,
-  Target,
-  Users,
 } from 'lucide-react';
-import { useNavigate, useSearchParams } from 'react-router-dom';
+import { useNavigate } from 'react-router-dom';
 import { PageContainer } from '@/components/common';
 import { useTranslation } from 'react-i18next';
 import { DASHBOARD_PATHS } from '@/routes/dashboard';
 import { helpApi } from '@/api';
 import type { Guide } from '@/api/help';
-import { QUERY_KEYS } from '@/lib/reactQuery';
+import { useQuery } from '@tanstack/react-query';
+import { useNotificationStore } from '@/store';
+import { apiLogger } from '@/utils/logger';
 
 interface GuideCategory {
   id: string;
   name: string;
-  icon: React.ComponentType<{ size?: number; className?: string }>;
+  icon: string;
   color: string;
 }
 
-const MODULE_CATEGORIES: GuideCategory[] = [
-  { id: 'iam', name: 'IAM身份管理', icon: Users, color: 'primary' },
-  { id: 'workflow', name: 'Workflow工作流', icon: Clock, color: 'info' },
-  { id: 'crm', name: 'CRM客户管理', icon: Building2, color: 'success' },
-  { id: 'erp', name: 'ERP企业资源', icon: Briefcase, color: 'warning' },
-  { id: 'wms', name: 'WMS仓储管理', icon: Package, color: 'error' },
-  { id: 'mes', name: 'MES生产制造', icon: Factory, color: 'secondary' },
-  { id: 'hrm', name: 'HRM人力资源', icon: Users, color: 'primary' },
-  { id: 'qms', name: 'QMS质量管理', icon: Award, color: 'success' },
-  { id: 'pm', name: 'PM项目管理', icon: Target, color: 'warning' },
-  { id: 'scm', name: 'SCM供应链', icon: Truck, color: 'info' },
+const GUIDE_CATEGORIES: GuideCategory[] = [
+  { id: 'beginner', name: '入门指南', icon: '🌱', color: 'primary' },
+  { id: 'advanced', name: '进阶教程', icon: '🚀', color: 'success' },
+  { id: 'expert', name: '高级技巧', icon: '💎', color: 'warning' },
 ];
 
 export const GuidePage: React.FC = () => {
   const { t } = useTranslation();
   const theme = useTheme();
   const navigate = useNavigate();
-  const [searchParams] = useSearchParams();
+  const { addNotification } = useNotificationStore();
   const [selectedCategory, setSelectedCategory] = useState('all');
-  const [favorites, setFavorites] = useState<Set<string>>(new Set());
 
-  const { data: guides = [], isLoading: loading } = useQuery<Guide[]>({
-    queryKey: [...QUERY_KEYS.HELP.GUIDES, selectedCategory],
+  const guidesQuery = useQuery<Guide[]>({
+    queryKey: ['help-guides', selectedCategory],
     queryFn: async () => {
       const params = {
         category: selectedCategory === 'all' ? undefined : selectedCategory,
@@ -80,14 +62,17 @@ export const GuidePage: React.FC = () => {
       };
       const response = await helpApi.listGuides(params);
       if (response.success && response.data) {
-        return response.data.items;
+        return response.data.items || [];
       }
       return [];
     },
+    staleTime: 5 * 60 * 1000,
   });
+  const guides = guidesQuery.data || [];
+  const loading = guidesQuery.isLoading;
 
-  useQuery<string[]>({
-    queryKey: QUERY_KEYS.HELP.GUIDE_CATEGORIES,
+  const categoriesQuery = useQuery<string[]>({
+    queryKey: ['help-guide-categories'],
     queryFn: async () => {
       const response = await helpApi.getGuideCategories();
       if (response.success && response.data) {
@@ -95,62 +80,40 @@ export const GuidePage: React.FC = () => {
       }
       return [];
     },
+    staleTime: 5 * 60 * 1000,
   });
+  const categories = categoriesQuery.data || [];
 
-  useEffect(() => {
-    const categoryFromUrl = searchParams.get('category');
-    if (categoryFromUrl && MODULE_CATEGORIES.some((c) => c.id === categoryFromUrl)) {
-      setSelectedCategory(categoryFromUrl);
+  React.useEffect(() => {
+    if (guidesQuery.isError) {
+      apiLogger.error('获取指南列表失败:', guidesQuery.error);
+      addNotification({
+        type: 'error',
+        title: '加载失败',
+        message: '无法加载指南列表',
+      });
     }
-  }, [searchParams]);
+  }, [guidesQuery.isError, guidesQuery.error, apiLogger, addNotification]);
 
-  useEffect(() => {
-    try {
-      const saved = localStorage.getItem('help_favorites');
-      if (saved) {
-        setFavorites(new Set(JSON.parse(saved)));
-      }
-    } catch {
-      // ignore localStorage parse errors
+  React.useEffect(() => {
+    if (categoriesQuery.isError) {
+      apiLogger.error('获取指南分类失败:', categoriesQuery.error);
     }
-  }, []);
+  }, [categoriesQuery.isError, categoriesQuery.error, apiLogger]);
 
-  const saveFavorites = (newFavorites: Set<string>) => {
-    try {
-      localStorage.setItem('help_favorites', JSON.stringify([...newFavorites]));
-    } catch {
-      // ignore localStorage save errors
-    }
-  };
+  const filteredGuides =
+    selectedCategory === 'all'
+      ? guides
+      : guides.filter((guide: Guide) => guide.category === selectedCategory);
 
-  const toggleFavorite = (guideId: string) => {
-    const newFavorites = new Set(favorites);
-    if (newFavorites.has(guideId)) {
-      newFavorites.delete(guideId);
-    } else {
-      newFavorites.add(guideId);
-    }
-    setFavorites(newFavorites);
-    saveFavorites(newFavorites);
-  };
-
-  const filteredGuides = useMemo(
-    () =>
-      selectedCategory === 'all'
-        ? guides
-        : guides.filter((guide) => guide.category === selectedCategory),
-    [guides, selectedCategory]
-  );
-
-  const completedCount = guides.filter((g) => g.is_active).length;
-  const totalProgress =
-    guides.length > 0
-      ? Math.round(guides.reduce((acc, g) => acc + (g.is_active ? 100 : 0), 0) / guides.length)
-      : 0;
+  const completedCount = guides.filter((g: Guide) => g.is_active).length;
+  const totalProgress = guides.length > 0
+    ? Math.round(guides.reduce((acc, g) => acc + (g.is_active ? 100 : 0), 0) / guides.length)
+    : 0;
 
   const getCategoryInfo = (categoryId: string) => {
-    const category = MODULE_CATEGORIES.find((c) => c.id === categoryId);
-    return category || { id: categoryId, name: categoryId, icon: ClipboardList, color: 'primary' };
+    const category = GUIDE_CATEGORIES.find((c) => c.id === categoryId);
+    return category || { id: categoryId, name: categoryId, icon: '📚', color: 'primary' };
   };
 
   const getCategoryColor = (color: string) => {
@@ -158,9 +121,6 @@ export const GuidePage: React.FC = () => {
       primary: 'primary.main',
       success: 'success.main',
       warning: 'warning.main',
-      info: 'info.main',
-      error: 'error.main',
-      secondary: 'secondary.main',
     };
     return colorMap[color] || colorMap.primary;
   };
@@ -176,10 +136,7 @@ export const GuidePage: React.FC = () => {
           sx={{ textTransform: 'none' }}
           onClick={() => navigate(DASHBOARD_PATHS.helpCenter)}
         >
-          <ArrowLeft
-            size={16}
-            sx={{ mr: 1 }}
-          />
+          <ArrowLeft size={16} sx={{ mr: 1 }} />
           返回帮助中心
         </Button>
       </Box>
@@ -201,32 +158,20 @@ export const GuidePage: React.FC = () => {
               <Award sx={{ width: 32, height: 32, color: 'primary.main' }} />
             </Box>
             <Box>
-              <Typography
-                variant='h6'
-                sx={{ fontWeight: 600 }}
-              >
+              <Typography variant='h6' sx={{ fontWeight: 600 }}>
                 学习进度
               </Typography>
-              <Typography
-                variant='body2'
-                color='text.secondary'
-              >
-                已完成 {completedCount}/{guides.length} 个课程 · 收藏 {favorites.size} 篇
+              <Typography variant='body2' color='text.secondary'>
+                已完成 {completedCount}/{guides.length} 个课程
               </Typography>
             </Box>
           </Box>
           <Box>
             <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: 1 }}>
-              <Typography
-                variant='body2'
-                color='text.secondary'
-              >
+              <Typography variant='body2' color='text.secondary'>
                 总体进度
               </Typography>
-              <Typography
-                variant='body2'
-                sx={{ fontWeight: 600 }}
-              >
+              <Typography variant='body2' sx={{ fontWeight: 600 }}>
                 {totalProgress}%
               </Typography>
             </Box>
@@ -240,34 +185,25 @@ export const GuidePage: React.FC = () => {
       </Card>
 
       <Box sx={{ mb: 6 }}>
-        <Typography
-          variant='body2'
-          color='text.secondary'
-          sx={{ mb: 2 }}
-        >
+        <Typography variant='body2' color='text.secondary' sx={{ mb: 2 }}>
           {t('help_center.filter_category')}
         </Typography>
-        <Stack
-          direction='row'
-          spacing={2}
-          sx={{ flexWrap: 'wrap' }}
-        >
+        <Stack direction='row' spacing={2} sx={{ flexWrap: 'wrap' }}>
           <Chip
             label='📋 全部'
             onClick={() => setSelectedCategory('all')}
             color={selectedCategory === 'all' ? 'primary' : 'default'}
             sx={{ cursor: 'pointer', fontWeight: selectedCategory === 'all' ? 600 : 400 }}
           />
-          {MODULE_CATEGORIES.map((category) => {
-            const Icon = category.icon;
+          {[...new Set(categories)].map((category) => {
+            const info = getCategoryInfo(category);
             return (
               <Chip
-                key={category.id}
-                icon={<Icon size={16} />}
-                label={category.name}
-                onClick={() => setSelectedCategory(category.id)}
-                color={selectedCategory === category.id ? 'primary' : 'default'}
-                sx={{ cursor: 'pointer', fontWeight: selectedCategory === category.id ? 600 : 400 }}
+                key={category}
+                label={`${info.icon} ${info.name}`}
+                onClick={() => setSelectedCategory(category)}
+                color={selectedCategory === category ? 'primary' : 'default'}
+                sx={{ cursor: 'pointer', fontWeight: selectedCategory === category ? 600 : 400 }}
               />
             );
           })}
@@ -279,18 +215,11 @@ export const GuidePage: React.FC = () => {
           <CircularProgress />
         </Box>
       ) : (
-        <Grid
-          container
-          spacing={3}
-        >
+        <Grid container spacing={3}>
           {filteredGuides.map((guide) => {
             const categoryInfo = getCategoryInfo(guide.category);
-            const isFavorite = favorites.has(guide.id);
             return (
-              <Grid
-                size={{ xs: 12, md: 6 }}
-                key={guide.id}
-              >
+              <Grid size={{ xs: 12, md: 6 }} key={guide.id}>
                 <Card
                   sx={{
                     height: '100%',
@@ -321,10 +250,7 @@ export const GuidePage: React.FC = () => {
                       </Box>
                       <Box sx={{ flex: 1 }}>
                         <Box sx={{ display: 'flex', alignItems: 'center', gap: 2, mb: 1 }}>
-                          <Typography
-                            variant='h6'
-                            sx={{ fontWeight: 600 }}
-                          >
+                          <Typography variant='h6' sx={{ fontWeight: 600 }}>
                             {guide.title}
                           </Typography>
                           {guide.is_active && (
@@ -336,49 +262,22 @@ export const GuidePage: React.FC = () => {
                             />
                           )}
                         </Box>
-                        <Typography
-                          variant='body2'
-                          color='text.secondary'
-                        >
+                        <Typography variant='body2' color='text.secondary'>
                           {guide.description}
                         </Typography>
                       </Box>
-                      <IconButton
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          toggleFavorite(guide.id);
-                        }}
-                        sx={{
-                          color: isFavorite ? 'warning.main' : theme.palette.text.disabled,
-                          '&:hover': { color: 'warning.main' },
-                        }}
-                      >
-                        {isFavorite ? <BookmarkCheck size={20} /> : <Bookmark size={20} />}
-                      </IconButton>
                     </Box>
 
                     <Box sx={{ display: 'flex', alignItems: 'center', gap: 3, mb: 3 }}>
                       <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-                        <Clock
-                          size={14}
-                          sx={{ color: theme.palette.text.disabled }}
-                        />
-                        <Typography
-                          variant='body2'
-                          color='text.secondary'
-                        >
+                        <Clock size={14} sx={{ color: theme.palette.text.disabled }} />
+                        <Typography variant='body2' color='text.secondary'>
                           {guide.duration}
                         </Typography>
                       </Box>
                       <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-                        <BookOpen
-                          size={14}
-                          sx={{ color: theme.palette.text.disabled }}
-                        />
-                        <Typography
-                          variant='body2'
-                          color='text.secondary'
-                        >
+                        <BookOpen size={14} sx={{ color: theme.palette.text.disabled }} />
+                        <Typography variant='body2' color='text.secondary'>
                           {guide.lessons_count} 节课
                         </Typography>
                       </Box>
@@ -392,16 +291,10 @@ export const GuidePage: React.FC = () => {
                     {!guide.is_active && (
                       <Box>
                         <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: 1 }}>
-                          <Typography
-                            variant='body2'
-                            color='text.secondary'
-                          >
+                          <Typography variant='body2' color='text.secondary'>
                             学习进度
                           </Typography>
-                          <Typography
-                            variant='body2'
-                            sx={{ fontWeight: 600 }}
-                          >
+                          <Typography variant='body2' sx={{ fontWeight: 600 }}>
                             0%
                           </Typography>
                         </Box>
@@ -433,20 +326,11 @@ export const GuidePage: React.FC = () => {
 
       {!loading && filteredGuides.length === 0 && (
         <Box sx={{ textAlign: 'center', py: 12 }}>
-          <BookOpen
-            size={48}
-            sx={{ color: theme.palette.text.disabled, mx: 'auto', mb: 3 }}
-          />
-          <Typography
-            variant='h6'
-            sx={{ mb: 2 }}
-          >
+          <BookOpen size={48} sx={{ color: theme.palette.text.disabled, mx: 'auto', mb: 3 }} />
+          <Typography variant='h6' sx={{ mb: 2 }}>
             {t('help_center.no_results')}
           </Typography>
-          <Typography
-            variant='body2'
-            color='text.secondary'
-          >
+          <Typography variant='body2' color='text.secondary'>
             {t('help_center.try_different')}
           </Typography>
         </Box>
@@ -456,42 +340,24 @@ export const GuidePage: React.FC = () => {
         <Card sx={{ borderRadius: 2 }}>
           <CardContent>
             <Box sx={{ display: 'flex', alignItems: 'center', gap: 2, mb: 4 }}>
-              <Lightbulb
-                size={20}
-                sx={{ color: theme.palette.warning.main }}
-              />
-              <Typography
-                variant='h6'
-                sx={{ fontWeight: 600 }}
-              >
+              <Lightbulb size={20} sx={{ color: theme.palette.warning.main }} />
+              <Typography variant='h6' sx={{ fontWeight: 600 }}>
                 学习小贴士
               </Typography>
             </Box>
-            <Grid
-              container
-              spacing={4}
-            >
+            <Grid container spacing={4}>
               <Grid size={{ xs: 12, sm: 4 }}>
-                <Typography
-                  variant='body2'
-                  color='text.secondary'
-                >
+                <Typography variant='body2' color='text.secondary'>
                   📖 <strong>循序渐进</strong>：建议按照入门→进阶→高级的顺序学习
                 </Typography>
               </Grid>
               <Grid size={{ xs: 12, sm: 4 }}>
-                <Typography
-                  variant='body2'
-                  color='text.secondary'
-                >
+                <Typography variant='body2' color='text.secondary'>
                   👀 <strong>边学边练</strong>：跟随指南操作，加深理解和记忆
                 </Typography>
               </Grid>
               <Grid size={{ xs: 12, sm: 4 }}>
-                <Typography
-                  variant='body2'
-                  color='text.secondary'
-                >
+                <Typography variant='body2' color='text.secondary'>
                   💬 <strong>遇到问题</strong>：参考FAQ或联系在线客服获取帮助
                 </Typography>
               </Grid>

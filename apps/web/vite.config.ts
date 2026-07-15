@@ -26,21 +26,23 @@ interface ServiceConfig {
   skipPluginHealth?: boolean;
 }
 
+// WebSocket 路径规范: /ws/{module}/{feature} 或 /{module}/ws/{feature}
+// 后端路由与前端钩子路径必须保持一致
 const services: ServiceConfig[] = [
-  { name: 'core', port: 8000, hasWs: true, wsPath: '/ws/core', apiRewrite: (path) => path.replace(/^\/core\/api/, '/api/core') },
+  { name: 'core', port: 8000, hasWs: true, wsPath: '/ws/core' },
   { name: 'comm', port: 8000, useCoreService: true, apiRewrite: (path) => path.replace(/^\/comm\/api/, '/api/core/comm') },
-  { name: 'iam', port: 8000, useCoreService: true, apiRewrite: (path) => path.replace(/^\/iam\/api/, '/api/core/iam') },
+  { name: 'iam', port: 8000, useCoreService: true, apiRewrite: (path) => path.replace(/^\/iam\/api\/iam/, '/api/core/iam') },
   { name: 'doc', port: 8012, pageRewrite: (path) => path.replace(/^\/doc(\/.*)$/, '/api/doc$1') },
   { name: 'file', port: 8000, useCoreService: true, pageRewrite: (path) => path.replace(/^\/file(\/.*)$/, '/api/core/file$1') },
   { name: 'mail', port: 8000, useCoreService: true, pageRewrite: (path) => path.replace(/^\/mail(\/.*)$/, '/api/core/comm/mail$1') },
-  { name: 'notification', port: 8000, useCoreService: true, pageRewrite: (path) => path.replace(/^\/notification(\/.*)$/, '/api/core/comm/notify$1'), apiRewrite: (path) => path.replace(/^\/notification\/api/, '/api/core/comm/notify') },
+  { name: 'notification', port: 8000, useCoreService: true, pageRewrite: (path) => path.replace(/^\/notification(\/.*)$/, '/api/core/notification$1'), apiRewrite: (path) => path.replace(/^\/notification\/api\/v1/, '/api/core/notification').replace(/^\/notification\/api/, '/api/core/notification') },
   { name: 'im', port: 8000, useCoreService: true, pageRewrite: (path) => path.replace(/^\/im(\/.*)$/, '/api/core/comm/im$1') },
   { name: 'erp', port: 8010, apiRewrite: (path) => path.replace(/^\/erp\/system/, '/api/erp') },
   { name: 'finance', port: 8011 },
   { name: 'hrm', port: 8020 },
   { name: 'pm', port: 8023 },
   { name: 'crm', port: 8029 },
-  { name: 'mes', port: 8030, hasWs: true, wsPath: '/mes/ws' },
+  { name: 'mes', port: 8030, hasWs: true, wsPath: '/ws/mes' },
   { name: 'pdm', port: 8031 },
   { name: 'scm', port: 8040 },
   { name: 'wms', port: 8041 },
@@ -48,18 +50,18 @@ const services: ServiceConfig[] = [
   { name: 'qms', port: 8050 },
   { name: 'lims', port: 8051 },
   { name: 'ehs', port: 8052 },
-  { name: 'rd', port: 8053 },
-  { name: 'bi', port: 8060 },
+  { name: 'rs', port: 8053 },
+  { name: 'bi', port: 8060, hasWs: true, wsPath: '/ws/bi' },
   { name: 'report', port: 8060, skipPluginHealth: true },
   { name: 'monitor', port: 8062, apiRewrite: (path) => path.replace(/^\/monitor\/api/, '/api/monitor') },
   { name: 'portal', port: 8063 },
   { name: 'mobile', port: 8070 },
-  { name: 'gis', port: 8071, hasWs: true, wsPath: '/gis/ws', wsRewrite: (path) => path.replace(/^\/gis\/ws/, '/ws/gis') },
+  { name: 'gis', port: 8071, hasWs: true, wsPath: '/ws/gis' },
   { name: 'integration', port: 8072 },
   { name: 'master', port: 8000, useCoreService: true, apiRewrite: (path) => path.replace(/^\/master\/api/, '/api') },
   { name: 'migration', port: 8000, useCoreService: true, apiRewrite: (path) => path.replace(/^\/migration\/api/, '/api') },
-  { name: 'ai', port: 8013, skipPluginHealth: true },
-  { name: 'flow', port: 8000, useCoreService: true, apiRewrite: (path) => path.replace(/^\/flow\/api/, '/api/core/flow'), pageRewrite: (path) => path.replace(/^\/flow/, '/api/core/flow') },
+  { name: 'ai', port: 8064, skipPluginHealth: true },
+  { name: 'flow', port: 8000, useCoreService: true, pageRewrite: (path) => path.replace(/^\/flow/, '/api/core/flow') },
   { name: 'manufacturing', port: 8030, skipPluginHealth: true },
 ];
 
@@ -69,7 +71,6 @@ const isPageRequest = (req: IncomingMessage): boolean => {
   if (url.includes('.') && !url.includes('?')) return false;
   if (url.startsWith('/api/') || url.startsWith('/ws/')) return false;
   if (url.startsWith('/src/')) return false;
-  if (url.startsWith('/notification/')) return false;
   if (url.endsWith('/health')) return false;
   if (url.includes('/api/')) return false;
   if (accept.includes('text/html') && req.method === 'GET') return true;
@@ -174,12 +175,13 @@ const createHealthProxyConfig = (serviceName: string, target: string) => ({
   configure: createProxyLogger(serviceName, target),
 });
 
-const createWsProxyConfig = (serviceName: string, target: string, wsPath?: string) => ({
+const createWsProxyConfig = (serviceName: string, target: string, wsPath?: string, wsRewrite?: (path: string) => string) => ({
   target,
   changeOrigin: true,
   ws: true,
   proxyTimeout: 60000,
   timeout: 60000,
+  rewrite: wsRewrite,
   configure: (proxy: any) => {
     proxy.on('proxyReq', (proxyReq: any, req: IncomingMessage) => {
       if (req.headers['upgrade'] && req.headers['upgrade'].toLowerCase() === 'websocket') {
@@ -230,7 +232,7 @@ const generateServiceProxies = (services: ServiceConfig[]) => {
       }
 
       if (service.hasWs && service.wsPath) {
-        proxyConfig[service.wsPath] = createWsProxyConfig(serviceName, target);
+        proxyConfig[service.wsPath] = createWsProxyConfig(serviceName, target, service.wsPath, service.wsRewrite);
       }
     } else {
       proxyConfig[`/${serviceName}/api`] = service.apiRewrite
@@ -274,9 +276,63 @@ const generateServiceProxies = (services: ServiceConfig[]) => {
       }
 
       if (service.hasWs && service.wsPath) {
-        proxyConfig[service.wsPath] = createWsProxyConfig(serviceName, target);
+        proxyConfig[service.wsPath] = createWsProxyConfig(serviceName, target, service.wsPath, service.wsRewrite);
       }
     }
+  });
+
+  return proxyConfig;
+};
+
+const generateLegacyRewrites = () => {
+  const proxyConfig: Record<string, any> = {};
+
+  (['iam','flow','file','mail','im','notification','master','migration','comm'] as const).forEach((svc) => {
+    proxyConfig[`/api/core/${svc}/v1`] = {
+      target: 'http://localhost:8000',
+      changeOrigin: true,
+      rewrite: (p: string) => p.replace(`/api/core/${svc}/v1`, `/api/core/${svc}`),
+      configure: createProxyLogger(`legacy-${svc}`, 'http://localhost:8000'),
+    };
+  });
+
+  const group2SvcMap: Record<string, number> = {
+    erp: 8010, finance: 8011, doc: 8012, ai: 8013, hrm: 8020, pm: 8023, crm: 8029,
+    mes: 8030, pdm: 8031, scm: 8040, wms: 8041, srm: 8042, qms: 8050, lims: 8051,
+    ehs: 8052, rd: 8053, bi: 8060, report: 8061, monitor: 8062, portal: 8063,
+    mobile: 8070, gis: 8071, integration: 8072
+  };
+  Object.entries(group2SvcMap).forEach(([svc, port]) => {
+    proxyConfig[`/api/core/${svc}/v1`] = {
+      target: `http://localhost:${port}`,
+      changeOrigin: true,
+      rewrite: (p: string) => p.replace(`/api/core/${svc}/v1`, `/api/${svc}`),
+      configure: createProxyLogger(`legacy-${svc}`, `http://localhost:${port}`),
+    };
+    proxyConfig[`/api/core/${svc}/`] = {
+      target: `http://localhost:${port}`,
+      changeOrigin: true,
+      rewrite: (p: string) => p.replace(`/api/core/${svc}`, `/api/${svc}`),
+      configure: createProxyLogger(`core-legacy-${svc}`, `http://localhost:${port}`),
+    };
+  });
+
+  const legacyV1SvcMap: Record<string, { target: string; rewrite: (p: string) => string }> = {
+    auth: { target: 'http://localhost:8000', rewrite: (p) => p.replace('/api/v1/auth', '/api/core/iam/auth') },
+    users: { target: 'http://localhost:8000', rewrite: (p) => p.replace('/api/v1/users', '/api/core/iam/users') },
+    roles: { target: 'http://localhost:8000', rewrite: (p) => p.replace('/api/v1/roles', '/api/core/iam/roles') },
+    permissions: { target: 'http://localhost:8000', rewrite: (p) => p.replace('/api/v1/permissions', '/api/core/iam/permissions') },
+    employees: { target: 'http://localhost:8020', rewrite: (p) => p.replace('/api/v1/employees', '/api/hrm/employees') },
+    departments: { target: 'http://localhost:8020', rewrite: (p) => p.replace('/api/v1/departments', '/api/hrm/departments') },
+    health: { target: 'http://localhost:8000', rewrite: (p) => p.replace('/api/v1/health', '/health') },
+  };
+  Object.entries(legacyV1SvcMap).forEach(([svc, cfg]) => {
+    proxyConfig[`/api/v1/${svc}`] = {
+      target: cfg.target,
+      changeOrigin: true,
+      rewrite: cfg.rewrite,
+      configure: createProxyLogger(`v1-legacy-${svc}`, cfg.target),
+    };
   });
 
   return proxyConfig;
@@ -759,6 +815,7 @@ export default defineConfig({
     },
     proxy: {
       ...generateServiceProxies(services),
+      ...generateLegacyRewrites(),
 
       '/api/core/plugins': {
         target: 'http://localhost:8000',
@@ -781,24 +838,6 @@ export default defineConfig({
         rewrite: (path: string) => path.replace(/^\/unified-core/, ''),
         configure: createProxyLogger('unified-core', 'http://localhost:8000'),
       },
-      '/iam/api/auth/': {
-        target: 'http://localhost:8000',
-        changeOrigin: true,
-        rewrite: (path: string) => path.replace(/^\/iam\/api\/auth\//, '/api/core/iam/auth/'),
-        configure: createProxyLogger('iam-auth', 'http://localhost:8000'),
-      },
-      '/iam/auth/': {
-        target: 'http://localhost:8000',
-        changeOrigin: true,
-        rewrite: (path: string) => path.replace(/^\/iam\/auth\//, '/api/core/iam/auth/'),
-        configure: createProxyLogger('iam-auth', 'http://localhost:8000'),
-      },
-      '/notification/v1': {
-        target: 'http://localhost:8000',
-        changeOrigin: true,
-        rewrite: (path: string) => path.replace(/^\/notification\/v1/, '/api/v1'),
-        configure: createProxyLogger('notification', 'http://localhost:8000'),
-      },
       '/health': { 
         target: 'http://localhost:8000', 
         changeOrigin: true,
@@ -813,7 +852,7 @@ export default defineConfig({
       '/master/monitor/': {
         target: 'http://localhost:8062',
         changeOrigin: true,
-        rewrite: (path: string) => path.replace(/^\/master\/monitor/, '/api/v1/monitor'),
+        rewrite: (path: string) => path.replace(/^\/master\/monitor/, '/api/monitor'),
         configure: createProxyLogger('monitor', 'http://localhost:8062'),
       },
       '/migration/health': {

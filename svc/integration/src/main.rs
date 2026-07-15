@@ -22,7 +22,7 @@ use uuid::Uuid;
 
 use topems_shared::{
     auth_middleware, build_health_response, create_cors_layer, init_telemetry, rls_middleware,
-    telemetry_middleware, ApiResponse, AuthState, RateLimitConfig, RateLimitMiddleware,
+    telemetry_middleware, wrap_group2_router, ApiResponse, AuthState, RouteCompatConfig,
     ServiceHealth,
 };
 
@@ -149,54 +149,6 @@ pub struct CreateWmsScmSyncRequest {
     pub unit: Option<String>,
 }
 
-#[derive(Debug, Clone, Serialize, Deserialize, sqlx::FromRow)]
-pub struct CrmErpSync {
-    pub id: Uuid,
-    pub crm_customer_id: Uuid,
-    pub erp_customer_id: Option<Uuid>,
-    pub customer_name: String,
-    pub customer_code: Option<String>,
-    pub contact_info: Option<serde_json::Value>,
-    pub synced: bool,
-    pub sync_status: String,
-    pub sync_error: Option<String>,
-    pub last_synced_at: Option<DateTime<Utc>>,
-    pub created_at: DateTime<Utc>,
-    pub updated_at: DateTime<Utc>,
-}
-
-#[derive(Debug, Clone, Serialize, Deserialize)]
-pub struct CreateCrmErpSyncRequest {
-    pub crm_customer_id: String,
-    pub customer_name: String,
-    pub customer_code: Option<String>,
-    pub contact_info: Option<serde_json::Value>,
-}
-
-#[derive(Debug, Clone, Serialize, Deserialize, sqlx::FromRow)]
-pub struct HrmFinanceSync {
-    pub id: Uuid,
-    pub hrm_employee_id: Uuid,
-    pub finance_employee_id: Option<Uuid>,
-    pub employee_name: String,
-    pub employee_code: String,
-    pub payroll_data: Option<serde_json::Value>,
-    pub synced: bool,
-    pub sync_status: String,
-    pub sync_error: Option<String>,
-    pub last_synced_at: Option<DateTime<Utc>>,
-    pub created_at: DateTime<Utc>,
-    pub updated_at: DateTime<Utc>,
-}
-
-#[derive(Debug, Clone, Serialize, Deserialize)]
-pub struct CreateHrmFinanceSyncRequest {
-    pub hrm_employee_id: String,
-    pub employee_name: String,
-    pub employee_code: String,
-    pub payroll_data: Option<serde_json::Value>,
-}
-
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct SyncStats {
     pub lims_qms_total: i64,
@@ -220,12 +172,8 @@ struct AppState {
     erp_url: String,
     wms_url: String,
     scm_url: String,
-    crm_url: String,
-    finance_url: String,
-    hrm_url: String,
     auth_state: AuthState,
     mes_erp_sync_service: std::sync::Arc<MesErpSyncService>,
-    rate_limit_middleware: std::sync::Arc<RateLimitMiddleware>,
 }
 
 impl FromRef<AppState> for AuthState {
@@ -272,24 +220,14 @@ async fn main() {
         }
     };
 
-    let lims_url =
-        std::env::var("LIMS_URL").unwrap_or_else(|_| "http://topems-lims:8052".to_string());
-    let qms_url = std::env::var("QMS_URL").unwrap_or_else(|_| "http://topems-qms:8052".to_string());
-    let mes_url = std::env::var("MES_URL").unwrap_or_else(|_| "http://topems-mes:8030".to_string());
-    let erp_url = std::env::var("ERP_URL").unwrap_or_else(|_| "http://topems-erp:8010".to_string());
-    let wms_url = std::env::var("WMS_URL").unwrap_or_else(|_| "http://topems-wms:8042".to_string());
-    let scm_url = std::env::var("SCM_URL").unwrap_or_else(|_| "http://topems-scm:8040".to_string());
-    let crm_url = std::env::var("CRM_URL").unwrap_or_else(|_| "http://topems-crm:8020".to_string());
-    let finance_url =
-        std::env::var("FINANCE_URL").unwrap_or_else(|_| "http://topems-finance:8015".to_string());
-    let hrm_url = std::env::var("HRM_URL").unwrap_or_else(|_| "http://topems-hrm:8012".to_string());
-
-    let rate_limit_config = RateLimitConfig {
-        enabled: true,
-        requests: 100,
-        window_secs: 60,
-    };
-    let rate_limit_middleware = std::sync::Arc::new(RateLimitMiddleware::new(rate_limit_config));
+    let lims_url = std::env::var("QUALITY_ASSURANCE_URL")
+        .unwrap_or_else(|_| "http://localhost:8052".to_string());
+    let qms_url = std::env::var("QUALITY_ASSURANCE_URL")
+        .unwrap_or_else(|_| "http://localhost:8052".to_string());
+    let mes_url = std::env::var("MES_URL").unwrap_or_else(|_| "http://localhost:8030".to_string());
+    let erp_url = std::env::var("ERP_URL").unwrap_or_else(|_| "http://localhost:8010".to_string());
+    let wms_url = std::env::var("WMS_URL").unwrap_or_else(|_| "http://localhost:8042".to_string());
+    let scm_url = std::env::var("SCM_URL").unwrap_or_else(|_| "http://localhost:8040".to_string());
 
     let app_state = AppState {
         pool: pool.clone(),
@@ -299,12 +237,8 @@ async fn main() {
         erp_url: erp_url.clone(),
         wms_url,
         scm_url,
-        crm_url,
-        finance_url,
-        hrm_url,
         auth_state: AuthState::from_env(),
         mes_erp_sync_service: std::sync::Arc::new(MesErpSyncService::new(pool, mes_url, erp_url)),
-        rate_limit_middleware,
     };
 
     let cors = create_cors_layer();
@@ -317,152 +251,141 @@ async fn main() {
         .with_state(app_state.clone());
 
     let protected_routes = Router::new()
-        .route("/api/core/integration/stats", get(get_sync_stats))
-        .route("/api/core/integration/events", get(list_events))
-        .route("/api/core/integration/events", post(create_event))
-        .route("/api/core/integration/lims-qms", get(list_lims_qms_sync))
-        .route("/api/core/integration/lims-qms", post(create_lims_qms_sync))
+        .route("/api/core/integration/v1/stats", get(get_sync_stats))
+        .route("/api/core/integration/v1/events", get(list_events))
+        .route("/api/core/integration/v1/events", post(create_event))
+        .route("/api/core/integration/v1/lims-qms", get(list_lims_qms_sync))
         .route(
-            "/api/core/integration/lims-qms/{id}",
+            "/api/core/integration/v1/lims-qms",
+            post(create_lims_qms_sync),
+        )
+        .route(
+            "/api/core/integration/v1/lims-qms/{id}",
             get(get_lims_qms_sync),
         )
         .route(
-            "/api/core/integration/lims-qms/{id}/sync",
+            "/api/core/integration/v1/lims-qms/{id}/sync",
             post(sync_lims_qms),
         )
-        .route("/api/core/integration/mes-erp", get(list_mes_erp_sync))
-        .route("/api/core/integration/mes-erp", post(create_mes_erp_sync))
-        .route("/api/core/integration/mes-erp/{id}", get(get_mes_erp_sync))
+        .route("/api/core/integration/v1/mes-erp", get(list_mes_erp_sync))
         .route(
-            "/api/core/integration/mes-erp/{id}/sync",
+            "/api/core/integration/v1/mes-erp",
+            post(create_mes_erp_sync),
+        )
+        .route(
+            "/api/core/integration/v1/mes-erp/{id}",
+            get(get_mes_erp_sync),
+        )
+        .route(
+            "/api/core/integration/v1/mes-erp/{id}/sync",
             post(sync_mes_erp),
         )
         .route(
-            "/api/core/integration/mes-erp/sync/erp-to-mes",
+            "/api/core/integration/v1/mes-erp/sync/erp-to-mes",
             post(sync_erp_order_to_mes),
         )
         .route(
-            "/api/core/integration/mes-erp/sync/mes-to-erp",
+            "/api/core/integration/v1/mes-erp/sync/mes-to-erp",
             post(sync_mes_progress_to_erp),
         )
         .route(
-            "/api/core/integration/mes-erp/{id}/retry",
+            "/api/core/integration/v1/mes-erp/{id}/retry",
             post(retry_mes_erp_sync),
         )
         .route(
-            "/api/core/integration/mes-erp/{id}/logs",
+            "/api/core/integration/v1/mes-erp/{id}/logs",
             get(get_mes_erp_sync_logs),
         )
         .route(
-            "/api/core/integration/mes-erp/records",
+            "/api/core/integration/v1/mes-erp/records",
             get(list_mes_erp_sync_records),
         )
-        .route("/api/core/integration/wms-scm", get(list_wms_scm_sync))
-        .route("/api/core/integration/wms-scm", post(create_wms_scm_sync))
-        .route("/api/core/integration/wms-scm/{id}", get(get_wms_scm_sync))
+        .route("/api/core/integration/v1/wms-scm", get(list_wms_scm_sync))
         .route(
-            "/api/core/integration/wms-scm/{id}/sync",
+            "/api/core/integration/v1/wms-scm",
+            post(create_wms_scm_sync),
+        )
+        .route(
+            "/api/core/integration/v1/wms-scm/{id}",
+            get(get_wms_scm_sync),
+        )
+        .route(
+            "/api/core/integration/v1/wms-scm/{id}/sync",
             post(sync_wms_scm),
         )
-        // CRM↔ERP 客户数据同步 API
-        .route("/api/core/integration/crm-erp", get(list_crm_erp_sync))
-        .route("/api/core/integration/crm-erp", post(create_crm_erp_sync))
-        .route("/api/core/integration/crm-erp/{id}", get(get_crm_erp_sync))
-        .route(
-            "/api/core/integration/crm-erp/{id}/sync",
-            post(sync_crm_erp),
-        )
-        // HRM↔Finance 薪资数据同步 API
-        .route(
-            "/api/core/integration/hrm-finance",
-            get(list_hrm_finance_sync),
-        )
-        .route(
-            "/api/core/integration/hrm-finance",
-            post(create_hrm_finance_sync),
-        )
-        .route(
-            "/api/core/integration/hrm-finance/{id}",
-            get(get_hrm_finance_sync),
-        )
-        .route(
-            "/api/core/integration/hrm-finance/{id}/sync",
-            post(sync_hrm_finance),
-        )
         // MES↔QMS 质检数据集成 API
-        .route("/api/core/integration/mes-qms", get(list_mes_qms_sync_api))
         .route(
-            "/api/core/integration/mes-qms/{id}",
+            "/api/core/integration/v1/mes-qms",
+            get(list_mes_qms_sync_api),
+        )
+        .route(
+            "/api/core/integration/v1/mes-qms/{id}",
             get(get_mes_qms_sync_api),
         )
         .route(
-            "/api/core/integration/mes-qms/stats",
+            "/api/core/integration/v1/mes-qms/stats",
             get(get_mes_qms_stats_api),
         )
         .route(
-            "/api/core/integration/mes-qms/trigger-inspection",
+            "/api/core/integration/v1/mes-qms/trigger-inspection",
             post(trigger_qms_inspection_api),
         )
         .route(
-            "/api/core/integration/mes-qms/sync-result",
+            "/api/core/integration/v1/mes-qms/sync-result",
             post(sync_quality_result_api),
         )
         .route(
-            "/api/core/integration/mes-qms/sync-trace",
+            "/api/core/integration/v1/mes-qms/sync-trace",
             post(sync_trace_chain_api),
         )
         .route(
-            "/api/core/integration/mes-qms/defect-handling",
+            "/api/core/integration/v1/mes-qms/defect-handling",
             post(defect_handling_api),
         )
         .route(
-            "/api/core/integration/mes-qms/{id}/retry",
+            "/api/core/integration/v1/mes-qms/{id}/retry",
             post(retry_mes_qms_sync_api),
         )
         // 转换规则 API
         .route(
-            "/api/core/integration/rules",
+            "/api/core/integration/v1/rules",
             get(list_conversion_rules_api),
         )
         .route(
-            "/api/core/integration/rules",
+            "/api/core/integration/v1/rules",
             post(create_conversion_rule_api),
         )
         .route(
-            "/api/core/integration/rules/{id}",
+            "/api/core/integration/v1/rules/{id}",
             get(get_conversion_rule_api),
         )
         .route(
-            "/api/core/integration/rules/{id}",
+            "/api/core/integration/v1/rules/{id}",
             put(update_conversion_rule_api),
         )
         .route(
-            "/api/core/integration/rules/{id}",
+            "/api/core/integration/v1/rules/{id}",
             delete(delete_conversion_rule_api),
         )
         .route(
-            "/api/core/integration/rules/{id}/executions",
+            "/api/core/integration/v1/rules/{id}/executions",
             get(get_rule_executions_api),
         )
         .route(
-            "/api/core/integration/rules/{id}/execute",
+            "/api/core/integration/v1/rules/{id}/execute",
             post(execute_conversion_rule_api),
         )
         .route(
-            "/api/core/integration/rules/{id}/enable",
+            "/api/core/integration/v1/rules/{id}/enable",
             post(enable_conversion_rule_api),
         )
         .route(
-            "/api/core/integration/rules/{id}/disable",
+            "/api/core/integration/v1/rules/{id}/disable",
             post(disable_conversion_rule_api),
         )
         .layer(axum::middleware::from_fn_with_state(
             app_state.auth_state.clone(),
             auth_middleware,
-        ))
-        .layer(axum::middleware::from_fn_with_state(
-            app_state.clone(),
-            rate_limit_middleware_fn,
         ))
         .layer(axum::middleware::from_fn_with_state(
             app_state.pool.clone(),
@@ -475,6 +398,9 @@ async fn main() {
         .merge(protected_routes)
         .layer(axum::middleware::from_fn(telemetry_middleware))
         .layer(cors);
+
+    let cfg = RouteCompatConfig::new("integration", "/api/core/integration", &[]);
+    let app = wrap_group2_router(app, cfg);
 
     let port = std::env::var("INTEGRATION_PORT")
         .or_else(|_| std::env::var("SERVER_PORT"))
@@ -525,18 +451,6 @@ async fn init_database(pool: &PgPool) -> Result<(), sqlx::Error> {
     init_conversion_rules_table(pool).await?;
     mes_qms_integration::init_mes_qms_tables(pool).await?;
     Ok(())
-}
-
-async fn rate_limit_middleware_fn(
-    State(state): State<AppState>,
-    req: axum::http::Request<axum::body::Body>,
-    next: axum::middleware::Next,
-) -> axum::http::Response<axum::body::Body> {
-    state
-        .rate_limit_middleware
-        .clone()
-        .middleware(req, next)
-        .await
 }
 
 async fn get_sync_stats(State(state): State<AppState>) -> Json<ApiResponse<SyncStats>> {
@@ -1784,296 +1698,4 @@ async fn list_mes_erp_sync_records(
             Json(ApiResponse::error(500, &format!("获取同步记录失败: {}", e)))
         }
     }
-}
-
-// ==================== CRM↔ERP Customer Sync API ====================
-
-async fn list_crm_erp_sync(State(state): State<AppState>) -> Json<ApiResponse<Vec<CrmErpSync>>> {
-    match sqlx::query_as::<_, CrmErpSync>(
-        "SELECT id, crm_customer_id, erp_customer_id, customer_name, customer_code, 
-                contact_info, synced, sync_status, sync_error, last_synced_at, 
-                created_at, updated_at
-           FROM crm_erp_sync ORDER BY updated_at DESC LIMIT 100",
-    )
-    .fetch_all(&state.pool)
-    .await
-    {
-        Ok(syncs) => Json(ApiResponse::success(
-            syncs,
-            "CRM↔ERP syncs retrieved successfully",
-        )),
-        Err(e) => {
-            tracing::error!("Failed to fetch CRM↔ERP syncs: {}", e);
-            Json(ApiResponse::error(
-                500,
-                &format!("Failed to fetch CRM↔ERP syncs: {}", e),
-            ))
-        }
-    }
-}
-
-async fn create_crm_erp_sync(
-    State(state): State<AppState>,
-    Json(req): Json<CreateCrmErpSyncRequest>,
-) -> Json<ApiResponse<CrmErpSync>> {
-    let id = Uuid::new_v4();
-    let now = Utc::now();
-
-    let crm_uuid = match Uuid::parse_str(&req.crm_customer_id) {
-        Ok(u) => u,
-        Err(e) => {
-            return Json(ApiResponse::error(
-                400,
-                &format!("Invalid CRM customer ID: {}", e),
-            ))
-        }
-    };
-
-    match sqlx::query_as::<_, CrmErpSync>(
-        "INSERT INTO crm_erp_sync (
-            id, crm_customer_id, customer_name, customer_code, contact_info, 
-            synced, sync_status, created_at, updated_at
-        ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)
-        RETURNING id, crm_customer_id, erp_customer_id, customer_name, customer_code, 
-                  contact_info, synced, sync_status, sync_error, last_synced_at, 
-                  created_at, updated_at",
-    )
-    .bind(id)
-    .bind(crm_uuid)
-    .bind(req.customer_name)
-    .bind(req.customer_code)
-    .bind(req.contact_info)
-    .bind(false)
-    .bind("pending")
-    .bind(now)
-    .bind(now)
-    .fetch_one(&state.pool)
-    .await
-    {
-        Ok(sync) => Json(ApiResponse::success(
-            sync,
-            "CRM↔ERP sync created successfully",
-        )),
-        Err(e) => {
-            tracing::error!("Failed to create CRM↔ERP sync: {}", e);
-            Json(ApiResponse::error(
-                500,
-                &format!("Failed to create CRM↔ERP sync: {}", e),
-            ))
-        }
-    }
-}
-
-async fn get_crm_erp_sync(
-    State(state): State<AppState>,
-    Path(id): Path<Uuid>,
-) -> Json<ApiResponse<CrmErpSync>> {
-    match sqlx::query_as::<_, CrmErpSync>(
-        "SELECT id, crm_customer_id, erp_customer_id, customer_name, customer_code, 
-                contact_info, synced, sync_status, sync_error, last_synced_at, 
-                created_at, updated_at
-           FROM crm_erp_sync WHERE id = $1",
-    )
-    .bind(id)
-    .fetch_one(&state.pool)
-    .await
-    {
-        Ok(sync) => Json(ApiResponse::success(sync, "CRM↔ERP sync found")),
-        Err(sqlx::Error::RowNotFound) => Json(ApiResponse::error(404, "Sync not found")),
-        Err(e) => {
-            tracing::error!("Failed to fetch sync: {}", e);
-            Json(ApiResponse::error(
-                500,
-                &format!("Failed to fetch sync: {}", e),
-            ))
-        }
-    }
-}
-
-async fn sync_crm_erp(
-    State(state): State<AppState>,
-    Path(id): Path<Uuid>,
-) -> Json<ApiResponse<CrmErpSync>> {
-    let now = Utc::now();
-    let erp_customer_id = Uuid::new_v4();
-
-    let updated_sync = match sqlx::query_as::<_, CrmErpSync>(
-        "UPDATE crm_erp_sync SET 
-            erp_customer_id = $2, synced = $3, sync_status = $4, 
-            sync_error = NULL, last_synced_at = $5, updated_at = $6
-         WHERE id = $1
-         RETURNING id, crm_customer_id, erp_customer_id, customer_name, customer_code, 
-                  contact_info, synced, sync_status, sync_error, last_synced_at, 
-                  created_at, updated_at",
-    )
-    .bind(id)
-    .bind(Some(erp_customer_id))
-    .bind(true)
-    .bind("synced")
-    .bind(Some(now))
-    .bind(now)
-    .fetch_one(&state.pool)
-    .await
-    {
-        Ok(s) => s,
-        Err(e) => {
-            tracing::error!("Failed to update sync: {}", e);
-            return Json(ApiResponse::error(
-                500,
-                &format!("Failed to update sync: {}", e),
-            ));
-        }
-    };
-
-    Json(ApiResponse::success(
-        updated_sync,
-        "CRM↔ERP sync completed successfully",
-    ))
-}
-
-// ==================== HRM↔Finance Payroll Sync API ====================
-
-async fn list_hrm_finance_sync(
-    State(state): State<AppState>,
-) -> Json<ApiResponse<Vec<HrmFinanceSync>>> {
-    match sqlx::query_as::<_, HrmFinanceSync>(
-        "SELECT id, hrm_employee_id, finance_employee_id, employee_name, employee_code, 
-                payroll_data, synced, sync_status, sync_error, last_synced_at, 
-                created_at, updated_at
-           FROM hrm_finance_sync ORDER BY updated_at DESC LIMIT 100",
-    )
-    .fetch_all(&state.pool)
-    .await
-    {
-        Ok(syncs) => Json(ApiResponse::success(
-            syncs,
-            "HRM↔Finance syncs retrieved successfully",
-        )),
-        Err(e) => {
-            tracing::error!("Failed to fetch HRM↔Finance syncs: {}", e);
-            Json(ApiResponse::error(
-                500,
-                &format!("Failed to fetch HRM↔Finance syncs: {}", e),
-            ))
-        }
-    }
-}
-
-async fn create_hrm_finance_sync(
-    State(state): State<AppState>,
-    Json(req): Json<CreateHrmFinanceSyncRequest>,
-) -> Json<ApiResponse<HrmFinanceSync>> {
-    let id = Uuid::new_v4();
-    let now = Utc::now();
-
-    let hrm_uuid = match Uuid::parse_str(&req.hrm_employee_id) {
-        Ok(u) => u,
-        Err(e) => {
-            return Json(ApiResponse::error(
-                400,
-                &format!("Invalid HRM employee ID: {}", e),
-            ))
-        }
-    };
-
-    match sqlx::query_as::<_, HrmFinanceSync>(
-        "INSERT INTO hrm_finance_sync (
-            id, hrm_employee_id, employee_name, employee_code, payroll_data, 
-            synced, sync_status, created_at, updated_at
-        ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)
-        RETURNING id, hrm_employee_id, finance_employee_id, employee_name, employee_code, 
-                  payroll_data, synced, sync_status, sync_error, last_synced_at, 
-                  created_at, updated_at",
-    )
-    .bind(id)
-    .bind(hrm_uuid)
-    .bind(req.employee_name)
-    .bind(req.employee_code)
-    .bind(req.payroll_data)
-    .bind(false)
-    .bind("pending")
-    .bind(now)
-    .bind(now)
-    .fetch_one(&state.pool)
-    .await
-    {
-        Ok(sync) => Json(ApiResponse::success(
-            sync,
-            "HRM↔Finance sync created successfully",
-        )),
-        Err(e) => {
-            tracing::error!("Failed to create HRM↔Finance sync: {}", e);
-            Json(ApiResponse::error(
-                500,
-                &format!("Failed to create HRM↔Finance sync: {}", e),
-            ))
-        }
-    }
-}
-
-async fn get_hrm_finance_sync(
-    State(state): State<AppState>,
-    Path(id): Path<Uuid>,
-) -> Json<ApiResponse<HrmFinanceSync>> {
-    match sqlx::query_as::<_, HrmFinanceSync>(
-        "SELECT id, hrm_employee_id, finance_employee_id, employee_name, employee_code, 
-                payroll_data, synced, sync_status, sync_error, last_synced_at, 
-                created_at, updated_at
-           FROM hrm_finance_sync WHERE id = $1",
-    )
-    .bind(id)
-    .fetch_one(&state.pool)
-    .await
-    {
-        Ok(sync) => Json(ApiResponse::success(sync, "HRM↔Finance sync found")),
-        Err(sqlx::Error::RowNotFound) => Json(ApiResponse::error(404, "Sync not found")),
-        Err(e) => {
-            tracing::error!("Failed to fetch sync: {}", e);
-            Json(ApiResponse::error(
-                500,
-                &format!("Failed to fetch sync: {}", e),
-            ))
-        }
-    }
-}
-
-async fn sync_hrm_finance(
-    State(state): State<AppState>,
-    Path(id): Path<Uuid>,
-) -> Json<ApiResponse<HrmFinanceSync>> {
-    let now = Utc::now();
-    let finance_employee_id = Uuid::new_v4();
-
-    let updated_sync = match sqlx::query_as::<_, HrmFinanceSync>(
-        "UPDATE hrm_finance_sync SET 
-            finance_employee_id = $2, synced = $3, sync_status = $4, 
-            sync_error = NULL, last_synced_at = $5, updated_at = $6
-         WHERE id = $1
-         RETURNING id, hrm_employee_id, finance_employee_id, employee_name, employee_code, 
-                  payroll_data, synced, sync_status, sync_error, last_synced_at, 
-                  created_at, updated_at",
-    )
-    .bind(id)
-    .bind(Some(finance_employee_id))
-    .bind(true)
-    .bind("synced")
-    .bind(Some(now))
-    .bind(now)
-    .fetch_one(&state.pool)
-    .await
-    {
-        Ok(s) => s,
-        Err(e) => {
-            tracing::error!("Failed to update sync: {}", e);
-            return Json(ApiResponse::error(
-                500,
-                &format!("Failed to update sync: {}", e),
-            ));
-        }
-    };
-
-    Json(ApiResponse::success(
-        updated_sync,
-        "HRM↔Finance sync completed successfully",
-    ))
 }

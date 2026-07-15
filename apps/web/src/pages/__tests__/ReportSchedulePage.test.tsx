@@ -111,18 +111,7 @@ vi.mock('@/store', () => ({
   useToggleSidebarCollapsed: vi.fn(),
   useSetSidebarCollapsed: vi.fn(),
 }));
-
-const mockAddNotification = vi.fn();
-
-const mockSchedules = [
-  { id: 'sch-001', name: '销售月报', cron: '0 0 1 * *', status: 'active', template_id: 'tpl-001' },
-];
-
-const renderWithProviders = (ui: React.ReactElement) => render(<BrowserRouter>{ui}</BrowserRouter>);
-
-describe('ReportSchedulePage', () => {
-  beforeEach(() => {
-    (useNotificationStore as any).getState = vi.fn().mockReturnValue({
+    (useNotificationStore.getState as vi.Mock).mockReturnValue({
       addNotification: mockAddNotification,
       notifications: [],
       removeNotification: vi.fn(),
@@ -132,46 +121,53 @@ describe('ReportSchedulePage', () => {
       success: true,
       data: mockSchedules,
     });
+
     (reportApi.createSchedule as vi.Mock).mockResolvedValue({
       success: true,
       data: { id: 'sch-002' },
     });
+
     (reportApi.deleteSchedule as vi.Mock).mockResolvedValue({
       success: true,
     });
+
     (reportApi.listTemplates as vi.Mock).mockResolvedValue({
       success: true,
       data: [],
     });
+
     (reportApi.executeSchedule as vi.Mock).mockResolvedValue({
       success: true,
     });
+
     (reportApi.getExecutionHistory as vi.Mock).mockResolvedValue({
       success: true,
       data: [],
     });
   });
 
-  it('should render page title', async () => {
+describe('ReportSchedulePage', () => {
+it('should render page title', async () => {
     renderWithProviders(<ReportSchedulePage />);
     expect(
       await screen.findByRole('heading', { name: '定时任务管理' }, { timeout: 10000 })
     ).toBeInTheDocument();
-  });
+});
 
-  it('should render schedule list', async () => {
+it('should render schedule list', async () => {
     renderWithProviders(<ReportSchedulePage />);
     await waitFor(() => {
       expect(screen.getByText('销售月报')).toBeInTheDocument();
-    });
   });
+});
 
-  it('should handle API error', async () => {
+it('should handle API error', async () => {
     (reportApi.listSchedules as vi.Mock).mockRejectedValue(new Error('Network error'));
     renderWithProviders(<ReportSchedulePage />);
 
     await waitFor(() => {
-      expect(screen.getByText('Network error')).toBeInTheDocument();
-    });
+      expect(screen.getByText('获取定时任务列表失败')).toBeInTheDocument();
   });
+});
+;
 });

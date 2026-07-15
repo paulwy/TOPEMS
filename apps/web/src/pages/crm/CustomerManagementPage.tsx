@@ -9,8 +9,11 @@ import {
   Typography,
   Grid,
   OutlinedInput,
+  useTheme,
+  useMediaQuery,
 } from '@mui/material';
-import { StatusBadge } from '@topems/shared-components';
+import { StatusBadge, Hidden } from '@topems/shared-components';
+import { useResponsive } from '@/hooks/useResponsive';
 import {
   FormField,
   FormSelect,
@@ -85,6 +88,9 @@ const CustomerManagementPage: React.FC = () => {
   const navigate = useNavigate();
   const { addNotification } = useNotificationStore();
   const queryClient = useQueryClient();
+  const { isMobile, isTablet, isDesktop } = useResponsive();
+  const theme = useTheme();
+  const fullScreen = useMediaQuery(theme.breakpoints.down('sm'));
 
   const [searchTerm, setSearchTerm] = useState('');
   const [statusFilter, setStatusFilter] = useState<string>('');
@@ -479,56 +485,84 @@ const CustomerManagementPage: React.FC = () => {
   };
 
   const columns = useMemo<ColumnDef<Customer>[]>(
-    () => [
-      {
-        id: 'name',
-        label: '客户名称',
-        render: (row) => (
-          <Typography
-            variant='body2'
-            sx={{ fontWeight: 500 }}
-          >
-            {row.name}
-          </Typography>
-        ),
-      },
-      {
-        id: 'code',
-        label: '客户代码',
-        render: (row) => row.code || '-',
-      },
-      {
-        id: 'industry',
-        label: '行业',
-        render: (row) => row.industry || '-',
-      },
-      {
-        id: 'customer_type',
-        label: '客户类型',
-        render: (row) => getCustomerTypeChip(row.customer_type),
-      },
-      {
-        id: 'rating',
-        label: '评级',
-        render: (row) => getRatingChip(row.rating),
-      },
-      {
-        id: 'phone',
-        label: '电话',
-        render: (row) => row.phone || '-',
-      },
-      {
-        id: 'email',
-        label: '邮箱',
-        render: (row) => row.email || '-',
-      },
-      {
-        id: 'status',
-        label: '状态',
-        render: (row) => getStatusChip(row.status),
-      },
-    ],
-    []
+    () => {
+      const baseColumns = [
+        {
+          id: 'name',
+          label: '客户名称',
+          render: (row: Customer) => (
+            <Typography
+              variant='body2'
+              sx={{ fontWeight: 500 }}
+            >
+              {row.name}
+            </Typography>
+          ),
+        },
+        {
+          id: 'customer_type',
+          label: '客户类型',
+          render: (row: Customer) => getCustomerTypeChip(row.customer_type),
+        },
+        {
+          id: 'status',
+          label: '状态',
+          render: (row: Customer) => getStatusChip(row.status),
+        },
+      ];
+
+      if (isMobile) {
+        return baseColumns;
+      }
+
+      if (isTablet) {
+        return [
+          ...baseColumns.slice(0, 1),
+          {
+            id: 'code',
+            label: '客户代码',
+            render: (row) => row.code || '-',
+          },
+          ...baseColumns.slice(1),
+          {
+            id: 'rating',
+            label: '评级',
+            render: (row) => getRatingChip(row.rating),
+          },
+        ];
+      }
+
+      return [
+        ...baseColumns.slice(0, 1),
+        {
+          id: 'code',
+          label: '客户代码',
+          render: (row) => row.code || '-',
+        },
+        {
+          id: 'industry',
+          label: '行业',
+          render: (row) => row.industry || '-',
+        },
+        ...baseColumns.slice(1),
+        {
+          id: 'rating',
+          label: '评级',
+          render: (row) => getRatingChip(row.rating),
+        },
+        {
+          id: 'phone',
+          label: '电话',
+          render: (row) => row.phone || '-',
+        },
+        {
+          id: 'email',
+          label: '邮箱',
+          render: (row) => row.email || '-',
+        },
+      ];
+    },
+    [isMobile, isTablet]
   );
 
   const rowActions = useMemo<RowAction<Customer>[]>(
@@ -711,7 +745,8 @@ const CustomerManagementPage: React.FC = () => {
         <Dialog
           open={showDialog}
           onClose={() => setShowDialog(false)}
-          maxWidth='lg'
+          maxWidth={isMobile ? 'sm' : 'lg'}
+          fullWidth={isMobile}
         >
           <DialogTitle>{selectedCustomer ? '编辑客户' : '新建客户'}</DialogTitle>
           <DialogContent>
@@ -1004,7 +1039,8 @@ const CustomerManagementPage: React.FC = () => {
         <Dialog
           open={showTagDialog}
           onClose={() => setShowTagDialog(false)}
-          maxWidth='md'
+          maxWidth={isMobile ? 'sm' : 'md'}
+          fullWidth={isMobile}
         >
           <DialogTitle>管理客户标签 - {selectedCustomer?.name}</DialogTitle>
           <DialogContent>

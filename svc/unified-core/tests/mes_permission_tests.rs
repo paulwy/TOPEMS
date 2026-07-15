@@ -7,19 +7,6 @@ use serde_json::{json, Value};
 
 const API_URL: &str = "http://localhost:8000";
 
-/// 检查 API 服务是否可用
-async fn ensure_api_available() -> bool {
-    reqwest::Client::builder()
-        .timeout(std::time::Duration::from_secs(2))
-        .build()
-        .unwrap()
-        .get(format!("{}/api/core/iam/auth/login", API_URL))
-        .send()
-        .await
-        .map(|resp| !resp.status().is_server_error())
-        .unwrap_or(false)
-}
-
 fn create_client() -> Client {
     Client::new()
 }
@@ -27,7 +14,7 @@ fn create_client() -> Client {
 async fn login(username: &str, password: &str) -> Result<String, String> {
     let client = create_client();
     let response = client
-        .post(format!("{}/api/core/iam/auth/login", API_URL))
+        .post(format!("{}/api/core/iam/v1/auth/login", API_URL))
         .json(&json!({ "username": username, "password": password }))
         .send()
         .await
@@ -79,11 +66,8 @@ async fn auth_request(
 }
 
 #[tokio::test]
+#[ignore]
 async fn test_mes_001_view_production_plan() {
-    if !ensure_api_available().await {
-        eprintln!("⏭ 跳过: API服务未运行 ({})", API_URL);
-        return;
-    }
     tracing::info!("测试 MES-001: 查看生产计划");
     let token = login("admin", "admin123").await.expect("管理员登录失败");
     let client = create_client();
@@ -98,11 +82,8 @@ async fn test_mes_001_view_production_plan() {
 }
 
 #[tokio::test]
+#[ignore]
 async fn test_mes_002_create_production_plan() {
-    if !ensure_api_available().await {
-        eprintln!("⏭ 跳过: API服务未运行 ({})", API_URL);
-        return;
-    }
     tracing::info!("测试 MES-002: 创建生产计划");
     let token = login("admin", "admin123").await.expect("管理员登录失败");
     let client = create_client();
@@ -133,11 +114,8 @@ async fn test_mes_002_create_production_plan() {
 }
 
 #[tokio::test]
+#[ignore]
 async fn test_mes_003_view_workshop() {
-    if !ensure_api_available().await {
-        eprintln!("⏭ 跳过: API服务未运行 ({})", API_URL);
-        return;
-    }
     tracing::info!("测试 MES-003: 查看车间信息");
     let token = login("admin", "admin123").await.expect("管理员登录失败");
     let client = create_client();
@@ -152,11 +130,8 @@ async fn test_mes_003_view_workshop() {
 }
 
 #[tokio::test]
+#[ignore]
 async fn test_mes_004_view_machine_status() {
-    if !ensure_api_available().await {
-        eprintln!("⏭ 跳过: API服务未运行 ({})", API_URL);
-        return;
-    }
     tracing::info!("测试 MES-004: 查看设备状态");
     let token = login("admin", "admin123").await.expect("管理员登录失败");
     let client = create_client();
@@ -171,11 +146,8 @@ async fn test_mes_004_view_machine_status() {
 }
 
 #[tokio::test]
+#[ignore]
 async fn test_mes_005_view_production_stats() {
-    if !ensure_api_available().await {
-        eprintln!("⏭ 跳过: API服务未运行 ({})", API_URL);
-        return;
-    }
     tracing::info!("测试 MES-005: 查看生产统计");
     let token = login("admin", "admin123").await.expect("管理员登录失败");
     let client = create_client();
@@ -190,11 +162,8 @@ async fn test_mes_005_view_production_stats() {
 }
 
 #[tokio::test]
+#[ignore]
 async fn test_mes_006_view_quality_control() {
-    if !ensure_api_available().await {
-        eprintln!("⏭ 跳过: API服务未运行 ({})", API_URL);
-        return;
-    }
     tracing::info!("测试 MES-006: 查看质量控制");
     let token = login("admin", "admin123").await.expect("管理员登录失败");
     let client = create_client();
@@ -209,11 +178,8 @@ async fn test_mes_006_view_quality_control() {
 }
 
 #[tokio::test]
+#[ignore]
 async fn run_all_mes_tests_summary() {
-    if !ensure_api_available().await {
-        eprintln!("⏭ 跳过: API服务未运行 ({})", API_URL);
-        return;
-    }
     tracing::info!("========================================");
     tracing::info!("  MES 权限测试套件");
     tracing::info!("========================================");

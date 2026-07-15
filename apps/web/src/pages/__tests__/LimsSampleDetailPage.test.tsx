@@ -2,7 +2,6 @@ import React from 'react';
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { render, screen, waitFor } from '@testing-library/react';
 import { MemoryRouter, Route, Routes } from 'react-router-dom';
-import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import LimsSampleDetailPage from '../lims/LimsSampleDetailPage';
 import { limsApi } from '@/api/lims';
 import { useNotificationStore, useAuthStore } from '@/store';
@@ -98,40 +97,7 @@ vi.mock('@/store', () => ({
   useToggleSidebarCollapsed: vi.fn(),
   useSetSidebarCollapsed: vi.fn(),
 }));
-
-const queryClient = new QueryClient();
-const mockAddNotification = vi.fn();
-
-const mockSampleDetail = {
-  id: 'SMP-2024-001',
-  sample_no: 'SMP-2024-001',
-  name: '土壤样本A',
-  status: 'pending',
-  type: 'soil',
-  source: 'A区',
-  collected_at: '2024-01-10T10:00:00Z',
-  created_at: '2024-01-10T10:00:00Z',
-};
-
-function renderWithProviders() {
-  return render(
-    <QueryClientProvider client={queryClient}>
-      <MemoryRouter initialEntries={['/lims/samples/SMP-2024-001']}>
-        <Routes>
-          <Route
-            path='/lims/samples/:id'
-            element={<LimsSampleDetailPage />}
-          />
-        </Routes>
-      </MemoryRouter>
-    </QueryClientProvider>
-  );
-}
-
-describe('LimsSampleDetailPage', () => {
-  beforeEach(() => {
-    vi.clearAllMocks();
-    (useNotificationStore as vi.Mock).mockReturnValue({
+    (useNotificationStore.getState as vi.Mock).mockReturnValue({
       addNotification: mockAddNotification,
       notifications: [],
       removeNotification: vi.fn(),
@@ -147,32 +113,34 @@ describe('LimsSampleDetailPage', () => {
     });
   });
 
-  it('should render loading state initially', async () => {
-    renderWithProviders();
+describe('LimsSampleDetailPage', () => {
+it('should render loading state initially', async () => {
+    renderWithProviders(<LimsSampleDetailPage />);
     await waitFor(() => {
       expect(screen.getByText('加载中...')).toBeInTheDocument();
-    });
   });
+});
 
-  it('should render page title', async () => {
-    renderWithProviders();
+it('should render page title', async () => {
+    renderWithProviders(<LimsSampleDetailPage />);
     await waitFor(() => {
       expect(screen.getByText('土壤样本A')).toBeInTheDocument();
-    });
   });
+});
 
-  it('should render sample details', async () => {
-    renderWithProviders();
+it('should render sample details', async () => {
+    renderWithProviders(<LimsSampleDetailPage />);
     await waitFor(() => {
       expect(screen.getByText('SMP-2024-001')).toBeInTheDocument();
-    });
   });
+});
 
-  it('should handle API error', async () => {
+it('should handle API error', async () => {
     (limsApi.getSample as vi.Mock).mockRejectedValue(new Error('Network error'));
-    renderWithProviders();
+    renderWithProviders(<LimsSampleDetailPage />);
     await waitFor(() => {
       expect(screen.getByText('样品不存在或已被删除')).toBeInTheDocument();
-    });
   });
+});
+;
 });

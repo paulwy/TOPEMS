@@ -1,30 +1,33 @@
-import React, { useState, useEffect, useCallback } from 'react';
-import { useTheme } from '@mui/material';
-import { Bell } from 'lucide-react';
-import NotificationPanel from './NotificationPanel';
-import { useNotificationWebSocket } from '../../hooks/useNotificationWebSocket';
-import { useNotificationState } from '../../hooks/useNotificationState';
-import { useAuth } from '../../hooks/useAuth';
-import type { Notification } from '@/api/notification';
+import React, { useState, useEffect, useCallback } from "react";
+import { Bell } from "lucide-react";
+import NotificationPanel from "./NotificationPanel";
+import { useNotificationWebSocket } from "../../hooks/useNotificationWebSocket";
+import { useNotificationState } from "../../hooks/useNotificationState";
+import { useAuth } from "../../hooks/useAuth";
+import type { Notification } from "../../api/notification";
 
 interface NotificationBellProps {
   onNotificationClick?: () => void;
 }
 
-const NotificationBell: React.FC<NotificationBellProps> = ({ onNotificationClick }) => {
-  const theme = useTheme();
+const NotificationBell: React.FC<NotificationBellProps> = ({
+  onNotificationClick,
+}) => {
   const [showPanel, setShowPanel] = useState(false);
   const [hasNewNotification, setHasNewNotification] = useState(false);
   const { user, isAuthenticated } = useAuth();
 
   const {
+    notifications: _,
     unreadCount,
+    loading: __,
+    error: ___,
     addNotification,
-    updateNotification,
-    removeNotification,
+    updateNotification: ____,
+    removeNotification: _____,
     fetchNotifications,
     fetchUnreadCount,
-  } = useNotificationState(isAuthenticated);
+  } = useNotificationState();
 
   const handleNewNotification = useCallback(
     (notification: Notification) => {
@@ -32,7 +35,7 @@ const NotificationBell: React.FC<NotificationBellProps> = ({ onNotificationClick
       setHasNewNotification(true);
       setTimeout(() => setHasNewNotification(false), 3000);
     },
-    [addNotification]
+    [addNotification],
   );
 
   const userId = user?.id;
@@ -42,13 +45,14 @@ const NotificationBell: React.FC<NotificationBellProps> = ({ onNotificationClick
     error: _wsError,
     reconnect: _reconnect,
   } = useNotificationWebSocket({
-    userId: isAuthenticated && userId ? userId : '',
+    userId: isAuthenticated ? userId : undefined,
     onNotification: handleNewNotification,
     onUnreadCountChange: fetchUnreadCount,
     maxReconnectAttempts: 5,
     autoConnect: isAuthenticated,
   });
 
+  // Fetch initial data when component mounts and user is authenticated
   useEffect(() => {
     if (isAuthenticated) {
       fetchUnreadCount();
@@ -75,80 +79,32 @@ const NotificationBell: React.FC<NotificationBellProps> = ({ onNotificationClick
   };
 
   return (
-    <div style={{ position: 'relative' }}>
+    <div className="relative">
       <button
         onClick={handleBellClick}
-        style={{
-          padding: 8,
-          color: theme.palette.text.secondary,
-          backgroundColor: 'transparent',
-          border: 'none',
-          borderRadius: 8,
-          cursor: 'pointer',
-          transition: 'all 0.2s',
-        }}
-        aria-label='通知'
+        className="relative p-2 text-gray-600 hover:text-gray-900 hover:bg-gray-100 rounded-lg transition-all duration-200"
+        aria-label="通知"
       >
-        <Bell style={{ width: 24, height: 24 }} />
+        <Bell className="w-6 h-6" />
         {unreadCount > 0 && (
-          <span
-            style={{
-              position: 'absolute',
-              top: -4,
-              right: -4,
-              backgroundColor: theme.palette.error.main,
-              color: 'white',
-              fontSize: 12,
-              fontWeight: 'bold',
-              borderRadius: 9999,
-              minWidth: 20,
-              height: 20,
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              padding: '0 6px',
-            }}
-          >
-            {unreadCount > 99 ? '99+' : unreadCount}
+          <span className="absolute -top-1 -right-1 bg-red-500 text-white text-xs font-bold rounded-full min-w-[20px] h-5 flex items-center justify-center px-1.5">
+            {unreadCount > 99 ? "99+" : unreadCount}
           </span>
         )}
         {hasNewNotification && (
-          <span
-            style={{
-              position: 'absolute',
-              top: -4,
-              right: -4,
-              width: 12,
-              height: 12,
-              backgroundColor: theme.palette.success.dark,
-              borderRadius: '9999px',
-              animation: 'ping 1s cubic-bezier(0, 0, 0.2, 1)',
-            }}
-          />
+          <span className="absolute -top-1 -right-1 w-3 h-3 bg-green-500 rounded-full animate-ping" />
         )}
         {isConnected && (
           <span
-            style={{
-              position: 'absolute',
-              bottom: 4,
-              right: 4,
-              width: 8,
-              height: 8,
-              backgroundColor: theme.palette.success.dark,
-              borderRadius: '9999px',
-            }}
-            title='已连接'
+            className="absolute bottom-1 right-1 w-2 h-2 bg-green-500 rounded-full"
+            title="已连接"
           />
         )}
       </button>
 
       {showPanel && (
         <>
-          {/* eslint-disable-next-line jsx-a11y/click-events-have-key-events, jsx-a11y/no-static-element-interactions */}
-          <div
-            style={{ position: 'fixed', inset: 0, zIndex: 40 }}
-            onClick={handleClose}
-          />
+          <div className="fixed inset-0 z-40" onClick={handleClose} />
           <NotificationPanel
             onClose={handleClose}
             onUnreadCountChange={handleUnreadCountChange}

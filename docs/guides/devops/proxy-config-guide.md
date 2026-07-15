@@ -173,7 +173,7 @@ curl http://localhost:3000/new-service/health
   name: 'mes', 
   port: 8030, 
   hasWs: true, 
-  wsPath: '/mes/ws' 
+  wsPath: '/ws/mes' 
 }
 ```
 
@@ -417,8 +417,9 @@ const createPageSafeProxy = (config: any) => ({
 |------|------|------|----------|----------|
 | unified-core | core | 通知 | `/ws/core/notifications` | `/ws/core/notifications` |
 | unified-core | core | IM | `/ws/core/im` | `/ws/core/im` |
-| MES | mes | 仪表盘 | `/mes/ws/dashboard` | `/mes/ws/dashboard` |
-| GIS | gis | 通用 | `/gis/ws` | `/ws/gis` |
+| MES | mes | 仪表盘 | `/ws/mes/dashboard` | `/ws/mes/dashboard` |
+| BI | bi | 仪表盘 | `/ws/bi/dashboard/{id}` | `/ws/bi/dashboard/{id}` |
+| GIS | gis | 通用 | `/ws/gis` | `/ws/gis` |
 
 ### 6.2 WebSocket 代理配置模板
 
@@ -441,7 +442,7 @@ const createPageSafeProxy = (config: any) => ({
 },
 
 // 业务服务 WebSocket（无重写，直接转发）
-'/mes/ws': {
+'/ws/mes': {
   target: 'http://localhost:8030',
   changeOrigin: true,
   ws: true,
@@ -457,14 +458,30 @@ const createPageSafeProxy = (config: any) => ({
   },
 },
 
-// GIS WebSocket（带重写）
-'/gis/ws': {
+// BI WebSocket（无重写，直接转发，支持动态dashboard_id）
+'/ws/bi': {
+  target: 'http://localhost:8060',
+  changeOrigin: true,
+  ws: true,
+  proxyTimeout: 60000,
+  timeout: 60000,
+  configure: (proxy: any) => {
+    proxy.on('proxyReq', (proxyReq: any, req: IncomingMessage) => {
+      if (req.headers['upgrade'] && req.headers['upgrade'].toLowerCase() === 'websocket') {
+        proxyReq.setHeader('Connection', 'Upgrade');
+        proxyReq.setHeader('Upgrade', 'websocket');
+      }
+    });
+  },
+},
+
+// GIS WebSocket（无重写，直接转发）
+'/ws/gis': {
   target: 'http://localhost:8071',
   changeOrigin: true,
   ws: true,
   proxyTimeout: 60000,
   timeout: 60000,
-  rewrite: (path: string) => path.replace(/^\/gis\/ws/, '/api/gis/ws'),
   configure: (proxy: any) => {
     proxy.on('proxyReq', (proxyReq: any, req: IncomingMessage) => {
       if (req.headers['upgrade'] && req.headers['upgrade'].toLowerCase() === 'websocket') {
@@ -499,7 +516,7 @@ const wsPath = `/ws/core${servicePath}`; // '/ws/core/im'
 const wsUrl = `${window.location.protocol === 'https:' ? 'wss:' : 'ws:'}//${window.location.host}${wsPath}`;
 
 // MES 仪表盘
-const wsUrl = `${protocol}//${host}/mes/ws/dashboard${tokenParam}`;
+const wsUrl = `${protocol}//${host}/ws/mes/dashboard${tokenParam}`;
 ```
 
 ## 7. 日志配置规范

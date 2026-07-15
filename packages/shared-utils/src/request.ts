@@ -23,7 +23,18 @@ const createRequestClient = (config?: RequestConfig): AxiosInstance => {
 
       const url = config.url || '';
       // 公开路径不需要认证
-      const publicPaths = ['/health', '/api/v1/auth/login', '/api/v1/auth/register'];
+      const publicPaths = [
+        '/health',
+        // 新路径（K8s Ingress 契约，V9 起首选）
+        '/api/core/iam/auth/login',
+        '/api/core/iam/auth/register',
+        '/api/core/iam/auth/refresh',
+        '/api/core/iam/auth/forgot-password',
+        // 兼容旧路径（向后兼容，至少一个大版本）
+        '/api/v1/auth/login',
+        '/api/v1/auth/register',
+        '/api/v1/auth/refresh',
+      ];
       const isPublic = publicPaths.some((path) => url.startsWith(path));
 
       if (!isPublic) {

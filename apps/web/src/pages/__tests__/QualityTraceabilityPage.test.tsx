@@ -109,7 +109,7 @@ vi.mock('@/store', () => ({
 }));
 
 describe('QualityTraceabilityPage', () => {
-  it('should render without crashing', () => {
+it('should render without crashing', () => {
     // QualityTraceabilityPage is a stub component that returns null
     render(
       <BrowserRouter>
@@ -118,13 +118,13 @@ describe('QualityTraceabilityPage', () => {
     );
     // Stub component renders null, so no errors is the expected behavior
     expect(true).toBe(true);
-  });
-  describe('QualityTraceabilityPage', () => {
-    it('should have valid traceability API', () => {
-      expect(mesApi.traceability.getTraceChain).toBeDefined();
-      expect(mesApi.traceability.forwardTraceability).toBeDefined();
-      expect(mesApi.traceability.backwardTraceability).toBeDefined();
-      expect(mesApi.traceability.listQualityRecords).toBeDefined();
-    });
-  });
+});
+
+it('should have valid traceability API', () => {
+    expect(mesApi.traceability.getTraceChain).toBeDefined();
+    expect(mesApi.traceability.forwardTraceability).toBeDefined();
+    expect(mesApi.traceability.backwardTraceability).toBeDefined();
+    expect(mesApi.traceability.listQualityRecords).toBeDefined();
+});
+;
 });
