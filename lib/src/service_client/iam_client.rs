@@ -49,18 +49,22 @@ impl IamServiceClient {
     }
 
     pub async fn get_user(&self, id: Uuid) -> ServiceClientResult<User> {
-        self.base_client.get(&format!("/api/v1/users/{}", id)).await
+        self.base_client
+            .get(&format!("/api/core/iam/users/{}", id))
+            .await
     }
 
     pub async fn get_role(&self, id: Uuid) -> ServiceClientResult<Role> {
-        self.base_client.get(&format!("/api/v1/roles/{}", id)).await
+        self.base_client
+            .get(&format!("/api/core/iam/roles/{}", id))
+            .await
     }
 
     pub async fn list_users(&self) -> ServiceClientResult<Vec<User>> {
-        self.base_client.get("/api/v1/users").await
+        self.base_client.get("/api/core/iam/users").await
     }
 
     pub async fn list_roles(&self) -> ServiceClientResult<Vec<Role>> {
-        self.base_client.get("/api/v1/roles").await
+        self.base_client.get("/api/core/iam/roles").await
     }
 }
