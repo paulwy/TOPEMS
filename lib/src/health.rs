@@ -361,21 +361,29 @@ impl HealthChecker {
     }
 
     pub fn get_metrics(&self, service_name: &str) -> Option<ServiceMetrics> {
-        self.monitors
-            .get(service_name)
-            .map(|monitor| monitor.lock().unwrap_or_else(|e| {
-                tracing::error!("Lock poisoned: {}", e);
-                e.into_inner()
-            }).get_metrics())
+        self.monitors.get(service_name).map(|monitor| {
+            monitor
+                .lock()
+                .unwrap_or_else(|e| {
+                    tracing::error!("Lock poisoned: {}", e);
+                    e.into_inner()
+                })
+                .get_metrics()
+        })
     }
 
     pub fn get_all_metrics(&self) -> Vec<ServiceMetrics> {
         self.monitors
             .values()
-            .map(|monitor| monitor.lock().unwrap_or_else(|e| {
-                tracing::error!("Lock poisoned: {}", e);
-                e.into_inner()
-            }).get_metrics())
+            .map(|monitor| {
+                monitor
+                    .lock()
+                    .unwrap_or_else(|e| {
+                        tracing::error!("Lock poisoned: {}", e);
+                        e.into_inner()
+                    })
+                    .get_metrics()
+            })
             .collect()
     }
 }
