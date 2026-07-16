@@ -197,7 +197,10 @@ impl MigrationSDK {
         for entry in entries.flatten() {
             let path = entry.path();
             if path.extension().is_some_and(|ext| ext == "sql") {
-                let filename = path.file_name().map(|n| n.to_string_lossy().to_string()).unwrap_or_default();
+                let filename = path
+                    .file_name()
+                    .map(|n| n.to_string_lossy().to_string())
+                    .unwrap_or_default();
                 let version = extract_version(&filename);
                 let name = extract_name(&filename);
 
