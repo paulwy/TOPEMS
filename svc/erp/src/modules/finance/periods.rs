@@ -27,10 +27,10 @@ struct PeriodRequest {
 }
 
 pub async fn get_current_period(
-    State(_state): State<ApiState>,
+    State(state): State<ApiState>,
     Extension(claims): Extension<Claims>,
 ) -> Json<ApiResponse<PeriodResponse>> {
-    if let Err(e) = check_permission(&claims, &ModulePermission::FinanceRead).await {
+    if let Err(e) = check_permission(&state.db, &claims, &ModulePermission::FinanceRead).await {
         return e;
     }
 
@@ -73,11 +73,11 @@ fn get_days_in_month(year: i32, month: i32) -> i32 {
 }
 
 pub async fn list_periods(
-    State(_state): State<ApiState>,
+    State(state): State<ApiState>,
     Extension(claims): Extension<Claims>,
     Query(params): Query<PeriodListParams>,
 ) -> Json<ApiResponse<Vec<PeriodResponse>>> {
-    if let Err(e) = check_permission(&claims, &ModulePermission::FinanceRead).await {
+    if let Err(e) = check_permission(&state.db, &claims, &ModulePermission::FinanceRead).await {
         return e;
     }
 
@@ -114,11 +114,11 @@ struct PeriodListParams {
 }
 
 pub async fn open_period(
-    State(_state): State<ApiState>,
+    State(state): State<ApiState>,
     Extension(claims): Extension<Claims>,
     Json(req): Json<PeriodRequest>,
 ) -> Json<ApiResponse<()>> {
-    if let Err(e) = check_permission(&claims, &ModulePermission::FinanceWrite).await {
+    if let Err(e) = check_permission(&state.db, &claims, &ModulePermission::FinanceWrite).await {
         return e;
     }
 
@@ -129,11 +129,11 @@ pub async fn open_period(
 }
 
 pub async fn close_period(
-    State(_state): State<ApiState>,
+    State(state): State<ApiState>,
     Extension(claims): Extension<Claims>,
     Json(req): Json<PeriodRequest>,
 ) -> Json<ApiResponse<()>> {
-    if let Err(e) = check_permission(&claims, &ModulePermission::FinanceWrite).await {
+    if let Err(e) = check_permission(&state.db, &claims, &ModulePermission::FinanceWrite).await {
         return e;
     }
 

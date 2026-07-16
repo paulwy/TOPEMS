@@ -16,6 +16,10 @@ pub struct PluginInfo {
     pub plugin_type: String,
     pub permissions: Vec<Permission>,
     pub runtime_url: String,
+    #[serde(default)]
+    pub dependencies: Vec<String>,
+    #[serde(default)]
+    pub navigation_config: Option<serde_json::Value>,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -40,7 +44,7 @@ pub async fn get_plugin_info() -> Json<ApiResponse<PluginInfo>> {
         name: "移动端服务".to_string(),
         version: "1.0.0".to_string(),
         description: "Mobile 移动端服务 - 离线同步、扫码、设备管理".to_string(),
-        category: "System".to_string(),
+        category: "other".to_string(),
         plugin_type: "business".to_string(),
         permissions: vec![
             Permission {
@@ -111,6 +115,12 @@ pub async fn get_plugin_info() -> Json<ApiResponse<PluginInfo>> {
             },
         ],
         runtime_url,
+        dependencies: vec![],
+        navigation_config: Some(serde_json::json!([
+            {"code": "mobile-devices", "label": "设备管理", "path": "/mobile/devices", "icon": "Smartphone", "order": 10, "group": "business"},
+            {"code": "mobile-sync", "label": "离线同步", "path": "/mobile/sync", "icon": "RefreshCw", "order": 20, "group": "business"},
+            {"code": "mobile-scan", "label": "扫码", "path": "/mobile/scan", "icon": "ScanLine", "order": 30, "group": "business"}
+        ])),
     };
 
     Json(ApiResponse::success(plugin_info, "获取插件信息成功"))
@@ -151,16 +161,27 @@ pub async fn auto_register_to_core(core_url: Option<&str>) {
         name: "移动端服务".to_string(),
         version: env!("CARGO_PKG_VERSION").to_string(),
         description: "Mobile 移动端服务 - 离线同步、扫码、设备管理".to_string(),
-        category: "System".to_string(),
+        category: "other".to_string(),
         plugin_type: "business".to_string(),
         permissions: vec![],
         runtime_url,
+        dependencies: vec![],
+        navigation_config: Some(serde_json::json!([
+            {"code": "mobile-devices", "label": "设备管理", "path": "/mobile/devices", "icon": "Smartphone", "order": 10, "group": "business"},
+            {"code": "mobile-sync", "label": "离线同步", "path": "/mobile/sync", "icon": "RefreshCw", "order": 20, "group": "business"},
+            {"code": "mobile-scan", "label": "扫码", "path": "/mobile/scan", "icon": "ScanLine", "order": 30, "group": "business"}
+        ])),
     };
 
     let client = reqwest::Client::new();
     let url = format!("{}/api/core/plugin/dev/plugins/mobile/register", core_url);
 
-    match client.post(&url).json(&info).send().await {
+    let token = std::env::var("PLUGIN_REGISTRATION_TOKEN").unwrap_or_default();
+    let mut request = client.post(&url).json(&info);
+    if !token.is_empty() {
+        request = request.header("X-Plugin-Token", &token);
+    }
+    match request.send().await {
         Ok(response) => {
             if response.status().is_success() {
                 tracing::info!(

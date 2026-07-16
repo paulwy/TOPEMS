@@ -101,18 +101,12 @@ pub struct CompleteInitRequest {
 
 pub fn create_routes() -> Router<ApiState> {
     Router::new()
-        .route("/api/core/hrm/hrm/setup/progress", get(get_init_progress))
-        .route("/api/core/hrm/hrm/setup/company", post(setup_company_info))
-        .route(
-            "/api/core/hrm/hrm/setup/departments",
-            post(setup_departments),
-        )
-        .route("/api/core/hrm/hrm/setup/positions", post(setup_positions))
-        .route("/api/core/hrm/hrm/setup/admin", post(setup_admin_user))
-        .route(
-            "/api/core/hrm/hrm/setup/complete",
-            post(complete_initialization),
-        )
+        .route("/hrm/setup/progress", get(get_init_progress))
+        .route("/hrm/setup/company", post(setup_company_info))
+        .route("/hrm/setup/departments", post(setup_departments))
+        .route("/hrm/setup/positions", post(setup_positions))
+        .route("/hrm/setup/admin", post(setup_admin_user))
+        .route("/hrm/setup/complete", post(complete_initialization))
 }
 
 const DEFAULT_ORG_ID: Uuid = Uuid::from_u128(0x00000000000000000000000000000001);

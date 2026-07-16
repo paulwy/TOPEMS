@@ -112,6 +112,43 @@ pub async fn install_plugin(
         None => return Json(CoreResponse::error("Plugin not found")),
     };
 
+    // 依赖检查：验证插件声明的所有依赖是否已安装且激活
+    let deps: Vec<String> = if let Some(deps_json) = &plugin.dependencies {
+        serde_json::from_value(deps_json.clone()).unwrap_or_default()
+    } else {
+        vec![]
+    };
+
+    if !deps.is_empty() {
+        let mut missing_deps = Vec::new();
+        for dep_code in &deps {
+            let is_installed: Option<bool> = sqlx::query_scalar(
+                r#"SELECT EXISTS(
+                    SELECT 1 FROM core.core_tenant_plugins tp
+                    JOIN core.core_plugins p ON tp.plugin_id = p.id
+                    WHERE tp.tenant_id = $1 AND p.code = $2 AND tp.is_active = true
+                )"#,
+            )
+            .bind(tenant_id)
+            .bind(dep_code)
+            .fetch_one(&state.pool)
+            .await
+            .ok()
+            .flatten();
+
+            if !is_installed.unwrap_or(false) {
+                missing_deps.push(dep_code.clone());
+            }
+        }
+
+        if !missing_deps.is_empty() {
+            return Json(CoreResponse::error(&format!(
+                "Missing dependencies: [{}]. Please install and activate them first.",
+                missing_deps.join(", ")
+            )));
+        }
+    }
+
     // Create installation
     let installation_result = sqlx::query_as(
         r#"
@@ -189,6 +226,30 @@ pub async fn uninstall_plugin(
         Some(p) => p,
         None => return Json(CoreResponse::error("Plugin not found")),
     };
+
+    // 反向依赖检查：查找是否有其他已安装插件依赖当前插件
+    let dependent_plugins: Vec<String> = sqlx::query_scalar(
+        r#"
+        SELECT p.code FROM core.core_plugins p
+        JOIN core.core_tenant_plugins tp ON tp.plugin_id = p.id
+        WHERE tp.tenant_id = $1
+          AND tp.is_active = true
+          AND p.code != $2
+          AND p.dependencies @> to_jsonb($2::text)
+        "#,
+    )
+    .bind(tenant_id)
+    .bind(&plugin_code)
+    .fetch_all(&state.pool)
+    .await
+    .unwrap_or_default();
+
+    if !dependent_plugins.is_empty() && req.uninstall_tier != UninstallTier::Disable {
+        return Json(CoreResponse::error(&format!(
+            "Cannot uninstall: [{}] depend(s) on this plugin. Please uninstall them first or use disable tier.",
+            dependent_plugins.join(", ")
+        )));
+    }
 
     // Handle each tier
     let result = match req.uninstall_tier {

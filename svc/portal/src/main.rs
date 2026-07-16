@@ -96,151 +96,136 @@ async fn main() -> anyhow::Result<()> {
         .route("/", get(home));
 
     let protected_routes = Router::new()
+        .route("/services", get(modules::services::list_services))
+        .route("/todos", get(modules::todos::get_todos))
+        .route("/todos", post(modules::todos::add_todo))
+        .route("/todos/{id}", post(modules::todos::complete_todo))
+        .route("/todos/{id}", delete(modules::todos::delete_todo))
+        .route("/user", get(modules::user::get_user_info))
         .route(
-            "/api/core/portal/services",
-            get(modules::services::list_services),
-        )
-        .route("/api/core/portal/todos", get(modules::todos::get_todos))
-        .route("/api/core/portal/todos", post(modules::todos::add_todo))
-        .route(
-            "/api/core/portal/todos/{id}",
-            post(modules::todos::complete_todo),
-        )
-        .route(
-            "/api/core/portal/todos/{id}",
-            delete(modules::todos::delete_todo),
-        )
-        .route("/api/core/portal/user", get(modules::user::get_user_info))
-        .route(
-            "/api/core/portal/monitoring/services",
+            "/monitoring/services",
             get(modules::monitoring::get_monitoring_services),
         )
         .route(
-            "/api/core/portal/monitoring/metrics",
+            "/monitoring/metrics",
             get(modules::monitoring::get_monitoring_metrics),
         )
         .route(
-            "/api/core/portal/monitoring/alerts",
+            "/monitoring/alerts",
             get(modules::monitoring::get_monitoring_alerts),
         )
         .route(
-            "/api/core/portal/monitoring/alerts/{id}",
+            "/monitoring/alerts/{id}",
             post(modules::monitoring::acknowledge_alert),
         )
         .route(
-            "/api/core/portal/monitoring/logs",
+            "/monitoring/logs",
             get(modules::monitoring::get_monitoring_logs),
         )
         .route(
-            "/api/core/portal/notifications",
+            "/notifications",
             get(modules::notifications::get_notifications),
         )
         .route(
-            "/api/core/portal/notifications/{id}",
+            "/notifications/{id}",
             post(modules::notifications::mark_notification_read),
         )
         .route(
-            "/api/core/portal/notifications/mark-all-read",
+            "/notifications/mark-all-read",
             post(modules::notifications::mark_all_notifications_read),
         )
         .route(
-            "/api/core/portal/dashboard/stats",
+            "/dashboard/stats",
             get(modules::dashboard::get_dashboard_stats),
         )
         .route(
-            "/api/core/portal/dashboard/quick-access",
+            "/dashboard/quick-access",
             get(modules::dashboard::get_quick_access),
         )
         .route(
-            "/api/core/portal/dashboard/quick-access",
+            "/dashboard/quick-access",
             post(modules::dashboard::add_quick_access),
         )
         .route(
-            "/api/core/portal/dashboard/quick-access/{id}",
+            "/dashboard/quick-access/{id}",
             delete(modules::dashboard::remove_quick_access),
         )
         .route(
-            "/api/core/portal/announcements",
+            "/announcements",
             get(modules::announcements::get_announcements),
         )
         .route(
-            "/api/core/portal/announcements/{id}",
+            "/announcements/{id}",
             get(modules::announcements::get_announcement),
         )
         .route(
-            "/api/core/portal/announcements",
+            "/announcements",
             post(modules::announcements::create_announcement),
         )
         .route(
-            "/api/core/portal/announcements/{id}",
+            "/announcements/{id}",
             put(modules::announcements::update_announcement),
         )
         .route(
-            "/api/core/portal/announcements/{id}",
+            "/announcements/{id}",
             delete(modules::announcements::delete_announcement),
         )
         .route(
-            "/api/core/portal/announcements/{id}/pin",
+            "/announcements/{id}/pin",
             post(modules::announcements::toggle_announcement_pin),
         )
         .route(
-            "/api/core/portal/announcements/pinned",
+            "/announcements/pinned",
             get(modules::announcements::get_pinned_announcements),
         )
+        .route("/settings", get(modules::settings::get_user_settings))
+        .route("/settings", put(modules::settings::update_user_settings))
         .route(
-            "/api/core/portal/settings",
-            get(modules::settings::get_user_settings),
-        )
-        .route(
-            "/api/core/portal/settings",
-            put(modules::settings::update_user_settings),
-        )
-        .route(
-            "/api/core/portal/settings/reset",
+            "/settings/reset",
             post(modules::settings::reset_user_settings),
         )
         .route(
-            "/api/core/portal/settings/themes",
+            "/settings/themes",
             get(modules::settings::get_available_themes),
         )
         .route(
-            "/api/core/portal/settings/languages",
+            "/settings/languages",
             get(modules::settings::get_available_languages),
         )
         .route(
-            "/api/core/portal/quick-actions",
+            "/quick-actions",
             get(modules::quick_actions::get_quick_actions),
         )
         .route(
-            "/api/core/portal/quick-actions/favorites",
+            "/quick-actions/favorites",
             get(modules::quick_actions::get_favorite_actions),
         )
         .route(
-            "/api/core/portal/quick-actions/{id}/favorite",
+            "/quick-actions/{id}/favorite",
             post(modules::quick_actions::toggle_favorite_action),
         )
         .route(
-            "/api/core/portal/quick-actions/{id}/execute",
+            "/quick-actions/{id}/execute",
             post(modules::quick_actions::execute_quick_action),
         )
         .route(
-            "/api/core/portal/navigation/menu",
+            "/navigation/menu",
             get(modules::navigation::get_navigation_menu),
         )
         .route(
-            "/api/core/portal/navigation/pinned",
+            "/navigation/pinned",
             get(modules::navigation::get_pinned_apps),
         )
         .route(
-            "/api/core/portal/navigation/pinned",
+            "/navigation/pinned",
             post(modules::navigation::add_pinned_app),
         )
         .route(
-            "/api/core/portal/navigation/pinned/{id}",
+            "/navigation/pinned/{id}",
             delete(modules::navigation::remove_pinned_app),
         )
         .route(
-            "/api/core/portal/navigation/pinned/reorder",
+            "/navigation/pinned/reorder",
             put(modules::navigation::reorder_pinned_apps),
         )
         .layer(axum::middleware::from_fn_with_state(
@@ -255,14 +240,14 @@ async fn main() -> anyhow::Result<()> {
 
     let app = Router::new()
         .merge(public_routes)
-        .merge(protected_routes)
+        .nest("/api/portal", protected_routes)
         .merge(create_api_info_router("topems-portal"))
         .layer(axum::middleware::from_fn(telemetry_middleware))
         .layer(cors)
         .layer(CookieManagerLayer::new())
         .layer(prometheus_layer);
 
-    let cfg = RouteCompatConfig::new("portal", "/api/core/portal", &[]);
+    let cfg = RouteCompatConfig::new("portal", "/api/portal", &[]);
     let app = wrap_group2_router(app, cfg);
 
     let port = env::var("PORTAL_PORT")

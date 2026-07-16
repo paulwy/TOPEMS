@@ -12,6 +12,12 @@ pub struct PluginInfo {
     pub description: String,
     pub permissions: Vec<PermissionDef>,
     pub runtime_url: String,
+    #[serde(default)]
+    pub dependencies: Vec<String>,
+    #[serde(default)]
+    pub navigation_config: Option<serde_json::Value>,
+    #[serde(default)]
+    pub category: Option<String>,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -33,6 +39,13 @@ pub async fn get_plugin_info() -> Json<ApiResponse<PluginInfo>> {
         description: "PDM 产品数据管理系统，包含产品、物料、配方、文档、版本等模块".to_string(),
         permissions: vec![],
         runtime_url,
+        dependencies: vec!["mes".to_string()],
+        navigation_config: Some(serde_json::json!([
+            {"code": "pdm-bom", "label": "产品结构", "path": "/pdm/bom", "icon": "Layers", "order": 10, "group": "business"},
+            {"code": "pdm-processes", "label": "工艺管理", "path": "/pdm/processes", "icon": "Settings", "order": 20, "group": "business"},
+            {"code": "pdm-documents", "label": "文档管理", "path": "/pdm/documents", "icon": "FileText", "order": 30, "group": "business"}
+        ])),
+        category: Some("manufacturing".to_string()),
     };
     Json(ApiResponse::success(info, "Plugin info"))
 }

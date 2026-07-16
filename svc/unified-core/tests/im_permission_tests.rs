@@ -20,7 +20,7 @@ async fn login(username: &str, password: &str) -> Result<String, String> {
     let client = create_client();
 
     let response = client
-        .post(format!("{}/api/core/iam/v1/auth/login", API_URL))
+        .post(format!("{}/api/core/iam/auth/login", API_URL))
         .json(&json!({ "username": username, "password": password }))
         .send()
         .await
@@ -307,7 +307,7 @@ async fn test_im_006_add_contact() {
     let client = create_client();
 
     // 获取用户列表找一个用户作为联系人
-    let users_result = auth_request(&client, &token, "GET", "/api/core/iam/v1/users", None).await;
+    let users_result = auth_request(&client, &token, "GET", "/api/core/iam/users", None).await;
 
     match users_result {
         Ok((_, body)) => {
@@ -366,7 +366,7 @@ async fn test_im_007_view_online_status() {
     let client = create_client();
 
     // 获取用户列表
-    let users_result = auth_request(&client, &token, "GET", "/api/core/iam/v1/users", None).await;
+    let users_result = auth_request(&client, &token, "GET", "/api/core/iam/users", None).await;
 
     match users_result {
         Ok((_, body)) => {

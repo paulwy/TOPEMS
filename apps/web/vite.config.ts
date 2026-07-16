@@ -35,7 +35,7 @@ const services: ServiceConfig[] = [
   { name: 'doc', port: 8012, pageRewrite: (path) => path.replace(/^\/doc(\/.*)$/, '/api/doc$1') },
   { name: 'file', port: 8000, useCoreService: true, pageRewrite: (path) => path.replace(/^\/file(\/.*)$/, '/api/core/file$1') },
   { name: 'mail', port: 8000, useCoreService: true, pageRewrite: (path) => path.replace(/^\/mail(\/.*)$/, '/api/core/comm/mail$1') },
-  { name: 'notification', port: 8000, useCoreService: true, pageRewrite: (path) => path.replace(/^\/notification(\/.*)$/, '/api/core/notification$1'), apiRewrite: (path) => path.replace(/^\/notification\/api\/v1/, '/api/core/notification').replace(/^\/notification\/api/, '/api/core/notification') },
+  { name: 'notification', port: 8000, useCoreService: true, pageRewrite: (path) => path.replace(/^\/notification(\/.*)$/, '/api/core/notification$1'), apiRewrite: (path) => path.replace(/^\/notification\/api/, '/api/core/notification') },
   { name: 'im', port: 8000, useCoreService: true, pageRewrite: (path) => path.replace(/^\/im(\/.*)$/, '/api/core/comm/im$1') },
   { name: 'erp', port: 8010, apiRewrite: (path) => path.replace(/^\/erp\/system/, '/api/erp') },
   { name: 'finance', port: 8011 },

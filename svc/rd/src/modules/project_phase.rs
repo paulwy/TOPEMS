@@ -32,13 +32,13 @@ fn get_tenant_id(claims: &Claims, headers: &HeaderMap) -> Uuid {
 
 pub fn create_routes() -> Router<super::ApiState> {
     Router::<super::ApiState>::new()
-        .route("/api/core/rd/phases", post(create_phase))
+        .route("/phases", post(create_phase))
         .route(
-            "/api/core/rd/projects/{project_id}/phases",
+            "/projects/{project_id}/phases",
             get(get_project_phases).post(create_phase),
         )
-        .route("/api/core/rd/phases/{id}", put(update_phase))
-        .route("/api/core/rd/phases/{id}", delete(delete_phase))
+        .route("/phases/{id}", put(update_phase))
+        .route("/phases/{id}", delete(delete_phase))
 }
 
 pub async fn create_phase(

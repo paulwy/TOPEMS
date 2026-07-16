@@ -213,9 +213,10 @@ where
         return Ok(dt.with_timezone(&Utc));
     }
     if let Ok(naive) = chrono::NaiveDate::parse_from_str(&s, "%Y-%m-%d") {
-        return Ok(naive
+        let naive_dt = naive
             .and_hms_opt(0, 0, 0)
-            .ok_or_else(|| serde::de::Error::custom(format!("Invalid date format: {}", s)))?);
+            .ok_or_else(|| serde::de::Error::custom(format!("Invalid date format: {}", s)))?;
+        return Ok(DateTime::<Utc>::from_naive_utc_and_offset(naive_dt, Utc));
     }
     Err(serde::de::Error::custom(format!(
         "Invalid date format: {}",

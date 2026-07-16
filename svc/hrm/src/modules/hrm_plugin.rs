@@ -17,6 +17,12 @@ pub struct PluginInfo {
     pub description: String,
     pub permissions: Vec<PermissionDef>,
     pub runtime_url: String,
+    #[serde(default)]
+    pub dependencies: Vec<String>,
+    #[serde(default)]
+    pub navigation_config: Option<serde_json::Value>,
+    #[serde(default)]
+    pub category: Option<String>,
 }
 
 /// 权限定义
@@ -76,6 +82,15 @@ pub async fn get_plugin_info() -> Json<ApiResponse<PluginInfo>> {
             },
         ],
         runtime_url,
+        dependencies: vec![],
+        navigation_config: Some(serde_json::json!([
+            {"code": "hrm-employees", "label": "员工管理", "path": "/hrm/employees", "icon": "Users", "order": 10, "group": "business"},
+            {"code": "hrm-departments", "label": "部门管理", "path": "/hrm/departments", "icon": "Building2", "order": 20, "group": "business"},
+            {"code": "hrm-attendance", "label": "考勤管理", "path": "/hrm/attendance", "icon": "Calendar", "order": 30, "group": "business"},
+            {"code": "hrm-recruitment", "label": "招聘管理", "path": "/hrm/recruitment", "icon": "Users", "order": 40, "group": "business"},
+            {"code": "hrm-settings", "label": "人事设置", "path": "/hrm/settings", "icon": "Settings", "order": 50, "group": "business"}
+        ])),
+        category: Some("hr".to_string()),
     };
     Json(ApiResponse::success(info, "Plugin info"))
 }
@@ -113,12 +128,26 @@ pub async fn auto_register_to_core(core_url: Option<&str>) {
         description: "HRM 人力资源管理系统".to_string(),
         permissions: vec![],
         runtime_url,
+        dependencies: vec![],
+        navigation_config: Some(serde_json::json!([
+            {"code": "hrm-employees", "label": "员工管理", "path": "/hrm/employees", "icon": "Users", "order": 10, "group": "business"},
+            {"code": "hrm-departments", "label": "部门管理", "path": "/hrm/departments", "icon": "Building2", "order": 20, "group": "business"},
+            {"code": "hrm-attendance", "label": "考勤管理", "path": "/hrm/attendance", "icon": "Calendar", "order": 30, "group": "business"},
+            {"code": "hrm-recruitment", "label": "招聘管理", "path": "/hrm/recruitment", "icon": "Users", "order": 40, "group": "business"},
+            {"code": "hrm-settings", "label": "人事设置", "path": "/hrm/settings", "icon": "Settings", "order": 50, "group": "business"}
+        ])),
+        category: Some("hr".to_string()),
     };
 
     let client = reqwest::Client::new();
     let url = format!("{}/api/core/plugin/dev/plugins/hrm/register", core_url);
 
-    match client.post(&url).json(&info).send().await {
+    let token = std::env::var("PLUGIN_REGISTRATION_TOKEN").unwrap_or_default();
+    let mut request = client.post(&url).json(&info);
+    if !token.is_empty() {
+        request = request.header("X-Plugin-Token", &token);
+    }
+    match request.send().await {
         Ok(response) => {
             if response.status().is_success() {
                 tracing::info!(

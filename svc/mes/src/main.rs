@@ -97,13 +97,13 @@ async fn main() -> anyhow::Result<()> {
 
     let app = Router::new()
         .merge(public_routes)
-        .merge(protected_routes)
+        .nest("/api/mes", protected_routes)
         .layer(cors)
         .layer(axum::middleware::from_fn(telemetry_middleware))
         .layer(prometheus_layer)
         .with_state(state);
 
-    let cfg = RouteCompatConfig::new("mes", "/api/core/mes", &[]);
+    let cfg = RouteCompatConfig::new("mes", "/api/mes", &[]);
     let app = wrap_group2_router(app, cfg);
 
     let port = std::env::var("MES_PORT")

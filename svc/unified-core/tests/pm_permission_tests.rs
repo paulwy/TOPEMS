@@ -20,7 +20,7 @@ async fn login(username: &str, password: &str) -> Result<String, String> {
     let client = create_client();
 
     let response = client
-        .post(format!("{}/api/core/iam/v1/auth/login", API_URL))
+        .post(format!("{}/api/core/iam/auth/login", API_URL))
         .json(&json!({ "username": username, "password": password }))
         .send()
         .await
@@ -354,7 +354,7 @@ async fn test_pm_007_add_member() {
 
     // 获取项目和用户
     let proj_result = auth_request(&client, &token, "GET", "/api/pm/projects", None).await;
-    let user_result = auth_request(&client, &token, "GET", "/api/core/iam/v1/users", None).await;
+    let user_result = auth_request(&client, &token, "GET", "/api/core/iam/users", None).await;
 
     match (proj_result, user_result) {
         (Ok((_, proj_body)), Ok((_, user_body))) => {
@@ -569,8 +569,7 @@ async fn test_pm_010_assign_task() {
                     if let Some(task_id) = task["id"].as_str() {
                         // 获取用户列表
                         let user_result =
-                            auth_request(&client, &token, "GET", "/api/core/iam/v1/users", None)
-                                .await;
+                            auth_request(&client, &token, "GET", "/api/core/iam/users", None).await;
 
                         match user_result {
                             Ok((_, user_body)) => {

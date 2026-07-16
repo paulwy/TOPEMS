@@ -3,15 +3,11 @@
 
 pub mod billing;
 pub mod communication;
-pub mod crm;
 pub mod dict;
-pub mod erp;
 pub mod feedback;
 pub mod file;
-pub mod finance;
 pub mod flow;
 pub mod help;
-pub mod hrm;
 pub mod iam;
 pub mod login_log;
 pub mod menu;
@@ -21,4 +17,3 @@ pub mod plugin;
 pub mod search;
 pub mod sync;
 pub mod tenant;
-pub mod wms;

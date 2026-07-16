@@ -17,6 +17,7 @@ pub mod health;
 pub mod hrm;
 pub mod logging;
 pub mod messaging;
+pub mod middleware;
 pub mod metrics;
 pub mod migration;
 pub mod monitoring;
@@ -34,6 +35,7 @@ pub mod schema;
 pub mod security;
 pub mod service_bootstrap;
 pub mod service_client;
+pub mod service_config;
 pub mod service_discovery;
 pub mod service_port;
 pub mod storage;
@@ -90,7 +92,8 @@ pub use event::{
     HrmEmployeeUpdatedPayload, LimsInspectionAbnormalDetectedPayload,
     LimsInspectionResultSubmittedPayload, LimsSampleRegisteredPayload, PmProjectCreatedPayload,
     PmProjectUpdatedPayload, PmTaskCreatedPayload, PmTaskDeletedPayload, PmTaskUpdatedPayload,
-    QmsCorrectiveActionCreatedPayload, QmsInspectionCompletedPayload,
+    PositionCreatedPayload, PositionDeletedPayload, PositionUpdatedPayload,
+    PermissionChangedPayload, QmsCorrectiveActionCreatedPayload, QmsInspectionCompletedPayload,
 };
 pub use health::{
     build_health_response, check_http_health, create_health_router, create_metrics_router,
@@ -123,7 +126,14 @@ pub use performance::{
 };
 pub use permission::{
     check_any_module_permission, check_module_permission, check_resource_permission,
-    ModulePermission,
+    DataCondition, DataPermission, ModulePermission, PermissionTemplate, Position,
+    ResourcePermission,
+};
+
+pub use middleware::{
+    department_middleware, require_department, require_module_active,
+    require_module_permission, require_permission, require_role, require_tenant_status,
+    tenant_middleware,
 };
 pub use query_optimizer::{
     suggest_query_optimization, BatchOperations, IndexRecommendation, NPlusOneDetector,
@@ -157,9 +167,14 @@ pub use service_client::{
     BaseServiceClient, Company, Department, Employee, GenericServiceClient, HrmServiceClient,
     IamServiceClient, NotificationSvcClient, ServiceClientError, ServiceClientResult, User,
 };
+pub use service_config::{
+    global_registry, DeploymentType, ServiceConfigRegistry, ServiceDefinition, ServiceGroup,
+    ValidationIssue, ValidationSeverity,
+};
 pub use service_discovery::{
     LocalServiceRegistry, PortalServiceAggregator, ServiceCategory, ServiceDiscoveryClient,
     ServiceHealthStatus, ServiceInfo, ServiceRegistryStatus,
+    ConsulServiceRegistrar, ConsulDiscoveryClient, SmartServiceClient, ServiceInstance,
 };
 pub use storage::{FileMetadata, LocalStorage, StorageConfig, StorageService};
 pub use telemetry::{

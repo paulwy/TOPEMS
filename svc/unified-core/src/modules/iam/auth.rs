@@ -232,6 +232,9 @@ pub async fn login(
         email: Some(user.email.clone()),
         department: None,
         tenant_id: None,
+        department_id: None,
+        position_id: None,
+        position_code: None,
     };
 
     let access_token = match claims.encode(&state.auth_state.jwt_secret) {
@@ -617,6 +620,9 @@ pub async fn refresh_token(
         email: Some(email),
         department: None,
         tenant_id: None,
+        department_id: None,
+        position_id: None,
+        position_code: None,
     };
 
     let access_token = match claims.encode(&state.auth_state.jwt_secret) {

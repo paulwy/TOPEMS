@@ -22,7 +22,7 @@ pub async fn list_scopes(
     Extension(claims): Extension<Claims>,
     Query(params): Query<PaginationParams>,
 ) -> Json<ApiResponse<PaginatedResponse<ConsolidationScope>>> {
-    if let Err(e) = check_permission(&claims, &ModulePermission::FinanceRead).await {
+    if let Err(e) = check_permission(&state.db, &claims, &ModulePermission::FinanceRead).await {
         return e;
     }
 

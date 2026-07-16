@@ -150,47 +150,32 @@ pub struct JobOpeningQueryParams {
 pub fn create_routes() -> Router<ApiState> {
     Router::new()
         .route(
-            "/api/core/hrm/job-openings",
+            "/job-openings",
             get(list_job_openings).post(create_job_opening),
         )
         .route(
-            "/api/core/hrm/job-openings/{id}",
+            "/job-openings/{id}",
             get(get_job_opening)
                 .put(update_job_opening)
                 .delete(delete_job_opening),
         )
+        .route("/job-openings/{id}/publish", put(publish_job_opening))
+        .route("/job-openings/{id}/close", put(close_job_opening))
+        .route("/candidates", get(list_candidates).post(create_candidate))
         .route(
-            "/api/core/hrm/job-openings/{id}/publish",
-            put(publish_job_opening),
-        )
-        .route(
-            "/api/core/hrm/job-openings/{id}/close",
-            put(close_job_opening),
-        )
-        .route(
-            "/api/core/hrm/candidates",
-            get(list_candidates).post(create_candidate),
-        )
-        .route(
-            "/api/core/hrm/candidates/{id}",
+            "/candidates/{id}",
             get(get_candidate)
                 .put(update_candidate)
                 .delete(delete_candidate),
         )
+        .route("/interviews", get(list_interviews).post(create_interview))
         .route(
-            "/api/core/hrm/interviews",
-            get(list_interviews).post(create_interview),
-        )
-        .route(
-            "/api/core/hrm/interviews/{id}",
+            "/interviews/{id}",
             get(get_interview)
                 .put(update_interview)
                 .delete(delete_interview),
         )
-        .route(
-            "/api/core/hrm/interviews/{id}/complete",
-            put(complete_interview),
-        )
+        .route("/interviews/{id}/complete", put(complete_interview))
 }
 
 async fn list_job_openings(

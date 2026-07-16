@@ -13,11 +13,11 @@ use topems_shared::auth::Claims;
 use topems_shared::{ApiResponse, PaginatedResponse};
 
 pub async fn preview_generated_vouchers(
-    State(_state): State<ApiState>,
+    State(state): State<ApiState>,
     Extension(claims): Extension<Claims>,
     Json(_req): Json<serde_json::Value>,
 ) -> Json<ApiResponse<serde_json::Value>> {
-    if let Err(e) = check_permission(&claims, &ModulePermission::VoucherRead).await {
+    if let Err(e) = check_permission(&state.db, &claims, &ModulePermission::VoucherRead).await {
         return e;
     }
 
@@ -46,11 +46,11 @@ pub async fn preview_generated_vouchers(
 }
 
 pub async fn generate_voucher_from_source(
-    State(_state): State<ApiState>,
+    State(state): State<ApiState>,
     Extension(claims): Extension<Claims>,
     Json(_req): Json<serde_json::Value>,
 ) -> Json<ApiResponse<serde_json::Value>> {
-    if let Err(e) = check_permission(&claims, &ModulePermission::VoucherWrite).await {
+    if let Err(e) = check_permission(&state.db, &claims, &ModulePermission::VoucherWrite).await {
         return e;
     }
 
@@ -66,11 +66,11 @@ pub async fn generate_voucher_from_source(
 }
 
 pub async fn batch_generate_vouchers(
-    State(_state): State<ApiState>,
+    State(state): State<ApiState>,
     Extension(claims): Extension<Claims>,
     Json(_req): Json<serde_json::Value>,
 ) -> Json<ApiResponse<serde_json::Value>> {
-    if let Err(e) = check_permission(&claims, &ModulePermission::VoucherWrite).await {
+    if let Err(e) = check_permission(&state.db, &claims, &ModulePermission::VoucherWrite).await {
         return e;
     }
 
@@ -90,11 +90,11 @@ pub async fn batch_generate_vouchers(
 }
 
 pub async fn auto_generate_vouchers(
-    State(_state): State<ApiState>,
+    State(state): State<ApiState>,
     Extension(claims): Extension<Claims>,
     Json(_req): Json<serde_json::Value>,
 ) -> Json<ApiResponse<serde_json::Value>> {
-    if let Err(e) = check_permission(&claims, &ModulePermission::VoucherWrite).await {
+    if let Err(e) = check_permission(&state.db, &claims, &ModulePermission::VoucherWrite).await {
         return e;
     }
 
@@ -108,11 +108,11 @@ pub async fn auto_generate_vouchers(
 }
 
 pub async fn match_voucher_template(
-    State(_state): State<ApiState>,
+    State(state): State<ApiState>,
     Extension(claims): Extension<Claims>,
     Json(_req): Json<serde_json::Value>,
 ) -> Json<ApiResponse<serde_json::Value>> {
-    if let Err(e) = check_permission(&claims, &ModulePermission::VoucherRead).await {
+    if let Err(e) = check_permission(&state.db, &claims, &ModulePermission::VoucherRead).await {
         return e;
     }
 
@@ -129,11 +129,11 @@ pub async fn match_voucher_template(
 }
 
 pub async fn get_template_usage_stats(
-    State(_state): State<ApiState>,
+    State(state): State<ApiState>,
     Extension(claims): Extension<Claims>,
     Path(_template_id): Path<Uuid>,
 ) -> Json<ApiResponse<serde_json::Value>> {
-    if let Err(e) = check_permission(&claims, &ModulePermission::VoucherRead).await {
+    if let Err(e) = check_permission(&state.db, &claims, &ModulePermission::VoucherRead).await {
         return e;
     }
 
@@ -151,11 +151,11 @@ pub async fn get_template_usage_stats(
 }
 
 pub async fn list_generation_rules(
-    State(_state): State<ApiState>,
+    State(state): State<ApiState>,
     Extension(claims): Extension<Claims>,
     Query(params): Query<GenerationRuleQueryParams>,
 ) -> Json<ApiResponse<PaginatedResponse<serde_json::Value>>> {
-    if let Err(e) = check_permission(&claims, &ModulePermission::VoucherRead).await {
+    if let Err(e) = check_permission(&state.db, &claims, &ModulePermission::VoucherRead).await {
         return e;
     }
 
@@ -195,11 +195,11 @@ pub async fn list_generation_rules(
 }
 
 pub async fn create_generation_rule(
-    State(_state): State<ApiState>,
+    State(state): State<ApiState>,
     Extension(claims): Extension<Claims>,
     Json(_req): Json<serde_json::Value>,
 ) -> Json<ApiResponse<serde_json::Value>> {
-    if let Err(e) = check_permission(&claims, &ModulePermission::VoucherWrite).await {
+    if let Err(e) = check_permission(&state.db, &claims, &ModulePermission::VoucherWrite).await {
         return e;
     }
 
@@ -220,11 +220,11 @@ pub async fn create_generation_rule(
 }
 
 pub async fn get_generation_rule(
-    State(_state): State<ApiState>,
+    State(state): State<ApiState>,
     Extension(claims): Extension<Claims>,
     Path(_rule_id): Path<String>,
 ) -> Json<ApiResponse<serde_json::Value>> {
-    if let Err(e) = check_permission(&claims, &ModulePermission::VoucherRead).await {
+    if let Err(e) = check_permission(&state.db, &claims, &ModulePermission::VoucherRead).await {
         return e;
     }
 
@@ -246,12 +246,12 @@ pub async fn get_generation_rule(
 }
 
 pub async fn update_generation_rule(
-    State(_state): State<ApiState>,
+    State(state): State<ApiState>,
     Extension(claims): Extension<Claims>,
     Path(_rule_id): Path<String>,
     Json(_req): Json<serde_json::Value>,
 ) -> Json<ApiResponse<serde_json::Value>> {
-    if let Err(e) = check_permission(&claims, &ModulePermission::VoucherWrite).await {
+    if let Err(e) = check_permission(&state.db, &claims, &ModulePermission::VoucherWrite).await {
         return e;
     }
 
@@ -273,11 +273,11 @@ pub async fn update_generation_rule(
 }
 
 pub async fn delete_generation_rule(
-    State(_state): State<ApiState>,
+    State(state): State<ApiState>,
     Extension(claims): Extension<Claims>,
     Path(_rule_id): Path<String>,
 ) -> Json<ApiResponse<String>> {
-    if let Err(e) = check_permission(&claims, &ModulePermission::VoucherWrite).await {
+    if let Err(e) = check_permission(&state.db, &claims, &ModulePermission::VoucherWrite).await {
         return e;
     }
 
@@ -285,12 +285,12 @@ pub async fn delete_generation_rule(
 }
 
 pub async fn toggle_generation_rule(
-    State(_state): State<ApiState>,
+    State(state): State<ApiState>,
     Extension(claims): Extension<Claims>,
     Path(_rule_id): Path<String>,
     Json(req): Json<serde_json::Value>,
 ) -> Json<ApiResponse<String>> {
-    if let Err(e) = check_permission(&claims, &ModulePermission::VoucherWrite).await {
+    if let Err(e) = check_permission(&state.db, &claims, &ModulePermission::VoucherWrite).await {
         return e;
     }
 

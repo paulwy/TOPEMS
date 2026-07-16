@@ -1,9 +1,13 @@
 use sqlx::PgPool;
 use topems_shared::auth::Claims;
+use topems_shared::permission::{
+    check_module_permission, ModuleCode, ModulePermission as SharedModulePermission,
+    PermissionAction,
+};
 use topems_shared::response::ApiResponse;
 
 #[derive(Debug, Clone, PartialEq)]
-pub enum ModulePermission {
+pub enum CrmPermission {
     CustomerRead,
     CustomerWrite,
     ContactRead,
@@ -15,47 +19,53 @@ pub enum ModulePermission {
     All,
 }
 
-impl std::fmt::Display for ModulePermission {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+impl CrmPermission {
+    pub fn to_shared(&self) -> SharedModulePermission {
         match self {
-            ModulePermission::CustomerRead => write!(f, "crm:read"),
-            ModulePermission::CustomerWrite => write!(f, "crm:write"),
-            ModulePermission::ContactRead => write!(f, "crm:read"),
-            ModulePermission::ContactWrite => write!(f, "crm:write"),
-            ModulePermission::OpportunityRead => write!(f, "crm:read"),
-            ModulePermission::OpportunityWrite => write!(f, "crm:write"),
-            ModulePermission::InteractionRead => write!(f, "crm:read"),
-            ModulePermission::InteractionWrite => write!(f, "crm:write"),
-            ModulePermission::All => write!(f, "crm:admin"),
+            CrmPermission::CustomerRead => {
+                SharedModulePermission::new(ModuleCode::Crm, PermissionAction::Read)
+            }
+            CrmPermission::CustomerWrite => {
+                SharedModulePermission::new(ModuleCode::Crm, PermissionAction::Write)
+            }
+            CrmPermission::ContactRead => {
+                SharedModulePermission::new(ModuleCode::Crm, PermissionAction::Read)
+            }
+            CrmPermission::ContactWrite => {
+                SharedModulePermission::new(ModuleCode::Crm, PermissionAction::Write)
+            }
+            CrmPermission::OpportunityRead => {
+                SharedModulePermission::new(ModuleCode::Crm, PermissionAction::Read)
+            }
+            CrmPermission::OpportunityWrite => {
+                SharedModulePermission::new(ModuleCode::Crm, PermissionAction::Write)
+            }
+            CrmPermission::InteractionRead => {
+                SharedModulePermission::new(ModuleCode::Crm, PermissionAction::Read)
+            }
+            CrmPermission::InteractionWrite => {
+                SharedModulePermission::new(ModuleCode::Crm, PermissionAction::Write)
+            }
+            CrmPermission::All => {
+                SharedModulePermission::new(ModuleCode::Crm, PermissionAction::Admin)
+            }
         }
     }
 }
 
+impl std::fmt::Display for CrmPermission {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        write!(f, "{}", self.to_shared())
+    }
+}
+
+pub type ModulePermission = CrmPermission;
+
 pub async fn check_permission<T>(
-    _db: &PgPool,
+    db: &PgPool,
     claims: &Claims,
-    permission: &ModulePermission,
+    permission: &CrmPermission,
 ) -> Result<(), axum::Json<ApiResponse<T>>> {
-    if claims.is_superuser {
-        return Ok(());
-    }
-
-    let permission_str = permission.to_string();
-
-    if claims.has_permission(&permission_str) {
-        return Ok(());
-    }
-
-    if claims.has_permission("crm:admin") {
-        return Ok(());
-    }
-
-    if claims.has_permission("all") {
-        return Ok(());
-    }
-
-    Err(axum::Json(ApiResponse::error(
-        403,
-        &format!("权限不足：需要 {} 权限", permission),
-    )))
+    let shared_perm = permission.to_shared();
+    check_module_permission(db, claims, &shared_perm).await
 }

@@ -14,7 +14,7 @@ fn create_client() -> Client {
 async fn login(username: &str, password: &str) -> Result<String, String> {
     let client = create_client();
     let response = client
-        .post(format!("{}/api/core/iam/v1/auth/login", API_URL))
+        .post(format!("{}/api/core/iam/auth/login", API_URL))
         .json(&json!({ "username": username, "password": password }))
         .send()
         .await

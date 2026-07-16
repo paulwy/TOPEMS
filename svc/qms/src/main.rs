@@ -121,20 +121,17 @@ async fn main() -> anyhow::Result<()> {
         .layer(axum::middleware::from_fn_with_state(
             state.pool.clone(),
             rls_middleware,
-        ))
-        .layer(axum::middleware::from_fn(
-            shared::permission::check_permission,
         ));
 
     let app = Router::new()
         .merge(public_routes)
-        .merge(protected_routes)
+        .nest("/api/qms", protected_routes)
         .layer(cors)
         .layer(axum::middleware::from_fn(telemetry_middleware))
         .layer(prometheus_layer)
         .with_state(state);
 
-    let cfg = RouteCompatConfig::new("qms", "/api/core/qms", &[]);
+    let cfg = RouteCompatConfig::new("qms", "/api/qms", &[]);
     let app = wrap_group2_router(app, cfg);
 
     let port = std::env::var("QMS_PORT")

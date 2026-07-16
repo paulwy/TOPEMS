@@ -33,13 +33,13 @@ fn get_tenant_id(claims: &Claims, headers: &HeaderMap) -> Uuid {
 
 pub fn create_routes() -> Router<super::ApiState> {
     Router::<super::ApiState>::new()
-        .route("/api/core/rd/milestones", post(create_milestone))
+        .route("/milestones", post(create_milestone))
         .route(
-            "/api/core/rd/milestones/project/{project_id}",
+            "/milestones/project/{project_id}",
             get(get_project_milestones),
         )
-        .route("/api/core/rd/milestones/{id}", put(update_milestone))
-        .route("/api/core/rd/milestones/{id}", delete(delete_milestone))
+        .route("/milestones/{id}", put(update_milestone))
+        .route("/milestones/{id}", delete(delete_milestone))
 }
 
 pub async fn create_milestone(

@@ -41,19 +41,16 @@ pub struct PaginationParams {
 
 pub fn create_routes() -> Router<super::ApiState> {
     Router::<super::ApiState>::new()
+        .route("/formulas", get(list_formulas).post(create_formula))
         .route(
-            "/api/core/rd/formulas",
-            get(list_formulas).post(create_formula),
-        )
-        .route(
-            "/api/core/rd/formulas/{id}",
+            "/formulas/{id}",
             get(get_formula).put(update_formula).delete(delete_formula),
         )
         .route(
-            "/api/core/rd/formulas/{id}/versions",
+            "/formulas/{id}/versions",
             get(get_formula_versions).post(create_formula_version),
         )
-        .route("/api/core/rd/formulas/{id}/approve", post(approve_formula))
+        .route("/formulas/{id}/approve", post(approve_formula))
 }
 
 async fn list_formulas(

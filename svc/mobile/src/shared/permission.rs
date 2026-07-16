@@ -1,52 +1,90 @@
 // Mobile 服务权限定义
+use sqlx::PgPool;
+use topems_shared::auth::Claims;
+use topems_shared::permission::{
+    check_module_permission, ModuleCode, ModulePermission as SharedModulePermission,
+    PermissionAction,
+};
+use topems_shared::response::ApiResponse;
 
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub enum MobilePermission {
-    // 巡检操作
     PatrolRead,
     PatrolWrite,
     PatrolDelete,
-    // 扫码操作
     ScanRead,
     ScanWrite,
     ScanDelete,
-    // 任务操作
     TaskRead,
     TaskWrite,
     TaskDelete,
     TaskAssign,
-    // 设备操作
     DeviceRegister,
     DeviceManage,
-    // 离线数据
     OfflineSync,
-    // 统计
     StatsView,
-    // 管理权限
     Manage,
+}
+
+impl MobilePermission {
+    pub fn to_shared(&self) -> SharedModulePermission {
+        match self {
+            MobilePermission::PatrolRead => {
+                SharedModulePermission::new(ModuleCode::System, PermissionAction::Read)
+            }
+            MobilePermission::PatrolWrite => {
+                SharedModulePermission::new(ModuleCode::System, PermissionAction::Write)
+            }
+            MobilePermission::PatrolDelete => {
+                SharedModulePermission::new(ModuleCode::System, PermissionAction::Delete)
+            }
+            MobilePermission::ScanRead => {
+                SharedModulePermission::new(ModuleCode::System, PermissionAction::Read)
+            }
+            MobilePermission::ScanWrite => {
+                SharedModulePermission::new(ModuleCode::System, PermissionAction::Write)
+            }
+            MobilePermission::ScanDelete => {
+                SharedModulePermission::new(ModuleCode::System, PermissionAction::Delete)
+            }
+            MobilePermission::TaskRead => {
+                SharedModulePermission::new(ModuleCode::System, PermissionAction::Read)
+            }
+            MobilePermission::TaskWrite => {
+                SharedModulePermission::new(ModuleCode::System, PermissionAction::Write)
+            }
+            MobilePermission::TaskDelete => {
+                SharedModulePermission::new(ModuleCode::System, PermissionAction::Delete)
+            }
+            MobilePermission::TaskAssign => {
+                SharedModulePermission::new(ModuleCode::System, PermissionAction::Write)
+            }
+            MobilePermission::DeviceRegister => {
+                SharedModulePermission::new(ModuleCode::System, PermissionAction::Write)
+            }
+            MobilePermission::DeviceManage => {
+                SharedModulePermission::new(ModuleCode::System, PermissionAction::Admin)
+            }
+            MobilePermission::OfflineSync => {
+                SharedModulePermission::new(ModuleCode::System, PermissionAction::Write)
+            }
+            MobilePermission::StatsView => {
+                SharedModulePermission::new(ModuleCode::System, PermissionAction::Read)
+            }
+            MobilePermission::Manage => {
+                SharedModulePermission::new(ModuleCode::System, PermissionAction::Admin)
+            }
+        }
+    }
 }
 
 impl std::fmt::Display for MobilePermission {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        match self {
-            MobilePermission::PatrolRead => write!(f, "mobile.patrol_read"),
-            MobilePermission::PatrolWrite => write!(f, "mobile.patrol_write"),
-            MobilePermission::PatrolDelete => write!(f, "mobile.patrol_delete"),
-            MobilePermission::ScanRead => write!(f, "mobile.scan_read"),
-            MobilePermission::ScanWrite => write!(f, "mobile.scan_write"),
-            MobilePermission::ScanDelete => write!(f, "mobile.scan_delete"),
-            MobilePermission::TaskRead => write!(f, "mobile.task_read"),
-            MobilePermission::TaskWrite => write!(f, "mobile.task_write"),
-            MobilePermission::TaskDelete => write!(f, "mobile.task_delete"),
-            MobilePermission::TaskAssign => write!(f, "mobile.task_assign"),
-            MobilePermission::DeviceRegister => write!(f, "mobile.device_register"),
-            MobilePermission::DeviceManage => write!(f, "mobile.device_manage"),
-            MobilePermission::OfflineSync => write!(f, "mobile.offline_sync"),
-            MobilePermission::StatsView => write!(f, "mobile.stats_view"),
-            MobilePermission::Manage => write!(f, "mobile.manage"),
-        }
+        write!(f, "{}", self.to_shared())
     }
 }
+
+pub type ModulePermission = MobilePermission;
 
 impl MobilePermission {
     pub fn module_name() -> &'static str {
@@ -54,24 +92,19 @@ impl MobilePermission {
     }
 }
 
-/// 检查 Mobile 权限
-pub fn check_mobile_permission(
-    claims: &topems_shared::auth::Claims,
+pub async fn check_mobile_permission<T>(
+    db: &PgPool,
+    claims: &Claims,
     permission: &MobilePermission,
-) -> Result<(), String> {
+) -> Result<(), axum::Json<ApiResponse<T>>> {
+    let shared_perm = permission.to_shared();
+    check_module_permission(db, claims, &shared_perm).await
+}
+
+pub fn has_mobile_permission(claims: &Claims, permission: &MobilePermission) -> bool {
     if claims.is_superuser {
-        return Ok(());
+        return true;
     }
-
-    let module_manage = format!("{}.manage", MobilePermission::module_name());
-    if claims.has_permission(&module_manage) {
-        return Ok(());
-    }
-
     let perm_str = permission.to_string();
-    if claims.has_permission(&perm_str) {
-        Ok(())
-    } else {
-        Err(format!("权限不足：需要 {} 权限", perm_str))
-    }
+    claims.has_permission(&perm_str) || claims.has_permission("system:admin")
 }

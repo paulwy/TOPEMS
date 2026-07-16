@@ -16,7 +16,7 @@ pub async fn voucher_summary(
     Extension(claims): Extension<Claims>,
     Query(params): Query<ReportParams>,
 ) -> Json<ApiResponse<serde_json::Value>> {
-    if let Err(e) = check_permission(&claims, &ModulePermission::ReportRead).await {
+    if let Err(e) = check_permission(&state.db, &claims, &ModulePermission::ReportRead).await {
         return e;
     }
 
@@ -103,7 +103,7 @@ pub async fn voucher_details(
     Extension(claims): Extension<Claims>,
     Query(params): Query<ReportParams>,
 ) -> Json<ApiResponse<Vec<VoucherDetail>>> {
-    if let Err(e) = check_permission(&claims, &ModulePermission::ReportRead).await {
+    if let Err(e) = check_permission(&state.db, &claims, &ModulePermission::ReportRead).await {
         return e;
     }
 
@@ -157,7 +157,7 @@ pub async fn voucher_trend(
     Extension(claims): Extension<Claims>,
     Query(params): Query<ReportParams>,
 ) -> Json<ApiResponse<Vec<VoucherTrend>>> {
-    if let Err(e) = check_permission(&claims, &ModulePermission::ReportRead).await {
+    if let Err(e) = check_permission(&state.db, &claims, &ModulePermission::ReportRead).await {
         return e;
     }
 

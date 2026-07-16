@@ -164,6 +164,133 @@ TOPEMS 是一个基于微服务架构的企业级数字化平台，提供统一�
 | EventBus | 事件总线，服务间异步通信 | 后端 + 前端 |
 | ServiceRegistry | 服务注册与发现 | unified-core |
 | GlobalConfig | 全局配置管理 | unified-core |
+| **ServiceConfigRegistry** | **集中化配置管理单例（V13.0）** | `lib/src/service_config.rs` |
+| **ConsulServiceRegistrar** | **Consul 服务注册（V13.0）** | `lib/src/service_discovery.rs` |
+| **SmartServiceClient** | **智能服务客户端（Consul + 回退，V13.0）** | `lib/src/service_discovery.rs` |
+| **PluginHeartbeatMonitor** | **插件心跳超时检测后台任务（V13.0）** | `svc/unified-core/src/main.rs` |
+
+### 插件化架构 (V13.0)
+
+#### 架构整改背景
+
+V13.0 针对插件化架构分析中的 7 大缺陷进行了全面整改：
+
+| 缺陷 | 整改方案 | 关键文件 |
+|------|---------|---------|
+| 核心服务职责过重 | 移除 unified-core 中 erp/crm/hrm/wms/finance 残留 | `svc/unified-core/src/modules/mod.rs` |
+| 插件注册无安全验证 | `PLUGIN_REGISTRATION_TOKEN` + `X-Plugin-Token` 令牌验证 | `svc/unified-core/src/modules/plugin/handlers/runtime.rs` |
+| 服务发现未落地 | Consul 注册/发现 + 环境变量回退 | `lib/src/service_discovery.rs` |
+| 前端插件化不彻底 | 后端导航配置 API + 前端动态获取 | `apps/web/src/lib/plugin-loader/PluginManager.ts` |
+| 心跳超时无检测 | 后台任务每 30 秒检测，90 秒超时 | `svc/unified-core/src/main.rs` |
+| 缺少依赖检查 | 安装正向 + 卸载反向依赖检查 | `svc/unified-core/src/modules/plugin/handlers/tenant_plugins.rs` |
+| 配置分散 | ServiceConfigRegistry 集中化配置 | `lib/src/service_config.rs` |
+
+#### 插件注册安全流程
+
+```
+插件服务启动
+    │
+    ▼
+读取 PLUGIN_REGISTRATION_TOKEN 环境变量
+    │
+    ▼
+POST /api/core/plugin/dev/plugins/{code}/register
+Header: X-Plugin-Token: <token>
+Body: { code, name, version, dependencies, navigation_config, ... }
+    │
+    ▼
+unified-core 验证令牌
+    │  ├─ 令牌未设置 → 开发模式，跳过验证
+    │  ├─ 令牌匹配 → 注册成功
+    │  └─ 令牌不匹配 → 403 拒绝注册
+    │
+    ▼
+存储插件信息 + dependencies + navigation_config
+    │
+    ▼
+插件定期 POST /heartbeat（携带令牌）
+    │
+    ▼
+核心后台任务每 30 秒检测心跳
+    │  ├─ last_heartbeat > 90 秒 → 标记 offline
+    │  └─ 注册 > 2 分钟无心跳 → 标记 offline
+```
+
+#### 插件依赖检查
+
+**安装时（正向检查）：**
+```
+安装 QMS 插件
+    │
+    ▼
+查询 QMS 声明的 dependencies: ["erp", "mes"]
+    │
+    ▼
+验证 erp、mes 是否已安装且激活
+    │  ├─ 全部已安装 → 安装成功
+    │  └─ 缺失依赖 → "Missing dependencies: [erp, mes]"
+```
+
+**卸载时（反向检查）：**
+```
+卸载 ERP 插件
+    │
+    ▼
+查询 core_plugins WHERE dependencies @> '["erp"]'
+    │
+    ▼
+查找依赖 ERP 的已安装插件
+    │  ├─ 无依赖 → 允许卸载
+    │  └─ 有依赖（如 QMS、RS）→ "Cannot uninstall: [qms, rs] depend(s) on this plugin"
+```
+
+#### 服务发现架构
+
+```
+客户端请求
+    │
+    ▼
+SmartServiceClient
+    │
+    ├─ CONSUL_ENABLED=true?
+    │   ├─ 是 → ConsulDiscoveryClient 发现服务
+    │   │       ├─ 成功 → 返回服务实例
+    │   │       └─ 失败 → 降级到环境变量
+    │   └─ 否 → 直接使用环境变量
+    │
+    ▼
+服务实例 URL
+```
+
+#### 前端动态导航
+
+```
+应用启动
+    │
+    ▼
+PluginManager.fetchNavigationConfig()
+    │
+    ├─ 请求 /api/core/plugin/navigation-config
+    │   ├─ 成功 → 使用后端动态导航配置（带缓存）
+    │   └─ 失败 → 降级到本地静态 NavigationRegistry
+    │
+    ▼
+渲染侧边栏菜单
+```
+
+#### 核心服务瘦身
+
+V13.0 移除了 unified-core 中的业务模块残留：
+
+| 已移除模块 | 原位置 | 现归属 |
+|-----------|--------|--------|
+| erp | `svc/unified-core/src/modules/erp/` | `svc/erp/`（独立服务） |
+| crm | `svc/unified-core/src/modules/crm/` | `svc/crm/`（独立服务） |
+| hrm | `svc/unified-core/src/modules/hrm/` | `svc/hrm/`（独立服务） |
+| wms | `svc/unified-core/src/modules/wms/` | `svc/wms/`（独立服务） |
+| finance | `svc/unified-core/src/modules/finance/` | `svc/finance/`（独立服务） |
+
+unified-core 现仅保留核心模块：iam、doc、flow、file、mail、im、notification、plugin、search、communication。
 
 ### 服务间通信
 

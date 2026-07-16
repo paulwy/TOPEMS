@@ -43,7 +43,7 @@ pub async fn get_account_balances(
     Extension(claims): Extension<Claims>,
     Query(params): Query<AccountBalancesParams>,
 ) -> Json<ApiResponse<Vec<AccountBalance>>> {
-    if let Err(e) = check_permission(&claims, &ModulePermission::FinanceRead).await {
+    if let Err(e) = check_permission(&state.db, &claims, &ModulePermission::FinanceRead).await {
         return e;
     }
 
@@ -190,7 +190,7 @@ pub async fn get_opening_balances(
     Extension(claims): Extension<Claims>,
     Query(params): Query<OpeningBalancesParams>,
 ) -> Json<ApiResponse<Vec<AccountOpeningBalance>>> {
-    if let Err(e) = check_permission(&claims, &ModulePermission::FinanceRead).await {
+    if let Err(e) = check_permission(&state.db, &claims, &ModulePermission::FinanceRead).await {
         return e;
     }
 
@@ -245,7 +245,7 @@ pub async fn set_opening_balance(
     Path(account_id): Path<Uuid>,
     Json(req): Json<SetOpeningBalanceRequest>,
 ) -> Json<ApiResponse<AccountOpeningBalance>> {
-    if let Err(e) = check_permission(&claims, &ModulePermission::FinanceWrite).await {
+    if let Err(e) = check_permission(&state.db, &claims, &ModulePermission::FinanceWrite).await {
         return e;
     }
 
@@ -290,11 +290,11 @@ struct CarryForwardRequest {
 }
 
 pub async fn carry_forward_opening_balance(
-    State(_state): State<ApiState>,
+    State(state): State<ApiState>,
     Extension(claims): Extension<Claims>,
     Json(req): Json<CarryForwardRequest>,
 ) -> Json<ApiResponse<()>> {
-    if let Err(e) = check_permission(&claims, &ModulePermission::FinanceWrite).await {
+    if let Err(e) = check_permission(&state.db, &claims, &ModulePermission::FinanceWrite).await {
         return e;
     }
 

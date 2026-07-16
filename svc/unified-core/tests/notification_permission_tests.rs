@@ -20,7 +20,7 @@ async fn login(username: &str, password: &str) -> Result<String, String> {
     let client = create_client();
 
     let response = client
-        .post(format!("{}/api/core/iam/v1/auth/login", API_URL))
+        .post(format!("{}/api/core/iam/auth/login", API_URL))
         .json(&json!({ "username": username, "password": password }))
         .send()
         .await
@@ -96,7 +96,7 @@ async fn test_notif_001_list_notifications() {
         &client,
         &token,
         "GET",
-        "/api/core/comm/notify/v1/notifications",
+        "/api/core/notification/notifications",
         None,
     )
     .await;
@@ -127,7 +127,7 @@ async fn test_notif_002_list_unread() {
         &client,
         &token,
         "GET",
-        "/api/core/comm/notify/v1/notifications/unread",
+        "/api/core/notification/notifications/unread",
         None,
     )
     .await;
@@ -159,7 +159,7 @@ async fn test_notif_003_mark_read() {
         &client,
         &token,
         "GET",
-        "/api/core/comm/notify/v1/notifications",
+        "/api/core/notification/notifications",
         None,
     )
     .await;
@@ -180,7 +180,7 @@ async fn test_notif_003_mark_read() {
                             &client,
                             &token,
                             "PUT",
-                            &format!("/api/core/comm/notify/v1/notifications/{}", note_id),
+                            &format!("/api/core/notification/notifications/{}", note_id),
                             Some(json!({ "is_read": true })),
                         )
                         .await;
@@ -217,7 +217,7 @@ async fn test_notif_004_mark_all_read() {
         &client,
         &token,
         "PUT",
-        "/api/core/comm/notify/v1/notifications/read-all",
+        "/api/core/notification/notifications/read-all",
         None,
     )
     .await;
@@ -331,7 +331,7 @@ async fn test_notif_007_access_others_notification() {
                 &client,
                 &token,
                 "GET",
-                &format!("/api/core/comm/notify/v1/notifications/{}", fake_notif_id),
+                &format!("/api/core/notification/notifications/{}", fake_notif_id),
                 None,
             )
             .await;

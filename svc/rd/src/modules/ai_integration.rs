@@ -61,21 +61,12 @@ struct ListQueryParams {
 
 pub fn create_routes() -> axum::Router<super::ApiState> {
     axum::Router::<super::ApiState>::new()
+        .route("/ai/analyses", axum::routing::get(list_analyses))
+        .route("/ai/analyses", axum::routing::post(create_analysis))
+        .route("/ai/analyses/{id}", axum::routing::get(get_analysis))
+        .route("/ai/chat", axum::routing::post(ai_chat))
         .route(
-            "/api/core/rd/ai/analyses",
-            axum::routing::get(list_analyses),
-        )
-        .route(
-            "/api/core/rd/ai/analyses",
-            axum::routing::post(create_analysis),
-        )
-        .route(
-            "/api/core/rd/ai/analyses/{id}",
-            axum::routing::get(get_analysis),
-        )
-        .route("/api/core/rd/ai/chat", axum::routing::post(ai_chat))
-        .route(
-            "/api/core/rd/entities/{entity_type}/{entity_id}/analyses",
+            "/entities/{entity_type}/{entity_id}/analyses",
             axum::routing::get(get_entity_analyses),
         )
 }

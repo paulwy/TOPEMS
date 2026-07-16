@@ -23,7 +23,7 @@ pub async fn list_subjects(
     Extension(claims): Extension<Claims>,
     Query(params): Query<PaginationParams>,
 ) -> Json<ApiResponse<PaginatedResponse<AccountingSubject>>> {
-    if let Err(e) = check_permission(&claims, &ModulePermission::VoucherRead).await {
+    if let Err(e) = check_permission(&state.db, &claims, &ModulePermission::VoucherRead).await {
         return e;
     }
 
@@ -84,7 +84,7 @@ pub async fn create_subject(
     headers: HeaderMap,
     Json(req): Json<CreateAccountingSubjectRequest>,
 ) -> Json<ApiResponse<AccountingSubject>> {
-    if let Err(e) = check_permission(&claims, &ModulePermission::VoucherWrite).await {
+    if let Err(e) = check_permission(&state.db, &claims, &ModulePermission::VoucherWrite).await {
         return e;
     }
 
@@ -171,7 +171,7 @@ pub async fn get_subject(
     Extension(claims): Extension<Claims>,
     Path(id): Path<Uuid>,
 ) -> Json<ApiResponse<AccountingSubject>> {
-    if let Err(e) = check_permission(&claims, &ModulePermission::VoucherRead).await {
+    if let Err(e) = check_permission(&state.db, &claims, &ModulePermission::VoucherRead).await {
         return e;
     }
 
@@ -202,7 +202,7 @@ pub async fn update_subject(
     headers: HeaderMap,
     Json(req): Json<UpdateAccountingSubjectRequest>,
 ) -> Json<ApiResponse<AccountingSubject>> {
-    if let Err(e) = check_permission(&claims, &ModulePermission::VoucherWrite).await {
+    if let Err(e) = check_permission(&state.db, &claims, &ModulePermission::VoucherWrite).await {
         return e;
     }
 
@@ -297,7 +297,7 @@ pub async fn delete_subject(
     Path(id): Path<Uuid>,
     headers: HeaderMap,
 ) -> Json<ApiResponse<String>> {
-    if let Err(e) = check_permission(&claims, &ModulePermission::VoucherWrite).await {
+    if let Err(e) = check_permission(&state.db, &claims, &ModulePermission::VoucherWrite).await {
         return e;
     }
 

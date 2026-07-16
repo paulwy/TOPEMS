@@ -95,37 +95,25 @@ pub struct QueryParams {
 pub fn create_routes() -> Router<ApiState> {
     Router::new()
         .route(
-            "/api/core/hrm/performance-reviews",
+            "/performance-reviews",
             get(list_reviews).post(create_review),
         )
         .route(
-            "/api/core/hrm/performance-reviews/{id}",
+            "/performance-reviews/{id}",
             get(get_review).put(update_review).delete(delete_review),
         )
+        .route("/performance-reviews/{id}/submit", put(submit_review))
+        .route("/performance-reviews/{id}/approve", put(approve_review))
+        .route("/performance-goals", get(list_goals).post(create_goal))
         .route(
-            "/api/core/hrm/performance-reviews/{id}/submit",
-            put(submit_review),
-        )
-        .route(
-            "/api/core/hrm/performance-reviews/{id}/approve",
-            put(approve_review),
-        )
-        .route(
-            "/api/core/hrm/performance-goals",
-            get(list_goals).post(create_goal),
-        )
-        .route(
-            "/api/core/hrm/performance-goals/{id}",
+            "/performance-goals/{id}",
             get(get_goal).put(update_goal).delete(delete_goal),
         )
         .route(
-            "/api/core/hrm/employees/{id}/performance-reviews",
+            "/employees/{id}/performance-reviews",
             get(get_employee_reviews),
         )
-        .route(
-            "/api/core/hrm/employees/{id}/performance-goals",
-            get(get_employee_goals),
-        )
+        .route("/employees/{id}/performance-goals", get(get_employee_goals))
 }
 
 async fn list_reviews(

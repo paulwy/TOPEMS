@@ -17,40 +17,25 @@ use topems_shared::ApiResponse;
 
 pub fn create_routes() -> Router<ApiState> {
     Router::new()
+        .route("/training-plans", get(list_plans).post(create_plan))
         .route(
-            "/api/core/hrm/training-plans",
-            get(list_plans).post(create_plan),
-        )
-        .route(
-            "/api/core/hrm/training-plans/{id}",
+            "/training-plans/{id}",
             get(get_plan).put(update_plan).delete(delete_plan),
         )
+        .route("/training-courses", get(list_courses).post(create_course))
         .route(
-            "/api/core/hrm/training-courses",
-            get(list_courses).post(create_course),
-        )
-        .route(
-            "/api/core/hrm/training-courses/{id}",
+            "/training-courses/{id}",
             get(get_course).put(update_course).delete(delete_course),
         )
+        .route("/training-records", get(list_records).post(create_record))
         .route(
-            "/api/core/hrm/training-records",
-            get(list_records).post(create_record),
-        )
-        .route(
-            "/api/core/hrm/training-records/{id}",
+            "/training-records/{id}",
             get(get_record).put(update_record).delete(delete_record),
         )
+        .route("/training-courses/{id}/enroll", post(enroll_course))
+        .route("/training-courses/{id}/records", get(get_course_records))
         .route(
-            "/api/core/hrm/training-courses/{id}/enroll",
-            post(enroll_course),
-        )
-        .route(
-            "/api/core/hrm/training-courses/{id}/records",
-            get(get_course_records),
-        )
-        .route(
-            "/api/core/hrm/employees/{id}/training-records",
+            "/employees/{id}/training-records",
             get(get_employee_records),
         )
 }

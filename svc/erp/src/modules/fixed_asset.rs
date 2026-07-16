@@ -97,7 +97,7 @@ pub async fn list_fixed_assets(
     Extension(claims): Extension<Claims>,
     Query(params): Query<FixedAssetParams>,
 ) -> Json<ApiResponse<PaginatedResponse<FixedAsset>>> {
-    if let Err(e) = check_permission(&claims, &ModulePermission::FixedAssetRead).await {
+    if let Err(e) = check_permission(&state.db, &claims, &ModulePermission::FixedAssetRead).await {
         return e;
     }
 
@@ -179,7 +179,7 @@ pub async fn create_fixed_asset(
     headers: HeaderMap,
     Json(req): Json<CreateFixedAssetRequest>,
 ) -> Json<ApiResponse<FixedAsset>> {
-    if let Err(e) = check_permission(&claims, &ModulePermission::FixedAssetWrite).await {
+    if let Err(e) = check_permission(&state.db, &claims, &ModulePermission::FixedAssetWrite).await {
         return e;
     }
 
@@ -285,7 +285,7 @@ pub async fn get_fixed_asset(
     Extension(claims): Extension<Claims>,
     Path(id): Path<Uuid>,
 ) -> Json<ApiResponse<FixedAsset>> {
-    if let Err(e) = check_permission(&claims, &ModulePermission::FixedAssetRead).await {
+    if let Err(e) = check_permission(&state.db, &claims, &ModulePermission::FixedAssetRead).await {
         return e;
     }
 
@@ -319,7 +319,7 @@ pub async fn update_fixed_asset(
     headers: HeaderMap,
     Json(req): Json<UpdateFixedAssetRequest>,
 ) -> Json<ApiResponse<FixedAsset>> {
-    if let Err(e) = check_permission(&claims, &ModulePermission::FixedAssetWrite).await {
+    if let Err(e) = check_permission(&state.db, &claims, &ModulePermission::FixedAssetWrite).await {
         return e;
     }
 
@@ -444,7 +444,7 @@ pub async fn delete_fixed_asset(
     Path(id): Path<Uuid>,
     headers: HeaderMap,
 ) -> Json<ApiResponse<String>> {
-    if let Err(e) = check_permission(&claims, &ModulePermission::FixedAssetWrite).await {
+    if let Err(e) = check_permission(&state.db, &claims, &ModulePermission::FixedAssetWrite).await {
         return e;
     }
 
@@ -513,7 +513,9 @@ pub async fn depreciate_assets(
     headers: HeaderMap,
     Json(req): Json<DepreciateRequest>,
 ) -> Json<ApiResponse<serde_json::Value>> {
-    if let Err(e) = check_permission(&claims, &ModulePermission::FixedAssetDepreciate).await {
+    if let Err(e) =
+        check_permission(&state.db, &claims, &ModulePermission::FixedAssetDepreciate).await
+    {
         return e;
     }
 

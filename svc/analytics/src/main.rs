@@ -1077,7 +1077,7 @@ async fn main() -> anyhow::Result<()> {
         .layer(prometheus_layer)
         .with_state(state);
 
-    let cfg = RouteCompatConfig::new("analytics", "/api/core/bi", &[]);
+    let cfg = RouteCompatConfig::new("analytics", "/api/bi", &[]);
     let app = wrap_group2_router(app, cfg);
 
     let port = std::env::var("ANALYTICS_PORT")

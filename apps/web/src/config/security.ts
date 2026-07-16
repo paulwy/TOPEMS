@@ -97,22 +97,17 @@ export const securityConfig: SecurityConfig = {
 };
 
 export const applySecurityHeaders = (): void => {
+  // Note: X-Frame-Options and X-Content-Type-Options can only be set via HTTP headers,
+  // not <meta> tags. They are included here for documentation but should be configured
+  // on the server (e.g., Vite proxy, Nginx, or CDN).
   const metaTags = [
     {
       name: 'Content-Security-Policy',
       content: securityConfig.contentSecurityPolicy,
     },
     {
-      name: 'X-Frame-Options',
-      content: securityConfig.xFrameOptions,
-    },
-    {
       name: 'X-XSS-Protection',
       content: securityConfig.xXssProtection,
-    },
-    {
-      name: 'X-Content-Type-Options',
-      content: 'nosniff',
     },
     {
       name: 'Referrer-Policy',

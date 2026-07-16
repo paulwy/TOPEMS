@@ -2,85 +2,98 @@
 
 use sqlx::PgPool;
 use topems_shared::auth::Claims;
-use topems_shared::permission::check_resource_permission;
+use topems_shared::permission::{
+    check_module_permission, check_resource_permission, ModuleCode,
+    ModulePermission as SharedModulePermission, PermissionAction,
+};
 use topems_shared::response::ApiResponse;
 use uuid::Uuid;
 
 #[derive(Debug, Clone, PartialEq)]
-pub enum ModulePermission {
-    // 资产管理权限
+pub enum ErpPermission {
     AssetRead,
     AssetWrite,
-    // 财务管理权限
     FinanceRead,
     FinanceWrite,
-    // 凭证管理权限
     VoucherRead,
     VoucherWrite,
     VoucherAudit,
     VoucherPost,
-    // 固定资产权限
     FixedAssetRead,
     FixedAssetWrite,
     FixedAssetDepreciate,
-    // 报表权限
     ReportRead,
-    // 完整权限
     All,
 }
 
-impl std::fmt::Display for ModulePermission {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+impl ErpPermission {
+    pub fn to_shared(&self) -> SharedModulePermission {
         match self {
-            ModulePermission::AssetRead => write!(f, "erp:asset:read"),
-            ModulePermission::AssetWrite => write!(f, "erp:asset:write"),
-            ModulePermission::FinanceRead => write!(f, "erp:finance:read"),
-            ModulePermission::FinanceWrite => write!(f, "erp:finance:write"),
-            ModulePermission::VoucherRead => write!(f, "erp:voucher:read"),
-            ModulePermission::VoucherWrite => write!(f, "erp:voucher:write"),
-            ModulePermission::VoucherAudit => write!(f, "erp:voucher:audit"),
-            ModulePermission::VoucherPost => write!(f, "erp:voucher:post"),
-            ModulePermission::FixedAssetRead => write!(f, "erp:fixed_asset:read"),
-            ModulePermission::FixedAssetWrite => write!(f, "erp:fixed_asset:write"),
-            ModulePermission::FixedAssetDepreciate => write!(f, "erp:fixed_asset:depreciate"),
-            ModulePermission::ReportRead => write!(f, "erp:report:read"),
-            ModulePermission::All => write!(f, "erp:admin"),
+            ErpPermission::AssetRead => {
+                SharedModulePermission::new(ModuleCode::Erp, PermissionAction::Read)
+            }
+            ErpPermission::AssetWrite => {
+                SharedModulePermission::new(ModuleCode::Erp, PermissionAction::Write)
+            }
+            ErpPermission::FinanceRead => {
+                SharedModulePermission::new(ModuleCode::Erp, PermissionAction::Read)
+            }
+            ErpPermission::FinanceWrite => {
+                SharedModulePermission::new(ModuleCode::Erp, PermissionAction::Write)
+            }
+            ErpPermission::VoucherRead => {
+                SharedModulePermission::new(ModuleCode::Erp, PermissionAction::Read)
+            }
+            ErpPermission::VoucherWrite => {
+                SharedModulePermission::new(ModuleCode::Erp, PermissionAction::Write)
+            }
+            ErpPermission::VoucherAudit => {
+                SharedModulePermission::new(ModuleCode::Erp, PermissionAction::Approve)
+            }
+            ErpPermission::VoucherPost => {
+                SharedModulePermission::new(ModuleCode::Erp, PermissionAction::Write)
+            }
+            ErpPermission::FixedAssetRead => {
+                SharedModulePermission::new(ModuleCode::Erp, PermissionAction::Read)
+            }
+            ErpPermission::FixedAssetWrite => {
+                SharedModulePermission::new(ModuleCode::Erp, PermissionAction::Write)
+            }
+            ErpPermission::FixedAssetDepreciate => {
+                SharedModulePermission::new(ModuleCode::Erp, PermissionAction::Write)
+            }
+            ErpPermission::ReportRead => {
+                SharedModulePermission::new(ModuleCode::Erp, PermissionAction::Read)
+            }
+            ErpPermission::All => {
+                SharedModulePermission::new(ModuleCode::Erp, PermissionAction::Admin)
+            }
         }
     }
 }
 
-pub async fn check_permission<T>(
-    claims: &Claims,
-    permission: &ModulePermission,
-) -> Result<(), axum::Json<ApiResponse<T>>> {
-    if claims.is_superuser {
-        return Ok(());
+impl std::fmt::Display for ErpPermission {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        write!(f, "{}", self.to_shared())
     }
-
-    let permission_str = permission.to_string();
-
-    if claims.has_permission(&permission_str) {
-        return Ok(());
-    }
-
-    if claims.has_permission("erp:admin") {
-        return Ok(());
-    }
-
-    if claims.has_permission("all") {
-        return Ok(());
-    }
-
-    Err(axum::Json(ApiResponse::error(
-        403,
-        &format!("权限不足：需要 {} 权限", permission),
-    )))
 }
 
-pub async fn check_employee_permission<T>(
+pub type ModulePermission = ErpPermission;
+
+pub async fn check_permission<T>(
     db: &PgPool,
     claims: &Claims,
-    employee_id: &Uuid,
+    permission: &ErpPermission,
 ) -> Result<(), axum::Json<ApiResponse<T>>> {
-    check_resource_permission(db, claims, employee_id, "信息", "employee.manage").await
+    let shared_perm = permission.to_shared();
+    check_module_permission(db, claims, &shared_perm).await
+}
+
+pub async fn check_resource_permission_for_erp<T>(
+    db: &PgPool,
+    claims: &Claims,
+    resource_id: &Uuid,
+    resource_type: &str,
+) -> Result<(), axum::Json<ApiResponse<T>>> {
+    check_resource_permission(db, claims, resource_id, resource_type, "erp:admin").await
 }

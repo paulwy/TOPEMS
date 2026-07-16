@@ -18,7 +18,7 @@ pub async fn list_collections(
     Extension(claims): Extension<Claims>,
     Query(params): Query<PaginationParams>,
 ) -> Json<ApiResponse<PaginatedResponse<CollectionRecord>>> {
-    if let Err(e) = check_permission(&claims, &ModulePermission::FinanceRead).await {
+    if let Err(e) = check_permission(&state.db, &claims, &ModulePermission::FinanceRead).await {
         return e;
     }
 
@@ -125,7 +125,7 @@ pub async fn create_collection(
     Extension(claims): Extension<Claims>,
     Json(req): Json<CreateCollectionRequest>,
 ) -> Json<ApiResponse<CollectionRecord>> {
-    if let Err(e) = check_permission(&claims, &ModulePermission::FinanceWrite).await {
+    if let Err(e) = check_permission(&state.db, &claims, &ModulePermission::FinanceWrite).await {
         return e;
     }
 

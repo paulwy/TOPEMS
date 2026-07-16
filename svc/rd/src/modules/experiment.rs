@@ -40,36 +40,24 @@ pub struct PaginationParams {
 pub fn create_routes() -> Router<super::ApiState> {
     Router::<super::ApiState>::new()
         .route(
-            "/api/core/rd/experiments",
+            "/experiments",
             get(list_experiments).post(create_experiment),
         )
         .route(
-            "/api/core/rd/experiments/{id}",
+            "/experiments/{id}",
             get(get_experiment)
                 .put(update_experiment)
                 .delete(delete_experiment),
         )
         .route(
-            "/api/core/rd/experiments/{id}/records",
+            "/experiments/{id}/records",
             get(get_experiment_records).post(create_experiment_record),
         )
-        .route(
-            "/api/core/rd/experiments/phase/lab",
-            get(list_lab_experiments),
-        )
-        .route(
-            "/api/core/rd/experiments/phase/pilot",
-            get(list_pilot_experiments),
-        )
-        .route(
-            "/api/core/rd/experiments/phase/scaleup",
-            get(list_scaleup_experiments),
-        )
-        .route(
-            "/api/core/rd/experiments/{id}/advance-phase",
-            post(advance_phase),
-        )
-        .route("/api/core/rd/batch-trace/{batch_number}", get(trace_batch))
+        .route("/experiments/phase/lab", get(list_lab_experiments))
+        .route("/experiments/phase/pilot", get(list_pilot_experiments))
+        .route("/experiments/phase/scaleup", get(list_scaleup_experiments))
+        .route("/experiments/{id}/advance-phase", post(advance_phase))
+        .route("/batch-trace/{batch_number}", get(trace_batch))
 }
 
 async fn list_experiments(

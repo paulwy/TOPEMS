@@ -13,6 +13,12 @@ pub struct PluginInfo {
     pub description: String,
     pub runtime_url: String,
     pub permissions: Vec<PermissionDef>,
+    #[serde(default)]
+    pub dependencies: Vec<String>,
+    #[serde(default)]
+    pub navigation_config: Option<serde_json::Value>,
+    #[serde(default)]
+    pub category: Option<String>,
 }
 
 /// 权限定义
@@ -99,6 +105,14 @@ pub async fn get_plugin_info() -> Json<ApiResponse<PluginInfo>> {
                 action: "write".to_string(),
             },
         ],
+        dependencies: vec![],
+        navigation_config: Some(serde_json::json!([
+            {"code": "crm-customers", "label": "客户管理", "path": "/crm/customers", "icon": "Users", "order": 10, "group": "business"},
+            {"code": "crm-leads", "label": "线索管理", "path": "/crm/leads", "icon": "Target", "order": 20, "group": "business"},
+            {"code": "crm-opportunities", "label": "商机管理", "path": "/crm/opportunities", "icon": "TrendingUp", "order": 30, "group": "business"},
+            {"code": "crm-contacts", "label": "联系人", "path": "/crm/contacts", "icon": "User", "order": 40, "group": "business"}
+        ])),
+        category: Some("crm".to_string()),
     };
     Json(ApiResponse::success(info, "Plugin info"))
 }
@@ -131,12 +145,25 @@ pub async fn auto_register_to_core(core_url: Option<&str>) {
         description: "CRM 客户关系管理系统".to_string(),
         runtime_url,
         permissions: vec![],
+        dependencies: vec![],
+        navigation_config: Some(serde_json::json!([
+            {"code": "crm-customers", "label": "客户管理", "path": "/crm/customers", "icon": "Users", "order": 10, "group": "business"},
+            {"code": "crm-leads", "label": "线索管理", "path": "/crm/leads", "icon": "Target", "order": 20, "group": "business"},
+            {"code": "crm-opportunities", "label": "商机管理", "path": "/crm/opportunities", "icon": "TrendingUp", "order": 30, "group": "business"},
+            {"code": "crm-contacts", "label": "联系人", "path": "/crm/contacts", "icon": "User", "order": 40, "group": "business"}
+        ])),
+        category: Some("crm".to_string()),
     };
 
     let client = reqwest::Client::new();
     let url = format!("{}/api/core/plugin/dev/plugins/crm/register", core_url);
 
-    match client.post(&url).json(&info).send().await {
+    let token = std::env::var("PLUGIN_REGISTRATION_TOKEN").unwrap_or_default();
+    let mut request = client.post(&url).json(&info);
+    if !token.is_empty() {
+        request = request.header("X-Plugin-Token", &token);
+    }
+    match request.send().await {
         Ok(response) => {
             if response.status().is_success() {
                 tracing::info!(

@@ -24,7 +24,7 @@ pub async fn list_vouchers(
     Extension(claims): Extension<Claims>,
     Query(params): Query<PaginationParams>,
 ) -> Json<ApiResponse<PaginatedResponse<FinancialVoucher>>> {
-    if let Err(e) = check_permission(&claims, &ModulePermission::VoucherRead).await {
+    if let Err(e) = check_permission(&state.db, &claims, &ModulePermission::VoucherRead).await {
         return e;
     }
 
@@ -89,7 +89,7 @@ pub async fn create_voucher(
     headers: HeaderMap,
     Json(req): Json<CreateFinancialVoucherRequest>,
 ) -> Json<ApiResponse<FinancialVoucher>> {
-    if let Err(e) = check_permission(&claims, &ModulePermission::VoucherWrite).await {
+    if let Err(e) = check_permission(&state.db, &claims, &ModulePermission::VoucherWrite).await {
         return e;
     }
 
@@ -212,7 +212,7 @@ pub async fn get_voucher(
     Extension(claims): Extension<Claims>,
     Path(id): Path<Uuid>,
 ) -> Json<ApiResponse<FinancialVoucher>> {
-    if let Err(e) = check_permission(&claims, &ModulePermission::VoucherRead).await {
+    if let Err(e) = check_permission(&state.db, &claims, &ModulePermission::VoucherRead).await {
         return e;
     }
 
@@ -241,7 +241,7 @@ pub async fn get_voucher_items(
     Extension(claims): Extension<Claims>,
     Path(id): Path<Uuid>,
 ) -> Json<ApiResponse<Vec<VoucherItem>>> {
-    if let Err(e) = check_permission(&claims, &ModulePermission::VoucherRead).await {
+    if let Err(e) = check_permission(&state.db, &claims, &ModulePermission::VoucherRead).await {
         return e;
     }
 
@@ -271,7 +271,7 @@ pub async fn update_voucher(
     headers: HeaderMap,
     Json(req): Json<UpdateFinancialVoucherRequest>,
 ) -> Json<ApiResponse<FinancialVoucher>> {
-    if let Err(e) = check_permission(&claims, &ModulePermission::VoucherWrite).await {
+    if let Err(e) = check_permission(&state.db, &claims, &ModulePermission::VoucherWrite).await {
         return e;
     }
 
@@ -376,7 +376,7 @@ pub async fn delete_voucher(
     Path(id): Path<Uuid>,
     headers: HeaderMap,
 ) -> Json<ApiResponse<String>> {
-    if let Err(e) = check_permission(&claims, &ModulePermission::VoucherWrite).await {
+    if let Err(e) = check_permission(&state.db, &claims, &ModulePermission::VoucherWrite).await {
         return e;
     }
 
@@ -461,7 +461,7 @@ pub async fn approve_voucher(
     headers: HeaderMap,
     Json(req): Json<ApproveVoucherRequest>,
 ) -> Json<ApiResponse<FinancialVoucher>> {
-    if let Err(e) = check_permission(&claims, &ModulePermission::VoucherAudit).await {
+    if let Err(e) = check_permission(&state.db, &claims, &ModulePermission::VoucherAudit).await {
         return e;
     }
 
@@ -556,7 +556,7 @@ pub async fn post_voucher(
     headers: HeaderMap,
     Json(req): Json<PostVoucherRequest>,
 ) -> Json<ApiResponse<FinancialVoucher>> {
-    if let Err(e) = check_permission(&claims, &ModulePermission::VoucherPost).await {
+    if let Err(e) = check_permission(&state.db, &claims, &ModulePermission::VoucherPost).await {
         return e;
     }
 
@@ -647,7 +647,7 @@ pub async fn unpost_voucher(
     Path(id): Path<Uuid>,
     headers: HeaderMap,
 ) -> Json<ApiResponse<FinancialVoucher>> {
-    if let Err(e) = check_permission(&claims, &ModulePermission::VoucherPost).await {
+    if let Err(e) = check_permission(&state.db, &claims, &ModulePermission::VoucherPost).await {
         return e;
     }
 
@@ -732,7 +732,7 @@ pub async fn import_u8_vouchers(
     headers: HeaderMap,
     Json(req): Json<U8VoucherImportRequest>,
 ) -> Json<ApiResponse<VoucherImportResult>> {
-    if let Err(e) = check_permission(&claims, &ModulePermission::VoucherWrite).await {
+    if let Err(e) = check_permission(&state.db, &claims, &ModulePermission::VoucherWrite).await {
         return e;
     }
 

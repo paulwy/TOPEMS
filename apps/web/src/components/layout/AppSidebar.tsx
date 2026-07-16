@@ -23,9 +23,40 @@ import {
 import type { Theme } from '@mui/material/styles';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { usePermission } from '@/hooks/usePermission';
+import { useServiceStatus } from '@/hooks/useServiceStatus';
 import { navigationRegistryV2 } from '@/lib/navigation';
 import type { NavItem } from '@/lib/navigation/types';
 import { useUIStore } from '@/store';
+
+const moduleToService: Record<string, string> = {
+  rs: 'rs',
+  lims: 'lims',
+  doc: 'doc',
+  ai: 'ai',
+  workflow: 'flow',
+  iam: 'iam',
+  qms: 'qms',
+  ehs: 'ehs',
+  srm: 'srm',
+  pdm: 'pdm',
+  crm: 'crm',
+  mes: 'mes',
+  mail: 'mail',
+  mobile: 'mobile',
+  hrm: 'hrm',
+  erp: 'erp',
+  gis: 'gis',
+  pm: 'pm',
+  bi: 'bi',
+  integration: 'integration',
+  notification: 'notification',
+  portal: 'portal',
+  scm: 'scm',
+  wms: 'wms',
+  im: 'im',
+  report: 'report',
+  contract: 'hrm',
+};
 
 import {
   ChevronLeft,
@@ -92,6 +123,12 @@ export const AppSidebar: React.FC<AppSidebarProps> = ({
   const navigate = useNavigate();
   const location = useLocation();
   const { checkPermission } = usePermission();
+  const { serviceStatuses } = useServiceStatus();
+
+  const isServiceOffline = (moduleCode: string): boolean => {
+    const serviceKey = moduleToService[moduleCode];
+    return serviceKey ? !serviceStatuses[serviceKey] : false;
+  };
 
   const isTablet = useMediaQuery('(min-width:768px) and (max-width:1024px)');
 
@@ -616,67 +653,78 @@ export const AppSidebar: React.FC<AppSidebarProps> = ({
                         sx={navItemSx(isActive, true)}
                       >
                         {renderIcon(item.icon, 18) || (
-                          <Typography sx={{ width: 18, height: 18, fontSize: 18 }} />
-                        )}
-                        {!collapsed && (
-                          <Box sx={{ flex: 1, display: 'flex', alignItems: 'center', gap: 1 }}>
-                            <Typography sx={{ fontSize: 14, fontWeight: isActive ? 600 : 500 }}>
-                              {item.label}
-                            </Typography>
-                            {item.badge && (
-                              <Chip
-                                size='small'
-                                label={item.badge}
+                              <Typography sx={{ width: 18, height: 18, fontSize: 18 }} />
+                            )}
+                            {!collapsed && (
+                              <Box sx={{ flex: 1, display: 'flex', alignItems: 'center', gap: 1 }}>
+                                <Typography sx={{ fontSize: 14, fontWeight: isActive ? 600 : 500 }}>
+                                  {item.label}
+                                </Typography>
+                                {item.badge && (
+                                  <Chip
+                                    size='small'
+                                    label={item.badge}
+                                    sx={{
+                                      height: 16,
+                                      fontSize: '0.625rem',
+                                      fontWeight: 600,
+                                      bgcolor: 'error.main',
+                                      color: 'white',
+                                      '& .MuiChip-label': {
+                                        px: 0.5,
+                                      },
+                                    }}
+                                  />
+                                )}
+                              </Box>
+                            )}
+                            {!collapsed && isServiceOffline(item.moduleCode || item.code) && (
+                              <Box
                                 sx={{
-                                  height: 16,
-                                  fontSize: '0.625rem',
-                                  fontWeight: 600,
+                                  width: 8,
+                                  height: 8,
+                                  borderRadius: '50%',
                                   bgcolor: 'error.main',
-                                  color: 'white',
-                                  '& .MuiChip-label': {
-                                    px: 0.5,
+                                  animation: 'pulse 2s infinite',
+                                }}
+                              />
+                            )}
+                            {collapsed && item.badge && (
+                              <MuiBadge
+                                badgeContent={item.badge}
+                                color='error'
+                                sx={{
+                                  position: 'absolute',
+                                  top: 4,
+                                  right: 4,
+                                  '& .MuiBadge-badge': {
+                                    fontSize: '0.625rem',
+                                    height: 14,
+                                    minWidth: 14,
                                   },
                                 }}
                               />
                             )}
                           </Box>
-                        )}
-                        {collapsed && item.badge && (
-                          <MuiBadge
-                            badgeContent={item.badge}
-                            color='error'
-                            sx={{
-                              position: 'absolute',
-                              top: 4,
-                              right: 4,
-                              '& .MuiBadge-badge': {
-                                fontSize: '0.625rem',
-                                height: 14,
-                                minWidth: 14,
-                              },
-                            }}
-                          />
-                        )}
-                      </Box>
-                    );
-                    return collapsed ? (
-                      <Tooltip
-                        key={item.code || `${item.label}-${index}`}
-                        title={item.label}
-                        placement='right'
-                        arrow
-                      >
-                        {NavButton}
-                      </Tooltip>
-                    ) : (
-                      NavButton
-                    );
-                  })}
-                </Box>
-              </>
-            )}
+                        );
+                        return collapsed ? (
+                          <Tooltip
+                            key={item.code || `${item.label}-${index}`}
+                            title={item.label}
+                            placement='right'
+                            arrow
+                          >
+                            {NavButton}
+                          </Tooltip>
+                        ) : (
+                          NavButton
+                        );
+                      })}
+                    </Box>
+                  </>
+                )}
 
-            {pluginNavItems.length > 0 && (
+                {pluginNavItems.length > 0 && (
               <>
                 <Box sx={{ my: 1, mx: 1, borderBottom: 1, borderColor: 'divider' }} />
                 {!collapsed && (
@@ -742,6 +790,17 @@ export const AppSidebar: React.FC<AppSidebarProps> = ({
                               />
                             )}
                           </Box>
+                        )}
+                        {!collapsed && isServiceOffline(item.moduleCode || item.code) && (
+                          <Box
+                            sx={{
+                              width: 8,
+                              height: 8,
+                              borderRadius: '50%',
+                              bgcolor: 'error.main',
+                              animation: 'pulse 2s infinite',
+                            }}
+                          />
                         )}
                         {collapsed && item.badge && (
                           <MuiBadge

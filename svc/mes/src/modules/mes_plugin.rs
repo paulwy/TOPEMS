@@ -12,6 +12,12 @@ pub struct PluginInfo {
     pub description: String,
     pub permissions: Vec<PermissionDef>,
     pub runtime_url: String,
+    #[serde(default)]
+    pub dependencies: Vec<String>,
+    #[serde(default)]
+    pub navigation_config: Option<serde_json::Value>,
+    #[serde(default)]
+    pub category: Option<String>,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -115,6 +121,13 @@ pub async fn get_plugin_info() -> Json<ApiResponse<PluginInfo>> {
             },
         ],
         runtime_url,
+        dependencies: vec![],
+        navigation_config: Some(serde_json::json!([
+            {"code": "mes-orders", "label": "生产订单", "path": "/mes/orders", "icon": "ClipboardList", "order": 10, "group": "business"},
+            {"code": "mes-workstations", "label": "工位管理", "path": "/mes/workstations", "icon": "Factory", "order": 20, "group": "business"},
+            {"code": "mes-equipment", "label": "设备管理", "path": "/mes/equipment", "icon": "Wrench", "order": 30, "group": "business"}
+        ])),
+        category: Some("manufacturing".to_string()),
     };
     Json(ApiResponse::success(info, "Plugin info"))
 }
@@ -137,12 +150,24 @@ pub async fn auto_register_to_core(core_url: Option<&str>) {
         description: "MES 制造执行系统".to_string(),
         permissions: vec![],
         runtime_url,
+        dependencies: vec![],
+        navigation_config: Some(serde_json::json!([
+            {"code": "mes-orders", "label": "生产订单", "path": "/mes/orders", "icon": "ClipboardList", "order": 10, "group": "business"},
+            {"code": "mes-workstations", "label": "工位管理", "path": "/mes/workstations", "icon": "Factory", "order": 20, "group": "business"},
+            {"code": "mes-equipment", "label": "设备管理", "path": "/mes/equipment", "icon": "Wrench", "order": 30, "group": "business"}
+        ])),
+        category: Some("manufacturing".to_string()),
     };
 
     let client = reqwest::Client::new();
     let url = format!("{}/api/core/plugin/dev/plugins/mes/register", core_url);
 
-    match client.post(&url).json(&info).send().await {
+    let token = std::env::var("PLUGIN_REGISTRATION_TOKEN").unwrap_or_default();
+    let mut request = client.post(&url).json(&info);
+    if !token.is_empty() {
+        request = request.header("X-Plugin-Token", &token);
+    }
+    match request.send().await {
         Ok(response) => {
             if response.status().is_success() {
                 tracing::info!(

@@ -112,286 +112,277 @@ async fn main() -> Result<()> {
         // Frontend aligned routes (WMS module)
         // Inventory
         .route(
-            "/api/core/wms/inventory",
+            "/inventory",
             get(modules::inventory::list_inventory).post(modules::inventory::create_inventory),
         )
         .route(
-            "/api/core/wms/inventory/{id}",
+            "/inventory/{id}",
             get(modules::inventory::get_inventory)
                 .put(modules::inventory::update_inventory)
                 .delete(modules::inventory::delete_inventory),
         )
         .route(
-            "/api/core/wms/inventory/low-stock",
+            "/inventory/low-stock",
             get(modules::inventory::list_low_stock_inventory),
         )
         .route(
-            "/api/core/wms/inventory/warehouse/{warehouse_id}",
+            "/inventory/warehouse/{warehouse_id}",
             get(modules::inventory::list_inventory_by_warehouse),
         )
         .route(
-            "/api/core/wms/inventory/statistics",
+            "/inventory/statistics",
             get(modules::inventory::get_inventory_statistics),
         )
         .route(
-            "/api/core/wms/inventory/abc-analysis",
+            "/inventory/abc-analysis",
             get(modules::inventory::get_abc_analysis),
         )
+        .route("/inventory/turnover", get(modules::inventory::get_turnover))
         .route(
-            "/api/core/wms/inventory/turnover",
-            get(modules::inventory::get_turnover),
-        )
-        .route(
-            "/api/core/wms/inventory/value-by-warehouse",
+            "/inventory/value-by-warehouse",
             get(modules::inventory::get_value_by_warehouse),
         )
         // Warehouse
         .route(
-            "/api/core/wms/warehouses",
+            "/warehouses",
             get(modules::warehouse::list_warehouses).post(modules::warehouse::create_warehouse),
         )
         .route(
-            "/api/core/wms/warehouses/{id}",
+            "/warehouses/{id}",
             get(modules::warehouse::get_warehouse)
                 .put(modules::warehouse::update_warehouse)
                 .delete(modules::warehouse::delete_warehouse),
         )
         // Location
         .route(
-            "/api/core/wms/locations",
+            "/locations",
             get(modules::location::list_locations).post(modules::location::create_location),
         )
         .route(
-            "/api/core/wms/locations/{id}",
+            "/locations/{id}",
             get(modules::location::get_location)
                 .put(modules::location::update_location)
                 .delete(modules::location::delete_location),
         )
         .route(
-            "/api/core/wms/locations/batch",
+            "/locations/batch",
             post(modules::location::batch_create_locations)
                 .put(modules::location::batch_update_locations),
         )
         // Inbound Order
         .route(
-            "/api/core/wms/inbound-orders",
+            "/inbound-orders",
             get(modules::inbound_order::list_inbound_orders)
                 .post(modules::inbound_order::create_inbound_order),
         )
         .route(
-            "/api/core/wms/inbound-orders/{id}",
+            "/inbound-orders/{id}",
             get(modules::inbound_order::get_inbound_order)
                 .put(modules::inbound_order::update_inbound_order)
                 .delete(modules::inbound_order::delete_inbound_order),
         )
         .route(
-            "/api/core/wms/inbound-orders/{id}/confirm",
+            "/inbound-orders/{id}/confirm",
             post(modules::inbound_order::confirm_inbound_order),
         )
         .route(
-            "/api/core/wms/inbound-orders/{id}/receive",
+            "/inbound-orders/{id}/receive",
             post(modules::inbound_order::receive_inbound_order),
         )
         // Outbound Order
         .route(
-            "/api/core/wms/outbound-orders",
+            "/outbound-orders",
             get(modules::outbound_order::list_outbound_orders)
                 .post(modules::outbound_order::create_outbound_order),
         )
         .route(
-            "/api/core/wms/outbound-orders/{id}",
+            "/outbound-orders/{id}",
             get(modules::outbound_order::get_outbound_order)
                 .put(modules::outbound_order::update_outbound_order)
                 .delete(modules::outbound_order::delete_outbound_order),
         )
         .route(
-            "/api/core/wms/outbound-orders/{id}/confirm",
+            "/outbound-orders/{id}/confirm",
             post(modules::outbound_order::confirm_outbound_order),
         )
         .route(
-            "/api/core/wms/outbound-orders/{id}/pick",
+            "/outbound-orders/{id}/pick",
             post(modules::outbound_order::pick_outbound_order),
         )
         .route(
-            "/api/core/wms/outbound-orders/{id}/pack",
+            "/outbound-orders/{id}/pack",
             post(modules::outbound_order::pack_outbound_order),
         )
         .route(
-            "/api/core/wms/outbound-orders/{id}/ship",
+            "/outbound-orders/{id}/ship",
             post(modules::outbound_order::ship_outbound_order),
         )
         // Stock Take
         .route(
-            "/api/core/wms/stock-takes",
+            "/stock-takes",
             get(modules::stock_take::list_stock_takes).post(modules::stock_take::create_stock_take),
         )
         .route(
-            "/api/core/wms/stock-takes/{id}",
+            "/stock-takes/{id}",
             get(modules::stock_take::get_stock_take)
                 .put(modules::stock_take::update_stock_take)
                 .delete(modules::stock_take::delete_stock_take),
         )
         .route(
-            "/api/core/wms/stock-takes/{id}/start",
+            "/stock-takes/{id}/start",
             post(modules::stock_take::start_stock_take),
         )
         .route(
-            "/api/core/wms/stock-takes/{id}/complete",
+            "/stock-takes/{id}/complete",
             post(modules::stock_take::complete_stock_take),
         )
         .route(
-            "/api/core/wms/stock-takes/{id}/adjust",
+            "/stock-takes/{id}/adjust",
             post(modules::stock_take::adjust_stock_take),
         )
         .route(
-            "/api/core/wms/stock-takes/{id}/items",
+            "/stock-takes/{id}/items",
             get(modules::stock_take::list_stock_take_items)
                 .post(modules::stock_take::create_stock_take_item),
         )
         .route(
-            "/api/core/wms/stock-takes/{id}/items/{item_id}",
+            "/stock-takes/{id}/items/{item_id}",
             get(modules::stock_take::get_stock_take_item)
                 .put(modules::stock_take::update_stock_take_item)
                 .delete(modules::stock_take::delete_stock_take_item),
         )
         .route(
-            "/api/core/wms/stock-takes/{id}/items/{item_id}/count",
+            "/stock-takes/{id}/items/{item_id}/count",
             post(modules::stock_take::count_stock_take),
         )
         // Transfer
         .route(
-            "/api/core/wms/transfers",
+            "/transfers",
             get(modules::transfer_order::list_transfers)
                 .post(modules::transfer_order::create_transfer),
         )
         .route(
-            "/api/core/wms/transfers/{id}",
+            "/transfers/{id}",
             get(modules::transfer_order::get_transfer)
                 .put(modules::transfer_order::update_transfer)
                 .delete(modules::transfer_order::delete_transfer),
         )
         .route(
-            "/api/core/wms/transfers/{id}/confirm",
+            "/transfers/{id}/confirm",
             post(modules::transfer_order::confirm_transfer),
         )
         .route(
-            "/api/core/wms/transfers/{id}/ship",
+            "/transfers/{id}/ship",
             post(modules::transfer_order::ship_transfer),
         )
         .route(
-            "/api/core/wms/transfers/{id}/receive",
+            "/transfers/{id}/receive",
             post(modules::transfer_order::receive_transfer),
         )
         .route(
-            "/api/core/wms/transfers/{id}/complete",
+            "/transfers/{id}/complete",
             post(modules::transfer_order::complete_transfer),
         )
         // Batch
         .route(
-            "/api/core/wms/batches",
+            "/batches",
             get(modules::batch::list_batches).post(modules::batch::create_batch),
         )
         .route(
-            "/api/core/wms/batches/{id}",
+            "/batches/{id}",
             get(modules::batch::get_batch)
                 .put(modules::batch::update_batch)
                 .delete(modules::batch::delete_batch),
         )
         // Serial Number
         .route(
-            "/api/core/wms/serial-numbers",
+            "/serial-numbers",
             get(modules::serial_number::list_serial_numbers)
                 .post(modules::serial_number::create_serial_number),
         )
         .route(
-            "/api/core/wms/serial-numbers/{id}",
+            "/serial-numbers/{id}",
             get(modules::serial_number::get_serial_number)
                 .put(modules::serial_number::update_serial_number)
                 .delete(modules::serial_number::delete_serial_number),
         )
         .route(
-            "/api/core/wms/serial-numbers/{id}/trace",
+            "/serial-numbers/{id}/trace",
             get(modules::serial_number::get_trace),
         )
         // Inventory Alert
         .route(
-            "/api/core/wms/inventory-alerts/rules",
+            "/inventory-alerts/rules",
             get(modules::inventory_alert::list_alert_rules)
                 .post(modules::inventory_alert::create_alert_rule),
         )
         .route(
-            "/api/core/wms/inventory-alerts/rules/{id}",
+            "/inventory-alerts/rules/{id}",
             get(modules::inventory_alert::get_alert_rule)
                 .put(modules::inventory_alert::update_alert_rule)
                 .delete(modules::inventory_alert::delete_alert_rule),
         )
         .route(
-            "/api/core/wms/inventory-alerts/records",
+            "/inventory-alerts/records",
             get(modules::inventory_alert::list_alert_records),
         )
         .route(
-            "/api/core/wms/inventory-alerts/records/{id}",
+            "/inventory-alerts/records/{id}",
             get(modules::inventory_alert::get_alert_record),
         )
         .route(
-            "/api/core/wms/inventory-alerts/records/{id}/confirm",
+            "/inventory-alerts/records/{id}/confirm",
             post(modules::inventory_alert::confirm_alert_record),
         )
         .route(
-            "/api/core/wms/inventory-alerts/statistics",
+            "/inventory-alerts/statistics",
             get(modules::inventory_alert::get_alert_statistics),
         )
         // Wave Pick
         .route(
-            "/api/core/wms/wave-picks",
+            "/wave-picks",
             get(modules::wave_pick::list_wave_picks).post(modules::wave_pick::create_wave_pick),
         )
         .route(
-            "/api/core/wms/wave-picks/{id}",
+            "/wave-picks/{id}",
             get(modules::wave_pick::get_wave_pick)
                 .put(modules::wave_pick::update_wave_pick)
                 .delete(modules::wave_pick::delete_wave_pick),
         )
         .route(
-            "/api/core/wms/wave-picks/{id}/start",
+            "/wave-picks/{id}/start",
             post(modules::wave_pick::start_wave_pick),
         )
         .route(
-            "/api/core/wms/wave-picks/{id}/complete",
+            "/wave-picks/{id}/complete",
             post(modules::wave_pick::complete_wave_pick),
         )
         .route(
-            "/api/core/wms/wave-picks/{id}/cancel",
+            "/wave-picks/{id}/cancel",
             post(modules::wave_pick::cancel_wave_pick),
         )
         // Smart Replenishment
         .route(
-            "/api/core/wms/smart-replenishment/suggestions",
+            "/smart-replenishment/suggestions",
             get(modules::smart_replenishment::list_suggestions),
         )
         .route(
-            "/api/core/wms/smart-replenishment/suggestions/generate",
+            "/smart-replenishment/suggestions/generate",
             post(modules::smart_replenishment::compute_replenishment),
         )
         .route(
-            "/api/core/wms/smart-replenishment/suggestions/{id}",
+            "/smart-replenishment/suggestions/{id}",
             get(modules::smart_replenishment::get_suggestion)
                 .post(modules::smart_replenishment::confirm_suggestion),
         )
         .route(
-            "/api/core/wms/smart-replenishment/rules",
+            "/smart-replenishment/rules",
             get(modules::smart_replenishment::list_rules)
                 .post(modules::smart_replenishment::create_rule),
         )
         // Audit
-        .route(
-            "/api/core/wms/audit-logs",
-            get(modules::audit::list_audit_logs),
-        )
-        .route(
-            "/api/core/wms/audit-logs/{id}",
-            get(modules::audit::get_audit_log),
-        )
+        .route("/audit-logs", get(modules::audit::list_audit_logs))
+        .route("/audit-logs/{id}", get(modules::audit::get_audit_log))
         .layer(axum::middleware::from_fn_with_state(
             api_state.auth_state.clone(),
             auth_middleware,
@@ -403,14 +394,14 @@ async fn main() -> Result<()> {
 
     let app = Router::new()
         .merge(health_router)
-        .merge(protected_routes)
+        .nest("/api/wms", protected_routes)
         .merge(create_api_info_router("topems-wms"))
         .layer(axum::middleware::from_fn(telemetry_middleware))
         .layer(prometheus_layer)
         .layer(cors)
         .with_state(api_state.clone());
 
-    let cfg = RouteCompatConfig::new("wms", "/api/core/wms", &[]);
+    let cfg = RouteCompatConfig::new("wms", "/api/wms", &[]);
     let app = wrap_group2_router(app, cfg);
 
     let port = env::var("WMS_PORT")

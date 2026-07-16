@@ -1,65 +1,105 @@
 // AI 服务权限定义
 use axum::{extract::Request, http::header::AUTHORIZATION, http::StatusCode};
+use sqlx::PgPool;
 use topems_shared::auth::{verify_jwt_token, Claims};
+use topems_shared::permission::{
+    check_module_permission, ModuleCode, ModulePermission as SharedModulePermission,
+    PermissionAction,
+};
+use topems_shared::response::ApiResponse;
 
 #[derive(Debug, Clone, PartialEq, Eq)]
 #[allow(dead_code)]
 pub enum AiPermission {
-    // 向量操作
     VectorRead,
     VectorWrite,
     VectorDelete,
     VectorSearch,
-    // 文档操作
     DocumentRead,
     DocumentWrite,
     DocumentDelete,
     DocumentProcess,
-    // QA 操作
     QaRead,
     QaWrite,
     QaFeedback,
-    // 分析操作
     AnalysisRead,
     AnalysisWrite,
-    // 连接器操作
     ConnectorRead,
     ConnectorWrite,
     ConnectorDelete,
-    // 管理权限
     Manage,
 }
 
-impl std::fmt::Display for AiPermission {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+impl AiPermission {
+    pub fn to_shared(&self) -> SharedModulePermission {
         match self {
-            AiPermission::VectorRead => write!(f, "ai.vector_read"),
-            AiPermission::VectorWrite => write!(f, "ai.vector_write"),
-            AiPermission::VectorDelete => write!(f, "ai.vector_delete"),
-            AiPermission::VectorSearch => write!(f, "ai.vector_search"),
-            AiPermission::DocumentRead => write!(f, "ai.document_read"),
-            AiPermission::DocumentWrite => write!(f, "ai.document_write"),
-            AiPermission::DocumentDelete => write!(f, "ai.document_delete"),
-            AiPermission::DocumentProcess => write!(f, "ai.document_process"),
-            AiPermission::QaRead => write!(f, "ai.qa_read"),
-            AiPermission::QaWrite => write!(f, "ai.qa_write"),
-            AiPermission::QaFeedback => write!(f, "ai.qa_feedback"),
-            AiPermission::AnalysisRead => write!(f, "ai.analysis_read"),
-            AiPermission::AnalysisWrite => write!(f, "ai.analysis_write"),
-            AiPermission::ConnectorRead => write!(f, "ai.connector_read"),
-            AiPermission::ConnectorWrite => write!(f, "ai.connector_write"),
-            AiPermission::ConnectorDelete => write!(f, "ai.connector_delete"),
-            AiPermission::Manage => write!(f, "ai.manage"),
+            AiPermission::VectorRead => {
+                SharedModulePermission::new(ModuleCode::Ai, PermissionAction::Read)
+            }
+            AiPermission::VectorWrite => {
+                SharedModulePermission::new(ModuleCode::Ai, PermissionAction::Write)
+            }
+            AiPermission::VectorDelete => {
+                SharedModulePermission::new(ModuleCode::Ai, PermissionAction::Delete)
+            }
+            AiPermission::VectorSearch => {
+                SharedModulePermission::new(ModuleCode::Ai, PermissionAction::Read)
+            }
+            AiPermission::DocumentRead => {
+                SharedModulePermission::new(ModuleCode::Ai, PermissionAction::Read)
+            }
+            AiPermission::DocumentWrite => {
+                SharedModulePermission::new(ModuleCode::Ai, PermissionAction::Write)
+            }
+            AiPermission::DocumentDelete => {
+                SharedModulePermission::new(ModuleCode::Ai, PermissionAction::Delete)
+            }
+            AiPermission::DocumentProcess => {
+                SharedModulePermission::new(ModuleCode::Ai, PermissionAction::Write)
+            }
+            AiPermission::QaRead => {
+                SharedModulePermission::new(ModuleCode::Ai, PermissionAction::Read)
+            }
+            AiPermission::QaWrite => {
+                SharedModulePermission::new(ModuleCode::Ai, PermissionAction::Write)
+            }
+            AiPermission::QaFeedback => {
+                SharedModulePermission::new(ModuleCode::Ai, PermissionAction::Write)
+            }
+            AiPermission::AnalysisRead => {
+                SharedModulePermission::new(ModuleCode::Ai, PermissionAction::Read)
+            }
+            AiPermission::AnalysisWrite => {
+                SharedModulePermission::new(ModuleCode::Ai, PermissionAction::Write)
+            }
+            AiPermission::ConnectorRead => {
+                SharedModulePermission::new(ModuleCode::Ai, PermissionAction::Read)
+            }
+            AiPermission::ConnectorWrite => {
+                SharedModulePermission::new(ModuleCode::Ai, PermissionAction::Write)
+            }
+            AiPermission::ConnectorDelete => {
+                SharedModulePermission::new(ModuleCode::Ai, PermissionAction::Delete)
+            }
+            AiPermission::Manage => {
+                SharedModulePermission::new(ModuleCode::Ai, PermissionAction::Admin)
+            }
         }
     }
 }
 
-/// 从请求中解析 JWT 并检查权限
+impl std::fmt::Display for AiPermission {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        write!(f, "{}", self.to_shared())
+    }
+}
+
+pub type ModulePermission = AiPermission;
+
 #[allow(dead_code)]
 pub async fn check_request_permission(
     req: Request,
-) -> Result<(Claims, Request), (StatusCode, axum::Json<topems_shared::ApiResponse<()>>)> {
-    // 获取 Authorization header
+) -> Result<(Claims, Request), (StatusCode, axum::Json<ApiResponse<()>>)> {
     let auth_header = req
         .headers()
         .get(AUTHORIZATION)
@@ -70,19 +110,18 @@ pub async fn check_request_permission(
         _ => {
             return Err((
                 StatusCode::UNAUTHORIZED,
-                axum::Json(topems_shared::ApiResponse::error(401, "缺少认证信息")),
+                axum::Json(ApiResponse::error(401, "缺少认证信息")),
             ));
         }
     };
 
-    // 解析 JWT
     let secret = std::env::var("JWT_SECRET").unwrap_or_else(|_| "your-secret-key".to_string());
     let claims = match verify_jwt_token(token, &secret) {
         Ok(c) => c,
         Err(_) => {
             return Err((
                 StatusCode::UNAUTHORIZED,
-                axum::Json(topems_shared::ApiResponse::error(401, "无效的认证信息")),
+                axum::Json(ApiResponse::error(401, "无效的认证信息")),
             ));
         }
     };
@@ -90,33 +129,21 @@ pub async fn check_request_permission(
     Ok((claims, req))
 }
 
-/// 检查 AI 权限
 #[allow(dead_code)]
-pub fn check_ai_permission(
+pub async fn check_ai_permission<T>(
+    db: &PgPool,
     claims: &Claims,
     permission: &AiPermission,
-) -> Result<(), (StatusCode, axum::Json<topems_shared::ApiResponse<()>>)> {
-    // 超级用户拥有所有权限
+) -> Result<(), axum::Json<ApiResponse<T>>> {
+    let shared_perm = permission.to_shared();
+    check_module_permission(db, claims, &shared_perm).await
+}
+
+#[allow(dead_code)]
+pub fn has_ai_permission(claims: &Claims, permission: &AiPermission) -> bool {
     if claims.is_superuser {
-        return Ok(());
+        return true;
     }
-
-    // 检查模块管理权限
-    if claims.has_permission("ai.manage") {
-        return Ok(());
-    }
-
-    // 检查具体权限
     let perm_str = permission.to_string();
-    if claims.has_permission(&perm_str) {
-        return Ok(());
-    }
-
-    Err((
-        StatusCode::FORBIDDEN,
-        axum::Json(topems_shared::ApiResponse::error(
-            403,
-            &format!("权限不足：需要 {} 权限", perm_str),
-        )),
-    ))
+    claims.has_permission(&perm_str) || claims.has_permission("ai:admin")
 }

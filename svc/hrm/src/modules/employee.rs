@@ -26,21 +26,15 @@ fn get_tenant_id(claims: &Claims, headers: &axum::http::HeaderMap) -> Uuid {
 
 pub fn create_routes() -> Router<ApiState> {
     Router::new()
+        .route("/employees", get(list_employees).post(create_employee))
         .route(
-            "/api/core/hrm/employees",
-            get(list_employees).post(create_employee),
-        )
-        .route(
-            "/api/core/hrm/employees/{id}",
+            "/employees/{id}",
             get(get_employee)
                 .put(update_employee)
                 .delete(delete_employee),
         )
-        .route(
-            "/api/core/hrm/employees/{id}/details",
-            get(get_employee_details),
-        )
-        .route("/api/core/hrm/employees/export", post(export_employees))
+        .route("/employees/{id}/details", get(get_employee_details))
+        .route("/employees/export", post(export_employees))
 }
 
 const EMPLOYEE_CACHE_TTL: u64 = 3600;
@@ -87,7 +81,7 @@ pub struct ExportRequest {
 
 #[utoipa::path(
     get,
-    path = "/api/core/hrm/employees",
+    path = "/employees",
     tag = "employees",
     responses(
         (status = 200, description = "获取员工列表成功", body = [Employee]),
@@ -126,7 +120,7 @@ async fn list_employees(
 
 #[utoipa::path(
     get,
-    path = "/api/core/hrm/employees/{id}",
+    path = "/employees/{id}",
     tag = "employees",
     responses(
         (status = 200, description = "获取员工成功", body = Employee),
@@ -178,7 +172,7 @@ async fn get_employee(
 
 #[utoipa::path(
     get,
-    path = "/api/core/hrm/employees/{id}/details",
+    path = "/employees/{id}/details",
     tag = "employees",
     responses(
         (status = 200, description = "获取员工详细信息成功"),
@@ -253,7 +247,7 @@ async fn get_employee_details(
 
 #[utoipa::path(
     post,
-    path = "/api/core/hrm/employees",
+    path = "/employees",
     tag = "employees",
     responses(
         (status = 200, description = "员工创建成功", body = Employee),
@@ -327,7 +321,7 @@ async fn create_employee(
 
 #[utoipa::path(
     put,
-    path = "/api/core/hrm/employees/{id}",
+    path = "/employees/{id}",
     tag = "employees",
     responses(
         (status = 200, description = "员工更新成功", body = Employee),
@@ -392,7 +386,7 @@ async fn update_employee(
 
 #[utoipa::path(
     delete,
-    path = "/api/core/hrm/employees/{id}",
+    path = "/employees/{id}",
     tag = "employees",
     responses(
         (status = 200, description = "员工删除成功"),
@@ -445,7 +439,7 @@ async fn delete_employee(
 
 #[utoipa::path(
     post,
-    path = "/api/core/hrm/employees/export",
+    path = "/employees/export",
     tag = "employees",
     responses(
         (status = 200, description = "导出成功"),

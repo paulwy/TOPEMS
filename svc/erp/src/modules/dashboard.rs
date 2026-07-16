@@ -118,5 +118,5 @@ async fn get_dashboard(
 }
 
 pub fn create_routes() -> Router<ApiState> {
-    Router::new().route("/api/core/erp/dashboard", axum::routing::get(get_dashboard))
+    Router::new().route("/dashboard", axum::routing::get(get_dashboard))
 }

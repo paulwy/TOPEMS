@@ -82,7 +82,7 @@ async fn main() -> anyhow::Result<()> {
         );
 
     let protected_routes = Router::new()
-        .nest("/api/core/finance/v1", modules::create_routes())
+        .nest("/api/finance", modules::create_routes())
         .layer(axum::middleware::from_fn_with_state(
             auth_state.clone(),
             auth_middleware,
@@ -97,7 +97,7 @@ async fn main() -> anyhow::Result<()> {
         .layer(prometheus_layer)
         .with_state(state);
 
-    let cfg = RouteCompatConfig::new("finance", "/api/core/finance", &[]);
+    let cfg = RouteCompatConfig::new("finance", "/api/finance", &[]);
     let app = wrap_group2_router(app, cfg);
 
     let port = std::env::var("FINANCE_PORT")

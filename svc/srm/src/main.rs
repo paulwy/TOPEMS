@@ -174,13 +174,13 @@ async fn main() -> Result<()> {
 
     let app = Router::new()
         .merge(health_router)
-        .merge(protected_routes)
+        .nest("/api/srm", protected_routes)
         .merge(create_api_info_router("topems-srm"))
         .layer(axum::middleware::from_fn(telemetry_middleware))
         .layer(cors)
         .layer(prometheus_layer);
 
-    let cfg = RouteCompatConfig::new("srm", "/api/core/srm", &[]);
+    let cfg = RouteCompatConfig::new("srm", "/api/srm", &[]);
     let app = wrap_group2_router(app, cfg);
 
     let port = env::var("SRM_PORT")

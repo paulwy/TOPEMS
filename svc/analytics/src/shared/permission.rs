@@ -8,6 +8,8 @@ pub enum AnalyticsPermission {
     DataExport,
 }
 
+pub type ModulePermission = AnalyticsPermission;
+
 pub fn check_permission(_claims: &Claims, _permission: AnalyticsPermission) -> bool {
     true
 }

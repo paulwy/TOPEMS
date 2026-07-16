@@ -95,13 +95,13 @@ async fn main() -> Result<()> {
 
     let app = Router::new()
         .merge(public_routes)
-        .merge(protected_routes)
+        .nest("/api/pm", protected_routes)
         .merge(create_api_info_router("topems-pm"))
         .layer(axum::middleware::from_fn(telemetry_middleware))
         .layer(prometheus_layer)
         .layer(cors);
 
-    let cfg = RouteCompatConfig::new("pm", "/api/core/pm", &[]);
+    let cfg = RouteCompatConfig::new("pm", "/api/pm", &[]);
     let app = wrap_group2_router(app, cfg);
 
     let port = std::env::var("PM_PORT").unwrap_or_else(|_| "8023".to_string());

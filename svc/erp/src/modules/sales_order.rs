@@ -40,7 +40,7 @@ pub async fn list_sales_orders(
     Extension(claims): Extension<Claims>,
     Query(params): Query<PaginationParams>,
 ) -> Json<ApiResponse<PaginatedResponse<SalesOrder>>> {
-    if let Err(e) = check_permission(&claims, &ModulePermission::FinanceRead).await {
+    if let Err(e) = check_permission(&state.db, &claims, &ModulePermission::FinanceRead).await {
         return e;
     }
 
@@ -108,7 +108,7 @@ pub async fn get_sales_order(
     Extension(claims): Extension<Claims>,
     Path(id): Path<Uuid>,
 ) -> Json<ApiResponse<SalesOrder>> {
-    if let Err(e) = check_permission(&claims, &ModulePermission::FinanceRead).await {
+    if let Err(e) = check_permission(&state.db, &claims, &ModulePermission::FinanceRead).await {
         return e;
     }
 
@@ -134,7 +134,7 @@ pub async fn create_sales_order(
     Extension(claims): Extension<Claims>,
     Json(body): Json<CreateSalesOrderRequest>,
 ) -> Json<ApiResponse<SalesOrder>> {
-    if let Err(e) = check_permission(&claims, &ModulePermission::FinanceWrite).await {
+    if let Err(e) = check_permission(&state.db, &claims, &ModulePermission::FinanceWrite).await {
         return e;
     }
 
@@ -190,7 +190,7 @@ pub async fn update_sales_order(
     Path(id): Path<Uuid>,
     Json(body): Json<UpdateSalesOrderRequest>,
 ) -> Json<ApiResponse<SalesOrder>> {
-    if let Err(e) = check_permission(&claims, &ModulePermission::FinanceWrite).await {
+    if let Err(e) = check_permission(&state.db, &claims, &ModulePermission::FinanceWrite).await {
         return e;
     }
 
@@ -224,7 +224,7 @@ pub async fn delete_sales_order(
     Extension(claims): Extension<Claims>,
     Path(id): Path<Uuid>,
 ) -> Json<ApiResponse<String>> {
-    if let Err(e) = check_permission(&claims, &ModulePermission::FinanceWrite).await {
+    if let Err(e) = check_permission(&state.db, &claims, &ModulePermission::FinanceWrite).await {
         return e;
     }
 

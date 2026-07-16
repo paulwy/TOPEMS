@@ -20,7 +20,7 @@ pub async fn list_payables(
     Extension(claims): Extension<Claims>,
     Query(params): Query<PaginationParams>,
 ) -> Json<ApiResponse<PaginatedResponse<Payable>>> {
-    if let Err(e) = check_permission(&claims, &ModulePermission::FinanceRead).await {
+    if let Err(e) = check_permission(&state.db, &claims, &ModulePermission::FinanceRead).await {
         return e;
     }
 
@@ -82,7 +82,7 @@ pub async fn create_payable(
     headers: HeaderMap,
     Json(req): Json<CreatePayableRequest>,
 ) -> Json<ApiResponse<Payable>> {
-    if let Err(e) = check_permission(&claims, &ModulePermission::FinanceWrite).await {
+    if let Err(e) = check_permission(&state.db, &claims, &ModulePermission::FinanceWrite).await {
         return e;
     }
 
@@ -165,7 +165,7 @@ pub async fn get_payable(
     Extension(claims): Extension<Claims>,
     Path(id): Path<Uuid>,
 ) -> Json<ApiResponse<Payable>> {
-    if let Err(e) = check_permission(&claims, &ModulePermission::FinanceRead).await {
+    if let Err(e) = check_permission(&state.db, &claims, &ModulePermission::FinanceRead).await {
         return e;
     }
 
@@ -210,7 +210,7 @@ pub async fn update_payable(
     headers: HeaderMap,
     Json(req): Json<UpdatePayableRequest>,
 ) -> Json<ApiResponse<Payable>> {
-    if let Err(e) = check_permission(&claims, &ModulePermission::FinanceWrite).await {
+    if let Err(e) = check_permission(&state.db, &claims, &ModulePermission::FinanceWrite).await {
         return e;
     }
 
@@ -310,7 +310,7 @@ pub async fn delete_payable(
     Path(id): Path<Uuid>,
     headers: HeaderMap,
 ) -> Json<ApiResponse<String>> {
-    if let Err(e) = check_permission(&claims, &ModulePermission::FinanceWrite).await {
+    if let Err(e) = check_permission(&state.db, &claims, &ModulePermission::FinanceWrite).await {
         return e;
     }
 

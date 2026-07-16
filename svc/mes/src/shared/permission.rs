@@ -4,10 +4,14 @@
 
 use sqlx::PgPool;
 use topems_shared::auth::Claims;
+use topems_shared::permission::{
+    check_module_permission, ModuleCode, ModulePermission as SharedModulePermission,
+    PermissionAction,
+};
 use topems_shared::response::ApiResponse;
 
 #[derive(Debug, Clone, PartialEq)]
-pub enum ModulePermission {
+pub enum MesPermission {
     ProductionOrderRead,
     ProductionOrderWrite,
     ProductionOrderStart,
@@ -37,71 +41,107 @@ pub enum ModulePermission {
     All,
 }
 
-impl std::fmt::Display for ModulePermission {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+impl MesPermission {
+    pub fn to_shared(&self) -> SharedModulePermission {
         match self {
-            ModulePermission::ProductionOrderRead => write!(f, "mes:production_order:read"),
-            ModulePermission::ProductionOrderWrite => write!(f, "mes:production_order:write"),
-            ModulePermission::ProductionOrderStart => write!(f, "mes:production_order:start"),
-            ModulePermission::ProductionOrderComplete => write!(f, "mes:production_order:complete"),
-            ModulePermission::ProductionOrderCancel => write!(f, "mes:production_order:cancel"),
-            ModulePermission::ProcessRead => write!(f, "mes:process:read"),
-            ModulePermission::ProcessWrite => write!(f, "mes:process:write"),
-            ModulePermission::RecordRead => write!(f, "mes:record:read"),
-            ModulePermission::RecordWrite => write!(f, "mes:record:write"),
-            ModulePermission::EquipmentRead => write!(f, "mes:equipment:read"),
-            ModulePermission::EquipmentWrite => write!(f, "mes:equipment:write"),
-            ModulePermission::WorkStationRead => write!(f, "mes:work_station:read"),
-            ModulePermission::WorkStationWrite => write!(f, "mes:work_station:write"),
-            ModulePermission::ProductionSchedulingRead => {
-                write!(f, "mes:production_scheduling:read")
+            MesPermission::ProductionOrderRead => {
+                SharedModulePermission::new(ModuleCode::Mes, PermissionAction::Read)
             }
-            ModulePermission::ProductionSchedulingWrite => {
-                write!(f, "mes:production_scheduling:write")
+            MesPermission::ProductionOrderWrite => {
+                SharedModulePermission::new(ModuleCode::Mes, PermissionAction::Write)
             }
-            ModulePermission::ProductionSchedulingAdjust => {
-                write!(f, "mes:production_scheduling:adjust")
+            MesPermission::ProductionOrderStart => {
+                SharedModulePermission::new(ModuleCode::Mes, PermissionAction::Write)
             }
-            ModulePermission::MaterialBomRead => write!(f, "mes:material_bom:read"),
-            ModulePermission::MaterialBomWrite => write!(f, "mes:material_bom:write"),
-            ModulePermission::MaterialBomIssue => write!(f, "mes:material_bom:issue"),
-            ModulePermission::MaterialBomReturn => write!(f, "mes:material_bom:return"),
-            ModulePermission::QualityTraceabilityRead => write!(f, "mes:quality_traceability:read"),
-            ModulePermission::EquipmentOeeRead => write!(f, "mes:equipment_oee:read"),
-            ModulePermission::EquipmentOeeWrite => write!(f, "mes:equipment_oee:write"),
-            ModulePermission::WipRead => write!(f, "mes:wip:read"),
-            ModulePermission::WipWrite => write!(f, "mes:wip:write"),
-            ModulePermission::WipTransfer => write!(f, "mes:wip:transfer"),
-            ModulePermission::All => write!(f, "mes:admin"),
+            MesPermission::ProductionOrderComplete => {
+                SharedModulePermission::new(ModuleCode::Mes, PermissionAction::Write)
+            }
+            MesPermission::ProductionOrderCancel => {
+                SharedModulePermission::new(ModuleCode::Mes, PermissionAction::Delete)
+            }
+            MesPermission::ProcessRead => {
+                SharedModulePermission::new(ModuleCode::Mes, PermissionAction::Read)
+            }
+            MesPermission::ProcessWrite => {
+                SharedModulePermission::new(ModuleCode::Mes, PermissionAction::Write)
+            }
+            MesPermission::RecordRead => {
+                SharedModulePermission::new(ModuleCode::Mes, PermissionAction::Read)
+            }
+            MesPermission::RecordWrite => {
+                SharedModulePermission::new(ModuleCode::Mes, PermissionAction::Write)
+            }
+            MesPermission::EquipmentRead => {
+                SharedModulePermission::new(ModuleCode::Mes, PermissionAction::Read)
+            }
+            MesPermission::EquipmentWrite => {
+                SharedModulePermission::new(ModuleCode::Mes, PermissionAction::Write)
+            }
+            MesPermission::WorkStationRead => {
+                SharedModulePermission::new(ModuleCode::Mes, PermissionAction::Read)
+            }
+            MesPermission::WorkStationWrite => {
+                SharedModulePermission::new(ModuleCode::Mes, PermissionAction::Write)
+            }
+            MesPermission::ProductionSchedulingRead => {
+                SharedModulePermission::new(ModuleCode::Mes, PermissionAction::Read)
+            }
+            MesPermission::ProductionSchedulingWrite => {
+                SharedModulePermission::new(ModuleCode::Mes, PermissionAction::Write)
+            }
+            MesPermission::ProductionSchedulingAdjust => {
+                SharedModulePermission::new(ModuleCode::Mes, PermissionAction::Write)
+            }
+            MesPermission::MaterialBomRead => {
+                SharedModulePermission::new(ModuleCode::Mes, PermissionAction::Read)
+            }
+            MesPermission::MaterialBomWrite => {
+                SharedModulePermission::new(ModuleCode::Mes, PermissionAction::Write)
+            }
+            MesPermission::MaterialBomIssue => {
+                SharedModulePermission::new(ModuleCode::Mes, PermissionAction::Write)
+            }
+            MesPermission::MaterialBomReturn => {
+                SharedModulePermission::new(ModuleCode::Mes, PermissionAction::Write)
+            }
+            MesPermission::QualityTraceabilityRead => {
+                SharedModulePermission::new(ModuleCode::Mes, PermissionAction::Read)
+            }
+            MesPermission::EquipmentOeeRead => {
+                SharedModulePermission::new(ModuleCode::Mes, PermissionAction::Read)
+            }
+            MesPermission::EquipmentOeeWrite => {
+                SharedModulePermission::new(ModuleCode::Mes, PermissionAction::Write)
+            }
+            MesPermission::WipRead => {
+                SharedModulePermission::new(ModuleCode::Mes, PermissionAction::Read)
+            }
+            MesPermission::WipWrite => {
+                SharedModulePermission::new(ModuleCode::Mes, PermissionAction::Write)
+            }
+            MesPermission::WipTransfer => {
+                SharedModulePermission::new(ModuleCode::Mes, PermissionAction::Write)
+            }
+            MesPermission::All => {
+                SharedModulePermission::new(ModuleCode::Mes, PermissionAction::Admin)
+            }
         }
     }
 }
 
+impl std::fmt::Display for MesPermission {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        write!(f, "{}", self.to_shared())
+    }
+}
+
+pub type ModulePermission = MesPermission;
+
 pub async fn check_permission<T>(
-    _db: &PgPool,
+    db: &PgPool,
     claims: &Claims,
-    permission: &ModulePermission,
+    permission: &MesPermission,
 ) -> Result<(), axum::Json<ApiResponse<T>>> {
-    if claims.is_superuser {
-        return Ok(());
-    }
-
-    let permission_str = permission.to_string();
-
-    if claims.has_permission(&permission_str) {
-        return Ok(());
-    }
-
-    if claims.has_permission("mes:admin") {
-        return Ok(());
-    }
-
-    if claims.has_permission("all") {
-        return Ok(());
-    }
-
-    Err(axum::Json(ApiResponse::error(
-        403,
-        &format!("权限不足：需要 {} 权限", permission),
-    )))
+    let shared_perm = permission.to_shared();
+    check_module_permission(db, claims, &shared_perm).await
 }

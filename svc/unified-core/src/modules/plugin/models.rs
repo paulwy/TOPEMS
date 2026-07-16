@@ -591,6 +591,15 @@ pub struct RegisterPluginRequest {
     pub runtime_url: String,
     pub base_path: Option<String>,
     pub permissions: Vec<PermissionDef>,
+    /// 插件依赖列表（插件代码数组）
+    #[serde(default)]
+    pub dependencies: Vec<String>,
+    /// 导航配置（插件向前端提供的菜单结构）
+    #[serde(default)]
+    pub navigation_config: Option<serde_json::Value>,
+    /// 插件分类
+    #[serde(default)]
+    pub category: Option<String>,
 }
 
 /// 权限定义

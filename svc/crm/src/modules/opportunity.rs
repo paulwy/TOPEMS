@@ -73,30 +73,24 @@ pub struct BatchDeleteRequest {
 pub fn create_routes() -> Router<ApiState> {
     Router::new()
         .route(
-            "/api/core/crm/opportunities",
+            "/opportunities",
             get(list_opportunities).post(create_opportunity),
         )
         .route(
-            "/api/core/crm/opportunities/batch-delete",
+            "/opportunities/batch-delete",
             post(batch_delete_opportunities),
         )
         .route(
-            "/api/core/crm/opportunities/{id}",
+            "/opportunities/{id}",
             get(get_opportunity)
                 .put(update_opportunity)
                 .delete(delete_opportunity),
         )
-        .route("/api/core/crm/opportunities/funnel", get(get_sales_funnel))
+        .route("/opportunities/funnel", get(get_sales_funnel))
+        .route("/opportunities/stats", get(get_opportunity_stats))
+        .route("/opportunities/forecast", get(get_opportunity_forecast))
         .route(
-            "/api/core/crm/opportunities/stats",
-            get(get_opportunity_stats),
-        )
-        .route(
-            "/api/core/crm/opportunities/forecast",
-            get(get_opportunity_forecast),
-        )
-        .route(
-            "/api/core/crm/opportunities/stage-transitions",
+            "/opportunities/stage-transitions",
             get(get_stage_transitions),
         )
 }

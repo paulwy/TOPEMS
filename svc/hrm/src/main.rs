@@ -153,7 +153,7 @@ async fn build_routes() -> Result<Router> {
 
     let app = Router::new()
         .merge(health_router)
-        .merge(protected_routes)
+        .nest("/api/hrm", protected_routes)
         .merge(create_api_info_router("topems-hrm"))
         .layer(axum::middleware::from_fn(telemetry_middleware))
         .layer(prometheus_layer)
