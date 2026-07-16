@@ -316,7 +316,7 @@ async fn main() -> Result<()> {
 
     let app = Router::new()
         .merge(public_routes)
-        .merge(protected_routes)
+        .nest("/api/scm", protected_routes)
         .merge(create_api_info_router("topems-scm"))
         .with_state(api_state)
         .layer(cors)
@@ -328,7 +328,7 @@ async fn main() -> Result<()> {
             Duration::from_secs(30),
         ));
 
-    let cfg = RouteCompatConfig::new("scm", "/api/core/scm", &[]);
+    let cfg = RouteCompatConfig::new("scm", "/api/scm", &[]);
     let app = wrap_group2_router(app, cfg);
 
     let port = env::var("SCM_PORT")

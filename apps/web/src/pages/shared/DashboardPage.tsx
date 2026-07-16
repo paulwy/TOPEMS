@@ -3,9 +3,6 @@ import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { QUERY_KEYS } from '@/lib/reactQuery';
 import { apiLogger } from '@/utils/logger';
 import { useNavigate, useLocation } from 'react-router-dom';
-import { GIS_PATHS } from '@/modules/gis/config';
-import { BI_PATHS } from '@/modules/bi/config';
-import { IM_PATHS } from '@/modules/im/config';
 import { AUTH_PATHS } from '@/routes/auth';
 import {
   Box,
@@ -21,60 +18,17 @@ import {
   Checkbox,
 } from '@mui/material';
 import {
-  FileText,
-  GitBranch,
-  Bot,
-  Users,
-  Package,
   User,
   Activity,
-  Building,
-  Folder,
-  BarChart3,
-  MapPin,
-  Smartphone,
-  MessageSquare,
-  Receipt,
-  TrendingUp,
-  Briefcase,
-  Calendar,
-  DollarSign,
-  BookOpen,
-  HelpCircle,
-  FileCheck,
-  FlaskConical,
-  ClipboardList,
-  Shield,
-  AlertCircle,
   Clock,
-  Database,
-  X,
-  Link,
-  Factory,
-  AlertTriangle,
-  Truck,
-  ShoppingCart,
-  Warehouse,
-  Map,
-  MessageCircle,
-  BarChart2,
-  Mail,
-  ChevronRight,
-  Book,
-  FolderKanban,
-  Settings,
-  CheckCircle,
-  Zap,
   ListTodo,
-  Bell,
-  Clock3,
+  CheckCircle,
+  GitBranch,
+  FileText,
+  Folder,
 } from 'lucide-react';
 import { docApi } from '@/api/doc';
 import { workflowApi } from '@/api/workflow';
-import { erpApi } from '@/api/erp';
-import { hrmApi } from '@/api/hrm';
-import { mobileApi } from '@/api/mobile';
-import { pluginApi, type TenantInstalledPlugin } from '@/api/plugin';
 import { qmsApi } from '@/api/qms';
 import { ehsApi } from '@/api/ehs';
 import { srmApi } from '@/api/srm';
@@ -86,7 +40,6 @@ import { useInstalledPlugins } from '../../context/PluginContext';
 import { usePermission } from '@/hooks/usePermission';
 import { useAuth } from '@/hooks/useAuth';
 import { useServiceStatus } from '@/hooks/useServiceStatus';
-import { StatsChart } from '@/components/bi/StatsChart';
 import { MetricCard } from '@/components/bi/MetricCard';
 import { useShortcutsStore } from '../../store';
 import {
@@ -105,6 +58,8 @@ import {
   RecentActivitySection,
 } from '@/components/dashboard';
 import { PageContainer } from '@/components/common';
+import { navigationRegistryV2 } from '@/lib/navigation/NavigationRegistryV2';
+import { convertModuleCardsToModuleItems } from '@/lib/navigation/dashboardAdapter';
 
 interface DashboardPageProps {
   onLogout?: () => void;
@@ -508,348 +463,46 @@ const DashboardPage: React.FC<DashboardPageProps> = ({ onLogout }) => {
     [navigate]
   );
 
-  const coreModules = useMemo(
-    (): ModuleItem[] =>
-      [
-        {
-          title: '文档管理',
-          icon: FileText,
-          description: '文件上传、下载、版本管理',
-          path: '/documents',
-          color: 'bg-blue-500',
-          status: 'online' as const,
-          permission: 'doc:read',
-          module: 'doc',
-        },
-        {
-          title: 'AI 知识库',
-          icon: Bot,
-          description: '智能问答、知识检索',
-          path: '/ai',
-          color: 'bg-purple-500',
-          status: 'online' as const,
-          permission: 'ai:read',
-          module: 'ai',
-        },
-        {
-          title: '工作流',
-          icon: GitBranch,
-          description: '流程审批、任务管理',
-          path: '/flow/definitions',
-          color: 'bg-green-500',
-          status: 'online' as const,
-          permission: 'workflow:read',
-          module: 'workflow',
-        },
-        {
-          title: '通讯录',
-          icon: Book,
-          description: '企业通讯录、组织架构',
-          path: '/addressbook',
-          color: 'bg-emerald-500',
-          status: 'online' as const,
-          permission: null,
-          module: null,
-        },
-        {
-          title: '项目管理',
-          icon: FolderKanban,
-          description: '项目全生命周期、合同、预算、风险管理',
-          path: '/pm/projects',
-          color: 'bg-rose-500',
-          status: 'online' as const,
-          permission: null,
-          module: 'pm',
-        },
-      ].filter((module) => shouldShowModule(module)),
-    [shouldShowModule]
-  );
+  const { checkPermission } = usePermission();
 
-  const systemServicesModules = useMemo(
-    (): ModuleItem[] =>
-      [
-        {
-          title: '系统管理',
-          icon: Settings,
-          description: '用户、角色、权限、系统设置管理',
-          path: '/iam/system',
-          color: 'bg-slate-600',
-          status: 'online' as const,
-          permission: 'iam:system_update',
-          module: 'iam',
-          adminOnly: true,
-        },
-        {
-          title: '系统集成',
-          icon: Link,
-          description: 'LIMS-QMS/MES-ERP/WMS-SCM 等系统间数据同步',
-          path: '/integration',
-          color: 'bg-blue-500',
-          status: 'online' as const,
-          permission: 'iam:system_update',
-          module: 'integration',
-          adminOnly: true,
-        },
-        {
-          title: '报表中心',
-          icon: BarChart3,
-          description: 'RS/LIMS/QMS/EHS/SRM/PDM 各模块报表',
-          path: '/report/list',
-          color: 'bg-emerald-500',
-          status: 'online' as const,
-          permission: 'iam:system_update',
-          module: 'iam',
-          adminOnly: true,
-        },
-        {
-          title: '模板管理',
-          icon: FileText,
-          description: '文档模板、流程模板管理',
-          path: '/templates',
-          color: 'bg-violet-500',
-          status: 'online' as const,
-          permission: 'doc:admin',
-          module: 'doc',
-          adminOnly: true,
-        },
-        {
-          title: '帮助中心',
-          icon: HelpCircle,
-          description: '使用指南、视频教程、常见问题',
-          path: '/help',
-          color: 'bg-amber-500',
-          status: 'online' as const,
-          permission: null,
-        },
-      ].filter((module) => shouldShowModule(module)),
-    [shouldShowModule]
-  );
+  const [navConfigUpdated, setNavConfigUpdated] = useState(0);
 
-  const businessModules = useMemo(
-    (): ModuleItem[] =>
-      [
-        {
-          title: '公司管理',
-          icon: Building,
-          description: '企业信息、组织架构',
-          path: '/hrm/companies',
-          color: 'bg-blue-500',
-          status: 'online' as const,
-          permission: 'hrm:read',
-          module: 'hrm',
-          adminOnly: true,
-        },
-        {
-          title: '部门管理',
-          icon: Folder,
-          description: '部门结构、层级关系',
-          path: '/hrm/departments',
-          color: 'bg-teal-500',
-          status: 'online' as const,
-          permission: 'hrm:read',
-          module: 'hrm',
-          adminOnly: true,
-        },
-        {
-          title: '员工管理',
-          icon: Users,
-          description: '员工信息、任职管理',
-          path: '/hrm/employees',
-          color: 'bg-emerald-500',
-          status: 'online' as const,
-          permission: 'hrm:read',
-          module: 'hrm',
-          adminOnly: true,
-        },
-        {
-          title: '薪酬管理',
-          icon: DollarSign,
-          description: '薪资计算、奖金社保、个税管理',
-          path: '/hrm/payroll',
-          color: 'bg-yellow-500',
-          status: 'online' as const,
-          permission: 'hrm:read',
-          module: 'hrm',
-          adminOnly: true,
-        },
-        {
-          title: '资产管理',
-          icon: Box,
-          description: '企业资产、设备台账、点巡检、维护维修',
-          path: '/assets',
-          color: 'bg-purple-500',
-          status: 'online' as const,
-          permission: 'erp:admin',
-          module: 'erp',
-          adminOnly: true,
-        },
-        {
-          title: '行政办公',
-          icon: Briefcase,
-          description: '办公用品、会议室、车辆、公告管理',
-          path: '/administration',
-          color: 'bg-sky-500',
-          status: 'online' as const,
-          permission: 'erp:admin',
-          module: 'erp',
-          adminOnly: true,
-        },
-        {
-          title: '合同管理',
-          icon: FileCheck,
-          description: '员工合同、续签流程、到期提醒',
-          path: '/hrm/contracts',
-          color: 'bg-violet-500',
-          status: 'online' as const,
-          permission: 'contract:read',
-          module: 'contract',
-          adminOnly: true,
-        },
-        {
-          title: '预算管理',
-          icon: TrendingUp,
-          description: '部门预算、使用进度、预警',
-          path: '/budget',
-          color: 'bg-green-500',
-          status: 'online' as const,
-          permission: 'erp:admin',
-          module: 'erp',
-          adminOnly: true,
-        },
-        {
-          title: '费用管理',
-          icon: Receipt,
-          description: '费用报销、预算、应收应付',
-          path: '/finance',
-          color: 'bg-indigo-500',
-          status: 'online' as const,
-          permission: 'erp:admin',
-          module: 'erp',
-          adminOnly: true,
-        },
-        {
-          title: '文档中心',
-          icon: BookOpen,
-          description: '企业文档管理、知识共享',
-          path: '/document-center',
-          color: 'bg-blue-500',
-          status: 'online' as const,
-          permission: 'doc:read',
-          module: 'doc',
-        },
-        {
-          title: '商业智能',
-          icon: BarChart3,
-          description: '数据大屏、概览分析、各模块数据统计',
-          path: BI_PATHS.dashboard,
-          color: 'bg-emerald-500',
-          status: 'new' as const,
-          permission: null,
-          module: 'bi',
-        },
-        {
-          title: '科研研发',
-          icon: FlaskConical,
-          description: '项目管理、配方管理',
-          path: '/rs',
-          color: 'bg-orange-500',
-          status: 'beta' as const,
-          permission: 'rs:read',
-          module: 'rs',
-        },
-        {
-          title: '实验室管理',
-          icon: ClipboardList,
-          description: '样品管理、检测记录',
-          path: '/lims',
-          color: 'bg-cyan-500',
-          status: 'beta' as const,
-          permission: 'lims:read',
-          module: 'lims',
-        },
-        {
-          title: '质量管理',
-          icon: Shield,
-          description: '质量管控、合规管理',
-          path: '/qms',
-          color: 'bg-indigo-500',
-          status: 'online' as const,
-          permission: 'qms:read',
-          module: 'qms',
-        },
-        {
-          title: '环境健康安全',
-          icon: AlertCircle,
-          description: '安全风险、应急预案',
-          path: '/ehs',
-          color: 'bg-red-500',
-          status: 'online' as const,
-          permission: 'ehs:read',
-          module: 'ehs',
-        },
-        {
-          title: '供应商关系',
-          icon: Users,
-          description: '供应商管理、采购订单',
-          path: '/srm',
-          color: 'bg-purple-500',
-          status: 'online' as const,
-          permission: 'srm:read',
-          module: 'srm',
-        },
-        {
-          title: '生产数据管理',
-          icon: Package,
-          description: '生产工艺、配方批次',
-          path: '/pdm',
-          color: 'bg-amber-500',
-          status: 'online' as const,
-          permission: 'pdm:read',
-          module: 'pdm',
-        },
-        {
-          title: '厂区空间',
-          icon: MapPin,
-          description: '设备点位、管线、仓储管理',
-          path: GIS_PATHS.root,
-          color: 'bg-teal-500',
-          status: 'new' as const,
-          permission: 'gis:read',
-          module: 'gis',
-        },
-        {
-          title: '移动工作台',
-          icon: Smartphone,
-          description: '巡检打卡、扫码入库、移动任务',
-          path: '/mobile-workstation',
-          color: 'bg-indigo-500',
-          status: 'new' as const,
-          permission: null,
-          module: 'mobile',
-        },
-        {
-          title: '即时通讯',
-          icon: MessageSquare,
-          description: '聊天会话、项目群组、消息通知',
-          path: IM_PATHS.root,
-          color: 'bg-pink-500',
-          status: 'new' as const,
-          permission: 'im:read',
-          module: 'im',
-        },
-        {
-          title: '邮件管理',
-          icon: Mail,
-          description: '邮件发送、模板管理、邮件记录',
-          path: '/mail',
-          color: 'bg-cyan-500',
-          status: 'new' as const,
-          permission: 'mail:read',
-          module: 'mail',
-        },
-      ].filter((module) => shouldShowModule(module)),
-    [shouldShowModule]
-  );
+  useEffect(() => {
+    const handler = () => {
+      setNavConfigUpdated((prev) => prev + 1);
+    };
+    navigationRegistryV2.emitter.on('navigationUpdated', handler);
+    return () => {
+      navigationRegistryV2.emitter.off('navigationUpdated', handler);
+    };
+  }, []);
+
+  const allModuleCards = useMemo(() => {
+    return navigationRegistryV2.getModuleCards(checkPermission);
+  }, [checkPermission, navConfigUpdated]);
+
+  const coreModules = useMemo((): ModuleItem[] => {
+    const coreCards = allModuleCards.filter((m) => m.source === 'core');
+    return convertModuleCardsToModuleItems(coreCards).filter((module) => shouldShowModule(module));
+  }, [allModuleCards, shouldShowModule]);
+
+  const systemServicesModules = useMemo((): ModuleItem[] => {
+    const systemModules = ['iam', 'integration', 'report'];
+    const systemCards = allModuleCards.filter((m) => 
+      systemModules.includes(m.code) || 
+      m.permission?.includes('admin') || 
+      m.permission?.includes('system')
+    );
+    return convertModuleCardsToModuleItems(systemCards).filter((module) => shouldShowModule(module));
+  }, [allModuleCards, shouldShowModule]);
+
+  const businessModules = useMemo((): ModuleItem[] => {
+    const systemModules = ['iam', 'integration', 'report'];
+    const businessCards = allModuleCards.filter((m) => 
+      m.source === 'plugin' && !systemModules.includes(m.code)
+    );
+    return convertModuleCardsToModuleItems(businessCards).filter((module) => shouldShowModule(module));
+  }, [allModuleCards, shouldShowModule]);
 
   if (loading) {
     return (
@@ -890,13 +543,9 @@ const DashboardPage: React.FC<DashboardPageProps> = ({ onLogout }) => {
       case 'workflow':
         return <GitBranch size={18} />;
       case 'lims':
-        return <ClipboardList size={18} />;
       case 'training':
-        return <BookOpen size={18} />;
       case 'report':
-        return <FileText size={18} />;
       case 'meeting':
-        return <Calendar size={18} />;
       default:
         return <ListTodo size={18} />;
     }

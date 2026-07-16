@@ -19,6 +19,10 @@ pub struct PluginInfo {
     pub plugin_type: String,
     pub permissions: Vec<Permission>,
     pub runtime_url: String,
+    #[serde(default)]
+    pub dependencies: Vec<String>,
+    #[serde(default)]
+    pub navigation_config: Option<serde_json::Value>,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -44,7 +48,7 @@ pub async fn get_plugin_info() -> Json<ApiResponse<PluginInfo>> {
         description: "质量管理系统 - 质量检验、质量问题、质量标准、SPC、FMEA、8D、APQP、质量成本"
             .to_string(),
         author: "TOPEMS".to_string(),
-        category: "Quality".to_string(),
+        category: "quality".to_string(),
         plugin_type: "business".to_string(),
         permissions: vec![
             Permission {
@@ -74,6 +78,12 @@ pub async fn get_plugin_info() -> Json<ApiResponse<PluginInfo>> {
             },
         ],
         runtime_url,
+        dependencies: vec!["erp".to_string(), "mes".to_string()],
+        navigation_config: Some(serde_json::json!([
+            {"code": "qms-inspections", "label": "质量检验", "path": "/qms/inspections", "icon": "ClipboardCheck", "order": 10, "group": "business"},
+            {"code": "qms-issues", "label": "质量问题", "path": "/qms/issues", "icon": "AlertTriangle", "order": 20, "group": "business"},
+            {"code": "qms-standards", "label": "质量标准", "path": "/qms/standards", "icon": "BookCheck", "order": 30, "group": "business"}
+        ])),
     };
 
     Json(ApiResponse::success(plugin_info, "QMS plugin info"))
@@ -121,16 +131,27 @@ pub async fn auto_register_to_core(core_url: Option<&str>) {
         version: env!("CARGO_PKG_VERSION").to_string(),
         description: "质量管理系统 - QMS质量管理、LIMS实验室管理、EHS环境健康安全".to_string(),
         author: "TOPEMS".to_string(),
-        category: "Quality".to_string(),
+        category: "quality".to_string(),
         plugin_type: "business".to_string(),
         permissions: vec![],
         runtime_url,
+        dependencies: vec!["erp".to_string(), "mes".to_string()],
+        navigation_config: Some(serde_json::json!([
+            {"code": "qms-inspections", "label": "质量检验", "path": "/qms/inspections", "icon": "ClipboardCheck", "order": 10, "group": "business"},
+            {"code": "qms-issues", "label": "质量问题", "path": "/qms/issues", "icon": "AlertTriangle", "order": 20, "group": "business"},
+            {"code": "qms-standards", "label": "质量标准", "path": "/qms/standards", "icon": "BookCheck", "order": 30, "group": "business"}
+        ])),
     };
 
     let client = reqwest::Client::new();
     let url = format!("{}/api/core/plugin/dev/plugins/qms/register", core_url);
 
-    match client.post(&url).json(&info).send().await {
+    let token = std::env::var("PLUGIN_REGISTRATION_TOKEN").unwrap_or_default();
+    let mut request = client.post(&url).json(&info);
+    if !token.is_empty() {
+        request = request.header("X-Plugin-Token", &token);
+    }
+    match request.send().await {
         Ok(response) => {
             if response.status().is_success() {
                 tracing::info!(

@@ -19,7 +19,7 @@ fn create_client() -> Client {
 async fn login(username: &str, password: &str) -> Result<String, String> {
     let client = create_client();
     let response = client
-        .post(format!("{}/api/core/iam/v1/auth/login", API_URL))
+        .post(format!("{}/api/core/iam/auth/login", API_URL))
         .json(&json!({ "username": username, "password": password }))
         .send()
         .await
@@ -78,7 +78,7 @@ async fn test_gis_001_view_map() {
     tracing::info!("测试 GIS-001: 查看地图数据");
     let token = login("admin", "admin123").await.expect("管理员登录失败");
     let client = create_client();
-    match auth_request(&client, &token, "GET", "/api/core/gis/v1/map", None).await {
+    match auth_request(&client, &token, "GET", "/api/gis/map", None).await {
         Ok((status, body)) => {
             assert_eq!(status, 200, "状态码应为 200");
             assert!(body["success"].as_bool().unwrap_or(false), "请求应成功");
@@ -96,15 +96,7 @@ async fn test_gis_002_search_location() {
     tracing::info!("测试 GIS-002: 位置查询");
     let token = login("admin", "admin123").await.expect("管理员登录失败");
     let client = create_client();
-    match auth_request(
-        &client,
-        &token,
-        "GET",
-        "/api/core/gis/v1/search?q=测试位置",
-        None,
-    )
-    .await
-    {
+    match auth_request(&client, &token, "GET", "/api/gis/search?q=测试位置", None).await {
         Ok((status, body)) => {
             assert_eq!(status, 200, "状态码应为 200");
             assert!(body["success"].as_bool().unwrap_or(false), "请求应成功");
@@ -126,7 +118,7 @@ async fn test_gis_003_add_marker() {
         &client,
         &token,
         "POST",
-        "/api/core/gis/v1/markers",
+        "/api/gis/markers",
         Some(json!({
             "name": "测试地标",
             "latitude": 31.2304,
@@ -152,7 +144,7 @@ async fn test_gis_004_list_markers() {
     tracing::info!("测试 GIS-004: 查看地标列表");
     let token = login("admin", "admin123").await.expect("管理员登录失败");
     let client = create_client();
-    match auth_request(&client, &token, "GET", "/api/core/gis/v1/markers", None).await {
+    match auth_request(&client, &token, "GET", "/api/gis/markers", None).await {
         Ok((status, body)) => {
             assert_eq!(status, 200, "状态码应为 200");
             assert!(body["success"].as_bool().unwrap_or(false), "请求应成功");
@@ -174,7 +166,7 @@ async fn test_gis_005_route_planning() {
         &client,
         &token,
         "POST",
-        "/api/core/gis/v1/route",
+        "/api/gis/route",
         Some(json!({
             "start": { "lat": 31.2304, "lng": 121.4737 },
             "end": { "lat": 31.2305, "lng": 121.4738 }

@@ -222,7 +222,7 @@ pub async fn mobile_get_approval_detail(
 }
 
 #[derive(Debug, Deserialize)]
-struct ApproveRequest {
+pub struct ApproveRequest {
     pub comment: Option<String>,
 }
 
@@ -419,7 +419,7 @@ pub async fn mobile_get_today_attendance(
 }
 
 #[derive(Debug, Deserialize)]
-struct CheckInRequest {
+pub struct CheckInRequest {
     pub location: Option<String>,
     pub notes: Option<String>,
 }
@@ -506,7 +506,7 @@ pub async fn mobile_checkin(
 }
 
 #[derive(Debug, Deserialize)]
-struct CheckOutRequest {
+pub struct CheckOutRequest {
     pub location: Option<String>,
     pub notes: Option<String>,
 }

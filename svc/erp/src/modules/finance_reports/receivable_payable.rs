@@ -16,7 +16,7 @@ pub async fn receivables_report(
     Extension(claims): Extension<Claims>,
     Query(params): Query<ReportParams>,
 ) -> Json<ApiResponse<Vec<ReceivableSummary>>> {
-    if let Err(e) = check_permission(&claims, &ModulePermission::ReportRead).await {
+    if let Err(e) = check_permission(&state.db, &claims, &ModulePermission::ReportRead).await {
         return e;
     }
 
@@ -62,7 +62,7 @@ pub async fn payables_report(
     Extension(claims): Extension<Claims>,
     Query(params): Query<ReportParams>,
 ) -> Json<ApiResponse<Vec<PayableSummary>>> {
-    if let Err(e) = check_permission(&claims, &ModulePermission::ReportRead).await {
+    if let Err(e) = check_permission(&state.db, &claims, &ModulePermission::ReportRead).await {
         return e;
     }
 
@@ -108,7 +108,7 @@ pub async fn aging_analysis(
     Extension(claims): Extension<Claims>,
     Query(params): Query<ReportParams>,
 ) -> Json<ApiResponse<Vec<AgingAnalysisItem>>> {
-    if let Err(e) = check_permission(&claims, &ModulePermission::ReportRead).await {
+    if let Err(e) = check_permission(&state.db, &claims, &ModulePermission::ReportRead).await {
         return e;
     }
 

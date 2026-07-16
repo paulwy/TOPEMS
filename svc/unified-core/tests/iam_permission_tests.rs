@@ -26,7 +26,7 @@ async fn login(username: &str, password: &str) -> Result<String, String> {
     let client = create_client();
 
     let response = client
-        .post(format!("{}/api/core/iam/v1/auth/login", API_URL))
+        .post(format!("{}/api/core/iam/auth/login", API_URL))
         .json(&json!({
             "username": username,
             "password": password
@@ -104,7 +104,7 @@ async fn test_iam_001_superuser_list_users() {
     let token = login("admin", "admin123").await.expect("管理员登录失败");
     let client = create_client();
 
-    let (status, body) = auth_request(&client, &token, "GET", "/api/core/iam/v1/users", None)
+    let (status, body) = auth_request(&client, &token, "GET", "/api/core/iam/users", None)
         .await
         .expect("请求失败");
 
@@ -138,10 +138,9 @@ async fn test_iam_002_employee_list_users() {
         Ok(token) => {
             let client = create_client();
 
-            let (status, body) =
-                auth_request(&client, &token, "GET", "/api/core/iam/v1/users", None)
-                    .await
-                    .expect("请求失败");
+            let (status, body) = auth_request(&client, &token, "GET", "/api/core/iam/users", None)
+                .await
+                .expect("请求失败");
 
             // 可能返回 200（有限数据）或 403（无权限）
             if status == 200 {
@@ -185,7 +184,7 @@ async fn test_iam_003_admin_create_user() {
         &client,
         &token,
         "POST",
-        "/api/core/iam/v1/users",
+        "/api/core/iam/users",
         Some(new_user),
     )
     .await
@@ -224,7 +223,7 @@ async fn test_iam_004_unauthorized_create_user() {
                 &client,
                 &token,
                 "POST",
-                "/api/core/iam/v1/users",
+                "/api/core/iam/users",
                 Some(new_user),
             )
             .await
@@ -251,7 +250,7 @@ async fn test_iam_005_admin_delete_user() {
 
     // 使用已存在的测试用户进行删除测试
     // 先查询用户列表获取一个用户ID
-    let (_, list_body) = auth_request(&client, &token, "GET", "/api/core/iam/v1/users", None)
+    let (_, list_body) = auth_request(&client, &token, "GET", "/api/core/iam/users", None)
         .await
         .expect("获取用户列表失败");
 
@@ -280,7 +279,7 @@ async fn test_iam_005_admin_delete_user() {
             &client,
             &token,
             "DELETE",
-            &format!("/api/core/iam/v1/users/{}", user_id),
+            &format!("/api/core/iam/users/{}", user_id),
             None,
         )
         .await
@@ -309,7 +308,7 @@ async fn test_iam_006_superuser_assign_role() {
     let client = create_client();
 
     // 获取角色列表
-    let (_, roles_body) = auth_request(&client, &token, "GET", "/api/core/iam/v1/roles", None)
+    let (_, roles_body) = auth_request(&client, &token, "GET", "/api/core/iam/roles", None)
         .await
         .expect("获取角色列表失败");
 
@@ -325,10 +324,9 @@ async fn test_iam_006_superuser_assign_role() {
             let role_id = role["id"].as_str().expect("角色ID不存在");
 
             // 获取用户列表，找一个测试用户
-            let (_, list_body) =
-                auth_request(&client, &token, "GET", "/api/core/iam/v1/users", None)
-                    .await
-                    .expect("获取用户列表失败");
+            let (_, list_body) = auth_request(&client, &token, "GET", "/api/core/iam/users", None)
+                .await
+                .expect("获取用户列表失败");
 
             let users = if list_body["data"]["users"].is_array() {
                 list_body["data"]["users"].as_array().unwrap().clone()
@@ -356,7 +354,7 @@ async fn test_iam_006_superuser_assign_role() {
                     &client,
                     &token,
                     "PUT",
-                    &format!("/api/core/iam/v1/users/{}/roles", user_id),
+                    &format!("/api/core/iam/users/{}/roles", user_id),
                     Some(role_assignment),
                 )
                 .await;
@@ -398,7 +396,7 @@ async fn test_iam_007_cross_tenant_access() {
         &client,
         &token,
         "GET",
-        &format!("/api/core/iam/v1/users/{}", fake_user_id),
+        &format!("/api/core/iam/users/{}", fake_user_id),
         None,
     )
     .await
@@ -432,10 +430,9 @@ async fn test_iam_008_user_change_own_password() {
             let client = create_client();
 
             // 获取当前用户信息
-            let (_, me_body) =
-                auth_request(&client, &token, "GET", "/api/core/iam/v1/users/me", None)
-                    .await
-                    .expect("获取用户信息失败");
+            let (_, me_body) = auth_request(&client, &token, "GET", "/api/core/iam/users/me", None)
+                .await
+                .expect("获取用户信息失败");
 
             if let Some(user_id) = me_body["data"]["id"].as_str() {
                 // 尝试修改密码
@@ -448,7 +445,7 @@ async fn test_iam_008_user_change_own_password() {
                     &client,
                     &token,
                     "PUT",
-                    &format!("/api/core/iam/v1/users/{}/password", user_id),
+                    &format!("/api/core/iam/users/{}/password", user_id),
                     Some(password_change),
                 )
                 .await
@@ -490,7 +487,7 @@ async fn test_iam_009_user_change_others_password() {
                 &client,
                 &token,
                 "PUT",
-                &format!("/api/core/iam/v1/users/{}/password", other_user_id),
+                &format!("/api/core/iam/users/{}/password", other_user_id),
                 Some(password_change),
             )
             .await
@@ -515,7 +512,7 @@ async fn test_iam_list_roles() {
     let token = login("admin", "admin123").await.expect("管理员登录失败");
     let client = create_client();
 
-    let (status, body) = auth_request(&client, &token, "GET", "/api/core/iam/v1/roles", None)
+    let (status, body) = auth_request(&client, &token, "GET", "/api/core/iam/roles", None)
         .await
         .expect("请求失败");
 
@@ -537,7 +534,7 @@ async fn test_iam_list_permissions() {
     let token = login("admin", "admin123").await.expect("管理员登录失败");
     let client = create_client();
 
-    let (status, body) = auth_request(&client, &token, "GET", "/api/core/iam/v1/permissions", None)
+    let (status, body) = auth_request(&client, &token, "GET", "/api/core/iam/permissions", None)
         .await
         .expect("请求失败");
 

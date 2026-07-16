@@ -126,7 +126,7 @@ async fn main() -> Result<()> {
 
     let app = Router::new()
         .merge(health_router)
-        .merge(protected_routes)
+        .nest("/api/monitor", protected_routes)
         .merge(create_api_info_router("topems-monitor"))
         .layer(axum::middleware::from_fn(telemetry_middleware))
         .layer(axum::middleware::from_fn(move |req, next| {
@@ -141,7 +141,7 @@ async fn main() -> Result<()> {
         .layer(cors)
         .with_state(api_state.clone());
 
-    let cfg = RouteCompatConfig::new("monitor", "/api/core/monitor", &[]);
+    let cfg = RouteCompatConfig::new("monitor", "/api/monitor", &[]);
     let app = wrap_group2_router(app, cfg);
 
     let port = env::var("MONITOR_PORT")

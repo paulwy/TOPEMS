@@ -256,13 +256,13 @@ async fn main() -> anyhow::Result<()> {
 
     let app = Router::new()
         .merge(public_routes)
-        .merge(protected_routes)
+        .nest("/api/lims", protected_routes)
         .layer(axum::middleware::from_fn(telemetry_middleware))
         .layer(cors)
         .layer(prometheus_layer)
         .with_state(state);
 
-    let cfg = RouteCompatConfig::new("lims", "/api/core/lims", &[]);
+    let cfg = RouteCompatConfig::new("lims", "/api/lims", &[]);
     let app = wrap_group2_router(app, cfg);
 
     let port = std::env::var("LIMS_PORT")

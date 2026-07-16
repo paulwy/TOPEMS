@@ -168,278 +168,275 @@ async fn main() -> Result<()> {
         // Frontend aligned routes (ERP module)
         // Production Order
         .route(
-            "/api/core/erp/production-orders",
+            "/production-orders",
             get(modules::production_order::list_production_orders)
                 .post(modules::production_order::create_production_order),
         )
         .route(
-            "/api/core/erp/production-orders/{id}",
+            "/production-orders/{id}",
             get(modules::production_order::get_production_order)
                 .put(modules::production_order::update_production_order)
                 .delete(modules::production_order::delete_production_order),
         )
         .route(
-            "/api/core/erp/production-orders/{id}/progress",
+            "/production-orders/{id}/progress",
             put(modules::production_order::update_production_progress),
         )
         .route(
-            "/api/core/erp/production-orders/{id}/status",
+            "/production-orders/{id}/status",
             post(modules::production_order::update_production_status),
         )
         // Sales Order
         .route(
-            "/api/core/erp/sales-orders",
+            "/sales-orders",
             get(modules::sales_order::list_sales_orders)
                 .post(modules::sales_order::create_sales_order),
         )
         .route(
-            "/api/core/erp/sales-orders/{id}",
+            "/sales-orders/{id}",
             get(modules::sales_order::get_sales_order)
                 .put(modules::sales_order::update_sales_order)
                 .delete(modules::sales_order::delete_sales_order),
         )
         // Material
         .route(
-            "/api/core/erp/materials",
+            "/materials",
             get(modules::material::list_materials).post(modules::material::create_material),
         )
         .route(
-            "/api/core/erp/materials/{id}",
+            "/materials/{id}",
             get(modules::material::get_material)
                 .put(modules::material::update_material)
                 .delete(modules::material::delete_material),
         )
         // Inventory
         .route(
-            "/api/core/erp/inventory",
+            "/inventory",
             get(modules::inventory::list_inventory).post(modules::inventory::create_inventory),
         )
         .route(
-            "/api/core/erp/inventory/{id}",
+            "/inventory/{id}",
             get(modules::inventory::get_inventory)
                 .put(modules::inventory::update_inventory)
                 .delete(modules::inventory::delete_inventory),
         )
         .route(
-            "/api/core/erp/inventory/low-stock",
+            "/inventory/low-stock",
             get(modules::inventory::get_low_stock),
         )
         // Supplier
         .route(
-            "/api/core/erp/suppliers",
+            "/suppliers",
             get(modules::supplier::list_suppliers).post(modules::supplier::create_supplier),
         )
         .route(
-            "/api/core/erp/suppliers/{id}",
+            "/suppliers/{id}",
             get(modules::supplier::get_supplier)
                 .put(modules::supplier::update_supplier)
                 .delete(modules::supplier::delete_supplier),
         )
         // Customer
         .route(
-            "/api/core/erp/customers",
+            "/customers",
             get(modules::customer::list_customers).post(modules::customer::create_customer),
         )
         .route(
-            "/api/core/erp/customers/{id}",
+            "/customers/{id}",
             get(modules::customer::get_customer)
                 .put(modules::customer::update_customer)
                 .delete(modules::customer::delete_customer),
         )
         // Finance
         .route(
-            "/api/core/erp/expenses",
+            "/expenses",
             get(modules::finance::list_expenses).post(modules::finance::create_expense),
         )
         .route(
-            "/api/core/erp/expenses/{id}",
+            "/expenses/{id}",
             get(modules::finance::get_expense)
                 .put(modules::finance::update_expense)
                 .delete(modules::finance::delete_expense),
         )
         .route(
-            "/api/core/erp/budgets",
+            "/budgets",
             get(modules::finance::list_budgets).post(modules::finance::create_budget),
         )
         .route(
-            "/api/core/erp/budgets/{id}",
+            "/budgets/{id}",
             get(modules::finance::get_budget)
                 .put(modules::finance::update_budget)
                 .delete(modules::finance::delete_budget),
         )
         .route(
-            "/api/core/erp/receivables",
+            "/receivables",
             get(modules::finance::list_receivables).post(modules::finance::create_receivable),
         )
         .route(
-            "/api/core/erp/receivables/{id}",
+            "/receivables/{id}",
             get(modules::finance::get_receivable)
                 .put(modules::finance::update_receivable)
                 .delete(modules::finance::delete_receivable),
         )
         .route(
-            "/api/core/erp/payables",
+            "/payables",
             get(modules::finance::list_payables).post(modules::finance::create_payable),
         )
         .route(
-            "/api/core/erp/payables/{id}",
+            "/payables/{id}",
             get(modules::finance::get_payable)
                 .put(modules::finance::update_payable)
                 .delete(modules::finance::delete_payable),
         )
         // Voucher
         .route(
-            "/api/core/erp/vouchers",
+            "/vouchers",
             get(modules::voucher::list_vouchers).post(modules::voucher::create_voucher),
         )
         .route(
-            "/api/core/erp/vouchers/{id}",
+            "/vouchers/{id}",
             get(modules::voucher::get_voucher)
                 .put(modules::voucher::update_voucher)
                 .delete(modules::voucher::delete_voucher),
         )
         .route(
-            "/api/core/erp/vouchers/{id}/approve",
+            "/vouchers/{id}/approve",
             post(modules::voucher::approve_voucher),
         )
+        .route("/vouchers/{id}/post", post(modules::voucher::post_voucher))
         .route(
-            "/api/core/erp/vouchers/{id}/post",
-            post(modules::voucher::post_voucher),
-        )
-        .route(
-            "/api/core/erp/voucher-templates",
+            "/voucher-templates",
             get(modules::voucher::list_voucher_templates)
                 .post(modules::voucher::create_voucher_template),
         )
         .route(
-            "/api/core/erp/voucher-templates/{id}",
+            "/voucher-templates/{id}",
             get(modules::voucher::get_voucher_template)
                 .put(modules::voucher::update_voucher_template)
                 .delete(modules::voucher::delete_voucher_template),
         )
         .route(
-            "/api/core/erp/voucher-templates/{id}/preview",
+            "/voucher-templates/{id}/preview",
             get(modules::voucher::preview_generated_vouchers),
         )
         .route(
-            "/api/core/erp/accounting-subjects",
+            "/accounting-subjects",
             get(modules::voucher::list_subjects).post(modules::voucher::create_subject),
         )
         .route(
-            "/api/core/erp/accounting-subjects/{id}",
+            "/accounting-subjects/{id}",
             get(modules::voucher::get_subject)
                 .put(modules::voucher::update_subject)
                 .delete(modules::voucher::delete_subject),
         )
         // Asset
         .route(
-            "/api/core/erp/assets",
+            "/assets",
             get(modules::asset::list_assets).post(modules::asset::create_asset),
         )
         .route(
-            "/api/core/erp/assets/{id}",
+            "/assets/{id}",
             get(modules::asset::get_asset)
                 .put(modules::asset::update_asset)
                 .delete(modules::asset::delete_asset),
         )
         // Fixed Asset
         .route(
-            "/api/core/erp/fixed-assets",
+            "/fixed-assets",
             get(modules::fixed_asset::list_fixed_assets)
                 .post(modules::fixed_asset::create_fixed_asset),
         )
         .route(
-            "/api/core/erp/fixed-assets/{id}",
+            "/fixed-assets/{id}",
             get(modules::fixed_asset::get_fixed_asset)
                 .put(modules::fixed_asset::update_fixed_asset)
                 .delete(modules::fixed_asset::delete_fixed_asset),
         )
         // Bank
         .route(
-            "/api/core/erp/bank-accounts",
+            "/bank-accounts",
             get(modules::bank::list_bank_accounts).post(modules::bank::create_bank_account),
         )
         .route(
-            "/api/core/erp/bank-accounts/{id}",
+            "/bank-accounts/{id}",
             get(modules::bank::get_bank_account)
                 .put(modules::bank::update_bank_account)
                 .delete(modules::bank::delete_bank_account),
         )
         // Office Supplies
         .route(
-            "/api/core/erp/office-supplies",
+            "/office-supplies",
             get(modules::office_supplies::list_supplies)
                 .post(modules::office_supplies::create_supply),
         )
         .route(
-            "/api/core/erp/office-supplies/{id}",
+            "/office-supplies/{id}",
             get(modules::office_supplies::get_supply)
                 .put(modules::office_supplies::update_supply)
                 .delete(modules::office_supplies::delete_supply),
         )
         // Meeting Room
         .route(
-            "/api/core/erp/meeting-rooms",
+            "/meeting-rooms",
             get(modules::meeting_room::list_rooms).post(modules::meeting_room::create_room),
         )
         .route(
-            "/api/core/erp/meeting-rooms/{id}",
+            "/meeting-rooms/{id}",
             get(modules::meeting_room::get_room)
                 .put(modules::meeting_room::update_room)
                 .delete(modules::meeting_room::delete_room),
         )
         .route(
-            "/api/core/erp/meeting-bookings",
+            "/meeting-bookings",
             get(modules::meeting_room::list_bookings).post(modules::meeting_room::create_booking),
         )
         .route(
-            "/api/core/erp/meeting-bookings/{id}",
+            "/meeting-bookings/{id}",
             get(modules::meeting_room::get_booking)
                 .put(modules::meeting_room::update_booking)
                 .delete(modules::meeting_room::delete_booking),
         )
         // Vehicles
         .route(
-            "/api/core/erp/vehicles",
+            "/vehicles",
             get(modules::vehicles::list_vehicles).post(modules::vehicles::create_vehicle),
         )
         .route(
-            "/api/core/erp/vehicles/{id}",
+            "/vehicles/{id}",
             get(modules::vehicles::get_vehicle)
                 .put(modules::vehicles::update_vehicle)
                 .delete(modules::vehicles::delete_vehicle),
         )
         .route(
-            "/api/core/erp/vehicle-requests",
+            "/vehicle-requests",
             get(modules::vehicles::list_vehicle_requests)
                 .post(modules::vehicles::create_vehicle_request),
         )
         .route(
-            "/api/core/erp/vehicle-requests/{id}",
+            "/vehicle-requests/{id}",
             get(modules::vehicles::get_vehicle_request)
                 .put(modules::vehicles::update_vehicle_request)
                 .delete(modules::vehicles::delete_vehicle_request),
         )
         // Announcement
         .route(
-            "/api/core/erp/announcements",
+            "/announcements",
             get(modules::announcement::list_announcements)
                 .post(modules::announcement::create_announcement),
         )
         .route(
-            "/api/core/erp/announcements/{id}",
+            "/announcements/{id}",
             get(modules::announcement::get_announcement)
                 .put(modules::announcement::update_announcement)
                 .delete(modules::announcement::delete_announcement),
         )
         // Opening Balance
         .route(
-            "/api/core/erp/opening-balances",
+            "/opening-balances",
             get(modules::opening_balance::list_opening_balances)
                 .post(modules::opening_balance::create_opening_balance),
         )
         .route(
-            "/api/core/erp/opening-balances/{id}",
+            "/opening-balances/{id}",
             get(modules::opening_balance::get_opening_balance)
                 .put(modules::opening_balance::update_opening_balance)
                 .delete(modules::opening_balance::delete_opening_balance),
@@ -457,7 +454,7 @@ async fn main() -> Result<()> {
 
     let app = Router::new()
         .merge(health_router)
-        .merge(protected_routes)
+        .nest("/api/erp", protected_routes)
         .merge(create_api_info_router("topems-erp"))
         .route(
             "/api-docs/openapi.json",
@@ -472,7 +469,7 @@ async fn main() -> Result<()> {
         .layer(prometheus_layer)
         .layer(cors);
 
-    let cfg = RouteCompatConfig::new("erp", "/api/core/erp", &[]);
+    let cfg = RouteCompatConfig::new("erp", "/api/erp", &[]);
     let app = wrap_group2_router(app, cfg);
 
     let port = env::var("ERP_PORT")

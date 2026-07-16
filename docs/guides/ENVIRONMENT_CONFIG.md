@@ -521,6 +521,44 @@ lsof -i :8000
 ./scripts/topems.sh restart
 ```
 
+### 插件架构配置 (V13.0)
+
+V13.0 引入了插件化架构增强，需要以下环境变量：
+
+```env
+# 插件注册安全令牌（生产环境必须设置）
+# 生成方式：openssl rand -hex 32
+PLUGIN_REGISTRATION_TOKEN=
+
+# Consul 服务发现（可选，未启用时使用环境变量回退）
+CONSUL_ENABLED=false
+CONSUL_URL=http://localhost:8500
+CONSUL_TOKEN=
+
+# 插件心跳超时阈值（秒）
+PLUGIN_HEARTBEAT_TIMEOUT=90
+SERVICE_HEARTBEAT_INTERVAL=30
+```
+
+**开发环境：** 令牌留空即跳过验证（开发模式）。
+
+**生产环境：** 必须设置强令牌，所有业务服务需配置相同的 `PLUGIN_REGISTRATION_TOKEN`。
+
+**验证配置：**
+```bash
+# 检查令牌是否已设置
+echo $PLUGIN_REGISTRATION_TOKEN
+
+# 生成新令牌
+openssl rand -hex 32
+
+# 测试插件注册（携带令牌）
+curl -X POST http://localhost:8000/api/core/plugin/dev/plugins/qms/register \
+  -H "X-Plugin-Token: $PLUGIN_REGISTRATION_TOKEN" \
+  -H "Content-Type: application/json" \
+  -d '{"code":"qms","name":"QMS","version":"1.0.0","runtime_url":"http://localhost:8050"}'
+```
+
 ## 最佳实践
 
 1. **版本控制**：只提交 `.env.example` 文件，不要提交实际的 `.env` 文件

@@ -20,7 +20,7 @@ async fn login(username: &str, password: &str) -> Result<String, String> {
     let client = create_client();
 
     let response = client
-        .post(format!("{}/api/core/iam/v1/auth/login", API_URL))
+        .post(format!("{}/api/core/iam/auth/login", API_URL))
         .json(&json!({ "username": username, "password": password }))
         .send()
         .await
@@ -92,7 +92,7 @@ async fn test_doc_001_list_documents() {
     let token = login("admin", "admin123").await.expect("管理员登录失败");
     let client = create_client();
 
-    let result = auth_request(&client, &token, "GET", "/api/core/doc/documents", None).await;
+    let result = auth_request(&client, &token, "GET", "/api/doc/documents", None).await;
 
     match result {
         Ok((status, body)) => {
@@ -127,14 +127,7 @@ async fn test_doc_002_create_document() {
         "type": "markdown"
     });
 
-    let result = auth_request(
-        &client,
-        &token,
-        "POST",
-        "/api/core/doc/documents",
-        Some(new_doc),
-    )
-    .await;
+    let result = auth_request(&client, &token, "POST", "/api/doc/documents", Some(new_doc)).await;
 
     match result {
         Ok((status, _)) => {
@@ -161,7 +154,7 @@ async fn test_doc_003_edit_others_document() {
     let client = create_client();
 
     // 先获取文档列表
-    let result = auth_request(&client, &token, "GET", "/api/core/doc/documents", None).await;
+    let result = auth_request(&client, &token, "GET", "/api/doc/documents", None).await;
 
     match result {
         Ok((_, body)) => {
@@ -181,7 +174,7 @@ async fn test_doc_003_edit_others_document() {
                             &client,
                             &token,
                             "PUT",
-                            &format!("/api/core/doc/documents/{}", doc_id),
+                            &format!("/api/doc/documents/{}", doc_id),
                             Some(update),
                         )
                         .await;
@@ -215,7 +208,7 @@ async fn test_doc_004_delete_document() {
     let client = create_client();
 
     // 获取文档列表
-    let result = auth_request(&client, &token, "GET", "/api/core/doc/documents", None).await;
+    let result = auth_request(&client, &token, "GET", "/api/doc/documents", None).await;
 
     match result {
         Ok((_, body)) => {
@@ -238,7 +231,7 @@ async fn test_doc_004_delete_document() {
                             &client,
                             &token,
                             "DELETE",
-                            &format!("/api/core/doc/documents/{}", doc_id),
+                            &format!("/api/doc/documents/{}", doc_id),
                             None,
                         )
                         .await;
@@ -277,7 +270,7 @@ async fn test_doc_005_publish_document() {
     let client = create_client();
 
     // 获取文档列表
-    let result = auth_request(&client, &token, "GET", "/api/core/doc/documents", None).await;
+    let result = auth_request(&client, &token, "GET", "/api/doc/documents", None).await;
 
     match result {
         Ok((_, body)) => {
@@ -297,7 +290,7 @@ async fn test_doc_005_publish_document() {
                             &client,
                             &token,
                             "POST",
-                            &format!("/api/core/doc/documents/{}/publish", doc_id),
+                            &format!("/api/doc/documents/{}/publish", doc_id),
                             None,
                         )
                         .await;
@@ -331,7 +324,7 @@ async fn test_doc_006_archive_document() {
     let client = create_client();
 
     // 获取文档列表
-    let result = auth_request(&client, &token, "GET", "/api/core/doc/documents", None).await;
+    let result = auth_request(&client, &token, "GET", "/api/doc/documents", None).await;
 
     match result {
         Ok((_, body)) => {
@@ -346,7 +339,7 @@ async fn test_doc_006_archive_document() {
                             &client,
                             &token,
                             "POST",
-                            &format!("/api/core/doc/documents/{}/archive", doc_id),
+                            &format!("/api/doc/documents/{}/archive", doc_id),
                             None,
                         )
                         .await;
@@ -380,7 +373,7 @@ async fn test_doc_007_generate_from_template() {
     let client = create_client();
 
     // 获取模板列表
-    let result = auth_request(&client, &token, "GET", "/api/core/doc/templates", None).await;
+    let result = auth_request(&client, &token, "GET", "/api/doc/templates", None).await;
 
     match result {
         Ok((status, body)) => {
@@ -394,7 +387,7 @@ async fn test_doc_007_generate_from_template() {
                                 &client,
                                 &token,
                                 "POST",
-                                &format!("/api/core/doc/templates/{}/generate", template_id),
+                                &format!("/api/doc/templates/{}/generate", template_id),
                                 Some(json!({ "title": "从模板生成的文档" })),
                             )
                             .await;
@@ -435,7 +428,7 @@ async fn test_doc_008_cross_company_access() {
         &client,
         &token,
         "GET",
-        &format!("/api/core/doc/documents/{}", fake_doc_id),
+        &format!("/api/doc/documents/{}", fake_doc_id),
         None,
     )
     .await;

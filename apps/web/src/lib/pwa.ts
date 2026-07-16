@@ -65,6 +65,11 @@ export const getRegistration = (): ServiceWorkerRegistration | null => {
 };
 
 export const initPWA = (): void => {
+  if (import.meta.env.DEV) {
+    logger.debug('Service Worker disabled in development mode');
+    return;
+  }
+
   registerSW();
 
   setInterval(checkForUpdate, UPDATE_CHECK_INTERVAL);

@@ -33,7 +33,7 @@ pub async fn list_accounts(
     Extension(claims): Extension<Claims>,
     Query(params): Query<AccountListParams>,
 ) -> Json<ApiResponse<PaginatedResponse<AccountingSubject>>> {
-    if let Err(e) = check_permission(&claims, &ModulePermission::FinanceRead).await {
+    if let Err(e) = check_permission(&state.db, &claims, &ModulePermission::FinanceRead).await {
         return e;
     }
 
@@ -178,7 +178,7 @@ pub async fn get_accounts_tree(
     Extension(claims): Extension<Claims>,
     Query(params): Query<AccountTreeParams>,
 ) -> Json<ApiResponse<Vec<AccountingSubject>>> {
-    if let Err(e) = check_permission(&claims, &ModulePermission::FinanceRead).await {
+    if let Err(e) = check_permission(&state.db, &claims, &ModulePermission::FinanceRead).await {
         return e;
     }
 
@@ -214,7 +214,7 @@ pub async fn get_account(
     Extension(claims): Extension<Claims>,
     Path(id): Path<Uuid>,
 ) -> Json<ApiResponse<AccountingSubject>> {
-    if let Err(e) = check_permission(&claims, &ModulePermission::FinanceRead).await {
+    if let Err(e) = check_permission(&state.db, &claims, &ModulePermission::FinanceRead).await {
         return e;
     }
 
@@ -244,7 +244,7 @@ pub async fn create_account(
     _headers: HeaderMap,
     Json(req): Json<CreateAccountingSubjectRequest>,
 ) -> Json<ApiResponse<AccountingSubject>> {
-    if let Err(e) = check_permission(&claims, &ModulePermission::FinanceWrite).await {
+    if let Err(e) = check_permission(&state.db, &claims, &ModulePermission::FinanceWrite).await {
         return e;
     }
 
@@ -288,7 +288,7 @@ pub async fn update_account(
     _headers: HeaderMap,
     Json(req): Json<UpdateAccountingSubjectRequest>,
 ) -> Json<ApiResponse<AccountingSubject>> {
-    if let Err(e) = check_permission(&claims, &ModulePermission::FinanceWrite).await {
+    if let Err(e) = check_permission(&state.db, &claims, &ModulePermission::FinanceWrite).await {
         return e;
     }
 
@@ -347,7 +347,7 @@ pub async fn delete_account(
     Path(id): Path<Uuid>,
     _headers: HeaderMap,
 ) -> Json<ApiResponse<()>> {
-    if let Err(e) = check_permission(&claims, &ModulePermission::FinanceWrite).await {
+    if let Err(e) = check_permission(&state.db, &claims, &ModulePermission::FinanceWrite).await {
         return e;
     }
 
@@ -377,7 +377,7 @@ pub async fn batch_create_children(
     Path(parent_id): Path<Uuid>,
     Json(req): Json<BatchCreateChildrenRequest>,
 ) -> Json<ApiResponse<Vec<AccountingSubject>>> {
-    if let Err(e) = check_permission(&claims, &ModulePermission::FinanceWrite).await {
+    if let Err(e) = check_permission(&state.db, &claims, &ModulePermission::FinanceWrite).await {
         return e;
     }
 

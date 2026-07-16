@@ -16,10 +16,10 @@ pub async fn call_finance_core_approval(
         std::env::var("FINANCE_CORE_URL").unwrap_or_else(|_| "http://localhost:8000".to_string());
 
     let relative_path = match action {
-        "submit" => "/api/core/finance/approvals/submit",
-        "approve" => "/api/core/finance/approvals/approve",
-        "reject" => "/api/core/finance/approvals/reject",
-        "cancel" => "/api/core/finance/approvals/cancel",
+        "submit" => "/api/finance/approvals/submit",
+        "approve" => "/api/finance/approvals/approve",
+        "reject" => "/api/finance/approvals/reject",
+        "cancel" => "/api/finance/approvals/cancel",
         _ => return Err(format!("Unknown action: {}", action)),
     };
 

@@ -16,7 +16,7 @@ pub async fn budget_summary(
     Extension(claims): Extension<Claims>,
     Query(params): Query<ReportParams>,
 ) -> Json<ApiResponse<Vec<BudgetSummary>>> {
-    if let Err(e) = check_permission(&claims, &ModulePermission::ReportRead).await {
+    if let Err(e) = check_permission(&state.db, &claims, &ModulePermission::ReportRead).await {
         return e;
     }
 
@@ -66,7 +66,7 @@ pub async fn employee_summary(
     Extension(claims): Extension<Claims>,
     Query(_params): Query<ReportParams>,
 ) -> Json<ApiResponse<Vec<EmployeeSummary>>> {
-    if let Err(e) = check_permission(&claims, &ModulePermission::ReportRead).await {
+    if let Err(e) = check_permission(&state.db, &claims, &ModulePermission::ReportRead).await {
         return e;
     }
 

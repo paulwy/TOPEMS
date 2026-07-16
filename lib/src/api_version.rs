@@ -145,48 +145,45 @@ impl RouteCompatConfig {
 }
 
 /// 分析 Group2 服务的传入路径，返回 (是否旧路径, 需要重写的目标 URI path)
-/// - /api/{svc}/** → 新路径 (不是 legacy)，重写 /api/core/{svc}/v1/** 或 {internal_base}/v1/**
-/// - /api/{svc}/v1/** → 旧路径 (legacy)，重写 {internal_base}/v1/**
-/// - /api/core/{svc}/** → 旧路径 (legacy)，重写 {internal_base}/v1/**
-/// - /api/core/{svc}/v1/** → 旧路径 (legacy)，不需重写
-/// - /api/v1/{shortcut}/** → 旧路径 (legacy)，重写 {internal_base}/v1/{映射子路径}/**
+/// V9.0 契约：Group2 内部路由前缀为 /api/{svc}/（无 /core，无 /v1）
+/// - /api/{svc}/** → 新路径，无需重写
+/// - /api/core/{svc}/** → 旧路径 (legacy)，重写为 /api/{svc}/**
+/// - /api/{svc}/v1/** → 旧路径 (legacy)，重写为 /api/{svc}/**
 fn analyze_group2_path<'a>(path: &'a str, cfg: &RouteCompatConfig) -> (bool, Option<String>) {
     let svc = cfg.svc;
     let new_prefix = format!("/api/{}/", svc);
     let new_v1_prefix = format!("/api/{}/v1/", svc);
     let core_prefix = format!("/api/core/{}/", svc);
     let core_v1_prefix = format!("/api/core/{}/v1/", svc);
-    let internal_v1_base = format!("{}/v1", cfg.internal_base);
+    let internal_base = cfg.internal_base;
 
-    // 精确 /api/{svc}/v1? query 也考虑
-    // 1) 旧 /api/core/{svc}/v1/* → legacy: true, no rewrite needed (prefix equals internal_base)
-    if path.starts_with(&core_v1_prefix) || path == format!("/api/core/{}/v1", svc) {
-        return (true, None);
+    // 1) 旧 /api/core/{svc}/v1/* → legacy: true, 重写为 /api/{svc}/*
+    if let Some(rest) = path.strip_prefix(&core_v1_prefix) {
+        return (true, Some(format!("{}/{}", internal_base, rest)));
+    }
+    if path == format!("/api/core/{}/v1", svc) {
+        return (true, Some(format!("{}/", internal_base)));
     }
 
-    // 2) 新路径 /api/{svc}/v1/* → legacy: true, rewrite to /api/core/{svc}/v1/*
-    if let Some(rest) = path.strip_prefix(&new_v1_prefix) {
-        return (true, Some(format!("{}/{}", internal_v1_base, rest)));
-    }
-    if path == format!("/api/{}/v1", svc) {
-        return (true, Some(internal_v1_base.clone()));
-    }
-
-    // 3) 旧路径 /api/core/{svc}/* (无 v1) → legacy: true, rewrite to {internal_base}/v1/*
+    // 2) 旧路径 /api/core/{svc}/* (无 v1) → legacy: true, 重写为 /api/{svc}/*
     if let Some(rest) = path.strip_prefix(&core_prefix) {
-        // 如果 rest 已经以 v1/ 开头理论上被 (1) 捕获了，这里不会到
-        return (true, Some(format!("{}/{}", internal_v1_base, rest)));
+        return (true, Some(format!("{}/{}", internal_base, rest)));
     }
     if path == format!("/api/core/{}", svc) {
-        return (true, Some(format!("{}/", internal_v1_base)));
+        return (true, Some(format!("{}/", internal_base)));
     }
 
-    // 4) 新路径 /api/{svc}/* (无 v1) → legacy: false, rewrite to {internal_base}/v1/*
-    if let Some(rest) = path.strip_prefix(&new_prefix) {
-        return (false, Some(format!("{}/{}", internal_v1_base, rest)));
+    // 3) 旧 /api/{svc}/v1/* → legacy: true, 重写为 /api/{svc}/*
+    if let Some(rest) = path.strip_prefix(&new_v1_prefix) {
+        return (true, Some(format!("{}/{}", internal_base, rest)));
     }
-    if path == format!("/api/{}", svc) {
-        return (false, Some(format!("{}/", internal_v1_base)));
+    if path == format!("/api/{}/v1", svc) {
+        return (true, Some(format!("{}/", internal_base)));
+    }
+
+    // 4) 新路径 /api/{svc}/* → legacy: false, 无需重写
+    if path.starts_with(&new_prefix) || path == format!("/api/{}", svc) {
+        return (false, None);
     }
 
     // 5) /api/v1/{shortcut}/* → legacy top-level shortcuts
@@ -195,15 +192,15 @@ fn analyze_group2_path<'a>(path: &'a str, cfg: &RouteCompatConfig) -> (bool, Opt
         if let Some(rest) = path.strip_prefix(&sc_prefix) {
             return (
                 true,
-                Some(format!("{}/v1/{}/{}", cfg.internal_base, new_seg, rest)),
+                Some(format!("{}/{}/{}", internal_base, new_seg, rest)),
             );
         }
         if path == format!("/api/v1/{}", old) {
-            return (true, Some(format!("{}/v1/{}/", cfg.internal_base, new_seg)));
+            return (true, Some(format!("{}/{}/", internal_base, new_seg)));
         }
     }
 
-    // 不匹配：保持原样，legacy=false (让现有 404 流程处理)
+    // 不匹配：保持原样
     (false, None)
 }
 
@@ -283,35 +280,34 @@ fn analyze_group1_path<'a>(path: &'a str, cfg: &Group1CompatConfig) -> (bool, Op
         let exact_new = format!("/api/core/{}", mod_name);
         let exact_legacy = format!("/api/core/{}/v1", mod_name);
 
-        // 已经是 legacy 旧格式 /api/core/{mod}/v1/  →  legacy=true, 无需重写
-        if path.starts_with(&legacy_mod_prefix) || path == exact_legacy {
-            return (true, None);
+        // 旧格式 /api/core/{mod}/v1/ → legacy=true, 重写为 /api/core/{mod}/
+        if let Some(rest) = path.strip_prefix(&legacy_mod_prefix) {
+            return (true, Some(format!("/api/core/{}/{}", mod_name, rest)));
+        }
+        if path == exact_legacy {
+            return (true, Some(format!("/api/core/{}/", mod_name)));
         }
 
-        // 新格式 /api/core/{mod}/ (无 v1) → legacy=false → 重写到 legacy v1 前缀
-        if let Some(rest) = path.strip_prefix(&new_mod_prefix) {
-            // 防止重复: 若 rest 以 "v1/" 开头理论上已捕获 legacy 分支
-            return (false, Some(format!("/api/core/{}/v1/{}", mod_name, rest)));
-        }
-        if path == exact_new {
-            return (false, Some(format!("/api/core/{}/v1/", mod_name)));
+        // 新格式 /api/core/{mod}/ (无 v1) → legacy=false, 无需重写
+        if path.starts_with(&new_mod_prefix) || path == exact_new {
+            return (false, None);
         }
     }
 
-    // 顶层 /api/v1/{shortcut}/* 快捷映射
+    // 顶层 /api/v1/{shortcut}/* 快捷映射 → 重写为 /api/core/{mod}/{seg}
     for (old_seg, mod_name, new_seg) in cfg.shortcuts {
         let sc_prefix = format!("/api/v1/{}/", old_seg);
         if let Some(rest) = path.strip_prefix(&sc_prefix) {
             return (
                 true,
-                Some(format!("/api/core/{}/v1/{}/{}", mod_name, new_seg, rest)),
+                Some(format!("/api/core/{}/{}/{}", mod_name, new_seg, rest)),
             );
         }
         let exact_sc = format!("/api/v1/{}", old_seg);
         if path == exact_sc {
             return (
                 true,
-                Some(format!("/api/core/{}/v1/{}/", mod_name, new_seg)),
+                Some(format!("/api/core/{}/{}/", mod_name, new_seg)),
             );
         }
     }

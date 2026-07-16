@@ -27,6 +27,9 @@ pub struct Claims {
     pub email: Option<String>,
     pub department: Option<String>,
     pub tenant_id: Option<String>,
+    pub department_id: Option<String>,
+    pub position_id: Option<String>,
+    pub position_code: Option<String>,
 }
 
 impl Claims {
@@ -170,6 +173,9 @@ pub fn generate_jwt_token(user_id: &str, secret: &str, expire_minutes: i64) -> S
         email: None,
         department: None,
         tenant_id: None,
+        department_id: None,
+        position_id: None,
+        position_code: None,
     };
     claims.encode(secret).unwrap_or_else(|_| String::new())
 }
@@ -492,6 +498,7 @@ pub fn get_permission_by_id(permission_id: &str) -> Option<Permission> {
 }
 
 fn is_public_path(path: &str) -> bool {
+    eprintln!("DEBUG is_public_path: path='{}'", path);
     // 先精确匹配完整路径
     let public_paths = [
         "/",
@@ -502,7 +509,15 @@ fn is_public_path(path: &str) -> bool {
         "/api/core/iam/auth/register",
         "/api/core/iam/auth/forgot-password",
         "/api/core/iam/auth/reset-password",
+        "/api/core/iam/auth/logout",
         "/api/integration/webhooks",
+        // V1 版本路径（前端统一使用 /v1 前缀）
+        "/api/core/iam/v1/auth/login",
+        "/api/core/iam/v1/auth/refresh",
+        "/api/core/iam/v1/auth/register",
+        "/api/core/iam/v1/auth/forgot-password",
+        "/api/core/iam/v1/auth/reset-password",
+        "/api/core/iam/v1/auth/logout",
         // 兼容旧路径（向后兼容，至少一个大版本）
         "/api/v1/auth/login",
         "/api/v1/auth/refresh",
@@ -514,6 +529,7 @@ fn is_public_path(path: &str) -> bool {
     }
     // Group1 / Group2 新路径下的公开前缀检查（webhook、auth 相关）
     path.starts_with("/api/core/iam/auth/")
+        || path.starts_with("/api/core/iam/v1/auth/")
         || path.starts_with("/api/integration/webhooks")
         || path.starts_with("/api/integration/v1/webhooks")
 }
@@ -591,6 +607,9 @@ pub async fn auth_middleware(
             email: Some("dev@example.com".to_string()),
             department: None,
             tenant_id: None,
+            department_id: None,
+            position_id: None,
+            position_code: None,
         };
         parts.extensions.insert(claims);
         let req = Request::from_parts(parts, body);

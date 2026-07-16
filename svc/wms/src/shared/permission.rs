@@ -1,9 +1,13 @@
 use sqlx::PgPool;
 use topems_shared::auth::Claims;
+use topems_shared::permission::{
+    check_module_permission, ModuleCode, ModulePermission as SharedModulePermission,
+    PermissionAction,
+};
 use topems_shared::response::ApiResponse;
 
 #[derive(Debug, Clone, PartialEq)]
-pub enum ModulePermission {
+pub enum WmsPermission {
     WarehouseRead,
     WarehouseWrite,
     InventoryRead,
@@ -15,47 +19,53 @@ pub enum ModulePermission {
     All,
 }
 
-impl std::fmt::Display for ModulePermission {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+impl WmsPermission {
+    pub fn to_shared(&self) -> SharedModulePermission {
         match self {
-            ModulePermission::WarehouseRead => write!(f, "wms:read"),
-            ModulePermission::WarehouseWrite => write!(f, "wms:write"),
-            ModulePermission::InventoryRead => write!(f, "wms:read"),
-            ModulePermission::InventoryWrite => write!(f, "wms:write"),
-            ModulePermission::InboundRead => write!(f, "wms:read"),
-            ModulePermission::InboundWrite => write!(f, "wms:write"),
-            ModulePermission::OutboundRead => write!(f, "wms:read"),
-            ModulePermission::OutboundWrite => write!(f, "wms:write"),
-            ModulePermission::All => write!(f, "wms:admin"),
+            WmsPermission::WarehouseRead => {
+                SharedModulePermission::new(ModuleCode::Wms, PermissionAction::Read)
+            }
+            WmsPermission::WarehouseWrite => {
+                SharedModulePermission::new(ModuleCode::Wms, PermissionAction::Write)
+            }
+            WmsPermission::InventoryRead => {
+                SharedModulePermission::new(ModuleCode::Wms, PermissionAction::Read)
+            }
+            WmsPermission::InventoryWrite => {
+                SharedModulePermission::new(ModuleCode::Wms, PermissionAction::Write)
+            }
+            WmsPermission::InboundRead => {
+                SharedModulePermission::new(ModuleCode::Wms, PermissionAction::Read)
+            }
+            WmsPermission::InboundWrite => {
+                SharedModulePermission::new(ModuleCode::Wms, PermissionAction::Write)
+            }
+            WmsPermission::OutboundRead => {
+                SharedModulePermission::new(ModuleCode::Wms, PermissionAction::Read)
+            }
+            WmsPermission::OutboundWrite => {
+                SharedModulePermission::new(ModuleCode::Wms, PermissionAction::Write)
+            }
+            WmsPermission::All => {
+                SharedModulePermission::new(ModuleCode::Wms, PermissionAction::Admin)
+            }
         }
     }
 }
 
+impl std::fmt::Display for WmsPermission {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        write!(f, "{}", self.to_shared())
+    }
+}
+
+pub type ModulePermission = WmsPermission;
+
 pub async fn check_permission<T>(
-    _db: &PgPool,
+    db: &PgPool,
     claims: &Claims,
-    permission: &ModulePermission,
+    permission: &WmsPermission,
 ) -> Result<(), axum::Json<ApiResponse<T>>> {
-    if claims.is_superuser {
-        return Ok(());
-    }
-
-    let permission_str = permission.to_string();
-
-    if claims.has_permission(&permission_str) {
-        return Ok(());
-    }
-
-    if claims.has_permission("wms:admin") {
-        return Ok(());
-    }
-
-    if claims.has_permission("all") {
-        return Ok(());
-    }
-
-    Err(axum::Json(ApiResponse::error(
-        403,
-        &format!("权限不足：需要 {} 权限", permission),
-    )))
+    let shared_perm = permission.to_shared();
+    check_module_permission(db, claims, &shared_perm).await
 }

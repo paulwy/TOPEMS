@@ -118,7 +118,7 @@ async fn main() -> Result<()> {
         .layer(prometheus_layer)
         .layer(cors);
 
-    let cfg = RouteCompatConfig::new("crm", "/api/core/crm", &[]);
+    let cfg = RouteCompatConfig::new("crm", "/api/crm", &[]);
     let app = wrap_group2_router(app, cfg);
 
     let port = env::var("CRM_PORT")

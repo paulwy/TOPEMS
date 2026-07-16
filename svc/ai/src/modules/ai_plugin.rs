@@ -17,6 +17,10 @@ pub struct PluginInfo {
     pub plugin_type: String,
     pub runtime_url: String,
     pub permissions: Vec<Permission>,
+    #[serde(default)]
+    pub dependencies: Vec<String>,
+    #[serde(default)]
+    pub navigation_config: Option<serde_json::Value>,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -44,7 +48,7 @@ pub async fn get_plugin_info() -> Json<ApiResponse<PluginInfo>> {
         version: "1.0.0".to_string(),
         description: "AI 智能服务 - 向量数据库、文档分析、QA问答、智能生成".to_string(),
         author: "TOPEMS".to_string(),
-        category: "AI".to_string(),
+        category: "other".to_string(),
         plugin_type: "ai".to_string(),
         runtime_url,
         permissions: vec![
@@ -109,6 +113,12 @@ pub async fn get_plugin_info() -> Json<ApiResponse<PluginInfo>> {
                 description: "管理数据连接器".to_string(),
             },
         ],
+        dependencies: vec![],
+        navigation_config: Some(serde_json::json!([
+            {"code": "ai-search", "label": "AI 搜索", "path": "/ai/search", "icon": "Search", "order": 10, "group": "business"},
+            {"code": "ai-chat", "label": "AI 对话", "path": "/ai/chat", "icon": "MessageSquare", "order": 20, "group": "business"},
+            {"code": "ai-documents", "label": "文档管理", "path": "/ai/documents", "icon": "FileText", "order": 30, "group": "business"}
+        ])),
     };
 
     Json(ApiResponse::success(plugin_info, "AI plugin info"))
@@ -155,16 +165,27 @@ pub async fn auto_register_to_core(core_url: Option<&str>) {
         version: env!("CARGO_PKG_VERSION").to_string(),
         description: "AI 智能服务".to_string(),
         author: "TOPEMS".to_string(),
-        category: "AI".to_string(),
+        category: "other".to_string(),
         plugin_type: "ai".to_string(),
         runtime_url,
         permissions: vec![],
+        dependencies: vec![],
+        navigation_config: Some(serde_json::json!([
+            {"code": "ai-search", "label": "AI 搜索", "path": "/ai/search", "icon": "Search", "order": 10, "group": "business"},
+            {"code": "ai-chat", "label": "AI 对话", "path": "/ai/chat", "icon": "MessageSquare", "order": 20, "group": "business"},
+            {"code": "ai-documents", "label": "文档管理", "path": "/ai/documents", "icon": "FileText", "order": 30, "group": "business"}
+        ])),
     };
 
     let client = reqwest::Client::new();
     let url = format!("{}/api/core/plugin/dev/plugins/ai/register", core_url);
 
-    match client.post(&url).json(&info).send().await {
+    let token = std::env::var("PLUGIN_REGISTRATION_TOKEN").unwrap_or_default();
+    let mut request = client.post(&url).json(&info);
+    if !token.is_empty() {
+        request = request.header("X-Plugin-Token", &token);
+    }
+    match request.send().await {
         Ok(response) => {
             if response.status().is_success() {
                 tracing::info!(

@@ -122,6 +122,9 @@ services:
       - REDIS_URL=redis://redis:6379
       - RABBITMQ_URL=amqp://${RABBITMQ_USER:-topems}:${RABBITMQ_PASSWORD:-topems_secret}@rabbitmq:5672/%2f
       - CONSUL_URL=http://consul:8500
+      - CONSUL_ENABLED=${CONSUL_ENABLED:-false}
+      - PLUGIN_REGISTRATION_TOKEN=${PLUGIN_REGISTRATION_TOKEN:-}
+      - PLUGIN_HEARTBEAT_TIMEOUT=${PLUGIN_HEARTBEAT_TIMEOUT:-90}
       - JAEGER_ENDPOINT=http://jaeger:14268/api/traces
       - TRACING_SAMPLING_RATIO=1.0
     ports:
@@ -473,6 +476,8 @@ services:
       - QMS_PORT=8050
       - CORE_URL=http://unified-core:8000
       - CONSUL_URL=http://consul:8500
+      - CONSUL_ENABLED=${CONSUL_ENABLED:-false}
+      - PLUGIN_REGISTRATION_TOKEN=${PLUGIN_REGISTRATION_TOKEN:-}
       - ERP_URL=http://erp:8010
       - MES_URL=http://mes:8030
       - RUST_LOG=info

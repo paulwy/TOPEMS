@@ -87,8 +87,8 @@ async fn main() -> topems_shared::Result<()> {
 
     let public_routes: Router<modules::ApiState> = Router::new()
         .route("/health", get(health_check))
-        .route("/api/core/rd/health/detailed", get(health_check_detailed))
-        .route("/api/core/rd/metrics", get(get_metrics))
+        .route("/health/detailed", get(health_check_detailed))
+        .route("/metrics", get(get_metrics))
         .route("/api-docs/openapi.json", get(serve_openapi_json))
         .route(
             "/metrics",
@@ -116,13 +116,13 @@ async fn main() -> topems_shared::Result<()> {
 
     let app = Router::new()
         .merge(public_routes.with_state(api_state.clone()))
-        .merge(protected_routes)
+        .nest("/api/rd", protected_routes)
         .merge(create_api_info_router("topems-rd"))
         .layer(axum::middleware::from_fn(telemetry_middleware))
         .layer(prometheus_layer)
         .layer(create_cors_layer());
 
-    let cfg = RouteCompatConfig::new("rd", "/api/core/rd", &[]);
+    let cfg = RouteCompatConfig::new("rd", "/api/rd", &[]);
     let app = wrap_group2_router(app, cfg);
 
     let core_url = env::var("CORE_URL").ok();

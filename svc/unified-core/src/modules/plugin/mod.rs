@@ -266,5 +266,24 @@ pub async fn init_database(pool: &PgPool) -> Result<(), sqlx::Error> {
         .execute(pool)
         .await?;
 
+    // Plugin navigation config (navigation items registered by plugins for frontend)
+    sqlx::query(
+        r#"
+        CREATE TABLE IF NOT EXISTS core_plugin_navigation (
+            id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+            plugin_code VARCHAR(64) NOT NULL UNIQUE,
+            nav_config JSONB NOT NULL DEFAULT '[]',
+            created_at TIMESTAMP DEFAULT NOW(),
+            updated_at TIMESTAMP DEFAULT NOW()
+        )
+        "#,
+    )
+    .execute(pool)
+    .await?;
+
+    sqlx::query("CREATE INDEX IF NOT EXISTS idx_core_plugin_navigation_code ON core_plugin_navigation(plugin_code)")
+        .execute(pool)
+        .await?;
+
     Ok(())
 }

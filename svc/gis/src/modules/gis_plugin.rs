@@ -12,7 +12,12 @@ pub async fn auto_register_to_core(core_url: Option<&str>) {
     let client = reqwest::Client::new();
     let url = format!("{}/api/core/plugin/dev/plugins/gis/register", core_url);
 
-    match client.post(&url).json(&info).send().await {
+    let token = std::env::var("PLUGIN_REGISTRATION_TOKEN").unwrap_or_default();
+    let mut request = client.post(&url).json(&info);
+    if !token.is_empty() {
+        request = request.header("X-Plugin-Token", &token);
+    }
+    match request.send().await {
         Ok(response) => {
             if response.status().is_success() {
                 tracing::info!(
@@ -48,6 +53,10 @@ pub struct PluginInfo {
     pub base_path: String,
     pub permissions: Vec<String>,
     pub runtime_url: String,
+    #[serde(default)]
+    pub dependencies: Vec<String>,
+    #[serde(default)]
+    pub navigation_config: Option<serde_json::Value>,
 }
 
 /// 获取运行时 URL
@@ -62,7 +71,7 @@ pub fn get_plugin_info() -> PluginInfo {
         name: "地理信息服务".to_string(),
         version: "1.0.0".to_string(),
         description: "GIS 地理信息服务 - 位置服务、轨迹追踪、地理围栏".to_string(),
-        category: "IoT".to_string(),
+        category: "gis".to_string(),
         plugin_type: "business".to_string(),
         port: 8054,
         base_path: "/api/gis".to_string(),
@@ -73,6 +82,12 @@ pub fn get_plugin_info() -> PluginInfo {
             "track".to_string(),
         ],
         runtime_url,
+        dependencies: vec!["mes".to_string()],
+        navigation_config: Some(serde_json::json!([
+            {"code": "gis-maps", "label": "地图服务", "path": "/gis/maps", "icon": "Map", "order": 10, "group": "business"},
+            {"code": "gis-locations", "label": "位置服务", "path": "/gis/locations", "icon": "MapPin", "order": 20, "group": "business"},
+            {"code": "gis-geofences", "label": "地理围栏", "path": "/gis/geofences", "icon": "Hexagon", "order": 30, "group": "business"}
+        ])),
     }
 }
 

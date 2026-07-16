@@ -16,6 +16,12 @@ pub struct PluginInfo {
     pub deployment: DeploymentInfo,
     pub permissions: Vec<PermissionDef>,
     pub runtime_url: String,
+    #[serde(default)]
+    pub dependencies: Vec<String>,
+    #[serde(default)]
+    pub navigation_config: Option<serde_json::Value>,
+    #[serde(default)]
+    pub category: Option<String>,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -52,6 +58,12 @@ pub async fn get_plugin_info() -> Json<ApiResponse<PluginInfo>> {
             },
         ],
         runtime_url,
+        dependencies: vec![],
+        navigation_config: Some(serde_json::json!([
+            {"code": "portal-dashboard", "label": "企业门户", "path": "/portal/dashboard", "icon": "LayoutDashboard", "order": 10, "group": "business"},
+            {"code": "portal-announcements", "label": "公告管理", "path": "/portal/announcements", "icon": "Megaphone", "order": 20, "group": "business"}
+        ])),
+        category: Some("other".to_string()),
     };
 
     Json(ApiResponse::success(plugin_info, "获取插件信息成功"))
@@ -88,12 +100,23 @@ pub async fn auto_register_to_core(core_url: Option<&str>) {
         },
         permissions: vec![],
         runtime_url,
+        dependencies: vec![],
+        navigation_config: Some(serde_json::json!([
+            {"code": "portal-dashboard", "label": "企业门户", "path": "/portal/dashboard", "icon": "LayoutDashboard", "order": 10, "group": "business"},
+            {"code": "portal-announcements", "label": "公告管理", "path": "/portal/announcements", "icon": "Megaphone", "order": 20, "group": "business"}
+        ])),
+        category: Some("other".to_string()),
     };
 
     let client = Client::new();
     let url = format!("{}/api/core/plugin/dev/plugins/portal/register", core_url);
 
-    match client.post(&url).json(&info).send().await {
+    let token = std::env::var("PLUGIN_REGISTRATION_TOKEN").unwrap_or_default();
+    let mut request = client.post(&url).json(&info);
+    if !token.is_empty() {
+        request = request.header("X-Plugin-Token", &token);
+    }
+    match request.send().await {
         Ok(response) => {
             if response.status().is_success() {
                 tracing::info!(

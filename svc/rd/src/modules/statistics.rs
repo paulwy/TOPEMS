@@ -24,7 +24,7 @@ pub struct RsStatistics {
 }
 
 pub fn create_routes() -> Router<super::ApiState> {
-    Router::<super::ApiState>::new().route("/api/core/rd/statistics", get(get_statistics))
+    Router::<super::ApiState>::new().route("/statistics", get(get_statistics))
 }
 
 pub async fn get_statistics(

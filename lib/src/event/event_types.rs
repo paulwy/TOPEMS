@@ -47,6 +47,12 @@ pub enum EventType {
     EhsToQmsTriggered,
     LimsToEhsTriggered,
 
+    // Permission Events
+    PermissionChanged,
+    PositionCreated,
+    PositionUpdated,
+    PositionDeleted,
+
     HealthCheck,
 }
 
@@ -267,6 +273,38 @@ pub struct LimsReagentAlertPayload {
     pub current_stock: Option<i32>,
     pub min_stock: Option<i32>,
     pub expiry_date: Option<String>,
+}
+
+// --- Permission Events ---
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct PermissionChangedPayload {
+    pub user_id: Uuid,
+    pub tenant_id: Uuid,
+    pub permissions_added: Vec<String>,
+    pub permissions_removed: Vec<String>,
+    pub changed_at: DateTime<Utc>,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct PositionCreatedPayload {
+    pub position_id: Uuid,
+    pub tenant_id: Uuid,
+    pub code: String,
+    pub name: String,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct PositionUpdatedPayload {
+    pub position_id: Uuid,
+    pub tenant_id: Uuid,
+    pub changes: serde_json::Value,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct PositionDeletedPayload {
+    pub position_id: Uuid,
+    pub tenant_id: Uuid,
 }
 
 impl std::fmt::Display for EventType {

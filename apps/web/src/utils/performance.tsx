@@ -166,7 +166,7 @@ export function generatePerformanceReport(): PerformanceReport {
 export function logPerformanceMetrics(): void {
   initPerformanceMonitoring().then((metrics) => {
     const report = generatePerformanceReport();
-    console.log('[TOPEMS Performance]', JSON.stringify(report, null, 2));
+    logger.debug('[TOPEMS Performance]', JSON.stringify(report, null, 2));
 
     if (typeof window !== 'undefined') {
       (window as unknown as Record<string, unknown>).__TOPEMS_PERF__ = report;
@@ -178,7 +178,7 @@ export function measureTime<T>(label: string, fn: () => T): T {
   const start = performance.now();
   const result = fn();
   const end = performance.now();
-  console.log(`[Performance] ${label}: ${(end - start).toFixed(2)}ms`);
+  logger.debug(`[Performance] ${label}: ${(end - start).toFixed(2)}ms`);
   return result;
 }
 
@@ -186,7 +186,7 @@ export async function measureAsyncTime<T>(label: string, fn: () => Promise<T>): 
   const start = performance.now();
   const result = await fn();
   const end = performance.now();
-  console.log(`[Performance] ${label}: ${(end - start).toFixed(2)}ms`);
+  logger.debug(`[Performance] ${label}: ${(end - start).toFixed(2)}ms`);
   return result;
 }
 

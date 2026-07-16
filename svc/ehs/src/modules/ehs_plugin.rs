@@ -19,6 +19,10 @@ pub struct PluginInfo {
     pub plugin_type: String,
     pub permissions: Vec<Permission>,
     pub runtime_url: String,
+    #[serde(default)]
+    pub dependencies: Vec<String>,
+    #[serde(default)]
+    pub navigation_config: Option<serde_json::Value>,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -44,7 +48,7 @@ pub async fn get_plugin_info() -> Json<ApiResponse<PluginInfo>> {
         description: "质量管理与安全服务 - QMS质量管理、LIMS实验室管理、EHS环境健康安全"
             .to_string(),
         author: "TOPEMS".to_string(),
-        category: "Quality".to_string(),
+        category: "quality".to_string(),
         plugin_type: "business".to_string(),
         permissions: vec![
             Permission {
@@ -149,6 +153,12 @@ pub async fn get_plugin_info() -> Json<ApiResponse<PluginInfo>> {
             },
         ],
         runtime_url,
+        dependencies: vec!["mes".to_string(), "qms".to_string()],
+        navigation_config: Some(serde_json::json!([
+            {"code": "ehs-risks", "label": "风险评估", "path": "/ehs/risks", "icon": "AlertOctagon", "order": 10, "group": "business"},
+            {"code": "ehs-accidents", "label": "事故管理", "path": "/ehs/accidents", "icon": "AlertTriangle", "order": 20, "group": "business"},
+            {"code": "ehs-training", "label": "安全培训", "path": "/ehs/training", "icon": "GraduationCap", "order": 30, "group": "business"}
+        ])),
     };
 
     Json(ApiResponse::success(plugin_info, "QA plugin info"))
@@ -197,16 +207,27 @@ pub async fn auto_register_to_core(core_url: Option<&str>) {
         description: "质量管理与安全服务 - QMS质量管理、LIMS实验室管理、EHS环境健康安全"
             .to_string(),
         author: "TOPEMS".to_string(),
-        category: "Quality".to_string(),
+        category: "quality".to_string(),
         plugin_type: "business".to_string(),
         permissions: vec![],
         runtime_url,
+        dependencies: vec!["mes".to_string(), "qms".to_string()],
+        navigation_config: Some(serde_json::json!([
+            {"code": "ehs-risks", "label": "风险评估", "path": "/ehs/risks", "icon": "AlertOctagon", "order": 10, "group": "business"},
+            {"code": "ehs-accidents", "label": "事故管理", "path": "/ehs/accidents", "icon": "AlertTriangle", "order": 20, "group": "business"},
+            {"code": "ehs-training", "label": "安全培训", "path": "/ehs/training", "icon": "GraduationCap", "order": 30, "group": "business"}
+        ])),
     };
 
     let client = reqwest::Client::new();
     let url = format!("{}/api/core/plugin/dev/plugins/qa/register", core_url);
 
-    match client.post(&url).json(&info).send().await {
+    let token = std::env::var("PLUGIN_REGISTRATION_TOKEN").unwrap_or_default();
+    let mut request = client.post(&url).json(&info);
+    if !token.is_empty() {
+        request = request.header("X-Plugin-Token", &token);
+    }
+    match request.send().await {
         Ok(response) => {
             if response.status().is_success() {
                 tracing::info!(

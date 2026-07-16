@@ -59,20 +59,11 @@ pub struct FunnelQueryParams {
 
 pub fn create_routes() -> Router<ApiState> {
     Router::new()
-        .route("/api/core/crm/sales-funnel", get(get_funnel_data))
-        .route(
-            "/api/core/crm/sales-funnel/metrics",
-            get(get_funnel_metrics),
-        )
-        .route(
-            "/api/core/crm/sales-funnel/conversion",
-            get(get_funnel_conversion),
-        )
-        .route("/api/core/crm/sales-funnel/trend", get(get_funnel_trend))
-        .route(
-            "/api/core/crm/sales-funnel/stage/{stage}",
-            get(get_stage_opportunities),
-        )
+        .route("/sales-funnel", get(get_funnel_data))
+        .route("/sales-funnel/metrics", get(get_funnel_metrics))
+        .route("/sales-funnel/conversion", get(get_funnel_conversion))
+        .route("/sales-funnel/trend", get(get_funnel_trend))
+        .route("/sales-funnel/stage/{stage}", get(get_stage_opportunities))
 }
 
 async fn get_funnel_data(

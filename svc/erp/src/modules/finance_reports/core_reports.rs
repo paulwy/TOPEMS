@@ -19,7 +19,7 @@ pub async fn balance_sheet(
     Extension(claims): Extension<Claims>,
     Query(params): Query<ReportParams>,
 ) -> Json<ApiResponse<BalanceSheet>> {
-    if let Err(e) = check_permission(&claims, &ModulePermission::ReportRead).await {
+    if let Err(e) = check_permission(&state.db, &claims, &ModulePermission::ReportRead).await {
         return e;
     }
 
@@ -170,7 +170,7 @@ pub async fn income_statement(
     Extension(claims): Extension<Claims>,
     Query(params): Query<ReportParams>,
 ) -> Json<ApiResponse<IncomeStatement>> {
-    if let Err(e) = check_permission(&claims, &ModulePermission::ReportRead).await {
+    if let Err(e) = check_permission(&state.db, &claims, &ModulePermission::ReportRead).await {
         return e;
     }
 
@@ -257,7 +257,7 @@ pub async fn cash_flow(
     Extension(claims): Extension<Claims>,
     Query(params): Query<ReportParams>,
 ) -> Json<ApiResponse<CashFlowStatement>> {
-    if let Err(e) = check_permission(&claims, &ModulePermission::ReportRead).await {
+    if let Err(e) = check_permission(&state.db, &claims, &ModulePermission::ReportRead).await {
         return e;
     }
 

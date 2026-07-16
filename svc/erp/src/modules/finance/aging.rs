@@ -16,11 +16,11 @@ pub struct AgingParams {
 }
 
 pub async fn get_receivable_aging(
-    State(_state): State<ApiState>,
+    State(state): State<ApiState>,
     Extension(claims): Extension<Claims>,
     Query(params): Query<AgingParams>,
 ) -> Json<ApiResponse<serde_json::Value>> {
-    if let Err(e) = check_permission(&claims, &ModulePermission::FinanceRead).await {
+    if let Err(e) = check_permission(&state.db, &claims, &ModulePermission::FinanceRead).await {
         return e;
     }
 
@@ -34,11 +34,11 @@ pub async fn get_receivable_aging(
 }
 
 pub async fn get_payable_aging(
-    State(_state): State<ApiState>,
+    State(state): State<ApiState>,
     Extension(claims): Extension<Claims>,
     Query(params): Query<AgingParams>,
 ) -> Json<ApiResponse<serde_json::Value>> {
-    if let Err(e) = check_permission(&claims, &ModulePermission::FinanceRead).await {
+    if let Err(e) = check_permission(&state.db, &claims, &ModulePermission::FinanceRead).await {
         return e;
     }
 

@@ -37,7 +37,7 @@ pub async fn list_assets(
     Extension(claims): Extension<Claims>,
     Query(params): Query<PaginationParams>,
 ) -> Json<ApiResponse<PaginatedResponse<Asset>>> {
-    if let Err(e) = check_permission(&claims, &ModulePermission::AssetRead).await {
+    if let Err(e) = check_permission(&state.db, &claims, &ModulePermission::AssetRead).await {
         return e;
     }
 
@@ -100,7 +100,7 @@ pub async fn create_asset(
     headers: HeaderMap,
     Json(req): Json<CreateAssetRequest>,
 ) -> Json<ApiResponse<Asset>> {
-    if let Err(e) = check_permission(&claims, &ModulePermission::AssetWrite).await {
+    if let Err(e) = check_permission(&state.db, &claims, &ModulePermission::AssetWrite).await {
         return e;
     }
 
@@ -196,7 +196,7 @@ pub async fn get_asset(
     Extension(claims): Extension<Claims>,
     Path(id): Path<Uuid>,
 ) -> Json<ApiResponse<Asset>> {
-    if let Err(e) = check_permission(&claims, &ModulePermission::AssetRead).await {
+    if let Err(e) = check_permission(&state.db, &claims, &ModulePermission::AssetRead).await {
         return e;
     }
 
@@ -228,7 +228,7 @@ pub async fn update_asset(
     headers: HeaderMap,
     Json(req): Json<UpdateAssetRequest>,
 ) -> Json<ApiResponse<Asset>> {
-    if let Err(e) = check_permission(&claims, &ModulePermission::AssetWrite).await {
+    if let Err(e) = check_permission(&state.db, &claims, &ModulePermission::AssetWrite).await {
         return e;
     }
 
@@ -349,7 +349,7 @@ pub async fn delete_asset(
     Path(id): Path<Uuid>,
     headers: HeaderMap,
 ) -> Json<ApiResponse<String>> {
-    if let Err(e) = check_permission(&claims, &ModulePermission::AssetWrite).await {
+    if let Err(e) = check_permission(&state.db, &claims, &ModulePermission::AssetWrite).await {
         return e;
     }
 

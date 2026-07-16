@@ -123,6 +123,9 @@ export class PluginManager {
   private isInitialized = false;
   private initializationPromise: Promise<void> | null = null;
   public readonly emitter: TypedEventEmitter<PluginManagerEventMap>;
+  private navigationConfigCache: Map<string, NavItemConfig[]> = new Map();
+  private navConfigLastFetch: number = 0;
+  private readonly NAV_CONFIG_TTL = 5 * 60 * 1000; // 5分钟缓存
 
   private constructor() {
     this.emitter = new TypedEventEmitter();
@@ -466,14 +469,16 @@ export class PluginManager {
   }
 
   private async syncNavigationRegistry(): Promise<void> {
+    await this.fetchNavigationConfig(true);
+
     const activePlugins = this.getActivePlugins();
     const registeredModules = navigationRegistryV2.getAllModuleCodes();
 
-    activePlugins.forEach((plugin) => {
+    for (const plugin of activePlugins) {
       if (!registeredModules.includes(plugin.code)) {
-        this.registerPluginInNavigation(plugin);
+        await this.registerPluginInNavigation(plugin);
       }
-    });
+    }
 
     registeredModules.forEach((moduleCode) => {
       if (!this.isPluginActive(moduleCode)) {
@@ -484,8 +489,8 @@ export class PluginManager {
     apiLogger.info('[PluginManager] Navigation registry synchronized');
   }
 
-  private registerPluginInNavigation(plugin: PluginState): void {
-    const navItems = this.generateNavItems(plugin.code);
+  private async registerPluginInNavigation(plugin: PluginState): Promise<void> {
+    const navItems = await this.generateNavItems(plugin.code);
 
     const config: ModuleNavConfig = {
       code: plugin.code,
@@ -504,7 +509,52 @@ export class PluginManager {
     apiLogger.info(`[PluginManager] Registered module: ${plugin.code}`);
   }
 
-  private generateNavItems(pluginCode: string): NavItemConfig[] {
+  /**
+   * 从后端获取所有插件的导航配置
+   * @param force 是否强制刷新，忽略缓存
+   */
+  async fetchNavigationConfig(force = false): Promise<void> {
+    if (!force &&
+      Date.now() - this.navConfigLastFetch < this.NAV_CONFIG_TTL &&
+      this.navigationConfigCache.size > 0
+    ) {
+      return;
+    }
+
+    try {
+      const response = await fetch('/api/core/plugin/navigation-config');
+      const result = await response.json();
+
+      if (result?.success && result?.data?.modules) {
+        this.navigationConfigCache.clear();
+
+        for (const module of result.data.modules) {
+          if (module.navigation && Array.isArray(module.navigation)) {
+            this.navigationConfigCache.set(module.code, module.navigation);
+          }
+        }
+
+        this.navConfigLastFetch = Date.now();
+        apiLogger.info(
+          '[PluginManager] Navigation config fetched from server:',
+          this.navigationConfigCache.size,
+          'modules'
+        );
+      }
+    } catch (error) {
+      apiLogger.warn('[PluginManager] Failed to fetch navigation config, using fallback:', error);
+    }
+  }
+
+  private async generateNavItems(pluginCode: string): Promise<NavItemConfig[]> {
+    // 1. 优先从后端配置获取
+    await this.fetchNavigationConfig();
+    const cached = this.navigationConfigCache.get(pluginCode);
+    if (cached && cached.length > 0) {
+      return cached;
+    }
+
+    // 2. 回退到硬编码配置（保留现有的 navItemMap 作为 fallback）
     const navItemMap: Record<string, NavItemConfig[]> = {
       hrm: [
         {

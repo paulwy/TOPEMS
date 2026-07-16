@@ -20,7 +20,7 @@ pub async fn list_voucher_templates(
     Extension(claims): Extension<Claims>,
     Query(params): Query<VoucherTemplateQueryParams>,
 ) -> Json<ApiResponse<PaginatedResponse<VoucherTemplate>>> {
-    if let Err(e) = check_permission(&claims, &ModulePermission::VoucherRead).await {
+    if let Err(e) = check_permission(&state.db, &claims, &ModulePermission::VoucherRead).await {
         return e;
     }
 
@@ -250,7 +250,7 @@ pub async fn get_voucher_template(
     Extension(claims): Extension<Claims>,
     Path(template_id): Path<Uuid>,
 ) -> Json<ApiResponse<VoucherTemplate>> {
-    if let Err(e) = check_permission(&claims, &ModulePermission::VoucherRead).await {
+    if let Err(e) = check_permission(&state.db, &claims, &ModulePermission::VoucherRead).await {
         return e;
     }
 
@@ -297,7 +297,7 @@ pub async fn create_voucher_template(
     Extension(claims): Extension<Claims>,
     Json(req): Json<CreateVoucherTemplateRequest>,
 ) -> Json<ApiResponse<VoucherTemplate>> {
-    if let Err(e) = check_permission(&claims, &ModulePermission::VoucherWrite).await {
+    if let Err(e) = check_permission(&state.db, &claims, &ModulePermission::VoucherWrite).await {
         return e;
     }
 
@@ -365,7 +365,7 @@ pub async fn update_voucher_template(
     Path(template_id): Path<Uuid>,
     Json(req): Json<UpdateVoucherTemplateRequest>,
 ) -> Json<ApiResponse<VoucherTemplate>> {
-    if let Err(e) = check_permission(&claims, &ModulePermission::VoucherWrite).await {
+    if let Err(e) = check_permission(&state.db, &claims, &ModulePermission::VoucherWrite).await {
         return e;
     }
 
@@ -483,7 +483,7 @@ pub async fn delete_voucher_template(
     Extension(claims): Extension<Claims>,
     Path(template_id): Path<Uuid>,
 ) -> Json<ApiResponse<String>> {
-    if let Err(e) = check_permission(&claims, &ModulePermission::VoucherWrite).await {
+    if let Err(e) = check_permission(&state.db, &claims, &ModulePermission::VoucherWrite).await {
         return e;
     }
 
@@ -507,7 +507,7 @@ pub async fn copy_voucher_template(
     Path(template_id): Path<Uuid>,
     Json(req): Json<serde_json::Value>,
 ) -> Json<ApiResponse<VoucherTemplate>> {
-    if let Err(e) = check_permission(&claims, &ModulePermission::VoucherWrite).await {
+    if let Err(e) = check_permission(&state.db, &claims, &ModulePermission::VoucherWrite).await {
         return e;
     }
 
@@ -615,7 +615,7 @@ pub async fn set_default_voucher_template(
     Path(template_id): Path<Uuid>,
     Json(req): Json<serde_json::Value>,
 ) -> Json<ApiResponse<String>> {
-    if let Err(e) = check_permission(&claims, &ModulePermission::VoucherWrite).await {
+    if let Err(e) = check_permission(&state.db, &claims, &ModulePermission::VoucherWrite).await {
         return e;
     }
 
@@ -644,7 +644,7 @@ pub async fn toggle_voucher_template(
     Path(template_id): Path<Uuid>,
     Json(req): Json<serde_json::Value>,
 ) -> Json<ApiResponse<String>> {
-    if let Err(e) = check_permission(&claims, &ModulePermission::VoucherWrite).await {
+    if let Err(e) = check_permission(&state.db, &claims, &ModulePermission::VoucherWrite).await {
         return e;
     }
 
@@ -669,7 +669,7 @@ pub async fn add_voucher_template_entry(
     Path(template_id): Path<Uuid>,
     Json(entry): Json<serde_json::Value>,
 ) -> Json<ApiResponse<serde_json::Value>> {
-    if let Err(e) = check_permission(&claims, &ModulePermission::VoucherWrite).await {
+    if let Err(e) = check_permission(&state.db, &claims, &ModulePermission::VoucherWrite).await {
         return e;
     }
 
@@ -711,7 +711,7 @@ pub async fn update_voucher_template_entry(
     Path((template_id, entry_id)): Path<(Uuid, String)>,
     Json(entry): Json<serde_json::Value>,
 ) -> Json<ApiResponse<serde_json::Value>> {
-    if let Err(e) = check_permission(&claims, &ModulePermission::VoucherWrite).await {
+    if let Err(e) = check_permission(&state.db, &claims, &ModulePermission::VoucherWrite).await {
         return e;
     }
 
@@ -753,7 +753,7 @@ pub async fn delete_voucher_template_entry(
     Extension(claims): Extension<Claims>,
     Path((template_id, entry_id)): Path<(Uuid, String)>,
 ) -> Json<ApiResponse<String>> {
-    if let Err(e) = check_permission(&claims, &ModulePermission::VoucherWrite).await {
+    if let Err(e) = check_permission(&state.db, &claims, &ModulePermission::VoucherWrite).await {
         return e;
     }
 
@@ -795,7 +795,7 @@ pub async fn reorder_voucher_template_entries(
     Path(template_id): Path<Uuid>,
     Json(req): Json<serde_json::Value>,
 ) -> Json<ApiResponse<String>> {
-    if let Err(e) = check_permission(&claims, &ModulePermission::VoucherWrite).await {
+    if let Err(e) = check_permission(&state.db, &claims, &ModulePermission::VoucherWrite).await {
         return e;
     }
 

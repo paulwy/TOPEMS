@@ -315,3 +315,123 @@ pub fn get_module_actions() -> Vec<(String, String)> {
         ("admin".to_string(), "管理".to_string()),
     ]
 }
+
+#[derive(Debug, Clone, PartialEq, Eq, Hash)]
+pub struct Position {
+    pub id: Uuid,
+    pub code: String,
+    pub name: String,
+    pub department_id: Option<Uuid>,
+    pub permissions: Vec<ModulePermission>,
+}
+
+impl Position {
+    pub fn new(id: Uuid, code: String, name: String) -> Self {
+        Position {
+            id,
+            code,
+            name,
+            department_id: None,
+            permissions: Vec::new(),
+        }
+    }
+
+    pub fn has_permission(&self, permission: &ModulePermission) -> bool {
+        self.permissions.iter().any(|p| p.implies(permission))
+    }
+
+    pub fn add_permission(&mut self, permission: ModulePermission) {
+        if !self.permissions.contains(&permission) {
+            self.permissions.push(permission);
+        }
+    }
+}
+
+#[derive(Debug, Clone, PartialEq, Eq, Hash)]
+pub struct ResourcePermission {
+    pub module: ModuleCode,
+    pub resource: String,
+    pub action: PermissionAction,
+}
+
+impl ResourcePermission {
+    pub fn new(module: ModuleCode, resource: String, action: PermissionAction) -> Self {
+        ResourcePermission { module, resource, action }
+    }
+
+    pub fn parse(s: &str) -> Option<Self> {
+        let parts: Vec<&str> = s.split(':').collect();
+        if parts.len() != 3 {
+            return None;
+        }
+        let module = ModuleCode::from_str(parts[0])?;
+        let action = PermissionAction::from_str(parts[2])?;
+        Some(ResourcePermission {
+            module,
+            resource: parts[1].to_string(),
+            action,
+        })
+    }
+
+    pub fn implies(&self, other: &ResourcePermission) -> bool {
+        if self.module != other.module || self.resource != other.resource {
+            return false;
+        }
+        self.action.level() >= other.action.level()
+    }
+}
+
+impl std::fmt::Display for ResourcePermission {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        write!(f, "{}:{}:{}", self.module.as_str(), self.resource, self.action.as_str())
+    }
+}
+
+#[derive(Debug, Clone, PartialEq)]
+pub struct DataPermission {
+    pub resource_type: String,
+    pub conditions: Vec<DataCondition>,
+}
+
+#[derive(Debug, Clone, PartialEq)]
+pub struct DataCondition {
+    pub field: String,
+    pub operator: ConditionOperator,
+    pub value: String,
+}
+
+#[derive(Debug, Clone, Copy, PartialEq)]
+pub enum ConditionOperator {
+    Equals,
+    NotEquals,
+    In,
+    NotIn,
+    Contains,
+    GreaterThan,
+    LessThan,
+}
+
+#[derive(Debug, Clone)]
+pub struct PermissionTemplate {
+    pub id: Uuid,
+    pub name: String,
+    pub description: Option<String>,
+    pub permissions: Vec<String>,
+}
+
+impl PermissionTemplate {
+    pub fn new(id: Uuid, name: String) -> Self {
+        PermissionTemplate {
+            id,
+            name,
+            description: None,
+            permissions: Vec::new(),
+        }
+    }
+
+    pub fn add_permission(&mut self, permission: &str) {
+        if !self.permissions.contains(&permission.to_string()) {
+            self.permissions.push(permission.to_string());
+        }
+    }
+}

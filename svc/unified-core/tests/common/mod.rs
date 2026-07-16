@@ -155,7 +155,7 @@ impl TestContext {
 /// 使用"含 /v1 的旧路径"以保证即使 Phase 2 还没接入也能命中 handler。
 pub async fn login(client: &Client, username: &str, password: &str) -> Result<String, String> {
     let url = format!(
-        "http://localhost:{}/api/core/iam/v1/auth/login",
+        "http://localhost:{}/api/core/iam/auth/login",
         UNIFIED_CORE_PORT
     );
     let resp = client

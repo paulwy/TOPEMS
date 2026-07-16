@@ -54,17 +54,14 @@ pub struct RecommendationQueryParams {
 pub fn create_routes() -> Router<ApiState> {
     Router::new()
         .route(
-            "/api/core/crm/recommendations",
+            "/recommendations",
             get(list_recommendations).post(create_recommendation),
         )
         .route(
-            "/api/core/crm/customers/{id}/recommendations",
+            "/customers/{id}/recommendations",
             get(get_customer_recommendations),
         )
-        .route(
-            "/api/core/crm/recommendations/{id}",
-            get(get_recommendation),
-        )
+        .route("/recommendations/{id}", get(get_recommendation))
 }
 
 async fn list_recommendations(

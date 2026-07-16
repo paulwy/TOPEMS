@@ -17,11 +17,11 @@ struct ReconcileRequest {
 }
 
 pub async fn reconcile(
-    State(_state): State<ApiState>,
+    State(state): State<ApiState>,
     Extension(claims): Extension<Claims>,
     Json(_req): Json<ReconcileRequest>,
 ) -> Json<ApiResponse<()>> {
-    if let Err(e) = check_permission(&claims, &ModulePermission::FinanceWrite).await {
+    if let Err(e) = check_permission(&state.db, &claims, &ModulePermission::FinanceWrite).await {
         return e;
     }
 
@@ -36,11 +36,11 @@ struct AutoReconcileRequest {
 }
 
 pub async fn auto_reconcile(
-    State(_state): State<ApiState>,
+    State(state): State<ApiState>,
     Extension(claims): Extension<Claims>,
     Json(req): Json<AutoReconcileRequest>,
 ) -> Json<ApiResponse<serde_json::Value>> {
-    if let Err(e) = check_permission(&claims, &ModulePermission::FinanceWrite).await {
+    if let Err(e) = check_permission(&state.db, &claims, &ModulePermission::FinanceWrite).await {
         return e;
     }
 

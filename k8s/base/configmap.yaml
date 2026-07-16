@@ -27,6 +27,13 @@ data:
   REPORT_PORT: "8061"
   # Logging
   RUST_LOG: "info"
+  # V13.0 Plugin Architecture
+  CONSUL_ENABLED: "true"
+  CONSUL_URL: "http://consul-service:8500"
+  PLUGIN_AUTO_REGISTER: "true"
+  PLUGIN_REGISTER_URL: "http://unified-core-service:8000/api/core/plugin/dev/plugins"
+  SERVICE_HEARTBEAT_INTERVAL: "30"
+  PLUGIN_HEARTBEAT_TIMEOUT: "90"
 ---
 # TOPEMS Secrets (Base64 encoded)
 # Note: In production, use external secrets manager
@@ -41,3 +48,6 @@ stringData:
   POSTGRES_PASSWORD: "topems_secret"
   DATABASE_URL: "postgres://topems:topems_secret@postgres-service:5432/topems"
   REDIS_URL: "redis://redis-service:6379"
+  # V13.0 Plugin Registration Token (CHANGE IN PRODUCTION!)
+  # Generate with: openssl rand -hex 32
+  PLUGIN_REGISTRATION_TOKEN: "CHANGE_ME_TO_A_SECURE_RANDOM_TOKEN"

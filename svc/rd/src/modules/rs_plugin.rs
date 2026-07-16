@@ -17,6 +17,10 @@ pub struct PluginInfo {
     pub deployment: DeploymentInfo,
     pub permissions: Vec<PermissionDef>,
     pub runtime_url: String,
+    #[serde(default)]
+    pub dependencies: Vec<String>,
+    #[serde(default)]
+    pub navigation_config: Option<serde_json::Value>,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -43,7 +47,7 @@ pub async fn get_plugin_info() -> Json<ApiResponse<PluginInfo>> {
         name: "研发管理".to_string(),
         version: "1.0.0".to_string(),
         description: "RS 研发管理系统 - 项目管理、实验记录、配方管理".to_string(),
-        category: "R&D".to_string(),
+        category: "project".to_string(),
         plugin_type: "business".to_string(),
         deployment: DeploymentInfo {
             port: 8053,
@@ -67,6 +71,12 @@ pub async fn get_plugin_info() -> Json<ApiResponse<PluginInfo>> {
             },
         ],
         runtime_url,
+        dependencies: vec!["pm".to_string(), "mes".to_string()],
+        navigation_config: Some(serde_json::json!([
+            {"code": "rs-projects", "label": "研发项目", "path": "/rs/projects", "icon": "FlaskRound", "order": 10, "group": "business"},
+            {"code": "rs-experiments", "label": "实验管理", "path": "/rs/experiments", "icon": "FlaskConical", "order": 20, "group": "business"},
+            {"code": "rs-results", "label": "成果管理", "path": "/rs/results", "icon": "Award", "order": 30, "group": "business"}
+        ])),
     };
 
     Json(ApiResponse::success(plugin_info, "获取插件信息成功"))
@@ -97,7 +107,7 @@ pub async fn auto_register_to_core(core_url: Option<&str>) {
         name: "研发管理".to_string(),
         version: env!("CARGO_PKG_VERSION").to_string(),
         description: "RS 研发管理系统 - 项目管理、实验记录、配方管理".to_string(),
-        category: "R&D".to_string(),
+        category: "project".to_string(),
         plugin_type: "business".to_string(),
         deployment: DeploymentInfo {
             port: 8053,
@@ -105,12 +115,23 @@ pub async fn auto_register_to_core(core_url: Option<&str>) {
         },
         permissions: vec![],
         runtime_url,
+        dependencies: vec!["pm".to_string(), "mes".to_string()],
+        navigation_config: Some(serde_json::json!([
+            {"code": "rs-projects", "label": "研发项目", "path": "/rs/projects", "icon": "FlaskRound", "order": 10, "group": "business"},
+            {"code": "rs-experiments", "label": "实验管理", "path": "/rs/experiments", "icon": "FlaskConical", "order": 20, "group": "business"},
+            {"code": "rs-results", "label": "成果管理", "path": "/rs/results", "icon": "Award", "order": 30, "group": "business"}
+        ])),
     };
 
     let client = reqwest::Client::new();
     let url = format!("{}/api/core/plugin/dev/plugins/rs/register", core_url);
 
-    match client.post(&url).json(&info).send().await {
+    let token = std::env::var("PLUGIN_REGISTRATION_TOKEN").unwrap_or_default();
+    let mut request = client.post(&url).json(&info);
+    if !token.is_empty() {
+        request = request.header("X-Plugin-Token", &token);
+    }
+    match request.send().await {
         Ok(response) => {
             if response.status().is_success() {
                 tracing::info!(

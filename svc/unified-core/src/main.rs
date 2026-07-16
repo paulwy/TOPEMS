@@ -172,23 +172,6 @@ async fn main() {
     modules::menu::init_database(&pool)
         .await
         .expect("Failed to init menu database");
-    modules::erp::init_database(&pool)
-        .await
-        .expect("Failed to init erp database");
-    modules::hrm::init_database(&pool)
-        .await
-        .expect("Failed to init hrm database");
-    modules::crm::init_database(&pool)
-        .await
-        .expect("Failed to init crm database");
-    modules::wms::init_database(&pool)
-        .await
-        .expect("Failed to init wms database");
-
-    modules::finance::init_database(&pool)
-        .await
-        .expect("Failed to init finance database");
-
     modules::help::init_database(&pool)
         .await
         .expect("Failed to init help database");
@@ -247,6 +230,9 @@ async fn main() {
         .add_skip_path("/api/info")
         .add_skip_path("/api/core/health");
 
+    // Clone pool for background tasks before it is moved into AppState
+    let pool_for_heartbeat = pool.clone();
+
     let state = AppState {
         auth_state,
         pool,
@@ -276,6 +262,61 @@ async fn main() {
             }
         }
     });
+
+    // Spawn background task to detect stale plugin heartbeats
+    {
+        let pool_clone = pool_for_heartbeat.clone();
+        tokio::spawn(async move {
+            let mut interval = tokio::time::interval(tokio::time::Duration::from_secs(30));
+            loop {
+                interval.tick().await;
+
+                // Mark plugins with stale heartbeats (>90s) as offline
+                let result = sqlx::query(
+                    r#"
+                    UPDATE core.core_plugin_instances
+                    SET runtime_status = 'offline'
+                    WHERE runtime_status = 'running'
+                      AND last_heartbeat IS NOT NULL
+                      AND last_heartbeat < NOW() - INTERVAL '90 seconds'
+                    "#,
+                )
+                .execute(&pool_clone)
+                .await;
+
+                if let Ok(result) = result {
+                    if result.rows_affected() > 0 {
+                        tracing::warn!(
+                            "[Plugin-Heartbeat] Marked {} plugin(s) as offline due to stale heartbeat",
+                            result.rows_affected()
+                        );
+                    }
+                }
+
+                // Also mark plugins that never sent a heartbeat but were registered >2 min ago
+                let result = sqlx::query(
+                    r#"
+                    UPDATE core.core_plugin_instances
+                    SET runtime_status = 'offline'
+                    WHERE runtime_status = 'running'
+                      AND last_heartbeat IS NULL
+                      AND created_at < NOW() - INTERVAL '2 minutes'
+                    "#,
+                )
+                .execute(&pool_clone)
+                .await;
+
+                if let Ok(result) = result {
+                    if result.rows_affected() > 0 {
+                        tracing::warn!(
+                            "[Plugin-Heartbeat] Marked {} plugin(s) as offline (no heartbeat received)",
+                            result.rows_affected()
+                        );
+                    }
+                }
+            }
+        });
+    }
 
     let cors = create_cors_layer();
 
@@ -309,11 +350,6 @@ async fn main() {
             "help",
             "menu",
             "login_log",
-            "erp",
-            "hrm",
-            "crm",
-            "wms",
-            "finance",
         ],
         shortcuts: &[
             ("auth", "iam", "auth"),

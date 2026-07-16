@@ -18,7 +18,7 @@ pub async fn list_payments(
     Extension(claims): Extension<Claims>,
     Query(params): Query<PaginationParams>,
 ) -> Json<ApiResponse<PaginatedResponse<PaymentRecord>>> {
-    if let Err(e) = check_permission(&claims, &ModulePermission::FinanceRead).await {
+    if let Err(e) = check_permission(&state.db, &claims, &ModulePermission::FinanceRead).await {
         return e;
     }
 
@@ -108,7 +108,7 @@ pub async fn create_payment(
     Extension(claims): Extension<Claims>,
     Json(req): Json<CreatePaymentRequest>,
 ) -> Json<ApiResponse<PaymentRecord>> {
-    if let Err(e) = check_permission(&claims, &ModulePermission::FinanceWrite).await {
+    if let Err(e) = check_permission(&state.db, &claims, &ModulePermission::FinanceWrite).await {
         return e;
     }
 

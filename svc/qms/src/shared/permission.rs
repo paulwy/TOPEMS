@@ -1,273 +1,166 @@
-use axum::{middleware::Next, response::Response};
-use topems_shared::{ApiResponse, Claims};
+use sqlx::PgPool;
+use topems_shared::auth::Claims;
+use topems_shared::permission::{
+    check_module_permission, ModuleCode, ModulePermission as SharedModulePermission,
+    PermissionAction,
+};
+use topems_shared::response::ApiResponse;
 
-fn has_qms_permission(claims: &Claims, required_action: &str) -> bool {
-    let action_levels = [
-        ("read", 1),
-        ("write", 2),
-        ("delete", 3),
-        ("approve", 3),
-        ("admin", 4),
-    ];
+#[derive(Debug, Clone, PartialEq)]
+pub enum QmsPermission {
+    CheckRead,
+    CheckWrite,
+    IssueRead,
+    IssueWrite,
+    StandardRead,
+    StandardWrite,
+    ActionRead,
+    ActionWrite,
+    AuditPlanRead,
+    AuditPlanWrite,
+    AuditTaskRead,
+    AuditTaskWrite,
+    AuditFindingRead,
+    AuditFindingWrite,
+    SpcRead,
+    SpcWrite,
+    QualityCostRead,
+    QualityCostWrite,
+    EightdRead,
+    EightdWrite,
+    FmeaRead,
+    FmeaWrite,
+    DashboardRead,
+    AlertRuleRead,
+    AlertRuleWrite,
+    ApqpRead,
+    ApqpWrite,
+    SyncRead,
+    SyncWrite,
+    All,
+}
 
-    let required_level = action_levels
-        .iter()
-        .find(|(a, _)| *a == required_action)
-        .map(|(_, l)| *l)
-        .unwrap_or(0);
+impl QmsPermission {
+    pub fn to_shared(&self) -> SharedModulePermission {
+        match self {
+            QmsPermission::CheckRead => {
+                SharedModulePermission::new(ModuleCode::Qms, PermissionAction::Read)
+            }
+            QmsPermission::CheckWrite => {
+                SharedModulePermission::new(ModuleCode::Qms, PermissionAction::Write)
+            }
+            QmsPermission::IssueRead => {
+                SharedModulePermission::new(ModuleCode::Qms, PermissionAction::Read)
+            }
+            QmsPermission::IssueWrite => {
+                SharedModulePermission::new(ModuleCode::Qms, PermissionAction::Write)
+            }
+            QmsPermission::StandardRead => {
+                SharedModulePermission::new(ModuleCode::Qms, PermissionAction::Read)
+            }
+            QmsPermission::StandardWrite => {
+                SharedModulePermission::new(ModuleCode::Qms, PermissionAction::Write)
+            }
+            QmsPermission::ActionRead => {
+                SharedModulePermission::new(ModuleCode::Qms, PermissionAction::Read)
+            }
+            QmsPermission::ActionWrite => {
+                SharedModulePermission::new(ModuleCode::Qms, PermissionAction::Write)
+            }
+            QmsPermission::AuditPlanRead => {
+                SharedModulePermission::new(ModuleCode::Qms, PermissionAction::Read)
+            }
+            QmsPermission::AuditPlanWrite => {
+                SharedModulePermission::new(ModuleCode::Qms, PermissionAction::Write)
+            }
+            QmsPermission::AuditTaskRead => {
+                SharedModulePermission::new(ModuleCode::Qms, PermissionAction::Read)
+            }
+            QmsPermission::AuditTaskWrite => {
+                SharedModulePermission::new(ModuleCode::Qms, PermissionAction::Write)
+            }
+            QmsPermission::AuditFindingRead => {
+                SharedModulePermission::new(ModuleCode::Qms, PermissionAction::Read)
+            }
+            QmsPermission::AuditFindingWrite => {
+                SharedModulePermission::new(ModuleCode::Qms, PermissionAction::Write)
+            }
+            QmsPermission::SpcRead => {
+                SharedModulePermission::new(ModuleCode::Qms, PermissionAction::Read)
+            }
+            QmsPermission::SpcWrite => {
+                SharedModulePermission::new(ModuleCode::Qms, PermissionAction::Write)
+            }
+            QmsPermission::QualityCostRead => {
+                SharedModulePermission::new(ModuleCode::Qms, PermissionAction::Read)
+            }
+            QmsPermission::QualityCostWrite => {
+                SharedModulePermission::new(ModuleCode::Qms, PermissionAction::Write)
+            }
+            QmsPermission::EightdRead => {
+                SharedModulePermission::new(ModuleCode::Qms, PermissionAction::Read)
+            }
+            QmsPermission::EightdWrite => {
+                SharedModulePermission::new(ModuleCode::Qms, PermissionAction::Write)
+            }
+            QmsPermission::FmeaRead => {
+                SharedModulePermission::new(ModuleCode::Qms, PermissionAction::Read)
+            }
+            QmsPermission::FmeaWrite => {
+                SharedModulePermission::new(ModuleCode::Qms, PermissionAction::Write)
+            }
+            QmsPermission::DashboardRead => {
+                SharedModulePermission::new(ModuleCode::Qms, PermissionAction::Read)
+            }
+            QmsPermission::AlertRuleRead => {
+                SharedModulePermission::new(ModuleCode::Qms, PermissionAction::Read)
+            }
+            QmsPermission::AlertRuleWrite => {
+                SharedModulePermission::new(ModuleCode::Qms, PermissionAction::Write)
+            }
+            QmsPermission::ApqpRead => {
+                SharedModulePermission::new(ModuleCode::Qms, PermissionAction::Read)
+            }
+            QmsPermission::ApqpWrite => {
+                SharedModulePermission::new(ModuleCode::Qms, PermissionAction::Write)
+            }
+            QmsPermission::SyncRead => {
+                SharedModulePermission::new(ModuleCode::Qms, PermissionAction::Read)
+            }
+            QmsPermission::SyncWrite => {
+                SharedModulePermission::new(ModuleCode::Qms, PermissionAction::Write)
+            }
+            QmsPermission::All => {
+                SharedModulePermission::new(ModuleCode::Qms, PermissionAction::Admin)
+            }
+        }
+    }
+}
 
-    if required_level == 0 {
+impl std::fmt::Display for QmsPermission {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        write!(f, "{}", self.to_shared())
+    }
+}
+
+pub type ModulePermission = QmsPermission;
+
+pub async fn check_permission<T>(
+    db: &PgPool,
+    claims: &Claims,
+    permission: &QmsPermission,
+) -> Result<(), axum::Json<ApiResponse<T>>> {
+    let shared_perm = permission.to_shared();
+    check_module_permission(db, claims, &shared_perm).await
+}
+
+pub fn has_qms_permission(claims: &Claims, action: &str) -> bool {
+    if claims.is_superuser {
         return true;
     }
 
-    for (action, level) in &action_levels {
-        if *level >= required_level && claims.has_permission(&format!("qms:{}", action)) {
-            return true;
-        }
-    }
-
-    claims.has_permission("all")
-}
-
-pub async fn check_permission(
-    req: axum::http::Request<axum::body::Body>,
-    next: Next,
-) -> Result<Response, axum::Json<ApiResponse<()>>> {
-    let claims = req.extensions().get::<Claims>();
-
-    if let Some(claims) = claims {
-        if claims.is_superuser {
-            return Ok(next.run(req).await);
-        }
-
-        let path = req.uri().path().to_string();
-        let method = req.method().as_str();
-
-        let required_action = match (path.as_str(), method) {
-            (p, m) if p.starts_with("/api/qms/checks") => match m {
-                "GET" => Some("read"),
-                "POST" | "PUT" | "DELETE" => Some("write"),
-                _ => None,
-            },
-            (p, m) if p.starts_with("/api/qms/issues") => match m {
-                "GET" => Some("read"),
-                "POST" | "PUT" | "DELETE" => Some("write"),
-                _ => None,
-            },
-            (p, m) if p.starts_with("/api/qms/standards") => match m {
-                "GET" => Some("read"),
-                "POST" | "PUT" | "DELETE" => Some("write"),
-                _ => None,
-            },
-            (p, m) if p.starts_with("/api/qms/actions") => match m {
-                "GET" => Some("read"),
-                "POST" | "PUT" | "DELETE" => Some("write"),
-                _ => None,
-            },
-            (p, m) if p.starts_with("/api/qms/audit-plans") => match m {
-                "GET" => Some("read"),
-                "POST" | "PUT" | "DELETE" => Some("write"),
-                _ => None,
-            },
-            (p, m) if p.starts_with("/api/qms/audit-tasks") => match m {
-                "GET" => Some("read"),
-                "POST" | "PUT" | "DELETE" => Some("write"),
-                _ => None,
-            },
-            (p, m) if p.starts_with("/api/qms/audit-findings") => match m {
-                "GET" => Some("read"),
-                "POST" | "PUT" | "DELETE" => Some("write"),
-                _ => None,
-            },
-            (p, m) if p.starts_with("/api/qms/spc") => match m {
-                "GET" => Some("read"),
-                "POST" | "PUT" | "DELETE" => Some("write"),
-                _ => None,
-            },
-            (p, m) if p.starts_with("/api/qms/quality-costs") => match m {
-                "GET" => Some("read"),
-                "POST" | "PUT" | "DELETE" => Some("write"),
-                _ => None,
-            },
-            (p, m) if p.starts_with("/api/qms/eightd") => match m {
-                "GET" => Some("read"),
-                "POST" | "PUT" | "DELETE" => Some("write"),
-                _ => None,
-            },
-            (p, m) if p.starts_with("/api/qms/fmea") => match m {
-                "GET" => Some("read"),
-                "POST" | "PUT" | "DELETE" => Some("write"),
-                _ => None,
-            },
-            (p, m) if p.starts_with("/api/qms/fmea-items") => match m {
-                "GET" => Some("read"),
-                "POST" | "PUT" | "DELETE" => Some("write"),
-                _ => None,
-            },
-            (p, m) if p.starts_with("/api/qms/quality-dashboard") => match m {
-                "GET" => Some("read"),
-                "POST" | "PUT" | "DELETE" => Some("write"),
-                _ => None,
-            },
-            (p, m) if p.starts_with("/api/qms/alert-rules") => match m {
-                "GET" => Some("read"),
-                "POST" | "PUT" | "DELETE" => Some("write"),
-                _ => None,
-            },
-            (p, m) if p.starts_with("/api/qms/alert-messages") => match m {
-                "GET" => Some("read"),
-                "POST" | "PUT" | "DELETE" => Some("write"),
-                _ => None,
-            },
-            (p, m) if p.starts_with("/api/qms/apqp") => match m {
-                "GET" => Some("read"),
-                "POST" | "PUT" | "DELETE" => Some("write"),
-                _ => None,
-            },
-            (p, m) if p.starts_with("/api/qms/sync") => match m {
-                "GET" => Some("read"),
-                "POST" | "PUT" | "DELETE" => Some("write"),
-                _ => None,
-            },
-            (p, m) if p.starts_with("/api/qms/sync-records") => match m {
-                "GET" => Some("read"),
-                "POST" | "PUT" | "DELETE" => Some("write"),
-                _ => None,
-            },
-            (p, m) if p.starts_with("/api/qms/dashboard") => match m {
-                "GET" => Some("read"),
-                _ => None,
-            },
-            _ => None,
-        };
-
-        if let Some(action) = required_action {
-            if !has_qms_permission(claims, action) {
-                return Err(axum::Json(ApiResponse::error(403, "权限不足")));
-            }
-        }
-
-        return Ok(next.run(req).await);
-    }
-
-    let permissions_header = req.headers().get("X-User-Permissions");
-    let user_permissions: Vec<String> = match permissions_header {
-        Some(h) => match h.to_str() {
-            Ok(s) => s.split(',').map(|p| p.trim().to_string()).collect(),
-            Err(_) => Vec::new(),
-        },
-        None => Vec::new(),
-    };
-
-    let path = req.uri().path().to_string();
-    let method = req.method().as_str();
-
-    let required_permission = match (path.as_str(), method) {
-        (p, m) if p.starts_with("/api/qms/checks") => match m {
-            "GET" => Some("qms:read"),
-            "POST" | "PUT" | "DELETE" => Some("qms:write"),
-            _ => None,
-        },
-        (p, m) if p.starts_with("/api/qms/issues") => match m {
-            "GET" => Some("qms:read"),
-            "POST" | "PUT" | "DELETE" => Some("qms:write"),
-            _ => None,
-        },
-        (p, m) if p.starts_with("/api/qms/standards") => match m {
-            "GET" => Some("qms:read"),
-            "POST" | "PUT" | "DELETE" => Some("qms:write"),
-            _ => None,
-        },
-        (p, m) if p.starts_with("/api/qms/actions") => match m {
-            "GET" => Some("qms:read"),
-            "POST" | "PUT" | "DELETE" => Some("qms:write"),
-            _ => None,
-        },
-        (p, m) if p.starts_with("/api/qms/audit-plans") => match m {
-            "GET" => Some("qms:read"),
-            "POST" | "PUT" | "DELETE" => Some("qms:write"),
-            _ => None,
-        },
-        (p, m) if p.starts_with("/api/qms/audit-tasks") => match m {
-            "GET" => Some("qms:read"),
-            "POST" | "PUT" | "DELETE" => Some("qms:write"),
-            _ => None,
-        },
-        (p, m) if p.starts_with("/api/qms/audit-findings") => match m {
-            "GET" => Some("qms:read"),
-            "POST" | "PUT" | "DELETE" => Some("qms:write"),
-            _ => None,
-        },
-        (p, m) if p.starts_with("/api/qms/spc") => match m {
-            "GET" => Some("qms:read"),
-            "POST" | "PUT" | "DELETE" => Some("qms:write"),
-            _ => None,
-        },
-        (p, m) if p.starts_with("/api/qms/quality-costs") => match m {
-            "GET" => Some("qms:read"),
-            "POST" | "PUT" | "DELETE" => Some("qms:write"),
-            _ => None,
-        },
-        (p, m) if p.starts_with("/api/qms/eightd") => match m {
-            "GET" => Some("qms:read"),
-            "POST" | "PUT" | "DELETE" => Some("qms:write"),
-            _ => None,
-        },
-        (p, m) if p.starts_with("/api/qms/fmea") => match m {
-            "GET" => Some("qms:read"),
-            "POST" | "PUT" | "DELETE" => Some("qms:write"),
-            _ => None,
-        },
-        (p, m) if p.starts_with("/api/qms/fmea-items") => match m {
-            "GET" => Some("qms:read"),
-            "POST" | "PUT" | "DELETE" => Some("qms:write"),
-            _ => None,
-        },
-        (p, m) if p.starts_with("/api/qms/quality-dashboard") => match m {
-            "GET" => Some("qms:read"),
-            "POST" | "PUT" | "DELETE" => Some("qms:write"),
-            _ => None,
-        },
-        (p, m) if p.starts_with("/api/qms/alert-rules") => match m {
-            "GET" => Some("qms:read"),
-            "POST" | "PUT" | "DELETE" => Some("qms:write"),
-            _ => None,
-        },
-        (p, m) if p.starts_with("/api/qms/alert-messages") => match m {
-            "GET" => Some("qms:read"),
-            "POST" | "PUT" | "DELETE" => Some("qms:write"),
-            _ => None,
-        },
-        (p, m) if p.starts_with("/api/qms/apqp") => match m {
-            "GET" => Some("qms:read"),
-            "POST" | "PUT" | "DELETE" => Some("qms:write"),
-            _ => None,
-        },
-        (p, m) if p.starts_with("/api/qms/sync") => match m {
-            "GET" => Some("qms:read"),
-            "POST" | "PUT" | "DELETE" => Some("qms:write"),
-            _ => None,
-        },
-        (p, m) if p.starts_with("/api/qms/sync-records") => match m {
-            "GET" => Some("qms:read"),
-            "POST" | "PUT" | "DELETE" => Some("qms:write"),
-            _ => None,
-        },
-        (p, m) if p.starts_with("/api/qms/dashboard") => match m {
-            "GET" => Some("qms:read"),
-            _ => None,
-        },
-        _ => None,
-    };
-
-    if let Some(permission) = required_permission {
-        if !user_permissions
-            .iter()
-            .any(|p| p == "all" || p == "qms:admin" || p == permission)
-        {
-            return Err(axum::Json(ApiResponse::error(403, "权限不足")));
-        }
-    }
-
-    Ok(next.run(req).await)
+    let permission_str = format!("qms:{}", action);
+    claims.has_permission(&permission_str)
+        || claims.has_permission("qms:admin")
+        || claims.has_permission("all")
 }

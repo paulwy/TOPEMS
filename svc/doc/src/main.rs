@@ -84,7 +84,7 @@ async fn main() -> anyhow::Result<()> {
         );
 
     let protected_routes = Router::new()
-        .nest("/api/core/doc/v1", modules::create_routes())
+        .nest("/api/doc", modules::create_routes())
         .layer(axum::middleware::from_fn_with_state(
             auth_state.clone(),
             auth_middleware,
@@ -99,7 +99,7 @@ async fn main() -> anyhow::Result<()> {
         .layer(prometheus_layer)
         .with_state(state);
 
-    let cfg = RouteCompatConfig::new("doc", "/api/core/doc", &[]);
+    let cfg = RouteCompatConfig::new("doc", "/api/doc", &[]);
     let app = wrap_group2_router(app, cfg);
 
     let port = std::env::var("DOC_PORT")

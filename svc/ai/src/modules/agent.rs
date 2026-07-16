@@ -7,8 +7,8 @@ use topems_shared::ApiResponse;
 
 pub fn create_routes() -> Router<crate::shared::AppState> {
     Router::new()
-        .route("/api/core/ai/agent/run", post(agent_run))
-        .route("/api/core/ai/agent/tools", get(list_agent_tools))
+        .route("/agent/run", post(agent_run))
+        .route("/agent/tools", get(list_agent_tools))
 }
 
 async fn agent_run(

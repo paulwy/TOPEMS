@@ -13,8 +13,8 @@ use topems_shared::ApiResponse;
 
 pub fn create_routes() -> Router<super::ApiState> {
     Router::new()
-        .route("/api/core/hrm/audit-logs", get(list_audit_logs))
-        .route("/api/core/hrm/audit-logs/{id}", get(get_audit_log))
+        .route("/audit-logs", get(list_audit_logs))
+        .route("/audit-logs/{id}", get(get_audit_log))
 }
 
 #[derive(Debug, Deserialize)]

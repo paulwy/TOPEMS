@@ -45,14 +45,14 @@ pub struct TokenResponse {
 
 pub fn create_routes() -> Router<super::ApiState> {
     Router::new()
-        .route("/api/core/rd/auth/login", post(login))
-        .route("/api/core/rd/auth/refresh", post(refresh_token))
-        .route("/api/core/rd/auth/logout", post(logout))
+        .route("/auth/login", post(login))
+        .route("/auth/refresh", post(refresh_token))
+        .route("/auth/logout", post(logout))
 }
 
 #[utoipa::path(
     post,
-    path = "/api/core/rd/auth/login",
+    path = "/auth/login",
     tag = "auth",
     request_body = LoginRequest,
     responses(
@@ -120,6 +120,9 @@ async fn login(
         iat: now.timestamp() as usize,
         department: None,
         tenant_id: None,
+        department_id: None,
+        position_id: None,
+        position_code: None,
     };
 
     let access_token = match claims.encode(&state.auth_state.jwt_secret) {
@@ -182,7 +185,7 @@ async fn login(
 
 #[utoipa::path(
     post,
-    path = "/api/core/rd/auth/refresh",
+    path = "/auth/refresh",
     tag = "auth",
     request_body = RefreshRequest,
     responses(
@@ -254,6 +257,9 @@ async fn refresh_token(
         iat: now.timestamp() as usize,
         department: None,
         tenant_id: None,
+        department_id: None,
+        position_id: None,
+        position_code: None,
     };
 
     let access_token = match claims.encode(&state.auth_state.jwt_secret) {
@@ -275,7 +281,7 @@ async fn refresh_token(
 
 #[utoipa::path(
     post,
-    path = "/api/core/rd/auth/logout",
+    path = "/auth/logout",
     tag = "auth",
     responses(
         (status = 200, description = "Logout successful"),

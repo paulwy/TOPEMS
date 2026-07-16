@@ -1,6 +1,6 @@
 # TOPEMS Code Wiki
 
-> **版本**: v5.14.0 | **最后更新**: 2026-07-16 | **文档版本**: v1.0
+> **版本**: v5.15.0 | **最后更新**: 2026-07-16 | **文档版本**: v1.1 (V13.0 插件化架构整改)
 
 ---
 
@@ -33,6 +33,12 @@
 | **业务服务** | MES、PDM、QMS、LIMS、EHS、BI、ERP、HRM、SCM、WMS、CRM、PM、GIS |
 | **技术亮点** | Rust高性能后端、React 19前端、微服务架构、PWA支持、AI增强 |
 | **安全特性** | JWT认证、RBAC权限、行级安全(RLS)、多租户隔离、字段加密 |
+| **V13.0 插件化架构** | 插件注册安全令牌验证（PLUGIN_REGISTRATION_TOKEN + X-Plugin-Token） |
+| | Consul 服务发现 + 环境变量回退（SmartServiceClient） |
+| | 插件心跳超时检测（30秒间隔，90秒超时） |
+| | 插件依赖检查（正向+反向） |
+| | 前端动态导航配置（fetchNavigationConfig） |
+| | 集中化配置管理（ServiceConfigRegistry） |
 
 ### 1.3 技术栈
 
@@ -143,6 +149,56 @@
 - **插件化架构**: 业务服务以插件形式存在，可独立安装卸载
 - **共享库模式**: 通过 `lib/` 共享核心功能（认证、数据库、缓存等）
 - **Schema隔离**: 每个业务模块使用独立的PostgreSQL Schema
+
+#### 2.2.1 V13.0 插件注册安全验证流程
+
+V13.0 整改后，业务服务（插件）向 unified-core 注册时需经过严格的安全验证流程：
+
+```
+业务服务启动
+    │
+    ▼
+读取 PLUGIN_REGISTRATION_TOKEN 环境变量
+    │
+    ▼
+携带 X-Plugin-Token 头 + dependencies + navigation_config
+    │
+    ▼
+POST /api/core/plugin/register
+    │
+    ▼
+┌──────────────────────────────────────────────┐
+│  unified-core 验证流程                         │
+│  1. verify_registration_token() 校验令牌      │
+│  2. 检查 dependencies 是否已安装               │
+│  3. 存储 navigation_config 到数据库            │
+│  4. 记录插件状态为 active                      │
+│  5. 启动心跳监控（30秒间隔，90秒超时）          │
+└──────────────────────────────────────────────┘
+    │
+    ▼
+注册成功，插件对外提供服务
+    │
+    ▼
+每 30 秒发送心跳 → /api/core/plugin/heartbeat
+    │
+    ▼
+超时 90 秒未心跳 → 插件标记为 inactive
+```
+
+#### 2.2.2 核心服务瘦身
+
+V13.0 整改后，**unified-core 核心服务完成瘦身**，不再包含以下业务模块的实现，相关业务能力已移至独立业务服务：
+
+| 已迁移业务模块 | 迁移目标 |
+|--------------|---------|
+| erp（企业资源计划） | svc/erp/ 独立服务 |
+| crm（客户关系管理） | svc/crm/ 独立服务 |
+| hrm（人力资源管理） | svc/hrm/ 独立服务 |
+| wms（仓储管理） | svc/wms/ 独立服务 |
+| finance（财务管理） | svc/finance/ 独立服务 |
+
+unified-core 现仅保留基础能力：IAM、工作流、文件管理、通讯服务、租户管理、**插件管理**、数据字典、迁移服务、搜索服务。业务服务以**插件**形式注册到核心，由 unified-core 统一管理生命周期、依赖关系与导航配置。
 
 ### 2.3 API路径规范
 
@@ -270,6 +326,52 @@ TOPEMS/
 | **存储** | [storage.rs](file:///Users/air/TOPEMS/lib/src/storage.rs) | 文件存储抽象 |
 | **租户** | [tenant.rs](file:///Users/air/TOPEMS/lib/src/tenant.rs) | 多租户管理 |
 | **向量存储** | [vector_store.rs](file:///Users/air/TOPEMS/lib/src/vector_store.rs) | Redis向量搜索 |
+
+### 3.5 插件架构 (V13.0)
+
+V13.0 整改引入了完整的插件化架构，包含安全注册、心跳监控、依赖检查、服务发现、配置管理等核心能力。
+
+#### 3.5.1 核心组件
+
+| 组件 | 文件路径 | 职责 |
+|------|---------|------|
+| 插件运行时 | [svc/unified-core/src/modules/plugin/handlers/runtime.rs](file:///Users/air/TOPEMS/svc/unified-core/src/modules/plugin/handlers/runtime.rs) | 插件注册、安全令牌验证、心跳处理、导航配置 API |
+| 租户插件管理 | [svc/unified-core/src/modules/plugin/handlers/tenant_plugins.rs](file:///Users/air/TOPEMS/svc/unified-core/src/modules/plugin/handlers/tenant_plugins.rs) | 插件安装/卸载的依赖检查（正向 + 反向） |
+| 插件数据模型 | [svc/unified-core/src/modules/plugin/models.rs](file:///Users/air/TOPEMS/svc/unified-core/src/modules/plugin/models.rs) | `RegisterPluginRequest`（含 `dependencies`、`navigation_config`、`category`） |
+| 心跳检测任务 | [svc/unified-core/src/main.rs](file:///Users/air/TOPEMS/svc/unified-core/src/main.rs) | 后台任务，每 30 秒扫描一次插件心跳，超过 90 秒未心跳则标记为 inactive |
+| 服务发现 | [lib/src/service_discovery.rs](file:///Users/air/TOPEMS/lib/src/service_discovery.rs) | `ConsulServiceRegistrar`、`ConsulDiscoveryClient`、`SmartServiceClient` |
+| 集中化配置 | [lib/src/service_config.rs](file:///Users/air/TOPEMS/lib/src/service_config.rs) | `ServiceConfigRegistry` 单例，统一管理所有服务的配置 |
+
+#### 3.5.2 业务服务插件入口
+
+以下 7 个业务服务在启动时通过 `*_plugin.rs` 向 unified-core 注册插件，统一携带 `X-Plugin-Token` 头、`dependencies` 字段和 `navigation_config` 字段：
+
+| 业务服务 | 插件入口文件 |
+|---------|-------------|
+| RD（研发管理） | `svc/rd/src/rd_plugin.rs` |
+| AI（人工智能） | `svc/ai/src/ai_plugin.rs` |
+| Mobile（移动端） | `svc/mobile/src/mobile_plugin.rs` |
+| GIS（地理信息） | `svc/gis/src/gis_plugin.rs` |
+| QMS（质量管理） | `svc/qms/src/qms_plugin.rs` |
+| LIMS（实验室管理） | `svc/lims/src/lims_plugin.rs` |
+| EHS（环境健康安全） | `svc/ehs/src/ehs_plugin.rs` |
+
+#### 3.5.3 服务发现机制
+
+`SmartServiceClient` 采用**双层回退策略**解析服务地址：
+
+1. **优先**：通过 `ConsulDiscoveryClient` 查询 Consul 服务注册中心
+2. **回退**：当 Consul 不可用或 `CONSUL_ENABLED=false` 时，从环境变量读取服务地址（由 `ServiceConfigRegistry` 提供）
+
+这种设计保证了在开发环境（无 Consul）和生产环境（有 Consul）下均可正常运行。
+
+#### 3.5.4 心跳超时检测
+
+`svc/unified-core/src/main.rs` 在服务启动时 spawn 一个后台 Tokio 任务：
+
+- **扫描间隔**：30 秒
+- **超时阈值**：90 秒（可通过 `PLUGIN_HEARTBEAT_TIMEOUT` 环境变量配置）
+- **超时处理**：将插件状态从 `active` 标记为 `inactive`，前端导航自动隐藏对应菜单
 
 ---
 
@@ -436,6 +538,37 @@ JWT Token → 解析权限列表 → authStore → usePermission → UI渲染
 | useNotification | [hooks/useNotification.ts](file:///Users/air/TOPEMS/apps/web/src/hooks/useNotification.ts) | 通知管理 |
 | useOfflineQuery | [hooks/useOfflineQuery.ts](file:///Users/air/TOPEMS/apps/web/src/hooks/useOfflineQuery.ts) | 离线查询 |
 | useOfflineSync | [hooks/useOfflineSync.ts](file:///Users/air/TOPEMS/apps/web/src/hooks/useOfflineSync.ts) | 离线同步 |
+
+### 4.6 插件加载器 (V13.0)
+
+**文件**: [apps/web/src/lib/plugin-loader/PluginManager.ts](file:///Users/air/TOPEMS/apps/web/src/lib/plugin-loader/PluginManager.ts)
+
+V13.0 整改后，前端导航不再完全依赖静态配置，而是通过 `PluginManager` 的 `fetchNavigationConfig()` 方法**动态拉取后端导航配置**，并实现优雅降级。
+
+#### 4.6.1 fetchNavigationConfig() 工作流程
+
+```
+PluginManager.fetchNavigationConfig()
+    │
+    ▼
+请求 GET /api/core/plugin/navigation-config
+    │
+    ├── 成功 → 使用后端返回的导航配置（含已注册插件菜单）
+    │
+    └── 失败/超时 → 降级到前端静态导航配置（lib/navigation/）
+```
+
+#### 4.6.2 降级策略
+
+| 优先级 | 来源 | 说明 |
+|-------|------|------|
+| 1（高） | 后端 `/api/core/plugin/navigation-config` | 反映 unified-core 中已注册且 `active` 的插件，与心跳状态联动 |
+| 2（低） | 前端静态配置 `lib/navigation/` | 兜底方案，保证后端不可用时前端仍可基本导航 |
+
+这种设计使得：
+- 插件注册后无需重新部署前端即可在导航中出现
+- 插件心跳超时被标记为 `inactive` 后，导航菜单自动隐藏
+- 后端短暂不可用时前端仍可用静态配置提供基础体验
 
 ---
 
@@ -716,6 +849,46 @@ pub struct Claims {
 | `rls_middleware` | 行级安全中间件，注入租户上下文 |
 | 功能 | 基于tenant_id自动过滤查询结果 |
 
+#### 7.1.5 插件架构 (V13.0)
+
+**文件**: [svc/unified-core/src/modules/plugin/handlers/runtime.rs](file:///Users/air/TOPEMS/svc/unified-core/src/modules/plugin/handlers/runtime.rs)
+
+| 函数 | 签名 | 说明 |
+|------|------|------|
+| `verify_registration_token` | `fn verify_registration_token(header: &HeaderMap, expected: &str) -> Result<()>` | 插件注册令牌验证，校验 `X-Plugin-Token` 头是否与 `PLUGIN_REGISTRATION_TOKEN` 一致；开发模式下（令牌为空）跳过校验 |
+| `register_plugin` | `async fn register_plugin(State, Json<RegisterPluginRequest>) -> Result<ApiResponse>` | 插件注册入口：执行令牌验证 → 存储 `dependencies` → 存储 `navigation_config` → 写入插件记录并置为 `active` |
+| `get_navigation_config` | `async fn get_navigation_config(State) -> Result<ApiResponse<NavigationConfig>>` | 导航配置 API，返回当前租户下所有 `active` 插件的导航菜单聚合结果，供前端 `fetchNavigationConfig()` 调用 |
+| `heartbeat` | `async fn heartbeat(State, Path<plugin_id>) -> Result<ApiResponse>` | 接收插件心跳，更新 `last_heartbeat_at` 时间戳 |
+
+**文件**: [svc/unified-core/src/modules/plugin/handlers/tenant_plugins.rs](file:///Users/air/TOPEMS/svc/unified-core/src/modules/plugin/handlers/tenant_plugins.rs)
+
+| 函数 | 签名 | 说明 |
+|------|------|------|
+| `install_plugin` | `async fn install_plugin(State, Path<plugin_id>) -> Result<ApiResponse>` | 插件安装：执行**正向依赖检查**，确认该插件声明的所有 `dependencies` 已安装；任一缺失则拒绝安装并返回缺失列表 |
+| `uninstall_plugin` | `async fn uninstall_plugin(State, Path<plugin_id>) -> Result<ApiResponse>` | 插件卸载：执行**反向依赖检查**，确认没有其他已安装插件依赖当前插件；存在依赖则拒绝卸载并返回被依赖列表 |
+
+**文件**: [svc/unified-core/src/modules/plugin/models.rs](file:///Users/air/TOPEMS/svc/unified-core/src/modules/plugin/models.rs)
+
+| 结构体 | 关键字段 | 说明 |
+|--------|---------|------|
+| `RegisterPluginRequest` | `name`, `version`, `category`, `dependencies: Vec<String>`, `navigation_config: Value`, `endpoint` | 插件注册请求体；`dependencies` 用于正向/反向依赖检查，`navigation_config` 由后端存储并下发前端 |
+
+#### 7.1.6 服务发现与配置 (V13.0)
+
+**文件**: [lib/src/service_discovery.rs](file:///Users/air/TOPEMS/lib/src/service_discovery.rs)
+
+| 结构体/函数 | 说明 |
+|------------|------|
+| `ConsulServiceRegistrar` | Consul 服务注册器，服务启动时将自身地址、端口、健康检查路径注册到 Consul |
+| `ConsulDiscoveryClient` | Consul 服务发现客户端，从 Consul 查询指定服务名的可用实例列表 |
+| `SmartServiceClient` | 智能服务客户端：**优先**走 Consul 发现，**失败回退**到 `ServiceConfigRegistry` 提供的环境变量地址；对外暴露统一的 `resolve(service_name)` 接口 |
+
+**文件**: [lib/src/service_config.rs](file:///Users/air/TOPEMS/lib/src/service_config.rs)
+
+| 结构体/函数 | 说明 |
+|------------|------|
+| `ServiceConfigRegistry` | 集中化配置单例（`once_cell::sync::Lazy`），从环境变量加载所有服务地址；提供 `get_service_url(name)` 查询接口；作为 `SmartServiceClient` 的回退数据源 |
+
 ### 7.2 前端核心 (TypeScript)
 
 #### 7.2.1 API客户端
@@ -817,6 +990,17 @@ unified-core (核心)
 ```
 
 所有服务都依赖于 `lib/` (topems_shared) 共享库。
+
+#### 8.1.1 V13.0 插件架构相关依赖
+
+| 文件 | 依赖 | 说明 |
+|------|------|------|
+| [lib/src/service_discovery.rs](file:///Users/air/TOPEMS/lib/src/service_discovery.rs) | `consul`（可选） | Consul 客户端依赖；通过 cargo feature flag 控制，未启用时仅保留环境变量回退路径，编译不会失败 |
+| [lib/src/service_config.rs](file:///Users/air/TOPEMS/lib/src/service_config.rs) | `once_cell`、`tokio` | 提供 `ServiceConfigRegistry` 集中化配置单例，从环境变量加载所有服务地址 |
+| [svc/unified-core/src/modules/plugin/](file:///Users/air/TOPEMS/svc/unified-core/src/modules/plugin/) | `topems_shared`、`sqlx`、`axum` | 插件注册/心跳/依赖检查/导航配置 API 的实现 |
+| 7 个业务服务的 `*_plugin.rs` | `reqwest`、`topems_shared` | 启动时通过 HTTP 向 unified-core 注册，携带 `X-Plugin-Token` 头 |
+
+> **注意**：Consul 为**可选依赖**，开发环境可通过 `CONSUL_ENABLED=false` 完全跳过，所有服务地址解析回退到 `ServiceConfigRegistry` 提供的环境变量。
 
 ### 8.2 前端依赖
 
@@ -1063,6 +1247,35 @@ k8s/
 openssl rand -base64 32
 ```
 
+### 9.7 插件架构环境变量 (V13.0)
+
+V13.0 插件化架构整改新增以下环境变量，统一在 `unified-core` 与各业务服务中生效：
+
+| 变量 | 说明 | 默认值 |
+|------|------|--------|
+| `PLUGIN_REGISTRATION_TOKEN` | 插件注册安全令牌；业务服务注册时通过 `X-Plugin-Token` 头携带，unified-core 校验一致性 | 空（开发模式跳过校验） |
+| `CONSUL_ENABLED` | 是否启用 Consul 服务发现；`false` 时 `SmartServiceClient` 直接走环境变量回退 | `false` |
+| `CONSUL_URL` | Consul 服务注册中心地址 | `http://localhost:8500` |
+| `PLUGIN_HEARTBEAT_TIMEOUT` | 插件心跳超时秒数；超过该值未收到心跳则标记为 `inactive` | `90` |
+
+#### 配置示例
+
+```bash
+# .env (生产环境)
+PLUGIN_REGISTRATION_TOKEN=$(openssl rand -base64 32)
+CONSUL_ENABLED=true
+CONSUL_URL=http://consul:8500
+PLUGIN_HEARTBEAT_TIMEOUT=90
+```
+
+```bash
+# .env (开发环境，零配置)
+# PLUGIN_REGISTRATION_TOKEN 留空 → 跳过令牌校验
+# CONSUL_ENABLED 默认 false → 使用环境变量服务地址
+```
+
+> **安全提示**：生产环境**必须**配置 `PLUGIN_REGISTRATION_TOKEN`，否则任意服务均可冒充插件注册到 unified-core，造成安全风险。
+
 ---
 
 ## 10. 开发指南
@@ -1234,6 +1447,13 @@ pnpm run typecheck               # 类型检查
 | **Docker配置** | [docker/docker-compose.yml](file:///Users/air/TOPEMS/docker/docker-compose.yml) |
 | **K8s配置** | [k8s/base/ingress.yaml](file:///Users/air/TOPEMS/k8s/base/ingress.yaml) |
 | **数据库初始化** | [database/postgres/init.sql](file:///Users/air/TOPEMS/database/postgres/init.sql) |
+| **V13.0 插件运行时** | [svc/unified-core/src/modules/plugin/handlers/runtime.rs](file:///Users/air/TOPEMS/svc/unified-core/src/modules/plugin/handlers/runtime.rs) |
+| **V13.0 租户插件管理** | [svc/unified-core/src/modules/plugin/handlers/tenant_plugins.rs](file:///Users/air/TOPEMS/svc/unified-core/src/modules/plugin/handlers/tenant_plugins.rs) |
+| **V13.0 插件数据模型** | [svc/unified-core/src/modules/plugin/models.rs](file:///Users/air/TOPEMS/svc/unified-core/src/modules/plugin/models.rs) |
+| **V13.0 心跳检测任务** | [svc/unified-core/src/main.rs](file:///Users/air/TOPEMS/svc/unified-core/src/main.rs) |
+| **V13.0 服务发现** | [lib/src/service_discovery.rs](file:///Users/air/TOPEMS/lib/src/service_discovery.rs) |
+| **V13.0 集中化配置** | [lib/src/service_config.rs](file:///Users/air/TOPEMS/lib/src/service_config.rs) |
+| **V13.0 前端插件加载器** | [apps/web/src/lib/plugin-loader/PluginManager.ts](file:///Users/air/TOPEMS/apps/web/src/lib/plugin-loader/PluginManager.ts) |
 
 ---
 

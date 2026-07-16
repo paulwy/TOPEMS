@@ -19,7 +19,8 @@ pub use event_types::{
     LimsInspectionResultSubmittedPayload, LimsReagentAlertPayload, LimsRecordCompletedPayload,
     LimsSampleRegisteredPayload, PmProjectCreatedPayload, PmProjectUpdatedPayload,
     PmTaskCreatedPayload, PmTaskDeletedPayload, PmTaskUpdatedPayload,
-    QmsCorrectiveActionCreatedPayload, QmsInspectionCompletedPayload,
+    PositionCreatedPayload, PositionDeletedPayload, PositionUpdatedPayload,
+    PermissionChangedPayload, QmsCorrectiveActionCreatedPayload, QmsInspectionCompletedPayload,
     QmsQualityIssueCreatedPayload,
 };
 pub use monitor::{EventMetrics, EventMonitor, EventTrace, TraceStatus};

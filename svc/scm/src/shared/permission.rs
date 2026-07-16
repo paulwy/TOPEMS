@@ -1,10 +1,14 @@
 use sqlx::PgPool;
 use topems_shared::auth::Claims;
+use topems_shared::permission::{
+    check_module_permission, check_resource_permission, ModuleCode,
+    ModulePermission as SharedModulePermission, PermissionAction,
+};
 use topems_shared::response::ApiResponse;
 use uuid::Uuid;
 
 #[derive(Debug, Clone, PartialEq)]
-pub enum ModulePermission {
+pub enum ScmPermission {
     SupplierRead,
     SupplierWrite,
     PurchaseOrderRead,
@@ -22,78 +26,79 @@ pub enum ModulePermission {
     All,
 }
 
-impl std::fmt::Display for ModulePermission {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+impl ScmPermission {
+    pub fn to_shared(&self) -> SharedModulePermission {
         match self {
-            ModulePermission::SupplierRead => write!(f, "scm:read"),
-            ModulePermission::SupplierWrite => write!(f, "scm:write"),
-            ModulePermission::PurchaseOrderRead => write!(f, "scm:read"),
-            ModulePermission::PurchaseOrderWrite => write!(f, "scm:write"),
-            ModulePermission::PurchaseOrderApprove => write!(f, "scm:purchase_order:approve"),
-            ModulePermission::PurchaseItemRead => write!(f, "scm:read"),
-            ModulePermission::PurchaseItemWrite => write!(f, "scm:write"),
-            ModulePermission::SupplierEvaluationRead => write!(f, "scm:read"),
-            ModulePermission::SupplierEvaluationWrite => write!(f, "scm:write"),
-            ModulePermission::SupplierDeliveryAppointmentRead => write!(f, "scm:read"),
-            ModulePermission::SupplierDeliveryAppointmentWrite => write!(f, "scm:write"),
-            ModulePermission::SupplierDeliveryAppointmentApprove => {
-                write!(f, "scm:delivery_appointment:approve")
+            ScmPermission::SupplierRead => {
+                SharedModulePermission::new(ModuleCode::Scm, PermissionAction::Read)
             }
-            ModulePermission::PriceComparisonRead => write!(f, "scm:read"),
-            ModulePermission::PriceComparisonWrite => write!(f, "scm:write"),
-            ModulePermission::All => write!(f, "scm:admin"),
+            ScmPermission::SupplierWrite => {
+                SharedModulePermission::new(ModuleCode::Scm, PermissionAction::Write)
+            }
+            ScmPermission::PurchaseOrderRead => {
+                SharedModulePermission::new(ModuleCode::Scm, PermissionAction::Read)
+            }
+            ScmPermission::PurchaseOrderWrite => {
+                SharedModulePermission::new(ModuleCode::Scm, PermissionAction::Write)
+            }
+            ScmPermission::PurchaseOrderApprove => {
+                SharedModulePermission::new(ModuleCode::Scm, PermissionAction::Approve)
+            }
+            ScmPermission::PurchaseItemRead => {
+                SharedModulePermission::new(ModuleCode::Scm, PermissionAction::Read)
+            }
+            ScmPermission::PurchaseItemWrite => {
+                SharedModulePermission::new(ModuleCode::Scm, PermissionAction::Write)
+            }
+            ScmPermission::SupplierEvaluationRead => {
+                SharedModulePermission::new(ModuleCode::Scm, PermissionAction::Read)
+            }
+            ScmPermission::SupplierEvaluationWrite => {
+                SharedModulePermission::new(ModuleCode::Scm, PermissionAction::Write)
+            }
+            ScmPermission::SupplierDeliveryAppointmentRead => {
+                SharedModulePermission::new(ModuleCode::Scm, PermissionAction::Read)
+            }
+            ScmPermission::SupplierDeliveryAppointmentWrite => {
+                SharedModulePermission::new(ModuleCode::Scm, PermissionAction::Write)
+            }
+            ScmPermission::SupplierDeliveryAppointmentApprove => {
+                SharedModulePermission::new(ModuleCode::Scm, PermissionAction::Approve)
+            }
+            ScmPermission::PriceComparisonRead => {
+                SharedModulePermission::new(ModuleCode::Scm, PermissionAction::Read)
+            }
+            ScmPermission::PriceComparisonWrite => {
+                SharedModulePermission::new(ModuleCode::Scm, PermissionAction::Write)
+            }
+            ScmPermission::All => {
+                SharedModulePermission::new(ModuleCode::Scm, PermissionAction::Admin)
+            }
         }
     }
 }
 
+impl std::fmt::Display for ScmPermission {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        write!(f, "{}", self.to_shared())
+    }
+}
+
+pub type ModulePermission = ScmPermission;
+
 pub async fn check_permission<T>(
-    _db: &PgPool,
+    db: &PgPool,
     claims: &Claims,
-    permission: &ModulePermission,
+    permission: &ScmPermission,
 ) -> Result<(), axum::Json<ApiResponse<T>>> {
-    if claims.is_superuser {
-        return Ok(());
-    }
-
-    let permission_str = permission.to_string();
-
-    if claims.has_permission(&permission_str) {
-        return Ok(());
-    }
-
-    if claims.has_permission("scm:admin") {
-        return Ok(());
-    }
-
-    if claims.has_permission("all") {
-        return Ok(());
-    }
-
-    Err(axum::Json(ApiResponse::error(
-        403,
-        &format!("权限不足：需要 {} 权限", permission),
-    )))
+    let shared_perm = permission.to_shared();
+    check_module_permission(db, claims, &shared_perm).await
 }
 
 pub async fn check_supplier_permission<T>(
-    _db: &PgPool,
+    db: &PgPool,
     claims: &Claims,
-    _supplier_id: &Uuid,
+    supplier_id: &Uuid,
 ) -> Result<(), axum::Json<ApiResponse<T>>> {
-    if claims.is_superuser {
-        return Ok(());
-    }
-
-    if claims.has_permission("scm.manage") {
-        return Ok(());
-    }
-
-    if claims.has_permission("supplier.manage") {
-        return Ok(());
-    }
-
-    Err(axum::Json(ApiResponse::error(
-        403,
-        "权限不足：需要供应商管理权限",
-    )))
+    check_resource_permission(db, claims, supplier_id, "supplier", "scm:admin").await
 }

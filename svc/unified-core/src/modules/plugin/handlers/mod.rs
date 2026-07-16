@@ -19,8 +19,8 @@ pub use tenant_plugins::{
 };
 
 pub use runtime::{
-    get_plugin_status, list_plugins_with_status, register_plugin, unregister_plugin,
-    update_plugin_status,
+    get_navigation_config, get_plugin_status, list_plugins_with_status, register_plugin,
+    unregister_plugin, update_plugin_status,
 };
 
 pub use simple_api::{

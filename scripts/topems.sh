@@ -118,20 +118,26 @@ build_service() {
     local executable_name=$(get_executable_name "$service_name")
     cd "$PROJECT_ROOT"
 
+    local build_output
+    local offline_result
+
     set +e
-    SQLX_OFFLINE=true cargo build --release --bin "$executable_name" 2>&1
-    local offline_result=$?
+    build_output=$(SQLX_OFFLINE=true cargo build --release --bin "$executable_name" 2>&1)
+    offline_result=$?
     set -e
+    echo "$build_output"
 
     if [ $offline_result -eq 0 ]; then
         success "$service_name 编译成功"
         return 0
     else
         warning "$service_name 离线编译失败，尝试在线编译..."
+        local online_result
         set +e
-        cargo build --release --bin "$executable_name" 2>&1
-        local online_result=$?
+        build_output=$(cargo build --release --bin "$executable_name" 2>&1)
+        online_result=$?
         set -e
+        echo "$build_output"
         if [ $online_result -eq 0 ]; then
             success "$service_name 在线编译成功"
             return 0
@@ -147,10 +153,15 @@ build_all_backend() {
     info "全量编译所有后端服务..."
 
     cd "$PROJECT_ROOT"
+
+    local build_output
+    local build_result
+
     set +e
-    SQLX_OFFLINE=true cargo build --release --workspace 2>&1
-    local build_result=$?
+    build_output=$(SQLX_OFFLINE=true cargo build --release --workspace 2>&1)
+    build_result=$?
     set -e
+    echo "$build_output"
 
     if [ $build_result -eq 0 ]; then
         local total=$(get_all_services | wc -l | tr -d ' ')
@@ -158,13 +169,26 @@ build_all_backend() {
         return 0
     else
         warning "离线编译失败，尝试在线编译..."
+        local online_result
         set +e
-        cargo build --release --workspace 2>&1
-        local online_result=$?
+        build_output=$(cargo build --release --workspace 2>&1)
+        online_result=$?
         set -e
+        echo "$build_output"
         if [ $online_result -eq 0 ]; then
             local total=$(get_all_services | wc -l | tr -d ' ')
             success "所有后端服务编译完成 ($total 成功)"
+            
+            info "生成 sqlx 查询缓存..."
+            if command -v cargo-sqlx &> /dev/null || command -v sqlx &> /dev/null; then
+                set +e
+                cargo sqlx prepare --workspace -- --release 2>&1
+                set -e
+                success "sqlx 查询缓存生成完成"
+            else
+                warning "cargo-sqlx 未安装，跳过 sqlx-data.json 生成"
+            fi
+            
             return 0
         else
             error "后端编译失败"
@@ -177,17 +201,23 @@ build_all_backend() {
 build_frontend() {
     info "编译前端..."
     
-    local pkg_cmd="yarn"
-    if ! command -v yarn &> /dev/null; then
-        if command -v pnpm &> /dev/null; then
-            pkg_cmd="pnpm"
-        else
-            error "yarn 和 pnpm 都未安装"
-            return 1
-        fi
+    local pkg_cmd
+    if command -v pnpm &> /dev/null; then
+        pkg_cmd="pnpm"
+    elif command -v yarn &> /dev/null; then
+        pkg_cmd="yarn"
+    else
+        error "pnpm 和 yarn 都未安装"
+        return 1
     fi
     
-    cd "$PROJECT_ROOT/apps/web"
+    local web_dir="$PROJECT_ROOT/apps/web"
+    if [ ! -d "$web_dir" ]; then
+        error "前端目录不存在: $web_dir"
+        return 1
+    fi
+    
+    cd "$web_dir"
     
     if [ ! -d "node_modules" ]; then
         info "安装前端依赖..."
@@ -201,16 +231,17 @@ build_frontend() {
 build_all() {
     info "========== 全量编译开始 =========="
 
-    set +e
-    build_all_backend
-    local backend_result=$?
-    set -e
+    local backend_result=0
+    local frontend_result=0
+
+    if ! build_all_backend; then
+        backend_result=1
+    fi
 
     info "========== 编译前端 =========="
-    set +e
-    build_frontend
-    local frontend_result=$?
-    set -e
+    if ! build_frontend; then
+        frontend_result=1
+    fi
 
     echo ""
     info "========== 全量编译完成 =========="
@@ -241,17 +272,23 @@ test_backend() {
 test_frontend() {
     info "运行前端测试..."
     
-    local pkg_cmd="yarn"
-    if ! command -v yarn &> /dev/null; then
-        if command -v pnpm &> /dev/null; then
-            pkg_cmd="pnpm"
-        else
-            error "yarn 和 pnpm 都未安装"
-            return 1
-        fi
+    local pkg_cmd
+    if command -v pnpm &> /dev/null; then
+        pkg_cmd="pnpm"
+    elif command -v yarn &> /dev/null; then
+        pkg_cmd="yarn"
+    else
+        error "pnpm 和 yarn 都未安装"
+        return 1
     fi
     
-    cd "$PROJECT_ROOT/apps/web"
+    local web_dir="$PROJECT_ROOT/apps/web"
+    if [ ! -d "$web_dir" ]; then
+        error "前端目录不存在: $web_dir"
+        return 1
+    fi
+    
+    cd "$web_dir"
     
     if [ ! -d "node_modules" ]; then
         info "安装前端依赖..."
@@ -265,16 +302,17 @@ test_frontend() {
 test_all() {
     info "========== 运行所有测试 =========="
 
-    set +e
-    test_backend
-    local backend_result=$?
-    set -e
+    local backend_result=0
+    local frontend_result=0
+
+    if ! test_backend; then
+        backend_result=1
+    fi
 
     info "========== 运行前端测试 =========="
-    set +e
-    test_frontend
-    local frontend_result=$?
-    set -e
+    if ! test_frontend; then
+        frontend_result=1
+    fi
 
     echo ""
     info "========== 测试完成 =========="
@@ -616,19 +654,16 @@ start_all_services() {
 # 停止所有服务
 stop_all_services() {
     info "停止所有服务..."
-    set +e
     for service in $(get_all_services); do
-        stop_service "$service"
+        stop_service "$service" || true
     done
-    stop_frontend
-    set -e
+    stop_frontend || true
 }
 
 # 启动开发环境（macOS）
 start_dev_macos() {
     info "启动 macOS 开发环境..."
 
-    # 检查依赖
     check_command() {
         if ! command -v "$1" &> /dev/null; then
             error "$1 未安装"
@@ -638,43 +673,44 @@ start_dev_macos() {
 
     check_command "cargo" || return 1
     check_command "node" || return 1
-    # 检查 yarn 或 pnpm
-    if ! command -v yarn &> /dev/null; then
-        if ! command -v pnpm &> /dev/null; then
-            error "yarn 或 pnpm 未安装"
-            return 1
-        fi
-        warning "未安装 yarn，将使用 pnpm"
-        YARN_CMD="pnpm"
+    local pkg_cmd
+    if command -v pnpm &> /dev/null; then
+        pkg_cmd="pnpm"
+    elif command -v yarn &> /dev/null; then
+        pkg_cmd="yarn"
+        warning "未安装 pnpm，将使用 yarn"
     else
-        YARN_CMD="yarn"
+        error "pnpm 和 yarn 都未安装"
+        return 1
     fi
     check_command "psql" || return 1
 
-    # 启动数据库（复用统一函数）
     db_start
     redis_start
 
-    # 检查环境变量
     if [[ ! -f "$PROJECT_ROOT/.env" ]]; then
         warning ".env 文件不存在，从示例复制..."
         cp "$PROJECT_ROOT/.env.example" "$PROJECT_ROOT/.env"
-        JWT_SECRET=$(openssl rand -base64 32 | tr '/' '_' | tr '+' '-' | tr '=' '.')
-        awk -F'=' -v secret="$JWT_SECRET" '$1=="JWT_SECRET" {$2=secret} 1' OFS='=' "$PROJECT_ROOT/.env" > "$PROJECT_ROOT/.env.tmp"
+        local jwt_secret
+        jwt_secret=$(openssl rand -base64 32 | tr '/' '_' | tr '+' '-' | tr '=' '.')
+        awk -F'=' -v secret="$jwt_secret" '$1=="JWT_SECRET" {$2=secret} 1' OFS='=' "$PROJECT_ROOT/.env" > "$PROJECT_ROOT/.env.tmp"
         mv "$PROJECT_ROOT/.env.tmp" "$PROJECT_ROOT/.env"
     fi
 
-    # 启动后端服务
     start_service "iam"
 
-    # 启动前端
     info "启动前端服务..."
     if ! lsof -Pi ":3000" -sTCP:LISTEN -t &> /dev/null; then
-        cd "$PROJECT_ROOT/apps/web"
-        [ ! -d "node_modules" ] && $YARN_CMD install --silent
-        nohup $YARN_CMD dev > "/tmp/topems-web.log" 2>&1 &
-        sleep 5
-        info "前端服务启动中..."
+        local web_dir="$PROJECT_ROOT/apps/web"
+        if [ -d "$web_dir" ]; then
+            cd "$web_dir"
+            [ ! -d "node_modules" ] && $pkg_cmd install --silent
+            nohup $pkg_cmd dev > "/tmp/topems-web.log" 2>&1 &
+            sleep 5
+            info "前端服务启动中..."
+        else
+            error "前端目录不存在: $web_dir"
+        fi
     else
         warning "前端已在端口 3000 运行"
     fi
@@ -689,27 +725,30 @@ start_dev_macos() {
 start_frontend() {
     info "启动前端服务..."
     
-    # 检测包管理器
-    local pkg_cmd="yarn"
-    if ! command -v yarn &> /dev/null; then
-        if command -v pnpm &> /dev/null; then
-            pkg_cmd="pnpm"
-            warning "使用 pnpm"
-        else
-            error "yarn 和 pnpm 都未安装"
-            return 1
-        fi
+    local pkg_cmd
+    if command -v pnpm &> /dev/null; then
+        pkg_cmd="pnpm"
+    elif command -v yarn &> /dev/null; then
+        pkg_cmd="yarn"
+        warning "使用 yarn"
+    else
+        error "pnpm 和 yarn 都未安装"
+        return 1
     fi
     
-    cd "$PROJECT_ROOT/apps/web"
+    local web_dir="$PROJECT_ROOT/apps/web"
+    if [ ! -d "$web_dir" ]; then
+        error "前端目录不存在: $web_dir"
+        return 1
+    fi
     
-    # 检查依赖
+    cd "$web_dir"
+    
     if [ ! -d "node_modules" ]; then
         info "安装前端依赖..."
         $pkg_cmd install --silent
     fi
     
-    # 启动前端
     if check_port 3000; then
         info "前端已在端口 3000 运行"
         return 0

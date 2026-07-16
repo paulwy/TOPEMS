@@ -1,10 +1,15 @@
 use sqlx::PgPool;
 use topems_shared::auth::Claims;
+use topems_shared::permission::{
+    check_module_permission, check_resource_permission, ModuleCode,
+    ModulePermission as SharedModulePermission, PermissionAction,
+};
 use topems_shared::response::ApiResponse;
+use uuid::Uuid;
 
 #[allow(dead_code)]
 #[derive(Debug, Clone, PartialEq)]
-pub enum ModulePermission {
+pub enum HrmPermission {
     CompanyRead,
     CompanyWrite,
     AttendanceRead,
@@ -22,53 +27,79 @@ pub enum ModulePermission {
     All,
 }
 
-impl std::fmt::Display for ModulePermission {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+impl HrmPermission {
+    pub fn to_shared(&self) -> SharedModulePermission {
         match self {
-            ModulePermission::CompanyRead => write!(f, "hrm:read"),
-            ModulePermission::CompanyWrite => write!(f, "hrm:write"),
-            ModulePermission::AttendanceRead => write!(f, "hrm:read"),
-            ModulePermission::AttendanceWrite => write!(f, "hrm:write"),
-            ModulePermission::LeaveRead => write!(f, "hrm:read"),
-            ModulePermission::LeaveWrite => write!(f, "hrm:write"),
-            ModulePermission::EmployeeRead => write!(f, "hrm:read"),
-            ModulePermission::EmployeeWrite => write!(f, "hrm:write"),
-            ModulePermission::DepartmentRead => write!(f, "hrm:read"),
-            ModulePermission::DepartmentWrite => write!(f, "hrm:write"),
-            ModulePermission::PayrollRead => write!(f, "hrm:read"),
-            ModulePermission::PayrollWrite => write!(f, "hrm:write"),
-            ModulePermission::PerformanceRead => write!(f, "hrm:read"),
-            ModulePermission::PerformanceWrite => write!(f, "hrm:write"),
-            ModulePermission::All => write!(f, "hrm:admin"),
+            HrmPermission::CompanyRead => {
+                SharedModulePermission::new(ModuleCode::Hrm, PermissionAction::Read)
+            }
+            HrmPermission::CompanyWrite => {
+                SharedModulePermission::new(ModuleCode::Hrm, PermissionAction::Write)
+            }
+            HrmPermission::AttendanceRead => {
+                SharedModulePermission::new(ModuleCode::Hrm, PermissionAction::Read)
+            }
+            HrmPermission::AttendanceWrite => {
+                SharedModulePermission::new(ModuleCode::Hrm, PermissionAction::Write)
+            }
+            HrmPermission::LeaveRead => {
+                SharedModulePermission::new(ModuleCode::Hrm, PermissionAction::Read)
+            }
+            HrmPermission::LeaveWrite => {
+                SharedModulePermission::new(ModuleCode::Hrm, PermissionAction::Write)
+            }
+            HrmPermission::EmployeeRead => {
+                SharedModulePermission::new(ModuleCode::Hrm, PermissionAction::Read)
+            }
+            HrmPermission::EmployeeWrite => {
+                SharedModulePermission::new(ModuleCode::Hrm, PermissionAction::Write)
+            }
+            HrmPermission::DepartmentRead => {
+                SharedModulePermission::new(ModuleCode::Hrm, PermissionAction::Read)
+            }
+            HrmPermission::DepartmentWrite => {
+                SharedModulePermission::new(ModuleCode::Hrm, PermissionAction::Write)
+            }
+            HrmPermission::PayrollRead => {
+                SharedModulePermission::new(ModuleCode::Hrm, PermissionAction::Read)
+            }
+            HrmPermission::PayrollWrite => {
+                SharedModulePermission::new(ModuleCode::Hrm, PermissionAction::Write)
+            }
+            HrmPermission::PerformanceRead => {
+                SharedModulePermission::new(ModuleCode::Hrm, PermissionAction::Read)
+            }
+            HrmPermission::PerformanceWrite => {
+                SharedModulePermission::new(ModuleCode::Hrm, PermissionAction::Write)
+            }
+            HrmPermission::All => {
+                SharedModulePermission::new(ModuleCode::Hrm, PermissionAction::Admin)
+            }
         }
     }
 }
 
+impl std::fmt::Display for HrmPermission {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        write!(f, "{}", self.to_shared())
+    }
+}
+
+pub type ModulePermission = HrmPermission;
+
 pub async fn check_permission<T>(
-    _db: &PgPool,
+    db: &PgPool,
     claims: &Claims,
-    permission: &ModulePermission,
+    permission: &HrmPermission,
 ) -> Result<(), axum::Json<ApiResponse<T>>> {
-    if claims.is_superuser {
-        return Ok(());
-    }
+    let shared_perm = permission.to_shared();
+    check_module_permission(db, claims, &shared_perm).await
+}
 
-    let permission_str = permission.to_string();
-
-    if claims.has_permission(&permission_str) {
-        return Ok(());
-    }
-
-    if claims.has_permission("hrm:admin") {
-        return Ok(());
-    }
-
-    if claims.has_permission("all") {
-        return Ok(());
-    }
-
-    Err(axum::Json(ApiResponse::error(
-        403,
-        &format!("权限不足：需要 {} 权限", permission),
-    )))
+pub async fn check_employee_permission<T>(
+    db: &PgPool,
+    claims: &Claims,
+    employee_id: &Uuid,
+) -> Result<(), axum::Json<ApiResponse<T>>> {
+    check_resource_permission(db, claims, employee_id, "employee", "hrm:admin").await
 }

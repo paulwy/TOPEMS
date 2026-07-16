@@ -13,6 +13,12 @@ pub struct PluginInfo {
     pub deployment: DeploymentInfo,
     pub permissions: Vec<PermissionDef>,
     pub runtime_url: String,
+    #[serde(default)]
+    pub dependencies: Vec<String>,
+    #[serde(default)]
+    pub navigation_config: Option<serde_json::Value>,
+    #[serde(default)]
+    pub category: Option<String>,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -49,6 +55,13 @@ pub async fn get_plugin_info() -> Json<ApiResponse<PluginInfo>> {
             },
         ],
         runtime_url,
+        dependencies: vec![],
+        navigation_config: Some(serde_json::json!([
+            {"code": "monitor-system", "label": "系统监控", "path": "/monitor/system", "icon": "Activity", "order": 10, "group": "business"},
+            {"code": "monitor-services", "label": "服务监控", "path": "/monitor/services", "icon": "Server", "order": 20, "group": "business"},
+            {"code": "monitor-alerts", "label": "告警管理", "path": "/monitor/alerts", "icon": "Bell", "order": 30, "group": "business"}
+        ])),
+        category: Some("other".to_string()),
     };
 
     Json(ApiResponse::success(plugin_info, "获取插件信息成功"))
@@ -95,12 +108,24 @@ pub async fn auto_register_to_core(core_url: Option<&str>) {
             },
         ],
         runtime_url,
+        dependencies: vec![],
+        navigation_config: Some(serde_json::json!([
+            {"code": "monitor-system", "label": "系统监控", "path": "/monitor/system", "icon": "Activity", "order": 10, "group": "business"},
+            {"code": "monitor-services", "label": "服务监控", "path": "/monitor/services", "icon": "Server", "order": 20, "group": "business"},
+            {"code": "monitor-alerts", "label": "告警管理", "path": "/monitor/alerts", "icon": "Bell", "order": 30, "group": "business"}
+        ])),
+        category: Some("other".to_string()),
     };
 
     let client = reqwest::Client::new();
     let url = format!("{}/api/core/plugin/dev/plugins/monitor/register", core_url);
 
-    match client.post(&url).json(&info).send().await {
+    let token = std::env::var("PLUGIN_REGISTRATION_TOKEN").unwrap_or_default();
+    let mut request = client.post(&url).json(&info);
+    if !token.is_empty() {
+        request = request.header("X-Plugin-Token", &token);
+    }
+    match request.send().await {
         Ok(response) => {
             if response.status().is_success() {
                 tracing::info!(
