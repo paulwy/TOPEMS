@@ -1048,7 +1048,7 @@ const TemplateDemoPage: React.FC<TemplateDemoPageProps> = ({ onClose }) => {
                           size='small'
                           value={templateVariables[varDef.key] || ''}
                           onChange={(e) => handleVariableChange(varDef.key, e.target.value)}
-                          slotProps={{ inputLabel: { shrink: true } } as any}
+                          slotProps={{ inputLabel: { shrink: true } } as const}
                         />
                       ) : (
                         <TextField

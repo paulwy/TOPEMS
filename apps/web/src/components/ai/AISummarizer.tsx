@@ -124,7 +124,7 @@ export function AISummarizer({
           <FormLabel>摘要类型</FormLabel>
           <Select
             value={summaryType}
-            onChange={(e) => handleTypeChange(e.target.value as any)}
+            onChange={(e) => handleTypeChange(e.target.value as 'short' | 'medium' | 'detailed')}
             size='small'
           >
             {(

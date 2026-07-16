@@ -334,7 +334,7 @@ export const HelpCenterPage: React.FC = () => {
                   <Chip
                     size='small'
                     label={getTypeChip(update.type).label}
-                    color={getTypeChip(update.type).color as any}
+                    color={getTypeChip(update.type).color as React.ComponentProps<typeof import('@mui/material/Chip').default>['color']}
                     sx={{ fontWeight: 500 }}
                   />
                   <Typography variant='body2' color='text.secondary'>

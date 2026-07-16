@@ -249,8 +249,8 @@ export default function ConsolidationReportsPage() {
             ? `¥${report.total_assets.toLocaleString('zh-CN')}`
             : '-',
           net_profit:
-            (report as any).归属于母公司净利润 || report.net_profit
-              ? `¥${Math.abs((report as any).归属于母公司净利润 || report.net_profit).toLocaleString('zh-CN')}`
+            report.归属于母公司净利润 || report.net_profit
+              ? `¥${Math.abs((report.归属于母公司净利润 || report.net_profit) || 0).toLocaleString('zh-CN')}`
               : '-',
           status: STATUS_CONFIG[report.status]?.label || report.status,
           approval_status:

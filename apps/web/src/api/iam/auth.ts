@@ -1,6 +1,13 @@
 import apiClient from '../client';
 import type { ApiResponse } from '../client';
-import type { AuthTokens, ResetPasswordRequest, SetNewPasswordRequest, User } from './types';
+import type {
+  AuthTokens,
+  LoginResponseData,
+  RefreshTokenResponseData,
+  ResetPasswordRequest,
+  SetNewPasswordRequest,
+  User,
+} from './types';
 
 export const authModuleApi = {
   register: async (data: {
@@ -12,8 +19,8 @@ export const authModuleApi = {
     return apiClient.iam.post<AuthTokens>('/auth/register', data);
   },
 
-  login: async (data: { username: string; password: string }): Promise<ApiResponse<any>> => {
-    const response = await apiClient.iam.post<any>('/auth/login', data);
+  login: async (data: { username: string; password: string }): Promise<ApiResponse<LoginResponseData>> => {
+    const response = await apiClient.iam.post<LoginResponseData>('/auth/login', data);
 
     if (response.success && response.data) {
       localStorage.setItem('token', response.data.access_token);
@@ -31,8 +38,8 @@ export const authModuleApi = {
     apiClient.clearAuthToken();
   },
 
-  refreshToken: async (token: string): Promise<ApiResponse<any>> => {
-    const response = await apiClient.iam.post<any>('/auth/refresh', {
+  refreshToken: async (token: string): Promise<ApiResponse<RefreshTokenResponseData>> => {
+    const response = await apiClient.iam.post<RefreshTokenResponseData>('/auth/refresh', {
       refresh_token: token,
     });
 
@@ -77,8 +84,8 @@ export const authModuleApi = {
     require_special?: boolean;
     max_age_days?: number;
     prevent_reuse?: number;
-  }): Promise<ApiResponse<any>> => {
-    return apiClient.iam.put('/auth/password-policy', data);
+  }): Promise<ApiResponse<{ updated: boolean }>> => {
+    return apiClient.iam.put<{ updated: boolean }>('/auth/password-policy', data);
   },
 
   getActiveSessions: async (): Promise<
@@ -121,8 +128,8 @@ export const authModuleApi = {
     login_alerts?: boolean;
     ip_whitelist?: string[];
     session_timeout_minutes?: number;
-  }): Promise<ApiResponse<any>> => {
-    return apiClient.iam.put('/auth/security-settings', data);
+  }): Promise<ApiResponse<{ updated: boolean }>> => {
+    return apiClient.iam.put<{ updated: boolean }>('/auth/security-settings', data);
   },
 };
 

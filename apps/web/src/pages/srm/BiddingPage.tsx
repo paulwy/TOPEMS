@@ -37,12 +37,12 @@ const ct = designTokens.colors;
 
 const statusConfig: Record<
   string,
-  { label: string; color: 'default' | 'primary' | 'success' | 'warning' | 'error' }
+  { label: string; color: 'default' | 'primary' | 'success' | 'warning' | 'error' | 'info' }
 > = {
   draft: { label: '草稿', color: 'default' },
   published: { label: '已发布', color: 'primary' },
   bidding: { label: '投标中', color: 'warning' },
-  opened: { label: '已开标', color: 'info' as any },
+  opened: { label: '已开标', color: 'info' },
   evaluating: { label: '评标中', color: 'primary' },
   awarded: { label: '已定标', color: 'success' },
   cancelled: { label: '已取消', color: 'error' },
@@ -610,7 +610,7 @@ const BiddingPage: React.FC = () => {
                   value={formData.bid_deadline}
                   onChange={(e) => setFormData({ ...formData, bid_deadline: e.target.value })}
                   size='small'
-                  slotProps={{ inputLabel: { shrink: true } } as any}
+                  slotProps={{ inputLabel: { shrink: true } } as const}
                 />
                 <TextField
                   label='开标日期'
@@ -618,7 +618,7 @@ const BiddingPage: React.FC = () => {
                   value={formData.open_date}
                   onChange={(e) => setFormData({ ...formData, open_date: e.target.value })}
                   size='small'
-                  slotProps={{ inputLabel: { shrink: true } } as any}
+                  slotProps={{ inputLabel: { shrink: true } } as const}
                 />
               </Box>
             )}

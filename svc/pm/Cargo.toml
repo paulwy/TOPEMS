@@ -28,6 +28,7 @@ prometheus.workspace = true
 axum-prometheus.workspace = true
 rust_decimal.workspace = true
 reqwest.workspace = true
+bcrypt.workspace = true
 
 [dev-dependencies]
 tokio-test.workspace = true

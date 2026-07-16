@@ -1,4 +1,4 @@
-import { useForm, Controller } from 'react-hook-form';
+import { useForm, Controller, type Resolver } from 'react-hook-form';
 import {
   Card,
   CardContent,
@@ -44,7 +44,7 @@ export function WorkflowFormExample({ onSubmit, initialValues }: WorkflowFormExa
     reset,
     formState: { errors },
   } = useForm<WorkflowFormValues>({
-    resolver: zodResolver(workflowFormSchema) as any,
+    resolver: zodResolver(workflowFormSchema) as Resolver<WorkflowFormValues>,
     defaultValues: {
       name: initialValues?.name || '',
       description: initialValues?.description || '',

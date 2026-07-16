@@ -41,9 +41,9 @@ const PositionManagementPage: React.FC<PositionManagementPageProps> = () => {
 
   const [formData, setFormData] = useState<Partial<Position>>({});
 
-  const positionsQuery = useQuery<{ items: Position[]; total: number; page: number; pagesize: number }>({
+  const positionsQuery = useQuery<PaginatedResult<Position>>({
     queryKey: ['hrm-positions', searchText, statusFilter, departmentFilter],
-    queryFn: async () => {
+    queryFn: async (): Promise<PaginatedResult<Position>> => {
       const params: ListParams = {};
       if (searchText) params.search = searchText;
       if (statusFilter && statusFilter !== 'all') params.status = statusFilter;
@@ -51,12 +51,12 @@ const PositionManagementPage: React.FC<PositionManagementPageProps> = () => {
 
       const response = await positionApi.list(params);
       if (response.code === 200 && response.data) {
-        const data = response.data as any;
+        const data = response.data as unknown as Record<string, unknown>;
         return {
-          items: data.items || [],
-          total: data.total || 0,
-          page: data.page || 1,
-          pagesize: data.pagesize || 10,
+          items: (data.items as Position[]) || [],
+          total: (data.total as number) || 0,
+          page: (data.page as number) || 1,
+          pagesize: (data.pagesize as number) || 10,
         };
       }
       return { items: [], total: 0, page: 1, pagesize: 10 };

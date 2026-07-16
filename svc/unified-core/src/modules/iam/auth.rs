@@ -1,6 +1,7 @@
 use axum::http::HeaderMap;
 use axum::{extract::State, Extension, Json};
 use serde::{Deserialize, Serialize};
+use sha2::{Digest, Sha256};
 use sqlx::Row;
 use uuid::Uuid;
 
@@ -8,6 +9,13 @@ use crate::modules::communication::mail::send_email_async;
 use crate::modules::login_log::handlers::record_login_event;
 use topems_shared::auth::Claims;
 use topems_shared::generate_refresh_token;
+
+fn hash_token(token: &str) -> String {
+    let mut hasher = Sha256::new();
+    hasher.update(token.as_bytes());
+    let result = hasher.finalize();
+    format!("{:x}", result)
+}
 
 #[derive(Debug, Clone, Deserialize)]
 struct LoginRequest {
@@ -22,10 +30,11 @@ struct UserRow {
     password_hash: String,
     email: String,
     full_name: Option<String>,
-    status: String,
+    is_active: bool,
     is_superuser: bool,
-    tenant_id: Option<Uuid>,
-    created_at: Option<chrono::NaiveDateTime>,
+    roles: Option<Vec<String>>,
+    permissions: Option<Vec<String>>,
+    created_at: Option<chrono::DateTime<chrono::Utc>>,
 }
 
 #[derive(Debug, Clone, Serialize)]
@@ -65,11 +74,18 @@ pub async fn login(
         .and_then(|v| v.as_str())
         .unwrap_or("");
 
-    let ip_address = headers
+    let ip_address_opt = headers
         .get("X-Forwarded-For")
         .and_then(|h| h.to_str().ok())
-        .or_else(|| headers.get("X-Real-IP").and_then(|h| h.to_str().ok()))
-        .unwrap_or("unknown");
+        .or_else(|| headers.get("X-Real-IP").and_then(|h| h.to_str().ok()));
+
+    let ip_address = ip_address_opt.unwrap_or("");
+
+    let ip_addr_opt = if ip_address_opt.map(|s| s == "unknown").unwrap_or(true) {
+        None
+    } else {
+        ip_address_opt
+    };
 
     let user_agent = headers
         .get("User-Agent")
@@ -99,7 +115,7 @@ pub async fn login(
     }
 
     let user = match sqlx::query_as::<_, UserRow>(
-        "SELECT id, username, password_hash, email, full_name, status, is_superuser, tenant_id, created_at FROM core_users WHERE username = $1 OR email = $1",
+        "SELECT id, username, password_hash, email, full_name, is_active, is_superuser, roles, permissions, created_at FROM iam.users WHERE username = $1 OR email = $1",
     )
     .bind(username)
     .fetch_optional(&state.pool)
@@ -148,11 +164,11 @@ pub async fn login(
         }
     };
 
-    if user.status != "active" {
+    if !user.is_active {
         tracing::warn!("Login failed: user is not active - {}", username);
         let _ = record_login_event(
-            &state.pool,
-            user.tenant_id.unwrap_or(Uuid::nil()),
+                &state.pool,
+                Uuid::nil(),
             Some(user.id),
             &user.username,
             ip_address,
@@ -172,8 +188,8 @@ pub async fn login(
     if !verify_password(password, &user.password_hash) {
         tracing::warn!("Login failed: invalid password for user - {}", username);
         let _ = record_login_event(
-            &state.pool,
-            user.tenant_id.unwrap_or(Uuid::nil()),
+                &state.pool,
+                Uuid::nil(),
             Some(user.id),
             &user.username,
             ip_address,
@@ -192,9 +208,12 @@ pub async fn login(
 
     let jwt_expire_minutes = state.auth_state.token_expiry_hours * 60;
 
-    // 获取用户的角色和权限
-    let (user_roles, user_permissions) =
-        get_user_roles_and_permissions(&state, user.id, user.is_superuser).await;
+    let user_roles = user.roles.clone().unwrap_or_default();
+    let user_permissions = if user.is_superuser {
+        vec!["*".to_string()]
+    } else {
+        user.permissions.clone().unwrap_or_default()
+    };
 
     // 创建完整的 Claims，包含用户的真实 is_superuser 状态
     let now = chrono::Utc::now();
@@ -214,7 +233,7 @@ pub async fn login(
         iat: now.timestamp() as usize,
         email: Some(user.email.clone()),
         department: None,
-        tenant_id: user.tenant_id.map(|t| t.to_string()),
+        tenant_id: None,
     };
 
     let access_token = match claims.encode(&state.auth_state.jwt_secret) {
@@ -230,24 +249,48 @@ pub async fn login(
         }
     };
 
+    let access_token_hash = hash_token(&access_token);
     let refresh_token = generate_refresh_token();
+    let refresh_token_hash = hash_token(&refresh_token);
     let expires_in = jwt_expire_minutes * 60;
 
-    // 保存会话到数据库
-    let expires_at =
+    let access_expires_at =
         chrono::Utc::now() + chrono::Duration::hours(state.auth_state.token_expiry_hours);
-    match sqlx::query(
-        "INSERT INTO unified_core.sessions (user_id, token, refresh_token, expires_at) VALUES ($1, $2, $3, $4) ON CONFLICT (user_id) DO UPDATE SET token = $2, refresh_token = $3, expires_at = $4",
+    let refresh_expires_at = chrono::Utc::now()
+        + chrono::Duration::hours(state.auth_state.token_expiry_hours * 7);
+
+    let insert_session_result = sqlx::query(
+        "INSERT INTO iam.sessions (user_id, token_hash, ip_address, user_agent, expires_at)
+         VALUES ($1, $2, $3::inet, $4, $5)",
     )
     .bind(&user.id)
-    .bind(&access_token)
-    .bind(&refresh_token)
-    .bind(&expires_at)
+    .bind(&access_token_hash)
+    .bind(ip_addr_opt)
+    .bind(user_agent.as_deref())
+    .bind(&access_expires_at)
     .execute(&state.pool)
-    .await
-    {
+    .await;
+
+    match insert_session_result {
         Ok(_) => tracing::debug!("会话保存成功"),
         Err(e) => tracing::warn!("会话保存失败: {}", e),
+    }
+
+    let insert_refresh_result = sqlx::query(
+        "INSERT INTO iam.refresh_tokens (user_id, token_hash, ip_address, user_agent, expires_at)
+         VALUES ($1, $2, $3::inet, $4, $5)",
+    )
+    .bind(&user.id)
+    .bind(&refresh_token_hash)
+    .bind(ip_addr_opt)
+    .bind(user_agent.as_deref())
+    .bind(&refresh_expires_at)
+    .execute(&state.pool)
+    .await;
+
+    match insert_refresh_result {
+        Ok(_) => tracing::debug!("Refresh token 保存成功"),
+        Err(e) => tracing::warn!("Refresh token 保存失败: {}", e),
     }
 
     let username_clone = user.username.clone();
@@ -262,7 +305,7 @@ pub async fn login(
             username: user.username,
             email: user.email,
             full_name: user.full_name,
-            is_active: user.status == "active",
+            is_active: user.is_active,
             is_superuser: user.is_superuser,
             created_at: user.created_at.map(|t| t.to_string()),
             roles: user_roles,
@@ -274,7 +317,7 @@ pub async fn login(
 
     let _ = record_login_event(
         &state.pool,
-        user.tenant_id.unwrap_or(Uuid::nil()),
+        Uuid::nil(),
         Some(user.id),
         &username_clone,
         ip_address,
@@ -369,7 +412,7 @@ pub async fn register(
     }
 
     // 检查用户名是否已存在
-    match sqlx::query_scalar::<_, i64>("SELECT COUNT(*) FROM core_users WHERE username = $1")
+    match sqlx::query_scalar::<_, i64>("SELECT COUNT(*) FROM iam.users WHERE username = $1")
         .bind(username)
         .fetch_one(&state.pool)
         .await
@@ -395,7 +438,7 @@ pub async fn register(
     }
 
     // 检查邮箱是否已存在
-    match sqlx::query_scalar::<_, i64>("SELECT COUNT(*) FROM core_users WHERE email = $1")
+    match sqlx::query_scalar::<_, i64>("SELECT COUNT(*) FROM iam.users WHERE email = $1")
         .bind(email)
         .fetch_one(&state.pool)
         .await
@@ -438,8 +481,8 @@ pub async fn register(
     let user_id = Uuid::new_v4();
     match sqlx::query(
         r#"
-        INSERT INTO core_users (id, username, email, password_hash, full_name, status, is_superuser, created_at, updated_at)
-        VALUES ($1, $2, $3, $4, $5, 'active', false, NOW(), NOW())
+        INSERT INTO iam.users (id, username, email, password_hash, full_name, is_active, is_superuser)
+        VALUES ($1, $2, $3, $4, $5, true, false)
         "#,
     )
     .bind(user_id)
@@ -495,20 +538,21 @@ pub async fn refresh_token(
         }));
     }
 
-    // 查询会话获取用户信息
+    let refresh_token_hash = hash_token(refresh_token);
+
     let row = match sqlx::query(
-        "SELECT s.user_id, u.username, u.is_superuser, u.email, u.status, u.tenant_id
-         FROM unified_core.sessions s
-         JOIN core_users u ON s.user_id = u.id
-         WHERE s.refresh_token = $1 AND s.expires_at > NOW()",
+        "SELECT rt.user_id, u.username, u.is_superuser, u.email, u.is_active, u.roles, u.permissions, rt.id as refresh_token_id
+         FROM iam.refresh_tokens rt
+         JOIN iam.users u ON rt.user_id = u.id
+         WHERE rt.token_hash = $1 AND rt.expires_at > NOW() AND rt.revoked_at IS NULL",
     )
-    .bind(refresh_token)
+    .bind(&refresh_token_hash)
     .fetch_optional(&state.pool)
     .await
     {
         Ok(Some(r)) => r,
         Ok(None) => {
-            tracing::warn!("Refresh token 无效或已过期");
+            tracing::warn!("Refresh token 无效或已过期或已吊销");
             return Json(serde_json::json!({
                 "success": false,
                 "message": "Refresh token 无效或已过期",
@@ -517,7 +561,7 @@ pub async fn refresh_token(
             }));
         }
         Err(e) => {
-            tracing::error!("查询会话失败: {}", e);
+            tracing::error!("查询 refresh token 失败: {}", e);
             return Json(serde_json::json!({
                 "success": false,
                 "message": "内部服务器错误",
@@ -531,10 +575,9 @@ pub async fn refresh_token(
     let username: String = row.get("username");
     let is_superuser: bool = row.get("is_superuser");
     let email: String = row.get("email");
-    let status: String = row.get("status");
-    let tenant_id: Option<Uuid> = row.get("tenant_id");
+    let is_active: bool = row.get("is_active");
 
-    if status != "active" {
+    if !is_active {
         return Json(serde_json::json!({
             "success": false,
             "message": "用户账号已被禁用",
@@ -548,9 +591,17 @@ pub async fn refresh_token(
     let now = chrono::Utc::now();
     let exp = (now + chrono::Duration::minutes(jwt_expire_minutes)).timestamp() as usize;
 
-    // 获取用户的角色和权限（与 login 保持一致）
-    let (user_roles, user_permissions) =
-        get_user_roles_and_permissions(&state, user_id, is_superuser).await;
+    let user_roles: Vec<String> = row
+        .try_get::<Option<Vec<String>>, _>("roles")
+        .unwrap_or_default()
+        .unwrap_or_default();
+    let user_permissions: Vec<String> = if is_superuser {
+        vec!["*".to_string()]
+    } else {
+        row.try_get::<Option<Vec<String>>, _>("permissions")
+            .unwrap_or_default()
+            .unwrap_or_default()
+    };
 
     let claims = Claims {
         sub: user_id.to_string(),
@@ -567,7 +618,7 @@ pub async fn refresh_token(
         iat: now.timestamp() as usize,
         email: Some(email),
         department: None,
-        tenant_id: tenant_id.map(|t| t.to_string()),
+        tenant_id: None,
     };
 
     let access_token = match claims.encode(&state.auth_state.jwt_secret) {
@@ -583,20 +634,106 @@ pub async fn refresh_token(
         }
     };
 
-    // 更新会话中的 access_token 和过期时间
-    let expires_at =
+    let access_token_hash = hash_token(&access_token);
+    let new_refresh_token = generate_refresh_token();
+    let new_refresh_token_hash = hash_token(&new_refresh_token);
+
+    let access_expires_at =
         chrono::Utc::now() + chrono::Duration::hours(state.auth_state.token_expiry_hours);
-    match sqlx::query(
-        "UPDATE unified_core.sessions SET token = $1, expires_at = $2 WHERE refresh_token = $3",
+    let refresh_expires_at = chrono::Utc::now()
+        + chrono::Duration::hours(state.auth_state.token_expiry_hours * 7);
+
+    let old_refresh_token_id: Uuid = row.get("refresh_token_id");
+
+    let tx_result = state.pool.begin().await;
+    let mut tx = match tx_result {
+        Ok(tx) => tx,
+        Err(e) => {
+            tracing::error!("开启事务失败: {}", e);
+            return Json(serde_json::json!({
+                "success": false,
+                "message": "内部服务器错误",
+                "data": null,
+                "code": 500
+            }));
+        }
+    };
+
+    let revoke_result = sqlx::query(
+        "UPDATE iam.refresh_tokens
+         SET revoked_at = NOW(), revoked_reason = 'rotated'
+         WHERE id = $1 AND revoked_at IS NULL",
     )
-    .bind(&access_token)
-    .bind(&expires_at)
-    .bind(&refresh_token)
-    .execute(&state.pool)
-    .await
-    {
-        Ok(_) => tracing::debug!("会话更新成功"),
-        Err(e) => tracing::warn!("会话更新失败: {}", e),
+    .bind(&old_refresh_token_id)
+    .execute(&mut *tx)
+    .await;
+
+    if let Err(e) = revoke_result {
+        tracing::error!("吊销旧 refresh token 失败: {}", e);
+        let _ = tx.rollback().await;
+        return Json(serde_json::json!({
+            "success": false,
+            "message": "内部服务器错误",
+            "data": null,
+            "code": 500
+        }));
+    }
+
+    let insert_result = sqlx::query(
+        "INSERT INTO iam.refresh_tokens (user_id, token_hash, expires_at)
+         VALUES ($1, $2, $3)",
+    )
+    .bind(&user_id)
+    .bind(&new_refresh_token_hash)
+    .bind(&refresh_expires_at)
+    .execute(&mut *tx)
+    .await;
+
+    if let Err(e) = insert_result {
+        tracing::error!("插入新 refresh token 失败: {}", e);
+        let _ = tx.rollback().await;
+        return Json(serde_json::json!({
+            "success": false,
+            "message": "内部服务器错误",
+            "data": null,
+            "code": 500
+        }));
+    }
+
+    let session_result = sqlx::query(
+        "INSERT INTO iam.sessions (user_id, token_hash, expires_at)
+         VALUES ($1, $2, $3)",
+    )
+    .bind(&user_id)
+    .bind(&access_token_hash)
+    .bind(&access_expires_at)
+    .execute(&mut *tx)
+    .await;
+
+    if let Err(e) = session_result {
+        tracing::error!("插入新 session 失败: {}", e);
+        let _ = tx.rollback().await;
+        return Json(serde_json::json!({
+            "success": false,
+            "message": "内部服务器错误",
+            "data": null,
+            "code": 500
+        }));
+    }
+
+    match tx.commit().await {
+        Ok(_) => {
+            tracing::debug!("Token 刷新成功，已旋转 refresh_token");
+        }
+        Err(e) => {
+            tracing::error!("提交事务失败: {}", e);
+            return Json(serde_json::json!({
+                "success": false,
+                "message": "内部服务器错误",
+                "data": null,
+                "code": 500
+            }));
+        }
     }
 
     Json(serde_json::json!({
@@ -604,7 +741,9 @@ pub async fn refresh_token(
         "message": "Token刷新成功",
         "data": {
             "access_token": access_token,
+            "refresh_token": new_refresh_token,
             "expires_in": jwt_expire_minutes * 60,
+            "refresh_expires_in": state.auth_state.token_expiry_hours * 7 * 3600,
             "username": username,
             "is_superuser": is_superuser
         },
@@ -632,12 +771,56 @@ pub async fn logout(
         }
     };
 
-    // 删除用户会话
-    match sqlx::query("DELETE FROM unified_core.sessions WHERE user_id = $1")
+    // 删除用户会话和刷新令牌
+    let mut tx = match state.pool.begin().await {
+        Ok(tx) => tx,
+        Err(e) => {
+            tracing::error!("开启事务失败: {}", e);
+            return Json(serde_json::json!({
+                "success": false,
+                "message": "登出失败",
+                "data": null,
+                "code": 500
+            }));
+        }
+    };
+
+    let delete_sessions = sqlx::query("DELETE FROM iam.sessions WHERE user_id = $1")
         .bind(user_id)
-        .execute(&state.pool)
-        .await
-    {
+        .execute(&mut *tx)
+        .await;
+
+    if let Err(e) = delete_sessions {
+        tracing::error!("删除会话失败: {}", e);
+        let _ = tx.rollback().await;
+        return Json(serde_json::json!({
+            "success": false,
+            "message": "登出失败",
+            "data": null,
+            "code": 500
+        }));
+    }
+
+    let revoke_refresh = sqlx::query(
+        "UPDATE iam.refresh_tokens SET revoked_at = NOW(), revoked_reason = 'logout'
+         WHERE user_id = $1 AND revoked_at IS NULL",
+    )
+    .bind(user_id)
+    .execute(&mut *tx)
+    .await;
+
+    if let Err(e) = revoke_refresh {
+        tracing::error!("吊销 refresh token 失败: {}", e);
+        let _ = tx.rollback().await;
+        return Json(serde_json::json!({
+            "success": false,
+            "message": "登出失败",
+            "data": null,
+            "code": 500
+        }));
+    }
+
+    match tx.commit().await {
         Ok(_) => {
             tracing::info!("Logout successful for user: {}", claims.username);
             Json(serde_json::json!({
@@ -648,7 +831,7 @@ pub async fn logout(
             }))
         }
         Err(e) => {
-            tracing::error!("Logout failed: {}", e);
+            tracing::error!("Logout commit failed: {}", e);
             Json(serde_json::json!({
                 "success": false,
                 "message": "登出失败",
@@ -679,7 +862,7 @@ pub async fn forgot_password(
 
     // 查找用户
     let user = match sqlx::query_as::<_, UserRow>(
-        "SELECT id, username, email FROM core_users WHERE email = $1 AND status = 'active'",
+        "SELECT id, username, email, password_hash, full_name, is_active, is_superuser, roles, permissions, created_at FROM iam.users WHERE email = $1 AND is_active = true",
     )
     .bind(email)
     .fetch_optional(&state.pool)
@@ -888,7 +1071,7 @@ pub async fn reset_password(
     };
 
     // 更新密码
-    match sqlx::query("UPDATE core_users SET password_hash = $1, updated_at = NOW() WHERE id = $2")
+    match sqlx::query("UPDATE iam.users SET password_hash = $1, updated_at = NOW() WHERE id = $2")
         .bind(&password_hash)
         .bind(user_id)
         .execute(&mut *tx)
@@ -927,7 +1110,7 @@ pub async fn reset_password(
     }
 
     // 使所有现有会话失效
-    match sqlx::query("DELETE FROM unified_core.sessions WHERE user_id = $1")
+    match sqlx::query("DELETE FROM iam.sessions WHERE user_id = $1")
         .bind(user_id)
         .execute(&mut *tx)
         .await
@@ -1021,5 +1204,14 @@ async fn get_user_roles_and_permissions(
 }
 
 fn verify_password(password: &str, password_hash: &str) -> bool {
-    bcrypt::verify(password, password_hash).unwrap_or(false)
+    match bcrypt::verify(password, password_hash) {
+        Ok(result) => result,
+        Err(e) => {
+            tracing::error!(
+                "Password verification error: hash may be corrupted - {}",
+                e
+            );
+            false
+        }
+    }
 }

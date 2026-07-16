@@ -141,9 +141,9 @@ const LimsProcessPage: React.FC = () => {
     disabled_instruments: 0,
   };
 
-  const processesQuery = useQuery({
+  const processesQuery = useQuery<{ items: InspectionProcess[]; total: number }>({
     queryKey: ['lims-processes', currentPage, pageSize, debouncedSearch, filterStatus],
-    queryFn: async () => {
+    queryFn: async (): Promise<{ items: InspectionProcess[]; total: number }> => {
       const params: ListParams = {
         page: currentPage + 1,
         pagesize: pageSize,
@@ -157,9 +157,9 @@ const LimsProcessPage: React.FC = () => {
 
       const response = await limsApi.processes.list(params);
       if (response.success && response.data) {
-        const data = response.data as any;
-        const items = data.items || data.processes || [];
-        const total = data.total || items.length;
+        const data = response.data as unknown as Record<string, unknown>;
+        const items = (data.items as InspectionProcess[]) || (data.processes as InspectionProcess[]) || [];
+        const total = (data.total as number) || items.length;
         return { items, total };
       }
       return { items: [], total: 0 };

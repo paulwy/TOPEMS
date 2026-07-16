@@ -62,12 +62,16 @@ const EhsDrillPage: React.FC = () => {
     queryFn: async () => {
       const response = await ehsApi.listDrills();
       if (response.success && response.data) {
-        const data = response.data as any;
-        const drillsData = Array.isArray(data) ? data : data.data || [];
-        return drillsData.map((item: { [key: string]: unknown }) => ({
+        const data = response.data as unknown as Record<string, unknown>;
+        const drillsData = (
+          Array.isArray(data)
+            ? (data as unknown as Record<string, unknown>[])
+            : (data.data as unknown as Record<string, unknown>[]) || []
+        ) as unknown as Record<string, unknown>[];
+        return drillsData.map((item) => ({
           ...item,
           status: translateStatus(item.status as string),
-        }));
+        })) as DrillRecord[];
       }
       return [];
     },
@@ -77,17 +81,17 @@ const EhsDrillPage: React.FC = () => {
   const drills = drillsQuery.data || [];
   const loading = drillsQuery.isLoading;
 
-  const drillDetailQuery = useQuery({
+  const drillDetailQuery = useQuery<DrillRecord | null>({
     queryKey: ['ehs-drill-detail', selectedDrill?.id],
     queryFn: async () => {
       if (!selectedDrill?.id) return null;
       const response = await ehsApi.getDrill(selectedDrill.id);
       if (response.success && response.data) {
-        const drillData = response.data as any;
+        const drillData = response.data as unknown as Record<string, unknown>;
         return {
           ...drillData,
-          status: translateStatus(drillData.status),
-        };
+          status: translateStatus(drillData.status as string),
+        } as DrillRecord;
       }
       return null;
     },
@@ -407,7 +411,7 @@ const EhsDrillPage: React.FC = () => {
               type='date'
               value={formData.date}
               onChange={(e) => setFormData({ ...formData, date: e.target.value })}
-              slotProps={{ inputLabel: { shrink: true } } as any}
+              slotProps={{ inputLabel: { shrink: true } } as const}
             />
             <TextField
               fullWidth

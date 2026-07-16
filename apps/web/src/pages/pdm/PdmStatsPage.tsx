@@ -49,56 +49,64 @@ const adaptBatch = (item: { [key: string]: unknown }) => ({
 const PdmStatsPage: React.FC = () => {
   const queryClient = useQueryClient();
 
-  const { data: processRes, isLoading: processesLoading } = useQuery({
+  const { data: processRes, isLoading: processesLoading } = useQuery<ProductionProcess[]>({
     queryKey: QUERY_KEYS.PDM.PROCESSES,
-    queryFn: async () => {
+    queryFn: async (): Promise<ProductionProcess[]> => {
       const response = await pdmApi.listProcesses();
       if (response.success && response.data) {
-        const data = response.data as any;
-        const items = Array.isArray(data) ? data : data.processes || [];
-        return items.map(adaptProcess);
+        const data = response.data as unknown as Record<string, unknown>;
+        const items = (Array.isArray(data) ? data : data.processes || []) as unknown as {
+          [key: string]: unknown;
+        }[];
+        return items.map(adaptProcess) as unknown as ProductionProcess[];
       }
       return [];
     },
     staleTime: 5 * 60 * 1000,
   });
 
-  const { data: stepRes, isLoading: stepsLoading } = useQuery({
+  const { data: stepRes, isLoading: stepsLoading } = useQuery<ProductionStep[]>({
     queryKey: QUERY_KEYS.PDM.STEPS,
-    queryFn: async () => {
+    queryFn: async (): Promise<ProductionStep[]> => {
       const response = await pdmApi.listSteps();
       if (response.success && response.data) {
-        const data = response.data as any;
-        const items = Array.isArray(data) ? data : data.steps || [];
-        return items.map(adaptStep);
+        const data = response.data as unknown as Record<string, unknown>;
+        const items = (Array.isArray(data) ? data : data.steps || []) as unknown as {
+          [key: string]: unknown;
+        }[];
+        return items.map(adaptStep) as unknown as ProductionStep[];
       }
       return [];
     },
     staleTime: 5 * 60 * 1000,
   });
 
-  const { data: formulaRes, isLoading: formulasLoading } = useQuery({
+  const { data: formulaRes, isLoading: formulasLoading } = useQuery<ProductionFormula[]>({
     queryKey: QUERY_KEYS.PDM.FORMULAS,
-    queryFn: async () => {
+    queryFn: async (): Promise<ProductionFormula[]> => {
       const response = await pdmApi.listFormulas();
       if (response.success && response.data) {
-        const data = response.data as any;
-        const items = Array.isArray(data) ? data : data.formulas || [];
-        return items.map(adaptFormula);
+        const data = response.data as unknown as Record<string, unknown>;
+        const items = (Array.isArray(data) ? data : data.formulas || []) as unknown as {
+          [key: string]: unknown;
+        }[];
+        return items.map(adaptFormula) as unknown as ProductionFormula[];
       }
       return [];
     },
     staleTime: 5 * 60 * 1000,
   });
 
-  const { data: batchRes, isLoading: batchesLoading } = useQuery({
+  const { data: batchRes, isLoading: batchesLoading } = useQuery<ProductionBatch[]>({
     queryKey: QUERY_KEYS.PDM.BATCHES,
-    queryFn: async () => {
+    queryFn: async (): Promise<ProductionBatch[]> => {
       const response = await pdmApi.listBatches();
       if (response.success && response.data) {
-        const data = response.data as any;
-        const items = Array.isArray(data) ? data : data.batches || [];
-        return items.map(adaptBatch);
+        const data = response.data as unknown as Record<string, unknown>;
+        const items = (Array.isArray(data) ? data : data.batches || []) as unknown as {
+          [key: string]: unknown;
+        }[];
+        return items.map(adaptBatch) as unknown as ProductionBatch[];
       }
       return [];
     },

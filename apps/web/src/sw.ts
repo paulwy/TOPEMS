@@ -8,11 +8,9 @@ import { CacheableResponsePlugin } from 'workbox-cacheable-response';
 import { ExpirationPlugin } from 'workbox-expiration';
 import { logger } from '@/utils/logger';
 
-/* eslint-disable @typescript-eslint/naming-convention */
 declare const self: ServiceWorkerGlobalScope & {
   __WB_MANIFEST: PrecacheEntry[];
 };
-/* eslint-enable @typescript-eslint/naming-convention */
 
 precacheAndRoute(self.__WB_MANIFEST);
 

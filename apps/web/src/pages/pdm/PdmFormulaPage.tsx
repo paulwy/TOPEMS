@@ -57,13 +57,13 @@ const PdmFormulaPage: React.FC = () => {
     process_id: '',
   });
 
-  const { data: formulas = [], isLoading } = useQuery({
+  const { data: formulas = [], isLoading } = useQuery<ProductionFormula[]>({
     queryKey: QUERY_KEYS.PDM.FORMULAS,
-    queryFn: async () => {
+    queryFn: async (): Promise<ProductionFormula[]> => {
       const response = await pdmApi.listFormulas();
       if (response.success && response.data) {
-        const adapted = (response.data as any).map(adaptFormula);
-        return adapted;
+        const adapted = (response.data as unknown as { [key: string]: unknown }[]).map(adaptFormula);
+        return adapted as unknown as ProductionFormula[];
       }
       return [];
     },

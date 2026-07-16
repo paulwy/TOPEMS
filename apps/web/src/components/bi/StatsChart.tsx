@@ -158,7 +158,7 @@ export const StatsChart: React.FC<StatsChartProps> = ({
                 <Cell
                   key={`cell-${index}`}
                   fill={
-                    ((entry as Record<string, unknown>)[colorKey] as string) ||
+                    ((entry as unknown as Record<string, unknown>)[colorKey] as string) ||
                     colors[index % colors.length]
                   }
                 />
@@ -215,7 +215,7 @@ export const StatsChart: React.FC<StatsChartProps> = ({
                   <Cell
                     key={`cell-${index}`}
                     fill={
-                      ((entry as Record<string, unknown>)[colorKey] as string) ||
+                      ((entry as unknown as Record<string, unknown>)[colorKey] as string) ||
                       colors[index % colors.length]
                     }
                   />

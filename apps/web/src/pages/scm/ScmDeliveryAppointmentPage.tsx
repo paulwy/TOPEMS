@@ -361,6 +361,16 @@ const ScmDeliveryAppointmentPage: React.FC = () => {
     },
   });
 
+  const openConfirmDialog = useCallback((config: {
+    title: string;
+    message: string;
+    onConfirm: () => void;
+    danger?: boolean;
+  }) => {
+    setConfirmDialogConfig(config);
+    setConfirmDialogOpen(true);
+  }, []);
+
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     if (!formData.supplier_id || !formData.delivery_date || !formData.delivery_method) {
@@ -455,8 +465,7 @@ const ScmDeliveryAppointmentPage: React.FC = () => {
         },
       });
     },
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-    [addNotification]
+    [openConfirmDialog, approveMutation]
   );
 
   const handleReject = useCallback(
@@ -470,8 +479,7 @@ const ScmDeliveryAppointmentPage: React.FC = () => {
         danger: true,
       });
     },
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-    [addNotification]
+    [openConfirmDialog, rejectMutation]
   );
 
   const handleConfirmArrival = useCallback(
@@ -484,8 +492,7 @@ const ScmDeliveryAppointmentPage: React.FC = () => {
         },
       });
     },
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-    [addNotification]
+    [openConfirmDialog, confirmArrivalMutation]
   );
 
   const handleComplete = useCallback(
@@ -498,8 +505,7 @@ const ScmDeliveryAppointmentPage: React.FC = () => {
         },
       });
     },
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-    [addNotification]
+    [openConfirmDialog, completeMutation]
   );
 
   const handleCancel = useCallback(
@@ -513,8 +519,7 @@ const ScmDeliveryAppointmentPage: React.FC = () => {
         danger: true,
       });
     },
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-    [addNotification]
+    [openConfirmDialog, cancelMutation]
   );
 
   const resetForm = () => {
@@ -539,16 +544,6 @@ const ScmDeliveryAppointmentPage: React.FC = () => {
     });
     setIsEditing(false);
     setSelectedAppointment(null);
-  };
-
-  const openConfirmDialog = (config: {
-    title: string;
-    message: string;
-    onConfirm: () => void;
-    danger?: boolean;
-  }) => {
-    setConfirmDialogConfig(config);
-    setConfirmDialogOpen(true);
   };
 
   // 统计卡片
@@ -871,7 +866,7 @@ const ScmDeliveryAppointmentPage: React.FC = () => {
                 onChange={(e) => setFormData({ ...formData, delivery_date: e.target.value })}
                 size='small'
                 required
-                slotProps={{ inputLabel: { shrink: true } } as any}
+                slotProps={{ inputLabel: { shrink: true } } as const}
               />
               <TextField
                 label='预约时间'
@@ -879,7 +874,7 @@ const ScmDeliveryAppointmentPage: React.FC = () => {
                 value={formData.delivery_time}
                 onChange={(e) => setFormData({ ...formData, delivery_time: e.target.value })}
                 size='small'
-                slotProps={{ inputLabel: { shrink: true } } as any}
+                slotProps={{ inputLabel: { shrink: true } } as const}
               />
               <FormControl
                 size='small'
@@ -936,7 +931,7 @@ const ScmDeliveryAppointmentPage: React.FC = () => {
                   setFormData({ ...formData, expected_arrival_time: e.target.value })
                 }
                 size='small'
-                slotProps={{ inputLabel: { shrink: true } } as any}
+                slotProps={{ inputLabel: { shrink: true } } as const}
               />
               <TextField
                 label='总数量'

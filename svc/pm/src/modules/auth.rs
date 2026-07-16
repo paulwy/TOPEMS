@@ -28,7 +28,25 @@ pub struct AuthTokens {
 }
 
 async fn login(Json(req): Json<LoginRequest>) -> Json<ApiResponse<AuthTokens>> {
-    if req.username == "admin" && req.password == "password" {
+    // 从环境变量读取管理员凭据；未配置时拒绝登录并记录警告
+    let admin_user = std::env::var("PM_ADMIN_USERNAME").unwrap_or_else(|_| {
+        tracing::warn!("PM_ADMIN_USERNAME 未配置，登录功能不可用");
+        String::new()
+    });
+    let admin_password_hash = std::env::var("PM_ADMIN_PASSWORD_HASH").unwrap_or_else(|_| {
+        tracing::warn!("PM_ADMIN_PASSWORD_HASH 未配置，登录功能不可用");
+        String::new()
+    });
+
+    let password_valid = !admin_user.is_empty()
+        && !admin_password_hash.is_empty()
+        && req.username == admin_user
+        && bcrypt::verify(&req.password, &admin_password_hash).unwrap_or_else(|e| {
+            tracing::error!("密码哈希验证失败: {}", e);
+            false
+        });
+
+    if password_valid {
         Json(ApiResponse::success(
             AuthTokens {
                 access_token: "test-token-12345".to_string(),

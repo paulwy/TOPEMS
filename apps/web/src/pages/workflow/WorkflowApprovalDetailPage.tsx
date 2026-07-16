@@ -73,13 +73,13 @@ const FlowApprovalDetailPage: React.FC = () => {
 
       const approvalResponse = await workflowApi.getApproval(id);
       if (approvalResponse.success && approvalResponse.data) {
-        const data = approvalResponse.data as any;
+        const data = approvalResponse.data as unknown as Approval;
 
         let recordsList: ApprovalRecord[] = [];
         const recordsResponse = await workflowApi.getRecordsByApproval(id);
         if (recordsResponse.success && recordsResponse.data) {
-          const recordsData = recordsResponse.data as any;
-          recordsList = Array.isArray(recordsData) ? recordsData : recordsData.items || [];
+          const recordsData = recordsResponse.data as unknown as Record<string, unknown>;
+          recordsList = Array.isArray(recordsData) ? recordsData as ApprovalRecord[] : (recordsData.items as ApprovalRecord[]) || [];
         }
 
         return { approval: data, records: recordsList };
@@ -767,9 +767,9 @@ const FlowApprovalDetailPage: React.FC = () => {
             >
               当前审批关联的表单数据
             </Typography>
-            {(approval as any)?.form_data && Object.keys((approval as any).form_data).length > 0 ? (
+            {(approval as unknown as Record<string, unknown>)?.form_data && Object.keys((approval as unknown as Record<string, unknown>).form_data as unknown as Record<string, unknown>).length > 0 ? (
               <Box sx={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: 2 }}>
-                {Object.entries((approval as any).form_data).map(([key, value]) => (
+                {Object.entries((approval as unknown as Record<string, unknown>).form_data as unknown as Record<string, unknown>).map(([key, value]) => (
                   <Box
                     key={key}
                     sx={{

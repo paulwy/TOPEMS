@@ -591,7 +591,7 @@ const ScmPurchaseOrderPage: React.FC = () => {
                 onChange={(e) => setFormData({ ...formData, order_date: e.target.value })}
                 size='small'
                 required
-                slotProps={{ inputLabel: { shrink: true } } as any}
+                slotProps={{ inputLabel: { shrink: true } } as const}
                 disabled={isEditing}
               />
               <TextField
@@ -600,7 +600,7 @@ const ScmPurchaseOrderPage: React.FC = () => {
                 value={formData.delivery_date}
                 onChange={(e) => setFormData({ ...formData, delivery_date: e.target.value })}
                 size='small'
-                slotProps={{ inputLabel: { shrink: true } } as any}
+                slotProps={{ inputLabel: { shrink: true } } as const}
               />
               <TextField
                 label='总金额'

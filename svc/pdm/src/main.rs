@@ -48,9 +48,8 @@ async fn main() {
     tracing::info!("🚀 TOPEMS PDM Service starting...");
 
     let database_url = std::env::var("DATABASE_URL").unwrap_or_else(|_| {
-        env::var("DATABASE_URL")
-            .expect("DATABASE_URL environment variable is required")
-            .to_string()
+        tracing::error!("DATABASE_URL environment variable is required");
+        std::process::exit(1);
     });
 
     let pool = match sqlx::postgres::PgPoolOptions::new()

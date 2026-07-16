@@ -30,11 +30,11 @@ use topems_shared::{
 };
 
 lazy_static::lazy_static! {
-    pub static ref ASSET_COUNT: IntGauge = register_int_gauge!("topems_erp_asset_count", "Total number of assets in ERP system").unwrap();
-    pub static ref VOUCHER_COUNT: IntGauge = register_int_gauge!("topems_erp_voucher_count", "Total number of vouchers in ERP system").unwrap();
-    pub static ref FINANCIAL_TRANSACTION_COUNT: IntCounter = register_int_counter!("topems_erp_financial_transactions_total", "Total number of financial transactions").unwrap();
-    pub static ref ACTIVE_USERS: IntGauge = register_int_gauge!("topems_erp_active_users", "Number of active users in the last hour").unwrap();
-    pub static ref API_REQUESTS_TOTAL: IntCounter = register_int_counter!("topems_erp_api_requests_total", "Total number of API requests").unwrap();
+    pub static ref ASSET_COUNT: IntGauge = register_int_gauge!("topems_erp_asset_count", "Total number of assets in ERP system").expect("Failed to register asset_count gauge - check for duplicate metric registrations");
+    pub static ref VOUCHER_COUNT: IntGauge = register_int_gauge!("topems_erp_voucher_count", "Total number of vouchers in ERP system").expect("Failed to register voucher_count gauge - check for duplicate metric registrations");
+    pub static ref FINANCIAL_TRANSACTION_COUNT: IntCounter = register_int_counter!("topems_erp_financial_transactions_total", "Total number of financial transactions").expect("Failed to register financial_transactions counter - check for duplicate metric registrations");
+    pub static ref ACTIVE_USERS: IntGauge = register_int_gauge!("topems_erp_active_users", "Number of active users in the last hour").expect("Failed to register active_users gauge - check for duplicate metric registrations");
+    pub static ref API_REQUESTS_TOTAL: IntCounter = register_int_counter!("topems_erp_api_requests_total", "Total number of API requests").expect("Failed to register api_requests counter - check for duplicate metric registrations");
 }
 
 #[derive(OpenApi)]
@@ -69,11 +69,10 @@ async fn main() -> Result<()> {
     let _telemetry_guard = init_telemetry("topems-erp");
 
     let db_config = DatabaseConfig {
-        url: env::var("DATABASE_URL").unwrap_or_else(|_| {
-            env::var("DATABASE_URL")
-                .expect("DATABASE_URL environment variable is required")
-                .to_string()
-        }),
+        url: env::var("DATABASE_URL").map_err(|_| {
+            tracing::error!("DATABASE_URL environment variable is required");
+            anyhow::anyhow!("DATABASE_URL environment variable is required")
+        })?,
         max_connections: 20,
         min_connections: Some(5),
         connect_timeout: Some(30),
@@ -119,7 +118,10 @@ async fn main() -> Result<()> {
         tracing::warn!("HRM服务客户端初始化失败: {}, 将使用mock模式", e);
         use topems_shared::service_client::HrmServiceClient;
         let default_url = "http://localhost:8011".to_string();
-        Arc::new(HrmServiceClient::new(default_url).expect("默认HRM客户端创建失败"))
+        Arc::new(HrmServiceClient::new(default_url).unwrap_or_else(|e| {
+            tracing::error!("默认HRM客户端创建失败: {}", e);
+            panic!("HRM客户端创建失败，请检查HRM服务配置")
+        }))
     });
 
     let api_state = ApiState {
@@ -151,8 +153,13 @@ async fn main() -> Result<()> {
                 let encoder = TextEncoder::new();
                 let metrics = prometheus::gather();
                 let mut buffer = Vec::new();
-                encoder.encode(&metrics, &mut buffer).unwrap();
-                String::from_utf8(buffer).unwrap()
+                if encoder.encode(&metrics, &mut buffer).is_err() {
+                    return "Prometheus encoding error".to_string();
+                }
+                String::from_utf8(buffer).unwrap_or_else(|e| {
+                    tracing::error!("Failed to convert Prometheus output to UTF-8: {}", e);
+                    "Prometheus output encoding error".to_string()
+                })
             }),
         )
         .with_state(api_state.clone());
@@ -454,7 +461,10 @@ async fn main() -> Result<()> {
         .merge(create_api_info_router("topems-erp"))
         .route(
             "/api-docs/openapi.json",
-            get(|| async { serde_json::to_string_pretty(&ApiDoc::openapi()).unwrap() }),
+            get(|| async { serde_json::to_string_pretty(&ApiDoc::openapi()).unwrap_or_else(|e| {
+                tracing::error!("Failed to serialize OpenAPI spec: {}", e);
+                "{}".to_string()
+            }) }),
         )
         .layer(axum::middleware::from_fn(telemetry_middleware))
         .layer(prometheus_layer)
@@ -669,11 +679,22 @@ async fn init_db(_pool: &sqlx::PgPool) -> Result<()> {
 
 fn init_encryption_service() -> FieldEncryptionService {
     let master_key = env::var("ENCRYPTION_MASTER_KEY").unwrap_or_else(|_| {
+        tracing::warn!("ENCRYPTION_MASTER_KEY not set, using insecure default - MUST be changed in production");
         "0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef".to_string()
     });
-    let key_bytes = hex::decode(&master_key).unwrap_or_else(|_| vec![0x42; 32]);
+    let key_bytes = hex::decode(&master_key).unwrap_or_else(|e| {
+        tracing::warn!("Failed to decode ENCRYPTION_MASTER_KEY as hex ({}), using fallback key", e);
+        vec![0x42; 32]
+    });
     let mut key_array = [0u8; 32];
-    key_array.copy_from_slice(&key_bytes[..32]);
+    let source = if key_bytes.len() >= 32 {
+        &key_bytes[..32]
+    } else {
+        tracing::warn!("ENCRYPTION_MASTER_KEY too short, padding with zeros");
+        key_array[..key_bytes.len()].copy_from_slice(&key_bytes);
+        return FieldEncryptionService::new(KeyManager::new(&key_array));
+    };
+    key_array.copy_from_slice(source);
     let key_manager = KeyManager::new(&key_array);
     FieldEncryptionService::new(key_manager)
 }

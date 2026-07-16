@@ -417,7 +417,7 @@ export const DocumentKnowledgeBasePage: React.FC = () => {
           <Chip
             size='small'
             label={STATUS_LABELS[row.status]}
-            color={STATUS_COLORS[row.status] as any}
+            color={STATUS_COLORS[row.status] as React.ComponentProps<typeof import('@mui/material/Chip').default>['color']}
             variant='outlined'
             sx={{ fontWeight: 500 }}
           />

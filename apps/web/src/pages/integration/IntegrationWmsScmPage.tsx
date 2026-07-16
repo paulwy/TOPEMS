@@ -251,12 +251,12 @@ const IntegrationWmsScmPage: React.FC = () => {
       return;
     }
     const request: CreateWmsScmSyncRequest = {
-      wms_inventory_id: (data as Record<string, unknown>).wms_inventory_id as string,
-      item_name: (data as Record<string, unknown>).item_name as string,
-      quantity: ((data as Record<string, unknown>).quantity as string)
-        ? parseFloat((data as Record<string, unknown>).quantity as string)
+      wms_inventory_id: (data as unknown as Record<string, unknown>).wms_inventory_id as string,
+      item_name: (data as unknown as Record<string, unknown>).item_name as string,
+      quantity: ((data as unknown as Record<string, unknown>).quantity as string)
+        ? parseFloat((data as unknown as Record<string, unknown>).quantity as string)
         : undefined,
-      unit: ((data as Record<string, unknown>).unit as string) || undefined,
+      unit: ((data as unknown as Record<string, unknown>).unit as string) || undefined,
     };
     createMutation.mutate(request);
   };

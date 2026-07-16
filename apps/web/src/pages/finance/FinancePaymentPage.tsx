@@ -520,7 +520,7 @@ const FinancePaymentPage: React.FC = () => {
 
   const updateItem = (index: number, field: keyof PaymentItem, value: string | number) => {
     const newItems = [...formData.items];
-    (newItems[index] as any)[field] = value;
+    newItems[index] = { ...newItems[index], [field]: value } as PaymentItem;
     setFormData({ ...formData, items: newItems });
   };
 

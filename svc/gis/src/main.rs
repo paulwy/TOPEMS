@@ -182,15 +182,24 @@ async fn main() -> Result<()> {
         "topems_gis_custom_metric",
         "This is a custom metric for TOPEMS-GIS",
     )
-    .unwrap();
+    .unwrap_or_else(|e| {
+        tracing::error!("Failed to create Prometheus gauge: {}", e);
+        panic!("Prometheus gauge creation failed - check for duplicate metric registrations")
+    });
     default_registry()
         .register(Box::new(custom_gauge.clone()))
-        .unwrap();
+        .unwrap_or_else(|e| {
+            tracing::error!("Failed to register Prometheus gauge: {}", e);
+            panic!("Prometheus gauge registration failed - check for duplicate metric registrations")
+        });
     custom_gauge.set(42.0);
     tracing::info!("✅ Prometheus 监控已初始化");
 
     let database_url =
-        env::var("DATABASE_URL").expect("DATABASE_URL must be set in environment variables");
+        env::var("DATABASE_URL").map_err(|_| {
+            tracing::error!("DATABASE_URL environment variable is required");
+            anyhow::anyhow!("DATABASE_URL must be set in environment variables")
+        })?;
     let pool = sqlx::PgPool::connect(&database_url).await?;
     tracing::info!("✅ 连接到 PostgreSQL 数据库成功");
 

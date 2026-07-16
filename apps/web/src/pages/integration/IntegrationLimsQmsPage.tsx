@@ -247,11 +247,11 @@ const IntegrationLimsQmsPage: React.FC = () => {
       return;
     }
     const request: CreateLimsQmsSyncRequest = {
-      lims_sample_id: (data as Record<string, unknown>).lims_sample_id as string,
-      sample_name: (data as Record<string, unknown>).sample_name as string,
+      lims_sample_id: (data as unknown as Record<string, unknown>).lims_sample_id as string,
+      sample_name: (data as unknown as Record<string, unknown>).sample_name as string,
       inspection_result:
-        ((data as Record<string, unknown>).inspection_result as string) || undefined,
-      inspection_notes: ((data as Record<string, unknown>).inspection_notes as string) || undefined,
+        ((data as unknown as Record<string, unknown>).inspection_result as string) || undefined,
+      inspection_notes: ((data as unknown as Record<string, unknown>).inspection_notes as string) || undefined,
     };
     createMutation.mutate(request);
   };

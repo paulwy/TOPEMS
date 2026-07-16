@@ -40,15 +40,46 @@ ALTER TABLE core_guides ENABLE ROW LEVEL SECURITY;
 ALTER TABLE core_guide_lessons ENABLE ROW LEVEL SECURITY;
 ALTER TABLE core_guide_progress ENABLE ROW LEVEL SECURITY;
 
--- 创建 RLS 策略
-CREATE POLICY IF NOT EXISTS core_faqs_tenant_policy ON core_faqs
-    FOR ALL USING (tenant_id = current_setting('app.current_tenant_id')::UUID);
+-- 创建 RLS 策略（使用 DO 块实现 IF NOT EXISTS 逻辑）
+DO $$
+BEGIN
+    IF NOT EXISTS (
+        SELECT 1 FROM pg_policies 
+        WHERE schemaname = 'public' 
+          AND tablename = 'core_faqs' 
+          AND policyname = 'core_faqs_tenant_policy'
+    ) THEN
+        CREATE POLICY core_faqs_tenant_policy ON core_faqs
+            FOR ALL USING (tenant_id = current_setting('app.current_tenant_id')::UUID);
+    END IF;
 
-CREATE POLICY IF NOT EXISTS core_guides_tenant_policy ON core_guides
-    FOR ALL USING (tenant_id = current_setting('app.current_tenant_id')::UUID);
+    IF NOT EXISTS (
+        SELECT 1 FROM pg_policies 
+        WHERE schemaname = 'public' 
+          AND tablename = 'core_guides' 
+          AND policyname = 'core_guides_tenant_policy'
+    ) THEN
+        CREATE POLICY core_guides_tenant_policy ON core_guides
+            FOR ALL USING (tenant_id = current_setting('app.current_tenant_id')::UUID);
+    END IF;
 
-CREATE POLICY IF NOT EXISTS core_guide_lessons_tenant_policy ON core_guide_lessons
-    FOR ALL USING (tenant_id = current_setting('app.current_tenant_id')::UUID);
+    IF NOT EXISTS (
+        SELECT 1 FROM pg_policies 
+        WHERE schemaname = 'public' 
+          AND tablename = 'core_guide_lessons' 
+          AND policyname = 'core_guide_lessons_tenant_policy'
+    ) THEN
+        CREATE POLICY core_guide_lessons_tenant_policy ON core_guide_lessons
+            FOR ALL USING (tenant_id = current_setting('app.current_tenant_id')::UUID);
+    END IF;
 
-CREATE POLICY IF NOT EXISTS core_guide_progress_tenant_policy ON core_guide_progress
-    FOR ALL USING (tenant_id = current_setting('app.current_tenant_id')::UUID);
+    IF NOT EXISTS (
+        SELECT 1 FROM pg_policies 
+        WHERE schemaname = 'public' 
+          AND tablename = 'core_guide_progress' 
+          AND policyname = 'core_guide_progress_tenant_policy'
+    ) THEN
+        CREATE POLICY core_guide_progress_tenant_policy ON core_guide_progress
+            FOR ALL USING (tenant_id = current_setting('app.current_tenant_id')::UUID);
+    END IF;
+END $$;

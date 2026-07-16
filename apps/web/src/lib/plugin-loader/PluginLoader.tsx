@@ -110,16 +110,6 @@ export const ModuleErrorFallback: React.FC<{ error?: Error }> = ({ error }) => (
   </Box>
 );
 
-/* eslint-disable @typescript-eslint/naming-convention */
-declare global {
-  interface Window {
-    System?: {
-      import: (modulePath: string) => Promise<any>;
-    };
-  }
-}
-/* eslint-enable @typescript-eslint/naming-convention */
-
 export class PluginLoader {
   private cache: Map<string, any> = new Map();
   private retryCount: Map<string, number> = new Map();
@@ -138,8 +128,8 @@ export class PluginLoader {
   }
 
   async initSystemJS(): Promise<void> {
-    if (typeof window !== 'undefined' && (window as any).System) {
-      this.systemJS = (window as any).System;
+    if (typeof window !== 'undefined' && (window as unknown as { System?: unknown }).System) {
+      this.systemJS = (window as unknown as { System: { import: (modulePath: string) => Promise<any> } }).System;
     } else {
       await this.loadSystemJS();
     }
@@ -150,7 +140,7 @@ export class PluginLoader {
       const script = document.createElement('script');
       script.src = 'https://cdn.jsdelivr.net/npm/systemjs@6.14.0/dist/system.min.js';
       script.onload = () => {
-        this.systemJS = (window as any).System;
+        this.systemJS = (window as unknown as { System: { import: (modulePath: string) => Promise<any> } }).System;
         resolve();
       };
       script.onerror = reject;
@@ -274,8 +264,8 @@ export class PluginLoader {
       script.type = 'text/javascript';
       script.onload = () => {
         const globalVar = url.split('/').pop()?.replace('.js', '');
-        if (globalVar && (window as any)[globalVar]) {
-          resolve((window as any)[globalVar]);
+        if (globalVar && (window as unknown as Record<string, unknown>)[globalVar]) {
+          resolve((window as unknown as Record<string, unknown>)[globalVar]);
         } else {
           reject(new Error('UMD module not found in global scope'));
         }

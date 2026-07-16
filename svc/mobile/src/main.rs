@@ -250,11 +250,10 @@ async fn main() -> anyhow::Result<()> {
 
     let _telemetry_guard = init_telemetry("topems-mobile");
 
-    let database_url = env::var("DATABASE_URL").unwrap_or_else(|_| {
-        env::var("DATABASE_URL")
-            .expect("DATABASE_URL environment variable is required")
-            .to_string()
-    });
+    let database_url = env::var("DATABASE_URL").map_err(|_| {
+        tracing::error!("DATABASE_URL environment variable is required");
+        anyhow::anyhow!("DATABASE_URL environment variable is required")
+    })?;
 
     let pool = match PgPoolOptions::new()
         .max_connections(5)

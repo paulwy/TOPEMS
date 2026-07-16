@@ -135,7 +135,7 @@ describe('PDM Module API Tests', () => {
           unit: 'pcs',
         },
       ];
-      await bomApi.batchCreateItems('bom-001', items as any);
+      await bomApi.batchCreateItems('bom-001', items as unknown as Record<string, unknown>[]);
       const { apiClient } = await import('../../client');
       expect(apiClient.pdm.post).toHaveBeenCalledWith('/bom-versions/bom-001/items/batch', {
         items,
@@ -425,7 +425,7 @@ describe('PDM Module API Tests', () => {
     it('createProcess should call POST /production-processes with data', async () => {
       const { pdmApi } = await import('../index');
       const data = { process_no: 'PROC-001', name: 'Process A', version: '1.0', status: 'active' };
-      await pdmApi.createProcess(data as any);
+      await pdmApi.createProcess(data as unknown as Record<string, unknown>);
       const { apiClient } = await import('../../client');
       expect(apiClient.pdm.post).toHaveBeenCalledWith('/production-processes', data);
     });
@@ -433,7 +433,7 @@ describe('PDM Module API Tests', () => {
     it('updateProcess should call PUT /production-processes/:id with data', async () => {
       const { pdmApi } = await import('../index');
       const data = { name: 'Updated Process', status: 'active' };
-      await pdmApi.updateProcess('proc-001', data as any);
+      await pdmApi.updateProcess('proc-001', data as unknown as Record<string, unknown>);
       const { apiClient } = await import('../../client');
       expect(apiClient.pdm.put).toHaveBeenCalledWith('/production-processes/proc-001', data);
     });

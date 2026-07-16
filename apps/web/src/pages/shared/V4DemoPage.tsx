@@ -529,7 +529,7 @@ const V4DemoPage: React.FC = () => {
                           <Chip
                             label={template.name}
                             size='small'
-                            color={template.color as any}
+                            color={template.color as React.ComponentProps<typeof import('@mui/material/Chip').default>['color']}
                             variant='outlined'
                           />
                         </Box>

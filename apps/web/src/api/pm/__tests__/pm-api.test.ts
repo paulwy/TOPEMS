@@ -1,4 +1,5 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
+import type { CreateProjectRequest, UpdateProjectRequest } from '../types';
 
 vi.mock('../../client', () => {
   const mockPmClient = {
@@ -45,7 +46,7 @@ describe('PM Module API Tests', () => {
     it('create should call POST /projects with data', async () => {
       const { projectApi } = await import('../project');
       const data = { name: 'Project A', project_code: 'PROJ-001' };
-      await projectApi.create(data as any);
+      await projectApi.create(data as unknown as CreateProjectRequest);
       const { apiClient } = await import('../../client');
       expect(apiClient.pm.post).toHaveBeenCalledWith('/projects', data);
     });
@@ -53,7 +54,7 @@ describe('PM Module API Tests', () => {
     it('update should call PUT /projects/:id with data', async () => {
       const { projectApi } = await import('../project');
       const data = { name: 'Updated Project' };
-      await projectApi.update('proj-001', data as any);
+      await projectApi.update('proj-001', data as Partial<UpdateProjectRequest>);
       const { apiClient } = await import('../../client');
       expect(apiClient.pm.put).toHaveBeenCalledWith('/projects/proj-001', data);
     });

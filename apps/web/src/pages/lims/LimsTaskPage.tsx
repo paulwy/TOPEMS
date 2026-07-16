@@ -225,18 +225,20 @@ const LimsTaskPage: React.FC = () => {
     };
   };
 
-  const samplesData =
-    (samplesResponse as any)?.items || (samplesResponse as any)?.samples || samplesResponse;
+  const samplesData = samplesResponse?.items;
   const safeSamples = Array.isArray(samplesData)
     ? samplesData.map((s: RawSample) => adaptSample(s))
     : [];
 
-  const processesData =
-    (processesResponse as any)?.items || (processesResponse as any)?.processes || processesResponse;
-  const safeProcesses = Array.isArray(processesData) ? processesData : [];
+  const processesData = processesResponse?.items;
+  const safeProcesses = Array.isArray(processesData)
+    ? (processesData as unknown as InspectionProcess[])
+    : [];
 
-  const tasksData = (tasksResponse as any)?.items || (tasksResponse as any)?.tasks || tasksResponse;
-  const rawTasks: RawTask[] = Array.isArray(tasksData) ? tasksData : [];
+  const tasksData = tasksResponse?.items;
+  const rawTasks: RawTask[] = Array.isArray(tasksData)
+    ? (tasksData as unknown as RawTask[])
+    : [];
   const safeTasks = rawTasks.map((t) => adaptTask(t));
 
   const stats: LimsStatistics = statsResponse || {
@@ -257,11 +259,9 @@ const LimsTaskPage: React.FC = () => {
     disabled_instruments: 0,
   };
 
-  const recordsData =
-    (taskRecordsResponse as any)?.items ||
-    (taskRecordsResponse as any)?.records ||
-    taskRecordsResponse;
-  const selectedTaskRecords: InspectionRecord[] = Array.isArray(recordsData) ? recordsData : [];
+  const selectedTaskRecords: InspectionRecord[] = Array.isArray(taskRecordsResponse)
+    ? taskRecordsResponse
+    : [];
 
   const createTaskMutation = useMutation({
     mutationFn: async (data: CreateInspectionTaskRequest) => {

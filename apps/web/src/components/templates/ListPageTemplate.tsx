@@ -92,7 +92,7 @@ export function ListPageTemplate<T>({
   data,
   loading,
   error,
-  getRowId = (row: T) => (row as any).id,
+  getRowId = (row: T) => (row as unknown as Record<string, unknown>).id as string | number,
   onRowClick,
   selectable,
   onSelectionChange,
@@ -515,7 +515,7 @@ export function ListPageTemplate<T>({
   const handleSelectAll = useCallback(
     (event: React.ChangeEvent<HTMLInputElement>) => {
       if (event.target.checked) {
-        const allIds = data.map((row) => getRowId?.(row) ?? (row as any).id);
+        const allIds = data.map((row) => getRowId?.(row) ?? (row as unknown as Record<string, unknown>).id as string | number);
         effectiveOnSelectionChange?.(allIds);
       } else {
         effectiveOnSelectionChange?.([]);
@@ -526,7 +526,7 @@ export function ListPageTemplate<T>({
 
   const handleSelectRow = useCallback(
     (row: T) => {
-      const rowId = getRowId?.(row) ?? (row as any).id;
+      const rowId = getRowId?.(row) ?? (row as unknown as Record<string, unknown>).id as string | number;
       const newSelected = effectiveSelectedIds.includes(rowId)
         ? effectiveSelectedIds.filter((id) => id !== rowId)
         : [...effectiveSelectedIds, rowId];
@@ -570,7 +570,7 @@ export function ListPageTemplate<T>({
   // 处理行展开
   const handleExpandRow = useCallback(
     (row: T) => {
-      const rowId = getRowId?.(row) ?? (row as any).id;
+      const rowId = getRowId?.(row) ?? (row as unknown as Record<string, unknown>).id as string | number;
       const newExpanded = expandedIds.includes(rowId)
         ? expandedIds.filter((id) => id !== rowId)
         : [...expandedIds, rowId];
@@ -627,7 +627,7 @@ export function ListPageTemplate<T>({
         const exportData = data.map((row) => {
           const transformed = exportTransform
             ? exportTransform(row)
-            : (row as Record<string, unknown>);
+            : (row as unknown as Record<string, unknown>);
           return headers
             .map((header) => {
               const col = visibleColumns.find(
@@ -903,7 +903,7 @@ export function ListPageTemplate<T>({
     }
 
     return data.map((row, index) => {
-      const rowId = getRowId?.(row) ?? (row as any).id;
+      const rowId = getRowId?.(row) ?? (row as unknown as Record<string, unknown>).id as string | number;
       const isSelected = effectiveSelectedIds.includes(rowId);
       const isExpanded = expandedIds.includes(rowId);
 
@@ -1005,7 +1005,7 @@ export function ListPageTemplate<T>({
               >
                 {column.render
                   ? column.render(row, index)
-                  : String((row as Record<string, unknown>)[column.id])}
+                  : String((row as unknown as Record<string, unknown>)[column.id])}
               </TableCell>
             ))}
             {rowActions && rowActions.length > 0 && (
@@ -1157,7 +1157,7 @@ export function ListPageTemplate<T>({
     return (
       <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1.5, p: 1.5 }}>
         {data.map((row, index) => {
-          const rowId = getRowId ? getRowId(row) : ((row as any).id ?? index);
+          const rowId = getRowId ? getRowId(row) : ((row as unknown as Record<string, unknown>).id as string | number ?? index);
           const isSelected = selectedIds.has(rowId);
 
           // 优先使用自定义渲染函数
@@ -1177,7 +1177,7 @@ export function ListPageTemplate<T>({
           }
 
           // 默认卡片渲染
-          const rowObj = row as any;
+          const rowObj = row as unknown as Record<string, unknown>;
           const title = mobileCardTitleKey
             ? rowObj[mobileCardTitleKey]
             : rowObj.name || rowObj.title || rowObj.code || `项目 ${index + 1}`;
@@ -1221,7 +1221,7 @@ export function ListPageTemplate<T>({
                   >
                     {String(title ?? '')}
                   </Typography>
-                  {subtitle && (
+                  {subtitle ? (
                     <Typography
                       variant='body2'
                       color='text.secondary'
@@ -1235,7 +1235,7 @@ export function ListPageTemplate<T>({
                     >
                       {String(subtitle)}
                     </Typography>
-                  )}
+                  ) : null}
                 </Box>
                 <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
                   {selectable && (

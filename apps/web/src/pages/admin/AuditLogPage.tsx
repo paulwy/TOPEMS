@@ -555,7 +555,7 @@ const AuditLogPage: React.FC<AuditLogPageProps> = ({ onNavigate }) => {
                 setCurrentPage(1);
               }}
               sx={{ width: 220 }}
-              slotProps={{ inputLabel: { shrink: true } } as any}
+              slotProps={{ inputLabel: { shrink: true } } as const}
             />
             <Typography
               variant='body2'
@@ -572,7 +572,7 @@ const AuditLogPage: React.FC<AuditLogPageProps> = ({ onNavigate }) => {
                 setCurrentPage(1);
               }}
               sx={{ width: 220 }}
-              slotProps={{ inputLabel: { shrink: true } } as any}
+              slotProps={{ inputLabel: { shrink: true } } as const}
             />
             {(startDate || endDate) && (
               <Button

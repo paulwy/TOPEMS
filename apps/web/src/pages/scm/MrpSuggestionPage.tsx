@@ -480,7 +480,7 @@ const MrpSuggestionPage: React.FC = () => {
         <Chip
           size='small'
           label={getSuggestionTypeLabel(row.suggestion_type)}
-          color={getSuggestionTypeColor(row.suggestion_type) as any}
+          color={getSuggestionTypeColor(row.suggestion_type) as React.ComponentProps<typeof import('@mui/material/Chip').default>['color']}
           variant='outlined'
         />
       ),
@@ -532,7 +532,7 @@ const MrpSuggestionPage: React.FC = () => {
         <Chip
           size='small'
           label={getStatusLabel(row.status)}
-          color={getStatusColor(row.status) as any}
+          color={getStatusColor(row.status) as React.ComponentProps<typeof import('@mui/material/Chip').default>['color']}
           variant='outlined'
         />
       ),

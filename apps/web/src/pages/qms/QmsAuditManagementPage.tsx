@@ -26,13 +26,12 @@ const QmsAuditManagementPage: React.FC = () => {
   const [showDetailModal, setShowDetailModal] = useState(false);
   const [selectedItem, setSelectedItem] = useState<AuditPlan | null>(null);
 
-  const { data: auditPlans = [], isLoading: loading } = useQuery({
+  const { data: auditPlans = [], isLoading: loading } = useQuery<AuditPlan[]>({
     queryKey: ['qms-audit-plans'],
-    queryFn: async () => {
+    queryFn: async (): Promise<AuditPlan[]> => {
       const response = await qmsApi.listAuditPlans();
       if (response.success && response.data) {
-        const plansData = response.data as any;
-        return Array.isArray(plansData) ? plansData : plansData.plans || [];
+        return response.data;
       }
       return [];
     },

@@ -341,7 +341,7 @@ const MrpPlanPage: React.FC = () => {
         <Chip
           size='small'
           label={getStatusLabel(row.status)}
-          color={getStatusColor(row.status) as any}
+          color={getStatusColor(row.status) as React.ComponentProps<typeof import('@mui/material/Chip').default>['color']}
           variant='outlined'
         />
       ),
@@ -489,7 +489,7 @@ const MrpPlanPage: React.FC = () => {
                 onChange={(e) => setFormData({ ...formData, start_date: e.target.value })}
                 size='small'
                 required
-                slotProps={{ inputLabel: { shrink: true } } as any}
+                slotProps={{ inputLabel: { shrink: true } } as const}
               />
               <TextField
                 label='结束日期 *'
@@ -498,7 +498,7 @@ const MrpPlanPage: React.FC = () => {
                 onChange={(e) => setFormData({ ...formData, end_date: e.target.value })}
                 size='small'
                 required
-                slotProps={{ inputLabel: { shrink: true } } as any}
+                slotProps={{ inputLabel: { shrink: true } } as const}
               />
             </Box>
             <TextField

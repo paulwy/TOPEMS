@@ -984,8 +984,8 @@ const HrmTrainingPage: React.FC = () => {
                     <FormLabel htmlFor='course-images'>课程图片</FormLabel>
                     <Box sx={{ mt: 1 }}>
                       <ImageUpload
-                        value={(formData as any).images || []}
-                        onChange={(files) => setFormData({ ...formData, images: files } as any)}
+                        value={((formData as unknown as Record<string, unknown>).images as string[]) || []}
+                        onChange={(files) => setFormData({ ...formData, images: files } as unknown as Record<string, unknown>)}
                         maxCount={9}
                         accept='image/*'
                         cropEnabled

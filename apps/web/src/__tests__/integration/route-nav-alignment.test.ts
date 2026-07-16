@@ -12,7 +12,7 @@ vi.mock('@/lib/plugin-loader/PluginManager', () => ({
   },
 }));
 
-const mockPluginManager = pluginManager as any;
+const mockPluginManager = pluginManager as unknown as Record<string, unknown>;
 
 describe('Route-Navigation Alignment', () => {
   beforeEach(() => {

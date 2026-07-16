@@ -190,8 +190,14 @@ impl VersionMiddleware {
         }
     }
 
-    pub fn config(&self) -> std::sync::RwLockReadGuard<'_, VersionConfig> {
-        self.config.read().unwrap()
+    pub fn config(&self) -> Option<std::sync::RwLockReadGuard<'_, VersionConfig>> {
+        match self.config.read() {
+            Ok(guard) => Some(guard),
+            Err(e) => {
+                tracing::error!("Version config RwLock poisoned: {}", e);
+                None
+            }
+        }
     }
 
     pub fn update_config(&self, config: VersionConfig) {
@@ -406,8 +412,13 @@ pub async fn versioning_middleware(
     req: Request<Body>,
     next: Next,
 ) -> Response {
-    // Clone config to avoid holding RwLockReadGuard (which is !Send) across .await points
-    let config = state.versioning_middleware.config().clone();
+    let config = match state.versioning_middleware.config() {
+        Some(guard) => guard.clone(),
+        None => {
+            tracing::error!("Version config unavailable, skipping version check");
+            return next.run(req).await;
+        }
+    };
 
     if !config.enabled {
         return next.run(req).await;
@@ -422,7 +433,13 @@ pub async fn versioning_middleware(
             req.uri().path()
         );
 
-        let api_version = config.get_version(&requested_version).unwrap();
+        let api_version = match config.get_version(&requested_version) {
+            Some(v) => v,
+            None => {
+                tracing::error!("Version marked as sunset but not found in config: {}", requested_version);
+                return next.run(req).await;
+            }
+        };
         let body = serde_json::json!({
             "success": false,
             "message": format!("API版本 {} 已停用，请升级到最新版本 {}", requested_version, config.current_version),
@@ -438,7 +455,13 @@ pub async fn versioning_middleware(
         let mut response = (
             StatusCode::GONE,
             [(axum::http::header::CONTENT_TYPE, "application/json")],
-            serde_json::to_string(&body).unwrap(),
+            match serde_json::to_string(&body) {
+                Ok(s) => s,
+                Err(e) => {
+                    tracing::error!("Failed to serialize sunset response: {}", e);
+                    r#"{"success":false,"message":"Internal error","code":500}"#.to_string()
+                }
+            },
         )
             .into_response();
 
@@ -466,7 +489,13 @@ pub async fn versioning_middleware(
         let response = (
             StatusCode::BAD_REQUEST,
             [(axum::http::header::CONTENT_TYPE, "application/json")],
-            serde_json::to_string(&body).unwrap(),
+            match serde_json::to_string(&body) {
+                Ok(s) => s,
+                Err(e) => {
+                    tracing::error!("Failed to serialize error response: {}", e);
+                    r#"{"success":false,"message":"Internal error","code":500}"#.to_string()
+                }
+            },
         )
             .into_response();
 
@@ -481,7 +510,13 @@ pub async fn versioning_middleware(
         );
     }
 
-    let api_version = config.get_version(&requested_version).unwrap();
+    let api_version = match config.get_version(&requested_version) {
+        Some(v) => v,
+        None => {
+            tracing::error!("Version marked as supported but not found in config: {}", requested_version);
+            return next.run(req).await;
+        }
+    };
 
     let mut response = next.run(req).await;
     add_version_headers(&mut response, &requested_version, api_version);

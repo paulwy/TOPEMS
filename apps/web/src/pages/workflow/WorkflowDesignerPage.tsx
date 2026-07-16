@@ -79,7 +79,7 @@ const WorkflowDesignerPage: React.FC = () => {
       });
       // Convert workflow definition to nodes and edges
       if (wf.definition && wf.definition.nodes) {
-        const approvalNodes = wf.definition.nodes as any[];
+        const approvalNodes = wf.definition.nodes;
         const convertedNodes = approvalNodes.map((node, index) => ({
           id: node.node_id,
           type: index === 0 ? 'start' : node.approvers?.length > 1 ? 'approval' : 'task',

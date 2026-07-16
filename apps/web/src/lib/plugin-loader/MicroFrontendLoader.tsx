@@ -21,19 +21,9 @@ interface MountFunction {
 
 const remoteModuleCache: Map<string, MountFunction> = new Map();
 
-declare global {
-  interface Window {
-    [key: string]: any;
-    // eslint-disable-next-line @typescript-eslint/naming-convention
-    __webpack_share_scopes__: any;
-    // eslint-disable-next-line @typescript-eslint/naming-convention
-    __webpack_init_sharing__: (scope: string) => Promise<void>;
-  }
-}
-
 const loadRemoteEntry = async (remoteName: string): Promise<void> => {
   return new Promise((resolve, reject) => {
-    if (window[remoteName]) {
+    if ((window as unknown as Record<string, unknown>)[remoteName]) {
       resolve();
       return;
     }
@@ -62,7 +52,7 @@ const loadRemoteEntry = async (remoteName: string): Promise<void> => {
     script.async = true;
 
     script.onload = () => {
-      if (window[remoteName]) {
+      if ((window as unknown as Record<string, unknown>)[remoteName]) {
         resolve();
       } else {
         reject(new Error(`Remote entry loaded but ${remoteName} not found on window`));
@@ -94,7 +84,7 @@ const loadRemoteModule = async (
       await window.__webpack_init_sharing__('default');
     }
 
-    const container = window[remoteName];
+    const container = (window as Record<string, WebpackContainer | undefined>)[remoteName];
     if (!container) {
       throw new Error(`Remote module "${remoteName}" not found`);
     }
@@ -104,10 +94,11 @@ const loadRemoteModule = async (
     }
 
     const factory = await container.get(modulePath);
-    const module = await factory();
+    const remoteModule = (await factory()) as unknown as Record<string, unknown>;
 
-    const mountFn = module.mount || module.default?.mount;
-    const unmountFn = module.unmount || module.default?.unmount;
+    const defaultExport = remoteModule.default as unknown as Record<string, unknown> | undefined;
+    const mountFn = (remoteModule.mount || defaultExport?.mount) as MountFunction['mount'] | undefined;
+    const unmountFn = (remoteModule.unmount || defaultExport?.unmount) as MountFunction['unmount'] | undefined;
 
     if (!mountFn) {
       throw new Error(`Module ${remoteName}:${modulePath} does not export a mount function`);

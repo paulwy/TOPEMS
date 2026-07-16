@@ -169,7 +169,7 @@ export function logPerformanceMetrics(): void {
     console.log('[TOPEMS Performance]', JSON.stringify(report, null, 2));
 
     if (typeof window !== 'undefined') {
-      (window as any).__TOPEMS_PERF__ = report;
+      (window as unknown as Record<string, unknown>).__TOPEMS_PERF__ = report;
     }
   });
 }

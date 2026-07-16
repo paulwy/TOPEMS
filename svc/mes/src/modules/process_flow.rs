@@ -619,13 +619,15 @@ pub async fn get_flow_steps(
                 .map(|s| ProcessFlowStepResponse {
                     id: s.id.to_string(),
                     flow_id: s.flow_id.to_string(),
-                    process_id: s.process_id.map(|u| u.to_string()).unwrap_or_default(),
+                    process_id: s.process_id.to_string(),
                     process_name: s.process_name,
                     process_code: s.process_code,
-                    sequence: s.sequence.unwrap_or_default(),
+                    sequence: s.sequence,
                     work_station_id: s.work_station_id.map(|u| u.to_string()),
                     work_station_name: Some(s.work_station_name),
-                    equipment_ids: s.equipment_ids,
+                    equipment_ids: s.equipment_ids.as_ref().map(|ids| {
+                        serde_json::to_string(&ids.iter().map(|u| u.to_string()).collect::<Vec<_>>()).unwrap_or_default()
+                    }),
                     standard_time: opt_big_decimal_to_f64(s.standard_time),
                     wait_time: opt_big_decimal_to_f64(s.wait_time),
                     transfer_time: s.transfer_time.map(|t| t.to_string()),
@@ -683,15 +685,13 @@ pub async fn add_flow_step(
     let wait_time = body
         .wait_time
         .and_then(|v| BigDecimal::from_str(&v.to_string()).ok());
-    let transfer_time: Option<NaiveDateTime> = body
+    let transfer_time = body
         .transfer_time
-        .and_then(|v| NaiveDateTime::parse_from_str(&v, "%Y-%m-%d %H:%M:%S").ok());
-    let equipment_ids: Option<String> = body.equipment_ids.map(|ids| {
-        let uuids: Vec<Uuid> = ids
-            .into_iter()
+        .and_then(|v| BigDecimal::from_str(&v).ok());
+    let equipment_ids: Option<Vec<Uuid>> = body.equipment_ids.map(|ids| {
+        ids.into_iter()
             .filter_map(|id| Uuid::parse_str(&id).ok())
-            .collect();
-        serde_json::to_string(&uuids).unwrap_or_default()
+            .collect()
     });
 
     let result = sqlx::query!(
@@ -711,7 +711,7 @@ pub async fn add_flow_step(
         process_uuid,
         body.sequence,
         work_station_uuid,
-        equipment_ids,
+        equipment_ids.as_deref(),
         standard_time,
         wait_time,
         transfer_time,
@@ -741,13 +741,15 @@ pub async fn add_flow_step(
                 ProcessFlowStepResponse {
                     id: s.id.to_string(),
                     flow_id: s.flow_id.to_string(),
-                    process_id: s.process_id.map(|u| u.to_string()).unwrap_or_default(),
+                    process_id: s.process_id.to_string(),
                     process_name,
                     process_code,
-                    sequence: s.sequence.unwrap_or_default(),
+                    sequence: s.sequence,
                     work_station_id: s.work_station_id.map(|u| u.to_string()),
                     work_station_name: None,
-                    equipment_ids: s.equipment_ids,
+                    equipment_ids: s.equipment_ids.as_ref().map(|ids| {
+                        serde_json::to_string(&ids.iter().map(|u| u.to_string()).collect::<Vec<_>>()).unwrap_or_default()
+                    }),
                     standard_time: opt_big_decimal_to_f64(s.standard_time),
                     wait_time: opt_big_decimal_to_f64(s.wait_time),
                     transfer_time: s.transfer_time.map(|t| t.to_string()),
@@ -794,15 +796,13 @@ pub async fn update_flow_step(
     let wait_time = body
         .wait_time
         .and_then(|v| BigDecimal::from_str(&v.to_string()).ok());
-    let transfer_time: Option<NaiveDateTime> = body
+    let transfer_time = body
         .transfer_time
-        .and_then(|v| NaiveDateTime::parse_from_str(&v, "%Y-%m-%d %H:%M:%S").ok());
-    let equipment_ids: Option<String> = body.equipment_ids.map(|ids| {
-        let uuids: Vec<Uuid> = ids
-            .into_iter()
+        .and_then(|v| BigDecimal::from_str(&v).ok());
+    let equipment_ids: Option<Vec<Uuid>> = body.equipment_ids.map(|ids| {
+        ids.into_iter()
             .filter_map(|id| Uuid::parse_str(&id).ok())
-            .collect();
-        serde_json::to_string(&uuids).unwrap_or_default()
+            .collect()
     });
 
     let result = sqlx::query!(
@@ -825,7 +825,7 @@ pub async fn update_flow_step(
         "#,
         body.sequence,
         work_station_uuid,
-        equipment_ids,
+        equipment_ids.as_deref(),
         standard_time,
         wait_time,
         transfer_time,
@@ -856,13 +856,15 @@ pub async fn update_flow_step(
                 ProcessFlowStepResponse {
                     id: s.id.to_string(),
                     flow_id: s.flow_id.to_string(),
-                    process_id: s.process_id.map(|u| u.to_string()).unwrap_or_default(),
+                    process_id: s.process_id.to_string(),
                     process_name,
                     process_code,
-                    sequence: s.sequence.unwrap_or_default(),
+                    sequence: s.sequence,
                     work_station_id: s.work_station_id.map(|u| u.to_string()),
                     work_station_name: None,
-                    equipment_ids: s.equipment_ids,
+                    equipment_ids: s.equipment_ids.as_ref().map(|ids| {
+                        serde_json::to_string(&ids.iter().map(|u| u.to_string()).collect::<Vec<_>>()).unwrap_or_default()
+                    }),
                     standard_time: opt_big_decimal_to_f64(s.standard_time),
                     wait_time: opt_big_decimal_to_f64(s.wait_time),
                     transfer_time: s.transfer_time.map(|t| t.to_string()),
@@ -995,13 +997,15 @@ pub async fn reorder_flow_steps(
                 .map(|s| ProcessFlowStepResponse {
                     id: s.id.to_string(),
                     flow_id: s.flow_id.to_string(),
-                    process_id: s.process_id.map(|u| u.to_string()).unwrap_or_default(),
+                    process_id: s.process_id.to_string(),
                     process_name: s.process_name,
                     process_code: s.process_code,
-                    sequence: s.sequence.unwrap_or_default(),
+                    sequence: s.sequence,
                     work_station_id: s.work_station_id.map(|u| u.to_string()),
                     work_station_name: Some(s.work_station_name),
-                    equipment_ids: s.equipment_ids,
+                    equipment_ids: s.equipment_ids.as_ref().map(|ids| {
+                        serde_json::to_string(&ids.iter().map(|u| u.to_string()).collect::<Vec<_>>()).unwrap_or_default()
+                    }),
                     standard_time: opt_big_decimal_to_f64(s.standard_time),
                     wait_time: opt_big_decimal_to_f64(s.wait_time),
                     transfer_time: s.transfer_time.map(|t| t.to_string()),

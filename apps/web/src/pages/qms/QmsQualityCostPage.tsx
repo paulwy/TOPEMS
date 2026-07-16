@@ -72,13 +72,12 @@ const QmsQualityCostPage: React.FC = () => {
   const addNotification = useNotificationStore((state) => state.addNotification);
   const queryClient = useQueryClient();
 
-  const { data: costs = [], isLoading: loading } = useQuery({
+  const { data: costs = [], isLoading: loading } = useQuery<QualityCost[]>({
     queryKey: ['qms-quality-costs'],
-    queryFn: async () => {
+    queryFn: async (): Promise<QualityCost[]> => {
       const response = await qmsApi.listQualityCosts();
       if (response.success && response.data) {
-        const data = response.data as any;
-        return Array.isArray(data) ? data : data.costs || [];
+        return response.data;
       }
       return [];
     },
@@ -97,13 +96,12 @@ const QmsQualityCostPage: React.FC = () => {
     staleTime: 5 * 60 * 1000,
   });
 
-  const { data: trendData, isLoading: loadingTrend } = useQuery({
+  const { data: trendData = [], isLoading: loadingTrend } = useQuery<CostTrendItem[]>({
     queryKey: ['qms-cost-trend'],
-    queryFn: async () => {
+    queryFn: async (): Promise<CostTrendItem[]> => {
       const response = await qmsApi.getCostTrend({ period: 'month' });
       if (response.success && response.data) {
-        const data = response.data as any;
-        return Array.isArray(data) ? data : data.trend || [];
+        return response.data;
       }
       return [];
     },
@@ -301,7 +299,7 @@ const QmsQualityCostPage: React.FC = () => {
     },
   ];
 
-  const filteredCosts = costs.filter((cost: any) => {
+  const filteredCosts = costs.filter((cost: QualityCost) => {
     if (filterData.cost_type && cost.costType !== filterData.cost_type) return false;
     if (filterData.department && cost.department !== filterData.department) return false;
     return true;
@@ -629,7 +627,7 @@ const QmsQualityCostPage: React.FC = () => {
                 size='small'
                 fullWidth
                 label='发生日期'
-                slotProps={{ inputLabel: { shrink: true } } as any}
+                slotProps={{ inputLabel: { shrink: true } } as const}
                 value={formData.occurrence_date}
                 onChange={(e) =>
                   setFormData((prev) => ({ ...prev, occurrence_date: e.target.value }))
@@ -917,7 +915,7 @@ const QmsQualityCostPage: React.FC = () => {
                       </Typography>
                     ) : trendData.length > 0 ? (
                       <Box sx={{ mt: 2 }}>
-                        {trendData.slice(0, 6).map((item: any, index: number) => (
+                        {trendData.slice(0, 6).map((item: CostTrendItem, index: number) => (
                           <Box
                             key={index}
                             sx={{

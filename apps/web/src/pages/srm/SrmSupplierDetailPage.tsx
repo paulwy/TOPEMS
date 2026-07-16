@@ -187,7 +187,7 @@ const SrmSupplierDetailPage: React.FC = () => {
                       ? '中'
                       : '高'
                 }
-                color={riskColors[supplier.risklevel] as any}
+                color={riskColors[supplier.risklevel] as React.ComponentProps<typeof import('@mui/material/Chip').default>['color']}
                 size='small'
               />
             </Box>

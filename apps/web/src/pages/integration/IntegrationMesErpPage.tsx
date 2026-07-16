@@ -254,11 +254,11 @@ const IntegrationMesErpPage: React.FC = () => {
       return;
     }
     const request: CreateMesErpSyncRequest = {
-      mes_order_id: (data as Record<string, unknown>).mes_order_id as string,
-      order_number: (data as Record<string, unknown>).order_number as string,
-      product_name: ((data as Record<string, unknown>).product_name as string) || undefined,
-      quantity: ((data as Record<string, unknown>).quantity as string)
-        ? parseFloat((data as Record<string, unknown>).quantity as string)
+      mes_order_id: (data as unknown as Record<string, unknown>).mes_order_id as string,
+      order_number: (data as unknown as Record<string, unknown>).order_number as string,
+      product_name: ((data as unknown as Record<string, unknown>).product_name as string) || undefined,
+      quantity: ((data as unknown as Record<string, unknown>).quantity as string)
+        ? parseFloat((data as unknown as Record<string, unknown>).quantity as string)
         : undefined,
     };
     createMutation.mutate(request);

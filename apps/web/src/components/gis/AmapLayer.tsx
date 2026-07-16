@@ -65,7 +65,7 @@ const AmapLayer = forwardRef<AmapLayerRef, AmapLayerProps>(
       if (!mapRef.current) return;
 
       mapRef.current.plugin(['AMap.Marker'], () => {
-        updateMarkers((window as Record<string, unknown>).AMap as AMapType, mapRef.current);
+        updateMarkers((window as unknown as Record<string, unknown>).AMap as AMapType, mapRef.current);
       });
     }, [devicePoints, storageLocations]);
 

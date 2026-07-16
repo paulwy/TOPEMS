@@ -59,10 +59,13 @@ const apiReportToReport = (apiReport: ApiReport): Report => ({
   id: apiReport.id,
   name: apiReport.name,
   type: apiReport.report_type,
-  creator: (apiReport as any).created_by || '未知',
+  creator: apiReport.created_by || '未知',
   created_at: apiReport.created_at,
   updated_at: apiReport.updated_at,
-  status: (apiReport as any).status || 'active',
+  status:
+    apiReport.status === 'draft' || apiReport.status === 'archived'
+      ? apiReport.status
+      : 'active',
   description: apiReport.description,
 });
 

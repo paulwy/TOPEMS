@@ -162,11 +162,11 @@ const SupplierPortalPage: React.FC = () => {
 
   const statusConfig: Record<
     string,
-    { label: string; color: 'default' | 'primary' | 'success' | 'warning' | 'error' }
+    { label: string; color: 'default' | 'primary' | 'success' | 'warning' | 'error' | 'info' }
   > = {
     pending: { label: '待处理', color: 'warning' },
     processing: { label: '处理中', color: 'primary' },
-    shipped: { label: '已发货', color: 'info' as any },
+    shipped: { label: '已发货', color: 'info' },
     completed: { label: '已完成', color: 'success' },
     cancelled: { label: '已取消', color: 'default' },
   };

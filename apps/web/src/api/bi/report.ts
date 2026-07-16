@@ -32,7 +32,7 @@ export const reportCrudApi: CrudOperations<Report> = {
     fetchReports({
       page: params?.page,
       pageSize: params?.pagesize,
-      ...(params as any),
+      ...(params as unknown as Record<string, unknown>),
     }),
   get: fetchReport,
   create: createReport,

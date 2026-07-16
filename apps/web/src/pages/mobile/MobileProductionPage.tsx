@@ -613,7 +613,7 @@ const MobileProductionPage: React.FC = () => {
                               <Chip
                                 label={getStatusLabel(order.status)}
                                 size='small'
-                                color={getStatusColor(order.status) as any}
+                                color={getStatusColor(order.status) as React.ComponentProps<typeof import('@mui/material/Chip').default>['color']}
                                 sx={{ height: 20, fontSize: '0.7rem' }}
                               />
                               <Typography
@@ -897,7 +897,7 @@ const MobileProductionPage: React.FC = () => {
                             <Chip
                               label={getStatusLabel(equipment.status)}
                               size='small'
-                              color={getStatusColor(equipment.status) as any}
+                              color={getStatusColor(equipment.status) as React.ComponentProps<typeof import('@mui/material/Chip').default>['color']}
                               sx={{ height: 18, fontSize: '0.65rem' }}
                             />
                           </Box>
@@ -984,7 +984,7 @@ const MobileProductionPage: React.FC = () => {
                     quantity: parseInt(e.target.value) || 0,
                   }))
                 }
-                slotProps={{ input: { min: 0 } } as any}
+                slotProps={{ input: { min: 0 } } as const}
               />
               <TextField
                 fullWidth
@@ -997,7 +997,7 @@ const MobileProductionPage: React.FC = () => {
                     good_quantity: parseInt(e.target.value) || 0,
                   }))
                 }
-                slotProps={{ input: { min: 0 } } as any}
+                slotProps={{ input: { min: 0 } } as const}
               />
               <TextField
                 fullWidth
@@ -1010,7 +1010,7 @@ const MobileProductionPage: React.FC = () => {
                     bad_quantity: parseInt(e.target.value) || 0,
                   }))
                 }
-                slotProps={{ input: { min: 0 } } as any}
+                slotProps={{ input: { min: 0 } } as const}
               />
             </Box>
           </DialogContent>

@@ -254,18 +254,22 @@ export const MessageBubble: React.FC<MessageBubbleProps> = ({
             </div>
           ) : isImage && message.content ? (
             <>
-              {/* eslint-disable-next-line jsx-a11y/click-events-have-key-events, jsx-a11y/no-noninteractive-element-interactions, jsx-a11y/img-redundant-alt */}
-              <img
-                src={message.content}
-                alt='Shared image'
-                style={{
-                  borderRadius: 8,
-                  maxWidth: '100%',
-                  cursor: 'pointer',
-                  maxHeight: 300,
-                }}
+              <button
+                type="button"
                 onClick={() => window.open(message.content, '_blank')}
-              />
+                style={{ background: 'none', border: 'none', padding: 0, cursor: 'pointer' }}
+              >
+                <img
+                  src={message.content}
+                  alt='聊天图片'
+                  style={{
+                    borderRadius: 8,
+                    maxWidth: '100%',
+                    maxHeight: 300,
+                    display: 'block',
+                  }}
+                />
+              </button>
             </>
           ) : isFile ? (
             <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>

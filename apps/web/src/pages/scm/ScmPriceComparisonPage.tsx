@@ -32,7 +32,7 @@ const ScmPriceComparisonPage: React.FC = () => {
     queryFn: async () => {
       const params: Record<string, unknown> = { page: page + 1, pageSize };
       if (statusFilter !== 'all') params.status = statusFilter;
-      const response = await scmApi.priceComparisons.list(params as any);
+      const response = await scmApi.priceComparisons.list(params as unknown as Record<string, unknown>);
       if (response.success && response.data) {
         return { items: response.data.items || [], total: response.data.total || 0 };
       }

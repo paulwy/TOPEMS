@@ -136,8 +136,12 @@ const EhsCheckPage: React.FC = () => {
       if (!selectedPlan?.id) return [];
       const response = await ehsApi.listInspectionItems(selectedPlan.id);
       if (response.success && response.data) {
-        const data = response.data as any;
-        return Array.isArray(data) ? data : data.items || [];
+        const data = response.data as unknown as InspectionItem[] | { items: InspectionItem[] };
+        return (
+          Array.isArray(data)
+            ? (data as InspectionItem[])
+            : (data.items as InspectionItem[]) || []
+        ) as InspectionItem[];
       }
       return [];
     },
@@ -162,7 +166,10 @@ const EhsCheckPage: React.FC = () => {
       if (!selectedRecord?.id) return null;
       const response = await ehsApi.getInspectionRecord(selectedRecord.id);
       if (response.success && response.data) {
-        const data = response.data as any;
+        const data = response.data as unknown as {
+          record: InspectionRecord;
+          items: RecordItem[];
+        };
         return {
           record: data.record,
           items: data.items || [],
@@ -736,8 +743,8 @@ const EhsCheckPage: React.FC = () => {
       <ListPageTemplate
         title={activeTab === 'plans' ? '检查计划' : '检查记录'}
         subtitle={activeTab === 'plans' ? 'Inspection Plans' : 'Inspection Records'}
-        columns={activeTab === 'plans' ? planColumns : (recordColumns as any)}
-        data={activeTab === 'plans' ? filteredPlans : (filteredRecords as any)}
+        columns={(activeTab === 'plans' ? planColumns : recordColumns) as unknown as ColumnDef<InspectionPlan>[]}
+        data={(activeTab === 'plans' ? filteredPlans : filteredRecords) as unknown as InspectionPlan[]}
         loading={loading}
         filters={filters}
         searchable

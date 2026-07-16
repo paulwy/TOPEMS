@@ -59,7 +59,7 @@ const FlowVersionHistoryPage: React.FC = () => {
       if (!id) return null;
       const workflowResponse = await workflowApi.getWorkflow(id);
       if (workflowResponse.success && workflowResponse.data) {
-        return workflowResponse.data as any;
+        return workflowResponse.data as unknown as Workflow;
       }
       return null;
     },
@@ -75,7 +75,9 @@ const FlowVersionHistoryPage: React.FC = () => {
       if (!id) return [];
       const versionsResponse = await workflowApi.getVersions(id);
       if (versionsResponse.success && versionsResponse.data) {
-        const data = versionsResponse.data as any;
+        const data = versionsResponse.data as unknown as
+          | WorkflowVersion[]
+          | { items: WorkflowVersion[] };
         const versionList = Array.isArray(data) ? data : data.items || [];
         return versionList;
       }
@@ -119,10 +121,10 @@ const FlowVersionHistoryPage: React.FC = () => {
       if (!wfResponse.success || !wfResponse.data) {
         throw new Error('获取工作流失败');
       }
-      const workflowData = wfResponse.data as any;
+      const workflowData = wfResponse.data as unknown as Workflow;
       return workflowApi.createVersion(id!, {
         version: data.version,
-        definition: workflowData.definition || {},
+        definition: workflowData.definition,
         change_description: data.change_description,
         created_by: 'current-user',
       });

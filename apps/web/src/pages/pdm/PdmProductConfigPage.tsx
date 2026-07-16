@@ -109,14 +109,14 @@ export const PdmProductConfigPage: React.FC = () => {
     queryClient.invalidateQueries({ queryKey: QUERY_KEYS.PDM.PRODUCT_CONFIGS });
   }, [queryClient]);
 
-  const { data: configs = [], isLoading: loading } = useQuery({
+  const { data: configs = [], isLoading: loading } = useQuery<ProductConfig[]>({
     queryKey: QUERY_KEYS.PDM.PRODUCT_CONFIGS,
-    queryFn: async () => {
+    queryFn: async (): Promise<ProductConfig[]> => {
       const response = await pdmApi.listProductConfigs();
       if (response.success && response.data) {
-        const data = response.data as any;
+        const data = response.data as unknown as Record<string, unknown>;
         const items = Array.isArray(data) ? data : data.configs || [];
-        return items;
+        return items as unknown as ProductConfig[];
       }
       return [];
     },
@@ -345,7 +345,7 @@ export const PdmProductConfigPage: React.FC = () => {
           <Chip
             size='small'
             label={getStatusLabel(row.status)}
-            color={getStatusColor(row.status) as any}
+            color={getStatusColor(row.status) as React.ComponentProps<typeof import('@mui/material/Chip').default>['color']}
           />
         ),
       },

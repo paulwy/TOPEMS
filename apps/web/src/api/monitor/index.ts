@@ -283,7 +283,7 @@ export const alertCrudApi: CrudOperations<Alert, AlertQueryParams> = {
     monitorApi.listAlerts({
       page: params?.page,
       pagesize: params?.pagesize,
-      ...(params as any),
+      ...(params as unknown as Record<string, unknown>),
     }) as Promise<{
       success: boolean;
       code: number;
@@ -295,11 +295,11 @@ export const alertCrudApi: CrudOperations<Alert, AlertQueryParams> = {
   ) => Promise<{ success: boolean; code: number; message: string; data?: Alert }>,
   create: (() => {
     throw new Error('Not implemented');
-  }) as any,
+  }) as unknown as CrudOperations<Alert, AlertQueryParams>['create'],
   update: (() => {
     throw new Error('Not implemented');
-  }) as any,
+  }) as unknown as CrudOperations<Alert, AlertQueryParams>['update'],
   delete: (() => {
     throw new Error('Not implemented');
-  }) as any,
+  }) as unknown as CrudOperations<Alert, AlertQueryParams>['delete'],
 };

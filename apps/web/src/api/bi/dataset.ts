@@ -33,7 +33,7 @@ export const datasetCrudApi: CrudOperations<Dataset> = {
     listDatasets({
       page: params?.page,
       pageSize: params?.pagesize,
-      ...(params as any),
+      ...(params as unknown as Record<string, unknown>),
     }),
   get: getDataset,
   create: createDataset,

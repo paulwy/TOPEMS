@@ -662,7 +662,7 @@ const TransferPage: React.FC = () => {
               onChange={(e) => setNewItem({ ...newItem, planned_date: e.target.value })}
               fullWidth
               size='small'
-              slotProps={{ inputLabel: { shrink: true } } as any}
+              slotProps={{ inputLabel: { shrink: true } } as const}
             />
             <TextField
               label='承运人'

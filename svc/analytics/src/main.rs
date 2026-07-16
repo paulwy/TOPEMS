@@ -42,7 +42,7 @@ pub use shared::*;
 // ==================== 主入口 ====================
 
 #[tokio::main]
-async fn main() {
+async fn main() -> anyhow::Result<()> {
     _ = dotenv::dotenv();
 
     let _telemetry_guard = init_telemetry("topems-analytics");
@@ -50,9 +50,8 @@ async fn main() {
     tracing::info!("🚀 TOPEMS Analytics Service starting...");
 
     let database_url = std::env::var("DATABASE_URL").unwrap_or_else(|_| {
-        env::var("DATABASE_URL")
-            .expect("DATABASE_URL environment variable is required")
-            .to_string()
+        tracing::error!("DATABASE_URL environment variable is required");
+        std::process::exit(1);
     });
 
     let pool = match sqlx::postgres::PgPoolOptions::new()
@@ -1088,12 +1087,11 @@ async fn main() {
     let addr = SocketAddr::from(([0, 0, 0, 0], port));
     tracing::info!("✅ Analytics Service is running at http://{}", addr);
 
-    axum::serve(
-        tokio::net::TcpListener::bind(&addr).await.unwrap(),
-        app.into_make_service(),
-    )
-    .await
-    .unwrap();
+    let listener = tokio::net::TcpListener::bind(&addr).await?;
+    axum::serve(listener, app.into_make_service())
+        .await?;
+
+    Ok(())
 }
 
 // ==================== 公共处理函数 ====================

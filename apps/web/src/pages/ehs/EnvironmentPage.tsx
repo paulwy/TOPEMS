@@ -62,9 +62,13 @@ const EnvironmentPage: React.FC = () => {
         status: statusFilter || undefined,
       });
       if (response.success && response.data) {
-        const data = response.data as any;
-        const monitorsData = Array.isArray(data) ? data : data.data || [];
-        const adapted = monitorsData.map((item: { [key: string]: unknown }) => ({
+        const data = response.data as unknown as Record<string, unknown>;
+        const monitorsData = (
+          Array.isArray(data)
+            ? (data as unknown as Record<string, unknown>[])
+            : (data.data as unknown as Record<string, unknown>[]) || []
+        ) as unknown as Record<string, unknown>[];
+        const adapted = monitorsData.map((item) => ({
           ...item,
           status:
             item.status === 'active'
@@ -75,7 +79,7 @@ const EnvironmentPage: React.FC = () => {
                   ? '维护中'
                   : item.status,
         }));
-        return adapted;
+        return adapted as unknown as EnvironmentMonitor[];
       }
       return [];
     },
@@ -134,7 +138,7 @@ const EnvironmentPage: React.FC = () => {
       {
         id: 'monitor_no',
         label: '监测点编号',
-        render: (row) => (row as any).monitor_no || '-',
+        render: (row) => row.monitor_no || '-',
       },
       {
         id: 'name',
@@ -220,7 +224,7 @@ const EnvironmentPage: React.FC = () => {
     return monitors.filter((monitor) => {
       const matchesSearch =
         monitor.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        ((monitor as any).monitor_no || '').toLowerCase().includes(searchTerm.toLowerCase());
+        (monitor.monitor_no || '').toLowerCase().includes(searchTerm.toLowerCase());
       const matchesType = !typeFilter || monitor.monitor_type === typeFilter;
       const matchesStatus = !statusFilter || monitor.status === statusFilter;
       return matchesSearch && matchesType && matchesStatus;
@@ -585,7 +589,7 @@ const EnvironmentPage: React.FC = () => {
                   >
                     监测点编号
                   </Box>
-                  <Box sx={{ fontWeight: 500 }}>{(monitorDetail as any).monitor_no || '-'}</Box>
+                  <Box sx={{ fontWeight: 500 }}>{monitorDetail.monitor_no || '-'}</Box>
                 </Box>
                 <Box>
                   <Box

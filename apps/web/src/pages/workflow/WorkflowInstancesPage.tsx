@@ -208,7 +208,7 @@ export const WorkflowInstancesPage: React.FC = () => {
 
       const matchesStatus = statusFilter === 'all' || instance.status === statusFilter;
 
-      const workflowType = (instance as any).data?.type as string;
+      const workflowType = instance.data?.type as string;
       const matchesType = typeFilter === 'all' || workflowType === typeFilter;
 
       return matchesSearch && matchesStatus && matchesType;
@@ -324,7 +324,7 @@ export const WorkflowInstancesPage: React.FC = () => {
         id: 'workflow_type',
         label: '流程类型',
         render: (row) => {
-          const workflowType = (row as any).data?.type as string;
+          const workflowType = row.data?.type as string;
           const typeConfig = TYPE_CONFIG[workflowType];
           return (
             <Chip

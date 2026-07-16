@@ -89,7 +89,7 @@ describe('useOfflineSync', () => {
     let recordId: string | null = null;
     await act(async () => {
       recordId = await result.current.queueOfflineRequest({
-        service: 'hrm' as any,
+        service: 'hrm' as const,
         endpoint: '/api/employees',
         method: 'POST',
         data: { name: 'John' },
@@ -121,7 +121,7 @@ describe('useOfflineSync', () => {
 
     await act(async () => {
       await result.current.queueOfflineRequest({
-        service: 'hrm' as any,
+        service: 'hrm' as const,
         endpoint: '/api/employees/1',
         method: 'PUT',
         data: { name: 'Updated' },

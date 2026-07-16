@@ -174,7 +174,7 @@ export const DateRangePicker: React.FC<DateRangePickerProps> = ({
                 onChange={(e) => setCustomStart(e.target.value)}
                 size='small'
                 sx={{ flex: 1 }}
-                slotProps={{ inputLabel: { shrink: true } } as any}
+                slotProps={{ inputLabel: { shrink: true } } as const}
               />
               <Typography
                 variant='body2'
@@ -188,7 +188,7 @@ export const DateRangePicker: React.FC<DateRangePickerProps> = ({
                 onChange={(e) => setCustomEnd(e.target.value)}
                 size='small'
                 sx={{ flex: 1 }}
-                slotProps={{ inputLabel: { shrink: true } } as any}
+                slotProps={{ inputLabel: { shrink: true } } as const}
               />
             </Box>
             <Button

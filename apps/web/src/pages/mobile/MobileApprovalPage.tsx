@@ -41,6 +41,7 @@ import { MobileLayout, PullToRefresh, MobileSkeleton, MobileButton } from '@/com
 import { SwipeAction, type SwipeActionItem } from '@/components/mobile';
 import { useNotificationStore, useAuthStore } from '@/store';
 import { approvalTaskApi } from '@/api/workflow/approval';
+import type { ListParams } from '@/api/workflow/types';
 import { apiLogger } from '@/utils/logger';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { MOBILE_PATHS } from '@/modules/mobile/config';
@@ -153,7 +154,7 @@ const MobileApprovalPage: React.FC = () => {
   const approvalsQuery = useQuery<ApprovalItem[]>({
     queryKey: ['mobile-approvals', activeTab, searchQuery, user?.id],
     queryFn: async () => {
-      const params: Record<string, unknown> = {};
+      const params: ListParams = {};
       if (searchQuery) {
         params.search = searchQuery;
       }
@@ -168,10 +169,10 @@ const MobileApprovalPage: React.FC = () => {
         params.initiator_id = user?.id;
       }
 
-      const response = await approvalTaskApi.listApprovalTasks(params as any);
+      const response = await approvalTaskApi.listApprovalTasks(params);
       if (response.success && response.data) {
-        const data = response.data as any;
-        const apiApprovals = Array.isArray(data) ? data : data.items || [];
+        const data = response.data as unknown as Record<string, unknown>;
+        const apiApprovals = (Array.isArray(data) ? data : (data.items as ApiApproval[]) || []) as ApiApproval[];
         return apiApprovals.map(mapApiApprovalToApprovalItem);
       }
       return [];
@@ -424,7 +425,7 @@ const MobileApprovalPage: React.FC = () => {
                     <Chip
                       label={getPriorityLabel(selectedApproval.priority)}
                       size='small'
-                      color={getPriorityColor(selectedApproval.priority) as any}
+                      color={getPriorityColor(selectedApproval.priority) as React.ComponentProps<typeof import('@mui/material/Chip').default>['color']}
                       sx={{ height: 20, fontSize: '0.7rem' }}
                     />
                   </Box>
@@ -898,7 +899,7 @@ const MobileApprovalPage: React.FC = () => {
                                 <Chip
                                   label={getPriorityLabel(approval.priority)}
                                   size='small'
-                                  color={getPriorityColor(approval.priority) as any}
+                                  color={getPriorityColor(approval.priority) as React.ComponentProps<typeof import('@mui/material/Chip').default>['color']}
                                   sx={{ height: 20, fontSize: '0.7rem' }}
                                 />
                                 {approval.amount && (

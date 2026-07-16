@@ -142,7 +142,7 @@ export default function AccountManagementPage() {
 
   const handleCreate = async (data: AccountFormData) => {
     try {
-      await createAccount.mutateAsync(data as any);
+      await createAccount.mutateAsync(data as unknown as Partial<Account>);
       setIsCreating(false);
       refetch();
     } catch (error: unknown) {

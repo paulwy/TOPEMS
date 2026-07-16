@@ -10,7 +10,7 @@ import {
   Upload,
   Search,
 } from 'lucide-react';
-import { Box, Typography, Chip, Button, Grid } from '@mui/material';
+import { Box, Typography, Chip, Button, Grid, type ChipProps } from '@mui/material';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 
 import { useNotificationStore } from '@/store';
@@ -31,6 +31,7 @@ import {
   createTemplate,
   getTemplate,
   type NotificationTemplate,
+  type TemplateStatusEnum,
 } from '@/api/notification';
 import { apiLogger } from '@/utils/logger';
 
@@ -48,7 +49,7 @@ const TYPE_LABELS: Record<string, string> = {
   alert: '告警',
 };
 
-const TYPE_COLORS: Record<string, string> = {
+const TYPE_COLORS: Record<string, NonNullable<ChipProps['color']>> = {
   system: 'primary',
   workflow: 'secondary',
   reminder: 'warning',
@@ -88,7 +89,7 @@ export const NotificationTemplatesPage: React.FC = () => {
       const response = await getTemplates(
         currentPage,
         pageSize,
-        selectedStatus ? (selectedStatus as any) : undefined,
+        selectedStatus ? (selectedStatus as TemplateStatusEnum) : undefined,
         debouncedSearch || undefined
       );
       if (response.success && response.data?.templates) {
@@ -309,7 +310,7 @@ export const NotificationTemplatesPage: React.FC = () => {
           <Chip
             label={TYPE_LABELS[row.notification_type] || row.notification_type}
             size='small'
-            color={(TYPE_COLORS[row.notification_type] as any) || 'primary'}
+            color={TYPE_COLORS[row.notification_type] || 'primary'}
             variant='outlined'
             sx={{ minWidth: 80 }}
           />

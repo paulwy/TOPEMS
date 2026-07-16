@@ -88,10 +88,10 @@ export const PageContainer: React.FC<PageContainerProps> = ({
     };
   }, [backButton, navHierarchy]);
 
-  const headerTitle = (headerProps as any)?.title;
+  const headerTitle = (headerProps as unknown as PageHeaderProps)?.title;
   const mergedHeaderProps: PageHeaderProps = {
     title: headerTitle || title || '',
-    ...(headerProps as any),
+    ...(headerProps as unknown as Record<string, unknown>),
     ...(headerActions && { customToolbar: headerActions }),
     ...(headerContent && { children: headerContent }),
     ...(actions && { actions }),

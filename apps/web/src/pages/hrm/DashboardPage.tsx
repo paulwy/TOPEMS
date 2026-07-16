@@ -22,6 +22,7 @@ import {
   departmentApi,
   type Employee,
   type Department,
+  type AttendanceRecord,
 } from '@/api/hrm';
 import { HRM_PATHS } from '@/modules/hrm/config';
 
@@ -81,9 +82,9 @@ export const DashboardPage: React.FC = () => {
     queryFn: async () => {
       const res = await attendanceApi.list();
       if (res.success && res.data) {
-        return (res.data.items as any[]) || [];
+        return (res.data.items as AttendanceRecord[]) || [];
       }
-      return [] as any[];
+      return [] as AttendanceRecord[];
     },
   });
 

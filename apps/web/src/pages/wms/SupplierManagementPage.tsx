@@ -35,7 +35,7 @@ const SupplierManagementPage: React.FC = () => {
   const [showDetailDialog, setShowDetailDialog] = useState(false);
   const [selectedSupplier, setSelectedSupplier] = useState<Supplier | null>(null);
   const [selectedIds, setSelectedIds] = useState<string[]>([]);
-  const [formData, setFormData] = useState<CreateSupplierRequest>({
+  const [formData, setFormData] = useState<CreateSupplierRequest & { images?: string[] }>({
     name: '',
     short_name: '',
     contact_name: '',
@@ -44,7 +44,7 @@ const SupplierManagementPage: React.FC = () => {
     address: '',
     bank_account: '',
     tax_number: '',
-  } as any);
+  });
 
   const { addNotification } = useNotificationStore();
   const queryClient = useQueryClient();
@@ -417,8 +417,8 @@ const SupplierManagementPage: React.FC = () => {
                   供应商图片
                 </Typography>
                 <ImageUpload
-                  value={(formData as any).images || []}
-                  onChange={(files) => setFormData({ ...formData, images: files } as any)}
+                  value={formData.images || []}
+                  onChange={(files) => setFormData({ ...formData, images: files })}
                   maxCount={9}
                   accept='image/*'
                   cropEnabled

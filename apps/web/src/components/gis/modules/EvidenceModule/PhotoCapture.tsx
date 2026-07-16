@@ -70,9 +70,11 @@ const PhotoCapture: React.FC<PhotoCaptureProps> = ({
     if (stream) {
       const track = stream.getVideoTracks()[0];
       if (track && 'getCapabilities' in track) {
-        const capabilities = track.getCapabilities() as any;
+        const capabilities = track.getCapabilities() as MediaTrackCapabilities & { torch?: boolean };
         if (capabilities.torch) {
-          track.applyConstraints({ advanced: [{ torch: !flashOn } as any] });
+          track.applyConstraints({
+            advanced: [{ torch: !flashOn } as MediaTrackConstraintSet & { torch?: boolean }],
+          });
           setFlashOn(!flashOn);
         }
       }

@@ -473,7 +473,7 @@ mod tests {
     use super::*;
 
     #[tokio::test]
-    async fn test_create_tenant() {
+    async fn test_create_tenant() -> Result<(), TenantError> {
         let manager = TenantManager::new();
 
         let tenant = manager
@@ -482,16 +482,16 @@ mod tests {
                 "test-company".to_string(),
                 TenantPlan::Professional,
             )
-            .await
-            .unwrap();
+            .await?;
 
         assert_eq!(tenant.name, "Test Company");
         assert_eq!(tenant.plan, TenantPlan::Professional);
         assert!(matches!(tenant.status, TenantStatus::Trial));
+        Ok(())
     }
 
     #[tokio::test]
-    async fn test_get_tenant_by_slug() {
+    async fn test_get_tenant_by_slug() -> Result<(), TenantError> {
         let manager = TenantManager::new();
 
         manager
@@ -500,12 +500,13 @@ mod tests {
                 "test-company".to_string(),
                 TenantPlan::Basic,
             )
-            .await
-            .unwrap();
+            .await?;
 
         let found = manager.get_tenant_by_slug("test-company").await;
         assert!(found.is_some());
-        assert_eq!(found.unwrap().name, "Test Company");
+        let tenant = found.ok_or(TenantError::TenantNotFound)?;
+        assert_eq!(tenant.name, "Test Company");
+        Ok(())
     }
 
     #[tokio::test]

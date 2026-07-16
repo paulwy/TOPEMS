@@ -40,7 +40,7 @@ import {
 import { ListPageTemplate, type ColumnDef } from '@/components/templates';
 import { ehsApi } from '@/api/ehs';
 import { PageContainer } from '@/components/common/PageContainerV2';
-import type { SafetyIssue, Rectification, Verification } from '@/api/ehs';
+import type { SafetyIssue, SafetyIssueDetail, Rectification, Verification } from '@/api/ehs';
 import { useNotificationStore } from '@/store';
 import { designTokens } from '@/theme/tokens';
 
@@ -116,7 +116,7 @@ const EhsHazardPage: React.FC = () => {
     try {
       const response = await ehsApi.getSafetyIssue(issueId);
       if (response.success && response.data) {
-        const data = response.data as any;
+        const data = response.data as unknown as SafetyIssueDetail;
         setSelectedIssue(data.hazard);
         setRectification(data.rectification || null);
         setVerification(data.verification || null);

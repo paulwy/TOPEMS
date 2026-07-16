@@ -114,7 +114,7 @@ vi.mock('@/store', () => ({
 
 describe('LimsProcessPage', () => {
   beforeEach(() => {
-    global.fetch = vi.fn().mockResolvedValue({ ok: true }) as any;
+    global.fetch = vi.fn().mockResolvedValue({ ok: true } as unknown as Record<string, unknown>);
   });
 
 describe('LimsProcessPage', () => {

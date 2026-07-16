@@ -223,7 +223,7 @@ const RsProjectCreatePage: React.FC = () => {
   ];
 
   const handleSubmit = async (data: unknown) => {
-    const formData = data as Record<string, unknown>;
+    const formData = data as unknown as Record<string, unknown>;
 
     const requestData = {
       name: formData.name as string,

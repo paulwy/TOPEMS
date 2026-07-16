@@ -38,23 +38,24 @@ import type {
   Barcode as BarcodeType,
   CreateBarcodeRequest,
   UpdateBarcodeRequest,
+  ListParams,
 } from '@/api/lims';
 import { useNotificationStore } from '@/store';
 import { apiLogger } from '@/utils/logger';
 import { designTokens } from '@/theme/tokens';
 import { DASHBOARD_PATHS } from '@/routes/dashboard';
-import { useCrudOperations } from '@/hooks/useCrudQueries';
+import { useCrudOperations, type CrudOperations } from '@/hooks/useCrudQueries';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 
 const ct = designTokens.colors;
 
 const barcodeCrudApi = {
-  list: (params?: Record<string, unknown>) => limsApi.listBarcodes(params as any),
+  list: (params?: ListParams) => limsApi.listBarcodes(params),
   get: (id: string) => limsApi.getBarcode(id),
   create: (data: CreateBarcodeRequest) => limsApi.generateBarcode(data),
   update: (id: string, data: UpdateBarcodeRequest) => limsApi.updateBarcode(id, data),
   delete: (id: string) => limsApi.deleteBarcode(id),
-} as any;
+} as unknown as CrudOperations<BarcodeType, CreateBarcodeRequest, UpdateBarcodeRequest>;
 
 const BarcodePage: React.FC = () => {
   const navigate = useNavigate();
@@ -94,7 +95,7 @@ const BarcodePage: React.FC = () => {
     queryFn: async () => {
       const response = await limsApi.getBarcodeTypes();
       if (response.success && response.data) {
-        const data = response.data as any;
+        const data = response.data as unknown as Record<string, unknown>;
         if (Array.isArray(data)) return data;
         if (data.items && Array.isArray(data.items)) return data.items;
         return [];
@@ -373,9 +374,9 @@ const BarcodePage: React.FC = () => {
       updateMutation.mutate({
         id: selectedBarcode.id,
         data: {
-          ...formData,
-          status: (formData as any).status || selectedBarcode.status,
-        } as UpdateBarcodeRequest,
+          sample_id: formData.sample_id,
+          status: selectedBarcode.status,
+        },
       });
     } else {
       generateMutation.mutate(formData);

@@ -722,10 +722,10 @@ const QmsEightDPage: React.FC = () => {
         <CardContent sx={{ p: 0 }}>
           <ListPageTemplate
             columns={columns}
-            data={filteredReports as any[]}
+            data={filteredReports}
             loading={loading}
             getRowId={(row: EightDReport) => row.id}
-            rowActions={rowActions as any}
+            rowActions={rowActions as unknown as RowAction<EightDReport>[]}
             searchable={false}
             filters={[]}
             actions={[]}
@@ -854,7 +854,7 @@ const QmsEightDPage: React.FC = () => {
                   type='date'
                   value={formData.dueDate}
                   onChange={(e) => setFormData((prev) => ({ ...prev, dueDate: e.target.value }))}
-                  slotProps={{ inputLabel: { shrink: true } } as any}
+                  slotProps={{ inputLabel: { shrink: true } } as const}
                 />
               </Box>
             </Box>

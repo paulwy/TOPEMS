@@ -4,10 +4,12 @@ pub mod audit;
 pub mod cache;
 pub mod db;
 pub mod document;
+pub mod embedding;
 pub mod multimodal;
 pub mod pdf;
 pub mod qa;
 pub mod recommendation;
+pub mod search;
 pub mod vector;
 
 pub use agent::{AgentRequest, AgentResponse, AgentService};

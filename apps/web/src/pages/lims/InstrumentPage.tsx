@@ -693,7 +693,7 @@ const InstrumentPage: React.FC = () => {
                 type='date'
                 value={formData.purchase_date}
                 onChange={(e) => setFormData({ ...formData, purchase_date: e.target.value })}
-                slotProps={{ inputLabel: { shrink: true } } as any}
+                slotProps={{ inputLabel: { shrink: true } } as const}
               />
               <TextField
                 fullWidth
@@ -701,7 +701,7 @@ const InstrumentPage: React.FC = () => {
                 type='date'
                 value={formData.calibration_date}
                 onChange={(e) => setFormData({ ...formData, calibration_date: e.target.value })}
-                slotProps={{ inputLabel: { shrink: true } } as any}
+                slotProps={{ inputLabel: { shrink: true } } as const}
               />
             </Box>
             <Box sx={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 2 }}>
@@ -713,7 +713,7 @@ const InstrumentPage: React.FC = () => {
                 onChange={(e) =>
                   setFormData({ ...formData, next_calibration_date: e.target.value })
                 }
-                slotProps={{ inputLabel: { shrink: true } } as any}
+                slotProps={{ inputLabel: { shrink: true } } as const}
               />
               <TextField
                 fullWidth

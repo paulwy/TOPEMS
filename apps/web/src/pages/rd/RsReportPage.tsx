@@ -7,7 +7,7 @@ import {
   FlaskConical as ScienceIcon,
   Folder as FolderIcon,
 } from 'lucide-react';
-import { StatsPageTemplate } from '@/components/templates/StatsPageTemplate';
+import { StatsPageTemplate, type TableColumn } from '@/components/templates/StatsPageTemplate';
 import { apiClient } from '@/api/client';
 import { PageContainer } from '@/components/common';
 
@@ -157,7 +157,7 @@ const RsReportPage: React.FC = () => {
           label: '占比',
           render: (value: unknown) => `${(value as number).toFixed(1)}%`,
         },
-      ] as any,
+      ] as TableColumn[],
       data: [
         {
           phase: '小试阶段',

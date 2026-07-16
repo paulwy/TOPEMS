@@ -770,7 +770,7 @@ async fn submit_payment_handler(
 ) -> Json<ApiResponse<PaymentResponse>> {
     let service = FinanceService::new(state.pool.clone(), state.workflow_client.clone());
     let tenant_id = get_tenant_id(&claims);
-    let submitted_by = claims.username.clone();
+    let _submitted_by = claims.username.clone();
 
     let payment = match service.get_payment(tenant_id, payment_id).await {
         Ok(p) => p,

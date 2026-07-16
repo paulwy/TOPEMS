@@ -77,7 +77,7 @@ export const ProductPage: React.FC = () => {
     queryFn: async () => {
       const response = await pdmApi.listProducts();
       if (response.success && response.data) {
-        const data = response.data as any;
+        const data = response.data as unknown as Record<string, unknown>;
         const items = Array.isArray(data) ? data : data.products || [];
         return items as Product[];
       }

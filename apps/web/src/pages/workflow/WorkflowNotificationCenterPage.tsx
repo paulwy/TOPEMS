@@ -20,7 +20,7 @@ const FlowNotificationCenter: React.FC = () => {
 
   const notificationsQuery = useQuery<Notification[]>({
     queryKey: ['workflow-notifications', filter],
-    queryFn: async () => {
+    queryFn: async (): Promise<Notification[]> => {
       const userId = user?.id || 'current-user-id';
 
       const params: ListParams = {};
@@ -30,9 +30,7 @@ const FlowNotificationCenter: React.FC = () => {
 
       const response = await workflowApi.listNotifications(userId, params);
       if (response.success && response.data) {
-        const data = response.data as any;
-        const notificationList = Array.isArray(data) ? data : data.items || [];
-        return notificationList;
+        return response.data;
       }
       return [];
     },

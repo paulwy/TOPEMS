@@ -86,15 +86,14 @@ const FlowTemplatePage: React.FC = () => {
 
   const data: FlowTemplate[] = useMemo(() => {
     return workflows.map((w: Workflow) => {
-      const wData = (w as any).data || {};
       return {
         id: w.id,
         name: w.name,
-        type: String(wData.type || 'approval'),
-        scope: String(wData.scope || '全公司'),
-        usageCount: Number(wData.usageCount || 0),
-        creator: (w as any).created_by || '-',
-        createdAt: new Date((w as any).created_at).toISOString().split('T')[0],
+        type: String(w.data?.type || 'approval'),
+        scope: String(w.data?.scope || '全公司'),
+        usageCount: Number(w.data?.usageCount || 0),
+        creator: w.created_by || '-',
+        createdAt: new Date(w.created_at).toISOString().split('T')[0],
       };
     });
   }, [workflows]);
@@ -120,8 +119,8 @@ const FlowTemplatePage: React.FC = () => {
         const workflow = response.data;
         await createMutation.mutateAsync({
           name: `${workflow.name} (副本)`,
-          description: (workflow as any).description,
-          definition: (workflow as any).definition,
+          description: workflow.description,
+          definition: workflow.definition,
           isactive: false,
         } as Partial<Workflow>);
         success('模板复制成功');

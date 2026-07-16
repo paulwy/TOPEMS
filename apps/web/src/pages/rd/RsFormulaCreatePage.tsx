@@ -236,7 +236,7 @@ const RsFormulaCreatePage: React.FC = () => {
   };
 
   const handleSubmit = async (data: unknown) => {
-    const formData = data as Record<string, unknown>;
+    const formData = data as unknown as Record<string, unknown>;
 
     if (!formData.name || !formData.code || !formData.project_id) {
       addNotification({

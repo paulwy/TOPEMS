@@ -22,6 +22,7 @@ import HeatmapLayer, { HeatmapLegend } from '../HeatmapModule/HeatmapLayer';
 import Map3DView from '../../Map3DView';
 import AmapLayer from '../../AmapLayer';
 import DeviceTrackPanel from '../../DeviceTrackPanel';
+import L from 'leaflet';
 import 'leaflet/dist/leaflet.css';
 import 'leaflet-draw/dist/leaflet.draw.css';
 
@@ -99,7 +100,7 @@ const getStatusColor = (status: string) => {
 
 // Icons
 const createDeviceIcon = () =>
-  new (window as any).L.Icon({
+  new L.Icon({
     iconUrl:
       "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='%2300C897'%3E%3Cpath d='M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7zm0 9.5c-1.38 0-2.5-1.12-2.5-2.5s1.12-2.5 2.5-2.5 2.5 1.12 2.5 2.5-1.12 2.5-2.5 2.5z'/%3E%3C/svg%3E",
     iconSize: [28, 28],
@@ -107,7 +108,7 @@ const createDeviceIcon = () =>
   });
 
 const createStorageIcon = () =>
-  new (window as any).L.Icon({
+  new L.Icon({
     iconUrl:
       "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='%23F59E0B'%3E%3Cpath d='M19 3H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zm0 16H5V5h14v14z'/%3E%3C/svg%3E",
     iconSize: [28, 28],
@@ -946,7 +947,7 @@ const MapView: React.FC<MapViewProps> = ({
                   key={feature.id}
                   position={[feature.points[0].lat, feature.points[0].lng]}
                   icon={
-                    new (window as any).L.Icon({
+                    new L.Icon({
                       iconUrl: `data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='${feature.color}'%3E%3Ccircle cx='12' cy='12' r='8'/%3E%3C/svg%3E`,
                       iconSize: [20, 20],
                       iconAnchor: [10, 10],

@@ -57,13 +57,17 @@ const EhsPlanPage: React.FC = () => {
     queryFn: async () => {
       const response = await ehsApi.listPlans();
       if (response.success && response.data) {
-        const data = response.data as any;
-        const plansData = Array.isArray(data) ? data : data.data || [];
-        return plansData.map((item: { [key: string]: unknown }) => ({
+        const data = response.data as unknown as Record<string, unknown>;
+        const plansData = (
+          Array.isArray(data)
+            ? (data as unknown as Record<string, unknown>[])
+            : (data.data as unknown as Record<string, unknown>[]) || []
+        ) as unknown as Record<string, unknown>[];
+        return plansData.map((item) => ({
           ...item,
           status:
             item.status === 'active' ? '有效' : item.status === 'inactive' ? '无效' : item.status,
-        }));
+        })) as EmergencyPlan[];
       }
       return [];
     },
@@ -82,7 +86,7 @@ const EhsPlanPage: React.FC = () => {
       if (!selectedPlan?.id) return null;
       const response = await ehsApi.getPlan(selectedPlan.id);
       if (response.success && response.data) {
-        const planData = response.data as any;
+        const planData = response.data as unknown as EmergencyPlan;
         return {
           ...planData,
           status:

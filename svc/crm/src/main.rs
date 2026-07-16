@@ -46,9 +46,10 @@ async fn main() -> Result<()> {
     env::set_var("SEARCH_PATH", "crm, shared, public");
 
     let db_config = DatabaseConfig {
-        url: env::var("DATABASE_URL")
-            .expect("DATABASE_URL environment variable is required")
-            .to_string(),
+        url: env::var("DATABASE_URL").map_err(|_| {
+            tracing::error!("DATABASE_URL environment variable is required");
+            anyhow::anyhow!("DATABASE_URL environment variable is required")
+        })?,
         max_connections: 10,
         min_connections: Some(2),
         connect_timeout: Some(30),

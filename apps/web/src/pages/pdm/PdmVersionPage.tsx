@@ -102,11 +102,11 @@ export const PdmVersionPage: React.FC = () => {
 
   const { data: documents = [] } = useQuery<Document[]>({
     queryKey: QUERY_KEYS.PDM.DOCUMENTS,
-    queryFn: async () => {
+    queryFn: async (): Promise<Document[]> => {
       const response = await pdmApi.listDocuments();
       if (response.success && response.data) {
-        const data = response.data as any;
-        return Array.isArray(data) ? data : data.documents || [];
+        const data = response.data as unknown as Record<string, unknown>;
+        return (Array.isArray(data) ? data : data.documents || []) as unknown as Document[];
       }
       return [];
     },
@@ -126,12 +126,12 @@ export const PdmVersionPage: React.FC = () => {
     error: queryError,
   } = useQuery<DocumentVersion[]>({
     queryKey: QUERY_KEYS.PDM.DOCUMENT_VERSIONS(selectedDocument || 'none'),
-    queryFn: async () => {
+    queryFn: async (): Promise<DocumentVersion[]> => {
       if (!selectedDocument) return [];
       const response = await pdmApi.listVersions(selectedDocument);
       if (response.success && response.data) {
-        const data = response.data as any;
-        return Array.isArray(data) ? data : data.versions || [];
+        const data = response.data as unknown as Record<string, unknown>;
+        return (Array.isArray(data) ? data : data.versions || []) as unknown as DocumentVersion[];
       }
       return [];
     },
@@ -167,7 +167,7 @@ export const PdmVersionPage: React.FC = () => {
 
     const adapted = filtered.map((item) => ({
       ...item,
-      versionNumber: (item as any).version_number || (item as any).versionNumber || '',
+      versionNumber: item.version_number || '',
     }));
 
     const total = adapted.length;

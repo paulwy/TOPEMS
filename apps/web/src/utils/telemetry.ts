@@ -29,8 +29,8 @@ const getEnv = (key: string): string | undefined => {
   if (typeof process !== 'undefined' && process.env) {
     return process.env[key];
   }
-  if (typeof window !== 'undefined' && (window as any).env) {
-    return (window as any).env[key];
+  if (typeof window !== 'undefined' && (window as unknown as { env?: Record<string, string | undefined> }).env) {
+    return (window as unknown as { env: Record<string, string | undefined> }).env[key];
   }
   return undefined;
 };

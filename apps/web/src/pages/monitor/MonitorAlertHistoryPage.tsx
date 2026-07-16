@@ -365,7 +365,7 @@ const MonitorAlertHistoryPage: React.FC = () => {
         render: (row) => (
           <Chip
             size='small'
-            color={getSeverityColor(row.severity) as any}
+            color={getSeverityColor(row.severity) as React.ComponentProps<typeof import('@mui/material/Chip').default>['color']}
             label={getSeverityLabel(row.severity)}
             variant='outlined'
           />
@@ -420,7 +420,7 @@ const MonitorAlertHistoryPage: React.FC = () => {
         render: (row) => (
           <Chip
             size='small'
-            color={getStatusColor(row.status) as any}
+            color={getStatusColor(row.status) as React.ComponentProps<typeof import('@mui/material/Chip').default>['color']}
             label={getStatusLabel(row.status)}
             variant='outlined'
           />
@@ -643,12 +643,12 @@ const MonitorAlertHistoryPage: React.FC = () => {
                 <Chip
                   label={getSeverityLabel(selectedAlert.severity)}
                   size='small'
-                  color={getSeverityColor(selectedAlert.severity) as any}
+                  color={getSeverityColor(selectedAlert.severity) as React.ComponentProps<typeof import('@mui/material/Chip').default>['color']}
                 />
                 <Chip
                   label={getStatusLabel(selectedAlert.status)}
                   size='small'
-                  color={getStatusColor(selectedAlert.status) as any}
+                  color={getStatusColor(selectedAlert.status) as React.ComponentProps<typeof import('@mui/material/Chip').default>['color']}
                   variant='outlined'
                 />
               </Box>

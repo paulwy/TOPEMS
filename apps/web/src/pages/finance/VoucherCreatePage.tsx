@@ -296,7 +296,7 @@ const VoucherCreatePage: React.FC = () => {
             required
             fullWidth
             size='small'
-            slotProps={{ inputLabel: { shrink: true } } as any}
+            slotProps={{ inputLabel: { shrink: true } } as const}
           />
           <TextField
             label='会计期间 *'

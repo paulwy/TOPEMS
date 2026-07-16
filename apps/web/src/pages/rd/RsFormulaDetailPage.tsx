@@ -20,7 +20,7 @@ import {
   Button,
 } from '@mui/material';
 import { Edit, History, CheckCircle } from 'lucide-react';
-import { DetailPageTemplate, type SectionConfig } from '@/components/templates';
+import { DetailPageTemplate, type SectionConfig, type PageAction } from '@/components/templates';
 import { formulaApi } from '@/api/rd';
 import { PageContainer } from '@/components/common';
 import type { Formula, FormulaVersion } from '@/api/rd';
@@ -294,7 +294,7 @@ const RsFormulaDetailPage: React.FC = () => {
     ],
   };
 
-  const actions = [
+  const actions: PageAction[] = [
     {
       label: '版本历史',
       icon: <History size={18} />,
@@ -315,7 +315,7 @@ const RsFormulaDetailPage: React.FC = () => {
       color: 'success' as const,
       loading: approving,
     },
-  ].filter(Boolean) as any[];
+  ].filter(Boolean) as PageAction[];
 
   return (
     <PageContainer

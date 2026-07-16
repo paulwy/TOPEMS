@@ -365,7 +365,7 @@ const OutboundOrderPage: React.FC = () => {
               size='small'
               required
               fullWidth
-              slotProps={{ inputLabel: { shrink: true } } as any}
+              slotProps={{ inputLabel: { shrink: true } } as const}
             />
             <TextField
               label='预计发货'
@@ -374,7 +374,7 @@ const OutboundOrderPage: React.FC = () => {
               onChange={(e) => setFormData({ ...formData, expected_delivery: e.target.value })}
               size='small'
               fullWidth
-              slotProps={{ inputLabel: { shrink: true } } as any}
+              slotProps={{ inputLabel: { shrink: true } } as const}
             />
             <TextField
               label='总金额'
@@ -471,7 +471,7 @@ const OutboundOrderPage: React.FC = () => {
                 }
                 size='small'
                 fullWidth
-                slotProps={{ inputLabel: { shrink: true } } as any}
+                slotProps={{ inputLabel: { shrink: true } } as const}
               />
               <TextField
                 label='总金额'

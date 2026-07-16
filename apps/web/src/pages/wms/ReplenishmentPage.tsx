@@ -81,6 +81,8 @@ const priorityConfig: Record<
 
 type TabValue = 'suggestions' | 'orders';
 
+type ReplenishmentItem = ReplenishmentSuggestion | ReplenishmentOrder;
+
 const ReplenishmentPage: React.FC = () => {
   const { addNotification } = useNotificationStore();
   const queryClient = useQueryClient();
@@ -563,11 +565,14 @@ const ReplenishmentPage: React.FC = () => {
     setCurrentPage(1);
   };
 
-  const currentColumns = (activeTab === 'suggestions' ? suggestionColumns : orderColumns) as any;
-  const currentData = (activeTab === 'suggestions' ? suggestions : orders) as any;
+  const currentColumns = (
+    activeTab === 'suggestions' ? suggestionColumns : orderColumns
+  ) as unknown as ColumnDef<ReplenishmentItem>[];
+  const currentData: ReplenishmentItem[] =
+    activeTab === 'suggestions' ? suggestions : orders;
   const currentRowActions = (
     activeTab === 'suggestions' ? suggestionRowActions : orderRowActions
-  ) as any;
+  ) as unknown as RowAction<ReplenishmentItem>[];
 
   const statsContent = (
     <Box

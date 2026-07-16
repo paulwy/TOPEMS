@@ -22,7 +22,7 @@ export const NotificationList: React.FC<NotificationListProps> = ({ userId = 'cu
       const response = await imApi.listNotifications(userId);
       if (response.success && response.data) {
         const data: unknown = response.data;
-        setNotifications(((data as Record<string, unknown>).notifications || []) as Notification[]);
+        setNotifications(((data as unknown as Record<string, unknown>).notifications || []) as Notification[]);
       }
     } catch (error: unknown) {
       logger.error('Failed to load notifications:', error);

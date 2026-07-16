@@ -502,7 +502,7 @@ const MobileInventoryPage: React.FC = () => {
                               <Chip
                                 label={getStatusLabel(item.status)}
                                 size='small'
-                                color={getStatusColor(item.status) as any}
+                                color={getStatusColor(item.status) as React.ComponentProps<typeof import('@mui/material/Chip').default>['color']}
                                 sx={{ height: 18, fontSize: '0.65rem' }}
                               />
                               <Typography
@@ -588,7 +588,7 @@ const MobileInventoryPage: React.FC = () => {
                           <Chip
                             label={getStatusLabel(task.status)}
                             size='small'
-                            color={getStatusColor(task.status) as any}
+                            color={getStatusColor(task.status) as React.ComponentProps<typeof import('@mui/material/Chip').default>['color']}
                             sx={{ height: 20, fontSize: '0.7rem' }}
                           />
                         </Box>
@@ -724,7 +724,7 @@ const MobileInventoryPage: React.FC = () => {
                               <Chip
                                 label={getStatusLabel(order.status)}
                                 size='small'
-                                color={getStatusColor(order.status) as any}
+                                color={getStatusColor(order.status) as React.ComponentProps<typeof import('@mui/material/Chip').default>['color']}
                                 sx={{ height: 18, fontSize: '0.65rem' }}
                               />
                             </Box>
@@ -795,7 +795,7 @@ const MobileInventoryPage: React.FC = () => {
                               <Chip
                                 label={getStatusLabel(order.status)}
                                 size='small'
-                                color={getStatusColor(order.status) as any}
+                                color={getStatusColor(order.status) as React.ComponentProps<typeof import('@mui/material/Chip').default>['color']}
                                 sx={{ height: 18, fontSize: '0.65rem' }}
                               />
                             </Box>

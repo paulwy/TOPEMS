@@ -124,7 +124,7 @@ const renderWithProviders = (ui: React.ReactElement) => render(<BrowserRouter>{u
 
 describe('ReportListPage', () => {
   beforeEach(() => {
-    (useNotificationStore as any).getState = vi.fn().mockReturnValue({
+    (useNotificationStore as unknown as Record<string, unknown>).getState = vi.fn().mockReturnValue({
       addNotification: mockAddNotification,
       notifications: [],
       removeNotification: vi.fn(),

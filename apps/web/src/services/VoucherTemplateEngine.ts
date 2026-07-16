@@ -142,7 +142,7 @@ export class ExpressionEvaluator {
 
     for (const part of parts) {
       if (value === null || value === undefined) return undefined;
-      value = (value as Record<string, unknown>)[part];
+      value = (value as unknown as Record<string, unknown>)[part];
     }
 
     return value;

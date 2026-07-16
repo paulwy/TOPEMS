@@ -42,6 +42,11 @@ pub struct ResponseFeedbackRequest {
     pub response: String,
 }
 
+#[derive(Debug, FromRow)]
+struct FeedbackOwnerId {
+    user_id: String,
+}
+
 #[derive(Debug, Deserialize)]
 pub struct ListFeedbackParams {
     pub page: Option<i64>,
@@ -58,18 +63,17 @@ pub async fn create_feedback(
     Extension(claims): Extension<Claims>,
     Json(payload): Json<CreateFeedbackRequest>,
 ) -> impl IntoResponse {
-    let feedback = sqlx::query_as!(
-        Feedback,
+    let feedback = sqlx::query_as::<_, Feedback>(
         r#"INSERT INTO core_feedbacks (user_id, type, title, description, screenshots, satisfaction)
            VALUES ($1, $2, $3, $4, $5, $6)
            RETURNING id, user_id, type as type_, title, description, screenshots, satisfaction, status, response, responded_by, responded_at, created_at, updated_at"#,
-        claims.sub,
-        payload.type_,
-        payload.title,
-        payload.description,
-        &payload.screenshots.unwrap_or_default(),
-        payload.satisfaction.unwrap_or(3),
     )
+    .bind(claims.sub)
+    .bind(payload.type_)
+    .bind(payload.title)
+    .bind(payload.description)
+    .bind(&payload.screenshots.unwrap_or_default())
+    .bind(payload.satisfaction.unwrap_or(3))
     .fetch_one(&state.pool)
     .await;
 
@@ -86,12 +90,11 @@ pub async fn get_feedback(
     State(state): State<AppState>,
     Path(id): Path<Uuid>,
 ) -> impl IntoResponse {
-    let feedback = sqlx::query_as!(
-        Feedback,
+    let feedback = sqlx::query_as::<_, Feedback>(
         r#"SELECT id, user_id, type as type_, title, description, screenshots, satisfaction, status, response, responded_by, responded_at, created_at, updated_at
            FROM core_feedbacks WHERE id = $1"#,
-        id,
     )
+    .bind(id)
     .fetch_one(&state.pool)
     .await;
 
@@ -168,13 +171,13 @@ pub async fn response_feedback(
         return StatusCode::FORBIDDEN.into_response();
     }
 
-    let result = sqlx::query!(
+    let result = sqlx::query(
         r#"UPDATE core_feedbacks SET status = 'resolved', response = $1, responded_by = $2, responded_at = NOW(), updated_at = NOW()
            WHERE id = $3"#,
-        payload.response,
-        claims.sub,
-        id,
     )
+    .bind(payload.response)
+    .bind(claims.sub)
+    .bind(id)
     .execute(&state.pool)
     .await;
 
@@ -192,7 +195,8 @@ pub async fn delete_feedback(
     Extension(claims): Extension<Claims>,
     Path(id): Path<Uuid>,
 ) -> impl IntoResponse {
-    let feedback = sqlx::query!(r#"SELECT user_id FROM core_feedbacks WHERE id = $1"#, id,)
+    let feedback = sqlx::query_as::<_, FeedbackOwnerId>(r#"SELECT user_id FROM core_feedbacks WHERE id = $1"#)
+        .bind(id)
         .fetch_one(&state.pool)
         .await;
 
@@ -202,7 +206,8 @@ pub async fn delete_feedback(
                 return StatusCode::FORBIDDEN.into_response();
             }
 
-            let result = sqlx::query!(r#"DELETE FROM core_feedbacks WHERE id = $1"#, id)
+            let result = sqlx::query(r#"DELETE FROM core_feedbacks WHERE id = $1"#)
+                .bind(id)
                 .execute(&state.pool)
                 .await;
 

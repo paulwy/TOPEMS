@@ -116,10 +116,10 @@ const MobileTaskListPage: React.FC = () => {
         pagesize: pageSize,
       });
       if (response.success && response.data) {
-        const data = response.data as any;
-        const apiTasks = Array.isArray(data) ? data : data.items || [];
+        const data = response.data as unknown as Record<string, unknown>;
+        const apiTasks = (Array.isArray(data) ? data : (data.items as ApiTask[]) || []) as ApiTask[];
         const tasks = apiTasks.map(mapApiTaskToTask);
-        const total = data.total || apiTasks.length;
+        const total = (data.total as number) || apiTasks.length;
         return { tasks, total, page: pageParam };
       }
       return { tasks: [], total: 0, page: pageParam };

@@ -129,7 +129,7 @@ function renderWithProviders(children: React.ReactNode) {
 describe('WorkStationPage', () => {
   beforeEach(() => {
     vi.clearAllMocks();
-    (useNotificationStore as any).getState = vi.fn().mockReturnValue({
+    (useNotificationStore as unknown as Record<string, unknown>).getState = vi.fn().mockReturnValue({
       addNotification: mockAddNotification,
       notifications: [],
       removeNotification: vi.fn(),

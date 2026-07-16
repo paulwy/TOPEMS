@@ -40,12 +40,12 @@ const PdmBatchPage: React.FC = () => {
   });
   const addNotification = useNotificationStore((state) => state.addNotification);
 
-  const { data: batches = [], isLoading: loading } = useQuery({
+  const { data: batches = [], isLoading: loading } = useQuery<ProductionBatch[]>({
     queryKey: QUERY_KEYS.PDM.BATCHES,
-    queryFn: async () => {
+    queryFn: async (): Promise<ProductionBatch[]> => {
       const response = await pdmApi.listBatches();
       if (response.success && response.data) {
-        const adapted = (response.data as any).map((item: { [key: string]: unknown }) => ({
+        const adapted = (response.data as unknown as { [key: string]: unknown }[]).map((item: { [key: string]: unknown }) => ({
           ...item,
           quantity: item.planned_quantity || item.actual_quantity || 0,
           status:
@@ -59,7 +59,7 @@ const PdmBatchPage: React.FC = () => {
                     ? '已取消'
                     : item.status,
         }));
-        return adapted;
+        return adapted as unknown as ProductionBatch[];
       }
       return [];
     },

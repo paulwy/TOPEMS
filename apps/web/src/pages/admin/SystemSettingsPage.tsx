@@ -312,7 +312,7 @@ export default function SystemSettingsPage() {
 
   const handleSubmit = useCallback(
     async (data: unknown) => {
-      const formData = data as Record<string, unknown>;
+      const formData = data as unknown as Record<string, unknown>;
       setSettings((prev) => ({
         ...prev,
         [activeTab]: {

@@ -119,7 +119,11 @@ export const AddressbookSidebar: React.FC<AddressbookSidebarProps> = ({
     );
   };
 
-  const typeFilters = [
+  const typeFilters: Array<{
+    id: 'all' | 'EMPLOYEE' | 'DEPARTMENT' | 'COMPANY';
+    label: string;
+    icon: React.ComponentType<{ sx?: object }>;
+  }> = [
     { id: 'all', label: '全部', icon: Users },
     { id: 'EMPLOYEE', label: '员工', icon: User },
     { id: 'DEPARTMENT', label: '部门', icon: Folder },
@@ -166,7 +170,7 @@ export const AddressbookSidebar: React.FC<AddressbookSidebarProps> = ({
           {typeFilters.map(({ id, label, icon: Icon }) => (
             <button
               key={id}
-              onClick={() => onTypeSelect(id as any)}
+              onClick={() => onTypeSelect(id)}
               style={{
                 display: 'flex',
                 alignItems: 'center',

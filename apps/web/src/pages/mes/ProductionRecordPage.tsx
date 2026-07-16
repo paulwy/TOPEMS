@@ -537,7 +537,7 @@ const ProductionRecordPage: React.FC = () => {
                 onChange={(e) => setFormData({ ...formData, start_time: e.target.value })}
                 size='small'
                 required
-                slotProps={{ inputLabel: { shrink: true } } as any}
+                slotProps={{ inputLabel: { shrink: true } } as const}
                 disabled={!!selectedRecord}
               />
             </Box>

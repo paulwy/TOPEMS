@@ -333,7 +333,7 @@ export function MasterDetailPageTemplate<T>({
     const keyword = searchValue.toLowerCase();
     return items.filter((item) =>
       columns.some((col) => {
-        const val = col.field ? (item as any)[col.field] : '';
+        const val = col.field ? (item as unknown as Record<string, unknown>)[col.field] : '';
         return String(val).toLowerCase().includes(keyword);
       })
     );
@@ -446,7 +446,7 @@ export function MasterDetailPageTemplate<T>({
         {!isMobile ? (
           <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
             {columns.map((col) => {
-              const value = col.field ? (item as any)[col.field] : undefined;
+              const value = col.field ? (item as unknown as Record<string, unknown>)[col.field] : undefined;
               return (
                 <Box
                   key={col.id}
@@ -467,7 +467,7 @@ export function MasterDetailPageTemplate<T>({
                       variant='body2'
                       sx={{ fontWeight: col.id === columns[0].id ? 500 : 400 }}
                     >
-                      {value ?? '-'}
+                      {value != null ? String(value) : '-'}
                     </Typography>
                   )}
                 </Box>
@@ -523,12 +523,12 @@ export function MasterDetailPageTemplate<T>({
               >
                 {primaryColumn.render
                   ? primaryColumn.render(
-                      primaryColumn.field ? (item as any)[primaryColumn.field!] : undefined,
+                      primaryColumn.field ? (item as unknown as Record<string, unknown>)[primaryColumn.field!] : undefined,
                       item,
                       index
                     )
                   : primaryColumn.field
-                    ? (item as any)[primaryColumn.field!]
+                    ? String((item as unknown as Record<string, unknown>)[primaryColumn.field!])
                     : '-'}
               </Typography>
             )}
@@ -539,12 +539,12 @@ export function MasterDetailPageTemplate<T>({
               >
                 {secondaryColumn.render
                   ? secondaryColumn.render(
-                      secondaryColumn.field ? (item as any)[secondaryColumn.field!] : undefined,
+                      secondaryColumn.field ? (item as unknown as Record<string, unknown>)[secondaryColumn.field!] : undefined,
                       item,
                       index
                     )
                   : secondaryColumn.field
-                    ? (item as any)[secondaryColumn.field!]
+                    ? String((item as unknown as Record<string, unknown>)[secondaryColumn.field!])
                     : '-'}
               </Typography>
             )}

@@ -1,4 +1,14 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
+import type {
+  CreateBiddingRequest,
+  CreateInquiryRequest,
+  CreatePurchaseOrderRequest,
+  CreateQuotationRequest,
+  CreateScoringDimensionRequest,
+  CreateSupplierContractRequest,
+  CreateSupplierEvaluationRequest,
+  CreateSupplierRequest,
+} from '../index';
 
 vi.mock('../../client', () => {
   const mockSrmClient = {
@@ -42,7 +52,7 @@ describe('SRM Module API Tests', () => {
         status: 'active',
         risklevel: 'low',
       };
-      await srmApi.createSupplier(data as any);
+      await srmApi.createSupplier(data as unknown as CreateSupplierRequest);
       const { apiClient } = await import('../../client');
       expect(apiClient.srm.post).toHaveBeenCalledWith('/suppliers', data);
     });
@@ -50,7 +60,7 @@ describe('SRM Module API Tests', () => {
     it('updateSupplier should call PUT /suppliers/:id with data', async () => {
       const { srmApi } = await import('..');
       const data = { name: 'Updated Supplier', status: 'active' };
-      await srmApi.updateSupplier('supplier-001', data as any);
+      await srmApi.updateSupplier('supplier-001', data as Partial<CreateSupplierRequest>);
       const { apiClient } = await import('../../client');
       expect(apiClient.srm.put).toHaveBeenCalledWith('/suppliers/supplier-001', data);
     });
@@ -81,7 +91,7 @@ describe('SRM Module API Tests', () => {
     it('createEvaluation should call POST /supplier-evaluations with data', async () => {
       const { srmApi } = await import('..');
       const data = { supplier_id: 'supplier-001', evaluation_no: 'EVAL-001', status: 'pending' };
-      await srmApi.createEvaluation(data as any);
+      await srmApi.createEvaluation(data as unknown as CreateSupplierEvaluationRequest);
       const { apiClient } = await import('../../client');
       expect(apiClient.srm.post).toHaveBeenCalledWith('/supplier-evaluations', data);
     });
@@ -89,7 +99,7 @@ describe('SRM Module API Tests', () => {
     it('updateEvaluation should call PUT /supplier-evaluations/:id with data', async () => {
       const { srmApi } = await import('..');
       const data = { overall_score: 85, status: 'completed' };
-      await srmApi.updateEvaluation('eval-001', data as any);
+      await srmApi.updateEvaluation('eval-001', data as Partial<CreateSupplierEvaluationRequest>);
       const { apiClient } = await import('../../client');
       expect(apiClient.srm.put).toHaveBeenCalledWith('/supplier-evaluations/eval-001', data);
     });
@@ -125,7 +135,7 @@ describe('SRM Module API Tests', () => {
         currency: 'CNY',
         status: 'draft',
       };
-      await srmApi.createPurchaseOrder(data as any);
+      await srmApi.createPurchaseOrder(data as unknown as CreatePurchaseOrderRequest);
       const { apiClient } = await import('../../client');
       expect(apiClient.srm.post).toHaveBeenCalledWith('/purchase-orders', data);
     });
@@ -133,7 +143,7 @@ describe('SRM Module API Tests', () => {
     it('updatePurchaseOrder should call PUT /purchase-orders/:id with data', async () => {
       const { srmApi } = await import('..');
       const data = { total_amount: 10000, status: 'pending' };
-      await srmApi.updatePurchaseOrder('po-001', data as any);
+      await srmApi.updatePurchaseOrder('po-001', data as Partial<CreatePurchaseOrderRequest>);
       const { apiClient } = await import('../../client');
       expect(apiClient.srm.put).toHaveBeenCalledWith('/purchase-orders/po-001', data);
     });
@@ -171,7 +181,7 @@ describe('SRM Module API Tests', () => {
         currency: 'CNY',
         status: 'draft',
       };
-      await srmApi.createContract(data as any);
+      await srmApi.createContract(data as unknown as CreateSupplierContractRequest);
       const { apiClient } = await import('../../client');
       expect(apiClient.srm.post).toHaveBeenCalledWith('/supplier-contracts', data);
     });
@@ -179,7 +189,7 @@ describe('SRM Module API Tests', () => {
     it('updateContract should call PUT /supplier-contracts/:id with data', async () => {
       const { srmApi } = await import('..');
       const data = { title: 'Updated Contract', total_amount: 50000 };
-      await srmApi.updateContract('contract-001', data as any);
+      await srmApi.updateContract('contract-001', data as Partial<CreateSupplierContractRequest>);
       const { apiClient } = await import('../../client');
       expect(apiClient.srm.put).toHaveBeenCalledWith('/supplier-contracts/contract-001', data);
     });
@@ -256,7 +266,7 @@ describe('SRM Module API Tests', () => {
     it('updateScoringDimension should call PUT /scoring-dimensions/:id with data', async () => {
       const { srmApi } = await import('..');
       const data = { name: 'Updated Quality', weight: 35 };
-      await srmApi.updateScoringDimension('dim-001', data as any);
+      await srmApi.updateScoringDimension('dim-001', data as Partial<CreateScoringDimensionRequest>);
       const { apiClient } = await import('../../client');
       expect(apiClient.srm.put).toHaveBeenCalledWith('/scoring-dimensions/dim-001', data);
     });
@@ -353,7 +363,7 @@ describe('SRM Module API Tests', () => {
     it('createInquiry should call POST /inquiries with data', async () => {
       const { srmApi } = await import('..');
       const data = { inquiry_no: 'INQ-001', title: 'Material Inquiry', status: 'draft' };
-      await srmApi.createInquiry(data as any);
+      await srmApi.createInquiry(data as unknown as CreateInquiryRequest);
       const { apiClient } = await import('../../client');
       expect(apiClient.srm.post).toHaveBeenCalledWith('/inquiries', data);
     });
@@ -418,7 +428,7 @@ describe('SRM Module API Tests', () => {
         currency: 'CNY',
         status: 'draft',
       };
-      await srmApi.createQuotation(data as any);
+      await srmApi.createQuotation(data as unknown as CreateQuotationRequest);
       const { apiClient } = await import('../../client');
       expect(apiClient.srm.post).toHaveBeenCalledWith('/quotations', data);
     });
@@ -466,7 +476,7 @@ describe('SRM Module API Tests', () => {
     it('createBidding should call POST /biddings with data', async () => {
       const { srmApi } = await import('..');
       const data = { bidding_no: 'BID-001', title: 'Bidding A', currency: 'CNY', status: 'draft' };
-      await srmApi.createBidding(data as any);
+      await srmApi.createBidding(data as unknown as CreateBiddingRequest);
       const { apiClient } = await import('../../client');
       expect(apiClient.srm.post).toHaveBeenCalledWith('/biddings', data);
     });

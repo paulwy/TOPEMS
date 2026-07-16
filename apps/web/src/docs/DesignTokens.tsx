@@ -381,27 +381,27 @@ export function TypographyShowcase() {
           </Typography>
           <Box sx={{ flex: 1 }}>
             <Typography
-              variant={variant as any}
-              sx={{ ...(props as any), textTransform: (props as any).textTransform ?? undefined }}
+              variant={variant as unknown as React.ComponentProps<typeof Typography>['variant']}
+            sx={{ ...(props as unknown as Record<string, unknown>), textTransform: (props as unknown as Record<string, unknown>).textTransform as string | undefined ?? undefined }}
             >
               {label} — The quick brown fox jumps over the lazy dog
             </Typography>
           </Box>
           <Box sx={{ flexShrink: 0, display: 'flex', gap: 1 }}>
             <Chip
-              label={`${(props as any).fontSize}`}
+              label={`${(props as unknown as Record<string, unknown>).fontSize}`}
               size='small'
               variant='outlined'
               sx={{ fontFamily: 'monospace', fontSize: '0.65rem' }}
             />
             <Chip
-              label={`w${(props as any).fontWeight}`}
+              label={`w${(props as unknown as Record<string, unknown>).fontWeight}`}
               size='small'
               variant='outlined'
               sx={{ fontFamily: 'monospace', fontSize: '0.65rem' }}
             />
             <Chip
-              label={`lh${(props as any).lineHeight}`}
+              label={`lh${(props as unknown as Record<string, unknown>).lineHeight}`}
               size='small'
               variant='outlined'
               sx={{ fontFamily: 'monospace', fontSize: '0.65rem' }}

@@ -258,10 +258,9 @@ const TileLayer3D: React.FC<TileLayer3DProps> = ({ viewState, enable3D }) => {
   const map = useMap();
 
   useEffect(() => {
-    // 应用3D倾斜效果
-    // @ts-ignore - Leaflet 3D扩展
-    if (enable3D && map && map.setView) {
-      // 根据pitch调整视角
+    // 应用3D倾斜效果 - 根据pitch/bearing调整视角
+    if (enable3D && map) {
+      map.setView(map.getCenter(), map.getZoom());
     }
   }, [viewState.pitch, viewState.bearing, enable3D, map]);
 

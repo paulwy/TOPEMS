@@ -103,7 +103,7 @@ const FinanceInvoicePage: React.FC = () => {
     }) => {
       const response = await receivablePayableApi.createSalesInvoice(data);
       if (!response.success) {
-        throw new Error((response as any).message || '开具失败');
+        throw new Error((response as unknown as { message?: string }).message || '开具失败');
       }
       return response.data;
     },
@@ -121,7 +121,7 @@ const FinanceInvoicePage: React.FC = () => {
     mutationFn: async ({ id, data }: { id: string; data: Partial<SalesInvoice> }) => {
       const response = await receivablePayableApi.updateSalesInvoice(id, data);
       if (!response.success) {
-        throw new Error((response as any).message || '更新失败');
+        throw new Error(response.message || '更新失败');
       }
       return response.data;
     },
@@ -138,7 +138,7 @@ const FinanceInvoicePage: React.FC = () => {
     mutationFn: async (id: string) => {
       const response = await receivablePayableApi.deleteSalesInvoice(id);
       if (!response.success) {
-        throw new Error((response as any).message || '删除失败');
+        throw new Error(response.message || '删除失败');
       }
     },
     onSuccess: () => {

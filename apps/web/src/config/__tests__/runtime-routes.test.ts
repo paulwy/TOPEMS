@@ -53,7 +53,7 @@ describe('runtime.ts services 路由契约（V9.0 删除 /v1）', () => {
 
   it('Group1 核心虚拟服务前缀正确（/api/core/ 开头，无 /v1）', () => {
     Object.entries(EXPECTED_GROUP1).forEach(([k, expected]) => {
-      const val: string = (runtime.services as any)[k] ?? '';
+      const val: string = (runtime.services as unknown as Record<string, unknown>)[k] ?? '';
       expect(val.startsWith('/api/core')).toBe(true);
       expect(val).toContain(expected);
       expect(val).not.toContain('/v1');
@@ -62,7 +62,7 @@ describe('runtime.ts services 路由契约（V9.0 删除 /v1）', () => {
 
   it('Group2 独立进程服务无 /core 前缀，无 /v1', () => {
     Object.entries(EXPECTED_GROUP2).forEach(([k, expected]) => {
-      const val: string = (runtime.services as any)[k] ?? '';
+      const val: string = (runtime.services as unknown as Record<string, unknown>)[k] ?? '';
       expect(val.startsWith('/api/core')).toBe(false);
       expect(val).toContain(expected);
       expect(val).not.toContain('/v1');
@@ -70,7 +70,7 @@ describe('runtime.ts services 路由契约（V9.0 删除 /v1）', () => {
   });
 
   it('jaeger 是独立 HTTP URL（不在 /api 体系内）', () => {
-    const val: string = (runtime.services as any).jaeger ?? '';
+    const val: string = (runtime.services as unknown as Record<string, unknown>).jaeger ?? '';
     expect(val.startsWith('http')).toBe(true);
   });
 
