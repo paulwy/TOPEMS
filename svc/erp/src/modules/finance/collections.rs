@@ -1,8 +1,6 @@
 #![allow(dead_code)]
 
-use axum::{
-    extract::{State, Extension, Json, Query},
-};
+use axum::extract::{Extension, Json, Query, State};
 
 use chrono::Utc;
 

@@ -20,7 +20,9 @@ pub struct SyncMesToErpRequest {
     pub mes_order_id: String,
 }
 
-pub async fn list_mes_erp_sync(State(state): State<AppState>) -> Json<ApiResponse<Vec<MesErpSync>>> {
+pub async fn list_mes_erp_sync(
+    State(state): State<AppState>,
+) -> Json<ApiResponse<Vec<MesErpSync>>> {
     match sqlx::query_as::<_, MesErpSync>(
         "SELECT id, mes_order_id, erp_order_id, order_number, product_name, quantity,
                 synced, sync_status, sync_error, last_synced_at, created_at, updated_at

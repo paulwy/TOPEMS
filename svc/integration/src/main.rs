@@ -104,8 +104,7 @@ async fn main() -> anyhow::Result<()> {
         plugin::auto_register_to_core(core_url.as_deref()).await;
     });
 
-    axum::serve(listener, app.into_make_service())
-        .await?;
+    axum::serve(listener, app.into_make_service()).await?;
 
     Ok(())
 }

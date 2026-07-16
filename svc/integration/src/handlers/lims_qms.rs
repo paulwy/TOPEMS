@@ -7,7 +7,9 @@ use topems_shared::ApiResponse;
 
 use crate::models::{AppState, CreateLimsQmsSyncRequest, LimsQmsSync};
 
-pub async fn list_lims_qms_sync(State(state): State<AppState>) -> Json<ApiResponse<Vec<LimsQmsSync>>> {
+pub async fn list_lims_qms_sync(
+    State(state): State<AppState>,
+) -> Json<ApiResponse<Vec<LimsQmsSync>>> {
     match sqlx::query_as::<_, LimsQmsSync>(
         "SELECT id, lims_sample_id, qms_inspection_id, sample_name, inspection_result,
                 inspection_notes, synced, sync_status, sync_error, last_synced_at,

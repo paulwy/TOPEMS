@@ -30,7 +30,9 @@ pub async fn health() -> Json<ApiResponse<String>> {
     Json(ApiResponse::success(status_str, "健康检查"))
 }
 
-pub async fn health_check_detailed(State(state): State<AppState>) -> Json<ApiResponse<ServiceHealth>> {
+pub async fn health_check_detailed(
+    State(state): State<AppState>,
+) -> Json<ApiResponse<ServiceHealth>> {
     let dependencies = vec![
         check_iam_health().await,
         check_database_health(&state.document_service.pool().await).await,

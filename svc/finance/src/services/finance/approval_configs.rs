@@ -39,7 +39,6 @@ impl FinanceService {
         Ok(results)
     }
 
-
     pub async fn get_approval_config(
         &self,
         tenant_id: Uuid,
@@ -70,7 +69,6 @@ impl FinanceService {
             updated_at: config.updated_at,
         })
     }
-
 
     pub async fn create_approval_config(
         &self,
@@ -139,7 +137,6 @@ impl FinanceService {
             updated_at: config.updated_at,
         })
     }
-
 
     pub async fn update_approval_config(
         &self,
@@ -218,7 +215,6 @@ impl FinanceService {
         })
     }
 
-
     pub async fn delete_approval_config(
         &self,
         tenant_id: Uuid,
@@ -247,8 +243,10 @@ impl FinanceService {
         Ok(())
     }
 
-
-    pub(super) async fn get_approval_nodes(&self, config_id: Uuid) -> Result<Vec<ApprovalNode>, TopemsError> {
+    pub(super) async fn get_approval_nodes(
+        &self,
+        config_id: Uuid,
+    ) -> Result<Vec<ApprovalNode>, TopemsError> {
         let nodes: Vec<ApprovalNode> = sqlx::query_as(
             "SELECT * FROM core_finance_approval_nodes WHERE config_id = $1 ORDER BY node_level ASC",
         )

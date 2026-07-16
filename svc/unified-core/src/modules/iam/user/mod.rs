@@ -1,14 +1,14 @@
 //! User submodule - User management handlers
 
-mod models;
 mod crud;
-mod status;
+mod models;
 mod profile;
+mod status;
 
 pub use models::ListUsersParams;
 
-pub use crud::{list_users, create_user, get_user, update_user, delete_user};
+pub use crud::{create_user, delete_user, get_user, list_users, update_user};
 
-pub use status::{disable_user, enable_user, change_password};
+pub use status::{change_password, disable_user, enable_user};
 
-pub use profile::{get_preferences, update_preferences, get_current_user};
+pub use profile::{get_current_user, get_preferences, update_preferences};

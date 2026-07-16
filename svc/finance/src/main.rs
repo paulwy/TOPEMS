@@ -108,8 +108,7 @@ async fn main() -> anyhow::Result<()> {
     tracing::info!("✅ Finance Service is running at http://{}", addr);
 
     let listener = tokio::net::TcpListener::bind(&addr).await?;
-    axum::serve(listener, app.into_make_service())
-        .await?;
+    axum::serve(listener, app.into_make_service()).await?;
 
     Ok(())
 }

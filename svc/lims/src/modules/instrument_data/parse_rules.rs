@@ -3,9 +3,7 @@ use sqlx::types::Uuid;
 use sqlx::Row;
 use topems_shared::ApiResponse;
 
-use super::models::{
-    CreateParseRuleRequest, ParseRule, ParseRuleQuery, UpdateParseRuleRequest,
-};
+use super::models::{CreateParseRuleRequest, ParseRule, ParseRuleQuery, UpdateParseRuleRequest};
 
 pub async fn list_parse_rules(
     State(state): State<crate::shared::AppState>,

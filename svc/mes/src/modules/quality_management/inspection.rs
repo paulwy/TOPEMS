@@ -1,10 +1,4 @@
-use axum::{
-    extract::Extension,
-    extract::Path,
-    extract::Query,
-    extract::State,
-    Json,
-};
+use axum::{extract::Extension, extract::Path, extract::Query, extract::State, Json};
 use chrono::{NaiveDateTime, Utc};
 use serde::{Deserialize, Serialize};
 use sqlx::{
@@ -313,12 +307,8 @@ pub async fn get_inspection(
                 process_name: r.process_name,
                 inspection_type: r.inspection_type,
                 quantity: big_decimal_to_f64_non_opt(r.quantity),
-                qualified_quantity: big_decimal_to_f64_non_opt(
-                    r.qualified_quantity,
-                ),
-                unqualified_quantity: big_decimal_to_f64_non_opt(
-                    r.unqualified_quantity,
-                ),
+                qualified_quantity: big_decimal_to_f64_non_opt(r.qualified_quantity),
+                unqualified_quantity: big_decimal_to_f64_non_opt(r.unqualified_quantity),
                 qualification_rate: big_decimal_to_f64(r.qualification_rate),
                 inspector: r.inspector,
                 inspection_time: r.inspection_time.unwrap_or_default(),
@@ -422,12 +412,8 @@ pub async fn create_inspection(
                 process_name: r.process_name,
                 inspection_type: r.inspection_type,
                 quantity: big_decimal_to_f64_non_opt(r.quantity),
-                qualified_quantity: big_decimal_to_f64_non_opt(
-                    r.qualified_quantity,
-                ),
-                unqualified_quantity: big_decimal_to_f64_non_opt(
-                    r.unqualified_quantity,
-                ),
+                qualified_quantity: big_decimal_to_f64_non_opt(r.qualified_quantity),
+                unqualified_quantity: big_decimal_to_f64_non_opt(r.unqualified_quantity),
                 qualification_rate: big_decimal_to_f64(r.qualification_rate),
                 inspector: r.inspector,
                 inspection_time: r.inspection_time.unwrap_or_default(),
@@ -521,12 +507,8 @@ pub async fn update_inspection(
                 process_name: r.process_name,
                 inspection_type: r.inspection_type,
                 quantity: big_decimal_to_f64_non_opt(r.quantity),
-                qualified_quantity: big_decimal_to_f64_non_opt(
-                    r.qualified_quantity,
-                ),
-                unqualified_quantity: big_decimal_to_f64_non_opt(
-                    r.unqualified_quantity,
-                ),
+                qualified_quantity: big_decimal_to_f64_non_opt(r.qualified_quantity),
+                unqualified_quantity: big_decimal_to_f64_non_opt(r.unqualified_quantity),
                 qualification_rate: big_decimal_to_f64(r.qualification_rate),
                 inspector: r.inspector,
                 inspection_time: r.inspection_time.unwrap_or_default(),

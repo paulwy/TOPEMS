@@ -4,9 +4,7 @@ mod models;
 mod return_handlers;
 mod utils;
 
-use axum::{
-    routing::get, Router,
-};
+use axum::{routing::get, Router};
 
 use crate::AppState;
 
@@ -34,7 +32,8 @@ pub fn create_routes() -> Router<AppState> {
         )
         .route(
             "/api/mes/material-returns",
-            get(return_handlers::list_material_returns).post(return_handlers::create_material_return),
+            get(return_handlers::list_material_returns)
+                .post(return_handlers::create_material_return),
         )
         .route(
             "/api/mes/material-returns/{id}",
@@ -44,25 +43,16 @@ pub fn create_routes() -> Router<AppState> {
         )
 }
 
-pub use models::*;
 pub use bom_handlers::{
-    list_material_boms,
-    create_material_bom,
-    get_material_bom,
+    create_material_bom, delete_material_bom, get_material_bom, list_material_boms,
     update_material_bom,
-    delete_material_bom,
 };
 pub use issue_handlers::{
-    list_material_issues,
-    create_material_issue,
-    get_material_issue,
+    create_material_issue, delete_material_issue, get_material_issue, list_material_issues,
     update_material_issue,
-    delete_material_issue,
 };
+pub use models::*;
 pub use return_handlers::{
-    list_material_returns,
-    create_material_return,
-    get_material_return,
+    create_material_return, delete_material_return, get_material_return, list_material_returns,
     update_material_return,
-    delete_material_return,
 };

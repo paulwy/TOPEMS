@@ -6,9 +6,8 @@ use chrono::{Datelike, Utc};
 use sqlx::Row;
 
 use super::models::{
-    BusinessOverview, CashFlowAnalysis, CategoryExpense, CategorySummary,
-    DepartmentExpense, ExpenseAnalysis, FinancialOverview, KeyRatios,
-    MonthlyTrendItem, ProfitAnalysis, ReportParams,
+    BusinessOverview, CashFlowAnalysis, CategoryExpense, CategorySummary, DepartmentExpense,
+    ExpenseAnalysis, FinancialOverview, KeyRatios, MonthlyTrendItem, ProfitAnalysis, ReportParams,
 };
 use super::ApiState;
 use crate::shared::permission::{check_permission, ModulePermission};

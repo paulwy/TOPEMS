@@ -195,10 +195,11 @@ pub async fn delete_feedback(
     Extension(claims): Extension<Claims>,
     Path(id): Path<Uuid>,
 ) -> impl IntoResponse {
-    let feedback = sqlx::query_as::<_, FeedbackOwnerId>(r#"SELECT user_id FROM core_feedbacks WHERE id = $1"#)
-        .bind(id)
-        .fetch_one(&state.pool)
-        .await;
+    let feedback =
+        sqlx::query_as::<_, FeedbackOwnerId>(r#"SELECT user_id FROM core_feedbacks WHERE id = $1"#)
+            .bind(id)
+            .fetch_one(&state.pool)
+            .await;
 
     match feedback {
         Ok(feedback) => {

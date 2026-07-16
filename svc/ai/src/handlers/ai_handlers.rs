@@ -3,9 +3,9 @@
 use crate::models::{
     AIGenerateRequest, AIGenerateResponse, AITemplate, AiSearchDocument, AiSearchRequest,
     AiSearchResponse, ChatRequest, ChatResponse, ChunkInfo, CompleteRequest, CompleteResponse,
-    OpenAIMessage, OpenAIRequest, OpenAIResponse, SearchResult, SummarizeRequest,
-    SummarizeResponse, Suggestion, TemplateField, ValidateRequest, ValidateResponse,
-    ValidationIssue, CLIENT, CONFIG, DOCUMENTS,
+    OpenAIMessage, OpenAIRequest, OpenAIResponse, SearchResult, Suggestion, SummarizeRequest,
+    SummarizeResponse, TemplateField, ValidateRequest, ValidateResponse, ValidationIssue, CLIENT,
+    CONFIG, DOCUMENTS,
 };
 use crate::services::search::vector_search;
 use axum::Json;
@@ -15,11 +15,21 @@ use topems_shared::ApiResponse;
 pub async fn generate(Json(req): Json<AIGenerateRequest>) -> Json<ApiResponse<AIGenerateResponse>> {
     let config = match CONFIG.get() {
         Some(c) => c,
-        None => return Json(ApiResponse::<AIGenerateResponse>::error(500, "AI service not initialized")),
+        None => {
+            return Json(ApiResponse::<AIGenerateResponse>::error(
+                500,
+                "AI service not initialized",
+            ))
+        }
     };
     let client = match CLIENT.get() {
         Some(c) => c,
-        None => return Json(ApiResponse::<AIGenerateResponse>::error(500, "AI client not initialized")),
+        None => {
+            return Json(ApiResponse::<AIGenerateResponse>::error(
+                500,
+                "AI client not initialized",
+            ))
+        }
     };
 
     let prompt = if let Some(p) = req.variables.get("prompt") {
@@ -77,11 +87,21 @@ pub async fn generate(Json(req): Json<AIGenerateRequest>) -> Json<ApiResponse<AI
 pub async fn validate(Json(req): Json<ValidateRequest>) -> Json<ApiResponse<ValidateResponse>> {
     let config = match CONFIG.get() {
         Some(c) => c,
-        None => return Json(ApiResponse::<ValidateResponse>::error(500, "AI service not initialized")),
+        None => {
+            return Json(ApiResponse::<ValidateResponse>::error(
+                500,
+                "AI service not initialized",
+            ))
+        }
     };
     let client = match CLIENT.get() {
         Some(c) => c,
-        None => return Json(ApiResponse::<ValidateResponse>::error(500, "AI client not initialized")),
+        None => {
+            return Json(ApiResponse::<ValidateResponse>::error(
+                500,
+                "AI client not initialized",
+            ))
+        }
     };
 
     let context_info = if let Some(ctx) = &req.context {
@@ -225,11 +245,21 @@ pub async fn validate(Json(req): Json<ValidateRequest>) -> Json<ApiResponse<Vali
 pub async fn complete(Json(req): Json<CompleteRequest>) -> Json<ApiResponse<CompleteResponse>> {
     let config = match CONFIG.get() {
         Some(c) => c,
-        None => return Json(ApiResponse::<CompleteResponse>::error(500, "AI service not initialized")),
+        None => {
+            return Json(ApiResponse::<CompleteResponse>::error(
+                500,
+                "AI service not initialized",
+            ))
+        }
     };
     let client = match CLIENT.get() {
         Some(c) => c,
-        None => return Json(ApiResponse::<CompleteResponse>::error(500, "AI client not initialized")),
+        None => {
+            return Json(ApiResponse::<CompleteResponse>::error(
+                500,
+                "AI client not initialized",
+            ))
+        }
     };
 
     let existing_data = req
@@ -338,11 +368,21 @@ pub async fn complete(Json(req): Json<CompleteRequest>) -> Json<ApiResponse<Comp
 pub async fn summarize(Json(req): Json<SummarizeRequest>) -> Json<ApiResponse<SummarizeResponse>> {
     let config = match CONFIG.get() {
         Some(c) => c,
-        None => return Json(ApiResponse::<SummarizeResponse>::error(500, "AI service not initialized")),
+        None => {
+            return Json(ApiResponse::<SummarizeResponse>::error(
+                500,
+                "AI service not initialized",
+            ))
+        }
     };
     let client = match CLIENT.get() {
         Some(c) => c,
-        None => return Json(ApiResponse::<SummarizeResponse>::error(500, "AI client not initialized")),
+        None => {
+            return Json(ApiResponse::<SummarizeResponse>::error(
+                500,
+                "AI client not initialized",
+            ))
+        }
     };
 
     let prompt = format!("请为以下内容生成摘要：\n\n{}", req.text);
@@ -457,11 +497,21 @@ pub async fn chat(Json(req): Json<ChatRequest>) -> Json<ApiResponse<ChatResponse
 
     let config = match CONFIG.get() {
         Some(c) => c,
-        None => return Json(ApiResponse::<ChatResponse>::error(500, "AI service not initialized")),
+        None => {
+            return Json(ApiResponse::<ChatResponse>::error(
+                500,
+                "AI service not initialized",
+            ))
+        }
     };
     let client = match CLIENT.get() {
         Some(c) => c,
-        None => return Json(ApiResponse::<ChatResponse>::error(500, "AI client not initialized")),
+        None => {
+            return Json(ApiResponse::<ChatResponse>::error(
+                500,
+                "AI client not initialized",
+            ))
+        }
     };
 
     let answer = if config.use_ollama || config.api_key.is_some() {
@@ -552,7 +602,10 @@ pub async fn ai_search(Json(req): Json<AiSearchRequest>) -> Json<ApiResponse<AiS
             Ok(d) => d,
             Err(e) => {
                 tracing::error!("Failed to lock documents: {}", e);
-                return Json(ApiResponse::<AiSearchResponse>::error(500, "Internal server error"));
+                return Json(ApiResponse::<AiSearchResponse>::error(
+                    500,
+                    "Internal server error",
+                ));
             }
         };
 

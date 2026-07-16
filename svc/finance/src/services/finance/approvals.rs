@@ -31,7 +31,6 @@ impl FinanceService {
         Ok(workflow)
     }
 
-
     pub async fn approve(
         &self,
         tenant_id: Uuid,
@@ -55,7 +54,6 @@ impl FinanceService {
 
         Ok(workflow)
     }
-
 
     pub async fn reject(
         &self,
@@ -83,7 +81,6 @@ impl FinanceService {
         Ok(workflow)
     }
 
-
     pub async fn cancel_approval(
         &self,
         tenant_id: Uuid,
@@ -104,7 +101,6 @@ impl FinanceService {
         Ok(workflow)
     }
 
-
     pub async fn get_approval_status(
         &self,
         tenant_id: Uuid,
@@ -122,7 +118,6 @@ impl FinanceService {
 
         Ok(workflow)
     }
-
 
     pub async fn list_pending_approvals(
         &self,
@@ -163,6 +158,4 @@ impl FinanceService {
 
         Ok((workflows, total.0))
     }
-
-
 }

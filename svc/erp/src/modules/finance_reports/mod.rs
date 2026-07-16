@@ -2,30 +2,30 @@ use axum::{routing::get, Router};
 
 use super::ApiState;
 
-mod models;
-mod core_reports;
-mod voucher_reports;
-mod receivable_payable;
-mod budget_hr;
 mod analysis_reports;
+mod budget_hr;
+mod core_reports;
+mod models;
 mod project_department;
+mod receivable_payable;
+mod voucher_reports;
 
 pub use models::*;
 
-pub use core_reports::{balance_sheet, income_statement, cash_flow};
+pub use core_reports::{balance_sheet, cash_flow, income_statement};
 
-pub use voucher_reports::{voucher_summary, voucher_details, voucher_trend};
+pub use voucher_reports::{voucher_details, voucher_summary, voucher_trend};
 
-pub use receivable_payable::{receivables_report, payables_report, aging_analysis};
+pub use receivable_payable::{aging_analysis, payables_report, receivables_report};
 
 pub use budget_hr::{budget_summary, employee_summary};
 
 pub use analysis_reports::{
-    category_summary, monthly_trend, business_overview, cash_flow_analysis,
-    expense_analysis, profit_analysis, financial_overview,
+    business_overview, cash_flow_analysis, category_summary, expense_analysis, financial_overview,
+    monthly_trend, profit_analysis,
 };
 
-pub use project_department::{project_summary, department_summary};
+pub use project_department::{department_summary, project_summary};
 
 pub fn create_routes() -> Router<ApiState> {
     Router::new()

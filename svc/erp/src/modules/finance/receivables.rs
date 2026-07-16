@@ -1,9 +1,7 @@
 #![allow(dead_code)]
 
+use axum::extract::{Extension, Json, Path, Query, State};
 use axum::http::HeaderMap;
-use axum::{
-    extract::{State, Extension, Json, Query, Path},
-};
 
 use chrono::Utc;
 
@@ -11,7 +9,7 @@ use uuid::Uuid;
 
 use super::super::ApiState;
 use super::PaginationParams;
-use crate::models::finance::{Receivable, CreateReceivableRequest, UpdateReceivableRequest};
+use crate::models::finance::{CreateReceivableRequest, Receivable, UpdateReceivableRequest};
 use crate::modules::audit::{log_audit_event, AuditEventParams};
 use crate::shared::permission::{check_permission, ModulePermission};
 use topems_shared::auth::Claims;
@@ -262,7 +260,9 @@ pub async fn update_receivable(
 
     let (response, status_str, error_msg) = match &result {
         Ok(receivable) => {
-            state.receivable_cache.remove(&super::receivable_cache_key(&id));
+            state
+                .receivable_cache
+                .remove(&super::receivable_cache_key(&id));
             (
                 Json(ApiResponse::success(receivable.clone(), "应收账款更新成功")),
                 "success".to_string(),
@@ -323,7 +323,9 @@ pub async fn delete_receivable(
 
     let (response, status_str, error_msg) = match &result {
         Ok(r) if r.rows_affected() > 0 => {
-            state.receivable_cache.remove(&super::receivable_cache_key(&id));
+            state
+                .receivable_cache
+                .remove(&super::receivable_cache_key(&id));
             (
                 Json(ApiResponse::success("".to_string(), "应收账款删除成功")),
                 "success".to_string(),

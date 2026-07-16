@@ -14,8 +14,7 @@ use super::common::PaginationParams;
 use super::ApiState;
 
 macro_rules! log_audit {
-    ($($args:expr),*) => {
-    };
+    ($($args:expr),*) => {};
 }
 
 pub async fn list_scopes(

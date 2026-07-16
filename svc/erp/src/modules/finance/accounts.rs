@@ -1,18 +1,18 @@
 #![allow(dead_code)]
 
-use serde::{Deserialize};
+use serde::Deserialize;
 
+use axum::extract::{Extension, Json, Path, Query, State};
 use axum::http::HeaderMap;
-use axum::{
-    extract::{State, Extension, Json, Query, Path},
-};
 
 use chrono::Utc;
 
 use uuid::Uuid;
 
 use super::super::ApiState;
-use crate::models::finance::{AccountingSubject, CreateAccountingSubjectRequest, UpdateAccountingSubjectRequest};
+use crate::models::finance::{
+    AccountingSubject, CreateAccountingSubjectRequest, UpdateAccountingSubjectRequest,
+};
 use crate::shared::permission::{check_permission, ModulePermission};
 use topems_shared::auth::Claims;
 use topems_shared::{api_error, ApiResponse, PaginatedResponse};

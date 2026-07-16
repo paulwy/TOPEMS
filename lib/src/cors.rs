@@ -16,6 +16,7 @@ pub fn create_cors_layer() -> CorsLayer {
             "No CORS origins configured, using strict default (only localhost for development)"
         );
         AllowOrigin::list(vec![
+            // SAFETY: these are hardcoded valid localhost URLs that cannot fail to parse
             "http://localhost:3000".parse().unwrap(),
             "http://localhost:5173".parse().unwrap(),
         ])

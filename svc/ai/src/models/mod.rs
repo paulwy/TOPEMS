@@ -179,7 +179,8 @@ pub struct EmbeddingData {
     pub embedding: Vec<f32>,
 }
 
-pub static VECTORS: std::sync::OnceLock<Arc<Mutex<Vec<VectorEmbedding>>>> = std::sync::OnceLock::new();
+pub static VECTORS: std::sync::OnceLock<Arc<Mutex<Vec<VectorEmbedding>>>> =
+    std::sync::OnceLock::new();
 pub static CHUNKS: std::sync::OnceLock<Arc<Mutex<Vec<DocumentChunk>>>> = std::sync::OnceLock::new();
 pub static DOCUMENTS: std::sync::OnceLock<Arc<Mutex<Vec<Document>>>> = std::sync::OnceLock::new();
 pub static CLIENT: std::sync::OnceLock<Client> = std::sync::OnceLock::new();

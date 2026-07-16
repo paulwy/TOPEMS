@@ -7,10 +7,10 @@ use axum::{
 use crate::modules::ApiState;
 
 mod models;
-mod suggestions;
-mod rules;
 mod orders;
+mod rules;
 mod safety_stock;
+mod suggestions;
 
 pub use models::{
     ConfirmSuggestionRequest, CreateReplenishmentRuleRequest, ReplenishmentComputeRequest,

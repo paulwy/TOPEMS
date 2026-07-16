@@ -11,8 +11,7 @@ use topems_shared::{api_error, ApiResponse};
 use super::ApiState;
 
 macro_rules! log_audit {
-    ($($args:expr),*) => {
-    };
+    ($($args:expr),*) => {};
 }
 
 pub async fn list_scope_companies(

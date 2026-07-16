@@ -127,7 +127,11 @@ impl StorageService for LocalStorage {
 
         Ok(FileMetadata {
             id: uuid::Uuid::new_v4().to_string(),
-            filename: path.file_name().unwrap_or_default().to_string_lossy().to_string(),
+            filename: path
+                .file_name()
+                .unwrap_or_default()
+                .to_string_lossy()
+                .to_string(),
             path: path.to_string_lossy().to_string(),
             size: content.len() as u64,
             content_type: content_type.to_string(),
@@ -168,7 +172,11 @@ impl StorageService for LocalStorage {
 
                     results.push(FileMetadata {
                         id: uuid::Uuid::new_v4().to_string(),
-                        filename: path.file_name().unwrap_or_default().to_string_lossy().to_string(),
+                        filename: path
+                            .file_name()
+                            .unwrap_or_default()
+                            .to_string_lossy()
+                            .to_string(),
                         path: path
                             .strip_prefix(&self.base_path)
                             .unwrap_or(&path)
@@ -203,7 +211,11 @@ impl StorageService for LocalStorage {
 
         Ok(Some(FileMetadata {
             id: uuid::Uuid::new_v4().to_string(),
-            filename: full_path.file_name().unwrap_or_default().to_string_lossy().to_string(),
+            filename: full_path
+                .file_name()
+                .unwrap_or_default()
+                .to_string_lossy()
+                .to_string(),
             path: path.to_string(),
             size: metadata.len(),
             content_type: "application/octet-stream".to_string(),

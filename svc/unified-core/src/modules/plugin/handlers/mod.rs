@@ -1,84 +1,48 @@
+pub mod automated_upgrade;
 pub mod marketplace;
-pub mod tenant_plugins;
+pub mod reviews_stats;
 pub mod runtime;
 pub mod simple_api;
-pub mod versioning;
+pub mod tenant_plugins;
 pub mod upgrade_workflow;
-pub mod reviews_stats;
-pub mod automated_upgrade;
+pub mod versioning;
 
 pub use marketplace::{
-    get_marketplace_summary,
-    list_categories,
-    list_plugins,
-    get_plugin,
-    get_plugin_versions,
-    get_plugin_reviews,
-    create_review,
+    create_review, get_marketplace_summary, get_plugin, get_plugin_reviews, get_plugin_versions,
+    list_categories, list_plugins,
 };
 
 pub use tenant_plugins::{
-    list_tenant_plugins,
-    list_my_plugins,
-    install_plugin,
-    uninstall_plugin,
-    activate_plugin,
-    deactivate_plugin,
-    get_available_plugins,
-    upload_plugin,
-    upload_plugin_version,
-    publish_plugin,
-    unpublish_plugin,
-    update_plugin,
+    activate_plugin, deactivate_plugin, get_available_plugins, install_plugin, list_my_plugins,
+    list_tenant_plugins, publish_plugin, uninstall_plugin, unpublish_plugin, update_plugin,
+    upload_plugin, upload_plugin_version,
 };
 
 pub use runtime::{
-    register_plugin,
+    get_plugin_status, list_plugins_with_status, register_plugin, unregister_plugin,
     update_plugin_status,
-    get_plugin_status,
-    unregister_plugin,
-    list_plugins_with_status,
 };
 
 pub use simple_api::{
+    disable_plugin_simple, enable_plugin_simple, get_plugin_details, install_plugin_simple,
+    list_installed_plugins, list_tenant_installed_plugins, uninstall_plugin_simple,
     PluginDetailsResponse,
-    list_installed_plugins,
-    get_plugin_details,
-    install_plugin_simple,
-    uninstall_plugin_simple,
-    list_tenant_installed_plugins,
-    enable_plugin_simple,
-    disable_plugin_simple,
 };
 
 pub use versioning::{
-    compare_plugin_versions,
-    check_plugin_updates,
-    rollback_plugin_version,
-    check_all_updates,
+    check_all_updates, check_plugin_updates, compare_plugin_versions, rollback_plugin_version,
 };
 
 pub use upgrade_workflow::{
-    start_plugin_upgrade,
-    verify_plugin_version,
-    get_upgrade_task_status,
-    list_upgrade_tasks,
+    get_upgrade_task_status, list_upgrade_tasks, start_plugin_upgrade, verify_plugin_version,
 };
 
 pub use reviews_stats::{
-    get_plugin_reviews_by_code,
-    create_plugin_review,
-    get_plugin_statistics,
+    create_plugin_review, get_download_history, get_plugin_reviews_by_code, get_plugin_statistics,
     get_review_statistics,
-    get_download_history,
 };
 
 pub use automated_upgrade::{
-    get_upgrade_schedule,
-    configure_upgrade_schedule,
-    get_upgrade_queue,
-    add_to_upgrade_queue,
-    cancel_upgrade_queue_item,
-    batch_upgrade,
-    get_upgrade_history,
+    add_to_upgrade_queue, batch_upgrade, cancel_upgrade_queue_item, configure_upgrade_schedule,
+    get_upgrade_history, get_upgrade_queue, get_upgrade_schedule,
 };

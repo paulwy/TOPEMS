@@ -626,7 +626,10 @@ pub async fn get_flow_steps(
                     work_station_id: s.work_station_id.map(|u| u.to_string()),
                     work_station_name: Some(s.work_station_name),
                     equipment_ids: s.equipment_ids.as_ref().map(|ids| {
-                        serde_json::to_string(&ids.iter().map(|u| u.to_string()).collect::<Vec<_>>()).unwrap_or_default()
+                        serde_json::to_string(
+                            &ids.iter().map(|u| u.to_string()).collect::<Vec<_>>(),
+                        )
+                        .unwrap_or_default()
                     }),
                     standard_time: opt_big_decimal_to_f64(s.standard_time),
                     wait_time: opt_big_decimal_to_f64(s.wait_time),
@@ -748,7 +751,10 @@ pub async fn add_flow_step(
                     work_station_id: s.work_station_id.map(|u| u.to_string()),
                     work_station_name: None,
                     equipment_ids: s.equipment_ids.as_ref().map(|ids| {
-                        serde_json::to_string(&ids.iter().map(|u| u.to_string()).collect::<Vec<_>>()).unwrap_or_default()
+                        serde_json::to_string(
+                            &ids.iter().map(|u| u.to_string()).collect::<Vec<_>>(),
+                        )
+                        .unwrap_or_default()
                     }),
                     standard_time: opt_big_decimal_to_f64(s.standard_time),
                     wait_time: opt_big_decimal_to_f64(s.wait_time),
@@ -863,7 +869,10 @@ pub async fn update_flow_step(
                     work_station_id: s.work_station_id.map(|u| u.to_string()),
                     work_station_name: None,
                     equipment_ids: s.equipment_ids.as_ref().map(|ids| {
-                        serde_json::to_string(&ids.iter().map(|u| u.to_string()).collect::<Vec<_>>()).unwrap_or_default()
+                        serde_json::to_string(
+                            &ids.iter().map(|u| u.to_string()).collect::<Vec<_>>(),
+                        )
+                        .unwrap_or_default()
                     }),
                     standard_time: opt_big_decimal_to_f64(s.standard_time),
                     wait_time: opt_big_decimal_to_f64(s.wait_time),
@@ -1004,7 +1013,10 @@ pub async fn reorder_flow_steps(
                     work_station_id: s.work_station_id.map(|u| u.to_string()),
                     work_station_name: Some(s.work_station_name),
                     equipment_ids: s.equipment_ids.as_ref().map(|ids| {
-                        serde_json::to_string(&ids.iter().map(|u| u.to_string()).collect::<Vec<_>>()).unwrap_or_default()
+                        serde_json::to_string(
+                            &ids.iter().map(|u| u.to_string()).collect::<Vec<_>>(),
+                        )
+                        .unwrap_or_default()
                     }),
                     standard_time: opt_big_decimal_to_f64(s.standard_time),
                     wait_time: opt_big_decimal_to_f64(s.wait_time),

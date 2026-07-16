@@ -5,7 +5,10 @@ use axum::{
 use chrono::{Datelike, Utc};
 use sqlx::Row;
 
-use super::models::{BalanceItem, BalanceSheet, CashFlowItem, CashFlowStatement, IncomeItem, IncomeStatement, ReportParams};
+use super::models::{
+    BalanceItem, BalanceSheet, CashFlowItem, CashFlowStatement, IncomeItem, IncomeStatement,
+    ReportParams,
+};
 use super::ApiState;
 use crate::shared::permission::{check_permission, ModulePermission};
 use topems_shared::auth::Claims;

@@ -1,9 +1,6 @@
 #![allow(dead_code)]
 
-use axum::{
-    routing::*,
-    Router,
-};
+use axum::{routing::*, Router};
 
 use super::accounting_subjects::*;
 use super::generation::*;

@@ -1,6 +1,6 @@
 #![allow(dead_code)]
 
-use crate::handlers::{connector_handlers, health, ai_handlers};
+use crate::handlers::{ai_handlers, connector_handlers, health};
 use crate::middleware;
 use crate::modules::{
     AnalysisApi, DocumentApi, EmbeddingApi, MultimodalApi, QaApi, RecommendationApi, VectorApi,
@@ -35,7 +35,10 @@ pub fn create_routes(
             "/api/plugins/health",
             get(crate::modules::ai_plugin::plugin_health_check),
         )
-        .route("/api/core/ai/health/detailed", get(health::health_check_detailed))
+        .route(
+            "/api/core/ai/health/detailed",
+            get(health::health_check_detailed),
+        )
         .route("/api/core/ai/metrics", get(VectorApi::stats))
         .route("/api/core/ai/search", post(ai_handlers::ai_search))
         .route(
@@ -122,13 +125,34 @@ pub fn create_routes(
         )
         .route("/api/core/ai/qa/feedback", post(QaApi::feedback))
         // 数据连接器 API
-        .route("/api/core/ai/connectors", get(connector_handlers::list_connectors))
-        .route("/api/core/ai/connectors/get", get(connector_handlers::get_connector))
-        .route("/api/core/ai/connectors/create", post(connector_handlers::create_connector))
-        .route("/api/core/ai/connectors/update", post(connector_handlers::update_connector))
-        .route("/api/core/ai/connectors/delete", post(connector_handlers::delete_connector))
-        .route("/api/core/ai/connectors/test", get(connector_handlers::test_connector))
-        .route("/api/core/ai/connectors/query", post(connector_handlers::query_data))
+        .route(
+            "/api/core/ai/connectors",
+            get(connector_handlers::list_connectors),
+        )
+        .route(
+            "/api/core/ai/connectors/get",
+            get(connector_handlers::get_connector),
+        )
+        .route(
+            "/api/core/ai/connectors/create",
+            post(connector_handlers::create_connector),
+        )
+        .route(
+            "/api/core/ai/connectors/update",
+            post(connector_handlers::update_connector),
+        )
+        .route(
+            "/api/core/ai/connectors/delete",
+            post(connector_handlers::delete_connector),
+        )
+        .route(
+            "/api/core/ai/connectors/test",
+            get(connector_handlers::test_connector),
+        )
+        .route(
+            "/api/core/ai/connectors/query",
+            post(connector_handlers::query_data),
+        )
         .layer(axum::middleware::from_fn_with_state(
             app_state.auth_state.clone(),
             auth_middleware,

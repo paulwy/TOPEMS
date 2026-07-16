@@ -1,9 +1,7 @@
 #![allow(dead_code)]
 
+use axum::extract::{Extension, Json, Path, Query, State};
 use axum::http::HeaderMap;
-use axum::{
-    extract::{State, Extension, Json, Query, Path},
-};
 
 use chrono::Utc;
 

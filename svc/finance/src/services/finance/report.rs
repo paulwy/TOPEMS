@@ -53,7 +53,6 @@ impl FinanceService {
         Ok(entries)
     }
 
-
     pub async fn get_trial_balance(
         &self,
         tenant_id: Uuid,
@@ -80,7 +79,6 @@ impl FinanceService {
 
         Ok(balances)
     }
-
 
     pub async fn get_balance_sheet(
         &self,
@@ -111,7 +109,6 @@ impl FinanceService {
             total_equity,
         })
     }
-
 
     pub(super) async fn get_balance_items(
         &self,
@@ -167,7 +164,6 @@ impl FinanceService {
         Ok(items)
     }
 
-
     pub async fn get_income_statement(
         &self,
         tenant_id: Uuid,
@@ -193,7 +189,6 @@ impl FinanceService {
             net_income,
         })
     }
-
 
     pub(super) async fn get_income_items(
         &self,
@@ -230,7 +225,6 @@ impl FinanceService {
 
         Ok(items)
     }
-
 
     pub async fn get_cash_flow_statement(
         &self,
@@ -303,6 +297,4 @@ impl FinanceService {
             closing_balance,
         })
     }
-
-
 }

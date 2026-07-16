@@ -157,7 +157,6 @@ impl FinanceService {
         result
     }
 
-
     pub(super) async fn get_approval_workflow(
         &self,
         tenant_id: Uuid,
@@ -176,7 +175,6 @@ impl FinanceService {
 
         Ok(workflow_id)
     }
-
 
     pub async fn approve_payment(
         &self,
@@ -364,7 +362,6 @@ impl FinanceService {
         result
     }
 
-
     pub async fn reject_payment(
         &self,
         tenant_id: Uuid,
@@ -503,7 +500,6 @@ impl FinanceService {
         result
     }
 
-
     pub async fn execute_payment(
         &self,
         tenant_id: Uuid,
@@ -539,7 +535,6 @@ impl FinanceService {
 
         self.get_payment_response(tenant_id, payment_id).await
     }
-
 
     pub async fn write_off_payment_item(
         &self,
@@ -577,5 +572,4 @@ impl FinanceService {
 
         self.get_payment_response(tenant_id, payment_id).await
     }
-
 }

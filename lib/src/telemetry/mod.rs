@@ -96,7 +96,10 @@ pub fn init_telemetry(service_name: &str) -> TelemetryGuard {
     let tracer = tracer_provider.tracer(service_name);
     let otel_layer = OpenTelemetryLayer::new(tracer);
 
-    let mut provider_guard = TRACER_PROVIDER.lock().unwrap();
+    let mut provider_guard = TRACER_PROVIDER.lock().unwrap_or_else(|e| {
+        tracing::error!("Lock poisoned: {}", e);
+        e.into_inner()
+    });
     if let Some(old_provider) = provider_guard.take() {
         let _ = old_provider.shutdown();
     }
@@ -139,7 +142,10 @@ impl Drop for TelemetryGuard {
     fn drop(&mut self) {
         if self.otel_enabled {
             tracing::info!("🛑 Telemetry guard dropped, flushing remaining spans...");
-            let mut provider_guard = TRACER_PROVIDER.lock().unwrap();
+            let mut provider_guard = TRACER_PROVIDER.lock().unwrap_or_else(|e| {
+                tracing::error!("Lock poisoned: {}", e);
+                e.into_inner()
+            });
             if let Some(provider) = provider_guard.take() {
                 let _ = provider.shutdown();
             }
