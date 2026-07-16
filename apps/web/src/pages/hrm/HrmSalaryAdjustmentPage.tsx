@@ -83,7 +83,7 @@ const HrmSalaryAdjustmentPage: React.FC = () => {
         label={cfg.label}
         color={cfg.color}
         size='small'
-        icon={cfg.icon as any}
+        icon={cfg.icon as unknown as React.ReactElement}
       />
     );
   };

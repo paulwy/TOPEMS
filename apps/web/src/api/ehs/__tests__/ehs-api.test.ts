@@ -1,4 +1,23 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
+import type {
+  CreateControlMeasureRequest,
+  CreateInspectionItemRequest,
+  CreateInspectionPlanRequest,
+  CreateInspectionRecordRequest,
+  CreateRectificationRequest,
+  CreateRiskAssessmentRequest,
+  CreateRiskControlMeasureRequest,
+  CreateRiskMgmtAssessmentRequest,
+  CreateRiskRequest,
+  CreateSafetyHazardRequest,
+  CreateSafetyIssueRequest,
+  CreateTrainingCertificateRequest,
+  CreateTrainingPlanRequest,
+  CreateTrainingRecordRequest,
+  CreateVerificationRequest,
+  UpdateRiskRequest,
+  UpdateTrainingPlanRequest,
+} from '../types';
 
 vi.mock('../../client', () => {
   const mockEhsClient = {
@@ -50,7 +69,7 @@ describe('EHS Module API Tests', () => {
       const { apiClient } = await import('../../client');
       (apiClient.ehs.post as vi.Mock).mockResolvedValue({ data: {} });
       const data = { name: 'Test Hazard', category: 'safety', severity: 'high' };
-      await hazardApi.createHazard(data as any);
+      await hazardApi.createHazard(data as unknown as CreateSafetyHazardRequest);
       expect(apiClient.ehs.post).toHaveBeenCalledWith('/hazards', data);
     });
 
@@ -59,7 +78,7 @@ describe('EHS Module API Tests', () => {
       const { apiClient } = await import('../../client');
       (apiClient.ehs.put as vi.Mock).mockResolvedValue({ data: {} });
       const data = { name: 'Updated Hazard', status: 'inactive' };
-      await hazardApi.updateHazard('hazard-001', data as any);
+      await hazardApi.updateHazard('hazard-001', data as Partial<CreateSafetyHazardRequest>);
       expect(apiClient.ehs.put).toHaveBeenCalledWith('/hazards/hazard-001', data);
     });
 
@@ -83,7 +102,7 @@ describe('EHS Module API Tests', () => {
       const { apiClient } = await import('../../client');
       (apiClient.ehs.post as vi.Mock).mockResolvedValue({ data: {} });
       const data = { likelihood: 3, severity: 4, risk_level: 'high' };
-      await hazardApi.createRiskAssessment('hazard-001', data as any);
+      await hazardApi.createRiskAssessment('hazard-001', data as unknown as CreateRiskAssessmentRequest);
       expect(apiClient.ehs.post).toHaveBeenCalledWith('/hazards/hazard-001/assessments', data);
     });
 
@@ -100,7 +119,7 @@ describe('EHS Module API Tests', () => {
       const { apiClient } = await import('../../client');
       (apiClient.ehs.post as vi.Mock).mockResolvedValue({ data: {} });
       const data = { measure: 'Install guardrails', type: 'engineering' };
-      await hazardApi.createControlMeasure('hazard-001', data as any);
+      await hazardApi.createControlMeasure('hazard-001', data as unknown as CreateControlMeasureRequest);
       expect(apiClient.ehs.post).toHaveBeenCalledWith('/hazards/hazard-001/controls', data);
     });
 
@@ -136,7 +155,7 @@ describe('EHS Module API Tests', () => {
       const { apiClient } = await import('../../client');
       (apiClient.ehs.post as vi.Mock).mockResolvedValue({ data: {} });
       const data = { name: 'Test Plan', frequency: 'monthly' };
-      await inspectionApi.createInspectionPlan(data as any);
+      await inspectionApi.createInspectionPlan(data as unknown as CreateInspectionPlanRequest);
       expect(apiClient.ehs.post).toHaveBeenCalledWith('/checks/plans', data);
     });
 
@@ -145,7 +164,7 @@ describe('EHS Module API Tests', () => {
       const { apiClient } = await import('../../client');
       (apiClient.ehs.put as vi.Mock).mockResolvedValue({ data: {} });
       const data = { name: 'Updated Plan' };
-      await inspectionApi.updateInspectionPlan('plan-001', data as any);
+      await inspectionApi.updateInspectionPlan('plan-001', data as Partial<CreateInspectionPlanRequest>);
       expect(apiClient.ehs.put).toHaveBeenCalledWith('/checks/plans/plan-001', data);
     });
 
@@ -169,7 +188,7 @@ describe('EHS Module API Tests', () => {
       const { apiClient } = await import('../../client');
       (apiClient.ehs.post as vi.Mock).mockResolvedValue({ data: {} });
       const data = { name: 'Check fire extinguisher', category: 'safety' };
-      await inspectionApi.createInspectionItem('plan-001', data as any);
+      await inspectionApi.createInspectionItem('plan-001', data as unknown as CreateInspectionItemRequest);
       expect(apiClient.ehs.post).toHaveBeenCalledWith('/checks/plans/plan-001/items', data);
     });
 
@@ -196,7 +215,7 @@ describe('EHS Module API Tests', () => {
       const { apiClient } = await import('../../client');
       (apiClient.ehs.post as vi.Mock).mockResolvedValue({ data: {} });
       const data = { plan_id: 'plan-001', inspector: 'John' };
-      await inspectionApi.createInspectionRecord(data as any);
+      await inspectionApi.createInspectionRecord(data as unknown as CreateInspectionRecordRequest);
       expect(apiClient.ehs.post).toHaveBeenCalledWith('/checks/records', data);
     });
   });
@@ -227,7 +246,7 @@ describe('EHS Module API Tests', () => {
         description: 'Safety issue description',
         severity: 'high',
       };
-      await safetyIssueApi.createSafetyIssue(data as any);
+      await safetyIssueApi.createSafetyIssue(data as unknown as CreateSafetyIssueRequest);
       expect(apiClient.ehs.post).toHaveBeenCalledWith('/issues', data);
     });
 
@@ -236,7 +255,7 @@ describe('EHS Module API Tests', () => {
       const { apiClient } = await import('../../client');
       (apiClient.ehs.put as vi.Mock).mockResolvedValue({ data: {} });
       const data = { title: 'Updated Issue', status: 'in_progress' };
-      await safetyIssueApi.updateSafetyIssue('issue-001', data as any);
+      await safetyIssueApi.updateSafetyIssue('issue-001', data as Partial<CreateSafetyIssueRequest>);
       expect(apiClient.ehs.put).toHaveBeenCalledWith('/issues/issue-001', data);
     });
 
@@ -252,7 +271,7 @@ describe('EHS Module API Tests', () => {
       const { apiClient } = await import('../../client');
       (apiClient.ehs.post as vi.Mock).mockResolvedValue({ data: {} });
       const data = { responsible_person: 'John', deadline: '2024-02-01' };
-      await safetyIssueApi.startRectification('issue-001', data as any);
+      await safetyIssueApi.startRectification('issue-001', data as unknown as CreateRectificationRequest);
       expect(apiClient.ehs.post).toHaveBeenCalledWith('/issues/issue-001/rectification', data);
     });
 
@@ -269,7 +288,7 @@ describe('EHS Module API Tests', () => {
       const { apiClient } = await import('../../client');
       (apiClient.ehs.post as vi.Mock).mockResolvedValue({ data: {} });
       const data = { verifier: 'Jane', result: 'pass' };
-      await safetyIssueApi.verifySafetyIssue('issue-001', data as any);
+      await safetyIssueApi.verifySafetyIssue('issue-001', data as unknown as CreateVerificationRequest);
       expect(apiClient.ehs.post).toHaveBeenCalledWith('/issues/issue-001/verification', data);
     });
 
@@ -304,7 +323,7 @@ describe('EHS Module API Tests', () => {
       const { apiClient } = await import('../../client');
       (apiClient.ehs.post as vi.Mock).mockResolvedValue({ data: {} });
       const data = { name: 'Test Risk', category: 'operational', likelihood: 3 };
-      await riskApi.createRisk(data as any);
+      await riskApi.createRisk(data as unknown as CreateRiskRequest);
       expect(apiClient.ehs.post).toHaveBeenCalledWith('/hazards', data);
     });
 
@@ -313,7 +332,7 @@ describe('EHS Module API Tests', () => {
       const { apiClient } = await import('../../client');
       (apiClient.ehs.put as vi.Mock).mockResolvedValue({ data: {} });
       const data = { name: 'Updated Risk', status: 'mitigated' };
-      await riskApi.updateRisk('risk-001', data as any);
+      await riskApi.updateRisk('risk-001', data as Partial<UpdateRiskRequest>);
       expect(apiClient.ehs.put).toHaveBeenCalledWith('/hazards/risk-001', data);
     });
 
@@ -337,7 +356,7 @@ describe('EHS Module API Tests', () => {
       const { apiClient } = await import('../../client');
       (apiClient.ehs.post as vi.Mock).mockResolvedValue({ data: {} });
       const data = { assessor: 'John', assessment_date: '2024-01-15' };
-      await riskApi.createRiskMgmtAssessment('risk-001', data as any);
+      await riskApi.createRiskMgmtAssessment('risk-001', data as unknown as CreateRiskMgmtAssessmentRequest);
       expect(apiClient.ehs.post).toHaveBeenCalledWith('/hazards/risk-001/assessments', data);
     });
 
@@ -354,7 +373,7 @@ describe('EHS Module API Tests', () => {
       const { apiClient } = await import('../../client');
       (apiClient.ehs.post as vi.Mock).mockResolvedValue({ data: {} });
       const data = { measure: 'Risk reduction measure', type: 'preventive' };
-      await riskApi.createRiskControlMeasure('risk-001', data as any);
+      await riskApi.createRiskControlMeasure('risk-001', data as unknown as CreateRiskControlMeasureRequest);
       expect(apiClient.ehs.post).toHaveBeenCalledWith('/hazards/risk-001/controls', data);
     });
 
@@ -390,7 +409,7 @@ describe('EHS Module API Tests', () => {
       const { apiClient } = await import('../../client');
       (apiClient.ehs.post as vi.Mock).mockResolvedValue({ data: {} });
       const data = { name: 'Safety Training', training_type: 'safety', category: 'EHS' };
-      await trainingApi.createTrainingPlan(data as any);
+      await trainingApi.createTrainingPlan(data as unknown as CreateTrainingPlanRequest);
       expect(apiClient.ehs.post).toHaveBeenCalledWith('/training/plans', data);
     });
 
@@ -399,7 +418,7 @@ describe('EHS Module API Tests', () => {
       const { apiClient } = await import('../../client');
       (apiClient.ehs.put as vi.Mock).mockResolvedValue({ data: {} });
       const data = { name: 'Updated Training Plan' };
-      await trainingApi.updateTrainingPlan('plan-001', data as any);
+      await trainingApi.updateTrainingPlan('plan-001', data as Partial<UpdateTrainingPlanRequest>);
       expect(apiClient.ehs.put).toHaveBeenCalledWith('/training/plans/plan-001', data);
     });
 
@@ -433,7 +452,7 @@ describe('EHS Module API Tests', () => {
       const { apiClient } = await import('../../client');
       (apiClient.ehs.post as vi.Mock).mockResolvedValue({ data: {} });
       const data = { plan_id: 'plan-001', employee_id: 'emp-001', score: 95 };
-      await trainingApi.createTrainingRecord(data as any);
+      await trainingApi.createTrainingRecord(data as unknown as CreateTrainingRecordRequest);
       expect(apiClient.ehs.post).toHaveBeenCalledWith('/training/records', data);
     });
 
@@ -460,7 +479,7 @@ describe('EHS Module API Tests', () => {
       const { apiClient } = await import('../../client');
       (apiClient.ehs.post as vi.Mock).mockResolvedValue({ data: {} });
       const data = { employee_id: 'emp-001', certificate_type: 'safety', issue_date: '2024-01-15' };
-      await trainingApi.createTrainingCertificate(data as any);
+      await trainingApi.createTrainingCertificate(data as unknown as CreateTrainingCertificateRequest);
       expect(apiClient.ehs.post).toHaveBeenCalledWith('/training/certificates', data);
     });
   });

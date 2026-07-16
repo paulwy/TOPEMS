@@ -57,6 +57,7 @@ import {
   type FieldValues,
   type UseFormReturn,
   type FieldErrors,
+  type Resolver,
 } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import type { z } from 'zod';
@@ -509,8 +510,11 @@ export const FormPageTemplate: React.FC<FormPageTemplateProps> = ({
   const [currentGroup, setCurrentGroup] = useState<string>('all');
 
   // 表单初始化
+  const resolver: Resolver | undefined = schema
+    ? (zodResolver(schema as never) as unknown as Resolver)
+    : undefined;
   const methods = useForm({
-    resolver: schema ? (zodResolver(schema as any) as any) : undefined,
+    resolver,
     defaultValues: defaultValues || {},
     mode: 'onBlur',
   });
@@ -703,7 +707,7 @@ export const FormPageTemplate: React.FC<FormPageTemplateProps> = ({
         const visibleData: Record<string, any> = {};
         Object.keys(data as object).forEach((key) => {
           if (fieldVisibility[key] !== false) {
-            visibleData[key] = (data as Record<string, unknown>)[key];
+            visibleData[key] = (data as unknown as Record<string, unknown>)[key];
           }
         });
 
@@ -776,7 +780,7 @@ export const FormPageTemplate: React.FC<FormPageTemplateProps> = ({
     const fieldError = errors[fieldName];
     if (!fieldError) return '';
 
-    const error = fieldError as any;
+    const error = fieldError as { message?: string };
     let message = error?.message || '验证失败';
 
     // 使用自定义验证消息

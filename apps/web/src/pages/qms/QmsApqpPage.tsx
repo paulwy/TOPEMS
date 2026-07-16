@@ -47,6 +47,13 @@ import { useNotificationStore } from '@/store';
 
 const ct = designTokens.colors;
 
+interface ApqpProjectDetails {
+  phases: ApqpPhase[];
+  tasks: ApqpTask[];
+  risks: ApqpRisk[];
+  progress: ApqpProgressStatistics | null;
+}
+
 const QmsApqpPage: React.FC = () => {
   const navigate = useNavigate();
   const [selectedProject, setSelectedProject] = useState<ApqpProject | null>(null);
@@ -67,21 +74,20 @@ const QmsApqpPage: React.FC = () => {
   const addNotification = useNotificationStore((state) => state.addNotification);
   const queryClient = useQueryClient();
 
-  const { data: projects = [], isLoading: loading } = useQuery({
+  const { data: projects = [], isLoading: loading } = useQuery<ApqpProject[]>({
     queryKey: ['qms-apqp-projects'],
-    queryFn: async () => {
+    queryFn: async (): Promise<ApqpProject[]> => {
       const response = await qmsApi.listApqpProjects();
       if (response.success && response.data) {
-        const data = response.data as any;
-        return Array.isArray(data) ? data : data.projects || [];
+        return response.data;
       }
       return [];
     },
   });
 
-  const { data: projectDetails } = useQuery({
+  const { data: projectDetails } = useQuery<ApqpProjectDetails>({
     queryKey: ['qms-apqp-project-details', selectedProject?.id],
-    queryFn: async () => {
+    queryFn: async (): Promise<ApqpProjectDetails> => {
       if (!selectedProject?.id) {
         return { phases: [], tasks: [], risks: [], progress: null };
       }
@@ -93,28 +99,11 @@ const QmsApqpPage: React.FC = () => {
       ]);
 
       return {
-        phases:
-          phasesRes.success && phasesRes.data
-            ? Array.isArray(phasesRes.data)
-              ? phasesRes.data
-              : (phasesRes.data as any).phases || []
-            : [],
-        tasks:
-          tasksRes.success && tasksRes.data
-            ? Array.isArray(tasksRes.data)
-              ? tasksRes.data
-              : (tasksRes.data as any).tasks || []
-            : [],
-        risks:
-          risksRes.success && risksRes.data
-            ? Array.isArray(risksRes.data)
-              ? risksRes.data
-              : (risksRes.data as any).risks || []
-            : [],
+        phases: phasesRes.success && phasesRes.data ? phasesRes.data : [],
+        tasks: tasksRes.success && tasksRes.data ? tasksRes.data : [],
+        risks: risksRes.success && risksRes.data ? risksRes.data : [],
         progress:
-          progressRes.success && progressRes.data
-            ? (progressRes.data as ApqpProgressStatistics)
-            : null,
+          progressRes.success && progressRes.data ? progressRes.data : null,
       };
     },
     enabled: !!selectedProject?.id,

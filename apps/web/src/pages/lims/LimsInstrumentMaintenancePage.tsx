@@ -782,7 +782,7 @@ const LimsInstrumentMaintenancePage: React.FC = () => {
                 }
                 fullWidth
                 size='small'
-                slotProps={{ inputLabel: { shrink: true } } as any}
+                slotProps={{ inputLabel: { shrink: true } } as const}
               />
               <TextField
                 type='date'
@@ -796,7 +796,7 @@ const LimsInstrumentMaintenancePage: React.FC = () => {
                 }
                 fullWidth
                 size='small'
-                slotProps={{ inputLabel: { shrink: true } } as any}
+                slotProps={{ inputLabel: { shrink: true } } as const}
               />
             </Box>
             <TextField
@@ -905,7 +905,7 @@ const LimsInstrumentMaintenancePage: React.FC = () => {
                 }
                 fullWidth
                 size='small'
-                slotProps={{ inputLabel: { shrink: true } } as any}
+                slotProps={{ inputLabel: { shrink: true } } as const}
               />
               <TextField
                 type='date'
@@ -919,7 +919,7 @@ const LimsInstrumentMaintenancePage: React.FC = () => {
                 }
                 fullWidth
                 size='small'
-                slotProps={{ inputLabel: { shrink: true } } as any}
+                slotProps={{ inputLabel: { shrink: true } } as const}
               />
             </Box>
             <TextField

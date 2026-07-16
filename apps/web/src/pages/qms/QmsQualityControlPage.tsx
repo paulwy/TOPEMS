@@ -87,13 +87,12 @@ const QmsQualityControlPage: React.FC = () => {
     },
   });
 
-  const { data: auditPlans = [], isLoading: auditsLoading } = useQuery({
+  const { data: auditPlans = [], isLoading: auditsLoading } = useQuery<AuditPlan[]>({
     queryKey: ['qms-audit-plans'],
-    queryFn: async () => {
+    queryFn: async (): Promise<AuditPlan[]> => {
       const response = await qmsApi.listAuditPlans();
       if (response.success && response.data) {
-        const plansData = response.data as any;
-        return Array.isArray(plansData) ? plansData : plansData.plans || [];
+        return response.data;
       }
       return [];
     },
@@ -669,11 +668,11 @@ const QmsQualityControlPage: React.FC = () => {
       <Card>
         <CardContent sx={{ p: 0 }}>
           <ListPageTemplate
-            columns={currentColumns as any}
-            data={currentData as any[]}
+            columns={currentColumns as ColumnDef<QualityIssue | AuditPlan>[]}
+            data={currentData as (QualityIssue | AuditPlan)[]}
             loading={loading}
             getRowId={(row: QualityIssue | AuditPlan) => row.id}
-            rowActions={currentRowActions as any}
+            rowActions={currentRowActions as RowAction<QualityIssue | AuditPlan>[]}
             searchable={false}
             filters={[]}
             actions={[]}

@@ -57,33 +57,35 @@ export const PdmBomPage: React.FC = () => {
     level: 1,
   });
 
-  const { data: products = [], isLoading: productsLoading } = useQuery({
+  const { data: products = [], isLoading: productsLoading } = useQuery<Product[]>({
     queryKey: QUERY_KEYS.PDM.PRODUCTS,
-    queryFn: async () => {
+    queryFn: async (): Promise<Product[]> => {
       const response = await pdmApi.listProducts();
       if (response.success && response.data) {
-        const data = response.data as any;
-        return Array.isArray(data) ? data : data.products || [];
+        const data = response.data as unknown as Record<string, unknown>;
+        return (Array.isArray(data) ? data : data.products || []) as unknown as Product[];
       }
       return [];
     },
     staleTime: 5 * 60 * 1000,
   });
 
-  const { data: bomItems = [], isLoading } = useQuery({
+  const { data: bomItems = [], isLoading } = useQuery<BomItem[]>({
     queryKey: QUERY_KEYS.PDM.BOM_ITEMS,
-    queryFn: async () => {
+    queryFn: async (): Promise<BomItem[]> => {
       const response = await pdmApi.listBomItems();
       if (response.success && response.data) {
-        const data = response.data as any;
-        const items = Array.isArray(data) ? data : data.items || [];
+        const data = response.data as unknown as Record<string, unknown>;
+        const items = (Array.isArray(data) ? data : data.items || []) as unknown as {
+          [key: string]: unknown;
+        }[];
         return items.map((item: { [key: string]: unknown }) => ({
           ...item,
           partNumber: item.part_number || item.partNumber || '',
           partName: item.part_name || item.partName || '',
           unitPrice: item.unit_price || item.unitPrice || 0,
           totalPrice: item.total_price || item.totalPrice || 0,
-        }));
+        })) as unknown as BomItem[];
       }
       return [];
     },

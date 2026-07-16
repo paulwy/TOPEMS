@@ -150,11 +150,13 @@ const PerformanceTestPage: React.FC = () => {
       setRenderComplete(true);
     }, 100);
 
-    const navTiming = performance.getEntriesByType('navigation')[0] as any;
+    const navTiming = performance.getEntriesByType(
+      'navigation'
+    )[0] as PerformanceNavigationTiming;
     if (navTiming) {
-      setNavigationTime(navTiming.loadEventEnd - navTiming.navigationStart);
-      setDomContentLoaded(navTiming.domContentLoadedEventEnd - navTiming.navigationStart);
-      setWindowLoad(navTiming.loadEventEnd - navTiming.navigationStart);
+      setNavigationTime(navTiming.loadEventEnd - navTiming.startTime);
+      setDomContentLoaded(navTiming.domContentLoadedEventEnd - navTiming.startTime);
+      setWindowLoad(navTiming.loadEventEnd - navTiming.startTime);
     }
 
     const checkPaintTiming = () => {
@@ -245,7 +247,7 @@ const PerformanceTestPage: React.FC = () => {
     const ttiCheckTimer = setInterval(() => {
       const navEntries = performance.getEntriesByType('navigation');
       if (navEntries.length > 0) {
-        const nav = navEntries[0] as any;
+        const nav = navEntries[0] as PerformanceNavigationTiming;
         const tti = nav.domContentLoadedEventEnd || nav.loadEventEnd;
         if (tti) {
           setTtiTime(tti);

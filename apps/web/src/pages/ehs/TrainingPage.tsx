@@ -60,7 +60,7 @@ const TrainingPage: React.FC = () => {
         search: searchTerm || undefined,
       });
       if (response.success && response.data) {
-        const data = response.data as any;
+        const data = response.data as unknown as Record<string, unknown>;
         return Array.isArray(data) ? data : data.data || [];
       }
       return [];
@@ -76,7 +76,7 @@ const TrainingPage: React.FC = () => {
         search: searchTerm || undefined,
       });
       if (response.success && response.data) {
-        const data = response.data as any;
+        const data = response.data as unknown as Record<string, unknown>;
         return Array.isArray(data) ? data : data.data || [];
       }
       return [];
@@ -92,7 +92,7 @@ const TrainingPage: React.FC = () => {
         search: searchTerm || undefined,
       });
       if (response.success && response.data) {
-        const data = response.data as any;
+        const data = response.data as unknown as Record<string, unknown>;
         return Array.isArray(data) ? data : data.data || [];
       }
       return [];
@@ -453,8 +453,8 @@ const TrainingPage: React.FC = () => {
 
       <ListPageTemplate
         title=''
-        columns={currentColumns as any}
-        data={currentData as any}
+        columns={currentColumns as unknown as ColumnDef<unknown>[]}
+        data={currentData as unknown[]}
         loading={loading}
         filters={filters}
         searchable

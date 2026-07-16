@@ -204,11 +204,11 @@ const VoucherManagementPage: React.FC = () => {
   const getStatusBadge = (status: string) => {
     const badges: Record<
       string,
-      { color: 'success' | 'warning' | 'default' | 'secondary' | 'error' | 'info'; label: string }
+      { color: 'success' | 'warning' | 'default' | 'secondary' | 'error' | 'info' | 'primary'; label: string }
     > = {
       draft: { color: 'default', label: '草稿' },
       pending: { color: 'warning', label: '待审核' },
-      approved: { color: 'primary' as any, label: '已审核' },
+      approved: { color: 'primary' as const, label: '已审核' },
       posted: { color: 'success', label: '已记账' },
       closed: { color: 'secondary', label: '已结账' },
       imported: { color: 'info', label: '已导入' },
@@ -235,7 +235,7 @@ const VoucherManagementPage: React.FC = () => {
       <Chip
         label={config.label}
         size='small'
-        color={config.color as any}
+        color={config.color as React.ComponentProps<typeof import('@mui/material/Chip').default>['color']}
         variant='outlined'
       />
     );
@@ -932,7 +932,7 @@ const VoucherManagementPage: React.FC = () => {
                 onChange={(e) =>
                   setNewVoucher((prev) => ({ ...prev, voucher_date: e.target.value }))
                 }
-                slotProps={{ inputLabel: { shrink: true } } as any}
+                slotProps={{ inputLabel: { shrink: true } } as const}
               />
               <TextField
                 size='small'

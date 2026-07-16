@@ -1,4 +1,4 @@
-import { useState, useCallback } from 'react';
+import { useState, useCallback, type ComponentType } from 'react';
 import {
   Box,
   List,
@@ -40,7 +40,9 @@ const groupIcons: Record<string, any> = {
 
 function getIcon(iconName?: string) {
   if (!iconName) return null;
-  const Icon = (LucideIcons as any)[iconName];
+  const Icon = (
+    LucideIcons as unknown as Record<string, ComponentType<{ size?: number | string }>>
+  )[iconName];
   return Icon ? <Icon size={20} /> : null;
 }
 

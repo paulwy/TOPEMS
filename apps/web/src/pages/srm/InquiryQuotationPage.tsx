@@ -572,7 +572,7 @@ const InquiryQuotationPage: React.FC = () => {
                   value={formData.deadline}
                   onChange={(e) => setFormData({ ...formData, deadline: e.target.value })}
                   size='small'
-                  slotProps={{ inputLabel: { shrink: true } } as any}
+                  slotProps={{ inputLabel: { shrink: true } } as const}
                 />
                 <TextField
                   label='备注'

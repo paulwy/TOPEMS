@@ -116,7 +116,7 @@ const ScmPurchaseItemPage: React.FC = () => {
 
   const deleteMutation = useMutation({
     mutationFn: async (id: string) => {
-      const response = await scmApi.purchaseItems.update(id, { product_name: '' } as any);
+      const response = await scmApi.purchaseItems.update(id, { product_name: '' } as unknown as Record<string, unknown>);
       if (!response.success) {
         throw new Error(response.message || '删除采购明细失败');
       }

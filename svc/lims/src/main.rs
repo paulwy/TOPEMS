@@ -44,7 +44,7 @@ pub use shared::*;
 // ==================== 主入口 ====================
 
 #[tokio::main]
-async fn main() {
+async fn main() -> anyhow::Result<()> {
     _ = dotenv::dotenv();
 
     let _telemetry_guard = init_telemetry("topems-lims");
@@ -53,9 +53,8 @@ async fn main() {
 
     let db_config = DatabaseConfig {
         url: std::env::var("DATABASE_URL").unwrap_or_else(|_| {
-            env::var("DATABASE_URL")
-                .expect("DATABASE_URL environment variable is required")
-                .to_string()
+            tracing::error!("DATABASE_URL environment variable is required");
+            std::process::exit(1);
         }),
         max_connections: 20,
         min_connections: Some(5),
@@ -278,12 +277,11 @@ async fn main() {
         modules::lims_plugin::auto_register_to_core(core_url.as_deref()).await;
     });
 
-    axum::serve(
-        tokio::net::TcpListener::bind(&addr).await.unwrap(),
-        app.into_make_service(),
-    )
-    .await
-    .unwrap();
+    let listener = tokio::net::TcpListener::bind(&addr).await?;
+    axum::serve(listener, app.into_make_service())
+        .await?;
+
+    Ok(())
 }
 
 // ==================== 公共处理函数 ====================

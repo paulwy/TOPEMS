@@ -576,7 +576,7 @@ const LeaveManagementPage: React.FC = () => {
                   handleInputChange('start_date', e.target.value)
                 }
                 fullWidth
-                slotProps={{ inputLabel: { shrink: true } } as any}
+                slotProps={{ inputLabel: { shrink: true } } as const}
               />
               <FormField
                 name='end_date'
@@ -587,7 +587,7 @@ const LeaveManagementPage: React.FC = () => {
                   handleInputChange('end_date', e.target.value)
                 }
                 fullWidth
-                slotProps={{ inputLabel: { shrink: true } } as any}
+                slotProps={{ inputLabel: { shrink: true } } as const}
               />
             </Box>
             <FormField

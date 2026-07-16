@@ -559,7 +559,7 @@ const LimsProficiencyTestingPage: React.FC = () => {
                 type='date'
                 value={formData.registration_date || ''}
                 onChange={(e) => setFormData({ ...formData, registration_date: e.target.value })}
-                slotProps={{ inputLabel: { shrink: true } } as any}
+                slotProps={{ inputLabel: { shrink: true } } as const}
               />
               <TextField
                 fullWidth
@@ -567,7 +567,7 @@ const LimsProficiencyTestingPage: React.FC = () => {
                 type='date'
                 value={formData.report_deadline || ''}
                 onChange={(e) => setFormData({ ...formData, report_deadline: e.target.value })}
-                slotProps={{ inputLabel: { shrink: true } } as any}
+                slotProps={{ inputLabel: { shrink: true } } as const}
               />
             </Box>
             <TextField

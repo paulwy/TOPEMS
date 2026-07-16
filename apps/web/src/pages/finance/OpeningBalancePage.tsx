@@ -260,7 +260,7 @@ export default function OpeningBalancePage() {
               size='small'
               value={period}
               onChange={(e) => setPeriod(e.target.value)}
-              slotProps={{ inputLabel: { shrink: true } } as any}
+              slotProps={{ inputLabel: { shrink: true } } as const}
             />
             <FormControl
               size='small'
@@ -570,7 +570,7 @@ export default function OpeningBalancePage() {
               size='small'
               value={carryForwardFrom}
               onChange={(e) => setCarryForwardFrom(e.target.value)}
-              slotProps={{ inputLabel: { shrink: true } } as any}
+              slotProps={{ inputLabel: { shrink: true } } as const}
             />
             <TextField
               label='到期间'
@@ -578,7 +578,7 @@ export default function OpeningBalancePage() {
               size='small'
               value={carryForwardTo}
               onChange={(e) => setCarryForwardTo(e.target.value)}
-              slotProps={{ inputLabel: { shrink: true } } as any}
+              slotProps={{ inputLabel: { shrink: true } } as const}
             />
             <Box
               sx={{

@@ -114,13 +114,13 @@ export const ChangePage: React.FC = () => {
     queryClient.invalidateQueries({ queryKey: QUERY_KEYS.PDM.CHANGE_ORDERS });
   }, [queryClient]);
 
-  const { data: changeOrders = [], isLoading: loading } = useQuery({
+  const { data: changeOrders = [], isLoading: loading } = useQuery<ChangeOrder[]>({
     queryKey: QUERY_KEYS.PDM.CHANGE_ORDERS,
-    queryFn: async () => {
+    queryFn: async (): Promise<ChangeOrder[]> => {
       const response = await pdmApi.listChangeOrders();
       if (response.success && response.data) {
-        const data = response.data as any;
-        return Array.isArray(data) ? data : data.changeOrders || [];
+        const data = response.data as unknown as Record<string, unknown>;
+        return (Array.isArray(data) ? data : data.changeOrders || []) as unknown as ChangeOrder[];
       }
       return [];
     },

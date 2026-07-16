@@ -1087,7 +1087,19 @@ fn create_mailer() -> Result<SmtpTransport, String> {
         .parse::<u16>()
         .unwrap_or(587);
     let smtp_user = std::env::var("SMTP_USER").unwrap_or_else(|_| "".to_string());
-    let smtp_password = std::env::var("SMTP_PASSWORD").unwrap_or_else(|_| "".to_string());
+    // 安全策略：非 localhost 模式下必须显式配置 SMTP_PASSWORD，否则拒绝创建 mailer
+    let smtp_password = match std::env::var("SMTP_PASSWORD") {
+        Ok(p) => p,
+        Err(_) => {
+            if smtp_host != "localhost" {
+                return Err(
+                    "SMTP_PASSWORD 未配置：非 localhost 模式下要求显式配置邮箱密码".to_string(),
+                );
+            }
+            tracing::warn!("SMTP_PASSWORD 未配置 - localhost 模式下邮件发送可能失败");
+            String::new()
+        }
+    };
     let smtp_tls = std::env::var("SMTP_TLS").unwrap_or_else(|_| "starttls".to_string());
 
     let tls_config = match smtp_tls.as_str() {

@@ -45,7 +45,7 @@ const NotificationBell: React.FC<NotificationBellProps> = ({
     error: _wsError,
     reconnect: _reconnect,
   } = useNotificationWebSocket({
-    userId: isAuthenticated ? userId : undefined,
+    userId: isAuthenticated ? (userId ?? '') : '',
     onNotification: handleNewNotification,
     onUnreadCountChange: fetchUnreadCount,
     maxReconnectAttempts: 5,

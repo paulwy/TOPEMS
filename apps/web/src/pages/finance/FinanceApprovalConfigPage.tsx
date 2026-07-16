@@ -30,6 +30,7 @@ import { Plus, Edit, Delete, Eye, RefreshCw, ChevronRight, AlertCircle } from 'l
 import {
   approvalConfigApi,
   type ApprovalConfig,
+  type ApprovalNode,
   type CreateApprovalConfigRequest,
 } from '@/api/finance/approvalConfig';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
@@ -212,11 +213,11 @@ export const FinanceApprovalConfigPage: React.FC = () => {
 
   const updateNode = (
     index: number,
-    field: string,
+    field: keyof ApprovalNode,
     value: string | number | boolean | string[]
   ) => {
     const nodes = [...(formData.nodes || [])];
-    (nodes[index] as any)[field] = value;
+    nodes[index] = { ...nodes[index], [field]: value } as ApprovalNode;
     setFormData({ ...formData, nodes });
   };
 

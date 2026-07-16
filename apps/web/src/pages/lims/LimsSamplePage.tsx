@@ -610,7 +610,7 @@ const LimsSamplePage: React.FC = () => {
                 type='date'
                 value={formData.received_date}
                 onChange={(e) => setFormData({ ...formData, received_date: e.target.value })}
-                slotProps={{ inputLabel: { shrink: true } } as any}
+                slotProps={{ inputLabel: { shrink: true } } as const}
               />
             </Box>
             <Box sx={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 2 }}>

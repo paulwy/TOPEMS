@@ -382,7 +382,7 @@ export const TimelinePageTemplate: React.FC<TimelinePageTemplateProps> = ({
                     <Chip
                       label={node.status}
                       size='small'
-                      color={getStatusColor(node.status) as any}
+                      color={getStatusColor(node.status) as React.ComponentProps<typeof import('@mui/material/Chip').default>['color']}
                       sx={{ height: 20, fontSize: '0.6rem' }}
                     />
                   )}
@@ -390,7 +390,7 @@ export const TimelinePageTemplate: React.FC<TimelinePageTemplateProps> = ({
                     <Chip
                       label={node.priority}
                       size='small'
-                      color={getPriorityColor(node.priority) as any}
+                      color={getPriorityColor(node.priority) as React.ComponentProps<typeof import('@mui/material/Chip').default>['color']}
                       sx={{ height: 20, fontSize: '0.6rem' }}
                     />
                   )}

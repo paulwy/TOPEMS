@@ -529,7 +529,7 @@ const MobileQualityPage: React.FC = () => {
                             <Chip
                               label={getStatusLabel(task.status)}
                               size='small'
-                              color={getStatusColor(task.status) as any}
+                              color={getStatusColor(task.status) as React.ComponentProps<typeof import('@mui/material/Chip').default>['color']}
                               sx={{ height: 20, fontSize: '0.7rem' }}
                             />
                           </Box>
@@ -696,7 +696,7 @@ const MobileQualityPage: React.FC = () => {
                           <Chip
                             label={getSeverityLabel(defect.severity)}
                             size='small'
-                            color={getSeverityColor(defect.severity) as any}
+                            color={getSeverityColor(defect.severity) as React.ComponentProps<typeof import('@mui/material/Chip').default>['color']}
                             sx={{ height: 20, fontSize: '0.7rem' }}
                           />
                         </Box>
@@ -747,7 +747,7 @@ const MobileQualityPage: React.FC = () => {
                           <Chip
                             label={getStatusLabel(defect.status)}
                             size='small'
-                            color={getStatusColor(defect.status) as any}
+                            color={getStatusColor(defect.status) as React.ComponentProps<typeof import('@mui/material/Chip').default>['color']}
                             sx={{ height: 20, fontSize: '0.7rem' }}
                           />
                         </Box>
@@ -836,7 +836,7 @@ const MobileQualityPage: React.FC = () => {
                     quantity: parseInt(e.target.value) || 0,
                   }))
                 }
-                slotProps={{ input: { min: 1 } } as any}
+                slotProps={{ input: { min: 1 } } as const}
               />
               <TextField
                 fullWidth

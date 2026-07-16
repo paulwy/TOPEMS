@@ -31,7 +31,7 @@ import { useNotificationStore } from '@/store';
 import { apiLogger } from '@/utils/logger';
 import { PageContainer } from '@/components/common';
 import { designTokens } from '@/theme/tokens';
-import { useCrudOperations } from '@/hooks/useCrudQueries';
+import { useCrudOperations, type CrudOperations } from '@/hooks/useCrudQueries';
 
 const ct = designTokens.colors;
 
@@ -41,7 +41,7 @@ const orderCrudApi = {
     const items = (response.data || []) as PurchaseOrder[];
     const adapted = items.map((item) => ({
       ...item,
-      total_amount: (item as any).total_amount || (item as any).amount || 0,
+      total_amount: (item as unknown as Record<string, unknown>).total_amount || (item as unknown as Record<string, unknown>).amount || 0,
       status:
         item.status === 'pending'
           ? '待处理'
@@ -54,12 +54,12 @@ const orderCrudApi = {
                 : item.status === 'cancelled'
                   ? '已取消'
                   : item.status,
-      order_date: (item as any).order_date || (item as any).created_at,
+      order_date: (item as unknown as Record<string, unknown>).order_date || (item as unknown as Record<string, unknown>).created_at,
     }));
     return {
       success: response.success,
       message: response.message,
-      code: (response as any).code,
+      code: (response as unknown as Record<string, unknown>).code,
       data: {
         items: adapted,
         total: adapted.length,
@@ -71,7 +71,7 @@ const orderCrudApi = {
   update: (id: string, data: Partial<CreatePurchaseOrderRequest>) =>
     srmApi.updatePurchaseOrder(id, data as CreatePurchaseOrderRequest),
   delete: (id: string) => srmApi.deletePurchaseOrder(id),
-} as any;
+} as unknown as CrudOperations<PurchaseOrder, CreatePurchaseOrderRequest>;
 
 const SrmOrderPage: React.FC = () => {
   const theme = useTheme();

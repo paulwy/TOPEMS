@@ -117,10 +117,10 @@ impl KeyManager {
             .ok_or(EncryptionError::KeyNotFound(version))
     }
 
-    pub fn current_key(&self) -> &[u8; 32] {
+    pub fn current_key(&self) -> EncryptionResult<&[u8; 32]> {
         self.keys
             .get(&self.current_version)
-            .expect("Current key must exist")
+            .ok_or(EncryptionError::KeyNotFound(self.current_version))
     }
 
     pub fn rotate_key(&mut self, new_key: &[u8; 32]) -> u32 {
@@ -151,7 +151,7 @@ impl FieldEncryptionService {
     }
 
     pub fn encrypt(&self, plaintext: &str) -> EncryptionResult<EncryptedField> {
-        let key = self.key_manager.current_key();
+        let key = self.key_manager.current_key()?;
         let cipher = Aes256Gcm::new(Key::<Aes256Gcm>::from_slice(key));
         let nonce = Aes256Gcm::generate_nonce(&mut OsRng);
         let ciphertext = cipher
@@ -505,52 +505,55 @@ mod tests {
     }
 
     #[test]
-    fn test_encryption_roundtrip() {
+    fn test_encryption_roundtrip() -> EncryptionResult<()> {
         let service = test_service();
         let plaintext = "Hello, World!";
-        let encrypted = service.encrypt(plaintext).unwrap();
-        let decrypted = service.decrypt(&encrypted).unwrap();
+        let encrypted = service.encrypt(plaintext)?;
+        let decrypted = service.decrypt(&encrypted)?;
         assert_eq!(plaintext, decrypted);
         assert_eq!(encrypted.key_version, 1);
         assert!(encrypted.is_encrypted());
+        Ok(())
     }
 
     #[test]
-    fn test_encrypt_to_string_roundtrip() {
+    fn test_encrypt_to_string_roundtrip() -> EncryptionResult<()> {
         let service = test_service();
         let plaintext = "Test String 123";
-        let encrypted_str = service.encrypt_to_string(plaintext).unwrap();
+        let encrypted_str = service.encrypt_to_string(plaintext)?;
         assert!(encrypted_str.starts_with('{'));
-        let decrypted = service.decrypt_string(&encrypted_str).unwrap();
+        let decrypted = service.decrypt_string(&encrypted_str)?;
         assert_eq!(plaintext, decrypted);
+        Ok(())
     }
 
     #[test]
-    fn test_key_rotation() {
+    fn test_key_rotation() -> EncryptionResult<()> {
         let mut key_manager = KeyManager::new(&test_key());
         let service = FieldEncryptionService::new(key_manager.clone());
 
         let plaintext = "Rotation Test";
-        let encrypted_v1 = service.encrypt(plaintext).unwrap();
+        let encrypted_v1 = service.encrypt(plaintext)?;
         assert_eq!(encrypted_v1.key_version, 1);
 
         let new_key = [0x99u8; 32];
         key_manager.rotate_key(&new_key);
         let service_v2 = FieldEncryptionService::new(key_manager);
 
-        let decrypted = service_v2.decrypt(&encrypted_v1).unwrap();
+        let decrypted = service_v2.decrypt(&encrypted_v1)?;
         assert_eq!(plaintext, decrypted);
 
-        let encrypted_v2 = service_v2.encrypt(plaintext).unwrap();
+        let encrypted_v2 = service_v2.encrypt(plaintext)?;
         assert_eq!(encrypted_v2.key_version, 2);
 
         assert!(service_v2.needs_rotation(&encrypted_v1));
         assert!(!service_v2.needs_rotation(&encrypted_v2));
 
-        let rotated = service_v2.rotate_field(&encrypted_v1).unwrap();
+        let rotated = service_v2.rotate_field(&encrypted_v1)?;
         assert_eq!(rotated.key_version, 2);
-        let decrypted_rotated = service_v2.decrypt(&rotated).unwrap();
+        let decrypted_rotated = service_v2.decrypt(&rotated)?;
         assert_eq!(plaintext, decrypted_rotated);
+        Ok(())
     }
 
     #[test]
@@ -628,89 +631,93 @@ mod tests {
     }
 
     #[test]
-    fn test_searchable_encryption() {
+    fn test_searchable_encryption() -> EncryptionResult<()> {
         let service = test_service();
         let index_key = [0x12u8; 32];
         let sse = SearchableEncryption::new(service, &index_key);
 
         let plaintext = "test@example.com";
-        let (encrypted, indexes) = sse.encrypt_with_index(plaintext).unwrap();
+        let (encrypted, indexes) = sse.encrypt_with_index(plaintext)?;
         assert!(!indexes.is_empty());
 
-        let decrypted = sse.decrypt(&encrypted).unwrap();
+        let decrypted = sse.decrypt(&encrypted)?;
         assert_eq!(plaintext, decrypted);
 
-        let search_token = sse.generate_search_token("test@example.com").unwrap();
+        let search_token = sse.generate_search_token("test@example.com")?;
         assert!(indexes.contains(&search_token));
+        Ok(())
     }
 
     #[test]
-    fn test_search_token_deterministic() {
+    fn test_search_token_deterministic() -> EncryptionResult<()> {
         let service = test_service();
         let index_key = [0x12u8; 32];
         let sse = SearchableEncryption::new(service, &index_key);
 
-        let token1 = sse.generate_search_token("test").unwrap();
-        let token2 = sse.generate_search_token("test").unwrap();
+        let token1 = sse.generate_search_token("test")?;
+        let token2 = sse.generate_search_token("test")?;
         assert_eq!(token1, token2);
 
-        let token3 = sse.generate_search_token("different").unwrap();
+        let token3 = sse.generate_search_token("different")?;
         assert_ne!(token1, token3);
+        Ok(())
     }
 
     #[test]
-    fn test_optional_string_encryption() {
+    fn test_optional_string_encryption() -> EncryptionResult<()> {
         let service = test_service();
         let value = Some("test".to_string());
-        let encrypted = encrypt_optional_string(&service, &value).unwrap();
+        let encrypted = encrypt_optional_string(&service, &value)?;
         assert!(encrypted.is_some());
-        assert!(encrypted.as_ref().unwrap().starts_with('{'));
+        assert!(encrypted.as_ref().is_some_and(|e| e.starts_with('{')));
 
-        let decrypted = decrypt_optional_string(&service, &encrypted).unwrap();
+        let decrypted = decrypt_optional_string(&service, &encrypted)?;
         assert_eq!(decrypted, value);
 
         let none_value: Option<String> = None;
-        let encrypted_none = encrypt_optional_string(&service, &none_value).unwrap();
+        let encrypted_none = encrypt_optional_string(&service, &none_value)?;
         assert!(encrypted_none.is_none());
+        Ok(())
     }
 
     #[test]
-    fn test_multiple_key_versions() {
+    fn test_multiple_key_versions() -> EncryptionResult<()> {
         let mut key_manager = KeyManager::new(&[0x01u8; 32]);
         key_manager.add_key(2, &[0x02u8; 32]);
         key_manager.add_key(3, &[0x03u8; 32]);
 
-        key_manager.set_current_version(1).unwrap();
+        key_manager.set_current_version(1)?;
         let service_v1 = FieldEncryptionService::new(key_manager.clone());
         let data = "multi-version test";
-        let enc_v1 = service_v1.encrypt(data).unwrap();
+        let enc_v1 = service_v1.encrypt(data)?;
         assert_eq!(enc_v1.key_version, 1);
 
-        key_manager.set_current_version(2).unwrap();
+        key_manager.set_current_version(2)?;
         let service_v2 = FieldEncryptionService::new(key_manager.clone());
-        let dec_from_v2 = service_v2.decrypt(&enc_v1).unwrap();
+        let dec_from_v2 = service_v2.decrypt(&enc_v1)?;
         assert_eq!(dec_from_v2, data);
 
-        key_manager.set_current_version(3).unwrap();
+        key_manager.set_current_version(3)?;
         let service_v3 = FieldEncryptionService::new(key_manager);
-        let dec_from_v3 = service_v3.decrypt(&enc_v1).unwrap();
+        let dec_from_v3 = service_v3.decrypt(&enc_v1)?;
         assert_eq!(dec_from_v3, data);
+        Ok(())
     }
 
     #[test]
-    fn test_key_not_found() {
+    fn test_key_not_found() -> EncryptionResult<()> {
         let key_manager = KeyManager::new(&test_key());
         let service = FieldEncryptionService::new(key_manager);
 
-        let mut field = service.encrypt("test").unwrap();
+        let mut field = service.encrypt("test")?;
         field.key_version = 999;
 
         let result = service.decrypt(&field);
-        assert!(result.is_err());
-        match result.err().unwrap() {
-            EncryptionError::KeyNotFound(v) => assert_eq!(v, 999),
+        match result {
+            Err(EncryptionError::KeyNotFound(v)) => assert_eq!(v, 999),
             _ => panic!("Expected KeyNotFound error"),
         }
+        Ok(())
     }
 
     #[test]

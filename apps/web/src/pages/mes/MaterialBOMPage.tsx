@@ -273,7 +273,7 @@ const MaterialBOMPage: React.FC = () => {
 
   const updateBomItem = (index: number, field: string, value: unknown) => {
     const newItems = [...(formData.items || [])];
-    (newItems[index] as Record<string, unknown>)[field] = value;
+    (newItems[index] as unknown as Record<string, unknown>)[field] = value;
     setFormData({ ...formData, items: newItems });
   };
 

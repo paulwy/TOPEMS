@@ -105,7 +105,7 @@ export const importFromExcel = async <T>(
         const sheetName = workbook.SheetNames[0];
         const worksheet = workbook.Sheets[sheetName];
 
-        const rawData = XLSX.utils.sheet_to_json(worksheet) as Record<string, unknown>[];
+        const rawData = XLSX.utils.sheet_to_json(worksheet) as unknown as Record<string, unknown>[];
 
         const errors: { row: number; message: string }[] = [];
         const result: T[] = [];

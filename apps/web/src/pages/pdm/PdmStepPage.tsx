@@ -57,13 +57,13 @@ const PdmStepPage: React.FC = () => {
   const [page, setPage] = useState(0);
   const [pageSize, setPageSize] = useState(10);
 
-  const { data: steps = [], isLoading } = useQuery({
+  const { data: steps = [], isLoading } = useQuery<ProductionStep[]>({
     queryKey: QUERY_KEYS.PDM.STEPS,
-    queryFn: async () => {
+    queryFn: async (): Promise<ProductionStep[]> => {
       const response = await pdmApi.listSteps();
       if (response.success && response.data) {
-        const adapted = (response.data as any).map(adaptStep);
-        return adapted;
+        const adapted = (response.data as unknown as { [key: string]: unknown }[]).map(adaptStep);
+        return adapted as unknown as ProductionStep[];
       }
       return [];
     },

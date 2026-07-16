@@ -153,7 +153,7 @@ const OutboundPage: React.FC = () => {
       if (statusFilter) params.status = statusFilter;
       if (warehouseFilter) params.warehouse_id = warehouseFilter;
 
-      const response = await wmsApi.outboundOrders.list(params as any);
+      const response = await wmsApi.outboundOrders.list(params as unknown as Record<string, unknown>);
       if (response.success && response.data) {
         return { orders: response.data.items || [], total: response.data.total || 0 };
       }
@@ -184,7 +184,7 @@ const OutboundPage: React.FC = () => {
         pagesize: pageSize,
       };
 
-      const response = await wmsApi.wavePicks.list(params as any);
+      const response = await wmsApi.wavePicks.list(params as unknown as Record<string, unknown>);
       if (response.success && response.data) {
         return { wavePicks: response.data.items || [], total: response.data.total || 0 };
       }
@@ -836,7 +836,7 @@ const OutboundPage: React.FC = () => {
               onChange={(e) => setNewItem({ ...newItem, expected_date: e.target.value })}
               fullWidth
               size='small'
-              slotProps={{ inputLabel: { shrink: true } } as any}
+              slotProps={{ inputLabel: { shrink: true } } as const}
             />
             <TextField
               label='发货地址'

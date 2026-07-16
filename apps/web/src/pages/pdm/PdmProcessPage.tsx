@@ -46,13 +46,13 @@ const PdmProcessPage: React.FC = () => {
     version: '1.0',
   });
 
-  const { data: processes = [], isLoading } = useQuery({
+  const { data: processes = [], isLoading } = useQuery<ProductionProcess[]>({
     queryKey: QUERY_KEYS.PDM.PROCESSES,
-    queryFn: async () => {
+    queryFn: async (): Promise<ProductionProcess[]> => {
       const response = await pdmApi.listProcesses();
       if (response.success && response.data) {
-        const adapted = (response.data as any).map(adaptProcess);
-        return adapted;
+        const adapted = (response.data as unknown as { [key: string]: unknown }[]).map(adaptProcess);
+        return adapted as unknown as ProductionProcess[];
       }
       return [];
     },

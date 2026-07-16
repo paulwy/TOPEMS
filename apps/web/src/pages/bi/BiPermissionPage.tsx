@@ -730,7 +730,7 @@ const BiPermissionPage = () => {
                                 <Chip
                                   label={getPermissionTypeLabel(perm.permission_type)}
                                   size='small'
-                                  color={getPermissionTypeColor(perm.permission_type) as any}
+                                  color={getPermissionTypeColor(perm.permission_type) as React.ComponentProps<typeof import('@mui/material/Chip').default>['color']}
                                 />
                               </TableCell>
                               <TableCell>

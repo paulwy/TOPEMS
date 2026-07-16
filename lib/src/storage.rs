@@ -127,7 +127,7 @@ impl StorageService for LocalStorage {
 
         Ok(FileMetadata {
             id: uuid::Uuid::new_v4().to_string(),
-            filename: path.file_name().unwrap().to_string_lossy().to_string(),
+            filename: path.file_name().unwrap_or_default().to_string_lossy().to_string(),
             path: path.to_string_lossy().to_string(),
             size: content.len() as u64,
             content_type: content_type.to_string(),
@@ -168,7 +168,7 @@ impl StorageService for LocalStorage {
 
                     results.push(FileMetadata {
                         id: uuid::Uuid::new_v4().to_string(),
-                        filename: path.file_name().unwrap().to_string_lossy().to_string(),
+                        filename: path.file_name().unwrap_or_default().to_string_lossy().to_string(),
                         path: path
                             .strip_prefix(&self.base_path)
                             .unwrap_or(&path)
@@ -203,7 +203,7 @@ impl StorageService for LocalStorage {
 
         Ok(Some(FileMetadata {
             id: uuid::Uuid::new_v4().to_string(),
-            filename: full_path.file_name().unwrap().to_string_lossy().to_string(),
+            filename: full_path.file_name().unwrap_or_default().to_string_lossy().to_string(),
             path: path.to_string(),
             size: metadata.len(),
             content_type: "application/octet-stream".to_string(),
@@ -258,67 +258,86 @@ mod tests {
     use tempdir::TempDir;
 
     #[tokio::test]
-    async fn test_local_storage_upload_download() {
-        let temp_dir = TempDir::new("storage_test").unwrap();
-        let storage = LocalStorage::new_with_path(temp_dir.path().to_str().unwrap()).unwrap();
+    async fn test_local_storage_upload_download() -> Result<()> {
+        let temp_dir = TempDir::new("storage_test")?;
+        let storage = LocalStorage::new_with_path(
+            temp_dir
+                .path()
+                .to_str()
+                .ok_or_else(|| TopemsError::Internal("temp path invalid".to_string()))?,
+        )?;
 
         let content = b"test content";
         let metadata = storage
             .upload(Path::new("test.txt"), content, "text/plain")
-            .await
-            .unwrap();
+            .await?;
 
         assert_eq!(metadata.filename, "test.txt");
         assert_eq!(metadata.size, content.len() as u64);
 
-        let downloaded = storage.download("test.txt").await.unwrap();
+        let downloaded = storage.download("test.txt").await?;
         assert_eq!(downloaded, content);
+        Ok(())
     }
 
     #[tokio::test]
-    async fn test_local_storage_exists() {
-        let temp_dir = TempDir::new("storage_test").unwrap();
-        let storage = LocalStorage::new_with_path(temp_dir.path().to_str().unwrap()).unwrap();
+    async fn test_local_storage_exists() -> Result<()> {
+        let temp_dir = TempDir::new("storage_test")?;
+        let storage = LocalStorage::new_with_path(
+            temp_dir
+                .path()
+                .to_str()
+                .ok_or_else(|| TopemsError::Internal("temp path invalid".to_string()))?,
+        )?;
 
-        assert!(!storage.exists("nonexistent.txt").await.unwrap());
+        assert!(!storage.exists("nonexistent.txt").await?);
 
         storage
             .upload(Path::new("exists.txt"), b"content", "text/plain")
-            .await
-            .unwrap();
-        assert!(storage.exists("exists.txt").await.unwrap());
+            .await?;
+        assert!(storage.exists("exists.txt").await?);
+        Ok(())
     }
 
     #[tokio::test]
-    async fn test_local_storage_delete() {
-        let temp_dir = TempDir::new("storage_test").unwrap();
-        let storage = LocalStorage::new_with_path(temp_dir.path().to_str().unwrap()).unwrap();
+    async fn test_local_storage_delete() -> Result<()> {
+        let temp_dir = TempDir::new("storage_test")?;
+        let storage = LocalStorage::new_with_path(
+            temp_dir
+                .path()
+                .to_str()
+                .ok_or_else(|| TopemsError::Internal("temp path invalid".to_string()))?,
+        )?;
 
         storage
             .upload(Path::new("delete_me.txt"), b"content", "text/plain")
-            .await
-            .unwrap();
-        assert!(storage.exists("delete_me.txt").await.unwrap());
+            .await?;
+        assert!(storage.exists("delete_me.txt").await?);
 
-        storage.delete("delete_me.txt").await.unwrap();
-        assert!(!storage.exists("delete_me.txt").await.unwrap());
+        storage.delete("delete_me.txt").await?;
+        assert!(!storage.exists("delete_me.txt").await?);
+        Ok(())
     }
 
     #[tokio::test]
-    async fn test_local_storage_list() {
-        let temp_dir = TempDir::new("storage_test").unwrap();
-        let storage = LocalStorage::new_with_path(temp_dir.path().to_str().unwrap()).unwrap();
+    async fn test_local_storage_list() -> Result<()> {
+        let temp_dir = TempDir::new("storage_test")?;
+        let storage = LocalStorage::new_with_path(
+            temp_dir
+                .path()
+                .to_str()
+                .ok_or_else(|| TopemsError::Internal("temp path invalid".to_string()))?,
+        )?;
 
         storage
             .upload(Path::new("file1.txt"), b"content1", "text/plain")
-            .await
-            .unwrap();
+            .await?;
         storage
             .upload(Path::new("file2.txt"), b"content2", "text/plain")
-            .await
-            .unwrap();
+            .await?;
 
-        let files = storage.list("").await.unwrap();
+        let files = storage.list("").await?;
         assert_eq!(files.len(), 2);
+        Ok(())
     }
 }

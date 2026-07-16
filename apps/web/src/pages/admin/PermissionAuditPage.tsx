@@ -532,7 +532,7 @@ const PermissionAuditPage: React.FC<PermissionAuditPageProps> = () => {
                             <Chip
                               label={change.status === 'success' ? '成功' : '失败'}
                               size='small'
-                              color={getStatusColor(change.status) as any}
+                              color={getStatusColor(change.status) as React.ComponentProps<typeof import('@mui/material/Chip').default>['color']}
                             />
                           </TableCell>
                         </TableRow>
@@ -590,7 +590,7 @@ const PermissionAuditPage: React.FC<PermissionAuditPageProps> = () => {
                                     : '失败'
                               }
                               size='small'
-                              color={getStatusColor(log.status) as any}
+                              color={getStatusColor(log.status) as React.ComponentProps<typeof import('@mui/material/Chip').default>['color']}
                             />
                           </TableCell>
                           <TableCell>{log.response_time || 0}ms</TableCell>

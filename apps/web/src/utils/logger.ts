@@ -3,7 +3,8 @@
  * 用于替代 console.log/error/warn
  * 使用方法：import logger from "@/utils/logger";
  */
-/* eslint-disable no-console */
+
+/* eslint-disable no-console -- Logger is the designated console wrapper */
 
 export type LogLevel = 'debug' | 'info' | 'warn' | 'error';
 
@@ -170,7 +171,7 @@ export default createLogger;
 function safeEnvFlag(flag: 'PROD' | 'DEV', fallback: boolean): boolean {
   try {
     if (typeof import.meta !== 'undefined' && import.meta.env) {
-      const value = (import.meta.env as Record<string, unknown>)[flag];
+      const value = (import.meta.env as unknown as Record<string, unknown>)[flag];
       return typeof value === 'boolean' ? value : String(value) === 'true';
     }
   } catch {

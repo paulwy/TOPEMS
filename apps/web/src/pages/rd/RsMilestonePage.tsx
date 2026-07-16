@@ -402,7 +402,7 @@ const RsMilestonePage: React.FC = () => {
                   start_date: e.target.value,
                 })
               }
-              slotProps={{ inputLabel: { shrink: true } } as any}
+              slotProps={{ inputLabel: { shrink: true } } as const}
             />
             <TextField
               label='结束日期'
@@ -415,7 +415,7 @@ const RsMilestonePage: React.FC = () => {
                   end_date: e.target.value,
                 })
               }
-              slotProps={{ inputLabel: { shrink: true } } as any}
+              slotProps={{ inputLabel: { shrink: true } } as const}
             />
             <TextField
               label='关联项目'

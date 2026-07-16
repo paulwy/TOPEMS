@@ -65,7 +65,7 @@ const performDeferredInit = () => {
 };
 
 if ('requestIdleCallback' in window) {
-  (window as any).requestIdleCallback(performDeferredInit, { timeout: 3000 });
+  (window as unknown as { requestIdleCallback: (cb: () => void, opts?: { timeout: number }) => void }).requestIdleCallback(performDeferredInit, { timeout: 3000 });
 } else {
   setTimeout(performDeferredInit, 800);
 }

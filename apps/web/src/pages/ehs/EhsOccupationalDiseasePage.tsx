@@ -30,7 +30,7 @@ import {
 import { ListPageTemplate, type ColumnDef, type RowAction } from '@/components/templates';
 import { PageContainer } from '@/components/common/PageContainerV2';
 import { ehsApi } from '@/api/ehs';
-import type { CreateOccupationalDiseaseCaseRequest } from '@/api/ehs/types';
+import type { CreateOccupationalDiseaseCaseRequest } from '@/api/ehs/types/index';
 import { useNotificationStore } from '@/store';
 import { apiLogger } from '@/utils/logger';
 import { designTokens } from '@/theme/tokens';
@@ -107,7 +107,7 @@ const EhsOccupationalDiseasePage: React.FC = () => {
         pagesize: 100,
       });
       if (response.success && response.data) {
-        const data = response.data as any;
+        const data = response.data as unknown as Record<string, unknown>;
         return Array.isArray(data) ? data : data.data || [];
       }
       return [];
@@ -449,8 +449,8 @@ const EhsOccupationalDiseasePage: React.FC = () => {
       diagnosis_date: formData.diagnosis_date || null,
       disease_type: formData.disease_type,
       disease_name: formData.disease_name,
-      severity: (formData.severity as any) || undefined,
-      status: (formData.status as any) || undefined,
+      severity: (formData.severity as 'mild' | 'moderate' | 'severe' | 'fatal') || undefined,
+      status: (formData.status as 'suspected' | 'confirmed' | 'recovered' | 'chronic' | 'deceased') || undefined,
     };
     saveMutation.mutate({ id: editingCase?.id, data: payload });
   };
@@ -585,7 +585,7 @@ const EhsOccupationalDiseasePage: React.FC = () => {
                 label='诊断日期'
                 value={formData.diagnosis_date}
                 onChange={(e) => setFormData({ ...formData, diagnosis_date: e.target.value })}
-                slotProps={{ inputLabel: { shrink: true } } as any}
+                slotProps={{ inputLabel: { shrink: true } } as const}
               />
             </Box>
             <TextField

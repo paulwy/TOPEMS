@@ -28,7 +28,10 @@ import {
   deleteNotification,
   markAllAsRead,
   type Notification,
+  type NotificationTypeEnum,
 } from '@/api/notification';
+
+type NotificationItem = Notification & { important?: boolean };
 
 const ct = designTokens.colors;
 
@@ -80,19 +83,22 @@ export const NotificationListPage: React.FC = () => {
   const [deleteTarget, setDeleteTarget] = useState<Notification | null>(null);
   const [bulkDeleteDialogOpen, setBulkDeleteDialogOpen] = useState(false);
 
-  const { data: notifications = [], isLoading: loading } = useQuery({
+  const { data: notifications = [], isLoading: loading } = useQuery<NotificationItem[]>({
     queryKey: ['notifications', activeTab, typeFilter],
     queryFn: async () => {
       const response = await getNotifications(
         page,
         100,
-        typeFilter !== 'all' ? (typeFilter as any) : undefined
+        typeFilter !== 'all' ? (typeFilter as NotificationTypeEnum) : undefined
       );
       if (response.success && response.data?.notifications) {
-        return response.data.notifications.map((n: Notification) => ({
-          ...n,
-          important: (n as any).important || false,
-        }));
+        return response.data.notifications.map((n: Notification) => {
+          const item = n as NotificationItem;
+          return {
+            ...n,
+            important: item.important || false,
+          };
+        });
       }
       return [];
     },
@@ -120,7 +126,7 @@ export const NotificationListPage: React.FC = () => {
   });
 
   const filteredByTab = useMemo(() => {
-    let result = notifications as Notification[];
+    let result: NotificationItem[] = notifications;
     switch (activeTab) {
       case 'unread':
         result = result.filter((n) => !n.is_read);
@@ -129,7 +135,7 @@ export const NotificationListPage: React.FC = () => {
         result = result.filter((n) => n.is_read);
         break;
       case 'important':
-        result = result.filter((n) => (n as any).important);
+        result = result.filter((n) => n.important);
         break;
       default:
         break;
@@ -157,7 +163,7 @@ export const NotificationListPage: React.FC = () => {
 
     if (importantFilter !== 'all') {
       result = result.filter((n) =>
-        importantFilter === 'important' ? (n as any).important : !(n as any).important
+        importantFilter === 'important' ? n.important : !n.important
       );
     }
 
@@ -394,7 +400,7 @@ export const NotificationListPage: React.FC = () => {
                 {row.content}
               </Typography>
             </Box>
-            {(row as any).important && (
+            {(row as NotificationItem).important && (
               <Star
                 size={14}
                 color='warning.main'

@@ -45,9 +45,10 @@ async fn main() -> Result<()> {
     env::set_var("SEARCH_PATH", "monitor, shared, public");
 
     let db_config = DatabaseConfig {
-        url: env::var("DATABASE_URL")
-            .expect("DATABASE_URL environment variable is required")
-            .to_string(),
+        url: env::var("DATABASE_URL").map_err(|_| {
+            tracing::error!("DATABASE_URL environment variable is required");
+            anyhow::anyhow!("DATABASE_URL environment variable is required")
+        })?,
         max_connections: 10,
         min_connections: Some(2),
         connect_timeout: Some(30),
@@ -107,8 +108,11 @@ async fn main() -> Result<()> {
                 let encoder = TextEncoder::new();
                 let metrics = prometheus::gather();
                 let mut buffer = Vec::new();
-                encoder.encode(&metrics, &mut buffer).unwrap();
-                String::from_utf8(buffer).unwrap()
+                match encoder.encode(&metrics, &mut buffer) {
+                    Ok(()) => String::from_utf8(buffer)
+                        .unwrap_or_else(|_| "Error: invalid UTF-8 in metrics".to_string()),
+                    Err(e) => format!("Error encoding metrics: {}", e),
+                }
             }),
         )
         .with_state(api_state.clone());

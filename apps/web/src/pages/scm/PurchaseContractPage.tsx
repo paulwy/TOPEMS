@@ -681,7 +681,7 @@ const PurchaseContractPage: React.FC = () => {
                 value={formData.sign_date}
                 onChange={(e) => setFormData({ ...formData, sign_date: e.target.value })}
                 size='small'
-                slotProps={{ inputLabel: { shrink: true } } as any}
+                slotProps={{ inputLabel: { shrink: true } } as const}
               />
               <TextField
                 label='生效日期'
@@ -689,7 +689,7 @@ const PurchaseContractPage: React.FC = () => {
                 value={formData.effective_date}
                 onChange={(e) => setFormData({ ...formData, effective_date: e.target.value })}
                 size='small'
-                slotProps={{ inputLabel: { shrink: true } } as any}
+                slotProps={{ inputLabel: { shrink: true } } as const}
               />
               <TextField
                 label='到期日期'
@@ -697,7 +697,7 @@ const PurchaseContractPage: React.FC = () => {
                 value={formData.expiry_date}
                 onChange={(e) => setFormData({ ...formData, expiry_date: e.target.value })}
                 size='small'
-                slotProps={{ inputLabel: { shrink: true } } as any}
+                slotProps={{ inputLabel: { shrink: true } } as const}
               />
               <TextField
                 label='合同金额'

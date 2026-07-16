@@ -63,9 +63,13 @@ const HealthManagementPage: React.FC = () => {
         status: statusFilter || undefined,
       });
       if (response.success && response.data) {
-        const data = response.data as any;
-        const rawRecords = Array.isArray(data) ? data : data.data || [];
-        return rawRecords.map((item: { [key: string]: unknown }) => ({
+        const data = response.data as unknown as Record<string, unknown>;
+        const rawRecords = (
+          Array.isArray(data)
+            ? (data as unknown as Record<string, unknown>[])
+            : (data.data as unknown as Record<string, unknown>[]) || []
+        ) as unknown as Record<string, unknown>[];
+        return rawRecords.map((item) => ({
           ...item,
           status:
             item.status === 'active'
@@ -75,7 +79,7 @@ const HealthManagementPage: React.FC = () => {
                 : item.status === 'suspended'
                   ? '暂停'
                   : item.status,
-        }));
+        })) as HealthRecord[];
       }
       return [];
     },
@@ -143,7 +147,7 @@ const HealthManagementPage: React.FC = () => {
       {
         id: 'record_no',
         label: '档案编号',
-        render: (row) => (row as any).record_no || '-',
+        render: (row) => row.record_no || '-',
       },
       {
         id: 'employee_name',
@@ -220,7 +224,7 @@ const HealthManagementPage: React.FC = () => {
     return records.filter((record) => {
       const matchesSearch =
         record.employee_name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        ((record as any).record_no || '').toLowerCase().includes(searchTerm.toLowerCase());
+        (record.record_no || '').toLowerCase().includes(searchTerm.toLowerCase());
       const matchesStatus = !statusFilter || record.status === statusFilter;
       return matchesSearch && matchesStatus;
     });
@@ -608,7 +612,7 @@ const HealthManagementPage: React.FC = () => {
                   >
                     档案编号
                   </Box>
-                  <Box sx={{ fontWeight: 500 }}>{(selectedRecord as any).record_no || '-'}</Box>
+                  <Box sx={{ fontWeight: 500 }}>{selectedRecord.record_no || '-'}</Box>
                 </Box>
                 <Box>
                   <Box

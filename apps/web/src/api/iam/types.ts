@@ -32,6 +32,23 @@ export interface AuthTokens {
   user: User;
 }
 
+export interface LoginResponseData {
+  access_token: string;
+  refresh_token: string;
+  token_type: string;
+  expires_in: number;
+  user: User;
+}
+
+export interface RefreshTokenResponseData {
+  access_token: string;
+  refresh_token: string;
+  expires_in: number;
+  refresh_expires_in: number;
+  username: string;
+  is_superuser: boolean;
+}
+
 export interface Role {
   id: string;
   name: string;
@@ -68,6 +85,7 @@ export interface ShortcutItem {
   id: string;
   title: string;
   path: string;
+  icon?: string;
 }
 
 export interface UserWithPermissions {

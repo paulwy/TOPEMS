@@ -107,7 +107,7 @@ const InboundPage: React.FC = () => {
       if (statusFilter) params.status = statusFilter;
       if (warehouseFilter) params.warehouse_id = warehouseFilter;
 
-      const response = await wmsApi.inboundOrders.list(params as any);
+      const response = await wmsApi.inboundOrders.list(params as unknown as Record<string, unknown>);
       if (response.success && response.data) {
         return { items: response.data.items || [], total: response.data.total || 0 };
       }
@@ -723,7 +723,7 @@ const InboundPage: React.FC = () => {
               onChange={(e) => setNewItem({ ...newItem, expected_date: e.target.value })}
               fullWidth
               size='small'
-              slotProps={{ inputLabel: { shrink: true } } as any}
+              slotProps={{ inputLabel: { shrink: true } } as const}
             />
           </Box>
           <Typography
@@ -987,7 +987,7 @@ const InboundPage: React.FC = () => {
                         };
                         setReceiveItems(newReceiveItems);
                       }}
-                      slotProps={{ input: { min: 0 } } as any}
+                      slotProps={{ input: { min: 0 } } as const}
                     />
                   </Box>
                 ))}

@@ -27,7 +27,7 @@ import { useNotificationStore } from '@/store';
 import { apiLogger } from '@/utils/logger';
 import { designTokens } from '@/theme/tokens';
 import { SCM_PATHS } from '@/modules/scm/config';
-import { useCrudOperations } from '@/hooks/useCrudQueries';
+import { useCrudOperations, type CrudOperations } from '@/hooks/useCrudQueries';
 import { useQuery } from '@tanstack/react-query';
 import { QUERY_KEYS } from '@/lib/reactQuery';
 
@@ -61,7 +61,7 @@ const ScmSupplierPage: React.FC = () => {
     create,
     fetch,
   } = useCrudOperations<Supplier, CreateSupplierRequest, UpdateSupplierRequest>({
-    api: scmApi.suppliers as any,
+    api: scmApi.suppliers as unknown as CrudOperations<Supplier, CreateSupplierRequest, UpdateSupplierRequest>,
     queryKey: 'scm-suppliers',
     defaultPageSize: 10,
   });

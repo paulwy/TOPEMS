@@ -21,7 +21,7 @@ import { financeApi } from '@/api/finance';
 import type { AccountBalance } from '@/types/finance';
 import { useNotificationStore } from '@/store';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { useCrudOperations } from '@/hooks/useCrudQueries';
+import { useCrudOperations, type CrudOperations } from '@/hooks/useCrudQueries';
 import {
   Typography,
   Box,
@@ -82,7 +82,7 @@ const FinanceBudgetPage: React.FC = () => {
     delete: deleteBudget,
     fetch: fetchBudgets,
   } = useCrudOperations<Budget>({
-    api: budgetApi as any,
+    api: budgetApi as unknown as CrudOperations<Budget>,
     queryKey: 'finance-budgets',
     defaultPageSize: 50,
   });
@@ -114,7 +114,7 @@ const FinanceBudgetPage: React.FC = () => {
         ...formData,
         total_budget: parseFloat(formData.total_budget),
       };
-      const result = await createBudget(data as any);
+      const result = await createBudget(data as unknown as Record<string, unknown>);
       if (result) {
         setShowCreateDialog(false);
         resetForm();
@@ -131,7 +131,7 @@ const FinanceBudgetPage: React.FC = () => {
         ...formData,
         total_budget: parseFloat(formData.total_budget),
       };
-      const result = await updateBudget(editingBudget.id, data as any);
+      const result = await updateBudget(editingBudget.id, data as unknown as Record<string, unknown>);
       if (result) {
         setEditingBudget(null);
         setShowCreateDialog(false);

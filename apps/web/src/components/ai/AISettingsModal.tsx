@@ -281,7 +281,7 @@ const AISettingsModal: React.FC<AISettingsModalProps> = ({ isOpen, onClose }) =>
                   onChange={(e) =>
                     setConfig((prev) => ({
                       ...prev,
-                      responseLength: e.target.value as any,
+                      responseLength: e.target.value as 'short' | 'medium' | 'long',
                     }))
                   }
                   style={{

@@ -24,7 +24,7 @@ const ScmInventoryTurnoverPage: React.FC = () => {
     queryFn: async () => {
       const params: Record<string, unknown> = { page: page + 1, pageSize };
       if (categoryFilter !== 'all') params.category = categoryFilter;
-      const response = await scmApi.inventoryTurnover.list(params as any);
+      const response = await scmApi.inventoryTurnover.list(params as unknown as Record<string, unknown>);
       if (response.success && response.data) {
         return { items: response.data.items || [], total: response.data.total || 0 };
       }

@@ -666,7 +666,7 @@ impl MonitoringState {
             .collect()
     }
 
-    pub async fn get_statistics(&self) -> AlertStatistics {
+    pub async fn get_statistics(&self) -> Result<AlertStatistics, MonitoringError> {
         let alerts = self.alerts.read().await;
         let now = Utc::now();
         let twenty_four_hours_ago = now - Duration::hours(24);
@@ -718,9 +718,9 @@ impl MonitoringState {
                 let hour = alert
                     .triggered_at
                     .with_minute(0)
-                    .unwrap()
+                    .ok_or(MonitoringError::DateTimeConstruction)?
                     .with_second(0)
-                    .unwrap();
+                    .ok_or(MonitoringError::DateTimeConstruction)?;
                 *hourly_counts.entry(hour).or_insert(0) += 1;
             }
         }
@@ -748,9 +748,9 @@ impl MonitoringState {
         for i in 0..24 {
             let hour = (twenty_four_hours_ago + Duration::hours(i))
                 .with_minute(0)
-                .unwrap()
+                .ok_or(MonitoringError::DateTimeConstruction)?
                 .with_second(0)
-                .unwrap();
+                .ok_or(MonitoringError::DateTimeConstruction)?;
             let count = hourly_counts.get(&hour).copied().unwrap_or(0);
             trend_last_24h.push(HourlyAlertCount { hour, count });
         }
@@ -761,7 +761,7 @@ impl MonitoringState {
             None
         };
 
-        AlertStatistics {
+        Ok(AlertStatistics {
             total_alerts: alerts.len() as u64,
             active_alerts: active_count,
             resolved_alerts: resolved_count,
@@ -774,7 +774,7 @@ impl MonitoringState {
             top_services,
             top_categories,
             trend_last_24h,
-        }
+        })
     }
 
     pub async fn add_alert_rule(&self, rule: AlertRule) {
@@ -801,18 +801,18 @@ impl MonitoringState {
         silences.len() < initial_len
     }
 
-    pub async fn get_night_silence_config() -> SilenceRule {
+    pub async fn get_night_silence_config() -> Result<SilenceRule, MonitoringError> {
         let now = Utc::now();
         let tonight = now
             .with_hour(22)
-            .unwrap()
+            .ok_or(MonitoringError::DateTimeConstruction)?
             .with_minute(0)
-            .unwrap()
+            .ok_or(MonitoringError::DateTimeConstruction)?
             .with_second(0)
-            .unwrap();
+            .ok_or(MonitoringError::DateTimeConstruction)?;
         let tomorrow_morning = tonight + Duration::hours(10);
 
-        SilenceRule {
+        Ok(SilenceRule {
             id: "night-silence".to_string(),
             name: "夜间静默".to_string(),
             description: Some("夜间非工作时间降低告警敏感度".to_string()),
@@ -831,8 +831,16 @@ impl MonitoringState {
                 interval_days: Some(1),
                 weekdays: None,
             }),
-        }
+        })
     }
+}
+
+#[derive(Debug, thiserror::Error)]
+pub enum MonitoringError {
+    #[error("Invalid datetime construction")]
+    DateTimeConstruction,
+    #[error("Unexpected none value")]
+    UnexpectedNone,
 }
 
 pub fn default_alert_rules() -> Vec<AlertRule> {
@@ -1166,7 +1174,7 @@ mod tests {
     }
 
     #[tokio::test]
-    async fn test_alert_statistics() {
+    async fn test_alert_statistics() -> Result<(), MonitoringError> {
         let state = MonitoringState::new();
         let now = Utc::now();
 
@@ -1215,7 +1223,7 @@ mod tests {
         state.create_alert(&rule_p0, "P0告警".to_string()).await;
         state.create_alert(&rule_p1, "P1告警".to_string()).await;
 
-        let stats = state.get_statistics().await;
+        let stats = state.get_statistics().await?;
         assert_eq!(stats.total_alerts, 2);
         assert_eq!(stats.active_alerts, 2);
         assert_eq!(stats.p0_count, 1);
@@ -1223,10 +1231,11 @@ mod tests {
         assert_eq!(stats.p2_count, 0);
         assert_eq!(stats.p3_count, 0);
         assert_eq!(stats.top_categories.len(), 2);
+        Ok(())
     }
 
     #[tokio::test]
-    async fn test_evaluate_alert_rule() {
+    async fn test_evaluate_alert_rule() -> Result<(), MonitoringError> {
         let state = MonitoringState::new();
         let now = Utc::now();
 
@@ -1256,9 +1265,10 @@ mod tests {
 
         let result_high = state.evaluate_alert_rule(&rule, 90.0).await;
         assert!(result_high.is_some());
-        let alert = result_high.unwrap();
+        let alert = result_high.ok_or(MonitoringError::UnexpectedNone)?;
         assert_eq!(alert.severity, AlertSeverity::P1);
         assert_eq!(alert.category, AlertCategory::System);
+        Ok(())
     }
 
     #[tokio::test]

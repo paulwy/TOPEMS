@@ -33,7 +33,7 @@ import {
 import { DataTable } from '@/components/common/DataTable';
 import type { ColumnDef } from '@tanstack/react-table';
 import { ehsApi } from '@/api/ehs';
-import type { Hazard, RiskAssessment, ControlMeasure } from '@/api/ehs';
+import type { Hazard, RiskAssessment, ControlMeasure, SafetyHazard } from '@/api/ehs';
 import { EHSStatusBadge, EHSMeasureTypeBadge, calculateRiskLevel } from '@/components/ehs';
 import { useNotification } from '@/hooks/useNotification';
 import { DetailPageTemplate, type TabConfig, type SectionConfig } from '@/components/templates';
@@ -88,7 +88,7 @@ const EhsHazardDetailPage: React.FC = () => {
     queryFn: async () => {
       const response = await ehsApi.getHazard(id!);
       if (response.success && response.data) {
-        const safetyHazard = response.data as any;
+        const safetyHazard = response.data as unknown as SafetyHazard;
         const hazardData: Hazard = {
           id: safetyHazard.id,
           name: safetyHazard.name,
@@ -127,7 +127,7 @@ const EhsHazardDetailPage: React.FC = () => {
     queryFn: async () => {
       const response = await ehsApi.listRiskAssessments(id!);
       if (response.success && response.data) {
-        const data = response.data as any;
+        const data = response.data as unknown as Record<string, unknown>;
         return Array.isArray(data) ? data : data.data || data.assessments || [];
       }
       return [];
@@ -141,7 +141,7 @@ const EhsHazardDetailPage: React.FC = () => {
     queryFn: async () => {
       const response = await ehsApi.listControlMeasures(id!);
       if (response.success && response.data) {
-        const data = response.data as any;
+        const data = response.data as unknown as Record<string, unknown>;
         return Array.isArray(data) ? data : data.data || data.measures || [];
       }
       return [];

@@ -26,17 +26,23 @@ import type { DrillRecord, CreateDrillRecordRequest } from '@/api/ehs';
 import { useNotificationStore } from '@/store';
 import { apiLogger } from '@/utils/logger';
 import { designTokens } from '@/theme/tokens';
-import { useCrudOperations } from '@/hooks/useCrudQueries';
+import { useCrudOperations, type CrudOperations } from '@/hooks/useCrudQueries';
 
 const ct = designTokens.colors;
 
-const drillCrudApi = {
-  list: (params?: Record<string, unknown>) => ehsApi.listDrills(params as any),
-  get: (id: string) => ehsApi.getDrill(id),
-  create: (data: CreateDrillRecordRequest) => ehsApi.createDrill(data),
-  update: (id: string, data: Partial<CreateDrillRecordRequest>) => ehsApi.updateDrill(id, data),
-  delete: (id: string) => ehsApi.deleteDrill(id),
-} as any;
+const drillCrudApi: CrudOperations<DrillRecord, CreateDrillRecordRequest> = {
+  list: (params) => ehsApi.listDrills(params),
+  get: (id) => ehsApi.getDrill(id),
+  create: (data) => ehsApi.createDrill(data),
+  update: (id, data) => ehsApi.updateDrill(id, data),
+  delete: (id) =>
+    ehsApi.deleteDrill(id) as unknown as Promise<{
+      success: boolean;
+      code: number;
+      message: string;
+      data?: string;
+    }>,
+};
 
 const EmergencyPage: React.FC = () => {
   const navigate = useNavigate();

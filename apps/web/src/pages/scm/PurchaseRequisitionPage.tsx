@@ -258,6 +258,16 @@ const PurchaseRequisitionPage: React.FC = () => {
     },
   });
 
+  const openConfirmDialog = useCallback((config: {
+    title: string;
+    message: string;
+    onConfirm: () => void;
+    danger?: boolean;
+  }) => {
+    setConfirmDialogConfig(config);
+    setConfirmDialogOpen(true);
+  }, []);
+
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     if (isEditing && selectedRequisition) {
@@ -310,8 +320,7 @@ const PurchaseRequisitionPage: React.FC = () => {
         },
       });
     },
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-    [addNotification]
+    [openConfirmDialog, submitMutation]
   );
 
   const handleApprove = useCallback(
@@ -324,8 +333,7 @@ const PurchaseRequisitionPage: React.FC = () => {
         },
       });
     },
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-    [addNotification]
+    [openConfirmDialog, approveMutation]
   );
 
   const handleReject = useCallback(
@@ -339,8 +347,7 @@ const PurchaseRequisitionPage: React.FC = () => {
         danger: true,
       });
     },
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-    [addNotification]
+    [openConfirmDialog, rejectMutation]
   );
 
   const handleConvertToOrder = useCallback(
@@ -353,8 +360,7 @@ const PurchaseRequisitionPage: React.FC = () => {
         },
       });
     },
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-    [addNotification]
+    [openConfirmDialog, convertMutation]
   );
 
   const resetForm = () => {
@@ -369,16 +375,6 @@ const PurchaseRequisitionPage: React.FC = () => {
     });
     setIsEditing(false);
     setSelectedRequisition(null);
-  };
-
-  const openConfirmDialog = (config: {
-    title: string;
-    message: string;
-    onConfirm: () => void;
-    danger?: boolean;
-  }) => {
-    setConfirmDialogConfig(config);
-    setConfirmDialogOpen(true);
   };
 
   const columns: ColumnDef<PurchaseRequisition>[] = [
@@ -601,7 +597,7 @@ const PurchaseRequisitionPage: React.FC = () => {
                 onChange={(e) => setFormData({ ...formData, request_date: e.target.value })}
                 size='small'
                 required
-                slotProps={{ inputLabel: { shrink: true } } as any}
+                slotProps={{ inputLabel: { shrink: true } } as const}
                 disabled={isEditing}
               />
               <TextField
@@ -610,7 +606,7 @@ const PurchaseRequisitionPage: React.FC = () => {
                 value={formData.required_date}
                 onChange={(e) => setFormData({ ...formData, required_date: e.target.value })}
                 size='small'
-                slotProps={{ inputLabel: { shrink: true } } as any}
+                slotProps={{ inputLabel: { shrink: true } } as const}
               />
               <FormControl size='small'>
                 <InputLabel>优先级</InputLabel>

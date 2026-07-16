@@ -27,12 +27,17 @@ import {
   type RowAction,
 } from '@/components/templates';
 import { limsApi } from '@/api/lims';
-import type { TestMethod, CreateTestMethodRequest, UpdateTestMethodRequest } from '@/api/lims';
+import type {
+  TestMethod,
+  CreateTestMethodRequest,
+  UpdateTestMethodRequest,
+  ListParams,
+} from '@/api/lims';
 import { useNotificationStore } from '@/store';
 import { apiLogger } from '@/utils/logger';
 import { designTokens } from '@/theme/tokens';
 import { DASHBOARD_PATHS } from '@/routes/dashboard';
-import { useCrudOperations } from '@/hooks/useCrudQueries';
+import { useCrudOperations, type CrudOperations } from '@/hooks/useCrudQueries';
 
 const ct = designTokens.colors;
 
@@ -41,12 +46,12 @@ interface TestMethodForm extends CreateTestMethodRequest {
 }
 
 const testMethodCrudApi = {
-  list: (params?: Record<string, unknown>) => limsApi.listTestMethods(params as any),
+  list: (params?: ListParams) => limsApi.listTestMethods(params),
   get: (id: string) => limsApi.getTestMethod(id),
   create: (data: CreateTestMethodRequest) => limsApi.createTestMethod(data),
   update: (id: string, data: UpdateTestMethodRequest) => limsApi.updateTestMethod(id, data),
   delete: (id: string) => limsApi.deleteTestMethod(id),
-} as any;
+} as unknown as CrudOperations<TestMethod, CreateTestMethodRequest, UpdateTestMethodRequest>;
 
 const LimsTestMethodPage: React.FC = () => {
   const navigate = useNavigate();

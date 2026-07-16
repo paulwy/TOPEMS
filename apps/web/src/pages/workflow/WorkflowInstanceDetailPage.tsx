@@ -42,12 +42,11 @@ const FlowInstanceDetailPage: React.FC = () => {
 
   const detailsQuery = useQuery<InstanceDetails | null>({
     queryKey: ['workflow-instance-details', id],
-    queryFn: async () => {
+    queryFn: async (): Promise<InstanceDetails | null> => {
       if (!id) return null;
       const response = await workflowApi.getInstanceDetails(id);
       if (response.success && response.data) {
-        const data = response.data as any;
-        return data;
+        return response.data as unknown as InstanceDetails;
       }
       return null;
     },

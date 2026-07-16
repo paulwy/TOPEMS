@@ -123,7 +123,7 @@ const ScmEvaluationPage: React.FC = () => {
   });
 
   const deleteMutation = useMutation({
-    mutationFn: (id: string) => scmApi.evaluations.update(id, { comments: '[已删除]' } as any),
+    mutationFn: (id: string) => scmApi.evaluations.update(id, { comments: '[已删除]' }),
     onSuccess: () => {
       invalidateEvaluations();
       addNotification({
@@ -362,7 +362,7 @@ const ScmEvaluationPage: React.FC = () => {
                 onChange={(e) => setFormData({ ...formData, evaluation_date: e.target.value })}
                 size='small'
                 required
-                slotProps={{ inputLabel: { shrink: true } } as any}
+                slotProps={{ inputLabel: { shrink: true } } as const}
                 disabled={isEditing}
               />
               <TextField

@@ -69,10 +69,10 @@ const EhsIncidentReportPage: React.FC = () => {
     queryFn: async () => {
       const response = await ehsApi.listIncidents();
       if (response.success && response.data) {
-        const data = response.data as any;
-        return Array.isArray(data) ? data : data.data || data.incidents || [];
+        const data = response.data as unknown as Incident[] | { data: Incident[]; incidents: Incident[] };
+        return Array.isArray(data) ? data : (data as { data?: Incident[]; incidents?: Incident[] }).data || (data as { data?: Incident[]; incidents?: Incident[] }).incidents || [];
       }
-      return [];
+      return [] as Incident[];
     },
   });
   const incidents = (incidentsData as Incident[]) || [];
@@ -86,8 +86,8 @@ const EhsIncidentReportPage: React.FC = () => {
 
       const actionsRes = await ehsApi.listIncidentActions(incidentId);
       if (actionsRes.success && actionsRes.data) {
-        const actionsData = actionsRes.data as any;
-        const actionsArray = Array.isArray(actionsData) ? actionsData : actionsData.data || [];
+        const actionsData = actionsRes.data as unknown as IncidentAction[] | { data: IncidentAction[] };
+        const actionsArray = Array.isArray(actionsData) ? actionsData : (actionsData as { data: IncidentAction[] }).data || [];
         setActions(actionsArray);
       }
     } catch (error: unknown) {

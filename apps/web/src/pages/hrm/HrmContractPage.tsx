@@ -975,7 +975,7 @@ export default function ContractManagementPage() {
                   setFormState((s) => ({ ...s, start_date: e.target.value }))
                 }
                 fullWidth
-                slotProps={{ inputLabel: { shrink: true } } as any}
+                slotProps={{ inputLabel: { shrink: true } } as const}
               />
               <FormField
                 name='end_date'
@@ -987,7 +987,7 @@ export default function ContractManagementPage() {
                 }
                 placeholder='无固定期限'
                 fullWidth
-                slotProps={{ inputLabel: { shrink: true } } as any}
+                slotProps={{ inputLabel: { shrink: true } } as const}
               />
             </Stack>
 
@@ -1376,7 +1376,7 @@ export default function ContractManagementPage() {
                 setRenewFormState((s) => ({ ...s, new_start_date: e.target.value }))
               }
               fullWidth
-              slotProps={{ inputLabel: { shrink: true } } as any}
+              slotProps={{ inputLabel: { shrink: true } } as const}
             />
             <FormField
               name='new_end_date'
@@ -1388,7 +1388,7 @@ export default function ContractManagementPage() {
               }
               placeholder='无固定期限'
               fullWidth
-              slotProps={{ inputLabel: { shrink: true } } as any}
+              slotProps={{ inputLabel: { shrink: true } } as const}
             />
           </Stack>
 

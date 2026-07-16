@@ -87,13 +87,13 @@ export const MaterialPage: React.FC = () => {
     queryClient.invalidateQueries({ queryKey: QUERY_KEYS.PDM.MATERIALS });
   }, [queryClient]);
 
-  const { data: materials = [], isLoading: loading } = useQuery({
+  const { data: materials = [], isLoading: loading } = useQuery<Material[]>({
     queryKey: QUERY_KEYS.PDM.MATERIALS,
-    queryFn: async () => {
+    queryFn: async (): Promise<Material[]> => {
       const response = await pdmApi.listMaterials();
       if (response.success && response.data) {
-        const data = response.data as any;
-        return Array.isArray(data) ? data : data.materials || [];
+        const data = response.data as unknown as Record<string, unknown>;
+        return (Array.isArray(data) ? data : data.materials || []) as unknown as Material[];
       }
       return [];
     },

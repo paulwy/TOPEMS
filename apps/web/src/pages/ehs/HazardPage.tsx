@@ -27,17 +27,17 @@ import type { Hazard, RiskAssessment, ControlMeasure, CreateSafetyHazardRequest 
 import { useNotificationStore } from '@/store';
 import { apiLogger } from '@/utils/logger';
 import { designTokens } from '@/theme/tokens';
-import { useCrudOperations } from '@/hooks/useCrudQueries';
+import { useCrudOperations, type CrudOperations } from '@/hooks/useCrudQueries';
 
 const ct = designTokens.colors;
 
 const hazardCrudApi = {
-  list: (params?: Record<string, unknown>) => ehsApi.listHazards(params as any),
+  list: (params?: Record<string, unknown>) => ehsApi.listHazards(params as unknown as Record<string, unknown>),
   get: (id: string) => ehsApi.getHazard(id),
   create: (data: CreateSafetyHazardRequest) => ehsApi.createHazard(data),
   update: (id: string, data: Partial<CreateSafetyHazardRequest>) => ehsApi.updateHazard(id, data),
   delete: (id: string) => ehsApi.deleteHazard(id),
-} as any;
+} as unknown as CrudOperations<Hazard, CreateSafetyHazardRequest>;
 
 const HazardPage: React.FC = () => {
   const [searchTerm, setSearchTerm] = useState('');
@@ -83,11 +83,11 @@ const HazardPage: React.FC = () => {
         setSelectedHazard(hazardRes.data as Hazard);
       }
       if (assessmentsRes.success && assessmentsRes.data) {
-        const data = assessmentsRes.data as any;
+        const data = assessmentsRes.data as unknown as RiskAssessment[] | { data: RiskAssessment[] };
         setRiskAssessments(Array.isArray(data) ? data : data.data || []);
       }
       if (controlsRes.success && controlsRes.data) {
-        const data = controlsRes.data as any;
+        const data = controlsRes.data as unknown as ControlMeasure[] | { data: ControlMeasure[] };
         setControlMeasures(Array.isArray(data) ? data : data.data || []);
       }
     } catch (err: unknown) {

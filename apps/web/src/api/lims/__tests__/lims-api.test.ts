@@ -1,4 +1,19 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
+import type {
+  BatchCreateSamplesRequest,
+  CreateCalibrationRequest,
+  CreateInstrumentRequest,
+  CreateInspectionRecordRequest,
+  CreateInspectionTaskRequest,
+  CreateLifecycleEventRequest,
+  CreateMethodVersionRequest,
+  CreateReagentRequest,
+  CreateSampleRequest,
+  CreateTestMethodRequest,
+  TransitionStageRequest,
+  UpdateReagentRequest,
+  UpdateSampleRequest,
+} from '../types';
 
 vi.mock('../../client', () => {
   const mockLimsClient = {
@@ -51,7 +66,7 @@ describe('LIMS Module API Tests', () => {
       const { apiClient } = await import('../../client');
       (apiClient.lims.post as vi.Mock).mockResolvedValue({ data: {} });
       const data = { sample_no: 'S-001', sample_name: 'Test Sample', sample_type: 'water' };
-      await sampleApi.createSample(data as any);
+      await sampleApi.createSample(data as unknown as CreateSampleRequest);
       expect(apiClient.lims.post).toHaveBeenCalledWith('/samples', data);
     });
 
@@ -60,7 +75,7 @@ describe('LIMS Module API Tests', () => {
       const { apiClient } = await import('../../client');
       (apiClient.lims.put as vi.Mock).mockResolvedValue({ data: {} });
       const data = { sample_name: 'Updated Sample' };
-      await sampleApi.updateSample('sample-001', data as any);
+      await sampleApi.updateSample('sample-001', data as Partial<UpdateSampleRequest>);
       expect(apiClient.lims.put).toHaveBeenCalledWith('/samples/sample-001', data);
     });
 
@@ -76,7 +91,7 @@ describe('LIMS Module API Tests', () => {
       const { apiClient } = await import('../../client');
       (apiClient.lims.post as vi.Mock).mockResolvedValue({ data: {} });
       const data = { samples: [{ sample_no: 'S-001' }, { sample_no: 'S-002' }] };
-      await sampleApi.batchCreateSamples(data as any);
+      await sampleApi.batchCreateSamples(data as unknown as BatchCreateSamplesRequest);
       expect(apiClient.lims.post).toHaveBeenCalledWith('/samples/batch', data);
     });
 
@@ -93,7 +108,7 @@ describe('LIMS Module API Tests', () => {
       const { apiClient } = await import('../../client');
       (apiClient.lims.post as vi.Mock).mockResolvedValue({ data: {} });
       const data = { stage: 'testing', operator: 'John' };
-      await sampleApi.transitionSampleStage('sample-001', data as any);
+      await sampleApi.transitionSampleStage('sample-001', data as unknown as TransitionStageRequest);
       expect(apiClient.lims.post).toHaveBeenCalledWith(
         '/samples/sample-001/transition-stage',
         data
@@ -133,7 +148,7 @@ describe('LIMS Module API Tests', () => {
       const { apiClient } = await import('../../client');
       (apiClient.lims.post as vi.Mock).mockResolvedValue({ data: {} });
       const data = { sample_id: 'sample-001', task_type: 'testing' };
-      await taskApi.createTask(data as any);
+      await taskApi.createTask(data as unknown as CreateInspectionTaskRequest);
       expect(apiClient.lims.post).toHaveBeenCalledWith('/tasks', data);
     });
 
@@ -142,7 +157,7 @@ describe('LIMS Module API Tests', () => {
       const { apiClient } = await import('../../client');
       (apiClient.lims.put as vi.Mock).mockResolvedValue({ data: {} });
       const data = { status: 'in_progress' };
-      await taskApi.updateTask('task-001', data as any);
+      await taskApi.updateTask('task-001', data as Partial<CreateInspectionTaskRequest>);
       expect(apiClient.lims.put).toHaveBeenCalledWith('/tasks/task-001', data);
     });
 
@@ -166,7 +181,7 @@ describe('LIMS Module API Tests', () => {
       const { apiClient } = await import('../../client');
       (apiClient.lims.post as vi.Mock).mockResolvedValue({ data: {} });
       const data = { step_name: 'testing', result: 'pass' };
-      await taskApi.completeStep('task-001', data as any);
+      await taskApi.completeStep('task-001', data as unknown as CreateLifecycleEventRequest);
       expect(apiClient.lims.post).toHaveBeenCalledWith('/tasks/task-001/complete_step', {
         ...data,
         task_id: 'task-001',
@@ -207,7 +222,7 @@ describe('LIMS Module API Tests', () => {
       const { apiClient } = await import('../../client');
       (apiClient.lims.post as vi.Mock).mockResolvedValue({ data: {} });
       const data = { name: 'Test Instrument', model: 'Model A', serial_no: 'SN-001' };
-      await instrumentApi.createInstrument(data as any);
+      await instrumentApi.createInstrument(data as unknown as CreateInstrumentRequest);
       expect(apiClient.lims.post).toHaveBeenCalledWith('/instruments', data);
     });
 
@@ -216,7 +231,7 @@ describe('LIMS Module API Tests', () => {
       const { apiClient } = await import('../../client');
       (apiClient.lims.put as vi.Mock).mockResolvedValue({ data: {} });
       const data = { name: 'Updated Instrument' };
-      await instrumentApi.updateInstrument('inst-001', data as any);
+      await instrumentApi.updateInstrument('inst-001', data as Partial<CreateInstrumentRequest>);
       expect(apiClient.lims.put).toHaveBeenCalledWith('/instruments/inst-001', data);
     });
 
@@ -232,7 +247,7 @@ describe('LIMS Module API Tests', () => {
       const { apiClient } = await import('../../client');
       (apiClient.lims.post as vi.Mock).mockResolvedValue({ data: {} });
       const data = { calibration_date: '2024-01-15', technician: 'John' };
-      await instrumentApi.calibrate('inst-001', data as any);
+      await instrumentApi.calibrate('inst-001', data as unknown as CreateCalibrationRequest);
       expect(apiClient.lims.post).toHaveBeenCalledWith('/instruments/inst-001/calibrate', data);
     });
 
@@ -269,7 +284,7 @@ describe('LIMS Module API Tests', () => {
       const { apiClient } = await import('../../client');
       (apiClient.lims.post as vi.Mock).mockResolvedValue({ data: {} });
       const data = { name: 'Test Reagent', batch_no: 'B-001', quantity: 100 };
-      await reagentApi.createReagent(data as any);
+      await reagentApi.createReagent(data as unknown as CreateReagentRequest);
       expect(apiClient.lims.post).toHaveBeenCalledWith('/reagents', data);
     });
 
@@ -278,7 +293,7 @@ describe('LIMS Module API Tests', () => {
       const { apiClient } = await import('../../client');
       (apiClient.lims.put as vi.Mock).mockResolvedValue({ data: {} });
       const data = { quantity: 150 };
-      await reagentApi.updateReagent('reagent-001', data as any);
+      await reagentApi.updateReagent('reagent-001', data as Partial<UpdateReagentRequest>);
       expect(apiClient.lims.put).toHaveBeenCalledWith('/reagents/reagent-001', data);
     });
 
@@ -332,7 +347,7 @@ describe('LIMS Module API Tests', () => {
       const { apiClient } = await import('../../client');
       (apiClient.lims.post as vi.Mock).mockResolvedValue({ data: {} });
       const data = { name: 'Test Method', code: 'TM-001', category: 'chemical' };
-      await testMethodApi.createTestMethod(data as any);
+      await testMethodApi.createTestMethod(data as unknown as CreateTestMethodRequest);
       expect(apiClient.lims.post).toHaveBeenCalledWith('/test-methods', data);
     });
 
@@ -341,7 +356,7 @@ describe('LIMS Module API Tests', () => {
       const { apiClient } = await import('../../client');
       (apiClient.lims.put as vi.Mock).mockResolvedValue({ data: {} });
       const data = { name: 'Updated Method' };
-      await testMethodApi.updateTestMethod('method-001', data as any);
+      await testMethodApi.updateTestMethod('method-001', data as Partial<CreateTestMethodRequest>);
       expect(apiClient.lims.put).toHaveBeenCalledWith('/test-methods/method-001', data);
     });
 
@@ -365,7 +380,7 @@ describe('LIMS Module API Tests', () => {
       const { apiClient } = await import('../../client');
       (apiClient.lims.post as vi.Mock).mockResolvedValue({ data: {} });
       const data = { version: '2.0', change_log: 'Updated method' };
-      await testMethodApi.createNewVersion('method-001', data as any);
+      await testMethodApi.createNewVersion('method-001', data as unknown as CreateMethodVersionRequest);
       expect(apiClient.lims.post).toHaveBeenCalledWith(
         '/test-methods/method-001/new-version',
         data
@@ -397,7 +412,7 @@ describe('LIMS Module API Tests', () => {
       const { apiClient } = await import('../../client');
       (apiClient.lims.post as vi.Mock).mockResolvedValue({ data: {} });
       const data = { task_id: 'task-001', result: 'pass' };
-      await recordApi.createRecord(data as any);
+      await recordApi.createRecord(data as unknown as CreateInspectionRecordRequest);
       expect(apiClient.lims.post).toHaveBeenCalledWith('/records', data);
     });
 

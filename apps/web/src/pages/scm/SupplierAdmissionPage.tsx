@@ -330,6 +330,16 @@ const SupplierAdmissionPage: React.FC = () => {
     setShowDialog(true);
   };
 
+  const openConfirmDialog = useCallback((config: {
+    title: string;
+    message: string;
+    onConfirm: () => void;
+    danger?: boolean;
+  }) => {
+    setConfirmDialogConfig(config);
+    setConfirmDialogOpen(true);
+  }, []);
+
   const handleDelete = (admission: SupplierAdmission) => {
     openConfirmDialog({
       title: '确认删除',
@@ -351,8 +361,7 @@ const SupplierAdmissionPage: React.FC = () => {
         },
       });
     },
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-    [addNotification]
+    [openConfirmDialog, submitMutation]
   );
 
   const handleApprove = useCallback(
@@ -365,8 +374,7 @@ const SupplierAdmissionPage: React.FC = () => {
         },
       });
     },
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-    [addNotification]
+    [openConfirmDialog, approveMutation]
   );
 
   const handleReject = useCallback(
@@ -380,8 +388,7 @@ const SupplierAdmissionPage: React.FC = () => {
         danger: true,
       });
     },
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-    [addNotification]
+    [openConfirmDialog, rejectMutation]
   );
 
   const handleActivateSupplier = useCallback(
@@ -394,8 +401,7 @@ const SupplierAdmissionPage: React.FC = () => {
         },
       });
     },
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-    [addNotification]
+    [openConfirmDialog, activateMutation]
   );
 
   const resetForm = () => {
@@ -421,16 +427,6 @@ const SupplierAdmissionPage: React.FC = () => {
     setIsEditing(false);
     setSelectedAdmission(null);
     setActiveTab(0);
-  };
-
-  const openConfirmDialog = (config: {
-    title: string;
-    message: string;
-    onConfirm: () => void;
-    danger?: boolean;
-  }) => {
-    setConfirmDialogConfig(config);
-    setConfirmDialogOpen(true);
   };
 
   const columns: ColumnDef<SupplierAdmission>[] = [
@@ -764,7 +760,7 @@ const SupplierAdmissionPage: React.FC = () => {
                   value={formData.established_date}
                   onChange={(e) => setFormData({ ...formData, established_date: e.target.value })}
                   size='small'
-                  slotProps={{ inputLabel: { shrink: true } } as any}
+                  slotProps={{ inputLabel: { shrink: true } } as const}
                 />
                 <TextField
                   label='经营范围'

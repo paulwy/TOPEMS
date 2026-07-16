@@ -82,7 +82,7 @@ export interface AdvancedFilter {
 }
 
 // ============ 虚拟滚动行数据 ============
-/* eslint-disable @typescript-eslint/no-explicit-any */
+/* eslint-disable @typescript-eslint/no-explicit-any -- VirtualRowData acts as a type-erased data bag for react-window virtual rows, where the concrete row type is determined by the DataTable generic at the call site */
 
 interface VirtualRowData {
   rows: Row<any>[];
@@ -456,8 +456,8 @@ export function DataTable<TData, TValue>({
   loading = false,
   responsive = true,
   emptyMessage = '暂无数据',
-  getRowKey = (row: TData) =>
-    (row as any).id?.toString() || (row as any).key || Math.random().toString(),
+  getRowKey = (row: TData): string =>
+    (row as unknown as Record<string, unknown>).id?.toString() || (row as unknown as Record<string, unknown>).key?.toString() || Math.random().toString(),
   extraActions,
   sx,
   persistColumnConfig = false,
@@ -1475,7 +1475,7 @@ export function MobileCardView<TData>({
   onRowClick,
   loading = false,
   emptyMessage = '暂无数据',
-  getRowKey = (row: TData) => (row as any).id?.toString() || Math.random().toString(),
+  getRowKey = (row: TData) => (row as unknown as Record<string, unknown>).id?.toString() || Math.random().toString(),
   showSelection = false,
   selectedIds = [],
   onSelectionChange,
@@ -1533,7 +1533,7 @@ export function MobileCardView<TData>({
         }
 
         // 默认卡片渲染
-        const rowObj = row as any;
+        const rowObj = row as unknown as Record<string, unknown>;
         const title = titleKey
           ? rowObj[titleKey]
           : rowObj.name || rowObj.title || `项目 ${index + 1}`;
@@ -1583,7 +1583,7 @@ export function MobileCardView<TData>({
                 >
                   {String(title ?? '')}
                 </Typography>
-                {subtitle && (
+                {subtitle ? (
                   <Typography
                     variant='body2'
                     color='text.secondary'
@@ -1597,7 +1597,7 @@ export function MobileCardView<TData>({
                   >
                     {String(subtitle)}
                   </Typography>
-                )}
+                ) : null}
               </Box>
               {showSelection && (
                 <Checkbox

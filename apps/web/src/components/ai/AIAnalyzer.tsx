@@ -145,7 +145,7 @@ export function AIAnalyzer({
         setSentimentResult({
           sentiment: response.data.sentiment as 'positive' | 'negative' | 'neutral',
           confidence: response.data.confidence,
-          details: response.data.details as any,
+          details: response.data.details as SentimentResult['details'],
         });
       }
     } catch (error: unknown) {

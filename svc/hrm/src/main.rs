@@ -52,7 +52,10 @@ async fn main() -> Result<()> {
 
 async fn build_routes() -> Result<Router> {
     let database_url =
-        env::var("DATABASE_URL").expect("DATABASE_URL environment variable is required");
+        env::var("DATABASE_URL").map_err(|_| {
+            tracing::error!("DATABASE_URL environment variable is required");
+            anyhow::anyhow!("DATABASE_URL environment variable is required")
+        })?;
     let db_config = DatabaseConfig {
         url: database_url,
         max_connections: env::var("DB_MAX_CONNECTIONS")
@@ -128,8 +131,11 @@ async fn build_routes() -> Result<Router> {
                 let encoder = TextEncoder::new();
                 let metrics = prometheus::gather();
                 let mut buffer = Vec::new();
-                encoder.encode(&metrics, &mut buffer).unwrap();
-                String::from_utf8(buffer).unwrap()
+                match encoder.encode(&metrics, &mut buffer) {
+                    Ok(()) => String::from_utf8(buffer)
+                        .unwrap_or_else(|_| "Error: invalid UTF-8 in metrics".to_string()),
+                    Err(e) => format!("Error encoding metrics: {}", e),
+                }
             }),
         )
         .route("/api-docs/openapi.json", get(serve_openapi_json))
@@ -331,7 +337,10 @@ async fn check_iam_health() -> DependencyHealth {
 
 fn init_encryption_service() -> FieldEncryptionService {
     let encryption_key =
-        env::var("ENCRYPTION_KEY").expect("ENCRYPTION_KEY environment variable is required");
+        env::var("ENCRYPTION_KEY").unwrap_or_else(|_| {
+            tracing::error!("ENCRYPTION_KEY environment variable is required");
+            panic!("ENCRYPTION_KEY environment variable is required - service cannot start without encryption key")
+        });
 
     let key_b64 = if let Some(stripped) = encryption_key.strip_prefix("base64:") {
         stripped.to_string()
@@ -345,7 +354,10 @@ fn init_encryption_service() -> FieldEncryptionService {
 
     topems_shared::KeyManager::from_base64_key(&key_b64)
         .map(FieldEncryptionService::new)
-        .expect("Failed to initialize encryption service with provided ENCRYPTION_KEY")
+        .unwrap_or_else(|e| {
+            tracing::error!("Failed to initialize encryption service: {}", e);
+            panic!("Failed to initialize encryption service with provided ENCRYPTION_KEY: {}", e)
+        })
 }
 
 async fn init_db(_pool: &sqlx::PgPool) -> Result<()> {

@@ -431,7 +431,7 @@ const QmsSpcPage: React.FC = () => {
 
       if (isEditing && selectedChart) {
         const { chartNo, ...updateData } = submitData;
-        await updateSpcChartMutation.mutateAsync({ id: selectedChart.id, data: updateData as any });
+        await updateSpcChartMutation.mutateAsync({ id: selectedChart.id, data: updateData });
       } else {
         await createSpcChartMutation.mutateAsync(submitData);
       }
@@ -701,10 +701,10 @@ const QmsSpcPage: React.FC = () => {
         <CardContent sx={{ p: 0 }}>
           <ListPageTemplate
             columns={columns}
-            data={filteredCharts as any[]}
+            data={filteredCharts}
             loading={loading}
             getRowId={(row: SpcChart) => row.id}
-            rowActions={rowActions as any}
+            rowActions={rowActions as unknown as RowAction<SpcChart>[]}
             searchable={false}
             filters={[]}
             actions={[]}

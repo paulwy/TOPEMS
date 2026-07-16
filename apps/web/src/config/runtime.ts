@@ -14,9 +14,9 @@ function getImportMetaEnvSafe(): Record<string, string | boolean | undefined> {
   return {};
 }
 
-function getEnv(key: string, defaultValue: string = ''): string {
-  if (typeof globalThis !== 'undefined' && (globalThis as any).import?.meta?.env) {
-    return (globalThis as any).import.meta.env[key] || defaultValue;
+export function getEnv(key: string, defaultValue: string = ''): string {
+  if (typeof globalThis !== 'undefined' && (globalThis as unknown as { import?: { meta?: { env?: Record<string, string> } } }).import?.meta?.env) {
+    return (globalThis as unknown as { import: { meta: { env: Record<string, string> } } }).import.meta.env[key] || defaultValue;
   }
 
   const env = getImportMetaEnvSafe();

@@ -688,7 +688,7 @@ ${content
                     components={{
                       code({ node, className, children, ...props }) {
                         const match = /language-(\w+)/.exec(className || '');
-                        const isInline = (props as any).inline;
+                        const isInline = (props as unknown as Record<string, unknown>).inline;
                         return !isInline && match ? (
                           <SyntaxHighlighter
                             style={vscDarkPlus as { [key: string]: React.CSSProperties }}

@@ -196,15 +196,14 @@ export class ModuleRegistry {
 
     if (module.remoteEntry && module.entry) {
       // Dynamic remote module
-      // @ts-ignore
       await __webpack_init_sharing__('default');
-      // @ts-ignore
-      const container = await window[module.id];
-      // @ts-ignore
+      const container = (window as Record<string, WebpackContainer | undefined>)[module.id];
+      if (!container) {
+        throw new Error(`Remote container "${module.id}" not found on window`);
+      }
       await container.init(__webpack_share_scopes__.default);
-      // @ts-ignore
       const factory = await container.get(module.entry);
-      return factory().then((module: unknown) => module);
+      return factory();
     }
 
     throw new Error(`Cannot load module ${moduleId}: no entry point`);

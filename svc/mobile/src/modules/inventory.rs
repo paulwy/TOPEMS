@@ -127,8 +127,8 @@ pub async fn list_stocktake_tasks(
                         "total_items": row.total_items,
                         "counted_items": row.counted_items,
                         "assignee": row.assignee,
-                        "due_date": row.due_date.map(|d| d.to_string()).unwrap_or_default(),
-                        "created_at": row.created_at.map(|d| d.to_string()).unwrap_or_default(),
+                        "due_date": row.due_date.to_string(),
+                        "created_at": row.created_at.to_string(),
                     })
                 })
                 .collect();
@@ -262,8 +262,8 @@ pub async fn list_inbound_orders(
                         "status": row.status,
                         "total_items": row.total_items,
                         "total_quantity": row.total_quantity,
-                        "expected_date": row.expected_date.map(|d| d.to_string()).unwrap_or_default(),
-                        "created_at": row.created_at.map(|d| d.to_string()).unwrap_or_default(),
+                        "expected_date": row.expected_date.to_string(),
+                        "created_at": row.created_at.to_string(),
                     })
                 })
                 .collect();
@@ -305,8 +305,8 @@ pub async fn list_outbound_orders(
                         "status": row.status,
                         "total_items": row.total_items,
                         "total_quantity": row.total_quantity,
-                        "expected_date": row.expected_date.map(|d| d.to_string()).unwrap_or_default(),
-                        "created_at": row.created_at.map(|d| d.to_string()).unwrap_or_default(),
+                        "expected_date": row.expected_date.to_string(),
+                        "created_at": row.created_at.to_string(),
                     })
                 })
                 .collect();

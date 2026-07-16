@@ -63,12 +63,12 @@ const SrmFinancePage: React.FC = () => {
       const invoiceRecords: FinanceRecord[] = [];
 
       if (contractsRes.success && contractsRes.data) {
-        const data = contractsRes.data as any;
-        const items = Array.isArray(data) ? data : data.contracts || [];
+        const data = contractsRes.data as unknown as SupplierContract[] | { contracts: SupplierContract[] };
+        const items = Array.isArray(data) ? data : (data as { contracts: SupplierContract[] }).contracts || [];
         invoiceRecords.push(
-          ...items.map((item: { [key: string]: unknown }) => ({
+          ...items.map((item: SupplierContract) => ({
             ...item,
-            record_no: item.contract_no || item.record_no || '',
+            record_no: item.contract_no || '',
             supplier_name: item.supplier_name || '',
             type: 'contract',
             amount: item.total_amount || 0,
@@ -89,12 +89,12 @@ const SrmFinancePage: React.FC = () => {
       }
 
       if (ordersRes.success && ordersRes.data) {
-        const data = ordersRes.data as any;
-        const items = Array.isArray(data) ? data : data.orders || [];
+        const data = ordersRes.data as unknown as PurchaseOrder[] | { orders: PurchaseOrder[] };
+        const items = Array.isArray(data) ? data : (data as { orders: PurchaseOrder[] }).orders || [];
         paymentRecords.push(
-          ...items.map((item: { [key: string]: unknown }) => ({
+          ...items.map((item: PurchaseOrder) => ({
             ...item,
-            record_no: item.po_no || item.record_no || '',
+            record_no: item.po_no || '',
             supplier_name: '',
             type: 'order',
             amount: item.total_amount || 0,

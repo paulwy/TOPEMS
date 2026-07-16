@@ -639,7 +639,7 @@ const MobileWorkbenchPage: React.FC = () => {
                               <Chip
                                 label={item.status}
                                 size='small'
-                                color={getStatusColor(item.status) as any}
+                                color={getStatusColor(item.status) as React.ComponentProps<typeof import('@mui/material/Chip').default>['color']}
                                 sx={{ height: 20, fontSize: '0.7rem' }}
                               />
                             ) : undefined

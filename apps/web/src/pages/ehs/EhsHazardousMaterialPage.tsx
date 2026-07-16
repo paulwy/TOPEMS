@@ -42,6 +42,7 @@ interface HazardousMaterial {
   material_code: string;
   name: string;
   category: string;
+  hazard_class?: string;
   cas_no: string;
   quantity: number;
   unit: string;
@@ -113,7 +114,7 @@ const EhsHazardousMaterialPage: React.FC = () => {
     queryFn: async () => {
       const response = await ehsApi.hazardousMaterials.listHazardousMaterials({ pagesize: 100 });
       if (response.success && response.data) {
-        const data = response.data as any;
+        const data = response.data as unknown as Record<string, unknown>;
         return Array.isArray(data) ? data : data.data || [];
       }
       return [];
@@ -323,7 +324,7 @@ const EhsHazardousMaterialPage: React.FC = () => {
           material_code: row.material_code || '',
           name: row.name || '',
           category: row.category || '',
-          hazard_class: (row as any).hazard_class || '',
+          hazard_class: row.hazard_class || '',
           cas_no: row.cas_no || '',
           quantity: String(row.quantity ?? ''),
           unit: row.unit || '',
@@ -711,7 +712,7 @@ const EhsHazardousMaterialPage: React.FC = () => {
                 label='有效期'
                 value={formData.expiry_date}
                 onChange={(e) => setFormData({ ...formData, expiry_date: e.target.value })}
-                slotProps={{ inputLabel: { shrink: true } } as any}
+                slotProps={{ inputLabel: { shrink: true } } as const}
               />
             </Box>
             <TextField

@@ -1083,7 +1083,7 @@ const DepartmentFormDialog: React.FC<DepartmentFormDialogProps> = ({
             部门图片
           </Typography>
           <ImageUpload
-            value={(formData as any)?.images || []}
+            value={((formData as unknown as Record<string, unknown>)?.images as string[]) || []}
             onChange={(files) => onChange('images', files)}
             maxCount={9}
             accept='image/*'

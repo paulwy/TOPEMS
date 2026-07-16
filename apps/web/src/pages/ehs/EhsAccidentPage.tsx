@@ -91,13 +91,17 @@ const EhsAccidentPage: React.FC = () => {
     queryFn: async () => {
       const response = await ehsApi.listAccidents({ pagesize: 100 });
       if (response.success && response.data) {
-        const data = response.data as any;
-        const accidentsData = Array.isArray(data) ? data : data.data || [];
-        return accidentsData.map((item: Accident) => ({
+        const data = response.data as unknown as Record<string, unknown>;
+        const accidentsData = (
+          Array.isArray(data)
+            ? (data as unknown as Record<string, unknown>[])
+            : (data.data as unknown as Record<string, unknown>[]) || []
+        ) as unknown as Record<string, unknown>[];
+        return accidentsData.map((item) => ({
           ...item,
-          status: translateStatus(item.status),
-          severity: translateSeverity(item.severity),
-        }));
+          status: translateStatus(item.status as string),
+          severity: translateSeverity(item.severity as string),
+        })) as Accident[];
       }
       return [];
     },
@@ -113,14 +117,14 @@ const EhsAccidentPage: React.FC = () => {
     }
   }, [accidentsQuery.isError, addNotification]);
 
-  const accidentDetailQuery = useQuery({
+  const accidentDetailQuery = useQuery<AccidentDetail | null>({
     queryKey: ['ehs-accident-detail', selectedAccident?.id],
     queryFn: async () => {
       if (!selectedAccident?.id) return null;
       const response = await ehsApi.getAccident(selectedAccident.id);
       if (response.success && response.data) {
-        const data = response.data as any;
-        const detailData: AccidentDetail = {
+        const data = response.data as unknown as AccidentDetail;
+        return {
           ...data,
           accident: {
             ...data.accident,
@@ -128,7 +132,6 @@ const EhsAccidentPage: React.FC = () => {
             severity: translateSeverity(data.accident.severity),
           },
         };
-        return detailData;
       }
       return null;
     },
@@ -600,7 +603,7 @@ const EhsAccidentPage: React.FC = () => {
                   label='发生时间'
                   value={formData.occurred_at}
                   onChange={(e) => setFormData({ ...formData, occurred_at: e.target.value })}
-                  slotProps={{ inputLabel: { shrink: true } } as any}
+                  slotProps={{ inputLabel: { shrink: true } } as const}
                 />
               </Box>
               <Box sx={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 2 }}>

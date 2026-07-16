@@ -48,7 +48,7 @@ export const announcementCrudApi: CrudOperations<Announcement> = {
     announcementApi.list({
       page: params?.page,
       pagesize: params?.pagesize,
-      ...(params as any),
+      ...(params as unknown as Record<string, unknown>),
     }),
   get: announcementApi.get,
   create: announcementApi.create,

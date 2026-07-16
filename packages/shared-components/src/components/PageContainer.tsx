@@ -114,7 +114,7 @@ export const PageContainer: React.FC<PageContainerProps> = ({
   sx,
   contentSx,
 }) => {
-  const ContentWrapper = (paper ? Paper : Box) as React.ElementType;
+  const ContentWrapper = (paper ? Paper : Box) as React.FC<React.PropsWithChildren<{ sx?: React.ComponentProps<typeof Box>['sx']; elevation?: number }>>;
   const contentWrapperProps = paper
     ? {
         elevation: 0,

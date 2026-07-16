@@ -336,9 +336,10 @@ export const DashboardEditor: React.FC<{
   const selectedWidget = widgets.find((w) => w.id === selectedWidgetId);
 
   const renderResizeHandle = (position: string) => (
-    // eslint-disable-next-line jsx-a11y/no-static-element-interactions
     <div
       className='resize-handle'
+      role="separator"
+      tabIndex={0}
       style={{
         position: 'absolute',
         width: 12,
@@ -349,7 +350,12 @@ export const DashboardEditor: React.FC<{
         zIndex: 10,
         [position]: -6,
       }}
-      onMouseDown={(e) => handleResizeStart(e, selectedWidgetId!, position as any)}
+      onMouseDown={(e) => handleResizeStart(e, selectedWidgetId!, position as 'se' | 'sw' | 'ne' | 'nw')}
+      onKeyDown={(e) => {
+        if (e.key === 'Enter' || e.key === ' ') {
+          e.preventDefault();
+        }
+      }}
     />
   );
 

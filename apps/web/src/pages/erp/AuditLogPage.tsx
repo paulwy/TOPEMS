@@ -453,7 +453,7 @@ const AuditLogPage: React.FC = () => {
             type='date'
             value={dateRange.start}
             onChange={(e) => setDateRange((prev) => ({ ...prev, start: e.target.value }))}
-            slotProps={{ inputLabel: { shrink: true } } as any}
+            slotProps={{ inputLabel: { shrink: true } } as const}
           />
           <TextField
             size='small'
@@ -461,7 +461,7 @@ const AuditLogPage: React.FC = () => {
             type='date'
             value={dateRange.end}
             onChange={(e) => setDateRange((prev) => ({ ...prev, end: e.target.value }))}
-            slotProps={{ inputLabel: { shrink: true } } as any}
+            slotProps={{ inputLabel: { shrink: true } } as const}
           />
         </Box>
 

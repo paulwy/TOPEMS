@@ -6,11 +6,6 @@ import { moduleRegistry } from '@/modules/registry';
 import { eventBus, ModuleEvents } from './EventBus';
 import { logger } from '@/utils/logger';
 
-/* eslint-disable @typescript-eslint/naming-convention */
-declare const __webpack_share_scopes__: any;
-declare const __webpack_init_sharing__: (scope: string) => Promise<void>;
-/* eslint-enable @typescript-eslint/naming-convention */
-
 interface CacheEntry<T> {
   data: T;
   timestamp: number;
@@ -59,7 +54,7 @@ async function loadRemoteModule(
   try {
     await __webpack_init_sharing__('default');
 
-    const container = (window as any)[remoteName];
+    const container = (window as Record<string, WebpackContainer | undefined>)[remoteName];
 
     if (!container) {
       throw new Error(`Remote module "${remoteName}" not found. Make sure the remote is loaded.`);
@@ -69,17 +64,17 @@ async function loadRemoteModule(
     const factory = await container.get(modulePath);
     const module = await factory();
 
-    const resolvedModule = module.default || module;
+    const resolvedModule = (module as unknown as Record<string, unknown>).default || module;
     const now = Date.now();
     remoteModuleCache.set(cacheKey, {
-      data: resolvedModule,
+      data: resolvedModule as React.ComponentType,
       timestamp: now,
       expiresAt: now + CACHE_TTL,
     });
 
     cleanupOldCache();
 
-    return resolvedModule;
+    return resolvedModule as React.ComponentType;
   } catch (error: unknown) {
     logger.error(`[DynamicRouter] Failed to load remote module ${remoteName}:${modulePath}`, error);
     throw error;

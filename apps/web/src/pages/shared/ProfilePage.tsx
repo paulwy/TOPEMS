@@ -210,7 +210,7 @@ const ProfilePage: React.FC = () => {
             id: s.id,
             title: s.title,
             path: s.path,
-            icon: (s as any).icon || 'Circle',
+            icon: s.icon || 'Circle',
           }))
         );
       }

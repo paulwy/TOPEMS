@@ -93,17 +93,55 @@ impl AuthState {
         let default_refresh_secret =
             "topems-refresh-secret-key-must-be-at-least-32-characters-for-hs256";
 
-        let jwt_secret =
-            std::env::var("JWT_SECRET").unwrap_or_else(|_| default_jwt_secret.to_string());
+        let is_production = std::env::var("RUST_ENV")
+            .map(|v| v == "production")
+            .unwrap_or(false)
+            || std::env::var("ENV")
+                .map(|v| v == "production")
+                .unwrap_or(false);
+
+        let jwt_secret = std::env::var("JWT_SECRET").unwrap_or_else(|_| {
+            if is_production {
+                panic!(
+                    "JWT_SECRET environment variable is required in production mode. \
+                     Please set a strong secret of at least 32 characters."
+                );
+            }
+            tracing::warn!(
+                "⚠️  JWT_SECRET not set, using default development secret. \
+                 This is INSECURE for production use!"
+            );
+            default_jwt_secret.to_string()
+        });
+
         let refresh_secret = std::env::var("JWT_REFRESH_SECRET")
             .or_else(|_| std::env::var("REFRESH_SECRET"))
-            .unwrap_or_else(|_| default_refresh_secret.to_string());
+            .unwrap_or_else(|_| {
+                if is_production {
+                    panic!(
+                        "JWT_REFRESH_SECRET environment variable is required in production mode. \
+                         Please set a strong secret of at least 32 characters."
+                    );
+                }
+                tracing::warn!(
+                    "⚠️  JWT_REFRESH_SECRET not set, using default development secret. \
+                     This is INSECURE for production use!"
+                );
+                default_refresh_secret.to_string()
+            });
 
         if jwt_secret.len() < 32 {
             panic!("JWT_SECRET must be at least 32 characters long for security");
         }
         if refresh_secret.len() < 32 {
             panic!("JWT_REFRESH_SECRET or REFRESH_SECRET must be at least 32 characters long for security");
+        }
+
+        if jwt_secret == default_jwt_secret && is_production {
+            panic!("Default JWT_SECRET cannot be used in production mode");
+        }
+        if refresh_secret == default_refresh_secret && is_production {
+            panic!("Default JWT_REFRESH_SECRET cannot be used in production mode");
         }
 
         Self {

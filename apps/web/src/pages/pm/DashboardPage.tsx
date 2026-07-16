@@ -34,7 +34,7 @@ export const DashboardPage: React.FC = () => {
   const loading = statisticsQuery.isLoading || projectsQuery.isLoading;
 
   const statsData = useMemo(() => {
-    const data = statisticsQuery.data as any;
+    const data = statisticsQuery.data as unknown as Record<string, unknown>;
     const projects = projectsQuery.data ?? [];
 
     const activeProjects = data?.active_projects ?? 0;

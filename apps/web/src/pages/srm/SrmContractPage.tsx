@@ -9,7 +9,7 @@ import { apiLogger } from '@/utils/logger';
 import { ConfirmDialog } from '@topems/shared-components';
 import { PageContainer } from '@/components/common';
 import { SRM_PATHS } from '@/modules/srm/config';
-import { useCrudOperations } from '@/hooks/useCrudQueries';
+import { useCrudOperations, type CrudOperations } from '@/hooks/useCrudQueries';
 
 const STATUS_OPTIONS = [
   { label: '全部', value: '' },
@@ -26,7 +26,7 @@ const contractCrudApi = {
     return {
       success: response.success,
       message: response.message,
-      code: (response as any).code,
+      code: (response as unknown as Record<string, unknown>).code,
       data: {
         items,
         total: items.length,
@@ -38,7 +38,7 @@ const contractCrudApi = {
   update: (id: string, data: Partial<CreateSupplierContractRequest>) =>
     srmApi.updateContract(id, data as CreateSupplierContractRequest),
   delete: (id: string) => srmApi.deleteContract(id),
-} as any;
+} as unknown as CrudOperations<SupplierContract, CreateSupplierContractRequest>;
 
 const SrmContractPage: React.FC = () => {
   const navigate = useNavigate();

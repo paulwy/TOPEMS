@@ -671,7 +671,7 @@ const MobileAttendancePage: React.FC = () => {
                             <Chip
                               label={getStatusLabel(record.status)}
                               size='small'
-                              color={getStatusColor(record.status) as any}
+                              color={getStatusColor(record.status) as React.ComponentProps<typeof import('@mui/material/Chip').default>['color']}
                               sx={{ height: 20, fontSize: '0.7rem' }}
                             />
                             <Typography
@@ -775,7 +775,7 @@ const MobileAttendancePage: React.FC = () => {
                                 <Chip
                                   label={getLeaveStatusLabel(leave.status)}
                                   size='small'
-                                  color={getLeaveStatusColor(leave.status) as any}
+                                  color={getLeaveStatusColor(leave.status) as React.ComponentProps<typeof import('@mui/material/Chip').default>['color']}
                                   sx={{ height: 22, fontSize: '0.75rem' }}
                                 />
                               </Box>
@@ -845,7 +845,7 @@ const MobileAttendancePage: React.FC = () => {
                 type='date'
                 value={leaveForm.start_date}
                 onChange={(e) => setLeaveForm((prev) => ({ ...prev, start_date: e.target.value }))}
-                slotProps={{ inputLabel: { shrink: true } } as any}
+                slotProps={{ inputLabel: { shrink: true } } as const}
               />
               <TextField
                 fullWidth
@@ -853,7 +853,7 @@ const MobileAttendancePage: React.FC = () => {
                 type='date'
                 value={leaveForm.end_date}
                 onChange={(e) => setLeaveForm((prev) => ({ ...prev, end_date: e.target.value }))}
-                slotProps={{ inputLabel: { shrink: true } } as any}
+                slotProps={{ inputLabel: { shrink: true } } as const}
               />
               <TextField
                 fullWidth

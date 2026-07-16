@@ -58,17 +58,24 @@ async fn main() -> Result<()> {
         "topems_scm_custom_metric",
         "This is a custom metric for TOPEMS-SCM",
     )
-    .unwrap();
+    .unwrap_or_else(|e| {
+        tracing::error!("Failed to create Prometheus gauge: {}", e);
+        panic!("Prometheus gauge creation failed - check for duplicate metric registrations")
+    });
     default_registry()
         .register(Box::new(custom_gauge.clone()))
-        .unwrap();
+        .unwrap_or_else(|e| {
+            tracing::error!("Failed to register Prometheus gauge: {}", e);
+            panic!("Prometheus gauge registration failed - check for duplicate metric registrations")
+        });
     custom_gauge.set(42.0);
     tracing::info!("✅ Prometheus 监控已初始化");
 
     let db_config = DatabaseConfig {
-        url: env::var("DATABASE_URL")
-            .expect("DATABASE_URL environment variable is required")
-            .to_string(),
+        url: env::var("DATABASE_URL").map_err(|_| {
+            tracing::error!("DATABASE_URL environment variable is required");
+            anyhow::anyhow!("DATABASE_URL environment variable is required")
+        })?,
         max_connections: 50,
         min_connections: Some(10),
         connect_timeout: Some(10),

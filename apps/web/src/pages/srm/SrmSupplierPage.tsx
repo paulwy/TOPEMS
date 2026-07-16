@@ -41,15 +41,15 @@ const SrmSupplierPage: React.FC = () => {
     queryFn: async () => {
       const response = await srmApi.listSuppliers();
       if (response.success && response.data) {
-        const data = response.data as any;
-        const items = Array.isArray(data) ? data : data.suppliers || [];
+        const data = response.data as unknown as Record<string, unknown>;
+        const items = (Array.isArray(data) ? data : (data.suppliers as unknown as Record<string, unknown>[]) || []) as unknown as Record<string, unknown>[];
         return items.map((item: { [key: string]: unknown }) => ({
           ...item,
           supplier_no: item.supplier_no || item.supplierNo || '',
           contact_phone: item.phone || item.contactPhone || item.contact_phone || '',
           status:
             item.status === 'active' ? '启用' : item.status === 'inactive' ? '禁用' : item.status,
-        }));
+        })) as unknown as Supplier[];
       }
       return [];
     },

@@ -594,7 +594,7 @@ const SerialNumberPage: React.FC = () => {
                     setFormData({ ...formData, production_date: e.target.value })
                   }
                   size='small'
-                  slotProps={{ inputLabel: { shrink: true } } as any}
+                  slotProps={{ inputLabel: { shrink: true } } as const}
                 />
                 <FormField
                   name='expiry_date'
@@ -605,7 +605,7 @@ const SerialNumberPage: React.FC = () => {
                     setFormData({ ...formData, expiry_date: e.target.value })
                   }
                   size='small'
-                  slotProps={{ inputLabel: { shrink: true } } as any}
+                  slotProps={{ inputLabel: { shrink: true } } as const}
                 />
                 <FormControl size='small'>
                   <InputLabel>质检状态</InputLabel>
@@ -642,7 +642,7 @@ const SerialNumberPage: React.FC = () => {
                     setFormData({ ...formData, warranty_start_date: e.target.value })
                   }
                   size='small'
-                  slotProps={{ inputLabel: { shrink: true } } as any}
+                  slotProps={{ inputLabel: { shrink: true } } as const}
                 />
                 <FormField
                   name='warranty_end_date'
@@ -653,7 +653,7 @@ const SerialNumberPage: React.FC = () => {
                     setFormData({ ...formData, warranty_end_date: e.target.value })
                   }
                   size='small'
-                  slotProps={{ inputLabel: { shrink: true } } as any}
+                  slotProps={{ inputLabel: { shrink: true } } as const}
                 />
                 <FormField
                   name='unit_price'
