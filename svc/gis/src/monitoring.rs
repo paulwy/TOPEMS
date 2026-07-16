@@ -1,6 +1,6 @@
 use prometheus::{
-    register_counter_vec, register_gauge, register_histogram_vec, CounterVec, Gauge, HistogramVec,
-    HistogramOpts, Opts, Registry,
+    register_counter_vec, register_gauge, register_histogram_vec, CounterVec, Gauge, HistogramOpts,
+    HistogramVec, Opts, Registry,
 };
 use std::sync::Arc;
 use tokio::time::{self, Duration};
@@ -26,7 +26,7 @@ impl Metrics {
             ),
             &["method", "endpoint", "status_code"]
         )
-        .unwrap();
+        .expect("Failed to register request_counter metric");
 
         let request_duration = register_histogram_vec!(
             HistogramOpts::new(
@@ -35,7 +35,7 @@ impl Metrics {
             ),
             &["method", "endpoint"]
         )
-        .unwrap();
+        .expect("Failed to register request_duration metric");
 
         let database_queries = register_counter_vec!(
             Opts::new(
@@ -44,7 +44,7 @@ impl Metrics {
             ),
             &["query_type", "table"]
         )
-        .unwrap();
+        .expect("Failed to register database_queries metric");
 
         let database_query_duration = register_histogram_vec!(
             HistogramOpts::new(
@@ -53,32 +53,25 @@ impl Metrics {
             ),
             &["query_type", "table"]
         )
-        .unwrap();
+        .expect("Failed to register database_query_duration metric");
 
-        let active_requests = register_gauge!(
-            Opts::new(
-                "topems_gis_active_requests",
-                "Number of active HTTP requests",
-            )
-        )
-        .unwrap();
+        let active_requests = register_gauge!(Opts::new(
+            "topems_gis_active_requests",
+            "Number of active HTTP requests",
+        ))
+        .expect("Failed to register active_requests metric");
 
-        let memory_usage = register_gauge!(
-            Opts::new(
-                "topems_gis_memory_usage_bytes",
-                "Current memory usage in bytes",
-            )
-        )
-        .unwrap();
+        let memory_usage = register_gauge!(Opts::new(
+            "topems_gis_memory_usage_bytes",
+            "Current memory usage in bytes",
+        ))
+        .expect("Failed to register memory_usage metric");
 
         let cache_hits = register_counter_vec!(
-            Opts::new(
-                "topems_gis_cache_hits_total",
-                "Total number of cache hits",
-            ),
+            Opts::new("topems_gis_cache_hits_total", "Total number of cache hits",),
             &["cache_type"]
         )
-        .unwrap();
+        .expect("Failed to register cache_hits metric");
 
         let cache_misses = register_counter_vec!(
             Opts::new(
@@ -87,7 +80,7 @@ impl Metrics {
             ),
             &["cache_type"]
         )
-        .unwrap();
+        .expect("Failed to register cache_misses metric");
 
         Self {
             request_counter,
@@ -101,13 +94,7 @@ impl Metrics {
         }
     }
 
-    pub fn record_request(
-        &self,
-        method: &str,
-        endpoint: &str,
-        status_code: u16,
-        duration: f64,
-    ) {
+    pub fn record_request(&self, method: &str, endpoint: &str, status_code: u16, duration: f64) {
         self.request_counter
             .with_label_values(&[method, endpoint, &status_code.to_string()])
             .inc();
@@ -116,12 +103,7 @@ impl Metrics {
             .observe(duration);
     }
 
-    pub fn record_database_query(
-        &self,
-        query_type: &str,
-        table: &str,
-        duration: f64,
-    ) {
+    pub fn record_database_query(&self, query_type: &str, table: &str, duration: f64) {
         self.database_queries
             .with_label_values(&[query_type, table])
             .inc();

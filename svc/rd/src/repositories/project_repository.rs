@@ -273,7 +273,9 @@ mod tests {
 
     async fn setup_test_db() -> PgPool {
         let database_url = "postgres://topems:topems_secret@localhost:5432/topems";
-        let pool = PgPool::connect(database_url).await.unwrap();
+        let pool = PgPool::connect(database_url)
+            .await
+            .expect("Failed to connect to test database");
 
         // 清理测试表中的所有数据，确保测试隔离
         // 使用 CASCADE 以删除关联数据（如 project_phases 等外键关联表）
@@ -434,7 +436,7 @@ mod tests {
         }
         assert!(result.is_ok());
 
-        let project = result.unwrap();
+        let project = result.expect("Failed to create project");
         assert_eq!(project.name, "Test Project");
         assert_eq!(project.code, "TEST-001");
     }
@@ -463,11 +465,14 @@ mod tests {
             workspace_id: None,
         };
 
-        let created = repo.create(&req).await.unwrap();
-        let fetched = repo.get_by_id(created.id).await.unwrap();
+        let created = repo.create(&req).await.expect("Failed to create project");
+        let fetched = repo
+            .get_by_id(created.id)
+            .await
+            .expect("Failed to fetch project");
 
         assert!(fetched.is_some());
-        assert_eq!(fetched.unwrap().id, created.id);
+        assert_eq!(fetched.expect("Project should exist").id, created.id);
     }
 
     #[tokio::test]
@@ -479,7 +484,7 @@ mod tests {
         sqlx::query("TRUNCATE TABLE rs.projects, rs.project_phases, rs.project_milestones, rs.project_members, rs.experiments, rs.formulas CASCADE")
             .execute(&pool)
             .await
-            .unwrap_or_default();
+            .expect("Failed to truncate test tables");
 
         for i in 1..=5 {
             let req = CreateProjectRequest {
@@ -500,10 +505,13 @@ mod tests {
                 parent_id: None,
                 workspace_id: None,
             };
-            repo.create(&req).await.unwrap();
+            repo.create(&req).await.expect("Failed to create project");
         }
 
-        let (projects, total) = repo.list(None, None, 1, 10).await.unwrap();
+        let (projects, total) = repo
+            .list(None, None, 1, 10)
+            .await
+            .expect("Failed to list projects");
         assert!(total >= 5, "列表应该至少返回5个项目，实际: {}", total);
         assert!(
             projects.len() <= 10 && projects.len() >= 1,

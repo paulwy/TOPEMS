@@ -343,13 +343,15 @@ mod tests {
         client_ip: Option<&str>,
     ) -> Request<Body> {
         let mut req = Request::builder()
-            .uri(Uri::try_from(path).unwrap())
+            .uri(Uri::try_from(path).expect("Invalid test URI"))
             .body(Body::empty())
-            .unwrap();
+            .expect("Failed to create test request");
 
         if let Some(ip) = client_ip {
-            req.headers_mut()
-                .insert("X-Forwarded-For", HeaderValue::from_str(ip).unwrap());
+            req.headers_mut().insert(
+                "X-Forwarded-For",
+                HeaderValue::from_str(ip).expect("Invalid IP header"),
+            );
         }
 
         if let Some(id) = user_id {
@@ -393,7 +395,14 @@ mod tests {
 
         assert!(!config.enabled);
         assert_eq!(config.default_rule.requests, 100);
-        assert_eq!(config.path_rules.get("/api/core/iam").unwrap().requests, 50);
+        assert_eq!(
+            config
+                .path_rules
+                .get("/api/core/iam")
+                .expect("Path rule not found")
+                .requests,
+            50
+        );
         assert!(config.skip_paths.contains(&"/api/test".to_string()));
         assert!(!config.by_user_id);
     }

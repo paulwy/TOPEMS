@@ -11,7 +11,7 @@ pub static HTTP_REQUEST_DURATION: LazyLock<HistogramVec> = LazyLock::new(|| {
         &["method", "path", "status"],
         vec![0.005, 0.01, 0.025, 0.05, 0.1, 0.25, 0.5, 1.0, 2.5, 5.0, 10.0]
     )
-    .unwrap()
+    .expect("Failed to register HTTP_REQUEST_DURATION histogram")
 });
 
 pub static HTTP_REQUESTS_TOTAL: LazyLock<IntCounterVec> = LazyLock::new(|| {
@@ -20,11 +20,12 @@ pub static HTTP_REQUESTS_TOTAL: LazyLock<IntCounterVec> = LazyLock::new(|| {
         "Total number of HTTP requests",
         &["method", "path", "status"]
     )
-    .unwrap()
+    .expect("Failed to register HTTP_REQUESTS_TOTAL counter")
 });
 
 pub static ACTIVE_USERS: LazyLock<IntGauge> = LazyLock::new(|| {
-    register_int_gauge!("topems_active_users", "Number of currently active users").unwrap()
+    register_int_gauge!("topems_active_users", "Number of currently active users")
+        .expect("Failed to register ACTIVE_USERS gauge")
 });
 
 pub static BUSINESS_OPERATION_DURATION: LazyLock<HistogramVec> = LazyLock::new(|| {
@@ -34,7 +35,7 @@ pub static BUSINESS_OPERATION_DURATION: LazyLock<HistogramVec> = LazyLock::new(|
         &["service", "operation", "status"],
         vec![0.01, 0.05, 0.1, 0.25, 0.5, 1.0, 2.5, 5.0, 10.0, 30.0]
     )
-    .unwrap()
+    .expect("Failed to register BUSINESS_OPERATION_DURATION histogram")
 });
 
 pub static BUSINESS_OPERATIONS_TOTAL: LazyLock<IntCounterVec> = LazyLock::new(|| {
@@ -43,7 +44,7 @@ pub static BUSINESS_OPERATIONS_TOTAL: LazyLock<IntCounterVec> = LazyLock::new(||
         "Total number of business operations",
         &["service", "operation", "status"]
     )
-    .unwrap()
+    .expect("Failed to register BUSINESS_OPERATIONS_TOTAL counter")
 });
 
 pub static DB_QUERY_DURATION: LazyLock<HistogramVec> = LazyLock::new(|| {
@@ -53,7 +54,7 @@ pub static DB_QUERY_DURATION: LazyLock<HistogramVec> = LazyLock::new(|| {
         &["service", "query_type", "table"],
         vec![0.001, 0.005, 0.01, 0.025, 0.05, 0.1, 0.25, 0.5, 1.0]
     )
-    .unwrap()
+    .expect("Failed to register DB_QUERY_DURATION histogram")
 });
 
 #[macro_export]

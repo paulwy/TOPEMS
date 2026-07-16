@@ -141,7 +141,8 @@ impl MessageProducer for InMemoryMessageBroker {
 
     async fn publish_message(&self, message: Message) -> Result<()> {
         let topic = message.topic.clone();
-        let subscribers = self.subscribers.read().unwrap();
+        let subscribers = self.subscribers.read()
+            .map_err(|e| TopemsError::Internal(format!("Failed to acquire read lock: {}", e)))?;
 
         if let Some(handlers) = subscribers.get(&topic) {
             for handler in handlers {
@@ -160,7 +161,8 @@ impl MessageConsumer for InMemoryMessageBroker {
         topic: &str,
         handler: Box<dyn Fn(Message) -> Result<()> + Send + Sync + 'static>,
     ) -> Result<()> {
-        let mut subscribers = self.subscribers.write().unwrap();
+        let mut subscribers = self.subscribers.write()
+            .map_err(|e| TopemsError::Internal(format!("Failed to acquire write lock: {}", e)))?;
         subscribers
             .entry(topic.to_string())
             .or_default()
@@ -169,7 +171,8 @@ impl MessageConsumer for InMemoryMessageBroker {
     }
 
     async fn unsubscribe(&self, topic: &str) -> Result<()> {
-        let mut subscribers = self.subscribers.write().unwrap();
+        let mut subscribers = self.subscribers.write()
+            .map_err(|e| TopemsError::Internal(format!("Failed to acquire write lock: {}", e)))?;
         subscribers.remove(topic);
         Ok(())
     }

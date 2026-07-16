@@ -6,10 +6,13 @@ import { queryClient } from './lib/reactQuery';
 import { logger } from '@/utils/logger';
 import { applySecurityHeaders } from '@/config/security';
 import { logPerformanceMetrics } from '@/utils/performance';
+import { initPWA } from '@/lib/pwa';
 
 applySecurityHeaders();
 
 logPerformanceMetrics();
+
+initPWA();
 
 import('./index.css').catch(logger.error);
 

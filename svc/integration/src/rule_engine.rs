@@ -320,31 +320,29 @@ impl FieldMapper {
                 .unwrap_or(serde_json::Value::Null));
         }
 
-        let source_val = source_value.unwrap();
-
-        // 优先检查条件映射
-        if let Some(ref conditional_mappings) = mapping.conditional_mappings {
-            for cond_mapping in conditional_mappings {
-                if Self::evaluate_condition(&cond_mapping.condition, source_data) {
-                    return Ok(cond_mapping.result.clone());
+        if let Some(source_val) = source_value {
+            if let Some(ref conditional_mappings) = mapping.conditional_mappings {
+                for cond_mapping in conditional_mappings {
+                    if Self::evaluate_condition(&cond_mapping.condition, source_data) {
+                        return Ok(cond_mapping.result.clone());
+                    }
                 }
             }
-        }
 
-        // 检查值映射表
-        if let Some(ref value_map) = mapping.value_map {
-            if let Some(str_val) = source_val.as_str() {
-                return Ok(value_map.get(str_val).clone());
+            if let Some(ref value_map) = mapping.value_map {
+                if let Some(str_val) = source_val.as_str() {
+                    return Ok(value_map.get(str_val).clone());
+                }
             }
+
+            if let Some(ref transform) = mapping.transform {
+                return Self::apply_transform(&source_val, transform);
+            }
+
+            return Ok(source_val);
         }
 
-        // 检查转换表达式
-        if let Some(ref transform) = mapping.transform {
-            return Self::apply_transform(&source_val, transform);
-        }
-
-        // 返回原始值
-        Ok(source_val)
+        Ok(serde_json::Value::Null)
     }
 
     /// 评估条件表达式
@@ -670,7 +668,7 @@ mod tests {
             "value": "confirmed"
         });
 
-        let condition = RuleEvaluator::parse_condition(&json).unwrap();
+        let condition = RuleEvaluator::parse_condition(&json).expect("Failed to parse condition");
         assert_eq!(condition.field, "status");
         assert_eq!(condition.operator, ConditionOperator::Eq);
         assert_eq!(condition.value, serde_json::json!("confirmed"));
@@ -774,7 +772,8 @@ mod tests {
             "product_name": "测试产品"
         });
 
-        let result = FieldMapper::apply_mappings(&source, &mappings).unwrap();
+        let result = FieldMapper::apply_mappings(&source, &mappings)
+            .expect("Failed to apply field mappings");
         assert_eq!(result["source_order_number"], "SO-2024-001");
         assert_eq!(result["product_name"], "测试产品");
         assert_eq!(result["description"], "无备注");
@@ -783,14 +782,16 @@ mod tests {
     #[test]
     fn test_transform_to_uppercase() {
         let value = serde_json::json!("hello");
-        let result = FieldMapper::apply_transform(&value, "field.toUpperCase()").unwrap();
+        let result = FieldMapper::apply_transform(&value, "field.toUpperCase()")
+            .expect("Failed to apply transform");
         assert_eq!(result, serde_json::json!("HELLO"));
     }
 
     #[test]
     fn test_transform_to_lowercase() {
         let value = serde_json::json!("HELLO");
-        let result = FieldMapper::apply_transform(&value, "field.toLowerCase()").unwrap();
+        let result = FieldMapper::apply_transform(&value, "field.toLowerCase()")
+            .expect("Failed to apply transform");
         assert_eq!(result, serde_json::json!("hello"));
     }
 
@@ -870,11 +871,13 @@ mod tests {
         }];
 
         let source = serde_json::json!({"status": "confirmed"});
-        let result = FieldMapper::apply_mappings(&source, &mappings).unwrap();
+        let result = FieldMapper::apply_mappings(&source, &mappings)
+            .expect("Failed to apply field mappings");
         assert_eq!(result["order_status"], "已确认");
 
         let source2 = serde_json::json!({"status": "cancelled"});
-        let result2 = FieldMapper::apply_mappings(&source2, &mappings).unwrap();
+        let result2 = FieldMapper::apply_mappings(&source2, &mappings)
+            .expect("Failed to apply field mappings");
         assert_eq!(result2["order_status"], "未知状态");
     }
 
@@ -915,15 +918,18 @@ mod tests {
         }];
 
         let source1 = serde_json::json!({"amount": 500});
-        let result1 = FieldMapper::apply_mappings(&source1, &mappings).unwrap();
+        let result1 = FieldMapper::apply_mappings(&source1, &mappings)
+            .expect("Failed to apply field mappings");
         assert_eq!(result1["category"], "small");
 
         let source2 = serde_json::json!({"amount": 5000});
-        let result2 = FieldMapper::apply_mappings(&source2, &mappings).unwrap();
+        let result2 = FieldMapper::apply_mappings(&source2, &mappings)
+            .expect("Failed to apply field mappings");
         assert_eq!(result2["category"], "medium");
 
         let source3 = serde_json::json!({"amount": 15000});
-        let result3 = FieldMapper::apply_mappings(&source3, &mappings).unwrap();
+        let result3 = FieldMapper::apply_mappings(&source3, &mappings)
+            .expect("Failed to apply field mappings");
         assert_eq!(result3["category"], "large");
     }
 
@@ -950,7 +956,8 @@ mod tests {
                 "total": 15000
             }
         });
-        let result = FieldMapper::apply_mappings(&source, &mappings).unwrap();
+        let result = FieldMapper::apply_mappings(&source, &mappings)
+            .expect("Failed to apply field mappings");
         assert_eq!(result["order_level"], "vip");
     }
 }

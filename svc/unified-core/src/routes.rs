@@ -50,10 +50,7 @@ pub fn create_routes(
             "/api/core/comm/notify/v1/notifications/health/detailed",
             get(modules::communication::notification::get_notification_health_detailed),
         )
-        .route(
-            "/metrics",
-            get(move || async move { metrics_render() }),
-        )
+        .route("/metrics", get(move || async move { metrics_render() }))
         // Auth endpoints (no auth required for login) - /v1 prefix aligned with frontend
         .route(
             "/api/core/iam/v1/auth/login",
@@ -66,6 +63,10 @@ pub fn create_routes(
         .route(
             "/api/core/iam/v1/auth/refresh",
             post(modules::iam::auth::refresh_token),
+        )
+        .route(
+            "/api/core/iam/v1/auth/logout",
+            post(modules::iam::auth::logout),
         )
         .route(
             "/api/core/iam/v1/auth/forgot-password",
@@ -86,7 +87,10 @@ pub fn create_routes(
             get(modules::communication::ws::websocket_handler),
         )
         // Plugin proxy route (no auth required - plugins handle their own auth)
-        .route("/api/plugins/{plugin_code}/{*path}", get(handlers::plugin_proxy))
+        .route(
+            "/api/plugins/{plugin_code}/{*path}",
+            get(handlers::plugin_proxy),
+        )
         // Plugin registration routes (no auth required - for service startup auto-registration)
         .route(
             "/api/core/plugin/dev/plugins/{code}/register",
@@ -125,17 +129,6 @@ pub fn create_routes(
         ));
 
     // ===== Protected routes (auth required) =====
-
-    // ----- Auth Operations (requires auth but no specific permission) -----
-    let auth_operations_routes = Router::new()
-        .route(
-            "/api/core/iam/v1/auth/logout",
-            post(modules::iam::auth::logout),
-        )
-        .layer(axum::middleware::from_fn_with_state(
-            state.auth_state.clone(),
-            auth_middleware,
-        ));
 
     // ----- IAM Routes with iam:read permission -----
     let iam_read_routes = Router::new()
@@ -1817,7 +1810,10 @@ pub fn create_routes(
 
     // ----- Health & Metrics (with auth) -----
     let health_routes = Router::new()
-        .route("/api/core/health/v1/detailed", get(handlers::detailed_health))
+        .route(
+            "/api/core/health/v1/detailed",
+            get(handlers::detailed_health),
+        )
         .layer(axum::middleware::from_fn_with_state(
             state.auth_state.clone(),
             auth_middleware,
@@ -2390,8 +2386,7 @@ pub fn create_routes(
     */
 
     // ===== Merge all protected routes with their respective permission middleware =====
-    let protected_routes = auth_operations_routes
-        .merge(iam_read_routes)
+    let protected_routes = iam_read_routes
         .merge(iam_write_routes)
         .merge(iam_delete_routes)
         .merge(flow_read_routes)

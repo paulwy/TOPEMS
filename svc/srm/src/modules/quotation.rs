@@ -109,25 +109,34 @@ async fn create_quotation(
         Err(_) => return Json(ApiResponse::<Quotation>::error(400, "无效的供应商ID")),
     };
 
-    let inquiry = sqlx::query_scalar::<_, String>(
+    let inquiry = match sqlx::query_scalar::<_, String>(
         "SELECT inquiry_no FROM plugin_srm.inquiries WHERE id = $1",
     )
     .bind(inquiry_id)
     .fetch_optional(&state.db)
     .await
-    .unwrap_or(None);
+    {
+        Ok(Some(i)) => i,
+        Ok(None) => return Json(ApiResponse::<Quotation>::error(400, "询价不存在")),
+        Err(e) => {
+            tracing::error!("查询询价失败: {}", e);
+            return Json(ApiResponse::<Quotation>::error(500, "查询询价失败"));
+        }
+    };
 
-    if inquiry.is_none() {
-        return Json(ApiResponse::<Quotation>::error(400, "询价不存在"));
-    }
-
-    let supplier_name = sqlx::query_scalar::<_, Option<String>>(
+    let supplier_name = match sqlx::query_scalar::<_, Option<String>>(
         "SELECT name FROM plugin_srm.suppliers WHERE id = $1",
     )
     .bind(supplier_id)
     .fetch_optional(&state.db)
     .await
-    .unwrap_or(None);
+    {
+        Ok(n) => n,
+        Err(e) => {
+            tracing::error!("查询供应商失败: {}", e);
+            return Json(ApiResponse::<Quotation>::error(500, "查询供应商失败"));
+        }
+    };
 
     let id = Uuid::new_v4();
     let now = Utc::now();
@@ -151,7 +160,7 @@ async fn create_quotation(
     .bind(id)
     .bind(&quotation_no)
     .bind(inquiry_id)
-    .bind(&inquiry.unwrap())
+    .bind(&inquiry)
     .bind(supplier_id)
     .bind(supplier_name)
     .bind(&req.title)

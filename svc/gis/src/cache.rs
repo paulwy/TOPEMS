@@ -1,7 +1,6 @@
-use std::time::Duration;
 use std::num::NonZeroUsize;
+use std::time::Duration;
 use tokio::sync::RwLock;
-
 
 use lru::LruCache;
 
@@ -15,7 +14,10 @@ pub struct GisCache {
 
 impl GisCache {
     pub fn new(max_size: usize, ttl_minutes: u64) -> Self {
-        let capacity = NonZeroUsize::new(max_size).unwrap_or(NonZeroUsize::new(1000).unwrap());
+        let capacity = NonZeroUsize::new(max_size).unwrap_or_else(|| {
+            NonZeroUsize::new(1000)
+                .unwrap_or_else(|| NonZeroUsize::new(100).expect("100 is non-zero"))
+        });
         Self {
             factory_maps: RwLock::new(LruCache::new(capacity)),
             device_locations: RwLock::new(LruCache::new(capacity)),

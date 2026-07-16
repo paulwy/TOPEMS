@@ -1,6 +1,8 @@
 import React from 'react';
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { render, screen, waitFor, fireEvent, act } from '@testing-library/react';
+import { renderWithProviders } from '@/__tests__/test-utils';
+
 import { BrowserRouter } from 'react-router-dom';
 import MobileTaskListPage from '../mobile/MobileTaskListPage';
 import { useNotificationStore, useAuthStore } from '@/store';

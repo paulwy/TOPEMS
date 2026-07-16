@@ -155,8 +155,9 @@ mod tests {
             updated_at: Utc::now(),
         };
 
-        let json = serde_json::to_string(&customer).unwrap();
-        let deserialized: Customer = serde_json::from_str(&json).unwrap();
+        let json = serde_json::to_string(&customer).expect("Failed to serialize customer");
+        let deserialized: Customer =
+            serde_json::from_str(&json).expect("Failed to deserialize customer");
 
         assert_eq!(customer.id, deserialized.id);
         assert_eq!(customer.name, deserialized.name);
@@ -257,15 +258,27 @@ mod tests {
         let original_email = customer.email.clone();
         let original_phone = customer.phone.clone();
 
-        customer.encrypt_fields(&service).unwrap();
+        customer
+            .encrypt_fields(&service)
+            .expect("Failed to encrypt customer fields");
 
         assert_ne!(customer.email, original_email);
         assert_ne!(customer.phone, original_phone);
 
-        assert!(customer.email.as_ref().unwrap().starts_with('{'));
-        assert!(customer.phone.as_ref().unwrap().starts_with('{'));
+        assert!(customer
+            .email
+            .as_ref()
+            .expect("email should be Some after encryption")
+            .starts_with('{'));
+        assert!(customer
+            .phone
+            .as_ref()
+            .expect("phone should be Some after encryption")
+            .starts_with('{'));
 
-        customer.decrypt_fields(&service).unwrap();
+        customer
+            .decrypt_fields(&service)
+            .expect("Failed to decrypt customer fields");
 
         assert_eq!(customer.email, original_email);
         assert_eq!(customer.phone, original_phone);
@@ -305,7 +318,15 @@ mod tests {
 
         customer.mask_sensitive_fields();
 
-        assert!(customer.phone.as_ref().unwrap().contains("****"));
-        assert!(customer.email.as_ref().unwrap().contains("***"));
+        assert!(customer
+            .phone
+            .as_ref()
+            .expect("phone should be Some")
+            .contains("****"));
+        assert!(customer
+            .email
+            .as_ref()
+            .expect("email should be Some")
+            .contains("***"));
     }
 }

@@ -238,19 +238,25 @@ pub async fn search_all(
     let mut results: Vec<SearchResult> = Vec::new();
     let per_module_limit = limit / 5;
 
-    if modules.is_none() || modules.as_ref().unwrap().contains(&"user".to_string()) {
+    let should_search = |module: &str| {
+        modules
+            .as_ref()
+            .map_or(true, |m| m.contains(&module.to_string()))
+    };
+
+    if should_search("user") {
         results.extend(search_users(pool, keyword, per_module_limit).await);
     }
 
-    if modules.is_none() || modules.as_ref().unwrap().contains(&"customer".to_string()) {
+    if should_search("customer") {
         results.extend(search_customers(pool, keyword, per_module_limit).await);
     }
 
-    if modules.is_none() || modules.as_ref().unwrap().contains(&"order".to_string()) {
+    if should_search("order") {
         results.extend(search_orders(pool, keyword, per_module_limit).await);
     }
 
-    if modules.is_none() || modules.as_ref().unwrap().contains(&"document".to_string()) {
+    if should_search("document") {
         results.extend(search_documents(pool, keyword, per_module_limit).await);
     }
 

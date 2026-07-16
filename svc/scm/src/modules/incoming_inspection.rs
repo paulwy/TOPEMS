@@ -329,10 +329,11 @@ async fn update_notice(
     .fetch_optional(&state.db)
     .await;
 
-    if existing.is_err() {
-        return Json(api_error(500, "查询到货通知单失败"));
-    }
-    if existing.unwrap().is_none() {
+    let existing = match existing {
+        Ok(e) => e,
+        Err(_) => return Json(api_error(500, "查询到货通知单失败")),
+    };
+    if existing.is_none() {
         return Json(api_error(404, "到货通知单不存在"));
     }
 
@@ -652,10 +653,11 @@ pub async fn update_inspection(
         .fetch_optional(&state.db)
         .await;
 
-    if existing.is_err() {
-        return Json(api_error(500, "查询检验记录失败"));
-    }
-    if existing.unwrap().is_none() {
+    let existing = match existing {
+        Ok(e) => e,
+        Err(_) => return Json(api_error(500, "查询检验记录失败")),
+    };
+    if existing.is_none() {
         return Json(api_error(404, "检验记录不存在"));
     }
 
