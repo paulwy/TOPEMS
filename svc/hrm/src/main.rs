@@ -51,11 +51,10 @@ async fn main() -> Result<()> {
 }
 
 async fn build_routes() -> Result<Router> {
-    let database_url =
-        env::var("DATABASE_URL").map_err(|_| {
-            tracing::error!("DATABASE_URL environment variable is required");
-            anyhow::anyhow!("DATABASE_URL environment variable is required")
-        })?;
+    let database_url = env::var("DATABASE_URL").map_err(|_| {
+        tracing::error!("DATABASE_URL environment variable is required");
+        anyhow::anyhow!("DATABASE_URL environment variable is required")
+    })?;
     let db_config = DatabaseConfig {
         url: database_url,
         max_connections: env::var("DB_MAX_CONNECTIONS")
@@ -356,7 +355,10 @@ fn init_encryption_service() -> FieldEncryptionService {
         .map(FieldEncryptionService::new)
         .unwrap_or_else(|e| {
             tracing::error!("Failed to initialize encryption service: {}", e);
-            panic!("Failed to initialize encryption service with provided ENCRYPTION_KEY: {}", e)
+            panic!(
+                "Failed to initialize encryption service with provided ENCRYPTION_KEY: {}",
+                e
+            )
         })
 }
 

@@ -1,9 +1,6 @@
 use crate::AppState;
 use axum::Extension;
-use axum::{
-    extract::State,
-    Json,
-};
+use axum::{extract::State, Json};
 use topems_shared::Claims;
 
 use super::models::{PreferenceRow, UserResponse, UserRow};

@@ -1,7 +1,4 @@
-use axum::{
-    extract::State,
-    Json,
-};
+use axum::{extract::State, Json};
 use chrono::Datelike;
 use chrono::NaiveDate;
 use sqlx::Row;

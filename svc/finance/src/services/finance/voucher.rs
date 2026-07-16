@@ -92,7 +92,6 @@ impl FinanceService {
         })
     }
 
-
     pub(super) async fn generate_voucher_no(
         &self,
         tenant_id: Uuid,
@@ -123,7 +122,6 @@ impl FinanceService {
         Ok(format!("{}{}{:04}", prefix, period_prefix, count.0 + 1))
     }
 
-
     pub async fn submit_voucher(
         &self,
         tenant_id: Uuid,
@@ -141,7 +139,6 @@ impl FinanceService {
 
         Ok(voucher)
     }
-
 
     pub async fn approve_voucher(
         &self,
@@ -163,7 +160,6 @@ impl FinanceService {
         Ok(voucher)
     }
 
-
     pub async fn reject_voucher(
         &self,
         tenant_id: Uuid,
@@ -182,7 +178,6 @@ impl FinanceService {
 
         Ok(voucher)
     }
-
 
     pub async fn post_voucher(
         &self,
@@ -249,7 +244,6 @@ impl FinanceService {
         Ok(updated_voucher)
     }
 
-
     pub(super) async fn calculate_account_balance(
         &self,
         tenant_id: Uuid,
@@ -266,7 +260,6 @@ impl FinanceService {
 
         Ok(result.0.unwrap_or(Decimal::ZERO))
     }
-
 
     pub async fn get_voucher(
         &self,
@@ -301,7 +294,6 @@ impl FinanceService {
         })
     }
 
-
     pub async fn list_vouchers(
         &self,
         tenant_id: Uuid,
@@ -334,7 +326,6 @@ impl FinanceService {
 
         Ok(vouchers)
     }
-
 
     pub async fn batch_submit_vouchers(
         &self,
@@ -374,7 +365,6 @@ impl FinanceService {
             results,
         })
     }
-
 
     pub async fn batch_approve_vouchers(
         &self,
@@ -419,7 +409,6 @@ impl FinanceService {
         })
     }
 
-
     pub async fn batch_post_vouchers(
         &self,
         tenant_id: Uuid,
@@ -459,7 +448,6 @@ impl FinanceService {
             results,
         })
     }
-
 
     pub async fn export_vouchers(
         &self,
@@ -544,7 +532,6 @@ impl FinanceService {
         })
     }
 
-
     pub(super) async fn create_voucher_with_tx(
         &self,
         tx: &mut sqlx::PgConnection,
@@ -627,7 +614,6 @@ impl FinanceService {
         })
     }
 
-
     pub(super) async fn generate_voucher_no_with_tx(
         &self,
         tx: &mut sqlx::PgConnection,
@@ -656,7 +642,6 @@ impl FinanceService {
 
         Ok(format!("{}{}{:04}", prefix, period_prefix, count.0 + 1))
     }
-
 
     pub(super) async fn update_voucher_lines_with_tx(
         &self,
@@ -707,6 +692,4 @@ impl FinanceService {
 
         Ok(())
     }
-
-
 }

@@ -1,10 +1,10 @@
 #![allow(dead_code)]
 
-use super::models::{ErpConnectionConfig, ErpSystemType};
-use super::traits::ErpAdapter;
 use super::kingdee_adapter::KingdeeApiClient;
-use super::yonyou_adapter::YonyouApiClient;
+use super::models::{ErpConnectionConfig, ErpSystemType};
 use super::sap_adapter::SapApiClient;
+use super::traits::ErpAdapter;
+use super::yonyou_adapter::YonyouApiClient;
 
 pub struct ErpAdapterFactory;
 

@@ -5,9 +5,7 @@ use uuid::Uuid;
 
 use topems_shared::ApiResponse;
 
-use crate::models::{
-    AppState, CreateIntegrationEventRequest, IntegrationEvent, SyncStats,
-};
+use crate::models::{AppState, CreateIntegrationEventRequest, IntegrationEvent, SyncStats};
 
 pub async fn get_sync_stats(State(state): State<AppState>) -> Json<ApiResponse<SyncStats>> {
     let lims_qms_result = sqlx::query(
@@ -99,7 +97,9 @@ pub async fn get_sync_stats(State(state): State<AppState>) -> Json<ApiResponse<S
     ))
 }
 
-pub async fn list_events(State(state): State<AppState>) -> Json<ApiResponse<Vec<IntegrationEvent>>> {
+pub async fn list_events(
+    State(state): State<AppState>,
+) -> Json<ApiResponse<Vec<IntegrationEvent>>> {
     match sqlx::query_as::<_, IntegrationEvent>(
         "SELECT id, source_system, target_system, event_type, source_record_id,
                 target_record_id, payload, status, error_message, synced_at, created_at

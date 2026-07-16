@@ -195,7 +195,6 @@ apps/desktop/src-tauri/cargo-crates/
 node_modules/
 package-lock.json
 yarn.lock
-pnpm-lock.yaml
 shrinkwrap.json
 
 # TypeScript

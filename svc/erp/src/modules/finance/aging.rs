@@ -1,10 +1,8 @@
 #![allow(dead_code)]
 
-use serde::{Deserialize};
+use serde::Deserialize;
 
-use axum::{
-    extract::{State, Extension, Json, Query, Path},
-};
+use axum::extract::{Extension, Json, Path, Query, State};
 
 use super::super::ApiState;
 use crate::shared::permission::{check_permission, ModulePermission};

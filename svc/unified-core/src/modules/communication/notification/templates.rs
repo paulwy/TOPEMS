@@ -8,10 +8,7 @@ use sqlx::Row;
 use topems_shared::auth::Claims;
 use uuid::Uuid;
 
-use super::models::{
-    CreateTemplateRequest,
-    UpdateTemplateRequest,
-};
+use super::models::{CreateTemplateRequest, UpdateTemplateRequest};
 
 /// 列出通知模板
 pub async fn list_templates(

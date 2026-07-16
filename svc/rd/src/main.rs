@@ -41,7 +41,9 @@ async fn main() -> topems_shared::Result<()> {
         .register(Box::new(custom_gauge.clone()))
         .unwrap_or_else(|e| {
             tracing::error!("Failed to register Prometheus gauge: {}", e);
-            panic!("Prometheus gauge registration failed - check for duplicate metric registrations")
+            panic!(
+                "Prometheus gauge registration failed - check for duplicate metric registrations"
+            )
         });
     custom_gauge.set(42.0);
     tracing::info!("✅ Prometheus 监控已初始化");
@@ -50,7 +52,9 @@ async fn main() -> topems_shared::Result<()> {
     let db_config = DatabaseConfig {
         url: env::var("DATABASE_URL").map_err(|_| {
             tracing::error!("DATABASE_URL environment variable is required");
-            topems_shared::TopemsError::Validation("DATABASE_URL environment variable is required".to_string())
+            topems_shared::TopemsError::Validation(
+                "DATABASE_URL environment variable is required".to_string(),
+            )
         })?,
         max_connections: 10,
         min_connections: Some(2),

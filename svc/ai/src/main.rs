@@ -45,7 +45,9 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
         .register(Box::new(custom_gauge.clone()))
         .unwrap_or_else(|e| {
             tracing::error!("Failed to register Prometheus gauge: {}", e);
-            panic!("Prometheus gauge registration failed - check for duplicate metric registrations")
+            panic!(
+                "Prometheus gauge registration failed - check for duplicate metric registrations"
+            )
         });
     custom_gauge.set(42.0);
     tracing::info!("✅ Prometheus 监控已初始化");
@@ -182,9 +184,15 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
     // 初始化静态存储（向后兼容）
     let docs = load_documents_from_dir(DOCS_DIR).await;
     tracing::info!("📁 加载了 {} 个文件系统文档", docs.len());
-    DOCUMENTS.set(Arc::new(Mutex::new(docs))).map_err(|_| "DOCUMENTS already initialized")?;
-    VECTORS.set(Arc::new(Mutex::new(Vec::new()))).map_err(|_| "VECTORS already initialized")?;
-    CHUNKS.set(Arc::new(Mutex::new(Vec::new()))).map_err(|_| "CHUNKS already initialized")?;
+    DOCUMENTS
+        .set(Arc::new(Mutex::new(docs)))
+        .map_err(|_| "DOCUMENTS already initialized")?;
+    VECTORS
+        .set(Arc::new(Mutex::new(Vec::new())))
+        .map_err(|_| "VECTORS already initialized")?;
+    CHUNKS
+        .set(Arc::new(Mutex::new(Vec::new())))
+        .map_err(|_| "CHUNKS already initialized")?;
 
     // 后台索引文档（向后兼容）
     if std::env::var("DISABLE_AUTO_INDEX").is_err() {
@@ -195,9 +203,15 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
         tracing::info!("⚠️ 自动文档索引已禁用");
     }
 
-    CLIENT.set(http_client.clone()).map_err(|_| "CLIENT already initialized")?;
-    CONFIG.set(config.clone()).map_err(|_| "CONFIG already initialized")?;
-    CONNECTORS.set(Arc::new(Mutex::new(Vec::new()))).map_err(|_| "CONNECTORS already initialized")?;
+    CLIENT
+        .set(http_client.clone())
+        .map_err(|_| "CLIENT already initialized")?;
+    CONFIG
+        .set(config.clone())
+        .map_err(|_| "CONFIG already initialized")?;
+    CONNECTORS
+        .set(Arc::new(Mutex::new(Vec::new())))
+        .map_err(|_| "CONNECTORS already initialized")?;
     tracing::info!("✅ 数据连接器框架已初始化");
 
     // 创建 Agent 服务

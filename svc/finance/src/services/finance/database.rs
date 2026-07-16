@@ -147,7 +147,6 @@ pub async fn init_database(pool: &PgPool) -> Result<(), TopemsError> {
     Ok(())
 }
 
-
 pub async fn init_aux_tables(pool: &PgPool) -> Result<(), TopemsError> {
     let create_types = r#"
         DO $$ BEGIN
@@ -200,4 +199,3 @@ pub async fn init_aux_tables(pool: &PgPool) -> Result<(), TopemsError> {
     }
     Ok(())
 }
-

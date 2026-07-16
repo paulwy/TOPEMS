@@ -8,10 +8,7 @@ use sqlx::Row;
 use topems_shared::auth::Claims;
 use uuid::Uuid;
 
-use super::models::{
-    NotificationQuery,
-    ArchiveConfig,
-};
+use super::models::{ArchiveConfig, NotificationQuery};
 
 /// 归档通知
 pub async fn archive_notification(

@@ -66,7 +66,9 @@ async fn main() -> Result<()> {
         .register(Box::new(custom_gauge.clone()))
         .unwrap_or_else(|e| {
             tracing::error!("Failed to register Prometheus gauge: {}", e);
-            panic!("Prometheus gauge registration failed - check for duplicate metric registrations")
+            panic!(
+                "Prometheus gauge registration failed - check for duplicate metric registrations"
+            )
         });
     custom_gauge.set(42.0);
     tracing::info!("✅ Prometheus 监控已初始化");

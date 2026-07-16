@@ -69,7 +69,9 @@ impl axum::extract::FromRef<AppState> for std::sync::Arc<modules::communication:
     }
 }
 
-impl axum::extract::FromRef<AppState> for std::sync::Arc<middleware::rate_limit::RateLimitMiddleware> {
+impl axum::extract::FromRef<AppState>
+    for std::sync::Arc<middleware::rate_limit::RateLimitMiddleware>
+{
     fn from_ref(state: &AppState) -> Self {
         state.rate_limit_middleware.clone()
     }
@@ -211,10 +213,14 @@ async fn main() {
     let http_client = Client::new();
 
     let rate_limit_config = middleware::rate_limit::RateLimitConfig::default();
-    let rate_limit_middleware = std::sync::Arc::new(middleware::rate_limit::RateLimitMiddleware::new(rate_limit_config));
+    let rate_limit_middleware = std::sync::Arc::new(
+        middleware::rate_limit::RateLimitMiddleware::new(rate_limit_config),
+    );
 
     let version_config = middleware::versioning::VersionConfig::default();
-    let versioning_middleware = std::sync::Arc::new(middleware::versioning::VersionMiddleware::new(version_config));
+    let versioning_middleware = std::sync::Arc::new(
+        middleware::versioning::VersionMiddleware::new(version_config),
+    );
 
     let security_headers_config = SecurityHeadersConfig::default();
     let security_headers_layer =

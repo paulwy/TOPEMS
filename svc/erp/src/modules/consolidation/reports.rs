@@ -12,8 +12,7 @@ use super::common::{call_finance_core_approval, PaginationParams};
 use super::ApiState;
 
 macro_rules! log_audit {
-    ($($args:expr),*) => {
-    };
+    ($($args:expr),*) => {};
 }
 
 pub async fn list_reports(

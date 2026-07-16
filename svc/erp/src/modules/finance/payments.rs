@@ -1,8 +1,6 @@
 #![allow(dead_code)]
 
-use axum::{
-    extract::{State, Extension, Json, Query},
-};
+use axum::extract::{Extension, Json, Query, State};
 
 use chrono::Utc;
 
@@ -10,7 +8,7 @@ use uuid::Uuid;
 
 use super::super::ApiState;
 use super::PaginationParams;
-use crate::models::finance::{PaymentRecord, CreatePaymentRequest};
+use crate::models::finance::{CreatePaymentRequest, PaymentRecord};
 use crate::shared::permission::{check_permission, ModulePermission};
 use topems_shared::auth::Claims;
 use topems_shared::{api_error, ApiResponse, PaginatedResponse};

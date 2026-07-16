@@ -251,7 +251,9 @@ impl CompressionMiddleware {
                     HeaderValue::from_static(algorithm.to_header_value()),
                 );
                 if let Ok(content_length) = HeaderValue::from_str(&compressed.len().to_string()) {
-                    response.headers_mut().insert(header::CONTENT_LENGTH, content_length);
+                    response
+                        .headers_mut()
+                        .insert(header::CONTENT_LENGTH, content_length);
                 }
                 response.headers_mut().remove(header::ETAG);
 
@@ -336,9 +338,15 @@ mod tests {
         let middleware = CompressionMiddleware::new(config);
 
         let test_data = b"Hello, world! This is a test string for compression.";
-        let gzip_result = middleware.compress_gzip(test_data).expect("gzip compression failed");
-        let deflate_result = middleware.compress_deflate(test_data).expect("deflate compression failed");
-        let brotli_result = middleware.compress_brotli(test_data).expect("brotli compression failed");
+        let gzip_result = middleware
+            .compress_gzip(test_data)
+            .expect("gzip compression failed");
+        let deflate_result = middleware
+            .compress_deflate(test_data)
+            .expect("deflate compression failed");
+        let brotli_result = middleware
+            .compress_brotli(test_data)
+            .expect("brotli compression failed");
 
         assert!(!gzip_result.is_empty());
         assert!(!deflate_result.is_empty());

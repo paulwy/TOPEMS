@@ -8,15 +8,15 @@ pub struct FinanceService {
 }
 
 mod account;
-mod voucher;
-mod report;
-mod periods;
-mod aux_accounts;
+mod approval_configs;
 mod approvals;
+mod aux_accounts;
+mod database;
 mod payment;
 mod payment_workflow;
-mod approval_configs;
-mod database;
+mod periods;
+mod report;
+mod voucher;
 
 impl FinanceService {
     pub fn new(db_pool: PgPool, workflow_client: WorkflowClient) -> Self {

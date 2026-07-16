@@ -126,7 +126,7 @@ impl ServiceMonitor {
             uptime: Some(self.get_uptime()),
             dependencies: None,
             response_time_ms: Some(response_time),
-            last_check: Some(self.last_check.unwrap().to_rfc3339()),
+            last_check: self.last_check.map(|dt| dt.to_rfc3339()),
         }
     }
 
@@ -346,7 +346,14 @@ impl HealthChecker {
         let mut results = Vec::new();
 
         for monitor in self.monitors.values() {
-            let health = monitor.lock().unwrap().check_health().await;
+            let health = monitor
+                .lock()
+                .unwrap_or_else(|e| {
+                    tracing::error!("Lock poisoned: {}", e);
+                    e.into_inner()
+                })
+                .check_health()
+                .await;
             results.push(health);
         }
 
@@ -356,13 +363,19 @@ impl HealthChecker {
     pub fn get_metrics(&self, service_name: &str) -> Option<ServiceMetrics> {
         self.monitors
             .get(service_name)
-            .map(|monitor| monitor.lock().unwrap().get_metrics())
+            .map(|monitor| monitor.lock().unwrap_or_else(|e| {
+                tracing::error!("Lock poisoned: {}", e);
+                e.into_inner()
+            }).get_metrics())
     }
 
     pub fn get_all_metrics(&self) -> Vec<ServiceMetrics> {
         self.monitors
             .values()
-            .map(|monitor| monitor.lock().unwrap().get_metrics())
+            .map(|monitor| monitor.lock().unwrap_or_else(|e| {
+                tracing::error!("Lock poisoned: {}", e);
+                e.into_inner()
+            }).get_metrics())
             .collect()
     }
 }
@@ -391,19 +404,31 @@ impl SystemMetrics {
     }
 
     pub fn record_request(&self) {
-        *self.request_count.lock().unwrap() += 1;
+        *self.request_count.lock().unwrap_or_else(|e| {
+            tracing::error!("Lock poisoned: {}", e);
+            e.into_inner()
+        }) += 1;
     }
 
     pub fn record_error(&self) {
-        *self.error_count.lock().unwrap() += 1;
+        *self.error_count.lock().unwrap_or_else(|e| {
+            tracing::error!("Lock poisoned: {}", e);
+            e.into_inner()
+        }) += 1;
     }
 
     pub fn increment_connections(&self) {
-        *self.active_connections.lock().unwrap() += 1;
+        *self.active_connections.lock().unwrap_or_else(|e| {
+            tracing::error!("Lock poisoned: {}", e);
+            e.into_inner()
+        }) += 1;
     }
 
     pub fn decrement_connections(&self) {
-        *self.active_connections.lock().unwrap() -= 1;
+        *self.active_connections.lock().unwrap_or_else(|e| {
+            tracing::error!("Lock poisoned: {}", e);
+            e.into_inner()
+        }) -= 1;
     }
 
     pub fn get_uptime(&self) -> String {
@@ -420,15 +445,24 @@ impl SystemMetrics {
     }
 
     pub fn get_request_count(&self) -> u64 {
-        *self.request_count.lock().unwrap()
+        *self.request_count.lock().unwrap_or_else(|e| {
+            tracing::error!("Lock poisoned: {}", e);
+            e.into_inner()
+        })
     }
 
     pub fn get_error_count(&self) -> u64 {
-        *self.error_count.lock().unwrap()
+        *self.error_count.lock().unwrap_or_else(|e| {
+            tracing::error!("Lock poisoned: {}", e);
+            e.into_inner()
+        })
     }
 
     pub fn get_active_connections(&self) -> u64 {
-        *self.active_connections.lock().unwrap()
+        *self.active_connections.lock().unwrap_or_else(|e| {
+            tracing::error!("Lock poisoned: {}", e);
+            e.into_inner()
+        })
     }
 
     pub fn get_uptime_seconds(&self) -> u64 {

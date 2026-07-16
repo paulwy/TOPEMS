@@ -290,22 +290,34 @@ mod tests {
     async fn test_mock_embedder() {
         let embedder = MockEmbedder::new(3584);
 
-        let result = embedder.embed("Hello world").await.expect("Failed to embed text");
+        let result = embedder
+            .embed("Hello world")
+            .await
+            .expect("Failed to embed text");
         assert_eq!(result.len(), 3584);
 
         // 相同文本应产生相同结果
-        let result2 = embedder.embed("Hello world").await.expect("Failed to embed text");
+        let result2 = embedder
+            .embed("Hello world")
+            .await
+            .expect("Failed to embed text");
         assert_eq!(result, result2);
     }
 
     #[tokio::test]
     async fn test_ollama_embedder() {
         let client = OllamaClient::new(OllamaConfig::default());
-        let healthy = client.health_check().await.expect("Failed to check Ollama health");
+        let healthy = client
+            .health_check()
+            .await
+            .expect("Failed to check Ollama health");
         println!("Ollama healthy: {}", healthy);
 
         if healthy {
-            let embedding = client.embed("Hello world").await.expect("Failed to embed text");
+            let embedding = client
+                .embed("Hello world")
+                .await
+                .expect("Failed to embed text");
             println!("Embedding length: {}", embedding.len());
             assert!(!embedding.is_empty(), "Embedding should not be empty");
         }

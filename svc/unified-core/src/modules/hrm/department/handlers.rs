@@ -13,7 +13,8 @@ use super::models::{
 };
 
 fn default_tenant_id() -> Uuid {
-    Uuid::parse_str("00000000-0000-0000-0000-000000000001").expect("hardcoded default UUID should always be valid")
+    Uuid::parse_str("00000000-0000-0000-0000-000000000001")
+        .expect("hardcoded default UUID should always be valid")
 }
 
 pub async fn list_departments(

@@ -436,7 +436,10 @@ pub async fn versioning_middleware(
         let api_version = match config.get_version(&requested_version) {
             Some(v) => v,
             None => {
-                tracing::error!("Version marked as sunset but not found in config: {}", requested_version);
+                tracing::error!(
+                    "Version marked as sunset but not found in config: {}",
+                    requested_version
+                );
                 return next.run(req).await;
             }
         };
@@ -513,7 +516,10 @@ pub async fn versioning_middleware(
     let api_version = match config.get_version(&requested_version) {
         Some(v) => v,
         None => {
-            tracing::error!("Version marked as supported but not found in config: {}", requested_version);
+            tracing::error!(
+                "Version marked as supported but not found in config: {}",
+                requested_version
+            );
             return next.run(req).await;
         }
     };

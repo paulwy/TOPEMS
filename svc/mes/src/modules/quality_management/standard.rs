@@ -1,10 +1,4 @@
-use axum::{
-    extract::Extension,
-    extract::Path,
-    extract::Query,
-    extract::State,
-    Json,
-};
+use axum::{extract::Extension, extract::Path, extract::Query, extract::State, Json};
 use chrono::NaiveDateTime;
 use serde::{Deserialize, Serialize};
 use sqlx::{

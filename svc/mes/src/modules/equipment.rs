@@ -1160,7 +1160,8 @@ pub async fn create_inspection(
         .and_then(|v| BigDecimal::from_str(&v.to_string()).ok());
     let inspection_date = NaiveDateTime::parse_from_str(&body.inspection_date, "%Y-%m-%d %H:%M:%S")
         .unwrap_or_else(|_| chrono::Utc::now().naive_utc())
-        .format("%Y-%m-%d %H:%M:%S").to_string();
+        .format("%Y-%m-%d %H:%M:%S")
+        .to_string();
     let items_value = body.items.clone();
 
     let result = sqlx::query!(

@@ -197,7 +197,7 @@ impl MigrationSDK {
         for entry in entries.flatten() {
             let path = entry.path();
             if path.extension().is_some_and(|ext| ext == "sql") {
-                let filename = path.file_name().unwrap().to_string_lossy().to_string();
+                let filename = path.file_name().map(|n| n.to_string_lossy().to_string()).unwrap_or_default();
                 let version = extract_version(&filename);
                 let name = extract_name(&filename);
 
@@ -428,7 +428,10 @@ fn calculate_checksum(content: &str) -> String {
 fn generate_lock_value() -> String {
     let timestamp = SystemTime::now()
         .duration_since(UNIX_EPOCH)
-        .unwrap()
+        .unwrap_or_else(|e| {
+            tracing::error!("System clock error: {}", e);
+            std::time::Duration::ZERO
+        })
         .as_nanos();
     format!("lock_{}", timestamp)
 }

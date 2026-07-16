@@ -31,7 +31,9 @@ pub async fn list_connectors() -> Json<ApiResponse<Vec<DataConnector>>> {
     }
 }
 
-pub async fn get_connector(Query(params): Query<ConnectorQuery>) -> Json<ApiResponse<DataConnector>> {
+pub async fn get_connector(
+    Query(params): Query<ConnectorQuery>,
+) -> Json<ApiResponse<DataConnector>> {
     if let Some(connectors) = CONNECTORS.get() {
         let connectors = match connectors.lock() {
             Ok(c) => c,
@@ -85,7 +87,10 @@ pub async fn create_connector(
             Ok(c) => c,
             Err(e) => {
                 tracing::error!("Failed to lock connectors: {}", e);
-                return Json(ApiResponse::<DataConnector>::error(500, "Internal server error"));
+                return Json(ApiResponse::<DataConnector>::error(
+                    500,
+                    "Internal server error",
+                ));
             }
         };
         connectors.push(new_connector.clone());
@@ -111,7 +116,10 @@ pub async fn update_connector(
             Ok(c) => c,
             Err(e) => {
                 tracing::error!("Failed to lock connectors: {}", e);
-                return Json(ApiResponse::<DataConnector>::error(500, "Internal server error"));
+                return Json(ApiResponse::<DataConnector>::error(
+                    500,
+                    "Internal server error",
+                ));
             }
         };
         if let Some(connector) = connectors.iter_mut().find(|c| c.id == params.id) {
@@ -187,7 +195,10 @@ pub async fn test_connector(
             Ok(c) => c,
             Err(e) => {
                 tracing::error!("Failed to lock connectors: {}", e);
-                return Json(ApiResponse::<ConnectorStatus>::error(500, "Internal server error"));
+                return Json(ApiResponse::<ConnectorStatus>::error(
+                    500,
+                    "Internal server error",
+                ));
             }
         };
         if let Some(connector) = connectors.iter().find(|c| c.id == params.id) {
@@ -227,7 +238,10 @@ pub async fn query_data(Json(req): Json<DataQueryRequest>) -> Json<ApiResponse<D
             Ok(c) => c,
             Err(e) => {
                 tracing::error!("Failed to lock connectors: {}", e);
-                return Json(ApiResponse::<DataQueryResponse>::error(500, "Internal server error"));
+                return Json(ApiResponse::<DataQueryResponse>::error(
+                    500,
+                    "Internal server error",
+                ));
             }
         };
         if let Some(_connector) = connectors.iter().find(|c| c.id == req.connector_id) {

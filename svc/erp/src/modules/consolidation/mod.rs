@@ -1,66 +1,38 @@
-use axum::{
-    routing::*,
-    Router,
-};
+use axum::{routing::*, Router};
 
 use super::ApiState;
 
 mod common;
-mod scopes;
-mod scope_companies;
+mod company_relations;
 mod elimination_rules;
 mod internal_transactions;
 mod reports;
-mod company_relations;
+mod scope_companies;
+mod scopes;
 
 pub use common::{call_finance_core_approval, PaginationParams};
 
-pub use scopes::{
-    list_scopes,
-    get_scope,
-    create_scope,
-    update_scope,
-    delete_scope,
-};
+pub use scopes::{create_scope, delete_scope, get_scope, list_scopes, update_scope};
 
 pub use scope_companies::{
-    list_scope_companies,
-    add_scope_company,
-    update_scope_company,
-    remove_scope_company,
+    add_scope_company, list_scope_companies, remove_scope_company, update_scope_company,
 };
 
 pub use elimination_rules::{
-    list_elimination_rules,
-    get_elimination_rule,
-    create_elimination_rule,
+    create_elimination_rule, delete_elimination_rule, get_elimination_rule, list_elimination_rules,
     update_elimination_rule,
-    delete_elimination_rule,
 };
 
-pub use internal_transactions::{
-    list_internal_transactions,
-    execute_elimination,
-};
+pub use internal_transactions::{execute_elimination, list_internal_transactions};
 
 pub use reports::{
-    list_reports,
-    get_report,
-    generate_report,
-    get_report_lines,
-    submit_report,
-    approve_report,
-    publish_report,
-    delete_report,
+    approve_report, delete_report, generate_report, get_report, get_report_lines, list_reports,
+    publish_report, submit_report,
 };
 
 pub use company_relations::{
-    list_company_relations,
-    get_company_tree,
-    create_company_relation,
-    update_company_relation,
-    delete_company_relation,
-    get_company_financial_data,
+    create_company_relation, delete_company_relation, get_company_financial_data, get_company_tree,
+    list_company_relations, update_company_relation,
 };
 
 pub fn create_routes() -> Router<ApiState> {

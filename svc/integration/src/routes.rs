@@ -25,7 +25,10 @@ pub fn create_routes(state: AppState) -> Router {
             get(events::get_sync_stats),
         )
         .route("/api/core/integration/v1/events", get(events::list_events))
-        .route("/api/core/integration/v1/events", post(events::create_event))
+        .route(
+            "/api/core/integration/v1/events",
+            post(events::create_event),
+        )
         .route(
             "/api/core/integration/v1/lims-qms",
             get(lims_qms::list_lims_qms_sync),

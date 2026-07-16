@@ -7,7 +7,9 @@ use topems_shared::ApiResponse;
 
 use crate::models::{AppState, CreateWmsScmSyncRequest, WmsScmSync};
 
-pub async fn list_wms_scm_sync(State(state): State<AppState>) -> Json<ApiResponse<Vec<WmsScmSync>>> {
+pub async fn list_wms_scm_sync(
+    State(state): State<AppState>,
+) -> Json<ApiResponse<Vec<WmsScmSync>>> {
     match sqlx::query_as::<_, WmsScmSync>(
         "SELECT id, wms_inventory_id, scm_supply_id, item_name, quantity, unit,
                 synced, sync_status, sync_error, last_synced_at, created_at, updated_at

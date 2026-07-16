@@ -66,6 +66,7 @@ impl RateLimitMiddleware {
                     r#"{"error":"Too many requests","status":429}"#,
                 ))
                 .unwrap_or_else(|_| {
+                    // SAFETY: building a response with INTERNAL_SERVER_ERROR and empty body cannot fail
                     axum::response::Response::builder()
                         .status(StatusCode::INTERNAL_SERVER_ERROR)
                         .body(axum::body::Body::empty())

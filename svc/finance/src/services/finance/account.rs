@@ -41,7 +41,6 @@ impl FinanceService {
         Ok(account)
     }
 
-
     pub async fn get_account(
         &self,
         tenant_id: Uuid,
@@ -56,7 +55,6 @@ impl FinanceService {
 
         Ok(account)
     }
-
 
     pub async fn get_account_by_code(
         &self,
@@ -74,7 +72,6 @@ impl FinanceService {
         Ok(account)
     }
 
-
     pub async fn list_accounts(&self, tenant_id: Uuid) -> Result<Vec<Account>, TopemsError> {
         let accounts = sqlx::query_as(
             "SELECT * FROM core_finance_accounts WHERE tenant_id = $1 ORDER BY code",
@@ -85,6 +82,4 @@ impl FinanceService {
 
         Ok(accounts)
     }
-
-
 }

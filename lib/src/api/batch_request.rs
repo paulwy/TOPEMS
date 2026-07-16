@@ -130,7 +130,20 @@ impl BatchRequestHandler {
                 let timeout_clone = timeout_duration;
 
                 let task = tokio::spawn(async move {
-                    let permit = semaphore_clone.acquire_owned().await.unwrap();
+                    let permit = match semaphore_clone.acquire_owned().await {
+                        Ok(p) => p,
+                        Err(e) => {
+                            tracing::error!("Semaphore acquire failed: {}", e);
+                            return SingleResponse {
+                                request_id: req.id,
+                                status_code: 503,
+                                success: false,
+                                data: None,
+                                error: Some("Service temporarily unavailable".to_string()),
+                                latency_ms: 0,
+                            };
+                        }
+                    };
                     let _permit = permit;
                     let start = std::time::Instant::now();
 

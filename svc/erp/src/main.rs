@@ -461,10 +461,12 @@ async fn main() -> Result<()> {
         .merge(create_api_info_router("topems-erp"))
         .route(
             "/api-docs/openapi.json",
-            get(|| async { serde_json::to_string_pretty(&ApiDoc::openapi()).unwrap_or_else(|e| {
-                tracing::error!("Failed to serialize OpenAPI spec: {}", e);
-                "{}".to_string()
-            }) }),
+            get(|| async {
+                serde_json::to_string_pretty(&ApiDoc::openapi()).unwrap_or_else(|e| {
+                    tracing::error!("Failed to serialize OpenAPI spec: {}", e);
+                    "{}".to_string()
+                })
+            }),
         )
         .layer(axum::middleware::from_fn(telemetry_middleware))
         .layer(prometheus_layer)
@@ -679,11 +681,16 @@ async fn init_db(_pool: &sqlx::PgPool) -> Result<()> {
 
 fn init_encryption_service() -> FieldEncryptionService {
     let master_key = env::var("ENCRYPTION_MASTER_KEY").unwrap_or_else(|_| {
-        tracing::warn!("ENCRYPTION_MASTER_KEY not set, using insecure default - MUST be changed in production");
+        tracing::warn!(
+            "ENCRYPTION_MASTER_KEY not set, using insecure default - MUST be changed in production"
+        );
         "0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef".to_string()
     });
     let key_bytes = hex::decode(&master_key).unwrap_or_else(|e| {
-        tracing::warn!("Failed to decode ENCRYPTION_MASTER_KEY as hex ({}), using fallback key", e);
+        tracing::warn!(
+            "Failed to decode ENCRYPTION_MASTER_KEY as hex ({}), using fallback key",
+            e
+        );
         vec![0x42; 32]
     });
     let mut key_array = [0u8; 32];

@@ -1,9 +1,7 @@
 #![allow(dead_code)]
 
+use axum::extract::{Extension, Json, Path, Query, State};
 use axum::http::HeaderMap;
-use axum::{
-    extract::{State, Extension, Json, Query, Path},
-};
 
 use chrono::Utc;
 
@@ -11,7 +9,7 @@ use uuid::Uuid;
 
 use super::super::ApiState;
 use super::PaginationParams;
-use crate::models::finance::{Expense, CreateExpenseRequest, UpdateExpenseRequest};
+use crate::models::finance::{CreateExpenseRequest, Expense, UpdateExpenseRequest};
 use crate::modules::audit::{log_audit_event, AuditEventParams};
 use crate::shared::permission::{check_permission, ModulePermission};
 use topems_shared::auth::Claims;

@@ -596,7 +596,10 @@ mod tests {
             last_heartbeat: Utc::now(),
         };
 
-        manager.add_node(node.clone()).await.expect("Failed to add node");
+        manager
+            .add_node(node.clone())
+            .await
+            .expect("Failed to add node");
 
         let found = manager.get_node(node.id).await;
         assert!(found.is_some());
