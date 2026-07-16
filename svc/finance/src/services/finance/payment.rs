@@ -17,7 +17,9 @@ impl FinanceService {
     ) -> Result<PaymentResponse, TopemsError> {
         let payment_date = req.payment_date.unwrap_or_else(|| Utc::now().date_naive());
         let voucher_date = chrono::DateTime::<Utc>::from_naive_utc_and_offset(
-            payment_date.and_hms_opt(0, 0, 0).unwrap(),
+            payment_date
+                .and_hms_opt(0, 0, 0)
+                .expect("Failed to construct datetime from date"),
             Utc,
         );
         let period = format!("{:04}{:02}", payment_date.year(), payment_date.month());
@@ -139,7 +141,6 @@ impl FinanceService {
         })
     }
 
-
     pub async fn get_payment(
         &self,
         tenant_id: Uuid,
@@ -182,7 +183,6 @@ impl FinanceService {
             created_at: payment.created_at,
         })
     }
-
 
     pub async fn list_payments(
         &self,
@@ -235,7 +235,6 @@ impl FinanceService {
         Ok((results, total.0))
     }
 
-
     pub(super) async fn get_payment_response(
         &self,
         tenant_id: Uuid,
@@ -278,7 +277,6 @@ impl FinanceService {
             created_at: payment.created_at,
         })
     }
-
 
     pub async fn update_payment(
         &self,
@@ -391,7 +389,6 @@ impl FinanceService {
         self.get_payment(tenant_id, payment_id).await
     }
 
-
     pub async fn delete_payment(
         &self,
         tenant_id: Uuid,
@@ -418,7 +415,6 @@ impl FinanceService {
 
         Ok(())
     }
-
 
     pub(super) async fn generate_payment_no(&self, tenant_id: Uuid) -> Result<String, TopemsError> {
         let today = Utc::now();
@@ -575,5 +571,4 @@ impl FinanceService {
             created_at: Utc::now(),
         })
     }
-
 }

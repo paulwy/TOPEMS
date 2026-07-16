@@ -68,12 +68,20 @@ pub async fn tenant_middleware(
     let claims = match req.extensions().get::<topems_shared::Claims>() {
         Some(c) => c,
         None => {
+            let body = serde_json::to_string(&ApiResponse::<()>::error(401, "缺少认证信息"))
+                .unwrap_or_else(|e| {
+                    tracing::error!("Failed to serialize error response: {}", e);
+                    r#"{"success":false,"message":"缺少认证信息","code":401}"#.to_string()
+                });
             return axum::http::Response::builder()
                 .status(401)
-                .body(axum::body::Body::from(
-                    serde_json::to_string(&ApiResponse::<()>::error(401, "缺少认证信息")).unwrap(),
-                ))
-                .unwrap()
+                .body(axum::body::Body::from(body))
+                .unwrap_or_else(|e| {
+                    tracing::error!("Failed to build error response: {}", e);
+                    axum::http::Response::new(axum::body::Body::from(
+                        r#"{"success":false,"message":"缺少认证信息","code":401}"#,
+                    ))
+                });
         }
     };
 
@@ -81,11 +89,9 @@ pub async fn tenant_middleware(
         .tenant_id
         .as_ref()
         .and_then(|t| Uuid::parse_str(t).ok())
-        .unwrap_or_else(|| Uuid::parse_str("00000000-0000-0000-0000-000000000000").unwrap());
+        .unwrap_or_else(Uuid::nil);
 
-    let user_id = claims
-        .user_id()
-        .unwrap_or_else(|_| Uuid::parse_str("00000000-0000-0000-0000-000000000000").unwrap());
+    let user_id = claims.user_id().unwrap_or_else(|_| Uuid::nil());
 
     let mut req = req;
     req.extensions_mut()

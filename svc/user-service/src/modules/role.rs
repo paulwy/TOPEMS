@@ -6,10 +6,16 @@ use uuid::Uuid;
 use crate::models::role::{CreateRoleRequest, Role, UpdateRoleRequest};
 
 pub async fn list_roles(Extension(pool): Extension<PgPool>) -> Json<ApiResponse<Vec<Role>>> {
-    let rows = sqlx::query("SELECT id, name, description, permissions, status, created_at, updated_at FROM core_roles ORDER BY name")
+    let rows = match sqlx::query("SELECT id, name, description, permissions, status, created_at, updated_at FROM core_roles ORDER BY name")
         .fetch_all(&pool)
         .await
-        .unwrap_or_default();
+    {
+        Ok(r) => r,
+        Err(e) => {
+            tracing::error!("查询角色列表失败: {}", e);
+            return Json(ApiResponse::error(500, "查询角色列表失败"));
+        }
+    };
 
     let roles: Vec<Role> = rows
         .into_iter()
@@ -23,7 +29,7 @@ pub async fn create_role(
     Extension(pool): Extension<PgPool>,
     Json(req): Json<CreateRoleRequest>,
 ) -> Json<ApiResponse<Role>> {
-    let row = sqlx::query(
+    let row = match sqlx::query(
         r#"INSERT INTO core_roles (name, description, permissions, status)
            VALUES ($1, $2, $3, $4)
            RETURNING id, name, description, permissions, status, created_at, updated_at"#,
@@ -34,9 +40,21 @@ pub async fn create_role(
     .bind("active")
     .fetch_one(&pool)
     .await
-    .unwrap();
+    {
+        Ok(r) => r,
+        Err(e) => {
+            tracing::error!("创建角色失败: {}", e);
+            return Json(ApiResponse::error(500, "创建角色失败"));
+        }
+    };
 
-    let role = Role::from_row(&row).unwrap();
+    let role = match Role::from_row(&row) {
+        Ok(r) => r,
+        Err(e) => {
+            tracing::error!("解析角色数据失败: {}", e);
+            return Json(ApiResponse::error(500, "创建角色失败"));
+        }
+    };
     Json(ApiResponse::success(role, "创建成功"))
 }
 
@@ -44,11 +62,17 @@ pub async fn get_role(
     Extension(pool): Extension<PgPool>,
     Path(id): Path<Uuid>,
 ) -> Json<ApiResponse<Role>> {
-    let row = sqlx::query("SELECT id, name, description, permissions, status, created_at, updated_at FROM core_roles WHERE id = $1")
+    let row = match sqlx::query("SELECT id, name, description, permissions, status, created_at, updated_at FROM core_roles WHERE id = $1")
         .bind(id)
         .fetch_optional(&pool)
         .await
-        .unwrap();
+    {
+        Ok(r) => r,
+        Err(e) => {
+            tracing::error!("查询角色失败: {}", e);
+            return Json(ApiResponse::error(500, "查询角色失败"));
+        }
+    };
 
     match row {
         Some(row) => match Role::from_row(&row) {
@@ -64,7 +88,7 @@ pub async fn update_role(
     Path(id): Path<Uuid>,
     Json(req): Json<UpdateRoleRequest>,
 ) -> Json<ApiResponse<Role>> {
-    let row = sqlx::query(
+    let row = match sqlx::query(
         r#"UPDATE core_roles SET
            name = COALESCE($1, name),
            description = COALESCE($2, description),
@@ -81,7 +105,13 @@ pub async fn update_role(
     .bind(id)
     .fetch_optional(&pool)
     .await
-    .unwrap();
+    {
+        Ok(r) => r,
+        Err(e) => {
+            tracing::error!("更新角色失败: {}", e);
+            return Json(ApiResponse::error(500, "更新角色失败"));
+        }
+    };
 
     match row {
         Some(row) => match Role::from_row(&row) {
@@ -96,11 +126,17 @@ pub async fn delete_role(
     Extension(pool): Extension<PgPool>,
     Path(id): Path<Uuid>,
 ) -> Json<ApiResponse<()>> {
-    let result = sqlx::query("DELETE FROM core_roles WHERE id = $1")
+    let result = match sqlx::query("DELETE FROM core_roles WHERE id = $1")
         .bind(id)
         .execute(&pool)
         .await
-        .unwrap();
+    {
+        Ok(r) => r,
+        Err(e) => {
+            tracing::error!("删除角色失败: {}", e);
+            return Json(ApiResponse::error(500, "删除角色失败"));
+        }
+    };
 
     if result.rows_affected() > 0 {
         Json(ApiResponse::success((), "删除成功"))

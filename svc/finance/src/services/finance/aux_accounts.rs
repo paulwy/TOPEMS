@@ -42,7 +42,6 @@ impl FinanceService {
         Ok(aux_account)
     }
 
-
     pub async fn list_aux_accounts(
         &self,
         tenant_id: Uuid,
@@ -69,7 +68,6 @@ impl FinanceService {
         Ok(accounts)
     }
 
-
     pub async fn get_aux_account(
         &self,
         tenant_id: Uuid,
@@ -85,7 +83,6 @@ impl FinanceService {
 
         Ok(account)
     }
-
 
     pub async fn get_aux_ledger(
         &self,
@@ -139,7 +136,6 @@ impl FinanceService {
 
         Ok(entries)
     }
-
 
     pub async fn get_aux_balance(
         &self,
@@ -208,8 +204,7 @@ impl FinanceService {
                     total_debit,
                     total_credit,
                 });
-            } else {
-                let report = acc.get_mut(&aux_id).unwrap();
+            } else if let Some(report) = acc.get_mut(&aux_id) {
                 report.total_debit += total_debit;
                 report.total_credit += total_credit;
                 report.items.push(AuxBalanceItem {
@@ -224,6 +219,4 @@ impl FinanceService {
         let reports: Vec<AuxBalanceReport> = acc.into_values().collect();
         Ok(reports)
     }
-
-
 }

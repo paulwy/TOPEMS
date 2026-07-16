@@ -221,13 +221,14 @@ impl ChartService {
                         "value1".to_string(),
                         serde_json::Value::Number(
                             serde_json::Number::from_f64((rng.gen::<f64>() * 100.0) + 50.0)
-                                .unwrap(),
+                                .unwrap_or_else(|| serde_json::Number::from(50)),
                         ),
                     );
                     row.insert(
                         "value2".to_string(),
                         serde_json::Value::Number(
-                            serde_json::Number::from_f64((rng.gen::<f64>() * 80.0) + 30.0).unwrap(),
+                            serde_json::Number::from_f64((rng.gen::<f64>() * 80.0) + 30.0)
+                                .unwrap_or_else(|| serde_json::Number::from(30)),
                         ),
                     );
                     data.push(row);
@@ -245,7 +246,8 @@ impl ChartService {
                     row.insert(
                         "value".to_string(),
                         serde_json::Value::Number(
-                            serde_json::Number::from_f64(rng.gen::<f64>() * 100.0).unwrap(),
+                            serde_json::Number::from_f64(rng.gen::<f64>() * 100.0)
+                                .unwrap_or_else(|| serde_json::Number::from(0)),
                         ),
                     );
                     data.push(row);
@@ -258,13 +260,15 @@ impl ChartService {
                     row.insert(
                         "x".to_string(),
                         serde_json::Value::Number(
-                            serde_json::Number::from_f64(rng.gen::<f64>() * 100.0).unwrap(),
+                            serde_json::Number::from_f64(rng.gen::<f64>() * 100.0)
+                                .unwrap_or_else(|| serde_json::Number::from(0)),
                         ),
                     );
                     row.insert(
                         "y".to_string(),
                         serde_json::Value::Number(
-                            serde_json::Number::from_f64(rng.gen::<f64>() * 100.0).unwrap(),
+                            serde_json::Number::from_f64(rng.gen::<f64>() * 100.0)
+                                .unwrap_or_else(|| serde_json::Number::from(0)),
                         ),
                     );
                     data.push(row);
@@ -281,7 +285,8 @@ impl ChartService {
                     row.insert(
                         "count".to_string(),
                         serde_json::Value::Number(
-                            serde_json::Number::from_f64((rng.gen::<f64>() * 50.0) + 10.0).unwrap(),
+                            serde_json::Number::from_f64((rng.gen::<f64>() * 50.0) + 10.0)
+                                .unwrap_or_else(|| serde_json::Number::from(10)),
                         ),
                     );
                     data.push(row);
@@ -303,7 +308,7 @@ impl ChartService {
                         "value".to_string(),
                         serde_json::Value::Number(
                             serde_json::Number::from_f64((rng.gen::<f64>() * 1000.0) + 100.0)
-                                .unwrap(),
+                                .unwrap_or_else(|| serde_json::Number::from(100)),
                         ),
                     );
                     data.push(row);

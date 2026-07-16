@@ -465,19 +465,19 @@ impl MultiLevelCacheManager {
                     Ok(value) => {
                         let full_key = format!("{}:{}", config_clone.prefix, key);
                         let l1_ttl = Some(Duration::from_secs(config_clone.l1_ttl));
-                        #[allow(clippy::let_unit_value)]
-                        let _ = tokio::runtime::Runtime::new()
-                            .unwrap()
-                            .block_on(l1_cache_clone.set(full_key.clone(), value.clone(), l1_ttl));
-                        if let Some(l2) = &l2_cache_clone {
+                        if let Ok(runtime) = tokio::runtime::Runtime::new() {
                             #[allow(clippy::let_unit_value)]
-                            let _ = tokio::runtime::Runtime::new().unwrap().block_on(l2.set(
-                                &full_key,
-                                &value,
-                                Some(config_clone.l2_ttl),
-                            ));
+                            let _ = runtime.block_on(l1_cache_clone.set(full_key.clone(), value.clone(), l1_ttl));
+                            if let Some(l2) = &l2_cache_clone {
+                                #[allow(clippy::let_unit_value)]
+                                let _ = runtime.block_on(l2.set(
+                                    &full_key,
+                                    &value,
+                                    Some(config_clone.l2_ttl),
+                                ));
+                            }
+                            count += 1;
                         }
-                        count += 1;
                     }
                     Err(_) => continue,
                 }
@@ -589,8 +589,8 @@ mod tests {
         let config = CacheConfig::default();
         let cache = MultiLevelCacheManager::new(&config, None);
 
-        cache.set("test_key", &"test_value", None).await.unwrap();
-        let result: Option<String> = cache.get("test_key").await.unwrap();
+        cache.set("test_key", &"test_value", None).await.expect("cache set failed");
+        let result: Option<String> = cache.get("test_key").await.expect("cache get failed");
         assert_eq!(result, Some("test_value".to_string()));
     }
 
@@ -599,10 +599,10 @@ mod tests {
         let config = CacheConfig::default();
         let cache = MultiLevelCacheManager::new(&config, None);
 
-        cache.set("stat_key", &"stat_value", None).await.unwrap();
-        let _: Option<String> = cache.get("stat_key").await.unwrap();
-        let _: Option<String> = cache.get("stat_key").await.unwrap();
-        let _: Option<String> = cache.get("miss_key").await.unwrap();
+        cache.set("stat_key", &"stat_value", None).await.expect("cache set failed");
+        let _: Option<String> = cache.get("stat_key").await.expect("cache get failed");
+        let _: Option<String> = cache.get("stat_key").await.expect("cache get failed");
+        let _: Option<String> = cache.get("miss_key").await.expect("cache get failed");
 
         let stats = cache.get_statistics();
         assert_eq!(stats.l1_hits, 2);

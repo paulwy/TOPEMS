@@ -233,7 +233,7 @@ mod tests {
 
     fn create_test_track_points() -> Vec<TrackPoint> {
         let base_time = DateTime::parse_from_rfc3339("2024-01-01T10:00:00Z")
-            .unwrap()
+            .expect("Failed to parse base time")
             .with_timezone(&Utc);
 
         vec![
@@ -290,7 +290,7 @@ mod tests {
         let stats = TrackStatisticsCalculator::calculate(&points);
 
         assert!(stats.is_some());
-        let stats = stats.unwrap();
+        let stats = stats.expect("Expected TrackStatistics to be Some");
 
         assert_eq!(stats.point_count, 3);
         assert!(stats.total_distance > 0.0);
@@ -319,7 +319,7 @@ mod tests {
     #[test]
     fn test_calculate_statistics_single_point() {
         let base_time = DateTime::parse_from_rfc3339("2024-01-01T10:00:00Z")
-            .unwrap()
+            .expect("Failed to parse base time")
             .with_timezone(&Utc);
 
         let points = vec![TrackPoint {
@@ -335,7 +335,7 @@ mod tests {
         let stats = TrackStatisticsCalculator::calculate(&points);
 
         assert!(stats.is_some());
-        let stats = stats.unwrap();
+        let stats = stats.expect("Expected TrackStatistics to be Some");
 
         assert_eq!(stats.point_count, 1);
         assert_eq!(stats.total_distance, 0.0);
@@ -371,7 +371,7 @@ mod tests {
         let pos1 = serde_json::json!({"lat": 31.2304, "lng": 121.4737});
         let parsed = TrackStatisticsCalculator::parse_position(&pos1);
         assert!(parsed.is_some());
-        let p = parsed.unwrap();
+        let p = parsed.expect("Expected parsed position");
         assert_eq!(p.lat, 31.2304);
         assert_eq!(p.lng, 121.4737);
 
@@ -379,7 +379,7 @@ mod tests {
         let pos2 = serde_json::json!([121.4737, 31.2304]);
         let parsed2 = TrackStatisticsCalculator::parse_position(&pos2);
         assert!(parsed2.is_some());
-        let p2 = parsed2.unwrap();
+        let p2 = parsed2.expect("Expected parsed position");
         assert_eq!(p2.lat, 31.2304);
         assert_eq!(p2.lng, 121.4737);
     }

@@ -270,7 +270,7 @@ pub async fn record_login_event(
     tenant_id: Uuid,
     user_id: Option<Uuid>,
     username: &str,
-    ip_address: &str,
+    ip_address: Option<&str>,
     user_agent: Option<&str>,
     status: &str,
     error_message: Option<&str>,
@@ -279,7 +279,7 @@ pub async fn record_login_event(
         r#"
         INSERT INTO core_login_logs
             (tenant_id, user_id, username, ip_address, user_agent, status, error_message, login_time)
-        VALUES ($1, $2, $3, $4, $5, $6, $7, NOW())
+        VALUES ($1, $2, $3, $4::inet, $5, $6, $7, NOW())
         "#,
     )
     .bind(tenant_id)

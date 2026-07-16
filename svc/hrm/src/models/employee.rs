@@ -273,7 +273,7 @@ mod tests {
             employee_number: "EMP001".to_string(),
             name: "John Doe".to_string(),
             gender: Some("male".to_string()),
-            hire_date: Some(NaiveDate::from_ymd_opt(2024, 1, 15).unwrap()),
+            hire_date: Some(NaiveDate::from_ymd_opt(2024, 1, 15).expect("invalid date")),
             email: Some("john@example.com".to_string()),
             phone: Some("1234567890".to_string()),
             id_card_number: Some("110101199001011234".to_string()),
@@ -361,19 +361,39 @@ mod tests {
         let original_id_card = employee.id_card_number.clone();
         let original_address = employee.address.clone();
 
-        employee.encrypt_fields(&service).unwrap();
+        employee
+            .encrypt_fields(&service)
+            .expect("encryption failed");
 
         assert_ne!(employee.email, original_email);
         assert_ne!(employee.phone, original_phone);
         assert_ne!(employee.id_card_number, original_id_card);
         assert_ne!(employee.address, original_address);
 
-        assert!(employee.email.as_ref().unwrap().starts_with('{'));
-        assert!(employee.phone.as_ref().unwrap().starts_with('{'));
-        assert!(employee.id_card_number.as_ref().unwrap().starts_with('{'));
-        assert!(employee.address.as_ref().unwrap().starts_with('{'));
+        assert!(employee
+            .email
+            .as_ref()
+            .expect("email should exist")
+            .starts_with('{'));
+        assert!(employee
+            .phone
+            .as_ref()
+            .expect("phone should exist")
+            .starts_with('{'));
+        assert!(employee
+            .id_card_number
+            .as_ref()
+            .expect("id_card_number should exist")
+            .starts_with('{'));
+        assert!(employee
+            .address
+            .as_ref()
+            .expect("address should exist")
+            .starts_with('{'));
 
-        employee.decrypt_fields(&service).unwrap();
+        employee
+            .decrypt_fields(&service)
+            .expect("decryption failed");
 
         assert_eq!(employee.email, original_email);
         assert_eq!(employee.phone, original_phone);
@@ -407,13 +427,25 @@ mod tests {
 
         employee.mask_sensitive_fields();
 
-        assert!(employee.phone.as_ref().unwrap().contains("****"));
-        assert!(employee.email.as_ref().unwrap().contains("***"));
+        assert!(employee
+            .phone
+            .as_ref()
+            .expect("phone should exist")
+            .contains("****"));
+        assert!(employee
+            .email
+            .as_ref()
+            .expect("email should exist")
+            .contains("***"));
         assert!(employee
             .id_card_number
             .as_ref()
-            .unwrap()
+            .expect("id_card_number should exist")
             .contains("********"));
-        assert!(employee.address.as_ref().unwrap().contains("******"));
+        assert!(employee
+            .address
+            .as_ref()
+            .expect("address should exist")
+            .contains("******"));
     }
 }

@@ -596,11 +596,11 @@ mod tests {
             last_heartbeat: Utc::now(),
         };
 
-        manager.add_node(node.clone()).await.unwrap();
+        manager.add_node(node.clone()).await.expect("Failed to add node");
 
         let found = manager.get_node(node.id).await;
         assert!(found.is_some());
-        assert_eq!(found.unwrap().hostname, "node1.example.com");
+        assert_eq!(found.expect("Node not found").hostname, "node1.example.com");
     }
 
     #[tokio::test]
@@ -631,14 +631,14 @@ mod tests {
                 last_heartbeat: Utc::now(),
             };
 
-            manager.add_node(node).await.unwrap();
+            manager.add_node(node).await.expect("Failed to add node");
         }
 
         let selected = manager
             .select_node(LoadBalancingAlgorithm::RoundRobin)
             .await;
         assert!(selected.is_ok());
-        assert!(selected.unwrap().is_some());
+        assert!(selected.expect("Load balancing selection failed").is_some());
     }
 
     #[tokio::test]

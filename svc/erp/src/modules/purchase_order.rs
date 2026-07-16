@@ -161,7 +161,7 @@ pub async fn create_purchase_order(
     let order_no = format!(
         "PO-{}-{}",
         chrono::Local::now().format("%Y%m%d"),
-        Uuid::new_v4().to_string().split('-').next().unwrap()
+        Uuid::new_v4().to_string().split('-').next().unwrap_or("0")
     );
 
     let total_amount = req

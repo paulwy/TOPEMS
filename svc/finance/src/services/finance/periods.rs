@@ -9,7 +9,11 @@ use topems_shared::error::TopemsError;
 use super::FinanceService;
 
 impl FinanceService {
-    pub(super) async fn check_period_open(&self, tenant_id: Uuid, period: String) -> Result<(), TopemsError> {
+    pub(super) async fn check_period_open(
+        &self,
+        tenant_id: Uuid,
+        period: String,
+    ) -> Result<(), TopemsError> {
         let period_status: Option<(String,)> = sqlx::query_as(
             "SELECT status::text FROM core_finance_periods WHERE tenant_id = $1 AND period_name = $2",
         )
@@ -26,7 +30,6 @@ impl FinanceService {
 
         Ok(())
     }
-
 
     pub async fn open_period(
         &self,
@@ -64,19 +67,25 @@ impl FinanceService {
         }
 
         let start_date = NaiveDate::from_ymd_opt(year, month as u32, 1)
-            .unwrap()
+            .ok_or_else(|| {
+                TopemsError::ValidationFailed(format!("无效的日期: {}-{:02}-01", year, month))
+            })?
             .and_hms_opt(0, 0, 0)
-            .unwrap();
+            .ok_or_else(|| TopemsError::ValidationFailed("时间转换失败".to_string()))?;
         let end_date = NaiveDate::from_ymd_opt(
             if month == 12 { year + 1 } else { year },
             if month == 12 { 1 } else { month as u32 + 1 },
             1,
         )
-        .unwrap()
+        .ok_or_else(|| {
+            let next_month = if month == 12 { 1 } else { month + 1 };
+            let next_year = if month == 12 { year + 1 } else { year };
+            TopemsError::ValidationFailed(format!("无效的日期: {}-{:02}-01", next_year, next_month))
+        })?
         .pred_opt()
-        .unwrap()
+        .ok_or_else(|| TopemsError::ValidationFailed("日期计算失败".to_string()))?
         .and_hms_opt(23, 59, 59)
-        .unwrap();
+        .ok_or_else(|| TopemsError::ValidationFailed("时间转换失败".to_string()))?;
 
         let period: Period = sqlx::query_as(
             "INSERT INTO core_finance_periods (tenant_id, year, month, period_name, status, start_date, end_date)
@@ -94,7 +103,6 @@ impl FinanceService {
 
         Ok(period)
     }
-
 
     pub async fn close_period(
         &self,
@@ -115,15 +123,30 @@ impl FinanceService {
         .bind(year)
         .bind(month)
         .bind(period_name)
-        .bind(chrono::NaiveDate::from_ymd_opt(year as i32, month as u32, 1).unwrap().and_hms_opt(0, 0, 0).unwrap())
-        .bind(chrono::NaiveDate::from_ymd_opt(year as i32, month as u32, 1).unwrap().and_hms_opt(23, 59, 59).unwrap())
+        .bind(chrono::NaiveDate::from_ymd_opt(year as i32, month as u32, 1)
+            .ok_or_else(|| TopemsError::ValidationFailed(format!("无效的日期: {}-{:02}-01", year, month)))?
+            .and_hms_opt(0, 0, 0)
+            .ok_or_else(|| TopemsError::ValidationFailed("时间转换失败".to_string()))?)
+        .bind(chrono::NaiveDate::from_ymd_opt(
+            if month == 12 { year + 1 } else { year },
+            if month == 12 { 1 } else { month as u32 + 1 },
+            1,
+        )
+        .ok_or_else(|| {
+            let next_month = if month == 12 { 1 } else { month + 1 };
+            let next_year = if month == 12 { year + 1 } else { year };
+            TopemsError::ValidationFailed(format!("无效的日期: {}-{:02}-01", next_year, next_month))
+        })?
+        .pred_opt()
+        .ok_or_else(|| TopemsError::ValidationFailed("日期计算失败".to_string()))?
+        .and_hms_opt(23, 59, 59)
+        .ok_or_else(|| TopemsError::ValidationFailed("时间转换失败".to_string()))?)
         .bind(closed_by)
         .fetch_one(&self.db_pool)
         .await?;
 
         Ok(period)
     }
-
 
     pub async fn year_end_close(
         &self,
@@ -295,6 +318,4 @@ impl FinanceService {
             expense_accounts_closed: expense_rows.len() as i32,
         })
     }
-
-
 }

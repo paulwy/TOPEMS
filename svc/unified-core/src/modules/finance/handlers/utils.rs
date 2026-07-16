@@ -1,7 +1,8 @@
 use uuid::Uuid;
 
 pub fn default_tenant_id() -> Uuid {
-    Uuid::parse_str("00000000-0000-0000-0000-000000000001").unwrap()
+    Uuid::parse_str("00000000-0000-0000-0000-000000000001")
+        .expect("hardcoded default tenant UUID should be valid")
 }
 
 pub fn generate_payment_no() -> String {

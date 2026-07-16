@@ -1,6 +1,8 @@
 import React from 'react';
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { render, screen, waitFor, fireEvent } from '@testing-library/react';
+import { renderWithProviders } from '@/__tests__/test-utils';
+
 import { BrowserRouter } from 'react-router-dom';
 import MobileApprovalPage from '../mobile/MobileApprovalPage';
 import { useNotificationStore, useAuthStore } from '@/store';
@@ -100,8 +102,7 @@ describe('MobileApprovalPage', () => {
 it('should render page title', async () => {
     renderWithProviders(<MobileApprovalPage />);
     await waitFor(() => {
-      expect(screen.getByRole('heading')).toBeInTheDocument();
+      expect(screen.getByText('审批')).toBeInTheDocument();
   });
 });
-;
 });

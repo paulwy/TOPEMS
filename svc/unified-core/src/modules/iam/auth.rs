@@ -1,5 +1,5 @@
 use axum::http::HeaderMap;
-use axum::{extract::State, Extension, Json};
+use axum::{extract::State, Json};
 use serde::{Deserialize, Serialize};
 use sha2::{Digest, Sha256};
 use sqlx::Row;
@@ -79,8 +79,6 @@ pub async fn login(
         .and_then(|h| h.to_str().ok())
         .or_else(|| headers.get("X-Real-IP").and_then(|h| h.to_str().ok()));
 
-    let ip_address = ip_address_opt.unwrap_or("");
-
     let ip_addr_opt = if ip_address_opt.map(|s| s == "unknown").unwrap_or(true) {
         None
     } else {
@@ -100,7 +98,7 @@ pub async fn login(
             Uuid::nil(),
             None,
             username,
-            ip_address,
+            ip_addr_opt,
             user_agent.as_deref(),
             "failed",
             Some("用户名和密码不能为空"),
@@ -129,7 +127,7 @@ pub async fn login(
                 Uuid::nil(),
                 None,
                 username,
-                ip_address,
+                ip_addr_opt,
                 user_agent.as_deref(),
                 "failed",
                 Some("用户不存在"),
@@ -149,7 +147,7 @@ pub async fn login(
                 Uuid::nil(),
                 None,
                 username,
-                ip_address,
+                ip_addr_opt,
                 user_agent.as_deref(),
                 "failed",
                 Some("内部服务器错误"),
@@ -167,11 +165,11 @@ pub async fn login(
     if !user.is_active {
         tracing::warn!("Login failed: user is not active - {}", username);
         let _ = record_login_event(
-                &state.pool,
-                Uuid::nil(),
+            &state.pool,
+            Uuid::nil(),
             Some(user.id),
             &user.username,
-            ip_address,
+            ip_addr_opt,
             user_agent.as_deref(),
             "failed",
             Some("用户账号已被禁用"),
@@ -188,11 +186,11 @@ pub async fn login(
     if !verify_password(password, &user.password_hash) {
         tracing::warn!("Login failed: invalid password for user - {}", username);
         let _ = record_login_event(
-                &state.pool,
-                Uuid::nil(),
+            &state.pool,
+            Uuid::nil(),
             Some(user.id),
             &user.username,
-            ip_address,
+            ip_addr_opt,
             user_agent.as_deref(),
             "failed",
             Some("密码错误"),
@@ -256,8 +254,8 @@ pub async fn login(
 
     let access_expires_at =
         chrono::Utc::now() + chrono::Duration::hours(state.auth_state.token_expiry_hours);
-    let refresh_expires_at = chrono::Utc::now()
-        + chrono::Duration::hours(state.auth_state.token_expiry_hours * 7);
+    let refresh_expires_at =
+        chrono::Utc::now() + chrono::Duration::hours(state.auth_state.token_expiry_hours * 7);
 
     let insert_session_result = sqlx::query(
         "INSERT INTO iam.sessions (user_id, token_hash, ip_address, user_agent, expires_at)
@@ -320,7 +318,7 @@ pub async fn login(
         Uuid::nil(),
         Some(user.id),
         &username_clone,
-        ip_address,
+        ip_addr_opt,
         user_agent.as_deref(),
         "success",
         None,
@@ -640,8 +638,8 @@ pub async fn refresh_token(
 
     let access_expires_at =
         chrono::Utc::now() + chrono::Duration::hours(state.auth_state.token_expiry_hours);
-    let refresh_expires_at = chrono::Utc::now()
-        + chrono::Duration::hours(state.auth_state.token_expiry_hours * 7);
+    let refresh_expires_at =
+        chrono::Utc::now() + chrono::Duration::hours(state.auth_state.token_expiry_hours * 7);
 
     let old_refresh_token_id: Uuid = row.get("refresh_token_id");
 
@@ -752,24 +750,68 @@ pub async fn refresh_token(
 }
 
 /// 用户登出接口
+/// 通过请求体中的 refresh_token 哈希查找 user_id 并吊销所有会话/刷新令牌。
+/// 该接口不需要 access_token（access_token 可能已过期，但用户仍希望吊销 refresh token）。
 pub async fn logout(
     State(state): State<crate::AppState>,
-    Extension(claims): Extension<Claims>,
+    Json(payload): Json<serde_json::Value>,
 ) -> Json<serde_json::Value> {
-    tracing::info!("IAM auth logout called for user: {}", claims.username);
+    let refresh_token = payload
+        .get("refresh_token")
+        .and_then(|v| v.as_str())
+        .map(|s| s.to_string());
 
-    let user_id = match Uuid::parse_str(&claims.sub) {
-        Ok(id) => id,
-        Err(e) => {
-            tracing::error!("Invalid user ID format: {}", e);
+    let refresh_token = match refresh_token {
+        Some(t) if !t.is_empty() => t,
+        _ => {
             return Json(serde_json::json!({
                 "success": false,
-                "message": "无效的用户ID",
+                "message": "缺少 refresh_token",
                 "data": null,
                 "code": 400
             }));
         }
     };
+
+    // 通过 refresh_token 哈希查找 user_id
+    use sha2::{Digest, Sha256};
+    let mut hasher = Sha256::new();
+    hasher.update(refresh_token.as_bytes());
+    let token_hash = format!("{:x}", hasher.finalize());
+
+    let user_id: Option<Uuid> = match sqlx::query_scalar(
+        "SELECT user_id FROM iam.refresh_tokens WHERE token_hash = $1 AND revoked_at IS NULL",
+    )
+    .bind(&token_hash)
+    .fetch_optional(&state.pool)
+    .await
+    {
+        Ok(uid) => uid,
+        Err(e) => {
+            tracing::error!("查询 refresh_token 失败: {}", e);
+            return Json(serde_json::json!({
+                "success": false,
+                "message": "登出失败",
+                "data": null,
+                "code": 500
+            }));
+        }
+    };
+
+    let user_id = match user_id {
+        Some(uid) => uid,
+        None => {
+            // token 已不存在或已吊销，视为登出成功（幂等）
+            return Json(serde_json::json!({
+                "success": true,
+                "message": "登出成功",
+                "data": null,
+                "code": 0
+            }));
+        }
+    };
+
+    tracing::info!("IAM auth logout called for user_id: {}", user_id);
 
     // 删除用户会话和刷新令牌
     let mut tx = match state.pool.begin().await {
@@ -822,7 +864,7 @@ pub async fn logout(
 
     match tx.commit().await {
         Ok(_) => {
-            tracing::info!("Logout successful for user: {}", claims.username);
+            tracing::info!("Logout successful for user_id: {}", user_id);
             Json(serde_json::json!({
                 "success": true,
                 "message": "登出成功",
@@ -1207,10 +1249,7 @@ fn verify_password(password: &str, password_hash: &str) -> bool {
     match bcrypt::verify(password, password_hash) {
         Ok(result) => result,
         Err(e) => {
-            tracing::error!(
-                "Password verification error: hash may be corrupted - {}",
-                e
-            );
+            tracing::error!("Password verification error: hash may be corrupted - {}", e);
             false
         }
     }

@@ -140,7 +140,7 @@ impl CompressionMiddleware {
             return next.run(req).await;
         }
 
-        let algorithm = selected_algorithm.unwrap();
+        let algorithm = selected_algorithm.expect("algorithm should be selected");
         let response = next.run(req).await;
 
         if !self.should_compress(&response) {
@@ -231,53 +231,61 @@ impl CompressionMiddleware {
             return response;
         }
 
-        let compressed = match algorithm {
+        let compressed_data = match algorithm {
             CompressionAlgorithm::Gzip => self.compress_gzip(&bytes),
             CompressionAlgorithm::Deflate => self.compress_deflate(&bytes),
             CompressionAlgorithm::Brotli => self.compress_brotli(&bytes),
         };
 
-        info!(
-            "Compressed response: {} bytes -> {} bytes ({}%)",
-            bytes.len(),
-            compressed.len(),
-            ((compressed.len() as f64 / bytes.len() as f64) * 100.0).round()
-        );
+        match compressed_data {
+            Ok(compressed) => {
+                info!(
+                    "Compressed response: {} bytes -> {} bytes ({}%)",
+                    bytes.len(),
+                    compressed.len(),
+                    ((compressed.len() as f64 / bytes.len() as f64) * 100.0).round()
+                );
 
-        response.headers_mut().insert(
-            header::CONTENT_ENCODING,
-            HeaderValue::from_static(algorithm.to_header_value()),
-        );
-        response.headers_mut().insert(
-            header::CONTENT_LENGTH,
-            HeaderValue::from_str(&compressed.len().to_string()).unwrap(),
-        );
-        response.headers_mut().remove(header::ETAG);
+                response.headers_mut().insert(
+                    header::CONTENT_ENCODING,
+                    HeaderValue::from_static(algorithm.to_header_value()),
+                );
+                if let Ok(content_length) = HeaderValue::from_str(&compressed.len().to_string()) {
+                    response.headers_mut().insert(header::CONTENT_LENGTH, content_length);
+                }
+                response.headers_mut().remove(header::ETAG);
 
-        *response.body_mut() = Body::from(compressed);
-        response
+                *response.body_mut() = Body::from(compressed);
+                response
+            }
+            Err(e) => {
+                tracing::error!("Compression failed: {}", e);
+                *response.body_mut() = Body::from(bytes);
+                response
+            }
+        }
     }
 
-    fn compress_gzip(&self, data: &[u8]) -> Vec<u8> {
+    fn compress_gzip(&self, data: &[u8]) -> Result<Vec<u8>, std::io::Error> {
         let mut encoder = GzEncoder::new(Vec::new(), Compression::default());
-        encoder.write_all(data).unwrap();
-        encoder.finish().unwrap()
+        encoder.write_all(data)?;
+        encoder.finish()
     }
 
-    fn compress_deflate(&self, data: &[u8]) -> Vec<u8> {
+    fn compress_deflate(&self, data: &[u8]) -> Result<Vec<u8>, std::io::Error> {
         let mut encoder = DeflateEncoder::new(Vec::new(), Compression::default());
-        encoder.write_all(data).unwrap();
-        encoder.finish().unwrap()
+        encoder.write_all(data)?;
+        encoder.finish()
     }
 
-    fn compress_brotli(&self, data: &[u8]) -> Vec<u8> {
+    fn compress_brotli(&self, data: &[u8]) -> Result<Vec<u8>, std::io::Error> {
         let mut result = Vec::new();
         {
             let mut compressor = CompressorWriter::new(&mut result, data.len(), 11, 22);
-            compressor.write_all(data).unwrap();
-            compressor.flush().unwrap();
+            compressor.write_all(data)?;
+            compressor.flush()?;
         }
-        result
+        Ok(result)
     }
 }
 
@@ -328,9 +336,9 @@ mod tests {
         let middleware = CompressionMiddleware::new(config);
 
         let test_data = b"Hello, world! This is a test string for compression.";
-        let gzip_result = middleware.compress_gzip(test_data);
-        let deflate_result = middleware.compress_deflate(test_data);
-        let brotli_result = middleware.compress_brotli(test_data);
+        let gzip_result = middleware.compress_gzip(test_data).expect("gzip compression failed");
+        let deflate_result = middleware.compress_deflate(test_data).expect("deflate compression failed");
+        let brotli_result = middleware.compress_brotli(test_data).expect("brotli compression failed");
 
         assert!(!gzip_result.is_empty());
         assert!(!deflate_result.is_empty());
@@ -346,7 +354,7 @@ mod tests {
             .header(header::CONTENT_TYPE, "image/png")
             .header(header::CONTENT_LENGTH, "10000")
             .body(Body::empty())
-            .unwrap();
+            .expect("failed to build response");
 
         assert!(!middleware.should_compress(&response));
     }
@@ -360,7 +368,7 @@ mod tests {
             .header(header::CONTENT_TYPE, "application/json")
             .header(header::CONTENT_LENGTH, "2000")
             .body(Body::empty())
-            .unwrap();
+            .expect("failed to build response");
 
         assert!(middleware.should_compress(&response));
     }

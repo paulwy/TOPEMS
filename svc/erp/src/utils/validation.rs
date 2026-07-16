@@ -5,11 +5,14 @@ use lazy_static::lazy_static;
 use regex::Regex;
 
 lazy_static! {
-    static ref EMAIL_REGEX: Regex =
-        Regex::new(r"^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$").unwrap();
-    static ref PHONE_REGEX: Regex = Regex::new(r"^1[3-9]\d{9}$").unwrap();
-    static ref EMPLOYEE_NUMBER_REGEX: Regex = Regex::new(r"^[A-Za-z0-9_]{2,20}$").unwrap();
-    static ref ASSET_NUMBER_REGEX: Regex = Regex::new(r"^[A-Za-z0-9_-]{2,25}$").unwrap();
+    static ref EMAIL_REGEX: Regex = Regex::new(r"^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$")
+        .expect("invalid EMAIL_REGEX pattern");
+    static ref PHONE_REGEX: Regex =
+        Regex::new(r"^1[3-9]\d{9}$").expect("invalid PHONE_REGEX pattern");
+    static ref EMPLOYEE_NUMBER_REGEX: Regex =
+        Regex::new(r"^[A-Za-z0-9_]{2,20}$").expect("invalid EMPLOYEE_NUMBER_REGEX pattern");
+    static ref ASSET_NUMBER_REGEX: Regex =
+        Regex::new(r"^[A-Za-z0-9_-]{2,25}$").expect("invalid ASSET_NUMBER_REGEX pattern");
 }
 
 #[allow(dead_code)]
