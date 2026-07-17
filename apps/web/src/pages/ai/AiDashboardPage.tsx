@@ -5,8 +5,7 @@
  * @path /ai/dashboard
  */
 
-import React, { useMemo, useCallback } from 'react';
-import { useQuery } from '@tanstack/react-query';
+import React, { useState, useMemo, useCallback } from 'react';
 import {
   Sparkles,
   MessageSquare,
@@ -31,7 +30,6 @@ import { useNavigate } from 'react-router-dom';
 import { PageContainer } from '@/components/common';
 import { AI_PATHS } from '@/modules/ai/config';
 import { useNotificationStore } from '@/store';
-import { aiApi } from '@/api/ai';
 
 interface StatCardProps {
   id: string;
@@ -271,12 +269,7 @@ const RecentItem: React.FC<RecentItemProps> = ({ title, description, status, typ
       <Box sx={{ flex: 1, minWidth: 0 }}>
         <Typography
           variant='body2'
-          sx={{
-            fontWeight: 500,
-            textOverflow: 'ellipsis',
-            overflow: 'hidden',
-            whiteSpace: 'nowrap',
-          }}
+          sx={{ fontWeight: 500, textOverflow: 'ellipsis', overflow: 'hidden', whiteSpace: 'nowrap' }}
         >
           {title}
         </Typography>
@@ -287,7 +280,9 @@ const RecentItem: React.FC<RecentItemProps> = ({ title, description, status, typ
           {description}
         </Typography>
       </Box>
-      <CircleDot style={{ width: 12, height: 12, color: statusColors[status] }} />
+      <CircleDot
+        style={{ width: 12, height: 12, color: statusColors[status] }}
+      />
     </Box>
   );
 };
@@ -323,13 +318,10 @@ const FeatureCard: React.FC<FeatureCardProps> = ({
             flexShrink: 0,
           }}
         >
-          {React.cloneElement(
-            icon as React.ReactElement<{ size?: number; style?: React.CSSProperties }>,
-            {
-              size: 28,
-              style: { color },
-            }
-          )}
+          {React.cloneElement(icon as React.ReactElement<{ size?: number; style?: React.CSSProperties }>, {
+            size: 28,
+            style: { color },
+          })}
         </Box>
         <Box sx={{ flex: 1 }}>
           <Typography
@@ -444,45 +436,16 @@ const MiniChart: React.FC<{ data: number[]; color: string }> = ({ data, color })
 export const AiDashboardPage: React.FC = () => {
   const navigate = useNavigate();
   const addNotification = useNotificationStore((state) => state.addNotification);
+  const [loading, setLoading] = useState(false);
   const theme = useTheme();
   const isMobile = useMediaQuery(theme.breakpoints.down('sm'));
 
-  const { data: dashboardStats, isLoading: loading } = useQuery({
-    queryKey: ['ai-dashboard'],
-    queryFn: async () => {
-      const response = await aiApi.getDashboardStats();
-      if (response.success && response.data) {
-        return response.data;
-      }
-      return null;
-    },
-    staleTime: 5 * 60 * 1000,
-  });
-
-  const { data: activityTrend } = useQuery({
-    queryKey: ['ai-activity-trend'],
-    queryFn: async () => {
-      const response = await aiApi.getActivityTrend({ days: 7, group_by: 'day' });
-      if (response.success && response.data) {
-        return response.data;
-      }
-      return null;
-    },
-    staleTime: 5 * 60 * 1000,
-  });
-
-  const stats: StatCardProps[] = useMemo(() => {
-    if (!dashboardStats) return [];
-    const formatTokens = (tokens: number) => {
-      if (tokens >= 1_000_000) return `${(tokens / 1_000_000).toFixed(1)}M`;
-      if (tokens >= 1_000) return `${(tokens / 1_000).toFixed(1)}K`;
-      return tokens.toString();
-    };
-    return [
+  const stats: StatCardProps[] = useMemo(
+    () => [
       {
         id: 'chat-count',
         title: '对话次数',
-        value: dashboardStats.total_conversations.toLocaleString(),
+        value: '1,256',
         icon: <MessageSquare size={22} />,
         change: 23,
         changeLabel: '较上月',
@@ -492,7 +455,7 @@ export const AiDashboardPage: React.FC = () => {
       {
         id: 'doc-analysis',
         title: '文档分析',
-        value: dashboardStats.total_documents.toLocaleString(),
+        value: '89',
         icon: <FileText size={22} />,
         change: 15,
         changeLabel: '较上月',
@@ -501,43 +464,44 @@ export const AiDashboardPage: React.FC = () => {
       },
       {
         id: 'code-gen',
-        title: '消息总数',
-        value: dashboardStats.total_messages.toLocaleString(),
+        title: '代码生成',
+        value: '456',
         icon: <Code size={22} />,
         change: 45,
         changeLabel: '较上月',
         color: 'success',
-        onClick: () => navigate(AI_PATHS.chat),
+        onClick: () => navigate(AI_PATHS.code),
       },
       {
         id: 'token-usage',
         title: 'Token消耗',
-        value: formatTokens(dashboardStats.total_tokens),
+        value: '12.5M',
         icon: <Zap size={22} />,
         change: 8,
         changeLabel: '较上月',
         color: 'warning',
       },
       {
-        id: 'active-users',
-        title: '活跃用户',
-        value: dashboardStats.active_users.toLocaleString(),
-        icon: <Users size={22} />,
-        change: 12,
-        changeLabel: '较上月',
+        id: 'avg-response',
+        title: '平均响应',
+        value: '1.2s',
+        icon: <Clock size={22} />,
+        change: -0.3,
+        changeLabel: '秒下降',
         color: 'secondary',
       },
       {
         id: 'satisfaction',
         title: '用户满意度',
-        value: `${dashboardStats.satisfaction_rate}%`,
+        value: '96.5%',
         icon: <Sparkles size={22} />,
         change: 2.1,
         changeLabel: '%提升',
         color: 'success',
       },
-    ];
-  }, [navigate, dashboardStats]);
+    ],
+    [navigate]
+  );
 
   const quickActions: QuickActionProps[] = useMemo(
     () => [
@@ -666,13 +630,14 @@ export const AiDashboardPage: React.FC = () => {
   );
 
   const handleRefresh = useCallback(() => {
-    addNotification({ title: '刷新成功', message: '数据已更新', type: 'success' });
+    setLoading(true);
+    setTimeout(() => {
+      setLoading(false);
+      addNotification({ title: '刷新成功', message: '数据已更新', type: 'success' });
+    }, 500);
   }, [addNotification]);
 
-  const usageData = useMemo(() => {
-    if (!activityTrend) return [120, 150, 130, 180, 160, 200, 190];
-    return activityTrend.map((item) => item.conversations);
-  }, [activityTrend]);
+  const usageData = [120, 150, 130, 180, 160, 200, 190];
 
   return (
     <PageContainer
