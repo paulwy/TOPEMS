@@ -185,18 +185,13 @@ const RsReviewPage: React.FC = () => {
 
   const handleApprove = async (review: Review) => {
     try {
-      queryClient.setQueryData(
-        [...QUERY_KEYS.RD.REVIEWS, { page, rowsPerPage, searchTerm, statusFilter }],
-        (oldData: { reviews: Review[]; total: number } | undefined) => {
-          if (!oldData) return oldData;
-          return {
-            ...oldData,
-            reviews: oldData.reviews.map((r) =>
-              r.id === review.id ? { ...r, status: 'approved' } : r
-            ),
-          };
-        }
-      );
+      queryClient.setQueryData([...QUERY_KEYS.RD.REVIEWS, { page, rowsPerPage, searchTerm, statusFilter }], (oldData: { reviews: Review[]; total: number } | undefined) => {
+        if (!oldData) return oldData;
+        return {
+          ...oldData,
+          reviews: oldData.reviews.map((r) => (r.id === review.id ? { ...r, status: 'approved' } : r)),
+        };
+      });
       addNotification({
         type: 'success',
         title: '操作成功',
@@ -209,18 +204,13 @@ const RsReviewPage: React.FC = () => {
 
   const handleReject = async (review: Review) => {
     try {
-      queryClient.setQueryData(
-        [...QUERY_KEYS.RD.REVIEWS, { page, rowsPerPage, searchTerm, statusFilter }],
-        (oldData: { reviews: Review[]; total: number } | undefined) => {
-          if (!oldData) return oldData;
-          return {
-            ...oldData,
-            reviews: oldData.reviews.map((r) =>
-              r.id === review.id ? { ...r, status: 'rejected' } : r
-            ),
-          };
-        }
-      );
+      queryClient.setQueryData([...QUERY_KEYS.RD.REVIEWS, { page, rowsPerPage, searchTerm, statusFilter }], (oldData: { reviews: Review[]; total: number } | undefined) => {
+        if (!oldData) return oldData;
+        return {
+          ...oldData,
+          reviews: oldData.reviews.map((r) => (r.id === review.id ? { ...r, status: 'rejected' } : r)),
+        };
+      });
       addNotification({
         type: 'success',
         title: '操作成功',

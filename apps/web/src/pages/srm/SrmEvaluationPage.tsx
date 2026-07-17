@@ -52,7 +52,9 @@ const SrmEvaluationPage: React.FC = () => {
         srmApi.listSuppliers(),
       ]);
 
-      const supplierMap = new Map((supplierResponse.data || []).map((s) => [s.id, s.name]));
+      const supplierMap = new Map(
+        (supplierResponse.data || []).map((s) => [s.id, s.name])
+      );
 
       if (evalResponse.success && evalResponse.data) {
         return evalResponse.data.map((evalItem) => ({

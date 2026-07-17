@@ -368,18 +368,10 @@ const PmResourcePage: React.FC = () => {
     [projects, selectedProject, selectedType, selectedStatus]
   );
 
-  const availableCount = filteredResources.filter(
-    (r: ProjectResource) => r.status === 'available'
-  ).length;
+  const availableCount = filteredResources.filter((r: ProjectResource) => r.status === 'available').length;
   const inUseCount = filteredResources.filter((r: ProjectResource) => r.status === 'in_use').length;
-  const totalHours = filteredResources.reduce(
-    (sum: number, r: ProjectResource) => sum + (r.actual_hours || 0),
-    0
-  );
-  const totalCost = filteredResources.reduce(
-    (sum: number, r: ProjectResource) => sum + (r.actual_cost || 0),
-    0
-  );
+  const totalHours = filteredResources.reduce((sum: number, r: ProjectResource) => sum + (r.actual_hours || 0), 0);
+  const totalCost = filteredResources.reduce((sum: number, r: ProjectResource) => sum + (r.actual_cost || 0), 0);
 
   const handleRefresh = () => {
     queryClient.invalidateQueries({ queryKey: QUERY_KEYS.PM.PROJECTS });

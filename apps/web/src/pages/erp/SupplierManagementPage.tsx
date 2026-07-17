@@ -64,21 +64,9 @@ const SupplierManagementPage: React.FC = () => {
   const queryClient = useQueryClient();
   const { addNotification } = useNotificationStore();
 
-  const queryKey = [
-    QUERY_KEYS.ERP.SUPPLIERS,
-    searchTerm,
-    statusFilter,
-    categoryFilter,
-    currentPage,
-    pageSize,
-  ];
+  const queryKey = [QUERY_KEYS.ERP.SUPPLIERS, searchTerm, statusFilter, categoryFilter, currentPage, pageSize];
 
-  const { data: suppliersResponse, isLoading } = useQuery<{
-    suppliers: Supplier[];
-    total: number;
-    page: number;
-    pagesize: number;
-  }>({
+  const { data: suppliersResponse, isLoading } = useQuery<{ suppliers: Supplier[]; total: number; page: number; pagesize: number }>({
     queryKey,
     queryFn: async () => {
       const params: Record<string, unknown> = {
@@ -163,10 +151,7 @@ const SupplierManagementPage: React.FC = () => {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (selectedSupplier) {
-      await updateMutation.mutateAsync({
-        id: selectedSupplier.id,
-        data: formData as UpdateSupplierRequest,
-      });
+      await updateMutation.mutateAsync({ id: selectedSupplier.id, data: formData as UpdateSupplierRequest });
     } else {
       await createMutation.mutateAsync(formData);
     }

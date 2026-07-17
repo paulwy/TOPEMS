@@ -157,12 +157,7 @@ export const QUERY_KEYS = {
     PURCHASE_ORDERS: ['erp', 'purchase-orders'],
     FINANCIAL_REPORTS: {
       BALANCE_SHEET: (period: string) => ['erp', 'financial-reports', 'balance-sheet', period],
-      INCOME_STATEMENT: (period: string) => [
-        'erp',
-        'financial-reports',
-        'income-statement',
-        period,
-      ],
+      INCOME_STATEMENT: (period: string) => ['erp', 'financial-reports', 'income-statement', period],
       CASH_FLOW: (period: string) => ['erp', 'financial-reports', 'cash-flow', period],
     },
   },
