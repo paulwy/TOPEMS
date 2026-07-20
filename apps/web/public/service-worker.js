@@ -1,6 +1,8 @@
-const CACHE_NAME = 'topems-cache-v2';
-const RUNTIME_CACHE = 'topems-runtime-v1';
-const API_CACHE = 'topems-api-v1';
+const CACHE_NAME = 'topems-cache-v3';
+const RUNTIME_CACHE = 'topems-runtime-v2';
+const API_CACHE = 'topems-api-v2';
+const IMAGE_CACHE = 'topems-images-v1';
+const FONT_CACHE = 'topems-fonts-v1';
 
 const PRECACHE_ASSETS = [
   '/',
@@ -10,11 +12,19 @@ const PRECACHE_ASSETS = [
   '/offline.html',
 ];
 
-const ASSET_EXTENSIONS = ['.js', '.css', '.png', '.jpg', '.jpeg', '.svg', '.woff', '.woff2', '.ttf', '.eot'];
+const ASSET_EXTENSIONS = ['.js', '.css'];
+const IMAGE_EXTENSIONS = ['.png', '.jpg', '.jpeg', '.svg', '.webp', '.gif'];
+const FONT_EXTENSIONS = ['.woff', '.woff2', '.ttf', '.eot'];
 
-const MAX_CACHE_SIZE = 50;
-const MAX_API_CACHE_SIZE = 20;
+const MAX_CACHE_SIZE = 100;
+const MAX_API_CACHE_SIZE = 50;
+const MAX_IMAGE_CACHE_SIZE = 30;
+const MAX_FONT_CACHE_SIZE = 20;
 const API_CACHE_TTL = 5 * 60 * 1000;
+const IMAGE_CACHE_TTL = 24 * 60 * 60 * 1000;
+const FONT_CACHE_TTL = 7 * 24 * 60 * 60 * 1000;
+
+const STALE_WHILE_REVALIDATE_PATHS = ['/api/health', '/api/auth/me'];
 
 self.addEventListener('install', (event) => {
   event.waitUntil(
@@ -27,12 +37,13 @@ self.addEventListener('install', (event) => {
 });
 
 self.addEventListener('activate', (event) => {
+  const currentCaches = [CACHE_NAME, RUNTIME_CACHE, API_CACHE, IMAGE_CACHE, FONT_CACHE];
+  
   event.waitUntil(
     caches.keys().then((cacheNames) => {
       return Promise.all(
         cacheNames.filter((name) => 
-          name.startsWith('topems-') && 
-          !(name === CACHE_NAME || name === RUNTIME_CACHE || name === API_CACHE)
+          name.startsWith('topems-') && !currentCaches.includes(name)
         ).map((name) => {
           return caches.delete(name);
         })
@@ -57,7 +68,21 @@ self.addEventListener('fetch', (event) => {
   }
   
   if (url.pathname.startsWith('/api/')) {
-    event.respondWith(networkFirstWithAPICache(request));
+    if (STALE_WHILE_REVALIDATE_PATHS.some(path => url.pathname.startsWith(path))) {
+      event.respondWith(staleWhileRevalidate(request));
+    } else {
+      event.respondWith(networkFirstWithAPICache(request));
+    }
+    return;
+  }
+  
+  if (IMAGE_EXTENSIONS.some(ext => url.pathname.endsWith(ext))) {
+    event.respondWith(cacheFirstWithTTL(request, IMAGE_CACHE, MAX_IMAGE_CACHE_SIZE, IMAGE_CACHE_TTL));
+    return;
+  }
+  
+  if (FONT_EXTENSIONS.some(ext => url.pathname.endsWith(ext))) {
+    event.respondWith(cacheFirstWithTTL(request, FONT_CACHE, MAX_FONT_CACHE_SIZE, FONT_CACHE_TTL));
     return;
   }
   
@@ -83,9 +108,35 @@ self.addEventListener('message', (event) => {
     }
   }
   
+  if (event.data && event.data.type === 'CACHE_IMAGES') {
+    const { urls } = event.data;
+    if (urls && Array.isArray(urls)) {
+      caches.open(IMAGE_CACHE).then((cache) => {
+        urls.forEach(url => {
+          cache.add(url).catch(() => {});
+        });
+      });
+    }
+  }
+  
   if (event.data && event.data.type === 'CLEAR_API_CACHE') {
     caches.delete(API_CACHE).then(() => {
       event.ports[0]?.postMessage({ success: true });
+    });
+  }
+  
+  if (event.data && event.data.type === 'PRECACHE_ASSETS') {
+    const { assets } = event.data;
+    if (assets && Array.isArray(assets)) {
+      caches.open(CACHE_NAME).then((cache) => {
+        cache.addAll(assets).catch(() => {});
+      });
+    }
+  }
+  
+  if (event.data && event.data.type === 'GET_CACHE_STATS') {
+    getCacheStats().then(stats => {
+      event.ports[0]?.postMessage(stats);
     });
   }
 });
@@ -112,6 +163,48 @@ async function cacheFirstWithRuntime(request) {
   }
 }
 
+async function cacheFirstWithTTL(request, cacheName, maxSize, ttl) {
+  const cachedResponse = await caches.match(request);
+  if (cachedResponse) {
+    const cachedData = await cachedResponse.json().catch(() => ({ timestamp: 0 }));
+    if (!cachedData.timestamp || Date.now() - cachedData.timestamp < ttl) {
+      return cachedResponse;
+    }
+  }
+  
+  try {
+    const networkResponse = await fetch(request);
+    if (networkResponse && networkResponse.status === 200) {
+      const cache = await caches.open(cacheName);
+      await trimCache(cacheName, maxSize);
+      
+      const responseToCache = networkResponse.clone();
+      const blob = await responseToCache.blob();
+      
+      cache.put(request, new Response(blob, {
+        headers: networkResponse.headers,
+      }));
+      
+      const metaCache = await caches.open(`${cacheName}-meta`);
+      metaCache.put(request.url, new Response(JSON.stringify({
+        timestamp: Date.now(),
+        ttl,
+      }), {
+        headers: { 'Content-Type': 'application/json' },
+      }));
+    }
+    return networkResponse;
+  } catch (error) {
+    if (cachedResponse) {
+      return cachedResponse;
+    }
+    return new Response('Offline', {
+      status: 503,
+      headers: { 'Content-Type': 'text/plain' },
+    });
+  }
+}
+
 async function networkFirstWithAPICache(request) {
   try {
     const networkResponse = await fetch(request);
@@ -121,6 +214,7 @@ async function networkFirstWithAPICache(request) {
       await trimCache(API_CACHE, MAX_API_CACHE_SIZE);
       const responseToCache = networkResponse.clone();
       const clonedResponse = responseToCache.clone();
+      
       clonedResponse.json().then((data) => {
         cache.put(request, new Response(JSON.stringify({
           data,
@@ -137,7 +231,7 @@ async function networkFirstWithAPICache(request) {
   } catch (error) {
     const cachedResponse = await caches.match(request);
     if (cachedResponse) {
-      const cachedData = await cachedResponse.json();
+      const cachedData = await cachedResponse.json().catch(() => ({ timestamp: 0, data: null }));
       if (cachedData.timestamp && Date.now() - cachedData.timestamp < cachedData.ttl) {
         return new Response(JSON.stringify(cachedData.data), {
           status: 200,
@@ -160,9 +254,8 @@ async function staleWhileRevalidate(request) {
   const networkPromise = fetch(request).then((networkResponse) => {
     if (networkResponse && networkResponse.status === 200) {
       const responseToCache = networkResponse.clone();
-      const cache = caches.open(CACHE_NAME);
-      cache.then((c) => {
-        c.put(request, responseToCache);
+      caches.open(CACHE_NAME).then((cache) => {
+        cache.put(request, responseToCache);
       });
     }
     return networkResponse;
@@ -180,14 +273,51 @@ async function trimCache(cacheName, maxSize) {
   const keys = await cache.keys();
   
   if (keys.length > maxSize) {
-    const sortedKeys = keys.sort((a, b) => {
-      const aUrl = new URL(a.url);
-      const bUrl = new URL(b.url);
-      return aUrl.pathname.localeCompare(bUrl.pathname);
-    });
+    const keyData = await Promise.all(keys.map(async (key) => {
+      const response = await cache.match(key);
+      const metaCache = await caches.open(`${cacheName}-meta`);
+      const metaResponse = await metaCache.match(key.url);
+      let timestamp = Date.now();
+      
+      if (metaResponse) {
+        const metaData = await metaResponse.json().catch(() => ({ timestamp: Date.now() }));
+        timestamp = metaData.timestamp || Date.now();
+      } else if (response) {
+        const dateHeader = response.headers.get('date');
+        if (dateHeader) {
+          timestamp = new Date(dateHeader).getTime();
+        }
+      }
+      
+      return { key, timestamp };
+    }));
     
-    for (let i = 0; i < keys.length - maxSize; i++) {
-      await cache.delete(sortedKeys[i]);
+    keyData.sort((a, b) => a.timestamp - b.timestamp);
+    
+    for (let i = 0; i < keyData.length - maxSize; i++) {
+      await cache.delete(keyData[i].key);
+      const metaCache = await caches.open(`${cacheName}-meta`);
+      await metaCache.delete(keyData[i].key.url);
     }
   }
+}
+
+async function getCacheStats() {
+  const cacheNames = [CACHE_NAME, RUNTIME_CACHE, API_CACHE, IMAGE_CACHE, FONT_CACHE];
+  const stats = {};
+  
+  for (const name of cacheNames) {
+    const cache = await caches.open(name);
+    const keys = await cache.keys();
+    stats[name] = {
+      size: keys.length,
+      maxSize: name === CACHE_NAME ? MAX_CACHE_SIZE :
+               name === RUNTIME_CACHE ? MAX_CACHE_SIZE :
+               name === API_CACHE ? MAX_API_CACHE_SIZE :
+               name === IMAGE_CACHE ? MAX_IMAGE_CACHE_SIZE :
+               MAX_FONT_CACHE_SIZE,
+    };
+  }
+  
+  return stats;
 }

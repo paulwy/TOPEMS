@@ -1,0 +1,147 @@
+// V24.0 模块 C: WMS（仓储管理）gRPC 服务定义
+// 提供库存/库位/出入库单据的跨服务查询接口
+
+syntax = "proto3";
+
+package topems.wms.v1;
+
+option go_package = "topems/wms/v1;wmsv1";
+option java_package = "topems.wms.v1";
+
+import "google/protobuf/timestamp.proto";
+
+// 库存记录
+message Inventory {
+  string id = 1;
+  string tenant_id = 2;
+  string warehouse_id = 3;
+  string warehouse_code = 4;
+  string location_id = 5;
+  string location_code = 6;
+  string material_id = 7;
+  string material_code = 8;
+  double quantity = 9;
+  double locked_quantity = 10;
+  double available_quantity = 11;
+  string batch_no = 12;
+  string status = 13; // available / locked / frozen / expired
+  google.protobuf.Timestamp updated_at = 14;
+}
+
+// 仓库
+message Warehouse {
+  string id = 1;
+  string code = 2;
+  string name = 3;
+  string tenant_id = 4;
+  string type = 5; // raw_material / finished_goods / semi_finished / returns
+  bool is_active = 6;
+}
+
+// 库位
+message Location {
+  string id = 1;
+  string code = 2;
+  string warehouse_id = 3;
+  string tenant_id = 4;
+  string zone = 5;
+  string row = 6;
+  string bay = 7;
+  string level = 8;
+  bool is_active = 9;
+}
+
+// 出库单
+message OutboundOrder {
+  string id = 1;
+  string order_no = 2;
+  string tenant_id = 3;
+  string warehouse_id = 4;
+  string type = 5; // sales / production / transfer / scrap
+  string status = 6; // draft / picking / picked / shipping / closed
+  google.protobuf.Timestamp order_date = 7;
+}
+
+// 入库单
+message InboundOrder {
+  string id = 1;
+  string order_no = 2;
+  string tenant_id = 3;
+  string warehouse_id = 4;
+  string type = 5; // purchase / production / transfer / returns
+  string status = 6; // draft / receiving / received / closed
+  google.protobuf.Timestamp order_date = 7;
+}
+
+// 请求/响应消息
+message GetInventoryRequest {
+  string inventory_id = 1;
+}
+
+message QueryInventoryRequest {
+  string tenant_id = 1;
+  string warehouse_id = 2;
+  string material_id = 3;
+  string location_id = 4;
+  string batch_no = 5;
+  int32 page = 6;
+  int32 page_size = 7;
+}
+
+message QueryInventoryResponse {
+  repeated Inventory items = 1;
+  int32 total = 2;
+  int32 page = 3;
+  int32 page_size = 4;
+}
+
+message CheckStockRequest {
+  string tenant_id = 1;
+  string material_id = 2;
+  string warehouse_id = 3;
+}
+
+message CheckStockResponse {
+  string material_id = 1;
+  double total_quantity = 2;
+  double available_quantity = 3;
+  double locked_quantity = 4;
+  bool sufficient = 5;
+}
+
+message GetWarehouseRequest {
+  string warehouse_id = 1;
+}
+
+message ListWarehousesRequest {
+  string tenant_id = 1;
+  bool include_inactive = 2;
+}
+
+message ListWarehousesResponse {
+  repeated Warehouse warehouses = 1;
+}
+
+message GetOutboundOrderRequest {
+  string order_id = 1;
+}
+
+message GetInboundOrderRequest {
+  string order_id = 1;
+}
+
+// WMS 服务
+service WmsService {
+  // 库存查询
+  rpc GetInventory(GetInventoryRequest) returns (Inventory);
+  rpc QueryInventory(QueryInventoryRequest) returns (QueryInventoryResponse);
+  rpc CheckStock(CheckStockRequest) returns (CheckStockResponse);
+
+  // 仓库与库位
+  rpc GetWarehouse(GetWarehouseRequest) returns (Warehouse);
+  rpc ListWarehouses(ListWarehousesRequest) returns (ListWarehousesResponse);
+
+  // 单据查询
+  rpc GetOutboundOrder(GetOutboundOrderRequest) returns (OutboundOrder);
+  rpc GetInboundOrder(GetInboundOrderRequest) returns (InboundOrder);
+}

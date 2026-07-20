@@ -39,6 +39,7 @@ export const ServiceStatusCard: React.FC<ServiceStatusCardProps> = ({
 
   return (
     <Box
+      className='service-status-card'
       sx={{
         padding: 1.5,
         borderRadius: 3,

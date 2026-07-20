@@ -1,0 +1,117 @@
+// V24.0 模块 C: IAM（身份与访问管理）gRPC 服务定义
+// 提供 RPC 接口用于跨服务获取用户/角色/权限信息
+
+syntax = "proto3";
+
+package topems.iam.v1;
+
+option go_package = "topems/iam/v1;iamv1";
+option java_package = "topems.iam.v1";
+
+import "google/protobuf/timestamp.proto";
+
+// 用户信息
+message User {
+  string id = 1;
+  string username = 2;
+  string email = 3;
+  string display_name = 4;
+  string tenant_id = 5;
+  repeated string roles = 6;
+  repeated string permissions = 7;
+  bool is_active = 8;
+  google.protobuf.Timestamp created_at = 9;
+  google.protobuf.Timestamp updated_at = 10;
+}
+
+// 角色信息
+message Role {
+  string id = 1;
+  string code = 2;
+  string name = 3;
+  string tenant_id = 4;
+  repeated string permissions = 5;
+  bool is_system = 6;
+}
+
+// 权限信息
+message Permission {
+  string id = 1;
+  string code = 2;
+  string name = 3;
+  string module = 4;
+  string action = 5;
+  string scope = 6; // tenant / department / self
+}
+
+// 租户信息
+message Tenant {
+  string id = 1;
+  string code = 2;
+  string name = 3;
+  string plan = 4; // starter / business / enterprise
+  string status = 5; // active / suspended / expired
+  google.protobuf.Timestamp created_at = 6;
+}
+
+// 请求消息
+message GetUserRequest {
+  string user_id = 1;
+  bool include_permissions = 2;
+}
+
+message GetUserByUsernameRequest {
+  string username = 1;
+  string tenant_id = 2;
+  bool include_permissions = 3;
+}
+
+message ListUsersRequest {
+  string tenant_id = 1;
+  int32 page = 2;
+  int32 page_size = 3;
+  string keyword = 4;
+  bool include_inactive = 5;
+}
+
+message ListUsersResponse {
+  repeated User users = 1;
+  int32 total = 2;
+  int32 page = 3;
+  int32 page_size = 4;
+}
+
+message CheckPermissionRequest {
+  string user_id = 1;
+  string permission_code = 2;
+  string resource_id = 3;
+}
+
+message CheckPermissionResponse {
+  bool allowed = 1;
+  string reason = 2;
+}
+
+message ValidateTokenRequest {
+  string token = 1;
+}
+
+message ValidateTokenResponse {
+  bool valid = 1;
+  User user = 2;
+  string expires_at = 3;
+}
+
+// IAM 服务
+service IamService {
+  // 获取用户信息
+  rpc GetUser(GetUserRequest) returns (User);
+  // 按用户名获取用户
+  rpc GetUserByUsername(GetUserByUsernameRequest) returns (User);
+  // 列出租户用户
+  rpc ListUsers(ListUsersRequest) returns (ListUsersResponse);
+  // 校验权限
+  rpc CheckPermission(CheckPermissionRequest) returns (CheckPermissionResponse);
+  // 校验 JWT Token
+  rpc ValidateToken(ValidateTokenRequest) returns (ValidateTokenResponse);
+}

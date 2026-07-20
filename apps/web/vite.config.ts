@@ -8,15 +8,60 @@ import type { IncomingMessage, ServerResponse } from 'http';
 // Deployment mode: 'module-federation' | 'static' | 'hybrid'
 const DEPLOYMENT_MODE = process.env.VITE_DEPLOYMENT_MODE || 'module-federation';
 
-// Remote entry URL for Module Federation
-const getRemoteEntryUrl = () => {
+/**
+ * 从环境变量读取单个 remote 的 entry URL
+ *
+ * 多 remote 配置约定：
+ *   VITE_REMOTE_<NAME_UPPER>=https://host/remoteEntry.js
+ *
+ * 生产环境注入示例：
+ *   VITE_REMOTE_TOPEMS_CORE=https://core.topems.com/remoteEntry.js
+ *   VITE_REMOTE_TOPEMS_ERP=https://erp.topems.com/remoteEntry.js
+ *   VITE_REMOTE_TOPEMS_HRM=https://hrm.topems.com/remoteEntry.js
+ *   ...
+ *
+ * 完整模块清单与运行时配置见 apps/web/src/microfrontend/config.ts
+ * （REMOTE_MODULES 中定义了所有可启用的业务域模块）
+ */
+const getRemoteEntry = (name: string, defaultValue: string): string => {
   const env = loadEnv('', process.cwd(), '');
   if (DEPLOYMENT_MODE === 'static') {
-    // In static mode, use local chunks instead of remote
-    return undefined;
+    // 静态部署模式下不加载任何 remote
+    return '';
   }
-  // Dynamic mode: use remote entry from env or default to localhost:3001/remoteEntry.js
-  return env.VITE_CORE_REMOTE_ENTRY || 'http://localhost:3001/remoteEntry.js';
+  const envKey = `VITE_REMOTE_${name.toUpperCase()}`;
+  return env[envKey] || defaultValue;
+};
+
+/**
+ * 构建 federation remotes 配置
+ *
+ * - module-federation / hybrid: 启用 topems_core 作为基础 remote
+ * - static: 关闭所有 remote（使用本地打包）
+ *
+ * 扩展多 remote：
+ *   1. 在 apps/web/src/microfrontend/config.ts 的 REMOTE_MODULES 中追加配置
+ *   2. 通过环境变量 VITE_REMOTE_TOPEMS_<NAME> 注入生产入口
+ *   3. 可按下方示例在返回对象中追加 remote（仅显式声明的 remote 会被 federation 编译期处理）
+ *
+ *   return {
+ *     topems_core: getRemoteEntry('topems_core', 'http://localhost:3001/remoteEntry.js'),
+ *     topems_erp:  getRemoteEntry('topems_erp',  'http://localhost:3002/remoteEntry.js'),
+ *     topems_hrm:  getRemoteEntry('topems_hrm',  'http://localhost:3003/remoteEntry.js'),
+ *     // ...
+ *   };
+ *
+ * 运行时动态加载（推荐生产环境使用）见
+ * apps/web/src/microfrontend/RemoteLoader.tsx
+ */
+const buildRemotes = (): Record<string, string> => {
+  if (DEPLOYMENT_MODE === 'static') {
+    return {};
+  }
+  // 保留 topems_core 作为基础 remote，向后兼容
+  return {
+    topems_core: getRemoteEntry('topems_core', 'http://localhost:3001/remoteEntry.js'),
+  };
 };
 
 const createServiceProxyConfig = (serviceName: string, target: string, skipRewrite = false) => ({
@@ -54,13 +99,22 @@ export default defineConfig({
        * - module-federation: 动态加载远程模块 (SaaS)
        * - static: 静态打包所有模块 (本地安装)
        * - hybrid: 核心静态 + 插件动态
+       *
+       * 多 remote 扩展：
+       * - 编译期声明的 remote 通过 buildRemotes() 返回
+       * - 运行时按需加载见 apps/web/src/microfrontend/RemoteLoader.tsx
+       * - 模块清单（业务域拆分、权限、预加载策略）见
+       *   apps/web/src/microfrontend/config.ts 的 REMOTE_MODULES
        */
-      remotes: DEPLOYMENT_MODE !== 'static' ? {
-        topems_core: getRemoteEntryUrl(),
-      } : {},
+      remotes: buildRemotes(),
       /**
        * Shared dependencies - These are shared between host and remotes
        * 配置为 singleton 模式避免重复加载
+       *
+       * 新增 shared 依赖（版本协商 + 降级）：
+       * - @tanstack/react-query: 业务模块共享 QueryClient
+       * - react-hook-form: 业务模块共享表单状态
+       * - zod: 业务模块共享 schema 验证
        */
       shared: {
         'react': {
@@ -119,6 +173,23 @@ export default defineConfig({
           singleton: true,
           requiredVersion: '^1.11.0',
           strictVersion: true,
+        },
+        '@tanstack/react-query': {
+          singleton: true,
+          requiredVersion: '^5.0.0',
+          strictVersion: true,
+        },
+        '@tanstack/react-query-devtools': {
+          singleton: true,
+          requiredVersion: '^5.0.0',
+        },
+        'react-hook-form': {
+          singleton: true,
+          requiredVersion: '^7.0.0',
+        },
+        'zod': {
+          singleton: true,
+          requiredVersion: '^3.0.0',
         },
       },
     }),

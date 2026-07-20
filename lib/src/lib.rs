@@ -14,16 +14,20 @@ pub mod database;
 pub mod embedding;
 pub mod error;
 pub mod event;
+pub mod feature_flag;
+#[cfg(feature = "grpc")]
+pub mod grpc;
 pub mod health;
 pub mod hrm;
-pub mod logging;
 pub mod layers;
+pub mod logging;
 pub mod messaging;
-pub mod middleware;
 pub mod metrics;
+pub mod middleware;
 pub mod migration;
 pub mod monitoring;
 pub mod notification;
+pub mod observability;
 pub mod ollama_client;
 pub mod performance;
 pub mod permission;
@@ -90,6 +94,7 @@ pub use config_center::{
 pub use cors::create_cors_layer;
 pub use database::{
     check_pool_health, create_database_pool, test_database_connection, HealthCheckResult,
+    ReadWriteConfig, ReadWritePool,
 };
 pub use error::{Result, TopemsError};
 pub use event::{
@@ -97,10 +102,13 @@ pub use event::{
     EventError, EventPublisher, EventResult, EventSubscriber, EventType,
     HrmDepartmentCreatedPayload, HrmDepartmentDeletedPayload, HrmDepartmentUpdatedPayload,
     HrmEmployeeCreatedPayload, HrmEmployeeUpdatedPayload, LimsInspectionAbnormalDetectedPayload,
-    LimsInspectionResultSubmittedPayload, LimsSampleRegisteredPayload, PmProjectCreatedPayload,
-    PmProjectUpdatedPayload, PmTaskCreatedPayload, PmTaskDeletedPayload, PmTaskUpdatedPayload,
-    PositionCreatedPayload, PositionDeletedPayload, PositionUpdatedPayload,
-    PermissionChangedPayload, QmsCorrectiveActionCreatedPayload, QmsInspectionCompletedPayload,
+    LimsInspectionResultSubmittedPayload, LimsSampleRegisteredPayload, PermissionChangedPayload,
+    PmProjectCreatedPayload, PmProjectUpdatedPayload, PmTaskCreatedPayload, PmTaskDeletedPayload,
+    PmTaskUpdatedPayload, PositionCreatedPayload, PositionDeletedPayload, PositionUpdatedPayload,
+    QmsCorrectiveActionCreatedPayload, QmsInspectionCompletedPayload,
+};
+pub use feature_flag::{
+    FeatureCondition, FeatureContext, FeatureFlag, FeatureFlagService, FeatureState,
 };
 pub use health::{
     build_health_response, check_http_health, create_health_router, create_metrics_router,
@@ -109,6 +117,7 @@ pub use health::{
     ServiceMonitor, SimpleHealthConfig, SystemMetrics,
 };
 pub use hrm::{AppState, PaginatedResult, PaginationQuery};
+pub use layers::{can_depend, module_layer, modules_by_layer, Layer};
 pub use logging::{
     create_log_filter, generate_request_id, generate_span_id, generate_trace_id, init_logging,
     JsonEventFormatter, LogAggregator, LogEntry, LogFormat, LogQuery, LogStats, TraceContext,
@@ -133,18 +142,16 @@ pub use performance::{
 };
 pub use permission::{
     check_any_module_permission, check_module_permission, check_resource_permission,
-    DataCondition, DataPermission, ModuleCode, ModulePermission, PermissionAction,
-    PermissionCacheStats, PermissionChangeType, PermissionMetadata, PermissionMetadataCache,
-    PermissionScope, PermissionTemplate, Position, ResourcePermission,
-    get_all_module_permissions, get_module_actions,
+    get_all_module_permissions, get_module_actions, DataCondition, DataPermission, ModuleCode,
+    ModulePermission, PermissionAction, PermissionCacheStats, PermissionChangeType,
+    PermissionMetadata, PermissionMetadataCache, PermissionScope, PermissionTemplate, Position,
+    ResourcePermission,
 };
 pub use permission_center::{check_permission_with_scope, PermissionCenterClient};
-pub use layers::{can_depend, module_layer, modules_by_layer, Layer};
 
 pub use middleware::{
-    department_middleware, require_department, require_module_active,
-    require_module_permission, require_permission, require_role, require_tenant_status,
-    tenant_middleware,
+    department_middleware, require_department, require_module_active, require_module_permission,
+    require_permission, require_role, require_tenant_status, tenant_middleware,
 };
 pub use query_optimizer::{
     suggest_query_optimization, BatchOperations, IndexRecommendation, NPlusOneDetector,
@@ -183,9 +190,9 @@ pub use service_config::{
     ValidationIssue, ValidationSeverity,
 };
 pub use service_discovery::{
-    LocalServiceRegistry, PortalServiceAggregator, ServiceCategory, ServiceDiscoveryClient,
-    ServiceHealthStatus, ServiceInfo, ServiceRegistryStatus,
-    ConsulServiceRegistrar, ConsulDiscoveryClient, SmartServiceClient, ServiceInstance,
+    ConsulDiscoveryClient, ConsulServiceRegistrar, LocalServiceRegistry, PortalServiceAggregator,
+    ServiceCategory, ServiceDiscoveryClient, ServiceHealthStatus, ServiceInfo, ServiceInstance,
+    ServiceRegistryStatus, SmartServiceClient,
 };
 pub use storage::{FileMetadata, LocalStorage, StorageConfig, StorageService};
 pub use telemetry::{
@@ -245,4 +252,29 @@ pub use compression::{CompressionAlgorithm, CompressionConfig, CompressionMiddle
 pub use saga::{
     InMemorySagaStore, PostgresSagaStore, SagaError, SagaInstance, SagaOrchestrator, SagaResult,
     SagaStatus, SagaStep, SagaStepDefinition, SagaStore, StepStatus,
+};
+
+// 可观测性聚合模块导出（SLO + 日志查询 + 告警分级）
+// 注意：AlertRule/AlertSeverity/LogQuery/LogEntry 与 monitoring/logging 模块重名，
+// 此处使用 Observability 前缀别名避免 E0252 重复定义错误。
+// 如需使用 observability 命名空间下的原始类型，可直接通过 `observability::` 路径访问。
+pub use observability::{
+    AlertEvent, AlertManager, AlertRule as ObservabilityAlertRule,
+    AlertSeverity as ObservabilityAlertSeverity, AlertState, AlertStats, InMemoryLogStore,
+    LogEntry as ObservabilityLogEntry, LogLevel, LogQuery as ObservabilityLogQuery, LogQueryError,
+    LogQueryProvider, LogQueryResult, LogStats as ObservabilityLogStats, ObservabilityAggregator,
+    ObservabilityDashboard, SLODefinition, SLOManager, SLOMeasurement, SLOReport, SLOStatus,
+    SLOType,
+};
+pub use observability::presets::{
+    standard_slos_for_all_services, standard_slos_for_service,
+};
+
+// gRPC 微服务基础模块导出（V24.0 模块 C）
+// 仅当启用 grpc feature 时生效
+#[cfg(feature = "grpc")]
+pub use grpc::{
+    DependencyProbe, GrpcChannelPool, GrpcHealthCheckResponse, GrpcHealthChecker,
+    GrpcHealthServer, GrpcHealthState, GrpcHealthStatus, GrpcPoolConfig, GrpcPoolError,
+    GrpcPoolStats, HealthProbeId, LoadBalancingStrategy, PooledChannel, ProbeKind,
 };

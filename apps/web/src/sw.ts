@@ -12,35 +12,78 @@ declare const self: ServiceWorkerGlobalScope & {
   __WB_MANIFEST: PrecacheEntry[];
 };
 
+// V24.0 模块 D: PWA 缓存版本（用于强制更新缓存）
+const CACHE_VERSION = 'v24.0';
+const CACHE_NAME = {
+  PRECACHE: `topems-precache-${CACHE_VERSION}`,
+  API: `topems-api-${CACHE_VERSION}`,
+  STATIC: `topems-static-${CACHE_VERSION}`,
+  IMAGES: `topems-images-${CACHE_VERSION}`,
+  FONT: `topems-fonts-${CACHE_VERSION}`,
+  CDN: `topems-cdn-${CACHE_VERSION}`,
+  SYNC_QUEUE: `topems-sync-queue-${CACHE_VERSION}`,
+  RUNTIME: `topems-runtime-${CACHE_VERSION}`,
+} as const;
+
+// 预缓存关键路由（V24.0 模块 D 增强）
+const PRECACHE_ROUTES = [
+  '/',
+  '/dashboard',
+  '/login',
+  '/offline.html',
+  '/manifest.json',
+];
+
 precacheAndRoute(self.__WB_MANIFEST);
 
-const appShellUrls = ['/', '/dashboard', '/login'];
-
-const CACHE_NAME = {
-  PRECACHE: 'topems-precache',
-  API: 'topems-api',
-  STATIC: 'topems-static',
-  IMAGES: 'topems-images',
-  FONT: 'topems-fonts',
-  SYNC_QUEUE: 'topems-sync-queue',
-};
-
-// Navigation route - SPA fallback
+// SPA 导航路由（V24.0 模块 D：失败时回退到 offline.html）
 const handler = createHandlerBoundToURL('/index.html');
 const navigationRoute = new NavigationRoute(handler, {
   allowlist: [/^\/(?!api\/)/],
 });
 registerRoute(navigationRoute);
 
-// API requests - Stale-While-Revalidate with different TTLs
+// 导航请求的离线回退链：网络 → SPA → offline.html
+self.addEventListener('fetch', (event) => {
+  if (event.request.mode !== 'navigate') return;
+
+  event.respondWith(
+    (async () => {
+      try {
+        // 1. 优先尝试网络（捕获在线状态）
+        const networkResponse = await fetch(event.request);
+        return networkResponse;
+      } catch {
+        // 2. 网络失败，尝试 SPA 入口
+        try {
+          const cache = await caches.open(CACHE_NAME.PRECACHE);
+          const spaResponse = await cache.match('/index.html');
+          if (spaResponse) return spaResponse;
+
+          // 3. SPA 不可用，回退到 offline.html
+          const offlineResponse = await cache.match('/offline.html');
+          if (offlineResponse) return offlineResponse;
+
+          // 4. 全部失败，返回 503
+          return new Response('Service Unavailable', {
+            status: 503,
+            headers: { 'Content-Type': 'text/plain; charset=utf-8' },
+          });
+        } catch {
+          return new Response('Service Unavailable', { status: 503 });
+        }
+      }
+    })()
+  );
+});
+
+// API 请求 - Stale-While-Revalidate（5min TTL）
 registerRoute(
   ({ url }: { url: URL }) => url.pathname.startsWith('/api/'),
   new StaleWhileRevalidate({
     cacheName: CACHE_NAME.API,
     plugins: [
-      new CacheableResponsePlugin({
-        statuses: [200],
-      }),
+      new CacheableResponsePlugin({ statuses: [200] }),
       new ExpirationPlugin({
         maxAgeSeconds: 5 * 60,
         maxEntries: 200,
@@ -49,16 +92,14 @@ registerRoute(
   })
 );
 
-// Static assets - Cache First
+// 静态资源（CSS/JS） - Cache First
 registerRoute(
   ({ request }: { request: Request }) =>
     request.destination === 'style' || request.destination === 'script',
   new CacheFirst({
     cacheName: CACHE_NAME.STATIC,
     plugins: [
-      new CacheableResponsePlugin({
-        statuses: [200],
-      }),
+      new CacheableResponsePlugin({ statuses: [200] }),
       new ExpirationPlugin({
         maxAgeSeconds: 30 * 24 * 60 * 60,
         maxEntries: 100,
@@ -67,15 +108,13 @@ registerRoute(
   })
 );
 
-// Images - Cache First with larger cache
+// 图片 - Cache First（60天）
 registerRoute(
   ({ request }: { request: Request }) => request.destination === 'image',
   new CacheFirst({
     cacheName: CACHE_NAME.IMAGES,
     plugins: [
-      new CacheableResponsePlugin({
-        statuses: [200],
-      }),
+      new CacheableResponsePlugin({ statuses: [200] }),
       new ExpirationPlugin({
         maxAgeSeconds: 60 * 24 * 60 * 60,
         maxEntries: 200,
@@ -84,7 +123,7 @@ registerRoute(
   })
 );
 
-// Fonts - Cache First
+// 字体 - Cache First（1年）
 registerRoute(
   ({ url }: { url: URL }) =>
     url.pathname.endsWith('.woff2') ||
@@ -94,9 +133,7 @@ registerRoute(
   new CacheFirst({
     cacheName: CACHE_NAME.FONT,
     plugins: [
-      new CacheableResponsePlugin({
-        statuses: [200],
-      }),
+      new CacheableResponsePlugin({ statuses: [200] }),
       new ExpirationPlugin({
         maxAgeSeconds: 365 * 24 * 60 * 60,
         maxEntries: 50,
@@ -105,20 +142,47 @@ registerRoute(
   })
 );
 
-// Offline fallback for navigation
-self.addEventListener('fetch', (event) => {
-  if (event.request.mode === 'navigate') {
-    event.respondWith(
-      fetch(event.request).catch(async () => {
-        const cache = await caches.open(CACHE_NAME.PRECACHE);
-        const cachedResponse = await cache.match('/index.html');
-        return cachedResponse || new Response(null, { status: 503 });
-      })
-    );
-  }
-});
+// V24.0 模块 D 增强：CDN 资源（Google Fonts/Material Icons 等）- Cache First
+registerRoute(
+  ({ url }: { url: URL }) =>
+    url.hostname === 'fonts.googleapis.com' ||
+    url.hostname === 'fonts.gstatic.com' ||
+    url.hostname === 'cdn.jsdelivr.net' ||
+    url.hostname === 'unpkg.com',
+  new CacheFirst({
+    cacheName: CACHE_NAME.CDN,
+    plugins: [
+      new CacheableResponsePlugin({ statuses: [200] }),
+      new ExpirationPlugin({
+        maxAgeSeconds: 30 * 24 * 60 * 60,
+        maxEntries: 100,
+      }),
+    ],
+  })
+);
 
-// Background sync for failed requests
+// V24.0 模块 D 增强：GET 请求的 NetworkFirst（关键 API 数据，如用户信息/权限）
+registerRoute(
+  ({ url, request }: { url: URL; request: Request }) =>
+    url.pathname.startsWith('/api/') &&
+    request.method === 'GET' &&
+    (url.pathname.includes('/auth/') ||
+      url.pathname.includes('/permission') ||
+      url.pathname.includes('/profile')),
+  new NetworkFirst({
+    cacheName: CACHE_NAME.RUNTIME,
+    networkTimeoutSeconds: 5,
+    plugins: [
+      new CacheableResponsePlugin({ statuses: [200] }),
+      new ExpirationPlugin({
+        maxAgeSeconds: 60 * 60, // 1 小时
+        maxEntries: 50,
+      }),
+    ],
+  })
+);
+
+// 后台同步：失败请求队列重放
 interface SyncRequest {
   request: Request;
   timestamp: number;
@@ -156,7 +220,7 @@ async function syncData(): Promise<void> {
   }
 }
 
-// Notification handling
+// 推送通知处理（V24.0 模块 D 增强：支持 actions/vibrate/requireInteraction）
 self.addEventListener('push', (event) => {
   const pushEvent = event as unknown as {
     data: { json: () => unknown };
@@ -164,15 +228,31 @@ self.addEventListener('push', (event) => {
   };
 
   const payload =
-    (pushEvent.data?.json() as { title?: string; body?: string; data?: Record<string, unknown> }) ||
-    {};
+    (pushEvent.data?.json() as {
+      title?: string;
+      body?: string;
+      data?: Record<string, unknown>;
+      icon?: string;
+      badge?: string;
+      tag?: string;
+      actions?: Array<{ action: string; title: string; icon?: string }>;
+      requireInteraction?: boolean;
+      vibrate?: number[];
+    }) || {};
+
   const title = payload.title || 'TOPEMS 通知';
-  const options: NotificationOptions = {
+  // TS 6.x lib.dom.d.ts 中 NotificationOptions 未声明 vibrate，但 Web Notifications 规范支持该字段
+  // 通过扩展类型声明保留运行时行为，同时通过类型校验
+  const options = {
     body: payload.body || '',
-    icon: '/icons/icon-192x192.png',
-    badge: '/icons/icon-72x72.png',
+    icon: payload.icon || '/icons/icon-192x192.png',
+    badge: payload.badge || '/icons/icon-72x72.png',
     data: payload.data || {},
-  };
+    tag: payload.tag || 'topems-notification',
+    requireInteraction: payload.requireInteraction ?? false,
+    vibrate: payload.vibrate ?? [200, 100, 200],
+    actions: payload.actions,
+  } as NotificationOptions & { vibrate?: number[] };
 
   pushEvent.waitUntil(self.registration.showNotification(title, options));
 });
@@ -180,12 +260,22 @@ self.addEventListener('push', (event) => {
 self.addEventListener('notificationclick', (event) => {
   const notificationEvent = event as unknown as {
     notification: Notification & { data?: Record<string, unknown> };
+    action?: string;
     waitUntil: (promise: Promise<unknown>) => void;
   };
 
   notificationEvent.notification.close();
 
-  const url = notificationEvent.notification.data?.url || '/dashboard';
+  // V24.0 模块 D 增强：支持 action 按钮
+  const action = notificationEvent.action;
+  const data = notificationEvent.notification.data || {};
+  let url: string;
+  if (action && data.actionUrls && typeof data.actionUrls === 'object') {
+    url = (data.actionUrls as Record<string, string>)[action] || '/dashboard';
+  } else {
+    url = (data.url as string) || '/dashboard';
+  }
+
   notificationEvent.waitUntil(
     self.clients.matchAll({ type: 'window', includeUncontrolled: true }).then((clientList) => {
       for (const client of clientList) {
@@ -201,7 +291,7 @@ self.addEventListener('notificationclick', (event) => {
   );
 });
 
-// Message handling from client
+// 消息处理（来自客户端）
 self.addEventListener('message', (event) => {
   const messageEvent = event as unknown as {
     data: { type: string; payload?: unknown };
@@ -236,24 +326,32 @@ self.addEventListener('message', (event) => {
         });
       }
       break;
+    case 'PRECACHE_ROUTES':
+      // V24.0 模块 D：客户端可主动触发关键路由预缓存
+      caches
+        .open(CACHE_NAME.PRECACHE)
+        .then((cache) => cache.addAll(PRECACHE_ROUTES))
+        .catch((err) => logger.error('Precache routes failed:', err));
+      break;
     default:
       break;
   }
 });
 
-// Activate event - clean up old caches
+// Activate 事件 - 清理旧版本缓存
 self.addEventListener('activate', (event) => {
   const activateEvent = event as unknown as {
     waitUntil: (promise: Promise<unknown>) => void;
   };
 
-  const currentCaches = Object.values(CACHE_NAME);
+  const currentCaches = Object.values(CACHE_NAME) as string[];
   activateEvent.waitUntil(
     caches
       .keys()
       .then((cacheNames) => {
         return Promise.all(
           cacheNames.map((cacheName) => {
+            // 清理非当前版本的缓存（强制更新）
             if (!currentCaches.includes(cacheName)) {
               return caches.delete(cacheName);
             }
@@ -264,5 +362,18 @@ self.addEventListener('activate', (event) => {
       .then(() => {
         return self.clients.claim();
       })
+  );
+});
+
+// V24.0 模块 D：安装时预缓存关键路由
+self.addEventListener('install', (event) => {
+  const installEvent = event as unknown as {
+    waitUntil: (promise: Promise<unknown>) => void;
+  };
+  installEvent.waitUntil(
+    caches
+      .open(CACHE_NAME.PRECACHE)
+      .then((cache) => cache.addAll(PRECACHE_ROUTES))
+      .catch((err) => logger.error('Install precache failed:', err))
   );
 });

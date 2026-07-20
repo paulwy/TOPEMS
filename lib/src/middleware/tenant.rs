@@ -1,3 +1,4 @@
+use crate::auth::Claims;
 use axum::{
     body::Body,
     extract::Request,
@@ -6,7 +7,6 @@ use axum::{
     response::IntoResponse,
 };
 use sqlx::PgPool;
-use crate::auth::Claims;
 use uuid::Uuid;
 
 #[derive(Clone)]
@@ -32,7 +32,9 @@ pub fn tenant_middleware() -> impl Fn(
        + Clone
        + Send
        + Sync {
-    move |axum::extract::State(pool): axum::extract::State<PgPool>, req: Request<Body>, next: Next| {
+    move |axum::extract::State(pool): axum::extract::State<PgPool>,
+          req: Request<Body>,
+          next: Next| {
         Box::pin(async move {
             let claims = match req.extensions().get::<Claims>() {
                 Some(c) => c,
@@ -92,7 +94,8 @@ pub fn tenant_middleware() -> impl Fn(
             };
 
             let mut req = req;
-            req.extensions_mut().insert(TenantContext { tenant_id, user_id });
+            req.extensions_mut()
+                .insert(TenantContext { tenant_id, user_id });
 
             next.run(req).await
         })
@@ -101,7 +104,10 @@ pub fn tenant_middleware() -> impl Fn(
 
 pub fn require_tenant_status(
     status: &'static str,
-) -> impl Fn(Request<Body>, Next) -> std::pin::Pin<Box<dyn std::future::Future<Output = axum::response::Response> + Send>>
+) -> impl Fn(
+    Request<Body>,
+    Next,
+) -> std::pin::Pin<Box<dyn std::future::Future<Output = axum::response::Response> + Send>>
        + Clone
        + Send
        + Sync {

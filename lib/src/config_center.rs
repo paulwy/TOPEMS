@@ -145,11 +145,7 @@ impl ConfigAuditLog {
     ///
     /// 找到指定 version_id 的版本，将其值作为新版本写入，
     /// 这样既保留了回滚操作本身的审计记录，也恢复了历史值。
-    pub async fn rollback(
-        &self,
-        config_key: &str,
-        version_id: Uuid,
-    ) -> Result<ConfigVersion> {
+    pub async fn rollback(&self, config_key: &str, version_id: Uuid) -> Result<ConfigVersion> {
         // 在锁内查找目标版本，避免跨 await 持锁
         let target_value = {
             let versions = self.versions.read().await;
@@ -167,10 +163,7 @@ impl ConfigAuditLog {
         })?;
 
         // 获取当前最新值作为 previous_value
-        let previous_value = self
-            .get_latest_version(config_key)
-            .await
-            .map(|c| c.value);
+        let previous_value = self.get_latest_version(config_key).await.map(|c| c.value);
 
         let new_version = self
             .record_change(
@@ -264,8 +257,9 @@ impl ConfigCenter {
 
         // 校验规则
         if let Some(rule) = &schema.validation {
-            Self::validate_rule(rule, value)
-                .map_err(|e| TopemsError::ConfigValidation(format!("规则校验失败 [{}]: {}", key, e)))?;
+            Self::validate_rule(rule, value).map_err(|e| {
+                TopemsError::ConfigValidation(format!("规则校验失败 [{}]: {}", key, e))
+            })?;
         }
 
         Ok(())
@@ -342,8 +336,9 @@ impl ConfigCenter {
         drop(schemas);
 
         for (key, raw, config_type) in to_load {
-            let value = Self::parse_value(&config_type, &raw)
-                .map_err(|e| TopemsError::ConfigValidation(format!("解析环境变量失败 [{}]: {}", key, e)))?;
+            let value = Self::parse_value(&config_type, &raw).map_err(|e| {
+                TopemsError::ConfigValidation(format!("解析环境变量失败 [{}]: {}", key, e))
+            })?;
 
             // 直接写入，不通过 set() 以避免重复触发 schema 查找
             let previous = self.get(&key).await;
@@ -382,9 +377,8 @@ impl ConfigCenter {
             TopemsError::FileOperation(format!("读取 services.yaml 失败: {}: {}", yaml_path, e))
         })?;
 
-        let parsed: ServicesYaml = serde_yaml::from_str(&content).map_err(|e| {
-            TopemsError::ConfigLoad(format!("解析 services.yaml 失败: {}", e))
-        })?;
+        let parsed: ServicesYaml = serde_yaml::from_str(&content)
+            .map_err(|e| TopemsError::ConfigLoad(format!("解析 services.yaml 失败: {}", e)))?;
 
         // 注册 service_groups 下的服务
         for (group, services) in &parsed.service_groups {
@@ -392,10 +386,7 @@ impl ConfigCenter {
                 let key = format!("service.{}.port", svc.name);
                 let schema = ConfigSchema {
                     name: key.clone(),
-                    description: format!(
-                        "{} - {} (group: {})",
-                        svc.name, svc.description, group
-                    ),
+                    description: format!("{} - {} (group: {})", svc.name, svc.description, group),
                     config_type: ConfigType::Integer,
                     default_value: Some(serde_json::json!(svc.port)),
                     required: false,
@@ -537,7 +528,9 @@ impl ConfigCenter {
         let ok = match (config_type, value) {
             (ConfigType::String, serde_json::Value::String(_)) => true,
             (ConfigType::Integer, serde_json::Value::Number(n)) => n.is_i64() || n.is_u64(),
-            (ConfigType::Float, serde_json::Value::Number(n)) => n.is_f64() || n.is_i64() || n.is_u64(),
+            (ConfigType::Float, serde_json::Value::Number(n)) => {
+                n.is_f64() || n.is_i64() || n.is_u64()
+            }
             (ConfigType::Boolean, serde_json::Value::Bool(_)) => true,
             (ConfigType::Duration, serde_json::Value::String(_)) => true,
             (ConfigType::Url, serde_json::Value::String(_)) => true,
@@ -758,7 +751,8 @@ mod tests {
     #[tokio::test]
     async fn test_config_validation() {
         let cc = ConfigCenter::new();
-        cc.register_schema(integer_schema("app.pool.size", 1, 100)).await;
+        cc.register_schema(integer_schema("app.pool.size", 1, 100))
+            .await;
 
         // 合法值
         cc.set("app.pool.size", serde_json::json!(50), Some("tester"))
@@ -767,7 +761,11 @@ mod tests {
 
         // 类型错误
         let err = cc
-            .set("app.pool.size", serde_json::json!("not int"), Some("tester"))
+            .set(
+                "app.pool.size",
+                serde_json::json!("not int"),
+                Some("tester"),
+            )
             .await;
         assert!(err.is_err());
 
@@ -793,7 +791,8 @@ mod tests {
     #[tokio::test]
     async fn test_config_audit_log() {
         let cc = ConfigCenter::new();
-        cc.register_schema(integer_schema("app.audit.key", 0, 1000)).await;
+        cc.register_schema(integer_schema("app.audit.key", 0, 1000))
+            .await;
 
         cc.set("app.audit.key", serde_json::json!(1), Some("user1"))
             .await
@@ -819,7 +818,8 @@ mod tests {
     #[tokio::test]
     async fn test_config_rollback() {
         let cc = ConfigCenter::new();
-        cc.register_schema(integer_schema("app.rollback.key", 0, 1000)).await;
+        cc.register_schema(integer_schema("app.rollback.key", 0, 1000))
+            .await;
 
         cc.set("app.rollback.key", serde_json::json!(10), Some("user1"))
             .await
@@ -840,7 +840,9 @@ mod tests {
             .unwrap();
 
         // 回滚到 v1
-        cc.rollback("app.rollback.key", v1.version_id).await.unwrap();
+        cc.rollback("app.rollback.key", v1.version_id)
+            .await
+            .unwrap();
 
         // 当前值应为 10
         assert_eq!(
@@ -849,13 +851,13 @@ mod tests {
         );
 
         // 回滚到不存在的 version_id 应报错
-        let err = cc
-            .rollback("app.rollback.key", Uuid::new_v4())
-            .await;
+        let err = cc.rollback("app.rollback.key", Uuid::new_v4()).await;
         assert!(err.is_err());
 
         // 回滚到 v2（验证 v2 仍然可用）
-        cc.rollback("app.rollback.key", v2.version_id).await.unwrap();
+        cc.rollback("app.rollback.key", v2.version_id)
+            .await
+            .unwrap();
         assert_eq!(
             cc.get("app.rollback.key").await,
             Some(serde_json::json!(20))
@@ -881,14 +883,8 @@ mod tests {
     async fn test_config_audit_log_max_history() {
         let log = ConfigAuditLog::new(3);
         for i in 0..5 {
-            log.record_change(
-                "key",
-                serde_json::json!(i),
-                None,
-                None,
-                None,
-            )
-            .await;
+            log.record_change("key", serde_json::json!(i), None, None, None)
+                .await;
         }
         let history = log.get_history("key").await;
         assert_eq!(history.len(), 3);
@@ -913,10 +909,7 @@ mod tests {
         })
         .await;
         cc.load_from_env().await.unwrap();
-        assert_eq!(
-            cc.get("env.test").await,
-            Some(serde_json::json!("hello"))
-        );
+        assert_eq!(cc.get("env.test").await, Some(serde_json::json!("hello")));
         std::env::remove_var("TOPEMS_TEST_CFG_CENTER");
     }
 
@@ -945,6 +938,9 @@ mod tests {
         // stub 方法应返回 Ok(())
         assert!(cc.load_from_consul("http://localhost:8500").await.is_ok());
         assert!(cc.push_to_consul("http://localhost:8500").await.is_ok());
-        assert!(cc.watch_consul_changes("http://localhost:8500").await.is_ok());
+        assert!(cc
+            .watch_consul_changes("http://localhost:8500")
+            .await
+            .is_ok());
     }
 }

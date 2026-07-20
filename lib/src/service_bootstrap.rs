@@ -160,14 +160,10 @@ impl ServiceBootstrap {
 
         // V21.0: 初始化权限中心客户端
         if self.config.enable_permission_center {
-            let permission_client = crate::permission_center::PermissionCenterClient::new(
-                self.config.service_name,
-            );
+            let permission_client =
+                crate::permission_center::PermissionCenterClient::new(self.config.service_name);
             if let Err(e) = permission_client.initialize().await {
-                tracing::warn!(
-                    "⚠️  权限元数据缓存初始化失败（不影响启动）: {:?}",
-                    e
-                );
+                tracing::warn!("⚠️  权限元数据缓存初始化失败（不影响启动）: {:?}", e);
             } else {
                 tracing::info!("✅ 权限元数据缓存已初始化");
 
@@ -179,10 +175,7 @@ impl ServiceBootstrap {
                                 .start_event_subscription(&subscriber)
                                 .await
                             {
-                                tracing::warn!(
-                                    "⚠️  权限变更事件订阅启动失败: {:?}",
-                                    e
-                                );
+                                tracing::warn!("⚠️  权限变更事件订阅启动失败: {:?}", e);
                             } else {
                                 tracing::info!("✅ 权限变更事件订阅已启动");
 
@@ -198,18 +191,12 @@ impl ServiceBootstrap {
                                     })
                                     .await
                                 {
-                                    tracing::warn!(
-                                        "⚠️  缓存失效广播订阅失败: {:?}",
-                                        e
-                                    );
+                                    tracing::warn!("⚠️  缓存失效广播订阅失败: {:?}", e);
                                 }
                             }
                         }
                         Err(e) => {
-                            tracing::warn!(
-                                "⚠️  RabbitMQ 连接失败，跳过事件订阅: {:?}",
-                                e
-                            );
+                            tracing::warn!("⚠️  RabbitMQ 连接失败，跳过事件订阅: {:?}", e);
                         }
                     }
                 }

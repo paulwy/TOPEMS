@@ -23,6 +23,4 @@ pub mod store;
 
 pub use orchestrator::{SagaInstance, SagaOrchestrator, SagaStatus, SagaStepDefinition};
 pub use step::{SagaStep, StepStatus};
-pub use store::{
-    InMemorySagaStore, PostgresSagaStore, SagaError, SagaResult, SagaStore,
-};
+pub use store::{InMemorySagaStore, PostgresSagaStore, SagaError, SagaResult, SagaStore};

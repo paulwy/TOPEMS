@@ -115,11 +115,7 @@ impl SchemaRegistry {
     }
 
     /// 设置 payload 示例
-    pub fn set_example(
-        &self,
-        event_type: &str,
-        example: serde_json::Value,
-    ) -> EventResult<()> {
+    pub fn set_example(&self, event_type: &str, example: serde_json::Value) -> EventResult<()> {
         let mut schemas = self.schemas.write();
         let entry = schemas
             .get_mut(event_type)
@@ -224,7 +220,10 @@ impl SchemaRegistry {
 // ====================================================================
 
 /// 校验 `value` 是否符合给定的 `schema`
-fn validate_against_schema(value: &serde_json::Value, schema: &serde_json::Value) -> ValidationResult {
+fn validate_against_schema(
+    value: &serde_json::Value,
+    schema: &serde_json::Value,
+) -> ValidationResult {
     let mut result = ValidationResult::ok();
     if !schema.is_object() {
         return result;
@@ -343,10 +342,7 @@ fn check_type(value: &serde_json::Value, type_val: &serde_json::Value) -> Result
     if matched {
         Ok(())
     } else {
-        Err(format!(
-            "类型不匹配：期望 {}，实际 {}",
-            expected, actual
-        ))
+        Err(format!("类型不匹配：期望 {}，实际 {}", expected, actual))
     }
 }
 
@@ -438,10 +434,7 @@ mod tests {
         let result = registry.validate("order.created", &invalid_payload);
         assert!(!result.valid);
         assert!(
-            result
-                .errors
-                .iter()
-                .any(|e| e.contains("event_type")),
+            result.errors.iter().any(|e| e.contains("event_type")),
             "应有 event_type 缺失错误"
         );
 
