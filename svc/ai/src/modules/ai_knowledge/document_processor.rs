@@ -165,18 +165,16 @@ fn parse_html(content: &[u8]) -> Result<String, ProcessorError> {
 /// 去除 HTML 标签，提取纯文本
 fn strip_html_tags(html: &str) -> String {
     // 移除 script/style 块及其内容
-    // SAFETY: 正则表达式是硬编码的，编译时已验证，不会失败
-    let script_re = Regex::new(r"(?is)<(script|style)[^>]*>.*?</\1>").unwrap();
+    let script_re = Regex::new(r"(?is)<(script|style)[^>]*>.*?</\1>")
+        .expect("hardcoded regex should always compile");
     let html = script_re.replace_all(html, "");
 
     // 移除 HTML 注释
-    // SAFETY: 正则表达式是硬编码的，编译时已验证，不会失败
-    let comment_re = Regex::new(r"(?s)<!--.*?-->").unwrap();
+    let comment_re = Regex::new(r"(?s)<!--.*?-->").expect("hardcoded regex should always compile");
     let html = comment_re.replace_all(&html, "");
 
     // 移除所有 HTML 标签
-    // SAFETY: 正则表达式是硬编码的，编译时已验证，不会失败
-    let tag_re = Regex::new(r"<[^>]+>").unwrap();
+    let tag_re = Regex::new(r"<[^>]+>").expect("hardcoded regex should always compile");
     let text = tag_re.replace_all(&html, " ");
 
     // 解码常见 HTML 实体
@@ -336,8 +334,7 @@ fn apply_overlap(tokens: &mut Vec<String>, overlap: usize) {
 
 /// 简单的句子切分（按中英文句号/问号/叹号切分）
 fn split_sentences(text: &str) -> Vec<String> {
-    // SAFETY: 正则表达式是硬编码的，编译时已验证，不会失败
-    let re = Regex::new(r"[。！？.!?]").unwrap();
+    let re = Regex::new(r"[。！？.!?]").expect("hardcoded regex should always compile");
     let mut sentences = Vec::new();
     let mut last = 0;
     for mat in re.find_iter(text) {

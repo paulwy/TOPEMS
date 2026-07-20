@@ -15,6 +15,6 @@ pub use connection_pool::{
     PooledChannel,
 };
 pub use health::{
-    DependencyProbe, GrpcHealthCheckResponse, GrpcHealthChecker, GrpcHealthServer,
-    GrpcHealthState, GrpcHealthStatus, HealthProbeId, ProbeKind,
+    DependencyProbe, GrpcHealthCheckResponse, GrpcHealthChecker, GrpcHealthServer, GrpcHealthState,
+    GrpcHealthStatus, HealthProbeId, ProbeKind,
 };

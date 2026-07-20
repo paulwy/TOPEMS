@@ -396,8 +396,11 @@ pub async fn update_document(
     }
 
     if let Some(new_kb_id) = req.kb_id {
-        // SAFETY: 函数开头已检查 existing.is_none() 并提前 return，这里 unwrap 不会 panic
-        let old_kb_id = existing.as_ref().unwrap().document.kb_id;
+        let old_kb_id = existing
+            .as_ref()
+            .expect("existing should exist after is_some() check")
+            .document
+            .kb_id;
         if old_kb_id != new_kb_id {
             let _ = sqlx::query(
                 r#"UPDATE core.knowledge_bases

@@ -146,7 +146,7 @@ pub async fn get_position(
         }));
     }
 
-    let p = row.unwrap();
+    let p = row.expect("row should exist after is_none() check");
 
     let permissions: Vec<String> =
         sqlx::query(r#"SELECT permission FROM iam.position_permissions WHERE position_id = $1"#)

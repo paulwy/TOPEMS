@@ -180,10 +180,7 @@ impl GrpcChannelPool {
         let pool = Arc::new(EndpointPool::new(url.to_string(), priority, channel));
 
         let mut groups = self.groups.write().await;
-        groups
-            .entry(group.to_string())
-            .or_default()
-            .push(pool);
+        groups.entry(group.to_string()).or_default().push(pool);
 
         let mut stats = self.stats.write().await;
         stats.total_endpoints += 1;
@@ -195,7 +192,12 @@ impl GrpcChannelPool {
             .entry(group.to_string())
             .or_insert_with(|| Arc::new(AtomicU64::new(0)));
 
-        debug!(url = url, group = group, priority = priority, "Added gRPC endpoint");
+        debug!(
+            url = url,
+            group = group,
+            priority = priority,
+            "Added gRPC endpoint"
+        );
         Ok(())
     }
 
@@ -206,7 +208,8 @@ impl GrpcChannelPool {
             GrpcPoolError::NoHealthyEndpoints(format!("group not found: {}", group))
         })?;
 
-        let healthy: Vec<&Arc<EndpointPool>> = endpoints.iter().filter(|e| e.is_healthy()).collect();
+        let healthy: Vec<&Arc<EndpointPool>> =
+            endpoints.iter().filter(|e| e.is_healthy()).collect();
         if healthy.is_empty() {
             return Err(GrpcPoolError::NoHealthyEndpoints(group.to_string()));
         }
@@ -325,7 +328,10 @@ mod tests {
 
     #[test]
     fn test_strategy_default() {
-        assert_eq!(LoadBalancingStrategy::default(), LoadBalancingStrategy::RoundRobin);
+        assert_eq!(
+            LoadBalancingStrategy::default(),
+            LoadBalancingStrategy::RoundRobin
+        );
     }
 
     #[test]

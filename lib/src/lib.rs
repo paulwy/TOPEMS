@@ -258,6 +258,7 @@ pub use saga::{
 // 注意：AlertRule/AlertSeverity/LogQuery/LogEntry 与 monitoring/logging 模块重名，
 // 此处使用 Observability 前缀别名避免 E0252 重复定义错误。
 // 如需使用 observability 命名空间下的原始类型，可直接通过 `observability::` 路径访问。
+pub use observability::presets::{standard_slos_for_all_services, standard_slos_for_service};
 pub use observability::{
     AlertEvent, AlertManager, AlertRule as ObservabilityAlertRule,
     AlertSeverity as ObservabilityAlertSeverity, AlertState, AlertStats, InMemoryLogStore,
@@ -266,15 +267,12 @@ pub use observability::{
     ObservabilityDashboard, SLODefinition, SLOManager, SLOMeasurement, SLOReport, SLOStatus,
     SLOType,
 };
-pub use observability::presets::{
-    standard_slos_for_all_services, standard_slos_for_service,
-};
 
 // gRPC 微服务基础模块导出（V24.0 模块 C）
 // 仅当启用 grpc feature 时生效
 #[cfg(feature = "grpc")]
 pub use grpc::{
-    DependencyProbe, GrpcChannelPool, GrpcHealthCheckResponse, GrpcHealthChecker,
-    GrpcHealthServer, GrpcHealthState, GrpcHealthStatus, GrpcPoolConfig, GrpcPoolError,
-    GrpcPoolStats, HealthProbeId, LoadBalancingStrategy, PooledChannel, ProbeKind,
+    DependencyProbe, GrpcChannelPool, GrpcHealthCheckResponse, GrpcHealthChecker, GrpcHealthServer,
+    GrpcHealthState, GrpcHealthStatus, GrpcPoolConfig, GrpcPoolError, GrpcPoolStats, HealthProbeId,
+    LoadBalancingStrategy, PooledChannel, ProbeKind,
 };

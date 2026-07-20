@@ -2,12 +2,12 @@
 //!
 //! 验证 SLO 管理、统一日志查询和告警分级模块的公开 API。
 
+use topems_shared::observability::presets::{
+    standard_slos_for_all_services, standard_slos_for_service,
+};
 use topems_shared::observability::{
     AlertManager, AlertRule, AlertSeverity, AlertState, InMemoryLogStore, LogLevel, LogQuery,
     LogQueryProvider, ObservabilityAggregator, SLODefinition, SLOMeasurement, SLOStatus, SLOType,
-};
-use topems_shared::observability::presets::{
-    standard_slos_for_all_services, standard_slos_for_service,
 };
 
 fn make_slo_definition(id: &str, target: f64, alert_threshold: f64) -> SLODefinition {
@@ -44,7 +44,10 @@ fn test_slo_lifecycle_via_aggregator() {
     agg.slo_manager.register(def);
 
     // 初始无数据
-    assert_eq!(agg.slo_manager.get_status("slo-1"), SLOStatus::InsufficientData);
+    assert_eq!(
+        agg.slo_manager.get_status("slo-1"),
+        SLOStatus::InsufficientData
+    );
 
     // 健康状态
     agg.slo_manager
@@ -180,7 +183,13 @@ async fn test_in_memory_log_query() {
     let store = InMemoryLogStore::new();
     store.append(make_log_entry("1", LogLevel::Info, "svc-a", "hello", None));
     store.append(make_log_entry("2", LogLevel::Error, "svc-b", "boom", None));
-    store.append(make_log_entry("3", LogLevel::Warn, "svc-a", "watch out", None));
+    store.append(make_log_entry(
+        "3",
+        LogLevel::Warn,
+        "svc-a",
+        "watch out",
+        None,
+    ));
 
     let mut query = LogQuery::default();
     query.service = Some("svc-a".to_string());
@@ -197,9 +206,27 @@ async fn test_in_memory_log_query() {
 #[tokio::test]
 async fn test_in_memory_trace_logs() {
     let store = InMemoryLogStore::new();
-    store.append(make_log_entry("1", LogLevel::Info, "svc-a", "a", Some("trace-1")));
-    store.append(make_log_entry("2", LogLevel::Info, "svc-b", "b", Some("trace-1")));
-    store.append(make_log_entry("3", LogLevel::Info, "svc-c", "c", Some("trace-2")));
+    store.append(make_log_entry(
+        "1",
+        LogLevel::Info,
+        "svc-a",
+        "a",
+        Some("trace-1"),
+    ));
+    store.append(make_log_entry(
+        "2",
+        LogLevel::Info,
+        "svc-b",
+        "b",
+        Some("trace-1"),
+    ));
+    store.append(make_log_entry(
+        "3",
+        LogLevel::Info,
+        "svc-c",
+        "c",
+        Some("trace-2"),
+    ));
 
     let logs = store.get_trace_logs("trace-1").await.unwrap();
     assert_eq!(logs.len(), 2);

@@ -10,8 +10,8 @@ pub mod slo;
 
 pub use alerting::{AlertEvent, AlertManager, AlertRule, AlertSeverity, AlertState, AlertStats};
 pub use log_query::{
-    InMemoryLogStore, LogEntry, LogLevel, LogQuery, LogQueryError, LogQueryProvider, LogQueryResult,
-    LogStats,
+    InMemoryLogStore, LogEntry, LogLevel, LogQuery, LogQueryError, LogQueryProvider,
+    LogQueryResult, LogStats,
 };
 pub use slo::{SLODefinition, SLOManager, SLOMeasurement, SLOReport, SLOStatus, SLOType};
 
@@ -62,8 +62,7 @@ impl ObservabilityAggregator {
             critical_alerts: active_alerts
                 .iter()
                 .filter(|a| {
-                    a.severity == AlertSeverity::Critical
-                        || a.severity == AlertSeverity::Emergency
+                    a.severity == AlertSeverity::Critical || a.severity == AlertSeverity::Emergency
                 })
                 .count(),
         }

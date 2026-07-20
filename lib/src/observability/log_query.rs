@@ -5,9 +5,7 @@ use std::collections::HashMap;
 use std::sync::Arc;
 
 /// 日志级别
-#[derive(
-    Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash, Serialize, Deserialize,
-)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash, Serialize, Deserialize)]
 pub enum LogLevel {
     Trace,
     Debug,
@@ -351,13 +349,33 @@ mod tests {
     #[tokio::test]
     async fn test_in_memory_trace_logs() {
         let store = InMemoryLogStore::new();
-        store.append(make_entry("1", LogLevel::Info, "svc-a", "a", Some("trace-1")));
-        store.append(make_entry("2", LogLevel::Info, "svc-b", "b", Some("trace-1")));
-        store.append(make_entry("3", LogLevel::Info, "svc-c", "c", Some("trace-2")));
+        store.append(make_entry(
+            "1",
+            LogLevel::Info,
+            "svc-a",
+            "a",
+            Some("trace-1"),
+        ));
+        store.append(make_entry(
+            "2",
+            LogLevel::Info,
+            "svc-b",
+            "b",
+            Some("trace-1"),
+        ));
+        store.append(make_entry(
+            "3",
+            LogLevel::Info,
+            "svc-c",
+            "c",
+            Some("trace-2"),
+        ));
 
         let logs = store.get_trace_logs("trace-1").await.unwrap();
         assert_eq!(logs.len(), 2);
-        assert!(logs.iter().all(|e| e.trace_id.as_deref() == Some("trace-1")));
+        assert!(logs
+            .iter()
+            .all(|e| e.trace_id.as_deref() == Some("trace-1")));
     }
 
     #[tokio::test]

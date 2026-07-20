@@ -1,10 +1,10 @@
-use serde::{Serialize, Deserialize};
+use chrono::{DateTime, Utc};
+use parking_lot::RwLock;
+use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
 use std::sync::Arc;
-use parking_lot::RwLock;
-use chrono::{DateTime, Utc};
-use uuid::Uuid;
 use tracing::{info, warn};
+use uuid::Uuid;
 
 /// 特性开关状态
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
@@ -119,7 +119,11 @@ impl FeatureFlagService {
     }
 
     /// 评估条件
-    fn evaluate_conditions(&self, conditions: &[FeatureCondition], context: &FeatureContext) -> bool {
+    fn evaluate_conditions(
+        &self,
+        conditions: &[FeatureCondition],
+        context: &FeatureContext,
+    ) -> bool {
         for condition in conditions {
             if !self.evaluate_condition(condition, context) {
                 return false;
@@ -143,15 +147,13 @@ impl FeatureFlagService {
                     (hash % 100) < *percentage as u64
                 })
             }
-            FeatureCondition::Environment(env) => {
-                context.environment == *env
-            }
-            FeatureCondition::And(conditions) => {
-                conditions.iter().all(|c| self.evaluate_condition(c, context))
-            }
-            FeatureCondition::Or(conditions) => {
-                conditions.iter().any(|c| self.evaluate_condition(c, context))
-            }
+            FeatureCondition::Environment(env) => context.environment == *env,
+            FeatureCondition::And(conditions) => conditions
+                .iter()
+                .all(|c| self.evaluate_condition(c, context)),
+            FeatureCondition::Or(conditions) => conditions
+                .iter()
+                .any(|c| self.evaluate_condition(c, context)),
         }
     }
 

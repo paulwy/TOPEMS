@@ -127,11 +127,7 @@ pub trait GrpcHealthChecker: Send + Sync {
     /// 执行一次健康检查，返回聚合后状态
     async fn check(&self, service: &str) -> GrpcHealthCheckResponse;
     /// 订阅健康状态变化（watch RPC 后端）
-    async fn watch(
-        &self,
-        service: &str,
-        tx: tokio::sync::mpsc::Sender<GrpcHealthCheckResponse>,
-    );
+    async fn watch(&self, service: &str, tx: tokio::sync::mpsc::Sender<GrpcHealthCheckResponse>);
 }
 
 /// 健康状态聚合器
@@ -214,7 +210,10 @@ impl GrpcHealthState {
                 "Service is healthy but some non-critical dependencies are degraded".to_string(),
             )
         } else {
-            (GrpcHealthStatus::Serving, "All dependencies healthy".to_string())
+            (
+                GrpcHealthStatus::Serving,
+                "All dependencies healthy".to_string(),
+            )
         };
 
         GrpcHealthCheckResponse {
@@ -227,15 +226,14 @@ impl GrpcHealthState {
     }
 
     /// 执行单个探针（带缓存）
-    async fn probe_one(
-        &self,
-        id: &str,
-        probe: &Arc<dyn DependencyProbe>,
-    ) -> GrpcHealthStatus {
+    async fn probe_one(&self, id: &str, probe: &Arc<dyn DependencyProbe>) -> GrpcHealthStatus {
         // 检查缓存
         let now = Utc::now();
         if let Some((status, ts)) = self.cached.read().await.get(id) {
-            let elapsed = now.signed_duration_since(*ts).to_std().unwrap_or(self.cache_ttl);
+            let elapsed = now
+                .signed_duration_since(*ts)
+                .to_std()
+                .unwrap_or(self.cache_ttl);
             if elapsed < self.cache_ttl {
                 return *status;
             }
@@ -372,10 +370,7 @@ mod tests {
         let response = state.check().await;
         assert_eq!(response.status, GrpcHealthStatus::Serving);
         assert_eq!(response.dependencies.len(), 1);
-        assert_eq!(
-            response.dependencies["db"],
-            GrpcHealthStatus::Serving
-        );
+        assert_eq!(response.dependencies["db"], GrpcHealthStatus::Serving);
     }
 
     #[tokio::test]

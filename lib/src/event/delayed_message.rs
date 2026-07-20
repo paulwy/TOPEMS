@@ -7,9 +7,7 @@ use std::time::Duration;
 use tracing::{info, warn};
 
 use lapin::{
-    options::{
-        BasicPublishOptions, ExchangeDeclareOptions, QueueBindOptions, QueueDeclareOptions,
-    },
+    options::{BasicPublishOptions, ExchangeDeclareOptions, QueueBindOptions, QueueDeclareOptions},
     types::FieldTable,
     BasicProperties, Channel, Connection, ConnectionProperties, ExchangeKind,
 };
@@ -38,7 +36,10 @@ impl DelayedMessagePublisher {
             .map_err(|e| super::error::EventError::ConnectionError(e.to_string()))?;
 
         let mut args = FieldTable::default();
-        args.insert("x-delayed-type".into(), lapin::types::AMQPValue::LongString("topic".into()));
+        args.insert(
+            "x-delayed-type".into(),
+            lapin::types::AMQPValue::LongString("topic".into()),
+        );
 
         channel
             .exchange_declare(
@@ -55,7 +56,10 @@ impl DelayedMessagePublisher {
             )
             .await
             .map_err(|e| {
-                warn!("Failed to declare delayed exchange, falling back to regular exchange: {}", e);
+                warn!(
+                    "Failed to declare delayed exchange, falling back to regular exchange: {}",
+                    e
+                );
                 super::error::EventError::ConnectionError(e.to_string())
             })
             .unwrap_or(());
@@ -297,7 +301,11 @@ impl DelayedMessageSubscriber {
         event_type: EventType,
         handler: impl Fn(Event) -> EventResult<()> + 'static + Send + Sync,
     ) -> EventResult<()> {
-        let routing_key = format!("event.delayed.{}.{}", self.queue_name.replace("topems.delayed.", ""), event_type);
+        let routing_key = format!(
+            "event.delayed.{}.{}",
+            self.queue_name.replace("topems.delayed.", ""),
+            event_type
+        );
 
         self.channel
             .queue_bind(
