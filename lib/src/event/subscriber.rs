@@ -7,7 +7,7 @@ use std::env;
 use std::future::Future;
 use std::pin::Pin;
 use std::sync::Arc;
-use tracing::{debug, error, info, warn};
+use tracing::{debug, error, info, warn, Instrument};
 
 /// 事件处理器回调类型
 pub type EventHandler =
@@ -127,6 +127,24 @@ impl EventSubscriber {
                     let handler_clone = handler.clone();
                     let dlq_clone = dlq.clone();
 
+                    // V26.0: 如果事件携带 trace_id，创建关联 span 实现分布式追踪
+                    let span = if let Some(ref trace_id) = event.trace_id {
+                        tracing::info_span!(
+                            "event_handler",
+                            trace_id = %trace_id,
+                            event_type = ?event.event_type,
+                            event_id = %event.event_id,
+                            source = %event.source,
+                        )
+                    } else {
+                        tracing::info_span!(
+                            "event_handler",
+                            event_type = ?event.event_type,
+                            event_id = %event.event_id,
+                            source = %event.source,
+                        )
+                    };
+
                     tokio::spawn(async move {
                         match tokio::time::timeout(
                             tokio::time::Duration::from_secs(30),
@@ -140,7 +158,7 @@ impl EventSubscriber {
                                 let _ = dlq_clone.push(event_clone, "处理超时").await;
                             }
                         }
-                    });
+                    }.instrument(span));
                 }
             }
         }

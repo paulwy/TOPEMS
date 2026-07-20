@@ -1,3 +1,9 @@
+/**
+ * @deprecated V26.0: 此模块已弃用，请使用 `@/utils/telemetry` 中的 OpenTelemetry SDK 实现。
+ * 保留此文件仅用于向后兼容，新项目请使用 telemetry.ts 中的 `initTelemetry`,
+ * `injectTraceContext`, `startSpan`, `traceAsync` 等函数。
+ */
+
 import config from '../config/runtime';
 
 export interface SpanContext {

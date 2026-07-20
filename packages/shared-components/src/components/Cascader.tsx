@@ -126,7 +126,7 @@ const Cascader: React.FC<CascaderProps> = ({
         <TextField
           onClick={handleOpen}
           value={displayValue}
-          placeholder={placeholder}
+          placeholder={finalPlaceholder}
           disabled={disabled}
           fullWidth={fullWidth}
           slotProps={{
@@ -241,7 +241,7 @@ const Cascader: React.FC<CascaderProps> = ({
                   <ListItemIcon>
                     <ChevronLeft size={18} />
                   </ListItemIcon>
-                  <ListItemText primary={<Typography variant="caption">返回上一级</Typography>} />
+                  <ListItemText primary={<Typography variant="caption">{backText}</Typography>} />
                 </ListItemButton>
               </Box>
             </Box>

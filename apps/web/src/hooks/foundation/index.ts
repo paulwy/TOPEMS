@@ -64,3 +64,10 @@ export type {
   UseColumnWidthOptions,
   UseColumnWidthResult,
 } from '../useColumnWidth';
+
+// Web Vitals (V26.0)
+export { useWebVitals, getWebVitalsSnapshot } from './useWebVitals';
+export type {
+  WebVitalsMetrics,
+  WebVitalsCallback,
+} from './useWebVitals';

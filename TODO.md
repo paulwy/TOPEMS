@@ -1,13 +1,17 @@
 # TOPEMS 项目任务规划与路线图
 
-> 版本: 25.0 | 更新日期: 2026-07-20
+> 版本: 26.0 | 更新日期: 2026-07-20
 > 服务总数: 27 个 | 前端页面: 423 页 | 后端API端点: 1,228 个 | 前端API函数: 1,082 个
 > 综合健康评分: **100/100**（Rust 0 errors + TS 0 errors）| 核心平台完成度: 99% | 业务应用完成度: 98%
 > **架构优化总设计：[V20.0 架构全面优化方案](./docs/architecture/2026-07-20-architecture-optimization-v20.md)**
 
 > **🏗️ Phase15 迭代演进 - 表单增强 + 消息队列 + WebSocket** ✅ 全部完成 — A: 表单增强（Cascader级联选择器 + DateRangePicker日期范围选择器 + FileUpload文件上传组件，均支持赛博朋克主题✅）；B: 后端消息队列增强（DelayedMessagePublisher/Subscriber 延迟消息支持，基于 RabbitMQ x-delayed-message 交换器✅）；C: WebSocket实时通信（useWebSocket Hook + WebSocketService 自动重连 + 订阅管理 + 5种连接状态✅）；D: 代码质量（cargo check 0 errors ✅ + tsc 0 errors ✅）
 
+> **🏗️ Phase16 迭代演进 - WebSocket 实时化 + 表单国际化** ✅ 全部完成 — A: 后端 WebSocket 频道订阅增强（WsConnection 频道集合管理 + subscribe_to_channel/unsubscribe_from_channel/get_channel_subscribers✅ + broadcast_to_channel 频道定向广播✅ + broadcast_to_notifications 通知频道广播✅ + 连接断开时自动清理频道订阅✅ + 订阅确认消息 subscribed 类型✅）；B: 实时通知系统（useNotificationWebSocket Hook 支持双模式调用（字符串 userId 或对象 options）✅ + onNotification/onUnreadCountChange 回调✅ + NotificationPanel 接入 WebSocket（实时状态 Chip 显示 connected/disconnected）✅ + WebSocket 通知与 REST API 历史通知合并✅）；C: Dashboard WebSocket 集成（useDashboardWebSocket 已存在且功能完整 ✅ + 模块级 WebSocket 路径（mes/bi/gis）✅ + 认证消息 + 自动重连策略✅）；D: 表单组件国际化（Cascader locale prop 支持 placeholder/backText✅ + DateRangePicker locale prop 支持 placeholder/startDate/endDate/weekdays/presets✅ + FileUpload locale prop 支持 dragText/clickText/maxSizeText/processing/completed/failed/retry/remove/sizeExceeded/uploadFailed✅ + zh.json/en.json 添加 24 个翻译键✅）；E: 代码质量（cargo check 0 errors ✅ + tsc 0 errors ✅）
+
 > **🏆 V20.0-V26.0 架构优化总览** ✅ 全部 7 个版本完成 — V20.0 跨层筑基（缓存一致性+Saga+CI效率）✅ + V21.0 统一权限中心+共享库分层✅ + V22.0 API网关+Hooks分层+状态重组+服务网格✅ + V23.0 配置管理统一+模板精简+事件驱动升级✅ + V24.0 数据库优化+灰度发布体系✅ + V25.0 微前端生产化+可观测性增强✅ + V26.0 全链路追踪生产化✅；累计：跨层架构（缓存一致性/Saga/权限中心/事件版本化/Schema注册表/死信队列/全链路追踪）✅ + 基础设施（Traefik网关+Consul网格+PgBouncer+灰度发布+配置中心+Jaeger）✅ + 后端架构（共享库4层分层/读写分离/gRPC基础/SLO/日志查询/告警分级/RabbitMQ trace传播）✅ + 前端架构（Hooks 4层治理/Store 3层重组/模板5+10体系/MF多remote生产化/useFeatureFlag/Web Vitals）✅
+
+> **🏗️ V26.0 架构优化 - 全链路追踪生产化** ✅ 全部完成 — A: 后端 RabbitMQ trace 传播（Publisher 自动注入当前 trace_id✅ + Subscriber 提取 trace_id 创建关联 span✅ + Event::with_trace_id 复用 V20.0 已有字段✅）；B: 前端 Web Vitals 监控（useWebVitals Hook 监控 LCP/FID/CLS/FCP/TTFB/INP✅ + getWebVitalsSnapshot 同步读取✅ + foundation/index.ts 导出✅）；C: tracing.ts 弃用标记（添加 @deprecated 注释推荐使用 telemetry.ts OpenTelemetry SDK✅）；D: 验证（27/27 服务 telemetry_middleware 全部就位✅ + cargo check --workspace 0 errors✅ + tsc --noEmit 0 errors✅ + Jaeger 已在 docker-compose 就绪✅）
 
 > **🏗️ V25.0 架构优化 - 微前端生产化 + 可观测性增强** ✅ 全部完成 — A: 微前端生产化（9 业务域 remote 模块清单 + RemoteModuleConfig 配置中心 + 环境变量注入 getRemoteEntry + 按权限过滤 getEnabledModules✅ + RemoteLoader ErrorBoundary + Suspense + lazy 加载✅ + MicroAppRouter 按权限动态路由✅ + MicroFrontendRegistry 运行时注册中心✅ + vite.config buildRemotes + 4 个新 shared 依赖✅）；B: 可观测性增强（SLOManager 4 类 SLO + register/record/status/report✅ + LogQueryProvider trait + InMemoryLogStore 多维过滤分页✅ + AlertManager 分级告警 Info/Warning/Critical/Emergency + 5 渠道通知 log/websocket/email/sms/phone✅ + standard_slos_for_service/all_services 81 个 SLO 预设✅ + ObservabilityAggregator 统一聚合 + with_defaults 内存实现✅ + 10 个集成测试全部通过✅）；C: 代码质量清零（修复 shared-components Cascader/DateRangePicker/FileUpload MUI v9 兼容与导出 + useImWebSocket 类型 + tsc --noEmit 0 errors✅）
 
