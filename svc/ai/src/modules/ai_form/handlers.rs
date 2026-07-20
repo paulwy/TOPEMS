@@ -230,8 +230,9 @@ pub async fn suggest_for_form(
             ),
         ));
     }
-    // SAFETY: 上面已经检查了 registry.contains(&form_type)，这里 unwrap 不会 panic
-    let cfg = registry.get(&form_type).unwrap();
+    let cfg = registry
+        .get(&form_type)
+        .expect("form config should exist after contains() check");
     if !cfg.supports("suggest") {
         return Json(api_error(
             400,
@@ -285,8 +286,9 @@ pub async fn enhance_for_form(
             ),
         ));
     }
-    // SAFETY: 上面已经检查了 registry.contains(&form_type)，这里 unwrap 不会 panic
-    let cfg = registry.get(&form_type).unwrap();
+    let cfg = registry
+        .get(&form_type)
+        .expect("form config should exist after contains() check");
     if !cfg.supports("enhance") {
         return Json(api_error(
             400,

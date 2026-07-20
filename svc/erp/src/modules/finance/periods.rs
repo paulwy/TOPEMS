@@ -66,9 +66,11 @@ pub async fn get_current_period(
                 .unwrap_or(now);
             // 月末：下个月 1 号 - 1 秒
             let next_month = if now.month() == 12 {
-                Utc::with_ymd_and_hms(&Utc, now.year() + 1, 1, 1, 0, 0, 0).unwrap()
+                Utc::with_ymd_and_hms(&Utc, now.year() + 1, 1, 1, 0, 0, 0)
+                    .expect("valid date should always be constructible")
             } else {
-                Utc::with_ymd_and_hms(&Utc, now.year(), now.month() + 1, 1, 0, 0, 0).unwrap()
+                Utc::with_ymd_and_hms(&Utc, now.year(), now.month() + 1, 1, 0, 0, 0)
+                    .expect("valid date should always be constructible")
             };
             let end = next_month - chrono::Duration::seconds(1);
 

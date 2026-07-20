@@ -16,8 +16,12 @@ pub fn create_cors_layer() -> CorsLayer {
             "No CORS origins configured, using strict default (only localhost for development)"
         );
         AllowOrigin::list(vec![
-            "http://localhost:3000".parse().expect("hardcoded localhost URL should always parse"),
-            "http://localhost:5173".parse().expect("hardcoded localhost URL should always parse"),
+            "http://localhost:3000"
+                .parse()
+                .expect("hardcoded localhost URL should always parse"),
+            "http://localhost:5173"
+                .parse()
+                .expect("hardcoded localhost URL should always parse"),
         ])
     } else {
         tracing::info!("CORS allowed origins: {:?}", origins);

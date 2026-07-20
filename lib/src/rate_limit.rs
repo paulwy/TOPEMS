@@ -69,7 +69,9 @@ impl RateLimitMiddleware {
                     axum::response::Response::builder()
                         .status(StatusCode::INTERNAL_SERVER_ERROR)
                         .body(axum::body::Body::empty())
-                        .expect("building response with INTERNAL_SERVER_ERROR should always succeed")
+                        .expect(
+                            "building response with INTERNAL_SERVER_ERROR should always succeed",
+                        )
                 });
         } else {
             entry.0 += 1;

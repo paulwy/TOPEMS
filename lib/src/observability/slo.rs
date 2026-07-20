@@ -10,18 +10,11 @@ pub enum SLOType {
     /// 可用性（成功率）
     Availability,
     /// 延迟（P99/P95/P90）
-    Latency {
-        percentile: f64,
-        threshold_ms: u64,
-    },
+    Latency { percentile: f64, threshold_ms: u64 },
     /// 吞吐量
-    Throughput {
-        min_rps: f64,
-    },
+    Throughput { min_rps: f64 },
     /// 错误率
-    ErrorRate {
-        max_rate: f64,
-    },
+    ErrorRate { max_rate: f64 },
 }
 
 /// SLO 定义

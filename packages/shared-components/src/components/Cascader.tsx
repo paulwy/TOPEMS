@@ -22,6 +22,11 @@ export interface CascaderOption {
   disabled?: boolean;
 }
 
+export interface CascaderLocale {
+  placeholder?: string;
+  backText?: string;
+}
+
 export interface CascaderProps {
   value?: string[];
   onChange?: (value: string[]) => void;
@@ -32,19 +37,23 @@ export interface CascaderProps {
   multiple?: boolean;
   maxTagCount?: number;
   className?: string;
+  locale?: CascaderLocale;
 }
 
 const Cascader: React.FC<CascaderProps> = ({
   value = [],
   onChange,
   options,
-  placeholder = '请选择',
+  placeholder,
   disabled = false,
   fullWidth = false,
   multiple = false,
   maxTagCount = 3,
   className,
+  locale,
 }) => {
+  const finalPlaceholder = placeholder ?? locale?.placeholder ?? '请选择';
+  const backText = locale?.backText ?? '返回上一级';
   const [anchorEl, setAnchorEl] = useState<HTMLElement | null>(null);
   const [selectedPath, setSelectedPath] = useState<CascaderOption[]>([]);
   const [currentLevel, setCurrentLevel] = useState<CascaderOption[]>(options);
