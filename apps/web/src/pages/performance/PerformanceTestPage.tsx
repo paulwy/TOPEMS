@@ -1,4 +1,5 @@
 import React, { useEffect, useState, useRef, useCallback } from 'react';
+import { logger } from '@/utils/logger';
 
 interface LayoutShift {
   value: number;
@@ -209,7 +210,7 @@ const PerformanceTestPage: React.FC = () => {
     try {
       lcpObserver.observe({ entryTypes: ['largest-contentful-paint'] });
     } catch (e) {
-      console.warn('LCP observer not supported');
+      logger.warn('LCP observer not supported');
     }
 
     const fidObserver = new PerformanceObserver((entryList) => {
@@ -224,7 +225,7 @@ const PerformanceTestPage: React.FC = () => {
     try {
       fidObserver.observe({ entryTypes: ['first-input'] });
     } catch (e) {
-      console.warn('FID observer not supported');
+      logger.warn('FID observer not supported');
     }
 
     const clsObserver = new PerformanceObserver((entryList) => {
@@ -241,7 +242,7 @@ const PerformanceTestPage: React.FC = () => {
     try {
       clsObserver.observe({ entryTypes: ['layout-shift'], buffered: true });
     } catch (e) {
-      console.warn('CLS observer not supported');
+      logger.warn('CLS observer not supported');
     }
 
     const ttiCheckTimer = setInterval(() => {

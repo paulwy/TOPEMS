@@ -10,6 +10,7 @@
 
 pub mod dashboard;
 pub mod dead_letter_queue;
+pub mod delayed_message;
 pub mod error;
 pub mod event_types;
 pub mod monitor;
@@ -24,6 +25,7 @@ pub use dashboard::{
     EventTypeDistribution, RecentEvent, SchemaRegistryStats as DashboardSchemaRegistryStats,
 };
 pub use dead_letter_queue::{DeadLetter, DeadLetterList, DeadLetterQueue, DeadLetterStats};
+pub use delayed_message::{DelayedMessagePublisher, DelayedMessageSubscriber};
 pub use error::{EventError, EventResult};
 pub use event_types::{
     AfterSalesTicketCreatedPayload, AiDocumentProcessedPayload, AiImageAnalyzedPayload,

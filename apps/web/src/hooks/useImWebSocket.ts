@@ -220,7 +220,7 @@ export function useImWebSocket(options: UseImWebSocketOptions = {}) {
         try {
           let msg: string | ImWsMessage = event.data;
           try {
-            const parsed = JSON.parse(event.data) as WsMessage;
+            const parsed = JSON.parse(event.data) as ImWsMessage;
             msg = parsed;
           } catch (_) {
             // keep as string
