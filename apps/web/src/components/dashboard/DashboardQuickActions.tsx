@@ -36,6 +36,7 @@ export const DashboardQuickActions: React.FC<DashboardQuickActionsProps> = ({
 
   return (
     <Box
+      className='dashboard-quick-actions'
       sx={{
         display: 'grid',
         gridTemplateColumns: {

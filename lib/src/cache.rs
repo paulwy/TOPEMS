@@ -862,10 +862,7 @@ impl DistributedCacheManager {
                 warn!("Cleared all L1 cache due to broadcast");
             }
             _ => {
-                warn!(
-                    "Unknown invalidation level: {}",
-                    payload.invalidation_level
-                );
+                warn!("Unknown invalidation level: {}", payload.invalidation_level);
             }
         }
 
@@ -961,10 +958,7 @@ impl CacheWarmer {
                     total_count += task_count;
                 }
                 Err(e) => {
-                    warn!(
-                        "Cache warmup task '{}' failed: {:?}",
-                        task.name, e
-                    );
+                    warn!("Cache warmup task '{}' failed: {:?}", task.name, e);
                 }
             }
         }
@@ -1052,10 +1046,22 @@ mod tests {
         assert!(simple_wildcard_match("hello", "h*"));
         assert!(simple_wildcard_match("hello", "*o"));
         assert!(simple_wildcard_match("hello", "h*o"));
-        assert!(simple_wildcard_match("tenant:erp:dict:currency", "tenant:erp:dict:*"));
-        assert!(simple_wildcard_match("tenant:erp:dict:currency", "tenant:erp:*"));
-        assert!(simple_wildcard_match("tenant:erp:dict:currency", "tenant:*"));
-        assert!(!simple_wildcard_match("tenant:erp:dict:currency", "tenant:hrm:*"));
+        assert!(simple_wildcard_match(
+            "tenant:erp:dict:currency",
+            "tenant:erp:dict:*"
+        ));
+        assert!(simple_wildcard_match(
+            "tenant:erp:dict:currency",
+            "tenant:erp:*"
+        ));
+        assert!(simple_wildcard_match(
+            "tenant:erp:dict:currency",
+            "tenant:*"
+        ));
+        assert!(!simple_wildcard_match(
+            "tenant:erp:dict:currency",
+            "tenant:hrm:*"
+        ));
         assert!(!simple_wildcard_match("hello", "world"));
     }
 

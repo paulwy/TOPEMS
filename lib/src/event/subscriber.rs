@@ -50,7 +50,10 @@ impl EventSubscriber {
     /// 订阅特定事件类型（返回 Result 的 handler 版本）
     pub fn subscribe_handler<F>(mut self, event_types: Vec<EventType>, handler: F) -> Self
     where
-        F: Fn(Event) -> std::pin::Pin<Box<dyn std::future::Future<Output = Result<(), String>> + Send>>
+        F: Fn(
+                Event,
+            )
+                -> std::pin::Pin<Box<dyn std::future::Future<Output = Result<(), String>> + Send>>
             + Send
             + Sync
             + Clone

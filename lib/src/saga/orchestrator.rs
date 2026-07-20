@@ -79,10 +79,12 @@ pub struct SagaStepDefinition {
     /// 步骤名称
     pub name: String,
     /// 正向执行动作
-    pub forward_action: Box<dyn Fn(SagaInstance) -> BoxFuture<'static, Result<(), SagaError>> + Send + Sync>,
+    pub forward_action:
+        Box<dyn Fn(SagaInstance) -> BoxFuture<'static, Result<(), SagaError>> + Send + Sync>,
     /// 补偿动作（可选，None 表示该步骤无补偿逻辑）
-    pub compensate_action:
-        Option<Box<dyn Fn(SagaInstance) -> BoxFuture<'static, Result<(), SagaError>> + Send + Sync>>,
+    pub compensate_action: Option<
+        Box<dyn Fn(SagaInstance) -> BoxFuture<'static, Result<(), SagaError>> + Send + Sync>,
+    >,
 }
 
 /// Saga 编排器
@@ -323,12 +325,7 @@ impl SagaOrchestrator {
 
             step.status = StepStatus::Compensating;
             self.store
-                .update_step_status(
-                    saga_id,
-                    step.step_index,
-                    StepStatus::Compensating,
-                    None,
-                )
+                .update_step_status(saga_id, step.step_index, StepStatus::Compensating, None)
                 .await?;
 
             step.status = StepStatus::Compensated;

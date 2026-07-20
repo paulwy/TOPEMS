@@ -110,7 +110,10 @@ impl SagaStore for InMemorySagaStore {
             .ok_or(SagaError::SagaNotFound(saga_id))?;
         saga.status = status;
         match saga.status {
-            SagaStatus::Completed | SagaStatus::Failed | SagaStatus::Compensated | SagaStatus::Aborted => {
+            SagaStatus::Completed
+            | SagaStatus::Failed
+            | SagaStatus::Compensated
+            | SagaStatus::Aborted => {
                 saga.completed_at = Some(chrono::Utc::now());
             }
             _ => {}

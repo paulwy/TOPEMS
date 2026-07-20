@@ -1,3 +1,4 @@
+use crate::auth::Claims;
 use axum::{
     body::Body,
     extract::Request,
@@ -5,7 +6,6 @@ use axum::{
     middleware::Next,
     response::IntoResponse,
 };
-use crate::auth::Claims;
 
 fn extract_claims(req: &Request<Body>) -> Option<Claims> {
     req.extensions().get::<Claims>().cloned()
@@ -13,7 +13,10 @@ fn extract_claims(req: &Request<Body>) -> Option<Claims> {
 
 pub fn require_permission(
     permission: &'static str,
-) -> impl Fn(Request<Body>, Next) -> std::pin::Pin<Box<dyn std::future::Future<Output = axum::response::Response> + Send>>
+) -> impl Fn(
+    Request<Body>,
+    Next,
+) -> std::pin::Pin<Box<dyn std::future::Future<Output = axum::response::Response> + Send>>
        + Clone
        + Send
        + Sync {
@@ -56,7 +59,10 @@ pub fn require_permission(
 
 pub fn require_role(
     role: &'static str,
-) -> impl Fn(Request<Body>, Next) -> std::pin::Pin<Box<dyn std::future::Future<Output = axum::response::Response> + Send>>
+) -> impl Fn(
+    Request<Body>,
+    Next,
+) -> std::pin::Pin<Box<dyn std::future::Future<Output = axum::response::Response> + Send>>
        + Clone
        + Send
        + Sync {
@@ -93,7 +99,10 @@ pub fn require_role(
     }
 }
 
-pub fn require_superuser() -> impl Fn(Request<Body>, Next) -> std::pin::Pin<Box<dyn std::future::Future<Output = axum::response::Response> + Send>>
+pub fn require_superuser() -> impl Fn(
+    Request<Body>,
+    Next,
+) -> std::pin::Pin<Box<dyn std::future::Future<Output = axum::response::Response> + Send>>
        + Clone
        + Send
        + Sync {
@@ -128,7 +137,10 @@ pub fn require_superuser() -> impl Fn(Request<Body>, Next) -> std::pin::Pin<Box<
 
 pub fn require_any_permission(
     permissions: &'static [&'static str],
-) -> impl Fn(Request<Body>, Next) -> std::pin::Pin<Box<dyn std::future::Future<Output = axum::response::Response> + Send>>
+) -> impl Fn(
+    Request<Body>,
+    Next,
+) -> std::pin::Pin<Box<dyn std::future::Future<Output = axum::response::Response> + Send>>
        + Clone
        + Send
        + Sync {
@@ -171,7 +183,10 @@ pub fn require_any_permission(
 
 pub fn require_all_permissions(
     permissions: &'static [&'static str],
-) -> impl Fn(Request<Body>, Next) -> std::pin::Pin<Box<dyn std::future::Future<Output = axum::response::Response> + Send>>
+) -> impl Fn(
+    Request<Body>,
+    Next,
+) -> std::pin::Pin<Box<dyn std::future::Future<Output = axum::response::Response> + Send>>
        + Clone
        + Send
        + Sync {

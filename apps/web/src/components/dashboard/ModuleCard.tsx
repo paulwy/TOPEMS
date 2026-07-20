@@ -96,6 +96,7 @@ export const ModuleCard: React.FC<ModuleCardProps> = ({ item, onClick, size = 'm
       }}
       onMouseEnter={() => setIsHovered(true)}
       onMouseLeave={() => setIsHovered(false)}
+      className='dashboard-module-card'
       style={{
         background: 'white',
         borderRadius: '16px',

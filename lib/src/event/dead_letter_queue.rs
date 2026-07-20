@@ -212,9 +212,7 @@ impl DeadLetterQueue {
         page_size: usize,
     ) -> EventResult<DeadLetterList> {
         if page_size == 0 {
-            return Err(EventError::ConfigError(
-                "page_size 不能为 0".to_string(),
-            ));
+            return Err(EventError::ConfigError("page_size 不能为 0".to_string()));
         }
 
         let mut con = self.redis_client.get_multiplexed_async_connection().await?;
@@ -223,10 +221,7 @@ impl DeadLetterQueue {
         // 收集所有死信条目并按 created_at 降序排序（最新在前）
         let mut all_items: Vec<DeadLetter> = Vec::new();
         for key in &keys {
-            let count: i64 = redis::cmd("LLEN")
-                .arg(key)
-                .query_async(&mut con)
-                .await?;
+            let count: i64 = redis::cmd("LLEN").arg(key).query_async(&mut con).await?;
             if count == 0 {
                 continue;
             }
@@ -272,10 +267,7 @@ impl DeadLetterQueue {
         let keys = self.list_dlq_keys(None).await?;
         let mut con = self.redis_client.get_multiplexed_async_connection().await?;
         for key in &keys {
-            let count: i64 = redis::cmd("LLEN")
-                .arg(key)
-                .query_async(&mut con)
-                .await?;
+            let count: i64 = redis::cmd("LLEN").arg(key).query_async(&mut con).await?;
             if count == 0 {
                 continue;
             }
@@ -353,10 +345,8 @@ impl DeadLetterQueue {
 
         for key in keys {
             loop {
-                let result: Option<String> = redis::cmd("RPOP")
-                    .arg(&key)
-                    .query_async(&mut con)
-                    .await?;
+                let result: Option<String> =
+                    redis::cmd("RPOP").arg(&key).query_async(&mut con).await?;
                 let Some(json) = result else { break };
                 let Ok(dead_letter) = serde_json::from_str::<DeadLetter>(&json) else {
                     let _: () = redis::cmd("INCR")
@@ -427,8 +417,7 @@ impl DeadLetterQueue {
 
         let archive_key = format!(
             "{}:{}",
-            DLQ_ARCHIVE_KEY_PREFIX,
-            dead_letter.event.event_type
+            DLQ_ARCHIVE_KEY_PREFIX, dead_letter.event.event_type
         );
         let _: () = redis::cmd("LPUSH")
             .arg(&archive_key)
@@ -468,16 +457,17 @@ impl DeadLetterQueue {
         let mut oldest: Option<DateTime<Utc>> = None;
 
         for key in &keys {
-            let count: i64 = redis::cmd("LLEN")
-                .arg(key)
-                .query_async(&mut con)
-                .await?;
+            let count: i64 = redis::cmd("LLEN").arg(key).query_async(&mut con).await?;
             let count = count.max(0) as usize;
             total_dead_letters += count;
 
             // 解析事件类型（key 形如 topems:dlq:EventType）
             let parts: Vec<&str> = key.splitn(3, ':').collect();
-            let event_type_name = if parts.len() == 3 { parts[2].to_string() } else { key.clone() };
+            let event_type_name = if parts.len() == 3 {
+                parts[2].to_string()
+            } else {
+                key.clone()
+            };
             *by_event_type.entry(event_type_name).or_insert(0) += count;
 
             // 寻找最早 created_at
@@ -560,10 +550,7 @@ impl DeadLetterQueue {
         let keys = self.list_dlq_keys(None).await?;
         let mut con = self.redis_client.get_multiplexed_async_connection().await?;
         for key in keys {
-            let count: i64 = redis::cmd("LLEN")
-                .arg(&key)
-                .query_async(&mut con)
-                .await?;
+            let count: i64 = redis::cmd("LLEN").arg(&key).query_async(&mut con).await?;
             if count == 0 {
                 continue;
             }

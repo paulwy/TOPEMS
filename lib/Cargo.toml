@@ -7,6 +7,9 @@ description = "Shared library for TOPEMS microservices"
 
 [features]
 pgvector = []
+# V24.0 模块 C: gRPC 微服务基础特性开关
+# 启用后激活 tonic/prost 依赖与 grpc 模块；服务可基于此构建 gRPC server/client
+grpc = ["dep:tonic", "dep:prost"]
 
 [dependencies]
 dotenv.workspace = true
@@ -63,6 +66,16 @@ tracing-opentelemetry = "0.33"
 prometheus = "0.13"
 tracing-appender = "0.2"
 
+# gRPC 微服务基础（V24.0 模块 C）
+# tonic 工作区已锁定 0.14，与 axum 0.8 兼容
+tonic = { workspace = true, optional = true }
+prost = { version = "0.13", optional = true }
+http = "1"
+
 [dev-dependencies]
 tokio-test.workspace = true
 tempdir = "0.3"
+
+[build-dependencies]
+tonic-build = "0.14"
+prost-build = "0.13"

@@ -2166,6 +2166,1435 @@ export const cyberpunkComponentStyles = `
   border-radius: 3px;
   box-shadow: 0 0 6px rgba(0, 255, 255, 0.50);
 }
+
+/* ========== BI MetricCard 指标卡片 ========== */
+
+/* 容器 — 深空玻璃拟态 + 霓虹边框 */
+.cyberpunk-mode .bi-metric-card {
+  background-color: rgba(26, 26, 46, 0.70) !important;
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border: 1px solid rgba(0, 255, 255, 0.20) !important;
+  box-shadow:
+    0 4px 24px rgba(0, 0, 0, 0.40),
+    inset 0 1px 0 rgba(255, 255, 255, 0.06);
+  position: relative;
+  overflow: hidden;
+}
+
+/* 顶部装饰光带 */
+.cyberpunk-mode .bi-metric-card::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 2px;
+  background: linear-gradient(90deg, transparent, #00FFFF, #FF00FF, transparent);
+  opacity: 0.60;
+}
+
+/* hover 态 — 霓虹发光增强 */
+.cyberpunk-mode .bi-metric-card:hover {
+  border-color: rgba(0, 255, 255, 0.50) !important;
+  box-shadow:
+    0 12px 40px rgba(0, 0, 0, 0.50),
+    0 0 24px rgba(0, 255, 255, 0.25),
+    inset 0 1px 0 rgba(255, 255, 255, 0.10);
+}
+
+/* 指标数值 — 霓虹发光 */
+.cyberpunk-mode .bi-metric-card .MuiTypography-root {
+  color: #E2E8F0;
+}
+.cyberpunk-mode .bi-metric-card .MuiTypography-h4,
+.cyberpunk-mode .bi-metric-card .MuiTypography-h3 {
+  color: #00FFFF;
+  text-shadow: 0 0 12px rgba(0, 255, 255, 0.50);
+  font-family: 'JetBrains Mono', 'Fira Code', monospace;
+  font-weight: 700;
+}
+
+/* 趋势上升 — 霓虹绿 */
+.cyberpunk-mode .bi-metric-card [color='success.main'],
+.cyberpunk-mode .bi-metric-card .MuiTypography-colorSuccess {
+  color: #00FF88 !important;
+  text-shadow: 0 0 6px rgba(0, 255, 136, 0.50);
+}
+
+/* 趋势下降 — 霓虹红 */
+.cyberpunk-mode .bi-metric-card [color='error.main'],
+.cyberpunk-mode .bi-metric-card .MuiTypography-colorError {
+  color: #FF0066 !important;
+  text-shadow: 0 0 6px rgba(255, 0, 102, 0.50);
+}
+
+/* ========== BI ChartCard 图表卡片 ========== */
+
+/* 容器 — 玻璃拟态 */
+.cyberpunk-mode .bi-chart-card {
+  background-color: rgba(26, 26, 46, 0.70) !important;
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border: 1px solid rgba(0, 255, 255, 0.20) !important;
+  box-shadow:
+    0 4px 24px rgba(0, 0, 0, 0.40),
+    inset 0 1px 0 rgba(255, 255, 255, 0.06);
+  overflow: hidden;
+  position: relative;
+}
+
+/* 顶部霓虹装饰线 */
+.cyberpunk-mode .bi-chart-card::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 1px;
+  background: linear-gradient(90deg, transparent, #00FFFF, transparent);
+  opacity: 0.70;
+  z-index: 1;
+}
+
+/* hover 态 */
+.cyberpunk-mode .bi-chart-card:hover {
+  border-color: rgba(0, 255, 255, 0.40) !important;
+  box-shadow:
+    0 12px 40px rgba(0, 0, 0, 0.50),
+    0 0 24px rgba(0, 255, 255, 0.20);
+}
+
+/* 卡片标题 — 霓虹青 */
+.cyberpunk-mode .bi-chart-card .MuiCardHeader-title {
+  color: #00FFFF;
+  text-shadow: 0 0 8px rgba(0, 255, 255, 0.40);
+  font-weight: 600;
+  letter-spacing: 0.02em;
+}
+
+/* 卡片副标题 */
+.cyberpunk-mode .bi-chart-card .MuiCardHeader-subheader {
+  color: #8892B0;
+  font-family: 'JetBrains Mono', 'Fira Code', monospace;
+  font-size: 0.75rem;
+}
+
+/* 卡片头部底边 */
+.cyberpunk-mode .bi-chart-card .MuiCardHeader-root {
+  border-bottom: 1px solid rgba(0, 255, 255, 0.15);
+}
+
+/* 图表类型切换按钮容器 — 深色玻璃 */
+.cyberpunk-mode .bi-chart-card .MuiCardHeader-action div[style*='F1F5F9'] {
+  background-color: rgba(0, 255, 255, 0.06) !important;
+  border: 1px solid rgba(0, 255, 255, 0.20);
+}
+
+/* 切换按钮 hover — 霓虹青 */
+.cyberpunk-mode .bi-chart-card .MuiCardHeader-action button:hover {
+  color: #00FFFF;
+  background-color: rgba(0, 255, 255, 0.10);
+}
+
+/* 时间范围 Chip — 霓虹风格 */
+.cyberpunk-mode .bi-chart-card .MuiChip-root {
+  background-color: rgba(0, 255, 255, 0.08);
+  border: 1px solid rgba(0, 255, 255, 0.30);
+  color: #00FFFF;
+}
+
+/* 汇总数据 — 等宽字体 */
+.cyberpunk-mode .bi-chart-card .MuiCardContent-root .MuiTypography-caption {
+  font-family: 'JetBrains Mono', 'Fira Code', monospace;
+  color: #8892B0;
+}
+
+/* ========== AI FloatingAIHelper 浮动助手 ========== */
+
+/* 浮动按钮 — 霓虹渐变 + 多层发光 */
+.cyberpunk-mode .ai-helper-fab {
+  background: linear-gradient(135deg, #00FFFF 0%, #0088FF 50%, #FF00FF 100%) !important;
+  box-shadow:
+    0 8px 24px rgba(0, 0, 0, 0.50),
+    0 0 24px rgba(0, 255, 255, 0.50),
+    0 0 48px rgba(255, 0, 255, 0.25) !important;
+  border: 2px solid rgba(255, 255, 255, 0.30);
+  position: relative;
+  overflow: hidden;
+  animation: cyber-pulse-glow 2.5s ease-in-out infinite;
+}
+
+/* hover 态 — 发光增强 */
+.cyberpunk-mode .ai-helper-fab:hover {
+  box-shadow:
+    0 12px 32px rgba(0, 0, 0, 0.60),
+    0 0 36px rgba(0, 255, 255, 0.70),
+    0 0 72px rgba(255, 0, 255, 0.40) !important;
+  transform: scale(1.05);
+}
+
+/* 浮动按钮扫描线 */
+.cyberpunk-mode .ai-helper-fab::before {
+  content: '';
+  position: absolute;
+  top: -100%;
+  left: 0;
+  right: 0;
+  height: 50%;
+  background: linear-gradient(180deg, transparent, rgba(255, 255, 255, 0.40), transparent);
+  animation: cyber-logo-scan 3s ease-in-out infinite;
+  pointer-events: none;
+}
+
+/* 浮动按钮图标 — 黑色高对比 */
+.cyberpunk-mode .ai-helper-fab svg {
+  color: #0A0A1A !important;
+  filter: drop-shadow(0 1px 2px rgba(255, 255, 255, 0.50));
+}
+
+/* AI 助手面板 — 深空玻璃拟态 */
+.cyberpunk-mode .ai-helper-panel {
+  background-color: rgba(10, 10, 26, 0.92) !important;
+  backdrop-filter: blur(24px);
+  -webkit-backdrop-filter: blur(24px);
+  border: 1px solid rgba(0, 255, 255, 0.40);
+  box-shadow:
+    0 32px 80px rgba(0, 0, 0, 0.70),
+    0 0 60px rgba(0, 255, 255, 0.20),
+    inset 0 1px 0 rgba(255, 255, 255, 0.10);
+  overflow: hidden;
+  position: relative;
+}
+
+/* 面板顶部装饰线 */
+.cyberpunk-mode .ai-helper-panel::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 2px;
+  background: linear-gradient(90deg, transparent, #00FFFF, #FF00FF, #00FFFF, transparent);
+  box-shadow: 0 0 10px rgba(0, 255, 255, 0.60);
+  z-index: 1;
+}
+
+/* 面板头部 — 渐变背景 */
+.cyberpunk-mode .ai-helper-panel .MuiBox-root:first-child > .MuiBox-root:first-child {
+  background: linear-gradient(135deg, #00FFFF 0%, #0088FF 50%, #FF00FF 100%) !important;
+  position: relative;
+}
+
+/* 面板头部标题 */
+.cyberpunk-mode .ai-helper-panel .MuiBox-root:first-child > .MuiBox-root:first-child .MuiTypography-root {
+  color: #0A0A1A !important;
+  font-weight: 800;
+  text-shadow: 0 1px 2px rgba(255, 255, 255, 0.40);
+}
+
+/* 面板头部图标按钮 — 半透明白 */
+.cyberpunk-mode .ai-helper-panel .MuiBox-root:first-child > .MuiBox-root:first-child .MuiIconButton-root {
+  color: #0A0A1A;
+  background-color: rgba(255, 255, 255, 0.20);
+  backdrop-filter: blur(8px);
+}
+.cyberpunk-mode .ai-helper-panel .MuiBox-root:first-child > .MuiBox-root:first-child .MuiIconButton-root:hover {
+  background-color: rgba(255, 255, 255, 0.30);
+}
+
+/* 搜索框 — 霓虹焦点 */
+.cyberpunk-mode .ai-helper-panel .MuiOutlinedInput-root .MuiOutlinedInput-notchedOutline {
+  border-color: rgba(0, 255, 255, 0.30);
+}
+.cyberpunk-mode .ai-helper-panel .MuiOutlinedInput-root.Mui-focused .MuiOutlinedInput-notchedOutline {
+  border-color: #00FFFF;
+  box-shadow: 0 0 12px rgba(0, 255, 255, 0.30);
+}
+
+/* 工具/命令卡片 — 玻璃拟态 */
+.cyberpunk-mode .ai-helper-panel .MuiPaper-root.MuiPaper-elevation0,
+.cyberpunk-mode .ai-helper-panel .MuiPaper-outlined {
+  background-color: rgba(255, 255, 255, 0.03);
+  border: 1px solid rgba(0, 255, 255, 0.20);
+  backdrop-filter: blur(8px);
+}
+
+/* 工具卡片 hover — 霓虹边框 + 扫光 */
+.cyberpunk-mode .ai-helper-panel .MuiPaper-root.MuiPaper-elevation0:hover,
+.cyberpunk-mode .ai-helper-panel .MuiPaper-outlined:hover {
+  border-color: rgba(0, 255, 255, 0.50);
+  background-color: rgba(0, 255, 255, 0.06);
+  box-shadow: 0 0 16px rgba(0, 255, 255, 0.20);
+}
+
+/* 工具标题 — 霓虹青 */
+.cyberpunk-mode .ai-helper-panel .MuiTypography-subtitle2 {
+  color: #00FFFF;
+  text-shadow: 0 0 6px rgba(0, 255, 255, 0.40);
+}
+
+/* 工具描述 — 灰蓝 */
+.cyberpunk-mode .ai-helper-panel .MuiTypography-caption {
+  color: #8892B0;
+}
+
+/* 工具图标 — 霓虹青 */
+.cyberpunk-mode .ai-helper-panel .MuiListItemIcon-root svg {
+  color: #00FFFF;
+  filter: drop-shadow(0 0 4px rgba(0, 255, 255, 0.50));
+}
+
+/* 命令 Chip — 霓虹风格 */
+.cyberpunk-mode .ai-helper-panel .MuiChip-root {
+  background-color: rgba(0, 255, 255, 0.08);
+  border: 1px solid rgba(0, 255, 255, 0.30);
+  color: #00FFFF;
+  font-family: 'JetBrains Mono', 'Fira Code', monospace;
+}
+
+/* 命令 Chip hover */
+.cyberpunk-mode .ai-helper-panel .MuiChip-root:hover {
+  background-color: rgba(0, 255, 255, 0.15);
+  border-color: rgba(0, 255, 255, 0.60);
+  box-shadow: 0 0 12px rgba(0, 255, 255, 0.30);
+}
+
+/* ========== KanbanPageTemplate 看板模板 ========== */
+
+/* 看板容器 */
+.cyberpunk-mode .kanban-page-template {
+  position: relative;
+}
+
+/* 看板统计卡 — 玻璃拟态 */
+.cyberpunk-mode .kanban-page-template .MuiPaper-root[style*='borderRadius: 2'] {
+  background-color: rgba(26, 26, 46, 0.70) !important;
+  backdrop-filter: blur(12px);
+  border: 1px solid rgba(0, 255, 255, 0.20) !important;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.40);
+}
+
+/* 看板统计数字 — 霓虹青等宽 */
+.cyberpunk-mode .kanban-page-template .MuiTypography-h5,
+.cyberpunk-mode .kanban-page-template .MuiTypography-h4 {
+  color: #00FFFF;
+  font-family: 'JetBrains Mono', 'Fira Code', monospace;
+  text-shadow: 0 0 8px rgba(0, 255, 255, 0.50);
+}
+
+/* 看板列容器 — 深色玻璃 */
+.cyberpunk-mode .kanban-page-template .MuiBox-root > .MuiPaper-root {
+  background-color: rgba(10, 10, 26, 0.60) !important;
+  backdrop-filter: blur(8px);
+  border: 1px solid rgba(0, 255, 255, 0.15);
+}
+
+/* 看板列标题 — 霓虹大写 */
+.cyberpunk-mode .kanban-page-template .MuiTypography-subtitle1 {
+  color: #00FFFF;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  text-shadow: 0 0 6px rgba(0, 255, 255, 0.40);
+  font-weight: 700;
+}
+
+/* 看板卡片 — 玻璃拟态 */
+.cyberpunk-mode .kanban-page-template .MuiPaper-elevation1,
+.cyberpunk-mode .kanban-page-template .MuiPaper-elevation2 {
+  background-color: rgba(26, 26, 46, 0.80) !important;
+  backdrop-filter: blur(12px);
+  border: 1px solid rgba(0, 255, 255, 0.20) !important;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.40);
+  transition: all 200ms cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+/* 看板卡片 hover — 上浮 + 霓虹边框 */
+.cyberpunk-mode .kanban-page-template .MuiPaper-elevation1:hover,
+.cyberpunk-mode .kanban-page-template .MuiPaper-elevation2:hover {
+  border-color: rgba(0, 255, 255, 0.60) !important;
+  transform: translateY(-2px);
+  box-shadow:
+    0 12px 24px rgba(0, 0, 0, 0.50),
+    0 0 16px rgba(0, 255, 255, 0.30);
+}
+
+/* 看板卡片标题 — 霓虹白 */
+.cyberpunk-mode .kanban-page-template .MuiPaper-elevation1 .MuiTypography-h6,
+.cyberpunk-mode .kanban-page-template .MuiPaper-elevation2 .MuiTypography-h6 {
+  color: #E2E8F0;
+  text-shadow: 0 0 4px rgba(0, 255, 255, 0.30);
+}
+
+/* 看板卡片优先级 Chip — 霓虹色 */
+.cyberpunk-mode .kanban-page-template .MuiChip-colorError,
+.cyberpunk-mode .kanban-page-template .MuiChip-colorError_MuiChip-colorDefault {
+  background-color: rgba(255, 0, 102, 0.15) !important;
+  color: #FF0066 !important;
+  border: 1px solid rgba(255, 0, 102, 0.40);
+  text-shadow: 0 0 4px rgba(255, 0, 102, 0.40);
+}
+
+.cyberpunk-mode .kanban-page-template .MuiChip-colorWarning {
+  background-color: rgba(255, 215, 0, 0.15) !important;
+  color: #FFD700 !important;
+  border: 1px solid rgba(255, 215, 0, 0.40);
+  text-shadow: 0 0 4px rgba(255, 215, 0, 0.40);
+}
+
+.cyberpunk-mode .kanban-page-template .MuiChip-colorSuccess {
+  background-color: rgba(0, 255, 136, 0.15) !important;
+  color: #00FF88 !important;
+  border: 1px solid rgba(0, 255, 136, 0.40);
+  text-shadow: 0 0 4px rgba(0, 255, 136, 0.40);
+}
+
+.cyberpunk-mode .kanban-page-template .MuiChip-colorInfo {
+  background-color: rgba(0, 255, 255, 0.15) !important;
+  color: #00FFFF !important;
+  border: 1px solid rgba(0, 255, 255, 0.40);
+  text-shadow: 0 0 4px rgba(0, 255, 255, 0.40);
+}
+
+/* 看板进度条 — 霓虹渐变 */
+.cyberpunk-mode .kanban-page-template .MuiLinearProgress-bar {
+  background: linear-gradient(90deg, #00FFFF, #FF00FF);
+  box-shadow: 0 0 8px rgba(0, 255, 255, 0.50);
+}
+
+/* 看板搜索框 — 霓虹焦点 */
+.cyberpunk-mode .kanban-page-template .MuiOutlinedInput-root.Mui-focused .MuiOutlinedInput-notchedOutline {
+  border-color: #00FFFF;
+  box-shadow: 0 0 12px rgba(0, 255, 255, 0.30);
+}
+
+/* ========== Dashboard 仪表盘组件 ========== */
+
+/* Dashboard 模块卡片 — 玻璃拟态 */
+.cyberpunk-mode .MuiPaper-root.dashboard-module-card,
+.cyberpunk-mode .dashboard-module-card {
+  background-color: rgba(26, 26, 46, 0.70) !important;
+  backdrop-filter: blur(12px);
+  border: 1px solid rgba(0, 255, 255, 0.20) !important;
+  box-shadow: 0 4px 24px rgba(0, 0, 0, 0.40);
+  position: relative;
+  overflow: hidden;
+  transition: all 250ms cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+/* hover — 霓虹发光 */
+.cyberpunk-mode .MuiPaper-root.dashboard-module-card:hover,
+.cyberpunk-mode .dashboard-module-card:hover {
+  border-color: rgba(0, 255, 255, 0.50) !important;
+  transform: translateY(-2px);
+  box-shadow:
+    0 12px 32px rgba(0, 0, 0, 0.50),
+    0 0 24px rgba(0, 255, 255, 0.25);
+}
+
+/* 仪表盘 Hero 区域 — 深空背景 */
+.cyberpunk-mode .dashboard-hero {
+  background: linear-gradient(135deg,
+    rgba(0, 255, 255, 0.10) 0%,
+    rgba(255, 0, 255, 0.05) 50%,
+    rgba(10, 10, 26, 0.80) 100%) !important;
+  border: 1px solid rgba(0, 255, 255, 0.30);
+  backdrop-filter: blur(16px);
+  position: relative;
+  overflow: hidden;
+}
+
+/* Hero 装饰光斑 */
+.cyberpunk-mode .dashboard-hero::before {
+  content: '';
+  position: absolute;
+  top: -50%;
+  right: -20%;
+  width: 60%;
+  height: 200%;
+  background: radial-gradient(circle, rgba(0, 255, 255, 0.15) 0%, transparent 70%);
+  pointer-events: none;
+  animation: cyber-pulse-glow 4s ease-in-out infinite;
+}
+
+/* 仪表盘服务状态卡 — 玻璃拟态 */
+.cyberpunk-mode .service-status-card {
+  background-color: rgba(26, 26, 46, 0.70) !important;
+  backdrop-filter: blur(12px);
+  border: 1px solid rgba(0, 255, 255, 0.20) !important;
+}
+
+/* 仪表盘最近活动 — 玻璃拟态 */
+.cyberpunk-mode .recent-activities {
+  background-color: rgba(26, 26, 46, 0.70) !important;
+  backdrop-filter: blur(12px);
+  border: 1px solid rgba(0, 255, 255, 0.20) !important;
+}
+
+/* 仪表盘快捷操作 — 霓虹按钮 */
+.cyberpunk-mode .dashboard-quick-actions .MuiButton-root {
+  background-color: rgba(0, 255, 255, 0.08);
+  border: 1px solid rgba(0, 255, 255, 0.30);
+  color: #00FFFF;
+  backdrop-filter: blur(8px);
+}
+.cyberpunk-mode .dashboard-quick-actions .MuiButton-root:hover {
+  background-color: rgba(0, 255, 255, 0.15);
+  border-color: rgba(0, 255, 255, 0.60);
+  box-shadow: 0 0 12px rgba(0, 255, 255, 0.30);
+}
+
+/* ========== WizardPageTemplate 向导页模板 ========== */
+
+/* 向导步骤标签 — 激活态霓虹 */
+.cyberpunk-mode .MuiStepLabel-label.Mui-active {
+  color: #00FFFF !important;
+  text-shadow: 0 0 6px rgba(0, 255, 255, 0.40);
+  font-weight: 600;
+}
+
+/* 向导步骤标签 — 完成态霓虹绿 */
+.cyberpunk-mode .MuiStepLabel-label.Mui-completed {
+  color: #00FF88 !important;
+}
+
+/* 向导内容容器 — 玻璃拟态 */
+.cyberpunk-mode .MuiStepContent-root {
+  border-left: 2px solid rgba(0, 255, 255, 0.30);
+}
+
+/* 向导底部按钮区 */
+.cyberpunk-mode .MuiStepContent-root .MuiBox-root:last-child {
+  border-top: 1px solid rgba(0, 255, 255, 0.15);
+  padding-top: 12px;
+}
+
+/* 向导进度条 — 霓虹渐变 */
+.cyberpunk-mode .MuiLinearProgress-root {
+  background-color: rgba(0, 255, 255, 0.10);
+}
+.cyberpunk-mode .MuiLinearProgress-bar {
+  background: linear-gradient(90deg, #00FFFF, #FF00FF);
+  box-shadow: 0 0 8px rgba(0, 255, 255, 0.50);
+}
+
+/* ========== CardListTemplate 卡片列表模板 ========== */
+
+/* 卡片列表统计区 — 玻璃拟态 */
+.cyberpunk-mode .card-list-stat {
+  background-color: rgba(26, 26, 46, 0.70) !important;
+  backdrop-filter: blur(12px);
+  border: 1px solid rgba(0, 255, 255, 0.20) !important;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.40);
+}
+
+/* 卡片列表项 — 玻璃拟态 */
+.cyberpunk-mode .card-list-item {
+  background-color: rgba(26, 26, 46, 0.70) !important;
+  backdrop-filter: blur(12px);
+  border: 1px solid rgba(0, 255, 255, 0.20) !important;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.40);
+  transition: all 250ms cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+/* hover — 上浮 + 霓虹 */
+.cyberpunk-mode .card-list-item:hover {
+  border-color: rgba(0, 255, 255, 0.50) !important;
+  transform: translateY(-2px);
+  box-shadow:
+    0 12px 24px rgba(0, 0, 0, 0.50),
+    0 0 16px rgba(0, 255, 255, 0.25);
+}
+
+/* 卡片列表筛选条 — 玻璃拟态 */
+.cyberpunk-mode .card-list-filter {
+  background-color: rgba(10, 10, 26, 0.60) !important;
+  backdrop-filter: blur(8px);
+  border: 1px solid rgba(0, 255, 255, 0.15);
+}
+
+/* ========== MasterDetailPageTemplate 主从详情模板 ========== */
+
+/* 主列表容器 — 玻璃拟态 */
+.cyberpunk-mode .master-detail-master {
+  background-color: rgba(26, 26, 46, 0.70) !important;
+  backdrop-filter: blur(12px);
+  border: 1px solid rgba(0, 255, 255, 0.20) !important;
+}
+
+/* 主列表选中项 — 霓虹高亮 */
+.cyberpunk-mode .master-detail-master .MuiListItemButton-root.Mui-selected {
+  background-color: rgba(0, 255, 255, 0.12);
+  border-left: 3px solid #00FFFF;
+  box-shadow: inset 4px 0 12px rgba(0, 255, 255, 0.20);
+}
+
+/* 详情面板 — 玻璃拟态 */
+.cyberpunk-mode .master-detail-detail {
+  background-color: rgba(10, 10, 26, 0.60) !important;
+  backdrop-filter: blur(8px);
+  border: 1px solid rgba(0, 255, 255, 0.15);
+}
+
+/* ========== MarkdownEditorTemplate Markdown 编辑器模板 ========== */
+
+/* 工具栏 — 深色玻璃 */
+.cyberpunk-mode .markdown-editor-toolbar {
+  background-color: rgba(10, 10, 26, 0.60) !important;
+  backdrop-filter: blur(8px);
+  border-bottom: 1px solid rgba(0, 255, 255, 0.20) !important;
+}
+
+/* 工具栏按钮 — 霓虹 hover */
+.cyberpunk-mode .markdown-editor-toolbar .MuiIconButton-root:hover {
+  color: #00FFFF;
+  background-color: rgba(0, 255, 255, 0.10);
+}
+
+/* 编辑器文本域 — 深色背景 */
+.cyberpunk-mode .markdown-editor-textarea .MuiOutlinedInput-root {
+  background-color: rgba(10, 10, 26, 0.80);
+  font-family: 'JetBrains Mono', 'Fira Code', monospace;
+  color: #E2E8F0;
+}
+
+/* 编辑器焦点 — 霓虹边框 */
+.cyberpunk-mode .markdown-editor-textarea .MuiOutlinedInput-root.Mui-focused .MuiOutlinedInput-notchedOutline {
+  border-color: #00FFFF;
+  box-shadow: 0 0 12px rgba(0, 255, 255, 0.30);
+}
+
+/* 预览区 — 深色玻璃 */
+.cyberpunk-mode .markdown-editor-preview {
+  background-color: rgba(10, 10, 26, 0.60);
+  color: #E2E8F0;
+  padding: 16px;
+}
+
+/* 预览区标题 — 霓虹青 */
+.cyberpunk-mode .markdown-editor-preview h1,
+.cyberpunk-mode .markdown-editor-preview h2,
+.cyberpunk-mode .markdown-editor-preview h3 {
+  color: #00FFFF;
+  text-shadow: 0 0 6px rgba(0, 255, 255, 0.30);
+  border-bottom: 1px solid rgba(0, 255, 255, 0.20);
+}
+
+/* 预览区代码块 — 霓虹边框 */
+.cyberpunk-mode .markdown-editor-preview pre {
+  background-color: rgba(0, 0, 0, 0.40);
+  border: 1px solid rgba(0, 255, 255, 0.20);
+  border-radius: 4px;
+  padding: 12px;
+  overflow-x: auto;
+}
+
+/* 预览区行内代码 — 霓虹背景 */
+.cyberpunk-mode .markdown-editor-preview code {
+  background-color: rgba(0, 255, 255, 0.10);
+  color: #00FFFF;
+  padding: 2px 6px;
+  border-radius: 3px;
+  font-family: 'JetBrains Mono', 'Fira Code', monospace;
+}
+
+/* 预览区引用 — 霓虹左边框 */
+.cyberpunk-mode .markdown-editor-preview blockquote {
+  border-left: 3px solid #00FFFF;
+  background-color: rgba(0, 255, 255, 0.05);
+  padding: 8px 16px;
+  margin: 12px 0;
+  color: #8892B0;
+}
+
+/* 预览区链接 — 霓虹青 */
+.cyberpunk-mode .markdown-editor-preview a {
+  color: #00FFFF;
+  text-decoration: none;
+  text-shadow: 0 0 4px rgba(0, 255, 255, 0.30);
+  border-bottom: 1px dashed rgba(0, 255, 255, 0.40);
+}
+.cyberpunk-mode .markdown-editor-preview a:hover {
+  border-bottom-style: solid;
+  text-shadow: 0 0 8px rgba(0, 255, 255, 0.60);
+}
+
+/* ========== AI ChatHistory 对话历史 ========== */
+
+/* 历史列表容器 — 玻璃拟态 */
+.cyberpunk-mode .chat-history {
+  background-color: rgba(26, 26, 46, 0.70) !important;
+  backdrop-filter: blur(12px);
+  border: 1px solid rgba(0, 255, 255, 0.20) !important;
+}
+
+/* 历史列表项 — hover 霓虹 */
+.cyberpunk-mode .chat-history .MuiListItemButton-root:hover {
+  background-color: rgba(0, 255, 255, 0.06);
+  border-left: 2px solid rgba(0, 255, 255, 0.40);
+}
+
+/* 历史列表选中项 — 霓虹高亮 */
+.cyberpunk-mode .chat-history .MuiListItemButton-root.Mui-selected {
+  background-color: rgba(0, 255, 255, 0.12);
+  border-left: 3px solid #00FFFF;
+  box-shadow: inset 4px 0 12px rgba(0, 255, 255, 0.20);
+}
+
+/* 历史搜索框 — 霓虹焦点 */
+.cyberpunk-mode .chat-history .MuiOutlinedInput-root.Mui-focused .MuiOutlinedInput-notchedOutline {
+  border-color: #00FFFF;
+  box-shadow: 0 0 12px rgba(0, 255, 255, 0.30);
+}
+
+/* ========== AIToolsPanel 工具面板 ========== */
+
+/* 工具面板容器 — 玻璃拟态 */
+.cyberpunk-mode .ai-tools-panel {
+  background-color: rgba(26, 26, 46, 0.70) !important;
+  backdrop-filter: blur(12px);
+  border: 1px solid rgba(0, 255, 255, 0.20) !important;
+}
+
+/* 工具卡片 — 玻璃拟态 */
+.cyberpunk-mode .ai-tools-panel .MuiPaper-root {
+  background-color: rgba(255, 255, 255, 0.03) !important;
+  border: 1px solid rgba(0, 255, 255, 0.20);
+  backdrop-filter: blur(8px);
+}
+
+/* 工具卡片 hover — 霓虹 */
+.cyberpunk-mode .ai-tools-panel .MuiPaper-root:hover {
+  border-color: rgba(0, 255, 255, 0.50);
+  background-color: rgba(0, 255, 255, 0.06) !important;
+  box-shadow: 0 0 16px rgba(0, 255, 255, 0.20);
+}
+
+/* 工具输入框 — 霓虹焦点 */
+.cyberpunk-mode .ai-tools-panel .MuiOutlinedInput-root.Mui-focused .MuiOutlinedInput-notchedOutline {
+  border-color: #00FFFF;
+  box-shadow: 0 0 12px rgba(0, 255, 255, 0.30);
+}
+
+/* ========== 全局 PageContainer 容器适配 ========== */
+
+/* 页面容器背景 — 深空网格 */
+.cyberpunk-mode .page-container,
+.cyberpunk-mode [class*='PageContainer'] {
+  background-color: transparent;
+  position: relative;
+}
+
+/* 数据流装饰 — 持续脉动 */
+@keyframes cyber-data-pulse {
+  0%, 100% {
+    opacity: 0.40;
+    transform: scale(1);
+  }
+  50% {
+    opacity: 0.80;
+    transform: scale(1.05);
+  }
+}
+
+/* HUD 装饰光斑 — 隐式背景层 */
+.cyberpunk-mode .cyber-hud-ambient {
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+  z-index: 0;
+  background:
+    radial-gradient(circle at 15% 20%, rgba(0, 255, 255, 0.06) 0%, transparent 40%),
+    radial-gradient(circle at 85% 80%, rgba(255, 0, 255, 0.06) 0%, transparent 40%),
+    radial-gradient(circle at 50% 50%, rgba(0, 255, 136, 0.04) 0%, transparent 50%);
+  animation: cyber-data-pulse 6s ease-in-out infinite;
+}
+
+/* ========== Select 下拉选择器 ========== */
+
+.cyberpunk-mode .MuiSelect-root {
+  color: #E6F1FF;
+}
+.cyberpunk-mode .MuiSelect-root:hover {
+  color: #00FFFF;
+}
+.cyberpunk-mode .MuiSelect-iconOutlined {
+  color: rgba(0, 255, 255, 0.50);
+}
+.cyberpunk-mode .MuiSelect-root:hover .MuiSelect-iconOutlined {
+  color: #00FFFF;
+}
+.cyberpunk-mode .MuiSelect-root.Mui-focused .MuiSelect-iconOutlined {
+  color: #00FFFF;
+  filter: drop-shadow(0 0 4px rgba(0, 255, 255, 0.50));
+}
+
+/* Select 下拉菜单 — 玻璃拟态 */
+.cyberpunk-mode .MuiList-root.MuiMenu-list {
+  background-color: rgba(26, 26, 46, 0.95);
+  backdrop-filter: blur(12px);
+  border: 1px solid rgba(0, 255, 255, 0.25);
+}
+.cyberpunk-mode .MuiMenuItem-root {
+  color: #8892B0;
+}
+.cyberpunk-mode .MuiMenuItem-root:hover {
+  background-color: rgba(0, 255, 255, 0.08);
+  color: #E6F1FF;
+}
+.cyberpunk-mode .MuiMenuItem-root.Mui-selected {
+  background-color: rgba(0, 255, 255, 0.12);
+  color: #00FFFF;
+}
+
+/* ========== Rating 评分组件 ========== */
+
+.cyberpunk-mode .MuiRating-root {
+  color: rgba(0, 255, 255, 0.30);
+}
+.cyberpunk-mode .MuiRating-root:hover {
+  color: rgba(0, 255, 255, 0.50);
+}
+.cyberpunk-mode .MuiRating-icon {
+  filter: drop-shadow(0 0 4px rgba(0, 255, 255, 0.30));
+}
+.cyberpunk-mode .MuiRating-iconFilled {
+  color: #00FFFF;
+  filter: drop-shadow(0 0 8px rgba(0, 255, 255, 0.60));
+}
+.cyberpunk-mode .MuiRating-iconHover {
+  color: #FF00FF;
+  filter: drop-shadow(0 0 8px rgba(255, 0, 255, 0.60));
+}
+.cyberpunk-mode .MuiRating-iconEmpty {
+  color: rgba(0, 255, 255, 0.20);
+}
+
+/* ========== Autocomplete 自动完成 ========== */
+
+/* 下拉面板 — 玻璃拟态 */
+.cyberpunk-mode .MuiAutocomplete-paper {
+  background-color: rgba(26, 26, 46, 0.95);
+  backdrop-filter: blur(12px);
+  border: 1px solid rgba(0, 255, 255, 0.25);
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.5), 0 0 20px rgba(0, 255, 255, 0.10);
+}
+.cyberpunk-mode .MuiAutocomplete-option {
+  color: #8892B0;
+  transition: all 150ms ease;
+}
+.cyberpunk-mode .MuiAutocomplete-option:hover {
+  background-color: rgba(0, 255, 255, 0.08);
+  color: #E6F1FF;
+}
+.cyberpunk-mode .MuiAutocomplete-option[data-focus='true'] {
+  background-color: rgba(0, 255, 255, 0.12);
+  color: #00FFFF;
+}
+.cyberpunk-mode .MuiAutocomplete-option[aria-selected='true'] {
+  background-color: rgba(0, 255, 255, 0.15);
+  color: #00FFFF;
+  border-left: 2px solid #00FFFF;
+}
+
+/* Autocomplete 标签 — 霓虹风格 */
+.cyberpunk-mode .MuiChip-filled.MuiChip-colorDefault {
+  background-color: rgba(0, 255, 255, 0.10);
+  border: 1px solid rgba(0, 255, 255, 0.30);
+  color: #00FFFF;
+}
+.cyberpunk-mode .MuiChip-filled.MuiChip-colorDefault:hover {
+  background-color: rgba(0, 255, 255, 0.15);
+  border-color: rgba(0, 255, 255, 0.50);
+}
+
+/* ========== Input 输入框 ========== */
+
+.cyberpunk-mode .MuiInput-root {
+  color: #E6F1FF;
+}
+.cyberpunk-mode .MuiInput-underline:before {
+  border-bottom-color: rgba(0, 255, 255, 0.20);
+}
+.cyberpunk-mode .MuiInput-underline:hover:before {
+  border-bottom-color: rgba(0, 255, 255, 0.40);
+}
+.cyberpunk-mode .MuiInput-underline:after {
+  border-bottom-color: #00FFFF;
+}
+.cyberpunk-mode .MuiInput-underline.Mui-error:after {
+  border-bottom-color: #FF4444;
+}
+
+/* ========== FormControlLabel 表单标签 ========== */
+
+.cyberpunk-mode .MuiFormControlLabel-root .MuiTypography-root {
+  color: #E6F1FF;
+}
+.cyberpunk-mode .MuiFormControlLabel-root:hover .MuiTypography-root {
+  color: #00FFFF;
+}
+
+/* ========== MenuItem 菜单项增强 ========== */
+
+.cyberpunk-mode .MuiMenuItem-root.Mui-selected:hover {
+  background-color: rgba(0, 255, 255, 0.18);
+}
+.cyberpunk-mode .MuiMenuItem-divider {
+  border-color: rgba(0, 255, 255, 0.10);
+}
+
+/* ========== DialogTitle 对话框标题增强 ========== */
+
+.cyberpunk-mode .MuiDialogTitle-root + .MuiDialogContent-root {
+  padding-top: 20px;
+}
+
+/* ========== DialogContent 对话框内容增强 ========== */
+
+.cyberpunk-mode .MuiDialogContent-root {
+  color: #8892B0;
+}
+.cyberpunk-mode .MuiDialogContent-root .MuiTypography-root {
+  color: #E6F1FF;
+}
+
+/* ========== DialogActions 对话框操作区增强 ========== */
+
+.cyberpunk-mode .MuiDialogActions-root .MuiButton-text {
+  color: #8892B0;
+}
+.cyberpunk-mode .MuiDialogActions-root .MuiButton-text:hover {
+  color: #00FFFF;
+}
+
+/* ========== TabScrollButton 标签滚动按钮 ========== */
+
+.cyberpunk-mode .MuiTabScrollButton-root {
+  color: rgba(0, 255, 255, 0.50);
+}
+.cyberpunk-mode .MuiTabScrollButton-root:hover {
+  color: #00FFFF;
+  background-color: rgba(0, 255, 255, 0.08);
+}
+
+/* ========== TablePagination 表格分页 ========== */
+
+.cyberpunk-mode .MuiTablePagination-root {
+  color: #8892B0;
+}
+.cyberpunk-mode .MuiTablePagination-selectIcon {
+  color: rgba(0, 255, 255, 0.50);
+}
+.cyberpunk-mode .MuiTablePagination-actions .MuiIconButton-root {
+  color: #8892B0;
+}
+.cyberpunk-mode .MuiTablePagination-actions .MuiIconButton-root:hover {
+  color: #00FFFF;
+  background-color: rgba(0, 255, 255, 0.08);
+}
+
+/* ========== LinearProgress 线性进度条增强 ========== */
+
+.cyberpunk-mode .MuiLinearProgress-root {
+  height: 4px;
+}
+.cyberpunk-mode .MuiLinearProgress-barColorPrimary {
+  background: linear-gradient(90deg, #00FFFF, #FF00FF);
+}
+.cyberpunk-mode .MuiLinearProgress-barColorSecondary {
+  background: linear-gradient(90deg, #FF00FF, #00FFFF);
+}
+
+/* ========== CircularProgress 圆形进度条增强 ========== */
+
+.cyberpunk-mode .MuiCircularProgress-colorPrimary {
+  color: #00FFFF;
+}
+.cyberpunk-mode .MuiCircularProgress-colorSecondary {
+  color: #FF00FF;
+}
+
+/* ========== ExpansionPanel 折叠面板 ========== */
+
+.cyberpunk-mode .MuiAccordionSummary-content {
+  color: #E6F1FF;
+}
+.cyberpunk-mode .MuiAccordionDetails-root {
+  color: #8892B0;
+  background-color: rgba(0, 255, 255, 0.03);
+}
+
+/* ========== MenuList 菜单列表 ========== */
+
+.cyberpunk-mode .MuiMenuList-root {
+  padding: 4px 0;
+}
+.cyberpunk-mode .MuiMenuList-root .MuiMenuItem-root {
+  padding: 8px 16px;
+}
+
+/* ========== Popover 弹出层增强 ========== */
+
+.cyberpunk-mode .MuiPopover-paper {
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.5), 0 0 20px rgba(0, 255, 255, 0.10);
+}
+
+/* ========== Tooltip 提示增强 ========== */
+
+.cyberpunk-mode .MuiTooltip-arrow {
+  color: rgba(26, 26, 46, 0.95);
+}
+
+/* ========== Chip 标签增强 ========== */
+
+.cyberpunk-mode .MuiChip-outlined {
+  border-color: rgba(0, 255, 255, 0.30);
+  color: #00FFFF;
+}
+.cyberpunk-mode .MuiChip-outlined:hover {
+  border-color: #00FFFF;
+  background-color: rgba(0, 255, 255, 0.08);
+}
+.cyberpunk-mode .MuiChip-deleteIcon {
+  color: #00FFFF;
+}
+.cyberpunk-mode .MuiChip-deleteIcon:hover {
+  color: #FF4444;
+}
+
+/* ========== Avatar 头像增强 ========== */
+
+.cyberpunk-mode .MuiAvatar-colorDefault {
+  background-color: rgba(0, 255, 255, 0.20);
+  color: #00FFFF;
+}
+.cyberpunk-mode .MuiAvatar-group .MuiAvatar-root {
+  border-color: #0A0A1A;
+}
+
+/* ========== Badge 徽章增强 ========== */
+
+.cyberpunk-mode .MuiBadge-colorPrimary {
+  background-color: #00FFFF;
+  color: #0A0A1A;
+}
+.cyberpunk-mode .MuiBadge-colorSecondary {
+  background-color: #FF00FF;
+  color: #0A0A1A;
+}
+.cyberpunk-mode .MuiBadge-colorSuccess {
+  background-color: #00FF88;
+  color: #0A0A1A;
+}
+.cyberpunk-mode .MuiBadge-colorError {
+  background-color: #FF4444;
+  color: #FFFFFF;
+}
+.cyberpunk-mode .MuiBadge-colorWarning {
+  background-color: #FFD700;
+  color: #0A0A1A;
+}
+
+/* ========== Divider 分割线增强 ========== */
+
+.cyberpunk-mode .MuiDivider-light {
+  border-color: rgba(0, 255, 255, 0.10);
+}
+
+/* ========== IconButton 图标按钮增强 ========== */
+
+.cyberpunk-mode .MuiIconButton-colorPrimary {
+  color: #00FFFF;
+}
+.cyberpunk-mode .MuiIconButton-colorSecondary {
+  color: #FF00FF;
+}
+
+/* ========== Link 链接增强 ========== */
+
+.cyberpunk-mode .MuiLink-underlineHover:hover {
+  text-decoration: underline;
+  text-decoration-color: #00FFFF;
+}
+
+/* ========== ButtonGroup 按钮组 ========== */
+
+.cyberpunk-mode .MuiButtonGroup-root {
+  border-color: rgba(0, 255, 255, 0.20);
+}
+.cyberpunk-mode .MuiButtonGroup-root .MuiButton-root {
+  border-color: rgba(0, 255, 255, 0.20);
+}
+.cyberpunk-mode .MuiButtonGroup-root .MuiButton-root:hover {
+  border-color: rgba(0, 255, 255, 0.40);
+}
+
+/* ========== TextField 文本框增强 ========== */
+
+.cyberpunk-mode .MuiTextField-root .MuiInputLabel-root {
+  color: #8892B0;
+}
+.cyberpunk-mode .MuiTextField-root .MuiInputLabel-root.Mui-focused {
+  color: #00FFFF;
+}
+.cyberpunk-mode .MuiTextField-root .MuiFormHelperText-root {
+  color: #8892B0;
+}
+.cyberpunk-mode .MuiTextField-root .MuiFormHelperText-root.Mui-error {
+  color: #FF4444;
+}
+
+/* ========== FormControl 表单控件 ========== */
+
+.cyberpunk-mode .MuiFormControl-root .MuiInputLabel-root {
+  color: #8892B0;
+}
+.cyberpunk-mode .MuiFormControl-root .MuiInputLabel-root.Mui-focused {
+  color: #00FFFF;
+}
+
+/* ========== FormGroup 表单组 ========== */
+
+.cyberpunk-mode .MuiFormGroup-root {
+  gap: 8px;
+}
+
+/* ========== Checkbox 复选框增强 ========== */
+
+.cyberpunk-mode .MuiCheckbox-colorPrimary {
+  color: rgba(0, 255, 255, 0.30);
+}
+.cyberpunk-mode .MuiCheckbox-colorPrimary.Mui-checked {
+  color: #00FFFF;
+}
+.cyberpunk-mode .MuiCheckbox-colorSecondary {
+  color: rgba(255, 0, 255, 0.30);
+}
+.cyberpunk-mode .MuiCheckbox-colorSecondary.Mui-checked {
+  color: #FF00FF;
+}
+
+/* ========== Switch 开关增强 ========== */
+
+.cyberpunk-mode .MuiSwitch-colorPrimary .MuiSwitch-thumb {
+  background-color: #00FFFF;
+}
+.cyberpunk-mode .MuiSwitch-colorSecondary .MuiSwitch-thumb {
+  background-color: #FF00FF;
+}
+
+/* ========== Radio 单选按钮增强 ========== */
+
+.cyberpunk-mode .MuiRadio-colorPrimary {
+  color: rgba(0, 255, 255, 0.30);
+}
+.cyberpunk-mode .MuiRadio-colorPrimary.Mui-checked {
+  color: #00FFFF;
+}
+.cyberpunk-mode .MuiRadio-colorSecondary {
+  color: rgba(255, 0, 255, 0.30);
+}
+.cyberpunk-mode .MuiRadio-colorSecondary.Mui-checked {
+  color: #FF00FF;
+}
+
+/* ========== Slider 滑块增强 ========== */
+
+.cyberpunk-mode .MuiSlider-colorPrimary {
+  color: #00FFFF;
+}
+.cyberpunk-mode .MuiSlider-colorSecondary {
+  color: #FF00FF;
+}
+.cyberpunk-mode .MuiSlider-markLabel {
+  color: #8892B0;
+}
+
+/* ========== List 列表组件 ========== */
+
+.cyberpunk-mode .MuiList-root {
+  color: #8892B0;
+}
+.cyberpunk-mode .MuiListItem-root {
+  color: #E6F1FF;
+}
+.cyberpunk-mode .MuiListItem-root:hover {
+  background-color: rgba(0, 255, 255, 0.06);
+}
+.cyberpunk-mode .MuiListItemText-primary {
+  color: #E6F1FF;
+}
+.cyberpunk-mode .MuiListItemText-secondary {
+  color: #8892B0;
+}
+
+/* ========== ListItemIcon 列表项图标 ========== */
+
+.cyberpunk-mode .MuiListItemIcon-root {
+  color: #8892B0;
+}
+.cyberpunk-mode .MuiListItemButton-root:hover .MuiListItemIcon-root {
+  color: #00FFFF;
+}
+.cyberpunk-mode .MuiListItemButton-root.Mui-selected .MuiListItemIcon-root {
+  color: #00FFFF;
+}
+
+/* ========== ListItemAvatar 列表项头像 ========== */
+
+.cyberpunk-mode .MuiListItemAvatar-root {
+  color: #8892B0;
+}
+
+/* ========== ListSubheader 列表副标题 ========== */
+
+.cyberpunk-mode .MuiListSubheader-root {
+  background-color: transparent;
+  color: rgba(0, 255, 255, 0.60);
+  font-weight: 600;
+}
+
+/* ========== Paper 纸张组件增强 ========== */
+
+.cyberpunk-mode .MuiPaper-elevation1 {
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3), inset 0 1px 0 rgba(255, 255, 255, 0.08);
+}
+.cyberpunk-mode .MuiPaper-elevation2 {
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.4), inset 0 1px 0 rgba(255, 255, 255, 0.08);
+}
+.cyberpunk-mode .MuiPaper-elevation4 {
+  box-shadow: 0 16px 40px rgba(0, 0, 0, 0.5), inset 0 1px 0 rgba(255, 255, 255, 0.08);
+}
+
+/* ========== Card 卡片增强 ========== */
+
+.cyberpunk-mode .MuiCardHeader-root {
+  border-bottom: 1px solid rgba(0, 255, 255, 0.15);
+}
+.cyberpunk-mode .MuiCardHeader-title {
+  color: #E6F1FF;
+}
+.cyberpunk-mode .MuiCardHeader-subheader {
+  color: #8892B0;
+}
+.cyberpunk-mode .MuiCardContent-root {
+  color: #8892B0;
+}
+.cyberpunk-mode .MuiCardActions-root {
+  border-top: 1px solid rgba(0, 255, 255, 0.15);
+}
+
+/* ========== Alert 警告增强 ========== */
+
+.cyberpunk-mode .MuiAlert-icon {
+  color: currentColor;
+}
+.cyberpunk-mode .MuiAlert-action .MuiButton-root {
+  color: currentColor;
+}
+
+/* ========== Backdrop 背景遮罩增强 ========== */
+
+.cyberpunk-mode .MuiBackdrop-invisible {
+  background-color: rgba(10, 10, 26, 0.60);
+}
+
+/* ========== Fade 淡入淡出动画 ========== */
+
+.cyberpunk-mode .MuiFade-root {
+  transition: opacity 200ms ease;
+}
+
+/* ========== Grow 缩放动画 ========== */
+
+.cyberpunk-mode .MuiGrow-root {
+  transition: all 200ms cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+/* ========== Slide 滑动动画 ========== */
+
+.cyberpunk-mode .MuiSlide-root {
+  transition: transform 200ms cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+/* ========== Zoom 缩放动画 ========== */
+
+.cyberpunk-mode .MuiZoom-root {
+  transition: transform 200ms cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+/* ========== Collapse 折叠动画 ========== */
+
+.cyberpunk-mode .MuiCollapse-root {
+  transition: height 200ms cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+/* ========== TransitionGroup 过渡组 ========== */
+
+.cyberpunk-mode .MuiTransitionGroup-root {
+  transition: all 200ms ease;
+}
+
+/* ========== Cascader 级联选择器 ========== */
+
+.cyberpunk-mode .MuiPopover-paper.cascader-popover {
+  background-color: rgba(26, 26, 46, 0.95);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border: 1px solid rgba(0, 255, 255, 0.25);
+  box-shadow:
+    0 8px 32px rgba(0, 0, 0, 0.5),
+    0 0 20px rgba(0, 255, 255, 0.10);
+}
+.cyberpunk-mode .cascader-list .MuiListItem-root {
+  color: #8892B0;
+  transition: all 150ms ease;
+}
+.cyberpunk-mode .cascader-list .MuiListItem-root:hover {
+  background-color: rgba(0, 255, 255, 0.08);
+  color: #E6F1FF;
+}
+.cyberpunk-mode .cascader-list .MuiListItem-root.Mui-selected {
+  background-color: rgba(0, 255, 255, 0.12);
+  color: #00FFFF;
+  border-left: 2px solid #00FFFF;
+}
+.cyberpunk-mode .cascader-path .MuiListItem-root {
+  color: #8892B0;
+}
+.cyberpunk-mode .cascader-path .MuiListItem-root:hover {
+  background-color: rgba(0, 255, 255, 0.06);
+  color: #00FFFF;
+}
+.cyberpunk-mode .cascader-divider {
+  border-color: rgba(0, 255, 255, 0.10);
+}
+
+/* ========== DateRangePicker 日期范围选择器 ========== */
+
+.cyberpunk-mode .date-range-picker .MuiTextField-root {
+  color: #E6F1FF;
+}
+.cyberpunk-mode .date-range-picker .MuiTextField-root .MuiInputAdornment-root svg {
+  color: rgba(0, 255, 255, 0.50);
+}
+.cyberpunk-mode .date-range-picker .MuiPopover-paper {
+  background-color: rgba(26, 26, 46, 0.95);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border: 1px solid rgba(0, 255, 255, 0.25);
+  box-shadow:
+    0 8px 32px rgba(0, 0, 0, 0.5),
+    0 0 20px rgba(0, 255, 255, 0.10);
+}
+.cyberpunk-mode .date-range-picker .MuiTypography-subtitle1 {
+  color: #00FFFF;
+}
+.cyberpunk-mode .date-range-picker .MuiTypography-h6 {
+  color: #E6F1FF;
+}
+.cyberpunk-mode .date-range-picker .MuiButton-outlined {
+  color: #8892B0;
+  border-color: rgba(0, 255, 255, 0.30);
+}
+.cyberpunk-mode .date-range-picker .MuiButton-outlined:hover {
+  color: #00FFFF;
+  border-color: #00FFFF;
+  background-color: rgba(0, 255, 255, 0.08);
+}
+.cyberpunk-mode .date-range-picker .MuiButton-contained {
+  background: linear-gradient(135deg, #00FFFF 0%, #FF00FF 100%);
+  color: #0A0A1A;
+}
+.cyberpunk-mode .date-range-picker .date-cell {
+  color: #8892B0;
+}
+.cyberpunk-mode .date-range-picker .date-cell:hover {
+  background-color: rgba(0, 255, 255, 0.10);
+  color: #00FFFF;
+}
+.cyberpunk-mode .date-range-picker .date-cell.date-selected {
+  background-color: rgba(0, 255, 255, 0.20);
+  color: #00FFFF;
+}
+.cyberpunk-mode .date-range-picker .date-cell.date-in-range {
+  background-color: rgba(0, 255, 255, 0.06);
+}
+.cyberpunk-mode .date-range-picker .date-cell.date-today {
+  border-color: #FF00FF;
+  color: #FF00FF;
+}
+
+/* ========== FileUpload 文件上传组件 ========== */
+
+.cyberpunk-mode .file-upload .MuiPaper-root {
+  background-color: rgba(26, 26, 46, 0.60);
+  border-color: rgba(0, 255, 255, 0.20);
+}
+.cyberpunk-mode .file-upload .MuiPaper-root:hover {
+  border-color: rgba(0, 255, 255, 0.50);
+  background-color: rgba(0, 255, 255, 0.06);
+}
+.cyberpunk-mode .file-upload .MuiPaper-root[class*='dragging'] {
+  border-color: #00FFFF;
+  background-color: rgba(0, 255, 255, 0.10);
+  box-shadow: 0 0 24px rgba(0, 255, 255, 0.30);
+}
+.cyberpunk-mode .file-upload .MuiTypography-body1 {
+  color: #E6F1FF;
+}
+.cyberpunk-mode .file-upload .MuiTypography-caption {
+  color: #8892B0;
+}
+.cyberpunk-mode .file-upload .upload-icon svg {
+  color: rgba(0, 255, 255, 0.50);
+}
+.cyberpunk-mode .file-upload[class*='dragging'] .upload-icon svg {
+  color: #00FFFF;
+  filter: drop-shadow(0 0 8px rgba(0, 255, 255, 0.60));
+}
+.cyberpunk-mode .file-upload .file-item {
+  background-color: rgba(10, 10, 26, 0.80);
+  border-color: rgba(0, 255, 255, 0.20);
+}
+.cyberpunk-mode .file-upload .file-item.file-error {
+  border-color: rgba(255, 68, 68, 0.50);
+}
+.cyberpunk-mode .file-upload .file-icon svg {
+  color: rgba(0, 255, 255, 0.50);
+}
+.cyberpunk-mode .file-upload .file-item.file-error .file-icon svg {
+  color: #FF4444;
+}
+.cyberpunk-mode .file-upload .file-name {
+  color: #E6F1FF;
+}
+.cyberpunk-mode .file-upload .file-size {
+  color: #8892B0;
+}
+.cyberpunk-mode .file-upload .MuiChip-colorSuccess {
+  background-color: rgba(0, 255, 136, 0.15);
+  color: #00FF88;
+  border: 1px solid rgba(0, 255, 136, 0.40);
+}
+.cyberpunk-mode .file-upload .MuiChip-colorError {
+  background-color: rgba(255, 68, 68, 0.15);
+  color: #FF4444;
+  border: 1px solid rgba(255, 68, 68, 0.40);
+}
+.cyberpunk-mode .file-upload .MuiChip-colorPrimary {
+  background-color: rgba(0, 255, 255, 0.15);
+  color: #00FFFF;
+  border: 1px solid rgba(0, 255, 255, 0.40);
+}
+.cyberpunk-mode .file-upload .MuiLinearProgress-root {
+  background-color: rgba(0, 255, 255, 0.10);
+}
+.cyberpunk-mode .file-upload .MuiLinearProgress-bar {
+  background: linear-gradient(90deg, #00FFFF, #FF00FF);
+  box-shadow: 0 0 8px rgba(0, 255, 255, 0.50);
+}
 `;
 
 /**

@@ -163,7 +163,11 @@ impl RabbitMqPublisher {
         };
 
         let payload_json = serde_json::to_value(&payload)?;
-        let event = Event::new(EventType::CacheInvalidated, &self.service_name, payload_json);
+        let event = Event::new(
+            EventType::CacheInvalidated,
+            &self.service_name,
+            payload_json,
+        );
         let event_json = serde_json::to_string(&event)?;
 
         // Fanout Exchange 无需 routing_key
@@ -341,11 +345,7 @@ impl RabbitMqSubscriber {
         handler: impl Fn(CacheInvalidatedPayload) -> EventResult<()> + 'static + Send + Sync,
     ) -> EventResult<()> {
         // 每个实例独立队列，exclusive=true
-        let exclusive_queue = format!(
-            "topems.cache.{}.{}",
-            self.queue_name,
-            std::process::id()
-        );
+        let exclusive_queue = format!("topems.cache.{}.{}", self.queue_name, std::process::id());
 
         self.channel
             .queue_declare(

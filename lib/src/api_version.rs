@@ -305,10 +305,7 @@ fn analyze_group1_path<'a>(path: &'a str, cfg: &Group1CompatConfig) -> (bool, Op
         }
         let exact_sc = format!("/api/v1/{}", old_seg);
         if path == exact_sc {
-            return (
-                true,
-                Some(format!("/api/core/{}/{}/", mod_name, new_seg)),
-            );
+            return (true, Some(format!("/api/core/{}/{}/", mod_name, new_seg)));
         }
     }
 

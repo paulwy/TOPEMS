@@ -125,10 +125,7 @@ impl EventVersionRegistry {
     pub fn register(&self, entry: EventVersionEntry) -> EventResult<()> {
         let mut entries = self.entries.write();
         let list = entries.entry(entry.event_type.clone()).or_default();
-        if let Some(existing) = list
-            .iter_mut()
-            .find(|e| e.version == entry.version)
-        {
+        if let Some(existing) = list.iter_mut().find(|e| e.version == entry.version) {
             warn!(
                 event_type = %entry.event_type,
                 version = %entry.version,
@@ -190,10 +187,7 @@ impl EventVersionRegistry {
             .iter_mut()
             .find(|e| e.version == version)
             .ok_or_else(|| {
-                EventError::ConfigError(format!(
-                    "事件 {} 版本 {} 未注册",
-                    event_type, version
-                ))
+                EventError::ConfigError(format!("事件 {} 版本 {} 未注册", event_type, version))
             })?;
         entry.deprecated = true;
         entry.deprecation_notice = Some(notice.to_string());
@@ -332,12 +326,8 @@ mod tests {
             .unwrap();
 
         assert!(registry.check_compatibility("order.created", &EventVersion::v2()));
-        assert!(
-            registry.check_compatibility("order.created", &EventVersion::new(2, 3))
-        );
-        assert!(
-            !registry.check_compatibility("order.created", &EventVersion::v1())
-        );
+        assert!(registry.check_compatibility("order.created", &EventVersion::new(2, 3)));
+        assert!(!registry.check_compatibility("order.created", &EventVersion::v1()));
     }
 
     #[test]

@@ -288,15 +288,15 @@ export const FloatingAIHelper: React.FC = () => {
           <Box sx={{ height: '100%', display: 'flex', flexDirection: 'column' }}>
             {/* 头部 */}
             <Box
-              sx={{
-                p: 2,
-                background: 'linear-gradient(135deg, primary.main 0%, secondary.main 100%)',
-                color: 'white',
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'space-between',
-              }}
-            >
+          sx={{
+            p: 2,
+            background: `linear-gradient(135deg, ${theme.palette.primary.main} 0%, ${theme.palette.secondary.main} 100%)`,
+            color: 'white',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'space-between',
+          }}
+        >
               <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5 }}>
                 <Sparkles style={{ width: 20, height: 20 }} />
                 <Typography

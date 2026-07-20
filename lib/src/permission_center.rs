@@ -76,10 +76,7 @@ impl PermissionCenterClient {
     /// 失败时保留本地缓存，不影响服务启动。
     #[allow(dead_code)]
     pub async fn fetch_from_iam(&self, iam_url: &str) -> Result<(), TopemsError> {
-        info!(
-            "Fetching permission metadata from IAM service: {}",
-            iam_url
-        );
+        info!("Fetching permission metadata from IAM service: {}", iam_url);
 
         // TODO: 当 IAM 服务实现 /api/iam/permissions/metadata 接口后，启用远程拉取
         // 当前阶段使用本地内置权限定义，保证 V21.0 架构落地不依赖 IAM 服务升级
@@ -179,10 +176,7 @@ impl PermissionCenterClient {
                     action: action_str.clone(),
                     scope: "all".to_string(),
                     name: format!("{} - {}", module_str, action_str),
-                    description: Some(format!(
-                        "Module {} {} permission",
-                        module_str, action_str
-                    )),
+                    description: Some(format!("Module {} {} permission", module_str, action_str)),
                     is_builtin: true,
                 }
             })
