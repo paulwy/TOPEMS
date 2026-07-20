@@ -134,6 +134,11 @@ export const QUERY_KEYS = {
     RECOMMENDATIONS: ['crm', 'recommendations'],
     OPPORTUNITY_STATS: ['crm', 'opportunity-stats'],
     OPPORTUNITY_FUNNEL: ['crm', 'opportunity-funnel'],
+    RETURNS: ['crm', 'returns'],
+    RETURN: (id: string) => ['crm', 'return', id],
+    RETURN_ITEMS: (id: string) => ['crm', 'return', id, 'items'],
+    RETURN_FINANCE_STATUS: (id: string) => ['crm', 'return', id, 'finance-status'],
+    RETURN_INVENTORY_STATUS: (id: string) => ['crm', 'return', id, 'inventory-status'],
   },
   ERP: {
     ASSETS: ['erp', 'assets'],

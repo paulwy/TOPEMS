@@ -46,9 +46,11 @@ import type {
 import { apiLogger } from '@/utils/logger';
 import { PageContainer } from '@/components/common';
 
+import { useTranslation } from 'react-i18next';
 const ct = designTokens.colors;
 
 const FinanceReportsPage: React.FC = () => {
+  const { t } = useTranslation();
   const theme = useTheme();
   const addNotification = useNotificationStore((state) => state.addNotification);
 
@@ -79,7 +81,7 @@ const FinanceReportsPage: React.FC = () => {
   const monthlyTrends = reportsQuery.data?.monthlyTrends ?? [];
   const departmentSummaries = reportsQuery.data?.departmentSummaries ?? [];
   const loading = reportsQuery.isLoading;
-  const error = reportsQuery.error ? '加载报表数据失败，请稍后重试' : null;
+  const error = reportsQuery.error ? t('finance.finance_reports_page.fail') : null;
 
   const formatCurrency = (amount: number) =>
     `¥${amount.toLocaleString('zh-CN', { minimumFractionDigits: 2 })}`;
@@ -90,28 +92,28 @@ const FinanceReportsPage: React.FC = () => {
     return [
       {
         id: 'total-assets',
-        title: '总资产',
+        title: t('finance.finance_reports_page.text_fa1861'),
         value: formatCurrency(businessOverview.total_assets),
         icon: <DollarSign sx={{ width: 24, height: 24 }} />,
         gradient: [ct.primary.dark, ct.primary[800]] as [string, string],
       },
       {
         id: 'total-liabilities',
-        title: '总负债',
+        title: t('finance.finance_reports_page.text_5701ad'),
         value: formatCurrency(businessOverview.total_liabilities),
         icon: <TrendingDown sx={{ width: 24, height: 24 }} />,
         gradient: [ct.warning.main, ct.warning.dark] as [string, string],
       },
       {
         id: 'total-revenue',
-        title: '总收入',
+        title: t('finance.finance_reports_page.text_d00a67'),
         value: formatCurrency(businessOverview.total_revenue),
         icon: <TrendingUp sx={{ width: 24, height: 24 }} />,
         gradient: [ct.success.main, ct.success.dark] as [string, string],
       },
       {
         id: 'net-profit',
-        title: '净利润',
+        title: t('finance.finance_reports_page.text_80170f'),
         value: formatCurrency(businessOverview.net_profit),
         icon: <Wallet sx={{ width: 24, height: 24 }} />,
         gradient:
@@ -128,7 +130,7 @@ const FinanceReportsPage: React.FC = () => {
     return [
       {
         id: 'monthly-trend',
-        title: '月度趋势分析',
+        title: t('finance.finance_reports_page.text_573852'),
         type: 'line',
         dataKey: 'value',
         nameKey: 'name',
@@ -149,20 +151,20 @@ const FinanceReportsPage: React.FC = () => {
 
     if (activeTab === 'projects') {
       const columns: TableColumn[] = [
-        { id: 'project_name', label: '项目名称', field: 'project_name' },
-        { id: 'contract_amount', label: '合同金额', field: 'contract_amount', align: 'right' },
-        { id: 'received_amount', label: '已收款', field: 'received_amount', align: 'right' },
-        { id: 'payable_amount', label: '应付金额', field: 'payable_amount', align: 'right' },
-        { id: 'paid_amount', label: '已付款', field: 'paid_amount', align: 'right' },
-        { id: 'profit', label: '项目利润', field: 'profit', align: 'right' },
-        { id: 'margin', label: '利润率(%)', field: 'margin', align: 'center' },
-        { id: 'status', label: '状态', field: 'status', align: 'center' },
+        { id: 'project_name', label: t('finance.finance_reports_page.name'), field: 'project_name' },
+        { id: 'contract_amount', label: t('finance.finance_reports_page.amount'), field: 'contract_amount', align: 'right' },
+        { id: 'received_amount', label: t('finance.finance_reports_page.text_2365c3'), field: 'received_amount', align: 'right' },
+        { id: 'payable_amount', label: t('finance.finance_reports_page.amount_1'), field: 'payable_amount', align: 'right' },
+        { id: 'paid_amount', label: t('finance.finance_reports_page.text_22956d'), field: 'paid_amount', align: 'right' },
+        { id: 'profit', label: t('finance.finance_reports_page.text_53826b'), field: 'profit', align: 'right' },
+        { id: 'margin', label: t('finance.finance_reports_page.text_2b63f6'), field: 'margin', align: 'center' },
+        { id: 'status', label: t('finance.finance_reports_page.status'), field: 'status', align: 'center' },
       ];
 
       return [
         {
           id: 'project-table',
-          title: '项目财务汇总',
+          title: t('finance.finance_reports_page.text_a34842'),
           columns,
           data: projectSummaries.map((p) => ({
             project_name: p.project_name,
@@ -181,17 +183,17 @@ const FinanceReportsPage: React.FC = () => {
 
     if (activeTab === 'departments') {
       const columns: TableColumn[] = [
-        { id: 'department_name', label: '部门名称', field: 'department_name' },
-        { id: 'total_expenses', label: '总费用', field: 'total_expenses', align: 'right' },
-        { id: 'budget_amount', label: '预算金额', field: 'budget_amount', align: 'right' },
-        { id: 'expense_count', label: '费用笔数', field: 'expense_count', align: 'center' },
-        { id: 'budget_usage', label: '预算使用率(%)', field: 'budget_usage', align: 'center' },
+        { id: 'department_name', label: t('finance.finance_reports_page.name_1'), field: 'department_name' },
+        { id: 'total_expenses', label: t('finance.finance_reports_page.text_136f63'), field: 'total_expenses', align: 'right' },
+        { id: 'budget_amount', label: t('finance.finance_reports_page.amount_2'), field: 'budget_amount', align: 'right' },
+        { id: 'expense_count', label: t('finance.finance_reports_page.text_cf03b2'), field: 'expense_count', align: 'center' },
+        { id: 'budget_usage', label: t('finance.finance_reports_page.text_439d93'), field: 'budget_usage', align: 'center' },
       ];
 
       return [
         {
           id: 'department-table',
-          title: '部门财务汇总',
+          title: t('finance.finance_reports_page.text_c9941b'),
           columns,
           data: departmentSummaries.map((d) => ({
             department_name: d.department_name,
@@ -209,14 +211,14 @@ const FinanceReportsPage: React.FC = () => {
   }, [activeTab, projectSummaries, departmentSummaries, loading]);
 
   const tabs = [
-    { label: '经营概览', value: 'overview', icon: <PieChart sx={{ width: 16, height: 16 }} /> },
-    { label: '项目财务', value: 'projects', icon: <PieChart sx={{ width: 16, height: 16 }} /> },
-    { label: '部门财务', value: 'departments', icon: <Building2 sx={{ width: 16, height: 16 }} /> },
-    { label: '账龄分析', value: 'aging', icon: <Clock sx={{ width: 16, height: 16 }} /> },
-    { label: '凭证统计', value: 'voucher', icon: <FileText sx={{ width: 16, height: 16 }} /> },
-    { label: '现金流分析', value: 'cashflow', icon: <Activity sx={{ width: 16, height: 16 }} /> },
-    { label: '费用分析', value: 'expense', icon: <Wallet sx={{ width: 16, height: 16 }} /> },
-    { label: '利润分析', value: 'profit', icon: <TrendingUp sx={{ width: 16, height: 16 }} /> },
+    { label: t('finance.finance_reports_page.text_7637e9'), value: 'overview', icon: <PieChart sx={{ width: 16, height: 16 }} /> },
+    { label: t('finance.finance_reports_page.text_97191a'), value: 'projects', icon: <PieChart sx={{ width: 16, height: 16 }} /> },
+    { label: t('finance.finance_reports_page.text_578051'), value: 'departments', icon: <Building2 sx={{ width: 16, height: 16 }} /> },
+    { label: t('finance.finance_reports_page.text_4f4da0'), value: 'aging', icon: <Clock sx={{ width: 16, height: 16 }} /> },
+    { label: t('finance.finance_reports_page.text_54251d'), value: 'voucher', icon: <FileText sx={{ width: 16, height: 16 }} /> },
+    { label: t('finance.finance_reports_page.text_ec205a'), value: 'cashflow', icon: <Activity sx={{ width: 16, height: 16 }} /> },
+    { label: t('finance.finance_reports_page.text_146922'), value: 'expense', icon: <Wallet sx={{ width: 16, height: 16 }} /> },
+    { label: t('finance.finance_reports_page.text_46756e'), value: 'profit', icon: <TrendingUp sx={{ width: 16, height: 16 }} /> },
   ];
 
   const customToolbar = (
@@ -233,7 +235,7 @@ const FinanceReportsPage: React.FC = () => {
           <InputLabel>选择期间</InputLabel>
           <Select
             value={period}
-            label='选择期间'
+            label={t('finance.finance_reports_page.text_0d80a7')}
             onChange={(e) => setPeriod(e.target.value)}
           >
             <MenuItem value=''>全部期间</MenuItem>
@@ -259,8 +261,8 @@ const FinanceReportsPage: React.FC = () => {
   return (
     <PageContainer maxWidth='xl'>
       <StatsPageTemplate
-        title='财务报表分析'
-        subtitle='企业经营状况与项目财务汇总分析'
+        title={t('finance.finance_reports_page.text_9bb20b')}
+        subtitle={t('finance.finance_reports_page.text_fb0fa5')}
         statCards={statCards}
         statColumns={4}
         charts={charts}

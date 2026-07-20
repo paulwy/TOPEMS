@@ -17,6 +17,7 @@ import { ListPageTemplate } from '@/components/templates';
 import type { ColumnDef, RowAction, FilterConfig } from '@/components/templates';
 import { MuiStatCard as StatCard, StatCardGroup } from '@/components';
 import { useNotification } from '@/hooks/useNotification';
+import { useUrlListState } from '@/hooks';
 import { receivablePayableApi } from '@/api/finance';
 import type { SalesInvoice, InvoiceStatus, PaginatedResult } from '@/types/finance';
 import { apiLogger } from '@/utils/logger';
@@ -41,19 +42,33 @@ import {
 } from '@mui/material';
 import type { SelectChangeEvent } from '@mui/material';
 
+import { useTranslation } from 'react-i18next';
 interface InvoiceListItem extends SalesInvoice {
   tax_rate: number;
 }
 
 const FinanceInvoicePage: React.FC = () => {
+  const { t } = useTranslation();
   const { success, error } = useNotification();
   const queryClient = useQueryClient();
 
-  const [page, setPage] = useState(1);
-  const [pageSize, setPageSize] = useState(10);
-  const [filterType, setFilterType] = useState<string>('');
-  const [filterStatus, setFilterStatus] = useState<string>('');
-  const [searchQuery, setSearchQuery] = useState('');
+  const {
+    searchQuery,
+    setSearchQuery,
+    filters: urlFilters,
+    setFilter,
+    currentPage,
+    setCurrentPage,
+    pageSize,
+    setPageSize,
+  } = useUrlListState<{ type: string; status: string }>({
+    defaultPageSize: 10,
+    defaultFilters: { type: '', status: '' },
+    baseIndex: 1,
+    historyMode: 'replace',
+  });
+  const filterType = urlFilters.type;
+  const filterStatus = urlFilters.status;
   const [showCreateModal, setShowCreateModal] = useState(false);
   const [showDetailModal, setShowDetailModal] = useState(false);
   const [selectedInvoice, setSelectedInvoice] = useState<InvoiceListItem | null>(null);
@@ -68,15 +83,15 @@ const FinanceInvoicePage: React.FC = () => {
   });
 
   const invoiceListQuery = useQuery({
-    queryKey: ['finance-invoices', page, pageSize, filterStatus],
+    queryKey: ['finance-invoices', currentPage, pageSize, filterStatus],
     queryFn: async () => {
       const response = await receivablePayableApi.listSalesInvoices({
         status: filterStatus || undefined,
-        page,
+        page: currentPage,
         pagesize: pageSize,
       });
       if (!response.success || !response.data) {
-        throw new Error(response.message || '获取发票列表失败');
+        throw new Error(response.message || t('finance.finance_invoice_page.list'));
       }
       const itemsWithTaxRate = (response.data.items || []).map((item) => ({
         ...item,
@@ -103,17 +118,17 @@ const FinanceInvoicePage: React.FC = () => {
     }) => {
       const response = await receivablePayableApi.createSalesInvoice(data);
       if (!response.success) {
-        throw new Error((response as unknown as { message?: string }).message || '开具失败');
+        throw new Error((response as unknown as { message?: string }).message || t('finance.finance_invoice_page.fail'));
       }
       return response.data;
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['finance-invoices'] });
-      success('发票开具成功');
+      success(t('finance.finance_invoice_page.success'));
     },
     onError: (err: any) => {
-      apiLogger.error('开具发票失败:', err);
-      error(err.message || '开具发票失败');
+      apiLogger.error(t('finance.finance_invoice_page.fail_1'), err);
+      error(err.message || t('finance.finance_invoice_page.fail_2'));
     },
   });
 
@@ -121,7 +136,7 @@ const FinanceInvoicePage: React.FC = () => {
     mutationFn: async ({ id, data }: { id: string; data: Partial<SalesInvoice> }) => {
       const response = await receivablePayableApi.updateSalesInvoice(id, data);
       if (!response.success) {
-        throw new Error(response.message || '更新失败');
+        throw new Error(response.message || t('finance.finance_invoice_page.update'));
       }
       return response.data;
     },
@@ -129,8 +144,8 @@ const FinanceInvoicePage: React.FC = () => {
       queryClient.invalidateQueries({ queryKey: ['finance-invoices'] });
     },
     onError: (err: any) => {
-      apiLogger.error('更新发票失败:', err);
-      error(err.message || '更新发票失败');
+      apiLogger.error(t('finance.finance_invoice_page.update_1'), err);
+      error(err.message || t('finance.finance_invoice_page.update_2'));
     },
   });
 
@@ -138,16 +153,16 @@ const FinanceInvoicePage: React.FC = () => {
     mutationFn: async (id: string) => {
       const response = await receivablePayableApi.deleteSalesInvoice(id);
       if (!response.success) {
-        throw new Error(response.message || '删除失败');
+        throw new Error(response.message || t('finance.finance_invoice_page.delete'));
       }
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['finance-invoices'] });
-      success('发票删除成功');
+      success(t('finance.finance_invoice_page.delete_success'));
     },
     onError: (err: any) => {
-      apiLogger.error('删除发票失败:', err);
-      error(err.message || '删除发票失败');
+      apiLogger.error(t('finance.finance_invoice_page.delete_1'), err);
+      error(err.message || t('finance.finance_invoice_page.delete_2'));
     },
   });
 
@@ -172,37 +187,37 @@ const FinanceInvoicePage: React.FC = () => {
 
     return [
       {
-        title: '总发票数',
+        title: t('finance.finance_invoice_page.text_fafc4f'),
         value: totalCount,
         icon: <FileText size={24} />,
         color: 'primary' as const,
       },
       {
-        title: '已开票',
+        title: t('finance.finance_invoice_page.text_ca4355'),
         value: verifiedCount,
         icon: <CheckCircle size={24} />,
         color: 'success' as const,
       },
       {
-        title: '待开票',
+        title: t('finance.finance_invoice_page.text_963609'),
         value: pendingCount,
         icon: <Clock size={24} />,
         color: 'warning' as const,
       },
       {
-        title: '已作废',
+        title: t('finance.finance_invoice_page.text_dcc961'),
         value: voidedCount,
         icon: <XCircle size={24} />,
         color: 'error' as const,
       },
       {
-        title: '总金额',
+        title: t('finance.finance_invoice_page.amount'),
         value: `¥${totalAmount.toLocaleString()}`,
         icon: <FileText size={24} />,
         color: 'secondary' as const,
       },
       {
-        title: '总税额',
+        title: t('finance.finance_invoice_page.text_182fd9'),
         value: `¥${totalTaxAmount.toLocaleString()}`,
         icon: <FileText size={24} />,
         color: 'info' as const,
@@ -219,35 +234,35 @@ const FinanceInvoicePage: React.FC = () => {
         label: string;
       }
     > = {
-      draft: { color: 'warning', icon: <Clock size={12} />, label: '草稿' },
+      draft: { color: 'warning', icon: <Clock size={12} />, label: t('finance.finance_invoice_page.text_22b433') },
       approved: {
         color: 'success',
         icon: <CheckCircle size={12} />,
-        label: '已批准',
+        label: t('finance.finance_invoice_page.text_337737'),
       },
       invoiced: {
         color: 'success',
         icon: <CheckCircle size={12} />,
-        label: '已开票',
+        label: t('finance.finance_invoice_page.text_ca4355'),
       },
       partial_received: {
         color: 'warning',
         icon: <Clock size={12} />,
-        label: '部分收款',
+        label: t('finance.finance_invoice_page.text_c1b9ce'),
       },
       received: {
         color: 'success',
         icon: <CheckCircle size={12} />,
-        label: '已收款',
+        label: t('finance.finance_invoice_page.text_2365c3'),
       },
-      overdue: { color: 'error', icon: <Clock size={12} />, label: '已逾期' },
+      overdue: { color: 'error', icon: <Clock size={12} />, label: t('finance.finance_invoice_page.text_5d8559') },
     };
     return configs[status] || { color: 'default', icon: null, label: status };
   };
 
   const handleCreate = async () => {
     if (!newInvoice.customer_id || !newInvoice.amount) {
-      error('请填写必填信息');
+      error(t('finance.finance_invoice_page.please_fill'));
       return;
     }
 
@@ -277,7 +292,7 @@ const FinanceInvoicePage: React.FC = () => {
         id: invoice.id,
         data: { status: 'invoiced' },
       });
-      success('发票认证成功');
+      success(t('finance.finance_invoice_page.success_1'));
     } catch {}
   };
 
@@ -287,58 +302,58 @@ const FinanceInvoicePage: React.FC = () => {
   };
 
   const handleDelete = async (id: string) => {
-    if (!confirm('确定要删除该发票吗？')) return;
+    if (!confirm(t('finance.finance_invoice_page.confirm'))) return;
     try {
       await deleteInvoiceMutation.mutateAsync(id);
     } catch {}
   };
 
   const handlePageChange = (newPage: number) => {
-    setPage(newPage + 1);
+    setCurrentPage(newPage + 1);
   };
 
   const handlePageSizeChange = (newSize: number) => {
     setPageSize(newSize);
-    setPage(1);
+    setCurrentPage(1);
   };
 
   const handleSearch = () => {
-    setPage(1);
+    setCurrentPage(1);
   };
 
   const handleReset = () => {
     setSearchQuery('');
-    setFilterStatus('');
-    setFilterType('');
-    setPage(1);
+    setFilter('status', '');
+    setFilter('type', '');
+    setCurrentPage(1);
   };
 
   const columns = useMemo(
     () => [
       {
         id: 'invoice_no',
-        label: '发票号码',
+        label: t('finance.finance_invoice_page.text_4ae540'),
         render: (row: InvoiceListItem) => (
           <MuiBox sx={{ fontWeight: 600, color: 'success.main' }}>{row.invoice_no}</MuiBox>
         ),
       },
       {
         id: 'invoice_date',
-        label: '开票日期',
+        label: t('finance.finance_invoice_page.date'),
         render: (row: InvoiceListItem) => (
           <MuiBox sx={{ color: 'text.secondary', fontSize: '0.875rem' }}>{row.invoice_date}</MuiBox>
         ),
       },
       {
         id: 'customer_name',
-        label: '客户名称',
+        label: t('finance.finance_invoice_page.customer_name'),
         render: (row: InvoiceListItem) => (
           <MuiBox sx={{ fontWeight: 500 }}>{row.customer_name}</MuiBox>
         ),
       },
       {
         id: 'amount',
-        label: '金额',
+        label: t('finance.finance_invoice_page.amount_1'),
         render: (row: InvoiceListItem) => (
           <MuiBox sx={{ fontFamily: 'monospace', fontWeight: 600 }}>
             ¥{row.amount.toLocaleString()}
@@ -347,7 +362,7 @@ const FinanceInvoicePage: React.FC = () => {
       },
       {
         id: 'tax_rate',
-        label: '税率',
+        label: t('finance.finance_invoice_page.text_2a79a7'),
         render: (row: InvoiceListItem) => (
           <Chip
             label={`${row.tax_rate}%`}
@@ -357,7 +372,7 @@ const FinanceInvoicePage: React.FC = () => {
       },
       {
         id: 'tax_amount',
-        label: '税额',
+        label: t('finance.finance_invoice_page.text_87b755'),
         render: (row: InvoiceListItem) => (
           <MuiBox sx={{ color: 'warning.main', fontFamily: 'monospace' }}>
             ¥{row.tax_amount.toLocaleString()}
@@ -366,7 +381,7 @@ const FinanceInvoicePage: React.FC = () => {
       },
       {
         id: 'total_amount',
-        label: '价税合计',
+        label: t('finance.finance_invoice_page.text_6be1ce'),
         render: (row: InvoiceListItem) => (
           <MuiBox sx={{ fontFamily: 'monospace', fontWeight: 600 }}>
             ¥{row.total_amount.toLocaleString()}
@@ -375,7 +390,7 @@ const FinanceInvoicePage: React.FC = () => {
       },
       {
         id: 'status',
-        label: '状态',
+        label: t('finance.finance_invoice_page.status'),
         render: (row: InvoiceListItem) => {
           const config = getStatusConfig(row.status);
           return (
@@ -395,19 +410,19 @@ const FinanceInvoicePage: React.FC = () => {
   const rowActions = useMemo(
     () => [
       {
-        label: '查看详情',
+        label: t('finance.finance_invoice_page.view_detail'),
         icon: <Eye sx={{ width: 16, height: 16 }} />,
         onClick: (row: InvoiceListItem) => handleViewDetail(row),
       },
       {
-        label: '认证抵扣',
+        label: t('finance.finance_invoice_page.text_2eda0f'),
         icon: <CheckCircle sx={{ width: 16, height: 16 }} />,
         color: 'success' as const,
         show: (row: InvoiceListItem) => row.status === 'draft',
         onClick: (row: InvoiceListItem) => handleVerify(row),
       },
       {
-        label: '删除',
+        label: t('finance.finance_invoice_page.delete_3'),
         icon: <Trash2 sx={{ width: 16, height: 16 }} />,
         color: 'error' as const,
         onClick: (row: InvoiceListItem) => handleDelete(row.id),
@@ -421,28 +436,34 @@ const FinanceInvoicePage: React.FC = () => {
     () => [
       {
         id: 'invoice_type',
-        label: '发票类型',
+        label: t('finance.finance_invoice_page.type'),
         type: 'select' as const,
         options: [
-          { value: 'normal', label: '增值税普通发票' },
-          { value: 'special', label: '增值税专用发票' },
+          { value: 'normal', label: t('finance.finance_invoice_page.text_8236f8') },
+          { value: 'special', label: t('finance.finance_invoice_page.text_e3eaa7') },
         ],
         value: filterType,
-        onChange: (value: unknown) => setFilterType(value as string),
+        onChange: (value: unknown) => {
+          setFilter('type', value as string);
+          setCurrentPage(1);
+        },
       },
       {
         id: 'status',
-        label: '状态',
+        label: t('finance.finance_invoice_page.status'),
         type: 'select' as const,
         options: [
-          { value: 'pending', label: '待开票' },
-          { value: 'approved', label: '已批准' },
-          { value: 'invoiced', label: '已开票' },
-          { value: 'paid', label: '已收款' },
-          { value: 'cancelled', label: '已作废' },
+          { value: 'pending', label: t('finance.finance_invoice_page.text_963609') },
+          { value: 'approved', label: t('finance.finance_invoice_page.text_337737') },
+          { value: 'invoiced', label: t('finance.finance_invoice_page.text_ca4355') },
+          { value: 'paid', label: t('finance.finance_invoice_page.text_2365c3') },
+          { value: 'cancelled', label: t('finance.finance_invoice_page.text_dcc961') },
         ],
         value: filterStatus,
-        onChange: (value: unknown) => setFilterStatus(value as string),
+        onChange: (value: unknown) => {
+          setFilter('status', value as string);
+          setCurrentPage(1);
+        },
       },
     ],
     [filterType, filterStatus]
@@ -450,14 +471,14 @@ const FinanceInvoicePage: React.FC = () => {
 
   const exportFields = useMemo(
     () => [
-      { key: 'invoice_no', title: '发票号码' },
-      { key: 'invoice_date', title: '开票日期' },
-      { key: 'customer_name', title: '客户名称' },
-      { key: 'amount', title: '金额' },
-      { key: 'tax_rate', title: '税率' },
-      { key: 'tax_amount', title: '税额' },
-      { key: 'total_amount', title: '价税合计' },
-      { key: 'status', title: '状态' },
+      { key: 'invoice_no', title: t('finance.finance_invoice_page.text_4ae540') },
+      { key: 'invoice_date', title: t('finance.finance_invoice_page.date') },
+      { key: 'customer_name', title: t('finance.finance_invoice_page.customer_name') },
+      { key: 'amount', title: t('finance.finance_invoice_page.amount_1') },
+      { key: 'tax_rate', title: t('finance.finance_invoice_page.text_2a79a7') },
+      { key: 'tax_amount', title: t('finance.finance_invoice_page.text_87b755') },
+      { key: 'total_amount', title: t('finance.finance_invoice_page.text_6be1ce') },
+      { key: 'status', title: t('finance.finance_invoice_page.status') },
     ],
     []
   );
@@ -538,8 +559,8 @@ const FinanceInvoicePage: React.FC = () => {
               <DataExport
                 data={invoiceData as unknown as Record<string, unknown>[]}
                 fields={exportFields}
-                defaultFileName='发票数据'
-                buttonText='数据导出'
+                defaultFileName={t('finance.finance_invoice_page.text_2e7448')}
+                buttonText={t('finance.finance_invoice_page.export')}
               />
               <Button
                 variant='contained'
@@ -565,27 +586,28 @@ const FinanceInvoicePage: React.FC = () => {
           data={invoiceData}
           loading={loading}
           searchable
-          searchPlaceholder='搜索发票号或客户...'
+          searchPlaceholder={t('finance.finance_invoice_page.search')}
           filters={advancedFilters}
           filtersValue={{
             invoice_type: filterType,
             status: filterStatus,
           }}
           onFilterChange={(filters) => {
-            if (filters.invoice_type !== undefined) setFilterType(filters.invoice_type as string);
-            if (filters.status !== undefined) setFilterStatus(filters.status as string);
+            if (filters.invoice_type !== undefined) setFilter('type', filters.invoice_type as string);
+            if (filters.status !== undefined) setFilter('status', filters.status as string);
+            setCurrentPage(1);
           }}
           onSearch={handleSearch}
           actions={[
-            { label: '搜索', variant: 'outlined', onClick: handleSearch },
-            { label: '重置', variant: 'outlined', onClick: handleReset },
+            { label: t('finance.finance_invoice_page.search_1'), variant: 'outlined', onClick: handleSearch },
+            { label: t('finance.finance_invoice_page.reset'), variant: 'outlined', onClick: handleReset },
           ]}
           selectable
           selectedIds={selectedIds}
           onSelectionChange={setSelectedIds}
           rowActions={rowActions}
           pagination={{
-            page: page - 1,
+            page: currentPage - 1,
             pageSize,
             total,
             onPageChange: handlePageChange,
@@ -608,20 +630,20 @@ const FinanceInvoicePage: React.FC = () => {
             sx={{ pt: 2 }}
           >
             <TextField
-              label='客户ID *'
+              label={t('finance.finance_invoice_page.customer')}
               fullWidth
               value={newInvoice.customer_id}
               onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
                 setNewInvoice({ ...newInvoice, customer_id: e.target.value })
               }
-              placeholder='请输入客户ID'
+              placeholder={t('finance.finance_invoice_page.please_input')}
             />
             <Stack
               direction='row'
               spacing={2}
             >
               <CurrencyField
-                label='金额 *'
+                label={t('finance.finance_invoice_page.amount_2')}
                 fullWidth
                 value={newInvoice.amount || 0}
                 onChange={(val: number) =>
@@ -635,7 +657,7 @@ const FinanceInvoicePage: React.FC = () => {
                 <InputLabel>税率</InputLabel>
                 <Select
                   value={newInvoice.tax_rate.toString()}
-                  label='税率'
+                  label={t('finance.finance_invoice_page.text_2a79a7')}
                   onChange={(e: SelectChangeEvent) =>
                     setNewInvoice({
                       ...newInvoice,
@@ -654,7 +676,7 @@ const FinanceInvoicePage: React.FC = () => {
               <InputLabel>发票类型</InputLabel>
               <Select
                 value={newInvoice.invoice_type}
-                label='发票类型'
+                label={t('finance.finance_invoice_page.type')}
                 onChange={(e: SelectChangeEvent) =>
                   setNewInvoice({
                     ...newInvoice,

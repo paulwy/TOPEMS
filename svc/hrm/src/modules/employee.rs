@@ -8,7 +8,10 @@ use crate::models::{CreateEmployeeRequest, Employee, UpdateEmployeeRequest};
 use crate::modules::audit::log_audit_event;
 use crate::services::employee_service::EmployeeService;
 use crate::shared::permission::{check_permission, ModulePermission};
-use topems_shared::{api_error, ApiResponse, Claims};
+use topems_shared::{
+    api_error, event::EventType, event::HrmEmployeeCreatedPayload,
+    event::HrmEmployeeUpdatedPayload, ApiResponse, Claims,
+};
 
 fn get_tenant_id(claims: &Claims, headers: &axum::http::HeaderMap) -> Uuid {
     claims
@@ -141,8 +144,13 @@ async fn get_employee(
 
     let cache_key = employee_cache_key(&id);
 
+    if let Some(cached) = state.employee_cache.get(&cache_key) {
+        return Json(ApiResponse::success(cached, "从本地内存缓存获取员工成功"));
+    }
+
     if let Ok(Some(cached)) = state.cache.get(&cache_key).await {
         if let Ok(employee) = serde_json::from_str::<Employee>(&cached) {
+            state.employee_cache.set(cache_key, employee.clone());
             return Json(ApiResponse::success(employee, "从缓存获取员工成功"));
         }
     }
@@ -157,6 +165,9 @@ async fn get_employee(
         ..
     } = &result
     {
+        state
+            .employee_cache
+            .set(cache_key.clone(), employee.clone());
         let _ = state
             .cache
             .set(
@@ -289,6 +300,37 @@ async fn create_employee(
                     Some(EMPLOYEE_CACHE_TTL),
                 )
                 .await;
+
+            if let Some(ref publisher) = state.event_publisher {
+                let publisher = publisher.clone();
+                let emp_id = employee.id;
+                let emp_name = employee.name.clone();
+                let emp_email = employee.email.clone().unwrap_or_default();
+                let dept_id = employee.department_id;
+                tokio::spawn(async move {
+                    let payload = HrmEmployeeCreatedPayload {
+                        employee_id: emp_id,
+                        name: emp_name,
+                        email: emp_email,
+                        department_id: dept_id,
+                    };
+                    if let Err(e) = publisher
+                        .publish_event(EventType::HrmEmployeeCreated, payload)
+                        .await
+                    {
+                        tracing::warn!(
+                            "[hrm] HrmEmployeeCreated 事件发布失败（graceful fallback）: {}",
+                            e
+                        );
+                    } else {
+                        tracing::info!(
+                            "[hrm] HrmEmployeeCreated 事件发布成功 - employee_id={}",
+                            emp_id
+                        );
+                    }
+                });
+            }
+
             status_str = "success".to_string();
             error_msg = None;
             data_value = serde_json::to_value(employee).ok();
@@ -346,6 +388,7 @@ async fn update_employee(
     let result = service.update_employee(&id, req).await;
 
     if result.code == 200 {
+        state.employee_cache.remove(&employee_cache_key(&id));
         let _ = state
             .cache
             .set(
@@ -410,6 +453,7 @@ async fn delete_employee(
     let result = service.delete_employee(&id).await;
 
     if result.code == 200 {
+        state.employee_cache.remove(&employee_cache_key(&id));
         let _ = state.cache.delete(&employee_cache_key(&id)).await;
     }
 

@@ -1,0 +1,136 @@
+name: Deploy to Kubernetes
+
+on:
+  push:
+    branches: [main, develop]
+    tags: ['v*']
+  workflow_dispatch:
+    inputs:
+      environment:
+        description: '部署环境'
+        required: true
+        type: choice
+        default: staging
+        options:
+          - staging
+          - production
+      image_tag:
+        description: '镜像 tag（留空使用最新 sha）'
+        required: false
+        default: ''
+
+env:
+  K8S_NAMESPACE: topems
+
+jobs:
+  deploy:
+    name: Deploy to ${{ github.event.inputs.environment || 'staging' }}
+    runs-on: ubuntu-latest
+    if: github.ref == 'refs/heads/main' || github.ref == 'refs/heads/develop' || startsWith(github.ref, 'refs/tags/v')
+    environment: ${{ github.event.inputs.environment || 'staging' }}
+    permissions:
+      contents: read
+      packages: read
+    
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Determine image tag
+        id: tag
+        run: |
+          if [ -n "${{ github.event.inputs.image_tag }}" ]; then
+            echo "image_tag=${{ github.event.inputs.image_tag }}" >> $GITHUB_OUTPUT
+          elif [[ "${{ github.ref }}" == refs/tags/v* ]]; then
+            echo "image_tag=${GITHUB_REF#refs/tags/}" >> $GITHUB_OUTPUT
+          else
+            echo "image_tag=sha-$(echo ${{ github.sha }} | cut -c1-7)" >> $GITHUB_OUTPUT
+          fi
+
+      - name: Setup kubectl
+        uses: azure/setup-kubectl@v4
+        with:
+          version: 'v1.30.0'
+
+      - name: Configure kubectl
+        run: |
+          mkdir -p $HOME/.kube
+          if [ "${{ github.event.inputs.environment || 'staging' }}" = "production" ]; then
+            echo "${{ secrets.KUBE_CONFIG_PROD }}" | base64 -d > $HOME/.kube/config
+          else
+            echo "${{ secrets.KUBE_CONFIG_STAGING }}" | base64 -d > $HOME/.kube/config
+          fi
+          chmod 600 $HOME/.kube/config
+
+      - name: Create namespace if not exists
+        run: |
+          kubectl get namespace ${{ env.K8S_NAMESPACE }} || \
+          kubectl create namespace ${{ env.K8S_NAMESPACE }}
+
+      - name: Apply base manifests
+        run: |
+          kubectl apply -f k8s/base/ -n ${{ env.K8S_NAMESPACE }}
+
+      - name: Deploy all services
+        run: |
+          SERVICES=(
+            unified-core erp finance doc ai hrm pm crm mes pdm
+            scm wms srm qms lims ehs rd analytics monitor portal mobile gis integration
+          )
+          
+          echo "## K8s Deployment Summary" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "| Service | Status | Image Tag |" >> $GITHUB_STEP_SUMMARY
+          echo "|---------|--------|-----------|" >> $GITHUB_STEP_SUMMARY
+          
+          for svc in "${SERVICES[@]}"; do
+            echo "Deploying $svc..."
+            kubectl set image deployment/$svc \
+              $svc=ghcr.io/${{ github.repository_owner }}/topems-$svc:${{ steps.tag.outputs.image_tag }} \
+              -n ${{ env.K8S_NAMESPACE }} || true
+            
+            kubectl rollout status deployment/$svc \
+              -n ${{ env.K8S_NAMESPACE }} \
+              --timeout=300s && \
+              echo "| $svc | ✅ Deployed | ${{ steps.tag.outputs.image_tag }} |" >> $GITHUB_STEP_SUMMARY || \
+              echo "| $svc | ❌ Failed | ${{ steps.tag.outputs.image_tag }} |" >> $GITHUB_STEP_SUMMARY
+          done
+
+      - name: Deploy frontend
+        run: |
+          kubectl set image deployment/web \
+            web=ghcr.io/${{ github.repository_owner }}/topems-web:${{ steps.tag.outputs.image_tag }} \
+            -n ${{ env.K8S_NAMESPACE }} || true
+          kubectl rollout status deployment/web \
+            -n ${{ env.K8S_NAMESPACE }} \
+            --timeout=180s
+
+      - name: Verify deployments
+        run: |
+          echo "### Deployment Status" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo '```' >> $GITHUB_STEP_SUMMARY
+          kubectl get deployments -n ${{ env.K8S_NAMESPACE }} -o wide >> $GITHUB_STEP_SUMMARY
+          echo '```' >> $GITHUB_STEP_SUMMARY
+
+      - name: Run smoke tests
+        run: |
+          # 等待服务就绪
+          sleep 30
+          
+          # 获取 ingress URL
+          INGRESS_IP=$(kubectl get ingress -n ${{ env.K8S_NAMESPACE }} -o jsonpath='{.items[0].status.loadBalancer.ingress[0].ip}')
+          
+          if [ -n "$INGRESS_IP" ]; then
+            echo "Testing via ingress: $INGRESS_IP"
+            curl -sf "http://$INGRESS_IP/health" || exit 1
+            curl -sf "http://$INGRESS_IP/api/health" || exit 1
+            echo "✅ Smoke tests passed" >> $GITHUB_STEP_SUMMARY
+          else
+            echo "⚠️ No ingress IP found, skipping smoke tests" >> $GITHUB_STEP_SUMMARY
+          fi
+
+      - name: Notify on failure
+        if: failure()
+        run: |
+          echo "❌ Deployment failed, check logs for details" >> $GITHUB_STEP_SUMMARY
+          exit 1

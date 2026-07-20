@@ -13,6 +13,7 @@ pub enum ModuleCode {
     Pm,
     Rs,
     Scm,
+    Srm,
     Crm,
     Ai,
     Gis,
@@ -41,6 +42,7 @@ impl ModuleCode {
             ModuleCode::Pm => "pm",
             ModuleCode::Rs => "rs",
             ModuleCode::Scm => "scm",
+            ModuleCode::Srm => "srm",
             ModuleCode::Crm => "crm",
             ModuleCode::Ai => "ai",
             ModuleCode::Gis => "gis",
@@ -67,6 +69,7 @@ impl ModuleCode {
             "pm" => Some(ModuleCode::Pm),
             "rs" => Some(ModuleCode::Rs),
             "scm" => Some(ModuleCode::Scm),
+            "srm" => Some(ModuleCode::Srm),
             "crm" => Some(ModuleCode::Crm),
             "ai" => Some(ModuleCode::Ai),
             "gis" => Some(ModuleCode::Gis),
@@ -131,8 +134,9 @@ impl PermissionAction {
 
 #[derive(Debug, Clone, PartialEq, Eq, Hash)]
 pub struct ModulePermission {
-    module: ModuleCode,
-    action: PermissionAction,
+    /// V21.0: 公开字段以支持权限中心客户端访问
+    pub module: ModuleCode,
+    pub action: PermissionAction,
 }
 
 impl ModulePermission {
@@ -266,6 +270,7 @@ pub fn get_all_module_permissions() -> Vec<ModulePermission> {
         ModuleCode::Pm,
         ModuleCode::Rs,
         ModuleCode::Scm,
+        ModuleCode::Srm,
         ModuleCode::Crm,
         ModuleCode::Ai,
         ModuleCode::Gis,
@@ -352,38 +357,154 @@ pub struct ResourcePermission {
     pub module: ModuleCode,
     pub resource: String,
     pub action: PermissionAction,
+    /// V21.0: 数据范围，默认为 All
+    pub scope: PermissionScope,
 }
 
 impl ResourcePermission {
     pub fn new(module: ModuleCode, resource: String, action: PermissionAction) -> Self {
-        ResourcePermission { module, resource, action }
+        ResourcePermission {
+            module,
+            resource,
+            action,
+            scope: PermissionScope::All,
+        }
+    }
+
+    /// V21.0: 带数据范围的构造函数
+    pub fn with_scope(
+        module: ModuleCode,
+        resource: String,
+        action: PermissionAction,
+        scope: PermissionScope,
+    ) -> Self {
+        ResourcePermission {
+            module,
+            resource,
+            action,
+            scope,
+        }
     }
 
     pub fn parse(s: &str) -> Option<Self> {
         let parts: Vec<&str> = s.split(':').collect();
-        if parts.len() != 3 {
-            return None;
+        // V21.0: 支持两种格式：
+        // - 3段: module:resource:action（向后兼容，scope=All）
+        // - 4段: module:resource:action:scope（新格式）
+        match parts.len() {
+            3 => {
+                let module = ModuleCode::from_str(parts[0])?;
+                let action = PermissionAction::from_str(parts[2])?;
+                Some(ResourcePermission {
+                    module,
+                    resource: parts[1].to_string(),
+                    action,
+                    scope: PermissionScope::All,
+                })
+            }
+            4 => {
+                let module = ModuleCode::from_str(parts[0])?;
+                let action = PermissionAction::from_str(parts[2])?;
+                let scope = PermissionScope::from_str(parts[3])?;
+                Some(ResourcePermission {
+                    module,
+                    resource: parts[1].to_string(),
+                    action,
+                    scope,
+                })
+            }
+            _ => None,
         }
-        let module = ModuleCode::from_str(parts[0])?;
-        let action = PermissionAction::from_str(parts[2])?;
-        Some(ResourcePermission {
-            module,
-            resource: parts[1].to_string(),
-            action,
-        })
     }
 
     pub fn implies(&self, other: &ResourcePermission) -> bool {
         if self.module != other.module || self.resource != other.resource {
             return false;
         }
-        self.action.level() >= other.action.level()
+        // V21.0: 数据范围蕴含关系
+        // All 蕴含所有；Department 蕴含 Team 和 Self；Team 蕴含 Self
+        self.action.level() >= other.action.level() && self.scope.implies(&other.scope)
     }
 }
 
 impl std::fmt::Display for ResourcePermission {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        write!(f, "{}:{}:{}", self.module.as_str(), self.resource, self.action.as_str())
+        write!(
+            f,
+            "{}:{}:{}:{}",
+            self.module.as_str(),
+            self.resource,
+            self.action.as_str(),
+            self.scope.as_str()
+        )
+    }
+}
+
+/// V21.0: 数据范围（Scope）- ABAC 属性基访问控制
+///
+/// 用于控制用户能访问的数据范围，与 RBAC 权限组合使用：
+/// - All: 所有数据（最高权限）
+/// - Department: 本部门数据
+/// - Team: 本团队数据
+/// - Self: 仅本人数据（最低权限）
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
+pub enum PermissionScope {
+    /// 所有数据（管理员级别）
+    All,
+    /// 本部门数据
+    Department,
+    /// 本团队数据
+    Team,
+    /// 仅本人数据
+    Self_,
+}
+
+impl PermissionScope {
+    pub fn as_str(&self) -> &'static str {
+        match self {
+            PermissionScope::All => "all",
+            PermissionScope::Department => "dept",
+            PermissionScope::Team => "team",
+            PermissionScope::Self_ => "self",
+        }
+    }
+
+    #[allow(clippy::should_implement_trait)]
+    pub fn from_str(s: &str) -> Option<Self> {
+        match s {
+            "all" => Some(PermissionScope::All),
+            "dept" | "department" => Some(PermissionScope::Department),
+            "team" => Some(PermissionScope::Team),
+            "self" => Some(PermissionScope::Self_),
+            _ => None,
+        }
+    }
+
+    /// 范围等级，用于蕴含判断
+    pub fn level(&self) -> u8 {
+        match self {
+            PermissionScope::All => 4,
+            PermissionScope::Department => 3,
+            PermissionScope::Team => 2,
+            PermissionScope::Self_ => 1,
+        }
+    }
+
+    /// 判断当前范围是否蕴含另一个范围
+    pub fn implies(&self, other: &PermissionScope) -> bool {
+        self.level() >= other.level()
+    }
+}
+
+impl Default for PermissionScope {
+    fn default() -> Self {
+        PermissionScope::All
+    }
+}
+
+impl std::fmt::Display for PermissionScope {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        write!(f, "{}", self.as_str())
     }
 }
 
@@ -433,5 +554,199 @@ impl PermissionTemplate {
         if !self.permissions.contains(&permission.to_string()) {
             self.permissions.push(permission.to_string());
         }
+    }
+}
+
+// ============================================================================
+// V21.0 统一权限中心：权限元数据缓存 + 实时同步
+// ============================================================================
+
+/// V21.0: 权限元数据
+///
+/// 描述一个权限的完整定义，包括模块、资源、操作、数据范围、描述等。
+/// 由 IAM 服务作为权威源统一管理，各服务启动时拉取并缓存。
+#[derive(Debug, Clone, serde::Serialize, serde::Deserialize)]
+pub struct PermissionMetadata {
+    /// 权限标识：`module:resource:action:scope`
+    pub code: String,
+    /// 模块编码
+    pub module: String,
+    /// 资源名称
+    pub resource: String,
+    /// 操作类型
+    pub action: String,
+    /// 数据范围
+    pub scope: String,
+    /// 权限名称（显示用）
+    pub name: String,
+    /// 权限描述
+    pub description: Option<String>,
+    /// 是否为系统内置权限（不可删除）
+    pub is_builtin: bool,
+}
+
+/// V21.0: 权限元数据缓存
+///
+/// 各服务启动时从 IAM 服务拉取权限元数据，缓存在内存中。
+/// 当权限变更时（通过 PermissionChangedEvent），自动更新缓存。
+///
+/// 设计要点：
+/// - 使用 RwLock 实现读多写少的并发访问
+/// - 支持按模块、资源、操作多维度查询
+/// - 支持增量更新（仅更新变更的权限）
+pub struct PermissionMetadataCache {
+    /// 权限代码 → 元数据映射
+    cache: parking_lot::RwLock<std::collections::HashMap<String, PermissionMetadata>>,
+    /// 模块 → 权限代码集合（用于按模块批量查询）
+    module_index: parking_lot::RwLock<std::collections::HashMap<String, Vec<String>>>,
+    /// 最后更新时间
+    last_updated: parking_lot::RwLock<Option<chrono::DateTime<chrono::Utc>>>,
+}
+
+impl PermissionMetadataCache {
+    pub fn new() -> Self {
+        Self {
+            cache: parking_lot::RwLock::new(std::collections::HashMap::new()),
+            module_index: parking_lot::RwLock::new(std::collections::HashMap::new()),
+            last_updated: parking_lot::RwLock::new(None),
+        }
+    }
+
+    /// 批量加载权限元数据（启动时调用）
+    pub fn load_all(&self, metadata_list: Vec<PermissionMetadata>) {
+        let mut cache = self.cache.write();
+        let mut module_index = self.module_index.write();
+        cache.clear();
+        module_index.clear();
+
+        for metadata in metadata_list {
+            let module = metadata.module.clone();
+            let code = metadata.code.clone();
+            module_index.entry(module).or_default().push(code.clone());
+            cache.insert(code, metadata);
+        }
+
+        *self.last_updated.write() = Some(chrono::Utc::now());
+    }
+
+    /// 增量更新单个权限元数据（权限变更事件触发）
+    pub fn upsert(&self, metadata: PermissionMetadata) {
+        let code = metadata.code.clone();
+        let module = metadata.module.clone();
+        let mut cache = self.cache.write();
+        let mut module_index = self.module_index.write();
+
+        // 如果权限已存在且模块变更，需要更新索引
+        if let Some(old) = cache.get(&code) {
+            if old.module != module {
+                if let Some(codes) = module_index.get_mut(&old.module) {
+                    codes.retain(|c| c != &code);
+                }
+            }
+        }
+
+        module_index.entry(module).or_default().push(code.clone());
+        cache.insert(code, metadata);
+        *self.last_updated.write() = Some(chrono::Utc::now());
+    }
+
+    /// 删除权限元数据
+    pub fn remove(&self, code: &str) {
+        let mut cache = self.cache.write();
+        let mut module_index = self.module_index.write();
+
+        if let Some(metadata) = cache.remove(code) {
+            if let Some(codes) = module_index.get_mut(&metadata.module) {
+                codes.retain(|c| c != code);
+            }
+        }
+        *self.last_updated.write() = Some(chrono::Utc::now());
+    }
+
+    /// 查询单个权限元数据
+    pub fn get(&self, code: &str) -> Option<PermissionMetadata> {
+        self.cache.read().get(code).cloned()
+    }
+
+    /// 按模块查询所有权限
+    pub fn list_by_module(&self, module: &str) -> Vec<PermissionMetadata> {
+        let cache = self.cache.read();
+        let module_index = self.module_index.read();
+        module_index
+            .get(module)
+            .map(|codes| {
+                codes
+                    .iter()
+                    .filter_map(|code| cache.get(code).cloned())
+                    .collect()
+            })
+            .unwrap_or_default()
+    }
+
+    /// 获取所有权限元数据
+    pub fn list_all(&self) -> Vec<PermissionMetadata> {
+        self.cache.read().values().cloned().collect()
+    }
+
+    /// 获取缓存统计信息
+    pub fn stats(&self) -> PermissionCacheStats {
+        let cache = self.cache.read();
+        let module_index = self.module_index.read();
+        PermissionCacheStats {
+            total_permissions: cache.len(),
+            total_modules: module_index.len(),
+            last_updated: *self.last_updated.read(),
+        }
+    }
+
+    /// 清空缓存
+    pub fn clear(&self) {
+        self.cache.write().clear();
+        self.module_index.write().clear();
+        *self.last_updated.write() = None;
+    }
+}
+
+impl Default for PermissionMetadataCache {
+    fn default() -> Self {
+        Self::new()
+    }
+}
+
+/// V21.0: 权限缓存统计信息
+#[derive(Debug, Clone, serde::Serialize, serde::Deserialize)]
+pub struct PermissionCacheStats {
+    pub total_permissions: usize,
+    pub total_modules: usize,
+    pub last_updated: Option<chrono::DateTime<chrono::Utc>>,
+}
+
+/// V21.0: 权限变更操作类型
+#[derive(Debug, Clone, Copy, PartialEq, Eq, serde::Serialize, serde::Deserialize)]
+pub enum PermissionChangeType {
+    /// 新增权限
+    Created,
+    /// 更新权限
+    Updated,
+    /// 删除权限
+    Deleted,
+    /// 批量导入
+    BulkImported,
+}
+
+impl PermissionChangeType {
+    pub fn as_str(&self) -> &'static str {
+        match self {
+            PermissionChangeType::Created => "created",
+            PermissionChangeType::Updated => "updated",
+            PermissionChangeType::Deleted => "deleted",
+            PermissionChangeType::BulkImported => "bulk_imported",
+        }
+    }
+}
+
+impl std::fmt::Display for PermissionChangeType {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        write!(f, "{}", self.as_str())
     }
 }

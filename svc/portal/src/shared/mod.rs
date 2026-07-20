@@ -2,7 +2,9 @@ use axum::extract::FromRef;
 use reqwest::Client;
 use sqlx::PgPool;
 use std::sync::Arc;
-use topems_shared::{AuthState, LocalServiceRegistry, PortalServiceAggregator};
+use topems_shared::{
+    event::EventPublisher, AuthState, LocalServiceRegistry, PortalServiceAggregator,
+};
 
 #[derive(Clone)]
 pub struct AppState {
@@ -11,6 +13,7 @@ pub struct AppState {
     pub service_aggregator: Arc<PortalServiceAggregator>,
     pub http_client: Client,
     pub pool: PgPool,
+    pub event_publisher: Option<Arc<EventPublisher>>,
 }
 
 impl FromRef<AppState> for AuthState {
@@ -26,7 +29,7 @@ impl FromRef<AppState> for PgPool {
 }
 
 impl AppState {
-    pub async fn new(pool: PgPool) -> Self {
+    pub async fn new(pool: PgPool, event_publisher: Option<Arc<EventPublisher>>) -> Self {
         let aggregator = PortalServiceAggregator::new();
         aggregator.init_default_services().await;
 
@@ -36,6 +39,7 @@ impl AppState {
             service_aggregator: Arc::new(aggregator),
             http_client: Client::new(),
             pool,
+            event_publisher,
         }
     }
 }

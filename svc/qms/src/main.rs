@@ -16,6 +16,7 @@
 
 mod middleware;
 mod shared;
+mod workflow;
 
 pub mod modules;
 
@@ -28,9 +29,9 @@ use axum_prometheus::PrometheusMetricLayer;
 use sqlx::PgPool;
 
 use topems_shared::{
-    auth_middleware, create_cors_layer, get_api_info_handler, init_telemetry, rls_middleware,
-    simple_health_check, telemetry_middleware, wrap_group2_router, ApiResponse, AuthState,
-    RouteCompatConfig, ServiceHealth, SimpleHealthConfig,
+    auth_middleware, create_cors_layer, event::EventPublisher, get_api_info_handler,
+    init_telemetry, rls_middleware, simple_health_check, telemetry_middleware, wrap_group2_router,
+    ApiResponse, AuthState, RouteCompatConfig, ServiceHealth, SimpleHealthConfig,
 };
 
 pub use shared::*;
@@ -42,11 +43,19 @@ pub struct AppState {
     pub auth_state: AuthState,
     pub pool: PgPool,
     pub health_config: SimpleHealthConfig,
+    pub event_publisher: Option<std::sync::Arc<EventPublisher>>,
+    pub workflow_client: workflow::WorkflowClient,
 }
 
 impl axum::extract::FromRef<AppState> for AuthState {
     fn from_ref(state: &AppState) -> Self {
         state.auth_state.clone()
+    }
+}
+
+impl axum::extract::FromRef<AppState> for workflow::WorkflowClient {
+    fn from_ref(state: &AppState) -> Self {
+        state.workflow_client.clone()
     }
 }
 
@@ -88,10 +97,28 @@ async fn main() -> anyhow::Result<()> {
     let auth_state = AuthState::from_env();
     let health_config = SimpleHealthConfig::new("topems-qms").with_db(pool.clone());
 
+    let event_publisher = match EventPublisher::new("topems-qms") {
+        Ok(publisher) => {
+            tracing::info!("📢 事件发布服务初始化成功");
+            Some(std::sync::Arc::new(publisher))
+        }
+        Err(e) => {
+            tracing::warn!("⚠️ 事件发布服务初始化失败（不阻塞启动）: {}", e);
+            None
+        }
+    };
+
+    let workflow_url = std::env::var("WORKFLOW_SERVICE_URL")
+        .unwrap_or_else(|_| "http://localhost:8001".to_string());
+    let workflow_client = workflow::WorkflowClient::new(&workflow_url);
+    tracing::info!("🔗 工作流服务客户端初始化成功: {}", workflow_url);
+
     let state = AppState {
         auth_state,
         pool,
         health_config,
+        event_publisher,
+        workflow_client,
     };
 
     let cors = create_cors_layer();

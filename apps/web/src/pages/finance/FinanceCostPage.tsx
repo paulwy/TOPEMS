@@ -11,6 +11,7 @@ import {
   Wallet,
   Download,
 } from 'lucide-react';
+import { useTranslation } from 'react-i18next';
 import { DataExport, BackButton, PageContainer } from '@/components/common';
 import { useNotificationStore } from '@/store';
 import { ListPageTemplate, StatCardGroup } from '@/components';
@@ -31,6 +32,7 @@ import {
 } from '@mui/material';
 
 const FinanceCostPage: React.FC = () => {
+  const { t } = useTranslation();
   const addNotification = useNotificationStore((state) => state.addNotification);
 
   const [filterCenter, setFilterCenter] = useState('');
@@ -70,7 +72,7 @@ const FinanceCostPage: React.FC = () => {
   const costData = accountsQuery.data || [];
   const balanceData = balancesQuery.data || [];
   const loading = accountsQuery.isLoading || balancesQuery.isLoading;
-  const error = accountsQuery.error || balancesQuery.error ? '加载成本数据失败' : undefined;
+  const error = accountsQuery.error || balancesQuery.error ? t('finance.finance_cost_page.fail') : undefined;
 
   const getAccountBalance = (accountId: string): AccountBalance | undefined => {
     return balanceData.find((b) => b.account_id === accountId);
@@ -97,19 +99,19 @@ const FinanceCostPage: React.FC = () => {
   const statCards = useMemo(() => {
     return [
       {
-        title: '成本科目数',
+        title: t('finance.finance_cost_page.text_27d98b'),
         value: costData.length,
         icon: <Wallet size={24} />,
         color: 'primary' as const,
       },
       {
-        title: '实际总成本',
+        title: t('finance.finance_cost_page.actual'),
         value: `¥${totalActual.toLocaleString()}`,
         icon: <DollarSign size={24} />,
         color: 'secondary' as const,
       },
       {
-        title: '本期借方发生',
+        title: t('finance.finance_cost_page.text_2058a6'),
         value: `¥${balanceData
           .filter((b) => b.category === 'cost')
           .reduce((sum, b) => sum + b.period_debit, 0)
@@ -127,8 +129,8 @@ const FinanceCostPage: React.FC = () => {
 
   const handleExport = () => {
     addNotification({
-      title: '导出成功',
-      message: '成本数据已导出',
+      title: t('finance.finance_cost_page.export'),
+      message: t('finance.finance_cost_page.export_1'),
       type: 'success',
     });
   };
@@ -142,19 +144,19 @@ const FinanceCostPage: React.FC = () => {
     () => [
       {
         id: 'code',
-        label: '科目编码',
+        label: t('finance.finance_cost_page.code'),
         render: (row: Account) => (
           <MuiBox sx={{ fontWeight: 600, color: 'primary.main' }}>{row.code}</MuiBox>
         ),
       },
       {
         id: 'name',
-        label: '成本项目',
+        label: t('finance.finance_cost_page.text_6c5f2d'),
         render: (row: Account) => <MuiBox sx={{ fontWeight: 500 }}>{row.name}</MuiBox>,
       },
       {
         id: 'balance',
-        label: '借方余额',
+        label: t('finance.finance_cost_page.text_23a35c'),
         render: (row: Account) => {
           const balance = getAccountBalance(row.id);
           return (
@@ -166,7 +168,7 @@ const FinanceCostPage: React.FC = () => {
       },
       {
         id: 'period_debit',
-        label: '本期借方发生',
+        label: t('finance.finance_cost_page.text_2058a6'),
         render: (row: Account) => {
           const balance = getAccountBalance(row.id);
           return (
@@ -178,7 +180,7 @@ const FinanceCostPage: React.FC = () => {
       },
       {
         id: 'period_credit',
-        label: '本期贷方发生',
+        label: t('finance.finance_cost_page.text_1d91a4'),
         render: (row: Account) => {
           const balance = getAccountBalance(row.id);
           return (
@@ -190,15 +192,15 @@ const FinanceCostPage: React.FC = () => {
       },
       {
         id: 'status',
-        label: '状态',
+        label: t('finance.finance_cost_page.status'),
         render: (row: Account) => {
           const statusColors: Record<string, 'success' | 'warning' | 'error' | 'default'> = {
             active: 'success',
             disabled: 'error',
           };
           const statusLabels: Record<string, string> = {
-            active: '启用',
-            disabled: '停用',
+            active: t('finance.finance_cost_page.active'),
+            disabled: t('finance.finance_cost_page.inactive'),
           };
           return (
             <Chip
@@ -216,7 +218,7 @@ const FinanceCostPage: React.FC = () => {
   const rowActions = useMemo(
     () => [
       {
-        label: '成本分析',
+        label: t('finance.finance_cost_page.text_7f9f6f'),
         icon: <BarChart3 size={16} />,
         color: 'success' as const,
         onClick: (row: Account) => handleAnalysis(row),
@@ -229,11 +231,11 @@ const FinanceCostPage: React.FC = () => {
     () => [
       {
         id: 'status',
-        label: '状态',
+        label: t('finance.finance_cost_page.status'),
         type: 'select' as const,
         options: [
-          { value: 'active', label: '启用' },
-          { value: 'disabled', label: '停用' },
+          { value: 'active', label: t('finance.finance_cost_page.active') },
+          { value: 'disabled', label: t('finance.finance_cost_page.inactive') },
         ],
         value: filterCenter,
         onChange: (value: unknown) => setFilterCenter(value as string),
@@ -244,12 +246,12 @@ const FinanceCostPage: React.FC = () => {
 
   const exportFields = useMemo(
     () => [
-      { key: 'code', title: '科目编码' },
-      { key: 'name', title: '成本项目' },
-      { key: 'category', title: '科目类别' },
-      { key: 'balance_direction', title: '余额方向' },
-      { key: 'level', title: '层级' },
-      { key: 'status', title: '状态' },
+      { key: 'code', title: t('finance.finance_cost_page.code') },
+      { key: 'name', title: t('finance.finance_cost_page.text_6c5f2d') },
+      { key: 'category', title: t('finance.finance_cost_page.text_f31b4e') },
+      { key: 'balance_direction', title: t('finance.finance_cost_page.text_98f933') },
+      { key: 'level', title: t('finance.finance_cost_page.text_6896da') },
+      { key: 'status', title: t('finance.finance_cost_page.status') },
     ],
     []
   );
@@ -258,8 +260,8 @@ const FinanceCostPage: React.FC = () => {
     <PageContainer
       padding={false}
       maxWidth={false}
-      title='成本管理'
-      subtitle='管理成本核算和成本分析'
+      title={t('finance.finance_cost_page.text_86194f')}
+      subtitle={t('finance.finance_cost_page.text_319c67')}
       autoTitle
       autoBreadcrumbs
     >
@@ -335,8 +337,8 @@ const FinanceCostPage: React.FC = () => {
               <DataExport
                 data={costData as unknown as Record<string, unknown>[]}
                 fields={exportFields}
-                defaultFileName='成本数据'
-                buttonText='数据导出'
+                defaultFileName={t('finance.finance_cost_page.text_50e24e')}
+                buttonText={t('finance.finance_cost_page.export_2')}
               />
             </Stack>
           </Stack>
@@ -355,7 +357,7 @@ const FinanceCostPage: React.FC = () => {
           loading={loading}
           error={error}
           searchable
-          searchPlaceholder='搜索成本中心、项目...'
+          searchPlaceholder={t('finance.finance_cost_page.search')}
           searchValue={searchQuery}
           onSearch={setSearchQuery}
           filters={advancedFilters}

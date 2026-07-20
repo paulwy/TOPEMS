@@ -28,9 +28,11 @@ import { apiLogger } from '@/utils/logger';
 import { designTokens } from '@/theme/tokens';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 
+import { useTranslation } from 'react-i18next';
 const ct = designTokens.colors;
 
 const EnvironmentPage: React.FC = () => {
+  const { t } = useTranslation();
   const navigate = useNavigate();
   const queryClient = useQueryClient();
   const [searchTerm, setSearchTerm] = useState('');
@@ -76,7 +78,7 @@ const EnvironmentPage: React.FC = () => {
               : item.status === 'inactive'
                 ? 'inactive'
                 : item.status === 'maintenance'
-                  ? '维护中'
+                  ? t('ehs.environment_page.maintenance')
                   : item.status,
         }));
         return adapted as unknown as EnvironmentMonitor[];
@@ -114,9 +116,9 @@ const EnvironmentPage: React.FC = () => {
       维护中: { bg: 'warning.lighter', color: 'warning.dark' },
     };
     const statusLabels: Record<string, string> = {
-      active: '正常',
-      inactive: '停用',
-      maintenance: '维护中',
+      active: t('ehs.environment_page.normal'),
+      inactive: t('ehs.environment_page.inactive'),
+      maintenance: t('ehs.environment_page.maintenance'),
     };
     const colors = statusMap[status] || { bg: 'grey.100', color: 'text.secondary' };
     const label = statusLabels[status] || status;
@@ -137,12 +139,12 @@ const EnvironmentPage: React.FC = () => {
     () => [
       {
         id: 'monitor_no',
-        label: '监测点编号',
+        label: t('ehs.environment_page.text_808bc7'),
         render: (row) => row.monitor_no || '-',
       },
       {
         id: 'name',
-        label: '监测点名称',
+        label: t('ehs.environment_page.name'),
         render: (row) => (
           <Typography
             variant='body2'
@@ -154,17 +156,17 @@ const EnvironmentPage: React.FC = () => {
       },
       {
         id: 'monitor_type',
-        label: '监测类型',
+        label: t('ehs.environment_page.type'),
         render: (row) => row.monitor_type || '-',
       },
       {
         id: 'location',
-        label: '位置',
+        label: t('ehs.environment_page.text_d4d2a6'),
         render: (row) => row.location || '-',
       },
       {
         id: 'status',
-        label: '状态',
+        label: t('ehs.environment_page.status'),
         render: (row) => getStatusBadge(row.status),
       },
     ],
@@ -179,7 +181,7 @@ const EnvironmentPage: React.FC = () => {
   const rowActions = useMemo<RowAction<EnvironmentMonitor>[]>(
     () => [
       {
-        label: '详情',
+        label: t('ehs.environment_page.detail'),
         icon: <Eye size={16} />,
         onClick: (row) => handleViewDetail(row),
       },
@@ -191,27 +193,27 @@ const EnvironmentPage: React.FC = () => {
     () => [
       {
         id: 'monitor_type',
-        label: '监测类型',
+        label: t('ehs.environment_page.type'),
         type: 'select',
         options: [
-          { value: '', label: '全部' },
-          { value: '水质', label: '水质监测' },
-          { value: '空气质量', label: '空气质量' },
-          { value: '噪声', label: '噪声监测' },
-          { value: '土壤', label: '土壤监测' },
+          { value: '', label: t('ehs.environment_page.all') },
+          { value: t('ehs.environment_page.text_319faa'), label: t('ehs.environment_page.text_c19e2d') },
+          { value: t('ehs.environment_page.text_939a2d'), label: t('ehs.environment_page.text_939a2d') },
+          { value: t('ehs.environment_page.text_c63ace'), label: t('ehs.environment_page.text_c0a4ed') },
+          { value: t('ehs.environment_page.text_5a5df7'), label: t('ehs.environment_page.text_fffc90') },
         ],
         value: typeFilter,
         onChange: (value) => setTypeFilter(value as string),
       },
       {
         id: 'status',
-        label: '状态',
+        label: t('ehs.environment_page.status'),
         type: 'select',
         options: [
-          { value: '', label: '全部' },
-          { value: 'active', label: '正常' },
-          { value: 'inactive', label: '停用' },
-          { value: 'maintenance', label: '维护中' },
+          { value: '', label: t('ehs.environment_page.all') },
+          { value: 'active', label: t('ehs.environment_page.normal') },
+          { value: 'inactive', label: t('ehs.environment_page.inactive') },
+          { value: 'maintenance', label: t('ehs.environment_page.maintenance') },
         ],
         value: statusFilter,
         onChange: (value) => setStatusFilter(value as string),
@@ -264,12 +266,12 @@ const EnvironmentPage: React.FC = () => {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['ehs-environment-monitors'] });
-      addNotification({ title: '成功', message: '环境监测点创建成功', type: 'success' });
+      addNotification({ title: t('ehs.environment_page.success'), message: t('ehs.environment_page.create'), type: 'success' });
       setShowCreateModal(false);
     },
     onError: (err) => {
-      addNotification({ title: '错误', message: '创建失败', type: 'error' });
-      apiLogger.error('创建环境监测点失败:', err);
+      addNotification({ title: t('ehs.environment_page.error'), message: t('ehs.environment_page.create_1'), type: 'error' });
+      apiLogger.error(t('ehs.environment_page.create_2'), err);
     },
   });
 
@@ -288,7 +290,7 @@ const EnvironmentPage: React.FC = () => {
 
   const headerActions = [
     {
-      label: '新增监测点',
+      label: t('ehs.environment_page.add'),
       icon: <Plus style={{ width: 18, height: 18 }} />,
       onClick: handleCreate,
       variant: 'contained' as const,
@@ -415,12 +417,12 @@ const EnvironmentPage: React.FC = () => {
       </Box>
 
       <ListPageTemplate<EnvironmentMonitor>
-        title='环境监测点列表'
+        title={t('ehs.environment_page.list')}
         columns={columns}
         data={filteredMonitors}
         loading={loading}
         searchable
-        searchPlaceholder='搜索监测点名称或编号...'
+        searchPlaceholder={t('ehs.environment_page.search')}
         searchValue={searchTerm}
         onSearch={(value) => setSearchTerm(value)}
         filters={filters}
@@ -439,77 +441,77 @@ const EnvironmentPage: React.FC = () => {
           <Box sx={{ pt: 1, display: 'flex', flexDirection: 'column', gap: 2 }}>
             <TextField
               fullWidth
-              label='监测点名称 *'
+              label={t('ehs.environment_page.name_1')}
               value={formData.name}
               onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-              placeholder='请输入监测点名称'
+              placeholder={t('ehs.environment_page.please_input')}
             />
             <FormControl fullWidth>
               <InputLabel>监测类型 *</InputLabel>
               <Select
                 value={formData.monitor_type}
-                label='监测类型 *'
+                label={t('ehs.environment_page.type_1')}
                 onChange={(e) => setFormData({ ...formData, monitor_type: e.target.value })}
               >
-                <MenuItem value='水质'>水质监测</MenuItem>
-                <MenuItem value='空气质量'>空气质量</MenuItem>
-                <MenuItem value='噪声'>噪声监测</MenuItem>
-                <MenuItem value='土壤'>土壤监测</MenuItem>
+                <MenuItem value={t('ehs.environment_page.text_319faa')}>水质监测</MenuItem>
+                <MenuItem value={t('ehs.environment_page.text_939a2d')}>空气质量</MenuItem>
+                <MenuItem value={t('ehs.environment_page.text_c63ace')}>噪声监测</MenuItem>
+                <MenuItem value={t('ehs.environment_page.text_5a5df7')}>土壤监测</MenuItem>
               </Select>
             </FormControl>
             <TextField
               fullWidth
-              label='位置'
+              label={t('ehs.environment_page.text_d4d2a6')}
               value={formData.location}
               onChange={(e) => setFormData({ ...formData, location: e.target.value })}
-              placeholder='请输入位置'
+              placeholder={t('ehs.environment_page.please_input_1')}
             />
             <TextField
               fullWidth
-              label='监测频率'
+              label={t('ehs.environment_page.text_bbe6ff')}
               value={formData.monitor_frequency}
               onChange={(e) => setFormData({ ...formData, monitor_frequency: e.target.value })}
-              placeholder='如：每日一次'
+              placeholder={t('ehs.environment_page.text_7a3f38')}
             />
             <Box sx={{ display: 'flex', gap: 2 }}>
               <TextField
                 fullWidth
-                label='标准值'
+                label={t('ehs.environment_page.standard_value')}
                 value={formData.standard_value}
                 onChange={(e) => setFormData({ ...formData, standard_value: e.target.value })}
-                placeholder='标准值'
+                placeholder={t('ehs.environment_page.standard_value')}
               />
               <TextField
                 fullWidth
-                label='单位'
+                label={t('ehs.environment_page.unit')}
                 value={formData.unit}
                 onChange={(e) => setFormData({ ...formData, unit: e.target.value })}
-                placeholder='单位'
+                placeholder={t('ehs.environment_page.unit')}
               />
             </Box>
             <Box sx={{ display: 'flex', gap: 2 }}>
               <TextField
                 fullWidth
-                label='预警阈值'
+                label={t('ehs.environment_page.text_b399a0')}
                 type='number'
                 value={formData.warning_threshold}
                 onChange={(e) => setFormData({ ...formData, warning_threshold: e.target.value })}
-                placeholder='预警阈值'
+                placeholder={t('ehs.environment_page.text_b399a0')}
               />
               <TextField
                 fullWidth
-                label='报警阈值'
+                label={t('ehs.environment_page.text_32d6d6')}
                 type='number'
                 value={formData.alarm_threshold}
                 onChange={(e) => setFormData({ ...formData, alarm_threshold: e.target.value })}
-                placeholder='报警阈值'
+                placeholder={t('ehs.environment_page.text_32d6d6')}
               />
             </Box>
             <FormControl fullWidth>
               <InputLabel>状态</InputLabel>
               <Select
                 value={formData.status}
-                label='状态'
+                label={t('ehs.environment_page.status')}
                 onChange={(e) =>
                   setFormData({ ...formData, status: e.target.value as typeof formData.status })
                 }
@@ -521,10 +523,10 @@ const EnvironmentPage: React.FC = () => {
             </FormControl>
             <TextField
               fullWidth
-              label='描述'
+              label={t('ehs.environment_page.description')}
               value={formData.description}
               onChange={(e) => setFormData({ ...formData, description: e.target.value })}
-              placeholder='请输入描述'
+              placeholder={t('ehs.environment_page.please_input_2')}
               multiline
               rows={2}
             />

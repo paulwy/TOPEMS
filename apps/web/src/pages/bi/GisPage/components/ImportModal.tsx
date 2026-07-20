@@ -21,6 +21,7 @@ import {
 } from '@mui/material';
 import { X, Upload, FileText } from 'lucide-react';
 
+import { useTranslation } from 'react-i18next';
 interface ImportModalProps {
   open: boolean;
   importFile: File | null;
@@ -42,6 +43,7 @@ export const ImportModal: React.FC<ImportModalProps> = ({
   onConfirmChange,
   onImport,
 }) => {
+  const { t } = useTranslation();
   return (
     <Dialog
       open={open}
@@ -150,7 +152,7 @@ export const ImportModal: React.FC<ImportModalProps> = ({
                 control={
                   <Checkbox checked={importConfirm} onChange={(e) => onConfirmChange(e.target.checked)} />
                 }
-                label='我确认要导入以上数据'
+                label={t('bi.gis_page_components__import_modal.import')}
               />
             </Box>
           )}

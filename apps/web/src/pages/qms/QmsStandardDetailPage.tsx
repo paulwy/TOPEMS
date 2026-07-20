@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { useParams, useNavigate } from 'react-router-dom';
 import { FileText, Calendar, User, FileCheck, Edit3, Plus, Download, Upload } from 'lucide-react';
 import {
@@ -18,7 +18,7 @@ import { DetailPageTemplate, ListPageTemplate, type ColumnDef } from '@/componen
 import { PageContainer } from '@/components/common';
 import { qmsApi } from '@/api/qms';
 import type { QualityStandard, StandardRevision, CreateQualityStandardRequest } from '@/api/qms';
-import { useNotificationStore } from '@/store';
+import { useCrudMutations } from '@/hooks';
 import { designTokens } from '@/theme/tokens';
 import { QUERY_KEYS } from '@/lib/reactQuery';
 import { QMS_PATHS } from '@/modules/qms/config';
@@ -29,7 +29,6 @@ const QmsStandardDetailPage: React.FC = () => {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
   const queryClient = useQueryClient();
-  const addNotification = useNotificationStore((state) => state.addNotification);
 
   const { data: standard, isLoading: loading } = useQuery<QualityStandard | null>({
     queryKey: QUERY_KEYS.QMS.STANDARD(id || ''),
@@ -125,52 +124,46 @@ const QmsStandardDetailPage: React.FC = () => {
     );
   };
 
-  const updateMutation = useMutation({
-    mutationFn: async (params: { id: string; data: CreateQualityStandardRequest }) => {
-      const response = await qmsApi.updateStandard(params.id, params.data);
-      if (!response.success) {
-        throw new Error(response.message || '更新质量标准失败');
-      }
-      return response;
-    },
-    onSuccess: () => {
-      addNotification({ title: '成功', message: '质量标准更新成功', type: 'success' });
-      setShowEditModal(false);
-      if (standard) {
-        queryClient.invalidateQueries({ queryKey: QUERY_KEYS.QMS.STANDARD(standard.id) });
-      }
-    },
-    onError: (err: unknown) => {
-      addNotification({
-        title: '错误',
-        message: err instanceof Error ? err.message : '更新质量标准时发生错误',
-        type: 'error',
-      });
-    },
-  });
-
-  const createRevisionMutation = useMutation({
-    mutationFn: async (data: CreateQualityStandardRequest) => {
+  const { updateMutation, createMutation: createRevisionMutation } = useCrudMutations<
+    CreateQualityStandardRequest,
+    CreateQualityStandardRequest,
+    string
+  >({
+    queryKeyToInvalidate: QUERY_KEYS.QMS.STANDARDS,
+    createFn: async (data) => {
       const response = await qmsApi.createStandard(data);
       if (!response.success) {
         throw new Error(response.message || '创建版本失败');
       }
       return response;
     },
-    onSuccess: () => {
-      addNotification({ title: '成功', message: '新版本创建成功', type: 'success' });
+    updateFn: async ({ id, data }) => {
+      const response = await qmsApi.updateStandard(String(id), data);
+      if (!response.success) {
+        throw new Error(response.message || '更新质量标准失败');
+      }
+      return response;
+    },
+    deleteFn: async (id) => {
+      const response = await qmsApi.deleteStandard(String(id));
+      if (!response.success) {
+        throw new Error(response.message || '删除质量标准失败');
+      }
+      return response;
+    },
+    entityName: '质量标准',
+    onUpdateSuccess: () => {
+      setShowEditModal(false);
+      if (standard) {
+        queryClient.invalidateQueries({ queryKey: QUERY_KEYS.QMS.STANDARD(standard.id) });
+      }
+    },
+    onCreateSuccess: () => {
       setShowRevisionModal(false);
       if (standard) {
         queryClient.invalidateQueries({ queryKey: QUERY_KEYS.QMS.STANDARD_REVISIONS(standard.id) });
       }
       navigate(QMS_PATHS.standards);
-    },
-    onError: (err: unknown) => {
-      addNotification({
-        title: '错误',
-        message: err instanceof Error ? err.message : '创建版本时发生错误',
-        type: 'error',
-      });
     },
   });
 

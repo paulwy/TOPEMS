@@ -1,0 +1,49 @@
+{
+  "title": "Integration Management",
+  "menu": {
+    "datasource": "Data Source",
+    "connector": "Connector",
+    "sync_task": "Sync Task",
+    "mapping": "Mapping",
+    "log": "Log"
+  },
+  "status": {
+    "pending": "Pending",
+    "running": "Running",
+    "success": "Success",
+    "failed": "Failed",
+    "stopped": "Stopped",
+    "disabled": "Disabled"
+  },
+  "action": {
+    "create": "Create",
+    "edit": "Edit",
+    "delete": "Delete",
+    "view": "View",
+    "test": "Test",
+    "start": "Start",
+    "stop": "Stop",
+    "retry": "Retry"
+  },
+  "field": {
+    "datasource_name": "Data Source Name",
+    "datasource_type": "Data Source Type",
+    "connector": "Connector",
+    "endpoint": "Endpoint",
+    "sync_direction": "Sync Direction",
+    "sync_frequency": "Sync Frequency",
+    "last_sync_time": "Last Sync Time",
+    "last_sync_status": "Last Sync Status",
+    "mapping_name": "Mapping Name",
+    "description": "Description"
+  },
+  "message": {
+    "create_success": "Created successfully",
+    "update_success": "Updated successfully",
+    "delete_success": "Deleted successfully",
+    "test_success": "Connection test succeeded",
+    "test_failed": "Connection test failed",
+    "confirm_delete": "Confirm deletion?",
+    "no_data": "No data"
+  }
+}

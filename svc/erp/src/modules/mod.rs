@@ -7,7 +7,8 @@ use sqlx::postgres::PgPool;
 use std::sync::Arc;
 use std::time::Instant;
 use topems_shared::{
-    AuthState, FieldEncryptionService, HrmServiceClient, NotificationServiceClient, SystemMetrics,
+    event::EventPublisher, AuthState, FieldEncryptionService, HrmServiceClient,
+    NotificationServiceClient, SystemMetrics,
 };
 
 pub mod addressbook;
@@ -58,6 +59,7 @@ pub struct ApiState {
     pub budget_cache: Arc<InMemoryCache<serde_json::Value>>,
     pub receivable_cache: Arc<InMemoryCache<serde_json::Value>>,
     pub payable_cache: Arc<InMemoryCache<serde_json::Value>>,
+    pub event_publisher: Option<Arc<EventPublisher>>,
 }
 
 impl FromRef<ApiState> for AuthState {

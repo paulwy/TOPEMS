@@ -85,4 +85,20 @@ pub fn create_routes() -> Router<ApiState> {
             "/api/erp/payables/{id}",
             get(get_payable).put(update_payable).delete(delete_payable),
         )
+        // 余额查询
+        .route("/api/erp/finance/balances", get(get_account_balances))
+        // 会计期间管理
+        .route("/api/erp/finance/periods/current", get(get_current_period))
+        .route("/api/erp/finance/periods", get(list_periods))
+        .route("/api/erp/finance/periods/{period}/open", post(open_period))
+        .route(
+            "/api/erp/finance/periods/{period}/close",
+            post(close_period),
+        )
+        // 对账管理 - V19.5 恢复路由注册
+        .route(
+            "/api/erp/finance/reconciliation",
+            get(list_reconciliations).post(create_reconciliation),
+        )
+        .route("/api/erp/finance/reconciliation/auto", post(auto_reconcile))
 }

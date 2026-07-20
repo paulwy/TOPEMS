@@ -1,7 +1,7 @@
 use anyhow::Result;
 use axum::{
     extract::{Extension, Path, Query, State},
-    routing::get,
+    routing::{get, post},
     Json, Router,
 };
 use chrono::Utc;
@@ -14,8 +14,11 @@ use crate::models::{
     CreateSupplierRequest, Supplier, SupplierContract, SupplierPerformance, SupplierProduct,
     UpdateSupplierRequest,
 };
+use crate::shared::cache::InMemoryCache;
 use crate::shared::permission::{check_permission, ModulePermission};
+use crate::workflow::{CreateInstanceRequest, WorkflowClient};
 use topems_shared::auth::Claims;
+use topems_shared::event::{EventPublisher, EventType, SrmSupplierRegisteredPayload};
 use topems_shared::ApiResponse;
 
 #[derive(Debug, Deserialize)]
@@ -31,10 +34,23 @@ pub struct ListQueryParams {
 
 pub struct AppState {
     pub db: PgPool,
+    pub event_publisher: Option<Arc<EventPublisher>>,
+    pub workflow_client: WorkflowClient,
+    pub supplier_cache: Arc<InMemoryCache<serde_json::Value>>,
 }
 
-pub async fn create_routes(db: PgPool) -> Result<Router> {
-    let state = Arc::new(AppState { db });
+pub async fn create_routes(
+    db: PgPool,
+    event_publisher: Option<Arc<EventPublisher>>,
+    workflow_client: WorkflowClient,
+    supplier_cache: Arc<InMemoryCache<serde_json::Value>>,
+) -> Result<Router> {
+    let state = Arc::new(AppState {
+        db,
+        event_publisher,
+        workflow_client,
+        supplier_cache,
+    });
 
     let app = Router::new()
         .route(
@@ -59,6 +75,18 @@ pub async fn create_routes(db: PgPool) -> Result<Router> {
             "/api/srm/suppliers/{id}/performance",
             get(get_supplier_performance),
         )
+        .route(
+            "/api/srm/suppliers/{id}/approval/start",
+            post(start_supplier_approval),
+        )
+        .route(
+            "/api/srm/suppliers/{id}/approval/approve",
+            post(approve_supplier),
+        )
+        .route(
+            "/api/srm/suppliers/{id}/approval/reject",
+            post(reject_supplier),
+        )
         .with_state(state);
 
     Ok(app)
@@ -76,6 +104,26 @@ fn get_tenant_id(claims: &Claims, headers: &axum::http::HeaderMap) -> Uuid {
                 .and_then(|s| Uuid::parse_str(s).ok())
         })
         .unwrap_or_else(Uuid::new_v4)
+}
+
+fn supplier_cache_key(tenant_id: Uuid, id: Uuid) -> String {
+    format!("srm:supplier:{}:{}", tenant_id, id)
+}
+
+fn suppliers_list_cache_key(
+    tenant_id: Uuid,
+    page: i64,
+    page_size: i64,
+    search: &Option<String>,
+    status: &Option<String>,
+    category: &Option<String>,
+    sort_by: &str,
+    sort_order: &str,
+) -> String {
+    format!(
+        "srm:suppliers:{}:page:{}:size:{}:search:{:?}:status:{:?}:category:{:?}:sort:{}:order:{}",
+        tenant_id, page, page_size, search, status, category, sort_by, sort_order
+    )
 }
 
 // ==================== Supplier Handlers ====================
@@ -96,10 +144,6 @@ async fn list_suppliers(
     let page_size = params.page_size.unwrap_or(20).min(100);
     let offset = (page - 1) * page_size;
 
-    let search_pattern = params.search.as_deref().map(|s| format!("%{}%", s));
-    let status_filter = params.status.clone();
-    let category_filter = params.category.clone();
-
     let sort_by = params
         .sort_by
         .clone()
@@ -108,6 +152,27 @@ async fn list_suppliers(
         .sort_order
         .clone()
         .unwrap_or_else(|| "DESC".to_string());
+
+    let cache_key = suppliers_list_cache_key(
+        tenant_id,
+        page,
+        page_size,
+        &params.search,
+        &params.status,
+        &params.category,
+        &sort_by,
+        &sort_order,
+    );
+
+    if let Some(cached) = state.supplier_cache.get(&cache_key) {
+        tracing::debug!("📋 供应商列表缓存命中: {}", cache_key);
+        return Json(ApiResponse::success(cached, "获取供应商列表成功"));
+    }
+
+    let search_pattern = params.search.as_deref().map(|s| format!("%{}%", s));
+    let status_filter = params.status.clone();
+    let category_filter = params.category.clone();
+
     let order_clause = if sort_order == "ASC" { "ASC" } else { "DESC" };
 
     let sort_field = match sort_by.as_str() {
@@ -166,15 +231,16 @@ async fn list_suppliers(
 
             let total = count_result.unwrap_or(0);
 
-            Json(ApiResponse::success(
-                serde_json::json!({
-                    "suppliers": suppliers,
-                    "total": total,
-                    "page": page,
-                    "page_size": page_size
-                }),
-                "获取供应商列表成功",
-            ))
+            let response_data = serde_json::json!({
+                "suppliers": suppliers,
+                "total": total,
+                "page": page,
+                "page_size": page_size
+            });
+
+            state.supplier_cache.set(cache_key, response_data.clone());
+
+            Json(ApiResponse::success(response_data, "获取供应商列表成功"))
         }
         Err(e) => {
             tracing::error!("获取供应商列表失败: {}", e);
@@ -252,6 +318,9 @@ async fn create_supplier(
 
     match result {
         Ok(supplier) => {
+            state.supplier_cache.clear();
+            tracing::debug!("🗑️ 供应商缓存已清空（创建供应商）");
+
             record_audit_log(
                 &state.db,
                 "suppliers",
@@ -263,6 +332,40 @@ async fn create_supplier(
                 tenant_id,
             )
             .await;
+
+            if let Some(ref publisher) = state.event_publisher {
+                let publisher = publisher.clone();
+                let supplier_id = id;
+                let supplier_name = supplier.name.clone();
+                let contact_person = supplier.contact_person.clone();
+                let contact_email = supplier.email.clone();
+                let registered_by = user_id.map(|u| u.to_string());
+                let registered_at = Some(now);
+                tokio::spawn(async move {
+                    let payload = SrmSupplierRegisteredPayload {
+                        supplier_id,
+                        supplier_name,
+                        contact_person,
+                        contact_email,
+                        registered_by,
+                        registered_at,
+                    };
+                    if let Err(e) = publisher
+                        .publish_event(EventType::SrmSupplierRegistered, payload)
+                        .await
+                    {
+                        tracing::warn!(
+                            "[srm] SrmSupplierRegistered 事件发布失败（graceful fallback）: {}",
+                            e
+                        );
+                    } else {
+                        tracing::info!(
+                            "[srm] SrmSupplierRegistered 事件发布成功 - supplier_id={}",
+                            supplier_id
+                        );
+                    }
+                });
+            }
 
             Json(ApiResponse::success(supplier, "供应商创建成功"))
         }
@@ -285,6 +388,14 @@ async fn get_supplier(
     }
 
     let tenant_id = get_tenant_id(&claims, &headers);
+    let cache_key = supplier_cache_key(tenant_id, id);
+
+    if let Some(cached) = state.supplier_cache.get(&cache_key) {
+        tracing::debug!("📋 供应商缓存命中: {}", cache_key);
+        if let Ok(supplier) = serde_json::from_value::<Supplier>(cached) {
+            return Json(ApiResponse::success(supplier, "获取供应商成功"));
+        }
+    }
 
     let result = sqlx::query_as::<_, Supplier>(
         r#"
@@ -298,7 +409,12 @@ async fn get_supplier(
     .await;
 
     match result {
-        Ok(Some(supplier)) => Json(ApiResponse::success(supplier, "获取供应商成功")),
+        Ok(Some(supplier)) => {
+            if let Ok(value) = serde_json::to_value(&supplier) {
+                state.supplier_cache.set(cache_key, value);
+            }
+            Json(ApiResponse::success(supplier, "获取供应商成功"))
+        }
         Ok(None) => Json(ApiResponse::<Supplier>::error(404, "供应商不存在")),
         Err(e) => {
             tracing::error!("获取供应商失败: {}", e);
@@ -387,6 +503,11 @@ async fn update_supplier(
 
     match result {
         Ok(supplier) => {
+            let cache_key = supplier_cache_key(tenant_id, id);
+            state.supplier_cache.remove(&cache_key);
+            state.supplier_cache.clear();
+            tracing::debug!("🗑️ 供应商缓存已失效: {}", cache_key);
+
             record_audit_log(
                 &state.db,
                 "suppliers",
@@ -446,6 +567,11 @@ async fn delete_supplier(
 
     match result {
         Ok(r) if r.rows_affected() > 0 => {
+            let cache_key = supplier_cache_key(tenant_id, id);
+            state.supplier_cache.remove(&cache_key);
+            state.supplier_cache.clear();
+            tracing::debug!("🗑️ 供应商缓存已失效: {}", cache_key);
+
             record_audit_log(
                 &state.db,
                 "suppliers",
@@ -696,4 +822,228 @@ async fn record_audit_log(
     if let Err(e) = result {
         tracing::error!("记录审计日志失败: {}", e);
     }
+}
+
+// ==================== Supplier Approval Workflow ====================
+
+#[derive(Debug, Deserialize)]
+pub struct StartApprovalRequest {
+    pub workflow_id: Uuid,
+    pub comment: Option<String>,
+}
+
+#[derive(Debug, Deserialize)]
+pub struct ApprovalActionRequest {
+    pub comment: Option<String>,
+}
+
+async fn start_supplier_approval(
+    State(state): State<Arc<AppState>>,
+    Extension(claims): Extension<Claims>,
+    headers: axum::http::HeaderMap,
+    Path(id): Path<Uuid>,
+    Json(req): Json<StartApprovalRequest>,
+) -> Json<ApiResponse<serde_json::Value>> {
+    match check_permission(&state.db, &claims, &ModulePermission::SupplierWrite).await {
+        Ok(_) => {}
+        Err(e) => return e,
+    }
+
+    let tenant_id = get_tenant_id(&claims, &headers);
+    let user_id = Uuid::parse_str(&claims.sub).ok();
+
+    let supplier = sqlx::query_as::<_, Supplier>(
+        "SELECT id, tenant_id, supplier_no, name, legal_name, category, status, tax_id, address, contact_person, phone, email, website, credit_rating, risk_level, created_by, created_at, updated_at FROM plugin_srm.suppliers WHERE id = $1 AND tenant_id = $2",
+    )
+    .bind(id)
+    .bind(tenant_id)
+    .fetch_one(&state.db)
+    .await;
+
+    if supplier.is_err() {
+        return Json(ApiResponse::<serde_json::Value>::error(404, "供应商不存在"));
+    }
+
+    tracing::info!(
+        "Starting approval for supplier {}: workflow_id={}",
+        id,
+        req.workflow_id
+    );
+
+    let workflow_client = state.workflow_client.clone();
+    let id_str = id.to_string();
+    tokio::spawn(async move {
+        let request = CreateInstanceRequest {
+            workflow_id: req.workflow_id,
+            title: format!("供应商准入审批 - {}", id_str),
+            variables: Some(serde_json::json!({
+                "supplier_id": id_str,
+            })),
+        };
+        match workflow_client.create_instance(request).await {
+            Ok(instance) => {
+                tracing::info!("[srm] 供应商审批流程启动成功 - instance_id={}", instance.id);
+            }
+            Err(e) => {
+                tracing::warn!("[srm] 供应商审批流程启动失败（graceful fallback）: {}", e);
+            }
+        }
+    });
+
+    let result = sqlx::query(
+        "UPDATE plugin_srm.suppliers SET status = 'pending_approval', updated_at = NOW() WHERE id = $1",
+    )
+    .bind(id)
+    .execute(&state.db)
+    .await;
+
+    if result.is_ok() {
+        state.supplier_cache.clear();
+    }
+
+    record_audit_log(
+        &state.db,
+        "suppliers",
+        id,
+        "start_approval",
+        None,
+        Some(Some(serde_json::json!({
+            "workflow_id": req.workflow_id.to_string(),
+            "comment": req.comment,
+        }))),
+        user_id,
+        tenant_id,
+    )
+    .await;
+
+    Json(ApiResponse::success(
+        serde_json::json!({
+            "supplier_id": id,
+            "workflow_id": req.workflow_id,
+            "approval_status": "pending"
+        }),
+        "供应商审批流程已启动",
+    ))
+}
+
+async fn approve_supplier(
+    State(state): State<Arc<AppState>>,
+    Extension(claims): Extension<Claims>,
+    headers: axum::http::HeaderMap,
+    Path(id): Path<Uuid>,
+    Json(_req): Json<ApprovalActionRequest>,
+) -> Json<ApiResponse<serde_json::Value>> {
+    match check_permission(&state.db, &claims, &ModulePermission::SupplierWrite).await {
+        Ok(_) => {}
+        Err(e) => return e,
+    }
+
+    let tenant_id = get_tenant_id(&claims, &headers);
+    let user_id = Uuid::parse_str(&claims.sub).ok();
+
+    let supplier = sqlx::query_as::<_, Supplier>(
+        "SELECT id, tenant_id, supplier_no, name, legal_name, category, status, tax_id, address, contact_person, phone, email, website, credit_rating, risk_level, created_by, created_at, updated_at FROM plugin_srm.suppliers WHERE id = $1 AND tenant_id = $2",
+    )
+    .bind(id)
+    .bind(tenant_id)
+    .fetch_one(&state.db)
+    .await;
+
+    if supplier.is_err() {
+        return Json(ApiResponse::<serde_json::Value>::error(404, "供应商不存在"));
+    }
+
+    let result = sqlx::query(
+        "UPDATE plugin_srm.suppliers SET status = 'approved', updated_at = NOW() WHERE id = $1",
+    )
+    .bind(id)
+    .execute(&state.db)
+    .await;
+
+    if result.is_ok() {
+        state.supplier_cache.clear();
+    }
+
+    record_audit_log(
+        &state.db,
+        "suppliers",
+        id,
+        "approve",
+        None,
+        Some(Some(serde_json::json!({
+            "status": "approved",
+        }))),
+        user_id,
+        tenant_id,
+    )
+    .await;
+
+    Json(ApiResponse::success(
+        serde_json::json!({
+            "supplier_id": id,
+            "approval_status": "approved"
+        }),
+        "供应商审批通过",
+    ))
+}
+
+async fn reject_supplier(
+    State(state): State<Arc<AppState>>,
+    Extension(claims): Extension<Claims>,
+    headers: axum::http::HeaderMap,
+    Path(id): Path<Uuid>,
+    Json(_req): Json<ApprovalActionRequest>,
+) -> Json<ApiResponse<serde_json::Value>> {
+    match check_permission(&state.db, &claims, &ModulePermission::SupplierWrite).await {
+        Ok(_) => {}
+        Err(e) => return e,
+    }
+
+    let tenant_id = get_tenant_id(&claims, &headers);
+    let user_id = Uuid::parse_str(&claims.sub).ok();
+
+    let supplier = sqlx::query_as::<_, Supplier>(
+        "SELECT id, tenant_id, supplier_no, name, legal_name, category, status, tax_id, address, contact_person, phone, email, website, credit_rating, risk_level, created_by, created_at, updated_at FROM plugin_srm.suppliers WHERE id = $1 AND tenant_id = $2",
+    )
+    .bind(id)
+    .bind(tenant_id)
+    .fetch_one(&state.db)
+    .await;
+
+    if supplier.is_err() {
+        return Json(ApiResponse::<serde_json::Value>::error(404, "供应商不存在"));
+    }
+
+    let result = sqlx::query(
+        "UPDATE plugin_srm.suppliers SET status = 'rejected', updated_at = NOW() WHERE id = $1",
+    )
+    .bind(id)
+    .execute(&state.db)
+    .await;
+
+    if result.is_ok() {
+        state.supplier_cache.clear();
+    }
+
+    record_audit_log(
+        &state.db,
+        "suppliers",
+        id,
+        "reject",
+        None,
+        Some(Some(serde_json::json!({
+            "status": "rejected",
+        }))),
+        user_id,
+        tenant_id,
+    )
+    .await;
+
+    Json(ApiResponse::success(
+        serde_json::json!({
+            "supplier_id": id,
+            "approval_status": "rejected"
+        }),
+        "供应商审批已驳回",
+    ))
 }

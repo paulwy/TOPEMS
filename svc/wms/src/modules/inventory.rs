@@ -19,32 +19,45 @@ use topems_shared::{api_error, ApiResponse};
 
 fn inventory_row_to_json(row: &sqlx::postgres::PgRow) -> serde_json::Value {
     serde_json::json!({
-        "id": row.try_get::<Uuid, _>("id").ok(),
-        "sku": row.try_get::<String, _>("sku").ok(),
-        "name": row.try_get::<String, _>("name").ok(),
-        "specification": row.try_get::<Option<String>, _>("specification").ok(),
-        "unit": row.try_get::<Option<String>, _>("unit").ok(),
-        "quantity": row.try_get::<f64, _>("quantity").ok(),
-        "available_quantity": row.try_get::<f64, _>("available_quantity").ok(),
-        "reserved_quantity": row.try_get::<Option<f64>, _>("reserved_quantity").ok(),
-        "location_id": row.try_get::<Option<Uuid>, _>("location_id").ok(),
-        "warehouse_id": row.try_get::<Uuid, _>("warehouse_id").ok(),
-        "min_quantity": row.try_get::<Option<f64>, _>("min_quantity").ok(),
-        "max_quantity": row.try_get::<Option<f64>, _>("max_quantity").ok(),
-        "reorder_point": row.try_get::<Option<f64>, _>("reorder_point").ok(),
-        "status": row.try_get::<String, _>("status").ok(),
-        "batch_number": row.try_get::<Option<String>, _>("batch_number").ok(),
-        "lot_number": row.try_get::<Option<String>, _>("lot_number").ok(),
-        "expiry_date": row.try_get::<Option<String>, _>("expiry_date").ok(),
-        "supplier_name": row.try_get::<Option<String>, _>("supplier_name").ok(),
-        "supplier_code": row.try_get::<Option<String>, _>("supplier_code").ok(),
-        "purchase_price": row.try_get::<Option<f64>, _>("purchase_price").ok(),
-        "total_value": row.try_get::<Option<f64>, _>("total_value").ok(),
-        "last_movement_date": row.try_get::<Option<String>, _>("last_movement_date").ok(),
-        "last_movement_type": row.try_get::<Option<String>, _>("last_movement_type").ok(),
-        "created_at": row.try_get::<chrono::NaiveDateTime, _>("created_at").ok().map(|t| t.to_string()),
-        "updated_at": row.try_get::<chrono::NaiveDateTime, _>("updated_at").ok().map(|t| t.to_string()),
+        "id": row.get::<uuid::Uuid, _>("id"),
+        "sku": row.get::<String, _>("sku"),
+        "name": row.get::<String, _>("name"),
+        "specification": row.get::<Option<String>, _>("specification"),
+        "unit": row.get::<Option<String>, _>("unit"),
+        "quantity": row.get::<f64, _>("quantity"),
+        "available_quantity": row.get::<Option<f64>, _>("available_quantity"),
+        "location_id": row.get::<Option<Uuid>, _>("location_id"),
+        "warehouse_id": row.get::<Option<Uuid>, _>("warehouse_id"),
+        "min_quantity": row.get::<Option<f64>, _>("min_quantity"),
+        "max_quantity": row.get::<Option<f64>, _>("max_quantity"),
+        "status": row.get::<String, _>("status"),
+        "created_at": row.get::<chrono::DateTime<chrono::Utc>, _>("created_at"),
+        "updated_at": row.get::<chrono::DateTime<chrono::Utc>, _>("updated_at"),
     })
+}
+
+/// V19.7: 生成库存移动单号 MV-YYYYMMDD-6位序列号
+async fn generate_inventory_movement_no(state: &ApiState, tenant_id: Uuid) -> String {
+    let today = Utc::now().format("%Y%m%d").to_string();
+    let prefix = format!("MV-{}", today);
+    let seq: i64 = sqlx::query_scalar(
+        r#"SELECT COUNT(*) FROM wms.inventory_movements
+           WHERE tenant_id = $1 AND movement_no LIKE $2"#,
+    )
+    .bind(tenant_id)
+    .bind(format!("{}%", prefix))
+    .fetch_one(&state.db)
+    .await
+    .unwrap_or(0);
+    format!("{}-{:06}", prefix, seq + 1)
+}
+
+/// V19.7: 从 Claims 中解析 tenant_id
+fn resolve_tenant_id(claims: &Claims) -> Result<Uuid, String> {
+    match &claims.tenant_id {
+        Some(id) => Uuid::parse_str(id).map_err(|e| format!("无效的租户ID: {}", e)),
+        None => Err("缺少租户ID".to_string()),
+    }
 }
 
 #[derive(Debug, Deserialize)]
@@ -301,6 +314,10 @@ pub async fn update_inventory(
         Ok(_) => {}
         Err(e) => return e,
     }
+    let tenant_id = match resolve_tenant_id(&claims) {
+        Ok(id) => id,
+        Err(msg) => return Json(api_error(401, &msg)),
+    };
     let request_data = serde_json::to_value(&req).ok();
 
     let existing_result = sqlx::query(
@@ -409,6 +426,59 @@ pub async fn update_inventory(
     let (response, status_str, error_msg, response_data) = match &result {
         Ok(item) => {
             let item_json = inventory_row_to_json(item);
+
+            // V19.7: 库存变更时同步写入 inventory_movements 记录
+            // 解决"写入断链"问题：之前 update_inventory 只更新主表，下游 smart_replenishment 读空表
+            let old_quantity: f64 = existing.try_get::<f64, _>("quantity").unwrap_or(0.0);
+            let quantity_diff = quantity - old_quantity;
+            if quantity_diff.abs() > f64::EPSILON {
+                let movement_no = generate_inventory_movement_no(&state, tenant_id).await;
+                let movement_id = Uuid::new_v4();
+                let operator_id = Uuid::parse_str(&claims.sub).ok();
+                let movement_type = if quantity_diff > 0.0 {
+                    "adjustment_in"
+                } else {
+                    "adjustment_out"
+                };
+                let abs_qty = quantity_diff.abs();
+
+                if let Err(e) = sqlx::query(
+                    r#"
+                    INSERT INTO wms.inventory_movements (
+                        id, movement_no, tenant_id, movement_type, reference_id, reference_type,
+                        material_id, material_code, material_name, quantity,
+                        from_location_id, to_location_id, from_warehouse_id, to_warehouse_id,
+                        status, performed_by, performed_at, notes, created_at, updated_at
+                    ) VALUES (
+                        $1, $2, $3, $4, $5, 'inventory_adjustment',
+                        $6, $7, $8, $9,
+                        NULL, $10, NULL, $11,
+                        'completed', $12, $13, $14, $15, $15
+                    )
+                    "#,
+                )
+                .bind(movement_id)
+                .bind(&movement_no)
+                .bind(tenant_id)
+                .bind(movement_type)
+                .bind(id.to_string())
+                .bind(id)
+                .bind(&sku)
+                .bind(&name)
+                .bind(abs_qty)
+                .bind(location_id)
+                .bind(warehouse_id)
+                .bind(operator_id)
+                .bind(now)
+                .bind(format!("库存调整：{} → {}", old_quantity, quantity))
+                .bind(now)
+                .execute(&state.db)
+                .await
+                {
+                    tracing::warn!("写入 inventory_movements 失败（不阻塞主流程）: {}", e);
+                }
+            }
+
             (
                 Json(ApiResponse::success(item_json.clone(), "库存更新成功")),
                 "success",

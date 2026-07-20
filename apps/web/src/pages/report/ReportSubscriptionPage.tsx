@@ -44,6 +44,8 @@ import {
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { useNotificationStore } from '@/store';
 import { apiLogger } from '@/utils/logger';
+import { ConfirmDialog } from '@topems/shared-components';
+import { useConfirmDialog, useCrudMutations, useUrlListState } from '@/hooks';
 
 const FREQUENCY_OPTIONS: { value: SubscriptionFrequency; label: string }[] = [
   { value: 'daily', label: '每天' },
@@ -66,8 +68,20 @@ const ReportSubscriptionPage: React.FC = () => {
   const [editMode, setEditMode] = useState(false);
   const [currentSubscription, setCurrentSubscription] = useState<ReportSubscription | null>(null);
 
-  const [searchValue, setSearchValue] = useState('');
-  const [filtersValue, setFiltersValue] = useState<Record<string, any>>({});
+  const {
+    searchQuery,
+    setSearchQuery,
+    debouncedSearch,
+    filters: urlFilters,
+    setFilters,
+  } = useUrlListState<{ frequency: string; status: string }>({
+    defaultPageSize: 10,
+    defaultFilters: { frequency: '', status: '' },
+    baseIndex: 1,
+    historyMode: 'replace',
+  });
+  const searchValue = searchQuery;
+  const filtersValue = urlFilters;
 
   const [formData, setFormData] = useState<CreateSubscriptionRequest | UpdateSubscriptionRequest>({
     template_id: '',
@@ -76,6 +90,12 @@ const ReportSubscriptionPage: React.FC = () => {
     frequency: 'weekly',
     enabled: true,
   });
+  const {
+    confirmOpen: confirmDialogOpen,
+    confirmConfig: confirmDialogConfig,
+    openConfirm: openConfirmDialog,
+    closeConfirm: setConfirmDialogClosed,
+  } = useConfirmDialog();
 
   const subscriptionsQuery = useQuery({
     queryKey: ['report-subscriptions'],
@@ -106,82 +126,34 @@ const ReportSubscriptionPage: React.FC = () => {
   const loading = subscriptionsQuery.isLoading || templatesQuery.isLoading;
   const error = subscriptionsQuery.error ? (subscriptionsQuery.error as Error).message : '';
 
-  const createMutation = useMutation({
-    mutationFn: async (data: CreateSubscriptionRequest) => {
+  const { createMutation, updateMutation, deleteMutation } = useCrudMutations<
+    CreateSubscriptionRequest,
+    UpdateSubscriptionRequest,
+    string
+  >({
+    queryKeyToInvalidate: ['report-subscriptions'],
+    createFn: async (data) => {
       const response = await reportApi.createSubscription(data);
       if (!response.success) {
         throw new Error(response.message || '创建订阅失败');
       }
       return response.data;
     },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['report-subscriptions'] });
-      addNotification({
-        type: 'success',
-        title: '创建成功',
-        message: '订阅创建成功',
-      });
-    },
-    onError: (err: unknown) => {
-      apiLogger.error('创建订阅失败:', err);
-      addNotification({
-        type: 'error',
-        title: '创建失败',
-        message: (err as Error).message || '创建订阅失败',
-      });
-    },
-  });
-
-  const updateMutation = useMutation({
-    mutationFn: async ({ id, data }: { id: string; data: UpdateSubscriptionRequest }) => {
-      const response = await reportApi.updateSubscription(id, data);
+    updateFn: async ({ id, data }) => {
+      const response = await reportApi.updateSubscription(String(id), data);
       if (!response.success) {
         throw new Error(response.message || '更新订阅失败');
       }
       return response.data;
     },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['report-subscriptions'] });
-      addNotification({
-        type: 'success',
-        title: '更新成功',
-        message: '订阅更新成功',
-      });
-    },
-    onError: (err: unknown) => {
-      apiLogger.error('更新订阅失败:', err);
-      addNotification({
-        type: 'error',
-        title: '更新失败',
-        message: (err as Error).message || '更新订阅失败',
-      });
-    },
-  });
-
-  const deleteMutation = useMutation({
-    mutationFn: async (id: string) => {
-      const response = await reportApi.deleteSubscription(id);
+    deleteFn: async (id) => {
+      const response = await reportApi.deleteSubscription(String(id));
       if (!response.success) {
         throw new Error(response.message || '删除订阅失败');
       }
-      return id;
+      return response.data;
     },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['report-subscriptions'] });
-      addNotification({
-        type: 'success',
-        title: '删除成功',
-        message: '订阅删除成功',
-      });
-    },
-    onError: (err: unknown) => {
-      apiLogger.error('删除订阅失败:', err);
-      addNotification({
-        type: 'error',
-        title: '删除失败',
-        message: (err as Error).message || '删除订阅失败',
-      });
-    },
+    entityName: '订阅',
   });
 
   const toggleMutation = useMutation({
@@ -209,8 +181,8 @@ const ReportSubscriptionPage: React.FC = () => {
   const filteredData = useMemo(() => {
     let result = [...subscriptions];
 
-    if (searchValue) {
-      const query = searchValue.toLowerCase();
+    if (debouncedSearch) {
+      const query = debouncedSearch.toLowerCase();
       result = result.filter(
         (item) =>
           (item.template_name || item.template_id).toLowerCase().includes(query) ||
@@ -229,7 +201,7 @@ const ReportSubscriptionPage: React.FC = () => {
     }
 
     return result;
-  }, [subscriptions, searchValue, filtersValue]);
+  }, [subscriptions, debouncedSearch, filtersValue]);
 
   const handleOpenCreateDialog = () => {
     setEditMode(false);
@@ -285,9 +257,15 @@ const ReportSubscriptionPage: React.FC = () => {
     }
   };
 
-  const handleDelete = async (id: string) => {
-    if (!window.confirm('确定要删除这个订阅吗？')) return;
-    await deleteMutation.mutateAsync(id);
+  const handleDelete = (id: string) => {
+    openConfirmDialog({
+      title: '确认删除',
+      message: '确定要删除这个订阅吗？',
+      danger: true,
+      onConfirm: () => {
+        deleteMutation.mutate(id);
+      },
+    });
   };
 
   const handleToggle = async (id: string, currentEnabled: boolean) => {
@@ -413,12 +391,12 @@ const ReportSubscriptionPage: React.FC = () => {
   );
 
   const handleSearch = useCallback((value: string) => {
-    setSearchValue(value);
-  }, []);
+    setSearchQuery(value);
+  }, [setSearchQuery]);
 
   const handleFilterChange = useCallback((filters: Record<string, any>) => {
-    setFiltersValue(filters);
-  }, []);
+    setFilters(filters);
+  }, [setFilters]);
 
   return (
     <PageContainer
@@ -537,6 +515,18 @@ const ReportSubscriptionPage: React.FC = () => {
           </Button>
         </DialogActions>
       </Dialog>
+
+      <ConfirmDialog
+        isOpen={confirmDialogOpen}
+        onClose={setConfirmDialogClosed}
+        onConfirm={() => {
+          confirmDialogConfig?.onConfirm();
+          setConfirmDialogClosed();
+        }}
+        title={confirmDialogConfig?.title || ''}
+        message={confirmDialogConfig?.message || ''}
+        danger={confirmDialogConfig?.danger}
+      />
     </PageContainer>
   );
 };

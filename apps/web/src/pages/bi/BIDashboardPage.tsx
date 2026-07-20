@@ -61,6 +61,7 @@ import { PageContainer } from '@/components/common';
 import { logger } from '@/utils/logger';
 import { designTokens } from '@/theme/tokens';
 
+import { useTranslation } from 'react-i18next';
 const ct = designTokens.colors;
 
 type ViewMode = 'list' | 'editor';
@@ -81,6 +82,7 @@ interface DashboardSaveConfig {
 }
 
 const BIDashboardPage = () => {
+  const { t } = useTranslation();
   const queryClient = useQueryClient();
   const [viewMode, setViewMode] = useState<ViewMode>('list');
   const [activeTab, setActiveTab] = useState<TabType>('dashboards');
@@ -239,7 +241,7 @@ const BIDashboardPage = () => {
 
   const handleCreateDashboard = () => {
     const data: Partial<Dashboard> = {
-      name: createDialog.name || '未命名仪表盘',
+      name: createDialog.name || t('bi.bi_dashboard_page.text_d5e229'),
       description: createDialog.description,
       owner_id: 'current-user',
       is_public: false,
@@ -252,7 +254,7 @@ const BIDashboardPage = () => {
   };
 
   const handleDeleteDashboard = (id: string) => {
-    if (!confirm('确定要删除这个仪表盘吗？')) return;
+    if (!confirm(t('bi.bi_dashboard_page.confirm'))) return;
     deleteMutation.mutate(id);
   };
 
@@ -314,8 +316,8 @@ const BIDashboardPage = () => {
 
   return (
     <PageContainer
-      title='自定义仪表盘'
-      subtitle='管理和创建您的个性化数据仪表盘'
+      title={t('bi.bi_dashboard_page.text_286397')}
+      subtitle={t('bi.bi_dashboard_page.create')}
       headerProps={{
         pageIcon: <BarChart3 style={{ width: 20, height: 20 }} />,
         pageGradient: `linear-gradient(135deg, ${ct.secondary[400]} 0%, ${ct.secondary[600]} 100%)`,
@@ -327,9 +329,9 @@ const BIDashboardPage = () => {
         title=''
         subtitle=''
         breadcrumbs={[
-          { label: '首页', href: '/dashboard' },
+          { label: t('bi.bi_dashboard_page.home'), href: '/dashboard' },
           { label: 'BI' },
-          { label: '自定义仪表盘' },
+          { label: t('bi.bi_dashboard_page.text_286397') },
         ]}
       >
         <Box sx={{ p: 3 }}>
@@ -349,13 +351,13 @@ const BIDashboardPage = () => {
               >
                 <Tab
                   value='dashboards'
-                  label='仪表盘'
+                  label={t('bi.bi_dashboard_page.text_3fa8b3')}
                   icon={<LayoutDashboard size={18} />}
                   iconPosition='start'
                 />
                 <Tab
                   value='templates'
-                  label='模板'
+                  label={t('bi.bi_dashboard_page.text_59cf15')}
                   icon={<FolderOpen size={18} />}
                   iconPosition='start'
                 />
@@ -391,7 +393,7 @@ const BIDashboardPage = () => {
               >
                 <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
                   <TextField
-                    placeholder='搜索仪表盘...'
+                    placeholder={t('bi.bi_dashboard_page.search')}
                     value={searchTerm}
                     onChange={(e) => setSearchTerm(e.target.value)}
                     size='small'
@@ -479,7 +481,7 @@ const BIDashboardPage = () => {
                     >
                       {dashboard.is_public && (
                         <Chip
-                          label='公开'
+                          label={t('bi.bi_dashboard_page.text_b6a098')}
                           size='small'
                           color='primary'
                           sx={{ position: 'absolute', top: 8, right: 8 }}
@@ -544,19 +546,19 @@ const BIDashboardPage = () => {
                         )}
                         <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
                           <Chip
-                            label='图表'
+                            label={t('bi.bi_dashboard_page.text_d09504')}
                             size='small'
                             variant='outlined'
                           />
                           <Chip
-                            label='指标'
+                            label={t('bi.bi_dashboard_page.text_7e6875')}
                             size='small'
                             variant='outlined'
                           />
                         </Box>
                       </CardContent>
                       <CardActions sx={{ justifyContent: 'flex-end', gap: 1 }}>
-                        <Tooltip title='编辑'>
+                        <Tooltip title={t('bi.bi_dashboard_page.edit')}>
                           <IconButton
                             size='small'
                             onClick={(e) => {
@@ -567,7 +569,7 @@ const BIDashboardPage = () => {
                             <Edit2 sx={{ width: 18, height: 18 }} />
                           </IconButton>
                         </Tooltip>
-                        <Tooltip title='克隆'>
+                        <Tooltip title={t('bi.bi_dashboard_page.text_25fe25')}>
                           <IconButton
                             size='small'
                             onClick={(e) => {
@@ -578,7 +580,7 @@ const BIDashboardPage = () => {
                             <Copy sx={{ width: 18, height: 18 }} />
                           </IconButton>
                         </Tooltip>
-                        <Tooltip title={dashboard.is_public ? '设为私有' : '设为公开'}>
+                        <Tooltip title={dashboard.is_public ? t('bi.bi_dashboard_page.text_a81fcd') : t('bi.bi_dashboard_page.text_8b4b56')}>
                           <IconButton
                             size='small'
                             onClick={(e) => {
@@ -593,7 +595,7 @@ const BIDashboardPage = () => {
                             )}
                           </IconButton>
                         </Tooltip>
-                        <Tooltip title='删除'>
+                        <Tooltip title={t('bi.bi_dashboard_page.delete')}>
                           <IconButton
                             size='small'
                             color='error'
@@ -620,14 +622,14 @@ const BIDashboardPage = () => {
                 <DialogTitle>创建仪表盘</DialogTitle>
                 <DialogContent sx={{ mt: 2 }}>
                   <TextField
-                    label='仪表盘名称'
+                    label={t('bi.bi_dashboard_page.name')}
                     fullWidth
                     value={createDialog.name}
                     onChange={(e) => setCreateDialog({ ...createDialog, name: e.target.value })}
                     sx={{ mb: 3 }}
                   />
                   <TextField
-                    label='描述'
+                    label={t('bi.bi_dashboard_page.description')}
                     multiline
                     rows={2}
                     fullWidth
@@ -778,7 +780,7 @@ const BIDashboardPage = () => {
                       ) : (
                         <Eye sx={{ mr: 2 }} />
                       )}
-                      {contextDashboard.is_public ? '设为私有' : '设为公开'}
+                      {contextDashboard.is_public ? t('bi.bi_dashboard_page.text_a81fcd') : t('bi.bi_dashboard_page.text_8b4b56')}
                     </MenuItem>
                     <Divider />
                     <MenuItem

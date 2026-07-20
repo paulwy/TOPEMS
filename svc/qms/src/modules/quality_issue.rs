@@ -7,7 +7,9 @@ use axum::{
 };
 use serde::{Deserialize, Serialize};
 use sqlx::{types::Uuid, FromRow};
-use topems_shared::{ApiResponse, Claims};
+use topems_shared::{event::EventType, event::QmsQualityIssueCreatedPayload, ApiResponse, Claims};
+
+use crate::workflow::{CreateInstanceRequest, WorkflowClient};
 
 #[derive(Debug, Serialize, Deserialize)]
 pub struct IssueQuery {
@@ -34,6 +36,14 @@ pub struct QualityIssue {
     pub updated_at: Option<String>,
 }
 
+#[derive(Debug, Serialize)]
+pub struct QualityIssueWithWorkflow {
+    #[serde(flatten)]
+    pub issue: QualityIssue,
+    pub approval_workflow_id: Option<String>,
+    pub approval_status: Option<String>,
+}
+
 #[derive(Debug, Serialize, Deserialize)]
 pub struct CreateIssueRequest {
     pub title: String,
@@ -42,6 +52,7 @@ pub struct CreateIssueRequest {
     pub source: Option<String>,
     pub related_inspection_id: Option<String>,
     pub created_by: Option<String>,
+    pub workflow_id: Option<Uuid>,
 }
 
 #[derive(Debug, Serialize, Deserialize)]
@@ -123,7 +134,48 @@ pub async fn create_issue(
     .await;
 
     match issue {
-        Ok(data) => Json(ApiResponse::success(data, "质量问题创建成功")),
+        Ok(data) => {
+            if let Some(ref publisher) = state.event_publisher {
+                let publisher = publisher.clone();
+                let issue_id_val = Uuid::parse_str(&data.id).unwrap_or_else(|_| Uuid::nil());
+                let issue_no_val = data.issue_no.clone();
+                let title_val = data.title.clone();
+                let desc_val = data.description.clone();
+                let sev_val = data.severity.clone();
+                let created_by_val = data.created_by.clone();
+                let related_id = data
+                    .related_inspection_id
+                    .clone()
+                    .and_then(|s| Uuid::parse_str(&s).ok());
+                tokio::spawn(async move {
+                    let payload = QmsQualityIssueCreatedPayload {
+                        issue_id: issue_id_val,
+                        issue_no: issue_no_val,
+                        title: title_val,
+                        description: desc_val,
+                        severity: sev_val,
+                        created_by: created_by_val,
+                        related_inspection_id: related_id,
+                    };
+                    if let Err(e) = publisher
+                        .publish_event(EventType::QmsQualityIssueCreated, payload)
+                        .await
+                    {
+                        tracing::warn!(
+                            "[qms] QmsQualityIssueCreated 事件发布失败（graceful fallback）: {}",
+                            e
+                        );
+                    } else {
+                        tracing::info!(
+                            "[qms] QmsQualityIssueCreated 事件发布成功 - issue_id={}",
+                            issue_id_val
+                        );
+                    }
+                });
+            }
+
+            Json(ApiResponse::success(data, "质量问题创建成功"))
+        }
         Err(e) => {
             tracing::error!("Failed to create issue: {}", e);
             Json(ApiResponse::error(500, "质量问题创建失败"))
@@ -235,6 +287,155 @@ pub async fn delete_issue(
     }
 }
 
+#[derive(Debug, Deserialize)]
+pub struct StartApprovalRequest {
+    pub workflow_id: Uuid,
+    pub comment: Option<String>,
+}
+
+#[derive(Debug, Deserialize)]
+pub struct ApprovalActionRequest {
+    pub comment: Option<String>,
+}
+
+pub async fn start_issue_approval(
+    State(state): State<crate::AppState>,
+    Extension(claims): Extension<Claims>,
+    axum::extract::Path(id): axum::extract::Path<String>,
+    headers: axum::http::HeaderMap,
+    Json(req): Json<StartApprovalRequest>,
+) -> Json<ApiResponse<QualityIssueWithWorkflow>> {
+    let tenant_id = get_tenant_id(&claims, &headers);
+    let issue_id = match Uuid::parse_str(&id) {
+        Ok(u) => u,
+        Err(_) => return Json(ApiResponse::error(400, "无效的问题ID")),
+    };
+
+    tracing::info!(
+        "Starting approval for issue {}: workflow_id={}",
+        id,
+        req.workflow_id
+    );
+
+    let workflow_client = state.workflow_client.clone();
+    let id_clone = id.clone();
+    tokio::spawn(async move {
+        let request = CreateInstanceRequest {
+            workflow_id: req.workflow_id,
+            title: format!("质量问题审批 - {}", id_clone),
+            variables: Some(serde_json::json!({
+                "issue_id": id_clone,
+            })),
+        };
+        match workflow_client.create_instance(request).await {
+            Ok(instance) => {
+                tracing::info!(
+                    "[qms] 质量问题审批流程启动成功 - instance_id={}",
+                    instance.id
+                );
+            }
+            Err(e) => {
+                tracing::warn!("[qms] 质量问题审批流程启动失败: {}", e);
+            }
+        }
+    });
+
+    let issue = sqlx::query_as::<_, QualityIssue>(r#"SELECT id, tenant_id::TEXT, issue_no, title, description, severity, status, source, related_inspection_id::TEXT, created_by, created_at::TEXT, resolved_at::TEXT, updated_at::TEXT FROM qa_quality_issues WHERE id = $1 AND tenant_id = $2"#)
+        .bind(issue_id)
+        .bind(tenant_id)
+        .fetch_one(&state.pool)
+        .await;
+
+    match issue {
+        Ok(data) => Json(ApiResponse::success(
+            QualityIssueWithWorkflow {
+                issue: data,
+                approval_workflow_id: Some(req.workflow_id.to_string()),
+                approval_status: Some("pending".to_string()),
+            },
+            "质量问题审批流程已启动",
+        )),
+        Err(e) => {
+            tracing::error!("Failed to fetch issue: {}", e);
+            Json(ApiResponse::error(500, "获取质量问题失败"))
+        }
+    }
+}
+
+pub async fn approve_issue(
+    State(state): State<crate::AppState>,
+    Extension(claims): Extension<Claims>,
+    axum::extract::Path(id): axum::extract::Path<String>,
+    headers: axum::http::HeaderMap,
+    Json(req): Json<ApprovalActionRequest>,
+) -> Json<ApiResponse<QualityIssueWithWorkflow>> {
+    let tenant_id = get_tenant_id(&claims, &headers);
+    let issue_id = match Uuid::parse_str(&id) {
+        Ok(u) => u,
+        Err(_) => return Json(ApiResponse::error(400, "无效的问题ID")),
+    };
+
+    tracing::info!("Approving issue {}", id);
+
+    let result = sqlx::query_as::<_, QualityIssue>(r#"UPDATE qa_quality_issues SET status = 'approved', updated_at = NOW() WHERE id = $1 AND tenant_id = $2 RETURNING id, tenant_id::TEXT, issue_no, title, description, severity, status, source, related_inspection_id::TEXT, created_by, created_at::TEXT, resolved_at::TEXT, updated_at::TEXT"#)
+        .bind(issue_id)
+        .bind(tenant_id)
+        .fetch_one(&state.pool)
+        .await;
+
+    match result {
+        Ok(data) => Json(ApiResponse::success(
+            QualityIssueWithWorkflow {
+                issue: data,
+                approval_workflow_id: None,
+                approval_status: Some("approved".to_string()),
+            },
+            "质量问题审批通过",
+        )),
+        Err(e) => {
+            tracing::error!("Failed to approve issue: {}", e);
+            Json(ApiResponse::error(500, "质量问题审批失败"))
+        }
+    }
+}
+
+pub async fn reject_issue(
+    State(state): State<crate::AppState>,
+    Extension(claims): Extension<Claims>,
+    axum::extract::Path(id): axum::extract::Path<String>,
+    headers: axum::http::HeaderMap,
+    Json(req): Json<ApprovalActionRequest>,
+) -> Json<ApiResponse<QualityIssueWithWorkflow>> {
+    let tenant_id = get_tenant_id(&claims, &headers);
+    let issue_id = match Uuid::parse_str(&id) {
+        Ok(u) => u,
+        Err(_) => return Json(ApiResponse::error(400, "无效的问题ID")),
+    };
+
+    tracing::info!("Rejecting issue {}", id);
+
+    let result = sqlx::query_as::<_, QualityIssue>(r#"UPDATE qa_quality_issues SET status = 'rejected', updated_at = NOW() WHERE id = $1 AND tenant_id = $2 RETURNING id, tenant_id::TEXT, issue_no, title, description, severity, status, source, related_inspection_id::TEXT, created_by, created_at::TEXT, resolved_at::TEXT, updated_at::TEXT"#)
+        .bind(issue_id)
+        .bind(tenant_id)
+        .fetch_one(&state.pool)
+        .await;
+
+    match result {
+        Ok(data) => Json(ApiResponse::success(
+            QualityIssueWithWorkflow {
+                issue: data,
+                approval_workflow_id: None,
+                approval_status: Some("rejected".to_string()),
+            },
+            "质量问题审批已驳回",
+        )),
+        Err(e) => {
+            tracing::error!("Failed to reject issue: {}", e);
+            Json(ApiResponse::error(500, "质量问题审批驳回失败"))
+        }
+    }
+}
+
 pub fn create_routes() -> Router<crate::AppState> {
     Router::new()
         .route("/api/qms/issues", get(list_issues))
@@ -243,4 +444,10 @@ pub fn create_routes() -> Router<crate::AppState> {
         .route("/api/qms/issues/{id}", put(update_issue))
         .route("/api/qms/issues/{id}", delete(delete_issue))
         .route("/api/qms/issues/{id}/resolve", post(resolve_issue))
+        .route(
+            "/api/qms/issues/{id}/approval/start",
+            post(start_issue_approval),
+        )
+        .route("/api/qms/issues/{id}/approval/approve", post(approve_issue))
+        .route("/api/qms/issues/{id}/approval/reject", post(reject_issue))
 }

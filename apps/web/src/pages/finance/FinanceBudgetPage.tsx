@@ -15,6 +15,7 @@ import {
   Calendar,
   FileText,
 } from 'lucide-react';
+import { useTranslation } from 'react-i18next';
 import { useNavigate } from 'react-router-dom';
 import { budgetApi, type Budget, type PaginatedResult } from '@/api/erp';
 import { financeApi } from '@/api/finance';
@@ -50,6 +51,7 @@ import {
 const ct = designTokens.colors;
 
 const FinanceBudgetPage: React.FC = () => {
+  const { t } = useTranslation();
   const navigate = useNavigate();
   const addNotification = useNotificationStore((state) => state.addNotification);
   const queryClient = useQueryClient();
@@ -223,49 +225,49 @@ const FinanceBudgetPage: React.FC = () => {
   const statCards = useMemo(
     () => [
       {
-        title: '总预算',
+        title: t('finance.finance_budget_page.text_b91eb1'),
         value: formatCurrency(budgetStats.totalBudget),
         icon: <DollarSign size={24} />,
         color: 'primary' as const,
       },
       {
-        title: '已使用',
+        title: t('finance.finance_budget_page.text_b59b00'),
         value: formatCurrency(budgetStats.totalUsed),
         icon: <PieChart size={24} />,
         color: 'warning' as const,
       },
       {
-        title: '剩余预算',
+        title: t('finance.finance_budget_page.text_3f2783'),
         value: formatCurrency(budgetStats.totalRemaining),
         icon: <CheckCircle2 size={24} />,
         color: 'success' as const,
       },
       {
-        title: '平均使用率',
+        title: t('finance.finance_budget_page.text_bf99c1'),
         value: formatPercent(budgetStats.avgUsageRate),
         icon: <Calendar size={24} />,
         color: 'secondary' as const,
       },
       {
-        title: '执行中预算',
+        title: t('finance.finance_budget_page.text_e5f5f7'),
         value: budgetStats.activeBudgets,
         icon: <CheckCircle2 size={24} />,
         color: 'success' as const,
       },
       {
-        title: '已完成预算',
+        title: t('finance.finance_budget_page.completed'),
         value: budgetStats.completedBudgets,
         icon: <FileText size={24} />,
         color: 'primary' as const,
       },
       {
-        title: '已冻结预算',
+        title: t('finance.finance_budget_page.text_416804'),
         value: budgetStats.frozenBudgets,
         icon: <XCircle size={24} />,
         color: 'info' as const,
       },
       {
-        title: '已过期预算',
+        title: t('finance.finance_budget_page.text_9e6eab'),
         value: budgetStats.expiredBudgets,
         icon: <AlertCircle size={24} />,
         color: 'error' as const,
@@ -278,35 +280,35 @@ const FinanceBudgetPage: React.FC = () => {
   const budgetTypeData = useMemo(
     () => [
       {
-        name: '运营预算',
+        name: t('finance.finance_budget_page.text_e9e771'),
         value: budgets
           .filter((b) => b.budget_type === 'operating')
           .reduce((sum, b) => sum + b.total_budget, 0),
         color: 'primary.main',
       },
       {
-        name: '资本预算',
+        name: t('finance.finance_budget_page.text_2fc835'),
         value: budgets
           .filter((b) => b.budget_type === 'capital')
           .reduce((sum, b) => sum + b.total_budget, 0),
         color: 'success.dark',
       },
       {
-        name: '项目预算',
+        name: t('finance.finance_budget_page.text_fa2986'),
         value: budgets
           .filter((b) => b.budget_type === 'project')
           .reduce((sum, b) => sum + b.total_budget, 0),
         color: 'warning.main',
       },
       {
-        name: '市场预算',
+        name: t('finance.finance_budget_page.text_fb0bc4'),
         value: budgets
           .filter((b) => b.budget_type === 'marketing')
           .reduce((sum, b) => sum + b.total_budget, 0),
         color: 'error.main',
       },
       {
-        name: '人事预算',
+        name: t('finance.finance_budget_page.text_859388'),
         value: budgets
           .filter((b) => b.budget_type === 'personnel')
           .reduce((sum, b) => sum + b.total_budget, 0),
@@ -320,22 +322,22 @@ const FinanceBudgetPage: React.FC = () => {
   const budgetStatusData = useMemo(
     () => [
       {
-        name: '执行中',
+        name: t('finance.finance_budget_page.text_46e386'),
         value: budgets.filter((b) => b.status === 'active').length,
         color: 'success.dark',
       },
       {
-        name: '已完成',
+        name: t('finance.finance_budget_page.completed_1'),
         value: budgets.filter((b) => b.status === 'completed').length,
         color: 'primary.main',
       },
       {
-        name: '已冻结',
+        name: t('finance.finance_budget_page.text_92cff4'),
         value: budgets.filter((b) => b.status === 'frozen').length,
         color: 'grey.400',
       },
       {
-        name: '已过期',
+        name: t('finance.finance_budget_page.text_4d5ccd'),
         value: budgets.filter((b) => b.status === 'expired').length,
         color: 'error.main',
       },
@@ -348,10 +350,10 @@ const FinanceBudgetPage: React.FC = () => {
       string,
       { color: 'success' | 'error' | 'default' | 'warning'; label: string }
     > = {
-      active: { color: 'success', label: '执行中' },
-      expired: { color: 'error', label: '已过期' },
-      frozen: { color: 'default', label: '已冻结' },
-      completed: { color: 'warning', label: '已完成' },
+      active: { color: 'success', label: t('finance.finance_budget_page.text_46e386') },
+      expired: { color: 'error', label: t('finance.finance_budget_page.text_4d5ccd') },
+      frozen: { color: 'default', label: t('finance.finance_budget_page.text_92cff4') },
+      completed: { color: 'warning', label: t('finance.finance_budget_page.completed_1') },
     };
     const config = variants[status as keyof typeof variants] || variants.active;
     return (
@@ -365,11 +367,11 @@ const FinanceBudgetPage: React.FC = () => {
 
   const getTypeLabel = (type: string) => {
     const labels: Record<string, string> = {
-      operating: '运营预算',
-      capital: '资本预算',
-      project: '项目预算',
-      marketing: '市场预算',
-      personnel: '人事预算',
+      operating: t('finance.finance_budget_page.text_e9e771'),
+      capital: t('finance.finance_budget_page.text_2fc835'),
+      project: t('finance.finance_budget_page.text_fa2986'),
+      marketing: t('finance.finance_budget_page.text_fb0bc4'),
+      personnel: t('finance.finance_budget_page.text_859388'),
     };
     return labels[type] || type;
   };
@@ -379,7 +381,7 @@ const FinanceBudgetPage: React.FC = () => {
     () => [
       {
         id: 'budget_type',
-        label: '预算类型',
+        label: t('finance.finance_budget_page.type'),
         render: (row: Budget) => (
           <Box sx={{ display: 'flex', alignItems: 'center' }}>
             <Building2
@@ -396,12 +398,12 @@ const FinanceBudgetPage: React.FC = () => {
       },
       {
         id: 'fiscal_year',
-        label: '预算年度',
+        label: t('finance.finance_budget_page.text_58d7d9'),
         render: (row: Budget) => <Box sx={{ color: 'text.secondary' }}>{row.fiscal_year}</Box>,
       },
       {
         id: 'total_budget',
-        label: '预算金额',
+        label: t('finance.finance_budget_page.amount'),
         align: 'right' as const,
         render: (row: Budget) => (
           <Box sx={{ fontWeight: 'medium' }}>{formatCurrency(row.total_budget)}</Box>
@@ -409,7 +411,7 @@ const FinanceBudgetPage: React.FC = () => {
       },
       {
         id: 'used_amount',
-        label: '已使用',
+        label: t('finance.finance_budget_page.text_b59b00'),
         align: 'right' as const,
         render: (row: Budget) => (
           <Box sx={{ color: 'warning.main' }}>{formatCurrency(row.used_amount || 0)}</Box>
@@ -417,7 +419,7 @@ const FinanceBudgetPage: React.FC = () => {
       },
       {
         id: 'remaining_amount',
-        label: '剩余',
+        label: t('finance.finance_budget_page.text_43b510'),
         align: 'right' as const,
         render: (row: Budget) => (
           <Box sx={{ color: 'success.main' }}>{formatCurrency(row.remaining_amount || 0)}</Box>
@@ -425,7 +427,7 @@ const FinanceBudgetPage: React.FC = () => {
       },
       {
         id: 'usage_rate',
-        label: '使用率',
+        label: t('finance.finance_budget_page.text_41d8b2'),
         render: (row: Budget) => (
           <Box
             sx={{
@@ -453,7 +455,7 @@ const FinanceBudgetPage: React.FC = () => {
       },
       {
         id: 'status',
-        label: '状态',
+        label: t('finance.finance_budget_page.status'),
         render: (row: Budget) => getStatusChip(row.status),
       },
     ],
@@ -464,17 +466,17 @@ const FinanceBudgetPage: React.FC = () => {
   const rowActions = useMemo(
     () => [
       {
-        label: '查看详情',
+        label: t('finance.finance_budget_page.view_detail'),
         icon: <Eye sx={{ width: 16, height: 16 }} />,
         onClick: (row: Budget) => openDetailDialog(row),
       },
       {
-        label: '编辑',
+        label: t('finance.finance_budget_page.edit'),
         icon: <Edit2 sx={{ width: 16, height: 16 }} />,
         onClick: (row: Budget) => openEditDialog(row),
       },
       {
-        label: '删除',
+        label: t('finance.finance_budget_page.delete'),
         icon: <Trash2 sx={{ width: 16, height: 16 }} />,
         color: 'error' as const,
         onClick: (row: Budget) => handleDeleteClick(row.id),
@@ -489,27 +491,27 @@ const FinanceBudgetPage: React.FC = () => {
     () => [
       {
         id: 'budget_type',
-        label: '类型',
+        label: t('finance.finance_budget_page.type_1'),
         type: 'select' as const,
         options: [
-          { value: 'operating', label: '运营预算' },
-          { value: 'capital', label: '资本预算' },
-          { value: 'project', label: '项目预算' },
-          { value: 'marketing', label: '市场预算' },
-          { value: 'personnel', label: '人事预算' },
+          { value: 'operating', label: t('finance.finance_budget_page.text_e9e771') },
+          { value: 'capital', label: t('finance.finance_budget_page.text_2fc835') },
+          { value: 'project', label: t('finance.finance_budget_page.text_fa2986') },
+          { value: 'marketing', label: t('finance.finance_budget_page.text_fb0bc4') },
+          { value: 'personnel', label: t('finance.finance_budget_page.text_859388') },
         ],
         value: filterType,
         onChange: (value: unknown) => setFilterType(value as string),
       },
       {
         id: 'status',
-        label: '状态',
+        label: t('finance.finance_budget_page.status'),
         type: 'select' as const,
         options: [
-          { value: 'active', label: '执行中' },
-          { value: 'completed', label: '已完成' },
-          { value: 'frozen', label: '已冻结' },
-          { value: 'expired', label: '已过期' },
+          { value: 'active', label: t('finance.finance_budget_page.text_46e386') },
+          { value: 'completed', label: t('finance.finance_budget_page.completed_1') },
+          { value: 'frozen', label: t('finance.finance_budget_page.text_92cff4') },
+          { value: 'expired', label: t('finance.finance_budget_page.text_4d5ccd') },
         ],
         value: filterStatus,
         onChange: (value: unknown) => setFilterStatus(value as string),
@@ -520,7 +522,7 @@ const FinanceBudgetPage: React.FC = () => {
 
   return (
     <PageContainer
-      title='预算列表'
+      title={t('finance.finance_budget_page.list')}
       subtitle=''
     >
       <Box
@@ -546,7 +548,7 @@ const FinanceBudgetPage: React.FC = () => {
           </Typography>
         </Box>
         <ActionButton
-          label='新增预算'
+          label={t('finance.finance_budget_page.add')}
           icon={<Plus size={16} />}
           variant='primary'
           onClick={() => {
@@ -625,7 +627,7 @@ const FinanceBudgetPage: React.FC = () => {
         loading={loading}
         error={error}
         searchable
-        searchPlaceholder='搜索预算类型或年度...'
+        searchPlaceholder={t('finance.finance_budget_page.search')}
         searchValue={searchTerm}
         onSearch={setSearchTerm}
         filters={filters}
@@ -645,11 +647,11 @@ const FinanceBudgetPage: React.FC = () => {
         onRefresh={() => {
           queryClient.invalidateQueries({ queryKey: ['finance-budgets'] });
         }}
-        emptyMessage='暂无预算数据'
+        emptyMessage={t('finance.finance_budget_page.no_data')}
         emptyIcon={<AlertCircle sx={{ width: 48, height: 48, color: 'grey.300' }} />}
         actions={[
           {
-            label: '刷新',
+            label: t('finance.finance_budget_page.refresh'),
             icon: <RefreshCw sx={{ width: 16, height: 16 }} />,
             variant: 'outlined',
             onClick: () => {
@@ -663,9 +665,9 @@ const FinanceBudgetPage: React.FC = () => {
       <Dialog
         open={showCreateDialog}
         onClose={() => setShowCreateDialog(false)}
-        title={editingBudget ? '编辑预算' : '新增预算'}
+        title={editingBudget ? t('finance.finance_budget_page.edit_1') : t('finance.finance_budget_page.add')}
         cancelButton={{
-          label: '取消',
+          label: t('finance.finance_budget_page.cancel'),
           onClick: () => {
             setShowCreateDialog(false);
             setEditingBudget(null);
@@ -673,29 +675,29 @@ const FinanceBudgetPage: React.FC = () => {
           },
         }}
         confirmButton={{
-          label: editingBudget ? '更新' : '创建',
+          label: editingBudget ? t('finance.finance_budget_page.update') : t('finance.finance_budget_page.create'),
           onClick: editingBudget ? handleUpdate : handleCreate,
         }}
       >
         <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2, mt: 1 }}>
           <FormSelect
             name='budget_type'
-            label='预算类型'
+            label={t('finance.finance_budget_page.type')}
             value={formData.budget_type}
             onChange={(value: string | number | string[]) =>
               setFormData({ ...formData, budget_type: value as string })
             }
             options={[
-              { value: 'operating', label: '运营预算' },
-              { value: 'capital', label: '资本预算' },
-              { value: 'project', label: '项目预算' },
-              { value: 'marketing', label: '市场预算' },
-              { value: 'personnel', label: '人事预算' },
+              { value: 'operating', label: t('finance.finance_budget_page.text_e9e771') },
+              { value: 'capital', label: t('finance.finance_budget_page.text_2fc835') },
+              { value: 'project', label: t('finance.finance_budget_page.text_fa2986') },
+              { value: 'marketing', label: t('finance.finance_budget_page.text_fb0bc4') },
+              { value: 'personnel', label: t('finance.finance_budget_page.text_859388') },
             ]}
           />
           <FormField
             name='fiscal_year'
-            label='预算年度'
+            label={t('finance.finance_budget_page.text_58d7d9')}
             type='number'
             value={formData.fiscal_year}
             onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
@@ -704,7 +706,7 @@ const FinanceBudgetPage: React.FC = () => {
           />
           <FormField
             name='total_budget'
-            label='预算金额'
+            label={t('finance.finance_budget_page.amount')}
             type='number'
             value={formData.total_budget}
             onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
@@ -713,16 +715,16 @@ const FinanceBudgetPage: React.FC = () => {
           />
           <FormSelect
             name='status'
-            label='状态'
+            label={t('finance.finance_budget_page.status')}
             value={formData.status}
             onChange={(value: string | number | string[]) =>
               setFormData({ ...formData, status: value as string })
             }
             options={[
-              { value: 'active', label: '执行中' },
-              { value: 'completed', label: '已完成' },
-              { value: 'frozen', label: '已冻结' },
-              { value: 'expired', label: '已过期' },
+              { value: 'active', label: t('finance.finance_budget_page.text_46e386') },
+              { value: 'completed', label: t('finance.finance_budget_page.completed_1') },
+              { value: 'frozen', label: t('finance.finance_budget_page.text_92cff4') },
+              { value: 'expired', label: t('finance.finance_budget_page.text_4d5ccd') },
             ]}
           />
         </Box>
@@ -732,7 +734,7 @@ const FinanceBudgetPage: React.FC = () => {
       <Dialog
         open={showDetailDialog}
         onClose={() => setShowDetailDialog(false)}
-        title='预算详情'
+        title={t('finance.finance_budget_page.detail')}
       >
         {selectedBudget && (
           <Box sx={{ display: 'flex', flexDirection: 'column', gap: 3, mt: 1 }}>

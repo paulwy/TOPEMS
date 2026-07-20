@@ -47,6 +47,8 @@ import {
   CardContent,
 } from '@mui/material';
 import { PageContainer } from '@/components/common';
+import { ConfirmDialog } from '@topems/shared-components';
+import { useConfirmDialog } from '@/hooks';
 import { useNotificationStore } from '@/store';
 import { extractErrorMessage } from '@/utils/errors';
 import { QUERY_KEYS } from '@/lib/reactQuery';
@@ -79,6 +81,12 @@ const BackupPage: React.FC = () => {
 
   const [backupName, setBackupName] = useState('');
   const [backupType, setBackupType] = useState<'full' | 'incremental' | 'schema'>('full');
+  const {
+    confirmOpen: confirmDialogOpen,
+    confirmConfig: confirmDialogConfig,
+    openConfirm: openConfirmDialog,
+    closeConfirm: setConfirmDialogClosed,
+  } = useConfirmDialog();
 
   const {
     data: backups = [],
@@ -172,11 +180,16 @@ const BackupPage: React.FC = () => {
 
   const handleDeleteBackup = useCallback(
     (backupId: string) => {
-      if (window.confirm('确定要删除这个备份吗？此操作不可恢复。')) {
-        deleteBackupMutation.mutate(backupId);
-      }
+      openConfirmDialog({
+        title: '确认删除',
+        message: '确定要删除这个备份吗？此操作不可恢复。',
+        danger: true,
+        onConfirm: () => {
+          deleteBackupMutation.mutate(backupId);
+        },
+      });
     },
-    [deleteBackupMutation]
+    [deleteBackupMutation, openConfirmDialog]
   );
 
   const handleOpenRestoreModal = useCallback((backup: BackupRecord) => {
@@ -652,6 +665,18 @@ const BackupPage: React.FC = () => {
           <Button onClick={handleCloseModal}>关闭</Button>
         </DialogActions>
       </Dialog>
+
+      <ConfirmDialog
+        isOpen={confirmDialogOpen}
+        onClose={setConfirmDialogClosed}
+        onConfirm={() => {
+          confirmDialogConfig?.onConfirm();
+          setConfirmDialogClosed();
+        }}
+        title={confirmDialogConfig?.title || ''}
+        message={confirmDialogConfig?.message || ''}
+        danger={confirmDialogConfig?.danger}
+      />
     </PageContainer>
   );
 };

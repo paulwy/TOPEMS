@@ -1,77 +1,20 @@
-export { useCrud } from '@topems/shared-hooks';
-export type { UseCrudOptions, UseCrudResult } from '@topems/shared-hooks';
+/**
+ * Hooks 分层治理入口
+ *
+ * 共 4 层，依赖方向自上而下：
+ *   features → domain → ui → foundation
+ *
+ * 详见 ./LAYERS.md
+ */
 
-export { useBackNavigation } from './useBackNavigation';
-export type { FromState, BackNavigationResult } from './useBackNavigation';
+// Foundation layer - 基础原语层
+export * from './foundation';
 
-export { useAuth } from './useAuth';
-export { usePermission } from './usePermission';
-export { usePermissionCheck } from './usePermissionCheck';
-export { useRole } from './useRole';
-export { useOrganization } from './useOrganization';
+// UI layer - UI交互层
+export * from './ui';
 
-export { useNotification } from './useNotification';
-export { useNotificationState } from './useNotificationState';
-export { useNotificationWebSocket } from './useNotificationWebSocket';
-export { useNotificationSettings } from './useNotificationSettings';
+// Domain layer - 领域能力层
+export * from './domain';
 
-export { useAIHelper } from './useAIHelper';
-export { useAIContext } from './useAIContext';
-export type { AIRecommendation, AIContextState, QuickCommand } from './useAIContext';
-export { useBatchSelection } from './useBatchSelection';
-export { useAutoBreadcrumbs } from './useAutoBreadcrumbs';
-export type { AutoBreadcrumbItem, UseAutoBreadcrumbsOptions } from './useAutoBreadcrumbs';
-export { useDataTable, useExportData } from './useDataTable';
-export type { UseDataTableOptions, UseDataTableResult } from './useDataTable';
-export { useImportExport } from './useImportExport';
-export { useWebSocket } from './useWebSocket';
-export { useDashboardWebSocket } from './useDashboardWebSocket';
-export type { WsConnectionStatus } from './useWebSocket';
-export { usePerformanceMonitor } from './usePerformanceMonitor';
-export { useResponsive } from './useResponsive';
-export type { Breakpoint } from './useResponsive';
-
-export {
-  useKeyboardShortcuts,
-  useShortcutsHelp,
-  matchShortcut,
-  getShortcutKeyLabel,
-  getShortcutsByCategory,
-  GLOBAL_SHORTCUTS,
-  SEARCH_SHORTCUTS,
-} from './shortcuts';
-export type { ShortcutConfig, ShortcutBinding, ShortcutHandler } from './shortcuts';
-
-export { useWindowManager } from './useWindowManager';
-export type { WindowConfig, WindowState } from './useWindowManager';
-
-export { useDebounce, useDebouncedValue, useDebouncedCallback } from '@topems/shared-hooks';
-export { useThrottle, useThrottledValue, useThrottledCallback } from './useThrottle';
-export { useIntersectionObserver, useInView } from './useIntersectionObserver';
-export { useOfflineQuery, useOfflineMutation } from './useOfflineQuery';
-export { useOfflineSync } from './useOfflineSync';
-export type { SyncStatus, OfflineRequest } from './useOfflineSync';
-export type {
-  UseIntersectionObserverOptions,
-  UseIntersectionObserverResult,
-} from './useIntersectionObserver';
-export { useTouchFeedback, useSwipeGesture, useDoubleTap } from './useTouchFeedback';
-export type { TouchFeedbackOptions, TouchRipple } from './useTouchFeedback';
-
-export {
-  useAssets,
-  useExpenses,
-  useBudgets,
-  useReceivables,
-  usePayables,
-  useAccountingSubjects,
-  useVouchers,
-  useOfficeSupplies,
-  useMeetingRooms,
-  useMeetingBookings,
-  useVehicles,
-  useVehicleRequests,
-  useAnnouncements,
-  useFinanceReports,
-} from './useErp';
-export type { UseErpResult } from './useErp';
+// Features layer - 业务特征层
+export * from './features';

@@ -49,6 +49,7 @@ import { logger } from '@/utils/logger';
 import { designTokens } from '@/theme/tokens';
 import { BI_PATHS } from '@/modules/bi/config';
 
+import { useTranslation } from 'react-i18next';
 const ct = designTokens.colors;
 
 const quickActions = [
@@ -135,6 +136,7 @@ const recentActivities = [
 ];
 
 const BiIndexPage = () => {
+  const { t } = useTranslation();
   const [searchTerm, setSearchTerm] = useState('');
 
   const biDataQuery = useQuery<{
@@ -172,9 +174,9 @@ const BiIndexPage = () => {
 
   const keyMetrics = [
     {
-      title: '仪表盘',
+      title: t('bi.bi_index_page.text_3fa8b3'),
       value: '12',
-      unit: '个',
+      unit: t('bi.bi_index_page.text_930882'),
       change: 2,
       trend: 'up' as const,
       color: 'purple',
@@ -182,9 +184,9 @@ const BiIndexPage = () => {
       sparklineData: [2, 4, 5, 6, 8, 10, 12],
     },
     {
-      title: '报表',
+      title: t('bi.bi_index_page.text_fc00f3'),
       value: '28',
-      unit: '份',
+      unit: t('bi.bi_index_page.text_2a5da6'),
       change: 5,
       trend: 'up' as const,
       color: 'orange',
@@ -192,9 +194,9 @@ const BiIndexPage = () => {
       sparklineData: [10, 12, 15, 18, 22, 25, 28],
     },
     {
-      title: '数据集',
+      title: t('bi.bi_index_page.text_e20804'),
       value: '16',
-      unit: '个',
+      unit: t('bi.bi_index_page.text_930882'),
       change: 3,
       trend: 'up' as const,
       color: 'green',
@@ -202,9 +204,9 @@ const BiIndexPage = () => {
       sparklineData: [5, 7, 8, 10, 12, 14, 16],
     },
     {
-      title: '权限规则',
+      title: t('bi.bi_index_page.text_fff307'),
       value: '8',
-      unit: '条',
+      unit: t('bi.bi_index_page.text_cc1bac'),
       change: 1,
       trend: 'up' as const,
       color: 'blue',
@@ -214,19 +216,19 @@ const BiIndexPage = () => {
   ];
 
   const trendData = [
-    { name: '周一', 访问量: 1200, 报表数: 45, 分析数: 32 },
-    { name: '周二', 访问量: 1500, 报表数: 52, 分析数: 38 },
-    { name: '周三', 访问量: 1800, 报表数: 61, 分析数: 45 },
-    { name: '周四', 访问量: 1600, 报表数: 55, 分析数: 42 },
-    { name: '周五', 访问量: 2100, 报表数: 68, 分析数: 52 },
-    { name: '周六', 访问量: 900, 报表数: 30, 分析数: 20 },
-    { name: '周日', 访问量: 800, 报表数: 25, 分析数: 18 },
+    { name: t('bi.bi_index_page.text_1603b0'), 访问量: 1200, 报表数: 45, 分析数: 32 },
+    { name: t('bi.bi_index_page.text_b5a6a0'), 访问量: 1500, 报表数: 52, 分析数: 38 },
+    { name: t('bi.bi_index_page.text_e60725'), 访问量: 1800, 报表数: 61, 分析数: 45 },
+    { name: t('bi.bi_index_page.text_170fc8'), 访问量: 1600, 报表数: 55, 分析数: 42 },
+    { name: t('bi.bi_index_page.text_eb79ce'), 访问量: 2100, 报表数: 68, 分析数: 52 },
+    { name: t('bi.bi_index_page.text_245751'), 访问量: 900, 报表数: 30, 分析数: 20 },
+    { name: t('bi.bi_index_page.text_562d74'), 访问量: 800, 报表数: 25, 分析数: 18 },
   ];
 
   return (
     <PageContainer
-      title='商业智能'
-      subtitle='一站式数据分析与可视化平台'
+      title={t('bi.bi_index_page.text_7d6871')}
+      subtitle={t('bi.bi_index_page.text_22e202')}
       headerProps={{
         pageIcon: <BarChart3 style={{ width: 20, height: 20 }} />,
         pageGradient: `linear-gradient(135deg, ${ct.secondary[400]} 0%, ${ct.secondary.main} 100%)`,
@@ -237,7 +239,7 @@ const BiIndexPage = () => {
       <DashboardTemplate
         title=''
         subtitle=''
-        breadcrumbs={[{ label: '首页', href: '/dashboard' }, { label: 'BI' }]}
+        breadcrumbs={[{ label: t('bi.bi_index_page.home'), href: '/dashboard' }, { label: 'BI' }]}
       >
         <Box sx={{ p: 3 }}>
           <Box
@@ -263,7 +265,7 @@ const BiIndexPage = () => {
               </Typography>
             </Box>
             <TextField
-              placeholder='搜索仪表盘、报表、数据集...'
+              placeholder={t('bi.bi_index_page.search')}
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
               size='small'
@@ -397,7 +399,7 @@ const BiIndexPage = () => {
                       本周使用趋势
                     </Typography>
                     <Chip
-                      label='近7天'
+                      label={t('bi.bi_index_page.text_531609')}
                       size='small'
                       variant='outlined'
                     />
@@ -406,7 +408,7 @@ const BiIndexPage = () => {
                     type='area'
                     data={trendData}
                     xKey='name'
-                    yKeys={['访问量', '报表数', '分析数']}
+                    yKeys={[t('bi.bi_index_page.text_4461a6'), t('bi.bi_index_page.text_67211e'), t('bi.bi_index_page.text_3d5d87')]}
                     chartHeight={280}
                     chartWidth={700}
                     smooth
@@ -451,10 +453,10 @@ const BiIndexPage = () => {
                         disablePadding
                       >
                         {[
-                          { name: '销售总览仪表盘', desc: '销售数据综合分析', type: 'bar' },
-                          { name: '生产质量监控', desc: '实时质量指标监控', type: 'line' },
-                          { name: '库存周转率分析', desc: '仓库库存周转分析', type: 'pie' },
-                          { name: 'HR人力仪表盘', desc: '人力资源数据分析', type: 'table' },
+                          { name: t('bi.bi_index_page.text_5c4640'), desc: t('bi.bi_index_page.text_e8ccfa'), type: 'bar' },
+                          { name: t('bi.bi_index_page.production'), desc: t('bi.bi_index_page.text_1a3263'), type: 'line' },
+                          { name: t('bi.bi_index_page.text_e556ab'), desc: t('bi.bi_index_page.warehouse'), type: 'pie' },
+                          { name: t('bi.bi_index_page.text_96f1d5'), desc: t('bi.bi_index_page.text_f9b6a5'), type: 'table' },
                         ].map((item, idx) => (
                           <ListItem
                             key={idx}
@@ -523,10 +525,10 @@ const BiIndexPage = () => {
                         disablePadding
                       >
                         {[
-                          { name: '月度销售报表', type: '销售', format: 'Excel' },
-                          { name: '质量周报', type: '质量', format: 'PDF' },
-                          { name: '库存月报', type: '库存', format: 'Excel' },
-                          { name: '人事月报', type: 'HR', format: 'PDF' },
+                          { name: t('bi.bi_index_page.text_a71de2'), type: t('bi.bi_index_page.text_7f0dc5'), format: 'Excel' },
+                          { name: t('bi.bi_index_page.text_da4ee0'), type: t('bi.bi_index_page.text_3a7170'), format: 'PDF' },
+                          { name: t('bi.bi_index_page.text_51c296'), type: t('bi.bi_index_page.text_0eac88'), format: 'Excel' },
+                          { name: t('bi.bi_index_page.text_c272ae'), type: 'HR', format: 'PDF' },
                         ].map((item, idx) => (
                           <ListItem
                             key={idx}
@@ -646,9 +648,9 @@ const BiIndexPage = () => {
                     disablePadding
                   >
                     {[
-                      { name: '销售数据分析集', rows: '125,860 行', status: '正常' },
-                      { name: '生产质量数据集', rows: '89,450 行', status: '正常' },
-                      { name: '库存周转数据集', rows: '45,200 行', status: '草稿' },
+                      { name: t('bi.bi_index_page.text_f94f6c'), rows: t('bi.bi_index_page.text_bbaf48'), status: t('bi.bi_index_page.normal') },
+                      { name: t('bi.bi_index_page.production_1'), rows: t('bi.bi_index_page.text_1d93f6'), status: t('bi.bi_index_page.normal') },
+                      { name: t('bi.bi_index_page.text_7252f8'), rows: t('bi.bi_index_page.text_2ded3c'), status: t('bi.bi_index_page.text_22b433') },
                     ].map((item, idx) => (
                       <ListItem
                         key={idx}
@@ -682,7 +684,7 @@ const BiIndexPage = () => {
                         <Chip
                           label={item.status}
                           size='small'
-                          color={item.status === '正常' ? 'success' : 'warning'}
+                          color={item.status === t('bi.bi_index_page.normal') ? 'success' : 'warning'}
                           variant='outlined'
                         />
                       </ListItem>

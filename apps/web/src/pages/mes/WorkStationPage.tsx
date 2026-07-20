@@ -27,9 +27,11 @@ import { Plus, Edit, Eye, MapPin, Clock } from 'lucide-react';
 import { apiLogger } from '@/utils/logger';
 import { designTokens } from '@/theme/tokens';
 
+import { useTranslation } from 'react-i18next';
 const ct = designTokens.colors;
 
 const WorkStationPage: React.FC = () => {
+  const { t } = useTranslation();
   const queryClient = useQueryClient();
   const [searchTerm, setSearchTerm] = useState('');
   const [statusFilter, setStatusFilter] = useState<string>('');
@@ -60,7 +62,7 @@ const WorkStationPage: React.FC = () => {
 
       const response = await mesApi.workstations.list(params);
       if (!response.success || !response.data) {
-        throw new Error(response.message || '加载工作站列表失败');
+        throw new Error(response.message || t('mes.work_station_page.list'));
       }
       return {
         items: response.data.workstations || [],
@@ -79,8 +81,8 @@ const WorkStationPage: React.FC = () => {
     if (workstationsQuery.isError) {
       addNotification({
         type: 'error',
-        title: '加载失败',
-        message: '加载工作站列表失败',
+        title: t('mes.work_station_page.fail'),
+        message: t('mes.work_station_page.list'),
       });
     }
   }, [workstationsQuery.isError, addNotification]);
@@ -89,7 +91,7 @@ const WorkStationPage: React.FC = () => {
     mutationFn: async (data: CreateWorkStationRequest) => {
       const response = await mesApi.workstations.create(data);
       if (!response.success) {
-        throw new Error(response.message || '创建工作站失败');
+        throw new Error(response.message || t('mes.work_station_page.create'));
       }
       return response.data;
     },
@@ -97,16 +99,16 @@ const WorkStationPage: React.FC = () => {
       queryClient.invalidateQueries({ queryKey: ['mes-workstations'] });
       addNotification({
         type: 'success',
-        title: '创建成功',
-        message: '新工作站已创建',
+        title: t('mes.work_station_page.create_1'),
+        message: t('mes.work_station_page.create_2'),
       });
     },
     onError: (error: unknown) => {
-      apiLogger.error('创建工作站失败:', error);
+      apiLogger.error(t('mes.work_station_page.create_3'), error);
       addNotification({
         type: 'error',
-        title: '操作失败',
-        message: '创建工作站失败',
+        title: t('mes.work_station_page.operation_failed'),
+        message: t('mes.work_station_page.create'),
       });
     },
   });
@@ -115,7 +117,7 @@ const WorkStationPage: React.FC = () => {
     mutationFn: async ({ id, data }: { id: string; data: UpdateWorkStationRequest }) => {
       const response = await mesApi.workstations.update(id, data);
       if (!response.success) {
-        throw new Error(response.message || '更新工作站失败');
+        throw new Error(response.message || t('mes.work_station_page.update'));
       }
       return response.data;
     },
@@ -123,16 +125,16 @@ const WorkStationPage: React.FC = () => {
       queryClient.invalidateQueries({ queryKey: ['mes-workstations'] });
       addNotification({
         type: 'success',
-        title: '更新成功',
-        message: '工作站信息已更新',
+        title: t('mes.work_station_page.update_1'),
+        message: t('mes.work_station_page.update_2'),
       });
     },
     onError: (error: unknown) => {
-      apiLogger.error('更新工作站失败:', error);
+      apiLogger.error(t('mes.work_station_page.update_3'), error);
       addNotification({
         type: 'error',
-        title: '操作失败',
-        message: '更新工作站失败',
+        title: t('mes.work_station_page.operation_failed'),
+        message: t('mes.work_station_page.update'),
       });
     },
   });
@@ -183,10 +185,10 @@ const WorkStationPage: React.FC = () => {
 
   const getStatusBadge = (status: string) => {
     const statusMap: Record<string, { label: string; bg: string; color: string }> = {
-      active: { label: '运行中', bg: 'success.lighter', color: 'success.dark' },
-      idle: { label: '空闲', bg: 'warning.light', color: 'warning.700' },
-      maintenance: { label: '维护中', bg: 'primary.100', color: 'primary.dark' },
-      offline: { label: '离线', bg: 'error.lighter', color: 'error.dark' },
+      active: { label: t('mes.work_station_page.status_running'), bg: 'success.lighter', color: 'success.dark' },
+      idle: { label: t('mes.work_station_page.status_idle'), bg: 'warning.light', color: 'warning.700' },
+      maintenance: { label: t('mes.work_station_page.status_maintenance'), bg: 'primary.100', color: 'primary.dark' },
+      offline: { label: t('mes.work_station_page.status_offline'), bg: 'error.lighter', color: 'error.dark' },
     };
     const s = statusMap[status] || { label: status, bg: 'grey.100', color: 'text.secondary' };
     return (
@@ -200,14 +202,14 @@ const WorkStationPage: React.FC = () => {
 
   const columns: ColumnDef<WorkStation>[] = useMemo(
     () => [
-      { id: 'name', label: '工作站名称', sortable: true },
-      { id: 'code', label: '编码', sortable: true },
-      { id: 'location', label: '位置', render: (row) => row.location || '-' },
-      { id: 'capacity', label: '容量', render: (row) => row.capacity || '-' },
-      { id: 'supervisor', label: '负责人', render: (row) => row.supervisor || '-' },
+      { id: 'name', label: t('mes.work_station_page.name'), sortable: true },
+      { id: 'code', label: t('mes.work_station_page.code'), sortable: true },
+      { id: 'location', label: t('mes.work_station_page.text_d4d2a6'), render: (row) => row.location || '-' },
+      { id: 'capacity', label: t('mes.work_station_page.text_fe7d74'), render: (row) => row.capacity || '-' },
+      { id: 'supervisor', label: t('mes.work_station_page.manager'), render: (row) => row.supervisor || '-' },
       {
         id: 'status',
-        label: '状态',
+        label: t('mes.work_station_page.filter_status'),
         render: (row) => getStatusBadge(row.status),
       },
     ],
@@ -218,14 +220,14 @@ const WorkStationPage: React.FC = () => {
     () => [
       {
         id: 'status',
-        label: '状态',
+        label: t('mes.work_station_page.filter_status'),
         type: 'select',
         options: [
-          { label: '全部', value: '' },
-          { label: '运行中', value: 'active' },
-          { label: '空闲', value: 'idle' },
-          { label: '维护中', value: 'maintenance' },
-          { label: '离线', value: 'offline' },
+          { label: t('mes.work_station_page.all'), value: '' },
+          { label: t('mes.work_station_page.status_running'), value: 'active' },
+          { label: t('mes.work_station_page.status_idle'), value: 'idle' },
+          { label: t('mes.work_station_page.status_maintenance'), value: 'maintenance' },
+          { label: t('mes.work_station_page.status_offline'), value: 'offline' },
         ],
         value: statusFilter,
         onChange: (value: unknown) => {
@@ -240,12 +242,12 @@ const WorkStationPage: React.FC = () => {
   const rowActions: RowAction<WorkStation>[] = useMemo(
     () => [
       {
-        label: '查看详情',
+        label: t('mes.work_station_page.action_view_detail'),
         icon: <Eye size={16} />,
         onClick: handleViewDetail,
       },
       {
-        label: '编辑',
+        label: t('mes.work_station_page.action_edit'),
         icon: <Edit size={16} />,
         onClick: handleEdit,
       },
@@ -344,8 +346,8 @@ const WorkStationPage: React.FC = () => {
 
   return (
     <PageContainer
-      title='工作站管理'
-      subtitle='管理生产工作站,包括工作站名称、编码、位置、容量等'
+      title={t('mes.work_station_page.text_044a4f')}
+      subtitle={t('mes.work_station_page.name_1')}
       headerProps={{
         pageIcon: <MapPin style={{ width: 20, height: 20 }} />,
         pageGradient: `linear-gradient(135deg, ${ct.success.main} 0%, ${ct.success.dark} 100%)`,
@@ -359,7 +361,7 @@ const WorkStationPage: React.FC = () => {
         loading={loading || createMutation.isPending || updateMutation.isPending}
         filters={filters}
         searchable
-        searchPlaceholder='搜索工作站名称或编码...'
+        searchPlaceholder={t('mes.work_station_page.search')}
         searchValue={searchTerm}
         onSearch={handleSearch}
         pagination={{
@@ -370,14 +372,14 @@ const WorkStationPage: React.FC = () => {
         }}
         actions={[
           {
-            label: '新增工作站',
+            label: t('mes.work_station_page.add'),
             icon: <Plus size={16} />,
             onClick: handleOpenCreate,
           },
         ]}
         rowActions={rowActions}
         headerContent={statsContent}
-        emptyMessage='暂无工作站数据'
+        emptyMessage={t('mes.work_station_page.no_data')}
         getRowId={(row) => row.id}
       />
 
@@ -387,7 +389,7 @@ const WorkStationPage: React.FC = () => {
         maxWidth='md'
         fullWidth
       >
-        <DialogTitle>{selectedWorkStation ? '编辑工作站' : '新增工作站'}</DialogTitle>
+        <DialogTitle>{selectedWorkStation ? t('mes.work_station_page.edit') : t('mes.work_station_page.add')}</DialogTitle>
         <DialogContent>
           <form onSubmit={handleSubmit}>
             <Box
@@ -399,27 +401,27 @@ const WorkStationPage: React.FC = () => {
               }}
             >
               <TextField
-                label='工作站名称 *'
+                label={t('mes.work_station_page.name_2')}
                 value={formData.name}
                 onChange={(e) => setFormData({ ...formData, name: e.target.value })}
                 size='small'
                 required
               />
               <TextField
-                label='编码 *'
+                label={t('mes.work_station_page.code_1')}
                 value={formData.code}
                 onChange={(e) => setFormData({ ...formData, code: e.target.value })}
                 size='small'
                 required
               />
               <TextField
-                label='位置'
+                label={t('mes.work_station_page.text_d4d2a6')}
                 value={formData.location}
                 onChange={(e) => setFormData({ ...formData, location: e.target.value })}
                 size='small'
               />
               <TextField
-                label='容量'
+                label={t('mes.work_station_page.text_fe7d74')}
                 type='number'
                 value={formData.capacity}
                 onChange={(e) =>
@@ -431,7 +433,7 @@ const WorkStationPage: React.FC = () => {
                 size='small'
               />
               <TextField
-                label='负责人'
+                label={t('mes.work_station_page.manager')}
                 value={formData.supervisor}
                 onChange={(e) => setFormData({ ...formData, supervisor: e.target.value })}
                 size='small'

@@ -16,8 +16,9 @@ import {
   Divider,
 } from '@mui/material';
 import { PageContainer } from '@/components/common/PageContainerV2';
-import React from 'react';
+import React, { useMemo } from 'react';
 import { useQuery } from '@tanstack/react-query';
+import { useTranslation } from 'react-i18next';
 import { QUERY_KEYS } from '@/lib/reactQuery';
 import { mesApi } from '@/api/mes';
 import type { ProductionKanbanData } from '@/api/mes';
@@ -37,6 +38,7 @@ import { designTokens } from '@/theme/tokens';
 const ct = designTokens.colors;
 
 const ProductionKanbanPage: React.FC = () => {
+  const { t } = useTranslation();
   const { data: kanbanData, isLoading: loading } = useQuery<ProductionKanbanData | null>({
     queryKey: QUERY_KEYS.MES.KANBAN_DASHBOARD,
     queryFn: async () => {
@@ -49,8 +51,8 @@ const ProductionKanbanPage: React.FC = () => {
     refetchInterval: 60000,
   });
 
-  const getStatusColor = (status: string) => {
-    const colorMap: Record<string, string> = {
+  const statusColorMap = useMemo<Record<string, string>>(
+    () => ({
       running: 'success.main',
       idle: 'grey.500',
       maintenance: 'warning.main',
@@ -58,19 +60,21 @@ const ProductionKanbanPage: React.FC = () => {
       in_progress: 'primary.main',
       pending: 'text.secondary',
       completed: 'success.main',
-    };
-    return colorMap[status] || 'text.secondary';
-  };
+    }),
+    []
+  );
+
+  const getStatusColor = (status: string) => statusColorMap[status] || 'text.secondary';
 
   const getStatusText = (status: string) => {
     const textMap: Record<string, string> = {
-      running: '运行中',
-      idle: '空闲',
-      maintenance: '维护中',
-      error: '故障',
-      in_progress: '进行中',
-      pending: '待开始',
-      completed: '已完成',
+      running: t('mes.production_kanban_page.status_running'),
+      idle: t('mes.production_kanban_page.status_idle'),
+      maintenance: t('mes.production_kanban_page.status_maintenance'),
+      error: t('mes.production_kanban_page.status_error'),
+      in_progress: t('mes.production_kanban_page.status_in_progress'),
+      pending: t('mes.production_kanban_page.status_pending'),
+      completed: t('mes.production_kanban_page.status_completed'),
     };
     return textMap[status] || status;
   };
@@ -107,7 +111,7 @@ const ProductionKanbanPage: React.FC = () => {
               <CardContent>
                 <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 1 }}>
                   <Factory size={24} />
-                  <Typography variant='body2'>总订单数</Typography>
+                  <Typography variant='body2'>{t('mes.production_kanban_page.stat_total_orders')}</Typography>
                 </Box>
                 <Typography
                   variant='h4'
@@ -123,7 +127,7 @@ const ProductionKanbanPage: React.FC = () => {
               <CardContent>
                 <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 1 }}>
                   <Activity size={24} />
-                  <Typography variant='body2'>进行中</Typography>
+                  <Typography variant='body2'>{t('mes.production_kanban_page.stat_in_progress')}</Typography>
                 </Box>
                 <Typography
                   variant='h4'
@@ -139,7 +143,7 @@ const ProductionKanbanPage: React.FC = () => {
               <CardContent>
                 <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 1 }}>
                   <CheckCircle size={24} />
-                  <Typography variant='body2'>已完成</Typography>
+                  <Typography variant='body2'>{t('mes.production_kanban_page.stat_completed')}</Typography>
                 </Box>
                 <Typography
                   variant='h4'
@@ -155,7 +159,7 @@ const ProductionKanbanPage: React.FC = () => {
               <CardContent>
                 <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 1 }}>
                   <Package size={24} />
-                  <Typography variant='body2'>今日产量</Typography>
+                  <Typography variant='body2'>{t('mes.production_kanban_page.stat_today_output')}</Typography>
                 </Box>
                 <Typography
                   variant='h4'
@@ -171,7 +175,7 @@ const ProductionKanbanPage: React.FC = () => {
               <CardContent>
                 <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 1 }}>
                   <TrendingUp size={24} />
-                  <Typography variant='body2'>合格率</Typography>
+                  <Typography variant='body2'>{t('mes.production_kanban_page.stat_pass_rate')}</Typography>
                 </Box>
                 <Typography
                   variant='h4'
@@ -187,7 +191,7 @@ const ProductionKanbanPage: React.FC = () => {
               <CardContent>
                 <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 1 }}>
                   <Gauge size={24} />
-                  <Typography variant='body2'>OEE</Typography>
+                  <Typography variant='body2'>{t('mes.production_kanban_page.stat_oee')}</Typography>
                 </Box>
                 <Typography
                   variant='h4'
@@ -217,7 +221,7 @@ const ProductionKanbanPage: React.FC = () => {
                   variant='h6'
                   sx={{ fontWeight: 600 }}
                 >
-                  订单进度
+                  {t('mes.production_kanban_page.section_progress')}
                 </Typography>
               </Box>
               <Divider sx={{ mb: 2 }} />
@@ -227,7 +231,7 @@ const ProductionKanbanPage: React.FC = () => {
                     variant='body2'
                     sx={{ color: 'text.secondary', textAlign: 'center', py: 4 }}
                   >
-                    暂无订单数据
+                    {t('mes.production_kanban_page.no_order_data')}
                   </Typography>
                 ) : (
                   <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
@@ -259,7 +263,7 @@ const ProductionKanbanPage: React.FC = () => {
                               variant='body2'
                               sx={{ color: 'text.secondary' }}
                             >
-                              计划: {order.planned_quantity} / 完成: {order.completed_quantity}
+                              {t('mes.production_kanban_page.label_planned')}: {order.planned_quantity} / {t('mes.production_kanban_page.label_completed')}: {order.completed_quantity}
                             </Typography>
                           </Box>
                           <Chip
@@ -331,7 +335,7 @@ const ProductionKanbanPage: React.FC = () => {
                   variant='h6'
                   sx={{ fontWeight: 600 }}
                 >
-                  工作站状态
+                  {t('mes.production_kanban_page.section_workstation_status')}
                 </Typography>
               </Box>
               <Divider sx={{ mb: 2 }} />
@@ -341,7 +345,7 @@ const ProductionKanbanPage: React.FC = () => {
                     variant='body2'
                     sx={{ color: 'text.secondary', textAlign: 'center', py: 4 }}
                   >
-                    暂无工作站数据
+                    {t('mes.production_kanban_page.no_workstation_data')}
                   </Typography>
                 ) : (
                   <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1.5 }}>
@@ -369,7 +373,7 @@ const ProductionKanbanPage: React.FC = () => {
                             variant='caption'
                             sx={{ color: 'text.secondary' }}
                           >
-                            {ws.current_product || '空闲'}
+                            {ws.current_product || t('mes.production_kanban_page.status_idle')}
                           </Typography>
                         </Box>
                         <Box
@@ -401,7 +405,7 @@ const ProductionKanbanPage: React.FC = () => {
                   variant='h6'
                   sx={{ fontWeight: 600 }}
                 >
-                  质量趋势
+                  {t('mes.production_kanban_page.section_quality_trend')}
                 </Typography>
               </Box>
               <Divider sx={{ mb: 2 }} />
@@ -412,10 +416,10 @@ const ProductionKanbanPage: React.FC = () => {
                 <Table size='small'>
                   <TableHead>
                     <TableRow sx={{ bgcolor: 'grey.50' }}>
-                      <TableCell>日期</TableCell>
-                      <TableCell align='right'>总产量</TableCell>
-                      <TableCell align='right'>合格量</TableCell>
-                      <TableCell align='right'>合格率</TableCell>
+                      <TableCell>{t('mes.production_kanban_page.col_date')}</TableCell>
+                      <TableCell align='right'>{t('mes.production_kanban_page.col_total_output')}</TableCell>
+                      <TableCell align='right'>{t('mes.production_kanban_page.col_qualified')}</TableCell>
+                      <TableCell align='right'>{t('mes.production_kanban_page.col_pass_rate')}</TableCell>
                     </TableRow>
                   </TableHead>
                   <TableBody>
@@ -426,7 +430,7 @@ const ProductionKanbanPage: React.FC = () => {
                           align='center'
                           sx={{ py: 4, color: 'text.secondary' }}
                         >
-                          暂无质量数据
+                          {t('mes.production_kanban_page.no_quality_data')}
                         </TableCell>
                       </TableRow>
                     ) : (
@@ -483,7 +487,7 @@ const ProductionKanbanPage: React.FC = () => {
                   variant='h6'
                   sx={{ fontWeight: 600 }}
                 >
-                  设备状态
+                  {t('mes.production_kanban_page.section_equipment_status')}
                 </Typography>
               </Box>
               <Divider sx={{ mb: 2 }} />
@@ -494,10 +498,10 @@ const ProductionKanbanPage: React.FC = () => {
                 <Table size='small'>
                   <TableHead>
                     <TableRow sx={{ bgcolor: 'grey.50' }}>
-                      <TableCell>设备编码</TableCell>
-                      <TableCell>设备名称</TableCell>
-                      <TableCell align='center'>状态</TableCell>
-                      <TableCell align='right'>OEE</TableCell>
+                      <TableCell>{t('mes.production_kanban_page.col_equipment_code')}</TableCell>
+                      <TableCell>{t('mes.production_kanban_page.col_equipment_name')}</TableCell>
+                      <TableCell align='center'>{t('mes.production_kanban_page.col_status')}</TableCell>
+                      <TableCell align='right'>{t('mes.production_kanban_page.col_oee')}</TableCell>
                     </TableRow>
                   </TableHead>
                   <TableBody>
@@ -508,7 +512,7 @@ const ProductionKanbanPage: React.FC = () => {
                           align='center'
                           sx={{ py: 4, color: 'text.secondary' }}
                         >
-                          暂无设备数据
+                          {t('mes.production_kanban_page.no_equipment_data')}
                         </TableCell>
                       </TableRow>
                     ) : (

@@ -17,6 +17,7 @@ import {
   Clock,
   CheckCircle,
 } from 'lucide-react';
+import { useTranslation } from 'react-i18next';
 import { useNavigate } from 'react-router-dom';
 import { Box, InputBase, Typography, Button } from '@mui/material';
 import { apiLogger } from '@/utils/logger';
@@ -46,6 +47,7 @@ interface PayrollSummary {
 }
 
 const HrmPayrollPage: React.FC = () => {
+  const { t } = useTranslation();
   const navigate = useNavigate();
   const { success, error, notifications, hideNotification } = useNotification();
   const queryClient = useQueryClient();
@@ -115,11 +117,11 @@ const HrmPayrollPage: React.FC = () => {
   const createPayrollMutation = useMutation({
     mutationFn: async (period: string) => payrollApi.create({ pay_period: period }),
     onSuccess: () => {
-      success('工资发放批次创建成功');
+      success(t('hrm.hrm_payroll_page.create'));
       queryClient.invalidateQueries({ queryKey: QUERY_KEYS.HRM.PAYROLL });
     },
     onError: (err: unknown) => {
-      error('创建工资发放批次失败');
+      error(t('hrm.hrm_payroll_page.create_1'));
       apiLogger.error(err);
     },
   });
@@ -128,11 +130,11 @@ const HrmPayrollPage: React.FC = () => {
   const calculateMutation = useMutation({
     mutationFn: async (runId: string) => payrollApi.calculate(runId),
     onSuccess: () => {
-      success('薪资计算完成');
+      success(t('hrm.hrm_payroll_page.completed'));
       queryClient.invalidateQueries({ queryKey: QUERY_KEYS.HRM.PAYROLL });
     },
     onError: (err: unknown) => {
-      error('薪资计算失败');
+      error(t('hrm.hrm_payroll_page.fail'));
       apiLogger.error(err);
     },
   });
@@ -141,11 +143,11 @@ const HrmPayrollPage: React.FC = () => {
   const payMutation = useMutation({
     mutationFn: async (runId: string) => payrollApi.pay(runId),
     onSuccess: () => {
-      success('薪资发放完成');
+      success(t('hrm.hrm_payroll_page.completed_1'));
       queryClient.invalidateQueries({ queryKey: QUERY_KEYS.HRM.PAYROLL });
     },
     onError: (err: unknown) => {
-      error('薪资发放失败');
+      error(t('hrm.hrm_payroll_page.fail_1'));
       apiLogger.error(err);
     },
   });
@@ -167,7 +169,7 @@ const HrmPayrollPage: React.FC = () => {
 
   const getEmployeeName = (employeeId: string) => {
     const emp = employees.find((e) => e.id === employeeId);
-    return emp ? emp.name : '未知员工';
+    return emp ? emp.name : t('hrm.hrm_payroll_page.text_e92bd2');
   };
 
   const getPayrollStatusBadge = (status: string) => (
@@ -179,10 +181,10 @@ const HrmPayrollPage: React.FC = () => {
 
   const getAdjustmentTypeName = (type: string) => {
     const types: Record<string, string> = {
-      promotion: '晋升调薪',
-      demotion: '降职调薪',
-      bonus: '奖金发放',
-      deduction: '扣款',
+      promotion: t('hrm.hrm_payroll_page.text_34714b'),
+      demotion: t('hrm.hrm_payroll_page.text_309ae8'),
+      bonus: t('hrm.hrm_payroll_page.text_265086'),
+      deduction: t('hrm.hrm_payroll_page.text_b99e70'),
     };
     return types[type] || type;
   };
@@ -213,11 +215,11 @@ const HrmPayrollPage: React.FC = () => {
   // 薪资构成数据
   const salaryCompositionData = useMemo(
     () => [
-      { name: '基本工资', value: 60, color: 'primary.main' },
-      { name: '奖金', value: 15, color: 'success.dark' },
-      { name: '补贴', value: 10, color: 'warning.main' },
-      { name: '社保公积金（个人）', value: 8, color: 'error.main' },
-      { name: '个人所得税', value: 7, color: 'secondary.main' },
+      { name: t('hrm.hrm_payroll_page.text_d0e803'), value: 60, color: 'primary.main' },
+      { name: t('hrm.hrm_payroll_page.text_f41af7'), value: 15, color: 'success.dark' },
+      { name: t('hrm.hrm_payroll_page.text_805400'), value: 10, color: 'warning.main' },
+      { name: t('hrm.hrm_payroll_page.text_3d6bd6'), value: 8, color: 'error.main' },
+      { name: t('hrm.hrm_payroll_page.text_b7432c'), value: 7, color: 'secondary.main' },
     ],
     []
   );
@@ -226,17 +228,17 @@ const HrmPayrollPage: React.FC = () => {
   const payrollStatusData = useMemo(
     () => [
       {
-        name: '待计算',
+        name: t('hrm.hrm_payroll_page.text_714999'),
         value: payrollRuns.filter((r) => r.status === 'draft').length,
         color: 'warning.main',
       },
       {
-        name: '已计算',
+        name: t('hrm.hrm_payroll_page.text_9cf9bc'),
         value: payrollRuns.filter((r) => r.status === 'calculated').length,
         color: 'primary.main',
       },
       {
-        name: '已发放',
+        name: t('hrm.hrm_payroll_page.text_43d640'),
         value: payrollRuns.filter((r) => r.status === 'paid').length,
         color: 'success.dark',
       },
@@ -257,44 +259,44 @@ const HrmPayrollPage: React.FC = () => {
   const statCards = useMemo(
     () => [
       {
-        title: '发放人数',
+        title: t('hrm.hrm_payroll_page.text_5adbd7'),
         value: payrollStats.totalEmployees,
-        unit: '人',
+        unit: t('hrm.hrm_payroll_page.text_465afe'),
         icon: <Users sx={{ width: 20, height: 20 }} />,
         color: 'primary' as const,
       },
       {
-        title: '基本工资合计',
+        title: t('hrm.hrm_payroll_page.text_c82ad3'),
         value: formatCurrency(payrollStats.totalBaseSalary),
         icon: <DollarSign sx={{ width: 20, height: 20 }} />,
         color: 'success' as const,
       },
       {
-        title: '奖金合计',
+        title: t('hrm.hrm_payroll_page.text_a3ad89'),
         value: formatCurrency(payrollStats.totalBonus),
         icon: <TrendingUp sx={{ width: 20, height: 20 }} />,
         color: 'secondary' as const,
       },
       {
-        title: '实发工资合计',
+        title: t('hrm.hrm_payroll_page.text_48e9fd'),
         value: formatCurrency(payrollStats.totalNetSalary),
         icon: <CreditCard sx={{ width: 20, height: 20 }} />,
         color: 'primary' as const,
       },
       {
-        title: '平均工资',
+        title: t('hrm.hrm_payroll_page.text_f0f769'),
         value: formatCurrency(payrollStats.avgSalary),
         icon: <Receipt sx={{ width: 20, height: 20 }} />,
         color: 'info' as const,
       },
       {
-        title: '待计算批次',
+        title: t('hrm.hrm_payroll_page.text_480381'),
         value: payrollStats.pendingRuns,
         icon: <Clock sx={{ width: 20, height: 20 }} />,
         color: 'warning' as const,
       },
       {
-        title: '已发放批次',
+        title: t('hrm.hrm_payroll_page.text_b0fa63'),
         value: payrollStats.paidRuns,
         icon: <CheckCircle sx={{ width: 20, height: 20 }} />,
         color: 'success' as const,
@@ -308,7 +310,7 @@ const HrmPayrollPage: React.FC = () => {
     () => [
       {
         id: 'pay_period',
-        label: '发放周期',
+        label: t('hrm.hrm_payroll_page.text_52f37d'),
         render: (row) => (
           <Typography
             variant='body2'
@@ -320,7 +322,7 @@ const HrmPayrollPage: React.FC = () => {
       },
       {
         id: 'employee_count',
-        label: '员工人数',
+        label: t('hrm.hrm_payroll_page.text_34586c'),
         render: (row) => (
           <Typography
             variant='body2'
@@ -332,7 +334,7 @@ const HrmPayrollPage: React.FC = () => {
       },
       {
         id: 'total_amount',
-        label: '总金额',
+        label: t('hrm.hrm_payroll_page.amount'),
         render: (row) => (
           <Typography
             variant='h6'
@@ -344,12 +346,12 @@ const HrmPayrollPage: React.FC = () => {
       },
       {
         id: 'status',
-        label: '状态',
+        label: t('hrm.hrm_payroll_page.status'),
         render: (row) => getPayrollStatusBadge(row.status),
       },
       {
         id: 'paid_at',
-        label: '发放时间',
+        label: t('hrm.hrm_payroll_page.time'),
         render: (row) => (
           <Typography
             variant='body2'
@@ -367,19 +369,19 @@ const HrmPayrollPage: React.FC = () => {
   const payrollRowActions: RowAction<PayrollRun>[] = useMemo(
     () => [
       {
-        label: '查看明细',
+        label: t('hrm.hrm_payroll_page.view'),
         icon: <FileText size={16} />,
         onClick: (row) => setSelectedRunId(row.id),
       },
       {
-        label: '计算薪资',
+        label: t('hrm.hrm_payroll_page.text_ed8d89'),
         icon: <Calculator size={16} />,
         color: 'success',
         show: (row) => row.status === 'draft',
         onClick: (row) => handleCalculate(row.id),
       },
       {
-        label: '执行发放',
+        label: t('hrm.hrm_payroll_page.text_df6e5e'),
         icon: <CreditCard size={16} />,
         color: 'success',
         show: (row) => row.status === 'calculated',
@@ -395,7 +397,7 @@ const HrmPayrollPage: React.FC = () => {
     () => [
       {
         id: 'employee_name',
-        label: '员工姓名',
+        label: t('hrm.hrm_payroll_page.text_50df90'),
         render: (row) => (
           <Box>
             <Typography
@@ -415,7 +417,7 @@ const HrmPayrollPage: React.FC = () => {
       },
       {
         id: 'adjustment_type',
-        label: '调薪类型',
+        label: t('hrm.hrm_payroll_page.type'),
         render: (row) => (
           <Typography
             variant='body2'
@@ -427,7 +429,7 @@ const HrmPayrollPage: React.FC = () => {
       },
       {
         id: 'old_salary',
-        label: '原工资',
+        label: t('hrm.hrm_payroll_page.text_a80942'),
         render: (row) => (
           <Typography
             variant='body2'
@@ -439,7 +441,7 @@ const HrmPayrollPage: React.FC = () => {
       },
       {
         id: 'new_salary',
-        label: '新工资',
+        label: t('hrm.hrm_payroll_page.text_f740b8'),
         render: (row) => (
           <Typography
             variant='body2'
@@ -451,7 +453,7 @@ const HrmPayrollPage: React.FC = () => {
       },
       {
         id: 'adjustment_amount',
-        label: '调整金额',
+        label: t('hrm.hrm_payroll_page.amount_1'),
         render: (row) => (
           <Typography
             variant='body2'
@@ -463,7 +465,7 @@ const HrmPayrollPage: React.FC = () => {
       },
       {
         id: 'reason',
-        label: '原因',
+        label: t('hrm.hrm_payroll_page.text_41dfb0'),
         render: (row) => (
           <Typography
             variant='body2'
@@ -481,7 +483,7 @@ const HrmPayrollPage: React.FC = () => {
       },
       {
         id: 'effective_date',
-        label: '生效日期',
+        label: t('hrm.hrm_payroll_page.date'),
         render: (row) => (
           <Typography
             variant='body2'
@@ -493,7 +495,7 @@ const HrmPayrollPage: React.FC = () => {
       },
       {
         id: 'status',
-        label: '状态',
+        label: t('hrm.hrm_payroll_page.status'),
         render: (row) => (
           <StatusBadge
             status={`employee_${row.status}`}
@@ -521,7 +523,7 @@ const HrmPayrollPage: React.FC = () => {
           columns={[
             {
               id: 'employee_name',
-              label: '员工',
+              label: t('hrm.hrm_payroll_page.text_2ed392'),
               render: (item) => (
                 <Typography
                   variant='body2'
@@ -533,7 +535,7 @@ const HrmPayrollPage: React.FC = () => {
             },
             {
               id: 'gross_amount',
-              label: '应发工资',
+              label: t('hrm.hrm_payroll_page.text_84098f'),
               render: (item) => (
                 <Typography
                   variant='body2'
@@ -545,7 +547,7 @@ const HrmPayrollPage: React.FC = () => {
             },
             {
               id: 'deductions',
-              label: '扣款',
+              label: t('hrm.hrm_payroll_page.text_b99e70'),
               render: (item) => (
                 <Typography
                   variant='body2'
@@ -557,7 +559,7 @@ const HrmPayrollPage: React.FC = () => {
             },
             {
               id: 'taxes',
-              label: '个税',
+              label: t('hrm.hrm_payroll_page.text_b6c9b4'),
               render: (item) => (
                 <Typography
                   variant='body2'
@@ -569,7 +571,7 @@ const HrmPayrollPage: React.FC = () => {
             },
             {
               id: 'net_amount',
-              label: '实发工资',
+              label: t('hrm.hrm_payroll_page.text_fc0a99'),
               render: (item) => (
                 <Typography
                   variant='h6'
@@ -581,7 +583,7 @@ const HrmPayrollPage: React.FC = () => {
             },
             {
               id: 'status',
-              label: '状态',
+              label: t('hrm.hrm_payroll_page.status'),
               render: (item) => getPayrollStatusBadge(item.status),
             },
           ]}
@@ -623,8 +625,8 @@ const HrmPayrollPage: React.FC = () => {
     <PageContainer
       padding={false}
       maxWidth={false}
-      title='薪酬管理'
-      subtitle='管理员工薪资发放和调薪记录'
+      title={t('hrm.hrm_payroll_page.text_bf8ab5')}
+      subtitle={t('hrm.hrm_payroll_page.text_507738')}
       autoTitle
       autoBreadcrumbs
     >
@@ -803,10 +805,10 @@ const HrmPayrollPage: React.FC = () => {
           getRowId={(row) => row.id}
           rowActions={payrollRowActions}
           searchable
-          searchPlaceholder='搜索...'
+          searchPlaceholder={t('hrm.hrm_payroll_page.search')}
           searchValue={searchQuery}
           onSearch={setSearchQuery}
-          emptyMessage='暂无工资发放批次数据'
+          emptyMessage={t('hrm.hrm_payroll_page.no_data')}
           headerContent={
             <Box sx={{ display: 'flex', gap: 2, mb: 2 }}>
               <Button
@@ -827,11 +829,11 @@ const HrmPayrollPage: React.FC = () => {
           expandable={(row) => (selectedRunId === row.id ? renderPayrollItemDetail(row.id) : null)}
           onRowClick={(row) => setSelectedRunId(selectedRunId === row.id ? null : row.id)}
           exportable
-          exportFileName='工资发放批次'
+          exportFileName={t('hrm.hrm_payroll_page.text_8257cc')}
           persistFilters
           persistSearch
           emptyActionButton={{
-            label: '发起薪资核算',
+            label: t('hrm.hrm_payroll_page.text_483368'),
             icon: <Plus size={16} />,
             onClick: handleCreatePayroll,
           }}
@@ -845,8 +847,8 @@ const HrmPayrollPage: React.FC = () => {
           loading={loading}
           getRowId={(row) => row.id}
           searchable
-          searchPlaceholder='搜索...'
-          emptyMessage='暂无调薪记录'
+          searchPlaceholder={t('hrm.hrm_payroll_page.search')}
+          emptyMessage={t('hrm.hrm_payroll_page.no_data_1')}
           headerContent={
             <Box sx={{ display: 'flex', gap: 2, mb: 2 }}>
               <Button
@@ -865,7 +867,7 @@ const HrmPayrollPage: React.FC = () => {
             </Box>
           }
           exportable
-          exportFileName='调薪记录'
+          exportFileName={t('hrm.hrm_payroll_page.text_4d088e')}
           persistFilters
           persistSearch
         />
@@ -905,7 +907,7 @@ const HrmPayrollPage: React.FC = () => {
               </Typography>
               <InputBase
                 type='number'
-                placeholder='请输入税前收入'
+                placeholder={t('hrm.hrm_payroll_page.please_input')}
                 sx={{
                   width: '100%',
                   px: 2,
@@ -925,7 +927,7 @@ const HrmPayrollPage: React.FC = () => {
               </Typography>
               <InputBase
                 type='number'
-                placeholder='请输入社保公积金'
+                placeholder={t('hrm.hrm_payroll_page.please_input_1')}
                 sx={{
                   width: '100%',
                   px: 2,
@@ -945,7 +947,7 @@ const HrmPayrollPage: React.FC = () => {
               </Typography>
               <InputBase
                 type='number'
-                placeholder='请输入专项附加扣除'
+                placeholder={t('hrm.hrm_payroll_page.please_input_2')}
                 sx={{
                   width: '100%',
                   px: 2,

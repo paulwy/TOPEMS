@@ -17,8 +17,6 @@ import {
 import { Plus, Edit, Delete, Package } from 'lucide-react';
 import { pdmApi } from '@/api/pdm';
 import type { Product, CreateProductRequest } from '@/api/pdm';
-import { useNotificationStore } from '@/store';
-import { apiLogger } from '@/utils/logger';
 import {
   ListPageTemplate,
   type ColumnDef,
@@ -27,8 +25,9 @@ import {
 } from '@/components/templates';
 import { PageContainer } from '@/components/common';
 import { designTokens } from '@/theme/tokens';
-import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { QUERY_KEYS } from '@/lib/reactQuery';
+import { useCrudMutations } from '@/hooks';
 
 const ct = designTokens.colors;
 
@@ -66,8 +65,6 @@ export const ProductPage: React.FC = () => {
     category: '',
     unit: '',
   });
-  const addNotification = useNotificationStore((state) => state.addNotification);
-
   const loadProducts = useCallback(() => {
     queryClient.invalidateQueries({ queryKey: QUERY_KEYS.PDM.PRODUCTS });
   }, [queryClient]);
@@ -86,41 +83,23 @@ export const ProductPage: React.FC = () => {
     staleTime: 5 * 60 * 1000,
   });
 
-  const createProductMutation = useMutation({
-    mutationFn: (data: CreateProductRequest) => pdmApi.createProduct(data),
-    onSuccess: () => {
-      addNotification({ title: '成功', message: '产品创建成功', type: 'success' });
+  const { createMutation: createProductMutation, updateMutation: updateProductMutation, deleteMutation: deleteProductMutation } = useCrudMutations<
+    CreateProductRequest,
+    CreateProductRequest,
+    string
+  >({
+    queryKeyToInvalidate: QUERY_KEYS.PDM.PRODUCTS,
+    createFn: (data) => pdmApi.createProduct(data),
+    updateFn: ({ id, data }) => pdmApi.updateProduct(String(id), data),
+    deleteFn: (id) => pdmApi.deleteProduct(String(id)),
+    entityName: '产品',
+    onCreateSuccess: () => {
       setOpenDialog(false);
       setEditingProduct(null);
-      queryClient.invalidateQueries({ queryKey: QUERY_KEYS.PDM.PRODUCTS });
     },
-    onError: () => {
-      addNotification({ title: '错误', message: '创建失败', type: 'error' });
-    },
-  });
-
-  const updateProductMutation = useMutation({
-    mutationFn: ({ id, data }: { id: string; data: CreateProductRequest }) =>
-      pdmApi.updateProduct(id, data),
-    onSuccess: () => {
-      addNotification({ title: '成功', message: '产品更新成功', type: 'success' });
+    onUpdateSuccess: () => {
       setOpenDialog(false);
       setEditingProduct(null);
-      queryClient.invalidateQueries({ queryKey: QUERY_KEYS.PDM.PRODUCTS });
-    },
-    onError: () => {
-      addNotification({ title: '错误', message: '更新失败', type: 'error' });
-    },
-  });
-
-  const deleteProductMutation = useMutation({
-    mutationFn: (id: string) => pdmApi.deleteProduct(id),
-    onSuccess: () => {
-      addNotification({ title: '成功', message: '产品删除成功', type: 'success' });
-      queryClient.invalidateQueries({ queryKey: QUERY_KEYS.PDM.PRODUCTS });
-    },
-    onError: () => {
-      addNotification({ title: '错误', message: '删除失败', type: 'error' });
     },
   });
 

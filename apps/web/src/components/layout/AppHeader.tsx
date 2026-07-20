@@ -34,7 +34,6 @@ import {
 } from 'lucide-react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from '@/hooks/useAuth';
-import { useThemeStore } from '@/store';
 import { navigationRegistryV2 } from '@/lib/navigation';
 import type { NavItem } from '@/lib/navigation/types';
 import { PLUGIN_PATHS } from '@/modules/plugin/config';
@@ -43,6 +42,7 @@ import { DASHBOARD_PATHS } from '@/routes/dashboard';
 import { AUTH_PATHS } from '@/routes/auth';
 import { AI_PATHS } from '@/modules/ai/config';
 import GlobalSearchBar from '../GlobalSearchBar';
+import { ThemeSelector } from '../ThemeSelector';
 
 export interface AppHeaderProps {
   tabletDrawerOpen?: boolean;
@@ -79,9 +79,6 @@ export const AppHeader: React.FC<AppHeaderProps> = ({
   const location = useLocation();
   const theme = useTheme();
   const { logout } = useAuth();
-  const appTheme = useThemeStore((state) => state.theme);
-  const toggleTheme = useThemeStore((state) => state.toggleTheme);
-  const isDark = appTheme === 'dark';
 
   // 响应式断点：优化计划要求 < 768px 隐藏 Sidebar，使用汉堡菜单
   const isMobileNav = useMediaQuery('(max-width:767px)'); // < 768px 显示汉堡菜单按钮
@@ -224,6 +221,7 @@ export const AppHeader: React.FC<AppHeaderProps> = ({
             onClick={() => navigate(DASHBOARD_PATHS.dashboard)}
           >
             <Box
+              className='app-header-logo'
               sx={{
                 width: 36,
                 height: 36,
@@ -238,6 +236,7 @@ export const AppHeader: React.FC<AppHeaderProps> = ({
             </Box>
             <Typography
               variant='h6'
+              className='app-header-title'
               sx={{
                 fontWeight: 700,
                 background: 'linear-gradient(135deg, primary.main, secondary.main)',
@@ -556,20 +555,7 @@ export const AppHeader: React.FC<AppHeaderProps> = ({
                   查看全部通知
                 </MenuItem>
               </Menu>
-              <Tooltip title={isDark ? '切换浅色模式' : '切换深色模式'}>
-                <IconButton
-                  aria-label='切换主题'
-                  onClick={toggleTheme}
-                  sx={{ width: 36, height: 36, '&:hover': { bgcolor: 'action.hover' } }}
-                  size='small'
-                >
-                  {isDark ? (
-                    <Sun style={{ width: 18, height: 18 }} />
-                  ) : (
-                    <Moon style={{ width: 18, height: 18 }} />
-                  )}
-                </IconButton>
-              </Tooltip>
+              <ThemeSelector showMenu />
               <Tooltip title='用户菜单'>
                 <IconButton
                   size='small'

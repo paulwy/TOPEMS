@@ -238,6 +238,7 @@ export const FloatingAIHelper: React.FC = () => {
         <Fab
           color='primary'
           aria-label='AI助手'
+          className='ai-helper-fab'
           sx={{
             position: 'fixed',
             bottom: 24,
@@ -269,6 +270,7 @@ export const FloatingAIHelper: React.FC = () => {
         }}
         slotProps={{
           paper: {
+            className: 'ai-helper-panel',
             sx: {
               width: isMinimized
                 ? { xs: 280, sm: 320 }

@@ -18,11 +18,16 @@ import { Plus, Edit, Trash2 } from 'lucide-react';
 import { apiLogger } from '@/utils/logger';
 import { ListPageTemplate, type ColumnDef } from '@/components/templates';
 import { PageContainer } from '@/components/common';
+import { ConfirmDialog } from '@topems/shared-components';
+import { useConfirmDialog, useUrlListState } from '@/hooks';
 
 const ScmPurchaseItemPage: React.FC = () => {
   const queryClient = useQueryClient();
-  const [currentPage, setCurrentPage] = useState(1);
-  const [pageSize, setPageSize] = useState(10);
+  const listState = useUrlListState({
+    defaultPageSize: 10,
+    baseIndex: 1,
+    historyMode: 'replace',
+  });
   const [showDialog, setShowDialog] = useState(false);
   const [isEditing, setIsEditing] = useState(false);
   const [selectedItem, setSelectedItem] = useState<PurchaseItem | null>(null);
@@ -36,15 +41,21 @@ const ScmPurchaseItemPage: React.FC = () => {
     unit_price: 0,
     amount: 0,
   });
+  const {
+    confirmOpen: confirmDialogOpen,
+    confirmConfig: confirmDialogConfig,
+    openConfirm: openConfirmDialog,
+    closeConfirm: setConfirmDialogClosed,
+  } = useConfirmDialog();
 
   const { addNotification } = useNotificationStore();
 
   const itemsQuery = useQuery({
-    queryKey: [...QUERY_KEYS.SCM.PURCHASE_ITEMS, currentPage, pageSize],
+    queryKey: [...QUERY_KEYS.SCM.PURCHASE_ITEMS, listState.currentPage, listState.pageSize],
     queryFn: async () => {
       const response = await scmApi.purchaseItems.list({
-        page: currentPage,
-        pageSize,
+        page: listState.currentPage,
+        pageSize: listState.pageSize,
       });
       if (!response.success || !response.data) {
         throw new Error(response.message || '加载采购明细失败');
@@ -169,13 +180,15 @@ const ScmPurchaseItemPage: React.FC = () => {
     setShowDialog(true);
   };
 
-  const handleDelete = async (item: PurchaseItem) => {
-    if (!window.confirm(`确定要删除采购明细 "${item.product_name}" 吗？`)) {
-      return;
-    }
-    try {
-      await deleteMutation.mutateAsync(item.id);
-    } catch {}
+  const handleDelete = (item: PurchaseItem) => {
+    openConfirmDialog({
+      title: '确认删除',
+      message: `确定要删除采购明细 "${item.product_name}" 吗？`,
+      danger: true,
+      onConfirm: () => {
+        deleteMutation.mutate(item.id);
+      },
+    });
   };
 
   const resetForm = () => {
@@ -274,13 +287,13 @@ const ScmPurchaseItemPage: React.FC = () => {
         data={items}
         loading={loading || isMutationPending}
         pagination={{
-          page: currentPage - 1,
-          pageSize,
+          page: listState.currentPage - 1,
+          pageSize: listState.pageSize,
           total,
-          onPageChange: (page) => setCurrentPage(page + 1),
+          onPageChange: (page) => listState.setCurrentPage(page + 1),
           onPageSizeChange: (size) => {
-            setPageSize(size);
-            setCurrentPage(1);
+            listState.setPageSize(size);
+            listState.setCurrentPage(1);
           },
         }}
         actions={[
@@ -404,6 +417,18 @@ const ScmPurchaseItemPage: React.FC = () => {
           </form>
         </DialogContent>
       </Dialog>
+
+      <ConfirmDialog
+        isOpen={confirmDialogOpen}
+        onClose={setConfirmDialogClosed}
+        onConfirm={() => {
+          confirmDialogConfig?.onConfirm();
+          setConfirmDialogClosed();
+        }}
+        title={confirmDialogConfig?.title || ''}
+        message={confirmDialogConfig?.message || ''}
+        danger={confirmDialogConfig?.danger}
+      />
     </PageContainer>
   );
 };

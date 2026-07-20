@@ -17,7 +17,6 @@ import { PageContainer } from '@/components/common';
 import React, { useState, useMemo, useCallback } from 'react';
 import type { Material, CreateMaterialRequest, UpdateMaterialRequest } from '@/api/erp';
 import { erpApi } from '@/api/erp';
-import { useNotificationStore } from '@/store';
 import {
   ListPageTemplate,
   type ColumnDef,
@@ -25,9 +24,10 @@ import {
   type FilterConfig,
 } from '@/components/templates';
 import { Plus, Edit, Trash2, Eye, Package as PackageIcon } from 'lucide-react';
-import { apiLogger } from '@/utils/logger';
-import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { useQuery } from '@tanstack/react-query';
 import { QUERY_KEYS } from '@/lib/reactQuery';
+import { ConfirmDialog } from '@topems/shared-components';
+import { useConfirmDialog, useCrudMutations } from '@/hooks';
 
 const MaterialManagementPage: React.FC = () => {
   const [searchTerm, setSearchTerm] = useState('');
@@ -54,9 +54,12 @@ const MaterialManagementPage: React.FC = () => {
     weight: 0,
     volume: 0,
   });
-
-  const { addNotification } = useNotificationStore();
-  const queryClient = useQueryClient();
+  const {
+    confirmOpen: confirmDialogOpen,
+    confirmConfig: confirmDialogConfig,
+    openConfirm: openConfirmDialog,
+    closeConfirm: setConfirmDialogClosed,
+  } = useConfirmDialog();
 
   const queryKey = [
     QUERY_KEYS.ERP.MATERIALS,
@@ -96,85 +99,41 @@ const MaterialManagementPage: React.FC = () => {
   const materials = materialsResponse?.materials || [];
   const total = materialsResponse?.total || 0;
 
-  const createMutation = useMutation({
-    mutationFn: async (data: CreateMaterialRequest) => {
+  const { createMutation, updateMutation, deleteMutation } = useCrudMutations<
+    CreateMaterialRequest,
+    UpdateMaterialRequest,
+    string
+  >({
+    queryKeyToInvalidate: [QUERY_KEYS.ERP.MATERIALS],
+    createFn: async (data) => {
       const response = await erpApi.materials.create(data);
       if (!response.success) {
         throw new Error('Failed to create material');
       }
       return response;
     },
-    onSuccess: () => {
-      addNotification({
-        type: 'success',
-        title: '创建成功',
-        message: '新物料已创建',
-      });
-      queryClient.invalidateQueries({ queryKey: [QUERY_KEYS.ERP.MATERIALS] });
-      setShowDialog(false);
-      resetForm();
-    },
-    onError: (error) => {
-      apiLogger.error('创建失败:', error);
-      addNotification({
-        type: 'error',
-        title: '创建失败',
-        message: '无法创建物料',
-      });
-    },
-  });
-
-  const updateMutation = useMutation({
-    mutationFn: async ({ id, data }: { id: string; data: UpdateMaterialRequest }) => {
-      const response = await erpApi.materials.update(id, data);
+    updateFn: async ({ id, data }) => {
+      const response = await erpApi.materials.update(String(id), data);
       if (!response.success) {
         throw new Error('Failed to update material');
       }
       return response;
     },
-    onSuccess: () => {
-      addNotification({
-        type: 'success',
-        title: '更新成功',
-        message: '物料信息已更新',
-      });
-      queryClient.invalidateQueries({ queryKey: [QUERY_KEYS.ERP.MATERIALS] });
-      setShowDialog(false);
-      resetForm();
-    },
-    onError: (error) => {
-      apiLogger.error('更新失败:', error);
-      addNotification({
-        type: 'error',
-        title: '更新失败',
-        message: '无法更新物料',
-      });
-    },
-  });
-
-  const deleteMutation = useMutation({
-    mutationFn: async (id: string) => {
-      const response = await erpApi.materials.delete(id);
+    deleteFn: async (id) => {
+      const response = await erpApi.materials.delete(String(id));
       if (!response.success) {
         throw new Error('Failed to delete material');
       }
       return response;
     },
-    onSuccess: () => {
-      addNotification({
-        type: 'success',
-        title: '删除成功',
-        message: '物料已删除',
-      });
-      queryClient.invalidateQueries({ queryKey: [QUERY_KEYS.ERP.MATERIALS] });
+    entityName: '物料',
+    onCreateSuccess: () => {
+      setShowDialog(false);
+      resetForm();
     },
-    onError: (error) => {
-      apiLogger.error('删除失败:', error);
-      addNotification({
-        type: 'error',
-        title: '删除失败',
-        message: '无法删除物料',
-      });
+    onUpdateSuccess: () => {
+      setShowDialog(false);
+      resetForm();
     },
   });
 
@@ -191,11 +150,17 @@ const MaterialManagementPage: React.FC = () => {
   };
 
   const handleDelete = useCallback(
-    async (id: string) => {
-      if (!window.confirm('确定要删除这个物料吗?')) return;
-      await deleteMutation.mutateAsync(id);
+    (id: string) => {
+      openConfirmDialog({
+        title: '确认删除',
+        message: '确定要删除这个物料吗?',
+        danger: true,
+        onConfirm: () => {
+          deleteMutation.mutate(id);
+        },
+      });
     },
-    [deleteMutation]
+    [deleteMutation, openConfirmDialog]
   );
 
   const handleEdit = useCallback((material: Material) => {
@@ -759,6 +724,18 @@ const MaterialManagementPage: React.FC = () => {
           )}
         </DialogContent>
       </Dialog>
+
+      <ConfirmDialog
+        isOpen={confirmDialogOpen}
+        onClose={setConfirmDialogClosed}
+        onConfirm={() => {
+          confirmDialogConfig?.onConfirm();
+          setConfirmDialogClosed();
+        }}
+        title={confirmDialogConfig?.title || ''}
+        message={confirmDialogConfig?.message || ''}
+        danger={confirmDialogConfig?.danger}
+      />
     </PageContainer>
   );
 };

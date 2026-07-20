@@ -14,15 +14,18 @@
 #![allow(clippy::redundant_closure)]
 #![allow(dead_code)]
 
+mod event_handlers;
 mod middleware;
 mod models;
 mod modules;
 mod services;
+mod workflow;
 
 use std::env;
 mod shared;
 
 use std::net::SocketAddr;
+use std::sync::Arc;
 
 use axum::{extract::State, routing::get, Json, Router};
 use axum_prometheus::PrometheusMetricLayer;
@@ -68,13 +71,52 @@ async fn main() -> anyhow::Result<()> {
         tracing::warn!("EHS database init warning: {}", e);
     }
 
+    let event_publisher = match topems_shared::event::EventPublisher::new("topems-ehs") {
+        Ok(publisher) => {
+            tracing::info!("📢 事件发布服务初始化成功");
+            Some(std::sync::Arc::new(publisher))
+        }
+        Err(e) => {
+            tracing::warn!("⚠️ 事件发布服务初始化失败（不阻塞启动）: {}", e);
+            None
+        }
+    };
+
+    if let Err(e) =
+        event_handlers::start_event_subscribers(pool.clone(), event_publisher.clone()).await
+    {
+        tracing::warn!("⚠️ EHS 事件订阅者启动失败: {}", e);
+    }
+
     let auth_state = AuthState::from_env();
     let health_config = SimpleHealthConfig::new("topems-ehs").with_db(pool.clone());
+
+    let workflow_url = std::env::var("WORKFLOW_SERVICE_URL")
+        .unwrap_or_else(|_| "http://localhost:8001".to_string());
+    let workflow_client = workflow::WorkflowClient::new(&workflow_url);
+    tracing::info!("🔗 工作流服务客户端初始化成功: {}", workflow_url);
+
+    let hazard_cache = Arc::new(shared::cache::InMemoryCache::new(
+        std::time::Duration::from_secs(300),
+    ));
+    let training_cache = Arc::new(shared::cache::InMemoryCache::new(
+        std::time::Duration::from_secs(120),
+    ));
+    let dict_cache = Arc::new(shared::cache::InMemoryCache::new(
+        std::time::Duration::from_secs(600),
+    ));
+
+    tracing::info!("💾 内存缓存初始化完成（隐患/培训/字典）");
 
     let state = AppState {
         auth_state,
         pool,
         health_config,
+        event_publisher,
+        workflow_client,
+        hazard_cache,
+        training_cache,
+        dict_cache,
     };
 
     let cors = create_cors_layer();

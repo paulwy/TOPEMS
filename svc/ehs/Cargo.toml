@@ -23,6 +23,7 @@ axum-prometheus.workspace = true
 prometheus.workspace = true
 anyhow.workspace = true
 reqwest.workspace = true
+dashmap.workspace = true
 
 [dev-dependencies]
 tokio-test.workspace = true

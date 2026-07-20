@@ -7,6 +7,7 @@ pub mod cache;
 pub mod cluster;
 pub mod compression;
 pub mod config;
+pub mod config_center;
 pub mod cors;
 pub mod crud;
 pub mod database;
@@ -16,6 +17,7 @@ pub mod event;
 pub mod health;
 pub mod hrm;
 pub mod logging;
+pub mod layers;
 pub mod messaging;
 pub mod middleware;
 pub mod metrics;
@@ -25,12 +27,14 @@ pub mod notification;
 pub mod ollama_client;
 pub mod performance;
 pub mod permission;
+pub mod permission_center;
 pub mod query_optimizer;
 pub mod rate_limit;
 pub mod redis;
 pub mod repository;
 pub mod response;
 pub mod rls;
+pub mod saga;
 pub mod schema;
 pub mod security;
 pub mod service_bootstrap;
@@ -66,8 +70,8 @@ pub use backup::{
     BackupStatistics, BackupStatus, BackupType, CompressionType, RestoreRequest,
 };
 pub use cache::{
-    CacheManager, CacheStatistics, EvictionPolicy, InMemoryCache, MultiLevelCacheManager,
-    MultiLevelCacheStatistics,
+    CacheKeyGenerator, CacheManager, CacheStatistics, CacheWarmer, DistributedCacheManager,
+    EvictionPolicy, InMemoryCache, MultiLevelCacheManager, MultiLevelCacheStatistics,
 };
 pub use cluster::{
     ClusterConfig, ClusterError, ClusterEvent, ClusterEventType, ClusterManager, ClusterMetrics,
@@ -80,16 +84,19 @@ pub use config::enhanced::{
 pub use config::{
     get_default_port, AppConfig, CacheConfig, Config, ServiceConfig, ServiceRegistry,
 };
+pub use config_center::{
+    ConfigAuditLog, ConfigCenter, ConfigSchema, ConfigType, ConfigVersion, ValidationRule,
+};
 pub use cors::create_cors_layer;
 pub use database::{
     check_pool_health, create_database_pool, test_database_connection, HealthCheckResult,
 };
 pub use error::{Result, TopemsError};
 pub use event::{
-    EhsAccidentReportedPayload, EhsHazardReportedPayload, Event, EventError, EventPublisher,
-    EventResult, EventSubscriber, EventType, HrmDepartmentCreatedPayload,
-    HrmDepartmentDeletedPayload, HrmDepartmentUpdatedPayload, HrmEmployeeCreatedPayload,
-    HrmEmployeeUpdatedPayload, LimsInspectionAbnormalDetectedPayload,
+    CacheInvalidatedPayload, EhsAccidentReportedPayload, EhsHazardReportedPayload, Event,
+    EventError, EventPublisher, EventResult, EventSubscriber, EventType,
+    HrmDepartmentCreatedPayload, HrmDepartmentDeletedPayload, HrmDepartmentUpdatedPayload,
+    HrmEmployeeCreatedPayload, HrmEmployeeUpdatedPayload, LimsInspectionAbnormalDetectedPayload,
     LimsInspectionResultSubmittedPayload, LimsSampleRegisteredPayload, PmProjectCreatedPayload,
     PmProjectUpdatedPayload, PmTaskCreatedPayload, PmTaskDeletedPayload, PmTaskUpdatedPayload,
     PositionCreatedPayload, PositionDeletedPayload, PositionUpdatedPayload,
@@ -126,9 +133,13 @@ pub use performance::{
 };
 pub use permission::{
     check_any_module_permission, check_module_permission, check_resource_permission,
-    DataCondition, DataPermission, ModulePermission, PermissionTemplate, Position,
-    ResourcePermission,
+    DataCondition, DataPermission, ModuleCode, ModulePermission, PermissionAction,
+    PermissionCacheStats, PermissionChangeType, PermissionMetadata, PermissionMetadataCache,
+    PermissionScope, PermissionTemplate, Position, ResourcePermission,
+    get_all_module_permissions, get_module_actions,
 };
+pub use permission_center::{check_permission_with_scope, PermissionCenterClient};
+pub use layers::{can_depend, module_layer, modules_by_layer, Layer};
 
 pub use middleware::{
     department_middleware, require_department, require_module_active,
@@ -141,8 +152,8 @@ pub use query_optimizer::{
 };
 pub use rate_limit::{RateLimitConfig, RateLimitMiddleware};
 pub use redis::{
-    BloomFilter, CacheKeyGenerator, CacheProtectionConfig, CacheService, CacheStatisticsCollector,
-    RedisCacheService, RedisPool, UnifiedCacheManager,
+    BloomFilter, CacheKeyGenerator as RedisCacheKeyGenerator, CacheProtectionConfig, CacheService,
+    CacheStatisticsCollector, RedisCacheService, RedisPool, UnifiedCacheManager,
 };
 pub use repository::{
     PaginatedQuery, PaginatedResult as RepoPaginatedResult, QueryBuilder, Repository,
@@ -229,3 +240,9 @@ pub use api::{
 
 // 数据压缩中间件模块导出
 pub use compression::{CompressionAlgorithm, CompressionConfig, CompressionMiddleware};
+
+// Saga 分布式事务编排器模块导出
+pub use saga::{
+    InMemorySagaStore, PostgresSagaStore, SagaError, SagaInstance, SagaOrchestrator, SagaResult,
+    SagaStatus, SagaStep, SagaStepDefinition, SagaStore, StepStatus,
+};

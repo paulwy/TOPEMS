@@ -67,9 +67,11 @@ import {
 import { logger } from '@/utils/logger';
 import { designTokens } from '@/theme/tokens';
 
+import { useTranslation } from 'react-i18next';
 const ct = designTokens.colors;
 
 const BiPermissionPage = () => {
+  const { t } = useTranslation();
   const queryClient = useQueryClient();
   const [activeTab, setActiveTab] = useState<'row-level' | 'data'>('row-level');
   const [searchTerm, setSearchTerm] = useState('');
@@ -199,7 +201,7 @@ const BiPermissionPage = () => {
   };
 
   const handleDelete = (id: string) => {
-    if (!confirm('确定要删除这条权限规则吗？')) return;
+    if (!confirm(t('bi.bi_permission_page.confirm'))) return;
     deleteMutation.mutate(id);
   };
 
@@ -233,20 +235,20 @@ const BiPermissionPage = () => {
 
   const getResourceTypeLabel = (type: string) => {
     const labels: Record<string, string> = {
-      dashboard: '仪表盘',
-      dataset: '数据集',
-      datasource: '数据源',
-      report: '报表',
+      dashboard: t('bi.bi_permission_page.text_3fa8b3'),
+      dataset: t('bi.bi_permission_page.text_e20804'),
+      datasource: t('bi.bi_permission_page.text_c11322'),
+      report: t('bi.bi_permission_page.text_fc00f3'),
     };
     return labels[type] || type;
   };
 
   const getPermissionTypeLabel = (type: string) => {
     const labels: Record<string, string> = {
-      view: '查看',
-      edit: '编辑',
-      admin: '管理',
-      export: '导出',
+      view: t('bi.bi_permission_page.view'),
+      edit: t('bi.bi_permission_page.edit'),
+      admin: t('bi.bi_permission_page.text_08b55f'),
+      export: t('bi.bi_permission_page.export'),
     };
     return labels[type] || type;
   };
@@ -263,8 +265,8 @@ const BiPermissionPage = () => {
 
   return (
     <PageContainer
-      title='数据权限管理'
-      subtitle='配置行级权限和数据访问控制'
+      title={t('bi.bi_permission_page.text_c62b5d')}
+      subtitle={t('bi.bi_permission_page.text_6a9997')}
       headerProps={{
         pageIcon: <Shield style={{ width: 20, height: 20 }} />,
         pageGradient: `linear-gradient(135deg, ${ct.error.main} 0%, ${ct.error[600]} 100%)`,
@@ -276,9 +278,9 @@ const BiPermissionPage = () => {
         title=''
         subtitle=''
         breadcrumbs={[
-          { label: '首页', href: '/dashboard' },
+          { label: t('bi.bi_permission_page.home'), href: '/dashboard' },
           { label: 'BI' },
-          { label: '权限管理' },
+          { label: t('bi.bi_permission_page.text_23bbdd') },
         ]}
       >
         <Box sx={{ p: 3 }}>
@@ -461,20 +463,20 @@ const BiPermissionPage = () => {
               >
                 <Tab
                   value='row-level'
-                  label='行级权限'
+                  label={t('bi.bi_permission_page.text_578248')}
                   icon={<KeyRound size={16} />}
                   iconPosition='start'
                 />
                 <Tab
                   value='data'
-                  label='数据权限'
+                  label={t('bi.bi_permission_page.text_679f4e')}
                   icon={<Database size={16} />}
                   iconPosition='start'
                 />
               </Tabs>
               <Box sx={{ display: 'flex', gap: 2 }}>
                 <TextField
-                  placeholder='搜索权限规则...'
+                  placeholder={t('bi.bi_permission_page.search')}
                   value={searchTerm}
                   onChange={(e) => setSearchTerm(e.target.value)}
                   size='small'
@@ -632,35 +634,35 @@ const BiPermissionPage = () => {
                                       onChange={() => handleToggle(perm)}
                                     />
                                   }
-                                  label={perm.is_enabled ? '启用' : '停用'}
+                                  label={perm.is_enabled ? t('bi.bi_permission_page.active') : t('bi.bi_permission_page.inactive')}
                                   sx={{ m: 0 }}
                                 />
                               </TableCell>
                               <TableCell>
-                                <Tooltip title='测试规则'>
+                                <Tooltip title={t('bi.bi_permission_page.test')}>
                                   <IconButton
                                     size='small'
                                     onClick={() => handleTest(perm)}
-                                    aria-label='测试规则'
+                                    aria-label={t('bi.bi_permission_page.test')}
                                   >
                                     <CheckCircle2 size={16} />
                                   </IconButton>
                                 </Tooltip>
-                                <Tooltip title='编辑'>
+                                <Tooltip title={t('bi.bi_permission_page.edit')}>
                                   <IconButton
                                     size='small'
                                     onClick={() => handleOpenDialog(perm)}
-                                    aria-label='编辑权限规则'
+                                    aria-label={t('bi.bi_permission_page.edit_1')}
                                   >
                                     <Edit2 size={16} />
                                   </IconButton>
                                 </Tooltip>
-                                <Tooltip title='删除'>
+                                <Tooltip title={t('bi.bi_permission_page.delete')}>
                                   <IconButton
                                     size='small'
                                     color='error'
                                     onClick={() => handleDelete(perm.id)}
-                                    aria-label='删除权限规则'
+                                    aria-label={t('bi.bi_permission_page.delete_1')}
                                   >
                                     <Trash2 size={16} />
                                   </IconButton>
@@ -778,19 +780,19 @@ const BiPermissionPage = () => {
                                 {new Date(perm.created_at).toLocaleDateString()}
                               </TableCell>
                               <TableCell>
-                                <Tooltip title='编辑'>
+                                <Tooltip title={t('bi.bi_permission_page.edit')}>
                                   <IconButton
                                     size='small'
-                                    aria-label='编辑角色'
+                                    aria-label={t('bi.bi_permission_page.edit_2')}
                                   >
                                     <Edit2 size={16} />
                                   </IconButton>
                                 </Tooltip>
-                                <Tooltip title='删除'>
+                                <Tooltip title={t('bi.bi_permission_page.delete')}>
                                   <IconButton
                                     size='small'
                                     color='error'
-                                    aria-label='删除角色'
+                                    aria-label={t('bi.bi_permission_page.delete_2')}
                                   >
                                     <Trash2 size={16} />
                                   </IconButton>
@@ -813,7 +815,7 @@ const BiPermissionPage = () => {
             maxWidth='md'
             fullWidth
           >
-            <DialogTitle>{editingItem ? '编辑行级权限规则' : '新建行级权限规则'}</DialogTitle>
+            <DialogTitle>{editingItem ? t('bi.bi_permission_page.edit_3') : t('bi.bi_permission_page.text_f36bf2')}</DialogTitle>
             <DialogContent sx={{ mt: 2 }}>
               <Grid
                 container
@@ -821,7 +823,7 @@ const BiPermissionPage = () => {
               >
                 <Grid size={{ xs: 12 }}>
                   <TextField
-                    label='规则名称'
+                    label={t('bi.bi_permission_page.name')}
                     fullWidth
                     value={formData.name}
                     onChange={(e) => setFormData({ ...formData, name: e.target.value })}
@@ -829,7 +831,7 @@ const BiPermissionPage = () => {
                 </Grid>
                 <Grid size={{ xs: 12 }}>
                   <TextField
-                    label='描述'
+                    label={t('bi.bi_permission_page.description')}
                     multiline
                     rows={2}
                     fullWidth
@@ -842,7 +844,7 @@ const BiPermissionPage = () => {
                     <InputLabel>数据源</InputLabel>
                     <Select
                       value={formData.data_source_id}
-                      label='数据源'
+                      label={t('bi.bi_permission_page.text_c11322')}
                       onChange={(e) => setFormData({ ...formData, data_source_id: e.target.value })}
                     >
                       <MenuItem value='ds-001'>业务主数据库</MenuItem>
@@ -854,7 +856,7 @@ const BiPermissionPage = () => {
                 </Grid>
                 <Grid size={{ xs: 12, sm: 6 }}>
                   <TextField
-                    label='数据表名'
+                    label={t('bi.bi_permission_page.text_099652')}
                     fullWidth
                     value={formData.table_name}
                     onChange={(e) => setFormData({ ...formData, table_name: e.target.value })}
@@ -862,7 +864,7 @@ const BiPermissionPage = () => {
                 </Grid>
                 <Grid size={{ xs: 12 }}>
                   <TextField
-                    label='权限条件 (SQL WHERE 子句)'
+                    label={t('bi.bi_permission_page.text_924fa0')}
                     multiline
                     rows={4}
                     fullWidth
@@ -874,12 +876,12 @@ const BiPermissionPage = () => {
                         fontSize: 14,
                       },
                     }}
-                    helperText="例如: department = CURRENT_USER_DEPARTMENT 或 region = 'east'"
+                    helperText={t('bi.bi_permission_page.text_848c70')}
                   />
                 </Grid>
                 <Grid size={{ xs: 12, sm: 6 }}>
                   <TextField
-                    label='适用角色 (逗号分隔)'
+                    label={t('bi.bi_permission_page.text_5885b5')}
                     fullWidth
                     value={(formData.roles || []).join(', ')}
                     onChange={(e) =>
@@ -895,7 +897,7 @@ const BiPermissionPage = () => {
                 </Grid>
                 <Grid size={{ xs: 12, sm: 6 }}>
                   <TextField
-                    label='指定用户 (逗号分隔)'
+                    label={t('bi.bi_permission_page.text_d0959e')}
                     fullWidth
                     value={(formData.users || []).join(', ')}
                     onChange={(e) =>
@@ -912,13 +914,13 @@ const BiPermissionPage = () => {
                 <Grid size={{ xs: 12, sm: 6 }}>
                   <TextField
                     type='number'
-                    label='优先级'
+                    label={t('bi.bi_permission_page.text_ee8ecb')}
                     fullWidth
                     value={formData.priority}
                     onChange={(e) =>
                       setFormData({ ...formData, priority: parseInt(e.target.value) || 1 })
                     }
-                    helperText='数字越小优先级越高'
+                    helperText={t('bi.bi_permission_page.text_3446e5')}
                   />
                 </Grid>
                 <Grid size={{ xs: 12, sm: 6 }}>
@@ -929,7 +931,7 @@ const BiPermissionPage = () => {
                         onChange={(e) => setFormData({ ...formData, is_enabled: e.target.checked })}
                       />
                     }
-                    label='启用此规则'
+                    label={t('bi.bi_permission_page.active_1')}
                     sx={{ mt: 2 }}
                   />
                 </Grid>

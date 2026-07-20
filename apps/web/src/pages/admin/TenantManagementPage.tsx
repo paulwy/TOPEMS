@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useMemo, useCallback } from 'react';
+import React, { useState, useMemo, useCallback } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { QUERY_KEYS } from '@/lib/reactQuery';
 import {
@@ -43,6 +43,7 @@ import { tenantApi } from '@/api/tenant';
 import type { Tenant, TenantStatus, TenantPlan } from '@/api/tenant/types';
 import { logger } from '@/utils/logger';
 import { ADMIN_PATHS } from '@/modules/admin/config';
+import { useConfirmDialog, useUrlListState } from '@/hooks';
 
 const statusColors: Record<TenantStatus, 'success' | 'warning' | 'error' | 'default'> = {
   active: 'success',
@@ -76,35 +77,40 @@ const TenantManagementPage: React.FC = () => {
   const theme = useTheme();
   const navigate = useNavigate();
   const queryClient = useQueryClient();
-  const [searchQuery, setSearchQuery] = useState('');
-  const [debouncedSearch, setDebouncedSearch] = useState('');
-  const [statusFilter, setStatusFilter] = useState<string>('all');
-  const [planFilter, setPlanFilter] = useState<string>('all');
-  const [currentPage, setCurrentPage] = useState(1);
-  const [pageSize, setPageSize] = useState(10);
+  const listState = useUrlListState<{ status: string; plan: string }>({
+    defaultSearch: '',
+    defaultPageSize: 10,
+    defaultFilters: { status: 'all', plan: 'all' },
+    baseIndex: 1,
+    historyMode: 'replace',
+  });
+  const {
+    searchQuery,
+    debouncedSearch,
+    currentPage,
+    pageSize,
+    filters: urlFilters,
+    setSearchQuery,
+    setFilter,
+    setCurrentPage,
+    setPageSize,
+  } = listState;
+  const statusFilter = urlFilters.status;
+  const planFilter = urlFilters.plan;
   const [showCreateDialog, setShowCreateDialog] = useState(false);
   const [showEditDialog, setShowEditDialog] = useState(false);
   const [selectedTenant, setSelectedTenant] = useState<Tenant | null>(null);
-  const [confirmDialogOpen, setConfirmDialogOpen] = useState(false);
-  const [confirmConfig, setConfirmConfig] = useState<{
-    title: string;
-    message: string;
-    onConfirm: () => void;
-    danger?: boolean;
-  } | null>(null);
+  const {
+    confirmOpen: confirmDialogOpen,
+    confirmConfig,
+    openConfirm: openConfirmDialog,
+    closeConfirm: setConfirmDialogClosed,
+  } = useConfirmDialog();
   const [formData, setFormData] = useState({
     name: '',
     slug: '',
     plan: 'professional' as TenantPlan,
   });
-
-  useEffect(() => {
-    const timer = setTimeout(() => {
-      setDebouncedSearch(searchQuery);
-      setCurrentPage(1);
-    }, 300);
-    return () => clearTimeout(timer);
-  }, [searchQuery]);
 
   const tenantsQuery = useQuery({
     queryKey: [
@@ -191,7 +197,7 @@ const TenantManagementPage: React.FC = () => {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: QUERY_KEYS.TENANT.TENANTS });
-      setConfirmDialogOpen(false);
+      setConfirmDialogClosed();
     },
     onError: (err: unknown) => {
       logger.error('Failed to delete tenant:', err);
@@ -208,7 +214,7 @@ const TenantManagementPage: React.FC = () => {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: QUERY_KEYS.TENANT.TENANTS });
-      setConfirmDialogOpen(false);
+      setConfirmDialogClosed();
     },
     onError: (err: unknown) => {
       logger.error('Failed to suspend tenant:', err);
@@ -242,28 +248,26 @@ const TenantManagementPage: React.FC = () => {
 
   const handleDeleteTenant = useCallback(
     (tenant: Tenant) => {
-      setConfirmConfig({
+      openConfirmDialog({
         title: '确认删除租户',
         message: `确定要删除租户"${tenant.name}"吗？此操作不可恢复。`,
         danger: true,
         onConfirm: () => deleteTenantMutation.mutate(tenant.id),
       });
-      setConfirmDialogOpen(true);
     },
-    [deleteTenantMutation]
+    [deleteTenantMutation, openConfirmDialog]
   );
 
   const handleSuspendTenant = useCallback(
     (tenant: Tenant) => {
-      setConfirmConfig({
+      openConfirmDialog({
         title: '确认停用租户',
         message: `确定要停用租户"${tenant.name}"吗？停用后该租户的所有用户将无法登录。`,
         danger: true,
         onConfirm: () => suspendTenantMutation.mutate(tenant.id),
       });
-      setConfirmDialogOpen(true);
     },
-    [suspendTenantMutation]
+    [suspendTenantMutation, openConfirmDialog]
   );
 
   const handleActivateTenant = useCallback(
@@ -491,14 +495,12 @@ const TenantManagementPage: React.FC = () => {
 
   const handleFilterChange = useCallback((filters: Record<string, any>) => {
     if (filters.status !== undefined) {
-      setStatusFilter(filters.status);
-      setCurrentPage(1);
+      setFilter('status', filters.status);
     }
     if (filters.plan !== undefined) {
-      setPlanFilter(filters.plan);
-      setCurrentPage(1);
+      setFilter('plan', filters.plan);
     }
-  }, []);
+  }, [setFilter]);
 
   return (
     <PageContainer
@@ -693,7 +695,7 @@ const TenantManagementPage: React.FC = () => {
           message={confirmConfig.message}
           danger={confirmConfig.danger}
           onConfirm={confirmConfig.onConfirm}
-          onClose={() => setConfirmDialogOpen(false)}
+          onClose={setConfirmDialogClosed}
         />
       )}
     </PageContainer>

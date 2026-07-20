@@ -1,4 +1,5 @@
 import React, { useState, useMemo, useCallback } from 'react';
+import { useTranslation } from 'react-i18next';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { Box, Card, CardContent, Typography, Chip } from '@mui/material';
 import { Plus, Trash2, Upload, Download, Edit, Package } from 'lucide-react';
@@ -10,20 +11,13 @@ import {
 } from '@/components/templates';
 import { PageContainer } from '@/components/common';
 import { materialApi } from '@/api/rd';
-import type { Material, CreateMaterialRequest, UpdateMaterialRequest } from '@/api/rd';
+import type { Material } from '@/api/rd';
 import { useNotificationStore } from '@/store';
 import { logger } from '@/utils/logger';
 import { ConfirmDialog } from '@topems/shared-components';
 
-const STATUS_OPTIONS = [
-  { label: '全部', value: '' },
-  { label: '充足', value: 'sufficient' },
-  { label: '正常', value: 'normal' },
-  { label: '偏低', value: 'low' },
-  { label: '不足', value: 'insufficient' },
-];
-
 const RsMaterialListPage: React.FC = () => {
+  const { t } = useTranslation();
   const { addNotification } = useNotificationStore();
   const queryClient = useQueryClient();
   const [page, setPage] = useState(0);
@@ -35,6 +29,17 @@ const RsMaterialListPage: React.FC = () => {
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [deletingId, setDeletingId] = useState<string | null>(null);
   const [batchDeleteDialogOpen, setBatchDeleteDialogOpen] = useState(false);
+
+  const STATUS_OPTIONS = useMemo(
+    () => [
+      { label: t('rd.material_list_page.status_filter.all'), value: '' },
+      { label: t('rd.material_list_page.status_filter.sufficient'), value: 'sufficient' },
+      { label: t('rd.material_list_page.status_filter.normal'), value: 'normal' },
+      { label: t('rd.material_list_page.status_filter.low'), value: 'low' },
+      { label: t('rd.material_list_page.status_filter.insufficient'), value: 'insufficient' },
+    ],
+    [t]
+  );
 
   const materialListQuery = useQuery({
     queryKey: ['rs-materials', page, rowsPerPage, searchTerm, categoryFilter, statusFilter],
@@ -49,7 +54,7 @@ const RsMaterialListPage: React.FC = () => {
 
       const response = await materialApi.listMaterials(params);
       if (!response.success || !response.data) {
-        throw new Error(response.message || '加载物料列表失败');
+        throw new Error(response.message || t('rd.material_list_page.error.load_list_failed'));
       }
       return {
         materials: response.data.materials || [],
@@ -63,23 +68,24 @@ const RsMaterialListPage: React.FC = () => {
     mutationFn: async (id: string) => {
       const response = await materialApi.deleteMaterial(id);
       if (!response.success) {
-        throw new Error(response.message || '删除物料失败');
+        throw new Error(response.message || t('rd.material_list_page.error.delete_failed'));
       }
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['rs-materials'] });
       addNotification({
         type: 'success',
-        title: '删除成功',
-        message: '物料已删除',
+        title: t('rd.material_list_page.notification.delete_success_title'),
+        message: t('rd.material_list_page.notification.delete_success_message'),
       });
     },
     onError: (error: any) => {
       logger.error('删除物料失败:', error);
       addNotification({
         type: 'error',
-        title: '删除失败',
-        message: error.message || '无法删除物料',
+        title: t('rd.material_list_page.notification.delete_failed_title'),
+        message:
+          error.message || t('rd.material_list_page.notification.delete_failed_message'),
       });
     },
   });
@@ -88,7 +94,9 @@ const RsMaterialListPage: React.FC = () => {
     mutationFn: async (ids: string[]) => {
       const response = await materialApi.batchDeleteMaterials(ids);
       if (!response.success || !response.data) {
-        throw new Error(response.message || '批量删除物料失败');
+        throw new Error(
+          response.message || t('rd.material_list_page.error.batch_delete_failed')
+        );
       }
       return response.data;
     },
@@ -98,14 +106,19 @@ const RsMaterialListPage: React.FC = () => {
       if (failed === 0) {
         addNotification({
           type: 'success',
-          title: '批量删除成功',
-          message: `成功删除 ${success} 条物料`,
+          title: t('rd.material_list_page.notification.batch_delete_success_title'),
+          message: t('rd.material_list_page.notification.batch_delete_success_message', {
+            success,
+          }),
         });
       } else {
         addNotification({
           type: 'warning',
-          title: '部分成功',
-          message: `成功删除 ${success} 条，失败 ${failed} 条`,
+          title: t('rd.material_list_page.notification.batch_delete_partial_title'),
+          message: t('rd.material_list_page.notification.batch_delete_partial_message', {
+            success,
+            failed,
+          }),
         });
       }
     },
@@ -113,8 +126,10 @@ const RsMaterialListPage: React.FC = () => {
       logger.error('批量删除物料失败:', error);
       addNotification({
         type: 'error',
-        title: '删除失败',
-        message: error.message || '无法批量删除物料',
+        title: t('rd.material_list_page.notification.batch_delete_failed_title'),
+        message:
+          error.message ||
+          t('rd.material_list_page.notification.batch_delete_failed_message'),
       });
     },
   });
@@ -123,7 +138,7 @@ const RsMaterialListPage: React.FC = () => {
     mutationFn: async (file: File) => {
       const response = await materialApi.importMaterials(file);
       if (!response.success || !response.data) {
-        throw new Error(response.message || '导入物料失败');
+        throw new Error(response.message || t('rd.material_list_page.error.import_failed'));
       }
       return response.data;
     },
@@ -133,14 +148,19 @@ const RsMaterialListPage: React.FC = () => {
       if (failed === 0) {
         addNotification({
           type: 'success',
-          title: '导入成功',
-          message: `成功导入 ${success} 条物料`,
+          title: t('rd.material_list_page.notification.import_success_title'),
+          message: t('rd.material_list_page.notification.import_success_message', {
+            success,
+          }),
         });
       } else {
         addNotification({
           type: 'warning',
-          title: '部分成功',
-          message: `成功导入 ${success} 条，失败 ${failed} 条`,
+          title: t('rd.material_list_page.notification.import_partial_title'),
+          message: t('rd.material_list_page.notification.import_partial_message', {
+            success,
+            failed,
+          }),
         });
       }
     },
@@ -148,8 +168,9 @@ const RsMaterialListPage: React.FC = () => {
       logger.error('导入物料失败:', error);
       addNotification({
         type: 'error',
-        title: '导入失败',
-        message: error.message || '无法导入物料',
+        title: t('rd.material_list_page.notification.import_failed_title'),
+        message:
+          error.message || t('rd.material_list_page.notification.import_failed_message'),
       });
     },
   });
@@ -223,18 +244,18 @@ const RsMaterialListPage: React.FC = () => {
       window.URL.revokeObjectURL(url);
       addNotification({
         type: 'success',
-        title: '导出成功',
-        message: '物料数据已导出',
+        title: t('rd.material_list_page.notification.export_success_title'),
+        message: t('rd.material_list_page.notification.export_success_message'),
       });
     } catch (err: unknown) {
       logger.error('导出物料失败:', err);
       addNotification({
         type: 'error',
-        title: '导出失败',
-        message: '无法导出物料',
+        title: t('rd.material_list_page.notification.export_failed_title'),
+        message: t('rd.material_list_page.notification.export_failed_message'),
       });
     }
-  }, [addNotification]);
+  }, [addNotification, t]);
 
   const getStatusColor = useCallback(
     (status: string): 'success' | 'warning' | 'error' | 'default' | 'info' => {
@@ -258,20 +279,23 @@ const RsMaterialListPage: React.FC = () => {
     []
   );
 
-  const getStatusLabel = useCallback((status: string): string => {
-    switch (status) {
-      case 'sufficient':
-        return '充足';
-      case 'normal':
-        return '正常';
-      case 'low':
-        return '偏低';
-      case 'insufficient':
-        return '不足';
-      default:
-        return status;
-    }
-  }, []);
+  const getStatusLabel = useCallback(
+    (status: string): string => {
+      switch (status) {
+        case 'sufficient':
+          return t('rd.material_list_page.status_label.sufficient');
+        case 'normal':
+          return t('rd.material_list_page.status_label.normal');
+        case 'low':
+          return t('rd.material_list_page.status_label.low');
+        case 'insufficient':
+          return t('rd.material_list_page.status_label.insufficient');
+        default:
+          return status;
+      }
+    },
+    [t]
+  );
 
   const getStockStatus = useCallback((material: Material): string => {
     const stock = material.stock_quantity || 0;
@@ -304,7 +328,7 @@ const RsMaterialListPage: React.FC = () => {
     () => [
       {
         id: 'code',
-        label: '物料编码',
+        label: t('rd.material_list_page.column.code'),
         width: 140,
         sortable: true,
         render: (row) => (
@@ -318,13 +342,13 @@ const RsMaterialListPage: React.FC = () => {
       },
       {
         id: 'name',
-        label: '物料名称',
+        label: t('rd.material_list_page.column.name'),
         width: 200,
         sortable: true,
       },
       {
         id: 'category',
-        label: '类别',
+        label: t('rd.material_list_page.column.category'),
         width: 120,
         render: (row) => (
           <Chip
@@ -336,18 +360,18 @@ const RsMaterialListPage: React.FC = () => {
       },
       {
         id: 'stock_quantity',
-        label: '库存',
+        label: t('rd.material_list_page.column.stock'),
         width: 100,
         sortable: true,
       },
       {
         id: 'unit',
-        label: '单位',
+        label: t('rd.material_list_page.column.unit'),
         width: 80,
       },
       {
         id: 'status',
-        label: '状态',
+        label: t('rd.material_list_page.column.status'),
         width: 100,
         sortable: true,
         render: (row) => (
@@ -360,38 +384,38 @@ const RsMaterialListPage: React.FC = () => {
       },
       {
         id: 'location',
-        label: '存放位置',
+        label: t('rd.material_list_page.column.location'),
         width: 120,
         render: () => '-',
       },
     ],
-    [getStatusColor, getStatusLabel, getStockStatus]
+    [getStatusColor, getStatusLabel, getStockStatus, t]
   );
 
   const rowActions: RowAction<Material>[] = [
     {
-      label: '申请',
+      label: t('rd.material_list_page.row_action.apply'),
       onClick: () => {
         addNotification({
           type: 'info',
-          title: '提示',
-          message: '物料申请功能开发中',
+          title: t('rd.material_list_page.notification.tip_title'),
+          message: t('rd.material_list_page.notification.apply_in_development'),
         });
       },
     },
     {
-      label: '编辑',
+      label: t('rd.material_list_page.row_action.edit'),
       icon: <Edit size={16} />,
       onClick: () => {
         addNotification({
           type: 'info',
-          title: '提示',
-          message: '编辑物料功能开发中',
+          title: t('rd.material_list_page.notification.tip_title'),
+          message: t('rd.material_list_page.notification.edit_in_development'),
         });
       },
     },
     {
-      label: '删除',
+      label: t('rd.material_list_page.row_action.delete'),
       icon: <Trash2 size={16} />,
       color: 'error',
       onClick: (row) => handleDeleteClick(row.id),
@@ -400,12 +424,14 @@ const RsMaterialListPage: React.FC = () => {
 
   const batchActions: BatchAction[] = [
     {
-      label: '批量删除',
+      label: t('rd.material_list_page.batch_action.batch_delete'),
       icon: <Trash2 size={16} />,
       color: 'error',
       onClick: handleBatchDeleteClick,
       confirm: true,
-      confirmMessage: `确定要删除选中的 ${selectedIds.length} 条物料吗？`,
+      confirmMessage: t('rd.material_list_page.dialog.confirm_batch_delete_message', {
+        count: selectedIds.length,
+      }),
     },
   ];
 
@@ -413,10 +439,10 @@ const RsMaterialListPage: React.FC = () => {
     () => [
       {
         id: 'category',
-        label: '类别筛选',
+        label: t('rd.material_list_page.filter.category'),
         type: 'select' as const,
         options: [
-          { label: '全部', value: '' },
+          { label: t('rd.material_list_page.status_filter.all'), value: '' },
           ...categories.map((cat) => ({ label: cat, value: cat })),
         ],
         value: categoryFilter,
@@ -427,7 +453,7 @@ const RsMaterialListPage: React.FC = () => {
       },
       {
         id: 'status',
-        label: '状态筛选',
+        label: t('rd.material_list_page.filter.status'),
         type: 'select' as const,
         options: STATUS_OPTIONS,
         value: statusFilter,
@@ -437,7 +463,7 @@ const RsMaterialListPage: React.FC = () => {
         },
       },
     ],
-    [categories, categoryFilter, statusFilter]
+    [categories, categoryFilter, statusFilter, STATUS_OPTIONS, t]
   );
 
   const headerContent = (
@@ -458,7 +484,7 @@ const RsMaterialListPage: React.FC = () => {
                   color='text.secondary'
                   variant='body2'
                 >
-                  物料总数
+                  {t('rd.material_list_page.stat_card.total')}
                 </Typography>
                 <Typography
                   variant='h4'
@@ -482,7 +508,7 @@ const RsMaterialListPage: React.FC = () => {
                   color='text.secondary'
                   variant='body2'
                 >
-                  库存充足
+                  {t('rd.material_list_page.stat_card.sufficient')}
                 </Typography>
                 <Typography
                   variant='h4'
@@ -506,7 +532,7 @@ const RsMaterialListPage: React.FC = () => {
                   color='text.secondary'
                   variant='body2'
                 >
-                  库存不足
+                  {t('rd.material_list_page.stat_card.insufficient')}
                 </Typography>
                 <Typography
                   variant='h4'
@@ -528,8 +554,8 @@ const RsMaterialListPage: React.FC = () => {
 
   return (
     <PageContainer
-      title='物料管理'
-      subtitle='管理研发物料、库存监控、物料申请'
+      title={t('rd.material_list_page.title')}
+      subtitle={t('rd.material_list_page.subtitle')}
     >
       <input
         accept='.csv'
@@ -543,9 +569,9 @@ const RsMaterialListPage: React.FC = () => {
         title=''
         subtitle=''
         breadcrumbs={[
-          { label: '首页', href: '/dashboard' },
-          { label: '研发', href: '/rs' },
-          { label: '物料管理' },
+          { label: t('rd.material_list_page.breadcrumb.home'), href: '/dashboard' },
+          { label: t('rd.material_list_page.breadcrumb.rd'), href: '/rs' },
+          { label: t('rd.material_list_page.breadcrumb.material') },
         ]}
         columns={columns}
         data={materials}
@@ -562,7 +588,7 @@ const RsMaterialListPage: React.FC = () => {
           },
         }}
         searchable
-        searchPlaceholder='搜索物料名称或编码...'
+        searchPlaceholder={t('rd.material_list_page.search_placeholder')}
         searchValue={searchTerm}
         onSearch={(value) => {
           setSearchTerm(value);
@@ -587,25 +613,25 @@ const RsMaterialListPage: React.FC = () => {
         showBatchActionBar
         actions={[
           {
-            label: '导入',
+            label: t('rd.material_list_page.action_button.import'),
             icon: <Upload size={18} />,
             onClick: () => document.getElementById('import-file')?.click(),
             variant: 'outlined',
           },
           {
-            label: '导出',
+            label: t('rd.material_list_page.action_button.export'),
             icon: <Download size={18} />,
             onClick: handleExport,
             variant: 'outlined',
           },
           {
-            label: '新增物料',
+            label: t('rd.material_list_page.action_button.add'),
             icon: <Plus size={18} />,
             onClick: () => {
               addNotification({
                 type: 'info',
-                title: '提示',
-                message: '新增物料功能开发中',
+                title: t('rd.material_list_page.notification.tip_title'),
+                message: t('rd.material_list_page.notification.add_in_development'),
               });
             },
             variant: 'contained',
@@ -615,7 +641,7 @@ const RsMaterialListPage: React.FC = () => {
         headerContent={headerContent}
         getRowId={(row) => row.id}
         onRefresh={() => materialListQuery.refetch()}
-        emptyMessage='暂无物料数据'
+        emptyMessage={t('rd.material_list_page.empty_message')}
         showRowNumber
         columnConfigurable
         persistColumnConfig
@@ -629,8 +655,8 @@ const RsMaterialListPage: React.FC = () => {
           setDeletingId(null);
         }}
         onConfirm={handleDelete}
-        title='确认删除'
-        message='确定要删除这条物料吗？'
+        title={t('rd.material_list_page.dialog.confirm_delete_title')}
+        message={t('rd.material_list_page.dialog.confirm_delete_message')}
         danger
       />
 
@@ -638,8 +664,10 @@ const RsMaterialListPage: React.FC = () => {
         isOpen={batchDeleteDialogOpen}
         onClose={() => setBatchDeleteDialogOpen(false)}
         onConfirm={handleBatchDelete}
-        title='确认批量删除'
-        message={`确定要删除选中的 ${selectedIds.length} 条物料吗？`}
+        title={t('rd.material_list_page.dialog.confirm_batch_delete_title')}
+        message={t('rd.material_list_page.dialog.confirm_batch_delete_message', {
+          count: selectedIds.length,
+        })}
         danger
       />
     </PageContainer>

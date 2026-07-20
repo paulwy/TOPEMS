@@ -41,9 +41,11 @@ import type { InspectionPlan, InspectionItem, InspectionRecord, RecordItem } fro
 import { useNotificationStore } from '@/store';
 import { designTokens } from '@/theme/tokens';
 
+import { useTranslation } from 'react-i18next';
 const ct = designTokens.colors;
 
 const EhsCheckPage: React.FC = () => {
+  const { t } = useTranslation();
   const navigate = useNavigate();
   const queryClient = useQueryClient();
   const [activeTab, setActiveTab] = useState<'plans' | 'records'>('plans');
@@ -96,7 +98,7 @@ const EhsCheckPage: React.FC = () => {
         return data.map((item: InspectionPlan) => ({
           ...item,
           status:
-            item.status === 'active' ? '启用' : item.status === 'inactive' ? '停用' : item.status,
+            item.status === 'active' ? t('ehs.ehs_check_page.active') : item.status === 'inactive' ? t('ehs.ehs_check_page.inactive') : item.status,
         }));
       }
       return [];
@@ -115,11 +117,11 @@ const EhsCheckPage: React.FC = () => {
           ...item,
           status:
             item.status === 'completed'
-              ? '已完成'
+              ? t('ehs.ehs_check_page.completed')
               : item.status === 'in_progress'
-                ? '进行中'
+                ? t('ehs.ehs_check_page.in_progress')
                 : item.status === 'pending'
-                  ? '待处理'
+                  ? t('ehs.ehs_check_page.pending')
                   : item.status,
         }));
       }
@@ -155,7 +157,7 @@ const EhsCheckPage: React.FC = () => {
 
   useEffect(() => {
     if (planItemsQuery.isError) {
-      apiLogger.error('加载检查项失败:', planItemsQuery.error);
+      apiLogger.error(t('ehs.ehs_check_page.fail'), planItemsQuery.error);
       setPlanItems([]);
     }
   }, [planItemsQuery.isError, planItemsQuery.error]);
@@ -190,7 +192,7 @@ const EhsCheckPage: React.FC = () => {
 
   useEffect(() => {
     if (recordDetailQuery.isError) {
-      apiLogger.error('加载检查记录详情失败:', recordDetailQuery.error);
+      apiLogger.error(t('ehs.ehs_check_page.detail'), recordDetailQuery.error);
     }
   }, [recordDetailQuery.isError, recordDetailQuery.error]);
 
@@ -218,32 +220,32 @@ const EhsCheckPage: React.FC = () => {
 
   const getTypeLabel = (type: string) => {
     const typeMap: Record<string, string> = {
-      daily: '日常检查',
-      weekly: '周检查',
-      monthly: '月度检查',
-      quarterly: '季度检查',
-      yearly: '年度检查',
-      special: '专项检查',
+      daily: t('ehs.ehs_check_page.text_e428b1'),
+      weekly: t('ehs.ehs_check_page.text_be3739'),
+      monthly: t('ehs.ehs_check_page.text_0546f1'),
+      quarterly: t('ehs.ehs_check_page.text_f61fd9'),
+      yearly: t('ehs.ehs_check_page.text_572f54'),
+      special: t('ehs.ehs_check_page.text_1550f9'),
     };
     return typeMap[type] || type;
   };
 
   const planColumns: ColumnDef<InspectionPlan>[] = [
-    { id: 'plan_no', label: '计划编号' },
-    { id: 'title', label: '计划名称' },
+    { id: 'plan_no', label: t('ehs.ehs_check_page.plan') },
+    { id: 'title', label: t('ehs.ehs_check_page.name') },
     {
       id: 'inspection_type',
-      label: '检查类型',
+      label: t('ehs.ehs_check_page.type'),
       render: (row) => getTypeLabel(row.inspection_type),
     },
     {
       id: 'frequency',
-      label: '检查频率',
+      label: t('ehs.ehs_check_page.text_e8a33e'),
       render: (row) => getTypeLabel(row.frequency),
     },
     {
       id: 'inspector',
-      label: '负责人',
+      label: t('ehs.ehs_check_page.manager'),
       render: (row) => (
         <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
           <User style={{ width: 14, height: 14 }} />
@@ -253,12 +255,12 @@ const EhsCheckPage: React.FC = () => {
     },
     {
       id: 'status',
-      label: '状态',
+      label: t('ehs.ehs_check_page.status'),
       render: (row) => getStatusBadge(row.status),
     },
     {
       id: 'actions',
-      label: '操作',
+      label: t('ehs.ehs_check_page.action'),
       render: (row) => (
         <Box sx={{ display: 'flex', gap: 1 }}>
           <Button
@@ -281,16 +283,16 @@ const EhsCheckPage: React.FC = () => {
   ];
 
   const recordColumns: ColumnDef<InspectionRecord>[] = [
-    { id: 'record_no', label: '记录编号' },
-    { id: 'title', label: '检查名称' },
+    { id: 'record_no', label: t('ehs.ehs_check_page.text_4868f6') },
+    { id: 'title', label: t('ehs.ehs_check_page.name_1') },
     {
       id: 'inspection_type',
-      label: '检查类型',
+      label: t('ehs.ehs_check_page.type'),
       render: (row) => getTypeLabel(row.inspection_type),
     },
     {
       id: 'location',
-      label: '位置',
+      label: t('ehs.ehs_check_page.text_d4d2a6'),
       render: (row) => (
         <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
           <MapPin style={{ width: 14, height: 14 }} />
@@ -300,7 +302,7 @@ const EhsCheckPage: React.FC = () => {
     },
     {
       id: 'inspector',
-      label: '检查人',
+      label: t('ehs.ehs_check_page.text_2297ba'),
       render: (row) => (
         <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
           <User style={{ width: 14, height: 14 }} />
@@ -310,12 +312,12 @@ const EhsCheckPage: React.FC = () => {
     },
     {
       id: 'status',
-      label: '状态',
+      label: t('ehs.ehs_check_page.status'),
       render: (row) => getStatusBadge(row.status),
     },
     {
       id: 'actions',
-      label: '操作',
+      label: t('ehs.ehs_check_page.action'),
       render: (row) => (
         <Box sx={{ display: 'flex', gap: 1 }}>
           <Button
@@ -329,7 +331,7 @@ const EhsCheckPage: React.FC = () => {
               )
             }
           >
-            {expandedRecords.has(row.id) ? '收起' : '展开'}
+            {expandedRecords.has(row.id) ? t('ehs.ehs_check_page.text_def9e9') : t('ehs.ehs_check_page.text_e2edde')}
           </Button>
           <Button
             size='small'
@@ -418,13 +420,13 @@ const EhsCheckPage: React.FC = () => {
     mutationFn: (data: Parameters<typeof ehsApi.createInspectionPlan>[0]) =>
       ehsApi.createInspectionPlan(data),
     onSuccess: () => {
-      addNotification({ title: '成功', message: '检查计划创建成功', type: 'success' });
+      addNotification({ title: t('ehs.ehs_check_page.success'), message: t('ehs.ehs_check_page.create'), type: 'success' });
       queryClient.invalidateQueries({ queryKey: QUERY_KEYS.EHS.INSPECTION_PLANS });
       setShowCreatePlanModal(false);
     },
     onError: (error: unknown) => {
-      addNotification({ title: '错误', message: '创建失败', type: 'error' });
-      apiLogger.error('创建检查计划失败:', error);
+      addNotification({ title: t('ehs.ehs_check_page.error'), message: t('ehs.ehs_check_page.create_1'), type: 'error' });
+      apiLogger.error(t('ehs.ehs_check_page.create_2'), error);
     },
   });
 
@@ -444,13 +446,13 @@ const EhsCheckPage: React.FC = () => {
     mutationFn: (data: Parameters<typeof ehsApi.createInspectionRecord>[0]) =>
       ehsApi.createInspectionRecord(data),
     onSuccess: () => {
-      addNotification({ title: '成功', message: '检查记录创建成功', type: 'success' });
+      addNotification({ title: t('ehs.ehs_check_page.success'), message: t('ehs.ehs_check_page.create_3'), type: 'success' });
       queryClient.invalidateQueries({ queryKey: QUERY_KEYS.EHS.INSPECTION_RECORDS });
       setShowCreateRecordModal(false);
     },
     onError: (error: unknown) => {
-      addNotification({ title: '错误', message: '创建失败', type: 'error' });
-      apiLogger.error('创建检查记录失败:', error);
+      addNotification({ title: t('ehs.ehs_check_page.error'), message: t('ehs.ehs_check_page.create_1'), type: 'error' });
+      apiLogger.error(t('ehs.ehs_check_page.create_4'), error);
     },
   });
 
@@ -497,29 +499,29 @@ const EhsCheckPage: React.FC = () => {
 
   const stats = {
     plansTotal: plans.length,
-    plansActive: plans.filter((p) => p.status === '启用').length,
+    plansActive: plans.filter((p) => p.status === t('ehs.ehs_check_page.active')).length,
     recordsTotal: records.length,
-    recordsCompleted: records.filter((r) => r.status === '已完成').length,
-    recordsInProgress: records.filter((r) => r.status === '进行中').length,
+    recordsCompleted: records.filter((r) => r.status === t('ehs.ehs_check_page.completed')).length,
+    recordsInProgress: records.filter((r) => r.status === t('ehs.ehs_check_page.in_progress')).length,
   };
 
   const filters = [
     {
       id: 'status',
-      label: '状态',
+      label: t('ehs.ehs_check_page.status'),
       type: 'select' as const,
       options:
         activeTab === 'plans'
           ? [
-              { label: '全部', value: 'all' },
-              { label: '启用', value: '启用' },
-              { label: '停用', value: '停用' },
+              { label: t('ehs.ehs_check_page.all'), value: 'all' },
+              { label: t('ehs.ehs_check_page.active'), value: t('ehs.ehs_check_page.active') },
+              { label: t('ehs.ehs_check_page.inactive'), value: t('ehs.ehs_check_page.inactive') },
             ]
           : [
-              { label: '全部', value: 'all' },
-              { label: '已完成', value: '已完成' },
-              { label: '进行中', value: '进行中' },
-              { label: '待处理', value: '待处理' },
+              { label: t('ehs.ehs_check_page.all'), value: 'all' },
+              { label: t('ehs.ehs_check_page.completed'), value: t('ehs.ehs_check_page.completed') },
+              { label: t('ehs.ehs_check_page.in_progress'), value: t('ehs.ehs_check_page.in_progress') },
+              { label: t('ehs.ehs_check_page.pending'), value: t('ehs.ehs_check_page.pending') },
             ],
       value: statusFilter,
       onChange: (value: unknown) => setStatusFilter(value as string),
@@ -741,7 +743,7 @@ const EhsCheckPage: React.FC = () => {
       </Box>
 
       <ListPageTemplate
-        title={activeTab === 'plans' ? '检查计划' : '检查记录'}
+        title={activeTab === 'plans' ? t('ehs.ehs_check_page.plan_1') : t('ehs.ehs_check_page.text_9b9efd')}
         subtitle={activeTab === 'plans' ? 'Inspection Plans' : 'Inspection Records'}
         columns={(activeTab === 'plans' ? planColumns : recordColumns) as unknown as ColumnDef<InspectionPlan>[]}
         data={(activeTab === 'plans' ? filteredPlans : filteredRecords) as unknown as InspectionPlan[]}
@@ -753,7 +755,7 @@ const EhsCheckPage: React.FC = () => {
         onSearch={(value) => setSearchTerm(value)}
         actions={[
           {
-            label: activeTab === 'plans' ? '新增计划' : '新增记录',
+            label: activeTab === 'plans' ? t('ehs.ehs_check_page.add') : t('ehs.ehs_check_page.add_1'),
             icon: <Plus style={{ width: 18, height: 18 }} />,
             onClick: activeTab === 'plans' ? handleCreatePlan : handleCreateRecord,
             variant: 'contained',
@@ -822,17 +824,17 @@ const EhsCheckPage: React.FC = () => {
           <Box sx={{ pt: 1, display: 'flex', flexDirection: 'column', gap: 2 }}>
             <TextField
               fullWidth
-              label='计划名称 *'
+              label={t('ehs.ehs_check_page.name_2')}
               value={formData.title}
               onChange={(e) => setFormData({ ...formData, title: e.target.value })}
-              placeholder='请输入计划名称'
+              placeholder={t('ehs.ehs_check_page.please_input')}
             />
             <TextField
               fullWidth
-              label='描述'
+              label={t('ehs.ehs_check_page.description')}
               value={formData.description}
               onChange={(e) => setFormData({ ...formData, description: e.target.value })}
-              placeholder='请输入计划描述'
+              placeholder={t('ehs.ehs_check_page.please_input_1')}
               multiline
               rows={2}
             />
@@ -841,7 +843,7 @@ const EhsCheckPage: React.FC = () => {
                 <InputLabel>检查类型 *</InputLabel>
                 <Select
                   value={formData.inspection_type}
-                  label='检查类型'
+                  label={t('ehs.ehs_check_page.type')}
                   onChange={(e) => setFormData({ ...formData, inspection_type: e.target.value })}
                 >
                   <MenuItem value='daily'>日常检查</MenuItem>
@@ -856,7 +858,7 @@ const EhsCheckPage: React.FC = () => {
                 <InputLabel>检查频率 *</InputLabel>
                 <Select
                   value={formData.frequency}
-                  label='检查频率'
+                  label={t('ehs.ehs_check_page.text_e8a33e')}
                   onChange={(e) => setFormData({ ...formData, frequency: e.target.value })}
                 >
                   <MenuItem value='daily'>每天</MenuItem>
@@ -871,24 +873,24 @@ const EhsCheckPage: React.FC = () => {
               <TextField
                 fullWidth
                 type='date'
-                label='开始日期'
+                label={t('ehs.ehs_check_page.start_date')}
                 value={formData.start_date}
                 onChange={(e) => setFormData({ ...formData, start_date: e.target.value })}
               />
               <TextField
                 fullWidth
                 type='date'
-                label='结束日期'
+                label={t('ehs.ehs_check_page.end_date')}
                 value={formData.end_date}
                 onChange={(e) => setFormData({ ...formData, end_date: e.target.value })}
               />
             </Box>
             <TextField
               fullWidth
-              label='负责人'
+              label={t('ehs.ehs_check_page.manager')}
               value={formData.inspector}
               onChange={(e) => setFormData({ ...formData, inspector: e.target.value })}
-              placeholder='请输入负责人姓名'
+              placeholder={t('ehs.ehs_check_page.manager_1')}
             />
           </Box>
         </DialogContent>
@@ -921,16 +923,16 @@ const EhsCheckPage: React.FC = () => {
             <Box sx={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 2 }}>
               <TextField
                 fullWidth
-                label='检查名称 *'
+                label={t('ehs.ehs_check_page.name_3')}
                 value={recordFormData.title}
                 onChange={(e) => setRecordFormData({ ...recordFormData, title: e.target.value })}
-                placeholder='请输入检查名称'
+                placeholder={t('ehs.ehs_check_page.please_input_2')}
               />
               <FormControl fullWidth>
                 <InputLabel>检查类型 *</InputLabel>
                 <Select
                   value={recordFormData.inspection_type}
-                  label='检查类型'
+                  label={t('ehs.ehs_check_page.type')}
                   onChange={(e) =>
                     setRecordFormData({
                       ...recordFormData,
@@ -950,26 +952,26 @@ const EhsCheckPage: React.FC = () => {
             <Box sx={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 2 }}>
               <TextField
                 fullWidth
-                label='位置'
+                label={t('ehs.ehs_check_page.text_d4d2a6')}
                 value={recordFormData.location}
                 onChange={(e) => setRecordFormData({ ...recordFormData, location: e.target.value })}
-                placeholder='请输入检查位置'
+                placeholder={t('ehs.ehs_check_page.please_input_3')}
               />
               <TextField
                 fullWidth
-                label='检查人'
+                label={t('ehs.ehs_check_page.text_2297ba')}
                 value={recordFormData.inspector}
                 onChange={(e) =>
                   setRecordFormData({ ...recordFormData, inspector: e.target.value })
                 }
-                placeholder='请输入检查人姓名'
+                placeholder={t('ehs.ehs_check_page.please_input_4')}
               />
             </Box>
             <Box sx={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 2 }}>
               <TextField
                 fullWidth
                 type='date'
-                label='检查日期'
+                label={t('ehs.ehs_check_page.date')}
                 value={recordFormData.inspected_at}
                 onChange={(e) =>
                   setRecordFormData({ ...recordFormData, inspected_at: e.target.value })
@@ -977,7 +979,7 @@ const EhsCheckPage: React.FC = () => {
               />
               <TextField
                 fullWidth
-                label='关联计划'
+                label={t('ehs.ehs_check_page.plan_2')}
                 select
                 value={recordFormData.plan_id}
                 onChange={(e) => setRecordFormData({ ...recordFormData, plan_id: e.target.value })}
@@ -1036,13 +1038,13 @@ const EhsCheckPage: React.FC = () => {
                       <Box sx={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: 2 }}>
                         <TextField
                           size='small'
-                          label='检查项名称'
+                          label={t('ehs.ehs_check_page.name_4')}
                           value={item.item_title}
                           onChange={(e) => updateRecordItem(index, 'item_title', e.target.value)}
                         />
                         <TextField
                           size='small'
-                          label='类别'
+                          label={t('ehs.ehs_check_page.text_383a6d')}
                           value={item.item_category}
                           onChange={(e) => updateRecordItem(index, 'item_category', e.target.value)}
                         />
@@ -1053,7 +1055,7 @@ const EhsCheckPage: React.FC = () => {
                           <InputLabel>结果</InputLabel>
                           <Select
                             value={item.result}
-                            label='结果'
+                            label={t('ehs.ehs_check_page.text_5ad7f5')}
                             onChange={(e) => updateRecordItem(index, 'result', e.target.value)}
                           >
                             <MenuItem value='pass'>合格</MenuItem>
@@ -1065,7 +1067,7 @@ const EhsCheckPage: React.FC = () => {
                       <TextField
                         size='small'
                         fullWidth
-                        label='备注'
+                        label={t('ehs.ehs_check_page.remark')}
                         value={item.remarks}
                         onChange={(e) => updateRecordItem(index, 'remarks', e.target.value)}
                         sx={{ mt: 1 }}
@@ -1104,7 +1106,7 @@ const EhsCheckPage: React.FC = () => {
         maxWidth='md'
         fullWidth
       >
-        <DialogTitle>{selectedPlan ? '检查计划详情' : '检查记录详情'}</DialogTitle>
+        <DialogTitle>{selectedPlan ? t('ehs.ehs_check_page.detail_1') : t('ehs.ehs_check_page.detail_2')}</DialogTitle>
         <DialogContent>
           {selectedPlan ? (
             <Box
@@ -1280,10 +1282,10 @@ const EhsCheckPage: React.FC = () => {
                         <Chip
                           label={
                             item.result === 'pass'
-                              ? '合格'
+                              ? t('ehs.ehs_check_page.qualified')
                               : item.result === 'fail'
-                                ? '不合格'
-                                : '不适用'
+                                ? t('ehs.ehs_check_page.unqualified')
+                                : t('ehs.ehs_check_page.text_321ff7')
                           }
                           size='small'
                           sx={{

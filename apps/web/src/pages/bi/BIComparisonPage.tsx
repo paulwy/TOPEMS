@@ -50,6 +50,7 @@ import { designTokens } from '@/theme/tokens';
 import { logger } from '@/utils/logger';
 import { BI_PATHS } from '@/modules/bi/config';
 
+import { useTranslation } from 'react-i18next';
 const ct = designTokens.colors;
 
 interface ComparisonRow {
@@ -62,6 +63,7 @@ interface ComparisonRow {
 }
 
 const BIComparisonPage = () => {
+  const { t } = useTranslation();
   const queryClient = useQueryClient();
   const navigate = useNavigate();
   const [error, setError] = useState<string | null>(null);
@@ -120,7 +122,7 @@ const BIComparisonPage = () => {
   useEffect(() => {
     if (comparisonResultQuery.isError) {
       logger.error('Failed to load comparison data:', comparisonResultQuery.error);
-      setError('加载对比数据失败，请稍后重试');
+      setError(t('bi.bi_comparison_page.fail'));
     } else {
       setError(null);
     }
@@ -140,7 +142,7 @@ const BIComparisonPage = () => {
     },
     onError: (e: unknown) => {
       logger.error('Failed to run comparison:', e);
-      setError('执行对比分析失败');
+      setError(t('bi.bi_comparison_page.fail_1'));
     },
   });
 
@@ -148,7 +150,7 @@ const BIComparisonPage = () => {
 
   const handleRefresh = () => {
     if (!currentComparisonId) {
-      setError('请先创建或选择一个对比分析');
+      setError(t('bi.bi_comparison_page.create'));
       return;
     }
     setError(null);
@@ -176,21 +178,21 @@ const BIComparisonPage = () => {
   const statsCards: StatCard[] = [
     {
       id: 'total-items',
-      title: '对比项总数',
+      title: t('bi.bi_comparison_page.text_82bbf6'),
       value: filteredData.length,
       icon: <TrendingUp size={24} />,
       color: 'primary',
     },
     {
       id: 'positive-change',
-      title: '正向增长项',
+      title: t('bi.bi_comparison_page.text_192089'),
       value: filteredData.filter((d) => d.changeRate > 0).length,
       icon: <TrendingUp size={24} />,
       color: 'success',
     },
     {
       id: 'negative-change',
-      title: '负向变化项',
+      title: t('bi.bi_comparison_page.text_dd5404'),
       value: filteredData.filter((d) => d.changeRate < 0).length,
       icon: <TrendingDown size={24} />,
       color: 'error',
@@ -222,8 +224,8 @@ const BIComparisonPage = () => {
 
   return (
     <PageContainer
-      title='数据对比分析'
-      subtitle='对比不同时间或维度的业务指标'
+      title={t('bi.bi_comparison_page.text_440e3b')}
+      subtitle={t('bi.bi_comparison_page.time')}
       padding={false}
       maxWidth={false}
     >
@@ -231,9 +233,9 @@ const BIComparisonPage = () => {
         title=''
         subtitle=''
         breadcrumbs={[
-          { label: '首页', href: '/dashboard' },
+          { label: t('bi.bi_comparison_page.home'), href: '/dashboard' },
           { label: 'BI' },
-          { label: '数据对比' },
+          { label: t('bi.bi_comparison_page.text_faa198') },
         ]}
         stats={statsCards}
         loading={loading}
@@ -290,7 +292,7 @@ const BIComparisonPage = () => {
                   <InputLabel>对比分析</InputLabel>
                   <Select
                     value={currentComparisonId || ''}
-                    label='对比分析'
+                    label={t('bi.bi_comparison_page.text_1a2beb')}
                     onChange={(e) => setCurrentComparisonId(e.target.value)}
                   >
                     {comparisons.map((comp) => (
@@ -311,7 +313,7 @@ const BIComparisonPage = () => {
                 <InputLabel>时间范围</InputLabel>
                 <Select
                   value={timeRange}
-                  label='时间范围'
+                  label={t('bi.bi_comparison_page.time_1')}
                   onChange={(e) => setTimeRange(e.target.value)}
                 >
                   <MenuItem value='all'>全部时间</MenuItem>
@@ -327,7 +329,7 @@ const BIComparisonPage = () => {
                 <InputLabel>对比维度</InputLabel>
                 <Select
                   value={comparisonDimension}
-                  label='对比维度'
+                  label={t('bi.bi_comparison_page.text_457941')}
                   onChange={(e) => setComparisonDimension(e.target.value)}
                 >
                   <MenuItem value='halfYear'>半年度对比</MenuItem>
@@ -345,7 +347,7 @@ const BIComparisonPage = () => {
               </Button>
               <ExportButton
                 data={exportData}
-                columns={['对比项', '指标A', '指标B', '差异', '变化率']}
+                columns={[t('bi.bi_comparison_page.text_97d1f3'), t('bi.bi_comparison_page.text_f776bc'), t('bi.bi_comparison_page.text_841866'), t('bi.bi_comparison_page.difference'), t('bi.bi_comparison_page.text_afb4b6')]}
                 filename='bi-comparison-data'
               />
             </Box>
@@ -355,8 +357,8 @@ const BIComparisonPage = () => {
         {/* 对比图表 */}
         <Card sx={{ mb: 3 }}>
           <CardHeader
-            title='指标对比图'
-            subheader='指标A与指标B可视化对比'
+            title={t('bi.bi_comparison_page.text_70ef92')}
+            subheader={t('bi.bi_comparison_page.text_d7d403')}
           />
           <CardContent>
             <ResponsiveContainer
@@ -379,12 +381,12 @@ const BIComparisonPage = () => {
                 <Tooltip />
                 <Legend />
                 <Bar
-                  dataKey='指标A'
+                  dataKey={t('bi.bi_comparison_page.text_f776bc')}
                   fill={BIChartColors.series[0]}
                   radius={[4, 4, 0, 0]}
                 />
                 <Bar
-                  dataKey='指标B'
+                  dataKey={t('bi.bi_comparison_page.text_841866')}
                   fill={BIChartColors.series[1]}
                   radius={[4, 4, 0, 0]}
                 />
@@ -396,8 +398,8 @@ const BIComparisonPage = () => {
         {/* 对比数据表 */}
         <Card>
           <CardHeader
-            title='对比数据表'
-            subheader='指标A与指标B对比分析'
+            title={t('bi.bi_comparison_page.text_f9aa62')}
+            subheader={t('bi.bi_comparison_page.text_008210')}
           />
           <CardContent>
             <Paper sx={{ overflow: 'auto' }}>
@@ -492,7 +494,7 @@ const BIComparisonPage = () => {
                 onPageChange={handleChangePage}
                 rowsPerPage={rowsPerPage}
                 onRowsPerPageChange={handleChangeRowsPerPage}
-                labelRowsPerPage='每页行数'
+                labelRowsPerPage={t('bi.bi_comparison_page.text_b6960b')}
               />
             </Paper>
           </CardContent>

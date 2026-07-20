@@ -1,0 +1,51 @@
+{
+  "title": "Supply Chain Management",
+  "menu": {
+    "purchase_plan": "Purchase Plan",
+    "supplier_evaluation": "Supplier Evaluation",
+    "demand_forecast": "Demand Forecast",
+    "mrp": "Material Requirements Planning",
+    "purchase_request": "Purchase Request",
+    "purchase_order": "Purchase Order"
+  },
+  "status": {
+    "draft": "Draft",
+    "submitted": "Submitted",
+    "approved": "Approved",
+    "rejected": "Rejected",
+    "in_progress": "In Progress",
+    "completed": "Completed",
+    "cancelled": "Cancelled"
+  },
+  "action": {
+    "create": "Create",
+    "edit": "Edit",
+    "delete": "Delete",
+    "view": "View",
+    "submit": "Submit",
+    "approve": "Approve",
+    "reject": "Reject",
+    "export": "Export"
+  },
+  "field": {
+    "plan_code": "Plan Code",
+    "supplier": "Supplier",
+    "material": "Material",
+    "quantity": "Quantity",
+    "unit": "Unit",
+    "expected_date": "Expected Delivery Date",
+    "amount": "Amount",
+    "currency": "Currency",
+    "warehouse": "Warehouse",
+    "priority": "Priority"
+  },
+  "message": {
+    "create_success": "Created successfully",
+    "update_success": "Updated successfully",
+    "delete_success": "Deleted successfully",
+    "approve_success": "Approved successfully",
+    "submit_success": "Submitted successfully",
+    "confirm_delete": "Confirm deletion?",
+    "no_data": "No data"
+  }
+}

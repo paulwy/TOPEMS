@@ -31,37 +31,41 @@ import { apiLogger } from '@/utils/logger';
 import { ConfirmDialog, PageContainer } from '@/components/common';
 import { designTokens } from '@/theme/tokens';
 
+import { useTranslation } from 'react-i18next';
 const ct = designTokens.colors;
 
-const statusConfig: Record<
-  string,
-  { label: string; color: 'success' | 'warning' | 'error' | 'info' | 'default' }
-> = {
-  pending: { label: '待处理', color: 'warning' },
-  confirmed: { label: '已确认', color: 'info' },
-  shipped: { label: '已发货', color: 'info' },
-  received: { label: '已收货', color: 'success' },
-  completed: { label: '已完成', color: 'success' },
-  cancelled: { label: '已取消', color: 'error' },
-};
 
-const transferTypeConfig: Record<string, string> = {
-  internal: '内部调拨',
-  external: '外部调拨',
-  return: '退货调拨',
-};
 
-const priorityConfig: Record<
-  string,
-  { label: string; color: 'error' | 'warning' | 'info' | 'default' }
-> = {
-  urgent: { label: '紧急', color: 'error' },
-  high: { label: '高', color: 'warning' },
-  normal: { label: '普通', color: 'info' },
-  low: { label: '低', color: 'default' },
-};
 
 const TransferPage: React.FC = () => {
+  const { t } = useTranslation();
+  const statusConfig: Record<
+    string,
+    { label: string; color: 'success' | 'warning' | 'error' | 'info' | 'default' }
+  > = {
+    pending: { label: t('wms.transfer_page.pending'), color: 'warning' },
+    confirmed: { label: t('wms.transfer_page.confirmed'), color: 'info' },
+    shipped: { label: t('wms.transfer_page.text_355409'), color: 'info' },
+    received: { label: t('wms.transfer_page.text_43ad19'), color: 'success' },
+    completed: { label: t('wms.transfer_page.status_completed'), color: 'success' },
+    cancelled: { label: t('wms.transfer_page.status_cancelled'), color: 'error' },
+  };
+  const priorityConfig: Record<
+    string,
+    { label: string; color: 'error' | 'warning' | 'info' | 'default' }
+  > = {
+    urgent: { label: t('wms.transfer_page.text_cb0ed5'), color: 'error' },
+    high: { label: t('wms.transfer_page.text_4296d7'), color: 'warning' },
+    normal: { label: t('wms.transfer_page.text_35242c'), color: 'info' },
+    low: { label: t('wms.transfer_page.text_19ac67'), color: 'default' },
+  };
+
+  const transferTypeConfig: Record<string, string> = {
+    internal: t('wms.transfer_page.transfer'),
+    external: t('wms.transfer_page.transfer_1'),
+    return: t('wms.transfer_page.transfer_2'),
+  };
+
   const { addNotification } = useNotificationStore();
   const queryClient = useQueryClient();
 
@@ -120,15 +124,15 @@ const TransferPage: React.FC = () => {
     },
     onSuccess: (response) => {
       if (response.success) {
-        addNotification({ type: 'success', title: '创建成功', message: '调拨单已创建' });
+        addNotification({ type: 'success', title: t('wms.transfer_page.create'), message: t('wms.transfer_page.create_1') });
         setShowCreateDialog(false);
         resetNewItem();
         queryClient.invalidateQueries({ queryKey: ['wms-transfers'] });
       }
     },
     onError: (error: unknown) => {
-      apiLogger.error('创建调拨单失败:', error);
-      addNotification({ type: 'error', title: '创建失败', message: '创建调拨单失败' });
+      apiLogger.error(t('wms.transfer_page.create_2'), error);
+      addNotification({ type: 'error', title: t('wms.transfer_page.create_3'), message: t('wms.transfer_page.create_4') });
     },
   });
 
@@ -138,13 +142,13 @@ const TransferPage: React.FC = () => {
     },
     onSuccess: (response) => {
       if (response.success) {
-        addNotification({ type: 'success', title: '确认成功', message: '调拨单已确认' });
+        addNotification({ type: 'success', title: t('wms.transfer_page.success'), message: t('wms.transfer_page.confirmed_1') });
         queryClient.invalidateQueries({ queryKey: ['wms-transfers'] });
       }
     },
     onError: (error: unknown) => {
-      apiLogger.error('确认调拨单失败:', error);
-      addNotification({ type: 'error', title: '确认失败', message: '确认调拨单失败' });
+      apiLogger.error(t('wms.transfer_page.fail'), error);
+      addNotification({ type: 'error', title: t('wms.transfer_page.fail_1'), message: t('wms.transfer_page.fail_2') });
     },
   });
 
@@ -154,13 +158,13 @@ const TransferPage: React.FC = () => {
     },
     onSuccess: (response) => {
       if (response.success) {
-        addNotification({ type: 'success', title: '发货成功', message: '调拨单已发货' });
+        addNotification({ type: 'success', title: t('wms.transfer_page.success_1'), message: t('wms.transfer_page.transfer_3') });
         queryClient.invalidateQueries({ queryKey: ['wms-transfers'] });
       }
     },
     onError: (error: unknown) => {
-      apiLogger.error('发货失败:', error);
-      addNotification({ type: 'error', title: '发货失败', message: '发货失败' });
+      apiLogger.error(t('wms.transfer_page.fail_3'), error);
+      addNotification({ type: 'error', title: t('wms.transfer_page.fail_4'), message: t('wms.transfer_page.fail_4') });
     },
   });
 
@@ -170,13 +174,13 @@ const TransferPage: React.FC = () => {
     },
     onSuccess: (response) => {
       if (response.success) {
-        addNotification({ type: 'success', title: '收货成功', message: '调拨单已收货' });
+        addNotification({ type: 'success', title: t('wms.transfer_page.success_2'), message: t('wms.transfer_page.transfer_4') });
         queryClient.invalidateQueries({ queryKey: ['wms-transfers'] });
       }
     },
     onError: (error: unknown) => {
-      apiLogger.error('收货失败:', error);
-      addNotification({ type: 'error', title: '收货失败', message: '收货失败' });
+      apiLogger.error(t('wms.transfer_page.fail_5'), error);
+      addNotification({ type: 'error', title: t('wms.transfer_page.fail_6'), message: t('wms.transfer_page.fail_6') });
     },
   });
 
@@ -186,13 +190,13 @@ const TransferPage: React.FC = () => {
     },
     onSuccess: (response) => {
       if (response.success) {
-        addNotification({ type: 'success', title: '完成成功', message: '调拨单已完成' });
+        addNotification({ type: 'success', title: t('wms.transfer_page.success_3'), message: t('wms.transfer_page.completed') });
         queryClient.invalidateQueries({ queryKey: ['wms-transfers'] });
       }
     },
     onError: (error: unknown) => {
-      apiLogger.error('完成调拨单失败:', error);
-      addNotification({ type: 'error', title: '完成失败', message: '完成调拨单失败' });
+      apiLogger.error(t('wms.transfer_page.fail_7'), error);
+      addNotification({ type: 'error', title: t('wms.transfer_page.fail_8'), message: t('wms.transfer_page.fail_9') });
     },
   });
 
@@ -202,13 +206,13 @@ const TransferPage: React.FC = () => {
     },
     onSuccess: (response) => {
       if (response.success) {
-        addNotification({ type: 'success', title: '删除成功', message: '调拨单已删除' });
+        addNotification({ type: 'success', title: t('wms.transfer_page.delete_success'), message: t('wms.transfer_page.deleted') });
         queryClient.invalidateQueries({ queryKey: ['wms-transfers'] });
       }
     },
     onError: (error: unknown) => {
-      apiLogger.error('删除调拨单失败:', error);
-      addNotification({ type: 'error', title: '删除失败', message: '删除调拨单失败' });
+      apiLogger.error(t('wms.transfer_page.delete'), error);
+      addNotification({ type: 'error', title: t('wms.transfer_page.delete_1'), message: t('wms.transfer_page.delete_2') });
     },
   });
 
@@ -216,8 +220,8 @@ const TransferPage: React.FC = () => {
     if (!newItem.from_warehouse_id || !newItem.to_warehouse_id) {
       addNotification({
         type: 'warning',
-        title: '验证错误',
-        message: '请填写必要信息（源仓库、目标仓库）',
+        title: t('wms.transfer_page.error'),
+        message: t('wms.transfer_page.please_fill'),
       });
       return;
     }
@@ -303,34 +307,34 @@ const TransferPage: React.FC = () => {
 
   const columns: ColumnDef<TransferOrder>[] = useMemo(
     () => [
-      { id: 'order_number', label: '调拨单号', sortable: true },
+      { id: 'order_number', label: t('wms.transfer_page.column_transfer_number'), sortable: true },
       {
         id: 'transfer_type',
-        label: '调拨类型',
+        label: t('wms.transfer_page.field_transfer_type'),
         render: (row) => transferTypeConfig[row.transfer_type] || row.transfer_type,
       },
       {
         id: 'from_warehouse_id',
-        label: '源仓库',
+        label: t('wms.transfer_page.warehouse'),
         render: (row) => getWarehouseName(row.from_warehouse_id),
       },
       {
         id: 'to_warehouse_id',
-        label: '目标仓库',
+        label: t('wms.transfer_page.warehouse_1'),
         render: (row) => getWarehouseName(row.to_warehouse_id),
       },
-      { id: 'total_quantity', label: '总数量' },
+      { id: 'total_quantity', label: t('wms.transfer_page.column_total_quantity') },
       {
         id: 'priority',
-        label: '优先级',
+        label: t('wms.transfer_page.text_ee8ecb'),
         render: (row) => getPriorityBadge(row.priority || 'normal'),
       },
       {
         id: 'status',
-        label: '状态',
+        label: t('wms.transfer_page.filter_status'),
         render: (row) => getStatusBadge(row.status),
       },
-      { id: 'planned_date', label: '计划日期' },
+      { id: 'planned_date', label: t('wms.transfer_page.date') },
     ],
     [getWarehouseName]
   );
@@ -339,16 +343,16 @@ const TransferPage: React.FC = () => {
     () => [
       {
         id: 'status',
-        label: '状态',
+        label: t('wms.transfer_page.filter_status'),
         type: 'select',
         options: [
-          { label: '全部状态', value: '' },
-          { label: '待处理', value: 'pending' },
-          { label: '已确认', value: 'confirmed' },
-          { label: '已发货', value: 'shipped' },
-          { label: '已收货', value: 'received' },
-          { label: '已完成', value: 'completed' },
-          { label: '已取消', value: 'cancelled' },
+          { label: t('wms.transfer_page.filter_option_all_status'), value: '' },
+          { label: t('wms.transfer_page.pending'), value: 'pending' },
+          { label: t('wms.transfer_page.confirmed'), value: 'confirmed' },
+          { label: t('wms.transfer_page.text_355409'), value: 'shipped' },
+          { label: t('wms.transfer_page.text_43ad19'), value: 'received' },
+          { label: t('wms.transfer_page.status_completed'), value: 'completed' },
+          { label: t('wms.transfer_page.status_cancelled'), value: 'cancelled' },
         ],
         value: statusFilter,
         onChange: (value) => {
@@ -358,10 +362,10 @@ const TransferPage: React.FC = () => {
       },
       {
         id: 'warehouse_id',
-        label: '仓库',
+        label: t('wms.transfer_page.warehouse_2'),
         type: 'select',
         options: [
-          { label: '全部仓库', value: '' },
+          { label: t('wms.transfer_page.all'), value: '' },
           ...warehouses.map((w) => ({ label: w.name, value: w.id })),
         ],
         value: warehouseFilter,
@@ -378,12 +382,12 @@ const TransferPage: React.FC = () => {
     () =>
       (row: TransferOrder): React.ReactNode => {
         const actions: RowAction<TransferOrder>[] = [
-          { label: '查看详情', icon: <Eye size={16} />, onClick: () => handleViewDetail(row) },
+          { label: t('wms.transfer_page.action_view_detail'), icon: <Eye size={16} />, onClick: () => handleViewDetail(row) },
         ];
 
         if (row.status === 'pending') {
           actions.push({
-            label: '确认',
+            label: t('wms.transfer_page.confirm'),
             icon: <Check size={16} />,
             onClick: () => handleConfirm(row.id),
           });
@@ -391,7 +395,7 @@ const TransferPage: React.FC = () => {
 
         if (row.status === 'confirmed') {
           actions.push({
-            label: '发货',
+            label: t('wms.transfer_page.text_045315'),
             icon: <Truck size={16} />,
             onClick: () => handleShip(row.id),
           });
@@ -399,7 +403,7 @@ const TransferPage: React.FC = () => {
 
         if (row.status === 'shipped') {
           actions.push({
-            label: '收货',
+            label: t('wms.transfer_page.text_430f7d'),
             icon: <Package size={16} />,
             onClick: () => handleReceive(row.id),
           });
@@ -407,7 +411,7 @@ const TransferPage: React.FC = () => {
 
         if (row.status === 'received') {
           actions.push({
-            label: '完成',
+            label: t('wms.transfer_page.completed_1'),
             icon: <Check size={16} />,
             onClick: () => handleComplete(row.id),
           });
@@ -415,7 +419,7 @@ const TransferPage: React.FC = () => {
 
         if (row.status === 'pending' || row.status === 'cancelled') {
           actions.push({
-            label: '删除',
+            label: t('wms.transfer_page.action_delete'),
             icon: <Trash2 size={16} />,
             color: 'error',
             onClick: () => handleDeleteClick(row.id),
@@ -523,8 +527,8 @@ const TransferPage: React.FC = () => {
 
   return (
     <PageContainer
-      title='库存调拨'
-      subtitle='管理库存调拨单，包括调拨出库、调拨入库等'
+      title={t('wms.transfer_page.transfer_5')}
+      subtitle={t('wms.transfer_page.transfer_inbound')}
       headerProps={{
         pageIcon: <ArrowRightLeft style={{ width: 20, height: 20 }} />,
         pageGradient: `linear-gradient(135deg, ${ct.secondary.main}, ${ct.secondary.dark})`,
@@ -534,16 +538,16 @@ const TransferPage: React.FC = () => {
         title=''
         subtitle=''
         breadcrumbs={[
-          { label: '首页', href: '/dashboard' },
-          { label: '仓储', href: '/wms' },
-          { label: '库存调拨' },
+          { label: t('wms.transfer_page.breadcrumb_home'), href: '/dashboard' },
+          { label: t('wms.transfer_page.breadcrumb_module'), href: '/wms' },
+          { label: t('wms.transfer_page.transfer_5') },
         ]}
         columns={columns}
         data={transfersData.items}
         loading={transfersLoading}
         filters={filters}
         searchable
-        searchPlaceholder='搜索调拨单号...'
+        searchPlaceholder={t('wms.transfer_page.search_placeholder')}
         onSearch={handleSearch}
         searchValue={searchTerm}
         pagination={{
@@ -552,10 +556,10 @@ const TransferPage: React.FC = () => {
           total: transfersData.total,
           onPageChange: setCurrentPage,
         }}
-        actions={[{ label: '新增调拨', icon: <Plus size={16} />, onClick: handleOpenCreate }]}
+        actions={[{ label: t('wms.transfer_page.dialog_create_title'), icon: <Plus size={16} />, onClick: handleOpenCreate }]}
         renderRowActions={renderRowActions}
         headerContent={statsContent}
-        emptyMessage='暂无调拨单数据'
+        emptyMessage={t('wms.transfer_page.empty_message')}
         getRowId={(row) => row.id}
       />
 
@@ -582,7 +586,7 @@ const TransferPage: React.FC = () => {
               <InputLabel>调拨类型</InputLabel>
               <Select
                 value={newItem.transfer_type}
-                label='调拨类型'
+                label={t('wms.transfer_page.field_transfer_type')}
                 onChange={(e) => setNewItem({ ...newItem, transfer_type: e.target.value })}
               >
                 {Object.entries(transferTypeConfig).map(([key, label]) => (
@@ -602,7 +606,7 @@ const TransferPage: React.FC = () => {
               <InputLabel>优先级</InputLabel>
               <Select
                 value={newItem.priority}
-                label='优先级'
+                label={t('wms.transfer_page.text_ee8ecb')}
                 onChange={(e) => setNewItem({ ...newItem, priority: e.target.value })}
               >
                 {Object.entries(priorityConfig).map(([key, config]) => (
@@ -622,7 +626,7 @@ const TransferPage: React.FC = () => {
               <InputLabel>源仓库 *</InputLabel>
               <Select
                 value={newItem.from_warehouse_id}
-                label='源仓库 *'
+                label={t('wms.transfer_page.warehouse_3')}
                 onChange={(e) => setNewItem({ ...newItem, from_warehouse_id: e.target.value })}
               >
                 {warehouses.map((w) => (
@@ -642,7 +646,7 @@ const TransferPage: React.FC = () => {
               <InputLabel>目标仓库 *</InputLabel>
               <Select
                 value={newItem.to_warehouse_id}
-                label='目标仓库 *'
+                label={t('wms.transfer_page.warehouse_4')}
                 onChange={(e) => setNewItem({ ...newItem, to_warehouse_id: e.target.value })}
               >
                 {warehouses.map((w) => (
@@ -656,7 +660,7 @@ const TransferPage: React.FC = () => {
               </Select>
             </FormControl>
             <TextField
-              label='计划日期'
+              label={t('wms.transfer_page.date')}
               type='date'
               value={newItem.planned_date}
               onChange={(e) => setNewItem({ ...newItem, planned_date: e.target.value })}
@@ -665,7 +669,7 @@ const TransferPage: React.FC = () => {
               slotProps={{ inputLabel: { shrink: true } } as const}
             />
             <TextField
-              label='承运人'
+              label={t('wms.transfer_page.text_c1451d')}
               value={newItem.transporter}
               onChange={(e) => setNewItem({ ...newItem, transporter: e.target.value })}
               fullWidth
@@ -673,7 +677,7 @@ const TransferPage: React.FC = () => {
             />
             <Box sx={{ gridColumn: '1 / -1' }}>
               <TextField
-                label='备注'
+                label={t('wms.transfer_page.field_remark')}
                 value={newItem.remarks}
                 onChange={(e) => setNewItem({ ...newItem, remarks: e.target.value })}
                 fullWidth
@@ -948,8 +952,8 @@ const TransferPage: React.FC = () => {
         isOpen={showDeleteConfirm}
         onClose={() => setShowDeleteConfirm(false)}
         onConfirm={handleDelete}
-        title='确认删除'
-        message='确定要删除这个调拨单吗？此操作不可撤销。'
+        title={t('wms.transfer_page.dialog_delete_title')}
+        message={t('wms.transfer_page.confirm_1')}
         danger
       />
     </PageContainer>

@@ -20,16 +20,21 @@ import { Plus, Edit, Trash2 } from 'lucide-react';
 import { apiLogger } from '@/utils/logger';
 import { ListPageTemplate, type ColumnDef } from '@/components/templates';
 import { PageContainer } from '@/components/common';
+import { ConfirmDialog } from '@topems/shared-components';
+import { useConfirmDialog, useUrlListState } from '@/hooks';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { QUERY_KEYS } from '@/lib/reactQuery';
 
 const ScmEvaluationPage: React.FC = () => {
   const queryClient = useQueryClient();
-  const [currentPage, setCurrentPage] = useState(1);
-  const [pageSize, setPageSize] = useState(10);
   const [showDialog, setShowDialog] = useState(false);
   const [isEditing, setIsEditing] = useState(false);
   const [selectedEvaluation, setSelectedEvaluation] = useState<SupplierEvaluation | null>(null);
+  const listState = useUrlListState({
+    defaultPageSize: 10,
+    baseIndex: 1,
+    historyMode: 'replace',
+  });
   const [formData, setFormData] = useState<CreateSupplierEvaluationRequest>({
     supplier_id: '',
     evaluation_date: '',
@@ -44,12 +49,19 @@ const ScmEvaluationPage: React.FC = () => {
 
   const { addNotification } = useNotificationStore();
 
+  const {
+    confirmOpen: confirmDialogOpen,
+    confirmConfig: confirmDialogConfig,
+    openConfirm: openConfirmDialog,
+    closeConfirm: setConfirmDialogClosed,
+  } = useConfirmDialog();
+
   const evaluationsQuery = useQuery<{ items: SupplierEvaluation[]; total: number }>({
-    queryKey: [...QUERY_KEYS.SCM.EVALUATIONS, currentPage, pageSize],
+    queryKey: [...QUERY_KEYS.SCM.EVALUATIONS, listState.currentPage, listState.pageSize],
     queryFn: async () => {
       const response = await scmApi.evaluations.list({
-        page: currentPage,
-        pageSize,
+        page: listState.currentPage,
+        pageSize: listState.pageSize,
       });
       if (response.success && response.data) {
         return { items: response.data.items || [], total: response.data.total || 0 };
@@ -178,10 +190,14 @@ const ScmEvaluationPage: React.FC = () => {
   };
 
   const handleDelete = (evaluation: SupplierEvaluation) => {
-    if (!window.confirm(`确定要删除这条评估记录吗？`)) {
-      return;
-    }
-    deleteMutation.mutate(evaluation.id);
+    openConfirmDialog({
+      title: '确认删除',
+      message: '确定要删除这条评估记录吗？',
+      danger: true,
+      onConfirm: () => {
+        deleteMutation.mutate(evaluation.id);
+      },
+    });
   };
 
   const resetForm = () => {
@@ -305,13 +321,13 @@ const ScmEvaluationPage: React.FC = () => {
         data={evaluations}
         loading={loading}
         pagination={{
-          page: currentPage - 1,
-          pageSize,
+          page: listState.currentPage - 1,
+          pageSize: listState.pageSize,
           total,
-          onPageChange: (page) => setCurrentPage(page + 1),
+          onPageChange: (page) => listState.setCurrentPage(page + 1),
           onPageSizeChange: (size) => {
-            setPageSize(size);
-            setCurrentPage(1);
+            listState.setPageSize(size);
+            listState.setCurrentPage(1);
           },
         }}
         actions={[
@@ -459,6 +475,17 @@ const ScmEvaluationPage: React.FC = () => {
           </form>
         </DialogContent>
       </Dialog>
+      <ConfirmDialog
+        isOpen={confirmDialogOpen}
+        onClose={setConfirmDialogClosed}
+        onConfirm={() => {
+          confirmDialogConfig?.onConfirm();
+          setConfirmDialogClosed();
+        }}
+        title={confirmDialogConfig?.title || ''}
+        message={confirmDialogConfig?.message || ''}
+        danger={confirmDialogConfig?.danger}
+      />
     </PageContainer>
   );
 };

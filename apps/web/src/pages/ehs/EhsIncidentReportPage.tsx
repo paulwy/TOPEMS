@@ -42,9 +42,11 @@ import type { Incident, IncidentAction } from '@/api/ehs';
 import { useNotificationStore } from '@/store';
 import { designTokens } from '@/theme/tokens';
 
+import { useTranslation } from 'react-i18next';
 const ct = designTokens.colors;
 
 const EhsIncidentReportPage: React.FC = () => {
+  const { t } = useTranslation();
   const navigate = useNavigate();
   const queryClient = useQueryClient();
   const [selectedIncident, setSelectedIncident] = useState<Incident | null>(null);
@@ -91,8 +93,8 @@ const EhsIncidentReportPage: React.FC = () => {
         setActions(actionsArray);
       }
     } catch (error: unknown) {
-      apiLogger.error('加载事件详情失败:', error);
-      addNotification({ title: '错误', message: '加载事件详情失败', type: 'error' });
+      apiLogger.error(t('ehs.ehs_incident_report_page.detail'), error);
+      addNotification({ title: t('ehs.ehs_incident_report_page.error'), message: t('ehs.ehs_incident_report_page.detail_1'), type: 'error' });
     }
   };
 
@@ -105,24 +107,24 @@ const EhsIncidentReportPage: React.FC = () => {
   const createIncidentMutation = useMutation({
     mutationFn: (data: typeof formData) => ehsApi.createIncident(data),
     onSuccess: () => {
-      addNotification({ title: '成功', message: '事件报告创建成功', type: 'success' });
+      addNotification({ title: t('ehs.ehs_incident_report_page.success'), message: t('ehs.ehs_incident_report_page.create'), type: 'success' });
       queryClient.invalidateQueries({ queryKey: QUERY_KEYS.EHS.INCIDENTS });
       setShowAddModal(false);
       resetForm();
     },
     onError: (error: unknown) => {
-      apiLogger.error('创建事件报告失败:', error);
-      addNotification({ title: '错误', message: '创建失败，请稍后重试', type: 'error' });
+      apiLogger.error(t('ehs.ehs_incident_report_page.create_1'), error);
+      addNotification({ title: t('ehs.ehs_incident_report_page.error'), message: t('ehs.ehs_incident_report_page.create_2'), type: 'error' });
     },
   });
 
   const handleCreateIncident = () => {
     if (!formData.title.trim()) {
-      addNotification({ title: '错误', message: '请输入事件标题', type: 'error' });
+      addNotification({ title: t('ehs.ehs_incident_report_page.error'), message: t('ehs.ehs_incident_report_page.please_input'), type: 'error' });
       return;
     }
     if (!formData.description.trim()) {
-      addNotification({ title: '错误', message: '请输入事件描述', type: 'error' });
+      addNotification({ title: t('ehs.ehs_incident_report_page.error'), message: t('ehs.ehs_incident_report_page.please_input_1'), type: 'error' });
       return;
     }
     createIncidentMutation.mutate(formData);
@@ -131,17 +133,17 @@ const EhsIncidentReportPage: React.FC = () => {
   const deleteIncidentMutation = useMutation({
     mutationFn: (incidentId: string) => ehsApi.deleteIncident(incidentId),
     onSuccess: () => {
-      addNotification({ title: '成功', message: '事件报告删除成功', type: 'success' });
+      addNotification({ title: t('ehs.ehs_incident_report_page.success'), message: t('ehs.ehs_incident_report_page.delete_success'), type: 'success' });
       queryClient.invalidateQueries({ queryKey: QUERY_KEYS.EHS.INCIDENTS });
     },
     onError: (error: unknown) => {
-      apiLogger.error('删除事件报告失败:', error);
-      addNotification({ title: '错误', message: '删除失败，请稍后重试', type: 'error' });
+      apiLogger.error(t('ehs.ehs_incident_report_page.delete'), error);
+      addNotification({ title: t('ehs.ehs_incident_report_page.error'), message: t('ehs.ehs_incident_report_page.delete_1'), type: 'error' });
     },
   });
 
   const handleDeleteIncident = (incidentId: string) => {
-    if (!confirm('确定要删除此事件报告吗？')) return;
+    if (!confirm(t('ehs.ehs_incident_report_page.confirm'))) return;
     deleteIncidentMutation.mutate(incidentId);
   };
 
@@ -160,10 +162,10 @@ const EhsIncidentReportPage: React.FC = () => {
 
   const getSeverityBadge = (severity: string) => {
     const severityMap: Record<string, { bg: string; color: string; label: string }> = {
-      fatal: { bg: 'error.lighter', color: 'error.dark', label: '致命' },
-      serious: { bg: ct.orange[200], color: 'warning.600', label: '严重' },
-      minor: { bg: 'warning.100', color: ct.yellow[600], label: '轻微' },
-      near_miss: { bg: 'primary.100', color: 'primary.dark', label: '未遂' },
+      fatal: { bg: 'error.lighter', color: 'error.dark', label: t('ehs.ehs_incident_report_page.text_a7551e') },
+      serious: { bg: ct.orange[200], color: 'warning.600', label: t('ehs.ehs_incident_report_page.text_e2e27a') },
+      minor: { bg: 'warning.100', color: ct.yellow[600], label: t('ehs.ehs_incident_report_page.text_b3bd3d') },
+      near_miss: { bg: 'primary.100', color: 'primary.dark', label: t('ehs.ehs_incident_report_page.text_88957b') },
     };
     const item = severityMap[severity] || {
       bg: 'grey.100',
@@ -181,14 +183,14 @@ const EhsIncidentReportPage: React.FC = () => {
 
   const getStatusBadge = (status: string) => {
     const statusMap: Record<string, { bg: string; color: string; label: string }> = {
-      pending: { bg: 'warning.100', color: ct.yellow[600], label: '待处理' },
-      待处理: { bg: 'warning.100', color: ct.yellow[600], label: '待处理' },
-      investigating: { bg: 'primary.100', color: 'primary.dark', label: '调查中' },
-      调查中: { bg: 'primary.100', color: 'primary.dark', label: '调查中' },
-      resolved: { bg: 'success.lighter', color: 'success.dark', label: '已解决' },
-      已解决: { bg: 'success.lighter', color: 'success.dark', label: '已解决' },
-      closed: { bg: 'grey.100', color: 'text.secondary', label: '已关闭' },
-      已关闭: { bg: 'grey.100', color: 'text.secondary', label: '已关闭' },
+      pending: { bg: 'warning.100', color: ct.yellow[600], label: t('ehs.ehs_incident_report_page.pending') },
+      待处理: { bg: 'warning.100', color: ct.yellow[600], label: t('ehs.ehs_incident_report_page.pending') },
+      investigating: { bg: 'primary.100', color: 'primary.dark', label: t('ehs.ehs_incident_report_page.text_913542') },
+      调查中: { bg: 'primary.100', color: 'primary.dark', label: t('ehs.ehs_incident_report_page.text_913542') },
+      resolved: { bg: 'success.lighter', color: 'success.dark', label: t('ehs.ehs_incident_report_page.text_d7d257') },
+      已解决: { bg: 'success.lighter', color: 'success.dark', label: t('ehs.ehs_incident_report_page.text_d7d257') },
+      closed: { bg: 'grey.100', color: 'text.secondary', label: t('ehs.ehs_incident_report_page.close') },
+      已关闭: { bg: 'grey.100', color: 'text.secondary', label: t('ehs.ehs_incident_report_page.close') },
     };
     const item = statusMap[status] || {
       bg: 'grey.100',
@@ -206,11 +208,11 @@ const EhsIncidentReportPage: React.FC = () => {
 
   const getTypeLabel = (type: string) => {
     const typeMap: Record<string, string> = {
-      near_miss: '未遂事件',
-      accident: '事故',
-      injury: '人员伤害',
-      environmental: '环境事件',
-      equipment: '设备故障',
+      near_miss: t('ehs.ehs_incident_report_page.text_f1d392'),
+      accident: t('ehs.ehs_incident_report_page.text_131045'),
+      injury: t('ehs.ehs_incident_report_page.personnel'),
+      environmental: t('ehs.ehs_incident_report_page.text_2f4ad4'),
+      equipment: t('ehs.ehs_incident_report_page.equipment'),
     };
     return typeMap[type] || type;
   };
@@ -218,14 +220,14 @@ const EhsIncidentReportPage: React.FC = () => {
   const columns: ColumnDef<Incident>[] = [
     {
       id: 'title',
-      label: '事件标题',
+      label: t('ehs.ehs_incident_report_page.title'),
       render: (row) => (
         <Typography sx={{ fontWeight: 500, color: 'slate.900' }}>{row.title}</Typography>
       ),
     },
     {
       id: 'incident_type',
-      label: '类型',
+      label: t('ehs.ehs_incident_report_page.type'),
       render: (row) => (
         <Chip
           label={getTypeLabel(row.incident_type)}
@@ -236,24 +238,24 @@ const EhsIncidentReportPage: React.FC = () => {
     },
     {
       id: 'severity',
-      label: '严重程度',
+      label: t('ehs.ehs_incident_report_page.text_08fe50'),
       render: (row) => getSeverityBadge(row.severity),
     },
     {
       id: 'status',
-      label: '状态',
+      label: t('ehs.ehs_incident_report_page.status'),
       render: (row) => getStatusBadge(row.status),
     },
     {
       id: 'reported_at',
-      label: '报告时间',
+      label: t('ehs.ehs_incident_report_page.time'),
       render: (row) => (
         <span>{row.reported_at ? new Date(row.reported_at).toLocaleString('zh-CN') : '-'}</span>
       ),
     },
     {
       id: 'actions',
-      label: '操作',
+      label: t('ehs.ehs_incident_report_page.action'),
       render: (row) => (
         <Box sx={{ display: 'flex', gap: 1 }}>
           <Button
@@ -289,18 +291,18 @@ const EhsIncidentReportPage: React.FC = () => {
   const actionColumns: ColumnDef<IncidentAction>[] = [
     {
       id: 'action_type',
-      label: '行动类型',
+      label: t('ehs.ehs_incident_report_page.type_1'),
       render: (row) => (
         <Chip
           size='small'
           sx={{ backgroundColor: 'primary.100', color: 'primary.dark' }}
           label={
             row.action_type === 'investigation'
-              ? '调查'
+              ? t('ehs.ehs_incident_report_page.text_75168b')
               : row.action_type === 'correction'
-                ? '纠正'
+                ? t('ehs.ehs_incident_report_page.text_67fb69')
                 : row.action_type === 'prevention'
-                  ? '预防'
+                  ? t('ehs.ehs_incident_report_page.text_fd1b9f')
                   : row.action_type
           }
         />
@@ -308,12 +310,12 @@ const EhsIncidentReportPage: React.FC = () => {
     },
     {
       id: 'description',
-      label: '行动描述',
+      label: t('ehs.ehs_incident_report_page.description'),
       render: (row) => row.description,
     },
     {
       id: 'responsible',
-      label: '负责人',
+      label: t('ehs.ehs_incident_report_page.manager'),
       render: (row) => (
         <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
           <Users sx={{ fontSize: 16 }} />
@@ -323,7 +325,7 @@ const EhsIncidentReportPage: React.FC = () => {
     },
     {
       id: 'due_date',
-      label: '截止日期',
+      label: t('ehs.ehs_incident_report_page.date'),
       render: (row) => (
         <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
           <Calendar sx={{ fontSize: 16 }} />
@@ -333,7 +335,7 @@ const EhsIncidentReportPage: React.FC = () => {
     },
     {
       id: 'status',
-      label: '状态',
+      label: t('ehs.ehs_incident_report_page.status'),
       render: (row) => getStatusBadge(row.status),
     },
   ];
@@ -347,7 +349,7 @@ const EhsIncidentReportPage: React.FC = () => {
 
   const headerActions = [
     {
-      label: '上报事件',
+      label: t('ehs.ehs_incident_report_page.text_bee0e8'),
       icon: <Plus sx={{ fontSize: 16, mr: 1 }} />,
       onClick: () => setShowAddModal(true),
       variant: 'contained' as const,
@@ -494,7 +496,7 @@ const EhsIncidentReportPage: React.FC = () => {
             </Card>
           </Box>
         }
-        emptyMessage='暂无事件报告'
+        emptyMessage={t('ehs.ehs_incident_report_page.no_data')}
         onRefresh={() => queryClient.invalidateQueries({ queryKey: QUERY_KEYS.EHS.INCIDENTS })}
       />
 
@@ -521,7 +523,7 @@ const EhsIncidentReportPage: React.FC = () => {
                 onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
                   setFormData((prev) => ({ ...prev, title: e.target.value }))
                 }
-                placeholder='请输入事件标题'
+                placeholder={t('ehs.ehs_incident_report_page.please_input')}
               />
             </Box>
             <Box sx={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 2 }}>
@@ -539,7 +541,7 @@ const EhsIncidentReportPage: React.FC = () => {
                   <InputLabel>事件类型</InputLabel>
                   <Select
                     value={formData.incident_type}
-                    label='事件类型'
+                    label={t('ehs.ehs_incident_report_page.type_2')}
                     onChange={(e) =>
                       setFormData((prev) => ({
                         ...prev,
@@ -570,7 +572,7 @@ const EhsIncidentReportPage: React.FC = () => {
                   <InputLabel>严重程度</InputLabel>
                   <Select
                     value={formData.severity}
-                    label='严重程度'
+                    label={t('ehs.ehs_incident_report_page.text_08fe50')}
                     onChange={(e) =>
                       setFormData((prev) => ({
                         ...prev,
@@ -604,7 +606,7 @@ const EhsIncidentReportPage: React.FC = () => {
                       location: e.target.value,
                     }))
                   }
-                  placeholder='请输入位置'
+                  placeholder={t('ehs.ehs_incident_report_page.please_input_2')}
                 />
               </Box>
               <Box>
@@ -624,7 +626,7 @@ const EhsIncidentReportPage: React.FC = () => {
                       reported_by: e.target.value,
                     }))
                   }
-                  placeholder='请输入报告人'
+                  placeholder={t('ehs.ehs_incident_report_page.please_input_3')}
                 />
               </Box>
             </Box>
@@ -666,7 +668,7 @@ const EhsIncidentReportPage: React.FC = () => {
                     description: e.target.value,
                   }))
                 }
-                placeholder='请详细描述事件经过...'
+                placeholder={t('ehs.ehs_incident_report_page.description_1')}
               />
             </Box>
           </Box>
@@ -836,7 +838,7 @@ const EhsIncidentReportPage: React.FC = () => {
                   variant='body1'
                   sx={{ mt: 1, whiteSpace: 'pre-wrap', color: 'text.primary' }}
                 >
-                  {selectedIncident.description || '暂无描述'}
+                  {selectedIncident.description || t('ehs.ehs_incident_report_page.description_2')}
                 </Typography>
               </Box>
 

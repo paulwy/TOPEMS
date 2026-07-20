@@ -43,6 +43,8 @@ import {
 } from '@/hooks/useConsolidation';
 import { DataTable } from '@/components/common/DataTable';
 import type { CompanyRelation, CompanyTreeNode, CompanyRelationType } from '@/types/consolidation';
+import { ConfirmDialog } from '@topems/shared-components';
+import { useConfirmDialog } from '@/hooks';
 
 // 关系类型配置
 const RELATION_TYPE_CONFIG: Record<
@@ -160,6 +162,12 @@ export default function CompanyStructurePage() {
   const [selectedRelation, setSelectedRelation] = useState<CompanyRelation | null>(null);
   const [activeTab, setActiveTab] = useState(0);
   const [expandedNodes, setExpandedNodes] = useState<Set<string>>(new Set());
+  const {
+    confirmOpen: confirmDialogOpen,
+    confirmConfig: confirmDialogConfig,
+    openConfirm: openConfirmDialog,
+    closeConfirm: setConfirmDialogClosed,
+  } = useConfirmDialog();
 
   // 查询公司关系列表
   const { data: relationsData, isLoading: relationsLoading } = useCompanyRelations({
@@ -197,10 +205,15 @@ export default function CompanyStructurePage() {
   };
 
   // 处理删除关系
-  const handleDeleteRelation = async (relationId: string) => {
-    if (window.confirm('确定要删除此公司关系吗？')) {
-      deleteRelation.mutate(relationId);
-    }
+  const handleDeleteRelation = (relationId: string) => {
+    openConfirmDialog({
+      title: '确认删除',
+      message: '确定要删除此公司关系吗？',
+      danger: true,
+      onConfirm: () => {
+        deleteRelation.mutate(relationId);
+      },
+    });
   };
 
   // 关系列表列定义
@@ -487,6 +500,18 @@ export default function CompanyStructurePage() {
           </Box>
         </CardContent>
       </Card>
+
+      <ConfirmDialog
+        isOpen={confirmDialogOpen}
+        onClose={setConfirmDialogClosed}
+        onConfirm={() => {
+          confirmDialogConfig?.onConfirm();
+          setConfirmDialogClosed();
+        }}
+        title={confirmDialogConfig?.title || ''}
+        message={confirmDialogConfig?.message || ''}
+        danger={confirmDialogConfig?.danger}
+      />
     </PageContainer>
   );
 }

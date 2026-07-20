@@ -30,6 +30,7 @@ use topems_shared::{
     SecurityHeadersLayer, ServiceHealth, SystemMetrics,
 };
 
+mod event_handlers;
 mod middleware;
 mod models;
 mod modules;
@@ -64,6 +65,10 @@ async fn main() -> Result<()> {
 
     if let Err(e) = init_db(&pool).await {
         tracing::warn!("数据库初始化警告: {}", e);
+    }
+
+    if let Err(e) = event_handlers::start_event_subscribers(pool.clone()).await {
+        tracing::warn!("⚠️ MONITOR 事件订阅者启动失败: {}", e);
     }
 
     let start_time = Instant::now();

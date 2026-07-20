@@ -12,7 +12,10 @@ use super::ApiState;
 use crate::models::{CreatePurchaseOrderRequest, PurchaseOrder, UpdatePurchaseOrderRequest};
 use crate::modules::audit::log_audit_event;
 use crate::shared::permission::{check_permission, ModulePermission};
-use topems_shared::{api_error, auth::Claims, ApiResponse, PaginationParams};
+use topems_shared::{
+    api_error, auth::Claims, event::EventType, event::PurchaseOrderApprovedPayload, ApiResponse,
+    PaginationParams,
+};
 
 pub fn create_routes() -> Router<ApiState> {
     Router::new()
@@ -427,11 +430,48 @@ pub async fn approve_order(
     .await;
 
     let (response, status_str, error_msg) = match &result {
-        Ok(order) => (
-            Json(ApiResponse::success(order.clone(), "采购订单审批通过")),
-            "success",
-            None,
-        ),
+        Ok(order) => {
+            if let Some(ref publisher) = state.event_publisher {
+                let publisher = publisher.clone();
+                let order_id = order.id;
+                let order_no = order.order_number.clone();
+                let supplier_id = order.supplier_id;
+                let total_amount = order.total_amount;
+                let approver_name_val = req.approver_name.clone().or(Some(claims.username.clone()));
+                let now_val = Utc::now();
+                tokio::spawn(async move {
+                    let payload = PurchaseOrderApprovedPayload {
+                        order_id,
+                        order_no,
+                        supplier_id,
+                        supplier_name: None,
+                        total_amount: total_amount,
+                        approved_by: approver_name_val,
+                        approved_at: Some(now_val),
+                    };
+                    if let Err(e) = publisher
+                        .publish_event(EventType::PurchaseOrderApproved, payload)
+                        .await
+                    {
+                        tracing::warn!(
+                            "[scm] PurchaseOrderApproved 事件发布失败（graceful fallback）: {}",
+                            e
+                        );
+                    } else {
+                        tracing::info!(
+                            "[scm] PurchaseOrderApproved 事件发布成功 - order_id={}",
+                            order_id
+                        );
+                    }
+                });
+            }
+
+            (
+                Json(ApiResponse::success(order.clone(), "采购订单审批通过")),
+                "success",
+                None,
+            )
+        }
         Err(e) => {
             tracing::error!("审批采购订单失败: {}", e);
             (

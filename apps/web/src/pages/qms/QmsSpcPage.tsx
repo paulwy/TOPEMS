@@ -50,6 +50,7 @@ import { spcApi, qmsApi } from '@/api/qms';
 import type { SpcChart, SpcDataPoint, ControlLimitsResult } from '@/api/qms';
 import { designTokens } from '@/theme/tokens';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { useCrudMutations } from '@/hooks';
 
 const ct = designTokens.colors;
 
@@ -158,8 +159,12 @@ const QmsSpcPage: React.FC = () => {
     enabled: !!selectedChart?.id,
   });
 
-  const createSpcChartMutation = useMutation({
-    mutationFn: async (data: {
+  const {
+    createMutation: createSpcChartMutation,
+    updateMutation: updateSpcChartMutation,
+    deleteMutation: deleteSpcChartMutation,
+  } = useCrudMutations<
+    {
       chartNo: string;
       chartName: string;
       chartType: string;
@@ -173,81 +178,46 @@ const QmsSpcPage: React.FC = () => {
       sampleSize: number;
       samplingFrequency?: string;
       description?: string;
-    }) => {
-      return qmsApi.createSpcChart(data);
     },
-    onSuccess: (response) => {
-      if (response.success) {
-        addNotification({ title: '成功', message: '图表创建成功', type: 'success' });
-        queryClient.invalidateQueries({ queryKey: ['qms-spc-charts'] });
-      } else {
-        addNotification({
-          title: '失败',
-          message: response.message || '创建失败',
-          type: 'error',
-        });
+    {
+      chartName: string;
+      chartType: string;
+      characteristic: string;
+      productName?: string;
+      processName?: string;
+      unit?: string;
+      usl?: number;
+      lsl?: number;
+      target?: number;
+      sampleSize: number;
+      samplingFrequency?: string;
+      description?: string;
+    },
+    string
+  >({
+    queryKeyToInvalidate: ['qms-spc-charts'],
+    createFn: async (data) => {
+      const response = await qmsApi.createSpcChart(data);
+      if (!response.success) {
+        throw new Error(response.message || '创建失败');
       }
+      return response;
     },
-    onError: () => {
-      addNotification({ title: '错误', message: '操作失败，请重试', type: 'error' });
-    },
-  });
-
-  const updateSpcChartMutation = useMutation({
-    mutationFn: async ({
-      id,
-      data,
-    }: {
-      id: string;
-      data: {
-        chartName: string;
-        chartType: string;
-        characteristic: string;
-        productName?: string;
-        processName?: string;
-        unit?: string;
-        usl?: number;
-        lsl?: number;
-        target?: number;
-        sampleSize: number;
-        samplingFrequency?: string;
-        description?: string;
-      };
-    }) => {
-      return qmsApi.updateSpcChart(id, data);
-    },
-    onSuccess: (response) => {
-      if (response.success) {
-        addNotification({ title: '成功', message: '图表更新成功', type: 'success' });
-        queryClient.invalidateQueries({ queryKey: ['qms-spc-charts'] });
-      } else {
-        addNotification({
-          title: '失败',
-          message: response.message || '更新失败',
-          type: 'error',
-        });
+    updateFn: async ({ id, data }) => {
+      const response = await qmsApi.updateSpcChart(String(id), data);
+      if (!response.success) {
+        throw new Error(response.message || '更新失败');
       }
+      return response;
     },
-    onError: () => {
-      addNotification({ title: '错误', message: '操作失败，请重试', type: 'error' });
-    },
-  });
-
-  const deleteSpcChartMutation = useMutation({
-    mutationFn: async (id: string) => {
-      return qmsApi.deleteSpcChart(id);
-    },
-    onSuccess: (response) => {
-      if (response.success) {
-        addNotification({ title: '成功', message: '图表删除成功', type: 'success' });
-        queryClient.invalidateQueries({ queryKey: ['qms-spc-charts'] });
-      } else {
-        addNotification({ title: '失败', message: response.message || '删除失败', type: 'error' });
+    deleteFn: async (id) => {
+      const response = await qmsApi.deleteSpcChart(String(id));
+      if (!response.success) {
+        throw new Error(response.message || '删除失败');
       }
+      return response;
     },
-    onError: () => {
-      addNotification({ title: '错误', message: '删除图表时发生错误', type: 'error' });
-    },
+    entityName: 'SPC图表',
   });
 
   const addSpcDataPointMutation = useMutation({

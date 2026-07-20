@@ -1,6 +1,8 @@
 pub mod permission;
 
 use axum::extract::FromRef;
+use std::sync::Arc;
+use topems_shared::event::EventPublisher;
 use topems_shared::AuthState;
 
 #[derive(Clone)]
@@ -13,6 +15,7 @@ pub struct AppState {
     pub agent_service: crate::services::AgentService,
     pub recommendation_service: crate::services::RecommendationService,
     pub multimodal_service: crate::services::MultimodalService,
+    pub event_publisher: Option<Arc<EventPublisher>>,
 }
 
 impl FromRef<AppState> for AuthState {

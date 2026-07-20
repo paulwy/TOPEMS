@@ -17,7 +17,6 @@ import { PageContainer } from '@/components/common';
 import React, { useState, useMemo, useCallback } from 'react';
 import type { Inventory, CreateInventoryRequest, UpdateInventoryRequest } from '@/api/erp';
 import { erpApi } from '@/api/erp';
-import { useNotificationStore } from '@/store';
 import {
   ListPageTemplate,
   type ColumnDef,
@@ -25,10 +24,11 @@ import {
   type FilterConfig,
 } from '@/components/templates';
 import { Plus, Edit, Trash2, Eye, Package, AlertTriangle } from 'lucide-react';
-import { apiLogger } from '@/utils/logger';
 import { designTokens } from '@/theme/tokens';
-import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { useQuery } from '@tanstack/react-query';
 import { QUERY_KEYS } from '@/lib/reactQuery';
+import { ConfirmDialog } from '@topems/shared-components';
+import { useConfirmDialog, useCrudMutations } from '@/hooks';
 
 const ct = designTokens.colors;
 
@@ -57,9 +57,12 @@ const InventoryManagementPage: React.FC = () => {
     unit_cost: 0,
     batch_number: '',
   });
-
-  const { addNotification } = useNotificationStore();
-  const queryClient = useQueryClient();
+  const {
+    confirmOpen: confirmDialogOpen,
+    confirmConfig: confirmDialogConfig,
+    openConfirm: openConfirmDialog,
+    closeConfirm: setConfirmDialogClosed,
+  } = useConfirmDialog();
 
   const queryKey = [QUERY_KEYS.ERP.INVENTORY, searchTerm, warehouseFilter, currentPage, pageSize];
 
@@ -86,85 +89,41 @@ const InventoryManagementPage: React.FC = () => {
   const items = inventoryResponse?.items || [];
   const total = inventoryResponse?.total || 0;
 
-  const createMutation = useMutation({
-    mutationFn: async (data: CreateInventoryRequest) => {
+  const { createMutation, updateMutation, deleteMutation } = useCrudMutations<
+    CreateInventoryRequest,
+    UpdateInventoryRequest,
+    string
+  >({
+    queryKeyToInvalidate: [QUERY_KEYS.ERP.INVENTORY],
+    createFn: async (data) => {
       const response = await erpApi.inventory.create(data);
       if (!response.success) {
         throw new Error('Failed to create inventory');
       }
       return response;
     },
-    onSuccess: () => {
-      addNotification({
-        type: 'success',
-        title: '创建成功',
-        message: '新库存记录已创建',
-      });
-      queryClient.invalidateQueries({ queryKey: [QUERY_KEYS.ERP.INVENTORY] });
-      setShowDialog(false);
-      resetForm();
-    },
-    onError: (error) => {
-      apiLogger.error('创建失败:', error);
-      addNotification({
-        type: 'error',
-        title: '创建失败',
-        message: '无法创建库存',
-      });
-    },
-  });
-
-  const updateMutation = useMutation({
-    mutationFn: async ({ id, data }: { id: string; data: UpdateInventoryRequest }) => {
-      const response = await erpApi.inventory.update(id, data);
+    updateFn: async ({ id, data }) => {
+      const response = await erpApi.inventory.update(String(id), data);
       if (!response.success) {
         throw new Error('Failed to update inventory');
       }
       return response;
     },
-    onSuccess: () => {
-      addNotification({
-        type: 'success',
-        title: '更新成功',
-        message: '库存信息已更新',
-      });
-      queryClient.invalidateQueries({ queryKey: [QUERY_KEYS.ERP.INVENTORY] });
-      setShowDialog(false);
-      resetForm();
-    },
-    onError: (error) => {
-      apiLogger.error('更新失败:', error);
-      addNotification({
-        type: 'error',
-        title: '更新失败',
-        message: '无法更新库存',
-      });
-    },
-  });
-
-  const deleteMutation = useMutation({
-    mutationFn: async (id: string) => {
-      const response = await erpApi.inventory.delete(id);
+    deleteFn: async (id) => {
+      const response = await erpApi.inventory.delete(String(id));
       if (!response.success) {
         throw new Error('Failed to delete inventory');
       }
       return response;
     },
-    onSuccess: () => {
-      addNotification({
-        type: 'success',
-        title: '删除成功',
-        message: '库存记录已删除',
-      });
-      queryClient.invalidateQueries({ queryKey: [QUERY_KEYS.ERP.INVENTORY] });
+    entityName: '库存记录',
+    onCreateSuccess: () => {
+      setShowDialog(false);
+      resetForm();
     },
-    onError: (error) => {
-      apiLogger.error('删除失败:', error);
-      addNotification({
-        type: 'error',
-        title: '删除失败',
-        message: '无法删除库存记录',
-      });
+    onUpdateSuccess: () => {
+      setShowDialog(false);
+      resetForm();
     },
   });
 
@@ -181,11 +140,17 @@ const InventoryManagementPage: React.FC = () => {
   };
 
   const handleDelete = useCallback(
-    async (id: string) => {
-      if (!window.confirm('确定要删除这条库存记录吗?')) return;
-      await deleteMutation.mutateAsync(id);
+    (id: string) => {
+      openConfirmDialog({
+        title: '确认删除',
+        message: '确定要删除这条库存记录吗?',
+        danger: true,
+        onConfirm: () => {
+          deleteMutation.mutate(id);
+        },
+      });
     },
-    [deleteMutation]
+    [deleteMutation, openConfirmDialog]
   );
 
   const handleEdit = useCallback((item: Inventory) => {
@@ -755,6 +720,18 @@ const InventoryManagementPage: React.FC = () => {
           )}
         </DialogContent>
       </Dialog>
+
+      <ConfirmDialog
+        isOpen={confirmDialogOpen}
+        onClose={setConfirmDialogClosed}
+        onConfirm={() => {
+          confirmDialogConfig?.onConfirm();
+          setConfirmDialogClosed();
+        }}
+        title={confirmDialogConfig?.title || ''}
+        message={confirmDialogConfig?.message || ''}
+        danger={confirmDialogConfig?.danger}
+      />
     </PageContainer>
   );
 };

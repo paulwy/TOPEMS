@@ -36,6 +36,7 @@ import {
 import { useNotificationStore } from '@/store';
 import { apiLogger } from '@/utils/logger';
 
+import { useTranslation } from 'react-i18next';
 interface FormSection {
   id: string;
   title: string;
@@ -52,6 +53,7 @@ interface FormSection {
 }
 
 const VoucherCreatePage: React.FC = () => {
+  const { t } = useTranslation();
   const navigate = useNavigate();
   const addNotification = useNotificationStore((state) => state.addNotification);
   const queryClient = useQueryClient();
@@ -150,8 +152,8 @@ const VoucherCreatePage: React.FC = () => {
   const validateForm = (): boolean => {
     if (!formData.voucher_number) {
       addNotification({
-        title: '验证错误',
-        message: '请输入凭证编号',
+        title: t('finance.voucher_create_page.error'),
+        message: t('finance.voucher_create_page.please_input'),
         type: 'warning',
       });
       return false;
@@ -159,8 +161,8 @@ const VoucherCreatePage: React.FC = () => {
 
     if (!formData.voucher_date) {
       addNotification({
-        title: '验证错误',
-        message: '请输入凭证日期',
+        title: t('finance.voucher_create_page.error'),
+        message: t('finance.voucher_create_page.please_input_1'),
         type: 'warning',
       });
       return false;
@@ -168,8 +170,8 @@ const VoucherCreatePage: React.FC = () => {
 
     if (!formData.period) {
       addNotification({
-        title: '验证错误',
-        message: '请输入会计期间',
+        title: t('finance.voucher_create_page.error'),
+        message: t('finance.voucher_create_page.please_input_2'),
         type: 'warning',
       });
       return false;
@@ -177,8 +179,8 @@ const VoucherCreatePage: React.FC = () => {
 
     if (voucherItems.length < 2) {
       addNotification({
-        title: '验证错误',
-        message: '请至少添加两条凭证明细',
+        title: t('finance.voucher_create_page.error'),
+        message: t('finance.voucher_create_page.text_abf017'),
         type: 'warning',
       });
       return false;
@@ -189,8 +191,8 @@ const VoucherCreatePage: React.FC = () => {
 
     if (totalDebit !== totalCredit || totalDebit === 0) {
       addNotification({
-        title: '验证错误',
-        message: '借贷不平衡或金额为零',
+        title: t('finance.voucher_create_page.error'),
+        message: t('finance.voucher_create_page.amount'),
         type: 'error',
       });
       return false;
@@ -210,14 +212,14 @@ const VoucherCreatePage: React.FC = () => {
     }) => {
       const result = await voucherApi.create(data);
       if (!result.success) {
-        throw new Error(result.message || '创建失败');
+        throw new Error(result.message || t('finance.voucher_create_page.create'));
       }
       return result;
     },
     onSuccess: () => {
       addNotification({
-        title: '成功',
-        message: '凭证创建成功',
+        title: t('finance.voucher_create_page.success'),
+        message: t('finance.voucher_create_page.create_1'),
         type: 'success',
       });
       queryClient.invalidateQueries({ queryKey: QUERY_KEYS.FINANCE.VOUCHERS });
@@ -225,8 +227,8 @@ const VoucherCreatePage: React.FC = () => {
     },
     onError: (err: Error) => {
       addNotification({
-        title: '错误',
-        message: err.message || '创建失败',
+        title: t('finance.voucher_create_page.error_1'),
+        message: err.message || t('finance.voucher_create_page.create'),
         type: 'error',
       });
     },
@@ -280,16 +282,16 @@ const VoucherCreatePage: React.FC = () => {
           }}
         >
           <TextField
-            label='凭证编号 *'
+            label={t('finance.voucher_create_page.text_7c0ad7')}
             value={formData.voucher_number}
             onChange={(e) => handleFieldChange('voucher_number', e.target.value)}
-            placeholder='例如: 记-2024-001'
+            placeholder={t('finance.voucher_create_page.text_c87953')}
             required
             fullWidth
             size='small'
           />
           <TextField
-            label='凭证日期 *'
+            label={t('finance.voucher_create_page.date')}
             type='date'
             value={formData.voucher_date}
             onChange={(e) => handleFieldChange('voucher_date', e.target.value)}
@@ -299,17 +301,17 @@ const VoucherCreatePage: React.FC = () => {
             slotProps={{ inputLabel: { shrink: true } } as const}
           />
           <TextField
-            label='会计期间 *'
+            label={t('finance.voucher_create_page.text_2902c0')}
             value={formData.period}
             onChange={(e) => handleFieldChange('period', e.target.value)}
-            placeholder='例如: 2024-01'
+            placeholder={t('finance.voucher_create_page.text_b2fa57')}
             required
             fullWidth
             size='small'
-            helperText='格式: YYYY-MM'
+            helperText={t('finance.voucher_create_page.text_b526f6')}
           />
           <TextField
-            label='附件数量'
+            label={t('finance.voucher_create_page.quantity')}
             type='number'
             value={formData.attachment_count}
             onChange={(e) => {
@@ -325,10 +327,10 @@ const VoucherCreatePage: React.FC = () => {
           />
           <Box sx={{ gridColumn: 'span 2' }}>
             <TextField
-              label='凭证摘要'
+              label={t('finance.voucher_create_page.text_95392b')}
               value={formData.summary}
               onChange={(e) => handleFieldChange('summary', e.target.value)}
-              placeholder='输入凭证摘要'
+              placeholder={t('finance.voucher_create_page.text_8e986b')}
               fullWidth
               size='small'
               multiline
@@ -362,7 +364,7 @@ const VoucherCreatePage: React.FC = () => {
               <Chip
                 size='small'
                 icon={<AlertCircle size={14} />}
-                label='借贷不平衡'
+                label={t('finance.voucher_create_page.text_f4cec4')}
                 color='warning'
                 variant='outlined'
               />
@@ -417,7 +419,7 @@ const VoucherCreatePage: React.FC = () => {
                       renderInput={(params) => (
                         <TextField
                           {...params}
-                          placeholder='选择或搜索科目'
+                          placeholder={t('finance.voucher_create_page.search')}
                           size='small'
                         />
                       )}
@@ -426,7 +428,7 @@ const VoucherCreatePage: React.FC = () => {
                   <TableCell>
                     <TextField
                       size='small'
-                      placeholder='分录摘要'
+                      placeholder={t('finance.voucher_create_page.text_5b1bed')}
                       value={item.summary}
                       onChange={(e) => updateVoucherItem(index, 'summary', e.target.value)}
                     />
@@ -592,14 +594,14 @@ const VoucherCreatePage: React.FC = () => {
   const sections = [
     {
       id: 'basic',
-      title: '基本信息',
+      title: t('finance.voucher_create_page.info'),
       content: basicInfoSection,
       collapsible: false,
       fields: [],
     },
     {
       id: 'items',
-      title: '凭证明细',
+      title: t('finance.voucher_create_page.text_5f3e09'),
       content: voucherItemsSection,
       collapsible: false,
       fields: [],
@@ -613,7 +615,7 @@ const VoucherCreatePage: React.FC = () => {
         sections={sections}
         onSubmit={handleSubmit}
         onCancel={handleCancel}
-        submitText='保存凭证'
+        submitText={t('finance.voucher_create_page.save')}
         submitting={submitting}
       />
     </PageContainer>

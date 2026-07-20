@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import {
   Upload,
   Package,
@@ -34,6 +35,7 @@ import { PageContainer } from '@/components/common';
 import { useNotificationStore } from '@/store';
 
 const PluginUploadPage: React.FC = () => {
+  const { t } = useTranslation();
   const addNotification = useNotificationStore((state) => state.addNotification);
   const [activeStep, setActiveStep] = useState(0);
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -72,17 +74,17 @@ const PluginUploadPage: React.FC = () => {
     const newErrors: Record<string, string> = {};
 
     if (step === 0) {
-      if (!formData.name.trim()) newErrors.name = '请输入插件名称';
-      if (!formData.code.trim()) newErrors.code = '请输入插件代码';
+      if (!formData.name.trim()) newErrors.name = t('plugin.upload_page.validation.name_required');
+      if (!formData.code.trim()) newErrors.code = t('plugin.upload_page.validation.code_required');
       else if (!/^[a-z][a-z0-9-]*$/.test(formData.code))
-        newErrors.code = '插件代码只能包含小写字母、数字和连字符，且以字母开头';
-      if (!formData.version.trim()) newErrors.version = '请输入版本号';
-      if (!formData.description.trim()) newErrors.description = '请输入插件描述';
-      if (!formData.category) newErrors.category = '请选择分类';
+        newErrors.code = t('plugin.upload_page.validation.code_format');
+      if (!formData.version.trim()) newErrors.version = t('plugin.upload_page.validation.version_required');
+      if (!formData.description.trim()) newErrors.description = t('plugin.upload_page.validation.description_required');
+      if (!formData.category) newErrors.category = t('plugin.upload_page.validation.category_required');
     }
 
     if (step === 1 && !formData.author.trim()) {
-      newErrors.author = '请输入作者名称';
+      newErrors.author = t('plugin.upload_page.validation.author_required');
     }
 
     setErrors(newErrors);
@@ -106,15 +108,15 @@ const PluginUploadPage: React.FC = () => {
     try {
       await new Promise((resolve) => setTimeout(resolve, 2000));
       addNotification({
-        title: '提交成功',
-        message: `${formData.name} 插件已提交审核，我们会尽快处理`,
+        title: t('plugin.upload_page.notification.submit_success_title'),
+        message: t('plugin.upload_page.notification.submit_success_message', { name: formData.name }),
         type: 'success',
       });
       setActiveStep(3);
     } catch (error: unknown) {
       addNotification({
-        title: '提交失败',
-        message: '提交失败，请稍后重试',
+        title: t('plugin.upload_page.notification.submit_failed_title'),
+        message: t('plugin.upload_page.notification.submit_failed_message'),
         type: 'error',
       });
     } finally {
@@ -122,16 +124,21 @@ const PluginUploadPage: React.FC = () => {
     }
   };
 
-  const steps = ['基本信息', '插件配置', '上传文件', '提交审核'];
+  const steps = [
+    t('plugin.upload_page.step.basic'),
+    t('plugin.upload_page.step.config'),
+    t('plugin.upload_page.step.upload'),
+    t('plugin.upload_page.step.submit'),
+  ];
 
   const categories = [
-    { value: 'finance', label: '财务管理' },
-    { value: 'hr', label: '人力资源' },
-    { value: 'manufacturing', label: '生产制造' },
-    { value: 'quality', label: '质量管理' },
-    { value: 'supply', label: '供应链' },
-    { value: 'crm', label: '客户关系' },
-    { value: 'project', label: '项目管理' },
+    { value: 'finance', label: t('plugin.category.finance') },
+    { value: 'hr', label: t('plugin.category.hr') },
+    { value: 'manufacturing', label: t('plugin.category.manufacturing') },
+    { value: 'quality', label: t('plugin.category.quality') },
+    { value: 'supply', label: t('plugin.category.supply') },
+    { value: 'crm', label: t('plugin.category.crm') },
+    { value: 'project', label: t('plugin.category.project') },
   ];
 
   return (
@@ -141,13 +148,13 @@ const PluginUploadPage: React.FC = () => {
           variant='h4'
           sx={{ fontWeight: 'bold', mb: 1 }}
         >
-          发布插件
+          {t('plugin.upload_page.title')}
         </Typography>
         <Typography
           variant='body1'
           color='textSecondary'
         >
-          将您的插件发布到 TOPEMS 插件市场，让更多用户使用
+          {t('plugin.upload_page.subtitle')}
         </Typography>
       </Box>
 
@@ -170,7 +177,7 @@ const PluginUploadPage: React.FC = () => {
                 variant='h6'
                 sx={{ fontWeight: 'bold', mb: 3 }}
               >
-                基本信息
+                {t('plugin.upload_page.section.basic_info')}
               </Typography>
 
               <Grid
@@ -180,22 +187,22 @@ const PluginUploadPage: React.FC = () => {
                 <Grid size={{ xs: 12, md: 6 }}>
                   <TextField
                     fullWidth
-                    label='插件名称'
+                    label={t('plugin.upload_page.form.name')}
                     value={formData.name}
                     onChange={(e) => handleChange('name', e.target.value)}
                     error={!!errors.name}
-                    helperText={errors.name || '显示在插件市场的名称'}
+                    helperText={errors.name || t('plugin.upload_page.helper.name')}
                     required
                   />
                 </Grid>
                 <Grid size={{ xs: 12, md: 6 }}>
                   <TextField
                     fullWidth
-                    label='插件代码'
+                    label={t('plugin.upload_page.form.code')}
                     value={formData.code}
                     onChange={(e) => handleChange('code', e.target.value.toLowerCase())}
                     error={!!errors.code}
-                    helperText={errors.code || '唯一标识符，只能包含小写字母、数字和连字符'}
+                    helperText={errors.code || t('plugin.upload_page.helper.code')}
                     required
                     slotProps={{
                       input: {
@@ -211,11 +218,11 @@ const PluginUploadPage: React.FC = () => {
                 <Grid size={{ xs: 12, md: 6 }}>
                   <TextField
                     fullWidth
-                    label='版本号'
+                    label={t('plugin.upload_page.form.version')}
                     value={formData.version}
                     onChange={(e) => handleChange('version', e.target.value)}
                     error={!!errors.version}
-                    helperText={errors.version || '遵循语义化版本规范，如 1.0.0'}
+                    helperText={errors.version || t('plugin.upload_page.helper.version')}
                     required
                     slotProps={{
                       input: {
@@ -232,7 +239,7 @@ const PluginUploadPage: React.FC = () => {
                   <TextField
                     fullWidth
                     select
-                    label='插件分类'
+                    label={t('plugin.upload_page.form.category')}
                     value={formData.category}
                     onChange={(e) => handleChange('category', e.target.value)}
                     error={!!errors.category}
@@ -252,11 +259,11 @@ const PluginUploadPage: React.FC = () => {
                 <Grid size={{ xs: 12 }}>
                   <TextField
                     fullWidth
-                    label='插件描述'
+                    label={t('plugin.upload_page.form.description')}
                     value={formData.description}
                     onChange={(e) => handleChange('description', e.target.value)}
                     error={!!errors.description}
-                    helperText={errors.description || '简要描述插件的功能和用途'}
+                    helperText={errors.description || t('plugin.upload_page.helper.description')}
                     required
                     multiline
                     rows={4}
@@ -277,10 +284,10 @@ const PluginUploadPage: React.FC = () => {
                 <Grid size={{ xs: 12, md: 6 }}>
                   <TextField
                     fullWidth
-                    label='标签'
+                    label={t('plugin.upload_page.form.tags')}
                     value={formData.tags}
                     onChange={(e) => handleChange('tags', e.target.value)}
-                    helperText='多个标签用逗号分隔'
+                    helperText={t('plugin.upload_page.helper.tags')}
                     slotProps={{
                       input: {
                         startAdornment: (
@@ -296,12 +303,12 @@ const PluginUploadPage: React.FC = () => {
                   <TextField
                     fullWidth
                     select
-                    label='插件类型'
+                    label={t('plugin.upload_page.form.plugin_type')}
                     value={formData.pluginType}
                     onChange={(e) => handleChange('pluginType', e.target.value)}
                   >
-                    <option value='core'>核心插件</option>
-                    <option value='business'>业务插件</option>
+                    <option value='core'>{t('plugin.plugin_type.core')}</option>
+                    <option value='business'>{t('plugin.plugin_type.business')}</option>
                   </TextField>
                 </Grid>
               </Grid>
@@ -314,7 +321,7 @@ const PluginUploadPage: React.FC = () => {
                 variant='h6'
                 sx={{ fontWeight: 'bold', mb: 3 }}
               >
-                插件配置
+                {t('plugin.upload_page.section.plugin_config')}
               </Typography>
 
               <Grid
@@ -324,7 +331,7 @@ const PluginUploadPage: React.FC = () => {
                 <Grid size={{ xs: 12, md: 6 }}>
                   <TextField
                     fullWidth
-                    label='作者名称'
+                    label={t('plugin.upload_page.form.author')}
                     value={formData.author}
                     onChange={(e) => handleChange('author', e.target.value)}
                     error={!!errors.author}
@@ -335,28 +342,28 @@ const PluginUploadPage: React.FC = () => {
                 <Grid size={{ xs: 12, md: 6 }}>
                   <TextField
                     fullWidth
-                    label='官方网站'
+                    label={t('plugin.upload_page.form.website')}
                     value={formData.website}
                     onChange={(e) => handleChange('website', e.target.value)}
-                    helperText='可选，插件的官方网站地址'
+                    helperText={t('plugin.upload_page.helper.website')}
                   />
                 </Grid>
                 <Grid size={{ xs: 12, md: 6 }}>
                   <TextField
                     fullWidth
-                    label='许可证'
+                    label={t('plugin.upload_page.form.license')}
                     value={formData.license}
                     onChange={(e) => handleChange('license', e.target.value)}
-                    helperText='如 MIT, Apache-2.0, GPL 等'
+                    helperText={t('plugin.upload_page.helper.license')}
                   />
                 </Grid>
                 <Grid size={{ xs: 12, md: 6 }}>
                   <TextField
                     fullWidth
-                    label='最低应用版本'
+                    label={t('plugin.upload_page.form.min_app_version')}
                     value={formData.minAppVersion}
                     onChange={(e) => handleChange('minAppVersion', e.target.value)}
-                    helperText='插件需要的最低 TOPEMS 版本'
+                    helperText={t('plugin.upload_page.helper.min_app_version')}
                   />
                 </Grid>
                 <Grid size={{ xs: 12, md: 6 }}>
@@ -368,13 +375,13 @@ const PluginUploadPage: React.FC = () => {
                           onChange={(e) => handleChange('isFree', e.target.checked)}
                         />
                       }
-                      label='免费插件'
+                      label={t('plugin.upload_page.form.is_free')}
                     />
                   </Box>
                   {!formData.isFree && (
                     <TextField
                       fullWidth
-                      label='价格（元）'
+                      label={t('plugin.upload_page.form.price')}
                       type='number'
                       value={formData.price}
                       onChange={(e) => handleChange('price', e.target.value)}
@@ -394,10 +401,10 @@ const PluginUploadPage: React.FC = () => {
                 <Grid size={{ xs: 12 }}>
                   <TextField
                     fullWidth
-                    label='版本更新说明'
+                    label={t('plugin.upload_page.form.release_notes')}
                     value={formData.releaseNotes}
                     onChange={(e) => handleChange('releaseNotes', e.target.value)}
-                    helperText='描述此版本的更新内容'
+                    helperText={t('plugin.upload_page.helper.release_notes')}
                     multiline
                     rows={4}
                   />
@@ -412,7 +419,7 @@ const PluginUploadPage: React.FC = () => {
                 variant='h6'
                 sx={{ fontWeight: 'bold', mb: 3 }}
               >
-                上传文件
+                {t('plugin.upload_page.section.upload_files')}
               </Typography>
 
               <Grid
@@ -434,19 +441,19 @@ const PluginUploadPage: React.FC = () => {
                       <Upload
                         sx={{ width: 48, height: 48, color: 'grey.400', mx: 'auto', mb: 2 }}
                       />
-                      <Typography sx={{ fontWeight: 'medium', mb: 1 }}>上传插件包</Typography>
+                      <Typography sx={{ fontWeight: 'medium', mb: 1 }}>{t('plugin.upload_page.upload.package_title')}</Typography>
                       <Typography
                         variant='body2'
                         color='textSecondary'
                       >
-                        点击或拖拽 .zip 或 .tar.gz 文件到此处
+                        {t('plugin.upload_page.upload.package_hint')}
                       </Typography>
                       <Typography
                         variant='caption'
                         color='textSecondary'
                         sx={{ mt: 1, display: 'block' }}
                       >
-                        最大 100MB
+                        {t('plugin.upload_page.upload.package_max_size')}
                       </Typography>
                     </CardContent>
                   </Card>
@@ -455,7 +462,7 @@ const PluginUploadPage: React.FC = () => {
                     sx={{ mt: 2 }}
                     icon={<Info sx={{ width: 18, height: 18 }} />}
                   >
-                    插件包需要包含 plugin.json 配置文件
+                    {t('plugin.upload_page.upload.package_alert')}
                   </Alert>
                 </Grid>
                 <Grid size={{ xs: 12, md: 6 }}>
@@ -471,19 +478,19 @@ const PluginUploadPage: React.FC = () => {
                   >
                     <CardContent sx={{ textAlign: 'center', py: 6 }}>
                       <Image sx={{ width: 48, height: 48, color: 'grey.400', mx: 'auto', mb: 2 }} />
-                      <Typography sx={{ fontWeight: 'medium', mb: 1 }}>上传截图</Typography>
+                      <Typography sx={{ fontWeight: 'medium', mb: 1 }}>{t('plugin.upload_page.upload.screenshot_title')}</Typography>
                       <Typography
                         variant='body2'
                         color='textSecondary'
                       >
-                        点击或拖拽图片文件到此处
+                        {t('plugin.upload_page.upload.screenshot_hint')}
                       </Typography>
                       <Typography
                         variant='caption'
                         color='textSecondary'
                         sx={{ mt: 1, display: 'block' }}
                       >
-                        支持 JPG、PNG，最多 6 张
+                        {t('plugin.upload_page.upload.screenshot_format')}
                       </Typography>
                     </CardContent>
                   </Card>
@@ -492,7 +499,7 @@ const PluginUploadPage: React.FC = () => {
                     sx={{ mt: 2 }}
                     icon={<Info sx={{ width: 18, height: 18 }} />}
                   >
-                    建议上传 1280x800 分辨率的截图
+                    {t('plugin.upload_page.upload.screenshot_alert')}
                   </Alert>
                 </Grid>
               </Grid>
@@ -502,7 +509,7 @@ const PluginUploadPage: React.FC = () => {
                   variant='subtitle2'
                   sx={{ mb: 2, fontWeight: 'medium' }}
                 >
-                  插件信息预览
+                  {t('plugin.upload_page.section.preview')}
                 </Typography>
                 <Card variant='outlined'>
                   <CardContent>
@@ -526,25 +533,25 @@ const PluginUploadPage: React.FC = () => {
                           variant='h6'
                           sx={{ fontWeight: 'bold' }}
                         >
-                          {formData.name || '插件名称'}
+                          {formData.name || t('plugin.upload_page.preview.name_placeholder')}
                         </Typography>
                         <Typography
                           variant='body2'
                           color='textSecondary'
                         >
-                          v{formData.version} · {formData.author || '作者'}
+                          v{formData.version} · {formData.author || t('plugin.upload_page.preview.author_placeholder')}
                         </Typography>
                       </Box>
                       <Box sx={{ flexGrow: 1 }} />
                       <Chip
                         label={
-                          categories.find((c) => c.value === formData.category)?.label || '分类'
+                          categories.find((c) => c.value === formData.category)?.label || t('plugin.upload_page.preview.category_placeholder')
                         }
                         size='small'
                       />
                       {formData.isFree ? (
                         <Chip
-                          label='免费'
+                          label={t('plugin.common.free')}
                           color='success'
                           size='small'
                         />
@@ -560,7 +567,7 @@ const PluginUploadPage: React.FC = () => {
                       variant='body2'
                       color='textSecondary'
                     >
-                      {formData.description || '插件描述将显示在这里...'}
+                      {formData.description || t('plugin.upload_page.preview.description_placeholder')}
                     </Typography>
                   </CardContent>
                 </Card>
@@ -577,14 +584,14 @@ const PluginUploadPage: React.FC = () => {
                 variant='h5'
                 sx={{ fontWeight: 'bold', mb: 2 }}
               >
-                提交成功！
+                {t('plugin.upload_page.success.title')}
               </Typography>
               <Typography
                 variant='body1'
                 color='textSecondary'
                 sx={{ mb: 4 }}
               >
-                您的插件 {formData.name} 已成功提交审核，我们会在 1-3 个工作日内完成审核并通知您。
+                {t('plugin.upload_page.success.message', { name: formData.name })}
               </Typography>
               <Button
                 variant='contained'
@@ -608,7 +615,7 @@ const PluginUploadPage: React.FC = () => {
                   });
                 }}
               >
-                继续发布新插件
+                {t('plugin.action.continue_publish')}
               </Button>
             </Box>
           )}
@@ -619,7 +626,7 @@ const PluginUploadPage: React.FC = () => {
                 disabled={activeStep === 0}
                 onClick={handleBack}
               >
-                上一步
+                {t('plugin.action.back')}
               </Button>
               <Box>
                 {activeStep < 2 && (
@@ -627,7 +634,7 @@ const PluginUploadPage: React.FC = () => {
                     variant='contained'
                     onClick={handleNext}
                   >
-                    下一步
+                    {t('plugin.action.next')}
                   </Button>
                 )}
                 {activeStep === 2 && (
@@ -645,7 +652,7 @@ const PluginUploadPage: React.FC = () => {
                       )
                     }
                   >
-                    {isSubmitting ? '提交中...' : '提交审核'}
+                    {isSubmitting ? t('plugin.common.submitting') : t('plugin.action.submit')}
                   </Button>
                 )}
               </Box>

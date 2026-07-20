@@ -1,3 +1,4 @@
+mod event_handlers;
 pub mod models;
 pub mod modules;
 pub mod services;
@@ -8,11 +9,12 @@ use axum_prometheus::PrometheusMetricLayer;
 use modules::{auth, pm_plugin};
 use prometheus::{default_registry, Gauge};
 use std::env;
+use std::sync::Arc;
 use topems_shared::{
     auth_middleware, build_health_response, create_api_info_router, create_cors_layer,
     create_database_pool, init_telemetry, rls_middleware, telemetry_middleware,
-    test_database_connection, wrap_group2_router, AuthState, DatabaseConfig, Result,
-    RouteCompatConfig, ServiceHealth,
+    test_database_connection, wrap_group2_router, AuthState, DatabaseConfig, EventPublisher,
+    Result, RouteCompatConfig, ServiceHealth,
 };
 use utoipa::OpenApi;
 
@@ -68,6 +70,23 @@ async fn main() -> Result<()> {
         tracing::warn!("数据库初始化警告: {}", e);
     }
 
+    let event_publisher = match EventPublisher::new("topems-pm") {
+        Ok(publisher) => {
+            tracing::info!("📢 事件发布服务初始化成功");
+            Some(Arc::new(publisher))
+        }
+        Err(e) => {
+            tracing::warn!("⚠️ 事件发布服务初始化失败（不阻塞启动）: {}", e);
+            None
+        }
+    };
+
+    if let Err(e) =
+        event_handlers::start_event_subscribers(pool.clone(), event_publisher.clone()).await
+    {
+        tracing::warn!("⚠️ PM 事件订阅者启动失败: {}", e);
+    }
+
     let cors = create_cors_layer();
 
     let auth_state = AuthState::from_env();
@@ -83,7 +102,7 @@ async fn main() -> Result<()> {
         .route("/api/plugins/health", get(pm_plugin::plugin_health_check))
         .merge(auth::create_routes());
 
-    let protected_routes = modules::create_routes(pool.clone())
+    let protected_routes = modules::create_routes(pool.clone(), event_publisher.clone())
         .layer(axum::middleware::from_fn_with_state(
             auth_state.clone(),
             auth_middleware,

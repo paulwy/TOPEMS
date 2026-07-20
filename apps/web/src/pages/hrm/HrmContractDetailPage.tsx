@@ -30,9 +30,11 @@ import { DetailPageTemplate, type TabConfig, type SectionConfig } from '@/compon
 import { PageContainer } from '@/components/common';
 import { designTokens } from '@/theme/tokens';
 
+import { useTranslation } from 'react-i18next';
 const ct = designTokens.colors;
 
 const HrmContractDetailPage: React.FC = () => {
+  const { t } = useTranslation();
   const navigate = useNavigate();
   const { id } = useParams<{ id: string }>();
   const { error } = useNotification();
@@ -44,11 +46,11 @@ const HrmContractDetailPage: React.FC = () => {
     enabled: !!id,
     queryFn: async () => {
       if (!id) {
-        throw new Error('合同ID为空');
+        throw new Error(t('hrm.hrm_contract_detail_page.text_05b5ba'));
       }
       const res = await hrmApi.contracts.get(id);
       if (!res.success || !res.data) {
-        throw new Error('获取合同详情失败');
+        throw new Error(t('hrm.hrm_contract_detail_page.detail'));
       }
       const contractData = res.data;
       const employeeRes = await hrmApi.employees.get(contractData.contract.employee_id);
@@ -75,7 +77,7 @@ const HrmContractDetailPage: React.FC = () => {
 
   const contract = contractQuery.data ?? null;
   const loading = contractQuery.isLoading;
-  const errorMessage = contractQuery.error ? '加载合同详情失败' : undefined;
+  const errorMessage = contractQuery.error ? t('hrm.hrm_contract_detail_page.detail_1') : undefined;
 
   const handleRenew = () => {
     navigate(HRM_PATHS.contractDetail.replace(':id', id!));
@@ -90,37 +92,37 @@ const HrmContractDetailPage: React.FC = () => {
         icon: React.ReactElement;
       }
     > = {
-      draft: { color: 'default', label: '草稿', icon: <FileText size={14} /> },
-      pending: { color: 'warning', label: '待审批', icon: <Clock size={14} /> },
-      approved: { color: 'success', label: '已审批', icon: <CheckCircle2 size={14} /> },
-      active: { color: 'success', label: '生效中', icon: <CheckCircle2 size={14} /> },
-      expired: { color: 'error', label: '已到期', icon: <AlertCircle size={14} /> },
-      terminated: { color: 'error', label: '已终止', icon: <AlertCircle size={14} /> },
+      draft: { color: 'default', label: t('hrm.hrm_contract_detail_page.text_22b433'), icon: <FileText size={14} /> },
+      pending: { color: 'warning', label: t('hrm.hrm_contract_detail_page.text_b0bf01'), icon: <Clock size={14} /> },
+      approved: { color: 'success', label: t('hrm.hrm_contract_detail_page.text_618acb'), icon: <CheckCircle2 size={14} /> },
+      active: { color: 'success', label: t('hrm.hrm_contract_detail_page.text_c062e3'), icon: <CheckCircle2 size={14} /> },
+      expired: { color: 'error', label: t('hrm.hrm_contract_detail_page.text_e5b59f'), icon: <AlertCircle size={14} /> },
+      terminated: { color: 'error', label: t('hrm.hrm_contract_detail_page.text_255412'), icon: <AlertCircle size={14} /> },
     };
     return config[status] || config.draft;
   };
 
   const getContractTypeLabel = (type: string) => {
     const labels: Record<string, string> = {
-      labor: '劳动合同',
-      probation: '试用期合同',
-      project: '项目合同',
-      outsourcing: '外包合同',
-      internship: '实习协议',
-      part_time: '兼职协议',
-      other: '其他',
+      labor: t('hrm.hrm_contract_detail_page.text_46f54e'),
+      probation: t('hrm.hrm_contract_detail_page.text_144fe2'),
+      project: t('hrm.hrm_contract_detail_page.text_ea048f'),
+      outsourcing: t('hrm.hrm_contract_detail_page.text_42e7fe'),
+      internship: t('hrm.hrm_contract_detail_page.text_5040bb'),
+      part_time: t('hrm.hrm_contract_detail_page.text_a97d2a'),
+      other: t('hrm.hrm_contract_detail_page.other'),
     };
     return labels[type] || type;
   };
 
   const getSalaryTypeLabel = (type: string) => {
     const labels: Record<string, string> = {
-      monthly: '月薪',
-      daily: '日薪',
-      hourly: '时薪',
-      project: '项目制',
-      commission: '提成制',
-      other: '其他',
+      monthly: t('hrm.hrm_contract_detail_page.text_4eb9e5'),
+      daily: t('hrm.hrm_contract_detail_page.text_2eddda'),
+      hourly: t('hrm.hrm_contract_detail_page.text_bae8cf'),
+      project: t('hrm.hrm_contract_detail_page.text_66566b'),
+      commission: t('hrm.hrm_contract_detail_page.text_2668b2'),
+      other: t('hrm.hrm_contract_detail_page.other'),
     };
     return labels[type] || type;
   };
@@ -182,7 +184,7 @@ const HrmContractDetailPage: React.FC = () => {
               {daysRemaining < 0
                 ? `合同已过期 ${Math.abs(daysRemaining)} 天`
                 : daysRemaining === 0
-                  ? '合同今日到期'
+                  ? t('hrm.hrm_contract_detail_page.today')
                   : daysRemaining < 30
                     ? `合同将在 ${daysRemaining} 天后到期，请及时处理续签`
                     : daysRemaining < 90
@@ -322,9 +324,9 @@ const HrmContractDetailPage: React.FC = () => {
 
   const tabs = useMemo<TabConfig[]>(
     () => [
-      { id: 'basic', label: '基本信息', content: basicInfoContent || <></> },
-      { id: 'duration', label: '期限信息', content: durationContent || <></> },
-      { id: 'salary', label: '薪资信息', content: salaryContent || <></> },
+      { id: 'basic', label: t('hrm.hrm_contract_detail_page.info'), content: basicInfoContent || <></> },
+      { id: 'duration', label: t('hrm.hrm_contract_detail_page.info_1'), content: durationContent || <></> },
+      { id: 'salary', label: t('hrm.hrm_contract_detail_page.info_2'), content: salaryContent || <></> },
     ],
     [basicInfoContent, durationContent, salaryContent]
   );
@@ -341,8 +343,8 @@ const HrmContractDetailPage: React.FC = () => {
       subtitle: contract?.contract_no || undefined,
       tags: [getContractTypeLabel(contract?.contract_type || '')],
       stats: [
-        { label: '员工', value: contract?.employee_name || '-' },
-        { label: '状态', value: getStatusConfig(contract?.status || '').label },
+        { label: t('hrm.hrm_contract_detail_page.text_2ed392'), value: contract?.employee_name || '-' },
+        { label: t('hrm.hrm_contract_detail_page.status'), value: getStatusConfig(contract?.status || '').label },
       ],
     }),
     [contract]
@@ -350,8 +352,8 @@ const HrmContractDetailPage: React.FC = () => {
 
   return (
     <PageContainer
-      title='合同详情'
-      subtitle='查看和管理员工合同信息'
+      title={t('hrm.hrm_contract_detail_page.detail_2')}
+      subtitle={t('hrm.hrm_contract_detail_page.view')}
     >
       <DetailPageTemplate
         title=''
@@ -364,7 +366,7 @@ const HrmContractDetailPage: React.FC = () => {
         tabs={tabs}
         actions={[
           {
-            label: '续签',
+            label: t('hrm.hrm_contract_detail_page.text_b53270'),
             icon: <Calendar style={{ width: 18, height: 18 }} />,
             onClick: () => setShowRenewDialog(true),
           },

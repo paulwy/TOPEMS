@@ -34,6 +34,7 @@ import {
   type TemplateStatusEnum,
 } from '@/api/notification';
 import { apiLogger } from '@/utils/logger';
+import { useConfirmDialog, useUrlListState } from '@/hooks';
 
 const ct = designTokens.colors;
 
@@ -65,26 +66,31 @@ export const NotificationTemplatesPage: React.FC = () => {
   const addNotification = useNotificationStore((state) => state.addNotification);
   const queryClient = useQueryClient();
 
-  const [searchQuery, setSearchQuery] = useState('');
-  const [debouncedSearch, setDebouncedSearch] = useState('');
-  const [selectedType, setSelectedType] = useState<string>('');
-  const [selectedStatus, setSelectedStatus] = useState<string>('');
-  const [currentPage, setCurrentPage] = useState(1);
-  const [pageSize] = useState(10);
+  const listState = useUrlListState<{ type: string; status: string }>({
+    defaultSearch: '',
+    defaultPageSize: 10,
+    defaultFilters: { type: '', status: '' },
+    baseIndex: 1,
+    historyMode: 'replace',
+  });
+  const {
+    searchQuery,
+    debouncedSearch,
+    currentPage,
+    pageSize,
+    filters: urlFilters,
+    setSearchQuery,
+    setFilter,
+    setCurrentPage,
+  } = listState;
+  const selectedType = urlFilters.type;
+  const selectedStatus = urlFilters.status;
 
   const [confirmDialogOpen, setConfirmDialogOpen] = useState(false);
   const [deleteTarget, setDeleteTarget] = useState<NotificationTemplate | null>(null);
 
-  React.useEffect(() => {
-    const timer = setTimeout(() => {
-      setDebouncedSearch(searchQuery);
-      setCurrentPage(1);
-    }, 300);
-    return () => clearTimeout(timer);
-  }, [searchQuery]);
-
   const { data: templates = [], isLoading: loading } = useQuery({
-    queryKey: ['notification-templates', debouncedSearch, selectedStatus],
+    queryKey: ['notification-templates', debouncedSearch, selectedStatus, currentPage, pageSize],
     queryFn: async () => {
       const response = await getTemplates(
         currentPage,
@@ -245,14 +251,12 @@ export const NotificationTemplatesPage: React.FC = () => {
 
   const handleFilterChange = useCallback((filters: Record<string, any>) => {
     if (filters.type !== undefined) {
-      setSelectedType(filters.type);
-      setCurrentPage(1);
+      setFilter('type', filters.type);
     }
     if (filters.status !== undefined) {
-      setSelectedStatus(filters.status);
-      setCurrentPage(1);
+      setFilter('status', filters.status);
     }
-  }, []);
+  }, [setFilter]);
 
   const columns: ColumnDef<NotificationTemplate>[] = useMemo(
     () => [

@@ -10,7 +10,9 @@ import { salaryAdjustmentApi } from '@/api/hrm';
 import type { SalaryAdjustment } from '@/api/hrm';
 import { PageContainer } from '@/components/common';
 
+import { useTranslation } from 'react-i18next';
 const HrmSalaryAdjustmentPage: React.FC = () => {
+  const { t } = useTranslation();
   const navigate = useNavigate();
   const addNotification = useNotificationStore((state) => state.addNotification);
   const queryClient = useQueryClient();
@@ -37,11 +39,11 @@ const HrmSalaryAdjustmentPage: React.FC = () => {
     mutationFn: async (args: { id: string; user: string }) =>
       salaryAdjustmentApi.approve(args.id, args.user),
     onSuccess: () => {
-      addNotification({ title: '审批成功', type: 'success', message: '已审批通过' });
+      addNotification({ title: t('hrm.hrm_salary_adjustment_page.success'), type: 'success', message: t('hrm.hrm_salary_adjustment_page.text_c0b5ba') });
       queryClient.invalidateQueries({ queryKey: QUERY_KEYS.HRM.SALARY_ADJUSTMENT });
     },
     onError: () => {
-      addNotification({ title: '审批失败', type: 'error', message: '审批失败' });
+      addNotification({ title: t('hrm.hrm_salary_adjustment_page.fail'), type: 'error', message: t('hrm.hrm_salary_adjustment_page.fail') });
     },
   });
 
@@ -50,13 +52,13 @@ const HrmSalaryAdjustmentPage: React.FC = () => {
       string,
       { label: string; color: 'primary' | 'success' | 'warning' | 'default' }
     > = {
-      promotion: { label: '晋升调薪', color: 'primary' },
-      demotion: { label: '降职调薪', color: 'warning' },
-      bonus: { label: '奖金调薪', color: 'success' },
-      deduction: { label: '扣减调薪', color: 'warning' },
-      annual: { label: '年度调薪', color: 'success' },
-      special: { label: '特殊调薪', color: 'warning' },
-      correction: { label: '纠正调薪', color: 'default' },
+      promotion: { label: t('hrm.hrm_salary_adjustment_page.text_34714b'), color: 'primary' },
+      demotion: { label: t('hrm.hrm_salary_adjustment_page.text_309ae8'), color: 'warning' },
+      bonus: { label: t('hrm.hrm_salary_adjustment_page.text_01b5d0'), color: 'success' },
+      deduction: { label: t('hrm.hrm_salary_adjustment_page.text_c6f803'), color: 'warning' },
+      annual: { label: t('hrm.hrm_salary_adjustment_page.text_4d3b2a'), color: 'success' },
+      special: { label: t('hrm.hrm_salary_adjustment_page.text_6b00d6'), color: 'warning' },
+      correction: { label: t('hrm.hrm_salary_adjustment_page.text_f290f3'), color: 'default' },
     };
     const cfg = map[type] || { label: type, color: 'default' as const };
     return (
@@ -73,9 +75,9 @@ const HrmSalaryAdjustmentPage: React.FC = () => {
       string,
       { label: string; color: 'success' | 'warning' | 'error' | 'default'; icon: React.ReactNode }
     > = {
-      approved: { label: '已批准', color: 'success', icon: <CheckCircle size={14} /> },
-      pending: { label: '待审批', color: 'warning', icon: <Clock size={14} /> },
-      rejected: { label: '已拒绝', color: 'error', icon: <XCircle size={14} /> },
+      approved: { label: t('hrm.hrm_salary_adjustment_page.text_337737'), color: 'success', icon: <CheckCircle size={14} /> },
+      pending: { label: t('hrm.hrm_salary_adjustment_page.text_b0bf01'), color: 'warning', icon: <Clock size={14} /> },
+      rejected: { label: t('hrm.hrm_salary_adjustment_page.text_81233d'), color: 'error', icon: <XCircle size={14} /> },
     };
     const cfg = map[status] || { label: status, color: 'default' as const, icon: null };
     return (
@@ -91,12 +93,12 @@ const HrmSalaryAdjustmentPage: React.FC = () => {
   const columns: ColumnDef<SalaryAdjustment>[] = [
     {
       id: 'employee_name',
-      label: '员工',
+      label: t('hrm.hrm_salary_adjustment_page.text_2ed392'),
       width: 120,
     },
     {
       id: 'department',
-      label: '部门',
+      label: t('hrm.hrm_salary_adjustment_page.text_1e1459'),
       width: 120,
       render: (row) => (
         <Typography
@@ -110,13 +112,13 @@ const HrmSalaryAdjustmentPage: React.FC = () => {
     },
     {
       id: 'adjustment_type',
-      label: '调薪类型',
+      label: t('hrm.hrm_salary_adjustment_page.type'),
       width: 120,
       render: (row) => getTypeChip(row.adjustment_type),
     },
     {
       id: 'old_salary',
-      label: '调前薪资',
+      label: t('hrm.hrm_salary_adjustment_page.text_efcdf1'),
       width: 110,
       align: 'right',
       render: (row) => (
@@ -125,7 +127,7 @@ const HrmSalaryAdjustmentPage: React.FC = () => {
     },
     {
       id: 'new_salary',
-      label: '调后薪资',
+      label: t('hrm.hrm_salary_adjustment_page.text_72ec23'),
       width: 110,
       align: 'right',
       render: (row) => (
@@ -139,7 +141,7 @@ const HrmSalaryAdjustmentPage: React.FC = () => {
     },
     {
       id: 'adjustment_amount',
-      label: '变动',
+      label: t('hrm.hrm_salary_adjustment_page.text_34d019'),
       width: 140,
       align: 'right',
       render: (row: SalaryAdjustment) => {
@@ -173,7 +175,7 @@ const HrmSalaryAdjustmentPage: React.FC = () => {
     },
     {
       id: 'effective_date',
-      label: '生效日期',
+      label: t('hrm.hrm_salary_adjustment_page.date'),
       width: 110,
       render: (row) => (
         <Typography variant='body2'>
@@ -183,13 +185,13 @@ const HrmSalaryAdjustmentPage: React.FC = () => {
     },
     {
       id: 'status',
-      label: '状态',
+      label: t('hrm.hrm_salary_adjustment_page.status'),
       width: 100,
       render: (row) => getStatusChip(row.status),
     },
     {
       id: 'reason',
-      label: '原因',
+      label: t('hrm.hrm_salary_adjustment_page.text_41dfb0'),
       render: (row) => (
         <Typography
           variant='body2'
@@ -204,18 +206,18 @@ const HrmSalaryAdjustmentPage: React.FC = () => {
 
   const rowActions: RowAction<SalaryAdjustment>[] = [
     {
-      label: '查看详情',
+      label: t('hrm.hrm_salary_adjustment_page.view_detail'),
       icon: <TrendingUp size={16} />,
       onClick: (row) => {
         addNotification({
-          title: '调薪详情',
+          title: t('hrm.hrm_salary_adjustment_page.detail'),
           type: 'info',
           message: `查看 ${row.employee_name} 的调薪详情`,
         });
       },
     },
     {
-      label: '审批',
+      label: t('hrm.hrm_salary_adjustment_page.text_0273ba'),
       icon: <CheckCircle size={16} />,
       onClick: (row) => {
         approveMutation.mutate({ id: row.id, user: 'current-user' });
@@ -226,8 +228,8 @@ const HrmSalaryAdjustmentPage: React.FC = () => {
 
   return (
     <PageContainer
-      title='薪资调整'
-      subtitle='员工薪资调整记录管理'
+      title={t('hrm.hrm_salary_adjustment_page.text_56e426')}
+      subtitle={t('hrm.hrm_salary_adjustment_page.text_cfb890')}
     >
       <ListPageTemplate<SalaryAdjustment>
         title=''
@@ -239,14 +241,14 @@ const HrmSalaryAdjustmentPage: React.FC = () => {
         searchable
         onRefresh={loadAdjustments}
         exportable
-        exportFileName='薪资调整列表'
+        exportFileName={t('hrm.hrm_salary_adjustment_page.list')}
         persistFilters
         persistSearch
         emptyActionButton={{
-          label: '发起调薪',
+          label: t('hrm.hrm_salary_adjustment_page.text_5781c0'),
           icon: <Plus size={16} />,
           onClick: () => {
-            addNotification({ title: '功能开发中', type: 'info', message: '调薪申请功能即将上线' });
+            addNotification({ title: t('hrm.hrm_salary_adjustment_page.text_4c9a4a'), type: 'info', message: t('hrm.hrm_salary_adjustment_page.text_422aa5') });
           },
         }}
       />

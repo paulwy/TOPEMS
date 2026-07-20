@@ -1,4 +1,5 @@
 use chrono::{DateTime, Utc};
+use rust_decimal::Decimal;
 use serde::{Deserialize, Serialize};
 use sqlx::FromRow;
 use utoipa::ToSchema;
@@ -585,4 +586,108 @@ pub struct UpdateVoucherTemplateRequest {
     pub entries: Option<Vec<serde_json::Value>>,
     pub status: Option<String>,
     pub is_default: Option<bool>,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize, sqlx::FromRow)]
+pub struct AccountBalance {
+    pub id: Uuid,
+    pub organization_id: Uuid,
+    pub subject_code: String,
+    pub subject_name: Option<String>,
+    pub period: String,
+    pub opening_debit: Decimal,
+    pub opening_credit: Decimal,
+    pub period_debit: Decimal,
+    pub period_credit: Decimal,
+    pub closing_debit: Decimal,
+    pub closing_credit: Decimal,
+    pub balance: Decimal,
+    pub created_at: DateTime<Utc>,
+    pub updated_at: DateTime<Utc>,
+    pub deleted_at: Option<DateTime<Utc>>,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize, sqlx::FromRow)]
+pub struct AccountingPeriod {
+    pub id: Uuid,
+    pub period: String,
+    pub year: i32,
+    pub month: i32,
+    pub start_date: DateTime<Utc>,
+    pub end_date: DateTime<Utc>,
+    pub status: String,
+    pub fiscal_year: String,
+    pub tenant_id: Uuid,
+    pub created_at: DateTime<Utc>,
+    pub updated_at: DateTime<Utc>,
+    pub closed_at: Option<DateTime<Utc>>,
+}
+
+// ============================================================
+//  V19.2/V19.3 财务对账模型 - V19.5 恢复
+// ============================================================
+
+#[derive(Debug, Clone, Serialize, Deserialize, sqlx::FromRow, ToSchema)]
+pub struct Reconciliation {
+    pub id: Uuid,
+    pub reconciliation_no: String,
+    pub reconciliation_type: String,
+    pub status: String,
+    pub period: String,
+    pub reference_id: Option<String>,
+    pub total_amount: Decimal,
+    pub reconciled_amount: Decimal,
+    pub discrepancy_amount: Decimal,
+    pub tenant_id: Uuid,
+    pub created_by: Option<Uuid>,
+    pub created_at: DateTime<Utc>,
+    pub updated_at: DateTime<Utc>,
+}
+
+#[derive(Debug, Clone, Deserialize, Serialize, ToSchema)]
+pub struct CreateReconciliationRequest {
+    pub reconciliation_type: String,
+    pub period: String,
+    pub reference_id: Option<String>,
+    pub total_amount: Option<Decimal>,
+    pub record_ids: Option<Vec<String>>,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize, sqlx::FromRow, ToSchema)]
+pub struct ReconciliationRecord {
+    pub id: Uuid,
+    pub reconciliation_id: Uuid,
+    pub record_type: String,
+    pub record_id: String,
+    pub amount: Decimal,
+    pub matched_amount: Decimal,
+    pub status: String,
+    pub matched_record_id: Option<Uuid>,
+    pub tenant_id: Uuid,
+    pub created_at: DateTime<Utc>,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize, sqlx::FromRow, ToSchema)]
+pub struct ReconciliationRule {
+    pub id: Uuid,
+    pub rule_name: String,
+    pub reconciliation_type: String,
+    pub match_field: String,
+    pub tolerance: Decimal,
+    pub priority: i32,
+    pub enabled: bool,
+    pub tenant_id: Uuid,
+    pub created_at: DateTime<Utc>,
+}
+
+#[derive(Debug, Clone, Deserialize, Serialize, ToSchema)]
+pub struct ReconciliationQuery {
+    pub page: Option<i64>,
+    pub page_size: Option<i64>,
+    pub reconciliation_type: Option<String>,
+    pub status: Option<String>,
+    pub period: Option<String>,
+    pub reference_id: Option<String>,
+    pub ref_id: Option<String>,
+    pub ref_type: Option<String>,
 }

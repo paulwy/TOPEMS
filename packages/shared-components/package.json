@@ -24,7 +24,12 @@
     "./DataTable": "./src/components/DataTable.tsx",
     "./PageContainer": "./src/components/PageContainer.tsx",
     "./CommandPalette": "./src/components/CommandPalette.tsx",
-    "./LazyImage": "./src/components/LazyImage.tsx"
+    "./LazyImage": "./src/components/LazyImage.tsx",
+    "./atoms": "./src/atoms/index.ts",
+    "./molecules": "./src/molecules/index.ts",
+    "./organisms": "./src/organisms/index.ts",
+    "./registry": "./src/registry/index.ts",
+    "./theme": "./src/theme/index.ts"
   },
   "peerDependencies": {
     "@emotion/react": "^11.0.0",

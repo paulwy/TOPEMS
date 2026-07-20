@@ -5,6 +5,7 @@ import { useNavigate } from 'react-router-dom';
 import { DASHBOARD_PATHS } from '@/routes/dashboard';
 import type { TabType } from '../types';
 
+import { useTranslation } from 'react-i18next';
 interface PageHeaderProps {
   activeTab: TabType;
   loading: boolean;
@@ -20,6 +21,7 @@ export const PageHeader: React.FC<PageHeaderProps> = ({
   onCreate,
   onImport,
 }) => {
+  const { t } = useTranslation();
   const navigate = useNavigate();
 
   return (
@@ -34,7 +36,7 @@ export const PageHeader: React.FC<PageHeaderProps> = ({
       }}
     >
       <Stack direction='row' spacing={1.5} sx={{ alignItems: 'center' }}>
-        <IconButton onClick={() => navigate(DASHBOARD_PATHS.dashboard)} aria-label='返回首页'>
+        <IconButton onClick={() => navigate(DASHBOARD_PATHS.dashboard)} aria-label={t('bi.gis_page_components__page_header.back')}>
           <ChevronRight style={{ transform: 'rotate(180deg)' }} />
         </IconButton>
         <Box>

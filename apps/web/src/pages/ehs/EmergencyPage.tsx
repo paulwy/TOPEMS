@@ -28,6 +28,7 @@ import { apiLogger } from '@/utils/logger';
 import { designTokens } from '@/theme/tokens';
 import { useCrudOperations, type CrudOperations } from '@/hooks/useCrudQueries';
 
+import { useTranslation } from 'react-i18next';
 const ct = designTokens.colors;
 
 const drillCrudApi: CrudOperations<DrillRecord, CreateDrillRecordRequest> = {
@@ -45,6 +46,7 @@ const drillCrudApi: CrudOperations<DrillRecord, CreateDrillRecordRequest> = {
 };
 
 const EmergencyPage: React.FC = () => {
+  const { t } = useTranslation();
   const navigate = useNavigate();
   const [searchTerm, setSearchTerm] = useState('');
   const [statusFilter, setStatusFilter] = useState('');
@@ -86,8 +88,8 @@ const EmergencyPage: React.FC = () => {
         setSelectedDrill(response.data as DrillRecord);
       }
     } catch (err: unknown) {
-      apiLogger.error('加载应急演练详情失败:', err);
-      addNotification({ title: '错误', message: '加载详情失败', type: 'error' });
+      apiLogger.error(t('ehs.emergency_page.detail'), err);
+      addNotification({ title: t('ehs.emergency_page.error'), message: t('ehs.emergency_page.detail_1'), type: 'error' });
     } finally {
       setDetailLoading(false);
     }
@@ -102,11 +104,11 @@ const EmergencyPage: React.FC = () => {
       cancelled: { bg: 'error.lighter', color: 'error.dark' },
     };
     const statusLabels: Record<string, string> = {
-      draft: '草稿',
-      planned: '已计划',
-      ongoing: '进行中',
-      completed: '已完成',
-      cancelled: '已取消',
+      draft: t('ehs.emergency_page.text_22b433'),
+      planned: t('ehs.emergency_page.plan'),
+      ongoing: t('ehs.emergency_page.in_progress'),
+      completed: t('ehs.emergency_page.completed'),
+      cancelled: t('ehs.emergency_page.cancelled'),
     };
     const colors = statusMap[status] || { bg: 'grey.100', color: 'text.secondary' };
     const label = statusLabels[status] || status;
@@ -127,12 +129,12 @@ const EmergencyPage: React.FC = () => {
     () => [
       {
         id: 'drill_no',
-        label: '演练编号',
+        label: t('ehs.emergency_page.text_855fce'),
         render: (row) => row.drill_no,
       },
       {
         id: 'drill_name',
-        label: '演练名称',
+        label: t('ehs.emergency_page.name'),
         render: (row) => (
           <Typography
             variant='body2'
@@ -144,22 +146,22 @@ const EmergencyPage: React.FC = () => {
       },
       {
         id: 'drill_date',
-        label: '演练日期',
+        label: t('ehs.emergency_page.date'),
         render: (row) => row.drill_date || '-',
       },
       {
         id: 'duration_hours',
-        label: '时长(小时)',
+        label: t('ehs.emergency_page.text_68f989'),
         render: (row) => row.duration_hours || '-',
       },
       {
         id: 'location',
-        label: '地点',
+        label: t('ehs.emergency_page.text_fc1a7d'),
         render: (row) => row.location || '-',
       },
       {
         id: 'status',
-        label: '状态',
+        label: t('ehs.emergency_page.status'),
         render: (row) => getStatusBadge(row.status),
       },
     ],
@@ -175,7 +177,7 @@ const EmergencyPage: React.FC = () => {
   const rowActions = useMemo<RowAction<DrillRecord>[]>(
     () => [
       {
-        label: '详情',
+        label: t('ehs.emergency_page.detail_2'),
         icon: <Eye size={16} />,
         onClick: (row) => handleViewDetail(row),
       },
@@ -187,15 +189,15 @@ const EmergencyPage: React.FC = () => {
     () => [
       {
         id: 'status',
-        label: '状态',
+        label: t('ehs.emergency_page.status'),
         type: 'select',
         options: [
-          { value: '', label: '全部' },
-          { value: 'draft', label: '草稿' },
-          { value: 'planned', label: '已计划' },
-          { value: 'ongoing', label: '进行中' },
-          { value: 'completed', label: '已完成' },
-          { value: 'cancelled', label: '已取消' },
+          { value: '', label: t('ehs.emergency_page.all') },
+          { value: 'draft', label: t('ehs.emergency_page.text_22b433') },
+          { value: 'planned', label: t('ehs.emergency_page.plan') },
+          { value: 'ongoing', label: t('ehs.emergency_page.in_progress') },
+          { value: 'completed', label: t('ehs.emergency_page.completed') },
+          { value: 'cancelled', label: t('ehs.emergency_page.cancelled') },
         ],
         value: statusFilter,
         onChange: (value) => setStatusFilter(value as string),
@@ -248,11 +250,11 @@ const EmergencyPage: React.FC = () => {
         issues_found: formData.issues_found || null,
         improvements: formData.improvements || null,
       });
-      addNotification({ title: '成功', message: '应急演练创建成功', type: 'success' });
+      addNotification({ title: t('ehs.emergency_page.success'), message: t('ehs.emergency_page.create'), type: 'success' });
       setShowCreateModal(false);
     } catch (err: unknown) {
-      addNotification({ title: '错误', message: '创建失败', type: 'error' });
-      apiLogger.error('创建应急演练失败:', err);
+      addNotification({ title: t('ehs.emergency_page.error'), message: t('ehs.emergency_page.create_1'), type: 'error' });
+      apiLogger.error(t('ehs.emergency_page.create_2'), err);
     }
   };
 
@@ -267,7 +269,7 @@ const EmergencyPage: React.FC = () => {
 
   const headerActions = [
     {
-      label: '新增演练',
+      label: t('ehs.emergency_page.add'),
       icon: <Plus style={{ width: 18, height: 18 }} />,
       onClick: handleCreate,
       variant: 'contained' as const,
@@ -394,12 +396,12 @@ const EmergencyPage: React.FC = () => {
       </Box>
 
       <ListPageTemplate<DrillRecord>
-        title='应急演练列表'
+        title={t('ehs.emergency_page.list')}
         columns={columns}
         data={filteredDrills}
         loading={loading}
         searchable
-        searchPlaceholder='搜索演练名称或编号...'
+        searchPlaceholder={t('ehs.emergency_page.search')}
         searchValue={searchTerm}
         onSearch={(value) => setSearchTerm(value)}
         filters={filters}
@@ -419,76 +421,76 @@ const EmergencyPage: React.FC = () => {
             <Box sx={{ display: 'flex', gap: 2 }}>
               <TextField
                 fullWidth
-                label='演练编号 *'
+                label={t('ehs.emergency_page.text_ebb463')}
                 value={formData.drill_no}
                 onChange={(e) => setFormData({ ...formData, drill_no: e.target.value })}
-                placeholder='请输入演练编号'
+                placeholder={t('ehs.emergency_page.please_input')}
               />
               <TextField
                 fullWidth
-                label='演练名称 *'
+                label={t('ehs.emergency_page.name_1')}
                 value={formData.drill_name}
                 onChange={(e) => setFormData({ ...formData, drill_name: e.target.value })}
-                placeholder='请输入演练名称'
+                placeholder={t('ehs.emergency_page.please_input_1')}
               />
             </Box>
             <Box sx={{ display: 'flex', gap: 2 }}>
               <TextField
                 fullWidth
-                label='演练日期'
+                label={t('ehs.emergency_page.date')}
                 type='date'
                 value={formData.drill_date}
                 onChange={(e) => setFormData({ ...formData, drill_date: e.target.value })}
               />
               <TextField
                 fullWidth
-                label='时长(小时)'
+                label={t('ehs.emergency_page.text_68f989')}
                 type='number'
                 value={formData.duration_hours}
                 onChange={(e) => setFormData({ ...formData, duration_hours: e.target.value })}
-                placeholder='请输入时长'
+                placeholder={t('ehs.emergency_page.please_input_2')}
               />
             </Box>
             <TextField
               fullWidth
-              label='地点'
+              label={t('ehs.emergency_page.text_fc1a7d')}
               value={formData.location}
               onChange={(e) => setFormData({ ...formData, location: e.target.value })}
-              placeholder='请输入地点'
+              placeholder={t('ehs.emergency_page.please_input_3')}
             />
             <TextField
               fullWidth
-              label='参与人员'
+              label={t('ehs.emergency_page.participant')}
               value={formData.participants}
               onChange={(e) => setFormData({ ...formData, participants: e.target.value })}
-              placeholder='多个参与人员用逗号分隔'
+              placeholder={t('ehs.emergency_page.participant_1')}
               multiline
               rows={2}
             />
             <TextField
               fullWidth
-              label='演练概要'
+              label={t('ehs.emergency_page.text_8f8a23')}
               value={formData.summary}
               onChange={(e) => setFormData({ ...formData, summary: e.target.value })}
-              placeholder='请输入演练概要'
+              placeholder={t('ehs.emergency_page.please_input_4')}
               multiline
               rows={3}
             />
             <TextField
               fullWidth
-              label='发现问题'
+              label={t('ehs.emergency_page.text_fa77ab')}
               value={formData.issues_found}
               onChange={(e) => setFormData({ ...formData, issues_found: e.target.value })}
-              placeholder='请输入发现的问题'
+              placeholder={t('ehs.emergency_page.please_input_5')}
               multiline
               rows={2}
             />
             <TextField
               fullWidth
-              label='改进措施'
+              label={t('ehs.emergency_page.text_a8f639')}
               value={formData.improvements}
               onChange={(e) => setFormData({ ...formData, improvements: e.target.value })}
-              placeholder='请输入改进措施'
+              placeholder={t('ehs.emergency_page.please_input_6')}
               multiline
               rows={2}
             />
@@ -496,7 +498,7 @@ const EmergencyPage: React.FC = () => {
               <InputLabel>状态</InputLabel>
               <Select
                 value={formData.status}
-                label='状态'
+                label={t('ehs.emergency_page.status')}
                 onChange={(e) =>
                   setFormData({ ...formData, status: e.target.value as typeof formData.status })
                 }

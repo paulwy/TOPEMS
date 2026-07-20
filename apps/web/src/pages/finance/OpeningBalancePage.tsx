@@ -51,6 +51,7 @@ import { useNotification } from '@/hooks/useNotification';
 import type { Account, AccountOpeningBalance, AccountCategory } from '@/types/finance';
 import { PageContainer } from '@/components/common';
 
+import { useTranslation } from 'react-i18next';
 // 科目类别配置
 const CATEGORY_CONFIG: Record<
   AccountCategory,
@@ -74,6 +75,7 @@ const BALANCE_DIRECTION_CONFIG = {
 };
 
 export default function OpeningBalancePage() {
+  const { t } = useTranslation();
   const { error: notifyError } = useNotification();
 
   // 状态
@@ -112,13 +114,13 @@ export default function OpeningBalancePage() {
 
   useEffect(() => {
     if (accountError) {
-      notifyError('获取科目列表失败');
+      notifyError(t('finance.opening_balance_page.list'));
     }
   }, [accountError, notifyError]);
 
   useEffect(() => {
     if (openingError) {
-      notifyError('获取期初余额失败');
+      notifyError(t('finance.opening_balance_page.fail'));
     }
   }, [openingError, notifyError]);
 
@@ -145,7 +147,7 @@ export default function OpeningBalancePage() {
       map.set(ob.account_id, ob);
     });
     return map;
-  }, [openingBalancesData]);
+  }, [openingBalancesData, t]);
 
   // 按类别筛选科目
   const filteredAccounts = useMemo(() => {
@@ -218,25 +220,25 @@ export default function OpeningBalancePage() {
 
   return (
     <PageContainer
-      title='期初余额管理'
-      subtitle='设置会计科目的期初余额，用于新会计期间初始化'
+      title={t('finance.opening_balance_page.text_a9c974')}
+      subtitle={t('finance.opening_balance_page.text_8987a5')}
       maxWidth='xl'
       headerProps={{
         actions: [
           {
-            label: '结转余额',
+            label: t('finance.opening_balance_page.text_571e80'),
             icon: <Calendar sx={{ width: 16, height: 16 }} />,
             onClick: () => setShowCarryForwardModal(true),
             variant: 'outlined',
           },
           {
-            label: '导入',
+            label: t('finance.opening_balance_page.import'),
             icon: <Upload sx={{ width: 16, height: 16 }} />,
             onClick: () => {},
             variant: 'outlined',
           },
           {
-            label: '导出',
+            label: t('finance.opening_balance_page.export'),
             icon: <Download sx={{ width: 16, height: 16 }} />,
             onClick: () => {},
             variant: 'outlined',
@@ -255,7 +257,7 @@ export default function OpeningBalancePage() {
             }}
           >
             <TextField
-              label='会计期间'
+              label={t('finance.opening_balance_page.text_6cde16')}
               type='month'
               size='small'
               value={period}
@@ -269,7 +271,7 @@ export default function OpeningBalancePage() {
               <InputLabel>科目类别</InputLabel>
               <Select
                 value={selectedCategory}
-                label='科目类别'
+                label={t('finance.opening_balance_page.text_f31b4e')}
                 onChange={(e) => setSelectedCategory(e.target.value as AccountCategory)}
               >
                 <MenuItem value=''>全部类别</MenuItem>
@@ -284,9 +286,9 @@ export default function OpeningBalancePage() {
               </Select>
             </FormControl>
             <TextField
-              label='搜索'
+              label={t('finance.opening_balance_page.search')}
               size='small'
-              placeholder='科目编码或名称...'
+              placeholder={t('finance.opening_balance_page.name')}
               value={searchKeyword}
               onChange={(e) => setSearchKeyword(e.target.value)}
               slotProps={{
@@ -316,7 +318,7 @@ export default function OpeningBalancePage() {
         loading={isLoading}
         stats={[
           {
-            title: '借方合计',
+            title: t('finance.opening_balance_page.text_10afa4'),
             value: totals.totalDebit.toLocaleString('zh-CN', {
               minimumFractionDigits: 2,
             }),
@@ -326,7 +328,7 @@ export default function OpeningBalancePage() {
             gradient: true,
           },
           {
-            title: '贷方合计',
+            title: t('finance.opening_balance_page.text_17daaa'),
             value: totals.totalCredit.toLocaleString('zh-CN', {
               minimumFractionDigits: 2,
             }),
@@ -336,7 +338,7 @@ export default function OpeningBalancePage() {
             gradient: true,
           },
           {
-            title: '差额',
+            title: t('finance.opening_balance_page.text_7daffe'),
             value: Math.abs(totals.totalDebit - totals.totalCredit).toLocaleString('zh-CN', {
               minimumFractionDigits: 2,
             }),
@@ -451,7 +453,7 @@ export default function OpeningBalancePage() {
                           variant='body2'
                           color='text.secondary'
                         >
-                          {account.haschildren ? '明细科目' : '明细'}
+                          {account.haschildren ? t('finance.opening_balance_page.text_7586c1') : t('finance.opening_balance_page.text_f82e51')}
                         </Typography>
                       </TableCell>
                       <TableCell align='right'>
@@ -477,7 +479,7 @@ export default function OpeningBalancePage() {
                               sx={{ width: 100 }}
                               value={editDebitBalance}
                               onChange={(e) => setEditDebitBalance(parseFloat(e.target.value) || 0)}
-                              placeholder='借方'
+                              placeholder={t('finance.opening_balance_page.text_63e2bc')}
                             />
                             <Typography
                               variant='body2'
@@ -493,7 +495,7 @@ export default function OpeningBalancePage() {
                               onChange={(e) =>
                                 setEditCreditBalance(parseFloat(e.target.value) || 0)
                               }
-                              placeholder='贷方'
+                              placeholder={t('finance.opening_balance_page.text_9ff9a6')}
                             />
                             <Button
                               size='small'
@@ -565,7 +567,7 @@ export default function OpeningBalancePage() {
         <DialogContent>
           <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2, mt: 1 }}>
             <TextField
-              label='从期间'
+              label={t('finance.opening_balance_page.text_0f84c0')}
               type='month'
               size='small'
               value={carryForwardFrom}
@@ -573,7 +575,7 @@ export default function OpeningBalancePage() {
               slotProps={{ inputLabel: { shrink: true } } as const}
             />
             <TextField
-              label='到期间'
+              label={t('finance.opening_balance_page.text_1d4106')}
               type='month'
               size='small'
               value={carryForwardTo}

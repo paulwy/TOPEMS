@@ -29,6 +29,7 @@ use topems_shared::{
 };
 
 mod db;
+mod event_handlers;
 mod middleware;
 mod models;
 mod modules;
@@ -206,6 +207,10 @@ async fn main() -> Result<()> {
 
     init_tables(&pool).await?;
     tracing::info!("✅ 数据库表初始化成功");
+
+    if let Err(e) = event_handlers::start_event_subscribers(pool.clone()).await {
+        tracing::warn!("⚠️ GIS 事件订阅者启动失败: {}", e);
+    }
 
     let auth_state = AuthState::from_env();
     let ws_config = modules::websocket::WebSocketConfig::from_env();

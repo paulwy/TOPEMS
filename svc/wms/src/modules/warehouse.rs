@@ -9,6 +9,23 @@ use crate::modules::ApiState;
 use topems_shared::auth::Claims;
 use topems_shared::{api_error, ApiResponse, PaginationParams};
 
+fn warehouse_cache_key(tenant_id: Uuid, id: Uuid) -> String {
+    format!("warehouse:{}:{}", tenant_id, id)
+}
+
+fn warehouse_list_cache_key(
+    tenant_id: Uuid,
+    page: i64,
+    page_size: i64,
+    search: &Option<String>,
+    status: &Option<String>,
+) -> String {
+    format!(
+        "warehouses:{}:page:{}:size:{}:search:{:?}:status:{:?}",
+        tenant_id, page, page_size, search, status
+    )
+}
+
 pub fn create_routes<S>() -> Router<S>
 where
     S: Clone + Send + Sync + 'static,
@@ -41,6 +58,14 @@ pub async fn list_warehouses(
     let status_filter = params.status.clone();
 
     let tenant_id = get_tenant_id(&claims, &headers);
+
+    let cache_key =
+        warehouse_list_cache_key(tenant_id, page, page_size, &params.search, &params.status);
+
+    if let Some(cached) = state.warehouse_cache.get(&cache_key) {
+        tracing::debug!("📋 仓库列表缓存命中: {}", cache_key);
+        return Json(ApiResponse::success(cached, "获取仓库列表成功"));
+    }
 
     let result = sqlx::query_as::<_, Warehouse>(
         r#"
@@ -81,15 +106,16 @@ pub async fn list_warehouses(
 
             let total = count_result.unwrap_or(0);
 
-            Json(ApiResponse::success(
-                serde_json::json!({
-                    "warehouses": warehouses,
-                    "total": total,
-                    "page": page,
-                    "page_size": page_size
-                }),
-                "获取仓库列表成功",
-            ))
+            let response_data = serde_json::json!({
+                "warehouses": warehouses,
+                "total": total,
+                "page": page,
+                "page_size": page_size
+            });
+
+            state.warehouse_cache.set(cache_key, response_data.clone());
+
+            Json(ApiResponse::success(response_data, "获取仓库列表成功"))
         }
         Err(e) => {
             tracing::error!("获取仓库列表失败: {}", e);
@@ -150,6 +176,11 @@ pub async fn create_warehouse(
         None
     };
 
+    if status == "success" {
+        state.warehouse_cache.clear();
+        tracing::debug!("🗑️ 仓库列表缓存已清空（创建仓库）");
+    }
+
     log_audit_event(
         &state.db,
         "create".to_string(),
@@ -176,6 +207,14 @@ pub async fn get_warehouse(
     headers: HeaderMap,
 ) -> Json<ApiResponse<Warehouse>> {
     let tenant_id = get_tenant_id(&claims, &headers);
+    let cache_key = warehouse_cache_key(tenant_id, id);
+
+    if let Some(cached) = state.warehouse_cache.get(&cache_key) {
+        tracing::debug!("📋 仓库缓存命中: {}", cache_key);
+        if let Ok(warehouse) = serde_json::from_value::<Warehouse>(cached) {
+            return Json(ApiResponse::success(warehouse, "获取仓库成功"));
+        }
+    }
 
     let result = sqlx::query_as::<_, Warehouse>(
         r#"
@@ -189,7 +228,12 @@ pub async fn get_warehouse(
     .await;
 
     match result {
-        Ok(Some(warehouse)) => Json(ApiResponse::success(warehouse, "获取仓库成功")),
+        Ok(Some(warehouse)) => {
+            if let Ok(value) = serde_json::to_value(&warehouse) {
+                state.warehouse_cache.set(cache_key, value);
+            }
+            Json(ApiResponse::success(warehouse, "获取仓库成功"))
+        }
         Ok(None) => Json(api_error(404, "仓库不存在")),
         Err(e) => {
             tracing::error!("获取仓库失败: {}", e);
@@ -275,6 +319,13 @@ pub async fn update_warehouse(
         None
     };
 
+    if status_str == "success" {
+        let cache_key = warehouse_cache_key(tenant_id, id);
+        state.warehouse_cache.remove(&cache_key);
+        state.warehouse_cache.clear();
+        tracing::debug!("🗑️ 仓库缓存已失效: {}", cache_key);
+    }
+
     log_audit_event(
         &state.db,
         "update".to_string(),
@@ -336,6 +387,13 @@ pub async fn delete_warehouse(
     } else {
         None
     };
+
+    if status_str == "success" {
+        let cache_key = warehouse_cache_key(tenant_id, id);
+        state.warehouse_cache.remove(&cache_key);
+        state.warehouse_cache.clear();
+        tracing::debug!("🗑️ 仓库缓存已失效: {}", cache_key);
+    }
 
     log_audit_event(
         &state.db,

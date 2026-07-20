@@ -1,144 +1,234 @@
 #![allow(dead_code)]
 
-use serde::{Deserialize, Serialize};
-
-use axum::extract::{Extension, Json, Query, State};
-
-use chrono::{Datelike, Utc};
+use axum::{
+    extract::{Extension, Path, State},
+    Json,
+};
+use chrono::{Datelike, TimeZone, Timelike, Utc};
+use uuid::Uuid;
 
 use super::super::ApiState;
+use crate::models::finance::AccountingPeriod;
 use crate::shared::permission::{check_permission, ModulePermission};
 use topems_shared::auth::Claims;
-use topems_shared::{api_error, ApiResponse};
+use topems_shared::{api_error, api_success, ApiResponse};
 
-#[derive(Debug, Serialize, Deserialize)]
-struct PeriodResponse {
-    period: String,
-    year: i32,
-    month: i32,
-    start_date: Option<String>,
-    end_date: Option<String>,
-    status: String,
-}
-
-#[derive(Debug, Deserialize)]
-struct PeriodRequest {
-    period: String,
+/// 从 Claims 中解析 tenant_id。
+fn resolve_tenant_id<T>(claims: &Claims) -> Result<Uuid, Json<ApiResponse<T>>> {
+    match &claims.tenant_id {
+        Some(id) => match Uuid::parse_str(id) {
+            Ok(uuid) => Ok(uuid),
+            Err(_) => Err(Json(api_error::<T>(401, "无效的租户ID"))),
+        },
+        None => Err(Json(api_error::<T>(401, "缺少租户ID"))),
+    }
 }
 
 pub async fn get_current_period(
     State(state): State<ApiState>,
     Extension(claims): Extension<Claims>,
-) -> Json<ApiResponse<PeriodResponse>> {
+) -> Json<ApiResponse<AccountingPeriod>> {
     if let Err(e) = check_permission(&state.db, &claims, &ModulePermission::FinanceRead).await {
         return e;
     }
 
+    let tenant_id = match resolve_tenant_id::<AccountingPeriod>(&claims) {
+        Ok(id) => id,
+        Err(resp) => return resp,
+    };
+
     let now = Utc::now();
-    let year = now.year();
-    let month = now.month() as i32;
-    let period = format!("{}{:02}", year, month);
+    let current_period = format!("{:04}{:02}", now.year(), now.month());
 
-    Json(ApiResponse::success(
-        PeriodResponse {
-            period: period.clone(),
-            year,
-            month,
-            start_date: Some(format!("{}-{:02}-01", year, month)),
-            end_date: Some(format!(
-                "{}-{:02}-{}",
-                year,
-                month,
-                get_days_in_month(year, month)
-            )),
-            status: "open".to_string(),
-        },
-        "获取当前会计期间成功",
-    ))
-}
+    // 查询当前期间
+    let existing = sqlx::query_as::<_, AccountingPeriod>(
+        r#"
+        SELECT id, period, year, month, start_date, end_date, status, fiscal_year, tenant_id, created_at, updated_at, closed_at
+        FROM erp.accounting_periods
+        WHERE period = $1 AND tenant_id = $2
+        "#,
+    )
+    .bind(&current_period)
+    .bind(tenant_id)
+    .fetch_optional(&state.db)
+    .await;
 
-fn get_days_in_month(year: i32, month: i32) -> i32 {
-    match month {
-        1 | 3 | 5 | 7 | 8 | 10 | 12 => 31,
-        4 | 6 | 9 | 11 => 30,
-        2 => {
-            if (year % 4 == 0 && year % 100 != 0) || (year % 400 == 0) {
-                29
+    match existing {
+        Ok(Some(period)) => Json(api_success(period)),
+        Ok(None) => {
+            // 当前期间不存在，自动创建
+            let start = now
+                .with_day(1)
+                .and_then(|d| d.with_hour(0))
+                .and_then(|d| d.with_minute(0))
+                .and_then(|d| d.with_second(0))
+                .and_then(|d| d.with_nanosecond(0))
+                .unwrap_or(now);
+            // 月末：下个月 1 号 - 1 秒
+            let next_month = if now.month() == 12 {
+                Utc::with_ymd_and_hms(&Utc, now.year() + 1, 1, 1, 0, 0, 0).unwrap()
             } else {
-                28
+                Utc::with_ymd_and_hms(&Utc, now.year(), now.month() + 1, 1, 0, 0, 0).unwrap()
+            };
+            let end = next_month - chrono::Duration::seconds(1);
+
+            let new_id = Uuid::new_v4();
+            let fiscal_year = now.year().to_string();
+
+            let inserted = sqlx::query_as::<_, AccountingPeriod>(
+                r#"
+                INSERT INTO erp.accounting_periods
+                    (id, period, year, month, start_date, end_date, status, fiscal_year, tenant_id, created_at, updated_at)
+                VALUES ($1, $2, $3, $4, $5, $6, 'open', $7, $8, NOW(), NOW())
+                RETURNING id, period, year, month, start_date, end_date, status, fiscal_year, tenant_id, created_at, updated_at, closed_at
+                "#,
+            )
+            .bind(new_id)
+            .bind(&current_period)
+            .bind(now.year())
+            .bind(now.month() as i32)
+            .bind(start)
+            .bind(end)
+            .bind(&fiscal_year)
+            .bind(tenant_id)
+            .fetch_one(&state.db)
+            .await;
+
+            match inserted {
+                Ok(period) => Json(api_success(period)),
+                Err(e) => Json(api_error::<AccountingPeriod>(
+                    500,
+                    &format!("创建当前会计期间失败: {}", e),
+                )),
             }
         }
-        _ => 30,
+        Err(e) => Json(api_error::<AccountingPeriod>(
+            500,
+            &format!("查询当前会计期间失败: {}", e),
+        )),
     }
 }
 
 pub async fn list_periods(
     State(state): State<ApiState>,
     Extension(claims): Extension<Claims>,
-    Query(params): Query<PeriodListParams>,
-) -> Json<ApiResponse<Vec<PeriodResponse>>> {
+) -> Json<ApiResponse<Vec<AccountingPeriod>>> {
     if let Err(e) = check_permission(&state.db, &claims, &ModulePermission::FinanceRead).await {
         return e;
     }
 
-    let year = params.year.unwrap_or(Utc::now().year());
-    let mut periods = Vec::new();
+    let tenant_id = match resolve_tenant_id::<Vec<AccountingPeriod>>(&claims) {
+        Ok(id) => id,
+        Err(resp) => return resp,
+    };
 
-    for month in 1..=12 {
-        periods.push(PeriodResponse {
-            period: format!("{}{:02}", year, month),
-            year,
-            month,
-            start_date: Some(format!("{}-{:02}-01", year, month)),
-            end_date: Some(format!(
-                "{}-{:02}-{}",
-                year,
-                month,
-                get_days_in_month(year, month)
-            )),
-            status: if month <= Utc::now().month() as i32 {
-                "open".to_string()
-            } else {
-                "closed".to_string()
-            },
-        });
+    let year = Utc::now().year();
+
+    match sqlx::query_as::<_, AccountingPeriod>(
+        r#"
+        SELECT id, period, year, month, start_date, end_date, status, fiscal_year, tenant_id, created_at, updated_at, closed_at
+        FROM erp.accounting_periods
+        WHERE year = $1 AND tenant_id = $2
+        ORDER BY period ASC
+        "#,
+    )
+    .bind(year)
+    .bind(tenant_id)
+    .fetch_all(&state.db)
+    .await
+    {
+        Ok(periods) => Json(api_success(periods)),
+        Err(e) => Json(api_error::<Vec<AccountingPeriod>>(
+            500,
+            &format!("查询会计期间列表失败: {}", e),
+        )),
     }
-
-    Json(ApiResponse::success(periods, "获取会计期间列表成功"))
-}
-
-#[derive(Debug, Deserialize)]
-struct PeriodListParams {
-    year: Option<i32>,
-    status: Option<String>,
 }
 
 pub async fn open_period(
     State(state): State<ApiState>,
     Extension(claims): Extension<Claims>,
-    Json(req): Json<PeriodRequest>,
-) -> Json<ApiResponse<()>> {
+    Path(period): Path<String>,
+) -> Json<ApiResponse<serde_json::Value>> {
     if let Err(e) = check_permission(&state.db, &claims, &ModulePermission::FinanceWrite).await {
         return e;
     }
 
-    Json(ApiResponse::success(
-        (),
-        &format!("会计期间 {} 已打开", req.period),
-    ))
+    let tenant_id = match resolve_tenant_id::<serde_json::Value>(&claims) {
+        Ok(id) => id,
+        Err(resp) => return resp,
+    };
+
+    match sqlx::query(
+        r#"
+        UPDATE erp.accounting_periods
+        SET status = 'open', updated_at = NOW(), closed_at = NULL
+        WHERE period = $1 AND tenant_id = $2
+        "#,
+    )
+    .bind(&period)
+    .bind(tenant_id)
+    .execute(&state.db)
+    .await
+    {
+        Ok(result) => {
+            if result.rows_affected() == 0 {
+                return Json(api_error::<serde_json::Value>(
+                    404,
+                    &format!("会计期间 {} 不存在", period),
+                ));
+            }
+            Json(api_success(
+                serde_json::json!({"period": period, "status": "open"}),
+            ))
+        }
+        Err(e) => Json(api_error::<serde_json::Value>(
+            500,
+            &format!("打开会计期间失败: {}", e),
+        )),
+    }
 }
 
 pub async fn close_period(
     State(state): State<ApiState>,
     Extension(claims): Extension<Claims>,
-    Json(req): Json<PeriodRequest>,
-) -> Json<ApiResponse<()>> {
+    Path(period): Path<String>,
+) -> Json<ApiResponse<serde_json::Value>> {
     if let Err(e) = check_permission(&state.db, &claims, &ModulePermission::FinanceWrite).await {
         return e;
     }
 
-    Json(ApiResponse::success(
-        (),
-        &format!("会计期间 {} 已关闭", req.period),
-    ))
+    let tenant_id = match resolve_tenant_id::<serde_json::Value>(&claims) {
+        Ok(id) => id,
+        Err(resp) => return resp,
+    };
+
+    match sqlx::query(
+        r#"
+        UPDATE erp.accounting_periods
+        SET status = 'closed', updated_at = NOW(), closed_at = NOW()
+        WHERE period = $1 AND tenant_id = $2
+        "#,
+    )
+    .bind(&period)
+    .bind(tenant_id)
+    .execute(&state.db)
+    .await
+    {
+        Ok(result) => {
+            if result.rows_affected() == 0 {
+                return Json(api_error::<serde_json::Value>(
+                    404,
+                    &format!("会计期间 {} 不存在", period),
+                ));
+            }
+            Json(api_success(
+                serde_json::json!({"period": period, "status": "closed"}),
+            ))
+        }
+        Err(e) => Json(api_error::<serde_json::Value>(
+            500,
+            &format!("关闭会计期间失败: {}", e),
+        )),
+    }
 }

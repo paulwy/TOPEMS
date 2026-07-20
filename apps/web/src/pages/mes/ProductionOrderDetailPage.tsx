@@ -19,9 +19,11 @@ import type { ProductionOrder, ProductionRecord, QualityRecord } from '@/api/mes
 import { designTokens } from '@/theme/tokens';
 import { MES_PATHS } from '@/modules/mes/config';
 
+import { useTranslation } from 'react-i18next';
 const ct = designTokens.colors;
 
 const ProductionOrderDetailPage: React.FC = () => {
+  const { t } = useTranslation();
   const { id } = useParams<{ id: string }>();
 
   const {
@@ -36,7 +38,7 @@ const ProductionOrderDetailPage: React.FC = () => {
       if (res.success && res.data) {
         return res.data;
       }
-      throw new Error(res.message || '加载工单信息失败');
+      throw new Error(res.message || t('mes.production_order_detail_page.fail'));
     },
     enabled: !!id,
   });
@@ -70,7 +72,7 @@ const ProductionOrderDetailPage: React.FC = () => {
   const records = recordsData || [];
   const qualityRecords = qualityRecordsData || [];
   const loading = orderLoading;
-  const errorMessage = orderError ? (orderError as Error).message || '加载工单详情失败' : undefined;
+  const errorMessage = orderError ? (orderError as Error).message || t('mes.production_order_detail_page.detail') : undefined;
 
   const getStatusColor = (status: string): ChipProps['color'] => {
     switch (status) {
@@ -93,12 +95,12 @@ const ProductionOrderDetailPage: React.FC = () => {
 
   const getStatusLabel = (status: string) => {
     const statusMap: Record<string, string> = {
-      pending: '待下达',
-      released: '已下达',
-      in_progress: '生产中',
-      completed: '已完成',
-      cancelled: '已取消',
-      paused: '已暂停',
+      pending: t('mes.production_order_detail_page.text_e0468e'),
+      released: t('mes.production_order_detail_page.status_released'),
+      in_progress: t('mes.production_order_detail_page.status_in_progress'),
+      completed: t('mes.production_order_detail_page.completed'),
+      cancelled: t('mes.production_order_detail_page.status_cancelled'),
+      paused: t('mes.production_order_detail_page.status_paused'),
     };
     return statusMap[status] || status;
   };
@@ -136,7 +138,7 @@ const ProductionOrderDetailPage: React.FC = () => {
         <Box>
           <InputLabel sx={{ fontSize: 12, color: 'text.secondary' }}>数量</InputLabel>
           <Typography sx={{ mt: 0.5 }}>
-            {order.quantity} {order.unit || '件'}
+            {order.quantity} {order.unit || t('mes.production_order_detail_page.text_f7edf5')}
           </Typography>
         </Box>
         <Box>
@@ -226,7 +228,7 @@ const ProductionOrderDetailPage: React.FC = () => {
                   </Typography>
                 </Box>
                 <Chip
-                  label={record.status === 'completed' ? '已完成' : '进行中'}
+                  label={record.status === 'completed' ? t('mes.production_order_detail_page.completed') : t('mes.production_order_detail_page.in_progress')}
                   color={record.status === 'completed' ? 'success' : 'primary'}
                   size='small'
                 />
@@ -318,7 +320,7 @@ const ProductionOrderDetailPage: React.FC = () => {
                   </Typography>
                 </Box>
                 <Chip
-                  label={record.status === 'qualified' ? '合格' : '不合格'}
+                  label={record.status === 'qualified' ? t('mes.production_order_detail_page.qualified') : t('mes.production_order_detail_page.unqualified')}
                   color={record.status === 'qualified' ? 'success' : 'error'}
                   size='small'
                 />
@@ -481,11 +483,11 @@ const ProductionOrderDetailPage: React.FC = () => {
 
   const tabs = useMemo<TabConfig[]>(
     () => [
-      { id: 'basic', label: '基本信息', content: basicInfoContent || <></> },
-      { id: 'schedule', label: '计划信息', content: scheduleInfoContent || <></> },
-      { id: 'statistics', label: '投入产出统计', content: statisticsContent || <></> },
-      { id: 'records', label: '报工记录', content: recordsContent || <></> },
-      { id: 'quality', label: '质量检验', content: qualityContent || <></> },
+      { id: 'basic', label: t('mes.production_order_detail_page.tab_basic'), content: basicInfoContent || <></> },
+      { id: 'schedule', label: t('mes.production_order_detail_page.info'), content: scheduleInfoContent || <></> },
+      { id: 'statistics', label: t('mes.production_order_detail_page.text_93466b'), content: statisticsContent || <></> },
+      { id: 'records', label: t('mes.production_order_detail_page.work_report'), content: recordsContent || <></> },
+      { id: 'quality', label: t('mes.production_order_detail_page.inspection'), content: qualityContent || <></> },
     ],
     [basicInfoContent, scheduleInfoContent, statisticsContent, recordsContent, qualityContent]
   );
@@ -502,8 +504,8 @@ const ProductionOrderDetailPage: React.FC = () => {
       subtitle: order?.order_number || undefined,
       tags: [getStatusLabel(order?.status || '')],
       stats: [
-        { label: '计划数量', value: `${order?.quantity || 0} ${order?.unit || '件'}` },
-        { label: '状态', value: getStatusLabel(order?.status || '') },
+        { label: t('mes.production_order_detail_page.field_planned_quantity'), value: `${order?.quantity || 0} ${order?.unit || '件'}` },
+        { label: t('mes.production_order_detail_page.field_status'), value: getStatusLabel(order?.status || '') },
       ],
     }),
     [order]

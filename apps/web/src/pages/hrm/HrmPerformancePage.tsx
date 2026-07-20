@@ -13,6 +13,7 @@ import {
 } from '@/api/hrm';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 
+import { useTranslation } from 'react-i18next';
 interface PerformanceReview {
   id: string;
   employee_name: string;
@@ -55,6 +56,7 @@ interface EmployeeScore {
 }
 
 const HrmPerformancePage: React.FC = () => {
+  const { t } = useTranslation();
   const { error } = useNotification();
   const queryClient = useQueryClient();
 
@@ -80,7 +82,7 @@ const HrmPerformancePage: React.FC = () => {
             const employee = employeeMap[review.employee_id];
             return {
               id: review.id,
-              employee_name: employee?.name || '未知员工',
+              employee_name: employee?.name || t('hrm.hrm_performance_page.text_e92bd2'),
               employee_no: employee?.employee_no || '',
               department: '',
               position: employee?.position || '',
@@ -96,7 +98,7 @@ const HrmPerformancePage: React.FC = () => {
         );
         return transformedReviews;
       } catch (err: unknown) {
-        error('加载数据失败');
+        error(t('hrm.hrm_performance_page.fail'));
         apiLogger.error('Failed to load performance reviews:', err);
         return [];
       }
@@ -122,7 +124,7 @@ const HrmPerformancePage: React.FC = () => {
           const employee = employeeMap[goal.employee_id];
           return {
             id: goal.id,
-            employee_name: employee?.name || '未知员工',
+            employee_name: employee?.name || t('hrm.hrm_performance_page.text_e92bd2'),
             goal_title: goal.title,
             goal_description: goal.description || '',
             weight: goal.weight,
@@ -135,7 +137,7 @@ const HrmPerformancePage: React.FC = () => {
         });
         return transformedGoals;
       } catch (err: unknown) {
-        error('加载数据失败');
+        error(t('hrm.hrm_performance_page.fail'));
         apiLogger.error('Failed to load performance goals:', err);
         return [];
       }
@@ -162,7 +164,7 @@ const HrmPerformancePage: React.FC = () => {
         rank: index + 1,
         review_period: review.review_period,
       }));
-  }, [reviews]);
+  }, [reviews, t]);
 
   const mapReviewStatus = (status: string): PerformanceReview['status'] => {
     const statusMap: Record<string, PerformanceReview['status']> = {
@@ -186,13 +188,13 @@ const HrmPerformancePage: React.FC = () => {
 
   const getStatusLabel = (status: string) => {
     const labels: Record<string, string> = {
-      pending: '待开始',
-      self_review: '自评中',
-      manager_review: '待上级评价',
-      completed: '已完成',
-      not_started: '未开始',
-      in_progress: '进行中',
-      cancelled: '已取消',
+      pending: t('hrm.hrm_performance_page.text_1568ba'),
+      self_review: t('hrm.hrm_performance_page.text_4b004d'),
+      manager_review: t('hrm.hrm_performance_page.text_433bfe'),
+      completed: t('hrm.hrm_performance_page.completed'),
+      not_started: t('hrm.hrm_performance_page.text_dd4e55'),
+      in_progress: t('hrm.hrm_performance_page.in_progress'),
+      cancelled: t('hrm.hrm_performance_page.cancelled'),
     };
     return labels[status] || status;
   };
@@ -239,30 +241,30 @@ const HrmPerformancePage: React.FC = () => {
 
   const reviewStatusData = useMemo(
     () => [
-      { name: '已完成', value: reviewList.filter((r) => r.status === 'completed').length },
-      { name: '待开始', value: reviewList.filter((r) => r.status === 'pending').length },
-      { name: '自评中', value: reviewList.filter((r) => r.status === 'self_review').length },
-      { name: '待上级评价', value: reviewList.filter((r) => r.status === 'manager_review').length },
+      { name: t('hrm.hrm_performance_page.completed'), value: reviewList.filter((r) => r.status === 'completed').length },
+      { name: t('hrm.hrm_performance_page.text_1568ba'), value: reviewList.filter((r) => r.status === 'pending').length },
+      { name: t('hrm.hrm_performance_page.text_4b004d'), value: reviewList.filter((r) => r.status === 'self_review').length },
+      { name: t('hrm.hrm_performance_page.text_433bfe'), value: reviewList.filter((r) => r.status === 'manager_review').length },
     ],
     [reviewList]
   );
 
   const goalStatusData = useMemo(
     () => [
-      { name: '已完成', value: goalList.filter((g) => g.status === 'completed').length },
-      { name: '进行中', value: goalList.filter((g) => g.status === 'in_progress').length },
-      { name: '未开始', value: goalList.filter((g) => g.status === 'not_started').length },
-      { name: '已取消', value: goalList.filter((g) => g.status === 'cancelled').length },
+      { name: t('hrm.hrm_performance_page.completed'), value: goalList.filter((g) => g.status === 'completed').length },
+      { name: t('hrm.hrm_performance_page.in_progress'), value: goalList.filter((g) => g.status === 'in_progress').length },
+      { name: t('hrm.hrm_performance_page.text_dd4e55'), value: goalList.filter((g) => g.status === 'not_started').length },
+      { name: t('hrm.hrm_performance_page.cancelled'), value: goalList.filter((g) => g.status === 'cancelled').length },
     ],
     [goalList]
   );
 
   const departmentScoreData = [
-    { name: '研发部', value: 85 },
-    { name: '产品部', value: 88 },
-    { name: '销售部', value: 82 },
-    { name: '财务部', value: 90 },
-    { name: '人事部', value: 86 },
+    { name: t('hrm.hrm_performance_page.text_9176a6'), value: 85 },
+    { name: t('hrm.hrm_performance_page.product'), value: 88 },
+    { name: t('hrm.hrm_performance_page.text_afdedb'), value: 82 },
+    { name: t('hrm.hrm_performance_page.text_b159e5'), value: 90 },
+    { name: t('hrm.hrm_performance_page.text_f802d1'), value: 86 },
   ];
 
   const filteredReviews = reviewList.filter(
@@ -272,9 +274,9 @@ const HrmPerformancePage: React.FC = () => {
   );
 
   const tabs = [
-    { label: '绩效评估', value: 'reviews', icon: <Award size={18} /> },
-    { label: '目标管理', value: 'goals', icon: <Target size={18} /> },
-    { label: '绩效排名', value: 'rankings', icon: <BarChart3 size={18} /> },
+    { label: t('hrm.hrm_performance_page.text_54e559'), value: 'reviews', icon: <Award size={18} /> },
+    { label: t('hrm.hrm_performance_page.text_81aa28'), value: 'goals', icon: <Target size={18} /> },
+    { label: t('hrm.hrm_performance_page.text_7cccc9'), value: 'rankings', icon: <BarChart3 size={18} /> },
   ];
 
   const statCards =
@@ -282,42 +284,42 @@ const HrmPerformancePage: React.FC = () => {
       ? [
           {
             id: 'total-reviews',
-            title: '绩效评估总数',
+            title: t('hrm.hrm_performance_page.text_d6b4a2'),
             value: performanceStats.totalReviews,
             icon: <Award size={24} />,
             color: 'primary' as const,
           },
           {
             id: 'completed-reviews',
-            title: '已完成评估',
+            title: t('hrm.hrm_performance_page.completed_1'),
             value: performanceStats.completedReviews,
             icon: <CheckCircle size={24} />,
             color: 'success' as const,
           },
           {
             id: 'pending-reviews',
-            title: '待完成评估',
+            title: t('hrm.hrm_performance_page.completed_2'),
             value: performanceStats.pendingReviews,
             icon: <Clock size={24} />,
             color: 'warning' as const,
           },
           {
             id: 'avg-score',
-            title: '平均绩效得分',
+            title: t('hrm.hrm_performance_page.text_ae5620'),
             value: performanceStats.avgScore,
             icon: <TrendingUp size={24} />,
             color: 'info' as const,
           },
           {
             id: 'total-goals',
-            title: '绩效目标总数',
+            title: t('hrm.hrm_performance_page.text_3a5c40'),
             value: performanceStats.totalGoals,
             icon: <Target size={24} />,
             color: 'primary' as const,
           },
           {
             id: 'in-progress-goals',
-            title: '进行中目标',
+            title: t('hrm.hrm_performance_page.in_progress_1'),
             value: performanceStats.inProgressGoals,
             icon: <Clock size={24} />,
             color: 'warning' as const,
@@ -330,7 +332,7 @@ const HrmPerformancePage: React.FC = () => {
       ? [
           {
             id: 'review-status-distribution',
-            title: '绩效评估状态分布',
+            title: t('hrm.hrm_performance_page.status'),
             type: 'pie' as const,
             dataKey: 'value',
             nameKey: 'name',
@@ -338,7 +340,7 @@ const HrmPerformancePage: React.FC = () => {
           },
           {
             id: 'goal-status-distribution',
-            title: '绩效目标状态分布',
+            title: t('hrm.hrm_performance_page.status_1'),
             type: 'pie' as const,
             dataKey: 'value',
             nameKey: 'name',
@@ -346,7 +348,7 @@ const HrmPerformancePage: React.FC = () => {
           },
           {
             id: 'department-scores',
-            title: '部门平均绩效得分',
+            title: t('hrm.hrm_performance_page.text_a9e047'),
             type: 'bar' as const,
             dataKey: 'value',
             nameKey: 'name',
@@ -361,18 +363,18 @@ const HrmPerformancePage: React.FC = () => {
         return [
           {
             id: 'performance-reviews',
-            title: '绩效评估列表',
+            title: t('hrm.hrm_performance_page.list'),
             columns: [
-              { id: 'employee_name', label: '员工姓名', field: 'employee_name' },
-              { id: 'department', label: '部门/岗位', field: 'department' },
-              { id: 'position', label: '岗位', field: 'position' },
-              { id: 'review_period', label: '考核周期', field: 'review_period' },
-              { id: 'self_score', label: '自评分', field: 'self_score' },
-              { id: 'manager_score', label: '上级评分', field: 'manager_score' },
-              { id: 'final_score', label: '最终得分', field: 'final_score' },
+              { id: 'employee_name', label: t('hrm.hrm_performance_page.text_50df90'), field: 'employee_name' },
+              { id: 'department', label: t('hrm.hrm_performance_page.text_cf5b9d'), field: 'department' },
+              { id: 'position', label: t('hrm.hrm_performance_page.text_8402fc'), field: 'position' },
+              { id: 'review_period', label: t('hrm.hrm_performance_page.text_2c9bde'), field: 'review_period' },
+              { id: 'self_score', label: t('hrm.hrm_performance_page.text_06fb03'), field: 'self_score' },
+              { id: 'manager_score', label: t('hrm.hrm_performance_page.text_71a612'), field: 'manager_score' },
+              { id: 'final_score', label: t('hrm.hrm_performance_page.text_90e436'), field: 'final_score' },
               {
                 id: 'status',
-                label: '状态',
+                label: t('hrm.hrm_performance_page.status_2'),
                 field: 'status',
                 render: (value: unknown) => getStatusLabel(value as string),
               },
@@ -390,18 +392,18 @@ const HrmPerformancePage: React.FC = () => {
         return [
           {
             id: 'performance-goals',
-            title: '绩效目标列表',
+            title: t('hrm.hrm_performance_page.list_1'),
             columns: [
-              { id: 'employee_name', label: '员工姓名', field: 'employee_name' },
-              { id: 'goal_title', label: '目标名称', field: 'goal_title' },
-              { id: 'progress', label: '进度(%)', field: 'progress' },
-              { id: 'weight', label: '权重(%)', field: 'weight' },
-              { id: 'target_value', label: '目标值', field: 'target_value' },
-              { id: 'current_value', label: '当前值', field: 'current_value' },
-              { id: 'due_date', label: '截止日期', field: 'due_date' },
+              { id: 'employee_name', label: t('hrm.hrm_performance_page.text_50df90'), field: 'employee_name' },
+              { id: 'goal_title', label: t('hrm.hrm_performance_page.name'), field: 'goal_title' },
+              { id: 'progress', label: t('hrm.hrm_performance_page.text_31e1ba'), field: 'progress' },
+              { id: 'weight', label: t('hrm.hrm_performance_page.text_6016f7'), field: 'weight' },
+              { id: 'target_value', label: t('hrm.hrm_performance_page.text_410d92'), field: 'target_value' },
+              { id: 'current_value', label: t('hrm.hrm_performance_page.text_e52c27'), field: 'current_value' },
+              { id: 'due_date', label: t('hrm.hrm_performance_page.date'), field: 'due_date' },
               {
                 id: 'status',
-                label: '状态',
+                label: t('hrm.hrm_performance_page.status_2'),
                 field: 'status',
                 render: (value: unknown) => getStatusLabel(value as string),
               },
@@ -416,16 +418,16 @@ const HrmPerformancePage: React.FC = () => {
         return [
           {
             id: 'employee-rankings',
-            title: '绩效排名',
+            title: t('hrm.hrm_performance_page.text_7cccc9'),
             columns: [
-              { id: 'rank', label: '排名', field: 'rank' },
-              { id: 'employee_name', label: '员工姓名', field: 'employee_name' },
-              { id: 'department', label: '部门', field: 'department' },
-              { id: 'position', label: '岗位', field: 'position' },
-              { id: 'kpi_score', label: 'KPI得分', field: 'kpi_score' },
-              { id: 'capability_score', label: '能力得分', field: 'capability_score' },
-              { id: 'attitude_score', label: '态度得分', field: 'attitude_score' },
-              { id: 'final_score', label: '最终得分', field: 'final_score' },
+              { id: 'rank', label: t('hrm.hrm_performance_page.text_a4dc00'), field: 'rank' },
+              { id: 'employee_name', label: t('hrm.hrm_performance_page.text_50df90'), field: 'employee_name' },
+              { id: 'department', label: t('hrm.hrm_performance_page.text_1e1459'), field: 'department' },
+              { id: 'position', label: t('hrm.hrm_performance_page.text_8402fc'), field: 'position' },
+              { id: 'kpi_score', label: t('hrm.hrm_performance_page.text_48e68e'), field: 'kpi_score' },
+              { id: 'capability_score', label: t('hrm.hrm_performance_page.text_fb823c'), field: 'capability_score' },
+              { id: 'attitude_score', label: t('hrm.hrm_performance_page.text_57cd5a'), field: 'attitude_score' },
+              { id: 'final_score', label: t('hrm.hrm_performance_page.text_90e436'), field: 'final_score' },
             ],
             data: rankings as unknown as Record<string, unknown>[],
           },
@@ -438,8 +440,8 @@ const HrmPerformancePage: React.FC = () => {
   return (
     <PageContainer
       maxWidth='xl'
-      title='绩效管理'
-      subtitle='管理员工绩效评估、目标设定和绩效考核'
+      title={t('hrm.hrm_performance_page.text_d01316')}
+      subtitle={t('hrm.hrm_performance_page.text_7a3165')}
       autoTitle
       autoBreadcrumbs
     >
@@ -453,13 +455,13 @@ const HrmPerformancePage: React.FC = () => {
         tables={tables}
         loading={isLoading}
         timeRangeOptions={[
-          { label: '本周', value: 'week' },
-          { label: '本月', value: 'month' },
-          { label: '本季度', value: 'quarter' },
-          { label: '本年', value: 'year' },
+          { label: t('hrm.hrm_performance_page.this_week'), value: 'week' },
+          { label: t('hrm.hrm_performance_page.this_month'), value: 'month' },
+          { label: t('hrm.hrm_performance_page.text_0477ce'), value: 'quarter' },
+          { label: t('hrm.hrm_performance_page.this_year'), value: 'year' },
         ]}
         timeRange='month'
-        search={{ value: searchQuery, onChange: setSearchQuery, placeholder: '搜索员工/部门...' }}
+        search={{ value: searchQuery, onChange: setSearchQuery, placeholder: t('hrm.hrm_performance_page.search') }}
         tabs={tabs}
         tabValue={activeTab}
         onTabChange={(value) => setActiveTab(value as typeof activeTab)}

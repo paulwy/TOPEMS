@@ -29,9 +29,11 @@ import { useNotificationStore } from '@/store';
 import { apiLogger } from '@/utils/logger';
 import { designTokens } from '@/theme/tokens';
 
+import { useTranslation } from 'react-i18next';
 const ct = designTokens.colors;
 
 const HealthManagementPage: React.FC = () => {
+  const { t } = useTranslation();
   const navigate = useNavigate();
   const queryClient = useQueryClient();
   const [searchTerm, setSearchTerm] = useState('');
@@ -77,7 +79,7 @@ const HealthManagementPage: React.FC = () => {
               : item.status === 'inactive'
                 ? 'inactive'
                 : item.status === 'suspended'
-                  ? '暂停'
+                  ? t('ehs.health_management_page.text_8d63ef')
                   : item.status,
         })) as HealthRecord[];
       }
@@ -110,8 +112,8 @@ const HealthManagementPage: React.FC = () => {
 
   useEffect(() => {
     if (recordDetailQuery.isError) {
-      apiLogger.error('加载健康档案详情失败:', recordDetailQuery.error);
-      addNotification({ title: '错误', message: '加载详情失败', type: 'error' });
+      apiLogger.error(t('ehs.health_management_page.detail'), recordDetailQuery.error);
+      addNotification({ title: t('ehs.health_management_page.error'), message: t('ehs.health_management_page.detail_1'), type: 'error' });
     }
   }, [recordDetailQuery.isError, recordDetailQuery.error, addNotification]);
 
@@ -123,9 +125,9 @@ const HealthManagementPage: React.FC = () => {
       暂停: { bg: 'warning.lighter', color: 'warning.dark' },
     };
     const statusLabels: Record<string, string> = {
-      active: '正常',
-      inactive: '无效',
-      suspended: '暂停',
+      active: t('ehs.health_management_page.normal'),
+      inactive: t('ehs.health_management_page.text_1abbb1'),
+      suspended: t('ehs.health_management_page.text_8d63ef'),
     };
     const colors = statusMap[status] || { bg: 'grey.100', color: 'text.secondary' };
     const label = statusLabels[status] || status;
@@ -146,12 +148,12 @@ const HealthManagementPage: React.FC = () => {
     () => [
       {
         id: 'record_no',
-        label: '档案编号',
+        label: t('ehs.health_management_page.text_d09fb9'),
         render: (row) => row.record_no || '-',
       },
       {
         id: 'employee_name',
-        label: '员工姓名',
+        label: t('ehs.health_management_page.text_50df90'),
         render: (row) => (
           <Typography
             variant='body2'
@@ -163,22 +165,22 @@ const HealthManagementPage: React.FC = () => {
       },
       {
         id: 'department',
-        label: '部门',
+        label: t('ehs.health_management_page.text_1e1459'),
         render: (row) => row.department || '-',
       },
       {
         id: 'position',
-        label: '岗位',
+        label: t('ehs.health_management_page.text_8402fc'),
         render: (row) => row.position || '-',
       },
       {
         id: 'workplace',
-        label: '工作场所',
+        label: t('ehs.health_management_page.text_e23e4a'),
         render: (row) => row.workplace || '-',
       },
       {
         id: 'status',
-        label: '状态',
+        label: t('ehs.health_management_page.status'),
         render: (row) => getStatusBadge(row.status),
       },
     ],
@@ -193,7 +195,7 @@ const HealthManagementPage: React.FC = () => {
   const rowActions = useMemo<RowAction<HealthRecord>[]>(
     () => [
       {
-        label: '详情',
+        label: t('ehs.health_management_page.detail_2'),
         icon: <Eye size={16} />,
         onClick: (row) => handleViewDetail(row),
       },
@@ -205,13 +207,13 @@ const HealthManagementPage: React.FC = () => {
     () => [
       {
         id: 'status',
-        label: '状态',
+        label: t('ehs.health_management_page.status'),
         type: 'select',
         options: [
-          { value: '', label: '全部' },
-          { value: 'active', label: '正常' },
-          { value: 'inactive', label: '无效' },
-          { value: 'suspended', label: '暂停' },
+          { value: '', label: t('ehs.health_management_page.all') },
+          { value: 'active', label: t('ehs.health_management_page.normal') },
+          { value: 'inactive', label: t('ehs.health_management_page.text_1abbb1') },
+          { value: 'suspended', label: t('ehs.health_management_page.text_8d63ef') },
         ],
         value: statusFilter,
         onChange: (value) => setStatusFilter(value as string),
@@ -252,13 +254,13 @@ const HealthManagementPage: React.FC = () => {
     mutationFn: (data: Parameters<typeof ehsApi.createHealthRecord>[0]) =>
       ehsApi.createHealthRecord(data),
     onSuccess: () => {
-      addNotification({ title: '成功', message: '健康档案创建成功', type: 'success' });
+      addNotification({ title: t('ehs.health_management_page.success'), message: t('ehs.health_management_page.create'), type: 'success' });
       queryClient.invalidateQueries({ queryKey: QUERY_KEYS.EHS.HEALTH_RECORDS });
       setShowCreateModal(false);
     },
     onError: (error: unknown) => {
-      addNotification({ title: '错误', message: '创建失败', type: 'error' });
-      apiLogger.error('创建健康档案失败:', error);
+      addNotification({ title: t('ehs.health_management_page.error'), message: t('ehs.health_management_page.create_1'), type: 'error' });
+      apiLogger.error(t('ehs.health_management_page.create_2'), error);
     },
   });
 
@@ -290,7 +292,7 @@ const HealthManagementPage: React.FC = () => {
 
   const headerActions = [
     {
-      label: '新增档案',
+      label: t('ehs.health_management_page.add'),
       icon: <Plus style={{ width: 18, height: 18 }} />,
       onClick: handleCreate,
       variant: 'contained' as const,
@@ -417,12 +419,12 @@ const HealthManagementPage: React.FC = () => {
       </Box>
 
       <ListPageTemplate<HealthRecord>
-        title='健康档案列表'
+        title={t('ehs.health_management_page.list')}
         columns={columns}
         data={filteredRecords}
         loading={loading}
         searchable
-        searchPlaceholder='搜索员工姓名或档案编号...'
+        searchPlaceholder={t('ehs.health_management_page.search')}
         searchValue={searchTerm}
         onSearch={(value) => setSearchTerm(value)}
         filters={filters}
@@ -442,17 +444,17 @@ const HealthManagementPage: React.FC = () => {
             <Box sx={{ display: 'flex', gap: 2 }}>
               <TextField
                 fullWidth
-                label='员工编号 *'
+                label={t('ehs.health_management_page.text_196a58')}
                 value={formData.employee_id}
                 onChange={(e) => setFormData({ ...formData, employee_id: e.target.value })}
-                placeholder='请输入员工编号'
+                placeholder={t('ehs.health_management_page.please_input')}
               />
               <TextField
                 fullWidth
-                label='员工姓名 *'
+                label={t('ehs.health_management_page.text_88eff5')}
                 value={formData.employee_name}
                 onChange={(e) => setFormData({ ...formData, employee_name: e.target.value })}
-                placeholder='请输入员工姓名'
+                placeholder={t('ehs.health_management_page.please_input_1')}
               />
             </Box>
             <Box sx={{ display: 'flex', gap: 2 }}>
@@ -460,7 +462,7 @@ const HealthManagementPage: React.FC = () => {
                 <InputLabel>性别</InputLabel>
                 <Select
                   value={formData.gender || ''}
-                  label='性别'
+                  label={t('ehs.health_management_page.text_787b56')}
                   onChange={(e) =>
                     setFormData({
                       ...formData,
@@ -474,7 +476,7 @@ const HealthManagementPage: React.FC = () => {
               </FormControl>
               <TextField
                 fullWidth
-                label='出生日期'
+                label={t('ehs.health_management_page.date')}
                 type='date'
                 value={formData.birthday}
                 onChange={(e) => setFormData({ ...formData, birthday: e.target.value })}
@@ -483,57 +485,57 @@ const HealthManagementPage: React.FC = () => {
             <Box sx={{ display: 'flex', gap: 2 }}>
               <TextField
                 fullWidth
-                label='部门'
+                label={t('ehs.health_management_page.text_1e1459')}
                 value={formData.department}
                 onChange={(e) => setFormData({ ...formData, department: e.target.value })}
-                placeholder='请输入部门'
+                placeholder={t('ehs.health_management_page.please_input_2')}
               />
               <TextField
                 fullWidth
-                label='岗位'
+                label={t('ehs.health_management_page.text_8402fc')}
                 value={formData.position}
                 onChange={(e) => setFormData({ ...formData, position: e.target.value })}
-                placeholder='请输入岗位'
+                placeholder={t('ehs.health_management_page.please_input_3')}
               />
             </Box>
             <TextField
               fullWidth
-              label='工作场所'
+              label={t('ehs.health_management_page.text_e23e4a')}
               value={formData.workplace}
               onChange={(e) => setFormData({ ...formData, workplace: e.target.value })}
-              placeholder='请输入工作场所'
+              placeholder={t('ehs.health_management_page.please_input_4')}
             />
             <Box sx={{ display: 'flex', gap: 2 }}>
               <TextField
                 fullWidth
-                label='血型'
+                label={t('ehs.health_management_page.text_6eb003')}
                 value={formData.blood_type}
                 onChange={(e) => setFormData({ ...formData, blood_type: e.target.value })}
-                placeholder='如：A型'
+                placeholder={t('ehs.health_management_page.text_94410e')}
               />
               <TextField
                 fullWidth
-                label='联系方式'
+                label={t('ehs.health_management_page.text_b58943')}
                 value={formData.contact_info}
                 onChange={(e) => setFormData({ ...formData, contact_info: e.target.value })}
-                placeholder='请输入联系方式'
+                placeholder={t('ehs.health_management_page.please_input_5')}
               />
             </Box>
             <TextField
               fullWidth
-              label='过敏史'
+              label={t('ehs.health_management_page.text_2ac7fd')}
               value={formData.allergy_history}
               onChange={(e) => setFormData({ ...formData, allergy_history: e.target.value })}
-              placeholder='请输入过敏史'
+              placeholder={t('ehs.health_management_page.please_input_6')}
               multiline
               rows={2}
             />
             <TextField
               fullWidth
-              label='既往病史'
+              label={t('ehs.health_management_page.text_044dcd')}
               value={formData.medical_history}
               onChange={(e) => setFormData({ ...formData, medical_history: e.target.value })}
-              placeholder='请输入既往病史'
+              placeholder={t('ehs.health_management_page.please_input_7')}
               multiline
               rows={2}
             />
@@ -541,7 +543,7 @@ const HealthManagementPage: React.FC = () => {
               <InputLabel>状态</InputLabel>
               <Select
                 value={formData.status}
-                label='状态'
+                label={t('ehs.health_management_page.status')}
                 onChange={(e) =>
                   setFormData({ ...formData, status: e.target.value as typeof formData.status })
                 }
@@ -632,9 +634,9 @@ const HealthManagementPage: React.FC = () => {
                   </Box>
                   <Box>
                     {selectedRecord.gender === 'male'
-                      ? '男'
+                      ? t('ehs.health_management_page.text_36a490')
                       : selectedRecord.gender === 'female'
-                        ? '女'
+                        ? t('ehs.health_management_page.text_87c835')
                         : '-'}
                   </Box>
                 </Box>

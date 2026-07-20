@@ -44,6 +44,7 @@ import type { FilterConfig } from '@/api/bi';
 import { logger } from '@/utils/logger';
 import { designTokens } from '@/theme/tokens';
 
+import { useTranslation } from 'react-i18next';
 const ct = designTokens.colors;
 
 const mockSalesData = [
@@ -146,6 +147,7 @@ const filters: FilterConfig[] = [
 ];
 
 const DataAnalysisPage = () => {
+  const { t } = useTranslation();
   const [activeTab, setActiveTab] = useState(0);
   const [chartType, setChartType] = useState<'bar' | 'line' | 'area' | 'pie'>('bar');
   const [filterValues, setFilterValues] = useState<Record<string, unknown>>({
@@ -194,12 +196,12 @@ const DataAnalysisPage = () => {
               }
             >
               {type === 'bar'
-                ? '柱状图'
+                ? t('bi.data_analysis_page.text_7c8ee6')
                 : type === 'line'
-                  ? '折线图'
+                  ? t('bi.data_analysis_page.text_c9c9bd')
                   : type === 'area'
-                    ? '面积图'
-                    : '饼图'}
+                    ? t('bi.data_analysis_page.text_af99db')
+                    : t('bi.data_analysis_page.text_d5e33d')}
             </Button>
           ))}
         </Box>
@@ -250,7 +252,7 @@ const DataAnalysisPage = () => {
               销售趋势分析
             </Typography>
             <Chip
-              label={drillLevel === 0 ? '按月份' : drillLevel === 1 ? '按地区' : '按产品'}
+              label={drillLevel === 0 ? t('bi.data_analysis_page.text_047d4a') : drillLevel === 1 ? t('bi.data_analysis_page.text_4a7b52') : t('bi.data_analysis_page.product_2')}
               size='small'
               color='primary'
               variant='outlined'
@@ -261,7 +263,7 @@ const DataAnalysisPage = () => {
               type='pie'
               data={mockRegionData}
               xKey='region'
-              yKeys={['销售额']}
+              yKeys={[t('bi.data_analysis_page.text_9ae444')]}
               chartHeight={400}
               chartWidth={800}
               showLegend
@@ -272,7 +274,7 @@ const DataAnalysisPage = () => {
               type={chartType}
               data={mockSalesData}
               xKey='month'
-              yKeys={['销售额', '订单数', '客户数']}
+              yKeys={[t('bi.data_analysis_page.text_9ae444'), t('bi.data_analysis_page.order'), t('bi.data_analysis_page.customer')]}
               chartHeight={400}
               chartWidth={800}
               smooth
@@ -304,7 +306,7 @@ const DataAnalysisPage = () => {
                 type='bar'
                 data={mockRegionData}
                 xKey='region'
-                yKeys={['销售额']}
+                yKeys={[t('bi.data_analysis_page.text_9ae444')]}
                 chartHeight={300}
                 chartWidth={400}
                 showTooltip
@@ -326,10 +328,10 @@ const DataAnalysisPage = () => {
               </Typography>
               <Box sx={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 2 }}>
                 {[
-                  { label: '总销售额', value: '¥913,000', change: '+12.5%', color: 'success.main' },
-                  { label: '总订单数', value: '3,130', change: '+8.3%', color: 'primary.main' },
-                  { label: '客户数', value: '1,270', change: '+15.2%', color: 'secondary.main' },
-                  { label: '客单价', value: '¥291.7', change: '+3.8%', color: 'warning.main' },
+                  { label: t('bi.data_analysis_page.text_4cbae8'), value: '¥913,000', change: '+12.5%', color: 'success.main' },
+                  { label: t('bi.data_analysis_page.order_1'), value: '3,130', change: '+8.3%', color: 'primary.main' },
+                  { label: t('bi.data_analysis_page.customer'), value: '1,270', change: '+15.2%', color: 'secondary.main' },
+                  { label: t('bi.data_analysis_page.text_53c7e7'), value: '¥291.7', change: '+3.8%', color: 'warning.main' },
                 ].map((metric, idx) => (
                   <Box
                     key={idx}
@@ -402,7 +404,7 @@ const DataAnalysisPage = () => {
                   <TableCell sx={{ fontWeight: 600, backgroundColor: ct.grey[50] }}>
                     产品类别
                   </TableCell>
-                  {['1月', '2月', '3月', '4月', '5月', '6月'].map((month) => (
+                  {[t('bi.data_analysis_page.text_fccc2b'), t('bi.data_analysis_page.text_c1d13f'), t('bi.data_analysis_page.text_c4767b'), t('bi.data_analysis_page.text_3eaf4b'), t('bi.data_analysis_page.text_0545f1'), t('bi.data_analysis_page.text_f2422a')].map((month) => (
                     <TableCell
                       key={month}
                       align='right'
@@ -420,12 +422,12 @@ const DataAnalysisPage = () => {
                     hover
                   >
                     <TableCell sx={{ fontWeight: 500 }}>{row.category}</TableCell>
-                    <TableCell align='right'>{row['1月'].toLocaleString()}</TableCell>
-                    <TableCell align='right'>{row['2月'].toLocaleString()}</TableCell>
-                    <TableCell align='right'>{row['3月'].toLocaleString()}</TableCell>
-                    <TableCell align='right'>{row['4月'].toLocaleString()}</TableCell>
-                    <TableCell align='right'>{row['5月'].toLocaleString()}</TableCell>
-                    <TableCell align='right'>{row['6月'].toLocaleString()}</TableCell>
+                    <TableCell align='right'>{(row as Record<string, any>)[t('bi.data_analysis_page.text_fccc2b')].toLocaleString()}</TableCell>
+                    <TableCell align='right'>{(row as Record<string, any>)[t('bi.data_analysis_page.text_c1d13f')].toLocaleString()}</TableCell>
+                    <TableCell align='right'>{(row as Record<string, any>)[t('bi.data_analysis_page.text_c4767b')].toLocaleString()}</TableCell>
+                    <TableCell align='right'>{(row as Record<string, any>)[t('bi.data_analysis_page.text_3eaf4b')].toLocaleString()}</TableCell>
+                    <TableCell align='right'>{(row as Record<string, any>)[t('bi.data_analysis_page.text_0545f1')].toLocaleString()}</TableCell>
+                    <TableCell align='right'>{(row as Record<string, any>)[t('bi.data_analysis_page.text_f2422a')].toLocaleString()}</TableCell>
                   </TableRow>
                 ))}
               </TableBody>
@@ -477,47 +479,47 @@ const DataAnalysisPage = () => {
                   {
                     date: '2026-06-28',
                     order: 'SO-20260628-001',
-                    customer: '张三',
-                    product: '笔记本电脑',
+                    customer: t('bi.data_analysis_page.text_615db5'),
+                    product: t('bi.data_analysis_page.text_161783'),
                     qty: 2,
                     amount: 12800,
-                    status: '已完成',
+                    status: t('bi.data_analysis_page.completed'),
                   },
                   {
                     date: '2026-06-28',
                     order: 'SO-20260628-002',
-                    customer: '李四',
-                    product: '无线耳机',
+                    customer: t('bi.data_analysis_page.text_36c942'),
+                    product: t('bi.data_analysis_page.text_86f5cb'),
                     qty: 5,
                     amount: 1950,
-                    status: '已完成',
+                    status: t('bi.data_analysis_page.completed'),
                   },
                   {
                     date: '2026-06-27',
                     order: 'SO-20260627-001',
-                    customer: '王五',
-                    product: '智能手表',
+                    customer: t('bi.data_analysis_page.text_3228f3'),
+                    product: t('bi.data_analysis_page.text_0c3bd4'),
                     qty: 1,
                     amount: 2299,
-                    status: '待发货',
+                    status: t('bi.data_analysis_page.text_d8476e'),
                   },
                   {
                     date: '2026-06-27',
                     order: 'SO-20260627-002',
-                    customer: '赵六',
-                    product: '平板电脑',
+                    customer: t('bi.data_analysis_page.text_b43536'),
+                    product: t('bi.data_analysis_page.text_e7e7de'),
                     qty: 3,
                     amount: 8997,
-                    status: '已完成',
+                    status: t('bi.data_analysis_page.completed'),
                   },
                   {
                     date: '2026-06-26',
                     order: 'SO-20260626-001',
-                    customer: '钱七',
-                    product: '蓝牙音箱',
+                    customer: t('bi.data_analysis_page.text_f9c684'),
+                    product: t('bi.data_analysis_page.text_467546'),
                     qty: 4,
                     amount: 1196,
-                    status: '已完成',
+                    status: t('bi.data_analysis_page.completed'),
                   },
                 ].map((row, idx) => (
                   <TableRow
@@ -534,7 +536,7 @@ const DataAnalysisPage = () => {
                       <Chip
                         label={row.status}
                         size='small'
-                        color={row.status === '已完成' ? 'success' : 'warning'}
+                        color={row.status === t('bi.data_analysis_page.completed') ? 'success' : 'warning'}
                         variant='outlined'
                       />
                     </TableCell>
@@ -550,8 +552,8 @@ const DataAnalysisPage = () => {
 
   return (
     <PageContainer
-      title='多维数据分析'
-      subtitle='多维度数据探索与钻取分析'
+      title={t('bi.data_analysis_page.text_ffa095')}
+      subtitle={t('bi.data_analysis_page.text_131448')}
       headerProps={{
         pageIcon: <BarChart3 style={{ width: 20, height: 20 }} />,
         pageGradient: `linear-gradient(135deg, ${ct.secondary.main} 0%, ${ct.secondary[400]} 100%)`,
@@ -563,9 +565,9 @@ const DataAnalysisPage = () => {
         title=''
         subtitle=''
         breadcrumbs={[
-          { label: '首页', href: '/dashboard' },
+          { label: t('bi.data_analysis_page.home'), href: '/dashboard' },
           { label: 'BI' },
-          { label: '多维分析' },
+          { label: t('bi.data_analysis_page.text_3faef8') },
         ]}
       >
         <Box sx={{ p: 3 }}>
@@ -599,17 +601,17 @@ const DataAnalysisPage = () => {
                 onChange={(_, v) => setActiveTab(v)}
               >
                 <Tab
-                  label='图表分析'
+                  label={t('bi.data_analysis_page.text_c6b32e')}
                   icon={<BarChart3 size={16} />}
                   iconPosition='start'
                 />
                 <Tab
-                  label='数据透视'
+                  label={t('bi.data_analysis_page.text_7f3ddd')}
                   icon={<Table2 size={16} />}
                   iconPosition='start'
                 />
                 <Tab
-                  label='数据明细'
+                  label={t('bi.data_analysis_page.text_56a37c')}
                   icon={<Layers size={16} />}
                   iconPosition='start'
                 />

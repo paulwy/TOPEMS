@@ -22,6 +22,7 @@ import { ListPageTemplate, type ColumnDef } from '@/components/templates';
 import { extractErrorMessage } from '@/utils/errors';
 import { PageContainer } from '@/components/common';
 import { ConfirmDialog } from '@topems/shared-components';
+import { useConfirmDialog, useUrlListState } from '@/hooks';
 import { designTokens } from '@/theme/tokens';
 
 const ct = designTokens.colors;
@@ -35,26 +36,33 @@ const UserManagementPage: React.FC<UserManagementPageProps> = ({ onNavigate: _on
 
   const queryClient = useQueryClient();
 
-  const [searchQuery, setSearchQuery] = useState('');
-  const [debouncedSearch, setDebouncedSearch] = useState('');
+  const listState = useUrlListState({
+    defaultSearch: '',
+    defaultPageSize: 10,
+    baseIndex: 1,
+    historyMode: 'replace',
+  });
+  const {
+    searchQuery,
+    debouncedSearch,
+    currentPage,
+    pageSize,
+    setSearchQuery,
+    setCurrentPage,
+  } = listState;
   const [showCreateModal, setShowCreateModal] = useState(false);
   const [showEditModal, setShowEditModal] = useState(false);
   const [showRolesModal, setShowRolesModal] = useState(false);
   const [selectedUser, setSelectedUser] = useState<User | null>(null);
-  const [confirmDialogOpen, setConfirmDialogOpen] = useState(false);
-  const [confirmDialogConfig, setConfirmDialogConfig] = useState<{
-    title: string;
-    message: string;
-    onConfirm: () => void;
-    danger?: boolean;
-  } | null>(null);
+  const {
+    confirmOpen: confirmDialogOpen,
+    confirmConfig: confirmDialogConfig,
+    openConfirm: openConfirmDialog,
+    closeConfirm: setConfirmDialogClosed,
+  } = useConfirmDialog();
 
   // 批量选择状态
   const [selectedUserIds, setSelectedUserIds] = useState<(string | number)[]>([]);
-
-  // 分页状态
-  const [currentPage, setCurrentPage] = useState(1);
-  const [pageSize] = useState(10);
 
   // 表单状态
   const [newUser, setNewUser] = useState({
@@ -64,16 +72,6 @@ const UserManagementPage: React.FC<UserManagementPageProps> = ({ onNavigate: _on
     full_name: '',
     role: '普通用户',
   });
-
-  // 防抖搜索
-  useEffect(() => {
-    const timer = setTimeout(() => {
-      setDebouncedSearch(searchQuery);
-      setCurrentPage(1);
-    }, 300);
-
-    return () => clearTimeout(timer);
-  }, [searchQuery]);
 
   const usersQuery = useQuery<{ items: User[]; total: number }>({
     queryKey: ['admin-users', currentPage, debouncedSearch],
@@ -301,16 +299,6 @@ const UserManagementPage: React.FC<UserManagementPageProps> = ({ onNavigate: _on
       user_ids: selectedUserIds.map(String),
       isactive: isActive,
     });
-  };
-
-  const openConfirmDialog = (config: {
-    title: string;
-    message: string;
-    onConfirm: () => void;
-    danger?: boolean;
-  }) => {
-    setConfirmDialogConfig(config);
-    setConfirmDialogOpen(true);
   };
 
   const handleBatchDelete = () => {
@@ -567,10 +555,10 @@ const UserManagementPage: React.FC<UserManagementPageProps> = ({ onNavigate: _on
         searchValue={searchQuery}
         onSearch={setSearchQuery}
         pagination={{
-          page: currentPage,
+          page: currentPage - 1,
           pageSize,
           total: totalUsers,
-          onPageChange: setCurrentPage,
+          onPageChange: (p) => setCurrentPage(p + 1),
         }}
         actions={[
           {
@@ -861,10 +849,10 @@ const UserManagementPage: React.FC<UserManagementPageProps> = ({ onNavigate: _on
 
       <ConfirmDialog
         isOpen={confirmDialogOpen}
-        onClose={() => setConfirmDialogOpen(false)}
+        onClose={setConfirmDialogClosed}
         onConfirm={() => {
           confirmDialogConfig?.onConfirm();
-          setConfirmDialogOpen(false);
+          setConfirmDialogClosed();
         }}
         title={confirmDialogConfig?.title || ''}
         message={confirmDialogConfig?.message || ''}

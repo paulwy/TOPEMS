@@ -12,6 +12,7 @@ import {
 } from '@mui/material';
 import { StatusBadge, ConfirmDialog, Hidden } from '@topems/shared-components';
 import { useResponsive } from '@/hooks/useResponsive';
+import { useUrlState } from '@/hooks';
 import { apiLogger } from '@/utils/logger';
 import {
   Users,
@@ -67,9 +68,11 @@ import TreeViewComponent from './components/TreeViewComponent';
 import EmployeeDetailDialog from './components/EmployeeDetailDialog';
 import type { TreeNode, EmployeeListParams, ViewMode } from './types';
 
+import { useTranslation } from 'react-i18next';
 const ct = designTokens.colors;
 
 const HrmEmployeePage: React.FC = () => {
+  const { t } = useTranslation();
   const navigate = useNavigate();
   const theme = useTheme();
   const { isMobile, isTablet } = useResponsive();
@@ -77,7 +80,10 @@ const HrmEmployeePage: React.FC = () => {
   const addNotification = useNotificationStore((state) => state.addNotification);
   const queryClient = useQueryClient();
 
-  const [viewMode, setViewMode] = useState<ViewMode>('list');
+  const [viewMode, setViewMode] = useUrlState<ViewMode>('view', 'list', {
+    mode: 'replace',
+    removeDefault: true,
+  });
 
   const [searchText, setSearchText] = useState('');
   const [statusFilter, setStatusFilter] = useState('all');
@@ -148,16 +154,16 @@ const HrmEmployeePage: React.FC = () => {
     mutationFn: (data: Partial<Employee>) => employeeApi.create(data),
     onSuccess: () => {
       addNotification({
-        title: '成功',
-        message: '员工创建成功',
+        title: t('hrm.hrm_employee_page_index.success'),
+        message: t('hrm.hrm_employee_page_index.create'),
         type: 'success',
       });
       queryClient.invalidateQueries({ queryKey: ['hrm-employees'] });
     },
     onError: (error: unknown) => {
       addNotification({
-        title: '失败',
-        message: (error as { message?: string }).message || '创建员工失败',
+        title: t('hrm.hrm_employee_page_index.fail'),
+        message: (error as { message?: string }).message || t('hrm.hrm_employee_page_index.create_1'),
         type: 'error',
       });
     },
@@ -168,16 +174,16 @@ const HrmEmployeePage: React.FC = () => {
       employeeApi.update(id, data),
     onSuccess: () => {
       addNotification({
-        title: '成功',
-        message: '员工更新成功',
+        title: t('hrm.hrm_employee_page_index.success'),
+        message: t('hrm.hrm_employee_page_index.update'),
         type: 'success',
       });
       queryClient.invalidateQueries({ queryKey: ['hrm-employees'] });
     },
     onError: (error: unknown) => {
       addNotification({
-        title: '失败',
-        message: (error as { message?: string }).message || '更新员工失败',
+        title: t('hrm.hrm_employee_page_index.fail'),
+        message: (error as { message?: string }).message || t('hrm.hrm_employee_page_index.update_1'),
         type: 'error',
       });
     },
@@ -187,16 +193,16 @@ const HrmEmployeePage: React.FC = () => {
     mutationFn: (id: string) => employeeApi.delete(id),
     onSuccess: () => {
       addNotification({
-        title: '成功',
-        message: '员工删除成功',
+        title: t('hrm.hrm_employee_page_index.success'),
+        message: t('hrm.hrm_employee_page_index.delete_success'),
         type: 'success',
       });
       queryClient.invalidateQueries({ queryKey: ['hrm-employees'] });
     },
     onError: (error: unknown) => {
       addNotification({
-        title: '失败',
-        message: (error as { message?: string }).message || '删除员工失败',
+        title: t('hrm.hrm_employee_page_index.fail'),
+        message: (error as { message?: string }).message || t('hrm.hrm_employee_page_index.delete'),
         type: 'error',
       });
     },
@@ -256,7 +262,7 @@ const HrmEmployeePage: React.FC = () => {
     setDepartmentFilter('all');
     setStatusFilter('all');
     setCurrentPage(1);
-  }, []);
+  }, [t]);
 
   const handleAdd = useCallback(() => {
     setSelectedEmployee(null);
@@ -283,7 +289,7 @@ const HrmEmployeePage: React.FC = () => {
     try {
       await deleteMutation.mutateAsync(deleteId);
     } catch (error: unknown) {
-      apiLogger.error('删除失败:', error);
+      apiLogger.error(t('hrm.hrm_employee_page_index.delete_1'), error);
     } finally {
       setConfirmDeleteOpen(false);
       setDeleteId(null);
@@ -310,7 +316,7 @@ const HrmEmployeePage: React.FC = () => {
         await deleteMutation.mutateAsync(id);
       }
       addNotification({
-        title: '成功',
+        title: t('hrm.hrm_employee_page_index.success'),
         message: `成功删除 ${batchDeleteIds.length} 名员工`,
         type: 'success',
       });
@@ -318,8 +324,8 @@ const HrmEmployeePage: React.FC = () => {
       setBatchDeleteIds([]);
     } catch (error: unknown) {
       addNotification({
-        title: '失败',
-        message: (error as { message?: string }).message || '批量删除失败',
+        title: t('hrm.hrm_employee_page_index.fail'),
+        message: (error as { message?: string }).message || t('hrm.hrm_employee_page_index.batch_delete'),
         type: 'error',
       });
     }
@@ -333,7 +339,7 @@ const HrmEmployeePage: React.FC = () => {
         setShowCreateModal(false);
         setFormData({});
       } catch (error: unknown) {
-        apiLogger.error('创建失败:', error);
+        apiLogger.error(t('hrm.hrm_employee_page_index.create_2'), error);
       }
     },
     [createMutation, formData]
@@ -348,7 +354,7 @@ const HrmEmployeePage: React.FC = () => {
         setShowEditModal(false);
         setSelectedEmployee(null);
       } catch (error: unknown) {
-        apiLogger.error('更新失败:', error);
+        apiLogger.error(t('hrm.hrm_employee_page_index.update_2'), error);
       }
     },
     [updateMutation, selectedEmployee, formData]
@@ -424,28 +430,28 @@ const HrmEmployeePage: React.FC = () => {
     () => [
       {
         id: 'total',
-        title: '员工总数',
+        title: t('hrm.hrm_employee_page_index.text_97e957'),
         value: employeeStats.total,
         icon: <Users style={{ width: 24, height: 24 }} />,
         color: 'primary' as const,
       },
       {
         id: 'active',
-        title: '在职员工',
+        title: t('hrm.hrm_employee_page_index.text_4d9eda'),
         value: employeeStats.active,
         icon: <Users style={{ width: 24, height: 24 }} />,
         color: 'success' as const,
       },
       {
         id: 'inactive',
-        title: '离职员工',
+        title: t('hrm.hrm_employee_page_index.text_683919'),
         value: employeeStats.inactive,
         icon: <Users style={{ width: 24, height: 24 }} />,
         color: 'error' as const,
       },
       {
         id: 'rate',
-        title: '在职率',
+        title: t('hrm.hrm_employee_page_index.text_7200f2'),
         value: `${employeeStats.activeRate}%`,
         icon: <Users style={{ width: 24, height: 24 }} />,
         color: 'info' as const,
@@ -490,18 +496,18 @@ const HrmEmployeePage: React.FC = () => {
           </Box>
         );
       },
-      description: (item) => (item as Employee).position || '未设置职位',
+      description: (item) => (item as Employee).position || t('hrm.hrm_employee_page_index.text_3332ab'),
       status: {
         field: 'status',
         options: {
-          active: { label: '在职', color: 'success' },
-          inactive: { label: '离职', color: 'default' },
+          active: { label: t('hrm.hrm_employee_page_index.text_b5509b'), color: 'success' },
+          inactive: { label: t('hrm.hrm_employee_page_index.text_583e79'), color: 'default' },
         },
       },
       meta: [
         {
           field: 'department_id',
-          label: '部门',
+          label: t('hrm.hrm_employee_page_index.text_1e1459'),
           icon: <Building2 sx={{ width: 14, height: 14 }} />,
           format: (value) => {
             const dept = departments.find((d) => d.id === value);
@@ -510,12 +516,12 @@ const HrmEmployeePage: React.FC = () => {
         },
         {
           field: 'email',
-          label: '邮箱',
+          label: t('hrm.hrm_employee_page_index.email'),
           icon: <Mail sx={{ width: 14, height: 14 }} />,
         },
         {
           field: 'phone',
-          label: '电话',
+          label: t('hrm.hrm_employee_page_index.phone'),
           icon: <Phone sx={{ width: 14, height: 14 }} />,
         },
       ],
@@ -526,19 +532,19 @@ const HrmEmployeePage: React.FC = () => {
   const cardActions = useMemo<CardAction[]>(
     () => [
       {
-        label: '查看',
+        label: t('hrm.hrm_employee_page_index.view'),
         icon: <Eye style={{ width: 14, height: 14 }} />,
         onClick: (item) => handleView(item as unknown as Employee),
         color: 'primary',
       },
       {
-        label: '编辑',
+        label: t('hrm.hrm_employee_page_index.edit'),
         icon: <Edit style={{ width: 14, height: 14 }} />,
         onClick: (item) => handleEdit(item as unknown as Employee),
         color: 'secondary',
       },
       {
-        label: '删除',
+        label: t('hrm.hrm_employee_page_index.delete_3'),
         icon: <Trash2 style={{ width: 14, height: 14 }} />,
         onClick: (item) => handleDelete((item as unknown as Employee).id),
         color: 'error',
@@ -552,7 +558,7 @@ const HrmEmployeePage: React.FC = () => {
     () => {
       const nameColumn = {
         id: 'name',
-        label: '员工信息',
+        label: t('hrm.hrm_employee_page_index.info'),
         minWidth: isMobile ? 120 : 200,
         render: (row: Employee) => (
           <Box sx={{ display: 'flex', alignItems: 'center', gap: isMobile ? 1 : 1.5 }}>
@@ -589,7 +595,7 @@ const HrmEmployeePage: React.FC = () => {
 
       const statusColumn = {
         id: 'status',
-        label: '状态',
+        label: t('hrm.hrm_employee_page_index.status'),
         width: isMobile ? 80 : 100,
         render: (row: Employee) => getStatusBadge(row.status),
       };
@@ -603,7 +609,7 @@ const HrmEmployeePage: React.FC = () => {
           nameColumn,
           {
             id: 'department_id',
-            label: '所属部门',
+            label: t('hrm.hrm_employee_page_index.text_68923b'),
             minWidth: 100,
             render: (row: Employee) => {
               const dept = departments.find((d) => d.id === row.department_id);
@@ -623,7 +629,7 @@ const HrmEmployeePage: React.FC = () => {
         nameColumn,
         {
           id: 'department_id',
-          label: '所属部门',
+          label: t('hrm.hrm_employee_page_index.text_68923b'),
           minWidth: 150,
           render: (row: Employee) => {
             const dept = departments.find((d) => d.id === row.department_id);
@@ -637,7 +643,7 @@ const HrmEmployeePage: React.FC = () => {
         },
         {
           id: 'position',
-          label: '职位',
+          label: t('hrm.hrm_employee_page_index.text_b652de'),
           minWidth: 120,
           render: (row: Employee) => (
             <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
@@ -648,7 +654,7 @@ const HrmEmployeePage: React.FC = () => {
         },
         {
           id: 'email',
-          label: '邮箱',
+          label: t('hrm.hrm_employee_page_index.email'),
           minWidth: 180,
           render: (row: Employee) => (
             <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
@@ -664,7 +670,7 @@ const HrmEmployeePage: React.FC = () => {
         },
         {
           id: 'phone',
-          label: '电话',
+          label: t('hrm.hrm_employee_page_index.phone'),
           minWidth: 130,
           render: (row: Employee) => (
             <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
@@ -681,12 +687,12 @@ const HrmEmployeePage: React.FC = () => {
 
   const exportFields = useMemo(
     () => [
-      { key: 'name', title: '员工姓名' },
-      { key: 'employee_no', title: '工号' },
-      { key: 'position', title: '职位' },
-      { key: 'email', title: '邮箱' },
-      { key: 'phone', title: '电话' },
-      { key: 'status', title: '状态' },
+      { key: 'name', title: t('hrm.hrm_employee_page_index.text_50df90') },
+      { key: 'employee_no', title: t('hrm.hrm_employee_page_index.text_752d38') },
+      { key: 'position', title: t('hrm.hrm_employee_page_index.text_b652de') },
+      { key: 'email', title: t('hrm.hrm_employee_page_index.email') },
+      { key: 'phone', title: t('hrm.hrm_employee_page_index.phone') },
+      { key: 'status', title: t('hrm.hrm_employee_page_index.status') },
     ],
     []
   );
@@ -694,18 +700,18 @@ const HrmEmployeePage: React.FC = () => {
   const rowActions = useMemo<RowAction<Employee>[]>(
     () => [
       {
-        label: '查看详情',
+        label: t('hrm.hrm_employee_page_index.view_detail'),
         icon: <Eye style={{ width: 16, height: 16 }} />,
         onClick: handleView,
       },
       {
-        label: '编辑',
+        label: t('hrm.hrm_employee_page_index.edit'),
         icon: <Edit style={{ width: 16, height: 16 }} />,
         onClick: handleEdit,
         color: 'primary',
       },
       {
-        label: '删除',
+        label: t('hrm.hrm_employee_page_index.delete_3'),
         icon: <Trash2 style={{ width: 16, height: 16 }} />,
         onClick: (row) => handleDelete(row.id),
         color: 'error',
@@ -719,25 +725,25 @@ const HrmEmployeePage: React.FC = () => {
     () => [
       {
         id: 'search',
-        label: '搜索',
+        label: t('hrm.hrm_employee_page_index.search'),
         type: 'text',
-        placeholder: '搜索姓名、工号、邮箱...',
+        placeholder: t('hrm.hrm_employee_page_index.search_1'),
         width: 250,
       },
       {
         id: 'department',
-        label: '部门',
+        label: t('hrm.hrm_employee_page_index.text_1e1459'),
         type: 'select',
         options: departments.map((d) => ({ label: d.name, value: d.id })),
       },
       {
         id: 'status',
-        label: '状态',
+        label: t('hrm.hrm_employee_page_index.status'),
         type: 'select',
         options: [
-          { label: '全部状态', value: 'all' },
-          { label: '在职', value: 'active' },
-          { label: '离职', value: 'inactive' },
+          { label: t('hrm.hrm_employee_page_index.status_1'), value: 'all' },
+          { label: t('hrm.hrm_employee_page_index.text_b5509b'), value: 'active' },
+          { label: t('hrm.hrm_employee_page_index.text_583e79'), value: 'inactive' },
         ],
       },
     ],
@@ -748,28 +754,28 @@ const HrmEmployeePage: React.FC = () => {
     () => [
       {
         id: 'total',
-        title: '员工总数',
+        title: t('hrm.hrm_employee_page_index.text_97e957'),
         value: employeeStats.total,
         icon: <Users style={{ width: 24, height: 24 }} />,
         color: 'primary' as const,
       },
       {
         id: 'active',
-        title: '在职员工',
+        title: t('hrm.hrm_employee_page_index.text_4d9eda'),
         value: employeeStats.active,
         icon: <Users style={{ width: 24, height: 24 }} />,
         color: 'success' as const,
       },
       {
         id: 'inactive',
-        title: '离职员工',
+        title: t('hrm.hrm_employee_page_index.text_683919'),
         value: employeeStats.inactive,
         icon: <Users style={{ width: 24, height: 24 }} />,
         color: 'error' as const,
       },
       {
         id: 'rate',
-        title: '在职率',
+        title: t('hrm.hrm_employee_page_index.text_7200f2'),
         value: `${employeeStats.activeRate}%`,
         icon: <Users style={{ width: 24, height: 24 }} />,
         color: 'info' as const,
@@ -782,8 +788,8 @@ const HrmEmployeePage: React.FC = () => {
     <PageContainer
       padding={false}
       maxWidth={false}
-      title='员工管理'
-      subtitle='管理企业员工信息'
+      title={t('hrm.hrm_employee_page_index.text_b33603')}
+      subtitle={t('hrm.hrm_employee_page_index.info_1')}
       autoTitle
       autoBreadcrumbs
       headerProps={{
@@ -873,8 +879,8 @@ const HrmEmployeePage: React.FC = () => {
           <DataExport
             data={data.items as unknown as Record<string, unknown>[]}
             fields={exportFields}
-            defaultFileName='员工数据'
-            buttonText='导出'
+            defaultFileName={t('hrm.hrm_employee_page_index.text_cdfc20')}
+            buttonText={t('hrm.hrm_employee_page_index.export')}
           />
           <Button
             variant='contained'
@@ -888,8 +894,8 @@ const HrmEmployeePage: React.FC = () => {
 
       {viewMode === 'list' && (
         <CardListTemplate
-          title='员工列表'
-          subtitle='管理企业员工信息'
+          title={t('hrm.hrm_employee_page_index.list')}
+          subtitle={t('hrm.hrm_employee_page_index.info_1')}
           metricStats={metricStats}
           metricColumns={4}
           data={data.items as unknown as Record<string, unknown>[]}
@@ -897,34 +903,34 @@ const HrmEmployeePage: React.FC = () => {
           loading={loading}
           emptyState={{
             emoji: '👥',
-            title: '暂无员工数据',
-            description: '点击上方按钮添加第一位员工',
-            actionLabel: '新增员工',
+            title: t('hrm.hrm_employee_page_index.no_data'),
+            description: t('hrm.hrm_employee_page_index.text_a69329'),
+            actionLabel: t('hrm.hrm_employee_page_index.add'),
             onAction: handleAdd,
           }}
           search={{
             value: searchText,
             onChange: setSearchText,
-            placeholder: '搜索姓名、工号、邮箱...',
+            placeholder: t('hrm.hrm_employee_page_index.search_1'),
           }}
           filters={[
             {
               id: 'department',
-              label: '部门',
+              label: t('hrm.hrm_employee_page_index.text_1e1459'),
               type: 'select' as const,
               options: [
-                { label: '全部部门', value: 'all' },
+                { label: t('hrm.hrm_employee_page_index.all'), value: 'all' },
                 ...departments.map((d) => ({ label: d.name, value: d.id })),
               ],
             },
             {
               id: 'status',
-              label: '状态',
+              label: t('hrm.hrm_employee_page_index.status'),
               type: 'select' as const,
               options: [
-                { label: '全部状态', value: 'all' },
-                { label: '在职', value: 'active' },
-                { label: '离职', value: 'inactive' },
+                { label: t('hrm.hrm_employee_page_index.status_1'), value: 'all' },
+                { label: t('hrm.hrm_employee_page_index.text_b5509b'), value: 'active' },
+                { label: t('hrm.hrm_employee_page_index.text_583e79'), value: 'inactive' },
               ],
             },
           ]}
@@ -939,7 +945,7 @@ const HrmEmployeePage: React.FC = () => {
           onFilterReset={handleReset}
           onSearch={handleSearch}
           addButton={{
-            text: '新增员工',
+            text: t('hrm.hrm_employee_page_index.add'),
             icon: <Plus style={{ width: 18, height: 18 }} />,
             onClick: handleAdd,
           }}
@@ -991,8 +997,8 @@ const HrmEmployeePage: React.FC = () => {
               <DataExport
                 data={data.items as unknown as Record<string, unknown>[]}
                 fields={exportFields}
-                defaultFileName='员工数据'
-                buttonText='导出'
+                defaultFileName={t('hrm.hrm_employee_page_index.text_cdfc20')}
+                buttonText={t('hrm.hrm_employee_page_index.export')}
               />
             </Box>
           }
@@ -1019,7 +1025,7 @@ const HrmEmployeePage: React.FC = () => {
             ) : treeData.length === 0 ? (
               <EmptyState
                 emoji='🏢'
-                title='暂无部门数据'
+                title={t('hrm.hrm_employee_page_index.no_data_1')}
                 compact
               />
             ) : (
@@ -1060,9 +1066,9 @@ const HrmEmployeePage: React.FC = () => {
                   data={data.items.filter((e: Employee) => e.department_id === selectedDeptId)}
                   rowActions={rowActions}
                   onRowClick={handleView}
-                  emptyMessage='该部门暂无员工'
+                  emptyMessage={t('hrm.hrm_employee_page_index.no_data_2')}
                   exportable
-                  exportFileName='员工列表'
+                  exportFileName={t('hrm.hrm_employee_page_index.list')}
                   exportTransform={(row: Employee) => ({
                     id: row.id,
                     name: row.name,
@@ -1071,12 +1077,12 @@ const HrmEmployeePage: React.FC = () => {
                     phone: row.phone || '',
                     department_name: row.department_name || '',
                     position_name: row.position || '',
-                    status: row.status === 'active' ? '在职' : '离职',
+                    status: row.status === 'active' ? t('hrm.hrm_employee_page_index.text_b5509b') : t('hrm.hrm_employee_page_index.text_583e79'),
                     hired_date: row.hire_date || '',
                   })}
                   batchActions={[
                     {
-                      label: '批量删除',
+                      label: t('hrm.hrm_employee_page_index.batch_delete_1'),
                       icon: <Trash2 size={16} />,
                       onClick: handleBatchDelete,
                     },
@@ -1086,8 +1092,8 @@ const HrmEmployeePage: React.FC = () => {
             ) : (
               <EmptyState
                 emoji='👈'
-                title='选择部门查看员工'
-                description='从左侧部门树中选择一个部门，查看部门成员信息'
+                title={t('hrm.hrm_employee_page_index.view_1')}
+                description={t('hrm.hrm_employee_page_index.view_2')}
                 compact
               />
             )}
@@ -1153,8 +1159,8 @@ const HrmEmployeePage: React.FC = () => {
         isOpen={confirmDeleteOpen}
         onClose={() => setConfirmDeleteOpen(false)}
         onConfirm={handleDeleteConfirm}
-        title='确认删除'
-        message='确定要删除这个员工吗？'
+        title={t('hrm.hrm_employee_page_index.confirm_delete')}
+        message={t('hrm.hrm_employee_page_index.confirm')}
         danger
       />
 
@@ -1162,7 +1168,7 @@ const HrmEmployeePage: React.FC = () => {
         isOpen={confirmBatchDeleteOpen}
         onClose={() => setConfirmBatchDeleteOpen(false)}
         onConfirm={handleBatchDeleteConfirm}
-        title='批量删除确认'
+        title={t('hrm.hrm_employee_page_index.batch_delete_2')}
         message={`确定要删除选中的 ${batchDeleteIds.length} 名员工吗？`}
         danger
       />

@@ -61,6 +61,7 @@ import type {
 } from '@/api/finance/payment';
 import { PaymentPrintTemplate } from './PaymentPrintTemplate';
 
+import { useTranslation } from 'react-i18next';
 const logger = createLogger('FinancePaymentPage');
 
 const paymentMethodOptions = [
@@ -97,6 +98,7 @@ const getStatusConfig = (status: string) => {
 };
 
 const FinancePaymentPage: React.FC = () => {
+  const { t } = useTranslation();
   const addNotification = useNotificationStore((state) => state.addNotification);
   const queryClient = useQueryClient();
 
@@ -173,7 +175,7 @@ const FinancePaymentPage: React.FC = () => {
   useEffect(() => {
     if (paymentsQuery.isError) {
       logger.error('Failed to load payments:', paymentsQuery.error);
-      addNotification({ title: '错误', message: '加载付款单列表失败', type: 'error' });
+      addNotification({ title: t('finance.finance_payment_page.error'), message: t('finance.finance_payment_page.list'), type: 'error' });
     }
   }, [paymentsQuery.isError, paymentsQuery.error, addNotification]);
 
@@ -184,12 +186,12 @@ const FinancePaymentPage: React.FC = () => {
     mutationFn: (data: CreatePaymentRequest) => financeApi.payment.create(data),
     onSuccess: () => {
       invalidatePayments();
-      addNotification({ title: '成功', message: '付款单创建成功', type: 'success' });
+      addNotification({ title: t('finance.finance_payment_page.success'), message: t('finance.finance_payment_page.create'), type: 'success' });
       setShowCreateDialog(false);
     },
     onError: (err: unknown) => {
       logger.error('Failed to submit payment:', err);
-      addNotification({ title: '错误', message: '创建付款单失败', type: 'error' });
+      addNotification({ title: t('finance.finance_payment_page.error'), message: t('finance.finance_payment_page.create_1'), type: 'error' });
     },
   });
 
@@ -198,12 +200,12 @@ const FinancePaymentPage: React.FC = () => {
       financeApi.payment.update(params.id, params.data),
     onSuccess: () => {
       invalidatePayments();
-      addNotification({ title: '成功', message: '付款单更新成功', type: 'success' });
+      addNotification({ title: t('finance.finance_payment_page.success'), message: t('finance.finance_payment_page.update'), type: 'success' });
       setShowCreateDialog(false);
     },
     onError: (err: unknown) => {
       logger.error('Failed to submit payment:', err);
-      addNotification({ title: '错误', message: '更新付款单失败', type: 'error' });
+      addNotification({ title: t('finance.finance_payment_page.error'), message: t('finance.finance_payment_page.update_1'), type: 'error' });
     },
   });
 
@@ -211,11 +213,11 @@ const FinancePaymentPage: React.FC = () => {
     mutationFn: (id: string) => financeApi.payment.remove(id),
     onSuccess: () => {
       invalidatePayments();
-      addNotification({ title: '成功', message: '付款单删除成功', type: 'success' });
+      addNotification({ title: t('finance.finance_payment_page.success'), message: t('finance.finance_payment_page.delete_success'), type: 'success' });
     },
     onError: (err: unknown) => {
       logger.error('Failed to delete payment:', err);
-      addNotification({ title: '错误', message: '删除付款单失败', type: 'error' });
+      addNotification({ title: t('finance.finance_payment_page.error'), message: t('finance.finance_payment_page.delete'), type: 'error' });
     },
   });
 
@@ -223,11 +225,11 @@ const FinancePaymentPage: React.FC = () => {
     mutationFn: (id: string) => financeApi.payment.submit(id),
     onSuccess: () => {
       invalidatePayments();
-      addNotification({ title: '成功', message: '提交审批成功', type: 'success' });
+      addNotification({ title: t('finance.finance_payment_page.success'), message: t('finance.finance_payment_page.submit'), type: 'success' });
     },
     onError: (err: unknown) => {
       logger.error('Failed to submit payment:', err);
-      addNotification({ title: '错误', message: '提交审批失败', type: 'error' });
+      addNotification({ title: t('finance.finance_payment_page.error'), message: t('finance.finance_payment_page.submit_1'), type: 'error' });
     },
   });
 
@@ -235,12 +237,12 @@ const FinancePaymentPage: React.FC = () => {
     mutationFn: (id: string) => financeApi.payment.approve(id),
     onSuccess: () => {
       invalidatePayments();
-      addNotification({ title: '成功', message: '审批通过', type: 'success' });
+      addNotification({ title: t('finance.finance_payment_page.success'), message: t('finance.finance_payment_page.text_ec5de2'), type: 'success' });
       setShowDetailDialog(false);
     },
     onError: (err: unknown) => {
       logger.error('Failed to approve payment:', err);
-      addNotification({ title: '错误', message: '审批失败', type: 'error' });
+      addNotification({ title: t('finance.finance_payment_page.error'), message: t('finance.finance_payment_page.fail'), type: 'error' });
     },
   });
 
@@ -248,12 +250,12 @@ const FinancePaymentPage: React.FC = () => {
     mutationFn: (id: string) => financeApi.payment.reject(id),
     onSuccess: () => {
       invalidatePayments();
-      addNotification({ title: '成功', message: '已拒绝', type: 'success' });
+      addNotification({ title: t('finance.finance_payment_page.success'), message: t('finance.finance_payment_page.text_81233d'), type: 'success' });
       setShowDetailDialog(false);
     },
     onError: (err: unknown) => {
       logger.error('Failed to reject payment:', err);
-      addNotification({ title: '错误', message: '操作失败', type: 'error' });
+      addNotification({ title: t('finance.finance_payment_page.error'), message: t('finance.finance_payment_page.operation_failed'), type: 'error' });
     },
   });
 
@@ -262,12 +264,12 @@ const FinancePaymentPage: React.FC = () => {
       financeApi.payment.execute(params.id, params.data),
     onSuccess: () => {
       invalidatePayments();
-      addNotification({ title: '成功', message: '付款执行成功', type: 'success' });
+      addNotification({ title: t('finance.finance_payment_page.success'), message: t('finance.finance_payment_page.success_1'), type: 'success' });
       setShowExecuteDialog(false);
     },
     onError: (err: unknown) => {
       logger.error('Failed to execute payment:', err);
-      addNotification({ title: '错误', message: '操作失败', type: 'error' });
+      addNotification({ title: t('finance.finance_payment_page.error'), message: t('finance.finance_payment_page.operation_failed'), type: 'error' });
     },
   });
 
@@ -275,12 +277,12 @@ const FinancePaymentPage: React.FC = () => {
     mutationFn: (data: WriteOffRequest) => financeApi.payment.writeOff(data),
     onSuccess: () => {
       invalidatePayments();
-      addNotification({ title: '成功', message: '核销成功', type: 'success' });
+      addNotification({ title: t('finance.finance_payment_page.success'), message: t('finance.finance_payment_page.success_2'), type: 'success' });
       setShowWriteOffDialog(false);
     },
     onError: (err: unknown) => {
       logger.error('Failed to write off payment:', err);
-      addNotification({ title: '错误', message: '核销失败', type: 'error' });
+      addNotification({ title: t('finance.finance_payment_page.error'), message: t('finance.finance_payment_page.fail_1'), type: 'error' });
     },
   });
 
@@ -307,8 +309,8 @@ const FinancePaymentPage: React.FC = () => {
     } catch (error) {
       logger.error('Failed to export payments:', error);
       addNotification({
-        title: '错误',
-        message: '导出失败',
+        title: t('finance.finance_payment_page.error'),
+        message: t('finance.finance_payment_page.export'),
         type: 'error',
       });
     }
@@ -316,16 +318,16 @@ const FinancePaymentPage: React.FC = () => {
 
   const exportToCSV = (payments: Payment[]) => {
     const headers = [
-      '付款单号',
-      '供应商',
-      '付款方式',
-      '付款金额',
-      '币种',
-      '付款日期',
-      '实际付款日期',
-      '银行流水号',
-      '状态',
-      '创建时间',
+      t('finance.finance_payment_page.text_b9b591'),
+      t('finance.finance_payment_page.supplier'),
+      t('finance.finance_payment_page.text_598fb8'),
+      t('finance.finance_payment_page.amount'),
+      t('finance.finance_payment_page.text_654522'),
+      t('finance.finance_payment_page.date'),
+      t('finance.finance_payment_page.date_1'),
+      t('finance.finance_payment_page.text_edb7f7'),
+      t('finance.finance_payment_page.status_1'),
+      t('finance.finance_payment_page.created_at'),
     ];
 
     const rows = payments.map((p) => [
@@ -393,13 +395,13 @@ const FinancePaymentPage: React.FC = () => {
 
   const handleSubmit = () => {
     if (!formData.supplierName || formData.totalAmount <= 0) {
-      addNotification({ title: '提示', message: '请填写供应商名称和付款金额', type: 'warning' });
+      addNotification({ title: t('finance.finance_payment_page.hint'), message: t('finance.finance_payment_page.supplier_name'), type: 'warning' });
       return;
     }
 
     const totalItemAmount = formData.items.reduce((sum, item) => sum + item.paymentAmount, 0);
     if (Math.abs(totalItemAmount - formData.totalAmount) > 0.01) {
-      addNotification({ title: '提示', message: '明细付款金额合计应等于总金额', type: 'warning' });
+      addNotification({ title: t('finance.finance_payment_page.hint'), message: t('finance.finance_payment_page.amount_1'), type: 'warning' });
       return;
     }
 
@@ -411,22 +413,22 @@ const FinancePaymentPage: React.FC = () => {
   };
 
   const handleDelete = (payment: Payment) => {
-    if (!window.confirm('确定要删除该付款单吗？')) return;
+    if (!window.confirm(t('finance.finance_payment_page.confirm'))) return;
     deleteMutation.mutate(payment.id);
   };
 
   const handleSubmitForApproval = (payment: Payment) => {
-    if (!window.confirm('确定要提交审批吗？')) return;
+    if (!window.confirm(t('finance.finance_payment_page.confirm_1'))) return;
     submitMutation.mutate(payment.id);
   };
 
   const handleApprove = (payment: Payment) => {
-    if (!window.confirm('确定要审批通过吗？')) return;
+    if (!window.confirm(t('finance.finance_payment_page.confirm_2'))) return;
     approveMutation.mutate(payment.id);
   };
 
   const handleReject = (payment: Payment) => {
-    if (!window.confirm('确定要拒绝该付款单吗？')) return;
+    if (!window.confirm(t('finance.finance_payment_page.confirm_3'))) return;
     rejectMutation.mutate(payment.id);
   };
 
@@ -446,8 +448,8 @@ const FinancePaymentPage: React.FC = () => {
       !executeFormData.actualPaymentDate
     ) {
       addNotification({
-        title: '提示',
-        message: '请填写完整的执行信息',
+        title: t('finance.finance_payment_page.hint'),
+        message: t('finance.finance_payment_page.please_fill'),
         type: 'error',
       });
       return;
@@ -473,8 +475,8 @@ const FinancePaymentPage: React.FC = () => {
   const handleWriteOffPayment = () => {
     if (!selectedItem || !writeOffFormData.writeOffAmount) {
       addNotification({
-        title: '提示',
-        message: '请填写核销金额',
+        title: t('finance.finance_payment_page.hint'),
+        message: t('finance.finance_payment_page.please_fill_1'),
         type: 'error',
       });
       return;
@@ -483,8 +485,8 @@ const FinancePaymentPage: React.FC = () => {
     const amount = parseFloat(writeOffFormData.writeOffAmount);
     if (isNaN(amount) || amount <= 0) {
       addNotification({
-        title: '提示',
-        message: '请输入有效的核销金额',
+        title: t('finance.finance_payment_page.hint'),
+        message: t('finance.finance_payment_page.please_input'),
         type: 'error',
       });
       return;
@@ -532,7 +534,7 @@ const FinancePaymentPage: React.FC = () => {
 
   return (
     <PageContainer
-      title='付款单管理'
+      title={t('finance.finance_payment_page.text_b3b3e0')}
       headerActions={
         <Button
           variant='contained'
@@ -552,7 +554,7 @@ const FinancePaymentPage: React.FC = () => {
           >
             <TextField
               size='small'
-              placeholder='搜索供应商名称...'
+              placeholder={t('finance.finance_payment_page.supplier_name_1')}
               value={searchText}
               onChange={(e) => setSearchText(e.target.value)}
               sx={{ width: 280 }}
@@ -564,7 +566,7 @@ const FinancePaymentPage: React.FC = () => {
               <InputLabel>状态</InputLabel>
               <Select
                 value={statusFilter}
-                label='状态'
+                label={t('finance.finance_payment_page.status_1')}
                 onChange={(e) => setStatusFilter(e.target.value)}
               >
                 {statusOptions.map((opt) => (
@@ -681,7 +683,7 @@ const FinancePaymentPage: React.FC = () => {
                           spacing={0.5}
                           sx={{ justifyContent: 'center' }}
                         >
-                          <Tooltip title='查看详情'>
+                          <Tooltip title={t('finance.finance_payment_page.view_detail')}>
                             <IconButton
                               size='small'
                               onClick={() => handleView(payment)}
@@ -690,7 +692,7 @@ const FinancePaymentPage: React.FC = () => {
                             </IconButton>
                           </Tooltip>
                           {canEdit(payment.status) && (
-                            <Tooltip title='编辑'>
+                            <Tooltip title={t('finance.finance_payment_page.edit')}>
                               <IconButton
                                 size='small'
                                 onClick={() => handleEdit(payment)}
@@ -700,7 +702,7 @@ const FinancePaymentPage: React.FC = () => {
                             </Tooltip>
                           )}
                           {canSubmit(payment.status) && (
-                            <Tooltip title='提交审批'>
+                            <Tooltip title={t('finance.finance_payment_page.submit_2')}>
                               <IconButton
                                 size='small'
                                 color='primary'
@@ -711,7 +713,7 @@ const FinancePaymentPage: React.FC = () => {
                             </Tooltip>
                           )}
                           {canDelete(payment.status) && (
-                            <Tooltip title='删除'>
+                            <Tooltip title={t('finance.finance_payment_page.delete_1')}>
                               <IconButton
                                 size='small'
                                 color='error'
@@ -740,7 +742,7 @@ const FinancePaymentPage: React.FC = () => {
             setPageSize(parseInt(e.target.value, 10));
             setPage(0);
           }}
-          labelRowsPerPage='每页行数'
+          labelRowsPerPage={t('finance.finance_payment_page.text_b6960b')}
           labelDisplayedRows={({ from, to, count }) => `第 ${from}-${to} 条，共 ${count} 条`}
         />
       </Card>
@@ -751,7 +753,7 @@ const FinancePaymentPage: React.FC = () => {
         maxWidth='md'
         fullWidth
       >
-        <DialogTitle>{editMode ? '编辑付款单' : '新建付款单'}</DialogTitle>
+        <DialogTitle>{editMode ? t('finance.finance_payment_page.edit_1') : t('finance.finance_payment_page.text_1f4d01')}</DialogTitle>
         <DialogContent dividers>
           <Grid
             container
@@ -765,7 +767,7 @@ const FinancePaymentPage: React.FC = () => {
             >
               <TextField
                 fullWidth
-                label='供应商名称'
+                label={t('finance.finance_payment_page.supplier_name_2')}
                 value={formData.supplierName}
                 onChange={(e) => setFormData({ ...formData, supplierName: e.target.value })}
                 required
@@ -783,7 +785,7 @@ const FinancePaymentPage: React.FC = () => {
                 <InputLabel>付款方式</InputLabel>
                 <Select
                   value={formData.paymentMethod}
-                  label='付款方式'
+                  label={t('finance.finance_payment_page.text_598fb8')}
                   onChange={(e) => setFormData({ ...formData, paymentMethod: e.target.value })}
                 >
                   {paymentMethodOptions.map((opt) => (
@@ -804,7 +806,7 @@ const FinancePaymentPage: React.FC = () => {
             >
               <TextField
                 fullWidth
-                label='开户银行'
+                label={t('finance.finance_payment_page.text_cc5ca0')}
                 value={formData.bankName}
                 onChange={(e) => setFormData({ ...formData, bankName: e.target.value })}
               />
@@ -816,7 +818,7 @@ const FinancePaymentPage: React.FC = () => {
             >
               <TextField
                 fullWidth
-                label='银行账号'
+                label={t('finance.finance_payment_page.text_954218')}
                 value={formData.bankAccountNo}
                 onChange={(e) => setFormData({ ...formData, bankAccountNo: e.target.value })}
               />
@@ -828,7 +830,7 @@ const FinancePaymentPage: React.FC = () => {
             >
               <TextField
                 fullWidth
-                label='付款总金额'
+                label={t('finance.finance_payment_page.amount_2')}
                 type='number'
                 value={formData.totalAmount || ''}
                 onChange={(e) =>
@@ -843,7 +845,7 @@ const FinancePaymentPage: React.FC = () => {
             >
               <TextField
                 fullWidth
-                label='备注'
+                label={t('finance.finance_payment_page.remark')}
                 multiline
                 rows={2}
                 value={formData.remark}
@@ -899,7 +901,7 @@ const FinancePaymentPage: React.FC = () => {
                         fullWidth
                         value={item.invoiceNo || ''}
                         onChange={(e) => updateItem(index, 'invoiceNo', e.target.value)}
-                        placeholder='输入发票号'
+                        placeholder={t('finance.finance_payment_page.text_73bd06')}
                       />
                     </TableCell>
                     <TableCell
@@ -936,7 +938,7 @@ const FinancePaymentPage: React.FC = () => {
                         fullWidth
                         value={item.remark || ''}
                         onChange={(e) => updateItem(index, 'remark', e.target.value)}
-                        placeholder='备注'
+                        placeholder={t('finance.finance_payment_page.remark')}
                       />
                     </TableCell>
                     <TableCell align='center'>
@@ -988,7 +990,7 @@ const FinancePaymentPage: React.FC = () => {
             onClick={handleSubmit}
             disabled={actionLoading}
           >
-            {editMode ? '保存修改' : '创建'}
+            {editMode ? t('finance.finance_payment_page.save') : t('finance.finance_payment_page.create_2')}
           </Button>
         </DialogActions>
       </Dialog>
@@ -1176,10 +1178,10 @@ const FinancePaymentPage: React.FC = () => {
                                 size='small'
                                 label={
                                   item.writeOffStatus === 'completed'
-                                    ? '已核销'
+                                    ? t('finance.finance_payment_page.text_77af84')
                                     : item.writeOffStatus === 'partial'
-                                      ? '部分核销'
-                                      : '待核销'
+                                      ? t('finance.finance_payment_page.text_8f9319')
+                                      : t('finance.finance_payment_page.text_e9cbed')
                                 }
                                 color={
                                   item.writeOffStatus === 'completed'
@@ -1278,7 +1280,7 @@ const FinancePaymentPage: React.FC = () => {
             >
               <TextField
                 fullWidth
-                label='银行流水号'
+                label={t('finance.finance_payment_page.text_edb7f7')}
                 value={executeFormData.bankTransactionNo}
                 onChange={(e) =>
                   setExecuteFormData({ ...executeFormData, bankTransactionNo: e.target.value })
@@ -1292,7 +1294,7 @@ const FinancePaymentPage: React.FC = () => {
             >
               <TextField
                 fullWidth
-                label='实际付款日期'
+                label={t('finance.finance_payment_page.date_1')}
                 type='date'
                 value={executeFormData.actualPaymentDate}
                 onChange={(e) =>
@@ -1334,7 +1336,7 @@ const FinancePaymentPage: React.FC = () => {
             >
               <TextField
                 fullWidth
-                label='发票号'
+                label={t('finance.finance_payment_page.text_d3c85a')}
                 value={selectedItem?.invoiceNo || '-'}
                 disabled
               />
@@ -1345,7 +1347,7 @@ const FinancePaymentPage: React.FC = () => {
             >
               <TextField
                 fullWidth
-                label='应付金额'
+                label={t('finance.finance_payment_page.amount_3')}
                 value={`¥${(selectedItem?.payableAmount || 0).toLocaleString('zh-CN', { minimumFractionDigits: 2 })}`}
                 disabled
               />
@@ -1356,7 +1358,7 @@ const FinancePaymentPage: React.FC = () => {
             >
               <TextField
                 fullWidth
-                label='本次付款'
+                label={t('finance.finance_payment_page.text_215ea2')}
                 value={`¥${(selectedItem?.paymentAmount || 0).toLocaleString('zh-CN', { minimumFractionDigits: 2 })}`}
                 disabled
               />
@@ -1367,7 +1369,7 @@ const FinancePaymentPage: React.FC = () => {
             >
               <TextField
                 fullWidth
-                label='核销金额'
+                label={t('finance.finance_payment_page.amount_4')}
                 type='number'
                 value={writeOffFormData.writeOffAmount}
                 onChange={(e) =>

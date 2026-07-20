@@ -9,6 +9,7 @@ import {
   Button,
 } from '@mui/material';
 import React, { useState, useMemo, useCallback } from 'react';
+import { useTranslation } from 'react-i18next';
 import type { Warehouse, CreateWarehouseRequest, UpdateWarehouseRequest } from '@/api/wms';
 import { wmsApi } from '@/api/wms';
 import { useNotificationStore } from '@/store';
@@ -25,12 +26,25 @@ import {
 import { ConfirmDialog, PageContainer } from '@/components/common';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { QUERY_KEYS } from '@/lib/reactQuery';
+import { useUrlListState } from '@/hooks';
 
 const WarehouseManagementPage: React.FC = () => {
-  const [searchTerm, setSearchTerm] = useState('');
-  const [statusFilter, setStatusFilter] = useState<string>('all');
-  const [currentPage, setCurrentPage] = useState(1);
-  const [pageSize] = useState(10);
+  const { t } = useTranslation();
+  const {
+    searchQuery,
+    setSearchQuery,
+    debouncedSearch,
+    filters,
+    setFilter,
+    currentPage,
+    setCurrentPage,
+    pageSize,
+  } = useUrlListState<{ status: string }>({
+    defaultPageSize: 10,
+    defaultFilters: { status: 'all' },
+    baseIndex: 1,
+    historyMode: 'replace',
+  });
   const [showDialog, setShowDialog] = useState(false);
   const [showDetailDialog, setShowDetailDialog] = useState(false);
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
@@ -48,14 +62,14 @@ const WarehouseManagementPage: React.FC = () => {
   const queryClient = useQueryClient();
 
   const { data: warehousesResponse, isLoading: loading } = useQuery({
-    queryKey: [QUERY_KEYS.WMS.WAREHOUSES, currentPage, pageSize, searchTerm, statusFilter],
+    queryKey: [QUERY_KEYS.WMS.WAREHOUSES, currentPage, pageSize, debouncedSearch, filters.status],
     queryFn: async () => {
       const params: Record<string, unknown> = {
         page: currentPage,
         pagesize: pageSize,
       };
-      if (searchTerm) params.search = searchTerm;
-      if (statusFilter !== 'all') params.status = statusFilter;
+      if (debouncedSearch) params.search = debouncedSearch;
+      if (filters.status !== 'all') params.status = filters.status;
 
       const response = await wmsApi.warehouses.list(params);
       if (!response.success) {
@@ -179,9 +193,9 @@ const WarehouseManagementPage: React.FC = () => {
       maintenance: 'warning',
     };
     const labels: Record<string, string> = {
-      active: '活跃',
-      inactive: '非活跃',
-      maintenance: '维护中',
+      active: t('wms.warehouse_management_page.status_active_label'),
+      inactive: t('wms.warehouse_management_page.status_inactive_label'),
+      maintenance: t('wms.warehouse_management_page.status_maintenance'),
     };
     return (
       <StatusBadge
@@ -196,62 +210,61 @@ const WarehouseManagementPage: React.FC = () => {
 
   const columns: ColumnDef<Warehouse>[] = useMemo(
     () => [
-      { id: 'name', label: '仓库名称', sortable: true },
-      { id: 'code', label: '仓库编码' },
-      { id: 'address', label: '地址' },
-      { id: 'manager', label: '负责人' },
-      { id: 'phone', label: '联系电话' },
+      { id: 'name', label: t('wms.warehouse_management_page.column_warehouse_name'), sortable: true },
+      { id: 'code', label: t('wms.warehouse_management_page.column_warehouse_code') },
+      { id: 'address', label: t('wms.warehouse_management_page.column_address') },
+      { id: 'manager', label: t('wms.warehouse_management_page.column_manager_label') },
+      { id: 'phone', label: t('wms.warehouse_management_page.column_phone') },
       {
         id: 'status',
-        label: '状态',
+        label: t('wms.warehouse_management_page.column_warehouse_status'),
         render: (row) => getStatusBadge(row.status),
       },
     ],
-    []
+    [t]
   );
 
-  const filters: FilterConfig[] = useMemo(
+  const filterConfigs: FilterConfig[] = useMemo(
     () => [
       {
         id: 'status',
-        label: '状态',
+        label: t('wms.warehouse_management_page.filter_status'),
         type: 'select',
         options: [
-          { label: '全部状态', value: 'all' },
-          { label: '活跃', value: 'active' },
-          { label: '非活跃', value: 'inactive' },
-          { label: '维护中', value: 'maintenance' },
+          { label: t('wms.warehouse_management_page.filter_option_all'), value: 'all' },
+          { label: t('wms.warehouse_management_page.status_active_label'), value: 'active' },
+          { label: t('wms.warehouse_management_page.status_inactive_label'), value: 'inactive' },
+          { label: t('wms.warehouse_management_page.status_maintenance'), value: 'maintenance' },
         ],
-        value: statusFilter,
+        value: filters.status,
         onChange: (value) => {
-          setStatusFilter(value as string);
-          setCurrentPage(1);
+          setFilter('status', value as string);
         },
       },
     ],
-    [statusFilter]
+    [filters.status, setFilter, t]
   );
 
   const rowActions: RowAction<Warehouse>[] = useMemo(
     () => [
       {
-        label: '查看详情',
+        label: t('wms.warehouse_management_page.action_view_detail'),
         icon: <Eye size={16} />,
         onClick: handleViewDetail,
       },
       {
-        label: '编辑',
+        label: t('wms.warehouse_management_page.action_edit'),
         icon: <Edit size={16} />,
         onClick: handleEdit,
       },
       {
-        label: '删除',
+        label: t('wms.warehouse_management_page.action_delete'),
         icon: <Trash2 size={16} />,
         color: 'error',
         onClick: (row) => handleDeleteClick(row.id),
       },
     ],
-    [handleDelete]
+    [t]
   );
 
   const handleOpenCreate = () => {
@@ -260,14 +273,13 @@ const WarehouseManagementPage: React.FC = () => {
   };
 
   const handleSearch = (value: string) => {
-    setSearchTerm(value);
-    setCurrentPage(1);
+    setSearchQuery(value);
   };
 
   return (
     <PageContainer
-      title='仓库管理'
-      subtitle='管理仓库信息,包括仓库名称、编码、地址、负责人等'
+      title={t('wms.warehouse_management_page.title')}
+      subtitle={t('wms.warehouse_management_page.subtitle_action')}
     >
       <ListPageTemplate
         title=''
@@ -275,11 +287,15 @@ const WarehouseManagementPage: React.FC = () => {
         columns={columns}
         data={warehouses}
         loading={loading}
-        filters={filters}
+        filters={filterConfigs}
+        filtersValue={{ status: filters.status }}
+        onFilterChange={(f) => {
+          if (f.status !== undefined) setFilter('status', f.status as string);
+        }}
         searchable
-        searchPlaceholder='搜索仓库名称或编码...'
-        onSearch={handleSearch}
-        searchValue={searchTerm}
+        searchPlaceholder={t('wms.warehouse_management_page.search_placeholder_code')}
+        onSearch={setSearchQuery}
+        searchValue={searchQuery}
         pagination={{
           page: currentPage,
           pageSize,
@@ -288,13 +304,13 @@ const WarehouseManagementPage: React.FC = () => {
         }}
         actions={[
           {
-            label: '新增仓库',
+            label: t('wms.warehouse_management_page.button_add'),
             icon: <Plus size={16} />,
             onClick: handleOpenCreate,
           },
         ]}
         rowActions={rowActions}
-        emptyMessage='暂无仓库数据'
+        emptyMessage={t('wms.warehouse_management_page.empty_message')}
         getRowId={(row) => row.id}
       />
 
@@ -305,7 +321,7 @@ const WarehouseManagementPage: React.FC = () => {
         maxWidth='sm'
         fullWidth
       >
-        <DialogTitle>{selectedWarehouse ? '编辑仓库' : '新增仓库'}</DialogTitle>
+        <DialogTitle>{selectedWarehouse ? t('wms.warehouse_management_page.dialog_edit_title') : t('wms.warehouse_management_page.dialog_create_title')}</DialogTitle>
         <DialogContent>
           <form onSubmit={handleSubmit}>
             <Box
@@ -321,7 +337,7 @@ const WarehouseManagementPage: React.FC = () => {
             >
               <FormField
                 name='name'
-                label='仓库名称 *'
+                label={t('wms.warehouse_management_page.field_warehouse_name_required')}
                 value={formData.name}
                 onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
                   setFormData({ ...formData, name: e.target.value })
@@ -331,7 +347,7 @@ const WarehouseManagementPage: React.FC = () => {
               />
               <FormField
                 name='code'
-                label='仓库编码'
+                label={t('wms.warehouse_management_page.field_warehouse_code')}
                 value={formData.code}
                 onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
                   setFormData({ ...formData, code: e.target.value })
@@ -340,7 +356,7 @@ const WarehouseManagementPage: React.FC = () => {
               />
               <FormField
                 name='address'
-                label='地址'
+                label={t('wms.warehouse_management_page.field_address')}
                 value={formData.address}
                 onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
                   setFormData({ ...formData, address: e.target.value })
@@ -349,7 +365,7 @@ const WarehouseManagementPage: React.FC = () => {
               />
               <FormField
                 name='manager'
-                label='负责人'
+                label={t('wms.warehouse_management_page.field_manager_label')}
                 value={formData.manager}
                 onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
                   setFormData({ ...formData, manager: e.target.value })
@@ -358,7 +374,7 @@ const WarehouseManagementPage: React.FC = () => {
               />
               <FormField
                 name='phone'
-                label='联系电话'
+                label={t('wms.warehouse_management_page.field_phone')}
                 value={formData.phone}
                 onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
                   setFormData({ ...formData, phone: e.target.value })
@@ -371,13 +387,13 @@ const WarehouseManagementPage: React.FC = () => {
                 variant='outlined'
                 onClick={() => setShowDialog(false)}
               >
-                取消
+                {t('wms.warehouse_management_page.button_cancel')}
               </Button>
               <Button
                 variant='contained'
                 type='submit'
               >
-                保存
+                {t('wms.warehouse_management_page.button_save')}
               </Button>
             </DialogActions>
           </form>
@@ -391,7 +407,7 @@ const WarehouseManagementPage: React.FC = () => {
         maxWidth='sm'
         fullWidth
       >
-        <DialogTitle>仓库详情</DialogTitle>
+        <DialogTitle>{t('wms.warehouse_management_page.dialog_detail_title')}</DialogTitle>
         <DialogContent>
           {selectedWarehouse && (
             <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
@@ -414,7 +430,7 @@ const WarehouseManagementPage: React.FC = () => {
                       color: 'text.secondary',
                     }}
                   >
-                    仓库名称
+                    {t('wms.warehouse_management_page.field_warehouse_name')}
                   </Box>
                   <Box
                     component='span'
@@ -432,7 +448,7 @@ const WarehouseManagementPage: React.FC = () => {
                       color: 'text.secondary',
                     }}
                   >
-                    仓库编码
+                    {t('wms.warehouse_management_page.field_warehouse_code')}
                   </Box>
                   <Box component='span'>{selectedWarehouse.code || '-'}</Box>
                 </Box>
@@ -445,7 +461,7 @@ const WarehouseManagementPage: React.FC = () => {
                       color: 'text.secondary',
                     }}
                   >
-                    地址
+                    {t('wms.warehouse_management_page.field_address')}
                   </Box>
                   <Box component='span'>{selectedWarehouse.address || '-'}</Box>
                 </Box>
@@ -458,7 +474,7 @@ const WarehouseManagementPage: React.FC = () => {
                       color: 'text.secondary',
                     }}
                   >
-                    负责人
+                    {t('wms.warehouse_management_page.field_manager_label')}
                   </Box>
                   <Box component='span'>{selectedWarehouse.manager || '-'}</Box>
                 </Box>
@@ -471,7 +487,7 @@ const WarehouseManagementPage: React.FC = () => {
                       color: 'text.secondary',
                     }}
                   >
-                    联系电话
+                    {t('wms.warehouse_management_page.field_phone')}
                   </Box>
                   <Box component='span'>{selectedWarehouse.phone || '-'}</Box>
                 </Box>
@@ -484,7 +500,7 @@ const WarehouseManagementPage: React.FC = () => {
                       color: 'text.secondary',
                     }}
                   >
-                    状态
+                    {t('wms.warehouse_management_page.column_warehouse_status')}
                   </Box>
                   <Box>{getStatusBadge(selectedWarehouse.status)}</Box>
                 </Box>
@@ -497,7 +513,7 @@ const WarehouseManagementPage: React.FC = () => {
                       color: 'text.secondary',
                     }}
                   >
-                    创建时间
+                    {t('wms.warehouse_management_page.field_created_at')}
                   </Box>
                   <Box>{new Date(selectedWarehouse.created_at).toLocaleString('zh-CN')}</Box>
                 </Box>
@@ -510,7 +526,7 @@ const WarehouseManagementPage: React.FC = () => {
                       color: 'text.secondary',
                     }}
                   >
-                    更新时间
+                    {t('wms.warehouse_management_page.field_updated_at')}
                   </Box>
                   <Box>{new Date(selectedWarehouse.updated_at).toLocaleString('zh-CN')}</Box>
                 </Box>
@@ -525,8 +541,8 @@ const WarehouseManagementPage: React.FC = () => {
         isOpen={showDeleteConfirm}
         onClose={() => setShowDeleteConfirm(false)}
         onConfirm={handleDelete}
-        title='确认删除'
-        message='确定要删除这个仓库吗？'
+        title={t('wms.warehouse_management_page.dialog_delete_title')}
+        message={t('wms.warehouse_management_page.dialog_delete_message')}
         danger
       />
     </PageContainer>

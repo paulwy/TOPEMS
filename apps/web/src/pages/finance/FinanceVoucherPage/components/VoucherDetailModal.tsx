@@ -3,6 +3,7 @@ import { Typography, Box } from '@mui/material';
 import { Dialog, StatusBadge } from '@/components/common';
 import type { FinancialVoucher, VoucherItem } from '@/api/erp';
 
+import { useTranslation } from 'react-i18next';
 interface VoucherDetailModalProps {
   open: boolean;
   onClose: () => void;
@@ -20,11 +21,12 @@ const VoucherDetailModal: React.FC<VoucherDetailModalProps> = ({
   getStatusBadge,
   formatCurrency,
 }) => {
+  const { t } = useTranslation();
   return (
     <Dialog
       open={open}
       onClose={onClose}
-      title='凭证详情'
+      title={t('finance.finance_voucher_page_components__voucher_detail_modal.detail')}
     >
       {currentVoucher && (
         <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2, mt: 1 }}>

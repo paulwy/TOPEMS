@@ -30,6 +30,8 @@ import { designTokens } from '@/theme/tokens';
 import { DASHBOARD_PATHS } from '@/routes/dashboard';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { QUERY_KEYS } from '@/lib/reactQuery';
+import { ConfirmDialog } from '@topems/shared-components';
+import { useConfirmDialog } from '@/hooks';
 
 const ct = designTokens.colors;
 
@@ -59,6 +61,12 @@ const LimsSamplePage: React.FC = () => {
     responsible_person: '',
     received_date: new Date().toISOString().split('T')[0],
   });
+  const {
+    confirmOpen: confirmDialogOpen,
+    confirmConfig: confirmDialogConfig,
+    openConfirm: openConfirmDialog,
+    closeConfirm: setConfirmDialogClosed,
+  } = useConfirmDialog();
 
   const queryKey = [QUERY_KEYS.LIMS.SAMPLES, currentPage, pageSize, searchTerm, statusFilter];
 
@@ -285,10 +293,16 @@ const LimsSamplePage: React.FC = () => {
     }
   };
 
-  const handleDelete = async (sample: Sample) => {
-    if (!window.confirm(`确定要删除样品 "${sample.name}" 吗？`)) return;
-    await deleteMutation.mutateAsync(sample.id);
-    setShowDetailModal(false);
+  const handleDelete = (sample: Sample) => {
+    openConfirmDialog({
+      title: '确认删除',
+      message: `确定要删除样品 "${sample.name}" 吗？`,
+      danger: true,
+      onConfirm: () => {
+        deleteMutation.mutate(sample.id);
+        setShowDetailModal(false);
+      },
+    });
   };
 
   const rowActions: RowAction<Sample>[] = useMemo(
@@ -838,6 +852,18 @@ const LimsSamplePage: React.FC = () => {
           </Button>
         </DialogActions>
       </Dialog>
+
+      <ConfirmDialog
+        isOpen={confirmDialogOpen}
+        onClose={setConfirmDialogClosed}
+        onConfirm={() => {
+          confirmDialogConfig?.onConfirm();
+          setConfirmDialogClosed();
+        }}
+        title={confirmDialogConfig?.title || ''}
+        message={confirmDialogConfig?.message || ''}
+        danger={confirmDialogConfig?.danger}
+      />
     </PageContainer>
   );
 };

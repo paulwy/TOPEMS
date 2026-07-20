@@ -1,5 +1,6 @@
 import { Box, Typography, Chip, IconButton, Tooltip, Stack } from '@mui/material';
 import React, { useState, useMemo, useCallback } from 'react';
+import { useUrlListState } from '@/hooks';
 import {
   FolderOpen,
   Upload,
@@ -112,11 +113,23 @@ export const DocumentListPage: React.FC = () => {
   const addNotification = useNotificationStore((state) => state.addNotification);
   const queryClient = useQueryClient();
 
-  const [searchQuery, setSearchQuery] = useState('');
-  const [typeFilter, setTypeFilter] = useState<string>('all');
-  const [categoryFilter, setCategoryFilter] = useState<string>('all');
-  const [currentPage, setCurrentPage] = useState(1);
-  const [pageSize] = useState(10);
+  const {
+    searchQuery,
+    setSearchQuery,
+    debouncedSearch,
+    filters: urlFilters,
+    setFilter,
+    currentPage,
+    setCurrentPage,
+    pageSize,
+  } = useUrlListState<{ type: string; category: string }>({
+    defaultPageSize: 10,
+    defaultFilters: { type: 'all', category: 'all' },
+    baseIndex: 1,
+    historyMode: 'replace',
+  });
+  const typeFilter = urlFilters.type;
+  const categoryFilter = urlFilters.category;
 
   const [confirmDialogOpen, setConfirmDialogOpen] = useState(false);
   const [confirmDialogConfig, setConfirmDialogConfig] = useState<{
@@ -166,7 +179,7 @@ export const DocumentListPage: React.FC = () => {
 
   const filteredDocuments = useMemo(() => {
     return documents.filter((doc) => {
-      if (searchQuery && !doc.name.toLowerCase().includes(searchQuery.toLowerCase())) {
+      if (debouncedSearch && !doc.name.toLowerCase().includes(debouncedSearch.toLowerCase())) {
         return false;
       }
       if (typeFilter !== 'all' && doc.type !== typeFilter) {
@@ -177,7 +190,7 @@ export const DocumentListPage: React.FC = () => {
       }
       return true;
     });
-  }, [documents, searchQuery, typeFilter, categoryFilter]);
+  }, [documents, debouncedSearch, typeFilter, categoryFilter]);
 
   const paginatedDocuments = useMemo(() => {
     const start = (currentPage - 1) * pageSize;
@@ -298,7 +311,7 @@ export const DocumentListPage: React.FC = () => {
       options: typeFilterOptions,
       value: typeFilter,
       onChange: (value: unknown) => {
-        setTypeFilter(value as string);
+        setFilter('type', value as string);
         setCurrentPage(1);
       },
     },
@@ -309,7 +322,7 @@ export const DocumentListPage: React.FC = () => {
       options: categoryFilterOptions,
       value: categoryFilter,
       onChange: (value: unknown) => {
-        setCategoryFilter(value as string);
+        setFilter('category', value as string);
         setCurrentPage(1);
       },
     },
@@ -505,12 +518,12 @@ export const DocumentListPage: React.FC = () => {
         onSearch={setSearchQuery}
         filters={filters}
         filtersValue={{ type: typeFilter, category: categoryFilter }}
-        onFilterChange={(filters) => {
-          if (filters.type !== undefined) {
-            setTypeFilter(filters.type as string);
+        onFilterChange={(newFilters) => {
+          if (newFilters.type !== undefined) {
+            setFilter('type', newFilters.type as string);
           }
-          if (filters.category !== undefined) {
-            setCategoryFilter(filters.category as string);
+          if (newFilters.category !== undefined) {
+            setFilter('category', newFilters.category as string);
           }
           setCurrentPage(1);
         }}

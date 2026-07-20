@@ -33,8 +33,10 @@ import { ModeToggle } from '@/components/theme/ModeToggle';
 import OrganizationFilter, {
   type OrganizationFilterValue,
 } from '@/components/ui/OrganizationFilter';
+import { useTranslation } from 'react-i18next';
 
 const BudgetManagementPage: React.FC = () => {
+  const { t } = useTranslation();
   const addNotification = useNotificationStore((state) => state.addNotification);
   const queryClient = useQueryClient();
 
@@ -70,7 +72,7 @@ const BudgetManagementPage: React.FC = () => {
   const budgets = budgetsQuery.data || [];
   const departments = departmentsQuery.data || [];
   const loading = budgetsQuery.isLoading || departmentsQuery.isLoading;
-  const error = budgetsQuery.error ? '加载数据失败' : undefined;
+  const error = budgetsQuery.error ? t('finance.budget_management_page.fail') : undefined;
 
   const invalidateBudgets = () => {
     queryClient.invalidateQueries({ queryKey: QUERY_KEYS.FINANCE.BUDGET });
@@ -87,7 +89,7 @@ const BudgetManagementPage: React.FC = () => {
     },
     onSuccess: (data) => {
       addNotification({
-        title: '批量更新成功',
+        title: t('finance.budget_management_page.update'),
         message: `成功更新 ${data.successCount} 条预算状态，失败 ${data.total - data.successCount} 条`,
         type: 'success',
       });
@@ -98,8 +100,8 @@ const BudgetManagementPage: React.FC = () => {
     },
     onError: (err: unknown) => {
       addNotification({
-        title: '批量更新失败',
-        message: (err as { message?: string }).message || '批量更新状态失败',
+        title: t('finance.budget_management_page.update_2'),
+        message: (err as { message?: string }).message || t('finance.budget_management_page.update_3'),
         type: 'error',
       });
     },
@@ -114,7 +116,7 @@ const BudgetManagementPage: React.FC = () => {
     },
     onSuccess: (data) => {
       addNotification({
-        title: '批量删除成功',
+        title: t('finance.budget_management_page.batch_delete'),
         message: `成功删除 ${data.successCount} 条预算，失败 ${data.total - data.successCount} 条`,
         type: 'success',
       });
@@ -123,8 +125,8 @@ const BudgetManagementPage: React.FC = () => {
     },
     onError: (err: unknown) => {
       addNotification({
-        title: '批量删除失败',
-        message: (err as { message?: string }).message || '批量删除失败',
+        title: t('finance.budget_management_page.batch_delete_1'),
+        message: (err as { message?: string }).message || t('finance.budget_management_page.batch_delete_1'),
         type: 'error',
       });
     },
@@ -160,12 +162,12 @@ const BudgetManagementPage: React.FC = () => {
     }) => {
       const res = await budgetApi.create(data);
       if (!res.success) {
-        throw new Error(res.message || '创建失败');
+        throw new Error(res.message || t('finance.budget_management_page.create'));
       }
       return res;
     },
     onSuccess: () => {
-      addNotification({ title: '成功', message: '预算创建成功', type: 'success' });
+      addNotification({ title: t('finance.budget_management_page.success'), message: t('finance.budget_management_page.create_1'), type: 'success' });
       setShowCreateModal(false);
       setNewBudget({
         department_id: '',
@@ -177,8 +179,8 @@ const BudgetManagementPage: React.FC = () => {
     },
     onError: (err: unknown) => {
       addNotification({
-        title: '失败',
-        message: (err as { message?: string }).message || '创建失败',
+        title: t('finance.budget_management_page.fail_1'),
+        message: (err as { message?: string }).message || t('finance.budget_management_page.create'),
         type: 'error',
       });
     },
@@ -189,9 +191,9 @@ const BudgetManagementPage: React.FC = () => {
       string,
       { color: 'primary' | 'default' | 'error' | 'warning'; label: string }
     > = {
-      active: { color: 'primary', label: '执行中' },
-      frozen: { color: 'warning', label: '已冻结' },
-      exhausted: { color: 'error', label: '已耗尽' },
+      active: { color: 'primary', label: t('finance.budget_management_page.text_46e386') },
+      frozen: { color: 'warning', label: t('finance.budget_management_page.text_92cff4') },
+      exhausted: { color: 'error', label: t('finance.budget_management_page.text_7bb9ff') },
     };
 
     const badgeConfig = config[status] || {
@@ -214,12 +216,12 @@ const BudgetManagementPage: React.FC = () => {
 
   const getBudgetTypeName = (type: string) => {
     const types: Record<string, string> = {
-      office: '办公费',
-      marketing: '市场费',
-      development: '研发费',
-      travel: '差旅费',
-      training: '培训费',
-      other: '其他',
+      office: t('finance.budget_management_page.text_976cad'),
+      marketing: t('finance.budget_management_page.text_656113'),
+      development: t('finance.budget_management_page.text_6d566d'),
+      travel: t('finance.budget_management_page.text_2038cb'),
+      training: t('finance.budget_management_page.text_b11633'),
+      other: t('finance.budget_management_page.other'),
     };
     return types[type] || type;
   };
@@ -234,19 +236,19 @@ const BudgetManagementPage: React.FC = () => {
     mutationFn: async (params: { id: string; data: any }) => {
       const res = await budgetApi.update(params.id, params.data);
       if (!res.success) {
-        throw new Error(res.message || '更新失败');
+        throw new Error(res.message || t('finance.budget_management_page.update_4'));
       }
       return res;
     },
     onSuccess: () => {
-      addNotification({ title: '成功', message: '预算更新成功', type: 'success' });
+      addNotification({ title: t('finance.budget_management_page.success'), message: t('finance.budget_management_page.update_5'), type: 'success' });
       setEditingBudget(null);
       invalidateBudgets();
     },
     onError: (err: unknown) => {
       addNotification({
-        title: '错误',
-        message: (err as { message?: string }).message || '更新失败',
+        title: t('finance.budget_management_page.error'),
+        message: (err as { message?: string }).message || t('finance.budget_management_page.update_4'),
         type: 'error',
       });
     },
@@ -256,18 +258,18 @@ const BudgetManagementPage: React.FC = () => {
     mutationFn: async (id: string) => {
       const res = await budgetApi.delete(id);
       if (!res.success) {
-        throw new Error(res.message || '删除失败');
+        throw new Error(res.message || t('finance.budget_management_page.delete_1'));
       }
       return res;
     },
     onSuccess: () => {
-      addNotification({ title: '成功', message: '预算删除成功', type: 'success' });
+      addNotification({ title: t('finance.budget_management_page.success'), message: t('finance.budget_management_page.delete_success'), type: 'success' });
       invalidateBudgets();
     },
     onError: (err: unknown) => {
       addNotification({
-        title: '错误',
-        message: (err as { message?: string }).message || '删除失败',
+        title: t('finance.budget_management_page.error'),
+        message: (err as { message?: string }).message || t('finance.budget_management_page.delete_1'),
         type: 'error',
       });
     },
@@ -298,7 +300,7 @@ const BudgetManagementPage: React.FC = () => {
   };
 
   const handleDelete = (id: string) => {
-    if (!confirm('确定要删除这条预算记录吗？')) return;
+    if (!confirm(t('finance.budget_management_page.confirm'))) return;
     deleteMutation.mutate(id);
   };
 
@@ -313,19 +315,19 @@ const BudgetManagementPage: React.FC = () => {
   const statCards = useMemo(
     () => [
       {
-        title: '总预算',
+        title: t('finance.budget_management_page.text_b91eb1'),
         value: `¥${totalBudget.toLocaleString()}`,
         icon: <DollarSign size={24} />,
         color: 'primary' as const,
       },
       {
-        title: '已使用',
+        title: t('finance.budget_management_page.text_b59b00'),
         value: `¥${totalUsed.toLocaleString()}`,
         icon: <TrendingUp size={24} />,
         color: 'success' as const,
       },
       {
-        title: '平均使用率',
+        title: t('finance.budget_management_page.text_bf99c1'),
         value: `${avgUsageRate.toFixed(1)}%`,
         icon: <Calendar size={24} />,
         color: avgUsageRate > 80 ? ('error' as const) : ('warning' as const),
@@ -339,7 +341,7 @@ const BudgetManagementPage: React.FC = () => {
     () => [
       {
         id: 'department_id',
-        label: '部门',
+        label: t('finance.budget_management_page.text_1e1459'),
         render: (row) => (
           <Typography
             variant='body2'
@@ -351,7 +353,7 @@ const BudgetManagementPage: React.FC = () => {
       },
       {
         id: 'budget_type',
-        label: '预算类型',
+        label: t('finance.budget_management_page.type'),
         render: (row) => (
           <Typography
             variant='body2'
@@ -363,7 +365,7 @@ const BudgetManagementPage: React.FC = () => {
       },
       {
         id: 'fiscal_year',
-        label: '财年',
+        label: t('finance.budget_management_page.text_dcdd8c'),
         render: (row) => (
           <Typography
             variant='body2'
@@ -375,7 +377,7 @@ const BudgetManagementPage: React.FC = () => {
       },
       {
         id: 'total_budget',
-        label: '预算总额',
+        label: t('finance.budget_management_page.text_f415f9'),
         render: (row) => (
           <Typography
             variant='body2'
@@ -387,7 +389,7 @@ const BudgetManagementPage: React.FC = () => {
       },
       {
         id: 'usage',
-        label: '使用进度',
+        label: t('finance.budget_management_page.text_085706'),
         render: (row) => (
           <Box sx={{ width: '100%', maxWidth: 320 }}>
             <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: 0.5 }}>
@@ -431,7 +433,7 @@ const BudgetManagementPage: React.FC = () => {
       },
       {
         id: 'remaining_amount',
-        label: '剩余',
+        label: t('finance.budget_management_page.text_43b510'),
         render: (row) => (
           <Typography
             variant='body2'
@@ -449,7 +451,7 @@ const BudgetManagementPage: React.FC = () => {
       },
       {
         id: 'status',
-        label: '状态',
+        label: t('finance.budget_management_page.status'),
         render: (row) => getStatusBadge(row.status),
       },
     ],
@@ -461,17 +463,17 @@ const BudgetManagementPage: React.FC = () => {
   const rowActions = useMemo<RowAction<Budget>[]>(
     () => [
       {
-        label: '编辑',
+        label: t('finance.budget_management_page.edit'),
         icon: <Edit sx={{ width: 16, height: 16 }} />,
         onClick: (row) => setEditingBudget(row),
       },
       {
-        label: '删除',
+        label: t('finance.budget_management_page.delete_2'),
         icon: <Trash2 sx={{ width: 16, height: 16 }} />,
         color: 'error',
         onClick: (row) => handleDelete(row.id),
         confirm: true,
-        confirmMessage: '确定要删除这条预算记录吗？',
+        confirmMessage: t('finance.budget_management_page.confirm'),
       },
     ],
 
@@ -482,19 +484,19 @@ const BudgetManagementPage: React.FC = () => {
   const batchActions = useMemo<BatchAction[]>(
     () => [
       {
-        label: '批量更新状态',
+        label: t('finance.budget_management_page.update_6'),
         icon: <Settings sx={{ width: 16, height: 16 }} />,
         onClick: handleBatchUpdateStatus,
         showWhenSelected: true,
       },
       {
-        label: '批量删除',
+        label: t('finance.budget_management_page.batch_delete_2'),
         icon: <Trash2 sx={{ width: 16, height: 16 }} />,
         color: 'error',
         onClick: handleBatchDelete,
         showWhenSelected: true,
         confirm: true,
-        confirmMessage: '确定要删除选中的预算记录吗？',
+        confirmMessage: t('finance.budget_management_page.confirm_1'),
       },
     ],
 
@@ -506,27 +508,27 @@ const BudgetManagementPage: React.FC = () => {
     () => [
       {
         id: 'status',
-        label: '状态',
+        label: t('finance.budget_management_page.status'),
         type: 'select' as const,
         options: [
-          { value: '', label: '全部' },
-          { value: 'active', label: '进行中' },
-          { value: 'frozen', label: '已冻结' },
-          { value: 'exhausted', label: '已耗尽' },
+          { value: '', label: t('finance.budget_management_page.all') },
+          { value: 'active', label: t('finance.budget_management_page.in_progress') },
+          { value: 'frozen', label: t('finance.budget_management_page.text_92cff4') },
+          { value: 'exhausted', label: t('finance.budget_management_page.text_7bb9ff') },
         ],
       },
       {
         id: 'budget_type',
-        label: '预算类型',
+        label: t('finance.budget_management_page.type'),
         type: 'select' as const,
         options: [
-          { value: '', label: '全部' },
-          { value: 'office', label: '办公费' },
-          { value: 'marketing', label: '市场费' },
-          { value: 'development', label: '研发费' },
-          { value: 'travel', label: '差旅费' },
-          { value: 'training', label: '培训费' },
-          { value: 'other', label: '其他' },
+          { value: '', label: t('finance.budget_management_page.all') },
+          { value: 'office', label: t('finance.budget_management_page.text_976cad') },
+          { value: 'marketing', label: t('finance.budget_management_page.text_656113') },
+          { value: 'development', label: t('finance.budget_management_page.text_6d566d') },
+          { value: 'travel', label: t('finance.budget_management_page.text_2038cb') },
+          { value: 'training', label: t('finance.budget_management_page.text_b11633') },
+          { value: 'other', label: t('finance.budget_management_page.other') },
         ],
       },
     ],
@@ -625,7 +627,7 @@ const BudgetManagementPage: React.FC = () => {
           loading={loading}
           error={error}
           searchable
-          searchPlaceholder='搜索预算...'
+          searchPlaceholder={t('finance.budget_management_page.search')}
           filters={filters}
           selectable
           selectedIds={selectedIds}
@@ -637,7 +639,7 @@ const BudgetManagementPage: React.FC = () => {
             budgetsQuery.refetch();
             departmentsQuery.refetch();
           }}
-          emptyMessage='暂无预算数据'
+          emptyMessage={t('finance.budget_management_page.no_data')}
         />
       </Box>
 
@@ -721,7 +723,7 @@ const BudgetManagementPage: React.FC = () => {
                 type='text'
                 value={newBudget.fiscal_year}
                 onChange={(e) => setNewBudget({ ...newBudget, fiscal_year: e.target.value })}
-                placeholder='例如: 2024'
+                placeholder={t('finance.budget_management_page.text_8e0be6')}
               />
             </Box>
 
@@ -739,7 +741,7 @@ const BudgetManagementPage: React.FC = () => {
                     total_budget: parseFloat(e.target.value) || 0,
                   })
                 }
-                placeholder='输入预算金额'
+                placeholder={t('finance.budget_management_page.amount')}
               />
             </Box>
           </Box>
