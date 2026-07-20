@@ -1,12 +1,14 @@
-import React, { useState, useEffect } from 'react';
-import { useTheme } from '@mui/material';
-import { Check, Settings, RefreshCw } from 'lucide-react';
+import React, { useState, useEffect, useCallback } from 'react';
+import { useTheme, Box, Chip } from '@mui/material';
+import { Check, Settings, RefreshCw, Wifi, WifiOff } from 'lucide-react';
 import NotificationItem from './NotificationItem';
 import NotificationSettings from './NotificationSettings';
 import type { Notification } from '@/api/notification';
 import { getNotifications, getUnreadCount, markAllAsRead } from '@/api/notification';
 import { logger } from '@/utils/logger';
 import { NOTIFICATION_PATHS } from '@/modules/notification/config';
+import { useAuthStore } from '@/store/authStore';
+import { useNotificationWebSocket } from '@/hooks/useNotificationWebSocket';
 
 interface NotificationPanelProps {
   onClose: () => void;
