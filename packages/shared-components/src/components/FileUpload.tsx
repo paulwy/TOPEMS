@@ -21,6 +21,21 @@ export interface UploadFile {
   error?: string;
 }
 
+export interface FileUploadLocale {
+  dragText?: string;
+  clickText?: string;
+  maxSizeText?: string;
+  maxFilesText?: string;
+  acceptText?: string;
+  processing?: string;
+  completed?: string;
+  failed?: string;
+  retry?: string;
+  remove?: string;
+  sizeExceeded?: string;
+  uploadFailed?: string;
+}
+
 export interface FileUploadProps {
   files?: UploadFile[];
   onChange?: (files: UploadFile[]) => void;
@@ -32,6 +47,7 @@ export interface FileUploadProps {
   disabled?: boolean;
   fullWidth?: boolean;
   className?: string;
+  locale?: FileUploadLocale;
 }
 
 const FileIcon: React.FC<{ type: string }> = ({ type }) => {
@@ -59,7 +75,17 @@ const FileUpload: React.FC<FileUploadProps> = ({
   disabled = false,
   fullWidth = false,
   className,
+  locale,
 }) => {
+  const dragText = locale?.dragText ?? '拖拽文件到此处，或点击选择文件';
+  const clickText = locale?.clickText ?? '点击选择文件';
+  const processingText = locale?.processing ?? '处理中...';
+  const completedText = locale?.completed ?? '上传完成';
+  const failedText = locale?.failed ?? '上传失败';
+  const retryText = locale?.retry ?? '重试';
+  const removeText = locale?.remove ?? '移除';
+  const sizeExceededText = locale?.sizeExceeded ?? '文件大小超过限制';
+  const uploadFailedText = locale?.uploadFailed ?? '上传失败';
   const [isDragging, setIsDragging] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
@@ -109,7 +135,7 @@ const FileUpload: React.FC<FileUploadProps> = ({
           type: file.type,
           progress: 0,
           status: 'error',
-          error: '文件大小超过限制',
+          error: sizeExceededText,
         });
         continue;
       }
@@ -145,7 +171,7 @@ const FileUpload: React.FC<FileUploadProps> = ({
       } catch {
         const errorFiles = updatedFiles.map((file) => {
           if (file.status === 'pending') {
-            return { ...file, status: 'error' as const, error: '上传失败' };
+            return { ...file, status: 'error' as const, error: uploadFailedText };
           }
           return file;
         });
@@ -188,11 +214,11 @@ const FileUpload: React.FC<FileUploadProps> = ({
         </Box>
         
         <Typography variant="body1" sx={{ mb: 1 }}>
-          {isDragging ? '松开鼠标上传文件' : '点击或拖拽文件到此处上传'}
+          {isDragging ? dragText : clickText}
         </Typography>
         
         <Typography variant="caption" color="text.secondary">
-          支持 {accept || '所有格式'} 文件，最大 {formatFileSize(maxSize)}，最多 {maxFiles} 个文件
+          {locale?.acceptText ?? `支持 ${accept || '所有格式'} 文件，最大 ${formatFileSize(maxSize)}，最多 ${maxFiles} 个文件`}
         </Typography>
         
         <input
@@ -244,10 +270,10 @@ const FileUpload: React.FC<FileUploadProps> = ({
               
               <Chip
                 label={
-                  file.status === 'pending' ? '等待上传' :
-                  file.status === 'uploading' ? `上传中 ${file.progress}%` :
-                  file.status === 'completed' ? '上传完成' :
-                  '上传失败'
+                  file.status === 'pending' ? (locale?.processing ?? '等待上传') :
+                  file.status === 'uploading' ? `${locale?.processing ?? '上传中'} ${file.progress}%` :
+                  file.status === 'completed' ? completedText :
+                  failedText
                 }
                 size="small"
                 color={
@@ -258,7 +284,7 @@ const FileUpload: React.FC<FileUploadProps> = ({
                 }
               />
               
-              <IconButton onClick={() => handleRemove(file.id)} size="small">
+              <IconButton onClick={() => handleRemove(file.id)} size="small" aria-label={removeText}>
                 <X size={18} />
               </IconButton>
             </Box>

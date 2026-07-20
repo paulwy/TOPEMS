@@ -21,11 +21,28 @@ export interface NotificationWsState {
   error: Error | null;
 }
 
-export function useNotificationWebSocket(userId: string, enabled = true): NotificationWsState & {
+export interface UseNotificationWebSocketOptions {
+  userId: string;
+  onNotification?: (notification: any) => void;
+  onUnreadCountChange?: (count: number) => void;
+  maxReconnectAttempts?: number;
+  autoConnect?: boolean;
+}
+
+export function useNotificationWebSocket(
+  userIdOrOptions: string | UseNotificationWebSocketOptions,
+  enabledOrLegacy = true
+): NotificationWsState & {
   markAsRead: (notificationId: string) => void;
   clearNotifications: () => void;
   reconnect: () => void;
 } {
+  const options: UseNotificationWebSocketOptions = typeof userIdOrOptions === 'string'
+    ? { userId: userIdOrOptions }
+    : userIdOrOptions;
+
+  const { userId, onNotification, onUnreadCountChange } = options;
+  const enabled = typeof userIdOrOptions === 'string' ? enabledOrLegacy : (options.autoConnect ?? true);
   const [isConnected, setIsConnected] = useState(false);
   const [notifications, setNotifications] = useState<NotificationWsPayload[]>([]);
   const [unreadCount, setUnreadCount] = useState(0);
@@ -73,6 +90,7 @@ export function useNotificationWebSocket(userId: string, enabled = true): Notifi
         const payload = message.payload as unknown as NotificationWsPayload;
         setNotifications((prev) => [payload, ...prev]);
         setUnreadCount((prev) => prev + 1);
+        onNotification?.(payload);
       }
     };
 
@@ -80,6 +98,7 @@ export function useNotificationWebSocket(userId: string, enabled = true): Notifi
       if (message.type === 'unread_count' && message.payload) {
         const payload = message.payload as unknown as UnreadCountPayload;
         setUnreadCount(payload.count);
+        onUnreadCountChange?.(payload.count);
       }
     };
 

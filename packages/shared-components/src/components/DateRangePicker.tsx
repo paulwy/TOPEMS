@@ -16,6 +16,14 @@ export interface DateRange {
   endDate: Date | null;
 }
 
+export interface DateRangePickerLocale {
+  placeholder?: string;
+  startDate?: string;
+  endDate?: string;
+  weekdays?: string[];
+  presets?: { label: string; days: number }[];
+}
+
 export interface DateRangePickerProps {
   value?: DateRange;
   onChange?: (value: DateRange) => void;
@@ -26,28 +34,35 @@ export interface DateRangePickerProps {
   minDate?: Date;
   maxDate?: Date;
   presets?: { label: string; days: number }[];
+  locale?: DateRangePickerLocale;
 }
 
-const WEEKDAYS = ['日', '一', '二', '三', '四', '五', '六'];
+const DEFAULT_WEEKDAYS = ['日', '一', '二', '三', '四', '五', '六'];
 
 const DateRangePicker: React.FC<DateRangePickerProps> = ({
   value = { startDate: null, endDate: null },
   onChange,
-  placeholder = '选择日期范围',
+  placeholder,
   disabled = false,
   fullWidth = false,
   className,
   minDate,
   maxDate,
-  presets = [
+  presets: presetsProp,
+  locale,
+}) => {
+  const finalPlaceholder = placeholder ?? locale?.placeholder ?? '选择日期范围';
+  const weekdays = locale?.weekdays ?? DEFAULT_WEEKDAYS;
+  const presets = presetsProp ?? locale?.presets ?? [
     { label: '今天', days: 0 },
     { label: '昨天', days: 1 },
     { label: '本周', days: 7 },
     { label: '本月', days: 30 },
     { label: '本季度', days: 90 },
     { label: '本年', days: 365 },
-  ],
-}) => {
+  ];
+  const startLabel = locale?.startDate ?? '开始日期';
+  const endLabel = locale?.endDate ?? '结束日期';
   const [anchorEl, setAnchorEl] = useState<HTMLElement | null>(null);
   const [currentMonth, setCurrentMonth] = useState(new Date());
   const [tempStartDate, setTempStartDate] = useState(value.startDate);
@@ -171,7 +186,7 @@ const DateRangePicker: React.FC<DateRangePickerProps> = ({
         <TextField
           onClick={handleOpen}
           value={displayValue}
-          placeholder={placeholder}
+          placeholder={finalPlaceholder}
           disabled={disabled}
           fullWidth={fullWidth}
           slotProps={{
@@ -245,7 +260,7 @@ const DateRangePicker: React.FC<DateRangePickerProps> = ({
           </Box>
 
           <Box sx={{ display: 'grid', gridTemplateColumns: 'repeat(7, 1fr)', gap: 0.5, mb: 3 }}>
-            {WEEKDAYS.map((day) => (
+            {weekdays.map((day) => (
               <Typography key={day} variant="caption" sx={{ textAlign: 'center', fontWeight: 600, py: 1 }}>
                 {day}
               </Typography>

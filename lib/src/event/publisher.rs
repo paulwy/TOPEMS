@@ -32,14 +32,16 @@ impl EventPublisher {
         })
     }
 
-    /// 发布事件
+    /// 发布事件（自动携带当前 trace context）
     pub async fn publish_event(
         &self,
         event_type: EventType,
         payload: impl Serialize,
     ) -> EventResult<()> {
         let payload_json = serde_json::to_value(&payload)?;
-        let event = Event::new(event_type, &self.service_name, payload_json);
+        let (trace_id, _) = crate::telemetry::get_current_trace_context();
+        let event = Event::new(event_type, &self.service_name, payload_json)
+            .with_trace_id(trace_id);
 
         let channel_name = format!("topems:events:{}", event_type);
         let event_json = serde_json::to_string(&event)?;
