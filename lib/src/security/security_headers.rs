@@ -313,9 +313,12 @@ mod tests {
         let config = SecurityHeadersConfig::new()
             .with_strict_transport_security(Duration::from_secs(3600), true);
 
-        let hsts = config.strict_transport_security.unwrap();
-        assert!(hsts.contains("max-age=3600"));
-        assert!(hsts.contains("includeSubDomains"));
+        if let Some(hsts) = config.strict_transport_security {
+            assert!(hsts.contains("max-age=3600"));
+            assert!(hsts.contains("includeSubDomains"));
+        } else {
+            panic!("Expected HSTS to be set");
+        }
     }
 
     #[test]
@@ -338,7 +341,10 @@ mod tests {
     #[test]
     fn test_add_security_headers_does_not_overwrite() {
         let config = SecurityHeadersConfig::default();
-        let mut response = Response::builder().status(StatusCode::OK).body(()).unwrap();
+        let mut response = Response::builder()
+            .status(StatusCode::OK)
+            .body(())
+            .expect("Failed to build test response");
 
         response.headers_mut().insert(
             HeaderName::from_static("x-frame-options"),
@@ -348,7 +354,7 @@ mod tests {
         add_security_headers(&mut response, &config);
 
         assert_eq!(
-            response.headers().get("x-frame-options").unwrap(),
+            response.headers().get("x-frame-options").expect("Expected x-frame-options header"),
             "ALLOW-FROM https://example.com"
         );
     }

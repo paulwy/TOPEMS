@@ -62,7 +62,7 @@ impl From<&str> for EvictionPolicy {
     }
 }
 
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, Serialize, Deserialize, Default)]
 pub struct CacheStatistics {
     pub total_entries: usize,
     pub hit_count: u64,

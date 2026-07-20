@@ -11,6 +11,7 @@ use std::sync::Arc;
 use std::time::Duration;
 use tokio::sync::RwLock;
 use tokio::time::interval;
+use topems_shared::auth::{verify_jwt_token, verify_message_signature, AuthState, Claims};
 use tracing::{error, info, warn};
 
 /// WebSocket 连接状态
@@ -77,16 +78,22 @@ type ChannelMap = Arc<RwLock<HashMap<String, HashSet<String>>>>;
 pub struct WsState {
     connections: ConnectionMap,
     channels: ChannelMap,
+    auth_state: Arc<AuthState>,
 }
 
 impl WsState {
-    pub fn new() -> Self {
+    pub fn new(auth_state: Arc<AuthState>) -> Self {
         let connections = Arc::new(RwLock::new(HashMap::new()));
         let channels = Arc::new(RwLock::new(HashMap::new()));
         Self {
             connections,
             channels,
+            auth_state,
         }
+    }
+
+    pub fn auth_state(&self) -> &Arc<AuthState> {
+        &self.auth_state
     }
 
     /// 添加连接
@@ -230,12 +237,6 @@ impl WsState {
     }
 }
 
-impl Default for WsState {
-    fn default() -> Self {
-        Self::new()
-    }
-}
-
 /// WebSocket 查询参数（用于认证）
 #[derive(Debug, Deserialize)]
 pub struct WsQueryParams {
@@ -256,9 +257,49 @@ async fn handle_socket(socket: WebSocket, state: Arc<WsState>, auth_token: Optio
         auth_token.is_some()
     );
 
-    let mut user_id: Option<String> = None;
     let (tx, mut rx) = socket.split();
     let tx_shared = Arc::new(RwLock::new(tx));
+
+    // 验证 JWT token
+    let (claims, user_id) = match &auth_token {
+        Some(token) => match verify_jwt_token(token, &state.auth_state().jwt_secret) {
+            Ok(c) => {
+                let user_id = c.sub.clone();
+                info!("WebSocket authenticated user: {}", user_id);
+                (Some(c), Some(user_id))
+            }
+            Err(e) => {
+                warn!("WebSocket JWT authentication failed: {}", e);
+                let mut sender = tx_shared.write().await;
+                let _ = sender
+                    .send(Message::Text(
+                        json!({
+                            "type": "auth_failed",
+                            "payload": { "error": "Authentication failed", "message": e.to_string() }
+                        })
+                        .to_string()
+                        .into(),
+                    ))
+                    .await;
+                return;
+            }
+        },
+        None => {
+            warn!("WebSocket connection without auth token, closing");
+            let mut sender = tx_shared.write().await;
+            let _ = sender
+                .send(Message::Text(
+                    json!({
+                        "type": "auth_failed",
+                        "payload": { "error": "Authentication required", "message": "Token is required" }
+                    })
+                    .to_string()
+                    .into(),
+                ))
+                .await;
+            return;
+        }
+    };
 
     let connection_for_heartbeat = tx_shared.clone();
 
@@ -285,29 +326,86 @@ async fn handle_socket(socket: WebSocket, state: Arc<WsState>, auth_token: Optio
         }
     });
 
+    // 创建连接
+    if let Some(id) = &user_id {
+        let conn = Arc::new(WsConnection::new(id.to_string(), tx_shared.clone()));
+        state.add_connection(id.to_string(), conn).await;
+    }
+
+    // 发送认证成功消息
+    let auth_success = json!({
+        "type": "auth_success",
+        "payload": {
+            "user_id": user_id.as_ref().unwrap_or(&"unknown".to_string()),
+            "username": claims.as_ref().map(|c| c.username.clone()).unwrap_or_default(),
+            "role": claims.as_ref().map(|c| c.role.clone()).unwrap_or_default(),
+        }
+    });
+    let mut tx = tx_shared.write().await;
+    let _ = tx
+        .send(Message::Text(auth_success.to_string().into()))
+        .await;
+
     while let Some(msg) = rx.next().await {
         match msg {
             Ok(Message::Text(text)) => {
-                info!("Received WebSocket message: {}", text);
+                info!(
+                    "Received WebSocket message from user {}: {}",
+                    user_id.as_deref().unwrap_or("unknown"),
+                    text
+                );
 
                 if let Ok(parsed) = serde_json::from_str::<Value>(&text) {
                     let msg_type = parsed.get("type").and_then(|v| v.as_str());
                     let payload = parsed.get("payload");
+                    let signature = parsed.get("signature").and_then(|v| v.as_str());
+
+                    if msg_type != Some("ping")
+                        && msg_type != Some("pong")
+                        && msg_type != Some("heartbeat_response")
+                    {
+                        if let Some(sig) = signature {
+                            let mut cloned = parsed.clone();
+                            cloned.as_object_mut().and_then(|o| o.remove("signature"));
+                            let original_message =
+                                serde_json::to_string(&cloned).unwrap_or_else(|_| text.to_string());
+
+                            if !verify_message_signature(
+                                &original_message,
+                                sig,
+                                &state.auth_state().jwt_secret,
+                            ) {
+                                warn!(
+                                    "Message signature verification failed for user {}",
+                                    user_id.as_deref().unwrap_or("unknown")
+                                );
+                                let mut tx = tx_shared.write().await;
+                                let _ = tx
+                                    .send(Message::Text(
+                                        json!({
+                                            "type": "signature_error",
+                                            "payload": { "error": "Invalid message signature" }
+                                        })
+                                        .to_string()
+                                        .into(),
+                                    ))
+                                    .await;
+                                continue;
+                            }
+                        } else {
+                            warn!(
+                                "Message without signature from user {}",
+                                user_id.as_deref().unwrap_or("unknown")
+                            );
+                        }
+                    }
 
                     match msg_type {
                         Some("subscribe") => {
                             if let Some(p) = payload {
                                 let channel = p.get("channel").and_then(|v| v.as_str());
-                                let uid = p.get("user_id").and_then(|v| v.as_str());
 
-                                if let Some(id) = uid {
-                                    user_id = Some(id.to_string());
-                                    let conn = Arc::new(WsConnection::new(
-                                        id.to_string(),
-                                        tx_shared.clone(),
-                                    ));
-                                    state.add_connection(id.to_string(), conn).await;
-
+                                if let Some(id) = &user_id {
                                     // 订阅指定频道
                                     if let Some(ch) = channel {
                                         state.subscribe_to_channel(id, ch.to_string()).await;

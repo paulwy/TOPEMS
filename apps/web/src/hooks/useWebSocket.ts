@@ -1,6 +1,26 @@
 import { useEffect, useCallback, useRef, useState } from 'react';
 import { logger } from '@/utils/logger';
 import { calculateBackoffDelay, HeartbeatMonitor, getNextReconnectDelay, DEFAULT_RECONNECT_STRATEGY } from '@/utils/websocket-optimizer';
+import { useAuthToken } from '@/store/authStore';
+
+const WS_SIGNING_SECRET = process.env.NEXT_PUBLIC_WS_SIGNING_SECRET || 'topems-ws-signing-secret';
+
+async function generateSignature(message: string): Promise<string> {
+  if (!WS_SIGNING_SECRET) return '';
+  const encoder = new TextEncoder();
+  const secretBytes = encoder.encode(WS_SIGNING_SECRET);
+  const messageBytes = encoder.encode(message);
+  
+  try {
+    const key = await crypto.subtle.importKey('raw', secretBytes, { name: 'HMAC', hash: 'SHA-256' }, false, ['sign']);
+    const signature = await crypto.subtle.sign('HMAC', key, messageBytes);
+    return Array.from(new Uint8Array(signature))
+      .map((b) => b.toString(16).padStart(2, '0'))
+      .join('');
+  } catch {
+    return '';
+  }
+}
 
 export interface WebSocketMessage {
   type: string;
@@ -32,6 +52,8 @@ export interface UseWebSocketOptions {
   heartbeatInterval?: number;
   /** 心跳超时（毫秒） */
   heartbeatTimeout?: number;
+  /** 是否自动使用 JWT token 认证（默认 true） */
+  autoAuthToken?: boolean;
 }
 
 export interface SubscriptionConfig {
@@ -54,6 +76,25 @@ class WebSocketService {
   private readonly enableHeartbeat = false;
   private readonly heartbeatInterval = 30000;
   private readonly heartbeatTimeout = 10000;
+  private authToken: string | null = null;
+  private onAuthFailed?: (error: string) => void;
+  private onAuthSuccess?: (data: Record<string, unknown>) => void;
+
+  setAuthToken(token: string | null): void {
+    this.authToken = token;
+  }
+
+  setAuthHandlers(onFailed: (error: string) => void, onSuccess: (data: Record<string, unknown>) => void): void {
+    this.onAuthFailed = onFailed;
+    this.onAuthSuccess = onSuccess;
+  }
+
+  private getWsUrl(): string {
+    if (this.authToken) {
+      return `${WS_URL}?token=${encodeURIComponent(this.authToken)}`;
+    }
+    return WS_URL;
+  }
 
   connect(): Promise<void> {
     if (this.socket?.readyState === WebSocket.OPEN) {
@@ -67,7 +108,8 @@ class WebSocketService {
     this.isConnecting = true;
     this.connectionPromise = new Promise((resolve, reject) => {
       try {
-        this.socket = new WebSocket(WS_URL);
+        const wsUrl = this.getWsUrl();
+        this.socket = new WebSocket(wsUrl);
 
         this.socket.onopen = () => {
           logger.info('[WebSocket] Connected');
@@ -86,6 +128,17 @@ class WebSocketService {
             if (message.type === 'pong' && this.heartbeatMonitor) {
               this.heartbeatMonitor.recordPong();
               return;
+            }
+            // 处理认证结果
+            if (message.type === 'auth_failed') {
+              const errorMsg = (message.payload as Record<string, unknown>)?.message as string || 'Authentication failed';
+              logger.error('[WebSocket] Authentication failed:', errorMsg);
+              this.onAuthFailed?.(errorMsg);
+              return;
+            }
+            if (message.type === 'auth_success') {
+              logger.info('[WebSocket] Authentication succeeded');
+              this.onAuthSuccess?.(message.payload as Record<string, unknown>);
             }
             this.notifySubscribers(message);
           } catch (error) {
@@ -208,10 +261,17 @@ class WebSocketService {
     }
   }
 
-  send(message: { type: string; payload?: Record<string, unknown> }): void {
-    if (this.socket?.readyState === WebSocket.OPEN) {
-      this.socket.send(JSON.stringify(message));
-    }
+  async send(message: { type: string; payload?: Record<string, unknown> }): Promise<void> {
+    if (this.socket?.readyState !== WebSocket.OPEN) return;
+    
+    const plainMessage = JSON.stringify(message);
+    const signature = await generateSignature(plainMessage);
+    
+    const signedMessage = signature 
+      ? JSON.stringify({ ...message, signature })
+      : plainMessage;
+    
+    this.socket.send(signedMessage);
   }
 
   disconnect(): void {
@@ -234,13 +294,30 @@ export function useWebSocketSubscription(
   channel: string,
   handler: (message: WebSocketMessage) => void,
   enabled = true
-): { isConnected: boolean; reconnect: () => void } {
+): { isConnected: boolean; reconnect: () => void; authStatus: 'pending' | 'success' | 'failed' } {
   const [isConnected, setIsConnected] = useState(false);
+  const [authStatus, setAuthStatus] = useState<'pending' | 'success' | 'failed'>('pending');
   const handlerRef = useRef(handler);
+  const token = useAuthToken();
 
   useEffect(() => {
     handlerRef.current = handler;
   }, [handler]);
+
+  useEffect(() => {
+    webSocketService.setAuthToken(token);
+    webSocketService.setAuthHandlers(
+      (error) => {
+        logger.error('[WebSocket] Auth failed:', error);
+        setAuthStatus('failed');
+        setIsConnected(false);
+      },
+      (data) => {
+        logger.info('[WebSocket] Auth success:', data);
+        setAuthStatus('success');
+      }
+    );
+  }, [token]);
 
   useEffect(() => {
     if (!enabled) return;
@@ -257,6 +334,7 @@ export function useWebSocketSubscription(
         });
       } catch (error) {
         setIsConnected(false);
+        setAuthStatus('failed');
       }
     };
 
@@ -273,10 +351,11 @@ export function useWebSocketSubscription(
   }, [channel, enabled]);
 
   const reconnect = useCallback(() => {
+    setAuthStatus('pending');
     webSocketService.connect();
   }, []);
 
-  return { isConnected, reconnect };
+  return { isConnected, reconnect, authStatus };
 }
 
 export function useWebSocketConnection(): { isConnected: boolean; connect: () => void; disconnect: () => void } {
@@ -319,27 +398,35 @@ export function useWebSocket(options: UseWebSocketOptions = {}) {
     enableHeartbeat = false,
     heartbeatInterval = 30000,
     heartbeatTimeout = 10000,
+    autoAuthToken = true,
   } = options;
 
   const [isConnected, setIsConnected] = useState(false);
   const [connectionStatus, setConnectionStatus] = useState<WsConnectionStatus>('disconnected');
   const [reconnectCount, setReconnectCount] = useState(0);
   const [error, setError] = useState<Event | null>(null);
+  const [authStatus, setAuthStatus] = useState<'pending' | 'success' | 'failed'>('pending');
 
   const socketRef = useRef<WebSocket | null>(null);
   const reconnectTimeoutRef = useRef<number | null>(null);
   const connectTimeoutRef = useRef<number | null>(null);
   const heartbeatMonitorRef = useRef<HeartbeatMonitor | null>(null);
+  const token = autoAuthToken ? useAuthToken() : null;
 
   useEffect(() => {
     if (!enabled) return;
 
-    const url = wsPath
+    let url = wsPath
       ? `${process.env.NEXT_PUBLIC_WS_URL || 'ws://localhost:8080'}${wsPath}`
       : WS_URL;
 
-    const fullUrl = queryParams
-      ? `${url}?${new URLSearchParams(queryParams).toString()}`
+    const params: Record<string, string> = { ...queryParams };
+    if (token && autoAuthToken) {
+      params.token = token;
+    }
+
+    const fullUrl = Object.keys(params).length > 0
+      ? `${url}?${new URLSearchParams(params).toString()}`
       : url;
 
     const startHeartbeat = (ws: WebSocket) => {
@@ -406,6 +493,17 @@ export function useWebSocket(options: UseWebSocketOptions = {}) {
             heartbeatMonitorRef.current.recordPong();
             return;
           }
+          // 处理认证结果
+          if (parsed.type === 'auth_failed') {
+            const errorMsg = (parsed.payload as Record<string, unknown>)?.message as string || 'Authentication failed';
+            logger.error('[WebSocket] Authentication failed:', errorMsg);
+            setAuthStatus('failed');
+            setIsConnected(false);
+            setConnectionStatus('error');
+          } else if (parsed.type === 'auth_success') {
+            logger.info('[WebSocket] Authentication succeeded');
+            setAuthStatus('success');
+          }
           message = parsed;
         } catch {
         }
@@ -455,27 +553,38 @@ export function useWebSocket(options: UseWebSocketOptions = {}) {
       }
       socketRef.current?.close(1000, 'Component unmounted');
     };
-  }, [enabled, wsPath, queryParams, authMessage, onMessage, onOpen, onClose, onError, reconnectAttempts, maxReconnectDelay, minReconnectDelay, connectionTimeout, shouldReconnect, enableHeartbeat, heartbeatInterval, heartbeatTimeout]);
+  }, [enabled, wsPath, queryParams, authMessage, onMessage, onOpen, onClose, onError, reconnectAttempts, maxReconnectDelay, minReconnectDelay, connectionTimeout, shouldReconnect, enableHeartbeat, heartbeatInterval, heartbeatTimeout, autoAuthToken, token]);
 
-  const send = useCallback((data: string | Record<string, unknown>) => {
-    if (socketRef.current?.readyState === WebSocket.OPEN) {
-      const message = typeof data === 'string' ? data : JSON.stringify(data);
-      socketRef.current.send(message);
-    }
+  const send = useCallback(async (data: string | Record<string, unknown>) => {
+    if (socketRef.current?.readyState !== WebSocket.OPEN) return;
+    
+    const plainMessage = typeof data === 'string' ? data : JSON.stringify(data);
+    const signature = await generateSignature(plainMessage);
+    
+    const messageToSend = signature && typeof data !== 'string'
+      ? JSON.stringify({ ...data, signature })
+      : plainMessage;
+    
+    socketRef.current.send(messageToSend);
   }, []);
 
   const connect = useCallback(() => {
     if (socketRef.current?.readyState !== WebSocket.OPEN) {
       setReconnectCount(0);
-      const url = wsPath
+      setAuthStatus('pending');
+      let url = wsPath
         ? `${process.env.NEXT_PUBLIC_WS_URL || 'ws://localhost:8080'}${wsPath}`
         : WS_URL;
-      const fullUrl = queryParams
-        ? `${url}?${new URLSearchParams(queryParams).toString()}`
+      const params: Record<string, string> = { ...queryParams };
+      if (token && autoAuthToken) {
+        params.token = token;
+      }
+      const fullUrl = Object.keys(params).length > 0
+        ? `${url}?${new URLSearchParams(params).toString()}`
         : url;
       socketRef.current = new WebSocket(fullUrl);
     }
-  }, [wsPath, queryParams]);
+  }, [wsPath, queryParams, token, autoAuthToken]);
 
   const disconnect = useCallback(() => {
     heartbeatMonitorRef.current?.stop();
@@ -489,6 +598,7 @@ export function useWebSocket(options: UseWebSocketOptions = {}) {
     connectionStatus,
     reconnectCount,
     error,
+    authStatus,
     connect,
     disconnect,
     send,

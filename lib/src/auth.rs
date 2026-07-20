@@ -200,6 +200,24 @@ pub fn generate_refresh_token() -> String {
     bytes.iter().map(|b| format!("{:02x}", b)).collect()
 }
 
+use hmac::{Hmac, Mac};
+use sha2::Sha256;
+
+type HmacSha256 = Hmac<Sha256>;
+
+pub fn sign_message(message: &str, secret: &str) -> String {
+    let mut mac = HmacSha256::new_from_slice(secret.as_bytes())
+        .expect("HMAC can take any size of key");
+    mac.update(message.as_bytes());
+    let result = mac.finalize();
+    hex::encode(result.into_bytes())
+}
+
+pub fn verify_message_signature(message: &str, signature: &str, secret: &str) -> bool {
+    let expected_signature = sign_message(message, secret);
+    expected_signature == signature
+}
+
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct Role {
     pub id: String,
@@ -564,7 +582,7 @@ fn is_plugin_public_path(path: &str, method: &str) -> bool {
 }
 
 pub async fn auth_middleware(
-    State(auth_state): State<AuthState>,
+    State(auth_state): State<std::sync::Arc<AuthState>>,
     req: Request<Body>,
     next: Next,
 ) -> Response {

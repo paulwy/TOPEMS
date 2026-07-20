@@ -1,5 +1,5 @@
-import React, { useEffect, useRef, useState } from 'react';
-import { Box, Typography, Paper } from '@mui/material';
+import React, { useEffect, useRef, useState, useCallback } from 'react';
+import { Box, Typography, Paper, Chip } from '@mui/material';
 import { logger } from '@/utils/logger';
 
 interface PerformanceMetrics {
@@ -9,12 +9,28 @@ interface PerformanceMetrics {
   domContentLoaded: number;
   resourceLoadTimes: Record<string, number>;
   apiCallTimes: Record<string, number>;
+  memoryUsage: number;
+  memoryLimit: number;
 }
 
 interface ApiCallMetrics {
   endpoint: string;
   duration: number;
   status: 'success' | 'error';
+  timestamp: number;
+}
+
+interface ComponentRenderMetrics {
+  componentName: string;
+  renderTime: number;
+  mountTime: number;
+  updateCount: number;
+  lastRenderTime: number;
+}
+
+interface ComponentLoadMetrics {
+  componentName: string;
+  loadTime: number;
   timestamp: number;
 }
 
@@ -26,18 +42,22 @@ class PerformanceMonitor {
     domContentLoaded: 0,
     resourceLoadTimes: {},
     apiCallTimes: {},
+    memoryUsage: 0,
+    memoryLimit: 0,
   };
 
   private apiCalls: ApiCallMetrics[] = [];
+  private componentRenderMetrics: Map<string, ComponentRenderMetrics> = new Map();
+  private componentLoadMetrics: ComponentLoadMetrics[] = [];
 
   constructor() {
     if (typeof window !== 'undefined') {
       this.initPerformanceObservers();
+      this.initMemoryMonitoring();
     }
   }
 
   private initPerformanceObservers() {
-    // 监控页面加载时间
     window.addEventListener('load', () => {
       const perfData = performance.getEntriesByType('navigation')[0] as PerformanceNavigationTiming;
       if (perfData) {
@@ -46,37 +66,22 @@ class PerformanceMonitor {
       }
     });
 
-    // 监控 FP (First Paint)
-    const fpObserver = new PerformanceObserver((list) => {
+    const paintObserver = new PerformanceObserver((list) => {
       for (const entry of list.getEntries()) {
         if (entry.name === 'first-paint') {
           this.metrics.firstPaint = entry.startTime;
-        }
-      }
-    });
-
-    try {
-      fpObserver.observe({ type: 'paint', buffered: true });
-    } catch (e: unknown) {
-      logger.warn('FP observer not supported');
-    }
-
-    // 监控 FCP (First Contentful Paint)
-    const fcpObserver = new PerformanceObserver((list) => {
-      for (const entry of list.getEntries()) {
-        if (entry.name === 'first-contentful-paint') {
+        } else if (entry.name === 'first-contentful-paint') {
           this.metrics.firstContentfulPaint = entry.startTime;
         }
       }
     });
 
     try {
-      fcpObserver.observe({ type: 'paint', buffered: true });
+      paintObserver.observe({ type: 'paint', buffered: true });
     } catch (e: unknown) {
-      logger.warn('FCP observer not supported');
+      logger.warn('Paint observer not supported');
     }
 
-    // 监控资源加载时间
     const resourceObserver = new PerformanceObserver((list) => {
       for (const entry of list.getEntries()) {
         const resource = entry as PerformanceResourceTiming;
@@ -89,9 +94,48 @@ class PerformanceMonitor {
     } catch (e: unknown) {
       logger.warn('Resource observer not supported');
     }
+
+    const lcpObserver = new PerformanceObserver((list) => {
+      const entries = list.getEntries();
+      const lcpEntry = entries[entries.length - 1];
+      if (lcpEntry) {
+        logger.info(`LCP: ${lcpEntry.startTime.toFixed(2)}ms`);
+      }
+    });
+
+    try {
+      lcpObserver.observe({ type: 'largest-contentful-paint', buffered: true });
+    } catch (e: unknown) {
+      logger.warn('LCP observer not supported');
+    }
+
+    const fidObserver = new PerformanceObserver((list) => {
+      for (const entry of list.getEntries()) {
+        const fidEntry = entry as PerformanceEventTiming;
+        logger.info(`FID: ${fidEntry.processingStart - fidEntry.startTime}ms`);
+      }
+    });
+
+    try {
+      fidObserver.observe({ type: 'first-input', buffered: true });
+    } catch (e: unknown) {
+      logger.warn('FID observer not supported');
+    }
   }
 
-  // 记录 API 调用时间
+  private initMemoryMonitoring() {
+    const updateMemory = () => {
+      if (typeof performance !== 'undefined' && (performance as any).memory) {
+        const memory = (performance as any).memory;
+        this.metrics.memoryUsage = memory.usedJSHeapSize;
+        this.metrics.memoryLimit = memory.totalJSHeapSize;
+      }
+    };
+
+    updateMemory();
+    setInterval(updateMemory, 10000);
+  }
+
   recordApiCall(endpoint: string, duration: number, status: 'success' | 'error') {
     const metric: ApiCallMetrics = {
       endpoint,
@@ -103,23 +147,63 @@ class PerformanceMonitor {
     this.apiCalls.push(metric);
     this.metrics.apiCallTimes[endpoint] = duration;
 
-    // 保留最近 100 次调用记录
     if (this.apiCalls.length > 100) {
       this.apiCalls.shift();
     }
   }
 
-  // 获取所有指标
+  recordComponentRender(componentName: string, renderTime: number, isMount: boolean) {
+    const existing = this.componentRenderMetrics.get(componentName);
+    
+    if (isMount) {
+      this.componentRenderMetrics.set(componentName, {
+        componentName,
+        renderTime,
+        mountTime: Date.now(),
+        updateCount: 0,
+        lastRenderTime: Date.now(),
+      });
+    } else {
+      this.componentRenderMetrics.set(componentName, {
+        componentName,
+        renderTime: existing ? (existing.renderTime + renderTime) / 2 : renderTime,
+        mountTime: existing?.mountTime || Date.now(),
+        updateCount: (existing?.updateCount || 0) + 1,
+        lastRenderTime: Date.now(),
+      });
+    }
+  }
+
+  recordComponentLoad(componentName: string, loadTime: number) {
+    const metric: ComponentLoadMetrics = {
+      componentName,
+      loadTime,
+      timestamp: Date.now(),
+    };
+
+    this.componentLoadMetrics.push(metric);
+
+    if (this.componentLoadMetrics.length > 50) {
+      this.componentLoadMetrics.shift();
+    }
+  }
+
   getMetrics(): PerformanceMetrics {
     return { ...this.metrics };
   }
 
-  // 获取 API 调用历史
   getApiCallHistory(): ApiCallMetrics[] {
     return [...this.apiCalls];
   }
 
-  // 获取平均 API 响应时间
+  getComponentRenderMetrics(): ComponentRenderMetrics[] {
+    return Array.from(this.componentRenderMetrics.values());
+  }
+
+  getComponentLoadMetrics(): ComponentLoadMetrics[] {
+    return [...this.componentLoadMetrics];
+  }
+
   getAverageApiResponseTime(endpoint?: string): number {
     if (endpoint) {
       const calls = this.apiCalls.filter((c) => c.endpoint === endpoint);
@@ -131,35 +215,46 @@ class PerformanceMonitor {
     return this.apiCalls.reduce((sum, c) => sum + c.duration, 0) / this.apiCalls.length;
   }
 
-  // 获取 API 成功率
   getApiSuccessRate(): number {
     if (this.apiCalls.length === 0) return 100;
     const successCalls = this.apiCalls.filter((c) => c.status === 'success').length;
     return (successCalls / this.apiCalls.length) * 100;
   }
 
-  // 获取慢 API 调用（超过阈值）
   getSlowApiCalls(thresholdMs: number = 1000): ApiCallMetrics[] {
     return this.apiCalls.filter((c) => c.duration > thresholdMs);
   }
 
-  // 清除所有记录
+  getSlowComponents(thresholdMs: number = 50): ComponentRenderMetrics[] {
+    return Array.from(this.componentRenderMetrics.values()).filter((m) => m.renderTime > thresholdMs);
+  }
+
+  getMemoryUsagePercent(): number {
+    if (this.metrics.memoryLimit === 0) return 0;
+    return (this.metrics.memoryUsage / this.metrics.memoryLimit) * 100;
+  }
+
   clear() {
     this.apiCalls = [];
     this.metrics.apiCallTimes = {};
     this.metrics.resourceLoadTimes = {};
+    this.componentRenderMetrics.clear();
+    this.componentLoadMetrics = [];
   }
 
-  // 导出性能报告
   exportReport(): string {
     return JSON.stringify(
       {
         metrics: this.metrics,
         apiCalls: this.apiCalls,
+        componentRenderMetrics: this.getComponentRenderMetrics(),
+        componentLoadMetrics: this.getComponentLoadMetrics(),
         summary: {
           averageApiResponseTime: this.getAverageApiResponseTime(),
           apiSuccessRate: this.getApiSuccessRate(),
           slowApiCalls: this.getSlowApiCalls().length,
+          slowComponents: this.getSlowComponents().length,
+          memoryUsagePercent: this.getMemoryUsagePercent(),
         },
         exportedAt: new Date().toISOString(),
       },
@@ -167,19 +262,37 @@ class PerformanceMonitor {
       2
     );
   }
+
+  logPerformanceReport() {
+    const report = JSON.parse(this.exportReport());
+    logger.info('Performance Report:', report.summary);
+    
+    if (report.summary.slowComponents > 0) {
+      logger.warn('Slow components detected:', report.componentRenderMetrics.filter((m: ComponentRenderMetrics) => m.renderTime > 50));
+    }
+    
+    if (report.summary.slowApiCalls > 0) {
+      logger.warn('Slow API calls detected:', report.summary.slowApiCalls);
+    }
+    
+    if (report.summary.memoryUsagePercent > 80) {
+      logger.warn(`High memory usage: ${report.summary.memoryUsagePercent.toFixed(1)}%`);
+    }
+  }
 }
 
-// 创建全局单例
 export const performanceMonitor = new PerformanceMonitor();
 
-// React Hook
 export function usePerformanceMonitor() {
   const [metrics, setMetrics] = useState<PerformanceMetrics>(performanceMonitor.getMetrics());
+  const [apiHistory, setApiHistory] = useState<ApiCallMetrics[]>([]);
+  const [componentMetrics, setComponentMetrics] = useState<ComponentRenderMetrics[]>([]);
 
   useEffect(() => {
-    // 定期更新指标
     const interval = setInterval(() => {
       setMetrics(performanceMonitor.getMetrics());
+      setApiHistory(performanceMonitor.getApiCallHistory());
+      setComponentMetrics(performanceMonitor.getComponentRenderMetrics());
     }, 5000);
 
     return () => clearInterval(interval);
@@ -187,38 +300,36 @@ export function usePerformanceMonitor() {
 
   return {
     metrics,
+    apiHistory,
+    componentMetrics,
     recordApiCall: performanceMonitor.recordApiCall.bind(performanceMonitor),
     getApiCallHistory: performanceMonitor.getApiCallHistory.bind(performanceMonitor),
-    getAverageApiResponseTime:
-      performanceMonitor.getAverageApiResponseTime.bind(performanceMonitor),
+    getAverageApiResponseTime: performanceMonitor.getAverageApiResponseTime.bind(performanceMonitor),
     getApiSuccessRate: performanceMonitor.getApiSuccessRate.bind(performanceMonitor),
     getSlowApiCalls: performanceMonitor.getSlowApiCalls.bind(performanceMonitor),
+    getSlowComponents: performanceMonitor.getSlowComponents.bind(performanceMonitor),
+    getMemoryUsagePercent: performanceMonitor.getMemoryUsagePercent.bind(performanceMonitor),
     exportReport: performanceMonitor.exportReport.bind(performanceMonitor),
+    logPerformanceReport: performanceMonitor.logPerformanceReport.bind(performanceMonitor),
     clear: performanceMonitor.clear.bind(performanceMonitor),
   };
 }
 
-// API 调用包装器
 export async function measureApiCall<T>(endpoint: string, apiCall: () => Promise<T>): Promise<T> {
   const startTime = performance.now();
 
   try {
     const result = await apiCall();
     const duration = performance.now() - startTime;
-
     performanceMonitor.recordApiCall(endpoint, duration, 'success');
-
     return result;
   } catch (error: unknown) {
     const duration = performance.now() - startTime;
-
     performanceMonitor.recordApiCall(endpoint, duration, 'error');
-
     throw error;
   }
 }
 
-// React Hook: API 调用
 export function useApiCall<T, A extends any[] = any[]>(
   apiCall: (...args: A) => Promise<T>,
   _deps: React.DependencyList = []
@@ -238,7 +349,7 @@ export function useApiCall<T, A extends any[] = any[]>(
     setError(null);
 
     try {
-      const result = await measureApiCall(callApi.current.name, () => callApi.current(...args));
+      const result = await measureApiCall(callApi.current.name || 'api-call', () => callApi.current(...args));
       setData(result);
       return result;
     } catch (err: unknown) {
@@ -252,14 +363,89 @@ export function useApiCall<T, A extends any[] = any[]>(
   return { loading, error, data, execute };
 }
 
-// 性能警告组件
+export function useComponentPerformance(componentName: string) {
+  const renderStartTime = useRef<number>(0);
+  const isMount = useRef(true);
+
+  const onRender = useCallback(() => {
+    renderStartTime.current = performance.now();
+  }, []);
+
+  const onRenderComplete = useCallback(() => {
+    const renderTime = performance.now() - renderStartTime.current;
+    performanceMonitor.recordComponentRender(componentName, renderTime, isMount.current);
+    isMount.current = false;
+  }, [componentName]);
+
+  return { onRender, onRenderComplete };
+}
+
+export function useComponentLoadTime(componentName: string) {
+  const [loadTime, setLoadTime] = useState<number | null>(null);
+
+  useEffect(() => {
+    const startTime = performance.now();
+    
+    const observer = new MutationObserver(() => {
+      const element = document.querySelector(`[data-component="${componentName}"]`);
+      if (element) {
+        const endTime = performance.now();
+        const duration = endTime - startTime;
+        setLoadTime(duration);
+        performanceMonitor.recordComponentLoad(componentName, duration);
+        observer.disconnect();
+      }
+    });
+
+    observer.observe(document.body, { childList: true, subtree: true });
+
+    return () => observer.disconnect();
+  }, [componentName]);
+
+  return loadTime;
+}
+
+export function withPerformanceTracking<P extends object>(
+  Component: React.ComponentType<P>,
+  componentName?: string
+): React.ComponentType<P> {
+  const name = componentName || Component.displayName || Component.name || 'UnknownComponent';
+
+  const WrappedComponent: React.FC<P> = (props) => {
+    const [isMounted, setIsMounted] = useState(false);
+    const startTime = useRef<number>(0);
+
+    useEffect(() => {
+      startTime.current = performance.now();
+      return () => {
+        const renderTime = performance.now() - startTime.current;
+        performanceMonitor.recordComponentRender(name, renderTime, false);
+      };
+    });
+
+    useEffect(() => {
+      setIsMounted(true);
+      const mountTime = performance.now() - startTime.current;
+      performanceMonitor.recordComponentRender(name, mountTime, true);
+    }, []);
+
+    return <Component {...props} />;
+  };
+
+  WrappedComponent.displayName = `withPerformanceTracking(${name})`;
+
+  return WrappedComponent;
+}
+
 export function PerformanceWarnings() {
-  const { getSlowApiCalls, getApiSuccessRate } = usePerformanceMonitor();
+  const { getSlowApiCalls, getApiSuccessRate, getSlowComponents, getMemoryUsagePercent } = usePerformanceMonitor();
 
   const slowCalls = getSlowApiCalls();
   const successRate = getApiSuccessRate();
+  const slowComponents = getSlowComponents();
+  const memoryPercent = getMemoryUsagePercent();
 
-  if (slowCalls.length === 0 && successRate >= 95) {
+  if (slowCalls.length === 0 && successRate >= 95 && slowComponents.length === 0 && memoryPercent < 80) {
     return null;
   }
 
@@ -273,25 +459,59 @@ export function PerformanceWarnings() {
         border: '1px solid #fde68a',
         borderRadius: 3,
         p: 4,
-        maxWidth: 400,
+        maxWidth: 450,
         boxShadow: 3,
+        zIndex: 1000,
       }}
     >
-      <Typography sx={{ fontWeight: 600, color: '#92400e', mb: 2 }}>⚠️ 性能警告</Typography>
+      <Typography sx={{ fontWeight: 600, color: '#92400e', mb: 3 }}>⚠️ 性能警告</Typography>
 
       {successRate < 95 && (
-        <Typography sx={{ fontSize: '0.875rem', color: 'warning.700', mb: 2 }}>
-          API 成功率: {successRate.toFixed(1)}%
-        </Typography>
+        <Box sx={{ mb: 2 }}>
+          <Chip
+            label={`API 成功率: ${successRate.toFixed(1)}%`}
+            color="error"
+            size="small"
+            sx={{ mr: 2 }}
+          />
+        </Box>
+      )}
+
+      {memoryPercent >= 80 && (
+        <Box sx={{ mb: 2 }}>
+          <Chip
+            label={`内存使用率: ${memoryPercent.toFixed(1)}%`}
+            color={memoryPercent >= 90 ? 'error' : 'warning'}
+            size="small"
+            sx={{ mr: 2 }}
+          />
+        </Box>
       )}
 
       {slowCalls.length > 0 && (
-        <Box sx={{ fontSize: '0.875rem', color: 'warning.700' }}>
-          <Typography sx={{ fontWeight: 500, mb: 1 }}>慢 API 调用 ({slowCalls.length}):</Typography>
-          <Box sx={{ pl: 4 }}>
+        <Box sx={{ mb: 3 }}>
+          <Typography sx={{ fontWeight: 500, color: 'warning.700', mb: 1 }}>
+            慢 API 调用 ({slowCalls.length}):
+          </Typography>
+          <Box sx={{ pl: 2 }}>
             {slowCalls.slice(0, 3).map((call, idx) => (
-              <Typography key={idx}>
+              <Typography key={idx} sx={{ fontSize: '0.75rem', color: 'warning.600' }}>
                 {call.endpoint}: {(call.duration / 1000).toFixed(2)}s
+              </Typography>
+            ))}
+          </Box>
+        </Box>
+      )}
+
+      {slowComponents.length > 0 && (
+        <Box>
+          <Typography sx={{ fontWeight: 500, color: 'warning.700', mb: 1 }}>
+            慢组件渲染 ({slowComponents.length}):
+          </Typography>
+          <Box sx={{ pl: 2 }}>
+            {slowComponents.slice(0, 3).map((comp, idx) => (
+              <Typography key={idx} sx={{ fontSize: '0.75rem', color: 'warning.600' }}>
+                {comp.componentName}: {comp.renderTime.toFixed(2)}ms (更新: {comp.updateCount}次)
               </Typography>
             ))}
           </Box>

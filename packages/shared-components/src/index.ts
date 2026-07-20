@@ -13,9 +13,9 @@ export { FormSelect, type FormSelectProps, type FormSelectOption } from './compo
 export { FormCheckbox, FormCheckboxGroup, type FormCheckboxProps, type FormCheckboxGroupProps } from './components/FormCheckbox';
 export { FormSwitch, type FormSwitchProps } from './components/FormSwitch';
 export { DatePicker, type DatePickerProps } from './components/DatePicker';
-export { Cascader, type CascaderProps, type CascaderOption } from './components/Cascader';
-export { DateRangePicker, type DateRangePickerProps, type DateRange } from './components/DateRangePicker';
-export { FileUpload, type FileUploadProps, type UploadFile } from './components/FileUpload';
+export { Cascader, type CascaderProps, type CascaderOption, type CascaderLocale } from './components/Cascader';
+export { DateRangePicker, type DateRangePickerProps, type DateRange, type DateRangePickerLocale } from './components/DateRangePicker';
+export { FileUpload, type FileUploadProps, type UploadFile, type FileUploadLocale } from './components/FileUpload';
 export { FilterBar, type FilterBarProps, type FilterConfig, type FilterOption, type FilterValue } from './components/FilterBar';
 export { ProgressBar, type ProgressBarProps } from './components/ProgressBar';
 export { Stepper, type StepperProps, type StepItem } from './components/Stepper';

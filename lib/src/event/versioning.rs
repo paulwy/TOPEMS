@@ -273,12 +273,12 @@ mod tests {
     fn test_version_registry_register() {
         let registry = EventVersionRegistry::new();
         let entry = make_entry("user.created", EventVersion::v1());
-        registry.register(entry).unwrap();
+        registry.register(entry).expect("Failed to register event version");
 
         let versions = registry.get_versions("user.created");
         assert_eq!(versions.len(), 1);
 
-        let latest = registry.get_latest_version("user.created").unwrap();
+        let latest = registry.get_latest_version("user.created").expect("Expected latest version");
         assert_eq!(latest.version, EventVersion::v1());
 
         let stats = registry.stats();
@@ -293,10 +293,10 @@ mod tests {
         let registry = EventVersionRegistry::new();
         registry
             .register(make_entry("user.deleted", EventVersion::v1()))
-            .unwrap();
+            .expect("Failed to register v1");
         registry
             .register(make_entry("user.deleted", EventVersion::v2()))
-            .unwrap();
+            .expect("Failed to register v2");
 
         registry
             .deprecate(
@@ -305,11 +305,11 @@ mod tests {
                 "请使用 v2 版本",
                 Some("user.deleted.v2"),
             )
-            .unwrap();
+            .expect("Failed to deprecate v1");
 
         let v1_entry = registry
             .get_version("user.deleted", &EventVersion::v1())
-            .unwrap();
+            .expect("Expected v1 entry");
         assert!(v1_entry.deprecated);
         assert_eq!(v1_entry.successor.as_deref(), Some("user.deleted.v2"));
 
@@ -323,7 +323,7 @@ mod tests {
         let registry = EventVersionRegistry::new();
         registry
             .register(make_entry("order.created", EventVersion::v2()))
-            .unwrap();
+            .expect("Failed to register order.created v2");
 
         assert!(registry.check_compatibility("order.created", &EventVersion::v2()));
         assert!(registry.check_compatibility("order.created", &EventVersion::new(2, 3)));
@@ -335,10 +335,10 @@ mod tests {
         let registry = EventVersionRegistry::new();
         registry
             .register(make_entry("a.created", EventVersion::v1()))
-            .unwrap();
+            .expect("Failed to register a.created");
         registry
             .register(make_entry("b.updated", EventVersion::v1()))
-            .unwrap();
+            .expect("Failed to register b.updated");
 
         let types = registry.list_event_types();
         assert_eq!(types, vec!["a.created", "b.updated"]);

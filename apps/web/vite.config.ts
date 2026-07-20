@@ -2,6 +2,7 @@ import { defineConfig, loadEnv } from 'vite'
 import react from '@vitejs/plugin-react'
 import path from 'path'
 import { federation } from '@module-federation/vite'
+import { visualizer } from 'rollup-plugin-visualizer'
 
 import type { IncomingMessage, ServerResponse } from 'http';
 
@@ -137,11 +138,6 @@ export default defineConfig({
           requiredVersion: '^6.0.0',
           strictVersion: true,
         },
-        '@mui/icons-material': {
-          singleton: true,
-          requiredVersion: '^6.0.0',
-          strictVersion: true,
-        },
         '@emotion/react': {
           singleton: true,
           requiredVersion: '^11.0.0',
@@ -179,10 +175,7 @@ export default defineConfig({
           requiredVersion: '^5.0.0',
           strictVersion: true,
         },
-        '@tanstack/react-query-devtools': {
-          singleton: true,
-          requiredVersion: '^5.0.0',
-        },
+
         'react-hook-form': {
           singleton: true,
           requiredVersion: '^7.0.0',
@@ -204,13 +197,28 @@ export default defineConfig({
     dedupe: ['react', 'react-dom', 'scheduler'],
   },
   build: {
-    // Module Federation handles shared dependencies automatically
-    // DO NOT use manualChunks when using Module Federation
     rollupOptions: {
       output: {
-        // manualChunks is disabled when using Module Federation
-        // The federation plugin automatically optimizes shared dependencies
+        manualChunks: {
+          vendor: ['react', 'react-dom', 'react-router-dom', '@tanstack/react-query', 'zustand'],
+          mui: ['@mui/material', '@emotion/react', '@emotion/styled'],
+          icons: ['lucide-react'],
+          charts: ['recharts'],
+          maps: ['leaflet', '@react-leaflet/core', 'react-leaflet'],
+          excel: ['xlsx'],
+          i18n: ['i18next', 'react-i18next'],
+          forms: ['react-hook-form', '@hookform/resolvers', 'zod'],
+          three: ['three', '@react-three/fiber', '@react-three/drei'],
+        },
       },
+      plugins: [
+        visualizer({
+          filename: './dist/stats.html',
+          open: false,
+          gzipSize: true,
+          brotliSize: true,
+        }),
+      ],
     },
     chunkSizeWarningLimit: 1500,
     sourcemap: false,
@@ -219,6 +227,7 @@ export default defineConfig({
       compress: {
         drop_console: true,
         drop_debugger: true,
+        pure_funcs: ['console.log', 'console.info', 'console.debug'],
       },
     },
   },

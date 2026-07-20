@@ -4,6 +4,7 @@ pub mod im;
 pub mod mail;
 pub mod notification;
 pub mod ws;
+pub mod ws_event_bridge;
 
 use sqlx::PgPool;
 
