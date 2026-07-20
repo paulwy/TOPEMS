@@ -2,8 +2,6 @@
 
 use axum::extract::{Extension, Json, Query, State};
 
-use chrono::Utc;
-
 use uuid::Uuid;
 
 use super::super::ApiState;
@@ -57,65 +55,8 @@ pub async fn list_collections(
             ))
         }
         Err(e) => {
-            tracing::warn!("获取收款记录失败: {}, 使用模拟数据", e);
-            let now = chrono::Utc::now();
-            let mock_collections = vec![
-                CollectionRecord {
-                    id: Uuid::new_v4(),
-                    collection_no: "COL202606001".to_string(),
-                    customer_id: None,
-                    customer_name: Some("北京科技有限公司".to_string()),
-                    amount: 50000.0,
-                    collection_date: Some(now),
-                    invoice_ids: None,
-                    bank_account_id: None,
-                    bank_account_no: Some("6222021234567890".to_string()),
-                    bank_name: Some("工商银行".to_string()),
-                    voucher_id: None,
-                    voucher_no: None,
-                    status: "recorded".to_string(),
-                    created_at: now,
-                    created_by: None,
-                },
-                CollectionRecord {
-                    id: Uuid::new_v4(),
-                    collection_no: "COL202606002".to_string(),
-                    customer_id: None,
-                    customer_name: Some("上海贸易公司".to_string()),
-                    amount: 35000.0,
-                    collection_date: Some(now),
-                    invoice_ids: None,
-                    bank_account_id: None,
-                    bank_account_no: Some("6222021234567891".to_string()),
-                    bank_name: Some("建设银行".to_string()),
-                    voucher_id: None,
-                    voucher_no: None,
-                    status: "matched".to_string(),
-                    created_at: now,
-                    created_by: None,
-                },
-                CollectionRecord {
-                    id: Uuid::new_v4(),
-                    collection_no: "COL202606003".to_string(),
-                    customer_id: None,
-                    customer_name: Some("广州制造集团".to_string()),
-                    amount: 120000.0,
-                    collection_date: Some(now),
-                    invoice_ids: None,
-                    bank_account_id: None,
-                    bank_account_no: Some("6222021234567892".to_string()),
-                    bank_name: Some("中国银行".to_string()),
-                    voucher_id: None,
-                    voucher_no: None,
-                    status: "recorded".to_string(),
-                    created_at: now,
-                    created_by: None,
-                },
-            ];
-            Json(ApiResponse::success(
-                PaginatedResponse::new(mock_collections, 3, page, page_size),
-                "获取收款记录列表成功",
-            ))
+            tracing::error!("获取收款记录失败: {}", e);
+            Json(api_error(500, "获取收款列表失败"))
         }
     }
 }
@@ -164,29 +105,8 @@ pub async fn create_collection(
     match result {
         Ok(collection) => Json(ApiResponse::success(collection, "创建收款记录成功")),
         Err(e) => {
-            tracing::warn!("创建收款记录失败: {}, 使用模拟数据", e);
-            Json(ApiResponse::success(
-                CollectionRecord {
-                    id,
-                    collection_no,
-                    customer_id: req.customer_id,
-                    customer_name: req.customer_name,
-                    amount: req.amount,
-                    collection_date: req.collection_date,
-                    invoice_ids: req
-                        .invoice_ids
-                        .map(|v| serde_json::to_value(v).unwrap_or(serde_json::Value::Null)),
-                    bank_account_id: req.bank_account_id,
-                    bank_account_no: req.bank_account_no,
-                    bank_name: req.bank_name,
-                    voucher_id: None,
-                    voucher_no: None,
-                    status: "recorded".to_string(),
-                    created_at: now,
-                    created_by: None,
-                },
-                "创建收款记录成功",
-            ))
+            tracing::error!("创建收款记录失败: {}", e);
+            Json(api_error(500, "创建收款记录失败"))
         }
     }
 }

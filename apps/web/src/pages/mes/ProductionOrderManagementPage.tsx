@@ -49,17 +49,33 @@ import {
 import { apiLogger } from '@/utils/logger';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { designTokens } from '@/theme/tokens';
+import { useUrlListState } from '@/hooks';
 
+import { useTranslation } from 'react-i18next';
 const ct = designTokens.colors;
 
 const ProductionOrderManagementPage: React.FC = () => {
+  const { t } = useTranslation();
   const { addNotification } = useNotificationStore();
   const queryClient = useQueryClient();
 
-  const [searchTerm, setSearchTerm] = useState('');
-  const [statusFilter, setStatusFilter] = useState<string>('all');
-  const [currentPage, setCurrentPage] = useState(1);
-  const [pageSize] = useState(10);
+  const {
+    searchQuery,
+    setSearchQuery,
+    debouncedSearch,
+    filters: urlFilters,
+    setFilter,
+    currentPage,
+    setCurrentPage,
+    pageSize,
+  } = useUrlListState<{ status: string }>({
+    defaultPageSize: 10,
+    defaultFilters: { status: 'all' },
+    baseIndex: 1,
+    historyMode: 'replace',
+  });
+  const searchTerm = searchQuery;
+  const statusFilter = urlFilters.status;
   const [showDialog, setShowDialog] = useState(false);
   const [showDetailDialog, setShowDetailDialog] = useState(false);
   const [selectedOrder, setSelectedOrder] = useState<ProductionOrder | null>(null);
@@ -74,13 +90,13 @@ const ProductionOrderManagementPage: React.FC = () => {
 
   // React Query - 订单列表
   const ordersQuery = useQuery({
-    queryKey: ['mes-production-orders', currentPage, pageSize, searchTerm, statusFilter],
+    queryKey: ['mes-production-orders', currentPage, pageSize, debouncedSearch, statusFilter],
     queryFn: async () => {
       const params: ListParams = {
         page: currentPage - 1,
         pagesize: pageSize,
       };
-      if (searchTerm) params.search = searchTerm;
+      if (debouncedSearch) params.search = debouncedSearch;
       if (statusFilter !== 'all') params.status = statusFilter;
       return mesApi.orders.list(params);
     },
@@ -99,16 +115,16 @@ const ProductionOrderManagementPage: React.FC = () => {
     onSuccess: () => {
       addNotification({
         type: 'success',
-        title: '创建成功',
-        message: '新生产订单已创建',
+        title: t('mes.production_order_management_page.create'),
+        message: t('mes.production_order_management_page.create_1'),
       });
       queryClient.invalidateQueries({ queryKey: ['mes-production-orders'] });
     },
     onError: () => {
       addNotification({
         type: 'error',
-        title: '操作失败',
-        message: '创建生产订单失败',
+        title: t('mes.production_order_management_page.operation_failed'),
+        message: t('mes.production_order_management_page.create_2'),
       });
     },
   });
@@ -119,16 +135,16 @@ const ProductionOrderManagementPage: React.FC = () => {
     onSuccess: () => {
       addNotification({
         type: 'success',
-        title: '更新成功',
-        message: '生产订单信息已更新',
+        title: t('mes.production_order_management_page.update'),
+        message: t('mes.production_order_management_page.update_1'),
       });
       queryClient.invalidateQueries({ queryKey: ['mes-production-orders'] });
     },
     onError: () => {
       addNotification({
         type: 'error',
-        title: '操作失败',
-        message: '更新生产订单失败',
+        title: t('mes.production_order_management_page.operation_failed'),
+        message: t('mes.production_order_management_page.update_2'),
       });
     },
   });
@@ -138,16 +154,16 @@ const ProductionOrderManagementPage: React.FC = () => {
     onSuccess: () => {
       addNotification({
         type: 'success',
-        title: '删除成功',
-        message: '生产订单已删除',
+        title: t('mes.production_order_management_page.delete_success'),
+        message: t('mes.production_order_management_page.deleted'),
       });
       queryClient.invalidateQueries({ queryKey: ['mes-production-orders'] });
     },
     onError: () => {
       addNotification({
         type: 'error',
-        title: '删除失败',
-        message: '无法删除生产订单',
+        title: t('mes.production_order_management_page.delete'),
+        message: t('mes.production_order_management_page.delete_1'),
       });
     },
   });
@@ -173,8 +189,8 @@ const ProductionOrderManagementPage: React.FC = () => {
     onError: () => {
       addNotification({
         type: 'error',
-        title: '状态更新失败',
-        message: '无法更新订单状态',
+        title: t('mes.production_order_management_page.update_3'),
+        message: t('mes.production_order_management_page.order_status'),
       });
     },
   });
@@ -185,12 +201,12 @@ const ProductionOrderManagementPage: React.FC = () => {
       if (response.success && response.data) {
         addNotification({
           type: 'success',
-          title: '状态更新成功',
+          title: t('mes.production_order_management_page.update_4'),
           message: `订单状态已更新为"${getStatusText(response.data.status)}"`,
         });
       }
     } catch (error: unknown) {
-      apiLogger.error('状态更新失败:', error);
+      apiLogger.error(t('mes.production_order_management_page.update_5'), error);
     }
   };
 
@@ -200,8 +216,8 @@ const ProductionOrderManagementPage: React.FC = () => {
       if (pendingOrders.length === 0) {
         addNotification({
           type: 'warning',
-          title: '没有可下达的订单',
-          message: '请选择待下达状态的订单',
+          title: t('mes.production_order_management_page.order'),
+          message: t('mes.production_order_management_page.please_select'),
         });
         return;
       }
@@ -243,20 +259,20 @@ const ProductionOrderManagementPage: React.FC = () => {
         if (successCount > 0) {
           addNotification({
             type: 'success',
-            title: '批量下达完成',
+            title: t('mes.production_order_management_page.completed'),
             message: `成功下达 ${successCount} 个订单${failureCount > 0 ? `，失败 ${failureCount} 个` : ''}`,
           });
         }
         if (failureCount > 0) {
           addNotification({
             type: 'error',
-            title: '部分下达失败',
+            title: t('mes.production_order_management_page.fail'),
             message: `有 ${failureCount} 个订单下达失败`,
           });
         }
         queryClient.invalidateQueries({ queryKey: ['mes-production-orders'] });
       } catch (error: unknown) {
-        apiLogger.error('批量下达失败:', error);
+        apiLogger.error(t('mes.production_order_management_page.fail_2'), error);
         queryClient.setQueryData<ProductionOrder[]>(['mes-production-orders'], (existing) => {
           if (!existing) return existing;
           return existing.map((order) =>
@@ -267,8 +283,8 @@ const ProductionOrderManagementPage: React.FC = () => {
         });
         addNotification({
           type: 'error',
-          title: '批量下达失败',
-          message: '批量下达过程中发生错误',
+          title: t('mes.production_order_management_page.fail_3'),
+          message: t('mes.production_order_management_page.error'),
         });
       }
     },
@@ -281,8 +297,8 @@ const ProductionOrderManagementPage: React.FC = () => {
       if (inProgressOrders.length === 0) {
         addNotification({
           type: 'warning',
-          title: '没有可完成的订单',
-          message: '请选择生产中状态的订单',
+          title: t('mes.production_order_management_page.completed_1'),
+          message: t('mes.production_order_management_page.in_production'),
         });
         return;
       }
@@ -324,20 +340,20 @@ const ProductionOrderManagementPage: React.FC = () => {
         if (successCount > 0) {
           addNotification({
             type: 'success',
-            title: '批量完成完成',
+            title: t('mes.production_order_management_page.completed_2'),
             message: `成功完成 ${successCount} 个订单${failureCount > 0 ? `，失败 ${failureCount} 个` : ''}`,
           });
         }
         if (failureCount > 0) {
           addNotification({
             type: 'error',
-            title: '部分完成失败',
+            title: t('mes.production_order_management_page.fail_4'),
             message: `有 ${failureCount} 个订单完成失败`,
           });
         }
         queryClient.invalidateQueries({ queryKey: ['mes-production-orders'] });
       } catch (error: unknown) {
-        apiLogger.error('批量完成失败:', error);
+        apiLogger.error(t('mes.production_order_management_page.fail_6'), error);
         queryClient.setQueryData<ProductionOrder[]>(['mes-production-orders'], (existing) => {
           if (!existing) return existing;
           return existing.map((order) =>
@@ -348,8 +364,8 @@ const ProductionOrderManagementPage: React.FC = () => {
         });
         addNotification({
           type: 'error',
-          title: '批量完成失败',
-          message: '部分订单完成失败',
+          title: t('mes.production_order_management_page.fail_7'),
+          message: t('mes.production_order_management_page.fail_8'),
         });
       }
     },
@@ -358,12 +374,12 @@ const ProductionOrderManagementPage: React.FC = () => {
 
   const getStatusText = (status: string) => {
     const statusMap: Record<string, string> = {
-      pending: '待下达',
-      released: '已下达',
-      in_progress: '生产中',
-      completed: '已完成',
-      cancelled: '已取消',
-      paused: '已暂停',
+      pending: t('mes.production_order_management_page.text_e0468e'),
+      released: t('mes.production_order_management_page.status_released'),
+      in_progress: t('mes.production_order_management_page.status_in_progress'),
+      completed: t('mes.production_order_management_page.completed_3'),
+      cancelled: t('mes.production_order_management_page.status_cancelled'),
+      paused: t('mes.production_order_management_page.status_paused'),
     };
     return statusMap[status] || status;
   };
@@ -374,13 +390,13 @@ const ProductionOrderManagementPage: React.FC = () => {
         return [
           {
             action: 'release',
-            label: '下达订单',
+            label: t('mes.production_order_management_page.order_1'),
             icon: <Play size={14} />,
             color: 'success' as const,
           },
           {
             action: 'cancel',
-            label: '取消',
+            label: t('mes.production_order_management_page.action_cancel'),
             icon: <XCircle size={14} />,
             color: 'error' as const,
           },
@@ -390,13 +406,13 @@ const ProductionOrderManagementPage: React.FC = () => {
         return [
           {
             action: 'start',
-            label: '开始生产',
+            label: t('mes.production_order_management_page.production'),
             icon: <Play size={14} />,
             color: 'success' as const,
           },
           {
             action: 'complete',
-            label: '完成生产',
+            label: t('mes.production_order_management_page.completed_4'),
             icon: <CheckCircle size={14} />,
             color: 'success' as const,
           },
@@ -405,13 +421,13 @@ const ProductionOrderManagementPage: React.FC = () => {
         return [
           {
             action: 'start',
-            label: '恢复生产',
+            label: t('mes.production_order_management_page.production_1'),
             icon: <Play size={14} />,
             color: 'success' as const,
           },
           {
             action: 'cancel',
-            label: '取消',
+            label: t('mes.production_order_management_page.action_cancel'),
             icon: <XCircle size={14} />,
             color: 'error' as const,
           },
@@ -435,17 +451,17 @@ const ProductionOrderManagementPage: React.FC = () => {
       setShowDialog(false);
       resetForm();
     } catch (error: unknown) {
-      apiLogger.error('操作失败:', error);
+      apiLogger.error(t('mes.production_order_management_page.operation_failed_1'), error);
     }
   };
 
   const handleDelete = useCallback(
     async (id: string) => {
-      if (!window.confirm('确定要删除这个生产订单吗?')) return;
+      if (!window.confirm(t('mes.production_order_management_page.confirm'))) return;
       try {
         await deleteMutation.mutateAsync(id);
       } catch (error: unknown) {
-        apiLogger.error('删除失败:', error);
+        apiLogger.error(t('mes.production_order_management_page.delete_2'), error);
       }
     },
     [deleteMutation]
@@ -488,12 +504,12 @@ const ProductionOrderManagementPage: React.FC = () => {
         color: string;
       }
     > = {
-      pending: { label: '待下达', bg: 'warning.light', color: 'warning.700' },
-      released: { label: '已下达', bg: ct.secondary[100], color: 'secondary.700' },
-      in_progress: { label: '生产中', bg: 'primary.100', color: 'primary.dark' },
-      completed: { label: '已完成', bg: 'success.lighter', color: 'success.700' },
-      cancelled: { label: '已取消', bg: 'error.lighter', color: 'error.dark' },
-      paused: { label: '已暂停', bg: 'grey.100', color: 'text.secondary' },
+      pending: { label: t('mes.production_order_management_page.text_e0468e'), bg: 'warning.light', color: 'warning.700' },
+      released: { label: t('mes.production_order_management_page.status_released'), bg: ct.secondary[100], color: 'secondary.700' },
+      in_progress: { label: t('mes.production_order_management_page.status_in_progress'), bg: 'primary.100', color: 'primary.dark' },
+      completed: { label: t('mes.production_order_management_page.completed_3'), bg: 'success.lighter', color: 'success.700' },
+      cancelled: { label: t('mes.production_order_management_page.status_cancelled'), bg: 'error.lighter', color: 'error.dark' },
+      paused: { label: t('mes.production_order_management_page.status_paused'), bg: 'grey.100', color: 'text.secondary' },
     };
     const s = statusMap[status] || { label: status, bg: 'grey.100', color: 'text.secondary' };
     return (
@@ -507,12 +523,12 @@ const ProductionOrderManagementPage: React.FC = () => {
 
   const columns: ColumnDef<ProductionOrder>[] = useMemo(
     () => [
-      { id: 'order_number', label: '订单号', sortable: true },
-      { id: 'product_name', label: '产品名称', sortable: true },
-      { id: 'quantity', label: '数量', sortable: true },
+      { id: 'order_number', label: t('mes.production_order_management_page.order_number'), sortable: true },
+      { id: 'product_name', label: t('mes.production_order_management_page.column_product_name'), sortable: true },
+      { id: 'quantity', label: t('mes.production_order_management_page.quantity'), sortable: true },
       {
         id: 'scheduled_start_date',
-        label: '计划开始时间',
+        label: t('mes.production_order_management_page.start_time'),
         render: (row) =>
           row.scheduled_start_date
             ? new Date(row.scheduled_start_date).toLocaleDateString('zh-CN')
@@ -520,7 +536,7 @@ const ProductionOrderManagementPage: React.FC = () => {
       },
       {
         id: 'scheduled_end_date',
-        label: '计划结束时间',
+        label: t('mes.production_order_management_page.end_time'),
         render: (row) =>
           row.scheduled_end_date
             ? new Date(row.scheduled_end_date).toLocaleDateString('zh-CN')
@@ -528,7 +544,7 @@ const ProductionOrderManagementPage: React.FC = () => {
       },
       {
         id: 'status',
-        label: '状态',
+        label: t('mes.production_order_management_page.filter_status'),
         render: (row) => getStatusBadge(row.status),
       },
     ],
@@ -539,46 +555,45 @@ const ProductionOrderManagementPage: React.FC = () => {
     () => [
       {
         id: 'status',
-        label: '状态',
+        label: t('mes.production_order_management_page.filter_status'),
         type: 'select',
         options: [
-          { label: '全部状态', value: 'all' },
-          { label: '待下达', value: 'pending' },
-          { label: '已下达', value: 'released' },
-          { label: '生产中', value: 'in_progress' },
-          { label: '已完成', value: 'completed' },
-          { label: '已取消', value: 'cancelled' },
-          { label: '已暂停', value: 'paused' },
+          { label: t('mes.production_order_management_page.filter_option_all_status'), value: 'all' },
+          { label: t('mes.production_order_management_page.text_e0468e'), value: 'pending' },
+          { label: t('mes.production_order_management_page.status_released'), value: 'released' },
+          { label: t('mes.production_order_management_page.status_in_progress'), value: 'in_progress' },
+          { label: t('mes.production_order_management_page.completed_3'), value: 'completed' },
+          { label: t('mes.production_order_management_page.status_cancelled'), value: 'cancelled' },
+          { label: t('mes.production_order_management_page.status_paused'), value: 'paused' },
         ],
         value: statusFilter,
         onChange: (value: unknown) => {
-          setStatusFilter(value as string);
-          setCurrentPage(1);
+          setFilter('status', value as string);
         },
       },
     ],
-    [statusFilter]
+    [statusFilter, setFilter]
   );
 
   const rowActions: RowAction<ProductionOrder>[] = useMemo(
     () => [
       {
-        label: '查看详情',
+        label: t('mes.production_order_management_page.action_view_detail'),
         icon: <Eye size={16} />,
         onClick: handleViewDetail,
       },
       {
-        label: '编辑',
+        label: t('mes.production_order_management_page.action_edit'),
         icon: <Edit size={16} />,
         onClick: handleEdit,
       },
       {
-        label: '删除',
+        label: t('mes.production_order_management_page.action_delete'),
         icon: <Trash2 size={16} />,
         color: 'error',
         onClick: (row) => handleDelete(row.id),
         confirm: true,
-        confirmMessage: '确定要删除这个生产订单吗?',
+        confirmMessage: t('mes.production_order_management_page.confirm'),
       },
     ],
     [handleViewDetail, handleEdit, handleDelete]
@@ -622,8 +637,7 @@ const ProductionOrderManagementPage: React.FC = () => {
   };
 
   const handleSearch = (value: string) => {
-    setSearchTerm(value);
-    setCurrentPage(1);
+    setSearchQuery(value);
   };
 
   // 状态统计
@@ -723,8 +737,8 @@ const ProductionOrderManagementPage: React.FC = () => {
 
   return (
     <PageContainer
-      title='生产订单'
-      subtitle='管理生产订单信息,包括订单号、产品、数量、计划时间等'
+      title={t('mes.production_order_management_page.production_2')}
+      subtitle={t('mes.production_order_management_page.order_number_1')}
       headerProps={{
         pageIcon: <ClipboardList style={{ width: 20, height: 20 }} />,
         pageGradient: `linear-gradient(135deg, ${ct.primary.main} 0%, ${ct.primary.dark} 100%)`,
@@ -738,7 +752,7 @@ const ProductionOrderManagementPage: React.FC = () => {
         loading={loading}
         filters={filters}
         searchable
-        searchPlaceholder='搜索订单号或产品名称...'
+        searchPlaceholder={t('mes.production_order_management_page.product_name')}
         searchValue={searchTerm}
         onSearch={handleSearch}
         pagination={{
@@ -752,7 +766,7 @@ const ProductionOrderManagementPage: React.FC = () => {
         onSelectionChange={(ids) => setSelectedIds(ids.map(String))}
         actions={[
           {
-            label: '新增订单',
+            label: t('mes.production_order_management_page.add'),
             icon: <Plus size={16} />,
             onClick: handleOpenCreate,
           },
@@ -760,29 +774,29 @@ const ProductionOrderManagementPage: React.FC = () => {
         rowActions={rowActions}
         batchActions={[
           {
-            label: '批量下达',
+            label: t('mes.production_order_management_page.text_7526f4'),
             icon: <Play size={16} />,
             onClick: handleBatchRelease,
             color: 'success',
           },
           {
-            label: '批量完成',
+            label: t('mes.production_order_management_page.completed_5'),
             icon: <CheckCircle size={16} />,
             onClick: handleBatchComplete,
             color: 'primary',
           },
         ]}
         headerContent={statsContent}
-        emptyMessage='暂无生产订单数据'
+        emptyMessage={t('mes.production_order_management_page.empty_message')}
         getRowId={(row) => row.id}
         mobileCardTitleKey='product_name'
         mobileCardSubtitleKey='order_number'
         mobileCardDisplayFields={['status', 'quantity', 'completed_quantity', 'planned_start_date']}
         mobileCardFieldLabels={{
-          status: '状态',
-          quantity: '计划数量',
-          completed_quantity: '完成数量',
-          planned_start_date: '计划开始',
+          status: t('mes.production_order_management_page.filter_status'),
+          quantity: t('mes.production_order_management_page.column_planned_quantity'),
+          completed_quantity: t('mes.production_order_management_page.completed_quantity'),
+          planned_start_date: t('mes.production_order_management_page.field_planned_start'),
         }}
       />
 
@@ -792,7 +806,7 @@ const ProductionOrderManagementPage: React.FC = () => {
         onClose={() => setShowDialog(false)}
         maxWidth='md'
       >
-        <DialogTitle>{selectedOrder ? '编辑生产订单' : '新增生产订单'}</DialogTitle>
+        <DialogTitle>{selectedOrder ? t('mes.production_order_management_page.dialog_edit_title') : t('mes.production_order_management_page.dialog_create_title')}</DialogTitle>
         <DialogContent>
           <Box
             component='span'
@@ -803,7 +817,7 @@ const ProductionOrderManagementPage: React.FC = () => {
               fontSize: 14,
             }}
           >
-            {selectedOrder ? '修改生产订单信息' : '填写新生产订单信息'}
+            {selectedOrder ? t('mes.production_order_management_page.info') : t('mes.production_order_management_page.info_1')}
           </Box>
           <form onSubmit={handleSubmit}>
             <Box

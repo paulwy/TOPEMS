@@ -1,4 +1,5 @@
 #![allow(dead_code)]
+mod event_handlers;
 
 mod db;
 mod models;
@@ -275,9 +276,27 @@ async fn main() -> anyhow::Result<()> {
         }
     };
 
+    let event_publisher = match topems_shared::event::EventPublisher::new("topems-mobile") {
+        Ok(publisher) => {
+            tracing::info!("📢 事件发布服务初始化成功");
+            Some(std::sync::Arc::new(publisher))
+        }
+        Err(e) => {
+            tracing::warn!("⚠️ 事件发布服务初始化失败（不阻塞启动）: {}", e);
+            None
+        }
+    };
+
+    if let Err(e) =
+        event_handlers::start_event_subscribers(pool.clone(), event_publisher.clone()).await
+    {
+        tracing::warn!("⚠️ MOBILE 事件订阅者启动失败: {}", e);
+    }
+
     let app_state = AppState {
         auth_state: AuthState::from_env(),
         pool: pool.clone(),
+        event_publisher,
     };
     let cors = create_cors_layer();
 

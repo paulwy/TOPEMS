@@ -1,0 +1,49 @@
+{
+  "title": "集成管理",
+  "menu": {
+    "datasource": "数据源",
+    "connector": "连接器",
+    "sync_task": "同步任务",
+    "mapping": "映射",
+    "log": "日志"
+  },
+  "status": {
+    "pending": "待执行",
+    "running": "执行中",
+    "success": "成功",
+    "failed": "失败",
+    "stopped": "已停止",
+    "disabled": "已禁用"
+  },
+  "action": {
+    "create": "创建",
+    "edit": "编辑",
+    "delete": "删除",
+    "view": "查看",
+    "test": "测试",
+    "start": "启动",
+    "stop": "停止",
+    "retry": "重试"
+  },
+  "field": {
+    "datasource_name": "数据源名称",
+    "datasource_type": "数据源类型",
+    "connector": "连接器",
+    "endpoint": "端点",
+    "sync_direction": "同步方向",
+    "sync_frequency": "同步频率",
+    "last_sync_time": "最近同步时间",
+    "last_sync_status": "最近同步状态",
+    "mapping_name": "映射名称",
+    "description": "描述"
+  },
+  "message": {
+    "create_success": "创建成功",
+    "update_success": "更新成功",
+    "delete_success": "删除成功",
+    "test_success": "连接测试成功",
+    "test_failed": "连接测试失败",
+    "confirm_delete": "确认删除？",
+    "no_data": "暂无数据"
+  }
+}

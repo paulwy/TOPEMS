@@ -1,0 +1,49 @@
+{
+  "title": "Instant Messaging",
+  "menu": {
+    "conversation": "Conversation",
+    "message": "Message",
+    "group": "Group",
+    "mail": "Mail",
+    "template": "Template",
+    "contact": "Contact"
+  },
+  "status": {
+    "online": "Online",
+    "offline": "Offline",
+    "away": "Away",
+    "busy": "Busy",
+    "invisible": "Invisible"
+  },
+  "action": {
+    "create": "Create",
+    "edit": "Edit",
+    "delete": "Delete",
+    "view": "View",
+    "send": "Send",
+    "reply": "Reply",
+    "forward": "Forward",
+    "invite": "Invite"
+  },
+  "field": {
+    "conversation_name": "Conversation Name",
+    "group_name": "Group Name",
+    "member": "Member",
+    "owner": "Owner",
+    "admin": "Admin",
+    "last_message": "Last Message",
+    "unread_count": "Unread Count",
+    "subject": "Subject",
+    "content": "Content",
+    "attachment": "Attachment"
+  },
+  "message": {
+    "create_success": "Created successfully",
+    "update_success": "Updated successfully",
+    "delete_success": "Deleted successfully",
+    "send_success": "Sent successfully",
+    "send_failed": "Failed to send",
+    "confirm_delete": "Confirm deletion?",
+    "no_data": "No data"
+  }
+}

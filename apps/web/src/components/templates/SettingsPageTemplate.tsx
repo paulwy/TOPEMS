@@ -421,6 +421,7 @@ export const SettingsPageTemplate: React.FC<SettingsPageTemplateProps> = ({
     return (
       <Paper
         key={section.id}
+        className='settings-page-section'
         sx={{ borderRadius: 3, mb: 2, overflow: 'hidden' }}
       >
         <Box
@@ -573,6 +574,7 @@ export const SettingsPageTemplate: React.FC<SettingsPageTemplateProps> = ({
           {showResetButton && (
             <Button
               variant='outlined'
+              className='settings-page-reset-btn'
               onClick={handleReset}
               disabled={saving || loading || !hasChanges}
               startIcon={<RotateCcw style={{ width: 16, height: 16 }} />}
@@ -583,6 +585,7 @@ export const SettingsPageTemplate: React.FC<SettingsPageTemplateProps> = ({
           {showSaveButton && (
             <Button
               variant='contained'
+              className='settings-page-save-btn'
               onClick={handleSave}
               disabled={saving || loading || !hasChanges}
               startIcon={

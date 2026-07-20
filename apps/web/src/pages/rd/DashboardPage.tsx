@@ -1,5 +1,6 @@
 import React, { useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { useTranslation } from 'react-i18next';
 import { FileText, ArrowRight, FlaskConical, CheckCircle, Rocket } from 'lucide-react';
 import { DashboardTemplate } from '@/components/templates';
 import type { StatCard, ChartCard, QuickAction } from '@/components/templates';
@@ -19,14 +20,8 @@ const iconMap: Record<string, React.ReactNode> = {
   Rocket: <Rocket size={24} />,
 };
 
-const getGreeting = (): string => {
-  const hour = new Date().getHours();
-  if (hour < 12) return '上午好';
-  if (hour < 18) return '下午好';
-  return '晚上好';
-};
-
 export const DashboardPage: React.FC = () => {
+  const { t } = useTranslation();
   const navigate = useNavigate();
 
   const { data: stats, isLoading: loading } = useQuery({
@@ -41,64 +36,71 @@ export const DashboardPage: React.FC = () => {
     staleTime: 5 * 60 * 1000,
   });
 
+  const getGreeting = (): string => {
+    const hour = new Date().getHours();
+    if (hour < 12) return t('rd.dashboard_page.greeting.morning');
+    if (hour < 18) return t('rd.dashboard_page.greeting.afternoon');
+    return t('rd.dashboard_page.greeting.evening');
+  };
+
   const statsCards: StatCard[] = useMemo(
     () => [
       {
         id: 'research-projects',
-        title: '研发项目',
+        title: t('rd.dashboard_page.stat_card.research_projects'),
         value: (stats?.total_projects || 8).toString(),
         icon: iconMap.FlaskConical,
         change: 1,
-        changeLabel: 'vs 上周期',
+        changeLabel: t('rd.common.vs_last_period'),
         color: 'primary',
       },
       {
         id: 'document-count',
-        title: '文档数量',
+        title: t('rd.dashboard_page.stat_card.document_count'),
         value: (stats?.total_formulas || 256).toString(),
         icon: iconMap.FileText,
         change: 24,
-        changeLabel: 'vs 上周期',
+        changeLabel: t('rd.common.vs_last_period'),
         color: 'info',
       },
       {
         id: 'test-cases',
-        title: '测试用例',
+        title: t('rd.dashboard_page.stat_card.test_cases'),
         value: (stats?.total_tasks || 1234).toString(),
         icon: iconMap.CheckCircle,
         change: 156,
-        changeLabel: 'vs 上周期',
+        changeLabel: t('rd.common.vs_last_period'),
         color: 'success',
       },
       {
         id: 'version-releases',
-        title: '版本发布',
+        title: t('rd.dashboard_page.stat_card.version_releases'),
         value: (stats?.total_experiments || 5).toString(),
         icon: iconMap.Rocket,
         change: 2,
-        changeLabel: 'vs 上周期',
+        changeLabel: t('rd.common.vs_last_period'),
         color: 'warning',
       },
     ],
-    [stats]
+    [stats, t]
   );
 
   const charts: ChartCard[] = useMemo(() => {
     const barData = [
-      { name: '待处理', value: stats?.pending_projects || 0 },
-      { name: '进行中', value: stats?.in_progress_projects || 0 },
-      { name: '已完成', value: stats?.completed_projects || 0 },
-      { name: '已取消', value: stats?.cancelled_projects || 0 },
+      { name: t('rd.dashboard_page.status_label.pending'), value: stats?.pending_projects || 0 },
+      { name: t('rd.dashboard_page.status_label.in_progress'), value: stats?.in_progress_projects || 0 },
+      { name: t('rd.dashboard_page.status_label.completed'), value: stats?.completed_projects || 0 },
+      { name: t('rd.dashboard_page.status_label.cancelled'), value: stats?.cancelled_projects || 0 },
     ];
     const lineData = [
-      { name: '待处理', value: stats?.pending_experiments || 0 },
-      { name: '进行中', value: stats?.in_progress_experiments || 0 },
-      { name: '已完成', value: stats?.completed_experiments || 0 },
+      { name: t('rd.dashboard_page.status_label.pending'), value: stats?.pending_experiments || 0 },
+      { name: t('rd.dashboard_page.status_label.in_progress'), value: stats?.in_progress_experiments || 0 },
+      { name: t('rd.dashboard_page.status_label.completed'), value: stats?.completed_experiments || 0 },
     ];
     return [
       {
         id: 'project-type-distribution',
-        title: '项目状态分布',
+        title: t('rd.dashboard_page.chart.project_status_distribution'),
         chart: (
           <BarChartComponent
             data={barData}
@@ -110,7 +112,7 @@ export const DashboardPage: React.FC = () => {
       },
       {
         id: 'monthly-release-trend',
-        title: '实验状态分布',
+        title: t('rd.dashboard_page.chart.experiment_status_distribution'),
         chart: (
           <LineChartComponent
             data={lineData}
@@ -121,24 +123,24 @@ export const DashboardPage: React.FC = () => {
         height: 300,
       },
     ];
-  }, [stats]);
+  }, [stats, t]);
 
   const quickActions: QuickAction[] = [
     {
       id: 'create-research-project',
-      label: '创建研发项目',
+      label: t('rd.dashboard_page.quick_action.create_research_project'),
       icon: <ArrowRight size={18} />,
       onClick: () => navigate(RD_PATHS.projectCreate),
     },
     {
       id: 'write-test-case',
-      label: '编写测试用例',
+      label: t('rd.dashboard_page.quick_action.write_test_case'),
       icon: <ArrowRight size={18} />,
       onClick: () => navigate(RD_PATHS.test),
     },
     {
       id: 'release-new-version',
-      label: '发布新版本',
+      label: t('rd.dashboard_page.quick_action.release_new_version'),
       icon: <ArrowRight size={18} />,
       onClick: () => navigate(RD_PATHS.deploy),
     },
@@ -146,8 +148,8 @@ export const DashboardPage: React.FC = () => {
 
   return (
     <PageContainer
-      title='研发管理'
-      subtitle={`${getGreeting()}，研发项目与文档管理`}
+      title={t('rd.dashboard_page.title')}
+      subtitle={t('rd.dashboard_page.subtitle', { greeting: getGreeting() })}
       padding={false}
       maxWidth={false}
     >
@@ -157,7 +159,7 @@ export const DashboardPage: React.FC = () => {
         stats={statsCards}
         charts={charts}
         quickActions={quickActions}
-        quickActionsTitle='快捷操作'
+        quickActionsTitle={t('rd.dashboard_page.quick_action.title')}
         loading={loading}
       />
     </PageContainer>

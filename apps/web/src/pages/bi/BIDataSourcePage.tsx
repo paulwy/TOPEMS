@@ -25,6 +25,7 @@ import { PageContainer } from '@/components/common';
 import { useCrudOperations } from '@/hooks/useCrudQueries';
 import { dataSourceCrudApi, testDataSource, refreshDataSource, type DataSource } from '@/api/bi';
 
+import { useTranslation } from 'react-i18next';
 const getStatusConfig = (status: string) => {
   switch (status) {
     case 'active':
@@ -76,6 +77,7 @@ const getTypeConfig = (type: string) => {
 };
 
 const BIDataSourcePage = () => {
+  const { t } = useTranslation();
   const queryClient = useQueryClient();
   const [searchTerm, setSearchTerm] = useState('');
   const [filterType, setFilterType] = useState<string>('');
@@ -187,7 +189,7 @@ const BIDataSourcePage = () => {
     () => [
       {
         id: 'name',
-        label: '数据源名称',
+        label: t('bi.bi_data_source_page.name'),
         render: (row) => (
           <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5 }}>
             <Database
@@ -213,7 +215,7 @@ const BIDataSourcePage = () => {
       },
       {
         id: 'type',
-        label: '类型',
+        label: t('bi.bi_data_source_page.type'),
         render: (row) => {
           const typeConfig = getTypeConfig(row.type);
           return (
@@ -228,7 +230,7 @@ const BIDataSourcePage = () => {
       },
       {
         id: 'status',
-        label: '连接状态',
+        label: t('bi.bi_data_source_page.status'),
         render: (row) => {
           const statusConfig = getStatusConfig(row.status);
           return (
@@ -243,7 +245,7 @@ const BIDataSourcePage = () => {
       },
       {
         id: 'last_sync',
-        label: '最后同步时间',
+        label: t('bi.bi_data_source_page.time'),
         render: (row) =>
           row.last_sync ? (
             <Typography
@@ -263,7 +265,7 @@ const BIDataSourcePage = () => {
       },
       {
         id: 'dataVolume',
-        label: '数据量',
+        label: t('bi.bi_data_source_page.text_6c8266'),
         render: (row) => (
           <Typography variant='body2'>
             {row.data_volume ? `${(row.data_volume / 1000).toFixed(1)}K` : '-'}
@@ -277,32 +279,32 @@ const BIDataSourcePage = () => {
   const rowActions = useMemo<RowAction<DataSource>[]>(
     () => [
       {
-        label: '同步',
+        label: t('bi.bi_data_source_page.text_6a620e'),
         icon: <RefreshCw size={16} />,
         onClick: (row) => handleSync(row),
       },
       {
-        label: '测试连接',
+        label: t('bi.bi_data_source_page.test'),
         icon: <TestTube size={16} />,
         onClick: (row) => handleTestConnection(row),
       },
       {
-        label: '查看',
+        label: t('bi.bi_data_source_page.view'),
         icon: <Eye size={16} />,
         onClick: (row) => logger.info('View:', row.id),
       },
       {
-        label: '编辑',
+        label: t('bi.bi_data_source_page.edit'),
         icon: <Edit size={16} />,
         onClick: (row) => logger.info('Edit:', row.id),
       },
       {
-        label: '删除',
+        label: t('bi.bi_data_source_page.delete'),
         icon: <Trash2 size={16} />,
         color: 'error',
         onClick: (row) => handleDelete(row),
         confirm: true,
-        confirmMessage: '确定要删除这个数据源吗?',
+        confirmMessage: t('bi.bi_data_source_page.confirm'),
       },
     ],
     [handleSync, handleTestConnection, handleDelete]
@@ -312,30 +314,30 @@ const BIDataSourcePage = () => {
     () => [
       {
         id: 'type',
-        label: '数据源类型',
+        label: t('bi.bi_data_source_page.type_1'),
         type: 'select',
         options: [
-          { value: '', label: '全部类型' },
+          { value: '', label: t('bi.bi_data_source_page.type_2') },
           { value: 'postgresql', label: 'PostgreSQL' },
           { value: 'mysql', label: 'MySQL' },
           { value: 'mongodb', label: 'MongoDB' },
           { value: 'redis', label: 'Redis' },
           { value: 'elasticsearch', label: 'Elasticsearch' },
           { value: 'api', label: 'API' },
-          { value: 'file', label: '文件' },
+          { value: 'file', label: t('bi.bi_data_source_page.text_2a0c47') },
         ],
         value: filterType,
         onChange: (value) => handleFilterTypeChange(value as string),
       },
       {
         id: 'status',
-        label: '状态',
+        label: t('bi.bi_data_source_page.status_1'),
         type: 'select',
         options: [
-          { value: '', label: '全部' },
-          { value: 'active', label: '已连接' },
-          { value: 'inactive', label: '未激活' },
-          { value: 'error', label: '异常' },
+          { value: '', label: t('bi.bi_data_source_page.all') },
+          { value: 'active', label: t('bi.bi_data_source_page.text_c5ea9c') },
+          { value: 'inactive', label: t('bi.bi_data_source_page.text_d70e9b') },
+          { value: 'error', label: t('bi.bi_data_source_page.abnormal') },
         ],
         value: filterStatus,
         onChange: (value) => handleFilterStatusChange(value as string),
@@ -359,8 +361,8 @@ const BIDataSourcePage = () => {
 
   return (
     <PageContainer
-      title='数据源管理'
-      subtitle='配置和管理BI数据源连接'
+      title={t('bi.bi_data_source_page.text_4feab2')}
+      subtitle={t('bi.bi_data_source_page.text_b72c3a')}
     >
       <ListPageTemplate<DataSource>
         title=''
@@ -370,7 +372,7 @@ const BIDataSourcePage = () => {
         loading={actionLoading}
         error={error || undefined}
         searchable
-        searchPlaceholder='搜索数据源名称...'
+        searchPlaceholder={t('bi.bi_data_source_page.search')}
         searchValue={searchTerm}
         onSearch={handleSearch}
         filters={filters}
@@ -379,12 +381,12 @@ const BIDataSourcePage = () => {
         onRefresh={refresh}
         actions={[
           {
-            label: '返回数据大屏',
+            label: t('bi.bi_data_source_page.back'),
             variant: 'outlined',
             onClick: () => logger.info('Back to dashboard'),
           },
           {
-            label: '新增数据源',
+            label: t('bi.bi_data_source_page.add'),
             icon: <Plus size={16} />,
             variant: 'contained',
             onClick: () => logger.info('Add datasource'),

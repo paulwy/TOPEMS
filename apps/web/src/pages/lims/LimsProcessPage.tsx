@@ -18,6 +18,7 @@ import { ClipboardList, ChevronRight, FileText, Play, Clock, CheckCircle, X } fr
 import { useNavigate } from 'react-router-dom';
 import { limsApi, type InspectionProcess, type LimsStatistics, type ListParams } from '@/api/lims';
 import { useNotificationStore } from '@/store';
+import { useUrlListState } from '@/hooks';
 import {
   ListPageTemplate,
   type ColumnDef,
@@ -55,11 +56,27 @@ const STATUS_OPTIONS = [
 const LimsProcessPage: React.FC = () => {
   const navigate = useNavigate();
   const addNotification = useNotificationStore((state) => state.addNotification);
-  const [searchQuery, setSearchQuery] = useState('');
-  const [debouncedSearch, setDebouncedSearch] = useState('');
-  const [filterStatus, setFilterStatus] = useState<string>('');
-  const [currentPage, setCurrentPage] = useState(0);
-  const [pageSize, setPageSize] = useState(10);
+  const listState = useUrlListState<{ status: string }>({
+    defaultSearch: '',
+    defaultPageSize: 10,
+    defaultFilters: { status: '' },
+    baseIndex: 0,
+    historyMode: 'replace',
+    defaultSortBy: 'created_at',
+    defaultSortOrder: 'desc',
+  });
+  const {
+    searchQuery,
+    debouncedSearch,
+    currentPage,
+    pageSize,
+    filters: urlFilters,
+    setSearchQuery,
+    setFilter,
+    setCurrentPage,
+    setPageSize,
+  } = listState;
+  const filterStatus = urlFilters.status;
   const [serviceStatuses, setServiceStatuses] = useState<{
     [key: string]: boolean;
   }>({
@@ -101,14 +118,6 @@ const LimsProcessPage: React.FC = () => {
 
     return () => clearInterval(intervalId);
   }, []);
-
-  React.useEffect(() => {
-    const timer = setTimeout(() => {
-      setDebouncedSearch(searchQuery);
-      setCurrentPage(0);
-    }, 300);
-    return () => clearTimeout(timer);
-  }, [searchQuery]);
 
   const statisticsQuery = useQuery({
     queryKey: ['lims-statistics'],
@@ -189,8 +198,7 @@ const LimsProcessPage: React.FC = () => {
 
   const handleFilterChange = (filters: Record<string, unknown>) => {
     if (filters.status !== undefined) {
-      setFilterStatus(String(filters.status || ''));
-      setCurrentPage(0);
+      setFilter('status', String(filters.status || ''));
     }
   };
 
@@ -210,11 +218,9 @@ const LimsProcessPage: React.FC = () => {
         label: '状态',
         type: 'select',
         options: STATUS_OPTIONS,
-        value: filterStatus,
-        onChange: (value: unknown) => setFilterStatus(value as string),
       },
     ],
-    [filterStatus]
+    []
   );
 
   const columns = useMemo<ColumnDef<InspectionProcess>[]>(

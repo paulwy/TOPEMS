@@ -79,10 +79,16 @@ pub async fn list_suppliers(
 
     let cache_key = suppliers_list_cache_key(page, page_size, &params.search, &params.status);
 
+    if let Some(cached) = state.supplier_cache.get(&cache_key) {
+        tracing::debug!("📋 内存缓存命中: {}", cache_key);
+        return Json(ApiResponse::success(cached, "获取供应商列表成功"));
+    }
+
     if let Some(cache) = &state.cache {
         if let Ok(Some(cached)) = cache.get(&cache_key).await {
-            tracing::debug!("📋 缓存命中: {}", cache_key);
-            if let Ok(data) = serde_json::from_str(&cached) {
+            tracing::debug!("📋 Redis缓存命中: {}", cache_key);
+            if let Ok(data) = serde_json::from_str::<serde_json::Value>(&cached) {
+                state.supplier_cache.set(cache_key.clone(), data.clone());
                 return Json(ApiResponse::success(data, "获取供应商列表成功"));
             }
         }
@@ -127,6 +133,10 @@ pub async fn list_suppliers(
                 "page": page,
                 "page_size": page_size
             });
+
+            state
+                .supplier_cache
+                .set(cache_key.clone(), response_data.clone());
 
             if let Some(cache) = &state.cache {
                 if let Ok(serialized) = serde_json::to_string(&response_data) {
@@ -202,8 +212,14 @@ pub async fn create_supplier(
         None
     };
 
+    if status == "success" {
+        state.supplier_cache.clear();
+        tracing::debug!("🗑️ 供应商内存缓存已清空（创建供应商）");
+    }
+
+    let redis_cache = state.cache.clone();
     tokio::spawn(async move {
-        clear_supplier_caches(&state.cache).await;
+        clear_supplier_redis_caches(&redis_cache).await;
     });
 
     log_audit_event(
@@ -237,10 +253,20 @@ pub async fn get_supplier(
 
     let cache_key = supplier_cache_key(&id);
 
+    if let Some(cached) = state.supplier_cache.get(&cache_key) {
+        tracing::debug!("📋 内存缓存命中: {}", cache_key);
+        if let Ok(supplier) = serde_json::from_value::<Supplier>(cached) {
+            return Json(ApiResponse::success(supplier, "获取供应商成功"));
+        }
+    }
+
     if let Some(cache) = &state.cache {
         if let Ok(Some(cached)) = cache.get(&cache_key).await {
-            tracing::debug!("📋 缓存命中: {}", cache_key);
-            if let Ok(supplier) = serde_json::from_str(&cached) {
+            tracing::debug!("📋 Redis缓存命中: {}", cache_key);
+            if let Ok(supplier) = serde_json::from_str::<Supplier>(&cached) {
+                if let Ok(value) = serde_json::to_value(&supplier) {
+                    state.supplier_cache.set(cache_key.clone(), value);
+                }
                 return Json(ApiResponse::success(supplier, "获取供应商成功"));
             }
         }
@@ -258,6 +284,9 @@ pub async fn get_supplier(
 
     match result {
         Ok(Some(supplier)) => {
+            if let Ok(value) = serde_json::to_value(&supplier) {
+                state.supplier_cache.set(cache_key.clone(), value);
+            }
             if let Some(cache) = &state.cache {
                 if let Ok(serialized) = serde_json::to_string(&supplier) {
                     let _ = cache
@@ -356,8 +385,16 @@ pub async fn update_supplier(
         None
     };
 
+    if status_str == "success" {
+        let cache_key = supplier_cache_key(&id);
+        state.supplier_cache.remove(&cache_key);
+        state.supplier_cache.clear();
+        tracing::debug!("🗑️ 供应商内存缓存已失效: {}", cache_key);
+    }
+
+    let redis_cache = state.cache.clone();
     tokio::spawn(async move {
-        clear_supplier_caches(&state.cache).await;
+        clear_supplier_redis_caches(&redis_cache).await;
     });
 
     log_audit_event(
@@ -421,8 +458,16 @@ pub async fn delete_supplier(
         None
     };
 
+    if status_str == "success" {
+        let cache_key = supplier_cache_key(&id);
+        state.supplier_cache.remove(&cache_key);
+        state.supplier_cache.clear();
+        tracing::debug!("🗑️ 供应商内存缓存已失效: {}", cache_key);
+    }
+
+    let redis_cache = state.cache.clone();
     tokio::spawn(async move {
-        clear_supplier_caches(&state.cache).await;
+        clear_supplier_redis_caches(&redis_cache).await;
     });
 
     log_audit_event(
@@ -444,12 +489,12 @@ pub async fn delete_supplier(
     response
 }
 
-async fn clear_supplier_caches(cache: &Option<Arc<RedisCacheService>>) {
+async fn clear_supplier_redis_caches(cache: &Option<Arc<RedisCacheService>>) {
     if let Some(cache) = cache {
         let _ = cache.delete(&format!("{}:*", CACHE_PREFIX_SUPPLIER)).await;
         let _ = cache
             .delete(&format!("{}:*", CACHE_PREFIX_SUPPLIERS_LIST))
             .await;
-        tracing::debug!("🗑️ 供应商缓存已清除");
+        tracing::debug!("🗑️ 供应商Redis缓存已清除");
     }
 }

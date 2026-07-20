@@ -29,6 +29,7 @@ import { apiLogger } from '@/utils/logger';
 import { designTokens } from '@/theme/tokens';
 import { useCrudOperations, type CrudOperations } from '@/hooks/useCrudQueries';
 
+import { useTranslation } from 'react-i18next';
 const ct = designTokens.colors;
 
 const hazardCrudApi = {
@@ -40,6 +41,7 @@ const hazardCrudApi = {
 } as unknown as CrudOperations<Hazard, CreateSafetyHazardRequest>;
 
 const HazardPage: React.FC = () => {
+  const { t } = useTranslation();
   const [searchTerm, setSearchTerm] = useState('');
   const [severityFilter, setSeverityFilter] = useState('all');
   const [statusFilter, setStatusFilter] = useState('all');
@@ -91,7 +93,7 @@ const HazardPage: React.FC = () => {
         setControlMeasures(Array.isArray(data) ? data : data.data || []);
       }
     } catch (err: unknown) {
-      apiLogger.error('加载危险源详情失败:', err);
+      apiLogger.error(t('ehs.hazard_page.detail'), err);
     }
   };
 
@@ -102,10 +104,10 @@ const HazardPage: React.FC = () => {
 
   const getStatusBadge = (status: string) => {
     const statusMap: Record<string, { bg: string; color: string; label: string }> = {
-      active: { bg: 'error.lighter', color: 'error.dark', label: '活跃' },
-      controlled: { bg: 'warning.lighter', color: 'warning.dark', label: '已控制' },
-      eliminated: { bg: 'success.lighter', color: 'success.dark', label: '已消除' },
-      archived: { bg: 'grey.100', color: 'text.secondary', label: '已归档' },
+      active: { bg: 'error.lighter', color: 'error.dark', label: t('ehs.hazard_page.active') },
+      controlled: { bg: 'warning.lighter', color: 'warning.dark', label: t('ehs.hazard_page.text_2ef3d6') },
+      eliminated: { bg: 'success.lighter', color: 'success.dark', label: t('ehs.hazard_page.text_b05ad3') },
+      archived: { bg: 'grey.100', color: 'text.secondary', label: t('ehs.hazard_page.text_c3ba16') },
     };
     const colors = statusMap[status] || { bg: 'grey.100', color: 'text.secondary', label: status };
     return (
@@ -119,9 +121,9 @@ const HazardPage: React.FC = () => {
 
   const getSeverityBadge = (severity: string) => {
     const severityMap: Record<string, { bg: string; color: string; label: string }> = {
-      high: { bg: 'error.light', color: 'error.dark', label: '高' },
-      medium: { bg: 'warning.light', color: 'warning.dark', label: '中' },
-      low: { bg: 'success.lighter', color: 'success.dark', label: '低' },
+      high: { bg: 'error.light', color: 'error.dark', label: t('ehs.hazard_page.text_4296d7') },
+      medium: { bg: 'warning.light', color: 'warning.dark', label: t('ehs.hazard_page.text_aed1df') },
+      low: { bg: 'success.lighter', color: 'success.dark', label: t('ehs.hazard_page.text_19ac67') },
     };
     const colors = severityMap[severity] || {
       bg: 'grey.100',
@@ -146,20 +148,20 @@ const HazardPage: React.FC = () => {
       (likelihoodScore[hazard.likelihood] || 2) *
       (exposureScore[hazard.exposure] || 2);
     if (total >= 18)
-      return { level: 'extreme', label: '极高风险', bg: 'error.main', color: 'white' };
+      return { level: 'extreme', label: t('ehs.hazard_page.text_9ac974'), bg: 'error.main', color: 'white' };
     if (total >= 9)
-      return { level: 'high', label: '高风险', bg: 'error.light', color: 'error.dark' };
+      return { level: 'high', label: t('ehs.hazard_page.text_4433e7'), bg: 'error.light', color: 'error.dark' };
     if (total >= 4)
-      return { level: 'medium', label: '中风险', bg: 'warning.light', color: 'warning.dark' };
-    return { level: 'low', label: '低风险', bg: 'success.lighter', color: 'success.dark' };
+      return { level: 'medium', label: t('ehs.hazard_page.text_8a8992'), bg: 'warning.light', color: 'warning.dark' };
+    return { level: 'low', label: t('ehs.hazard_page.text_b56976'), bg: 'success.lighter', color: 'success.dark' };
   };
 
   const getControlStatusBadge = (status: string) => {
     const statusMap: Record<string, { bg: string; color: string; label: string }> = {
-      pending: { bg: 'grey.100', color: 'text.secondary', label: '待处理' },
-      in_progress: { bg: 'warning.lighter', color: 'warning.dark', label: '进行中' },
-      completed: { bg: 'success.lighter', color: 'success.dark', label: '已完成' },
-      verified: { bg: 'primary.lighter', color: 'primary.dark', label: '已验证' },
+      pending: { bg: 'grey.100', color: 'text.secondary', label: t('ehs.hazard_page.pending') },
+      in_progress: { bg: 'warning.lighter', color: 'warning.dark', label: t('ehs.hazard_page.in_progress') },
+      completed: { bg: 'success.lighter', color: 'success.dark', label: t('ehs.hazard_page.completed') },
+      verified: { bg: 'primary.lighter', color: 'primary.dark', label: t('ehs.hazard_page.text_876caf') },
     };
     const colors = statusMap[status] || { bg: 'grey.100', color: 'text.secondary', label: status };
     return (
@@ -173,16 +175,16 @@ const HazardPage: React.FC = () => {
 
   const columns: ColumnDef<Hazard>[] = useMemo(
     () => [
-      { id: 'name', label: '危险源名称' },
-      { id: 'category', label: '类别' },
+      { id: 'name', label: t('ehs.hazard_page.name') },
+      { id: 'category', label: t('ehs.hazard_page.text_383a6d') },
       {
         id: 'severity',
-        label: '严重程度',
+        label: t('ehs.hazard_page.text_08fe50'),
         render: (row) => getSeverityBadge(row.severity),
       },
       {
         id: 'risklevel',
-        label: '风险等级',
+        label: t('ehs.hazard_page.text_25eb6b'),
         render: (row) => {
           const risk = getRiskLevel(row);
           return (
@@ -194,10 +196,10 @@ const HazardPage: React.FC = () => {
           );
         },
       },
-      { id: 'location', label: '位置', render: (row) => row.location || '-' },
+      { id: 'location', label: t('ehs.hazard_page.text_d4d2a6'), render: (row) => row.location || '-' },
       {
         id: 'status',
-        label: '状态',
+        label: t('ehs.hazard_page.status'),
         render: (row) => getStatusBadge(row.status),
       },
     ],
@@ -232,27 +234,27 @@ const HazardPage: React.FC = () => {
     () => [
       {
         id: 'severity',
-        label: '严重程度',
+        label: t('ehs.hazard_page.text_08fe50'),
         type: 'select' as const,
         options: [
-          { value: 'all', label: '全部' },
-          { value: 'high', label: '高' },
-          { value: 'medium', label: '中' },
-          { value: 'low', label: '低' },
+          { value: 'all', label: t('ehs.hazard_page.all') },
+          { value: 'high', label: t('ehs.hazard_page.text_4296d7') },
+          { value: 'medium', label: t('ehs.hazard_page.text_aed1df') },
+          { value: 'low', label: t('ehs.hazard_page.text_19ac67') },
         ],
         value: severityFilter,
         onChange: (value: unknown) => setSeverityFilter(value as string),
       },
       {
         id: 'status',
-        label: '状态',
+        label: t('ehs.hazard_page.status'),
         type: 'select' as const,
         options: [
-          { value: 'all', label: '全部' },
-          { value: 'active', label: '活跃' },
-          { value: 'controlled', label: '已控制' },
-          { value: 'eliminated', label: '已消除' },
-          { value: 'archived', label: '已归档' },
+          { value: 'all', label: t('ehs.hazard_page.all') },
+          { value: 'active', label: t('ehs.hazard_page.active') },
+          { value: 'controlled', label: t('ehs.hazard_page.text_2ef3d6') },
+          { value: 'eliminated', label: t('ehs.hazard_page.text_b05ad3') },
+          { value: 'archived', label: t('ehs.hazard_page.text_c3ba16') },
         ],
         value: statusFilter,
         onChange: (value: unknown) => setStatusFilter(value as string),
@@ -263,7 +265,7 @@ const HazardPage: React.FC = () => {
 
   const rowActions = [
     {
-      label: '详情',
+      label: t('ehs.hazard_page.detail_1'),
       icon: <Eye size={16} />,
       onClick: (row: Hazard) => handleView(row),
     },
@@ -303,13 +305,13 @@ const HazardPage: React.FC = () => {
       });
       setShowCreateModal(false);
     } catch (err: unknown) {
-      apiLogger.error('创建危险源失败:', err);
+      apiLogger.error(t('ehs.hazard_page.create'), err);
     }
   };
 
   const headerActions = [
     {
-      label: '登记危险源',
+      label: t('ehs.hazard_page.text_af307b'),
       icon: <Plus style={{ width: 18, height: 18 }} />,
       onClick: handleCreate,
       variant: 'contained' as const,
@@ -327,7 +329,7 @@ const HazardPage: React.FC = () => {
     return stepMap[status] || 0;
   };
 
-  const steps = ['识别', '评估', '控制', '消除'];
+  const steps = [t('ehs.hazard_page.text_72eff8'), t('ehs.hazard_page.text_26b9c1'), t('ehs.hazard_page.text_34e47d'), t('ehs.hazard_page.text_ace916')];
 
   return (
     <PageContainer
@@ -486,7 +488,7 @@ const HazardPage: React.FC = () => {
         loading={loading}
         filters={filters}
         searchable
-        searchPlaceholder='搜索危险源名称或位置...'
+        searchPlaceholder={t('ehs.hazard_page.search')}
         searchValue={searchTerm}
         onSearch={(value) => setSearchTerm(value)}
         onRefresh={refresh}
@@ -504,17 +506,17 @@ const HazardPage: React.FC = () => {
           <Box sx={{ pt: 1, display: 'flex', flexDirection: 'column', gap: 2 }}>
             <TextField
               fullWidth
-              label='危险源名称 *'
+              label={t('ehs.hazard_page.name_1')}
               value={formData.name}
               onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-              placeholder='请输入危险源名称'
+              placeholder={t('ehs.hazard_page.please_input')}
             />
             <Box sx={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 2 }}>
               <FormControl fullWidth>
                 <InputLabel>类别 *</InputLabel>
                 <Select
                   value={formData.category}
-                  label='类别'
+                  label={t('ehs.hazard_page.text_383a6d')}
                   onChange={(e) => setFormData({ ...formData, category: e.target.value })}
                 >
                   <MenuItem value='equipment'>设备设施</MenuItem>
@@ -527,10 +529,10 @@ const HazardPage: React.FC = () => {
               </FormControl>
               <TextField
                 fullWidth
-                label='位置'
+                label={t('ehs.hazard_page.text_d4d2a6')}
                 value={formData.location}
                 onChange={(e) => setFormData({ ...formData, location: e.target.value })}
-                placeholder='请输入位置'
+                placeholder={t('ehs.hazard_page.please_input_1')}
               />
             </Box>
             <Box sx={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: 2 }}>
@@ -538,7 +540,7 @@ const HazardPage: React.FC = () => {
                 <InputLabel>严重程度 *</InputLabel>
                 <Select
                   value={formData.severity}
-                  label='严重程度'
+                  label={t('ehs.hazard_page.text_08fe50')}
                   onChange={(e) =>
                     setFormData({
                       ...formData,
@@ -555,7 +557,7 @@ const HazardPage: React.FC = () => {
                 <InputLabel>可能性 *</InputLabel>
                 <Select
                   value={formData.likelihood}
-                  label='可能性'
+                  label={t('ehs.hazard_page.text_708913')}
                   onChange={(e) =>
                     setFormData({
                       ...formData,
@@ -572,7 +574,7 @@ const HazardPage: React.FC = () => {
                 <InputLabel>暴露程度 *</InputLabel>
                 <Select
                   value={formData.exposure}
-                  label='暴露程度'
+                  label={t('ehs.hazard_page.text_b5e61b')}
                   onChange={(e) =>
                     setFormData({
                       ...formData,
@@ -588,10 +590,10 @@ const HazardPage: React.FC = () => {
             </Box>
             <TextField
               fullWidth
-              label='描述'
+              label={t('ehs.hazard_page.description')}
               value={formData.description}
               onChange={(e) => setFormData({ ...formData, description: e.target.value })}
-              placeholder='请输入危险源描述'
+              placeholder={t('ehs.hazard_page.please_input_2')}
               multiline
               rows={3}
             />
@@ -726,7 +728,7 @@ const HazardPage: React.FC = () => {
                             variant='caption'
                             sx={{ color: 'text.secondary' }}
                           >
-                            负责人: {measure.responsible || '-'} | 截止: {measure.deadline || '-'}
+                            {t('ehs.hazard_page.text_81a600')}: {measure.responsible || '-'}
                           </Typography>
                         </Box>
                         {getControlStatusBadge(measure.status)}

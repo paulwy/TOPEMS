@@ -51,6 +51,7 @@ import { PageContainer } from '@/components/common';
 import { fetchWidgets, createWidget, updateWidget, deleteWidget, type Widget } from '@/api/bi';
 import { logger } from '@/utils/logger';
 
+import { useTranslation } from 'react-i18next';
 interface VisualizationComponent {
   id: string;
   type: 'bar' | 'line' | 'pie' | 'gauge' | 'table' | 'text' | 'image' | 'metric';
@@ -151,6 +152,7 @@ const canvasComponentToWidgetData = (comp: CanvasComponent): Partial<Widget> => 
 });
 
 const BIVisualizationPage = () => {
+  const { t } = useTranslation();
   const queryClient = useQueryClient();
   const [error, setError] = useState<string | null>(null);
   const [searchTerm, setSearchTerm] = useState('');
@@ -184,7 +186,7 @@ const BIVisualizationPage = () => {
   useEffect(() => {
     if (widgetsQuery.isError) {
       logger.error('Failed to load widgets:', widgetsQuery.error);
-      setError('加载组件数据失败，请稍后重试');
+      setError(t('bi.bi_visualization_page.fail'));
     } else {
       setError(null);
     }
@@ -248,9 +250,9 @@ const BIVisualizationPage = () => {
     const componentType = e.dataTransfer.getData('componentType');
     if (componentType) {
       const newComponentData: Partial<Widget> = {
-        name: '新组件',
+        name: t('bi.bi_visualization_page.text_e798a0'),
         widget_type: componentType,
-        config: { title: '新组件' },
+        config: { title: t('bi.bi_visualization_page.text_e798a0') },
         position: {
           x: 50,
           y: 50,
@@ -287,14 +289,14 @@ const BIVisualizationPage = () => {
   const statsCards: StatCard[] = [
     {
       id: 'total-components',
-      title: '组件总数',
+      title: t('bi.bi_visualization_page.text_c95a1a'),
       value: canvasComponents.length,
       icon: <BoxIcon size={24} />,
       color: 'primary',
     },
     {
       id: 'component-types',
-      title: '组件类型',
+      title: t('bi.bi_visualization_page.type'),
       value: new Set(canvasComponents.map((c) => c.type)).size,
       icon: <Settings size={24} />,
       color: 'info',
@@ -304,8 +306,8 @@ const BIVisualizationPage = () => {
   if (loading) {
     return (
       <PageContainer
-        title='可视化编辑器'
-        subtitle='拖拽组件创建可视化报表'
+        title={t('bi.bi_visualization_page.edit')}
+        subtitle={t('bi.bi_visualization_page.create')}
         padding={false}
         maxWidth={false}
       >
@@ -313,9 +315,9 @@ const BIVisualizationPage = () => {
           title=''
           subtitle=''
           breadcrumbs={[
-            { label: '首页', href: '/dashboard' },
+            { label: t('bi.bi_visualization_page.home'), href: '/dashboard' },
             { label: 'BI' },
-            { label: '可视化编辑' },
+            { label: t('bi.bi_visualization_page.edit_1') },
           ]}
           loading={true}
         >
@@ -357,8 +359,8 @@ const BIVisualizationPage = () => {
 
   return (
     <PageContainer
-      title='可视化编辑器'
-      subtitle='拖拽组件创建可视化报表'
+      title={t('bi.bi_visualization_page.edit')}
+      subtitle={t('bi.bi_visualization_page.create')}
       padding={false}
       maxWidth={false}
     >
@@ -366,9 +368,9 @@ const BIVisualizationPage = () => {
         title=''
         subtitle=''
         breadcrumbs={[
-          { label: '首页', href: '/dashboard' },
+          { label: t('bi.bi_visualization_page.home'), href: '/dashboard' },
           { label: 'BI' },
-          { label: '可视化编辑' },
+          { label: t('bi.bi_visualization_page.edit_1') },
         ]}
         stats={statsCards}
         loading={loading}
@@ -377,11 +379,11 @@ const BIVisualizationPage = () => {
         <Box sx={{ display: 'flex', gap: 3, height: 'calc(100vh - 280px)' }}>
           <Card sx={{ width: 280, display: 'flex', flexDirection: 'column' }}>
             <CardHeader
-              title='组件列表'
+              title={t('bi.bi_visualization_page.list')}
               avatar={<Settings size={20} />}
               action={
                 <Box sx={{ display: 'flex', gap: 0.5, pr: 1 }}>
-                  <Tooltip title='网格视图'>
+                  <Tooltip title={t('bi.bi_visualization_page.text_90581a')}>
                     <IconButton
                       size='small'
                       onClick={() => setViewMode('grid')}
@@ -390,7 +392,7 @@ const BIVisualizationPage = () => {
                       <Grid3X3 size={16} />
                     </IconButton>
                   </Tooltip>
-                  <Tooltip title='列表视图'>
+                  <Tooltip title={t('bi.bi_visualization_page.list_1')}>
                     <IconButton
                       size='small'
                       onClick={() => setViewMode('list')}
@@ -404,7 +406,7 @@ const BIVisualizationPage = () => {
             />
             <CardContent sx={{ flex: 1, overflow: 'auto' }}>
               <TextField
-                placeholder='搜索组件...'
+                placeholder={t('bi.bi_visualization_page.search')}
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
                 size='small'
@@ -430,7 +432,7 @@ const BIVisualizationPage = () => {
                 <InputLabel>组件类型</InputLabel>
                 <Select
                   value={filterType}
-                  label='组件类型'
+                  label={t('bi.bi_visualization_page.type')}
                   onChange={(e) => setFilterType(e.target.value)}
                 >
                   <MenuItem value='all'>全部类型</MenuItem>
@@ -516,8 +518,8 @@ const BIVisualizationPage = () => {
 
           <Card sx={{ flex: 1, display: 'flex', flexDirection: 'column' }}>
             <CardHeader
-              title='画布区域'
-              subheader='拖拽组件到此处进行可视化编辑'
+              title={t('bi.bi_visualization_page.text_6cfd0e')}
+              subheader={t('bi.bi_visualization_page.edit_2')}
               action={
                 <Box sx={{ display: 'flex', gap: 1, pr: 2 }}>
                   <Button
@@ -638,13 +640,13 @@ const BIVisualizationPage = () => {
                           variant='caption'
                           color='text.secondary'
                         >
-                          {comp.type === 'bar' && '柱状图'}
-                          {comp.type === 'line' && '折线图'}
-                          {comp.type === 'pie' && '饼图'}
-                          {comp.type === 'gauge' && '仪表盘'}
-                          {comp.type === 'table' && '数据表格'}
-                          {comp.type === 'text' && '文本内容'}
-                          {comp.type === 'image' && '图片'}
+                          {comp.type === 'bar' && t('bi.bi_visualization_page.text_7c8ee6')}
+                          {comp.type === 'line' && t('bi.bi_visualization_page.text_c9c9bd')}
+                          {comp.type === 'pie' && t('bi.bi_visualization_page.text_d5e33d')}
+                          {comp.type === 'gauge' && t('bi.bi_visualization_page.text_3fa8b3')}
+                          {comp.type === 'table' && t('bi.bi_visualization_page.text_01c85e')}
+                          {comp.type === 'text' && t('bi.bi_visualization_page.content')}
+                          {comp.type === 'image' && t('bi.bi_visualization_page.text_20def7')}
                           {comp.type === 'metric' && `数值: ${comp.config.value || 0}`}
                         </Typography>
                       </Box>
@@ -656,7 +658,7 @@ const BIVisualizationPage = () => {
           </Card>
 
           <Card sx={{ width: 300, display: 'flex', flexDirection: 'column' }}>
-            <CardHeader title='属性配置' />
+            <CardHeader title={t('bi.bi_visualization_page.text_6aab38')} />
             <CardContent sx={{ flex: 1, overflow: 'auto' }}>
               {selectedComponent ? (
                 <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
@@ -680,7 +682,7 @@ const BIVisualizationPage = () => {
                           </Typography>
                         </Box>
                         <TextField
-                          label='标题'
+                          label={t('bi.bi_visualization_page.title')}
                           size='small'
                           fullWidth
                           value={comp.config.title || ''}
@@ -747,7 +749,7 @@ const BIVisualizationPage = () => {
                               }}
                             />
                             <TextField
-                              label='宽度'
+                              label={t('bi.bi_visualization_page.text_c28479')}
                               size='small'
                               type='number'
                               value={comp.width}
@@ -762,7 +764,7 @@ const BIVisualizationPage = () => {
                               }}
                             />
                             <TextField
-                              label='高度'
+                              label={t('bi.bi_visualization_page.text_c1df04')}
                               size='small'
                               type='number'
                               value={comp.height}

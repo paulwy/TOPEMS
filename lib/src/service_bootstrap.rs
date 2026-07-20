@@ -40,6 +40,21 @@ pub struct BootstrapConfig {
 
     /// 是否启用指标监控
     pub enable_metrics: bool,
+
+    /// V21.0: 是否启用权限中心（默认启用）
+    ///
+    /// 启动时自动初始化权限元数据缓存，
+    /// 并订阅 PermissionMetadataChangedEvent 实时更新。
+    pub enable_permission_center: bool,
+
+    /// V21.0: 是否启用事件订阅（默认启用）
+    ///
+    /// 启动时自动订阅：
+    /// - 权限变更事件（PermissionMetadataChangedEvent）
+    /// - 缓存失效广播（CacheInvalidatedEvent via Fanout Exchange）
+    ///
+    /// 需要 RabbitMQ 连接可用，失败不影响服务启动。
+    pub enable_event_subscription: bool,
 }
 
 impl Default for BootstrapConfig {
@@ -53,6 +68,8 @@ impl Default for BootstrapConfig {
             enable_cors: true,
             enable_health_check: true,
             enable_metrics: true,
+            enable_permission_center: true,
+            enable_event_subscription: true,
         }
     }
 }
@@ -140,6 +157,64 @@ impl ServiceBootstrap {
         // 创建数据库连接池
         let db = self.create_database_pool().await?;
         tracing::info!("✅ 数据库连接成功");
+
+        // V21.0: 初始化权限中心客户端
+        if self.config.enable_permission_center {
+            let permission_client = crate::permission_center::PermissionCenterClient::new(
+                self.config.service_name,
+            );
+            if let Err(e) = permission_client.initialize().await {
+                tracing::warn!(
+                    "⚠️  权限元数据缓存初始化失败（不影响启动）: {:?}",
+                    e
+                );
+            } else {
+                tracing::info!("✅ 权限元数据缓存已初始化");
+
+                // 启动权限变更事件订阅（非阻塞，失败不影响启动）
+                if self.config.enable_event_subscription {
+                    match crate::event::RabbitMqSubscriber::new(self.config.service_name).await {
+                        Ok(subscriber) => {
+                            if let Err(e) = permission_client
+                                .start_event_subscription(&subscriber)
+                                .await
+                            {
+                                tracing::warn!(
+                                    "⚠️  权限变更事件订阅启动失败: {:?}",
+                                    e
+                                );
+                            } else {
+                                tracing::info!("✅ 权限变更事件订阅已启动");
+
+                                // 同时订阅缓存失效广播
+                                if let Err(e) = subscriber
+                                    .subscribe_cache_invalidation(|payload| {
+                                        tracing::info!(
+                                            "🔄 收到缓存失效广播: pattern={}, level={}",
+                                            payload.cache_key_pattern,
+                                            payload.invalidation_level
+                                        );
+                                        Ok(())
+                                    })
+                                    .await
+                                {
+                                    tracing::warn!(
+                                        "⚠️  缓存失效广播订阅失败: {:?}",
+                                        e
+                                    );
+                                }
+                            }
+                        }
+                        Err(e) => {
+                            tracing::warn!(
+                                "⚠️  RabbitMQ 连接失败，跳过事件订阅: {:?}",
+                                e
+                            );
+                        }
+                    }
+                }
+            }
+        }
 
         // 创建应用状态
         let start_time = Instant::now();

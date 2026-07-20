@@ -1,0 +1,140 @@
+# TOPEMS Traefik 静态配置 (v3.0)
+# 开发环境配置 - 生产环境请关闭 api.insecure 并配置 TLS
+
+# ================================================
+# 入口点（EntryPoints）
+# ================================================
+entryPoints:
+  # HTTP 入口（开发环境）
+  web:
+    address: ":80"
+    http:
+      redirections:
+        entryPoint:
+          to: websecure
+          scheme: https
+          permanent: false
+
+  # HTTPS 入口（生产环境启用 TLS）
+  websecure:
+    address: ":443"
+    http:
+      tls:
+        # 默认 TLS 配置，可由动态配置覆盖
+        certResolver: letsencrypt
+        domains:
+          - main: "topems.local"
+
+  # Traefik Dashboard / API 入口
+  traefik:
+    address: ":8080"
+
+# ================================================
+# API 与 Dashboard
+# ================================================
+api:
+  # 启用 Dashboard
+  dashboard: true
+  # 开发环境：允许通过 8080 端口无认证访问（生产环境必须关闭）
+  insecure: true
+  # 调试模式（生产环境关闭）
+  debug: true
+
+# ================================================
+# 文件动态配置提供者
+# ================================================
+providers:
+  file:
+    directory: "/etc/traefik/dynamic"
+    watch: true
+    # 仅加载 .yml/.yaml 后缀文件
+    filename: ""
+    # 调试日志
+    debugLogGeneratedFile: true
+
+# ================================================
+# 指标（Prometheus）
+# ================================================
+metrics:
+  prometheus:
+    # 启用 Prometheus 指标暴露
+    addEntryPointsLabels: true
+    addServicesLabels: true
+    addRoutersLabels: true
+    addServerTLS: true
+    entryPoint: traefik
+    # 桶配置（按延迟分布）
+    buckets:
+      0.1: 0.1
+      0.3: 0.3
+      1.2: 1.2
+      5.0: 5.0
+
+# ================================================
+# 链路追踪（Jaeger）
+# ================================================
+tracing:
+  jaeger:
+    # 启用 Jaeger 追踪
+    samplingStrategy: const
+    samplingParam: 1.0
+    # 通过 HTTP 上报 trace
+    collector:
+      endpoint: "http://jaeger:14268/api/traces"
+    # 是否记录头信息
+    traceContextHeaderName: "uber-trace-id"
+    # 不记录请求体（避免敏感信息泄露）
+    disableAttemptReconnecting: true
+
+# ================================================
+# 访问日志
+# ================================================
+accessLog:
+  # 启用访问日志
+  filePath: "/var/log/traefik/access.log"
+  # JSON 格式（便于 ELK 采集）
+  format: json
+  # 过滤：仅记录 4xx/5xx 错误（生产可改为全量）
+  filters:
+    statusCodes:
+      - "200"
+      - "300"
+      - "400"
+      - "500"
+    retryAttempts: true
+    minDuration: "10ms"
+  # 字段配置
+  fields:
+    defaultMode: keep
+    names:
+      # 隐藏客户端 IP 末段（生产环境隐私保护）
+      ClientHost: keep
+      # 保留请求 URI
+      RequestURI: keep
+      # 隐藏 User-Agent 详情
+      UserAgent: keep
+    headers:
+      defaultMode: drop
+      names:
+        Authorization: redacted
+        Cookie: redacted
+        X-Auth-Token: redacted
+        X-Request-Id: keep
+        X-Tenant-Id: keep
+
+# ================================================
+# 实验性插件（requestid 插件用于请求 ID 注入）
+# ================================================
+experimental:
+  plugins:
+    requestid:
+      moduleName: "github.com/tommoulard/requestid"
+      version: "v0.1.0"
+
+# ================================================
+# 日志级别
+# ================================================
+log:
+  level: INFO
+  format: json
+  filePath: "/var/log/traefik/traefik.log"

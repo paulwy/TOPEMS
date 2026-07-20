@@ -50,6 +50,7 @@ import type {
 import type { ConsolidationReport, ConsolidationReportType } from '@/types/consolidation';
 import { PageContainer } from '@/components/common';
 
+import { useTranslation } from 'react-i18next';
 const ct = designTokens.colors;
 
 const REPORT_TYPE_CONFIG: Record<
@@ -81,6 +82,7 @@ const APPROVAL_STATUS_CONFIG: Record<string, { label: string; color: string }> =
 };
 
 export default function ConsolidationReportsPage() {
+  const { t } = useTranslation();
   const { error: notifyError, success: notifySuccess } = useNotification();
 
   const [searchKeyword, setSearchKeyword] = useState('');
@@ -118,11 +120,11 @@ export default function ConsolidationReportsPage() {
   const generateReport = useGenerateConsolidationReport();
 
   useEffect(() => {
-    if (scopesError) notifyError('获取合并范围列表失败');
+    if (scopesError) notifyError(t('finance.consolidation_reports_page.list'));
   }, [scopesError, notifyError]);
 
   useEffect(() => {
-    if (reportsError) notifyError('获取报表列表失败');
+    if (reportsError) notifyError(t('finance.consolidation_reports_page.list_1'));
   }, [reportsError, notifyError]);
 
   const handleOpenGenerateModal = () => {
@@ -136,7 +138,7 @@ export default function ConsolidationReportsPage() {
 
   const handleGenerateReport = async () => {
     if (!generateFormData.scope_id || !generateFormData.report_type || !generateFormData.period) {
-      notifyError('请填写完整的生成条件');
+      notifyError(t('finance.consolidation_reports_page.please_fill'));
       return;
     }
 
@@ -148,7 +150,7 @@ export default function ConsolidationReportsPage() {
       auto_eliminate: true,
     });
 
-    notifySuccess('合并报表生成任务已提交');
+    notifySuccess(t('finance.consolidation_reports_page.submit'));
     setShowGenerateModal(false);
     refetch();
   };
@@ -164,28 +166,28 @@ export default function ConsolidationReportsPage() {
     () => [
       {
         id: 'balance-sheet',
-        title: '合并资产负债表',
+        title: t('finance.consolidation_reports_page.text_cb3b91'),
         value: reports.filter((r) => r.report_type === 'consolidated_balance_sheet').length,
         icon: <Building2 sx={{ width: 24, height: 24 }} />,
         gradient: [ct.primary.dark, ct.primary[800]] as [string, string],
       },
       {
         id: 'income-statement',
-        title: '合并利润表',
+        title: t('finance.consolidation_reports_page.text_1fd96a'),
         value: reports.filter((r) => r.report_type === 'consolidated_income_statement').length,
         icon: <TrendingUp sx={{ width: 24, height: 24 }} />,
         gradient: [ct.success.main, ct.success.dark] as [string, string],
       },
       {
         id: 'cash-flow',
-        title: '合并现金流量表',
+        title: t('finance.consolidation_reports_page.text_c4397e'),
         value: reports.filter((r) => r.report_type === 'consolidated_cash_flow').length,
         icon: <DollarSign sx={{ width: 24, height: 24 }} />,
         gradient: [ct.secondary.main, ct.secondary.dark] as [string, string],
       },
       {
         id: 'equity-changes',
-        title: '所有者权益变动表',
+        title: t('finance.consolidation_reports_page.text_b70e57'),
         value: reports.filter((r) => r.report_type === 'consolidated_statement_changes').length,
         icon: <BarChart3 sx={{ width: 24, height: 24 }} />,
         gradient: [ct.warning.main, ct.warning.dark] as [string, string],
@@ -205,15 +207,15 @@ export default function ConsolidationReportsPage() {
     return [
       {
         id: 'status-distribution',
-        title: '报表状态分布',
+        title: t('finance.consolidation_reports_page.status'),
         type: 'pie',
         dataKey: 'value',
         nameKey: 'name',
         data: [
-          { name: '草稿', value: statusDistribution.draft, color: 'grey' },
-          { name: '计算中', value: statusDistribution.calculating, color: ct.primary.dark },
-          { name: '已完成', value: statusDistribution.completed, color: ct.success.main },
-          { name: '已发布', value: statusDistribution.published, color: 'secondary.main' },
+          { name: t('finance.consolidation_reports_page.text_22b433'), value: statusDistribution.draft, color: 'grey' },
+          { name: t('finance.consolidation_reports_page.text_5930ea'), value: statusDistribution.calculating, color: ct.primary.dark },
+          { name: t('finance.consolidation_reports_page.completed'), value: statusDistribution.completed, color: ct.success.main },
+          { name: t('finance.consolidation_reports_page.text_dca0c1'), value: statusDistribution.published, color: 'secondary.main' },
         ].filter((d) => d.value > 0),
         height: 250,
       },
@@ -221,23 +223,23 @@ export default function ConsolidationReportsPage() {
   }, [reports]);
 
   const tableColumns: TableColumn[] = [
-    { id: 'report_no', label: '报表编号', field: 'report_no' },
-    { id: 'report_type', label: '报表类型', field: 'report_type' },
-    { id: 'scope_name', label: '合并范围', field: 'scope_name' },
-    { id: 'period', label: '期间', field: 'period' },
-    { id: 'company_count', label: '公司数', field: 'company_count' },
-    { id: 'total_assets', label: '资产总计', field: 'total_assets', align: 'right' },
-    { id: 'net_profit', label: '净利润', field: 'net_profit', align: 'right' },
-    { id: 'status', label: '状态', field: 'status', align: 'center' },
-    { id: 'approval_status', label: '审批', field: 'approval_status', align: 'center' },
-    { id: 'actions', label: '操作', field: 'actions', align: 'center' },
+    { id: 'report_no', label: t('finance.consolidation_reports_page.text_634a94'), field: 'report_no' },
+    { id: 'report_type', label: t('finance.consolidation_reports_page.type'), field: 'report_type' },
+    { id: 'scope_name', label: t('finance.consolidation_reports_page.text_2ae758'), field: 'scope_name' },
+    { id: 'period', label: t('finance.consolidation_reports_page.text_2f4339'), field: 'period' },
+    { id: 'company_count', label: t('finance.consolidation_reports_page.text_ccb91d'), field: 'company_count' },
+    { id: 'total_assets', label: t('finance.consolidation_reports_page.text_f9dddf'), field: 'total_assets', align: 'right' },
+    { id: 'net_profit', label: t('finance.consolidation_reports_page.text_80170f'), field: 'net_profit', align: 'right' },
+    { id: 'status', label: t('finance.consolidation_reports_page.status_1'), field: 'status', align: 'center' },
+    { id: 'approval_status', label: t('finance.consolidation_reports_page.text_0273ba'), field: 'approval_status', align: 'center' },
+    { id: 'actions', label: t('finance.consolidation_reports_page.action'), field: 'actions', align: 'center' },
   ];
 
   const tables = useMemo<DataTable[]>(
     () => [
       {
         id: 'report-list',
-        title: '合并报表列表',
+        title: t('finance.consolidation_reports_page.list_2'),
         columns: tableColumns,
         data: reports.map((report) => ({
           report_no: report.report_no,
@@ -312,7 +314,7 @@ export default function ConsolidationReportsPage() {
       <TextField
         size='small'
         type='month'
-        label='会计期间'
+        label={t('finance.consolidation_reports_page.text_6cde16')}
         value={period}
         onChange={(e) => setPeriod(e.target.value)}
         sx={{ minWidth: 140 }}
@@ -331,8 +333,8 @@ export default function ConsolidationReportsPage() {
   return (
     <PageContainer maxWidth='xl'>
       <StatsPageTemplate
-        title='合并报表'
-        subtitle='查看多公司合并后的财务报表'
+        title={t('finance.consolidation_reports_page.text_e2b4a2')}
+        subtitle={t('finance.consolidation_reports_page.view')}
         statCards={statCards}
         statColumns={4}
         charts={charts}
@@ -342,7 +344,7 @@ export default function ConsolidationReportsPage() {
         search={{
           value: searchKeyword,
           onChange: setSearchKeyword,
-          placeholder: '报表编号...',
+          placeholder: t('finance.consolidation_reports_page.text_f90bca'),
         }}
         onRefresh={refetch}
         showExport={true}
@@ -376,7 +378,7 @@ export default function ConsolidationReportsPage() {
               </Box>
               <IconButton
                 onClick={() => setShowDetail(false)}
-                aria-label='关闭'
+                aria-label={t('finance.consolidation_reports_page.close')}
               >
                 <X style={{ width: 20, height: 20 }} />
               </IconButton>
@@ -617,7 +619,7 @@ export default function ConsolidationReportsPage() {
               <InputLabel>合并范围 *</InputLabel>
               <Select
                 value={generateFormData.scope_id}
-                label='合并范围'
+                label={t('finance.consolidation_reports_page.text_2ae758')}
                 onChange={(e) =>
                   setGenerateFormData({ ...generateFormData, scope_id: e.target.value })
                 }
@@ -637,7 +639,7 @@ export default function ConsolidationReportsPage() {
               <InputLabel>报表类型 *</InputLabel>
               <Select
                 value={generateFormData.report_type}
-                label='报表类型'
+                label={t('finance.consolidation_reports_page.type')}
                 onChange={(e) =>
                   setGenerateFormData({
                     ...generateFormData,
@@ -659,7 +661,7 @@ export default function ConsolidationReportsPage() {
             <TextField
               fullWidth
               type='month'
-              label='会计期间 *'
+              label={t('finance.consolidation_reports_page.text_2902c0')}
               value={generateFormData.period}
               onChange={(e) => setGenerateFormData({ ...generateFormData, period: e.target.value })}
             />
@@ -684,7 +686,7 @@ export default function ConsolidationReportsPage() {
             onClick={handleGenerateReport}
             disabled={generateReport.isPending}
           >
-            {generateReport.isPending ? '生成中...' : '生成报表'}
+            {generateReport.isPending ? t('finance.consolidation_reports_page.text_4d020b') : t('finance.consolidation_reports_page.text_0b5bc4')}
           </Button>
         </DialogActions>
       </Dialog>

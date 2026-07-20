@@ -32,6 +32,15 @@ crate::define_service_client!(
         list_vouchers(page: i32, page_size: i32) -> ApiResponse<Vec<serde_json::Value>> {
             get => "/api/erp/vouchers?page={}&pagesize={}"
         }
+        create_voucher() -> ApiResponse<serde_json::Value> {
+            post => "/api/erp/vouchers"; body: data: &serde_json::Value
+        }
+        create_reconciliation() -> ApiResponse<serde_json::Value> {
+            post => "/api/erp/finance/reconciliation"; body: data: &serde_json::Value
+        }
+        list_reconciliations_by_ref(ref_id: &str, ref_type: &str) -> ApiResponse<serde_json::Value> {
+            get => "/api/erp/finance/reconciliation?ref_id={}&ref_type={}"
+        }
         list_assets(page: i32, page_size: i32) -> ApiResponse<Vec<serde_json::Value>> {
             get => "/api/erp/assets?page={}&pagesize={}"
         }

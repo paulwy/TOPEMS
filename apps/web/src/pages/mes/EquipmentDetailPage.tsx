@@ -2,6 +2,7 @@ import { Typography, Box, InputLabel, Chip, type ChipProps } from '@mui/material
 import React, { useState, useMemo } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { useQuery, useMutation } from '@tanstack/react-query';
+import { useTranslation } from 'react-i18next';
 import { QUERY_KEYS } from '@/lib/reactQuery';
 import { Wrench, MapPin, Calendar, User, FileText } from 'lucide-react';
 import { assetApi, type Asset } from '@/api/erp';
@@ -16,6 +17,7 @@ import { MES_PATHS } from '@/modules/mes/config';
 const ct = designTokens.colors;
 
 const EquipmentDetailPage: React.FC = () => {
+  const { t } = useTranslation();
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
   const { success, error } = useNotification();
@@ -34,26 +36,26 @@ const EquipmentDetailPage: React.FC = () => {
       if (res.code === 200 && res.data) {
         return res.data;
       }
-      throw new Error(res.message || '加载设备信息失败');
+      throw new Error(res.message || t('mes.equipment_detail_page.notifications.load_error.message'));
     },
     enabled: !!id,
   });
 
-  const errorMessage = queryError ? '加载设备信息失败' : undefined;
+  const errorMessage = queryError ? t('mes.equipment_detail_page.notifications.load_error.message') : undefined;
 
   const deleteMutation = useMutation({
     mutationFn: (equipmentId: string) => assetApi.delete(equipmentId),
     onSuccess: (res) => {
       if (res.code === 200) {
-        success('设备删除成功');
+        success(t('mes.equipment_detail_page.notifications.delete_success.message'));
         navigate(MES_PATHS.equipment);
       } else {
-        error(res.message || '删除失败');
+        error(res.message || t('mes.equipment_detail_page.notifications.delete_error.message'));
       }
     },
     onError: (err: unknown) => {
       apiLogger.error('Failed to delete equipment:', err);
-      error('删除设备失败');
+      error(t('mes.equipment_detail_page.notifications.delete_error.message'));
     },
     onSettled: () => {
       setDeleteDialogOpen(false);
@@ -83,13 +85,13 @@ const EquipmentDetailPage: React.FC = () => {
   const getStatusLabel = (status: string) => {
     switch (status) {
       case 'idle':
-        return '闲置';
+        return t('mes.equipment_detail_page.status_idle');
       case 'in_use':
-        return '使用中';
+        return t('mes.equipment_detail_page.status_in_use');
       case 'maintenance':
-        return '维护中';
+        return t('mes.equipment_detail_page.status_maintenance');
       case 'scrapped':
-        return '已报废';
+        return t('mes.equipment_detail_page.status_scrapped');
       default:
         return status;
     }
@@ -119,29 +121,29 @@ const EquipmentDetailPage: React.FC = () => {
         }}
       >
         <Box>
-          <InputLabel sx={{ fontSize: 12, color: 'text.secondary' }}>设备编号</InputLabel>
+          <InputLabel sx={{ fontSize: 12, color: 'text.secondary' }}>{t('mes.equipment_detail_page.field_equipment_number')}</InputLabel>
           <Typography sx={{ fontWeight: 'medium', mt: 0.5 }}>
             {equipment.asset_number || '-'}
           </Typography>
         </Box>
         <Box>
-          <InputLabel sx={{ fontSize: 12, color: 'text.secondary' }}>设备名称</InputLabel>
+          <InputLabel sx={{ fontSize: 12, color: 'text.secondary' }}>{t('mes.equipment_detail_page.field_equipment_name')}</InputLabel>
           <Typography sx={{ fontWeight: 'medium', mt: 0.5 }}>{equipment.name || '-'}</Typography>
         </Box>
         <Box>
-          <InputLabel sx={{ fontSize: 12, color: 'text.secondary' }}>设备类别</InputLabel>
+          <InputLabel sx={{ fontSize: 12, color: 'text.secondary' }}>{t('mes.equipment_detail_page.field_equipment_category')}</InputLabel>
           <Typography sx={{ mt: 0.5 }}>{equipment.category || '-'}</Typography>
         </Box>
         <Box>
-          <InputLabel sx={{ fontSize: 12, color: 'text.secondary' }}>品牌</InputLabel>
+          <InputLabel sx={{ fontSize: 12, color: 'text.secondary' }}>{t('mes.equipment_detail_page.field_brand')}</InputLabel>
           <Typography sx={{ mt: 0.5 }}>{equipment.brand || '-'}</Typography>
         </Box>
         <Box>
-          <InputLabel sx={{ fontSize: 12, color: 'text.secondary' }}>型号</InputLabel>
+          <InputLabel sx={{ fontSize: 12, color: 'text.secondary' }}>{t('mes.equipment_detail_page.field_model')}</InputLabel>
           <Typography sx={{ mt: 0.5 }}>{equipment.model || '-'}</Typography>
         </Box>
         <Box>
-          <InputLabel sx={{ fontSize: 12, color: 'text.secondary' }}>状态</InputLabel>
+          <InputLabel sx={{ fontSize: 12, color: 'text.secondary' }}>{t('mes.equipment_detail_page.field_status')}</InputLabel>
           <Box sx={{ mt: 0.5 }}>
             <Chip
               label={getStatusLabel(equipment.status)}
@@ -152,7 +154,7 @@ const EquipmentDetailPage: React.FC = () => {
         </Box>
       </Box>
     );
-  }, [equipment]);
+  }, [equipment, t]);
 
   const specsContent = useMemo(() => {
     if (!equipment) return null;
@@ -165,36 +167,36 @@ const EquipmentDetailPage: React.FC = () => {
         }}
       >
         <Box>
-          <InputLabel sx={{ fontSize: 12, color: 'text.secondary' }}>序列号</InputLabel>
+          <InputLabel sx={{ fontSize: 12, color: 'text.secondary' }}>{t('mes.equipment_detail_page.field_serial_no')}</InputLabel>
           <Typography sx={{ mt: 0.5 }}>{equipment.serial_number || '-'}</Typography>
         </Box>
         <Box>
-          <InputLabel sx={{ fontSize: 12, color: 'text.secondary' }}>制造商</InputLabel>
+          <InputLabel sx={{ fontSize: 12, color: 'text.secondary' }}>{t('mes.equipment_detail_page.field_manufacturer')}</InputLabel>
           <Typography sx={{ mt: 0.5 }}>{equipment.manufacturer || '-'}</Typography>
         </Box>
         <Box>
-          <InputLabel sx={{ fontSize: 12, color: 'text.secondary' }}>额定功率</InputLabel>
+          <InputLabel sx={{ fontSize: 12, color: 'text.secondary' }}>{t('mes.equipment_detail_page.field_rated_power')}</InputLabel>
           <Typography sx={{ mt: 0.5 }}>
             {equipment.rated_power ? `${equipment.rated_power} kW` : '-'}
           </Typography>
         </Box>
         <Box>
-          <InputLabel sx={{ fontSize: 12, color: 'text.secondary' }}>额定电压</InputLabel>
+          <InputLabel sx={{ fontSize: 12, color: 'text.secondary' }}>{t('mes.equipment_detail_page.field_rated_voltage')}</InputLabel>
           <Typography sx={{ mt: 0.5 }}>
             {equipment.rated_voltage ? `${equipment.rated_voltage} V` : '-'}
           </Typography>
         </Box>
         <Box>
-          <InputLabel sx={{ fontSize: 12, color: 'text.secondary' }}>采购金额</InputLabel>
+          <InputLabel sx={{ fontSize: 12, color: 'text.secondary' }}>{t('mes.equipment_detail_page.field_purchase_amount')}</InputLabel>
           <Typography sx={{ mt: 0.5 }}>{formatCurrency(equipment.purchase_amount)}</Typography>
         </Box>
         <Box>
-          <InputLabel sx={{ fontSize: 12, color: 'text.secondary' }}>存放位置</InputLabel>
+          <InputLabel sx={{ fontSize: 12, color: 'text.secondary' }}>{t('mes.equipment_detail_page.field_location')}</InputLabel>
           <Typography sx={{ mt: 0.5 }}>{equipment.location || '-'}</Typography>
         </Box>
       </Box>
     );
-  }, [equipment]);
+  }, [equipment, t]);
 
   const purchaseInfoContent = useMemo(() => {
     if (!equipment) return null;
@@ -207,26 +209,26 @@ const EquipmentDetailPage: React.FC = () => {
         }}
       >
         <Box>
-          <InputLabel sx={{ fontSize: 12, color: 'text.secondary' }}>采购日期</InputLabel>
+          <InputLabel sx={{ fontSize: 12, color: 'text.secondary' }}>{t('mes.equipment_detail_page.field_purchase_date')}</InputLabel>
           <Typography sx={{ mt: 0.5 }}>{formatDate(equipment.purchase_date)}</Typography>
         </Box>
         <Box>
-          <InputLabel sx={{ fontSize: 12, color: 'text.secondary' }}>采购金额</InputLabel>
+          <InputLabel sx={{ fontSize: 12, color: 'text.secondary' }}>{t('mes.equipment_detail_page.field_purchase_amount')}</InputLabel>
           <Typography sx={{ mt: 0.5 }}>{formatCurrency(equipment.purchase_amount)}</Typography>
         </Box>
         <Box>
-          <InputLabel sx={{ fontSize: 12, color: 'text.secondary' }}>负责人</InputLabel>
+          <InputLabel sx={{ fontSize: 12, color: 'text.secondary' }}>{t('mes.equipment_detail_page.field_responsible_person')}</InputLabel>
           <Typography sx={{ mt: 0.5 }}>{equipment.responsible_id || '-'}</Typography>
         </Box>
       </Box>
     );
-  }, [equipment]);
+  }, [equipment, t]);
 
   const footerSection = useMemo<SectionConfig>(() => {
     if (!equipment) return { id: 'footer', content: null };
     return {
       id: 'footer',
-      title: '其他信息',
+      title: t('mes.equipment_detail_page.section_other_info'),
       content: (
         <Box
           sx={{
@@ -240,7 +242,7 @@ const EquipmentDetailPage: React.FC = () => {
               variant='body2'
               color='text.secondary'
             >
-              创建时间
+              {t('mes.equipment_detail_page.field_created_at')}
             </Typography>
             <Typography sx={{ fontWeight: 'medium', mt: 0.5 }}>
               {formatDate(equipment.created_at)}
@@ -251,7 +253,7 @@ const EquipmentDetailPage: React.FC = () => {
               variant='body2'
               color='text.secondary'
             >
-              更新时间
+              {t('mes.equipment_detail_page.field_updated_at')}
             </Typography>
             <Typography sx={{ fontWeight: 'medium', mt: 0.5 }}>
               {formatDate(equipment.updated_at)}
@@ -262,7 +264,7 @@ const EquipmentDetailPage: React.FC = () => {
               variant='body2'
               color='text.secondary'
             >
-              设备ID
+              {t('mes.equipment_detail_page.field_equipment_id')}
             </Typography>
             <Typography
               sx={{ fontWeight: 'medium', mt: 0.5, fontFamily: 'monospace', fontSize: '0.875rem' }}
@@ -273,15 +275,15 @@ const EquipmentDetailPage: React.FC = () => {
         </Box>
       ),
     };
-  }, [equipment]);
+  }, [equipment, t]);
 
   const tabs = useMemo<TabConfig[]>(
     () => [
-      { id: 'basic', label: '基本信息', content: basicInfoContent || <></> },
-      { id: 'specs', label: '规格信息', content: specsContent || <></> },
-      { id: 'purchase', label: '采购信息', content: purchaseInfoContent || <></> },
+      { id: 'basic', label: t('mes.equipment_detail_page.tab_basic'), content: basicInfoContent || <></> },
+      { id: 'specs', label: t('mes.equipment_detail_page.tab_specs'), content: specsContent || <></> },
+      { id: 'purchase', label: t('mes.equipment_detail_page.tab_purchase'), content: purchaseInfoContent || <></> },
     ],
-    [basicInfoContent, specsContent, purchaseInfoContent]
+    [t, basicInfoContent, specsContent, purchaseInfoContent]
   );
 
   const infoCard = useMemo(
@@ -296,11 +298,11 @@ const EquipmentDetailPage: React.FC = () => {
       subtitle: equipment?.asset_number || undefined,
       tags: [equipment?.category || ''],
       stats: [
-        { label: '设备类别', value: equipment?.category || '-' },
-        { label: '状态', value: getStatusLabel(equipment?.status || '') },
+        { label: t('mes.equipment_detail_page.field_equipment_category'), value: equipment?.category || '-' },
+        { label: t('mes.equipment_detail_page.field_status'), value: getStatusLabel(equipment?.status || '') },
       ],
     }),
-    [equipment]
+    [equipment, t]
   );
 
   return (
@@ -328,8 +330,8 @@ const EquipmentDetailPage: React.FC = () => {
         isOpen={deleteDialogOpen}
         onClose={() => setDeleteDialogOpen(false)}
         onConfirm={handleDelete}
-        title='确认删除'
-        message='确定要删除此设备吗？'
+        title={t('mes.equipment_detail_page.dialog_delete_title')}
+        message={t('mes.equipment_detail_page.dialog_delete_message')}
         danger
       />
     </PageContainer>

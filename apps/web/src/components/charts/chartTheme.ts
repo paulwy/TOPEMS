@@ -2,6 +2,7 @@
 // A cohesive, professional color scheme for business intelligence dashboards
 
 import { useTheme } from '@mui/material/styles';
+import { useThemeStore } from '@/store';
 
 // ── Chart type enum for future MUI X Charts migration ──────────────────────
 
@@ -43,6 +44,23 @@ export const BIChartColors = {
     text: '#94A3B8',
     background: 'rgba(30, 41, 59, 0.95)',
     border: '#475569',
+  },
+  // 赛博朋克霓虹色板 — 高饱和度发光色，适配深空背景
+  cyberpunk: {
+    series: [
+      '#00FFFF', // 霓虹青
+      '#FF00FF', // 霓虹品红
+      '#FFD700', // 霓虹金
+      '#00FF88', // 霓虹绿
+      '#FF4444', // 霓虹红
+      '#00AAFF', // 电光蓝
+      '#FF8800', // 霓虹橙
+      '#AA00FF', // 紫电
+    ],
+    grid: 'rgba(0, 255, 255, 0.10)',
+    text: '#8892B0',
+    background: 'rgba(26, 26, 46, 0.95)',
+    border: 'rgba(0, 255, 255, 0.30)',
   },
   neutral: {
     grid: '#E2E8F0',
@@ -123,7 +141,26 @@ export interface ChartThemeColors {
 
 export const useChartTheme = (): ChartThemeColors => {
   const theme = useTheme();
+  const storeTheme = useThemeStore((state) => state.theme);
   const isDark = theme.palette.mode === 'dark';
+  const isCyberpunk = storeTheme === 'cyberpunk';
+
+  // 赛博朋克模式优先级最高
+  if (isCyberpunk) {
+    return {
+      gridColor: BIChartColors.cyberpunk.grid,
+      textColor: BIChartColors.cyberpunk.text,
+      tooltipBg: BIChartColors.cyberpunk.background,
+      borderColor: BIChartColors.cyberpunk.border,
+      primary: '#00FFFF',
+      secondary: '#FF00FF',
+      success: '#00FF88',
+      warning: '#FFD700',
+      error: '#FF4444',
+      info: '#00AAFF',
+      series: BIChartColors.cyberpunk.series,
+    };
+  }
 
   return {
     gridColor: isDark ? BIChartColors.neutral.gridDark : BIChartColors.neutral.grid,

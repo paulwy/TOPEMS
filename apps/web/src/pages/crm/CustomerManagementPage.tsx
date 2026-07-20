@@ -12,8 +12,9 @@ import {
   useTheme,
   useMediaQuery,
 } from '@mui/material';
-import { StatusBadge, Hidden } from '@topems/shared-components';
+import { StatusBadge, Hidden, ConfirmDialog } from '@topems/shared-components';
 import { useResponsive } from '@/hooks/useResponsive';
+import { useConfirmDialog, useCrudMutations, useUrlListState } from '@/hooks';
 import {
   FormField,
   FormSelect,
@@ -31,7 +32,7 @@ import { useNavigate } from 'react-router-dom';
 import { ListPageTemplate } from '@/components/templates';
 
 import type { RowAction, FilterConfig, ColumnDef } from '@/components/templates';
-import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { designTokens } from '@/theme/tokens';
 
 const ct = designTokens.colors;
@@ -92,11 +93,38 @@ const CustomerManagementPage: React.FC = () => {
   const theme = useTheme();
   const fullScreen = useMediaQuery(theme.breakpoints.down('sm'));
 
-  const [searchTerm, setSearchTerm] = useState('');
-  const [statusFilter, setStatusFilter] = useState<string>('');
-  const [customerTypeFilter, setCustomerTypeFilter] = useState<string>('');
-  const [ratingFilter, setRatingFilter] = useState<string>('');
-  const [industryFilter, setIndustryFilter] = useState<string>('');
+  // URL 同步的列表状态（搜索、分页、筛选）
+  const listState = useUrlListState<{
+    status: string;
+    customer_type: string;
+    rating: string;
+    industry: string;
+  }>({
+    defaultSearch: '',
+    defaultPageSize: 20,
+    defaultFilters: {
+      status: '',
+      customer_type: '',
+      rating: '',
+      industry: '',
+    },
+    historyMode: 'replace',
+  });
+
+  const {
+    searchQuery,
+    debouncedSearch,
+    currentPage,
+    pageSize,
+    filters: urlFilters,
+    setSearchQuery,
+    setCurrentPage,
+    setPageSize,
+    setFilter,
+    setFilters,
+  } = listState;
+  const searchTerm = debouncedSearch;
+
   const [showDialog, setShowDialog] = useState(false);
   const [selectedCustomer, setSelectedCustomer] = useState<Customer | null>(null);
   const [showTagDialog, setShowTagDialog] = useState(false);
@@ -122,35 +150,36 @@ const CustomerManagementPage: React.FC = () => {
     employee_count: undefined,
     notes: '',
   });
-  const [pagination, setPagination] = useState({
-    page: 0,
-    pageSize: 20,
-    total: 0,
-  });
   const [selectedIds, setSelectedIds] = useState<string[]>([]);
+  const {
+    confirmOpen: confirmDialogOpen,
+    confirmConfig: confirmDialogConfig,
+    openConfirm: openConfirmDialog,
+    closeConfirm: setConfirmDialogClosed,
+  } = useConfirmDialog();
 
   // React Query - 客户列表
   const customersQuery = useQuery({
     queryKey: [
       'crm-customers',
-      pagination.page,
-      pagination.pageSize,
+      currentPage,
+      pageSize,
       searchTerm,
-      statusFilter,
-      customerTypeFilter,
-      ratingFilter,
-      industryFilter,
+      urlFilters.status,
+      urlFilters.customer_type,
+      urlFilters.rating,
+      urlFilters.industry,
     ],
     queryFn: async () => {
       const params: Record<string, unknown> = {
-        page: pagination.page + 1,
-        pagesize: pagination.pageSize,
+        page: currentPage,
+        pagesize: pageSize,
       };
       if (searchTerm) params.search = searchTerm;
-      if (statusFilter) params.status = statusFilter;
-      if (customerTypeFilter) params.customer_type = customerTypeFilter;
-      if (ratingFilter) params.rating = ratingFilter;
-      if (industryFilter) params.industry = industryFilter;
+      if (urlFilters.status) params.status = urlFilters.status;
+      if (urlFilters.customer_type) params.customer_type = urlFilters.customer_type;
+      if (urlFilters.rating) params.rating = urlFilters.rating;
+      if (urlFilters.industry) params.industry = urlFilters.industry;
       return crmApi.customers.list(params);
     },
     staleTime: 5 * 60 * 1000,
@@ -177,62 +206,16 @@ const CustomerManagementPage: React.FC = () => {
     allTagsQuery.data?.success && allTagsQuery.data.data ? allTagsQuery.data.data.items || [] : [];
 
   // React Query - Mutations
-  const createMutation = useMutation({
-    mutationFn: (data: CreateCustomerRequest) => crmApi.customers.create(data),
-    onSuccess: () => {
-      addNotification({
-        type: 'success',
-        title: '创建成功',
-        message: '新客户已创建',
-      });
-      queryClient.invalidateQueries({ queryKey: ['crm-customers'] });
-    },
-    onError: () => {
-      addNotification({
-        type: 'error',
-        title: '操作失败',
-        message: '创建客户失败',
-      });
-    },
-  });
-
-  const updateMutation = useMutation({
-    mutationFn: ({ id, data }: { id: string; data: UpdateCustomerRequest }) =>
-      crmApi.customers.update(id, data),
-    onSuccess: () => {
-      addNotification({
-        type: 'success',
-        title: '更新成功',
-        message: '客户信息已更新',
-      });
-      queryClient.invalidateQueries({ queryKey: ['crm-customers'] });
-    },
-    onError: () => {
-      addNotification({
-        type: 'error',
-        title: '操作失败',
-        message: '更新客户失败',
-      });
-    },
-  });
-
-  const deleteMutation = useMutation({
-    mutationFn: (id: string) => crmApi.customers.delete(id),
-    onSuccess: () => {
-      addNotification({
-        type: 'success',
-        title: '删除成功',
-        message: '客户已删除',
-      });
-      queryClient.invalidateQueries({ queryKey: ['crm-customers'] });
-    },
-    onError: () => {
-      addNotification({
-        type: 'error',
-        title: '删除失败',
-        message: '无法删除客户',
-      });
-    },
+  const { createMutation, updateMutation, deleteMutation } = useCrudMutations<
+    CreateCustomerRequest,
+    UpdateCustomerRequest,
+    string
+  >({
+    queryKeyToInvalidate: ['crm-customers'],
+    createFn: async (data) => crmApi.customers.create(data),
+    updateFn: async ({ id, data }) => crmApi.customers.update(String(id), data),
+    deleteFn: async (id) => crmApi.customers.delete(String(id)),
+    entityName: '客户',
   });
 
   const loadCustomerTags = async (customerId: string) => {
@@ -264,13 +247,15 @@ const CustomerManagementPage: React.FC = () => {
     }
   };
 
-  const handleDelete = async (id: string) => {
-    if (!window.confirm('确定要删除这个客户吗?')) return;
-    try {
-      await deleteMutation.mutateAsync(id);
-    } catch (error: unknown) {
-      logger.error('删除失败:', error);
-    }
+  const handleDelete = (id: string) => {
+    openConfirmDialog({
+      title: '确认删除',
+      message: '确定要删除这个客户吗?',
+      danger: true,
+      onConfirm: () => {
+        deleteMutation.mutate(id);
+      },
+    });
   };
 
   const handleBatchDelete = useCallback(async () => {
@@ -607,9 +592,9 @@ const CustomerManagementPage: React.FC = () => {
           { value: 'inactive', label: '非活跃' },
           { value: 'prospect', label: '潜在' },
         ],
-        value: statusFilter,
+        value: urlFilters.status,
         onChange: (value) => {
-          setStatusFilter(value as string);
+          setFilter('status', value as string);
         },
       },
       {
@@ -623,9 +608,9 @@ const CustomerManagementPage: React.FC = () => {
           { value: 'inactive', label: '非活跃客户' },
           { value: 'churned', label: '流失客户' },
         ],
-        value: customerTypeFilter,
+        value: urlFilters.customer_type,
         onChange: (value) => {
-          setCustomerTypeFilter(value as string);
+          setFilter('customer_type', value as string);
         },
       },
       {
@@ -639,13 +624,13 @@ const CustomerManagementPage: React.FC = () => {
           { value: 'C', label: 'C - 一般' },
           { value: 'D', label: 'D - 较差' },
         ],
-        value: ratingFilter,
+        value: urlFilters.rating,
         onChange: (value) => {
-          setRatingFilter(value as string);
+          setFilter('rating', value as string);
         },
       },
     ],
-    [statusFilter, customerTypeFilter, ratingFilter]
+    [urlFilters.status, urlFilters.customer_type, urlFilters.rating, setFilter]
   );
 
   const availableTags = allTags.filter((tag) => !customerTags.some((ct) => ct.id === tag.id));
@@ -673,21 +658,21 @@ const CustomerManagementPage: React.FC = () => {
           loading={loading}
           searchable
           searchPlaceholder='搜索客户名称或代码...'
-          searchValue={searchTerm}
+          searchValue={searchQuery}
           onSearch={(value) => {
-            setSearchTerm(value);
+            setSearchQuery(value);
           }}
           filters={filters}
           rowActions={rowActions}
           pagination={{
-            page: pagination.page,
-            pageSize: pagination.pageSize,
+            page: currentPage - 1,
+            pageSize,
             total,
             onPageChange: (page) => {
-              setPagination((prev) => ({ ...prev, page }));
+              setCurrentPage(page + 1);
             },
-            onPageSizeChange: (pageSize) => {
-              setPagination((prev) => ({ ...prev, pageSize, page: 0 }));
+            onPageSizeChange: (newPageSize) => {
+              setPageSize(newPageSize);
             },
           }}
           selectable
@@ -730,8 +715,6 @@ const CustomerManagementPage: React.FC = () => {
           }
           exportable
           exportFileName='客户列表'
-          persistFilters
-          persistSearch
           emptyActionButton={{
             label: '新建客户',
             icon: <Plus size={18} />,
@@ -1116,6 +1099,18 @@ const CustomerManagementPage: React.FC = () => {
           </DialogContent>
         </Dialog>
       </>
+
+      <ConfirmDialog
+        isOpen={confirmDialogOpen}
+        onClose={setConfirmDialogClosed}
+        onConfirm={() => {
+          confirmDialogConfig?.onConfirm();
+          setConfirmDialogClosed();
+        }}
+        title={confirmDialogConfig?.title || ''}
+        message={confirmDialogConfig?.message || ''}
+        danger={confirmDialogConfig?.danger}
+      />
     </PageContainer>
   );
 };

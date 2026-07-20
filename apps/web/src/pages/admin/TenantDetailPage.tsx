@@ -45,6 +45,7 @@ import {
 import { useParams, useNavigate } from 'react-router-dom';
 import { PageContainer } from '@/components/common';
 import { ConfirmDialog } from '@topems/shared-components';
+import { useConfirmDialog } from '@/hooks';
 import {
   DetailPageTemplate,
   ListPageTemplate,
@@ -110,13 +111,12 @@ const TenantDetailPage: React.FC = () => {
 
   const [showInviteDialog, setShowInviteDialog] = useState(false);
   const [inviteForm, setInviteForm] = useState({ email: '', role: 'member' as TenantRole });
-  const [confirmDialogOpen, setConfirmDialogOpen] = useState(false);
-  const [confirmConfig, setConfirmConfig] = useState<{
-    title: string;
-    message: string;
-    onConfirm: () => void;
-    danger?: boolean;
-  } | null>(null);
+  const {
+    confirmOpen: confirmDialogOpen,
+    confirmConfig,
+    openConfirm: openConfirmDialog,
+    closeConfirm: setConfirmDialogClosed,
+  } = useConfirmDialog();
 
   const tenantQuery = useQuery<Tenant | null>({
     queryKey: ['admin-tenant', tenantId],
@@ -216,7 +216,7 @@ const TenantDetailPage: React.FC = () => {
       tenantApi.removeMember(params.tenantId, params.userId),
     onSuccess: () => {
       invalidateUsers();
-      setConfirmDialogOpen(false);
+      setConfirmDialogClosed();
     },
     onError: (error: unknown) => {
       logger.error('Failed to remove member:', error);
@@ -241,7 +241,7 @@ const TenantDetailPage: React.FC = () => {
 
   const handleRemoveMember = useCallback(
     (user: TenantUser) => {
-      setConfirmConfig({
+      openConfirmDialog({
         title: '确认移除成员',
         message: `确定要移除成员"${user.email}"吗？`,
         danger: true,
@@ -250,9 +250,8 @@ const TenantDetailPage: React.FC = () => {
           removeMemberMutation.mutate({ tenantId, userId: user.id });
         },
       });
-      setConfirmDialogOpen(true);
     },
-    [tenantId, removeMemberMutation]
+    [tenantId, removeMemberMutation, openConfirmDialog]
   );
 
   const handleUpdateMemberRole = (userId: string, role: TenantRole) => {
@@ -970,7 +969,7 @@ const TenantDetailPage: React.FC = () => {
           message={confirmConfig.message}
           danger={confirmConfig.danger}
           onConfirm={confirmConfig.onConfirm}
-          onClose={() => setConfirmDialogOpen(false)}
+          onClose={setConfirmDialogClosed}
         />
       )}
     </PageContainer>

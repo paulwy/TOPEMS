@@ -1,3 +1,4 @@
+mod event_handlers;
 use axum::{
     extract::FromRef,
     routing::{delete, get, post, put},
@@ -80,7 +81,24 @@ async fn main() -> anyhow::Result<()> {
         }
     };
 
-    let app_state = AppState::new(pool.clone()).await;
+    let event_publisher = match topems_shared::event::EventPublisher::new("topems-portal") {
+        Ok(publisher) => {
+            tracing::info!("📢 事件发布服务初始化成功");
+            Some(Arc::new(publisher))
+        }
+        Err(e) => {
+            tracing::warn!("⚠️ 事件发布服务初始化失败（不阻塞启动）: {}", e);
+            None
+        }
+    };
+
+    if let Err(e) =
+        event_handlers::start_event_subscribers(pool.clone(), event_publisher.clone()).await
+    {
+        tracing::warn!("⚠️ PORTAL 事件订阅者启动失败: {}", e);
+    }
+
+    let app_state = AppState::new(pool.clone(), event_publisher).await;
 
     let cors = create_cors_layer();
 

@@ -8,8 +8,10 @@ import { DashboardTemplate, type StatCard, type ChartCard } from '@/components/t
 import { PageContainer } from '@/components/common';
 import { useQuery } from '@tanstack/react-query';
 import { QUERY_KEYS } from '@/lib/reactQuery';
+import { useTranslation } from 'react-i18next';
 
 const SrmDashboardPage: React.FC = () => {
+  const { t } = useTranslation();
   const { data: statistics, isLoading: loading } = useQuery({
     queryKey: QUERY_KEYS.SRM.STATISTICS,
     queryFn: async () => {
@@ -24,15 +26,15 @@ const SrmDashboardPage: React.FC = () => {
 
   const mapStatusToChinese = (status: string) => {
     const statusMap: Record<string, string> = {
-      active: '启用',
-      inactive: '禁用',
-      pending: '待处理',
-      completed: '已完成',
-      delivered: '已交付',
-      cancelled: '已取消',
-      processing: '处理中',
-      draft: '草稿',
-      expired: '已过期',
+      active: t('srm.status_active'),
+      inactive: t('srm.status_inactive'),
+      pending: t('srm.status_pending'),
+      completed: t('srm.status_completed'),
+      delivered: t('srm.status_delivered'),
+      cancelled: t('srm.status_cancelled'),
+      processing: t('srm.status_processing'),
+      draft: t('srm.status_draft'),
+      expired: t('srm.status_expired'),
     };
     return statusMap[status] || status;
   };
@@ -42,64 +44,64 @@ const SrmDashboardPage: React.FC = () => {
     return [
       {
         id: 'suppliers',
-        title: '供应商总数',
+        title: t('srm.total_suppliers'),
         value: statistics.basic.total_suppliers ?? 0,
         icon: <Users size={24} />,
-        subtitle: `${statistics.basic.active_suppliers ?? 0} 个启用中`,
+        subtitle: t('srm.active_suppliers_count', { count: statistics.basic.active_suppliers ?? 0 }),
         color: 'primary',
       },
       {
         id: 'avg-score',
-        title: '平均评分',
+        title: t('srm.average_rating'),
         value: (statistics.basic.avg_score ?? 0).toFixed(1),
         icon: <Award size={24} />,
-        subtitle: `${statistics.basic.total_evaluations ?? 0} 次评估`,
+        subtitle: t('srm.total_evaluations_count', { count: statistics.basic.total_evaluations ?? 0 }),
         color: 'warning',
       },
       {
         id: 'orders',
-        title: '采购订单',
+        title: t('srm.purchase_order'),
         value: statistics.basic.total_orders ?? 0,
         icon: <ClipboardList size={24} />,
-        subtitle: `${statistics.basic.pending_orders ?? 0} 个待处理`,
+        subtitle: t('srm.pending_orders_count', { count: statistics.basic.pending_orders ?? 0 }),
         color: 'success',
       },
       {
         id: 'order-amount',
-        title: '订单总额',
+        title: t('srm.total_order_amount'),
         value: `¥${(statistics.basic.total_order_amount ?? 0).toLocaleString()}`,
         icon: <DollarSign size={24} />,
-        subtitle: `${statistics.basic.completed_orders ?? 0} 个已完成`,
+        subtitle: t('srm.completed_orders_count', { count: statistics.basic.completed_orders ?? 0 }),
         color: 'info',
       },
       {
         id: 'contracts',
-        title: '合同总数',
+        title: t('srm.total_contracts'),
         value: statistics.basic.total_contracts ?? 0,
         icon: <ScrollText size={24} />,
-        subtitle: `${statistics.basic.active_contracts ?? 0} 个有效`,
+        subtitle: t('srm.active_contracts_count', { count: statistics.basic.active_contracts ?? 0 }),
         color: 'secondary',
       },
       {
         id: 'categories',
-        title: '供应商分类',
+        title: t('srm.supplier_category'),
         value: statistics.supplier_by_category?.length ?? 0,
         icon: <Building2 size={24} />,
-        subtitle: '类别数量',
+        subtitle: t('srm.category_count'),
         color: 'primary',
       },
     ];
-  }, [statistics]);
+  }, [statistics, t]);
 
   const charts: ChartCard[] = useMemo(() => {
     if (!statistics) return [];
     const chartList: ChartCard[] = [
       {
         id: 'supplier-status',
-        title: '供应商状态分布',
+        title: t('srm.supplier_status_distribution'),
         chart: (
           <StatsChart
-            title='供应商状态分布'
+            title={t('srm.supplier_status_distribution')}
             type='pie'
             data={(statistics.supplier_by_status ?? []).map((s) => ({
               name: mapStatusToChinese(s.status),
@@ -115,10 +117,10 @@ const SrmDashboardPage: React.FC = () => {
       },
       {
         id: 'order-status',
-        title: '订单状态分布',
+        title: t('srm.order_status_distribution'),
         chart: (
           <StatsChart
-            title='订单状态分布'
+            title={t('srm.order_status_distribution')}
             type='pie'
             data={(statistics.order_by_status ?? []).map((s) => ({
               name: mapStatusToChinese(s.status),
@@ -133,10 +135,10 @@ const SrmDashboardPage: React.FC = () => {
       },
       {
         id: 'evaluation-score',
-        title: '评估分数分布',
+        title: t('srm.evaluation_score_distribution'),
         chart: (
           <StatsChart
-            title='评估分数分布'
+            title={t('srm.evaluation_score_distribution')}
             type='bar'
             data={(statistics.evaluation_score_distribution ?? []).map((s) => ({
               name: s.range,
@@ -151,10 +153,10 @@ const SrmDashboardPage: React.FC = () => {
       },
       {
         id: 'monthly-trend',
-        title: '月度订单趋势',
+        title: t('srm.monthly_order_trend'),
         chart: (
           <StatsChart
-            title='月度订单趋势'
+            title={t('srm.monthly_order_trend')}
             type='line'
             data={(statistics.monthly_order_trend ?? []).map((t) => ({
               name: t.month,
@@ -173,10 +175,10 @@ const SrmDashboardPage: React.FC = () => {
     if ((statistics.contract_by_status ?? []).length > 0) {
       chartList.push({
         id: 'contract-status',
-        title: '合同状态分布',
+        title: t('srm.contract_status_distribution'),
         chart: (
           <StatsChart
-            title='合同状态分布'
+            title={t('srm.contract_status_distribution')}
             type='pie'
             data={statistics.contract_by_status.map((s) => ({
               name: mapStatusToChinese(s.status),
@@ -192,11 +194,11 @@ const SrmDashboardPage: React.FC = () => {
     }
 
     return chartList;
-  }, [statistics]);
+  }, [statistics, t]);
 
   return (
     <PageContainer
-      title='供应商关系管理'
+      title={t('srm.title')}
       subtitle='Supplier Relationship Management'
       padding={false}
       maxWidth={false}
@@ -204,7 +206,7 @@ const SrmDashboardPage: React.FC = () => {
       <DashboardTemplate
         title=''
         subtitle=''
-        breadcrumbs={[{ label: '首页', href: '/dashboard' }, { label: 'SRM' }]}
+        breadcrumbs={[{ label: t('common.home'), href: '/dashboard' }, { label: 'SRM' }]}
         stats={stats}
         charts={charts}
         loading={loading}

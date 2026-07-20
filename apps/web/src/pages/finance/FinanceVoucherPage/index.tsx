@@ -47,9 +47,11 @@ import VoucherImportModal from './components/VoucherImportModal';
 import VoucherDetailModal from './components/VoucherDetailModal';
 import ConfirmDialogs from './components/ConfirmDialogs';
 
+import { useTranslation } from 'react-i18next';
 const ct = designTokens.colors;
 
 const FinanceVoucherPage: React.FC = () => {
+  const { t } = useTranslation();
   const navigate = useNavigate();
   const addNotification = useNotificationStore((state) => state.addNotification);
   const queryClient = useQueryClient();
@@ -98,7 +100,7 @@ const FinanceVoucherPage: React.FC = () => {
     queryFn: async () => {
       const response = await accountingSubjectApi.list();
       if (!response.success || !response.data) {
-        throw new Error(response.message || '加载会计科目失败');
+        throw new Error(response.message || t('finance.finance_voucher_page_index.fail'));
       }
       return response.data.items || [];
     },
@@ -115,15 +117,15 @@ const FinanceVoucherPage: React.FC = () => {
         setVoucherItems(result.data);
       }
     } catch (err: unknown) {
-      apiLogger.error('加载凭证明细失败:', err);
+      apiLogger.error(t('finance.finance_voucher_page_index.fail_1'), err);
     }
   };
 
   const handleCreate = async () => {
     if (!newVoucher.voucher_number || !newVoucher.voucher_date || !newVoucher.period) {
       addNotification({
-        title: '提示',
-        message: '请填写必填字段',
+        title: t('finance.finance_voucher_page_index.hint'),
+        message: t('finance.finance_voucher_page_index.please_fill'),
         type: 'warning',
       });
       return;
@@ -134,8 +136,8 @@ const FinanceVoucherPage: React.FC = () => {
 
     if (totalDebit !== totalCredit) {
       addNotification({
-        title: '错误',
-        message: '借贷不平，无法创建凭证',
+        title: t('finance.finance_voucher_page_index.error'),
+        message: t('finance.finance_voucher_page_index.create'),
         type: 'error',
       });
       return;
@@ -186,13 +188,13 @@ const FinanceVoucherPage: React.FC = () => {
 
       if (successCount === selectedIds.length) {
         addNotification({
-          title: '成功',
+          title: t('finance.finance_voucher_page_index.success'),
           message: `批量删除成功，共 ${successCount} 条记录`,
           type: 'success',
         });
       } else {
         addNotification({
-          title: '部分成功',
+          title: t('finance.finance_voucher_page_index.success_1'),
           message: `成功删除 ${successCount} 条，失败 ${selectedIds.length - successCount} 条`,
           type: 'warning',
         });
@@ -201,8 +203,8 @@ const FinanceVoucherPage: React.FC = () => {
       setSelectedIds([]);
     } catch (err: unknown) {
       addNotification({
-        title: '错误',
-        message: (err as { message?: string }).message || '批量删除失败',
+        title: t('finance.finance_voucher_page_index.error'),
+        message: (err as { message?: string }).message || t('finance.finance_voucher_page_index.batch_delete_1'),
         type: 'error',
       });
     } finally {
@@ -220,13 +222,13 @@ const FinanceVoucherPage: React.FC = () => {
 
       if (successCount === selectedIds.length) {
         addNotification({
-          title: '成功',
+          title: t('finance.finance_voucher_page_index.success'),
           message: `批量审核成功，共 ${successCount} 条记录`,
           type: 'success',
         });
       } else {
         addNotification({
-          title: '部分成功',
+          title: t('finance.finance_voucher_page_index.success_1'),
           message: `成功审核 ${successCount} 条，失败 ${selectedIds.length - successCount} 条`,
           type: 'warning',
         });
@@ -235,8 +237,8 @@ const FinanceVoucherPage: React.FC = () => {
       setSelectedIds([]);
     } catch (err: unknown) {
       addNotification({
-        title: '错误',
-        message: (err as { message?: string }).message || '批量审核失败',
+        title: t('finance.finance_voucher_page_index.error'),
+        message: (err as { message?: string }).message || t('finance.finance_voucher_page_index.fail_2'),
         type: 'error',
       });
     }
@@ -250,7 +252,7 @@ const FinanceVoucherPage: React.FC = () => {
         import_mode: 'insert',
       });
       if (!result.success) {
-        throw new Error(result.message || '导入失败');
+        throw new Error(result.message || t('finance.finance_voucher_page_index.import'));
       }
       return result.data;
     },
@@ -263,25 +265,25 @@ const FinanceVoucherPage: React.FC = () => {
       } = data || ({} as { success_count?: number; failed_count?: number; errors?: unknown[] });
       if (failedCount === 0) {
         addNotification({
-          title: '成功',
+          title: t('finance.finance_voucher_page_index.success'),
           message: `成功导入${successCount}张凭证`,
           type: 'success',
         });
       } else {
         addNotification({
-          title: '部分成功',
+          title: t('finance.finance_voucher_page_index.success_1'),
           message: `成功导入${successCount}张，失败${failedCount}张`,
           type: 'warning',
         });
-        errors?.forEach((err: string) => apiLogger.warn('导入错误:', err));
+        errors?.forEach((err: string) => apiLogger.warn(t('finance.finance_voucher_page_index.import_3'), err));
       }
       setShowImportModal(false);
     },
     onError: (err: unknown) => {
-      apiLogger.error('导入凭证失败:', err);
+      apiLogger.error(t('finance.finance_voucher_page_index.import_4'), err);
       addNotification({
-        title: '错误',
-        message: (err as Error).message || '导入失败',
+        title: t('finance.finance_voucher_page_index.error'),
+        message: (err as Error).message || t('finance.finance_voucher_page_index.import'),
         type: 'error',
       });
     },
@@ -349,11 +351,11 @@ const FinanceVoucherPage: React.FC = () => {
         label: string;
       }
     > = {
-      draft: { color: 'default', label: '草稿' },
-      pending: { color: 'warning', label: '待审核' },
-      approved: { color: 'success', label: '已审核' },
-      posted: { color: 'success', label: '已记账' },
-      imported: { color: 'secondary', label: '已导入' },
+      draft: { color: 'default', label: t('finance.finance_voucher_page_index.text_22b433') },
+      pending: { color: 'warning', label: t('finance.finance_voucher_page_index.pending_review') },
+      approved: { color: 'success', label: t('finance.finance_voucher_page_index.approved') },
+      posted: { color: 'success', label: t('finance.finance_voucher_page_index.text_4ab08f') },
+      imported: { color: 'secondary', label: t('finance.finance_voucher_page_index.import_5') },
     };
     const config = badges[status] || {
       color: 'default' as const,
@@ -375,28 +377,28 @@ const FinanceVoucherPage: React.FC = () => {
     () => [
       {
         id: 'total',
-        title: '凭证总数',
+        title: t('finance.finance_voucher_page_index.text_551f4c'),
         value: vouchers.length,
         icon: <FileText size={24} />,
         color: 'primary' as const,
       },
       {
         id: 'approved',
-        title: '已审核',
+        title: t('finance.finance_voucher_page_index.approved'),
         value: vouchers.filter((v) => v.status === 'approved' || v.status === 'posted').length,
         icon: <FileCheck size={24} />,
         color: 'success' as const,
       },
       {
         id: 'pending',
-        title: '待审核',
+        title: t('finance.finance_voucher_page_index.pending_review'),
         value: vouchers.filter((v) => v.status === 'pending').length,
         icon: <Clock size={24} />,
         color: 'warning' as const,
       },
       {
         id: 'total_amount',
-        title: '总金额',
+        title: t('finance.finance_voucher_page_index.amount'),
         value: formatCurrency(vouchers.reduce((sum, v) => sum + v.total_debit, 0)),
         icon: <DollarSign size={24} />,
         color: 'secondary' as const,
@@ -409,28 +411,28 @@ const FinanceVoucherPage: React.FC = () => {
     () => [
       {
         id: 'total',
-        title: '科目总数',
+        title: t('finance.finance_voucher_page_index.text_3eb8d3'),
         value: subjects.length,
         icon: <Building2 size={24} />,
         color: 'primary' as const,
       },
       {
         id: 'active',
-        title: '已启用',
+        title: t('finance.finance_voucher_page_index.active'),
         value: subjects.filter((s) => s.status === 'active').length,
         icon: <FileCheck size={24} />,
         color: 'success' as const,
       },
       {
         id: 'level1',
-        title: '一级科目',
+        title: t('finance.finance_voucher_page_index.text_6772b0'),
         value: subjects.filter((s) => s.level === 1).length,
         icon: <DollarSign size={24} />,
         color: 'warning' as const,
       },
       {
         id: 'cash_flow',
-        title: '现金流量科目',
+        title: t('finance.finance_voucher_page_index.text_07d5bc'),
         value: subjects.filter((s) => s.is_cash_flow).length,
         icon: <Clock size={24} />,
         color: 'info' as const,
@@ -443,7 +445,7 @@ const FinanceVoucherPage: React.FC = () => {
     () => [
       {
         id: 'voucher_number',
-        label: '凭证编号',
+        label: t('finance.finance_voucher_page_index.text_846d88'),
         render: (row: FinancialVoucher) => (
           <Typography sx={{ fontWeight: 500, color: 'primary.main' }}>
             {row.voucher_number}
@@ -452,7 +454,7 @@ const FinanceVoucherPage: React.FC = () => {
       },
       {
         id: 'voucher_date',
-        label: '凭证日期',
+        label: t('finance.finance_voucher_page_index.date'),
         render: (row: FinancialVoucher) => (
           <Typography
             variant='body2'
@@ -464,7 +466,7 @@ const FinanceVoucherPage: React.FC = () => {
       },
       {
         id: 'period',
-        label: '期间',
+        label: t('finance.finance_voucher_page_index.text_2f4339'),
         render: (row: FinancialVoucher) => (
           <Typography
             variant='body2'
@@ -476,7 +478,7 @@ const FinanceVoucherPage: React.FC = () => {
       },
       {
         id: 'total_debit',
-        label: '借方金额',
+        label: t('finance.finance_voucher_page_index.amount_1'),
         render: (row: FinancialVoucher) => (
           <Typography sx={{ fontWeight: 'bold', color: 'error.main' }}>
             {formatCurrency(row.total_debit)}
@@ -485,7 +487,7 @@ const FinanceVoucherPage: React.FC = () => {
       },
       {
         id: 'total_credit',
-        label: '贷方金额',
+        label: t('finance.finance_voucher_page_index.amount_2'),
         render: (row: FinancialVoucher) => (
           <Typography sx={{ fontWeight: 'bold', color: 'success.main' }}>
             {formatCurrency(row.total_credit)}
@@ -494,7 +496,7 @@ const FinanceVoucherPage: React.FC = () => {
       },
       {
         id: 'maker_name',
-        label: '制单人',
+        label: t('finance.finance_voucher_page_index.document_maker'),
         render: (row: FinancialVoucher) => (
           <Typography
             variant='body2'
@@ -506,7 +508,7 @@ const FinanceVoucherPage: React.FC = () => {
       },
       {
         id: 'status',
-        label: '状态',
+        label: t('finance.finance_voucher_page_index.status'),
         render: (row: FinancialVoucher) => getStatusBadge(row.status),
       },
     ],
@@ -516,7 +518,7 @@ const FinanceVoucherPage: React.FC = () => {
   const voucherRowActions = useMemo(
     () => [
       {
-        label: '查看详情',
+        label: t('finance.finance_voucher_page_index.view_detail'),
         icon: <Eye size={16} />,
         onClick: (row: FinancialVoucher) => {
           setCurrentVoucher(row);
@@ -525,7 +527,7 @@ const FinanceVoucherPage: React.FC = () => {
         },
       },
       {
-        label: '编辑',
+        label: t('finance.finance_voucher_page_index.edit'),
         icon: <Edit size={16} />,
         color: 'primary' as const,
         onClick: (row: FinancialVoucher) => {
@@ -542,7 +544,7 @@ const FinanceVoucherPage: React.FC = () => {
         },
       },
       {
-        label: '删除',
+        label: t('finance.finance_voucher_page_index.delete_1'),
         icon: <Trash2 size={16} />,
         color: 'error' as const,
         onClick: (row: FinancialVoucher) => handleDelete(row.id),
@@ -556,29 +558,29 @@ const FinanceVoucherPage: React.FC = () => {
     () => [
       {
         id: 'status',
-        label: '状态',
+        label: t('finance.finance_voucher_page_index.status'),
         type: 'select' as const,
         options: [
-          { value: '', label: '全部状态' },
-          { value: 'draft', label: '草稿' },
-          { value: 'pending', label: '待审核' },
-          { value: 'approved', label: '已审核' },
-          { value: 'posted', label: '已记账' },
-          { value: 'imported', label: '已导入' },
+          { value: '', label: t('finance.finance_voucher_page_index.status_1') },
+          { value: 'draft', label: t('finance.finance_voucher_page_index.text_22b433') },
+          { value: 'pending', label: t('finance.finance_voucher_page_index.pending_review') },
+          { value: 'approved', label: t('finance.finance_voucher_page_index.approved') },
+          { value: 'posted', label: t('finance.finance_voucher_page_index.text_4ab08f') },
+          { value: 'imported', label: t('finance.finance_voucher_page_index.import_5') },
         ],
       },
       {
         id: 'period',
-        label: '期间',
+        label: t('finance.finance_voucher_page_index.text_2f4339'),
         type: 'select' as const,
         options: [
-          { value: '', label: '全部期间' },
-          { value: '2024-01', label: '2024年01月' },
-          { value: '2024-02', label: '2024年02月' },
-          { value: '2024-03', label: '2024年03月' },
-          { value: '2024-04', label: '2024年04月' },
-          { value: '2024-05', label: '2024年05月' },
-          { value: '2024-06', label: '2024年06月' },
+          { value: '', label: t('finance.finance_voucher_page_index.all') },
+          { value: '2024-01', label: t('finance.finance_voucher_page_index.text_a5afc4') },
+          { value: '2024-02', label: t('finance.finance_voucher_page_index.text_b5dbfd') },
+          { value: '2024-03', label: t('finance.finance_voucher_page_index.text_29a209') },
+          { value: '2024-04', label: t('finance.finance_voucher_page_index.text_839676') },
+          { value: '2024-05', label: t('finance.finance_voucher_page_index.text_69ccfd') },
+          { value: '2024-06', label: t('finance.finance_voucher_page_index.text_c62e26') },
         ],
       },
     ],
@@ -616,8 +618,8 @@ const FinanceVoucherPage: React.FC = () => {
     <PageContainer
       padding={false}
       maxWidth={false}
-      title='财务凭证管理'
-      subtitle='管理财务凭证、会计科目，支持用友凭证导入'
+      title={t('finance.finance_voucher_page_index.text_6b6598')}
+      subtitle={t('finance.finance_voucher_page_index.import_6')}
       headerProps={{
         pageIcon: <Wallet style={{ width: 20, height: 20 }} />,
         pageGradient: `linear-gradient(135deg, ${ct.success.main} 0%, ${ct.success.dark} 100%)`,
@@ -642,7 +644,7 @@ const FinanceVoucherPage: React.FC = () => {
           >
             <Box sx={{ display: 'flex', alignItems: 'center' }}>
               <ActionButton
-                label='返回'
+                label={t('finance.finance_voucher_page_index.back')}
                 icon={<ChevronLeft size={20} />}
                 variant='text'
                 onClick={() => navigate(FINANCE_PATHS.dashboard)}
@@ -670,13 +672,13 @@ const FinanceVoucherPage: React.FC = () => {
             </Box>
             <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
               <ActionButton
-                label='导入用友凭证'
+                label={t('finance.finance_voucher_page_index.import_7')}
                 icon={<Upload size={16} />}
                 variant='primary'
                 onClick={() => setShowImportModal(true)}
               />
               <ActionButton
-                label='新增凭证'
+                label={t('finance.finance_voucher_page_index.add')}
                 icon={<Plus size={16} />}
                 variant='primary'
                 onClick={() => {
@@ -697,13 +699,13 @@ const FinanceVoucherPage: React.FC = () => {
         >
           <Tab
             value='vouchers'
-            label='财务凭证'
+            label={t('finance.finance_voucher_page_index.text_755348')}
             icon={<FileText sx={{ width: 16, height: 16 }} />}
             iconPosition='start'
           />
           <Tab
             value='subjects'
-            label='会计科目'
+            label={t('finance.finance_voucher_page_index.text_d64865')}
             icon={<Building2 sx={{ width: 16, height: 16 }} />}
             iconPosition='start'
           />
@@ -745,7 +747,7 @@ const FinanceVoucherPage: React.FC = () => {
           setShowCreateModal(false);
           resetForm();
         }}
-        title={newVoucher.voucher_number ? '编辑凭证' : '新增财务凭证'}
+        title={newVoucher.voucher_number ? t('finance.finance_voucher_page_index.edit_1') : t('finance.finance_voucher_page_index.add_1')}
         newVoucher={newVoucher}
         setNewVoucher={setNewVoucher}
         onSubmit={handleCreate}

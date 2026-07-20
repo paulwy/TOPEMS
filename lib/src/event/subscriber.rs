@@ -47,6 +47,31 @@ impl EventSubscriber {
         self
     }
 
+    /// 订阅特定事件类型（返回 Result 的 handler 版本）
+    pub fn subscribe_handler<F>(mut self, event_types: Vec<EventType>, handler: F) -> Self
+    where
+        F: Fn(Event) -> std::pin::Pin<Box<dyn std::future::Future<Output = Result<(), String>> + Send>>
+            + Send
+            + Sync
+            + Clone
+            + 'static,
+    {
+        let handler_arc: EventHandler = Arc::new(move |event| {
+            let handler = handler.clone();
+            Box::pin(async move {
+                match handler(event).await {
+                    Ok(_) => {}
+                    Err(e) => {
+                        error!("事件处理器执行失败: {}", e);
+                    }
+                }
+            })
+        });
+
+        self.handlers.push((event_types, handler_arc));
+        self
+    }
+
     /// 启动事件监听（持续运行）
     pub async fn start_listening(self) -> EventResult<()> {
         let con = self.redis_client.get_async_connection().await?;

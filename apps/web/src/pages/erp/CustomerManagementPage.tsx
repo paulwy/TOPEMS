@@ -29,6 +29,8 @@ import { Plus, Edit, Trash2, Eye, User } from 'lucide-react';
 import { apiLogger } from '@/utils/logger';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { QUERY_KEYS } from '@/lib/reactQuery';
+import { ConfirmDialog } from '@topems/shared-components';
+import { useConfirmDialog } from '@/hooks';
 
 const ct = designTokens.colors;
 
@@ -65,6 +67,12 @@ const CustomerManagementPage: React.FC = () => {
     industry: '',
     remark: '',
   });
+  const {
+    confirmOpen: confirmDialogOpen,
+    confirmConfig: confirmDialogConfig,
+    openConfirm: openConfirmDialog,
+    closeConfirm: setConfirmDialogClosed,
+  } = useConfirmDialog();
 
   const queryClient = useQueryClient();
 
@@ -173,11 +181,17 @@ const CustomerManagementPage: React.FC = () => {
   };
 
   const handleDelete = useCallback(
-    async (id: string) => {
-      if (!window.confirm('确定要删除这个客户吗?')) return;
-      await deleteMutation.mutateAsync(id);
+    (id: string) => {
+      openConfirmDialog({
+        title: '确认删除',
+        message: '确定要删除这个客户吗?',
+        danger: true,
+        onConfirm: () => {
+          deleteMutation.mutate(id);
+        },
+      });
     },
-    [deleteMutation]
+    [deleteMutation, openConfirmDialog]
   );
 
   const handleEdit = useCallback((customer: Customer) => {
@@ -937,6 +951,18 @@ const CustomerManagementPage: React.FC = () => {
           )}
         </DialogContent>
       </Dialog>
+
+      <ConfirmDialog
+        isOpen={confirmDialogOpen}
+        onClose={setConfirmDialogClosed}
+        onConfirm={() => {
+          confirmDialogConfig?.onConfirm();
+          setConfirmDialogClosed();
+        }}
+        title={confirmDialogConfig?.title || ''}
+        message={confirmDialogConfig?.message || ''}
+        danger={confirmDialogConfig?.danger}
+      />
     </PageContainer>
   );
 };

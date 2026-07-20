@@ -1,4 +1,4 @@
-import React, { useState, useMemo, useCallback } from 'react';
+import React, { useState, useMemo, useCallback, useEffect } from 'react';
 import {
   Box,
   Dialog,
@@ -14,11 +14,10 @@ import {
   Button,
 } from '@mui/material';
 import { Plus, Edit, Delete, Layers, ArrowDownRight, Database } from 'lucide-react';
-import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { pdmApi } from '@/api/pdm';
 import type { BomItem, Product } from '@/api/pdm';
 import { useNotificationStore } from '@/store';
-import { apiLogger } from '@/utils/logger';
 import {
   ListPageTemplate,
   type ColumnDef,
@@ -28,6 +27,7 @@ import {
 import { PageContainer } from '@/components/common/PageContainerV2';
 import { designTokens } from '@/theme/tokens';
 import { QUERY_KEYS } from '@/lib/reactQuery';
+import { useCrudMutations, useUrlListState } from '@/hooks';
 
 const ct = designTokens.colors;
 
@@ -40,12 +40,40 @@ interface BomItemFormData {
   level: number;
 }
 
+interface BomItemCreateRequest {
+  bom_version_id: string;
+  item_no: string;
+  product_id: string;
+  part_number: string;
+  part_name: string;
+  quantity: number;
+  unit: string;
+  unit_price: number;
+  level: number;
+  total_price: number;
+}
+
 export const PdmBomPage: React.FC = () => {
   const queryClient = useQueryClient();
   const addNotification = useNotificationStore((state) => state.addNotification);
 
-  const [selectedProduct, setSelectedProduct] = useState('');
-  const [searchTerm, setSearchTerm] = useState('');
+  const {
+    searchQuery,
+    setSearchQuery,
+    debouncedSearch,
+    filters: urlFilters,
+    setFilter,
+    currentPage,
+    setCurrentPage,
+    pageSize,
+  } = useUrlListState<{ product: string }>({
+    defaultPageSize: 10,
+    defaultFilters: { product: '' },
+    baseIndex: 1,
+    historyMode: 'replace',
+  });
+  const searchTerm = searchQuery;
+  const selectedProduct = urlFilters.product;
   const [openDialog, setOpenDialog] = useState(false);
   const [editingItem, setEditingItem] = useState<BomItem | null>(null);
   const [formData, setFormData] = useState<BomItemFormData>({
@@ -92,58 +120,29 @@ export const PdmBomPage: React.FC = () => {
     staleTime: 5 * 60 * 1000,
   });
 
-  const createBomItemMutation = useMutation({
-    mutationFn: (data: {
-      bom_version_id: string;
-      item_no: string;
-      product_id: string;
-      part_number: string;
-      part_name: string;
-      quantity: number;
-      unit: string;
-      unit_price: number;
-      level: number;
-      total_price: number;
-    }) => pdmApi.createBomItem(data),
-    onSuccess: () => {
-      addNotification({ title: '成功', message: '物料添加成功', type: 'success' });
+  const { createMutation: createBomItemMutation, updateMutation: updateBomItemMutation, deleteMutation: deleteBomItemMutation } = useCrudMutations<
+    BomItemCreateRequest,
+    BomItemCreateRequest,
+    string
+  >({
+    queryKeyToInvalidate: QUERY_KEYS.PDM.BOM_ITEMS,
+    createFn: (data) => pdmApi.createBomItem(data),
+    updateFn: ({ id, data }) => pdmApi.updateBomItem(String(id), data),
+    deleteFn: (id) => pdmApi.deleteBomItem(String(id)),
+    entityName: 'BOM物料',
+    onCreateSuccess: () => {
       setOpenDialog(false);
-      queryClient.invalidateQueries({ queryKey: QUERY_KEYS.PDM.BOM_ITEMS });
     },
-    onError: (err: unknown) => {
-      addNotification({ title: '错误', message: '创建失败', type: 'error' });
-      apiLogger.error('创建BOM物料失败:', err);
-    },
-  });
-
-  const updateBomItemMutation = useMutation({
-    mutationFn: ({ id, data }: { id: string; data: any }) => pdmApi.updateBomItem(id, data),
-    onSuccess: () => {
-      addNotification({ title: '成功', message: '物料更新成功', type: 'success' });
+    onUpdateSuccess: () => {
       setOpenDialog(false);
-      queryClient.invalidateQueries({ queryKey: QUERY_KEYS.PDM.BOM_ITEMS });
-    },
-    onError: (err: unknown) => {
-      addNotification({ title: '错误', message: '更新失败', type: 'error' });
-      apiLogger.error('更新BOM物料失败:', err);
     },
   });
 
-  const deleteBomItemMutation = useMutation({
-    mutationFn: (id: string) => pdmApi.deleteBomItem(id),
-    onSuccess: () => {
-      addNotification({ title: '成功', message: '物料删除成功', type: 'success' });
-      queryClient.invalidateQueries({ queryKey: QUERY_KEYS.PDM.BOM_ITEMS });
-    },
-    onError: (err: unknown) => {
-      addNotification({ title: '错误', message: '删除失败', type: 'error' });
-      apiLogger.error('删除BOM物料失败:', err);
-    },
-  });
-
-  if (productsLoading && !selectedProduct && products.length > 0) {
-    setSelectedProduct(products[0].id);
-  }
+  useEffect(() => {
+    if (!productsLoading && !selectedProduct && products.length > 0) {
+      setFilter('product', products[0].id);
+    }
+  }, [productsLoading, selectedProduct, products, setFilter]);
 
   const handleEditItem = (item: BomItem) => {
     setEditingItem(item);
@@ -205,12 +204,12 @@ export const PdmBomPage: React.FC = () => {
     return bomItems.filter((item: any) => {
       const matchesProduct = !selectedProduct || item.product_id === selectedProduct;
       const matchesSearch =
-        !searchTerm ||
-        item.part_name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        item.part_number.toLowerCase().includes(searchTerm.toLowerCase());
+        !debouncedSearch ||
+        item.part_name.toLowerCase().includes(debouncedSearch.toLowerCase()) ||
+        item.part_number.toLowerCase().includes(debouncedSearch.toLowerCase());
       return matchesProduct && matchesSearch;
     });
-  }, [bomItems, selectedProduct, searchTerm]);
+  }, [bomItems, selectedProduct, debouncedSearch]);
 
   const totalCost = filteredBomItems.reduce(
     (sum: number, item: any) => sum + (item.total_price || item.quantity * (item.unit_price || 0)),
@@ -235,12 +234,13 @@ export const PdmBomPage: React.FC = () => {
   );
 
   const handleFilterChange = useCallback((values: Record<string, any>) => {
-    setSelectedProduct(values.product || '');
-  }, []);
+    setFilter('product', values.product || '');
+    setCurrentPage(1);
+  }, [setFilter, setCurrentPage]);
 
   const handleSearch = useCallback((value: string) => {
-    setSearchTerm(value);
-  }, []);
+    setSearchQuery(value);
+  }, [setSearchQuery]);
 
   const columns: ColumnDef<BomItem>[] = useMemo(
     () => [

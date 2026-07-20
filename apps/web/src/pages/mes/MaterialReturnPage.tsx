@@ -56,9 +56,11 @@ import {
 import { apiLogger } from '@/utils/logger';
 import { designTokens } from '@/theme/tokens';
 
+import { useTranslation } from 'react-i18next';
 const ct = designTokens.colors;
 
 const MaterialReturnPage: React.FC = () => {
+  const { t } = useTranslation();
   const queryClient = useQueryClient();
   const [searchTerm, setSearchTerm] = useState('');
   const [statusFilter, setStatusFilter] = useState<string>('all');
@@ -106,29 +108,29 @@ const MaterialReturnPage: React.FC = () => {
     onSuccess: () => {
       addNotification({
         type: 'success',
-        title: '创建成功',
-        message: '物料退库单已创建',
+        title: t('mes.material_return_page.create'),
+        message: t('mes.material_return_page.create_1'),
       });
       queryClient.invalidateQueries({ queryKey: QUERY_KEYS.MES.MATERIAL_RETURNS });
       setShowDialog(false);
       resetForm();
     },
     onError: (error: unknown) => {
-      apiLogger.error('创建物料退库单失败:', error);
+      apiLogger.error(t('mes.material_return_page.create_2'), error);
       addNotification({
         type: 'error',
-        title: '操作失败',
-        message: '创建物料退库单失败',
+        title: t('mes.material_return_page.operation_failed'),
+        message: t('mes.material_return_page.create_3'),
       });
     },
   });
 
   const getStatusText = (status: string) => {
     const statusMap: Record<string, string> = {
-      pending: '待审核',
-      approved: '已审核',
-      returned: '已退库',
-      cancelled: '已取消',
+      pending: t('mes.material_return_page.pending_review'),
+      approved: t('mes.material_return_page.approved'),
+      returned: t('mes.material_return_page.text_333b02'),
+      cancelled: t('mes.material_return_page.status_cancelled'),
     };
     return statusMap[status] || status;
   };
@@ -162,10 +164,10 @@ const MaterialReturnPage: React.FC = () => {
         color: string;
       }
     > = {
-      pending: { label: '待审核', bg: 'warning.light', color: 'warning.700' },
-      approved: { label: '已审核', bg: ct.secondary[100], color: 'secondary.700' },
-      returned: { label: '已退库', bg: 'success.lighter', color: 'success.700' },
-      cancelled: { label: '已取消', bg: 'error.lighter', color: 'error.dark' },
+      pending: { label: t('mes.material_return_page.pending_review'), bg: 'warning.light', color: 'warning.700' },
+      approved: { label: t('mes.material_return_page.approved'), bg: ct.secondary[100], color: 'secondary.700' },
+      returned: { label: t('mes.material_return_page.text_333b02'), bg: 'success.lighter', color: 'success.700' },
+      cancelled: { label: t('mes.material_return_page.status_cancelled'), bg: 'error.lighter', color: 'error.dark' },
     };
     const s = statusMap[status] || { label: status, bg: 'grey.100', color: 'text.secondary' };
     return (
@@ -205,23 +207,23 @@ const MaterialReturnPage: React.FC = () => {
 
   const columns: ColumnDef<MaterialReturn>[] = useMemo(
     () => [
-      { id: 'return_no', label: '退库单号', sortable: true },
-      { id: 'order_number', label: '工单号', sortable: true },
-      { id: 'operator', label: '退库人', sortable: true },
+      { id: 'return_no', label: t('mes.material_return_page.text_efd2aa'), sortable: true },
+      { id: 'order_number', label: t('mes.material_return_page.field_work_order'), sortable: true },
+      { id: 'operator', label: t('mes.material_return_page.text_b7740d'), sortable: true },
       {
         id: 'return_time',
-        label: '退库时间',
+        label: t('mes.material_return_page.time'),
         render: (row) =>
           row.return_time ? new Date(row.return_time).toLocaleString('zh-CN') : '-',
       },
       {
         id: 'items_count',
-        label: '物料项数',
+        label: t('mes.material_return_page.material'),
         render: (row) => row.items?.length || 0,
       },
       {
         id: 'reason',
-        label: '退库原因',
+        label: t('mes.material_return_page.text_5caa28'),
         render: (row) => (
           <Box
             sx={{
@@ -237,7 +239,7 @@ const MaterialReturnPage: React.FC = () => {
       },
       {
         id: 'status',
-        label: '状态',
+        label: t('mes.material_return_page.filter_status'),
         render: (row) => getStatusBadge(row.status),
       },
     ],
@@ -248,14 +250,14 @@ const MaterialReturnPage: React.FC = () => {
     () => [
       {
         id: 'status',
-        label: '状态',
+        label: t('mes.material_return_page.filter_status'),
         type: 'select',
         options: [
-          { label: '全部状态', value: 'all' },
-          { label: '待审核', value: 'pending' },
-          { label: '已审核', value: 'approved' },
-          { label: '已退库', value: 'returned' },
-          { label: '已取消', value: 'cancelled' },
+          { label: t('mes.material_return_page.filter_option_all_status'), value: 'all' },
+          { label: t('mes.material_return_page.pending_review'), value: 'pending' },
+          { label: t('mes.material_return_page.approved'), value: 'approved' },
+          { label: t('mes.material_return_page.text_333b02'), value: 'returned' },
+          { label: t('mes.material_return_page.status_cancelled'), value: 'cancelled' },
         ],
         value: statusFilter,
         onChange: (value: unknown) => {
@@ -270,7 +272,7 @@ const MaterialReturnPage: React.FC = () => {
   const rowActions: RowAction<MaterialReturn>[] = useMemo(
     () => [
       {
-        label: '查看详情',
+        label: t('mes.material_return_page.action_view_detail'),
         icon: <Eye size={16} />,
         onClick: handleViewDetail,
       },
@@ -393,7 +395,7 @@ const MaterialReturnPage: React.FC = () => {
         loading={loading}
         filters={filters}
         searchable
-        searchPlaceholder='搜索退库单号或工单号...'
+        searchPlaceholder={t('mes.material_return_page.work_order_number')}
         searchValue={searchTerm}
         onSearch={handleSearch}
         pagination={{
@@ -407,14 +409,14 @@ const MaterialReturnPage: React.FC = () => {
         onSelectionChange={(ids) => setSelectedIds(ids.map(String))}
         actions={[
           {
-            label: '新增退库',
+            label: t('mes.material_return_page.add'),
             icon: <Plus size={16} />,
             onClick: handleOpenCreate,
           },
         ]}
         rowActions={rowActions}
         headerContent={statsContent}
-        emptyMessage='暂无物料退库记录'
+        emptyMessage={t('mes.material_return_page.no_data')}
         getRowId={(row) => row.id}
       />
 
@@ -535,7 +537,7 @@ const MaterialReturnPage: React.FC = () => {
                           align='center'
                           sx={{ color: 'text.secondary', py: 3 }}
                         >
-                          暂无物料，点击"添加物料"按钮添加
+                          暂无物料，点击t('mes.material_return_page.material_1')按钮添加
                         </TableCell>
                       </TableRow>
                     ) : (
@@ -547,7 +549,7 @@ const MaterialReturnPage: React.FC = () => {
                               size='small'
                               value={item.material_code}
                               onChange={(e) => updateItem(index, 'material_code', e.target.value)}
-                              placeholder='物料编码'
+                              placeholder={t('mes.material_return_page.column_material_code')}
                             />
                           </TableCell>
                           <TableCell>
@@ -555,7 +557,7 @@ const MaterialReturnPage: React.FC = () => {
                               size='small'
                               value={item.material_name}
                               onChange={(e) => updateItem(index, 'material_name', e.target.value)}
-                              placeholder='物料名称'
+                              placeholder={t('mes.material_return_page.column_material_name')}
                             />
                           </TableCell>
                           <TableCell>

@@ -22,6 +22,7 @@ import { PageContainer } from '@/components/common';
 import React, { useState, useMemo, useCallback, useEffect } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { useResponsive } from '@/hooks/useResponsive';
+import { useCrudMutations } from '@/hooks';
 import { Hidden } from '@topems/shared-components';
 import type {
   WorkOrder,
@@ -53,9 +54,11 @@ import {
 import { apiLogger } from '@/utils/logger';
 import { designTokens } from '@/theme/tokens';
 
+import { useTranslation } from 'react-i18next';
 const ct = designTokens.colors;
 
 const WorkOrderPage: React.FC = () => {
+  const { t } = useTranslation();
   const { isMobile, isTablet } = useResponsive();
   const theme = useTheme();
 
@@ -102,74 +105,43 @@ const WorkOrderPage: React.FC = () => {
 
   useEffect(() => {
     if (isError && error) {
-      apiLogger.error('加载工单列表失败:', error);
+      apiLogger.error(t('mes.work_order_page.list'), error);
       addNotification({
         type: 'error',
-        title: '加载失败',
-        message: '无法加载工单列表',
+        title: t('mes.work_order_page.fail'),
+        message: t('mes.work_order_page.list_1'),
       });
     }
   }, [isError, error]);
 
-  const createWorkOrderMutation = useMutation({
-    mutationFn: (data: CreateWorkOrderRequest) => mesApi.workOrders.create(data),
-    onSuccess: () => {
-      addNotification({
-        type: 'success',
-        title: '创建成功',
-        message: '新工单已创建',
-      });
-      queryClient.invalidateQueries({ queryKey: ['mes-work-orders'] });
+  const {
+    createMutation: createWorkOrderMutation,
+    updateMutation: updateWorkOrderMutation,
+    deleteMutation: deleteWorkOrderMutation,
+  } = useCrudMutations<CreateWorkOrderRequest, UpdateWorkOrderRequest, string>({
+    queryKeyToInvalidate: ['mes-work-orders'],
+    createFn: async (data) => {
+      const response = await mesApi.workOrders.create(data);
+      if (!response.success) {
+        throw new Error(response.message || '创建工单失败');
+      }
+      return response.data;
     },
-    onError: (error: unknown) => {
-      apiLogger.error('创建失败:', error);
-      addNotification({
-        type: 'error',
-        title: '操作失败',
-        message: '创建工单失败',
-      });
+    updateFn: async ({ id, data }) => {
+      const response = await mesApi.workOrders.update(String(id), data);
+      if (!response.success) {
+        throw new Error(response.message || '更新工单失败');
+      }
+      return response.data;
     },
-  });
-
-  const updateWorkOrderMutation = useMutation({
-    mutationFn: ({ id, data }: { id: string; data: UpdateWorkOrderRequest }) =>
-      mesApi.workOrders.update(id, data),
-    onSuccess: () => {
-      addNotification({
-        type: 'success',
-        title: '更新成功',
-        message: '工单信息已更新',
-      });
-      queryClient.invalidateQueries({ queryKey: ['mes-work-orders'] });
+    deleteFn: async (id) => {
+      const response = await mesApi.workOrders.delete(String(id));
+      if (!response.success) {
+        throw new Error(response.message || '删除工单失败');
+      }
+      return response.data;
     },
-    onError: (error: unknown) => {
-      apiLogger.error('更新失败:', error);
-      addNotification({
-        type: 'error',
-        title: '操作失败',
-        message: '更新工单失败',
-      });
-    },
-  });
-
-  const deleteWorkOrderMutation = useMutation({
-    mutationFn: (id: string) => mesApi.workOrders.delete(id),
-    onSuccess: () => {
-      addNotification({
-        type: 'success',
-        title: '删除成功',
-        message: '工单已删除',
-      });
-      queryClient.invalidateQueries({ queryKey: ['mes-work-orders'] });
-    },
-    onError: (error: unknown) => {
-      apiLogger.error('删除失败:', error);
-      addNotification({
-        type: 'error',
-        title: '删除失败',
-        message: '无法删除工单',
-      });
-    },
+    entityName: '工单',
   });
 
   const statusMutation = useMutation({
@@ -192,17 +164,17 @@ const WorkOrderPage: React.FC = () => {
     onSuccess: (response) => {
       addNotification({
         type: 'success',
-        title: '状态更新成功',
+        title: t('mes.work_order_page.update_4'),
         message: `工单状态已更新为"${getStatusText(response.data?.status)}"`,
       });
       queryClient.invalidateQueries({ queryKey: ['mes-work-orders'] });
     },
     onError: (error: unknown) => {
-      apiLogger.error('状态更新失败:', error);
+      apiLogger.error(t('mes.work_order_page.update_5'), error);
       addNotification({
         type: 'error',
-        title: '状态更新失败',
-        message: '无法更新工单状态',
+        title: t('mes.work_order_page.update_6'),
+        message: t('mes.work_order_page.work_order_status_1'),
       });
     },
   });
@@ -213,12 +185,12 @@ const WorkOrderPage: React.FC = () => {
 
   const getStatusText = (status: string) => {
     const statusMap: Record<string, string> = {
-      pending: '待开工',
-      in_progress: '进行中',
-      paused: '已暂停',
-      completed: '已完成',
-      cancelled: '已取消',
-      closed: '已结案',
+      pending: t('mes.work_order_page.text_051f08'),
+      in_progress: t('mes.work_order_page.in_progress'),
+      paused: t('mes.work_order_page.status_paused'),
+      completed: t('mes.work_order_page.completed'),
+      cancelled: t('mes.work_order_page.status_cancelled'),
+      closed: t('mes.work_order_page.text_039892'),
     };
     return statusMap[status] || status;
   };
@@ -229,13 +201,13 @@ const WorkOrderPage: React.FC = () => {
         return [
           {
             action: 'start',
-            label: '开始生产',
+            label: t('mes.work_order_page.production'),
             icon: <Play size={14} />,
             color: 'success' as const,
           },
           {
             action: 'cancel',
-            label: '取消',
+            label: t('mes.work_order_page.cancel'),
             icon: <XCircle size={14} />,
             color: 'error' as const,
           },
@@ -244,13 +216,13 @@ const WorkOrderPage: React.FC = () => {
         return [
           {
             action: 'pause',
-            label: '暂停',
+            label: t('mes.work_order_page.action_pause'),
             icon: <Pause size={14} />,
             color: 'warning' as const,
           },
           {
             action: 'complete',
-            label: '完成',
+            label: t('mes.work_order_page.completed_1'),
             icon: <CheckCircle size={14} />,
             color: 'success' as const,
           },
@@ -259,13 +231,13 @@ const WorkOrderPage: React.FC = () => {
         return [
           {
             action: 'resume',
-            label: '恢复',
+            label: t('mes.work_order_page.action_resume'),
             icon: <Play size={14} />,
             color: 'success' as const,
           },
           {
             action: 'cancel',
-            label: '取消',
+            label: t('mes.work_order_page.cancel'),
             icon: <XCircle size={14} />,
             color: 'error' as const,
           },
@@ -289,13 +261,13 @@ const WorkOrderPage: React.FC = () => {
       setShowDialog(false);
       resetForm();
     } catch (error: unknown) {
-      apiLogger.error('操作失败:', error);
+      apiLogger.error(t('mes.work_order_page.operation_failed_1'), error);
     }
   };
 
   const handleDelete = useCallback(
     async (id: string) => {
-      if (!window.confirm('确定要删除这个工单吗?')) return;
+      if (!window.confirm(t('mes.work_order_page.confirm'))) return;
       await deleteWorkOrderMutation.mutateAsync(id);
     },
     [deleteWorkOrderMutation]
@@ -341,12 +313,12 @@ const WorkOrderPage: React.FC = () => {
         color: string;
       }
     > = {
-      pending: { label: '待开工', bg: 'warning.light', color: 'warning.700' },
-      in_progress: { label: '进行中', bg: 'primary.100', color: 'primary.dark' },
-      paused: { label: '已暂停', bg: 'grey.100', color: 'text.secondary' },
-      completed: { label: '已完成', bg: 'success.lighter', color: 'success.700' },
-      cancelled: { label: '已取消', bg: 'error.lighter', color: 'error.dark' },
-      closed: { label: '已结案', bg: 'grey.200', color: 'text.primary' },
+      pending: { label: t('mes.work_order_page.text_051f08'), bg: 'warning.light', color: 'warning.700' },
+      in_progress: { label: t('mes.work_order_page.in_progress'), bg: 'primary.100', color: 'primary.dark' },
+      paused: { label: t('mes.work_order_page.status_paused'), bg: 'grey.100', color: 'text.secondary' },
+      completed: { label: t('mes.work_order_page.completed'), bg: 'success.lighter', color: 'success.700' },
+      cancelled: { label: t('mes.work_order_page.status_cancelled'), bg: 'error.lighter', color: 'error.dark' },
+      closed: { label: t('mes.work_order_page.text_039892'), bg: 'grey.200', color: 'text.primary' },
     };
     const s = statusMap[status] || { label: status, bg: 'grey.100', color: 'text.secondary' };
     return (
@@ -367,10 +339,10 @@ const WorkOrderPage: React.FC = () => {
         color: string;
       }
     > = {
-      urgent: { label: '紧急', bg: 'error.lighter', color: 'error.dark' },
-      high: { label: '高', bg: 'warning.light', color: 'warning.700' },
-      normal: { label: '普通', bg: 'primary.100', color: 'primary.dark' },
-      low: { label: '低', bg: 'grey.100', color: 'text.secondary' },
+      urgent: { label: t('mes.work_order_page.text_cb0ed5'), bg: 'error.lighter', color: 'error.dark' },
+      high: { label: t('mes.work_order_page.text_4296d7'), bg: 'warning.light', color: 'warning.700' },
+      normal: { label: t('mes.work_order_page.text_35242c'), bg: 'primary.100', color: 'primary.dark' },
+      low: { label: t('mes.work_order_page.text_19ac67'), bg: 'grey.100', color: 'text.secondary' },
     };
     const p = priorityMap[priority || 'normal'] || priorityMap.normal;
     return (
@@ -385,16 +357,16 @@ const WorkOrderPage: React.FC = () => {
   const columns: ColumnDef<WorkOrder>[] = useMemo(
     () => {
       const baseColumns = [
-        { id: 'work_order_no', label: '工单号', sortable: true },
-        { id: 'quantity', label: '计划数量', sortable: true },
+        { id: 'work_order_no', label: t('mes.work_order_page.column_order_no'), sortable: true },
+        { id: 'quantity', label: t('mes.work_order_page.column_planned_quantity'), sortable: true },
         {
           id: 'priority',
-          label: '优先级',
+          label: t('mes.work_order_page.field_priority'),
           render: (row: WorkOrder) => getPriorityBadge(row.priority),
         },
         {
           id: 'status',
-          label: '状态',
+          label: t('mes.work_order_page.filter_status'),
           render: (row: WorkOrder) => getStatusBadge(row.status),
         },
       ];
@@ -406,23 +378,23 @@ const WorkOrderPage: React.FC = () => {
       if (isTablet) {
         return [
           ...baseColumns.slice(0, 1),
-          { id: 'order_number', label: '生产订单', sortable: true },
-          { id: 'completed_quantity', label: '完成数量', sortable: true },
+          { id: 'order_number', label: t('mes.work_order_page.production_1'), sortable: true },
+          { id: 'completed_quantity', label: t('mes.work_order_page.completed_quantity'), sortable: true },
           ...baseColumns.slice(1),
         ];
       }
 
       return [
         ...baseColumns.slice(0, 1),
-        { id: 'order_number', label: '生产订单', sortable: true },
-        { id: 'process_name', label: '工序', sortable: true },
-        { id: 'work_station_name', label: '工作站', sortable: true },
-        { id: 'team_name', label: '班组', sortable: true },
+        { id: 'order_number', label: t('mes.work_order_page.production_1'), sortable: true },
+        { id: 'process_name', label: t('mes.work_order_page.process'), sortable: true },
+        { id: 'work_station_name', label: t('mes.work_order_page.text_909250'), sortable: true },
+        { id: 'team_name', label: t('mes.work_order_page.team'), sortable: true },
         ...baseColumns.slice(1),
-        { id: 'completed_quantity', label: '完成数量', sortable: true },
+        { id: 'completed_quantity', label: t('mes.work_order_page.completed_quantity'), sortable: true },
         {
           id: 'planned_start_time',
-          label: '计划开始',
+          label: t('mes.work_order_page.field_planned_start'),
           render: (row: WorkOrder) =>
             row.planned_start_time
               ? new Date(row.planned_start_time).toLocaleDateString('zh-CN')
@@ -430,7 +402,7 @@ const WorkOrderPage: React.FC = () => {
         },
         {
           id: 'planned_end_time',
-          label: '计划结束',
+          label: t('mes.work_order_page.field_planned_end'),
           render: (row: WorkOrder) =>
             row.planned_end_time ? new Date(row.planned_end_time).toLocaleDateString('zh-CN') : '-',
         },
@@ -443,16 +415,16 @@ const WorkOrderPage: React.FC = () => {
     () => [
       {
         id: 'status',
-        label: '状态',
+        label: t('mes.work_order_page.filter_status'),
         type: 'select',
         options: [
-          { label: '全部状态', value: 'all' },
-          { label: '待开工', value: 'pending' },
-          { label: '进行中', value: 'in_progress' },
-          { label: '已暂停', value: 'paused' },
-          { label: '已完成', value: 'completed' },
-          { label: '已取消', value: 'cancelled' },
-          { label: '已结案', value: 'closed' },
+          { label: t('mes.work_order_page.filter_option_all_status'), value: 'all' },
+          { label: t('mes.work_order_page.text_051f08'), value: 'pending' },
+          { label: t('mes.work_order_page.in_progress'), value: 'in_progress' },
+          { label: t('mes.work_order_page.status_paused'), value: 'paused' },
+          { label: t('mes.work_order_page.completed'), value: 'completed' },
+          { label: t('mes.work_order_page.status_cancelled'), value: 'cancelled' },
+          { label: t('mes.work_order_page.text_039892'), value: 'closed' },
         ],
         value: statusFilter,
         onChange: (value: unknown) => {
@@ -467,22 +439,22 @@ const WorkOrderPage: React.FC = () => {
   const rowActions: RowAction<WorkOrder>[] = useMemo(
     () => [
       {
-        label: '查看详情',
+        label: t('mes.work_order_page.action_view_detail'),
         icon: <Eye size={16} />,
         onClick: handleViewDetail,
       },
       {
-        label: '编辑',
+        label: t('mes.work_order_page.action_edit'),
         icon: <Edit size={16} />,
         onClick: handleEdit,
       },
       {
-        label: '删除',
+        label: t('mes.work_order_page.action_delete'),
         icon: <Trash2 size={16} />,
         color: 'error',
         onClick: (row) => handleDelete(row.id),
         confirm: true,
-        confirmMessage: '确定要删除这个工单吗?',
+        confirmMessage: t('mes.work_order_page.confirm'),
       },
     ],
     [handleViewDetail, handleEdit, handleDelete]
@@ -625,8 +597,8 @@ const WorkOrderPage: React.FC = () => {
 
   return (
     <PageContainer
-      title='工单管理'
-      subtitle='管理生产工单信息,包括工单号、工序、工作站、班组、数量等'
+      title={t('mes.work_order_page.work_order')}
+      subtitle={t('mes.work_order_page.work_order_number')}
       headerProps={{
         pageIcon: <FileText style={{ width: 20, height: 20 }} />,
         pageGradient: `linear-gradient(135deg, ${ct.primary.main} 0%, ${ct.primary.dark} 100%)`,
@@ -640,7 +612,7 @@ const WorkOrderPage: React.FC = () => {
         loading={loading}
         filters={filters}
         searchable
-        searchPlaceholder='搜索工单号或生产订单...'
+        searchPlaceholder={t('mes.work_order_page.work_order_number_1')}
         searchValue={searchTerm}
         onSearch={handleSearch}
         pagination={{
@@ -654,23 +626,23 @@ const WorkOrderPage: React.FC = () => {
         onSelectionChange={(ids) => setSelectedIds(ids.map(String))}
         actions={[
           {
-            label: '新增工单',
+            label: t('mes.work_order_page.dialog_create_title'),
             icon: <Plus size={16} />,
             onClick: handleOpenCreate,
           },
         ]}
         rowActions={rowActions}
         headerContent={statsContent}
-        emptyMessage='暂无工单数据'
+        emptyMessage={t('mes.work_order_page.empty_message')}
         getRowId={(row) => row.id}
         mobileCardTitleKey='product_name'
         mobileCardSubtitleKey='work_order_number'
         mobileCardDisplayFields={['status', 'quantity', 'completed_quantity', 'work_center']}
         mobileCardFieldLabels={{
-          status: '状态',
-          quantity: '计划数量',
-          completed_quantity: '完成数量',
-          work_center: '工作中心',
+          status: t('mes.work_order_page.filter_status'),
+          quantity: t('mes.work_order_page.column_planned_quantity'),
+          completed_quantity: t('mes.work_order_page.completed_quantity'),
+          work_center: t('mes.work_order_page.text_8ee6a4'),
         }}
       />
 
@@ -680,7 +652,7 @@ const WorkOrderPage: React.FC = () => {
         maxWidth={isMobile ? 'sm' : 'md'}
         fullWidth={isMobile}
       >
-        <DialogTitle>{selectedWorkOrder ? '编辑工单' : '新增工单'}</DialogTitle>
+        <DialogTitle>{selectedWorkOrder ? t('mes.work_order_page.dialog_edit_title') : t('mes.work_order_page.dialog_create_title')}</DialogTitle>
         <DialogContent>
           <Box
             component='span'
@@ -691,7 +663,7 @@ const WorkOrderPage: React.FC = () => {
               fontSize: 14,
             }}
           >
-            {selectedWorkOrder ? '修改工单信息' : '填写新工单信息'}
+            {selectedWorkOrder ? t('mes.work_order_page.info') : t('mes.work_order_page.info_1')}
           </Box>
           <form onSubmit={handleSubmit}>
             <Box

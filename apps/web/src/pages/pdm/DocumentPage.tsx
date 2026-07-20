@@ -47,7 +47,6 @@ import {
   type DocumentSearchParams,
 } from '@/api/pdm/document';
 import { useNotificationStore } from '@/store';
-import { apiLogger } from '@/utils/logger';
 import {
   ListPageTemplate,
   type ColumnDef,
@@ -58,6 +57,7 @@ import { PageContainer } from '@/components/common/PageContainerV2';
 import { designTokens } from '@/theme/tokens';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { QUERY_KEYS } from '@/lib/reactQuery';
+import { useCrudMutations } from '@/hooks';
 
 const ct = designTokens.colors;
 
@@ -180,41 +180,23 @@ export const DocumentPage: React.FC = () => {
     searchDocumentsMutation.mutate(keyword);
   };
 
-  const createDocumentMutation = useMutation({
-    mutationFn: (data: CreatePdmDocumentRequest) => documentApi.create(data),
-    onSuccess: () => {
-      addNotification({ title: '成功', message: '文档创建成功', type: 'success' });
+  const { createMutation: createDocumentMutation, updateMutation: updateDocumentMutation, deleteMutation: deleteDocumentMutation } = useCrudMutations<
+    CreatePdmDocumentRequest,
+    CreatePdmDocumentRequest,
+    string
+  >({
+    queryKeyToInvalidate: QUERY_KEYS.PDM.DOCUMENTS,
+    createFn: (data) => documentApi.create(data),
+    updateFn: ({ id, data }) => documentApi.update(String(id), data),
+    deleteFn: (id) => documentApi.delete(String(id)),
+    entityName: '文档',
+    onCreateSuccess: () => {
       setOpenDialog(false);
       setEditingDocument(null);
-      queryClient.invalidateQueries({ queryKey: QUERY_KEYS.PDM.DOCUMENTS });
     },
-    onError: () => {
-      addNotification({ title: '错误', message: '创建失败', type: 'error' });
-    },
-  });
-
-  const updateDocumentMutation = useMutation({
-    mutationFn: ({ id, data }: { id: string; data: CreatePdmDocumentRequest }) =>
-      documentApi.update(id, data),
-    onSuccess: () => {
-      addNotification({ title: '成功', message: '文档更新成功', type: 'success' });
+    onUpdateSuccess: () => {
       setOpenDialog(false);
       setEditingDocument(null);
-      queryClient.invalidateQueries({ queryKey: QUERY_KEYS.PDM.DOCUMENTS });
-    },
-    onError: () => {
-      addNotification({ title: '错误', message: '更新失败', type: 'error' });
-    },
-  });
-
-  const deleteDocumentMutation = useMutation({
-    mutationFn: (id: string) => documentApi.delete(id),
-    onSuccess: () => {
-      addNotification({ title: '成功', message: '文档删除成功', type: 'success' });
-      queryClient.invalidateQueries({ queryKey: QUERY_KEYS.PDM.DOCUMENTS });
-    },
-    onError: () => {
-      addNotification({ title: '错误', message: '删除失败', type: 'error' });
     },
   });
 

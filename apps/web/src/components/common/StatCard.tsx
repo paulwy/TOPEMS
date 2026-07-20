@@ -42,6 +42,7 @@ import {
   type LucideIcon,
 } from 'lucide-react';
 import { useTouchFeedback } from '@/hooks/useTouchFeedback';
+import { useCountUp, countUpEasings } from '@/hooks/useCountUp';
 
 // ============ 类型定义 ============
 
@@ -383,9 +384,6 @@ export const StatCardBase: React.FC<StatCardBaseProps> = ({
   children,
 }) => {
   const theme = useTheme();
-  const [displayValue, setDisplayValue] = useState(
-    animate && typeof value === 'number' ? 0 : value
-  );
   const [isHovered, _setIsHovered] = useState(false);
   const [isVisible, setIsVisible] = useState(false);
   const cardRef = useRef<HTMLDivElement>(null);
@@ -427,33 +425,20 @@ export const StatCardBase: React.FC<StatCardBaseProps> = ({
     return () => observer.disconnect();
   }, []);
 
-  useEffect(() => {
-    if (!animate || typeof value !== 'number' || !isVisible) {
-      setDisplayValue(value);
-      return;
-    }
+  // 数字滚动 — 使用 useCountUp hook（可见时启动）
+  const numericValue = typeof value === 'number' ? value : 0;
+  const { displayValue: animatedDisplay } = useCountUp(numericValue, {
+    duration: 1200,
+    enabled: animate && typeof value === 'number' && isVisible,
+    easing: countUpEasings.easeOutQuart,
+  });
 
-    const duration = 1200;
-    const steps = 40;
-    const stepDuration = duration / steps;
-    const startValue = 0;
-    const endValue = value as number;
-
-    let currentStep = 0;
-    const timer = setInterval(() => {
-      currentStep++;
-      if (currentStep >= steps) {
-        setDisplayValue(endValue);
-        clearInterval(timer);
-      } else {
-        const progress = currentStep / steps;
-        const eased = 1 - Math.pow(1 - progress, 4);
-        setDisplayValue(Math.round(startValue + (endValue - startValue) * eased));
-      }
-    }, stepDuration);
-
-    return () => clearInterval(timer);
-  }, [value, animate, isVisible]);
+  const displayValue =
+    animate && typeof value === 'number'
+      ? isVisible
+        ? animatedDisplay.toLocaleString()
+        : '0'
+      : value;
 
   const computedTrend = trend ?? (change !== undefined ? (change >= 0 ? 'up' : 'down') : null);
 
@@ -581,7 +566,7 @@ export const StatCardBase: React.FC<StatCardBaseProps> = ({
                   lineHeight: 1.2,
                 }}
               >
-                {typeof displayValue === 'number' ? displayValue.toLocaleString() : displayValue}
+                {displayValue}
               </Typography>
               {unit && (
                 <Typography

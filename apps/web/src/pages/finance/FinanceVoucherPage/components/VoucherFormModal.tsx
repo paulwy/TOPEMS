@@ -10,6 +10,7 @@ import {
 } from '@/components/common';
 import type { VoucherItemRequest, AccountingSubject } from '@/api/erp';
 
+import { useTranslation } from 'react-i18next';
 interface NewVoucherState {
   voucher_number: string;
   voucher_date: string;
@@ -51,17 +52,18 @@ const VoucherFormModal: React.FC<VoucherFormModalProps> = ({
   subjects,
   formatCurrency,
 }) => {
+  const { t } = useTranslation();
   return (
     <Dialog
       open={open}
       onClose={onClose}
       title={title}
       cancelButton={{
-        label: '取消',
+        label: t('finance.finance_voucher_page_components__voucher_form_modal.cancel'),
         onClick: onClose,
       }}
       confirmButton={{
-        label: '保存凭证',
+        label: t('finance.finance_voucher_page_components__voucher_form_modal.save'),
         onClick: onSubmit,
       }}
     >
@@ -75,7 +77,7 @@ const VoucherFormModal: React.FC<VoucherFormModalProps> = ({
         >
           <FormField
             name='voucher_number'
-            label='凭证编号 *'
+            label={t('finance.finance_voucher_page_components__voucher_form_modal.text_7c0ad7')}
             value={newVoucher.voucher_number}
             onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
               setNewVoucher((prev) => ({
@@ -83,11 +85,11 @@ const VoucherFormModal: React.FC<VoucherFormModalProps> = ({
                 voucher_number: e.target.value,
               }))
             }
-            placeholder='请输入凭证编号'
+            placeholder={t('finance.finance_voucher_page_components__voucher_form_modal.please_input')}
           />
           <FormField
             name='voucher_date'
-            label='凭证日期 *'
+            label={t('finance.finance_voucher_page_components__voucher_form_modal.date')}
             type='date'
             value={newVoucher.voucher_date}
             onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
@@ -99,7 +101,7 @@ const VoucherFormModal: React.FC<VoucherFormModalProps> = ({
           />
           <FormField
             name='period'
-            label='期间 *'
+            label={t('finance.finance_voucher_page_components__voucher_form_modal.text_9d3080')}
             value={newVoucher.period}
             onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
               setNewVoucher((prev) => ({
@@ -107,7 +109,7 @@ const VoucherFormModal: React.FC<VoucherFormModalProps> = ({
                 period: e.target.value,
               }))
             }
-            placeholder='如: 2024-06'
+            placeholder={t('finance.finance_voucher_page_components__voucher_form_modal.text_4c1005')}
           />
         </Box>
         <Box
@@ -119,7 +121,7 @@ const VoucherFormModal: React.FC<VoucherFormModalProps> = ({
         >
           <FormField
             name='attachment_count'
-            label='附件数量'
+            label={t('finance.finance_voucher_page_components__voucher_form_modal.quantity')}
             type='number'
             value={newVoucher.attachment_count}
             onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
@@ -131,7 +133,7 @@ const VoucherFormModal: React.FC<VoucherFormModalProps> = ({
           />
           <FormField
             name='maker_name'
-            label='制单人'
+            label={t('finance.finance_voucher_page_components__voucher_form_modal.document_maker')}
             value={newVoucher.maker_name}
             onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
               setNewVoucher((prev) => ({
@@ -139,12 +141,12 @@ const VoucherFormModal: React.FC<VoucherFormModalProps> = ({
                 maker_name: e.target.value,
               }))
             }
-            placeholder='制单人姓名'
+            placeholder={t('finance.finance_voucher_page_components__voucher_form_modal.document_maker_1')}
           />
         </Box>
         <FormField
           name='summary'
-          label='摘要'
+          label={t('finance.finance_voucher_page_components__voucher_form_modal.text_3ae146')}
           multiline
           rows={2}
           value={newVoucher.summary}
@@ -154,7 +156,7 @@ const VoucherFormModal: React.FC<VoucherFormModalProps> = ({
               summary: e.target.value,
             }))
           }
-          placeholder='凭证摘要'
+          placeholder={t('finance.finance_voucher_page_components__voucher_form_modal.text_95392b')}
         />
 
         <Box sx={{ borderTop: 1, borderColor: 'divider', pt: 2 }}>
@@ -173,7 +175,7 @@ const VoucherFormModal: React.FC<VoucherFormModalProps> = ({
               凭证明细
             </Typography>
             <ActionButton
-              label='添加分录'
+              label={t('finance.finance_voucher_page_components__voucher_form_modal.text_8f114f')}
               icon={<Plus size={16} />}
               variant='secondary'
               size='small'
@@ -213,7 +215,7 @@ const VoucherFormModal: React.FC<VoucherFormModalProps> = ({
                 </Typography>
                 <FormSelect
                   name={`subject_code_${index}`}
-                  label='选择科目'
+                  label={t('finance.finance_voucher_page_components__voucher_form_modal.text_3a5553')}
                   value={item.subject_code}
                   onChange={(value: string | number | string[]) =>
                     updateVoucherItem(index, 'subject_code', value as string | number)
@@ -229,7 +231,7 @@ const VoucherFormModal: React.FC<VoucherFormModalProps> = ({
                   sx={{ width: 100 }}
                   value={item.subject_name}
                   slotProps={{ input: { readOnly: true } }}
-                  placeholder='科目名称'
+                  placeholder={t('finance.finance_voucher_page_components__voucher_form_modal.name')}
                 />
                 <CurrencyField
                   name={`debit_amount_${index}`}
@@ -237,7 +239,7 @@ const VoucherFormModal: React.FC<VoucherFormModalProps> = ({
                   sx={{ width: 150 }}
                   value={item.debit_amount || 0}
                   onChange={(val: number) => updateVoucherItem(index, 'debit_amount', val)}
-                  placeholder='借方'
+                  placeholder={t('finance.finance_voucher_page_components__voucher_form_modal.text_63e2bc')}
                 />
                 <CurrencyField
                   name={`credit_amount_${index}`}
@@ -245,10 +247,10 @@ const VoucherFormModal: React.FC<VoucherFormModalProps> = ({
                   sx={{ width: 150 }}
                   value={item.credit_amount || 0}
                   onChange={(val: number) => updateVoucherItem(index, 'credit_amount', val)}
-                  placeholder='贷方'
+                  placeholder={t('finance.finance_voucher_page_components__voucher_form_modal.text_9ff9a6')}
                 />
                 <ActionButton
-                  label='删除'
+                  label={t('finance.finance_voucher_page_components__voucher_form_modal.delete')}
                   icon={<X size={16} />}
                   variant='text'
                   size='small'

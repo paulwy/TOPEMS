@@ -98,18 +98,63 @@ impl DocumentApi {
                 filename.clone(),
                 file_path,
                 file_size,
-                mime_type,
+                mime_type.clone(),
                 tenant_id,
             )
             .await
         {
-            Ok(doc_id) => Json(ApiResponse::success(
-                UploadDocumentResponse {
-                    document_id: Uuid::parse_str(&doc_id).unwrap_or(Uuid::nil()),
-                    message: format!("文档 '{}' 上传成功", filename),
-                },
-                "Success",
-            )),
+            Ok(doc_id) => {
+                let document_id = Uuid::parse_str(&doc_id).unwrap_or(Uuid::nil());
+
+                // 发布 AiDocumentProcessed 事件（graceful fallback）
+                if let Some(ref publisher) = state.event_publisher {
+                    let publisher = publisher.clone();
+                    let process_id = Uuid::new_v4();
+                    let document_name = filename.clone();
+                    let process_type = mime_type.clone();
+                    let extracted_data = serde_json::json!({
+                        "file_size": file_size,
+                        "mime_type": mime_type.clone(),
+                        "tenant_id": tenant_id,
+                        "processed_by": claims.sub.clone(),
+                    });
+                    tokio::spawn(async move {
+                        let payload = topems_shared::event::AiDocumentProcessedPayload {
+                            process_id,
+                            document_id: Some(document_id),
+                            document_name: Some(document_name.clone()),
+                            process_type,
+                            extracted_data,
+                            processed_at: Some(chrono::Utc::now()),
+                        };
+                        if let Err(e) = publisher
+                            .publish_event(
+                                topems_shared::event::EventType::AiDocumentProcessed,
+                                payload,
+                            )
+                            .await
+                        {
+                            tracing::warn!(
+                                "[ai] AiDocumentProcessed 事件发布失败（graceful fallback）: {}",
+                                e
+                            );
+                        } else {
+                            tracing::info!(
+                                "[ai] AiDocumentProcessed 事件发布成功 - doc_id={}",
+                                document_id
+                            );
+                        }
+                    });
+                }
+
+                Json(ApiResponse::success(
+                    UploadDocumentResponse {
+                        document_id,
+                        message: format!("文档 '{}' 上传成功", filename),
+                    },
+                    "Success",
+                ))
+            }
             Err(e) => Json(ApiResponse::<UploadDocumentResponse>::error(500, &e)),
         }
     }

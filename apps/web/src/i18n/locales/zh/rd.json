@@ -1,0 +1,405 @@
+{
+  "title": "研发管理",
+  "menu": {
+    "project": "研发项目",
+    "milestone": "里程碑",
+    "task": "任务",
+    "document": "文档",
+    "test": "测试",
+    "material": "物料",
+    "experiment": "实验",
+    "deployment": "部署",
+    "statistics": "统计"
+  },
+  "status": {
+    "planning": "规划中",
+    "in_progress": "进行中",
+    "completed": "已完成",
+    "on_hold": "已暂停",
+    "cancelled": "已取消",
+    "pending": "待启动",
+    "paused": "暂停",
+    "passed": "已通过",
+    "failed": "未通过",
+    "pending_test": "待执行",
+    "sufficient": "充足",
+    "normal": "正常",
+    "low": "偏低",
+    "insufficient": "不足"
+  },
+  "action": {
+    "create": "创建",
+    "edit": "编辑",
+    "delete": "删除",
+    "view": "查看",
+    "assign": "分配",
+    "approve": "审批",
+    "execute": "执行",
+    "detail": "详情",
+    "export": "导出",
+    "import": "导入",
+    "apply": "申请",
+    "batch_delete": "批量删除"
+  },
+  "field": {
+    "project_name": "项目名称",
+    "project_code": "项目编码",
+    "project_type": "项目类型",
+    "start_date": "开始日期",
+    "end_date": "结束日期",
+    "owner": "负责人",
+    "leader": "项目负责人",
+    "members": "成员",
+    "progress": "进度",
+    "priority": "优先级",
+    "description": "描述",
+    "budget": "预算金额",
+    "budget_yuan": "预算(万元)",
+    "risklevel": "风险等级",
+    "case_no": "用例编号",
+    "case_name": "用例名称",
+    "case_type": "用例类型",
+    "related_requirement": "关联需求",
+    "material_code": "物料编码",
+    "material_name": "物料名称",
+    "category": "类别",
+    "stock": "库存",
+    "unit": "单位",
+    "location": "存放位置"
+  },
+  "message": {
+    "create_success": "创建成功",
+    "update_success": "更新成功",
+    "delete_success": "删除成功",
+    "confirm_delete": "确认删除？",
+    "no_data": "暂无数据",
+    "operation_success": "操作成功",
+    "operation_failed": "操作失败",
+    "submit_failed": "提交失败"
+  },
+  "priority": {
+    "high": "高",
+    "medium": "中",
+    "low": "低",
+    "normal": "普通",
+    "important": "重要",
+    "urgent": "紧急",
+    "strategic": "战略级"
+  },
+  "risk_level": {
+    "low": "低",
+    "medium": "中",
+    "high": "高",
+    "extreme": "极高"
+  },
+  "project_type": {
+    "new_product": "新产品研发",
+    "process_improvement": "工艺改进",
+    "formula_optimization": "配方优化",
+    "technical_breakthrough": "技术攻关",
+    "equipment_modification": "设备改造",
+    "other": "其他"
+  },
+  "case_type": {
+    "functional": "功能测试",
+    "performance": "性能测试",
+    "stress": "压力测试",
+    "ui": "UI测试",
+    "security": "安全测试"
+  },
+  "common": {
+    "all": "全部",
+    "vs_last_period": "vs 上周期",
+    "tip": "提示",
+    "in_development": "功能开发中",
+    "confirm": "确认",
+    "cancel": "取消",
+    "close": "关闭",
+    "create": "创建",
+    "save_changes": "保存修改",
+    "submit_success": "提交成功",
+    "submit_failed_check_form": "提交失败，请检查表单",
+    "upload_report": "上传测试报告"
+  },
+  "dashboard_page": {
+    "title": "研发管理",
+    "subtitle": "{{greeting}}，研发项目与文档管理",
+    "greeting": {
+      "morning": "上午好",
+      "afternoon": "下午好",
+      "evening": "晚上好"
+    },
+    "stat_card": {
+      "research_projects": "研发项目",
+      "document_count": "文档数量",
+      "test_cases": "测试用例",
+      "version_releases": "版本发布"
+    },
+    "chart": {
+      "project_status_distribution": "项目状态分布",
+      "experiment_status_distribution": "实验状态分布"
+    },
+    "status_label": {
+      "pending": "待处理",
+      "in_progress": "进行中",
+      "completed": "已完成",
+      "cancelled": "已取消"
+    },
+    "quick_action": {
+      "title": "快捷操作",
+      "create_research_project": "创建研发项目",
+      "write_test_case": "编写测试用例",
+      "release_new_version": "发布新版本"
+    }
+  },
+  "project_list_page": {
+    "title": "研发项目管理",
+    "subtitle": "管理研发项目、跟踪进度、分配资源",
+    "search_placeholder": "搜索项目名称或编码...",
+    "empty_message": "暂无项目数据",
+    "column": {
+      "code": "项目编码",
+      "name": "项目名称",
+      "project_type": "项目类型",
+      "leader": "负责人",
+      "status": "状态",
+      "progress": "进度",
+      "start_date": "开始日期",
+      "budget": "预算(万元)"
+    },
+    "status_filter": {
+      "all": "全部",
+      "pending": "待启动",
+      "in_progress": "进行中",
+      "completed": "已完成",
+      "paused": "暂停",
+      "cancelled": "取消"
+    },
+    "row_action": {
+      "view_detail": "查看详情",
+      "edit": "编辑",
+      "delete": "删除"
+    },
+    "action_button": {
+      "export": "导出",
+      "create_project": "新建项目"
+    },
+    "filter": {
+      "status": "状态"
+    },
+    "notification": {
+      "delete_success_title": "删除成功",
+      "delete_success_message": "项目已删除",
+      "delete_failed_title": "删除失败",
+      "delete_failed_message": "无法删除项目"
+    },
+    "error": {
+      "load_list_failed": "加载项目列表失败",
+      "delete_failed": "删除项目失败"
+    },
+    "dialog": {
+      "confirm_delete_title": "确认删除",
+      "confirm_delete_message": "确定要删除项目 \"{{name}}\" 吗？此操作不可恢复。"
+    }
+  },
+  "project_create_page": {
+    "title_create": "新建研发项目",
+    "subtitle_create": "创建新的研发项目，设置基本信息和团队",
+    "title_edit": "编辑研发项目",
+    "subtitle_edit": "修改项目基本信息和配置",
+    "submit_text_create": "创建项目",
+    "submit_text_edit": "保存修改",
+    "section": {
+      "basic_title": "基本信息",
+      "basic_description": "项目核心信息",
+      "timing_title": "时间和预算",
+      "timing_description": "项目时间安排和预算规划",
+      "risk_title": "风险评估",
+      "risk_description": "项目风险等级和优先级"
+    },
+    "field": {
+      "name": "项目名称",
+      "name_placeholder": "请输入项目名称",
+      "code": "项目编码",
+      "code_placeholder": "例如: RS-2024-001",
+      "code_helper": "编辑时编码不可修改",
+      "project_type": "项目类型",
+      "leader": "项目负责人",
+      "leader_placeholder": "请输入负责人姓名",
+      "description": "项目描述",
+      "description_placeholder": "请输入项目描述，包括目标、背景、预期成果等",
+      "start_date": "开始日期",
+      "end_date": "结束日期",
+      "budget": "预算金额",
+      "budget_placeholder": "请输入预算金额",
+      "budget_helper": "单位：元",
+      "risklevel": "风险等级",
+      "priority": "优先级"
+    },
+    "notification": {
+      "create_success_title": "创建成功",
+      "create_success_message": "项目已创建",
+      "update_success_title": "更新成功",
+      "update_success_message": "项目信息已更新",
+      "submit_failed_title": "提交失败",
+      "submit_failed_message": "无法提交项目数据"
+    },
+    "error": {
+      "load_project_failed": "加载项目数据失败",
+      "create_failed": "创建项目失败",
+      "update_failed": "更新项目失败",
+      "submit_failed": "无法提交项目数据"
+    },
+    "validation": {
+      "submit_success": "提交成功",
+      "submit_failed": "提交失败，请检查表单"
+    }
+  },
+  "test_page": {
+    "search_placeholder": "搜索用例编号、名称...",
+    "action_button": {
+      "new_case": "新建用例"
+    },
+    "column": {
+      "case_no": "用例编号",
+      "case_name": "用例名称",
+      "case_type": "用例类型",
+      "priority": "优先级",
+      "status": "状态",
+      "related_requirement": "关联需求"
+    },
+    "filter": {
+      "case_type": "用例类型",
+      "priority": "优先级",
+      "status": "状态"
+    },
+    "row_action": {
+      "detail": "详情",
+      "execute": "执行",
+      "edit": "编辑"
+    },
+    "dialog": {
+      "new_case_title": "新建用例",
+      "case_name_label": "用例名称",
+      "case_type_label": "用例类型",
+      "priority_label": "优先级",
+      "related_requirement_label": "关联需求",
+      "test_report_attachment": "测试报告附件",
+      "upload_text": "上传测试报告",
+      "cancel": "取消",
+      "create": "创建",
+      "detail_title": "用例详情",
+      "close": "关闭",
+      "related_requirement_display": "关联需求: {{requirement}}"
+    },
+    "notification": {
+      "execute_success_title": "操作成功",
+      "execute_success_message": "测试用例已执行",
+      "execute_failed_title": "操作失败",
+      "execute_failed_message": "执行测试失败",
+      "create_success_title": "创建成功",
+      "create_success_message": "新测试用例已创建",
+      "create_failed_title": "创建失败",
+      "create_failed_message": "无法创建测试用例"
+    },
+    "error": {
+      "load_list_failed": "加载测试用例失败",
+      "update_failed": "更新测试用例失败",
+      "execute_failed": "执行测试失败",
+      "create_failed": "创建测试用例失败"
+    }
+  },
+  "material_list_page": {
+    "title": "物料管理",
+    "subtitle": "管理研发物料、库存监控、物料申请",
+    "search_placeholder": "搜索物料名称或编码...",
+    "empty_message": "暂无物料数据",
+    "breadcrumb": {
+      "home": "首页",
+      "rd": "研发",
+      "material": "物料管理"
+    },
+    "stat_card": {
+      "total": "物料总数",
+      "sufficient": "库存充足",
+      "insufficient": "库存不足"
+    },
+    "column": {
+      "code": "物料编码",
+      "name": "物料名称",
+      "category": "类别",
+      "stock": "库存",
+      "unit": "单位",
+      "status": "状态",
+      "location": "存放位置"
+    },
+    "status_filter": {
+      "all": "全部",
+      "sufficient": "充足",
+      "normal": "正常",
+      "low": "偏低",
+      "insufficient": "不足"
+    },
+    "filter": {
+      "category": "类别筛选",
+      "status": "状态筛选"
+    },
+    "row_action": {
+      "apply": "申请",
+      "edit": "编辑",
+      "delete": "删除"
+    },
+    "batch_action": {
+      "batch_delete": "批量删除"
+    },
+    "action_button": {
+      "add": "新增",
+      "import": "导入",
+      "export": "导出"
+    },
+    "notification": {
+      "delete_success_title": "删除成功",
+      "delete_success_message": "物料已删除",
+      "delete_failed_title": "删除失败",
+      "delete_failed_message": "无法删除物料",
+      "batch_delete_success_title": "批量删除成功",
+      "batch_delete_success_message": "成功删除 {{success}} 条物料",
+      "batch_delete_partial_title": "部分成功",
+      "batch_delete_partial_message": "成功删除 {{success}} 条，失败 {{failed}} 条",
+      "batch_delete_failed_title": "删除失败",
+      "batch_delete_failed_message": "无法批量删除物料",
+      "import_success_title": "导入成功",
+      "import_success_message": "成功导入 {{success}} 条物料",
+      "import_partial_title": "部分成功",
+      "import_partial_message": "成功导入 {{success}} 条，失败 {{failed}} 条",
+      "import_failed_title": "导入失败",
+      "import_failed_message": "无法导入物料",
+      "export_success_title": "导出成功",
+      "export_success_message": "物料数据已导出",
+      "export_failed_title": "导出失败",
+      "export_failed_message": "无法导出物料",
+      "apply_in_development": "物料申请功能开发中",
+      "edit_in_development": "编辑物料功能开发中",
+      "add_in_development": "新增物料功能开发中",
+      "tip_title": "提示"
+    },
+    "error": {
+      "load_list_failed": "加载物料列表失败",
+      "delete_failed": "删除物料失败",
+      "batch_delete_failed": "批量删除物料失败",
+      "import_failed": "导入物料失败"
+    },
+    "dialog": {
+      "confirm_delete_title": "确认删除",
+      "confirm_delete_message": "确定要删除这条物料吗？",
+      "confirm_batch_delete_title": "确认批量删除",
+      "confirm_batch_delete_message": "确定要删除选中的 {{count}} 条物料吗？"
+    },
+    "status_label": {
+      "sufficient": "充足",
+      "normal": "正常",
+      "low": "偏低",
+      "insufficient": "不足"
+    }
+  }
+}

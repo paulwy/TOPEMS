@@ -74,173 +74,8 @@ pub async fn list_voucher_templates(
             ))
         }
         Err(e) => {
-            tracing::warn!("获取凭证模板失败: {}, 使用模拟数据", e);
-            let now = chrono::Utc::now();
-            let mock_templates = vec![
-                VoucherTemplate {
-                    id: Uuid::new_v4(),
-                    code: "PURCHASE_INVOICE".to_string(),
-                    name: "采购发票应付凭证".to_string(),
-                    r#type: "purchase_invoice".to_string(),
-                    description: Some("根据采购发票自动生成应付账款凭证".to_string()),
-                    applicable_modules: Some(serde_json::json!(["srm"])),
-                    applicable_companies: None,
-                    condition: None,
-                    entries: Some(serde_json::json!([
-                        {
-                            "id": "e1",
-                            "line_no": 1,
-                            "account_rule_type": "fixed",
-                            "account_code": "1405",
-                            "amount_rule_type": "field",
-                            "amount_field": "data.amount",
-                            "direction_rule_type": "fixed",
-                            "fixed_direction": "debit",
-                            "summary_rule_type": "expression",
-                            "summary_expression": "采购商品/服务"
-                        },
-                        {
-                            "id": "e2",
-                            "line_no": 2,
-                            "account_rule_type": "fixed",
-                            "account_code": "2221.01",
-                            "amount_rule_type": "field",
-                            "amount_field": "data.tax_amount",
-                            "direction_rule_type": "fixed",
-                            "fixed_direction": "debit",
-                            "summary_rule_type": "expression",
-                            "summary_expression": "进项税额"
-                        },
-                        {
-                            "id": "e3",
-                            "line_no": 3,
-                            "account_rule_type": "fixed",
-                            "account_code": "2202",
-                            "amount_rule_type": "expression",
-                            "amount_expression": "data.amount + data.tax_amount",
-                            "direction_rule_type": "fixed",
-                            "fixed_direction": "credit",
-                            "summary_rule_type": "expression",
-                            "summary_expression": "应付账款"
-                        }
-                    ])),
-                    status: "active".to_string(),
-                    is_default: true,
-                    created_at: now,
-                    updated_at: now,
-                    created_by: None,
-                },
-                VoucherTemplate {
-                    id: Uuid::new_v4(),
-                    code: "SALES_INVOICE".to_string(),
-                    name: "销售发票应收凭证".to_string(),
-                    r#type: "sales_invoice".to_string(),
-                    description: Some("根据销售发票自动生成应收账款凭证".to_string()),
-                    applicable_modules: Some(serde_json::json!(["crm"])),
-                    applicable_companies: None,
-                    condition: None,
-                    entries: Some(serde_json::json!([
-                        {
-                            "id": "e1",
-                            "line_no": 1,
-                            "account_rule_type": "fixed",
-                            "account_code": "1122",
-                            "amount_rule_type": "expression",
-                            "amount_expression": "data.amount + data.tax_amount",
-                            "direction_rule_type": "fixed",
-                            "fixed_direction": "debit",
-                            "summary_rule_type": "expression",
-                            "summary_expression": "应收账款"
-                        },
-                        {
-                            "id": "e2",
-                            "line_no": 2,
-                            "account_rule_type": "fixed",
-                            "account_code": "6001",
-                            "amount_rule_type": "field",
-                            "amount_field": "data.amount",
-                            "direction_rule_type": "fixed",
-                            "fixed_direction": "credit",
-                            "summary_rule_type": "expression",
-                            "summary_expression": "主营业务收入"
-                        },
-                        {
-                            "id": "e3",
-                            "line_no": 3,
-                            "account_rule_type": "fixed",
-                            "account_code": "2221.02",
-                            "amount_rule_type": "field",
-                            "amount_field": "data.tax_amount",
-                            "direction_rule_type": "fixed",
-                            "fixed_direction": "credit",
-                            "summary_rule_type": "expression",
-                            "summary_expression": "销项税额"
-                        }
-                    ])),
-                    status: "active".to_string(),
-                    is_default: true,
-                    created_at: now,
-                    updated_at: now,
-                    created_by: None,
-                },
-                VoucherTemplate {
-                    id: Uuid::new_v4(),
-                    code: "PAYROLL".to_string(),
-                    name: "工资发放凭证".to_string(),
-                    r#type: "payroll".to_string(),
-                    description: Some("根据工资数据自动生成工资发放凭证".to_string()),
-                    applicable_modules: Some(serde_json::json!(["hrm"])),
-                    applicable_companies: None,
-                    condition: None,
-                    entries: Some(serde_json::json!([
-                        {
-                            "id": "e1",
-                            "line_no": 1,
-                            "account_rule_type": "fixed",
-                            "account_code": "6602.01",
-                            "amount_rule_type": "field",
-                            "amount_field": "data.total_salary",
-                            "direction_rule_type": "fixed",
-                            "fixed_direction": "debit",
-                            "summary_rule_type": "expression",
-                            "summary_expression": "工资费用"
-                        },
-                        {
-                            "id": "e2",
-                            "line_no": 2,
-                            "account_rule_type": "fixed",
-                            "account_code": "2211",
-                            "amount_rule_type": "field",
-                            "amount_field": "data.total_tax",
-                            "direction_rule_type": "fixed",
-                            "fixed_direction": "credit",
-                            "summary_rule_type": "expression",
-                            "summary_expression": "应交税费"
-                        },
-                        {
-                            "id": "e3",
-                            "line_no": 3,
-                            "account_rule_type": "fixed",
-                            "account_code": "1002",
-                            "amount_rule_type": "expression",
-                            "amount_expression": "data.total_salary - data.total_tax",
-                            "direction_rule_type": "fixed",
-                            "fixed_direction": "credit",
-                            "summary_rule_type": "expression",
-                            "summary_expression": "银行存款"
-                        }
-                    ])),
-                    status: "active".to_string(),
-                    is_default: false,
-                    created_at: now,
-                    updated_at: now,
-                    created_by: None,
-                },
-            ];
-            Json(ApiResponse::success(
-                PaginatedResponse::new(mock_templates, 3, page, page_size),
-                "获取凭证模板列表成功",
-            ))
+            tracing::error!("获取凭证模板失败: {}", e);
+            Json(api_error(500, "获取凭证模板列表失败"))
         }
     }
 }
@@ -269,25 +104,8 @@ pub async fn get_voucher_template(
         Ok(Some(template)) => Json(ApiResponse::success(template, "获取凭证模板详情成功")),
         Ok(None) => Json(api_error(404, "凭证模板不存在")),
         Err(e) => {
-            tracing::warn!("获取凭证模板失败: {}, 使用模拟数据", e);
-            let now = chrono::Utc::now();
-            let mock_template = VoucherTemplate {
-                id: template_id,
-                code: "GENERAL_JOURNAL".to_string(),
-                name: "通用转账凭证".to_string(),
-                r#type: "general_journal".to_string(),
-                description: Some("通用转账凭证模板".to_string()),
-                applicable_modules: Some(serde_json::json!(["finance"])),
-                applicable_companies: None,
-                condition: None,
-                entries: Some(serde_json::json!([])),
-                status: "active".to_string(),
-                is_default: false,
-                created_at: now,
-                updated_at: now,
-                created_by: None,
-            };
-            Json(ApiResponse::success(mock_template, "获取凭证模板详情成功"))
+            tracing::error!("获取凭证模板失败: {}", e);
+            Json(api_error(500, "获取凭证模板失败"))
         }
     }
 }
@@ -337,24 +155,8 @@ pub async fn create_voucher_template(
     match result {
         Ok(template) => Json(ApiResponse::success(template, "凭证模板创建成功")),
         Err(e) => {
-            tracing::warn!("创建凭证模板失败: {}, 返回模拟数据", e);
-            let mock_template = VoucherTemplate {
-                id,
-                code: req.code,
-                name: req.name,
-                r#type: req.r#type,
-                description: req.description,
-                applicable_modules: applicable_modules_json,
-                applicable_companies: applicable_companies_json,
-                condition: req.condition,
-                entries: Some(entries_json),
-                status: "active".to_string(),
-                is_default: false,
-                created_at: now,
-                updated_at: now,
-                created_by: Uuid::parse_str(&claims.sub).ok(),
-            };
-            Json(ApiResponse::success(mock_template, "凭证模板创建成功"))
+            tracing::error!("创建凭证模板失败: {}", e);
+            Json(api_error(500, "创建凭证模板失败"))
         }
     }
 }
@@ -453,27 +255,8 @@ pub async fn update_voucher_template(
     match result {
         Ok(template) => Json(ApiResponse::success(template, "凭证模板更新成功")),
         Err(e) => {
-            tracing::warn!("更新凭证模板失败: {}, 返回模拟数据", e);
-            Json(ApiResponse::success(
-                VoucherTemplate {
-                    id: template_id,
-                    code: existing.code,
-                    name,
-                    r#type: existing.r#type,
-                    description,
-                    applicable_modules: applicable_modules_json.or(existing.applicable_modules),
-                    applicable_companies: applicable_companies_json
-                        .or(existing.applicable_companies),
-                    condition: req.condition.or(existing.condition),
-                    entries: entries_json.or(existing.entries),
-                    status,
-                    is_default,
-                    created_at: existing.created_at,
-                    updated_at: now,
-                    created_by: existing.created_by,
-                },
-                "凭证模板更新成功",
-            ))
+            tracing::error!("更新凭证模板失败: {}", e);
+            Json(api_error(500, "更新凭证模板失败"))
         }
     }
 }
@@ -585,26 +368,8 @@ pub async fn copy_voucher_template(
     match result {
         Ok(template) => Json(ApiResponse::success(template, "凭证模板复制成功")),
         Err(e) => {
-            tracing::warn!("复制凭证模板失败: {}, 返回模拟数据", e);
-            Json(ApiResponse::success(
-                VoucherTemplate {
-                    id,
-                    code: new_code.to_string(),
-                    name: new_name.to_string(),
-                    r#type: existing.r#type,
-                    description: existing.description,
-                    applicable_modules: existing.applicable_modules,
-                    applicable_companies: existing.applicable_companies,
-                    condition: existing.condition,
-                    entries: existing.entries,
-                    status: "active".to_string(),
-                    is_default: false,
-                    created_at: now,
-                    updated_at: now,
-                    created_by: Uuid::parse_str(&claims.sub).ok(),
-                },
-                "凭证模板复制成功",
-            ))
+            tracing::error!("复制凭证模板失败: {}", e);
+            Json(api_error(500, "复制凭证模板失败"))
         }
     }
 }

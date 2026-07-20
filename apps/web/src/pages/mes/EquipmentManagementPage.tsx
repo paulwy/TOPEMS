@@ -50,15 +50,30 @@ import {
   AlertTriangle,
 } from 'lucide-react';
 import { apiLogger } from '@/utils/logger';
+import { useUrlListState } from '@/hooks';
 
+import { useTranslation } from 'react-i18next';
 const ct = designTokens.colors;
 
 const EquipmentManagementPage: React.FC = () => {
+  const { t } = useTranslation();
   const queryClient = useQueryClient();
-  const [searchTerm, setSearchTerm] = useState('');
-  const [statusFilter, setStatusFilter] = useState<string>('all');
-  const [currentPage, setCurrentPage] = useState(1);
-  const [pageSize] = useState(10);
+  const {
+    searchQuery,
+    setSearchQuery,
+    debouncedSearch,
+    filters: urlFilters,
+    setFilter,
+    currentPage,
+    setCurrentPage,
+    pageSize,
+  } = useUrlListState<{ status: string }>({
+    defaultPageSize: 10,
+    defaultFilters: { status: 'all' },
+    baseIndex: 1,
+    historyMode: 'replace',
+  });
+  const statusFilter = urlFilters.status;
   const [showDialog, setShowDialog] = useState(false);
   const [showDetailDialog, setShowDetailDialog] = useState(false);
   const [showMaintenanceDialog, setShowMaintenanceDialog] = useState(false);
@@ -83,18 +98,18 @@ const EquipmentManagementPage: React.FC = () => {
   const { addNotification } = useNotificationStore();
 
   const equipmentQuery = useQuery({
-    queryKey: ['mes-equipment', currentPage, pageSize, searchTerm, statusFilter],
+    queryKey: ['mes-equipment', currentPage, pageSize, debouncedSearch, statusFilter],
     queryFn: async () => {
       const params: ListParams = {
         page: currentPage - 1,
         pagesize: pageSize,
       };
-      if (searchTerm) params.search = searchTerm;
+      if (debouncedSearch) params.search = debouncedSearch;
       if (statusFilter !== 'all') params.status = statusFilter;
 
       const response = await mesApi.equipment.list(params);
       if (!response.success || !response.data) {
-        throw new Error(response.message || '加载设备列表失败');
+        throw new Error(response.message || t('mes.equipment_management_page.list'));
       }
       return {
         items: response.data.equipments || [],
@@ -110,7 +125,7 @@ const EquipmentManagementPage: React.FC = () => {
     queryFn: async () => {
       const response = await mesApi.equipment.getStatistics();
       if (!response.success || !response.data) {
-        throw new Error(response.message || '加载设备统计失败');
+        throw new Error(response.message || t('mes.equipment_management_page.fail'));
       }
       return response.data;
     },
@@ -127,7 +142,7 @@ const EquipmentManagementPage: React.FC = () => {
     mutationFn: async (data: CreateEquipmentRequest) => {
       const response = await mesApi.equipment.create(data);
       if (!response.success) {
-        throw new Error(response.message || '创建设备失败');
+        throw new Error(response.message || t('mes.equipment_management_page.create'));
       }
       return response.data;
     },
@@ -136,16 +151,16 @@ const EquipmentManagementPage: React.FC = () => {
       queryClient.invalidateQueries({ queryKey: ['mes-equipment-statistics'] });
       addNotification({
         type: 'success',
-        title: '创建成功',
-        message: '新设备已创建',
+        title: t('mes.equipment_management_page.create_1'),
+        message: t('mes.equipment_management_page.create_2'),
       });
     },
     onError: (error: unknown) => {
-      apiLogger.error('创建设备失败:', error);
+      apiLogger.error(t('mes.equipment_management_page.create_3'), error);
       addNotification({
         type: 'error',
-        title: '操作失败',
-        message: '创建设备失败',
+        title: t('mes.equipment_management_page.operation_failed'),
+        message: t('mes.equipment_management_page.create'),
       });
     },
   });
@@ -154,7 +169,7 @@ const EquipmentManagementPage: React.FC = () => {
     mutationFn: async ({ id, data }: { id: string; data: UpdateEquipmentRequest }) => {
       const response = await mesApi.equipment.update(id, data);
       if (!response.success) {
-        throw new Error(response.message || '更新设备失败');
+        throw new Error(response.message || t('mes.equipment_management_page.update'));
       }
       return response.data;
     },
@@ -163,16 +178,16 @@ const EquipmentManagementPage: React.FC = () => {
       queryClient.invalidateQueries({ queryKey: ['mes-equipment-statistics'] });
       addNotification({
         type: 'success',
-        title: '更新成功',
-        message: '设备信息已更新',
+        title: t('mes.equipment_management_page.update_1'),
+        message: t('mes.equipment_management_page.update_2'),
       });
     },
     onError: (error: unknown) => {
-      apiLogger.error('更新设备失败:', error);
+      apiLogger.error(t('mes.equipment_management_page.update_3'), error);
       addNotification({
         type: 'error',
-        title: '操作失败',
-        message: '更新设备失败',
+        title: t('mes.equipment_management_page.operation_failed'),
+        message: t('mes.equipment_management_page.update'),
       });
     },
   });
@@ -181,7 +196,7 @@ const EquipmentManagementPage: React.FC = () => {
     mutationFn: async (id: string) => {
       const response = await mesApi.equipment.delete(id);
       if (!response.success) {
-        throw new Error(response.message || '删除设备失败');
+        throw new Error(response.message || t('mes.equipment_management_page.delete'));
       }
     },
     onSuccess: () => {
@@ -189,16 +204,16 @@ const EquipmentManagementPage: React.FC = () => {
       queryClient.invalidateQueries({ queryKey: ['mes-equipment-statistics'] });
       addNotification({
         type: 'success',
-        title: '删除成功',
-        message: '设备已删除',
+        title: t('mes.equipment_management_page.delete_success'),
+        message: t('mes.equipment_management_page.deleted'),
       });
     },
     onError: (error: unknown) => {
-      apiLogger.error('删除设备失败:', error);
+      apiLogger.error(t('mes.equipment_management_page.delete_1'), error);
       addNotification({
         type: 'error',
-        title: '操作失败',
-        message: '删除设备失败',
+        title: t('mes.equipment_management_page.operation_failed'),
+        message: t('mes.equipment_management_page.delete'),
       });
     },
   });
@@ -207,7 +222,7 @@ const EquipmentManagementPage: React.FC = () => {
     mutationFn: async ({ id, data }: { id: string; data: MaintenanceEquipmentRequest }) => {
       const response = await mesApi.equipment.maintenance(id, data);
       if (!response.success) {
-        throw new Error(response.message || '创建设备维护记录失败');
+        throw new Error(response.message || t('mes.equipment_management_page.create_4'));
       }
       return response.data;
     },
@@ -216,26 +231,26 @@ const EquipmentManagementPage: React.FC = () => {
       queryClient.invalidateQueries({ queryKey: ['mes-equipment-statistics'] });
       addNotification({
         type: 'success',
-        title: '维护成功',
-        message: '设备维护记录已创建',
+        title: t('mes.equipment_management_page.success'),
+        message: t('mes.equipment_management_page.create_5'),
       });
     },
     onError: (error: unknown) => {
-      apiLogger.error('创建设备维护失败:', error);
+      apiLogger.error(t('mes.equipment_management_page.create_6'), error);
       addNotification({
         type: 'error',
-        title: '操作失败',
-        message: '创建设备维护记录失败',
+        title: t('mes.equipment_management_page.operation_failed'),
+        message: t('mes.equipment_management_page.create_4'),
       });
     },
   });
 
   const getStatusText = (status: string) => {
     const statusMap: Record<string, string> = {
-      running: '运行中',
-      idle: '空闲',
-      maintenance: '维护中',
-      fault: '故障',
+      running: t('mes.equipment_management_page.status_running'),
+      idle: t('mes.equipment_management_page.idle'),
+      maintenance: t('mes.equipment_management_page.status_maintenance'),
+      fault: t('mes.equipment_management_page.status_fault'),
     };
     return statusMap[status] || status;
   };
@@ -271,7 +286,7 @@ const EquipmentManagementPage: React.FC = () => {
 
   const handleDelete = useCallback(
     async (id: string) => {
-      if (!window.confirm('确定要删除这个设备吗?')) return;
+      if (!window.confirm(t('mes.equipment_management_page.confirm'))) return;
       try {
         await deleteMutation.mutateAsync(id);
       } catch {}
@@ -343,10 +358,10 @@ const EquipmentManagementPage: React.FC = () => {
         color: string;
       }
     > = {
-      running: { label: '运行中', bg: 'success.lighter', color: 'success.700' },
-      idle: { label: '空闲', bg: 'grey.100', color: 'text.secondary' },
-      maintenance: { label: '维护中', bg: 'warning.light', color: 'warning.700' },
-      fault: { label: '故障', bg: 'error.lighter', color: 'error.dark' },
+      running: { label: t('mes.equipment_management_page.status_running'), bg: 'success.lighter', color: 'success.700' },
+      idle: { label: t('mes.equipment_management_page.idle'), bg: 'grey.100', color: 'text.secondary' },
+      maintenance: { label: t('mes.equipment_management_page.status_maintenance'), bg: 'warning.light', color: 'warning.700' },
+      fault: { label: t('mes.equipment_management_page.status_fault'), bg: 'error.lighter', color: 'error.dark' },
     };
     const s = statusMap[status] || { label: status, bg: 'grey.100', color: 'text.secondary' };
     return (
@@ -366,14 +381,14 @@ const EquipmentManagementPage: React.FC = () => {
 
   const columns: ColumnDef<Equipment>[] = useMemo(
     () => [
-      { id: 'code', label: '设备编号', sortable: true },
-      { id: 'name', label: '设备名称', sortable: true },
-      { id: 'type', label: '设备类型', sortable: true },
-      { id: 'model', label: '型号', sortable: true },
-      { id: 'location', label: '位置', sortable: true },
+      { id: 'code', label: t('mes.equipment_management_page.equipment'), sortable: true },
+      { id: 'name', label: t('mes.equipment_management_page.column_equipment_name'), sortable: true },
+      { id: 'type', label: t('mes.equipment_management_page.equipment_type'), sortable: true },
+      { id: 'model', label: t('mes.equipment_management_page.text_ac4190'), sortable: true },
+      { id: 'location', label: t('mes.equipment_management_page.text_d4d2a6'), sortable: true },
       {
         id: 'status',
-        label: '状态',
+        label: t('mes.equipment_management_page.filter_status'),
         render: (row) => getStatusBadge(row.status),
       },
     ],
@@ -384,18 +399,18 @@ const EquipmentManagementPage: React.FC = () => {
     () => [
       {
         id: 'status',
-        label: '状态',
+        label: t('mes.equipment_management_page.filter_status'),
         type: 'select',
         options: [
-          { label: '全部状态', value: 'all' },
-          { label: '运行中', value: 'running' },
-          { label: '空闲', value: 'idle' },
-          { label: '维护中', value: 'maintenance' },
-          { label: '故障', value: 'fault' },
+          { label: t('mes.equipment_management_page.filter_option_all_status'), value: 'all' },
+          { label: t('mes.equipment_management_page.status_running'), value: 'running' },
+          { label: t('mes.equipment_management_page.idle'), value: 'idle' },
+          { label: t('mes.equipment_management_page.status_maintenance'), value: 'maintenance' },
+          { label: t('mes.equipment_management_page.status_fault'), value: 'fault' },
         ],
         value: statusFilter,
         onChange: (value: unknown) => {
-          setStatusFilter(value as string);
+          setFilter('status', value as string);
           setCurrentPage(1);
         },
       },
@@ -406,27 +421,27 @@ const EquipmentManagementPage: React.FC = () => {
   const rowActions: RowAction<Equipment>[] = useMemo(
     () => [
       {
-        label: '查看详情',
+        label: t('mes.equipment_management_page.action_view_detail'),
         icon: <Eye size={16} />,
         onClick: handleViewDetail,
       },
       {
-        label: '设备维护',
+        label: t('mes.equipment_management_page.equipment_1'),
         icon: <Wrench size={16} />,
         onClick: handleMaintenance,
       },
       {
-        label: '编辑',
+        label: t('mes.equipment_management_page.action_edit'),
         icon: <Edit size={16} />,
         onClick: handleEdit,
       },
       {
-        label: '删除',
+        label: t('mes.equipment_management_page.action_delete'),
         icon: <Trash2 size={16} />,
         color: 'error',
         onClick: (row) => handleDelete(row.id),
         confirm: true,
-        confirmMessage: '确定要删除这个设备吗?',
+        confirmMessage: t('mes.equipment_management_page.confirm'),
       },
     ],
     [handleViewDetail, handleMaintenance, handleEdit, handleDelete]
@@ -438,7 +453,7 @@ const EquipmentManagementPage: React.FC = () => {
   };
 
   const handleSearch = (value: string) => {
-    setSearchTerm(value);
+    setSearchQuery(value);
     setCurrentPage(1);
   };
 
@@ -538,8 +553,8 @@ const EquipmentManagementPage: React.FC = () => {
 
   return (
     <PageContainer
-      title='设备管理'
-      subtitle='管理设备信息,包括设备编号、名称、型号、状态等'
+      title={t('mes.equipment_management_page.breadcrumb_current')}
+      subtitle={t('mes.equipment_management_page.name')}
       headerProps={{
         pageIcon: <Wrench style={{ width: 20, height: 20 }} />,
         pageGradient: `linear-gradient(135deg, ${ct.warning.main} 0%, ${ct.warning.dark} 100%)`,
@@ -553,8 +568,8 @@ const EquipmentManagementPage: React.FC = () => {
         loading={loading || isMutationPending}
         filters={filters}
         searchable
-        searchPlaceholder='搜索设备编号或名称...'
-        searchValue={searchTerm}
+        searchPlaceholder={t('mes.equipment_management_page.search')}
+        searchValue={searchQuery}
         onSearch={handleSearch}
         pagination={{
           page: currentPage - 1,
@@ -567,23 +582,23 @@ const EquipmentManagementPage: React.FC = () => {
         onSelectionChange={(ids) => setSelectedIds(ids.map(String))}
         actions={[
           {
-            label: '新增设备',
+            label: t('mes.equipment_management_page.dialog_create_title'),
             icon: <Plus size={16} />,
             onClick: handleOpenCreate,
           },
         ]}
         rowActions={rowActions}
         headerContent={statsContent}
-        emptyMessage='暂无设备数据'
+        emptyMessage={t('mes.equipment_management_page.empty_message')}
         getRowId={(row) => row.id}
         mobileCardTitleKey='name'
         mobileCardSubtitleKey='code'
         mobileCardDisplayFields={['status', 'location', 'department', 'next_maintenance_date']}
         mobileCardFieldLabels={{
-          status: '状态',
-          location: '位置',
-          department: '部门',
-          next_maintenance_date: '下次维护',
+          status: t('mes.equipment_management_page.filter_status'),
+          location: t('mes.equipment_management_page.text_d4d2a6'),
+          department: t('mes.equipment_management_page.text_1e1459'),
+          next_maintenance_date: t('mes.equipment_management_page.column_next_maintenance'),
         }}
         onRefresh={() => {
           queryClient.invalidateQueries({ queryKey: ['mes-equipment'] });
@@ -597,7 +612,7 @@ const EquipmentManagementPage: React.FC = () => {
         onClose={() => setShowDialog(false)}
         maxWidth='md'
       >
-        <DialogTitle>{selectedEquipment ? '编辑设备' : '新增设备'}</DialogTitle>
+        <DialogTitle>{selectedEquipment ? t('mes.equipment_management_page.dialog_edit_title') : t('mes.equipment_management_page.dialog_create_title')}</DialogTitle>
         <DialogContent>
           <Box
             component='span'
@@ -608,7 +623,7 @@ const EquipmentManagementPage: React.FC = () => {
               fontSize: 14,
             }}
           >
-            {selectedEquipment ? '修改设备信息' : '填写新设备信息'}
+            {selectedEquipment ? t('mes.equipment_management_page.info') : t('mes.equipment_management_page.info_1')}
           </Box>
           <form onSubmit={handleSubmit}>
             <Box

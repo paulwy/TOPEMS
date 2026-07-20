@@ -18,7 +18,6 @@ import {
   MenuItem,
   Button,
 } from '@mui/material';
-import { useNotificationStore } from '@/store';
 import * as z from 'zod';
 import {
   ListPageTemplate,
@@ -27,18 +26,18 @@ import {
   type RowAction,
 } from '@/components/templates';
 import { PageContainer } from '@/components/common';
+import { ConfirmDialog } from '@topems/shared-components';
+import { useConfirmDialog, useCrudMutations } from '@/hooks';
 import { qmsApi } from '@/api/qms';
 import type { QualityStandard, CreateQualityStandardRequest } from '@/api/qms';
 import { designTokens } from '@/theme/tokens';
 import { QMS_PATHS } from '@/modules/qms/config';
-import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { useQuery } from '@tanstack/react-query';
 
 const ct = designTokens.colors;
 
 const QmsStandardListPage: React.FC = () => {
   const navigate = useNavigate();
-  const queryClient = useQueryClient();
-  const addNotification = useNotificationStore((state) => state.addNotification);
 
   const [searchTerm, setSearchTerm] = useState('');
   const [statusFilter, setStatusFilter] = useState('all');
@@ -54,6 +53,12 @@ const QmsStandardListPage: React.FC = () => {
     description: '',
     effective_date: '',
   });
+  const {
+    confirmOpen: confirmDialogOpen,
+    confirmConfig: confirmDialogConfig,
+    openConfirm: openConfirmDialog,
+    closeConfirm: setConfirmDialogClosed,
+  } = useConfirmDialog();
 
   const [errors, setErrors] = useState<Record<string, string>>({});
 
@@ -96,65 +101,41 @@ const QmsStandardListPage: React.FC = () => {
   const standards = standardsQuery.data || [];
   const loading = standardsQuery.isLoading;
 
-  const createMutation = useMutation({
-    mutationFn: (data: CreateQualityStandardRequest) => qmsApi.createStandard(data),
-    onSuccess: (response) => {
-      if (response.success) {
-        addNotification({ title: '成功', message: '创建成功', type: 'success' });
-        queryClient.invalidateQueries({ queryKey: ['qms-standards'] });
-        setShowModal(false);
-        resetForm();
-      } else {
-        addNotification({
-          title: '失败',
-          message: response.message || '创建失败',
-          type: 'error',
-        });
+  const { createMutation, updateMutation, deleteMutation } = useCrudMutations<
+    CreateQualityStandardRequest,
+    CreateQualityStandardRequest,
+    string
+  >({
+    queryKeyToInvalidate: ['qms-standards'],
+    createFn: async (data) => {
+      const response = await qmsApi.createStandard(data);
+      if (!response.success) {
+        throw new Error(response.message || '创建失败');
       }
+      return response;
     },
-    onError: () => {
-      addNotification({ title: '错误', message: '操作失败，请重试', type: 'error' });
-    },
-  });
-
-  const updateMutation = useMutation({
-    mutationFn: ({ id, data }: { id: string; data: CreateQualityStandardRequest }) =>
-      qmsApi.updateStandard(id, data),
-    onSuccess: (response) => {
-      if (response.success) {
-        addNotification({ title: '成功', message: '更新成功', type: 'success' });
-        queryClient.invalidateQueries({ queryKey: ['qms-standards'] });
-        setShowModal(false);
-        resetForm();
-      } else {
-        addNotification({
-          title: '失败',
-          message: response.message || '更新失败',
-          type: 'error',
-        });
+    updateFn: async ({ id, data }) => {
+      const response = await qmsApi.updateStandard(String(id), data);
+      if (!response.success) {
+        throw new Error(response.message || '更新失败');
       }
+      return response;
     },
-    onError: () => {
-      addNotification({ title: '错误', message: '操作失败，请重试', type: 'error' });
-    },
-  });
-
-  const deleteMutation = useMutation({
-    mutationFn: (id: string) => qmsApi.deleteStandard(id),
-    onSuccess: (response) => {
-      if (response.success) {
-        addNotification({ title: '成功', message: '删除成功', type: 'success' });
-        queryClient.invalidateQueries({ queryKey: ['qms-standards'] });
-      } else {
-        addNotification({
-          title: '失败',
-          message: response.message || '删除失败',
-          type: 'error',
-        });
+    deleteFn: async (id) => {
+      const response = await qmsApi.deleteStandard(String(id));
+      if (!response.success) {
+        throw new Error(response.message || '删除失败');
       }
+      return response;
     },
-    onError: () => {
-      addNotification({ title: '错误', message: '删除时发生错误', type: 'error' });
+    entityName: '质量标准',
+    onCreateSuccess: () => {
+      setShowModal(false);
+      resetForm();
+    },
+    onUpdateSuccess: () => {
+      setShowModal(false);
+      resetForm();
     },
   });
 
@@ -245,9 +226,15 @@ const QmsStandardListPage: React.FC = () => {
     });
   };
 
-  const deleteItem = async (id: string) => {
-    if (!window.confirm('确定要删除此质量标准吗？')) return;
-    await deleteMutation.mutateAsync(id);
+  const deleteItem = (id: string) => {
+    openConfirmDialog({
+      title: '确认删除',
+      message: '确定要删除此质量标准吗？',
+      danger: true,
+      onConfirm: () => {
+        deleteMutation.mutate(id);
+      },
+    });
   };
 
   const standardRowActions: RowAction<QualityStandard>[] = [
@@ -752,6 +739,18 @@ const QmsStandardListPage: React.FC = () => {
           </Button>
         </DialogActions>
       </Dialog>
+
+      <ConfirmDialog
+        isOpen={confirmDialogOpen}
+        onClose={setConfirmDialogClosed}
+        onConfirm={() => {
+          confirmDialogConfig?.onConfirm();
+          setConfirmDialogClosed();
+        }}
+        title={confirmDialogConfig?.title || ''}
+        message={confirmDialogConfig?.message || ''}
+        danger={confirmDialogConfig?.danger}
+      />
     </PageContainer>
   );
 };

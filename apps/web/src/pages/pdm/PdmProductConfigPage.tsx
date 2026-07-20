@@ -20,8 +20,6 @@ import {
 import { Settings, Plus, Edit, Delete, Zap, Package, Shield } from 'lucide-react';
 import { pdmApi } from '@/api/pdm';
 import type { ProductConfig } from '@/api/pdm';
-import { useNotificationStore } from '@/store';
-import { apiLogger } from '@/utils/logger';
 import {
   ListPageTemplate,
   type ColumnDef,
@@ -30,8 +28,9 @@ import {
 } from '@/components/templates';
 import { PageContainer } from '@/components/common/PageContainerV2';
 import { designTokens } from '@/theme/tokens';
-import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { QUERY_KEYS } from '@/lib/reactQuery';
+import { useCrudMutations } from '@/hooks';
 
 const ct = designTokens.colors;
 
@@ -55,6 +54,14 @@ interface FormData {
   options: string[];
 }
 
+interface ProductConfigRequest {
+  name: string;
+  code: string;
+  status: string;
+  attributes: FormData['attributes'];
+  options: string[];
+}
+
 export const PdmProductConfigPage: React.FC = () => {
   const queryClient = useQueryClient();
   const [searchTerm, setSearchTerm] = useState('');
@@ -73,8 +80,6 @@ export const PdmProductConfigPage: React.FC = () => {
     },
     options: [],
   });
-  const addNotification = useNotificationStore((state) => state.addNotification);
-
   const configAttributes: ConfigAttribute[] = [
     {
       name: '颜色',
@@ -123,52 +128,23 @@ export const PdmProductConfigPage: React.FC = () => {
     staleTime: 5 * 60 * 1000,
   });
 
-  const createConfigMutation = useMutation({
-    mutationFn: (data: {
-      name: string;
-      code: string;
-      status: string;
-      attributes: any;
-      options: string[];
-    }) => pdmApi.createProductConfig(data),
-    onSuccess: () => {
-      addNotification({ title: '成功', message: '配置创建成功', type: 'success' });
+  const { createMutation: createConfigMutation, updateMutation: updateConfigMutation, deleteMutation: deleteConfigMutation } = useCrudMutations<
+    ProductConfigRequest,
+    ProductConfigRequest,
+    string
+  >({
+    queryKeyToInvalidate: QUERY_KEYS.PDM.PRODUCT_CONFIGS,
+    createFn: (data) => pdmApi.createProductConfig(data),
+    updateFn: ({ id, data }) => pdmApi.updateProductConfig(String(id), data),
+    deleteFn: (id) => pdmApi.deleteProductConfig(String(id)),
+    entityName: '产品配置',
+    onCreateSuccess: () => {
       setOpenDialog(false);
       setEditingConfig(null);
-      queryClient.invalidateQueries({ queryKey: QUERY_KEYS.PDM.PRODUCT_CONFIGS });
     },
-    onError: () => {
-      addNotification({ title: '错误', message: '创建失败', type: 'error' });
-    },
-  });
-
-  const updateConfigMutation = useMutation({
-    mutationFn: ({
-      id,
-      data,
-    }: {
-      id: string;
-      data: { name: string; code: string; status: string; attributes: any; options: string[] };
-    }) => pdmApi.updateProductConfig(id, data),
-    onSuccess: () => {
-      addNotification({ title: '成功', message: '配置更新成功', type: 'success' });
+    onUpdateSuccess: () => {
       setOpenDialog(false);
       setEditingConfig(null);
-      queryClient.invalidateQueries({ queryKey: QUERY_KEYS.PDM.PRODUCT_CONFIGS });
-    },
-    onError: () => {
-      addNotification({ title: '错误', message: '更新失败', type: 'error' });
-    },
-  });
-
-  const deleteConfigMutation = useMutation({
-    mutationFn: (id: string) => pdmApi.deleteProductConfig(id),
-    onSuccess: () => {
-      addNotification({ title: '成功', message: '配置删除成功', type: 'success' });
-      queryClient.invalidateQueries({ queryKey: QUERY_KEYS.PDM.PRODUCT_CONFIGS });
-    },
-    onError: () => {
-      addNotification({ title: '错误', message: '删除失败', type: 'error' });
     },
   });
 

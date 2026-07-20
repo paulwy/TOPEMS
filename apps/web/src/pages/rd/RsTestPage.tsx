@@ -1,4 +1,5 @@
 import React, { useState, useMemo } from 'react';
+import { useTranslation } from 'react-i18next';
 import {
   Box,
   Chip,
@@ -12,7 +13,6 @@ import {
   InputLabel,
   Select,
   MenuItem,
-  Tooltip,
   Typography,
   Button,
 } from '@mui/material';
@@ -38,6 +38,7 @@ import { logger } from '@/utils/logger';
 import { QUERY_KEYS } from '@/lib/reactQuery';
 
 const RsTestPage: React.FC = () => {
+  const { t } = useTranslation();
   const queryClient = useQueryClient();
   const { addNotification } = useNotificationStore();
   const [page, setPage] = useState(0);
@@ -51,7 +52,7 @@ const RsTestPage: React.FC = () => {
   const [selectedCase, setSelectedCase] = useState<TestCase | null>(null);
   const [newCaseForm, setNewCaseForm] = useState({
     case_name: '',
-    case_type: '功能测试',
+    case_type: t('rd.case_type.functional'),
     priority: 'medium',
     related_requirement: '',
   });
@@ -74,7 +75,7 @@ const RsTestPage: React.FC = () => {
 
       const response = await rdApi.listTests(params);
       if (!response.success || !response.data) {
-        throw new Error(response.message || '加载测试用例失败');
+        throw new Error(response.message || t('rd.test_page.error.load_list_failed'));
       }
       return {
         test_cases: response.data.test_cases || [],
@@ -87,7 +88,7 @@ const RsTestPage: React.FC = () => {
     mutationFn: async ({ id, data }: { id: string; data: UpdateTestCaseRequest }) => {
       const response = await rdApi.updateTest(id, data);
       if (!response.success) {
-        throw new Error(response.message || '更新测试用例失败');
+        throw new Error(response.message || t('rd.test_page.error.update_failed'));
       }
       return response;
     },
@@ -95,16 +96,19 @@ const RsTestPage: React.FC = () => {
       queryClient.invalidateQueries({ queryKey: QUERY_KEYS.RD.TEST_CASES });
       addNotification({
         type: 'success',
-        title: '操作成功',
-        message: '测试用例已执行',
+        title: t('rd.test_page.notification.execute_success_title'),
+        message: t('rd.test_page.notification.execute_success_message'),
       });
     },
     onError: (error: unknown) => {
       logger.error('执行测试失败:', error);
       addNotification({
         type: 'error',
-        title: '操作失败',
-        message: error instanceof Error ? error.message : '执行测试失败',
+        title: t('rd.test_page.notification.execute_failed_title'),
+        message:
+          error instanceof Error
+            ? error.message
+            : t('rd.test_page.notification.execute_failed_message'),
       });
     },
   });
@@ -113,7 +117,7 @@ const RsTestPage: React.FC = () => {
     mutationFn: async (data: CreateTestCaseRequest) => {
       const response = await rdApi.createTest(data);
       if (!response.success) {
-        throw new Error(response.message || '创建测试用例失败');
+        throw new Error(response.message || t('rd.test_page.error.create_failed'));
       }
       return response;
     },
@@ -121,16 +125,19 @@ const RsTestPage: React.FC = () => {
       queryClient.invalidateQueries({ queryKey: QUERY_KEYS.RD.TEST_CASES });
       addNotification({
         type: 'success',
-        title: '创建成功',
-        message: '新测试用例已创建',
+        title: t('rd.test_page.notification.create_success_title'),
+        message: t('rd.test_page.notification.create_success_message'),
       });
     },
     onError: (error: unknown) => {
       logger.error('创建测试用例失败:', error);
       addNotification({
         type: 'error',
-        title: '创建失败',
-        message: error instanceof Error ? error.message : '无法创建测试用例',
+        title: t('rd.test_page.notification.create_failed_title'),
+        message:
+          error instanceof Error
+            ? error.message
+            : t('rd.test_page.notification.create_failed_message'),
       });
     },
   });
@@ -147,11 +154,11 @@ const RsTestPage: React.FC = () => {
 
   const getCaseTypeLabel = (type: string): string => {
     const types: Record<string, string> = {
-      功能测试: '功能测试',
-      性能测试: '性能测试',
-      压力测试: '压力测试',
-      UI测试: 'UI测试',
-      安全测试: '安全测试',
+      功能测试: t('rd.case_type.functional'),
+      性能测试: t('rd.case_type.performance'),
+      压力测试: t('rd.case_type.stress'),
+      UI测试: t('rd.case_type.ui'),
+      安全测试: t('rd.case_type.security'),
     };
     return types[type] || type;
   };
@@ -159,11 +166,11 @@ const RsTestPage: React.FC = () => {
   const getPriorityLabel = (priority: string): string => {
     switch (priority) {
       case 'high':
-        return '高';
+        return t('rd.priority.high');
       case 'medium':
-        return '中';
+        return t('rd.priority.medium');
       case 'low':
-        return '低';
+        return t('rd.priority.low');
       default:
         return priority;
     }
@@ -185,11 +192,11 @@ const RsTestPage: React.FC = () => {
   const getStatusLabel = (status: string): string => {
     switch (status) {
       case 'passed':
-        return '已通过';
+        return t('rd.status.passed');
       case 'failed':
-        return '未通过';
+        return t('rd.status.failed');
       case 'pending':
-        return '待执行';
+        return t('rd.status.pending_test');
       default:
         return status;
     }
@@ -234,7 +241,7 @@ const RsTestPage: React.FC = () => {
       setNewCaseDialogOpen(false);
       setNewCaseForm({
         case_name: '',
-        case_type: '功能测试',
+        case_type: t('rd.case_type.functional'),
         priority: 'medium',
         related_requirement: '',
       });
@@ -248,7 +255,7 @@ const RsTestPage: React.FC = () => {
     () => [
       {
         id: 'case_no',
-        label: '用例编号',
+        label: t('rd.test_page.column.case_no'),
         render: (row) => (
           <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
             <ClipboardList
@@ -266,12 +273,12 @@ const RsTestPage: React.FC = () => {
       },
       {
         id: 'case_name',
-        label: '用例名称',
+        label: t('rd.test_page.column.case_name'),
         render: (row) => row.case_name,
       },
       {
         id: 'case_type',
-        label: '用例类型',
+        label: t('rd.test_page.column.case_type'),
         render: (row) => (
           <Chip
             label={getCaseTypeLabel(row.case_type)}
@@ -282,7 +289,7 @@ const RsTestPage: React.FC = () => {
       },
       {
         id: 'priority',
-        label: '优先级',
+        label: t('rd.test_page.column.priority'),
         render: (row) => (
           <Chip
             label={getPriorityLabel(row.priority)}
@@ -293,7 +300,7 @@ const RsTestPage: React.FC = () => {
       },
       {
         id: 'status',
-        label: '状态',
+        label: t('rd.test_page.column.status'),
         render: (row) => (
           <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
             {row.status === 'passed' ? (
@@ -322,43 +329,43 @@ const RsTestPage: React.FC = () => {
       },
       {
         id: 'related_requirement',
-        label: '关联需求',
+        label: t('rd.test_page.column.related_requirement'),
         render: (row) => row.related_requirement,
       },
     ],
-    []
+    [t]
   );
 
   const rowActions = useMemo<RowAction<TestCase>[]>(
     () => [
       {
-        label: '详情',
+        label: t('rd.test_page.row_action.detail'),
         icon: <FileText size={16} />,
         onClick: (row) => handleViewDetail(row),
       },
       {
-        label: '执行',
+        label: t('rd.test_page.row_action.execute'),
         icon: <Play size={16} />,
         color: 'success',
         onClick: (row) => handleExecuteTest(row),
       },
       {
-        label: '编辑',
+        label: t('rd.test_page.row_action.edit'),
         icon: <Edit size={16} />,
         onClick: () => {},
       },
     ],
-    []
+    [t]
   );
 
   const filters = useMemo<FilterConfig[]>(
     () => [
       {
         id: 'case_type',
-        label: '用例类型',
+        label: t('rd.test_page.filter.case_type'),
         type: 'select',
         options: [
-          { value: '', label: '全部' },
+          { value: '', label: t('rd.common.all') },
           ...uniqueCaseTypes.map((type) => ({
             value: type,
             label: getCaseTypeLabel(type),
@@ -369,32 +376,32 @@ const RsTestPage: React.FC = () => {
       },
       {
         id: 'priority',
-        label: '优先级',
+        label: t('rd.test_page.filter.priority'),
         type: 'select',
         options: [
-          { value: '', label: '全部' },
-          { value: 'high', label: '高' },
-          { value: 'medium', label: '中' },
-          { value: 'low', label: '低' },
+          { value: '', label: t('rd.common.all') },
+          { value: 'high', label: t('rd.priority.high') },
+          { value: 'medium', label: t('rd.priority.medium') },
+          { value: 'low', label: t('rd.priority.low') },
         ],
         value: priorityFilter,
         onChange: (value) => setPriorityFilter(value as string),
       },
       {
         id: 'status',
-        label: '状态',
+        label: t('rd.test_page.filter.status'),
         type: 'select',
         options: [
-          { value: '', label: '全部' },
-          { value: 'passed', label: '已通过' },
-          { value: 'failed', label: '未通过' },
-          { value: 'pending', label: '待执行' },
+          { value: '', label: t('rd.common.all') },
+          { value: 'passed', label: t('rd.status.passed') },
+          { value: 'failed', label: t('rd.status.failed') },
+          { value: 'pending', label: t('rd.status.pending_test') },
         ],
         value: statusFilter,
         onChange: (value) => setStatusFilter(value as string),
       },
     ],
-    [caseTypeFilter, priorityFilter, statusFilter, uniqueCaseTypes]
+    [caseTypeFilter, priorityFilter, statusFilter, uniqueCaseTypes, t]
   );
 
   return (
@@ -409,7 +416,7 @@ const RsTestPage: React.FC = () => {
         data={testCases}
         loading={loading}
         searchable
-        searchPlaceholder='搜索用例编号、名称...'
+        searchPlaceholder={t('rd.test_page.search_placeholder')}
         searchValue={searchTerm}
         onSearch={(value) => setSearchTerm(value)}
         filters={filters}
@@ -423,7 +430,7 @@ const RsTestPage: React.FC = () => {
         }}
         actions={[
           {
-            label: '新建用例',
+            label: t('rd.test_page.action_button.new_case'),
             icon: <Plus size={18} />,
             onClick: () => {
               setTestReportAttachments([]);
@@ -440,46 +447,46 @@ const RsTestPage: React.FC = () => {
         maxWidth='sm'
         fullWidth
       >
-        <DialogTitle>新建用例</DialogTitle>
+        <DialogTitle>{t('rd.test_page.dialog.new_case_title')}</DialogTitle>
         <DialogContent>
           <Stack
             spacing={2}
             sx={{ mt: 2 }}
           >
             <TextField
-              label='用例名称'
+              label={t('rd.test_page.dialog.case_name_label')}
               fullWidth
               value={newCaseForm.case_name}
               onChange={(e) => setNewCaseForm({ ...newCaseForm, case_name: e.target.value })}
             />
             <FormControl fullWidth>
-              <InputLabel>用例类型</InputLabel>
+              <InputLabel>{t('rd.test_page.dialog.case_type_label')}</InputLabel>
               <Select
                 value={newCaseForm.case_type}
-                label='用例类型'
+                label={t('rd.test_page.dialog.case_type_label')}
                 onChange={(e) => setNewCaseForm({ ...newCaseForm, case_type: e.target.value })}
               >
-                <MenuItem value='功能测试'>功能测试</MenuItem>
-                <MenuItem value='性能测试'>性能测试</MenuItem>
-                <MenuItem value='压力测试'>压力测试</MenuItem>
-                <MenuItem value='UI测试'>UI测试</MenuItem>
-                <MenuItem value='安全测试'>安全测试</MenuItem>
+                <MenuItem value='功能测试'>{t('rd.case_type.functional')}</MenuItem>
+                <MenuItem value='性能测试'>{t('rd.case_type.performance')}</MenuItem>
+                <MenuItem value='压力测试'>{t('rd.case_type.stress')}</MenuItem>
+                <MenuItem value='UI测试'>{t('rd.case_type.ui')}</MenuItem>
+                <MenuItem value='安全测试'>{t('rd.case_type.security')}</MenuItem>
               </Select>
             </FormControl>
             <FormControl fullWidth>
-              <InputLabel>优先级</InputLabel>
+              <InputLabel>{t('rd.test_page.dialog.priority_label')}</InputLabel>
               <Select
                 value={newCaseForm.priority}
-                label='优先级'
+                label={t('rd.test_page.dialog.priority_label')}
                 onChange={(e) => setNewCaseForm({ ...newCaseForm, priority: e.target.value })}
               >
-                <MenuItem value='high'>高</MenuItem>
-                <MenuItem value='medium'>中</MenuItem>
-                <MenuItem value='low'>低</MenuItem>
+                <MenuItem value='high'>{t('rd.priority.high')}</MenuItem>
+                <MenuItem value='medium'>{t('rd.priority.medium')}</MenuItem>
+                <MenuItem value='low'>{t('rd.priority.low')}</MenuItem>
               </Select>
             </FormControl>
             <TextField
-              label='关联需求'
+              label={t('rd.test_page.dialog.related_requirement_label')}
               fullWidth
               value={newCaseForm.related_requirement}
               onChange={(e) =>
@@ -495,7 +502,7 @@ const RsTestPage: React.FC = () => {
                 color='text.secondary'
                 sx={{ mb: 1 }}
               >
-                测试报告附件
+                {t('rd.test_page.dialog.test_report_attachment')}
               </Typography>
               <FileUpload
                 value={testReportAttachments}
@@ -504,19 +511,21 @@ const RsTestPage: React.FC = () => {
                 maxCount={5}
                 maxSize={20}
                 maxTotalSize={100}
-                uploadText='上传测试报告'
+                uploadText={t('rd.test_page.dialog.upload_text')}
               />
             </Box>
           </Stack>
         </DialogContent>
         <DialogActions>
-          <Button onClick={() => setNewCaseDialogOpen(false)}>取消</Button>
+          <Button onClick={() => setNewCaseDialogOpen(false)}>
+            {t('rd.test_page.dialog.cancel')}
+          </Button>
           <Button
             variant='contained'
             sx={{ bgcolor: 'primary.main' }}
             onClick={handleCreateCase}
           >
-            创建
+            {t('rd.test_page.dialog.create')}
           </Button>
         </DialogActions>
       </Dialog>
@@ -527,7 +536,7 @@ const RsTestPage: React.FC = () => {
         maxWidth='md'
         fullWidth
       >
-        <DialogTitle>用例详情</DialogTitle>
+        <DialogTitle>{t('rd.test_page.dialog.detail_title')}</DialogTitle>
         <DialogContent>
           {selectedCase && (
             <Box sx={{ py: 2 }}>
@@ -563,14 +572,18 @@ const RsTestPage: React.FC = () => {
                   variant='subtitle2'
                   color='text.secondary'
                 >
-                  关联需求: {selectedCase.related_requirement}
+                  {t('rd.test_page.dialog.related_requirement_display', {
+                    requirement: selectedCase.related_requirement,
+                  })}
                 </Typography>
               </Box>
             </Box>
           )}
         </DialogContent>
         <DialogActions>
-          <Button onClick={() => setDetailDialogOpen(false)}>关闭</Button>
+          <Button onClick={() => setDetailDialogOpen(false)}>
+            {t('rd.test_page.dialog.close')}
+          </Button>
         </DialogActions>
       </Dialog>
     </PageContainer>

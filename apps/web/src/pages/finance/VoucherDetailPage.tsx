@@ -43,6 +43,7 @@ import type { Voucher, VoucherEntry } from '@/types/finance';
 import { useNotificationStore } from '@/store';
 import { apiLogger } from '@/utils/logger';
 
+import { useTranslation } from 'react-i18next';
 const ct = designTokens.colors;
 
 interface TabConfig {
@@ -54,6 +55,7 @@ interface TabConfig {
 }
 
 const VoucherDetailPage: React.FC = () => {
+  const { t } = useTranslation();
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
   const addNotification = useNotificationStore((state) => state.addNotification);
@@ -93,8 +95,8 @@ const VoucherDetailPage: React.FC = () => {
 
   useEffect(() => {
     if (voucherQuery.isError) {
-      apiLogger.error('加载凭证详情失败:', voucherQuery.error);
-      addNotification({ title: '错误', message: '加载凭证详情失败', type: 'error' });
+      apiLogger.error(t('finance.voucher_detail_page.detail'), voucherQuery.error);
+      addNotification({ title: t('finance.voucher_detail_page.error'), message: t('finance.voucher_detail_page.detail_1'), type: 'error' });
     }
   }, [voucherQuery.isError, voucherQuery.error, addNotification]);
 
@@ -105,52 +107,52 @@ const VoucherDetailPage: React.FC = () => {
   const deleteMutation = useMutation({
     mutationFn: (voucherId: string) => voucherApi.delete(voucherId),
     onSuccess: () => {
-      addNotification({ title: '成功', message: '删除成功', type: 'success' });
+      addNotification({ title: t('finance.voucher_detail_page.success'), message: t('finance.voucher_detail_page.delete_success'), type: 'success' });
       queryClient.invalidateQueries({ queryKey: ['finance-vouchers'] });
       navigate(FINANCE_PATHS.vouchers);
     },
     onError: (err: unknown) => {
-      apiLogger.error('删除凭证失败:', err);
-      addNotification({ title: '错误', message: '删除失败', type: 'error' });
+      apiLogger.error(t('finance.voucher_detail_page.delete'), err);
+      addNotification({ title: t('finance.voucher_detail_page.error'), message: t('finance.voucher_detail_page.delete_1'), type: 'error' });
     },
   });
 
   const handleDelete = () => {
-    if (!confirm('确定要删除该凭证吗？')) return;
+    if (!confirm(t('finance.voucher_detail_page.confirm'))) return;
     if (id) deleteMutation.mutate(id);
   };
 
   const auditMutation = useMutation({
     mutationFn: (voucherId: string) => voucherApi.approve(voucherId),
     onSuccess: () => {
-      addNotification({ title: '成功', message: '审核成功', type: 'success' });
+      addNotification({ title: t('finance.voucher_detail_page.success'), message: t('finance.voucher_detail_page.success_1'), type: 'success' });
       queryClient.invalidateQueries({ queryKey: ['finance-voucher', id] });
     },
     onError: (err: unknown) => {
-      apiLogger.error('审核凭证失败:', err);
-      addNotification({ title: '失败', message: '审核失败', type: 'error' });
+      apiLogger.error(t('finance.voucher_detail_page.fail'), err);
+      addNotification({ title: t('finance.voucher_detail_page.fail_1'), message: t('finance.voucher_detail_page.fail_2'), type: 'error' });
     },
   });
 
   const handleAudit = () => {
-    if (!confirm('确定要审核该凭证吗？')) return;
+    if (!confirm(t('finance.voucher_detail_page.confirm_1'))) return;
     if (id) auditMutation.mutate(id);
   };
 
   const postMutation = useMutation({
     mutationFn: (voucherId: string) => voucherApi.post(voucherId),
     onSuccess: () => {
-      addNotification({ title: '成功', message: '记账成功', type: 'success' });
+      addNotification({ title: t('finance.voucher_detail_page.success'), message: t('finance.voucher_detail_page.success_2'), type: 'success' });
       queryClient.invalidateQueries({ queryKey: ['finance-voucher', id] });
     },
     onError: (err: unknown) => {
-      apiLogger.error('记账失败:', err);
-      addNotification({ title: '失败', message: '记账失败', type: 'error' });
+      apiLogger.error(t('finance.voucher_detail_page.fail_3'), err);
+      addNotification({ title: t('finance.voucher_detail_page.fail_1'), message: t('finance.voucher_detail_page.fail_4'), type: 'error' });
     },
   });
 
   const handlePost = () => {
-    if (!confirm('确定要记账该凭证吗？')) return;
+    if (!confirm(t('finance.voucher_detail_page.confirm_2'))) return;
     if (id) postMutation.mutate(id);
   };
 
@@ -174,12 +176,12 @@ const VoucherDetailPage: React.FC = () => {
         color: 'default' | 'primary' | 'secondary' | 'error' | 'info' | 'success' | 'warning';
       }
     > = {
-      draft: { label: '草稿', color: 'default' },
-      submitted: { label: '待审核', color: 'warning' },
-      approved: { label: '已审核', color: 'info' },
-      posted: { label: '已记账', color: 'success' },
-      reversed: { label: '已冲销', color: 'secondary' },
-      imported: { label: '已导入', color: 'secondary' },
+      draft: { label: t('finance.voucher_detail_page.text_22b433'), color: 'default' },
+      submitted: { label: t('finance.voucher_detail_page.pending_review'), color: 'warning' },
+      approved: { label: t('finance.voucher_detail_page.approved'), color: 'info' },
+      posted: { label: t('finance.voucher_detail_page.text_4ab08f'), color: 'success' },
+      reversed: { label: t('finance.voucher_detail_page.text_247201'), color: 'secondary' },
+      imported: { label: t('finance.voucher_detail_page.import'), color: 'secondary' },
     };
     const config = statusConfig[status] || { label: status, color: 'default' };
     return (
@@ -246,8 +248,8 @@ const VoucherDetailPage: React.FC = () => {
     subtitle: `期间: ${voucher.period}`,
     tags: [getStatusBadge(voucher.status)] as unknown as string[],
     stats: [
-      { label: '借方合计', value: formatCurrency(voucher.total_debit) },
-      { label: '贷方合计', value: formatCurrency(voucher.total_credit) },
+      { label: t('finance.voucher_detail_page.text_10afa4'), value: formatCurrency(voucher.total_debit) },
+      { label: t('finance.voucher_detail_page.text_17daaa'), value: formatCurrency(voucher.total_credit) },
     ],
   };
 
@@ -627,7 +629,7 @@ const VoucherDetailPage: React.FC = () => {
                 variant='caption'
                 color='text.secondary'
               >
-                {voucher.maker_name || '系统'} - {formatDate(voucher.created_at)}
+                {voucher.maker_name || t('finance.voucher_detail_page.text_8a8b89')} - {formatDate(voucher.created_at)}
               </Typography>
             </Box>
           </Box>
@@ -719,14 +721,14 @@ const VoucherDetailPage: React.FC = () => {
   );
 
   const tabs: TabConfig[] = [
-    { id: 'basic', label: '基本信息', content: basicInfoTab },
+    { id: 'basic', label: t('finance.voucher_detail_page.info'), content: basicInfoTab },
     {
       id: 'items',
-      label: '凭证明细',
+      label: t('finance.voucher_detail_page.text_5f3e09'),
       badge: voucherItems.length,
       content: voucherItemsTab,
     },
-    { id: 'logs', label: '操作日志', content: operationLogTab },
+    { id: 'logs', label: t('finance.voucher_detail_page.action_log'), content: operationLogTab },
   ];
 
   return (
@@ -734,9 +736,9 @@ const VoucherDetailPage: React.FC = () => {
       title={voucherNumber}
       subtitle={`期间: ${voucher.period}`}
       breadcrumbs={[
-        { label: '首页', href: '/dashboard' },
-        { label: '财务', href: '/finance' },
-        { label: '凭证管理', href: FINANCE_PATHS.vouchers },
+        { label: t('finance.voucher_detail_page.home'), href: '/dashboard' },
+        { label: t('finance.voucher_detail_page.text_b8fe8d'), href: '/finance' },
+        { label: t('finance.voucher_detail_page.text_161d77'), href: FINANCE_PATHS.vouchers },
         { label: voucherNumber },
       ]}
       backHref={FINANCE_PATHS.vouchers}

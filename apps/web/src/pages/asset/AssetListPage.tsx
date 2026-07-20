@@ -25,13 +25,28 @@ import { useNotificationStore } from '@/store';
 import { apiLogger } from '@/utils/logger';
 import { assetApi } from '@/api/erp/finance/asset';
 import type { Asset } from '@/api/erp/types';
+import { useUrlListState } from '@/hooks';
 
+import { useTranslation } from 'react-i18next';
 const AssetListPage: React.FC = () => {
-  const [searchTerm, setSearchTerm] = useState('');
-  const [statusFilter, setStatusFilter] = useState<string>('all');
-  const [categoryFilter, setCategoryFilter] = useState<string>('all');
-  const [currentPage, setCurrentPage] = useState(1);
-  const [pageSize] = useState(10);
+  const { t } = useTranslation();
+  const {
+    searchQuery,
+    setSearchQuery,
+    debouncedSearch,
+    filters: urlFilters,
+    setFilter,
+    currentPage,
+    setCurrentPage,
+    pageSize,
+  } = useUrlListState<{ status: string; category: string }>({
+    defaultPageSize: 10,
+    defaultFilters: { status: 'all', category: 'all' },
+    baseIndex: 1,
+    historyMode: 'replace',
+  });
+  const statusFilter = urlFilters.status;
+  const categoryFilter = urlFilters.category;
   const [showDialog, setShowDialog] = useState(false);
   const [showDetailDialog, setShowDetailDialog] = useState(false);
   const [selectedAsset, setSelectedAsset] = useState<Asset | null>(null);
@@ -57,13 +72,13 @@ const AssetListPage: React.FC = () => {
     {
       id: '1',
       asset_number: 'AST-001',
-      name: '办公电脑-01',
-      category: '电脑设备',
-      brand: '联想',
+      name: t('asset.asset_list_page.text_1c38b4'),
+      category: t('asset.asset_list_page.equipment'),
+      brand: t('asset.asset_list_page.text_a607eb'),
       model: 'ThinkPad X1',
       purchase_date: '2024-01-15',
       purchase_amount: 8500,
-      location: '研发部',
+      location: t('asset.asset_list_page.text_9176a6'),
       status: 'in_use',
       created_at: '2024-01-15',
       updated_at: '2024-01-15',
@@ -71,13 +86,13 @@ const AssetListPage: React.FC = () => {
     {
       id: '2',
       asset_number: 'AST-002',
-      name: '服务器-01',
-      category: '服务器',
-      brand: '戴尔',
+      name: t('asset.asset_list_page.text_6264c8'),
+      category: t('asset.asset_list_page.text_c566ca'),
+      brand: t('asset.asset_list_page.text_6162f6'),
       model: 'PowerEdge R740',
       purchase_date: '2023-06-20',
       purchase_amount: 45000,
-      location: '机房',
+      location: t('asset.asset_list_page.text_cfb51b'),
       status: 'in_use',
       created_at: '2023-06-20',
       updated_at: '2023-06-20',
@@ -85,13 +100,13 @@ const AssetListPage: React.FC = () => {
     {
       id: '3',
       asset_number: 'AST-003',
-      name: '打印机-01',
-      category: '办公设备',
-      brand: '惠普',
+      name: t('asset.asset_list_page.print'),
+      category: t('asset.asset_list_page.equipment_1'),
+      brand: t('asset.asset_list_page.text_12ba35'),
       model: 'LaserJet Pro',
       purchase_date: '2024-03-10',
       purchase_amount: 2800,
-      location: '行政部',
+      location: t('asset.asset_list_page.text_aa8251'),
       status: 'in_use',
       created_at: '2024-03-10',
       updated_at: '2024-03-10',
@@ -99,13 +114,13 @@ const AssetListPage: React.FC = () => {
     {
       id: '4',
       asset_number: 'AST-004',
-      name: '投影仪-01',
-      category: '办公设备',
-      brand: '爱普生',
+      name: t('asset.asset_list_page.text_8b3327'),
+      category: t('asset.asset_list_page.equipment_1'),
+      brand: t('asset.asset_list_page.text_e7b585'),
       model: 'CB-FH52',
       purchase_date: '2024-02-28',
       purchase_amount: 5200,
-      location: '会议室A',
+      location: t('asset.asset_list_page.text_f79b2d'),
       status: 'in_use',
       created_at: '2024-02-28',
       updated_at: '2024-02-28',
@@ -113,13 +128,13 @@ const AssetListPage: React.FC = () => {
     {
       id: '5',
       asset_number: 'AST-005',
-      name: '空调-01',
-      category: '办公设备',
-      brand: '格力',
+      name: t('asset.asset_list_page.text_a63052'),
+      category: t('asset.asset_list_page.equipment_1'),
+      brand: t('asset.asset_list_page.text_1f45da'),
       model: 'KFR-72LW',
       purchase_date: '2023-08-15',
       purchase_amount: 8900,
-      location: '大会议室',
+      location: t('asset.asset_list_page.text_ec7c0b'),
       status: 'in_use',
       created_at: '2023-08-15',
       updated_at: '2023-08-15',
@@ -127,13 +142,13 @@ const AssetListPage: React.FC = () => {
     {
       id: '6',
       asset_number: 'AST-006',
-      name: '办公桌-01',
-      category: '办公家具',
-      brand: '美时',
-      model: 'A系列',
+      name: t('asset.asset_list_page.text_7e0b2e'),
+      category: t('asset.asset_list_page.text_ee33f3'),
+      brand: t('asset.asset_list_page.text_e8b2f4'),
+      model: t('asset.asset_list_page.text_c7f686'),
       purchase_date: '2024-01-05',
       purchase_amount: 1200,
-      location: '财务部',
+      location: t('asset.asset_list_page.text_b159e5'),
       status: 'in_use',
       created_at: '2024-01-05',
       updated_at: '2024-01-05',
@@ -141,13 +156,13 @@ const AssetListPage: React.FC = () => {
     {
       id: '7',
       asset_number: 'AST-007',
-      name: '笔记本电脑-01',
-      category: '电脑设备',
-      brand: '苹果',
+      name: t('asset.asset_list_page.text_3247ab'),
+      category: t('asset.asset_list_page.equipment'),
+      brand: t('asset.asset_list_page.text_e6803e'),
       model: 'MacBook Pro',
       purchase_date: '2024-04-20',
       purchase_amount: 12999,
-      location: '市场部',
+      location: t('asset.asset_list_page.text_73b111'),
       status: 'in_use',
       created_at: '2024-04-20',
       updated_at: '2024-04-20',
@@ -155,13 +170,13 @@ const AssetListPage: React.FC = () => {
     {
       id: '8',
       asset_number: 'AST-008',
-      name: '监控摄像头-01',
-      category: '网络设备',
-      brand: '海康威视',
+      name: t('asset.asset_list_page.text_d77852'),
+      category: t('asset.asset_list_page.equipment_2'),
+      brand: t('asset.asset_list_page.text_732ddb'),
       model: 'DS-2CD3T46WD-I3',
       purchase_date: '2023-12-10',
       purchase_amount: 650,
-      location: '大门',
+      location: t('asset.asset_list_page.text_cd1357'),
       status: 'in_use',
       created_at: '2023-12-10',
       updated_at: '2023-12-10',
@@ -169,13 +184,13 @@ const AssetListPage: React.FC = () => {
     {
       id: '9',
       asset_number: 'AST-009',
-      name: '路由器-01',
-      category: '网络设备',
-      brand: '华为',
+      name: t('asset.asset_list_page.text_17c639'),
+      category: t('asset.asset_list_page.equipment_2'),
+      brand: t('asset.asset_list_page.text_d63e7e'),
       model: 'AR6140-S',
       purchase_date: '2023-11-25',
       purchase_amount: 3200,
-      location: '机房',
+      location: t('asset.asset_list_page.text_cfb51b'),
       status: 'in_use',
       created_at: '2023-11-25',
       updated_at: '2023-11-25',
@@ -183,13 +198,13 @@ const AssetListPage: React.FC = () => {
     {
       id: '10',
       asset_number: 'AST-010',
-      name: '复印机-01',
-      category: '办公设备',
-      brand: '佳能',
+      name: t('asset.asset_list_page.text_f0a0e0'),
+      category: t('asset.asset_list_page.equipment_1'),
+      brand: t('asset.asset_list_page.text_5fafbd'),
       model: 'iR-ADV C3525',
       purchase_date: '2023-09-18',
       purchase_amount: 18500,
-      location: '文印室',
+      location: t('asset.asset_list_page.text_9e410a'),
       status: 'maintenance',
       created_at: '2023-09-18',
       updated_at: '2023-09-18',
@@ -197,13 +212,13 @@ const AssetListPage: React.FC = () => {
     {
       id: '11',
       asset_number: 'AST-011',
-      name: '汽车-01',
-      category: '运输工具',
-      brand: '大众',
-      model: '迈腾',
+      name: t('asset.asset_list_page.text_6f6262'),
+      category: t('asset.asset_list_page.text_68f50e'),
+      brand: t('asset.asset_list_page.text_c3f702'),
+      model: t('asset.asset_list_page.text_f5d856'),
       purchase_date: '2022-05-20',
       purchase_amount: 230000,
-      location: '车库',
+      location: t('asset.asset_list_page.text_b21ed8'),
       status: 'in_use',
       created_at: '2022-05-20',
       updated_at: '2022-05-20',
@@ -211,13 +226,13 @@ const AssetListPage: React.FC = () => {
     {
       id: '12',
       asset_number: 'AST-012',
-      name: '软件许可证-01',
-      category: '软件资产',
-      brand: '微软',
+      name: t('asset.asset_list_page.text_f099a8'),
+      category: t('asset.asset_list_page.text_7ea307'),
+      brand: t('asset.asset_list_page.text_40a567'),
       model: 'Office 365',
       purchase_date: '2024-01-01',
       purchase_amount: 3650,
-      location: '全公司',
+      location: t('asset.asset_list_page.text_646f04'),
       status: 'in_use',
       created_at: '2024-01-01',
       updated_at: '2024-01-01',
@@ -226,13 +241,13 @@ const AssetListPage: React.FC = () => {
 
   const filteredAssets = useMemo(() => {
     let result = mockAssets;
-    if (searchTerm) {
+    if (debouncedSearch) {
       result = result.filter(
         (a) =>
-          a.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-          a.asset_number.toLowerCase().includes(searchTerm.toLowerCase()) ||
-          a.brand?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-          a.location?.toLowerCase().includes(searchTerm.toLowerCase())
+          a.name.toLowerCase().includes(debouncedSearch.toLowerCase()) ||
+          a.asset_number.toLowerCase().includes(debouncedSearch.toLowerCase()) ||
+          a.brand?.toLowerCase().includes(debouncedSearch.toLowerCase()) ||
+          a.location?.toLowerCase().includes(debouncedSearch.toLowerCase())
       );
     }
     if (statusFilter !== 'all') {
@@ -242,12 +257,12 @@ const AssetListPage: React.FC = () => {
       result = result.filter((a) => a.category === categoryFilter);
     }
     return result;
-  }, [searchTerm, statusFilter, categoryFilter]);
+  }, [debouncedSearch, statusFilter, categoryFilter]);
 
   const { isLoading } = useQuery({
     queryKey: [
       QUERY_KEYS.ERP.ASSETS,
-      searchTerm,
+      debouncedSearch,
       statusFilter,
       categoryFilter,
       currentPage,
@@ -272,19 +287,19 @@ const AssetListPage: React.FC = () => {
     onSuccess: () => {
       addNotification({
         type: 'success',
-        title: '创建成功',
-        message: '新资产已创建',
+        title: t('asset.asset_list_page.create'),
+        message: t('asset.asset_list_page.create_1'),
       });
       queryClient.invalidateQueries({ queryKey: [QUERY_KEYS.ERP.ASSETS] });
       setShowDialog(false);
       resetForm();
     },
     onError: (error) => {
-      apiLogger.error('创建失败:', error);
+      apiLogger.error(t('asset.asset_list_page.create_2'), error);
       addNotification({
         type: 'error',
-        title: '创建失败',
-        message: '无法创建资产',
+        title: t('asset.asset_list_page.create_3'),
+        message: t('asset.asset_list_page.create_4'),
       });
     },
   });
@@ -297,19 +312,19 @@ const AssetListPage: React.FC = () => {
     onSuccess: () => {
       addNotification({
         type: 'success',
-        title: '更新成功',
-        message: '资产信息已更新',
+        title: t('asset.asset_list_page.update'),
+        message: t('asset.asset_list_page.update_1'),
       });
       queryClient.invalidateQueries({ queryKey: [QUERY_KEYS.ERP.ASSETS] });
       setShowDialog(false);
       resetForm();
     },
     onError: (error) => {
-      apiLogger.error('更新失败:', error);
+      apiLogger.error(t('asset.asset_list_page.update_2'), error);
       addNotification({
         type: 'error',
-        title: '更新失败',
-        message: '无法更新资产',
+        title: t('asset.asset_list_page.update_3'),
+        message: t('asset.asset_list_page.update_4'),
       });
     },
   });
@@ -322,17 +337,17 @@ const AssetListPage: React.FC = () => {
     onSuccess: () => {
       addNotification({
         type: 'success',
-        title: '删除成功',
-        message: '资产已删除',
+        title: t('asset.asset_list_page.delete_success'),
+        message: t('asset.asset_list_page.deleted'),
       });
       queryClient.invalidateQueries({ queryKey: [QUERY_KEYS.ERP.ASSETS] });
     },
     onError: (error) => {
-      apiLogger.error('删除失败:', error);
+      apiLogger.error(t('asset.asset_list_page.delete'), error);
       addNotification({
         type: 'error',
-        title: '删除失败',
-        message: '无法删除资产',
+        title: t('asset.asset_list_page.delete_1'),
+        message: t('asset.asset_list_page.delete_2'),
       });
     },
   });
@@ -348,7 +363,7 @@ const AssetListPage: React.FC = () => {
 
   const handleDelete = useCallback(
     async (id: string) => {
-      if (!window.confirm('确定要删除这个资产吗?')) return;
+      if (!window.confirm(t('asset.asset_list_page.confirm'))) return;
       await deleteMutation.mutateAsync(id);
     },
     [deleteMutation]
@@ -403,11 +418,11 @@ const AssetListPage: React.FC = () => {
         color: string;
       }
     > = {
-      in_use: { label: '使用中', bg: 'success.lighter', color: 'success.700' },
-      idle: { label: '闲置', bg: 'info.lighter', color: 'info.700' },
-      maintenance: { label: '维修中', bg: 'warning.lighter', color: 'warning.700' },
-      retired: { label: '已报废', bg: 'error.lighter', color: 'error.dark' },
-      inventory: { label: '库存', bg: 'grey.100', color: 'text.secondary' },
+      in_use: { label: t('asset.asset_list_page.text_4d419c'), bg: 'success.lighter', color: 'success.700' },
+      idle: { label: t('asset.asset_list_page.text_72d05c'), bg: 'info.lighter', color: 'info.700' },
+      maintenance: { label: t('asset.asset_list_page.repair'), bg: 'warning.lighter', color: 'warning.700' },
+      retired: { label: t('asset.asset_list_page.scrap'), bg: 'error.lighter', color: 'error.dark' },
+      inventory: { label: t('asset.asset_list_page.text_0eac88'), bg: 'grey.100', color: 'text.secondary' },
     };
     const s = statusMap[status] || { label: status, bg: 'grey.100', color: 'text.secondary' };
     return (
@@ -421,19 +436,19 @@ const AssetListPage: React.FC = () => {
 
   const columns: ColumnDef<Asset>[] = useMemo(
     () => [
-      { id: 'asset_number', label: '资产编号', sortable: true, width: 120 },
-      { id: 'name', label: '资产名称', sortable: true, width: 150 },
-      { id: 'category', label: '分类', width: 100 },
+      { id: 'asset_number', label: t('asset.asset_list_page.text_1b6830'), sortable: true, width: 120 },
+      { id: 'name', label: t('asset.asset_list_page.name'), sortable: true, width: 150 },
+      { id: 'category', label: t('asset.asset_list_page.text_d0771a'), width: 100 },
       {
         id: 'brand',
-        label: '品牌/型号',
+        label: t('asset.asset_list_page.text_a9c200'),
         width: 180,
         render: (row) =>
           row.brand && row.model ? `${row.brand} ${row.model}` : row.brand || row.model || '-',
       },
       {
         id: 'purchase_amount',
-        label: '购入金额',
+        label: t('asset.asset_list_page.amount'),
         width: 120,
         align: 'right',
         render: (row) =>
@@ -443,16 +458,16 @@ const AssetListPage: React.FC = () => {
       },
       {
         id: 'purchase_date',
-        label: '购入日期',
+        label: t('asset.asset_list_page.date'),
         sortable: true,
         width: 120,
         render: (row) =>
           row.purchase_date ? new Date(row.purchase_date).toLocaleDateString('zh-CN') : '-',
       },
-      { id: 'location', label: '存放位置', width: 120 },
+      { id: 'location', label: t('asset.asset_list_page.text_bea7aa'), width: 120 },
       {
         id: 'status',
-        label: '状态',
+        label: t('asset.asset_list_page.status'),
         width: 100,
         render: (row) => getStatusBadge(row.status),
       },
@@ -464,39 +479,39 @@ const AssetListPage: React.FC = () => {
     () => [
       {
         id: 'status',
-        label: '状态',
+        label: t('asset.asset_list_page.status'),
         type: 'select',
         options: [
-          { label: '全部状态', value: 'all' },
-          { label: '使用中', value: 'in_use' },
-          { label: '闲置', value: 'idle' },
-          { label: '维修中', value: 'maintenance' },
-          { label: '已报废', value: 'retired' },
-          { label: '库存', value: 'inventory' },
+          { label: t('asset.asset_list_page.status_1'), value: 'all' },
+          { label: t('asset.asset_list_page.text_4d419c'), value: 'in_use' },
+          { label: t('asset.asset_list_page.text_72d05c'), value: 'idle' },
+          { label: t('asset.asset_list_page.repair'), value: 'maintenance' },
+          { label: t('asset.asset_list_page.scrap'), value: 'retired' },
+          { label: t('asset.asset_list_page.text_0eac88'), value: 'inventory' },
         ],
         value: statusFilter,
         onChange: (value: unknown) => {
-          setStatusFilter(value as string);
+          setFilter('status', value as string);
           setCurrentPage(1);
         },
       },
       {
         id: 'category',
-        label: '分类',
+        label: t('asset.asset_list_page.text_d0771a'),
         type: 'select',
         options: [
-          { label: '全部分类', value: 'all' },
-          { label: '办公设备', value: '办公设备' },
-          { label: '电脑设备', value: '电脑设备' },
-          { label: '服务器', value: '服务器' },
-          { label: '网络设备', value: '网络设备' },
-          { label: '办公家具', value: '办公家具' },
-          { label: '运输工具', value: '运输工具' },
-          { label: '软件资产', value: '软件资产' },
+          { label: t('asset.asset_list_page.all'), value: 'all' },
+          { label: t('asset.asset_list_page.equipment_1'), value: t('asset.asset_list_page.equipment_1') },
+          { label: t('asset.asset_list_page.equipment'), value: t('asset.asset_list_page.equipment') },
+          { label: t('asset.asset_list_page.text_c566ca'), value: t('asset.asset_list_page.text_c566ca') },
+          { label: t('asset.asset_list_page.equipment_2'), value: t('asset.asset_list_page.equipment_2') },
+          { label: t('asset.asset_list_page.text_ee33f3'), value: t('asset.asset_list_page.text_ee33f3') },
+          { label: t('asset.asset_list_page.text_68f50e'), value: t('asset.asset_list_page.text_68f50e') },
+          { label: t('asset.asset_list_page.text_7ea307'), value: t('asset.asset_list_page.text_7ea307') },
         ],
         value: categoryFilter,
         onChange: (value: unknown) => {
-          setCategoryFilter(value as string);
+          setFilter('category', value as string);
           setCurrentPage(1);
         },
       },
@@ -507,27 +522,27 @@ const AssetListPage: React.FC = () => {
   const rowActions: RowAction<Asset>[] = useMemo(
     () => [
       {
-        label: '查看详情',
+        label: t('asset.asset_list_page.view_detail'),
         icon: <Eye size={16} />,
         onClick: handleViewDetail,
       },
       {
-        label: '编辑',
+        label: t('asset.asset_list_page.edit'),
         icon: <Edit size={16} />,
         onClick: handleEdit,
       },
       {
-        label: '调拨',
+        label: t('asset.asset_list_page.transfer'),
         icon: <MapPin size={16} />,
         onClick: () => {},
       },
       {
-        label: '删除',
+        label: t('asset.asset_list_page.delete_3'),
         icon: <Trash2 size={16} />,
         color: 'error',
         onClick: (row) => handleDelete(row.id),
         confirm: true,
-        confirmMessage: '确定要删除这个资产吗?',
+        confirmMessage: t('asset.asset_list_page.confirm'),
         divider: true,
       },
     ],
@@ -540,7 +555,7 @@ const AssetListPage: React.FC = () => {
   };
 
   const handleSearch = (value: string) => {
-    setSearchTerm(value);
+    setSearchQuery(value);
     setCurrentPage(1);
   };
 
@@ -623,8 +638,8 @@ const AssetListPage: React.FC = () => {
 
   return (
     <PageContainer
-      title='资产列表'
-      subtitle='管理企业固定资产信息'
+      title={t('asset.asset_list_page.list')}
+      subtitle={t('asset.asset_list_page.info')}
     >
       <ListPageTemplate
         title=''
@@ -633,10 +648,20 @@ const AssetListPage: React.FC = () => {
         data={assets}
         loading={isLoading}
         filters={filters}
+        filtersValue={{ status: statusFilter, category: categoryFilter }}
+        onFilterChange={(newFilters) => {
+          if (newFilters.status !== undefined) {
+            setFilter('status', newFilters.status as string);
+          }
+          if (newFilters.category !== undefined) {
+            setFilter('category', newFilters.category as string);
+          }
+          setCurrentPage(1);
+        }}
         searchable
-        searchPlaceholder='搜索资产编号、名称、品牌、位置...'
-        searchValue={searchTerm}
-        onSearch={handleSearch}
+        searchPlaceholder={t('asset.asset_list_page.search')}
+        searchValue={searchQuery}
+        onSearch={setSearchQuery}
         pagination={{
           page: currentPage - 1,
           pageSize,
@@ -648,14 +673,14 @@ const AssetListPage: React.FC = () => {
         onSelectionChange={(ids) => setSelectedIds(ids.map(String))}
         actions={[
           {
-            label: '新增资产',
+            label: t('asset.asset_list_page.add'),
             icon: <Plus size={16} />,
             onClick: handleOpenCreate,
           },
         ]}
         rowActions={rowActions}
         headerContent={statsContent}
-        emptyMessage='暂无资产数据'
+        emptyMessage={t('asset.asset_list_page.no_data')}
         getRowId={(row) => row.id}
       />
 
@@ -664,7 +689,7 @@ const AssetListPage: React.FC = () => {
         onClose={() => setShowDialog(false)}
         maxWidth='lg'
       >
-        <DialogTitle>{selectedAsset ? '编辑资产' : '新增资产'}</DialogTitle>
+        <DialogTitle>{selectedAsset ? t('asset.asset_list_page.edit_1') : t('asset.asset_list_page.add')}</DialogTitle>
         <DialogContent>
           <Box
             component='span'
@@ -675,7 +700,7 @@ const AssetListPage: React.FC = () => {
               fontSize: 14,
             }}
           >
-            {selectedAsset ? '修改资产信息' : '填写新资产信息'}
+            {selectedAsset ? t('asset.asset_list_page.info_1') : t('asset.asset_list_page.info_2')}
           </Box>
           <form onSubmit={handleSubmit}>
             <Box
@@ -716,13 +741,13 @@ const AssetListPage: React.FC = () => {
                   onChange={(e) => setFormData({ ...formData, category: e.target.value })}
                 >
                   <option value=''>请选择分类</option>
-                  <option value='办公设备'>办公设备</option>
-                  <option value='电脑设备'>电脑设备</option>
-                  <option value='服务器'>服务器</option>
-                  <option value='网络设备'>网络设备</option>
-                  <option value='办公家具'>办公家具</option>
-                  <option value='运输工具'>运输工具</option>
-                  <option value='软件资产'>软件资产</option>
+                  <option value={t('asset.asset_list_page.equipment_1')}>办公设备</option>
+                  <option value={t('asset.asset_list_page.equipment')}>电脑设备</option>
+                  <option value={t('asset.asset_list_page.text_c566ca')}>服务器</option>
+                  <option value={t('asset.asset_list_page.equipment_2')}>网络设备</option>
+                  <option value={t('asset.asset_list_page.text_ee33f3')}>办公家具</option>
+                  <option value={t('asset.asset_list_page.text_68f50e')}>运输工具</option>
+                  <option value={t('asset.asset_list_page.text_7ea307')}>软件资产</option>
                 </TextField>
               </Box>
               <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1 }}>
@@ -807,7 +832,7 @@ const AssetListPage: React.FC = () => {
                 variant='contained'
                 disabled={createMutation.isPending || updateMutation.isPending}
               >
-                {createMutation.isPending || updateMutation.isPending ? '保存中...' : '保存'}
+                {createMutation.isPending || updateMutation.isPending ? t('asset.asset_list_page.save') : t('asset.asset_list_page.save_1')}
               </Button>
             </DialogActions>
           </form>

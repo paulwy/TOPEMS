@@ -1011,6 +1011,49 @@ pub async fn ship_outbound_order(
         .bind(item.item_id)
         .execute(&mut *tx)
         .await;
+
+        // V19.8: 出库发货时同步写入 inventory_movements
+        let seq: i64 = sqlx::query_scalar(
+            r#"SELECT COUNT(*) FROM wms.inventory_movements
+               WHERE movement_no LIKE $1"#,
+        )
+        .bind(format!("MV-{}%", now.format("%Y%m%d")))
+        .fetch_one(&mut *tx)
+        .await
+        .unwrap_or(0);
+        let movement_no = format!("MV-{}-{:06}", now.format("%Y%m%d"), seq + 1);
+        let movement_id = Uuid::new_v4();
+        let org_id = uuid::Uuid::parse_str("00000000-0000-0000-0000-000000000001")
+            .unwrap_or(uuid::Uuid::nil());
+
+        let _ = sqlx::query(
+            r#"
+            INSERT INTO wms.inventory_movements (
+                id, movement_no, tenant_id, movement_type, reference_id, reference_type,
+                material_id, material_code, material_name, quantity,
+                from_location_id, to_location_id, from_warehouse_id, to_warehouse_id,
+                status, performed_at, notes, created_at, updated_at
+            )
+            SELECT
+                $1, $2, $3, 'outbound', $4, 'outbound_order',
+                NULL, oo.material_code, oo.material_name, $5,
+                oo.source_location_id, NULL, o.warehouse_id, NULL,
+                'completed', $6, $7, $6, $6
+            FROM wms.outbound_order_items oo
+            JOIN wms.outbound_orders o ON oo.order_id = o.id
+            WHERE oo.id = $8
+            "#,
+        )
+        .bind(movement_id)
+        .bind(&movement_no)
+        .bind(org_id)
+        .bind(id.to_string())
+        .bind(item.shipped_quantity)
+        .bind(now)
+        .bind(format!("出库发货：订单 {}", id))
+        .bind(item.item_id)
+        .execute(&mut *tx)
+        .await;
     }
 
     let _ = sqlx::query(

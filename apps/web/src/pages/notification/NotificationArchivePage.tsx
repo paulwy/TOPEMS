@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useMemo, useCallback } from 'react';
+import React, { useState, useMemo, useCallback, useEffect } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import {
   Archive,
@@ -21,6 +21,7 @@ import {
 } from '@/api/notification';
 import { NOTIFICATION_PATHS } from '@/modules/notification/config';
 import { useNotification } from '@/hooks/useNotification';
+import { useUrlListState } from '@/hooks';
 import { apiLogger } from '@/utils/logger';
 import {
   ListPageTemplate,
@@ -39,21 +40,23 @@ const NotificationArchivePage: React.FC = () => {
   const { success, error, notifications, hideNotification } = useNotification();
   const queryClient = useQueryClient();
 
-  const [searchQuery, setSearchQuery] = useState('');
-  const [debouncedSearch, setDebouncedSearch] = useState('');
-  const [page, setPage] = useState(1);
+  const listState = useUrlListState({
+    defaultSearch: '',
+    defaultPageSize: 20,
+    baseIndex: 1,
+    historyMode: 'replace',
+  });
+  const {
+    searchQuery,
+    debouncedSearch,
+    currentPage: page,
+    setSearchQuery,
+    setCurrentPage: setPage,
+  } = listState;
   const [showConfigModal, setShowConfigModal] = useState(false);
   const [selectedNotification, setSelectedNotification] = useState<ArchivedNotification | null>(
     null
   );
-
-  // 防抖搜索
-  useEffect(() => {
-    const timer = setTimeout(() => {
-      setDebouncedSearch(searchQuery);
-    }, 300);
-    return () => clearTimeout(timer);
-  }, [searchQuery]);
 
   const archivedQuery = useQuery<{ notifications: ArchivedNotification[]; total: number }>({
     queryKey: ['notification-archive', page],

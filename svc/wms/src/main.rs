@@ -38,6 +38,7 @@ use topems_shared::{
 
 use modules::wms_plugin::{auto_register_to_core, get_plugin_info, plugin_health_check};
 use modules::ApiState;
+use shared::cache::InMemoryCache;
 
 #[tokio::main]
 async fn main() -> Result<()> {
@@ -73,11 +74,32 @@ async fn main() -> Result<()> {
     let start_time = Instant::now();
     let metrics = Arc::new(SystemMetrics::new());
 
+    let event_publisher = match topems_shared::event::EventPublisher::new("topems-wms") {
+        Ok(publisher) => {
+            tracing::info!("📢 事件发布服务初始化成功");
+            Some(Arc::new(publisher))
+        }
+        Err(e) => {
+            tracing::warn!("⚠️ 事件发布服务初始化失败（不阻塞启动）: {}", e);
+            None
+        }
+    };
+
+    let warehouse_cache = Arc::new(InMemoryCache::new(std::time::Duration::from_secs(300)));
+    let inventory_cache = Arc::new(InMemoryCache::new(std::time::Duration::from_secs(120)));
+    let dict_cache = Arc::new(InMemoryCache::new(std::time::Duration::from_secs(600)));
+
+    tracing::info!("💾 内存缓存初始化完成（仓库/库存/字典）");
+
     let api_state = ApiState {
         db: pool.clone(),
         auth_state: AuthState::from_env(),
         metrics: metrics.clone(),
         start_time,
+        event_publisher,
+        warehouse_cache,
+        inventory_cache,
+        dict_cache,
     };
 
     let cors = create_cors_layer();

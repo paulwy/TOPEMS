@@ -28,30 +28,33 @@ import { ConfirmDialog, FormField } from '@topems/shared-components';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { QUERY_KEYS } from '@/lib/reactQuery';
 
+import { useTranslation } from 'react-i18next';
 const ct = designTokens.colors;
 
-const statusConfig: Record<
-  string,
-  { label: string; color: 'default' | 'primary' | 'success' | 'warning' | 'error' }
-> = {
-  in_stock: { label: '在库', color: 'success' },
-  out_stock: { label: '已出库', color: 'default' },
-  reserved: { label: '已预留', color: 'warning' },
-  frozen: { label: '冻结', color: 'error' },
-  scrapped: { label: '报废', color: 'default' },
-};
 
-const qualityStatusConfig: Record<
-  string,
-  { label: string; color: 'default' | 'primary' | 'success' | 'warning' | 'error' }
-> = {
-  qualified: { label: '合格', color: 'success' },
-  unqualified: { label: '不合格', color: 'error' },
-  pending: { label: '待检', color: 'warning' },
-  inspecting: { label: '检验中', color: 'primary' },
-};
 
 const SerialNumberPage: React.FC = () => {
+  const { t } = useTranslation();
+  const statusConfig: Record<
+    string,
+    { label: string; color: 'default' | 'primary' | 'success' | 'warning' | 'error' }
+  > = {
+    in_stock: { label: t('wms.serial_number_page.status_in_stock'), color: 'success' },
+    out_stock: { label: t('wms.serial_number_page.status_out_stock'), color: 'default' },
+    reserved: { label: t('wms.serial_number_page.text_ba07b1'), color: 'warning' },
+    frozen: { label: t('wms.serial_number_page.text_28a286'), color: 'error' },
+    scrapped: { label: t('wms.serial_number_page.scrap'), color: 'default' },
+  };
+  const qualityStatusConfig: Record<
+    string,
+    { label: string; color: 'default' | 'primary' | 'success' | 'warning' | 'error' }
+  > = {
+    qualified: { label: t('wms.serial_number_page.qualified'), color: 'success' },
+    unqualified: { label: t('wms.serial_number_page.unqualified'), color: 'error' },
+    pending: { label: t('wms.serial_number_page.text_5930e6'), color: 'warning' },
+    inspecting: { label: t('wms.serial_number_page.inspection'), color: 'primary' },
+  };
+
   const [currentPage, setCurrentPage] = useState(1);
   const [pageSize, setPageSize] = useState(10);
   const [showDialog, setShowDialog] = useState(false);
@@ -71,7 +74,7 @@ const SerialNumberPage: React.FC = () => {
     sku: '',
     material_name: '',
     specification: '',
-    unit: '个',
+    unit: t('wms.serial_number_page.text_930882'),
     warehouse_id: '',
     location_id: '',
     supplier_id: '',
@@ -124,7 +127,7 @@ const SerialNumberPage: React.FC = () => {
       resetForm();
     },
     onError: (error) => {
-      apiLogger.error('创建序列号失败:', error);
+      apiLogger.error(t('wms.serial_number_page.create'), error);
     },
   });
 
@@ -142,7 +145,7 @@ const SerialNumberPage: React.FC = () => {
       resetForm();
     },
     onError: (error) => {
-      apiLogger.error('更新序列号失败:', error);
+      apiLogger.error(t('wms.serial_number_page.update'), error);
     },
   });
 
@@ -158,7 +161,7 @@ const SerialNumberPage: React.FC = () => {
       queryClient.invalidateQueries({ queryKey: [QUERY_KEYS.WMS.SERIAL_NUMBERS] });
     },
     onError: (error) => {
-      apiLogger.error('删除序列号失败:', error);
+      apiLogger.error(t('wms.serial_number_page.delete'), error);
     },
   });
 
@@ -189,7 +192,7 @@ const SerialNumberPage: React.FC = () => {
       sku: serial.sku,
       material_name: serial.material_name,
       specification: serial.specification || '',
-      unit: serial.unit || '个',
+      unit: serial.unit || t('wms.serial_number_page.text_930882'),
       warehouse_id: serial.warehouse_id,
       location_id: serial.location_id || '',
       supplier_id: serial.supplier_id || '',
@@ -208,7 +211,7 @@ const SerialNumberPage: React.FC = () => {
 
   const handleDelete = async (serial: SerialNumber) => {
     openConfirmDialog({
-      title: '确认删除',
+      title: t('wms.serial_number_page.dialog_delete_title'),
       message: `确定要删除序列号 "${serial.serial_no}" 吗？`,
       onConfirm: async () => {
         await deleteMutation.mutateAsync(serial.id);
@@ -223,16 +226,16 @@ const SerialNumberPage: React.FC = () => {
       if (response.success) {
         addNotification({
           type: 'info',
-          title: '追溯信息',
+          title: t('wms.serial_number_page.info'),
           message: `序列号 ${serial.serial_no} 共有 ${response.data?.length || 0} 条追溯记录`,
         });
       }
     } catch (error: unknown) {
-      apiLogger.error('查询追溯失败:', error);
+      apiLogger.error(t('wms.serial_number_page.search'), error);
       addNotification({
         type: 'error',
-        title: '查询失败',
-        message: '查询序列号追溯信息失败',
+        title: t('wms.serial_number_page.search_1'),
+        message: t('wms.serial_number_page.search_2'),
       });
     }
   };
@@ -243,7 +246,7 @@ const SerialNumberPage: React.FC = () => {
       sku: '',
       material_name: '',
       specification: '',
-      unit: '个',
+      unit: t('wms.serial_number_page.text_930882'),
       warehouse_id: '',
       location_id: '',
       supplier_id: '',
@@ -282,14 +285,14 @@ const SerialNumberPage: React.FC = () => {
   const columns: ColumnDef<SerialNumber>[] = [
     {
       id: 'serial_no',
-      label: '序列号',
+      label: t('wms.serial_number_page.column_serial_number'),
       render: (row) => (
         <Box sx={{ fontWeight: 500, fontFamily: 'monospace' }}>
           {row.serial_no}
           {isWarrantyExpiringSoon(row) && (
             <Chip
               size='small'
-              label='保修临期'
+              label={t('wms.serial_number_page.text_996830')}
               color='warning'
               sx={{ ml: 1, fontSize: '0.625rem', height: 16 }}
             />
@@ -299,7 +302,7 @@ const SerialNumberPage: React.FC = () => {
     },
     {
       id: 'material_info',
-      label: '物料信息',
+      label: t('wms.serial_number_page.info_1'),
       render: (row) => (
         <Box>
           <Box sx={{ fontWeight: 500 }}>{row.material_name}</Box>
@@ -309,22 +312,22 @@ const SerialNumberPage: React.FC = () => {
     },
     {
       id: 'batch_no',
-      label: '批次号',
+      label: t('wms.serial_number_page.text_51767c'),
       render: (row) => row.batch_no || '-',
     },
     {
       id: 'location',
-      label: '库位',
+      label: t('wms.serial_number_page.field_location'),
       render: (row) => row.location_code || row.warehouse_name || '-',
     },
     {
       id: 'supplier_name',
-      label: '供应商',
+      label: t('wms.serial_number_page.supplier'),
       render: (row) => row.supplier_name || '-',
     },
     {
       id: 'quality_status',
-      label: '质检状态',
+      label: t('wms.serial_number_page.status'),
       render: (row) => {
         const config = qualityStatusConfig[row.quality_status] || qualityStatusConfig.pending;
         return (
@@ -339,7 +342,7 @@ const SerialNumberPage: React.FC = () => {
     },
     {
       id: 'status',
-      label: '状态',
+      label: t('wms.serial_number_page.filter_status'),
       render: (row) => {
         const config = statusConfig[row.status] || statusConfig.in_stock;
         return (
@@ -353,7 +356,7 @@ const SerialNumberPage: React.FC = () => {
     },
     {
       id: 'warranty',
-      label: '保修期限',
+      label: t('wms.serial_number_page.text_6a1188'),
       render: (row) => (
         <Box sx={{ fontSize: '0.8rem' }}>
           {row.warranty_start_date && row.warranty_end_date ? (
@@ -371,28 +374,28 @@ const SerialNumberPage: React.FC = () => {
 
   const rowActions = [
     {
-      label: '编辑',
+      label: t('wms.serial_number_page.action_edit'),
       icon: <Edit size={14} />,
       onClick: (row: SerialNumber) => handleEdit(row),
     },
     {
-      label: '追溯',
+      label: t('wms.serial_number_page.text_958e95'),
       icon: <History size={14} />,
       onClick: (row: SerialNumber) => handleTrace(row),
     },
     {
-      label: '调拨',
+      label: t('wms.serial_number_page.transfer'),
       icon: <ArrowRightLeft size={14} />,
       onClick: (_row: SerialNumber) => {
         addNotification({
           type: 'info',
-          title: '功能提示',
-          message: '序列号调拨功能开发中',
+          title: t('wms.serial_number_page.hint'),
+          message: t('wms.serial_number_page.transfer_1'),
         });
       },
     },
     {
-      label: '删除',
+      label: t('wms.serial_number_page.action_delete'),
       icon: <Trash2 size={14} />,
       color: 'error' as const,
       onClick: (row: SerialNumber) => handleDelete(row),
@@ -401,8 +404,8 @@ const SerialNumberPage: React.FC = () => {
 
   return (
     <PageContainer
-      title='序列号管理'
-      subtitle='管理商品序列号，跟踪单件商品的全生命周期'
+      title={t('wms.serial_number_page.breadcrumb_current')}
+      subtitle={t('wms.serial_number_page.text_cccf00')}
       maxWidth='xl'
       headerProps={{
         pageIcon: <Hash style={{ width: 20, height: 20 }} />,
@@ -427,7 +430,7 @@ const SerialNumberPage: React.FC = () => {
         }}
         actions={[
           {
-            label: '新增序列号',
+            label: t('wms.serial_number_page.dialog_create_title'),
             icon: <Plus size={16} />,
             onClick: () => {
               resetForm();
@@ -438,13 +441,13 @@ const SerialNumberPage: React.FC = () => {
         ]}
         rowActions={rowActions}
         onRefresh={refetch}
-        emptyMessage='暂无序列号数据'
+        emptyMessage={t('wms.serial_number_page.empty_message')}
         headerContent={
           <Box sx={{ display: 'flex', gap: 1, alignItems: 'center' }}>
             <FormField
               name='searchValue'
               size='small'
-              placeholder='搜索序列号...'
+              placeholder={t('wms.serial_number_page.search_placeholder')}
               value={searchValue}
               onChange={(e: React.ChangeEvent<HTMLInputElement>) => setSearchValue(e.target.value)}
               onKeyDown={(e: React.KeyboardEvent<HTMLInputElement>) =>
@@ -469,7 +472,7 @@ const SerialNumberPage: React.FC = () => {
         maxWidth='lg'
         fullWidth
       >
-        <DialogTitle>{isEditing ? '编辑序列号' : '新增序列号'}</DialogTitle>
+        <DialogTitle>{isEditing ? t('wms.serial_number_page.dialog_edit_title') : t('wms.serial_number_page.dialog_create_title')}</DialogTitle>
         <DialogContent>
           <Box sx={{ borderBottom: 1, borderColor: 'divider', mb: 2 }}>
             <Tabs
@@ -477,12 +480,12 @@ const SerialNumberPage: React.FC = () => {
               onChange={(_, newValue) => setActiveTab(newValue)}
             >
               <Tab
-                label='基本信息'
+                label={t('wms.serial_number_page.info_2')}
                 icon={<Hash size={16} />}
                 iconPosition='start'
               />
               <Tab
-                label='保修信息'
+                label={t('wms.serial_number_page.info_3')}
                 icon={<Package size={16} />}
                 iconPosition='start'
               />
@@ -500,7 +503,7 @@ const SerialNumberPage: React.FC = () => {
               >
                 <FormField
                   name='serial_no'
-                  label='序列号 *'
+                  label={t('wms.serial_number_page.field_serial_number_required')}
                   value={formData.serial_no}
                   onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
                     setFormData({ ...formData, serial_no: e.target.value })
@@ -511,7 +514,7 @@ const SerialNumberPage: React.FC = () => {
                 />
                 <FormField
                   name='sku'
-                  label='SKU编码 *'
+                  label={t('wms.serial_number_page.code')}
                   value={formData.sku}
                   onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
                     setFormData({ ...formData, sku: e.target.value })
@@ -522,7 +525,7 @@ const SerialNumberPage: React.FC = () => {
                 />
                 <FormField
                   name='material_name'
-                  label='物料名称 *'
+                  label={t('wms.serial_number_page.field_material_name_required')}
                   value={formData.material_name}
                   onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
                     setFormData({ ...formData, material_name: e.target.value })
@@ -533,7 +536,7 @@ const SerialNumberPage: React.FC = () => {
                 />
                 <FormField
                   name='specification'
-                  label='规格型号'
+                  label={t('wms.serial_number_page.spec')}
                   value={formData.specification}
                   onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
                     setFormData({ ...formData, specification: e.target.value })
@@ -542,7 +545,7 @@ const SerialNumberPage: React.FC = () => {
                 />
                 <FormField
                   name='unit'
-                  label='单位'
+                  label={t('wms.serial_number_page.unit')}
                   value={formData.unit}
                   onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
                     setFormData({ ...formData, unit: e.target.value })
@@ -551,7 +554,7 @@ const SerialNumberPage: React.FC = () => {
                 />
                 <FormField
                   name='batch_no'
-                  label='批次号'
+                  label={t('wms.serial_number_page.text_51767c')}
                   value={formData.batch_no}
                   onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
                     setFormData({ ...formData, batch_no: e.target.value })
@@ -560,7 +563,7 @@ const SerialNumberPage: React.FC = () => {
                 />
                 <FormField
                   name='warehouse_id'
-                  label='仓库ID'
+                  label={t('wms.serial_number_page.warehouse')}
                   value={formData.warehouse_id}
                   onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
                     setFormData({ ...formData, warehouse_id: e.target.value })
@@ -569,7 +572,7 @@ const SerialNumberPage: React.FC = () => {
                 />
                 <FormField
                   name='location_id'
-                  label='库位ID'
+                  label={t('wms.serial_number_page.location')}
                   value={formData.location_id}
                   onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
                     setFormData({ ...formData, location_id: e.target.value })
@@ -578,7 +581,7 @@ const SerialNumberPage: React.FC = () => {
                 />
                 <FormField
                   name='supplier_id'
-                  label='供应商ID'
+                  label={t('wms.serial_number_page.supplier_1')}
                   value={formData.supplier_id}
                   onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
                     setFormData({ ...formData, supplier_id: e.target.value })
@@ -587,7 +590,7 @@ const SerialNumberPage: React.FC = () => {
                 />
                 <FormField
                   name='production_date'
-                  label='生产日期'
+                  label={t('wms.serial_number_page.date')}
                   type='date'
                   value={formData.production_date}
                   onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
@@ -598,7 +601,7 @@ const SerialNumberPage: React.FC = () => {
                 />
                 <FormField
                   name='expiry_date'
-                  label='有效期至'
+                  label={t('wms.serial_number_page.text_6460f4')}
                   type='date'
                   value={formData.expiry_date}
                   onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
@@ -611,7 +614,7 @@ const SerialNumberPage: React.FC = () => {
                   <InputLabel>质检状态</InputLabel>
                   <Select
                     value={formData.quality_status}
-                    label='质检状态'
+                    label={t('wms.serial_number_page.status')}
                     onChange={(e: SelectChangeEvent) =>
                       setFormData({ ...formData, quality_status: e.target.value })
                     }
@@ -635,7 +638,7 @@ const SerialNumberPage: React.FC = () => {
               >
                 <FormField
                   name='warranty_start_date'
-                  label='保修开始日期'
+                  label={t('wms.serial_number_page.start_date')}
                   type='date'
                   value={formData.warranty_start_date}
                   onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
@@ -646,7 +649,7 @@ const SerialNumberPage: React.FC = () => {
                 />
                 <FormField
                   name='warranty_end_date'
-                  label='保修结束日期'
+                  label={t('wms.serial_number_page.end_date')}
                   type='date'
                   value={formData.warranty_end_date}
                   onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
@@ -657,7 +660,7 @@ const SerialNumberPage: React.FC = () => {
                 />
                 <FormField
                   name='unit_price'
-                  label='单价'
+                  label={t('wms.serial_number_page.text_da4abd')}
                   type='number'
                   value={formData.unit_price}
                   onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
@@ -669,7 +672,7 @@ const SerialNumberPage: React.FC = () => {
             )}
             <FormField
               name='remark'
-              label='备注'
+              label={t('wms.serial_number_page.field_remark')}
               multiline
               rows={2}
               value={formData.remark}
@@ -691,7 +694,7 @@ const SerialNumberPage: React.FC = () => {
                 type='submit'
                 variant='contained'
               >
-                {isEditing ? '更新' : '保存'}
+                {isEditing ? t('wms.serial_number_page.update_1') : t('wms.serial_number_page.save')}
               </Button>
             </DialogActions>
           </form>

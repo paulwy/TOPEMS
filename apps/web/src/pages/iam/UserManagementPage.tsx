@@ -17,6 +17,7 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { Plus, Edit, Trash2, Shield, UserPlus, UserMinus } from 'lucide-react';
 import { authApi, type User, type Role } from '@/api/iam';
 import { useNotificationStore } from '../../store';
+import { useUrlListState } from '@/hooks';
 import { RoleBadge } from '@/components/PermissionGate';
 import { ListPageTemplate, type ColumnDef } from '@/components/templates';
 import { extractErrorMessage } from '@/utils/errors';
@@ -37,8 +38,12 @@ const UserManagementPage: React.FC<UserManagementPageProps> = ({ onNavigate: _on
   const addNotification = useNotificationStore((state) => state.addNotification);
   const queryClient = useQueryClient();
 
-  const [searchQuery, setSearchQuery] = useState('');
-  const [debouncedSearch, setDebouncedSearch] = useState('');
+  const { searchQuery, setSearchQuery, debouncedSearch, currentPage, pageSize, setCurrentPage, setPageSize } =
+    useUrlListState({
+      baseIndex: 1,
+      defaultPageSize: 20,
+      historyMode: 'replace',
+    });
   const [showCreateModal, setShowCreateModal] = useState(false);
   const [showEditModal, setShowEditModal] = useState(false);
   const [showRolesModal, setShowRolesModal] = useState(false);
@@ -54,20 +59,6 @@ const UserManagementPage: React.FC<UserManagementPageProps> = ({ onNavigate: _on
 
   // 批量选择状态
   const [selectedUserIds, setSelectedUserIds] = useState<(string | number)[]>([]);
-
-  // 分页状态
-  const [currentPage, setCurrentPage] = useState(1);
-  const [pageSize] = useState(10);
-
-  // 防抖搜索
-  useEffect(() => {
-    const timer = setTimeout(() => {
-      setDebouncedSearch(searchQuery);
-      setCurrentPage(1);
-    }, 300);
-
-    return () => clearTimeout(timer);
-  }, [searchQuery]);
 
   const { data: usersData, isLoading: loading } = useQuery({
     queryKey: [...QUERY_KEYS.IAM.USERS, { page: currentPage, search: debouncedSearch }],

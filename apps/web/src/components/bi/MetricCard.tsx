@@ -2,6 +2,7 @@ import React, { useEffect, useState, useRef } from 'react';
 import { TrendingUp, TrendingDown, Minus, Activity } from 'lucide-react';
 import type { LucideIcon } from 'lucide-react';
 import { Box, Typography } from '@mui/material';
+import { useCountUp, countUpEasings } from '@/hooks/useCountUp';
 
 interface SparklineProps {
   data: number[];
@@ -169,9 +170,6 @@ export const MetricCard: React.FC<MetricCardProps> = ({
   sparklineData,
   animate = true,
 }) => {
-  const [displayValue, setDisplayValue] = useState(
-    animate && typeof value === 'number' ? 0 : value
-  );
   const [isHovered, setIsHovered] = useState(false);
   const [isVisible, setIsVisible] = useState(false);
   const cardRef = useRef<HTMLDivElement>(null);
@@ -194,33 +192,20 @@ export const MetricCard: React.FC<MetricCardProps> = ({
     return () => observer.disconnect();
   }, []);
 
-  useEffect(() => {
-    if (!animate || typeof value !== 'number' || !isVisible) {
-      setDisplayValue(value);
-      return;
-    }
+  // 数字滚动 — 使用 useCountUp hook（可见时启动）
+  const numericValue = typeof value === 'number' ? value : 0;
+  const { displayValue: animatedDisplay } = useCountUp(numericValue, {
+    duration: 1200,
+    enabled: animate && typeof value === 'number' && isVisible,
+    easing: countUpEasings.easeOutQuart,
+  });
 
-    const duration = 1200;
-    const steps = 40;
-    const stepDuration = duration / steps;
-    const startValue = 0;
-    const endValue = value as number;
-
-    let currentStep = 0;
-    const timer = setInterval(() => {
-      currentStep++;
-      if (currentStep >= steps) {
-        setDisplayValue(endValue);
-        clearInterval(timer);
-      } else {
-        const progress = currentStep / steps;
-        const eased = 1 - Math.pow(1 - progress, 4);
-        setDisplayValue(Math.round(startValue + (endValue - startValue) * eased));
-      }
-    }, stepDuration);
-
-    return () => clearInterval(timer);
-  }, [value, animate, isVisible]);
+  const displayValue =
+    animate && typeof value === 'number'
+      ? isVisible
+        ? animatedDisplay.toLocaleString()
+        : '0'
+      : value;
 
   const computedTrend = trend ?? (change !== undefined ? (change >= 0 ? 'up' : 'down') : null);
 
@@ -293,12 +278,14 @@ export const MetricCard: React.FC<MetricCardProps> = ({
   return (
     <Box
       ref={cardRef}
+      className='bi-metric-card'
       sx={{
         position: 'relative',
-        backgroundColor: 'white',
+        backgroundColor: 'background.paper',
         borderRadius: 3,
         padding: 3,
-        border: '1px solid rgba(226, 232, 240, 0.6)',
+        border: '1px solid',
+        borderColor: 'divider',
         overflow: 'hidden',
         transition: 'all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275)',
         boxShadow: isHovered
@@ -390,7 +377,7 @@ export const MetricCard: React.FC<MetricCardProps> = ({
                   lineHeight: 1.2,
                 }}
               >
-                {typeof displayValue === 'number' ? displayValue.toLocaleString() : displayValue}
+                {displayValue}
               </Typography>
               {unit && (
                 <Typography

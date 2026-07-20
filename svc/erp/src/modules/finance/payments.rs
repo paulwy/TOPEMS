@@ -2,8 +2,6 @@
 
 use axum::extract::{Extension, Json, Query, State};
 
-use chrono::Utc;
-
 use uuid::Uuid;
 
 use super::super::ApiState;
@@ -57,48 +55,8 @@ pub async fn list_payments(
             ))
         }
         Err(e) => {
-            tracing::warn!("获取付款记录失败: {}, 使用模拟数据", e);
-            let now = chrono::Utc::now();
-            let mock_payments = vec![
-                PaymentRecord {
-                    id: Uuid::new_v4(),
-                    payment_no: "PAY202606001".to_string(),
-                    supplier_id: None,
-                    supplier_name: Some("深圳供应商有限公司".to_string()),
-                    amount: 45000.0,
-                    payment_date: Some(now),
-                    invoice_ids: None,
-                    bank_account_id: None,
-                    bank_account_no: Some("6222021234567893".to_string()),
-                    bank_name: Some("招商银行".to_string()),
-                    voucher_id: None,
-                    voucher_no: None,
-                    status: "recorded".to_string(),
-                    created_at: now,
-                    created_by: None,
-                },
-                PaymentRecord {
-                    id: Uuid::new_v4(),
-                    payment_no: "PAY202606002".to_string(),
-                    supplier_id: None,
-                    supplier_name: Some("杭州原材料厂".to_string()),
-                    amount: 28000.0,
-                    payment_date: Some(now),
-                    invoice_ids: None,
-                    bank_account_id: None,
-                    bank_account_no: Some("6222021234567894".to_string()),
-                    bank_name: Some("浦发银行".to_string()),
-                    voucher_id: None,
-                    voucher_no: None,
-                    status: "matched".to_string(),
-                    created_at: now,
-                    created_by: None,
-                },
-            ];
-            Json(ApiResponse::success(
-                PaginatedResponse::new(mock_payments, 2, page, page_size),
-                "获取付款记录列表成功",
-            ))
+            tracing::error!("获取付款记录失败: {}", e);
+            Json(api_error(500, "获取付款列表失败"))
         }
     }
 }
@@ -147,29 +105,8 @@ pub async fn create_payment(
     match result {
         Ok(payment) => Json(ApiResponse::success(payment, "创建付款记录成功")),
         Err(e) => {
-            tracing::warn!("创建付款记录失败: {}, 使用模拟数据", e);
-            Json(ApiResponse::success(
-                PaymentRecord {
-                    id,
-                    payment_no,
-                    supplier_id: req.supplier_id,
-                    supplier_name: req.supplier_name,
-                    amount: req.amount,
-                    payment_date: req.payment_date,
-                    invoice_ids: req
-                        .invoice_ids
-                        .map(|v| serde_json::to_value(v).unwrap_or(serde_json::Value::Null)),
-                    bank_account_id: req.bank_account_id,
-                    bank_account_no: req.bank_account_no,
-                    bank_name: req.bank_name,
-                    voucher_id: None,
-                    voucher_no: None,
-                    status: "recorded".to_string(),
-                    created_at: now,
-                    created_by: None,
-                },
-                "创建付款记录成功",
-            ))
+            tracing::error!("创建付款记录失败: {}", e);
+            Json(api_error(500, "创建付款记录失败"))
         }
     }
 }

@@ -1,3 +1,6 @@
+use crate::models::Customer;
+use crate::shared::InMemoryCache;
+use crate::workflow::WorkflowClient;
 use axum::{extract::FromRef, Router};
 use sqlx::postgres::PgPool;
 use std::sync::Arc;
@@ -6,6 +9,7 @@ use topems_shared::AuthState;
 use topems_shared::FieldEncryptionService;
 use topems_shared::SystemMetrics;
 
+pub mod aftersales;
 pub mod audit;
 pub mod billing;
 pub mod contact;
@@ -30,6 +34,12 @@ pub struct ApiState {
     pub metrics: Arc<SystemMetrics>,
     pub start_time: Instant,
     pub encryption: Arc<FieldEncryptionService>,
+    pub event_publisher: Option<Arc<topems_shared::event::publisher::EventPublisher>>,
+    pub erp_client: Option<Arc<topems_shared::service_client::ErpServiceClient>>,
+    pub wms_client: Option<Arc<topems_shared::service_client::WmsServiceClient>>,
+    pub workflow_client: WorkflowClient,
+    pub customer_cache: Arc<InMemoryCache<Customer>>,
+    pub dashboard_cache: Arc<InMemoryCache<serde_json::Value>>,
 }
 
 impl FromRef<ApiState> for AuthState {
@@ -41,6 +51,12 @@ impl FromRef<ApiState> for AuthState {
 impl FromRef<ApiState> for PgPool {
     fn from_ref(state: &ApiState) -> Self {
         state.db.clone()
+    }
+}
+
+impl FromRef<ApiState> for WorkflowClient {
+    fn from_ref(state: &ApiState) -> Self {
+        state.workflow_client.clone()
     }
 }
 
@@ -60,4 +76,5 @@ pub fn create_routes() -> Router<ApiState> {
         .merge(billing::create_routes())
         .merge(crm_plugin::create_routes())
         .merge(tag::create_routes())
+        .merge(aftersales::create_routes())
 }

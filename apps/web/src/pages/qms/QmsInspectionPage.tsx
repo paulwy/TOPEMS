@@ -50,6 +50,7 @@ import {
   type AuditInspectionRequestBackend,
 } from '@/api/qms';
 import { useNotificationStore } from '@/store';
+import { useCrudMutations } from '@/hooks';
 import { designTokens } from '@/theme/tokens';
 import { QUERY_KEYS } from '@/lib/reactQuery';
 
@@ -318,25 +319,36 @@ const QmsInspectionPage: React.FC = () => {
     setShowAuditModal(true);
   };
 
-  const createMutation = useMutation({
-    mutationFn: async (data: CreateQualityCheckRequest) => {
+  const { createMutation } = useCrudMutations<
+    CreateQualityCheckRequest,
+    CreateQualityCheckRequest,
+    string
+  >({
+    queryKeyToInvalidate: QUERY_KEYS.QMS.INSPECTIONS,
+    createFn: async (data) => {
       const response = await qmsApi.createCheck(data);
       if (!response.success) {
         throw new Error(response.message || '创建质检单失败');
       }
       return response;
     },
-    onSuccess: () => {
-      addNotification({ title: '成功', message: '质检单创建成功', type: 'success' });
-      queryClient.invalidateQueries({ queryKey: QUERY_KEYS.QMS.INSPECTIONS });
-      setShowCreateModal(false);
+    updateFn: async ({ id, data }) => {
+      const response = await qmsApi.updateCheck(String(id), data);
+      if (!response.success) {
+        throw new Error(response.message || '更新质检单失败');
+      }
+      return response;
     },
-    onError: (err: unknown) => {
-      addNotification({
-        title: '错误',
-        message: err instanceof Error ? err.message : '创建质检单时发生错误',
-        type: 'error',
-      });
+    deleteFn: async (id) => {
+      const response = await qmsApi.deleteCheck(String(id));
+      if (!response.success) {
+        throw new Error(response.message || '删除质检单失败');
+      }
+      return response;
+    },
+    entityName: '质检单',
+    onCreateSuccess: () => {
+      setShowCreateModal(false);
     },
   });
 

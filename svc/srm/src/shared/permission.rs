@@ -25,37 +25,37 @@ impl SrmPermission {
     pub fn to_shared(&self) -> SharedModulePermission {
         match self {
             SrmPermission::SupplierRead => {
-                SharedModulePermission::new(ModuleCode::Scm, PermissionAction::Read)
+                SharedModulePermission::new(ModuleCode::Srm, PermissionAction::Read)
             }
             SrmPermission::SupplierWrite => {
-                SharedModulePermission::new(ModuleCode::Scm, PermissionAction::Write)
+                SharedModulePermission::new(ModuleCode::Srm, PermissionAction::Write)
             }
             SrmPermission::ContractRead => {
-                SharedModulePermission::new(ModuleCode::Scm, PermissionAction::Read)
+                SharedModulePermission::new(ModuleCode::Srm, PermissionAction::Read)
             }
             SrmPermission::ContractWrite => {
-                SharedModulePermission::new(ModuleCode::Scm, PermissionAction::Write)
+                SharedModulePermission::new(ModuleCode::Srm, PermissionAction::Write)
             }
             SrmPermission::PaymentRead => {
-                SharedModulePermission::new(ModuleCode::Scm, PermissionAction::Read)
+                SharedModulePermission::new(ModuleCode::Srm, PermissionAction::Read)
             }
             SrmPermission::PaymentWrite => {
-                SharedModulePermission::new(ModuleCode::Scm, PermissionAction::Write)
+                SharedModulePermission::new(ModuleCode::Srm, PermissionAction::Write)
             }
             SrmPermission::SourcingRead => {
-                SharedModulePermission::new(ModuleCode::Scm, PermissionAction::Read)
+                SharedModulePermission::new(ModuleCode::Srm, PermissionAction::Read)
             }
             SrmPermission::SourcingWrite => {
-                SharedModulePermission::new(ModuleCode::Scm, PermissionAction::Write)
+                SharedModulePermission::new(ModuleCode::Srm, PermissionAction::Write)
             }
             SrmPermission::VendorAssessmentRead => {
-                SharedModulePermission::new(ModuleCode::Scm, PermissionAction::Read)
+                SharedModulePermission::new(ModuleCode::Srm, PermissionAction::Read)
             }
             SrmPermission::VendorAssessmentWrite => {
-                SharedModulePermission::new(ModuleCode::Scm, PermissionAction::Write)
+                SharedModulePermission::new(ModuleCode::Srm, PermissionAction::Write)
             }
             SrmPermission::All => {
-                SharedModulePermission::new(ModuleCode::Scm, PermissionAction::Admin)
+                SharedModulePermission::new(ModuleCode::Srm, PermissionAction::Admin)
             }
         }
     }

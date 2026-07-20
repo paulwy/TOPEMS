@@ -35,6 +35,7 @@ import { useNotificationStore } from '@/store';
 import { apiLogger } from '@/utils/logger';
 import { designTokens } from '@/theme/tokens';
 
+import { useTranslation } from 'react-i18next';
 const ct = designTokens.colors;
 
 interface HazardousMaterial {
@@ -79,6 +80,7 @@ const unitOptions = [
 ];
 
 const EhsHazardousMaterialPage: React.FC = () => {
+  const { t } = useTranslation();
   const queryClient = useQueryClient();
   const [searchQuery, setSearchQuery] = useState('');
   const [categoryFilter, setCategoryFilter] = useState('');
@@ -171,9 +173,9 @@ const EhsHazardousMaterialPage: React.FC = () => {
     const now = new Date();
     const expiry = new Date(expiryDate);
     const daysDiff = Math.ceil((expiry.getTime() - now.getTime()) / (1000 * 60 * 60 * 24));
-    if (daysDiff <= 0) return { text: '已过期', color: 'error.dark' as const };
-    if (daysDiff <= 30) return { text: '临期', color: 'warning.dark' as const };
-    return { text: '正常', color: 'success.dark' as const };
+    if (daysDiff <= 0) return { text: t('ehs.ehs_hazardous_material_page.text_4d5ccd'), color: 'error.dark' as const };
+    if (daysDiff <= 30) return { text: t('ehs.ehs_hazardous_material_page.text_2cae05'), color: 'warning.dark' as const };
+    return { text: t('ehs.ehs_hazardous_material_page.normal'), color: 'success.dark' as const };
   };
 
   const filteredMaterials = useMemo(() => {
@@ -199,9 +201,9 @@ const EhsHazardousMaterialPage: React.FC = () => {
       total: materials.length,
       expiring: materials.filter((m) => {
         const status = getExpiryStatus(m.expiry_date);
-        return status && (status.text === '临期' || status.text === '已过期');
+        return status && (status.text === t('ehs.ehs_hazardous_material_page.text_2cae05') || status.text === t('ehs.ehs_hazardous_material_page.text_4d5ccd'));
       }).length,
-      severe: materials.filter((m) => m.danger_level === '一级' || m.danger_level === '二级')
+      severe: materials.filter((m) => m.danger_level === t('ehs.ehs_hazardous_material_page.text_117bf1') || m.danger_level === t('ehs.ehs_hazardous_material_page.text_301d4d'))
         .length,
       thisMonth: materials.filter((m) => {
         if (!m.created_at) return false;
@@ -216,7 +218,7 @@ const EhsHazardousMaterialPage: React.FC = () => {
   const columns: ColumnDef<HazardousMaterial>[] = [
     {
       id: 'material_code',
-      label: '编码',
+      label: t('ehs.ehs_hazardous_material_page.code'),
       width: 130,
       sortable: true,
       render: (row) => (
@@ -227,21 +229,21 @@ const EhsHazardousMaterialPage: React.FC = () => {
     },
     {
       id: 'name',
-      label: '名称',
+      label: t('ehs.ehs_hazardous_material_page.name'),
       width: 150,
       sortable: true,
       render: (row) => <Typography sx={{ fontWeight: 500 }}>{row.name}</Typography>,
     },
     {
       id: 'category',
-      label: '分类',
+      label: t('ehs.ehs_hazardous_material_page.text_d0771a'),
       width: 100,
       align: 'center',
       render: (row) => getCategoryChip(row.category),
     },
     {
       id: 'cas_no',
-      label: 'CAS号',
+      label: t('ehs.ehs_hazardous_material_page.text_c7a092'),
       width: 120,
       render: (row) => (
         <Typography sx={{ fontFamily: 'monospace', fontSize: '0.8rem' }}>
@@ -251,7 +253,7 @@ const EhsHazardousMaterialPage: React.FC = () => {
     },
     {
       id: 'quantity',
-      label: '库存量',
+      label: t('ehs.ehs_hazardous_material_page.text_244f4d'),
       width: 100,
       align: 'right',
       render: (row) => (
@@ -262,20 +264,20 @@ const EhsHazardousMaterialPage: React.FC = () => {
     },
     {
       id: 'storage_location',
-      label: '存放位置',
+      label: t('ehs.ehs_hazardous_material_page.text_bea7aa'),
       width: 140,
       render: (row) => row.storage_location || '-',
     },
     {
       id: 'danger_level',
-      label: '危险等级',
+      label: t('ehs.ehs_hazardous_material_page.text_0f016f'),
       width: 100,
       align: 'center',
       render: (row) => getDangerLevelChip(row.danger_level),
     },
     {
       id: 'expiry_date',
-      label: '有效期',
+      label: t('ehs.ehs_hazardous_material_page.text_bb114a'),
       width: 130,
       sortable: true,
       render: (row) => {
@@ -286,12 +288,12 @@ const EhsHazardousMaterialPage: React.FC = () => {
             <Typography sx={{ fontSize: '0.875rem' }}>
               {row.expiry_date ? new Date(row.expiry_date).toLocaleDateString('zh-CN') : '-'}
             </Typography>
-            {status && status.text !== '正常' && (
+            {status && status.text !== t('ehs.ehs_hazardous_material_page.normal') && (
               <Chip
                 label={status.text}
                 size='small'
                 sx={{
-                  backgroundColor: status.text === '已过期' ? 'error.lighter' : 'warning.100',
+                  backgroundColor: status.text === t('ehs.ehs_hazardous_material_page.text_4d5ccd') ? 'error.lighter' : 'warning.100',
                   color: status.color,
                   fontWeight: 500,
                   height: 20,
@@ -307,7 +309,7 @@ const EhsHazardousMaterialPage: React.FC = () => {
 
   const rowActions: RowAction<HazardousMaterial>[] = [
     {
-      label: '查看',
+      label: t('ehs.ehs_hazardous_material_page.view'),
       icon: <Eye size={16} />,
       onClick: (row) => {
         setSelectedMaterial(row);
@@ -316,7 +318,7 @@ const EhsHazardousMaterialPage: React.FC = () => {
       color: 'primary',
     },
     {
-      label: '编辑',
+      label: t('ehs.ehs_hazardous_material_page.edit'),
       icon: <Edit size={16} />,
       onClick: (row) => {
         setEditingMaterial(row);
@@ -351,8 +353,8 @@ const EhsHazardousMaterialPage: React.FC = () => {
             setMsdsData(null);
           }
         } catch (err: unknown) {
-          apiLogger.error('加载MSDS数据失败:', err);
-          addNotification({ title: '错误', message: '加载MSDS数据失败', type: 'error' });
+          apiLogger.error(t('ehs.ehs_hazardous_material_page.fail'), err);
+          addNotification({ title: t('ehs.ehs_hazardous_material_page.error'), message: t('ehs.ehs_hazardous_material_page.fail_1'), type: 'error' });
           setMsdsData(null);
         } finally {
           setMsdsLoading(false);
@@ -417,7 +419,7 @@ const EhsHazardousMaterialPage: React.FC = () => {
         }}
       >
         <StatCard
-          label='物品总数'
+          label={t('ehs.ehs_hazardous_material_page.text_9856ee')}
           value={stats.total}
           icon={<FlaskConical />}
           bgColor='error.light'
@@ -425,7 +427,7 @@ const EhsHazardousMaterialPage: React.FC = () => {
           iconColor='error.main'
         />
         <StatCard
-          label='临期预警'
+          label={t('ehs.ehs_hazardous_material_page.text_c516b4')}
           value={stats.expiring}
           icon={<AlertTriangle />}
           bgColor='background.paper'
@@ -433,7 +435,7 @@ const EhsHazardousMaterialPage: React.FC = () => {
           iconColor={ct.yellow[600]}
         />
         <StatCard
-          label='严重危化品数'
+          label={t('ehs.ehs_hazardous_material_page.text_edaacc')}
           value={stats.severe}
           icon={<Package />}
           bgColor='background.paper'
@@ -441,7 +443,7 @@ const EhsHazardousMaterialPage: React.FC = () => {
           iconColor='error.700'
         />
         <StatCard
-          label='本月入库'
+          label={t('ehs.ehs_hazardous_material_page.inbound')}
           value={stats.thisMonth}
           icon={<Clock />}
           bgColor='background.paper'
@@ -487,8 +489,8 @@ const EhsHazardousMaterialPage: React.FC = () => {
     },
     onSuccess: (_data, variables) => {
       addNotification({
-        title: '成功',
-        message: variables.id ? '危化品信息更新成功' : '危化品入库成功',
+        title: t('ehs.ehs_hazardous_material_page.success'),
+        message: variables.id ? t('ehs.ehs_hazardous_material_page.update') : t('ehs.ehs_hazardous_material_page.success_1'),
         type: 'success',
       });
       queryClient.invalidateQueries({ queryKey: QUERY_KEYS.EHS.HAZARDOUS_MATERIALS });
@@ -496,25 +498,25 @@ const EhsHazardousMaterialPage: React.FC = () => {
     },
     onError: (error: unknown) => {
       addNotification({
-        title: '错误',
-        message: editingMaterial ? '更新失败' : '入库失败',
+        title: t('ehs.ehs_hazardous_material_page.error'),
+        message: editingMaterial ? t('ehs.ehs_hazardous_material_page.update_1') : t('ehs.ehs_hazardous_material_page.fail_2'),
         type: 'error',
       });
-      apiLogger.error('保存危化品失败:', error);
+      apiLogger.error(t('ehs.ehs_hazardous_material_page.save'), error);
     },
   });
 
   const handleSave = () => {
     if (!formData.material_code.trim()) {
-      addNotification({ title: '错误', message: '请输入编码', type: 'error' });
+      addNotification({ title: t('ehs.ehs_hazardous_material_page.error'), message: t('ehs.ehs_hazardous_material_page.please_input'), type: 'error' });
       return;
     }
     if (!formData.name.trim()) {
-      addNotification({ title: '错误', message: '请输入名称', type: 'error' });
+      addNotification({ title: t('ehs.ehs_hazardous_material_page.error'), message: t('ehs.ehs_hazardous_material_page.please_input_1'), type: 'error' });
       return;
     }
     if (!formData.storage_location.trim()) {
-      addNotification({ title: '错误', message: '请输入存放位置', type: 'error' });
+      addNotification({ title: t('ehs.ehs_hazardous_material_page.error'), message: t('ehs.ehs_hazardous_material_page.please_input_2'), type: 'error' });
       return;
     }
     const payload = {
@@ -535,7 +537,7 @@ const EhsHazardousMaterialPage: React.FC = () => {
 
   const headerActions = [
     {
-      label: '入库登记',
+      label: t('ehs.ehs_hazardous_material_page.inbound_1'),
       icon: <Plus sx={{ width: 16, height: 16 }} />,
       onClick: handleCreate,
       variant: 'contained' as const,
@@ -564,7 +566,7 @@ const EhsHazardousMaterialPage: React.FC = () => {
           onPageChange: setCurrentPage,
         }}
         searchable
-        searchPlaceholder='搜索编码、名称、CAS号或存放位置...'
+        searchPlaceholder={t('ehs.ehs_hazardous_material_page.search')}
         searchValue={searchQuery}
         onSearch={(value) => {
           setSearchQuery(value);
@@ -573,25 +575,25 @@ const EhsHazardousMaterialPage: React.FC = () => {
         filters={[
           {
             id: 'category',
-            label: '分类',
+            label: t('ehs.ehs_hazardous_material_page.text_d0771a'),
             type: 'select',
             value: categoryFilter,
             onChange: (value) => {
               setCategoryFilter(String(value));
               setCurrentPage(0);
             },
-            options: [{ label: '全部', value: '' }, ...categoryOptions],
+            options: [{ label: t('ehs.ehs_hazardous_material_page.all'), value: '' }, ...categoryOptions],
           },
           {
             id: 'danger_level',
-            label: '危险等级',
+            label: t('ehs.ehs_hazardous_material_page.text_0f016f'),
             type: 'select',
             value: dangerLevelFilter,
             onChange: (value) => {
               setDangerLevelFilter(String(value));
               setCurrentPage(0);
             },
-            options: [{ label: '全部', value: '' }, ...dangerLevelOptions],
+            options: [{ label: t('ehs.ehs_hazardous_material_page.all'), value: '' }, ...dangerLevelOptions],
           },
         ]}
         rowActions={rowActions}
@@ -609,23 +611,23 @@ const EhsHazardousMaterialPage: React.FC = () => {
         maxWidth='md'
         fullWidth
       >
-        <DialogTitle>{editingMaterial ? '编辑危化品' : '入库登记'}</DialogTitle>
+        <DialogTitle>{editingMaterial ? t('ehs.ehs_hazardous_material_page.edit_1') : t('ehs.ehs_hazardous_material_page.inbound_1')}</DialogTitle>
         <DialogContent>
           <Box sx={{ pt: 1, display: 'flex', flexDirection: 'column', gap: 2 }}>
             <Box sx={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 2 }}>
               <TextField
                 fullWidth
-                label='编码 *'
+                label={t('ehs.ehs_hazardous_material_page.code_1')}
                 value={formData.material_code}
                 onChange={(e) => setFormData({ ...formData, material_code: e.target.value })}
-                placeholder='请输入危化品编码'
+                placeholder={t('ehs.ehs_hazardous_material_page.please_input_3')}
               />
               <TextField
                 fullWidth
-                label='名称 *'
+                label={t('ehs.ehs_hazardous_material_page.name_1')}
                 value={formData.name}
                 onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-                placeholder='请输入危化品名称'
+                placeholder={t('ehs.ehs_hazardous_material_page.please_input_4')}
               />
             </Box>
             <Box sx={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 2 }}>
@@ -633,7 +635,7 @@ const EhsHazardousMaterialPage: React.FC = () => {
                 <InputLabel>分类</InputLabel>
                 <Select
                   value={formData.category}
-                  label='分类'
+                  label={t('ehs.ehs_hazardous_material_page.text_d0771a')}
                   onChange={(e) => setFormData({ ...formData, category: e.target.value })}
                 >
                   {categoryOptions.map((opt) => (
@@ -648,17 +650,17 @@ const EhsHazardousMaterialPage: React.FC = () => {
               </FormControl>
               <TextField
                 fullWidth
-                label='CAS号'
+                label={t('ehs.ehs_hazardous_material_page.text_c7a092')}
                 value={formData.cas_no}
                 onChange={(e) => setFormData({ ...formData, cas_no: e.target.value })}
-                placeholder='请输入CAS号'
+                placeholder={t('ehs.ehs_hazardous_material_page.please_input_5')}
               />
             </Box>
             <Box sx={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: 2 }}>
               <TextField
                 fullWidth
                 type='number'
-                label='库存量'
+                label={t('ehs.ehs_hazardous_material_page.text_244f4d')}
                 value={formData.quantity}
                 onChange={(e) => setFormData({ ...formData, quantity: e.target.value })}
                 placeholder='0'
@@ -667,7 +669,7 @@ const EhsHazardousMaterialPage: React.FC = () => {
                 <InputLabel>单位</InputLabel>
                 <Select
                   value={formData.unit}
-                  label='单位'
+                  label={t('ehs.ehs_hazardous_material_page.unit')}
                   onChange={(e) => setFormData({ ...formData, unit: e.target.value })}
                 >
                   {unitOptions.map((opt) => (
@@ -682,10 +684,10 @@ const EhsHazardousMaterialPage: React.FC = () => {
               </FormControl>
               <TextField
                 fullWidth
-                label='存放位置 *'
+                label={t('ehs.ehs_hazardous_material_page.text_a97e2a')}
                 value={formData.storage_location}
                 onChange={(e) => setFormData({ ...formData, storage_location: e.target.value })}
-                placeholder='请输入存放位置'
+                placeholder={t('ehs.ehs_hazardous_material_page.please_input_2')}
               />
             </Box>
             <Box sx={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 2 }}>
@@ -693,7 +695,7 @@ const EhsHazardousMaterialPage: React.FC = () => {
                 <InputLabel>危险等级</InputLabel>
                 <Select
                   value={formData.danger_level}
-                  label='危险等级'
+                  label={t('ehs.ehs_hazardous_material_page.text_0f016f')}
                   onChange={(e) => setFormData({ ...formData, danger_level: e.target.value })}
                 >
                   {dangerLevelOptions.map((opt) => (
@@ -709,7 +711,7 @@ const EhsHazardousMaterialPage: React.FC = () => {
               <TextField
                 fullWidth
                 type='date'
-                label='有效期'
+                label={t('ehs.ehs_hazardous_material_page.text_bb114a')}
                 value={formData.expiry_date}
                 onChange={(e) => setFormData({ ...formData, expiry_date: e.target.value })}
                 slotProps={{ inputLabel: { shrink: true } } as const}
@@ -717,10 +719,10 @@ const EhsHazardousMaterialPage: React.FC = () => {
             </Box>
             <TextField
               fullWidth
-              label='描述'
+              label={t('ehs.ehs_hazardous_material_page.description')}
               value={formData.description}
               onChange={(e) => setFormData({ ...formData, description: e.target.value })}
-              placeholder='请输入描述'
+              placeholder={t('ehs.ehs_hazardous_material_page.please_input_6')}
               multiline
               rows={4}
             />
@@ -819,13 +821,13 @@ const EhsHazardousMaterialPage: React.FC = () => {
                     </Typography>
                     {(() => {
                       const status = getExpiryStatus(selectedMaterial.expiry_date);
-                      return status && status.text !== '正常' ? (
+                      return status && status.text !== t('ehs.ehs_hazardous_material_page.normal') ? (
                         <Chip
                           label={status.text}
                           size='small'
                           sx={{
                             backgroundColor:
-                              status.text === '已过期' ? 'error.lighter' : 'warning.100',
+                              status.text === t('ehs.ehs_hazardous_material_page.text_4d5ccd') ? 'error.lighter' : 'warning.100',
                             color: status.color,
                             fontWeight: 500,
                           }}
@@ -842,7 +844,7 @@ const EhsHazardousMaterialPage: React.FC = () => {
                 >
                   描述
                 </Typography>
-                <Typography>{selectedMaterial.description || '暂无描述'}</Typography>
+                <Typography>{selectedMaterial.description || t('ehs.ehs_hazardous_material_page.description_1')}</Typography>
               </Box>
             </Box>
           ) : (
@@ -861,7 +863,7 @@ const EhsHazardousMaterialPage: React.FC = () => {
         maxWidth='lg'
         fullWidth
       >
-        <DialogTitle>MSDS - {selectedMaterial?.name || '化学品安全技术说明书'}</DialogTitle>
+        <DialogTitle>MSDS - {selectedMaterial?.name || t('ehs.ehs_hazardous_material_page.description_2')}</DialogTitle>
         <DialogContent>
           {msdsLoading ? (
             <Box sx={{ textAlign: 'center', py: 6 }}>
@@ -915,7 +917,7 @@ const EhsHazardousMaterialPage: React.FC = () => {
                 >
                   危险性概述
                 </Typography>
-                <Typography>{msdsData.hazards_summary || '暂无信息'}</Typography>
+                <Typography>{msdsData.hazards_summary || t('ehs.ehs_hazardous_material_page.info')}</Typography>
               </Box>
               <Box sx={{ mb: 3 }}>
                 <Typography
@@ -924,7 +926,7 @@ const EhsHazardousMaterialPage: React.FC = () => {
                 >
                   急救措施
                 </Typography>
-                <Typography>{msdsData.first_aid || '暂无信息'}</Typography>
+                <Typography>{msdsData.first_aid || t('ehs.ehs_hazardous_material_page.info')}</Typography>
               </Box>
               <Box sx={{ mb: 3 }}>
                 <Typography
@@ -933,7 +935,7 @@ const EhsHazardousMaterialPage: React.FC = () => {
                 >
                   消防措施
                 </Typography>
-                <Typography>{msdsData.fire_fighting || '暂无信息'}</Typography>
+                <Typography>{msdsData.fire_fighting || t('ehs.ehs_hazardous_material_page.info')}</Typography>
               </Box>
               <Box sx={{ mb: 3 }}>
                 <Typography
@@ -942,7 +944,7 @@ const EhsHazardousMaterialPage: React.FC = () => {
                 >
                   泄漏应急处理
                 </Typography>
-                <Typography>{msdsData.leak_handling || '暂无信息'}</Typography>
+                <Typography>{msdsData.leak_handling || t('ehs.ehs_hazardous_material_page.info')}</Typography>
               </Box>
               <Box sx={{ mb: 3 }}>
                 <Typography
@@ -951,7 +953,7 @@ const EhsHazardousMaterialPage: React.FC = () => {
                 >
                   储存注意事项
                 </Typography>
-                <Typography>{msdsData.storage_notes || '暂无信息'}</Typography>
+                <Typography>{msdsData.storage_notes || t('ehs.ehs_hazardous_material_page.info')}</Typography>
               </Box>
             </Box>
           ) : (

@@ -1,0 +1,405 @@
+{
+  "title": "R&D Management",
+  "menu": {
+    "project": "R&D Project",
+    "milestone": "Milestone",
+    "task": "Task",
+    "document": "Document",
+    "test": "Test",
+    "material": "Material",
+    "experiment": "Experiment",
+    "deployment": "Deployment",
+    "statistics": "Statistics"
+  },
+  "status": {
+    "planning": "Planning",
+    "in_progress": "In Progress",
+    "completed": "Completed",
+    "on_hold": "On Hold",
+    "cancelled": "Cancelled",
+    "pending": "Pending",
+    "paused": "Paused",
+    "passed": "Passed",
+    "failed": "Failed",
+    "pending_test": "Pending",
+    "sufficient": "Sufficient",
+    "normal": "Normal",
+    "low": "Low",
+    "insufficient": "Insufficient"
+  },
+  "action": {
+    "create": "Create",
+    "edit": "Edit",
+    "delete": "Delete",
+    "view": "View",
+    "assign": "Assign",
+    "approve": "Approve",
+    "execute": "Execute",
+    "detail": "Details",
+    "export": "Export",
+    "import": "Import",
+    "apply": "Apply",
+    "batch_delete": "Batch Delete"
+  },
+  "field": {
+    "project_name": "Project Name",
+    "project_code": "Project Code",
+    "project_type": "Project Type",
+    "start_date": "Start Date",
+    "end_date": "End Date",
+    "owner": "Owner",
+    "leader": "Project Leader",
+    "members": "Members",
+    "progress": "Progress",
+    "priority": "Priority",
+    "description": "Description",
+    "budget": "Budget",
+    "budget_yuan": "Budget (10K CNY)",
+    "risklevel": "Risk Level",
+    "case_no": "Case No.",
+    "case_name": "Case Name",
+    "case_type": "Case Type",
+    "related_requirement": "Related Requirement",
+    "material_code": "Material Code",
+    "material_name": "Material Name",
+    "category": "Category",
+    "stock": "Stock",
+    "unit": "Unit",
+    "location": "Location"
+  },
+  "message": {
+    "create_success": "Created successfully",
+    "update_success": "Updated successfully",
+    "delete_success": "Deleted successfully",
+    "confirm_delete": "Confirm deletion?",
+    "no_data": "No data",
+    "operation_success": "Operation completed successfully",
+    "operation_failed": "Operation failed",
+    "submit_failed": "Submit failed"
+  },
+  "priority": {
+    "high": "High",
+    "medium": "Medium",
+    "low": "Low",
+    "normal": "Normal",
+    "important": "Important",
+    "urgent": "Urgent",
+    "strategic": "Strategic"
+  },
+  "risk_level": {
+    "low": "Low",
+    "medium": "Medium",
+    "high": "High",
+    "extreme": "Extreme"
+  },
+  "project_type": {
+    "new_product": "New Product R&D",
+    "process_improvement": "Process Improvement",
+    "formula_optimization": "Formula Optimization",
+    "technical_breakthrough": "Technical Breakthrough",
+    "equipment_modification": "Equipment Modification",
+    "other": "Other"
+  },
+  "case_type": {
+    "functional": "Functional Test",
+    "performance": "Performance Test",
+    "stress": "Stress Test",
+    "ui": "UI Test",
+    "security": "Security Test"
+  },
+  "common": {
+    "all": "All",
+    "vs_last_period": "vs last period",
+    "tip": "Tip",
+    "in_development": "Feature under development",
+    "confirm": "Confirm",
+    "cancel": "Cancel",
+    "close": "Close",
+    "create": "Create",
+    "save_changes": "Save Changes",
+    "submit_success": "Submitted successfully",
+    "submit_failed_check_form": "Submit failed, please check the form",
+    "upload_report": "Upload Test Report"
+  },
+  "dashboard_page": {
+    "title": "R&D Management",
+    "subtitle": "{{greeting}}, R&D project and document management",
+    "greeting": {
+      "morning": "Good morning",
+      "afternoon": "Good afternoon",
+      "evening": "Good evening"
+    },
+    "stat_card": {
+      "research_projects": "R&D Projects",
+      "document_count": "Documents",
+      "test_cases": "Test Cases",
+      "version_releases": "Version Releases"
+    },
+    "chart": {
+      "project_status_distribution": "Project Status Distribution",
+      "experiment_status_distribution": "Experiment Status Distribution"
+    },
+    "status_label": {
+      "pending": "Pending",
+      "in_progress": "In Progress",
+      "completed": "Completed",
+      "cancelled": "Cancelled"
+    },
+    "quick_action": {
+      "title": "Quick Actions",
+      "create_research_project": "Create R&D Project",
+      "write_test_case": "Write Test Case",
+      "release_new_version": "Release New Version"
+    }
+  },
+  "project_list_page": {
+    "title": "R&D Project Management",
+    "subtitle": "Manage R&D projects, track progress, and allocate resources",
+    "search_placeholder": "Search project name or code...",
+    "empty_message": "No project data",
+    "column": {
+      "code": "Project Code",
+      "name": "Project Name",
+      "project_type": "Project Type",
+      "leader": "Leader",
+      "status": "Status",
+      "progress": "Progress",
+      "start_date": "Start Date",
+      "budget": "Budget (10K CNY)"
+    },
+    "status_filter": {
+      "all": "All",
+      "pending": "Pending",
+      "in_progress": "In Progress",
+      "completed": "Completed",
+      "paused": "Paused",
+      "cancelled": "Cancelled"
+    },
+    "row_action": {
+      "view_detail": "View Details",
+      "edit": "Edit",
+      "delete": "Delete"
+    },
+    "action_button": {
+      "export": "Export",
+      "create_project": "New Project"
+    },
+    "filter": {
+      "status": "Status"
+    },
+    "notification": {
+      "delete_success_title": "Deleted Successfully",
+      "delete_success_message": "Project has been deleted",
+      "delete_failed_title": "Delete Failed",
+      "delete_failed_message": "Unable to delete project"
+    },
+    "error": {
+      "load_list_failed": "Failed to load project list",
+      "delete_failed": "Failed to delete project"
+    },
+    "dialog": {
+      "confirm_delete_title": "Confirm Delete",
+      "confirm_delete_message": "Are you sure you want to delete project \"{{name}}\"? This action cannot be undone."
+    }
+  },
+  "project_create_page": {
+    "title_create": "New R&D Project",
+    "subtitle_create": "Create a new R&D project, setting basic info and team",
+    "title_edit": "Edit R&D Project",
+    "subtitle_edit": "Modify project basic info and configuration",
+    "submit_text_create": "Create Project",
+    "submit_text_edit": "Save Changes",
+    "section": {
+      "basic_title": "Basic Information",
+      "basic_description": "Core project information",
+      "timing_title": "Time and Budget",
+      "timing_description": "Project schedule and budget planning",
+      "risk_title": "Risk Assessment",
+      "risk_description": "Project risk level and priority"
+    },
+    "field": {
+      "name": "Project Name",
+      "name_placeholder": "Please enter project name",
+      "code": "Project Code",
+      "code_placeholder": "e.g.: RS-2024-001",
+      "code_helper": "Code cannot be modified when editing",
+      "project_type": "Project Type",
+      "leader": "Project Leader",
+      "leader_placeholder": "Please enter leader name",
+      "description": "Project Description",
+      "description_placeholder": "Please enter project description, including goals, background, expected outcomes, etc.",
+      "start_date": "Start Date",
+      "end_date": "End Date",
+      "budget": "Budget Amount",
+      "budget_placeholder": "Please enter budget amount",
+      "budget_helper": "Unit: CNY",
+      "risklevel": "Risk Level",
+      "priority": "Priority"
+    },
+    "notification": {
+      "create_success_title": "Created Successfully",
+      "create_success_message": "Project has been created",
+      "update_success_title": "Updated Successfully",
+      "update_success_message": "Project information has been updated",
+      "submit_failed_title": "Submit Failed",
+      "submit_failed_message": "Unable to submit project data"
+    },
+    "error": {
+      "load_project_failed": "Failed to load project data",
+      "create_failed": "Failed to create project",
+      "update_failed": "Failed to update project",
+      "submit_failed": "Unable to submit project data"
+    },
+    "validation": {
+      "submit_success": "Submitted successfully",
+      "submit_failed": "Submit failed, please check the form"
+    }
+  },
+  "test_page": {
+    "search_placeholder": "Search case number or name...",
+    "action_button": {
+      "new_case": "New Case"
+    },
+    "column": {
+      "case_no": "Case No.",
+      "case_name": "Case Name",
+      "case_type": "Case Type",
+      "priority": "Priority",
+      "status": "Status",
+      "related_requirement": "Related Requirement"
+    },
+    "filter": {
+      "case_type": "Case Type",
+      "priority": "Priority",
+      "status": "Status"
+    },
+    "row_action": {
+      "detail": "Details",
+      "execute": "Execute",
+      "edit": "Edit"
+    },
+    "dialog": {
+      "new_case_title": "New Case",
+      "case_name_label": "Case Name",
+      "case_type_label": "Case Type",
+      "priority_label": "Priority",
+      "related_requirement_label": "Related Requirement",
+      "test_report_attachment": "Test Report Attachments",
+      "upload_text": "Upload Test Report",
+      "cancel": "Cancel",
+      "create": "Create",
+      "detail_title": "Case Details",
+      "close": "Close",
+      "related_requirement_display": "Related Requirement: {{requirement}}"
+    },
+    "notification": {
+      "execute_success_title": "Operation Successful",
+      "execute_success_message": "Test case has been executed",
+      "execute_failed_title": "Operation Failed",
+      "execute_failed_message": "Failed to execute test",
+      "create_success_title": "Created Successfully",
+      "create_success_message": "New test case has been created",
+      "create_failed_title": "Create Failed",
+      "create_failed_message": "Unable to create test case"
+    },
+    "error": {
+      "load_list_failed": "Failed to load test cases",
+      "update_failed": "Failed to update test case",
+      "execute_failed": "Failed to execute test",
+      "create_failed": "Failed to create test case"
+    }
+  },
+  "material_list_page": {
+    "title": "Material Management",
+    "subtitle": "Manage R&D materials, inventory monitoring, and material requests",
+    "search_placeholder": "Search material name or code...",
+    "empty_message": "No material data",
+    "breadcrumb": {
+      "home": "Home",
+      "rd": "R&D",
+      "material": "Material Management"
+    },
+    "stat_card": {
+      "total": "Total Materials",
+      "sufficient": "Sufficient Stock",
+      "insufficient": "Insufficient Stock"
+    },
+    "column": {
+      "code": "Material Code",
+      "name": "Material Name",
+      "category": "Category",
+      "stock": "Stock",
+      "unit": "Unit",
+      "status": "Status",
+      "location": "Storage Location"
+    },
+    "status_filter": {
+      "all": "All",
+      "sufficient": "Sufficient",
+      "normal": "Normal",
+      "low": "Low",
+      "insufficient": "Insufficient"
+    },
+    "filter": {
+      "category": "Category Filter",
+      "status": "Status Filter"
+    },
+    "row_action": {
+      "apply": "Apply",
+      "edit": "Edit",
+      "delete": "Delete"
+    },
+    "batch_action": {
+      "batch_delete": "Batch Delete"
+    },
+    "action_button": {
+      "add": "Add",
+      "import": "Import",
+      "export": "Export"
+    },
+    "notification": {
+      "delete_success_title": "Deleted Successfully",
+      "delete_success_message": "Material has been deleted",
+      "delete_failed_title": "Delete Failed",
+      "delete_failed_message": "Unable to delete material",
+      "batch_delete_success_title": "Batch Delete Successful",
+      "batch_delete_success_message": "Successfully deleted {{success}} materials",
+      "batch_delete_partial_title": "Partial Success",
+      "batch_delete_partial_message": "Successfully deleted {{success}}, failed {{failed}}",
+      "batch_delete_failed_title": "Delete Failed",
+      "batch_delete_failed_message": "Unable to batch delete materials",
+      "import_success_title": "Import Successful",
+      "import_success_message": "Successfully imported {{success}} materials",
+      "import_partial_title": "Partial Success",
+      "import_partial_message": "Successfully imported {{success}}, failed {{failed}}",
+      "import_failed_title": "Import Failed",
+      "import_failed_message": "Unable to import materials",
+      "export_success_title": "Export Successful",
+      "export_success_message": "Material data has been exported",
+      "export_failed_title": "Export Failed",
+      "export_failed_message": "Unable to export materials",
+      "apply_in_development": "Material request feature is under development",
+      "edit_in_development": "Edit material feature is under development",
+      "add_in_development": "Add material feature is under development",
+      "tip_title": "Tip"
+    },
+    "error": {
+      "load_list_failed": "Failed to load material list",
+      "delete_failed": "Failed to delete material",
+      "batch_delete_failed": "Failed to batch delete materials",
+      "import_failed": "Failed to import materials"
+    },
+    "dialog": {
+      "confirm_delete_title": "Confirm Delete",
+      "confirm_delete_message": "Are you sure you want to delete this material?",
+      "confirm_batch_delete_title": "Confirm Batch Delete",
+      "confirm_batch_delete_message": "Are you sure you want to delete the selected {{count}} materials?"
+    },
+    "status_label": {
+      "sufficient": "Sufficient",
+      "normal": "Normal",
+      "low": "Low",
+      "insufficient": "Insufficient"
+    }
+  }
+}

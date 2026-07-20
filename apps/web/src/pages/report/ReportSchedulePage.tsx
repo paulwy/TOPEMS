@@ -30,6 +30,8 @@ import {
   Alert,
 } from '@mui/material';
 import { PageContainer } from '@/components/common';
+import { ConfirmDialog } from '@topems/shared-components';
+import { useConfirmDialog } from '@/hooks';
 import {
   Plus as PlusIcon,
   Edit as EditIcon,
@@ -84,6 +86,12 @@ const ReportSchedulePage: React.FC = () => {
     schedule_expression: '',
     recipients: [],
   });
+  const {
+    confirmOpen: confirmDialogOpen,
+    confirmConfig: confirmDialogConfig,
+    openConfirm: openConfirmDialog,
+    closeConfirm: setConfirmDialogClosed,
+  } = useConfirmDialog();
 
   const queryClient = useQueryClient();
 
@@ -277,14 +285,15 @@ const ReportSchedulePage: React.FC = () => {
     }
   };
 
-  const handleDelete = async (id: string) => {
-    if (!window.confirm('确定要删除这个定时任务吗？')) return;
-    setError('');
-    try {
-      await deleteMutation.mutateAsync(id);
-    } catch (err) {
-      // Error handled by mutation onError
-    }
+  const handleDelete = (id: string) => {
+    openConfirmDialog({
+      title: '确认删除',
+      message: '确定要删除这个定时任务吗？',
+      danger: true,
+      onConfirm: () => {
+        deleteMutation.mutate(id);
+      },
+    });
   };
 
   const handleExecute = async (id: string) => {
@@ -665,6 +674,18 @@ const ReportSchedulePage: React.FC = () => {
           <Button onClick={() => setHistoryDialogOpen(false)}>关闭</Button>
         </DialogActions>
       </Dialog>
+
+      <ConfirmDialog
+        isOpen={confirmDialogOpen}
+        onClose={setConfirmDialogClosed}
+        onConfirm={() => {
+          confirmDialogConfig?.onConfirm();
+          setConfirmDialogClosed();
+        }}
+        title={confirmDialogConfig?.title || ''}
+        message={confirmDialogConfig?.message || ''}
+        danger={confirmDialogConfig?.danger}
+      />
     </PageContainer>
   );
 };

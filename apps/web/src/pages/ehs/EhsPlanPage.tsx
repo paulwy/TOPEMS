@@ -25,9 +25,11 @@ import { useNotificationStore } from '@/store';
 import { apiLogger } from '@/utils/logger';
 import { designTokens } from '@/theme/tokens';
 
+import { useTranslation } from 'react-i18next';
 const ct = designTokens.colors;
 
 const EhsPlanPage: React.FC = () => {
+  const { t } = useTranslation();
   const navigate = useNavigate();
   const queryClient = useQueryClient();
   const [searchTerm, setSearchTerm] = useState('');
@@ -66,7 +68,7 @@ const EhsPlanPage: React.FC = () => {
         return plansData.map((item) => ({
           ...item,
           status:
-            item.status === 'active' ? '有效' : item.status === 'inactive' ? '无效' : item.status,
+            item.status === 'active' ? t('ehs.ehs_plan_page.text_c6cc39') : item.status === 'inactive' ? t('ehs.ehs_plan_page.text_1abbb1') : item.status,
         })) as EmergencyPlan[];
       }
       return [];
@@ -76,7 +78,7 @@ const EhsPlanPage: React.FC = () => {
 
   useEffect(() => {
     if (isError) {
-      addNotification({ title: '错误', message: '加载应急预案列表失败', type: 'error' });
+      addNotification({ title: t('ehs.ehs_plan_page.error'), message: t('ehs.ehs_plan_page.list'), type: 'error' });
     }
   }, [isError, addNotification]);
 
@@ -91,9 +93,9 @@ const EhsPlanPage: React.FC = () => {
           ...planData,
           status:
             planData.status === 'active'
-              ? '有效'
+              ? t('ehs.ehs_plan_page.text_c6cc39')
               : planData.status === 'inactive'
-                ? '无效'
+                ? t('ehs.ehs_plan_page.text_1abbb1')
                 : planData.status,
         };
       }
@@ -113,8 +115,8 @@ const EhsPlanPage: React.FC = () => {
 
   useEffect(() => {
     if (planDetailQuery.isError) {
-      apiLogger.error('加载应急预案详情失败:', planDetailQuery.error);
-      addNotification({ title: '错误', message: '加载详情失败', type: 'error' });
+      apiLogger.error(t('ehs.ehs_plan_page.detail'), planDetailQuery.error);
+      addNotification({ title: t('ehs.ehs_plan_page.error'), message: t('ehs.ehs_plan_page.detail_1'), type: 'error' });
     }
   }, [planDetailQuery.isError, planDetailQuery.error, addNotification]);
 
@@ -141,12 +143,12 @@ const EhsPlanPage: React.FC = () => {
     () => [
       {
         id: 'plan_no',
-        label: '预案编号',
+        label: t('ehs.ehs_plan_page.text_31f58e'),
         render: (row) => row.plan_no,
       },
       {
         id: 'name',
-        label: '预案名称',
+        label: t('ehs.ehs_plan_page.name'),
         render: (row) => (
           <Typography
             variant='body2'
@@ -158,17 +160,17 @@ const EhsPlanPage: React.FC = () => {
       },
       {
         id: 'plan_type',
-        label: '预案类型',
+        label: t('ehs.ehs_plan_page.type'),
         render: (row) => row.plan_type || '-',
       },
       {
         id: 'scope',
-        label: '适用范围',
+        label: t('ehs.ehs_plan_page.text_901c0d'),
         render: (row) => row.scope || '-',
       },
       {
         id: 'responsible_persons',
-        label: '负责人',
+        label: t('ehs.ehs_plan_page.manager'),
         render: (row) => {
           const persons = row.responsible_persons;
           const displayText = Array.isArray(persons) ? persons.join(', ') : persons;
@@ -188,7 +190,7 @@ const EhsPlanPage: React.FC = () => {
       },
       {
         id: 'status',
-        label: '状态',
+        label: t('ehs.ehs_plan_page.status'),
         render: (row) => getStatusBadge(row.status),
       },
     ],
@@ -203,7 +205,7 @@ const EhsPlanPage: React.FC = () => {
   const rowActions = useMemo<RowAction<EmergencyPlan>[]>(
     () => [
       {
-        label: '详情',
+        label: t('ehs.ehs_plan_page.detail_2'),
         icon: <Eye size={16} />,
         onClick: (row) => handleViewDetail(row),
       },
@@ -215,26 +217,26 @@ const EhsPlanPage: React.FC = () => {
     () => [
       {
         id: 'plan_type',
-        label: '预案类型',
+        label: t('ehs.ehs_plan_page.type'),
         type: 'select',
         options: [
-          { value: '', label: '全部' },
-          { value: '火灾预案', label: '火灾预案' },
-          { value: '化学品泄漏', label: '化学品泄漏' },
-          { value: '地震预案', label: '地震预案' },
-          { value: '应急预案', label: '应急预案' },
+          { value: '', label: t('ehs.ehs_plan_page.all') },
+          { value: t('ehs.ehs_plan_page.text_3dad3e'), label: t('ehs.ehs_plan_page.text_3dad3e') },
+          { value: t('ehs.ehs_plan_page.text_f81763'), label: t('ehs.ehs_plan_page.text_f81763') },
+          { value: t('ehs.ehs_plan_page.text_72c53e'), label: t('ehs.ehs_plan_page.text_72c53e') },
+          { value: t('ehs.ehs_plan_page.text_e0693a'), label: t('ehs.ehs_plan_page.text_e0693a') },
         ],
         value: typeFilter,
         onChange: (value) => setTypeFilter(value as string),
       },
       {
         id: 'status',
-        label: '状态',
+        label: t('ehs.ehs_plan_page.status'),
         type: 'select',
         options: [
-          { value: '', label: '全部' },
-          { value: '有效', label: '有效' },
-          { value: '无效', label: '无效' },
+          { value: '', label: t('ehs.ehs_plan_page.all') },
+          { value: t('ehs.ehs_plan_page.text_c6cc39'), label: t('ehs.ehs_plan_page.text_c6cc39') },
+          { value: t('ehs.ehs_plan_page.text_1abbb1'), label: t('ehs.ehs_plan_page.text_1abbb1') },
         ],
         value: statusFilter,
         onChange: (value) => setStatusFilter(value as string),
@@ -271,13 +273,13 @@ const EhsPlanPage: React.FC = () => {
   const createMutation = useMutation({
     mutationFn: (data: Parameters<typeof ehsApi.createPlan>[0]) => ehsApi.createPlan(data),
     onSuccess: () => {
-      addNotification({ title: '成功', message: '应急预案创建成功', type: 'success' });
+      addNotification({ title: t('ehs.ehs_plan_page.success'), message: t('ehs.ehs_plan_page.create'), type: 'success' });
       queryClient.invalidateQueries({ queryKey: QUERY_KEYS.EHS.PLANS });
       setShowCreateModal(false);
     },
     onError: (error: unknown) => {
-      apiLogger.error('创建应急预案失败:', error);
-      addNotification({ title: '错误', message: '创建失败', type: 'error' });
+      apiLogger.error(t('ehs.ehs_plan_page.create_1'), error);
+      addNotification({ title: t('ehs.ehs_plan_page.error'), message: t('ehs.ehs_plan_page.create_2'), type: 'error' });
     },
   });
 
@@ -301,15 +303,15 @@ const EhsPlanPage: React.FC = () => {
   const stats = useMemo(
     () => ({
       total: plans.length,
-      active: plans.filter((p) => p.status === '有效').length,
-      inactive: plans.filter((p) => p.status === '无效').length,
+      active: plans.filter((p) => p.status === t('ehs.ehs_plan_page.text_c6cc39')).length,
+      inactive: plans.filter((p) => p.status === t('ehs.ehs_plan_page.text_1abbb1')).length,
     }),
     [plans]
   );
 
   const headerActions = [
     {
-      label: '新增预案',
+      label: t('ehs.ehs_plan_page.add'),
       icon: <Plus style={{ width: 18, height: 18 }} />,
       onClick: handleCreate,
       variant: 'contained' as const,
@@ -436,12 +438,12 @@ const EhsPlanPage: React.FC = () => {
       </Box>
 
       <ListPageTemplate<EmergencyPlan>
-        title='应急预案列表'
+        title={t('ehs.ehs_plan_page.list_1')}
         columns={columns}
         data={filteredPlans}
         loading={loading}
         searchable
-        searchPlaceholder='搜索预案名称或编号...'
+        searchPlaceholder={t('ehs.ehs_plan_page.search')}
         searchValue={searchTerm}
         onSearch={(value) => setSearchTerm(value)}
         filters={filters}
@@ -460,46 +462,46 @@ const EhsPlanPage: React.FC = () => {
           <Box sx={{ pt: 1, display: 'flex', flexDirection: 'column', gap: 2 }}>
             <TextField
               fullWidth
-              label='预案编号 *'
+              label={t('ehs.ehs_plan_page.text_8ea99a')}
               value={formData.plan_no}
               onChange={(e) => setFormData({ ...formData, plan_no: e.target.value })}
-              placeholder='请输入预案编号'
+              placeholder={t('ehs.ehs_plan_page.please_input')}
             />
             <TextField
               fullWidth
-              label='预案名称 *'
+              label={t('ehs.ehs_plan_page.name_1')}
               value={formData.name}
               onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-              placeholder='请输入预案名称'
+              placeholder={t('ehs.ehs_plan_page.please_input_1')}
             />
             <TextField
               fullWidth
-              label='预案类型 *'
+              label={t('ehs.ehs_plan_page.type_1')}
               value={formData.plan_type}
               onChange={(e) => setFormData({ ...formData, plan_type: e.target.value })}
-              placeholder='请输入预案类型'
+              placeholder={t('ehs.ehs_plan_page.please_input_2')}
             />
             <TextField
               fullWidth
-              label='适用范围'
+              label={t('ehs.ehs_plan_page.text_901c0d')}
               value={formData.scope}
               onChange={(e) => setFormData({ ...formData, scope: e.target.value })}
-              placeholder='请输入适用范围'
+              placeholder={t('ehs.ehs_plan_page.please_input_3')}
               multiline
               rows={2}
             />
             <TextField
               fullWidth
-              label='触发条件'
+              label={t('ehs.ehs_plan_page.text_65939c')}
               value={formData.trigger_conditions}
               onChange={(e) => setFormData({ ...formData, trigger_conditions: e.target.value })}
-              placeholder='请输入触发条件'
+              placeholder={t('ehs.ehs_plan_page.please_input_4')}
               multiline
               rows={2}
             />
             <TextField
               fullWidth
-              label='响应程序'
+              label={t('ehs.ehs_plan_page.text_6820c2')}
               value={formData.response_procedures}
               onChange={(e) =>
                 setFormData({
@@ -507,13 +509,13 @@ const EhsPlanPage: React.FC = () => {
                   response_procedures: e.target.value,
                 })
               }
-              placeholder='请输入响应程序'
+              placeholder={t('ehs.ehs_plan_page.please_input_5')}
               multiline
               rows={3}
             />
             <TextField
               fullWidth
-              label='负责人'
+              label={t('ehs.ehs_plan_page.manager')}
               value={formData.responsible_persons}
               onChange={(e) =>
                 setFormData({
@@ -521,14 +523,14 @@ const EhsPlanPage: React.FC = () => {
                   responsible_persons: e.target.value,
                 })
               }
-              placeholder='多个负责人用逗号分隔'
+              placeholder={t('ehs.ehs_plan_page.manager_1')}
             />
             <TextField
               fullWidth
-              label='联系方式'
+              label={t('ehs.ehs_plan_page.text_b58943')}
               value={formData.contact_info}
               onChange={(e) => setFormData({ ...formData, contact_info: e.target.value })}
-              placeholder='请输入联系方式'
+              placeholder={t('ehs.ehs_plan_page.please_input_6')}
             />
           </Box>
         </DialogContent>

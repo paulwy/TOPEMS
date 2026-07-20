@@ -57,9 +57,11 @@ import {
 import { apiLogger } from '@/utils/logger';
 import { designTokens } from '@/theme/tokens';
 
+import { useTranslation } from 'react-i18next';
 const ct = designTokens.colors;
 
 const MaterialBOMPage: React.FC = () => {
+  const { t } = useTranslation();
   const queryClient = useQueryClient();
   const [searchTerm, setSearchTerm] = useState('');
   const [statusFilter, setStatusFilter] = useState<string>('all');
@@ -111,14 +113,14 @@ const MaterialBOMPage: React.FC = () => {
   const createMutation = useMutation({
     mutationFn: (data: CreateMaterialBomRequest) => mesApi.boms.create(data),
     onSuccess: () => {
-      addNotification({ type: 'success', title: '创建成功', message: '新BOM已创建' });
+      addNotification({ type: 'success', title: t('mes.material_bom_page.create'), message: t('mes.material_bom_page.bom') });
       invalidateBoms();
       setShowDialog(false);
       resetForm();
     },
     onError: (error: unknown) => {
-      apiLogger.error('操作失败:', error);
-      addNotification({ type: 'error', title: '操作失败', message: '创建BOM失败' });
+      apiLogger.error(t('mes.material_bom_page.operation_failed'), error);
+      addNotification({ type: 'error', title: t('mes.material_bom_page.operation_failed_1'), message: t('mes.material_bom_page.bom_1') });
     },
   });
 
@@ -126,35 +128,35 @@ const MaterialBOMPage: React.FC = () => {
     mutationFn: ({ id, data }: { id: string; data: UpdateMaterialBomRequest }) =>
       mesApi.boms.update(id, data),
     onSuccess: () => {
-      addNotification({ type: 'success', title: '更新成功', message: 'BOM信息已更新' });
+      addNotification({ type: 'success', title: t('mes.material_bom_page.update'), message: t('mes.material_bom_page.bom_2') });
       invalidateBoms();
       setShowDialog(false);
       resetForm();
     },
     onError: (error: unknown) => {
-      apiLogger.error('操作失败:', error);
-      addNotification({ type: 'error', title: '操作失败', message: '更新BOM失败' });
+      apiLogger.error(t('mes.material_bom_page.operation_failed'), error);
+      addNotification({ type: 'error', title: t('mes.material_bom_page.operation_failed_1'), message: t('mes.material_bom_page.bom_3') });
     },
   });
 
   const deleteMutation = useMutation({
     mutationFn: (id: string) => mesApi.boms.delete(id),
     onSuccess: () => {
-      addNotification({ type: 'success', title: '删除成功', message: 'BOM已删除' });
+      addNotification({ type: 'success', title: t('mes.material_bom_page.delete_success'), message: t('mes.material_bom_page.deleted') });
       invalidateBoms();
     },
     onError: (error: unknown) => {
-      apiLogger.error('删除失败:', error);
-      addNotification({ type: 'error', title: '删除失败', message: '无法删除BOM' });
+      apiLogger.error(t('mes.material_bom_page.delete'), error);
+      addNotification({ type: 'error', title: t('mes.material_bom_page.delete_1'), message: t('mes.material_bom_page.bom_4') });
     },
   });
 
   const getStatusText = (status: string) => {
     const statusMap: Record<string, string> = {
-      draft: '草稿',
-      active: '启用',
-      inactive: '停用',
-      obsolete: '作废',
+      draft: t('mes.material_bom_page.status_draft'),
+      active: t('mes.material_bom_page.active'),
+      inactive: t('mes.material_bom_page.inactive'),
+      obsolete: t('mes.material_bom_page.text_c4a4d9'),
     };
     return statusMap[status] || status;
   };
@@ -169,7 +171,7 @@ const MaterialBOMPage: React.FC = () => {
   };
 
   const handleDelete = (id: string) => {
-    if (!window.confirm('确定要删除这个BOM吗?')) return;
+    if (!window.confirm(t('mes.material_bom_page.bom_5'))) return;
     deleteMutation.mutate(id);
   };
 
@@ -198,7 +200,7 @@ const MaterialBOMPage: React.FC = () => {
         setShowDialog(true);
       }
     } catch (error: unknown) {
-      apiLogger.error('获取BOM详情失败:', error);
+      apiLogger.error(t('mes.material_bom_page.bom_6'), error);
     }
   };
 
@@ -210,7 +212,7 @@ const MaterialBOMPage: React.FC = () => {
         setShowDetailDialog(true);
       }
     } catch (error: unknown) {
-      apiLogger.error('获取BOM详情失败:', error);
+      apiLogger.error(t('mes.material_bom_page.bom_6'), error);
     }
   };
 
@@ -235,10 +237,10 @@ const MaterialBOMPage: React.FC = () => {
         color: string;
       }
     > = {
-      draft: { label: '草稿', bg: 'grey.100', color: 'text.secondary' },
-      active: { label: '启用', bg: 'success.lighter', color: 'success.700' },
-      inactive: { label: '停用', bg: 'warning.light', color: 'warning.700' },
-      obsolete: { label: '作废', bg: 'error.lighter', color: 'error.dark' },
+      draft: { label: t('mes.material_bom_page.status_draft'), bg: 'grey.100', color: 'text.secondary' },
+      active: { label: t('mes.material_bom_page.active'), bg: 'success.lighter', color: 'success.700' },
+      inactive: { label: t('mes.material_bom_page.inactive'), bg: 'warning.light', color: 'warning.700' },
+      obsolete: { label: t('mes.material_bom_page.text_c4a4d9'), bg: 'error.lighter', color: 'error.dark' },
     };
     const s = statusMap[status] || { label: status, bg: 'grey.100', color: 'text.secondary' };
     return (
@@ -279,22 +281,22 @@ const MaterialBOMPage: React.FC = () => {
 
   const columns: ColumnDef<MaterialBom>[] = useMemo(
     () => [
-      { id: 'product_code', label: '产品编码', sortable: true },
-      { id: 'product_name', label: '产品名称', sortable: true },
-      { id: 'version', label: '版本', sortable: true },
+      { id: 'product_code', label: t('mes.material_bom_page.column_product_code'), sortable: true },
+      { id: 'product_name', label: t('mes.material_bom_page.column_product_name'), sortable: true },
+      { id: 'version', label: t('mes.material_bom_page.field_version'), sortable: true },
       {
         id: 'status',
-        label: '状态',
+        label: t('mes.material_bom_page.filter_status'),
         render: (row) => getStatusBadge(row.status),
       },
       {
         id: 'items_count',
-        label: '子项数',
+        label: t('mes.material_bom_page.text_f98c74'),
         render: (row) => row.items?.length || 0,
       },
       {
         id: 'created_at',
-        label: '创建时间',
+        label: t('mes.material_bom_page.column_created_at'),
         render: (row) => new Date(row.created_at).toLocaleDateString('zh-CN'),
       },
     ],
@@ -305,14 +307,14 @@ const MaterialBOMPage: React.FC = () => {
     () => [
       {
         id: 'status',
-        label: '状态',
+        label: t('mes.material_bom_page.filter_status'),
         type: 'select',
         options: [
-          { label: '全部状态', value: 'all' },
-          { label: '草稿', value: 'draft' },
-          { label: '启用', value: 'active' },
-          { label: '停用', value: 'inactive' },
-          { label: '作废', value: 'obsolete' },
+          { label: t('mes.material_bom_page.filter_option_all_status'), value: 'all' },
+          { label: t('mes.material_bom_page.status_draft'), value: 'draft' },
+          { label: t('mes.material_bom_page.active'), value: 'active' },
+          { label: t('mes.material_bom_page.inactive'), value: 'inactive' },
+          { label: t('mes.material_bom_page.text_c4a4d9'), value: 'obsolete' },
         ],
         value: statusFilter,
         onChange: (value: unknown) => {
@@ -327,22 +329,22 @@ const MaterialBOMPage: React.FC = () => {
   const rowActions: RowAction<MaterialBom>[] = useMemo(
     () => [
       {
-        label: '查看详情',
+        label: t('mes.material_bom_page.action_view_detail'),
         icon: <Eye size={16} />,
         onClick: handleViewDetail,
       },
       {
-        label: '编辑',
+        label: t('mes.material_bom_page.action_edit'),
         icon: <Edit size={16} />,
         onClick: handleEdit,
       },
       {
-        label: '删除',
+        label: t('mes.material_bom_page.action_delete'),
         icon: <Trash2 size={16} />,
         color: 'error',
         onClick: (row) => handleDelete(row.id),
         confirm: true,
-        confirmMessage: '确定要删除这个BOM吗?',
+        confirmMessage: t('mes.material_bom_page.bom_5'),
       },
     ],
     [handleViewDetail, handleEdit, handleDelete]
@@ -451,7 +453,7 @@ const MaterialBOMPage: React.FC = () => {
         loading={loading}
         filters={filters}
         searchable
-        searchPlaceholder='搜索产品编码或名称...'
+        searchPlaceholder={t('mes.material_bom_page.product_code')}
         searchValue={searchTerm}
         onSearch={handleSearch}
         pagination={{
@@ -465,14 +467,14 @@ const MaterialBOMPage: React.FC = () => {
         onSelectionChange={(ids) => setSelectedIds(ids.map(String))}
         actions={[
           {
-            label: '新增BOM',
+            label: t('mes.material_bom_page.dialog_create_title'),
             icon: <Plus size={16} />,
             onClick: handleOpenCreate,
           },
         ]}
         rowActions={rowActions}
         headerContent={statsContent}
-        emptyMessage='暂无BOM数据'
+        emptyMessage={t('mes.material_bom_page.empty_message')}
         getRowId={(row) => row.id}
       />
 
@@ -482,7 +484,7 @@ const MaterialBOMPage: React.FC = () => {
         onClose={() => setShowDialog(false)}
         maxWidth='lg'
       >
-        <DialogTitle>{selectedBom ? '编辑BOM' : '新增BOM'}</DialogTitle>
+        <DialogTitle>{selectedBom ? t('mes.material_bom_page.dialog_edit_title') : t('mes.material_bom_page.dialog_create_title')}</DialogTitle>
         <DialogContent>
           <Box
             component='span'
@@ -493,7 +495,7 @@ const MaterialBOMPage: React.FC = () => {
               fontSize: 14,
             }}
           >
-            {selectedBom ? '修改BOM信息' : '填写新BOM信息'}
+            {selectedBom ? t('mes.material_bom_page.bom_7') : t('mes.material_bom_page.bom_8')}
           </Box>
           <form onSubmit={handleSubmit}>
             <Box
@@ -611,7 +613,7 @@ const MaterialBOMPage: React.FC = () => {
                           align='center'
                           sx={{ color: 'text.secondary', py: 3 }}
                         >
-                          暂无子项，点击"添加子项"按钮添加
+                          暂无子项，点击t('mes.material_bom_page.text_d87298')按钮添加
                         </TableCell>
                       </TableRow>
                     ) : (
@@ -625,7 +627,7 @@ const MaterialBOMPage: React.FC = () => {
                               onChange={(e) =>
                                 updateBomItem(index, 'material_code', e.target.value)
                               }
-                              placeholder='物料编码'
+                              placeholder={t('mes.material_bom_page.detail_col_material_code')}
                             />
                           </TableCell>
                           <TableCell>
@@ -635,7 +637,7 @@ const MaterialBOMPage: React.FC = () => {
                               onChange={(e) =>
                                 updateBomItem(index, 'material_name', e.target.value)
                               }
-                              placeholder='物料名称'
+                              placeholder={t('mes.material_bom_page.detail_col_material_name')}
                             />
                           </TableCell>
                           <TableCell>

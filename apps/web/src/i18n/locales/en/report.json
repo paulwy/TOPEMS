@@ -1,0 +1,50 @@
+{
+  "title": "Report Center",
+  "menu": {
+    "template": "Report Template",
+    "datasource": "Data Source",
+    "generate": "Generate",
+    "subscribe": "Subscribe",
+    "export": "Export"
+  },
+  "status": {
+    "draft": "Draft",
+    "published": "Published",
+    "archived": "Archived",
+    "generating": "Generating",
+    "generated": "Generated",
+    "failed": "Failed"
+  },
+  "action": {
+    "create": "Create",
+    "edit": "Edit",
+    "delete": "Delete",
+    "view": "View",
+    "generate": "Generate",
+    "subscribe": "Subscribe",
+    "unsubscribe": "Unsubscribe",
+    "export": "Export"
+  },
+  "field": {
+    "report_name": "Report Name",
+    "report_code": "Report Code",
+    "template": "Template",
+    "datasource": "Data Source",
+    "category": "Category",
+    "frequency": "Frequency",
+    "format": "Format",
+    "owner": "Owner",
+    "created_at": "Created At",
+    "last_generated_at": "Last Generated At"
+  },
+  "message": {
+    "create_success": "Created successfully",
+    "update_success": "Updated successfully",
+    "delete_success": "Deleted successfully",
+    "generate_success": "Report generated successfully",
+    "generate_failed": "Failed to generate report",
+    "subscribe_success": "Subscribed successfully",
+    "confirm_delete": "Confirm deletion?",
+    "no_data": "No data"
+  }
+}

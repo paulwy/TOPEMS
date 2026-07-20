@@ -27,6 +27,7 @@ prometheus.workspace = true
 reqwest.workspace = true
 num-traits = "0.2.19"
 bigdecimal.workspace = true
+dashmap.workspace = true
 
 [dev-dependencies]
 tokio = { version = "1", features = ["full", "test-util"] }

@@ -29,25 +29,29 @@ import { ConfirmDialog, PageContainer, StatusBadge } from '@/components/common';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { QUERY_KEYS } from '@/lib/reactQuery';
 
-const orderTypeConfig: Record<string, string> = {
-  purchase_in: '采购入库',
-  return_in: '退货入库',
-  transfer_in: '调拨入库',
-  other_in: '其他入库',
-};
+import { useTranslation } from 'react-i18next';
 
-const statusConfig: Record<
-  string,
-  { label: string; color: 'default' | 'success' | 'warning' | 'error' }
-> = {
-  pending: { label: '待处理', color: 'warning' },
-  confirmed: { label: '已确认', color: 'success' },
-  receiving: { label: '收货中', color: 'default' },
-  completed: { label: '已完成', color: 'default' },
-  cancelled: { label: '已取消', color: 'error' },
-};
 
 const InboundOrderPage: React.FC = () => {
+  const { t } = useTranslation();
+  const statusConfig: Record<
+    string,
+    { label: string; color: 'default' | 'success' | 'warning' | 'error' }
+  > = {
+    pending: { label: t('wms.inbound_order_page.pending'), color: 'warning' },
+    confirmed: { label: t('wms.inbound_order_page.confirmed'), color: 'success' },
+    receiving: { label: t('wms.inbound_order_page.text_61cf24'), color: 'default' },
+    completed: { label: t('wms.inbound_order_page.status_completed'), color: 'default' },
+    cancelled: { label: t('wms.inbound_order_page.status_cancelled'), color: 'error' },
+  };
+
+  const orderTypeConfig: Record<string, string> = {
+    purchase_in: t('wms.inbound_order_page.type_purchase'),
+    return_in: t('wms.inbound_order_page.type_return'),
+    transfer_in: t('wms.inbound_order_page.type_transfer'),
+    other_in: t('wms.inbound_order_page.type_other'),
+  };
+
   const { addNotification } = useNotificationStore();
 
   const [currentPage, setCurrentPage] = useState(1);
@@ -115,7 +119,7 @@ const InboundOrderPage: React.FC = () => {
       resetForm();
     },
     onError: (error) => {
-      apiLogger.error('创建入库订单失败:', error);
+      apiLogger.error(t('wms.inbound_order_page.create'), error);
     },
   });
 
@@ -132,7 +136,7 @@ const InboundOrderPage: React.FC = () => {
       setShowEditDialog(false);
     },
     onError: (error) => {
-      apiLogger.error('更新入库订单失败:', error);
+      apiLogger.error(t('wms.inbound_order_page.update'), error);
     },
   });
 
@@ -148,7 +152,7 @@ const InboundOrderPage: React.FC = () => {
       queryClient.invalidateQueries({ queryKey: [QUERY_KEYS.WMS.INBOUND_ORDERS] });
     },
     onError: (error) => {
-      apiLogger.error('删除入库订单失败:', error);
+      apiLogger.error(t('wms.inbound_order_page.delete'), error);
     },
   });
 
@@ -156,8 +160,8 @@ const InboundOrderPage: React.FC = () => {
     if (!formData.order_number) {
       addNotification({
         type: 'warning',
-        title: '验证错误',
-        message: '请填写订单号',
+        title: t('wms.inbound_order_page.error'),
+        message: t('wms.inbound_order_page.please_fill'),
       });
       return;
     }
@@ -229,24 +233,24 @@ const InboundOrderPage: React.FC = () => {
 
   const columns: ColumnDef<InboundOrder>[] = useMemo(
     () => [
-      { id: 'order_number', label: '订单号', sortable: true },
+      { id: 'order_number', label: t('wms.inbound_order_page.order_number'), sortable: true },
       {
         id: 'order_type',
-        label: '订单类型',
+        label: t('wms.inbound_order_page.order_type'),
         render: (row) => getOrderTypeLabel(row.order_type),
       },
-      { id: 'warehouse_id', label: '仓库' },
-      { id: 'supplier_name', label: '供应商' },
+      { id: 'warehouse_id', label: t('wms.inbound_order_page.filter_warehouse') },
+      { id: 'supplier_name', label: t('wms.inbound_order_page.field_supplier') },
       {
         id: 'expected_date',
-        label: '预计日期',
+        label: t('wms.inbound_order_page.date'),
         render: (row) =>
           row.expected_date ? new Date(row.expected_date).toLocaleDateString('zh-CN') : '-',
       },
-      { id: 'total_amount', label: '总金额' },
+      { id: 'total_amount', label: t('wms.inbound_order_page.amount') },
       {
         id: 'status',
-        label: '状态',
+        label: t('wms.inbound_order_page.filter_status'),
         render: (row) => getStatusBadge(row.status),
       },
     ],
@@ -257,15 +261,15 @@ const InboundOrderPage: React.FC = () => {
     () => [
       {
         id: 'status',
-        label: '状态',
+        label: t('wms.inbound_order_page.filter_status'),
         type: 'select',
         options: [
-          { label: '全部状态', value: '' },
-          { label: '待处理', value: 'pending' },
-          { label: '已确认', value: 'confirmed' },
-          { label: '收货中', value: 'receiving' },
-          { label: '已完成', value: 'completed' },
-          { label: '已取消', value: 'cancelled' },
+          { label: t('wms.inbound_order_page.filter_option_all_status'), value: '' },
+          { label: t('wms.inbound_order_page.pending'), value: 'pending' },
+          { label: t('wms.inbound_order_page.confirmed'), value: 'confirmed' },
+          { label: t('wms.inbound_order_page.text_61cf24'), value: 'receiving' },
+          { label: t('wms.inbound_order_page.status_completed'), value: 'completed' },
+          { label: t('wms.inbound_order_page.status_cancelled'), value: 'cancelled' },
         ],
         value: statusFilter,
         onChange: (value) => {
@@ -280,17 +284,17 @@ const InboundOrderPage: React.FC = () => {
   const rowActions: RowAction<InboundOrder>[] = useMemo(
     () => [
       {
-        label: '查看详情',
+        label: t('wms.inbound_order_page.action_view_detail'),
         icon: <Eye size={16} />,
         onClick: handleViewDetail,
       },
       {
-        label: '编辑',
+        label: t('wms.inbound_order_page.action_edit'),
         icon: <Edit size={16} />,
         onClick: handleEdit,
       },
       {
-        label: '删除',
+        label: t('wms.inbound_order_page.action_delete'),
         icon: <Trash2 size={16} />,
         color: 'error',
         onClick: (row) => handleDeleteClick(row.id),
@@ -311,23 +315,23 @@ const InboundOrderPage: React.FC = () => {
 
   return (
     <PageContainer
-      title='入库订单管理'
-      subtitle='管理入库订单,包括订单号、仓库、供应商、订单日期等'
+      title={t('wms.inbound_order_page.inbound')}
+      subtitle={t('wms.inbound_order_page.order_date')}
     >
       <ListPageTemplate
         title=''
         subtitle=''
         breadcrumbs={[
-          { label: '首页', href: '/dashboard' },
-          { label: '仓储', href: WMS_PATHS.root },
-          { label: '入库订单' },
+          { label: t('wms.inbound_order_page.breadcrumb_home'), href: '/dashboard' },
+          { label: t('wms.inbound_order_page.breadcrumb_module'), href: WMS_PATHS.root },
+          { label: t('wms.inbound_order_page.inbound_1') },
         ]}
         columns={columns}
         data={orders}
         loading={loading}
         filters={filters}
         searchable
-        searchPlaceholder='搜索订单号或供应商...'
+        searchPlaceholder={t('wms.inbound_order_page.order_number_1')}
         onSearch={handleSearch}
         searchValue={searchTerm}
         pagination={{
@@ -338,13 +342,13 @@ const InboundOrderPage: React.FC = () => {
         }}
         actions={[
           {
-            label: '新增入库订单',
+            label: t('wms.inbound_order_page.add'),
             icon: <Plus size={16} />,
             onClick: handleOpenCreate,
           },
         ]}
         rowActions={rowActions}
-        emptyMessage='暂无入库订单数据'
+        emptyMessage={t('wms.inbound_order_page.no_data')}
         getRowId={(row) => row.id}
       />
 
@@ -366,7 +370,7 @@ const InboundOrderPage: React.FC = () => {
             }}
           >
             <TextField
-              label='订单号 *'
+              label={t('wms.inbound_order_page.order_number_2')}
               value={formData.order_number}
               onChange={(e) => setFormData({ ...formData, order_number: e.target.value })}
               size='small'
@@ -380,7 +384,7 @@ const InboundOrderPage: React.FC = () => {
               <InputLabel>订单类型 *</InputLabel>
               <Select
                 value={formData.order_type}
-                label='订单类型 *'
+                label={t('wms.inbound_order_page.order_type_1')}
                 onChange={(e) => setFormData({ ...formData, order_type: e.target.value })}
               >
                 <MenuItem value='purchase_in'>采购入库</MenuItem>
@@ -390,28 +394,28 @@ const InboundOrderPage: React.FC = () => {
               </Select>
             </FormControl>
             <TextField
-              label='仓库ID'
+              label={t('wms.inbound_order_page.warehouse')}
               value={formData.warehouse_id}
               onChange={(e) => setFormData({ ...formData, warehouse_id: e.target.value })}
               size='small'
               fullWidth
             />
             <TextField
-              label='供应商ID'
+              label={t('wms.inbound_order_page.supplier')}
               value={formData.supplier_id}
               onChange={(e) => setFormData({ ...formData, supplier_id: e.target.value })}
               size='small'
               fullWidth
             />
             <TextField
-              label='供应商名称'
+              label={t('wms.inbound_order_page.supplier_name')}
               value={formData.supplier_name}
               onChange={(e) => setFormData({ ...formData, supplier_name: e.target.value })}
               size='small'
               fullWidth
             />
             <TextField
-              label='预计到货日期'
+              label={t('wms.inbound_order_page.field_expected_date')}
               type='date'
               value={formData.expected_date}
               onChange={(e) => setFormData({ ...formData, expected_date: e.target.value })}
@@ -456,7 +460,7 @@ const InboundOrderPage: React.FC = () => {
               }}
             >
               <TextField
-                label='订单号'
+                label={t('wms.inbound_order_page.order_number')}
                 value={editFormData.order_number || ''}
                 onChange={(e) => setEditFormData({ ...editFormData, order_number: e.target.value })}
                 size='small'
@@ -469,7 +473,7 @@ const InboundOrderPage: React.FC = () => {
                 <InputLabel>订单类型</InputLabel>
                 <Select
                   value={editFormData.order_type || ''}
-                  label='订单类型'
+                  label={t('wms.inbound_order_page.order_type')}
                   onChange={(e) => setEditFormData({ ...editFormData, order_type: e.target.value })}
                 >
                   <MenuItem value='purchase_in'>采购入库</MenuItem>
@@ -479,21 +483,21 @@ const InboundOrderPage: React.FC = () => {
                 </Select>
               </FormControl>
               <TextField
-                label='仓库ID'
+                label={t('wms.inbound_order_page.warehouse')}
                 value={editFormData.warehouse_id || ''}
                 onChange={(e) => setEditFormData({ ...editFormData, warehouse_id: e.target.value })}
                 size='small'
                 fullWidth
               />
               <TextField
-                label='供应商ID'
+                label={t('wms.inbound_order_page.supplier')}
                 value={editFormData.supplier_id || ''}
                 onChange={(e) => setEditFormData({ ...editFormData, supplier_id: e.target.value })}
                 size='small'
                 fullWidth
               />
               <TextField
-                label='供应商名称'
+                label={t('wms.inbound_order_page.supplier_name')}
                 value={editFormData.supplier_name || ''}
                 onChange={(e) =>
                   setEditFormData({ ...editFormData, supplier_name: e.target.value })
@@ -502,7 +506,7 @@ const InboundOrderPage: React.FC = () => {
                 fullWidth
               />
               <TextField
-                label='预计到货日期'
+                label={t('wms.inbound_order_page.field_expected_date')}
                 type='date'
                 value={editFormData.expected_date || ''}
                 onChange={(e) =>
@@ -550,35 +554,35 @@ const InboundOrderPage: React.FC = () => {
               }}
             >
               <TextField
-                label='订单号'
+                label={t('wms.inbound_order_page.order_number')}
                 value={selectedOrder.order_number}
                 size='small'
                 fullWidth
                 slotProps={{ input: { readOnly: true } }}
               />
               <TextField
-                label='订单类型'
+                label={t('wms.inbound_order_page.order_type')}
                 value={getOrderTypeLabel(selectedOrder.order_type)}
                 size='small'
                 fullWidth
                 slotProps={{ input: { readOnly: true } }}
               />
               <TextField
-                label='仓库'
+                label={t('wms.inbound_order_page.filter_warehouse')}
                 value={selectedOrder.warehouse_id}
                 size='small'
                 fullWidth
                 slotProps={{ input: { readOnly: true } }}
               />
               <TextField
-                label='供应商'
+                label={t('wms.inbound_order_page.field_supplier')}
                 value={selectedOrder.supplier_name || selectedOrder.supplier_id || '-'}
                 size='small'
                 fullWidth
                 slotProps={{ input: { readOnly: true } }}
               />
               <TextField
-                label='预计日期'
+                label={t('wms.inbound_order_page.date')}
                 value={
                   selectedOrder.expected_date
                     ? new Date(selectedOrder.expected_date).toLocaleDateString('zh-CN')
@@ -589,7 +593,7 @@ const InboundOrderPage: React.FC = () => {
                 slotProps={{ input: { readOnly: true } }}
               />
               <TextField
-                label='总金额'
+                label={t('wms.inbound_order_page.amount')}
                 value={selectedOrder.total_amount || '-'}
                 size='small'
                 fullWidth
@@ -597,7 +601,7 @@ const InboundOrderPage: React.FC = () => {
               />
               <Box>
                 <TextField
-                  label='状态'
+                  label={t('wms.inbound_order_page.filter_status')}
                   value={statusConfig[selectedOrder.status]?.label || selectedOrder.status}
                   size='small'
                   fullWidth
@@ -605,7 +609,7 @@ const InboundOrderPage: React.FC = () => {
                 />
               </Box>
               <TextField
-                label='创建时间'
+                label={t('wms.inbound_order_page.column_created_at')}
                 value={new Date(selectedOrder.created_at).toLocaleString('zh-CN')}
                 size='small'
                 fullWidth
@@ -629,8 +633,8 @@ const InboundOrderPage: React.FC = () => {
         isOpen={showDeleteConfirm}
         onClose={() => setShowDeleteConfirm(false)}
         onConfirm={handleDelete}
-        title='确认删除'
-        message='确定要删除这个入库订单吗？此操作不可撤销。'
+        title={t('wms.inbound_order_page.dialog_delete_title')}
+        message={t('wms.inbound_order_page.confirm')}
         danger
       />
     </PageContainer>

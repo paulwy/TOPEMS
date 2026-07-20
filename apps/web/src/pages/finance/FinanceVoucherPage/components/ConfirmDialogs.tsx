@@ -1,6 +1,7 @@
 import React from 'react';
 import { ConfirmDialog } from '@/components/common';
 
+import { useTranslation } from 'react-i18next';
 interface ConfirmDialogsProps {
   deleteDialogOpen: boolean;
   onCloseDelete: () => void;
@@ -20,14 +21,15 @@ const ConfirmDialogs: React.FC<ConfirmDialogsProps> = ({
   onConfirmBatchDelete,
   selectedIds,
 }) => {
+  const { t } = useTranslation();
   return (
     <>
       <ConfirmDialog
         isOpen={deleteDialogOpen}
         onClose={onCloseDelete}
         onConfirm={onConfirmDelete}
-        title='确认删除'
-        message='确定要删除该凭证吗？'
+        title={t('finance.finance_voucher_page_components__confirm_dialogs.confirm_delete')}
+        message={t('finance.finance_voucher_page_components__confirm_dialogs.confirm')}
         danger
       />
 
@@ -35,7 +37,7 @@ const ConfirmDialogs: React.FC<ConfirmDialogsProps> = ({
         isOpen={batchDeleteDialogOpen}
         onClose={onCloseBatchDelete}
         onConfirm={onConfirmBatchDelete}
-        title='确认批量删除'
+        title={t('finance.finance_voucher_page_components__confirm_dialogs.batch_delete')}
         message={`确定要删除选中的 ${selectedIds.length} 张凭证吗？`}
         danger
       />

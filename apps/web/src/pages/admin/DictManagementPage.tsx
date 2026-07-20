@@ -27,6 +27,8 @@ import { useNotificationStore } from '@/store/notificationStore';
 import { dictApi, type DictType, type DictItem } from '@/api/dict/dict';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { apiLogger } from '@/utils/logger';
+import { ConfirmDialog } from '@topems/shared-components';
+import { useConfirmDialog } from '@/hooks';
 
 const DictManagementPage: React.FC = () => {
   const addNotification = useNotificationStore((state) => state.addNotification);
@@ -52,6 +54,12 @@ const DictManagementPage: React.FC = () => {
     sort_order: 0,
     is_default: false,
   });
+  const {
+    confirmOpen: confirmDialogOpen,
+    confirmConfig: confirmDialogConfig,
+    openConfirm: openConfirmDialog,
+    closeConfirm: setConfirmDialogClosed,
+  } = useConfirmDialog();
 
   const dictTypesQuery = useQuery({
     queryKey: ['admin-dict-types'],
@@ -257,14 +265,18 @@ const DictManagementPage: React.FC = () => {
     handleCloseTypeDialog();
   };
 
-  const handleDeleteType = async (code: string) => {
-    if (!window.confirm('确定要删除此字典类型吗？所有关联的字典项也将被删除。')) {
-      return;
-    }
-    await deleteTypeMutation.mutateAsync(code);
-    if (selectedType?.code === code) {
-      setSelectedType(null);
-    }
+  const handleDeleteType = (code: string) => {
+    openConfirmDialog({
+      title: '确认删除',
+      message: '确定要删除此字典类型吗？所有关联的字典项也将被删除。',
+      danger: true,
+      onConfirm: async () => {
+        await deleteTypeMutation.mutateAsync(code);
+        if (selectedType?.code === code) {
+          setSelectedType(null);
+        }
+      },
+    });
   };
 
   const handleOpenItemDialog = (item?: DictItem) => {
@@ -313,12 +325,16 @@ const DictManagementPage: React.FC = () => {
     handleCloseItemDialog();
   };
 
-  const handleDeleteItem = async (itemCode: string) => {
+  const handleDeleteItem = (itemCode: string) => {
     if (!selectedType) return;
-    if (!window.confirm('确定要删除此字典项吗？')) {
-      return;
-    }
-    await deleteItemMutation.mutateAsync({ typeCode: selectedType.code, itemCode });
+    openConfirmDialog({
+      title: '确认删除',
+      message: '确定要删除此字典项吗？',
+      danger: true,
+      onConfirm: () => {
+        deleteItemMutation.mutate({ typeCode: selectedType.code, itemCode });
+      },
+    });
   };
 
   const categories = useMemo(() => {
@@ -611,6 +627,18 @@ const DictManagementPage: React.FC = () => {
           </Button>
         </DialogActions>
       </Dialog>
+
+      <ConfirmDialog
+        isOpen={confirmDialogOpen}
+        onClose={setConfirmDialogClosed}
+        onConfirm={() => {
+          confirmDialogConfig?.onConfirm();
+          setConfirmDialogClosed();
+        }}
+        title={confirmDialogConfig?.title || ''}
+        message={confirmDialogConfig?.message || ''}
+        danger={confirmDialogConfig?.danger}
+      />
     </Box>
   );
 };

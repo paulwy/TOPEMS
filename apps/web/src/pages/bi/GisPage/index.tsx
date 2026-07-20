@@ -80,9 +80,11 @@ import { DataTableSection } from './components/DataTableSection';
 import { EntityFormModal } from './components/EntityFormModal';
 import { ImportModal } from './components/ImportModal';
 
+import { useTranslation } from 'react-i18next';
 const ct = designTokens.colors;
 
 const GisContent: React.FC = () => {
+  const { t } = useTranslation();
   const theme = useTheme();
   const navigate = useNavigate();
   const {

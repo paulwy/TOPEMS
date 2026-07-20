@@ -81,6 +81,7 @@ const NotificationPanel: React.FC<NotificationPanelProps> = ({ onClose, onUnread
 
   return (
     <div
+      className='notification-panel'
       style={{
         position: 'absolute',
         right: 0,

@@ -26,6 +26,7 @@ import {
 import { Banknote, DollarSign, Shield, Save, Edit2, X } from 'lucide-react';
 import { designTokens } from '@/theme/tokens';
 
+import { useTranslation } from 'react-i18next';
 interface EmployeeFinanceTabProps {
   employeeId: string;
   employeeName: string;
@@ -35,6 +36,7 @@ export const EmployeeFinanceTab: React.FC<EmployeeFinanceTabProps> = ({
   employeeId,
   employeeName,
 }) => {
+  const { t } = useTranslation();
   const { data, isLoading, error } = useEmployeeFinanceInfo(employeeId);
   const theme = useTheme();
   const ct = designTokens.colors;
@@ -142,7 +144,7 @@ export const EmployeeFinanceTab: React.FC<EmployeeFinanceTabProps> = ({
           <Typography variant='h6'>财务信息</Typography>
           {hasFinanceInfo && (
             <Chip
-              label={financeInfo.status === 'active' ? '正常' : '未激活'}
+              label={financeInfo.status === 'active' ? t('hrm.employee_finance_tab.normal') : t('hrm.employee_finance_tab.text_d70e9b')}
               color={financeInfo.status === 'active' ? 'primary' : 'default'}
               size='small'
             />
@@ -175,7 +177,7 @@ export const EmployeeFinanceTab: React.FC<EmployeeFinanceTabProps> = ({
             onClick={handleEdit}
           >
             <Edit2 style={{ width: 16, height: 16, marginRight: 4 }} />
-            {hasFinanceInfo ? '编辑' : '初始化'}
+            {hasFinanceInfo ? t('hrm.employee_finance_tab.edit') : t('hrm.employee_finance_tab.text_2cb472')}
           </Button>
         )}
       </Box>
@@ -212,7 +214,7 @@ export const EmployeeFinanceTab: React.FC<EmployeeFinanceTabProps> = ({
                   onChange={(e) => setEditData({ ...editData, bank_name: e.target.value })}
                   size='small'
                   fullWidth
-                  placeholder='如：中国工商银行'
+                  placeholder={t('hrm.employee_finance_tab.text_f2afc7')}
                   sx={{ mt: 0.5 }}
                 />
               ) : (
@@ -234,7 +236,7 @@ export const EmployeeFinanceTab: React.FC<EmployeeFinanceTabProps> = ({
                   }
                   size='small'
                   fullWidth
-                  placeholder='请输入银行卡号'
+                  placeholder={t('hrm.employee_finance_tab.please_input')}
                   sx={{ mt: 0.5 }}
                 />
               ) : (
@@ -251,7 +253,7 @@ export const EmployeeFinanceTab: React.FC<EmployeeFinanceTabProps> = ({
                   onChange={(e) => setEditData({ ...editData, bank_branch: e.target.value })}
                   size='small'
                   fullWidth
-                  placeholder='如：北京分行中关村支行'
+                  placeholder={t('hrm.employee_finance_tab.text_de2d47')}
                   sx={{ mt: 0.5 }}
                 />
               ) : (
@@ -448,7 +450,7 @@ export const EmployeeFinanceTab: React.FC<EmployeeFinanceTabProps> = ({
                   }
                   size='small'
                   fullWidth
-                  placeholder='如: 0.105'
+                  placeholder={t('hrm.employee_finance_tab.text_5b6af8')}
                   sx={{ mt: 0.5 }}
                 />
               ) : (
@@ -493,7 +495,7 @@ export const EmployeeFinanceTab: React.FC<EmployeeFinanceTabProps> = ({
                   }
                   size='small'
                   fullWidth
-                  placeholder='如: 0.12'
+                  placeholder={t('hrm.employee_finance_tab.text_a89663')}
                   sx={{ mt: 0.5 }}
                 />
               ) : (
@@ -600,7 +602,7 @@ export const EmployeeFinanceTab: React.FC<EmployeeFinanceTabProps> = ({
                   onChange={(e) => setEditData({ ...editData, cost_center_id: e.target.value })}
                   size='small'
                   fullWidth
-                  placeholder='请输入成本中心编码'
+                  placeholder={t('hrm.employee_finance_tab.please_input_1')}
                   sx={{ mt: 0.5 }}
                 />
               ) : (
@@ -622,7 +624,7 @@ export const EmployeeFinanceTab: React.FC<EmployeeFinanceTabProps> = ({
                   }
                   size='small'
                   fullWidth
-                  placeholder='请输入费用科目编码'
+                  placeholder={t('hrm.employee_finance_tab.please_input_2')}
                   sx={{ mt: 0.5 }}
                 />
               ) : (
@@ -667,7 +669,7 @@ export const EmployeeFinanceTab: React.FC<EmployeeFinanceTabProps> = ({
                   onChange={(e) => setEditData({ ...editData, tax_id: e.target.value })}
                   size='small'
                   fullWidth
-                  placeholder='请输入纳税人识别号'
+                  placeholder={t('hrm.employee_finance_tab.please_input_3')}
                   sx={{ mt: 0.5 }}
                 />
               ) : (
@@ -701,7 +703,7 @@ export const EmployeeFinanceTab: React.FC<EmployeeFinanceTabProps> = ({
                 </FormControl>
               ) : (
                 <Typography sx={{ mt: 0.5, fontWeight: 500 }}>
-                  {financeInfo?.taxlevel ? `${financeInfo.taxlevel}孩扣除` : '无扣除'}
+                  {financeInfo?.taxlevel ? `${financeInfo.taxlevel}孩扣除` : t('hrm.employee_finance_tab.text_cd9b27')}
                 </Typography>
               )}
             </Box>

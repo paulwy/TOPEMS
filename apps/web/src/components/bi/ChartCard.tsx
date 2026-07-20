@@ -152,7 +152,7 @@ export const ChartCard: React.FC<ChartCardProps> = ({
         border: bordered ? '1px solid rgba(0,0,0,0.05)' : 'none',
         boxShadow: elevation || 0,
       }}
-      className={className}
+      className={`bi-chart-card ${className || ''}`.trim()}
     >
       <CardHeader
         sx={{

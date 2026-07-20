@@ -51,42 +51,46 @@ import { apiLogger } from '@/utils/logger';
 import { ConfirmDialog, PageContainer, StatusBadge } from '@/components/common';
 import { designTokens } from '@/theme/tokens';
 
+import { useTranslation } from 'react-i18next';
 const ct = designTokens.colors;
 
-const statusConfig: Record<
-  string,
-  { label: string; color: 'success' | 'warning' | 'error' | 'info' | 'default' }
-> = {
-  pending: { label: '待确认', color: 'warning' },
-  confirmed: { label: '已确认', color: 'info' },
-  picking: { label: '拣货中', color: 'info' },
-  picked: { label: '已拣货', color: 'info' },
-  packing: { label: '打包中', color: 'warning' },
-  shipped: { label: '已发货', color: 'success' },
-  completed: { label: '已完成', color: 'success' },
-  cancelled: { label: '已取消', color: 'error' },
-};
 
-const orderTypeConfig: Record<string, string> = {
-  sale: '销售出库',
-  return: '退货出库',
-  transfer: '调拨出库',
-  production: '生产领料',
-  other: '其他',
-};
 
-const wavePickStatusConfig: Record<
-  string,
-  { label: string; color: 'success' | 'warning' | 'error' | 'info' | 'default' }
-> = {
-  pending: { label: '待分配', color: 'warning' },
-  assigned: { label: '已分配', color: 'info' },
-  picking: { label: '拣货中', color: 'info' },
-  completed: { label: '已完成', color: 'success' },
-  cancelled: { label: '已取消', color: 'error' },
-};
 
 const OutboundPage: React.FC = () => {
+  const { t } = useTranslation();
+  const statusConfig: Record<
+    string,
+    { label: string; color: 'success' | 'warning' | 'error' | 'info' | 'default' }
+  > = {
+    pending: { label: t('wms.outbound_page.stat_pending'), color: 'warning' },
+    confirmed: { label: t('wms.outbound_page.status_confirmed'), color: 'info' },
+    picking: { label: t('wms.outbound_page.stat_picking'), color: 'info' },
+    picked: { label: t('wms.outbound_page.status_picked'), color: 'info' },
+    packing: { label: t('wms.outbound_page.status_packing'), color: 'warning' },
+    shipped: { label: t('wms.outbound_page.status_shipped'), color: 'success' },
+    completed: { label: t('wms.outbound_page.stat_completed'), color: 'success' },
+    cancelled: { label: t('wms.outbound_page.wave_status_cancelled'), color: 'error' },
+  };
+  const wavePickStatusConfig: Record<
+    string,
+    { label: string; color: 'success' | 'warning' | 'error' | 'info' | 'default' }
+  > = {
+    pending: { label: t('wms.outbound_page.wave_status_pending'), color: 'warning' },
+    assigned: { label: t('wms.outbound_page.wave_status_assigned'), color: 'info' },
+    picking: { label: t('wms.outbound_page.stat_picking'), color: 'info' },
+    completed: { label: t('wms.outbound_page.stat_completed'), color: 'success' },
+    cancelled: { label: t('wms.outbound_page.wave_status_cancelled'), color: 'error' },
+  };
+
+  const orderTypeConfig: Record<string, string> = {
+    sale: t('wms.outbound_page.type_sale'),
+    return: t('wms.outbound_page.type_return'),
+    transfer: t('wms.outbound_page.type_transfer'),
+    production: t('wms.outbound_page.type_production'),
+    other: t('wms.outbound_page.type_other'),
+  };
+
   const { addNotification } = useNotificationStore();
   const queryClient = useQueryClient();
   const [currentTab, setCurrentTab] = useState(0);
@@ -138,7 +142,7 @@ const OutboundPage: React.FC = () => {
 
   useEffect(() => {
     if (warehousesQuery.isError && warehousesQuery.error) {
-      apiLogger.error('获取仓库列表失败:', warehousesQuery.error);
+      apiLogger.error(t('wms.outbound_page.list'), warehousesQuery.error);
     }
   }, [warehousesQuery.isError, warehousesQuery.error]);
 
@@ -167,11 +171,11 @@ const OutboundPage: React.FC = () => {
 
   useEffect(() => {
     if (ordersQuery.isError && ordersQuery.error) {
-      apiLogger.error('获取出库单列表失败:', ordersQuery.error);
+      apiLogger.error(t('wms.outbound_page.list_1'), ordersQuery.error);
       addNotification({
         type: 'error',
-        title: '加载失败',
-        message: '无法加载出库单列表',
+        title: t('wms.outbound_page.fail'),
+        message: t('wms.outbound_page.list_2'),
       });
     }
   }, [ordersQuery.isError, ordersQuery.error, addNotification]);
@@ -199,7 +203,7 @@ const OutboundPage: React.FC = () => {
 
   useEffect(() => {
     if (wavePicksQuery.isError && wavePicksQuery.error) {
-      apiLogger.error('获取波次拣货列表失败:', wavePicksQuery.error);
+      apiLogger.error(t('wms.outbound_page.list_3'), wavePicksQuery.error);
     }
   }, [wavePicksQuery.isError, wavePicksQuery.error]);
 
@@ -208,17 +212,17 @@ const OutboundPage: React.FC = () => {
     onSuccess: () => {
       addNotification({
         type: 'success',
-        title: '创建成功',
-        message: '出库单已创建',
+        title: t('wms.outbound_page.create'),
+        message: t('wms.outbound_page.create_1'),
       });
       queryClient.invalidateQueries({ queryKey: ['wms-outbound-orders'] });
     },
     onError: (error: unknown) => {
-      apiLogger.error('创建出库单失败:', error);
+      apiLogger.error(t('wms.outbound_page.create_2'), error);
       addNotification({
         type: 'error',
-        title: '创建失败',
-        message: '创建出库单失败',
+        title: t('wms.outbound_page.create_3'),
+        message: t('wms.outbound_page.create_4'),
       });
     },
   });
@@ -228,17 +232,17 @@ const OutboundPage: React.FC = () => {
     onSuccess: () => {
       addNotification({
         type: 'success',
-        title: '确认成功',
-        message: '出库单已确认',
+        title: t('wms.outbound_page.success'),
+        message: t('wms.outbound_page.confirmed'),
       });
       queryClient.invalidateQueries({ queryKey: ['wms-outbound-orders'] });
     },
     onError: (error: unknown) => {
-      apiLogger.error('确认出库单失败:', error);
+      apiLogger.error(t('wms.outbound_page.fail_1'), error);
       addNotification({
         type: 'error',
-        title: '确认失败',
-        message: '确认出库单失败',
+        title: t('wms.outbound_page.fail_2'),
+        message: t('wms.outbound_page.fail_3'),
       });
     },
   });
@@ -248,17 +252,17 @@ const OutboundPage: React.FC = () => {
     onSuccess: () => {
       addNotification({
         type: 'success',
-        title: '拣货成功',
-        message: '出库单已开始拣货',
+        title: t('wms.outbound_page.success_1'),
+        message: t('wms.outbound_page.outbound'),
       });
       queryClient.invalidateQueries({ queryKey: ['wms-outbound-orders'] });
     },
     onError: (error: unknown) => {
-      apiLogger.error('拣货失败:', error);
+      apiLogger.error(t('wms.outbound_page.fail_4'), error);
       addNotification({
         type: 'error',
-        title: '拣货失败',
-        message: '拣货失败',
+        title: t('wms.outbound_page.fail_5'),
+        message: t('wms.outbound_page.fail_5'),
       });
     },
   });
@@ -268,17 +272,17 @@ const OutboundPage: React.FC = () => {
     onSuccess: () => {
       addNotification({
         type: 'success',
-        title: '发货成功',
-        message: '出库单已发货',
+        title: t('wms.outbound_page.success_2'),
+        message: t('wms.outbound_page.outbound_1'),
       });
       queryClient.invalidateQueries({ queryKey: ['wms-outbound-orders'] });
     },
     onError: (error: unknown) => {
-      apiLogger.error('发货失败:', error);
+      apiLogger.error(t('wms.outbound_page.fail_6'), error);
       addNotification({
         type: 'error',
-        title: '发货失败',
-        message: '发货失败',
+        title: t('wms.outbound_page.fail_7'),
+        message: t('wms.outbound_page.fail_7'),
       });
     },
   });
@@ -288,17 +292,17 @@ const OutboundPage: React.FC = () => {
     onSuccess: () => {
       addNotification({
         type: 'success',
-        title: '完成成功',
-        message: '出库单已完成',
+        title: t('wms.outbound_page.success_3'),
+        message: t('wms.outbound_page.completed'),
       });
       queryClient.invalidateQueries({ queryKey: ['wms-outbound-orders'] });
     },
     onError: (error: unknown) => {
-      apiLogger.error('完成出库单失败:', error);
+      apiLogger.error(t('wms.outbound_page.fail_8'), error);
       addNotification({
         type: 'error',
-        title: '完成失败',
-        message: '完成出库单失败',
+        title: t('wms.outbound_page.fail_9'),
+        message: t('wms.outbound_page.fail_10'),
       });
     },
   });
@@ -308,17 +312,17 @@ const OutboundPage: React.FC = () => {
     onSuccess: () => {
       addNotification({
         type: 'success',
-        title: '删除成功',
-        message: '出库单已删除',
+        title: t('wms.outbound_page.delete_success'),
+        message: t('wms.outbound_page.deleted'),
       });
       queryClient.invalidateQueries({ queryKey: ['wms-outbound-orders'] });
     },
     onError: (error: unknown) => {
-      apiLogger.error('删除出库单失败:', error);
+      apiLogger.error(t('wms.outbound_page.delete'), error);
       addNotification({
         type: 'error',
-        title: '删除失败',
-        message: '删除出库单失败',
+        title: t('wms.outbound_page.delete_1'),
+        message: t('wms.outbound_page.delete_2'),
       });
     },
   });
@@ -330,7 +334,7 @@ const OutboundPage: React.FC = () => {
         setOrderItems(response.data.items || []);
       }
     } catch (error: unknown) {
-      apiLogger.error('获取出库单明细失败:', error);
+      apiLogger.error(t('wms.outbound_page.fail_11'), error);
     }
   };
 
@@ -338,8 +342,8 @@ const OutboundPage: React.FC = () => {
     if (!newItem.order_number || !newItem.warehouse_id) {
       addNotification({
         type: 'warning',
-        title: '验证错误',
-        message: '请填写必要信息（出库单号、仓库）',
+        title: t('wms.outbound_page.error'),
+        message: t('wms.outbound_page.please_fill'),
       });
       return;
     }
@@ -419,23 +423,23 @@ const OutboundPage: React.FC = () => {
 
   const orderColumns: ColumnDef<OutboundOrder>[] = useMemo(
     () => [
-      { id: 'order_number', label: '出库单号', sortable: true },
+      { id: 'order_number', label: t('wms.outbound_page.detail_order_number'), sortable: true },
       {
         id: 'order_type',
-        label: '出库类型',
+        label: t('wms.outbound_page.detail_order_type'),
         render: (row) => orderTypeConfig[row.order_type] || row.order_type,
       },
       {
         id: 'warehouse_id',
-        label: '仓库',
+        label: t('wms.outbound_page.detail_warehouse'),
         render: (row) => getWarehouseName(row.warehouse_id),
       },
-      { id: 'customer_name', label: '客户' },
-      { id: 'total_quantity', label: '总数量' },
-      { id: 'expected_date', label: '预计日期' },
+      { id: 'customer_name', label: t('wms.outbound_page.detail_customer') },
+      { id: 'total_quantity', label: t('wms.outbound_page.detail_total_quantity') },
+      { id: 'expected_date', label: t('wms.outbound_page.detail_expected_date') },
       {
         id: 'status',
-        label: '状态',
+        label: t('wms.outbound_page.detail_col_status'),
         render: (row) => getStatusBadge(row.status),
       },
     ],
@@ -444,22 +448,22 @@ const OutboundPage: React.FC = () => {
 
   const wavePickColumns: ColumnDef<WavePick>[] = useMemo(
     () => [
-      { id: 'wave_number', label: '波次号', sortable: true },
+      { id: 'wave_number', label: t('wms.outbound_page.column_wave_number'), sortable: true },
       {
         id: 'warehouse_id',
-        label: '仓库',
+        label: t('wms.outbound_page.detail_warehouse'),
         render: (row) => getWarehouseName(row.warehouse_id),
       },
-      { id: 'wave_type', label: '波次类型' },
-      { id: 'total_orders', label: '订单数' },
-      { id: 'totalitems', label: '物料项数' },
-      { id: 'total_quantity', label: '总数量' },
+      { id: 'wave_type', label: t('wms.outbound_page.column_wave_type') },
+      { id: 'total_orders', label: t('wms.outbound_page.column_total_orders') },
+      { id: 'totalitems', label: t('wms.outbound_page.column_total_items') },
+      { id: 'total_quantity', label: t('wms.outbound_page.detail_total_quantity') },
       {
         id: 'status',
-        label: '状态',
+        label: t('wms.outbound_page.detail_col_status'),
         render: (row) => getStatusBadge(row.status, wavePickStatusConfig),
       },
-      { id: 'picker_name', label: '拣货员' },
+      { id: 'picker_name', label: t('wms.outbound_page.column_picker_name') },
     ],
     [getWarehouseName]
   );
@@ -468,18 +472,18 @@ const OutboundPage: React.FC = () => {
     () => [
       {
         id: 'status',
-        label: '状态',
+        label: t('wms.outbound_page.detail_col_status'),
         type: 'select',
         options: [
-          { label: '全部状态', value: '' },
-          { label: '待确认', value: 'pending' },
-          { label: '已确认', value: 'confirmed' },
-          { label: '拣货中', value: 'picking' },
-          { label: '已拣货', value: 'picked' },
-          { label: '打包中', value: 'packing' },
-          { label: '已发货', value: 'shipped' },
-          { label: '已完成', value: 'completed' },
-          { label: '已取消', value: 'cancelled' },
+          { label: t('wms.outbound_page.filter_option_all_status'), value: '' },
+          { label: t('wms.outbound_page.stat_pending'), value: 'pending' },
+          { label: t('wms.outbound_page.status_confirmed'), value: 'confirmed' },
+          { label: t('wms.outbound_page.stat_picking'), value: 'picking' },
+          { label: t('wms.outbound_page.status_picked'), value: 'picked' },
+          { label: t('wms.outbound_page.status_packing'), value: 'packing' },
+          { label: t('wms.outbound_page.status_shipped'), value: 'shipped' },
+          { label: t('wms.outbound_page.stat_completed'), value: 'completed' },
+          { label: t('wms.outbound_page.wave_status_cancelled'), value: 'cancelled' },
         ],
         value: statusFilter,
         onChange: (value) => {
@@ -489,10 +493,10 @@ const OutboundPage: React.FC = () => {
       },
       {
         id: 'warehouse_id',
-        label: '仓库',
+        label: t('wms.outbound_page.detail_warehouse'),
         type: 'select',
         options: [
-          { label: '全部仓库', value: '' },
+          { label: t('wms.outbound_page.filter_option_all_warehouse'), value: '' },
           ...warehouses.map((w) => ({ label: w.name, value: w.id })),
         ],
         value: warehouseFilter,
@@ -509,7 +513,7 @@ const OutboundPage: React.FC = () => {
     (row: OutboundOrder): React.ReactNode => {
       const actions: RowAction<OutboundOrder>[] = [
         {
-          label: '查看详情',
+          label: t('wms.outbound_page.action_view_detail'),
           icon: <Eye size={16} />,
           onClick: () => handleViewDetail(row),
         },
@@ -517,7 +521,7 @@ const OutboundPage: React.FC = () => {
 
       if (row.status === 'pending') {
         actions.push({
-          label: '确认',
+          label: t('wms.outbound_page.action_confirm'),
           icon: <Check size={16} />,
           onClick: () => handleConfirm(row.id),
         });
@@ -525,7 +529,7 @@ const OutboundPage: React.FC = () => {
 
       if (row.status === 'confirmed' || row.status === 'picking') {
         actions.push({
-          label: '拣货',
+          label: t('wms.outbound_page.action_pick'),
           icon: <ClipboardList size={16} />,
           onClick: () => handlePick(row.id),
         });
@@ -533,7 +537,7 @@ const OutboundPage: React.FC = () => {
 
       if (row.status === 'picked' || row.status === 'packing') {
         actions.push({
-          label: '发货',
+          label: t('wms.outbound_page.action_ship'),
           icon: <Truck size={16} />,
           onClick: () => handleShip(row.id),
         });
@@ -541,7 +545,7 @@ const OutboundPage: React.FC = () => {
 
       if (row.status === 'shipped') {
         actions.push({
-          label: '完成',
+          label: t('wms.outbound_page.action_complete'),
           icon: <Check size={16} />,
           onClick: () => handleComplete(row.id),
         });
@@ -549,7 +553,7 @@ const OutboundPage: React.FC = () => {
 
       if (row.status === 'pending' || row.status === 'cancelled') {
         actions.push({
-          label: '删除',
+          label: t('wms.outbound_page.action_delete'),
           icon: <Trash2 size={16} />,
           color: 'error',
           onClick: () => handleDeleteClick(row.id),
@@ -657,8 +661,8 @@ const OutboundPage: React.FC = () => {
 
   return (
     <PageContainer
-      title='出库管理'
-      subtitle='管理出库单，包括销售出库、生产领料、拣货管理等'
+      title={t('wms.outbound_page.breadcrumb_current')}
+      subtitle={t('wms.outbound_page.subtitle')}
       headerProps={{
         pageIcon: <Upload style={{ width: 20, height: 20 }} />,
         pageGradient: `linear-gradient(135deg, ${ct.warning.main}, ${ct.warning.dark})`,
@@ -669,8 +673,8 @@ const OutboundPage: React.FC = () => {
           value={currentTab}
           onChange={(_, newValue) => setCurrentTab(newValue)}
         >
-          <Tab label='出库单列表' />
-          <Tab label='波次拣货' />
+          <Tab label={t('wms.outbound_page.tab_orders')} />
+          <Tab label={t('wms.outbound_page.tab_wave_picking')} />
         </Tabs>
       </Box>
 
@@ -679,16 +683,16 @@ const OutboundPage: React.FC = () => {
           title=''
           subtitle=''
           breadcrumbs={[
-            { label: '首页', href: '/dashboard' },
-            { label: '仓储', href: WMS_PATHS.root },
-            { label: '出库管理' },
+            { label: t('wms.outbound_page.breadcrumb_home'), href: '/dashboard' },
+            { label: t('wms.outbound_page.breadcrumb_module'), href: WMS_PATHS.root },
+            { label: t('wms.outbound_page.breadcrumb_current') },
           ]}
           columns={orderColumns}
           data={orders}
           loading={loading}
           filters={filters}
           searchable
-          searchPlaceholder='搜索出库单号...'
+          searchPlaceholder={t('wms.outbound_page.search_placeholder')}
           onSearch={handleSearch}
           searchValue={searchTerm}
           pagination={{
@@ -699,23 +703,23 @@ const OutboundPage: React.FC = () => {
           }}
           actions={[
             {
-              label: '新增出库单',
+              label: t('wms.outbound_page.dialog_create_title'),
               icon: <Plus size={16} />,
               onClick: handleOpenCreate,
             },
           ]}
           renderRowActions={renderRowActions}
           headerContent={statsContent}
-          emptyMessage='暂无出库单数据'
+          emptyMessage={t('wms.outbound_page.empty_message')}
           getRowId={(row) => row.id}
           mobileCardTitleKey='order_number'
           mobileCardSubtitleKey='customer_name'
           mobileCardDisplayFields={['order_type', 'status', 'expected_date', 'total_quantity']}
           mobileCardFieldLabels={{
-            order_type: '出库类型',
-            status: '状态',
-            expected_date: '预计日期',
-            total_quantity: '总数',
+            order_type: t('wms.outbound_page.detail_order_type'),
+            status: t('wms.outbound_page.detail_col_status'),
+            expected_date: t('wms.outbound_page.detail_expected_date'),
+            total_quantity: t('wms.outbound_page.mobile_field_total_quantity'),
           }}
         />
       )}
@@ -725,17 +729,17 @@ const OutboundPage: React.FC = () => {
           title=''
           subtitle=''
           breadcrumbs={[
-            { label: '首页', href: '/dashboard' },
-            { label: '仓储', href: WMS_PATHS.root },
-            { label: '出库管理', href: WMS_PATHS.outbound },
-            { label: '波次拣货' },
+            { label: t('wms.outbound_page.breadcrumb_home'), href: '/dashboard' },
+            { label: t('wms.outbound_page.breadcrumb_module'), href: WMS_PATHS.root },
+            { label: t('wms.outbound_page.breadcrumb_current'), href: WMS_PATHS.outbound },
+            { label: t('wms.outbound_page.tab_wave_picking') },
           ]}
           columns={wavePickColumns}
           data={wavePicks}
           loading={wavePicksLoading}
           filters={[]}
           searchable
-          searchPlaceholder='搜索波次号...'
+          searchPlaceholder={t('wms.outbound_page.search_wave_placeholder')}
           onSearch={() => {}}
           searchValue=''
           pagination={{
@@ -745,15 +749,15 @@ const OutboundPage: React.FC = () => {
             onPageChange: setWavePicksPage,
           }}
           actions={[]}
-          emptyMessage='暂无波次拣货数据'
+          emptyMessage={t('wms.outbound_page.empty_wave_message')}
           getRowId={(row) => row.id}
           mobileCardTitleKey='wave_number'
           mobileCardDisplayFields={['status', 'total_items', 'picked_items', 'assigned_to']}
           mobileCardFieldLabels={{
-            status: '状态',
-            total_items: '总项数',
-            picked_items: '已拣数',
-            assigned_to: '分配给',
+            status: t('wms.outbound_page.detail_col_status'),
+            total_items: t('wms.outbound_page.mobile_wave_field_total_items'),
+            picked_items: t('wms.outbound_page.mobile_wave_field_picked_items'),
+            assigned_to: t('wms.outbound_page.mobile_wave_field_assigned_to'),
           }}
         />
       )}
@@ -775,7 +779,7 @@ const OutboundPage: React.FC = () => {
             }}
           >
             <TextField
-              label='出库单号 *'
+              label={t('wms.outbound_page.field_order_number_required')}
               value={newItem.order_number}
               onChange={(e) => setNewItem({ ...newItem, order_number: e.target.value })}
               fullWidth
@@ -789,7 +793,7 @@ const OutboundPage: React.FC = () => {
               <InputLabel>出库类型</InputLabel>
               <Select
                 value={newItem.order_type}
-                label='出库类型'
+                label={t('wms.outbound_page.detail_order_type')}
                 onChange={(e) => setNewItem({ ...newItem, order_type: e.target.value })}
               >
                 {Object.entries(orderTypeConfig).map(([key, label]) => (
@@ -809,7 +813,7 @@ const OutboundPage: React.FC = () => {
               <InputLabel>仓库 *</InputLabel>
               <Select
                 value={newItem.warehouse_id}
-                label='仓库 *'
+                label={t('wms.outbound_page.field_warehouse_required')}
                 onChange={(e) => setNewItem({ ...newItem, warehouse_id: e.target.value })}
               >
                 {warehouses.map((w) => (
@@ -823,14 +827,14 @@ const OutboundPage: React.FC = () => {
               </Select>
             </FormControl>
             <TextField
-              label='客户'
+              label={t('wms.outbound_page.detail_customer')}
               value={newItem.customer_name}
               onChange={(e) => setNewItem({ ...newItem, customer_name: e.target.value })}
               fullWidth
               size='small'
             />
             <TextField
-              label='预计日期'
+              label={t('wms.outbound_page.detail_expected_date')}
               type='date'
               value={newItem.expected_date}
               onChange={(e) => setNewItem({ ...newItem, expected_date: e.target.value })}
@@ -839,7 +843,7 @@ const OutboundPage: React.FC = () => {
               slotProps={{ inputLabel: { shrink: true } } as const}
             />
             <TextField
-              label='发货地址'
+              label={t('wms.outbound_page.field_shipping_address')}
               value={newItem.shipping_address}
               onChange={(e) => setNewItem({ ...newItem, shipping_address: e.target.value })}
               fullWidth
@@ -847,7 +851,7 @@ const OutboundPage: React.FC = () => {
             />
             <Box sx={{ gridColumn: '1 / -1' }}>
               <TextField
-                label='备注'
+                label={t('wms.outbound_page.field_remark')}
                 value={newItem.remarks}
                 onChange={(e) => setNewItem({ ...newItem, remarks: e.target.value })}
                 fullWidth
@@ -1031,7 +1035,7 @@ const OutboundPage: React.FC = () => {
                       <Typography variant='caption'>{item.requested_quantity}</Typography>
                       <Typography variant='caption'>{item.picked_quantity}</Typography>
                       <Typography variant='caption'>
-                        {item.status === 'shipped' ? '已发货' : item.status}
+                        {item.status === 'shipped' ? t('wms.outbound_page.status_shipped') : item.status}
                       </Typography>
                     </Box>
                   ))}
@@ -1064,8 +1068,8 @@ const OutboundPage: React.FC = () => {
         isOpen={showDeleteConfirm}
         onClose={() => setShowDeleteConfirm(false)}
         onConfirm={handleDelete}
-        title='确认删除'
-        message='确定要删除这个出库单吗？此操作不可撤销。'
+        title={t('wms.outbound_page.dialog_delete_title')}
+        message={t('wms.outbound_page.dialog_delete_message')}
         danger
       />
     </PageContainer>

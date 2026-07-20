@@ -308,8 +308,8 @@ pub async fn submit_result(
     .await;
 
     match row {
-        Ok(r) => Json(ApiResponse::success(
-            InspectionTask {
+        Ok(r) => {
+            let task = InspectionTask {
                 id: r.get("id"),
                 tenant_id: r.get("tenant_id"),
                 task_no: r.get("task_no"),
@@ -327,9 +327,46 @@ pub async fn submit_result(
                 recorded_by: r.get("recorded_by"),
                 created_at: r.get("created_at"),
                 updated_at: r.get("updated_at"),
-            },
-            "检测结果提交成功",
-        )),
+            };
+
+            if let Some(ref publisher) = state.event_publisher {
+                let publisher = publisher.clone();
+                let tid = Uuid::parse_str(&task.id).unwrap_or_else(|_| Uuid::nil());
+                let tno = task.task_no.clone();
+                let sid = Uuid::parse_str(&task.sample_id).unwrap_or_else(|_| Uuid::nil());
+                let sno = task.sample_no.clone();
+                let conclusion = task.conclusion.clone().unwrap_or_default();
+                let recorded_by = task.recorded_by.clone().unwrap_or_default();
+                let result_val = task.result.clone().unwrap_or(serde_json::Value::Null);
+                tokio::spawn(async move {
+                    let payload = topems_shared::event::LimsInspectionResultSubmittedPayload {
+                        task_id: tid,
+                        task_no: tno,
+                        sample_id: sid,
+                        sample_no: sno,
+                        conclusion,
+                        result: result_val,
+                        recorded_by,
+                    };
+                    if let Err(e) = publisher
+                        .publish_event(
+                            topems_shared::event::EventType::LimsInspectionResultSubmitted,
+                            payload,
+                        )
+                        .await
+                    {
+                        tracing::warn!("[lims] LimsInspectionResultSubmitted 事件发布失败（graceful fallback）: {}", e);
+                    } else {
+                        tracing::info!(
+                            "[lims] LimsInspectionResultSubmitted 事件发布成功 - task_id={}",
+                            tid
+                        );
+                    }
+                });
+            }
+
+            Json(ApiResponse::success(task, "检测结果提交成功"))
+        }
         Err(e) => {
             tracing::error!("Failed to submit result: {}", e);
             Json(ApiResponse::error(500, "检测结果提交失败"))

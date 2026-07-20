@@ -1,0 +1,51 @@
+{
+  "title": "供应链管理",
+  "menu": {
+    "purchase_plan": "采购计划",
+    "supplier_evaluation": "供应商评估",
+    "demand_forecast": "需求预测",
+    "mrp": "物料需求计划",
+    "purchase_request": "采购申请",
+    "purchase_order": "采购订单"
+  },
+  "status": {
+    "draft": "草稿",
+    "submitted": "已提交",
+    "approved": "已审批",
+    "rejected": "已驳回",
+    "in_progress": "执行中",
+    "completed": "已完成",
+    "cancelled": "已取消"
+  },
+  "action": {
+    "create": "创建",
+    "edit": "编辑",
+    "delete": "删除",
+    "view": "查看",
+    "submit": "提交",
+    "approve": "审批",
+    "reject": "驳回",
+    "export": "导出"
+  },
+  "field": {
+    "plan_code": "计划编号",
+    "supplier": "供应商",
+    "material": "物料",
+    "quantity": "数量",
+    "unit": "单位",
+    "expected_date": "期望交货日期",
+    "amount": "金额",
+    "currency": "币种",
+    "warehouse": "仓库",
+    "priority": "优先级"
+  },
+  "message": {
+    "create_success": "创建成功",
+    "update_success": "更新成功",
+    "delete_success": "删除成功",
+    "approve_success": "审批成功",
+    "submit_success": "提交成功",
+    "confirm_delete": "确认删除？",
+    "no_data": "暂无数据"
+  }
+}

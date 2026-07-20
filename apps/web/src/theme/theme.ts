@@ -2,6 +2,8 @@ import type { Theme, ThemeOptions } from '@mui/material/styles';
 import { createTheme } from '@mui/material/styles';
 import { designTokens, semanticTokens } from './tokens';
 import { gradients } from './gradients';
+import { cyberpunkTokens } from './tokens/cyberpunk.tokens';
+import { injectCyberpunkComponentStyles } from './animations/cyberpunk.css';
 
 // 扩展 Theme 接口以包含 gradients
 declare module '@mui/material/styles' {
@@ -10,6 +12,16 @@ declare module '@mui/material/styles' {
   }
   interface ThemeOptions {
     gradients?: typeof gradients;
+  }
+}
+
+// 扩展 Palette 颜色，增加 cyberpunk 专属字段
+declare module '@mui/material/styles' {
+  interface Palette {
+    accent?: { main: string; light: string; dark: string };
+  }
+  interface PaletteOptions {
+    accent?: { main?: string; light?: string; dark?: string };
   }
 }
 
@@ -73,7 +85,30 @@ export const createCustomTheme = (): Theme => {
           divider: designTokens.colors.grey[700],
         },
       },
-    },
+      cyberpunk: {
+        palette: {
+          primary: { ...cyberpunkTokens.colors.primary },
+          secondary: { ...cyberpunkTokens.colors.secondary },
+          success: { ...cyberpunkTokens.colors.success },
+          warning: { ...cyberpunkTokens.colors.warning },
+          error: { ...cyberpunkTokens.colors.error },
+          info: { ...cyberpunkTokens.colors.info },
+          grey: cyberpunkTokens.colors.grey,
+          background: {
+            default: cyberpunkTokens.colors.background.default,
+            paper: cyberpunkTokens.colors.background.paper,
+          },
+          text: {
+            primary: cyberpunkTokens.colors.text.primary,
+            secondary: cyberpunkTokens.colors.text.secondary,
+            disabled: cyberpunkTokens.colors.text.disabled,
+          },
+          divider: cyberpunkTokens.colors.border.default,
+          action: { ...cyberpunkTokens.colors.action },
+          accent: { ...cyberpunkTokens.colors.accent },
+        },
+      },
+    } as ThemeOptions['colorSchemes'],
     palette: {
       primary: {
         ...designTokens.colors.primary,
@@ -716,6 +751,13 @@ export const createCustomTheme = (): Theme => {
             padding: '12px 20px 16px',
             gap: 8,
           },
+        },
+      },
+      // 赛博朋克主题组件样式（通过全局 CSS 注入，避免重复定义组件）
+      MuiCssBaseline: {
+        styleOverrides: () => {
+          injectCyberpunkComponentStyles();
+          return {};
         },
       },
     },

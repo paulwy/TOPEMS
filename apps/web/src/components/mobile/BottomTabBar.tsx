@@ -41,6 +41,7 @@ export const BottomTabBar: React.FC<BottomTabBarProps> = ({
 
   return (
     <Paper
+      className='bottom-tab-bar'
       elevation={8}
       sx={{
         position: 'fixed',

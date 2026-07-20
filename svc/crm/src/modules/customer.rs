@@ -13,6 +13,7 @@ use crate::middleware::tenant::get_tenant_id;
 use crate::models::{CreateCustomerRequest, Customer, UpdateCustomerRequest};
 use crate::modules::audit::log_audit_event;
 use crate::shared::permission::{check_permission, ModulePermission};
+use crate::workflow::CreateInstanceRequest;
 use topems_shared::auth::Claims;
 use topems_shared::{api_error, ApiResponse};
 
@@ -42,6 +43,16 @@ pub fn create_routes() -> Router<ApiState> {
                 .put(update_customer)
                 .delete(delete_customer),
         )
+        .route(
+            "/customers/{id}/approval/start",
+            post(start_customer_approval),
+        )
+        .route("/customers/{id}/approval/approve", post(approve_customer))
+        .route("/customers/{id}/approval/reject", post(reject_customer))
+}
+
+fn customer_cache_key(id: &Uuid) -> String {
+    format!("customer:{}", id)
 }
 
 async fn list_customers(
@@ -264,6 +275,12 @@ async fn get_customer(
         Err(e) => return e,
     }
 
+    let cache_key = customer_cache_key(&id);
+
+    if let Some(cached) = state.customer_cache.get(&cache_key) {
+        return Json(ApiResponse::success(cached, "从内存缓存获取客户成功"));
+    }
+
     let tenant_id = get_tenant_id(&claims, &headers);
 
     let result = sqlx::query_as::<_, Customer>(
@@ -282,6 +299,7 @@ async fn get_customer(
     match result {
         Ok(Some(mut customer)) => {
             let _ = customer.decrypt_fields(&state.encryption);
+            state.customer_cache.set(cache_key, customer.clone());
             Json(ApiResponse::success(customer, "获取客户成功"))
         }
         Ok(None) => Json(api_error(404, "客户不存在")),
@@ -409,6 +427,7 @@ async fn update_customer(
         Ok(customer) => {
             let mut customer = customer.clone();
             let _ = customer.decrypt_fields(&state.encryption);
+            state.customer_cache.remove(&customer_cache_key(&id));
             let response_data = serde_json::to_value(&customer).ok();
             (
                 Json(ApiResponse::success(customer, "客户更新成功")),
@@ -467,11 +486,14 @@ async fn delete_customer(
         .await;
 
     let (response, status_str, error_msg) = match &result {
-        Ok(r) if r.rows_affected() > 0 => (
-            Json(ApiResponse::success("".to_string(), "客户删除成功")),
-            "success".to_string(),
-            None,
-        ),
+        Ok(r) if r.rows_affected() > 0 => {
+            state.customer_cache.remove(&customer_cache_key(&id));
+            (
+                Json(ApiResponse::success("".to_string(), "客户删除成功")),
+                "success".to_string(),
+                None,
+            )
+        }
         Ok(_) => (
             Json(api_error(404, "客户不存在")),
             "error".to_string(),
@@ -578,4 +600,237 @@ async fn batch_delete_customers(
     .await;
 
     response
+}
+
+// ==================== Customer Approval Workflow ====================
+
+#[derive(Debug, Deserialize)]
+pub struct StartApprovalRequest {
+    pub workflow_id: uuid::Uuid,
+    pub comment: Option<String>,
+}
+
+#[derive(Debug, Deserialize)]
+pub struct ApprovalActionRequest {
+    pub comment: Option<String>,
+}
+
+async fn start_customer_approval(
+    State(state): State<ApiState>,
+    Extension(claims): Extension<Claims>,
+    Path(id): Path<Uuid>,
+    headers: HeaderMap,
+    Json(req): Json<StartApprovalRequest>,
+) -> Json<ApiResponse<serde_json::Value>> {
+    match check_permission(&state.db, &claims, &ModulePermission::CustomerWrite).await {
+        Ok(_) => {}
+        Err(e) => return e,
+    }
+
+    let tenant_id = get_tenant_id(&claims, &headers);
+
+    let customer = sqlx::query_as::<_, Customer>(
+        "SELECT id, tenant_id, name, customer_no, customer_type, status, rating, industry, contact_person, phone, email, address, website, source, description, created_at, updated_at FROM plugin_crm.customers WHERE id = $1 AND tenant_id = $2",
+    )
+    .bind(id)
+    .bind(tenant_id)
+    .fetch_one(&state.db)
+    .await;
+
+    if customer.is_err() {
+        return Json(ApiResponse::<serde_json::Value>::error(404, "客户不存在"));
+    }
+
+    tracing::info!(
+        "Starting approval for customer {}: workflow_id={}",
+        id,
+        req.workflow_id
+    );
+
+    let workflow_client = state.workflow_client.clone();
+    let id_str = id.to_string();
+    tokio::spawn(async move {
+        let request = CreateInstanceRequest {
+            workflow_id: req.workflow_id,
+            title: format!("客户审批 - {}", id_str),
+            variables: Some(serde_json::json!({
+                "customer_id": id_str,
+            })),
+        };
+        match workflow_client.create_instance(request).await {
+            Ok(instance) => {
+                tracing::info!("[crm] 客户审批流程启动成功 - instance_id={}", instance.id);
+            }
+            Err(e) => {
+                tracing::warn!("[crm] 客户审批流程启动失败（graceful fallback）: {}", e);
+            }
+        }
+    });
+
+    let result = sqlx::query(
+        "UPDATE plugin_crm.customers SET status = 'pending_approval', updated_at = NOW() WHERE id = $1",
+    )
+    .bind(id)
+    .execute(&state.db)
+    .await;
+
+    if result.is_ok() {
+        state.customer_cache.remove(&customer_cache_key(&id));
+    }
+
+    log_audit_event(
+        &state.db,
+        "start_approval".to_string(),
+        "customer".to_string(),
+        Some(id),
+        None,
+        Some(claims.sub.clone()),
+        None,
+        None,
+        Some(serde_json::json!({
+            "workflow_id": req.workflow_id.to_string(),
+            "comment": req.comment,
+        })),
+        "success".to_string(),
+        None,
+        &headers,
+    )
+    .await;
+
+    Json(ApiResponse::success(
+        serde_json::json!({
+            "customer_id": id,
+            "workflow_id": req.workflow_id,
+            "approval_status": "pending"
+        }),
+        "客户审批流程已启动",
+    ))
+}
+
+async fn approve_customer(
+    State(state): State<ApiState>,
+    Extension(claims): Extension<Claims>,
+    Path(id): Path<Uuid>,
+    headers: HeaderMap,
+    Json(_req): Json<ApprovalActionRequest>,
+) -> Json<ApiResponse<serde_json::Value>> {
+    match check_permission(&state.db, &claims, &ModulePermission::CustomerWrite).await {
+        Ok(_) => {}
+        Err(e) => return e,
+    }
+
+    let tenant_id = get_tenant_id(&claims, &headers);
+
+    let customer = sqlx::query_as::<_, Customer>(
+        "SELECT id, tenant_id, name, customer_no, customer_type, status, rating, industry, contact_person, phone, email, address, website, source, description, created_at, updated_at FROM plugin_crm.customers WHERE id = $1 AND tenant_id = $2",
+    )
+    .bind(id)
+    .bind(tenant_id)
+    .fetch_one(&state.db)
+    .await;
+
+    if customer.is_err() {
+        return Json(ApiResponse::<serde_json::Value>::error(404, "客户不存在"));
+    }
+
+    let result = sqlx::query(
+        "UPDATE plugin_crm.customers SET status = 'approved', updated_at = NOW() WHERE id = $1",
+    )
+    .bind(id)
+    .execute(&state.db)
+    .await;
+
+    if result.is_ok() {
+        state.customer_cache.remove(&customer_cache_key(&id));
+    }
+
+    log_audit_event(
+        &state.db,
+        "approve".to_string(),
+        "customer".to_string(),
+        Some(id),
+        None,
+        Some(claims.sub.clone()),
+        None,
+        None,
+        Some(serde_json::json!({
+            "status": "approved",
+        })),
+        "success".to_string(),
+        None,
+        &headers,
+    )
+    .await;
+
+    Json(ApiResponse::success(
+        serde_json::json!({
+            "customer_id": id,
+            "approval_status": "approved"
+        }),
+        "客户审批通过",
+    ))
+}
+
+async fn reject_customer(
+    State(state): State<ApiState>,
+    Extension(claims): Extension<Claims>,
+    Path(id): Path<Uuid>,
+    headers: HeaderMap,
+    Json(_req): Json<ApprovalActionRequest>,
+) -> Json<ApiResponse<serde_json::Value>> {
+    match check_permission(&state.db, &claims, &ModulePermission::CustomerWrite).await {
+        Ok(_) => {}
+        Err(e) => return e,
+    }
+
+    let tenant_id = get_tenant_id(&claims, &headers);
+
+    let customer = sqlx::query_as::<_, Customer>(
+        "SELECT id, tenant_id, name, customer_no, customer_type, status, rating, industry, contact_person, phone, email, address, website, source, description, created_at, updated_at FROM plugin_crm.customers WHERE id = $1 AND tenant_id = $2",
+    )
+    .bind(id)
+    .bind(tenant_id)
+    .fetch_one(&state.db)
+    .await;
+
+    if customer.is_err() {
+        return Json(ApiResponse::<serde_json::Value>::error(404, "客户不存在"));
+    }
+
+    let result = sqlx::query(
+        "UPDATE plugin_crm.customers SET status = 'rejected', updated_at = NOW() WHERE id = $1",
+    )
+    .bind(id)
+    .execute(&state.db)
+    .await;
+
+    if result.is_ok() {
+        state.customer_cache.remove(&customer_cache_key(&id));
+    }
+
+    log_audit_event(
+        &state.db,
+        "reject".to_string(),
+        "customer".to_string(),
+        Some(id),
+        None,
+        Some(claims.sub.clone()),
+        None,
+        None,
+        Some(serde_json::json!({
+            "status": "rejected",
+        })),
+        "success".to_string(),
+        None,
+        &headers,
+    )
+    .await;
+
+    Json(ApiResponse::success(
+        serde_json::json!({
+            "customer_id": id,
+            "approval_status": "rejected"
+        }),
+        "客户审批已驳回",
+    ))
 }

@@ -23,9 +23,11 @@ import {
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { apiLogger } from '@/utils/logger';
 
+import { useTranslation } from 'react-i18next';
 interface PositionManagementPageProps {}
 
 const PositionManagementPage: React.FC<PositionManagementPageProps> = () => {
+  const { t } = useTranslation();
   const theme = useTheme();
   const { addNotification } = useNotificationStore();
   const queryClient = useQueryClient();
@@ -83,10 +85,10 @@ const PositionManagementPage: React.FC<PositionManagementPageProps> = () => {
 
   React.useEffect(() => {
     if (positionsQuery.isError) {
-      apiLogger.error('加载岗位列表失败:', positionsQuery.error);
+      apiLogger.error(t('hrm.hrm_position_page.list'), positionsQuery.error);
       addNotification({
-        title: '加载失败',
-        message: (positionsQuery.error as { message?: string })?.message || '获取岗位列表失败',
+        title: t('hrm.hrm_position_page.fail'),
+        message: (positionsQuery.error as { message?: string })?.message || t('hrm.hrm_position_page.list_1'),
         type: 'error',
       });
     }
@@ -94,10 +96,10 @@ const PositionManagementPage: React.FC<PositionManagementPageProps> = () => {
 
   React.useEffect(() => {
     if (departmentsQuery.isError) {
-      apiLogger.error('加载部门列表失败:', departmentsQuery.error);
+      apiLogger.error(t('hrm.hrm_position_page.list_2'), departmentsQuery.error);
       addNotification({
-        title: '加载失败',
-        message: (departmentsQuery.error as { message?: string })?.message || '获取部门列表失败',
+        title: t('hrm.hrm_position_page.fail'),
+        message: (departmentsQuery.error as { message?: string })?.message || t('hrm.hrm_position_page.list_3'),
         type: 'error',
       });
     }
@@ -107,17 +109,17 @@ const PositionManagementPage: React.FC<PositionManagementPageProps> = () => {
     mutationFn: (data: Partial<Position>) => positionApi.create(data),
     onSuccess: () => {
       addNotification({
-        title: '成功',
-        message: '岗位创建成功',
+        title: t('hrm.hrm_position_page.success'),
+        message: t('hrm.hrm_position_page.create'),
         type: 'success',
       });
       queryClient.invalidateQueries({ queryKey: ['hrm-positions'] });
     },
     onError: (error: unknown) => {
-      apiLogger.error('创建岗位失败:', error);
+      apiLogger.error(t('hrm.hrm_position_page.create_1'), error);
       addNotification({
-        title: '失败',
-        message: (error as { message?: string }).message || '创建岗位失败',
+        title: t('hrm.hrm_position_page.fail_1'),
+        message: (error as { message?: string }).message || t('hrm.hrm_position_page.create_2'),
         type: 'error',
       });
     },
@@ -128,17 +130,17 @@ const PositionManagementPage: React.FC<PositionManagementPageProps> = () => {
       positionApi.update(id, data),
     onSuccess: () => {
       addNotification({
-        title: '成功',
-        message: '岗位更新成功',
+        title: t('hrm.hrm_position_page.success'),
+        message: t('hrm.hrm_position_page.update'),
         type: 'success',
       });
       queryClient.invalidateQueries({ queryKey: ['hrm-positions'] });
     },
     onError: (error: unknown) => {
-      apiLogger.error('更新岗位失败:', error);
+      apiLogger.error(t('hrm.hrm_position_page.update_1'), error);
       addNotification({
-        title: '失败',
-        message: (error as { message?: string }).message || '更新岗位失败',
+        title: t('hrm.hrm_position_page.fail_1'),
+        message: (error as { message?: string }).message || t('hrm.hrm_position_page.update_2'),
         type: 'error',
       });
     },
@@ -148,17 +150,17 @@ const PositionManagementPage: React.FC<PositionManagementPageProps> = () => {
     mutationFn: (id: string) => positionApi.delete(id),
     onSuccess: () => {
       addNotification({
-        title: '成功',
-        message: '岗位删除成功',
+        title: t('hrm.hrm_position_page.success'),
+        message: t('hrm.hrm_position_page.delete_success'),
         type: 'success',
       });
       queryClient.invalidateQueries({ queryKey: ['hrm-positions'] });
     },
     onError: (error: unknown) => {
-      apiLogger.error('删除岗位失败:', error);
+      apiLogger.error(t('hrm.hrm_position_page.delete'), error);
       addNotification({
-        title: '失败',
-        message: (error as { message?: string }).message || '删除岗位失败',
+        title: t('hrm.hrm_position_page.fail_1'),
+        message: (error as { message?: string }).message || t('hrm.hrm_position_page.delete_1'),
         type: 'error',
       });
     },
@@ -182,7 +184,7 @@ const PositionManagementPage: React.FC<PositionManagementPageProps> = () => {
   };
 
   const handleDelete = async (id: string) => {
-    if (!confirm('确定要删除这个岗位吗？')) return;
+    if (!confirm(t('hrm.hrm_position_page.confirm'))) return;
     await deletePositionMutation.mutateAsync(id);
   };
 
@@ -214,8 +216,8 @@ const PositionManagementPage: React.FC<PositionManagementPageProps> = () => {
       inactive: 'default',
     };
     const labels: Record<string, string> = {
-      active: '启用',
-      inactive: '禁用',
+      active: t('hrm.hrm_position_page.active'),
+      inactive: t('hrm.hrm_position_page.text_710ad0'),
     };
     return (
       <StatusBadge
@@ -234,25 +236,25 @@ const PositionManagementPage: React.FC<PositionManagementPageProps> = () => {
 
     return [
       {
-        title: '总岗位数',
+        title: t('hrm.hrm_position_page.text_7fa104'),
         value: totalPositions,
         icon: <Briefcase style={{ width: 24, height: 24 }} />,
         color: 'primary' as const,
       },
       {
-        title: '启用岗位',
+        title: t('hrm.hrm_position_page.active_1'),
         value: activePositions,
         icon: <CheckCircle style={{ width: 24, height: 24 }} />,
         color: 'success' as const,
       },
       {
-        title: '禁用岗位',
+        title: t('hrm.hrm_position_page.text_a240fa'),
         value: inactivePositions,
         icon: <XCircle style={{ width: 24, height: 24 }} />,
         color: 'warning' as const,
       },
       {
-        title: '总人数',
+        title: t('hrm.hrm_position_page.text_c9088f'),
         value: totalEmployees,
         icon: <Users style={{ width: 24, height: 24 }} />,
         color: 'info' as const,
@@ -264,7 +266,7 @@ const PositionManagementPage: React.FC<PositionManagementPageProps> = () => {
     () => [
       {
         id: 'name',
-        label: '岗位名称',
+        label: t('hrm.hrm_position_page.name'),
         render: (row: Position) => {
           return (
             <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5 }}>
@@ -303,7 +305,7 @@ const PositionManagementPage: React.FC<PositionManagementPageProps> = () => {
       },
       {
         id: 'department_id',
-        label: '所属部门',
+        label: t('hrm.hrm_position_page.text_68923b'),
         render: (row: Position) => (
           <Typography
             variant='body2'
@@ -315,7 +317,7 @@ const PositionManagementPage: React.FC<PositionManagementPageProps> = () => {
       },
       {
         id: 'level',
-        label: '岗位级别',
+        label: t('hrm.hrm_position_page.text_f42e3d'),
         render: (row: Position) => (
           <Typography
             variant='body2'
@@ -327,7 +329,7 @@ const PositionManagementPage: React.FC<PositionManagementPageProps> = () => {
       },
       {
         id: 'salary_range',
-        label: '薪资范围',
+        label: t('hrm.hrm_position_page.text_532859'),
         render: (row: Position) => (
           <Typography
             variant='body2'
@@ -339,7 +341,7 @@ const PositionManagementPage: React.FC<PositionManagementPageProps> = () => {
       },
       {
         id: 'status',
-        label: '状态',
+        label: t('hrm.hrm_position_page.status'),
         render: (row: Position) => getStatusBadge(row.status),
       },
     ],
@@ -348,34 +350,34 @@ const PositionManagementPage: React.FC<PositionManagementPageProps> = () => {
 
   const rowActions: RowAction<Position>[] = [
     {
-      label: '查看',
+      label: t('hrm.hrm_position_page.view'),
       icon: <Eye style={{ width: 16, height: 16 }} />,
       onClick: handleView,
     },
     {
-      label: '编辑',
+      label: t('hrm.hrm_position_page.edit'),
       icon: <Edit style={{ width: 16, height: 16 }} />,
       onClick: handleEdit,
     },
     {
-      label: '删除',
+      label: t('hrm.hrm_position_page.delete_2'),
       icon: <Trash2 style={{ width: 16, height: 16 }} />,
       color: 'error',
       onClick: (row: Position) => handleDelete(row.id),
       confirm: true,
-      confirmMessage: '确定要删除这个岗位吗？',
+      confirmMessage: t('hrm.hrm_position_page.confirm'),
     },
   ];
 
   const exportFields = useMemo(
     () => [
-      { key: 'name', title: '岗位名称' },
-      { key: 'code', title: '岗位编码' },
-      { key: 'level', title: '岗位级别' },
-      { key: 'min_salary', title: '最低薪资' },
-      { key: 'max_salary', title: '最高薪资' },
-      { key: 'status', title: '状态' },
-      { key: 'employee_count', title: '员工数量' },
+      { key: 'name', title: t('hrm.hrm_position_page.name') },
+      { key: 'code', title: t('hrm.hrm_position_page.code') },
+      { key: 'level', title: t('hrm.hrm_position_page.text_f42e3d') },
+      { key: 'min_salary', title: t('hrm.hrm_position_page.text_ac4667') },
+      { key: 'max_salary', title: t('hrm.hrm_position_page.text_d8c7a1') },
+      { key: 'status', title: t('hrm.hrm_position_page.status') },
+      { key: 'employee_count', title: t('hrm.hrm_position_page.quantity') },
     ],
     []
   );
@@ -384,9 +386,9 @@ const PositionManagementPage: React.FC<PositionManagementPageProps> = () => {
     <Box sx={{ minHeight: '100vh', bgcolor: 'grey.50' }}>
       <Box sx={{ maxWidth: 1280, mx: 'auto', px: 3, py: 3 }}>
         <ListPageTemplate
-          title='岗位管理'
-          subtitle='管理企业岗位信息、薪资范围'
-          breadcrumbs={[{ label: '人力资源', href: '/hrm' }, { label: '岗位管理' }]}
+          title={t('hrm.hrm_position_page.text_a862dd')}
+          subtitle={t('hrm.hrm_position_page.info')}
+          breadcrumbs={[{ label: t('hrm.hrm_position_page.text_40fb54'), href: '/hrm' }, { label: t('hrm.hrm_position_page.text_a862dd') }]}
           columns={columns}
           data={data.items}
           loading={loading}
@@ -406,16 +408,16 @@ const PositionManagementPage: React.FC<PositionManagementPageProps> = () => {
             },
           }}
           searchable
-          searchPlaceholder='搜索岗位名称或编码'
+          searchPlaceholder={t('hrm.hrm_position_page.search')}
           searchValue={searchText}
           onSearch={(value: string) => setSearchText(value)}
           filters={[
             {
               id: 'department',
-              label: '部门',
+              label: t('hrm.hrm_position_page.text_1e1459'),
               type: 'select',
               options: [
-                { label: '全部部门', value: 'all' },
+                { label: t('hrm.hrm_position_page.all'), value: 'all' },
                 ...departments.map((d) => ({ label: d.name, value: d.id })),
               ],
               value: departmentFilter,
@@ -423,12 +425,12 @@ const PositionManagementPage: React.FC<PositionManagementPageProps> = () => {
             },
             {
               id: 'status',
-              label: '状态',
+              label: t('hrm.hrm_position_page.status'),
               type: 'select',
               options: [
-                { label: '全部状态', value: 'all' },
-                { label: '启用', value: 'active' },
-                { label: '禁用', value: 'inactive' },
+                { label: t('hrm.hrm_position_page.status_1'), value: 'all' },
+                { label: t('hrm.hrm_position_page.active'), value: 'active' },
+                { label: t('hrm.hrm_position_page.text_710ad0'), value: 'inactive' },
               ],
               value: statusFilter,
               onChange: (value: unknown) => setStatusFilter(value as string),
@@ -436,20 +438,20 @@ const PositionManagementPage: React.FC<PositionManagementPageProps> = () => {
           ]}
           actions={[
             {
-              label: '导出',
+              label: t('hrm.hrm_position_page.export'),
               icon: <Briefcase style={{ width: 18, height: 18 }} />,
               onClick: () => {},
               variant: 'outlined',
             },
             {
-              label: '新增岗位',
+              label: t('hrm.hrm_position_page.add'),
               icon: <Plus style={{ width: 18, height: 18 }} />,
               onClick: handleAdd,
               variant: 'contained',
             },
           ]}
           onRefresh={() => queryClient.invalidateQueries({ queryKey: ['hrm-positions'] })}
-          emptyMessage='暂无岗位数据'
+          emptyMessage={t('hrm.hrm_position_page.no_data')}
           emptyIcon={
             <Briefcase style={{ width: 48, height: 48, color: theme.palette.text.disabled }} />
           }
@@ -459,17 +461,17 @@ const PositionManagementPage: React.FC<PositionManagementPageProps> = () => {
               <DataExport
                 data={data.items as unknown as Record<string, unknown>[]}
                 fields={exportFields}
-                defaultFileName='岗位数据'
-                buttonText='导出'
+                defaultFileName={t('hrm.hrm_position_page.text_1ae711')}
+                buttonText={t('hrm.hrm_position_page.export')}
               />
             </Box>
           }
           exportable
-          exportFileName='岗位列表'
+          exportFileName={t('hrm.hrm_position_page.list_4')}
           persistFilters
           persistSearch
           emptyActionButton={{
-            label: '新增岗位',
+            label: t('hrm.hrm_position_page.add'),
             icon: <Plus size={16} />,
             onClick: handleAdd,
           }}
@@ -479,12 +481,12 @@ const PositionManagementPage: React.FC<PositionManagementPageProps> = () => {
       <Dialog
         open={showCreateModal}
         onClose={() => setShowCreateModal(false)}
-        title='新增岗位'
+        title={t('hrm.hrm_position_page.add')}
         maxWidth='sm'
         fullWidth
-        cancelButton={{ label: '取消' }}
+        cancelButton={{ label: t('hrm.hrm_position_page.cancel') }}
         confirmButton={{
-          label: '创建',
+          label: t('hrm.hrm_position_page.create_3'),
           onClick: () => handleCreate({ preventDefault: () => {} } as React.FormEvent),
           disabled: createPositionMutation.isPending,
         }}
@@ -494,7 +496,7 @@ const PositionManagementPage: React.FC<PositionManagementPageProps> = () => {
             <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
               <FormField
                 name='create-name'
-                label='岗位名称 *'
+                label={t('hrm.hrm_position_page.name_1')}
                 type='text'
                 required
                 fullWidth
@@ -502,39 +504,39 @@ const PositionManagementPage: React.FC<PositionManagementPageProps> = () => {
                 onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
                   handleInputChange('name', e.target.value)
                 }
-                placeholder='请输入岗位名称'
+                placeholder={t('hrm.hrm_position_page.please_input')}
               />
               <FormField
                 name='create-code'
-                label='岗位编码'
+                label={t('hrm.hrm_position_page.code')}
                 type='text'
                 fullWidth
                 value={(formData as Position)?.code || ''}
                 onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
                   handleInputChange('code', e.target.value)
                 }
-                placeholder='请输入岗位编码'
+                placeholder={t('hrm.hrm_position_page.please_input_1')}
               />
               <FormSelect
                 name='department_id'
-                label='所属部门'
+                label={t('hrm.hrm_position_page.text_68923b')}
                 value={(formData as Position)?.department_id || ''}
                 options={[
-                  { value: 'none', label: '无' },
+                  { value: 'none', label: t('hrm.hrm_position_page.text_d81bb2') },
                   ...departments.map((d) => ({ value: d.id, label: d.name })),
                 ]}
                 onChange={(value) => handleInputChange('department_id', value)}
               />
               <FormField
                 name='create-level'
-                label='岗位级别'
+                label={t('hrm.hrm_position_page.text_f42e3d')}
                 type='text'
                 fullWidth
                 value={(formData as Position)?.level || ''}
                 onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
                   handleInputChange('level', e.target.value)
                 }
-                placeholder='请输入岗位级别'
+                placeholder={t('hrm.hrm_position_page.please_input_2')}
               />
               <Box
                 sx={{
@@ -545,30 +547,30 @@ const PositionManagementPage: React.FC<PositionManagementPageProps> = () => {
               >
                 <FormField
                   name='create-min-salary'
-                  label='最低薪资'
+                  label={t('hrm.hrm_position_page.text_ac4667')}
                   type='number'
                   fullWidth
                   value={(formData as Position)?.min_salary || ''}
                   onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
                     handleInputChange('min_salary', parseFloat(e.target.value) || 0)
                   }
-                  placeholder='最低薪资'
+                  placeholder={t('hrm.hrm_position_page.text_ac4667')}
                 />
                 <FormField
                   name='create-max-salary'
-                  label='最高薪资'
+                  label={t('hrm.hrm_position_page.text_d8c7a1')}
                   type='number'
                   fullWidth
                   value={(formData as Position)?.max_salary || ''}
                   onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
                     handleInputChange('max_salary', parseFloat(e.target.value) || 0)
                   }
-                  placeholder='最高薪资'
+                  placeholder={t('hrm.hrm_position_page.text_d8c7a1')}
                 />
               </Box>
               <FormField
                 name='create-description'
-                label='岗位描述'
+                label={t('hrm.hrm_position_page.description')}
                 multiline
                 rows={3}
                 fullWidth
@@ -576,11 +578,11 @@ const PositionManagementPage: React.FC<PositionManagementPageProps> = () => {
                 onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
                   handleInputChange('description', e.target.value)
                 }
-                placeholder='请输入岗位描述'
+                placeholder={t('hrm.hrm_position_page.please_input_3')}
               />
               <FormField
                 name='create-requirements'
-                label='任职要求'
+                label={t('hrm.hrm_position_page.text_2bc4c4')}
                 multiline
                 rows={3}
                 fullWidth
@@ -588,15 +590,15 @@ const PositionManagementPage: React.FC<PositionManagementPageProps> = () => {
                 onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
                   handleInputChange('requirements', e.target.value)
                 }
-                placeholder='请输入任职要求'
+                placeholder={t('hrm.hrm_position_page.please_input_4')}
               />
               <FormSelect
                 name='status'
-                label='状态'
+                label={t('hrm.hrm_position_page.status')}
                 value={(formData as Position)?.status || 'active'}
                 options={[
-                  { value: 'active', label: '启用' },
-                  { value: 'inactive', label: '禁用' },
+                  { value: 'active', label: t('hrm.hrm_position_page.active') },
+                  { value: 'inactive', label: t('hrm.hrm_position_page.text_710ad0') },
                 ]}
                 onChange={(value) => handleInputChange('status', value)}
               />
@@ -608,7 +610,7 @@ const PositionManagementPage: React.FC<PositionManagementPageProps> = () => {
                 variant='contained'
                 disabled={createPositionMutation.isPending}
               >
-                {createPositionMutation.isPending ? '创建中...' : '创建'}
+                {createPositionMutation.isPending ? t('hrm.hrm_position_page.create_4') : t('hrm.hrm_position_page.create_3')}
               </Button>
             </DialogActions>
           </form>
@@ -618,18 +620,18 @@ const PositionManagementPage: React.FC<PositionManagementPageProps> = () => {
       <Dialog
         open={showEditModal}
         onClose={() => setShowEditModal(false)}
-        title='编辑岗位'
+        title={t('hrm.hrm_position_page.edit_1')}
         maxWidth='sm'
         fullWidth
         cancelButton={{
-          label: '取消',
+          label: t('hrm.hrm_position_page.cancel'),
           onClick: () => {
             setShowEditModal(false);
             setSelectedPosition(null);
           },
         }}
         confirmButton={{
-          label: '保存',
+          label: t('hrm.hrm_position_page.save'),
           onClick: () => handleUpdate({ preventDefault: () => {} } as React.FormEvent),
           disabled: updatePositionMutation.isPending,
         }}
@@ -639,7 +641,7 @@ const PositionManagementPage: React.FC<PositionManagementPageProps> = () => {
             <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
               <FormField
                 name='edit-name'
-                label='岗位名称 *'
+                label={t('hrm.hrm_position_page.name_1')}
                 type='text'
                 required
                 fullWidth
@@ -650,7 +652,7 @@ const PositionManagementPage: React.FC<PositionManagementPageProps> = () => {
               />
               <FormField
                 name='edit-code'
-                label='岗位编码'
+                label={t('hrm.hrm_position_page.code')}
                 type='text'
                 fullWidth
                 value={(formData as Position)?.code || ''}
@@ -660,17 +662,17 @@ const PositionManagementPage: React.FC<PositionManagementPageProps> = () => {
               />
               <FormSelect
                 name='department_id'
-                label='所属部门'
+                label={t('hrm.hrm_position_page.text_68923b')}
                 value={(formData as Position)?.department_id || ''}
                 options={[
-                  { value: 'none', label: '无' },
+                  { value: 'none', label: t('hrm.hrm_position_page.text_d81bb2') },
                   ...departments.map((d) => ({ value: d.id, label: d.name })),
                 ]}
                 onChange={(value) => handleInputChange('department_id', value)}
               />
               <FormField
                 name='edit-level'
-                label='岗位级别'
+                label={t('hrm.hrm_position_page.text_f42e3d')}
                 type='text'
                 fullWidth
                 value={(formData as Position)?.level || ''}
@@ -687,7 +689,7 @@ const PositionManagementPage: React.FC<PositionManagementPageProps> = () => {
               >
                 <FormField
                   name='edit-min-salary'
-                  label='最低薪资'
+                  label={t('hrm.hrm_position_page.text_ac4667')}
                   type='number'
                   fullWidth
                   value={(formData as Position)?.min_salary || ''}
@@ -697,7 +699,7 @@ const PositionManagementPage: React.FC<PositionManagementPageProps> = () => {
                 />
                 <FormField
                   name='edit-max-salary'
-                  label='最高薪资'
+                  label={t('hrm.hrm_position_page.text_d8c7a1')}
                   type='number'
                   fullWidth
                   value={(formData as Position)?.max_salary || ''}
@@ -708,7 +710,7 @@ const PositionManagementPage: React.FC<PositionManagementPageProps> = () => {
               </Box>
               <FormField
                 name='edit-description'
-                label='岗位描述'
+                label={t('hrm.hrm_position_page.description')}
                 multiline
                 rows={3}
                 fullWidth
@@ -719,7 +721,7 @@ const PositionManagementPage: React.FC<PositionManagementPageProps> = () => {
               />
               <FormField
                 name='edit-requirements'
-                label='任职要求'
+                label={t('hrm.hrm_position_page.text_2bc4c4')}
                 multiline
                 rows={3}
                 fullWidth
@@ -730,11 +732,11 @@ const PositionManagementPage: React.FC<PositionManagementPageProps> = () => {
               />
               <FormSelect
                 name='status'
-                label='状态'
+                label={t('hrm.hrm_position_page.status')}
                 value={(formData as Position)?.status || 'active'}
                 options={[
-                  { value: 'active', label: '启用' },
-                  { value: 'inactive', label: '禁用' },
+                  { value: 'active', label: t('hrm.hrm_position_page.active') },
+                  { value: 'inactive', label: t('hrm.hrm_position_page.text_710ad0') },
                 ]}
                 onChange={(value) => handleInputChange('status', value)}
               />
@@ -746,10 +748,10 @@ const PositionManagementPage: React.FC<PositionManagementPageProps> = () => {
       <Dialog
         open={showViewModal}
         onClose={() => setShowViewModal(false)}
-        title='岗位详情'
+        title={t('hrm.hrm_position_page.detail')}
         maxWidth='sm'
         fullWidth
-        confirmButton={{ label: '关闭' }}
+        confirmButton={{ label: t('hrm.hrm_position_page.close') }}
       >
         <DialogContent>
           {selectedPosition && (

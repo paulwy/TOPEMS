@@ -18,12 +18,14 @@ mod middleware;
 mod shared;
 
 pub mod models;
+pub mod modules;
 
 use std::env;
-pub mod modules;
-pub mod services;
-
 use std::net::SocketAddr;
+use std::sync::Arc;
+use std::time::Duration;
+mod event_handlers;
+pub mod services;
 
 use axum::{
     extract::State,
@@ -80,13 +82,31 @@ async fn main() -> anyhow::Result<()> {
         tracing::warn!("LIMS module database init warning: {}", e);
     }
 
+    if let Err(e) = event_handlers::start_event_subscribers(pool.clone()).await {
+        tracing::warn!("⚠️ LIMS 事件订阅者启动失败: {}", e);
+    }
+
     let auth_state = AuthState::from_env();
     let health_config = SimpleHealthConfig::new("topems-lims").with_db(pool.clone());
+
+    let event_publisher = match topems_shared::event::EventPublisher::new("topems-lims") {
+        Ok(publisher) => {
+            tracing::info!("📢 事件发布服务初始化成功");
+            Some(Arc::new(publisher))
+        }
+        Err(e) => {
+            tracing::warn!("⚠️ 事件发布服务初始化失败（不阻塞启动）: {}", e);
+            None
+        }
+    };
 
     let state = AppState {
         auth_state,
         pool,
         health_config,
+        event_publisher,
+        test_method_cache: Arc::new(shared::InMemoryCache::new(Duration::from_secs(3600))),
+        instrument_cache: Arc::new(shared::InMemoryCache::new(Duration::from_secs(1800))),
     };
 
     let cors = create_cors_layer();

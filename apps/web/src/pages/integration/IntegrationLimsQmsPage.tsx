@@ -4,6 +4,7 @@
  */
 
 import React, { useState } from 'react';
+import { useUrlListState } from '@/hooks';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { QUERY_KEYS } from '@/lib/reactQuery';
 import { PageContainer } from '@/components/common';
@@ -83,8 +84,21 @@ const IntegrationLimsQmsPage: React.FC = () => {
   const queryClient = useQueryClient();
 
   // 数据状态
-  const [pagination, setPagination] = useState({ page: 0, pageSize: 10 });
-  const [searchValue, setSearchValue] = useState('');
+  const listState = useUrlListState({
+    defaultSearch: '',
+    defaultPageSize: 10,
+    baseIndex: 0,
+    historyMode: 'replace',
+  });
+  const {
+    searchQuery,
+    setSearchQuery,
+    debouncedSearch,
+    currentPage: page,
+    setCurrentPage: setPage,
+    pageSize,
+    setPageSize,
+  } = listState;
 
   // 弹窗状态
   const [showCreateModal, setShowCreateModal] = useState(false);
@@ -153,14 +167,14 @@ const IntegrationLimsQmsPage: React.FC = () => {
 
   // 筛选数据
   const filteredData = React.useMemo(() => {
-    if (!searchValue) return syncs;
-    const keyword = searchValue.toLowerCase();
+    if (!debouncedSearch) return syncs;
+    const keyword = debouncedSearch.toLowerCase();
     return syncs.filter(
       (sync) =>
         sync.sample_name.toLowerCase().includes(keyword) ||
         sync.lims_sample_id.toLowerCase().includes(keyword)
     );
-  }, [syncs, searchValue]);
+  }, [syncs, debouncedSearch]);
 
   // 表格列定义
   const columns: ColumnDef<LimsQmsSync>[] = [
@@ -289,14 +303,14 @@ const IntegrationLimsQmsPage: React.FC = () => {
         data={filteredData}
         loading={loading}
         pagination={{
-          page: pagination.page,
-          pageSize: pagination.pageSize,
+          page,
+          pageSize,
           total: filteredData.length,
-          onPageChange: (page) => setPagination((p) => ({ ...p, page })),
-          onPageSizeChange: (pageSize) => setPagination({ page: 0, pageSize }),
+          onPageChange: setPage,
+          onPageSizeChange: (newSize) => { setPageSize(newSize); setPage(0); },
         }}
-        searchValue={searchValue}
-        onSearch={setSearchValue}
+        searchValue={searchQuery}
+        onSearch={setSearchQuery}
         searchable
         searchPlaceholder='搜索样本名称或 ID...'
         actions={[

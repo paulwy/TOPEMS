@@ -39,6 +39,7 @@ export function ModeToggle() {
       <Button
         variant='outlined'
         size='small'
+        className='theme-toggle-btn'
         onClick={handleMenuOpen}
       >
         {getIcon()}

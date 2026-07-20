@@ -29,6 +29,7 @@ import {
 import type { SelectChangeEvent } from '@mui/material';
 import { ConfirmDialog } from '@topems/shared-components';
 
+import { useTranslation } from 'react-i18next';
 interface Receipt {
   id: string;
   receipt_number: string;
@@ -41,6 +42,7 @@ interface Receipt {
 }
 
 const FinanceReceiptPage: React.FC = () => {
+  const { t } = useTranslation();
   const { success, error, notifications, hideNotification } = useNotification();
   const queryClient = useQueryClient();
 
@@ -56,7 +58,7 @@ const FinanceReceiptPage: React.FC = () => {
 
   const [newReceipt, setNewReceipt] = useState({
     customer: '',
-    receipt_method: '银行转账',
+    receipt_method: t('finance.finance_receipt_page.text_02ab80'),
     amount: 0,
     bank_account: '',
   });
@@ -69,13 +71,13 @@ const FinanceReceiptPage: React.FC = () => {
     let statusText = '';
     switch (record.status) {
       case 'recorded':
-        statusText = '已到账';
+        statusText = t('finance.finance_receipt_page.text_50de5a');
         break;
       case 'matched':
-        statusText = '已核销';
+        statusText = t('finance.finance_receipt_page.text_77af84');
         break;
       case 'cancelled':
-        statusText = '已取消';
+        statusText = t('finance.finance_receipt_page.cancelled');
         break;
       default:
         statusText = record.status;
@@ -86,7 +88,7 @@ const FinanceReceiptPage: React.FC = () => {
       receipt_number: record.collection_no,
       receipt_date: record.collection_date,
       customer: record.customer_name || '',
-      receipt_method: '银行转账',
+      receipt_method: t('finance.finance_receipt_page.text_02ab80'),
       amount: record.amount,
       bank_account: bankAccount,
       status: statusText,
@@ -103,7 +105,7 @@ const FinanceReceiptPage: React.FC = () => {
       if (response.success && response.data) {
         return response.data.items.map(mapCollectionRecordToReceipt);
       }
-      throw new Error(response.message || '获取收款记录失败');
+      throw new Error(response.message || t('finance.finance_receipt_page.fail'));
     },
     staleTime: 60000,
   });
@@ -127,23 +129,23 @@ const FinanceReceiptPage: React.FC = () => {
         data as Partial<CollectionRecord>
       );
       if (!response.success) {
-        throw new Error(response.message || '收款登记失败');
+        throw new Error(response.message || t('finance.finance_receipt_page.fail_1'));
       }
       return response.data;
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['finance', 'receipts'] });
-      success('收款登记成功');
+      success(t('finance.finance_receipt_page.success'));
       setShowCreateModal(false);
       setNewReceipt({
         customer: '',
-        receipt_method: '银行转账',
+        receipt_method: t('finance.finance_receipt_page.text_02ab80'),
         amount: 0,
         bank_account: '',
       });
     },
     onError: (err: unknown) => {
-      error((err as { message?: string }).message || '收款登记失败');
+      error((err as { message?: string }).message || t('finance.finance_receipt_page.fail_1'));
       apiLogger.error('Failed to create collection', err);
     },
   });
@@ -167,38 +169,38 @@ const FinanceReceiptPage: React.FC = () => {
 
   const statCards = useMemo(() => {
     const totalCount = receiptData.length;
-    const receivedCount = receiptData.filter((r) => r.status === '已到账').length;
-    const pendingCount = receiptData.filter((r) => r.status === '待到账').length;
-    const verifyCount = receiptData.filter((r) => r.status === '待核销').length;
+    const receivedCount = receiptData.filter((r) => r.status === t('finance.finance_receipt_page.text_50de5a')).length;
+    const pendingCount = receiptData.filter((r) => r.status === t('finance.finance_receipt_page.text_d757a1')).length;
+    const verifyCount = receiptData.filter((r) => r.status === t('finance.finance_receipt_page.text_e9cbed')).length;
     const totalAmount = receiptData.reduce((sum, r) => sum + r.amount, 0);
 
     return [
       {
-        title: '总收款数',
+        title: t('finance.finance_receipt_page.text_1bd2af'),
         value: totalCount,
         icon: <Banknote size={24} />,
         color: 'primary' as const,
       },
       {
-        title: '已到账',
+        title: t('finance.finance_receipt_page.text_50de5a'),
         value: receivedCount,
         icon: <CheckCircle size={24} />,
         color: 'success' as const,
       },
       {
-        title: '待到账',
+        title: t('finance.finance_receipt_page.text_d757a1'),
         value: pendingCount,
         icon: <Clock size={24} />,
         color: 'warning' as const,
       },
       {
-        title: '待核销',
+        title: t('finance.finance_receipt_page.text_e9cbed'),
         value: verifyCount,
         icon: <Clock size={24} />,
         color: 'error' as const,
       },
       {
-        title: '总金额',
+        title: t('finance.finance_receipt_page.amount'),
         value: `¥${totalAmount.toLocaleString()}`,
         icon: <Banknote size={24} />,
         color: 'secondary' as const,
@@ -225,7 +227,7 @@ const FinanceReceiptPage: React.FC = () => {
 
   const handleCreate = () => {
     if (!newReceipt.customer || !newReceipt.amount) {
-      error('请填写客户和收款金额');
+      error(t('finance.finance_receipt_page.please_fill'));
       return;
     }
 
@@ -235,7 +237,7 @@ const FinanceReceiptPage: React.FC = () => {
       amount: newReceipt.amount,
       collection_date: new Date().toISOString().split('T')[0],
       bank_account_id: '',
-      bank_account_no: newReceipt.bank_account || '默认账户',
+      bank_account_no: newReceipt.bank_account || t('finance.finance_receipt_page.text_2f930c'),
       bank_name: '',
       invoice_ids: [],
       status: 'recorded',
@@ -252,9 +254,9 @@ const FinanceReceiptPage: React.FC = () => {
     queryClient.setQueryData(
       ['finance', 'receipts'],
       (old: Receipt[] | undefined) =>
-        old?.map((r) => (r.id === selectedReceipt.id ? { ...r, status: '已到账' } : r)) || []
+        old?.map((r) => (r.id === selectedReceipt.id ? { ...r, status: t('finance.finance_receipt_page.text_50de5a') } : r)) || []
     );
-    success('收款已确认到账');
+    success(t('finance.finance_receipt_page.confirmed'));
     setShowConfirmModal(false);
   };
 
@@ -262,9 +264,9 @@ const FinanceReceiptPage: React.FC = () => {
     queryClient.setQueryData(
       ['finance', 'receipts'],
       (old: Receipt[] | undefined) =>
-        old?.map((r) => (r.id === receipt.id ? { ...r, status: '已核销' } : r)) || []
+        old?.map((r) => (r.id === receipt.id ? { ...r, status: t('finance.finance_receipt_page.text_77af84') } : r)) || []
     );
-    success('收款已核销');
+    success(t('finance.finance_receipt_page.text_097376'));
   };
 
   const handleDeleteClick = (id: string) => {
@@ -278,7 +280,7 @@ const FinanceReceiptPage: React.FC = () => {
       ['finance', 'receipts'],
       (old: Receipt[] | undefined) => old?.filter((r) => r.id !== deletingId) || []
     );
-    success('收款记录已删除');
+    success(t('finance.finance_receipt_page.deleted'));
     setDeleteDialogOpen(false);
     setDeletingId(null);
   };
@@ -299,26 +301,26 @@ const FinanceReceiptPage: React.FC = () => {
     () => [
       {
         id: 'receipt_number',
-        label: '收款单号',
+        label: t('finance.finance_receipt_page.text_d62976'),
         render: (row: Receipt) => (
           <MuiBox sx={{ fontWeight: 600, color: 'success.main' }}>{row.receipt_number}</MuiBox>
         ),
       },
       {
         id: 'receipt_date',
-        label: '收款日期',
+        label: t('finance.finance_receipt_page.date'),
         render: (row: Receipt) => (
           <MuiBox sx={{ color: 'text.secondary', fontSize: '0.875rem' }}>{row.receipt_date}</MuiBox>
         ),
       },
       {
         id: 'customer',
-        label: '客户',
+        label: t('finance.finance_receipt_page.customer'),
         render: (row: Receipt) => <MuiBox sx={{ fontWeight: 500 }}>{row.customer}</MuiBox>,
       },
       {
         id: 'receipt_method',
-        label: '收款方式',
+        label: t('finance.finance_receipt_page.text_153cdd'),
         render: (row: Receipt) => (
           <Chip
             label={row.receipt_method}
@@ -328,7 +330,7 @@ const FinanceReceiptPage: React.FC = () => {
       },
       {
         id: 'amount',
-        label: '收款金额',
+        label: t('finance.finance_receipt_page.amount_1'),
         render: (row: Receipt) => (
           <MuiBox
             sx={{
@@ -343,14 +345,14 @@ const FinanceReceiptPage: React.FC = () => {
       },
       {
         id: 'bank_account',
-        label: '银行账户',
+        label: t('finance.finance_receipt_page.text_c85e1d'),
         render: (row: Receipt) => (
           <MuiBox sx={{ color: 'text.secondary', fontSize: '0.875rem' }}>{row.bank_account}</MuiBox>
         ),
       },
       {
         id: 'status',
-        label: '状态',
+        label: t('finance.finance_receipt_page.status'),
         render: (row: Receipt) => {
           const config = getStatusConfig(row.status);
           return (
@@ -370,26 +372,26 @@ const FinanceReceiptPage: React.FC = () => {
   const rowActions = useMemo(
     () => [
       {
-        label: '确认到账',
+        label: t('finance.finance_receipt_page.confirm'),
         icon: <CheckCircle sx={{ width: 16, height: 16 }} />,
         color: 'success' as const,
-        show: (row: Receipt) => row.status === '待到账',
+        show: (row: Receipt) => row.status === t('finance.finance_receipt_page.text_d757a1'),
         onClick: (row: Receipt) => handleConfirm(row),
       },
       {
-        label: '核销',
+        label: t('finance.finance_receipt_page.text_e7d31e'),
         icon: <Check sx={{ width: 16, height: 16 }} />,
         color: 'success' as const,
-        show: (row: Receipt) => row.status === '已到账',
+        show: (row: Receipt) => row.status === t('finance.finance_receipt_page.text_50de5a'),
         onClick: (row: Receipt) => handleVerify(row),
       },
       {
-        label: '查看',
+        label: t('finance.finance_receipt_page.view'),
         icon: <Eye sx={{ width: 16, height: 16 }} />,
-        onClick: (row: Receipt) => apiLogger.info('查看', row),
+        onClick: (row: Receipt) => apiLogger.info(t('finance.finance_receipt_page.view'), row),
       },
       {
-        label: '删除',
+        label: t('finance.finance_receipt_page.delete'),
         icon: <Trash2 sx={{ width: 16, height: 16 }} />,
         color: 'error' as const,
         onClick: (row: Receipt) => handleDeleteClick(row.id),
@@ -402,27 +404,27 @@ const FinanceReceiptPage: React.FC = () => {
     () => [
       {
         id: 'receipt_method',
-        label: '收款方式',
+        label: t('finance.finance_receipt_page.text_153cdd'),
         type: 'select' as const,
         options: [
-          { value: '银行转账', label: '银行转账' },
-          { value: '银行承兑汇票', label: '银行承兑汇票' },
-          { value: '商业承兑汇票', label: '商业承兑汇票' },
-          { value: '现金', label: '现金' },
+          { value: t('finance.finance_receipt_page.text_02ab80'), label: t('finance.finance_receipt_page.text_02ab80') },
+          { value: t('finance.finance_receipt_page.text_a542e2'), label: t('finance.finance_receipt_page.text_a542e2') },
+          { value: t('finance.finance_receipt_page.text_41e003'), label: t('finance.finance_receipt_page.text_41e003') },
+          { value: t('finance.finance_receipt_page.text_e7c090'), label: t('finance.finance_receipt_page.text_e7c090') },
         ],
         value: filterMethod,
         onChange: (value: unknown) => setFilterMethod(value as string),
       },
       {
         id: 'status',
-        label: '状态',
+        label: t('finance.finance_receipt_page.status'),
         type: 'select' as const,
         options: [
-          { value: '已到账', label: '已到账' },
-          { value: '已核销', label: '已核销' },
-          { value: '待核销', label: '待核销' },
-          { value: '待到账', label: '待到账' },
-          { value: '已取消', label: '已取消' },
+          { value: t('finance.finance_receipt_page.text_50de5a'), label: t('finance.finance_receipt_page.text_50de5a') },
+          { value: t('finance.finance_receipt_page.text_77af84'), label: t('finance.finance_receipt_page.text_77af84') },
+          { value: t('finance.finance_receipt_page.text_e9cbed'), label: t('finance.finance_receipt_page.text_e9cbed') },
+          { value: t('finance.finance_receipt_page.text_d757a1'), label: t('finance.finance_receipt_page.text_d757a1') },
+          { value: t('finance.finance_receipt_page.cancelled'), label: t('finance.finance_receipt_page.cancelled') },
         ],
         value: filterStatus,
         onChange: (value: unknown) => setFilterStatus(value as string),
@@ -433,13 +435,13 @@ const FinanceReceiptPage: React.FC = () => {
 
   const exportFields = useMemo(
     () => [
-      { key: 'receipt_number', title: '收款单号' },
-      { key: 'receipt_date', title: '收款日期' },
-      { key: 'customer', title: '客户' },
-      { key: 'receipt_method', title: '收款方式' },
-      { key: 'amount', title: '收款金额' },
-      { key: 'bank_account', title: '银行账户' },
-      { key: 'status', title: '状态' },
+      { key: 'receipt_number', title: t('finance.finance_receipt_page.text_d62976') },
+      { key: 'receipt_date', title: t('finance.finance_receipt_page.date') },
+      { key: 'customer', title: t('finance.finance_receipt_page.customer') },
+      { key: 'receipt_method', title: t('finance.finance_receipt_page.text_153cdd') },
+      { key: 'amount', title: t('finance.finance_receipt_page.amount_1') },
+      { key: 'bank_account', title: t('finance.finance_receipt_page.text_c85e1d') },
+      { key: 'status', title: t('finance.finance_receipt_page.status') },
     ],
     []
   );
@@ -513,15 +515,15 @@ const FinanceReceiptPage: React.FC = () => {
             >
               <IconButton
                 onClick={handleRefresh}
-                aria-label='刷新'
+                aria-label={t('finance.finance_receipt_page.refresh')}
               >
                 <RefreshCw sx={{ width: 20, height: 20 }} />
               </IconButton>
               <DataExport
                 data={receiptData as unknown as Record<string, unknown>[]}
                 fields={exportFields}
-                defaultFileName='收款数据'
-                buttonText='数据导出'
+                defaultFileName={t('finance.finance_receipt_page.text_1c634a')}
+                buttonText={t('finance.finance_receipt_page.export')}
               />
               <Button
                 variant='contained'
@@ -545,7 +547,7 @@ const FinanceReceiptPage: React.FC = () => {
           columns={columns}
           data={filteredData}
           searchable
-          searchPlaceholder='搜索收款单号、客户...'
+          searchPlaceholder={t('finance.finance_receipt_page.search')}
           filters={advancedFilters}
           filtersValue={{
             receipt_method: filterMethod,
@@ -558,8 +560,8 @@ const FinanceReceiptPage: React.FC = () => {
           }}
           onSearch={handleSearch}
           actions={[
-            { label: '搜索', variant: 'outlined', onClick: handleSearch },
-            { label: '重置', variant: 'outlined', onClick: handleReset },
+            { label: t('finance.finance_receipt_page.search_1'), variant: 'outlined', onClick: handleSearch },
+            { label: t('finance.finance_receipt_page.reset'), variant: 'outlined', onClick: handleReset },
           ]}
           selectable
           selectedIds={selectedIds}
@@ -582,7 +584,7 @@ const FinanceReceiptPage: React.FC = () => {
             sx={{ pt: 2 }}
           >
             <TextField
-              label='客户 *'
+              label={t('finance.finance_receipt_page.customer_1')}
               fullWidth
               value={newReceipt.customer}
               onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
@@ -597,7 +599,7 @@ const FinanceReceiptPage: React.FC = () => {
                 <InputLabel>收款方式</InputLabel>
                 <Select
                   value={newReceipt.receipt_method}
-                  label='收款方式'
+                  label={t('finance.finance_receipt_page.text_153cdd')}
                   onChange={(e: SelectChangeEvent) =>
                     setNewReceipt({
                       ...newReceipt,
@@ -605,14 +607,14 @@ const FinanceReceiptPage: React.FC = () => {
                     })
                   }
                 >
-                  <MenuItem value='银行转账'>银行转账</MenuItem>
-                  <MenuItem value='银行承兑汇票'>银行承兑汇票</MenuItem>
-                  <MenuItem value='商业承兑汇票'>商业承兑汇票</MenuItem>
-                  <MenuItem value='现金'>现金</MenuItem>
+                  <MenuItem value={t('finance.finance_receipt_page.text_02ab80')}>银行转账</MenuItem>
+                  <MenuItem value={t('finance.finance_receipt_page.text_a542e2')}>银行承兑汇票</MenuItem>
+                  <MenuItem value={t('finance.finance_receipt_page.text_41e003')}>商业承兑汇票</MenuItem>
+                  <MenuItem value={t('finance.finance_receipt_page.text_e7c090')}>现金</MenuItem>
                 </Select>
               </FormControl>
               <CurrencyField
-                label='收款金额 *'
+                label={t('finance.finance_receipt_page.amount_2')}
                 fullWidth
                 value={newReceipt.amount || 0}
                 onChange={(val: number) =>
@@ -624,13 +626,13 @@ const FinanceReceiptPage: React.FC = () => {
               />
             </Stack>
             <TextField
-              label='银行账户'
+              label={t('finance.finance_receipt_page.text_c85e1d')}
               fullWidth
               value={newReceipt.bank_account}
               onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
                 setNewReceipt({ ...newReceipt, bank_account: e.target.value })
               }
-              placeholder='请输入银行账户'
+              placeholder={t('finance.finance_receipt_page.please_input')}
             />
           </Stack>
         </DialogContent>
@@ -641,7 +643,7 @@ const FinanceReceiptPage: React.FC = () => {
             onClick={handleCreate}
             disabled={createMutation.isPending}
           >
-            {createMutation.isPending ? '登记中...' : '登记'}
+            {createMutation.isPending ? t('finance.finance_receipt_page.text_bf55e5') : t('finance.finance_receipt_page.text_26c86f')}
           </Button>
         </DialogActions>
       </Dialog>
@@ -781,8 +783,8 @@ const FinanceReceiptPage: React.FC = () => {
           setDeletingId(null);
         }}
         onConfirm={handleDelete}
-        title='确认删除'
-        message='确定要删除该收款记录吗？'
+        title={t('finance.finance_receipt_page.confirm_delete')}
+        message={t('finance.finance_receipt_page.confirm_1')}
         danger
       />
     </PageContainer>

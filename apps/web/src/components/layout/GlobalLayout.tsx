@@ -7,7 +7,7 @@ import { usePermission } from '../../hooks/usePermission';
 import { useResponsive } from '../../hooks/useResponsive';
 import { navigationRegistryV2 } from '@/lib/navigation';
 import type { NavItem } from '@/lib/navigation/types';
-import { useUIStore } from '@/store';
+import { useUIStore, useThemeStore } from '@/store';
 import { getUnreadCount } from '@/api/notification';
 import { apiLogger } from '@/utils/logger';
 import { FloatingAIHelper } from '../ai/FloatingAIHelper';
@@ -42,6 +42,8 @@ export const GlobalLayout: React.FC<GlobalLayoutProps> = ({ children }) => {
   const navigate = useNavigate();
   const sidebarCollapsed = useUIStore((state) => state.sidebarCollapsed);
   const toggleSidebarCollapsed = useUIStore((state) => state.toggleSidebarCollapsed);
+  const currentTheme = useThemeStore((state) => state.theme);
+  const isCyberpunk = currentTheme === 'cyberpunk';
 
   const { isMobile, isTablet, isTabletNarrow, isTabletWide } = useResponsive();
   const isDesktop = useMediaQuery('(min-width:1025px)');
@@ -241,6 +243,22 @@ export const GlobalLayout: React.FC<GlobalLayoutProps> = ({ children }) => {
         showCentralNav
       />
 
+      {/* 赛博朋克 HUD 装饰元素 — 仅在 cyberpunk 主题下渲染 */}
+      {isCyberpunk && (
+        <>
+          {/* 顶部 HUD 状态扫描线 */}
+          <Box
+            className='cyber-hud-statusbar'
+            aria-hidden='true'
+          />
+          {/* 右下角 HUD 数据流指示 */}
+          <Box
+            className='cyber-hud-datastream'
+            aria-hidden='true'
+          />
+        </>
+      )}
+
       <Box sx={{ display: 'flex', flexDirection: 'row', flex: 1 }}>
         {/* Sidebar：Tablet 端（768px-1024px）持久化显示，窄平板（768px-899px）自动折叠为图标栏 */}
         {shouldShowSidebar && (
@@ -274,7 +292,16 @@ export const GlobalLayout: React.FC<GlobalLayoutProps> = ({ children }) => {
             pb: { xs: 9, sm: 3, lg: 4 },
           }}
         >
-          {isMobile ? <PageTransition>{children}</PageTransition> : children}
+          {isMobile ? (
+            <PageTransition>{children}</PageTransition>
+          ) : (
+            <Box
+              key={location.pathname}
+              className='cyber-page-enter'
+            >
+              {children}
+            </Box>
+          )}
           <Box
             component='footer'
             sx={{

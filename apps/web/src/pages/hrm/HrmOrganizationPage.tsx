@@ -43,12 +43,14 @@ import { ConfirmDialog } from '@topems/shared-components';
 import { PageContainer } from '@/components/common';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 
+import { useTranslation } from 'react-i18next';
 interface NodeData {
   type: 'company' | 'department';
   data: Company | Department;
 }
 
 const HrmOrganizationPage: React.FC = () => {
+  const { t } = useTranslation();
   const addNotification = useNotificationStore((state) => state.addNotification);
   const queryClient = useQueryClient();
 
@@ -130,13 +132,13 @@ const HrmOrganizationPage: React.FC = () => {
   const createCompanyMutation = useMutation({
     mutationFn: (data: Partial<Company>) => companyApi.create(data),
     onSuccess: () => {
-      addNotification({ title: '成功', message: '创建成功', type: 'success' });
+      addNotification({ title: t('hrm.hrm_organization_page.success'), message: t('hrm.hrm_organization_page.create'), type: 'success' });
       queryClient.invalidateQueries({ queryKey: ['hrm-companies-org'] });
     },
     onError: (error: unknown) => {
       addNotification({
-        title: '失败',
-        message: (error as { message?: string }).message || '创建失败',
+        title: t('hrm.hrm_organization_page.fail'),
+        message: (error as { message?: string }).message || t('hrm.hrm_organization_page.create_1'),
         type: 'error',
       });
     },
@@ -145,13 +147,13 @@ const HrmOrganizationPage: React.FC = () => {
   const updateCompanyMutation = useMutation({
     mutationFn: ({ id, data }: { id: string; data: Partial<Company> }) => companyApi.update(id, data),
     onSuccess: () => {
-      addNotification({ title: '成功', message: '更新成功', type: 'success' });
+      addNotification({ title: t('hrm.hrm_organization_page.success'), message: t('hrm.hrm_organization_page.update'), type: 'success' });
       queryClient.invalidateQueries({ queryKey: ['hrm-companies-org'] });
     },
     onError: (error: unknown) => {
       addNotification({
-        title: '失败',
-        message: (error as { message?: string }).message || '更新失败',
+        title: t('hrm.hrm_organization_page.fail'),
+        message: (error as { message?: string }).message || t('hrm.hrm_organization_page.update_1'),
         type: 'error',
       });
     },
@@ -160,14 +162,14 @@ const HrmOrganizationPage: React.FC = () => {
   const deleteCompanyMutation = useMutation({
     mutationFn: (id: string) => companyApi.delete(id),
     onSuccess: () => {
-      addNotification({ title: '成功', message: '删除成功', type: 'success' });
+      addNotification({ title: t('hrm.hrm_organization_page.success'), message: t('hrm.hrm_organization_page.delete_success'), type: 'success' });
       queryClient.invalidateQueries({ queryKey: ['hrm-companies-org'] });
       queryClient.invalidateQueries({ queryKey: ['hrm-departments-org'] });
     },
     onError: (error: unknown) => {
       addNotification({
-        title: '失败',
-        message: (error as { message?: string }).message || '删除失败',
+        title: t('hrm.hrm_organization_page.fail'),
+        message: (error as { message?: string }).message || t('hrm.hrm_organization_page.delete'),
         type: 'error',
       });
     },
@@ -176,13 +178,13 @@ const HrmOrganizationPage: React.FC = () => {
   const createDepartmentMutation = useMutation({
     mutationFn: (data: Partial<Department>) => departmentApi.create(data),
     onSuccess: () => {
-      addNotification({ title: '成功', message: '创建成功', type: 'success' });
+      addNotification({ title: t('hrm.hrm_organization_page.success'), message: t('hrm.hrm_organization_page.create'), type: 'success' });
       queryClient.invalidateQueries({ queryKey: ['hrm-departments-org'] });
     },
     onError: (error: unknown) => {
       addNotification({
-        title: '失败',
-        message: (error as { message?: string }).message || '创建失败',
+        title: t('hrm.hrm_organization_page.fail'),
+        message: (error as { message?: string }).message || t('hrm.hrm_organization_page.create_1'),
         type: 'error',
       });
     },
@@ -191,13 +193,13 @@ const HrmOrganizationPage: React.FC = () => {
   const updateDepartmentMutation = useMutation({
     mutationFn: ({ id, data }: { id: string; data: Partial<Department> }) => departmentApi.update(id, data),
     onSuccess: () => {
-      addNotification({ title: '成功', message: '更新成功', type: 'success' });
+      addNotification({ title: t('hrm.hrm_organization_page.success'), message: t('hrm.hrm_organization_page.update'), type: 'success' });
       queryClient.invalidateQueries({ queryKey: ['hrm-departments-org'] });
     },
     onError: (error: unknown) => {
       addNotification({
-        title: '失败',
-        message: (error as { message?: string }).message || '更新失败',
+        title: t('hrm.hrm_organization_page.fail'),
+        message: (error as { message?: string }).message || t('hrm.hrm_organization_page.update_1'),
         type: 'error',
       });
     },
@@ -206,13 +208,13 @@ const HrmOrganizationPage: React.FC = () => {
   const deleteDepartmentMutation = useMutation({
     mutationFn: (id: string) => departmentApi.delete(id),
     onSuccess: () => {
-      addNotification({ title: '成功', message: '删除成功', type: 'success' });
+      addNotification({ title: t('hrm.hrm_organization_page.success'), message: t('hrm.hrm_organization_page.delete_success'), type: 'success' });
       queryClient.invalidateQueries({ queryKey: ['hrm-departments-org'] });
     },
     onError: (error: unknown) => {
       addNotification({
-        title: '失败',
-        message: (error as { message?: string }).message || '删除失败',
+        title: t('hrm.hrm_organization_page.fail'),
+        message: (error as { message?: string }).message || t('hrm.hrm_organization_page.delete'),
         type: 'error',
       });
     },
@@ -277,28 +279,28 @@ const HrmOrganizationPage: React.FC = () => {
   const statCards: StatCard[] = [
     {
       id: 'companies',
-      title: '公司数',
+      title: t('hrm.hrm_organization_page.text_ccb91d'),
       value: companies.length,
       icon: <Building style={{ width: 24, height: 24 }} />,
       color: 'primary',
     },
     {
       id: 'departments',
-      title: '部门数',
+      title: t('hrm.hrm_organization_page.text_a78441'),
       value: departments.length,
       icon: <Building2 style={{ width: 24, height: 24 }} />,
       color: 'secondary',
     },
     {
       id: 'employees',
-      title: '员工总数',
+      title: t('hrm.hrm_organization_page.text_97e957'),
       value: employees.length,
       icon: <Users style={{ width: 24, height: 24 }} />,
       color: 'success',
     },
     {
       id: 'activeDepts',
-      title: '启用部门',
+      title: t('hrm.hrm_organization_page.active'),
       value: departments.filter((d) => d.status === 'active').length,
       icon: <Building2 style={{ width: 24, height: 24 }} />,
       color: 'info',
@@ -306,14 +308,14 @@ const HrmOrganizationPage: React.FC = () => {
   ];
 
   const filterOptions = [
-    { label: '全部状态', value: 'all' },
-    { label: '启用', value: 'active' },
-    { label: '禁用', value: 'inactive' },
+    { label: t('hrm.hrm_organization_page.status'), value: 'all' },
+    { label: t('hrm.hrm_organization_page.active_1'), value: 'active' },
+    { label: t('hrm.hrm_organization_page.text_710ad0'), value: 'inactive' },
   ];
 
   const rowActions: TreeAction[] = [
     {
-      label: '查看',
+      label: t('hrm.hrm_organization_page.view'),
       icon: <Eye style={{ width: 16, height: 16 }} />,
       onClick: (node) => {
         setSelectedNode(node);
@@ -330,7 +332,7 @@ const HrmOrganizationPage: React.FC = () => {
       },
     },
     {
-      label: '编辑',
+      label: t('hrm.hrm_organization_page.edit'),
       icon: <Edit style={{ width: 16, height: 16 }} />,
       onClick: (node) => {
         setSelectedNode(node);
@@ -348,14 +350,14 @@ const HrmOrganizationPage: React.FC = () => {
       color: 'primary',
     },
     {
-        label: '删除',
+        label: t('hrm.hrm_organization_page.delete_1'),
         icon: <Trash2 style={{ width: 16, height: 16 }} />,
         onClick: (node) => {
           const nodeData = node.data as NodeData;
           if (nodeData.type === 'company') {
             openConfirmDialog({
-              title: '确认删除',
-              message: '确定要删除这个公司吗？',
+              title: t('hrm.hrm_organization_page.confirm_delete'),
+              message: t('hrm.hrm_organization_page.confirm'),
               onConfirm: async () => {
                 try {
                   await deleteCompanyMutation.mutateAsync((nodeData.data as Company).id);
@@ -365,8 +367,8 @@ const HrmOrganizationPage: React.FC = () => {
                   }
                 } catch (error: unknown) {
                   addNotification({
-                    title: '失败',
-                    message: (error as { message?: string }).message || '删除失败',
+                    title: t('hrm.hrm_organization_page.fail'),
+                    message: (error as { message?: string }).message || t('hrm.hrm_organization_page.delete'),
                     type: 'error',
                   });
                 }
@@ -375,8 +377,8 @@ const HrmOrganizationPage: React.FC = () => {
             });
           } else {
             openConfirmDialog({
-              title: '确认删除',
-              message: '确定要删除这个部门吗？',
+              title: t('hrm.hrm_organization_page.confirm_delete'),
+              message: t('hrm.hrm_organization_page.confirm_1'),
               onConfirm: async () => {
                 try {
                   await deleteDepartmentMutation.mutateAsync((nodeData.data as Department).id);
@@ -386,8 +388,8 @@ const HrmOrganizationPage: React.FC = () => {
                   }
                 } catch (error: unknown) {
                   addNotification({
-                    title: '失败',
-                    message: (error as { message?: string }).message || '删除失败',
+                    title: t('hrm.hrm_organization_page.fail'),
+                    message: (error as { message?: string }).message || t('hrm.hrm_organization_page.delete'),
                     type: 'error',
                   });
                 }
@@ -428,8 +430,8 @@ const HrmOrganizationPage: React.FC = () => {
       }
     } catch (error: unknown) {
       addNotification({
-        title: '失败',
-        message: (error as { message?: string }).message || '操作失败',
+        title: t('hrm.hrm_organization_page.fail'),
+        message: (error as { message?: string }).message || t('hrm.hrm_organization_page.operation_failed'),
         type: 'error',
       });
     }
@@ -458,8 +460,8 @@ const HrmOrganizationPage: React.FC = () => {
       }
     } catch (error: unknown) {
       addNotification({
-        title: '失败',
-        message: (error as { message?: string }).message || '操作失败',
+        title: t('hrm.hrm_organization_page.fail'),
+        message: (error as { message?: string }).message || t('hrm.hrm_organization_page.operation_failed'),
         type: 'error',
       });
     }
@@ -505,7 +507,7 @@ const HrmOrganizationPage: React.FC = () => {
                   variant='body2'
                   color='text.secondary'
                 >
-                  {(selectedNode.data as NodeData).type === 'company' ? '公司' : '部门'}
+                  {(selectedNode.data as NodeData).type === 'company' ? t('hrm.hrm_organization_page.text_41716f') : t('hrm.hrm_organization_page.text_1e1459')}
                 </Typography>
               </Box>
             </Box>
@@ -558,7 +560,7 @@ const HrmOrganizationPage: React.FC = () => {
             {employees.length === 0 ? (
               <EmptyState
                 emoji='👥'
-                title='暂无员工数据'
+                title={t('hrm.hrm_organization_page.no_data')}
                 compact
               />
             ) : (
@@ -595,13 +597,13 @@ const HrmOrganizationPage: React.FC = () => {
                         variant='body2'
                         color='text.secondary'
                       >
-                        {emp.position || '无职位'}
+                        {emp.position || t('hrm.hrm_organization_page.text_88ed4c')}
                       </Typography>
                     </Box>
                     <Chip
                       size='small'
                       variant='outlined'
-                      label={emp.status === 'active' ? '在职' : '离职'}
+                      label={emp.status === 'active' ? t('hrm.hrm_organization_page.text_b5509b') : t('hrm.hrm_organization_page.text_583e79')}
                     />
                   </Box>
                 ))}
@@ -616,12 +618,12 @@ const HrmOrganizationPage: React.FC = () => {
   return (
     <PageContainer maxWidth='xl'>
       <TreePageTemplate
-        title='组织架构'
-        subtitle='管理企业组织架构和部门信息'
+        title={t('hrm.hrm_organization_page.text_19a4ec')}
+        subtitle={t('hrm.hrm_organization_page.info')}
         stats={statCards}
         data={buildTree()}
         loading={loading}
-        searchPlaceholder='搜索公司或部门...'
+        searchPlaceholder={t('hrm.hrm_organization_page.search')}
         filterOptions={filterOptions}
         filterValue={statusFilter}
         onFilterChange={(value) => setStatusFilter(value)}
@@ -632,19 +634,19 @@ const HrmOrganizationPage: React.FC = () => {
           queryClient.invalidateQueries({ queryKey: ['hrm-companies-org', 'hrm-departments-org', 'hrm-employees-org'] });
         }}
         onAdd={handleCreateCompany}
-        addButtonText='新增公司'
+        addButtonText={t('hrm.hrm_organization_page.add')}
         addButtonIcon={<Plus style={{ width: 18, height: 18 }} />}
         rowActions={rowActions}
         onSelect={handleSelectNode}
         selectedId={selectedId}
         detailPanel={detailPanel}
-        detailPanelTitle='组织详情'
+        detailPanelTitle={t('hrm.hrm_organization_page.detail')}
         onRefresh={() => queryClient.invalidateQueries({ queryKey: ['hrm-companies-org', 'hrm-departments-org', 'hrm-employees-org'] })}
         treeWidth={320}
         emptyState={{
           emoji: '🏢',
-          title: '暂无组织架构数据',
-          actionLabel: '新增公司',
+          title: t('hrm.hrm_organization_page.no_data_1'),
+          actionLabel: t('hrm.hrm_organization_page.add'),
           onAction: handleCreateCompany,
         }}
       />
@@ -656,7 +658,7 @@ const HrmOrganizationPage: React.FC = () => {
         fullWidth
       >
         <DialogTitle>
-          {modalMode === 'create' ? '创建公司' : modalMode === 'edit' ? '编辑公司' : '查看公司'}
+          {modalMode === 'create' ? t('hrm.hrm_organization_page.create_2') : modalMode === 'edit' ? t('hrm.hrm_organization_page.edit_1') : t('hrm.hrm_organization_page.view_1')}
         </DialogTitle>
         <DialogContent sx={{ maxHeight: '70vh', overflowY: 'auto' }}>
           <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2, mt: 1 }}>
@@ -668,7 +670,7 @@ const HrmOrganizationPage: React.FC = () => {
                 value={companyFormData.name || ''}
                 onChange={(e) => setCompanyFormData({ ...companyFormData, name: e.target.value })}
                 disabled={modalMode === 'view'}
-                placeholder='请输入公司名称'
+                placeholder={t('hrm.hrm_organization_page.please_input')}
               />
             </Box>
             <Box>
@@ -681,7 +683,7 @@ const HrmOrganizationPage: React.FC = () => {
                   setCompanyFormData({ ...companyFormData, short_name: e.target.value })
                 }
                 disabled={modalMode === 'view'}
-                placeholder='请输入公司简称'
+                placeholder={t('hrm.hrm_organization_page.please_input_1')}
               />
             </Box>
             <Box>
@@ -694,7 +696,7 @@ const HrmOrganizationPage: React.FC = () => {
                   setCompanyFormData({ ...companyFormData, address: e.target.value })
                 }
                 disabled={modalMode === 'view'}
-                placeholder='请输入公司地址'
+                placeholder={t('hrm.hrm_organization_page.please_input_2')}
               />
             </Box>
             <Box>
@@ -709,7 +711,7 @@ const HrmOrganizationPage: React.FC = () => {
                   setCompanyFormData({ ...companyFormData, description: e.target.value })
                 }
                 disabled={modalMode === 'view'}
-                placeholder='请输入公司描述'
+                placeholder={t('hrm.hrm_organization_page.please_input_3')}
               />
             </Box>
             <Box>
@@ -741,11 +743,11 @@ const HrmOrganizationPage: React.FC = () => {
               onClick={handleSaveCompany}
               variant='contained'
             >
-              {modalMode === 'create' ? '创建' : '保存'}
+              {modalMode === 'create' ? t('hrm.hrm_organization_page.create_3') : t('hrm.hrm_organization_page.save')}
             </Button>
           )}
           <Button onClick={() => setShowCompanyModal(false)}>
-            {modalMode === 'view' ? '关闭' : '取消'}
+            {modalMode === 'view' ? t('hrm.hrm_organization_page.close') : t('hrm.hrm_organization_page.cancel')}
           </Button>
         </DialogActions>
       </Dialog>
@@ -757,7 +759,7 @@ const HrmOrganizationPage: React.FC = () => {
         fullWidth
       >
         <DialogTitle>
-          {modalMode === 'create' ? '创建部门' : modalMode === 'edit' ? '编辑部门' : '查看部门'}
+          {modalMode === 'create' ? t('hrm.hrm_organization_page.create_4') : modalMode === 'edit' ? t('hrm.hrm_organization_page.edit_2') : t('hrm.hrm_organization_page.view_2')}
         </DialogTitle>
         <DialogContent sx={{ maxHeight: '70vh', overflowY: 'auto' }}>
           <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2, mt: 1 }}>
@@ -769,7 +771,7 @@ const HrmOrganizationPage: React.FC = () => {
                 value={deptFormData.name || ''}
                 onChange={(e) => setDeptFormData({ ...deptFormData, name: e.target.value })}
                 disabled={modalMode === 'view'}
-                placeholder='请输入部门名称'
+                placeholder={t('hrm.hrm_organization_page.please_input_4')}
               />
             </Box>
             <Box>
@@ -781,13 +783,13 @@ const HrmOrganizationPage: React.FC = () => {
                   value={deptFormData.code || ''}
                   onChange={(e) => setDeptFormData({ ...deptFormData, code: e.target.value })}
                   disabled={modalMode === 'view'}
-                  placeholder='请输入部门编码'
+                  placeholder={t('hrm.hrm_organization_page.please_input_5')}
                 />
                 <AIHelperButton
                   type='generate'
                   onClick={() => setShowAICodeGenerator(true)}
                   size='small'
-                  label='AI生成'
+                  label={t('hrm.hrm_organization_page.text_488a57')}
                   variant='text'
                 />
               </Box>
@@ -830,7 +832,7 @@ const HrmOrganizationPage: React.FC = () => {
                 value={deptFormData.description || ''}
                 onChange={(e) => setDeptFormData({ ...deptFormData, description: e.target.value })}
                 disabled={modalMode === 'view'}
-                placeholder='请输入部门描述'
+                placeholder={t('hrm.hrm_organization_page.please_input_6')}
               />
             </Box>
             <Box>
@@ -862,11 +864,11 @@ const HrmOrganizationPage: React.FC = () => {
               onClick={handleSaveDepartment}
               variant='contained'
             >
-              {modalMode === 'create' ? '创建' : '保存'}
+              {modalMode === 'create' ? t('hrm.hrm_organization_page.create_3') : t('hrm.hrm_organization_page.save')}
             </Button>
           )}
           <Button onClick={() => setShowDeptModal(false)}>
-            {modalMode === 'view' ? '关闭' : '取消'}
+            {modalMode === 'view' ? t('hrm.hrm_organization_page.close') : t('hrm.hrm_organization_page.cancel')}
           </Button>
         </DialogActions>
       </Dialog>

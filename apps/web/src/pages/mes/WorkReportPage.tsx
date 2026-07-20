@@ -37,9 +37,11 @@ import { Plus, Edit, Trash2, Eye, CheckCircle, XCircle, Clock, FileText } from '
 import { apiLogger } from '@/utils/logger';
 import { designTokens } from '@/theme/tokens';
 
+import { useTranslation } from 'react-i18next';
 const ct = designTokens.colors;
 
 const WorkReportPage: React.FC = () => {
+  const { t } = useTranslation();
   const queryClient = useQueryClient();
   const [searchTerm, setSearchTerm] = useState('');
   const [statusFilter, setStatusFilter] = useState<string>('all');
@@ -90,11 +92,11 @@ const WorkReportPage: React.FC = () => {
 
   const getStatusText = (status: string) => {
     const statusMap: Record<string, string> = {
-      draft: '草稿',
-      submitted: '已提交',
-      approved: '已审核',
-      rejected: '已驳回',
-      cancelled: '已取消',
+      draft: t('mes.work_report_page.text_22b433'),
+      submitted: t('mes.work_report_page.submit'),
+      approved: t('mes.work_report_page.approved'),
+      rejected: t('mes.work_report_page.status_rejected'),
+      cancelled: t('mes.work_report_page.cancelled'),
     };
     return statusMap[status] || status;
   };
@@ -102,14 +104,14 @@ const WorkReportPage: React.FC = () => {
   const createMutation = useMutation({
     mutationFn: (data: CreateWorkReportRequest) => mesApi.workReports.create(data),
     onSuccess: () => {
-      addNotification({ type: 'success', title: '创建成功', message: '新报工已创建' });
+      addNotification({ type: 'success', title: t('mes.work_report_page.create'), message: t('mes.work_report_page.create_1') });
       invalidateReports();
       setShowDialog(false);
       resetForm();
     },
     onError: (error: unknown) => {
-      apiLogger.error('操作失败:', error);
-      addNotification({ type: 'error', title: '操作失败', message: '创建报工失败' });
+      apiLogger.error(t('mes.work_report_page.operation_failed'), error);
+      addNotification({ type: 'error', title: t('mes.work_report_page.operation_failed_1'), message: t('mes.work_report_page.create_2') });
     },
   });
 
@@ -117,50 +119,50 @@ const WorkReportPage: React.FC = () => {
     mutationFn: ({ id, data }: { id: string; data: UpdateWorkReportRequest }) =>
       mesApi.workReports.update(id, data),
     onSuccess: () => {
-      addNotification({ type: 'success', title: '更新成功', message: '报工信息已更新' });
+      addNotification({ type: 'success', title: t('mes.work_report_page.update'), message: t('mes.work_report_page.update_1') });
       invalidateReports();
       setShowDialog(false);
       resetForm();
     },
     onError: (error: unknown) => {
-      apiLogger.error('操作失败:', error);
-      addNotification({ type: 'error', title: '操作失败', message: '更新报工失败' });
+      apiLogger.error(t('mes.work_report_page.operation_failed'), error);
+      addNotification({ type: 'error', title: t('mes.work_report_page.operation_failed_1'), message: t('mes.work_report_page.update_2') });
     },
   });
 
   const deleteMutation = useMutation({
     mutationFn: (id: string) => mesApi.workReports.delete(id),
     onSuccess: () => {
-      addNotification({ type: 'success', title: '删除成功', message: '报工记录已删除' });
+      addNotification({ type: 'success', title: t('mes.work_report_page.delete_success'), message: t('mes.work_report_page.deleted') });
       invalidateReports();
     },
     onError: (error: unknown) => {
-      apiLogger.error('删除失败:', error);
-      addNotification({ type: 'error', title: '删除失败', message: '无法删除报工记录' });
+      apiLogger.error(t('mes.work_report_page.delete'), error);
+      addNotification({ type: 'error', title: t('mes.work_report_page.delete_1'), message: t('mes.work_report_page.delete_2') });
     },
   });
 
   const approveMutation = useMutation({
     mutationFn: (id: string) => mesApi.workReports.approve(id),
     onSuccess: () => {
-      addNotification({ type: 'success', title: '审核成功', message: '报工已审核通过' });
+      addNotification({ type: 'success', title: t('mes.work_report_page.success'), message: t('mes.work_report_page.approved_1') });
       invalidateReports();
     },
     onError: (error: unknown) => {
-      apiLogger.error('审核失败:', error);
-      addNotification({ type: 'error', title: '审核失败', message: '无法审核报工' });
+      apiLogger.error(t('mes.work_report_page.fail'), error);
+      addNotification({ type: 'error', title: t('mes.work_report_page.fail_1'), message: t('mes.work_report_page.work_report') });
     },
   });
 
   const rejectMutation = useMutation({
     mutationFn: (id: string) => mesApi.workReports.reject(id),
     onSuccess: () => {
-      addNotification({ type: 'success', title: '驳回成功', message: '报工已驳回' });
+      addNotification({ type: 'success', title: t('mes.work_report_page.success_1'), message: t('mes.work_report_page.work_report_1') });
       invalidateReports();
     },
     onError: (error: unknown) => {
-      apiLogger.error('驳回失败:', error);
-      addNotification({ type: 'error', title: '驳回失败', message: '无法驳回报工' });
+      apiLogger.error(t('mes.work_report_page.fail_2'), error);
+      addNotification({ type: 'error', title: t('mes.work_report_page.fail_3'), message: t('mes.work_report_page.work_report_2') });
     },
   });
 
@@ -174,7 +176,7 @@ const WorkReportPage: React.FC = () => {
   };
 
   const handleDelete = (id: string) => {
-    if (!window.confirm('确定要删除这条报工记录吗?')) return;
+    if (!window.confirm(t('mes.work_report_page.confirm'))) return;
     deleteMutation.mutate(id);
   };
 
@@ -225,11 +227,11 @@ const WorkReportPage: React.FC = () => {
         color: string;
       }
     > = {
-      draft: { label: '草稿', bg: 'grey.100', color: 'text.secondary' },
-      submitted: { label: '已提交', bg: 'primary.100', color: 'primary.dark' },
-      approved: { label: '已审核', bg: 'success.lighter', color: 'success.700' },
-      rejected: { label: '已驳回', bg: 'error.lighter', color: 'error.dark' },
-      cancelled: { label: '已取消', bg: 'grey.100', color: 'text.secondary' },
+      draft: { label: t('mes.work_report_page.text_22b433'), bg: 'grey.100', color: 'text.secondary' },
+      submitted: { label: t('mes.work_report_page.submit'), bg: 'primary.100', color: 'primary.dark' },
+      approved: { label: t('mes.work_report_page.approved'), bg: 'success.lighter', color: 'success.700' },
+      rejected: { label: t('mes.work_report_page.status_rejected'), bg: 'error.lighter', color: 'error.dark' },
+      cancelled: { label: t('mes.work_report_page.cancelled'), bg: 'grey.100', color: 'text.secondary' },
     };
     const s = statusMap[status] || { label: status, bg: 'grey.100', color: 'text.secondary' };
     return (
@@ -243,27 +245,27 @@ const WorkReportPage: React.FC = () => {
 
   const columns: ColumnDef<WorkReport>[] = useMemo(
     () => [
-      { id: 'report_no', label: '报工单号', sortable: true },
-      { id: 'order_number', label: '生产订单', sortable: true },
-      { id: 'process_name', label: '工序', sortable: true },
-      { id: 'work_station_name', label: '工作站', sortable: true },
-      { id: 'worker_name', label: '操作人员', sortable: true },
-      { id: 'quantity_good', label: '合格数量', sortable: true },
-      { id: 'quantity_bad', label: '不良数量', sortable: true },
-      { id: 'quantity_total', label: '总数量', sortable: true },
+      { id: 'report_no', label: t('mes.work_report_page.column_report_no'), sortable: true },
+      { id: 'order_number', label: t('mes.work_report_page.production'), sortable: true },
+      { id: 'process_name', label: t('mes.work_report_page.field_process'), sortable: true },
+      { id: 'work_station_name', label: t('mes.work_report_page.text_909250'), sortable: true },
+      { id: 'worker_name', label: t('mes.work_report_page.operator'), sortable: true },
+      { id: 'quantity_good', label: t('mes.work_report_page.field_qualified_quantity'), sortable: true },
+      { id: 'quantity_bad', label: t('mes.work_report_page.field_defective_quantity'), sortable: true },
+      { id: 'quantity_total', label: t('mes.work_report_page.total_quantity'), sortable: true },
       {
         id: 'start_time',
-        label: '开始时间',
+        label: t('mes.work_report_page.start_time'),
         render: (row) => (row.start_time ? new Date(row.start_time).toLocaleString('zh-CN') : '-'),
       },
       {
         id: 'end_time',
-        label: '结束时间',
+        label: t('mes.work_report_page.end_time'),
         render: (row) => (row.end_time ? new Date(row.end_time).toLocaleString('zh-CN') : '-'),
       },
       {
         id: 'status',
-        label: '状态',
+        label: t('mes.work_report_page.filter_status'),
         render: (row) => getStatusBadge(row.status),
       },
     ],
@@ -274,15 +276,15 @@ const WorkReportPage: React.FC = () => {
     () => [
       {
         id: 'status',
-        label: '状态',
+        label: t('mes.work_report_page.filter_status'),
         type: 'select',
         options: [
-          { label: '全部状态', value: 'all' },
-          { label: '草稿', value: 'draft' },
-          { label: '已提交', value: 'submitted' },
-          { label: '已审核', value: 'approved' },
-          { label: '已驳回', value: 'rejected' },
-          { label: '已取消', value: 'cancelled' },
+          { label: t('mes.work_report_page.filter_option_all_status'), value: 'all' },
+          { label: t('mes.work_report_page.text_22b433'), value: 'draft' },
+          { label: t('mes.work_report_page.submit'), value: 'submitted' },
+          { label: t('mes.work_report_page.approved'), value: 'approved' },
+          { label: t('mes.work_report_page.status_rejected'), value: 'rejected' },
+          { label: t('mes.work_report_page.cancelled'), value: 'cancelled' },
         ],
         value: statusFilter,
         onChange: (value: unknown) => {
@@ -297,36 +299,36 @@ const WorkReportPage: React.FC = () => {
   const rowActions: RowAction<WorkReport>[] = useMemo(
     () => [
       {
-        label: '查看详情',
+        label: t('mes.work_report_page.action_view_detail'),
         icon: <Eye size={16} />,
         onClick: handleViewDetail,
       },
       {
-        label: '编辑',
+        label: t('mes.work_report_page.action_edit'),
         icon: <Edit size={16} />,
         onClick: handleEdit,
       },
       {
-        label: '审核',
+        label: t('mes.work_report_page.text_cf13b1'),
         icon: <CheckCircle size={16} />,
         color: 'success',
         onClick: (row) => handleApprove(row.id),
         show: (row) => row.status === 'submitted',
       },
       {
-        label: '驳回',
+        label: t('mes.work_report_page.action_reject'),
         icon: <XCircle size={16} />,
         color: 'error',
         onClick: (row) => handleReject(row.id),
         show: (row) => row.status === 'submitted',
       },
       {
-        label: '删除',
+        label: t('mes.work_report_page.action_delete'),
         icon: <Trash2 size={16} />,
         color: 'error',
         onClick: (row) => handleDelete(row.id),
         confirm: true,
-        confirmMessage: '确定要删除这条报工记录吗?',
+        confirmMessage: t('mes.work_report_page.confirm'),
       },
     ],
     [handleViewDetail, handleEdit, handleDelete, handleApprove, handleReject]
@@ -453,7 +455,7 @@ const WorkReportPage: React.FC = () => {
         loading={loading}
         filters={filters}
         searchable
-        searchPlaceholder='搜索报工单号或操作人员...'
+        searchPlaceholder={t('mes.work_report_page.operator_1')}
         searchValue={searchTerm}
         onSearch={handleSearch}
         pagination={{
@@ -467,14 +469,14 @@ const WorkReportPage: React.FC = () => {
         onSelectionChange={(ids) => setSelectedIds(ids.map(String))}
         actions={[
           {
-            label: '新增报工',
+            label: t('mes.work_report_page.dialog_create_title'),
             icon: <Plus size={16} />,
             onClick: handleOpenCreate,
           },
         ]}
         rowActions={rowActions}
         headerContent={statsContent}
-        emptyMessage='暂无报工数据'
+        emptyMessage={t('mes.work_report_page.empty_message')}
         getRowId={(row) => row.id}
       />
 
@@ -483,7 +485,7 @@ const WorkReportPage: React.FC = () => {
         onClose={() => setShowDialog(false)}
         maxWidth='md'
       >
-        <DialogTitle>{selectedReport ? '编辑报工' : '新增报工'}</DialogTitle>
+        <DialogTitle>{selectedReport ? t('mes.work_report_page.dialog_edit_title') : t('mes.work_report_page.dialog_create_title')}</DialogTitle>
         <DialogContent>
           <Box
             component='span'
@@ -494,7 +496,7 @@ const WorkReportPage: React.FC = () => {
               fontSize: 14,
             }}
           >
-            {selectedReport ? '修改报工信息' : '填写新报工信息'}
+            {selectedReport ? t('mes.work_report_page.info') : t('mes.work_report_page.info_1')}
           </Box>
           <form onSubmit={handleSubmit}>
             <Box

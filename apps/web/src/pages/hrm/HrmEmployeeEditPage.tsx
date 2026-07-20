@@ -19,6 +19,7 @@ import { useNotification } from '@/hooks/useNotification';
 import { HRM_PATHS } from '@/modules/hrm/config';
 import { logger } from '@/utils/logger';
 
+import { useTranslation } from 'react-i18next';
 const employeeSchema = z.object({
   name: z.string().min(1, '姓名不能为空'),
   employee_no: z.string().min(1, '工号不能为空'),
@@ -38,6 +39,7 @@ const employeeSchema = z.object({
 type EmployeeFormData = z.infer<typeof employeeSchema>;
 
 const HrmEmployeeEditPage: React.FC = () => {
+  const { t } = useTranslation();
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
   const { success, error } = useNotification();
@@ -48,11 +50,11 @@ const HrmEmployeeEditPage: React.FC = () => {
     enabled: !!id,
     queryFn: async () => {
       if (!id) {
-        throw new Error('员工ID无效');
+        throw new Error(t('hrm.hrm_employee_edit_page.text_15c288'));
       }
       const res = await employeeApi.get(id);
       if (res.code !== 200 || !res.data) {
-        throw new Error('加载员工信息失败');
+        throw new Error(t('hrm.hrm_employee_edit_page.fail'));
       }
       return res.data;
     },
@@ -88,16 +90,16 @@ const HrmEmployeeEditPage: React.FC = () => {
   const updateMutation = useMutation({
     mutationFn: async (args: { id: string; data: EmployeeFormData }) => {
       if (!args.data.name || !args.data.employee_no) {
-        throw new Error('请填写必填字段');
+        throw new Error(t('hrm.hrm_employee_edit_page.please_fill'));
       }
       const res = await employeeApi.update(args.id, args.data);
       if (res.code !== 200) {
-        throw new Error(res.message || '更新失败');
+        throw new Error(res.message || t('hrm.hrm_employee_edit_page.update'));
       }
       return res;
     },
     onSuccess: () => {
-      success('员工信息更新成功');
+      success(t('hrm.hrm_employee_edit_page.update_1'));
       queryClient.invalidateQueries({ queryKey: QUERY_KEYS.HRM.EMPLOYEES });
       if (id) {
         queryClient.invalidateQueries({ queryKey: QUERY_KEYS.HRM.EMPLOYEE(id) });
@@ -106,18 +108,18 @@ const HrmEmployeeEditPage: React.FC = () => {
     },
     onError: (err: Error) => {
       logger.error('Failed to update employee:', err);
-      error(err.message || '更新员工信息失败');
+      error(err.message || t('hrm.hrm_employee_edit_page.update_2'));
     },
   });
 
   const handleSubmit = (data: unknown) => {
     if (!id) {
-      error('员工ID无效');
+      error(t('hrm.hrm_employee_edit_page.text_15c288'));
       return;
     }
     const formData = data as EmployeeFormData;
     if (!formData.name || !formData.employee_no) {
-      error('请填写必填字段');
+      error(t('hrm.hrm_employee_edit_page.please_fill'));
       return;
     }
     updateMutation.mutate({ id, data: formData });
@@ -155,133 +157,133 @@ const HrmEmployeeEditPage: React.FC = () => {
   const sections: FormSection[] = [
     {
       id: 'basic',
-      title: '基本信息',
-      description: '员工基本个人信息',
+      title: t('hrm.hrm_employee_edit_page.info'),
+      description: t('hrm.hrm_employee_edit_page.info_1'),
       icon: <User style={{ width: 18, height: 18 }} />,
       collapsible: false,
       fields: [
         {
           name: 'name',
-          label: '姓名',
+          label: t('hrm.hrm_employee_edit_page.text_60d045'),
           type: 'text',
           required: true,
-          placeholder: '请输入姓名',
+          placeholder: t('hrm.hrm_employee_edit_page.please_input_1'),
         },
         {
           name: 'employee_no',
-          label: '工号',
+          label: t('hrm.hrm_employee_edit_page.text_752d38'),
           type: 'text',
           required: true,
-          placeholder: '请输入工号',
+          placeholder: t('hrm.hrm_employee_edit_page.please_input_2'),
         },
         {
           name: 'gender',
-          label: '性别',
+          label: t('hrm.hrm_employee_edit_page.text_787b56'),
           type: 'select',
           options: [
-            { label: '男', value: 'male' },
-            { label: '女', value: 'female' },
+            { label: t('hrm.hrm_employee_edit_page.text_36a490'), value: 'male' },
+            { label: t('hrm.hrm_employee_edit_page.text_87c835'), value: 'female' },
           ],
         },
         {
           name: 'birth_date',
-          label: '出生日期',
+          label: t('hrm.hrm_employee_edit_page.date'),
           type: 'date',
-          placeholder: '请选择出生日期',
+          placeholder: t('hrm.hrm_employee_edit_page.please_select'),
         },
       ],
     },
     {
       id: 'contact',
-      title: '联系方式',
-      description: '员工联系信息',
+      title: t('hrm.hrm_employee_edit_page.text_b58943'),
+      description: t('hrm.hrm_employee_edit_page.info_2'),
       icon: <Mail style={{ width: 18, height: 18 }} />,
       collapsible: false,
       fields: [
         {
           name: 'email',
-          label: '邮箱',
+          label: t('hrm.hrm_employee_edit_page.email'),
           type: 'email',
-          placeholder: '请输入邮箱地址',
+          placeholder: t('hrm.hrm_employee_edit_page.please_input_3'),
         },
         {
           name: 'phone',
-          label: '手机号',
+          label: t('hrm.hrm_employee_edit_page.text_8098e2'),
           type: 'text',
-          placeholder: '请输入手机号',
+          placeholder: t('hrm.hrm_employee_edit_page.please_input_4'),
         },
         {
           name: 'address',
-          label: '地址',
+          label: t('hrm.hrm_employee_edit_page.address'),
           type: 'text',
-          placeholder: '请输入地址',
+          placeholder: t('hrm.hrm_employee_edit_page.please_input_5'),
           span: 2,
         },
       ],
     },
     {
       id: 'work',
-      title: '工作信息',
-      description: '员工工作相关信息',
+      title: t('hrm.hrm_employee_edit_page.info_3'),
+      description: t('hrm.hrm_employee_edit_page.info_4'),
       icon: <Briefcase style={{ width: 18, height: 18 }} />,
       collapsible: false,
       fields: [
         {
           name: 'department_id',
-          label: '部门',
+          label: t('hrm.hrm_employee_edit_page.text_1e1459'),
           type: 'select',
           options: departments.map((dept) => ({
             label: dept.name,
             value: dept.id,
           })),
-          placeholder: '请选择部门',
+          placeholder: t('hrm.hrm_employee_edit_page.please_select_1'),
         },
         {
           name: 'position_id',
-          label: '岗位',
+          label: t('hrm.hrm_employee_edit_page.text_8402fc'),
           type: 'select',
           options: positions.map((pos) => ({
             label: pos.name,
             value: pos.id,
           })),
-          placeholder: '请选择岗位',
+          placeholder: t('hrm.hrm_employee_edit_page.please_select_2'),
         },
         {
           name: 'hire_date',
-          label: '入职日期',
+          label: t('hrm.hrm_employee_edit_page.date_1'),
           type: 'date',
-          placeholder: '请选择入职日期',
+          placeholder: t('hrm.hrm_employee_edit_page.please_select_3'),
         },
         {
           name: 'status',
-          label: '状态',
+          label: t('hrm.hrm_employee_edit_page.status'),
           type: 'select',
           options: [
-            { label: '在职', value: 'active' },
-            { label: '试用期', value: 'probation' },
-            { label: '离职', value: 'resigned' },
+            { label: t('hrm.hrm_employee_edit_page.text_b5509b'), value: 'active' },
+            { label: t('hrm.hrm_employee_edit_page.text_9a3256'), value: 'probation' },
+            { label: t('hrm.hrm_employee_edit_page.text_583e79'), value: 'resigned' },
           ],
         },
       ],
     },
     {
       id: 'emergency',
-      title: '紧急联系人',
-      description: '紧急情况下的联系人信息',
+      title: t('hrm.hrm_employee_edit_page.contact'),
+      description: t('hrm.hrm_employee_edit_page.contact_1'),
       icon: <MapPin style={{ width: 18, height: 18 }} />,
       collapsible: false,
       fields: [
         {
           name: 'emergency_contact_name',
-          label: '紧急联系人',
+          label: t('hrm.hrm_employee_edit_page.contact'),
           type: 'text',
-          placeholder: '请输入紧急联系人姓名',
+          placeholder: t('hrm.hrm_employee_edit_page.contact_2'),
         },
         {
           name: 'emergency_contact_phone',
-          label: '紧急联系电话',
+          label: t('hrm.hrm_employee_edit_page.phone'),
           type: 'text',
-          placeholder: '请输入紧急联系电话',
+          placeholder: t('hrm.hrm_employee_edit_page.please_input_6'),
         },
       ],
     },
@@ -289,17 +291,17 @@ const HrmEmployeeEditPage: React.FC = () => {
 
   return (
     <PageContainer
-      title='编辑员工'
-      subtitle='修改员工档案信息'
+      title={t('hrm.hrm_employee_edit_page.edit')}
+      subtitle={t('hrm.hrm_employee_edit_page.info_5')}
     >
       <FormPageTemplate
         title=''
         subtitle=''
         breadcrumbs={[
-          { label: '首页', href: '/dashboard' },
-          { label: '人力资源', href: '/hrm' },
-          { label: '员工管理', href: '/hrm/employees' },
-          { label: '编辑员工' },
+          { label: t('hrm.hrm_employee_edit_page.home'), href: '/dashboard' },
+          { label: t('hrm.hrm_employee_edit_page.text_40fb54'), href: '/hrm' },
+          { label: t('hrm.hrm_employee_edit_page.text_b33603'), href: '/hrm/employees' },
+          { label: t('hrm.hrm_employee_edit_page.edit') },
         ]}
         sections={sections}
         schema={employeeSchema}
@@ -308,8 +310,8 @@ const HrmEmployeeEditPage: React.FC = () => {
         submitting={submitting}
         onSubmit={handleSubmit}
         onCancel={handleCancel}
-        submitText='保存修改'
-        cancelText='取消'
+        submitText={t('hrm.hrm_employee_edit_page.save')}
+        cancelText={t('hrm.hrm_employee_edit_page.cancel')}
         columns={3}
         stickyFooter={true}
       />

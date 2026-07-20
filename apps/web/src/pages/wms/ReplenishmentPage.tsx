@@ -45,45 +45,48 @@ import { apiLogger } from '@/utils/logger';
 import { ConfirmDialog, PageContainer, StatusBadge } from '@/components/common';
 import { designTokens } from '@/theme/tokens';
 
+import { useTranslation } from 'react-i18next';
 const ct = designTokens.colors;
 
-const suggestionStatusConfig: Record<
-  string,
-  { label: string; color: 'success' | 'warning' | 'error' | 'info' | 'default' }
-> = {
-  pending: { label: '待处理', color: 'warning' },
-  approved: { label: '已批准', color: 'info' },
-  rejected: { label: '已拒绝', color: 'error' },
-  converted: { label: '已转化', color: 'success' },
-};
 
-const orderStatusConfig: Record<
-  string,
-  { label: string; color: 'success' | 'warning' | 'error' | 'info' | 'default' }
-> = {
-  draft: { label: '草稿', color: 'default' },
-  pending: { label: '待确认', color: 'warning' },
-  confirmed: { label: '已确认', color: 'info' },
-  in_progress: { label: '进行中', color: 'info' },
-  completed: { label: '已完成', color: 'success' },
-  cancelled: { label: '已取消', color: 'error' },
-};
 
-const priorityConfig: Record<
-  string,
-  { label: string; color: 'error' | 'warning' | 'info' | 'default' }
-> = {
-  urgent: { label: '紧急', color: 'error' },
-  high: { label: '高', color: 'warning' },
-  normal: { label: '普通', color: 'info' },
-  low: { label: '低', color: 'default' },
-};
 
 type TabValue = 'suggestions' | 'orders';
 
 type ReplenishmentItem = ReplenishmentSuggestion | ReplenishmentOrder;
 
 const ReplenishmentPage: React.FC = () => {
+  const { t } = useTranslation();
+  const suggestionStatusConfig: Record<
+    string,
+    { label: string; color: 'success' | 'warning' | 'error' | 'info' | 'default' }
+  > = {
+    pending: { label: t('wms.replenishment_page.pending'), color: 'warning' },
+    approved: { label: t('wms.replenishment_page.text_337737'), color: 'info' },
+    rejected: { label: t('wms.replenishment_page.text_81233d'), color: 'error' },
+    converted: { label: t('wms.replenishment_page.text_f9a204'), color: 'success' },
+  };
+  const orderStatusConfig: Record<
+    string,
+    { label: string; color: 'success' | 'warning' | 'error' | 'info' | 'default' }
+  > = {
+    draft: { label: t('wms.replenishment_page.text_22b433'), color: 'default' },
+    pending: { label: t('wms.replenishment_page.confirm'), color: 'warning' },
+    confirmed: { label: t('wms.replenishment_page.confirmed'), color: 'info' },
+    in_progress: { label: t('wms.replenishment_page.in_progress'), color: 'info' },
+    completed: { label: t('wms.replenishment_page.status_completed'), color: 'success' },
+    cancelled: { label: t('wms.replenishment_page.status_cancelled'), color: 'error' },
+  };
+  const priorityConfig: Record<
+    string,
+    { label: string; color: 'error' | 'warning' | 'info' | 'default' }
+  > = {
+    urgent: { label: t('wms.replenishment_page.text_cb0ed5'), color: 'error' },
+    high: { label: t('wms.replenishment_page.text_4296d7'), color: 'warning' },
+    normal: { label: t('wms.replenishment_page.text_35242c'), color: 'info' },
+    low: { label: t('wms.replenishment_page.text_19ac67'), color: 'default' },
+  };
+
   const { addNotification } = useNotificationStore();
   const queryClient = useQueryClient();
 
@@ -118,7 +121,7 @@ const ReplenishmentPage: React.FC = () => {
 
   useEffect(() => {
     if (warehousesQuery.isError && warehousesQuery.error) {
-      apiLogger.error('获取仓库列表失败:', warehousesQuery.error);
+      apiLogger.error(t('wms.replenishment_page.list'), warehousesQuery.error);
     }
   }, [warehousesQuery.isError, warehousesQuery.error]);
 
@@ -148,11 +151,11 @@ const ReplenishmentPage: React.FC = () => {
 
   useEffect(() => {
     if (suggestionsQuery.isError && suggestionsQuery.error) {
-      apiLogger.error('获取补货建议列表失败:', suggestionsQuery.error);
+      apiLogger.error(t('wms.replenishment_page.list_1'), suggestionsQuery.error);
       addNotification({
         type: 'error',
-        title: '加载失败',
-        message: '无法加载补货建议列表',
+        title: t('wms.replenishment_page.fail'),
+        message: t('wms.replenishment_page.list_2'),
       });
     }
   }, [suggestionsQuery.isError, suggestionsQuery.error, addNotification]);
@@ -183,11 +186,11 @@ const ReplenishmentPage: React.FC = () => {
 
   useEffect(() => {
     if (ordersQuery.isError && ordersQuery.error) {
-      apiLogger.error('获取补货单列表失败:', ordersQuery.error);
+      apiLogger.error(t('wms.replenishment_page.list_3'), ordersQuery.error);
       addNotification({
         type: 'error',
-        title: '加载失败',
-        message: '无法加载补货单列表',
+        title: t('wms.replenishment_page.fail'),
+        message: t('wms.replenishment_page.list_4'),
       });
     }
   }, [ordersQuery.isError, ordersQuery.error, addNotification]);
@@ -209,7 +212,7 @@ const ReplenishmentPage: React.FC = () => {
 
   useEffect(() => {
     if (statisticsQuery.isError && statisticsQuery.error) {
-      apiLogger.error('获取补货统计失败:', statisticsQuery.error);
+      apiLogger.error(t('wms.replenishment_page.fail_1'), statisticsQuery.error);
     }
   }, [statisticsQuery.isError, statisticsQuery.error]);
 
@@ -221,18 +224,18 @@ const ReplenishmentPage: React.FC = () => {
     onSuccess: (response) => {
       addNotification({
         type: 'success',
-        title: '生成成功',
+        title: t('wms.replenishment_page.success'),
         message: `已生成 ${response.data?.count || 0} 条补货建议`,
       });
       queryClient.invalidateQueries({ queryKey: ['wms-suggestions'] });
       queryClient.invalidateQueries({ queryKey: ['wms-replenishment-statistics'] });
     },
     onError: (error: unknown) => {
-      apiLogger.error('生成补货建议失败:', error);
+      apiLogger.error(t('wms.replenishment_page.fail_2'), error);
       addNotification({
         type: 'error',
-        title: '生成失败',
-        message: '生成补货建议失败',
+        title: t('wms.replenishment_page.fail_3'),
+        message: t('wms.replenishment_page.fail_4'),
       });
     },
   });
@@ -243,19 +246,19 @@ const ReplenishmentPage: React.FC = () => {
     onSuccess: () => {
       addNotification({
         type: 'success',
-        title: '创建成功',
-        message: '补货单已创建',
+        title: t('wms.replenishment_page.create'),
+        message: t('wms.replenishment_page.create_1'),
       });
       queryClient.invalidateQueries({ queryKey: ['wms-suggestions'] });
       queryClient.invalidateQueries({ queryKey: ['wms-replenishment-orders'] });
       queryClient.invalidateQueries({ queryKey: ['wms-replenishment-statistics'] });
     },
     onError: (error: unknown) => {
-      apiLogger.error('创建补货单失败:', error);
+      apiLogger.error(t('wms.replenishment_page.create_2'), error);
       addNotification({
         type: 'error',
-        title: '创建失败',
-        message: '创建补货单失败',
+        title: t('wms.replenishment_page.create_3'),
+        message: t('wms.replenishment_page.create_4'),
       });
     },
   });
@@ -265,18 +268,18 @@ const ReplenishmentPage: React.FC = () => {
     onSuccess: () => {
       addNotification({
         type: 'success',
-        title: '确认成功',
-        message: '补货单已确认',
+        title: t('wms.replenishment_page.success_1'),
+        message: t('wms.replenishment_page.confirmed_1'),
       });
       queryClient.invalidateQueries({ queryKey: ['wms-replenishment-orders'] });
       queryClient.invalidateQueries({ queryKey: ['wms-replenishment-statistics'] });
     },
     onError: (error: unknown) => {
-      apiLogger.error('确认补货单失败:', error);
+      apiLogger.error(t('wms.replenishment_page.fail_5'), error);
       addNotification({
         type: 'error',
-        title: '确认失败',
-        message: '确认补货单失败',
+        title: t('wms.replenishment_page.fail_6'),
+        message: t('wms.replenishment_page.fail_7'),
       });
     },
   });
@@ -286,18 +289,18 @@ const ReplenishmentPage: React.FC = () => {
     onSuccess: () => {
       addNotification({
         type: 'success',
-        title: '完成成功',
-        message: '补货单已完成',
+        title: t('wms.replenishment_page.success_2'),
+        message: t('wms.replenishment_page.completed'),
       });
       queryClient.invalidateQueries({ queryKey: ['wms-replenishment-orders'] });
       queryClient.invalidateQueries({ queryKey: ['wms-replenishment-statistics'] });
     },
     onError: (error: unknown) => {
-      apiLogger.error('完成补货单失败:', error);
+      apiLogger.error(t('wms.replenishment_page.fail_8'), error);
       addNotification({
         type: 'error',
-        title: '完成失败',
-        message: '完成补货单失败',
+        title: t('wms.replenishment_page.fail_9'),
+        message: t('wms.replenishment_page.fail_10'),
       });
     },
   });
@@ -307,18 +310,18 @@ const ReplenishmentPage: React.FC = () => {
     onSuccess: () => {
       addNotification({
         type: 'success',
-        title: '删除成功',
-        message: '补货单已删除',
+        title: t('wms.replenishment_page.delete_success'),
+        message: t('wms.replenishment_page.deleted'),
       });
       queryClient.invalidateQueries({ queryKey: ['wms-replenishment-orders'] });
       queryClient.invalidateQueries({ queryKey: ['wms-replenishment-statistics'] });
     },
     onError: (error: unknown) => {
-      apiLogger.error('删除补货单失败:', error);
+      apiLogger.error(t('wms.replenishment_page.delete'), error);
       addNotification({
         type: 'error',
-        title: '删除失败',
-        message: '删除补货单失败',
+        title: t('wms.replenishment_page.delete_1'),
+        message: t('wms.replenishment_page.delete_2'),
       });
     },
   });
@@ -413,24 +416,24 @@ const ReplenishmentPage: React.FC = () => {
 
   const suggestionColumns: ColumnDef<ReplenishmentSuggestion>[] = useMemo(
     () => [
-      { id: 'suggestion_number', label: '建议编号', sortable: true },
-      { id: 'sku', label: '物料编码' },
-      { id: 'material_name', label: '物料名称', sortable: true },
+      { id: 'suggestion_number', label: t('wms.replenishment_page.text_5cfc3e'), sortable: true },
+      { id: 'sku', label: t('wms.replenishment_page.column_material_code') },
+      { id: 'material_name', label: t('wms.replenishment_page.column_material_name'), sortable: true },
       {
         id: 'warehouse_id',
-        label: '仓库',
+        label: t('wms.replenishment_page.warehouse'),
         render: (row) => getWarehouseName(row.warehouse_id),
       },
-      { id: 'current_quantity', label: '当前库存' },
-      { id: 'suggested_quantity', label: '建议数量' },
+      { id: 'current_quantity', label: t('wms.replenishment_page.text_cd14d6') },
+      { id: 'suggested_quantity', label: t('wms.replenishment_page.quantity') },
       {
         id: 'priority',
-        label: '优先级',
+        label: t('wms.replenishment_page.text_ee8ecb'),
         render: (row) => getPriorityBadge(row.priority),
       },
       {
         id: 'status',
-        label: '状态',
+        label: t('wms.replenishment_page.filter_status'),
         render: (row) => getStatusBadge(row.status, 'suggestion'),
       },
     ],
@@ -439,26 +442,26 @@ const ReplenishmentPage: React.FC = () => {
 
   const orderColumns: ColumnDef<ReplenishmentOrder>[] = useMemo(
     () => [
-      { id: 'order_number', label: '补货单号', sortable: true },
+      { id: 'order_number', label: t('wms.replenishment_page.column_replenishment_number'), sortable: true },
       {
         id: 'warehouse_id',
-        label: '仓库',
+        label: t('wms.replenishment_page.warehouse'),
         render: (row) => getWarehouseName(row.warehouse_id),
       },
-      { id: 'supplier_name', label: '供应商' },
-      { id: 'total_quantity', label: '总数量' },
-      { id: 'total_amount', label: '总金额' },
+      { id: 'supplier_name', label: t('wms.replenishment_page.supplier') },
+      { id: 'total_quantity', label: t('wms.replenishment_page.total_quantity') },
+      { id: 'total_amount', label: t('wms.replenishment_page.amount') },
       {
         id: 'priority',
-        label: '优先级',
+        label: t('wms.replenishment_page.text_ee8ecb'),
         render: (row) => getPriorityBadge(row.priority || 'normal'),
       },
       {
         id: 'status',
-        label: '状态',
+        label: t('wms.replenishment_page.filter_status'),
         render: (row) => getStatusBadge(row.status, 'order'),
       },
-      { id: 'expected_date', label: '预计日期' },
+      { id: 'expected_date', label: t('wms.replenishment_page.date') },
     ],
     [getWarehouseName]
   );
@@ -467,25 +470,25 @@ const ReplenishmentPage: React.FC = () => {
     () => [
       {
         id: 'status',
-        label: '状态',
+        label: t('wms.replenishment_page.filter_status'),
         type: 'select',
         options:
           activeTab === 'suggestions'
             ? [
-                { label: '全部状态', value: '' },
-                { label: '待处理', value: 'pending' },
-                { label: '已批准', value: 'approved' },
-                { label: '已拒绝', value: 'rejected' },
-                { label: '已转化', value: 'converted' },
+                { label: t('wms.replenishment_page.filter_option_all_status'), value: '' },
+                { label: t('wms.replenishment_page.pending'), value: 'pending' },
+                { label: t('wms.replenishment_page.text_337737'), value: 'approved' },
+                { label: t('wms.replenishment_page.text_81233d'), value: 'rejected' },
+                { label: t('wms.replenishment_page.text_f9a204'), value: 'converted' },
               ]
             : [
-                { label: '全部状态', value: '' },
-                { label: '草稿', value: 'draft' },
-                { label: '待确认', value: 'pending' },
-                { label: '已确认', value: 'confirmed' },
-                { label: '进行中', value: 'in_progress' },
-                { label: '已完成', value: 'completed' },
-                { label: '已取消', value: 'cancelled' },
+                { label: t('wms.replenishment_page.filter_option_all_status'), value: '' },
+                { label: t('wms.replenishment_page.text_22b433'), value: 'draft' },
+                { label: t('wms.replenishment_page.confirm'), value: 'pending' },
+                { label: t('wms.replenishment_page.confirmed'), value: 'confirmed' },
+                { label: t('wms.replenishment_page.in_progress'), value: 'in_progress' },
+                { label: t('wms.replenishment_page.status_completed'), value: 'completed' },
+                { label: t('wms.replenishment_page.status_cancelled'), value: 'cancelled' },
               ],
         value: statusFilter,
         onChange: (value) => {
@@ -495,10 +498,10 @@ const ReplenishmentPage: React.FC = () => {
       },
       {
         id: 'warehouse_id',
-        label: '仓库',
+        label: t('wms.replenishment_page.warehouse'),
         type: 'select',
         options: [
-          { label: '全部仓库', value: '' },
+          { label: t('wms.replenishment_page.all'), value: '' },
           ...warehouses.map((w) => ({ label: w.name, value: w.id })),
         ],
         value: warehouseFilter,
@@ -514,12 +517,12 @@ const ReplenishmentPage: React.FC = () => {
   const suggestionRowActions: RowAction<ReplenishmentSuggestion>[] = useMemo(
     () => [
       {
-        label: '查看详情',
+        label: t('wms.replenishment_page.action_view_detail'),
         icon: <Eye size={16} />,
         onClick: handleViewSuggestionDetail,
       },
       {
-        label: '创建补货单',
+        label: t('wms.replenishment_page.create_6'),
         icon: <ShoppingCart size={16} />,
         onClick: handleCreateOrderFromSuggestion,
       },
@@ -530,22 +533,22 @@ const ReplenishmentPage: React.FC = () => {
   const orderRowActions: RowAction<ReplenishmentOrder>[] = useMemo(
     () => [
       {
-        label: '查看详情',
+        label: t('wms.replenishment_page.action_view_detail'),
         icon: <Eye size={16} />,
         onClick: handleViewOrderDetail,
       },
       {
-        label: '确认',
+        label: t('wms.replenishment_page.confirm_1'),
         icon: <Check size={16} />,
         onClick: (row) => handleConfirmOrder(row.id),
       },
       {
-        label: '完成',
+        label: t('wms.replenishment_page.completed_1'),
         icon: <Check size={16} />,
         onClick: (row) => handleCompleteOrder(row.id),
       },
       {
-        label: '删除',
+        label: t('wms.replenishment_page.action_delete'),
         icon: <Trash2 size={16} />,
         color: 'error',
         onClick: (row) => handleDeleteClick(row.id),
@@ -652,13 +655,13 @@ const ReplenishmentPage: React.FC = () => {
     </Box>
   );
 
-  const currentTitle = activeTab === 'suggestions' ? '补货建议' : '补货单';
-  const currentBreadcrumb = activeTab === 'suggestions' ? '补货建议' : '补货单';
+  const currentTitle = activeTab === 'suggestions' ? t('wms.replenishment_page.text_d063c6') : t('wms.replenishment_page.text_16ebaf');
+  const currentBreadcrumb = activeTab === 'suggestions' ? t('wms.replenishment_page.text_d063c6') : t('wms.replenishment_page.text_16ebaf');
 
   return (
     <PageContainer
-      title='补货管理'
-      subtitle='智能补货建议和补货单管理'
+      title={t('wms.replenishment_page.breadcrumb_current')}
+      subtitle={t('wms.replenishment_page.text_7bf91a')}
       headerProps={{
         pageIcon: <ShoppingCart style={{ width: 20, height: 20 }} />,
         pageGradient: `linear-gradient(135deg, ${ct.warning.main}, ${ct.warning.dark})`,
@@ -703,9 +706,9 @@ const ReplenishmentPage: React.FC = () => {
         title=''
         subtitle=''
         breadcrumbs={[
-          { label: '首页', href: '/dashboard' },
-          { label: '仓储', href: WMS_PATHS.root },
-          { label: '补货管理', href: WMS_PATHS.replenishment },
+          { label: t('wms.replenishment_page.breadcrumb_home'), href: '/dashboard' },
+          { label: t('wms.replenishment_page.breadcrumb_module'), href: WMS_PATHS.root },
+          { label: t('wms.replenishment_page.breadcrumb_current'), href: WMS_PATHS.replenishment },
           { label: currentBreadcrumb },
         ]}
         columns={currentColumns}
@@ -734,7 +737,7 @@ const ReplenishmentPage: React.FC = () => {
         maxWidth='md'
         fullWidth
       >
-        <DialogTitle>{activeTab === 'suggestions' ? '补货建议详情' : '补货单详情'}</DialogTitle>
+        <DialogTitle>{activeTab === 'suggestions' ? t('wms.replenishment_page.detail') : t('wms.replenishment_page.detail_1')}</DialogTitle>
         <DialogContent>
           {activeTab === 'suggestions' && selectedSuggestion && (
             <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
@@ -1024,8 +1027,8 @@ const ReplenishmentPage: React.FC = () => {
         isOpen={showDeleteConfirm}
         onClose={() => setShowDeleteConfirm(false)}
         onConfirm={handleDelete}
-        title='确认删除'
-        message='确定要删除这个补货单吗？此操作不可撤销。'
+        title={t('wms.replenishment_page.dialog_delete_title')}
+        message={t('wms.replenishment_page.confirm_2')}
         danger
       />
     </PageContainer>

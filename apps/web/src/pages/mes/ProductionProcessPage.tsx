@@ -36,9 +36,11 @@ import { Plus, Edit, Eye, Clock, Settings } from 'lucide-react';
 import { apiLogger } from '@/utils/logger';
 import { designTokens } from '@/theme/tokens';
 
+import { useTranslation } from 'react-i18next';
 const ct = designTokens.colors;
 
 const ProductionProcessPage: React.FC = () => {
+  const { t } = useTranslation();
   const queryClient = useQueryClient();
   const [searchTerm, setSearchTerm] = useState('');
   const [statusFilter, setStatusFilter] = useState<string>('');
@@ -70,7 +72,7 @@ const ProductionProcessPage: React.FC = () => {
 
       const response = await mesApi.processes.list(params);
       if (!response.success || !response.data) {
-        throw new Error(response.message || '加载工序列表失败');
+        throw new Error(response.message || t('mes.production_process_page.list'));
       }
       return {
         items: response.data.processes || [],
@@ -89,7 +91,7 @@ const ProductionProcessPage: React.FC = () => {
     mutationFn: async (data: CreateProductionProcessRequest) => {
       const response = await mesApi.processes.create(data);
       if (!response.success) {
-        throw new Error(response.message || '创建工序失败');
+        throw new Error(response.message || t('mes.production_process_page.create'));
       }
       return response.data;
     },
@@ -97,16 +99,16 @@ const ProductionProcessPage: React.FC = () => {
       queryClient.invalidateQueries({ queryKey: ['mes-processes'] });
       addNotification({
         type: 'success',
-        title: '创建成功',
-        message: '新工序已创建',
+        title: t('mes.production_process_page.create_1'),
+        message: t('mes.production_process_page.create_2'),
       });
     },
     onError: (error: unknown) => {
-      apiLogger.error('创建工序失败:', error);
+      apiLogger.error(t('mes.production_process_page.create_3'), error);
       addNotification({
         type: 'error',
-        title: '操作失败',
-        message: '创建工序失败',
+        title: t('mes.production_process_page.operation_failed'),
+        message: t('mes.production_process_page.create'),
       });
     },
   });
@@ -115,7 +117,7 @@ const ProductionProcessPage: React.FC = () => {
     mutationFn: async ({ id, data }: { id: string; data: UpdateProductionProcessRequest }) => {
       const response = await mesApi.processes.update(id, data);
       if (!response.success) {
-        throw new Error(response.message || '更新工序失败');
+        throw new Error(response.message || t('mes.production_process_page.update'));
       }
       return response.data;
     },
@@ -123,16 +125,16 @@ const ProductionProcessPage: React.FC = () => {
       queryClient.invalidateQueries({ queryKey: ['mes-processes'] });
       addNotification({
         type: 'success',
-        title: '更新成功',
-        message: '工序信息已更新',
+        title: t('mes.production_process_page.update_1'),
+        message: t('mes.production_process_page.update_2'),
       });
     },
     onError: (error: unknown) => {
-      apiLogger.error('更新工序失败:', error);
+      apiLogger.error(t('mes.production_process_page.update_3'), error);
       addNotification({
         type: 'error',
-        title: '操作失败',
-        message: '更新工序失败',
+        title: t('mes.production_process_page.operation_failed'),
+        message: t('mes.production_process_page.update'),
       });
     },
   });
@@ -183,8 +185,8 @@ const ProductionProcessPage: React.FC = () => {
 
   const getStatusBadge = (status: string) => {
     const statusMap: Record<string, { label: string; bg: string; color: string }> = {
-      active: { label: '启用', bg: 'success.lighter', color: 'success.dark' },
-      inactive: { label: '禁用', bg: 'error.lighter', color: 'error.dark' },
+      active: { label: t('mes.production_process_page.status_active'), bg: 'success.lighter', color: 'success.dark' },
+      inactive: { label: t('mes.production_process_page.text_710ad0'), bg: 'error.lighter', color: 'error.dark' },
     };
     const s = statusMap[status] || { label: status, bg: 'grey.100', color: 'text.secondary' };
     return (
@@ -200,25 +202,25 @@ const ProductionProcessPage: React.FC = () => {
     () => [
       {
         id: 'name',
-        label: '工序名称',
+        label: t('mes.production_process_page.column_process_name'),
         sortable: true,
         render: (row) => <Box sx={{ fontWeight: 500 }}>{row.name}</Box>,
       },
-      { id: 'code', label: '工序编码', sortable: true, render: (row) => row.code || '-' },
-      { id: 'sequence', label: '顺序', sortable: true },
+      { id: 'code', label: t('mes.production_process_page.column_process_code'), sortable: true, render: (row) => row.code || '-' },
+      { id: 'sequence', label: t('mes.production_process_page.text_6367e7'), sortable: true },
       {
         id: 'standard_time',
-        label: '标准工时(小时)',
+        label: t('mes.production_process_page.text_5d4906'),
         render: (row) => (row.standard_time ? `${row.standard_time}h` : '-'),
       },
       {
         id: 'work_station_id',
-        label: '工作站',
+        label: t('mes.production_process_page.text_909250'),
         render: (row) => row.work_station_id || '-',
       },
       {
         id: 'status',
-        label: '状态',
+        label: t('mes.production_process_page.filter_status'),
         render: (row) => getStatusBadge(row.status),
       },
     ],
@@ -229,12 +231,12 @@ const ProductionProcessPage: React.FC = () => {
     () => [
       {
         id: 'status',
-        label: '状态',
+        label: t('mes.production_process_page.filter_status'),
         type: 'select',
         options: [
-          { label: '全部', value: '' },
-          { label: '启用', value: 'active' },
-          { label: '禁用', value: 'inactive' },
+          { label: t('mes.production_process_page.all'), value: '' },
+          { label: t('mes.production_process_page.status_active'), value: 'active' },
+          { label: t('mes.production_process_page.text_710ad0'), value: 'inactive' },
         ],
         value: statusFilter,
         onChange: (value: unknown) => {
@@ -249,12 +251,12 @@ const ProductionProcessPage: React.FC = () => {
   const rowActions: RowAction<ProductionProcess>[] = useMemo(
     () => [
       {
-        label: '查看详情',
+        label: t('mes.production_process_page.action_view_detail'),
         icon: <Eye size={16} />,
         onClick: handleViewDetail,
       },
       {
-        label: '编辑',
+        label: t('mes.production_process_page.action_edit'),
         icon: <Edit size={16} />,
         onClick: handleEdit,
       },
@@ -348,7 +350,7 @@ const ProductionProcessPage: React.FC = () => {
         loading={loading}
         filters={filters}
         searchable
-        searchPlaceholder='搜索工序名称或编码...'
+        searchPlaceholder={t('mes.production_process_page.search_placeholder')}
         searchValue={searchTerm}
         onSearch={handleSearch}
         pagination={{
@@ -359,7 +361,7 @@ const ProductionProcessPage: React.FC = () => {
         }}
         actions={[
           {
-            label: '新增工序',
+            label: t('mes.production_process_page.dialog_create_title'),
             icon: <Plus size={16} />,
             onClick: () => {
               resetForm();
@@ -369,7 +371,7 @@ const ProductionProcessPage: React.FC = () => {
         ]}
         rowActions={rowActions}
         headerContent={statsContent}
-        emptyMessage='暂无工序数据'
+        emptyMessage={t('mes.production_process_page.empty_message')}
         getRowId={(row) => row.id}
       />
 
@@ -379,7 +381,7 @@ const ProductionProcessPage: React.FC = () => {
         maxWidth='md'
         fullWidth
       >
-        <DialogTitle>{selectedProcess ? '编辑工序' : '新增工序'}</DialogTitle>
+        <DialogTitle>{selectedProcess ? t('mes.production_process_page.dialog_edit_title') : t('mes.production_process_page.dialog_create_title')}</DialogTitle>
         <DialogContent>
           <form onSubmit={handleSubmit}>
             <Box
@@ -391,20 +393,20 @@ const ProductionProcessPage: React.FC = () => {
               }}
             >
               <TextField
-                label='工序名称 *'
+                label={t('mes.production_process_page.field_process_name_required')}
                 value={formData.name}
                 onChange={(e) => setFormData({ ...formData, name: e.target.value })}
                 size='small'
                 required
               />
               <TextField
-                label='工序编码'
+                label={t('mes.production_process_page.column_process_code')}
                 value={formData.code}
                 onChange={(e) => setFormData({ ...formData, code: e.target.value })}
                 size='small'
               />
               <TextField
-                label='顺序 *'
+                label={t('mes.production_process_page.text_961c58')}
                 type='number'
                 value={formData.sequence}
                 onChange={(e) =>
@@ -417,7 +419,7 @@ const ProductionProcessPage: React.FC = () => {
                 required
               />
               <TextField
-                label='标准工时(小时)'
+                label={t('mes.production_process_page.text_5d4906')}
                 type='number'
                 value={formData.standard_time}
                 onChange={(e) =>
@@ -429,14 +431,14 @@ const ProductionProcessPage: React.FC = () => {
                 size='small'
               />
               <TextField
-                label='工作站ID'
+                label={t('mes.production_process_page.text_e991a1')}
                 value={formData.work_station_id}
                 onChange={(e) => setFormData({ ...formData, work_station_id: e.target.value })}
                 size='small'
               />
             </Box>
             <TextField
-              label='描述'
+              label={t('mes.production_process_page.field_description')}
               multiline
               rows={2}
               value={formData.description}

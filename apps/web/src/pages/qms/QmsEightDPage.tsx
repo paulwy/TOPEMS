@@ -61,6 +61,7 @@ import { eightDApi } from '@/api/qms';
 import type { EightDReport, EightDAuditLog } from '@/api/qms';
 import { designTokens } from '@/theme/tokens';
 import { logger } from '@/utils/logger';
+import { useCrudMutations, useUrlListState } from '@/hooks';
 
 const ct = designTokens.colors;
 
@@ -76,7 +77,13 @@ const D_STEPS = [
 ];
 
 const QmsEightDPage: React.FC = () => {
-  const [searchTerm, setSearchTerm] = useState('');
+  const { searchQuery, setSearchQuery, debouncedSearch } = useUrlListState({
+    defaultPageSize: 10,
+    defaultFilters: {},
+    baseIndex: 1,
+    historyMode: 'replace',
+  });
+
   const [showModal, setShowModal] = useState(false);
   const [showDetailModal, setShowDetailModal] = useState(false);
   const [selectedReport, setSelectedReport] = useState<EightDReport | null>(null);
@@ -293,44 +300,20 @@ const QmsEightDPage: React.FC = () => {
     },
   ];
 
-  const deleteReportMutation = useMutation({
-    mutationFn: (id: string) => eightDApi.deleteEightDReport(id),
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['qms-eightd-reports'] });
-      addNotification({ title: '成功', message: '报告删除成功', type: 'success' });
-    },
-    onError: () => {
-      addNotification({ title: '错误', message: '删除报告时发生错误', type: 'error' });
-    },
-  });
-
-  const createReportMutation = useMutation({
-    mutationFn: (data: Parameters<typeof eightDApi.createEightDReport>[0]) =>
-      eightDApi.createEightDReport(data),
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['qms-eightd-reports'] });
-      addNotification({ title: '成功', message: '报告创建成功', type: 'success' });
-    },
-    onError: () => {
-      addNotification({ title: '错误', message: '创建失败', type: 'error' });
-    },
-  });
-
-  const updateReportMutation = useMutation({
-    mutationFn: ({
-      id,
-      data,
-    }: {
-      id: string;
-      data: Parameters<typeof eightDApi.updateEightDReport>[1];
-    }) => eightDApi.updateEightDReport(id, data),
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['qms-eightd-reports'] });
-      addNotification({ title: '成功', message: '报告更新成功', type: 'success' });
-    },
-    onError: () => {
-      addNotification({ title: '错误', message: '更新失败', type: 'error' });
-    },
+  const {
+    createMutation: createReportMutation,
+    updateMutation: updateReportMutation,
+    deleteMutation: deleteReportMutation,
+  } = useCrudMutations<
+    Parameters<typeof eightDApi.createEightDReport>[0],
+    Parameters<typeof eightDApi.updateEightDReport>[1],
+    string
+  >({
+    queryKeyToInvalidate: ['qms-eightd-reports'],
+    createFn: (data) => eightDApi.createEightDReport(data),
+    updateFn: ({ id, data }) => eightDApi.updateEightDReport(String(id), data),
+    deleteFn: (id) => eightDApi.deleteEightDReport(String(id)),
+    entityName: '8D报告',
   });
 
   const submitStepMutation = useMutation({
@@ -516,10 +499,10 @@ const QmsEightDPage: React.FC = () => {
   const filteredReports = useMemo(() => {
     return reports.filter(
       (item) =>
-        item.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        item.reportNo.toLowerCase().includes(searchTerm.toLowerCase())
+        item.title.toLowerCase().includes(debouncedSearch.toLowerCase()) ||
+        item.reportNo.toLowerCase().includes(debouncedSearch.toLowerCase())
     );
-  }, [reports, searchTerm]);
+  }, [reports, debouncedSearch]);
 
   const stats = useMemo(() => {
     return {
@@ -687,8 +670,8 @@ const QmsEightDPage: React.FC = () => {
         pageIcon: <FileText style={{ width: 20, height: 20 }} />,
         pageGradient: `linear-gradient(135deg, ${ct.secondary[400]}, ${ct.secondary.main})`,
         search: {
-          value: searchTerm,
-          onChange: setSearchTerm,
+          value: searchQuery,
+          onChange: setSearchQuery,
           placeholder: '搜索报告编号或标题...',
         },
         actions: [

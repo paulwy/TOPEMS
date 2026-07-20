@@ -1,4 +1,5 @@
 mod cache;
+mod event_handlers;
 mod middleware;
 mod models;
 mod modules;
@@ -73,6 +74,23 @@ async fn main() -> topems_shared::Result<()> {
         tracing::warn!("数据库初始化警告: {}", e);
     }
 
+    let event_publisher = match topems_shared::event::EventPublisher::new("topems-rd") {
+        Ok(publisher) => {
+            tracing::info!("📢 事件发布服务初始化成功");
+            Some(Arc::new(publisher))
+        }
+        Err(e) => {
+            tracing::warn!("⚠️ 事件发布服务初始化失败（不阻塞启动）: {}", e);
+            None
+        }
+    };
+
+    if let Err(e) =
+        event_handlers::start_event_subscribers(pool.clone(), event_publisher.clone()).await
+    {
+        tracing::warn!("⚠️ RD 事件订阅者启动失败: {}", e);
+    }
+
     let start_time = Instant::now();
     let metrics = Arc::new(SystemMetrics::new());
     let auth_state = AuthState::from_env();
@@ -83,6 +101,7 @@ async fn main() -> topems_shared::Result<()> {
         config: config.clone(),
         metrics: metrics.clone(),
         start_time,
+        event_publisher,
     };
 
     let public_routes: Router<modules::ApiState> = Router::new()

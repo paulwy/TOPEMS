@@ -800,7 +800,10 @@ export const KanbanPageTemplate: React.FC<KanbanPageTemplateProps> = ({
   };
 
   return (
-    <Box {...props}>
+    <Box
+      className='kanban-page-template'
+      {...props}
+    >
       <PageHeader
         title={title}
         subtitle={subtitle}

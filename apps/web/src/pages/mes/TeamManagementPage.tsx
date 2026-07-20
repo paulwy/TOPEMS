@@ -23,10 +23,9 @@ import {
 } from '@mui/material';
 import { PageContainer } from '@/components/common';
 import React, { useState, useMemo, useCallback } from 'react';
-import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { useQuery } from '@tanstack/react-query';
 import type { Team, TeamMember, CreateTeamRequest, UpdateTeamRequest } from '@/api/mes';
 import { mesApi } from '@/api/mes';
-import { useNotificationStore } from '@/store';
 import { LoadingSpinner } from '@topems/shared-components';
 import {
   ListPageTemplate,
@@ -35,13 +34,14 @@ import {
   type FilterConfig,
 } from '@/components/templates';
 import { Plus, Edit, Trash2, Eye, Users } from 'lucide-react';
-import { apiLogger } from '@/utils/logger';
 import { designTokens } from '@/theme/tokens';
+import { useCrudMutations } from '@/hooks';
 
+import { useTranslation } from 'react-i18next';
 const ct = designTokens.colors;
 
 const TeamManagementPage: React.FC = () => {
-  const queryClient = useQueryClient();
+  const { t } = useTranslation();
   const [searchTerm, setSearchTerm] = useState('');
   const [statusFilter, setStatusFilter] = useState<string>('all');
   const [currentPage, setCurrentPage] = useState(1);
@@ -57,8 +57,6 @@ const TeamManagementPage: React.FC = () => {
     description: '',
   });
 
-  const { addNotification } = useNotificationStore();
-
   const teamsQuery = useQuery({
     queryKey: ['mes-teams', currentPage, pageSize, searchTerm, statusFilter],
     queryFn: async () => {
@@ -71,7 +69,7 @@ const TeamManagementPage: React.FC = () => {
 
       const response = await mesApi.teams.list(params);
       if (!response.success || !response.data) {
-        throw new Error(response.message || '加载班组列表失败');
+        throw new Error(response.message || t('mes.team_management_page.list'));
       }
       return {
         items: response.data.teams || [],
@@ -92,7 +90,7 @@ const TeamManagementPage: React.FC = () => {
       if (!selectedTeam?.id) return { items: [] as TeamMember[] };
       const response = await mesApi.teams.getMembers(selectedTeam.id);
       if (!response.success || !response.data) {
-        throw new Error(response.message || '加载班组成员失败');
+        throw new Error(response.message || t('mes.team_management_page.fail'));
       }
       return { items: response.data.members || [] };
     },
@@ -103,81 +101,34 @@ const TeamManagementPage: React.FC = () => {
   const teamMembers = teamMembersQuery.data?.items ?? [];
   const membersLoading = teamMembersQuery.isLoading;
 
-  const createMutation = useMutation({
-    mutationFn: async (data: CreateTeamRequest) => {
+  const { createMutation, updateMutation, deleteMutation } = useCrudMutations<
+    CreateTeamRequest,
+    UpdateTeamRequest,
+    string
+  >({
+    queryKeyToInvalidate: ['mes-teams'],
+    createFn: async (data) => {
       const response = await mesApi.teams.create(data);
       if (!response.success) {
         throw new Error(response.message || '创建班组失败');
       }
       return response.data;
     },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['mes-teams'] });
-      addNotification({
-        type: 'success',
-        title: '创建成功',
-        message: '新班组已创建',
-      });
-    },
-    onError: (error: unknown) => {
-      apiLogger.error('创建班组失败:', error);
-      addNotification({
-        type: 'error',
-        title: '操作失败',
-        message: '创建班组失败',
-      });
-    },
-  });
-
-  const updateMutation = useMutation({
-    mutationFn: async ({ id, data }: { id: string; data: UpdateTeamRequest }) => {
-      const response = await mesApi.teams.update(id, data);
+    updateFn: async ({ id, data }) => {
+      const response = await mesApi.teams.update(String(id), data);
       if (!response.success) {
         throw new Error(response.message || '更新班组失败');
       }
       return response.data;
     },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['mes-teams'] });
-      addNotification({
-        type: 'success',
-        title: '更新成功',
-        message: '班组信息已更新',
-      });
-    },
-    onError: (error: unknown) => {
-      apiLogger.error('更新班组失败:', error);
-      addNotification({
-        type: 'error',
-        title: '操作失败',
-        message: '更新班组失败',
-      });
-    },
-  });
-
-  const deleteMutation = useMutation({
-    mutationFn: async (id: string) => {
-      const response = await mesApi.teams.delete(id);
+    deleteFn: async (id) => {
+      const response = await mesApi.teams.delete(String(id));
       if (!response.success) {
         throw new Error(response.message || '删除班组失败');
       }
+      return response.data;
     },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['mes-teams'] });
-      addNotification({
-        type: 'success',
-        title: '删除成功',
-        message: '班组已删除',
-      });
-    },
-    onError: (error: unknown) => {
-      apiLogger.error('删除班组失败:', error);
-      addNotification({
-        type: 'error',
-        title: '删除失败',
-        message: '无法删除班组',
-      });
-    },
+    entityName: '班组',
   });
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -198,7 +149,7 @@ const TeamManagementPage: React.FC = () => {
 
   const handleDelete = useCallback(
     async (id: string) => {
-      if (!window.confirm('确定要删除这个班组吗?')) return;
+      if (!window.confirm(t('mes.team_management_page.confirm'))) return;
       try {
         await deleteMutation.mutateAsync(id);
       } catch {}
@@ -243,8 +194,8 @@ const TeamManagementPage: React.FC = () => {
         color: string;
       }
     > = {
-      active: { label: '活跃', bg: 'success.lighter', color: 'success.700' },
-      inactive: { label: '停用', bg: 'grey.100', color: 'text.secondary' },
+      active: { label: t('mes.team_management_page.active'), bg: 'success.lighter', color: 'success.700' },
+      inactive: { label: t('mes.team_management_page.status_inactive'), bg: 'grey.100', color: 'text.secondary' },
     };
     const s = statusMap[status] || { label: status, bg: 'grey.100', color: 'text.secondary' };
     return (
@@ -258,29 +209,29 @@ const TeamManagementPage: React.FC = () => {
 
   const getTeamTypeText = (type?: string) => {
     const typeMap: Record<string, string> = {
-      production: '生产班组',
-      maintenance: '维修班组',
-      quality: '质检班组',
-      logistics: '物流班组',
+      production: t('mes.team_management_page.team'),
+      maintenance: t('mes.team_management_page.team_1'),
+      quality: t('mes.team_management_page.team_2'),
+      logistics: t('mes.team_management_page.team_3'),
     };
     return typeMap[type || ''] || type || '-';
   };
 
   const columns: ColumnDef<Team>[] = useMemo(
     () => [
-      { id: 'team_code', label: '班组编码', sortable: true },
-      { id: 'team_name', label: '班组名称', sortable: true },
+      { id: 'team_code', label: t('mes.team_management_page.column_team_code'), sortable: true },
+      { id: 'team_name', label: t('mes.team_management_page.column_team_name'), sortable: true },
       {
         id: 'team_type',
-        label: '班组类型',
+        label: t('mes.team_management_page.type'),
         render: (row) => getTeamTypeText(row.team_type),
       },
-      { id: 'work_station_name', label: '所属工作站', sortable: true },
-      { id: 'leader_name', label: '班组长', sortable: true },
-      { id: 'member_count', label: '成员数', sortable: true },
+      { id: 'work_station_name', label: t('mes.team_management_page.text_915df3'), sortable: true },
+      { id: 'leader_name', label: t('mes.team_management_page.field_leader'), sortable: true },
+      { id: 'member_count', label: t('mes.team_management_page.column_member_count'), sortable: true },
       {
         id: 'status',
-        label: '状态',
+        label: t('mes.team_management_page.filter_status'),
         render: (row) => getStatusBadge(row.status),
       },
     ],
@@ -291,12 +242,12 @@ const TeamManagementPage: React.FC = () => {
     () => [
       {
         id: 'status',
-        label: '状态',
+        label: t('mes.team_management_page.filter_status'),
         type: 'select',
         options: [
-          { label: '全部状态', value: 'all' },
-          { label: '活跃', value: 'active' },
-          { label: '停用', value: 'inactive' },
+          { label: t('mes.team_management_page.filter_option_all_status'), value: 'all' },
+          { label: t('mes.team_management_page.active'), value: 'active' },
+          { label: t('mes.team_management_page.status_inactive'), value: 'inactive' },
         ],
         value: statusFilter,
         onChange: (value: unknown) => {
@@ -311,22 +262,22 @@ const TeamManagementPage: React.FC = () => {
   const rowActions: RowAction<Team>[] = useMemo(
     () => [
       {
-        label: '查看详情',
+        label: t('mes.team_management_page.action_view_detail'),
         icon: <Eye size={16} />,
         onClick: handleViewDetail,
       },
       {
-        label: '编辑',
+        label: t('mes.team_management_page.action_edit'),
         icon: <Edit size={16} />,
         onClick: handleEdit,
       },
       {
-        label: '删除',
+        label: t('mes.team_management_page.action_delete'),
         icon: <Trash2 size={16} />,
         color: 'error',
         onClick: (row) => handleDelete(row.id),
         confirm: true,
-        confirmMessage: '确定要删除这个班组吗?',
+        confirmMessage: t('mes.team_management_page.confirm'),
       },
     ],
     [handleViewDetail, handleEdit, handleDelete]
@@ -423,8 +374,8 @@ const TeamManagementPage: React.FC = () => {
 
   return (
     <PageContainer
-      title='班组管理'
-      subtitle='管理生产班组信息,包括班组编码、名称、类型、成员等'
+      title={t('mes.team_management_page.breadcrumb_current')}
+      subtitle={t('mes.team_management_page.team_code')}
       headerProps={{
         pageIcon: <Users style={{ width: 20, height: 20 }} />,
         pageGradient: `linear-gradient(135deg, ${ct.success.main} 0%, ${ct.success.dark} 100%)`,
@@ -443,7 +394,7 @@ const TeamManagementPage: React.FC = () => {
         }
         filters={filters}
         searchable
-        searchPlaceholder='搜索班组编码或名称...'
+        searchPlaceholder={t('mes.team_management_page.team_code_1')}
         searchValue={searchTerm}
         onSearch={handleSearch}
         pagination={{
@@ -457,14 +408,14 @@ const TeamManagementPage: React.FC = () => {
         onSelectionChange={(ids) => setSelectedIds(ids.map(String))}
         actions={[
           {
-            label: '新增班组',
+            label: t('mes.team_management_page.dialog_create_title'),
             icon: <Plus size={16} />,
             onClick: handleOpenCreate,
           },
         ]}
         rowActions={rowActions}
         headerContent={statsContent}
-        emptyMessage='暂无班组数据'
+        emptyMessage={t('mes.team_management_page.empty_message')}
         getRowId={(row) => row.id}
       />
 
@@ -473,7 +424,7 @@ const TeamManagementPage: React.FC = () => {
         onClose={() => setShowDialog(false)}
         maxWidth='md'
       >
-        <DialogTitle>{selectedTeam ? '编辑班组' : '新增班组'}</DialogTitle>
+        <DialogTitle>{selectedTeam ? t('mes.team_management_page.dialog_edit_title') : t('mes.team_management_page.dialog_create_title')}</DialogTitle>
         <DialogContent>
           <Box
             component='span'
@@ -484,7 +435,7 @@ const TeamManagementPage: React.FC = () => {
               fontSize: 14,
             }}
           >
-            {selectedTeam ? '修改班组信息' : '填写新班组信息'}
+            {selectedTeam ? t('mes.team_management_page.info') : t('mes.team_management_page.info_1')}
           </Box>
           <form onSubmit={handleSubmit}>
             <Box
@@ -687,7 +638,7 @@ const TeamManagementPage: React.FC = () => {
                               <TableCell>
                                 <Chip
                                   size='small'
-                                  label={member.status === 'active' ? '在职' : '离职'}
+                                  label={member.status === 'active' ? t('mes.team_management_page.text_b5509b') : t('mes.team_management_page.text_583e79')}
                                   sx={{
                                     backgroundColor:
                                       member.status === 'active' ? 'success.lighter' : 'grey.100',

@@ -21,6 +21,8 @@ import { StatusBadge, PageContainer } from '@/components/common';
 import { designTokens } from '@/theme/tokens';
 import { PM_PATHS } from '@/modules/pm/config';
 import { useNotificationStore } from '@/store';
+import { ConfirmDialog } from '@topems/shared-components';
+import { useConfirmDialog } from '@/hooks';
 
 const ct = designTokens.colors;
 
@@ -76,6 +78,12 @@ const PmContractListPage: React.FC = () => {
   const [selectedStatus, setSelectedStatus] = useState('');
   const [currentPage, setCurrentPage] = useState(1);
   const pageSize = 10;
+  const {
+    confirmOpen: confirmDialogOpen,
+    confirmConfig: confirmDialogConfig,
+    openConfirm: openConfirmDialog,
+    closeConfirm: setConfirmDialogClosed,
+  } = useConfirmDialog();
 
   const contractListQuery = useQuery({
     queryKey: ['pm-contracts'],
@@ -140,13 +148,17 @@ const PmContractListPage: React.FC = () => {
   };
 
   const handleDelete = useCallback(
-    async (id: string) => {
-      if (!window.confirm('确定要删除这个合同吗？')) return;
-      try {
-        await deleteContractMutation.mutateAsync(id);
-      } catch {}
+    (id: string) => {
+      openConfirmDialog({
+        title: '确认删除',
+        message: '确定要删除这个合同吗？',
+        danger: true,
+        onConfirm: () => {
+          deleteContractMutation.mutate(id);
+        },
+      });
     },
-    [deleteContractMutation]
+    [deleteContractMutation, openConfirmDialog]
   );
 
   const formatDate = (dateStr?: string) => {
@@ -450,6 +462,18 @@ const PmContractListPage: React.FC = () => {
           amount: '金额',
           start_date: '开始日期',
         }}
+      />
+
+      <ConfirmDialog
+        isOpen={confirmDialogOpen}
+        onClose={setConfirmDialogClosed}
+        onConfirm={() => {
+          confirmDialogConfig?.onConfirm();
+          setConfirmDialogClosed();
+        }}
+        title={confirmDialogConfig?.title || ''}
+        message={confirmDialogConfig?.message || ''}
+        danger={confirmDialogConfig?.danger}
       />
     </PageContainer>
   );

@@ -14,7 +14,9 @@ use crate::modules::audit::log_audit_event;
 use crate::modules::ApiState;
 use crate::shared::permission::{check_permission, ModulePermission};
 use topems_shared::auth::Claims;
-use topems_shared::{api_error, ApiResponse, PaginationParams};
+use topems_shared::{
+    api_error, event::EventType, event::StockInboundPayload, ApiResponse, PaginationParams,
+};
 
 #[derive(Debug, Deserialize, Serialize)]
 pub struct InboundOrderItemRequest {
@@ -212,11 +214,47 @@ pub async fn create_inbound_order(
     .await;
 
     let (response, status, error_msg) = match &result {
-        Ok(order) => (
-            Json(ApiResponse::success(order.clone(), "入库订单创建成功")),
-            "success",
-            None,
-        ),
+        Ok(order) => {
+            if let Some(ref publisher) = state.event_publisher {
+                let publisher = publisher.clone();
+                let oid = order.id;
+                let ono = order.order_number.clone();
+                let wh_id = order.warehouse_id;
+                let total = order.total_amount.unwrap_or(0.0);
+                let now_val = Utc::now();
+                tokio::spawn(async move {
+                    let payload = StockInboundPayload {
+                        inbound_id: oid,
+                        inbound_no: ono,
+                        warehouse_id: wh_id,
+                        warehouse_name: None,
+                        material_id: None,
+                        material_name: None,
+                        quantity: total,
+                        reference_order_id: None,
+                        received_by: None,
+                        received_at: Some(now_val),
+                    };
+                    if let Err(e) = publisher
+                        .publish_event(EventType::StockInbound, payload)
+                        .await
+                    {
+                        tracing::warn!(
+                            "[wms] StockInbound 事件发布失败（graceful fallback）: {}",
+                            e
+                        );
+                    } else {
+                        tracing::info!("[wms] StockInbound 事件发布成功 - inbound_id={}", oid);
+                    }
+                });
+            }
+
+            (
+                Json(ApiResponse::success(order.clone(), "入库订单创建成功")),
+                "success",
+                None,
+            )
+        }
         Err(e) => {
             tracing::error!("创建入库订单失败: {}", e);
             (
@@ -863,6 +901,49 @@ pub async fn receive_inbound_order(
                 "#,
             )
             .bind(item.received_quantity)
+            .bind(item.item_id)
+            .execute(&mut *tx)
+            .await;
+
+            // V19.8: 入库收货时同步写入 inventory_movements
+            let seq: i64 = sqlx::query_scalar(
+                r#"SELECT COUNT(*) FROM wms.inventory_movements
+                   WHERE movement_no LIKE $1"#,
+            )
+            .bind(format!("MV-{}%", now.format("%Y%m%d")))
+            .fetch_one(&mut *tx)
+            .await
+            .unwrap_or(0);
+            let movement_no = format!("MV-{}-{:06}", now.format("%Y%m%d"), seq + 1);
+            let movement_id = Uuid::new_v4();
+            let org_id = uuid::Uuid::parse_str("00000000-0000-0000-0000-000000000001")
+                .unwrap_or(uuid::Uuid::nil());
+
+            let _ = sqlx::query(
+                r#"
+                INSERT INTO wms.inventory_movements (
+                    id, movement_no, tenant_id, movement_type, reference_id, reference_type,
+                    material_id, material_code, material_name, quantity,
+                    from_location_id, to_location_id, from_warehouse_id, to_warehouse_id,
+                    status, performed_at, notes, created_at, updated_at
+                )
+                SELECT
+                    $1, $2, $3, 'inbound', $4, 'inbound_order',
+                    NULL, io.material_code, io.material_name, $5,
+                    NULL, io.location_id, NULL, i.warehouse_id,
+                    'completed', $6, $7, $6, $6
+                FROM wms.inbound_order_items io
+                JOIN wms.inbound_orders i ON io.order_id = i.id
+                WHERE io.id = $8
+                "#,
+            )
+            .bind(movement_id)
+            .bind(&movement_no)
+            .bind(org_id)
+            .bind(id.to_string())
+            .bind(item.received_quantity)
+            .bind(now)
+            .bind(format!("入库收货：订单 {}", id))
             .bind(item.item_id)
             .execute(&mut *tx)
             .await;

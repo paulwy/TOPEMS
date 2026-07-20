@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useMemo } from 'react';
+import { useUrlListState } from '@/hooks';
 import {
   Box,
   Dialog,
@@ -83,7 +84,19 @@ const SrmSupplierPage: React.FC = () => {
 
   const scoreDistribution = scoreDistributionQuery.data ?? [];
 
-  const [searchTerm, setSearchTerm] = useState('');
+  const {
+    searchQuery,
+    setSearchQuery,
+    debouncedSearch,
+    currentPage,
+    setCurrentPage,
+    pageSize,
+  } = useUrlListState({
+    defaultPageSize: 10,
+    baseIndex: 1,
+    historyMode: 'replace',
+  });
+  const searchTerm = searchQuery;
   const [showCreateModal, setShowCreateModal] = useState(false);
   const [showEditModal, setShowEditModal] = useState(false);
   const [editingId, setEditingId] = useState<string | null>(null);
@@ -268,12 +281,12 @@ const SrmSupplierPage: React.FC = () => {
   const filteredSuppliers = useMemo(() => {
     return suppliers.filter((s) => {
       return (
-        s.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        s.supplier_no.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        (s.contact_person && s.contact_person.toLowerCase().includes(searchTerm.toLowerCase()))
+        s.name.toLowerCase().includes(debouncedSearch.toLowerCase()) ||
+        s.supplier_no.toLowerCase().includes(debouncedSearch.toLowerCase()) ||
+        (s.contact_person && s.contact_person.toLowerCase().includes(debouncedSearch.toLowerCase()))
       );
     });
-  }, [suppliers, searchTerm]);
+  }, [suppliers, debouncedSearch]);
 
   const handleCreate = () => {
     setFormData({
@@ -666,7 +679,7 @@ const SrmSupplierPage: React.FC = () => {
         searchable
         searchPlaceholder='搜索供应商名称或编号...'
         searchValue={searchTerm}
-        onSearch={setSearchTerm}
+        onSearch={setSearchQuery}
         rowActions={rowActions}
         actions={[
           {

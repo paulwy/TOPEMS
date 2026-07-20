@@ -1,0 +1,49 @@
+{
+  "title": "即时通讯",
+  "menu": {
+    "conversation": "会话",
+    "message": "消息",
+    "group": "群组",
+    "mail": "邮件",
+    "template": "模板",
+    "contact": "联系人"
+  },
+  "status": {
+    "online": "在线",
+    "offline": "离线",
+    "away": "离开",
+    "busy": "忙碌",
+    "invisible": "隐身"
+  },
+  "action": {
+    "create": "创建",
+    "edit": "编辑",
+    "delete": "删除",
+    "view": "查看",
+    "send": "发送",
+    "reply": "回复",
+    "forward": "转发",
+    "invite": "邀请"
+  },
+  "field": {
+    "conversation_name": "会话名称",
+    "group_name": "群组名称",
+    "member": "成员",
+    "owner": "群主",
+    "admin": "管理员",
+    "last_message": "最新消息",
+    "unread_count": "未读数",
+    "subject": "主题",
+    "content": "内容",
+    "attachment": "附件"
+  },
+  "message": {
+    "create_success": "创建成功",
+    "update_success": "更新成功",
+    "delete_success": "删除成功",
+    "send_success": "发送成功",
+    "send_failed": "发送失败",
+    "confirm_delete": "确认删除？",
+    "no_data": "暂无数据"
+  }
+}
