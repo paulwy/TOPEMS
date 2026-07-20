@@ -6,7 +6,7 @@ use axum::{
 use futures_util::{stream::SplitSink, SinkExt, StreamExt};
 use serde::{Deserialize, Serialize};
 use serde_json::{json, Value};
-use std::collections::HashMap;
+use std::collections::{HashMap, HashSet};
 use std::sync::Arc;
 use std::time::Duration;
 use tokio::sync::RwLock;
@@ -19,6 +19,8 @@ pub(crate) struct WsConnection {
     sender: Arc<RwLock<SplitSink<WebSocket, Message>>>,
     connected_at: chrono::DateTime<chrono::Utc>,
     last_pong: std::sync::atomic::AtomicI64,
+    /// 用户订阅的频道集合
+    channels: RwLock<HashSet<String>>,
 }
 
 impl WsConnection {
@@ -28,6 +30,7 @@ impl WsConnection {
             sender,
             connected_at: chrono::Utc::now(),
             last_pong: std::sync::atomic::AtomicI64::new(chrono::Utc::now().timestamp()),
+            channels: RwLock::new(HashSet::new()),
         }
     }
 
@@ -41,24 +44,54 @@ impl WsConnection {
     fn seconds_since_pong(&self) -> i64 {
         chrono::Utc::now().timestamp() - self.last_pong.load(std::sync::atomic::Ordering::Relaxed)
     }
+
+    /// 订阅频道
+    async fn subscribe_channel(&self, channel: String) {
+        let mut channels = self.channels.write().await;
+        channels.insert(channel);
+    }
+
+    /// 取消订阅频道
+    async fn unsubscribe_channel(&self, channel: &str) {
+        let mut channels = self.channels.write().await;
+        channels.remove(channel);
+    }
+
+    /// 检查是否订阅了指定频道
+    async fn is_subscribed(&self, channel: &str) -> bool {
+        let channels = self.channels.read().await;
+        channels.contains(channel)
+    }
+
+    /// 获取所有订阅的频道
+    async fn get_channels(&self) -> HashSet<String> {
+        let channels = self.channels.read().await;
+        channels.clone()
+    }
 }
 
 type ConnectionMap = Arc<RwLock<HashMap<String, Arc<WsConnection>>>>;
+/// 频道订阅映射: channel -> [user_id]
+type ChannelMap = Arc<RwLock<HashMap<String, HashSet<String>>>>;
 
 pub struct WsState {
     connections: ConnectionMap,
+    channels: ChannelMap,
 }
 
 impl WsState {
     pub fn new() -> Self {
         let connections = Arc::new(RwLock::new(HashMap::new()));
-        Self { connections }
+        let channels = Arc::new(RwLock::new(HashMap::new()));
+        Self {
+            connections,
+            channels,
+        }
     }
 
     /// 添加连接
     pub(crate) async fn add_connection(&self, user_id: String, connection: Arc<WsConnection>) {
         let mut connections = self.connections.write().await;
-        // 移除旧连接（如果存在）
         connections.remove(&user_id);
         connections.insert(user_id.clone(), connection);
         info!(
@@ -71,12 +104,61 @@ impl WsState {
     /// 移除连接
     pub async fn remove_connection(&self, user_id: &str) {
         let mut connections = self.connections.write().await;
+        if let Some(conn) = connections.get(user_id) {
+            // 清理频道订阅
+            let subscribed = conn.get_channels().await;
+            let mut channels = self.channels.write().await;
+            for ch in subscribed {
+                if let Some(users) = channels.get_mut(&ch) {
+                    users.remove(user_id);
+                    if users.is_empty() {
+                        channels.remove(&ch);
+                    }
+                }
+            }
+        }
         connections.remove(user_id);
         info!(
             "User {} disconnected, total connections: {}",
             user_id,
             connections.len()
         );
+    }
+
+    /// 用户订阅频道
+    pub async fn subscribe_to_channel(&self, user_id: &str, channel: String) {
+        // 更新连接层面的频道集合
+        if let Some(conn) = self.connections.read().await.get(user_id) {
+            conn.subscribe_channel(channel.clone()).await;
+        }
+        // 更新全局频道映射
+        let mut channels = self.channels.write().await;
+        channels
+            .entry(channel.clone())
+            .or_default()
+            .insert(user_id.to_string());
+        info!("User {} subscribed to channel: {}", user_id, channel);
+    }
+
+    /// 用户取消订阅频道
+    pub async fn unsubscribe_from_channel(&self, user_id: &str, channel: &str) {
+        if let Some(conn) = self.connections.read().await.get(user_id) {
+            conn.unsubscribe_channel(channel).await;
+        }
+        let mut channels = self.channels.write().await;
+        if let Some(users) = channels.get_mut(channel) {
+            users.remove(user_id);
+            if users.is_empty() {
+                channels.remove(channel);
+            }
+        }
+        info!("User {} unsubscribed from channel: {}", user_id, channel);
+    }
+
+    /// 获取频道订阅者
+    pub async fn get_channel_subscribers(&self, channel: &str) -> HashSet<String> {
+        let channels = self.channels.read().await;
+        channels.get(channel).cloned().unwrap_or_default()
     }
 
     /// 获取所有已连接用户数
@@ -94,6 +176,23 @@ impl WsState {
             }
         }
         false
+    }
+
+    /// 向指定频道广播消息
+    pub async fn broadcast_to_channel(&self, channel: &str, message: Message) {
+        let subscribers = self.get_channel_subscribers(channel).await;
+        let connections = self.connections.read().await;
+        for user_id in subscribers {
+            if let Some(conn) = connections.get(&user_id) {
+                let mut sender = conn.sender.write().await;
+                if let Err(e) = sender.send(message.clone()).await {
+                    warn!(
+                        "Failed to send to user {} on channel {}: {}",
+                        user_id, channel, e
+                    );
+                }
+            }
+        }
     }
 
     /// 广播消息给所有用户
@@ -161,7 +260,6 @@ async fn handle_socket(socket: WebSocket, state: Arc<WsState>, auth_token: Optio
     let (tx, mut rx) = socket.split();
     let tx_shared = Arc::new(RwLock::new(tx));
 
-    // 心跳跟踪
     let connection_for_heartbeat = tx_shared.clone();
 
     // Spawn heartbeat task
@@ -199,20 +297,38 @@ async fn handle_socket(socket: WebSocket, state: Arc<WsState>, auth_token: Optio
                     match msg_type {
                         Some("subscribe") => {
                             if let Some(p) = payload {
-                                if let Some(id) = p.get("user_id").and_then(|v| v.as_str()) {
+                                let channel = p.get("channel").and_then(|v| v.as_str());
+                                let uid = p.get("user_id").and_then(|v| v.as_str());
+
+                                if let Some(id) = uid {
                                     user_id = Some(id.to_string());
-                                    // Create connection with shared sender
                                     let conn = Arc::new(WsConnection::new(
                                         id.to_string(),
                                         tx_shared.clone(),
                                     ));
                                     state.add_connection(id.to_string(), conn).await;
-                                    info!("User {} subscribed to notifications", id);
+
+                                    // 订阅指定频道
+                                    if let Some(ch) = channel {
+                                        state.subscribe_to_channel(id, ch.to_string()).await;
+                                    }
+
+                                    // 发送确认消息
+                                    let confirm = json!({
+                                        "type": "subscribed",
+                                        "payload": {
+                                            "channel": channel.unwrap_or("default"),
+                                            "user_id": id
+                                        }
+                                    });
+                                    let mut tx = tx_shared.write().await;
+                                    let _ =
+                                        tx.send(Message::Text(confirm.to_string().into())).await;
+                                    info!("User {} subscribed to channel: {:?}", id, channel);
                                 }
                             }
                         }
                         Some("pong") | Some("heartbeat_response") => {
-                            // Update last pong time
                             if let Some(id) = &user_id {
                                 if let Some(conn) = state.connections.read().await.get(id) {
                                     conn.update_pong_time();
@@ -226,9 +342,15 @@ async fn handle_socket(socket: WebSocket, state: Arc<WsState>, auth_token: Optio
                                 .await;
                         }
                         Some("unsubscribe") => {
-                            if let Some(id) = &user_id {
-                                state.remove_connection(id).await;
-                                info!("User {} unsubscribed from notifications", id);
+                            if let Some(p) = payload {
+                                if let Some(ch) = p.get("channel").and_then(|v| v.as_str()) {
+                                    if let Some(id) = &user_id {
+                                        state.unsubscribe_from_channel(id, ch).await;
+                                    }
+                                } else if let Some(id) = &user_id {
+                                    state.remove_connection(id).await;
+                                    info!("User {} unsubscribed from all channels", id);
+                                }
                             }
                         }
                         _ => {
@@ -258,7 +380,6 @@ async fn handle_socket(socket: WebSocket, state: Arc<WsState>, auth_token: Optio
         }
     }
 
-    // Cancel heartbeat task
     heartbeat_handle.abort();
 
     if let Some(id) = &user_id {
@@ -302,11 +423,22 @@ pub async fn broadcast_notification(state: &Arc<WsState>, user_id: &str, notific
     }
 }
 
+/// 向通知频道广播
+pub async fn broadcast_to_notifications(state: &Arc<WsState>, notification: Value) {
+    let msg = json!({
+        "type": "notification",
+        "payload": notification
+    });
+    state
+        .broadcast_to_channel("notifications", Message::Text(msg.to_string().into()))
+        .await;
+}
+
 /// 更新用户未读计数
 pub async fn update_unread_count(state: &Arc<WsState>, user_id: &str, count: i32) {
     let msg = json!({
         "type": "unread_count",
-        "payload": count
+        "payload": { "count": count }
     });
 
     if state

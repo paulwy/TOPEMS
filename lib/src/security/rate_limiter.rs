@@ -237,11 +237,10 @@ pub async fn rate_limit_middleware(
             .header("Content-Type", "application/json")
             .body(axum::body::Body::from(body))
             .unwrap_or_else(|_| {
-                // SAFETY: building a response with INTERNAL_SERVER_ERROR and empty body cannot fail
                 axum::response::Response::builder()
                     .status(StatusCode::INTERNAL_SERVER_ERROR)
                     .body(axum::body::Body::empty())
-                    .unwrap()
+                    .expect("building response with INTERNAL_SERVER_ERROR should always succeed")
             });
 
         add_rate_limit_headers(&mut response, max_requests, 0, reset);

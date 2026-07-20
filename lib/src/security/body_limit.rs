@@ -137,8 +137,7 @@ pub async fn body_limit_middleware(
                 .status(StatusCode::UNSUPPORTED_MEDIA_TYPE)
                 .header("Content-Type", "application/json")
                 .body(Body::from(body))
-                // SAFETY: building a response with a valid status code and well-formed body cannot fail
-                .unwrap();
+                .expect("building response with UNSUPPORTED_MEDIA_TYPE should always succeed");
         }
     }
 
@@ -158,8 +157,7 @@ pub async fn body_limit_middleware(
             .header("Content-Type", "application/json")
             .header("Content-Length", size.to_string())
             .body(Body::from(body))
-            // SAFETY: building a response with a valid status code and well-formed body cannot fail
-            .unwrap();
+            .expect("building response with PAYLOAD_TOO_LARGE should always succeed");
     }
 
     next.run(req).await

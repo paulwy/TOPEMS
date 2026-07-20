@@ -26,3 +26,11 @@ export type {
   ImConnectionStatus,
   UseImWebSocketOptions,
 } from '../../useImWebSocket';
+
+// Notification WebSocket
+export { useNotificationWebSocket } from '../../useNotificationWebSocket';
+export type {
+  NotificationWsPayload,
+  UnreadCountPayload,
+  NotificationWsState,
+} from '../../useNotificationWebSocket';
