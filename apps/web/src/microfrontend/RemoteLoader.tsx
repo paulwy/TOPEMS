@@ -1,6 +1,7 @@
 import React, { Component, ReactNode, Suspense, lazy } from 'react';
 import { Box, CircularProgress, Typography, Button } from '@mui/material';
 import { AlertTriangle as ErrorIcon, RefreshCw as RefreshIcon } from 'lucide-react';
+import { logger } from '@/utils/logger';
 
 /**
  * 远程模块加载状态
@@ -28,7 +29,7 @@ class RemoteErrorBoundary extends Component<
   }
 
   componentDidCatch(error: Error, errorInfo: React.ErrorInfo) {
-    console.error(`[RemoteErrorBoundary] 模块 ${this.props.moduleName} 加载失败:`, error, errorInfo);
+    logger.error(`[RemoteErrorBoundary] 模块 ${this.props.moduleName} 加载失败:`, error, errorInfo);
     this.props.onError?.(error);
   }
 

@@ -1,4 +1,5 @@
 import { QueryClient, QueryCache, MutationCache, type DefaultOptions } from '@tanstack/react-query';
+import { logger } from '@/utils/logger';
 
 let queryCache: QueryCache;
 let mutationCache: MutationCache;
@@ -16,7 +17,7 @@ try {
           type: 'error',
         });
       } catch {
-        console.error('Query error:', error);
+        logger.error('Query error:', error);
       }
     },
   });
@@ -31,7 +32,7 @@ try {
           type: 'error',
         });
       } catch {
-        console.error('Mutation error:', error);
+        logger.error('Mutation error:', error);
       }
     },
   });
