@@ -68,20 +68,18 @@ pub async fn etag_middleware(request: Request<Body>, next: Next) -> Response {
             let mut not_modified = parts;
             not_modified.status = StatusCode::NOT_MODIFIED;
             // 保留 ETag 头
-            not_modified.headers.insert(
-                HeaderName::from_static("etag"),
-                HeaderValue::from_str(&etag).unwrap(),
-            );
+            if let Ok(etag_header) = HeaderValue::from_str(&etag) {
+                not_modified.headers.insert(HeaderName::from_static("etag"), etag_header);
+            }
             not_modified.headers.remove(axum::http::header::CONTENT_LENGTH);
             not_modified.headers.remove(axum::http::header::CONTENT_TYPE);
             return Response::from_parts(not_modified, Body::empty());
         }
     }
 
-    parts.headers.insert(
-        HeaderName::from_static("etag"),
-        HeaderValue::from_str(&etag).unwrap(),
-    );
+    if let Ok(etag_header) = HeaderValue::from_str(&etag) {
+        parts.headers.insert(HeaderName::from_static("etag"), etag_header);
+    }
 
     Response::from_parts(parts, Body::from(body_bytes))
 }
@@ -218,7 +216,7 @@ pub fn generate_request_signature(
 }
 
 /// 常数时间字符串比较（防时序攻击）
-fn constant_time_eq(a: &[u8], b: &[u8]) -> bool {
+pub fn constant_time_eq(a: &[u8], b: &[u8]) -> bool {
     if a.len() != b.len() {
         return false;
     }
@@ -343,8 +341,8 @@ impl AuditContext {
 
 /// 签名校验失败响应
 pub fn signature_error_response(verification: SignatureVerification) -> Response {
-    let (status, message) = match verification {
-        SignatureVerification::Valid => (StatusCode::OK, "valid"),
+    let (status, message): (StatusCode, String) = match verification {
+        SignatureVerification::Valid => (StatusCode::OK, "valid".to_string()),
         SignatureVerification::MissingHeader(h) => {
             (StatusCode::BAD_REQUEST, format!("Missing header: {}", h))
         }

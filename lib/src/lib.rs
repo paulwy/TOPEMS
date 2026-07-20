@@ -2,6 +2,8 @@ pub mod api;
 pub mod api_security;
 pub mod api_version;
 pub mod audit;
+pub mod audit_soft_delete;
+pub mod performance;
 pub mod auth;
 pub mod backup;
 pub mod cache;
@@ -11,6 +13,7 @@ pub mod config;
 pub mod config_center;
 pub mod cors;
 pub mod crud;
+pub mod data_governance;
 pub mod database;
 pub mod embedding;
 pub mod error;
@@ -30,7 +33,6 @@ pub mod monitoring;
 pub mod notification;
 pub mod observability;
 pub mod ollama_client;
-pub mod performance;
 pub mod permission;
 pub mod permission_center;
 pub mod query_optimizer;
@@ -91,6 +93,14 @@ pub use config::{
 };
 pub use config_center::{
     ConfigAuditLog, ConfigCenter, ConfigSchema, ConfigType, ConfigVersion, ValidationRule,
+};
+pub use data_governance::{
+    BuiltInMaskingRules, ClassificationEngine, ClassificationRule, ComplianceAuditEvent,
+    ComplianceAuditor, ComplianceConfig, ComplianceEventType, ComplianceReport,
+    ComplianceReportGenerator, ComplianceReportType, ComplianceRequirement, ComplianceSummary,
+    DataClassification, DataErasureResult, DataExportResult, DataMaskingEngine, DataSubject,
+    DataSubjectRight, DataSubjectRightsManager, DataTag, DsrRequest, DsrRequestStatus,
+    DsrSummary, EntityAccessStats, EntityDataTags, MaskingRule, MaskingStrategy,
 };
 pub use cors::create_cors_layer;
 pub use database::{

@@ -454,3 +454,510 @@ impl CacheOperationRecorder {
             .record_cache_operation(false, self.key.clone(), self.cache_type.clone());
     }
 }
+
+pub mod v28 {
+    use crate::cache::{CacheStatistics, InMemoryCache};
+    use crate::observability::{AlertManager, AlertSeverity, AlertRule, SLOManager, SLOMeasurement, SLOType};
+    use chrono::{DateTime, Utc};
+    use serde::{Deserialize, Serialize};
+    use sha2::Digest;
+    use std::collections::{HashMap, HashSet};
+    use std::sync::Arc;
+    use std::time::{Duration, Instant};
+    use tokio::sync::RwLock;
+
+    #[derive(Debug, Clone)]
+    pub struct QueryCacheConfig {
+        pub enabled: bool,
+        pub default_ttl_secs: u64,
+        pub slow_query_threshold_ms: u64,
+        pub max_cache_size: usize,
+        pub redis_url: Option<String>,
+    }
+
+    impl Default for QueryCacheConfig {
+        fn default() -> Self {
+            Self {
+                enabled: true,
+                default_ttl_secs: 300,
+                slow_query_threshold_ms: 500,
+                max_cache_size: 10000,
+                redis_url: None,
+            }
+        }
+    }
+
+    pub fn generate_query_cache_key(sql: &str, params: &[&serde_json::Value]) -> String {
+        let mut hasher = sha2::Sha256::new();
+        hasher.update(sql.as_bytes());
+        for param in params {
+            if let Ok(encoded) = serde_json::to_string(param) {
+                hasher.update(encoded.as_bytes());
+            }
+        }
+        format!("query:{}", hex::encode(hasher.finalize()))
+    }
+
+    pub struct QueryCache {
+        config: QueryCacheConfig,
+        local_cache: InMemoryCache,
+        statistics: Arc<RwLock<QueryCacheStatistics>>,
+        invalidation_patterns: Arc<RwLock<HashMap<String, HashSet<String>>>>,
+    }
+
+    impl QueryCache {
+        pub fn new(mut config: QueryCacheConfig) -> Self {
+            let max_cache_size = config.max_cache_size;
+            let default_ttl = config.default_ttl_secs;
+            Self {
+                config,
+                local_cache: InMemoryCache::new(crate::config::CacheConfig {
+                    memory_cache_size: max_cache_size,
+                    default_ttl,
+                    ..Default::default()
+                }),
+                statistics: Arc::new(RwLock::new(QueryCacheStatistics::default())),
+                invalidation_patterns: Arc::new(RwLock::new(HashMap::new())),
+            }
+        }
+
+        pub async fn get(&self, key: &str) -> Option<String> {
+            let result = self.local_cache.get(key).await;
+            let mut stats = self.statistics.write().await;
+            if result.is_some() {
+                stats.hits += 1;
+            } else {
+                stats.misses += 1;
+            }
+            stats.total_queries += 1;
+            result
+        }
+
+        pub async fn set(&self, key: String, value: String, ttl: Option<Duration>) {
+            let ttl = ttl.or(Some(Duration::from_secs(self.config.default_ttl_secs)));
+            self.local_cache.set(key, value, ttl).await;
+        }
+
+        pub async fn invalidate(&self, pattern: &str) -> usize {
+            let count = self.local_cache.delete_by_pattern(pattern).await;
+            let mut stats = self.statistics.write().await;
+            stats.invalidations += 1;
+            count
+        }
+
+        pub async fn register_invalidation_pattern(&self, table_name: &str, cache_pattern: &str) {
+            let mut patterns = self.invalidation_patterns.write().await;
+            patterns
+                .entry(table_name.to_string())
+                .or_default()
+                .insert(cache_pattern.to_string());
+        }
+
+        pub async fn invalidate_by_table(&self, table_name: &str) -> usize {
+            let patterns = self.invalidation_patterns.read().await;
+            let mut total_deleted = 0;
+            if let Some(cache_patterns) = patterns.get(table_name) {
+                for pattern in cache_patterns {
+                    total_deleted += self.invalidate(pattern).await;
+                }
+            }
+            total_deleted
+        }
+
+        pub async fn get_statistics(&self) -> QueryCacheStatistics {
+            let mut stats = self.statistics.write().await;
+            let local_stats = self.local_cache.get_statistics();
+            stats.hit_rate = if stats.total_queries == 0 {
+                0.0
+            } else {
+                stats.hits as f64 / stats.total_queries as f64
+            };
+            stats.local_stats = local_stats;
+            stats.clone()
+        }
+    }
+
+    #[derive(Debug, Clone, Serialize, Deserialize, Default)]
+    pub struct QueryCacheStatistics {
+        pub hits: u64,
+        pub misses: u64,
+        pub total_queries: u64,
+        pub hit_rate: f64,
+        pub invalidations: u64,
+        pub local_stats: CacheStatistics,
+    }
+
+    #[derive(Debug, Clone, Serialize, Deserialize)]
+    pub struct SlowQueryRecord {
+        pub id: String,
+        pub sql: String,
+        pub params: Vec<String>,
+        pub duration_ms: u64,
+        pub occurred_at: DateTime<Utc>,
+        pub service_name: String,
+        pub trace_id: Option<String>,
+        pub affected_rows: Option<u64>,
+        pub is_n_plus_one: bool,
+    }
+
+    pub struct SlowQueryMonitor {
+        config: QueryCacheConfig,
+        slow_queries: Arc<RwLock<Vec<SlowQueryRecord>>>,
+        recent_queries: Arc<RwLock<HashMap<String, Vec<Instant>>>>,
+        max_history_size: usize,
+        slo_manager: Option<Arc<SLOManager>>,
+        alert_manager: Option<Arc<AlertManager>>,
+    }
+
+    impl SlowQueryMonitor {
+        pub fn new(config: QueryCacheConfig) -> Self {
+            Self {
+                config,
+                slow_queries: Arc::new(RwLock::new(Vec::new())),
+                recent_queries: Arc::new(RwLock::new(HashMap::new())),
+                max_history_size: 1000,
+                slo_manager: None,
+                alert_manager: None,
+            }
+        }
+
+        pub fn with_observability(
+            mut self,
+            slo_manager: Arc<SLOManager>,
+            alert_manager: Arc<AlertManager>,
+        ) -> Self {
+            self.slo_manager = Some(slo_manager);
+            self.alert_manager = Some(alert_manager);
+            self
+        }
+
+        pub async fn record_query(
+            &self,
+            sql: &str,
+            params: &[String],
+            duration_ms: u64,
+            service_name: &str,
+            trace_id: Option<&str>,
+            affected_rows: Option<u64>,
+        ) {
+            let is_slow = duration_ms >= self.config.slow_query_threshold_ms;
+            let is_n_plus_one = self.detect_n_plus_one(sql).await;
+
+            if is_slow || is_n_plus_one {
+                let record = SlowQueryRecord {
+                    id: uuid::Uuid::new_v4().to_string(),
+                    sql: sql.to_string(),
+                    params: params.to_vec(),
+                    duration_ms,
+                    occurred_at: Utc::now(),
+                    service_name: service_name.to_string(),
+                    trace_id: trace_id.map(|s| s.to_string()),
+                    affected_rows,
+                    is_n_plus_one,
+                };
+
+                let mut slow_queries = self.slow_queries.write().await;
+                slow_queries.push(record);
+                while slow_queries.len() > self.max_history_size {
+                    slow_queries.remove(0);
+                }
+
+                self.trigger_alert(service_name, duration_ms, is_n_plus_one).await;
+            }
+
+            self.track_recent_query(sql).await;
+        }
+
+        async fn detect_n_plus_one(&self, sql: &str) -> bool {
+            let mut recent = self.recent_queries.write().await;
+            let key = sql.to_string();
+            let now = Instant::now();
+            let timestamps = recent.entry(key).or_default();
+            timestamps.push(now);
+            timestamps.retain(|t| now.duration_since(*t) < Duration::from_secs(10));
+            timestamps.len() >= 5
+        }
+
+        async fn track_recent_query(&self, sql: &str) {
+            let mut recent = self.recent_queries.write().await;
+            let key = sql.to_string();
+            let now = Instant::now();
+            let timestamps = recent.entry(key).or_default();
+            timestamps.push(now);
+            timestamps.retain(|t| now.duration_since(*t) < Duration::from_secs(60));
+        }
+
+        async fn trigger_alert(&self, service_name: &str, duration_ms: u64, is_n_plus_one: bool) {
+            if let (Some(slo), Some(alert)) = (&self.slo_manager, &self.alert_manager) {
+                let severity = if is_n_plus_one {
+                    AlertSeverity::Critical
+                } else if duration_ms > 2000 {
+                    AlertSeverity::Critical
+                } else {
+                    AlertSeverity::Warning
+                };
+
+                let rule_name = if is_n_plus_one {
+                    format!("{}_n_plus_one_detection", service_name)
+                } else {
+                    format!("{}_slow_query", service_name)
+                };
+
+                let alert_rule = AlertRule {
+                    id: rule_name.clone(),
+                    name: rule_name.clone(),
+                    description: format!(
+                        "{} query detection for {}",
+                        if is_n_plus_one { "N+1" } else { "Slow" },
+                        service_name
+                    ),
+                    severity,
+                    expression: "".to_string(),
+                    threshold: 0.0,
+                    for_seconds: 0,
+                    labels: HashMap::new(),
+                    annotations: HashMap::new(),
+                    enabled: true,
+                };
+                alert.add_rule(alert_rule);
+
+                alert.fire_alert(
+                    &rule_name,
+                    duration_ms as f64,
+                    &format!(
+                        "{} query detected: {}ms{}",
+                        if is_n_plus_one { "N+1" } else { "Slow" },
+                        duration_ms,
+                        if is_n_plus_one { " (N+1 pattern)" } else { "" }
+                    ),
+                );
+
+                slo.record_measurement(SLOMeasurement {
+                    slo_id: format!("{}_query_latency", service_name),
+                    timestamp: Utc::now(),
+                    current_value: duration_ms as f64,
+                    sample_count: 1,
+                    error_count: 0,
+                    is_breaching: duration_ms > self.config.slow_query_threshold_ms,
+                });
+            }
+        }
+
+        pub async fn get_slow_queries(
+            &self,
+            limit: usize,
+            offset: usize,
+        ) -> Vec<SlowQueryRecord> {
+            let queries = self.slow_queries.read().await;
+            queries
+                .iter()
+                .skip(offset)
+                .take(limit)
+                .cloned()
+                .collect()
+        }
+
+        pub async fn get_slow_query_stats(&self) -> SlowQueryStatistics {
+            let queries = self.slow_queries.read().await;
+            let now = Utc::now();
+            let last_1h = now - chrono::Duration::hours(1);
+            let last_24h = now - chrono::Duration::hours(24);
+
+            let total = queries.len();
+            let last_hour = queries.iter().filter(|q| q.occurred_at > last_1h).count();
+            let last_day = queries.iter().filter(|q| q.occurred_at > last_24h).count();
+            let n_plus_one_count = queries.iter().filter(|q| q.is_n_plus_one).count();
+
+            let avg_duration = if total > 0 {
+                queries.iter().map(|q| q.duration_ms).sum::<u64>() / total as u64
+            } else {
+                0
+            };
+
+            let max_duration = queries.iter().map(|q| q.duration_ms).max().unwrap_or(0);
+
+            SlowQueryStatistics {
+                total_slow_queries: total as u64,
+                last_hour_count: last_hour as u64,
+                last_day_count: last_day as u64,
+                n_plus_one_count: n_plus_one_count as u64,
+                avg_duration_ms: avg_duration,
+                max_duration_ms: max_duration,
+            }
+        }
+
+        pub async fn clear_history(&self) {
+            let mut queries = self.slow_queries.write().await;
+            queries.clear();
+            let mut recent = self.recent_queries.write().await;
+            recent.clear();
+        }
+    }
+
+    #[derive(Debug, Clone, Serialize, Deserialize, Default)]
+    pub struct SlowQueryStatistics {
+        pub total_slow_queries: u64,
+        pub last_hour_count: u64,
+        pub last_day_count: u64,
+        pub n_plus_one_count: u64,
+        pub avg_duration_ms: u64,
+        pub max_duration_ms: u64,
+    }
+
+    pub struct PerformanceDashboard {
+        query_cache: Arc<QueryCache>,
+        slow_query_monitor: Arc<SlowQueryMonitor>,
+    }
+
+    impl PerformanceDashboard {
+        pub fn new(query_cache: Arc<QueryCache>, slow_query_monitor: Arc<SlowQueryMonitor>) -> Self {
+            Self {
+                query_cache,
+                slow_query_monitor,
+            }
+        }
+
+        pub async fn generate_report(&self) -> PerformanceReport {
+            let cache_stats = self.query_cache.get_statistics().await;
+            let slow_query_stats = self.slow_query_monitor.get_slow_query_stats().await;
+            let recent_slow_queries = self.slow_query_monitor.get_slow_queries(10, 0).await;
+
+            PerformanceReport {
+                generated_at: Utc::now(),
+                cache_statistics: cache_stats,
+                slow_query_statistics: slow_query_stats,
+                recent_slow_queries,
+            }
+        }
+
+        pub async fn get_cache_stats(&self) -> QueryCacheStatistics {
+            self.query_cache.get_statistics().await
+        }
+
+        pub async fn get_slow_query_stats(&self) -> SlowQueryStatistics {
+            self.slow_query_monitor.get_slow_query_stats().await
+        }
+
+        pub async fn get_recent_slow_queries(&self, limit: usize) -> Vec<SlowQueryRecord> {
+            self.slow_query_monitor.get_slow_queries(limit, 0).await
+        }
+
+        pub async fn invalidate_table_cache(&self, table_name: &str) -> usize {
+            self.query_cache.invalidate_by_table(table_name).await
+        }
+    }
+
+    #[derive(Debug, Clone, Serialize, Deserialize)]
+    pub struct PerformanceReport {
+        pub generated_at: DateTime<Utc>,
+        pub cache_statistics: QueryCacheStatistics,
+        pub slow_query_statistics: SlowQueryStatistics,
+        pub recent_slow_queries: Vec<SlowQueryRecord>,
+    }
+
+    #[cfg(test)]
+    mod tests {
+        use super::*;
+
+        #[test]
+        fn test_generate_query_cache_key() {
+            let key1 = generate_query_cache_key("SELECT * FROM users WHERE id = $1", &[&1]);
+            let key2 = generate_query_cache_key("SELECT * FROM users WHERE id = $1", &[&1]);
+            let key3 = generate_query_cache_key("SELECT * FROM users WHERE id = $1", &[&2]);
+            assert_eq!(key1, key2);
+            assert_ne!(key1, key3);
+            assert!(key1.starts_with("query:"));
+            assert_eq!(key1.len(), 68);
+        }
+
+        #[tokio::test]
+        async fn test_query_cache_basic() {
+            let config = QueryCacheConfig::default();
+            let cache = QueryCache::new(config);
+
+            let key = "test:key";
+            let value = "{\"id\":1}";
+
+            assert!(cache.get(key).await.is_none());
+            cache.set(key.to_string(), value.to_string(), None).await;
+            assert_eq!(cache.get(key).await, Some(value.to_string()));
+
+            let stats = cache.get_statistics().await;
+            assert_eq!(stats.hits, 1);
+            assert_eq!(stats.misses, 1);
+            assert_eq!(stats.total_queries, 2);
+        }
+
+        #[tokio::test]
+        async fn test_query_cache_invalidation() {
+            let config = QueryCacheConfig::default();
+            let cache = QueryCache::new(config);
+
+            cache.set("tenant1:orders:1".to_string(), "data".to_string(), None).await;
+            cache.set("tenant1:orders:2".to_string(), "data".to_string(), None).await;
+            cache.set("tenant1:users:1".to_string(), "data".to_string(), None).await;
+
+            cache.register_invalidation_pattern("orders", "tenant1:orders:*").await;
+            let deleted = cache.invalidate_by_table("orders").await;
+            assert_eq!(deleted, 2);
+
+            assert!(cache.get("tenant1:orders:1").await.is_none());
+            assert!(cache.get("tenant1:users:1").await.is_some());
+        }
+
+        #[tokio::test]
+        async fn test_slow_query_detection() {
+            let config = QueryCacheConfig::default();
+            let monitor = SlowQueryMonitor::new(config);
+
+            monitor
+                .record_query(
+                    "SELECT * FROM slow_table",
+                    &[],
+                    600,
+                    "test-service",
+                    None,
+                    None,
+                )
+                .await;
+
+            let stats = monitor.get_slow_query_stats().await;
+            assert_eq!(stats.total_slow_queries, 1);
+            assert_eq!(stats.last_hour_count, 1);
+        }
+
+        #[tokio::test]
+        async fn test_n_plus_one_detection() {
+            let config = QueryCacheConfig::default();
+            let monitor = SlowQueryMonitor::new(config);
+
+            for i in 0..6 {
+                monitor
+                    .record_query(
+                        "SELECT * FROM items WHERE order_id = $1",
+                        &[i.to_string()],
+                        10,
+                        "test-service",
+                        None,
+                        None,
+                    )
+                    .await;
+            }
+
+            let stats = monitor.get_slow_query_stats().await;
+            assert!(stats.n_plus_one_count >= 1);
+        }
+
+        #[tokio::test]
+        async fn test_performance_dashboard() {
+            let cache_config = QueryCacheConfig::default();
+            let query_cache = Arc::new(QueryCache::new(cache_config.clone()));
+            let slow_query_monitor = Arc::new(SlowQueryMonitor::new(cache_config));
+            let dashboard = PerformanceDashboard::new(query_cache, slow_query_monitor);
+
+            let report = dashboard.generate_report().await;
+            assert_eq!(report.cache_statistics.total_queries, 0);
+            assert_eq!(report.slow_query_statistics.total_slow_queries, 0);
+        }
+    }
+}

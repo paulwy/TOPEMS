@@ -81,7 +81,7 @@ pub struct AppState {
     pub db: sqlx::PgPool,
 
     /// 认证状态
-    pub auth_state: AuthState,
+    pub auth_state: Arc<AuthState>,
 
     /// 系统指标
     pub metrics: Arc<SystemMetrics>,
@@ -96,7 +96,7 @@ pub struct AppState {
 impl AppState {
     pub fn new(
         db: sqlx::PgPool,
-        auth_state: AuthState,
+        auth_state: Arc<AuthState>,
         metrics: Arc<SystemMetrics>,
         start_time: Instant,
         config: BootstrapConfig,
@@ -206,11 +206,11 @@ impl ServiceBootstrap {
         // 创建应用状态
         let start_time = Instant::now();
         let metrics = Arc::new(SystemMetrics::new());
-        let auth_state = AuthState::from_env();
+        let auth_state = Arc::new(AuthState::from_env());
 
         let app_state = AppState::new(
             db.clone(),
-            auth_state.clone(),
+            auth_state,
             metrics.clone(),
             start_time,
             self.config.clone(),

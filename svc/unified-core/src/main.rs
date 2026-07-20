@@ -43,7 +43,7 @@ pub use shared::*;
 
 #[derive(Clone)]
 pub struct AppState {
-    pub auth_state: AuthState,
+    pub auth_state: std::sync::Arc<AuthState>,
     pub pool: PgPool,
     pub health_config: SimpleHealthConfig,
     pub ws_state: std::sync::Arc<modules::communication::ws::WsState>,
@@ -59,7 +59,7 @@ pub struct AppState {
 
 impl axum::extract::FromRef<AppState> for AuthState {
     fn from_ref(state: &AppState) -> Self {
-        state.auth_state.clone()
+        (*state.auth_state).clone()
     }
 }
 
@@ -190,9 +190,10 @@ async fn main() {
         .await
         .expect("Failed to seed dict data");
 
-    let auth_state = AuthState::from_env();
+    let auth_state = std::sync::Arc::new(AuthState::from_env());
     let health_config = SimpleHealthConfig::new("topems-unified-core").with_db(pool.clone());
-    let ws_state = std::sync::Arc::new(modules::communication::ws::WsState::new());
+    let ws_state =
+        std::sync::Arc::new(modules::communication::ws::WsState::new(auth_state.clone()));
     let http_client = Client::new();
 
     let rate_limit_config = middleware::rate_limit::RateLimitConfig::default();
@@ -249,11 +250,12 @@ async fn main() {
     };
 
     // Spawn background task to cleanup timeout WebSocket connections
+    let ws_state_cleanup = state.ws_state.clone();
     tokio::spawn(async move {
         let mut interval = tokio::time::interval(tokio::time::Duration::from_secs(60));
         loop {
             interval.tick().await;
-            let removed = ws_state.cleanup_timeout_connections(90).await;
+            let removed = ws_state_cleanup.cleanup_timeout_connections(90).await;
             if !removed.is_empty() {
                 tracing::info!(
                     "WebSocket cleanup: removed {} timeout connections",
@@ -261,6 +263,13 @@ async fn main() {
                 );
             }
         }
+    });
+
+    // Spawn WebSocket event bridge (Redis -> WebSocket)
+    let ws_state_bridge = state.ws_state.clone();
+    tokio::spawn(async move {
+        let bridge_config = modules::communication::ws_event_bridge::WsEventBridgeConfig::default();
+        modules::communication::ws_event_bridge::spawn_event_bridge(ws_state_bridge, bridge_config);
     });
 
     // Spawn background task to detect stale plugin heartbeats
