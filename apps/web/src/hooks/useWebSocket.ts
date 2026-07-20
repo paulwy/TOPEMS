@@ -1,5 +1,6 @@
 import { useEffect, useCallback, useRef, useState } from 'react';
 import { logger } from '@/utils/logger';
+import { calculateBackoffDelay, HeartbeatMonitor, getNextReconnectDelay, DEFAULT_RECONNECT_STRATEGY } from '@/utils/websocket-optimizer';
 
 export interface WebSocketMessage {
   type: string;
@@ -25,6 +26,12 @@ export interface UseWebSocketOptions {
   connectionTimeout?: number;
   shouldReconnect?: (code: number) => boolean;
   enabled?: boolean;
+  /** 启用心跳检测（默认 false） */
+  enableHeartbeat?: boolean;
+  /** 心跳间隔（毫秒） */
+  heartbeatInterval?: number;
+  /** 心跳超时（毫秒） */
+  heartbeatTimeout?: number;
 }
 
 export interface SubscriptionConfig {
@@ -37,11 +44,16 @@ const WS_URL = process.env.NEXT_PUBLIC_WS_URL || 'ws://localhost:8080/ws';
 class WebSocketService {
   private socket: WebSocket | null = null;
   private reconnectAttempts = 0;
-  private maxReconnectAttempts = 10;
-  private reconnectDelay = 1000;
+  private readonly maxReconnectAttempts = 10;
+  private readonly reconnectMinDelay = 1000;
+  private readonly reconnectMaxDelay = 30000;
   private subscriptions: Map<string, Set<(message: WebSocketMessage) => void>> = new Map();
   private connectionPromise: Promise<void> | null = null;
   private isConnecting = false;
+  private heartbeatMonitor: HeartbeatMonitor | null = null;
+  private readonly enableHeartbeat = false;
+  private readonly heartbeatInterval = 30000;
+  private readonly heartbeatTimeout = 10000;
 
   connect(): Promise<void> {
     if (this.socket?.readyState === WebSocket.OPEN) {
@@ -63,12 +75,18 @@ class WebSocketService {
           this.isConnecting = false;
           this.connectionPromise = null;
           this.resubscribeAll();
+          this.startHeartbeatIfEnabled();
           resolve();
         };
 
         this.socket.onmessage = (event) => {
           try {
             const message: WebSocketMessage = JSON.parse(event.data);
+            // 识别 pong 响应，重置心跳超时
+            if (message.type === 'pong' && this.heartbeatMonitor) {
+              this.heartbeatMonitor.recordPong();
+              return;
+            }
             this.notifySubscribers(message);
           } catch (error) {
             logger.error('[WebSocket] Failed to parse message:', error);
@@ -77,6 +95,7 @@ class WebSocketService {
 
         this.socket.onclose = () => {
           logger.info('[WebSocket] Disconnected');
+          this.stopHeartbeat();
           this.socket = null;
           this.isConnecting = false;
           this.connectionPromise = null;
@@ -99,17 +118,43 @@ class WebSocketService {
     return this.connectionPromise;
   }
 
+  private startHeartbeatIfEnabled(): void {
+    if (!this.enableHeartbeat || !this.socket) return;
+    this.heartbeatMonitor = new HeartbeatMonitor(
+      () => {
+        this.send({ type: 'ping', payload: {} });
+      },
+      () => {
+        logger.warn('[WebSocket] Heartbeat timeout, forcing reconnect');
+        this.socket?.close(4001, 'Heartbeat timeout');
+      },
+      this.heartbeatInterval,
+      this.heartbeatTimeout
+    );
+    this.heartbeatMonitor.start();
+  }
+
+  private stopHeartbeat(): void {
+    this.heartbeatMonitor?.stop();
+    this.heartbeatMonitor = null;
+  }
+
   private scheduleReconnect(): void {
     if (this.reconnectAttempts >= this.maxReconnectAttempts) {
       logger.error('[WebSocket] Max reconnect attempts reached');
       return;
     }
 
-    const delay = this.reconnectDelay * Math.pow(2, this.reconnectAttempts);
+    // 使用指数退避 + 抖动算法
+    const delay = getNextReconnectDelay(this.reconnectAttempts, {
+      ...DEFAULT_RECONNECT_STRATEGY,
+      minDelay: this.reconnectMinDelay,
+      maxDelay: this.reconnectMaxDelay,
+    });
     this.reconnectAttempts++;
     
     setTimeout(() => {
-      logger.info(`[WebSocket] Reconnecting (attempt ${this.reconnectAttempts})...`);
+      logger.info(`[WebSocket] Reconnecting (attempt ${this.reconnectAttempts}, delay ${delay}ms)...`);
       this.connect().catch(() => {});
     }, delay);
   }
@@ -170,6 +215,7 @@ class WebSocketService {
   }
 
   disconnect(): void {
+    this.stopHeartbeat();
     if (this.socket) {
       this.socket.close();
       this.socket = null;
@@ -270,6 +316,9 @@ export function useWebSocket(options: UseWebSocketOptions = {}) {
     connectionTimeout = 10000,
     shouldReconnect,
     enabled = true,
+    enableHeartbeat = false,
+    heartbeatInterval = 30000,
+    heartbeatTimeout = 10000,
   } = options;
 
   const [isConnected, setIsConnected] = useState(false);
@@ -280,6 +329,7 @@ export function useWebSocket(options: UseWebSocketOptions = {}) {
   const socketRef = useRef<WebSocket | null>(null);
   const reconnectTimeoutRef = useRef<number | null>(null);
   const connectTimeoutRef = useRef<number | null>(null);
+  const heartbeatMonitorRef = useRef<HeartbeatMonitor | null>(null);
 
   useEffect(() => {
     if (!enabled) return;
@@ -291,6 +341,29 @@ export function useWebSocket(options: UseWebSocketOptions = {}) {
     const fullUrl = queryParams
       ? `${url}?${new URLSearchParams(queryParams).toString()}`
       : url;
+
+    const startHeartbeat = (ws: WebSocket) => {
+      if (!enableHeartbeat) return;
+      heartbeatMonitorRef.current = new HeartbeatMonitor(
+        () => {
+          if (ws.readyState === WebSocket.OPEN) {
+            ws.send(JSON.stringify({ type: 'ping', payload: {} }));
+          }
+        },
+        () => {
+          logger.warn('[WebSocket] Heartbeat timeout, forcing reconnect');
+          ws.close(4001, 'Heartbeat timeout');
+        },
+        heartbeatInterval,
+        heartbeatTimeout
+      );
+      heartbeatMonitorRef.current.start();
+    };
+
+    const stopHeartbeat = () => {
+      heartbeatMonitorRef.current?.stop();
+      heartbeatMonitorRef.current = null;
+    };
 
     const connect = () => {
       if (reconnectTimeoutRef.current) {
@@ -321,12 +394,19 @@ export function useWebSocket(options: UseWebSocketOptions = {}) {
         setError(null);
         authMessage?.();
         onOpen?.();
+        startHeartbeat(socketRef.current!);
       };
 
       socketRef.current.onmessage = (event) => {
         let message: string | WebSocketMessage = event.data;
         try {
-          message = JSON.parse(event.data) as WebSocketMessage;
+          const parsed = JSON.parse(event.data) as WebSocketMessage;
+          // 识别 pong 响应，重置心跳超时
+          if (parsed.type === 'pong' && heartbeatMonitorRef.current) {
+            heartbeatMonitorRef.current.recordPong();
+            return;
+          }
+          message = parsed;
         } catch {
         }
         onMessage?.(message);
@@ -337,21 +417,22 @@ export function useWebSocket(options: UseWebSocketOptions = {}) {
     };
 
     const handleClose = (event: CloseEvent) => {
+      stopHeartbeat();
       setIsConnected(false);
       setConnectionStatus('disconnected');
       onClose?.(event);
 
       if (enabled && (!shouldReconnect || shouldReconnect(event.code))) {
         if (reconnectCount < reconnectAttempts) {
-          const delay = Math.min(
-            minReconnectDelay * Math.pow(2, reconnectCount),
-            maxReconnectDelay
-          );
+          // 使用指数退避 + 抖动算法
+          const delay = calculateBackoffDelay(reconnectCount, minReconnectDelay, maxReconnectDelay);
           setReconnectCount((prev) => prev + 1);
           setConnectionStatus('reconnecting');
+          logger.info(`[WebSocket] Reconnecting in ${delay}ms (attempt ${reconnectCount + 1}/${reconnectAttempts})...`);
           reconnectTimeoutRef.current = window.setTimeout(connect, delay);
         } else {
           setConnectionStatus('error');
+          logger.error('[WebSocket] Max reconnect attempts reached');
         }
       }
     };
@@ -365,6 +446,7 @@ export function useWebSocket(options: UseWebSocketOptions = {}) {
     connect();
 
     return () => {
+      stopHeartbeat();
       if (reconnectTimeoutRef.current) {
         clearTimeout(reconnectTimeoutRef.current);
       }
@@ -373,7 +455,7 @@ export function useWebSocket(options: UseWebSocketOptions = {}) {
       }
       socketRef.current?.close(1000, 'Component unmounted');
     };
-  }, [enabled, wsPath, queryParams, authMessage, onMessage, onOpen, onClose, onError, reconnectAttempts, maxReconnectDelay, minReconnectDelay, connectionTimeout, shouldReconnect]);
+  }, [enabled, wsPath, queryParams, authMessage, onMessage, onOpen, onClose, onError, reconnectAttempts, maxReconnectDelay, minReconnectDelay, connectionTimeout, shouldReconnect, enableHeartbeat, heartbeatInterval, heartbeatTimeout]);
 
   const send = useCallback((data: string | Record<string, unknown>) => {
     if (socketRef.current?.readyState === WebSocket.OPEN) {
@@ -396,6 +478,8 @@ export function useWebSocket(options: UseWebSocketOptions = {}) {
   }, [wsPath, queryParams]);
 
   const disconnect = useCallback(() => {
+    heartbeatMonitorRef.current?.stop();
+    heartbeatMonitorRef.current = null;
     socketRef.current?.close(1000, 'Manual disconnect');
     socketRef.current = null;
   }, []);

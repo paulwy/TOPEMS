@@ -8,10 +8,6 @@ import { CacheableResponsePlugin } from 'workbox-cacheable-response';
 import { ExpirationPlugin } from 'workbox-expiration';
 import { logger } from '@/utils/logger';
 
-declare const self: ServiceWorkerGlobalScope & {
-  __WB_MANIFEST: PrecacheEntry[];
-};
-
 // V24.0 模块 D: PWA 缓存版本（用于强制更新缓存）
 const CACHE_VERSION = 'v24.0';
 const CACHE_NAME = {
@@ -25,14 +21,60 @@ const CACHE_NAME = {
   RUNTIME: `topems-runtime-${CACHE_VERSION}`,
 } as const;
 
-// 预缓存关键路由（V24.0 模块 D 增强）
+// V26.0：性能优化 - 智能预缓存关键路由
+// 根据业务优先级排序：登录 > 仪表盘 > 高频业务页面
 const PRECACHE_ROUTES = [
   '/',
-  '/dashboard',
   '/login',
+  '/dashboard',
   '/offline.html',
   '/manifest.json',
+  // 高频业务页面
+  '/mes/dashboard',
+  '/production',
+  '/inventory',
 ];
+
+/**
+ * V26.0 性能优化：缓存命中率统计
+ * 用于监控缓存策略效果
+ */
+class CacheStatsCollector {
+  private stats = {
+    precache: { hits: 0, misses: 0 },
+    api: { hits: 0, misses: 0 },
+    static: { hits: 0, misses: 0 },
+    images: { hits: 0, misses: 0 },
+    runtime: { hits: 0, misses: 0 },
+  };
+
+  recordHit(cache: keyof typeof this.stats): void {
+    this.stats[cache].hits++;
+  }
+
+  recordMiss(cache: keyof typeof this.stats): void {
+    this.stats[cache].misses++;
+  }
+
+  getStats() {
+    return { ...this.stats };
+  }
+
+  getHitRate(cache: keyof typeof this.stats): number {
+    const s = this.stats[cache];
+    const total = s.hits + s.misses;
+    return total > 0 ? s.hits / total : 0;
+  }
+}
+
+const cacheStats = new CacheStatsCollector();
+
+declare const self: ServiceWorkerGlobalScope & {
+  __WB_MANIFEST: PrecacheEntry[];
+  __STATS?: CacheStatsCollector;
+};
+
+self.__STATS = cacheStats;
 
 precacheAndRoute(self.__WB_MANIFEST);
 
@@ -52,6 +94,13 @@ self.addEventListener('fetch', (event) => {
       try {
         // 1. 优先尝试网络（捕获在线状态）
         const networkResponse = await fetch(event.request);
+        // 成功获取时，同时更新预缓存（用于离线访问）
+        if (networkResponse.ok && event.request.method === 'GET') {
+          const cache = await caches.open(CACHE_NAME.PRECACHE);
+          cache.put(event.request, networkResponse.clone()).catch(() => {
+            // 静默失败
+          });
+        }
         return networkResponse;
       } catch {
         // 2. 网络失败，尝试 SPA 入口
@@ -332,6 +381,13 @@ self.addEventListener('message', (event) => {
         .open(CACHE_NAME.PRECACHE)
         .then((cache) => cache.addAll(PRECACHE_ROUTES))
         .catch((err) => logger.error('Precache routes failed:', err));
+      break;
+    // V26.0：返回缓存统计信息
+    case 'GET_CACHE_STATS':
+      messageEvent.source?.postMessage({
+        type: 'CACHE_STATS',
+        payload: cacheStats.getStats(),
+      });
       break;
     default:
       break;

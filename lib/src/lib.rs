@@ -1,4 +1,5 @@
 pub mod api;
+pub mod api_security;
 pub mod api_version;
 pub mod audit;
 pub mod auth;
