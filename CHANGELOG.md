@@ -1,5 +1,107 @@
 # CHANGELOG
 
+## [Unreleased]
+
+## [13.2.0] - 2026-07-21
+
+### Cleanup
+
+- Removed root-level debug scripts (`split_notification*.py`, 3 files)
+- Removed `apps/web/FAIL` artifact
+- Updated `.gitignore` to block `FAIL`, `*.bak`, debug scripts, and logs
+
+### Security
+
+- Fixed AI service `JWT_SECRET` hardcoded fallback to `expect()` panic on missing env var
+
+### Infrastructure
+
+- Fixed Git LFS `tmp` directory permission errors
+
+## [13.1.0] - 2026-07-16
+
+### Documentation
+
+- Deleted 400+ redundant files (docs, configs, stale reports)
+- Merged duplicate directories (`docs/user/` → `docs/user-guide/`, etc.)
+- Cleaned expired reports in `docs/reports/`
+
+## [13.0.0] - 2026-07-16
+
+### Architecture
+
+- Plugin registration security token validation (`PLUGIN_REGISTRATION_TOKEN`)
+- Consul service discovery + fallback mechanism
+- Frontend dynamic navigation via backend API
+- Plugin heartbeat timeout detection
+- Dependency check (forward + reverse)
+- Centralized configuration management
+
+## [12.0.0] - 2026-07-16
+
+### Security
+
+- Multi-tenant isolation coverage: **97.3%** (565 tables + RLS)
+
+### Quality
+
+- `unwrap()` cleanup in business code
+- `console.log` cleanup
+- `routes.rs` splitting across services
+
+## [11.0.0] - 2026-07-16
+
+### Quality
+
+- `unwrap()` business code zeroed
+- Vitest mobile tests all green
+- PWA/offline acceptance passed
+
+## [10.0.0] - 2026-07-15 ~ 2026-07-25
+
+### Build
+
+- Rust 0 compilation errors
+- TypeScript 0 compilation errors
+- `as any` zeroed
+- `eslint` warnings reduced to 2
+- Hardcoded values zeroed
+- `unwrap()` reduced from 183 → 44
+- 20 large files split
+- `@ts-nocheck` zeroed
+- 14 frontend components split
+- 3 `main.rs` refactored
+
+## [9.0.0] - 2026-07-15
+
+### Architecture
+
+- Unified routing: all 31 services aligned to `nest + bare path` pattern
+- Removed `/v1` prefixes from API paths
+- K8s Ingress 5-way alignment
+- Legacy compatibility layers (`wrap_group2_router`, `wrap_group1_router`) fully removed
+
+## [7.0.0] - 2026-07-14
+
+### Frontend
+
+- React Query full coverage migration
+- `useAppStore` memoized optimization
+- UI components unified to `shared-components`
+- Responsive design enhancement
+
+## [5.19.0] - 2026-07-14
+
+### Verification
+
+- DataTable virtual scroll runtime verification
+- DatePicker/FormField runtime verification
+- React Query configuration runtime verification (LCP: 1920ms, FCP: 980ms)
+
+### Cleanup
+
+- Cleared TODO/FIXME comments from 69 files (business pages, mobile, components, backend)
+
 ## [5.14.0] - 2026-07-13
 
 ### Frontend
