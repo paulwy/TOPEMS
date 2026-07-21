@@ -17,8 +17,8 @@ pub mod health;
 pub mod hrm;
 pub mod logging;
 pub mod messaging;
-pub mod middleware;
 pub mod metrics;
+pub mod middleware;
 pub mod migration;
 pub mod monitoring;
 pub mod notification;
@@ -48,8 +48,7 @@ pub mod vector_store;
 pub mod ai_client;
 
 pub use api_version::{
-    api_prefix, create_api_info, create_api_info_router,
-    get_api_info_handler, versioned_router,
+    api_prefix, create_api_info, create_api_info_router, get_api_info_handler, versioned_router,
     ApiInfo, ApiVersionInfo,
 };
 pub use audit::{AuditLog, AuditLogQuery, CreateAuditLogRequest};
@@ -88,10 +87,10 @@ pub use event::{
     EventResult, EventSubscriber, EventType, HrmDepartmentCreatedPayload,
     HrmDepartmentDeletedPayload, HrmDepartmentUpdatedPayload, HrmEmployeeCreatedPayload,
     HrmEmployeeUpdatedPayload, LimsInspectionAbnormalDetectedPayload,
-    LimsInspectionResultSubmittedPayload, LimsSampleRegisteredPayload, PmProjectCreatedPayload,
-    PmProjectUpdatedPayload, PmTaskCreatedPayload, PmTaskDeletedPayload, PmTaskUpdatedPayload,
-    PositionCreatedPayload, PositionDeletedPayload, PositionUpdatedPayload,
-    PermissionChangedPayload, QmsCorrectiveActionCreatedPayload, QmsInspectionCompletedPayload,
+    LimsInspectionResultSubmittedPayload, LimsSampleRegisteredPayload, PermissionChangedPayload,
+    PmProjectCreatedPayload, PmProjectUpdatedPayload, PmTaskCreatedPayload, PmTaskDeletedPayload,
+    PmTaskUpdatedPayload, PositionCreatedPayload, PositionDeletedPayload, PositionUpdatedPayload,
+    QmsCorrectiveActionCreatedPayload, QmsInspectionCompletedPayload,
 };
 pub use health::{
     build_health_response, check_http_health, create_health_router, create_metrics_router,
@@ -123,15 +122,13 @@ pub use performance::{
     MetricsSnapshot, PerformanceMetrics, RequestTimer, TableStats,
 };
 pub use permission::{
-    check_any_module_permission, check_module_permission, check_resource_permission,
-    DataCondition, DataPermission, ModulePermission, PermissionTemplate, Position,
-    ResourcePermission,
+    check_any_module_permission, check_module_permission, check_resource_permission, DataCondition,
+    DataPermission, ModulePermission, PermissionTemplate, Position, ResourcePermission,
 };
 
 pub use middleware::{
-    department_middleware, require_department, require_module_active,
-    require_module_permission, require_permission, require_role, require_tenant_status,
-    tenant_middleware,
+    department_middleware, require_department, require_module_active, require_module_permission,
+    require_permission, require_role, require_tenant_status, tenant_middleware,
 };
 pub use query_optimizer::{
     suggest_query_optimization, BatchOperations, IndexRecommendation, NPlusOneDetector,
@@ -170,9 +167,9 @@ pub use service_config::{
     ValidationIssue, ValidationSeverity,
 };
 pub use service_discovery::{
-    LocalServiceRegistry, PortalServiceAggregator, ServiceCategory, ServiceDiscoveryClient,
-    ServiceHealthStatus, ServiceInfo, ServiceRegistryStatus,
-    ConsulServiceRegistrar, ConsulDiscoveryClient, SmartServiceClient, ServiceInstance,
+    ConsulDiscoveryClient, ConsulServiceRegistrar, LocalServiceRegistry, PortalServiceAggregator,
+    ServiceCategory, ServiceDiscoveryClient, ServiceHealthStatus, ServiceInfo, ServiceInstance,
+    ServiceRegistryStatus, SmartServiceClient,
 };
 pub use storage::{FileMetadata, LocalStorage, StorageConfig, StorageService};
 pub use telemetry::{

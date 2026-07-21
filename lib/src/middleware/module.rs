@@ -1,3 +1,5 @@
+use crate::auth::Claims;
+use crate::permission::{ModuleCode, PermissionAction};
 use axum::{
     body::Body,
     extract::Request,
@@ -5,12 +7,13 @@ use axum::{
     middleware::Next,
     response::IntoResponse,
 };
-use crate::auth::Claims;
-use crate::permission::{ModuleCode, PermissionAction};
 
 pub fn require_module_active(
     module: ModuleCode,
-) -> impl Fn(Request<Body>, Next) -> std::pin::Pin<Box<dyn std::future::Future<Output = axum::response::Response> + Send>>
+) -> impl Fn(
+    Request<Body>,
+    Next,
+) -> std::pin::Pin<Box<dyn std::future::Future<Output = axum::response::Response> + Send>>
        + Clone
        + Send
        + Sync {
@@ -64,7 +67,10 @@ pub fn require_module_active(
 pub fn require_module_permission(
     module: ModuleCode,
     action: PermissionAction,
-) -> impl Fn(Request<Body>, Next) -> std::pin::Pin<Box<dyn std::future::Future<Output = axum::response::Response> + Send>>
+) -> impl Fn(
+    Request<Body>,
+    Next,
+) -> std::pin::Pin<Box<dyn std::future::Future<Output = axum::response::Response> + Send>>
        + Clone
        + Send
        + Sync {

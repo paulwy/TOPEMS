@@ -416,7 +416,8 @@ impl ConsulServiceRegistrar {
         });
 
         let url = format!("{}/v1/agent/service/register", self.consul_url);
-        let response = self.client
+        let response = self
+            .client
             .put(&url)
             .json(&registration)
             .send()
@@ -424,19 +425,35 @@ impl ConsulServiceRegistrar {
             .map_err(|e| TopemsError::Internal(format!("Consul registration failed: {}", e)))?;
 
         if response.status().is_success() {
-            tracing::info!("[ServiceDiscovery] Registered {} with Consul at {}", self.service_name, self.consul_url);
+            tracing::info!(
+                "[ServiceDiscovery] Registered {} with Consul at {}",
+                self.service_name,
+                self.consul_url
+            );
         } else {
-            tracing::warn!("[ServiceDiscovery] Consul registration failed: {}", response.status());
+            tracing::warn!(
+                "[ServiceDiscovery] Consul registration failed: {}",
+                response.status()
+            );
         }
         Ok(())
     }
 
     /// 从 Consul 注销服务
     pub async fn deregister(&self) -> Result<()> {
-        let url = format!("{}/v1/agent/service/deregister/{}", self.consul_url, self.service_id);
-        self.client.put(&url).send().await
+        let url = format!(
+            "{}/v1/agent/service/deregister/{}",
+            self.consul_url, self.service_id
+        );
+        self.client
+            .put(&url)
+            .send()
+            .await
             .map_err(|e| TopemsError::Internal(format!("Consul deregistration failed: {}", e)))?;
-        tracing::info!("[ServiceDiscovery] Deregistered {} from Consul", self.service_name);
+        tracing::info!(
+            "[ServiceDiscovery] Deregistered {} from Consul",
+            self.service_name
+        );
         Ok(())
     }
 }
@@ -449,7 +466,10 @@ pub struct ConsulDiscoveryClient {
 
 impl ConsulDiscoveryClient {
     pub fn new(consul_url: String) -> Self {
-        Self { client: Client::new(), consul_url }
+        Self {
+            client: Client::new(),
+            consul_url,
+        }
     }
 
     pub fn from_env() -> Option<Self> {
@@ -459,25 +479,37 @@ impl ConsulDiscoveryClient {
 
     /// 获取健康服务实例
     pub async fn get_healthy_instances(&self, service_name: &str) -> Result<Vec<ServiceInstance>> {
-        let url = format!("{}/v1/health/service/{}?passing=true", self.consul_url, service_name);
-        let response = self.client.get(&url).send().await
+        let url = format!(
+            "{}/v1/health/service/{}?passing=true",
+            self.consul_url, service_name
+        );
+        let response = self
+            .client
+            .get(&url)
+            .send()
+            .await
             .map_err(|e| TopemsError::Internal(format!("Consul query failed: {}", e)))?;
 
-        let instances: Vec<serde_json::Value> = response.json().await
-            .map_err(|e| TopemsError::Internal(format!("Failed to parse Consul response: {}", e)))?;
+        let instances: Vec<serde_json::Value> = response.json().await.map_err(|e| {
+            TopemsError::Internal(format!("Failed to parse Consul response: {}", e))
+        })?;
 
-        let service_instances: Vec<ServiceInstance> = instances.iter().filter_map(|item| {
-            let service = item.get("Service")?;
-            Some(ServiceInstance {
-                id: service.get("ID")?.as_str()?.to_string(),
-                name: service.get("Service")?.as_str()?.to_string(),
-                address: service.get("Address")?.as_str()?.to_string(),
-                port: service.get("Port")?.as_u64()? as u16,
-                tags: service.get("Tags")
-                    .and_then(|t| serde_json::from_value(t.clone()).ok())
-                    .unwrap_or_default(),
+        let service_instances: Vec<ServiceInstance> = instances
+            .iter()
+            .filter_map(|item| {
+                let service = item.get("Service")?;
+                Some(ServiceInstance {
+                    id: service.get("ID")?.as_str()?.to_string(),
+                    name: service.get("Service")?.as_str()?.to_string(),
+                    address: service.get("Address")?.as_str()?.to_string(),
+                    port: service.get("Port")?.as_u64()? as u16,
+                    tags: service
+                        .get("Tags")
+                        .and_then(|t| serde_json::from_value(t.clone()).ok())
+                        .unwrap_or_default(),
+                })
             })
-        }).collect();
+            .collect();
 
         Ok(service_instances)
     }
@@ -495,11 +527,19 @@ impl ConsulDiscoveryClient {
     }
 
     /// 获取服务地址（带重试的客户端负载均衡）
-    pub async fn get_service_url_with_fallback(&self, service_name: &str, fallback_url: &str) -> String {
+    pub async fn get_service_url_with_fallback(
+        &self,
+        service_name: &str,
+        fallback_url: &str,
+    ) -> String {
         match self.get_service_url(service_name).await {
             Some(url) => url,
             None => {
-                tracing::warn!("[ServiceDiscovery] Service {} not found in Consul, using fallback: {}", service_name, fallback_url);
+                tracing::warn!(
+                    "[ServiceDiscovery] Service {} not found in Consul, using fallback: {}",
+                    service_name,
+                    fallback_url
+                );
                 fallback_url.to_string()
             }
         }
@@ -559,8 +599,12 @@ impl SmartServiceClient {
         path: &str,
         body: Option<serde_json::Value>,
     ) -> Result<reqwest::Response> {
-        let base_url = self.resolve_service_url(service_name).await
-            .ok_or_else(|| TopemsError::Internal(format!("Service {} not available", service_name)))?;
+        let base_url = self
+            .resolve_service_url(service_name)
+            .await
+            .ok_or_else(|| {
+                TopemsError::Internal(format!("Service {} not available", service_name))
+            })?;
 
         let url = format!("{}{}", base_url.trim_end_matches('/'), path);
         tracing::debug!("[SmartServiceClient] Calling {} -> {}", service_name, url);
@@ -569,8 +613,9 @@ impl SmartServiceClient {
         if let Some(b) = body {
             req = req.json(&b);
         }
-        let response = req.send().await
-            .map_err(|e| TopemsError::Internal(format!("Service call to {} failed: {}", service_name, e)))?;
+        let response = req.send().await.map_err(|e| {
+            TopemsError::Internal(format!("Service call to {} failed: {}", service_name, e))
+        })?;
 
         Ok(response)
     }

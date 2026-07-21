@@ -89,7 +89,10 @@ impl NotificationSvcClient {
         page_size: i32,
         notification_type: Option<&str>,
     ) -> ServiceClientResult<NotificationListResponse> {
-        let mut path = format!("/api/core/notification/notifications?page={}&pagesize={}", page, page_size);
+        let mut path = format!(
+            "/api/core/notification/notifications?page={}&pagesize={}",
+            page, page_size
+        );
         if let Some(nt) = notification_type {
             path.push_str(&format!("&notification_type={}", nt));
         }
@@ -97,7 +100,9 @@ impl NotificationSvcClient {
     }
 
     pub async fn get_unread(&self) -> ServiceClientResult<Vec<Notification>> {
-        self.base_client.get("/api/core/notification/notifications/unread").await
+        self.base_client
+            .get("/api/core/notification/notifications/unread")
+            .await
     }
 
     pub async fn get_unread_count(&self) -> ServiceClientResult<i32> {
@@ -122,7 +127,9 @@ impl NotificationSvcClient {
         &self,
         req: &CreateNotificationRequest,
     ) -> ServiceClientResult<Notification> {
-        self.base_client.post("/api/core/notification/notifications", req).await
+        self.base_client
+            .post("/api/core/notification/notifications", req)
+            .await
     }
 
     pub async fn delete_notification(&self, id: &str) -> ServiceClientResult<bool> {
@@ -132,6 +139,8 @@ impl NotificationSvcClient {
     }
 
     pub async fn get_stats(&self) -> ServiceClientResult<NotificationStats> {
-        self.base_client.get("/api/core/notification/notifications/stats/me").await
+        self.base_client
+            .get("/api/core/notification/notifications/stats/me")
+            .await
     }
 }

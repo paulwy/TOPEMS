@@ -1,3 +1,4 @@
+use crate::auth::Claims;
 use axum::{
     body::Body,
     extract::Request,
@@ -6,7 +7,6 @@ use axum::{
     response::IntoResponse,
 };
 use sqlx::PgPool;
-use crate::auth::Claims;
 use uuid::Uuid;
 
 #[derive(Clone)]
@@ -17,7 +17,10 @@ pub struct DepartmentContext {
 impl DepartmentContext {
     pub fn from_request(req: &Request<Body>) -> Option<Self> {
         let claims = req.extensions().get::<Claims>()?;
-        let department_id = claims.department.as_ref().and_then(|id| Uuid::parse_str(id).ok());
+        let department_id = claims
+            .department
+            .as_ref()
+            .and_then(|id| Uuid::parse_str(id).ok());
         Some(Self { department_id })
     }
 }
@@ -30,7 +33,9 @@ pub fn department_middleware() -> impl Fn(
        + Clone
        + Send
        + Sync {
-    move |axum::extract::State(pool): axum::extract::State<PgPool>, req: Request<Body>, next: Next| {
+    move |axum::extract::State(pool): axum::extract::State<PgPool>,
+          req: Request<Body>,
+          next: Next| {
         Box::pin(async move {
             let claims = match req.extensions().get::<Claims>() {
                 Some(c) => c,
@@ -44,7 +49,10 @@ pub fn department_middleware() -> impl Fn(
                 }
             };
 
-            let department_id = claims.department.as_ref().and_then(|id| Uuid::parse_str(id).ok());
+            let department_id = claims
+                .department
+                .as_ref()
+                .and_then(|id| Uuid::parse_str(id).ok());
 
             if let Some(dept_id) = department_id {
                 match sqlx::query("SELECT set_config('app.department_id', $1, false)")
@@ -58,7 +66,8 @@ pub fn department_middleware() -> impl Fn(
             }
 
             let mut req = req;
-            req.extensions_mut().insert(DepartmentContext { department_id });
+            req.extensions_mut()
+                .insert(DepartmentContext { department_id });
 
             next.run(req).await
         })
@@ -67,7 +76,10 @@ pub fn department_middleware() -> impl Fn(
 
 pub fn require_department(
     department_id: Uuid,
-) -> impl Fn(Request<Body>, Next) -> std::pin::Pin<Box<dyn std::future::Future<Output = axum::response::Response> + Send>>
+) -> impl Fn(
+    Request<Body>,
+    Next,
+) -> std::pin::Pin<Box<dyn std::future::Future<Output = axum::response::Response> + Send>>
        + Clone
        + Send
        + Sync {
@@ -90,7 +102,10 @@ pub fn require_department(
                 return next.run(req).await;
             }
 
-            let user_dept_id = claims.department.as_ref().and_then(|id| Uuid::parse_str(id).ok());
+            let user_dept_id = claims
+                .department
+                .as_ref()
+                .and_then(|id| Uuid::parse_str(id).ok());
             if user_dept_id != Some(department_id) {
                 tracing::warn!(
                     "Department access denied: user={}, required_department={}",
