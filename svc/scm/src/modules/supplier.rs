@@ -49,12 +49,9 @@ fn suppliers_list_cache_key(
 
 pub fn create_routes() -> Router<ApiState> {
     Router::new()
+        .route("/suppliers", get(list_suppliers).post(create_supplier))
         .route(
-            "/api/scm/suppliers",
-            get(list_suppliers).post(create_supplier),
-        )
-        .route(
-            "/api/scm/suppliers/{id}",
+            "/suppliers/{id}",
             get(get_supplier)
                 .put(update_supplier)
                 .delete(delete_supplier),

@@ -194,7 +194,7 @@ export const AdvancedFilterPanel = <T extends Record<string, any>>({
                       >
                         {fields.map((field) => (
                           <MenuItem
-                            key={String(field.key) as Key}
+                            key={String(field.key)}
                             value={String(field.key)}
                           >
                             {field.label}
@@ -213,7 +213,7 @@ export const AdvancedFilterPanel = <T extends Record<string, any>>({
                         label='操作'
                         onChange={(e) => updateCondition(index, { operator: e.target.value })}
                       >
-                        {operators[fieldType]?.map((op) => (
+                        {(operators[fieldType] || []).map((op) => (
                           <MenuItem
                             key={op.value}
                             value={op.value}
@@ -241,7 +241,7 @@ export const AdvancedFilterPanel = <T extends Record<string, any>>({
                                 })
                               }
                             >
-                              {options.map((opt) => (
+                              {(options || []).map((opt) => (
                                 <MenuItem
                                   key={opt.value}
                                   value={opt.value}

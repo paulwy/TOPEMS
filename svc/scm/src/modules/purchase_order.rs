@@ -16,16 +16,13 @@ use topems_shared::{api_error, auth::Claims, ApiResponse, PaginationParams};
 
 pub fn create_routes() -> Router<ApiState> {
     Router::new()
+        .route("/purchase-orders", get(list_orders).post(create_order))
         .route(
-            "/api/scm/purchase-orders",
-            get(list_orders).post(create_order),
-        )
-        .route(
-            "/api/scm/purchase-orders/{id}",
+            "/purchase-orders/{id}",
             get(get_order).put(update_order).delete(delete_order),
         )
-        .route("/api/scm/purchase-orders/{id}/approve", post(approve_order))
-        .route("/api/scm/purchase-orders/{id}/reject", post(reject_order))
+        .route("/purchase-orders/{id}/approve", post(approve_order))
+        .route("/purchase-orders/{id}/reject", post(reject_order))
 }
 
 pub async fn list_orders(

@@ -30,10 +30,7 @@ const createRequestClient = (config?: RequestConfig): AxiosInstance => {
         '/api/core/iam/auth/register',
         '/api/core/iam/auth/refresh',
         '/api/core/iam/auth/forgot-password',
-        // 兼容旧路径（向后兼容，至少一个大版本）
-        '/api/v1/auth/login',
-        '/api/v1/auth/register',
-        '/api/v1/auth/refresh',
+        
       ];
       const isPublic = publicPaths.some((path) => url.startsWith(path));
 

@@ -6,7 +6,7 @@ metadata:
   namespace: topems
   labels:
     app: ai
-    suite: analytics
+    suite: business
 spec:
   replicas: 2
   selector:
@@ -16,14 +16,14 @@ spec:
     metadata:
       labels:
         app: ai
-        suite: analytics
+        suite: business
     spec:
       containers:
       - name: ai
         image: topems/ai:latest
         imagePullPolicy: IfNotPresent
         ports:
-        - containerPort: 8064
+        - containerPort: 8013
           name: http
         envFrom:
         - configMapRef:
@@ -32,7 +32,7 @@ spec:
             name: topems-secrets
         env:
         - name: AI_PORT
-          value: "8064"
+          value: "8013"
         - name: CONSUL_URL
           value: "http://consul-service:8500"
         - name: OLLAMA_BASE_URL
@@ -47,13 +47,13 @@ spec:
         livenessProbe:
           httpGet:
             path: /health
-            port: 8064
+            port: 8013
           initialDelaySeconds: 15
           periodSeconds: 30
         readinessProbe:
           httpGet:
             path: /health
-            port: 8064
+            port: 8013
           initialDelaySeconds: 5
           periodSeconds: 10
 ---
@@ -65,7 +65,7 @@ metadata:
 spec:
   type: ClusterIP
   ports:
-  - port: 8064
-    targetPort: 8064
+  - port: 8013
+    targetPort: 8013
   selector:
     app: ai

@@ -20,21 +20,18 @@ use topems_shared::response::ApiResponse;
 pub fn create_routes() -> Router<AppState> {
     Router::new()
         .route(
-            "/api/mes/workstations",
+            "/workstations",
             get(list_work_stations).post(create_work_station),
         )
         .route(
-            "/api/mes/workstations/{id}",
+            "/workstations/{id}",
             get(get_work_station)
                 .put(update_work_station)
                 .delete(delete_work_station),
         )
+        .route("/workstations/{id}/activate", put(activate_work_station))
         .route(
-            "/api/mes/workstations/{id}/activate",
-            put(activate_work_station),
-        )
-        .route(
-            "/api/mes/workstations/{id}/deactivate",
+            "/workstations/{id}/deactivate",
             put(deactivate_work_station),
         )
 }

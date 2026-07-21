@@ -23,9 +23,9 @@ use utoipa::OpenApi;
 
 use topems_shared::{
     auth_middleware, check_http_health, create_api_info_router, create_cors_layer,
-    create_database_pool, init_telemetry, rls_middleware, telemetry_middleware, wrap_group2_router,
-    ApiResponse, AuthState, DatabaseConfig, DependencyHealth, FieldEncryptionService, HealthStatus,
-    KeyManager, RouteCompatConfig, ServiceHealth, SystemMetrics,
+    create_database_pool, init_telemetry, rls_middleware, telemetry_middleware, ApiResponse,
+    AuthState, DatabaseConfig, DependencyHealth, FieldEncryptionService, HealthStatus, KeyManager,
+    ServiceHealth, SystemMetrics,
 };
 
 mod middleware;
@@ -97,12 +97,12 @@ async fn main() -> Result<()> {
 
     let protected_routes = modules::create_routes()
         .layer(axum::middleware::from_fn_with_state(
-            api_state.auth_state.clone(),
-            auth_middleware,
-        ))
-        .layer(axum::middleware::from_fn_with_state(
             api_state.db.clone(),
             middleware::tenant::tenant_middleware,
+        ))
+        .layer(axum::middleware::from_fn_with_state(
+            api_state.auth_state.clone(),
+            auth_middleware,
         ))
         .layer(axum::middleware::from_fn_with_state(
             api_state.db.clone(),
@@ -112,14 +112,11 @@ async fn main() -> Result<()> {
 
     let app = Router::new()
         .merge(health_router)
-        .merge(protected_routes)
+        .nest("/api/crm", protected_routes)
         .merge(create_api_info_router("topems-crm"))
         .layer(axum::middleware::from_fn(telemetry_middleware))
         .layer(prometheus_layer)
         .layer(cors);
-
-    let cfg = RouteCompatConfig::new("crm", "/api/crm", &[]);
-    let app = wrap_group2_router(app, cfg);
 
     let port = env::var("CRM_PORT")
         .or_else(|_| env::var("SERVER_PORT"))

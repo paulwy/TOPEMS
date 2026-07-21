@@ -527,24 +527,18 @@ pub async fn acknowledge_alert(
 
 pub fn create_routes() -> Router<crate::AppState> {
     Router::new()
+        .route("/quality-dashboard/overview", get(get_quality_overview))
+        .route("/quality-dashboard/trend", get(get_quality_trend))
         .route(
-            "/api/qms/quality-dashboard/overview",
-            get(get_quality_overview),
-        )
-        .route("/api/qms/quality-dashboard/trend", get(get_quality_trend))
-        .route(
-            "/api/qms/quality-dashboard/defect-distribution",
+            "/quality-dashboard/defect-distribution",
             get(get_defect_distribution),
         )
-        .route("/api/qms/alert-rules", get(list_alert_rules))
-        .route("/api/qms/alert-rules", post(create_alert_rule))
-        .route("/api/qms/alert-rules/{id}", get(get_alert_rule))
-        .route("/api/qms/alert-rules/{id}", put(update_alert_rule))
-        .route("/api/qms/alert-rules/{id}", delete(delete_alert_rule))
-        .route("/api/qms/alert-messages", get(list_alert_messages))
-        .route("/api/qms/alert-messages", post(create_alert_message))
-        .route(
-            "/api/qms/alert-messages/{id}/acknowledge",
-            post(acknowledge_alert),
-        )
+        .route("/alert-rules", get(list_alert_rules))
+        .route("/alert-rules", post(create_alert_rule))
+        .route("/alert-rules/{id}", get(get_alert_rule))
+        .route("/alert-rules/{id}", put(update_alert_rule))
+        .route("/alert-rules/{id}", delete(delete_alert_rule))
+        .route("/alert-messages", get(list_alert_messages))
+        .route("/alert-messages", post(create_alert_message))
+        .route("/alert-messages/{id}/acknowledge", post(acknowledge_alert))
 }

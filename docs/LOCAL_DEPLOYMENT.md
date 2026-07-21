@@ -236,7 +236,7 @@ curl -s http://localhost:8000/api/plugins/info | python3 -m json.tool
 | 8061 | Report | svc/report |
 | 8062 | Monitor | svc/monitor |
 | 8063 | Portal | svc/portal |
-| 8064 | AI | svc/ai |
+| 8013 | AI | svc/ai |
 | 8070 | Mobile | svc/mobile |
 | 8071 | GIS | svc/gis |
 | 8072 | Integration | svc/integration |
@@ -348,7 +348,7 @@ Docker 部署**仍然受支持**，但仅作为可选方案。Docker 相关文�
 lsof -i :8000
 
 # 清理 TOPEMS 端口
-for port in 3000 3001 8000 8010 8020 8023 8029 8030 8031 8040 8041 8042 8050 8051 8052 8053 8060 8061 8062 8063 8064 8070 8071 8072; do
+for port in 3000 3001 8000 8010 8011 8012 8013 8020 8023 8029 8030 8031 8040 8041 8042 8050 8051 8052 8053 8060 8061 8062 8063 8070 8071 8072; do
   lsof -ti:$port 2>/dev/null | xargs kill -9 2>/dev/null
 done
 ```

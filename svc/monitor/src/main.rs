@@ -25,9 +25,8 @@ use std::time::Instant;
 use topems_shared::{
     auth_middleware, check_http_health, create_api_info_router, create_cors_layer,
     create_database_pool, init_telemetry, security_headers_middleware, telemetry_middleware,
-    wrap_group2_router, ApiResponse, AuthState, DatabaseConfig, DependencyHealth, HealthStatus,
-    RateLimitConfig, RateLimitMiddleware, RouteCompatConfig, SecurityHeadersConfig,
-    SecurityHeadersLayer, ServiceHealth, SystemMetrics,
+    ApiResponse, AuthState, DatabaseConfig, DependencyHealth, HealthStatus, RateLimitConfig,
+    RateLimitMiddleware, SecurityHeadersConfig, SecurityHeadersLayer, ServiceHealth, SystemMetrics,
 };
 
 mod middleware;
@@ -95,6 +94,10 @@ async fn main() -> Result<()> {
         .route("/api/health/detailed", get(health_check_detailed))
         .route("/api/metrics", get(get_metrics))
         .route(
+            "/api/monitor/health",
+            get(modules::health_check::get_service_health),
+        )
+        .route(
             "/api/plugins/health",
             get(modules::monitor_plugin::plugin_health_check),
         )
@@ -140,9 +143,6 @@ async fn main() -> Result<()> {
         .layer(prometheus_layer)
         .layer(cors)
         .with_state(api_state.clone());
-
-    let cfg = RouteCompatConfig::new("monitor", "/api/monitor", &[]);
-    let app = wrap_group2_router(app, cfg);
 
     let port = env::var("MONITOR_PORT")
         .or_else(|_| env::var("SERVER_PORT"))

@@ -36,7 +36,7 @@ export const SERVICE_PORTS: Record<string, ServicePort> = {
   },
   monitor: { name: 'monitor', port: 8062, description: '系统监控', category: 'analytics' },
   portal: { name: 'portal', port: 8063, description: '企业门户', category: 'analytics' },
-  ai: { name: 'ai', port: 8064, description: 'AI智能服务', category: 'analytics' },
+  ai: { name: 'ai', port: 8013, description: 'AI智能服务', category: 'business' },
   mobile: { name: 'mobile', port: 8070, description: '移动服务', category: 'infrastructure' },
   gis: { name: 'gis', port: 8071, description: '地理信息服务', category: 'infrastructure' },
   integration: {

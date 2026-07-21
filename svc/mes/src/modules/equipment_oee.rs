@@ -19,18 +19,18 @@ use topems_shared::response::ApiResponse;
 pub fn create_routes() -> Router<AppState> {
     Router::new()
         .route(
-            "/api/mes/equipment-oee",
+            "/equipment-oee",
             get(list_oee_records).post(create_oee_record),
         )
         .route(
-            "/api/mes/equipment-oee/{id}",
+            "/equipment-oee/{id}",
             get(get_oee_record)
                 .put(update_oee_record)
                 .delete(delete_oee_record),
         )
-        .route("/api/mes/equipment-oee/statistics", get(get_oee_statistics))
+        .route("/equipment-oee/statistics", get(get_oee_statistics))
         .route(
-            "/api/mes/equipment-oee/{equipment_id}/efficiency",
+            "/equipment-oee/{equipment_id}/efficiency",
             get(get_equipment_efficiency_analysis),
         )
 }

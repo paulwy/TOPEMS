@@ -4,7 +4,7 @@ use axum::Router;
 
 use topems_shared::{
     auth_middleware, build_health_response, create_cors_layer, rls_middleware,
-    telemetry_middleware, wrap_group2_router, RouteCompatConfig, ServiceHealth,
+    telemetry_middleware, ServiceHealth,
 };
 
 use crate::handlers::{conversion_rules, events, lims_qms, mes_erp, mes_qms, wms_scm};
@@ -106,12 +106,11 @@ pub fn create_routes(state: AppState) -> Router {
 
     let app = Router::new()
         .merge(public_routes)
-        .merge(protected_routes)
+        .nest("/api/integration", protected_routes)
         .layer(from_fn(telemetry_middleware))
         .layer(cors);
 
-    let cfg = RouteCompatConfig::new("integration", "/api/integration", &[]);
-    wrap_group2_router(app, cfg)
+    app
 }
 
 async fn home() -> &'static str {

@@ -19,18 +19,12 @@ use topems_shared::response::ApiResponse;
 
 pub fn create_routes() -> Router<AppState> {
     Router::new()
+        .route("/processes", get(list_processes).post(create_process))
         .route(
-            "/api/mes/processes",
-            get(list_processes).post(create_process),
-        )
-        .route(
-            "/api/mes/processes/{id}",
+            "/processes/{id}",
             get(get_process).put(update_process).delete(delete_process),
         )
-        .route(
-            "/api/mes/processes/{id}/deactivate",
-            put(deactivate_process),
-        )
+        .route("/processes/{id}/deactivate", put(deactivate_process))
 }
 
 // ==================== Data Types ====================

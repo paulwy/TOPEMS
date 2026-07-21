@@ -62,7 +62,7 @@ impl GenericServiceClient {
     }
 
     pub async fn get_detailed_health(&self) -> ServiceClientResult<ServiceHealth> {
-        self.base_client.get("/api/v1/health/detailed").await
+        self.base_client.get("/api/health/detailed").await
     }
 
     pub async fn get_service_info(&self) -> ServiceClientResult<ServiceInfo> {

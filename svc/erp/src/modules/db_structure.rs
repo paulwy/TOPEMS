@@ -46,15 +46,15 @@ pub struct TableDetail {
 
 pub fn create_routes() -> Router<ApiState> {
     Router::new()
-        .route("/api/erp/db/tables", get(list_tables))
-        .route("/api/erp/db/tables/{name}", get(get_table_detail))
-        .route("/api/erp/db/columns/preview", post(preview_add_column))
-        .route("/api/erp/db/columns", post(execute_add_column))
+        .route("/db/tables", get(list_tables))
+        .route("/db/tables/{name}", get(get_table_detail))
+        .route("/db/columns/preview", post(preview_add_column))
+        .route("/db/columns", post(execute_add_column))
         .route(
-            "/api/erp/db/columns/{table}/{column}",
+            "/db/columns/{table}/{column}",
             put(execute_modify_column).delete(execute_drop_column),
         )
-        .route("/api/erp/db/changes", get(list_db_changes))
+        .route("/db/changes", get(list_db_changes))
 }
 
 pub async fn list_tables(

@@ -88,12 +88,12 @@ const HrmReportsPage: React.FC = () => {
     queryKey: ['hrm', 'reports', timeRange],
     queryFn: async () => {
       const promises = [
-        apiClient.hrm.get(`/api/hrm/reports/employee-summary?time_range=${timeRange}`),
-        apiClient.hrm.get(`/api/hrm/reports/department-summary?time_range=${timeRange}`),
-        apiClient.hrm.get(`/api/hrm/reports/contract-summary?time_range=${timeRange}`),
-        apiClient.hrm.get(`/api/hrm/reports/training-summary?time_range=${timeRange}`),
-        apiClient.hrm.get(`/api/hrm/reports/attendance-summary?time_range=${timeRange}`),
-        apiClient.hrm.get(`/api/hrm/reports/payroll-summary?time_range=${timeRange}`),
+        apiClient.hrm.get(`/reports/employee-summary?time_range=${timeRange}`),
+        apiClient.hrm.get(`/reports/department-summary?time_range=${timeRange}`),
+        apiClient.hrm.get(`/reports/contract-summary?time_range=${timeRange}`),
+        apiClient.hrm.get(`/reports/training-summary?time_range=${timeRange}`),
+        apiClient.hrm.get(`/reports/attendance-summary?time_range=${timeRange}`),
+        apiClient.hrm.get(`/reports/payroll-summary?time_range=${timeRange}`),
       ];
 
       const results = await Promise.all(promises);

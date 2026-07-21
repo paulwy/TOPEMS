@@ -213,3 +213,9 @@ build/
 .traecache/
 .superpowers/
 *.code-workspace
+
+# Cleanup artifacts
+apps/web/FAIL
+split_notification*.py
+*.bak
+logs/

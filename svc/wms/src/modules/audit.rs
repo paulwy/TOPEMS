@@ -49,8 +49,8 @@ where
     ApiState: FromRef<S>,
 {
     Router::new()
-        .route("/api/wms/audit-logs", get(list_audit_logs))
-        .route("/api/wms/audit-logs/{id}", get(get_audit_log))
+        .route("/audit-logs", get(list_audit_logs))
+        .route("/audit-logs/{id}", get(get_audit_log))
 }
 
 #[derive(Debug, Deserialize)]

@@ -71,33 +71,27 @@ where
 {
     Router::new()
         .route(
-            "/api/wms/inbound-orders",
+            "/inbound-orders",
             get(list_inbound_orders).post(create_inbound_order),
         )
         .route(
-            "/api/wms/inbound-orders/{id}",
+            "/inbound-orders/{id}",
             get(get_inbound_order)
                 .put(update_inbound_order)
                 .delete(delete_inbound_order),
         )
         .route(
-            "/api/wms/inbound-orders/{id}/items",
+            "/inbound-orders/{id}/items",
             get(list_inbound_order_items).post(create_inbound_order_item),
         )
         .route(
-            "/api/wms/inbound-orders/{id}/items/{item_id}",
+            "/inbound-orders/{id}/items/{item_id}",
             put(update_inbound_order_item).delete(delete_inbound_order_item),
         )
+        .route("/inbound-orders/{id}/confirm", post(confirm_inbound_order))
+        .route("/inbound-orders/{id}/receive", post(receive_inbound_order))
         .route(
-            "/api/wms/inbound-orders/{id}/confirm",
-            post(confirm_inbound_order),
-        )
-        .route(
-            "/api/wms/inbound-orders/{id}/receive",
-            post(receive_inbound_order),
-        )
-        .route(
-            "/api/wms/inbound-orders/{id}/complete",
+            "/inbound-orders/{id}/complete",
             post(complete_inbound_order),
         )
 }

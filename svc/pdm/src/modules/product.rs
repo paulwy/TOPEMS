@@ -23,9 +23,9 @@ fn get_tenant_id(claims: &Claims, headers: &axum::http::HeaderMap) -> Uuid {
 
 pub fn create_routes() -> Router<AppState> {
     Router::new()
-        .route("/api/pdm/products", get(list_products).post(create_product))
+        .route("/products", get(list_products).post(create_product))
         .route(
-            "/api/pdm/products/{id}",
+            "/products/{id}",
             get(get_product).put(update_product).delete(delete_product),
         )
 }

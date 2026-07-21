@@ -15,18 +15,15 @@ use topems_shared::response::ApiResponse;
 pub fn create_routes() -> Router<AppState> {
     Router::new()
         .route(
-            "/api/mes/traceability/forward/{order_id}",
+            "/traceability/forward/{order_id}",
             get(forward_traceability),
         )
         .route(
-            "/api/mes/traceability/backward/{batch_no}",
+            "/traceability/backward/{batch_no}",
             get(backward_traceability),
         )
-        .route("/api/mes/traceability/chain", get(get_trace_chain))
-        .route(
-            "/api/mes/traceability/quality-records",
-            get(list_quality_records),
-        )
+        .route("/traceability/chain", get(get_trace_chain))
+        .route("/traceability/quality-records", get(list_quality_records))
 }
 
 // ==================== Data Types ====================

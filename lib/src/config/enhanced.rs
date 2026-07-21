@@ -542,7 +542,7 @@ impl ServiceRegistry {
 
         // 业务应用服务
         services.insert("pm".to_string(), 8023);
-        services.insert("ai".to_string(), 8064);
+        services.insert("ai".to_string(), 8013);
         services.insert("portal".to_string(), 8063);
         services.insert("integration".to_string(), 8072);
         services.insert("hrm".to_string(), 8020);

@@ -40,16 +40,15 @@ echo "  TOPEMS 部署健康检查"
 echo "=========================================="
 echo ""
 
-# 1. 检查 Docker 服务
+# 1. 检查 Docker 服务（可选，支持本地运行模式）
 echo "1. 检查 Docker 服务..."
 if docker info > /dev/null 2>&1; then
     print_ok "Docker 服务运行正常"
 else
-    print_fail "Docker 服务未运行"
-    exit 1
+    print_info "Docker 服务未运行，检查本地服务模式..."
 fi
 
-# 2. 检查容器状态
+# 2. 检查容器状态（可选，支持本地运行模式）
 echo ""
 echo "2. 检查容器状态..."
 RUNNING_CONTAINERS=$(docker ps --filter "name=topems-" --filter "status=running" -q 2>/dev/null | wc -l | tr -d ' ' || echo "0")
@@ -57,24 +56,30 @@ TOTAL_CONTAINERS=$(docker ps -a --filter "name=topems-" -q 2>/dev/null | wc -l |
 
 if [ "$RUNNING_CONTAINERS" -ge 2 ]; then
     print_ok "运行中的容器: $RUNNING_CONTAINERS/$TOTAL_CONTAINERS"
+elif [ "$RUNNING_CONTAINERS" -eq 0 ] && [ "$TOTAL_CONTAINERS" -eq 0 ]; then
+    print_info "无 Docker 容器，检查本地服务模式..."
 else
     print_fail "容器数量异常: $RUNNING_CONTAINERS/$TOTAL_CONTAINERS"
 fi
 
-# 3. 检查数据库连接
+# 3. 检查数据库连接（支持 Docker 和本地模式）
 echo ""
 echo "3. 检查数据库连接..."
 if docker exec topems-postgres pg_isready -U topems > /dev/null 2>&1; then
-    print_ok "PostgreSQL 运行正常"
+    print_ok "PostgreSQL 运行正常 (Docker)"
+elif psql -h localhost -U "$USER" -d "postgres" -c "SELECT 1;" > /dev/null 2>&1; then
+    print_ok "PostgreSQL 运行正常 (本地)"
 else
     print_fail "PostgreSQL 连接失败"
 fi
 
-# 4. 检查 Redis 连接
+# 4. 检查 Redis 连接（支持 Docker 和本地模式）
 echo ""
 echo "4. 检查 Redis 连接..."
 if docker exec topems-redis redis-cli ping > /dev/null 2>&1; then
-    print_ok "Redis 运行正常"
+    print_ok "Redis 运行正常 (Docker)"
+elif redis-cli ping > /dev/null 2>&1; then
+    print_ok "Redis 运行正常 (本地)"
 else
     print_fail "Redis 连接失败"
 fi

@@ -30,27 +30,18 @@ fn get_tenant_id(claims: &Claims, headers: &axum::http::HeaderMap) -> Uuid {
 pub fn create_routes() -> Router<AppState> {
     Router::new()
         .route(
-            "/api/pdm/change-notices",
+            "/change-notices",
             get(list_change_notices).post(create_change_notice),
         )
         .route(
-            "/api/pdm/change-notices/{id}",
+            "/change-notices/{id}",
             get(get_change_notice)
                 .put(update_change_notice)
                 .delete(delete_change_notice),
         )
-        .route(
-            "/api/pdm/change-notices/{id}/submit",
-            post(submit_change_notice),
-        )
-        .route(
-            "/api/pdm/change-notices/{id}/approve",
-            post(approve_change_notice),
-        )
-        .route(
-            "/api/pdm/change-notices/{id}/reject",
-            post(reject_change_notice),
-        )
+        .route("/change-notices/{id}/submit", post(submit_change_notice))
+        .route("/change-notices/{id}/approve", post(approve_change_notice))
+        .route("/change-notices/{id}/reject", post(reject_change_notice))
 }
 
 #[derive(Debug, Serialize, Deserialize, FromRow)]

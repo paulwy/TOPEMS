@@ -12,12 +12,12 @@ use crate::shared::AppState;
 
 pub fn create_routes() -> Router<AppState> {
     Router::new()
-        .route("/api/lims/tasks", get(list_tasks).post(create_task))
+        .route("/tasks", get(list_tasks).post(create_task))
         .route(
-            "/api/lims/tasks/{id}",
+            "/tasks/{id}",
             get(get_task).put(update_task).delete(delete_task),
         )
-        .route("/api/lims/tasks/{id}/result", post(submit_result))
+        .route("/tasks/{id}/result", post(submit_result))
 }
 
 #[derive(Debug, Serialize)]

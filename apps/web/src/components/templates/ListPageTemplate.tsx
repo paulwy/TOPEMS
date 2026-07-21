@@ -162,6 +162,8 @@ export function ListPageTemplate<T>({
   // 批量操作
   batchActions,
   enableBatchSelection,
+  // 选择 - selectedIds 单独解构避免进入 ...props 传递给 DOM
+  selectedIds: selectedIdsProp,
   // 排除自定义属性的剩余props
   ...props
 }: ListPageTemplateProps<T>) {
@@ -497,7 +499,7 @@ export function ListPageTemplate<T>({
     });
   }, [columns, columnConfig, columnConfigurable]);
 
-  const effectiveSelectedIds = Array.from(selection?.selected ?? selectedIds);
+  const effectiveSelectedIds = selection?.selected ?? selectedIdsProp ?? Array.from(selectedIds);
   const effectiveOnSelectionChange = selection?.onChange ?? onSelectionChange;
 
   // 处理排序

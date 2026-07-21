@@ -52,6 +52,10 @@ pub fn master_routes(state: &AppState) -> Router<AppState> {
             get(modules::tenant::handlers::get_usage_metrics),
         )
         .route(
+            "/api/core/tenant/{id}/usage",
+            get(modules::tenant::handlers::get_usage_metrics),
+        )
+        .route(
             "/api/core/tenant/{id}/billing",
             get(modules::tenant::handlers::get_billing_info),
         )
@@ -294,6 +298,58 @@ pub fn master_routes(state: &AppState) -> Router<AppState> {
             require_permission("system:write"),
         ));
 
+    let monitor_read = Router::new()
+        .route(
+            "/api/core/master/monitor/health",
+            get(modules::monitor::handlers::get_service_health),
+        )
+        .route(
+            "/api/core/master/monitor/alerts",
+            get(modules::monitor::handlers::list_alerts),
+        )
+        .route(
+            "/api/core/master/monitor/alerts/{id}",
+            get(modules::monitor::handlers::get_alert),
+        )
+        .route(
+            "/api/core/master/monitor/metrics/system",
+            get(modules::monitor::handlers::get_system_metrics),
+        )
+        .route(
+            "/api/core/master/monitor/metrics/database",
+            get(modules::monitor::handlers::get_database_metrics),
+        )
+        .route(
+            "/api/core/master/monitor/performance/api",
+            get(modules::monitor::handlers::get_api_performance),
+        )
+        .route(
+            "/api/core/master/monitor/metrics/realtime",
+            get(modules::monitor::handlers::get_realtime_metrics),
+        )
+        .route(
+            "/api/core/master/monitor/reports/performance",
+            get(modules::monitor::handlers::get_performance_report),
+        )
+        .layer(axum::middleware::from_fn_with_state(
+            state.clone(),
+            require_permission("system:read"),
+        ));
+
+    let monitor_write = Router::new()
+        .route(
+            "/api/core/master/monitor/alerts/{id}/acknowledge",
+            put(modules::monitor::handlers::acknowledge_alert),
+        )
+        .route(
+            "/api/core/master/monitor/alerts/{id}/resolve",
+            put(modules::monitor::handlers::resolve_alert),
+        )
+        .layer(axum::middleware::from_fn_with_state(
+            state.clone(),
+            require_permission("system:write"),
+        ));
+
     tenant_read
         .merge(tenant_write)
         .merge(billing_read)
@@ -302,4 +358,6 @@ pub fn master_routes(state: &AppState) -> Router<AppState> {
         .merge(dict_write)
         .merge(menu_read)
         .merge(menu_write)
+        .merge(monitor_read)
+        .merge(monitor_write)
 }

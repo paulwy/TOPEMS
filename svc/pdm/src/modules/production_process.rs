@@ -25,11 +25,11 @@ fn get_tenant_id(claims: &Claims, headers: &axum::http::HeaderMap) -> Uuid {
 pub fn create_routes() -> Router<AppState> {
     Router::new()
         .route(
-            "/api/pdm/production-processes",
+            "/production-processes",
             get(list_processes).post(create_process),
         )
         .route(
-            "/api/pdm/production-processes/{id}",
+            "/production-processes/{id}",
             get(get_process).put(update_process).delete(delete_process),
         )
 }

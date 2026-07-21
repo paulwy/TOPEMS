@@ -25,40 +25,40 @@ fn get_tenant_id(claims: &Claims, headers: &HeaderMap) -> Uuid {
 pub fn create_routes() -> Router<AppState> {
     Router::new()
         .route(
-            "/api/ehs/drills/plans",
+            "/drills/plans",
             get(list_drill_plans).post(create_drill_plan),
         )
         .route(
-            "/api/ehs/drills/plans/{id}",
+            "/drills/plans/{id}",
             get(get_drill_plan)
                 .put(update_drill_plan)
                 .delete(delete_drill_plan),
         )
         .route(
-            "/api/ehs/drills/records",
+            "/drills/records",
             get(list_drill_records).post(create_drill_record),
         )
         .route(
-            "/api/ehs/drills/records/{id}",
+            "/drills/records/{id}",
             get(get_drill_record)
                 .put(update_drill_record)
                 .delete(delete_drill_record),
         )
         .route(
-            "/api/ehs/drills/records/{id}/evaluation",
+            "/drills/records/{id}/evaluation",
             post(create_drill_evaluation),
         )
         .route(
-            "/api/ehs/drills/records/{id}/problems",
+            "/drills/records/{id}/problems",
             get(list_drill_problems).post(create_drill_problem),
         )
         .route(
-            "/api/ehs/drills/records/{id}/problems/{problem_id}",
+            "/drills/records/{id}/problems/{problem_id}",
             put(update_drill_problem),
         )
-        .route("/api/ehs/drills/types", get(list_drill_types))
-        .route("/api/ehs/drills/statistics", get(get_drill_statistics))
-        .route("/api/ehs/drills", get(list_drill_plans))
+        .route("/drills/types", get(list_drill_types))
+        .route("/drills/statistics", get(get_drill_statistics))
+        .route("/drills", get(list_drill_plans))
 }
 
 #[derive(Debug, Deserialize)]

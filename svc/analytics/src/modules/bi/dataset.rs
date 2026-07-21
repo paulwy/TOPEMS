@@ -79,16 +79,16 @@ pub struct Dataset {
 
 pub fn create_routes() -> Router<AppState> {
     Router::new()
-        .route("/api/bi/datasets", get(list_datasets).post(create_dataset))
+        .route("/datasets", get(list_datasets).post(create_dataset))
         .route(
-            "/api/bi/datasets/{id}",
+            "/datasets/{id}",
             get(get_dataset).put(update_dataset).delete(delete_dataset),
         )
-        .route("/api/bi/datasets/{id}/publish", post(publish_dataset))
-        .route("/api/bi/datasets/{id}/refresh", post(refresh_dataset))
-        .route("/api/bi/datasets/{id}/preview", get(get_dataset_preview))
-        .route("/api/bi/datasets/query", post(query_dataset))
-        .route("/api/bi/datasets/test-sql", post(test_sql_query))
+        .route("/datasets/{id}/publish", post(publish_dataset))
+        .route("/datasets/{id}/refresh", post(refresh_dataset))
+        .route("/datasets/{id}/preview", get(get_dataset_preview))
+        .route("/datasets/query", post(query_dataset))
+        .route("/datasets/test-sql", post(test_sql_query))
 }
 
 async fn list_datasets(

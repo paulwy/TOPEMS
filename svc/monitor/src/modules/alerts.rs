@@ -274,57 +274,48 @@ pub struct AlertQueryParams {
 
 pub fn create_routes() -> Router<ApiState> {
     Router::new()
-        .route("/api/monitor/alerts", get(list_alerts))
-        .route(
-            "/api/monitor/alerts/{id}",
-            get(get_alert).post(update_alert),
-        )
-        .route("/api/monitor/alerts/statistics", get(get_alert_statistics))
-        .route("/api/monitor/alerts/acknowledge", post(acknowledge_alerts))
-        .route("/api/monitor/alerts/resolve", post(resolve_alerts))
-        .route("/api/monitor/alerts/{id}/history", get(get_alert_history))
-        .route("/api/monitor/alerts/{id}/timeline", get(get_alert_timeline))
+        .route("/alerts", get(list_alerts))
+        .route("/alerts/{id}", get(get_alert).post(update_alert))
+        .route("/alerts/statistics", get(get_alert_statistics))
+        .route("/alerts/acknowledge", post(acknowledge_alerts))
+        .route("/alerts/resolve", post(resolve_alerts))
+        .route("/alerts/{id}/history", get(get_alert_history))
+        .route("/alerts/{id}/timeline", get(get_alert_timeline))
         // Alert Rules API
-        .route("/api/monitor/rules", get(list_rules).post(create_rule))
+        .route("/rules", get(list_rules).post(create_rule))
         .route(
-            "/api/monitor/rules/{id}",
+            "/rules/{id}",
             get(get_rule).put(update_rule).delete(delete_rule),
         )
-        .route("/api/monitor/rules/{id}/enable", post(enable_rule))
-        .route("/api/monitor/rules/{id}/disable", post(disable_rule))
+        .route("/rules/{id}/enable", post(enable_rule))
+        .route("/rules/{id}/disable", post(disable_rule))
         .route(
-            "/api/monitor/rules/{id}/advanced",
+            "/rules/{id}/advanced",
             get(get_advanced_rule).put(update_advanced_rule),
         )
         // Advanced Alert Configuration
         .route(
-            "/api/monitor/rules/{id}/scheduled-trigger",
+            "/rules/{id}/scheduled-trigger",
             get(get_scheduled_trigger).put(update_scheduled_trigger),
         )
         .route(
-            "/api/monitor/rules/{id}/escalation",
+            "/rules/{id}/escalation",
             get(get_escalation).put(update_escalation),
         )
+        .route("/rules/{id}/routing", get(get_routing).put(update_routing))
+        .route("/templates", get(list_templates).post(create_template))
         .route(
-            "/api/monitor/rules/{id}/routing",
-            get(get_routing).put(update_routing),
-        )
-        .route(
-            "/api/monitor/templates",
-            get(list_templates).post(create_template),
-        )
-        .route(
-            "/api/monitor/templates/{id}",
+            "/templates/{id}",
             get(get_template)
                 .put(update_template)
                 .delete(delete_template),
         )
         .route(
-            "/api/monitor/suppression",
+            "/suppression",
             get(list_suppression_rules).post(create_suppression_rule),
         )
         .route(
-            "/api/monitor/suppression/{id}",
+            "/suppression/{id}",
             get(get_suppression_rule)
                 .put(update_suppression_rule)
                 .delete(delete_suppression_rule),

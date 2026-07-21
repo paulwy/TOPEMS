@@ -207,7 +207,7 @@ impl NotificationServiceClient {
     ) -> Result<Notification> {
         let response = self
             .client
-            .post(format!("{}/api/v1/notifications", self.base_url))
+            .post(format!("{}/api/core/notification/notifications", self.base_url))
             .json(&req)
             .send()
             .await
@@ -231,7 +231,7 @@ impl NotificationServiceClient {
     ) -> Result<NotificationTemplate> {
         let response = self
             .client
-            .post(format!("{}/api/v1/templates", self.base_url))
+            .post(format!("{}/api/core/notification/notification-templates", self.base_url))
             .json(&req)
             .send()
             .await
@@ -252,7 +252,7 @@ impl NotificationServiceClient {
     pub async fn render_template(&self, req: RenderTemplateRequest) -> Result<Notification> {
         let response = self
             .client
-            .post(format!("{}/api/v1/templates/render", self.base_url))
+            .post(format!("{}/api/core/notification/notification-templates/render", self.base_url))
             .json(&req)
             .send()
             .await
@@ -273,7 +273,7 @@ impl NotificationServiceClient {
     pub async fn get_stats(&self) -> Result<NotificationStats> {
         let response = self
             .client
-            .get(format!("{}/api/v1/stats", self.base_url))
+            .get(format!("{}/api/core/notification/notifications/stats", self.base_url))
             .send()
             .await
             .map_err(|e| TopemsError::Internal(format!("Failed to send request: {}", e)))?;
@@ -294,7 +294,7 @@ impl NotificationServiceClient {
     pub async fn get_my_stats(&self) -> Result<NotificationStats> {
         let response = self
             .client
-            .get(format!("{}/api/v1/stats/me", self.base_url))
+            .get(format!("{}/api/core/notification/notifications/stats/me", self.base_url))
             .send()
             .await
             .map_err(|e| TopemsError::Internal(format!("Failed to send request: {}", e)))?;
@@ -315,7 +315,7 @@ impl NotificationServiceClient {
     pub async fn get_archive_config(&self) -> Result<ArchiveConfig> {
         let response = self
             .client
-            .get(format!("{}/api/v1/archive/config", self.base_url))
+            .get(format!("{}/api/core/notification/notifications/archive/config", self.base_url))
             .send()
             .await
             .map_err(|e| TopemsError::Internal(format!("Failed to send request: {}", e)))?;
@@ -335,7 +335,7 @@ impl NotificationServiceClient {
     pub async fn update_archive_config(&self, config: ArchiveConfig) -> Result<ArchiveConfig> {
         let response = self
             .client
-            .put(format!("{}/api/v1/archive/config", self.base_url))
+            .put(format!("{}/api/core/notification/notifications/archive/config", self.base_url))
             .json(&config)
             .send()
             .await
@@ -356,7 +356,7 @@ impl NotificationServiceClient {
     pub async fn run_auto_archive(&self) -> Result<serde_json::Value> {
         let response = self
             .client
-            .post(format!("{}/api/v1/archive/auto", self.base_url))
+            .post(format!("{}/api/core/notification/notifications/archive/run", self.base_url))
             .send()
             .await
             .map_err(|e| TopemsError::Internal(format!("Failed to send request: {}", e)))?;
@@ -379,7 +379,7 @@ impl NotificationServiceClient {
         &self,
         query: &NotificationListQuery,
     ) -> Result<NotificationListResponse> {
-        let mut url = format!("{}/api/v1/notifications?", self.base_url);
+        let mut url = format!("{}/api/core/notification/notifications?", self.base_url);
         if let Some(page) = query.page {
             url.push_str(&format!("page={}&", page));
         }
@@ -411,7 +411,7 @@ impl NotificationServiceClient {
     pub async fn get_notification(&self, id: &Uuid) -> Result<Notification> {
         let response = self
             .client
-            .get(format!("{}/api/v1/notifications/{}", self.base_url, id))
+            .get(format!("{}/api/core/notification/notifications/{}", self.base_url, id))
             .send()
             .await
             .map_err(|e| TopemsError::Internal(format!("Failed to send request: {}", e)))?;
@@ -431,7 +431,7 @@ impl NotificationServiceClient {
         let response = self
             .client
             .put(format!(
-                "{}/api/v1/notifications/{}/read",
+                "{}/api/core/notification/notifications/{}/read",
                 self.base_url, id
             ))
             .send()
@@ -452,7 +452,7 @@ impl NotificationServiceClient {
     pub async fn mark_all_as_read(&self) -> Result<i64> {
         let response = self
             .client
-            .put(format!("{}/api/v1/notifications/read-all", self.base_url))
+            .put(format!("{}/api/core/notification/notifications/read-all", self.base_url))
             .send()
             .await
             .map_err(|e| TopemsError::Internal(format!("Failed to send request: {}", e)))?;
@@ -482,7 +482,7 @@ impl NotificationServiceClient {
     pub async fn delete_notification(&self, id: &Uuid) -> Result<bool> {
         let response = self
             .client
-            .delete(format!("{}/api/v1/notifications/{}", self.base_url, id))
+            .delete(format!("{}/api/core/notification/notifications/{}", self.base_url, id))
             .send()
             .await
             .map_err(|e| TopemsError::Internal(format!("Failed to send request: {}", e)))?;
@@ -512,7 +512,7 @@ impl NotificationServiceClient {
     pub async fn get_unread_notifications(&self) -> Result<Vec<Notification>> {
         let response = self
             .client
-            .get(format!("{}/api/v1/notifications/unread", self.base_url))
+            .get(format!("{}/api/core/notification/notifications/unread", self.base_url))
             .send()
             .await
             .map_err(|e| TopemsError::Internal(format!("Failed to send request: {}", e)))?;
@@ -533,7 +533,7 @@ impl NotificationServiceClient {
         let response = self
             .client
             .get(format!(
-                "{}/api/v1/notifications/unread-count",
+                "{}/api/core/notification/notifications/unread-count",
                 self.base_url
             ))
             .send()
@@ -554,7 +554,7 @@ impl NotificationServiceClient {
     pub async fn bulk_mark_as_read(&self, ids: &[String]) -> Result<i64> {
         let response = self
             .client
-            .put(format!("{}/api/v1/notifications/bulk/read", self.base_url))
+            .put(format!("{}/api/core/notification/notifications/bulk/read", self.base_url))
             .json(&BulkOperationRequest { ids: ids.to_vec() })
             .send()
             .await
@@ -575,7 +575,7 @@ impl NotificationServiceClient {
         let response = self
             .client
             .delete(format!(
-                "{}/api/v1/notifications/bulk/delete",
+                "{}/api/core/notification/notifications/bulk/delete",
                 self.base_url
             ))
             .json(&BulkOperationRequest { ids: ids.to_vec() })

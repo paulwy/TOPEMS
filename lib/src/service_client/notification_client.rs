@@ -89,7 +89,7 @@ impl NotificationSvcClient {
         page_size: i32,
         notification_type: Option<&str>,
     ) -> ServiceClientResult<NotificationListResponse> {
-        let mut path = format!("/api/v1/notifications?page={}&pagesize={}", page, page_size);
+        let mut path = format!("/api/core/notification/notifications?page={}&pagesize={}", page, page_size);
         if let Some(nt) = notification_type {
             path.push_str(&format!("&notification_type={}", nt));
         }
@@ -97,24 +97,24 @@ impl NotificationSvcClient {
     }
 
     pub async fn get_unread(&self) -> ServiceClientResult<Vec<Notification>> {
-        self.base_client.get("/api/v1/notifications/unread").await
+        self.base_client.get("/api/core/notification/notifications/unread").await
     }
 
     pub async fn get_unread_count(&self) -> ServiceClientResult<i32> {
         self.base_client
-            .get("/api/v1/notifications/unread-count")
+            .get("/api/core/notification/notifications/unread-count")
             .await
     }
 
     pub async fn mark_as_read(&self, id: &str) -> ServiceClientResult<Notification> {
         self.base_client
-            .put(&format!("/api/v1/notifications/{}", id), &())
+            .put(&format!("/api/core/notification/notifications/{}", id), &())
             .await
     }
 
     pub async fn mark_all_as_read(&self) -> ServiceClientResult<i32> {
         self.base_client
-            .put("/api/v1/notifications/read-all", &())
+            .put("/api/core/notification/notifications/read-all", &())
             .await
     }
 
@@ -122,16 +122,16 @@ impl NotificationSvcClient {
         &self,
         req: &CreateNotificationRequest,
     ) -> ServiceClientResult<Notification> {
-        self.base_client.post("/api/v1/notifications", req).await
+        self.base_client.post("/api/core/notification/notifications", req).await
     }
 
     pub async fn delete_notification(&self, id: &str) -> ServiceClientResult<bool> {
         self.base_client
-            .delete(&format!("/api/notifications/{}", id))
+            .delete(&format!("/api/core/notification/notifications/{}", id))
             .await
     }
 
     pub async fn get_stats(&self) -> ServiceClientResult<NotificationStats> {
-        self.base_client.get("/api/notifications/stats/me").await
+        self.base_client.get("/api/core/notification/notifications/stats/me").await
     }
 }

@@ -16,7 +16,7 @@ export const searchApi = {
     limit = 20,
     signal?: AbortSignal
   ): Promise<ApiResponse<SearchResult[]>> {
-    return apiClient.core.get('/api/core/search/global', {
+    return apiClient.core.get('/search/v1', {
       params: { query, limit },
       signal,
     });

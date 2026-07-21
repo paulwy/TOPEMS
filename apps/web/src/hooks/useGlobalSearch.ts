@@ -97,7 +97,7 @@ export function useGlobalSearch(
   const [loading, setLoading] = useState(false);
   const [selectedIndex, setSelectedIndex] = useState(-1);
   const [searchHistory, setSearchHistory] = useState<string[]>([]);
-  const [filter, setFilter] = useState<SearchFilter>({});
+  const [filter, setFilter] = useState<SearchFilter>({ module: undefined, type: undefined });
 
   const inputRef = useRef<HTMLInputElement>(null);
   const searchRef = useRef<HTMLDivElement>(null);
@@ -219,11 +219,11 @@ export function useGlobalSearch(
     return filtered;
   }, [rawResults, filter, query]);
 
-  const availableModules = useMemo(() => {
+  const availableModules = useMemo<SearchFilterOption[]>(() => {
     return getAvailableModules(rawResults);
   }, [rawResults]);
 
-  const availableTypes = useMemo(() => {
+  const availableTypes = useMemo<SearchFilterOption[]>(() => {
     const filteredByModule = filter.module
       ? rawResults.filter((r) => r.module === filter.module)
       : rawResults;

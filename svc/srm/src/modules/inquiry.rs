@@ -31,16 +31,13 @@ pub async fn create_routes(db: PgPool) -> Result<Router> {
     let state = Arc::new(AppState { db });
 
     let app = Router::new()
+        .route("/inquiries", get(list_inquiries).post(create_inquiry))
         .route(
-            "/api/srm/inquiries",
-            get(list_inquiries).post(create_inquiry),
-        )
-        .route(
-            "/api/srm/inquiries/{id}",
+            "/inquiries/{id}",
             get(get_inquiry).put(update_inquiry).delete(delete_inquiry),
         )
-        .route("/api/srm/inquiries/{id}/publish", post(publish_inquiry))
-        .route("/api/srm/inquiries/{id}/close", post(close_inquiry))
+        .route("/inquiries/{id}/publish", post(publish_inquiry))
+        .route("/inquiries/{id}/close", post(close_inquiry))
         .with_state(state);
 
     Ok(app)

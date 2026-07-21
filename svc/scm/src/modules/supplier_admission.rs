@@ -16,33 +16,21 @@ use topems_shared::{api_error, auth::Claims, ApiResponse};
 pub fn create_routes() -> Router<ApiState> {
     Router::new()
         .route(
-            "/api/scm/supplier-admissions",
+            "/supplier-admissions",
             get(list_admissions).post(create_admission),
         )
         .route(
-            "/api/scm/supplier-admissions/{id}",
+            "/supplier-admissions/{id}",
             get(get_admission)
                 .put(update_admission)
                 .delete(delete_admission),
         )
+        .route("/supplier-admissions/{id}/submit", post(submit_admission))
+        .route("/supplier-admissions/{id}/approve", post(approve_admission))
+        .route("/supplier-admissions/{id}/reject", post(reject_admission))
+        .route("/supplier-admissions/{id}/audit", post(audit_admission))
         .route(
-            "/api/scm/supplier-admissions/{id}/submit",
-            post(submit_admission),
-        )
-        .route(
-            "/api/scm/supplier-admissions/{id}/approve",
-            post(approve_admission),
-        )
-        .route(
-            "/api/scm/supplier-admissions/{id}/reject",
-            post(reject_admission),
-        )
-        .route(
-            "/api/scm/supplier-admissions/{id}/audit",
-            post(audit_admission),
-        )
-        .route(
-            "/api/scm/supplier-admissions/{id}/activate-supplier",
+            "/supplier-admissions/{id}/activate-supplier",
             post(activate_supplier),
         )
 }

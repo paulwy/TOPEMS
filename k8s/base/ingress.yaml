@@ -137,14 +137,14 @@ spec:
             name: bi-service
             port:
               number: 8060
-      # Report API
+      # Report API (已整合到BI服务)
       - path: /api/report(/|$)(.*)
         pathType: Prefix
         backend:
           service:
-            name: report-service
+            name: bi-service
             port:
-              number: 8061
+              number: 8060
       # Monitor API
       - path: /api/monitor(/|$)(.*)
         pathType: Prefix
@@ -200,7 +200,7 @@ spec:
           service:
             name: ai-service
             port:
-              number: 8064
+              number: 8013
       # Mobile API
       - path: /api/mobile(/|$)(.*)
         pathType: Prefix

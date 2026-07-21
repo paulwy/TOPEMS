@@ -263,228 +263,228 @@
 
 | API路径                          | 方法    | 功能         |
 | -------------------------------- | ------- | ------------ |
-| `/api/v1/auth/login`             | POST    | 用户登录     |
-| `/api/v1/auth/register`          | POST    | 用户注册     |
-| `/api/v1/auth/refresh`           | POST    | 刷新Token    |
-| `/api/v1/auth/reset-password`    | POST    | 密码重置请求 |
-| `/api/v1/auth/set-new-password`  | POST    | 设置新密码   |
-| `/api/v1/auth/password-policy`   | GET/PUT | 密码策略     |
-| `/api/v1/auth/sessions`          | GET     | 活跃会话列表 |
-| `/api/v1/auth/sessions/:id`      | DELETE  | 撤销会话     |
-| `/api/v1/auth/security-settings` | GET/PUT | 安全设置     |
+| `/api/core/iam/auth/login`             | POST    | 用户登录     |
+| `/api/core/iam/auth/register`          | POST    | 用户注册     |
+| `/api/core/iam/auth/refresh`           | POST    | 刷新Token    |
+| `/api/core/iam/auth/reset-password`    | POST    | 密码重置请求 |
+| `/api/core/iam/auth/set-new-password`  | POST    | 设置新密码   |
+| `/api/core/iam/auth/password-policy`   | GET/PUT | 密码策略     |
+| `/api/core/iam/auth/sessions`          | GET     | 活跃会话列表 |
+| `/api/core/iam/auth/sessions/:id`      | DELETE  | 撤销会话     |
+| `/api/core/iam/auth/security-settings` | GET/PUT | 安全设置     |
 
 ### 2.2 用户管理 (IAM Users)
 
 | API路径                         | 方法           | 功能               |
 | ------------------------------- | -------------- | ------------------ |
-| `/api/v1/users`                 | GET/POST       | 用户列表/创建用户  |
-| `/api/v1/users/:id`             | GET/PUT/DELETE | 用户详情/更新/删除 |
-| `/api/v1/users/me`              | GET/PUT        | 当前用户信息       |
-| `/api/v1/users/me/permissions`  | GET            | 当前用户权限       |
-| `/api/v1/users/:id/permissions` | GET            | 用户权限详情       |
-| `/api/v1/users/batch-delete`    | POST           | 批量删除用户       |
+| `/api/core/iam/users`                 | GET/POST       | 用户列表/创建用户  |
+| `/api/core/iam/users/:id`             | GET/PUT/DELETE | 用户详情/更新/删除 |
+| `/api/core/iam/users/me`              | GET/PUT        | 当前用户信息       |
+| `/api/core/iam/users/me/permissions`  | GET            | 当前用户权限       |
+| `/api/core/iam/users/:id/permissions` | GET            | 用户权限详情       |
+| `/api/core/iam/users/batch-delete`    | POST           | 批量删除用户       |
 
 ### 2.3 角色管理 (IAM Roles)
 
 | API路径                         | 方法            | 功能               |
 | ------------------------------- | --------------- | ------------------ |
-| `/api/v1/roles`                 | GET/POST        | 角色列表/创建角色  |
-| `/api/v1/roles/:id`             | GET/PUT/DELETE  | 角色详情/更新/删除 |
-| `/api/v1/roles/:id/permissions` | GET/POST/DELETE | 角色权限管理       |
+| `/api/core/iam/roles`                 | GET/POST        | 角色列表/创建角色  |
+| `/api/core/iam/roles/:id`             | GET/PUT/DELETE  | 角色详情/更新/删除 |
+| `/api/core/iam/roles/:id/permissions` | GET/POST/DELETE | 角色权限管理       |
 
 ### 2.4 权限管理 (IAM Permissions)
 
 | API路径                   | 方法           | 功能               |
 | ------------------------- | -------------- | ------------------ |
-| `/api/v1/permissions`     | GET/POST       | 权限列表/创建权限  |
-| `/api/v1/permissions/:id` | GET/PUT/DELETE | 权限详情/更新/删除 |
+| `/api/core/iam/permissions`     | GET/POST       | 权限列表/创建权限  |
+| `/api/core/iam/permissions/:id` | GET/PUT/DELETE | 权限详情/更新/删除 |
 
 ### 2.5 审计日志 (IAM Audit)
 
 | API路径                            | 方法     | 功能                  |
 | ---------------------------------- | -------- | --------------------- |
-| `/api/v1/access-logs`              | GET/POST | 访问日志列表/创建日志 |
-| `/api/v1/access-logs/user/:userId` | GET      | 用户访问日志          |
+| `/api/core/iam/access-logs`              | GET/POST | 访问日志列表/创建日志 |
+| `/api/core/iam/access-logs/user/:userId` | GET      | 用户访问日志          |
 
 ### 2.6 人力资源管理 (HRM)
 
 | API路径                       | 方法                      | 功能       |
 | ----------------------------- | ------------------------- | ---------- |
-| `/api/v1/companies`           | CRUD                      | 公司管理   |
-| `/api/v1/departments`         | CRUD                      | 部门管理   |
-| `/api/v1/employees`           | CRUD                      | 员工管理   |
-| `/api/v1/positions`           | CRUD                      | 岗位管理   |
-| `/api/v1/leaves`              | CRUD + approve/reject     | 请假管理   |
-| `/api/v1/attendance`          | CRUD + check-in/check-out | 考勤管理   |
-| `/api/v1/job-openings`        | CRUD + publish/close      | 职位发布   |
-| `/api/v1/candidates`          | CRUD                      | 候选人管理 |
-| `/api/v1/interviews`          | CRUD                      | 面试管理   |
-| `/api/v1/payroll-runs`        | CRUD + calculate/pay      | 薪资管理   |
-| `/api/v1/performance-reviews` | CRUD + submit/approve     | 绩效评估   |
-| `/api/v1/performance-goals`   | CRUD                      | 绩效目标   |
-| `/api/v1/contracts`           | CRUD + renew              | 合同管理   |
-| `/api/v1/contract-renewals`   | CRUD + approve/reject     | 合同续签   |
-| `/api/v1/training-plans`      | CRUD                      | 培训计划   |
-| `/api/v1/training-courses`    | CRUD                      | 培训课程   |
-| `/api/v1/training-records`    | CRUD + enroll/complete    | 培训记录   |
-| `/api/v1/salary-adjustments`  | CRUD                      | 薪资调整   |
+| `/api/hrm/companies`           | CRUD                      | 公司管理   |
+| `/api/hrm/departments`         | CRUD                      | 部门管理   |
+| `/api/hrm/employees`           | CRUD                      | 员工管理   |
+| `/api/hrm/positions`           | CRUD                      | 岗位管理   |
+| `/api/hrm/leaves`              | CRUD + approve/reject     | 请假管理   |
+| `/api/hrm/attendance`          | CRUD + check-in/check-out | 考勤管理   |
+| `/api/hrm/job-openings`        | CRUD + publish/close      | 职位发布   |
+| `/api/hrm/candidates`          | CRUD                      | 候选人管理 |
+| `/api/hrm/interviews`          | CRUD                      | 面试管理   |
+| `/api/hrm/payroll-runs`        | CRUD + calculate/pay      | 薪资管理   |
+| `/api/hrm/performance-reviews` | CRUD + submit/approve     | 绩效评估   |
+| `/api/hrm/performance-goals`   | CRUD                      | 绩效目标   |
+| `/api/hrm/contracts`           | CRUD + renew              | 合同管理   |
+| `/api/hrm/contract-renewals`   | CRUD + approve/reject     | 合同续签   |
+| `/api/hrm/training-plans`      | CRUD                      | 培训计划   |
+| `/api/hrm/training-courses`    | CRUD                      | 培训课程   |
+| `/api/hrm/training-records`    | CRUD + enroll/complete    | 培训记录   |
+| `/api/hrm/salary-adjustments`  | CRUD                      | 薪资调整   |
 
 ### 2.7 客户关系管理 (CRM)
 
 | API路径                 | 方法 | 功能       |
 | ----------------------- | ---- | ---------- |
-| `/api/v1/customers`     | CRUD | 客户管理   |
-| `/api/v1/contacts`      | CRUD | 联系人管理 |
-| `/api/v1/opportunities` | CRUD | 商机管理   |
-| `/api/v1/interactions`  | CRUD | 交互记录   |
+| `/api/crm/customers`     | CRUD | 客户管理   |
+| `/api/crm/contacts`      | CRUD | 联系人管理 |
+| `/api/crm/opportunities` | CRUD | 商机管理   |
+| `/api/crm/interactions`  | CRUD | 交互记录   |
 
 ### 2.8 企业资源规划 (ERP)
 
 | API路径                                     | 方法              | 功能       |
 | ------------------------------------------- | ----------------- | ---------- |
-| `/api/v1/assets`                            | CRUD              | 资产管理   |
-| `/api/v1/expenses`                          | CRUD              | 费用管理   |
-| `/api/v1/budgets`                           | CRUD              | 预算管理   |
-| `/api/v1/receivables`                       | CRUD              | 应收账款   |
-| `/api/v1/payables`                          | CRUD              | 应付账款   |
-| `/api/v1/vouchers`                          | CRUD + items      | 凭证管理   |
-| `/api/v1/accounting-subjects`               | CRUD              | 会计科目   |
-| `/api/v1/office-supplies`                   | CRUD              | 办公用品   |
-| `/api/v1/meeting-rooms`                     | CRUD + bookings   | 会议室管理 |
-| `/api/v1/vehicles`                          | CRUD + requests   | 车辆管理   |
-| `/api/v1/announcements`                     | CRUD + publish    | 公告管理   |
-| `/api/v1/fixed-assets`                      | CRUD + depreciate | 固定资产   |
-| `/api/v1/bank-accounts`                     | CRUD              | 银行账户   |
-| `/api/v1/bank-transactions`                 | CRUD              | 银行交易   |
-| `/api/v1/finance/accounts/opening-balances` | CRUD + batch      | 期初余额   |
-| `/api/v1/reports/balance-sheet`             | GET               | 资产负债表 |
-| `/api/v1/reports/income-statement`          | GET               | 利润表     |
-| `/api/v1/reports/cash-flow`                 | GET               | 现金流量表 |
-| `/api/v1/reports/business-overview`         | GET               | 业务概览   |
+| `/api/erp/assets`                            | CRUD              | 资产管理   |
+| `/api/erp/expenses`                          | CRUD              | 费用管理   |
+| `/api/erp/budgets`                           | CRUD              | 预算管理   |
+| `/api/erp/receivables`                       | CRUD              | 应收账款   |
+| `/api/erp/payables`                          | CRUD              | 应付账款   |
+| `/api/erp/vouchers`                          | CRUD + items      | 凭证管理   |
+| `/api/erp/accounting-subjects`               | CRUD              | 会计科目   |
+| `/api/erp/office-supplies`                   | CRUD              | 办公用品   |
+| `/api/erp/meeting-rooms`                     | CRUD + bookings   | 会议室管理 |
+| `/api/erp/vehicles`                          | CRUD + requests   | 车辆管理   |
+| `/api/erp/announcements`                     | CRUD + publish    | 公告管理   |
+| `/api/erp/fixed-assets`                      | CRUD + depreciate | 固定资产   |
+| `/api/erp/bank-accounts`                     | CRUD              | 银行账户   |
+| `/api/erp/bank-transactions`                 | CRUD              | 银行交易   |
+| `/api/erp/finance/accounts/opening-balances` | CRUD + batch      | 期初余额   |
+| `/api/bi/reports/balance-sheet`             | GET               | 资产负债表 |
+| `/api/bi/reports/income-statement`          | GET               | 利润表     |
+| `/api/bi/reports/cash-flow`                 | GET               | 现金流量表 |
+| `/api/bi/reports/business-overview`         | GET               | 业务概览   |
 
 ### 2.9 工作流服务 (Flow)
 
 | API路径                          | 方法            | 功能       |
 | -------------------------------- | --------------- | ---------- |
-| `/api/v1/workflows`              | CRUD            | 工作流管理 |
-| `/api/v1/workflows/:id/versions` | CRUD + activate | 版本管理   |
-| `/api/v1/instances`              | CRUD            | 流程实例   |
-| `/api/v1/approvals`              | CRUD + process  | 审批管理   |
-| `/api/v1/notifications`          | CRUD            | 流程通知   |
-| `/api/v1/statistics`             | GET             | 流程统计   |
-| `/api/v1/performance`            | GET             | 性能统计   |
+| `/api/core/flow/workflows`              | CRUD            | 工作流管理 |
+| `/api/core/flow/workflows/:id/versions` | CRUD + activate | 版本管理   |
+| `/api/core/flow/instances`              | CRUD            | 流程实例   |
+| `/api/core/flow/approvals`              | CRUD + process  | 审批管理   |
+| `/api/core/notification/notifications`          | CRUD            | 流程通知   |
+| `/api/core/flow/statistics`             | GET             | 流程统计   |
+| `/api/core/flow/performance`            | GET             | 性能统计   |
 
 ### 2.10 项目管理 (PM)
 
 | API路径                           | 方法                       | 功能     |
 | --------------------------------- | -------------------------- | -------- |
-| `/api/v1/projects`                | CRUD + dashboard/gantt     | 项目管理 |
-| `/api/v1/projects/:id/phases`     | CRUD                       | 项目阶段 |
-| `/api/v1/projects/:id/milestones` | CRUD                       | 里程碑   |
-| `/api/v1/projects/:id/members`    | CRUD                       | 项目成员 |
-| `/api/v1/projects/:id/resources`  | CRUD                       | 项目资源 |
-| `/api/v1/projects/:id/expenses`   | CRUD                       | 项目费用 |
-| `/api/v1/projects/:id/benefits`   | CRUD                       | 项目收益 |
-| `/api/v1/projects/:id/approval`   | GET/POST                   | 项目审批 |
-| `/api/v1/contracts`               | CRUD + milestones/payments | 合同管理 |
-| `/api/v1/contract-templates`      | CRUD                       | 合同模板 |
-| `/api/v1/budgets`                 | CRUD                       | 预算管理 |
-| `/api/v1/risks`                   | CRUD                       | 风险管理 |
-| `/api/v1/quality-checks`          | CRUD                       | 质量检查 |
-| `/api/v1/defects`                 | CRUD                       | 缺陷管理 |
-| `/api/v1/acceptance-plans`        | CRUD                       | 验收计划 |
-| `/api/v1/settlements`             | CRUD                       | 结算管理 |
-| `/api/v1/documents`               | CRUD                       | 文档管理 |
-| `/api/v1/reports`                 | CRUD                       | 报表管理 |
-| `/api/v1/statistics`              | GET                        | PM统计   |
+| `/api/pm/projects`                | CRUD + dashboard/gantt     | 项目管理 |
+| `/api/pm/projects/:id/phases`     | CRUD                       | 项目阶段 |
+| `/api/pm/projects/:id/milestones` | CRUD                       | 里程碑   |
+| `/api/pm/projects/:id/members`    | CRUD                       | 项目成员 |
+| `/api/pm/projects/:id/resources`  | CRUD                       | 项目资源 |
+| `/api/pm/projects/:id/expenses`   | CRUD                       | 项目费用 |
+| `/api/pm/projects/:id/benefits`   | CRUD                       | 项目收益 |
+| `/api/pm/projects/:id/approval`   | GET/POST                   | 项目审批 |
+| `/api/hrm/contracts`               | CRUD + milestones/payments | 合同管理 |
+| `/api/pm/contract-templates`      | CRUD                       | 合同模板 |
+| `/api/erp/budgets`                 | CRUD                       | 预算管理 |
+| `/api/pm/risks`                   | CRUD                       | 风险管理 |
+| `/api/pm/quality-checks`          | CRUD                       | 质量检查 |
+| `/api/pm/defects`                 | CRUD                       | 缺陷管理 |
+| `/api/pm/acceptance-plans`        | CRUD                       | 验收计划 |
+| `/api/pm/settlements`             | CRUD                       | 结算管理 |
+| `/api/pm/documents`               | CRUD                       | 文档管理 |
+| `/api/bi/reports`                 | CRUD                       | 报表管理 |
+| `/api/core/flow/statistics`              | GET                        | PM统计   |
 
 ### 2.11 研发管理 (RS)
 
 | API路径               | 方法                       | 功能     |
 | --------------------- | -------------------------- | -------- |
-| `/api/v1/projects`    | CRUD + batch/export/import | 项目管理 |
-| `/api/v1/experiments` | CRUD + phase/trace         | 试验管理 |
-| `/api/v1/formulas`    | CRUD + versions/approve    | 配方管理 |
-| `/api/v1/statistics`  | GET                        | RS统计   |
-| `/api/v1/audit-logs`  | CRUD                       | 审计日志 |
+| `/api/pm/projects`    | CRUD + batch/export/import | 项目管理 |
+| `/api/rd/experiments` | CRUD + phase/trace         | 试验管理 |
+| `/api/rd/formulas`    | CRUD + versions/approve    | 配方管理 |
+| `/api/core/flow/statistics`  | GET                        | RS统计   |
+| `/api/core/iam/audit-logs`  | CRUD                       | 审计日志 |
 
 ### 2.12 商业智能 (BI)
 
 | API路径                         | 方法 | 功能         |
 | ------------------------------- | ---- | ------------ |
-| `/api/v1/dashboards`            | CRUD | 仪表盘管理   |
-| `/api/v1/reports`               | CRUD | 报表管理     |
-| `/api/v1/analytics/summary`     | GET  | 分析概览     |
-| `/api/v1/analytics/development` | GET  | 研发分析     |
-| `/api/v1/analytics/quality`     | GET  | 质量分析     |
-| `/api/v1/analytics/production`  | GET  | 生产分析     |
-| `/api/v1/analytics/laboratory`  | GET  | 实验室分析   |
-| `/api/v1/bi/rs/summary`         | GET  | RS模块分析   |
-| `/api/v1/bi/lims/summary`       | GET  | LIMS模块分析 |
-| `/api/v1/bi/qms/summary`        | GET  | QMS模块分析  |
-| `/api/v1/bi/ehs/summary`        | GET  | EHS模块分析  |
-| `/api/v1/bi/srm/summary`        | GET  | SRM模块分析  |
-| `/api/v1/bi/pdm/summary`        | GET  | PDM模块分析  |
+| `/api/bi/dashboards`            | CRUD | 仪表盘管理   |
+| `/api/bi/reports`               | CRUD | 报表管理     |
+| `/api/bi/analytics/summary`     | GET  | 分析概览     |
+| `/api/bi/analytics/development` | GET  | 研发分析     |
+| `/api/bi/analytics/quality`     | GET  | 质量分析     |
+| `/api/bi/analytics/production`  | GET  | 生产分析     |
+| `/api/bi/analytics/laboratory`  | GET  | 实验室分析   |
+| `/api/bi/rs/summary`         | GET  | RS模块分析   |
+| `/api/bi/lims/summary`       | GET  | LIMS模块分析 |
+| `/api/bi/qms/summary`        | GET  | QMS模块分析  |
+| `/api/bi/ehs/summary`        | GET  | EHS模块分析  |
+| `/api/bi/srm/summary`        | GET  | SRM模块分析  |
+| `/api/bi/pdm/summary`        | GET  | PDM模块分析  |
 
 ### 2.13 实验室信息管理 (LIMS)
 
 | API路径               | 方法                       | 功能     |
 | --------------------- | -------------------------- | -------- |
-| `/api/v1/samples`     | CRUD + batch/export/import | 样品管理 |
-| `/api/v1/processes`   | CRUD                       | 检验流程 |
-| `/api/v1/tasks`       | CRUD + complete_step       | 检验任务 |
-| `/api/v1/records`     | CRUD                       | 检验记录 |
-| `/api/v1/instruments` | CRUD                       | 仪器管理 |
-| `/api/v1/maintenance` | CRUD                       | 仪器维护 |
-| `/api/v1/statistics`  | GET                        | LIMS统计 |
+| `/api/lims/samples`     | CRUD + batch/export/import | 样品管理 |
+| `/api/lims/processes`   | CRUD                       | 检验流程 |
+| `/api/lims/tasks`       | CRUD + complete_step       | 检验任务 |
+| `/api/lims/records`     | CRUD                       | 检验记录 |
+| `/api/lims/instruments` | CRUD                       | 仪器管理 |
+| `/api/lims/maintenance` | CRUD                       | 仪器维护 |
+| `/api/core/flow/statistics`  | GET                        | LIMS统计 |
 
 ### 2.14 质量管理 (QMS)
 
 | API路径                           | 方法 | 功能     |
 | --------------------------------- | ---- | -------- |
-| `/api/v1/standards`               | CRUD | 质量标准 |
-| `/api/v1/standards/:id/revisions` | GET  | 标准版本 |
-| `/api/v1/checks`                  | CRUD | 质量检查 |
-| `/api/v1/issues`                  | CRUD | 质量问题 |
-| `/api/v1/improvements`            | CRUD | 质量改进 |
-| `/api/v1/audit-plans`             | CRUD | 审核计划 |
-| `/api/v1/audit-tasks`             | CRUD | 审核任务 |
-| `/api/v1/audit-findings`          | CRUD | 审核发现 |
+| `/api/qms/standards`               | CRUD | 质量标准 |
+| `/api/qms/standards/:id/revisions` | GET  | 标准版本 |
+| `/api/qms/checks`                  | CRUD | 质量检查 |
+| `/api/qms/issues`                  | CRUD | 质量问题 |
+| `/api/qms/improvements`            | CRUD | 质量改进 |
+| `/api/qms/audit-plans`             | CRUD | 审核计划 |
+| `/api/qms/audit-tasks`             | CRUD | 审核任务 |
+| `/api/qms/audit-findings`          | CRUD | 审核发现 |
 
 ### 2.15 环境健康安全 (EHS)
 
 | API路径                           | 方法 | 功能       |
 | --------------------------------- | ---- | ---------- |
-| `/api/v1/hazards`                 | CRUD | 危险源管理 |
-| `/api/v1/hazards/:id/assessments` | CRUD | 风险评估   |
-| `/api/v1/hazards/:id/controls`    | CRUD | 控制措施   |
-| `/api/v1/checks`                  | CRUD | 安全检查   |
-| `/api/v1/plans`                   | CRUD | 应急预案   |
-| `/api/v1/drills`                  | CRUD | 演练记录   |
-| `/api/v1/incidents`               | CRUD | 事故管理   |
-| `/api/v1/incidents/:id/actions`   | CRUD | 事故处理   |
+| `/api/ehs/hazards`                 | CRUD | 危险源管理 |
+| `/api/ehs/hazards/:id/assessments` | CRUD | 风险评估   |
+| `/api/ehs/hazards/:id/controls`    | CRUD | 控制措施   |
+| `/api/qms/checks`                  | CRUD | 安全检查   |
+| `/api/ehs/plans`                   | CRUD | 应急预案   |
+| `/api/ehs/drills`                  | CRUD | 演练记录   |
+| `/api/ehs/incidents`               | CRUD | 事故管理   |
+| `/api/ehs/incidents/:id/actions`   | CRUD | 事故处理   |
 
 ### 2.16 供应商关系管理 (SRM)
 
 | API路径                        | 方法 | 功能       |
 | ------------------------------ | ---- | ---------- |
-| `/api/v1/suppliers`            | CRUD | 供应商管理 |
-| `/api/v1/supplier-evaluations` | CRUD | 供应商评估 |
-| `/api/v1/purchase-orders`      | CRUD | 采购订单   |
-| `/api/v1/supplier-contracts`   | CRUD | 供应商合同 |
-| `/api/v1/statistics`           | GET  | SRM统计    |
-| `/api/v1/statistics/detailed`  | GET  | 详细统计   |
-| `/api/v1/suppliers-with-stats` | GET  | 供应商统计 |
+| `/api/scm/suppliers`            | CRUD | 供应商管理 |
+| `/api/scm/supplier-evaluations` | CRUD | 供应商评估 |
+| `/api/scm/purchase-orders`      | CRUD | 采购订单   |
+| `/api/scm/supplier-contracts`   | CRUD | 供应商合同 |
+| `/api/core/flow/statistics`           | GET  | SRM统计    |
+| `/api/core/flow/statistics/detailed`  | GET  | 详细统计   |
+| `/api/scm/suppliers-with-stats` | GET  | 供应商统计 |
 
 ### 2.17 生产数据管理 (PDM)
 
 | API路径              | 方法 | 功能     |
 | -------------------- | ---- | -------- |
-| `/api/v1/processes`  | CRUD | 工艺流程 |
-| `/api/v1/steps`      | CRUD | 工序管理 |
-| `/api/v1/formulas`   | CRUD | 配方管理 |
-| `/api/v1/batches`    | CRUD | 批次管理 |
-| `/api/v1/statistics` | GET  | PDM统计  |
+| `/api/lims/processes`  | CRUD | 工艺流程 |
+| `/api/mes/steps`      | CRUD | 工序管理 |
+| `/api/rd/formulas`   | CRUD | 配方管理 |
+| `/api/mes/batches`    | CRUD | 批次管理 |
+| `/api/core/flow/statistics` | GET  | PDM统计  |
 
 ---
 
@@ -525,21 +525,21 @@
 
 | 前端页面        | 缺失的后端API | 建议完善方案                    |
 | --------------- | ------------- | ------------------------------- |
-| `/crm/scoring`  | 客户评分API   | 新增 `/api/v1/customer-scoring` |
-| `/crm/forecast` | 销售预测API   | 新增 `/api/v1/sales-forecast`   |
-| `/crm/billing`  | 账单管理API   | 新增 `/api/v1/billing`          |
+| `/crm/scoring`  | 客户评分API   | 新增 `/api/crm/customer-scoring` |
+| `/crm/forecast` | 销售预测API   | 新增 `/api/crm/sales-forecast`   |
+| `/crm/billing`  | 账单管理API   | 新增 `/api/crm/billing`          |
 
 #### 3.2.2 RS模块 - 物料管理缺失
 
 | 前端页面        | 缺失的后端API | 建议完善方案                  |
 | --------------- | ------------- | ----------------------------- |
-| `/rs/materials` | 物料管理API   | 新增 `/api/v1/materials` CRUD |
+| `/rs/materials` | 物料管理API   | 新增 `/api/rd/materials` CRUD |
 
 #### 3.2.3 Notifications模块 - 需要独立服务
 
 | 前端页面                   | 当前状态        | 建议完善方案                             |
 | -------------------------- | --------------- | ---------------------------------------- |
-| `/notifications`           | 使用Flow通知API | 新增独立通知服务 `/api/v1/notifications` |
+| `/notifications`           | 使用Flow通知API | 新增独立通知服务 `/api/core/notification/notifications` |
 | `/notifications/templates` | 无对应API       | 新增通知模板API                          |
 | `/notifications/archive`   | 无对应API       | 新增通知归档API                          |
 | `/notifications/stats`     | 无对应API       | 新增通知统计API                          |
@@ -548,89 +548,89 @@
 
 | 前端页面          | 当前状态  | 建议完善方案                           |
 | ----------------- | --------- | -------------------------------------- |
-| `/documents`      | 无对应API | 新增文档管理API `/api/v1/documents`    |
-| `/knowledge-base` | 无对应API | 新增知识库API `/api/v1/knowledge-base` |
+| `/documents`      | 无对应API | 新增文档管理API `/api/pm/documents`    |
+| `/knowledge-base` | 无对应API | 新增知识库API `/api/ai/knowledge-base` |
 | `/templates`      | 部分对应  | 完善模板管理API                        |
 
 #### 3.2.5 AI模块 - 需要AI服务
 
 | 前端页面 | 当前状态  | 建议完善方案                 |
 | -------- | --------- | ---------------------------- |
-| `/ai`    | 无对应API | 新增AI服务API `/api/v1/ai/*` |
+| `/ai`    | 无对应API | 新增AI服务API `/api/ai/*` |
 
 #### 3.2.6 GIS模块 - 需要GIS服务
 
 | 前端页面 | 当前状态  | 建议完善方案                   |
 | -------- | --------- | ------------------------------ |
-| `/gis`   | 无对应API | 新增GIS服务API `/api/v1/gis/*` |
+| `/gis`   | 无对应API | 新增GIS服务API `/api/gis/*` |
 
 #### 3.2.7 IM模块 - 需要即时通讯服务
 
 | 前端页面 | 当前状态  | 建议完善方案                 |
 | -------- | --------- | ---------------------------- |
-| `/im`    | 无对应API | 新增IM服务API `/api/v1/im/*` |
+| `/im`    | 无对应API | 新增IM服务API `/api/core/im/*` |
 
 #### 3.2.8 Mail模块 - 需要邮件服务
 
 | 前端页面 | 当前状态  | 建议完善方案                     |
 | -------- | --------- | -------------------------------- |
-| `/mail`  | 无对应API | 新增邮件服务API `/api/v1/mail/*` |
+| `/mail`  | 无对应API | 新增邮件服务API `/api/core/mail/*` |
 
 #### 3.2.9 Mobile模块 - 需要移动服务
 
 | 前端页面              | 当前状态  | 建议完善方案                       |
 | --------------------- | --------- | ---------------------------------- |
-| `/mobile-workstation` | 无对应API | 新增移动服务API `/api/v1/mobile/*` |
+| `/mobile-workstation` | 无对应API | 新增移动服务API `/api/mobile/*` |
 
 #### 3.2.10 Performance模块 - 需要监控服务
 
 | 前端页面       | 当前状态  | 建议完善方案                        |
 | -------------- | --------- | ----------------------------------- |
-| `/performance` | 无对应API | 新增性能监控API `/api/v1/monitor/*` |
+| `/performance` | 无对应API | 新增性能监控API `/api/monitor/*` |
 
 ### 3.3 完善方案建议
 
 #### 3.3.1 优先级一：核心业务模块完善（高优先级）
 
 1. **CRM模块完善**
-   - 新增客户评分API：`/api/v1/customer-scoring`
-   - 新增销售预测API：`/api/v1/sales-forecast`
-   - 新增账单管理API：`/api/v1/billing`
+   - 新增客户评分API：`/api/crm/customer-scoring`
+   - 新增销售预测API：`/api/crm/sales-forecast`
+   - 新增账单管理API：`/api/crm/billing`
 
 2. **RS模块完善**
-   - 新增物料管理API：`/api/v1/materials`
+   - 新增物料管理API：`/api/rd/materials`
 
 3. **Notifications模块完善**
-   - 新增通知管理API：`/api/v1/notifications`
-   - 新增通知模板API：`/api/v1/notification-templates`
-   - 新增通知统计API：`/api/v1/notification-stats`
+   - 新增通知管理API：`/api/core/notification/notifications`
+   - 新增通知模板API：`/api/core/notification/notification-templates`
+   - 新增通知统计API：`/api/core/notification/notification-stats`
 
 #### 3.3.2 优先级二：文档与AI模块完善（中优先级）
 
 1. **Docs模块完善**
-   - 新增文档管理API：`/api/v1/documents`
-   - 新增知识库API：`/api/v1/knowledge-base`
+   - 新增文档管理API：`/api/pm/documents`
+   - 新增知识库API：`/api/ai/knowledge-base`
 
 2. **AI模块完善**
-   - 新增AI服务API：`/api/v1/ai/chat`
-   - 新增AI分析API：`/api/v1/ai/analysis`
+   - 新增AI服务API：`/api/ai/chat`
+   - 新增AI分析API：`/api/ai/analysis`
 
 #### 3.3.3 优先级三：辅助功能模块完善（低优先级）
 
 1. **GIS模块完善**
-   - 新增GIS服务API：`/api/v1/gis/locations`
+   - 新增GIS服务API：`/api/gis/locations`
 
 2. **IM模块完善**
-   - 新增IM服务API：`/api/v1/im/messages`
+   - 新增IM服务API：`/api/core/im/messages`
 
 3. **Mail模块完善**
-   - 新增邮件服务API：`/api/v1/mail/send`
+   - 新增邮件服务API：`/api/core/mail/send`
 
 4. **Mobile模块完善**
-   - 新增移动服务API：`/api/v1/mobile/devices`
+   - 新增移动服务API：`/api/mobile/devices`
 
 5. **Performance模块完善**
-   - 新增监控服务API：`/api/v1/monitor/metrics`
+   - 新增监控服务API：`/api/monitor/metrics`
 
 ### 3.4 前端API调用规范建议
 
@@ -638,7 +638,7 @@
 2. **类型定义**：每个模块应有完整的TypeScript类型定义
 3. **错误处理**：统一的错误处理和重试机制
 4. **API文档**：为每个API模块编写详细的接口文档
-5. **版本管理**：使用 `/api/v1/` 版本前缀，便于后续升级
+5. **版本管理**：使用 `/api/{service}/` 服务前缀，按服务分类
 
 ---
 

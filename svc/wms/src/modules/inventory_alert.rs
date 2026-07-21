@@ -85,39 +85,33 @@ where
     ApiState: FromRef<S>,
 {
     Router::new()
-        .route("/api/wms/alerts", get(list_alerts))
-        .route("/api/wms/alerts/{id}", get(get_alert))
-        .route("/api/wms/alerts/{id}/acknowledge", post(acknowledge_alert))
-        .route("/api/wms/alerts/statistics", get(get_alert_statistics))
-        .route("/api/wms/alerts/summary", get(get_alert_summary))
-        .route("/api/wms/alerts/by-warehouse", get(get_alerts_by_warehouse))
-        .route("/api/wms/inventory-alerts", get(list_alerts))
+        .route("/alerts", get(list_alerts))
+        .route("/alerts/{id}", get(get_alert))
+        .route("/alerts/{id}/acknowledge", post(acknowledge_alert))
+        .route("/alerts/statistics", get(get_alert_statistics))
+        .route("/alerts/summary", get(get_alert_summary))
+        .route("/alerts/by-warehouse", get(get_alerts_by_warehouse))
+        .route("/inventory-alerts", get(list_alerts))
+        .route("/inventory-alerts/statistics", get(get_alert_statistics))
+        .route("/inventory-alerts/{id}", get(get_alert))
         .route(
-            "/api/wms/inventory-alerts/statistics",
-            get(get_alert_statistics),
-        )
-        .route("/api/wms/inventory-alerts/{id}", get(get_alert))
-        .route(
-            "/api/wms/inventory-alerts/{id}/acknowledge",
+            "/inventory-alerts/{id}/acknowledge",
             post(acknowledge_alert),
         )
         .route(
-            "/api/wms/inventory-alerts/rules",
+            "/inventory-alerts/rules",
             get(list_alert_rules).post(create_alert_rule),
         )
         .route(
-            "/api/wms/inventory-alerts/rules/{id}",
+            "/inventory-alerts/rules/{id}",
             get(get_alert_rule)
                 .put(update_alert_rule)
                 .delete(delete_alert_rule),
         )
-        .route("/api/wms/inventory-alerts/records", get(list_alert_records))
+        .route("/inventory-alerts/records", get(list_alert_records))
+        .route("/inventory-alerts/records/{id}", get(get_alert_record))
         .route(
-            "/api/wms/inventory-alerts/records/{id}",
-            get(get_alert_record),
-        )
-        .route(
-            "/api/wms/inventory-alerts/records/{id}/confirm",
+            "/inventory-alerts/records/{id}/confirm",
             post(confirm_alert_record),
         )
 }

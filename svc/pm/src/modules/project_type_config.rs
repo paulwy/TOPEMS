@@ -9,9 +9,9 @@ use uuid::Uuid;
 
 pub fn create_routes(pool: PgPool) -> Router {
     Router::new()
-        .route("/api/pm/project-types", get(list_types).post(create_type))
+        .route("/project-types", get(list_types).post(create_type))
         .route(
-            "/api/pm/project-types/{id}",
+            "/project-types/{id}",
             get(get_type).put(update_type).delete(delete_type),
         )
         .with_state(pool)

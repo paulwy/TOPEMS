@@ -34,7 +34,7 @@ pub struct PmStatistics {
 
 pub fn create_routes(db: PgPool) -> Router {
     Router::new()
-        .route("/api/pm/statistics", get(get_statistics))
+        .route("/statistics", get(get_statistics))
         .with_state(db)
 }
 

@@ -23,7 +23,7 @@ http://localhost/api/{service}/...
 ```
 http://localhost:8000/api/iam/...  # 核心服务
 http://localhost:8010/api/erp/...   # ERP 服务
-http://localhost:8064/api/ai/...    # AI 服务
+http://localhost:8013/api/ai/...    # AI 服务
 ```
 
 ### 认证方式
@@ -148,7 +148,7 @@ GET /health/details
 | report | 8061 | /api/report/ | 报表服务 | ✅ |
 | monitor | 8062 | /api/monitor/ | 系统监控 | ✅ |
 | portal | 8063 | /api/portal/ | 企业门户 | ✅ |
-| ai | 8064 | /api/ai/ | AI 智能服务 | ✅ |
+| ai | 8013 AI 智能服务 | ✅ |
 | **基础设施 (8070-8079)** |
 | mobile | 8070 | /api/mobile/ | 移动服务 | ✅ |
 | gis | 8071 | /api/gis/ | 地理信息服务 | ✅ |
@@ -295,7 +295,7 @@ curl -X GET http://localhost:8020/api/hrm/employees \
   -H "Authorization: Bearer {token}"
 
 # 智能对话
-curl -X POST http://localhost:8064/api/ai/chat \
+curl -X POST http://localhost:8013/api/ai/chat \
   -H "Authorization: Bearer {token}" \
   -H "Content-Type: application/json" \
   -d '{"message":"帮我分析本月销售数据"}'
@@ -308,7 +308,7 @@ curl -X POST http://localhost:8064/api/ai/chat \
 curl http://localhost:8000/health
 curl http://localhost:8010/health
 curl http://localhost:8020/health
-curl http://localhost:8064/health
+curl http://localhost:8013/health
 ```
 
 ## 开发工具

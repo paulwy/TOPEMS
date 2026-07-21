@@ -23,7 +23,7 @@ fn get_tenant_id(claims: &Claims, headers: &HeaderMap) -> Uuid {
 }
 
 pub fn create_routes() -> Router<AppState> {
-    Router::new().route("/api/ehs/health", get(list_records).post(create_record))
+    Router::new().route("/health", get(list_records).post(create_record))
 }
 
 #[derive(Debug, Deserialize)]

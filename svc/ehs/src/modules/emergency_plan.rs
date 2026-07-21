@@ -24,36 +24,30 @@ fn get_tenant_id(claims: &Claims, headers: &HeaderMap) -> Uuid {
 
 pub fn create_routes() -> Router<AppState> {
     Router::new()
+        .route("/emergency-plans", get(list_plans).post(create_plan))
+        .route("/emergency-plans/categories", get(list_plan_categories))
         .route(
-            "/api/ehs/emergency-plans",
-            get(list_plans).post(create_plan),
-        )
-        .route(
-            "/api/ehs/emergency-plans/categories",
-            get(list_plan_categories),
-        )
-        .route(
-            "/api/ehs/emergency-plans/{id}",
+            "/emergency-plans/{id}",
             get(get_plan).put(update_plan).delete(delete_plan),
         )
         .route(
-            "/api/ehs/emergency-plans/{id}/supplies",
+            "/emergency-plans/{id}/supplies",
             get(list_plan_supplies).post(add_plan_supply),
         )
         .route(
-            "/api/ehs/emergency-plans/{id}/supplies/{supply_id}",
+            "/emergency-plans/{id}/supplies/{supply_id}",
             delete(delete_plan_supply),
         )
         .route(
-            "/api/ehs/emergency-plans/{id}/versions",
+            "/emergency-plans/{id}/versions",
             get(list_plan_versions).post(create_new_version),
         )
         .route(
-            "/api/ehs/emergency-plans/{id}/submit-approval",
+            "/emergency-plans/{id}/submit-approval",
             post(submit_plan_approval),
         )
-        .route("/api/ehs/emergency-plans/{id}/approve", post(approve_plan))
-        .route("/api/ehs/plans", get(list_plans).post(create_plan))
+        .route("/emergency-plans/{id}/approve", post(approve_plan))
+        .route("/plans", get(list_plans).post(create_plan))
 }
 
 #[derive(Debug, Deserialize)]

@@ -13,11 +13,11 @@ use crate::models::project_approval::{ApprovalRequest, ProjectApproval};
 pub fn create_routes(pool: PgPool) -> Router {
     Router::new()
         .route(
-            "/api/pm/projects/{project_id}/approval",
+            "/projects/{project_id}/approval",
             get(get_approval).post(submit_approval),
         )
         .route(
-            "/api/pm/projects/{project_id}/approval/action",
+            "/projects/{project_id}/approval/action",
             post(handle_approval_action),
         )
         .with_state(pool)
@@ -25,7 +25,7 @@ pub fn create_routes(pool: PgPool) -> Router {
 
 #[utoipa::path(
     get,
-    path = "/api/pm/projects/{project_id}/approval",
+    path = "/projects/{project_id}/approval",
     tag = "project_approval",
     responses(
         (status = 200, description = "获取项目审批信息成功", body = ApiResponse<ProjectApproval>),
@@ -56,7 +56,7 @@ async fn get_approval(
 
 #[utoipa::path(
     post,
-    path = "/api/pm/projects/{project_id}/approval",
+    path = "/projects/{project_id}/approval",
     tag = "project_approval",
     request_body = ApprovalRequest,
     responses(
@@ -118,7 +118,7 @@ async fn submit_approval(
 
 #[utoipa::path(
     post,
-    path = "/api/pm/projects/{project_id}/approval/action",
+    path = "/projects/{project_id}/approval/action",
     tag = "project_approval",
     request_body = ApprovalRequest,
     responses(

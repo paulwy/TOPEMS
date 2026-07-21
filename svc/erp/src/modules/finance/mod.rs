@@ -60,29 +60,29 @@ pub use reconciliation::*;
 
 pub fn create_routes() -> Router<ApiState> {
     Router::new()
-        .route("/api/erp/expenses", get(list_expenses).post(create_expense))
+        .route("/expenses", get(list_expenses).post(create_expense))
         .route(
-            "/api/erp/expenses/{id}",
+            "/expenses/{id}",
             get(get_expense).put(update_expense).delete(delete_expense),
         )
-        .route("/api/erp/budgets", get(list_budgets).post(create_budget))
+        .route("/budgets", get(list_budgets).post(create_budget))
         .route(
-            "/api/erp/budgets/{id}",
+            "/budgets/{id}",
             get(get_budget).put(update_budget).delete(delete_budget),
         )
         .route(
-            "/api/erp/receivables",
+            "/receivables",
             get(list_receivables).post(create_receivable),
         )
         .route(
-            "/api/erp/receivables/{id}",
+            "/receivables/{id}",
             get(get_receivable)
                 .put(update_receivable)
                 .delete(delete_receivable),
         )
-        .route("/api/erp/payables", get(list_payables).post(create_payable))
+        .route("/payables", get(list_payables).post(create_payable))
         .route(
-            "/api/erp/payables/{id}",
+            "/payables/{id}",
             get(get_payable).put(update_payable).delete(delete_payable),
         )
 }

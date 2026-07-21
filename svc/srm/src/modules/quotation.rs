@@ -27,18 +27,15 @@ pub async fn create_routes(db: PgPool) -> Result<Router> {
     let state = Arc::new(AppState { db });
 
     let app = Router::new()
+        .route("/quotations", get(list_quotations).post(create_quotation))
         .route(
-            "/api/srm/quotations",
-            get(list_quotations).post(create_quotation),
-        )
-        .route(
-            "/api/srm/quotations/{id}",
+            "/quotations/{id}",
             get(get_quotation)
                 .put(update_quotation)
                 .delete(delete_quotation),
         )
-        .route("/api/srm/quotations/{id}/award", post(award_quotation))
-        .route("/api/srm/quotations/{id}/reject", post(reject_quotation))
+        .route("/quotations/{id}/award", post(award_quotation))
+        .route("/quotations/{id}/reject", post(reject_quotation))
         .with_state(state);
 
     Ok(app)

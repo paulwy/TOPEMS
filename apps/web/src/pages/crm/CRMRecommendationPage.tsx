@@ -427,7 +427,7 @@ const CRMRecommendationPage: React.FC = () => {
             type='number'
             value={formData.top_k}
             onChange={(e) => setFormData({ ...formData, top_k: parseInt(e.target.value) || 10 })}
-            slotProps={{ input: { min: 1, max: 20 } } as const}
+            slotProps={{ htmlInput: { min: 1, max: 20 } }}
             fullWidth
           />
         </Box>

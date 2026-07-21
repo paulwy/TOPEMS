@@ -24,9 +24,9 @@ pub struct PurchaseItemQueryParams {
 
 pub fn create_routes() -> Router<ApiState> {
     Router::new()
-        .route("/api/scm/purchase-items", get(list_items).post(create_item))
+        .route("/purchase-items", get(list_items).post(create_item))
         .route(
-            "/api/scm/purchase-items/{id}",
+            "/purchase-items/{id}",
             get(get_item).put(update_item).delete(delete_item),
         )
 }

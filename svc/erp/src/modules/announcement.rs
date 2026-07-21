@@ -26,21 +26,18 @@ pub struct AnnouncementQueryParams {
 pub fn create_routes() -> Router<ApiState> {
     Router::new()
         .route(
-            "/api/erp/announcements",
+            "/announcements",
             get(list_announcements).post(create_announcement),
         )
         .route(
-            "/api/erp/announcements/{id}",
+            "/announcements/{id}",
             get(get_announcement)
                 .put(update_announcement)
                 .delete(delete_announcement),
         )
+        .route("/announcements/{id}/publish", post(publish_announcement))
         .route(
-            "/api/erp/announcements/{id}/publish",
-            post(publish_announcement),
-        )
-        .route(
-            "/api/erp/announcements/{id}/unpublish",
+            "/announcements/{id}/unpublish",
             post(unpublish_announcement),
         )
 }

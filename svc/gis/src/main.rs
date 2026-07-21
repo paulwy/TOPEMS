@@ -24,8 +24,7 @@ use utoipa::OpenApi;
 
 use topems_shared::{
     auth::Claims, create_api_info_router, create_cors_layer, init_telemetry, telemetry_middleware,
-    wrap_group2_router, ApiResponse, AuthState, DependencyHealth, HealthStatus, RouteCompatConfig,
-    ServiceHealth,
+    ApiResponse, AuthState, DependencyHealth, HealthStatus, ServiceHealth,
 };
 
 mod db;
@@ -222,7 +221,7 @@ async fn main() -> Result<()> {
 
     let cors = create_cors_layer();
 
-    let public_routes = Router::new()
+    let system_routes = Router::new()
         .route("/health", get(health_check))
         .route("/api/plugins/info", get(modules::gis_plugin::get_info))
         .route(
@@ -235,6 +234,9 @@ async fn main() -> Result<()> {
             "/metrics",
             get(move || async move { metric_handle.render() }),
         )
+        .with_state(state.clone());
+
+    let public_business_routes = Router::new()
         .route("/statistics", get(modules::stats::get_statistics))
         .route(
             "/search",
@@ -563,16 +565,13 @@ async fn main() -> Result<()> {
             topems_shared::auth_middleware,
         ));
 
-    let app = public_routes
-        .merge(protected_api)
+    let app = system_routes
+        .nest("/api/gis", public_business_routes.merge(protected_api))
         .merge(create_api_info_router("topems-gis"))
         .with_state(state)
         .layer(axum::middleware::from_fn(telemetry_middleware))
         .layer(prometheus_layer)
         .layer(cors);
-
-    let cfg = RouteCompatConfig::new("gis", "/api/gis", &[]);
-    let app = wrap_group2_router(app, cfg);
 
     let port = env::var("GIS_PORT")
         .or_else(|_| env::var("SERVER_PORT"))

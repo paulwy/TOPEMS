@@ -24,26 +24,20 @@ use topems_shared::response::ApiResponse;
 pub fn create_routes() -> Router<AppState> {
     Router::new()
         .route(
-            "/api/mes/orders",
+            "/orders",
             get(list_production_orders).post(create_production_order),
         )
-        .route("/api/mes/orders/from-erp", post(create_from_erp))
+        .route("/orders/from-erp", post(create_from_erp))
         .route(
-            "/api/mes/orders/{id}",
+            "/orders/{id}",
             get(get_production_order)
                 .put(update_production_order)
                 .delete(delete_production_order),
         )
-        .route(
-            "/api/mes/orders/{id}/release",
-            put(release_production_order),
-        )
-        .route("/api/mes/orders/{id}/start", put(start_production_order))
-        .route(
-            "/api/mes/orders/{id}/complete",
-            put(complete_production_order),
-        )
-        .route("/api/mes/orders/{id}/cancel", put(cancel_production_order))
+        .route("/orders/{id}/release", put(release_production_order))
+        .route("/orders/{id}/start", put(start_production_order))
+        .route("/orders/{id}/complete", put(complete_production_order))
+        .route("/orders/{id}/cancel", put(cancel_production_order))
 }
 
 // ==================== Data Types ====================

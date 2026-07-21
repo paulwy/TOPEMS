@@ -367,6 +367,9 @@ mod tests {
                 email: None,
                 department: None,
                 tenant_id: None,
+                department_id: None,
+                position_id: None,
+                position_code: None,
             };
             req.extensions_mut().insert(claims);
         }

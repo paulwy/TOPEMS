@@ -809,10 +809,11 @@ const CardGroupComponent: React.FC<CardGroup & { loading?: boolean }> = ({
               onChange={(_, newValue) => setActiveTab(newValue)}
               sx={{ mb: 2 }}
             >
-              {cards.map((card) => (
+              {cards.map((card, index) => (
                 <Tab
                   key={card.id}
                   label={card.title}
+                  value={index}
                 />
               ))}
             </Tabs>
@@ -972,10 +973,11 @@ export const DashboardTemplate: React.FC<DashboardTemplateProps> = ({
             value={statsTab}
             onChange={(_, newValue) => setStatsTab(newValue)}
           >
-            {stats.map((stat) => (
+            {stats.map((stat, index) => (
               <Tab
                 key={stat.id}
                 label={stat.title}
+                value={index}
               />
             ))}
           </Tabs>
@@ -1091,10 +1093,11 @@ export const DashboardTemplate: React.FC<DashboardTemplateProps> = ({
             value={activeChartTab}
             onChange={(_, newValue) => setActiveChartTab(newValue)}
           >
-            {charts.map((chart) => (
+            {charts.map((chart, index) => (
               <Tab
                 key={chart.id}
                 label={chart.title}
+                value={index}
               />
             ))}
           </Tabs>

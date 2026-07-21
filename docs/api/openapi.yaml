@@ -1310,7 +1310,7 @@ components:
           example: 50
 
 paths:
-  /api/v1/auth/login:
+  /api/core/iam/auth/login:
     post:
       tags:
         - "auth"
@@ -1365,7 +1365,7 @@ paths:
               schema:
                 $ref: "#/components/schemas/ErrorResponse"
 
-  /api/v1/auth/logout:
+  /api/core/iam/auth/logout:
     post:
       tags:
         - "auth"
@@ -1379,7 +1379,7 @@ paths:
               schema:
                 $ref: "#/components/schemas/SuccessResponse"
 
-  /api/v1/auth/refresh:
+  /api/core/iam/auth/refresh:
     post:
       tags:
         - "auth"
@@ -1419,7 +1419,7 @@ paths:
                         type: string
                         format: date-time
 
-  /api/v1/users:
+  /api/core/iam/users:
     get:
       tags:
         - "users"
@@ -1495,7 +1495,7 @@ paths:
                   data:
                     $ref: "#/components/schemas/User"
 
-  /api/v1/users/{id}:
+  /api/core/iam/users/{id}:
     get:
       tags:
         - "users"
@@ -1567,7 +1567,7 @@ paths:
               schema:
                 $ref: "#/components/schemas/SuccessResponse"
 
-  /api/v1/roles:
+  /api/core/iam/roles:
     get:
       tags:
         - "roles"
@@ -1622,7 +1622,7 @@ paths:
               schema:
                 $ref: "#/components/schemas/SuccessResponse"
 
-  /api/v1/roles/{id}:
+  /api/core/iam/roles/{id}:
     get:
       tags:
         - "roles"
@@ -1691,7 +1691,7 @@ paths:
               schema:
                 $ref: "#/components/schemas/SuccessResponse"
 
-  /api/v1/roles/{id}/permissions:
+  /api/core/iam/roles/{id}/permissions:
     post:
       tags:
         - "roles"
@@ -1725,7 +1725,7 @@ paths:
               schema:
                 $ref: "#/components/schemas/SuccessResponse"
 
-  /api/v1/permissions:
+  /api/core/iam/permissions:
     get:
       tags:
         - "permissions"
@@ -1779,7 +1779,7 @@ paths:
               schema:
                 $ref: "#/components/schemas/SuccessResponse"
 
-  /api/v1/users/{id}/roles:
+  /api/core/iam/users/{id}/roles:
     post:
       tags:
         - "users"
@@ -1813,7 +1813,7 @@ paths:
               schema:
                 $ref: "#/components/schemas/SuccessResponse"
 
-  /api/v1/users/{id}/effective-permissions:
+  /api/core/iam/users/{id}/effective-permissions:
     get:
       tags:
         - "users"

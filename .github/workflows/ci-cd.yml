@@ -322,7 +322,7 @@ jobs:
           - service: ai
             path: svc/ai
             dockerfile: svc/ai/Dockerfile
-            port: 8064
+            port: 8013
           - service: integration
             path: svc/integration
             dockerfile: svc/integration/Dockerfile
@@ -473,7 +473,7 @@ jobs:
             sleep 15
 
             FAILURE=false
-            for port in 8000 8010 8020 8029 8023 8071 8053 8040 8041 8042 8070 8062 8063 8064 8072 8030 8031 8050 8051 8052; do
+            for port in 8000 8010 8011 8012 8013 8020 8023 8029 8030 8031 8040 8041 8042 8050 8051 8052 8053 8060 8061 8062 8063 8070 8071 8072; do
               if ! curl -s -f -m 5 http://localhost:${port}/health; then
                 echo "Service on port ${port} not responding"
                 FAILURE=true
@@ -572,7 +572,7 @@ jobs:
             sleep 30
 
             FAILURE=false
-            for port in 8000 8010 8020 8029 8023 8071 8053 8040 8041 8042 8070 8062 8063 8064 8072 8030 8031 8050 8051 8052; do
+            for port in 8000 8010 8011 8012 8013 8020 8023 8029 8030 8031 8040 8041 8042 8050 8051 8052 8053 8060 8061 8062 8063 8070 8071 8072; do
               if ! curl -s -f -m 5 http://localhost:${port}/health; then
                 echo "Service on port ${port} not responding"
                 FAILURE=true

@@ -150,7 +150,7 @@ scrape_configs:
 
   - job_name: 'topems-ai'
     static_configs:
-      - targets: ['host.docker.internal:8064']
+      - targets: ['host.docker.internal:8013']
     metrics_path: /metrics
 
   - job_name: 'topems-mobile'

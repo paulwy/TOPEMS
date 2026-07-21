@@ -35,11 +35,11 @@ pub async fn create_routes(db: PgPool) -> Result<Router> {
 
     let app = Router::new()
         .route(
-            "/api/srm/supplier-categories",
+            "/supplier-categories",
             get(list_categories).post(create_category),
         )
         .route(
-            "/api/srm/supplier-categories/{id}",
+            "/supplier-categories/{id}",
             get(get_category)
                 .put(update_category)
                 .delete(delete_category),

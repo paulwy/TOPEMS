@@ -37,7 +37,8 @@ TOPEMS 共包含 **21 个服务**，端口分配遵循统一规范：
 | 生产制造 | 8030-8039 | mes(8030), pdm(8031) | - |
 | 供应链 | 8040-8049 | scm(8040), wms(8041), srm(8042) | - |
 | 质量/研发 | 8050-8059 | qms(8050), lims(8051), ehs(8052), rs(8053) | - |
-| 数据分析 | 8060-8069 | bi(8060), report(8061), monitor(8062), portal(8063), ai(8064) | - |
+| 经营管理 | 8010-8019 | erp(8010), finance(8011), doc(8012), ai(8013) | - |
+| 数据分析 | 8060-8069 | bi(8060), report(8061), monitor(8062), portal(8063) | - |
 | 基础设施 | 8070-8079 | mobile(8070), gis(8071), integration(8072) | - |
 
 ## 部署方式
@@ -322,7 +323,7 @@ upstream hrm {
 }
 
 upstream ai {
-    server 127.0.0.1:8064;
+    server 127.0.0.1:8013;
 }
 
 server {
@@ -396,7 +397,7 @@ global:
 scrape_configs:
   - job_name: 'topems'
     static_configs:
-      - targets: ['localhost:8000', 'localhost:8010', 'localhost:8020', 'localhost:8064']
+      - targets: ['localhost:8000', 'localhost:8010', 'localhost:8020', 'localhost:8013']
     metrics_path: /metrics
 ```
 
@@ -475,7 +476,7 @@ redis-cli ping
 curl http://localhost:11434/api/tags
 
 # 检查 AI 服务
-curl http://localhost:8064/health
+curl http://localhost:8013/health
 
 # 检查环境变量
 cat .env | grep -E "(OLLAMA|AI)"
@@ -544,7 +545,7 @@ cargo build --release --workspace
 | report | 8061 | HTTP | 报表服务 |
 | monitor | 8062 | HTTP | 系统监控 |
 | portal | 8063 | HTTP | 企业门户 |
-| ai | 8064 | HTTP | AI 智能服务 |
+| ai | 8013 AI 智能服务 |
 | mobile | 8070 | HTTP | 移动服务 |
 | gis | 8071 | HTTP | 地理信息服务 |
 | integration | 8072 | HTTP | 集成服务 |
@@ -562,7 +563,7 @@ cargo build --release --workspace
 | JWT_SECRET | JWT密钥 | - |
 | JWT_EXPIRY_HOURS | JWT过期时间（小时） | 24 |
 | CORE_PORT | 核心服务端口 | 8000 |
-| AI_PORT | AI服务端口 | 8064 |
+| AI_PORT | AI服务端口 | 8013 |
 | OLLAMA_BASE_URL | Ollama服务地址 | http://localhost:11434 |
 | OLLAMA_MODEL | 使用的AI模型 | qwen2.5:7b-instruct |
 | SMTP_HOST | SMTP服务器 | - |

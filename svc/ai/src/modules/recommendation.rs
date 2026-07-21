@@ -1,5 +1,5 @@
 use axum::{extract::State, Extension, Json};
-use topems_shared::{auth::Claims, ApiResponse};
+use topems_shared::ApiResponse;
 use uuid::Uuid;
 
 use crate::services::recommendation::{RecommendationRequest, RecommendationResponse, UserProfile};

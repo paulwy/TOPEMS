@@ -28,28 +28,25 @@ fn get_tenant_id(claims: &Claims, headers: &HeaderMap) -> Uuid {
 
 pub fn create_routes() -> Router<AppState> {
     Router::new()
-        .route("/api/ehs/checks/plans", get(list_plans).post(create_plan))
+        .route("/checks/plans", get(list_plans).post(create_plan))
         .route(
-            "/api/ehs/checks/plans/{id}",
+            "/checks/plans/{id}",
             get(get_plan).put(update_plan).delete(delete_plan),
         )
         .route(
-            "/api/ehs/checks/plans/{plan_id}/items",
+            "/checks/plans/{plan_id}/items",
             get(list_plan_items).post(create_plan_item),
         )
         .route(
-            "/api/ehs/checks/plans/{plan_id}/items/{item_id}",
+            "/checks/plans/{plan_id}/items/{item_id}",
             delete(delete_plan_item),
         )
+        .route("/checks/records", get(list_records).post(create_record))
         .route(
-            "/api/ehs/checks/records",
-            get(list_records).post(create_record),
-        )
-        .route(
-            "/api/ehs/checks/records/{id}",
+            "/checks/records/{id}",
             get(get_record).put(update_record).delete(delete_record),
         )
-        .route("/api/ehs/checks", get(list_plans))
+        .route("/checks", get(list_plans))
 }
 
 #[derive(Debug, Deserialize)]

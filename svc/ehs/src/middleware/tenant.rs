@@ -67,14 +67,12 @@ impl TenantContext {
     }
 }
 
-pub async fn tenant_middleware(
-    Extension(claims): Extension<Claims>,
-    mut req: Request<Body>,
-    next: Next,
-) -> Response {
+pub async fn tenant_middleware(mut req: Request<Body>, next: Next) -> Response {
+    let claims = req.extensions().get::<Claims>().cloned();
+
     let tenant_id = claims
-        .tenant_id
         .as_ref()
+        .and_then(|c| c.tenant_id.as_ref())
         .and_then(|t| Uuid::parse_str(t).ok())
         .or_else(|| {
             req.headers()
@@ -84,7 +82,10 @@ pub async fn tenant_middleware(
         })
         .unwrap_or_else(Uuid::new_v4);
 
-    let user_id = Uuid::parse_str(&claims.sub).unwrap_or_else(|_| Uuid::new_v4());
+    let user_id = claims
+        .as_ref()
+        .and_then(|c| Uuid::parse_str(&c.sub).ok())
+        .unwrap_or_else(Uuid::new_v4);
 
     let ctx = TenantContext { tenant_id, user_id };
     req.extensions_mut().insert(ctx);

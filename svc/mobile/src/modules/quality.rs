@@ -48,8 +48,8 @@ pub async fn list_quality_tasks(
                         "quantity": row.quantity,
                         "status": row.status,
                         "inspector": row.inspector,
-                        "due_date": row.due_date.to_string(),
-                        "created_at": row.created_at.to_string(),
+                        "due_date": row.due_date.map(|d| d.to_string()),
+                        "created_at": row.created_at.map(|d| d.to_string()),
                     })
                 })
                 .collect();
@@ -96,8 +96,8 @@ pub async fn get_quality_task(
                 "quantity": row.quantity,
                 "status": row.status,
                 "inspector": row.inspector,
-                "due_date": row.due_date.to_string(),
-                "created_at": row.created_at.to_string(),
+                "due_date": row.due_date.map(|d| d.to_string()),
+                "created_at": row.created_at.map(|d| d.to_string()),
             });
             Json(ApiResponse::success(task, "获取质检任务详情成功"))
         }
@@ -129,7 +129,7 @@ pub async fn list_defect_records(
                 .map(|row| {
                     let images: Vec<String> = row
                         .images
-                        .and_then(|imgs| serde_json::from_value::<Vec<String>>(imgs).ok())
+                        .and_then(|imgs| serde_json::from_str::<Vec<String>>(&imgs).ok())
                         .unwrap_or_default();
                     serde_json::json!({
                         "id": row.id,
@@ -142,7 +142,7 @@ pub async fn list_defect_records(
                         "description": row.description,
                         "images": images,
                         "reporter": row.reporter,
-                        "reported_at": row.reported_at.to_string(),
+                        "reported_at": row.reported_at.map(|d| d.to_string()),
                         "status": row.status,
                     })
                 })
@@ -205,9 +205,9 @@ pub async fn report_defect(
         payload.severity,
         payload.quantity as i32,
         payload.description,
-        serde_json::json!(images),
+        serde_json::to_string(&images).ok(),
         "mobile_user",
-        now,
+        Some(now.naive_utc()),
         "open",
     )
     .execute(&pool)
@@ -286,8 +286,8 @@ pub async fn update_quality_task_status(
                         "quantity": row.quantity,
                         "status": row.status,
                         "inspector": row.inspector,
-                        "due_date": row.due_date.to_string(),
-                        "created_at": row.created_at.to_string(),
+                        "due_date": row.due_date.map(|d| d.to_string()),
+                        "created_at": row.created_at.map(|d| d.to_string()),
                     });
                     Json(ApiResponse::success(task, "更新质检任务状态成功"))
                 }

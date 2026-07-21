@@ -25,69 +25,69 @@ fn get_tenant_id(claims: &Claims, headers: &HeaderMap) -> Uuid {
 pub fn create_routes() -> Router<AppState> {
     Router::new()
         .route(
-            "/api/ehs/environmental-compliance/regulations",
+            "/environmental-compliance/regulations",
             get(list_regulations).post(create_regulation),
         )
         .route(
-            "/api/ehs/environmental-compliance/regulations/categories",
+            "/environmental-compliance/regulations/categories",
             get(list_regulation_categories),
         )
         .route(
-            "/api/ehs/environmental-compliance/regulations/{id}",
+            "/environmental-compliance/regulations/{id}",
             get(get_regulation)
                 .put(update_regulation)
                 .delete(delete_regulation),
         )
         .route(
-            "/api/ehs/environmental-compliance/evaluations",
+            "/environmental-compliance/evaluations",
             get(list_evaluations).post(create_evaluation),
         )
         .route(
-            "/api/ehs/environmental-compliance/evaluations/{id}",
+            "/environmental-compliance/evaluations/{id}",
             get(get_evaluation)
                 .put(update_evaluation)
                 .delete(delete_evaluation),
         )
         .route(
-            "/api/ehs/environmental-compliance/monitoring",
+            "/environmental-compliance/monitoring",
             get(list_monitor_records).post(create_monitor_record),
         )
         .route(
-            "/api/ehs/environmental-compliance/monitoring/types",
+            "/environmental-compliance/monitoring/types",
             get(list_monitor_types),
         )
         .route(
-            "/api/ehs/environmental-compliance/monitoring/{id}",
+            "/environmental-compliance/monitoring/{id}",
             get(get_monitor_record).delete(delete_monitor_record),
         )
         .route(
-            "/api/ehs/environmental-compliance/permits",
+            "/environmental-compliance/permits",
             get(list_permits).post(create_permit),
         )
         .route(
-            "/api/ehs/environmental-compliance/permits/{id}",
+            "/environmental-compliance/permits/{id}",
             get(get_permit).put(update_permit).delete(delete_permit),
         )
         .route(
-            "/api/ehs/environmental-compliance/incidents",
+            "/environmental-compliance/incidents",
             get(list_incidents).post(create_incident),
         )
         .route(
-            "/api/ehs/environmental-compliance/incidents/{id}",
+            "/environmental-compliance/incidents/{id}",
             get(get_incident)
                 .put(update_incident)
                 .delete(delete_incident),
         )
         .route(
-            "/api/ehs/environmental-compliance/statistics",
+            "/environmental-compliance/statistics",
             get(get_compliance_statistics),
         )
         .route(
-            "/api/ehs/environmental-compliance/assessments",
+            "/environmental-compliance/assessments",
             get(list_evaluations).post(create_evaluation),
         )
         .route(
-            "/api/ehs/environmental-compliance/events",
+            "/environmental-compliance/events",
             get(list_incidents).post(create_incident),
         )
 }

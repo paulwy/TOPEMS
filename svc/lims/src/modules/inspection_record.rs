@@ -8,11 +8,8 @@ use crate::shared::AppState;
 
 pub fn create_routes() -> Router<AppState> {
     Router::new()
-        .route("/api/lims/records", get(list_records).post(create_record))
-        .route(
-            "/api/lims/records/{id}",
-            get(get_record).delete(delete_record),
-        )
+        .route("/records", get(list_records).post(create_record))
+        .route("/records/{id}", get(get_record).delete(delete_record))
 }
 
 #[derive(Debug, Deserialize)]

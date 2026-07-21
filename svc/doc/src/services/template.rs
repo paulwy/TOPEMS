@@ -14,7 +14,7 @@ impl TemplateService {
 
     pub async fn list_templates(&self, tenant_id: Uuid) -> Result<Vec<Template>> {
         sqlx::query_as::<_, Template>(
-            r#"SELECT * FROM doc.templates WHERE tenant_id = $1 ORDER BY name"#,
+            r#"SELECT * FROM core_doc_templates WHERE tenant_id = $1 ORDER BY name"#,
         )
         .bind(tenant_id)
         .fetch_all(&self.pool)
@@ -27,7 +27,7 @@ impl TemplateService {
         template_id: Uuid,
     ) -> Result<Option<Template>> {
         sqlx::query_as::<_, Template>(
-            r#"SELECT * FROM doc.templates WHERE tenant_id = $1 AND id = $2"#,
+            r#"SELECT * FROM core_doc_templates WHERE tenant_id = $1 AND id = $2"#,
         )
         .bind(tenant_id)
         .bind(template_id)
@@ -44,7 +44,7 @@ impl TemplateService {
         let fields = req.fields.unwrap_or(serde_json::json!([]));
         sqlx::query_as::<_, Template>(
             r#"
-            INSERT INTO doc.templates (tenant_id, name, category, description, content, content_type, fields, is_enabled, is_default, created_by)
+            INSERT INTO core_doc_templates (tenant_id, name, category, description, content, content_type, fields, is_enabled, is_default, created_by)
             VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10)
             RETURNING *
             "#,
@@ -71,7 +71,7 @@ impl TemplateService {
     ) -> Result<Option<Template>> {
         sqlx::query_as::<_, Template>(
             r#"
-            UPDATE doc.templates
+            UPDATE core_doc_templates
             SET name = COALESCE($2, name),
                 category = COALESCE($3, category),
                 description = COALESCE($4, description),
@@ -100,11 +100,12 @@ impl TemplateService {
     }
 
     pub async fn delete_template(&self, tenant_id: Uuid, template_id: Uuid) -> Result<bool> {
-        let result = sqlx::query(r#"DELETE FROM doc.templates WHERE tenant_id = $1 AND id = $2"#)
-            .bind(tenant_id)
-            .bind(template_id)
-            .execute(&self.pool)
-            .await?;
+        let result =
+            sqlx::query(r#"DELETE FROM core_doc_templates WHERE tenant_id = $1 AND id = $2"#)
+                .bind(tenant_id)
+                .bind(template_id)
+                .execute(&self.pool)
+                .await?;
         Ok(result.rows_affected() > 0)
     }
 }
@@ -112,7 +113,7 @@ impl TemplateService {
 pub async fn init_database(pool: &PgPool) -> Result<()> {
     sqlx::query(
         r#"
-        CREATE TABLE IF NOT EXISTS doc.templates (
+        CREATE TABLE IF NOT EXISTS core_doc_templates (
             id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
             tenant_id UUID NOT NULL,
             name VARCHAR(200) NOT NULL,

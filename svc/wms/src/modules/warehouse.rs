@@ -15,12 +15,9 @@ where
     ApiState: FromRef<S>,
 {
     Router::new()
+        .route("/warehouses", get(list_warehouses).post(create_warehouse))
         .route(
-            "/api/wms/warehouses",
-            get(list_warehouses).post(create_warehouse),
-        )
-        .route(
-            "/api/wms/warehouses/{id}",
+            "/warehouses/{id}",
             get(get_warehouse)
                 .put(update_warehouse)
                 .delete(delete_warehouse),

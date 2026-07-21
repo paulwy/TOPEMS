@@ -1,6 +1,7 @@
 //! Modules for unified-core service
 //! Contains IAM, Flow, File, Communication, Tenant, Billing, Plugin, and Sync submodules
 
+pub mod audit;
 pub mod billing;
 pub mod communication;
 pub mod dict;
@@ -13,6 +14,7 @@ pub mod login_log;
 pub mod menu;
 pub mod migration;
 pub mod mobile;
+pub mod monitor;
 pub mod plugin;
 pub mod search;
 pub mod sync;

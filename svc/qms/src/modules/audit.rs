@@ -498,30 +498,18 @@ pub async fn verify_audit_finding(
 
 pub fn create_routes() -> Router<crate::AppState> {
     Router::new()
-        .route("/api/qms/audit-plans", get(list_audit_plans))
-        .route("/api/qms/audit-plans", post(create_audit_plan))
-        .route("/api/qms/audit-plans/{id}", get(get_audit_plan))
-        .route("/api/qms/audit-plans/{id}/start", post(start_audit_plan))
+        .route("/audit-plans", get(list_audit_plans))
+        .route("/audit-plans", post(create_audit_plan))
+        .route("/audit-plans/{id}", get(get_audit_plan))
+        .route("/audit-plans/{id}/start", post(start_audit_plan))
+        .route("/audit-plans/{id}/complete", post(complete_audit_plan))
+        .route("/audit-tasks", get(list_audit_tasks))
+        .route("/audit-plans/{plan_id}/tasks", post(create_audit_task))
+        .route("/audit-tasks/{id}/complete", put(complete_audit_task))
+        .route("/audit-findings", get(list_audit_findings))
         .route(
-            "/api/qms/audit-plans/{id}/complete",
-            post(complete_audit_plan),
-        )
-        .route("/api/qms/audit-tasks", get(list_audit_tasks))
-        .route(
-            "/api/qms/audit-plans/{plan_id}/tasks",
-            post(create_audit_task),
-        )
-        .route(
-            "/api/qms/audit-tasks/{id}/complete",
-            put(complete_audit_task),
-        )
-        .route("/api/qms/audit-findings", get(list_audit_findings))
-        .route(
-            "/api/qms/audit-tasks/{task_id}/findings",
+            "/audit-tasks/{task_id}/findings",
             post(create_audit_finding),
         )
-        .route(
-            "/api/qms/audit-findings/{id}/verify",
-            post(verify_audit_finding),
-        )
+        .route("/audit-findings/{id}/verify", post(verify_audit_finding))
 }

@@ -237,7 +237,8 @@ docs/
 | 生产制造 | 8030-8039 | mes(8030), pdm(8031) | - | /api/mes/, /api/pdm/ |
 | 供应链 | 8040-8049 | scm(8040), wms(8041), srm(8042) | - | /api/scm/, /api/wms/, /api/srm/ |
 | 质量/研发 | 8050-8059 | qms(8050), lims(8051), ehs(8052), rs(8053) | - | /api/qms/, /api/lims/, /api/ehs/, /api/rs/ |
-| 数据分析 | 8060-8069 | bi(8060), report(8061), monitor(8062), portal(8063), ai(8064) | - | /api/bi/, /api/report/, /api/monitor/, /api/portal/, /api/ai/ |
+| 经营管理 | 8010-8019 | erp(8010), finance(8011), doc(8012), ai(8013) | - | /api/erp/, /api/finance/, /api/doc/, /api/ai/ |
+| 数据分析 | 8060-8069 | bi(8060), report(8061), monitor(8062), portal(8063) | - | /api/bi/, /api/report/, /api/monitor/, /api/portal/ |
 | 基础设施 | 8070-8079 | mobile(8070), gis(8071), integration(8072) | - | /api/mobile/, /api/gis/, /api/integration/ |
 
 ## 技术栈

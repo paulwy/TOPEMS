@@ -8,12 +8,9 @@ use crate::shared::AppState;
 
 pub fn create_routes() -> Router<AppState> {
     Router::new()
+        .route("/processes", get(list_processes).post(create_process))
         .route(
-            "/api/lims/processes",
-            get(list_processes).post(create_process),
-        )
-        .route(
-            "/api/lims/processes/{id}",
+            "/processes/{id}",
             get(get_process).put(update_process).delete(delete_process),
         )
 }

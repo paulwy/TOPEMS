@@ -14,14 +14,14 @@ use crate::shared::AppState;
 
 pub fn create_routes() -> Router<AppState> {
     Router::new()
-        .route("/api/lims/sync-records", get(list_sync_records))
+        .route("/sync-records", get(list_sync_records))
         .route(
-            "/api/lims/sync-records/{id}",
+            "/sync-records/{id}",
             get(get_sync_record).delete(delete_sync_record),
         )
-        .route("/api/lims/sync-records/{id}/retry", post(retry_sync))
-        .route("/api/lims/sync/record-to-qms", post(sync_record_to_qms))
-        .route("/api/lims/sync/reagent-to-ehs", post(sync_reagent_to_ehs))
+        .route("/sync-records/{id}/retry", post(retry_sync))
+        .route("/sync/record-to-qms", post(sync_record_to_qms))
+        .route("/sync/reagent-to-ehs", post(sync_reagent_to_ehs))
 }
 
 // ==================== Data Structures ====================

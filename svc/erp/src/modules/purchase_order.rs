@@ -26,23 +26,17 @@ pub struct PaginationParams {
 pub fn create_routes() -> Router<ApiState> {
     Router::new()
         .route(
-            "/api/erp/purchase-orders",
+            "/purchase-orders",
             get(list_purchase_orders).post(create_purchase_order),
         )
         .route(
-            "/api/erp/purchase-orders/{id}",
+            "/purchase-orders/{id}",
             get(get_purchase_order)
                 .put(update_purchase_order)
                 .delete(delete_purchase_order),
         )
-        .route(
-            "/api/erp/purchase-orders/{id}/approve",
-            put(approve_purchase_order),
-        )
-        .route(
-            "/api/erp/purchase-orders/{id}/cancel",
-            put(cancel_purchase_order),
-        )
+        .route("/purchase-orders/{id}/approve", put(approve_purchase_order))
+        .route("/purchase-orders/{id}/cancel", put(cancel_purchase_order))
 }
 
 pub async fn list_purchase_orders(

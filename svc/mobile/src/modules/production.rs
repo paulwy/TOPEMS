@@ -268,8 +268,8 @@ pub async fn list_equipment(State(pool): State<PgPool>) -> Json<ApiResponse<serd
                         "last_maintenance": row.last_maintenance.map(|d| d.to_string()),
                         "next_maintenance": row.next_maintenance.map(|d| d.to_string()),
                         "running_hours": row.running_hours,
-                        "created_at": row.created_at.to_string(),
-                        "updated_at": row.updated_at.to_string(),
+                        "created_at": row.created_at.map(|d| d.to_string()),
+                        "updated_at": row.updated_at.map(|d| d.to_string()),
                     })
                 })
                 .collect();
@@ -317,8 +317,8 @@ pub async fn get_equipment(
                 "last_maintenance": row.last_maintenance.map(|d| d.to_string()),
                 "next_maintenance": row.next_maintenance.map(|d| d.to_string()),
                 "running_hours": row.running_hours,
-                "created_at": row.created_at.to_string(),
-                "updated_at": row.updated_at.to_string(),
+                "created_at": row.created_at.map(|d| d.to_string()),
+                "updated_at": row.updated_at.map(|d| d.to_string()),
             });
             Json(ApiResponse::success(equipment, "获取设备详情成功"))
         }

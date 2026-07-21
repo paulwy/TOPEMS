@@ -8,12 +8,9 @@ use crate::shared::AppState;
 
 pub fn create_routes() -> Router<AppState> {
     Router::new()
+        .route("/reagents", get(list_reagents).post(create_reagent))
         .route(
-            "/api/lims/reagents",
-            get(list_reagents).post(create_reagent),
-        )
-        .route(
-            "/api/lims/reagents/{id}",
+            "/reagents/{id}",
             get(get_reagent).put(update_reagent).delete(delete_reagent),
         )
 }

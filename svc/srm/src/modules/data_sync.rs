@@ -41,20 +41,14 @@ pub async fn create_routes(db: PgPool) -> Result<Router> {
     let state = Arc::new(AppState { db });
 
     let app = Router::new()
+        .route("/sync/supplier-from-scm", post(sync_supplier_from_scm))
         .route(
-            "/api/srm/sync/supplier-from-scm",
-            post(sync_supplier_from_scm),
-        )
-        .route(
-            "/api/srm/sync/suppliers-from-scm",
+            "/sync/suppliers-from-scm",
             post(sync_all_suppliers_from_scm),
         )
-        .route("/api/srm/sync/supplier-to-scm", post(sync_supplier_to_scm))
-        .route(
-            "/api/srm/sync/suppliers-to-scm",
-            post(sync_all_suppliers_to_scm),
-        )
-        .route("/api/srm/sync/sync-logs", post(get_sync_logs))
+        .route("/sync/supplier-to-scm", post(sync_supplier_to_scm))
+        .route("/sync/suppliers-to-scm", post(sync_all_suppliers_to_scm))
+        .route("/sync/sync-logs", post(get_sync_logs))
         .with_state(state);
 
     Ok(app)

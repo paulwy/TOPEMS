@@ -21,12 +21,11 @@ pub struct ServiceHealth {
 }
 
 pub fn create_routes() -> Router<ApiState> {
-    Router::new().route("/api/monitor/health", get(get_service_health))
+    Router::new()
 }
 
-async fn get_service_health(
+pub async fn get_service_health(
     State(_state): State<ApiState>,
-    Extension(_claims): Extension<Claims>,
 ) -> Json<ApiResponse<Vec<ServiceHealth>>> {
     let services = vec![
         ServiceHealth {

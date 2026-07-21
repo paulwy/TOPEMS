@@ -27,23 +27,17 @@ pub struct RoomQueryParams {
 
 pub fn create_routes() -> Router<ApiState> {
     Router::new()
-        .route("/api/erp/meeting-rooms", get(list_rooms).post(create_room))
+        .route("/meeting-rooms", get(list_rooms).post(create_room))
         .route(
-            "/api/erp/meeting-rooms/{id}",
+            "/meeting-rooms/{id}",
             get(get_room).put(update_room).delete(delete_room),
         )
+        .route("/meeting-bookings", get(list_bookings).post(create_booking))
         .route(
-            "/api/erp/meeting-bookings",
-            get(list_bookings).post(create_booking),
-        )
-        .route(
-            "/api/erp/meeting-bookings/{id}",
+            "/meeting-bookings/{id}",
             get(get_booking).put(update_booking).delete(delete_booking),
         )
-        .route(
-            "/api/erp/meeting-rooms/{id}/bookings",
-            get(get_room_bookings),
-        )
+        .route("/meeting-rooms/{id}/bookings", get(get_room_bookings))
 }
 
 pub async fn list_rooms(

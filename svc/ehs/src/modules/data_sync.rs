@@ -13,25 +13,22 @@ use crate::shared::AppState;
 
 pub fn create_routes() -> Router<AppState> {
     Router::new()
-        .route("/api/ehs/sync-records", get(list_sync_records))
+        .route("/sync-records", get(list_sync_records))
         .route(
-            "/api/ehs/sync-records/{id}",
+            "/sync-records/{id}",
             get(get_sync_record).delete(delete_sync_record),
         )
-        .route("/api/ehs/sync-records/{id}/retry", post(retry_sync))
-        .route("/api/ehs/sync/hazard-to-qms", post(sync_hazard_to_qms))
+        .route("/sync-records/{id}/retry", post(retry_sync))
+        .route("/sync/hazard-to-qms", post(sync_hazard_to_qms))
+        .route("/sync/accident-to-lims", post(sync_accident_to_lims))
+        .route("/sync", get(list_sync_records))
         .route(
-            "/api/ehs/sync/accident-to-lims",
-            post(sync_accident_to_lims),
-        )
-        .route("/api/ehs/sync", get(list_sync_records))
-        .route(
-            "/api/ehs/sync/configs",
+            "/sync/configs",
             get(list_sync_configs).put(update_sync_configs),
         )
-        .route("/api/ehs/sync/retry", post(batch_retry_sync))
-        .route("/api/ehs/sync/to-lims", post(sync_accident_to_lims))
-        .route("/api/ehs/sync/to-qms", post(sync_hazard_to_qms))
+        .route("/sync/retry", post(batch_retry_sync))
+        .route("/sync/to-lims", post(sync_accident_to_lims))
+        .route("/sync/to-qms", post(sync_hazard_to_qms))
 }
 
 // ==================== Data Structures ====================

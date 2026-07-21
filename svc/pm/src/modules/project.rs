@@ -78,22 +78,19 @@ pub struct ProjectGanttResponse {
 
 pub fn create_routes(pool: PgPool) -> Router {
     Router::new()
-        .route("/api/pm/projects", get(list_projects).post(create_project))
+        .route("/projects", get(list_projects).post(create_project))
         .route(
-            "/api/pm/projects/{id}",
+            "/projects/{id}",
             get(get_project).put(update_project).delete(delete_project),
         )
-        .route(
-            "/api/pm/projects/{id}/dashboard",
-            get(get_project_dashboard),
-        )
-        .route("/api/pm/projects/{id}/gantt", get(get_project_gantt))
+        .route("/projects/{id}/dashboard", get(get_project_dashboard))
+        .route("/projects/{id}/gantt", get(get_project_gantt))
         .with_state(pool)
 }
 
 #[utoipa::path(
     get,
-    path = "/api/pm/projects",
+    path = "/projects",
     tag = "projects",
     params(
         ProjectQuery,
@@ -152,7 +149,7 @@ async fn list_projects(
 
 #[utoipa::path(
     post,
-    path = "/api/pm/projects",
+    path = "/projects",
     tag = "projects",
     request_body = CreateProjectRequest,
     responses(
@@ -216,7 +213,7 @@ async fn create_project(
 
 #[utoipa::path(
     get,
-    path = "/api/pm/projects/{id}",
+    path = "/projects/{id}",
     tag = "projects",
     responses(
         (status = 200, description = "获取项目成功", body = ApiResponse<Project>),
@@ -245,7 +242,7 @@ async fn get_project(
 
 #[utoipa::path(
     put,
-    path = "/api/pm/projects/{id}",
+    path = "/projects/{id}",
     tag = "projects",
     request_body = UpdateProjectRequest,
     responses(
@@ -314,7 +311,7 @@ async fn update_project(
 
 #[utoipa::path(
     delete,
-    path = "/api/pm/projects/{id}",
+    path = "/projects/{id}",
     tag = "projects",
     responses(
         (status = 200, description = "删除项目成功", body = ApiResponse<bool>),
@@ -345,7 +342,7 @@ async fn delete_project(
 
 #[utoipa::path(
     get,
-    path = "/api/pm/projects/{id}/dashboard",
+    path = "/projects/{id}/dashboard",
     tag = "projects",
     responses(
         (status = 200, description = "获取项目仪表盘成功", body = ApiResponse<ProjectDashboardResponse>),
@@ -460,7 +457,7 @@ async fn get_project_dashboard(
 
 #[utoipa::path(
     get,
-    path = "/api/pm/projects/{id}/gantt",
+    path = "/projects/{id}/gantt",
     tag = "projects",
     responses(
         (status = 200, description = "获取甘特图数据成功", body = ApiResponse<ProjectGanttResponse>),

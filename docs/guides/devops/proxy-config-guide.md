@@ -41,48 +41,76 @@ Vite 代理按照配置顺序匹配，**先匹配的规则优先**。必须遵�
 
 所有服务端口必须与以下文件保持一致：
 
-- `scripts/topems.sh` - 服务启动脚本
-- `apps/web/src/config/runtime.ts` - 前端服务配置
-- `vite.config.ts` - Vite 代理配置
+| 文件 | 作用 |
+|------|------|
+| `config/ports.env` | 端口定义主文件（权威来源） |
+| `config/services.yaml` | 服务配置文件 |
+| `scripts/services.conf` | 服务启动脚本配置 |
+| `scripts/topems.sh` | 服务管理脚本 |
+| `lib/src/config/services.rs` | Rust后端服务注册 |
+| `apps/web/vite.config.ts` | Vite代理配置 |
+| `.env` | 环境变量配置 |
 
-### 3.2 标准端口列表
+### 3.2 端口分配规则
 
-| 服务 | 端口 | 后端目录 |
-|------|------|---------|
-| unified-core | 8000 | svc/unified-core |
-| ERP | 8010 | svc/erp |
-| AI | 8013 | svc/ai |
-| Comm | 8000 | svc/core (useCoreService) |
-| File | 8000 | svc/core (useCoreService) |
-| Mail | 8000 | svc/core (useCoreService) |
-| Notification | 8000 | svc/core (useCoreService) |
-| IM | 8000 | svc/core (useCoreService) |
-| Master | 8000 | svc/core (useCoreService) |
-| Migration | 8000 | svc/core (useCoreService) |
-| Flow | 8000 | svc/core (useCoreService) |
-| Doc | 8012 | svc/doc |
-| HRM | 8020 | svc/hrm |
-| PM | 8023 | svc/pm |
-| CRM | 8029 | svc/crm |
-| MES | 8030 | svc/mes |
-| Manufacturing | 8030 | svc/mes (skipPluginHealth) |
-| PDM | 8031 | svc/pdm |
-| SCM | 8040 | svc/scm |
-| WMS | 8041 | svc/wms |
-| SRM | 8042 | svc/srm |
-| QMS | 8050 | svc/qms |
-| LIMS | 8051 | svc/lims |
-| EHS | 8052 | svc/ehs |
-| RS | 8053 | svc/rs |
-| BI | 8060 | svc/analytics (bi) |
-| Report | 8060 | svc/analytics (report, skipPluginHealth) |
-| Monitor | 8062 | svc/monitor |
-| Portal | 8063 | svc/portal |
-| Mobile | 8070 | svc/mobile |
-| GIS | 8071 | svc/gis |
-| Integration | 8072 | svc/integration |
+端口按业务域分组，每10个端口为一个域段：
 
-### 3.3 端口验证
+| 段位 | 业务域 | 说明 |
+|------|--------|------|
+| 8000-8009 | 核心服务 (Core) | unified-core及虚拟服务 |
+| 8010-8019 | 经营管理 (ERP) | ERP、Finance、Doc、AI |
+| 8020-8029 | 协同办公 (Collab) | HRM、PM、CRM |
+| 8030-8039 | 生产制造 (Mfg) | MES、PDM |
+| 8040-8049 | 供应链 (SCM) | SCM、WMS、SRM |
+| 8050-8059 | 质量/研发 (Q/RD) | QMS、LIMS、EHS、RS |
+| 8060-8069 | 数据分析/门户 (Analytics) | BI、Report、Monitor、Portal |
+| 8070-8079 | 基础设施 (Infra) | Mobile、GIS、Integration |
+| 3000/5432/6379/8080/11434 | 基础设施 | Web前端、数据库、缓存、网关、AI模型 |
+
+**规则说明：**
+- 段首(X0)分配给该域的核心服务
+- 域内从X0开始顺序递增
+- 虚拟服务由unified-core内部模块提供，共用8000端口
+- 任何端口变更必须同步到所有相关文件
+
+### 3.3 标准端口列表
+
+| 服务 | 端口 | 后端目录 | 说明 |
+|------|------|---------|------|
+| unified-core | 8000 | svc/unified-core | 核心服务（承载虚拟服务） |
+| IAM | 8000 | svc/unified-core | 虚拟服务 |
+| Flow | 8000 | svc/unified-core | 虚拟服务 |
+| File | 8000 | svc/unified-core | 虚拟服务 |
+| Mail | 8000 | svc/unified-core | 虚拟服务 |
+| IM | 8000 | svc/unified-core | 虚拟服务 |
+| Notification | 8000 | svc/unified-core | 虚拟服务 |
+| Comm | 8000 | svc/unified-core | 虚拟服务 |
+| ERP | 8010 | svc/erp | |
+| Finance | 8011 | svc/finance | |
+| Doc | 8012 | svc/doc | 独立服务 |
+| AI | 8013 | svc/ai | |
+| HRM | 8020 | svc/hrm | |
+| PM | 8023 | svc/pm | |
+| CRM | 8029 | svc/crm | |
+| MES | 8030 | svc/mes | |
+| Manufacturing | 8030 | svc/mes (skipPluginHealth) | |
+| PDM | 8031 | svc/pdm | |
+| SCM | 8040 | svc/scm | |
+| WMS | 8041 | svc/wms | |
+| SRM | 8042 | svc/srm | |
+| QMS | 8050 | svc/qms | |
+| LIMS | 8051 | svc/lims | |
+| EHS | 8052 | svc/ehs | |
+| RS | 8053 | svc/rs | |
+| BI | 8060 | svc/analytics | |
+| Report | 8061 | svc/analytics | |
+| Monitor | 8062 | svc/monitor | |
+| Portal | 8063 | svc/portal | |
+| Mobile | 8070 | svc/mobile | |
+| GIS | 8071 | svc/gis | |
+| Integration | 8072 | svc/integration | |
+
+### 3.4 端口验证
 
 添加新服务或修改端口时，必须执行以下验证：
 

@@ -12,7 +12,7 @@ use crate::shared::permission::{check_permission, ModulePermission};
 use crate::AppState;
 use topems_shared::response::ApiResponse;
 
-use super::{big_decimal_to_f64, big_decimal_to_f64_non_opt, datetime_to_string};
+use super::{big_decimal_to_f64, datetime_to_string, parse_opt_datetime};
 
 #[derive(Debug, Clone, Deserialize)]
 pub struct ListInspectionsQuery {
@@ -301,17 +301,17 @@ pub async fn get_inspection(
                 inspection_no: r.inspection_no,
                 order_id: r.order_id.map(|u| u.to_string()),
                 order_number: r.order_number,
-                product_code: r.product_code,
-                product_name: r.product_name,
+                product_code: r.product_code.unwrap_or_default(),
+                product_name: r.product_name.unwrap_or_default(),
                 process_id: r.process_id.map(|u| u.to_string()),
                 process_name: r.process_name,
-                inspection_type: r.inspection_type,
-                quantity: big_decimal_to_f64_non_opt(r.quantity),
-                qualified_quantity: big_decimal_to_f64_non_opt(r.qualified_quantity),
-                unqualified_quantity: big_decimal_to_f64_non_opt(r.unqualified_quantity),
+                inspection_type: r.inspection_type.unwrap_or_default(),
+                quantity: big_decimal_to_f64(r.quantity),
+                qualified_quantity: big_decimal_to_f64(r.qualified_quantity),
+                unqualified_quantity: big_decimal_to_f64(r.unqualified_quantity),
                 qualification_rate: big_decimal_to_f64(r.qualification_rate),
                 inspector: r.inspector,
-                inspection_time: r.inspection_time.unwrap_or_default(),
+                inspection_time: r.inspection_time.map(|t| t.to_string()).unwrap_or_default(),
                 status: r.status.unwrap_or_else(|| "pending".to_string()),
                 result: r.result,
                 memo: r.memo,
@@ -363,7 +363,7 @@ pub async fn create_inspection(
         .and_then(|v| BigDecimal::from_str(&v.to_string()).ok());
     let result = sqlx::query!(
         r#"
-        INSERT INTO quality_inspections (
+            INSERT INTO quality_inspections (
             inspection_no, order_id, order_number, product_code, product_name,
             process_id, process_name, inspection_type, quantity,
             qualified_quantity, unqualified_quantity, qualification_rate,
@@ -391,7 +391,7 @@ pub async fn create_inspection(
         unqualified_quantity,
         BigDecimal::from_str("0").unwrap_or_default(),
         body.inspector,
-        body.inspection_time.as_deref(),
+        parse_opt_datetime(body.inspection_time),
         body.status.unwrap_or_else(|| "pending".to_string()),
         body.result,
         body.memo,
@@ -406,17 +406,17 @@ pub async fn create_inspection(
                 inspection_no: r.inspection_no,
                 order_id: r.order_id.map(|u| u.to_string()),
                 order_number: r.order_number,
-                product_code: r.product_code,
-                product_name: r.product_name,
+                product_code: r.product_code.unwrap_or_default(),
+                product_name: r.product_name.unwrap_or_default(),
                 process_id: r.process_id.map(|u| u.to_string()),
                 process_name: r.process_name,
-                inspection_type: r.inspection_type,
-                quantity: big_decimal_to_f64_non_opt(r.quantity),
-                qualified_quantity: big_decimal_to_f64_non_opt(r.qualified_quantity),
-                unqualified_quantity: big_decimal_to_f64_non_opt(r.unqualified_quantity),
+                inspection_type: r.inspection_type.unwrap_or_default(),
+                quantity: big_decimal_to_f64(r.quantity),
+                qualified_quantity: big_decimal_to_f64(r.qualified_quantity),
+                unqualified_quantity: big_decimal_to_f64(r.unqualified_quantity),
                 qualification_rate: big_decimal_to_f64(r.qualification_rate),
                 inspector: r.inspector,
-                inspection_time: r.inspection_time.unwrap_or_default(),
+                inspection_time: r.inspection_time.map(|t| t.to_string()).unwrap_or_default(),
                 status: r.status.unwrap_or_else(|| "pending".to_string()),
                 result: r.result,
                 memo: r.memo,
@@ -459,7 +459,7 @@ pub async fn update_inspection(
         .and_then(|v| BigDecimal::from_str(&v.to_string()).ok());
     let result = sqlx::query!(
         r#"
-        UPDATE quality_inspections
+            UPDATE quality_inspections
         SET
             qualified_quantity = COALESCE($1, qualified_quantity),
             unqualified_quantity = COALESCE($2, unqualified_quantity),
@@ -485,7 +485,7 @@ pub async fn update_inspection(
         qualified_quantity,
         unqualified_quantity,
         body.inspector,
-        body.inspection_time.as_deref(),
+        parse_opt_datetime(body.inspection_time),
         body.status,
         body.result,
         body.memo,
@@ -501,17 +501,17 @@ pub async fn update_inspection(
                 inspection_no: r.inspection_no,
                 order_id: r.order_id.map(|u| u.to_string()),
                 order_number: r.order_number,
-                product_code: r.product_code,
-                product_name: r.product_name,
+                product_code: r.product_code.unwrap_or_default(),
+                product_name: r.product_name.unwrap_or_default(),
                 process_id: r.process_id.map(|u| u.to_string()),
                 process_name: r.process_name,
-                inspection_type: r.inspection_type,
-                quantity: big_decimal_to_f64_non_opt(r.quantity),
-                qualified_quantity: big_decimal_to_f64_non_opt(r.qualified_quantity),
-                unqualified_quantity: big_decimal_to_f64_non_opt(r.unqualified_quantity),
+                inspection_type: r.inspection_type.unwrap_or_default(),
+                quantity: big_decimal_to_f64(r.quantity),
+                qualified_quantity: big_decimal_to_f64(r.qualified_quantity),
+                unqualified_quantity: big_decimal_to_f64(r.unqualified_quantity),
                 qualification_rate: big_decimal_to_f64(r.qualification_rate),
                 inspector: r.inspector,
-                inspection_time: r.inspection_time.unwrap_or_default(),
+                inspection_time: r.inspection_time.map(|t| t.to_string()).unwrap_or_default(),
                 status: r.status.unwrap_or_else(|| "pending".to_string()),
                 result: r.result,
                 memo: r.memo,

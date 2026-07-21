@@ -18,24 +18,24 @@ use crate::models::settlement::{
 pub fn create_routes(pool: PgPool) -> Router {
     Router::new()
         .route(
-            "/api/pm/projects/{project_id}/settlements",
+            "/projects/{project_id}/settlements",
             get(get_project_settlements).post(create_settlement),
         )
         .route(
-            "/api/pm/settlements/{id}",
+            "/settlements/{id}",
             get(get_settlement).put(update_settlement),
         )
-        .route("/api/pm/settlements/{id}/approve", post(approve_settlement))
+        .route("/settlements/{id}/approve", post(approve_settlement))
         .route(
-            "/api/pm/settlements/{settlement_id}/items",
+            "/settlements/{settlement_id}/items",
             get(get_settlement_items).post(create_settlement_item),
         )
         .route(
-            "/api/pm/settlement-items/{id}",
+            "/settlement-items/{id}",
             put(update_settlement_item).delete(delete_settlement_item),
         )
         .route(
-            "/api/pm/settlements/{settlement_id}/adjustments",
+            "/settlements/{settlement_id}/adjustments",
             get(get_settlement_adjustments).post(create_settlement_adjustment),
         )
         .with_state(pool)

@@ -14,7 +14,7 @@ impl FolderService {
 
     pub async fn list_folders(&self, tenant_id: Uuid) -> Result<Vec<Folder>> {
         sqlx::query_as::<_, Folder>(
-            r#"SELECT * FROM doc.folders WHERE tenant_id = $1 ORDER BY name"#,
+            r#"SELECT * FROM core_doc_folders WHERE tenant_id = $1 ORDER BY name"#,
         )
         .bind(tenant_id)
         .fetch_all(&self.pool)
@@ -22,11 +22,13 @@ impl FolderService {
     }
 
     pub async fn get_folder(&self, tenant_id: Uuid, folder_id: Uuid) -> Result<Option<Folder>> {
-        sqlx::query_as::<_, Folder>(r#"SELECT * FROM doc.folders WHERE tenant_id = $1 AND id = $2"#)
-            .bind(tenant_id)
-            .bind(folder_id)
-            .fetch_optional(&self.pool)
-            .await
+        sqlx::query_as::<_, Folder>(
+            r#"SELECT * FROM core_doc_folders WHERE tenant_id = $1 AND id = $2"#,
+        )
+        .bind(tenant_id)
+        .bind(folder_id)
+        .fetch_optional(&self.pool)
+        .await
     }
 
     pub async fn create_folder(
@@ -37,7 +39,7 @@ impl FolderService {
     ) -> Result<Folder> {
         sqlx::query_as::<_, Folder>(
             r#"
-            INSERT INTO doc.folders (tenant_id, name, parent_id, description, sort_order, is_enabled, created_by)
+            INSERT INTO core_doc_folders (tenant_id, name, parent_id, description, sort_order, is_enabled, created_by)
             VALUES ($1, $2, $3, $4, $5, $6, $7)
             RETURNING *
             "#,
@@ -61,7 +63,7 @@ impl FolderService {
     ) -> Result<Option<Folder>> {
         sqlx::query_as::<_, Folder>(
             r#"
-            UPDATE doc.folders
+            UPDATE core_doc_folders
             SET name = COALESCE($2, name),
                 parent_id = COALESCE($3, parent_id),
                 description = COALESCE($4, description),
@@ -84,11 +86,12 @@ impl FolderService {
     }
 
     pub async fn delete_folder(&self, tenant_id: Uuid, folder_id: Uuid) -> Result<bool> {
-        let result = sqlx::query(r#"DELETE FROM doc.folders WHERE tenant_id = $1 AND id = $2"#)
-            .bind(tenant_id)
-            .bind(folder_id)
-            .execute(&self.pool)
-            .await?;
+        let result =
+            sqlx::query(r#"DELETE FROM core_doc_folders WHERE tenant_id = $1 AND id = $2"#)
+                .bind(tenant_id)
+                .bind(folder_id)
+                .execute(&self.pool)
+                .await?;
         Ok(result.rows_affected() > 0)
     }
 }
@@ -96,11 +99,11 @@ impl FolderService {
 pub async fn init_database(pool: &PgPool) -> Result<()> {
     sqlx::query(
         r#"
-        CREATE TABLE IF NOT EXISTS doc.folders (
+        CREATE TABLE IF NOT EXISTS core_doc_folders (
             id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
             tenant_id UUID NOT NULL,
             name VARCHAR(200) NOT NULL,
-            parent_id UUID REFERENCES doc.folders(id),
+            parent_id UUID REFERENCES core_doc_folders(id),
             description TEXT,
             sort_order INTEGER DEFAULT 0,
             is_enabled BOOLEAN DEFAULT true,

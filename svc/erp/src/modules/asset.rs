@@ -25,9 +25,9 @@ pub struct PaginationParams {
 
 pub fn create_routes() -> Router<ApiState> {
     Router::new()
-        .route("/api/erp/assets", get(list_assets).post(create_asset))
+        .route("/assets", get(list_assets).post(create_asset))
         .route(
-            "/api/erp/assets/{id}",
+            "/assets/{id}",
             get(get_asset).put(update_asset).delete(delete_asset),
         )
 }

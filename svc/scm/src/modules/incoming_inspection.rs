@@ -16,30 +16,18 @@ use topems_shared::{api_error, auth::Claims, ApiResponse, PaginationParams};
 
 pub fn create_routes() -> Router<ApiState> {
     Router::new()
+        .route("/incoming-notices", get(list_notices).post(create_notice))
+        .route("/incoming-notices/{id}", get(get_notice).put(update_notice))
         .route(
-            "/api/scm/incoming-notices",
-            get(list_notices).post(create_notice),
-        )
-        .route(
-            "/api/scm/incoming-notices/{id}",
-            get(get_notice).put(update_notice),
-        )
-        .route(
-            "/api/scm/incoming-inspections",
+            "/incoming-inspections",
             get(list_inspections).post(create_inspection),
         )
         .route(
-            "/api/scm/incoming-inspections/{id}",
+            "/incoming-inspections/{id}",
             get(get_inspection).put(update_inspection),
         )
-        .route(
-            "/api/scm/incoming-inspections/{id}/pass",
-            post(inspection_pass),
-        )
-        .route(
-            "/api/scm/incoming-inspections/{id}/fail",
-            post(inspection_fail),
-        )
+        .route("/incoming-inspections/{id}/pass", post(inspection_pass))
+        .route("/incoming-inspections/{id}/fail", post(inspection_fail))
 }
 
 fn notice_row_to_json(row: &sqlx::postgres::PgRow) -> serde_json::Value {

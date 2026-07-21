@@ -47,7 +47,7 @@ pub async fn create_share_link(
             "data": ShareLinkResponse {
                 id: row.id,
                 dashboard_id: row.dashboard_id,
-                share_url: format!("/api/bi/dashboard/share/{}", row.id),
+                share_url: format!("/dashboard/share/{}", row.id),
                 permission: row.permission,
                 expires_at: row.expires_at.map(|t| t.to_string()),
                 created_at: row.created_at.map(|t| t.to_string()).unwrap_or_default(),
@@ -143,7 +143,7 @@ pub async fn list_share_links(
         .map(|row| ShareLinkResponse {
             id: row.id,
             dashboard_id: row.dashboard_id,
-            share_url: format!("/api/bi/dashboard/share/{}", row.id),
+            share_url: format!("/dashboard/share/{}", row.id),
             permission: row.permission,
             expires_at: row.expires_at.map(|t| t.to_string()),
             created_at: row.created_at.map(|t| t.to_string()).unwrap_or_default(),

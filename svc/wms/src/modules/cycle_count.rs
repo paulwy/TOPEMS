@@ -30,21 +30,18 @@ where
 {
     Router::new()
         .route(
-            "/api/wms/cycle-counts",
+            "/cycle-counts",
             get(list_cycle_count_configs).post(create_cycle_count_config),
         )
         .route(
-            "/api/wms/cycle-counts/{id}",
+            "/cycle-counts/{id}",
             get(get_cycle_count_config)
                 .put(update_cycle_count_config)
                 .delete(delete_cycle_count_config),
         )
+        .route("/cycle-counts/{id}/generate", post(generate_cycle_count))
         .route(
-            "/api/wms/cycle-counts/{id}/generate",
-            post(generate_cycle_count),
-        )
-        .route(
-            "/api/wms/cycle-counts/generate-all",
+            "/cycle-counts/generate-all",
             post(generate_all_cycle_counts),
         )
 }

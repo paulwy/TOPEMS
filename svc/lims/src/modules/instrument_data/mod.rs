@@ -22,47 +22,38 @@ pub use statistics::*;
 pub fn create_routes() -> Router<AppState> {
     Router::new()
         .route(
-            "/api/lims/instrument-data",
+            "/instrument-data",
             get(list_instrument_data).post(create_instrument_data),
         )
         .route(
-            "/api/lims/instrument-data/{id}",
+            "/instrument-data/{id}",
             get(get_instrument_data)
                 .put(update_instrument_data)
                 .delete(delete_instrument_data),
         )
+        .route("/instrument-data/{id}/parse", post(parse_instrument_data))
+        .route("/instrument-data/parse/test", post(test_parse_data))
         .route(
-            "/api/lims/instrument-data/{id}/parse",
-            post(parse_instrument_data),
-        )
-        .route(
-            "/api/lims/instrument-data/parse/test",
-            post(test_parse_data),
-        )
-        .route(
-            "/api/lims/instrument-data/statistics",
+            "/instrument-data/statistics",
             get(get_instrument_data_statistics),
         )
         .route(
-            "/api/lims/collection-tasks",
+            "/collection-tasks",
             get(list_collection_tasks).post(create_collection_task),
         )
         .route(
-            "/api/lims/collection-tasks/{id}",
+            "/collection-tasks/{id}",
             get(get_collection_task)
                 .put(update_collection_task)
                 .delete(delete_collection_task),
         )
+        .route("/collection-tasks/{id}/trigger", post(trigger_collection))
         .route(
-            "/api/lims/collection-tasks/{id}/trigger",
-            post(trigger_collection),
-        )
-        .route(
-            "/api/lims/parse-rules",
+            "/parse-rules",
             get(list_parse_rules).post(create_parse_rule),
         )
         .route(
-            "/api/lims/parse-rules/{id}",
+            "/parse-rules/{id}",
             get(get_parse_rule)
                 .put(update_parse_rule)
                 .delete(delete_parse_rule),

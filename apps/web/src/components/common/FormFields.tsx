@@ -126,9 +126,9 @@ export function FormSelectField<T extends FieldValues>({
             {...field}
             label={label}
           >
-            {options.map((opt) => (
+            {options.map((opt: { value: string | number; label: string }) => (
               <MenuItem
-                key={opt.value}
+                key={String(opt.value)}
                 value={opt.value}
               >
                 {opt.label}

@@ -25,19 +25,16 @@ pub async fn create_routes(db: PgPool) -> Result<Router> {
 
     let app = Router::new()
         .route(
-            "/api/srm/scoring-dimensions",
+            "/scoring-dimensions",
             get(list_dimensions).post(create_dimension),
         )
         .route(
-            "/api/srm/scoring-dimensions/{id}",
+            "/scoring-dimensions/{id}",
             get(get_dimension)
                 .put(update_dimension)
                 .delete(delete_dimension),
         )
-        .route(
-            "/api/srm/scoring-dimensions/active",
-            get(list_active_dimensions),
-        )
+        .route("/scoring-dimensions/active", get(list_active_dimensions))
         .with_state(state);
 
     Ok(app)

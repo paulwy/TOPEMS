@@ -8,7 +8,6 @@ import {
   ListItemText,
   Chip,
   CircularProgress,
-  Collapse,
 } from '@mui/material';
 import { Search, Building2, ChevronRight, ChevronDown, Check } from 'lucide-react';
 
@@ -17,6 +16,7 @@ export interface Department {
   name: string;
   parentId?: string;
   children?: Department[];
+  depth?: number;
 }
 
 export interface DepartmentSelectProps {
@@ -31,136 +31,15 @@ export interface DepartmentSelectProps {
   allowClear?: boolean;
 }
 
-const TreeNode: React.FC<{
-  node: Department;
-  selected: boolean;
-  onClick: () => void;
-  onToggleExpand: () => void;
-  expanded: boolean;
-  depth: number;
-}> = ({ node, selected, onClick, onToggleExpand, expanded, depth }) => {
-  const hasChildren = node.children && node.children.length > 0;
-
-  return (
-    <React.Fragment>
-      <MenuItem
-        onClick={onClick}
-        selected={selected}
-        sx={{ pl: depth * 2 + 1, minHeight: 'auto', py: 1 }}
-      >
-        <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, width: '100%' }}>
-          {hasChildren && (
-            <Box
-              onClick={(e) => {
-                e.stopPropagation();
-                onToggleExpand();
-              }}
-              sx={{ cursor: 'pointer' }}
-            >
-              {expanded ? <ChevronDown size={16} /> : <ChevronRight size={16} />}
-            </Box>
-          )}
-          {!hasChildren && <Box sx={{ width: 16 }} />}
-          <Building2
-            size={16}
-            sx={{ color: 'text.secondary' }}
-          />
-          <ListItemText
-            primary={node.name}
-            sx={{ flex: 1 }}
-          />
-          {selected && <Check size={16} />}
-        </Box>
-      </MenuItem>
-      {hasChildren && expanded && (
-        <Collapse in={expanded}>
-          {node.children!.map((child) => (
-            <TreeNode
-              key={child.id}
-              node={child}
-              selected={false}
-              onClick={() => {}}
-              onToggleExpand={() => {}}
-              expanded={false}
-              depth={depth + 1}
-            />
-          ))}
-        </Collapse>
-      )}
-    </React.Fragment>
-  );
-};
-
-const DepartmentTree: React.FC<{
-  departments: Department[];
-  selectedIds: string[];
-  onSelect: (dept: Department) => void;
-}> = ({ departments, selectedIds, onSelect }) => {
-  const [expandedIds, setExpandedIds] = useState<Set<string>>(
-    new Set(departments.filter((d) => d.children?.length).map((d) => d.id))
-  );
-
-  const renderTree = (nodes: Department[], depth = 0) => {
-    return nodes.map((node) => {
-      const isSelected = selectedIds.includes(node.id);
-      const isExpanded = expandedIds.has(node.id);
-      const hasChildren = node.children && node.children.length > 0;
-
-      return (
-        <React.Fragment key={node.id}>
-          <MenuItem
-            onClick={() => onSelect(node)}
-            selected={isSelected}
-            sx={{ pl: depth * 2 + 1, minHeight: 'auto', py: 1 }}
-          >
-            <Box
-              sx={{
-                display: 'flex',
-                alignItems: 'center',
-                gap: 1,
-                width: '100%',
-              }}
-            >
-              {hasChildren && (
-                <Box
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    setExpandedIds((prev) => {
-                      const next = new Set(prev);
-                      if (next.has(node.id)) {
-                        next.delete(node.id);
-                      } else {
-                        next.add(node.id);
-                      }
-                      return next;
-                    });
-                  }}
-                  sx={{ cursor: 'pointer' }}
-                >
-                  {isExpanded ? <ChevronDown size={16} /> : <ChevronRight size={16} />}
-                </Box>
-              )}
-              {!hasChildren && <Box sx={{ width: 16 }} />}
-              <Building2
-                size={16}
-                sx={{ color: 'text.secondary' }}
-              />
-              <ListItemText
-                primary={node.name}
-                sx={{ flex: 1 }}
-              />
-              {isSelected && <Check size={16} />}
-            </Box>
-          </MenuItem>
-          {hasChildren && isExpanded && (
-            <Collapse in={isExpanded}>{renderTree(node.children!, depth + 1)}</Collapse>
-          )}
-        </React.Fragment>
-      );
-    });
-  };
-
-  return <>{renderTree(departments)}</>;
+const flattenDepartments = (departments: Department[], depth = 0): Department[] => {
+  let result: Department[] = [];
+  for (const dept of departments) {
+    result.push({ ...dept, depth });
+    if (dept.children && dept.children.length > 0) {
+      result = result.concat(flattenDepartments(dept.children, depth + 1));
+    }
+  }
+  return result;
 };
 
 export const DepartmentSelect: React.FC<DepartmentSelectProps> = ({
@@ -176,6 +55,9 @@ export const DepartmentSelect: React.FC<DepartmentSelectProps> = ({
 }) => {
   const [anchorEl, setAnchorEl] = useState<HTMLElement | null>(null);
   const [searchKeyword, setSearchKeyword] = useState('');
+  const [expandedIds, setExpandedIds] = useState<Set<string>>(
+    new Set(departments.filter((d) => d.children?.length).map((d) => d.id))
+  );
 
   useEffect(() => {
     onSearch?.(searchKeyword);
@@ -218,6 +100,31 @@ export const DepartmentSelect: React.FC<DepartmentSelectProps> = ({
     onChange(null);
   }, [onChange]);
 
+  const handleToggleExpand = useCallback((deptId: string) => {
+    setExpandedIds((prev) => {
+      const next = new Set(prev);
+      if (next.has(deptId)) {
+        next.delete(deptId);
+      } else {
+        next.add(deptId);
+      }
+      return next;
+    });
+  }, []);
+
+  const isVisible = (dept: Department): boolean => {
+    let current: Department | undefined = dept;
+    while (current !== undefined) {
+      const pId: string | undefined = current.parentId;
+      if (pId && !expandedIds.has(pId)) {
+        return false;
+      }
+      const p: Department | undefined = departments.find((d) => d.id === pId);
+      current = p;
+    }
+    return true;
+  };
+
   const selectedIds = multiple
     ? (value as Department[])?.map((d) => d.id) || []
     : [(value as Department)?.id].filter(Boolean);
@@ -225,6 +132,8 @@ export const DepartmentSelect: React.FC<DepartmentSelectProps> = ({
   const displayValue = multiple
     ? (value as Department[])?.map((d) => d.name).join(', ')
     : (value as Department)?.name;
+
+  const flattenedDepartments = flattenDepartments(departments);
 
   return (
     <Box>
@@ -283,16 +192,57 @@ export const DepartmentSelect: React.FC<DepartmentSelectProps> = ({
           <Box sx={{ p: 4, display: 'flex', justifyContent: 'center' }}>
             <CircularProgress size={24} />
           </Box>
-        ) : departments.length === 0 ? (
+        ) : flattenedDepartments.length === 0 ? (
           <MenuItem disabled>
             <ListItemText primary='暂无部门' />
           </MenuItem>
         ) : (
-          <DepartmentTree
-            departments={departments}
-            selectedIds={selectedIds}
-            onSelect={handleSelect}
-          />
+          flattenedDepartments
+            .filter(isVisible)
+            .map((dept) => {
+              const isSelected = selectedIds.includes(dept.id);
+              const hasChildren = dept.children && dept.children.length > 0;
+              const isExpanded = expandedIds.has(dept.id);
+              const depth = (dept as any).depth || 0;
+
+              return (
+                <MenuItem
+                  key={dept.id}
+                  onClick={() => {
+                    if (hasChildren) {
+                      handleToggleExpand(dept.id);
+                    }
+                    handleSelect(dept);
+                  }}
+                  selected={isSelected}
+                  sx={{ pl: depth * 2 + 1, minHeight: 'auto', py: 1 }}
+                >
+                  <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, width: '100%' }}>
+                    {hasChildren && (
+                      <Box
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          handleToggleExpand(dept.id);
+                        }}
+                        sx={{ cursor: 'pointer' }}
+                      >
+                        {isExpanded ? <ChevronDown size={16} /> : <ChevronRight size={16} />}
+                      </Box>
+                    )}
+                    {!hasChildren && <Box sx={{ width: 16 }} />}
+                    <Building2
+                      size={16}
+                      sx={{ color: 'text.secondary' }}
+                    />
+                    <ListItemText
+                      primary={dept.name}
+                      sx={{ flex: 1 }}
+                    />
+                    {isSelected && <Check size={16} />}
+                  </Box>
+                </MenuItem>
+              );
+            })
         )}
       </Menu>
     </Box>

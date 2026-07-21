@@ -836,7 +836,7 @@ const MobileQualityPage: React.FC = () => {
                     quantity: parseInt(e.target.value) || 0,
                   }))
                 }
-                slotProps={{ input: { min: 1 } } as const}
+                slotProps={{ htmlInput: { min: 1 } }}
               />
               <TextField
                 fullWidth

@@ -106,20 +106,17 @@ pub struct ComparisonItemRecord {
 
 pub fn create_routes() -> Router<ApiState> {
     Router::new()
-        .route(
-            "/api/scm/inquiries",
-            get(list_inquiries).post(create_inquiry),
-        )
+        .route("/inquiries", get(list_inquiries).post(create_inquiry))
         .route(
             "/api/inquiries/{id}",
             get(get_inquiry).delete(delete_inquiry),
         )
         .route("/api/inquiries/{id}/publish", post(publish_inquiry))
-        .route("/api/scm/quotes", get(list_quotes).post(create_quote))
+        .route("/quotes", get(list_quotes).post(create_quote))
         .route("/api/quotes/{id}", get(get_quote).put(update_quote))
         .route("/api/quotes/{id}/submit", post(submit_quote))
         .route(
-            "/api/scm/comparisons",
+            "/comparisons",
             get(list_comparisons).post(create_comparison),
         )
         .route("/api/comparisons/{id}", get(get_comparison))

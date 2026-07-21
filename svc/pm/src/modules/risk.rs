@@ -16,12 +16,12 @@ use crate::models::risk::{
 pub fn create_routes(pool: PgPool) -> Router {
     Router::new()
         .route(
-            "/api/pm/projects/{project_id}/risks",
+            "/projects/{project_id}/risks",
             get(get_project_risks).post(create_risk),
         )
-        .route("/api/pm/risks/{id}", get(get_risk).put(update_risk))
+        .route("/risks/{id}", get(get_risk).put(update_risk))
         .route(
-            "/api/pm/risks/{id}/events",
+            "/risks/{id}/events",
             get(get_risk_events).post(create_risk_event),
         )
         .with_state(pool)

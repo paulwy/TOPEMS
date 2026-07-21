@@ -19,8 +19,7 @@ use std::net::SocketAddr;
 
 use topems_shared::{
     auth_middleware, create_api_info_router, create_cors_layer, init_telemetry,
-    telemetry_middleware, wrap_group2_router, ApiResponse, AuthState, DependencyHealth,
-    HealthStatus, RouteCompatConfig, ServiceHealth,
+    telemetry_middleware, ApiResponse, AuthState, DependencyHealth, HealthStatus, ServiceHealth,
 };
 
 #[tokio::main]
@@ -83,8 +82,7 @@ async fn main() -> anyhow::Result<()> {
             get(move || async move { metric_handle.render() }),
         );
 
-    let protected_routes = Router::new()
-        .nest("/api/doc", modules::create_routes())
+    let protected_routes = modules::create_routes()
         .layer(axum::middleware::from_fn_with_state(
             auth_state.clone(),
             auth_middleware,
@@ -93,14 +91,11 @@ async fn main() -> anyhow::Result<()> {
 
     let app = Router::new()
         .merge(public_routes)
-        .merge(protected_routes)
+        .nest("/api/doc", protected_routes)
         .layer(axum::middleware::from_fn(telemetry_middleware))
         .layer(cors)
         .layer(prometheus_layer)
         .with_state(state);
-
-    let cfg = RouteCompatConfig::new("doc", "/api/doc", &[]);
-    let app = wrap_group2_router(app, cfg);
 
     let port = std::env::var("DOC_PORT")
         .unwrap_or_else(|_| "8012".to_string())

@@ -83,7 +83,7 @@ scripts/
 | report | 8061 | 报表服务 |
 | monitor | 8062 | 监控服务 |
 | portal | 8063 | 门户/API 网关 |
-| ai | 8064 | AI 服务 |
+| ai | 8013 AI 服务 |
 | mobile | 8070 | 移动服务 |
 | gis | 8071 | GIS 服务 |
 | integration | 8072 | 集成服务 |

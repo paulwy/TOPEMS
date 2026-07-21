@@ -121,5 +121,5 @@ pub async fn get_dashboard_stats(
 }
 
 pub fn create_routes() -> Router<crate::AppState> {
-    Router::new().route("/api/qms/dashboard", get(get_dashboard_stats))
+    Router::new().route("/dashboard", get(get_dashboard_stats))
 }

@@ -144,7 +144,6 @@ test_proxy_rewrite "/file/api/test" "/api/core/file/test" "文件API重写 (/fil
 test_proxy_rewrite "/mail/api/test" "/api/core/comm/mail/test" "邮件API重写 (/mail/api)"
 
 # 通知服务代理
-test_proxy_rewrite "/notification/api/v1/test" "/api/v1/test" "通知API v1重写 (/notification/api/v1)"
 test_proxy_rewrite "/notification/api/test" "/api/core/comm/notify/test" "通知API重写 (/notification/api)"
 
 # IM服务代理
@@ -164,8 +163,8 @@ echo "=== 2. 业务服务代理 ==="
 echo ""
 
 # ERP服务 (8010) - 使用真实API路径
-log_test "ERP API代理 (/erp/api/v1/health)"
-response_code=$(curl -s -o /dev/null -w "%{http_code}" "${FRONTEND_URL}/erp/api/v1/health" 2>&1)
+log_test "ERP API代理 (/erp/api/health)"
+response_code=$(curl -s -o /dev/null -w "%{http_code}" "${FRONTEND_URL}/erp/api/health" 2>&1)
 if [ "$response_code" -eq "200" ] || [ "$response_code" -eq "401" ]; then
     log_success "ERP API代理 - 工作正常 (状态码: $response_code)"
 elif [ "$response_code" -eq "503" ]; then
@@ -188,8 +187,8 @@ fi
 test_http_proxy "/hrm/health" 200 "HRM健康检查 (/hrm/health)"
 
 # PM项目管理服务 (8023) - 使用真实API路径
-log_test "PM API代理 (/pm/api/v1/health)"
-response_code=$(curl -s -o /dev/null -w "%{http_code}" "${FRONTEND_URL}/pm/api/v1/health" 2>&1)
+log_test "PM API代理 (/pm/api/health)"
+response_code=$(curl -s -o /dev/null -w "%{http_code}" "${FRONTEND_URL}/pm/api/health" 2>&1)
 if [ "$response_code" -eq "200" ] || [ "$response_code" -eq "401" ]; then
     log_success "PM API代理 - 工作正常 (状态码: $response_code)"
 elif [ "$response_code" -eq "503" ]; then
@@ -200,8 +199,8 @@ fi
 test_http_proxy "/pm/health" 200 "PM健康检查 (/pm/health)"
 
 # CRM客户管理服务 (8029) - 使用真实API路径
-log_test "CRM API代理 (/crm/api/v1/health)"
-response_code=$(curl -s -o /dev/null -w "%{http_code}" "${FRONTEND_URL}/crm/api/v1/health" 2>&1)
+log_test "CRM API代理 (/crm/api/health)"
+response_code=$(curl -s -o /dev/null -w "%{http_code}" "${FRONTEND_URL}/crm/api/health" 2>&1)
 if [ "$response_code" -eq "200" ] || [ "$response_code" -eq "401" ]; then
     log_success "CRM API代理 - 工作正常 (状态码: $response_code)"
 elif [ "$response_code" -eq "503" ]; then
@@ -212,8 +211,8 @@ fi
 test_http_proxy "/crm/health" 200 "CRM健康检查 (/crm/health)"
 
 # MES制造执行服务 (8030) - 使用真实API路径
-log_test "MES API重写 (/mes/api/v1/health)"
-response_code=$(curl -s -o /dev/null -w "%{http_code}" "${FRONTEND_URL}/mes/api/v1/health" 2>&1)
+log_test "MES API重写 (/mes/api/health)"
+response_code=$(curl -s -o /dev/null -w "%{http_code}" "${FRONTEND_URL}/mes/api/health" 2>&1)
 if [ "$response_code" -eq "200" ] || [ "$response_code" -eq "401" ]; then
     log_success "MES API重写 - 工作正常 (状态码: $response_code)"
 elif [ "$response_code" -eq "503" ]; then
@@ -271,7 +270,7 @@ test_http_proxy "/monitor/health" 200 "Monitor健康检查 (/monitor/health)"
 test_api_proxy "/portal/api/test" "Portal API代理"
 test_http_proxy "/portal/health" 200 "Portal健康检查 (/portal/health)"
 
-# AI智能服务 (8064)
+# AI智能服务 (8013)
 test_api_proxy "/ai/api/test" "AI API代理"
 test_http_proxy "/ai/health" 200 "AI健康检查 (/ai/health)"
 

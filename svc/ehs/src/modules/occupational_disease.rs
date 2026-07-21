@@ -25,73 +25,70 @@ fn get_tenant_id(claims: &Claims, headers: &HeaderMap) -> Uuid {
 pub fn create_routes() -> Router<AppState> {
     Router::new()
         .route(
-            "/api/ehs/occupational-disease/factors",
+            "/occupational-disease/factors",
             get(list_hazard_factors).post(create_hazard_factor),
         )
         .route(
-            "/api/ehs/occupational-disease/factors/{id}",
+            "/occupational-disease/factors/{id}",
             get(get_hazard_factor)
                 .put(update_hazard_factor)
                 .delete(delete_hazard_factor),
         )
         .route(
-            "/api/ehs/occupational-disease/detections",
+            "/occupational-disease/detections",
             get(list_detection_records).post(create_detection_record),
         )
         .route(
-            "/api/ehs/occupational-disease/detections/{id}",
+            "/occupational-disease/detections/{id}",
             get(get_detection_record).delete(delete_detection_record),
         )
         .route(
-            "/api/ehs/occupational-disease/cases",
+            "/occupational-disease/cases",
             get(list_disease_cases).post(create_disease_case),
         )
         .route(
-            "/api/ehs/occupational-disease/cases/{id}",
+            "/occupational-disease/cases/{id}",
             get(get_disease_case)
                 .put(update_disease_case)
                 .delete(delete_disease_case),
         )
         .route(
-            "/api/ehs/occupational-disease/protection-measures",
+            "/occupational-disease/protection-measures",
             get(list_protection_measures).post(create_protection_measure),
         )
         .route(
-            "/api/ehs/occupational-disease/protection-measures/{id}",
+            "/occupational-disease/protection-measures/{id}",
             get(get_protection_measure)
                 .put(update_protection_measure)
                 .delete(delete_protection_measure),
         )
         .route(
-            "/api/ehs/occupational-disease/trainings",
+            "/occupational-disease/trainings",
             get(list_health_trainings).post(create_health_training),
         )
         .route(
-            "/api/ehs/occupational-disease/trainings/{id}",
+            "/occupational-disease/trainings/{id}",
             get(get_health_training).delete(delete_health_training),
         )
+        .route("/occupational-disease/factor-types", get(list_factor_types))
         .route(
-            "/api/ehs/occupational-disease/factor-types",
-            get(list_factor_types),
-        )
-        .route(
-            "/api/ehs/occupational-disease/statistics",
+            "/occupational-disease/statistics",
             get(get_disease_statistics),
         )
         .route(
-            "/api/ehs/occupational-diseases/factors",
+            "/occupational-diseases/factors",
             get(list_hazard_factors).post(create_hazard_factor),
         )
         .route(
-            "/api/ehs/occupational-diseases/detection-records",
+            "/occupational-diseases/detection-records",
             get(list_detection_records).post(create_detection_record),
         )
         .route(
-            "/api/ehs/occupational-diseases/cases",
+            "/occupational-diseases/cases",
             get(list_disease_cases).post(create_disease_case),
         )
         .route(
-            "/api/ehs/occupational-diseases/protection-measures",
+            "/occupational-diseases/protection-measures",
             get(list_protection_measures).post(create_protection_measure),
         )
 }

@@ -56,27 +56,24 @@ pub async fn create_routes(db: PgPool) -> Result<Router> {
 
     let app = Router::new()
         .route(
-            "/api/srm/bid-requests",
+            "/bid-requests",
             get(list_bid_requests).post(create_bid_request),
         )
         .route(
-            "/api/srm/bid-requests/{id}",
+            "/bid-requests/{id}",
             get(get_bid_request)
                 .put(update_bid_request)
                 .delete(delete_bid_request),
         )
         .route(
-            "/api/srm/bid-requests/{id}/bids",
+            "/bid-requests/{id}/bids",
             get(get_bid_request_bids).post(create_bid),
         )
         .route(
-            "/api/srm/bids/{id}",
+            "/bids/{id}",
             get(get_bid).put(update_bid).delete(delete_bid),
         )
-        .route(
-            "/api/srm/bid-comparisons/{request_id}",
-            get(get_bid_comparison),
-        )
+        .route("/bid-comparisons/{request_id}", get(get_bid_comparison))
         .with_state(state);
 
     Ok(app)

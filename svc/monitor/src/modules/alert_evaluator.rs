@@ -470,19 +470,13 @@ pub async fn get_metric_snapshot(
 pub fn create_routes() -> Router<ApiState> {
     use axum::routing::{delete, get, post, put};
     Router::new()
+        .route("/thresholds", get(list_thresholds).post(create_threshold))
         .route(
-            "/api/monitor/thresholds",
-            get(list_thresholds).post(create_threshold),
-        )
-        .route(
-            "/api/monitor/thresholds/{id}",
+            "/thresholds/{id}",
             get(get_threshold)
                 .put(update_threshold)
                 .delete(delete_threshold),
         )
-        .route(
-            "/api/monitor/thresholds/evaluate",
-            post(evaluate_thresholds),
-        )
-        .route("/api/monitor/metrics/snapshot", get(get_metric_snapshot))
+        .route("/thresholds/evaluate", post(evaluate_thresholds))
+        .route("/metrics/snapshot", get(get_metric_snapshot))
 }

@@ -13,16 +13,16 @@ use crate::shared::AppState;
 pub fn create_routes() -> Router<AppState> {
     Router::new()
         .route(
-            "/api/lims/instruments",
+            "/instruments",
             get(list_instruments).post(create_instrument),
         )
         .route(
-            "/api/lims/instruments/{id}",
+            "/instruments/{id}",
             get(get_instrument)
                 .put(update_instrument)
                 .delete(delete_instrument),
         )
-        .route("/api/lims/instruments/{id}/calibration", post(calibrate))
+        .route("/instruments/{id}/calibration", post(calibrate))
 }
 
 #[derive(Debug, Deserialize)]

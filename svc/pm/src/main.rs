@@ -11,8 +11,7 @@ use std::env;
 use topems_shared::{
     auth_middleware, build_health_response, create_api_info_router, create_cors_layer,
     create_database_pool, init_telemetry, rls_middleware, telemetry_middleware,
-    test_database_connection, wrap_group2_router, AuthState, DatabaseConfig, Result,
-    RouteCompatConfig, ServiceHealth,
+    test_database_connection, AuthState, DatabaseConfig, Result, ServiceHealth,
 };
 use utoipa::OpenApi;
 
@@ -100,9 +99,6 @@ async fn main() -> Result<()> {
         .layer(axum::middleware::from_fn(telemetry_middleware))
         .layer(prometheus_layer)
         .layer(cors);
-
-    let cfg = RouteCompatConfig::new("pm", "/api/pm", &[]);
-    let app = wrap_group2_router(app, cfg);
 
     let port = std::env::var("PM_PORT").unwrap_or_else(|_| "8023".to_string());
     let addr = format!("0.0.0.0:{}", port);

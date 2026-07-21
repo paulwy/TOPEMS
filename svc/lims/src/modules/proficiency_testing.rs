@@ -12,32 +12,23 @@ use crate::shared::AppState;
 
 pub fn create_routes() -> Router<AppState> {
     Router::new()
-        .route("/api/lims/pt-plans", get(list_plans).post(create_plan))
+        .route("/pt-plans", get(list_plans).post(create_plan))
         .route(
-            "/api/lims/pt-plans/{id}",
+            "/pt-plans/{id}",
             get(get_plan).put(update_plan).delete(delete_plan),
         )
-        .route("/api/lims/pt-plans/{id}/samples", get(list_plan_samples))
-        .route("/api/lims/pt-plans/{id}/results", get(list_plan_results))
+        .route("/pt-plans/{id}/samples", get(list_plan_samples))
+        .route("/pt-plans/{id}/results", get(list_plan_results))
+        .route("/pt-plans/{id}/evaluations", get(list_plan_evaluations))
         .route(
-            "/api/lims/pt-plans/{id}/evaluations",
-            get(list_plan_evaluations),
-        )
-        .route(
-            "/api/lims/pt-plans/{id}/corrective-actions",
+            "/pt-plans/{id}/corrective-actions",
             get(list_plan_corrective_actions),
         )
-        .route("/api/lims/pt-samples/receive", post(receive_sample))
-        .route("/api/lims/pt-results", post(submit_result))
-        .route("/api/lims/pt-evaluations", post(evaluate_result))
-        .route(
-            "/api/lims/pt-corrective-actions",
-            post(create_corrective_action),
-        )
-        .route(
-            "/api/lims/pt-corrective-actions/{id}",
-            put(update_corrective_action),
-        )
+        .route("/pt-samples/receive", post(receive_sample))
+        .route("/pt-results", post(submit_result))
+        .route("/pt-evaluations", post(evaluate_result))
+        .route("/pt-corrective-actions", post(create_corrective_action))
+        .route("/pt-corrective-actions/{id}", put(update_corrective_action))
 }
 
 #[derive(Debug, Deserialize)]

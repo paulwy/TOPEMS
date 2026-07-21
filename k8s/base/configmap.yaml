@@ -24,7 +24,6 @@ data:
   LIMS_PORT: "8051"
   EHS_PORT: "8052"
   BI_PORT: "8060"
-  REPORT_PORT: "8061"
   # Logging
   RUST_LOG: "info"
   # V13.0 Plugin Architecture

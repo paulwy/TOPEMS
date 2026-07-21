@@ -32,17 +32,14 @@ where
 {
     Router::new()
         .route(
-            "/api/wms/discrepancies",
+            "/discrepancies",
             get(list_discrepancies).post(create_discrepancy),
         )
-        .route("/api/wms/discrepancies/{id}", get(get_discrepancy))
+        .route("/discrepancies/{id}", get(get_discrepancy))
+        .route("/discrepancies/{id}/approve", post(approve_discrepancy))
+        .route("/discrepancies/{id}/adjust", post(adjust_inventory))
         .route(
-            "/api/wms/discrepancies/{id}/approve",
-            post(approve_discrepancy),
-        )
-        .route("/api/wms/discrepancies/{id}/adjust", post(adjust_inventory))
-        .route(
-            "/api/wms/discrepancies/process-stock-take/{stock_take_id}",
+            "/discrepancies/process-stock-take/{stock_take_id}",
             post(process_stock_take_discrepancies),
         )
 }

@@ -61,26 +61,17 @@ pub async fn create_routes(db: PgPool) -> Result<Router> {
     let state = Arc::new(AppState { db });
 
     let app = Router::new()
-        .route("/api/srm/performance/reports", get(get_performance_reports))
+        .route("/performance/reports", get(get_performance_reports))
+        .route("/performance/reports/{id}", get(get_performance_report))
+        .route("/performance/compare", get(compare_supplier_performance))
+        .route("/performance/trend", get(get_performance_trend))
+        .route("/performance/top-suppliers", get(get_top_suppliers))
+        .route("/performance/export", get(export_performance_report))
         .route(
-            "/api/srm/performance/reports/{id}",
-            get(get_performance_report),
-        )
-        .route(
-            "/api/srm/performance/compare",
-            get(compare_supplier_performance),
-        )
-        .route("/api/srm/performance/trend", get(get_performance_trend))
-        .route("/api/srm/performance/top-suppliers", get(get_top_suppliers))
-        .route(
-            "/api/srm/performance/export",
-            get(export_performance_report),
-        )
-        .route(
-            "/api/srm/performance/score-level-distribution",
+            "/performance/score-level-distribution",
             get(get_score_level_distribution),
         )
-        .route("/api/srm/performance/summary", get(get_performance_summary))
+        .route("/performance/summary", get(get_performance_summary))
         .with_state(state);
 
     Ok(app)

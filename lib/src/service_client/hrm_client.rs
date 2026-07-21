@@ -64,31 +64,31 @@ impl HrmServiceClient {
 
     pub async fn get_employee(&self, id: Uuid) -> ServiceClientResult<Employee> {
         self.base_client
-            .get(&format!("/api/v1/employees/{}", id))
+            .get(&format!("/api/employees/{}", id))
             .await
     }
 
     pub async fn get_department(&self, id: Uuid) -> ServiceClientResult<Department> {
         self.base_client
-            .get(&format!("/api/v1/departments/{}", id))
+            .get(&format!("/api/departments/{}", id))
             .await
     }
 
     pub async fn get_company(&self, id: Uuid) -> ServiceClientResult<Company> {
         self.base_client
-            .get(&format!("/api/v1/companies/{}", id))
+            .get(&format!("/api/companies/{}", id))
             .await
     }
 
     pub async fn list_employees(&self) -> ServiceClientResult<Vec<Employee>> {
-        self.base_client.get("/api/v1/employees").await
+        self.base_client.get("/api/employees").await
     }
 
     pub async fn list_departments(&self) -> ServiceClientResult<Vec<Department>> {
-        self.base_client.get("/api/v1/departments").await
+        self.base_client.get("/api/departments").await
     }
 
     pub async fn list_companies(&self) -> ServiceClientResult<Vec<Company>> {
-        self.base_client.get("/api/v1/companies").await
+        self.base_client.get("/api/companies").await
     }
 }

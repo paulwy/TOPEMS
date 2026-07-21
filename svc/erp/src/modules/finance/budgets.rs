@@ -5,6 +5,8 @@ use axum::http::HeaderMap;
 
 use chrono::Utc;
 
+use sqlx::types::Decimal;
+
 use uuid::Uuid;
 
 use super::super::ApiState;
@@ -33,9 +35,10 @@ pub async fn list_budgets(
 
     let result = sqlx::query_as::<_, Budget>(
         r#"
-        SELECT id, department_id, budget_type, fiscal_year, total_budget, used_amount, remaining_amount, usage_rate, status, created_at, updated_at
+        SELECT id, organization_id, department_id, budget_type, fiscal_year, total_budget, used_amount, remaining_amount, usage_rate, status, created_at, updated_at, deleted_at
         FROM budgets
-        WHERE ($1::text IS NULL OR budget_type ILIKE $1 OR fiscal_year ILIKE $1)
+        WHERE deleted_at IS NULL
+          AND ($1::text IS NULL OR budget_type ILIKE $1 OR fiscal_year ILIKE $1)
           AND ($2::text IS NULL OR status = $2)
         ORDER BY created_at DESC
         LIMIT $3 OFFSET $4
@@ -53,7 +56,8 @@ pub async fn list_budgets(
             let count_result = sqlx::query_scalar::<_, i64>(
                 r#"
                 SELECT COUNT(*) FROM budgets
-                WHERE ($1::text IS NULL OR budget_type ILIKE $1 OR fiscal_year ILIKE $1)
+                WHERE deleted_at IS NULL
+                  AND ($1::text IS NULL OR budget_type ILIKE $1 OR fiscal_year ILIKE $1)
                   AND ($2::text IS NULL OR status = $2)
                 "#,
             )
@@ -86,24 +90,25 @@ pub async fn create_budget(
         return e;
     }
 
-    if req.total_budget <= 0.0 {
+    if req.total_budget <= Decimal::from(0) {
         return Json(api_error(400, "预算金额必须大于0"));
     }
 
     let id = Uuid::new_v4();
     let now = Utc::now();
-    let used_amount = 0.0;
+    let used_amount = Decimal::from(0);
     let remaining_amount = req.total_budget;
-    let usage_rate = 0.0;
+    let usage_rate = Decimal::from(0);
 
     let result = sqlx::query_as::<_, Budget>(
         r#"
-        INSERT INTO budgets (id, department_id, budget_type, fiscal_year, total_budget, used_amount, remaining_amount, usage_rate, status, created_at, updated_at)
-        VALUES ($1, $2, $3, $4, $5, $6, $7, $8, 'active', $9, $10)
-        RETURNING id, department_id, budget_type, fiscal_year, total_budget, used_amount, remaining_amount, usage_rate, status, created_at, updated_at
+        INSERT INTO budgets (id, organization_id, department_id, budget_type, fiscal_year, total_budget, used_amount, remaining_amount, usage_rate, status, created_at, updated_at, deleted_at)
+        VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, 'active', $10, $11, NULL)
+        RETURNING id, organization_id, department_id, budget_type, fiscal_year, total_budget, used_amount, remaining_amount, usage_rate, status, created_at, updated_at, deleted_at
         "#,
     )
     .bind(id)
+    .bind(None::<Uuid>)
     .bind(req.department_id)
     .bind(&req.budget_type)
     .bind(&req.fiscal_year)
@@ -178,8 +183,8 @@ pub async fn get_budget(
 
     let result = sqlx::query_as::<_, Budget>(
         r#"
-        SELECT id, department_id, budget_type, fiscal_year, total_budget, used_amount, remaining_amount, usage_rate, status, created_at, updated_at
-        FROM budgets WHERE id = $1
+        SELECT id, organization_id, department_id, budget_type, fiscal_year, total_budget, used_amount, remaining_amount, usage_rate, status, created_at, updated_at, deleted_at
+        FROM budgets WHERE id = $1 AND deleted_at IS NULL
         "#,
     )
     .bind(id)
@@ -215,7 +220,7 @@ pub async fn update_budget(
     }
 
     let existing = sqlx::query_as::<_, Budget>(
-        "SELECT id, department_id, budget_type, fiscal_year, total_budget, used_amount, remaining_amount, usage_rate, status, created_at, updated_at FROM budgets WHERE id = $1",
+        "SELECT id, organization_id, department_id, budget_type, fiscal_year, total_budget, used_amount, remaining_amount, usage_rate, status, created_at, updated_at, deleted_at FROM budgets WHERE id = $1 AND deleted_at IS NULL",
     )
     .bind(id)
     .fetch_optional(&state.db)
@@ -236,10 +241,10 @@ pub async fn update_budget(
     let used_amount = req.used_amount.unwrap_or(existing.used_amount);
     let status = req.status.unwrap_or(existing.status);
     let remaining_amount = total_budget - used_amount;
-    let usage_rate = if total_budget > 0.0 {
-        (used_amount / total_budget) * 100.0
+    let usage_rate = if total_budget > Decimal::from(0) {
+        (used_amount / total_budget) * Decimal::from(100)
     } else {
-        0.0
+        Decimal::from(0)
     };
     let now = Utc::now();
 
@@ -247,8 +252,8 @@ pub async fn update_budget(
         r#"
         UPDATE budgets SET
             department_id = $2, budget_type = $3, fiscal_year = $4, total_budget = $5, used_amount = $6, remaining_amount = $7, usage_rate = $8, status = $9, updated_at = $10
-        WHERE id = $1
-        RETURNING id, department_id, budget_type, fiscal_year, total_budget, used_amount, remaining_amount, usage_rate, status, created_at, updated_at
+        WHERE id = $1 AND deleted_at IS NULL
+        RETURNING id, organization_id, department_id, budget_type, fiscal_year, total_budget, used_amount, remaining_amount, usage_rate, status, created_at, updated_at, deleted_at
         "#,
     )
     .bind(id)
@@ -320,10 +325,11 @@ pub async fn delete_budget(
         return e;
     }
 
-    let result = sqlx::query("DELETE FROM budgets WHERE id = $1")
-        .bind(id)
-        .execute(&state.db)
-        .await;
+    let result =
+        sqlx::query("UPDATE budgets SET deleted_at = NOW() WHERE id = $1 AND deleted_at IS NULL")
+            .bind(id)
+            .execute(&state.db)
+            .await;
 
     let (response, status_str, error_msg) = match &result {
         Ok(r) if r.rows_affected() > 0 => {

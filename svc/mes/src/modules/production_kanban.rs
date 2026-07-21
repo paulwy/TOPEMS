@@ -17,17 +17,11 @@ use topems_shared::response::ApiResponse;
 
 pub fn create_routes() -> Router<AppState> {
     Router::new()
-        .route("/api/mes/kanban/dashboard", get(get_dashboard))
-        .route("/api/mes/kanban/order-progress", get(get_order_progress))
-        .route(
-            "/api/mes/kanban/workstation-status",
-            get(get_workstation_status),
-        )
-        .route("/api/mes/kanban/quality-trend", get(get_quality_trend))
-        .route(
-            "/api/mes/kanban/equipment-status",
-            get(get_equipment_status),
-        )
+        .route("/kanban/dashboard", get(get_dashboard))
+        .route("/kanban/order-progress", get(get_order_progress))
+        .route("/kanban/workstation-status", get(get_workstation_status))
+        .route("/kanban/quality-trend", get(get_quality_trend))
+        .route("/kanban/equipment-status", get(get_equipment_status))
 }
 
 // ==================== Response Types ====================

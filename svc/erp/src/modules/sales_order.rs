@@ -24,11 +24,11 @@ pub struct PaginationParams {
 pub fn create_routes() -> Router<ApiState> {
     Router::new()
         .route(
-            "/api/erp/sales-orders",
+            "/sales-orders",
             get(list_sales_orders).post(create_sales_order),
         )
         .route(
-            "/api/erp/sales-orders/{id}",
+            "/sales-orders/{id}",
             get(get_sales_order)
                 .put(update_sales_order)
                 .delete(delete_sales_order),

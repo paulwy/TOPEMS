@@ -138,7 +138,7 @@ test_proxy_with_rewrite "Core" "/core/api/test" "http://localhost:8000" "/api/co
 
 print_header "2. IAM 服务 - 端口 8000"
 echo -n "  登录 (POST)..."
-login_status=$(curl -s -o /dev/null -w "%{http_code}" -X POST "http://localhost:3000/iam/auth/login" -H "Content-Type: application/json" -d '{}')
+login_status=$(curl -s -o /dev/null -w "%{http_code}" -X POST "http://localhost:3000/api/core/iam/auth/login" -H "Content-Type: application/json" -d '{}')
 case $login_status in
   401|400|200)
     print_success "${login_status} (代理正确)"
@@ -210,7 +210,7 @@ test_health "Report" "/report/health" "http://localhost:8061"
 
 print_header "18. Monitor 服务 - 端口 8062"
 test_health "Monitor" "/monitor/health" "http://localhost:8062"
-test_proxy_with_rewrite "Monitor" "/monitor/api/alerts" "http://localhost:8062" "/api/v1/monitor/alerts" "告警列表"
+test_proxy_with_rewrite "Monitor" "/monitor/api/alerts" "http://localhost:8062" "/api/monitor/alerts" "告警列表"
 
 print_header "19. Portal 服务 - 端口 8063"
 test_health "Portal" "/portal/health" "http://localhost:8063"
@@ -233,7 +233,7 @@ test_proxy_with_rewrite "Doc" "/doc/api/documents" "http://localhost:8012" "/api
 
 print_header "25. 通信服务 (Comm) - 端口 8000"
 test_proxy_with_rewrite "Comm" "/comm/api/health" "http://localhost:8000" "/api/core/comm/api/health" "通信健康"
-test_proxy_with_rewrite "Comm" "/notification/api/v1/messages" "http://localhost:8000" "/api/v1/messages" "通知消息"
+test_proxy_with_rewrite "Comm" "/notification/api/messages" "http://localhost:8000" "/api/core/comm/notify/messages" "通知消息"
 
 print_header "26. Plugin Health 检查"
 test_proxy_with_rewrite "Plugin-Health" "/plugin-health/erp/api/plugins/health" "http://localhost:8010" "/api/plugins/health" "ERP插件健康"

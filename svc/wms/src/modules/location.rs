@@ -50,25 +50,19 @@ where
     ApiState: FromRef<S>,
 {
     Router::new()
+        .route("/locations", get(list_locations).post(create_location))
         .route(
-            "/api/wms/locations",
-            get(list_locations).post(create_location),
-        )
-        .route(
-            "/api/wms/locations/{id}",
+            "/locations/{id}",
             get(get_location)
                 .put(update_location)
                 .delete(delete_location),
         )
-        .route("/api/wms/locations/status", get(get_location_status))
+        .route("/locations/status", get(get_location_status))
         .route(
-            "/api/wms/locations/batch",
+            "/locations/batch",
             post(batch_create_locations).put(batch_update_locations),
         )
-        .route(
-            "/api/wms/locations/batch-delete",
-            post(batch_delete_locations),
-        )
+        .route("/locations/batch-delete", post(batch_delete_locations))
 }
 
 pub async fn list_locations(

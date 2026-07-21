@@ -16,39 +16,24 @@ use topems_shared::{api_error, auth::Claims, ApiResponse};
 pub fn create_routes() -> Router<ApiState> {
     Router::new()
         .route(
-            "/api/scm/purchase-contracts",
+            "/purchase-contracts",
             get(list_contracts).post(create_contract),
         )
         .route(
-            "/api/scm/purchase-contracts/{id}",
+            "/purchase-contracts/{id}",
             get(get_contract)
                 .put(update_contract)
                 .delete(delete_contract),
         )
+        .route("/purchase-contracts/{id}/submit", post(submit_contract))
+        .route("/purchase-contracts/{id}/approve", post(approve_contract))
+        .route("/purchase-contracts/{id}/reject", post(reject_contract))
+        .route("/purchase-contracts/{id}/cancel", post(cancel_contract))
         .route(
-            "/api/scm/purchase-contracts/{id}/submit",
-            post(submit_contract),
-        )
-        .route(
-            "/api/scm/purchase-contracts/{id}/approve",
-            post(approve_contract),
-        )
-        .route(
-            "/api/scm/purchase-contracts/{id}/reject",
-            post(reject_contract),
-        )
-        .route(
-            "/api/scm/purchase-contracts/{id}/cancel",
-            post(cancel_contract),
-        )
-        .route(
-            "/api/scm/purchase-contracts/{id}/terminate",
+            "/purchase-contracts/{id}/terminate",
             post(terminate_contract),
         )
-        .route(
-            "/api/scm/purchase-contracts/{id}/renew",
-            post(renew_contract),
-        )
+        .route("/purchase-contracts/{id}/renew", post(renew_contract))
 }
 
 pub async fn list_contracts(

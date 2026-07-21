@@ -67,30 +67,21 @@ pub struct SyncErrorDetail {
 
 pub fn create_routes() -> Router<ApiState> {
     Router::new()
+        .route("/sync/purchase-to-inbound", post(purchase_to_inbound))
         .route(
-            "/api/scm/sync/purchase-to-inbound",
-            post(purchase_to_inbound),
-        )
-        .route(
-            "/api/scm/sync/purchase-order/{id}/to-inbound",
+            "/sync/purchase-order/{id}/to-inbound",
             post(create_inbound_from_purchase),
         )
+        .route("/sync/supplier-from-srm", post(sync_supplier_from_srm))
         .route(
-            "/api/scm/sync/supplier-from-srm",
-            post(sync_supplier_from_srm),
-        )
-        .route(
-            "/api/scm/sync/suppliers-from-srm",
+            "/sync/suppliers-from-srm",
             post(sync_all_suppliers_from_srm),
         )
-        .route("/api/scm/sync/retry-failed", post(retry_failed_syncs))
-        .route("/api/scm/sync/statistics", post(get_sync_statistics))
-        .route("/api/scm/sync/sync-logs", post(get_sync_logs))
-        .route(
-            "/api/scm/sync/purchase-batch",
-            post(batch_sync_purchase_to_wms),
-        )
-        .route("/api/scm/sync/consistency-check", post(check_consistency))
+        .route("/sync/retry-failed", post(retry_failed_syncs))
+        .route("/sync/statistics", post(get_sync_statistics))
+        .route("/sync/sync-logs", post(get_sync_logs))
+        .route("/sync/purchase-batch", post(batch_sync_purchase_to_wms))
+        .route("/sync/consistency-check", post(check_consistency))
 }
 
 async fn purchase_to_inbound(

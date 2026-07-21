@@ -26,6 +26,58 @@ pub struct ReportParams {
     pub end_date: Option<String>,
     #[allow(dead_code)]
     pub department_id: Option<Uuid>,
+    pub time_range: Option<String>,
+}
+
+impl ReportParams {
+    pub fn get_date_range(&self) -> (String, String) {
+        if let Some(ref time_range) = self.time_range {
+            let now = Utc::now();
+            match time_range.as_str() {
+                "week" => (
+                    (now - chrono::Duration::days(7))
+                        .format("%Y-%m-%d")
+                        .to_string(),
+                    now.format("%Y-%m-%d").to_string(),
+                ),
+                "month" => (
+                    (now - chrono::Duration::days(30))
+                        .format("%Y-%m-%d")
+                        .to_string(),
+                    now.format("%Y-%m-%d").to_string(),
+                ),
+                "quarter" => (
+                    (now - chrono::Duration::days(90))
+                        .format("%Y-%m-%d")
+                        .to_string(),
+                    now.format("%Y-%m-%d").to_string(),
+                ),
+                "year" => (
+                    (now - chrono::Duration::days(365))
+                        .format("%Y-%m-%d")
+                        .to_string(),
+                    now.format("%Y-%m-%d").to_string(),
+                ),
+                _ => (
+                    (now - chrono::Duration::days(30))
+                        .format("%Y-%m-%d")
+                        .to_string(),
+                    now.format("%Y-%m-%d").to_string(),
+                ),
+            }
+        } else {
+            (
+                self.start_date.clone().unwrap_or_else(|| {
+                    (Utc::now() - chrono::Duration::days(30))
+                        .format("%Y-%m-%d")
+                        .to_string()
+                }),
+                self.end_date
+                    .clone()
+                    .unwrap_or_else(|| Utc::now().format("%Y-%m-%d").to_string()),
+            )
+        }
+    }
 }
 
 #[allow(dead_code)]
@@ -384,15 +436,7 @@ async fn attendance_summary(
     State(state): State<ApiState>,
     Query(params): Query<ReportParams>,
 ) -> Json<ApiResponse<serde_json::Value>> {
-    let start_date = params.start_date.clone().unwrap_or_else(|| {
-        (Utc::now() - chrono::Duration::days(30))
-            .format("%Y-%m-%d")
-            .to_string()
-    });
-    let end_date = params
-        .end_date
-        .clone()
-        .unwrap_or_else(|| Utc::now().format("%Y-%m-%d").to_string());
+    let (start_date, end_date) = params.get_date_range();
 
     let total_result = sqlx::query_scalar::<_, i64>(
         r#"SELECT COUNT(*) FROM hrm.attendance_records WHERE date BETWEEN $1 AND $2"#,

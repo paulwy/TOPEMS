@@ -13,13 +13,10 @@ use topems_shared::{api_error, auth::Claims, ApiResponse, PaginationParams};
 
 pub fn create_routes() -> Router<ApiState> {
     Router::new()
-        .route("/api/scm/inventory-turnover", get(calculate_turnover))
-        .route("/api/scm/inventory-turnover/days", get(turnover_days))
-        .route(
-            "/api/scm/inventory-turnover/abc-analysis",
-            get(abc_analysis),
-        )
-        .route("/api/scm/inventory-turnover/trend", get(turnover_trend))
+        .route("/inventory-turnover", get(calculate_turnover))
+        .route("/inventory-turnover/days", get(turnover_days))
+        .route("/inventory-turnover/abc-analysis", get(abc_analysis))
+        .route("/inventory-turnover/trend", get(turnover_trend))
 }
 
 #[derive(Debug, Clone, Deserialize, Serialize)]

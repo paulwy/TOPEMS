@@ -47,41 +47,32 @@ where
 {
     Router::new()
         .route(
-            "/api/wms/outbound-orders",
+            "/outbound-orders",
             get(list_outbound_orders).post(create_outbound_order),
         )
         .route(
-            "/api/wms/outbound-orders/{id}",
+            "/outbound-orders/{id}",
             get(get_outbound_order)
                 .put(update_outbound_order)
                 .delete(delete_outbound_order),
         )
         .route(
-            "/api/wms/outbound-orders/{id}/items",
+            "/outbound-orders/{id}/items",
             get(list_outbound_order_items).post(create_outbound_order_item),
         )
         .route(
-            "/api/wms/outbound-orders/{id}/items/{item_id}",
+            "/outbound-orders/{id}/items/{item_id}",
             put(update_outbound_order_item).delete(delete_outbound_order_item),
         )
         .route(
-            "/api/wms/outbound-orders/{id}/confirm",
+            "/outbound-orders/{id}/confirm",
             post(confirm_outbound_order),
         )
+        .route("/outbound-orders/{id}/pick", post(pick_outbound_order))
+        .route("/outbound-orders/{id}/pack", post(pack_outbound_order))
+        .route("/outbound-orders/{id}/ship", post(ship_outbound_order))
         .route(
-            "/api/wms/outbound-orders/{id}/pick",
-            post(pick_outbound_order),
-        )
-        .route(
-            "/api/wms/outbound-orders/{id}/pack",
-            post(pack_outbound_order),
-        )
-        .route(
-            "/api/wms/outbound-orders/{id}/ship",
-            post(ship_outbound_order),
-        )
-        .route(
-            "/api/wms/outbound-orders/{id}/complete",
+            "/outbound-orders/{id}/complete",
             post(complete_outbound_order),
         )
 }

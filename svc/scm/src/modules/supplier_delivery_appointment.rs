@@ -32,39 +32,36 @@ pub struct SupplierDeliveryAppointmentQueryParams {
 pub fn create_routes() -> Router<ApiState> {
     Router::new()
         .route(
-            "/api/scm/delivery-appointments",
+            "/delivery-appointments",
             get(list_appointments).post(create_appointment),
         )
         .route(
-            "/api/scm/delivery-appointments/{id}",
+            "/delivery-appointments/{id}",
             get(get_appointment)
                 .put(update_appointment)
                 .delete(delete_appointment),
         )
         .route(
-            "/api/scm/delivery-appointments/{id}/approve",
+            "/delivery-appointments/{id}/approve",
             post(approve_appointment),
         )
         .route(
-            "/api/scm/delivery-appointments/{id}/reject",
+            "/delivery-appointments/{id}/reject",
             post(reject_appointment),
         )
         .route(
-            "/api/scm/delivery-appointments/{id}/confirm-arrival",
+            "/delivery-appointments/{id}/confirm-arrival",
             post(confirm_arrival),
         )
         .route(
-            "/api/scm/delivery-appointments/{id}/complete",
+            "/delivery-appointments/{id}/complete",
             post(complete_appointment),
         )
         .route(
-            "/api/scm/delivery-appointments/{id}/cancel",
+            "/delivery-appointments/{id}/cancel",
             post(cancel_appointment),
         )
-        .route(
-            "/api/scm/delivery-appointments/stats",
-            get(appointment_stats),
-        )
+        .route("/delivery-appointments/stats", get(appointment_stats))
 }
 
 const SELECT_COLUMNS: &str = "id, appointment_no, purchase_order_id, purchase_order_no, supplier_id, supplier_name, delivery_date, delivery_time, delivery_method, vehicle_no, driver_name, driver_phone, cargo_description, total_quantity, total_weight, destination_warehouse, expected_arrival_time, actual_arrival_time, status, applicant, approver, approved_at, rejection_reason, remarks, created_by, created_at, updated_at";

@@ -115,7 +115,7 @@ pub async fn check_request_permission(
         }
     };
 
-    let secret = std::env::var("JWT_SECRET").unwrap_or_else(|_| "your-secret-key".to_string());
+    let secret = std::env::var("JWT_SECRET").expect("JWT_SECRET must be set in production");
     let claims = match verify_jwt_token(token, &secret) {
         Ok(c) => c,
         Err(_) => {

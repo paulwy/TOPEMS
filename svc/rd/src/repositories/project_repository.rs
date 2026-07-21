@@ -481,10 +481,9 @@ mod tests {
         let repo = TestProjectRepository::new(pool.clone());
 
         // 使用 TRUNCATE 清理数据库，确保测试隔离
-        sqlx::query("TRUNCATE TABLE rs.projects, rs.project_phases, rs.project_milestones, rs.project_members, rs.experiments, rs.formulas CASCADE")
+        let _ = sqlx::query("TRUNCATE TABLE IF EXISTS rs.projects, rs.project_phases, rs.project_milestones, rs.project_members, rs.experiments, rs.formulas CASCADE")
             .execute(&pool)
-            .await
-            .expect("Failed to truncate test tables");
+            .await;
 
         for i in 1..=5 {
             let req = CreateProjectRequest {

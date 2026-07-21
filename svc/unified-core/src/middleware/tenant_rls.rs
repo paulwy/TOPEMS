@@ -44,6 +44,9 @@ mod tests {
                 email: None,
                 department: None,
                 tenant_id: Some(id.to_string()),
+                department_id: None,
+                position_id: None,
+                position_code: None,
             };
             req.extensions_mut().insert(claims);
         }
@@ -91,6 +94,9 @@ mod tests {
             email: None,
             department: None,
             tenant_id: Some("claims-tenant".to_string()),
+            department_id: None,
+            position_id: None,
+            position_code: None,
         };
         req.extensions_mut().insert(claims);
 

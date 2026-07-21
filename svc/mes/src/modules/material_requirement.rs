@@ -22,25 +22,25 @@ use topems_shared::response::ApiResponse;
 pub fn create_routes() -> Router<AppState> {
     Router::new()
         .route(
-            "/api/mes/material-requirements",
+            "/material-requirements",
             get(list_material_requirements).post(create_material_requirement),
         )
         .route(
-            "/api/mes/material-requirements/{id}",
+            "/material-requirements/{id}",
             get(get_material_requirement)
                 .put(update_material_requirement)
                 .delete(delete_material_requirement),
         )
         .route(
-            "/api/mes/material-requirements/calculate",
+            "/material-requirements/calculate",
             post(calculate_requirements),
         )
         .route(
-            "/api/mes/material-requirements/{id}/confirm",
+            "/material-requirements/{id}/confirm",
             put(confirm_requirement),
         )
         .route(
-            "/api/mes/material-requirements/{id}/release",
+            "/material-requirements/{id}/release",
             put(release_requirement),
         )
 }
@@ -319,16 +319,16 @@ pub async fn get_material_requirement(
                 mrp_no: r.mrp_no,
                 order_id: r.order_id.map(|u| u.to_string()),
                 order_number: r.order_number,
-                product_code: r.product_code,
-                product_name: r.product_name,
+                product_code: r.product_code.unwrap_or_default(),
+                product_name: r.product_name.unwrap_or_default(),
                 material_code: r.material_code,
                 material_name: r.material_name,
                 specification: r.specification,
-                unit: r.unit,
+                unit: Some(r.unit),
                 required_quantity: big_decimal_to_f64_non_opt(r.required_quantity),
                 available_quantity: opt_big_decimal_to_f64(r.available_quantity),
                 shortfall_quantity: opt_big_decimal_to_f64(r.shortfall_quantity),
-                required_date: r.required_date,
+                required_date: r.required_date.map(|d| d.to_string()).unwrap_or_default(),
                 priority: r.priority,
                 status: r.status.unwrap_or_else(|| "pending".to_string()),
                 source_type: r.source_type,
@@ -366,7 +366,9 @@ pub async fn create_material_requirement(
     let required_quantity =
         BigDecimal::from_str(&body.required_quantity.to_string()).unwrap_or_default();
 
-    let required_date: Option<&str> = Some(&body.required_date);
+    let required_date = NaiveDateTime::parse_from_str(&body.required_date, "%Y-%m-%d")
+        .ok()
+        .or_else(|| NaiveDateTime::parse_from_str(&body.required_date, "%Y-%m-%d %H:%M:%S").ok());
 
     let result = sqlx::query!(
         r#"
@@ -403,16 +405,16 @@ pub async fn create_material_requirement(
                 mrp_no: r.mrp_no,
                 order_id: r.order_id.map(|u| u.to_string()),
                 order_number: r.order_number,
-                product_code: r.product_code,
-                product_name: r.product_name,
+                product_code: r.product_code.unwrap_or_default(),
+                product_name: r.product_name.unwrap_or_default(),
                 material_code: r.material_code,
                 material_name: r.material_name,
                 specification: r.specification,
-                unit: r.unit,
+                unit: Some(r.unit),
                 required_quantity: big_decimal_to_f64_non_opt(r.required_quantity),
                 available_quantity: opt_big_decimal_to_f64(r.available_quantity),
                 shortfall_quantity: opt_big_decimal_to_f64(r.shortfall_quantity),
-                required_date: r.required_date,
+                required_date: r.required_date.map(|d| d.to_string()).unwrap_or_default(),
                 priority: r.priority,
                 status: r.status.unwrap_or_else(|| "pending".to_string()),
                 source_type: r.source_type,
@@ -454,7 +456,11 @@ pub async fn update_material_requirement(
     let available_quantity = body
         .available_quantity
         .and_then(|v| BigDecimal::from_str(&v.to_string()).ok());
-    let required_date = body.required_date.as_deref();
+    let required_date = body.required_date.as_deref().and_then(|d| {
+        NaiveDateTime::parse_from_str(d, "%Y-%m-%d")
+            .ok()
+            .or_else(|| NaiveDateTime::parse_from_str(d, "%Y-%m-%d %H:%M:%S").ok())
+    });
 
     let result = sqlx::query!(
         r#"
@@ -489,16 +495,16 @@ pub async fn update_material_requirement(
                 mrp_no: r.mrp_no,
                 order_id: r.order_id.map(|u| u.to_string()),
                 order_number: r.order_number,
-                product_code: r.product_code,
-                product_name: r.product_name,
+                product_code: r.product_code.unwrap_or_default(),
+                product_name: r.product_name.unwrap_or_default(),
                 material_code: r.material_code,
                 material_name: r.material_name,
                 specification: r.specification,
-                unit: r.unit,
+                unit: Some(r.unit),
                 required_quantity: big_decimal_to_f64_non_opt(r.required_quantity),
                 available_quantity: opt_big_decimal_to_f64(r.available_quantity),
                 shortfall_quantity: opt_big_decimal_to_f64(r.shortfall_quantity),
-                required_date: r.required_date,
+                required_date: r.required_date.map(|d| d.to_string()).unwrap_or_default(),
                 priority: r.priority,
                 status: r.status.unwrap_or_else(|| "pending".to_string()),
                 source_type: r.source_type,
@@ -637,7 +643,7 @@ pub async fn calculate_requirements(
                     item.specification,
                     Some(item.unit),
                     required_quantity_bd,
-                    chrono::Local::now().format("%Y-%m-%d").to_string(),
+                    Some(chrono::Local::now().naive_local()),
                     Some("normal"),
                     Some("calculated"),
                     Some("calculated"),
@@ -651,16 +657,16 @@ pub async fn calculate_requirements(
                         mrp_no: r.mrp_no,
                         order_id: r.order_id.map(|u| u.to_string()),
                         order_number: r.order_number,
-                        product_code: r.product_code,
-                        product_name: r.product_name,
+                        product_code: r.product_code.unwrap_or_default(),
+                        product_name: r.product_name.unwrap_or_default(),
                         material_code: r.material_code,
                         material_name: r.material_name,
                         specification: r.specification,
-                        unit: r.unit,
+                        unit: Some(r.unit),
                         required_quantity: big_decimal_to_f64_non_opt(r.required_quantity),
                         available_quantity: opt_big_decimal_to_f64(r.available_quantity),
                         shortfall_quantity: opt_big_decimal_to_f64(r.shortfall_quantity),
-                        required_date: r.required_date,
+                        required_date: r.required_date.map(|d| d.to_string()).unwrap_or_default(),
                         priority: r.priority,
                         status: r.status.unwrap_or_else(|| "pending".to_string()),
                         source_type: r.source_type,
@@ -716,16 +722,16 @@ pub async fn confirm_requirement(
                 mrp_no: r.mrp_no,
                 order_id: r.order_id.map(|u| u.to_string()),
                 order_number: r.order_number,
-                product_code: r.product_code,
-                product_name: r.product_name,
+                product_code: r.product_code.unwrap_or_default(),
+                product_name: r.product_name.unwrap_or_default(),
                 material_code: r.material_code,
                 material_name: r.material_name,
                 specification: r.specification,
-                unit: r.unit,
+                unit: Some(r.unit),
                 required_quantity: big_decimal_to_f64_non_opt(r.required_quantity),
                 available_quantity: opt_big_decimal_to_f64(r.available_quantity),
                 shortfall_quantity: opt_big_decimal_to_f64(r.shortfall_quantity),
-                required_date: r.required_date,
+                required_date: r.required_date.map(|d| d.to_string()).unwrap_or_default(),
                 priority: r.priority,
                 status: r.status.unwrap_or_else(|| "pending".to_string()),
                 source_type: r.source_type,
@@ -780,16 +786,16 @@ pub async fn release_requirement(
                 mrp_no: r.mrp_no,
                 order_id: r.order_id.map(|u| u.to_string()),
                 order_number: r.order_number,
-                product_code: r.product_code,
-                product_name: r.product_name,
+                product_code: r.product_code.unwrap_or_default(),
+                product_name: r.product_name.unwrap_or_default(),
                 material_code: r.material_code,
                 material_name: r.material_name,
                 specification: r.specification,
-                unit: r.unit,
+                unit: Some(r.unit),
                 required_quantity: big_decimal_to_f64_non_opt(r.required_quantity),
                 available_quantity: opt_big_decimal_to_f64(r.available_quantity),
                 shortfall_quantity: opt_big_decimal_to_f64(r.shortfall_quantity),
-                required_date: r.required_date,
+                required_date: r.required_date.map(|d| d.to_string()).unwrap_or_default(),
                 priority: r.priority,
                 status: r.status.unwrap_or_else(|| "pending".to_string()),
                 source_type: r.source_type,

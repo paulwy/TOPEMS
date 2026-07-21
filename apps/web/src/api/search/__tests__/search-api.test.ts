@@ -52,7 +52,7 @@ describe('searchApi.globalSearch', () => {
 
     const result = await searchApi.globalSearch('test', 10);
 
-    expect(apiClient.core.get).toHaveBeenCalledWith('/api/core/search/global', {
+    expect(apiClient.core.get).toHaveBeenCalledWith('/search/v1', {
       params: { query: 'test', limit: 10 },
       signal: undefined,
     });
@@ -73,7 +73,7 @@ describe('searchApi.globalSearch', () => {
     const controller = new AbortController();
     await searchApi.globalSearch('test', 10, controller.signal);
 
-    expect(apiClient.core.get).toHaveBeenCalledWith('/api/core/search/global', {
+    expect(apiClient.core.get).toHaveBeenCalledWith('/search/v1', {
       params: { query: 'test', limit: 10 },
       signal: controller.signal,
     });
@@ -82,7 +82,7 @@ describe('searchApi.globalSearch', () => {
   it('should use default limit of 20', async () => {
     await searchApi.globalSearch('test');
 
-    expect(apiClient.core.get).toHaveBeenCalledWith('/api/core/search/global', {
+    expect(apiClient.core.get).toHaveBeenCalledWith('/search/v1', {
       params: { query: 'test', limit: 20 },
       signal: undefined,
     });

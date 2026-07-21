@@ -24,42 +24,39 @@ fn get_tenant_id(claims: &Claims, headers: &HeaderMap) -> Uuid {
 
 pub fn create_routes() -> Router<AppState> {
     Router::new()
+        .route("/training", get(list_trainings).post(create_training))
         .route(
-            "/api/ehs/training",
-            get(list_trainings).post(create_training),
-        )
-        .route(
-            "/api/ehs/training/{id}",
+            "/training/{id}",
             get(get_training)
                 .put(update_training)
                 .delete(delete_training),
         )
         .route(
-            "/api/ehs/training/plans",
+            "/training/plans",
             get(list_training_plans).post(create_training_plan),
         )
         .route(
-            "/api/ehs/training/plans/{id}",
+            "/training/plans/{id}",
             get(get_training_plan)
                 .put(update_training_plan)
                 .delete(delete_training_plan),
         )
         .route(
-            "/api/ehs/training/records",
+            "/training/records",
             get(list_training_records).post(create_training_record),
         )
         .route(
-            "/api/ehs/training/records/{id}",
+            "/training/records/{id}",
             get(get_training_record)
                 .put(update_training_record)
                 .delete(delete_training_record),
         )
         .route(
-            "/api/ehs/training/certificates",
+            "/training/certificates",
             get(list_certificates).post(create_certificate),
         )
         .route(
-            "/api/ehs/training/certificates/{id}",
+            "/training/certificates/{id}",
             get(get_certificate)
                 .put(update_certificate)
                 .delete(delete_certificate),

@@ -111,11 +111,11 @@ export const SERVICES: ServiceConfig[] = [
   {
     code: 'report',
     name: '报表',
-    devPath: '/report/api',
-    healthPath: '/report/health',
+    devPath: '/bi/api',
+    healthPath: '/bi/health',
     core: false,
     plugin: true,
-    envVar: 'VITE_REPORT_URL',
+    envVar: 'VITE_BI_URL',
   },
   {
     code: 'ai',

@@ -338,7 +338,7 @@ pub async fn export_chart(
         "data": {
             "widgetId": widget_id,
             "format": req.format,
-            "url": "/api/bi/download/placeholder"
+            "url": "/download/placeholder"
         }
     }))
 }

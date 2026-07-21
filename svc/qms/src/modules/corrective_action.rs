@@ -378,11 +378,11 @@ pub async fn delete_action(
 
 pub fn create_routes() -> Router<crate::AppState> {
     Router::new()
-        .route("/api/qms/actions", get(list_actions))
-        .route("/api/qms/actions", post(create_action))
-        .route("/api/qms/actions/{id}", get(get_action))
-        .route("/api/qms/actions/{id}", put(update_action))
-        .route("/api/qms/actions/{id}", delete(delete_action))
-        .route("/api/qms/actions/{id}/complete", post(complete_action))
-        .route("/api/qms/actions/{id}/items", get(get_action_items))
+        .route("/actions", get(list_actions))
+        .route("/actions", post(create_action))
+        .route("/actions/{id}", get(get_action))
+        .route("/actions/{id}", put(update_action))
+        .route("/actions/{id}", delete(delete_action))
+        .route("/actions/{id}/complete", post(complete_action))
+        .route("/actions/{id}/items", get(get_action_items))
 }

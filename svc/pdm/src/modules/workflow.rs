@@ -28,26 +28,17 @@ fn get_tenant_id(claims: &Claims, headers: &axum::http::HeaderMap) -> Uuid {
 
 pub fn create_routes() -> Router<AppState> {
     Router::new()
+        .route("/workflows", get(list_workflows).post(create_workflow))
         .route(
-            "/api/pdm/workflows",
-            get(list_workflows).post(create_workflow),
-        )
-        .route(
-            "/api/pdm/workflows/{id}",
+            "/workflows/{id}",
             get(get_workflow)
                 .put(update_workflow)
                 .delete(delete_workflow),
         )
-        .route("/api/pdm/workflows/start", post(start_workflow))
-        .route("/api/pdm/workflow-instances", get(list_workflow_instances))
-        .route(
-            "/api/pdm/workflow-instances/{id}",
-            get(get_workflow_instance),
-        )
-        .route(
-            "/api/pdm/workflow-instances/{id}/advance",
-            post(advance_workflow),
-        )
+        .route("/workflows/start", post(start_workflow))
+        .route("/workflow-instances", get(list_workflow_instances))
+        .route("/workflow-instances/{id}", get(get_workflow_instance))
+        .route("/workflow-instances/{id}/advance", post(advance_workflow))
 }
 
 #[derive(Debug, Serialize, Deserialize, FromRow)]

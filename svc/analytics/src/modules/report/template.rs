@@ -14,12 +14,9 @@ use crate::shared::AppState;
 
 pub fn create_routes() -> Router<AppState> {
     Router::new()
+        .route("/templates", get(list_templates).post(create_template))
         .route(
-            "/api/report/templates",
-            get(list_templates).post(create_template),
-        )
-        .route(
-            "/api/report/templates/{id}",
+            "/templates/{id}",
             get(get_template)
                 .put(update_template)
                 .delete(delete_template),
