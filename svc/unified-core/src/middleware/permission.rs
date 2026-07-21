@@ -561,6 +561,9 @@ mod tests {
             email: Some("test@test.com".to_string()),
             department: None,
             tenant_id: None,
+            department_id: None,
+            position_id: None,
+            position_code: None,
         }
     }
 

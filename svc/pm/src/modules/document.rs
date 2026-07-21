@@ -17,25 +17,25 @@ use crate::models::document::{
 pub fn create_routes(pool: PgPool) -> Router {
     Router::new()
         .route(
-            "/api/pm/projects/{project_id}/documents",
+            "/projects/{project_id}/documents",
             get(get_project_documents).post(create_document),
         )
         .route(
-            "/api/pm/documents/{id}",
+            "/documents/{id}",
             get(get_document)
                 .put(update_document)
                 .delete(delete_document),
         )
         .route(
-            "/api/pm/documents/{id}/versions",
+            "/documents/{id}/versions",
             get(get_document_versions).post(create_document_version),
         )
         .route(
-            "/api/pm/projects/{project_id}/folders",
+            "/projects/{project_id}/folders",
             get(get_project_folders).post(create_folder),
         )
         .route(
-            "/api/pm/folders/{id}",
+            "/folders/{id}",
             get(get_folder).put(update_folder).delete(delete_folder),
         )
         .with_state(pool)

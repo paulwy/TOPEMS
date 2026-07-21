@@ -12,32 +12,23 @@ use crate::shared::AppState;
 
 pub fn create_routes() -> Router<AppState> {
     Router::new()
+        .route("/test-methods", get(list_methods).post(create_method))
         .route(
-            "/api/lims/test-methods",
-            get(list_methods).post(create_method),
-        )
-        .route(
-            "/api/lims/test-methods/{id}",
+            "/test-methods/{id}",
             get(get_method).put(update_method).delete(delete_method),
         )
+        .route("/test-methods/{id}/versions", get(list_method_versions))
+        .route("/test-methods/{id}/new-version", post(create_new_version))
         .route(
-            "/api/lims/test-methods/{id}/versions",
-            get(list_method_versions),
-        )
-        .route(
-            "/api/lims/test-methods/{id}/new-version",
-            post(create_new_version),
-        )
-        .route(
-            "/api/lims/method-categories",
+            "/method-categories",
             get(list_categories).post(create_category),
         )
         .route(
-            "/api/lims/method-categories/{id}",
+            "/method-categories/{id}",
             put(update_category).delete(delete_category),
         )
         .route(
-            "/api/lims/method-validations",
+            "/method-validations",
             get(list_validations).post(create_validation),
         )
 }

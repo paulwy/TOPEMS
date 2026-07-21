@@ -22,25 +22,25 @@ use topems_shared::response::ApiResponse;
 pub fn create_routes() -> Router<AppState> {
     Router::new()
         .route(
-            "/api/mes/process-routes",
+            "/process-routes",
             get(list_process_routes).post(create_process_route),
         )
         .route(
-            "/api/mes/process-routes/{id}",
+            "/process-routes/{id}",
             get(get_process_route)
                 .put(update_process_route)
                 .delete(delete_process_route),
         )
         .route(
-            "/api/mes/process-routes/{id}/steps",
+            "/process-routes/{id}/steps",
             get(get_route_steps).post(add_route_step),
         )
         .route(
-            "/api/mes/process-routes/{id}/steps/reorder",
+            "/process-routes/{id}/steps/reorder",
             put(reorder_route_steps),
         )
         .route(
-            "/api/mes/process-routes/{id}/steps/{step_id}",
+            "/process-routes/{id}/steps/{step_id}",
             put(update_route_step).delete(remove_route_step),
         )
 }
@@ -535,8 +535,8 @@ pub async fn get_route_steps(
                 .into_iter()
                 .map(|s| ProcessRouteStepResponse {
                     id: s.id.to_string(),
-                    route_id: s.route_id.to_string(),
-                    process_id: s.process_id.to_string(),
+                    route_id: s.route_id.map(|u| u.to_string()).unwrap_or_default(),
+                    process_id: s.process_id.map(|u| u.to_string()).unwrap_or_default(),
                     process_name: s.process_name,
                     process_code: s.process_code,
                     sequence: s.sequence,
@@ -634,8 +634,8 @@ pub async fn add_route_step(
             Json(ApiResponse::success(
                 ProcessRouteStepResponse {
                     id: s.id.to_string(),
-                    route_id: s.route_id.to_string(),
-                    process_id: s.process_id.to_string(),
+                    route_id: s.route_id.map(|u| u.to_string()).unwrap_or_default(),
+                    process_id: s.process_id.map(|u| u.to_string()).unwrap_or_default(),
                     process_name,
                     process_code,
                     sequence: s.sequence,
@@ -723,8 +723,8 @@ pub async fn update_route_step(
             Json(ApiResponse::success(
                 ProcessRouteStepResponse {
                     id: s.id.to_string(),
-                    route_id: s.route_id.to_string(),
-                    process_id: s.process_id.to_string(),
+                    route_id: s.route_id.map(|u| u.to_string()).unwrap_or_default(),
+                    process_id: s.process_id.map(|u| u.to_string()).unwrap_or_default(),
                     process_name,
                     process_code,
                     sequence: s.sequence,
@@ -864,8 +864,8 @@ pub async fn reorder_route_steps(
                 .into_iter()
                 .map(|s| ProcessRouteStepResponse {
                     id: s.id.to_string(),
-                    route_id: s.route_id.to_string(),
-                    process_id: s.process_id.to_string(),
+                    route_id: s.route_id.map(|u| u.to_string()).unwrap_or_default(),
+                    process_id: s.process_id.map(|u| u.to_string()).unwrap_or_default(),
                     process_name: s.process_name,
                     process_code: s.process_code,
                     sequence: s.sequence,

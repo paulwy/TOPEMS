@@ -987,7 +987,7 @@ const InboundPage: React.FC = () => {
                         };
                         setReceiveItems(newReceiveItems);
                       }}
-                      slotProps={{ input: { min: 0 } } as const}
+                      slotProps={{ htmlInput: { min: 0 } }}
                     />
                   </Box>
                 ))}

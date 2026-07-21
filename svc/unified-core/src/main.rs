@@ -31,10 +31,9 @@ use sqlx::PgPool;
 
 use topems_shared::init_service_telemetry;
 use topems_shared::{
-    create_cors_layer, wrap_group1_router, AuditLoggerConfig, AuditLoggerMiddleware, AuthState,
-    BodyLimitConfig, BodyLimitMiddleware, CompressionConfig, CompressionMiddleware,
-    Group1CompatConfig, SecurityHeadersConfig, SecurityHeadersLayer, SimpleHealthConfig,
-    TelemetryExt,
+    create_cors_layer, AuditLoggerConfig, AuditLoggerMiddleware, AuthState, BodyLimitConfig,
+    BodyLimitMiddleware, CompressionConfig, CompressionMiddleware, SecurityHeadersConfig,
+    SecurityHeadersLayer, SimpleHealthConfig, TelemetryExt,
 };
 
 pub use shared::*;
@@ -330,43 +329,6 @@ async fn main() {
         .layer(cors)
         .layer(prometheus_layer)
         .with_state(state);
-
-    let group1_cfg = Group1CompatConfig {
-        modules: &[
-            "iam",
-            "flow",
-            "file",
-            "mail",
-            "im",
-            "notification",
-            "master",
-            "migration",
-            "comm",
-            "plugin",
-            "dict",
-            "tenant",
-            "billing",
-            "sync",
-            "help",
-            "menu",
-            "login_log",
-        ],
-        shortcuts: &[
-            ("auth", "iam", "auth"),
-            ("users", "iam", "users"),
-            ("roles", "iam", "roles"),
-            ("permissions", "iam", "permissions"),
-            ("logout", "iam", "auth/logout"),
-            ("sessions", "iam", "auth/sessions"),
-            ("security-settings", "iam", "security-settings"),
-            ("password-policy", "iam", "password-policy"),
-            ("reset-password", "iam", "auth/reset-password"),
-            ("forgot-password", "iam", "auth/forgot-password"),
-            ("set-new-password", "iam", "auth/set-new-password"),
-            ("health", "iam", "health"),
-        ],
-    };
-    let app = wrap_group1_router(app, group1_cfg);
 
     let port = std::env::var("CORE_PORT")
         .unwrap_or_else(|_| "8000".to_string())

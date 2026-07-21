@@ -65,24 +65,18 @@ where
     ApiState: FromRef<S>,
 {
     Router::new()
+        .route("/wave-picks", get(list_wave_picks).post(create_wave_pick))
         .route(
-            "/api/wms/wave-picks",
-            get(list_wave_picks).post(create_wave_pick),
-        )
-        .route(
-            "/api/wms/wave-picks/{id}",
+            "/wave-picks/{id}",
             get(get_wave_pick)
                 .put(update_wave_pick)
                 .delete(delete_wave_pick),
         )
-        .route("/api/wms/wave-picks/{id}/items", get(list_wave_pick_items))
-        .route("/api/wms/wave-picks/{id}/assign", post(assign_wave_pick))
-        .route("/api/wms/wave-picks/{id}/start", post(start_wave_pick))
-        .route(
-            "/api/wms/wave-picks/{id}/complete",
-            post(complete_wave_pick),
-        )
-        .route("/api/wms/wave-picks/{id}/cancel", post(cancel_wave_pick))
+        .route("/wave-picks/{id}/items", get(list_wave_pick_items))
+        .route("/wave-picks/{id}/assign", post(assign_wave_pick))
+        .route("/wave-picks/{id}/start", post(start_wave_pick))
+        .route("/wave-picks/{id}/complete", post(complete_wave_pick))
+        .route("/wave-picks/{id}/cancel", post(cancel_wave_pick))
 }
 
 pub async fn list_wave_picks(

@@ -1,6 +1,6 @@
 use chrono::{DateTime, Utc};
 use serde::{Deserialize, Serialize};
-use sqlx::FromRow;
+use sqlx::{types::Decimal, FromRow};
 use utoipa::ToSchema;
 use uuid::Uuid;
 
@@ -345,16 +345,18 @@ pub struct UpdateExpenseRequest {
 #[derive(Debug, Clone, FromRow, Serialize, Deserialize, ToSchema)]
 pub struct Budget {
     pub id: Uuid,
+    pub organization_id: Option<Uuid>,
     pub department_id: Option<Uuid>,
     pub budget_type: Option<String>,
     pub fiscal_year: String,
-    pub total_budget: f64,
-    pub used_amount: f64,
-    pub remaining_amount: f64,
-    pub usage_rate: f64,
+    pub total_budget: Decimal,
+    pub used_amount: Decimal,
+    pub remaining_amount: Decimal,
+    pub usage_rate: Decimal,
     pub status: String,
     pub created_at: DateTime<Utc>,
     pub updated_at: DateTime<Utc>,
+    pub deleted_at: Option<DateTime<Utc>>,
 }
 
 #[derive(Debug, Clone, Deserialize, Serialize, ToSchema)]
@@ -363,7 +365,7 @@ pub struct CreateBudgetRequest {
     pub department_id: Option<Uuid>,
     pub budget_type: Option<String>,
     pub fiscal_year: String,
-    pub total_budget: f64,
+    pub total_budget: Decimal,
 }
 
 #[derive(Debug, Clone, Deserialize, Serialize, ToSchema)]
@@ -372,8 +374,8 @@ pub struct UpdateBudgetRequest {
     pub department_id: Option<Uuid>,
     pub budget_type: Option<String>,
     pub fiscal_year: Option<String>,
-    pub total_budget: Option<f64>,
-    pub used_amount: Option<f64>,
+    pub total_budget: Option<Decimal>,
+    pub used_amount: Option<Decimal>,
     pub status: Option<String>,
 }
 

@@ -50,6 +50,7 @@ import {
   useReactTable,
   getSortedRowModel,
   getFilteredRowModel,
+  type Cell,
   type ColumnDef,
   type Row,
   type SortingState,
@@ -194,7 +195,7 @@ function DataTableVirtualRow({
             </IconButton>
           </TableCell>
         )}
-        {row.getVisibleCells().map((cell) => (
+        {row.getVisibleCells().map((cell: Cell<any, any>) => (
           <TableCell
             key={cell.id}
             sx={{
@@ -1153,7 +1154,7 @@ export function DataTable<TData, TValue>({
                                 </IconButton>
                               </TableCell>
                             )}
-                            {row.getVisibleCells().map((cell) => (
+                            {row.getVisibleCells().map((cell: Cell<any, any>) => (
                               <TableCell
                                 key={cell.id}
                                 sx={{

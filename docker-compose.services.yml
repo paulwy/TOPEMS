@@ -87,15 +87,15 @@ services:
     image: topems/ai:latest
     container_name: topems-ai
     ports:
-      - "8064:8064"
+      - "8064:8013"
     environment:
-      - AI_PORT=8064
+      - AI_PORT=8013
       - RUST_LOG=info
       - DATABASE_URL=postgres://topems:topems_secret@postgres:5432/topems
     depends_on:
       - postgres
     healthcheck:
-      test: ["CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://localhost:8064/health"]
+      test: ["CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://localhost:8013/health"]
       interval: 30s
       timeout: 3s
       retries: 3
@@ -362,25 +362,7 @@ services:
     networks:
       - topems-network
 
-  # Report Service
-  report:
-    image: topems/report:latest
-    container_name: topems-report
-    ports:
-      - "8061:8061"
-    environment:
-      - REPORT_PORT=8061
-      - RUST_LOG=info
-      - DATABASE_URL=postgres://topems:topems_secret@postgres:5432/topems
-    depends_on:
-      - postgres
-    healthcheck:
-      test: ["CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://localhost:8061/health"]
-      interval: 30s
-      timeout: 3s
-      retries: 3
-    networks:
-      - topems-network
+  
 
   # Monitor Service
   monitor:

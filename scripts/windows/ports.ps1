@@ -55,7 +55,7 @@ $script:GIS_PORT = 8071
 $script:BI_PORT = 8060
 $script:REPORT_PORT = 8061
 $script:MONITOR_PORT = 8062
-$script:AI_PORT = 8064
+$script:AI_PORT = 8013
 
 # ================================================
 # 扩展服务 (8070-8079)

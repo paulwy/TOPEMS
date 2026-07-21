@@ -1298,38 +1298,32 @@ pub async fn process_apqp_approval(
 
 pub fn create_routes() -> Router<crate::AppState> {
     Router::new()
-        .route("/api/qms/apqp/projects", get(list_apqp_projects))
-        .route("/api/qms/apqp/projects", post(create_apqp_project))
-        .route("/api/qms/apqp/projects/{id}", get(get_apqp_project))
-        .route("/api/qms/apqp/projects/{id}", put(update_apqp_project))
-        .route("/api/qms/apqp/projects/{id}", delete(delete_apqp_project))
+        .route("/apqp/projects", get(list_apqp_projects))
+        .route("/apqp/projects", post(create_apqp_project))
+        .route("/apqp/projects/{id}", get(get_apqp_project))
+        .route("/apqp/projects/{id}", put(update_apqp_project))
+        .route("/apqp/projects/{id}", delete(delete_apqp_project))
         .route(
-            "/api/qms/apqp/projects/{id}/transition",
+            "/apqp/projects/{id}/transition",
             post(transition_project_status),
         )
-        .route(
-            "/api/qms/apqp/projects/{id}/progress",
-            get(get_apqp_progress),
-        )
-        .route("/api/qms/apqp/phases", get(list_apqp_phases))
-        .route("/api/qms/apqp/phases", post(create_apqp_phase))
-        .route("/api/qms/apqp/phases/{id}", get(get_apqp_phase))
-        .route("/api/qms/apqp/phases/{id}", put(update_apqp_phase))
-        .route("/api/qms/apqp/phases/{id}", delete(delete_apqp_phase))
-        .route("/api/qms/apqp/tasks", get(list_apqp_tasks))
-        .route("/api/qms/apqp/tasks", post(create_apqp_task))
-        .route("/api/qms/apqp/tasks/{id}", get(get_apqp_task))
-        .route("/api/qms/apqp/tasks/{id}", put(update_apqp_task))
-        .route("/api/qms/apqp/tasks/{id}", delete(delete_apqp_task))
-        .route("/api/qms/apqp/risks", get(list_apqp_risks))
-        .route("/api/qms/apqp/risks", post(create_apqp_risk))
-        .route("/api/qms/apqp/risks/{id}", get(get_apqp_risk))
-        .route("/api/qms/apqp/risks/{id}", put(update_apqp_risk))
-        .route("/api/qms/apqp/risks/{id}", delete(delete_apqp_risk))
-        .route("/api/qms/apqp/approvals", get(list_apqp_approvals))
-        .route("/api/qms/apqp/approvals", post(create_apqp_approval))
-        .route(
-            "/api/qms/apqp/approvals/{id}/process",
-            post(process_apqp_approval),
-        )
+        .route("/apqp/projects/{id}/progress", get(get_apqp_progress))
+        .route("/apqp/phases", get(list_apqp_phases))
+        .route("/apqp/phases", post(create_apqp_phase))
+        .route("/apqp/phases/{id}", get(get_apqp_phase))
+        .route("/apqp/phases/{id}", put(update_apqp_phase))
+        .route("/apqp/phases/{id}", delete(delete_apqp_phase))
+        .route("/apqp/tasks", get(list_apqp_tasks))
+        .route("/apqp/tasks", post(create_apqp_task))
+        .route("/apqp/tasks/{id}", get(get_apqp_task))
+        .route("/apqp/tasks/{id}", put(update_apqp_task))
+        .route("/apqp/tasks/{id}", delete(delete_apqp_task))
+        .route("/apqp/risks", get(list_apqp_risks))
+        .route("/apqp/risks", post(create_apqp_risk))
+        .route("/apqp/risks/{id}", get(get_apqp_risk))
+        .route("/apqp/risks/{id}", put(update_apqp_risk))
+        .route("/apqp/risks/{id}", delete(delete_apqp_risk))
+        .route("/apqp/approvals", get(list_apqp_approvals))
+        .route("/apqp/approvals", post(create_apqp_approval))
+        .route("/apqp/approvals/{id}/process", post(process_apqp_approval))
 }

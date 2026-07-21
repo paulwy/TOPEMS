@@ -17,8 +17,7 @@ use std::time::Instant;
 use topems_shared::{
     auth_middleware, check_http_health, config::enhanced::DatabaseConfig, create_api_info_router,
     create_cors_layer, create_database_pool, init_telemetry, rls_middleware, telemetry_middleware,
-    wrap_group2_router, ApiResponse, AuthState, Config, DependencyHealth, HealthStatus,
-    RouteCompatConfig, ServiceHealth, SystemMetrics,
+    ApiResponse, AuthState, Config, DependencyHealth, HealthStatus, ServiceHealth, SystemMetrics,
 };
 use utoipa::OpenApi;
 
@@ -88,7 +87,6 @@ async fn main() -> topems_shared::Result<()> {
     let public_routes: Router<modules::ApiState> = Router::new()
         .route("/health", get(health_check))
         .route("/health/detailed", get(health_check_detailed))
-        .route("/metrics", get(get_metrics))
         .route("/api-docs/openapi.json", get(serve_openapi_json))
         .route(
             "/metrics",
@@ -121,9 +119,6 @@ async fn main() -> topems_shared::Result<()> {
         .layer(axum::middleware::from_fn(telemetry_middleware))
         .layer(prometheus_layer)
         .layer(create_cors_layer());
-
-    let cfg = RouteCompatConfig::new("rd", "/api/rd", &[]);
-    let app = wrap_group2_router(app, cfg);
 
     let core_url = env::var("CORE_URL").ok();
     tokio::spawn(async move {

@@ -39,64 +39,55 @@ where
     ApiState: FromRef<S>,
 {
     Router::new()
+        .route("/smart-replenishment/suggestions", get(list_suggestions))
         .route(
-            "/api/wms/smart-replenishment/suggestions",
-            get(list_suggestions),
-        )
-        .route(
-            "/api/wms/smart-replenishment/suggestions/generate",
+            "/smart-replenishment/suggestions/generate",
             post(compute_replenishment),
         )
         .route(
-            "/api/wms/smart-replenishment/suggestions/{id}",
+            "/smart-replenishment/suggestions/{id}",
             get(get_suggestion).post(confirm_suggestion),
         )
         .route(
-            "/api/wms/smart-replenishment/rules",
+            "/smart-replenishment/rules",
             get(list_rules).post(create_rule),
         )
         .route(
-            "/api/wms/smart-replenishment/rules/{id}",
+            "/smart-replenishment/rules/{id}",
             get(get_rule).put(update_rule).delete(delete_rule),
         )
+        .route("/smart-replenishment/statistics", get(get_statistics))
         .route(
-            "/api/wms/smart-replenishment/statistics",
-            get(get_statistics),
-        )
-        .route(
-            "/api/wms/smart-replenishment/orders",
+            "/smart-replenishment/orders",
             get(list_orders).post(create_order),
         )
         .route(
-            "/api/wms/smart-replenishment/orders/{id}",
+            "/smart-replenishment/orders/{id}",
             get(get_order).put(update_order).delete(delete_order),
         )
         .route(
-            "/api/wms/smart-replenishment/orders/{id}/items",
+            "/smart-replenishment/orders/{id}/items",
             get(list_order_items),
         )
         .route(
-            "/api/wms/smart-replenishment/orders/{id}/confirm",
+            "/smart-replenishment/orders/{id}/confirm",
             post(confirm_order),
         )
         .route(
-            "/api/wms/smart-replenishment/orders/{id}/complete",
+            "/smart-replenishment/orders/{id}/complete",
             post(complete_order),
         )
+        .route("/smart-replenishment/safety-stock", get(list_safety_stock))
         .route(
-            "/api/wms/smart-replenishment/safety-stock",
-            get(list_safety_stock),
-        )
-        .route(
-            "/api/wms/smart-replenishment/safety-stock/{id}",
+            "/smart-replenishment/safety-stock/{id}",
             get(get_safety_stock).put(update_safety_stock),
         )
         .route(
-            "/api/wms/smart-replenishment/safety-stock/batch-update",
+            "/smart-replenishment/safety-stock/batch-update",
             post(batch_update_safety_stock),
         )
         .route(
-            "/api/wms/smart-replenishment/safety-stock/calculate",
+            "/smart-replenishment/safety-stock/calculate",
             post(calculate_safety_stock),
         )
 }

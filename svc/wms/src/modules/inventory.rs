@@ -62,30 +62,18 @@ where
     ApiState: FromRef<S>,
 {
     Router::new()
+        .route("/inventory", get(list_inventory).post(create_inventory))
+        .route("/inventory/low-stock", get(list_low_stock_inventory))
         .route(
-            "/api/wms/inventory",
-            get(list_inventory).post(create_inventory),
-        )
-        .route(
-            "/api/wms/inventory/low-stock",
-            get(list_low_stock_inventory),
-        )
-        .route(
-            "/api/wms/inventory/warehouse/{warehouse_id}",
+            "/inventory/warehouse/{warehouse_id}",
             get(list_inventory_by_warehouse),
         )
+        .route("/inventory/statistics", get(get_inventory_statistics))
+        .route("/inventory/abc-analysis", get(get_abc_analysis))
+        .route("/inventory/turnover", get(get_turnover))
+        .route("/inventory/value-by-warehouse", get(get_value_by_warehouse))
         .route(
-            "/api/wms/inventory/statistics",
-            get(get_inventory_statistics),
-        )
-        .route("/api/wms/inventory/abc-analysis", get(get_abc_analysis))
-        .route("/api/wms/inventory/turnover", get(get_turnover))
-        .route(
-            "/api/wms/inventory/value-by-warehouse",
-            get(get_value_by_warehouse),
-        )
-        .route(
-            "/api/wms/inventory/{id}",
+            "/inventory/{id}",
             get(get_inventory)
                 .put(update_inventory)
                 .delete(delete_inventory),

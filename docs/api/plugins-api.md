@@ -60,7 +60,7 @@ TOPEMS 采用插件化架构，所有业务模块作为独立插件运行，通�
 | Report | 8061 | /api/report/* | ✅ 业务插件 | 报表服务 | - |
 | Monitor | 8062 | /api/monitor/* | ✅ 业务插件 | 监控告警 | - |
 | Portal | 8063 | /api/portal/* | ✅ 业务插件 | 企业门户 | - |
-| AI | 8064 | /api/ai/* | ✅ 业务插件 | AI 智能服务 | - |
+| AI | 8013 AI 智能服务 | - |
 | Mobile | 8070 | /api/mobile/* | ✅ 业务插件 | 移动端服务 | - |
 | GIS | 8071 | /api/gis/* | ✅ 业务插件 | 地理信息服务 | mes |
 | Integration | 8072 | /api/integration/* | ✅ 业务插件 | 系统集成 | - |

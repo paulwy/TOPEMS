@@ -588,35 +588,20 @@ pub async fn get_eightd_audit_logs(
 
 pub fn create_routes() -> Router<crate::AppState> {
     Router::new()
-        .route("/api/qms/eightd", get(list_eightd_reports))
-        .route("/api/qms/eightd", post(create_eightd_report))
-        .route("/api/qms/eightd/{id}", get(get_eightd_report))
-        .route("/api/qms/eightd/{id}", put(update_eightd_report))
-        .route("/api/qms/eightd/{id}", delete(delete_eightd_report))
-        .route("/api/qms/eightd/{id}/d1-team", post(update_d1_team))
+        .route("/eightd", get(list_eightd_reports))
+        .route("/eightd", post(create_eightd_report))
+        .route("/eightd/{id}", get(get_eightd_report))
+        .route("/eightd/{id}", put(update_eightd_report))
+        .route("/eightd/{id}", delete(delete_eightd_report))
+        .route("/eightd/{id}/d1-team", post(update_d1_team))
+        .route("/eightd/{id}/d3-containment", post(submit_d3_containment))
+        .route("/eightd/{id}/d4-root-cause", post(submit_d4_root_cause))
         .route(
-            "/api/qms/eightd/{id}/d3-containment",
-            post(submit_d3_containment),
-        )
-        .route(
-            "/api/qms/eightd/{id}/d4-root-cause",
-            post(submit_d4_root_cause),
-        )
-        .route(
-            "/api/qms/eightd/{id}/d5-permanent-action",
+            "/eightd/{id}/d5-permanent-action",
             post(submit_d5_permanent_action),
         )
-        .route(
-            "/api/qms/eightd/{id}/d6-verify",
-            post(verify_d6_effectiveness),
-        )
-        .route(
-            "/api/qms/eightd/{id}/d7-preventive",
-            post(submit_d7_preventive),
-        )
-        .route("/api/qms/eightd/{id}/close", post(close_eightd_report))
-        .route(
-            "/api/qms/eightd/{id}/audit-logs",
-            get(get_eightd_audit_logs),
-        )
+        .route("/eightd/{id}/d6-verify", post(verify_d6_effectiveness))
+        .route("/eightd/{id}/d7-preventive", post(submit_d7_preventive))
+        .route("/eightd/{id}/close", post(close_eightd_report))
+        .route("/eightd/{id}/audit-logs", get(get_eightd_audit_logs))
 }

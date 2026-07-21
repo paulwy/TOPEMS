@@ -181,7 +181,7 @@ pnpm dev:core
 curl http://localhost:8000/health
 
 # AI 服务（如已启动）
-curl http://localhost:8064/health
+curl http://localhost:8013/health
 
 # HRM 服务（如已启动）
 curl http://localhost:8020/health
@@ -326,7 +326,7 @@ A: 清理端口后重试：
 
 ```bash
 # 清理所有 TOPEMS 端口
-for port in 3000 3001 8000 8010 8020 8023 8029 8030 8031 8040 8041 8042 8050 8051 8052 8053 8060 8061 8062 8063 8064 8070 8071 8072; do
+for port in 3000 3001 8000 8010 8011 8012 8013 8020 8023 8029 8030 8031 8040 8041 8042 8050 8051 8052 8053 8060 8061 8062 8063 8070 8071 8072; do
   lsof -ti:$port 2>/dev/null | xargs kill -9 2>/dev/null
 done
 

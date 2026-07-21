@@ -167,7 +167,7 @@ const withRetry = async <T>(
 export const monitorApi = {
   getSystemMetrics: async (): Promise<ApiResponse<SystemMetrics>> => {
     return withRetry(
-      () => apiClient.master.get<SystemMetrics>('/monitor/metrics/system'),
+      () => apiClient.monitor.get<SystemMetrics>('/metrics/system'),
       DEFAULT_RETRY_CONFIG,
       'getSystemMetrics'
     );
@@ -175,7 +175,7 @@ export const monitorApi = {
 
   getServiceHealth: async (): Promise<ApiResponse<ServiceHealth[]>> => {
     return withRetry(
-      () => apiClient.master.get<ServiceHealth[]>('/monitor/health'),
+      () => apiClient.monitor.get<ServiceHealth[]>('/health'),
       DEFAULT_RETRY_CONFIG,
       'getServiceHealth'
     );
@@ -183,7 +183,7 @@ export const monitorApi = {
 
   getApiPerformance: async (): Promise<ApiResponse<ApiPerformance[]>> => {
     return withRetry(
-      () => apiClient.master.get<ApiPerformance[]>('/monitor/performance/api'),
+      () => apiClient.monitor.get<ApiPerformance[]>('/performance/api'),
       DEFAULT_RETRY_CONFIG,
       'getApiPerformance'
     );
@@ -191,7 +191,7 @@ export const monitorApi = {
 
   getDatabaseMetrics: async (): Promise<ApiResponse<DatabaseMetrics>> => {
     return withRetry(
-      () => apiClient.master.get<DatabaseMetrics>('/monitor/metrics/database'),
+      () => apiClient.monitor.get<DatabaseMetrics>('/metrics/database'),
       DEFAULT_RETRY_CONFIG,
       'getDatabaseMetrics'
     );
@@ -207,7 +207,7 @@ export const monitorApi = {
 
     return withRetry(
       () =>
-        apiClient.master.get<PaginatedResponse<Alert>>(`/monitor/alerts?${queryParams.toString()}`),
+        apiClient.monitor.get<PaginatedResponse<Alert>>(`/alerts?${queryParams.toString()}`),
       DEFAULT_RETRY_CONFIG,
       'listAlerts'
     );
@@ -215,7 +215,7 @@ export const monitorApi = {
 
   getAlert: async (id: string): Promise<ApiResponse<Alert>> => {
     return withRetry(
-      () => apiClient.master.get<Alert>(`/monitor/alerts/${id}`),
+      () => apiClient.monitor.get<Alert>(`/alerts/${id}`),
       DEFAULT_RETRY_CONFIG,
       `getAlert(${id})`
     );
@@ -223,7 +223,7 @@ export const monitorApi = {
 
   acknowledgeAlert: async (id: string): Promise<ApiResponse<Alert>> => {
     return withRetry(
-      () => apiClient.master.put<Alert>(`/monitor/alerts/${id}/acknowledge`),
+      () => apiClient.monitor.put<Alert>(`/alerts/${id}/acknowledge`),
       DEFAULT_RETRY_CONFIG,
       `acknowledgeAlert(${id})`
     );
@@ -231,7 +231,7 @@ export const monitorApi = {
 
   resolveAlert: async (id: string): Promise<ApiResponse<Alert>> => {
     return withRetry(
-      () => apiClient.master.put<Alert>(`/monitor/alerts/${id}/resolve`),
+      () => apiClient.monitor.put<Alert>(`/alerts/${id}/resolve`),
       DEFAULT_RETRY_CONFIG,
       `resolveAlert(${id})`
     );
@@ -247,8 +247,8 @@ export const monitorApi = {
 
     return withRetry(
       () =>
-        apiClient.master.get<PerformanceReport>(
-          `/monitor/reports/performance?${queryParams.toString()}`
+        apiClient.monitor.get<PerformanceReport>(
+          `/reports/performance?${queryParams.toString()}`
         ),
       DEFAULT_RETRY_CONFIG,
       'getPerformanceReport'
@@ -257,19 +257,19 @@ export const monitorApi = {
 
   getRealtimeMetrics: async (): Promise<ApiResponse<SystemMetrics>> => {
     return withRetry(
-      () => apiClient.master.get<SystemMetrics>('/monitor/metrics/realtime'),
+      () => apiClient.monitor.get<SystemMetrics>('/metrics/realtime'),
       DEFAULT_RETRY_CONFIG,
       'getRealtimeMetrics'
     );
   },
 
   health: async (): Promise<ApiResponse<string>> => {
-    return apiClient.master.get<string>('/health');
+    return apiClient.monitor.get<string>('/health');
   },
 
   testRetry: async (): Promise<ApiResponse<SystemMetrics>> => {
     return withRetry(
-      () => apiClient.master.get<SystemMetrics>('/monitor/metrics/test-retry'),
+      () => apiClient.monitor.get<SystemMetrics>('/metrics/test-retry'),
       DEFAULT_RETRY_CONFIG,
       'testRetry'
     );

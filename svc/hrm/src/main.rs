@@ -19,9 +19,8 @@ use topems_shared::redis::{RedisCacheService, RedisPool as RedisPoolTrait};
 use topems_shared::{
     auth_middleware, check_http_health, config::enhanced::DatabaseConfig, config::CacheConfig,
     create_api_info_router, create_cors_layer, init_telemetry, rls_middleware,
-    telemetry_middleware, wrap_group2_router, ApiResponse, AuthState, CacheService,
-    DependencyHealth, FieldEncryptionService, HealthStatus, RouteCompatConfig, ServiceHealth,
-    SystemMetrics,
+    telemetry_middleware, ApiResponse, AuthState, CacheService, DependencyHealth,
+    FieldEncryptionService, HealthStatus, ServiceHealth, SystemMetrics,
 };
 
 #[tokio::main]
@@ -122,6 +121,7 @@ async fn build_routes() -> Result<Router> {
     let (prometheus_layer, _metric_handle) = PrometheusMetricLayer::pair();
 
     let health_router = Router::new()
+        .route("/health", get(modules::health::health_check))
         .route("/api/health/detailed", get(health_check_detailed))
         .route("/api/metrics", get(get_metrics))
         .route(
@@ -158,25 +158,6 @@ async fn build_routes() -> Result<Router> {
         .layer(axum::middleware::from_fn(telemetry_middleware))
         .layer(prometheus_layer)
         .layer(create_cors_layer());
-
-    let cfg = RouteCompatConfig::new(
-        "hrm",
-        "/api/core/hrm",
-        &[
-            ("employees", "employees"),
-            ("departments", "departments"),
-            ("contracts", "contracts"),
-            ("attendance", "attendance"),
-            ("leave", "leave"),
-            ("payroll", "payroll"),
-            ("performance", "performance"),
-            ("recruitment", "recruitment"),
-            ("training", "training"),
-            ("salary-adjustments", "salary_adjustments"),
-            ("setup", "setup"),
-        ],
-    );
-    let app = wrap_group2_router(app, cfg);
 
     let core_url = env::var("CORE_URL").ok();
     tokio::spawn(async move {

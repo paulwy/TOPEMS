@@ -56,6 +56,7 @@ lims        svc/lims               topems-lims                 8051
 ehs         svc/ehs                topems-ehs                  8052
 rd          svc/rd                 topems-rd                   8053
 bi          svc/analytics          analytics-service           8060
+report      svc/analytics          analytics-service           8061
 monitor     svc/monitor            topems-monitor              8062
 portal      svc/portal             topems-portal               8063
 mobile      svc/mobile             topems-mobile               8070
@@ -366,6 +367,14 @@ start_service() {
     local executable_name=$(get_executable_name "$service_name")
     local executable_path="$PROJECT_ROOT/target/release/${executable_name}"
     
+    if [ -n "$executable_name" ] && ps aux | grep -v grep | grep -q "$executable_name" && [ "$executable_name" != "unified-core-service" ]; then
+        local other_service=$(echo "$SERVICES_CONFIG" | grep -v "^${service_name} " | grep " ${executable_name} " | awk '{print $1}')
+        if [ -n "$other_service" ]; then
+            info "$service_name 与 $other_service 共享同一可执行文件，$other_service 已在运行，跳过 $service_name"
+            return 0
+        fi
+    fi
+    
     [ ! -f "$executable_path" ] && { warning "可执行文件不存在，开始编译..."; build_service "$service_name" || return 1; }
 
     load_env
@@ -466,6 +475,17 @@ status_service() {
             echo -e "${YELLOW}⚠️${NC} $service_name (端口 $port) 运行中 (PID: $pid) [健康检查失败]"
         fi
     else
+        local executable_name=$(get_executable_name "$service_name")
+        if [ -n "$executable_name" ] && ps aux | grep -v grep | grep -q "$executable_name" && [ "$executable_name" != "unified-core-service" ]; then
+            local provider=$(echo "$SERVICES_CONFIG" | grep -v "^${service_name} " | grep " ${executable_name} " | awk '{print $1}')
+            if [ -n "$provider" ]; then
+                local provider_port=$(get_service_port "$provider")
+                if curl -s -f "http://localhost:$provider_port/health" >/dev/null 2>&1; then
+                    echo -e "${GREEN}✅${NC} $service_name (端口 $port) 由 $provider 服务提供 [健康]"
+                    return
+                fi
+            fi
+        fi
         echo -e "${RED}❌${NC} $service_name (端口 $port) 未运行"
     fi
 }
@@ -999,50 +1019,37 @@ db_migrate() {
     local db_name=${DATABASE_NAME:-topems}
     local db_user=${DATABASE_USER:-postgres}
 
-    if command -v sqlx &> /dev/null; then
-        cd "$PROJECT_ROOT"
+    info "使用 psql 模式执行迁移文件..."
+    
+    for migrate_dir in "migrations" $(find svc -name migrations -type d); do
+        [ -d "$migrate_dir" ] || continue
         
-        info "迁移根目录 migrations..."
-        if [ -d "migrations" ]; then
-            sqlx migrate run --source migrations 2>&1 || warning "根目录迁移失败（可能已应用）"
-        fi
-
-        for service in $(get_all_services); do
-            local service_path=$(get_service_path "$service")
-            local migrate_dir="$PROJECT_ROOT/$service_path/migrations"
-            [ -d "$migrate_dir" ] || continue
-
-            info "迁移 $service 服务..."
-            sqlx migrate run --source "$migrate_dir" 2>&1 || warning "$service 迁移失败"
-        done
-
-        success "数据库迁移完成"
-    else
-        warning "sqlx-cli 未安装，使用 psql 执行迁移文件"
-        
-        for migrate_dir in "migrations" $(find svc -name migrations -type d); do
-            [ -d "$migrate_dir" ] || continue
+        info "迁移目录: $migrate_dir..."
+        for file in $(ls "$migrate_dir"/*.sql 2>/dev/null | sort); do
+            [ -f "$file" ] || continue
+            local base=$(basename "$file" .sql)
+            local version=$(echo "$base" | grep -oE '[0-9]+' | head -1)
             
-            info "迁移目录: $migrate_dir..."
-            for file in $(ls "$migrate_dir"/*.sql 2>/dev/null | sort); do
-                [ -f "$file" ] || continue
-                local base=$(basename "$file" .sql)
-                local version=$(echo "$base" | grep -oE '[0-9]+' | head -1)
-                
-                if psql -h localhost -U "$db_user" -d "$db_name" -c "SELECT version FROM _sqlx_migrations WHERE version = '$version';" 2>/dev/null | grep -q "$version"; then
-                    detail "迁移 $base 已应用，跳过"
-                    continue
-                fi
-                
-                info "执行迁移: $file..."
-                if psql -h localhost -U "$db_user" -d "$db_name" -f "$file" 2>&1; then
-                    psql -h localhost -U "$db_user" -d "$db_name" -c "INSERT INTO _sqlx_migrations (version, description, installed_on, success, checksum, execution_time) VALUES ('$version', '$base', NOW(), true, 'manual', 0);" 2>/dev/null || true
-                else
-                    warning "迁移 $file 失败"
-                fi
-            done
+            if [ -z "$version" ]; then
+                warning "迁移文件 $file 没有版本号，跳过"
+                continue
+            fi
+            
+            if psql -h localhost -U "$db_user" -d "$db_name" -c "SELECT version FROM _sqlx_migrations WHERE version = '$version';" 2>/dev/null | grep -q "$version"; then
+                detail "迁移 $base 已应用，跳过"
+                continue
+            fi
+            
+            info "执行迁移: $file..."
+            if psql -h localhost -U "$db_user" -d "$db_name" -f "$file" 2>&1; then
+                psql -h localhost -U "$db_user" -d "$db_name" -c "INSERT INTO _sqlx_migrations (version, description, installed_on, success, checksum, execution_time) VALUES ('$version', '$base', NOW(), true, 'manual', 0);" 2>/dev/null || true
+            else
+                warning "迁移 $file 失败"
+            fi
         done
-    fi
+    done
+    
+    success "数据库迁移完成"
 }
 
 # 备份数据库
@@ -1061,8 +1068,6 @@ db_backup() {
 
         if command -v docker &> /dev/null && docker ps | grep -q postgres; then
             docker exec -t topems-postgres pg_dump -U "$db_user" "$db_name" > "$backup_file" 2>/dev/null
-        else
-            pg_dump -h localhost -U "$db_user" "$db_name" > "$backup_file" 2>/dev/null
         fi
 
         if [ $? -eq 0 ] && [ -s "$backup_file" ]; then

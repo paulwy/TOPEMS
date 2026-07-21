@@ -16,23 +16,17 @@ use crate::shared::AppState;
 pub fn create_routes() -> Router<AppState> {
     Router::new()
         .route(
-            "/api/report/subscriptions",
+            "/subscriptions",
             get(list_subscriptions).post(create_subscription),
         )
         .route(
-            "/api/report/subscriptions/{id}",
+            "/subscriptions/{id}",
             get(get_subscription)
                 .put(update_subscription)
                 .delete(delete_subscription),
         )
-        .route(
-            "/api/report/subscriptions/{id}/toggle",
-            post(toggle_subscription),
-        )
-        .route(
-            "/api/report/subscriptions/user/{user_id}",
-            get(get_user_subscriptions),
-        )
+        .route("/subscriptions/{id}/toggle", post(toggle_subscription))
+        .route("/subscriptions/user/{user_id}", get(get_user_subscriptions))
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]

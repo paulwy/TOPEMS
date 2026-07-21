@@ -2,7 +2,10 @@ pub mod feedback;
 
 pub use feedback::*;
 
+use axum::{routing::delete, routing::get, routing::post, routing::put, Router};
 use sqlx::PgPool;
+
+use crate::AppState;
 
 pub async fn init_database(pool: &PgPool) -> Result<(), sqlx::Error> {
     sqlx::query(
@@ -48,4 +51,21 @@ pub async fn init_database(pool: &PgPool) -> Result<(), sqlx::Error> {
     .await?;
 
     Ok(())
+}
+
+pub fn create_routes(state: AppState) -> Router<AppState> {
+    Router::new()
+        .route("/api/core/feedbacks", get(feedback::list_feedbacks))
+        .route("/api/core/feedbacks/{id}", get(feedback::get_feedback))
+        .route("/api/core/feedbacks", post(feedback::create_feedback))
+        .route("/api/core/feedbacks/{id}", put(feedback::response_feedback))
+        .route(
+            "/api/core/feedbacks/{id}",
+            delete(feedback::delete_feedback),
+        )
+        .route(
+            "/api/core/feedbacks/batch",
+            delete(feedback::delete_feedback),
+        )
+        .with_state(state)
 }

@@ -13,16 +13,13 @@ use topems_shared::{api_error, auth::Claims, ApiResponse};
 
 pub fn create_routes() -> Router<ApiState> {
     Router::new()
-        .route("/api/scm/dashboard/overview", get(overview))
+        .route("/dashboard/overview", get(overview))
         .route(
-            "/api/scm/dashboard/purchase-inbound-outbound",
+            "/dashboard/purchase-inbound-outbound",
             get(purchase_inbound_outbound_stats),
         )
-        .route(
-            "/api/scm/dashboard/supplier-performance",
-            get(supplier_performance),
-        )
-        .route("/api/scm/dashboard/real-time-status", get(real_time_status))
+        .route("/dashboard/supplier-performance", get(supplier_performance))
+        .route("/dashboard/real-time-status", get(real_time_status))
 }
 
 #[derive(Debug, Clone, Deserialize)]

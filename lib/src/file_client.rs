@@ -113,7 +113,7 @@ impl FileServiceClient {
 
         let form = reqwest::multipart::Form::new().part("file", part);
 
-        let url = format!("{}/api/v1/files/upload", self.base_url);
+        let url = format!("{}/api/core/file/upload", self.base_url);
         tracing::debug!("Uploading file to: {} ({} bytes)", url, content_length);
 
         let request = self.client.post(&url).multipart(form);
@@ -164,7 +164,7 @@ impl FileServiceClient {
 
         let request = self
             .client
-            .post(format!("{}/api/v1/files/upload", self.base_url))
+            .post(format!("{}/api/core/file/upload", self.base_url))
             .multipart(form);
 
         let response = self.add_auth_header(request).send().await?;
@@ -179,7 +179,7 @@ impl FileServiceClient {
     pub async fn get_file(&self, file_id: Uuid) -> anyhow::Result<FileMetadataResponse> {
         let request = self
             .client
-            .get(format!("{}/api/v1/files/{}", self.base_url, file_id));
+            .get(format!("{}/api/core/file/files/{}", self.base_url, file_id));
 
         let response = self.add_auth_header(request).send().await?;
 
@@ -192,7 +192,7 @@ impl FileServiceClient {
     /// 下载文件
     pub async fn download_file(&self, file_id: Uuid) -> anyhow::Result<Vec<u8>> {
         let request = self.client.get(format!(
-            "{}/api/v1/files/{}/download",
+            "{}/api/core/file/download/{}",
             self.base_url, file_id
         ));
 
@@ -206,7 +206,7 @@ impl FileServiceClient {
     pub async fn delete_file(&self, file_id: Uuid) -> anyhow::Result<()> {
         let request = self
             .client
-            .delete(format!("{}/api/v1/files/{}", self.base_url, file_id));
+            .delete(format!("{}/api/core/file/files/{}", self.base_url, file_id));
 
         let response = self.add_auth_header(request).send().await?;
 

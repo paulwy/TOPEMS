@@ -24,18 +24,18 @@ fn get_tenant_id(claims: &Claims, headers: &HeaderMap) -> Uuid {
 
 pub fn create_routes() -> Router<AppState> {
     Router::new()
-        .route("/api/ehs/hazards", get(list_risks).post(create_risk))
+        .route("/hazards", get(list_risks).post(create_risk))
         .route(
-            "/api/ehs/hazards/{id}",
+            "/hazards/{id}",
             get(get_risk).put(update_risk).delete(delete_risk),
         )
-        .route("/api/ehs/hazards/{id}/assessments", post(assess_risk))
+        .route("/hazards/{id}/assessments", post(assess_risk))
         .route(
-            "/api/ehs/hazards/{id}/controls",
+            "/hazards/{id}/controls",
             get(list_control_measures).post(create_control_measure),
         )
         .route(
-            "/api/ehs/hazards/{id}/controls/{measure_id}",
+            "/hazards/{id}/controls/{measure_id}",
             put(update_control_measure).delete(delete_control_measure),
         )
 }

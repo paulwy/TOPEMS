@@ -26,11 +26,11 @@ pub struct SupplierEvaluationQueryParams {
 pub fn create_routes() -> Router<ApiState> {
     Router::new()
         .route(
-            "/api/scm/evaluations",
+            "/evaluations",
             get(list_evaluations).post(create_evaluation),
         )
         .route(
-            "/api/scm/evaluations/{id}",
+            "/evaluations/{id}",
             get(get_evaluation)
                 .put(update_evaluation)
                 .delete(delete_evaluation),

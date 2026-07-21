@@ -29,33 +29,24 @@ pub use project_department::{department_summary, project_summary};
 
 pub fn create_routes() -> Router<ApiState> {
     Router::new()
-        .route("/api/erp/reports/balance-sheet", get(balance_sheet))
-        .route("/api/erp/reports/income-statement", get(income_statement))
-        .route("/api/erp/reports/cash-flow", get(cash_flow))
-        .route("/api/erp/reports/voucher-summary", get(voucher_summary))
-        .route("/api/erp/reports/voucher-details", get(voucher_details))
-        .route("/api/erp/reports/receivables", get(receivables_report))
-        .route("/api/erp/reports/payables", get(payables_report))
-        .route("/api/erp/reports/budget-summary", get(budget_summary))
-        .route("/api/erp/reports/employee-summary", get(employee_summary))
-        .route("/api/erp/reports/voucher-trend", get(voucher_trend))
-        .route("/api/erp/reports/category-summary", get(category_summary))
-        .route("/api/erp/reports/aging-analysis", get(aging_analysis))
-        .route("/api/erp/reports/monthly-trend", get(monthly_trend))
-        .route("/api/erp/reports/business-overview", get(business_overview))
-        .route("/api/erp/reports/project-summary", get(project_summary))
-        .route(
-            "/api/erp/reports/department-summary",
-            get(department_summary),
-        )
-        .route(
-            "/api/erp/reports/cash-flow-analysis",
-            get(cash_flow_analysis),
-        )
-        .route("/api/erp/reports/expense-analysis", get(expense_analysis))
-        .route("/api/erp/reports/profit-analysis", get(profit_analysis))
-        .route(
-            "/api/erp/reports/financial-overview",
-            get(financial_overview),
-        )
+        .route("/reports/balance-sheet", get(balance_sheet))
+        .route("/reports/income-statement", get(income_statement))
+        .route("/reports/cash-flow", get(cash_flow))
+        .route("/reports/voucher-summary", get(voucher_summary))
+        .route("/reports/voucher-details", get(voucher_details))
+        .route("/reports/receivables", get(receivables_report))
+        .route("/reports/payables", get(payables_report))
+        .route("/reports/budget-summary", get(budget_summary))
+        .route("/reports/employee-summary", get(employee_summary))
+        .route("/reports/voucher-trend", get(voucher_trend))
+        .route("/reports/category-summary", get(category_summary))
+        .route("/reports/aging-analysis", get(aging_analysis))
+        .route("/reports/monthly-trend", get(monthly_trend))
+        .route("/reports/business-overview", get(business_overview))
+        .route("/reports/project-summary", get(project_summary))
+        .route("/reports/department-summary", get(department_summary))
+        .route("/reports/cash-flow-analysis", get(cash_flow_analysis))
+        .route("/reports/expense-analysis", get(expense_analysis))
+        .route("/reports/profit-analysis", get(profit_analysis))
+        .route("/reports/financial-overview", get(financial_overview))
 }

@@ -27,7 +27,7 @@ class TestDataFlowFixtures:
         
         try:
             response = httpx.post(
-                f"{api_base_url}/api/v1/auth/login",
+                f"{api_base_url}/api/core/iam/auth/login",
                 json={"username": username, "password": password},
                 timeout=10.0
             )
@@ -61,7 +61,7 @@ class TestOrganizationDataFlow(TestDataFlowFixtures):
         """
         try:
             response = httpx.get(
-                f"{api_base_url}/api/v1/organizations",
+                f"{api_base_url}/api/core/iam/organizations",
                 headers=auth_headers,
                 timeout=10.0
             )
@@ -78,7 +78,7 @@ class TestOrganizationDataFlow(TestDataFlowFixtures):
                         # 如果有父组织，验证父组织存在
                         if parent_id:
                             parent_response = httpx.get(
-                                f"{api_base_url}/api/v1/organizations/{parent_id}",
+                                f"{api_base_url}/api/core/iam/organizations/{parent_id}",
                                 headers=auth_headers,
                                 timeout=5.0
                             )
@@ -105,7 +105,7 @@ class TestUserEmployeeDataFlow(TestDataFlowFixtures):
         """
         try:
             response = httpx.get(
-                f"{api_base_url}/api/v1/users?limit=20",
+                f"{api_base_url}/api/core/iam/users?limit=20",
                 headers=auth_headers,
                 timeout=10.0
             )
@@ -130,7 +130,7 @@ class TestUserEmployeeDataFlow(TestDataFlowFixtures):
                             hrm_port = int(os.getenv("HRM_PORT", "8011"))
                             try:
                                 hrm_response = httpx.get(
-                                    f"http://localhost:{hrm_port}/api/v1/employees/{employee_id}",
+                                    f"http://localhost:{hrm_port}/api/hrm/employees/{employee_id}",
                                     headers=auth_headers,
                                     timeout=5.0
                                 )
@@ -163,7 +163,7 @@ class TestUserEmployeeDataFlow(TestDataFlowFixtures):
             hrm_port = int(os.getenv("HRM_PORT", "8011"))
             
             response = httpx.get(
-                f"http://localhost:{hrm_port}/api/v1/employees?limit=10",
+                f"http://localhost:{hrm_port}/api/hrm/employees?limit=10",
                 headers=auth_headers,
                 timeout=10.0
             )
@@ -179,7 +179,7 @@ class TestUserEmployeeDataFlow(TestDataFlowFixtures):
                     # 验证组织和部门都存在
                     if org_id:
                         org_response = httpx.get(
-                            f"{api_base_url}/api/v1/organizations/{org_id}",
+                            f"{api_base_url}/api/core/iam/organizations/{org_id}",
                             headers=auth_headers,
                             timeout=5.0
                         )
@@ -208,7 +208,7 @@ class TestWorkflowDataFlow(TestDataFlowFixtures):
             flow_port = int(os.getenv("FLOW_PORT", "8004"))
             
             response = httpx.get(
-                f"http://localhost:{flow_port}/api/v1/process-definitions?limit=10",
+                f"http://localhost:{flow_port}/api/core/flow/process-definitions?limit=10",
                 headers=auth_headers,
                 timeout=10.0
             )
@@ -222,7 +222,7 @@ class TestWorkflowDataFlow(TestDataFlowFixtures):
                     
                     # 获取该定义的所有实例
                     instances_response = httpx.get(
-                        f"http://localhost:{flow_port}/api/v1/process-instances?definition_id={def_id}&limit=5",
+                        f"http://localhost:{flow_port}/api/core/flow/process-instances?definition_id={def_id}&limit=5",
                         headers=auth_headers,
                         timeout=10.0
                     )
@@ -259,7 +259,7 @@ class TestWorkflowDataFlow(TestDataFlowFixtures):
             flow_port = int(os.getenv("FLOW_PORT", "8004"))
             
             response = httpx.get(
-                f"http://localhost:{flow_port}/api/v1/tasks?status=pending&limit=10",
+                f"http://localhost:{flow_port}/api/core/flow/tasks?status=pending&limit=10",
                 headers=auth_headers,
                 timeout=10.0
             )
@@ -279,7 +279,7 @@ class TestWorkflowDataFlow(TestDataFlowFixtures):
                         
                         # 验证用户在 IAM 中存在
                         user_response = httpx.get(
-                            f"{api_base_url}/api/v1/users/{assignee_id}",
+                            f"{api_base_url}/api/core/iam/users/{assignee_id}",
                             headers=auth_headers,
                             timeout=5.0
                         )
@@ -312,7 +312,7 @@ class TestProductionDataFlow(TestDataFlowFixtures):
             mes_port = int(os.getenv("MES_PORT", "8030"))
             
             response = httpx.get(
-                f"http://localhost:{mes_port}/api/v1/production-orders?limit=10",
+                f"http://localhost:{mes_port}/api/mes/production-orders?limit=10",
                 headers=auth_headers,
                 timeout=10.0
             )
@@ -329,7 +329,7 @@ class TestProductionDataFlow(TestDataFlowFixtures):
                         pdm_port = int(os.getenv("PDM_PORT", "8023"))
                         try:
                             material_response = httpx.get(
-                                f"http://localhost:{pdm_port}/api/v1/materials/{material_id}",
+                                f"http://localhost:{pdm_port}/api/pdm/materials/{material_id}",
                                 headers=auth_headers,
                                 timeout=5.0
                             )
@@ -357,7 +357,7 @@ class TestProductionDataFlow(TestDataFlowFixtures):
             pdm_port = int(os.getenv("PDM_PORT", "8023"))
             
             response = httpx.get(
-                f"http://localhost:{pdm_port}/api/v1/bom?limit=10",
+                f"http://localhost:{pdm_port}/api/pdm/bom?limit=10",
                 headers=auth_headers,
                 timeout=10.0
             )
@@ -373,7 +373,7 @@ class TestProductionDataFlow(TestDataFlowFixtures):
                     if parent_id:
                         # 验证父项存在
                         parent_response = httpx.get(
-                            f"http://localhost:{pdm_port}/api/v1/bom/{parent_id}",
+                            f"http://localhost:{pdm_port}/api/pdm/bom/{parent_id}",
                             headers=auth_headers,
                             timeout=5.0
                         )

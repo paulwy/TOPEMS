@@ -78,7 +78,7 @@ def get_auth_token(client: APIClient) -> Optional[str]:
     password = os.getenv("TEST_PASSWORD", "admin")
     
     try:
-        response = client.post("/api/v1/auth/login", json={
+        response = client.post("/api/core/iam/auth/login", json={
             "username": username,
             "password": password
         })
@@ -147,7 +147,7 @@ class TestUserResponseSchema:
     def test_user_response_structure(self, authenticated_client):
         """测试用户响应结构"""
         try:
-            response = authenticated_client.get("/api/v1/users/me")
+            response = authenticated_client.get("/api/core/iam/users/me")
             
             if response.status_code == 401:
                 pytest.skip("认证失败，跳过测试")
@@ -172,7 +172,7 @@ class TestUserResponseSchema:
     def test_user_id_format(self, authenticated_client):
         """测试用户 ID 格式"""
         try:
-            response = authenticated_client.get("/api/v1/users/me")
+            response = authenticated_client.get("/api/core/iam/users/me")
             
             if response.status_code == 200:
                 user = response.json()
@@ -215,7 +215,7 @@ class TestCrossModuleUserReference:
         """
         try:
             # 获取当前用户
-            user_response = authenticated_client.get("/api/v1/users/me")
+            user_response = authenticated_client.get("/api/core/iam/users/me")
             
             if user_response.status_code != 200:
                 pytest.skip("无法获取用户信息")
@@ -230,7 +230,7 @@ class TestCrossModuleUserReference:
             
             # 尝试获取 HRM 服务中的员工信息
             hrm_port = int(os.getenv("HRM_PORT", "8011"))
-            hrm_url = f"http://localhost:{hrm_port}/api/v1"
+            hrm_url = f"http://localhost:{hrm_port}/api/hrm"
             
             hrm_client = APIClient(hrm_url, authenticated_client.token)
             
@@ -255,7 +255,7 @@ class TestCrossModuleUserReference:
     def test_user_roles_in_response(self, authenticated_client):
         """测试用户响应包含角色信息"""
         try:
-            response = authenticated_client.get("/api/v1/users/me")
+            response = authenticated_client.get("/api/core/iam/users/me")
             
             if response.status_code == 200:
                 user = response.json()
@@ -304,7 +304,7 @@ class TestWorkflowAPI:
         """测试工作流任务与用户引用一致性"""
         try:
             flow_port = int(os.getenv("FLOW_PORT", "8004"))
-            flow_url = f"http://localhost:{flow_port}/api/v1"
+            flow_url = f"http://localhost:{flow_port}/api/core/flow"
             
             flow_client = APIClient(flow_url, authenticated_client.token)
             
@@ -321,7 +321,7 @@ class TestWorkflowAPI:
                         
                         if assignee_id:
                             # 验证 assignee 在 IAM 中存在
-                            iam_response = authenticated_client.get(f"/api/v1/users/{assignee_id}")
+                            iam_response = authenticated_client.get(f"/api/core/iam/users/{assignee_id}")
                             
                             # 应该返回 200 或 404，不应该返回 500
                             assert iam_response.status_code in [200, 404], \
@@ -350,7 +350,7 @@ class TestAPIErrorHandling:
         
         client.token = "invalid_token_12345"
         
-        response = client.get("/api/v1/users/me")
+        response = client.get("/api/core/iam/users/me")
         assert response.status_code in [401, 403], \
             f"无效令牌应该返回 401 或 403，实际返回 {response.status_code}"
 
@@ -360,7 +360,7 @@ class TestAPIErrorHandling:
             pytest.skip("API 服务不可用")
         
         # 发送无效请求
-        response = client.post("/api/v1/auth/login", json={
+        response = client.post("/api/core/iam/auth/login", json={
             "username": "invalid",
             "password": "wrong"
         })

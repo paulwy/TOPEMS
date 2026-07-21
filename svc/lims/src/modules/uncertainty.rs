@@ -13,41 +13,35 @@ use crate::shared::AppState;
 pub fn create_routes() -> Router<AppState> {
     Router::new()
         .route(
-            "/api/lims/uncertainty-projects",
+            "/uncertainty-projects",
             get(list_projects).post(create_project),
         )
         .route(
-            "/api/lims/uncertainty-projects/{id}",
+            "/uncertainty-projects/{id}",
             get(get_project).put(update_project).delete(delete_project),
         )
+        .route("/uncertainty-projects/{id}/sources", get(list_sources))
         .route(
-            "/api/lims/uncertainty-projects/{id}/sources",
-            get(list_sources),
-        )
-        .route(
-            "/api/lims/uncertainty-projects/{id}/components",
+            "/uncertainty-projects/{id}/components",
             get(list_components),
         )
         .route(
-            "/api/lims/uncertainty-projects/{id}/combined",
+            "/uncertainty-projects/{id}/combined",
             post(calculate_combined),
         )
+        .route("/uncertainty-projects/{id}/report", get(generate_report))
+        .route("/uncertainty-sources", post(create_source))
         .route(
-            "/api/lims/uncertainty-projects/{id}/report",
-            get(generate_report),
-        )
-        .route("/api/lims/uncertainty-sources", post(create_source))
-        .route(
-            "/api/lims/uncertainty-sources/{id}",
+            "/uncertainty-sources/{id}",
             put(update_source).delete(delete_source),
         )
-        .route("/api/lims/uncertainty-components", post(create_component))
+        .route("/uncertainty-components", post(create_component))
         .route(
-            "/api/lims/uncertainty-components/{id}",
+            "/uncertainty-components/{id}",
             put(update_component).delete(delete_component),
         )
-        .route("/api/lims/uncertainty/type-a", post(calculate_type_a))
-        .route("/api/lims/uncertainty/type-b", post(calculate_type_b))
+        .route("/uncertainty/type-a", post(calculate_type_a))
+        .route("/uncertainty/type-b", post(calculate_type_b))
 }
 
 #[derive(Debug, Deserialize)]

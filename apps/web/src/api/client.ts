@@ -562,6 +562,9 @@ class ApiClient {
   get master() {
     return this.clients.master;
   }
+  get monitor() {
+    return this.clients.monitor;
+  }
 
   async get<T = unknown>(url: string, config?: AxiosRequestConfig): Promise<ApiResponse<T>> {
     return this.clients.core.get<T>(url, config);

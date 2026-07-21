@@ -9,7 +9,7 @@ plugin_type: ai
 
 # Runtime configuration
 runtime:
-  port: 8064
+  port: 8013
   health_endpoint: /health
   base_path: /api/ai
 

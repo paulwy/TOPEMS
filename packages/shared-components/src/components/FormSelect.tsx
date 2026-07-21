@@ -99,14 +99,6 @@ export const FormSelect: React.FC<FormSelectProps> = ({
           return options.find((opt) => opt.value === selected)?.label;
         }}
       >
-        {allowClear && !multiple && (
-          <MenuItem
-            value=''
-            sx={{ color: 'text.secondary', fontStyle: 'italic', fontSize: isMobile ? '0.875rem' : undefined }}
-          >
-            {placeholder || '请选择'}
-          </MenuItem>
-        )}
         {options.map((option) => (
           <MenuItem
             key={option.value}

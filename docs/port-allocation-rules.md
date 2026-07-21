@@ -51,8 +51,7 @@
 | 8051 | lims | Q/RD | LIMS_PORT | 实验室信息 |
 | 8052 | ehs | Q/RD | EHS_PORT | 环境健康安全 |
 | 8053 | rs | Q/RD | SERVER_PORT | 研发管理 |
-| 8060 | bi | Analytics | BI_PORT | 商业智能 |
-| 8061 | report | Analytics | REPORT_PORT | 报表服务 |
+| 8060 | bi | Analytics | BI_PORT | 商业智能（含报表服务） |
 | 8062 | monitor | Analytics | SERVER_PORT | 系统监控 |
 | 8063 | portal | Analytics | SERVER_PORT | 企业门户 |
 | 8070 | mobile | Infra | SERVER_PORT | 移动端 |

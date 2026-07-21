@@ -27,16 +27,10 @@ impl Default for AuditLoggerConfig {
             max_request_body_size: 1024 * 1024,
             max_response_body_size: 1024 * 1024,
             skip_paths: vec![
-                // 根与健康检查
                 "/health".to_string(),
-                // 新路径（K8s Ingress 契约 V9）
                 "/api/core/iam/auth/login".to_string(),
                 "/api/core/iam/auth/refresh".to_string(),
                 "/api/core/iam/auth/register".to_string(),
-                // 旧路径兼容
-                "/api/v1/auth/login".to_string(),
-                "/api/v1/auth/refresh".to_string(),
-                "/api/v1/auth/register".to_string(),
             ],
             skip_methods: vec!["OPTIONS".to_string()],
         }
@@ -404,17 +398,17 @@ mod tests {
     fn test_should_skip() {
         let config = AuditLoggerConfig::default();
         assert!(config.should_skip("/health", "GET"));
-        assert!(config.should_skip("/api/v1/auth/login", "POST"));
-        assert!(!config.should_skip("/api/v1/users", "GET"));
+        assert!(config.should_skip("/api/core/iam/auth/login", "POST"));
+        assert!(!config.should_skip("/api/core/iam/users", "GET"));
     }
 
     #[test]
     fn test_extract_entity_info() {
-        let (entity_type, action) = extract_entity_info("/api/v1/users", "POST");
+        let (entity_type, action) = extract_entity_info("/api/core/iam/users", "POST");
         assert_eq!(entity_type, "user");
         assert_eq!(action, "create");
 
-        let (entity_type, action) = extract_entity_info("/api/v1/workflows", "GET");
+        let (entity_type, action) = extract_entity_info("/api/core/flow/workflows", "GET");
         assert_eq!(entity_type, "workflow");
         assert_eq!(action, "read");
     }
@@ -422,7 +416,7 @@ mod tests {
     #[test]
     fn test_extract_entity_id() {
         let id_str = "550e8400-e29b-41d4-a716-446655440000";
-        let path = format!("/api/v1/users/{}", id_str);
+        let path = format!("/api/core/iam/users/{}", id_str);
         let entity_id = extract_entity_id(&path);
         assert!(entity_id.is_some());
         assert_eq!(entity_id.unwrap().to_string(), id_str);

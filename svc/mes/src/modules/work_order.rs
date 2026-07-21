@@ -22,23 +22,20 @@ use topems_shared::response::ApiResponse;
 pub fn create_routes() -> Router<AppState> {
     Router::new()
         .route(
-            "/api/mes/work-orders",
+            "/work-orders",
             get(list_work_orders).post(create_work_order),
         )
         .route(
-            "/api/mes/work-orders/{id}",
+            "/work-orders/{id}",
             get(get_work_order)
                 .put(update_work_order)
                 .delete(delete_work_order),
         )
-        .route("/api/mes/work-orders/{id}/start", put(start_work_order))
-        .route(
-            "/api/mes/work-orders/{id}/complete",
-            put(complete_work_order),
-        )
-        .route("/api/mes/work-orders/{id}/cancel", put(cancel_work_order))
-        .route("/api/mes/work-orders/{id}/pause", put(pause_work_order))
-        .route("/api/mes/work-orders/{id}/resume", put(resume_work_order))
+        .route("/work-orders/{id}/start", put(start_work_order))
+        .route("/work-orders/{id}/complete", put(complete_work_order))
+        .route("/work-orders/{id}/cancel", put(cancel_work_order))
+        .route("/work-orders/{id}/pause", put(pause_work_order))
+        .route("/work-orders/{id}/resume", put(resume_work_order))
 }
 
 // ==================== Request / Response Types ====================

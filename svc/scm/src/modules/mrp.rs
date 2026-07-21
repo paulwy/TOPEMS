@@ -16,22 +16,16 @@ use topems_shared::{api_error, auth::Claims, ApiResponse, PaginationParams};
 
 pub fn create_routes() -> Router<ApiState> {
     Router::new()
+        .route("/mrp/suggestions", get(list_suggestions).post(compute_mrp))
         .route(
-            "/api/scm/mrp/suggestions",
-            get(list_suggestions).post(compute_mrp),
-        )
-        .route(
-            "/api/scm/mrp/suggestions/{id}",
+            "/mrp/suggestions/{id}",
             get(get_suggestion).post(confirm_suggestion),
         )
+        .route("/mrp/material-summary", get(material_requirement_summary))
+        .route("/mrp-suggestions", get(list_suggestions))
+        .route("/mrp-suggestions/{id}", get(get_suggestion))
         .route(
-            "/api/scm/mrp/material-summary",
-            get(material_requirement_summary),
-        )
-        .route("/api/scm/mrp-suggestions", get(list_suggestions))
-        .route("/api/scm/mrp-suggestions/{id}", get(get_suggestion))
-        .route(
-            "/api/scm/mrp-suggestions/summary",
+            "/mrp-suggestions/summary",
             get(material_requirement_summary),
         )
 }

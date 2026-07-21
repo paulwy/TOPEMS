@@ -14,17 +14,14 @@ use crate::shared::AppState;
 
 pub fn create_routes() -> Router<AppState> {
     Router::new()
-        .route("/api/report/reports", get(list_reports).post(create_report))
+        .route("/reports", get(list_reports).post(create_report))
+        .route("/reports/from-template", post(create_report_from_template))
         .route(
-            "/api/report/reports/from-template",
-            post(create_report_from_template),
-        )
-        .route(
-            "/api/report/reports/{id}",
+            "/reports/{id}",
             get(get_report).put(update_report).delete(delete_report),
         )
-        .route("/api/report/reports/{id}/export", post(export_report))
-        .route("/api/report/reports/{id}/run", post(run_report))
+        .route("/reports/{id}/export", post(export_report))
+        .route("/reports/{id}/run", post(run_report))
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -397,7 +394,7 @@ pub async fn get_export_job(
         "data": {
             "id": _job_id,
             "status": "completed",
-            "downloadUrl": "/api/bi/download/placeholder"
+            "downloadUrl": "/download/placeholder"
         }
     }))
 }

@@ -25,63 +25,60 @@ fn get_tenant_id(claims: &Claims, headers: &HeaderMap) -> Uuid {
 pub fn create_routes() -> Router<AppState> {
     Router::new()
         .route(
-            "/api/ehs/occupational-health/exam-plans",
+            "/occupational-health/exam-plans",
             get(list_exam_plans).post(create_exam_plan),
         )
         .route(
-            "/api/ehs/occupational-health/exam-plans/{id}",
+            "/occupational-health/exam-plans/{id}",
             get(get_exam_plan)
                 .put(update_exam_plan)
                 .delete(delete_exam_plan),
         )
         .route(
-            "/api/ehs/occupational-health/exam-records",
+            "/occupational-health/exam-records",
             get(list_exam_records).post(create_exam_record),
         )
         .route(
-            "/api/ehs/occupational-health/exam-records/{id}",
+            "/occupational-health/exam-records/{id}",
             get(get_exam_record)
                 .put(update_exam_record)
                 .delete(delete_exam_record),
         )
         .route(
-            "/api/ehs/occupational-health/archives/{employee_id}",
+            "/occupational-health/archives/{employee_id}",
             get(get_health_archive),
         )
         .route(
-            "/api/ehs/occupational-health/contraindications",
+            "/occupational-health/contraindications",
             get(list_contraindications).post(create_contraindication),
         )
         .route(
-            "/api/ehs/occupational-health/contraindications/{id}",
+            "/occupational-health/contraindications/{id}",
             put(update_contraindication).delete(delete_contraindication),
         )
         .route(
-            "/api/ehs/occupational-health/abnormalities",
+            "/occupational-health/abnormalities",
             get(list_abnormalities),
         )
         .route(
-            "/api/ehs/occupational-health/abnormalities/{id}",
+            "/occupational-health/abnormalities/{id}",
             put(update_abnormality),
         )
+        .route("/occupational-health/exam-types", get(list_exam_types))
         .route(
-            "/api/ehs/occupational-health/exam-types",
-            get(list_exam_types),
-        )
-        .route(
-            "/api/ehs/occupational-health/statistics",
+            "/occupational-health/statistics",
             get(get_health_statistics),
         )
         .route(
-            "/api/ehs/occupational-health/check-plans",
+            "/occupational-health/check-plans",
             get(list_exam_plans).post(create_exam_plan),
         )
         .route(
-            "/api/ehs/occupational-health/check-records",
+            "/occupational-health/check-records",
             get(list_exam_records).post(create_exam_record),
         )
         .route(
-            "/api/ehs/occupational-health/records",
+            "/occupational-health/records",
             get(list_exam_records).post(create_exam_record),
         )
 }

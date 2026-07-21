@@ -49,11 +49,11 @@ pub async fn create_routes(db: PgPool) -> Result<Router> {
 
     let app = Router::new()
         .route(
-            "/api/srm/purchase-orders",
+            "/purchase-orders",
             get(list_purchase_orders).post(create_purchase_order),
         )
         .route(
-            "/api/srm/purchase-orders/{id}",
+            "/purchase-orders/{id}",
             get(get_purchase_order)
                 .put(update_purchase_order)
                 .delete(delete_purchase_order),

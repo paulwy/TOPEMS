@@ -87,13 +87,13 @@ cargo build --release 2>&1 | tail -50
 ```bash
 # 1. 查找占用端口的进程
 lsof -i :8000
-lsof -i :8064
+lsof -i :8013
 
 # 2. 强制终止占用进程
 lsof -ti :8000 | xargs kill -9
 
 # 3. 批量清理 TOPEMS 端口
-for port in 8000 8010 8020 8023 8029 8030 8031 8040 8041 8042 8050 8051 8052 8053 8060 8061 8062 8063 8064 8070 8071 8072; do
+for port in 8000 8010 8011 8012 8013 8020 8023 8029 8030 8031 8040 8041 8042 8050 8051 8052 8053 8060 8061 8062 8063 8070 8071 8072; do
   lsof -ti:$port 2>/dev/null | xargs kill -9 2>/dev/null
 done
 
@@ -209,7 +209,7 @@ DATABASE_CONNECTION_TIMEOUT=30s
 curl http://localhost:11434/api/tags
 
 # 2. 检查 AI 服务状态
-curl http://localhost:8064/health
+curl http://localhost:8013/health
 
 # 3. 检查环境变量
 cat .env | grep -E "(OLLAMA|AI)"

@@ -45,7 +45,6 @@ resources:
   
   # Analytics services
   - services/bi.yaml
-  - services/report.yaml
   - services/monitor.yaml
   - services/portal.yaml
   
@@ -118,8 +117,6 @@ images:
   
   # Analytics services
   - name: topems/bi
-    newTag: latest
-  - name: topems/report
     newTag: latest
   - name: topems/monitor
     newTag: latest

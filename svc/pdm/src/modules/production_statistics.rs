@@ -24,8 +24,8 @@ fn get_tenant_id(claims: &Claims, headers: &axum::http::HeaderMap) -> Uuid {
 
 pub fn create_routes() -> Router<AppState> {
     Router::new()
-        .route("/api/pdm/production-statistics", get(list_statistics))
-        .route("/api/pdm/statistics/{id}", get(get_statistics))
+        .route("/production-statistics", get(list_statistics))
+        .route("/statistics/{id}", get(get_statistics))
 }
 
 #[derive(Debug, Deserialize)]

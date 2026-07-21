@@ -1,6 +1,6 @@
 # TOPEMS 服务配置
 # 与 plugin-architecture-design.md 保持严格一致
-# 版本: v6.0
+# 版本: v6.1
 
 # ================================================
 # 端口分配规则 (Port Allocation Rules)
@@ -10,8 +10,8 @@
 # 3. 编号: 域内从 X0 开始顺序递增（如 8030, 8031, ...）
 # 4. 首位即主服务: 段首 (X0) 分配给该域的核心服务
 # 5. 虚拟服务: 由 unified-core 内部模块提供的服务（iam/doc/flow/file/mail/im/notification）共用 8000，通过 URL 路径区分
-# 6. 权威源: 本文件 + 各服务 main.rs 中的实际端口
-# 7. 同步: 任何端口变更必须同步到 services.conf, ports.env, docker-compose, vite.config.ts
+# 6. 权威源: 本文件 + config/ports.env + 各服务 main.rs 中的实际端口
+# 7. 同步: 任何端口变更必须同步到 services.conf, ports.env, docker-compose, vite.config.ts, .env
 #
 # 段位速查:
 #   8000-8009 核心 (Core)         8050-8059 质量/研发 (Q/RD)
@@ -51,7 +51,7 @@ service_groups:
 
     - name: doc
       port: 8012
-      env_var: DOC_PORT
+      env_var: DOC_STANDALONE_PORT
       description: 文档管理服务
       status: implemented
       dependencies: [unified-core]
@@ -172,6 +172,13 @@ service_groups:
       dependencies: [unified-core]
       service_dir: bi
 
+    - name: report
+      port: 8061
+      env_var: REPORT_PORT
+      description: 报表服务
+      status: implemented
+      dependencies: [unified-core, bi]
+
     - name: monitor
       port: 8062
       env_var: MONITOR_PORT
@@ -247,6 +254,12 @@ virtual_services:
     description: 即时通讯 (由 unified-core 提供)
     provider: unified-core
 
+  - name: doc
+    port: 8000
+    env_var: DOC_PORT
+    description: 文档管理服务 (由 unified-core 提供，虚拟服务)
+    provider: unified-core
+
 # 特殊端口配置
 special_ports:
   api_gateway:
@@ -314,6 +327,7 @@ module_groups:
 
   analytics:
     - bi
+    - report
     - monitor
     - portal
 
@@ -341,6 +355,7 @@ module_groups:
     - ehs
     - rs
     - bi
+    - report
     - monitor
     - portal
     - mobile

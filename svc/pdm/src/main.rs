@@ -29,8 +29,8 @@ use sqlx::PgPool;
 
 use topems_shared::{
     auth_middleware, create_cors_layer, get_api_info_handler, init_telemetry, rls_middleware,
-    simple_health_check, telemetry_middleware, wrap_group2_router, ApiResponse, AuthState,
-    RouteCompatConfig, ServiceHealth, SimpleHealthConfig,
+    simple_health_check, telemetry_middleware, ApiResponse, AuthState, ServiceHealth,
+    SimpleHealthConfig,
 };
 
 // ==================== 应用状态 ====================
@@ -98,6 +98,7 @@ async fn main() {
         )
         .route("/api", get(|| get_api_info_handler("pdm-service")))
         .route("/api/info", get(|| get_api_info_handler("pdm-service")))
+        .route("/api/health/detailed", get(detailed_health))
         .route(
             "/metrics",
             get(move || async move { metric_handle.render() }),
@@ -106,14 +107,12 @@ async fn main() {
     // Protected routes (auth required)
     let protected_routes = Router::new()
         .merge(modules::create_api_routes())
-        // Health & Metrics
-        .route("/api/health/detailed", get(detailed_health))
+        .layer(axum::middleware::from_fn(
+            middleware::tenant::tenant_middleware,
+        ))
         .layer(axum::middleware::from_fn_with_state(
             state.auth_state.clone(),
             auth_middleware,
-        ))
-        .layer(axum::middleware::from_fn(
-            middleware::tenant::tenant_middleware,
         ))
         .layer(axum::middleware::from_fn_with_state(
             state.pool.clone(),
@@ -127,9 +126,6 @@ async fn main() {
         .layer(cors)
         .layer(prometheus_layer)
         .with_state(state);
-
-    let cfg = RouteCompatConfig::new("pdm", "/api/pdm", &[]);
-    let app = wrap_group2_router(app, cfg);
 
     let port = std::env::var("PDM_PORT")
         .unwrap_or_else(|_| "8031".to_string())

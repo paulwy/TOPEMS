@@ -67,9 +67,9 @@ pub struct ListAuditLogsQuery {
 
 pub fn create_routes() -> Router<AppState> {
     Router::new()
-        .route("/api/lims/audit-logs", get(list_audit_logs))
-        .route("/api/lims/audit-logs/{id}", get(get_audit_log))
-        .route("/api/lims/audit-logs/export", get(export_audit_logs))
+        .route("/audit-logs", get(list_audit_logs))
+        .route("/audit-logs/{id}", get(get_audit_log))
+        .route("/audit-logs/export", get(export_audit_logs))
 }
 
 pub async fn list_audit_logs(

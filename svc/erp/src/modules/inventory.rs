@@ -22,17 +22,14 @@ pub struct PaginationParams {
 
 pub fn create_routes() -> Router<ApiState> {
     Router::new()
+        .route("/inventory", get(list_inventory).post(create_inventory))
         .route(
-            "/api/erp/inventory",
-            get(list_inventory).post(create_inventory),
-        )
-        .route(
-            "/api/erp/inventory/{id}",
+            "/inventory/{id}",
             get(get_inventory)
                 .put(update_inventory)
                 .delete(delete_inventory),
         )
-        .route("/api/erp/inventory/low-stock", get(get_low_stock))
+        .route("/inventory/low-stock", get(get_low_stock))
 }
 
 pub async fn list_inventory(

@@ -12,38 +12,26 @@ use crate::shared::AppState;
 
 pub fn create_routes() -> Router<AppState> {
     Router::new()
+        .route("/barcodes", get(list_barcodes).post(generate_barcode))
         .route(
-            "/api/lims/barcodes",
-            get(list_barcodes).post(generate_barcode),
-        )
-        .route(
-            "/api/lims/barcodes/{id}",
+            "/barcodes/{id}",
             get(get_barcode).put(update_barcode).delete(delete_barcode),
         )
-        .route("/api/lims/barcodes/{id}/print", post(print_barcode))
-        .route("/api/lims/barcodes/scan", post(scan_barcode))
-        .route("/api/lims/barcodes/types", get(get_barcode_types))
+        .route("/barcodes/{id}/print", post(print_barcode))
+        .route("/barcodes/scan", post(scan_barcode))
+        .route("/barcodes/types", get(get_barcode_types))
+        .route("/barcodes/trace/{barcode}", get(trace_sample_by_barcode))
         .route(
-            "/api/lims/barcodes/trace/{barcode}",
-            get(trace_sample_by_barcode),
-        )
-        .route(
-            "/api/lims/print-config",
+            "/print-config",
             get(get_print_config).put(update_print_config),
         )
+        .route("/rfid-tags", get(list_rfid_tags).post(create_rfid_tag))
+        .route("/rfid-tags/{id}", delete(delete_rfid_tag))
         .route(
-            "/api/lims/rfid-tags",
-            get(list_rfid_tags).post(create_rfid_tag),
-        )
-        .route("/api/lims/rfid-tags/{id}", delete(delete_rfid_tag))
-        .route(
-            "/api/lims/rfid-tags/{tag_id}/assign/{sample_id}",
+            "/rfid-tags/{tag_id}/assign/{sample_id}",
             post(assign_rfid_tag),
         )
-        .route(
-            "/api/lims/rfid-tags/{tag_id}/unassign",
-            post(unassign_rfid_tag),
-        )
+        .route("/rfid-tags/{tag_id}/unassign", post(unassign_rfid_tag))
 }
 
 #[derive(Debug, Deserialize)]

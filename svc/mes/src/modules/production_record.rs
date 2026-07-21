@@ -23,12 +23,12 @@ use topems_shared::response::ApiResponse;
 
 pub fn create_routes() -> Router<AppState> {
     Router::new()
-        .route("/api/mes/records", get(list_records).post(create_record))
+        .route("/records", get(list_records).post(create_record))
         .route(
-            "/api/mes/records/{id}",
+            "/records/{id}",
             get(get_record).put(update_record).delete(delete_record),
         )
-        .route("/api/mes/records/{id}/complete", post(complete_record))
+        .route("/records/{id}/complete", post(complete_record))
 }
 
 // ==================== Data Types ====================

@@ -207,26 +207,7 @@ export async function getActiveRouteConfigs(): Promise<RouteConfig[]> {
   return toFlatRouteConfig(configs);
 }
 
-export const coreModuleCodes = [
-  // 核心模块
-  'iam',
-  'admin',
-  'workflow',
-  'communication',
-  'file',
-  'tenant',
-  'billing',
-  'plugin',
-  'sync',
-  'dict',
-  'help',
-  'migration',
-  // 核心轻量版（基础功能随核心提供）
-  'erp',
-  'pm',
-  'mobile',
-  'portal',
-] as const;
+export const coreModuleCodes = Object.keys(moduleImports) as Array<keyof typeof moduleImports>;
 
 export const coreModuleRoutes = Object.keys(moduleImports).map((code) => ({
   code,

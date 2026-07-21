@@ -22,36 +22,30 @@ where
 {
     Router::new()
         .route(
-            "/api/wms/serial-numbers",
+            "/serial-numbers",
             get(list_serial_numbers).post(create_serial_number),
         )
+        .route("/serial-numbers/bulk", post(bulk_create_serial_numbers))
         .route(
-            "/api/wms/serial-numbers/bulk",
-            post(bulk_create_serial_numbers),
-        )
-        .route(
-            "/api/wms/serial-numbers/statistics",
+            "/serial-numbers/statistics",
             get(get_serial_number_statistics),
         )
+        .route("/serial-numbers/by-batch/{batch_no}", get(get_by_batch))
         .route(
-            "/api/wms/serial-numbers/by-batch/{batch_no}",
-            get(get_by_batch),
-        )
-        .route(
-            "/api/wms/serial-numbers/by-serial/{serial_no}",
+            "/serial-numbers/by-serial/{serial_no}",
             get(get_by_serial_no),
         )
         .route(
-            "/api/wms/serial-numbers/{id}",
+            "/serial-numbers/{id}",
             get(get_serial_number)
                 .put(update_serial_number)
                 .delete(delete_serial_number),
         )
         .route(
-            "/api/wms/serial-numbers/{id}/transfer-location",
+            "/serial-numbers/{id}/transfer-location",
             post(transfer_location),
         )
-        .route("/api/wms/serial-numbers/{id}/trace", get(get_trace))
+        .route("/serial-numbers/{id}/trace", get(get_trace))
 }
 
 pub async fn list_serial_numbers(

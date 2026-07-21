@@ -403,7 +403,7 @@
 | **P0** | **Phase 0:** 规划文档、对照表、docs banner、TODO 更新 | docs/、TODO.md | ✅ 已完成 | 6 Phase 计划文档生成 + 25 API 文档 banner + TODO 章节 |
 | **P0** | **Phase 1.1:** runtime.ts 37 个 services 默认值对齐 K8s 契约 | apps/web/src/config/runtime.ts、apps/desktop | ✅ 已完成 | 无 service 值含 `/v1`；Group1 有 /api/core、Group2 无 /core |
 | **P0** | **Phase 1.2:** Vite 代理新路径直通 + 旧路径自动 rewrite 成新路径 | apps/web/vite.config.ts | ✅ 已完成 | `/api/core/{svc}/v1/*` rewrite 到 `/api/core/{svc}/*`，Group2 同理 |
-| **P0** | **Phase 1.3:** Ingress 补 finance/doc；Nginx topems.conf 全量按 Group1/2 重写 + legacy /api/v1/* rewrite；AI 端口 8013→8064 对齐 | k8s/、deploy/nginx/、docker/nginx.conf | ✅ 已完成 | 33 个服务 upstream 齐全；AI=8064 与 K8s/docker 对齐；service 级 /api/{core/,}{svc}/v1/* rewrite 与顶层 /api/v1/* rewrite 均就位 |
+| **P0** | **Phase 1.3:** Ingress 补 finance/doc；Nginx topems.conf 全量按 Group1/2 重写 + legacy /api/v1/* rewrite；AI 端口 8013→8013 AI=8064 与 K8s/docker 对齐；service 级 /api/{core/,}{svc}/v1/* rewrite 与顶层 /api/v1/* rewrite 均就位 |
 | **P0** | **Phase 2:** runtime-routes.test.ts 锁契约 + 10+ 模块 API 测试全绿 | apps/web/src/** /__tests__ | ✅ 已完成 | 21 API test files 就绪；TS 诊断仅 1 条无关 Hint；3 条断言（无 v1 / Group1 / Group2 前缀正确性） |
 | **P0** | **Phase 3.1:** lib 层双轨辅助函数 register_routes_with_legacy_alias + Deprecation 响应头 + lib.rs re-export 补全 | lib/src/api_version.rs + lib/src/lib.rs | ✅ 已完成 | 旧路径返回 `Deprecation: true` + `Warning 299` header + WARN 日志；wrap_group1_router/wrap_group2_router/Group1CompatConfig/RouteCompatConfig 从 topems_shared 可直用 |
 | **P0** | **Phase 3.2.A:** unified-core Group1（IAM/Flow/File/Comm/Im/Notification 等）双轨注册 | svc/unified-core/src/main.rs | ✅ 已完成 | Group1CompatConfig 18 modules + 14 shortcuts；新 /api/core/{svc}/ 无 v1 与旧 /api/core/{svc}/v1/ 均命中同一 handler |

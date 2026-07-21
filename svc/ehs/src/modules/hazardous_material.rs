@@ -25,56 +25,53 @@ fn get_tenant_id(claims: &Claims, headers: &HeaderMap) -> Uuid {
 pub fn create_routes() -> Router<AppState> {
     Router::new()
         .route(
-            "/api/ehs/hazardous-materials",
+            "/hazardous-materials",
             get(list_materials).post(create_material),
         )
         .route(
-            "/api/ehs/hazardous-materials/categories",
+            "/hazardous-materials/categories",
             get(list_material_categories),
         )
         .route(
-            "/api/ehs/hazardous-materials/statistics",
+            "/hazardous-materials/statistics",
             get(get_material_statistics),
         )
         .route(
-            "/api/ehs/hazardous-materials/{id}",
+            "/hazardous-materials/{id}",
             get(get_material)
                 .put(update_material)
                 .delete(delete_material),
         )
         .route(
-            "/api/ehs/hazardous-materials/{id}/stocks",
+            "/hazardous-materials/{id}/stocks",
             get(list_material_stocks),
         )
         .route(
-            "/api/ehs/hazardous-materials/{id}/msds",
+            "/hazardous-materials/{id}/msds",
             get(get_material_msds).put(update_material_msds),
         )
         .route(
-            "/api/ehs/hazardous-materials/stock-records",
+            "/hazardous-materials/stock-records",
             get(list_stock_records),
         )
         .route(
-            "/api/ehs/hazardous-materials/stock-records/stock-in",
+            "/hazardous-materials/stock-records/stock-in",
             post(create_stock_in),
         )
         .route(
-            "/api/ehs/hazardous-materials/stock-records/stock-out",
+            "/hazardous-materials/stock-records/stock-out",
             post(create_stock_out),
         )
         .route(
-            "/api/ehs/hazardous-materials/stock-records/{id}",
+            "/hazardous-materials/stock-records/{id}",
             get(get_stock_record),
         )
         .route(
-            "/api/ehs/hazardous-materials/inventory",
+            "/hazardous-materials/inventory",
             get(list_materials).post(create_material),
         )
-        .route(
-            "/api/ehs/hazardous-materials/movements",
-            get(list_stock_records),
-        )
-        .route("/api/ehs/hazardous-materials/msds", get(list_materials))
+        .route("/hazardous-materials/movements", get(list_stock_records))
+        .route("/hazardous-materials/msds", get(list_materials))
 }
 
 #[derive(Debug, Deserialize)]

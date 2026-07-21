@@ -984,7 +984,7 @@ const MobileProductionPage: React.FC = () => {
                     quantity: parseInt(e.target.value) || 0,
                   }))
                 }
-                slotProps={{ input: { min: 0 } } as const}
+                slotProps={{ htmlInput: { min: 0 } }}
               />
               <TextField
                 fullWidth
@@ -997,7 +997,7 @@ const MobileProductionPage: React.FC = () => {
                     good_quantity: parseInt(e.target.value) || 0,
                   }))
                 }
-                slotProps={{ input: { min: 0 } } as const}
+                slotProps={{ htmlInput: { min: 0 } }}
               />
               <TextField
                 fullWidth
@@ -1010,7 +1010,7 @@ const MobileProductionPage: React.FC = () => {
                     bad_quantity: parseInt(e.target.value) || 0,
                   }))
                 }
-                slotProps={{ input: { min: 0 } } as const}
+                slotProps={{ htmlInput: { min: 0 } }}
               />
             </Box>
           </DialogContent>

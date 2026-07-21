@@ -108,35 +108,10 @@ pub async fn list_standards(
 
     let mut params: Vec<serde_json::Value> = Vec::new();
     let mut where_clause = String::from(" WHERE tenant_id = $1");
-    params.push(serde_json::Value::String(tenant_id.to_string()));
-
-    if let Some(category) = &query.category {
-        where_clause.push_str(&format!(" AND category = ${}", params.len() + 1));
-        params.push(serde_json::Value::String(category.clone()));
-    }
-
-    if let Some(status) = &query.status {
-        where_clause.push_str(&format!(" AND status = ${}", params.len() + 1));
-        params.push(serde_json::Value::String(status.clone()));
-    }
-
-    if let Some(search) = &query.search {
-        let pattern = format!("%{}%", search);
-        where_clause.push_str(&format!(
-            " AND (code ILIKE ${} OR name ILIKE ${} OR description ILIKE ${})",
-            params.len() + 1,
-            params.len() + 1,
-            params.len() + 1
-        ));
-        params.push(serde_json::Value::String(pattern));
-    }
 
     let count_sql = format!("SELECT COUNT(*) as total FROM qa_standards{}", where_clause);
 
-    let mut count_query = sqlx::query_scalar(&count_sql);
-    for p in &params {
-        count_query = count_query.bind(p.clone());
-    }
+    let mut count_query = sqlx::query_scalar(&count_sql).bind(tenant_id);
 
     let total: Option<i64> = match count_query.fetch_one(&state.pool).await {
         Ok(c) => c,
@@ -154,18 +129,15 @@ pub async fn list_standards(
         FROM qa_standards
         {}
         ORDER BY created_at DESC
-        LIMIT ${} OFFSET ${}
+        LIMIT $2 OFFSET $3
         "#,
         where_clause,
-        params.len() + 1,
-        params.len() + 2
     );
 
-    let mut fetch_query = sqlx::query_as::<_, QualityStandard>(&fetch_sql);
-    for p in &params {
-        fetch_query = fetch_query.bind(p.clone());
-    }
-    fetch_query = fetch_query.bind(page_size).bind(offset);
+    let mut fetch_query = sqlx::query_as::<_, QualityStandard>(&fetch_sql)
+        .bind(tenant_id)
+        .bind(page_size)
+        .bind(offset);
 
     match fetch_query.fetch_all(&state.pool).await {
         Ok(data) => Json(ApiResponse::success(
@@ -402,11 +374,11 @@ pub async fn create_revision(
 
 pub fn create_routes() -> Router<crate::AppState> {
     Router::new()
-        .route("/api/qms/standards", get(list_standards))
-        .route("/api/qms/standards", post(create_standard))
-        .route("/api/qms/standards/{id}", get(get_standard))
-        .route("/api/qms/standards/{id}", put(update_standard))
-        .route("/api/qms/standards/{id}", delete(delete_standard))
-        .route("/api/qms/standards/{id}/revisions", get(list_revisions))
-        .route("/api/qms/standards/{id}/revisions", post(create_revision))
+        .route("/standards", get(list_standards))
+        .route("/standards", post(create_standard))
+        .route("/standards/{id}", get(get_standard))
+        .route("/standards/{id}", put(update_standard))
+        .route("/standards/{id}", delete(delete_standard))
+        .route("/standards/{id}/revisions", get(list_revisions))
+        .route("/standards/{id}/revisions", post(create_revision))
 }

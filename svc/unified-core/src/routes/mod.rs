@@ -15,6 +15,7 @@ mod migration;
 mod mobile;
 mod monitor;
 mod plugin;
+mod system;
 
 use axum::routing::{get, post, put};
 use axum::Router;
@@ -126,8 +127,11 @@ pub fn create_routes(
         .merge(help::help_routes(state))
         .merge(migration::migration_routes(state))
         .merge(monitor::monitor_routes(state))
+        .merge(system::system_routes(state))
         .merge(modules::login_log::create_routes(state.clone()))
         .merge(modules::search::create_routes(state.clone()))
+        .merge(modules::feedback::create_routes(state.clone()))
+        .merge(modules::audit::create_routes(state.clone()))
         .layer(axum::middleware::from_fn_with_state(
             state.auth_state.clone(),
             auth_middleware,

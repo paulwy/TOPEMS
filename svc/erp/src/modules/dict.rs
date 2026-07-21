@@ -145,37 +145,34 @@ async fn require_dict_delete_permission(req: Request<Body>, next: Next) -> Respo
 pub fn create_routes() -> Router<ApiState> {
     Router::new()
         .route(
-            "/api/erp/system/dict-types",
+            "/system/dict-types",
             get(list_dict_types)
                 .post(create_dict_type)
                 .layer(axum::middleware::from_fn(require_dict_write_permission)),
         )
         .route(
-            "/api/erp/system/dict-types/{id}",
+            "/system/dict-types/{id}",
             get(get_dict_type)
                 .put(update_dict_type)
                 .delete(delete_dict_type)
                 .layer(axum::middleware::from_fn(require_dict_write_permission)),
         )
+        .route("/system/dict-types/{id}/items", get(list_dict_items))
         .route(
-            "/api/erp/system/dict-types/{id}/items",
-            get(list_dict_items),
-        )
-        .route(
-            "/api/erp/system/dict-types/{id}/items/export",
+            "/system/dict-types/{id}/items/export",
             get(export_dict_items),
         )
         .route(
-            "/api/erp/system/dict-items",
+            "/system/dict-items",
             post(create_dict_item).layer(axum::middleware::from_fn(require_dict_write_permission)),
         )
         .route(
-            "/api/erp/system/dict-items/batch",
+            "/system/dict-items/batch",
             post(batch_create_dict_items)
                 .layer(axum::middleware::from_fn(require_dict_write_permission)),
         )
         .route(
-            "/api/erp/system/dict-items/{id}",
+            "/system/dict-items/{id}",
             get(get_dict_item)
                 .put(update_dict_item)
                 .delete(delete_dict_item)

@@ -503,7 +503,6 @@ fn is_public_path(path: &str) -> bool {
     let public_paths = [
         "/",
         "/health",
-        // 新路径（K8s Ingress 契约，V9 起首选）
         "/api/core/iam/auth/login",
         "/api/core/iam/auth/refresh",
         "/api/core/iam/auth/register",
@@ -511,27 +510,12 @@ fn is_public_path(path: &str) -> bool {
         "/api/core/iam/auth/reset-password",
         "/api/core/iam/auth/logout",
         "/api/integration/webhooks",
-        // V1 版本路径（前端统一使用 /v1 前缀）
-        "/api/core/iam/v1/auth/login",
-        "/api/core/iam/v1/auth/refresh",
-        "/api/core/iam/v1/auth/register",
-        "/api/core/iam/v1/auth/forgot-password",
-        "/api/core/iam/v1/auth/reset-password",
-        "/api/core/iam/v1/auth/logout",
-        // 兼容旧路径（向后兼容，至少一个大版本）
-        "/api/v1/auth/login",
-        "/api/v1/auth/refresh",
-        "/api/v1/auth/register",
-        "/api/integration/v1/webhooks",
     ];
     if public_paths.contains(&path) {
         return true;
     }
-    // Group1 / Group2 新路径下的公开前缀检查（webhook、auth 相关）
     path.starts_with("/api/core/iam/auth/")
-        || path.starts_with("/api/core/iam/v1/auth/")
         || path.starts_with("/api/integration/webhooks")
-        || path.starts_with("/api/integration/v1/webhooks")
 }
 
 fn is_websocket_path(path: &str) -> bool {
@@ -596,17 +580,17 @@ pub async fn auth_middleware(
     if std::env::var("DEVELOPMENT_MODE").unwrap_or_default() == "true" {
         tracing::warn!("开发模式已启用 - 仅用于本地开发环境");
         let claims = Claims {
-            sub: "dev_user".to_string(),
+            sub: "00000000-0000-0000-0000-000000000001".to_string(),
             username: "dev_user".to_string(),
             role: "admin".to_string(),
             roles: vec!["admin".to_string(), "user".to_string()],
-            permissions: vec![],
+            permissions: vec!["iam:admin".to_string(), "notification:read".to_string(), "plugin:read".to_string(), "plugin:write".to_string()],
             is_superuser: true,
             exp: 0,
             iat: 0,
             email: Some("dev@example.com".to_string()),
             department: None,
-            tenant_id: None,
+            tenant_id: Some("00000000-0000-0000-0000-000000000001".to_string()),
             department_id: None,
             position_id: None,
             position_code: None,
@@ -721,6 +705,9 @@ mod tests {
             email: None,
             department: None,
             tenant_id: None,
+            department_id: None,
+            position_id: None,
+            position_code: None,
         };
         assert!(claims.has_permission("iam:users_read"));
         assert!(!claims.has_permission("iam:users_create"));
@@ -740,6 +727,9 @@ mod tests {
             email: None,
             department: None,
             tenant_id: None,
+            department_id: None,
+            position_id: None,
+            position_code: None,
         };
         assert!(claims.has_permission("any_permission"));
         assert!(claims.has_role("any_role"));
@@ -749,8 +739,8 @@ mod tests {
     fn test_is_public_path() {
         assert!(is_public_path("/"));
         assert!(is_public_path("/health"));
-        assert!(is_public_path("/api/v1/auth/login"));
-        assert!(!is_public_path("/api/v1/users"));
+        assert!(is_public_path("/api/core/iam/auth/login"));
+        assert!(!is_public_path("/api/core/iam/users"));
     }
 
     #[test]
@@ -759,7 +749,7 @@ mod tests {
         assert!(is_websocket_path("/ws/bi/dashboard"));
         assert!(is_websocket_path("/ws/gis/device/code"));
         assert!(is_websocket_path("/ws/core/notifications"));
-        assert!(!is_websocket_path("/api/v1/orders"));
+        assert!(!is_websocket_path("/api/orders"));
     }
 
     #[test]

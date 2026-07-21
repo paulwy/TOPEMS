@@ -1,4 +1,5 @@
 use chrono::Utc;
+use serde_json;
 use sqlx::postgres::PgPool;
 use uuid::Uuid;
 
@@ -311,7 +312,7 @@ async fn test_create_hazardous_material() {
     .bind(None::<String>)
     .bind("flammable")
     .bind(Some("high"))
-    .bind(Some("{}"))
+    .bind(serde_json::json!({}))
     .bind(Some("500ml"))
     .bind(Some("瓶"))
     .bind(Some("铁桶"))

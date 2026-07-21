@@ -20,21 +20,18 @@ where
     ApiState: FromRef<S>,
 {
     Router::new()
+        .route("/transfers", get(list_transfers).post(create_transfer))
         .route(
-            "/api/wms/transfers",
-            get(list_transfers).post(create_transfer),
-        )
-        .route(
-            "/api/wms/transfers/{id}",
+            "/transfers/{id}",
             get(get_transfer)
                 .put(update_transfer)
                 .delete(delete_transfer),
         )
-        .route("/api/wms/transfers/{id}/items", get(list_transfer_items))
-        .route("/api/wms/transfers/{id}/confirm", post(confirm_transfer))
-        .route("/api/wms/transfers/{id}/ship", post(ship_transfer))
-        .route("/api/wms/transfers/{id}/receive", post(receive_transfer))
-        .route("/api/wms/transfers/{id}/complete", post(complete_transfer))
+        .route("/transfers/{id}/items", get(list_transfer_items))
+        .route("/transfers/{id}/confirm", post(confirm_transfer))
+        .route("/transfers/{id}/ship", post(ship_transfer))
+        .route("/transfers/{id}/receive", post(receive_transfer))
+        .route("/transfers/{id}/complete", post(complete_transfer))
 }
 
 pub async fn list_transfers(

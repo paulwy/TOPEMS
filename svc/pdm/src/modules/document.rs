@@ -29,28 +29,19 @@ fn get_tenant_id(claims: &Claims, headers: &axum::http::HeaderMap) -> Uuid {
 
 pub fn create_routes() -> Router<AppState> {
     Router::new()
+        .route("/documents", get(list_documents).post(create_document))
         .route(
-            "/api/pdm/documents",
-            get(list_documents).post(create_document),
-        )
-        .route(
-            "/api/pdm/documents/{id}",
+            "/documents/{id}",
             get(get_document)
                 .put(update_document)
                 .delete(delete_document),
         )
+        .route("/documents/{id}/approve", post(start_document_approval))
         .route(
-            "/api/pdm/documents/{id}/approve",
-            post(start_document_approval),
-        )
-        .route(
-            "/api/pdm/documents/{id}/approval-history",
+            "/documents/{id}/approval-history",
             get(get_document_approval_history),
         )
-        .route(
-            "/api/pdm/documents/pending-approval",
-            get(list_pending_documents),
-        )
+        .route("/documents/pending-approval", get(list_pending_documents))
 }
 
 #[derive(Debug, Serialize, Deserialize, FromRow)]

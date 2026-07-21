@@ -87,34 +87,38 @@ const HrmDepartmentPage: React.FC = () => {
   const departmentsQuery = useQuery({
     queryKey: ['hrm-departments', searchText, statusFilter],
     queryFn: async () => {
-      const params: ListParams = { pagesize: 1000 };
-      if (searchText) params.search = searchText;
-      if (statusFilter !== 'all') params.status = statusFilter;
-      const response = await departmentApi.list(params);
-      if (response.code === 200 && response.data) {
-        const data = response.data as PaginatedResult<Department>;
-        const depts = data.items || [];
-        const rootDepts = depts.filter((d) => !d.parent_id);
-        rootDepts.forEach((d) => {
-          const expandAllChildren = (dept: Department, allDepts: Department[]) => {
-            setExpandedIds((prev) => {
-              const newExpanded = new Set(prev);
-              newExpanded.add(dept.id);
-              const children = allDepts.filter((child) => child.parent_id === dept.id);
-              children.forEach((child) => expandAllChildren(child, allDepts));
-              return newExpanded;
-            });
-          };
-          expandAllChildren(d, depts);
-        });
-        return depts;
+      try {
+        const params: ListParams = { pagesize: 1000 };
+        if (searchText) params.search = searchText;
+        if (statusFilter !== 'all') params.status = statusFilter;
+        const response = await departmentApi.list(params);
+        if (response.code === 200 && response.data) {
+          const data = response.data as PaginatedResult<Department>;
+          const depts = Array.isArray(data.items) ? data.items : [];
+          const rootDepts = depts.filter((d) => !d.parent_id);
+          rootDepts.forEach((d) => {
+            const expandAllChildren = (dept: Department, allDepts: Department[]) => {
+              setExpandedIds((prev) => {
+                const newExpanded = new Set(prev);
+                newExpanded.add(dept.id);
+                const children = allDepts.filter((child) => child.parent_id === dept.id);
+                children.forEach((child) => expandAllChildren(child, allDepts));
+                return newExpanded;
+              });
+            };
+            expandAllChildren(d, depts);
+          });
+          return depts;
+        }
+      } catch (error) {
+        console.error('Failed to fetch departments:', error);
       }
       return [];
     },
     staleTime: 5 * 60 * 1000,
   });
 
-  const departments = departmentsQuery.data || [];
+  const departments = Array.isArray(departmentsQuery.data) ? departmentsQuery.data : [];
   const loading = departmentsQuery.isLoading;
   const totalDepartments = departments.length;
 
@@ -122,30 +126,38 @@ const HrmDepartmentPage: React.FC = () => {
   const companiesQuery = useQuery({
     queryKey: ['hrm-companies'],
     queryFn: async () => {
-      const response = await companyApi.list({ pagesize: 100 });
-      if (response.code === 200 && response.data) {
-        const data = response.data as PaginatedResult<Company>;
-        return data.items || [];
+      try {
+        const response = await companyApi.list({ pagesize: 100 });
+        if (response.code === 200 && response.data) {
+          const data = response.data as PaginatedResult<Company>;
+          return Array.isArray(data.items) ? data.items : [];
+        }
+      } catch (error) {
+        console.error('Failed to fetch companies:', error);
       }
       return [];
     },
     staleTime: 30 * 60 * 1000,
   });
 
-  const companies = companiesQuery.data || [];
+  const companies = Array.isArray(companiesQuery.data) ? companiesQuery.data : [];
 
   // ============ React Query - 部门员工列表 ============
   const employeesQuery = useQuery({
     queryKey: ['hrm-department-employees', selectedDeptId],
     queryFn: async () => {
-      if (!selectedDeptId) return [];
-      const response = await employeeApi.list({
-        department_id: selectedDeptId,
-        pagesize: 100,
-      });
-      if (response.code === 200 && response.data) {
-        const data = response.data as PaginatedResult<Employee>;
-        return data.items || [];
+      try {
+        if (!selectedDeptId) return [];
+        const response = await employeeApi.list({
+          department_id: selectedDeptId,
+          pagesize: 100,
+        });
+        if (response.code === 200 && response.data) {
+          const data = response.data as PaginatedResult<Employee>;
+          return Array.isArray(data.items) ? data.items : [];
+        }
+      } catch (error) {
+        console.error('Failed to fetch employees:', error);
       }
       return [];
     },
@@ -153,7 +165,7 @@ const HrmDepartmentPage: React.FC = () => {
     staleTime: 5 * 60 * 1000,
   });
 
-  const employees = employeesQuery.data || [];
+  const employees = Array.isArray(employeesQuery.data) ? employeesQuery.data : [];
 
   // ============ React Query - Mutations ============
   const createMutation = useMutation({

@@ -1,10 +1,9 @@
-CREATE SCHEMA IF NOT EXISTS doc;
-
-CREATE TABLE IF NOT EXISTS doc.folders (
+CREATE TABLE IF NOT EXISTS core_doc_folders (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     tenant_id UUID,
     name VARCHAR(200) NOT NULL,
-    parent_id UUID REFERENCES doc.folders(id),
+    parent_id UUID REFERENCES core_doc_folders(id),
+    owner_id UUID,
     description TEXT,
     sort_order INTEGER DEFAULT 0,
     is_enabled BOOLEAN DEFAULT true,
@@ -13,10 +12,10 @@ CREATE TABLE IF NOT EXISTS doc.folders (
     updated_at TIMESTAMPTZ DEFAULT NOW()
 );
 
-CREATE INDEX IF NOT EXISTS idx_doc_folders_tenant ON doc.folders(tenant_id);
-CREATE INDEX IF NOT EXISTS idx_doc_folders_parent ON doc.folders(parent_id);
+CREATE INDEX IF NOT EXISTS idx_core_doc_folders_tenant ON core_doc_folders(tenant_id);
+CREATE INDEX IF NOT EXISTS idx_core_doc_folders_parent ON core_doc_folders(parent_id);
 
-CREATE TABLE IF NOT EXISTS doc.templates (
+CREATE TABLE IF NOT EXISTS core_doc_templates (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     tenant_id UUID,
     name VARCHAR(200) NOT NULL,
@@ -24,6 +23,7 @@ CREATE TABLE IF NOT EXISTS doc.templates (
     description TEXT,
     content TEXT,
     content_type VARCHAR(50) DEFAULT 'html',
+    variables JSONB DEFAULT '[]',
     fields JSONB DEFAULT '[]',
     is_enabled BOOLEAN DEFAULT true,
     is_default BOOLEAN DEFAULT false,
@@ -32,15 +32,15 @@ CREATE TABLE IF NOT EXISTS doc.templates (
     updated_at TIMESTAMPTZ DEFAULT NOW()
 );
 
-CREATE INDEX IF NOT EXISTS idx_doc_templates_tenant ON doc.templates(tenant_id);
-CREATE INDEX IF NOT EXISTS idx_doc_templates_category ON doc.templates(category);
+CREATE INDEX IF NOT EXISTS idx_core_doc_templates_tenant ON core_doc_templates(tenant_id);
+CREATE INDEX IF NOT EXISTS idx_core_doc_templates_category ON core_doc_templates(category);
 
-CREATE TABLE IF NOT EXISTS doc.documents (
+CREATE TABLE IF NOT EXISTS core_doc_documents (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     tenant_id UUID,
     title VARCHAR(500) NOT NULL,
-    folder_id UUID REFERENCES doc.folders(id),
-    template_id UUID REFERENCES doc.templates(id),
+    folder_id UUID REFERENCES core_doc_folders(id),
+    template_id UUID REFERENCES core_doc_templates(id),
     content TEXT,
     content_type VARCHAR(50) DEFAULT 'html',
     status VARCHAR(50) DEFAULT 'draft',
@@ -60,15 +60,15 @@ CREATE TABLE IF NOT EXISTS doc.documents (
     updated_at TIMESTAMPTZ DEFAULT NOW()
 );
 
-CREATE INDEX IF NOT EXISTS idx_doc_documents_tenant ON doc.documents(tenant_id);
-CREATE INDEX IF NOT EXISTS idx_doc_documents_folder ON doc.documents(folder_id);
-CREATE INDEX IF NOT EXISTS idx_doc_documents_status ON doc.documents(status);
-CREATE INDEX IF NOT EXISTS idx_doc_documents_template ON doc.documents(template_id);
+CREATE INDEX IF NOT EXISTS idx_core_doc_documents_tenant ON core_doc_documents(tenant_id);
+CREATE INDEX IF NOT EXISTS idx_core_doc_documents_folder ON core_doc_documents(folder_id);
+CREATE INDEX IF NOT EXISTS idx_core_doc_documents_status ON core_doc_documents(status);
+CREATE INDEX IF NOT EXISTS idx_core_doc_documents_template ON core_doc_documents(template_id);
 
-CREATE TABLE IF NOT EXISTS doc.document_versions (
+CREATE TABLE IF NOT EXISTS core_doc_document_versions (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     tenant_id UUID,
-    document_id UUID NOT NULL REFERENCES doc.documents(id) ON DELETE CASCADE,
+    document_id UUID NOT NULL REFERENCES core_doc_documents(id) ON DELETE CASCADE,
     version INTEGER NOT NULL,
     content TEXT,
     content_type VARCHAR(50) DEFAULT 'html',
@@ -78,31 +78,31 @@ CREATE TABLE IF NOT EXISTS doc.document_versions (
     UNIQUE(document_id, version)
 );
 
-CREATE INDEX IF NOT EXISTS idx_doc_versions_tenant ON doc.document_versions(tenant_id);
-CREATE INDEX IF NOT EXISTS idx_doc_versions_document ON doc.document_versions(document_id);
+CREATE INDEX IF NOT EXISTS idx_core_doc_versions_tenant ON core_doc_document_versions(tenant_id);
+CREATE INDEX IF NOT EXISTS idx_core_doc_versions_document ON core_doc_document_versions(document_id);
 
-CREATE TABLE IF NOT EXISTS doc.document_permissions (
+CREATE TABLE IF NOT EXISTS core_doc_document_permissions (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     tenant_id UUID,
-    document_id UUID NOT NULL REFERENCES doc.documents(id) ON DELETE CASCADE,
+    document_id UUID NOT NULL REFERENCES core_doc_documents(id) ON DELETE CASCADE,
     user_id UUID,
     role_id UUID,
     permission_type VARCHAR(50) NOT NULL,
     created_at TIMESTAMPTZ DEFAULT NOW()
 );
 
-CREATE INDEX IF NOT EXISTS idx_doc_permissions_tenant ON doc.document_permissions(tenant_id);
-CREATE INDEX IF NOT EXISTS idx_doc_permissions_document ON doc.document_permissions(document_id);
+CREATE INDEX IF NOT EXISTS idx_core_doc_permissions_tenant ON core_doc_document_permissions(tenant_id);
+CREATE INDEX IF NOT EXISTS idx_core_doc_permissions_document ON core_doc_document_permissions(document_id);
 
-CREATE TABLE IF NOT EXISTS doc.document_links (
+CREATE TABLE IF NOT EXISTS core_doc_document_links (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     tenant_id UUID,
-    document_id UUID NOT NULL REFERENCES doc.documents(id) ON DELETE CASCADE,
+    document_id UUID NOT NULL REFERENCES core_doc_documents(id) ON DELETE CASCADE,
     link_type VARCHAR(50),
-    target_document_id UUID REFERENCES doc.documents(id),
+    target_document_id UUID REFERENCES core_doc_documents(id),
     target_url TEXT,
     created_at TIMESTAMPTZ DEFAULT NOW()
 );
 
-CREATE INDEX IF NOT EXISTS idx_doc_links_tenant ON doc.document_links(tenant_id);
-CREATE INDEX IF NOT EXISTS idx_doc_links_document ON doc.document_links(document_id);
+CREATE INDEX IF NOT EXISTS idx_core_doc_links_tenant ON core_doc_document_links(tenant_id);
+CREATE INDEX IF NOT EXISTS idx_core_doc_links_document ON core_doc_document_links(document_id);

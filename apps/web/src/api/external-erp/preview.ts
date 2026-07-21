@@ -9,10 +9,7 @@ export const previewApi = {
       pagesize?: number;
     }
   ) =>
-    apiClient.integration.get(
-      `/integration/external-erp/connections/${configId}/preview/accounts`,
-      { params }
-    ),
+    apiClient.integration.get(`/external-erp/connections/${configId}/preview/accounts`, { params }),
 
   previewExternalCustomers: (
     configId: string,
@@ -22,10 +19,9 @@ export const previewApi = {
       pagesize?: number;
     }
   ) =>
-    apiClient.integration.get(
-      `/integration/external-erp/connections/${configId}/preview/customers`,
-      { params }
-    ),
+    apiClient.integration.get(`/external-erp/connections/${configId}/preview/customers`, {
+      params,
+    }),
 
   previewExternalSuppliers: (
     configId: string,
@@ -35,10 +31,9 @@ export const previewApi = {
       pagesize?: number;
     }
   ) =>
-    apiClient.integration.get(
-      `/integration/external-erp/connections/${configId}/preview/suppliers`,
-      { params }
-    ),
+    apiClient.integration.get(`/external-erp/connections/${configId}/preview/suppliers`, {
+      params,
+    }),
 
   previewExternalVouchers: (
     configId: string,
@@ -49,10 +44,7 @@ export const previewApi = {
       pagesize?: number;
     }
   ) =>
-    apiClient.integration.get(
-      `/integration/external-erp/connections/${configId}/preview/vouchers`,
-      { params }
-    ),
+    apiClient.integration.get(`/external-erp/connections/${configId}/preview/vouchers`, { params }),
 };
 
 export default previewApi;

@@ -21,7 +21,7 @@ async fn check_database(pool: &PgPool) -> String {
     }
 }
 
-async fn health_check(State(state): State<ApiState>) -> (StatusCode, Json<HealthResponse>) {
+pub async fn health_check(State(state): State<ApiState>) -> (StatusCode, Json<HealthResponse>) {
     let uptime = state.start_time.elapsed().as_secs();
     let db_status = check_database(&state.db).await;
 

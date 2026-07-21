@@ -23,12 +23,9 @@ pub struct PaginationParams {
 
 pub fn create_routes() -> Router<ApiState> {
     Router::new()
+        .route("/suppliers", get(list_suppliers).post(create_supplier))
         .route(
-            "/api/erp/suppliers",
-            get(list_suppliers).post(create_supplier),
-        )
-        .route(
-            "/api/erp/suppliers/{id}",
+            "/suppliers/{id}",
             get(get_supplier)
                 .put(update_supplier)
                 .delete(delete_supplier),

@@ -410,7 +410,7 @@ pub async fn export_report_pdf(
                 "conclusion": r.get::<Option<String>, _>("conclusion"),
             });
 
-            let pdf_url = format!("/api/lims/reports/{}/pdf", id);
+            let pdf_url = format!("/reports/{}/pdf", id);
 
             Json(ApiResponse::success(
                 serde_json::json!({

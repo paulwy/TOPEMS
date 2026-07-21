@@ -115,26 +115,14 @@ pub struct PerformanceQueryParams {
 
 pub fn create_routes() -> Router<ApiState> {
     Router::new()
-        .route("/api/monitor/metrics/system", get(get_system_metrics))
-        .route("/api/monitor/metrics/database", get(get_database_metrics))
-        .route("/api/monitor/performance/api", get(get_api_performance))
-        .route("/api/monitor/performance/trend", get(get_performance_trend))
-        .route(
-            "/api/monitor/performance/services",
-            get(get_service_performance),
-        )
-        .route(
-            "/api/monitor/performance/summary",
-            get(get_performance_summary),
-        )
-        .route(
-            "/api/monitor/performance/slow-queries",
-            get(get_slow_queries),
-        )
-        .route(
-            "/api/monitor/performance/export",
-            post(export_performance_data),
-        )
+        .route("/metrics/system", get(get_system_metrics))
+        .route("/metrics/database", get(get_database_metrics))
+        .route("/performance/api", get(get_api_performance))
+        .route("/performance/trend", get(get_performance_trend))
+        .route("/performance/services", get(get_service_performance))
+        .route("/performance/summary", get(get_performance_summary))
+        .route("/performance/slow-queries", get(get_slow_queries))
+        .route("/performance/export", post(export_performance_data))
 }
 
 async fn get_system_metrics(

@@ -37,79 +37,73 @@ pub use company_relations::{
 
 pub fn create_routes() -> Router<ApiState> {
     Router::new()
+        .route("/consolidation/scopes", get(list_scopes).post(create_scope))
         .route(
-            "/api/consolidation/scopes",
-            get(list_scopes).post(create_scope),
-        )
-        .route(
-            "/api/consolidation/scopes/{scopeId}",
+            "/consolidation/scopes/{scopeId}",
             get(get_scope).put(update_scope).delete(delete_scope),
         )
         .route(
-            "/api/consolidation/scopes/{scopeId}/companies",
+            "/consolidation/scopes/{scopeId}/companies",
             get(list_scope_companies),
         )
+        .route("/consolidation/scopes/companies", post(add_scope_company))
         .route(
-            "/api/consolidation/scopes/companies",
-            post(add_scope_company),
-        )
-        .route(
-            "/api/consolidation/scopes/companies/{companyId}",
+            "/consolidation/scopes/companies/{companyId}",
             put(update_scope_company).delete(remove_scope_company),
         )
         .route(
-            "/api/consolidation/elimination-rules",
+            "/consolidation/elimination-rules",
             get(list_elimination_rules).post(create_elimination_rule),
         )
         .route(
-            "/api/consolidation/elimination-rules/{ruleId}",
+            "/consolidation/elimination-rules/{ruleId}",
             get(get_elimination_rule)
                 .put(update_elimination_rule)
                 .delete(delete_elimination_rule),
         )
         .route(
-            "/api/consolidation/internal-transactions",
+            "/consolidation/internal-transactions",
             get(list_internal_transactions),
         )
         .route(
-            "/api/consolidation/execute-elimination",
+            "/consolidation/execute-elimination",
             post(execute_elimination),
         )
         .route(
-            "/api/consolidation/reports",
+            "/consolidation/reports",
             get(list_reports).post(generate_report),
         )
         .route(
-            "/api/consolidation/reports/{reportId}",
+            "/consolidation/reports/{reportId}",
             get(get_report).delete(delete_report),
         )
         .route(
-            "/api/consolidation/reports/{reportId}/lines",
+            "/consolidation/reports/{reportId}/lines",
             get(get_report_lines),
         )
         .route(
-            "/api/consolidation/reports/{reportId}/approve",
+            "/consolidation/reports/{reportId}/approve",
             post(approve_report),
         )
         .route(
-            "/api/consolidation/reports/{reportId}/submit",
+            "/consolidation/reports/{reportId}/submit",
             post(submit_report),
         )
         .route(
-            "/api/consolidation/reports/{reportId}/publish",
+            "/consolidation/reports/{reportId}/publish",
             post(publish_report),
         )
         .route(
-            "/api/consolidation/company-relations",
+            "/consolidation/company-relations",
             get(list_company_relations).post(create_company_relation),
         )
-        .route("/api/consolidation/company-tree", get(get_company_tree))
+        .route("/consolidation/company-tree", get(get_company_tree))
         .route(
-            "/api/consolidation/company-relations/{relationId}",
+            "/consolidation/company-relations/{relationId}",
             put(update_company_relation).delete(delete_company_relation),
         )
         .route(
-            "/api/consolidation/companies/{companyId}/financial-data",
+            "/consolidation/companies/{companyId}/financial-data",
             get(get_company_financial_data),
         )
 }

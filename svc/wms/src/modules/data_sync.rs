@@ -43,19 +43,13 @@ where
     ApiState: axum::extract::FromRef<S>,
 {
     Router::new()
+        .route("/sync/outbound-to-shipping", post(outbound_to_shipping))
         .route(
-            "/api/wms/sync/outbound-to-shipping",
-            post(outbound_to_shipping),
-        )
-        .route(
-            "/api/wms/sync/outbound-order/{id}/to-shipping",
+            "/sync/outbound-order/{id}/to-shipping",
             post(create_shipping_from_outbound),
         )
-        .route(
-            "/api/wms/sync/inbound-from-scm",
-            post(create_inbound_from_scm),
-        )
-        .route("/api/wms/sync/sync-logs", post(get_sync_logs))
+        .route("/sync/inbound-from-scm", post(create_inbound_from_scm))
+        .route("/sync/sync-logs", post(get_sync_logs))
 }
 
 pub async fn outbound_to_shipping(

@@ -75,6 +75,9 @@ fn test_claims_has_permission() {
         email: None,
         department: None,
         tenant_id: None,
+        department_id: None,
+        position_id: None,
+        position_code: None,
     };
 
     assert!(claims.has_permission("iam:users_read"));
@@ -96,6 +99,9 @@ fn test_claims_has_permission_superuser() {
         email: None,
         department: None,
         tenant_id: None,
+        department_id: None,
+        position_id: None,
+        position_code: None,
     };
 
     assert!(claims.has_permission("anything:permission"));
@@ -116,6 +122,9 @@ fn test_claims_has_role() {
         email: None,
         department: None,
         tenant_id: None,
+        department_id: None,
+        position_id: None,
+        position_code: None,
     };
 
     assert!(claims.has_role("user"));
@@ -137,6 +146,9 @@ fn test_claims_has_role_superuser() {
         email: None,
         department: None,
         tenant_id: None,
+        department_id: None,
+        position_id: None,
+        position_code: None,
     };
 
     assert!(claims.has_role("any_role"));
@@ -157,6 +169,9 @@ fn test_claims_has_any_permission() {
         email: None,
         department: None,
         tenant_id: None,
+        department_id: None,
+        position_id: None,
+        position_code: None,
     };
 
     assert!(claims.has_any_permission(&["iam:users_read", "iam:users_create"]));
@@ -177,6 +192,9 @@ fn test_claims_has_any_permission_superuser() {
         email: None,
         department: None,
         tenant_id: None,
+        department_id: None,
+        position_id: None,
+        position_code: None,
     };
 
     assert!(claims.has_any_permission(&["perm1", "perm2"]));
@@ -196,6 +214,9 @@ fn test_claims_has_all_permissions() {
         email: None,
         department: None,
         tenant_id: None,
+        department_id: None,
+        position_id: None,
+        position_code: None,
     };
 
     assert!(claims.has_all_permissions(&["iam:users_read", "iam:users_create"]));
@@ -216,6 +237,9 @@ fn test_claims_has_all_permissions_superuser() {
         email: None,
         department: None,
         tenant_id: None,
+        department_id: None,
+        position_id: None,
+        position_code: None,
     };
 
     assert!(claims.has_all_permissions(&["perm1", "perm2", "perm3"]));
@@ -236,6 +260,9 @@ fn test_claims_user_id_valid() {
         email: None,
         department: None,
         tenant_id: None,
+        department_id: None,
+        position_id: None,
+        position_code: None,
     };
 
     assert_eq!(claims.user_id().unwrap(), user_id);
@@ -255,6 +282,9 @@ fn test_claims_user_id_invalid() {
         email: None,
         department: None,
         tenant_id: None,
+        department_id: None,
+        position_id: None,
+        position_code: None,
     };
 
     assert!(claims.user_id().is_err());
@@ -275,6 +305,9 @@ fn test_claims_encode_and_verify() {
         email: Some("test@example.com".to_string()),
         department: Some("IT".to_string()),
         tenant_id: Some("tenant-1".to_string()),
+        department_id: None,
+        position_id: None,
+        position_code: None,
     };
 
     let token = claims.encode(TEST_SECRET).unwrap();
@@ -379,6 +412,9 @@ fn test_claims_serialization() {
         email: Some("test@test.com".to_string()),
         department: Some("IT".to_string()),
         tenant_id: Some("t1".to_string()),
+        department_id: None,
+        position_id: None,
+        position_code: None,
     };
 
     let json = serde_json::to_string(&claims).unwrap();

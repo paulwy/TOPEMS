@@ -24,35 +24,32 @@ fn get_tenant_id(claims: &Claims, headers: &HeaderMap) -> Uuid {
 
 pub fn create_routes() -> Router<AppState> {
     Router::new()
+        .route("/incidents", get(list_accidents).post(report_accident))
         .route(
-            "/api/ehs/incidents",
-            get(list_accidents).post(report_accident),
-        )
-        .route(
-            "/api/ehs/incidents/{id}",
+            "/incidents/{id}",
             get(get_accident)
                 .put(update_accident)
                 .delete(delete_accident),
         )
         .route(
-            "/api/ehs/incidents/{id}/investigation",
+            "/incidents/{id}/investigation",
             post(start_investigation).put(update_investigation),
         )
         .route(
-            "/api/ehs/incidents/{id}/investigation/complete",
+            "/incidents/{id}/investigation/complete",
             post(complete_investigation),
         )
-        .route("/api/ehs/incidents/{id}/treatment", post(create_treatment))
+        .route("/incidents/{id}/treatment", post(create_treatment))
         .route(
-            "/api/ehs/incidents/{id}/treatment/actions/{action_id}",
+            "/incidents/{id}/treatment/actions/{action_id}",
             put(update_treatment_action),
         )
         .route(
-            "/api/ehs/incidents/{id}/treatment/complete",
+            "/incidents/{id}/treatment/complete",
             post(complete_treatment),
         )
-        .route("/api/ehs/incidents/{id}/review", post(create_review))
-        .route("/api/ehs/incidents/{id}/close", post(close_accident))
+        .route("/incidents/{id}/review", post(create_review))
+        .route("/incidents/{id}/close", post(close_accident))
 }
 
 #[derive(Debug, Deserialize)]

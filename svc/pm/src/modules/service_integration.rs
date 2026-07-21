@@ -10,11 +10,11 @@ use uuid::Uuid;
 pub fn create_routes(pool: PgPool) -> Router {
     Router::new()
         .route(
-            "/api/pm/service-integrations",
+            "/service-integrations",
             get(list_integrations).post(create_integration),
         )
         .route(
-            "/api/pm/service-integrations/{id}",
+            "/service-integrations/{id}",
             get(get_integration)
                 .put(update_integration)
                 .delete(delete_integration),

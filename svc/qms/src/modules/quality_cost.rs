@@ -546,14 +546,11 @@ pub async fn get_cost_trend(
 
 pub fn create_routes() -> Router<crate::AppState> {
     Router::new()
-        .route("/api/qms/quality-costs", get(list_quality_costs))
-        .route("/api/qms/quality-costs", post(create_quality_cost))
-        .route("/api/qms/quality-costs/{id}", get(get_quality_cost))
-        .route("/api/qms/quality-costs/{id}", put(update_quality_cost))
-        .route("/api/qms/quality-costs/{id}", delete(delete_quality_cost))
-        .route(
-            "/api/qms/quality-costs/statistics",
-            get(get_cost_statistics),
-        )
-        .route("/api/qms/quality-costs/trend", get(get_cost_trend))
+        .route("/quality-costs", get(list_quality_costs))
+        .route("/quality-costs", post(create_quality_cost))
+        .route("/quality-costs/{id}", get(get_quality_cost))
+        .route("/quality-costs/{id}", put(update_quality_cost))
+        .route("/quality-costs/{id}", delete(delete_quality_cost))
+        .route("/quality-costs/statistics", get(get_cost_statistics))
+        .route("/quality-costs/trend", get(get_cost_trend))
 }

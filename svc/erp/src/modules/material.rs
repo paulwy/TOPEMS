@@ -23,12 +23,9 @@ pub struct PaginationParams {
 
 pub fn create_routes() -> Router<ApiState> {
     Router::new()
+        .route("/materials", get(list_materials).post(create_material))
         .route(
-            "/api/erp/materials",
-            get(list_materials).post(create_material),
-        )
-        .route(
-            "/api/erp/materials/{id}",
+            "/materials/{id}",
             get(get_material)
                 .put(update_material)
                 .delete(delete_material),

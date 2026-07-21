@@ -31,19 +31,16 @@ pub async fn create_routes(db: PgPool) -> Result<Router> {
     let state = Arc::new(AppState { db });
 
     let app = Router::new()
-        .route("/api/srm/biddings", get(list_biddings).post(create_bidding))
+        .route("/biddings", get(list_biddings).post(create_bidding))
         .route(
-            "/api/srm/biddings/{id}",
+            "/biddings/{id}",
             get(get_bidding).put(update_bidding).delete(delete_bidding),
         )
-        .route("/api/srm/biddings/{id}/publish", post(publish_bidding))
-        .route("/api/srm/biddings/{id}/open", post(open_bidding))
-        .route("/api/srm/biddings/{id}/evaluate", post(evaluate_bidding))
-        .route("/api/srm/biddings/{id}/award", post(award_bidding))
-        .route(
-            "/api/srm/biddings/{id}/suppliers",
-            get(list_bidding_suppliers),
-        )
+        .route("/biddings/{id}/publish", post(publish_bidding))
+        .route("/biddings/{id}/open", post(open_bidding))
+        .route("/biddings/{id}/evaluate", post(evaluate_bidding))
+        .route("/biddings/{id}/award", post(award_bidding))
+        .route("/biddings/{id}/suppliers", get(list_bidding_suppliers))
         .with_state(state);
 
     Ok(app)

@@ -11,32 +11,32 @@ use crate::AppState;
 pub fn create_routes() -> Router<AppState> {
     Router::new()
         .route(
-            "/api/mes/boms",
+            "/boms",
             get(bom_handlers::list_material_boms).post(bom_handlers::create_material_bom),
         )
         .route(
-            "/api/mes/boms/{id}",
+            "/boms/{id}",
             get(bom_handlers::get_material_bom)
                 .put(bom_handlers::update_material_bom)
                 .delete(bom_handlers::delete_material_bom),
         )
         .route(
-            "/api/mes/material-issues",
+            "/material-issues",
             get(issue_handlers::list_material_issues).post(issue_handlers::create_material_issue),
         )
         .route(
-            "/api/mes/material-issues/{id}",
+            "/material-issues/{id}",
             get(issue_handlers::get_material_issue)
                 .put(issue_handlers::update_material_issue)
                 .delete(issue_handlers::delete_material_issue),
         )
         .route(
-            "/api/mes/material-returns",
+            "/material-returns",
             get(return_handlers::list_material_returns)
                 .post(return_handlers::create_material_return),
         )
         .route(
-            "/api/mes/material-returns/{id}",
+            "/material-returns/{id}",
             get(return_handlers::get_material_return)
                 .put(return_handlers::update_material_return)
                 .delete(return_handlers::delete_material_return),

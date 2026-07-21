@@ -16,21 +16,15 @@ use crate::shared::AppState;
 
 pub fn create_routes() -> Router<AppState> {
     Router::new()
+        .route("/schedules", get(list_schedules).post(create_schedule))
         .route(
-            "/api/report/schedules",
-            get(list_schedules).post(create_schedule),
-        )
-        .route(
-            "/api/report/schedules/{id}",
+            "/schedules/{id}",
             get(get_schedule)
                 .put(update_schedule)
                 .delete(delete_schedule),
         )
-        .route("/api/report/schedules/{id}/execute", post(execute_schedule))
-        .route(
-            "/api/report/schedules/{id}/history",
-            get(get_execution_history),
-        )
+        .route("/schedules/{id}/execute", post(execute_schedule))
+        .route("/schedules/{id}/history", get(get_execution_history))
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]

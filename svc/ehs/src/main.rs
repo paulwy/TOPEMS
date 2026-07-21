@@ -30,8 +30,8 @@ use sqlx::PgPool;
 
 use topems_shared::{
     auth_middleware, create_cors_layer, get_api_info_handler, init_telemetry, rls_middleware,
-    simple_health_check, telemetry_middleware, wrap_group2_router, ApiResponse, AuthState,
-    RouteCompatConfig, ServiceHealth, SimpleHealthConfig,
+    simple_health_check, telemetry_middleware, ApiResponse, AuthState, ServiceHealth,
+    SimpleHealthConfig,
 };
 
 pub use shared::*;
@@ -101,13 +101,12 @@ async fn main() -> anyhow::Result<()> {
 
     let protected_routes = Router::new()
         .merge(modules::create_api_routes())
-        .route("/api/health/detailed", get(detailed_health))
+        .layer(axum::middleware::from_fn(
+            middleware::tenant::tenant_middleware,
+        ))
         .layer(axum::middleware::from_fn_with_state(
             state.auth_state.clone(),
             auth_middleware,
-        ))
-        .layer(axum::middleware::from_fn(
-            middleware::tenant::tenant_middleware,
         ))
         .layer(axum::middleware::from_fn_with_state(
             state.pool.clone(),
@@ -117,13 +116,11 @@ async fn main() -> anyhow::Result<()> {
     let app = Router::new()
         .merge(public_routes)
         .nest("/api/ehs", protected_routes)
+        .route("/api/health/detailed", get(detailed_health))
         .layer(axum::middleware::from_fn(telemetry_middleware))
         .layer(cors)
         .layer(prometheus_layer)
         .with_state(state);
-
-    let cfg = RouteCompatConfig::new("ehs", "/api/ehs", &[]);
-    let app = wrap_group2_router(app, cfg);
 
     let port = std::env::var("EHS_PORT")
         .unwrap_or_else(|_| "8052".to_string())

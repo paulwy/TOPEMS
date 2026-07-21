@@ -649,12 +649,12 @@ pub async fn calculate_control_limits(
 
 pub fn create_routes() -> Router<crate::AppState> {
     Router::new()
-        .route("/api/qms/spc/charts", get(list_spc_charts))
-        .route("/api/qms/spc/charts", post(create_spc_chart))
-        .route("/api/qms/spc/charts/{id}", get(get_spc_chart))
-        .route("/api/qms/spc/charts/{id}", put(update_spc_chart))
-        .route("/api/qms/spc/charts/{id}", delete(delete_spc_chart))
-        .route("/api/qms/spc/data-points", get(get_spc_data_points))
-        .route("/api/qms/spc/data-points", post(add_spc_data_point))
-        .route("/api/qms/spc/calculate", post(calculate_control_limits))
+        .route("/spc/charts", get(list_spc_charts))
+        .route("/spc/charts", post(create_spc_chart))
+        .route("/spc/charts/{id}", get(get_spc_chart))
+        .route("/spc/charts/{id}", put(update_spc_chart))
+        .route("/spc/charts/{id}", delete(delete_spc_chart))
+        .route("/spc/data-points", get(get_spc_data_points))
+        .route("/spc/data-points", post(add_spc_data_point))
+        .route("/spc/calculate", post(calculate_control_limits))
 }

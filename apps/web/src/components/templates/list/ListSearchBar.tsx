@@ -64,6 +64,17 @@ export const ListSearchBar: React.FC<ListSearchBarProps> = ({
     switch (filter.type) {
       case 'multiselect': {
         const selectedArr = Array.isArray(filterValue) ? filterValue : [];
+        const menuItems =
+          filter.options?.map((option) => (
+            <MenuItem
+              key={option.value}
+              value={option.value}
+            >
+              <Checkbox checked={selectedArr.includes(String(option.value))} />
+              <ListItemText primary={option.label} />
+            </MenuItem>
+          )) || [];
+
         return (
           <FormControl
             key={filter.id}
@@ -94,31 +105,7 @@ export const ListSearchBar: React.FC<ListSearchBarProps> = ({
                 );
               }}
             >
-              {filter.searchable && (
-                <TextField
-                  size='small'
-                  placeholder='搜索...'
-                  sx={{ px: 1, my: 1, minWidth: 150 }}
-                  slotProps={{
-                    input: {
-                      startAdornment: (
-                        <InputAdornment position='start'>
-                          <Search style={{ width: 16, height: 16 }} />
-                        </InputAdornment>
-                      ),
-                    },
-                  }}
-                />
-              )}
-              {filter.options?.map((option) => (
-                <MenuItem
-                  key={option.value}
-                  value={option.value}
-                >
-                  <Checkbox checked={selectedArr.includes(String(option.value))} />
-                  <ListItemText primary={option.label} />
-                </MenuItem>
-              ))}
+              {menuItems}
             </Select>
           </FormControl>
         );
@@ -154,24 +141,29 @@ export const ListSearchBar: React.FC<ListSearchBarProps> = ({
           />
         );
 
-      default:
+      default: {
+        const menuItems = [
+          <MenuItem key='' value=''>全部</MenuItem>,
+          ...(filter.options?.map((option) => (
+            <MenuItem
+              key={option.value}
+              value={option.value}
+            >
+              {option.label}
+            </MenuItem>
+          )) || []),
+        ];
+
         return (
           <TextField
             key={filter.id}
             {...commonProps}
             select
           >
-            <MenuItem value=''>全部</MenuItem>
-            {filter.options?.map((option) => (
-              <MenuItem
-                key={option.value}
-                value={option.value}
-              >
-                {option.label}
-              </MenuItem>
-            ))}
+            {menuItems}
           </TextField>
         );
+      }
     }
   };
 

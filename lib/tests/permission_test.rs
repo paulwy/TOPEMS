@@ -251,6 +251,9 @@ fn create_test_claims(permissions: Vec<&str>, is_superuser: bool) -> Claims {
         email: None,
         department: None,
         tenant_id: None,
+        department_id: None,
+        position_id: None,
+        position_code: None,
     }
 }
 

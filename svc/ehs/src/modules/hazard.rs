@@ -24,21 +24,21 @@ fn get_tenant_id(claims: &Claims, headers: &HeaderMap) -> Uuid {
 
 pub fn create_routes() -> Router<AppState> {
     Router::new()
-        .route("/api/ehs/issues", get(list_hazards).post(create_hazard))
+        .route("/issues", get(list_hazards).post(create_hazard))
         .route(
-            "/api/ehs/issues/{id}",
+            "/issues/{id}",
             get(get_hazard).put(update_hazard).delete(delete_hazard),
         )
         .route(
-            "/api/ehs/issues/{id}/rectification",
+            "/issues/{id}/rectification",
             post(start_rectification).put(update_rectification),
         )
         .route(
-            "/api/ehs/issues/{id}/rectification/submit",
+            "/issues/{id}/rectification/submit",
             post(submit_rectification),
         )
-        .route("/api/ehs/issues/{id}/verification", post(verify_hazard))
-        .route("/api/ehs/issues/{id}/close", post(close_hazard))
+        .route("/issues/{id}/verification", post(verify_hazard))
+        .route("/issues/{id}/close", post(close_hazard))
 }
 
 #[derive(Debug, Deserialize)]

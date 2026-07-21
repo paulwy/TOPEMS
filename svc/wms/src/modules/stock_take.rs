@@ -77,32 +77,29 @@ where
 {
     Router::new()
         .route(
-            "/api/wms/stock-takes",
+            "/stock-takes",
             get(list_stock_takes).post(create_stock_take),
         )
         .route(
-            "/api/wms/stock-takes/{id}",
+            "/stock-takes/{id}",
             get(get_stock_take)
                 .put(update_stock_take)
                 .delete(delete_stock_take),
         )
         .route(
-            "/api/wms/stock-takes/{id}/items",
+            "/stock-takes/{id}/items",
             get(list_stock_take_items).post(create_stock_take_item),
         )
         .route(
-            "/api/wms/stock-takes/{id}/items/{item_id}",
+            "/stock-takes/{id}/items/{item_id}",
             get(get_stock_take_item)
                 .put(update_stock_take_item)
                 .delete(delete_stock_take_item),
         )
-        .route("/api/wms/stock-takes/{id}/start", post(start_stock_take))
-        .route("/api/wms/stock-takes/{id}/count", post(count_stock_take))
-        .route(
-            "/api/wms/stock-takes/{id}/complete",
-            post(complete_stock_take),
-        )
-        .route("/api/wms/stock-takes/{id}/adjust", post(adjust_stock_take))
+        .route("/stock-takes/{id}/start", post(start_stock_take))
+        .route("/stock-takes/{id}/count", post(count_stock_take))
+        .route("/stock-takes/{id}/complete", post(complete_stock_take))
+        .route("/stock-takes/{id}/adjust", post(adjust_stock_take))
 }
 
 pub async fn list_stock_takes(

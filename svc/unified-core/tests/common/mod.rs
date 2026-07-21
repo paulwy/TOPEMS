@@ -91,11 +91,10 @@ impl TestContext {
     ///
     /// 必须以 `/` 开头（debug_assert 保护），例如 `/employees`，不能写成 `employees`。
     ///
-    /// ## Phase 依赖提醒
+    /// ## 路径约定
     ///
-    /// 此方法拼出的新路径（无 `/v1`）需要 Phase 2 `wrap_group1_router` /
-    /// `wrap_group2_router` 双轨注册接入后才能真正命中 handler，否则返回 404。
-    /// 登录等仍需 `/v1` 的场景请直接调用本模块的 `login()` / `login_admin()`。
+    /// 此方法拼出的路径为统一路由模式（无 `/v1`），直接命中 handler。
+    /// 登录等场景请直接调用本模块的 `login()` / `login_admin()`。
     pub async fn request(
         &self,
         group: &str,

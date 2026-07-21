@@ -14,7 +14,6 @@ use axum::{
 use axum_prometheus::{metrics_exporter_prometheus::PrometheusHandle, PrometheusMetricLayer};
 use topems_shared::{
     auth_middleware, create_api_info_router, create_cors_layer, telemetry_middleware,
-    wrap_group2_router, RouteCompatConfig,
 };
 
 pub fn create_routes(
@@ -36,7 +35,6 @@ pub fn create_routes(
             get(crate::modules::ai_plugin::plugin_health_check),
         )
         .route("/health/detailed", get(health::health_check_detailed))
-        .route("/metrics", get(VectorApi::stats))
         .route("/search", post(ai_handlers::ai_search))
         .route(
             "/metrics",
@@ -108,12 +106,12 @@ pub fn create_routes(
         )
         .route("/connectors/test", get(connector_handlers::test_connector))
         .route("/connectors/query", post(connector_handlers::query_data))
+        .layer(axum::middleware::from_fn(
+            middleware::tenant::tenant_middleware,
+        ))
         .layer(axum::middleware::from_fn_with_state(
             app_state.auth_state.clone(),
             auth_middleware,
-        ))
-        .layer(axum::middleware::from_fn(
-            middleware::tenant::tenant_middleware,
         ))
         .with_state(app_state.clone());
 
@@ -124,23 +122,23 @@ pub fn create_routes(
         .route("/analysis/entities", post(AnalysisApi::extract_entities))
         .route("/analysis/keywords", post(AnalysisApi::extract_keywords))
         .route("/analysis/history", post(AnalysisApi::history))
+        .layer(axum::middleware::from_fn(
+            middleware::tenant::tenant_middleware,
+        ))
         .layer(axum::middleware::from_fn_with_state(
             app_state.auth_state.clone(),
             auth_middleware,
-        ))
-        .layer(axum::middleware::from_fn(
-            middleware::tenant::tenant_middleware,
         ))
         .with_state(app_state.clone());
 
     let agent_router = Router::new()
         .merge(crate::modules::agent::create_routes())
+        .layer(axum::middleware::from_fn(
+            middleware::tenant::tenant_middleware,
+        ))
         .layer(axum::middleware::from_fn_with_state(
             app_state.auth_state.clone(),
             auth_middleware,
-        ))
-        .layer(axum::middleware::from_fn(
-            middleware::tenant::tenant_middleware,
         ))
         .with_state(app_state.clone());
 
@@ -163,12 +161,12 @@ pub fn create_routes(
             "/profile/update",
             post(RecommendationApi::update_user_profile),
         )
+        .layer(axum::middleware::from_fn(
+            middleware::tenant::tenant_middleware,
+        ))
         .layer(axum::middleware::from_fn_with_state(
             app_state.auth_state.clone(),
             auth_middleware,
-        ))
-        .layer(axum::middleware::from_fn(
-            middleware::tenant::tenant_middleware,
         ))
         .with_state(app_state.clone());
 
@@ -206,19 +204,16 @@ pub fn create_routes(
 
     let app = Router::new()
         .merge(public_routes)
-        .merge(protected_routes)
-        .merge(analysis_router)
-        .merge(agent_router)
-        .merge(recommendation_router)
-        .merge(multimodal_router)
+        .nest("/api/ai", protected_routes)
+        .nest("/api/ai", analysis_router)
+        .nest("/api/ai", agent_router)
+        .nest("/api/ai", recommendation_router)
+        .nest("/api/ai", multimodal_router)
         .merge(create_api_info_router("topems-ai"))
         .layer(axum::middleware::from_fn(telemetry_middleware))
         .layer(prometheus_layer)
         .layer(cors)
         .layer(DefaultBodyLimit::max(500 * 1024 * 1024));
-
-    let cfg = RouteCompatConfig::new("ai", "/api/ai", &[]);
-    let app = wrap_group2_router(app, cfg);
 
     app
 }

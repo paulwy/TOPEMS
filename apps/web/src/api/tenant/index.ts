@@ -14,7 +14,7 @@ import type {
   TenantContext,
 } from './types';
 
-const API_BASE = '/api/core/tenant';
+const API_BASE = '/tenant';
 
 export const tenantApi = {
   listTenants: async (params?: {

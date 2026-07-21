@@ -18,8 +18,7 @@ use uuid::Uuid;
 
 use topems_shared::{
     auth_middleware, build_health_response, create_api_info_router, create_cors_layer,
-    init_telemetry, rls_middleware, telemetry_middleware, wrap_group2_router, ApiResponse,
-    AuthState, RouteCompatConfig, ServiceHealth,
+    init_telemetry, rls_middleware, telemetry_middleware, ApiResponse, AuthState, ServiceHealth,
 };
 
 use db::repository::*;
@@ -552,9 +551,6 @@ async fn main() -> anyhow::Result<()> {
         .with_state(app_state)
         .layer(axum::middleware::from_fn(telemetry_middleware))
         .layer(cors);
-
-    let cfg = RouteCompatConfig::new("mobile", "/api/mobile", &[]);
-    let app = wrap_group2_router(app, cfg);
 
     let port = env::var("MOBILE_PORT")
         .or_else(|_| env::var("SERVER_PORT"))

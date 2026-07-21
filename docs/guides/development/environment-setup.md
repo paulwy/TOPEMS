@@ -202,7 +202,7 @@ cargo run -- --port 8020
 
 # 终端 3: 启动 AI 服务
 cd svc/ai-service
-cargo run -- --port 8064
+cargo run -- --port 8013
 ```
 
 ### 启动顺序
@@ -213,7 +213,7 @@ cargo run -- --port 8064
 | 2 | Redis | 6379 | - |
 | 3 | Unified Core | 8000 | PostgreSQL, Redis |
 | 4 | HRM Service | 8020 | Unified Core |
-| 5 | AI Service | 8064 | Unified Core |
+| 5 | AI Service | 8013 | Unified Core |
 
 ---
 
@@ -267,7 +267,7 @@ curl http://localhost:8000/health
 curl http://localhost:8020/health
 
 # 检查 AI 服务
-curl http://localhost:8064/health
+curl http://localhost:8013/health
 ```
 
 ### 2. 登录测试

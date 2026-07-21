@@ -40,6 +40,10 @@ pub fn plugin_routes(state: &AppState) -> Router<AppState> {
             get(modules::plugin::handlers::list_tenant_plugins),
         )
         .route(
+            "/api/core/plugin/tenant/my/plugins",
+            get(modules::plugin::handlers::list_my_plugins),
+        )
+        .route(
             "/api/core/plugin/tenant/{tenant_id}/available",
             get(modules::plugin::handlers::get_available_plugins),
         )

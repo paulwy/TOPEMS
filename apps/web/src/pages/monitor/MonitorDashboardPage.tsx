@@ -389,11 +389,11 @@ export const MonitorDashboardPage: React.FC = () => {
     apiPerformanceQuery.isFetching ||
     dbMetricsQuery.isFetching;
 
-  const systemMetrics = systemMetricsQuery.data;
-  const apiServices = serviceHealthQuery.data ?? [];
-  const apiAlerts = alertsQuery.data ?? [];
-  const apiPerf = apiPerformanceQuery.data ?? [];
-  const dbMetrics = dbMetricsQuery.data;
+  const systemMetrics = systemMetricsQuery.data || {};
+  const apiServices = Array.isArray(serviceHealthQuery.data) ? serviceHealthQuery.data : [];
+  const apiAlerts = Array.isArray(alertsQuery.data) ? alertsQuery.data : [];
+  const apiPerf = Array.isArray(apiPerformanceQuery.data) ? apiPerformanceQuery.data : [];
+  const dbMetrics = dbMetricsQuery.data || {};
 
   const services: ServiceHealth[] = useMemo(
     () =>

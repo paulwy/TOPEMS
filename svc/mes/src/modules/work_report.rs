@@ -19,20 +19,17 @@ use topems_shared::response::ApiResponse;
 pub fn create_routes() -> Router<AppState> {
     Router::new()
         .route(
-            "/api/mes/work-reports",
+            "/work-reports",
             get(list_work_reports).post(create_work_report),
         )
         .route(
-            "/api/mes/work-reports/{id}",
+            "/work-reports/{id}",
             get(get_work_report)
                 .put(update_work_report)
                 .delete(delete_work_report),
         )
-        .route(
-            "/api/mes/work-reports/{id}/approve",
-            put(approve_work_report),
-        )
-        .route("/api/mes/work-reports/{id}/reject", put(reject_work_report))
+        .route("/work-reports/{id}/approve", put(approve_work_report))
+        .route("/work-reports/{id}/reject", put(reject_work_report))
 }
 
 // ==================== Request / Response Types ====================

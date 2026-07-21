@@ -73,7 +73,7 @@ export const moduleMapping: Record<string, ModuleBackendMapping> = {
   workflow: {
     service: 'unified-core',
     module: 'flow',
-    apiBasePath: '/api/flow',
+    apiBasePath: '/api/core/flow',
   },
 
   notification: {
@@ -84,7 +84,7 @@ export const moduleMapping: Record<string, ModuleBackendMapping> = {
       notification: {
         service: 'unified-core',
         module: 'communication',
-        apiBasePath: '/api/v1',
+        apiBasePath: '/api/core/comm',
       },
     },
   },

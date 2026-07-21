@@ -21,22 +21,16 @@ where
     ApiState: FromRef<S>,
 {
     Router::new()
-        .route("/api/wms/batches", get(list_batches).post(create_batch))
-        .route("/api/wms/batches/statistics", get(get_batch_statistics))
-        .route("/api/wms/batches/expiring-soon", get(get_expiring_soon))
-        .route("/api/wms/batches/expired", get(get_expired))
+        .route("/batches", get(list_batches).post(create_batch))
+        .route("/batches/statistics", get(get_batch_statistics))
+        .route("/batches/expiring-soon", get(get_expiring_soon))
+        .route("/batches/expired", get(get_expired))
         .route(
-            "/api/wms/batches/{id}",
+            "/batches/{id}",
             get(get_batch).put(update_batch).delete(delete_batch),
         )
-        .route(
-            "/api/wms/batches/{id}/adjust-quantity",
-            post(adjust_quantity),
-        )
-        .route(
-            "/api/wms/batches/{id}/transfer-location",
-            post(transfer_location),
-        )
+        .route("/batches/{id}/adjust-quantity", post(adjust_quantity))
+        .route("/batches/{id}/transfer-location", post(transfer_location))
 }
 
 pub async fn list_batches(

@@ -12,25 +12,19 @@ use crate::shared::AppState;
 
 pub fn create_routes() -> Router<AppState> {
     Router::new()
-        .route("/api/lims/samples", get(list_samples).post(register_sample))
+        .route("/samples", get(list_samples).post(register_sample))
         .route(
-            "/api/lims/samples/{id}",
+            "/samples/{id}",
             get(get_sample).put(update_sample).delete(delete_sample),
         )
+        .route("/samples/{id}/lifecycle", get(get_sample_lifecycle))
+        .route("/samples/lifecycle", post(record_lifecycle_event))
         .route(
-            "/api/lims/samples/{id}/lifecycle",
-            get(get_sample_lifecycle),
-        )
-        .route("/api/lims/samples/lifecycle", post(record_lifecycle_event))
-        .route(
-            "/api/lims/samples/{id}/stage/{to_stage}",
+            "/samples/{id}/stage/{to_stage}",
             post(transition_sample_stage),
         )
-        .route(
-            "/api/lims/samples/{id}/traceability",
-            get(get_sample_traceability),
-        )
-        .route("/api/lims/lifecycle-stages", get(get_lifecycle_stages))
+        .route("/samples/{id}/traceability", get(get_sample_traceability))
+        .route("/lifecycle-stages", get(get_lifecycle_stages))
 }
 
 #[derive(Debug, Deserialize)]

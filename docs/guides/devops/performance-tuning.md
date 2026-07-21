@@ -775,7 +775,7 @@ export default function () {
   const responses = http.batch([
     ['GET', 'http://localhost:8000/api/iam/users/me', null, { headers: { Authorization: `Bearer ${token}` }}],
     ['GET', 'http://localhost:8020/api/hrm/employees', null, { headers: { Authorization: `Bearer ${token}` }}],
-    ['GET', 'http://localhost:8064/api/ai/models', null, { headers: { Authorization: `Bearer ${token}` }}],
+    ['GET', 'http://localhost:8013/api/ai/models', null, { headers: { Authorization: `Bearer ${token}` }}],
   ]);
   
   check(responses[0], {

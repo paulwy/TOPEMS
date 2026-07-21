@@ -64,7 +64,7 @@ impl ServiceDiscoveryClient {
     pub async fn list_services(&self) -> Result<Vec<ServiceInfo>> {
         let response = self
             .client
-            .get(format!("{}/api/v1/services", self.registry_url))
+            .get(format!("{}/api/services", self.registry_url))
             .send()
             .await
             .map_err(|e| TopemsError::Internal(format!("Failed to fetch services: {}", e)))?;
@@ -87,7 +87,7 @@ impl ServiceDiscoveryClient {
         let response = self
             .client
             .get(format!(
-                "{}/api/v1/services?category={}",
+                "{}/api/services?category={}",
                 self.registry_url,
                 serde_json::to_string(&category).unwrap_or_default()
             ))
@@ -109,7 +109,7 @@ impl ServiceDiscoveryClient {
     pub async fn get_service(&self, code: &str) -> Result<ServiceInfo> {
         let response = self
             .client
-            .get(format!("{}/api/v1/services/{}", self.registry_url, code))
+            .get(format!("{}/api/services/{}", self.registry_url, code))
             .send()
             .await
             .map_err(|e| TopemsError::Internal(format!("Failed to fetch service: {}", e)))?;
@@ -129,7 +129,7 @@ impl ServiceDiscoveryClient {
         let response = self
             .client
             .get(format!(
-                "{}/api/v1/services/{}/health",
+                "{}/api/services/{}/health",
                 self.registry_url, code
             ))
             .send()
@@ -155,7 +155,7 @@ impl ServiceDiscoveryClient {
         let response = self
             .client
             .get(format!(
-                "{}/api/v1/services/health/batch?codes={}",
+                "{}/api/services/health/batch?codes={}",
                 self.registry_url, codes_param
             ))
             .send()
@@ -263,7 +263,7 @@ impl PortalServiceAggregator {
                 category: ServiceCategory::Core,
                 status: ServiceRegistryStatus::Active,
                 url: None,
-                api_prefix: Some("/api/v1/iam".to_string()),
+                api_prefix: Some("/api/iam".to_string()),
                 port: 8001,
                 version: "1.0.0".to_string(),
                 order: 1,
@@ -277,7 +277,7 @@ impl PortalServiceAggregator {
                 category: ServiceCategory::Business,
                 status: ServiceRegistryStatus::Active,
                 url: None,
-                api_prefix: Some("/api/v1/hrm".to_string()),
+                api_prefix: Some("/api/hrm".to_string()),
                 port: 8015,
                 version: "1.0.0".to_string(),
                 order: 2,
@@ -291,7 +291,7 @@ impl PortalServiceAggregator {
                 category: ServiceCategory::Business,
                 status: ServiceRegistryStatus::Active,
                 url: None,
-                api_prefix: Some("/api/v1/doc".to_string()),
+                api_prefix: Some("/api/doc".to_string()),
                 port: 8002,
                 version: "1.0.0".to_string(),
                 order: 3,
@@ -305,7 +305,7 @@ impl PortalServiceAggregator {
                 category: ServiceCategory::Business,
                 status: ServiceRegistryStatus::Active,
                 url: None,
-                api_prefix: Some("/api/v1/crm".to_string()),
+                api_prefix: Some("/api/crm".to_string()),
                 port: 8016,
                 version: "1.0.0".to_string(),
                 order: 4,
@@ -319,7 +319,7 @@ impl PortalServiceAggregator {
                 category: ServiceCategory::Business,
                 status: ServiceRegistryStatus::Active,
                 url: None,
-                api_prefix: Some("/api/v1/pm".to_string()),
+                api_prefix: Some("/api/pm".to_string()),
                 port: 8027,
                 version: "1.0.0".to_string(),
                 order: 5,

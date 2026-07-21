@@ -90,7 +90,7 @@ BI_PORT=8060
 REPORT_PORT=8061
 MONITOR_PORT=8062
 PORTAL_PORT=8063
-AI_PORT=8064
+AI_PORT=8013
 
 # 基础设施服务 (8070-8079)
 MOBILE_PORT=8070
@@ -99,7 +99,7 @@ INTEGRATION_PORT=8072
 
 # 下游服务 URL
 CORE_SERVICE_URL=http://localhost:8000
-AI_SERVICE_URL=http://localhost:8064
+AI_SERVICE_URL=http://localhost:8013
 ```
 
 ### 可选配置项
@@ -204,14 +204,14 @@ BI_PORT=8060
 REPORT_PORT=8061
 MONITOR_PORT=8062
 PORTAL_PORT=8063
-AI_PORT=8064
+AI_PORT=8013
 MOBILE_PORT=8070
 GIS_PORT=8071
 INTEGRATION_PORT=8072
 
 # === 服务 URL ===
 CORE_SERVICE_URL=http://localhost:8000
-AI_SERVICE_URL=http://localhost:8064
+AI_SERVICE_URL=http://localhost:8013
 
 # === 前端配置 ===
 FRONTEND_PORT=3000
@@ -405,7 +405,7 @@ cargo run --bin unified-core-service -- --migrate
 curl http://localhost:8000/health
 curl http://localhost:8010/health
 curl http://localhost:8020/health
-curl http://localhost:8064/health
+curl http://localhost:8013/health
 ```
 
 ### 手动验证

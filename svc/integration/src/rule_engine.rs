@@ -629,7 +629,7 @@ pub trait RuleRepository: Send + Sync {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::TriggerType;
+    use crate::conversion_rules::TriggerType;
 
     #[test]
     fn test_condition_operator_parsing() {

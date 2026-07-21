@@ -23,40 +23,37 @@ pub fn create_routes() -> Router<AppState> {
     Router::new()
         // Quality Inspections
         .route(
-            "/api/mes/quality/inspections",
+            "/quality/inspections",
             get(list_inspections).post(create_inspection),
         )
         .route(
-            "/api/mes/quality/inspections/{id}",
+            "/quality/inspections/{id}",
             get(get_inspection)
                 .put(update_inspection)
                 .delete(delete_inspection),
         )
         // Quality Patrols
+        .route("/quality/patrols", get(list_patrols).post(create_patrol))
         .route(
-            "/api/mes/quality/patrols",
-            get(list_patrols).post(create_patrol),
-        )
-        .route(
-            "/api/mes/quality/patrols/{id}",
+            "/quality/patrols/{id}",
             get(get_patrol).put(update_patrol).delete(delete_patrol),
         )
         // Patrol Items
         .route(
-            "/api/mes/quality/patrols/{patrol_id}/items",
+            "/quality/patrols/{patrol_id}/items",
             get(list_patrol_items).post(add_patrol_item),
         )
         .route(
-            "/api/mes/quality/patrol-items/{id}",
+            "/quality/patrol-items/{id}",
             put(update_patrol_item).delete(delete_patrol_item),
         )
         // Quality Standards
         .route(
-            "/api/mes/quality/standards",
+            "/quality/standards",
             get(list_standards).post(create_standard),
         )
         .route(
-            "/api/mes/quality/standards/{id}",
+            "/quality/standards/{id}",
             get(get_standard)
                 .put(update_standard)
                 .delete(delete_standard),

@@ -59,8 +59,8 @@ impl<T> ApiResponse<T> {
 
 pub fn create_routes() -> Router<ApiState> {
     Router::new()
-        .route("/api/erp/audit-logs", get(list_audit_logs))
-        .route("/api/erp/audit-logs/{id}", get(get_audit_log))
+        .route("/audit-logs", get(list_audit_logs))
+        .route("/audit-logs/{id}", get(get_audit_log))
 }
 
 #[derive(Debug, Deserialize)]

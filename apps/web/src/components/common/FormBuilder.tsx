@@ -188,7 +188,16 @@ export default function FormBuilder({
               size='small'
             />
           );
-        case 'select':
+        case 'select': {
+          const menuItems = (field.options || []).map((opt) => (
+            <MenuItem
+              key={opt.value}
+              value={opt.value}
+            >
+              {opt.label}
+            </MenuItem>
+          ));
+
           return (
             <FormControl
               key={field.name}
@@ -205,17 +214,11 @@ export default function FormBuilder({
                 label={field.label}
                 onChange={(e) => handleChange(field.name, e.target.value)}
               >
-                {(field.options || []).map((opt) => (
-                  <MenuItem
-                    key={opt.value}
-                    value={opt.value}
-                  >
-                    {opt.label}
-                  </MenuItem>
-                ))}
+                {menuItems}
               </Select>
             </FormControl>
           );
+        }
         case 'checkbox':
           return (
             <FormControlLabel

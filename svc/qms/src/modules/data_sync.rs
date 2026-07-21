@@ -459,13 +459,10 @@ pub async fn delete_sync_record(
 
 pub fn create_routes() -> Router<crate::AppState> {
     Router::new()
-        .route("/api/qms/sync-records", get(list_sync_records))
-        .route("/api/qms/sync-records/{id}", get(get_sync_record))
-        .route("/api/qms/sync-records/{id}", delete(delete_sync_record))
-        .route("/api/qms/sync-records/{id}/retry", post(retry_sync))
-        .route(
-            "/api/qms/sync/inspection-to-lims",
-            post(sync_inspection_to_lims),
-        )
-        .route("/api/qms/sync/issue-to-ehs", post(sync_issue_to_ehs))
+        .route("/sync-records", get(list_sync_records))
+        .route("/sync-records/{id}", get(get_sync_record))
+        .route("/sync-records/{id}", delete(delete_sync_record))
+        .route("/sync-records/{id}/retry", post(retry_sync))
+        .route("/sync/inspection-to-lims", post(sync_inspection_to_lims))
+        .route("/sync/issue-to-ehs", post(sync_issue_to_ehs))
 }

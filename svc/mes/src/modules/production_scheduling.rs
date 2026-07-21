@@ -24,17 +24,17 @@ use topems_shared::response::ApiResponse;
 pub fn create_routes() -> Router<AppState> {
     Router::new()
         .route(
-            "/api/mes/schedules",
+            "/schedules",
             get(list_production_schedules).post(create_production_schedule),
         )
         .route(
-            "/api/mes/schedules/{id}",
+            "/schedules/{id}",
             get(get_production_schedule)
                 .put(update_production_schedule)
                 .delete(delete_production_schedule),
         )
-        .route("/api/mes/schedules/{id}/adjust", put(adjust_schedule))
-        .route("/api/mes/schedules/gantt", get(get_gantt_data))
+        .route("/schedules/{id}/adjust", put(adjust_schedule))
+        .route("/schedules/gantt", get(get_gantt_data))
 }
 
 // ==================== Data Types ====================

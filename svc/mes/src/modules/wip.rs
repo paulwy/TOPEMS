@@ -23,14 +23,14 @@ use topems_shared::response::ApiResponse;
 
 pub fn create_routes() -> Router<AppState> {
     Router::new()
-        .route("/api/mes/wips", get(list_wips).post(create_wip))
+        .route("/wips", get(list_wips).post(create_wip))
         .route(
-            "/api/mes/wips/{id}",
+            "/wips/{id}",
             get(get_wip).put(update_wip).delete(delete_wip),
         )
-        .route("/api/mes/wips/transfer", post(transfer_wip))
-        .route("/api/mes/wips/{wip_id}/transfers", get(list_wip_transfers))
-        .route("/api/mes/wips/statistics", get(get_wip_statistics))
+        .route("/wips/transfer", post(transfer_wip))
+        .route("/wips/{wip_id}/transfers", get(list_wip_transfers))
+        .route("/wips/statistics", get(get_wip_statistics))
 }
 
 // ==================== Data Types ====================

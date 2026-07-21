@@ -240,8 +240,8 @@ impl ServiceBootstrap {
     fn create_health_router(&self, state: AppState) -> Router {
         Router::new()
             .route("/health", get(health_check))
-            .route("/api/v1/health/detailed", get(health_check_detailed))
-            .route("/api/v1/metrics", get(get_metrics))
+            .route("/api/health/detailed", get(health_check_detailed))
+            .route("/api/metrics", get(get_metrics))
             .with_state(state)
     }
 }

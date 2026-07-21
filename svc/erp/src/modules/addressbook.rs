@@ -476,21 +476,12 @@ fn escape_csv(s: &str) -> String {
 
 pub fn create_routes() -> Router<ApiState> {
     Router::new()
-        .route("/api/erp/addressbook", axum::routing::get(get_contacts))
+        .route("/addressbook", axum::routing::get(get_contacts))
+        .route("/addressbook/{id}", axum::routing::get(get_contact_detail))
+        .route("/addressbook/search", axum::routing::get(search_contacts))
         .route(
-            "/api/erp/addressbook/{id}",
-            axum::routing::get(get_contact_detail),
-        )
-        .route(
-            "/api/erp/addressbook/search",
-            axum::routing::get(search_contacts),
-        )
-        .route(
-            "/api/erp/addressbook/departments/tree",
+            "/addressbook/departments/tree",
             axum::routing::get(get_department_tree),
         )
-        .route(
-            "/api/erp/addressbook/export",
-            axum::routing::get(export_contacts),
-        )
+        .route("/addressbook/export", axum::routing::get(export_contacts))
 }

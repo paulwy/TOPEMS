@@ -209,7 +209,7 @@
       "id": "ai",
       "name": "topems-ai",
       "tags": ["ai", "ai-service"],
-      "port": 8064,
+      "port": 8013,
       "health_check": {
         "http": "/health",
         "interval": "10s",

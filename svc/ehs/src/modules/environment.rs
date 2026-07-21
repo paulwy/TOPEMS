@@ -24,16 +24,13 @@ fn get_tenant_id(claims: &Claims, headers: &HeaderMap) -> Uuid {
 
 pub fn create_routes() -> Router<AppState> {
     Router::new()
+        .route("/environment", get(list_records).post(create_record))
         .route(
-            "/api/ehs/environment",
+            "/environment/monitors",
             get(list_records).post(create_record),
         )
         .route(
-            "/api/ehs/environment/monitors",
-            get(list_records).post(create_record),
-        )
-        .route(
-            "/api/ehs/environment/records",
+            "/environment/records",
             get(list_records).post(create_record),
         )
 }

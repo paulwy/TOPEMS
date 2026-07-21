@@ -13,11 +13,11 @@ use crate::models::project_benefit::{CreateBenefitRequest, ProjectBenefit};
 pub fn create_routes(pool: PgPool) -> Router {
     Router::new()
         .route(
-            "/api/pm/projects/{project_id}/benefits",
+            "/projects/{project_id}/benefits",
             get(get_benefits).post(calculate_benefits),
         )
         .route(
-            "/api/pm/projects/{project_id}/benefits/analysis",
+            "/projects/{project_id}/benefits/analysis",
             get(get_analysis),
         )
         .with_state(pool)
@@ -25,7 +25,7 @@ pub fn create_routes(pool: PgPool) -> Router {
 
 #[utoipa::path(
     get,
-    path = "/api/pm/projects/{project_id}/benefits",
+    path = "/projects/{project_id}/benefits",
     tag = "project_benefits",
     responses(
         (status = 200, description = "获取项目效益分析列表成功", body = ApiResponse<Vec<ProjectBenefit>>),
@@ -54,7 +54,7 @@ async fn get_benefits(
 
 #[utoipa::path(
     get,
-    path = "/api/pm/projects/{project_id}/benefits/analysis",
+    path = "/projects/{project_id}/benefits/analysis",
     tag = "project_benefits",
     responses(
         (status = 200, description = "获取项目效益综合分析成功", body = ApiResponse<serde_json::Value>),
@@ -152,7 +152,7 @@ async fn get_analysis(
 
 #[utoipa::path(
     post,
-    path = "/api/pm/projects/{project_id}/benefits",
+    path = "/projects/{project_id}/benefits",
     tag = "project_benefits",
     request_body = CreateBenefitRequest,
     responses(

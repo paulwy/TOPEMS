@@ -14,7 +14,7 @@ impl DocumentService {
 
     pub async fn list_documents(&self, tenant_id: Uuid) -> Result<Vec<Document>> {
         sqlx::query_as::<_, Document>(
-            r#"SELECT * FROM doc.documents WHERE tenant_id = $1 ORDER BY created_at DESC"#,
+            r#"SELECT * FROM core_doc_documents WHERE tenant_id = $1 ORDER BY created_at DESC"#,
         )
         .bind(tenant_id)
         .fetch_all(&self.pool)
@@ -27,7 +27,7 @@ impl DocumentService {
         document_id: Uuid,
     ) -> Result<Option<Document>> {
         sqlx::query_as::<_, Document>(
-            r#"SELECT * FROM doc.documents WHERE tenant_id = $1 AND id = $2"#,
+            r#"SELECT * FROM core_doc_documents WHERE tenant_id = $1 AND id = $2"#,
         )
         .bind(tenant_id)
         .bind(document_id)
@@ -44,7 +44,7 @@ impl DocumentService {
         let id = Uuid::new_v4();
         sqlx::query_as::<_, Document>(
             r#"
-            INSERT INTO doc.documents (id, tenant_id, title, folder_id, template_id, content, content_type, status, tags, description, created_by)
+            INSERT INTO core_doc_documents (id, tenant_id, title, folder_id, template_id, content, content_type, status, tags, description, created_by)
             VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11)
             RETURNING *
             "#,
@@ -72,7 +72,7 @@ impl DocumentService {
     ) -> Result<Option<Document>> {
         sqlx::query_as::<_, Document>(
             r#"
-            UPDATE doc.documents 
+            UPDATE core_doc_documents 
             SET title = COALESCE($1, title), folder_id = COALESCE($2, folder_id), 
                 content = COALESCE($3, content), tags = COALESCE($4, tags), 
                 description = COALESCE($5, description), updated_at = NOW()
@@ -92,11 +92,12 @@ impl DocumentService {
     }
 
     pub async fn delete_document(&self, tenant_id: Uuid, document_id: Uuid) -> Result<bool> {
-        let result = sqlx::query(r#"DELETE FROM doc.documents WHERE tenant_id = $1 AND id = $2"#)
-            .bind(tenant_id)
-            .bind(document_id)
-            .execute(&self.pool)
-            .await?;
+        let result =
+            sqlx::query(r#"DELETE FROM core_doc_documents WHERE tenant_id = $1 AND id = $2"#)
+                .bind(tenant_id)
+                .bind(document_id)
+                .execute(&self.pool)
+                .await?;
         Ok(result.rows_affected() > 0)
     }
 }
@@ -104,7 +105,7 @@ impl DocumentService {
 pub async fn init_database(pool: &PgPool) -> Result<()> {
     sqlx::query(
         r#"
-        CREATE TABLE IF NOT EXISTS doc.documents (
+        CREATE TABLE IF NOT EXISTS core_doc_documents (
             id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
             tenant_id UUID NOT NULL,
             title VARCHAR(200) NOT NULL,

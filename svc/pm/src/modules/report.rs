@@ -16,20 +16,20 @@ use crate::models::report::{
 pub fn create_routes(pool: PgPool) -> Router {
     Router::new()
         .route(
-            "/api/pm/projects/{project_id}/reports",
+            "/projects/{project_id}/reports",
             get(get_project_reports).post(create_report),
         )
-        .route("/api/pm/reports/{id}", get(get_report))
+        .route("/reports/{id}", get(get_report))
         .route(
-            "/api/pm/projects/{project_id}/reports/generate",
+            "/projects/{project_id}/reports/generate",
             post(generate_report),
         )
         .route(
-            "/api/pm/report-templates",
+            "/report-templates",
             get(list_templates).post(create_template),
         )
         .route(
-            "/api/pm/report-templates/{id}",
+            "/report-templates/{id}",
             get(get_template)
                 .put(update_template)
                 .delete(delete_template),

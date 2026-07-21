@@ -62,7 +62,7 @@ export const SearchInput: React.FC<SearchInputProps> = ({
 
   const handleClearFilter = () => {
     if (!onFilterChange) return;
-    onFilterChange({});
+    onFilterChange({ module: undefined, type: undefined });
   };
 
   const open = Boolean(anchorEl);
@@ -246,13 +246,13 @@ export const SearchInput: React.FC<SearchInputProps> = ({
 
           <Box sx={{ maxHeight: 200, overflowY: 'auto', mt: 2 }}>
             {activeTab === 'module'
-              ? availableModules?.map((module) => (
+              ? (availableModules || []).map((module) => (
                   <FormControlLabel
                     key={module.value}
                     control={
                       <Checkbox
                         size='small'
-                        checked={filter?.module === module.value}
+                        checked={!!(filter && filter.module === module.value)}
                         onChange={() => handleModuleSelect(module.value)}
                         sx={{
                           '&.Mui-checked': {
@@ -286,13 +286,13 @@ export const SearchInput: React.FC<SearchInputProps> = ({
                     }}
                   />
                 ))
-              : availableTypes?.map((type) => (
+              : (availableTypes || []).map((type) => (
                   <FormControlLabel
                     key={type.value}
                     control={
                       <Checkbox
                         size='small'
-                        checked={filter?.type === type.value}
+                        checked={!!(filter && filter.type === type.value)}
                         onChange={() => handleTypeSelect(type.value)}
                         sx={{
                           '&.Mui-checked': {

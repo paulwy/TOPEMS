@@ -34,6 +34,15 @@ pub struct LedgerQueryParams {
 }
 
 #[derive(Debug, Deserialize)]
+pub struct AccountBalanceQueryParams {
+    account_ids: Option<Vec<Uuid>>,
+    period: String,
+    company_id: Option<String>,
+    department_id: Option<String>,
+    project_id: Option<String>,
+}
+
+#[derive(Debug, Deserialize)]
 pub struct AuxQueryParams {
     pub aux_type: String,
     pub aux_id: Option<Uuid>,
@@ -145,6 +154,29 @@ async fn get_account_by_code(
     let tenant_id = get_tenant_id(&claims);
     match service.get_account_by_code(tenant_id, &code).await {
         Ok(account) => Json(ApiResponse::success(account, "查询成功")),
+        Err(e) => Json(ApiResponse::error(500, &e.to_string())),
+    }
+}
+
+async fn get_account_balances(
+    State(state): State<AppState>,
+    Extension(claims): Extension<Claims>,
+    Query(params): Query<AccountBalanceQueryParams>,
+) -> Json<ApiResponse<Vec<TrialBalance>>> {
+    let service = FinanceService::new(state.pool.clone(), state.workflow_client.clone());
+    let tenant_id = get_tenant_id(&claims);
+    match service.get_trial_balance(tenant_id, &params.period).await {
+        Ok(balances) => {
+            let filtered = if let Some(account_ids) = params.account_ids {
+                balances
+                    .into_iter()
+                    .filter(|b| account_ids.contains(&b.account_id))
+                    .collect()
+            } else {
+                balances
+            };
+            Json(ApiResponse::success(filtered, "查询成功"))
+        }
         Err(e) => Json(ApiResponse::error(500, &e.to_string())),
     }
 }
@@ -1062,6 +1094,10 @@ pub fn create_routes() -> Router<AppState> {
         .route("/dashboard", axum::routing::get(get_dashboard_handler))
         .route("/accounts", axum::routing::post(create_account))
         .route("/accounts", axum::routing::get(list_accounts))
+        .route(
+            "/accounts/balances",
+            axum::routing::get(get_account_balances),
+        )
         .route("/accounts/{account_id}", axum::routing::get(get_account))
         .route(
             "/accounts/code/{code}",

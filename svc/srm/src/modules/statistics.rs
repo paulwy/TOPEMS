@@ -28,12 +28,9 @@ pub fn create_routes(db: PgPool) -> Router {
     let state = Arc::new(AppState { db });
 
     Router::new()
-        .route("/api/srm/statistics", get(get_statistics))
-        .route("/api/srm/statistics/detailed", get(get_detailed_statistics))
-        .route(
-            "/api/srm/suppliers-with-stats",
-            get(get_suppliers_with_stats),
-        )
+        .route("/statistics", get(get_statistics))
+        .route("/statistics/detailed", get(get_detailed_statistics))
+        .route("/suppliers-with-stats", get(get_suppliers_with_stats))
         .with_state(state)
 }
 

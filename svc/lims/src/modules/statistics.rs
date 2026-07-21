@@ -7,7 +7,7 @@ use crate::middleware::tenant::TenantContext;
 use crate::shared::AppState;
 
 pub fn create_routes() -> Router<AppState> {
-    Router::new().route("/api/lims/statistics", get(get_statistics))
+    Router::new().route("/statistics", get(get_statistics))
 }
 
 #[derive(Debug, Serialize)]

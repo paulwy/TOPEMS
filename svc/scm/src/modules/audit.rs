@@ -26,7 +26,7 @@ pub struct ListAuditLogsQuery {
 
 pub fn create_routes() -> Router<ApiState> {
     Router::new()
-        .route("/api/scm/audit-logs", get(list_audit_logs))
+        .route("/audit-logs", get(list_audit_logs))
         .route("/api/audit-logs/{id}", get(get_audit_log))
 }
 
@@ -40,24 +40,24 @@ pub async fn list_audit_logs(
 
     let result = sqlx::query_as::<_, AuditLog>(
         r#"
-        SELECT id, action, entity_type, entity_id, entity_ids,
-               user_id, user_name, request_details, response_details,
-               status, error_message, ip_address, user_agent, created_at
+        SELECT id, action, table_name as entity_type, record_id as entity_id, 
+               NULL as entity_ids, changed_by::text as user_id, NULL as user_name, 
+               old_values as request_details, new_values as response_details,
+               'success' as status, NULL as error_message, ip_address, user_agent, 
+               changed_at as created_at
         FROM scm.audit_logs
         WHERE ($1::text IS NULL OR action = $1)
-          AND ($2::text IS NULL OR entity_type = $2)
-          AND ($3::text IS NULL OR user_id = $3)
-          AND ($4::text IS NULL OR status = $4)
-          AND ($5::text IS NULL OR created_at >= $5::timestamptz)
-          AND ($6::text IS NULL OR created_at <= $6::timestamptz)
-        ORDER BY created_at DESC
-        LIMIT $7 OFFSET $8
+          AND ($2::text IS NULL OR table_name = $2)
+          AND ($3::text IS NULL OR changed_by::text = $3)
+          AND ($4::text IS NULL OR changed_at >= $4::timestamptz)
+          AND ($5::text IS NULL OR changed_at <= $5::timestamptz)
+        ORDER BY changed_at DESC
+        LIMIT $6 OFFSET $7
         "#,
     )
     .bind(&params.action)
     .bind(&params.entity_type)
     .bind(&params.user_id)
-    .bind(&params.status)
     .bind(params.start_date.clone())
     .bind(params.end_date.clone())
     .bind(page_size)
@@ -71,17 +71,15 @@ pub async fn list_audit_logs(
                 r#"
                 SELECT COUNT(*) FROM scm.audit_logs
                 WHERE ($1::text IS NULL OR action = $1)
-                  AND ($2::text IS NULL OR entity_type = $2)
-                  AND ($3::text IS NULL OR user_id = $3)
-                  AND ($4::text IS NULL OR status = $4)
-                  AND ($5::text IS NULL OR created_at >= $5::timestamptz)
-                  AND ($6::text IS NULL OR created_at <= $6::timestamptz)
+                  AND ($2::text IS NULL OR table_name = $2)
+                  AND ($3::text IS NULL OR changed_by::text = $3)
+                  AND ($4::text IS NULL OR changed_at >= $4::timestamptz)
+                  AND ($5::text IS NULL OR changed_at <= $5::timestamptz)
                 "#,
             )
             .bind(&params.action)
             .bind(&params.entity_type)
             .bind(&params.user_id)
-            .bind(&params.status)
             .bind(params.start_date)
             .bind(params.end_date)
             .fetch_one(&state.db)
@@ -112,9 +110,11 @@ pub async fn get_audit_log(
 ) -> Json<ApiResponse<AuditLog>> {
     let result = sqlx::query_as::<_, AuditLog>(
         r#"
-        SELECT id, action, entity_type, entity_id, entity_ids,
-               user_id, user_name, request_details, response_details,
-               status, error_message, ip_address, user_agent, created_at
+        SELECT id, action, table_name as entity_type, record_id as entity_id, 
+               NULL as entity_ids, changed_by::text as user_id, NULL as user_name, 
+               old_values as request_details, new_values as response_details,
+               'success' as status, NULL as error_message, ip_address, user_agent, 
+               changed_at as created_at
         FROM scm.audit_logs WHERE id = $1
         "#,
     )

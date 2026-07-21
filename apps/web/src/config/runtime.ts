@@ -80,7 +80,7 @@ const config: RuntimeConfig = {
     rd: getEnv('VITE_RD_SERVICE_URL', '/api/rd'),
     bi: getEnv('VITE_BI_SERVICE_URL', '/api/bi'),
     analytics: getEnv('VITE_ANALYTICS_SERVICE_URL', '/api/bi'),
-    report: getEnv('VITE_REPORT_SERVICE_URL', '/api/report'),
+    report: getEnv('VITE_BI_SERVICE_URL', '/api/bi'),
     monitor: getEnv('VITE_MONITOR_SERVICE_URL', '/api/monitor'),
     portal: getEnv('VITE_PORTAL_SERVICE_URL', '/api/portal'),
     mobile: getEnv('VITE_MOBILE_SERVICE_URL', '/api/mobile'),
