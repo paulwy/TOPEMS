@@ -61,3 +61,29 @@ repos:
     hooks:
       - id: actionlint
         description: "GitHub Actions workflow linting"
+
+  - repo: local
+    hooks:
+      - id: cargo-fmt
+        name: cargo fmt
+        entry: cargo fmt --
+        language: system
+        files: \.rs$
+        pass_filenames: true
+        description: "Rust code formatting"
+
+      - id: forbid-bak-files
+        name: Forbid backup artifacts
+        entry: bash -c 'echo "Forbidden backup files detected: $@"; exit 1' --
+        language: system
+        files: '(.*\.bak|apps/web/FAIL|split_notification.*\.py)$'
+        description: "Prevent .bak / FAIL / debug scripts from being committed"
+
+      - id: check-todo-md-health
+        name: Check TODO.md health score accuracy
+        entry: bash -c 'if grep -q "100/100" TODO.md; then echo "TODO.md claims 100/100 health score - update to actual value"; exit 1; fi' --
+        language: system
+        files: TODO.md$
+        pass_filenames: true
+        description: "Prevent outdated self-reported health scores"
+
