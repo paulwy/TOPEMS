@@ -225,7 +225,6 @@ impl ServiceRegistry {
                 health_endpoint: "/health".to_string(),
                 api_prefix: "/api/bi".to_string(),
             },
-            
             ServiceConfig {
                 name: "topems-mail".to_string(),
                 display_name: "邮件服务".to_string(),

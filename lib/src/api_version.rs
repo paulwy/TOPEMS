@@ -30,8 +30,6 @@ pub fn versioned_router<S: Clone + Send + Sync + 'static>(
     Router::new().nest(&prefix, router)
 }
 
-
-
 /// 创建 API 信息响应
 pub fn create_api_info(service_name: &str) -> ApiInfo {
     ApiInfo {
@@ -60,12 +58,6 @@ pub fn create_api_info_router<S: Clone + Send + Sync + 'static>(
         .route("/api", get(move || get_api_info_handler(service_name)))
         .route("/api/info", get(move || get_api_info_handler(service_name)))
 }
-
-
-
-
-
-
 
 #[cfg(test)]
 mod tests {

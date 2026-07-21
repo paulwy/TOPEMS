@@ -356,7 +356,11 @@ pub struct ResourcePermission {
 
 impl ResourcePermission {
     pub fn new(module: ModuleCode, resource: String, action: PermissionAction) -> Self {
-        ResourcePermission { module, resource, action }
+        ResourcePermission {
+            module,
+            resource,
+            action,
+        }
     }
 
     pub fn parse(s: &str) -> Option<Self> {
@@ -383,7 +387,13 @@ impl ResourcePermission {
 
 impl std::fmt::Display for ResourcePermission {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        write!(f, "{}:{}:{}", self.module.as_str(), self.resource, self.action.as_str())
+        write!(
+            f,
+            "{}:{}:{}",
+            self.module.as_str(),
+            self.resource,
+            self.action.as_str()
+        )
     }
 }
 

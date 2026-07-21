@@ -17,10 +17,10 @@ pub use event_types::{
     HrmDepartmentCreatedPayload, HrmDepartmentDeletedPayload, HrmDepartmentUpdatedPayload,
     HrmEmployeeCreatedPayload, HrmEmployeeUpdatedPayload, LimsInspectionAbnormalDetectedPayload,
     LimsInspectionResultSubmittedPayload, LimsReagentAlertPayload, LimsRecordCompletedPayload,
-    LimsSampleRegisteredPayload, PmProjectCreatedPayload, PmProjectUpdatedPayload,
-    PmTaskCreatedPayload, PmTaskDeletedPayload, PmTaskUpdatedPayload,
+    LimsSampleRegisteredPayload, PermissionChangedPayload, PmProjectCreatedPayload,
+    PmProjectUpdatedPayload, PmTaskCreatedPayload, PmTaskDeletedPayload, PmTaskUpdatedPayload,
     PositionCreatedPayload, PositionDeletedPayload, PositionUpdatedPayload,
-    PermissionChangedPayload, QmsCorrectiveActionCreatedPayload, QmsInspectionCompletedPayload,
+    QmsCorrectiveActionCreatedPayload, QmsInspectionCompletedPayload,
     QmsQualityIssueCreatedPayload,
 };
 pub use monitor::{EventMetrics, EventMonitor, EventTrace, TraceStatus};

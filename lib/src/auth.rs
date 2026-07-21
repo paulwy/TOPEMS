@@ -514,8 +514,7 @@ fn is_public_path(path: &str) -> bool {
     if public_paths.contains(&path) {
         return true;
     }
-    path.starts_with("/api/core/iam/auth/")
-        || path.starts_with("/api/integration/webhooks")
+    path.starts_with("/api/core/iam/auth/") || path.starts_with("/api/integration/webhooks")
 }
 
 fn is_websocket_path(path: &str) -> bool {
@@ -584,7 +583,12 @@ pub async fn auth_middleware(
             username: "dev_user".to_string(),
             role: "admin".to_string(),
             roles: vec!["admin".to_string(), "user".to_string()],
-            permissions: vec!["iam:admin".to_string(), "notification:read".to_string(), "plugin:read".to_string(), "plugin:write".to_string()],
+            permissions: vec![
+                "iam:admin".to_string(),
+                "notification:read".to_string(),
+                "plugin:read".to_string(),
+                "plugin:write".to_string(),
+            ],
             is_superuser: true,
             exp: 0,
             iat: 0,

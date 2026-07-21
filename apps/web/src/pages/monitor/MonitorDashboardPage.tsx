@@ -53,7 +53,7 @@ import {
 import { useNotificationStore } from '../../store';
 import { designTokens } from '@/theme/tokens';
 import { QUERY_KEYS } from '@/lib/reactQuery';
-import { monitorApi } from '@/api/monitor';
+import { monitorApi, type SystemMetrics, type DatabaseMetrics } from '@/api/monitor';
 
 const ct = designTokens.colors;
 
@@ -389,11 +389,11 @@ export const MonitorDashboardPage: React.FC = () => {
     apiPerformanceQuery.isFetching ||
     dbMetricsQuery.isFetching;
 
-  const systemMetrics = systemMetricsQuery.data || {};
+  const systemMetrics = (systemMetricsQuery.data || {}) as SystemMetrics;
   const apiServices = Array.isArray(serviceHealthQuery.data) ? serviceHealthQuery.data : [];
   const apiAlerts = Array.isArray(alertsQuery.data) ? alertsQuery.data : [];
   const apiPerf = Array.isArray(apiPerformanceQuery.data) ? apiPerformanceQuery.data : [];
-  const dbMetrics = dbMetricsQuery.data || {};
+  const dbMetrics = (dbMetricsQuery.data || {}) as DatabaseMetrics;
 
   const services: ServiceHealth[] = useMemo(
     () =>
