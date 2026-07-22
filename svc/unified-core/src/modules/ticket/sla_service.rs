@@ -2,7 +2,7 @@
 
 use chrono::Datelike;
 use chrono::Timelike;
-use chrono::{DateTime, Duration, DurationRound, NaiveDateTime, Utc, Weekday};
+use chrono::{DateTime, Duration, Utc, Weekday};
 use sqlx::{PgPool, Row};
 use uuid::Uuid;
 

@@ -1,6 +1,7 @@
 use super::dead_letter_queue::DeadLetterQueue;
 use super::error::EventResult;
 use super::event_types::{Event, EventType};
+use super::master_data::{MasterDataDomain, MasterDataEvent};
 use futures_util::StreamExt;
 use redis::Client;
 use std::env;
@@ -13,11 +14,16 @@ use tracing::{debug, error, info, warn, Instrument};
 pub type EventHandler =
     Arc<dyn Fn(Event) -> Pin<Box<dyn Future<Output = ()> + Send>> + Send + Sync>;
 
+/// MDM 事件处理器回调类型
+pub type MasterDataEventHandler =
+    Arc<dyn Fn(MasterDataEvent) -> Pin<Box<dyn Future<Output = ()> + Send>> + Send + Sync>;
+
 /// 事件订阅者
 pub struct EventSubscriber {
     redis_client: Client,
     _service_name: String,
     handlers: Vec<(Vec<EventType>, EventHandler)>,
+    mdm_handlers: Vec<(Vec<MasterDataDomain>, MasterDataEventHandler)>,
 }
 
 impl EventSubscriber {
@@ -32,6 +38,7 @@ impl EventSubscriber {
             redis_client,
             _service_name: service_name.to_string(),
             handlers: Vec::new(),
+            mdm_handlers: Vec::new(),
         })
     }
 
@@ -80,7 +87,7 @@ impl EventSubscriber {
         let con = self.redis_client.get_async_connection().await?;
         let mut pubsub = con.into_pubsub();
 
-        // 订阅所有感兴趣的频道
+        // 订阅所有感兴趣的标准事件频道
         let mut all_event_types = Vec::new();
         for (event_types, _) in &self.handlers {
             all_event_types.extend(event_types.iter().cloned());
@@ -96,7 +103,24 @@ impl EventSubscriber {
             info!("订阅事件频道: {}", channel_name);
         }
 
+        // 订阅所有感兴趣的 MDM 事件频道
+        let mut all_mdm_domains = Vec::new();
+        for (domains, _) in &self.mdm_handlers {
+            all_mdm_domains.extend(domains.iter().cloned());
+        }
+
+        // 去重
+        all_mdm_domains.sort_by(|a, b| a.prefix().cmp(b.prefix()));
+        all_mdm_domains.dedup_by(|a, b| a.prefix() == b.prefix());
+
+        for domain in &all_mdm_domains {
+            let channel_name = format!("topems:master_data:{}", domain.prefix());
+            pubsub.subscribe(&channel_name).await?;
+            info!("订阅 MDM 频道: {}", channel_name);
+        }
+
         let handlers = Arc::new(self.handlers);
+        let mdm_handlers = Arc::new(self.mdm_handlers);
         let dlq = DeadLetterQueue::new()?;
         let mut stream = pubsub.on_message();
 
@@ -110,61 +134,117 @@ impl EventSubscriber {
                 }
             };
 
-            let event: Event = match serde_json::from_str(&payload) {
-                Ok(e) => e,
-                Err(e) => {
-                    error!("解析事件JSON错误: {:?}", e);
-                    continue;
-                }
-            };
+            let channel_name = msg.get_channel_name();
 
-            debug!("收到事件: {:?} from {}", event.event_type, event.source);
+            // 根据频道名称判断是标准事件还是 MDM 事件
+            if channel_name.starts_with("topems:master_data:") {
+                // 处理 MDM 主数据事件
+                let mdm_event: MasterDataEvent = match serde_json::from_str(&payload) {
+                    Ok(e) => e,
+                    Err(e) => {
+                        error!("解析 MDM 事件 JSON 错误: {:?}", e);
+                        continue;
+                    }
+                };
 
-            // 分发到相应的处理器
-            for (event_types, handler) in handlers.as_ref() {
-                if event_types.contains(&event.event_type) {
-                    let event_clone = event.clone();
-                    let handler_clone = handler.clone();
-                    let dlq_clone = dlq.clone();
+                debug!(
+                    "收到 MDM 事件: {:?} {:?} from {}",
+                    mdm_event.domain, mdm_event.action, mdm_event.source_service
+                );
 
-                    // V26.0: 如果事件携带 trace_id，创建关联 span 实现分布式追踪
-                    let span = if let Some(ref trace_id) = event.trace_id {
-                        tracing::info_span!(
-                            "event_handler",
-                            trace_id = %trace_id,
-                            event_type = ?event.event_type,
-                            event_id = %event.event_id,
-                            source = %event.source,
-                        )
-                    } else {
-                        tracing::info_span!(
-                            "event_handler",
-                            event_type = ?event.event_type,
-                            event_id = %event.event_id,
-                            source = %event.source,
-                        )
-                    };
+                // 分发到相应的 MDM 处理器
+                for (domains, handler) in mdm_handlers.as_ref() {
+                    if domains.contains(&mdm_event.domain) {
+                        let event_clone = mdm_event.clone();
+                        let handler_clone = handler.clone();
 
-                    tokio::spawn(
-                        async move {
-                            match tokio::time::timeout(
-                                tokio::time::Duration::from_secs(30),
-                                handler_clone(event_clone.clone()),
-                            )
-                            .await
-                            {
-                                Ok(_) => {}
-                                Err(e) => {
-                                    warn!(
-                                        "事件处理超时: {:?}, 事件ID: {}",
-                                        e, event_clone.event_id
-                                    );
-                                    let _ = dlq_clone.push(event_clone, "处理超时").await;
+                        let span = tracing::info_span!(
+                            "mdm_event_handler",
+                            domain = ?mdm_event.domain,
+                            action = ?mdm_event.action,
+                            master_data_id = %mdm_event.master_data_id,
+                            tenant_id = %mdm_event.tenant_id,
+                        );
+
+                        tokio::spawn(
+                            async move {
+                                match tokio::time::timeout(
+                                    tokio::time::Duration::from_secs(30),
+                                    handler_clone(event_clone),
+                                )
+                                .await
+                                {
+                                    Ok(_) => {}
+                                    Err(e) => {
+                                        warn!(
+                                            "MDM 事件处理超时: {:?}, master_data_id: {}",
+                                            e, event_clone.master_data_id
+                                        );
+                                    }
                                 }
                             }
-                        }
-                        .instrument(span),
-                    );
+                            .instrument(span),
+                        );
+                    }
+                }
+            } else {
+                // 处理标准事件
+                let event: Event = match serde_json::from_str(&payload) {
+                    Ok(e) => e,
+                    Err(e) => {
+                        error!("解析事件 JSON 错误: {:?}", e);
+                        continue;
+                    }
+                };
+
+                debug!("收到事件: {:?} from {}", event.event_type, event.source);
+
+                // 分发到相应的处理器
+                for (event_types, handler) in handlers.as_ref() {
+                    if event_types.contains(&event.event_type) {
+                        let event_clone = event.clone();
+                        let handler_clone = handler.clone();
+                        let dlq_clone = dlq.clone();
+
+                        // V26.0: 如果事件携带 trace_id，创建关联 span 实现分布式追踪
+                        let span = if let Some(ref trace_id) = event.trace_id {
+                            tracing::info_span!(
+                                "event_handler",
+                                trace_id = %trace_id,
+                                event_type = ?event.event_type,
+                                event_id = %event.event_id,
+                                source = %event.source,
+                            )
+                        } else {
+                            tracing::info_span!(
+                                "event_handler",
+                                event_type = ?event.event_type,
+                                event_id = %event.event_id,
+                                source = %event.source,
+                            )
+                        };
+
+                        tokio::spawn(
+                            async move {
+                                match tokio::time::timeout(
+                                    tokio::time::Duration::from_secs(30),
+                                    handler_clone(event_clone.clone()),
+                                )
+                                .await
+                                {
+                                    Ok(_) => {}
+                                    Err(e) => {
+                                        warn!(
+                                            "事件处理超时: {:?}, 事件ID: {}",
+                                            e, event_clone.event_id
+                                        );
+                                        let _ = dlq_clone.push(event_clone, "处理超时").await;
+                                    }
+                                }
+                            }
+                            .instrument(span),
+                        );
+                    }
                 }
             }
         }
@@ -186,5 +266,34 @@ impl EventSubscriber {
             ],
             handler,
         )
+    }
+
+    /// 订阅 MDM 主数据事件
+    pub fn subscribe_master_data<F, Fut>(mut self, domains: Vec<MasterDataDomain>, handler: F) -> Self
+    where
+        F: Fn(MasterDataEvent) -> Fut + Send + Sync + 'static,
+        Fut: Future<Output = ()> + Send + 'static,
+    {
+        let handler_arc: MasterDataEventHandler = Arc::new(move |event| Box::pin(handler(event)));
+        self.mdm_handlers.push((domains, handler_arc));
+        self
+    }
+
+    /// 便捷方法：订阅 MDM 员工事件
+    pub fn subscribe_master_data_employee<F, Fut>(self, handler: F) -> Self
+    where
+        F: Fn(MasterDataEvent) -> Fut + Send + Sync + 'static,
+        Fut: Future<Output = ()> + Send + 'static,
+    {
+        self.subscribe_master_data(vec![MasterDataDomain::Employee], handler)
+    }
+
+    /// 便捷方法：订阅 MDM 组织事件
+    pub fn subscribe_master_data_organization<F, Fut>(self, handler: F) -> Self
+    where
+        F: Fn(MasterDataEvent) -> Fut + Send + Sync + 'static,
+        Fut: Future<Output = ()> + Send + 'static,
+    {
+        self.subscribe_master_data(vec![MasterDataDomain::Organization], handler)
     }
 }

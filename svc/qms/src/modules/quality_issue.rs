@@ -9,7 +9,7 @@ use serde::{Deserialize, Serialize};
 use sqlx::{types::Uuid, FromRow};
 use topems_shared::{event::EventType, event::QmsQualityIssueCreatedPayload, ApiResponse, Claims};
 
-use crate::workflow::{CreateInstanceRequest, WorkflowClient};
+use crate::workflow::CreateInstanceRequest;
 
 #[derive(Debug, Serialize, Deserialize)]
 pub struct IssueQuery {
@@ -367,7 +367,7 @@ pub async fn approve_issue(
     Extension(claims): Extension<Claims>,
     axum::extract::Path(id): axum::extract::Path<String>,
     headers: axum::http::HeaderMap,
-    Json(req): Json<ApprovalActionRequest>,
+    Json(_req): Json<ApprovalActionRequest>,
 ) -> Json<ApiResponse<QualityIssueWithWorkflow>> {
     let tenant_id = get_tenant_id(&claims, &headers);
     let issue_id = match Uuid::parse_str(&id) {
@@ -404,7 +404,7 @@ pub async fn reject_issue(
     Extension(claims): Extension<Claims>,
     axum::extract::Path(id): axum::extract::Path<String>,
     headers: axum::http::HeaderMap,
-    Json(req): Json<ApprovalActionRequest>,
+    Json(_req): Json<ApprovalActionRequest>,
 ) -> Json<ApiResponse<QualityIssueWithWorkflow>> {
     let tenant_id = get_tenant_id(&claims, &headers);
     let issue_id = match Uuid::parse_str(&id) {

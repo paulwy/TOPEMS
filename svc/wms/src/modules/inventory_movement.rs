@@ -1,17 +1,15 @@
 use axum::{
     extract::{Extension, FromRef, Path, Query, State},
     http::HeaderMap,
-    routing::{get, post},
+    routing::get,
     Json, Router,
 };
 use chrono::Utc;
-use serde::Deserialize;
 use uuid::Uuid;
 
 use crate::models::{
     CreateInventoryMovementRequest, InventoryMovement, InventoryMovementQueryParams,
 };
-use crate::modules::audit::log_audit_event;
 use crate::modules::ApiState;
 use crate::shared::permission::{check_permission, ModulePermission};
 use topems_shared::auth::Claims;
@@ -56,7 +54,7 @@ where
 async fn list_inventory_movements(
     State(state): State<ApiState>,
     Extension(claims): Extension<Claims>,
-    headers: HeaderMap,
+    _headers: HeaderMap,
     Query(params): Query<InventoryMovementQueryParams>,
 ) -> Json<ApiResponse<serde_json::Value>> {
     if let Err(e) = check_permission(&state.db, &claims, &ModulePermission::InventoryRead).await {
@@ -150,7 +148,7 @@ async fn list_inventory_movements(
 async fn create_inventory_movement(
     State(state): State<ApiState>,
     Extension(claims): Extension<Claims>,
-    headers: HeaderMap,
+    _headers: HeaderMap,
     Json(req): Json<CreateInventoryMovementRequest>,
 ) -> Json<ApiResponse<InventoryMovement>> {
     if let Err(e) = check_permission(&state.db, &claims, &ModulePermission::InventoryWrite).await {
@@ -223,7 +221,7 @@ async fn get_inventory_movement(
     State(state): State<ApiState>,
     Extension(claims): Extension<Claims>,
     Path(id): Path<Uuid>,
-    headers: HeaderMap,
+    _headers: HeaderMap,
 ) -> Json<ApiResponse<InventoryMovement>> {
     if let Err(e) = check_permission(&state.db, &claims, &ModulePermission::InventoryRead).await {
         return e;

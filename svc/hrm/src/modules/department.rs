@@ -9,6 +9,7 @@ use uuid::Uuid;
 
 use super::ApiState;
 use crate::models::{CreateDepartmentRequest, Department, UpdateDepartmentRequest};
+use topems_shared::event::MasterDataAction;
 use topems_shared::{api_error, ApiResponse};
 
 pub fn create_routes() -> Router<ApiState> {
@@ -132,7 +133,35 @@ async fn create_department(
     .await;
 
     match result {
-        Ok(department) => Json(ApiResponse::success(department, "部门创建成功")),
+        Ok(department) => {
+            // 发布 MDM 主数据事件
+            let mdm_service = crate::services::mdm_event_service::MdmEventService::new();
+            let dept_id = department.id;
+            let dept_code = department.code.clone();
+            let dept_name = department.name.clone();
+            let parent_id = department.parent_id;
+            let manager_id = department.manager_id;
+            let company_id = department.company_id;
+            let status = department.status.clone();
+            tokio::spawn(async move {
+                mdm_service
+                    .publish_department_event(
+                        Uuid::nil(), // TODO: 获取真实 tenant_id
+                        dept_id,
+                        dept_code.as_deref(),
+                        &dept_name,
+                        parent_id,
+                        manager_id,
+                        company_id,
+                        &status,
+                        MasterDataAction::Created,
+                        None,
+                    )
+                    .await;
+            });
+
+            Json(ApiResponse::success(department, "部门创建成功"))
+        }
         Err(e) => {
             tracing::error!("创建部门失败: {}", e);
             Json(api_error(500, "部门创建失败"))
@@ -218,7 +247,35 @@ async fn update_department(
     .await;
 
     match result {
-        Ok(department) => Json(ApiResponse::success(department, "部门更新成功")),
+        Ok(department) => {
+            // 发布 MDM 主数据事件
+            let mdm_service = crate::services::mdm_event_service::MdmEventService::new();
+            let dept_id = department.id;
+            let dept_code = department.code.clone();
+            let dept_name = department.name.clone();
+            let parent_id = department.parent_id;
+            let manager_id = department.manager_id;
+            let company_id = department.company_id;
+            let status = department.status.clone();
+            tokio::spawn(async move {
+                mdm_service
+                    .publish_department_event(
+                        Uuid::nil(), // TODO: 获取真实 tenant_id
+                        dept_id,
+                        dept_code.as_deref(),
+                        &dept_name,
+                        parent_id,
+                        manager_id,
+                        company_id,
+                        &status,
+                        MasterDataAction::Updated,
+                        None,
+                    )
+                    .await;
+            });
+
+            Json(ApiResponse::success(department, "部门更新成功"))
+        }
         Err(e) => {
             tracing::error!("更新部门失败: {}", e);
             Json(api_error(500, "部门更新失败"))
@@ -237,6 +294,26 @@ async fn delete_department(
 
     match result {
         Ok(r) if r.rows_affected() > 0 => {
+            // 发布 MDM 主数据事件
+            let mdm_service = crate::services::mdm_event_service::MdmEventService::new();
+            let dept_id = id;
+            tokio::spawn(async move {
+                mdm_service
+                    .publish_department_event(
+                        Uuid::nil(), // TODO: 获取真实 tenant_id
+                        dept_id,
+                        None,
+                        "DELETED",
+                        None,
+                        None,
+                        None,
+                        "deleted",
+                        MasterDataAction::Deleted,
+                        None,
+                    )
+                    .await;
+            });
+
             Json(ApiResponse::success("".to_string(), "部门删除成功"))
         }
         Ok(_) => Json(api_error(404, "部门不存在")),

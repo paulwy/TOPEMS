@@ -9,8 +9,8 @@ use crate::modules::audit::log_audit_event;
 use crate::services::employee_service::EmployeeService;
 use crate::shared::permission::{check_permission, ModulePermission};
 use topems_shared::{
-    api_error, event::EventType, event::HrmEmployeeCreatedPayload,
-    event::HrmEmployeeUpdatedPayload, ApiResponse, Claims,
+    api_error, event::EventType, event::HrmEmployeeCreatedPayload, event::MasterDataAction,
+    ApiResponse, Claims,
 };
 
 fn get_tenant_id(claims: &Claims, headers: &axum::http::HeaderMap) -> Uuid {
@@ -331,6 +331,33 @@ async fn create_employee(
                 });
             }
 
+            // 发布 MDM 主数据事件
+            let mdm_service = crate::services::mdm_event_service::MdmEventService::new();
+            let emp_id = employee.id;
+            let emp_number = employee.employee_number.clone();
+            let emp_name = employee.name.clone();
+            let emp_email = employee.email.clone();
+            let emp_phone = employee.phone.clone();
+            let dept_id = employee.department_id;
+            let emp_status = employee.status.clone();
+            let tenant = tenant_id;
+            tokio::spawn(async move {
+                mdm_service
+                    .publish_employee_event(
+                        tenant,
+                        emp_id,
+                        &emp_number,
+                        &emp_name,
+                        emp_email.as_deref(),
+                        emp_phone.as_deref(),
+                        dept_id,
+                        &emp_status,
+                        MasterDataAction::Created,
+                        None,
+                    )
+                    .await;
+            });
+
             status_str = "success".to_string();
             error_msg = None;
             data_value = serde_json::to_value(employee).ok();
@@ -401,6 +428,35 @@ async fn update_employee(
                 Some(EMPLOYEE_CACHE_TTL),
             )
             .await;
+
+        // 发布 MDM 主数据事件
+        if let Some(employee) = &result.data {
+            let mdm_service = crate::services::mdm_event_service::MdmEventService::new();
+            let emp_id = employee.id;
+            let emp_number = employee.employee_number.clone();
+            let emp_name = employee.name.clone();
+            let emp_email = employee.email.clone();
+            let emp_phone = employee.phone.clone();
+            let dept_id = employee.department_id;
+            let emp_status = employee.status.clone();
+            let tenant = tenant_id;
+            tokio::spawn(async move {
+                mdm_service
+                    .publish_employee_event(
+                        tenant,
+                        emp_id,
+                        &emp_number,
+                        &emp_name,
+                        emp_email.as_deref(),
+                        emp_phone.as_deref(),
+                        dept_id,
+                        &emp_status,
+                        MasterDataAction::Updated,
+                        None,
+                    )
+                    .await;
+            });
+        }
     }
 
     log_audit_event(
@@ -455,6 +511,27 @@ async fn delete_employee(
     if result.code == 200 {
         state.employee_cache.remove(&employee_cache_key(&id));
         let _ = state.cache.delete(&employee_cache_key(&id)).await;
+
+        // 发布 MDM 主数据删除事件
+        let mdm_service = crate::services::mdm_event_service::MdmEventService::new();
+        let del_id = id;
+        let tenant = tenant_id;
+        tokio::spawn(async move {
+            mdm_service
+                .publish_employee_event(
+                    tenant,
+                    del_id,
+                    "DELETED",
+                    "DELETED",
+                    None,
+                    None,
+                    None,
+                    "deleted",
+                    MasterDataAction::Deleted,
+                    None,
+                )
+                .await;
+        });
     }
 
     log_audit_event(

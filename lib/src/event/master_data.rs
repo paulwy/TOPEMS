@@ -212,7 +212,7 @@ impl MasterDataEvent {
         use lapin::{
             options::{BasicPublishOptions, ExchangeDeclareOptions},
             types::FieldTable,
-            BasicProperties, Channel, Connection, ConnectionProperties, ExchangeKind,
+            BasicProperties, Connection, ConnectionProperties, ExchangeKind,
         };
         
         let rabbitmq_url =

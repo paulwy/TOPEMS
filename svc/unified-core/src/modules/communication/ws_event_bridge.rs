@@ -111,7 +111,7 @@ impl WsEventBridge {
     }
 
     /// 处理接收到的事件
-    async fn handle_event(ws_state: &Arc<WsState>, channel: &str, payload: &str) {
+    async fn handle_event(ws_state: &Arc<WsState>, _channel: &str, payload: &str) {
         // 解析事件 JSON
         let event_json: serde_json::Value = match serde_json::from_str(payload) {
             Ok(v) => v,

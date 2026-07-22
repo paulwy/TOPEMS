@@ -451,7 +451,7 @@ impl DataMaskingEngine {
         self.apply_strategy(value, MaskingStrategy::FullMask, "default")
     }
 
-    fn apply_strategy(&self, value: &str, strategy: MaskingStrategy, rule_name: &str) -> String {
+    fn apply_strategy(&self, value: &str, strategy: MaskingStrategy, _rule_name: &str) -> String {
         match strategy {
             MaskingStrategy::FullMask => "*".repeat(value.chars().count().max(8)),
             MaskingStrategy::PartialMask {

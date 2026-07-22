@@ -20,9 +20,10 @@
 use sqlx::{PgPool, Row};
 use topems_shared::event::{
     EmployeeOnboardedPayload, Event, EventResult, EventSubscriber, EventType,
-    InventoryUpdatedPayload, OpportunityWonPayload, PaymentMadePayload, PaymentReceivedPayload,
-    PmProjectCompletedPayload, PmProjectSettledPayload, PurchaseOrderApprovedPayload,
-    ReturnCompletedPayload, SalesOrderApprovedPayload, StockInboundPayload, StockOutboundPayload,
+    InventoryUpdatedPayload, MasterDataAction, MasterDataDomain, MasterDataEvent,
+    OpportunityWonPayload, PaymentMadePayload, PaymentReceivedPayload, PmProjectCompletedPayload,
+    PmProjectSettledPayload, PurchaseOrderApprovedPayload, ReturnCompletedPayload,
+    SalesOrderApprovedPayload, StockInboundPayload, StockOutboundPayload,
     WorkOrderCompletedPayload,
 };
 
@@ -57,6 +58,8 @@ impl ErpEventHandlers {
         let h11 = self.clone();
         let h12 = self.clone();
         let h13 = self.clone();
+        let h14 = self.clone();
+        let h15 = self.clone();
 
         Ok(subscriber
             .subscribe(vec![EventType::SalesOrderApproved], move |event| {
@@ -160,6 +163,25 @@ impl ErpEventHandlers {
                 Box::pin(async move {
                     if let Err(e) = h.handle_payment_made(event).await {
                         tracing::error!("[erp] handle_payment_made 失败: {}", e);
+                    }
+                })
+            })
+            .subscribe_master_data_employee(move |event| {
+                let h = h14.clone();
+                Box::pin(async move {
+                    if let Err(e) = h.handle_master_data_employee_changed(event).await {
+                        tracing::error!("[erp] handle_master_data_employee_changed 失败: {}", e);
+                    }
+                })
+            })
+            .subscribe_master_data_organization(move |event| {
+                let h = h15.clone();
+                Box::pin(async move {
+                    if let Err(e) = h.handle_master_data_organization_changed(event).await {
+                        tracing::error!(
+                            "[erp] handle_master_data_organization_changed 失败: {}",
+                            e
+                        );
                     }
                 })
             }))
@@ -1575,6 +1597,137 @@ impl ErpEventHandlers {
             }
             Err(e) => {
                 tracing::warn!("[erp] 核销应付账款失败（graceful fallback）: {}", e);
+            }
+        }
+
+        Ok(())
+    }
+
+    /// MDM 员工变更事件处理
+    ///
+    /// 订阅 HRM 员工变更事件，同步更新 ERP 中的员工相关记录
+    async fn handle_master_data_employee_changed(&self, event: MasterDataEvent) -> HandlerResult {
+        tracing::info!(
+            "[erp-mdm] 员工主数据变更事件 - domain={:?}, action={:?}, master_data_id={}, tenant_id={}",
+            event.domain,
+            event.action,
+            event.master_data_id,
+            event.tenant_id
+        );
+
+        let employee_name = event
+            .payload
+            .get("name")
+            .and_then(|v| v.as_str())
+            .unwrap_or("");
+        let email = event.payload.get("email").and_then(|v| v.as_str());
+        let department_id = event
+            .payload
+            .get("department_id")
+            .and_then(|v| v.as_str().and_then(|s| uuid::Uuid::parse_str(s).ok()));
+
+        match event.action {
+            MasterDataAction::Created => {
+                tracing::info!(
+                    "[erp-mdm] 员工创建 - name={}, email={:?}, department_id={:?}",
+                    employee_name,
+                    email,
+                    department_id
+                );
+                // TODO: 创建 ERP 员工记录，关联到部门
+            }
+            MasterDataAction::Updated => {
+                tracing::info!(
+                    "[erp-mdm] 员工更新 - name={}, email={:?}, changed_fields={:?}",
+                    employee_name,
+                    email,
+                    event.changed_fields
+                );
+                // TODO: 同步更新 ERP 员工记录
+            }
+            MasterDataAction::Deleted => {
+                tracing::info!(
+                    "[erp-mdm] 员工删除 - master_data_id={}",
+                    event.master_data_id
+                );
+                // TODO: 标记 ERP 员工记录为已离职
+            }
+            MasterDataAction::Activated | MasterDataAction::Deactivated => {
+                let status = if event.action == MasterDataAction::Activated {
+                    "active"
+                } else {
+                    "inactive"
+                };
+                tracing::info!(
+                    "[erp-mdm] 员工状态变更 - master_data_id={}, status={}",
+                    event.master_data_id,
+                    status
+                );
+                // TODO: 更新 ERP 员工状态
+            }
+        }
+
+        Ok(())
+    }
+
+    /// MDM 组织变更事件处理
+    ///
+    /// 订阅 HRM 部门/公司变更事件，同步更新 ERP 中的组织相关记录
+    async fn handle_master_data_organization_changed(
+        &self,
+        event: MasterDataEvent,
+    ) -> HandlerResult {
+        tracing::info!(
+            "[erp-mdm] 组织主数据变更事件 - domain={:?}, action={:?}, master_data_id={}, tenant_id={}",
+            event.domain,
+            event.action,
+            event.master_data_id,
+            event.tenant_id
+        );
+
+        let org_name = event
+            .payload
+            .get("name")
+            .and_then(|v| v.as_str())
+            .unwrap_or("");
+        let org_code = event.payload.get("code").and_then(|v| v.as_str());
+
+        match event.action {
+            MasterDataAction::Created => {
+                tracing::info!(
+                    "[erp-mdm] 组织创建 - name={}, code={:?}",
+                    org_name,
+                    org_code
+                );
+                // TODO: 创建 ERP 组织记录
+            }
+            MasterDataAction::Updated => {
+                tracing::info!(
+                    "[erp-mdm] 组织更新 - name={}, code={:?}",
+                    org_name,
+                    org_code
+                );
+                // TODO: 更新 ERP 组织记录
+            }
+            MasterDataAction::Deleted => {
+                tracing::info!(
+                    "[erp-mdm] 组织删除 - master_data_id={}",
+                    event.master_data_id
+                );
+                // TODO: 标记 ERP 组织为已删除
+            }
+            MasterDataAction::Activated | MasterDataAction::Deactivated => {
+                let status = if event.action == MasterDataAction::Activated {
+                    "active"
+                } else {
+                    "inactive"
+                };
+                tracing::info!(
+                    "[erp-mdm] 组织状态变更 - name={}, status={}",
+                    org_name,
+                    status
+                );
+                // TODO: 更新 ERP 组织状态
             }
         }
 

@@ -188,7 +188,7 @@ impl CodeAssistantApi {
 
     pub async fn review(
         Extension(_claims): Extension<Claims>,
-        Json(req): Json<CodeReviewRequest>,
+        Json(_req): Json<CodeReviewRequest>,
     ) -> Json<ApiResponse<CodeReviewResponse>> {
         let issues = vec![
             CodeReviewIssue {
