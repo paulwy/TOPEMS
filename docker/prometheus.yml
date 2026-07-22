@@ -37,7 +37,6 @@ scrape_configs:
           - topems-ehs
           - topems-rs
           - topems-bi
-          - topems-report
           - topems-monitor
           - topems-portal
           - topems-ai
@@ -133,11 +132,6 @@ scrape_configs:
       - targets: ['host.docker.internal:8060']
     metrics_path: /metrics
 
-  - job_name: 'topems-report'
-    static_configs:
-      - targets: ['host.docker.internal:8061']
-    metrics_path: /metrics
-
   - job_name: 'topems-monitor'
     static_configs:
       - targets: ['host.docker.internal:8062']
@@ -186,4 +180,26 @@ scrape_configs:
   - job_name: 'nginx'
     static_configs:
       - targets: ['topems-nginx:9113']
+    metrics_path: /metrics
+
+  # ================================================
+  # 可观测性基础设施自身监控
+  # ================================================
+  # OpenTelemetry Collector 自身指标 (端口 8888)
+  - job_name: 'otel-collector'
+    static_configs:
+      - targets: ['otel-collector:8888']
+    metrics_path: /metrics
+
+  # OpenTelemetry Collector Prometheus exporter (端口 8889)
+  # 暴露由 Collector 聚合的业务指标 (namespace: topems)
+  - job_name: 'otel-collector-exported'
+    static_configs:
+      - targets: ['otel-collector:8889']
+    metrics_path: /metrics
+
+  # Loki 日志聚合系统自身指标
+  - job_name: 'loki'
+    static_configs:
+      - targets: ['loki:3100']
     metrics_path: /metrics

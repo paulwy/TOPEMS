@@ -342,7 +342,7 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     const handleUnauthorized = () => {
       const tokenAtEventTime = localStorage.getItem('token');
       const userAtEventTime = localStorage.getItem('user');
-      
+
       authLogger.warn('[日志4-收到未授权事件触发登出]', {
         hasTokenAtEventTime: !!tokenAtEventTime,
         hasUserAtEventTime: !!userAtEventTime,
@@ -480,7 +480,12 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
       getTimeUntilExpiry,
     }),
     [
-      state,
+      state.user,
+      state.token,
+      state.isAuthenticated,
+      state.isLoading,
+      state.roles,
+      state.permissions,
       login,
       logout,
       hasPermission,

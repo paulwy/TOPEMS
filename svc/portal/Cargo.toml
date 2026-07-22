@@ -21,6 +21,7 @@ thiserror.workspace = true
 chrono.workspace = true
 reqwest.workspace = true
 topems-shared = { path = "../../lib" }
+utoipa.workspace = true
 axum-prometheus.workspace = true
 prometheus.workspace = true
 tower-cookies.workspace = true

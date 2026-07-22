@@ -31,8 +31,9 @@ use utoipa::OpenApi;
 
 use topems_shared::{
     auth_middleware, check_http_health, create_api_info_router, create_cors_layer,
-    create_database_pool, init_telemetry, rls_middleware, telemetry_middleware, ApiResponse,
-    AuthState, DatabaseConfig, DependencyHealth, HealthStatus, ServiceHealth, SystemMetrics,
+    create_database_pool, init_telemetry, rate_limit_middleware, register_routes_with_legacy_alias,
+    rls_middleware, telemetry_middleware, ApiResponse, AuthState, DatabaseConfig, DependencyHealth,
+    HealthStatus, RateLimitConfig, RateLimitMiddleware, ServiceHealth, SystemMetrics,
 };
 
 use modules::wms_plugin::{auto_register_to_core, get_plugin_info, plugin_health_check};
@@ -106,282 +107,20 @@ async fn main() -> Result<()> {
 
     let api_router = modules::create_routes::<ApiState>().with_state(api_state.clone());
 
+    let rate_limit_config = RateLimitConfig::new(200, 60)
+        .with_by_user_id(false)
+        .with_by_ip(true);
+    let rate_limiter = Arc::new(RateLimitMiddleware::new(rate_limit_config));
+    let rate_limit_layer = axum::middleware::from_fn({
+        let mw = rate_limiter.clone();
+        move |req, next| {
+            let mw = mw.clone();
+            async move { rate_limit_middleware(mw, req, next).await }
+        }
+    });
+
     let protected_routes: Router<ApiState> = Router::new()
         .merge(api_router)
-        // Frontend aligned routes (WMS module)
-        // Inventory
-        .route(
-            "/inventory",
-            get(modules::inventory::list_inventory).post(modules::inventory::create_inventory),
-        )
-        .route(
-            "/inventory/{id}",
-            get(modules::inventory::get_inventory)
-                .put(modules::inventory::update_inventory)
-                .delete(modules::inventory::delete_inventory),
-        )
-        .route(
-            "/inventory/low-stock",
-            get(modules::inventory::list_low_stock_inventory),
-        )
-        .route(
-            "/inventory/warehouse/{warehouse_id}",
-            get(modules::inventory::list_inventory_by_warehouse),
-        )
-        .route(
-            "/inventory/statistics",
-            get(modules::inventory::get_inventory_statistics),
-        )
-        .route(
-            "/inventory/abc-analysis",
-            get(modules::inventory::get_abc_analysis),
-        )
-        .route("/inventory/turnover", get(modules::inventory::get_turnover))
-        .route(
-            "/inventory/value-by-warehouse",
-            get(modules::inventory::get_value_by_warehouse),
-        )
-        // Warehouse
-        .route(
-            "/warehouses",
-            get(modules::warehouse::list_warehouses).post(modules::warehouse::create_warehouse),
-        )
-        .route(
-            "/warehouses/{id}",
-            get(modules::warehouse::get_warehouse)
-                .put(modules::warehouse::update_warehouse)
-                .delete(modules::warehouse::delete_warehouse),
-        )
-        // Location
-        .route(
-            "/locations",
-            get(modules::location::list_locations).post(modules::location::create_location),
-        )
-        .route(
-            "/locations/{id}",
-            get(modules::location::get_location)
-                .put(modules::location::update_location)
-                .delete(modules::location::delete_location),
-        )
-        .route(
-            "/locations/batch",
-            post(modules::location::batch_create_locations)
-                .put(modules::location::batch_update_locations),
-        )
-        // Inbound Order
-        .route(
-            "/inbound-orders",
-            get(modules::inbound_order::list_inbound_orders)
-                .post(modules::inbound_order::create_inbound_order),
-        )
-        .route(
-            "/inbound-orders/{id}",
-            get(modules::inbound_order::get_inbound_order)
-                .put(modules::inbound_order::update_inbound_order)
-                .delete(modules::inbound_order::delete_inbound_order),
-        )
-        .route(
-            "/inbound-orders/{id}/confirm",
-            post(modules::inbound_order::confirm_inbound_order),
-        )
-        .route(
-            "/inbound-orders/{id}/receive",
-            post(modules::inbound_order::receive_inbound_order),
-        )
-        // Outbound Order
-        .route(
-            "/outbound-orders",
-            get(modules::outbound_order::list_outbound_orders)
-                .post(modules::outbound_order::create_outbound_order),
-        )
-        .route(
-            "/outbound-orders/{id}",
-            get(modules::outbound_order::get_outbound_order)
-                .put(modules::outbound_order::update_outbound_order)
-                .delete(modules::outbound_order::delete_outbound_order),
-        )
-        .route(
-            "/outbound-orders/{id}/confirm",
-            post(modules::outbound_order::confirm_outbound_order),
-        )
-        .route(
-            "/outbound-orders/{id}/pick",
-            post(modules::outbound_order::pick_outbound_order),
-        )
-        .route(
-            "/outbound-orders/{id}/pack",
-            post(modules::outbound_order::pack_outbound_order),
-        )
-        .route(
-            "/outbound-orders/{id}/ship",
-            post(modules::outbound_order::ship_outbound_order),
-        )
-        // Stock Take
-        .route(
-            "/stock-takes",
-            get(modules::stock_take::list_stock_takes).post(modules::stock_take::create_stock_take),
-        )
-        .route(
-            "/stock-takes/{id}",
-            get(modules::stock_take::get_stock_take)
-                .put(modules::stock_take::update_stock_take)
-                .delete(modules::stock_take::delete_stock_take),
-        )
-        .route(
-            "/stock-takes/{id}/start",
-            post(modules::stock_take::start_stock_take),
-        )
-        .route(
-            "/stock-takes/{id}/complete",
-            post(modules::stock_take::complete_stock_take),
-        )
-        .route(
-            "/stock-takes/{id}/adjust",
-            post(modules::stock_take::adjust_stock_take),
-        )
-        .route(
-            "/stock-takes/{id}/items",
-            get(modules::stock_take::list_stock_take_items)
-                .post(modules::stock_take::create_stock_take_item),
-        )
-        .route(
-            "/stock-takes/{id}/items/{item_id}",
-            get(modules::stock_take::get_stock_take_item)
-                .put(modules::stock_take::update_stock_take_item)
-                .delete(modules::stock_take::delete_stock_take_item),
-        )
-        .route(
-            "/stock-takes/{id}/items/{item_id}/count",
-            post(modules::stock_take::count_stock_take),
-        )
-        // Transfer
-        .route(
-            "/transfers",
-            get(modules::transfer_order::list_transfers)
-                .post(modules::transfer_order::create_transfer),
-        )
-        .route(
-            "/transfers/{id}",
-            get(modules::transfer_order::get_transfer)
-                .put(modules::transfer_order::update_transfer)
-                .delete(modules::transfer_order::delete_transfer),
-        )
-        .route(
-            "/transfers/{id}/confirm",
-            post(modules::transfer_order::confirm_transfer),
-        )
-        .route(
-            "/transfers/{id}/ship",
-            post(modules::transfer_order::ship_transfer),
-        )
-        .route(
-            "/transfers/{id}/receive",
-            post(modules::transfer_order::receive_transfer),
-        )
-        .route(
-            "/transfers/{id}/complete",
-            post(modules::transfer_order::complete_transfer),
-        )
-        // Batch
-        .route(
-            "/batches",
-            get(modules::batch::list_batches).post(modules::batch::create_batch),
-        )
-        .route(
-            "/batches/{id}",
-            get(modules::batch::get_batch)
-                .put(modules::batch::update_batch)
-                .delete(modules::batch::delete_batch),
-        )
-        // Serial Number
-        .route(
-            "/serial-numbers",
-            get(modules::serial_number::list_serial_numbers)
-                .post(modules::serial_number::create_serial_number),
-        )
-        .route(
-            "/serial-numbers/{id}",
-            get(modules::serial_number::get_serial_number)
-                .put(modules::serial_number::update_serial_number)
-                .delete(modules::serial_number::delete_serial_number),
-        )
-        .route(
-            "/serial-numbers/{id}/trace",
-            get(modules::serial_number::get_trace),
-        )
-        // Inventory Alert
-        .route(
-            "/inventory-alerts/rules",
-            get(modules::inventory_alert::list_alert_rules)
-                .post(modules::inventory_alert::create_alert_rule),
-        )
-        .route(
-            "/inventory-alerts/rules/{id}",
-            get(modules::inventory_alert::get_alert_rule)
-                .put(modules::inventory_alert::update_alert_rule)
-                .delete(modules::inventory_alert::delete_alert_rule),
-        )
-        .route(
-            "/inventory-alerts/records",
-            get(modules::inventory_alert::list_alert_records),
-        )
-        .route(
-            "/inventory-alerts/records/{id}",
-            get(modules::inventory_alert::get_alert_record),
-        )
-        .route(
-            "/inventory-alerts/records/{id}/confirm",
-            post(modules::inventory_alert::confirm_alert_record),
-        )
-        .route(
-            "/inventory-alerts/statistics",
-            get(modules::inventory_alert::get_alert_statistics),
-        )
-        // Wave Pick
-        .route(
-            "/wave-picks",
-            get(modules::wave_pick::list_wave_picks).post(modules::wave_pick::create_wave_pick),
-        )
-        .route(
-            "/wave-picks/{id}",
-            get(modules::wave_pick::get_wave_pick)
-                .put(modules::wave_pick::update_wave_pick)
-                .delete(modules::wave_pick::delete_wave_pick),
-        )
-        .route(
-            "/wave-picks/{id}/start",
-            post(modules::wave_pick::start_wave_pick),
-        )
-        .route(
-            "/wave-picks/{id}/complete",
-            post(modules::wave_pick::complete_wave_pick),
-        )
-        .route(
-            "/wave-picks/{id}/cancel",
-            post(modules::wave_pick::cancel_wave_pick),
-        )
-        // Smart Replenishment
-        .route(
-            "/smart-replenishment/suggestions",
-            get(modules::smart_replenishment::list_suggestions),
-        )
-        .route(
-            "/smart-replenishment/suggestions/generate",
-            post(modules::smart_replenishment::compute_replenishment),
-        )
-        .route(
-            "/smart-replenishment/suggestions/{id}",
-            get(modules::smart_replenishment::get_suggestion)
-                .post(modules::smart_replenishment::confirm_suggestion),
-        )
-        .route(
-            "/smart-replenishment/rules",
-            get(modules::smart_replenishment::list_rules)
-                .post(modules::smart_replenishment::create_rule),
-        )
-        // Audit
-        .route("/audit-logs", get(modules::audit::list_audit_logs))
-        .route("/audit-logs/{id}", get(modules::audit::get_audit_log))
         .layer(axum::middleware::from_fn_with_state(
             api_state.auth_state.clone(),
             auth_middleware,
@@ -389,16 +128,20 @@ async fn main() -> Result<()> {
         .layer(axum::middleware::from_fn_with_state(
             api_state.db.clone(),
             rls_middleware,
-        ));
+        ))
+        .layer(rate_limit_layer);
 
-    let app = Router::new()
-        .merge(health_router)
-        .nest("/api/wms", protected_routes)
-        .merge(create_api_info_router("topems-wms"))
-        .layer(axum::middleware::from_fn(telemetry_middleware))
-        .layer(prometheus_layer)
-        .layer(cors)
-        .with_state(api_state.clone());
+    let app = register_routes_with_legacy_alias(
+        Router::new().merge(health_router),
+        "/api/wms",
+        &["/api/v1/wms"],
+        protected_routes,
+    )
+    .merge(create_api_info_router("topems-wms"))
+    .layer(axum::middleware::from_fn(telemetry_middleware))
+    .layer(prometheus_layer)
+    .layer(cors)
+    .with_state(api_state.clone());
 
     let port = env::var("WMS_PORT")
         .or_else(|_| env::var("SERVER_PORT"))

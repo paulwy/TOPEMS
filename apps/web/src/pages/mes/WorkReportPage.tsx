@@ -10,12 +10,10 @@ import {
   Select,
   MenuItem,
   FormControl,
-  Stack,
-  Typography,
   Button,
 } from '@mui/material';
 import { PageContainer } from '@/components/common/PageContainerV2';
-import React, { useState, useMemo, useCallback, useEffect } from 'react';
+import React, { useState, useMemo } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { QUERY_KEYS } from '@/lib/reactQuery';
 import type {
@@ -24,7 +22,7 @@ import type {
   UpdateWorkReportRequest,
   ListParams,
 } from '@/api/mes';
-import { mesApi } from '@/api/mes';
+import { workReportApi } from '@/api/mes';
 import { useNotificationStore } from '@/store';
 import { LoadingSpinner } from '@topems/shared-components';
 import {
@@ -33,7 +31,7 @@ import {
   type RowAction,
   type FilterConfig,
 } from '@/components/templates';
-import { Plus, Edit, Trash2, Eye, CheckCircle, XCircle, Clock, FileText } from 'lucide-react';
+import { Edit, Trash2, Eye, ClipboardList, CheckCircle, XCircle, Save } from 'lucide-react';
 import { apiLogger } from '@/utils/logger';
 import { designTokens } from '@/theme/tokens';
 
@@ -47,15 +45,19 @@ const WorkReportPage: React.FC = () => {
   const [pageSize] = useState(10);
   const [showDialog, setShowDialog] = useState(false);
   const [showDetailDialog, setShowDetailDialog] = useState(false);
-  const [selectedReport, setSelectedReport] = useState<WorkReport | null>(null);
+  const [selectedWorkReport, setSelectedWorkReport] = useState<WorkReport | null>(null);
   const [selectedIds, setSelectedIds] = useState<string[]>([]);
   const [formData, setFormData] = useState<CreateWorkReportRequest>({
     order_id: '',
+    process_id: '',
+    work_station_id: '',
+    team_id: '',
     worker_name: '',
     quantity_good: 0,
     quantity_bad: 0,
     start_time: '',
     end_time: '',
+    report_type: 'production',
   });
 
   const { addNotification } = useNotificationStore();
@@ -67,152 +69,163 @@ const WorkReportPage: React.FC = () => {
   if (searchTerm) params.search = searchTerm;
   if (statusFilter !== 'all') params.status = statusFilter;
 
-  const { data: reportsData, isLoading: loading } = useQuery({
+  const { data: workReportsData, isLoading: loading } = useQuery({
     queryKey: [...QUERY_KEYS.MES.WORK_REPORTS, params],
     queryFn: async () => {
-      const response = await mesApi.workReports.list(params);
+      const response = await workReportApi.list(params);
       if (response.success && response.data) {
         return {
-          reports: response.data.reports || [],
+          workReports: response.data.reports || [],
           total: response.data.total || 0,
         };
       }
-      return { reports: [], total: 0 };
+      return { workReports: [], total: 0 };
     },
   });
 
-  const reports = reportsData?.reports || [];
-  const total = reportsData?.total || 0;
+  const workReports = workReportsData?.workReports || [];
+  const total = workReportsData?.total || 0;
 
-  const invalidateReports = () => {
+  const invalidateWorkReports = () => {
     queryClient.invalidateQueries({ queryKey: QUERY_KEYS.MES.WORK_REPORTS });
   };
 
-  const getStatusText = (status: string) => {
-    const statusMap: Record<string, string> = {
-      draft: '草稿',
-      submitted: '已提交',
-      approved: '已审核',
-      rejected: '已驳回',
-      cancelled: '已取消',
-    };
-    return statusMap[status] || status;
-  };
-
   const createMutation = useMutation({
-    mutationFn: (data: CreateWorkReportRequest) => mesApi.workReports.create(data),
+    mutationFn: (data: CreateWorkReportRequest) => workReportApi.create(data),
     onSuccess: () => {
-      addNotification({ type: 'success', title: '创建成功', message: '新报工已创建' });
-      invalidateReports();
+      addNotification({ type: 'success', title: '创建成功', message: '新工作报告已创建' });
+      invalidateWorkReports();
       setShowDialog(false);
       resetForm();
     },
     onError: (error: unknown) => {
       apiLogger.error('操作失败:', error);
-      addNotification({ type: 'error', title: '操作失败', message: '创建报工失败' });
+      addNotification({ type: 'error', title: '操作失败', message: '创建工作报告失败' });
     },
   });
 
   const updateMutation = useMutation({
     mutationFn: ({ id, data }: { id: string; data: UpdateWorkReportRequest }) =>
-      mesApi.workReports.update(id, data),
+      workReportApi.update(id, data),
     onSuccess: () => {
-      addNotification({ type: 'success', title: '更新成功', message: '报工信息已更新' });
-      invalidateReports();
+      addNotification({ type: 'success', title: '更新成功', message: '工作报告信息已更新' });
+      invalidateWorkReports();
       setShowDialog(false);
       resetForm();
     },
     onError: (error: unknown) => {
       apiLogger.error('操作失败:', error);
-      addNotification({ type: 'error', title: '操作失败', message: '更新报工失败' });
+      addNotification({ type: 'error', title: '操作失败', message: '更新工作报告失败' });
     },
   });
 
   const deleteMutation = useMutation({
-    mutationFn: (id: string) => mesApi.workReports.delete(id),
+    mutationFn: (id: string) => workReportApi.delete(id),
     onSuccess: () => {
-      addNotification({ type: 'success', title: '删除成功', message: '报工记录已删除' });
-      invalidateReports();
+      addNotification({ type: 'success', title: '删除成功', message: '工作报告已删除' });
+      invalidateWorkReports();
     },
     onError: (error: unknown) => {
       apiLogger.error('删除失败:', error);
-      addNotification({ type: 'error', title: '删除失败', message: '无法删除报工记录' });
+      addNotification({ type: 'error', title: '删除失败', message: '无法删除工作报告' });
     },
   });
 
   const approveMutation = useMutation({
-    mutationFn: (id: string) => mesApi.workReports.approve(id),
+    mutationFn: (id: string) => workReportApi.approve(id),
     onSuccess: () => {
-      addNotification({ type: 'success', title: '审核成功', message: '报工已审核通过' });
-      invalidateReports();
+      addNotification({ type: 'success', title: '操作成功', message: '工作报告已审核' });
+      invalidateWorkReports();
     },
     onError: (error: unknown) => {
-      apiLogger.error('审核失败:', error);
-      addNotification({ type: 'error', title: '审核失败', message: '无法审核报工' });
+      apiLogger.error('操作失败:', error);
+      addNotification({ type: 'error', title: '操作失败', message: '审核工作报告失败' });
     },
   });
 
   const rejectMutation = useMutation({
-    mutationFn: (id: string) => mesApi.workReports.reject(id),
+    mutationFn: (id: string) => workReportApi.reject(id, '审核不通过'),
     onSuccess: () => {
-      addNotification({ type: 'success', title: '驳回成功', message: '报工已驳回' });
-      invalidateReports();
+      addNotification({ type: 'success', title: '操作成功', message: '工作报告已驳回' });
+      invalidateWorkReports();
     },
     onError: (error: unknown) => {
-      apiLogger.error('驳回失败:', error);
-      addNotification({ type: 'error', title: '驳回失败', message: '无法驳回报工' });
+      apiLogger.error('操作失败:', error);
+      addNotification({ type: 'error', title: '操作失败', message: '驳回工作报告失败' });
     },
   });
 
+  const getStatusText = (status: string) => {
+    const statusMap: Record<string, string> = {
+      draft: '草稿',
+      pending: '待审核',
+      approved: '已审核',
+      rejected: '已驳回',
+    };
+    return statusMap[status] || status;
+  };
+
+  const getReportTypeText = (reportType: string) => {
+    const reportTypeMap: Record<string, string> = {
+      production: '生产报告',
+      quality: '质量报告',
+      maintenance: '维护报告',
+    };
+    return reportTypeMap[reportType] || reportType;
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (selectedReport) {
-      updateMutation.mutate({ id: selectedReport.id, data: formData as UpdateWorkReportRequest });
+    if (selectedWorkReport) {
+      updateMutation.mutate({
+        id: selectedWorkReport.id,
+        data: formData as UpdateWorkReportRequest,
+      });
     } else {
       createMutation.mutate(formData);
     }
   };
 
   const handleDelete = (id: string) => {
-    if (!window.confirm('确定要删除这条报工记录吗?')) return;
+    if (!window.confirm('确定要删除这个工作报告吗?')) return;
     deleteMutation.mutate(id);
   };
 
-  const handleApprove = (id: string) => {
-    approveMutation.mutate(id);
-  };
-
-  const handleReject = (id: string) => {
-    rejectMutation.mutate(id);
-  };
-
-  const handleEdit = (report: WorkReport) => {
-    setSelectedReport(report);
+  const handleEdit = (workReport: WorkReport) => {
+    setSelectedWorkReport(workReport);
     setFormData({
-      order_id: report.order_id,
-      worker_name: report.worker_name,
-      quantity_good: report.quantity_good,
-      quantity_bad: report.quantity_bad,
-      start_time: report.start_time,
-      end_time: report.end_time,
+      order_id: workReport.order_id,
+      process_id: workReport.process_id || '',
+      work_station_id: workReport.work_station_id || '',
+      team_id: workReport.team_id || '',
+      worker_name: workReport.worker_name,
+      quantity_good: workReport.quantity_good,
+      quantity_bad: workReport.quantity_bad,
+      start_time: workReport.start_time,
+      end_time: workReport.end_time,
+      report_type: workReport.report_type || 'production',
     });
     setShowDialog(true);
   };
 
-  const handleViewDetail = (report: WorkReport) => {
-    setSelectedReport(report);
+  const handleViewDetail = (workReport: WorkReport) => {
+    setSelectedWorkReport(workReport);
     setShowDetailDialog(true);
   };
 
   const resetForm = () => {
-    setSelectedReport(null);
+    setSelectedWorkReport(null);
     setFormData({
       order_id: '',
+      process_id: '',
+      work_station_id: '',
+      team_id: '',
       worker_name: '',
       quantity_good: 0,
       quantity_bad: 0,
       start_time: '',
       end_time: '',
+      report_type: 'production',
     });
   };
 
@@ -226,10 +239,9 @@ const WorkReportPage: React.FC = () => {
       }
     > = {
       draft: { label: '草稿', bg: 'grey.100', color: 'text.secondary' },
-      submitted: { label: '已提交', bg: 'primary.100', color: 'primary.dark' },
+      pending: { label: '待审核', bg: 'info.lighter', color: 'info.700' },
       approved: { label: '已审核', bg: 'success.lighter', color: 'success.700' },
       rejected: { label: '已驳回', bg: 'error.lighter', color: 'error.dark' },
-      cancelled: { label: '已取消', bg: 'grey.100', color: 'text.secondary' },
     };
     const s = statusMap[status] || { label: status, bg: 'grey.100', color: 'text.secondary' };
     return (
@@ -243,28 +255,34 @@ const WorkReportPage: React.FC = () => {
 
   const columns: ColumnDef<WorkReport>[] = useMemo(
     () => [
-      { id: 'report_no', label: '报工单号', sortable: true },
-      { id: 'order_number', label: '生产订单', sortable: true },
-      { id: 'process_name', label: '工序', sortable: true },
-      { id: 'work_station_name', label: '工作站', sortable: true },
-      { id: 'worker_name', label: '操作人员', sortable: true },
-      { id: 'quantity_good', label: '合格数量', sortable: true },
-      { id: 'quantity_bad', label: '不良数量', sortable: true },
-      { id: 'quantity_total', label: '总数量', sortable: true },
+      { id: 'report_no', label: '报告编号', sortable: true },
+      { id: 'order_number', label: '订单编号', sortable: true },
+      { id: 'process_name', label: '工序名称' },
+      { id: 'worker_name', label: '操作员' },
       {
-        id: 'start_time',
-        label: '开始时间',
-        render: (row) => (row.start_time ? new Date(row.start_time).toLocaleString('zh-CN') : '-'),
+        id: 'quantity_total',
+        label: '总数量',
+        render: (row) => row.quantity_total,
       },
       {
-        id: 'end_time',
-        label: '结束时间',
-        render: (row) => (row.end_time ? new Date(row.end_time).toLocaleString('zh-CN') : '-'),
+        id: 'quantity_good',
+        label: '良品数',
+        render: (row) => row.quantity_good,
+      },
+      {
+        id: 'quantity_bad',
+        label: '不良数',
+        render: (row) => row.quantity_bad,
       },
       {
         id: 'status',
         label: '状态',
         render: (row) => getStatusBadge(row.status),
+      },
+      {
+        id: 'created_at',
+        label: '创建时间',
+        render: (row) => new Date(row.created_at).toLocaleDateString('zh-CN'),
       },
     ],
     []
@@ -279,10 +297,9 @@ const WorkReportPage: React.FC = () => {
         options: [
           { label: '全部状态', value: 'all' },
           { label: '草稿', value: 'draft' },
-          { label: '已提交', value: 'submitted' },
+          { label: '待审核', value: 'pending' },
           { label: '已审核', value: 'approved' },
           { label: '已驳回', value: 'rejected' },
-          { label: '已取消', value: 'cancelled' },
         ],
         value: statusFilter,
         onChange: (value: unknown) => {
@@ -305,20 +322,19 @@ const WorkReportPage: React.FC = () => {
         label: '编辑',
         icon: <Edit size={16} />,
         onClick: handleEdit,
+        show: (row) => row.status === 'draft',
       },
       {
         label: '审核',
         icon: <CheckCircle size={16} />,
-        color: 'success',
-        onClick: (row) => handleApprove(row.id),
-        show: (row) => row.status === 'submitted',
+        onClick: (row) => approveMutation.mutate(row.id),
+        show: (row) => row.status === 'pending',
       },
       {
         label: '驳回',
         icon: <XCircle size={16} />,
-        color: 'error',
-        onClick: (row) => handleReject(row.id),
-        show: (row) => row.status === 'submitted',
+        onClick: (row) => rejectMutation.mutate(row.id),
+        show: (row) => row.status === 'pending',
       },
       {
         label: '删除',
@@ -326,10 +342,11 @@ const WorkReportPage: React.FC = () => {
         color: 'error',
         onClick: (row) => handleDelete(row.id),
         confirm: true,
-        confirmMessage: '确定要删除这条报工记录吗?',
+        confirmMessage: '确定要删除这个工作报告吗?',
+        show: (row) => row.status === 'draft',
       },
     ],
-    [handleViewDetail, handleEdit, handleDelete, handleApprove, handleReject]
+    [approveMutation, rejectMutation]
   );
 
   const handleOpenCreate = () => {
@@ -342,96 +359,51 @@ const WorkReportPage: React.FC = () => {
     setCurrentPage(1);
   };
 
-  const stats = useMemo(() => {
-    return {
-      total: reports.length,
-      draft: reports.filter((r) => r.status === 'draft').length,
-      submitted: reports.filter((r) => r.status === 'submitted').length,
-      approved: reports.filter((r) => r.status === 'approved').length,
-      totalGood: reports.reduce((sum, r) => sum + r.quantity_good, 0),
-    };
-  }, [reports]);
-
   if (loading) return <LoadingSpinner />;
 
   const statsContent = (
     <Box
       sx={{
         display: 'grid',
-        gridTemplateColumns: { xs: 'repeat(2, 1fr)', md: 'repeat(5, 1fr)' },
+        gridTemplateColumns: { xs: 'repeat(2, 1fr)', md: 'repeat(4, 1fr)' },
         gap: 2,
         mb: 3,
       }}
     >
-      <Box sx={{ p: 2, bgcolor: 'grey.100', borderRadius: 3 }}>
-        <Typography
-          variant='body2'
-          sx={{ color: 'text.secondary' }}
-        >
-          总记录数
-        </Typography>
-        <Typography
-          variant='h5'
-          sx={{ fontWeight: 700 }}
-        >
-          {stats.total}
-        </Typography>
+      <Box sx={{ p: 2, bgcolor: ct.secondary[100], borderRadius: 3 }}>
+        <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 1 }}>
+          <ClipboardList
+            size={18}
+            sx={{ color: 'secondary.700' }}
+          />
+          <Box
+            component='span'
+            sx={{ color: 'text.secondary', fontSize: 14 }}
+          >
+            报告总数
+          </Box>
+        </Box>
+        <Box sx={{ fontWeight: 700, fontSize: 24, color: 'secondary.700' }}>
+          {workReports.length}
+        </Box>
       </Box>
-      <Box sx={{ p: 2, bgcolor: 'warning.light', borderRadius: 3 }}>
-        <Typography
-          variant='body2'
-          sx={{ color: 'text.secondary' }}
-        >
-          草稿
-        </Typography>
-        <Typography
-          variant='h5'
-          sx={{ fontWeight: 700 }}
-        >
-          {stats.draft}
-        </Typography>
-      </Box>
-      <Box sx={{ p: 2, bgcolor: 'primary.100', borderRadius: 3 }}>
-        <Typography
-          variant='body2'
-          sx={{ color: 'text.secondary' }}
-        >
-          待审核
-        </Typography>
-        <Typography
-          variant='h5'
-          sx={{ fontWeight: 700 }}
-        >
-          {stats.submitted}
-        </Typography>
+      <Box sx={{ p: 2, bgcolor: 'info.lighter', borderRadius: 3 }}>
+        <Box sx={{ color: 'text.secondary', fontSize: 14, mb: 1 }}>待审核</Box>
+        <Box sx={{ fontWeight: 700, fontSize: 24, color: 'info.700' }}>
+          {workReports.filter((r) => r.status === 'pending').length}
+        </Box>
       </Box>
       <Box sx={{ p: 2, bgcolor: 'success.lighter', borderRadius: 3 }}>
-        <Typography
-          variant='body2'
-          sx={{ color: 'text.secondary' }}
-        >
-          已审核
-        </Typography>
-        <Typography
-          variant='h5'
-          sx={{ fontWeight: 700 }}
-        >
-          {stats.approved}
-        </Typography>
+        <Box sx={{ color: 'text.secondary', fontSize: 14, mb: 1 }}>已审核</Box>
+        <Box sx={{ fontWeight: 700, fontSize: 24, color: 'success.700' }}>
+          {workReports.filter((r) => r.status === 'approved').length}
+        </Box>
       </Box>
-      <Box sx={{ p: 2, bgcolor: ct.secondary[100], borderRadius: 3 }}>
-        <Typography
-          variant='body2'
-          sx={{ color: 'text.secondary' }}
-        >
-          合格总数
-        </Typography>
-        <Typography
-          variant='h5'
-          sx={{ fontWeight: 700, color: 'secondary.700' }}
-        >
-          {stats.totalGood}
-        </Typography>
+      <Box sx={{ p: 2, bgcolor: 'error.lighter', borderRadius: 3 }}>
+        <Box sx={{ color: 'text.secondary', fontSize: 14, mb: 1 }}>已驳回</Box>
+        <Box sx={{ fontWeight: 700, fontSize: 24, color: 'error.dark' }}>
+          {workReports.filter((r) => r.status === 'rejected').length}
+        </Box>
       </Box>
     </Box>
   );
@@ -441,7 +413,7 @@ const WorkReportPage: React.FC = () => {
       autoTitle
       autoBreadcrumbs
       headerProps={{
-        pageIcon: <FileText style={{ width: 20, height: 20 }} />,
+        pageIcon: <ClipboardList style={{ width: 20, height: 20 }} />,
         pageGradient: `linear-gradient(135deg, ${ct.primary.main} 0%, ${ct.primary.dark} 100%)`,
       }}
     >
@@ -449,11 +421,11 @@ const WorkReportPage: React.FC = () => {
         title=''
         subtitle=''
         columns={columns}
-        data={reports}
+        data={workReports}
         loading={loading}
         filters={filters}
         searchable
-        searchPlaceholder='搜索报工单号或操作人员...'
+        searchPlaceholder='搜索报告编号或订单编号...'
         searchValue={searchTerm}
         onSearch={handleSearch}
         pagination={{
@@ -467,23 +439,24 @@ const WorkReportPage: React.FC = () => {
         onSelectionChange={(ids) => setSelectedIds(ids.map(String))}
         actions={[
           {
-            label: '新增报工',
-            icon: <Plus size={16} />,
+            label: '新增工作报告',
+            icon: <ClipboardList size={16} />,
             onClick: handleOpenCreate,
           },
         ]}
         rowActions={rowActions}
         headerContent={statsContent}
-        emptyMessage='暂无报工数据'
+        emptyMessage='暂无工作报告数据'
         getRowId={(row) => row.id}
       />
 
+      {/* 新增/编辑对话框 */}
       <Dialog
         open={showDialog}
         onClose={() => setShowDialog(false)}
         maxWidth='md'
       >
-        <DialogTitle>{selectedReport ? '编辑报工' : '新增报工'}</DialogTitle>
+        <DialogTitle>{selectedWorkReport ? '编辑工作报告' : '新增工作报告'}</DialogTitle>
         <DialogContent>
           <Box
             component='span'
@@ -494,7 +467,7 @@ const WorkReportPage: React.FC = () => {
               fontSize: 14,
             }}
           >
-            {selectedReport ? '修改报工信息' : '填写新报工信息'}
+            {selectedWorkReport ? '修改工作报告信息' : '填写新工作报告信息'}
           </Box>
           <form onSubmit={handleSubmit}>
             <Box
@@ -506,7 +479,7 @@ const WorkReportPage: React.FC = () => {
               }}
             >
               <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1 }}>
-                <InputLabel htmlFor='order_id'>生产订单ID *</InputLabel>
+                <InputLabel htmlFor='order_id'>订单ID *</InputLabel>
                 <TextField
                   id='order_id'
                   required
@@ -516,7 +489,7 @@ const WorkReportPage: React.FC = () => {
                 />
               </Box>
               <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1 }}>
-                <InputLabel htmlFor='worker_name'>操作人员 *</InputLabel>
+                <InputLabel htmlFor='worker_name'>操作员 *</InputLabel>
                 <TextField
                   id='worker_name'
                   required
@@ -526,18 +499,15 @@ const WorkReportPage: React.FC = () => {
                 />
               </Box>
               <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1 }}>
-                <InputLabel htmlFor='quantity_good'>合格数量 *</InputLabel>
+                <InputLabel htmlFor='quantity_good'>良品数量 *</InputLabel>
                 <TextField
                   id='quantity_good'
-                  type='number'
                   required
                   size='small'
+                  type='number'
                   value={formData.quantity_good}
                   onChange={(e) =>
-                    setFormData({
-                      ...formData,
-                      quantity_good: parseInt(e.target.value) || 0,
-                    })
+                    setFormData({ ...formData, quantity_good: parseFloat(e.target.value) })
                   }
                 />
               </Box>
@@ -545,51 +515,83 @@ const WorkReportPage: React.FC = () => {
                 <InputLabel htmlFor='quantity_bad'>不良数量</InputLabel>
                 <TextField
                   id='quantity_bad'
-                  type='number'
                   size='small'
-                  value={formData.quantity_bad || 0}
+                  type='number'
+                  value={formData.quantity_bad}
                   onChange={(e) =>
-                    setFormData({
-                      ...formData,
-                      quantity_bad: parseInt(e.target.value) || 0,
-                    })
+                    setFormData({ ...formData, quantity_bad: parseFloat(e.target.value) })
                   }
                 />
+              </Box>
+              <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1 }}>
+                <InputLabel htmlFor='process_id'>工序ID</InputLabel>
+                <TextField
+                  id='process_id'
+                  size='small'
+                  value={formData.process_id || ''}
+                  onChange={(e) => setFormData({ ...formData, process_id: e.target.value })}
+                />
+              </Box>
+              <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1 }}>
+                <InputLabel htmlFor='work_station_id'>工作站ID</InputLabel>
+                <TextField
+                  id='work_station_id'
+                  size='small'
+                  value={formData.work_station_id || ''}
+                  onChange={(e) => setFormData({ ...formData, work_station_id: e.target.value })}
+                />
+              </Box>
+              <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1 }}>
+                <InputLabel htmlFor='team_id'>班组ID</InputLabel>
+                <TextField
+                  id='team_id'
+                  size='small'
+                  value={formData.team_id || ''}
+                  onChange={(e) => setFormData({ ...formData, team_id: e.target.value })}
+                />
+              </Box>
+              <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1 }}>
+                <InputLabel htmlFor='report_type'>报告类型</InputLabel>
+                <FormControl
+                  fullWidth
+                  size='small'
+                >
+                  <Select
+                    id='report_type'
+                    value={formData.report_type || 'production'}
+                    onChange={(e) => setFormData({ ...formData, report_type: e.target.value })}
+                  >
+                    <MenuItem value='production'>生产报告</MenuItem>
+                    <MenuItem value='quality'>质量报告</MenuItem>
+                    <MenuItem value='maintenance'>维护报告</MenuItem>
+                  </Select>
+                </FormControl>
               </Box>
               <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1 }}>
                 <InputLabel htmlFor='start_time'>开始时间 *</InputLabel>
                 <TextField
                   id='start_time'
-                  type='datetime-local'
                   required
                   size='small'
+                  type='datetime-local'
                   value={formData.start_time}
-                  onChange={(e) =>
-                    setFormData({
-                      ...formData,
-                      start_time: e.target.value,
-                    })
-                  }
+                  onChange={(e) => setFormData({ ...formData, start_time: e.target.value })}
                 />
               </Box>
               <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1 }}>
                 <InputLabel htmlFor='end_time'>结束时间 *</InputLabel>
                 <TextField
                   id='end_time'
-                  type='datetime-local'
                   required
                   size='small'
+                  type='datetime-local'
                   value={formData.end_time}
-                  onChange={(e) =>
-                    setFormData({
-                      ...formData,
-                      end_time: e.target.value,
-                    })
-                  }
+                  onChange={(e) => setFormData({ ...formData, end_time: e.target.value })}
                 />
               </Box>
             </Box>
-            <DialogActions>
+
+            <DialogActions sx={{ mt: 2 }}>
               <Button
                 type='button'
                 variant='outlined'
@@ -600,6 +602,7 @@ const WorkReportPage: React.FC = () => {
               <Button
                 type='submit'
                 variant='contained'
+                startIcon={<Save size={16} />}
               >
                 保存
               </Button>
@@ -608,15 +611,16 @@ const WorkReportPage: React.FC = () => {
         </DialogContent>
       </Dialog>
 
+      {/* 详情对话框 */}
       <Dialog
         open={showDetailDialog}
         onClose={() => setShowDetailDialog(false)}
         maxWidth='md'
       >
-        <DialogTitle>报工详情</DialogTitle>
+        <DialogTitle>工作报告详情</DialogTitle>
         <DialogContent>
-          {selectedReport && (
-            <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
+          {selectedWorkReport && (
+            <Box sx={{ display: 'flex', flexDirection: 'column', gap: 3 }}>
               <Box
                 sx={{
                   display: 'grid',
@@ -625,86 +629,100 @@ const WorkReportPage: React.FC = () => {
                 }}
               >
                 <Box>
-                  <InputLabel sx={{ color: 'text.secondary', fontSize: 12 }}>报工单号</InputLabel>
-                  <Box
-                    component='span'
-                    sx={{ fontWeight: 500 }}
-                  >
-                    {selectedReport.report_no}
-                  </Box>
+                  <InputLabel sx={{ color: 'text.secondary', fontSize: 12 }}>报告编号</InputLabel>
+                  <Box sx={{ fontWeight: 500 }}>{selectedWorkReport.report_no}</Box>
                 </Box>
                 <Box>
-                  <InputLabel sx={{ color: 'text.secondary', fontSize: 12 }}>生产订单</InputLabel>
-                  <Box component='span'>{selectedReport.order_number || '-'}</Box>
+                  <InputLabel sx={{ color: 'text.secondary', fontSize: 12 }}>订单编号</InputLabel>
+                  <Box component='span'>{selectedWorkReport.order_number || '-'}</Box>
                 </Box>
                 <Box>
-                  <InputLabel sx={{ color: 'text.secondary', fontSize: 12 }}>工序</InputLabel>
-                  <Box component='span'>{selectedReport.process_name || '-'}</Box>
+                  <InputLabel sx={{ color: 'text.secondary', fontSize: 12 }}>工序名称</InputLabel>
+                  <Box component='span'>{selectedWorkReport.process_name || '-'}</Box>
                 </Box>
                 <Box>
                   <InputLabel sx={{ color: 'text.secondary', fontSize: 12 }}>工作站</InputLabel>
-                  <Box component='span'>{selectedReport.work_station_name || '-'}</Box>
+                  <Box component='span'>{selectedWorkReport.work_station_name || '-'}</Box>
                 </Box>
                 <Box>
                   <InputLabel sx={{ color: 'text.secondary', fontSize: 12 }}>班组</InputLabel>
-                  <Box component='span'>{selectedReport.team_name || '-'}</Box>
+                  <Box component='span'>{selectedWorkReport.team_name || '-'}</Box>
                 </Box>
                 <Box>
-                  <InputLabel sx={{ color: 'text.secondary', fontSize: 12 }}>操作人员</InputLabel>
-                  <Box component='span'>{selectedReport.worker_name}</Box>
-                </Box>
-                <Box>
-                  <InputLabel sx={{ color: 'text.secondary', fontSize: 12 }}>合格数量</InputLabel>
-                  <Box component='span'>{selectedReport.quantity_good}</Box>
-                </Box>
-                <Box>
-                  <InputLabel sx={{ color: 'text.secondary', fontSize: 12 }}>不良数量</InputLabel>
-                  <Box component='span'>{selectedReport.quantity_bad}</Box>
-                </Box>
-                <Box>
-                  <InputLabel sx={{ color: 'text.secondary', fontSize: 12 }}>总数量</InputLabel>
-                  <Box component='span'>{selectedReport.quantity_total}</Box>
+                  <InputLabel sx={{ color: 'text.secondary', fontSize: 12 }}>操作员</InputLabel>
+                  <Box component='span'>{selectedWorkReport.worker_name}</Box>
                 </Box>
                 <Box>
                   <InputLabel sx={{ color: 'text.secondary', fontSize: 12 }}>状态</InputLabel>
-                  <Box>{getStatusBadge(selectedReport.status)}</Box>
+                  <Box>{getStatusBadge(selectedWorkReport.status)}</Box>
+                </Box>
+                <Box>
+                  <InputLabel sx={{ color: 'text.secondary', fontSize: 12 }}>报告类型</InputLabel>
+                  <Box component='span'>
+                    {getReportTypeText(selectedWorkReport.report_type || 'production')}
+                  </Box>
+                </Box>
+                <Box>
+                  <InputLabel sx={{ color: 'text.secondary', fontSize: 12 }}>总数量</InputLabel>
+                  <Box component='span'>{selectedWorkReport.quantity_total}</Box>
+                </Box>
+                <Box>
+                  <InputLabel sx={{ color: 'text.secondary', fontSize: 12 }}>良品数量</InputLabel>
+                  <Box component='span'>{selectedWorkReport.quantity_good}</Box>
+                </Box>
+                <Box>
+                  <InputLabel sx={{ color: 'text.secondary', fontSize: 12 }}>不良数量</InputLabel>
+                  <Box component='span'>{selectedWorkReport.quantity_bad}</Box>
                 </Box>
                 <Box>
                   <InputLabel sx={{ color: 'text.secondary', fontSize: 12 }}>开始时间</InputLabel>
                   <Box component='span'>
-                    {selectedReport.start_time
-                      ? new Date(selectedReport.start_time).toLocaleString('zh-CN')
-                      : '-'}
+                    {new Date(selectedWorkReport.start_time).toLocaleString('zh-CN')}
                   </Box>
                 </Box>
                 <Box>
                   <InputLabel sx={{ color: 'text.secondary', fontSize: 12 }}>结束时间</InputLabel>
                   <Box component='span'>
-                    {selectedReport.end_time
-                      ? new Date(selectedReport.end_time).toLocaleString('zh-CN')
-                      : '-'}
+                    {new Date(selectedWorkReport.end_time).toLocaleString('zh-CN')}
                   </Box>
                 </Box>
-                <Box sx={{ gridColumn: '1 / -1' }}>
-                  <InputLabel sx={{ color: 'text.secondary', fontSize: 12 }}>备注</InputLabel>
-                  <Box component='span'>{selectedReport.remark || '-'}</Box>
+                <Box>
+                  <InputLabel sx={{ color: 'text.secondary', fontSize: 12 }}>
+                    实际时长(分钟)
+                  </InputLabel>
+                  <Box component='span'>{selectedWorkReport.actual_duration || '-'}</Box>
                 </Box>
+                <Box>
+                  <InputLabel sx={{ color: 'text.secondary', fontSize: 12 }}>
+                    标准时长(分钟)
+                  </InputLabel>
+                  <Box component='span'>{selectedWorkReport.standard_duration || '-'}</Box>
+                </Box>
+                {selectedWorkReport.remark && (
+                  <Box sx={{ gridColumn: '1 / -1' }}>
+                    <InputLabel sx={{ color: 'text.secondary', fontSize: 12 }}>备注</InputLabel>
+                    <Box component='span'>{selectedWorkReport.remark}</Box>
+                  </Box>
+                )}
                 <Box>
                   <InputLabel sx={{ color: 'text.secondary', fontSize: 12 }}>创建时间</InputLabel>
                   <Box component='span'>
-                    {new Date(selectedReport.created_at).toLocaleString('zh-CN')}
+                    {new Date(selectedWorkReport.created_at).toLocaleString('zh-CN')}
                   </Box>
                 </Box>
                 <Box>
                   <InputLabel sx={{ color: 'text.secondary', fontSize: 12 }}>更新时间</InputLabel>
                   <Box component='span'>
-                    {new Date(selectedReport.updated_at).toLocaleString('zh-CN')}
+                    {new Date(selectedWorkReport.updated_at).toLocaleString('zh-CN')}
                   </Box>
                 </Box>
               </Box>
             </Box>
           )}
         </DialogContent>
+        <DialogActions>
+          <Button onClick={() => setShowDetailDialog(false)}>关闭</Button>
+        </DialogActions>
       </Dialog>
     </PageContainer>
   );

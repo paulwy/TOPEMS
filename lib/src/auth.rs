@@ -498,8 +498,6 @@ pub fn get_permission_by_id(permission_id: &str) -> Option<Permission> {
 }
 
 fn is_public_path(path: &str) -> bool {
-    eprintln!("DEBUG is_public_path: path='{}'", path);
-    // 先精确匹配完整路径
     let public_paths = [
         "/",
         "/health",
@@ -510,11 +508,21 @@ fn is_public_path(path: &str) -> bool {
         "/api/core/iam/auth/reset-password",
         "/api/core/iam/auth/logout",
         "/api/integration/webhooks",
+        "/api/v1/core/iam/auth/login",
+        "/api/v1/core/iam/auth/refresh",
+        "/api/v1/core/iam/auth/register",
+        "/api/v1/core/iam/auth/forgot-password",
+        "/api/v1/core/iam/auth/reset-password",
+        "/api/v1/core/iam/auth/logout",
+        "/api/v1/integration/webhooks",
     ];
     if public_paths.contains(&path) {
         return true;
     }
-    path.starts_with("/api/core/iam/auth/") || path.starts_with("/api/integration/webhooks")
+    path.starts_with("/api/core/iam/auth/")
+        || path.starts_with("/api/integration/webhooks")
+        || path.starts_with("/api/v1/core/iam/auth/")
+        || path.starts_with("/api/v1/integration/webhooks")
 }
 
 fn is_websocket_path(path: &str) -> bool {
@@ -525,10 +533,10 @@ fn is_plugin_public_path(path: &str, method: &str) -> bool {
     if path.starts_with("/api/plugins/health") || path.starts_with("/api/plugins/info") {
         return true;
     }
-    if path.starts_with("/api/core/plugin/marketplace") {
+    if path.starts_with("/api/core/plugin/marketplace") || path.starts_with("/api/v1/core/plugin/marketplace") {
         return true;
     }
-    if path.starts_with("/api/core/plugins/") {
+    if path.starts_with("/api/core/plugins/") || path.starts_with("/api/v1/core/plugins/") {
         if path.ends_with("/install")
             || path.ends_with("/uninstall")
             || path.ends_with("/enable")
@@ -539,8 +547,14 @@ fn is_plugin_public_path(path: &str, method: &str) -> bool {
         if path == "/api/core/plugins" && method == "GET" {
             return true;
         }
+        if path == "/api/v1/core/plugins" && method == "GET" {
+            return true;
+        }
     }
     if path.starts_with("/api/core/plugin/dev/plugins/") && path.ends_with("/register") {
+        return true;
+    }
+    if path.starts_with("/api/v1/core/plugin/dev/plugins/") && path.ends_with("/register") {
         return true;
     }
     false
@@ -744,7 +758,12 @@ mod tests {
         assert!(is_public_path("/"));
         assert!(is_public_path("/health"));
         assert!(is_public_path("/api/core/iam/auth/login"));
+        assert!(is_public_path("/api/v1/core/iam/auth/login"));
+        assert!(is_public_path("/api/v1/core/iam/auth/refresh"));
+        assert!(is_public_path("/api/v1/core/iam/auth/register"));
+        assert!(is_public_path("/api/v1/core/iam/auth/logout"));
         assert!(!is_public_path("/api/core/iam/users"));
+        assert!(!is_public_path("/api/v1/core/iam/users"));
     }
 
     #[test]

@@ -6,15 +6,45 @@ use topems_mes::{modules, AppState};
 
 use std::env;
 use std::net::SocketAddr;
+use std::sync::Arc;
 
 use axum::{extract::State, routing::get, Json, Router};
 use axum_prometheus::PrometheusMetricLayer;
 
 use topems_shared::{
-    auth_middleware, create_cors_layer, get_api_info_handler, init_telemetry, rls_middleware,
-    simple_health_check, telemetry_middleware, ApiResponse, AuthState, ServiceHealth,
-    SimpleHealthConfig,
+    auth_middleware, create_cors_layer, get_api_info_handler, init_telemetry,
+    rate_limit_middleware, register_routes_with_legacy_alias, request_context_middleware,
+    rls_middleware, simple_health_check, telemetry_middleware, ApiResponse, AuthState,
+    RateLimitConfig, RateLimitMiddleware, ServiceHealth, SimpleHealthConfig,
 };
+
+use utoipa::OpenApi;
+
+#[derive(OpenApi)]
+#[openapi(
+    tags(
+        (name = "MES", description = "生产执行系统 API"),
+        (name = "Health", description = "健康检查接口"),
+        (name = "ProductionOrder", description = "生产订单管理接口"),
+        (name = "WorkOrder", description = "工单管理接口"),
+        (name = "QualityManagement", description = "质量管理接口"),
+        (name = "InventoryManagement", description = "库存管理接口"),
+        (name = "EquipmentManagement", description = "设备管理接口"),
+        (name = "APSScheduling", description = "高级排程接口"),
+        (name = "ProductionCost", description = "生产成本核算接口"),
+        (name = "EnergyManagement", description = "能耗管理接口"),
+        (name = "AnomalyDetection", description = "生产异常预警接口"),
+    ),
+    info(
+        title = "TOPEMS-MES API",
+        version = "1.0.0",
+        description = "TOPEMS 生产执行系统 API 文档\n\n## 功能模块\n\n- **生产订单**: 生产订单创建、排程、进度跟踪\n- **工单管理**: 工单下发、报工、完工\n- **质量管理**: 质检标准、检验记录、不合格品处理\n- **库存管理**: 车间库存、物料领用\n- **设备管理**: 设备台账、维护保养、状态监控\n- **高级排程**: APS 排程优化\n- **生产成本**: 工单成本核算\n- **能耗管理**: 能源消耗监控",
+    ),
+    servers(
+        (url = "http://localhost:8020", description = "本地开发环境"),
+    )
+)]
+struct ApiDoc;
 
 #[tokio::main]
 async fn main() -> anyhow::Result<()> {
@@ -83,6 +113,18 @@ async fn main() -> anyhow::Result<()> {
             axum::routing::get(modules::dashboard_ws::dashboard_websocket),
         );
 
+    let rate_limit_config = RateLimitConfig::new(200, 60)
+        .with_by_user_id(false)
+        .with_by_ip(true);
+    let rate_limiter = Arc::new(RateLimitMiddleware::new(rate_limit_config));
+    let rate_limit_layer = axum::middleware::from_fn({
+        let mw = rate_limiter.clone();
+        move |req, next| {
+            let mw = mw.clone();
+            async move { rate_limit_middleware(mw, req, next).await }
+        }
+    });
+
     let protected_routes = Router::new()
         .merge(modules::create_routes())
         .layer(axum::middleware::from_fn_with_state(
@@ -92,16 +134,30 @@ async fn main() -> anyhow::Result<()> {
         .layer(axum::middleware::from_fn_with_state(
             state.pool.clone(),
             rls_middleware,
-        ));
+        ))
+        .layer(rate_limit_layer);
 
-    let app = Router::new()
-        .merge(public_routes)
-        .nest("/api/mes", protected_routes)
-        .route("/api/health/detailed", get(detailed_health))
-        .layer(cors)
-        .layer(axum::middleware::from_fn(telemetry_middleware))
-        .layer(prometheus_layer)
-        .with_state(state);
+    let app = register_routes_with_legacy_alias(
+        Router::new().merge(public_routes),
+        "/api/mes",
+        &["/api/v1/mes"],
+        protected_routes,
+    )
+    .route("/api/health/detailed", get(detailed_health))
+    .route(
+        "/api-docs/openapi.json",
+        get(|| async {
+            serde_json::to_string_pretty(&ApiDoc::openapi()).unwrap_or_else(|e| {
+                tracing::error!("Failed to serialize OpenAPI spec: {}", e);
+                "{}".to_string()
+            })
+        }),
+    )
+    .layer(cors)
+    .layer(axum::middleware::from_fn(request_context_middleware))
+    .layer(axum::middleware::from_fn(telemetry_middleware))
+    .layer(prometheus_layer)
+    .with_state(state);
 
     let port = std::env::var("MES_PORT")
         .or_else(|_| std::env::var("SERVER_PORT"))

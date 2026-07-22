@@ -30,6 +30,10 @@ export const MES_PATHS = {
   materialIssue: '/mes/material-issue',
   materialReturn: '/mes/material-return',
   productionDashboard: '/mes/production-dashboard',
+  apsScheduling: '/mes/aps-scheduling',
+  productionCost: '/mes/production-cost',
+  energyManagement: '/mes/energy-management',
+  anomalyDetection: '/mes/anomaly-detection',
 } as const;
 
 // ---- 路由配置（供路由系统使用） ----
@@ -348,6 +352,62 @@ export const mesModuleConfig: RouteModuleConfig = {
       requiredPermissions: ['mes:read'],
       action: 'read',
     },
+    {
+      path: MES_PATHS.apsScheduling,
+      element: lazyWithRetry(
+        () => import('@/pages/mes/ApsSchedulingPage'),
+        'ApsSchedulingPage'
+      ),
+      module: 'mes',
+      code: 'mes-aps-scheduling',
+      title: 'APS 高级排程',
+      template: 'dashboard',
+      group: 'process',
+      requiredPermissions: ['mes:production_schedule:read', 'mes:read'],
+      action: 'read',
+    },
+    {
+      path: MES_PATHS.productionCost,
+      element: lazyWithRetry(
+        () => import('@/pages/mes/ProductionCostPage'),
+        'ProductionCostPage'
+      ),
+      module: 'mes',
+      code: 'mes-production-cost',
+      title: '生产成本核算',
+      template: 'dashboard',
+      group: 'analytics',
+      requiredPermissions: ['mes:read'],
+      action: 'read',
+    },
+    {
+      path: MES_PATHS.energyManagement,
+      element: lazyWithRetry(
+        () => import('@/pages/mes/EnergyManagementPage'),
+        'EnergyManagementPage'
+      ),
+      module: 'mes',
+      code: 'mes-energy-management',
+      title: '能耗管理',
+      template: 'dashboard',
+      group: 'analytics',
+      requiredPermissions: ['mes:read'],
+      action: 'read',
+    },
+    {
+      path: MES_PATHS.anomalyDetection,
+      element: lazyWithRetry(
+        () => import('@/pages/mes/AnomalyDetectionPage'),
+        'AnomalyDetectionPage'
+      ),
+      module: 'mes',
+      code: 'mes-anomaly-detection',
+      title: '异常预警',
+      template: 'dashboard',
+      group: 'analytics',
+      requiredPermissions: ['mes:read'],
+      action: 'read',
+    },
   ],
 };
 
@@ -556,6 +616,46 @@ export const mesNavConfig: ModuleNavConfig = {
       order: 5,
       group: 'analytics',
       description: '生产数据总览',
+    },
+    {
+      code: 'mes-aps-scheduling',
+      label: 'APS 高级排程',
+      icon: 'Brain',
+      path: MES_PATHS.apsScheduling,
+      permission: 'mes:production_schedule:read',
+      order: 5,
+      group: 'process',
+      description: '智能计划排程与优化分析',
+    },
+    {
+      code: 'mes-production-cost',
+      label: '生产成本核算',
+      icon: 'DollarSign',
+      path: MES_PATHS.productionCost,
+      permission: 'mes:read',
+      order: 6,
+      group: 'analytics',
+      description: '生产成本核算与趋势分析',
+    },
+    {
+      code: 'mes-energy-management',
+      label: '能耗管理',
+      icon: 'Zap',
+      path: MES_PATHS.energyManagement,
+      permission: 'mes:read',
+      order: 7,
+      group: 'analytics',
+      description: '能耗监控、报表与告警管理',
+    },
+    {
+      code: 'mes-anomaly-detection',
+      label: '异常预警',
+      icon: 'AlertTriangle',
+      path: MES_PATHS.anomalyDetection,
+      permission: 'mes:read',
+      order: 8,
+      group: 'analytics',
+      description: '设备/质量/生产异常实时检测与预警',
     },
   ],
 };

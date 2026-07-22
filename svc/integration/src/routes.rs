@@ -1,15 +1,39 @@
+use std::sync::Arc;
+
 use axum::middleware::{from_fn, from_fn_with_state};
 use axum::routing::{delete, get, post, put};
 use axum::Router;
 
 use topems_shared::{
-    auth_middleware, build_health_response, create_cors_layer, rls_middleware,
-    telemetry_middleware, ServiceHealth,
+    auth_middleware, build_health_response, create_cors_layer, rate_limit_middleware,
+    register_routes_with_legacy_alias, rls_middleware, telemetry_middleware, RateLimitConfig,
+    RateLimitMiddleware, ServiceHealth,
 };
+use utoipa::OpenApi;
 
 use crate::handlers::{conversion_rules, events, lims_qms, mes_erp, mes_qms, wms_scm};
 use crate::models::AppState;
 use crate::plugin;
+
+#[derive(OpenApi)]
+#[openapi(
+    tags(
+        (name = "Integration", description = "集成"),
+        (name = "Sync", description = "数据同步"),
+        (name = "Gateway", description = "API网关"),
+        (name = "MessageQueue", description = "消息队列"),
+        (name = "Health", description = "健康检查"),
+    ),
+    info(
+        title = "TOPEMS-integration API",
+        version = "1.0.0",
+        description = "TOPEMS 集成服务 - 数据同步、API 网关、消息队列",
+    ),
+    servers(
+        (url = "http://localhost:8050", description = "本地开发环境"),
+    )
+)]
+struct ApiDoc;
 
 pub fn create_routes(state: AppState) -> Router {
     let public_routes = Router::new()
@@ -18,6 +42,18 @@ pub fn create_routes(state: AppState) -> Router {
         .route("/api/plugins/info", get(plugin::get_plugin_info))
         .route("/api/plugins/health", get(plugin::plugin_health_check))
         .with_state(state.clone());
+
+    let rate_limit_config = RateLimitConfig::new(100, 60)
+        .with_by_user_id(false)
+        .with_by_ip(true);
+    let rate_limiter = Arc::new(RateLimitMiddleware::new(rate_limit_config));
+    let rate_limit_layer = from_fn({
+        let mw = rate_limiter.clone();
+        move |req, next| {
+            let mw = mw.clone();
+            async move { rate_limit_middleware(mw, req, next).await }
+        }
+    });
 
     let protected_routes = Router::new()
         .route("/stats", get(events::get_sync_stats))
@@ -100,15 +136,28 @@ pub fn create_routes(state: AppState) -> Router {
             auth_middleware,
         ))
         .layer(from_fn_with_state(state.pool.clone(), rls_middleware))
+        .layer(rate_limit_layer)
         .with_state(state);
 
     let cors = create_cors_layer();
 
-    let app = Router::new()
-        .merge(public_routes)
-        .nest("/api/integration", protected_routes)
-        .layer(from_fn(telemetry_middleware))
-        .layer(cors);
+    let app = register_routes_with_legacy_alias(
+        Router::new().merge(public_routes),
+        "/api/integration",
+        &["/api/v1/integration"],
+        protected_routes,
+    )
+    .route(
+        "/api-docs/openapi.json",
+        get(|| async {
+            serde_json::to_string_pretty(&ApiDoc::openapi()).unwrap_or_else(|e| {
+                tracing::error!("Failed to serialize OpenAPI spec: {}", e);
+                "{}".to_string()
+            })
+        }),
+    )
+    .layer(from_fn(telemetry_middleware))
+    .layer(cors);
 
     app
 }

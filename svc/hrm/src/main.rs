@@ -18,9 +18,10 @@ use modules::ApiState;
 use topems_shared::redis::{RedisCacheService, RedisPool as RedisPoolTrait};
 use topems_shared::{
     auth_middleware, check_http_health, config::enhanced::DatabaseConfig, config::CacheConfig,
-    create_api_info_router, create_cors_layer, init_telemetry, rls_middleware,
-    telemetry_middleware, ApiResponse, AuthState, CacheService, DependencyHealth,
-    FieldEncryptionService, HealthStatus, ServiceHealth, SystemMetrics,
+    create_api_info_router, create_cors_layer, init_telemetry, rate_limit_middleware,
+    register_routes_with_legacy_alias, rls_middleware, telemetry_middleware, ApiResponse,
+    AuthState, CacheService, DependencyHealth, FieldEncryptionService, HealthStatus,
+    RateLimitConfig, RateLimitMiddleware, ServiceHealth, SystemMetrics,
 };
 
 #[tokio::main]
@@ -140,6 +141,18 @@ async fn build_routes() -> Result<Router> {
         .route("/api-docs/openapi.json", get(serve_openapi_json))
         .with_state(api_state.clone());
 
+    let rate_limit_config = RateLimitConfig::new(200, 60)
+        .with_by_user_id(false)
+        .with_by_ip(true);
+    let rate_limiter = Arc::new(RateLimitMiddleware::new(rate_limit_config));
+    let rate_limit_layer = axum::middleware::from_fn({
+        let mw = rate_limiter.clone();
+        move |req, next| {
+            let mw = mw.clone();
+            async move { rate_limit_middleware(mw, req, next).await }
+        }
+    });
+
     let protected_routes = modules::create_routes()
         .layer(axum::middleware::from_fn_with_state(
             api_state.auth_state.clone(),
@@ -149,15 +162,19 @@ async fn build_routes() -> Result<Router> {
             api_state.db.clone(),
             rls_middleware,
         ))
+        .layer(rate_limit_layer)
         .with_state(api_state.clone());
 
-    let app = Router::new()
-        .merge(health_router)
-        .nest("/api/hrm", protected_routes)
-        .merge(create_api_info_router("topems-hrm"))
-        .layer(axum::middleware::from_fn(telemetry_middleware))
-        .layer(prometheus_layer)
-        .layer(create_cors_layer());
+    let app = register_routes_with_legacy_alias(
+        Router::new().merge(health_router),
+        "/api/hrm",
+        &["/api/v1/hrm", "/api/core/hrm/v1"],
+        protected_routes,
+    )
+    .merge(create_api_info_router("topems-hrm"))
+    .layer(axum::middleware::from_fn(telemetry_middleware))
+    .layer(prometheus_layer)
+    .layer(create_cors_layer());
 
     let core_url = env::var("CORE_URL").ok();
     tokio::spawn(async move {

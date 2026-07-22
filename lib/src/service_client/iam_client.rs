@@ -1,5 +1,6 @@
 use super::base_client::BaseServiceClient;
 use super::error::ServiceClientResult;
+use crate::response::ApiResponse;
 use serde::{Deserialize, Serialize};
 use uuid::Uuid;
 
@@ -41,6 +42,19 @@ impl IamServiceClient {
         Self::new(base_url)
     }
 
+    pub fn set_auth_token(&mut self, token: impl Into<String>) {
+        self.base_client.set_auth_token(token);
+    }
+
+    pub fn with_auth_token(mut self, token: impl Into<String>) -> Self {
+        self.base_client.set_auth_token(token);
+        self
+    }
+
+    pub fn add_header(&mut self, key: impl Into<String>, value: impl Into<String>) {
+        self.base_client.add_header(key, value);
+    }
+
     pub async fn get_health(&self) -> ServiceClientResult<bool> {
         match self.base_client.get_without_response("/health").await {
             Ok(_) => Ok(true),
@@ -66,5 +80,32 @@ impl IamServiceClient {
 
     pub async fn list_roles(&self) -> ServiceClientResult<Vec<Role>> {
         self.base_client.get("/api/core/iam/roles").await
+    }
+
+    pub async fn get_user_preferences(&self) -> ServiceClientResult<serde_json::Value> {
+        let resp: ApiResponse<serde_json::Value> = self
+            .base_client
+            .get("/api/core/iam/users/me/preferences")
+            .await?;
+        resp.data.ok_or_else(|| {
+            super::error::ServiceClientError::ConfigError(
+                "IAM preferences response missing data field".into(),
+            )
+        })
+    }
+
+    pub async fn update_user_preferences(
+        &self,
+        body: &serde_json::Value,
+    ) -> ServiceClientResult<serde_json::Value> {
+        let resp: ApiResponse<serde_json::Value> = self
+            .base_client
+            .put("/api/core/iam/users/me/preferences", body)
+            .await?;
+        resp.data.ok_or_else(|| {
+            super::error::ServiceClientError::ConfigError(
+                "IAM preferences update response missing data field".into(),
+            )
+        })
     }
 }

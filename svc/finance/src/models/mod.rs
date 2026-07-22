@@ -895,3 +895,302 @@ pub struct ApprovalConfigResponse {
     pub created_at: DateTime<Utc>,
     pub updated_at: DateTime<Utc>,
 }
+
+// ==================== Reconciliation Models ====================
+
+#[derive(Debug, Clone, PartialEq, Eq, sqlx::Type, Deserialize, Serialize)]
+#[sqlx(type_name = "reconciliation_type")]
+#[sqlx(rename_all = "snake_case")]
+#[serde(rename_all = "snake_case")]
+pub enum ReconciliationType {
+    Bank,
+    Receivable,
+    Payable,
+}
+
+impl fmt::Display for ReconciliationType {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        match self {
+            ReconciliationType::Bank => write!(f, "bank"),
+            ReconciliationType::Receivable => write!(f, "receivable"),
+            ReconciliationType::Payable => write!(f, "payable"),
+        }
+    }
+}
+
+impl fmt::Display for ReconciliationStatus {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        match self {
+            ReconciliationStatus::Pending => write!(f, "pending"),
+            ReconciliationStatus::Processing => write!(f, "processing"),
+            ReconciliationStatus::Completed => write!(f, "completed"),
+            ReconciliationStatus::Cancelled => write!(f, "cancelled"),
+        }
+    }
+}
+
+impl fmt::Display for MatchStatus {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        match self {
+            MatchStatus::Unmatched => write!(f, "unmatched"),
+            MatchStatus::Matched => write!(f, "matched"),
+            MatchStatus::Diff => write!(f, "diff"),
+            MatchStatus::Manual => write!(f, "manual"),
+        }
+    }
+}
+
+impl fmt::Display for ItemSource {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        match self {
+            ItemSource::Bank => write!(f, "bank"),
+            ItemSource::Erp => write!(f, "erp"),
+        }
+    }
+}
+
+#[derive(Debug, Clone, PartialEq, Eq, sqlx::Type, Deserialize, Serialize)]
+#[sqlx(type_name = "reconciliation_status")]
+#[sqlx(rename_all = "snake_case")]
+#[serde(rename_all = "snake_case")]
+pub enum ReconciliationStatus {
+    Pending,
+    Processing,
+    Completed,
+    Cancelled,
+}
+
+#[derive(Debug, Clone, PartialEq, Eq, sqlx::Type, Deserialize, Serialize)]
+#[sqlx(type_name = "match_status")]
+#[sqlx(rename_all = "snake_case")]
+#[serde(rename_all = "snake_case")]
+pub enum MatchStatus {
+    Unmatched,
+    Matched,
+    Diff,
+    Manual,
+}
+
+#[derive(Debug, Clone, PartialEq, Eq, sqlx::Type, Deserialize, Serialize)]
+#[sqlx(type_name = "diff_reason")]
+#[sqlx(rename_all = "snake_case")]
+#[serde(rename_all = "snake_case")]
+pub enum DiffReason {
+    TimeDiff,
+    AmountDiff,
+    Duplicate,
+    Missing,
+    Unknown,
+    Fee,
+    ExchangeRate,
+}
+
+#[derive(Debug, Clone, PartialEq, Eq, sqlx::Type, Deserialize, Serialize)]
+#[sqlx(type_name = "item_source")]
+#[sqlx(rename_all = "snake_case")]
+#[serde(rename_all = "snake_case")]
+pub enum ItemSource {
+    Bank,
+    Erp,
+}
+
+#[derive(Debug, Clone, FromRow, Serialize)]
+pub struct ReconciliationSession {
+    pub id: Uuid,
+    pub tenant_id: Uuid,
+    pub session_no: String,
+    pub reco_type: ReconciliationType,
+    pub period_start: chrono::NaiveDate,
+    pub period_end: chrono::NaiveDate,
+    pub bank_account_id: Option<Uuid>,
+    pub entity_id: Option<Uuid>,
+    pub status: ReconciliationStatus,
+    pub total_items: i32,
+    pub matched_items: i32,
+    pub unmatched_items: i32,
+    pub diff_items: i32,
+    pub created_by: String,
+    pub created_at: DateTime<Utc>,
+    pub updated_at: DateTime<Utc>,
+    pub completed_at: Option<DateTime<Utc>>,
+}
+
+#[derive(Debug, Clone, FromRow, Serialize)]
+pub struct ReconciliationItem {
+    pub id: Uuid,
+    pub session_id: Uuid,
+    pub tenant_id: Uuid,
+    pub source_type: ItemSource,
+    pub transaction_date: chrono::NaiveDate,
+    pub amount: Decimal,
+    pub direction: String,
+    pub counterparty_name: Option<String>,
+    pub counterparty_account: Option<String>,
+    pub reference_no: Option<String>,
+    pub description: Option<String>,
+    pub match_status: MatchStatus,
+    pub matched_item_id: Option<Uuid>,
+    pub diff_reason: Option<DiffReason>,
+    pub diff_amount: Option<Decimal>,
+    pub notes: Option<String>,
+    pub created_at: DateTime<Utc>,
+    pub updated_at: DateTime<Utc>,
+}
+
+#[derive(Debug, Clone, Deserialize)]
+pub struct CreateReconciliationSessionRequest {
+    pub reco_type: ReconciliationType,
+    pub period_start: String,
+    pub period_end: String,
+    pub bank_account_id: Option<Uuid>,
+    pub entity_id: Option<Uuid>,
+}
+
+#[derive(Debug, Clone, Deserialize)]
+pub struct ImportReconciliationItemsRequest {
+    pub session_id: Uuid,
+    pub source_type: ItemSource,
+    pub items: Vec<ReconciliationItemImport>,
+}
+
+#[derive(Debug, Clone, Deserialize)]
+pub struct ReconciliationItemImport {
+    pub transaction_date: String,
+    pub amount: Decimal,
+    pub direction: String,
+    pub counterparty_name: Option<String>,
+    pub counterparty_account: Option<String>,
+    pub reference_no: Option<String>,
+    pub description: Option<String>,
+}
+
+#[derive(Debug, Clone, Deserialize)]
+pub struct AutoMatchRequest {
+    pub session_id: Uuid,
+}
+
+#[derive(Debug, Clone, Deserialize)]
+pub struct UpdateDiffRequest {
+    pub item_id: Uuid,
+    pub diff_reason: DiffReason,
+    pub notes: Option<String>,
+}
+
+#[derive(Debug, Clone, Serialize)]
+pub struct ReconciliationSummary {
+    pub session_id: Uuid,
+    pub total_items: i32,
+    pub matched_items: i32,
+    pub unmatched_items: i32,
+    pub diff_items: i32,
+    pub match_rate: f64,
+}
+
+#[derive(Debug, Clone, Serialize)]
+pub struct MatchResult {
+    pub matched_pairs: Vec<MatchedPair>,
+    pub unmatched_bank: Vec<ReconciliationItem>,
+    pub unmatched_erp: Vec<ReconciliationItem>,
+}
+
+#[derive(Debug, Clone, Serialize)]
+pub struct MatchedPair {
+    pub bank_item_id: Uuid,
+    pub erp_item_id: Uuid,
+    pub amount: Decimal,
+    pub match_type: String,
+}
+
+#[derive(Debug, Clone, Deserialize)]
+pub struct ReconciliationSessionListQuery {
+    pub reco_type: Option<ReconciliationType>,
+    pub status: Option<ReconciliationStatus>,
+    pub page: Option<i64>,
+    pub page_size: Option<i64>,
+}
+
+#[derive(Debug, Clone, Serialize)]
+pub struct ReconciliationSessionListResponse {
+    pub items: Vec<ReconciliationSession>,
+    pub total: i64,
+    pub page: i64,
+    pub page_size: i64,
+}
+
+#[derive(Debug, Clone, Serialize)]
+pub struct ReconciliationReport {
+    pub session_id: Uuid,
+    pub session_no: String,
+    pub reco_type: ReconciliationType,
+    pub period_start: chrono::NaiveDate,
+    pub period_end: chrono::NaiveDate,
+    pub total_items: i32,
+    pub matched_items: i32,
+    pub unmatched_items: i32,
+    pub diff_items: i32,
+    pub match_rate: f64,
+    pub total_matched_amount: Decimal,
+    pub total_unmatched_amount: Decimal,
+    pub total_diff_amount: Decimal,
+    pub bank_balance: Decimal,
+    pub erp_balance: Decimal,
+    pub unreconciled_difference: Decimal,
+}
+
+#[derive(Debug, Clone, Serialize)]
+pub struct AgingBucket {
+    pub bucket: String,
+    pub range_days: String,
+    pub amount: Decimal,
+    pub count: i64,
+}
+
+#[derive(Debug, Clone, Serialize)]
+pub struct AgingReport {
+    pub as_of_date: chrono::NaiveDate,
+    pub direction: String,
+    pub total_amount: Decimal,
+    pub total_count: i64,
+    pub buckets: Vec<AgingBucket>,
+}
+
+#[derive(Debug, Clone, Deserialize)]
+pub struct BatchDiffRequest {
+    pub items: Vec<BatchDiffItem>,
+}
+
+#[derive(Debug, Clone, Deserialize)]
+pub struct BatchDiffItem {
+    pub item_id: Uuid,
+    pub diff_reason: DiffReason,
+    pub notes: Option<String>,
+}
+
+#[derive(Debug, Clone, Serialize)]
+pub struct BatchDiffResponse {
+    pub success_count: i32,
+    pub failed_count: i32,
+    pub failed_ids: Vec<Uuid>,
+}
+
+#[derive(Debug, Clone, Serialize)]
+pub struct DiffStatistics {
+    pub session_id: Uuid,
+    pub total_diff_items: i32,
+    pub by_reason: Vec<DiffReasonCount>,
+    pub by_status: Vec<DiffStatusCount>,
+    pub total_diff_amount: Decimal,
+}
+
+#[derive(Debug, Clone, Serialize)]
+pub struct DiffReasonCount {
+    pub reason: String,
+    pub count: i32,
+    pub amount: Decimal,
+}
+
+#[derive(Debug, Clone, Serialize)]
+pub struct DiffStatusCount {
+    pub status: String,
+    pub count: i32,
+}

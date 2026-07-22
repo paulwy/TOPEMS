@@ -1,3 +1,11 @@
+/**
+ * Report API - BI 服务的报表子模块
+ *
+ * NOTE: Report 是 BI (Business Intelligence) 服务的子模块，所有 API 实际调用 BI 服务。
+ * 此文件保持向后兼容，新代码请直接使用 `biApi`。
+ *
+ * Service path: /api/bi/ (via apiClient.bi)
+ */
 import apiClient from '../client';
 import type { ApiResponse } from '../client';
 
@@ -267,151 +275,151 @@ export interface UpdateSubscriptionRequest {
 
 export const reportApi = {
   listReports: async (): Promise<ApiResponse<ReportData[]>> => {
-    return apiClient.report.get<ReportData[]>('/reports');
+    return apiClient.bi.get<ReportData[]>('/reports');
   },
 
   getReport: async (id: string): Promise<ApiResponse<ReportData>> => {
-    return apiClient.report.get<ReportData>(`/report/reports/${id}`);
+    return apiClient.bi.get<ReportData>(`/reports/${id}`);
   },
 
   createReport: async (data: CreateReportRequest): Promise<ApiResponse<ReportData>> => {
-    return apiClient.report.post<ReportData>('/reports', data);
+    return apiClient.bi.post<ReportData>('/reports', data);
   },
 
   createReportFromTemplate: async (
     data: CreateReportFromTemplateRequest
   ): Promise<ApiResponse<ReportData>> => {
-    return apiClient.report.post<ReportData>('/report/reports/from-template', data);
+    return apiClient.bi.post<ReportData>('/reports/from-template', data);
   },
 
   updateReport: async (
     id: string,
     data: Partial<ReportConfig>
   ): Promise<ApiResponse<ReportData>> => {
-    return apiClient.report.put<ReportData>(`/report/reports/${id}`, data);
+    return apiClient.bi.put<ReportData>(`/reports/${id}`, data);
   },
 
   deleteReport: async (id: string): Promise<ApiResponse<boolean>> => {
-    return apiClient.report.delete<boolean>(`/report/reports/${id}`);
+    return apiClient.bi.delete<boolean>(`/reports/${id}`);
   },
 
   exportReport: async (
     id: string,
     data: ExportReportRequest
   ): Promise<ApiResponse<ExportResult>> => {
-    return apiClient.report.post<ExportResult>(`/report/reports/${id}/export`, data);
+    return apiClient.bi.post<ExportResult>(`/reports/${id}/export`, data);
   },
 
   runReport: async (id: string): Promise<ApiResponse<ReportData>> => {
-    return apiClient.report.post<ReportData>(`/report/reports/${id}/run`);
+    return apiClient.bi.post<ReportData>(`/reports/${id}/run`);
   },
 
   listTemplates: async (): Promise<ApiResponse<ReportTemplate[]>> => {
-    return apiClient.report.get<ReportTemplate[]>('/templates');
+    return apiClient.bi.get<ReportTemplate[]>('/templates');
   },
 
   getTemplate: async (id: string): Promise<ApiResponse<ReportTemplate>> => {
-    return apiClient.report.get<ReportTemplate>(`/report/templates/${id}`);
+    return apiClient.bi.get<ReportTemplate>(`/templates/${id}`);
   },
 
   createTemplate: async (
     data: Omit<ReportTemplate, 'id' | 'created_at' | 'updated_at'>
   ): Promise<ApiResponse<ReportTemplate>> => {
-    return apiClient.report.post<ReportTemplate>('/templates', data);
+    return apiClient.bi.post<ReportTemplate>('/templates', data);
   },
 
   updateTemplate: async (
     id: string,
     data: Partial<ReportTemplate>
   ): Promise<ApiResponse<ReportTemplate>> => {
-    return apiClient.report.put<ReportTemplate>(`/report/templates/${id}`, data);
+    return apiClient.bi.put<ReportTemplate>(`/templates/${id}`, data);
   },
 
   deleteTemplate: async (id: string): Promise<ApiResponse<boolean>> => {
-    return apiClient.report.delete<boolean>(`/report/templates/${id}`);
+    return apiClient.bi.delete<boolean>(`/templates/${id}`);
   },
 
   listReportTypes: async (): Promise<ApiResponse<ReportTypeInfo[]>> => {
-    return apiClient.report.get<ReportTypeInfo[]>('/report-types');
+    return apiClient.bi.get<ReportTypeInfo[]>('/report-types');
   },
 
   listSchedules: async (): Promise<ApiResponse<ReportSchedule[]>> => {
-    return apiClient.report.get<ReportSchedule[]>('/schedules');
+    return apiClient.bi.get<ReportSchedule[]>('/schedules');
   },
 
   getSchedule: async (id: string): Promise<ApiResponse<ReportSchedule>> => {
-    return apiClient.report.get<ReportSchedule>(`/report/schedules/${id}`);
+    return apiClient.bi.get<ReportSchedule>(`/schedules/${id}`);
   },
 
   createSchedule: async (data: CreateScheduleRequest): Promise<ApiResponse<ReportSchedule>> => {
-    return apiClient.report.post<ReportSchedule>('/schedules', data);
+    return apiClient.bi.post<ReportSchedule>('/schedules', data);
   },
 
   updateSchedule: async (
     id: string,
     data: UpdateScheduleRequest
   ): Promise<ApiResponse<ReportSchedule>> => {
-    return apiClient.report.put<ReportSchedule>(`/report/schedules/${id}`, data);
+    return apiClient.bi.put<ReportSchedule>(`/schedules/${id}`, data);
   },
 
   deleteSchedule: async (id: string): Promise<ApiResponse<boolean>> => {
-    return apiClient.report.delete<boolean>(`/report/schedules/${id}`);
+    return apiClient.bi.delete<boolean>(`/schedules/${id}`);
   },
 
   executeSchedule: async (id: string): Promise<ApiResponse<boolean>> => {
-    return apiClient.report.post<boolean>(`/report/schedules/${id}/execute`);
+    return apiClient.bi.post<boolean>(`/schedules/${id}/execute`);
   },
 
   getExecutionHistory: async (id: string): Promise<ApiResponse<ScheduleExecutionRecord[]>> => {
-    return apiClient.report.get<ScheduleExecutionRecord[]>(`/report/schedules/${id}/history`);
+    return apiClient.bi.get<ScheduleExecutionRecord[]>(`/schedules/${id}/history`);
   },
 
   listSubscriptions: async (): Promise<ApiResponse<ReportSubscription[]>> => {
-    return apiClient.report.get<ReportSubscription[]>('/subscriptions');
+    return apiClient.bi.get<ReportSubscription[]>('/subscriptions');
   },
 
   getSubscription: async (id: string): Promise<ApiResponse<ReportSubscription>> => {
-    return apiClient.report.get<ReportSubscription>(`/report/subscriptions/${id}`);
+    return apiClient.bi.get<ReportSubscription>(`/subscriptions/${id}`);
   },
 
   createSubscription: async (
     data: CreateSubscriptionRequest
   ): Promise<ApiResponse<ReportSubscription>> => {
-    return apiClient.report.post<ReportSubscription>('/subscriptions', data);
+    return apiClient.bi.post<ReportSubscription>('/subscriptions', data);
   },
 
   updateSubscription: async (
     id: string,
     data: UpdateSubscriptionRequest
   ): Promise<ApiResponse<ReportSubscription>> => {
-    return apiClient.report.put<ReportSubscription>(`/report/subscriptions/${id}`, data);
+    return apiClient.bi.put<ReportSubscription>(`/subscriptions/${id}`, data);
   },
 
   deleteSubscription: async (id: string): Promise<ApiResponse<boolean>> => {
-    return apiClient.report.delete<boolean>(`/report/subscriptions/${id}`);
+    return apiClient.bi.delete<boolean>(`/subscriptions/${id}`);
   },
 
   toggleSubscription: async (id: string): Promise<ApiResponse<ReportSubscription>> => {
-    return apiClient.report.post<ReportSubscription>(`/report/subscriptions/${id}/toggle`);
+    return apiClient.bi.post<ReportSubscription>(`/subscriptions/${id}/toggle`);
   },
 
   getUserSubscriptions: async (user_id: string): Promise<ApiResponse<ReportSubscription[]>> => {
-    return apiClient.report.get<ReportSubscription[]>(`/report/subscriptions/user/${user_id}`);
+    return apiClient.bi.get<ReportSubscription[]>(`/subscriptions/user/${user_id}`);
   },
 
   health: async (): Promise<ApiResponse<string>> => {
-    return apiClient.report.get<string>('/health');
+    return apiClient.bi.get<string>('/health');
   },
 
   getReportsCenterStats: async (): Promise<ApiResponse<ReportsCenterStats>> => {
-    return apiClient.report.get<ReportsCenterStats>('/reports-center/stats');
+    return apiClient.bi.get<ReportsCenterStats>('/reports-center/stats');
   },
 
   exportStatsReport: async (
     reportType: 'users' | 'permissions' | 'activities',
     format: ExportFormat
   ): Promise<ApiResponse<ExportResult>> => {
-    return apiClient.report.post<ExportResult>(`/reports-center/export/${reportType}`, {
+    return apiClient.bi.post<ExportResult>(`/reports-center/export/${reportType}`, {
       format,
     });
   },

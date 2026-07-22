@@ -24,8 +24,10 @@ import { codeApi } from './code';
 import { qaApi } from './qa';
 import { vectorApi } from './vector';
 import { recommendationApi } from './recommendation';
+import { assistantApi } from './assistant';
 
 export * from './types';
+export * from './assistant';
 
 export const aiApi = {
   ...documentApi,
@@ -35,6 +37,7 @@ export const aiApi = {
   ...qaApi,
   ...vectorApi,
   ...recommendationApi,
+  ...assistantApi,
 
   health: async (): Promise<ApiResponse<string>> => {
     return apiClient.ai.get<string>('/health');

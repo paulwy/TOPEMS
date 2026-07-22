@@ -34,7 +34,7 @@ describe('searchApi', () => {
       expect(result.data).toHaveLength(1);
       expect(result.data[0].title).toBe('API Result');
       expect(apiClient.core.get).toHaveBeenCalledWith(
-        '/api/core/search/global',
+        '/search/v1',
         expect.objectContaining({
           params: { query: 'test', limit: 20 },
         })
@@ -47,7 +47,7 @@ describe('searchApi', () => {
       await searchApi.globalSearch('test', 10, abortController.signal);
 
       expect(apiClient.core.get).toHaveBeenCalledWith(
-        '/api/core/search/global',
+        '/search/v1',
         expect.objectContaining({
           signal: abortController.signal,
         })
@@ -58,7 +58,7 @@ describe('searchApi', () => {
       await searchApi.globalSearch('test');
 
       expect(apiClient.core.get).toHaveBeenCalledWith(
-        '/api/core/search/global',
+        '/search/v1',
         expect.objectContaining({
           params: { query: 'test', limit: 20 },
         })

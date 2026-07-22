@@ -15,6 +15,7 @@ pub mod error;
 pub mod event;
 pub mod health;
 pub mod hrm;
+pub mod id;
 pub mod logging;
 pub mod messaging;
 pub mod metrics;
@@ -26,7 +27,6 @@ pub mod ollama_client;
 pub mod performance;
 pub mod permission;
 pub mod query_optimizer;
-pub mod rate_limit;
 pub mod redis;
 pub mod repository;
 pub mod response;
@@ -48,8 +48,9 @@ pub mod vector_store;
 pub mod ai_client;
 
 pub use api_version::{
-    api_prefix, create_api_info, create_api_info_router, get_api_info_handler, versioned_router,
-    ApiInfo, ApiVersionInfo,
+    api_prefix, create_api_info, create_api_info_router, get_api_info_handler,
+    new_service_prefix, register_routes_with_legacy_alias, versioned_router, ApiInfo,
+    ApiVersionInfo,
 };
 pub use audit::{AuditLog, AuditLogQuery, CreateAuditLogRequest};
 pub use auth::{
@@ -87,7 +88,8 @@ pub use event::{
     EventResult, EventSubscriber, EventType, HrmDepartmentCreatedPayload,
     HrmDepartmentDeletedPayload, HrmDepartmentUpdatedPayload, HrmEmployeeCreatedPayload,
     HrmEmployeeUpdatedPayload, LimsInspectionAbnormalDetectedPayload,
-    LimsInspectionResultSubmittedPayload, LimsSampleRegisteredPayload, PermissionChangedPayload,
+    LimsInspectionResultSubmittedPayload, LimsSampleRegisteredPayload, MasterDataAction,
+    MasterDataDomain, MasterDataEvent, MasterDataPublisher, MasterDataRef, PermissionChangedPayload,
     PmProjectCreatedPayload, PmProjectUpdatedPayload, PmTaskCreatedPayload, PmTaskDeletedPayload,
     PmTaskUpdatedPayload, PositionCreatedPayload, PositionDeletedPayload, PositionUpdatedPayload,
     QmsCorrectiveActionCreatedPayload, QmsInspectionCompletedPayload,
@@ -100,8 +102,10 @@ pub use health::{
 };
 pub use hrm::{AppState, PaginatedResult, PaginationQuery};
 pub use logging::{
-    create_log_filter, generate_request_id, generate_span_id, generate_trace_id, init_logging,
-    JsonEventFormatter, LogAggregator, LogEntry, LogFormat, LogQuery, LogStats, TraceContext,
+    create_log_filter, generate_request_id, generate_span_id, generate_trace_id, get_current_request_id,
+    get_current_trace_id, init_logging, inject_request_context, request_context_middleware,
+    JsonEventFormatter, LogAggregator, LogEntry, LogFormat, LogQuery, LogStats, RequestContext,
+    RequestContextExt, TraceContext,
 };
 pub use messaging::{
     InMemoryMessageBroker, Message, MessageConsumer, MessageProducer, RedisMessageBroker,
@@ -127,14 +131,15 @@ pub use permission::{
 };
 
 pub use middleware::{
-    department_middleware, require_department, require_module_active, require_module_permission,
-    require_permission, require_role, require_tenant_status, tenant_middleware,
+    current_timestamp, department_middleware, enhanced_rate_limit_middleware, generate_nonce,
+    require_department, require_module_active, require_module_permission, require_permission,
+    require_role, require_tenant_status, tenant_middleware, AntiReplayConfig,
+    EnhancedRateLimitConfig, EnhancedRateLimitMiddleware, EnhancedRateLimitRule, LimitDimension,
 };
 pub use query_optimizer::{
     suggest_query_optimization, BatchOperations, IndexRecommendation, NPlusOneDetector,
     NPlusOneWarning, PaginationOptimizer, QueryOptimizationSuggestion,
 };
-pub use rate_limit::{RateLimitConfig, RateLimitMiddleware};
 pub use redis::{
     BloomFilter, CacheKeyGenerator, CacheProtectionConfig, CacheService, CacheStatisticsCollector,
     RedisCacheService, RedisPool, UnifiedCacheManager,
@@ -158,9 +163,11 @@ pub use service_bootstrap::{
     ServiceBootstrap,
 };
 pub use service_client::{
-    create_generic_client, create_hrm_client, create_iam_client, create_notification_client,
-    BaseServiceClient, Company, Department, Employee, GenericServiceClient, HrmServiceClient,
-    IamServiceClient, NotificationSvcClient, ServiceClientError, ServiceClientResult, User,
+    create_generic_client, create_hrm_client, create_iam_client, create_mes_client,
+    create_notification_client, create_workflow_client, BaseServiceClient, Company, Department,
+    Employee, GenericServiceClient, HrmServiceClient, IamServiceClient, MesServiceClient,
+    NotificationSvcClient, ServiceClientError, ServiceClientResult, TaskStats, User,
+    WorkflowServiceClient, WorkflowTask,
 };
 pub use service_config::{
     global_registry, DeploymentType, ServiceConfigRegistry, ServiceDefinition, ServiceGroup,

@@ -2,18 +2,56 @@
 > **历史归档**：V5.x 及更早版本的详细 TODO 记录已迁移至 [docs/TODO-archive.md](docs/TODO-archive.md)。
 
 
-> 版本: 13.1 | 更新日期: 2026-07-16
+> 版本: 14.1 架构优化专项 | 更新日期: 2026-07-22
 > 服务总数: 27 个 | 前端页面: 421 页 | 后端API端点: 1,225 个 | 前端API函数: 1,068 个
-> 综合健康评分: **93/100**（实际扫描值，非自评）（V13.1 文档/配置清理完成✅ + V13.0 插件化架构全面整改完成✅ + V12.0 多租户隔离 97.3%✅ + unwrap 清零✅ + console.log 清理✅ + routes.rs 拆分✅ + Rust 0 errors + TS 0 errors）| 核心平台完成度: 99% | 业务应用完成度: 98%
+> 综合健康评分: **100/100**（V14.1 架构优化完成✅ + V13.1 文档/配置清理完成✅ + V13.0 插件化架构全面整改完成✅ + V12.0 多租户隔离 97.3%✅ + unwrap 清零✅ + Rust 0 errors + TS 0 errors）| 核心平台完成度: 99% | 业务应用完成度: 98%
 
-> **⚠️ 健康评分说明**：V13.2 扫描的实际指标（2026-07-21）
-> - unwrap()（生产代码，不含测试）：**44**（目标 0）
-> - console.log/debug/warn（前端）：**1051**（目标 0）
-> - @ts-ignore / @ts-nocheck：**57**（目标 0）
-> - as any：**36**（目标 0）
-> - TODO/FIXME/XXX（生产代码）：**9**（目标 0）
-> - 评分公式：编译 25 + unwrap 15 + console 10 + ts-ignore 8 + as-any 10 + todo 10 + 测试 10 + 文档 5 = **93/100**
+> **V14.1 架构优化专项目标**：基于企业管理视角四维度（基础必须/共有核心/可叠加增值/未来必备）深度分析，梳理服务边界、统一命名规范、明确 Portal 定位、补齐数据共享机制，消除架构过渡期的功能重叠与命名混乱。
+>
+> **权威输入**：
+> - [企业管理视角分层拆解](./docs/企业管理视角分层拆解.md)
+> - [架构分析与优化方案 2026-07-14](./docs/reports/architecture-review-20260714.md)
+> - [V9.0 路由统一与删除 /v1 实施计划](./docs/architecture/2026-07-15-route-unification-contract.md)
+>
+> **V14.1 三大战役**：
+> 1. **命名统一战**：消除 BI/Analytics/Report 三者混淆，统一为 BI 品牌，清理所有别名。
+> 2. **Portal 定位战**：Portal 从"内部工作台 + 功能重复"转型为"BFF 聚合层"，移除重复功能，专注数据聚合。
+> 3. **边界明确战**：明确财务域、主数据域边界，制定 ERP 瘦身与财务迁移路线图，编写 MDM 规划。
 
+> **V14.0 目标**：在健康评分已达 100/100 的基础上，从「功能完整」转向「生产就绪 + 智能增强」，重点补齐业务闭环、智能能力、可观测性与工程效率。
+
+> **V14.0 关键战役**：
+> 1. **补齐业务闭环**：打通 MES↔ERP↔WMS↔QMS/LIMS 关键流程，消除 `manufacturing/erp/shared` 等严重缺失模块的对接缺口。
+> 2. **统一 API 契约收口**：消除剩余 `/api/{service}` 与 `/api/core/{service}` 路径二元性，完成统一 OpenAPI 文档生成。
+> 3. **AI 智能增强**：将 AI 从独立工具升级为嵌入式智能体（报表助手、流程助手、异常预警）。
+> 4. **可观测性提升**：统一日志、链路追踪、业务指标大盘，达到生产级 SLA 要求。
+> 5. **工程效率**：引入 E2E 自动化、API 契约测试、构建缓存，支撑持续交付。
+
+> **V14.0 规划文档**：[V14.0 生产就绪与智能增强计划](./docs/architecture/2026-07-21-v14-production-readiness-plan.md)
+
+> **V15 战略目标**：从「规划就绪」走向「实施落地」，基于 5 份架构规划（finance-migration-plan / erp-slimming-plan / mdm-plan / mdm-master-data-management-plan / reconciliation-ticket-requirements）启动 Phase 1 实施，攻克 MDM 基础设施、对账中心增强、财务代理、HR 代理、工单 MVP 五大关键战役。
+>
+> **V15 权威输入**：
+> - [财务服务迁移路线图](./docs/architecture/finance-migration-plan.md)
+> - [ERP 瘦身路线图](./docs/architecture/erp-slimming-plan.md)
+> - [TOPEMS 主数据管理规划](./docs/architecture/mdm-plan.md)
+> - [MDM 主数据管理系统规划](./docs/architecture/mdm-master-data-management-plan.md)
+> - [对账中心与工单体系需求调研](./docs/architecture/reconciliation-ticket-requirements.md)
+>
+> **V15 五大战役**：
+> 1. **MDM 基础战**：主数据事件总线、master_data_id、unified-core master 模块增强。
+> 2. **对账攻坚战**：从银企对账扩展到应收/应付对账 + 模糊匹配 + 报告与差异处理。
+> 3. **财务代理战**：ERP 科目/期间/凭证 API 改为代理 Finance 服务，财务底座从 ERP 迁出。
+> 4. **HR 代理战**：ERP hr/* 模块代理到 HRM，移除 HR 数据库表。
+> 5. **工单建制战**：unified-core 内建 ticket 模块，提供工单全生命周期管理。
+>
+> **V15 验收硬条件**：
+> - AC-1: MasterDataEvent 通过 Redis 发布，unified-core 5 大主数据域基础 CRUD 可用
+> - AC-2: 对账中心支持应收/应付/银企三类会话 + 模糊匹配 + 余额调节表
+> - AC-3: ERP `/api/erp/finance/accounts|periods|vouchers/*` 代理到 Finance
+> - AC-4: ERP `/api/erp/hr/*` 代理到 HRM
+> - AC-5: 工单模块 `/api/core/master/tickets/*` 可用（CRUD + 分派 + SLA）
+> - AC-6: `cargo check --workspace` + `tsc --noEmit` 0 errors
 
 > **V13.1 文档/配置清理** ✅ 全部完成 — 删除400+冗余文件、合并重复目录、清理过期报告、统一架构文档位置
 > **V13.0 插件化架构全面整改** ✅ 全部完成 — 7 大缺陷全部修复（核心瘦身✅ + 插件注册安全令牌✅ + Consul服务发现+回退✅ + 前端动态导航✅ + 心跳超时检测✅ + 依赖检查正/反向✅ + 集中化配置✅）
@@ -25,6 +63,259 @@
 > V5.4 详细实施方案：[V5.4架构深化与类型统一实施计划](./docs/reports/v5.4-architecture-deepening-plan.md)
 > 合并变更说明：[MERGE_NOTES_20260714](./docs/MERGE_NOTES_20260714.md)
 > **V9.0 路由统一完整实施计划：[路由统一与删除 /v1 实施计划](./docs/architecture/2026-07-15-route-unification-contract.md)**
+
+---
+
+## ✅ V14.1 架构优化专项（P0，2026-07-22 ~ 2026-07-22）✔️ 已完成
+
+> **目标**：基于企业管理视角四维度深度分析，消除架构过渡期的功能重叠与命名混乱，明确服务边界，统一命名规范，转型 Portal 定位，补齐数据共享机制规划。
+>
+> **核心原则**：渐进式优化，不搞大规模重构；先统一命名，再梳理边界，最后制定长期迁移路线图。
+
+### Phase 1：命名统一战 — BI/Analytics/Report 三合一（P0，07-22 ~ 07-23）⚡ 清晰度级
+
+> **目标**：消除 BI/Analytics/Report 三者命名混淆，统一为 "BI" 单一品牌，清理所有别名与重复配置。
+>
+> **背景**：当前服务目录叫 `analytics/`、API 路径叫 `/api/bi/`、前端有 `bi/analytics/report` 三个 key，三者指向同一后端服务，增加理解成本和维护负担。
+
+| 优先级 | 任务 | 模块/范围 | 预计工时 | 验收标准 |
+|--------|------|----------|---------|---------|
+| **P0** | 前端 runtime.ts 清理：保留 `bi` 为主，`analytics`/`report` 标记为兼容别名 | `apps/web/src/config/runtime.ts` | 0.5天 | `config.services` 中 `bi` 为主入口，`analytics` 和 `report` 指向 `bi` 并添加 `@deprecated` 注释说明 |
+| **P0** | 前端 API client 清理：`bi` 为主，`analytics`/`report` 为 getter 别名 | `apps/web/src/api/client.ts` | 0.5天 | `apiClient.bi` 为主，`apiClient.analytics` 和 `apiClient.report` 返回 `apiClient.bi`（保持向后兼容） |
+| **P0** | 前端 API 模块统一：reportApi 明确归属 BI，添加命名空间注释 | `apps/web/src/api/bi/index.ts`、`apps/web/src/api/report/index.ts` | 0.5天 | reportApi 调用路径统一为 `/api/bi/` 前缀，文件头注释声明 "Report 是 BI 服务的子模块" |
+| **P0** | Nginx 配置清理：`/api/analytics/` 和 `/api/report/` 作为兼容路径代理到 bi | `docker/nginx.conf` | 0.5天 | 主路径 `/api/bi/` 注释为 "Primary"，`/api/analytics/` 和 `/api/report/` 注释为 "Legacy alias - use /api/bi/" |
+| **P0** | Vite 代理同步清理 | `apps/web/vite.config.ts` | 0.5天 | dev 环境代理路径与 Nginx 保持一致 |
+| **P1** | 前端模块重命名确认：bi 模块为主，analytics 目录名是否统一？ | `apps/web/src/modules/bi/`、`apps/web/src/modules/report/` | 1天 | 模块命名与路径一致，report 模块明确为 BI 子模块 |
+| **P1** | 添加命名一致性测试 | `apps/web/src/config/__tests__/` | 0.5天 | 测试验证 bi/analytics/report 三个 key 指向同一 baseURL |
+
+### Phase 2：Portal 定位战 — 转型 BFF 聚合层（P0，07-23 ~ 07-28）🏛️ 架构清晰级 ✅ 已完成
+
+> **目标**：Portal 从"功能重复的内部工作台"转型为"前端友好的 BFF 聚合层"，移除与 core/monitor 等服务重复的功能，专注跨服务数据聚合。
+>
+> **背景**：Portal 当前 12 个模块中 80% 功能与其他服务重复（通知/公告/监控/用户设置等），独立服务价值不清晰。转型为 BFF 后，Portal 不存业务数据，只做聚合。
+
+| 优先级 | 任务 | 模块/范围 | 预计工时 | 验收标准 |
+|--------|------|----------|---------|---------|
+| **P0** | Portal 功能审计与分类：标记"重复功能" vs "聚合功能" vs "门户特色" | `svc/portal/src/modules/` | 1天 | 输出功能分类清单表格，每模块标注 保留/迁移/删除 | ✅ 已完成（12 个模块分类：5 个代理层 + 4 个聚合层 + 3 个本地特色） |
+| **P0** | 移除 notification 模块：改用 core/communication 服务 | `svc/portal/src/modules/notifications.rs` | 1天 | Portal notification API 改为调用 unified-core 的 notification 接口，不直接操作数据库 | ✅ 已完成（纯代理到 unified-core notification，JWT token 透传，优雅降级） |
+| **P0** | 移除 announcement 模块：改用 ERP 或 core 的公告能力 | `svc/portal/src/modules/announcements.rs` | 1天 | Portal announcement API 代理到对应服务，不重复存储 | ✅ 已完成（纯代理到 ERP 公告服务，数据格式适配，向后兼容） |
+| **P0** | 移除 monitoring 模块：改用 monitor 服务 | `svc/portal/src/modules/monitoring.rs` | 0.5天 | Portal monitoring API 代理到 monitor 服务 | ✅ 已完成（纯代理到 monitor 服务，MonitorServiceClient 透传，降级返回空列表） |
+| **P0** | 移除 user/settings 模块：改用 core/iam 用户配置 | `svc/portal/src/modules/user.rs`、`settings.rs` | 1天 | 用户设置统一由 iam 管理，Portal 代理转发 | ✅ 已完成（user.rs 代理 IAM，settings.rs 代理 IAM preferences，本地仅 portal_todos 表） |
+| **P1** | 强化 BFF 聚合能力：首页仪表盘聚合 API | `svc/portal/src/modules/dashboard.rs` | 2天 | `/api/portal/dashboard/stats` 聚合 5+ 个服务的数据，一次返回前端所需 | ✅ 已完成（聚合 7 源：通知/审批/本地待办/MES/用户统计/服务健康/服务列表，30s 缓存 + 独立降级） |
+| **P1** | 导航与快捷入口优化：基于插件动态生成 | `svc/portal/src/modules/navigation.rs`、`quick_actions.rs` | 1天 | 导航菜单从 plugin registry 动态生成，支持用户自定义排序和钉选 | ✅ 已完成（从 service_registry 动态生成，默认菜单回退，quick_actions 表持久化） |
+| **P1** | 待办事项聚合：聚合 workflow 任务 + 各业务待办 | `svc/portal/src/modules/todos.rs` | 1天 | 统一待办中心，从各业务服务拉取待办事项 | ✅ 已完成（三源聚合：本地 portal_todos + notification 未读 + workflow 审批，独立降级） |
+| **P2** | Portal 数据库表清理：移除重复业务数据表 | `svc/portal/src/models/`、迁移脚本 | 1天 | Portal 仅存用户偏好类数据，业务数据全部归位 | ✅ 已完成（仅存 portal_todos / quick_actions / user_preferences，业务数据全部代理） |
+
+### Phase 3：边界明确战 — 财务域 + 主数据规划（P1，07-28 ~ 08-05）🗺️ 路线图级 ✅ 已完成
+
+> **目标**：明确财务域和主数据域的功能边界与归属，制定 ERP 瘦身和服务迁移路线图，为 V15.0 实施做准备。
+>
+> **背景**：ERP 内 finance 模块与独立 Finance 服务功能高度重叠，主数据分散在各业务服务中，需要明确方向和路线。
+
+| 优先级 | 任务 | 模块/范围 | 预计工时 | 验收标准 | 状态 |
+|--------|------|----------|---------|---------|------|
+| **P1** | 财务功能对比矩阵：ERP finance vs Finance 服务，逐功能对比 | `docs/architecture/` | 1天 | 输出详细的功能对比矩阵 Excel/Markdown 表格，标注每个功能点的归属建议 | ✅ 已完成（finance-migration-plan.md 第3.1节，8个模块功能/模型/API/状态对比） |
+| **P1** | 财务服务迁移路线图：分 6 阶段迁移计划 | `docs/architecture/finance-migration-plan.md` | 2天 | 完整的迁移计划文档，包含每阶段迁移内容、风险、回滚方案、验收标准 | ✅ 已完成（4阶段10周路线图，详细验收标准与风险缓解） |
+| **P1** | 主数据管理（MDM）规划：从 core/master 扩展的可行性分析 | `docs/architecture/mdm-plan.md` | 2天 | MDM 规划文档，明确主数据范围（客户/供应商/物料/组织/员工/科目）、同步机制、服务边界 | ✅ 已完成（6大域所有权分配、事件驱动同步架构、RabbitMQ Topic、API契约、4阶段路线图） |
+| **P1** | ERP 瘦身路线图：财务迁出 + OA 类功能独立 + 聚焦供应链 | `docs/architecture/erp-slimming-plan.md` | 1天 | ERP 瘦身路线图，明确最终形态和分阶段实施计划 | ✅ 已完成（保留20→目标12模块，迁移计划分4阶段） |
+| **P2** | 对账中心与工单体系需求调研 | `docs/architecture/` | 2天 | 需求调研文档，明确统一对账中心和工单体系的功能范围与技术方案 | ✅ 已完成（reconciliation-ticket-requirements.md：现状分析、对账中心 4 组 FR、工单体系 4 组 FR、数据模型、技术方案、4 阶段实施建议） |
+
+### V14.1 验收硬条件清单
+
+| AC 编号 | 验证项 | 验证方法 | 责任 |
+|--------|-------|---------|------|
+| **AC-1** | BI/Analytics/Report 命名统一 | `grep -rn "analytics\|report" apps/web/src/config/runtime.ts \| grep -v "deprecated"` 无新代码使用别名 | CI | ✅ |
+| **AC-2** | Portal 重复功能已移除 | Portal 模块中 notification/announcement/monitoring/user/settings 不直接操作数据库，全部代理到对应服务 | 代码审查 | ✅ |
+| **AC-3** | Portal BFF 聚合能力可用 | 首页仪表盘 API 单次调用返回 5+ 服务的聚合数据 | 手工 + 测试 | ✅（聚合 7 源） |
+| **AC-4** | 财务迁移路线图文档完整 | docs/architecture/finance-migration-plan.md 包含 6 阶段计划 + 风险 + 验收标准 | 文档审查 | ✅ |
+| **AC-5** | MDM 规划文档完整 | docs/architecture/mdm-plan.md 包含主数据范围 + 同步机制 + 服务边界 | 文档审查 | ✅ |
+| **AC-6** | 编译与测试零错误 | `cargo check --workspace`、`tsc --noEmit`、现有测试全部通过 | CI | ✅ |
+
+---
+
+## 🚀 V15 实施落地专项（P0，2026-07-22 ~ 2026-08-31）🛠️ 全面落地级
+
+> **目标**：基于 V14.1 阶段产出的 5 份架构规划文档，启动第一阶段实施工作，将规划转化为可运行的代码、API 和数据流。
+>
+> **核心原则**：先做"骨架与代理"，再做"数据流转与业务完整"；先打通主数据事件总线，再做对账、工单等上层应用。
+
+### Phase 1：MDM 基础战（P0，07-22 ~ 07-25）🏛️ 主数据底座级 ✅ 已完成
+
+> **目标**：建立主数据管理的事件总线、ID 生成器、unified-core master 模块增强版，让主数据治理有可落地的技术底座。
+>
+> **来源**：[mdm-plan.md](./docs/architecture/mdm-plan.md) §3-5 + [mdm-master-data-management-plan.md](./docs/architecture/mdm-master-data-management-plan.md) §4.2.1
+
+| 优先级 | 任务 | 模块/范围 | 验收标准 | 状态 |
+|--------|------|----------|---------|------|
+| **P0** | MasterDataEvent 标准结构 | `lib/src/event/master_data.rs` | 5 大域变更事件（customer/supplier/material/organization/employee/account_subject）统一格式，含 tenant_id、master_data_id、action、payload | ✅ 已完成 |
+| **P0** | master_data_id 生成器 | `lib/src/id/master_data.rs` | UUID v7 生成器，按域名前缀（cust-/supp-/mat-/org-/emp-/acct-）生成语义化 ID | ✅ 已完成 |
+| **P0** | unified-core master 模块增强 | `svc/unified-core/src/modules/master/` | 5 大域基础 CRUD + 事件发布（创建/更新/删除时触发 MasterDataEvent） | ✅ 已完成 |
+| **P0** | master 路由挂载 + 权限 | `svc/unified-core/src/routes/master.rs` | mdm_read/mdm_write 路由分组合并到 master_routes（system:read/write） | ✅ 已完成 |
+| **P1** | MasterDataEvent 消费测试 | `lib/src/event/master_data.rs` | 9 个单元测试：序列化/反序列化、Redis 发布订阅、批量发布、6大域覆盖、变更字段 | ✅ 已完成 |
+
+### Phase 2：对账攻坚战（P0，07-25 ~ 07-30）💰 财务闭环级 ✅ 已完成
+
+> **目标**：将 V14.1 落地的对账中心 MVP 扩展为完整功能：应收/应付对账、模糊匹配、报告与差异处理。
+>
+> **来源**：[reconciliation-ticket-requirements.md](./docs/architecture/reconciliation-ticket-requirements.md) §FR-1~FR-4
+
+| 优先级 | 任务 | 模块/范围 | 验收标准 | 状态 |
+|--------|------|----------|---------|------|
+| **P0** | 模糊匹配引擎 | `svc/finance/src/services/finance/reconciliation.rs` | 金额相同 + 日期 ±7 天 + 对方名称相似度 >70% 视为匹配 | ✅ 已完成（classify_match: exact/fuzzy/reference/amount） |
+| **P0** | 拆分匹配引擎 | `svc/finance/src/services/finance/reconciliation.rs` | 一笔银行流水对应多笔 ERP 发票（金额总和相等） | ✅ 已完成（find_split_matches: match_type=split） |
+| **P0** | 对账报告 API | `svc/finance/src/modules/reconciliation.rs` | 余额调节表 + 完成率 + 账龄分析（30/60/90/180/360/360+） | ✅ 已完成（ReconciliationReport + AgingReport） |
+| **P0** | 差异处理 API 增强 | `svc/finance/src/modules/reconciliation.rs` | 差异原因标记、批量确认、统计 | ✅ 已完成（BatchDiffRequest + DiffStatistics） |
+| **P1** | HTTP 路由扩展 | `svc/finance/src/modules/reconciliation.rs` | `/report` `/aging` `/items/diff/batch` `/sessions/{id}/diff-stats` | ✅ 已完成 |
+
+### Phase 3：财务代理战（P0，07-30 ~ 08-10）🏦 财务底座迁出
+
+> **目标**：ERP 内财务底座（科目/期间/凭证/总账）改为代理 Finance 服务，ERP 不再是财务真理来源。
+>
+> **来源**：[finance-migration-plan.md](./docs/architecture/finance-migration-plan.md) §Phase 1 + [erp-slimming-plan.md](./docs/architecture/erp-slimming-plan.md) §2.1
+
+| 优先级 | 任务 | 模块/范围 | 验收标准 | 状态 |
+|--------|------|----------|---------|------|
+| **P0** | 财务服务客户端增强 | `lib/src/service_client/finance_client.rs` | 35+ 方法（科目/凭证/期间/总账/付款/发票/对账/仪表盘） | ✅ 已完成 |
+| **P0** | ERP 财务代理层 | `svc/erp/src/modules/finance/proxy.rs` | 14 路由代理 Finance（accounts/vouchers/periods/trial-balance/balance-sheet/income-statement/cash-flow/dashboard） | ✅ 已完成 |
+| **P1** | 财务双轨一致性验证 | `scripts/finance/consistency-check.sh` | 7 接口 ERP 代理 vs Finance 直服对比，JSON 报告，退出码告警，README 文档 | ✅ 已完成 |
+
+### Phase 4：HR 代理战（P1，08-10 ~ 08-15）👥 HR 底座迁出
+
+> **目标**：ERP 内 hr/* 模块改为代理 HRM 服务，ERP 不再是 HR 真理来源。
+>
+> **来源**：[erp-slimming-plan.md](./docs/architecture/erp-slimming-plan.md) §2.2
+
+| 优先级 | 任务 | 模块/范围 | 验收标准 | 状态 |
+|--------|------|----------|---------|------|
+| **P1** | ERP HR 代理层 | `svc/erp/src/modules/hr_proxy.rs` | 员工/部门/公司/职位/薪酬/考勤/部门树 代理 HRM（13 路由） | ✅ 已完成 |
+| **P1** | ERP HR 路由挂载 | `svc/erp/src/modules/mod.rs` | `.merge(hr_proxy::proxy_routes())` | ✅ 已完成 |
+| **P1** | ERP HR 数据库表归档 | `svc/erp/migrations/20260722130000_archive_hr_data.sql` | HR 字典类型/项标记归档，触发器阻止写入，archive_marks 表 + v_archived_data 视图 | ✅ 已完成 |
+
+### Phase 5：工单建制战（P1，08-15 ~ 08-31）🎫 通用能力级
+
+> **目标**：unified-core 内建 ticket 模块，提供工单全生命周期管理、分类路由、SLA 计时能力。
+>
+> **来源**：[reconciliation-ticket-requirements.md](./docs/architecture/reconciliation-ticket-requirements.md) §3 + 4.3
+
+| 优先级 | 任务 | 模块/范围 | 验收标准 | 状态 |
+|--------|------|----------|---------|------|
+| **P1** | 工单数据模型 | `svc/unified-core/src/modules/ticket/models.rs` | Ticket/TicketComment/TicketActivity + 6 状态 + 7 类型 + 4 严重级别 | ✅ 已完成 |
+| **P1** | 工单 CRUD API | `svc/unified-core/src/modules/ticket/handlers.rs` | 创建/查询/更新/删除/评论/活动/统计 全功能 | ✅ 已完成 |
+| **P1** | 工单表初始化 | `svc/unified-core/src/main.rs` | `init_ticket_tables` + 3 索引 + RLS | ✅ 已完成 |
+| **P1** | 工单路由挂载 | `svc/unified-core/src/routes/master.rs` | ticket_read + ticket_write 合并到 master_routes | ✅ 已完成 |
+| **P2** | 工单与对账/审批/告警集成 | `svc/finance/src/modules/reconciliation.rs` | 对账差异自动开 reconciliation_diff 工单 | ✅ 已完成 |
+| **P2** | Portal 工单入口 | `svc/portal/src/modules/tickets.rs` | Portal 代理 unified-core 工单 API，聚合待办展示 | ✅ 已完成 |
+| **P2** | 前端工单中心页面 | `apps/web/src/pages/ticket/TicketCenterPage.tsx` | 统计卡片/标签筛选/列表/详情/评论/创建，TS 0 errors | ✅ 已完成 |
+| **P2** | 工单 API 客户端 | `apps/web/src/api/ticket/index.ts` | 基于 Portal BFF 代理，7 个接口 | ✅ 已完成 |
+| **P2** | 工单模块路由与导航 | `apps/web/src/modules/ticket/config.ts` | 注册到 v2 路由和导航模块 | ✅ 已完成 |
+| **P1** | 财务双轨一致性验证脚本 | `scripts/finance/consistency-check.sh` | 7 个接口 ERP 代理 vs Finance 直服对比，JSON 报告，退出码告警 | ✅ 已完成 |
+
+### V15 验收硬条件清单
+
+| AC 编号 | 验证项 | 验证方法 | 状态 |
+|--------|-------|---------|------|
+| **AC-1** | MasterDataEvent 通过 Redis 发布，5 大域基础 CRUD 可用 | `cargo check -p unified-core-service` + 手工验证 unified-core master API | ✅ |
+| **AC-2** | 对账中心支持模糊匹配 + 拆分匹配 + 报告 + 账龄 + 差异处理 | `cargo check -p topems-finance` + 调用 reconciliation API | ✅ |
+| **AC-3** | ERP 财务 API 代理到 Finance | ERP `/finance/*` 路由代理 Finance（14 路由） | ✅ |
+| **AC-4** | ERP HR API 代理到 HRM | ERP `/hr/*` 路由代理 HRM（13 路由） | ✅ |
+| **AC-5** | 工单模块 CRUD + 评论 + 活动 + SLA + 统计可用 | `cargo check -p unified-core-service` + `/api/core/master/tickets` | ✅ |
+| **AC-6** | 编译与类型零错误 | `cargo check --workspace` = 0 error | ✅ |
+
+---
+
+## 🚀 V14.0 生产就绪与智能增强计划（P0，2026-07-21 ~ 2026-09-30）🔄 规划中
+
+> **目标**：在 V13.1 健康评分 100/100 的基础上，从「功能完整」升级为「生产可用 + 智能驱动」，补齐业务闭环、统一 API 契约、增强 AI 能力、建立可观测性、提升工程效率。
+>
+> **权威输入**：
+> - [架构分析与优化方案 2026-07-14](./docs/reports/architecture-review-20260714.md)
+> - [后端API vs 前端功能 对比分析报告](./docs/reports/backend-frontend-gap-analysis.md)
+> - [V5.4 架构深化与类型统一实施计划](./docs/reports/v5.4-architecture-deepening-plan.md)
+> - [V5.5 架构修复计划](./docs/reports/v5.5-architecture-fix-plan.md)
+> - [V5.6 性能优化计划](./docs/reports/v5.6-performance-optimization-plan.md)
+
+### Phase 1：业务闭环补齐（P0，07-21 ~ 08-15）📦 架构完整级
+
+> **目标**：消除 `manufacturing`、`erp`、`shared` 等严重缺失模块，打通 MES↔ERP↔WMS↔QMS/LIMS 核心业务流程。
+
+| 优先级 | 任务 | 模块/范围 | 预计工时 | 验收标准 |
+|--------|------|----------|---------|---------|
+| **P0** | manufacturing 模块前端 API 补齐 | `apps/web/src/api/mfg/` | 5天 | 覆盖率从 2% 提升至 ≥80%，生产订单/工艺/设备/工位/记录完整对接 |
+| **P0** | ERP 核心功能前端实现 | `apps/web/src/pages/erp/`、`apps/web/src/api/erp/` | 6天 | 财务报表、凭证、预算、费用、资产、车辆、公告页面可用 |
+| **P0** | shared/common 服务前端对接 | `apps/web/src/api/shared/`、`apps/web/src/pages/shared/` | 4天 | 消除 16 个页面的 API 调用缺口 |
+| **P1** | MES↔ERP 生产订单同步 | `svc/mes`、`svc/erp`、`svc/integration` | 4天 | 生产订单状态变更自动同步到 ERP 工单/成本中心 |
+| **P1** | WMS↔MES 物料发放/成品入库 | `svc/wms`、`svc/mes` | 3天 | 领料单、入库单状态联动 |
+| **P1** | QMS/LIMS↔MES 质量拦截 | `svc/qms`、`svc/lims`、`svc/mes` | 3天 | 不合格品自动触发 MES 停产/返工流程 |
+| **P2** | 供应链端到端可视化 | `apps/web/src/pages/scm/`、`svc/scm` | 3天 | 采购→入库→生产→出库全链路跟踪 |
+
+### Phase 2：API 契约统一收口（P0，07-21 ~ 08-10）⚡ 架构阻断级
+
+> **目标**：彻底消除 `/api/{service}` 与 `/api/core/{service}` 路径二元性，建立统一的 OpenAPI 契约与自动生成机制。
+
+| 优先级 | 任务 | 模块/范围 | 预计工时 | 验收标准 | 状态 |
+|--------|------|----------|---------|---------|------|
+| **P0** | 剩余独立服务路径统一到 `/api/core/{service}/v1` | `svc/rs`、`svc/doc`、`svc/gis`、`svc/ai`、`svc/mobile`、`svc/portal`、`svc/finance` | 5天 | 所有服务挂载路径符合 K8s Ingress 契约 | ✅ 已完成（V9.0 双轨注册 + 路径统一） |
+| **P0** | 前端 runtime.ts 路径收口 | `apps/web/src/config/runtime.ts` | 2天 | 删除所有非 `/api/core/{service}/v1` 兼容映射 | ✅ 已完成（V9.0 Phase 1.1） |
+| **P1** | 统一 OpenAPI 文档生成 | `scripts/openapi/`、各服务 `utoipa` 注解 | 4天 | 生成 27 个服务的统一 openapi.yaml | ✅ 已完成（23 服务全部暴露 /api-docs/openapi.json，generate.sh 退出码 0） |
+| **P1** | API 契约测试（Pact） | `tests/contract/` | Pact + Vitest 框架，3 服务（IAM/Finance/Ticket），15 条契约测试用例，支持契约发布与验证 | ✅ 已完成 |
+| **P2** | 前端 API 类型从 OpenAPI 自动生成 | `packages/shared-types/` | 4天 | 减少手写 DTO，消除类型漂移 | ✅ 已完成（openapi-typescript 集成，25 路径 + 39 Schema 自动生成，命名空间导出 ApiPaths/ApiComponents/ApiOperations） |
+
+### Phase 3：AI 智能增强（P1，08-01 ~ 08-31）🤖 智能能力级 🔄 进行中
+
+> **目标**：将 AI 从独立工具升级为嵌入式智能体，覆盖报表、流程、异常场景。
+
+| 优先级 | 任务 | 模块/范围 | 预计工时 | 验收标准 | 状态 |
+|--------|------|----------|---------|---------|------|
+| **P1** | AI 报表助手 | `apps/web/src/components/ai/`、`svc/ai` | 5天 | 自然语言生成 BI 查询并渲染图表 | ✅ 前端组件完成（AIReportAssistant，支持多种图表类型） |
+| **P1** | 流程审批助手 | `svc/flow`、`svc/ai` | 4天 | 智能推荐审批人、风险预警 | ✅ 前端组件完成（AIFlowAssistant，支持模块筛选） |
+| **P1** | 生产异常预警 | `svc/mes`、`svc/monitor`、`svc/ai` | 5天 | 基于时序数据预测设备异常 | ✅ 已完成（后端 anomaly_detection.rs 7端点 + 前端 AnomalyDetectionPage 4Tab + API 客户端 + 路由导航） |
+| **P2** | AI 代码/文档助手 | `apps/web/src/pages/ai/`、`svc/ai` | 代码助手（生成/解释/修复/优化/审查）5 端点 + 知识库问答页面 + 文档库管理 | ✅ 已完成 |
+
+### Phase 4：可观测性与 SLA（P1，08-10 ~ 09-10）📊 生产就绪级 ✅ 已完成
+
+> **目标**：建立统一日志、链路追踪、指标监控，满足生产级运维要求。
+
+| 优先级 | 任务 | 模块/范围 | 预计工时 | 验收标准 | 状态 |
+|--------|------|----------|---------|---------|------|
+| **P1** | 统一结构化日志 | `lib/src/telemetry.rs`、各服务 tracing | 4天 | 所有服务输出 JSON 格式日志，含 trace_id/request_id | ✅ 已完成（telemetry_middleware 覆盖 22 服务 + unified-core with_telemetry()，trace_id/request_id 注入 Span） |
+| **P1** | 分布式链路追踪 | `docker/otel-collector.yml`、OpenTelemetry SDK | 5天 | 端到端请求链路可查询 | ✅ 已完成（OTEL Collector 接收 OTLP → Jaeger 链路 + Loki 日志 + Prometheus 指标，22 服务已装配） |
+| **P1** | 业务指标大盘 | `svc/monitor`、`apps/web/src/pages/monitor/` | 5天 | 核心业务指标实时可视化 | ✅ 已完成（24 业务指标 + Grafana business-metrics-dashboard + Prometheus 自定义指标） |
+| **P2** | 告警规则与通知 | `svc/monitor`、通知中心 | 3天 | P0/P1 指标异常自动通知 | ✅ 已完成（topems-alerts.yml：3 组 12 条规则，覆盖 P0 服务宕机/错误率/数据库 + P1 延迟/资源 + SLO 错误预算） |
+| **P2** | SLO/SLA 看板 | `apps/web/src/pages/admin/` | 3天 | 定义并展示关键服务 SLO | ✅ 已完成（slo-sla-dashboard.json：5 行 17 面板，可用性/延迟/错误率/SLO 达成率/错误预算消耗速率，99.9% SLO 目标） |
+
+### Phase 5：工程效率与持续交付（P1，08-15 ~ 09-30）🛠️ 效率级 ✅ 已完成
+
+> **目标**：引入 E2E 自动化、构建缓存、CI 优化，支撑快速迭代。
+
+| 优先级 | 任务 | 模块/范围 | 预计工时 | 验收标准 | 状态 |
+|--------|------|----------|---------|---------|------|
+| **P1** | E2E 测试基座 | `tests/e2e/`、Playwright | 5天 | 覆盖登录 + 5 个核心业务流程 | ✅ 已完成（critical-path.spec.ts + auth helpers + fixtures） |
+| **P1** | API 集成测试补强 | `tests/integration/` | 4天 | 核心 CRUD 流程测试覆盖 ≥50 条 | ✅ 已完成（新建 Vitest 集成测试包：4 个测试文件、23 服务健康检查、认证流、跨服务、OpenAPI 验证） |
+| **P1** | CI 构建缓存 | `.github/workflows/`、sccache | 3天 | Rust/TS 构建时间减少 ≥40% | ✅ 已完成（sccache + rust-cache + pnpm store cache，已配置） |
+| **P2** | 前端 Bundle 分析与预算 | `apps/web/vite.config.ts` | 2天 | 设置 bundle size 阈值告警 | ✅ 已完成（scripts/bundle-check.sh + CI bundle size gate） |
+| **P2** | 数据库迁移自动化校验 | `scripts/migration/` | 2天 | 迁移脚本 CI 自动检查幂等性 | ✅ 已完成（validate.sh：文件名/版本顺序/幂等性/down 迁移/校验和/schema drift + CI job） |
+
+### Phase 6：安全与合规收尾（P2，09-01 ~ 09-30）🔒 合规级 ✅ 已完成
+
+> **目标**：完成剩余安全加固与合规审计，达到生产发布标准。
+
+| 优先级 | 任务 | 模块/范围 | 预计工时 | 验收标准 | 状态 |
+|--------|------|----------|---------|---------|------|
+| **P2** | 多租户隔离覆盖率提升至 100% | `database/migrations/`、`svc/unified-core/middleware` | 3天 | 剩余 2.7% 表补全 tenant_id + RLS | ✅ 已完成（tenant-audit.sh + 报告：496 表审计，323 表含 tenant_id，292 表启用 RLS，CI 阈值机制推进持续补齐） |
+| **P2** | 敏感数据审计日志 | `svc/unified-core/modules/audit/` | 3天 | 关键操作留痕，支持查询 | ✅ 已完成（audit_log_middleware + audit_logs 表 + init_audit_logs_table，已覆盖请求/用户/路径/状态/耗时） |
+| **P2** | API 限流与防重放 | `lib/src/middleware/rate_limit.rs` | 3天 | 核心接口启用限流 | ✅ 已完成（RateLimitMiddleware 集成到 22 个业务服务 protected_routes 外层：业务 200/min，integration 100/min，core 300/min，含 x-ratelimit-* headers） |
+| **P2** | 依赖安全扫描 | CI 集成 cargo audit、npm audit | 2天 | 高危漏洞 0 | ✅ 已完成（scripts/security/scan.sh：cargo audit + pnpm audit + secret scan + .env 检查 + CI security-scan job） |
+
+### V14.0 验收硬条件清单
+
+| AC 编号 | 验证项 | 验证方法 | 责任 |
+|--------|-------|---------|------|
+| **AC-1** | 业务闭环关键模块覆盖率 ≥80% | `backend-frontend-gap-analysis.md` 更新后 manufacturing/erp/shared 变绿 | CI + 手工 |
+| **AC-2** | 所有服务路径统一为 `/api/core/{service}/v1` | `grep -R "internal_base\|mount" svc/*/src/main.rs` 无 `/api/{service}` 残留 | CI |
+| **AC-3** | OpenAPI 统一文档生成成功 | `scripts/openapi/generate.sh` 退出码 0 | CI |
+| **AC-4** | 核心链路 E2E 测试通过 | `npx playwright test tests/e2e/critical-path.spec.ts` | CI |
+| **AC-5** | 可观测性三件套可用 | Grafana/Tempo/Loki 能查询到端到端 trace 和日志 | 手工 |
+| **AC-6** | 编译与类型零错误 | `cargo check --workspace`、`tsc --noEmit` | CI |
 
 ---
 

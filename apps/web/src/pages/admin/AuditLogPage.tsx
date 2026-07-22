@@ -28,6 +28,7 @@ import {
   Activity,
   FileText,
   FlaskConical,
+  Database,
   Filter,
   RefreshCw,
   Download,
@@ -40,6 +41,7 @@ import type { AuditLog as LimsAuditLog } from '@/api/lims';
 import { auditLimsApi } from '@/api/lims';
 import type { AuditLog as RdAuditLog } from '@/api/rd';
 import { auditRdApi } from '@/api/rd';
+import { apiClient } from '@/api/client';
 import { useNotificationStore } from '@/store';
 import { apiLogger } from '@/utils/logger';
 import { ListPageTemplate, type ColumnDef, type FilterConfig } from '@/components/templates';
@@ -64,8 +66,30 @@ interface AuditLogPageProps {
   onNavigate?: (page: string) => void;
 }
 
-type AuditLogSource = 'lims' | 'rd';
-type AuditLog = LimsAuditLog | RdAuditLog;
+type AuditLogSource = 'lims' | 'rd' | 'core';
+
+interface UnifiedAuditLog {
+  id: string;
+  source: string;
+  tenant_id?: string | null;
+  user_id?: string | null;
+  username?: string | null;
+  user_name?: string | null;
+  action: string;
+  entity_type?: string | null;
+  entity_id?: string | null;
+  resource?: string | null;
+  ip_address?: string | null;
+  user_agent?: string | null;
+  status?: string | null;
+  success?: boolean | null;
+  error_message?: string | null;
+  request_details?: Record<string, unknown> | string | null;
+  response_details?: Record<string, unknown> | string | null;
+  created_at: string;
+}
+
+type AuditLog = LimsAuditLog | RdAuditLog | UnifiedAuditLog;
 
 const AuditLogPage: React.FC<AuditLogPageProps> = ({ onNavigate }) => {
   const addNotification = useNotificationStore((state) => state.addNotification);
@@ -74,7 +98,7 @@ const AuditLogPage: React.FC<AuditLogPageProps> = ({ onNavigate }) => {
   const [filterStatus, setFilterStatus] = useState<string>('all');
   const [filterAction, setFilterAction] = useState<string>('all');
   const [filterEntityType, setFilterEntityType] = useState<string>('all');
-  const [source, setSource] = useState<AuditLogSource>('lims');
+  const [source, setSource] = useState<AuditLogSource>('core');
   const [currentPage, setCurrentPage] = useState(1);
   const [startDate, setStartDate] = useState<string>('');
   const [endDate, setEndDate] = useState<string>('');
@@ -93,6 +117,40 @@ const AuditLogPage: React.FC<AuditLogPageProps> = ({ onNavigate }) => {
       endDate,
     ],
     queryFn: async () => {
+      if (source === 'core') {
+        const params: Record<string, unknown> = {
+          page: Math.max(1, currentPage),
+          pagesize: Math.min(200, Math.max(1, pageSize)),
+          source: 'audit_logs',
+        };
+        if (filterStatus !== 'all') {
+          params.status = filterStatus;
+        }
+        if (filterAction !== 'all') {
+          params.action = filterAction;
+        }
+        if (filterEntityType !== 'all') {
+          params.entity_type = filterEntityType;
+        }
+        if (startDate) {
+          params.start_date = formatDateTimeForApi(startDate);
+        }
+        if (endDate) {
+          params.end_date = formatDateTimeForApi(endDate);
+        }
+        const response = await apiClient.core.get<{
+          items: UnifiedAuditLog[];
+          total: number;
+        }>('/api/core/iam/v1/audit/logs', { params });
+        if (response.success && response.data) {
+          return {
+            items: response.data.items || [],
+            total: response.data.total || 0,
+          };
+        }
+        return { items: [], total: 0 };
+      }
+
       const api = source === 'lims' ? auditLimsApi : auditRdApi;
       const params: Record<string, unknown> = {
         page: Math.max(1, currentPage),
@@ -160,6 +218,29 @@ const AuditLogPage: React.FC<AuditLogPageProps> = ({ onNavigate }) => {
 
   const exportMutation = useMutation({
     mutationFn: async () => {
+      if (source === 'core') {
+        const params: Record<string, unknown> = { format: 'csv', source: 'audit_logs' };
+        if (filterStatus !== 'all') {
+          params.status = filterStatus;
+        }
+        if (filterAction !== 'all') {
+          params.action = filterAction;
+        }
+        if (filterEntityType !== 'all') {
+          params.entity_type = filterEntityType;
+        }
+        if (startDate) {
+          params.start_date = formatDateTimeForApi(startDate);
+        }
+        if (endDate) {
+          params.end_date = formatDateTimeForApi(endDate);
+        }
+        const response = await apiClient.core.get<unknown>('/api/core/iam/v1/audit/logs/export', {
+          params,
+          responseType: 'blob' as never,
+        });
+        return response;
+      }
       const api = source === 'lims' ? auditLimsApi : auditRdApi;
       const params: Record<string, unknown> = {};
       if (filterStatus !== 'all') {
@@ -180,9 +261,9 @@ const AuditLogPage: React.FC<AuditLogPageProps> = ({ onNavigate }) => {
       apiLogger.debug('导出审计日志参数:', { source, params });
       return api.exportAuditLogs(params);
     },
-    onSuccess: (blob) => {
-      apiLogger.debug('导出审计日志成功，blob size:', blob.size);
-      const url = window.URL.createObjectURL(blob);
+    onSuccess: (blob: unknown) => {
+      apiLogger.debug('导出审计日志成功，blob size:', (blob as Blob)?.size);
+      const url = window.URL.createObjectURL(blob as Blob);
       const a = document.createElement('a');
       a.href = url;
       a.download = `audit_logs_${new Date().toISOString().split('T')[0]}.csv`;
@@ -231,7 +312,7 @@ const AuditLogPage: React.FC<AuditLogPageProps> = ({ onNavigate }) => {
     setCurrentPage(1);
   };
 
-  const getStatusBadge = (status: string) => {
+  const getStatusBadge = (status: string | null | undefined) => {
     const badges: Record<
       string,
       {
@@ -243,9 +324,9 @@ const AuditLogPage: React.FC<AuditLogPageProps> = ({ onNavigate }) => {
       partial: { color: 'warning', label: '部分成功' },
       error: { color: 'error', label: '失败' },
     };
-    const config = badges[status] || {
+    const config = badges[status ?? ''] || {
       color: 'default' as const,
-      label: status,
+      label: status || '-',
     };
     return (
       <Chip
@@ -475,6 +556,17 @@ const AuditLogPage: React.FC<AuditLogPageProps> = ({ onNavigate }) => {
           p: 0.5,
         }}
       >
+        <Button
+          size='small'
+          variant={source === 'core' ? 'contained' : 'text'}
+          onClick={() => {
+            setSource('core');
+            setCurrentPage(1);
+          }}
+          startIcon={<Database size={16} />}
+        >
+          统一审计
+        </Button>
         <Button
           size='small'
           variant={source === 'lims' ? 'contained' : 'text'}

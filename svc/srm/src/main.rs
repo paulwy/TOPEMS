@@ -24,6 +24,7 @@ use axum::{
     Json, Router,
 };
 use std::env;
+use std::sync::Arc;
 use std::time::Instant;
 use utoipa::OpenApi;
 
@@ -31,8 +32,9 @@ use axum_prometheus::PrometheusMetricLayer;
 use prometheus::{default_registry, Gauge};
 use topems_shared::{
     auth_middleware, build_health_response, create_api_info_router, create_cors_layer,
-    create_database_pool, init_telemetry, rls_middleware, telemetry_middleware, ApiResponse,
-    AuthState, DatabaseConfig, ServiceHealth,
+    create_database_pool, init_telemetry, rate_limit_middleware, register_routes_with_legacy_alias,
+    rls_middleware, telemetry_middleware, ApiResponse, AuthState, DatabaseConfig, RateLimitConfig,
+    RateLimitMiddleware, ServiceHealth,
 };
 
 static START_TIME: std::sync::OnceLock<Instant> = std::sync::OnceLock::new();
@@ -145,6 +147,18 @@ async fn main() -> Result<()> {
         )
         .with_state(app_state.clone());
 
+    let rate_limit_config = RateLimitConfig::new(200, 60)
+        .with_by_user_id(false)
+        .with_by_ip(true);
+    let rate_limiter = Arc::new(RateLimitMiddleware::new(rate_limit_config));
+    let rate_limit_layer = axum::middleware::from_fn({
+        let mw = rate_limiter.clone();
+        move |req, next| {
+            let mw = mw.clone();
+            async move { rate_limit_middleware(mw, req, next).await }
+        }
+    });
+
     let protected_routes = Router::new()
         .merge(create_supplier_routes(pool.clone()).await?)
         .merge(create_category_routes(pool.clone()).await?)
@@ -170,16 +184,19 @@ async fn main() -> Result<()> {
         .layer(axum::middleware::from_fn_with_state(
             app_state.auth_state.clone(),
             auth_middleware,
-        ));
+        ))
+        .layer(rate_limit_layer);
 
-    let app = Router::new()
-        .merge(health_router)
-        .nest("/api/srm", protected_routes)
-        .route("/api/srm/health/detailed", get(health_check_detailed))
-        .merge(create_api_info_router("topems-srm"))
-        .layer(axum::middleware::from_fn(telemetry_middleware))
-        .layer(cors)
-        .layer(prometheus_layer);
+    let app = register_routes_with_legacy_alias(
+        Router::new().merge(health_router),
+        "/api/srm",
+        &["/api/v1/srm"],
+        protected_routes,
+    )
+    .merge(create_api_info_router("topems-srm"))
+    .layer(axum::middleware::from_fn(telemetry_middleware))
+    .layer(cors)
+    .layer(prometheus_layer);
 
     let port = env::var("SRM_PORT")
         .or_else(|_| env::var("SERVER_PORT"))

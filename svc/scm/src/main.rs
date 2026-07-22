@@ -31,8 +31,9 @@ use std::time::Duration;
 use topems_shared::redis::RedisCacheService;
 use topems_shared::{
     auth_middleware, build_health_response, create_api_info_router, create_cors_layer,
-    create_database_pool, init_telemetry, rls_middleware, telemetry_middleware, ApiResponse,
-    AuthState, DatabaseConfig, RedisConfig, RedisPool as RedisPoolTrait, ServiceHealth,
+    create_database_pool, init_telemetry, rate_limit_middleware, register_routes_with_legacy_alias,
+    rls_middleware, telemetry_middleware, ApiResponse, AuthState, DatabaseConfig, RateLimitConfig,
+    RateLimitMiddleware, RedisConfig, RedisPool as RedisPoolTrait, ServiceHealth,
 };
 use tower_http::{compression::CompressionLayer, timeout::TimeoutLayer};
 
@@ -138,6 +139,18 @@ async fn main() -> Result<()> {
         .route("/api/plugins/health", get(scm_plugin::plugin_health_check))
         .route("/api-docs/openapi.json", get(serve_openapi_json));
 
+    let rate_limit_config = RateLimitConfig::new(200, 60)
+        .with_by_user_id(false)
+        .with_by_ip(true);
+    let rate_limiter = Arc::new(RateLimitMiddleware::new(rate_limit_config));
+    let rate_limit_layer = axum::middleware::from_fn({
+        let mw = rate_limiter.clone();
+        move |req, next| {
+            let mw = mw.clone();
+            async move { rate_limit_middleware(mw, req, next).await }
+        }
+    });
+
     let protected_routes = modules::create_routes()
         .layer(axum::middleware::from_fn_with_state(
             api_state.auth_state.clone(),
@@ -146,22 +159,26 @@ async fn main() -> Result<()> {
         .layer(axum::middleware::from_fn_with_state(
             api_state.db.clone(),
             rls_middleware,
-        ));
+        ))
+        .layer(rate_limit_layer);
 
-    let app = Router::new()
-        .merge(public_routes)
-        .nest("/api/scm", protected_routes)
-        .route("/api/health/detailed", get(health_check_detailed))
-        .merge(create_api_info_router("topems-scm"))
-        .with_state(api_state)
-        .layer(cors)
-        .layer(axum::middleware::from_fn(telemetry_middleware))
-        .layer(prometheus_layer)
-        .layer(CompressionLayer::new())
-        .layer(TimeoutLayer::with_status_code(
-            StatusCode::REQUEST_TIMEOUT,
-            Duration::from_secs(30),
-        ));
+    let app = register_routes_with_legacy_alias(
+        Router::new().merge(public_routes),
+        "/api/scm",
+        &["/api/v1/scm"],
+        protected_routes,
+    )
+    .route("/api/health/detailed", get(health_check_detailed))
+    .merge(create_api_info_router("topems-scm"))
+    .with_state(api_state)
+    .layer(cors)
+    .layer(axum::middleware::from_fn(telemetry_middleware))
+    .layer(prometheus_layer)
+    .layer(CompressionLayer::new())
+    .layer(TimeoutLayer::with_status_code(
+        StatusCode::REQUEST_TIMEOUT,
+        Duration::from_secs(30),
+    ));
 
     let port = env::var("SCM_PORT")
         .or_else(|_| env::var("SERVER_PORT"))

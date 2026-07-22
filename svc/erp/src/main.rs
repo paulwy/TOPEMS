@@ -23,9 +23,11 @@ use utoipa::OpenApi;
 use modules::ApiState;
 use topems_shared::{
     auth_middleware, check_http_health, create_api_info_router, create_cors_layer,
-    create_database_pool, create_hrm_client, init_telemetry, rls_middleware, telemetry_middleware,
-    ApiResponse, AuthState, DatabaseConfig, DependencyHealth, FieldEncryptionService, HealthStatus,
-    KeyManager, NotificationServiceClient, ServiceHealth, SystemMetrics,
+    create_database_pool, create_hrm_client, init_telemetry, rate_limit_middleware,
+    register_routes_with_legacy_alias, request_context_middleware, rls_middleware,
+    telemetry_middleware, ApiResponse, AuthState, DatabaseConfig, DependencyHealth,
+    FieldEncryptionService, HealthStatus, KeyManager, NotificationServiceClient, RateLimitConfig,
+    RateLimitMiddleware, ServiceHealth, SystemMetrics,
 };
 
 lazy_static::lazy_static! {
@@ -35,31 +37,6 @@ lazy_static::lazy_static! {
     pub static ref ACTIVE_USERS: IntGauge = register_int_gauge!("topems_erp_active_users", "Number of active users in the last hour").expect("Failed to register active_users gauge - check for duplicate metric registrations");
     pub static ref API_REQUESTS_TOTAL: IntCounter = register_int_counter!("topems_erp_api_requests_total", "Total number of API requests").expect("Failed to register api_requests counter - check for duplicate metric registrations");
 }
-
-#[derive(OpenApi)]
-#[openapi(
-    tags(
-        (name = "ERP", description = "企业资源计划系统 API"),
-        (name = "Health", description = "健康检查接口"),
-        (name = "Metrics", description = "服务指标接口"),
-        (name = "Assets", description = "资产管理接口"),
-        (name = "Finance", description = "财务管理接口"),
-        (name = "Voucher", description = "凭证管理接口"),
-        (name = "Audit", description = "审计日志接口"),
-        (name = "Dict", description = "数据字典接口"),
-    ),
-    info(
-        title = "TOPEMS-ERP API",
-        version = "1.0.0",
-        description = "TOPEMS 企业资源计划系统 API 文档\n\n## 功能模块\n\n- **资产管理**: 资产的增删改查、状态管理\n- **财务管理**: 科目管理、预算管理、费用管理\n- **凭证管理**: 财务凭证的创建和审核\n- **审计日志**: 操作记录和审计追踪\n- **数据字典**: 系统配置数据管理",
-    ),
-    servers(
-        (url = "http://localhost:8009", description = "本地开发环境"),
-        (url = "http://erp.topems.local", description = "测试环境"),
-        (url = "http://erp.topems.prod", description = "生产环境"),
-    )
-)]
-struct ApiDoc;
 
 #[tokio::main]
 async fn main() -> Result<()> {
@@ -164,6 +141,18 @@ async fn main() -> Result<()> {
         )
         .with_state(api_state.clone());
 
+    let rate_limit_config = RateLimitConfig::new(200, 60)
+        .with_by_user_id(false)
+        .with_by_ip(true);
+    let rate_limiter = Arc::new(RateLimitMiddleware::new(rate_limit_config));
+    let rate_limit_layer = axum::middleware::from_fn({
+        let mw = rate_limiter.clone();
+        move |req, next| {
+            let mw = mw.clone();
+            async move { rate_limit_middleware(mw, req, next).await }
+        }
+    });
+
     let protected_routes = modules::create_routes()
         // Admin middleware
         .layer(axum::middleware::from_fn_with_state(
@@ -174,24 +163,31 @@ async fn main() -> Result<()> {
             api_state.db.clone(),
             rls_middleware,
         ))
+        .layer(rate_limit_layer)
         .with_state(api_state.clone());
 
-    let app = Router::new()
-        .merge(health_router)
-        .nest("/api/erp", protected_routes)
-        .merge(create_api_info_router("topems-erp"))
-        .route(
-            "/api-docs/openapi.json",
-            get(|| async {
-                serde_json::to_string_pretty(&ApiDoc::openapi()).unwrap_or_else(|e| {
+    let app = register_routes_with_legacy_alias(
+        Router::new().merge(health_router),
+        "/api/erp",
+        &["/api/v1/erp"],
+        protected_routes,
+    )
+    .merge(create_api_info_router("topems-erp"))
+    .route(
+        "/api-docs/openapi.json",
+        get(|| async {
+            serde_json::to_string_pretty(&modules::openapi::ErpApiDoc::openapi()).unwrap_or_else(
+                |e| {
                     tracing::error!("Failed to serialize OpenAPI spec: {}", e);
                     "{}".to_string()
-                })
-            }),
-        )
-        .layer(axum::middleware::from_fn(telemetry_middleware))
-        .layer(prometheus_layer)
-        .layer(cors);
+                },
+            )
+        }),
+    )
+    .layer(axum::middleware::from_fn(telemetry_middleware))
+    .layer(axum::middleware::from_fn(request_context_middleware))
+    .layer(prometheus_layer)
+    .layer(cors);
 
     let port = env::var("ERP_PORT")
         .or_else(|_| env::var("SERVER_PORT"))

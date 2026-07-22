@@ -3,14 +3,15 @@ use axum::{
     Json, Router,
 };
 use std::env;
+use std::sync::Arc;
 use tower_cookies::CookieManagerLayer;
 
 use axum_prometheus::PrometheusMetricLayer;
 use prometheus::{default_registry, Gauge};
 use topems_shared::init_service_telemetry;
 use topems_shared::{
-    build_health_response, create_api_info_router, create_cors_layer, ApiResponse, ServiceHealth,
-    TelemetryExt,
+    build_health_response, create_api_info_router, create_cors_layer, rate_limit_middleware,
+    ApiResponse, RateLimitConfig, RateLimitMiddleware, ServiceHealth, TelemetryExt,
 };
 
 mod models;
@@ -64,6 +65,18 @@ async fn main() -> anyhow::Result<()> {
 
     let cors = create_cors_layer();
 
+    let rate_limit_config = RateLimitConfig::new(200, 60)
+        .with_by_user_id(false)
+        .with_by_ip(true);
+    let rate_limiter = Arc::new(RateLimitMiddleware::new(rate_limit_config));
+    let rate_limit_layer = axum::middleware::from_fn({
+        let mw = rate_limiter.clone();
+        move |req, next| {
+            let mw = mw.clone();
+            async move { rate_limit_middleware(mw, req, next).await }
+        }
+    });
+
     let public_routes = Router::new()
         .route("/health", get(health_check))
         .route(
@@ -103,7 +116,8 @@ async fn main() -> anyhow::Result<()> {
         .route("/api/users/roles/{id}", get(modules::role::get_role))
         .route("/api/users/roles/{id}", put(modules::role::update_role))
         .route("/api/users/roles/{id}", delete(modules::role::delete_role))
-        .layer(axum::Extension(pool));
+        .layer(axum::Extension(pool))
+        .layer(rate_limit_layer);
 
     let app = Router::new()
         .merge(public_routes)

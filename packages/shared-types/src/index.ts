@@ -268,3 +268,10 @@ export {
 export type {
   StatusConfig,
 } from './business-status';
+
+// OpenAPI 自动生成类型（从后端 schema 自动生成，消除类型漂移）
+export type {
+  ApiPaths,
+  ApiComponents,
+  ApiOperations,
+} from './generated';

@@ -9,7 +9,8 @@
     "build": "tsup src/index.ts --format cjs,esm --dts",
     "dev": "tsup src/index.ts --format cjs,esm --dts --watch",
     "lint": "eslint . --ext .ts",
-    "lint:fix": "eslint . --ext .ts --fix"
+    "lint:fix": "eslint . --ext .ts --fix",
+    "gen:types": "node ../../scripts/openapi/gen-types.mjs"
   },
   "files": [
     "dist",
@@ -30,6 +31,7 @@
     "@types/node": "^20.0.0",
     "@types/react": "^19.2.17",
     "eslint": "^8.0.0",
+    "openapi-typescript": "^7.13.0",
     "react": "^19.2.7",
     "tsup": "^8.0.0",
     "typescript": "^5.0.0"

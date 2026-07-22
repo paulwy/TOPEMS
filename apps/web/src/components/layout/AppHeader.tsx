@@ -31,6 +31,7 @@ import {
   CheckCheck,
   Trash2,
   Settings,
+  Star,
 } from 'lucide-react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from '@/hooks/useAuth';
@@ -604,6 +605,15 @@ export const AppHeader: React.FC<AppHeaderProps> = ({
                 >
                   <User style={{ width: 18, height: 18, marginRight: 12 }} />
                   个人中心
+                </MenuItem>
+                <MenuItem
+                  onClick={() => {
+                    navigate(DASHBOARD_PATHS.favorites);
+                    handleUserMenuClose();
+                  }}
+                >
+                  <Star style={{ width: 18, height: 18, marginRight: 12 }} />
+                  我的收藏
                 </MenuItem>
                 <MenuItem onClick={handleLogout}>
                   <LogOut style={{ width: 18, height: 18, marginRight: 12 }} />

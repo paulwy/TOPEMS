@@ -26,6 +26,7 @@ reqwest.workspace = true
 rand.workspace = true
 lazy_static.workspace = true
 futures-util.workspace = true
+utoipa.workspace = true
 
 [dev-dependencies]
 tower = "0.5"

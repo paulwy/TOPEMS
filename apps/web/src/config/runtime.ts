@@ -59,11 +59,14 @@ const config: RuntimeConfig = {
     migration: getEnv('VITE_MIGRATION_SERVICE_URL', '/api/core/migration'),
     communication: getEnv('VITE_COMMUNICATION_SERVICE_URL', '/api/core/comm'),
 
-    // === Group 2: 独立进程服务（独立 deployment/port，/api/{svc}/ 开头） ===
+    // === Group 2: 独立进程服务（独立 deployment/port，统一 /api/core/{svc}/v1 格式） ===
     erp: getEnv('VITE_ERP_SERVICE_URL', '/api/erp'),
-    finance: getEnv('VITE_FINANCE_SERVICE_URL', '/api/finance'),
-    doc: getEnv('VITE_DOC_SERVICE_URL', '/api/doc'),
-    ai: getEnv('VITE_AI_SERVICE_URL', '/api/ai'),
+    /** @deprecated Old path /api/finance kept for backward compatibility. Use /api/core/finance/v1. */
+    finance: getEnv('VITE_FINANCE_SERVICE_URL', '/api/core/finance/v1'),
+    /** @deprecated Old path /api/doc kept for backward compatibility. Use /api/core/doc/v1. */
+    doc: getEnv('VITE_DOC_SERVICE_URL', '/api/core/doc/v1'),
+    /** @deprecated Old path /api/ai kept for backward compatibility. Use /api/core/ai/v1. */
+    ai: getEnv('VITE_AI_SERVICE_URL', '/api/core/ai/v1'),
     hrm: getEnv('VITE_HRM_SERVICE_URL', '/api/hrm'),
     pm: getEnv('VITE_PM_SERVICE_URL', '/api/pm'),
     crm: getEnv('VITE_CRM_SERVICE_URL', '/api/crm'),
@@ -77,14 +80,19 @@ const config: RuntimeConfig = {
     qualityAssurance: getEnv('VITE_QUALITY_ASSURANCE_SERVICE_URL', '/api/qms'),
     lims: getEnv('VITE_LIMS_SERVICE_URL', '/api/lims'),
     ehs: getEnv('VITE_EHS_SERVICE_URL', '/api/ehs'),
-    rd: getEnv('VITE_RD_SERVICE_URL', '/api/rd'),
+    /** @deprecated Old path /api/rd kept for backward compatibility. Use /api/core/rd/v1. */
+    rd: getEnv('VITE_RD_SERVICE_URL', '/api/core/rd/v1'),
     bi: getEnv('VITE_BI_SERVICE_URL', '/api/bi'),
+    /** @deprecated Use `bi` instead. analytics is an alias for BI service, kept for backward compatibility. */
     analytics: getEnv('VITE_ANALYTICS_SERVICE_URL', '/api/bi'),
+    /** @deprecated Use `bi` instead. report is a sub-module of BI service, kept for backward compatibility. */
     report: getEnv('VITE_BI_SERVICE_URL', '/api/bi'),
     monitor: getEnv('VITE_MONITOR_SERVICE_URL', '/api/monitor'),
     portal: getEnv('VITE_PORTAL_SERVICE_URL', '/api/portal'),
-    mobile: getEnv('VITE_MOBILE_SERVICE_URL', '/api/mobile'),
-    gis: getEnv('VITE_GIS_SERVICE_URL', '/api/gis'),
+    /** @deprecated Old path /api/mobile kept for backward compatibility. Use /api/core/mobile/v1. */
+    mobile: getEnv('VITE_MOBILE_SERVICE_URL', '/api/core/mobile/v1'),
+    /** @deprecated Old path /api/gis kept for backward compatibility. Use /api/core/gis/v1. */
+    gis: getEnv('VITE_GIS_SERVICE_URL', '/api/core/gis/v1'),
     integration: getEnv('VITE_INTEGRATION_SERVICE_URL', '/api/integration'),
 
     // === 顶层辅助服务 ===

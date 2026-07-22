@@ -7,58 +7,43 @@ use crate::AppState;
 
 pub fn iam_routes(state: &AppState) -> Router<AppState> {
     let read = Router::new()
-        .route("/api/core/iam/users", get(modules::iam::user::list_users))
+        .route("users", get(modules::iam::user::list_users))
+        .route("users/{id}", get(modules::iam::user::get_user))
+        .route("users/me", get(modules::iam::user::get_current_user))
         .route(
-            "/api/core/iam/users/{id}",
-            get(modules::iam::user::get_user),
-        )
-        .route(
-            "/api/core/iam/users/me",
-            get(modules::iam::user::get_current_user),
-        )
-        .route(
-            "/api/core/iam/users/me/preferences",
+            "users/me/preferences",
             get(modules::iam::user::get_preferences),
         )
-        .route("/api/core/iam/roles", get(modules::iam::role::list_roles))
+        .route("roles", get(modules::iam::role::list_roles))
+        .route("roles/{id}", get(modules::iam::role::get_role))
         .route(
-            "/api/core/iam/roles/{id}",
-            get(modules::iam::role::get_role),
-        )
-        .route(
-            "/api/core/iam/permissions",
+            "permissions",
             get(modules::iam::permission::list_permissions),
         )
         .route(
-            "/api/core/iam/user-permissions/{user_id}",
+            "user-permissions/{user_id}",
             get(modules::iam::user_permission::get_user_permissions),
         )
+        .route("positions", get(modules::iam::position::list_positions))
+        .route("positions/{id}", get(modules::iam::position::get_position))
         .route(
-            "/api/core/iam/positions",
-            get(modules::iam::position::list_positions),
-        )
-        .route(
-            "/api/core/iam/positions/{id}",
-            get(modules::iam::position::get_position),
-        )
-        .route(
-            "/api/core/iam/permissions/verify",
+            "permissions/verify",
             post(modules::iam::permission_verify::verify_permission),
         )
         .route(
-            "/api/core/iam/permissions/verify-multiple",
+            "permissions/verify-multiple",
             post(modules::iam::permission_verify::verify_multiple_permissions),
         )
         .route(
-            "/api/core/iam/permissions/my-permissions",
+            "permissions/my-permissions",
             get(modules::iam::permission_verify::get_my_permissions),
         )
         .route(
-            "/api/core/iam/users/{user_id}/positions",
+            "users/{user_id}/positions",
             get(modules::iam::user_position::get_user_positions),
         )
         .route(
-            "/api/core/iam/positions/{position_id}/users",
+            "positions/{position_id}/users",
             get(modules::iam::user_position::get_position_users),
         )
         .layer(axum::middleware::from_fn_with_state(
@@ -67,58 +52,43 @@ pub fn iam_routes(state: &AppState) -> Router<AppState> {
         ));
 
     let write = Router::new()
-        .route("/api/core/iam/users", post(modules::iam::user::create_user))
+        .route("users", post(modules::iam::user::create_user))
+        .route("users/{id}", put(modules::iam::user::update_user))
+        .route("users/{id}/disable", post(modules::iam::user::disable_user))
+        .route("users/{id}/enable", post(modules::iam::user::enable_user))
         .route(
-            "/api/core/iam/users/{id}",
-            put(modules::iam::user::update_user),
-        )
-        .route(
-            "/api/core/iam/users/{id}/disable",
-            post(modules::iam::user::disable_user),
-        )
-        .route(
-            "/api/core/iam/users/{id}/enable",
-            post(modules::iam::user::enable_user),
-        )
-        .route(
-            "/api/core/iam/users/{id}/password",
+            "users/{id}/password",
             put(modules::iam::user::change_password),
         )
         .route(
-            "/api/core/iam/users/me/preferences",
+            "users/me/preferences",
             put(modules::iam::user::update_preferences),
         )
-        .route("/api/core/iam/roles", post(modules::iam::role::create_role))
+        .route("roles", post(modules::iam::role::create_role))
+        .route("roles/{id}", put(modules::iam::role::update_role))
         .route(
-            "/api/core/iam/roles/{id}",
-            put(modules::iam::role::update_role),
-        )
-        .route(
-            "/api/core/iam/user-permissions/{user_id}",
+            "user-permissions/{user_id}",
             put(modules::iam::user_permission::update_user_permissions),
         )
+        .route("positions", post(modules::iam::position::create_position))
         .route(
-            "/api/core/iam/positions",
-            post(modules::iam::position::create_position),
-        )
-        .route(
-            "/api/core/iam/positions/{id}",
+            "positions/{id}",
             put(modules::iam::position::update_position),
         )
         .route(
-            "/api/core/iam/permissions/check-resource",
+            "permissions/check-resource",
             post(modules::iam::permission_verify::check_resource_permission),
         )
         .route(
-            "/api/core/iam/users/{user_id}/positions",
+            "users/{user_id}/positions",
             post(modules::iam::user_position::assign_position),
         )
         .route(
-            "/api/core/iam/users/batch-positions",
+            "users/batch-positions",
             post(modules::iam::user_position::batch_assign_positions),
         )
         .route(
-            "/api/core/iam/users/{user_id}/positions/{position_id}",
+            "users/{user_id}/positions/{position_id}",
             delete(modules::iam::user_position::unassign_position),
         )
         .layer(axum::middleware::from_fn_with_state(
@@ -127,16 +97,10 @@ pub fn iam_routes(state: &AppState) -> Router<AppState> {
         ));
 
     let delete_routes = Router::new()
+        .route("users/{id}", delete(modules::iam::user::delete_user))
+        .route("roles/{id}", delete(modules::iam::role::delete_role))
         .route(
-            "/api/core/iam/users/{id}",
-            delete(modules::iam::user::delete_user),
-        )
-        .route(
-            "/api/core/iam/roles/{id}",
-            delete(modules::iam::role::delete_role),
-        )
-        .route(
-            "/api/core/iam/positions/{id}",
+            "positions/{id}",
             delete(modules::iam::position::delete_position),
         )
         .layer(axum::middleware::from_fn_with_state(

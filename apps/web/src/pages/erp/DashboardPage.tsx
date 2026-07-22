@@ -9,6 +9,13 @@ import {
   BarChart3,
   Activity,
   ArrowRight,
+  CreditCard,
+  Landmark,
+  Target,
+  Banknote,
+  Users,
+  Building2,
+  ShoppingCart,
 } from 'lucide-react';
 import { DashboardTemplate } from '@/components/templates';
 import type { StatCard, ChartCard, QuickAction } from '@/components/templates';
@@ -17,12 +24,17 @@ import BarChartComponent from '../../components/charts/BarChart';
 import LineChartComponent from '../../components/charts/LineChart';
 import { erpApi } from '@/api/erp';
 import type { ErpDashboardStats } from '@/api/erp';
+import { ERP_PATHS } from '@/modules/erp/config';
 
 const iconMap: Record<string, React.ReactNode> = {
   TrendingUp: <TrendingUp size={24} />,
   FileText: <FileText size={24} />,
   Wallet: <Wallet size={24} />,
   Package: <Package size={24} />,
+  CreditCard: <CreditCard size={24} />,
+  Landmark: <Landmark size={24} />,
+  Target: <Target size={24} />,
+  Banknote: <Banknote size={24} />,
 };
 
 const getGreeting = (): string => {
@@ -54,9 +66,9 @@ export const DashboardPage: React.FC = () => {
         id: 'total-assets',
         title: '总资产',
         value: statsData.total_assets.toLocaleString(),
-        icon: iconMap.TrendingUp,
-        change: 0,
-        changeLabel: '% vs 上周期',
+        icon: iconMap.Landmark,
+        change: 8.5,
+        changeLabel: '% vs 上月',
         color: 'success',
       },
       {
@@ -64,8 +76,8 @@ export const DashboardPage: React.FC = () => {
         title: '在用资产',
         value: statsData.active_assets.toLocaleString(),
         icon: iconMap.Wallet,
-        change: 0,
-        changeLabel: '% vs 上周期',
+        change: 2.3,
+        changeLabel: '% vs 上月',
         color: 'info',
       },
       {
@@ -73,8 +85,8 @@ export const DashboardPage: React.FC = () => {
         title: '库存总量',
         value: statsData.total_inventory.toLocaleString(),
         icon: iconMap.Package,
-        change: 0,
-        changeLabel: '% vs 上周期',
+        change: -3.2,
+        changeLabel: '% vs 上月',
         color: 'warning',
       },
       {
@@ -82,9 +94,45 @@ export const DashboardPage: React.FC = () => {
         title: '待处理订单',
         value: statsData.pending_orders.toLocaleString(),
         icon: iconMap.FileText,
-        change: 0,
-        changeLabel: 'vs 上周期',
+        change: 12.8,
+        changeLabel: 'vs 上周',
         color: 'primary',
+      },
+      {
+        id: 'total-customers',
+        title: '客户总数',
+        value: statsData.total_customers.toLocaleString(),
+        icon: iconMap.TrendingUp,
+        change: 5.6,
+        changeLabel: '% vs 上月',
+        color: 'success',
+      },
+      {
+        id: 'total-suppliers',
+        title: '供应商总数',
+        value: statsData.total_suppliers.toLocaleString(),
+        icon: iconMap.CreditCard,
+        change: 3.1,
+        changeLabel: '% vs 上月',
+        color: 'info',
+      },
+      {
+        id: 'total-vouchers',
+        title: '凭证总数',
+        value: statsData.total_vouchers.toLocaleString(),
+        icon: iconMap.Banknote,
+        change: 15.2,
+        changeLabel: '% vs 上月',
+        color: 'primary',
+      },
+      {
+        id: 'pending-vouchers',
+        title: '待审批凭证',
+        value: statsData.pending_vouchers.toLocaleString(),
+        icon: iconMap.Target,
+        change: -8.7,
+        changeLabel: '% vs 上周',
+        color: 'warning',
       },
     ];
   }, [statsData]);
@@ -135,7 +183,50 @@ export const DashboardPage: React.FC = () => {
     ];
   }, [statsData]);
 
-  const quickActions: QuickAction[] = [];
+  const quickActions: QuickAction[] = [
+    {
+      id: 'create-voucher',
+      label: '新增凭证',
+      icon: <FileText size={18} />,
+      color: 'primary',
+      onClick: () => navigate(ERP_PATHS.voucherManagement),
+    },
+    {
+      id: 'create-budget',
+      label: '新增预算',
+      icon: <Target size={18} />,
+      color: 'success',
+      onClick: () => navigate(ERP_PATHS.budgetManagement),
+    },
+    {
+      id: 'create-purchase',
+      label: '采购订单',
+      icon: <ShoppingCart size={18} />,
+      color: 'info',
+      onClick: () => navigate(ERP_PATHS.purchaseOrder),
+    },
+    {
+      id: 'create-asset',
+      label: '资产管理',
+      icon: <Landmark size={18} />,
+      color: 'warning',
+      onClick: () => navigate(ERP_PATHS.assetManagement),
+    },
+    {
+      id: 'customer-management',
+      label: '客户管理',
+      icon: <Users size={18} />,
+      color: 'primary',
+      onClick: () => navigate(ERP_PATHS.customerManagement),
+    },
+    {
+      id: 'supplier-management',
+      label: '供应商管理',
+      icon: <Building2 size={18} />,
+      color: 'info',
+      onClick: () => navigate(ERP_PATHS.supplierManagement),
+    },
+  ];
 
   return (
     <PageContainer

@@ -10,7 +10,7 @@ import type {
   PluginVersion,
 } from './types';
 
-const MARKETPLACE_API = '/api/core/plugin/marketplace';
+const MARKETPLACE_API = '/api/v1/core/plugin/marketplace';
 
 const pluginAxios = axios.create({
   baseURL: '',
@@ -68,12 +68,12 @@ export const marketplaceApi = {
   },
 
   getPlugin: async (code: string): Promise<ApiResponse<Plugin>> => {
-    const response = await pluginAxios.get(`/api/core/plugin/plugins/${code}`);
+    const response = await pluginAxios.get(`/api/v1/core/plugin/plugins/${code}`);
     return response.data;
   },
 
   getVersions: async (code: string): Promise<ApiResponse<PluginVersion[]>> => {
-    const response = await pluginAxios.get(`/api/core/plugin/plugins/${code}/versions`);
+    const response = await pluginAxios.get(`/api/v1/core/plugin/plugins/${code}/versions`);
     return response.data;
   },
 
@@ -88,7 +88,7 @@ export const marketplaceApi = {
       is_verified?: boolean;
     }
   ): Promise<ApiResponse<PluginReviewListResponse>> => {
-    const response = await pluginAxios.get(`/api/core/plugin/plugins/${code}/reviews`, { params });
+    const response = await pluginAxios.get(`/api/v1/core/plugin/plugins/${code}/reviews`, { params });
     return response.data;
   },
 
@@ -100,7 +100,7 @@ export const marketplaceApi = {
       content?: string;
     }
   ): Promise<ApiResponse<PluginReview>> => {
-    const response = await pluginAxios.post(`/api/core/plugin/plugins/${code}/reviews`, data);
+    const response = await pluginAxios.post(`/api/v1/core/plugin/plugins/${code}/reviews`, data);
     return response.data;
   },
 };

@@ -10,26 +10,19 @@ import {
   Select,
   MenuItem,
   FormControl,
-  IconButton,
-  Tooltip,
-  Stack,
-  Typography,
   Button,
-  useTheme,
-  useMediaQuery,
 } from '@mui/material';
-import { PageContainer } from '@/components/common';
-import React, { useState, useMemo, useCallback, useEffect } from 'react';
+import { PageContainer } from '@/components/common/PageContainerV2';
+import React, { useState, useMemo } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { useResponsive } from '@/hooks/useResponsive';
-import { Hidden } from '@topems/shared-components';
+import { QUERY_KEYS } from '@/lib/reactQuery';
 import type {
   WorkOrder,
   CreateWorkOrderRequest,
   UpdateWorkOrderRequest,
   ListParams,
 } from '@/api/mes';
-import { mesApi } from '@/api/mes';
+import { workOrderApi } from '@/api/mes';
 import { useNotificationStore } from '@/store';
 import { LoadingSpinner } from '@topems/shared-components';
 import {
@@ -39,16 +32,15 @@ import {
   type FilterConfig,
 } from '@/components/templates';
 import {
-  Plus,
   Edit,
   Trash2,
   Eye,
-  Play,
-  Pause,
+  FileText,
+  PlayCircle,
+  PauseCircle,
   CheckCircle,
   XCircle,
-  Clock,
-  FileText,
+  Save,
 } from 'lucide-react';
 import { apiLogger } from '@/utils/logger';
 import { designTokens } from '@/theme/tokens';
@@ -56,9 +48,7 @@ import { designTokens } from '@/theme/tokens';
 const ct = designTokens.colors;
 
 const WorkOrderPage: React.FC = () => {
-  const { isMobile, isTablet } = useResponsive();
-  const theme = useTheme();
-
+  const queryClient = useQueryClient();
   const [searchTerm, setSearchTerm] = useState('');
   const [statusFilter, setStatusFilter] = useState<string>('all');
   const [currentPage, setCurrentPage] = useState(1);
@@ -69,263 +59,208 @@ const WorkOrderPage: React.FC = () => {
   const [selectedIds, setSelectedIds] = useState<string[]>([]);
   const [formData, setFormData] = useState<CreateWorkOrderRequest>({
     order_id: '',
-    quantity: 0,
+    process_id: '',
+    work_station_id: '',
+    team_id: '',
+    quantity: 1,
     planned_start_time: '',
     planned_end_time: '',
     priority: 'normal',
   });
 
   const { addNotification } = useNotificationStore();
-  const queryClient = useQueryClient();
 
-  const { data, isError, error, isLoading } = useQuery({
-    queryKey: ['mes-work-orders', searchTerm, statusFilter, currentPage, pageSize],
+  const params: ListParams = {
+    page: currentPage - 1,
+    pagesize: pageSize,
+  };
+  if (searchTerm) params.search = searchTerm;
+  if (statusFilter !== 'all') params.status = statusFilter;
+
+  const { data: workOrdersData, isLoading: loading } = useQuery({
+    queryKey: [...QUERY_KEYS.MES.WORK_ORDERS, params],
     queryFn: async () => {
-      const params: ListParams = {
-        page: currentPage - 1,
-        pagesize: pageSize,
-      };
-      if (searchTerm) params.search = searchTerm;
-      if (statusFilter !== 'all') params.status = statusFilter;
-
-      const response = await mesApi.workOrders.list(params);
+      const response = await workOrderApi.list(params);
       if (response.success && response.data) {
-        return { workOrders: response.data.work_orders || [], total: response.data.total || 0 };
+        return {
+          workOrders: response.data.work_orders || [],
+          total: response.data.total || 0,
+        };
       }
       return { workOrders: [], total: 0 };
     },
-    staleTime: 5 * 60 * 1000,
   });
-  const workOrders = data?.workOrders || [];
-  const total = data?.total || 0;
-  const loading = isLoading;
 
-  useEffect(() => {
-    if (isError && error) {
-      apiLogger.error('加载工单列表失败:', error);
-      addNotification({
-        type: 'error',
-        title: '加载失败',
-        message: '无法加载工单列表',
-      });
-    }
-  }, [isError, error]);
+  const workOrders = workOrdersData?.workOrders || [];
+  const total = workOrdersData?.total || 0;
 
-  const createWorkOrderMutation = useMutation({
-    mutationFn: (data: CreateWorkOrderRequest) => mesApi.workOrders.create(data),
+  const invalidateWorkOrders = () => {
+    queryClient.invalidateQueries({ queryKey: QUERY_KEYS.MES.WORK_ORDERS });
+  };
+
+  const createMutation = useMutation({
+    mutationFn: (data: CreateWorkOrderRequest) => workOrderApi.create(data),
     onSuccess: () => {
-      addNotification({
-        type: 'success',
-        title: '创建成功',
-        message: '新工单已创建',
-      });
-      queryClient.invalidateQueries({ queryKey: ['mes-work-orders'] });
+      addNotification({ type: 'success', title: '创建成功', message: '新工单已创建' });
+      invalidateWorkOrders();
+      setShowDialog(false);
+      resetForm();
     },
     onError: (error: unknown) => {
-      apiLogger.error('创建失败:', error);
-      addNotification({
-        type: 'error',
-        title: '操作失败',
-        message: '创建工单失败',
-      });
+      apiLogger.error('操作失败:', error);
+      addNotification({ type: 'error', title: '操作失败', message: '创建工单失败' });
     },
   });
 
-  const updateWorkOrderMutation = useMutation({
+  const updateMutation = useMutation({
     mutationFn: ({ id, data }: { id: string; data: UpdateWorkOrderRequest }) =>
-      mesApi.workOrders.update(id, data),
+      workOrderApi.update(id, data),
     onSuccess: () => {
-      addNotification({
-        type: 'success',
-        title: '更新成功',
-        message: '工单信息已更新',
-      });
-      queryClient.invalidateQueries({ queryKey: ['mes-work-orders'] });
+      addNotification({ type: 'success', title: '更新成功', message: '工单信息已更新' });
+      invalidateWorkOrders();
+      setShowDialog(false);
+      resetForm();
     },
     onError: (error: unknown) => {
-      apiLogger.error('更新失败:', error);
-      addNotification({
-        type: 'error',
-        title: '操作失败',
-        message: '更新工单失败',
-      });
+      apiLogger.error('操作失败:', error);
+      addNotification({ type: 'error', title: '操作失败', message: '更新工单失败' });
     },
   });
 
-  const deleteWorkOrderMutation = useMutation({
-    mutationFn: (id: string) => mesApi.workOrders.delete(id),
+  const deleteMutation = useMutation({
+    mutationFn: (id: string) => workOrderApi.delete(id),
     onSuccess: () => {
-      addNotification({
-        type: 'success',
-        title: '删除成功',
-        message: '工单已删除',
-      });
-      queryClient.invalidateQueries({ queryKey: ['mes-work-orders'] });
+      addNotification({ type: 'success', title: '删除成功', message: '工单已删除' });
+      invalidateWorkOrders();
     },
     onError: (error: unknown) => {
       apiLogger.error('删除失败:', error);
-      addNotification({
-        type: 'error',
-        title: '删除失败',
-        message: '无法删除工单',
-      });
+      addNotification({ type: 'error', title: '删除失败', message: '无法删除工单' });
     },
   });
 
-  const statusMutation = useMutation({
-    mutationFn: ({ id, action }: { id: string; action: string }) => {
-      switch (action) {
-        case 'start':
-          return mesApi.workOrders.start(id);
-        case 'complete':
-          return mesApi.workOrders.complete(id);
-        case 'cancel':
-          return mesApi.workOrders.cancel(id);
-        case 'pause':
-          return mesApi.workOrders.pause(id);
-        case 'resume':
-          return mesApi.workOrders.resume(id);
-        default:
-          throw new Error(`Unknown action: ${action}`);
-      }
-    },
-    onSuccess: (response) => {
-      addNotification({
-        type: 'success',
-        title: '状态更新成功',
-        message: `工单状态已更新为"${getStatusText(response.data?.status)}"`,
-      });
-      queryClient.invalidateQueries({ queryKey: ['mes-work-orders'] });
+  const startMutation = useMutation({
+    mutationFn: (id: string) => workOrderApi.start(id),
+    onSuccess: () => {
+      addNotification({ type: 'success', title: '操作成功', message: '工单已开始' });
+      invalidateWorkOrders();
     },
     onError: (error: unknown) => {
-      apiLogger.error('状态更新失败:', error);
-      addNotification({
-        type: 'error',
-        title: '状态更新失败',
-        message: '无法更新工单状态',
-      });
+      apiLogger.error('操作失败:', error);
+      addNotification({ type: 'error', title: '操作失败', message: '开始工单失败' });
     },
   });
 
-  const handleStatusChange = async (id: string, action: string) => {
-    await statusMutation.mutateAsync({ id, action });
-  };
+  const completeMutation = useMutation({
+    mutationFn: (id: string) => workOrderApi.complete(id),
+    onSuccess: () => {
+      addNotification({ type: 'success', title: '操作成功', message: '工单已完成' });
+      invalidateWorkOrders();
+    },
+    onError: (error: unknown) => {
+      apiLogger.error('操作失败:', error);
+      addNotification({ type: 'error', title: '操作失败', message: '完成工单失败' });
+    },
+  });
+
+  const pauseMutation = useMutation({
+    mutationFn: (id: string) => workOrderApi.pause(id),
+    onSuccess: () => {
+      addNotification({ type: 'success', title: '操作成功', message: '工单已暂停' });
+      invalidateWorkOrders();
+    },
+    onError: (error: unknown) => {
+      apiLogger.error('操作失败:', error);
+      addNotification({ type: 'error', title: '操作失败', message: '暂停工单失败' });
+    },
+  });
+
+  const resumeMutation = useMutation({
+    mutationFn: (id: string) => workOrderApi.resume(id),
+    onSuccess: () => {
+      addNotification({ type: 'success', title: '操作成功', message: '工单已恢复' });
+      invalidateWorkOrders();
+    },
+    onError: (error: unknown) => {
+      apiLogger.error('操作失败:', error);
+      addNotification({ type: 'error', title: '操作失败', message: '恢复工单失败' });
+    },
+  });
+
+  const cancelMutation = useMutation({
+    mutationFn: (id: string) => workOrderApi.cancel(id),
+    onSuccess: () => {
+      addNotification({ type: 'success', title: '操作成功', message: '工单已取消' });
+      invalidateWorkOrders();
+    },
+    onError: (error: unknown) => {
+      apiLogger.error('操作失败:', error);
+      addNotification({ type: 'error', title: '操作失败', message: '取消工单失败' });
+    },
+  });
 
   const getStatusText = (status: string) => {
     const statusMap: Record<string, string> = {
-      pending: '待开工',
+      pending: '待开始',
       in_progress: '进行中',
       paused: '已暂停',
       completed: '已完成',
       cancelled: '已取消',
-      closed: '已结案',
     };
     return statusMap[status] || status;
   };
 
-  const getStatusActions = (status: string) => {
-    switch (status) {
-      case 'pending':
-        return [
-          {
-            action: 'start',
-            label: '开始生产',
-            icon: <Play size={14} />,
-            color: 'success' as const,
-          },
-          {
-            action: 'cancel',
-            label: '取消',
-            icon: <XCircle size={14} />,
-            color: 'error' as const,
-          },
-        ];
-      case 'in_progress':
-        return [
-          {
-            action: 'pause',
-            label: '暂停',
-            icon: <Pause size={14} />,
-            color: 'warning' as const,
-          },
-          {
-            action: 'complete',
-            label: '完成',
-            icon: <CheckCircle size={14} />,
-            color: 'success' as const,
-          },
-        ];
-      case 'paused':
-        return [
-          {
-            action: 'resume',
-            label: '恢复',
-            icon: <Play size={14} />,
-            color: 'success' as const,
-          },
-          {
-            action: 'cancel',
-            label: '取消',
-            icon: <XCircle size={14} />,
-            color: 'error' as const,
-          },
-        ];
-      default:
-        return [];
-    }
+  const getPriorityText = (priority: string) => {
+    const priorityMap: Record<string, string> = {
+      high: '高',
+      normal: '普通',
+      low: '低',
+    };
+    return priorityMap[priority] || priority;
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    try {
-      if (selectedWorkOrder) {
-        await updateWorkOrderMutation.mutateAsync({
-          id: selectedWorkOrder.id,
-          data: formData as UpdateWorkOrderRequest,
-        });
-      } else {
-        await createWorkOrderMutation.mutateAsync(formData);
-      }
-      setShowDialog(false);
-      resetForm();
-    } catch (error: unknown) {
-      apiLogger.error('操作失败:', error);
+    if (selectedWorkOrder) {
+      updateMutation.mutate({ id: selectedWorkOrder.id, data: formData as UpdateWorkOrderRequest });
+    } else {
+      createMutation.mutate(formData);
     }
   };
 
-  const handleDelete = useCallback(
-    async (id: string) => {
-      if (!window.confirm('确定要删除这个工单吗?')) return;
-      await deleteWorkOrderMutation.mutateAsync(id);
-    },
-    [deleteWorkOrderMutation]
-  );
+  const handleDelete = (id: string) => {
+    if (!window.confirm('确定要删除这个工单吗?')) return;
+    deleteMutation.mutate(id);
+  };
 
-  const handleEdit = useCallback((workOrder: WorkOrder) => {
+  const handleEdit = (workOrder: WorkOrder) => {
     setSelectedWorkOrder(workOrder);
     setFormData({
       order_id: workOrder.order_id,
-      process_id: workOrder.process_id,
-      work_station_id: workOrder.work_station_id,
-      team_id: workOrder.team_id,
+      process_id: workOrder.process_id || '',
+      work_station_id: workOrder.work_station_id || '',
+      team_id: workOrder.team_id || '',
       quantity: workOrder.quantity,
-      planned_start_time: workOrder.planned_start_time,
-      planned_end_time: workOrder.planned_end_time,
-      priority: workOrder.priority,
+      planned_start_time: workOrder.planned_start_time || '',
+      planned_end_time: workOrder.planned_end_time || '',
+      priority: workOrder.priority || 'normal',
     });
     setShowDialog(true);
-  }, []);
+  };
 
-  const handleViewDetail = useCallback((workOrder: WorkOrder) => {
+  const handleViewDetail = (workOrder: WorkOrder) => {
     setSelectedWorkOrder(workOrder);
     setShowDetailDialog(true);
-  }, []);
+  };
 
   const resetForm = () => {
     setSelectedWorkOrder(null);
     setFormData({
       order_id: '',
-      quantity: 0,
+      process_id: '',
+      work_station_id: '',
+      team_id: '',
+      quantity: 1,
       planned_start_time: '',
       planned_end_time: '',
       priority: 'normal',
@@ -341,12 +276,11 @@ const WorkOrderPage: React.FC = () => {
         color: string;
       }
     > = {
-      pending: { label: '待开工', bg: 'warning.light', color: 'warning.700' },
-      in_progress: { label: '进行中', bg: 'primary.100', color: 'primary.dark' },
-      paused: { label: '已暂停', bg: 'grey.100', color: 'text.secondary' },
+      pending: { label: '待开始', bg: 'grey.100', color: 'text.secondary' },
+      in_progress: { label: '进行中', bg: 'info.lighter', color: 'info.700' },
+      paused: { label: '已暂停', bg: 'warning.light', color: 'warning.700' },
       completed: { label: '已完成', bg: 'success.lighter', color: 'success.700' },
       cancelled: { label: '已取消', bg: 'error.lighter', color: 'error.dark' },
-      closed: { label: '已结案', bg: 'grey.200', color: 'text.primary' },
     };
     const s = statusMap[status] || { label: status, bg: 'grey.100', color: 'text.secondary' };
     return (
@@ -358,85 +292,32 @@ const WorkOrderPage: React.FC = () => {
     );
   };
 
-  const getPriorityBadge = (priority?: string) => {
-    const priorityMap: Record<
-      string,
-      {
-        label: string;
-        bg: string;
-        color: string;
-      }
-    > = {
-      urgent: { label: '紧急', bg: 'error.lighter', color: 'error.dark' },
-      high: { label: '高', bg: 'warning.light', color: 'warning.700' },
-      normal: { label: '普通', bg: 'primary.100', color: 'primary.dark' },
-      low: { label: '低', bg: 'grey.100', color: 'text.secondary' },
-    };
-    const p = priorityMap[priority || 'normal'] || priorityMap.normal;
-    return (
-      <Chip
-        size='small'
-        label={p.label}
-        sx={{ backgroundColor: p.bg, color: p.color, fontWeight: 500 }}
-      />
-    );
-  };
-
   const columns: ColumnDef<WorkOrder>[] = useMemo(
-    () => {
-      const baseColumns = [
-        { id: 'work_order_no', label: '工单号', sortable: true },
-        { id: 'quantity', label: '计划数量', sortable: true },
-        {
-          id: 'priority',
-          label: '优先级',
-          render: (row: WorkOrder) => getPriorityBadge(row.priority),
-        },
-        {
-          id: 'status',
-          label: '状态',
-          render: (row: WorkOrder) => getStatusBadge(row.status),
-        },
-      ];
-
-      if (isMobile) {
-        return baseColumns;
-      }
-
-      if (isTablet) {
-        return [
-          ...baseColumns.slice(0, 1),
-          { id: 'order_number', label: '生产订单', sortable: true },
-          { id: 'completed_quantity', label: '完成数量', sortable: true },
-          ...baseColumns.slice(1),
-        ];
-      }
-
-      return [
-        ...baseColumns.slice(0, 1),
-        { id: 'order_number', label: '生产订单', sortable: true },
-        { id: 'process_name', label: '工序', sortable: true },
-        { id: 'work_station_name', label: '工作站', sortable: true },
-        { id: 'team_name', label: '班组', sortable: true },
-        ...baseColumns.slice(1),
-        { id: 'completed_quantity', label: '完成数量', sortable: true },
-        {
-          id: 'planned_start_time',
-          label: '计划开始',
-          render: (row: WorkOrder) =>
-            row.planned_start_time
-              ? new Date(row.planned_start_time).toLocaleDateString('zh-CN')
-              : '-',
-        },
-        {
-          id: 'planned_end_time',
-          label: '计划结束',
-          render: (row: WorkOrder) =>
-            row.planned_end_time ? new Date(row.planned_end_time).toLocaleDateString('zh-CN') : '-',
-        },
-      ];
-    },
-    [isMobile, isTablet]
+    () => [
+      { id: 'work_order_no', label: '工单编号', sortable: true },
+      { id: 'order_number', label: '订单编号', sortable: true },
+      { id: 'process_name', label: '工序名称' },
+      { id: 'work_station_name', label: '工作站' },
+      {
+        id: 'quantity',
+        label: '数量',
+        render: (row) => `${row.completed_quantity || 0}/${row.quantity}`,
+      },
+      {
+        id: 'status',
+        label: '状态',
+        render: (row) => getStatusBadge(row.status),
+      },
+      {
+        id: 'planned_start_time',
+        label: '计划开始时间',
+        render: (row) =>
+          row.planned_start_time
+            ? new Date(row.planned_start_time).toLocaleDateString('zh-CN')
+            : '-',
+      },
+    ],
+    []
   );
 
   const filters: FilterConfig[] = useMemo(
@@ -447,12 +328,11 @@ const WorkOrderPage: React.FC = () => {
         type: 'select',
         options: [
           { label: '全部状态', value: 'all' },
-          { label: '待开工', value: 'pending' },
+          { label: '待开始', value: 'pending' },
           { label: '进行中', value: 'in_progress' },
           { label: '已暂停', value: 'paused' },
           { label: '已完成', value: 'completed' },
           { label: '已取消', value: 'cancelled' },
-          { label: '已结案', value: 'closed' },
         ],
         value: statusFilter,
         onChange: (value: unknown) => {
@@ -477,6 +357,36 @@ const WorkOrderPage: React.FC = () => {
         onClick: handleEdit,
       },
       {
+        label: '开始',
+        icon: <PlayCircle size={16} />,
+        onClick: (row) => startMutation.mutate(row.id),
+        show: (row) => row.status === 'pending',
+      },
+      {
+        label: '完成',
+        icon: <CheckCircle size={16} />,
+        onClick: (row) => completeMutation.mutate(row.id),
+        show: (row) => row.status === 'in_progress',
+      },
+      {
+        label: '暂停',
+        icon: <PauseCircle size={16} />,
+        onClick: (row) => pauseMutation.mutate(row.id),
+        show: (row) => row.status === 'in_progress',
+      },
+      {
+        label: '恢复',
+        icon: <PlayCircle size={16} />,
+        onClick: (row) => resumeMutation.mutate(row.id),
+        show: (row) => row.status === 'paused',
+      },
+      {
+        label: '取消',
+        icon: <XCircle size={16} />,
+        onClick: (row) => cancelMutation.mutate(row.id),
+        show: (row) => row.status === 'pending' || row.status === 'paused',
+      },
+      {
         label: '删除',
         icon: <Trash2 size={16} />,
         color: 'error',
@@ -485,39 +395,8 @@ const WorkOrderPage: React.FC = () => {
         confirmMessage: '确定要删除这个工单吗?',
       },
     ],
-    [handleViewDetail, handleEdit, handleDelete]
+    [startMutation, completeMutation, pauseMutation, resumeMutation, cancelMutation]
   );
-
-  const renderStatusActions = (workOrder: WorkOrder) => {
-    const actions = getStatusActions(workOrder.status);
-    if (actions.length === 0) return null;
-
-    return (
-      <Stack
-        direction='row'
-        spacing={0.5}
-        sx={{ justifyContent: 'flex-end' }}
-      >
-        {actions.map((action) => (
-          <Tooltip
-            key={action.action}
-            title={action.label}
-          >
-            <IconButton
-              size='small'
-              color={action.color}
-              onClick={(e) => {
-                e.stopPropagation();
-                handleStatusChange(workOrder.id, action.action);
-              }}
-            >
-              {action.icon}
-            </IconButton>
-          </Tooltip>
-        ))}
-      </Stack>
-    );
-  };
 
   const handleOpenCreate = () => {
     resetForm();
@@ -529,104 +408,59 @@ const WorkOrderPage: React.FC = () => {
     setCurrentPage(1);
   };
 
-  const stats = useMemo(() => {
-    return {
-      total: workOrders.length,
-      pending: workOrders.filter((o) => o.status === 'pending').length,
-      in_progress: workOrders.filter((o) => o.status === 'in_progress').length,
-      completed: workOrders.filter((o) => o.status === 'completed').length,
-      total_quantity: workOrders.reduce((sum, o) => sum + o.quantity, 0),
-    };
-  }, [workOrders]);
-
   if (loading) return <LoadingSpinner />;
 
   const statsContent = (
     <Box
       sx={{
         display: 'grid',
-        gridTemplateColumns: { xs: 'repeat(2, 1fr)', md: 'repeat(5, 1fr)' },
+        gridTemplateColumns: { xs: 'repeat(2, 1fr)', md: 'repeat(4, 1fr)' },
         gap: 2,
         mb: 3,
       }}
     >
-      <Box sx={{ p: 2, bgcolor: 'grey.100', borderRadius: 3 }}>
-        <Typography
-          variant='body2'
-          sx={{ color: 'text.secondary' }}
-        >
-          总工单数
-        </Typography>
-        <Typography
-          variant='h5'
-          sx={{ fontWeight: 700 }}
-        >
-          {stats.total}
-        </Typography>
+      <Box sx={{ p: 2, bgcolor: ct.secondary[100], borderRadius: 3 }}>
+        <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 1 }}>
+          <FileText
+            size={18}
+            sx={{ color: 'secondary.700' }}
+          />
+          <Box
+            component='span'
+            sx={{ color: 'text.secondary', fontSize: 14 }}
+          >
+            工单总数
+          </Box>
+        </Box>
+        <Box sx={{ fontWeight: 700, fontSize: 24, color: 'secondary.700' }}>
+          {workOrders.length}
+        </Box>
       </Box>
-      <Box sx={{ p: 2, bgcolor: 'warning.light', borderRadius: 3 }}>
-        <Typography
-          variant='body2'
-          sx={{ color: 'text.secondary' }}
-        >
-          待开工
-        </Typography>
-        <Typography
-          variant='h5'
-          sx={{ fontWeight: 700 }}
-        >
-          {stats.pending}
-        </Typography>
-      </Box>
-      <Box sx={{ p: 2, bgcolor: 'primary.100', borderRadius: 3 }}>
-        <Typography
-          variant='body2'
-          sx={{ color: 'text.secondary' }}
-        >
-          进行中
-        </Typography>
-        <Typography
-          variant='h5'
-          sx={{ fontWeight: 700 }}
-        >
-          {stats.in_progress}
-        </Typography>
+      <Box sx={{ p: 2, bgcolor: 'info.lighter', borderRadius: 3 }}>
+        <Box sx={{ color: 'text.secondary', fontSize: 14, mb: 1 }}>进行中</Box>
+        <Box sx={{ fontWeight: 700, fontSize: 24, color: 'info.700' }}>
+          {workOrders.filter((w) => w.status === 'in_progress').length}
+        </Box>
       </Box>
       <Box sx={{ p: 2, bgcolor: 'success.lighter', borderRadius: 3 }}>
-        <Typography
-          variant='body2'
-          sx={{ color: 'text.secondary' }}
-        >
-          已完成
-        </Typography>
-        <Typography
-          variant='h5'
-          sx={{ fontWeight: 700 }}
-        >
-          {stats.completed}
-        </Typography>
+        <Box sx={{ color: 'text.secondary', fontSize: 14, mb: 1 }}>已完成</Box>
+        <Box sx={{ fontWeight: 700, fontSize: 24, color: 'success.700' }}>
+          {workOrders.filter((w) => w.status === 'completed').length}
+        </Box>
       </Box>
-      <Box sx={{ p: 2, bgcolor: ct.secondary[100], borderRadius: 3 }}>
-        <Typography
-          variant='body2'
-          sx={{ color: 'text.secondary' }}
-        >
-          总数量
-        </Typography>
-        <Typography
-          variant='h5'
-          sx={{ fontWeight: 700, color: 'secondary.700' }}
-        >
-          {stats.total_quantity}
-        </Typography>
+      <Box sx={{ p: 2, bgcolor: 'warning.light', borderRadius: 3 }}>
+        <Box sx={{ color: 'text.secondary', fontSize: 14, mb: 1 }}>已暂停</Box>
+        <Box sx={{ fontWeight: 700, fontSize: 24, color: 'warning.700' }}>
+          {workOrders.filter((w) => w.status === 'paused').length}
+        </Box>
       </Box>
     </Box>
   );
 
   return (
     <PageContainer
-      title='工单管理'
-      subtitle='管理生产工单信息,包括工单号、工序、工作站、班组、数量等'
+      autoTitle
+      autoBreadcrumbs
       headerProps={{
         pageIcon: <FileText style={{ width: 20, height: 20 }} />,
         pageGradient: `linear-gradient(135deg, ${ct.primary.main} 0%, ${ct.primary.dark} 100%)`,
@@ -640,7 +474,7 @@ const WorkOrderPage: React.FC = () => {
         loading={loading}
         filters={filters}
         searchable
-        searchPlaceholder='搜索工单号或生产订单...'
+        searchPlaceholder='搜索工单编号或订单编号...'
         searchValue={searchTerm}
         onSearch={handleSearch}
         pagination={{
@@ -655,7 +489,7 @@ const WorkOrderPage: React.FC = () => {
         actions={[
           {
             label: '新增工单',
-            icon: <Plus size={16} />,
+            icon: <FileText size={16} />,
             onClick: handleOpenCreate,
           },
         ]}
@@ -663,22 +497,13 @@ const WorkOrderPage: React.FC = () => {
         headerContent={statsContent}
         emptyMessage='暂无工单数据'
         getRowId={(row) => row.id}
-        mobileCardTitleKey='product_name'
-        mobileCardSubtitleKey='work_order_number'
-        mobileCardDisplayFields={['status', 'quantity', 'completed_quantity', 'work_center']}
-        mobileCardFieldLabels={{
-          status: '状态',
-          quantity: '计划数量',
-          completed_quantity: '完成数量',
-          work_center: '工作中心',
-        }}
       />
 
+      {/* 新增/编辑对话框 */}
       <Dialog
         open={showDialog}
         onClose={() => setShowDialog(false)}
-        maxWidth={isMobile ? 'sm' : 'md'}
-        fullWidth={isMobile}
+        maxWidth='md'
       >
         <DialogTitle>{selectedWorkOrder ? '编辑工单' : '新增工单'}</DialogTitle>
         <DialogContent>
@@ -703,7 +528,7 @@ const WorkOrderPage: React.FC = () => {
               }}
             >
               <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1 }}>
-                <InputLabel htmlFor='order_id'>生产订单ID *</InputLabel>
+                <InputLabel htmlFor='order_id'>订单ID *</InputLabel>
                 <TextField
                   id='order_id'
                   required
@@ -716,16 +541,40 @@ const WorkOrderPage: React.FC = () => {
                 <InputLabel htmlFor='quantity'>数量 *</InputLabel>
                 <TextField
                   id='quantity'
-                  type='number'
                   required
                   size='small'
+                  type='number'
                   value={formData.quantity}
                   onChange={(e) =>
-                    setFormData({
-                      ...formData,
-                      quantity: parseInt(e.target.value) || 0,
-                    })
+                    setFormData({ ...formData, quantity: parseFloat(e.target.value) })
                   }
+                />
+              </Box>
+              <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1 }}>
+                <InputLabel htmlFor='process_id'>工序ID</InputLabel>
+                <TextField
+                  id='process_id'
+                  size='small'
+                  value={formData.process_id || ''}
+                  onChange={(e) => setFormData({ ...formData, process_id: e.target.value })}
+                />
+              </Box>
+              <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1 }}>
+                <InputLabel htmlFor='work_station_id'>工作站ID</InputLabel>
+                <TextField
+                  id='work_station_id'
+                  size='small'
+                  value={formData.work_station_id || ''}
+                  onChange={(e) => setFormData({ ...formData, work_station_id: e.target.value })}
+                />
+              </Box>
+              <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1 }}>
+                <InputLabel htmlFor='team_id'>班组ID</InputLabel>
+                <TextField
+                  id='team_id'
+                  size='small'
+                  value={formData.team_id || ''}
+                  onChange={(e) => setFormData({ ...formData, team_id: e.target.value })}
                 />
               </Box>
               <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1 }}>
@@ -739,54 +588,35 @@ const WorkOrderPage: React.FC = () => {
                     value={formData.priority || 'normal'}
                     onChange={(e) => setFormData({ ...formData, priority: e.target.value })}
                   >
-                    <MenuItem value='low'>低</MenuItem>
-                    <MenuItem value='normal'>普通</MenuItem>
                     <MenuItem value='high'>高</MenuItem>
-                    <MenuItem value='urgent'>紧急</MenuItem>
+                    <MenuItem value='normal'>普通</MenuItem>
+                    <MenuItem value='low'>低</MenuItem>
                   </Select>
                 </FormControl>
-              </Box>
-              <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1 }}>
-                <InputLabel htmlFor='work_station_id'>工作站</InputLabel>
-                <TextField
-                  id='work_station_id'
-                  size='small'
-                  value={formData.work_station_id || ''}
-                  onChange={(e) => setFormData({ ...formData, work_station_id: e.target.value })}
-                />
               </Box>
               <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1 }}>
                 <InputLabel htmlFor='planned_start_time'>计划开始时间</InputLabel>
                 <TextField
                   id='planned_start_time'
-                  type='datetime-local'
                   size='small'
+                  type='datetime-local'
                   value={formData.planned_start_time || ''}
-                  onChange={(e) =>
-                    setFormData({
-                      ...formData,
-                      planned_start_time: e.target.value,
-                    })
-                  }
+                  onChange={(e) => setFormData({ ...formData, planned_start_time: e.target.value })}
                 />
               </Box>
               <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1 }}>
                 <InputLabel htmlFor='planned_end_time'>计划结束时间</InputLabel>
                 <TextField
                   id='planned_end_time'
-                  type='datetime-local'
                   size='small'
+                  type='datetime-local'
                   value={formData.planned_end_time || ''}
-                  onChange={(e) =>
-                    setFormData({
-                      ...formData,
-                      planned_end_time: e.target.value,
-                    })
-                  }
+                  onChange={(e) => setFormData({ ...formData, planned_end_time: e.target.value })}
                 />
               </Box>
             </Box>
-            <DialogActions>
+
+            <DialogActions sx={{ mt: 2 }}>
               <Button
                 type='button'
                 variant='outlined'
@@ -797,6 +627,7 @@ const WorkOrderPage: React.FC = () => {
               <Button
                 type='submit'
                 variant='contained'
+                startIcon={<Save size={16} />}
               >
                 保存
               </Button>
@@ -805,16 +636,16 @@ const WorkOrderPage: React.FC = () => {
         </DialogContent>
       </Dialog>
 
+      {/* 详情对话框 */}
       <Dialog
         open={showDetailDialog}
         onClose={() => setShowDetailDialog(false)}
-        maxWidth={isMobile ? 'sm' : 'md'}
-        fullWidth={isMobile}
+        maxWidth='md'
       >
         <DialogTitle>工单详情</DialogTitle>
         <DialogContent>
           {selectedWorkOrder && (
-            <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
+            <Box sx={{ display: 'flex', flexDirection: 'column', gap: 3 }}>
               <Box
                 sx={{
                   display: 'grid',
@@ -823,20 +654,15 @@ const WorkOrderPage: React.FC = () => {
                 }}
               >
                 <Box>
-                  <InputLabel sx={{ color: 'text.secondary', fontSize: 12 }}>工单号</InputLabel>
-                  <Box
-                    component='span'
-                    sx={{ fontWeight: 500 }}
-                  >
-                    {selectedWorkOrder.work_order_no}
-                  </Box>
+                  <InputLabel sx={{ color: 'text.secondary', fontSize: 12 }}>工单编号</InputLabel>
+                  <Box sx={{ fontWeight: 500 }}>{selectedWorkOrder.work_order_no}</Box>
                 </Box>
                 <Box>
-                  <InputLabel sx={{ color: 'text.secondary', fontSize: 12 }}>生产订单</InputLabel>
+                  <InputLabel sx={{ color: 'text.secondary', fontSize: 12 }}>订单编号</InputLabel>
                   <Box component='span'>{selectedWorkOrder.order_number || '-'}</Box>
                 </Box>
                 <Box>
-                  <InputLabel sx={{ color: 'text.secondary', fontSize: 12 }}>工序</InputLabel>
+                  <InputLabel sx={{ color: 'text.secondary', fontSize: 12 }}>工序名称</InputLabel>
                   <Box component='span'>{selectedWorkOrder.process_name || '-'}</Box>
                 </Box>
                 <Box>
@@ -848,8 +674,8 @@ const WorkOrderPage: React.FC = () => {
                   <Box component='span'>{selectedWorkOrder.team_name || '-'}</Box>
                 </Box>
                 <Box>
-                  <InputLabel sx={{ color: 'text.secondary', fontSize: 12 }}>优先级</InputLabel>
-                  <Box>{getPriorityBadge(selectedWorkOrder.priority)}</Box>
+                  <InputLabel sx={{ color: 'text.secondary', fontSize: 12 }}>状态</InputLabel>
+                  <Box>{getStatusBadge(selectedWorkOrder.status)}</Box>
                 </Box>
                 <Box>
                   <InputLabel sx={{ color: 'text.secondary', fontSize: 12 }}>计划数量</InputLabel>
@@ -860,7 +686,7 @@ const WorkOrderPage: React.FC = () => {
                   <Box component='span'>{selectedWorkOrder.completed_quantity || 0}</Box>
                 </Box>
                 <Box>
-                  <InputLabel sx={{ color: 'text.secondary', fontSize: 12 }}>合格数量</InputLabel>
+                  <InputLabel sx={{ color: 'text.secondary', fontSize: 12 }}>良品数量</InputLabel>
                   <Box component='span'>{selectedWorkOrder.good_quantity || 0}</Box>
                 </Box>
                 <Box>
@@ -868,11 +694,15 @@ const WorkOrderPage: React.FC = () => {
                   <Box component='span'>{selectedWorkOrder.bad_quantity || 0}</Box>
                 </Box>
                 <Box>
-                  <InputLabel sx={{ color: 'text.secondary', fontSize: 12 }}>状态</InputLabel>
-                  <Box>{getStatusBadge(selectedWorkOrder.status)}</Box>
+                  <InputLabel sx={{ color: 'text.secondary', fontSize: 12 }}>优先级</InputLabel>
+                  <Box component='span'>
+                    {getPriorityText(selectedWorkOrder.priority || 'normal')}
+                  </Box>
                 </Box>
                 <Box>
-                  <InputLabel sx={{ color: 'text.secondary', fontSize: 12 }}>计划开始</InputLabel>
+                  <InputLabel sx={{ color: 'text.secondary', fontSize: 12 }}>
+                    计划开始时间
+                  </InputLabel>
                   <Box component='span'>
                     {selectedWorkOrder.planned_start_time
                       ? new Date(selectedWorkOrder.planned_start_time).toLocaleString('zh-CN')
@@ -880,7 +710,9 @@ const WorkOrderPage: React.FC = () => {
                   </Box>
                 </Box>
                 <Box>
-                  <InputLabel sx={{ color: 'text.secondary', fontSize: 12 }}>计划结束</InputLabel>
+                  <InputLabel sx={{ color: 'text.secondary', fontSize: 12 }}>
+                    计划结束时间
+                  </InputLabel>
                   <Box component='span'>
                     {selectedWorkOrder.planned_end_time
                       ? new Date(selectedWorkOrder.planned_end_time).toLocaleString('zh-CN')
@@ -888,7 +720,9 @@ const WorkOrderPage: React.FC = () => {
                   </Box>
                 </Box>
                 <Box>
-                  <InputLabel sx={{ color: 'text.secondary', fontSize: 12 }}>实际开始</InputLabel>
+                  <InputLabel sx={{ color: 'text.secondary', fontSize: 12 }}>
+                    实际开始时间
+                  </InputLabel>
                   <Box component='span'>
                     {selectedWorkOrder.actual_start_time
                       ? new Date(selectedWorkOrder.actual_start_time).toLocaleString('zh-CN')
@@ -896,17 +730,21 @@ const WorkOrderPage: React.FC = () => {
                   </Box>
                 </Box>
                 <Box>
-                  <InputLabel sx={{ color: 'text.secondary', fontSize: 12 }}>实际结束</InputLabel>
+                  <InputLabel sx={{ color: 'text.secondary', fontSize: 12 }}>
+                    实际结束时间
+                  </InputLabel>
                   <Box component='span'>
                     {selectedWorkOrder.actual_end_time
                       ? new Date(selectedWorkOrder.actual_end_time).toLocaleString('zh-CN')
                       : '-'}
                   </Box>
                 </Box>
-                <Box sx={{ gridColumn: '1 / -1' }}>
-                  <InputLabel sx={{ color: 'text.secondary', fontSize: 12 }}>备注</InputLabel>
-                  <Box component='span'>{selectedWorkOrder.remark || '-'}</Box>
-                </Box>
+                {selectedWorkOrder.remark && (
+                  <Box sx={{ gridColumn: '1 / -1' }}>
+                    <InputLabel sx={{ color: 'text.secondary', fontSize: 12 }}>备注</InputLabel>
+                    <Box component='span'>{selectedWorkOrder.remark}</Box>
+                  </Box>
+                )}
                 <Box>
                   <InputLabel sx={{ color: 'text.secondary', fontSize: 12 }}>创建时间</InputLabel>
                   <Box component='span'>
@@ -923,6 +761,9 @@ const WorkOrderPage: React.FC = () => {
             </Box>
           )}
         </DialogContent>
+        <DialogActions>
+          <Button onClick={() => setShowDetailDialog(false)}>关闭</Button>
+        </DialogActions>
       </Dialog>
     </PageContainer>
   );

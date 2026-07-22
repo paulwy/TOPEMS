@@ -58,6 +58,10 @@ pub fn create_routes() -> Router<ApiState> {
         .merge(sales_forecast::create_routes())
         .merge(sales_funnel::create_routes())
         .merge(billing::create_routes())
-        .merge(crm_plugin::create_routes())
         .merge(tag::create_routes())
+}
+
+/// 系统级路由（无需认证，挂载在 app root）
+pub fn create_system_routes() -> Router<ApiState> {
+    Router::new().merge(crm_plugin::create_routes())
 }

@@ -41,6 +41,30 @@ pub struct MobileTask {
 
 #[derive(OpenApi)]
 #[openapi(
+    components(schemas(PatrolRecord, ScanRecord, MobileTask)),
+    tags(
+        (name = "patrol", description = "巡检管理 API"),
+        (name = "scan", description = "扫码管理 API"),
+        (name = "task", description = "任务管理 API"),
+        (name = "device", description = "设备管理 API"),
+        (name = "approval", description = "审批管理 API"),
+        (name = "production", description = "生产管理 API"),
+        (name = "inventory", description = "库存管理 API"),
+        (name = "notification", description = "通知管理 API"),
+    ),
+    info(
+        title = "TOPEMS Mobile API",
+        version = "1.0.0",
+        description = "TOPEMS 移动端 API - 包含巡检、扫码、任务、审批、生产、库存等功能"
+    ),
+    servers(
+        (url = "http://localhost:8064", description = "本地开发环境"),
+    )
+)]
+pub struct MobileApiDoc;
+
+#[derive(OpenApi)]
+#[openapi(
     components(schemas(PatrolRecord)),
     tags((name = "patrol", description = "巡检管理 API")),
     info(title = "TOPEMS Mobile Patrol API", version = "1.0.0", description = "移动巡检 API")

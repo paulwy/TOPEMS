@@ -35,6 +35,7 @@ use topems_shared::{
     BodyLimitMiddleware, CompressionConfig, CompressionMiddleware, SecurityHeadersConfig,
     SecurityHeadersLayer, SimpleHealthConfig, TelemetryExt,
 };
+use utoipa::OpenApi;
 
 pub use shared::*;
 
@@ -106,6 +107,32 @@ impl axum::extract::FromRef<AppState> for std::sync::Arc<AuditLoggerMiddleware> 
     }
 }
 
+#[derive(OpenApi)]
+#[openapi(
+    tags(
+        (name = "IAM", description = "身份与访问管理"),
+        (name = "Flow", description = "工作流"),
+        (name = "File", description = "文件管理"),
+        (name = "Communication", description = "通讯"),
+        (name = "IM", description = "即时消息"),
+        (name = "Notification", description = "通知"),
+        (name = "Master", description = "主数据"),
+        (name = "Migration", description = "数据迁移"),
+        (name = "Plugin", description = "插件管理"),
+        (name = "Search", description = "搜索"),
+        (name = "Health", description = "健康检查"),
+    ),
+    info(
+        title = "TOPEMS-unified-core API",
+        version = "1.0.0",
+        description = "TOPEMS 统一核心服务 - IAM、Flow、File、Communication、IM、Notification、Master 等核心模块",
+    ),
+    servers(
+        (url = "http://localhost:8000", description = "本地开发环境"),
+    )
+)]
+struct ApiDoc;
+
 // ==================== 主入口 ====================
 
 #[tokio::main]
@@ -168,6 +195,12 @@ async fn main() {
     modules::dict::init_database(&pool)
         .await
         .expect("Failed to init dict database");
+    modules::master::handlers::init_mdm_tables(&pool)
+        .await
+        .expect("Failed to init master database");
+    modules::ticket::handlers::init_ticket_tables(&pool)
+        .await
+        .expect("Failed to init ticket database");
     modules::menu::init_database(&pool)
         .await
         .expect("Failed to init menu database");
@@ -326,6 +359,15 @@ async fn main() {
     // outermost layers (telemetry, CORS, prometheus) and the final state.
     let app = routes::create_routes(&state, move || metric_handle.render())
         .with_telemetry()
+        .route(
+            "/api-docs/openapi.json",
+            axum::routing::get(|| async {
+                serde_json::to_string_pretty(&ApiDoc::openapi()).unwrap_or_else(|e| {
+                    tracing::error!("Failed to serialize OpenAPI spec: {}", e);
+                    "{}".to_string()
+                })
+            }),
+        )
         .layer(cors)
         .layer(prometheus_layer)
         .with_state(state);

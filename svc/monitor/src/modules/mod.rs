@@ -7,9 +7,11 @@ use topems_shared::SystemMetrics;
 
 pub mod alert_evaluator;
 pub mod alerts;
+pub mod business_metrics;
 pub mod health_check;
 pub mod metrics;
 pub mod monitor_plugin;
+pub mod slo;
 
 #[derive(Clone)]
 pub struct ApiState {
@@ -37,4 +39,6 @@ pub fn create_routes() -> Router<ApiState> {
         .merge(health_check::create_routes())
         .merge(alerts::create_routes())
         .merge(alert_evaluator::create_routes())
+        .merge(business_metrics::create_routes())
+        .merge(slo::create_routes())
 }

@@ -1,19 +1,19 @@
 /**
- * API 路径构造工具（V9.0 路由统一契约版）
+ * API 路径构造工具（V14.0 版本化路由统一契约版）
  *
  *  权威契约参考：docs/superpowers/plans/2026-07-15-route-unification-contract.md
- *  ┌────────────────────────────────────────────────────────────────────────────┐
- *  │ Group 1 — core 虚拟服务（unified-core:8000 承载） →  /api/core/{svc}/...   │
- *  │ Group 2 — 独立进程服务（各有独立 K8s deployment） →  /api/{svc}/...        │
- *  │ 完全移除默认 /v1 路径段（仅用于兼容旧路径）                                   │
- *  └────────────────────────────────────────────────────────────────────────────┘
+ *  ┌──────────────────────────────────────────────────────────────────────────────┐
+ *  │ Group 1 — core 虚拟服务（unified-core:8000 承载） →  /api/v1/core/{svc}/... │
+ *  │ Group 2 — 独立进程服务（各有独立 K8s deployment） →  /api/v1/{svc}/...      │
+ *  │ 统一版本前缀 /v1（全系统版本策略一致）                                         │
+ *  └──────────────────────────────────────────────────────────────────────────────┘
  */
 
-export const API_VERSION = '';
+export const API_VERSION = 'v1';
 
 /**
- * Group1 核心虚拟服务（K8s ingress `/api/core/*` 转发到 unified-core:8000）
- * 这些服务的路径必须以 `/api/core/{svc}/` 开头。
+ * Group1 核心虚拟服务（K8s ingress `/api/v1/core/*` 转发到 unified-core:8000）
+ * 这些服务的路径必须以 `/api/v1/core/{svc}/` 开头。
  */
 export const GROUP1_CORE_SERVICES = new Set<string>([
   'iam',
@@ -110,13 +110,13 @@ export interface ApiPathOptions {
 
 /**
  * 根据服务归属 Group1/Group2 自动选择正确的前缀
- *   Group1（iam/workflow/file/...） →  /api/core/{svc}/{path}
- *   Group2（erp/hrm/pm/...）       →  /api/{svc}/{path}
+ *   Group1（iam/workflow/file/...） →  /api/v1/core/{svc}/{path}
+ *   Group2（erp/hrm/pm/...）       →  /api/v1/{svc}/{path}
  */
 export function buildApiPath(options: ApiPathOptions): string {
   const { service, path } = options;
   const cleanPath = path.startsWith('/') ? path : `/${path}`;
-  const prefix = GROUP1_CORE_SERVICES.has(service) ? '/api/core' : '/api';
+  const prefix = GROUP1_CORE_SERVICES.has(service) ? '/api/v1/core' : '/api/v1';
   return `${prefix}/${service}${cleanPath}`;
 }
 

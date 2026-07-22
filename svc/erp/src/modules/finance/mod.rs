@@ -43,6 +43,7 @@ mod expenses;
 mod payables;
 mod payments;
 mod periods;
+mod proxy;
 mod receivables;
 mod reconciliation;
 
@@ -55,6 +56,7 @@ pub use expenses::*;
 pub use payables::*;
 pub use payments::*;
 pub use periods::*;
+pub use proxy::*;
 pub use receivables::*;
 pub use reconciliation::*;
 
@@ -85,4 +87,6 @@ pub fn create_routes() -> Router<ApiState> {
             "/payables/{id}",
             get(get_payable).put(update_payable).delete(delete_payable),
         )
+        // V15 Phase 3: 代理到 Finance 服务
+        .merge(proxy::proxy_routes())
 }

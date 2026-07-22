@@ -6,6 +6,8 @@ mod modules;
 mod services;
 mod shared;
 
+use std::sync::Arc;
+
 use crate::shared::AppState;
 
 use axum::{
@@ -19,8 +21,29 @@ use std::net::SocketAddr;
 
 use topems_shared::{
     auth_middleware, create_api_info_router, create_cors_layer, init_telemetry,
-    telemetry_middleware, ApiResponse, AuthState, DependencyHealth, HealthStatus, ServiceHealth,
+    rate_limit_middleware, register_routes_with_legacy_alias, telemetry_middleware, ApiResponse,
+    AuthState, DependencyHealth, HealthStatus, RateLimitConfig, RateLimitMiddleware, ServiceHealth,
 };
+use utoipa::OpenApi;
+
+#[derive(OpenApi)]
+#[openapi(
+    tags(
+        (name = "Document", description = "文档管理"),
+        (name = "Knowledge", description = "知识库"),
+        (name = "Version", description = "版本控制"),
+        (name = "Health", description = "健康检查"),
+    ),
+    info(
+        title = "TOPEMS-doc API",
+        version = "1.0.0",
+        description = "TOPEMS 文档服务 - 文档管理、版本控制、知识库",
+    ),
+    servers(
+        (url = "http://localhost:8012", description = "本地开发环境"),
+    )
+)]
+struct ApiDoc;
 
 #[tokio::main]
 async fn main() -> anyhow::Result<()> {
@@ -82,20 +105,45 @@ async fn main() -> anyhow::Result<()> {
             get(move || async move { metric_handle.render() }),
         );
 
+    let rate_limit_config = RateLimitConfig::new(200, 60)
+        .with_by_user_id(false)
+        .with_by_ip(true);
+    let rate_limiter = Arc::new(RateLimitMiddleware::new(rate_limit_config));
+    let rate_limit_layer = axum::middleware::from_fn({
+        let mw = rate_limiter.clone();
+        move |req, next| {
+            let mw = mw.clone();
+            async move { rate_limit_middleware(mw, req, next).await }
+        }
+    });
+
     let protected_routes = modules::create_routes()
         .layer(axum::middleware::from_fn_with_state(
             auth_state.clone(),
             auth_middleware,
         ))
+        .layer(rate_limit_layer)
         .with_state(state.clone());
 
-    let app = Router::new()
-        .merge(public_routes)
-        .nest("/api/doc", protected_routes)
-        .layer(axum::middleware::from_fn(telemetry_middleware))
-        .layer(cors)
-        .layer(prometheus_layer)
-        .with_state(state);
+    let app = register_routes_with_legacy_alias(
+        Router::new().merge(public_routes),
+        "/api/core/doc/v1",
+        &["/api/v1/doc", "/api/doc"],
+        protected_routes,
+    )
+    .route(
+        "/api-docs/openapi.json",
+        get(|| async {
+            serde_json::to_string_pretty(&ApiDoc::openapi()).unwrap_or_else(|e| {
+                tracing::error!("Failed to serialize OpenAPI spec: {}", e);
+                "{}".to_string()
+            })
+        }),
+    )
+    .layer(axum::middleware::from_fn(telemetry_middleware))
+    .layer(cors)
+    .layer(prometheus_layer)
+    .with_state(state);
 
     let port = std::env::var("DOC_PORT")
         .unwrap_or_else(|_| "8012".to_string())

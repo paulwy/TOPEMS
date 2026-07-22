@@ -8,7 +8,7 @@ import type {
   TenantPlugin,
 } from './types';
 
-const API_BASE = '/api/core/plugin';
+const API_BASE = '/api/v1/core/plugin';
 
 export const pluginApi = {
   listMarketplace: async (): Promise<ApiResponse<Plugin[]>> => {

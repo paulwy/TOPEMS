@@ -15,8 +15,11 @@ mod database;
 mod payment;
 mod payment_workflow;
 mod periods;
+mod reconciliation;
 mod report;
 mod voucher;
+
+pub use reconciliation::ReconciliationService;
 
 impl FinanceService {
     pub fn new(db_pool: PgPool, workflow_client: WorkflowClient) -> Self {

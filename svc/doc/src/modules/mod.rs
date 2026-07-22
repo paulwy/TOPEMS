@@ -171,6 +171,18 @@ async fn list_templates(
     }
 }
 
+async fn list_template_categories(
+    State(state): State<AppState>,
+    Extension(claims): Extension<Claims>,
+) -> Json<ApiResponse<Vec<String>>> {
+    let tenant_id = get_tenant_id(&claims);
+    let service = TemplateService::new(state.pool.clone());
+    match service.list_categories(tenant_id).await {
+        Ok(categories) => Json(ApiResponse::success(categories, "查询成功")),
+        Err(e) => Json(ApiResponse::error(500, &e.to_string())),
+    }
+}
+
 async fn get_template(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
@@ -374,6 +386,10 @@ pub fn create_routes() -> Router<AppState> {
         )
         .route("/templates", axum::routing::get(list_templates))
         .route("/templates", axum::routing::post(create_template))
+        .route(
+            "/templates/categories",
+            axum::routing::get(list_template_categories),
+        )
         .route("/templates/{template_id}", axum::routing::get(get_template))
         .route(
             "/templates/{template_id}",

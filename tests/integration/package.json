@@ -1,0 +1,17 @@
+{
+  "name": "@topems/integration-tests",
+  "version": "1.0.0",
+  "description": "TOPEMS API integration test suite (Rust axum services)",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "test": "vitest run",
+    "test:ci": "vitest run --reporter=verbose",
+    "typecheck": "tsc --noEmit"
+  },
+  "devDependencies": {
+    "@types/node": "^20.14.0",
+    "typescript": "^5.4.5",
+    "vitest": "^2.1.9"
+  }
+}

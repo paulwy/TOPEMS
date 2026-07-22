@@ -12,6 +12,8 @@ volumes:
   prometheus_data:
   consul_data:
   jaeger_data:
+  loki_data:
+  otel_collector_data:
 
 services:
   postgres:
@@ -952,8 +954,6 @@ services:
         condition: service_healthy
       doc:
         condition: service_healthy
-      report:
-        condition: service_healthy
       monitor:
         condition: service_healthy
       portal:
@@ -1046,8 +1046,60 @@ services:
       - topems-network
     depends_on:
       - prometheus
+      - loki
     healthcheck:
       test: ["CMD", "curl", "-f", "http://localhost:3000/api/health"]
+      interval: 10s
+      timeout: 5s
+      retries: 3
+      start_period: 10s
+    restart: unless-stopped
+
+  # ================================================
+  # 日志聚合系统 (Loki)
+  # ================================================
+  loki:
+    image: grafana/loki:latest
+    container_name: topems-loki
+    ports:
+      - "3100:3100"
+    volumes:
+      - loki_data:/loki
+      - ./loki/config.yml:/etc/loki/config.yml:ro
+    command: -config.file=/etc/loki/config.yml
+    networks:
+      - topems-network
+    healthcheck:
+      test: ["CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://localhost:3100/ready"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 30s
+    restart: unless-stopped
+
+  # ================================================
+  # OpenTelemetry Collector (遥测数据聚合)
+  # 接收 OTLP 数据，分发到 Jaeger(链路)、Prometheus(指标)、Loki(日志)
+  # ================================================
+  otel-collector:
+    image: otel/opentelemetry-collector-contrib:latest
+    container_name: topems-otel-collector
+    command: ["--config=/etc/otelcol/config.yml"]
+    volumes:
+      - ./otel-collector/config.yml:/etc/otelcol/config.yml:ro
+    ports:
+      - "4317:4317"   # OTLP gRPC
+      - "4318:4318"   # OTLP HTTP
+      - "8888:8888"   # Collector metrics
+    networks:
+      - topems-network
+    depends_on:
+      jaeger:
+        condition: service_healthy
+      loki:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://localhost:8888/metrics"]
       interval: 10s
       timeout: 5s
       retries: 3

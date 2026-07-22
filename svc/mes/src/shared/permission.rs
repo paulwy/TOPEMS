@@ -38,6 +38,7 @@ pub enum MesPermission {
     WipRead,
     WipWrite,
     WipTransfer,
+    ProductionCostRead,
     All,
 }
 
@@ -121,6 +122,9 @@ impl MesPermission {
             }
             MesPermission::WipTransfer => {
                 SharedModulePermission::new(ModuleCode::Mes, PermissionAction::Write)
+            }
+            MesPermission::ProductionCostRead => {
+                SharedModulePermission::new(ModuleCode::Mes, PermissionAction::Read)
             }
             MesPermission::All => {
                 SharedModulePermission::new(ModuleCode::Mes, PermissionAction::Admin)

@@ -1,32 +1,7 @@
 import { lazyWithRetry } from '@/routes/utils';
 import type { RouteModuleConfig } from '@/routes/v2/types';
 import type { ModuleNavConfig } from '@/lib/navigation/types';
-
-// ---- 路径常量：唯一真相源 ----
-// 组件中应引用 FINANCE_PATHS.xxx，而非硬编码字符串
-export const FINANCE_PATHS = {
-  root: '/finance',
-  dashboard: '/finance/dashboard',
-  ledger: '/finance/ledger',
-  vouchers: '/finance/vouchers',
-  voucherCreate: '/finance/vouchers/create',
-  voucherDetail: '/finance/vouchers/:id',
-  receivablePayable: '/finance/receivable-payable',
-  receipts: '/finance/receipts',
-  payments: '/finance/payments',
-  approvalConfig: '/finance/approval-config',
-  invoices: '/finance/invoices',
-  tax: '/finance/tax',
-  expense: '/finance/expense',
-  cost: '/finance/cost',
-  assets: '/finance/assets',
-  budget: '/finance/budget',
-  budgetDetail: '/finance/budget-detail',
-  openingBalance: '/finance/opening-balance',
-  consolidation: '/finance/consolidation',
-  consolidationReports: '/finance/consolidation-reports',
-  reports: '/finance/reports',
-} as const;
+import { FINANCE_PATHS } from './paths';
 
 // ---- 路由配置（供路由系统使用） ----
 export const financeModuleConfig: RouteModuleConfig = {
@@ -493,3 +468,5 @@ export const financeNavConfig: ModuleNavConfig = {
     },
   ],
 };
+
+export { FINANCE_PATHS } from './paths';

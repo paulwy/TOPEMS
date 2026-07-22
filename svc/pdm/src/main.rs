@@ -22,20 +22,44 @@ mod shared;
 
 use std::env;
 use std::net::SocketAddr;
+use std::sync::Arc;
 
 use axum::{extract::State, routing::get, Json, Router};
 use axum_prometheus::PrometheusMetricLayer;
 use sqlx::PgPool;
 
 use topems_shared::{
-    auth_middleware, create_cors_layer, get_api_info_handler, init_telemetry, rls_middleware,
-    simple_health_check, telemetry_middleware, ApiResponse, AuthState, ServiceHealth,
-    SimpleHealthConfig,
+    auth_middleware, create_cors_layer, get_api_info_handler, init_telemetry,
+    rate_limit_middleware, register_routes_with_legacy_alias, rls_middleware, simple_health_check,
+    telemetry_middleware, ApiResponse, AuthState, RateLimitConfig, RateLimitMiddleware,
+    ServiceHealth, SimpleHealthConfig,
 };
+use utoipa::OpenApi;
 
 // ==================== 应用状态 ====================
 
 pub use shared::AppState;
+
+#[derive(OpenApi)]
+#[openapi(
+    tags(
+        (name = "PDM", description = "产品数据管理"),
+        (name = "BOM", description = "BOM管理"),
+        (name = "Engineering", description = "工程管理"),
+        (name = "Change", description = "工程变更"),
+        (name = "Document", description = "文档管理"),
+        (name = "Health", description = "健康检查"),
+    ),
+    info(
+        title = "TOPEMS-pdm API",
+        version = "1.0.0",
+        description = "TOPEMS 产品数据管理服务 - BOM管理、工程变更、文档管理",
+    ),
+    servers(
+        (url = "http://localhost:8022", description = "本地开发环境"),
+    )
+)]
+struct ApiDoc;
 
 // ==================== 主入口 ====================
 
@@ -104,6 +128,18 @@ async fn main() {
             get(move || async move { metric_handle.render() }),
         );
 
+    let rate_limit_config = RateLimitConfig::new(200, 60)
+        .with_by_user_id(false)
+        .with_by_ip(true);
+    let rate_limiter = Arc::new(RateLimitMiddleware::new(rate_limit_config));
+    let rate_limit_layer = axum::middleware::from_fn({
+        let mw = rate_limiter.clone();
+        move |req, next| {
+            let mw = mw.clone();
+            async move { rate_limit_middleware(mw, req, next).await }
+        }
+    });
+
     // Protected routes (auth required)
     let protected_routes = Router::new()
         .merge(modules::create_api_routes())
@@ -117,15 +153,28 @@ async fn main() {
         .layer(axum::middleware::from_fn_with_state(
             state.pool.clone(),
             rls_middleware,
-        ));
+        ))
+        .layer(rate_limit_layer);
 
-    let app = Router::new()
-        .merge(public_routes)
-        .nest("/api/pdm", protected_routes)
-        .layer(axum::middleware::from_fn(telemetry_middleware))
-        .layer(cors)
-        .layer(prometheus_layer)
-        .with_state(state);
+    let app = register_routes_with_legacy_alias(
+        Router::new().merge(public_routes),
+        "/api/pdm",
+        &["/api/v1/pdm"],
+        protected_routes,
+    )
+    .route(
+        "/api-docs/openapi.json",
+        get(|| async {
+            serde_json::to_string_pretty(&ApiDoc::openapi()).unwrap_or_else(|e| {
+                tracing::error!("Failed to serialize OpenAPI spec: {}", e);
+                "{}".to_string()
+            })
+        }),
+    )
+    .layer(axum::middleware::from_fn(telemetry_middleware))
+    .layer(cors)
+    .layer(prometheus_layer)
+    .with_state(state);
 
     let port = std::env::var("PDM_PORT")
         .unwrap_or_else(|_| "8031".to_string())

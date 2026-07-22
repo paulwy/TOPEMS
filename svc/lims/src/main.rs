@@ -24,6 +24,7 @@ pub mod modules;
 pub mod services;
 
 use std::net::SocketAddr;
+use std::sync::Arc;
 
 use axum::{
     extract::State,
@@ -35,11 +36,34 @@ use sqlx::PgPool;
 
 use topems_shared::{
     auth_middleware, create_cors_layer, create_database_pool, get_api_info_handler, init_telemetry,
-    rls_middleware, simple_health_check, telemetry_middleware, ApiResponse, AuthState,
-    DatabaseConfig, ServiceHealth, SimpleHealthConfig,
+    rate_limit_middleware, register_routes_with_legacy_alias, rls_middleware, simple_health_check,
+    telemetry_middleware, ApiResponse, AuthState, DatabaseConfig, RateLimitConfig,
+    RateLimitMiddleware, ServiceHealth, SimpleHealthConfig,
 };
+use utoipa::OpenApi;
 
 pub use shared::*;
+
+#[derive(OpenApi)]
+#[openapi(
+    tags(
+        (name = "LIMS", description = "实验室信息管理"),
+        (name = "Sample", description = "样品管理"),
+        (name = "Instrument", description = "仪器管理"),
+        (name = "Test", description = "检测管理"),
+        (name = "Report", description = "检测报告"),
+        (name = "Health", description = "健康检查"),
+    ),
+    info(
+        title = "TOPEMS-lims API",
+        version = "1.0.0",
+        description = "TOPEMS 实验室信息管理服务 - 样品管理、仪器管理、检测报告",
+    ),
+    servers(
+        (url = "http://localhost:8027", description = "本地开发环境"),
+    )
+)]
+struct ApiDoc;
 
 // ==================== 主入口 ====================
 
@@ -111,131 +135,20 @@ async fn main() -> anyhow::Result<()> {
             get(move || async move { metric_handle.render() }),
         );
 
+    let rate_limit_config = RateLimitConfig::new(200, 60)
+        .with_by_user_id(false)
+        .with_by_ip(true);
+    let rate_limiter = Arc::new(RateLimitMiddleware::new(rate_limit_config));
+    let rate_limit_layer = axum::middleware::from_fn({
+        let mw = rate_limiter.clone();
+        move |req, next| {
+            let mw = mw.clone();
+            async move { rate_limit_middleware(mw, req, next).await }
+        }
+    });
+
     let protected_routes = Router::new()
         .merge(modules::create_api_routes())
-        // Sample
-        .route(
-            "/samples",
-            get(modules::sample::list_samples).post(modules::sample::register_sample),
-        )
-        .route(
-            "/samples/{id}",
-            get(modules::sample::get_sample)
-                .put(modules::sample::update_sample)
-                .delete(modules::sample::delete_sample),
-        )
-        .route(
-            "/samples/{id}/lifecycle",
-            get(modules::sample::get_sample_lifecycle),
-        )
-        .route(
-            "/samples/lifecycle",
-            post(modules::sample::record_lifecycle_event),
-        )
-        .route(
-            "/samples/{id}/stage/{to_stage}",
-            post(modules::sample::transition_sample_stage),
-        )
-        .route(
-            "/samples/{id}/traceability",
-            get(modules::sample::get_sample_traceability),
-        )
-        .route(
-            "/lifecycle-stages",
-            get(modules::sample::get_lifecycle_stages),
-        )
-        // Instrument
-        .route(
-            "/instruments",
-            get(modules::instrument::list_instruments).post(modules::instrument::create_instrument),
-        )
-        .route(
-            "/instruments/{id}",
-            get(modules::instrument::get_instrument)
-                .put(modules::instrument::update_instrument)
-                .delete(modules::instrument::delete_instrument),
-        )
-        .route(
-            "/instruments/{id}/calibration",
-            post(modules::instrument::calibrate),
-        )
-        // Reagent
-        .route(
-            "/reagents",
-            get(modules::reagent::list_reagents).post(modules::reagent::create_reagent),
-        )
-        .route(
-            "/reagents/{id}",
-            get(modules::reagent::get_reagent)
-                .put(modules::reagent::update_reagent)
-                .delete(modules::reagent::delete_reagent),
-        )
-        // Test Method
-        .route(
-            "/test-methods",
-            get(modules::test_method::list_methods).post(modules::test_method::create_method),
-        )
-        .route(
-            "/test-methods/{id}",
-            get(modules::test_method::get_method)
-                .put(modules::test_method::update_method)
-                .delete(modules::test_method::delete_method),
-        )
-        .route(
-            "/test-methods/{id}/versions",
-            get(modules::test_method::list_method_versions),
-        )
-        .route(
-            "/test-methods/{id}/new-version",
-            post(modules::test_method::create_new_version),
-        )
-        .route(
-            "/method-categories",
-            get(modules::test_method::list_categories).post(modules::test_method::create_category),
-        )
-        .route(
-            "/method-categories/{id}",
-            put(modules::test_method::update_category)
-                .delete(modules::test_method::delete_category),
-        )
-        .route(
-            "/method-validations",
-            get(modules::test_method::list_validations)
-                .post(modules::test_method::create_validation),
-        )
-        // Inspection Task
-        .route(
-            "/tasks",
-            get(modules::inspection_task::list_tasks).post(modules::inspection_task::create_task),
-        )
-        .route(
-            "/tasks/{id}",
-            get(modules::inspection_task::get_task)
-                .put(modules::inspection_task::update_task)
-                .delete(modules::inspection_task::delete_task),
-        )
-        .route(
-            "/tasks/{id}/result",
-            post(modules::inspection_task::submit_result),
-        )
-        // Data Sync
-        .route("/sync-records", get(modules::data_sync::list_sync_records))
-        .route(
-            "/sync-records/{id}",
-            get(modules::data_sync::get_sync_record).delete(modules::data_sync::delete_sync_record),
-        )
-        .route(
-            "/sync-records/{id}/retry",
-            post(modules::data_sync::retry_sync),
-        )
-        .route(
-            "/sync/record-to-qms",
-            post(modules::data_sync::sync_record_to_qms),
-        )
-        .route(
-            "/sync/reagent-to-ehs",
-            post(modules::data_sync::sync_reagent_to_ehs),
-        )
         .layer(axum::middleware::from_fn(
             middleware::tenant::tenant_middleware,
         ))
@@ -246,16 +159,29 @@ async fn main() -> anyhow::Result<()> {
         .layer(axum::middleware::from_fn_with_state(
             state.pool.clone(),
             rls_middleware,
-        ));
+        ))
+        .layer(rate_limit_layer);
 
-    let app = Router::new()
-        .merge(public_routes)
-        .nest("/api/lims", protected_routes)
-        .route("/api/health/detailed", get(detailed_health))
-        .layer(axum::middleware::from_fn(telemetry_middleware))
-        .layer(cors)
-        .layer(prometheus_layer)
-        .with_state(state);
+    let app = register_routes_with_legacy_alias(
+        Router::new().merge(public_routes),
+        "/api/lims",
+        &["/api/v1/lims"],
+        protected_routes,
+    )
+    .route("/api/health/detailed", get(detailed_health))
+    .route(
+        "/api-docs/openapi.json",
+        get(|| async {
+            serde_json::to_string_pretty(&ApiDoc::openapi()).unwrap_or_else(|e| {
+                tracing::error!("Failed to serialize OpenAPI spec: {}", e);
+                "{}".to_string()
+            })
+        }),
+    )
+    .layer(axum::middleware::from_fn(telemetry_middleware))
+    .layer(cors)
+    .layer(prometheus_layer)
+    .with_state(state);
 
     let port = std::env::var("LIMS_PORT")
         .unwrap_or_else(|_| "8051".to_string())

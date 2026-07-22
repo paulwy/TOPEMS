@@ -1,10 +1,1 @@
-pub mod announcement;
-pub mod dashboard;
-pub mod monitoring;
-pub mod navigation;
-pub mod notification;
-pub mod quick_action;
 pub mod service_registry;
-pub mod settings;
-pub mod todo;
-pub mod user;
