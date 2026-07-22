@@ -145,20 +145,26 @@ impl EventSubscriber {
                         )
                     };
 
-                    tokio::spawn(async move {
-                        match tokio::time::timeout(
-                            tokio::time::Duration::from_secs(30),
-                            handler_clone(event_clone.clone()),
-                        )
-                        .await
-                        {
-                            Ok(_) => {}
-                            Err(e) => {
-                                warn!("事件处理超时: {:?}, 事件ID: {}", e, event_clone.event_id);
-                                let _ = dlq_clone.push(event_clone, "处理超时").await;
+                    tokio::spawn(
+                        async move {
+                            match tokio::time::timeout(
+                                tokio::time::Duration::from_secs(30),
+                                handler_clone(event_clone.clone()),
+                            )
+                            .await
+                            {
+                                Ok(_) => {}
+                                Err(e) => {
+                                    warn!(
+                                        "事件处理超时: {:?}, 事件ID: {}",
+                                        e, event_clone.event_id
+                                    );
+                                    let _ = dlq_clone.push(event_clone, "处理超时").await;
+                                }
                             }
                         }
-                    }.instrument(span));
+                        .instrument(span),
+                    );
                 }
             }
         }

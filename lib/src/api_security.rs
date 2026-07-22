@@ -69,16 +69,24 @@ pub async fn etag_middleware(request: Request<Body>, next: Next) -> Response {
             not_modified.status = StatusCode::NOT_MODIFIED;
             // 保留 ETag 头
             if let Ok(etag_header) = HeaderValue::from_str(&etag) {
-                not_modified.headers.insert(HeaderName::from_static("etag"), etag_header);
+                not_modified
+                    .headers
+                    .insert(HeaderName::from_static("etag"), etag_header);
             }
-            not_modified.headers.remove(axum::http::header::CONTENT_LENGTH);
-            not_modified.headers.remove(axum::http::header::CONTENT_TYPE);
+            not_modified
+                .headers
+                .remove(axum::http::header::CONTENT_LENGTH);
+            not_modified
+                .headers
+                .remove(axum::http::header::CONTENT_TYPE);
             return Response::from_parts(not_modified, Body::empty());
         }
     }
 
     if let Ok(etag_header) = HeaderValue::from_str(&etag) {
-        parts.headers.insert(HeaderName::from_static("etag"), etag_header);
+        parts
+            .headers
+            .insert(HeaderName::from_static("etag"), etag_header);
     }
 
     Response::from_parts(parts, Body::from(body_bytes))
@@ -346,9 +354,10 @@ pub fn signature_error_response(verification: SignatureVerification) -> Response
         SignatureVerification::MissingHeader(h) => {
             (StatusCode::BAD_REQUEST, format!("Missing header: {}", h))
         }
-        SignatureVerification::InvalidTimestamp => {
-            (StatusCode::BAD_REQUEST, "Invalid timestamp format".to_string())
-        }
+        SignatureVerification::InvalidTimestamp => (
+            StatusCode::BAD_REQUEST,
+            "Invalid timestamp format".to_string(),
+        ),
         SignatureVerification::TimestampExpired { skew_secs } => (
             StatusCode::REQUEST_TIMEOUT,
             format!("Timestamp expired (skew {}s)", skew_secs),
@@ -465,7 +474,10 @@ mod tests {
             .header("x-user-id", "user-42")
             .header("x-forwarded-for", "192.168.1.100, 10.0.0.1")
             .header("user-agent", "test-agent/1.0")
-            .header("traceparent", "00-0af7651916cd43dd8448eb211c80319c-b7ad6b7169203331-01")
+            .header(
+                "traceparent",
+                "00-0af7651916cd43dd8448eb211c80319c-b7ad6b7169203331-01",
+            )
             .body(Body::empty())
             .unwrap();
 

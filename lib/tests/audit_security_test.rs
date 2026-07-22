@@ -160,8 +160,14 @@ fn test_api_security_constant_time_eq() {
 #[test]
 fn test_api_security_generate_signature() {
     let secret = "test-secret";
-    let signature =
-        generate_request_signature("POST", "/api/v1/orders", b"{\"id\":1}", 1700000000, "nonce-1", secret);
+    let signature = generate_request_signature(
+        "POST",
+        "/api/v1/orders",
+        b"{\"id\":1}",
+        1700000000,
+        "nonce-1",
+        secret,
+    );
     assert_eq!(signature.len(), 64); // SHA-256 hex length
 }
 

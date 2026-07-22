@@ -457,7 +457,9 @@ impl CacheOperationRecorder {
 
 pub mod v28 {
     use crate::cache::{CacheStatistics, InMemoryCache};
-    use crate::observability::{AlertManager, AlertSeverity, AlertRule, SLOManager, SLOMeasurement, SLOType};
+    use crate::observability::{
+        AlertManager, AlertRule, AlertSeverity, SLOManager, SLOMeasurement, SLOType,
+    };
     use chrono::{DateTime, Utc};
     use serde::{Deserialize, Serialize};
     use sha2::Digest;
@@ -662,7 +664,8 @@ pub mod v28 {
                     slow_queries.remove(0);
                 }
 
-                self.trigger_alert(service_name, duration_ms, is_n_plus_one).await;
+                self.trigger_alert(service_name, duration_ms, is_n_plus_one)
+                    .await;
             }
 
             self.track_recent_query(sql).await;
@@ -743,18 +746,9 @@ pub mod v28 {
             }
         }
 
-        pub async fn get_slow_queries(
-            &self,
-            limit: usize,
-            offset: usize,
-        ) -> Vec<SlowQueryRecord> {
+        pub async fn get_slow_queries(&self, limit: usize, offset: usize) -> Vec<SlowQueryRecord> {
             let queries = self.slow_queries.read().await;
-            queries
-                .iter()
-                .skip(offset)
-                .take(limit)
-                .cloned()
-                .collect()
+            queries.iter().skip(offset).take(limit).cloned().collect()
         }
 
         pub async fn get_slow_query_stats(&self) -> SlowQueryStatistics {
@@ -810,7 +804,10 @@ pub mod v28 {
     }
 
     impl PerformanceDashboard {
-        pub fn new(query_cache: Arc<QueryCache>, slow_query_monitor: Arc<SlowQueryMonitor>) -> Self {
+        pub fn new(
+            query_cache: Arc<QueryCache>,
+            slow_query_monitor: Arc<SlowQueryMonitor>,
+        ) -> Self {
             Self {
                 query_cache,
                 slow_query_monitor,
@@ -893,11 +890,19 @@ pub mod v28 {
             let config = QueryCacheConfig::default();
             let cache = QueryCache::new(config);
 
-            cache.set("tenant1:orders:1".to_string(), "data".to_string(), None).await;
-            cache.set("tenant1:orders:2".to_string(), "data".to_string(), None).await;
-            cache.set("tenant1:users:1".to_string(), "data".to_string(), None).await;
+            cache
+                .set("tenant1:orders:1".to_string(), "data".to_string(), None)
+                .await;
+            cache
+                .set("tenant1:orders:2".to_string(), "data".to_string(), None)
+                .await;
+            cache
+                .set("tenant1:users:1".to_string(), "data".to_string(), None)
+                .await;
 
-            cache.register_invalidation_pattern("orders", "tenant1:orders:*").await;
+            cache
+                .register_invalidation_pattern("orders", "tenant1:orders:*")
+                .await;
             let deleted = cache.invalidate_by_table("orders").await;
             assert_eq!(deleted, 2);
 

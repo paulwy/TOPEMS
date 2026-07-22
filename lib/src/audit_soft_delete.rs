@@ -271,11 +271,7 @@ mod tests {
             self.deleted_by = by;
         }
 
-        fn mark_deleted_with_actor(
-            &mut self,
-            when: Option<DateTime<Utc>>,
-            by: Option<String>,
-        ) {
+        fn mark_deleted_with_actor(&mut self, when: Option<DateTime<Utc>>, by: Option<String>) {
             self.deleted_at = when;
             self.deleted_by = by;
         }

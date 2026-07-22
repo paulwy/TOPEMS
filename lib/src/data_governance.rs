@@ -252,7 +252,10 @@ pub enum MaskingStrategy {
     /// 完全掩码：全部替换为固定字符（如 ********）
     FullMask,
     /// 部分掩码：保留部分字符（如 138****1234）
-    PartialMask { visible_prefix: usize, visible_suffix: usize },
+    PartialMask {
+        visible_prefix: usize,
+        visible_suffix: usize,
+    },
     /// 哈希：使用 SHA-256 等算法计算不可逆哈希
     Hash,
     /// 令牌化：使用令牌替换原始值，支持反向还原（需Token Vault）
@@ -285,7 +288,11 @@ pub struct MaskingRule {
 }
 
 impl MaskingRule {
-    pub fn new(name: impl Into<String>, pattern: impl Into<String>, strategy: MaskingStrategy) -> Self {
+    pub fn new(
+        name: impl Into<String>,
+        pattern: impl Into<String>,
+        strategy: MaskingStrategy,
+    ) -> Self {
         Self {
             name: name.into(),
             pattern: pattern.into(),
@@ -474,7 +481,10 @@ impl DataMaskingEngine {
                 format!("hash:{}", hex::encode(hasher.finalize())[..16].to_string())
             }
             MaskingStrategy::Tokenize => {
-                format!("tok:{}", Uuid::new_v4().to_string().split('-').next().unwrap_or(""))
+                format!(
+                    "tok:{}",
+                    Uuid::new_v4().to_string().split('-').next().unwrap_or("")
+                )
             }
             MaskingStrategy::Truncate { max_length } => {
                 let chars: Vec<char> = value.chars().collect();
@@ -573,7 +583,9 @@ impl std::fmt::Display for DataSubjectRight {
             DataSubjectRight::RightToAccess => write!(f, "right_to_access"),
             DataSubjectRight::RightToRectification => write!(f, "right_to_rectification"),
             DataSubjectRight::RightToErasure => write!(f, "right_to_erasure"),
-            DataSubjectRight::RightToRestrictProcessing => write!(f, "right_to_restrict_processing"),
+            DataSubjectRight::RightToRestrictProcessing => {
+                write!(f, "right_to_restrict_processing")
+            }
             DataSubjectRight::RightToDataPortability => write!(f, "right_to_data_portability"),
             DataSubjectRight::RightToObject => write!(f, "right_to_object"),
             DataSubjectRight::RightsRelatedToAutomatedDecisionMaking => {
@@ -703,11 +715,7 @@ impl Default for ComplianceConfig {
             default_due_days: 30,
             auto_approve_access_requests: true,
             mask_exported_data: true,
-            allowed_export_formats: vec![
-                "json".to_string(),
-                "csv".to_string(),
-                "xml".to_string(),
-            ],
+            allowed_export_formats: vec!["json".to_string(), "csv".to_string(), "xml".to_string()],
         }
     }
 }
@@ -801,7 +809,11 @@ impl DataSubjectRightsManager {
     /// 列出已逾期的请求
     pub async fn list_overdue_requests(&self) -> Vec<DsrRequest> {
         let requests = self.requests.read().await;
-        requests.values().filter(|r| r.is_overdue()).cloned().collect()
+        requests
+            .values()
+            .filter(|r| r.is_overdue())
+            .cloned()
+            .collect()
     }
 
     /// 更新请求状态
@@ -829,9 +841,7 @@ impl DataSubjectRightsManager {
         entity_tags: &EntityDataTags,
     ) -> Result<DataExportResult, String> {
         let mut requests = self.requests.write().await;
-        let request = requests
-            .get_mut(&request_id)
-            .ok_or("Request not found")?;
+        let request = requests.get_mut(&request_id).ok_or("Request not found")?;
 
         if request.right_type != DataSubjectRight::RightToAccess
             && request.right_type != DataSubjectRight::RightToDataPortability
@@ -845,8 +855,7 @@ impl DataSubjectRightsManager {
         // 对数据进行脱敏（如配置允许）
         let mut data = raw_data;
         if self.compliance_config.mask_exported_data {
-            self.masking_engine
-                .mask_json(&mut data, entity_tags, "");
+            self.masking_engine.mask_json(&mut data, entity_tags, "");
         }
 
         // 生成校验和
@@ -896,9 +905,7 @@ impl DataSubjectRightsManager {
         deletion_callback: impl FnOnce(&str) -> (usize, usize, Vec<String>),
     ) -> Result<DataErasureResult, String> {
         let mut requests = self.requests.write().await;
-        let request = requests
-            .get_mut(&request_id)
-            .ok_or("Request not found")?;
+        let request = requests.get_mut(&request_id).ok_or("Request not found")?;
 
         if request.right_type != DataSubjectRight::RightToErasure {
             return Err("Invalid right type for erasure processing".to_string());
@@ -1106,10 +1113,7 @@ impl ComplianceAuditor {
     }
 
     /// 查询指定数据主体的所有审计事件
-    pub async fn query_subject_events(
-        &self,
-        subject_id: &str,
-    ) -> Vec<ComplianceAuditEvent> {
+    pub async fn query_subject_events(&self, subject_id: &str) -> Vec<ComplianceAuditEvent> {
         let events = self.events.read().await;
         events
             .iter()
@@ -1119,26 +1123,18 @@ impl ComplianceAuditor {
     }
 
     /// 获取指定实体的访问统计
-    pub async fn entity_access_stats(
-        &self,
-        entity_name: &str,
-        days: i64,
-    ) -> EntityAccessStats {
+    pub async fn entity_access_stats(&self, entity_name: &str, days: i64) -> EntityAccessStats {
         let since = Utc::now() - chrono::Duration::days(days);
         let events = self.events.read().await;
 
         let entity_events: Vec<_> = events
             .iter()
-            .filter(|e| {
-                e.entity_name.as_deref() == Some(entity_name) && e.timestamp >= since
-            })
+            .filter(|e| e.entity_name.as_deref() == Some(entity_name) && e.timestamp >= since)
             .collect();
 
         let total_accesses = entity_events.len();
-        let unique_actors: std::collections::HashSet<_> = entity_events
-            .iter()
-            .map(|e| e.actor_id.clone())
-            .collect();
+        let unique_actors: std::collections::HashSet<_> =
+            entity_events.iter().map(|e| e.actor_id.clone()).collect();
         let unique_subjects: std::collections::HashSet<_> = entity_events
             .iter()
             .filter_map(|e| e.subject_id.clone())
@@ -1146,9 +1142,7 @@ impl ComplianceAuditor {
         let failed_accesses = entity_events.iter().filter(|e| !e.success).count();
         let restricted_accesses = entity_events
             .iter()
-            .filter(|e| {
-                e.classification == Some(DataClassification::Restricted)
-            })
+            .filter(|e| e.classification == Some(DataClassification::Restricted))
             .count();
 
         EntityAccessStats {
@@ -1314,8 +1308,8 @@ impl ComplianceReportGenerator {
         let compliance_score = if summary.total_audit_events == 0 {
             100.0
         } else {
-            let failure_rate = summary.total_failed_events as f64
-                / summary.total_audit_events as f64;
+            let failure_rate =
+                summary.total_failed_events as f64 / summary.total_audit_events as f64;
             let overdue_rate = if summary.total_dsr_requests > 0 {
                 summary.overdue_dsr_requests as f64 / summary.total_dsr_requests as f64
             } else {
@@ -1405,7 +1399,11 @@ impl ClassificationEngine {
                 pattern: Regex::new(r"password|passwd|pwd|密码|密钥|secret|token|api_key").unwrap(),
                 classification: DataClassification::Restricted,
                 confidence: 0.98,
-                keywords: vec!["密码".to_string(), "secret".to_string(), "token".to_string()],
+                keywords: vec![
+                    "密码".to_string(),
+                    "secret".to_string(),
+                    "token".to_string(),
+                ],
             },
             // 姓名
             ClassificationRule {
@@ -1463,7 +1461,11 @@ impl ClassificationEngine {
     }
 
     /// 批量分类实体的所有字段
-    pub fn classify_entity_fields(&self, entity_name: &str, field_names: &[String]) -> EntityDataTags {
+    pub fn classify_entity_fields(
+        &self,
+        entity_name: &str,
+        field_names: &[String],
+    ) -> EntityDataTags {
         let mut tags = EntityDataTags::new(entity_name);
 
         for field in field_names {
@@ -1512,7 +1514,9 @@ mod tests {
 
         assert_eq!(tag.field_path, "user.email");
         assert_eq!(tag.classification, DataClassification::Confidential);
-        assert!(tag.compliance_requirements.contains(&ComplianceRequirement::Gdpr));
+        assert!(tag
+            .compliance_requirements
+            .contains(&ComplianceRequirement::Gdpr));
         assert_eq!(tag.retention_days, Some(365));
         assert!(tag.is_sensitive_pii);
     }
@@ -1618,16 +1622,13 @@ mod tests {
 
     #[test]
     fn test_compliance_event_builder() {
-        let event = ComplianceAuditEvent::new(
-            ComplianceEventType::DataAccess,
-            "tenant_1",
-            "user_123",
-        )
-        .with_subject("subject_456")
-        .with_entity("users")
-        .with_classification(DataClassification::Confidential)
-        .with_compliance(ComplianceRequirement::Gdpr)
-        .with_ip("192.168.1.1");
+        let event =
+            ComplianceAuditEvent::new(ComplianceEventType::DataAccess, "tenant_1", "user_123")
+                .with_subject("subject_456")
+                .with_entity("users")
+                .with_classification(DataClassification::Confidential)
+                .with_compliance(ComplianceRequirement::Gdpr)
+                .with_ip("192.168.1.1");
 
         assert_eq!(event.event_type, ComplianceEventType::DataAccess);
         assert_eq!(event.subject_id, Some("subject_456".to_string()));

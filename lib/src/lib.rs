@@ -3,7 +3,6 @@ pub mod api_security;
 pub mod api_version;
 pub mod audit;
 pub mod audit_soft_delete;
-pub mod performance;
 pub mod auth;
 pub mod backup;
 pub mod cache;
@@ -34,6 +33,7 @@ pub mod monitoring;
 pub mod notification;
 pub mod observability;
 pub mod ollama_client;
+pub mod performance;
 pub mod permission;
 pub mod permission_center;
 pub mod query_optimizer;
@@ -59,9 +59,8 @@ pub mod vector_store;
 pub mod ai_client;
 
 pub use api_version::{
-    api_prefix, create_api_info, create_api_info_router, get_api_info_handler,
-    new_service_prefix, register_routes_with_legacy_alias, versioned_router, ApiInfo,
-    ApiVersionInfo,
+    api_prefix, create_api_info, create_api_info_router, get_api_info_handler, new_service_prefix,
+    register_routes_with_legacy_alias, versioned_router, ApiInfo, ApiVersionInfo,
 };
 pub use audit::{AuditLog, AuditLogQuery, CreateAuditLogRequest};
 pub use auth::{
@@ -92,15 +91,15 @@ pub use config::{
 pub use config_center::{
     ConfigAuditLog, ConfigCenter, ConfigSchema, ConfigType, ConfigVersion, ValidationRule,
 };
+pub use cors::create_cors_layer;
 pub use data_governance::{
     BuiltInMaskingRules, ClassificationEngine, ClassificationRule, ComplianceAuditEvent,
     ComplianceAuditor, ComplianceConfig, ComplianceEventType, ComplianceReport,
     ComplianceReportGenerator, ComplianceReportType, ComplianceRequirement, ComplianceSummary,
     DataClassification, DataErasureResult, DataExportResult, DataMaskingEngine, DataSubject,
-    DataSubjectRight, DataSubjectRightsManager, DataTag, DsrRequest, DsrRequestStatus,
-    DsrSummary, EntityAccessStats, EntityDataTags, MaskingRule, MaskingStrategy,
+    DataSubjectRight, DataSubjectRightsManager, DataTag, DsrRequest, DsrRequestStatus, DsrSummary,
+    EntityAccessStats, EntityDataTags, MaskingRule, MaskingStrategy,
 };
-pub use cors::create_cors_layer;
 pub use database::{
     check_pool_health, create_database_pool, test_database_connection, HealthCheckResult,
     ReadWriteConfig, ReadWritePool,
@@ -112,10 +111,11 @@ pub use event::{
     HrmDepartmentCreatedPayload, HrmDepartmentDeletedPayload, HrmDepartmentUpdatedPayload,
     HrmEmployeeCreatedPayload, HrmEmployeeUpdatedPayload, LimsInspectionAbnormalDetectedPayload,
     LimsInspectionResultSubmittedPayload, LimsSampleRegisteredPayload, MasterDataAction,
-    MasterDataDomain, MasterDataEvent, MasterDataPublisher, MasterDataRef, PermissionChangedPayload,
-    PmProjectCreatedPayload, PmProjectUpdatedPayload, PmTaskCreatedPayload, PmTaskDeletedPayload,
-    PmTaskUpdatedPayload, PositionCreatedPayload, PositionDeletedPayload, PositionUpdatedPayload,
-    QmsCorrectiveActionCreatedPayload, QmsInspectionCompletedPayload,
+    MasterDataDomain, MasterDataEvent, MasterDataPublisher, MasterDataRef,
+    PermissionChangedPayload, PmProjectCreatedPayload, PmProjectUpdatedPayload,
+    PmTaskCreatedPayload, PmTaskDeletedPayload, PmTaskUpdatedPayload, PositionCreatedPayload,
+    PositionDeletedPayload, PositionUpdatedPayload, QmsCorrectiveActionCreatedPayload,
+    QmsInspectionCompletedPayload,
 };
 pub use feature_flag::{
     FeatureCondition, FeatureContext, FeatureFlag, FeatureFlagService, FeatureState,
@@ -129,10 +129,10 @@ pub use health::{
 pub use hrm::{AppState, PaginatedResult, PaginationQuery};
 pub use layers::{can_depend, module_layer, modules_by_layer, Layer};
 pub use logging::{
-    create_log_filter, generate_request_id, generate_span_id, generate_trace_id, get_current_request_id,
-    get_current_trace_id, init_logging, inject_request_context, request_context_middleware,
-    JsonEventFormatter, LogAggregator, LogEntry, LogFormat, LogQuery, LogStats, RequestContext,
-    RequestContextExt, TraceContext,
+    create_log_filter, generate_request_id, generate_span_id, generate_trace_id,
+    get_current_request_id, get_current_trace_id, init_logging, inject_request_context,
+    request_context_middleware, JsonEventFormatter, LogAggregator, LogEntry, LogFormat, LogQuery,
+    LogStats, RequestContext, RequestContextExt, TraceContext,
 };
 pub use messaging::{
     InMemoryMessageBroker, Message, MessageConsumer, MessageProducer, RedisMessageBroker,

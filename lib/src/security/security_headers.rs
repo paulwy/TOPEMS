@@ -354,7 +354,10 @@ mod tests {
         add_security_headers(&mut response, &config);
 
         assert_eq!(
-            response.headers().get("x-frame-options").expect("Expected x-frame-options header"),
+            response
+                .headers()
+                .get("x-frame-options")
+                .expect("Expected x-frame-options header"),
             "ALLOW-FROM https://example.com"
         );
     }

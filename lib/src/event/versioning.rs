@@ -273,12 +273,16 @@ mod tests {
     fn test_version_registry_register() {
         let registry = EventVersionRegistry::new();
         let entry = make_entry("user.created", EventVersion::v1());
-        registry.register(entry).expect("Failed to register event version");
+        registry
+            .register(entry)
+            .expect("Failed to register event version");
 
         let versions = registry.get_versions("user.created");
         assert_eq!(versions.len(), 1);
 
-        let latest = registry.get_latest_version("user.created").expect("Expected latest version");
+        let latest = registry
+            .get_latest_version("user.created")
+            .expect("Expected latest version");
         assert_eq!(latest.version, EventVersion::v1());
 
         let stats = registry.stats();
