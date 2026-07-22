@@ -12,9 +12,11 @@ use super::ApiState;
 use crate::middleware::tenant::get_tenant_id;
 use crate::models::{CreateCustomerRequest, Customer, UpdateCustomerRequest};
 use crate::modules::audit::log_audit_event;
+use crate::services::mdm_event_service::MdmEventService;
 use crate::shared::permission::{check_permission, ModulePermission};
 use crate::workflow::CreateInstanceRequest;
 use topems_shared::auth::Claims;
+use topems_shared::event::MasterDataAction;
 use topems_shared::{api_error, ApiResponse};
 
 #[derive(Debug, Deserialize)]
@@ -261,6 +263,33 @@ async fn create_customer(
     )
     .await;
 
+    // 发布 MDM 主数据事件
+    if let Ok(customer) = &result {
+        let mdm_service = MdmEventService::new();
+        let cid = customer.id;
+        let ccode = customer.code.clone().unwrap_or_default();
+        let cname = customer.name.clone();
+        let cemail = customer.email.clone();
+        let cphone = customer.phone.clone();
+        let cstatus = customer.status.clone();
+        let tenant = tenant_id;
+        tokio::spawn(async move {
+            mdm_service
+                .publish_customer_event(
+                    tenant,
+                    cid,
+                    &ccode,
+                    &cname,
+                    cemail.as_deref(),
+                    cphone.as_deref(),
+                    &cstatus,
+                    MasterDataAction::Created,
+                    None,
+                )
+                .await;
+        });
+    }
+
     response
 }
 
@@ -463,6 +492,33 @@ async fn update_customer(
     )
     .await;
 
+    // 发布 MDM 主数据事件
+    if let Ok(customer) = &result {
+        let mdm_service = MdmEventService::new();
+        let cid = customer.id;
+        let ccode = customer.code.clone().unwrap_or_default();
+        let cname = customer.name.clone();
+        let cemail = customer.email.clone();
+        let cphone = customer.phone.clone();
+        let cstatus = customer.status.clone();
+        let tenant = tenant_id;
+        tokio::spawn(async move {
+            mdm_service
+                .publish_customer_event(
+                    tenant,
+                    cid,
+                    &ccode,
+                    &cname,
+                    cemail.as_deref(),
+                    cphone.as_deref(),
+                    &cstatus,
+                    MasterDataAction::Updated,
+                    None,
+                )
+                .await;
+        });
+    }
+
     response
 }
 
@@ -530,6 +586,27 @@ async fn delete_customer(
         &headers,
     )
     .await;
+
+    // 发布 MDM 主数据事件
+    if status_str == "success" {
+        let mdm_service = MdmEventService::new();
+        let tenant = tenant_id;
+        tokio::spawn(async move {
+            mdm_service
+                .publish_customer_event(
+                    tenant,
+                    id,
+                    "",
+                    "",
+                    None,
+                    None,
+                    "deleted",
+                    MasterDataAction::Deleted,
+                    None,
+                )
+                .await;
+        });
+    }
 
     response
 }

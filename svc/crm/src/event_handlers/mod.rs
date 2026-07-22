@@ -35,6 +35,7 @@ impl CrmEventHandlers {
         let h3 = self.clone();
         let h4 = self.clone();
         let h5 = self.clone();
+        let h6 = self.clone();
 
         Ok(subscriber
             .subscribe(vec![EventType::AfterSalesTicketCreated], move |event| {
@@ -77,6 +78,14 @@ impl CrmEventHandlers {
                             "[crm] handle_master_data_organization_changed 失败: {}",
                             e
                         );
+                    }
+                })
+            })
+            .subscribe_master_data(vec![MasterDataDomain::Supplier], move |event| {
+                let h = h6.clone();
+                Box::pin(async move {
+                    if let Err(e) = h.handle_master_data_supplier_changed(event).await {
+                        tracing::error!("[crm] handle_master_data_supplier_changed 失败: {}", e);
                     }
                 })
             }))
@@ -334,6 +343,70 @@ impl CrmEventHandlers {
                 );
 
                 // TODO: 更新 CRM 联系人状态
+            }
+        }
+
+        Ok(())
+    }
+
+    /// MDM 供应商变更事件处理
+    ///
+    /// 订阅 SCM 供应商变更事件，同步更新 CRM 中的供应商相关信息
+    async fn handle_master_data_supplier_changed(&self, event: MasterDataEvent) -> HandlerResult {
+        tracing::info!(
+            "[crm-mdm] 供应商主数据变更事件 - domain={:?}, action={:?}, master_data_id={}, tenant_id={}",
+            event.domain,
+            event.action,
+            event.master_data_id,
+            event.tenant_id
+        );
+
+        let supplier_name = event
+            .payload
+            .get("name")
+            .and_then(|v| v.as_str())
+            .unwrap_or("");
+        let contact_name = event.payload.get("contact_name").and_then(|v| v.as_str());
+        let email = event.payload.get("email").and_then(|v| v.as_str());
+
+        match event.action {
+            MasterDataAction::Created => {
+                tracing::info!(
+                    "[crm-mdm] 供应商创建 - name={}, contact_name={:?}, email={:?}",
+                    supplier_name,
+                    contact_name,
+                    email
+                );
+                // TODO: 创建 CRM 供应商记录或关联客户
+            }
+            MasterDataAction::Updated => {
+                tracing::info!(
+                    "[crm-mdm] 供应商更新 - name={}, email={:?}, changed_fields={:?}",
+                    supplier_name,
+                    email,
+                    event.changed_fields
+                );
+                // TODO: 同步更新 CRM 供应商信息
+            }
+            MasterDataAction::Deleted => {
+                tracing::info!(
+                    "[crm-mdm] 供应商删除 - master_data_id={}",
+                    event.master_data_id
+                );
+                // TODO: 标记 CRM 供应商为已删除
+            }
+            MasterDataAction::Activated | MasterDataAction::Deactivated => {
+                let status = if event.action == MasterDataAction::Activated {
+                    "active"
+                } else {
+                    "inactive"
+                };
+                tracing::info!(
+                    "[crm-mdm] 供应商状态变更 - name={}, status={}",
+                    supplier_name,
+                    status
+                );
+                // TODO: 更新 CRM 供应商状态
             }
         }
 
