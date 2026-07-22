@@ -1,7 +1,10 @@
 mod models;
 mod services;
+mod utils;
 
+mod event_handlers;
 pub mod modules;
+mod sagas;
 mod shared;
 
 use anyhow::Result;
@@ -11,7 +14,7 @@ use prometheus::{Encoder, TextEncoder};
 use serde::Serialize;
 use std::env;
 use std::sync::Arc;
-use std::time::Instant;
+use std::time::{Duration, Instant};
 use utoipa::OpenApi;
 
 use modules::ApiState;
@@ -101,6 +104,21 @@ async fn build_routes() -> Result<Router> {
         tracing::warn!("数据库初始化警告: {}", e);
     }
 
+    if let Err(e) = event_handlers::start_event_subscribers(pool.clone()).await {
+        tracing::warn!("⚠️ HRM 事件订阅者启动失败: {}", e);
+    }
+
+    let event_publisher = match topems_shared::event::EventPublisher::new("topems-hrm") {
+        Ok(publisher) => {
+            tracing::info!("📢 事件发布服务初始化成功");
+            Some(Arc::new(publisher))
+        }
+        Err(e) => {
+            tracing::warn!("⚠️ 事件发布服务初始化失败（不阻塞启动）: {}", e);
+            None
+        }
+    };
+
     let cache = init_cache().await;
     tracing::info!("🗄️ 缓存服务初始化完成");
 
@@ -117,6 +135,9 @@ async fn build_routes() -> Result<Router> {
         start_time,
         cache,
         encryption: Arc::new(encryption),
+        event_publisher,
+        employee_cache: Arc::new(utils::InMemoryCache::new(Duration::from_secs(3600))),
+        department_cache: Arc::new(utils::InMemoryCache::new(Duration::from_secs(1800))),
     };
 
     let (prometheus_layer, _metric_handle) = PrometheusMetricLayer::pair();

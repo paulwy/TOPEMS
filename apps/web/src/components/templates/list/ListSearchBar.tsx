@@ -28,11 +28,14 @@ interface ListSearchBarProps {
   onFilterChange?: (filters: Record<string, any>) => void;
   onRefresh?: () => void;
   quickFilters?: Array<{
+    key?: string;
     label: string;
     filters: Record<string, any>;
     searchValue?: string;
   }>;
-  onQuickFilter?: (quickFilter: { filters: Record<string, any>; searchValue?: string }) => void;
+  onQuickFilter?: (quickFilter: { key?: string; filters: Record<string, any>; searchValue?: string }) => void;
+  /** 当前激活的 quickFilter key（用于高亮显示） */
+  activeQuickFilterKey?: string | null;
 }
 
 export const ListSearchBar: React.FC<ListSearchBarProps> = ({
@@ -46,6 +49,7 @@ export const ListSearchBar: React.FC<ListSearchBarProps> = ({
   onRefresh,
   quickFilters,
   onQuickFilter,
+  activeQuickFilterKey,
 }) => {
   const renderFilter = (filter: FilterConfig) => {
     const filterValue = filter.value || (filter.type === 'multiselect' ? [] : '');
@@ -200,24 +204,29 @@ export const ListSearchBar: React.FC<ListSearchBarProps> = ({
 
       {filters?.map((filter) => renderFilter(filter))}
 
-      {quickFilters?.map((quickFilter, index) => (
-        <button
-          key={index}
-          onClick={() => onQuickFilter?.(quickFilter)}
-          style={{
-            padding: '6px 12px',
-            borderRadius: '4px',
-            border: '1px solid #e0e0e0',
-            backgroundColor: '#f5f5f5',
-            cursor: 'pointer',
-            fontSize: '12px',
-            fontWeight: 500,
-            color: '#333',
-          }}
-        >
-          {quickFilter.label}
-        </button>
-      ))}
+      {quickFilters?.map((quickFilter, index) => {
+        const key = quickFilter.key ?? String(index);
+        const isActive = activeQuickFilterKey === key;
+        return (
+          <button
+            key={key}
+            onClick={() => onQuickFilter?.({ key, filters: quickFilter.filters, searchValue: quickFilter.searchValue })}
+            style={{
+              padding: '6px 12px',
+              borderRadius: '4px',
+              border: isActive ? '1px solid #1976d2' : '1px solid #e0e0e0',
+              backgroundColor: isActive ? '#e3f2fd' : '#f5f5f5',
+              cursor: 'pointer',
+              fontSize: '12px',
+              fontWeight: isActive ? 600 : 500,
+              color: isActive ? '#1976d2' : '#333',
+              transition: 'all 0.2s',
+            }}
+          >
+            {quickFilter.label}
+          </button>
+        );
+      })}
 
       {onRefresh && (
         <Tooltip title='刷新'>

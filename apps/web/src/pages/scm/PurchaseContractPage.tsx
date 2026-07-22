@@ -28,6 +28,7 @@ import { ConfirmDialog } from '@topems/shared-components';
 import { designTokens } from '@/theme/tokens';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { QUERY_KEYS } from '@/lib/reactQuery';
+import { useConfirmDialog, useUrlListState } from '@/hooks';
 
 const ct = designTokens.colors;
 
@@ -55,18 +56,20 @@ const contractTypeConfig: Record<string, string> = {
 
 const PurchaseContractPage: React.FC = () => {
   const queryClient = useQueryClient();
-  const [currentPage, setCurrentPage] = useState(1);
-  const [pageSize, setPageSize] = useState(10);
+  const listState = useUrlListState({
+    defaultPageSize: 10,
+    baseIndex: 1,
+    historyMode: 'replace',
+  });
   const [showDialog, setShowDialog] = useState(false);
   const [isEditing, setIsEditing] = useState(false);
   const [selectedContract, setSelectedContract] = useState<PurchaseContract | null>(null);
-  const [confirmDialogOpen, setConfirmDialogOpen] = useState(false);
-  const [confirmDialogConfig, setConfirmDialogConfig] = useState<{
-    title: string;
-    message: string;
-    onConfirm: () => void;
-    danger?: boolean;
-  } | null>(null);
+  const {
+    confirmOpen: confirmDialogOpen,
+    confirmConfig: confirmDialogConfig,
+    openConfirm: openConfirmDialog,
+    closeConfirm: setConfirmDialogClosed,
+  } = useConfirmDialog();
   const [formData, setFormData] = useState<CreatePurchaseContractRequest>({
     contract_no: '',
     title: '',
@@ -86,11 +89,11 @@ const PurchaseContractPage: React.FC = () => {
   const { addNotification } = useNotificationStore();
 
   const contractsQuery = useQuery<{ items: PurchaseContract[]; total: number }>({
-    queryKey: [...QUERY_KEYS.SCM.PURCHASE_CONTRACTS, currentPage, pageSize],
+    queryKey: [...QUERY_KEYS.SCM.PURCHASE_CONTRACTS, listState.currentPage, listState.pageSize],
     queryFn: async () => {
       const response = await scmApi.purchaseContracts.list({
-        page: currentPage,
-        pageSize,
+        page: listState.currentPage,
+        pageSize: listState.pageSize,
       });
       if (response.success && response.data) {
         return { items: response.data.items || [], total: response.data.total || 0 };
@@ -424,16 +427,6 @@ const PurchaseContractPage: React.FC = () => {
     setSelectedContract(null);
   };
 
-  const openConfirmDialog = (config: {
-    title: string;
-    message: string;
-    onConfirm: () => void;
-    danger?: boolean;
-  }) => {
-    setConfirmDialogConfig(config);
-    setConfirmDialogOpen(true);
-  };
-
   const columns: ColumnDef<PurchaseContract>[] = [
     {
       id: 'contract_no',
@@ -594,13 +587,13 @@ const PurchaseContractPage: React.FC = () => {
         data={contracts}
         loading={loading}
         pagination={{
-          page: currentPage - 1,
-          pageSize,
+          page: listState.currentPage - 1,
+          pageSize: listState.pageSize,
           total,
-          onPageChange: (page) => setCurrentPage(page + 1),
+          onPageChange: (page) => listState.setCurrentPage(page + 1),
           onPageSizeChange: (size) => {
-            setPageSize(size);
-            setCurrentPage(1);
+            listState.setPageSize(size);
+            listState.setCurrentPage(1);
           },
         }}
         actions={[
@@ -766,10 +759,10 @@ const PurchaseContractPage: React.FC = () => {
 
       <ConfirmDialog
         isOpen={confirmDialogOpen}
-        onClose={() => setConfirmDialogOpen(false)}
+        onClose={setConfirmDialogClosed}
         onConfirm={() => {
           confirmDialogConfig?.onConfirm();
-          setConfirmDialogOpen(false);
+          setConfirmDialogClosed();
         }}
         title={confirmDialogConfig?.title || ''}
         message={confirmDialogConfig?.message || ''}

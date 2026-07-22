@@ -27,6 +27,7 @@ import { extractErrorMessage } from '@/utils/errors';
 import { PageContainer } from '@/components/common';
 import { INTEGRATION_PATHS } from '@/modules/integration/config';
 import { ConfirmDialog } from '@topems/shared-components';
+import { useConfirmDialog } from '@/hooks';
 
 const CONNECTION_TYPE_CONFIG: Record<
   string,
@@ -69,21 +70,12 @@ export const IntegrationConnectionsPage: React.FC = () => {
   const [statusFilter, setStatusFilter] = useState<string>('all');
   const [page, setPage] = useState(1);
   const pageSize = 10;
-  const [confirmDialogOpen, setConfirmDialogOpen] = useState(false);
-  const [confirmDialogConfig, setConfirmDialogConfig] = useState<{
-    title: string;
-    message: string;
-    onConfirm: () => void;
-    danger?: boolean;
-  } | null>(null);
-
-  const openConfirmDialog = useCallback(
-    (config: { title: string; message: string; onConfirm: () => void; danger?: boolean }) => {
-      setConfirmDialogConfig(config);
-      setConfirmDialogOpen(true);
-    },
-    []
-  );
+  const {
+    confirmOpen: confirmDialogOpen,
+    confirmConfig: confirmDialogConfig,
+    openConfirm: openConfirmDialog,
+    closeConfirm: setConfirmDialogClosed,
+  } = useConfirmDialog();
 
   const { data: connections = [], isLoading: loading } = useQuery<IntegrationConnection[]>({
     queryKey: ['integration-connections'],
@@ -407,10 +399,10 @@ export const IntegrationConnectionsPage: React.FC = () => {
       />
       <ConfirmDialog
         isOpen={confirmDialogOpen}
-        onClose={() => setConfirmDialogOpen(false)}
+        onClose={setConfirmDialogClosed}
         onConfirm={() => {
           confirmDialogConfig?.onConfirm();
-          setConfirmDialogOpen(false);
+          setConfirmDialogClosed();
         }}
         title={confirmDialogConfig?.title || ''}
         message={confirmDialogConfig?.message || ''}

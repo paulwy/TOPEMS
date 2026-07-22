@@ -1,7 +1,8 @@
+use crate::shared::cache::InMemoryCache;
 use axum::{extract::FromRef, Router};
 use sqlx::postgres::PgPool;
 use std::sync::Arc;
-use topems_shared::{redis::RedisCacheService, AuthState};
+use topems_shared::{event::EventPublisher, redis::RedisCacheService, AuthState};
 
 pub mod audit;
 pub mod data_sync;
@@ -27,6 +28,10 @@ pub struct ApiState {
     pub db: PgPool,
     pub auth_state: AuthState,
     pub cache: Option<Arc<RedisCacheService>>,
+    pub event_publisher: Option<Arc<EventPublisher>>,
+    pub supplier_cache: Arc<InMemoryCache<serde_json::Value>>,
+    pub purchase_cache: Arc<InMemoryCache<serde_json::Value>>,
+    pub dict_cache: Arc<InMemoryCache<String>>,
 }
 
 impl FromRef<ApiState> for AuthState {

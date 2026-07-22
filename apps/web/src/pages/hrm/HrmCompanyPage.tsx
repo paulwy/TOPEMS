@@ -56,7 +56,9 @@ import { EmptyState } from '@/components';
 import { ConfirmDialog } from '@topems/shared-components';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 
+import { useTranslation } from 'react-i18next';
 const HrmCompanyPage: React.FC = () => {
+  const { t } = useTranslation();
   const addNotification = useNotificationStore((state) => state.addNotification);
   const queryClient = useQueryClient();
 
@@ -138,13 +140,13 @@ const HrmCompanyPage: React.FC = () => {
   const createCompanyMutation = useMutation({
     mutationFn: (data: Partial<Company>) => companyApi.create(data),
     onSuccess: () => {
-      addNotification({ title: '成功', message: '创建成功', type: 'success' });
+      addNotification({ title: t('hrm.hrm_company_page.success'), message: t('hrm.hrm_company_page.create'), type: 'success' });
       queryClient.invalidateQueries({ queryKey: ['hrm-companies'] });
     },
     onError: (error: unknown) => {
       addNotification({
-        title: '失败',
-        message: (error as { message?: string }).message || '创建失败',
+        title: t('hrm.hrm_company_page.fail'),
+        message: (error as { message?: string }).message || t('hrm.hrm_company_page.create_1'),
         type: 'error',
       });
     },
@@ -154,13 +156,13 @@ const HrmCompanyPage: React.FC = () => {
     mutationFn: ({ id, data }: { id: string; data: Partial<Company> }) =>
       companyApi.update(id, data),
     onSuccess: () => {
-      addNotification({ title: '成功', message: '更新成功', type: 'success' });
+      addNotification({ title: t('hrm.hrm_company_page.success'), message: t('hrm.hrm_company_page.update'), type: 'success' });
       queryClient.invalidateQueries({ queryKey: ['hrm-companies'] });
     },
     onError: (error: unknown) => {
       addNotification({
-        title: '失败',
-        message: (error as { message?: string }).message || '更新失败',
+        title: t('hrm.hrm_company_page.fail'),
+        message: (error as { message?: string }).message || t('hrm.hrm_company_page.update_1'),
         type: 'error',
       });
     },
@@ -169,14 +171,14 @@ const HrmCompanyPage: React.FC = () => {
   const deleteCompanyMutation = useMutation({
     mutationFn: (id: string) => companyApi.delete(id),
     onSuccess: () => {
-      addNotification({ title: '成功', message: '删除成功', type: 'success' });
+      addNotification({ title: t('hrm.hrm_company_page.success'), message: t('hrm.hrm_company_page.delete_success'), type: 'success' });
       queryClient.invalidateQueries({ queryKey: ['hrm-companies'] });
       queryClient.invalidateQueries({ queryKey: ['hrm-departments-all'] });
     },
     onError: (error: unknown) => {
       addNotification({
-        title: '失败',
-        message: (error as { message?: string }).message || '删除失败',
+        title: t('hrm.hrm_company_page.fail'),
+        message: (error as { message?: string }).message || t('hrm.hrm_company_page.delete'),
         type: 'error',
       });
     },
@@ -219,28 +221,28 @@ const HrmCompanyPage: React.FC = () => {
   const statCards: StatCard[] = [
     {
       id: 'total',
-      title: '公司总数',
+      title: t('hrm.hrm_company_page.text_6e86b8'),
       value: companies.length,
       icon: <Building style={{ width: 24, height: 24 }} />,
       color: 'primary',
     },
     {
       id: 'active',
-      title: '启用公司',
+      title: t('hrm.hrm_company_page.active'),
       value: companies.filter((c) => c.status === 'active').length,
       icon: <Building style={{ width: 24, height: 24 }} />,
       color: 'success',
     },
     {
       id: 'departments',
-      title: '部门总数',
+      title: t('hrm.hrm_company_page.text_6f3e66'),
       value: departments.length,
       icon: <Folder style={{ width: 24, height: 24 }} />,
       color: 'info',
     },
     {
       id: 'employees',
-      title: '员工总数',
+      title: t('hrm.hrm_company_page.text_97e957'),
       value: employees.length,
       icon: <Users style={{ width: 24, height: 24 }} />,
       color: 'warning',
@@ -249,7 +251,7 @@ const HrmCompanyPage: React.FC = () => {
 
   const rowActions: TreeAction[] = [
     {
-      label: '查看',
+      label: t('hrm.hrm_company_page.view'),
       icon: <Eye style={{ width: 16, height: 16 }} />,
       onClick: (node) => {
         const company = node.data as Company;
@@ -258,7 +260,7 @@ const HrmCompanyPage: React.FC = () => {
       },
     },
     {
-      label: '编辑',
+      label: t('hrm.hrm_company_page.edit'),
       icon: <Edit style={{ width: 16, height: 16 }} />,
       onClick: (node) => {
         const company = node.data as Company;
@@ -269,13 +271,13 @@ const HrmCompanyPage: React.FC = () => {
       color: 'primary',
     },
     {
-      label: '删除',
+      label: t('hrm.hrm_company_page.delete_1'),
       icon: <Trash2 style={{ width: 16, height: 16 }} />,
       onClick: (node) => {
         const company = node.data as Company;
         openConfirmDialog({
-          title: '确认删除',
-          message: '确定要删除这个公司吗？',
+          title: t('hrm.hrm_company_page.confirm_delete'),
+          message: t('hrm.hrm_company_page.confirm'),
           onConfirm: async () => {
             try {
               await deleteCompanyMutation.mutateAsync(company.id);
@@ -284,8 +286,8 @@ const HrmCompanyPage: React.FC = () => {
               }
             } catch (error: unknown) {
               addNotification({
-                title: '失败',
-                message: (error as { message?: string }).message || '删除公司失败',
+                title: t('hrm.hrm_company_page.fail'),
+                message: (error as { message?: string }).message || t('hrm.hrm_company_page.delete_2'),
                 type: 'error',
               });
             }
@@ -299,10 +301,10 @@ const HrmCompanyPage: React.FC = () => {
   ];
 
   const filterOptions = [
-    { label: '全部状态', value: 'all' },
-    { label: '启用', value: 'active' },
-    { label: '禁用', value: 'inactive' },
-    { label: '归档', value: 'archived' },
+    { label: t('hrm.hrm_company_page.status'), value: 'all' },
+    { label: t('hrm.hrm_company_page.active_1'), value: 'active' },
+    { label: t('hrm.hrm_company_page.text_710ad0'), value: 'inactive' },
+    { label: t('hrm.hrm_company_page.text_2f51c1'), value: 'archived' },
   ];
 
   const selectedCompanyData = companies.find((c) => c.id === selectedId);
@@ -346,10 +348,10 @@ const HrmCompanyPage: React.FC = () => {
               color={selectedCompanyData.status === 'active' ? 'success' : 'default'}
               label={
                 selectedCompanyData.status === 'active'
-                  ? '启用'
+                  ? t('hrm.hrm_company_page.active_1')
                   : selectedCompanyData.status === 'inactive'
-                    ? '禁用'
-                    : '归档'
+                    ? t('hrm.hrm_company_page.text_710ad0')
+                    : t('hrm.hrm_company_page.text_2f51c1')
               }
               variant='outlined'
             />
@@ -505,7 +507,7 @@ const HrmCompanyPage: React.FC = () => {
             {departments.length === 0 ? (
               <EmptyState
                 emoji='📁'
-                title='暂无部门数据'
+                title={t('hrm.hrm_company_page.no_data')}
                 compact
               />
             ) : (
@@ -542,7 +544,7 @@ const HrmCompanyPage: React.FC = () => {
                     <Chip
                       size='small'
                       variant={dept.status === 'active' ? 'filled' : 'outlined'}
-                      label={dept.status === 'active' ? '启用' : '禁用'}
+                      label={dept.status === 'active' ? t('hrm.hrm_company_page.active_1') : t('hrm.hrm_company_page.text_710ad0')}
                     />
                   </Box>
                 ))}
@@ -560,7 +562,7 @@ const HrmCompanyPage: React.FC = () => {
     setSearchText('');
     setStatusFilter('all');
     setSelectedId(undefined);
-  }, []);
+  }, [t]);
 
   const handleAdd = useCallback(() => {
     setSelectedCompany(null);
@@ -580,8 +582,8 @@ const HrmCompanyPage: React.FC = () => {
         setFormData({});
       } catch (error: unknown) {
         addNotification({
-          title: '失败',
-          message: (error as { message?: string }).message || '创建公司失败',
+          title: t('hrm.hrm_company_page.fail'),
+          message: (error as { message?: string }).message || t('hrm.hrm_company_page.create_2'),
           type: 'error',
         });
       }
@@ -599,8 +601,8 @@ const HrmCompanyPage: React.FC = () => {
         setSelectedCompany(null);
       } catch (error: unknown) {
         addNotification({
-          title: '失败',
-          message: (error as { message?: string }).message || '更新公司失败',
+          title: t('hrm.hrm_company_page.fail'),
+          message: (error as { message?: string }).message || t('hrm.hrm_company_page.update_2'),
           type: 'error',
         });
       }
@@ -621,31 +623,31 @@ const HrmCompanyPage: React.FC = () => {
   return (
     <PageContainer maxWidth='xl'>
       <TreePageTemplate
-        title='公司管理'
-        subtitle='管理企业基本信息和组织架构'
+        title={t('hrm.hrm_company_page.text_9166f7')}
+        subtitle={t('hrm.hrm_company_page.info')}
         stats={statCards}
         data={buildTree()}
         loading={loading}
-        searchPlaceholder='搜索公司名称、编码或邮箱...'
+        searchPlaceholder={t('hrm.hrm_company_page.search')}
         filterOptions={filterOptions}
         filterValue={statusFilter}
         onFilterChange={(value) => setStatusFilter(value)}
         onSearch={handleSearch}
         onReset={handleReset}
         onAdd={handleAdd}
-        addButtonText='新增公司'
+        addButtonText={t('hrm.hrm_company_page.add')}
         addButtonIcon={<Plus style={{ width: 18, height: 18 }} />}
         rowActions={rowActions}
         onSelect={handleSelectNode}
         selectedId={selectedId}
         detailPanel={detailPanel}
-        detailPanelTitle='公司详情'
+        detailPanelTitle={t('hrm.hrm_company_page.detail')}
         onRefresh={() => queryClient.invalidateQueries({ queryKey: ['hrm-companies'] })}
         treeWidth={360}
         emptyState={{
           emoji: '🏢',
-          title: '暂无公司数据',
-          actionLabel: '新增公司',
+          title: t('hrm.hrm_company_page.no_data_1'),
+          actionLabel: t('hrm.hrm_company_page.add'),
           onAction: handleAdd,
         }}
       />
@@ -659,7 +661,7 @@ const HrmCompanyPage: React.FC = () => {
         maxWidth='md'
         fullWidth
       >
-        <DialogTitle>{showCreateModal ? '新增公司' : '编辑公司'}</DialogTitle>
+        <DialogTitle>{showCreateModal ? t('hrm.hrm_company_page.add') : t('hrm.hrm_company_page.edit_1')}</DialogTitle>
         <DialogContent sx={{ maxHeight: '70vh', overflowY: 'auto' }}>
           <Box
             component='form'
@@ -682,7 +684,7 @@ const HrmCompanyPage: React.FC = () => {
                 required
                 value={(formData as Company)?.name || ''}
                 onChange={(e) => handleInputChange('name', e.target.value)}
-                placeholder='请输入公司名称'
+                placeholder={t('hrm.hrm_company_page.please_input')}
               />
             </Box>
             <Box>
@@ -692,7 +694,7 @@ const HrmCompanyPage: React.FC = () => {
                 size='small'
                 value={(formData as Company)?.short_name || ''}
                 onChange={(e) => handleInputChange('short_name', e.target.value)}
-                placeholder='请输入公司简称'
+                placeholder={t('hrm.hrm_company_page.please_input_1')}
               />
             </Box>
             <Box sx={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 2 }}>
@@ -703,7 +705,7 @@ const HrmCompanyPage: React.FC = () => {
                   size='small'
                   value={(formData as Company)?.registration_number || ''}
                   onChange={(e) => handleInputChange('registration_number', e.target.value)}
-                  placeholder='请输入注册号'
+                  placeholder={t('hrm.hrm_company_page.please_input_2')}
                 />
               </Box>
               <Box>
@@ -713,7 +715,7 @@ const HrmCompanyPage: React.FC = () => {
                   size='small'
                   value={(formData as Company)?.tax_number || ''}
                   onChange={(e) => handleInputChange('tax_number', e.target.value)}
-                  placeholder='请输入税号'
+                  placeholder={t('hrm.hrm_company_page.please_input_3')}
                 />
               </Box>
             </Box>
@@ -726,7 +728,7 @@ const HrmCompanyPage: React.FC = () => {
                 rows={2}
                 value={(formData as Company)?.address || ''}
                 onChange={(e) => handleInputChange('address', e.target.value)}
-                placeholder='请输入地址'
+                placeholder={t('hrm.hrm_company_page.please_input_4')}
               />
             </Box>
             <Box sx={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 2 }}>
@@ -737,7 +739,7 @@ const HrmCompanyPage: React.FC = () => {
                   size='small'
                   value={(formData as Company)?.contact_phone || ''}
                   onChange={(e) => handleInputChange('contact_phone', e.target.value)}
-                  placeholder='请输入联系电话'
+                  placeholder={t('hrm.hrm_company_page.please_input_5')}
                 />
               </Box>
               <Box>
@@ -748,7 +750,7 @@ const HrmCompanyPage: React.FC = () => {
                   type='email'
                   value={(formData as Company)?.email || ''}
                   onChange={(e) => handleInputChange('email', e.target.value)}
-                  placeholder='请输入邮箱'
+                  placeholder={t('hrm.hrm_company_page.please_input_6')}
                 />
               </Box>
             </Box>
@@ -759,7 +761,7 @@ const HrmCompanyPage: React.FC = () => {
                 size='small'
                 value={(formData as Company)?.website || ''}
                 onChange={(e) => handleInputChange('website', e.target.value)}
-                placeholder='请输入网站地址'
+                placeholder={t('hrm.hrm_company_page.please_input_7')}
               />
             </Box>
             <Box>
@@ -793,7 +795,7 @@ const HrmCompanyPage: React.FC = () => {
                 type='submit'
                 variant='contained'
               >
-                {showCreateModal ? '创建' : '保存'}
+                {showCreateModal ? t('hrm.hrm_company_page.create_3') : t('hrm.hrm_company_page.save')}
               </Button>
             </DialogActions>
           </Box>
@@ -914,10 +916,10 @@ const HrmCompanyPage: React.FC = () => {
                     color={selectedCompany.status === 'active' ? 'success' : 'default'}
                     label={
                       selectedCompany.status === 'active'
-                        ? '启用'
+                        ? t('hrm.hrm_company_page.active_1')
                         : selectedCompany.status === 'inactive'
-                          ? '禁用'
-                          : '归档'
+                          ? t('hrm.hrm_company_page.text_710ad0')
+                          : t('hrm.hrm_company_page.text_2f51c1')
                     }
                     variant='outlined'
                   />

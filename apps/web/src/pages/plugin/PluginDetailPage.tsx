@@ -1,4 +1,5 @@
 import React, { useState, useMemo, useEffect } from 'react';
+import { useTranslation } from 'react-i18next';
 import { useParams, useNavigate } from 'react-router-dom';
 import {
   Package,
@@ -48,6 +49,7 @@ import { PLUGIN_PATHS } from '@/modules/plugin/config';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 
 const PluginDetailPage: React.FC = () => {
+  const { t } = useTranslation();
   const { pluginCode } = useParams<{ pluginCode: string }>();
   const navigate = useNavigate();
   const { installPlugin, isPluginInstalled, fetchHealthStatus, healthStatus } = usePluginStore();
@@ -69,12 +71,12 @@ const PluginDetailPage: React.FC = () => {
   const pluginQuery = useQuery({
     queryKey: ['plugin-detail', pluginCode],
     queryFn: async () => {
-      if (!pluginCode) throw new Error('插件代码不能为空');
+      if (!pluginCode) throw new Error(t('plugin.message.plugin_code_empty'));
       const res = await getPlugin(pluginCode);
       if (res.success && res.data) {
         return res.data;
       }
-      throw new Error('插件不存在');
+      throw new Error(t('plugin.message.plugin_not_exist'));
     },
     enabled: !!pluginCode,
     staleTime: 5 * 60 * 1000,
@@ -151,13 +153,13 @@ const PluginDetailPage: React.FC = () => {
 
   const submitReviewMutation = useMutation({
     mutationFn: (data: { rating: number; title?: string; content?: string }) => {
-      if (!pluginCode) throw new Error('插件代码不能为空');
+      if (!pluginCode) throw new Error(t('plugin.message.plugin_code_empty'));
       return submitPluginReview(pluginCode, data);
     },
     onSuccess: () => {
       addNotification({
-        title: '评价成功',
-        message: '感谢您的评价',
+        title: t('plugin.message.review_success_title'),
+        message: t('plugin.message.review_success_message'),
         type: 'success',
       });
       setRating(0);
@@ -169,8 +171,8 @@ const PluginDetailPage: React.FC = () => {
       logger.error('提交评价失败:', error);
       const err = error as { message?: string };
       addNotification({
-        title: '评价失败',
-        message: err.message || '无法提交评价',
+        title: t('plugin.message.review_failed_title'),
+        message: err.message || t('plugin.message.review_failed_message'),
         type: 'error',
       });
     },
@@ -187,22 +189,22 @@ const PluginDetailPage: React.FC = () => {
       const success = await installPlugin(pluginCode);
       if (success) {
         addNotification({
-          title: '安装成功',
-          message: `${plugin?.name || '插件'} 已成功安装`,
+          title: t('plugin.message.install_success'),
+          message: t('plugin.detail_page.install_success_message', { name: plugin?.name || t('plugin.title') }),
           type: 'success',
         });
       } else {
         addNotification({
-          title: '安装失败',
-          message: '无法安装插件，请稍后重试',
+          title: t('plugin.message.install_failed'),
+          message: t('plugin.message.install_failed_message'),
           type: 'error',
         });
       }
     } catch (error: unknown) {
       const err = error as { message?: string };
       addNotification({
-        title: '安装失败',
-        message: err.message || '无法安装插件',
+        title: t('plugin.message.install_failed'),
+        message: err.message || t('plugin.message.install_failed_short'),
         type: 'error',
       });
     } finally {
@@ -240,12 +242,21 @@ const PluginDetailPage: React.FC = () => {
   if (error || !plugin) {
     return (
       <PageContainer>
-        <Alert severity='error'>{error ? (error as Error).message : '插件不存在'}</Alert>
+        <Alert severity='error'>{error ? (error as Error).message : t('plugin.message.plugin_not_exist')}</Alert>
       </PageContainer>
     );
   }
 
   const healthStatusValue = pluginCode ? healthStatus[pluginCode] : null;
+
+  const features = [
+    t('plugin.detail_page.feature.business_flow'),
+    t('plugin.detail_page.feature.flexible_config'),
+    t('plugin.detail_page.feature.rich_api'),
+    t('plugin.detail_page.feature.multi_platform'),
+    t('plugin.detail_page.feature.data_security'),
+    t('plugin.detail_page.feature.continuous_update'),
+  ];
 
   return (
     <PageContainer maxWidth='lg'>
@@ -255,7 +266,7 @@ const PluginDetailPage: React.FC = () => {
           onClick={() => navigate(PLUGIN_PATHS.marketplace)}
           sx={{ mb: 3 }}
         >
-          返回插件市场
+          {t('plugin.detail_page.back_to_market')}
         </Button>
 
         <Grid
@@ -294,14 +305,14 @@ const PluginDetailPage: React.FC = () => {
                   {plugin.is_featured && (
                     <Chip
                       icon={<Star sx={{ width: 14, height: 14 }} />}
-                      label='精选'
+                      label={t('plugin.common.featured')}
                       size='small'
                       color='warning'
                     />
                   )}
                   {healthStatusValue && (
                     <Chip
-                      label={healthStatusValue.healthy ? '运行中' : '不健康'}
+                      label={healthStatusValue.healthy ? t('plugin.status.running') : t('plugin.status.unhealthy')}
                       size='small'
                       color={healthStatusValue.healthy ? 'success' : 'error'}
                     />
@@ -323,12 +334,12 @@ const PluginDetailPage: React.FC = () => {
                   <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
                     <Download sx={{ width: 18, height: 18, color: 'grey.500' }} />
                     <Typography variant='body2'>
-                      {plugin.install_count?.toLocaleString() || 0} 次安装
+                      {t('plugin.detail_page.install_count', { count: plugin.install_count?.toLocaleString() || 0 })}
                     </Typography>
                   </Box>
                   <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
                     <Shield sx={{ width: 18, height: 18, color: 'grey.500' }} />
-                    <Typography variant='body2'>{plugin.author_name || '未知作者'}</Typography>
+                    <Typography variant='body2'>{plugin.author_name || t('plugin.common.unknown_author')}</Typography>
                   </Box>
                 </Box>
               </Box>
@@ -339,9 +350,9 @@ const PluginDetailPage: React.FC = () => {
               onChange={(_, v) => setActiveTab(v)}
               sx={{ borderBottom: 1, borderColor: 'divider', mb: 3 }}
             >
-              <Tab label='介绍' />
-              <Tab label={`版本历史 (${versions.length})`} />
-              <Tab label={`用户评价 (${reviews.length})`} />
+              <Tab label={t('plugin.detail_page.tabs.intro')} />
+              <Tab label={t('plugin.detail_page.tabs.version_history', { count: versions.length })} />
+              <Tab label={t('plugin.detail_page.tabs.reviews', { count: reviews.length })} />
             </Tabs>
 
             {activeTab === 0 && (
@@ -350,7 +361,7 @@ const PluginDetailPage: React.FC = () => {
                   variant='h6'
                   sx={{ fontWeight: 'bold', mb: 2 }}
                 >
-                  插件介绍
+                  {t('plugin.detail_page.section.plugin_intro')}
                 </Typography>
                 <Typography
                   variant='body1'
@@ -363,19 +374,12 @@ const PluginDetailPage: React.FC = () => {
                   variant='h6'
                   sx={{ fontWeight: 'bold', mb: 2 }}
                 >
-                  主要功能
+                  {t('plugin.detail_page.section.main_features')}
                 </Typography>
                 <Box sx={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: 2, mb: 4 }}>
-                  {[
-                    '完整的业务流程支持',
-                    '灵活的配置选项',
-                    '丰富的API接口',
-                    '多端适配支持',
-                    '数据安全保障',
-                    '持续更新维护',
-                  ].map((feature, idx) => (
+                  {features.map((feature, idx) => (
                     <Box
-                      key={idx}
+                      key={`plugin-feature-${idx}`}
                       sx={{ display: 'flex', alignItems: 'center', gap: 2 }}
                     >
                       <CheckCircle
@@ -390,7 +394,7 @@ const PluginDetailPage: React.FC = () => {
                   variant='h6'
                   sx={{ fontWeight: 'bold', mb: 2 }}
                 >
-                  标签
+                  {t('plugin.detail_page.section.tags')}
                 </Typography>
                 <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 1 }}>
                   {plugin.tags?.map((tag) => (
@@ -410,7 +414,7 @@ const PluginDetailPage: React.FC = () => {
                   variant='h6'
                   sx={{ fontWeight: 'bold', mb: 3 }}
                 >
-                  版本历史
+                  {t('plugin.detail_page.section.version_history')}
                 </Typography>
                 {versions.length > 0 ? (
                   versions.map((version) => (
@@ -431,14 +435,14 @@ const PluginDetailPage: React.FC = () => {
                           <Typography sx={{ fontWeight: 'medium' }}>{version.version}</Typography>
                           {version.is_latest && (
                             <Chip
-                              label='最新'
+                              label={t('plugin.common.latest')}
                               size='small'
                               color='primary'
                             />
                           )}
                           {version.is_stable && (
                             <Chip
-                              label='稳定'
+                              label={t('plugin.common.stable')}
                               size='small'
                               color='success'
                               variant='outlined'
@@ -460,7 +464,7 @@ const PluginDetailPage: React.FC = () => {
                               variant='subtitle2'
                               sx={{ mb: 1 }}
                             >
-                              更新说明
+                              {t('plugin.detail_page.version.update_notes')}
                             </Typography>
                             <Typography
                               variant='body2'
@@ -477,7 +481,7 @@ const PluginDetailPage: React.FC = () => {
                               variant='body2'
                               color='textSecondary'
                             >
-                              大小: {formatFileSize(version.filesize)}
+                              {t('plugin.detail_page.version.size_label', { size: formatFileSize(version.filesize) })}
                             </Typography>
                           </Box>
                           {version.min_app_version && (
@@ -487,7 +491,7 @@ const PluginDetailPage: React.FC = () => {
                                 variant='body2'
                                 color='textSecondary'
                               >
-                                最低版本: v{version.min_app_version}
+                                {t('plugin.detail_page.version.min_version_label', { version: version.min_app_version })}
                               </Typography>
                             </Box>
                           )}
@@ -500,7 +504,7 @@ const PluginDetailPage: React.FC = () => {
                     variant='body2'
                     color='textSecondary'
                   >
-                    暂无版本信息
+                    {t('plugin.common.no_version_info')}
                   </Typography>
                 )}
               </Box>
@@ -514,11 +518,11 @@ const PluginDetailPage: React.FC = () => {
                       variant='h6'
                       sx={{ fontWeight: 'bold', mb: 2 }}
                     >
-                      发表评价
+                      {t('plugin.detail_page.section.post_review')}
                     </Typography>
                     <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
                       <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
-                        <Typography variant='body2'>评分：</Typography>
+                        <Typography variant='body2'>{t('plugin.common.rating_label')}</Typography>
                         <Rating
                           value={rating}
                           onChange={(_, newValue) => setRating(newValue || 0)}
@@ -526,13 +530,13 @@ const PluginDetailPage: React.FC = () => {
                         />
                       </Box>
                       <TextField
-                        label='评价标题'
+                        label={t('plugin.field.review_title')}
                         value={reviewTitle}
                         onChange={(e) => setReviewTitle(e.target.value)}
                         fullWidth
                       />
                       <TextField
-                        label='评价内容'
+                        label={t('plugin.field.review_content')}
                         value={reviewContent}
                         onChange={(e) => setReviewContent(e.target.value)}
                         fullWidth
@@ -554,7 +558,7 @@ const PluginDetailPage: React.FC = () => {
                         }
                         sx={{ alignSelf: 'flex-end' }}
                       >
-                        {submitReviewMutation.isPending ? '提交中...' : '提交评价'}
+                        {submitReviewMutation.isPending ? t('plugin.common.submitting') : t('plugin.common.submit_review')}
                       </Button>
                     </Box>
                   </CardContent>
@@ -564,7 +568,7 @@ const PluginDetailPage: React.FC = () => {
                   variant='h6'
                   sx={{ fontWeight: 'bold', mb: 3 }}
                 >
-                  全部评价 ({reviews.length})
+                  {t('plugin.detail_page.section.all_reviews', { count: reviews.length })}
                 </Typography>
                 {reviews.length > 0 ? (
                   reviews.map((review) => (
@@ -578,11 +582,11 @@ const PluginDetailPage: React.FC = () => {
                           <Box sx={{ flexGrow: 1 }}>
                             <Box sx={{ display: 'flex', alignItems: 'center', gap: 2, mb: 0.5 }}>
                               <Typography sx={{ fontWeight: 'medium' }}>
-                                {review.user_name || '匿名用户'}
+                                {review.user_name || t('plugin.common.anonymous_user')}
                               </Typography>
                               {review.is_verified_purchase && (
                                 <Chip
-                                  label='已购买'
+                                  label={t('plugin.common.purchased')}
                                   size='small'
                                   color='primary'
                                   variant='outlined'
@@ -590,7 +594,7 @@ const PluginDetailPage: React.FC = () => {
                               )}
                               {review.is_featured && (
                                 <Chip
-                                  label='精选'
+                                  label={t('plugin.common.featured')}
                                   size='small'
                                   color='warning'
                                   variant='outlined'
@@ -642,12 +646,12 @@ const PluginDetailPage: React.FC = () => {
                 ) : (
                   <Box sx={{ textAlign: 'center', py: 8 }}>
                     <Star sx={{ width: 48, height: 48, color: 'grey.300', mx: 'auto', mb: 2 }} />
-                    <Typography>暂无评价</Typography>
+                    <Typography>{t('plugin.common.no_reviews')}</Typography>
                     <Typography
                       variant='body2'
                       color='textSecondary'
                     >
-                      成为第一个评价的用户
+                      {t('plugin.detail_page.review.first_reviewer')}
                     </Typography>
                   </Box>
                 )}
@@ -664,14 +668,14 @@ const PluginDetailPage: React.FC = () => {
                       variant='h5'
                       sx={{ fontWeight: 'bold', mb: 1 }}
                     >
-                      {plugin.is_free ? '免费' : `¥${((plugin.price_cents || 0) / 100).toFixed(2)}`}
+                      {plugin.is_free ? t('plugin.common.free') : `¥${((plugin.price_cents || 0) / 100).toFixed(2)}`}
                     </Typography>
                     {!plugin.is_free && (
                       <Typography
                         variant='body2'
                         color='textSecondary'
                       >
-                        一次性购买，永久使用
+                        {t('plugin.detail_page.pricing.permanent_usage')}
                       </Typography>
                     )}
                   </Box>
@@ -695,35 +699,35 @@ const PluginDetailPage: React.FC = () => {
                     }
                   >
                     {installed
-                      ? '已安装'
+                      ? t('plugin.common.installed')
                       : isInstalling
-                        ? '安装中...'
+                        ? t('plugin.common.installing')
                         : plugin.is_free
-                          ? '立即安装'
-                          : '立即购买'}
+                          ? t('plugin.common.install_now')
+                          : t('plugin.common.buy_now')}
                   </Button>
 
                   <Divider />
 
                   <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
                     <Box sx={{ display: 'flex', justifyContent: 'space-between' }}>
-                      <Typography color='textSecondary'>分类</Typography>
+                      <Typography color='textSecondary'>{t('plugin.field.category')}</Typography>
                       <Typography sx={{ fontWeight: 'medium' }}>{plugin.category}</Typography>
                     </Box>
                     <Box sx={{ display: 'flex', justifyContent: 'space-between' }}>
-                      <Typography color='textSecondary'>类型</Typography>
+                      <Typography color='textSecondary'>{t('plugin.field.type')}</Typography>
                       <Chip
-                        label={plugin.plugin_type === 'core' ? '核心插件' : '业务插件'}
+                        label={plugin.plugin_type === 'core' ? t('plugin.plugin_type.core') : t('plugin.plugin_type.business')}
                         size='small'
                         variant='outlined'
                       />
                     </Box>
                     <Box sx={{ display: 'flex', justifyContent: 'space-between' }}>
-                      <Typography color='textSecondary'>最新版本</Typography>
+                      <Typography color='textSecondary'>{t('plugin.field.latest_version')}</Typography>
                       <Typography sx={{ fontWeight: 'medium' }}>v{plugin.version}</Typography>
                     </Box>
                     <Box sx={{ display: 'flex', justifyContent: 'space-between' }}>
-                      <Typography color='textSecondary'>发布时间</Typography>
+                      <Typography color='textSecondary'>{t('plugin.field.publish_time')}</Typography>
                       <Typography sx={{ fontWeight: 'medium' }}>
                         {plugin.created_at ? new Date(plugin.created_at).toLocaleDateString() : '-'}
                       </Typography>
@@ -738,7 +742,7 @@ const PluginDetailPage: React.FC = () => {
                     variant='h6'
                     sx={{ fontWeight: 'bold', mb: 2 }}
                   >
-                    评分概览
+                    {t('plugin.common.rating_overview')}
                   </Typography>
                   <Box sx={{ textAlign: 'center', mb: 3 }}>
                     <Typography
@@ -755,7 +759,7 @@ const PluginDetailPage: React.FC = () => {
                       variant='body2'
                       color='textSecondary'
                     >
-                      {reviews.length} 条评价
+                      {t('plugin.common.review_count', { count: reviews.length })}
                     </Typography>
                   </Box>
                   {[5, 4, 3, 2, 1].map((star) => {
@@ -770,7 +774,7 @@ const PluginDetailPage: React.FC = () => {
                           variant='body2'
                           sx={{ width: 24 }}
                         >
-                          {star}星
+                          {t('plugin.common.star_label', { star })}
                         </Typography>
                         <Box
                           sx={{

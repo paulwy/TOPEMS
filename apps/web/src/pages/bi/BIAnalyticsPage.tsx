@@ -47,6 +47,7 @@ import {
 import { PageContainer } from '@/components/common';
 import { designTokens } from '@/theme/tokens';
 
+import { useTranslation } from 'react-i18next';
 const ct = designTokens.colors;
 
 const ModuleCard = ({
@@ -268,6 +269,7 @@ const moduleConfigs: Omit<ModuleInfo, 'stats' | 'trend'>[] = [
 ];
 
 const BIAnalyticsPage = () => {
+  const { t } = useTranslation();
   const [error, setError] = useState<string | null>(null);
   const [organizationFilter, setOrganizationFilter] = useState<OrganizationFilterValue>({});
   const navigate = useNavigate();
@@ -312,7 +314,7 @@ const BIAnalyticsPage = () => {
   useEffect(() => {
     if (overviewQuery.isError) {
       logger.error('Failed to load analytics:', overviewQuery.error);
-      setError('加载分析数据失败，请稍后重试');
+      setError(t('bi.bi_analytics_page.fail'));
     } else {
       setError(null);
     }
@@ -469,40 +471,40 @@ const BIAnalyticsPage = () => {
   const statsCards: StatCard[] = [
     {
       id: 'total-projects',
-      title: '项目总数',
+      title: t('bi.bi_analytics_page.text_3ea3ec'),
       value: overview?.total_projects || 120,
       change: 12.5,
-      changeLabel: '较上月',
+      changeLabel: t('bi.bi_analytics_page.last_month'),
       icon: <BarChart3 size={24} />,
       color: 'primary',
       onClick: () => navigate(BI_PATHS.module.replace(':moduleId', 'development')),
     },
     {
       id: 'total-samples',
-      title: '样品总数',
+      title: t('bi.bi_analytics_page.text_14078c'),
       value: overview?.total_samples || 2450,
       change: 8.3,
-      changeLabel: '较上月',
+      changeLabel: t('bi.bi_analytics_page.last_month'),
       icon: <Database size={24} />,
       color: 'info',
       onClick: () => navigate(BI_PATHS.module.replace(':moduleId', 'laboratory')),
     },
     {
       id: 'pass-rate',
-      title: '质量合格率',
+      title: t('bi.bi_analytics_page.pass_rate'),
       value: overview?.pass_rate || '97.8',
       unit: '%',
       change: 0.5,
-      changeLabel: '较上月',
+      changeLabel: t('bi.bi_analytics_page.last_month'),
       icon: <CheckCircle size={24} />,
       color: 'success',
     },
     {
       id: 'active-risks',
-      title: '高风险数',
+      title: t('bi.bi_analytics_page.text_b77979'),
       value: overview?.active_risks || 15,
       change: -3.2,
-      changeLabel: '较上月',
+      changeLabel: t('bi.bi_analytics_page.last_month'),
       icon: <AlertCircle size={24} />,
       color: 'warning',
       onClick: () => navigate(BI_PATHS.module.replace(':moduleId', 'ehs')),
@@ -516,8 +518,8 @@ const BIAnalyticsPage = () => {
   const chartCards: ChartCardType[] = [
     {
       id: 'module-bar-chart',
-      title: '各业务模块数据统计',
-      subtitle: '模块数据量对比',
+      title: t('bi.bi_analytics_page.text_7057af'),
+      subtitle: t('bi.bi_analytics_page.text_f9e510'),
       chart: (
         <ResponsiveContainer
           width='100%'
@@ -556,8 +558,8 @@ const BIAnalyticsPage = () => {
     },
     {
       id: 'module-pie-chart',
-      title: '业务模块占比',
-      subtitle: '数据分布概览',
+      title: t('bi.bi_analytics_page.text_c7dd9d'),
+      subtitle: t('bi.bi_analytics_page.text_ab0b07'),
       chart: (
         <ResponsiveContainer
           width='100%'
@@ -597,8 +599,8 @@ const BIAnalyticsPage = () => {
 
   return (
     <PageContainer
-      title='BI 概览分析'
-      subtitle='各业务模块数据总览'
+      title={t('bi.bi_analytics_page.text_9cfb27')}
+      subtitle={t('bi.bi_analytics_page.text_1ca74a')}
       padding={false}
       maxWidth={false}
     >
@@ -606,9 +608,9 @@ const BIAnalyticsPage = () => {
         title=''
         subtitle=''
         breadcrumbs={[
-          { label: '首页', href: '/dashboard' },
+          { label: t('bi.bi_analytics_page.home'), href: '/dashboard' },
           { label: 'BI' },
-          { label: '概览分析' },
+          { label: t('bi.bi_analytics_page.text_c93998') },
         ]}
         stats={statsCards}
         charts={chartCards}

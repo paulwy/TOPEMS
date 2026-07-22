@@ -23,6 +23,7 @@ import { apiLogger } from '@/utils/logger';
 import { ListPageTemplate, type ColumnDef } from '@/components/templates';
 import { PageContainer } from '@/components/common';
 import { ConfirmDialog } from '@topems/shared-components';
+import { useConfirmDialog } from '@/hooks';
 
 const ScmPurchaseOrderPage: React.FC = () => {
   const queryClient = useQueryClient();
@@ -31,13 +32,12 @@ const ScmPurchaseOrderPage: React.FC = () => {
   const [showDialog, setShowDialog] = useState(false);
   const [isEditing, setIsEditing] = useState(false);
   const [selectedOrder, setSelectedOrder] = useState<PurchaseOrder | null>(null);
-  const [confirmDialogOpen, setConfirmDialogOpen] = useState(false);
-  const [confirmDialogConfig, setConfirmDialogConfig] = useState<{
-    title: string;
-    message: string;
-    onConfirm: () => void;
-    danger?: boolean;
-  } | null>(null);
+  const {
+    confirmOpen: confirmDialogOpen,
+    confirmConfig: confirmDialogConfig,
+    openConfirm: openConfirmDialog,
+    closeConfirm: setConfirmDialogClosed,
+  } = useConfirmDialog();
   const [formData, setFormData] = useState<CreatePurchaseOrderRequest>({
     order_number: '',
     supplier_id: '',
@@ -357,16 +357,6 @@ const ScmPurchaseOrderPage: React.FC = () => {
     setSelectedOrder(null);
   };
 
-  const openConfirmDialog = (config: {
-    title: string;
-    message: string;
-    onConfirm: () => void;
-    danger?: boolean;
-  }) => {
-    setConfirmDialogConfig(config);
-    setConfirmDialogOpen(true);
-  };
-
   const isMutationPending =
     createMutation.isPending ||
     updateMutation.isPending ||
@@ -646,10 +636,10 @@ const ScmPurchaseOrderPage: React.FC = () => {
 
       <ConfirmDialog
         isOpen={confirmDialogOpen}
-        onClose={() => setConfirmDialogOpen(false)}
+        onClose={setConfirmDialogClosed}
         onConfirm={() => {
           confirmDialogConfig?.onConfirm();
-          setConfirmDialogOpen(false);
+          setConfirmDialogClosed();
         }}
         title={confirmDialogConfig?.title || ''}
         message={confirmDialogConfig?.message || ''}

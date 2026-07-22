@@ -14,6 +14,7 @@
 #![allow(clippy::redundant_closure)]
 #![allow(dead_code)]
 
+mod event_handlers;
 mod middleware;
 mod models;
 mod modules;
@@ -95,6 +96,21 @@ async fn main() {
         tracing::warn!("PDM database init warning: {}", e);
     }
 
+    if let Err(e) = event_handlers::start_event_subscribers(pool.clone()).await {
+        tracing::warn!("⚠️ PDM 事件订阅者启动失败: {}", e);
+    }
+
+    let event_publisher = match topems_shared::event::EventPublisher::new("topems-pdm") {
+        Ok(publisher) => {
+            tracing::info!("📢 事件发布服务初始化成功");
+            Some(std::sync::Arc::new(publisher))
+        }
+        Err(e) => {
+            tracing::warn!("⚠️ 事件发布服务初始化失败（不阻塞启动）: {}", e);
+            None
+        }
+    };
+
     let auth_state = AuthState::from_env();
     let health_config = SimpleHealthConfig::new("topems-pdm").with_db(pool.clone());
 
@@ -102,6 +118,7 @@ async fn main() {
         auth_state,
         pool,
         health_config,
+        event_publisher,
     };
 
     let cors = create_cors_layer();

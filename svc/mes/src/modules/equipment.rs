@@ -674,54 +674,8 @@ pub async fn list_maintenances(
     let records = match result {
         Ok(r) => r,
         Err(e) => {
-            tracing::warn!("Failed to fetch maintenances: {}, using mock data", e);
-            let now = Utc::now();
-            let mock_records: Vec<MaintenanceRecord> = vec![
-                MaintenanceRecord {
-                    id: Uuid::new_v4(),
-                    equipment_id: Uuid::new_v4(),
-                    equipment_name: Some("CNC加工中心-A01".to_string()),
-                    equipment_no: Some("EQ202401010001".to_string()),
-                    maintenance_type: "定期维护".to_string(),
-                    description: Some("月度例行检查，更换润滑油".to_string()),
-                    maintainer: "张三".to_string(),
-                    start_time: now - chrono::Duration::hours(2),
-                    end_time: Some(now - chrono::Duration::hours(1)),
-                    cost: Some(500.0),
-                    result: Some("维护完成，设备运行正常".to_string()),
-                    status: "completed".to_string(),
-                    remarks: None,
-                    created_at: now - chrono::Duration::hours(2),
-                    updated_at: now - chrono::Duration::hours(1),
-                },
-                MaintenanceRecord {
-                    id: Uuid::new_v4(),
-                    equipment_id: Uuid::new_v4(),
-                    equipment_name: Some("注塑机-B02".to_string()),
-                    equipment_no: Some("EQ202402150003".to_string()),
-                    maintenance_type: "故障维修".to_string(),
-                    description: Some("液压系统泄漏，更换密封圈".to_string()),
-                    maintainer: "李四".to_string(),
-                    start_time: now - chrono::Duration::days(1),
-                    end_time: Some(now - chrono::Duration::hours(22)),
-                    cost: Some(2300.0),
-                    result: Some("维修完成，设备恢复正常".to_string()),
-                    status: "completed".to_string(),
-                    remarks: None,
-                    created_at: now - chrono::Duration::days(1),
-                    updated_at: now - chrono::Duration::hours(22),
-                },
-            ];
-            let total = 2;
-            return Json(ApiResponse::success(
-                serde_json::json!({
-                    "items": mock_records,
-                    "total": total,
-                    "page": page,
-                    "pagesize": page_size,
-                }),
-                "获取维护记录列表成功",
-            ));
+            tracing::error!("Failed to fetch maintenances: {}", e);
+            return Json(ApiResponse::error(500, "获取维护记录列表失败"));
         }
     };
 
@@ -818,27 +772,8 @@ pub async fn create_maintenance(
     let result = match result {
         Ok(r) => r,
         Err(e) => {
-            tracing::warn!("Failed to create maintenance: {}, using mock data", e);
-            return Json(ApiResponse::success(
-                MaintenanceRecord {
-                    id: Uuid::new_v4(),
-                    equipment_id: req.equipment_id,
-                    equipment_name: None,
-                    equipment_no: None,
-                    maintenance_type: req.maintenance_type,
-                    description: req.description,
-                    maintainer: req.maintainer,
-                    start_time,
-                    end_time,
-                    cost: req.cost,
-                    result: req.result,
-                    status: req.status.unwrap_or_else(|| "pending".to_string()),
-                    remarks: req.remarks,
-                    created_at: now,
-                    updated_at: now,
-                },
-                "维护记录创建成功",
-            ));
+            tracing::error!("Failed to create maintenance: {}", e);
+            return Json(ApiResponse::error(500, "创建维护记录失败"));
         }
     };
 

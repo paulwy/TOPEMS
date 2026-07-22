@@ -26,30 +26,33 @@ import { ConfirmDialog, FormField } from '@topems/shared-components';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { QUERY_KEYS } from '@/lib/reactQuery';
 
+import { useTranslation } from 'react-i18next';
 const ct = designTokens.colors;
 
-const statusConfig: Record<
-  string,
-  { label: string; color: 'default' | 'primary' | 'success' | 'warning' | 'error' }
-> = {
-  in_stock: { label: '在库', color: 'success' },
-  out_stock: { label: '已出库', color: 'default' },
-  reserved: { label: '已预留', color: 'warning' },
-  frozen: { label: '冻结', color: 'error' },
-  scrapped: { label: '报废', color: 'default' },
-};
 
-const qualityStatusConfig: Record<
-  string,
-  { label: string; color: 'default' | 'primary' | 'success' | 'warning' | 'error' }
-> = {
-  qualified: { label: '合格', color: 'success' },
-  unqualified: { label: '不合格', color: 'error' },
-  pending: { label: '待检', color: 'warning' },
-  inspecting: { label: '检验中', color: 'primary' },
-};
 
 const BatchManagementPage: React.FC = () => {
+  const { t } = useTranslation();
+  const statusConfig: Record<
+    string,
+    { label: string; color: 'default' | 'primary' | 'success' | 'warning' | 'error' }
+  > = {
+    in_stock: { label: t('wms.batch_management_page.text_a230ce'), color: 'success' },
+    out_stock: { label: t('wms.batch_management_page.outbound'), color: 'default' },
+    reserved: { label: t('wms.batch_management_page.text_ba07b1'), color: 'warning' },
+    frozen: { label: t('wms.batch_management_page.text_28a286'), color: 'error' },
+    scrapped: { label: t('wms.batch_management_page.scrap'), color: 'default' },
+  };
+  const qualityStatusConfig: Record<
+    string,
+    { label: string; color: 'default' | 'primary' | 'success' | 'warning' | 'error' }
+  > = {
+    qualified: { label: t('wms.batch_management_page.qualified'), color: 'success' },
+    unqualified: { label: t('wms.batch_management_page.unqualified'), color: 'error' },
+    pending: { label: t('wms.batch_management_page.text_5930e6'), color: 'warning' },
+    inspecting: { label: t('wms.batch_management_page.inspection'), color: 'primary' },
+  };
+
   const [currentPage, setCurrentPage] = useState(1);
   const [pageSize, setPageSize] = useState(10);
   const [showDialog, setShowDialog] = useState(false);
@@ -67,7 +70,7 @@ const BatchManagementPage: React.FC = () => {
     sku: '',
     material_name: '',
     specification: '',
-    unit: '个',
+    unit: t('wms.batch_management_page.text_930882'),
     quantity: 0,
     warehouse_id: '',
     location_id: '',
@@ -119,7 +122,7 @@ const BatchManagementPage: React.FC = () => {
       resetForm();
     },
     onError: (error) => {
-      apiLogger.error('创建批次失败:', error);
+      apiLogger.error(t('wms.batch_management_page.create'), error);
     },
   });
 
@@ -137,7 +140,7 @@ const BatchManagementPage: React.FC = () => {
       resetForm();
     },
     onError: (error) => {
-      apiLogger.error('更新批次失败:', error);
+      apiLogger.error(t('wms.batch_management_page.update'), error);
     },
   });
 
@@ -153,7 +156,7 @@ const BatchManagementPage: React.FC = () => {
       queryClient.invalidateQueries({ queryKey: [QUERY_KEYS.WMS.BATCHES] });
     },
     onError: (error) => {
-      apiLogger.error('删除批次失败:', error);
+      apiLogger.error(t('wms.batch_management_page.delete'), error);
     },
   });
 
@@ -180,7 +183,7 @@ const BatchManagementPage: React.FC = () => {
       sku: batch.sku,
       material_name: batch.material_name,
       specification: batch.specification || '',
-      unit: batch.unit || '个',
+      unit: batch.unit || t('wms.batch_management_page.text_930882'),
       quantity: batch.quantity,
       warehouse_id: batch.warehouse_id,
       location_id: batch.location_id || '',
@@ -199,7 +202,7 @@ const BatchManagementPage: React.FC = () => {
 
   const handleDelete = async (batch: Batch) => {
     openConfirmDialog({
-      title: '确认删除',
+      title: t('wms.batch_management_page.dialog_delete_title'),
       message: `确定要删除批次 "${batch.batch_no}" 吗？`,
       onConfirm: async () => {
         await deleteMutation.mutateAsync(batch.id);
@@ -214,7 +217,7 @@ const BatchManagementPage: React.FC = () => {
       sku: '',
       material_name: '',
       specification: '',
-      unit: '个',
+      unit: t('wms.batch_management_page.text_930882'),
       quantity: 0,
       warehouse_id: '',
       location_id: '',
@@ -257,14 +260,14 @@ const BatchManagementPage: React.FC = () => {
   const columns: ColumnDef<Batch>[] = [
     {
       id: 'batch_no',
-      label: '批次号',
+      label: t('wms.batch_management_page.column_batch_number'),
       render: (row) => (
         <Box sx={{ fontWeight: 500 }}>
           {row.batch_no}
           {isExpired(row) && (
             <Chip
               size='small'
-              label='已过期'
+              label={t('wms.batch_management_page.status_expired')}
               color='error'
               sx={{ ml: 1, fontSize: '0.625rem', height: 16 }}
             />
@@ -272,7 +275,7 @@ const BatchManagementPage: React.FC = () => {
           {isExpiringSoon(row) && !isExpired(row) && (
             <Chip
               size='small'
-              label='临期'
+              label={t('wms.batch_management_page.text_2cae05')}
               color='warning'
               sx={{ ml: 1, fontSize: '0.625rem', height: 16 }}
             />
@@ -282,7 +285,7 @@ const BatchManagementPage: React.FC = () => {
     },
     {
       id: 'material_info',
-      label: '物料信息',
+      label: t('wms.batch_management_page.info'),
       render: (row) => (
         <Box>
           <Box sx={{ fontWeight: 500 }}>{row.material_name}</Box>
@@ -295,7 +298,7 @@ const BatchManagementPage: React.FC = () => {
     },
     {
       id: 'quantity',
-      label: '数量',
+      label: t('wms.batch_management_page.column_quantity'),
       align: 'right',
       render: (row) => (
         <Box>
@@ -310,23 +313,23 @@ const BatchManagementPage: React.FC = () => {
     },
     {
       id: 'location',
-      label: '库位',
+      label: t('wms.batch_management_page.location'),
       render: (row) => row.location_code || row.warehouse_name || '-',
     },
     {
       id: 'supplier_name',
-      label: '供应商',
+      label: t('wms.batch_management_page.supplier'),
       render: (row) => row.supplier_name || '-',
     },
     {
       id: 'production_date',
-      label: '生产日期',
+      label: t('wms.batch_management_page.field_production_date'),
       render: (row) =>
         row.production_date ? new Date(row.production_date).toLocaleDateString('zh-CN') : '-',
     },
     {
       id: 'expiry_date',
-      label: '有效期至',
+      label: t('wms.batch_management_page.field_expiry_date'),
       render: (row) => (
         <Box
           sx={{
@@ -342,7 +345,7 @@ const BatchManagementPage: React.FC = () => {
     },
     {
       id: 'quality_status',
-      label: '质检状态',
+      label: t('wms.batch_management_page.status'),
       render: (row) => {
         const config = qualityStatusConfig[row.quality_status] || qualityStatusConfig.pending;
         return (
@@ -357,7 +360,7 @@ const BatchManagementPage: React.FC = () => {
     },
     {
       id: 'status',
-      label: '状态',
+      label: t('wms.batch_management_page.filter_status'),
       render: (row) => {
         const config = statusConfig[row.status] || statusConfig.in_stock;
         return (
@@ -373,23 +376,23 @@ const BatchManagementPage: React.FC = () => {
 
   const rowActions = [
     {
-      label: '编辑',
+      label: t('wms.batch_management_page.action_edit'),
       icon: <Edit size={14} />,
       onClick: (row: Batch) => handleEdit(row),
     },
     {
-      label: '调拨',
+      label: t('wms.batch_management_page.transfer'),
       icon: <ArrowRightLeft size={14} />,
       onClick: (_row: Batch) => {
         addNotification({
           type: 'info',
-          title: '功能提示',
-          message: '批次调拨功能开发中',
+          title: t('wms.batch_management_page.hint'),
+          message: t('wms.batch_management_page.transfer_1'),
         });
       },
     },
     {
-      label: '删除',
+      label: t('wms.batch_management_page.action_delete'),
       icon: <Trash2 size={14} />,
       color: 'error' as const,
       onClick: (row: Batch) => handleDelete(row),
@@ -398,8 +401,8 @@ const BatchManagementPage: React.FC = () => {
 
   return (
     <PageContainer
-      title='批次管理'
-      subtitle='管理库存批次，跟踪批次信息、有效期和质检状态'
+      title={t('wms.batch_management_page.breadcrumb_current')}
+      subtitle={t('wms.batch_management_page.status_1')}
       maxWidth='xl'
       headerProps={{
         pageIcon: <Layers style={{ width: 20, height: 20 }} />,
@@ -424,7 +427,7 @@ const BatchManagementPage: React.FC = () => {
         }}
         actions={[
           {
-            label: '新增批次',
+            label: t('wms.batch_management_page.dialog_create_title'),
             icon: <Plus size={16} />,
             onClick: () => {
               resetForm();
@@ -433,25 +436,25 @@ const BatchManagementPage: React.FC = () => {
             variant: 'contained',
           },
           {
-            label: '临期预警',
+            label: t('wms.batch_management_page.text_c516b4'),
             icon: <AlertTriangle size={16} />,
             onClick: () => {
               addNotification({
                 type: 'info',
-                title: '临期预警',
-                message: '正在加载临期批次...',
+                title: t('wms.batch_management_page.text_c516b4'),
+                message: t('wms.batch_management_page.text_601b16'),
               });
             },
             variant: 'outlined',
           },
           {
-            label: '库存总览',
+            label: t('wms.batch_management_page.text_a9abcd'),
             icon: <Package size={16} />,
             onClick: () => {
               addNotification({
                 type: 'info',
-                title: '库存总览',
-                message: '正在加载库存统计...',
+                title: t('wms.batch_management_page.text_a9abcd'),
+                message: t('wms.batch_management_page.text_80ce2e'),
               });
             },
             variant: 'outlined',
@@ -459,7 +462,7 @@ const BatchManagementPage: React.FC = () => {
         ]}
         rowActions={rowActions}
         onRefresh={refetch}
-        emptyMessage='暂无批次数据'
+        emptyMessage={t('wms.batch_management_page.empty_message')}
       />
 
       <Dialog
@@ -468,7 +471,7 @@ const BatchManagementPage: React.FC = () => {
         maxWidth='lg'
         fullWidth
       >
-        <DialogTitle>{isEditing ? '编辑批次' : '新增批次'}</DialogTitle>
+        <DialogTitle>{isEditing ? t('wms.batch_management_page.dialog_edit_title') : t('wms.batch_management_page.dialog_create_title')}</DialogTitle>
         <DialogContent>
           <form onSubmit={handleSubmit}>
             <Box
@@ -481,7 +484,7 @@ const BatchManagementPage: React.FC = () => {
             >
               <FormField
                 name='batch_no'
-                label='批次号 *'
+                label={t('wms.batch_management_page.field_batch_number_required')}
                 value={formData.batch_no}
                 onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
                   setFormData({ ...formData, batch_no: e.target.value })
@@ -492,7 +495,7 @@ const BatchManagementPage: React.FC = () => {
               />
               <FormField
                 name='sku'
-                label='SKU编码 *'
+                label={t('wms.batch_management_page.code')}
                 value={formData.sku}
                 onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
                   setFormData({ ...formData, sku: e.target.value })
@@ -503,7 +506,7 @@ const BatchManagementPage: React.FC = () => {
               />
               <FormField
                 name='material_name'
-                label='物料名称 *'
+                label={t('wms.batch_management_page.field_material_name_required')}
                 value={formData.material_name}
                 onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
                   setFormData({ ...formData, material_name: e.target.value })
@@ -514,7 +517,7 @@ const BatchManagementPage: React.FC = () => {
               />
               <FormField
                 name='specification'
-                label='规格型号'
+                label={t('wms.batch_management_page.spec')}
                 value={formData.specification}
                 onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
                   setFormData({ ...formData, specification: e.target.value })
@@ -523,7 +526,7 @@ const BatchManagementPage: React.FC = () => {
               />
               <FormField
                 name='unit'
-                label='单位'
+                label={t('wms.batch_management_page.column_unit')}
                 value={formData.unit}
                 onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
                   setFormData({ ...formData, unit: e.target.value })
@@ -532,7 +535,7 @@ const BatchManagementPage: React.FC = () => {
               />
               <FormField
                 name='quantity'
-                label='数量 *'
+                label={t('wms.batch_management_page.field_quantity_required')}
                 type='number'
                 value={formData.quantity}
                 onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
@@ -543,7 +546,7 @@ const BatchManagementPage: React.FC = () => {
               />
               <FormField
                 name='warehouse_id'
-                label='仓库ID'
+                label={t('wms.batch_management_page.warehouse')}
                 value={formData.warehouse_id}
                 onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
                   setFormData({ ...formData, warehouse_id: e.target.value })
@@ -552,7 +555,7 @@ const BatchManagementPage: React.FC = () => {
               />
               <FormField
                 name='location_id'
-                label='库位ID'
+                label={t('wms.batch_management_page.location_1')}
                 value={formData.location_id}
                 onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
                   setFormData({ ...formData, location_id: e.target.value })
@@ -561,7 +564,7 @@ const BatchManagementPage: React.FC = () => {
               />
               <FormField
                 name='supplier_id'
-                label='供应商ID'
+                label={t('wms.batch_management_page.supplier_1')}
                 value={formData.supplier_id}
                 onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
                   setFormData({ ...formData, supplier_id: e.target.value })
@@ -570,7 +573,7 @@ const BatchManagementPage: React.FC = () => {
               />
               <FormField
                 name='production_date'
-                label='生产日期'
+                label={t('wms.batch_management_page.field_production_date')}
                 type='date'
                 value={formData.production_date}
                 onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
@@ -581,7 +584,7 @@ const BatchManagementPage: React.FC = () => {
               />
               <FormField
                 name='expiry_date'
-                label='有效期至'
+                label={t('wms.batch_management_page.field_expiry_date')}
                 type='date'
                 value={formData.expiry_date}
                 onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
@@ -592,7 +595,7 @@ const BatchManagementPage: React.FC = () => {
               />
               <FormField
                 name='receipt_date'
-                label='入库日期'
+                label={t('wms.batch_management_page.date')}
                 type='date'
                 value={formData.receipt_date}
                 onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
@@ -605,7 +608,7 @@ const BatchManagementPage: React.FC = () => {
                 <InputLabel>质检状态</InputLabel>
                 <Select
                   value={formData.quality_status}
-                  label='质检状态'
+                  label={t('wms.batch_management_page.status')}
                   onChange={(e: SelectChangeEvent) =>
                     setFormData({ ...formData, quality_status: e.target.value })
                   }
@@ -618,7 +621,7 @@ const BatchManagementPage: React.FC = () => {
               </FormControl>
               <FormField
                 name='shelf_life_days'
-                label='保质期(天)'
+                label={t('wms.batch_management_page.text_3042e9')}
                 type='number'
                 value={formData.shelf_life_days}
                 onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
@@ -628,7 +631,7 @@ const BatchManagementPage: React.FC = () => {
               />
               <FormField
                 name='unit_price'
-                label='单价'
+                label={t('wms.batch_management_page.text_da4abd')}
                 type='number'
                 value={formData.unit_price}
                 onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
@@ -639,7 +642,7 @@ const BatchManagementPage: React.FC = () => {
             </Box>
             <FormField
               name='remark'
-              label='备注'
+              label={t('wms.batch_management_page.field_remark')}
               multiline
               rows={2}
               value={formData.remark}
@@ -661,7 +664,7 @@ const BatchManagementPage: React.FC = () => {
                 type='submit'
                 variant='contained'
               >
-                {isEditing ? '更新' : '保存'}
+                {isEditing ? t('wms.batch_management_page.update_1') : t('wms.batch_management_page.save')}
               </Button>
             </DialogActions>
           </form>

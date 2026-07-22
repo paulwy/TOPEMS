@@ -39,14 +39,28 @@ import {
   MenuItem,
 } from '@mui/material';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { useUrlListState } from '@/hooks';
 
+import { useTranslation } from 'react-i18next';
 const HrmAttendancePage: React.FC = () => {
+  const { t } = useTranslation();
   const addNotification = useNotificationStore((state) => state.addNotification);
   const queryClient = useQueryClient();
 
   const [activeTab, setActiveTab] = useState<'records' | 'leaves' | 'statistics'>('records');
-  const [searchQuery, setSearchQuery] = useState('');
-  const [selectedDate, setSelectedDate] = useState('2026-05-27');
+  const {
+    searchQuery,
+    setSearchQuery,
+    debouncedSearch,
+    filters: urlFilters,
+    setFilter,
+  } = useUrlListState<{ date: string }>({
+    defaultPageSize: 10,
+    defaultFilters: { date: '2026-05-27' },
+    baseIndex: 1,
+    historyMode: 'replace',
+  });
+  const selectedDate = urlFilters.date;
   const [showLeaveModal, setShowLeaveModal] = useState(false);
   const [leaveFormData, setLeaveFormData] = useState<Partial<LeaveRequest>>({});
 
@@ -99,38 +113,38 @@ const HrmAttendancePage: React.FC = () => {
       leaveApi.approve(id, action),
     onSuccess: (_, variables) => {
       addNotification({
-        title: '成功',
-        message: variables.action === 'approve' ? '已批准' : '已拒绝',
+        title: t('hrm.hrm_attendance_page.success'),
+        message: variables.action === 'approve' ? t('hrm.hrm_attendance_page.text_337737') : t('hrm.hrm_attendance_page.text_81233d'),
         type: 'success',
       });
       queryClient.invalidateQueries({ queryKey: ['hrm-leave-requests'] });
     },
     onError: () => {
-      addNotification({ title: '失败', message: '操作失败', type: 'error' });
+      addNotification({ title: t('hrm.hrm_attendance_page.fail'), message: t('hrm.hrm_attendance_page.operation_failed'), type: 'error' });
     },
   });
 
   const createLeaveMutation = useMutation({
     mutationFn: (data: Partial<LeaveRequest>) => leaveApi.create(data),
     onSuccess: () => {
-      addNotification({ title: '成功', message: '申请已提交', type: 'success' });
+      addNotification({ title: t('hrm.hrm_attendance_page.success'), message: t('hrm.hrm_attendance_page.submit'), type: 'success' });
       setShowLeaveModal(false);
       setLeaveFormData({});
       queryClient.invalidateQueries({ queryKey: ['hrm-leave-requests'] });
     },
     onError: () => {
-      addNotification({ title: '失败', message: '提交失败', type: 'error' });
+      addNotification({ title: t('hrm.hrm_attendance_page.fail'), message: t('hrm.hrm_attendance_page.submit_1'), type: 'error' });
     },
   });
 
   const getLeaveTypeName = (type: string) => {
     const types: Record<string, string> = {
-      sick: '病假',
-      personal: '事假',
-      annual: '年假',
-      marriage: '婚假',
-      maternity: '产假',
-      funeral: '丧假',
+      sick: t('hrm.hrm_attendance_page.text_26fa6c'),
+      personal: t('hrm.hrm_attendance_page.text_f571dd'),
+      annual: t('hrm.hrm_attendance_page.text_69a928'),
+      marriage: t('hrm.hrm_attendance_page.text_ff6647'),
+      maternity: t('hrm.hrm_attendance_page.text_f8d792'),
+      funeral: t('hrm.hrm_attendance_page.text_20fc6f'),
     };
     return types[type] || type;
   };
@@ -145,8 +159,8 @@ const HrmAttendancePage: React.FC = () => {
         }
       };
       setConfirmDialogConfig({
-        title: '确认操作',
-        message: action === 'approve' ? '确定要批准这个请假申请吗？' : '确定要拒绝这个请假申请吗？',
+        title: t('hrm.hrm_attendance_page.action'),
+        message: action === 'approve' ? t('hrm.hrm_attendance_page.confirm') : t('hrm.hrm_attendance_page.confirm_1'),
         onConfirm: confirmAction,
         danger: action === 'reject',
       });
@@ -164,11 +178,11 @@ const HrmAttendancePage: React.FC = () => {
   }, [leaveFormData, createLeaveMutation]);
 
   const filteredRecords = records.filter((r) =>
-    r.employee_name?.toLowerCase().includes(searchQuery.toLowerCase())
+    r.employee_name?.toLowerCase().includes(debouncedSearch.toLowerCase())
   );
 
   const filteredLeaves = leaves.filter((l) =>
-    l.employee_name?.toLowerCase().includes(searchQuery.toLowerCase())
+    l.employee_name?.toLowerCase().includes(debouncedSearch.toLowerCase())
   );
 
   const attendanceStats = useMemo(() => {
@@ -198,49 +212,49 @@ const HrmAttendancePage: React.FC = () => {
   const statCards: StatsStatCard[] = [
     {
       id: 'totalEmployees',
-      title: '总员工数',
+      title: t('hrm.hrm_attendance_page.text_cf4555'),
       value: attendanceStats.totalEmployees,
       icon: <Users size={20} />,
       color: 'primary',
     },
     {
       id: 'totalPresent',
-      title: '出勤人数',
+      title: t('hrm.hrm_attendance_page.text_675ff6'),
       value: attendanceStats.totalPresent,
       icon: <CheckCircle size={20} />,
       color: 'success',
     },
     {
       id: 'presentRate',
-      title: '出勤率',
+      title: t('hrm.hrm_attendance_page.text_91d77e'),
       value: `${attendanceStats.presentRate}%`,
       icon: <BarChart3 size={20} />,
       color: 'primary',
     },
     {
       id: 'avgWorkHours',
-      title: '平均工时',
+      title: t('hrm.hrm_attendance_page.text_7e3b68'),
       value: `${attendanceStats.avgWorkHours}h`,
       icon: <Clock size={20} />,
       color: 'warning',
     },
     {
       id: 'totalLate',
-      title: '迟到人数',
+      title: t('hrm.hrm_attendance_page.text_7344c8'),
       value: attendanceStats.totalLate,
       icon: <AlertCircle size={20} />,
       color: 'warning',
     },
     {
       id: 'totalAbsent',
-      title: '缺勤人数',
+      title: t('hrm.hrm_attendance_page.text_7dddee'),
       value: attendanceStats.totalAbsent,
       icon: <XCircle size={20} />,
       color: 'error',
     },
     {
       id: 'pendingLeaves',
-      title: '待审批请假',
+      title: t('hrm.hrm_attendance_page.text_7c3c05'),
       value: attendanceStats.pendingLeaves,
       icon: <Clock size={20} />,
       color: 'info',
@@ -250,7 +264,7 @@ const HrmAttendancePage: React.FC = () => {
   const recordColumns: ColumnDef<AttendanceRecord>[] = [
     {
       id: 'employee_name',
-      label: '员工姓名',
+      label: t('hrm.hrm_attendance_page.text_50df90'),
       width: 150,
       render: (row) => (
         <Box>
@@ -271,12 +285,12 @@ const HrmAttendancePage: React.FC = () => {
     },
     {
       id: 'date',
-      label: '日期',
+      label: t('hrm.hrm_attendance_page.date'),
       width: 120,
     },
     {
       id: 'check_in',
-      label: '上班打卡',
+      label: t('hrm.hrm_attendance_page.text_852471'),
       width: 120,
       render: (row) => (
         <Typography variant='body2'>{row.check_in || row.check_in_time || '-'}</Typography>
@@ -284,7 +298,7 @@ const HrmAttendancePage: React.FC = () => {
     },
     {
       id: 'check_out',
-      label: '下班打卡',
+      label: t('hrm.hrm_attendance_page.text_ab20b2'),
       width: 120,
       render: (row) => (
         <Typography variant='body2'>{row.check_out || row.check_out_time || '-'}</Typography>
@@ -292,7 +306,7 @@ const HrmAttendancePage: React.FC = () => {
     },
     {
       id: 'work_hours',
-      label: '工时',
+      label: t('hrm.hrm_attendance_page.text_e8c01f'),
       width: 100,
       render: (row) => (
         <Typography variant='body2'>
@@ -302,7 +316,7 @@ const HrmAttendancePage: React.FC = () => {
     },
     {
       id: 'status',
-      label: '状态',
+      label: t('hrm.hrm_attendance_page.status'),
       width: 100,
       render: (row) => (
         <StatusBadge
@@ -315,7 +329,7 @@ const HrmAttendancePage: React.FC = () => {
 
   const recordActions: RowAction<AttendanceRecord>[] = [
     {
-      label: '详情',
+      label: t('hrm.hrm_attendance_page.detail'),
       icon: <Eye size={16} />,
       onClick: () => {},
     },
@@ -324,7 +338,7 @@ const HrmAttendancePage: React.FC = () => {
   const leaveColumns: ColumnDef<LeaveRequest>[] = [
     {
       id: 'employee_name',
-      label: '申请人',
+      label: t('hrm.hrm_attendance_page.text_8ac8da'),
       width: 120,
       render: (row) => (
         <Typography
@@ -337,7 +351,7 @@ const HrmAttendancePage: React.FC = () => {
     },
     {
       id: 'leave_type',
-      label: '请假类型',
+      label: t('hrm.hrm_attendance_page.type'),
       width: 100,
       render: (row) => (
         <Chip
@@ -348,23 +362,23 @@ const HrmAttendancePage: React.FC = () => {
     },
     {
       id: 'start_date',
-      label: '开始日期',
+      label: t('hrm.hrm_attendance_page.start_date'),
       width: 120,
     },
     {
       id: 'end_date',
-      label: '结束日期',
+      label: t('hrm.hrm_attendance_page.end_date'),
       width: 120,
     },
     {
       id: 'days',
-      label: '天数',
+      label: t('hrm.hrm_attendance_page.text_aaf707'),
       width: 80,
       render: (row) => <Typography variant='body2'>{row.days}天</Typography>,
     },
     {
       id: 'reason',
-      label: '原因',
+      label: t('hrm.hrm_attendance_page.text_41dfb0'),
       width: 150,
       render: (row) => (
         <Typography
@@ -378,7 +392,7 @@ const HrmAttendancePage: React.FC = () => {
     },
     {
       id: 'status',
-      label: '状态',
+      label: t('hrm.hrm_attendance_page.status'),
       width: 100,
       render: (row) => (
         <StatusBadge
@@ -391,14 +405,14 @@ const HrmAttendancePage: React.FC = () => {
 
   const leaveActions: RowAction<LeaveRequest>[] = [
     {
-      label: '批准',
+      label: t('hrm.hrm_attendance_page.text_7a712b'),
       icon: <CheckCircle size={16} />,
       onClick: (row) => handleLeaveAction(row.id, 'approve'),
       color: 'success',
       show: (row) => row.status === 'pending',
     },
     {
-      label: '拒绝',
+      label: t('hrm.hrm_attendance_page.text_7173f8'),
       icon: <XCircle size={16} />,
       onClick: (row) => handleLeaveAction(row.id, 'reject'),
       color: 'error',
@@ -406,7 +420,7 @@ const HrmAttendancePage: React.FC = () => {
       divider: true,
     },
     {
-      label: '详情',
+      label: t('hrm.hrm_attendance_page.detail'),
       icon: <Eye size={16} />,
       onClick: () => {},
       show: (row) => row.status !== 'pending',
@@ -445,7 +459,7 @@ const HrmAttendancePage: React.FC = () => {
         type='date'
         size='small'
         value={selectedDate}
-        onChange={(e) => setSelectedDate(e.target.value)}
+        onChange={(e) => setFilter('date', e.target.value)}
         sx={{ bgcolor: 'white', borderRadius: 1 }}
       />
       <Button
@@ -461,15 +475,15 @@ const HrmAttendancePage: React.FC = () => {
     <PageContainer
       padding={false}
       maxWidth={false}
-      title='考勤管理'
-      subtitle='查看员工考勤记录和请假申请'
+      title={t('hrm.hrm_attendance_page.text_2a2338')}
+      subtitle={t('hrm.hrm_attendance_page.view')}
       autoTitle
       autoBreadcrumbs
     >
       {activeTab === 'statistics' ? (
         <StatsPageTemplate
-          title='考勤统计'
-          subtitle='查看考勤数据分析和统计报表'
+          title={t('hrm.hrm_attendance_page.text_d88c02')}
+          subtitle={t('hrm.hrm_attendance_page.view_1')}
           statCards={statCards}
           showStatCards={true}
           customToolbar={renderTabs}
@@ -485,19 +499,19 @@ const HrmAttendancePage: React.FC = () => {
 
           {activeTab === 'records' && (
             <ListPageTemplate<AttendanceRecord>
-              title='考勤记录'
-              subtitle='查看员工考勤打卡记录'
+              title={t('hrm.hrm_attendance_page.text_18b5ce')}
+              subtitle={t('hrm.hrm_attendance_page.view_2')}
               columns={recordColumns}
               data={filteredRecords}
               loading={loading}
               rowActions={recordActions}
               searchable
-              searchPlaceholder='搜索员工姓名...'
+              searchPlaceholder={t('hrm.hrm_attendance_page.search')}
               searchValue={searchQuery}
               onSearch={setSearchQuery}
               onRefresh={() => queryClient.invalidateQueries({ queryKey: ['hrm-attendance-records'] })}
               exportable
-              exportFileName='考勤记录'
+              exportFileName={t('hrm.hrm_attendance_page.text_18b5ce')}
               persistFilters
               persistSearch
             />
@@ -505,19 +519,19 @@ const HrmAttendancePage: React.FC = () => {
 
           {activeTab === 'leaves' && (
             <ListPageTemplate<LeaveRequest>
-              title='请假申请'
-              subtitle='管理员工请假申请'
+              title={t('hrm.hrm_attendance_page.text_ecfb12')}
+              subtitle={t('hrm.hrm_attendance_page.text_30f745')}
               columns={leaveColumns}
               data={filteredLeaves}
               loading={loading}
               rowActions={leaveActions}
               searchable
-              searchPlaceholder='搜索申请人...'
+              searchPlaceholder={t('hrm.hrm_attendance_page.search_1')}
               searchValue={searchQuery}
               onSearch={setSearchQuery}
               actions={[
                 {
-                  label: '请假申请',
+                  label: t('hrm.hrm_attendance_page.text_ecfb12'),
                   icon: <Plus size={16} />,
                   onClick: () => setShowLeaveModal(true),
                   variant: 'contained',
@@ -525,11 +539,11 @@ const HrmAttendancePage: React.FC = () => {
               ]}
               onRefresh={() => queryClient.invalidateQueries({ queryKey: ['hrm-leave-requests'] })}
               exportable
-              exportFileName='请假申请列表'
+              exportFileName={t('hrm.hrm_attendance_page.list')}
               persistFilters
               persistSearch
               emptyActionButton={{
-                label: '发起请假',
+                label: t('hrm.hrm_attendance_page.text_528f29'),
                 icon: <Plus size={16} />,
                 onClick: () => setShowLeaveModal(true),
               }}
@@ -587,7 +601,7 @@ const HrmAttendancePage: React.FC = () => {
                     onChange={(e) =>
                       setLeaveFormData({ ...leaveFormData, days: parseInt(e.target.value) || 0 })
                     }
-                    placeholder='请输入天数'
+                    placeholder={t('hrm.hrm_attendance_page.please_input')}
                   />
                 </Box>
               </Box>
@@ -626,7 +640,7 @@ const HrmAttendancePage: React.FC = () => {
                   rows={3}
                   value={leaveFormData.reason || ''}
                   onChange={(e) => setLeaveFormData({ ...leaveFormData, reason: e.target.value })}
-                  placeholder='请输入请假原因'
+                  placeholder={t('hrm.hrm_attendance_page.please_input_1')}
                 />
               </Box>
             </Box>

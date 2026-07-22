@@ -26,7 +26,9 @@ import {
 } from '@/api/hrm';
 import { HRM_PATHS } from '@/modules/hrm/config';
 
+import { useTranslation } from 'react-i18next';
 export const DashboardPage: React.FC = () => {
+  const { t } = useTranslation();
   const navigate = useNavigate();
   const [loading] = useState(false);
 
@@ -90,9 +92,9 @@ export const DashboardPage: React.FC = () => {
 
   const getGreeting = (): string => {
     const hour = new Date().getHours();
-    if (hour < 12) return '上午好';
-    if (hour < 18) return '下午好';
-    return '晚上好';
+    if (hour < 12) return t('hrm.dashboard_page.text_cad057');
+    if (hour < 18) return t('hrm.dashboard_page.text_8c9bdf');
+    return t('hrm.dashboard_page.text_6ab1f1');
   };
 
   const statsData = useMemo(() => {
@@ -147,16 +149,16 @@ export const DashboardPage: React.FC = () => {
     const statusDistribution = Object.entries(statusCounts).map(([name, value]) => ({
       name:
         name === 'active'
-          ? '正式'
+          ? t('hrm.dashboard_page.text_3c07bb')
           : name === 'probation'
-            ? '试用期'
+            ? t('hrm.dashboard_page.text_9a3256')
             : name === 'intern'
-              ? '实习'
+              ? t('hrm.dashboard_page.text_727190')
               : name,
       value,
     }));
 
-    const months = ['1月', '2月', '3月', '4月', '5月', '6月'];
+    const months = [t('hrm.dashboard_page.text_fccc2b'), t('hrm.dashboard_page.text_c1d13f'), t('hrm.dashboard_page.text_c4767b'), t('hrm.dashboard_page.text_3eaf4b'), t('hrm.dashboard_page.text_0545f1'), t('hrm.dashboard_page.text_f2422a')];
     const monthlyTrend = months.map((name, i) => ({
       name,
       value: Math.floor(Math.random() * 10) + 2 + i,
@@ -167,21 +169,21 @@ export const DashboardPage: React.FC = () => {
         departmentDistribution.length > 0
           ? departmentDistribution
           : [
-              { name: '技术部', value: 85 },
-              { name: '产品部', value: 45 },
-              { name: '市场部', value: 52 },
-              { name: '财务部', value: 28 },
-              { name: '人事部', value: 18 },
-              { name: '运营部', value: 28 },
+              { name: t('hrm.dashboard_page.text_c6a757'), value: 85 },
+              { name: t('hrm.dashboard_page.product'), value: 45 },
+              { name: t('hrm.dashboard_page.text_73b111'), value: 52 },
+              { name: t('hrm.dashboard_page.text_b159e5'), value: 28 },
+              { name: t('hrm.dashboard_page.text_f802d1'), value: 18 },
+              { name: t('hrm.dashboard_page.text_b890b3'), value: 28 },
             ],
       monthlyTrend,
       statusDistribution:
         statusDistribution.length > 0
           ? statusDistribution
           : [
-              { name: '试用期', value: 15 },
-              { name: '正式', value: 75 },
-              { name: '实习', value: 10 },
+              { name: t('hrm.dashboard_page.text_9a3256'), value: 15 },
+              { name: t('hrm.dashboard_page.text_3c07bb'), value: 75 },
+              { name: t('hrm.dashboard_page.text_727190'), value: 10 },
             ],
     };
   }, [departmentsQuery.data, employeesQuery.data]);
@@ -190,38 +192,38 @@ export const DashboardPage: React.FC = () => {
     () => [
       {
         id: 'total-employees',
-        title: '员工总数',
+        title: t('hrm.dashboard_page.text_97e957'),
         value: String(statsData.totalEmployees),
         icon: <Users size={24} />,
         change: 12,
-        changeLabel: '较上周期',
+        changeLabel: t('hrm.dashboard_page.last_week'),
         color: 'primary',
       },
       {
         id: 'new-hires',
-        title: '本月入职',
+        title: t('hrm.dashboard_page.this_month'),
         value: String(statsData.newHires),
         icon: <UserPlus size={24} />,
         change: 3,
-        changeLabel: '较上周期',
+        changeLabel: t('hrm.dashboard_page.last_week'),
         color: 'success',
       },
       {
         id: 'training',
-        title: '培训课程',
+        title: t('hrm.dashboard_page.text_07cb67'),
         value: String(statsData.trainingCourses),
         icon: <GraduationCap size={24} />,
         change: 5,
-        changeLabel: '较上周期',
+        changeLabel: t('hrm.dashboard_page.last_week'),
         color: 'info',
       },
       {
         id: 'performance',
-        title: '绩效考核',
+        title: t('hrm.dashboard_page.text_5ad4ab'),
         value: String(statsData.performanceReviews),
         icon: <Award size={24} />,
         change: 45,
-        changeLabel: '较上周期',
+        changeLabel: t('hrm.dashboard_page.last_week'),
         color: 'warning',
       },
     ],
@@ -232,7 +234,7 @@ export const DashboardPage: React.FC = () => {
     () => [
       {
         id: 'overview',
-        title: '部门分布',
+        title: t('hrm.dashboard_page.text_699d70'),
         chart: (
           <BarChartComponent
             data={chartData.departmentDistribution}
@@ -245,7 +247,7 @@ export const DashboardPage: React.FC = () => {
       },
       {
         id: 'trend',
-        title: '入职趋势',
+        title: t('hrm.dashboard_page.text_b3b5dc'),
         chart: (
           <LineChartComponent
             data={chartData.monthlyTrend}
@@ -258,7 +260,7 @@ export const DashboardPage: React.FC = () => {
       },
       {
         id: 'distribution',
-        title: '员工状态分布',
+        title: t('hrm.dashboard_page.status'),
         chart: <PieChartComponent data={chartData.statusDistribution} />,
         height: 300,
         type: 'pie',
@@ -271,25 +273,25 @@ export const DashboardPage: React.FC = () => {
     () => [
       {
         id: 'new-employee',
-        label: '新增员工',
+        label: t('hrm.dashboard_page.add'),
         icon: <ArrowRight size={18} />,
         onClick: () => navigate(HRM_PATHS.employeeCreate),
       },
       {
         id: 'recruitment',
-        label: '招聘管理',
+        label: t('hrm.dashboard_page.text_b4f20d'),
         icon: <ArrowRight size={18} />,
         onClick: () => navigate(HRM_PATHS.recruitment),
       },
       {
         id: 'training-plan',
-        label: '培训计划',
+        label: t('hrm.dashboard_page.plan'),
         icon: <ArrowRight size={18} />,
         onClick: () => navigate(HRM_PATHS.training),
       },
       {
         id: 'performance-review',
-        label: '绩效考核',
+        label: t('hrm.dashboard_page.text_5ad4ab'),
         icon: <ArrowRight size={18} />,
         onClick: () => navigate(HRM_PATHS.performance),
       },
@@ -299,7 +301,7 @@ export const DashboardPage: React.FC = () => {
 
   return (
     <PageContainer
-      title='人力资源仪表盘'
+      title={t('hrm.dashboard_page.text_695be5')}
       subtitle={`${getGreeting()}，员工管理与绩效考核`}
       padding={false}
       maxWidth={false}
@@ -311,7 +313,7 @@ export const DashboardPage: React.FC = () => {
         stats={stats}
         charts={charts}
         quickActions={quickActions}
-        quickActionsTitle='快捷操作'
+        quickActionsTitle={t('hrm.dashboard_page.action')}
         loading={loading}
         onRefresh={() => {
           employeesQuery.refetch();

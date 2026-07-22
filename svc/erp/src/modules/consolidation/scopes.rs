@@ -67,49 +67,8 @@ pub async fn list_scopes(
             ))
         }
         Err(e) => {
-            tracing::warn!("获取合并范围列表失败: {}, 使用模拟数据", e);
-            let mock_scopes = vec![
-                ConsolidationScope {
-                    id: Uuid::new_v4(),
-                    organization_id: Uuid::new_v4(),
-                    code: "GRP001".to_string(),
-                    name: "集团合并报表".to_string(),
-                    description: Some("集团整体合并报表范围".to_string()),
-                    consolidation_method: "full".to_string(),
-                    status: "active".to_string(),
-                    created_at: chrono::Utc::now(),
-                    updated_at: chrono::Utc::now(),
-                    created_by: None,
-                },
-                ConsolidationScope {
-                    id: Uuid::new_v4(),
-                    organization_id: Uuid::new_v4(),
-                    code: "GRP002".to_string(),
-                    name: "华南区合并".to_string(),
-                    description: Some("华南地区子公司合并范围".to_string()),
-                    consolidation_method: "full".to_string(),
-                    status: "active".to_string(),
-                    created_at: chrono::Utc::now(),
-                    updated_at: chrono::Utc::now(),
-                    created_by: None,
-                },
-                ConsolidationScope {
-                    id: Uuid::new_v4(),
-                    organization_id: Uuid::new_v4(),
-                    code: "GRP003".to_string(),
-                    name: "联营公司权益法".to_string(),
-                    description: Some("联营公司按权益法核算".to_string()),
-                    consolidation_method: "equity".to_string(),
-                    status: "active".to_string(),
-                    created_at: chrono::Utc::now(),
-                    updated_at: chrono::Utc::now(),
-                    created_by: None,
-                },
-            ];
-            Json(ApiResponse::success(
-                PaginatedResponse::new(mock_scopes, 3, page, page_size),
-                "获取合并范围列表成功",
-            ))
+            tracing::error!("获取合并范围列表失败: {}", e);
+            Json(api_error(500, "获取合并范围列表失败"))
         }
     }
 }

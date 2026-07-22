@@ -1159,5 +1159,34 @@ pub async fn init_database(pool: &PgPool) -> Result<(), sqlx::Error> {
         .execute(pool)
         .await?;
 
+    sqlx::query(
+        r#"
+        CREATE TABLE IF NOT EXISTS qa_ehs_employees (
+            id UUID PRIMARY KEY,
+            employee_no VARCHAR(64),
+            name VARCHAR(128) NOT NULL,
+            email VARCHAR(256),
+            department_id UUID,
+            department_name VARCHAR(128),
+            position VARCHAR(128),
+            status VARCHAR(32) DEFAULT 'active',
+            tenant_id UUID DEFAULT '00000000-0000-0000-0000-000000000000',
+            created_at TIMESTAMP DEFAULT NOW(),
+            updated_at TIMESTAMP DEFAULT NOW()
+        )
+        "#,
+    )
+    .execute(pool)
+    .await?;
+
+    sqlx::query("CREATE INDEX IF NOT EXISTS idx_qa_ehs_employees_name ON qa_ehs_employees(name)")
+        .execute(pool)
+        .await?;
+    sqlx::query(
+        "CREATE INDEX IF NOT EXISTS idx_qa_ehs_employees_dept ON qa_ehs_employees(department_id)",
+    )
+    .execute(pool)
+    .await?;
+
     Ok(())
 }

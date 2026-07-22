@@ -1,0 +1,43 @@
+{
+  "datacenter": "topems-dc",
+  "data_dir": "/consul/data",
+  "server": true,
+  "bootstrap_expect": 1,
+  "bind_addr": "0.0.0.0",
+  "client_addr": "0.0.0.0",
+  "ports": {
+    "grpc": 8502,
+    "grpc_tls": 8503,
+    "http": 8500,
+    "dns": 8600
+  },
+  "connect": {
+    "enabled": true,
+    "ca_provider": "consul",
+    "ca_config": {
+      "private_key_type": "ec",
+      "private_key_bits": 256,
+      "root_cert_ttl": "720h",
+      "intermediate_cert_ttl": "24h",
+      "leaf_cert_ttl": "12h"
+    }
+  },
+  "acl": {
+    "enabled": true,
+    "default_policy": "deny",
+    "enable_token_persistence": true
+  },
+  "telemetry": {
+    "prometheus_retention_time": "60s",
+    "disable_hostname": true
+  },
+  "ui_config": {
+    "enabled": true,
+    "content_path": "/ui/"
+  },
+  "log_level": "INFO",
+  "enable_script_checks": true,
+  "auto_encrypt": {
+    "tls": true
+  }
+}

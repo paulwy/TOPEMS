@@ -416,3 +416,80 @@ export interface RecommendationQueryParams extends PaginationParams {
   customer_id?: string;
   recommendation_type?: string;
 }
+
+// ---- Returns / Aftersales ----
+export type ReturnStatus = 'pending' | 'approved' | 'rejected' | 'received' | 'completed' | 'cancelled';
+export type ReturnType = 'return' | 'exchange';
+
+export interface ReturnRecord {
+  id: string;
+  return_no: string;
+  tenant_id?: string;
+  customer_id: string;
+  order_id?: string;
+  return_type: ReturnType;
+  reason: string;
+  reason_detail?: string;
+  status: ReturnStatus;
+  refund_amount?: number;
+  exchange_product_id?: string;
+  received?: boolean;
+  received_at?: string;
+  approved_by?: string;
+  approved_at?: string;
+  completed_at?: string;
+  created_by?: string;
+  updated_by?: string;
+  created_at: string;
+  updated_at: string;
+  ticket_id?: string;
+  warehouse_id?: string;
+}
+
+export interface ReturnItem {
+  id: string;
+  return_id: string;
+  product_id: string;
+  quantity: number;
+  unit_price?: number;
+  total_amount?: number;
+}
+
+export interface CreateReturnRequest {
+  customer_id: string;
+  order_id?: string;
+  return_type: ReturnType;
+  reason: string;
+  reason_detail?: string;
+  refund_amount?: number;
+  exchange_product_id?: string;
+  warehouse_id?: string;
+}
+
+export interface UpdateReturnRequest {
+  reason?: string;
+  reason_detail?: string;
+  refund_amount?: number;
+  warehouse_id?: string;
+}
+
+export interface ReturnQueryParams extends PaginationParams {
+  search?: string;
+  status?: ReturnStatus;
+  return_type?: ReturnType;
+  customer_id?: string;
+  order_id?: string;
+}
+
+export interface ReturnFinanceStatus {
+  refund_amount: number;
+  refund_status: string;
+  refunded_at?: string;
+}
+
+export interface ReturnInventoryStatus {
+  received: boolean;
+  received_at?: string;
+  warehouse_id?: string;
+  items_count: number;
+}

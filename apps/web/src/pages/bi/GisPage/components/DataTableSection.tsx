@@ -13,6 +13,7 @@ import type {
   FactoryMap,
   BusinessLocation,
 } from '@/api/gis';
+import i18n from '@/i18n';
 import {
   getDevicePointColumns,
   getPipelineColumns,
@@ -47,42 +48,42 @@ const tableConfig: Record<
 > = {
   devicePoints: {
     searchKey: 'name',
-    searchPlaceholder: '搜索设备名称...',
+    searchPlaceholder: i18n.t('bi.gis_page_components__data_table_section.equipment_name'),
     exportFileName: 'gis-device-points',
     getColumns: (onEdit, onDelete) =>
       getDevicePointColumns(onEdit, onDelete) as ColumnDef<GisEntity>[],
   },
   pipelines: {
     searchKey: 'name',
-    searchPlaceholder: '搜索管线名称...',
+    searchPlaceholder: i18n.t('bi.gis_page_components__data_table_section.search'),
     exportFileName: 'gis-pipelines',
     getColumns: (onEdit, onDelete) =>
       getPipelineColumns(onEdit, onDelete) as ColumnDef<GisEntity>[],
   },
   storageLocations: {
     searchKey: 'name',
-    searchPlaceholder: '搜索库位名称...',
+    searchPlaceholder: i18n.t('bi.gis_page_components__data_table_section.location_name'),
     exportFileName: 'gis-storage-locations',
     getColumns: (onEdit, onDelete) =>
       getStorageLocationColumns(onEdit, onDelete) as ColumnDef<GisEntity>[],
   },
   evidenceRecords: {
     searchKey: 'title',
-    searchPlaceholder: '搜索记录标题...',
+    searchPlaceholder: i18n.t('bi.gis_page_components__data_table_section.search_1'),
     exportFileName: 'gis-evidence-records',
     getColumns: (onEdit, onDelete) =>
       getEvidenceRecordColumns(onEdit, onDelete) as ColumnDef<GisEntity>[],
   },
   factoryMaps: {
     searchKey: 'name',
-    searchPlaceholder: '搜索地图名称...',
+    searchPlaceholder: i18n.t('bi.gis_page_components__data_table_section.search_2'),
     exportFileName: 'gis-factory-maps',
     getColumns: (onEdit, onDelete) =>
       getFactoryMapColumns(onEdit, onDelete) as ColumnDef<GisEntity>[],
   },
   businessLocations: {
     searchKey: 'business_name',
-    searchPlaceholder: '搜索业务名称...',
+    searchPlaceholder: i18n.t('bi.gis_page_components__data_table_section.search_3'),
     exportFileName: 'gis-business-locations',
     getColumns: (onEdit, onDelete) =>
       getBusinessLocationColumns(onEdit, onDelete) as ColumnDef<GisEntity>[],
@@ -125,7 +126,7 @@ export const DataTableSection: React.FC<DataTableSectionProps> = ({
         <Stack direction='row' spacing={2} sx={{ justifyContent: 'space-between', alignItems: 'center' }}>
           <TextField
             size='small'
-            placeholder='搜索...'
+            placeholder={i18n.t('bi.gis_page_components__data_table_section.search_4')}
             value={searchTerm}
             onChange={(e) => onSearchChange(e.target.value)}
             sx={{ flex: 1, maxWidth: 400 }}

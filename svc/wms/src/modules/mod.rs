@@ -1,8 +1,9 @@
+use crate::shared::cache::InMemoryCache;
 use axum::{extract::FromRef, Router};
 use sqlx::postgres::PgPool;
 use std::sync::Arc;
 use std::time::Instant;
-use topems_shared::{AuthState, SystemMetrics};
+use topems_shared::{event::EventPublisher, AuthState, SystemMetrics};
 
 pub mod audit;
 pub mod batch;
@@ -13,6 +14,7 @@ pub mod data_sync;
 pub mod inbound_order;
 pub mod inventory;
 pub mod inventory_alert;
+pub mod inventory_movement;
 pub mod location;
 pub mod openapi;
 pub mod outbound_order;
@@ -30,6 +32,10 @@ pub struct ApiState {
     pub auth_state: AuthState,
     pub metrics: Arc<SystemMetrics>,
     pub start_time: Instant,
+    pub event_publisher: Option<Arc<EventPublisher>>,
+    pub warehouse_cache: Arc<InMemoryCache<serde_json::Value>>,
+    pub inventory_cache: Arc<InMemoryCache<serde_json::Value>>,
+    pub dict_cache: Arc<InMemoryCache<String>>,
 }
 
 impl FromRef<ApiState> for AuthState {
@@ -57,6 +63,7 @@ where
         .merge(transfer_order::create_routes())
         .merge(inventory::create_routes())
         .merge(inventory_alert::create_routes())
+        .merge(inventory_movement::create_routes())
         .merge(inbound_order::create_routes())
         .merge(outbound_order::create_routes())
         .merge(stock_take::create_routes())

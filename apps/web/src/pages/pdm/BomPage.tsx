@@ -19,7 +19,6 @@ import {
 import { Plus, Edit, Delete, Package, GitCompare, CheckCircle, Archive } from 'lucide-react';
 import { bomApi, type BomVersion, type BomItem, type CreateBomVersionRequest } from '@/api/pdm/bom';
 import { useNotificationStore } from '@/store';
-import { apiLogger } from '@/utils/logger';
 import {
   ListPageTemplate,
   type ColumnDef,
@@ -30,6 +29,7 @@ import { PageContainer } from '@/components/common';
 import { designTokens } from '@/theme/tokens';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { QUERY_KEYS } from '@/lib/reactQuery';
+import { useCrudMutations } from '@/hooks';
 
 const ct = designTokens.colors;
 
@@ -122,41 +122,23 @@ export const BomPage: React.FC = () => {
     enabled: !!selectedVersionId,
   });
 
-  const createVersionMutation = useMutation({
-    mutationFn: (data: CreateBomVersionRequest) => bomApi.createVersion(data),
-    onSuccess: () => {
-      addNotification({ title: '成功', message: 'BOM版本创建成功', type: 'success' });
+  const { createMutation: createVersionMutation, updateMutation: updateVersionMutation, deleteMutation: deleteVersionMutation } = useCrudMutations<
+    CreateBomVersionRequest,
+    CreateBomVersionRequest,
+    string
+  >({
+    queryKeyToInvalidate: QUERY_KEYS.PDM.BOM_VERSIONS,
+    createFn: (data) => bomApi.createVersion(data),
+    updateFn: ({ id, data }) => bomApi.updateVersion(String(id), data),
+    deleteFn: (id) => bomApi.deleteVersion(String(id)),
+    entityName: 'BOM版本',
+    onCreateSuccess: () => {
       setOpenDialog(false);
       setEditingVersion(null);
-      queryClient.invalidateQueries({ queryKey: QUERY_KEYS.PDM.BOM_VERSIONS });
     },
-    onError: () => {
-      addNotification({ title: '错误', message: '创建失败', type: 'error' });
-    },
-  });
-
-  const updateVersionMutation = useMutation({
-    mutationFn: ({ id, data }: { id: string; data: CreateBomVersionRequest }) =>
-      bomApi.updateVersion(id, data),
-    onSuccess: () => {
-      addNotification({ title: '成功', message: 'BOM版本更新成功', type: 'success' });
+    onUpdateSuccess: () => {
       setOpenDialog(false);
       setEditingVersion(null);
-      queryClient.invalidateQueries({ queryKey: QUERY_KEYS.PDM.BOM_VERSIONS });
-    },
-    onError: () => {
-      addNotification({ title: '错误', message: '更新失败', type: 'error' });
-    },
-  });
-
-  const deleteVersionMutation = useMutation({
-    mutationFn: (id: string) => bomApi.deleteVersion(id),
-    onSuccess: () => {
-      addNotification({ title: '成功', message: 'BOM版本删除成功', type: 'success' });
-      queryClient.invalidateQueries({ queryKey: QUERY_KEYS.PDM.BOM_VERSIONS });
-    },
-    onError: () => {
-      addNotification({ title: '错误', message: '删除失败', type: 'error' });
     },
   });
 

@@ -4,6 +4,7 @@ import { AlertCircle, Download } from 'lucide-react';
 import { ActionButton, FormField, Dialog } from '@/components/common';
 import { useNotificationStore } from '@/store';
 
+import { useTranslation } from 'react-i18next';
 interface VoucherImportModalProps {
   open: boolean;
   onClose: () => void;
@@ -15,25 +16,26 @@ const VoucherImportModal: React.FC<VoucherImportModalProps> = ({
   onClose,
   onImport,
 }) => {
+  const { t } = useTranslation();
   const addNotification = useNotificationStore((state) => state.addNotification);
 
   return (
     <Dialog
       open={open}
       onClose={onClose}
-      title='导入用友财务凭证'
+      title={t('finance.finance_voucher_page_components__voucher_import_modal.import')}
       cancelButton={{
-        label: '取消',
+        label: t('finance.finance_voucher_page_components__voucher_import_modal.cancel'),
         onClick: onClose,
       }}
       confirmButton={{
-        label: '开始导入',
+        label: t('finance.finance_voucher_page_components__voucher_import_modal.import_1'),
         onClick: () => {
           const content = (document.getElementById('importData') as HTMLTextAreaElement).value;
           if (!content.trim()) {
             addNotification({
-              title: '提示',
-              message: '请输入凭证数据',
+              title: t('finance.finance_voucher_page_components__voucher_import_modal.hint'),
+              message: t('finance.finance_voucher_page_components__voucher_import_modal.please_input'),
               type: 'warning',
             });
             return;
@@ -65,37 +67,37 @@ const VoucherImportModal: React.FC<VoucherImportModalProps> = ({
             label=''
             multiline
             rows={12}
-            placeholder='[{"voucher_number": "记-001", "voucher_date": "2024-01-15", "period": "2024-01", "summary": "支付办公费用", "maker": "张三", "items": [{"line_number": 1, "subject_code": "6602", "subject_name": "管理费用", "summary": "办公用品", "debit_amount": 500.00, "credit_amount": 0}]}]'
+            placeholder={t('finance.finance_voucher_page_components__voucher_import_modal.text_a77173')}
             sx={{ fontFamily: 'monospace', fontSize: '0.75rem' }}
           />
         </Box>
         <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
           <ActionButton
-            label='加载示例数据'
+            label={t('finance.finance_voucher_page_components__voucher_import_modal.text_b7a702')}
             icon={<Download size={16} />}
             variant='secondary'
             onClick={() => {
               const sampleData = JSON.stringify(
                 [
                   {
-                    voucher_number: '记-001',
+                    voucher_number: t('finance.finance_voucher_page_components__voucher_import_modal.text_6357ac'),
                     voucher_date: '2024-01-15',
                     period: '2024-01',
-                    summary: '支付办公费用',
-                    maker: '张三',
+                    summary: t('finance.finance_voucher_page_components__voucher_import_modal.text_e64dd8'),
+                    maker: t('finance.finance_voucher_page_components__voucher_import_modal.text_615db5'),
                     items: [
                       {
                         line_number: 1,
                         subject_code: '6602',
-                        subject_name: '管理费用',
-                        summary: '办公用品',
+                        subject_name: t('finance.finance_voucher_page_components__voucher_import_modal.text_9d7181'),
+                        summary: t('finance.finance_voucher_page_components__voucher_import_modal.text_a554c6'),
                         debit_amount: 500.0,
                         credit_amount: 0,
                       },
                       {
                         line_number: 2,
                         subject_code: '1002',
-                        subject_name: '银行存款',
+                        subject_name: t('finance.finance_voucher_page_components__voucher_import_modal.text_54b4fb'),
                         summary: '',
                         debit_amount: 0,
                         credit_amount: 500.0,

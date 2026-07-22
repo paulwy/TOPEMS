@@ -8,6 +8,7 @@ import type { Account, AccountBalance } from '@/types/finance';
 import { apiLogger } from '@/utils/logger';
 
 import { FINANCE_PATHS } from '@/modules/finance/config';
+import { useTranslation } from 'react-i18next';
 import {
   Dialog,
   DialogTitle,
@@ -21,6 +22,7 @@ import {
 } from '@mui/material';
 
 const FinanceLedgerPage: React.FC = () => {
+  const { t } = useTranslation();
   const [filterPeriod, setFilterPeriod] = useState('');
   const [filterCategory, setFilterCategory] = useState('');
   const [searchQuery, setSearchQuery] = useState('');
@@ -32,7 +34,7 @@ const FinanceLedgerPage: React.FC = () => {
     queryFn: async () => {
       const res = await financeApi.period.getCurrent();
       if (!res.success || !res.data) {
-        throw new Error(res.message || '获取当前期间失败');
+        throw new Error(res.message || t('finance.finance_ledger_page.fail'));
       }
       return res.data;
     },
@@ -46,7 +48,7 @@ const FinanceLedgerPage: React.FC = () => {
         keyword: searchQuery || undefined,
       });
       if (!res.success || !res.data) {
-        throw new Error(res.message || '加载科目列表失败');
+        throw new Error(res.message || t('finance.finance_ledger_page.list'));
       }
       return res.data.items || [];
     },
@@ -61,7 +63,7 @@ const FinanceLedgerPage: React.FC = () => {
         period: currentPeriodQuery.data.period,
       });
       if (!res.success || !res.data) {
-        throw new Error(res.message || '加载账户余额失败');
+        throw new Error(res.message || t('finance.finance_ledger_page.fail_1'));
       }
       return res.data;
     },
@@ -96,14 +98,14 @@ const FinanceLedgerPage: React.FC = () => {
 
   const getCategoryLabel = (category?: string) => {
     const labels: Record<string, string> = {
-      asset: '资产类',
-      liability: '负债类',
-      equity: '权益类',
-      cost: '成本类',
-      expense: '费用类',
-      income: '收入类',
+      asset: t('finance.finance_ledger_page.text_8b786a'),
+      liability: t('finance.finance_ledger_page.text_299422'),
+      equity: t('finance.finance_ledger_page.text_17a475'),
+      cost: t('finance.finance_ledger_page.text_5a2da5'),
+      expense: t('finance.finance_ledger_page.text_239f3a'),
+      income: t('finance.finance_ledger_page.text_ef2827'),
     };
-    return labels[category || ''] || '其他';
+    return labels[category || ''] || t('finance.finance_ledger_page.other');
   };
 
   const statCards = useMemo(() => {
@@ -116,31 +118,31 @@ const FinanceLedgerPage: React.FC = () => {
 
     return [
       {
-        title: '科目总数',
+        title: t('finance.finance_ledger_page.text_3eb8d3'),
         value: totalAccounts,
         icon: <Calculator size={24} />,
         color: 'primary' as const,
       },
       {
-        title: '资产类科目',
+        title: t('finance.finance_ledger_page.text_59df2a'),
         value: assetCount,
         icon: <Wallet size={24} />,
         color: 'secondary' as const,
       },
       {
-        title: '负债类科目',
+        title: t('finance.finance_ledger_page.text_d21d54'),
         value: liabilityCount,
         icon: <TrendingUp size={24} />,
         color: 'error' as const,
       },
       {
-        title: '权益类科目',
+        title: t('finance.finance_ledger_page.text_58a714'),
         value: equityCount,
         icon: <TrendingDown size={24} />,
         color: 'success' as const,
       },
       {
-        title: '损益类科目',
+        title: t('finance.finance_ledger_page.text_d70851'),
         value: expenseCount + incomeCount,
         icon: <FileText size={24} />,
         color: 'info' as const,
@@ -157,19 +159,19 @@ const FinanceLedgerPage: React.FC = () => {
     () => [
       {
         id: 'code',
-        label: '科目编码',
+        label: t('finance.finance_ledger_page.code'),
         render: (row: Account) => (
           <Box sx={{ fontWeight: 600, color: 'success.main' }}>{row.code}</Box>
         ),
       },
       {
         id: 'name',
-        label: '科目名称',
+        label: t('finance.finance_ledger_page.name'),
         render: (row: Account) => <Box sx={{ fontWeight: 500 }}>{row.name}</Box>,
       },
       {
         id: 'category',
-        label: '科目类别',
+        label: t('finance.finance_ledger_page.text_f31b4e'),
         render: (row: Account) => (
           <Chip
             label={getCategoryLabel(row.category)}
@@ -180,7 +182,7 @@ const FinanceLedgerPage: React.FC = () => {
       },
       {
         id: 'level',
-        label: '科目级别',
+        label: t('finance.finance_ledger_page.text_e7c0f0'),
         render: (row: Account) => (
           <Chip
             label={`第${row.level}级`}
@@ -191,22 +193,22 @@ const FinanceLedgerPage: React.FC = () => {
       },
       {
         id: 'parent_code',
-        label: '上级科目',
+        label: t('finance.finance_ledger_page.text_e18d32'),
         render: (row: Account) => (
           <Box sx={{ color: 'text.secondary', fontSize: '0.875rem' }}>{row.parent_code || '-'}</Box>
         ),
       },
       {
         id: 'status',
-        label: '状态',
+        label: t('finance.finance_ledger_page.status'),
         render: (row: Account) => {
           const statusColors: Record<string, 'success' | 'error' | 'default'> = {
             active: 'success',
             disabled: 'error',
           };
           const statusLabels: Record<string, string> = {
-            active: '启用',
-            disabled: '禁用',
+            active: t('finance.finance_ledger_page.active'),
+            disabled: t('finance.finance_ledger_page.text_710ad0'),
           };
           return (
             <Chip
@@ -224,7 +226,7 @@ const FinanceLedgerPage: React.FC = () => {
   const rowActions = useMemo(
     () => [
       {
-        label: '查看详情',
+        label: t('finance.finance_ledger_page.view_detail'),
         icon: <Eye sx={{ width: 16, height: 16 }} />,
         onClick: (row: Account) => handleViewDetail(row),
       },
@@ -236,30 +238,30 @@ const FinanceLedgerPage: React.FC = () => {
     () => [
       {
         id: 'period',
-        label: '会计期间',
+        label: t('finance.finance_ledger_page.text_6cde16'),
         type: 'select' as const,
         options: [
-          { value: '', label: '全部期间' },
-          { value: '2024-01', label: '2024年1月' },
-          { value: '2024-02', label: '2024年2月' },
-          { value: '2024-03', label: '2024年3月' },
-          { value: '2024-04', label: '2024年4月' },
+          { value: '', label: t('finance.finance_ledger_page.all') },
+          { value: '2024-01', label: t('finance.finance_ledger_page.text_0f5e9e') },
+          { value: '2024-02', label: t('finance.finance_ledger_page.text_a6320e') },
+          { value: '2024-03', label: t('finance.finance_ledger_page.text_5df676') },
+          { value: '2024-04', label: t('finance.finance_ledger_page.text_fb109d') },
         ],
         value: filterPeriod,
         onChange: (value: unknown) => setFilterPeriod(value as string),
       },
       {
         id: 'category',
-        label: '科目类别',
+        label: t('finance.finance_ledger_page.text_f31b4e'),
         type: 'select' as const,
         options: [
-          { value: '', label: '全部类别' },
-          { value: 'asset', label: '资产类' },
-          { value: 'liability', label: '负债类' },
-          { value: 'equity', label: '权益类' },
-          { value: 'expense', label: '费用类' },
-          { value: 'income', label: '收入类' },
-          { value: 'cost', label: '成本类' },
+          { value: '', label: t('finance.finance_ledger_page.all_1') },
+          { value: 'asset', label: t('finance.finance_ledger_page.text_8b786a') },
+          { value: 'liability', label: t('finance.finance_ledger_page.text_299422') },
+          { value: 'equity', label: t('finance.finance_ledger_page.text_17a475') },
+          { value: 'expense', label: t('finance.finance_ledger_page.text_239f3a') },
+          { value: 'income', label: t('finance.finance_ledger_page.text_ef2827') },
+          { value: 'cost', label: t('finance.finance_ledger_page.text_5a2da5') },
         ],
         value: filterCategory,
         onChange: (value: unknown) => setFilterCategory(value as string),
@@ -270,12 +272,12 @@ const FinanceLedgerPage: React.FC = () => {
 
   const exportFields = useMemo(
     () => [
-      { key: 'code', title: '科目编码' },
-      { key: 'name', title: '科目名称' },
-      { key: 'category', title: '类别' },
-      { key: 'level', title: '级别' },
-      { key: 'parent_code', title: '上级科目' },
-      { key: 'status', title: '状态' },
+      { key: 'code', title: t('finance.finance_ledger_page.code') },
+      { key: 'name', title: t('finance.finance_ledger_page.name') },
+      { key: 'category', title: t('finance.finance_ledger_page.text_383a6d') },
+      { key: 'level', title: t('finance.finance_ledger_page.text_e78e4b') },
+      { key: 'parent_code', title: t('finance.finance_ledger_page.text_e18d32') },
+      { key: 'status', title: t('finance.finance_ledger_page.status') },
     ],
     []
   );
@@ -284,8 +286,8 @@ const FinanceLedgerPage: React.FC = () => {
     <PageContainer
       padding={false}
       maxWidth={false}
-      title='总账管理'
-      subtitle='管理会计科目和总账数据'
+      title={t('finance.finance_ledger_page.text_3c213e')}
+      subtitle={t('finance.finance_ledger_page.text_294254')}
       autoTitle
       autoBreadcrumbs
     >
@@ -354,8 +356,8 @@ const FinanceLedgerPage: React.FC = () => {
               <DataExport
                 data={filteredData as unknown as Record<string, unknown>[]}
                 fields={exportFields}
-                defaultFileName='总账数据'
-                buttonText='导出'
+                defaultFileName={t('finance.finance_ledger_page.text_3de613')}
+                buttonText={t('finance.finance_ledger_page.export')}
               />
             </Stack>
           </Stack>
@@ -374,7 +376,7 @@ const FinanceLedgerPage: React.FC = () => {
           loading={loading}
           error={error}
           searchable
-          searchPlaceholder='搜索科目编码、名称...'
+          searchPlaceholder={t('finance.finance_ledger_page.search')}
           searchValue={searchQuery}
           onSearch={setSearchQuery}
           filters={advancedFilters}
@@ -451,7 +453,7 @@ const FinanceLedgerPage: React.FC = () => {
                     科目类别
                   </Typography>
                   <Chip
-                    label={selectedEntry.category || '未分类'}
+                    label={selectedEntry.category || t('finance.finance_ledger_page.text_ecf7eb')}
                     size='small'
                     color='success'
                   />
@@ -506,7 +508,7 @@ const FinanceLedgerPage: React.FC = () => {
                       color: selectedEntry.is_cash_flow ? 'success.main' : 'text.secondary',
                     }}
                   >
-                    {selectedEntry.is_cash_flow ? '是' : '否'}
+                    {selectedEntry.is_cash_flow ? t('finance.finance_ledger_page.yes') : t('finance.finance_ledger_page.no')}
                   </Typography>
                 </Box>
               </Box>

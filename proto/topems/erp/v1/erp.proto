@@ -1,0 +1,132 @@
+// V24.0 模块 C: ERP（企业资源计划）gRPC 服务定义
+// 提供核心业务对象（物料/BOM/订单）的跨服务查询接口
+
+syntax = "proto3";
+
+package topems.erp.v1;
+
+option go_package = "topems/erp/v1;erpv1";
+option java_package = "topems.erp.v1";
+
+import "google/protobuf/timestamp.proto";
+
+// 物料信息
+message Material {
+  string id = 1;
+  string code = 2;
+  string name = 3;
+  string specification = 4;
+  string category = 5;
+  string unit = 6;
+  string tenant_id = 7;
+  bool is_active = 8;
+  google.protobuf.Timestamp created_at = 9;
+}
+
+// BOM 明细行
+message BomLine {
+  string id = 1;
+  string material_id = 2;
+  string material_code = 3;
+  double quantity = 4;
+  string unit = 5;
+  int32 sort_order = 6;
+  bool is_critical = 7;
+}
+
+// BOM 头
+message Bom {
+  string id = 1;
+  string product_material_id = 2;
+  string product_code = 3;
+  string version = 4;
+  string tenant_id = 5;
+  bool is_active = 6;
+  repeated BomLine lines = 7;
+  google.protobuf.Timestamp created_at = 8;
+}
+
+// 销售订单头
+message SalesOrder {
+  string id = 1;
+  string order_no = 2;
+  string tenant_id = 3;
+  string customer_id = 4;
+  string customer_name = 5;
+  string status = 6; // draft / confirmed / shipping / closed / cancelled
+  double total_amount = 7;
+  string currency = 8;
+  google.protobuf.Timestamp order_date = 9;
+}
+
+// 采购订单头
+message PurchaseOrder {
+  string id = 1;
+  string order_no = 2;
+  string tenant_id = 3;
+  string supplier_id = 4;
+  string supplier_name = 5;
+  string status = 6; // draft / submitted / approved / receiving / closed
+  double total_amount = 7;
+  string currency = 8;
+  google.protobuf.Timestamp order_date = 9;
+}
+
+// 请求/响应消息
+message GetMaterialRequest {
+  string material_id = 1;
+}
+
+message GetMaterialByCodeRequest {
+  string tenant_id = 1;
+  string code = 2;
+}
+
+message ListMaterialsRequest {
+  string tenant_id = 1;
+  int32 page = 2;
+  int32 page_size = 3;
+  string keyword = 4;
+  string category = 5;
+}
+
+message ListMaterialsResponse {
+  repeated Material materials = 1;
+  int32 total = 2;
+  int32 page = 3;
+  int32 page_size = 4;
+}
+
+message GetBomRequest {
+  string bom_id = 1;
+}
+
+message GetBomByProductRequest {
+  string tenant_id = 1;
+  string product_material_id = 2;
+  string version = 3; // 留空取最新版本
+}
+
+message GetSalesOrderRequest {
+  string order_id = 1;
+}
+
+message GetPurchaseOrderRequest {
+  string order_id = 1;
+}
+
+// ERP 服务
+service ErpService {
+  // 物料查询
+  rpc GetMaterial(GetMaterialRequest) returns (Material);
+  rpc GetMaterialByCode(GetMaterialByCodeRequest) returns (Material);
+  rpc ListMaterials(ListMaterialsRequest) returns (ListMaterialsResponse);
+
+  // BOM 查询
+  rpc GetBom(GetBomRequest) returns (Bom);
+  rpc GetBomByProduct(GetBomByProductRequest) returns (Bom);
+
+  // 订单查询
+  rpc GetSalesOrder(GetSalesOrderRequest) returns (SalesOrder);
+  rpc GetPurchaseOrder(GetPurchaseOrderRequest) returns (PurchaseOrder);
+}

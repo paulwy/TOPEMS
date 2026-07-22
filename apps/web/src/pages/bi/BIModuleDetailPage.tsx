@@ -74,6 +74,7 @@ import { BIChartColors } from '@/components/charts/chartTheme';
 import { designTokens } from '@/theme/tokens';
 import { BI_PATHS } from '@/modules/bi/config';
 
+import { useTranslation } from 'react-i18next';
 const ct = designTokens.colors;
 
 const moduleConfig: Record<string, { name: string; icon: string; color: string }> = {
@@ -292,6 +293,7 @@ const summaryLabels: Record<string, string> = {
 };
 
 const BIModuleDetailPage = () => {
+  const { t } = useTranslation();
   const { moduleId } = useParams<{ moduleId: string }>();
   const [error, setError] = useState<string | null>(null);
 
@@ -299,7 +301,7 @@ const BIModuleDetailPage = () => {
   const isMobile = useMediaQuery(theme.breakpoints.down('md'));
 
   const config = moduleConfig[moduleId || 'rs'] || {
-    name: '未知模块',
+    name: t('bi.bi_module_detail_page.text_912fa5'),
     icon: '📊',
     color: 'grey.500',
   };
@@ -357,11 +359,11 @@ const BIModuleDetailPage = () => {
           ([key, value]) => ({
             name:
               key === 'research'
-                ? '研发'
+                ? t('bi.bi_module_detail_page.text_fc7393')
                 : key === 'development'
-                  ? '开发'
+                  ? t('bi.bi_module_detail_page.text_3ff3c3')
                   : key === 'improvement'
-                    ? '改进'
+                    ? t('bi.bi_module_detail_page.text_50b419')
                     : key,
             value: value as number,
           })
@@ -371,12 +373,12 @@ const BIModuleDetailPage = () => {
           ([key, value]) => ({
             name:
               key === 'chemical'
-                ? '化学检验'
+                ? t('bi.bi_module_detail_page.inspection')
                 : key === 'physical'
-                  ? '物理检验'
+                  ? t('bi.bi_module_detail_page.inspection_1')
                   : key === 'microbiological'
-                    ? '微生物检验'
-                    : '其他',
+                    ? t('bi.bi_module_detail_page.inspection_2')
+                    : t('bi.bi_module_detail_page.other'),
             value: value as number,
           })
         );
@@ -384,17 +386,17 @@ const BIModuleDetailPage = () => {
         distributionData = Object.entries(summaryData.defect_types).map(([key, value]) => ({
           name:
             key === 'material'
-              ? '材料'
+              ? t('bi.bi_module_detail_page.text_ebc9d9')
               : key === 'process'
-                ? '工艺'
+                ? t('bi.bi_module_detail_page.process_route')
                 : key === 'equipment'
-                  ? '设备'
-                  : '其他',
+                  ? t('bi.bi_module_detail_page.equipment')
+                  : t('bi.bi_module_detail_page.other'),
           value: value as number,
         }));
       } else if (modId === 'ehs' && summaryData?.risk_distribution) {
         distributionData = Object.entries(summaryData.risk_distribution).map(([key, value]) => ({
-          name: key === 'high' ? '高风险' : key === 'medium' ? '中风险' : '低风险',
+          name: key === 'high' ? t('bi.bi_module_detail_page.text_4433e7') : key === 'medium' ? t('bi.bi_module_detail_page.text_8a8992') : t('bi.bi_module_detail_page.text_b56976'),
           value: value as number,
         }));
       } else if (modId === 'pdm' && summaryData?.product_line_usage) {
@@ -420,7 +422,7 @@ const BIModuleDetailPage = () => {
   useEffect(() => {
     if (moduleDataQuery.isError) {
       logger.error('Failed to load module data:', moduleDataQuery.error);
-      setError('加载模块数据失败，请稍后重试');
+      setError(t('bi.bi_module_detail_page.fail'));
     } else {
       setError(null);
     }
@@ -462,8 +464,8 @@ const BIModuleDetailPage = () => {
   const chartCards: ChartCardType[] = [
     {
       id: 'timeline-chart',
-      title: '月度趋势',
-      subtitle: '数据变化走势',
+      title: t('bi.bi_module_detail_page.text_a819e1'),
+      subtitle: t('bi.bi_module_detail_page.text_8268d9'),
       chart: (
         <ResponsiveContainer
           width='100%'
@@ -499,8 +501,8 @@ const BIModuleDetailPage = () => {
     },
     {
       id: 'distribution-chart',
-      title: '分布占比',
-      subtitle: '数据构成分析',
+      title: t('bi.bi_module_detail_page.text_772b34'),
+      subtitle: t('bi.bi_module_detail_page.text_c9454d'),
       chart: (
         <ResponsiveContainer
           width='100%'
@@ -546,8 +548,8 @@ const BIModuleDetailPage = () => {
   if (loading) {
     return (
       <PageContainer
-        title='模块详情'
-        subtitle='模块详细数据分析'
+        title={t('bi.bi_module_detail_page.detail')}
+        subtitle={t('bi.bi_module_detail_page.text_b5cd64')}
         padding={false}
         maxWidth={false}
       >
@@ -555,7 +557,7 @@ const BIModuleDetailPage = () => {
           title=''
           subtitle=''
           breadcrumbs={[
-            { label: '首页', href: '/dashboard' },
+            { label: t('bi.bi_module_detail_page.home'), href: '/dashboard' },
             { label: 'BI', href: BI_PATHS.analytics },
             { label: config.name },
           ]}
@@ -568,7 +570,7 @@ const BIModuleDetailPage = () => {
   return (
     <PageContainer
       title={`${config.name} - 模块详情`}
-      subtitle='模块详细数据分析'
+      subtitle={t('bi.bi_module_detail_page.text_b5cd64')}
       padding={false}
       maxWidth={false}
     >
@@ -576,7 +578,7 @@ const BIModuleDetailPage = () => {
         title=''
         subtitle=''
         breadcrumbs={[
-          { label: '首页', href: '/dashboard' },
+          { label: t('bi.bi_module_detail_page.home'), href: '/dashboard' },
           { label: 'BI', href: BI_PATHS.analytics },
           { label: config.name },
         ]}
@@ -623,8 +625,8 @@ const BIModuleDetailPage = () => {
 
         <Card>
           <CardHeader
-            title='数据明细表'
-            subheader='详细业务数据'
+            title={t('bi.bi_module_detail_page.text_615db0')}
+            subheader={t('bi.bi_module_detail_page.text_e6af8d')}
             avatar={<TableIcon size={20} />}
           />
           <CardContent>

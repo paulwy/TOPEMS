@@ -32,13 +32,30 @@ import {
 import { ListPageTemplate } from '@/components/templates';
 import type { ColumnDef, RowAction, FilterConfig } from '@/components/templates';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { ConfirmDialog } from '@topems/shared-components';
+import { useConfirmDialog, useUrlListState } from '@/hooks';
 
 const OpportunityManagementPage: React.FC = () => {
   const { addNotification } = useNotificationStore();
   const queryClient = useQueryClient();
 
-  const [searchTerm, setSearchTerm] = useState('');
-  const [stageFilter, setStageFilter] = useState<string>('');
+  // URL 同步的列表状态
+  const listState = useUrlListState<{ stage: string }>({
+    defaultSearch: '',
+    defaultPageSize: 20,
+    defaultFilters: { stage: '' },
+    historyMode: 'replace',
+  });
+  const {
+    searchQuery,
+    debouncedSearch: searchTerm,
+    currentPage,
+    pageSize,
+    filters: urlFilters,
+    setSearchQuery: setSearchTerm,
+    setFilter,
+  } = listState;
+  const stageFilter = urlFilters.stage;
   const [showDialog, setShowDialog] = useState(false);
   const [showDetailDialog, setShowDetailDialog] = useState(false);
   const [selectedOpportunity, setSelectedOpportunity] = useState<Opportunity | null>(null);
@@ -49,21 +66,22 @@ const OpportunityManagementPage: React.FC = () => {
     close_date: '',
     notes: '',
   });
-  const [pagination, setPagination] = useState({
-    page: 0,
-    pageSize: 20,
-    total: 0,
-  });
+  const {
+    confirmOpen: confirmDialogOpen,
+    confirmConfig: confirmDialogConfig,
+    openConfirm: openConfirmDialog,
+    closeConfirm: setConfirmDialogClosed,
+  } = useConfirmDialog();
 
   const opportunitiesQuery = useQuery({
-    queryKey: ['crm-opportunities', searchTerm, stageFilter, pagination.page, pagination.pageSize],
+    queryKey: ['crm-opportunities', searchTerm, urlFilters.stage, currentPage, pageSize],
     queryFn: async () => {
       const params: Record<string, unknown> = {
-        page: pagination.page + 1,
-        pagesize: pagination.pageSize,
+        page: currentPage,
+        pagesize: pageSize,
       };
       if (searchTerm) params.search = searchTerm;
-      if (stageFilter) params.stage = stageFilter;
+      if (urlFilters.stage) params.stage = urlFilters.stage;
       const response = await crmApi.opportunities.list(params);
       if (response.success && response.data) {
         return {
@@ -76,6 +94,7 @@ const OpportunityManagementPage: React.FC = () => {
     staleTime: 5 * 60 * 1000,
   });
   const opportunities = opportunitiesQuery.data?.items || [];
+  const total = opportunitiesQuery.data?.total || 0;
   const loading = opportunitiesQuery.isLoading;
 
   const funnelQuery = useQuery({
@@ -166,13 +185,15 @@ const OpportunityManagementPage: React.FC = () => {
     }
   };
 
-  const handleDelete = async (id: string) => {
-    if (!window.confirm('确定要删除这个商机吗?')) return;
-    try {
-      await deleteOpportunityMutation.mutateAsync(id);
-    } catch (error: unknown) {
-      logger.error('删除失败:', error);
-    }
+  const handleDelete = (id: string) => {
+    openConfirmDialog({
+      title: '确认删除',
+      message: '确定要删除这个商机吗?',
+      danger: true,
+      onConfirm: () => {
+        deleteOpportunityMutation.mutate(id);
+      },
+    });
   };
 
   const handleEdit = (opportunity: Opportunity) => {
@@ -310,13 +331,13 @@ const OpportunityManagementPage: React.FC = () => {
           { value: 'closed_won', label: '赢单' },
           { value: 'closed_lost', label: '输单' },
         ],
-        value: stageFilter,
+        value: urlFilters.stage,
         onChange: (value) => {
-          setStageFilter(value as string);
+          setFilter('stage', value as string);
         },
       },
     ],
-    [stageFilter]
+    [urlFilters.stage, setFilter]
   );
 
   const exportFields = useMemo(
@@ -567,21 +588,21 @@ const OpportunityManagementPage: React.FC = () => {
           loading={loading}
           searchable
           searchPlaceholder='搜索商机名称...'
-          searchValue={searchTerm}
+          searchValue={searchQuery}
           onSearch={(value) => {
             setSearchTerm(value);
           }}
           filters={filters}
           rowActions={rowActions}
           pagination={{
-            page: pagination.page,
-            pageSize: pagination.pageSize,
-            total: pagination.total,
+            page: currentPage - 1,
+            pageSize,
+            total,
             onPageChange: (page) => {
-              setPagination((prev) => ({ ...prev, page }));
+              listState.setCurrentPage(page + 1);
             },
-            onPageSizeChange: (pageSize) => {
-              setPagination((prev) => ({ ...prev, pageSize, page: 0 }));
+            onPageSizeChange: (newPageSize) => {
+              listState.setPageSize(newPageSize);
             },
           }}
           actions={[
@@ -787,6 +808,18 @@ const OpportunityManagementPage: React.FC = () => {
           )}
         </Dialog>
       </>
+
+      <ConfirmDialog
+        isOpen={confirmDialogOpen}
+        onClose={setConfirmDialogClosed}
+        onConfirm={() => {
+          confirmDialogConfig?.onConfirm();
+          setConfirmDialogClosed();
+        }}
+        title={confirmDialogConfig?.title || ''}
+        message={confirmDialogConfig?.message || ''}
+        danger={confirmDialogConfig?.danger}
+      />
     </PageContainer>
   );
 };

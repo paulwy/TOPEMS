@@ -44,6 +44,7 @@ import {
   Button,
 } from '@mui/material';
 import { PageContainer } from '@/components';
+import { useCrudMutations } from '@/hooks';
 
 const TemplateManagementPage: React.FC = () => {
   const queryClient = useQueryClient();
@@ -85,72 +86,40 @@ const TemplateManagementPage: React.FC = () => {
   const categories = categoriesQuery.data || [];
   const loading = templatesQuery.isLoading || categoriesQuery.isLoading;
 
-  const createMutation = useMutation({
-    mutationFn: async (data: CreateTemplateRequest) => {
+  const { createMutation, updateMutation, deleteMutation } = useCrudMutations<
+    CreateTemplateRequest,
+    Partial<CreateTemplateRequest>,
+    string
+  >({
+    queryKeyToInvalidate: ['templates'],
+    createFn: async (data) => {
       const response = await templateApi.create(data);
       if (!response.success) {
         throw new Error(response.message || '创建失败');
       }
       return response.data;
     },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['templates'] });
-      addNotification({ type: 'success', title: '成功', message: '模板创建成功' });
-      setShowCreateModal(false);
-    },
-    onError: (err: unknown) => {
-      apiLogger.error('创建模板失败:', err);
-      addNotification({
-        type: 'error',
-        title: '失败',
-        message: (err as Error).message || '创建失败',
-      });
-    },
-  });
-
-  const updateMutation = useMutation({
-    mutationFn: async ({ id, data }: { id: string; data: Partial<CreateTemplateRequest> }) => {
-      const response = await templateApi.update(id, data);
+    updateFn: async ({ id, data }) => {
+      const response = await templateApi.update(String(id), data);
       if (!response.success) {
         throw new Error(response.message || '更新失败');
       }
       return response.data;
     },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['templates'] });
-      addNotification({ type: 'success', title: '成功', message: '模板更新成功' });
-      setShowEditModal(false);
-      setSelectedTemplate(null);
-    },
-    onError: (err: unknown) => {
-      apiLogger.error('更新模板失败:', err);
-      addNotification({
-        type: 'error',
-        title: '失败',
-        message: (err as Error).message || '更新失败',
-      });
-    },
-  });
-
-  const deleteMutation = useMutation({
-    mutationFn: async (id: string) => {
-      const response = await templateApi.delete(id);
+    deleteFn: async (id) => {
+      const response = await templateApi.delete(String(id));
       if (!response.success) {
         throw new Error(response.message || '删除失败');
       }
       return id;
     },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['templates'] });
-      addNotification({ type: 'success', title: '成功', message: '模板删除成功' });
+    entityName: '模板',
+    onCreateSuccess: () => {
+      setShowCreateModal(false);
     },
-    onError: (err: unknown) => {
-      apiLogger.error('删除模板失败:', err);
-      addNotification({
-        type: 'error',
-        title: '失败',
-        message: (err as Error).message || '删除失败',
-      });
+    onUpdateSuccess: () => {
+      setShowEditModal(false);
+      setSelectedTemplate(null);
     },
   });
 

@@ -1,0 +1,50 @@
+{
+  "title": "报表中心",
+  "menu": {
+    "template": "报表模板",
+    "datasource": "数据源",
+    "generate": "生成",
+    "subscribe": "订阅",
+    "export": "导出"
+  },
+  "status": {
+    "draft": "草稿",
+    "published": "已发布",
+    "archived": "已归档",
+    "generating": "生成中",
+    "generated": "已生成",
+    "failed": "生成失败"
+  },
+  "action": {
+    "create": "创建",
+    "edit": "编辑",
+    "delete": "删除",
+    "view": "查看",
+    "generate": "生成",
+    "subscribe": "订阅",
+    "unsubscribe": "取消订阅",
+    "export": "导出"
+  },
+  "field": {
+    "report_name": "报表名称",
+    "report_code": "报表编码",
+    "template": "模板",
+    "datasource": "数据源",
+    "category": "分类",
+    "frequency": "频率",
+    "format": "格式",
+    "owner": "负责人",
+    "created_at": "创建时间",
+    "last_generated_at": "最近生成时间"
+  },
+  "message": {
+    "create_success": "创建成功",
+    "update_success": "更新成功",
+    "delete_success": "删除成功",
+    "generate_success": "报表生成成功",
+    "generate_failed": "报表生成失败",
+    "subscribe_success": "订阅成功",
+    "confirm_delete": "确认删除？",
+    "no_data": "暂无数据"
+  }
+}

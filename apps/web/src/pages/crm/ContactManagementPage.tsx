@@ -2,7 +2,6 @@ import React, { useState, useMemo } from 'react';
 import { Box, Typography } from '@mui/material';
 import type { Contact, CreateContactRequest, UpdateContactRequest } from '@/api/crm';
 import { crmApi } from '@/api/crm';
-import { useNotificationStore } from '@/store';
 import { logger } from '@/utils/logger';
 import {
   DataExport,
@@ -15,14 +14,28 @@ import {
 import { Plus, Edit, Trash2, Eye } from 'lucide-react';
 import { ListPageTemplate } from '@/components/templates';
 import type { ColumnDef, RowAction, FilterConfig } from '@/components/templates';
-import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { useQuery } from '@tanstack/react-query';
+import { ConfirmDialog } from '@topems/shared-components';
+import { useConfirmDialog, useCrudMutations, useUrlListState } from '@/hooks';
 
 const ContactManagementPage: React.FC = () => {
-  const { addNotification } = useNotificationStore();
-  const queryClient = useQueryClient();
-
-  const [searchTerm, setSearchTerm] = useState('');
-  const [statusFilter, setStatusFilter] = useState<string>('');
+  // URL 同步的列表状态
+  const listState = useUrlListState<{ status: string }>({
+    defaultSearch: '',
+    defaultPageSize: 20,
+    defaultFilters: { status: '' },
+    historyMode: 'replace',
+  });
+  const {
+    searchQuery,
+    debouncedSearch: searchTerm,
+    currentPage,
+    pageSize,
+    filters: urlFilters,
+    setSearchQuery: setSearchTerm,
+    setFilter,
+  } = listState;
+  const statusFilter = urlFilters.status;
   const [showDialog, setShowDialog] = useState(false);
   const [showDetailDialog, setShowDetailDialog] = useState(false);
   const [selectedContact, setSelectedContact] = useState<Contact | null>(null);
@@ -34,21 +47,22 @@ const ContactManagementPage: React.FC = () => {
     position: '',
     notes: '',
   });
-  const [pagination, setPagination] = useState({
-    page: 0,
-    pageSize: 20,
-    total: 0,
-  });
+  const {
+    confirmOpen: confirmDialogOpen,
+    confirmConfig: confirmDialogConfig,
+    openConfirm: openConfirmDialog,
+    closeConfirm: setConfirmDialogClosed,
+  } = useConfirmDialog();
 
   const contactsQuery = useQuery({
-    queryKey: ['crm-contacts', searchTerm, statusFilter, pagination.page, pagination.pageSize],
+    queryKey: ['crm-contacts', searchTerm, urlFilters.status, currentPage, pageSize],
     queryFn: async () => {
       const params: Record<string, unknown> = {
-        page: pagination.page + 1,
-        pagesize: pagination.pageSize,
+        page: currentPage,
+        pagesize: pageSize,
       };
       if (searchTerm) params.search = searchTerm;
-      if (statusFilter) params.status = statusFilter;
+      if (urlFilters.status) params.status = urlFilters.status;
       const response = await crmApi.contacts.list(params);
       if (response.success && response.data) {
         return {
@@ -61,44 +75,23 @@ const ContactManagementPage: React.FC = () => {
     staleTime: 5 * 60 * 1000,
   });
   const contacts = contactsQuery.data?.items || [];
+  const total = contactsQuery.data?.total || 0;
   const loading = contactsQuery.isLoading;
 
-  const createContactMutation = useMutation({
-    mutationFn: (data: CreateContactRequest & { customer_id?: string }) =>
-      crmApi.contacts.create(data),
-    onSuccess: () => {
-      addNotification({ type: 'success', title: '创建成功', message: '新联系人已创建' });
-      queryClient.invalidateQueries({ queryKey: ['crm-contacts'] });
-    },
-    onError: (error: unknown) => {
-      logger.error('创建失败:', error);
-      addNotification({ type: 'error', title: '操作失败', message: '创建联系人失败' });
-    },
-  });
-
-  const updateContactMutation = useMutation({
-    mutationFn: ({ id, data }: { id: string; data: UpdateContactRequest }) =>
-      crmApi.contacts.update(id, data),
-    onSuccess: () => {
-      addNotification({ type: 'success', title: '更新成功', message: '联系人信息已更新' });
-      queryClient.invalidateQueries({ queryKey: ['crm-contacts'] });
-    },
-    onError: (error: unknown) => {
-      logger.error('更新失败:', error);
-      addNotification({ type: 'error', title: '操作失败', message: '更新联系人失败' });
-    },
-  });
-
-  const deleteContactMutation = useMutation({
-    mutationFn: (id: string) => crmApi.contacts.delete(id),
-    onSuccess: () => {
-      addNotification({ type: 'success', title: '删除成功', message: '联系人已删除' });
-      queryClient.invalidateQueries({ queryKey: ['crm-contacts'] });
-    },
-    onError: (error: unknown) => {
-      logger.error('删除失败:', error);
-      addNotification({ type: 'error', title: '删除失败', message: '无法删除联系人' });
-    },
+  const {
+    createMutation: createContactMutation,
+    updateMutation: updateContactMutation,
+    deleteMutation: deleteContactMutation,
+  } = useCrudMutations<
+    CreateContactRequest & { customer_id?: string },
+    UpdateContactRequest,
+    string
+  >({
+    queryKeyToInvalidate: ['crm-contacts'],
+    createFn: async (data) => crmApi.contacts.create(data),
+    updateFn: async ({ id, data }) => crmApi.contacts.update(String(id), data),
+    deleteFn: async (id) => crmApi.contacts.delete(String(id)),
+    entityName: '联系人',
   });
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -119,13 +112,15 @@ const ContactManagementPage: React.FC = () => {
     }
   };
 
-  const handleDelete = async (id: string) => {
-    if (!window.confirm('确定要删除这个联系人吗?')) return;
-    try {
-      await deleteContactMutation.mutateAsync(id);
-    } catch (error: unknown) {
-      logger.error('删除失败:', error);
-    }
+  const handleDelete = (id: string) => {
+    openConfirmDialog({
+      title: '确认删除',
+      message: '确定要删除这个联系人吗?',
+      danger: true,
+      onConfirm: () => {
+        deleteContactMutation.mutate(id);
+      },
+    });
   };
 
   const handleEdit = (contact: Contact) => {
@@ -254,13 +249,13 @@ const ContactManagementPage: React.FC = () => {
           { value: 'active', label: '活跃' },
           { value: 'inactive', label: '非活跃' },
         ],
-        value: statusFilter,
+        value: urlFilters.status,
         onChange: (value) => {
-          setStatusFilter(value as string);
+          setFilter('status', value as string);
         },
       },
     ],
-    [statusFilter]
+    [urlFilters.status, setFilter]
   );
 
   const exportFields = useMemo(
@@ -294,21 +289,21 @@ const ContactManagementPage: React.FC = () => {
           loading={loading}
           searchable
           searchPlaceholder='搜索联系人姓名或邮箱...'
-          searchValue={searchTerm}
+          searchValue={searchQuery}
           onSearch={(value) => {
             setSearchTerm(value);
           }}
           filters={filters}
           rowActions={rowActions}
           pagination={{
-            page: pagination.page,
-            pageSize: pagination.pageSize,
-            total: pagination.total,
+            page: currentPage - 1,
+            pageSize,
+            total,
             onPageChange: (page) => {
-              setPagination((prev) => ({ ...prev, page }));
+              listState.setCurrentPage(page + 1);
             },
-            onPageSizeChange: (pageSize) => {
-              setPagination((prev) => ({ ...prev, pageSize, page: 0 }));
+            onPageSizeChange: (newPageSize) => {
+              listState.setPageSize(newPageSize);
             },
           }}
           actions={[
@@ -528,6 +523,18 @@ const ContactManagementPage: React.FC = () => {
           )}
         </Dialog>
       </>
+
+      <ConfirmDialog
+        isOpen={confirmDialogOpen}
+        onClose={setConfirmDialogClosed}
+        onConfirm={() => {
+          confirmDialogConfig?.onConfirm();
+          setConfirmDialogClosed();
+        }}
+        title={confirmDialogConfig?.title || ''}
+        message={confirmDialogConfig?.message || ''}
+        danger={confirmDialogConfig?.danger}
+      />
     </PageContainer>
   );
 };

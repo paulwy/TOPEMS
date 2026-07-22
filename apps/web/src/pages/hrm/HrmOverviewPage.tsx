@@ -23,9 +23,11 @@ import BarChartComponent from '../../components/charts/BarChart';
 import LineChartComponent from '../../components/charts/LineChart';
 import PieChartComponent from '../../components/charts/PieChart';
 
+import { useTranslation } from 'react-i18next';
 const ct = designTokens.colors;
 
 const HrmOverviewPage: React.FC = () => {
+  const { t } = useTranslation();
   const navigate = useNavigate();
 
   const loadingQuery = useQuery<boolean>({
@@ -39,56 +41,56 @@ const HrmOverviewPage: React.FC = () => {
     () => [
       {
         id: 'total-employees',
-        title: '员工总数',
+        title: t('hrm.hrm_overview_page.text_97e957'),
         value: '256',
         icon: <Users size={24} />,
         change: 12,
-        changeLabel: '较上月',
+        changeLabel: t('hrm.hrm_overview_page.last_month'),
         color: 'primary',
       },
       {
         id: 'new-hires',
-        title: '本月入职',
+        title: t('hrm.hrm_overview_page.this_month'),
         value: '8',
         icon: <UserPlus size={24} />,
         change: 3,
-        changeLabel: '较上月',
+        changeLabel: t('hrm.hrm_overview_page.last_month'),
         color: 'success',
       },
       {
         id: 'attendance-exception',
-        title: '考勤异常',
+        title: t('hrm.hrm_overview_page.abnormal'),
         value: '15',
         icon: <Clock size={24} />,
         change: -5,
-        changeLabel: '较上月',
+        changeLabel: t('hrm.hrm_overview_page.last_month'),
         color: 'error',
       },
       {
         id: 'pending-leave',
-        title: '待审批请假',
+        title: t('hrm.hrm_overview_page.text_7c3c05'),
         value: '6',
         icon: <Calendar size={24} />,
         change: 2,
-        changeLabel: '待处理',
+        changeLabel: t('hrm.hrm_overview_page.pending'),
         color: 'warning',
       },
       {
         id: 'avg-performance',
-        title: '平均绩效',
+        title: t('hrm.hrm_overview_page.text_d8ddb8'),
         value: '85.3',
         icon: <Award size={24} />,
         change: 3.2,
-        changeLabel: '较上月',
+        changeLabel: t('hrm.hrm_overview_page.last_month'),
         color: 'info',
       },
       {
         id: 'training-complete',
-        title: '培训完成率',
+        title: t('hrm.hrm_overview_page.completed'),
         value: '78%',
         icon: <GraduationCap size={24} />,
         change: 8,
-        changeLabel: '较上月',
+        changeLabel: t('hrm.hrm_overview_page.last_month'),
         color: 'success',
       },
     ],
@@ -96,36 +98,36 @@ const HrmOverviewPage: React.FC = () => {
   );
 
   const departmentData = [
-    { name: '技术部', value: 85 },
-    { name: '产品部', value: 42 },
-    { name: '市场部', value: 35 },
-    { name: '财务部', value: 22 },
-    { name: '人事部', value: 18 },
-    { name: '运营部', value: 28 },
-    { name: '销售部', value: 26 },
+    { name: t('hrm.hrm_overview_page.text_c6a757'), value: 85 },
+    { name: t('hrm.hrm_overview_page.product'), value: 42 },
+    { name: t('hrm.hrm_overview_page.text_73b111'), value: 35 },
+    { name: t('hrm.hrm_overview_page.text_b159e5'), value: 22 },
+    { name: t('hrm.hrm_overview_page.text_f802d1'), value: 18 },
+    { name: t('hrm.hrm_overview_page.text_b890b3'), value: 28 },
+    { name: t('hrm.hrm_overview_page.text_afdedb'), value: 26 },
   ];
 
   const monthlyTrendData = [
-    { name: '1月', value: 5 },
-    { name: '2月', value: 3 },
-    { name: '3月', value: 8 },
-    { name: '4月', value: 6 },
-    { name: '5月', value: 7 },
-    { name: '6月', value: 8 },
+    { name: t('hrm.hrm_overview_page.text_fccc2b'), value: 5 },
+    { name: t('hrm.hrm_overview_page.text_c1d13f'), value: 3 },
+    { name: t('hrm.hrm_overview_page.text_c4767b'), value: 8 },
+    { name: t('hrm.hrm_overview_page.text_3eaf4b'), value: 6 },
+    { name: t('hrm.hrm_overview_page.text_0545f1'), value: 7 },
+    { name: t('hrm.hrm_overview_page.text_f2422a'), value: 8 },
   ];
 
   const performanceData = [
-    { name: '优秀', value: 25 },
-    { name: '良好', value: 40 },
-    { name: '合格', value: 28 },
-    { name: '待改进', value: 7 },
+    { name: t('hrm.hrm_overview_page.text_c08ed9'), value: 25 },
+    { name: t('hrm.hrm_overview_page.text_c5c01c'), value: 40 },
+    { name: t('hrm.hrm_overview_page.qualified'), value: 28 },
+    { name: t('hrm.hrm_overview_page.text_e10613'), value: 7 },
   ];
 
   const charts: ChartCard[] = useMemo(
     () => [
       {
         id: 'department-distribution',
-        title: '部门人数分布',
+        title: t('hrm.hrm_overview_page.text_a2487e'),
         chart: (
           <BarChartComponent
             data={departmentData}
@@ -137,7 +139,7 @@ const HrmOverviewPage: React.FC = () => {
       },
       {
         id: 'hire-trend',
-        title: '月度入职离职趋势',
+        title: t('hrm.hrm_overview_page.text_0b2824'),
         chart: (
           <LineChartComponent
             data={monthlyTrendData}
@@ -149,7 +151,7 @@ const HrmOverviewPage: React.FC = () => {
       },
       {
         id: 'performance-distribution',
-        title: '绩效分布',
+        title: t('hrm.hrm_overview_page.text_5890cb'),
         chart: <PieChartComponent data={performanceData} />,
         height: 300,
       },
@@ -161,42 +163,42 @@ const HrmOverviewPage: React.FC = () => {
     () => [
       {
         id: 'employee-manage',
-        label: '员工管理',
+        label: t('hrm.hrm_overview_page.text_b33603'),
         icon: <Users size={20} />,
         onClick: () => navigate(HRM_PATHS.employees),
         color: ct.primary.dark,
       },
       {
         id: 'attendance-manage',
-        label: '考勤管理',
+        label: t('hrm.hrm_overview_page.text_2a2338'),
         icon: <Clock size={20} />,
         onClick: () => navigate(HRM_PATHS.attendance),
         color: ct.secondary[700],
       },
       {
         id: 'leave-manage',
-        label: '请假管理',
+        label: t('hrm.hrm_overview_page.text_f2b75f'),
         icon: <Calendar size={20} />,
         onClick: () => navigate(HRM_PATHS.leave),
         color: ct.success[700],
       },
       {
         id: 'salary-manage',
-        label: '薪酬管理',
+        label: t('hrm.hrm_overview_page.text_bf8ab5'),
         icon: <DollarSign size={20} />,
         onClick: () => navigate(HRM_PATHS.payroll),
         color: ct.warning[600],
       },
       {
         id: 'performance-review',
-        label: '绩效考核',
+        label: t('hrm.hrm_overview_page.text_5ad4ab'),
         icon: <Award size={20} />,
         onClick: () => navigate(HRM_PATHS.performance),
         color: ct.success[700],
       },
       {
         id: 'recruitment',
-        label: '招聘管理',
+        label: t('hrm.hrm_overview_page.text_b4f20d'),
         icon: <Briefcase size={20} />,
         onClick: () => navigate(HRM_PATHS.recruitment),
         color: ct.error[700],
@@ -209,18 +211,18 @@ const HrmOverviewPage: React.FC = () => {
     () => [
       {
         id: 'leave1',
-        title: '请假申请 - 李四',
-        description: '年假 3天 (7/1-7/3)',
+        title: t('hrm.hrm_overview_page.text_3f1c1f'),
+        description: t('hrm.hrm_overview_page.text_16737a'),
         time: '2026-06-29 09:30',
         icon: <Calendar size={18} />,
         status: 'warning',
-        tags: [{ label: '待审批', color: ct.warning[600] }],
+        tags: [{ label: t('hrm.hrm_overview_page.text_b0bf01'), color: ct.warning[600] }],
         onClick: () => navigate(HRM_PATHS.leave),
       },
       {
         id: 'emp1',
-        title: '新员工入职 - 王五',
-        description: '技术部 - 高级前端工程师',
+        title: t('hrm.hrm_overview_page.text_729463'),
+        description: t('hrm.hrm_overview_page.text_3d1fda'),
         time: '2026-06-29 08:00',
         icon: <UserPlus size={18} />,
         status: 'success',
@@ -228,8 +230,8 @@ const HrmOverviewPage: React.FC = () => {
       },
       {
         id: 'att1',
-        title: '考勤异常 - 张三',
-        description: '6月28日迟到35分钟',
+        title: t('hrm.hrm_overview_page.abnormal_1'),
+        description: t('hrm.hrm_overview_page.text_f127db'),
         time: '2026-06-28 17:30',
         icon: <Clock size={18} />,
         status: 'error',
@@ -237,8 +239,8 @@ const HrmOverviewPage: React.FC = () => {
       },
       {
         id: 'perf1',
-        title: 'Q2绩效考核完成',
-        description: '技术部考核已全部提交',
+        title: t('hrm.hrm_overview_page.completed_1'),
+        description: t('hrm.hrm_overview_page.submit'),
         time: '2026-06-28 16:00',
         icon: <Award size={18} />,
         status: 'success',
@@ -246,12 +248,12 @@ const HrmOverviewPage: React.FC = () => {
       },
       {
         id: 'train1',
-        title: '新员工培训 - 第3期',
-        description: '已完成 24/30 人',
+        title: t('hrm.hrm_overview_page.text_2a2606'),
+        description: t('hrm.hrm_overview_page.completed_2'),
         time: '2026-06-27 15:00',
         icon: <GraduationCap size={18} />,
         status: 'info',
-        tags: [{ label: '进行中', color: ct.primary.dark }],
+        tags: [{ label: t('hrm.hrm_overview_page.in_progress'), color: ct.primary.dark }],
         onClick: () => navigate(HRM_PATHS.training),
       },
     ],
@@ -260,20 +262,20 @@ const HrmOverviewPage: React.FC = () => {
 
   return (
     <PageContainer
-      title='人力资源管理'
+      title={t('hrm.hrm_overview_page.text_c19ad7')}
       padding={false}
       maxWidth={false}
     >
       <DashboardTemplate
         title=''
         subtitle=''
-        breadcrumbs={[{ label: '首页', href: '/dashboard' }, { label: '人力资源' }]}
+        breadcrumbs={[{ label: t('hrm.hrm_overview_page.home'), href: '/dashboard' }, { label: t('hrm.hrm_overview_page.text_40fb54') }]}
         stats={stats}
         charts={charts}
         recentItems={recentItems}
-        recentTitle='最近动态'
+        recentTitle={t('hrm.hrm_overview_page.text_32773c')}
         quickActions={quickActions}
-        quickActionsTitle='快捷操作'
+        quickActionsTitle={t('hrm.hrm_overview_page.action')}
         loading={loading}
       />
     </PageContainer>

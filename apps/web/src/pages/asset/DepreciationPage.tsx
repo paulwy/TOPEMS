@@ -26,7 +26,9 @@ import { useNotificationStore } from '@/store';
 import { apiLogger } from '@/utils/logger';
 import type { FixedAsset } from '@/api/erp/types';
 
+import { useTranslation } from 'react-i18next';
 const DepreciationPage: React.FC = () => {
+  const { t } = useTranslation();
   const [searchTerm, setSearchTerm] = useState('');
   const [statusFilter, setStatusFilter] = useState<string>('all');
   const [currentPage, setCurrentPage] = useState(1);
@@ -62,9 +64,9 @@ const DepreciationPage: React.FC = () => {
     {
       id: '1',
       asset_code: 'FA-001',
-      asset_name: '办公电脑-01',
+      asset_name: t('asset.depreciation_page.text_1c38b4'),
       asset_type: 'computer',
-      asset_category: '电脑设备',
+      asset_category: t('asset.depreciation_page.equipment'),
       purchase_date: '2022-01-15',
       original_value: 8500,
       accumulated_depreciation: 5100,
@@ -73,7 +75,7 @@ const DepreciationPage: React.FC = () => {
       expected_life: 3,
       salvage_value: 0,
       monthly_depreciation: 236.11,
-      location: '研发部',
+      location: t('asset.depreciation_page.text_9176a6'),
       status: 'active',
       created_at: '2022-01-15',
       updated_at: '2024-01-15',
@@ -81,9 +83,9 @@ const DepreciationPage: React.FC = () => {
     {
       id: '2',
       asset_code: 'FA-002',
-      asset_name: '服务器-01',
+      asset_name: t('asset.depreciation_page.text_6264c8'),
       asset_type: 'server',
-      asset_category: '服务器',
+      asset_category: t('asset.depreciation_page.text_c566ca'),
       purchase_date: '2021-06-20',
       original_value: 45000,
       accumulated_depreciation: 33750,
@@ -92,7 +94,7 @@ const DepreciationPage: React.FC = () => {
       expected_life: 5,
       salvage_value: 4500,
       monthly_depreciation: 675,
-      location: '机房',
+      location: t('asset.depreciation_page.text_cfb51b'),
       status: 'active',
       created_at: '2021-06-20',
       updated_at: '2024-01-15',
@@ -100,9 +102,9 @@ const DepreciationPage: React.FC = () => {
     {
       id: '3',
       asset_code: 'FA-003',
-      asset_name: '打印机-01',
+      asset_name: t('asset.depreciation_page.print'),
       asset_type: 'printer',
-      asset_category: '办公设备',
+      asset_category: t('asset.depreciation_page.equipment_1'),
       purchase_date: '2022-03-10',
       original_value: 2800,
       accumulated_depreciation: 1866.67,
@@ -111,7 +113,7 @@ const DepreciationPage: React.FC = () => {
       expected_life: 3,
       salvage_value: 0,
       monthly_depreciation: 77.78,
-      location: '行政部',
+      location: t('asset.depreciation_page.text_aa8251'),
       status: 'active',
       created_at: '2022-03-10',
       updated_at: '2024-01-15',
@@ -119,9 +121,9 @@ const DepreciationPage: React.FC = () => {
     {
       id: '4',
       asset_code: 'FA-004',
-      asset_name: '投影仪-01',
+      asset_name: t('asset.depreciation_page.text_8b3327'),
       asset_type: 'projector',
-      asset_category: '办公设备',
+      asset_category: t('asset.depreciation_page.equipment_1'),
       purchase_date: '2022-02-28',
       original_value: 5200,
       accumulated_depreciation: 3466.67,
@@ -130,7 +132,7 @@ const DepreciationPage: React.FC = () => {
       expected_life: 3,
       salvage_value: 0,
       monthly_depreciation: 144.44,
-      location: '会议室A',
+      location: t('asset.depreciation_page.text_f79b2d'),
       status: 'active',
       created_at: '2022-02-28',
       updated_at: '2024-01-15',
@@ -138,9 +140,9 @@ const DepreciationPage: React.FC = () => {
     {
       id: '5',
       asset_code: 'FA-005',
-      asset_name: '空调-01',
+      asset_name: t('asset.depreciation_page.text_a63052'),
       asset_type: 'aircon',
-      asset_category: '办公设备',
+      asset_category: t('asset.depreciation_page.equipment_1'),
       purchase_date: '2021-08-15',
       original_value: 8900,
       accumulated_depreciation: 5340,
@@ -149,7 +151,7 @@ const DepreciationPage: React.FC = () => {
       expected_life: 5,
       salvage_value: 890,
       monthly_depreciation: 133.5,
-      location: '大会议室',
+      location: t('asset.depreciation_page.text_ec7c0b'),
       status: 'active',
       created_at: '2021-08-15',
       updated_at: '2024-01-15',
@@ -157,9 +159,9 @@ const DepreciationPage: React.FC = () => {
     {
       id: '6',
       asset_code: 'FA-006',
-      asset_name: '汽车-01',
+      asset_name: t('asset.depreciation_page.text_6f6262'),
       asset_type: 'vehicle',
-      asset_category: '运输工具',
+      asset_category: t('asset.depreciation_page.text_68f50e'),
       purchase_date: '2020-05-20',
       original_value: 230000,
       accumulated_depreciation: 161000,
@@ -168,7 +170,7 @@ const DepreciationPage: React.FC = () => {
       expected_life: 5,
       salvage_value: 23000,
       monthly_depreciation: 3450,
-      location: '车库',
+      location: t('asset.depreciation_page.text_b21ed8'),
       status: 'active',
       created_at: '2020-05-20',
       updated_at: '2024-01-15',
@@ -176,9 +178,9 @@ const DepreciationPage: React.FC = () => {
     {
       id: '7',
       asset_code: 'FA-007',
-      asset_name: '复印机-01',
+      asset_name: t('asset.depreciation_page.text_f0a0e0'),
       asset_type: 'copier',
-      asset_category: '办公设备',
+      asset_category: t('asset.depreciation_page.equipment_1'),
       purchase_date: '2021-09-18',
       original_value: 18500,
       accumulated_depreciation: 11100,
@@ -187,7 +189,7 @@ const DepreciationPage: React.FC = () => {
       expected_life: 5,
       salvage_value: 1850,
       monthly_depreciation: 277.5,
-      location: '文印室',
+      location: t('asset.depreciation_page.text_9e410a'),
       status: 'depreciated',
       created_at: '2021-09-18',
       updated_at: '2024-01-15',
@@ -195,9 +197,9 @@ const DepreciationPage: React.FC = () => {
     {
       id: '8',
       asset_code: 'FA-008',
-      asset_name: '路由器-01',
+      asset_name: t('asset.depreciation_page.text_17c639'),
       asset_type: 'network',
-      asset_category: '网络设备',
+      asset_category: t('asset.depreciation_page.equipment_2'),
       purchase_date: '2021-11-25',
       original_value: 3200,
       accumulated_depreciation: 2133.33,
@@ -206,7 +208,7 @@ const DepreciationPage: React.FC = () => {
       expected_life: 3,
       salvage_value: 0,
       monthly_depreciation: 88.89,
-      location: '机房',
+      location: t('asset.depreciation_page.text_cfb51b'),
       status: 'active',
       created_at: '2021-11-25',
       updated_at: '2024-01-15',
@@ -251,19 +253,19 @@ const DepreciationPage: React.FC = () => {
     onSuccess: () => {
       addNotification({
         type: 'success',
-        title: '创建成功',
-        message: '新固定资产已创建',
+        title: t('asset.depreciation_page.create'),
+        message: t('asset.depreciation_page.create_1'),
       });
       queryClient.invalidateQueries({ queryKey: [QUERY_KEYS.FINANCE.ASSET] });
       setShowDialog(false);
       resetForm();
     },
     onError: (error) => {
-      apiLogger.error('创建失败:', error);
+      apiLogger.error(t('asset.depreciation_page.create_2'), error);
       addNotification({
         type: 'error',
-        title: '创建失败',
-        message: '无法创建固定资产',
+        title: t('asset.depreciation_page.create_3'),
+        message: t('asset.depreciation_page.create_4'),
       });
     },
   });
@@ -276,19 +278,19 @@ const DepreciationPage: React.FC = () => {
     onSuccess: () => {
       addNotification({
         type: 'success',
-        title: '更新成功',
-        message: '固定资产信息已更新',
+        title: t('asset.depreciation_page.update'),
+        message: t('asset.depreciation_page.update_1'),
       });
       queryClient.invalidateQueries({ queryKey: [QUERY_KEYS.FINANCE.ASSET] });
       setShowDialog(false);
       resetForm();
     },
     onError: (error) => {
-      apiLogger.error('更新失败:', error);
+      apiLogger.error(t('asset.depreciation_page.update_2'), error);
       addNotification({
         type: 'error',
-        title: '更新失败',
-        message: '无法更新固定资产',
+        title: t('asset.depreciation_page.update_3'),
+        message: t('asset.depreciation_page.update_4'),
       });
     },
   });
@@ -301,17 +303,17 @@ const DepreciationPage: React.FC = () => {
     onSuccess: () => {
       addNotification({
         type: 'success',
-        title: '删除成功',
-        message: '固定资产已删除',
+        title: t('asset.depreciation_page.delete_success'),
+        message: t('asset.depreciation_page.deleted'),
       });
       queryClient.invalidateQueries({ queryKey: [QUERY_KEYS.FINANCE.ASSET] });
     },
     onError: (error) => {
-      apiLogger.error('删除失败:', error);
+      apiLogger.error(t('asset.depreciation_page.delete'), error);
       addNotification({
         type: 'error',
-        title: '删除失败',
-        message: '无法删除固定资产',
+        title: t('asset.depreciation_page.delete_1'),
+        message: t('asset.depreciation_page.delete_2'),
       });
     },
   });
@@ -327,7 +329,7 @@ const DepreciationPage: React.FC = () => {
     onSuccess: (result) => {
       addNotification({
         type: 'success',
-        title: '折旧成功',
+        title: t('asset.depreciation_page.success'),
         message: `已完成 ${result.data.depreciated_count} 项资产的折旧`,
       });
       queryClient.invalidateQueries({ queryKey: [QUERY_KEYS.FINANCE.ASSET] });
@@ -335,11 +337,11 @@ const DepreciationPage: React.FC = () => {
       setDepreciatePeriod('');
     },
     onError: (error) => {
-      apiLogger.error('折旧失败:', error);
+      apiLogger.error(t('asset.depreciation_page.fail'), error);
       addNotification({
         type: 'error',
-        title: '折旧失败',
-        message: '无法执行折旧',
+        title: t('asset.depreciation_page.fail_1'),
+        message: t('asset.depreciation_page.text_e69527'),
       });
     },
   });
@@ -355,7 +357,7 @@ const DepreciationPage: React.FC = () => {
 
   const handleDelete = useCallback(
     async (id: string) => {
-      if (!window.confirm('确定要删除这个固定资产吗?')) return;
+      if (!window.confirm(t('asset.depreciation_page.confirm'))) return;
       await deleteMutation.mutateAsync(id);
     },
     [deleteMutation]
@@ -400,7 +402,7 @@ const DepreciationPage: React.FC = () => {
 
   const handleConfirmDepreciate = async () => {
     if (!depreciatePeriod) {
-      addNotification({ type: 'warning', title: '提示', message: '请选择折旧期间' });
+      addNotification({ type: 'warning', title: t('asset.depreciation_page.hint'), message: t('asset.depreciation_page.please_select') });
       return;
     }
     await depreciateMutation.mutateAsync({
@@ -440,10 +442,10 @@ const DepreciationPage: React.FC = () => {
         color: string;
       }
     > = {
-      active: { label: '在用', bg: 'success.lighter', color: 'success.700' },
-      idle: { label: '闲置', bg: 'info.lighter', color: 'info.700' },
-      depreciated: { label: '本月已折旧', bg: 'grey.100', color: 'text.secondary' },
-      retired: { label: '已报废', bg: 'error.lighter', color: 'error.dark' },
+      active: { label: t('asset.depreciation_page.text_60136e'), bg: 'success.lighter', color: 'success.700' },
+      idle: { label: t('asset.depreciation_page.text_72d05c'), bg: 'info.lighter', color: 'info.700' },
+      depreciated: { label: t('asset.depreciation_page.this_month'), bg: 'grey.100', color: 'text.secondary' },
+      retired: { label: t('asset.depreciation_page.scrap'), bg: 'error.lighter', color: 'error.dark' },
     };
     const s = statusMap[status] || { label: status, bg: 'grey.100', color: 'text.secondary' };
     return (
@@ -457,21 +459,21 @@ const DepreciationPage: React.FC = () => {
 
   const getMethodLabel = (method: string) => {
     const methodMap: Record<string, string> = {
-      straight_line: '直线法',
-      declining_balance: '双倍余额递减法',
-      sum_of_years: '年数总和法',
+      straight_line: t('asset.depreciation_page.text_0cd5c5'),
+      declining_balance: t('asset.depreciation_page.text_8ba30a'),
+      sum_of_years: t('asset.depreciation_page.text_686761'),
     };
     return methodMap[method] || method;
   };
 
   const columns: ColumnDef<FixedAsset>[] = useMemo(
     () => [
-      { id: 'asset_code', label: '资产编码', sortable: true, width: 120 },
-      { id: 'asset_name', label: '资产名称', sortable: true, width: 150 },
-      { id: 'asset_category', label: '分类', width: 100 },
+      { id: 'asset_code', label: t('asset.depreciation_page.code'), sortable: true, width: 120 },
+      { id: 'asset_name', label: t('asset.depreciation_page.name'), sortable: true, width: 150 },
+      { id: 'asset_category', label: t('asset.depreciation_page.text_d0771a'), width: 100 },
       {
         id: 'original_value',
-        label: '原值',
+        label: t('asset.depreciation_page.text_653f0c'),
         width: 120,
         align: 'right',
         render: (row) =>
@@ -479,7 +481,7 @@ const DepreciationPage: React.FC = () => {
       },
       {
         id: 'accumulated_depreciation',
-        label: '累计折旧',
+        label: t('asset.depreciation_page.text_d32915'),
         width: 120,
         align: 'right',
         render: (row) =>
@@ -487,20 +489,20 @@ const DepreciationPage: React.FC = () => {
       },
       {
         id: 'net_value',
-        label: '净值',
+        label: t('asset.depreciation_page.text_ef2f47'),
         width: 120,
         align: 'right',
         render: (row) => `¥${row.net_value.toLocaleString('zh-CN', { minimumFractionDigits: 2 })}`,
       },
       {
         id: 'depreciation_method',
-        label: '折旧方法',
+        label: t('asset.depreciation_page.text_9c58d4'),
         width: 100,
         render: (row) => getMethodLabel(row.depreciation_method),
       },
       {
         id: 'monthly_depreciation',
-        label: '月折旧额',
+        label: t('asset.depreciation_page.text_b3495b'),
         width: 120,
         align: 'right',
         render: (row) =>
@@ -508,14 +510,14 @@ const DepreciationPage: React.FC = () => {
       },
       {
         id: 'expected_life',
-        label: '使用年限',
+        label: t('asset.depreciation_page.text_02ff3d'),
         width: 80,
         align: 'center',
         render: (row) => `${row.expected_life}年`,
       },
       {
         id: 'status',
-        label: '状态',
+        label: t('asset.depreciation_page.status'),
         width: 100,
         render: (row) => getStatusBadge(row.status),
       },
@@ -527,14 +529,14 @@ const DepreciationPage: React.FC = () => {
     () => [
       {
         id: 'status',
-        label: '状态',
+        label: t('asset.depreciation_page.status'),
         type: 'select',
         options: [
-          { label: '全部状态', value: 'all' },
-          { label: '在用', value: 'active' },
-          { label: '闲置', value: 'idle' },
-          { label: '本月已折旧', value: 'depreciated' },
-          { label: '已报废', value: 'retired' },
+          { label: t('asset.depreciation_page.status_1'), value: 'all' },
+          { label: t('asset.depreciation_page.text_60136e'), value: 'active' },
+          { label: t('asset.depreciation_page.text_72d05c'), value: 'idle' },
+          { label: t('asset.depreciation_page.this_month'), value: 'depreciated' },
+          { label: t('asset.depreciation_page.scrap'), value: 'retired' },
         ],
         value: statusFilter,
         onChange: (value: unknown) => {
@@ -549,22 +551,22 @@ const DepreciationPage: React.FC = () => {
   const rowActions: RowAction<FixedAsset>[] = useMemo(
     () => [
       {
-        label: '查看详情',
+        label: t('asset.depreciation_page.view_detail'),
         icon: <Eye size={16} />,
         onClick: handleViewDetail,
       },
       {
-        label: '编辑',
+        label: t('asset.depreciation_page.edit'),
         icon: <Edit size={16} />,
         onClick: handleEdit,
       },
       {
-        label: '删除',
+        label: t('asset.depreciation_page.delete_3'),
         icon: <Trash2 size={16} />,
         color: 'error',
         onClick: (row) => handleDelete(row.id),
         confirm: true,
-        confirmMessage: '确定要删除这个固定资产吗?',
+        confirmMessage: t('asset.depreciation_page.confirm'),
         divider: true,
       },
     ],
@@ -574,12 +576,12 @@ const DepreciationPage: React.FC = () => {
   const batchActions: BatchAction<FixedAsset>[] = useMemo(
     () => [
       {
-        label: '批量折旧',
+        label: t('asset.depreciation_page.text_b33d6b'),
         icon: <Calculator size={16} />,
         color: 'primary',
         onClick: handleBatchDepreciate,
         confirm: true,
-        confirmMessage: '确定要对选中的资产执行折旧吗?',
+        confirmMessage: t('asset.depreciation_page.confirm_1'),
       },
     ],
     [handleBatchDepreciate]
@@ -679,8 +681,8 @@ const DepreciationPage: React.FC = () => {
 
   return (
     <PageContainer
-      title='折旧管理'
-      subtitle='管理固定资产折旧信息'
+      title={t('asset.depreciation_page.text_2eef93')}
+      subtitle={t('asset.depreciation_page.info')}
     >
       <ListPageTemplate
         title=''
@@ -690,7 +692,7 @@ const DepreciationPage: React.FC = () => {
         loading={isLoading}
         filters={filters}
         searchable
-        searchPlaceholder='搜索资产编码、名称、分类...'
+        searchPlaceholder={t('asset.depreciation_page.search')}
         searchValue={searchTerm}
         onSearch={handleSearch}
         pagination={{
@@ -704,12 +706,12 @@ const DepreciationPage: React.FC = () => {
         onSelectionChange={(ids) => setSelectedIds(ids.map(String))}
         actions={[
           {
-            label: '新增固定资产',
+            label: t('asset.depreciation_page.add'),
             icon: <Plus size={16} />,
             onClick: handleOpenCreate,
           },
           {
-            label: '执行折旧',
+            label: t('asset.depreciation_page.text_943ca0'),
             icon: <Calculator size={16} />,
             onClick: handleDepreciate,
           },
@@ -717,10 +719,10 @@ const DepreciationPage: React.FC = () => {
         rowActions={rowActions}
         batchActions={batchActions}
         headerContent={statsContent}
-        emptyMessage='暂无固定资产数据'
+        emptyMessage={t('asset.depreciation_page.no_data')}
         getRowId={(row) => row.id}
         exportable
-        exportFileName='折旧清单'
+        exportFileName={t('asset.depreciation_page.text_14a828')}
       />
 
       <Dialog
@@ -728,7 +730,7 @@ const DepreciationPage: React.FC = () => {
         onClose={() => setShowDialog(false)}
         maxWidth='lg'
       >
-        <DialogTitle>{selectedAsset ? '编辑固定资产' : '新增固定资产'}</DialogTitle>
+        <DialogTitle>{selectedAsset ? t('asset.depreciation_page.edit_1') : t('asset.depreciation_page.add')}</DialogTitle>
         <DialogContent>
           <Box
             component='span'
@@ -739,7 +741,7 @@ const DepreciationPage: React.FC = () => {
               fontSize: 14,
             }}
           >
-            {selectedAsset ? '修改固定资产信息' : '填写新固定资产信息'}
+            {selectedAsset ? t('asset.depreciation_page.info_1') : t('asset.depreciation_page.info_2')}
           </Box>
           <form onSubmit={handleSubmit}>
             <Box
@@ -780,12 +782,12 @@ const DepreciationPage: React.FC = () => {
                   onChange={(e) => setFormData({ ...formData, asset_category: e.target.value })}
                 >
                   <option value=''>请选择分类</option>
-                  <option value='办公设备'>办公设备</option>
-                  <option value='电脑设备'>电脑设备</option>
-                  <option value='服务器'>服务器</option>
-                  <option value='网络设备'>网络设备</option>
-                  <option value='办公家具'>办公家具</option>
-                  <option value='运输工具'>运输工具</option>
+                  <option value={t('asset.depreciation_page.equipment_1')}>办公设备</option>
+                  <option value={t('asset.depreciation_page.equipment')}>电脑设备</option>
+                  <option value={t('asset.depreciation_page.text_c566ca')}>服务器</option>
+                  <option value={t('asset.depreciation_page.equipment_2')}>网络设备</option>
+                  <option value={t('asset.depreciation_page.text_ee33f3')}>办公家具</option>
+                  <option value={t('asset.depreciation_page.text_68f50e')}>运输工具</option>
                 </TextField>
               </Box>
               <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1 }}>
@@ -884,7 +886,7 @@ const DepreciationPage: React.FC = () => {
                 variant='contained'
                 disabled={createMutation.isPending || updateMutation.isPending}
               >
-                {createMutation.isPending || updateMutation.isPending ? '保存中...' : '保存'}
+                {createMutation.isPending || updateMutation.isPending ? t('asset.depreciation_page.save') : t('asset.depreciation_page.save_1')}
               </Button>
             </DialogActions>
           </form>
@@ -1001,7 +1003,7 @@ const DepreciationPage: React.FC = () => {
         onClose={() => setShowDepreciateDialog(false)}
         maxWidth='md'
       >
-        <DialogTitle>{selectedIds.length > 0 ? '批量折旧' : '执行折旧'}</DialogTitle>
+        <DialogTitle>{selectedIds.length > 0 ? t('asset.depreciation_page.text_b33d6b') : t('asset.depreciation_page.text_943ca0')}</DialogTitle>
         <DialogContent>
           <Box
             sx={{
@@ -1036,8 +1038,8 @@ const DepreciationPage: React.FC = () => {
               sx={{ mt: 2 }}
             >
               {selectedIds.length > 0
-                ? '将对选中的资产执行折旧处理'
-                : '将对所有符合条件的资产执行折旧处理'}
+                ? t('asset.depreciation_page.text_a67937')
+                : t('asset.depreciation_page.text_1162f9')}
             </Typography>
           </Box>
         </DialogContent>
@@ -1061,7 +1063,7 @@ const DepreciationPage: React.FC = () => {
               depreciateMutation.isPending ? <RefreshCw size={16} /> : <Calculator size={16} />
             }
           >
-            {depreciateMutation.isPending ? '折旧中...' : '确认折旧'}
+            {depreciateMutation.isPending ? t('asset.depreciation_page.text_3afd7f') : t('asset.depreciation_page.confirm_2')}
           </Button>
         </DialogActions>
       </Dialog>

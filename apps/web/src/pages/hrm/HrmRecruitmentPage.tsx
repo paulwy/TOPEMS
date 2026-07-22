@@ -20,6 +20,7 @@ import {
   Loader2,
   Calendar,
 } from 'lucide-react';
+import { useTranslation } from 'react-i18next';
 import { useNavigate } from 'react-router-dom';
 import { Box, Typography, Chip } from '@mui/material';
 import { HRM_PATHS } from '@/modules/hrm/config';
@@ -83,6 +84,7 @@ interface InterviewRecord {
 }
 
 const HrmRecruitmentPage: React.FC = () => {
+  const { t } = useTranslation();
   const navigate = useNavigate();
   const { error, notifications, hideNotification } = useNotification();
 
@@ -246,35 +248,35 @@ const HrmRecruitmentPage: React.FC = () => {
     const badges: Record<string, React.ReactNode> = {
       open: (
         <Chip
-          label='招聘中'
+          label={t('hrm.hrm_recruitment_page.text_d8104a')}
           size='small'
           sx={{ bgcolor: 'success.light', color: 'success.dark' }}
         />
       ),
       closed: (
         <Chip
-          label='已关闭'
+          label={t('hrm.hrm_recruitment_page.close')}
           size='small'
           sx={{ bgcolor: 'grey.200', color: 'grey.700' }}
         />
       ),
       filled: (
         <Chip
-          label='已招满'
+          label={t('hrm.hrm_recruitment_page.text_283bcf')}
           size='small'
           sx={{ bgcolor: 'info.light', color: 'info.dark' }}
         />
       ),
       new: (
         <Chip
-          label='新增'
+          label={t('hrm.hrm_recruitment_page.add')}
           size='small'
           sx={{ bgcolor: 'info.light', color: 'info.dark' }}
         />
       ),
       interview: (
         <Chip
-          label='面试中'
+          label={t('hrm.hrm_recruitment_page.text_0b311e')}
           size='small'
           sx={{ bgcolor: 'warning.light', color: 'warning.dark' }}
         />
@@ -288,35 +290,35 @@ const HrmRecruitmentPage: React.FC = () => {
       ),
       hired: (
         <Chip
-          label='已入职'
+          label={t('hrm.hrm_recruitment_page.text_acae29')}
           size='small'
           sx={{ bgcolor: 'success.light', color: 'success.dark' }}
         />
       ),
       rejected: (
         <Chip
-          label='已拒绝'
+          label={t('hrm.hrm_recruitment_page.text_81233d')}
           size='small'
           sx={{ bgcolor: 'error.light', color: 'error.dark' }}
         />
       ),
       pass: (
         <Chip
-          label='通过'
+          label={t('hrm.hrm_recruitment_page.text_23c1f3')}
           size='small'
           sx={{ bgcolor: 'success.light', color: 'success.dark' }}
         />
       ),
       fail: (
         <Chip
-          label='未通过'
+          label={t('hrm.hrm_recruitment_page.text_4fcdbf')}
           size='small'
           sx={{ bgcolor: 'error.light', color: 'error.dark' }}
         />
       ),
       pending: (
         <Chip
-          label='待定'
+          label={t('hrm.hrm_recruitment_page.text_75c038')}
           size='small'
           sx={{ bgcolor: 'warning.light', color: 'warning.dark' }}
         />
@@ -459,25 +461,25 @@ const HrmRecruitmentPage: React.FC = () => {
           <StatCardGroup
             stats={[
               {
-                title: '招聘岗位数',
+                title: t('hrm.hrm_recruitment_page.text_35a062'),
                 value: positions.length,
                 icon: <Briefcase style={{ width: 24, height: 24 }} />,
                 color: 'primary',
               },
               {
-                title: '候选人总数',
+                title: t('hrm.hrm_recruitment_page.text_3973a9'),
                 value: candidates.length,
                 icon: <Users style={{ width: 24, height: 24 }} />,
                 color: 'secondary',
               },
               {
-                title: '面试安排数',
+                title: t('hrm.hrm_recruitment_page.text_367930'),
                 value: interviews.length,
                 icon: <Calendar style={{ width: 24, height: 24 }} />,
                 color: 'warning',
               },
               {
-                title: '已录用数',
+                title: t('hrm.hrm_recruitment_page.text_2bc57e'),
                 value: candidates.filter((c) => c.status === 'hired').length,
                 icon: <CheckCircle style={{ width: 24, height: 24 }} />,
                 color: 'success',
@@ -609,7 +611,7 @@ const HrmRecruitmentPage: React.FC = () => {
                 <Box
                   component='input'
                   type='text'
-                  placeholder='搜索职位/候选人...'
+                  placeholder={t('hrm.hrm_recruitment_page.search')}
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
                   sx={{
@@ -1412,10 +1414,10 @@ const HrmRecruitmentPage: React.FC = () => {
                               }}
                             >
                               {interview.interview_type === 'first'
-                                ? '初试'
+                                ? t('hrm.hrm_recruitment_page.text_f1a6b3')
                                 : interview.interview_type === 'second'
-                                  ? '复试'
-                                  : '终面'}
+                                  ? t('hrm.hrm_recruitment_page.text_1135ba')
+                                  : t('hrm.hrm_recruitment_page.text_d9ba52')}
                             </Box>
                             <Box
                               component='td'

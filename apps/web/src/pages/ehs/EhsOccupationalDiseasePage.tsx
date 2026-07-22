@@ -35,6 +35,7 @@ import { useNotificationStore } from '@/store';
 import { apiLogger } from '@/utils/logger';
 import { designTokens } from '@/theme/tokens';
 
+import { useTranslation } from 'react-i18next';
 const ct = designTokens.colors;
 
 interface OccupationalDiseaseCase {
@@ -73,6 +74,7 @@ const statusOptions = [
 ];
 
 const EhsOccupationalDiseasePage: React.FC = () => {
+  const { t } = useTranslation();
   const queryClient = useQueryClient();
   const [searchQuery, setSearchQuery] = useState('');
   const [hazardTypeFilter, setHazardTypeFilter] = useState('');
@@ -183,8 +185,8 @@ const EhsOccupationalDiseasePage: React.FC = () => {
         const now = new Date();
         return d.getMonth() === now.getMonth() && d.getFullYear() === now.getFullYear();
       }).length,
-      suspected: cases.filter((c) => c.status === '疑似').length,
-      confirmed: cases.filter((c) => c.status === '确诊').length,
+      suspected: cases.filter((c) => c.status === t('ehs.ehs_occupational_disease_page.text_20f4b0')).length,
+      confirmed: cases.filter((c) => c.status === t('ehs.ehs_occupational_disease_page.text_fbdb93')).length,
     }),
     [cases]
   );
@@ -192,7 +194,7 @@ const EhsOccupationalDiseasePage: React.FC = () => {
   const columns: ColumnDef<OccupationalDiseaseCase>[] = [
     {
       id: 'case_no',
-      label: '案例编号',
+      label: t('ehs.ehs_occupational_disease_page.text_47f81f'),
       width: 150,
       sortable: true,
       render: (row) => (
@@ -203,27 +205,27 @@ const EhsOccupationalDiseasePage: React.FC = () => {
     },
     {
       id: 'employee_name',
-      label: '员工姓名',
+      label: t('ehs.ehs_occupational_disease_page.text_50df90'),
       width: 120,
       sortable: true,
       render: (row) => <Typography sx={{ fontWeight: 500 }}>{row.employee_name}</Typography>,
     },
     {
       id: 'department',
-      label: '部门',
+      label: t('ehs.ehs_occupational_disease_page.text_1e1459'),
       width: 120,
       render: (row) => row.department || '-',
     },
     {
       id: 'hazard_type',
-      label: '危害因素类型',
+      label: t('ehs.ehs_occupational_disease_page.type'),
       width: 120,
       align: 'center',
       render: (row) => row.hazard_type || '-',
     },
     {
       id: 'diagnosis_date',
-      label: '诊断日期',
+      label: t('ehs.ehs_occupational_disease_page.date'),
       width: 140,
       sortable: true,
       render: (row) => (
@@ -235,20 +237,20 @@ const EhsOccupationalDiseasePage: React.FC = () => {
     },
     {
       id: 'disease_name',
-      label: '职业病名称',
+      label: t('ehs.ehs_occupational_disease_page.name'),
       width: 160,
       render: (row) => row.disease_name || '-',
     },
     {
       id: 'severity',
-      label: '严重程度',
+      label: t('ehs.ehs_occupational_disease_page.text_08fe50'),
       width: 100,
       align: 'center',
       render: (row) => getSeverityChip(row.severity),
     },
     {
       id: 'status',
-      label: '状态',
+      label: t('ehs.ehs_occupational_disease_page.status'),
       width: 100,
       align: 'center',
       render: (row) => getStatusChip(row.status),
@@ -257,7 +259,7 @@ const EhsOccupationalDiseasePage: React.FC = () => {
 
   const rowActions: RowAction<OccupationalDiseaseCase>[] = [
     {
-      label: '查看',
+      label: t('ehs.ehs_occupational_disease_page.view'),
       icon: <Eye size={16} />,
       onClick: (row) => {
         setSelectedCase(row);
@@ -266,7 +268,7 @@ const EhsOccupationalDiseasePage: React.FC = () => {
       color: 'primary',
     },
     {
-      label: '编辑',
+      label: t('ehs.ehs_occupational_disease_page.edit'),
       icon: <Edit size={16} />,
       onClick: (row) => {
         setEditingCase(row);
@@ -342,7 +344,7 @@ const EhsOccupationalDiseasePage: React.FC = () => {
         }}
       >
         <StatCard
-          label='案例总数'
+          label={t('ehs.ehs_occupational_disease_page.text_5d971b')}
           value={stats.total}
           icon={<HeartPulse />}
           bgColor='error.light'
@@ -350,7 +352,7 @@ const EhsOccupationalDiseasePage: React.FC = () => {
           iconColor='error.main'
         />
         <StatCard
-          label='本月新增'
+          label={t('ehs.ehs_occupational_disease_page.add')}
           value={stats.thisMonth}
           icon={<CalendarCheck />}
           bgColor='background.paper'
@@ -358,7 +360,7 @@ const EhsOccupationalDiseasePage: React.FC = () => {
           iconColor='primary.dark'
         />
         <StatCard
-          label='疑似案例'
+          label={t('ehs.ehs_occupational_disease_page.text_4f8157')}
           value={stats.suspected}
           icon={<AlertCircle />}
           bgColor='background.paper'
@@ -366,7 +368,7 @@ const EhsOccupationalDiseasePage: React.FC = () => {
           iconColor={ct.yellow[600]}
         />
         <StatCard
-          label='确诊案例'
+          label={t('ehs.ehs_occupational_disease_page.text_a3211f')}
           value={stats.confirmed}
           icon={<ClipboardList />}
           bgColor='background.paper'
@@ -411,8 +413,8 @@ const EhsOccupationalDiseasePage: React.FC = () => {
     },
     onSuccess: (_data, variables) => {
       addNotification({
-        title: '成功',
-        message: variables.id ? '案例更新成功' : '案例创建成功',
+        title: t('ehs.ehs_occupational_disease_page.success'),
+        message: variables.id ? t('ehs.ehs_occupational_disease_page.update') : t('ehs.ehs_occupational_disease_page.create'),
         type: 'success',
       });
       queryClient.invalidateQueries({ queryKey: QUERY_KEYS.EHS.OCCUPATIONAL_DISEASES });
@@ -420,25 +422,25 @@ const EhsOccupationalDiseasePage: React.FC = () => {
     },
     onError: (error: unknown) => {
       addNotification({
-        title: '错误',
-        message: editingCase ? '更新失败' : '创建失败',
+        title: t('ehs.ehs_occupational_disease_page.error'),
+        message: editingCase ? t('ehs.ehs_occupational_disease_page.update_1') : t('ehs.ehs_occupational_disease_page.create_1'),
         type: 'error',
       });
-      apiLogger.error('保存职业病案例失败:', error);
+      apiLogger.error(t('ehs.ehs_occupational_disease_page.save'), error);
     },
   });
 
   const handleSave = () => {
     if (!formData.employee_name.trim()) {
-      addNotification({ title: '错误', message: '请输入员工姓名', type: 'error' });
+      addNotification({ title: t('ehs.ehs_occupational_disease_page.error'), message: t('ehs.ehs_occupational_disease_page.please_input'), type: 'error' });
       return;
     }
     if (!formData.department.trim()) {
-      addNotification({ title: '错误', message: '请输入部门', type: 'error' });
+      addNotification({ title: t('ehs.ehs_occupational_disease_page.error'), message: t('ehs.ehs_occupational_disease_page.please_input_1'), type: 'error' });
       return;
     }
     if (!formData.disease_name.trim()) {
-      addNotification({ title: '错误', message: '请输入职业病名称', type: 'error' });
+      addNotification({ title: t('ehs.ehs_occupational_disease_page.error'), message: t('ehs.ehs_occupational_disease_page.please_input_2'), type: 'error' });
       return;
     }
     const payload: CreateOccupationalDiseaseCaseRequest = {
@@ -457,7 +459,7 @@ const EhsOccupationalDiseasePage: React.FC = () => {
 
   const headerActions = [
     {
-      label: '新增案例',
+      label: t('ehs.ehs_occupational_disease_page.add_1'),
       icon: <Plus sx={{ width: 16, height: 16 }} />,
       onClick: handleCreate,
       variant: 'contained' as const,
@@ -486,7 +488,7 @@ const EhsOccupationalDiseasePage: React.FC = () => {
           onPageChange: setCurrentPage,
         }}
         searchable
-        searchPlaceholder='搜索案例编号、员工姓名、职业病名称或部门...'
+        searchPlaceholder={t('ehs.ehs_occupational_disease_page.search')}
         searchValue={searchQuery}
         onSearch={(value) => {
           setSearchQuery(value);
@@ -495,36 +497,36 @@ const EhsOccupationalDiseasePage: React.FC = () => {
         filters={[
           {
             id: 'hazard_type',
-            label: '危害因素类型',
+            label: t('ehs.ehs_occupational_disease_page.type'),
             type: 'select',
             value: hazardTypeFilter,
             onChange: (value) => {
               setHazardTypeFilter(String(value));
               setCurrentPage(0);
             },
-            options: [{ label: '全部', value: '' }, ...hazardTypeOptions],
+            options: [{ label: t('ehs.ehs_occupational_disease_page.all'), value: '' }, ...hazardTypeOptions],
           },
           {
             id: 'severity',
-            label: '严重程度',
+            label: t('ehs.ehs_occupational_disease_page.text_08fe50'),
             type: 'select',
             value: severityFilter,
             onChange: (value) => {
               setSeverityFilter(String(value));
               setCurrentPage(0);
             },
-            options: [{ label: '全部', value: '' }, ...severityOptions],
+            options: [{ label: t('ehs.ehs_occupational_disease_page.all'), value: '' }, ...severityOptions],
           },
           {
             id: 'status',
-            label: '状态',
+            label: t('ehs.ehs_occupational_disease_page.status'),
             type: 'select',
             value: statusFilter,
             onChange: (value) => {
               setStatusFilter(String(value));
               setCurrentPage(0);
             },
-            options: [{ label: '全部', value: '' }, ...statusOptions],
+            options: [{ label: t('ehs.ehs_occupational_disease_page.all'), value: '' }, ...statusOptions],
           },
         ]}
         rowActions={rowActions}
@@ -542,23 +544,23 @@ const EhsOccupationalDiseasePage: React.FC = () => {
         maxWidth='md'
         fullWidth
       >
-        <DialogTitle>{editingCase ? '编辑案例' : '新增职业病案例'}</DialogTitle>
+        <DialogTitle>{editingCase ? t('ehs.ehs_occupational_disease_page.edit_1') : t('ehs.ehs_occupational_disease_page.add_2')}</DialogTitle>
         <DialogContent>
           <Box sx={{ pt: 1, display: 'flex', flexDirection: 'column', gap: 2 }}>
             <Box sx={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 2 }}>
               <TextField
                 fullWidth
-                label='员工姓名 *'
+                label={t('ehs.ehs_occupational_disease_page.text_88eff5')}
                 value={formData.employee_name}
                 onChange={(e) => setFormData({ ...formData, employee_name: e.target.value })}
-                placeholder='请输入员工姓名'
+                placeholder={t('ehs.ehs_occupational_disease_page.please_input')}
               />
               <TextField
                 fullWidth
-                label='部门 *'
+                label={t('ehs.ehs_occupational_disease_page.text_d4b3e6')}
                 value={formData.department}
                 onChange={(e) => setFormData({ ...formData, department: e.target.value })}
-                placeholder='请输入部门'
+                placeholder={t('ehs.ehs_occupational_disease_page.please_input_1')}
               />
             </Box>
             <Box sx={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 2 }}>
@@ -566,7 +568,7 @@ const EhsOccupationalDiseasePage: React.FC = () => {
                 <InputLabel>危害因素类型</InputLabel>
                 <Select
                   value={formData.hazard_type}
-                  label='危害因素类型'
+                  label={t('ehs.ehs_occupational_disease_page.type')}
                   onChange={(e) => setFormData({ ...formData, hazard_type: e.target.value })}
                 >
                   {hazardTypeOptions.map((opt) => (
@@ -582,7 +584,7 @@ const EhsOccupationalDiseasePage: React.FC = () => {
               <TextField
                 fullWidth
                 type='date'
-                label='诊断日期'
+                label={t('ehs.ehs_occupational_disease_page.date')}
                 value={formData.diagnosis_date}
                 onChange={(e) => setFormData({ ...formData, diagnosis_date: e.target.value })}
                 slotProps={{ inputLabel: { shrink: true } } as const}
@@ -590,17 +592,17 @@ const EhsOccupationalDiseasePage: React.FC = () => {
             </Box>
             <TextField
               fullWidth
-              label='职业病名称 *'
+              label={t('ehs.ehs_occupational_disease_page.name_1')}
               value={formData.disease_name}
               onChange={(e) => setFormData({ ...formData, disease_name: e.target.value })}
-              placeholder='请输入职业病名称'
+              placeholder={t('ehs.ehs_occupational_disease_page.please_input_2')}
             />
             <Box sx={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 2 }}>
               <FormControl fullWidth>
                 <InputLabel>严重程度</InputLabel>
                 <Select
                   value={formData.severity}
-                  label='严重程度'
+                  label={t('ehs.ehs_occupational_disease_page.text_08fe50')}
                   onChange={(e) => setFormData({ ...formData, severity: e.target.value })}
                 >
                   {severityOptions.map((opt) => (
@@ -617,7 +619,7 @@ const EhsOccupationalDiseasePage: React.FC = () => {
                 <InputLabel>状态</InputLabel>
                 <Select
                   value={formData.status}
-                  label='状态'
+                  label={t('ehs.ehs_occupational_disease_page.status')}
                   onChange={(e) => setFormData({ ...formData, status: e.target.value })}
                 >
                   {statusOptions.map((opt) => (
@@ -633,10 +635,10 @@ const EhsOccupationalDiseasePage: React.FC = () => {
             </Box>
             <TextField
               fullWidth
-              label='描述'
+              label={t('ehs.ehs_occupational_disease_page.description')}
               value={formData.description}
               onChange={(e) => setFormData({ ...formData, description: e.target.value })}
-              placeholder='请输入案例描述'
+              placeholder={t('ehs.ehs_occupational_disease_page.please_input_3')}
               multiline
               rows={4}
             />
@@ -733,7 +735,7 @@ const EhsOccupationalDiseasePage: React.FC = () => {
                 >
                   描述
                 </Typography>
-                <Typography>{selectedCase.description || '暂无描述'}</Typography>
+                <Typography>{selectedCase.description || t('ehs.ehs_occupational_disease_page.description_1')}</Typography>
               </Box>
             </Box>
           ) : (

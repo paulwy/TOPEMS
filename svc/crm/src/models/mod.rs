@@ -1,3 +1,4 @@
+pub mod aftersales;
 pub mod app_state;
 pub mod audit_log;
 pub mod billing;
@@ -21,3 +22,9 @@ pub use interaction::{CreateInteractionRequest, Interaction, UpdateInteractionRe
 pub use opportunity::{CreateOpportunityRequest, Opportunity, UpdateOpportunityRequest};
 pub use sales_forecast::{CreateSalesForecastRequest, SalesForecast, SalesForecastQueryParams};
 pub use tag::{AddTagToCustomerRequest, CreateTagRequest, CustomerWithTags, Tag, UpdateTagRequest};
+
+// V19.5: 启用 aftersales 模块编译（此前缺失模型导致未编译）
+pub use aftersales::{
+    CreateReturnItemRequest, CreateReturnRequest, Return, ReturnActionRequest, ReturnItem,
+    ReturnQuery, UpdateReturnRequest,
+};

@@ -49,7 +49,9 @@ import { EmptyState } from '@/components';
 import { ImageUpload, PageContainer } from '@/components/common';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 
+import { useTranslation } from 'react-i18next';
 const HrmDepartmentPage: React.FC = () => {
+  const { t } = useTranslation();
   const theme = useTheme();
   const isMobile = useMediaQuery(theme.breakpoints.down('md'));
   const addNotification = useNotificationStore((state) => state.addNotification);
@@ -172,16 +174,16 @@ const HrmDepartmentPage: React.FC = () => {
     mutationFn: (data: Partial<Department>) => departmentApi.create(data),
     onSuccess: () => {
       addNotification({
-        title: '成功',
-        message: '部门创建成功',
+        title: t('hrm.hrm_department_page.success'),
+        message: t('hrm.hrm_department_page.create_2'),
         type: 'success',
       });
       queryClient.invalidateQueries({ queryKey: ['hrm-departments'] });
     },
     onError: (error: unknown) => {
       addNotification({
-        title: '失败',
-        message: (error as { message?: string }).message || '创建部门失败',
+        title: t('hrm.hrm_department_page.fail'),
+        message: (error as { message?: string }).message || t('hrm.hrm_department_page.create_3'),
         type: 'error',
       });
     },
@@ -192,16 +194,16 @@ const HrmDepartmentPage: React.FC = () => {
       departmentApi.update(id, data),
     onSuccess: () => {
       addNotification({
-        title: '成功',
-        message: '部门更新成功',
+        title: t('hrm.hrm_department_page.success'),
+        message: t('hrm.hrm_department_page.update_1'),
         type: 'success',
       });
       queryClient.invalidateQueries({ queryKey: ['hrm-departments'] });
     },
     onError: (error: unknown) => {
       addNotification({
-        title: '失败',
-        message: (error as { message?: string }).message || '更新部门失败',
+        title: t('hrm.hrm_department_page.fail'),
+        message: (error as { message?: string }).message || t('hrm.hrm_department_page.update_2'),
         type: 'error',
       });
     },
@@ -211,8 +213,8 @@ const HrmDepartmentPage: React.FC = () => {
     mutationFn: (id: string) => departmentApi.delete(id),
     onSuccess: () => {
       addNotification({
-        title: '成功',
-        message: '部门删除成功',
+        title: t('hrm.hrm_department_page.success'),
+        message: t('hrm.hrm_department_page.delete_success'),
         type: 'success',
       });
       queryClient.invalidateQueries({ queryKey: ['hrm-departments'] });
@@ -222,8 +224,8 @@ const HrmDepartmentPage: React.FC = () => {
     },
     onError: (error: unknown) => {
       addNotification({
-        title: '失败',
-        message: (error as { message?: string }).message || '删除部门失败',
+        title: t('hrm.hrm_department_page.fail'),
+        message: (error as { message?: string }).message || t('hrm.hrm_department_page.delete_2'),
         type: 'error',
       });
     },
@@ -260,28 +262,28 @@ const HrmDepartmentPage: React.FC = () => {
   const statCards: TreeStatCard[] = [
     {
       id: 'total',
-      title: '部门总数',
+      title: t('hrm.hrm_department_page.text_6f3e66'),
       value: totalDepartments,
       icon: <Building2 style={{ width: 24, height: 24 }} />,
       color: 'primary',
     },
     {
       id: 'active',
-      title: '启用部门',
+      title: t('hrm.hrm_department_page.active'),
       value: departments.filter((d) => d.status === 'active').length,
       icon: <Building2 style={{ width: 24, height: 24 }} />,
       color: 'success',
     },
     {
       id: 'inactive',
-      title: '禁用部门',
+      title: t('hrm.hrm_department_page.text_12f462'),
       value: departments.filter((d) => d.status === 'inactive').length,
       icon: <Building2 style={{ width: 24, height: 24 }} />,
       color: 'warning',
     },
     {
       id: 'employees',
-      title: '部门员工',
+      title: t('hrm.hrm_department_page.text_55fab2'),
       value: employees.length,
       icon: <User style={{ width: 24, height: 24 }} />,
       color: 'info',
@@ -291,7 +293,7 @@ const HrmDepartmentPage: React.FC = () => {
   // ============ 操作按钮 ============
   const rowActions: TreeAction[] = [
     {
-      label: '查看',
+      label: t('hrm.hrm_department_page.view'),
       icon: <Eye style={{ width: 16, height: 16 }} />,
       onClick: (node) => {
         const dept = node.data as Department;
@@ -300,7 +302,7 @@ const HrmDepartmentPage: React.FC = () => {
       },
     },
     {
-      label: '编辑',
+      label: t('hrm.hrm_department_page.edit'),
       icon: <Edit style={{ width: 16, height: 16 }} />,
       onClick: (node) => {
         const dept = node.data as Department;
@@ -311,7 +313,7 @@ const HrmDepartmentPage: React.FC = () => {
       color: 'primary',
     },
     {
-      label: '删除',
+      label: t('hrm.hrm_department_page.delete'),
       icon: <Trash2 style={{ width: 16, height: 16 }} />,
       onClick: (node) => {
         const dept = node.data as Department;
@@ -319,14 +321,14 @@ const HrmDepartmentPage: React.FC = () => {
           try {
             await deleteMutation.mutateAsync(dept.id);
           } catch (error: unknown) {
-            apiLogger.error('删除失败:', error);
+            apiLogger.error(t('hrm.hrm_department_page.delete_1'), error);
           }
         };
         setShowViewModal(false);
         setConfirmDialogOpen(true);
         setConfirmDialogConfig({
-          title: '确认删除',
-          message: '确定要删除这个部门吗？',
+          title: t('hrm.hrm_department_page.confirm_delete'),
+          message: t('hrm.hrm_department_page.confirm'),
           onConfirm: confirmDelete,
           danger: true,
         });
@@ -338,9 +340,9 @@ const HrmDepartmentPage: React.FC = () => {
 
   // ============ 筛选选项 ============
   const filterOptions = [
-    { label: '全部状态', value: 'all' },
-    { label: '启用', value: 'active' },
-    { label: '禁用', value: 'inactive' },
+    { label: t('hrm.hrm_department_page.status'), value: 'all' },
+    { label: t('hrm.hrm_department_page.active_1'), value: 'active' },
+    { label: t('hrm.hrm_department_page.text_710ad0'), value: 'inactive' },
   ];
 
   // ============ 详情面板渲染 ============
@@ -425,7 +427,7 @@ const HrmDepartmentPage: React.FC = () => {
               >
                 {selectedDept.company_id
                   ? companies.find((c) => c.id === selectedDept.company_id)?.name || '-'
-                  : '无'}
+                  : t('hrm.hrm_department_page.text_d81bb2')}
               </Typography>
             </Box>
             <Box sx={{ bgcolor: 'grey.50', borderRadius: 3, p: 2 }}>
@@ -441,7 +443,7 @@ const HrmDepartmentPage: React.FC = () => {
               >
                 {selectedDept.parent_id
                   ? departments.find((d) => d.id === selectedDept.parent_id)?.name || '-'
-                  : '无'}
+                  : t('hrm.hrm_department_page.text_d81bb2')}
               </Typography>
             </Box>
             <Box sx={{ bgcolor: 'grey.50', borderRadius: 3, p: 2 }}>
@@ -504,7 +506,7 @@ const HrmDepartmentPage: React.FC = () => {
             {employees.length === 0 ? (
               <EmptyState
                 emoji='👤'
-                title='该部门暂无员工'
+                title={t('hrm.hrm_department_page.no_data')}
                 compact
               />
             ) : (
@@ -542,7 +544,7 @@ const HrmDepartmentPage: React.FC = () => {
                         variant='caption'
                         color='text.secondary'
                       >
-                        {emp.employee_no} · {emp.position || '无职位'}
+                        {emp.employee_no} · {emp.position || t('hrm.hrm_department_page.text_88ed4c')}
                       </Typography>
                     </Box>
                     {!isMobile && (
@@ -620,13 +622,13 @@ const HrmDepartmentPage: React.FC = () => {
     setStatusFilter('all');
     setSelectedDeptId(undefined);
     queryClient.invalidateQueries({ queryKey: ['hrm-departments'] });
-  }, [queryClient]);
+  }, [queryClient, t]);
 
   const handleAdd = useCallback(() => {
     setSelectedDepartment(null);
     setFormData({});
     setShowCreateModal(true);
-  }, []);
+  }, [t]);
 
   const handleEdit = useCallback((record: Department) => {
     setSelectedDepartment(record);
@@ -648,12 +650,12 @@ const HrmDepartmentPage: React.FC = () => {
             setSelectedDeptId(undefined);
           }
         } catch (error: unknown) {
-          apiLogger.error('删除失败:', error);
+          apiLogger.error(t('hrm.hrm_department_page.delete_1'), error);
         }
       };
       setConfirmDialogConfig({
-        title: '确认删除',
-        message: '确定要删除这个部门吗？',
+        title: t('hrm.hrm_department_page.confirm_delete'),
+        message: t('hrm.hrm_department_page.confirm'),
         onConfirm: confirmDelete,
         danger: true,
       });
@@ -670,7 +672,7 @@ const HrmDepartmentPage: React.FC = () => {
         setShowCreateModal(false);
         setFormData({});
       } catch (error: unknown) {
-        apiLogger.error('创建失败:', error);
+        apiLogger.error(t('hrm.hrm_department_page.create'), error);
       }
     },
     [createMutation, formData]
@@ -685,7 +687,7 @@ const HrmDepartmentPage: React.FC = () => {
         setShowEditModal(false);
         setSelectedDepartment(null);
       } catch (error: unknown) {
-        apiLogger.error('更新失败:', error);
+        apiLogger.error(t('hrm.hrm_department_page.update'), error);
       }
     },
     [updateMutation, selectedDepartment, formData]
@@ -741,31 +743,31 @@ const HrmDepartmentPage: React.FC = () => {
   return (
     <PageContainer maxWidth='xl'>
       <TreePageTemplate
-        title='部门管理'
+        title={t('hrm.hrm_department_page.text_368057')}
         subtitle={`${totalDepartments} 个部门`}
         stats={statCards}
         data={buildTree()}
         loading={loading}
-        searchPlaceholder='搜索部门...'
+        searchPlaceholder={t('hrm.hrm_department_page.search')}
         filterOptions={filterOptions}
         filterValue={statusFilter}
         onFilterChange={(value) => setStatusFilter(value)}
         onSearch={handleSearch}
         onReset={handleReset}
         onAdd={handleAdd}
-        addButtonText='新增部门'
+        addButtonText={t('hrm.hrm_department_page.add')}
         addButtonIcon={<Plus style={{ width: 18, height: 18 }} />}
         rowActions={rowActions}
         onSelect={handleSelectNode}
         selectedId={selectedDeptId}
         detailPanel={detailPanel}
-        detailPanelTitle='部门详情'
+        detailPanelTitle={t('hrm.hrm_department_page.detail')}
         onRefresh={() => queryClient.invalidateQueries({ queryKey: ['hrm-departments'] })}
         treeWidth={360}
         emptyState={{
           emoji: '🏢',
-          title: '暂无部门数据',
-          actionLabel: '新增部门',
+          title: t('hrm.hrm_department_page.no_data_1'),
+          actionLabel: t('hrm.hrm_department_page.add'),
           onAction: handleAdd,
         }}
       />
@@ -952,14 +954,16 @@ const DepartmentFormDialog: React.FC<DepartmentFormDialogProps> = ({
   onOpenAICodeGenerator,
   onOpenAITextOptimizer,
   onOpenAIFormValidator,
-}) => (
+}) => {
+  const { t } = useTranslation();
+  return (
   <Dialog
     open={open}
     onClose={onClose}
     maxWidth='sm'
     fullWidth
   >
-    <DialogTitle>{mode === 'create' ? '新增部门' : '编辑部门'}</DialogTitle>
+    <DialogTitle>{mode === 'create' ? t('hrm.hrm_department_page.add') : t('hrm.hrm_department_page.edit_1')}</DialogTitle>
     <DialogContent>
       <Box
         component='form'
@@ -967,7 +971,7 @@ const DepartmentFormDialog: React.FC<DepartmentFormDialogProps> = ({
         sx={{ display: 'grid', gap: 2, pt: 1 }}
       >
         <TextField
-          label='部门名称 *'
+          label={t('hrm.hrm_department_page.name')}
           value={(formData as Department)?.name || ''}
           onChange={(e) => onChange('name', e.target.value)}
           required
@@ -988,7 +992,7 @@ const DepartmentFormDialog: React.FC<DepartmentFormDialogProps> = ({
               type='generate'
               onClick={() => onOpenAICodeGenerator(mode)}
               size='small'
-              label='AI生成'
+              label={t('hrm.hrm_department_page.text_488a57')}
             />
           </Box>
           <TextField
@@ -1006,7 +1010,7 @@ const DepartmentFormDialog: React.FC<DepartmentFormDialogProps> = ({
           <InputLabel>所属公司</InputLabel>
           <Select
             value={(formData as Department)?.company_id || ''}
-            label='所属公司'
+            label={t('hrm.hrm_department_page.text_f6194b')}
             onChange={(e) =>
               onChange('company_id', e.target.value === 'none' ? '' : e.target.value)
             }
@@ -1030,7 +1034,7 @@ const DepartmentFormDialog: React.FC<DepartmentFormDialogProps> = ({
           <InputLabel>上级部门</InputLabel>
           <Select
             value={(formData as Department)?.parent_id || ''}
-            label='上级部门'
+            label={t('hrm.hrm_department_page.text_91f5c1')}
             onChange={(e) => onChange('parent_id', e.target.value === 'none' ? '' : e.target.value)}
           >
             <MenuItem value='none'>无</MenuItem>
@@ -1059,7 +1063,7 @@ const DepartmentFormDialog: React.FC<DepartmentFormDialogProps> = ({
               type='optimize'
               onClick={() => onOpenAITextOptimizer()}
               size='small'
-              label='AI优化'
+              label={t('hrm.hrm_department_page.text_f14a49')}
             />
           </Box>
           <TextField
@@ -1078,7 +1082,7 @@ const DepartmentFormDialog: React.FC<DepartmentFormDialogProps> = ({
           <InputLabel>状态</InputLabel>
           <Select
             value={(formData as Department)?.status || 'active'}
-            label='状态'
+            label={t('hrm.hrm_department_page.status_1')}
             onChange={(e) => onChange('status', e.target.value)}
           >
             <MenuItem value='active'>启用</MenuItem>
@@ -1109,7 +1113,7 @@ const DepartmentFormDialog: React.FC<DepartmentFormDialogProps> = ({
             type='validate'
             onClick={() => onOpenAIFormValidator()}
             size='small'
-            label='AI校验'
+            label={t('hrm.hrm_department_page.text_6bc019')}
           />
           <Box sx={{ display: 'flex', gap: 1 }}>
             <Button
@@ -1122,13 +1126,14 @@ const DepartmentFormDialog: React.FC<DepartmentFormDialogProps> = ({
               type='submit'
               variant='contained'
             >
-              {mode === 'create' ? '创建' : '保存'}
+              {mode === 'create' ? t('hrm.hrm_department_page.create_1') : t('hrm.hrm_department_page.save')}
             </Button>
           </Box>
         </DialogActions>
       </Box>
     </DialogContent>
   </Dialog>
-);
+  );
+};
 
 export default HrmDepartmentPage;

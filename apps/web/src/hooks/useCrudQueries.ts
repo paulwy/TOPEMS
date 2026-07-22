@@ -71,11 +71,18 @@ export interface UseCrudQueriesResult<T, TCreate = Partial<T>, TUpdate = Partial
   fetch: (params?: Record<string, unknown>) => void;
   get: (id: string) => Promise<T | null>;
   refresh: () => void;
-  // Mutation 操作
+  // Mutation 操作（Promise 风格便捷方法）
   create: (item: TCreate) => Promise<T | null>;
   update: (id: string, item: TUpdate) => Promise<T | null>;
   delete: (id: string) => Promise<void>;
   bulkDelete: (ids: string[]) => Promise<void>;
+  // 原始 Mutation 对象（用于访问 isPending/isError/onMutate 等高级用法）
+  mutations: {
+    createMutation: ReturnType<typeof useMutation<T | null, Error, TCreate, unknown>>;
+    updateMutation: ReturnType<typeof useMutation<T | null, Error, { id: string; item: TUpdate }, unknown>>;
+    deleteMutation: ReturnType<typeof useMutation<void, Error, string, unknown>>;
+    bulkDeleteMutation: ReturnType<typeof useMutation<void, Error, string[], unknown>>;
+  };
 }
 
 // ============ 内部辅助 ============
@@ -315,6 +322,12 @@ export function useCrudQueries<
     update,
     delete: deleteItem,
     bulkDelete,
+    mutations: {
+      createMutation,
+      updateMutation,
+      deleteMutation,
+      bulkDeleteMutation,
+    },
   };
 }
 
@@ -547,6 +560,12 @@ export function useModuleQueries<T extends { id?: string }>(
     update,
     delete: deleteItem,
     bulkDelete,
+    mutations: {
+      createMutation,
+      updateMutation,
+      deleteMutation,
+      bulkDeleteMutation,
+    },
   };
 }
 
@@ -577,6 +596,8 @@ export interface UseCrudOperationsOptions<T, TCreate = Partial<T>, TUpdate = Par
   defaultPageSize?: number;
   pageParamName?: string;
   pageSizeParamName?: string;
+  /** 实体名称（用于通知消息，如"用户"、"客户"）。传入后通知会变为"用户创建成功"等语义化文案 */
+  entityName?: string;
 }
 
 /**
@@ -608,6 +629,7 @@ export function useCrudOperations<
     defaultPageSize = 10,
     pageParamName = 'page',
     pageSizeParamName = 'pagesize',
+    entityName,
   } = options;
 
   const queryClient = useQueryClient();
@@ -711,49 +733,57 @@ export function useCrudOperations<
     [addNotification]
   );
 
+  // 语义化通知文案：传入 entityName 时变为"用户创建成功"，否则使用默认"创建成功"
+  const msgCreate = entityName ? `${entityName}创建成功` : '创建成功';
+  const msgUpdate = entityName ? `${entityName}更新成功` : '更新成功';
+  const msgDelete = entityName ? `${entityName}删除成功` : '删除成功';
+  const msgCreateErr = entityName ? `${entityName}创建失败` : '创建失败';
+  const msgUpdateErr = entityName ? `${entityName}更新失败` : '更新失败';
+  const msgDeleteErr = entityName ? `${entityName}删除失败` : '删除失败';
+
   const createMutation = useMutation({
     mutationFn: async (item: TCreate) => {
       const response = await api.create(item);
       if (!response.success) {
-        throw new Error(response.message || '创建失败');
+        throw new Error(response.message || msgCreateErr);
       }
       return response.data ?? null;
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: [queryKey, 'list'] });
-      notifySuccess('创建成功');
+      notifySuccess(msgCreate);
     },
-    onError: (err) => notifyError(err, '创建失败'),
+    onError: (err) => notifyError(err, msgCreateErr),
   });
 
   const updateMutation = useMutation({
     mutationFn: async ({ id, item }: { id: string; item: TUpdate }) => {
       const response = await api.update(id, item);
       if (!response.success) {
-        throw new Error(response.message || '更新失败');
+        throw new Error(response.message || msgUpdateErr);
       }
       return response.data ?? null;
     },
     onSuccess: (_data, variables) => {
       queryClient.invalidateQueries({ queryKey: [queryKey, 'list'] });
       queryClient.invalidateQueries({ queryKey: [queryKey, 'detail', variables.id] });
-      notifySuccess('更新成功');
+      notifySuccess(msgUpdate);
     },
-    onError: (err) => notifyError(err, '更新失败'),
+    onError: (err) => notifyError(err, msgUpdateErr),
   });
 
   const deleteMutation = useMutation({
     mutationFn: async (id: string) => {
       const response = await api.delete(id);
       if (!response.success) {
-        throw new Error(response.message || '删除失败');
+        throw new Error(response.message || msgDeleteErr);
       }
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: [queryKey] });
-      notifySuccess('删除成功');
+      notifySuccess(msgDelete);
     },
-    onError: (err) => notifyError(err, '删除失败'),
+    onError: (err) => notifyError(err, msgDeleteErr),
   });
 
   const bulkDeleteMutation = useMutation({
@@ -762,7 +792,11 @@ export function useCrudOperations<
     },
     onSuccess: (_data, variables) => {
       queryClient.invalidateQueries({ queryKey: [queryKey] });
-      notifySuccess(`已删除 ${variables.length} 条记录`);
+      notifySuccess(
+        entityName
+          ? `已删除 ${variables.length} 个${entityName}`
+          : `已删除 ${variables.length} 条记录`
+      );
     },
     onError: (err) => notifyError(err, '批量删除失败'),
   });
@@ -805,6 +839,12 @@ export function useCrudOperations<
     update,
     delete: deleteItem,
     bulkDelete,
+    mutations: {
+      createMutation,
+      updateMutation,
+      deleteMutation,
+      bulkDeleteMutation,
+    },
   };
 }
 

@@ -29,9 +29,11 @@ import { useNotificationStore } from '@/store';
 import { apiLogger } from '@/utils/logger';
 import { designTokens } from '@/theme/tokens';
 
+import { useTranslation } from 'react-i18next';
 const ct = designTokens.colors;
 
 const TrainingPage: React.FC = () => {
+  const { t } = useTranslation();
   const queryClient = useQueryClient();
   const [activeTab, setActiveTab] = useState(0);
   const [searchTerm, setSearchTerm] = useState('');
@@ -104,15 +106,15 @@ const TrainingPage: React.FC = () => {
 
   const getStatusBadge = (status: string) => {
     const statusMap: Record<string, { bg: string; color: string; label: string }> = {
-      draft: { bg: 'grey.100', color: 'text.secondary', label: '草稿' },
-      published: { bg: 'info.lighter', color: 'info.dark', label: '已发布' },
-      ongoing: { bg: 'warning.lighter', color: 'warning.dark', label: '进行中' },
-      completed: { bg: 'success.lighter', color: 'success.dark', label: '已完成' },
-      cancelled: { bg: 'error.lighter', color: 'error.dark', label: '已取消' },
-      valid: { bg: 'success.lighter', color: 'success.dark', label: '有效' },
-      expired: { bg: 'error.lighter', color: 'error.dark', label: '已过期' },
-      revoked: { bg: 'grey.200', color: 'text.secondary', label: '已撤销' },
-      failed: { bg: 'error.light', color: 'error.dark', label: '未通过' },
+      draft: { bg: 'grey.100', color: 'text.secondary', label: t('ehs.training_page.text_22b433') },
+      published: { bg: 'info.lighter', color: 'info.dark', label: t('ehs.training_page.text_dca0c1') },
+      ongoing: { bg: 'warning.lighter', color: 'warning.dark', label: t('ehs.training_page.in_progress') },
+      completed: { bg: 'success.lighter', color: 'success.dark', label: t('ehs.training_page.completed') },
+      cancelled: { bg: 'error.lighter', color: 'error.dark', label: t('ehs.training_page.cancelled') },
+      valid: { bg: 'success.lighter', color: 'success.dark', label: t('ehs.training_page.text_c6cc39') },
+      expired: { bg: 'error.lighter', color: 'error.dark', label: t('ehs.training_page.text_4d5ccd') },
+      revoked: { bg: 'grey.200', color: 'text.secondary', label: t('ehs.training_page.text_50239f') },
+      failed: { bg: 'error.light', color: 'error.dark', label: t('ehs.training_page.text_4fcdbf') },
     };
     const colors = statusMap[status] || { bg: 'grey.100', color: 'text.secondary', label: status };
     return (
@@ -126,72 +128,72 @@ const TrainingPage: React.FC = () => {
 
   const getTrainingTypeLabel = (type: string) => {
     const typeMap: Record<string, string> = {
-      safety: '安全培训',
-      professional: '专业培训',
-      skill: '技能培训',
-      awareness: '意识培训',
-      emergency: '应急培训',
+      safety: t('ehs.training_page.text_7e89cf'),
+      professional: t('ehs.training_page.text_6a13a6'),
+      skill: t('ehs.training_page.text_9f5a93'),
+      awareness: t('ehs.training_page.text_ee10d8'),
+      emergency: t('ehs.training_page.text_48e7ed'),
     };
     return typeMap[type] || type;
   };
 
   const getCategoryLabel = (category: string) => {
     const categoryMap: Record<string, string> = {
-      mandatory: '必修',
-      optional: '选修',
-      onboarding: '入职培训',
-      special: '专项培训',
+      mandatory: t('ehs.training_page.text_748fdd'),
+      optional: t('ehs.training_page.text_2e6913'),
+      onboarding: t('ehs.training_page.text_ee3d2c'),
+      special: t('ehs.training_page.text_017049'),
     };
     return categoryMap[category] || category;
   };
 
   const planColumns: ColumnDef<TrainingPlan>[] = useMemo(
     () => [
-      { id: 'plan_no', label: '计划编号' },
-      { id: 'title', label: '计划名称' },
+      { id: 'plan_no', label: t('ehs.training_page.plan') },
+      { id: 'title', label: t('ehs.training_page.name') },
       {
         id: 'training_type',
-        label: '培训类型',
+        label: t('ehs.training_page.type'),
         render: (row) => getTrainingTypeLabel(row.training_type),
       },
-      { id: 'category', label: '类别', render: (row) => getCategoryLabel(row.category) },
-      { id: 'trainer', label: '培训师', render: (row) => row.trainer || '-' },
-      { id: 'start_date', label: '开始日期', render: (row) => row.start_date || '-' },
-      { id: 'status', label: '状态', render: (row) => getStatusBadge(row.status) },
+      { id: 'category', label: t('ehs.training_page.text_383a6d'), render: (row) => getCategoryLabel(row.category) },
+      { id: 'trainer', label: t('ehs.training_page.text_e7bf21'), render: (row) => row.trainer || '-' },
+      { id: 'start_date', label: t('ehs.training_page.start_date'), render: (row) => row.start_date || '-' },
+      { id: 'status', label: t('ehs.training_page.status'), render: (row) => getStatusBadge(row.status) },
     ],
     []
   );
 
   const recordColumns: ColumnDef<TrainingRecord>[] = useMemo(
     () => [
-      { id: 'record_no', label: '记录编号' },
-      { id: 'title', label: '培训主题' },
+      { id: 'record_no', label: t('ehs.training_page.text_4868f6') },
+      { id: 'title', label: t('ehs.training_page.text_be89e2') },
       {
         id: 'training_type',
-        label: '培训类型',
+        label: t('ehs.training_page.type'),
         render: (row) => getTrainingTypeLabel(row.training_type),
       },
-      { id: 'trainer', label: '培训师', render: (row) => row.trainer || '-' },
-      { id: 'training_date', label: '培训日期', render: (row) => row.training_date || '-' },
-      { id: 'duration_hours', label: '时长(小时)', render: (row) => row.duration_hours || '-' },
-      { id: 'status', label: '状态', render: (row) => getStatusBadge(row.status) },
+      { id: 'trainer', label: t('ehs.training_page.text_e7bf21'), render: (row) => row.trainer || '-' },
+      { id: 'training_date', label: t('ehs.training_page.date'), render: (row) => row.training_date || '-' },
+      { id: 'duration_hours', label: t('ehs.training_page.text_68f989'), render: (row) => row.duration_hours || '-' },
+      { id: 'status', label: t('ehs.training_page.status'), render: (row) => getStatusBadge(row.status) },
     ],
     []
   );
 
   const certificateColumns: ColumnDef<TrainingCertificate>[] = useMemo(
     () => [
-      { id: 'certificate_no', label: '证书编号' },
-      { id: 'employee_name', label: '员工姓名' },
+      { id: 'certificate_no', label: t('ehs.training_page.text_3d4bca') },
+      { id: 'employee_name', label: t('ehs.training_page.text_50df90') },
       {
         id: 'training_type',
-        label: '培训类型',
+        label: t('ehs.training_page.type'),
         render: (row) => getTrainingTypeLabel(row.training_type),
       },
-      { id: 'certificate_type', label: '证书类型' },
-      { id: 'issue_date', label: '发证日期', render: (row) => row.issue_date || '-' },
-      { id: 'expiry_date', label: '有效期至', render: (row) => row.expiry_date || '-' },
-      { id: 'status', label: '状态', render: (row) => getStatusBadge(row.status) },
+      { id: 'certificate_type', label: t('ehs.training_page.type_1') },
+      { id: 'issue_date', label: t('ehs.training_page.date_1'), render: (row) => row.issue_date || '-' },
+      { id: 'expiry_date', label: t('ehs.training_page.text_6460f4'), render: (row) => row.expiry_date || '-' },
+      { id: 'status', label: t('ehs.training_page.status'), render: (row) => getStatusBadge(row.status) },
     ],
     []
   );
@@ -214,15 +216,15 @@ const TrainingPage: React.FC = () => {
     () => [
       {
         id: 'status',
-        label: '状态',
+        label: t('ehs.training_page.status'),
         type: 'select' as const,
         options: [
-          { value: 'all', label: '全部' },
-          { value: 'draft', label: '草稿' },
-          { value: 'published', label: '已发布' },
-          { value: 'ongoing', label: '进行中' },
-          { value: 'completed', label: '已完成' },
-          { value: 'cancelled', label: '已取消' },
+          { value: 'all', label: t('ehs.training_page.all') },
+          { value: 'draft', label: t('ehs.training_page.text_22b433') },
+          { value: 'published', label: t('ehs.training_page.text_dca0c1') },
+          { value: 'ongoing', label: t('ehs.training_page.in_progress') },
+          { value: 'completed', label: t('ehs.training_page.completed') },
+          { value: 'cancelled', label: t('ehs.training_page.cancelled') },
         ],
         value: statusFilter,
         onChange: (value: unknown) => setStatusFilter(value as string),
@@ -251,13 +253,13 @@ const TrainingPage: React.FC = () => {
     mutationFn: (data: Parameters<typeof ehsApi.createTrainingPlan>[0]) =>
       ehsApi.createTrainingPlan(data),
     onSuccess: () => {
-      addNotification({ title: '成功', message: '培训计划创建成功', type: 'success' });
+      addNotification({ title: t('ehs.training_page.success'), message: t('ehs.training_page.create'), type: 'success' });
       queryClient.invalidateQueries({ queryKey: QUERY_KEYS.EHS.TRAINING_PLANS });
       setShowCreateModal(false);
     },
     onError: (error: unknown) => {
-      addNotification({ title: '错误', message: '创建失败', type: 'error' });
-      apiLogger.error('创建培训计划失败:', error);
+      addNotification({ title: t('ehs.training_page.error'), message: t('ehs.training_page.create_1'), type: 'error' });
+      apiLogger.error(t('ehs.training_page.create_2'), error);
     },
   });
 
@@ -280,7 +282,7 @@ const TrainingPage: React.FC = () => {
 
   const headerActions = [
     {
-      label: '新建计划',
+      label: t('ehs.training_page.plan_1'),
       icon: <Plus style={{ width: 18, height: 18 }} />,
       onClick: handleCreate,
       variant: 'contained' as const,
@@ -445,9 +447,9 @@ const TrainingPage: React.FC = () => {
           onChange={(_, newValue) => setActiveTab(newValue)}
           sx={{ borderBottom: 1, borderColor: 'divider', px: 2 }}
         >
-          <Tab label='培训计划' />
-          <Tab label='培训记录' />
-          <Tab label='证书管理' />
+          <Tab label={t('ehs.training_page.plan_2')} />
+          <Tab label={t('ehs.training_page.text_6a18d7')} />
+          <Tab label={t('ehs.training_page.text_400100')} />
         </Tabs>
       </Card>
 
@@ -458,7 +460,7 @@ const TrainingPage: React.FC = () => {
         loading={loading}
         filters={filters}
         searchable
-        searchPlaceholder='搜索...'
+        searchPlaceholder={t('ehs.training_page.search')}
         searchValue={searchTerm}
         onSearch={(value) => setSearchTerm(value)}
         onRefresh={() => {
@@ -479,17 +481,17 @@ const TrainingPage: React.FC = () => {
           <Box sx={{ pt: 1, display: 'flex', flexDirection: 'column', gap: 2 }}>
             <TextField
               fullWidth
-              label='计划名称 *'
+              label={t('ehs.training_page.name_1')}
               value={planFormData.title}
               onChange={(e) => setPlanFormData({ ...planFormData, title: e.target.value })}
-              placeholder='请输入计划名称'
+              placeholder={t('ehs.training_page.please_input')}
             />
             <Box sx={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 2 }}>
               <FormControl fullWidth>
                 <InputLabel>培训类型 *</InputLabel>
                 <Select
                   value={planFormData.training_type}
-                  label='培训类型'
+                  label={t('ehs.training_page.type')}
                   onChange={(e) =>
                     setPlanFormData({ ...planFormData, training_type: e.target.value })
                   }
@@ -505,7 +507,7 @@ const TrainingPage: React.FC = () => {
                 <InputLabel>类别 *</InputLabel>
                 <Select
                   value={planFormData.category}
-                  label='类别'
+                  label={t('ehs.training_page.text_383a6d')}
                   onChange={(e) => setPlanFormData({ ...planFormData, category: e.target.value })}
                 >
                   <MenuItem value='mandatory'>必修</MenuItem>
@@ -518,31 +520,31 @@ const TrainingPage: React.FC = () => {
             <Box sx={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 2 }}>
               <TextField
                 fullWidth
-                label='培训师'
+                label={t('ehs.training_page.text_e7bf21')}
                 value={planFormData.trainer}
                 onChange={(e) => setPlanFormData({ ...planFormData, trainer: e.target.value })}
-                placeholder='请输入培训师姓名'
+                placeholder={t('ehs.training_page.please_input_1')}
               />
               <TextField
                 fullWidth
-                label='培训地点'
+                label={t('ehs.training_page.text_ebdf54')}
                 value={planFormData.location}
                 onChange={(e) => setPlanFormData({ ...planFormData, location: e.target.value })}
-                placeholder='请输入培训地点'
+                placeholder={t('ehs.training_page.please_input_2')}
               />
             </Box>
             <Box sx={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 2 }}>
               <TextField
                 fullWidth
                 type='date'
-                label='开始日期'
+                label={t('ehs.training_page.start_date')}
                 value={planFormData.start_date}
                 onChange={(e) => setPlanFormData({ ...planFormData, start_date: e.target.value })}
               />
               <TextField
                 fullWidth
                 type='date'
-                label='结束日期'
+                label={t('ehs.training_page.end_date')}
                 value={planFormData.end_date}
                 onChange={(e) => setPlanFormData({ ...planFormData, end_date: e.target.value })}
               />
@@ -551,30 +553,30 @@ const TrainingPage: React.FC = () => {
               <TextField
                 fullWidth
                 type='number'
-                label='课时数'
+                label={t('ehs.training_page.text_8a07e0')}
                 value={planFormData.duration_hours}
                 onChange={(e) =>
                   setPlanFormData({ ...planFormData, duration_hours: e.target.value })
                 }
-                placeholder='请输入课时数'
+                placeholder={t('ehs.training_page.please_input_3')}
               />
               <TextField
                 fullWidth
                 type='number'
-                label='最大人数'
+                label={t('ehs.training_page.text_290444')}
                 value={planFormData.max_participants}
                 onChange={(e) =>
                   setPlanFormData({ ...planFormData, max_participants: e.target.value })
                 }
-                placeholder='请输入最大人数'
+                placeholder={t('ehs.training_page.please_input_4')}
               />
             </Box>
             <TextField
               fullWidth
-              label='培训描述'
+              label={t('ehs.training_page.description')}
               value={planFormData.description}
               onChange={(e) => setPlanFormData({ ...planFormData, description: e.target.value })}
-              placeholder='请输入培训描述'
+              placeholder={t('ehs.training_page.please_input_5')}
               multiline
               rows={3}
             />

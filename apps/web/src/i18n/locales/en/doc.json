@@ -1,0 +1,51 @@
+{
+  "title": "Document Management",
+  "menu": {
+    "document": "Document",
+    "directory": "Directory",
+    "version": "Version",
+    "approval": "Approval",
+    "permission": "Permission",
+    "template": "Template"
+  },
+  "status": {
+    "draft": "Draft",
+    "in_review": "In Review",
+    "published": "Published",
+    "archived": "Archived",
+    "rejected": "Rejected",
+    "deprecated": "Deprecated"
+  },
+  "action": {
+    "create": "Create",
+    "edit": "Edit",
+    "delete": "Delete",
+    "view": "View",
+    "upload": "Upload",
+    "download": "Download",
+    "approve": "Approve",
+    "reject": "Reject",
+    "share": "Share"
+  },
+  "field": {
+    "document_name": "Document Name",
+    "document_type": "Document Type",
+    "directory": "Directory",
+    "version": "Version",
+    "author": "Author",
+    "owner": "Owner",
+    "tags": "Tags",
+    "size": "Size",
+    "created_at": "Created At",
+    "updated_at": "Updated At"
+  },
+  "message": {
+    "create_success": "Created successfully",
+    "update_success": "Updated successfully",
+    "delete_success": "Deleted successfully",
+    "upload_success": "Uploaded successfully",
+    "approve_success": "Approved successfully",
+    "confirm_delete": "Confirm deletion?",
+    "no_data": "No data"
+  }
+}

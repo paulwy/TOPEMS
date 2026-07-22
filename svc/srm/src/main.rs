@@ -11,11 +11,15 @@
 #![allow(clippy::map_flatten)]
 #![allow(dead_code)]
 
+mod event_handlers;
 mod middleware;
 mod models;
 mod modules;
 mod services;
 mod shared;
+mod workflow;
+
+use shared::cache::InMemoryCache;
 
 use anyhow::Result;
 use axum::{
@@ -55,6 +59,11 @@ use modules::{
 struct AppState {
     pool: sqlx::PgPool,
     auth_state: AuthState,
+    event_publisher: Option<std::sync::Arc<topems_shared::event::EventPublisher>>,
+    workflow_client: workflow::WorkflowClient,
+    supplier_cache: std::sync::Arc<InMemoryCache<serde_json::Value>>,
+    product_cache: std::sync::Arc<InMemoryCache<serde_json::Value>>,
+    dict_cache: std::sync::Arc<InMemoryCache<String>>,
 }
 
 impl FromRef<AppState> for AuthState {
@@ -66,6 +75,12 @@ impl FromRef<AppState> for AuthState {
 impl FromRef<AppState> for sqlx::PgPool {
     fn from_ref(state: &AppState) -> Self {
         state.pool.clone()
+    }
+}
+
+impl FromRef<AppState> for workflow::WorkflowClient {
+    fn from_ref(state: &AppState) -> Self {
+        state.workflow_client.clone()
     }
 }
 
@@ -122,9 +137,44 @@ async fn main() -> Result<()> {
         tracing::warn!("数据库初始化警告: {}", e);
     }
 
+    let event_publisher = match topems_shared::event::EventPublisher::new("topems-srm") {
+        Ok(publisher) => {
+            tracing::info!("📢 事件发布服务初始化成功");
+            Some(std::sync::Arc::new(publisher))
+        }
+        Err(e) => {
+            tracing::warn!("⚠️ 事件发布服务初始化失败（不阻塞启动）: {}", e);
+            None
+        }
+    };
+
+    if let Err(e) =
+        event_handlers::start_event_subscribers(pool.clone(), event_publisher.clone()).await
+    {
+        tracing::warn!("⚠️ SRM 事件订阅者启动失败: {}", e);
+    }
+
+    let supplier_cache =
+        std::sync::Arc::new(InMemoryCache::new(std::time::Duration::from_secs(300)));
+    let product_cache =
+        std::sync::Arc::new(InMemoryCache::new(std::time::Duration::from_secs(120)));
+    let dict_cache = std::sync::Arc::new(InMemoryCache::new(std::time::Duration::from_secs(600)));
+
+    tracing::info!("💾 内存缓存初始化完成（供应商/产品/字典）");
+
+    let workflow_url = std::env::var("WORKFLOW_SERVICE_URL")
+        .unwrap_or_else(|_| "http://localhost:8001".to_string());
+    let workflow_client = workflow::WorkflowClient::new(&workflow_url);
+    tracing::info!("🔗 工作流服务客户端初始化成功: {}", workflow_url);
+
     let app_state = AppState {
         pool: pool.clone(),
         auth_state: AuthState::from_env(),
+        event_publisher,
+        workflow_client,
+        supplier_cache,
+        product_cache,
+        dict_cache,
     };
 
     let cors = create_cors_layer();
@@ -160,7 +210,15 @@ async fn main() -> Result<()> {
     });
 
     let protected_routes = Router::new()
-        .merge(create_supplier_routes(pool.clone()).await?)
+        .merge(
+            create_supplier_routes(
+                pool.clone(),
+                app_state.event_publisher.clone(),
+                app_state.workflow_client.clone(),
+                app_state.supplier_cache.clone(),
+            )
+            .await?,
+        )
         .merge(create_category_routes(pool.clone()).await?)
         .merge(create_evaluation_routes(pool.clone()).await?)
         .merge(create_contract_routes(pool.clone()).await?)

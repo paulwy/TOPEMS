@@ -55,9 +55,11 @@ import {
 import { apiLogger } from '@/utils/logger';
 import { designTokens } from '@/theme/tokens';
 
+import { useTranslation } from 'react-i18next';
 const ct = designTokens.colors;
 
 const MaterialIssuePage: React.FC = () => {
+  const { t } = useTranslation();
   const queryClient = useQueryClient();
   const [searchTerm, setSearchTerm] = useState('');
   const [statusFilter, setStatusFilter] = useState<string>('all');
@@ -106,29 +108,29 @@ const MaterialIssuePage: React.FC = () => {
     onSuccess: () => {
       addNotification({
         type: 'success',
-        title: '创建成功',
-        message: '物料领用单已创建',
+        title: t('mes.material_issue_page.create'),
+        message: t('mes.material_issue_page.create_1'),
       });
       queryClient.invalidateQueries({ queryKey: QUERY_KEYS.MES.MATERIAL_ISSUES });
       setShowDialog(false);
       resetForm();
     },
     onError: (error: unknown) => {
-      apiLogger.error('创建物料领用单失败:', error);
+      apiLogger.error(t('mes.material_issue_page.create_2'), error);
       addNotification({
         type: 'error',
-        title: '操作失败',
-        message: '创建物料领用单失败',
+        title: t('mes.material_issue_page.operation_failed'),
+        message: t('mes.material_issue_page.create_3'),
       });
     },
   });
 
   const getStatusText = (status: string) => {
     const statusMap: Record<string, string> = {
-      pending: '待审核',
-      approved: '已审核',
-      issued: '已出库',
-      cancelled: '已取消',
+      pending: t('mes.material_issue_page.pending_review'),
+      approved: t('mes.material_issue_page.approved'),
+      issued: t('mes.material_issue_page.outbound'),
+      cancelled: t('mes.material_issue_page.status_cancelled'),
     };
     return statusMap[status] || status;
   };
@@ -162,10 +164,10 @@ const MaterialIssuePage: React.FC = () => {
         color: string;
       }
     > = {
-      pending: { label: '待审核', bg: 'warning.light', color: 'warning.700' },
-      approved: { label: '已审核', bg: ct.secondary[100], color: 'secondary.700' },
-      issued: { label: '已出库', bg: 'success.lighter', color: 'success.700' },
-      cancelled: { label: '已取消', bg: 'error.lighter', color: 'error.dark' },
+      pending: { label: t('mes.material_issue_page.pending_review'), bg: 'warning.light', color: 'warning.700' },
+      approved: { label: t('mes.material_issue_page.approved'), bg: ct.secondary[100], color: 'secondary.700' },
+      issued: { label: t('mes.material_issue_page.outbound'), bg: 'success.lighter', color: 'success.700' },
+      cancelled: { label: t('mes.material_issue_page.status_cancelled'), bg: 'error.lighter', color: 'error.dark' },
     };
     const s = statusMap[status] || { label: status, bg: 'grey.100', color: 'text.secondary' };
     return (
@@ -205,22 +207,22 @@ const MaterialIssuePage: React.FC = () => {
 
   const columns: ColumnDef<MaterialIssue>[] = useMemo(
     () => [
-      { id: 'issue_no', label: '领用单号', sortable: true },
-      { id: 'order_number', label: '工单号', sortable: true },
-      { id: 'operator', label: '领用人', sortable: true },
+      { id: 'issue_no', label: t('mes.material_issue_page.text_5d727e'), sortable: true },
+      { id: 'order_number', label: t('mes.material_issue_page.field_work_order'), sortable: true },
+      { id: 'operator', label: t('mes.material_issue_page.text_2da08d'), sortable: true },
       {
         id: 'issue_time',
-        label: '领用时间',
+        label: t('mes.material_issue_page.time'),
         render: (row) => (row.issue_time ? new Date(row.issue_time).toLocaleString('zh-CN') : '-'),
       },
       {
         id: 'items_count',
-        label: '物料项数',
+        label: t('mes.material_issue_page.material'),
         render: (row) => row.items?.length || 0,
       },
       {
         id: 'status',
-        label: '状态',
+        label: t('mes.material_issue_page.filter_status'),
         render: (row) => getStatusBadge(row.status),
       },
     ],
@@ -231,14 +233,14 @@ const MaterialIssuePage: React.FC = () => {
     () => [
       {
         id: 'status',
-        label: '状态',
+        label: t('mes.material_issue_page.filter_status'),
         type: 'select',
         options: [
-          { label: '全部状态', value: 'all' },
-          { label: '待审核', value: 'pending' },
-          { label: '已审核', value: 'approved' },
-          { label: '已出库', value: 'issued' },
-          { label: '已取消', value: 'cancelled' },
+          { label: t('mes.material_issue_page.filter_option_all_status'), value: 'all' },
+          { label: t('mes.material_issue_page.pending_review'), value: 'pending' },
+          { label: t('mes.material_issue_page.approved'), value: 'approved' },
+          { label: t('mes.material_issue_page.outbound'), value: 'issued' },
+          { label: t('mes.material_issue_page.status_cancelled'), value: 'cancelled' },
         ],
         value: statusFilter,
         onChange: (value: unknown) => {
@@ -253,7 +255,7 @@ const MaterialIssuePage: React.FC = () => {
   const rowActions: RowAction<MaterialIssue>[] = useMemo(
     () => [
       {
-        label: '查看详情',
+        label: t('mes.material_issue_page.action_view_detail'),
         icon: <Eye size={16} />,
         onClick: handleViewDetail,
       },
@@ -370,7 +372,7 @@ const MaterialIssuePage: React.FC = () => {
         loading={loading}
         filters={filters}
         searchable
-        searchPlaceholder='搜索领用单号或工单号...'
+        searchPlaceholder={t('mes.material_issue_page.work_order_number')}
         searchValue={searchTerm}
         onSearch={handleSearch}
         pagination={{
@@ -384,14 +386,14 @@ const MaterialIssuePage: React.FC = () => {
         onSelectionChange={(ids) => setSelectedIds(ids.map(String))}
         actions={[
           {
-            label: '新增领用',
+            label: t('mes.material_issue_page.add'),
             icon: <Plus size={16} />,
             onClick: handleOpenCreate,
           },
         ]}
         rowActions={rowActions}
         headerContent={statsContent}
-        emptyMessage='暂无物料领用记录'
+        emptyMessage={t('mes.material_issue_page.no_data')}
         getRowId={(row) => row.id}
       />
 
@@ -512,7 +514,7 @@ const MaterialIssuePage: React.FC = () => {
                           align='center'
                           sx={{ color: 'text.secondary', py: 3 }}
                         >
-                          暂无物料，点击"添加物料"按钮添加
+                          暂无物料，点击t('mes.material_issue_page.material_1')按钮添加
                         </TableCell>
                       </TableRow>
                     ) : (
@@ -524,7 +526,7 @@ const MaterialIssuePage: React.FC = () => {
                               size='small'
                               value={item.material_code}
                               onChange={(e) => updateItem(index, 'material_code', e.target.value)}
-                              placeholder='物料编码'
+                              placeholder={t('mes.material_issue_page.column_material_code')}
                             />
                           </TableCell>
                           <TableCell>
@@ -532,7 +534,7 @@ const MaterialIssuePage: React.FC = () => {
                               size='small'
                               value={item.material_name}
                               onChange={(e) => updateItem(index, 'material_name', e.target.value)}
-                              placeholder='物料名称'
+                              placeholder={t('mes.material_issue_page.column_material_name')}
                             />
                           </TableCell>
                           <TableCell>

@@ -22,6 +22,8 @@ export const CRM_PATHS = {
   salesForecast: '/crm/sales-forecast',
   customerSegmentation: '/crm/customer-segmentation',
   recommendation: '/crm/recommendation',
+  returns: '/crm/returns',
+  returnDetail: '/crm/returns/:id',
 } as const;
 
 // ---- 路由配置（供路由系统使用） ----
@@ -239,6 +241,28 @@ export const crmModuleConfig: RouteModuleConfig = {
       requiredPermissions: ['crm:recommendation:read', 'crm:read'],
       action: 'read',
     },
+    {
+      path: CRM_PATHS.returns,
+      element: lazyWithRetry(() => import('@/pages/crm/ReturnListPage'), 'ReturnListPage'),
+      module: 'crm',
+      code: 'crm-returns',
+      title: '退货/售后',
+      template: 'list',
+      group: 'business',
+      requiredPermissions: ['crm:return:read', 'crm:read'],
+      action: 'read',
+    },
+    {
+      path: CRM_PATHS.returnDetail,
+      element: lazyWithRetry(() => import('@/pages/crm/ReturnDetailPage'), 'ReturnDetailPage'),
+      module: 'crm',
+      code: 'crm-return-detail',
+      title: '退货详情',
+      template: 'detail',
+      group: 'business',
+      requiredPermissions: ['crm:return:read', 'crm:read'],
+      action: 'read',
+    },
   ],
 };
 
@@ -306,6 +330,16 @@ export const crmNavConfig: ModuleNavConfig = {
       order: 4,
       group: 'business',
       description: '客户互动记录',
+    },
+    {
+      code: 'crm-returns',
+      label: '退货/售后',
+      icon: 'RotateCcw',
+      path: CRM_PATHS.returns,
+      permission: 'crm:return:read',
+      order: 5,
+      group: 'business',
+      description: '退货换货与售后管理',
     },
     {
       code: 'crm-customer-segmentation',

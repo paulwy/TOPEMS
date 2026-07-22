@@ -1,3 +1,5 @@
+pub mod read_write;
+
 use crate::config::enhanced::DatabaseConfig;
 use crate::error::TopemsError;
 use crate::Result;
@@ -5,6 +7,9 @@ use sqlx::postgres::PgPoolOptions;
 use sqlx::PgPool;
 use std::time::Duration;
 use tracing::{debug, error, info};
+
+// 导出读写分离模块
+pub use read_write::{ReadWriteConfig, ReadWritePool};
 
 pub async fn create_database_pool(config: &DatabaseConfig) -> Result<PgPool> {
     let search_path =

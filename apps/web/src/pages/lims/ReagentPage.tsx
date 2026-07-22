@@ -42,6 +42,8 @@ import { LIMS_PATHS } from '@/modules/lims/config';
 import { DASHBOARD_PATHS } from '@/routes/dashboard';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { QUERY_KEYS } from '@/lib/reactQuery';
+import { ConfirmDialog } from '@topems/shared-components';
+import { useConfirmDialog } from '@/hooks';
 
 const ct = designTokens.colors;
 
@@ -75,6 +77,12 @@ const ReagentPage: React.FC = () => {
     location: '',
     status: '正常',
   });
+  const {
+    confirmOpen: confirmDialogOpen,
+    confirmConfig: confirmDialogConfig,
+    openConfirm: openConfirmDialog,
+    closeConfirm: setConfirmDialogClosed,
+  } = useConfirmDialog();
 
   const queryKey = [
     QUERY_KEYS.LIMS.REAGENTS,
@@ -414,10 +422,16 @@ const ReagentPage: React.FC = () => {
     }
   };
 
-  const handleDelete = async (reagent: Reagent) => {
-    if (!window.confirm(`确定要删除试剂 "${reagent.name}" 吗？`)) return;
-    await deleteMutation.mutateAsync(reagent.id);
-    setShowDetailModal(false);
+  const handleDelete = (reagent: Reagent) => {
+    openConfirmDialog({
+      title: '确认删除',
+      message: `确定要删除试剂 "${reagent.name}" 吗？`,
+      danger: true,
+      onConfirm: () => {
+        deleteMutation.mutate(reagent.id);
+        setShowDetailModal(false);
+      },
+    });
   };
 
   const stats = useMemo(
@@ -1040,6 +1054,18 @@ const ReagentPage: React.FC = () => {
           </Button>
         </DialogActions>
       </Dialog>
+
+      <ConfirmDialog
+        isOpen={confirmDialogOpen}
+        onClose={setConfirmDialogClosed}
+        onConfirm={() => {
+          confirmDialogConfig?.onConfirm();
+          setConfirmDialogClosed();
+        }}
+        title={confirmDialogConfig?.title || ''}
+        message={confirmDialogConfig?.message || ''}
+        danger={confirmDialogConfig?.danger}
+      />
     </PageContainer>
   );
 };

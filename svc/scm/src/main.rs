@@ -9,6 +9,7 @@
 #![allow(clippy::unnecessary_cast)]
 #![allow(clippy::too_many_arguments)]
 #![allow(dead_code)]
+mod event_handlers;
 
 use topems_scm::modules;
 
@@ -28,6 +29,7 @@ use modules::{scm_plugin, ApiState};
 use prometheus::{default_registry, Gauge};
 use std::sync::Arc;
 use std::time::Duration;
+use topems_scm::shared::cache::InMemoryCache;
 use topems_shared::redis::RedisCacheService;
 use topems_shared::{
     auth_middleware, build_health_response, create_api_info_router, create_cors_layer,
@@ -121,10 +123,35 @@ async fn main() -> Result<()> {
         tracing::warn!("数据库初始化警告: {}", e);
     }
 
+    if let Err(e) = event_handlers::start_event_subscribers(pool.clone()).await {
+        tracing::warn!("⚠️ SCM 事件订阅者启动失败: {}", e);
+    }
+
+    let event_publisher = match topems_shared::event::EventPublisher::new("topems-scm") {
+        Ok(publisher) => {
+            tracing::info!("📢 事件发布服务初始化成功");
+            Some(Arc::new(publisher))
+        }
+        Err(e) => {
+            tracing::warn!("⚠️ 事件发布服务初始化失败（不阻塞启动）: {}", e);
+            None
+        }
+    };
+
+    let supplier_cache = Arc::new(InMemoryCache::new(Duration::from_secs(300)));
+    let purchase_cache = Arc::new(InMemoryCache::new(Duration::from_secs(120)));
+    let dict_cache = Arc::new(InMemoryCache::new(Duration::from_secs(600)));
+
+    tracing::info!("💾 内存缓存初始化完成（供应商/采购/字典）");
+
     let api_state = ApiState {
         db: pool.clone(),
         auth_state: AuthState::from_env(),
         cache: redis_cache,
+        event_publisher,
+        supplier_cache,
+        purchase_cache,
+        dict_cache,
     };
 
     let cors = create_cors_layer();

@@ -1,4 +1,5 @@
 import React, { useState, useMemo, useEffect } from 'react';
+import { useTranslation } from 'react-i18next';
 import {
   Package,
   Star,
@@ -72,6 +73,7 @@ interface PluginCardProps {
 }
 
 const PluginCard: React.FC<PluginCardProps> = ({ plugin, healthStatus, onViewDetails }) => {
+  const { t } = useTranslation();
   const { installPlugin, isPluginInstalled } = usePluginStore();
   const addNotification = useNotificationStore((state) => state.addNotification);
   const [isInstalling, setIsInstalling] = useState(false);
@@ -83,22 +85,22 @@ const PluginCard: React.FC<PluginCardProps> = ({ plugin, healthStatus, onViewDet
       const success = await installPlugin(plugin.code);
       if (success) {
         addNotification({
-          title: '安装成功',
-          message: `${plugin.name} 插件已安装`,
+          title: t('plugin.message.install_success'),
+          message: t('plugin.marketplace_page.install_success_message', { name: plugin.name }),
           type: 'success',
         });
       } else {
         addNotification({
-          title: '安装失败',
-          message: '无法安装插件，请稍后重试',
+          title: t('plugin.message.install_failed'),
+          message: t('plugin.message.install_failed_message'),
           type: 'error',
         });
       }
     } catch (error: unknown) {
       const err = error as { message?: string };
       addNotification({
-        title: '安装失败',
-        message: err.message || '无法安装插件',
+        title: t('plugin.message.install_failed'),
+        message: err.message || t('plugin.message.install_failed_short'),
         type: 'error',
       });
     } finally {
@@ -167,7 +169,7 @@ const PluginCard: React.FC<PluginCardProps> = ({ plugin, healthStatus, onViewDet
           color='textSecondary'
           sx={{ mb: 3, flexGrow: 1 }}
         >
-          {plugin.description || '暂无描述'}
+          {plugin.description || t('plugin.common.no_description')}
         </Typography>
 
         <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 1, mb: 3 }}>
@@ -217,7 +219,7 @@ const PluginCard: React.FC<PluginCardProps> = ({ plugin, healthStatus, onViewDet
             onClick={onViewDetails}
             startIcon={<ExternalLink sx={{ width: 16, height: 16 }} />}
           >
-            详情
+            {t('plugin.common.details')}
           </Button>
           {installed ? (
             <Button
@@ -227,7 +229,7 @@ const PluginCard: React.FC<PluginCardProps> = ({ plugin, healthStatus, onViewDet
               disabled
               startIcon={<CheckCircle sx={{ width: 16, height: 16 }} />}
             >
-              已安装
+              {t('plugin.common.installed')}
             </Button>
           ) : (
             <Button
@@ -244,7 +246,7 @@ const PluginCard: React.FC<PluginCardProps> = ({ plugin, healthStatus, onViewDet
                 )
               }
             >
-              {isInstalling ? '安装中...' : plugin.is_free ? '免费安装' : '购买'}
+              {isInstalling ? t('plugin.common.installing') : plugin.is_free ? t('plugin.common.free_install') : t('plugin.common.purchase')}
             </Button>
           )}
         </Box>
@@ -257,6 +259,7 @@ const PluginDetailModal: React.FC<{
   plugin: Plugin;
   onClose: () => void;
 }> = ({ plugin, onClose }) => {
+  const { t } = useTranslation();
   const { installPlugin, isPluginInstalled } = usePluginStore();
   const addNotification = useNotificationStore((state) => state.addNotification);
   const [rating, setRating] = useState(0);
@@ -308,8 +311,8 @@ const PluginDetailModal: React.FC<{
       submitPluginReview(plugin.code, data),
     onSuccess: () => {
       addNotification({
-        title: '评价成功',
-        message: '感谢您的评价',
+        title: t('plugin.message.review_success_title'),
+        message: t('plugin.message.review_success_message'),
         type: 'success',
       });
       setRating(0);
@@ -321,8 +324,8 @@ const PluginDetailModal: React.FC<{
       logger.error('提交评价失败:', error);
       const err = error as { message?: string };
       addNotification({
-        title: '评价失败',
-        message: err.message || '无法提交评价',
+        title: t('plugin.message.review_failed_title'),
+        message: err.message || t('plugin.message.review_failed_message'),
         type: 'error',
       });
     },
@@ -343,23 +346,23 @@ const PluginDetailModal: React.FC<{
       const success = await installPlugin(plugin.code);
       if (success) {
         addNotification({
-          title: '安装成功',
-          message: `${plugin.name} 插件已安装`,
+          title: t('plugin.message.install_success'),
+          message: t('plugin.marketplace_page.install_success_message', { name: plugin.name }),
           type: 'success',
         });
         onClose();
       } else {
         addNotification({
-          title: '安装失败',
-          message: '无法安装插件，请稍后重试',
+          title: t('plugin.message.install_failed'),
+          message: t('plugin.message.install_failed_message'),
           type: 'error',
         });
       }
     } catch (error: unknown) {
       const err = error as { message?: string };
       addNotification({
-        title: '安装失败',
-        message: err.message || '无法安装插件',
+        title: t('plugin.message.install_failed'),
+        message: err.message || t('plugin.message.install_failed_short'),
         type: 'error',
       });
     } finally {
@@ -409,7 +412,7 @@ const PluginDetailModal: React.FC<{
           onClick={onClose}
           startIcon={<X sx={{ width: 20, height: 20 }} />}
         >
-          关闭
+          {t('plugin.action.close')}
         </Button>
       </DialogTitle>
 
@@ -430,13 +433,13 @@ const PluginDetailModal: React.FC<{
                 variant='h6'
                 sx={{ fontWeight: 'bold' }}
               >
-                描述
+                {t('plugin.common.description_label')}
               </Typography>
               <Typography
                 variant='body1'
                 color='textSecondary'
               >
-                {plugin.description || '暂无描述'}
+                {plugin.description || t('plugin.common.no_description')}
               </Typography>
             </Box>
 
@@ -445,7 +448,7 @@ const PluginDetailModal: React.FC<{
                 variant='h6'
                 sx={{ fontWeight: 'bold' }}
               >
-                版本历史
+                {t('plugin.common.version_history')}
               </Typography>
               <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
                 {versions.length > 0 ? (
@@ -465,7 +468,7 @@ const PluginDetailModal: React.FC<{
                           <Typography sx={{ fontWeight: 'medium' }}>{v.version}</Typography>
                           {v.is_latest && (
                             <Chip
-                              label='最新'
+                              label={t('plugin.common.latest')}
                               size='small'
                               color='primary'
                               variant='outlined'
@@ -473,7 +476,7 @@ const PluginDetailModal: React.FC<{
                           )}
                           {v.is_stable && (
                             <Chip
-                              label='稳定'
+                              label={t('plugin.common.stable')}
                               size='small'
                               color='success'
                               variant='outlined'
@@ -503,7 +506,7 @@ const PluginDetailModal: React.FC<{
                     variant='body2'
                     color='textSecondary'
                   >
-                    暂无版本信息
+                    {t('plugin.common.no_version_info')}
                   </Typography>
                 )}
               </Box>
@@ -514,7 +517,7 @@ const PluginDetailModal: React.FC<{
                 variant='h6'
                 sx={{ fontWeight: 'bold' }}
               >
-                用户评价 ({reviews.length})
+                {t('plugin.marketplace_page.review_label', { count: reviews.length })}
               </Typography>
               <Box sx={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
                 {reviews.length > 0 ? (
@@ -535,7 +538,7 @@ const PluginDetailModal: React.FC<{
                           <Avatar>{review.user_name?.charAt(0) || 'U'}</Avatar>
                           <Box>
                             <Typography sx={{ fontWeight: 'medium' }}>
-                              {review.user_name || '匿名用户'}
+                              {review.user_name || t('plugin.common.anonymous_user')}
                             </Typography>
                             <Typography
                               variant='body2'
@@ -564,7 +567,7 @@ const PluginDetailModal: React.FC<{
                       )}
                       {review.is_verified_purchase && (
                         <Chip
-                          label='已购买'
+                          label={t('plugin.common.purchased')}
                           size='small'
                           color='primary'
                           variant='outlined'
@@ -578,7 +581,7 @@ const PluginDetailModal: React.FC<{
                     variant='body2'
                     color='textSecondary'
                   >
-                    暂无评价
+                    {t('plugin.common.no_reviews')}
                   </Typography>
                 )}
               </Box>
@@ -595,7 +598,7 @@ const PluginDetailModal: React.FC<{
                     variant='h6'
                     sx={{ fontWeight: 'bold' }}
                   >
-                    评分
+                    {t('plugin.field.rating')}
                   </Typography>
                   <Box sx={{ textAlign: 'center' }}>
                     <Typography
@@ -616,7 +619,7 @@ const PluginDetailModal: React.FC<{
                 <Box
                   sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}
                 >
-                  <Typography sx={{ color: 'grey.600' }}>下载量</Typography>
+                  <Typography sx={{ color: 'grey.600' }}>{t('plugin.field.downloads')}</Typography>
                   <Typography sx={{ fontWeight: 'medium' }}>
                     {plugin.install_count?.toLocaleString() || 0}
                   </Typography>
@@ -625,16 +628,16 @@ const PluginDetailModal: React.FC<{
                 <Box
                   sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}
                 >
-                  <Typography sx={{ color: 'grey.600' }}>分类</Typography>
+                  <Typography sx={{ color: 'grey.600' }}>{t('plugin.field.category')}</Typography>
                   <Typography sx={{ fontWeight: 'medium' }}>{plugin.category}</Typography>
                 </Box>
 
                 <Box
                   sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}
                 >
-                  <Typography sx={{ color: 'grey.600' }}>作者</Typography>
+                  <Typography sx={{ color: 'grey.600' }}>{t('plugin.field.author')}</Typography>
                   <Typography sx={{ fontWeight: 'medium' }}>
-                    {plugin.author_name || '未知'}
+                    {plugin.author_name || t('plugin.common.unknown')}
                   </Typography>
                 </Box>
 
@@ -659,12 +662,12 @@ const PluginDetailModal: React.FC<{
                   }
                 >
                   {installed
-                    ? '已安装'
+                    ? t('plugin.common.installed')
                     : isInstalling
-                      ? '安装中...'
+                      ? t('plugin.common.installing')
                       : plugin.is_free
-                        ? '免费安装'
-                        : '购买'}
+                        ? t('plugin.common.free_install')
+                        : t('plugin.common.purchase')}
                 </Button>
               </CardContent>
             </Card>
@@ -675,7 +678,7 @@ const PluginDetailModal: React.FC<{
                   variant='h6'
                   sx={{ fontWeight: 'bold', mb: 4 }}
                 >
-                  发表评价
+                  {t('plugin.common.post_review')}
                 </Typography>
                 <Box sx={{ display: 'flex', flexDirection: 'column', gap: 3 }}>
                   <Rating
@@ -683,13 +686,13 @@ const PluginDetailModal: React.FC<{
                     onChange={(_, newValue) => setRating(newValue || 0)}
                   />
                   <TextField
-                    label='标题'
+                    label={t('plugin.field.title_field')}
                     value={reviewTitle}
                     onChange={(e) => setReviewTitle(e.target.value)}
                     fullWidth
                   />
                   <TextField
-                    label='评价内容'
+                    label={t('plugin.field.review_content')}
                     value={reviewContent}
                     onChange={(e) => setReviewContent(e.target.value)}
                     fullWidth
@@ -702,7 +705,7 @@ const PluginDetailModal: React.FC<{
                     onClick={handleSubmitReview}
                     disabled={rating === 0 || submitReviewMutation.isPending}
                   >
-                    {submitReviewMutation.isPending ? '提交中...' : '提交评价'}
+                    {submitReviewMutation.isPending ? t('plugin.common.submitting') : t('plugin.common.submit_review')}
                   </Button>
                 </Box>
               </CardContent>
@@ -715,6 +718,7 @@ const PluginDetailModal: React.FC<{
 };
 
 const PluginMarketplacePage: React.FC = () => {
+  const { t } = useTranslation();
   const {
     marketplacePlugins,
     healthStatus,
@@ -768,8 +772,8 @@ const PluginMarketplacePage: React.FC = () => {
     pluginsQuery.refetch();
     healthQuery.refetch();
     addNotification({
-      title: '刷新成功',
-      message: '插件列表已更新',
+      title: t('plugin.message.refresh_success'),
+      message: t('plugin.message.plugin_list_updated'),
       type: 'success',
     });
   };
@@ -783,7 +787,7 @@ const PluginMarketplacePage: React.FC = () => {
         (p) =>
           p.name.toLowerCase().includes(term) ||
           p.description?.toLowerCase().includes(term) ||
-          p.tags?.some((t) => t.toLowerCase().includes(term))
+          p.tags?.some((tg) => tg.toLowerCase().includes(term))
       );
     }
 
@@ -840,14 +844,14 @@ const PluginMarketplacePage: React.FC = () => {
                 variant='h4'
                 sx={{ fontWeight: 'bold' }}
               >
-                插件市场
+                {t('plugin.marketplace_page.title')}
               </Typography>
             </Box>
             <Typography
               variant='body1'
               sx={{ opacity: 0.6 }}
             >
-              发现和安装强大的插件，扩展您的 TOPEMS 功能
+              {t('plugin.marketplace_page.subtitle')}
             </Typography>
           </Box>
         </Box>
@@ -867,7 +871,7 @@ const PluginMarketplacePage: React.FC = () => {
                 }}
               />
               <TextField
-                placeholder='搜索插件...'
+                placeholder={t('plugin.marketplace_page.search_placeholder')}
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
                 fullWidth
@@ -880,13 +884,13 @@ const PluginMarketplacePage: React.FC = () => {
                 size='small'
                 sx={{ minWidth: 160 }}
               >
-                <InputLabel>套件分类</InputLabel>
+                <InputLabel>{t('plugin.marketplace_page.filter.suite_label')}</InputLabel>
                 <Select
                   value={selectedSuite}
-                  label='套件分类'
+                  label={t('plugin.marketplace_page.filter.suite_label')}
                   onChange={(e) => setSelectedSuite(e.target.value)}
                 >
-                  <MenuItem value='all'>全部套件</MenuItem>
+                  <MenuItem value='all'>{t('plugin.marketplace_page.filter.all_suites')}</MenuItem>
                   {SUITES.map((suite) => (
                     <MenuItem
                       key={suite.code}
@@ -902,27 +906,27 @@ const PluginMarketplacePage: React.FC = () => {
                 size='small'
                 sx={{ minWidth: 140 }}
               >
-                <InputLabel>排序方式</InputLabel>
+                <InputLabel>{t('plugin.marketplace_page.filter.sort_label')}</InputLabel>
                 <Select
                   value={sortBy}
-                  label='排序方式'
+                  label={t('plugin.marketplace_page.filter.sort_label')}
                   onChange={(e) => setSortBy(e.target.value as SortOption)}
                 >
                   <MenuItem value='popular'>
                     <TrendingUp sx={{ width: 16, height: 16, mr: 2 }} />
-                    最受欢迎
+                    {t('plugin.marketplace_page.sort.popular')}
                   </MenuItem>
                   <MenuItem value='rating'>
                     <Star sx={{ width: 16, height: 16, mr: 2 }} />
-                    评分最高
+                    {t('plugin.marketplace_page.sort.rating')}
                   </MenuItem>
                   <MenuItem value='newest'>
                     <Clock sx={{ width: 16, height: 16, mr: 2 }} />
-                    最新发布
+                    {t('plugin.marketplace_page.sort.newest')}
                   </MenuItem>
                   <MenuItem value='price'>
                     <ShoppingCart sx={{ width: 16, height: 16, mr: 2 }} />
-                    价格排序
+                    {t('plugin.marketplace_page.sort.price')}
                   </MenuItem>
                 </Select>
               </FormControl>
@@ -945,7 +949,7 @@ const PluginMarketplacePage: React.FC = () => {
                 onClick={handleRefresh}
                 startIcon={<RefreshCw sx={{ width: 16, height: 16 }} />}
               >
-                刷新
+                {t('plugin.action.refresh')}
               </Button>
             </Box>
           </Box>
@@ -1002,13 +1006,13 @@ const PluginMarketplacePage: React.FC = () => {
                     </Typography>
                     <Box sx={{ display: 'flex', alignItems: 'center', gap: 2, mt: 1 }}>
                       <Chip
-                        label={`${suite.plugins.length} 个插件`}
+                        label={t('plugin.marketplace_page.suite_plugin_count', { count: suite.plugins.length })}
                         size='small'
                         variant='outlined'
                       />
                       {suite.is_free ? (
                         <Chip
-                          label='免费'
+                          label={t('plugin.common.free')}
                           size='small'
                           color='success'
                         />
@@ -1035,14 +1039,14 @@ const PluginMarketplacePage: React.FC = () => {
               sx={{ fontWeight: 'bold' }}
             >
               {selectedSuite === 'all'
-                ? '全部插件'
+                ? t('plugin.marketplace_page.all_plugins')
                 : SUITES.find((s) => s.code === selectedSuite)?.name}
             </Typography>
             <Typography
               variant='body2'
               color='textSecondary'
             >
-              共 {filteredPlugins.length} 个插件
+              {t('plugin.marketplace_page.plugin_count', { count: filteredPlugins.length })}
             </Typography>
           </Box>
 
@@ -1073,13 +1077,13 @@ const PluginMarketplacePage: React.FC = () => {
                 variant='h6'
                 sx={{ fontWeight: 'medium' }}
               >
-                未找到匹配的插件
+                {t('plugin.marketplace_page.empty_title')}
               </Typography>
               <Typography
                 variant='body2'
                 color='textSecondary'
               >
-                尝试调整搜索条件或选择其他分类
+                {t('plugin.marketplace_page.empty_hint')}
               </Typography>
             </Box>
           )}

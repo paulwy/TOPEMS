@@ -1,8 +1,9 @@
 use chrono::{DateTime, Utc};
 use serde::{Deserialize, Serialize};
+use sqlx::FromRow;
 use uuid::Uuid;
 
-#[derive(Debug, Serialize, sqlx::FromRow)]
+#[derive(Debug, Serialize, FromRow)]
 pub struct PermissionChange {
     pub id: Uuid,
     pub user_id: Option<Uuid>,
@@ -97,7 +98,7 @@ pub struct TrendStat {
     pub count: i64,
 }
 
-#[derive(Debug, Serialize, sqlx::FromRow)]
+#[derive(Debug, Serialize, FromRow)]
 pub struct AccessControlLog {
     pub id: Uuid,
     pub user_id: Uuid,
@@ -181,4 +182,71 @@ pub struct AccessTrendStat {
     pub date: String,
     pub allowed: i64,
     pub denied: i64,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize, FromRow)]
+pub struct OperationLog {
+    pub id: Uuid,
+    pub tenant_id: Uuid,
+    pub user_id: Option<Uuid>,
+    pub user_name: String,
+    pub module: String,
+    pub operation: String,
+    pub resource_type: String,
+    pub resource_id: Option<String>,
+    pub description: Option<String>,
+    pub request_data: Option<serde_json::Value>,
+    pub response_status: Option<i32>,
+    pub ip_address: Option<String>,
+    pub user_agent: Option<String>,
+    pub trace_id: Option<String>,
+    pub created_at: DateTime<Utc>,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct OperationLogQuery {
+    pub user_id: Option<String>,
+    pub user_name: Option<String>,
+    pub module: Option<String>,
+    pub operation: Option<String>,
+    pub resource_type: Option<String>,
+    pub resource_id: Option<String>,
+    pub trace_id: Option<String>,
+    pub start_time: Option<String>,
+    pub end_time: Option<String>,
+    pub success: Option<bool>,
+    pub page: Option<i64>,
+    pub page_size: Option<i64>,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct OperationLogListResponse {
+    pub items: Vec<OperationLog>,
+    pub total: i64,
+    pub page: i64,
+    pub page_size: i64,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct OperationLogStatsResponse {
+    pub total: i64,
+    pub by_module: serde_json::Value,
+    pub by_operation: serde_json::Value,
+}
+
+#[derive(Debug, Clone)]
+pub struct OperationLogRecord {
+    pub tenant_id: Uuid,
+    pub user_id: Option<Uuid>,
+    pub user_name: String,
+    pub module: String,
+    pub operation: String,
+    pub resource_type: String,
+    pub resource_id: Option<String>,
+    pub description: Option<String>,
+    pub request_data: Option<serde_json::Value>,
+    pub response_status: Option<i32>,
+    pub ip_address: Option<String>,
+    pub user_agent: Option<String>,
+    pub trace_id: Option<String>,
 }

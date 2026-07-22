@@ -15,6 +15,10 @@ const CACHE_NAME = "gis-offline-tiles-v1";
 const TILE_DB_NAME = "gis_offline_db";
 const TILE_STORE = "tiles";
 
+const SW_DEBUG = false;
+const swLog = (...args) => { if (SW_DEBUG) console.log(...args); };
+const swError = (...args) => { if (SW_DEBUG) console.error(...args); };
+
 // 瓦片URL模板
 const TILE_URL_PATTERNS = [
   /^https:\/\/tile\.openstreetmap\.org\/\d+\/\d+\/\d+\.png/,
@@ -116,7 +120,7 @@ function parseTileUrl(url) {
  * Service Worker 安装事件
  */
 self.addEventListener("install", (event) => {
-  console.log("[SW] Installing offline tile service worker");
+  swLog("[SW] Installing offline tile service worker");
   self.skipWaiting();
 });
 
@@ -124,7 +128,7 @@ self.addEventListener("install", (event) => {
  * Service Worker 激活事件
  */
 self.addEventListener("activate", (event) => {
-  console.log("[SW] Activating offline tile service worker");
+  swLog("[SW] Activating offline tile service worker");
   event.waitUntil(clients.claim());
 });
 
@@ -150,7 +154,7 @@ self.addEventListener("fetch", async (event) => {
         const blob = await getTileFromIDB(url.href);
 
         if (blob) {
-          console.log(`[SW] Tile found in cache: ${url.pathname}`);
+          swLog(`[SW] Tile found in cache: ${url.pathname}`);
           return new Response(blob, {
             headers: {
               "Content-Type": "image/png",
@@ -160,7 +164,7 @@ self.addEventListener("fetch", async (event) => {
         }
 
         // 如果没有缓存，则从网络获取
-        console.log(`[SW] Tile not in cache, fetching: ${url.pathname}`);
+        swLog(`[SW] Tile not in cache, fetching: ${url.pathname}`);
         const response = await fetch(event.request);
 
         // 可选：缓存新获取的瓦片
@@ -172,7 +176,7 @@ self.addEventListener("fetch", async (event) => {
 
         return response;
       } catch (error) {
-        console.error(`[SW] Error fetching tile: ${error}`);
+        swError(`[SW] Error fetching tile: ${error}`);
         return new Response("Tile not available", {
           status: 503,
           statusText: "Service Unavailable",
@@ -208,9 +212,9 @@ async function cacheTile(url, response) {
       },
     });
 
-    console.log(`[SW] Cached tile: ${key}`);
+    swLog(`[SW] Cached tile: ${key}`);
   } catch (error) {
-    console.error(`[SW] Error caching tile: ${error}`);
+    swError(`[SW] Error caching tile: ${error}`);
   }
 }
 
@@ -238,7 +242,7 @@ self.addEventListener("message", async (event) => {
   if (event.data.type === "CACHE_TILES") {
     // 可以批量缓存瓦片
     const { tiles } = event.data;
-    console.log(`[SW] Caching ${tiles.length} tiles`);
+    swLog(`[SW] Caching ${tiles.length} tiles`);
 
     for (const tile of tiles) {
       try {
@@ -247,7 +251,7 @@ self.addEventListener("message", async (event) => {
           await cacheTile(tile.url, response);
         }
       } catch (error) {
-        console.error(`[SW] Error caching tile ${tile.url}:`, error);
+        swError(`[SW] Error caching tile ${tile.url}:`, error);
       }
     }
 

@@ -102,6 +102,7 @@ export const GlobalSearchBar: React.FC<GlobalSearchBarProps> = ({ variant = 'ful
   return (
     <Box
       ref={searchRef}
+      className='global-search-bar'
       sx={{ position: 'relative', width: '100%', maxWidth: 480 }}
     >
       <SearchInput

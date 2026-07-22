@@ -10,94 +10,232 @@
       padding: 0;
       box-sizing: border-box;
     }
-    
+
     body {
-      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'PingFang SC', 'Hiragino Sans GB', 'Microsoft YaHei', sans-serif;
-      background: linear-gradient(135deg, #1e3a5f 0%, #0d1b2a 100%);
+      font-family: 'JetBrains Mono', 'Fira Code', 'Consolas', monospace;
+      background: linear-gradient(135deg, #0a0a0f 0%, #0d1117 50%, #0a0a0f 100%);
       min-height: 100vh;
       display: flex;
       align-items: center;
       justify-content: center;
-      color: #ffffff;
+      color: #E6F1FF;
       padding: 20px;
+      overflow: hidden;
+      position: relative;
     }
-    
+
+    body::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      background-image: 
+        linear-gradient(rgba(0, 255, 255, 0.03) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(0, 255, 255, 0.03) 1px, transparent 1px);
+      background-size: 50px 50px;
+      pointer-events: none;
+      z-index: 0;
+    }
+
+    .scanline {
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+      height: 4px;
+      background: linear-gradient(90deg, transparent, rgba(0, 255, 255, 0.6), transparent);
+      animation: scanline-move 8s linear infinite;
+      pointer-events: none;
+      z-index: 100;
+      opacity: 0.3;
+    }
+
+    @keyframes scanline-move {
+      0% { top: 0; opacity: 0; }
+      10% { opacity: 0.3; }
+      90% { opacity: 0.3; }
+      100% { top: 100%; opacity: 0; }
+    }
+
+    .cyber-glow {
+      position: absolute;
+      border-radius: 50%;
+      filter: blur(100px);
+      pointer-events: none;
+      z-index: 0;
+    }
+
+    .glow-cyan {
+      width: 400px;
+      height: 400px;
+      top: -200px;
+      right: -100px;
+      background: rgba(0, 255, 255, 0.15);
+      animation: glow-pulse 6s ease-in-out infinite;
+    }
+
+    .glow-magenta {
+      width: 300px;
+      height: 300px;
+      bottom: -150px;
+      left: -100px;
+      background: rgba(255, 0, 255, 0.1);
+      animation: glow-pulse 4s ease-in-out infinite reverse;
+    }
+
+    @keyframes glow-pulse {
+      0%, 100% { transform: scale(1); opacity: 0.3; }
+      50% { transform: scale(1.2); opacity: 0.5; }
+    }
+
     .offline-container {
       text-align: center;
-      max-width: 480px;
+      max-width: 520px;
       width: 100%;
+      position: relative;
+      z-index: 1;
     }
-    
+
     .offline-icon {
-      width: 120px;
-      height: 120px;
-      margin: 0 auto 30px;
-      background: rgba(255, 255, 255, 0.1);
+      width: 140px;
+      height: 140px;
+      margin: 0 auto 32px;
+      background: rgba(0, 255, 255, 0.08);
+      border: 2px solid rgba(0, 255, 255, 0.4);
       border-radius: 50%;
       display: flex;
       align-items: center;
       justify-content: center;
-      font-size: 60px;
-      animation: pulse 2s ease-in-out infinite;
+      font-size: 64px;
+      animation: icon-pulse 2s ease-in-out infinite;
+      box-shadow: 
+        0 0 30px rgba(0, 255, 255, 0.3),
+        inset 0 0 30px rgba(0, 255, 255, 0.1);
+      position: relative;
     }
-    
-    @keyframes pulse {
-      0%, 100% {
-        transform: scale(1);
-        opacity: 0.8;
-      }
-      50% {
-        transform: scale(1.1);
-        opacity: 1;
-      }
+
+    .offline-icon::before {
+      content: '';
+      position: absolute;
+      top: -4px;
+      left: -4px;
+      right: -4px;
+      bottom: -4px;
+      border: 1px solid rgba(0, 255, 255, 0.2);
+      border-radius: 50%;
+      animation: ring-pulse 3s ease-in-out infinite;
     }
-    
+
+    @keyframes icon-pulse {
+      0%, 100% { transform: scale(1); box-shadow: 0 0 30px rgba(0, 255, 255, 0.3), inset 0 0 30px rgba(0, 255, 255, 0.1); }
+      50% { transform: scale(1.05); box-shadow: 0 0 50px rgba(0, 255, 255, 0.5), inset 0 0 40px rgba(0, 255, 255, 0.15); }
+    }
+
+    @keyframes ring-pulse {
+      0%, 100% { transform: scale(1); opacity: 0.5; }
+      50% { transform: scale(1.1); opacity: 0; }
+    }
+
     h1 {
-      font-size: 28px;
+      font-size: 32px;
       font-weight: 600;
       margin-bottom: 16px;
-      color: #ffffff;
+      background: linear-gradient(90deg, #00FFFF, #FF00FF);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+      text-shadow: 0 0 30px rgba(0, 255, 255, 0.5);
+      letter-spacing: 0.05em;
     }
-    
+
+    .status-badge {
+      display: inline-block;
+      padding: 6px 20px;
+      background: rgba(255, 0, 255, 0.1);
+      border: 1px solid rgba(255, 0, 255, 0.4);
+      border-radius: 20px;
+      font-size: 12px;
+      color: #FF00FF;
+      text-transform: uppercase;
+      letter-spacing: 0.1em;
+      margin-bottom: 24px;
+      animation: badge-glow 2s ease-in-out infinite;
+    }
+
+    @keyframes badge-glow {
+      0%, 100% { box-shadow: 0 0 10px rgba(255, 0, 255, 0.3); }
+      50% { box-shadow: 0 0 20px rgba(255, 0, 255, 0.6); }
+    }
+
     p {
-      font-size: 16px;
-      line-height: 1.6;
-      color: rgba(255, 255, 255, 0.7);
-      margin-bottom: 30px;
+      font-size: 15px;
+      line-height: 1.7;
+      color: rgba(230, 241, 255, 0.6);
+      margin-bottom: 32px;
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'PingFang SC', sans-serif;
     }
-    
+
     .offline-features {
-      background: rgba(255, 255, 255, 0.05);
+      background: rgba(13, 17, 23, 0.8);
+      backdrop-filter: blur(20px);
+      -webkit-backdrop-filter: blur(20px);
+      border: 1px solid rgba(0, 255, 255, 0.2);
       border-radius: 16px;
-      padding: 24px;
-      margin-bottom: 30px;
+      padding: 28px;
+      margin-bottom: 32px;
       text-align: left;
+      box-shadow: 
+        0 8px 32px rgba(0, 0, 0, 0.4),
+        0 0 0 1px rgba(0, 255, 255, 0.05) inset;
     }
-    
+
     .offline-features h3 {
-      font-size: 16px;
-      font-weight: 500;
-      margin-bottom: 16px;
-      color: #ffffff;
+      font-size: 14px;
+      font-weight: 600;
+      margin-bottom: 20px;
+      color: #00FFFF;
+      text-transform: uppercase;
+      letter-spacing: 0.1em;
+      position: relative;
+      padding-left: 16px;
     }
-    
+
+    .offline-features h3::before {
+      content: '';
+      position: absolute;
+      left: 0;
+      top: 50%;
+      transform: translateY(-50%);
+      width: 4px;
+      height: 16px;
+      background: linear-gradient(180deg, #00FFFF, #FF00FF);
+      border-radius: 2px;
+    }
+
     .offline-features ul {
       list-style: none;
     }
-    
+
     .offline-features li {
-      padding: 10px 0;
-      padding-left: 28px;
+      padding: 12px 0;
+      padding-left: 32px;
       position: relative;
       font-size: 14px;
-      color: rgba(255, 255, 255, 0.8);
-      border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+      color: rgba(230, 241, 255, 0.7);
+      border-bottom: 1px solid rgba(0, 255, 255, 0.05);
+      transition: color 0.3s ease;
     }
-    
+
     .offline-features li:last-child {
       border-bottom: none;
     }
-    
+
+    .offline-features li:hover {
+      color: #00FFFF;
+    }
+
     .offline-features li::before {
       content: '';
       position: absolute;
@@ -106,98 +244,163 @@
       transform: translateY(-50%);
       width: 20px;
       height: 20px;
-      background: rgba(34, 197, 94, 0.2);
-      border-radius: 50%;
+      background: rgba(0, 255, 255, 0.1);
+      border: 1px solid rgba(0, 255, 255, 0.3);
+      border-radius: 4px;
       display: flex;
       align-items: center;
       justify-content: center;
-      font-size: 10px;
     }
-    
+
     .offline-features li::after {
       content: '✓';
       position: absolute;
-      left: 5px;
+      left: 4px;
       top: 50%;
       transform: translateY(-50%);
-      font-size: 12px;
-      color: #22c55e;
+      font-size: 11px;
+      color: #00FFFF;
+      text-shadow: 0 0 10px rgba(0, 255, 255, 0.8);
     }
-    
+
     .retry-btn {
-      background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%);
+      background: linear-gradient(135deg, #00FFFF 0%, #FF00FF 100%);
       border: none;
-      color: white;
-      padding: 14px 40px;
-      font-size: 16px;
-      font-weight: 500;
+      color: #000;
+      padding: 16px 48px;
+      font-size: 15px;
+      font-weight: 600;
       border-radius: 12px;
       cursor: pointer;
       transition: all 0.3s ease;
-      box-shadow: 0 4px 15px rgba(59, 130, 246, 0.4);
+      box-shadow: 
+        0 0 20px rgba(0, 255, 255, 0.4),
+        0 4px 15px rgba(0, 0, 0, 0.3);
+      text-transform: uppercase;
+      letter-spacing: 0.1em;
+      position: relative;
+      overflow: hidden;
     }
-    
+
+    .retry-btn::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: -100%;
+      width: 100%;
+      height: 100%;
+      background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.4), transparent);
+      transition: left 0.5s ease;
+    }
+
+    .retry-btn:hover::before {
+      left: 100%;
+    }
+
     .retry-btn:hover {
       transform: translateY(-2px);
-      box-shadow: 0 6px 20px rgba(59, 130, 246, 0.5);
+      box-shadow: 
+        0 0 30px rgba(0, 255, 255, 0.6),
+        0 6px 20px rgba(0, 0, 0, 0.4);
     }
-    
+
     .retry-btn:active {
       transform: translateY(0);
     }
-    
+
     .last-sync {
-      margin-top: 20px;
+      margin-top: 24px;
       font-size: 12px;
-      color: rgba(255, 255, 255, 0.5);
+      color: rgba(230, 241, 255, 0.4);
+      font-family: 'JetBrains Mono', monospace;
     }
-    
+
     .spinner {
       display: inline-block;
       width: 20px;
       height: 20px;
-      border: 2px solid rgba(255, 255, 255, 0.3);
-      border-top-color: #ffffff;
+      border: 2px solid rgba(0, 0, 0, 0.3);
+      border-top-color: #000;
       border-radius: 50%;
       animation: spin 0.8s linear infinite;
-      margin-right: 8px;
+      margin-right: 10px;
       vertical-align: middle;
     }
-    
+
     @keyframes spin {
       to {
         transform: rotate(360deg);
       }
     }
-    
-    @media (max-width: 480px) {
+
+    .cyber-footer {
+      margin-top: 40px;
+      padding-top: 20px;
+      border-top: 1px solid rgba(0, 255, 255, 0.1);
+      font-size: 11px;
+      color: rgba(230, 241, 255, 0.3);
+      font-family: 'JetBrains Mono', monospace;
+      letter-spacing: 0.05em;
+    }
+
+    .cyber-footer span {
+      color: #00FFFF;
+      opacity: 0.5;
+    }
+
+    @media (max-width: 520px) {
       .offline-icon {
-        width: 100px;
-        height: 100px;
-        font-size: 50px;
+        width: 120px;
+        height: 120px;
+        font-size: 56px;
+        margin-bottom: 24px;
       }
-      
+
       h1 {
-        font-size: 24px;
+        font-size: 28px;
       }
-      
+
       p {
         font-size: 14px;
       }
-      
+
       .offline-features {
-        padding: 20px;
+        padding: 24px;
+      }
+
+      .retry-btn {
+        padding: 14px 32px;
+      }
+
+      .glow-cyan {
+        width: 300px;
+        height: 300px;
+        top: -150px;
+        right: -50px;
+      }
+
+      .glow-magenta {
+        width: 250px;
+        height: 250px;
+        bottom: -100px;
+        left: -50px;
       }
     }
   </style>
 </head>
 <body>
+  <div class="scanline"></div>
+  <div class="cyber-glow glow-cyan"></div>
+  <div class="cyber-glow glow-magenta"></div>
+
   <div class="offline-container">
     <div class="offline-icon">📡</div>
+
+    <div class="status-badge">SYS.OFFLINE</div>
     
     <h1>离线模式</h1>
     
-    <p>当前网络连接不可用。您仍可以访问已缓存的内容和执行离线操作。</p>
+    <p>当前网络连接不可用。系统已切换至离线模式，您仍可以访问已缓存的数据和执行本地操作。</p>
     
     <div class="offline-features">
       <h3>离线可用功能</h3>
@@ -215,7 +418,11 @@
     </button>
     
     <div class="last-sync" id="lastSync">
-      上次同步：刚刚
+      LAST_SYNC: <span>--:--:--</span>
+    </div>
+
+    <div class="cyber-footer">
+      TOPEMS v24.0 | <span>CYBERPUNK</span> MODE | PWA OFFLINE
     </div>
   </div>
   
@@ -226,19 +433,19 @@
     function updateLastSync() {
       const now = new Date();
       const timeStr = `${now.getHours().toString().padStart(2, '0')}:${now.getMinutes().toString().padStart(2, '0')}:${now.getSeconds().toString().padStart(2, '0')}`;
-      lastSync.textContent = `上次同步：${timeStr}`;
+      lastSync.innerHTML = `LAST_SYNC: <span>${timeStr}</span>`;
     }
     
     updateLastSync();
     
     retryBtn.addEventListener('click', () => {
-      retryBtn.innerHTML = '<span class="spinner"></span><span>正在连接...</span>';
+      retryBtn.innerHTML = '<span class="spinner"></span><span>CONNECTING...</span>';
       
       fetch('/api/health').then((response) => {
         if (response.ok) {
           location.reload();
         } else {
-          throw new Error('连接失败');
+          throw new Error('Connection failed');
         }
       }).catch(() => {
         setTimeout(() => {

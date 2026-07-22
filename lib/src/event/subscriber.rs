@@ -7,7 +7,7 @@ use std::env;
 use std::future::Future;
 use std::pin::Pin;
 use std::sync::Arc;
-use tracing::{debug, error, info, warn};
+use tracing::{debug, error, info, warn, Instrument};
 
 /// 事件处理器回调类型
 pub type EventHandler =
@@ -42,6 +42,34 @@ impl EventSubscriber {
         Fut: Future<Output = ()> + Send + 'static,
     {
         let handler_arc: EventHandler = Arc::new(move |event| Box::pin(handler(event)));
+
+        self.handlers.push((event_types, handler_arc));
+        self
+    }
+
+    /// 订阅特定事件类型（返回 Result 的 handler 版本）
+    pub fn subscribe_handler<F>(mut self, event_types: Vec<EventType>, handler: F) -> Self
+    where
+        F: Fn(
+                Event,
+            )
+                -> std::pin::Pin<Box<dyn std::future::Future<Output = Result<(), String>> + Send>>
+            + Send
+            + Sync
+            + Clone
+            + 'static,
+    {
+        let handler_arc: EventHandler = Arc::new(move |event| {
+            let handler = handler.clone();
+            Box::pin(async move {
+                match handler(event).await {
+                    Ok(_) => {}
+                    Err(e) => {
+                        error!("事件处理器执行失败: {}", e);
+                    }
+                }
+            })
+        });
 
         self.handlers.push((event_types, handler_arc));
         self
@@ -99,6 +127,24 @@ impl EventSubscriber {
                     let handler_clone = handler.clone();
                     let dlq_clone = dlq.clone();
 
+                    // V26.0: 如果事件携带 trace_id，创建关联 span 实现分布式追踪
+                    let span = if let Some(ref trace_id) = event.trace_id {
+                        tracing::info_span!(
+                            "event_handler",
+                            trace_id = %trace_id,
+                            event_type = ?event.event_type,
+                            event_id = %event.event_id,
+                            source = %event.source,
+                        )
+                    } else {
+                        tracing::info_span!(
+                            "event_handler",
+                            event_type = ?event.event_type,
+                            event_id = %event.event_id,
+                            source = %event.source,
+                        )
+                    };
+
                     tokio::spawn(async move {
                         match tokio::time::timeout(
                             tokio::time::Duration::from_secs(30),
@@ -112,7 +158,7 @@ impl EventSubscriber {
                                 let _ = dlq_clone.push(event_clone, "处理超时").await;
                             }
                         }
-                    });
+                    }.instrument(span));
                 }
             }
         }

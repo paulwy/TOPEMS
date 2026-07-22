@@ -1,0 +1,39 @@
+# 金丝雀发布配置
+# 用于 Traefik 路由层流量切分
+
+canary:
+  # 当前金丝雀版本
+  current_version: "v24.0"
+
+  # 流量切分策略
+  traffic_split:
+    # 稳定版本权重
+    stable_weight: 90
+    # 金丝雀版本权重
+    canary_weight: 10
+
+  # 金丝雀条件（可选）
+  conditions:
+    # 按租户灰度
+    tenant_whitelist:
+      - "tenant-uuid-1"
+      - "tenant-uuid-2"
+    # 或按百分比灰度
+    user_percentage: 10
+
+  # 金丝雀回滚条件
+  rollback_on:
+    # 错误率超过 5%
+    error_rate_threshold: 5
+    # 响应时间 P99 超过 2s
+    latency_p99_threshold_ms: 2000
+
+  # 自动放量配置
+  auto_promotion:
+    enabled: true
+    # 每 10 分钟检查一次
+    check_interval_minutes: 10
+    # 每次增加 10%
+    increment_percent: 10
+    # 达到 100% 后自动切换
+    target_percent: 100

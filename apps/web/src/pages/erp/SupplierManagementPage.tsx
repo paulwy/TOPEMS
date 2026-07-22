@@ -25,10 +25,10 @@ import {
   type FilterConfig,
 } from '@/components/templates';
 import { Plus, Edit, Trash2, Eye, Users, CheckCircle, XCircle } from 'lucide-react';
-import { apiLogger } from '@/utils/logger';
-import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { useQuery } from '@tanstack/react-query';
 import { QUERY_KEYS } from '@/lib/reactQuery';
-import { useNotificationStore } from '@/store';
+import { ConfirmDialog } from '@topems/shared-components';
+import { useConfirmDialog, useCrudMutations } from '@/hooks';
 
 const SupplierManagementPage: React.FC = () => {
   const [searchTerm, setSearchTerm] = useState('');
@@ -60,9 +60,12 @@ const SupplierManagementPage: React.FC = () => {
     category: '',
     remark: '',
   });
-
-  const queryClient = useQueryClient();
-  const { addNotification } = useNotificationStore();
+  const {
+    confirmOpen: confirmDialogOpen,
+    confirmConfig: confirmDialogConfig,
+    openConfirm: openConfirmDialog,
+    closeConfirm: setConfirmDialogClosed,
+  } = useConfirmDialog();
 
   const queryKey = [QUERY_KEYS.ERP.SUPPLIERS, searchTerm, statusFilter, categoryFilter, currentPage, pageSize];
 
@@ -90,61 +93,41 @@ const SupplierManagementPage: React.FC = () => {
   const suppliers = suppliersResponse?.suppliers || [];
   const total = suppliersResponse?.total || 0;
 
-  const createMutation = useMutation({
-    mutationFn: async (data: CreateSupplierRequest) => {
+  const { createMutation, updateMutation, deleteMutation } = useCrudMutations<
+    CreateSupplierRequest,
+    UpdateSupplierRequest,
+    string
+  >({
+    queryKeyToInvalidate: [QUERY_KEYS.ERP.SUPPLIERS],
+    createFn: async (data) => {
       const response = await erpApi.suppliers.create(data);
       if (!response.success) {
         throw new Error('Failed to create supplier');
       }
       return response;
     },
-    onSuccess: () => {
-      addNotification({ type: 'success', title: '创建成功', message: '新供应商已创建' });
-      queryClient.invalidateQueries({ queryKey: [QUERY_KEYS.ERP.SUPPLIERS] });
-      setShowDialog(false);
-      resetForm();
-    },
-    onError: (error) => {
-      apiLogger.error('创建失败:', error);
-      addNotification({ type: 'error', title: '创建失败', message: '无法创建供应商' });
-    },
-  });
-
-  const updateMutation = useMutation({
-    mutationFn: async ({ id, data }: { id: string; data: UpdateSupplierRequest }) => {
-      const response = await erpApi.suppliers.update(id, data);
+    updateFn: async ({ id, data }) => {
+      const response = await erpApi.suppliers.update(String(id), data);
       if (!response.success) {
         throw new Error('Failed to update supplier');
       }
       return response;
     },
-    onSuccess: () => {
-      addNotification({ type: 'success', title: '更新成功', message: '供应商信息已更新' });
-      queryClient.invalidateQueries({ queryKey: [QUERY_KEYS.ERP.SUPPLIERS] });
-      setShowDialog(false);
-      resetForm();
-    },
-    onError: (error) => {
-      apiLogger.error('更新失败:', error);
-      addNotification({ type: 'error', title: '更新失败', message: '无法更新供应商' });
-    },
-  });
-
-  const deleteMutation = useMutation({
-    mutationFn: async (id: string) => {
-      const response = await erpApi.suppliers.delete(id);
+    deleteFn: async (id) => {
+      const response = await erpApi.suppliers.delete(String(id));
       if (!response.success) {
         throw new Error('Failed to delete supplier');
       }
       return response;
     },
-    onSuccess: () => {
-      addNotification({ type: 'success', title: '删除成功', message: '供应商已删除' });
-      queryClient.invalidateQueries({ queryKey: [QUERY_KEYS.ERP.SUPPLIERS] });
+    entityName: '供应商',
+    onCreateSuccess: () => {
+      setShowDialog(false);
+      resetForm();
     },
-    onError: (error) => {
-      apiLogger.error('删除失败:', error);
-      addNotification({ type: 'error', title: '删除失败', message: '无法删除供应商' });
+    onUpdateSuccess: () => {
+      setShowDialog(false);
+      resetForm();
     },
   });
 
@@ -158,11 +141,17 @@ const SupplierManagementPage: React.FC = () => {
   };
 
   const handleDelete = useCallback(
-    async (id: string) => {
-      if (!window.confirm('确定要删除这个供应商吗?')) return;
-      await deleteMutation.mutateAsync(id);
+    (id: string) => {
+      openConfirmDialog({
+        title: '确认删除',
+        message: '确定要删除这个供应商吗?',
+        danger: true,
+        onConfirm: () => {
+          deleteMutation.mutate(id);
+        },
+      });
     },
-    [deleteMutation]
+    [deleteMutation, openConfirmDialog]
   );
 
   const handleEdit = useCallback((supplier: Supplier) => {
@@ -832,6 +821,18 @@ const SupplierManagementPage: React.FC = () => {
           )}
         </DialogContent>
       </Dialog>
+
+      <ConfirmDialog
+        isOpen={confirmDialogOpen}
+        onClose={setConfirmDialogClosed}
+        onConfirm={() => {
+          confirmDialogConfig?.onConfirm();
+          setConfirmDialogClosed();
+        }}
+        title={confirmDialogConfig?.title || ''}
+        message={confirmDialogConfig?.message || ''}
+        danger={confirmDialogConfig?.danger}
+      />
     </PageContainer>
   );
 };

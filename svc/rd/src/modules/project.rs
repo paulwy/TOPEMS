@@ -248,7 +248,7 @@ async fn create_project(
     };
 
     let request_data = serde_json::to_value(&req).ok();
-    let response_data = if let Ok(project) = result {
+    let response_data = if let Ok(ref project) = result {
         serde_json::to_value(&project).ok()
     } else {
         None
@@ -272,6 +272,38 @@ async fn create_project(
         .await;
 
         invalidate_project_cache(&id.to_string()).await;
+
+        if let Some(ref publisher) = state.event_publisher {
+            if let Ok(project) = &result {
+                let publisher = publisher.clone();
+                let pid = project.id;
+                let pname = project.name.clone();
+                let pcode = project.code.clone();
+                let pleader = project.leader.clone();
+                let pcreated_at = project.created_at;
+                tokio::spawn(async move {
+                    let payload = topems_shared::event::RdProjectCreatedPayload {
+                        project_id: pid,
+                        project_name: pname,
+                        project_code: Some(pcode),
+                        owner_id: None,
+                        owner_name: Some(pleader),
+                        created_at: Some(pcreated_at),
+                    };
+                    if let Err(e) = publisher
+                        .publish_event(topems_shared::event::EventType::RdProjectCreated, payload)
+                        .await
+                    {
+                        tracing::warn!(
+                            "[rd] RdProjectCreated 事件发布失败（graceful fallback）: {}",
+                            e
+                        );
+                    } else {
+                        tracing::info!("[rd] RdProjectCreated 事件发布成功 - project_id={}", pid);
+                    }
+                });
+            }
+        }
     }
 
     response

@@ -1,4 +1,4 @@
-import React, { useState, useMemo, useCallback } from 'react';
+import React, { useState, useMemo, useCallback, useEffect } from 'react';
 import { PageContainer } from '@/components/common';
 import { designTokens } from '@/theme/tokens';
 import {
@@ -39,17 +39,40 @@ import {
   type ListParams,
 } from '@/api/hrm';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { useUrlListState } from '@/hooks';
 
+import { useTranslation } from 'react-i18next';
 const ct = designTokens.colors;
 
 const LeaveManagementPage: React.FC = () => {
+  const { t } = useTranslation();
   const addNotification = useNotificationStore((state) => state.addNotification);
   const queryClient = useQueryClient();
 
-  const [searchText, setSearchText] = useState('');
-  const [statusFilter, setStatusFilter] = useState('');
-  const [typeFilter, setTypeFilter] = useState('');
-  const [employeeFilter, setEmployeeFilter] = useState('');
+  // URL 同步的列表状态（搜索、分页、筛选）
+  const listState = useUrlListState<{
+    search: string;
+    employee: string;
+    type: string;
+    status: string;
+  }>({
+    defaultSearch: '',
+    defaultPageSize: 10,
+    defaultFilters: { search: '', employee: '', type: '', status: '' },
+    historyMode: 'replace',
+  });
+
+  const {
+    debouncedSearch,
+    currentPage,
+    pageSize,
+    filters,
+    setCurrentPage,
+    setPageSize,
+    setFilter,
+    setFilters,
+    clearAll,
+  } = listState;
 
   const [isModalVisible, setIsModalVisible] = useState(false);
   const [isViewModalVisible, setIsViewModalVisible] = useState(false);
@@ -66,12 +89,14 @@ const LeaveManagementPage: React.FC = () => {
 
   // React Query - 请假申请列表
   const leaveRequestsQuery = useQuery<PaginatedResult<LeaveRequest>>({
-    queryKey: ['hrm-leave-requests-list', searchText, statusFilter, typeFilter, employeeFilter],
+    queryKey: ['hrm-leave-requests-list', debouncedSearch, filters.status, filters.type, filters.employee, currentPage, pageSize],
     queryFn: async () => {
       const params: ListParams = {};
-      if (searchText) params.search = searchText;
-      if (statusFilter) params.status = statusFilter;
-      if (employeeFilter) params.employee_id = employeeFilter;
+      if (debouncedSearch) params.search = debouncedSearch;
+      if (filters.status) params.status = filters.status;
+      if (filters.employee) params.employee_id = filters.employee;
+      params.page = currentPage;
+      params.pagesize = pageSize;
       const response = await leaveApi.list(params);
       if (response.code === 200) {
         return response.data!;
@@ -111,11 +136,11 @@ const LeaveManagementPage: React.FC = () => {
   const createLeaveMutation = useMutation({
     mutationFn: (data: Partial<LeaveRequest>) => leaveApi.create(data),
     onSuccess: () => {
-      addNotification({ title: '成功', message: '创建成功', type: 'success' });
+      addNotification({ title: t('hrm.hrm_leave_page.success'), message: t('hrm.hrm_leave_page.create'), type: 'success' });
       queryClient.invalidateQueries({ queryKey: ['hrm-leave-requests-list'] });
     },
     onError: () => {
-      addNotification({ title: '失败', message: '创建失败', type: 'error' });
+      addNotification({ title: t('hrm.hrm_leave_page.fail'), message: t('hrm.hrm_leave_page.create_1'), type: 'error' });
     },
   });
 
@@ -123,33 +148,33 @@ const LeaveManagementPage: React.FC = () => {
     mutationFn: ({ id, data }: { id: string; data: Partial<LeaveRequest> }) =>
       leaveApi.update(id, data),
     onSuccess: () => {
-      addNotification({ title: '成功', message: '更新成功', type: 'success' });
+      addNotification({ title: t('hrm.hrm_leave_page.success'), message: t('hrm.hrm_leave_page.update'), type: 'success' });
       queryClient.invalidateQueries({ queryKey: ['hrm-leave-requests-list'] });
     },
     onError: () => {
-      addNotification({ title: '失败', message: '更新失败', type: 'error' });
+      addNotification({ title: t('hrm.hrm_leave_page.fail'), message: t('hrm.hrm_leave_page.update_1'), type: 'error' });
     },
   });
 
   const deleteLeaveMutation = useMutation({
     mutationFn: (id: string) => leaveApi.delete(id),
     onSuccess: () => {
-      addNotification({ title: '成功', message: '删除成功', type: 'success' });
+      addNotification({ title: t('hrm.hrm_leave_page.success'), message: t('hrm.hrm_leave_page.delete_success'), type: 'success' });
       queryClient.invalidateQueries({ queryKey: ['hrm-leave-requests-list'] });
     },
     onError: () => {
-      addNotification({ title: '失败', message: '删除失败', type: 'error' });
+      addNotification({ title: t('hrm.hrm_leave_page.fail'), message: t('hrm.hrm_leave_page.delete'), type: 'error' });
     },
   });
 
   const approveLeaveMutation = useMutation({
     mutationFn: (id: string) => leaveApi.approve(id, 'admin'),
     onSuccess: () => {
-      addNotification({ title: '成功', message: '已批准', type: 'success' });
+      addNotification({ title: t('hrm.hrm_leave_page.success'), message: t('hrm.hrm_leave_page.text_337737'), type: 'success' });
       queryClient.invalidateQueries({ queryKey: ['hrm-leave-requests-list'] });
     },
     onError: () => {
-      addNotification({ title: '失败', message: '操作失败', type: 'error' });
+      addNotification({ title: t('hrm.hrm_leave_page.fail'), message: t('hrm.hrm_leave_page.operation_failed'), type: 'error' });
     },
   });
 
@@ -157,11 +182,11 @@ const LeaveManagementPage: React.FC = () => {
     mutationFn: ({ id, reason }: { id: string; reason: string }) =>
       leaveApi.reject(id, 'admin', reason),
     onSuccess: () => {
-      addNotification({ title: '成功', message: '已拒绝', type: 'success' });
+      addNotification({ title: t('hrm.hrm_leave_page.success'), message: t('hrm.hrm_leave_page.text_81233d'), type: 'success' });
       queryClient.invalidateQueries({ queryKey: ['hrm-leave-requests-list'] });
     },
     onError: () => {
-      addNotification({ title: '失败', message: '操作失败', type: 'error' });
+      addNotification({ title: t('hrm.hrm_leave_page.fail'), message: t('hrm.hrm_leave_page.operation_failed'), type: 'error' });
     },
   });
 
@@ -170,11 +195,8 @@ const LeaveManagementPage: React.FC = () => {
   };
 
   const handleReset = useCallback(() => {
-    setSearchText('');
-    setStatusFilter('');
-    setTypeFilter('');
-    setEmployeeFilter('');
-  }, []);
+    clearAll();
+  }, [clearAll]);
 
   const handleAdd = useCallback(() => {
     setEditingLeave(null);
@@ -203,8 +225,8 @@ const LeaveManagementPage: React.FC = () => {
         }
       };
       setConfirmDialogConfig({
-        title: '确认删除',
-        message: '确定要删除这个请假申请吗？',
+        title: t('hrm.hrm_leave_page.confirm_delete'),
+        message: t('hrm.hrm_leave_page.confirm'),
         onConfirm: confirmDelete,
         danger: true,
       });
@@ -223,8 +245,8 @@ const LeaveManagementPage: React.FC = () => {
         }
       };
       setConfirmDialogConfig({
-        title: '确认批准',
-        message: '确定要批准这个请假申请吗？',
+        title: t('hrm.hrm_leave_page.confirm_1'),
+        message: t('hrm.hrm_leave_page.confirm_2'),
         onConfirm: confirmApprove,
       });
       setConfirmDialogOpen(true);
@@ -236,14 +258,14 @@ const LeaveManagementPage: React.FC = () => {
     (id: string) => {
       const confirmReject = async () => {
         try {
-          await rejectLeaveMutation.mutateAsync({ id, reason: '已拒绝' });
+          await rejectLeaveMutation.mutateAsync({ id, reason: t('hrm.hrm_leave_page.text_81233d') });
         } catch (error: unknown) {
           logger.error('Failed to reject leave request:', error);
         }
       };
       setConfirmDialogConfig({
-        title: '确认拒绝',
-        message: '确定要拒绝这个请假申请吗？',
+        title: t('hrm.hrm_leave_page.confirm_3'),
+        message: t('hrm.hrm_leave_page.confirm_4'),
         onConfirm: confirmReject,
         danger: true,
       });
@@ -278,23 +300,23 @@ const LeaveManagementPage: React.FC = () => {
 
   const getLeaveTypeText = (type: string) => {
     const types: Record<string, string> = {
-      annual: '年假',
-      sick: '病假',
-      personal: '事假',
-      maternity: '产假',
-      paternity: '陪产假',
-      other: '其他',
+      annual: t('hrm.hrm_leave_page.text_69a928'),
+      sick: t('hrm.hrm_leave_page.text_26fa6c'),
+      personal: t('hrm.hrm_leave_page.text_f571dd'),
+      maternity: t('hrm.hrm_leave_page.text_f8d792'),
+      paternity: t('hrm.hrm_leave_page.text_e4eaf1'),
+      other: t('hrm.hrm_leave_page.other'),
     };
     return types[type] || type;
   };
 
   const leaveTypes = [
-    { value: 'annual', label: '年假' },
-    { value: 'sick', label: '病假' },
-    { value: 'personal', label: '事假' },
-    { value: 'maternity', label: '产假' },
-    { value: 'paternity', label: '陪产假' },
-    { value: 'other', label: '其他' },
+    { value: 'annual', label: t('hrm.hrm_leave_page.text_69a928') },
+    { value: 'sick', label: t('hrm.hrm_leave_page.text_26fa6c') },
+    { value: 'personal', label: t('hrm.hrm_leave_page.text_f571dd') },
+    { value: 'maternity', label: t('hrm.hrm_leave_page.text_f8d792') },
+    { value: 'paternity', label: t('hrm.hrm_leave_page.text_e4eaf1') },
+    { value: 'other', label: t('hrm.hrm_leave_page.other') },
   ];
 
   const leaveStats = useMemo(() => {
@@ -311,28 +333,28 @@ const LeaveManagementPage: React.FC = () => {
     () => [
       {
         id: 'total',
-        title: '申请总数',
+        title: t('hrm.hrm_leave_page.text_88ce9c'),
         value: leaveStats.total,
         icon: <FileText size={20} />,
         color: 'primary' as const,
       },
       {
         id: 'pending',
-        title: '待审批',
+        title: t('hrm.hrm_leave_page.text_b0bf01'),
         value: leaveStats.pending,
         icon: <Clock size={20} />,
         color: 'warning' as const,
       },
       {
         id: 'approved',
-        title: '已批准',
+        title: t('hrm.hrm_leave_page.text_337737'),
         value: leaveStats.approved,
         icon: <CheckCircle size={20} />,
         color: 'success' as const,
       },
       {
         id: 'rejected',
-        title: '已拒绝',
+        title: t('hrm.hrm_leave_page.text_81233d'),
         value: leaveStats.rejected,
         icon: <XCircle size={20} />,
         color: 'error' as const,
@@ -345,37 +367,37 @@ const LeaveManagementPage: React.FC = () => {
     () => [
       {
         id: 'employee',
-        label: '员工',
+        label: t('hrm.hrm_leave_page.text_2ed392'),
         minWidth: 150,
         render: (row) => employees.find((e) => e.id === row.employee_id)?.name || '-',
       },
       {
         id: 'leave_type',
-        label: '休假类型',
+        label: t('hrm.hrm_leave_page.type'),
         minWidth: 120,
         render: (row) => getLeaveTypeText(row.leave_type),
       },
       {
         id: 'start_date',
-        label: '开始日期',
+        label: t('hrm.hrm_leave_page.start_date'),
         minWidth: 120,
         render: (row) => row.start_date,
       },
       {
         id: 'end_date',
-        label: '结束日期',
+        label: t('hrm.hrm_leave_page.end_date'),
         minWidth: 120,
         render: (row) => row.end_date,
       },
       {
         id: 'days',
-        label: '天数',
+        label: t('hrm.hrm_leave_page.text_aaf707'),
         minWidth: 80,
         render: (row) => row.days,
       },
       {
         id: 'status',
-        label: '状态',
+        label: t('hrm.hrm_leave_page.status'),
         minWidth: 100,
         render: (row) => getLeaveStatusBadge(row.status),
       },
@@ -386,25 +408,25 @@ const LeaveManagementPage: React.FC = () => {
   const rowActions = useMemo<RowAction<LeaveRequest>[]>(
     () => [
       {
-        label: '查看',
+        label: t('hrm.hrm_leave_page.view'),
         icon: <Eye size={16} />,
         onClick: handleView,
       },
       {
-        label: '编辑',
+        label: t('hrm.hrm_leave_page.edit'),
         icon: <Edit size={16} />,
         onClick: handleEdit,
         color: 'primary',
       },
       {
-        label: '批准',
+        label: t('hrm.hrm_leave_page.text_7a712b'),
         icon: <Check size={16} />,
         onClick: (row) => handleApprove(row.id),
         color: 'success',
         show: (row) => row.status === 'pending',
       },
       {
-        label: '拒绝',
+        label: t('hrm.hrm_leave_page.text_7173f8'),
         icon: <X size={16} />,
         onClick: (row) => handleReject(row.id),
         color: 'error',
@@ -412,7 +434,7 @@ const LeaveManagementPage: React.FC = () => {
         divider: true,
       },
       {
-        label: '删除',
+        label: t('hrm.hrm_leave_page.delete_1'),
         icon: <Trash2 size={16} />,
         onClick: (row) => handleDelete(row.id),
         color: 'error',
@@ -446,94 +468,64 @@ const LeaveManagementPage: React.FC = () => {
           columns={columns}
           data={data.items}
           loading={loading}
+          searchable
+          searchValue={filters.search as string}
+          onSearchChange={(val) => setFilter('search', val)}
           pagination={{
-            page: data.page - 1,
-            pageSize: data.pagesize,
+            page: currentPage - 1,
+            pageSize,
             total: data.total,
-            onPageChange: (page) =>
-              queryClient.setQueryData(
-                ['hrm-leave-requests-list'],
-                (prev: PaginatedResult<LeaveRequest> | undefined) => ({
-                  ...(prev || { items: [], total: 0, page: 1, pagesize: 10 }),
-                  page: page + 1,
-                })
-              ),
-            onPageSizeChange: (pageSize) =>
-              queryClient.setQueryData(
-                ['hrm-leave-requests-list'],
-                (prev: PaginatedResult<LeaveRequest> | undefined) => ({
-                  ...(prev || { items: [], total: 0, page: 1, pagesize: 10 }),
-                  pagesize: pageSize,
-                  page: 1,
-                })
-              ),
+            onPageChange: (page) => setCurrentPage(page + 1),
+            onPageSizeChange: (size) => setPageSize(size),
           }}
           rowActions={rowActions}
           onRowClick={handleView}
-          emptyMessage='暂无休假申请数据'
+          emptyMessage={t('hrm.hrm_leave_page.no_data')}
           filters={[
             {
-              id: 'search',
-              label: '搜索',
-              type: 'text',
-              placeholder: '搜索员工姓名...',
-            },
-            {
               id: 'employee',
-              label: '员工',
+              label: t('hrm.hrm_leave_page.text_2ed392'),
               type: 'select',
               options: employees.map((e) => ({ label: e.name, value: e.id })),
             },
             {
               id: 'type',
-              label: '休假类型',
+              label: t('hrm.hrm_leave_page.type'),
               type: 'select',
               options: leaveTypes,
             },
             {
               id: 'status',
-              label: '状态',
+              label: t('hrm.hrm_leave_page.status'),
               type: 'select',
               options: [
-                { label: '全部状态', value: '' },
-                { label: '待审批', value: 'pending' },
-                { label: '已批准', value: 'approved' },
-                { label: '已拒绝', value: 'rejected' },
-                { label: '已取消', value: 'cancelled' },
+                { label: t('hrm.hrm_leave_page.status_1'), value: '' },
+                { label: t('hrm.hrm_leave_page.text_b0bf01'), value: 'pending' },
+                { label: t('hrm.hrm_leave_page.text_337737'), value: 'approved' },
+                { label: t('hrm.hrm_leave_page.text_81233d'), value: 'rejected' },
+                { label: t('hrm.hrm_leave_page.cancelled'), value: 'cancelled' },
               ],
             },
           ]}
           filtersValue={{
-            search: searchText,
-            employee: employeeFilter,
-            type: typeFilter,
-            status: statusFilter,
+            employee: filters.employee,
+            type: filters.type,
+            status: filters.status,
           }}
-          onFilterChange={(filters) => {
-            if (filters.search !== undefined) setSearchText(filters.search as string);
-            if (filters.employee !== undefined) setEmployeeFilter(filters.employee as string);
-            if (filters.type !== undefined) setTypeFilter(filters.type as string);
-            if (filters.status !== undefined) setStatusFilter(filters.status as string);
+          onFilterChange={(newFilters) => {
+            setFilters(newFilters as Record<string, string>);
           }}
-          onSearch={handleSearch}
           actions={[
             {
-              label: '搜索',
-              variant: 'outlined',
-              onClick: handleSearch,
-            },
-            {
-              label: '重置',
+              label: t('hrm.hrm_leave_page.reset'),
               variant: 'outlined',
               onClick: handleReset,
             },
           ]}
           exportable
-          exportFileName='休假申请列表'
-          persistFilters
-          persistSearch
+          exportFileName={t('hrm.hrm_leave_page.list')}
           emptyActionButton={{
-            label: '新增休假申请',
+            label: t('hrm.hrm_leave_page.add'),
             icon: <Plus size={16} />,
             onClick: handleAdd,
           }}
@@ -542,34 +534,34 @@ const LeaveManagementPage: React.FC = () => {
         <Dialog
           open={isModalVisible}
           onClose={() => setIsModalVisible(false)}
-          title={editingLeave ? '编辑休假申请' : '新增休假申请'}
+          title={editingLeave ? t('hrm.hrm_leave_page.edit_1') : t('hrm.hrm_leave_page.add')}
           maxWidth='sm'
           fullWidth
-          cancelButton={{ label: '取消' }}
-          confirmButton={{ label: '确定', onClick: handleModalOk }}
+          cancelButton={{ label: t('hrm.hrm_leave_page.cancel') }}
+          confirmButton={{ label: t('hrm.hrm_leave_page.confirm_5'), onClick: handleModalOk }}
         >
           <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2.5, pt: 1 }}>
             <FormSelect
               name='employee_id'
-              label='员工 *'
+              label={t('hrm.hrm_leave_page.text_1a8eb0')}
               value={(formData as LeaveRequest)?.employee_id || ''}
               options={[
-                { value: '', label: '请选择员工' },
+                { value: '', label: t('hrm.hrm_leave_page.please_select') },
                 ...employees.map((e) => ({ value: e.id, label: e.name })),
               ]}
               onChange={(value) => handleInputChange('employee_id', value as string | number)}
             />
             <FormSelect
               name='leave_type'
-              label='休假类型 *'
+              label={t('hrm.hrm_leave_page.type_1')}
               value={(formData as LeaveRequest)?.leave_type || ''}
-              options={[{ value: '', label: '请选择休假类型' }, ...leaveTypes]}
+              options={[{ value: '', label: t('hrm.hrm_leave_page.please_select_1') }, ...leaveTypes]}
               onChange={(value) => handleInputChange('leave_type', value as string | number)}
             />
             <Box sx={{ display: 'flex', gap: 2 }}>
               <FormField
                 name='start_date'
-                label='开始日期 *'
+                label={t('hrm.hrm_leave_page.start_date_1')}
                 type='date'
                 value={(formData as LeaveRequest)?.start_date || ''}
                 onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
@@ -580,7 +572,7 @@ const LeaveManagementPage: React.FC = () => {
               />
               <FormField
                 name='end_date'
-                label='结束日期 *'
+                label={t('hrm.hrm_leave_page.end_date_1')}
                 type='date'
                 value={(formData as LeaveRequest)?.end_date || ''}
                 onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
@@ -592,25 +584,25 @@ const LeaveManagementPage: React.FC = () => {
             </Box>
             <FormField
               name='days'
-              label='休假天数 *'
+              label={t('hrm.hrm_leave_page.text_c5dc09')}
               type='number'
               value={(formData as LeaveRequest)?.days || ''}
               onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
                 handleInputChange('days', parseFloat(e.target.value) || 0)
               }
-              placeholder='请输入休假天数'
+              placeholder={t('hrm.hrm_leave_page.please_input')}
               fullWidth
             />
             <FormField
               name='reason'
-              label='备注'
+              label={t('hrm.hrm_leave_page.remark')}
               value={(formData as LeaveRequest)?.reason || ''}
               onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
                 handleInputChange('reason', e.target.value)
               }
               multiline
               rows={3}
-              placeholder='请输入备注信息'
+              placeholder={t('hrm.hrm_leave_page.please_input_1')}
               fullWidth
             />
           </Box>
@@ -619,10 +611,10 @@ const LeaveManagementPage: React.FC = () => {
         <Dialog
           open={isViewModalVisible}
           onClose={() => setIsViewModalVisible(false)}
-          title='休假详情'
+          title={t('hrm.hrm_leave_page.detail')}
           maxWidth='sm'
           fullWidth
-          confirmButton={{ label: '关闭', onClick: () => setIsViewModalVisible(false) }}
+          confirmButton={{ label: t('hrm.hrm_leave_page.close'), onClick: () => setIsViewModalVisible(false) }}
         >
           {editingLeave && (
             <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1.5 }}>

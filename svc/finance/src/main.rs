@@ -1,6 +1,7 @@
 // TOPEMS Finance Service
 // =============================================================================
 
+pub mod event_handlers;
 pub mod models;
 pub mod modules;
 pub mod services;
@@ -87,10 +88,28 @@ async fn main() -> anyhow::Result<()> {
         .unwrap_or_else(|_| "http://localhost:8000".to_string());
     let workflow_client = WorkflowClient::new(&workflow_url);
 
+    let event_publisher = match topems_shared::event::EventPublisher::new("topems-finance") {
+        Ok(publisher) => {
+            tracing::info!("📢 事件发布服务初始化成功");
+            Some(std::sync::Arc::new(publisher))
+        }
+        Err(e) => {
+            tracing::warn!("⚠️ 事件发布服务初始化失败（不阻塞启动）: {}", e);
+            None
+        }
+    };
+
+    if let Err(e) =
+        event_handlers::start_event_subscribers(pool.clone(), event_publisher.clone()).await
+    {
+        tracing::warn!("⚠️ Finance 事件订阅者启动失败: {}", e);
+    }
+
     let state = AppState {
         auth_state: auth_state.clone(),
         pool: pool.clone(),
         workflow_client,
+        event_publisher,
     };
 
     let cors = create_cors_layer();

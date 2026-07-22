@@ -16,25 +16,23 @@
 
 mod middleware;
 mod shared;
+mod workflow;
 
 pub mod modules;
 
 use std::env;
 
 use std::net::SocketAddr;
-use std::sync::Arc;
 
 use axum::{extract::State, routing::get, Json, Router};
 use axum_prometheus::PrometheusMetricLayer;
 use sqlx::PgPool;
 
 use topems_shared::{
-    auth_middleware, create_cors_layer, get_api_info_handler, init_telemetry,
-    rate_limit_middleware, register_routes_with_legacy_alias, rls_middleware, simple_health_check,
-    telemetry_middleware, ApiResponse, AuthState, RateLimitConfig, RateLimitMiddleware,
-    ServiceHealth, SimpleHealthConfig,
+    auth_middleware, create_cors_layer, event::EventPublisher, get_api_info_handler,
+    init_telemetry, rls_middleware, simple_health_check, telemetry_middleware, wrap_group2_router,
+    ApiResponse, AuthState, RouteCompatConfig, ServiceHealth, SimpleHealthConfig,
 };
-use utoipa::OpenApi;
 
 pub use shared::*;
 
@@ -45,6 +43,8 @@ pub struct AppState {
     pub auth_state: AuthState,
     pub pool: PgPool,
     pub health_config: SimpleHealthConfig,
+    pub event_publisher: Option<std::sync::Arc<EventPublisher>>,
+    pub workflow_client: workflow::WorkflowClient,
 }
 
 impl axum::extract::FromRef<AppState> for AuthState {
@@ -53,26 +53,11 @@ impl axum::extract::FromRef<AppState> for AuthState {
     }
 }
 
-#[derive(OpenApi)]
-#[openapi(
-    tags(
-        (name = "QMS", description = "质量管理"),
-        (name = "Quality", description = "质量标准"),
-        (name = "Inspection", description = "检验记录"),
-        (name = "FMEA", description = "FMEA"),
-        (name = "NonConformance", description = "不合格品处理"),
-        (name = "Health", description = "健康检查"),
-    ),
-    info(
-        title = "TOPEMS-qms API",
-        version = "1.0.0",
-        description = "TOPEMS 质量管理服务 - 质量标准、检验记录、不合格品处理、FMEA",
-    ),
-    servers(
-        (url = "http://localhost:8028", description = "本地开发环境"),
-    )
-)]
-struct ApiDoc;
+impl axum::extract::FromRef<AppState> for workflow::WorkflowClient {
+    fn from_ref(state: &AppState) -> Self {
+        state.workflow_client.clone()
+    }
+}
 
 // ==================== 主入口 ====================
 
@@ -112,10 +97,28 @@ async fn main() -> anyhow::Result<()> {
     let auth_state = AuthState::from_env();
     let health_config = SimpleHealthConfig::new("topems-qms").with_db(pool.clone());
 
+    let event_publisher = match EventPublisher::new("topems-qms") {
+        Ok(publisher) => {
+            tracing::info!("📢 事件发布服务初始化成功");
+            Some(std::sync::Arc::new(publisher))
+        }
+        Err(e) => {
+            tracing::warn!("⚠️ 事件发布服务初始化失败（不阻塞启动）: {}", e);
+            None
+        }
+    };
+
+    let workflow_url = std::env::var("WORKFLOW_SERVICE_URL")
+        .unwrap_or_else(|_| "http://localhost:8001".to_string());
+    let workflow_client = workflow::WorkflowClient::new(&workflow_url);
+    tracing::info!("🔗 工作流服务客户端初始化成功: {}", workflow_url);
+
     let state = AppState {
         auth_state,
         pool,
         health_config,
+        event_publisher,
+        workflow_client,
     };
 
     let cors = create_cors_layer();
@@ -133,20 +136,11 @@ async fn main() -> anyhow::Result<()> {
             get(move || async move { metric_handle.render() }),
         );
 
-    let rate_limit_config = RateLimitConfig::new(200, 60)
-        .with_by_user_id(false)
-        .with_by_ip(true);
-    let rate_limiter = Arc::new(RateLimitMiddleware::new(rate_limit_config));
-    let rate_limit_layer = axum::middleware::from_fn({
-        let mw = rate_limiter.clone();
-        move |req, next| {
-            let mw = mw.clone();
-            async move { rate_limit_middleware(mw, req, next).await }
-        }
-    });
-
+    // Protected routes (auth required)
     let protected_routes = Router::new()
         .merge(modules::create_routes())
+        // Health & Metrics
+        .route("/api/health/detailed", get(detailed_health))
         .layer(axum::middleware::from_fn_with_state(
             state.auth_state.clone(),
             auth_middleware,
@@ -154,29 +148,18 @@ async fn main() -> anyhow::Result<()> {
         .layer(axum::middleware::from_fn_with_state(
             state.pool.clone(),
             rls_middleware,
-        ))
-        .layer(rate_limit_layer);
+        ));
 
-    let app = register_routes_with_legacy_alias(
-        Router::new().merge(public_routes),
-        "/api/qms",
-        &["/api/v1/qms"],
-        protected_routes,
-    )
-    .route("/api/health/detailed", get(detailed_health))
-    .route(
-        "/api-docs/openapi.json",
-        get(|| async {
-            serde_json::to_string_pretty(&ApiDoc::openapi()).unwrap_or_else(|e| {
-                tracing::error!("Failed to serialize OpenAPI spec: {}", e);
-                "{}".to_string()
-            })
-        }),
-    )
-    .layer(cors)
-    .layer(axum::middleware::from_fn(telemetry_middleware))
-    .layer(prometheus_layer)
-    .with_state(state);
+    let app = Router::new()
+        .merge(public_routes)
+        .nest("/api/qms", protected_routes)
+        .layer(cors)
+        .layer(axum::middleware::from_fn(telemetry_middleware))
+        .layer(prometheus_layer)
+        .with_state(state);
+
+    let cfg = RouteCompatConfig::new("qms", "/api/qms", &[]);
+    let app = wrap_group2_router(app, cfg);
 
     let port = std::env::var("QMS_PORT")
         .unwrap_or_else(|_| "8050".to_string())

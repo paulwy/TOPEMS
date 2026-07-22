@@ -1,5 +1,5 @@
 import React, { useState, useMemo } from 'react';
-import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { useQuery, useQueryClient } from '@tanstack/react-query';
 import {
   Box,
   Typography,
@@ -23,6 +23,7 @@ import { accountApi } from '@/api/finance/account';
 import type { Account, BalanceDirection } from '@/types/finance';
 import { useNotificationStore } from '@/store';
 import { logger } from '@/utils/logger';
+import { useCrudMutations } from '@/hooks';
 
 const ACCOUNT_TYPE_CONFIG: Record<
   string,
@@ -88,38 +89,16 @@ export default function AccountManagementPage() {
       }),
   });
 
-  const createAccount = useMutation({
-    mutationFn: (data: Partial<Account>) => accountApi.create(data),
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['admin-accounts'] });
-      addNotification({ title: '创建成功', message: '科目创建成功', type: 'success' });
-    },
-    onError: () => {
-      addNotification({ title: '创建失败', message: '创建科目失败', type: 'error' });
-    },
-  });
-
-  const updateAccount = useMutation({
-    mutationFn: ({ id, data }: { id: string; data: Partial<Account> }) =>
-      accountApi.update(id, data),
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['admin-accounts'] });
-      addNotification({ title: '更新成功', message: '科目更新成功', type: 'success' });
-    },
-    onError: () => {
-      addNotification({ title: '更新失败', message: '更新科目失败', type: 'error' });
-    },
-  });
-
-  const deleteAccount = useMutation({
-    mutationFn: (id: string) => accountApi.delete(id),
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['admin-accounts'] });
-      addNotification({ title: '删除成功', message: '科目删除成功', type: 'success' });
-    },
-    onError: () => {
-      addNotification({ title: '删除失败', message: '删除科目失败', type: 'error' });
-    },
+  const {
+    createMutation: createAccount,
+    updateMutation: updateAccount,
+    deleteMutation: deleteAccount,
+  } = useCrudMutations<Partial<Account>, Partial<Account>, string>({
+    queryKeyToInvalidate: ['admin-accounts'],
+    createFn: (data) => accountApi.create(data),
+    updateFn: ({ id, data }) => accountApi.update(String(id), data),
+    deleteFn: (id) => accountApi.delete(String(id)),
+    entityName: '科目',
   });
 
   const filteredAccounts = useMemo(() => {

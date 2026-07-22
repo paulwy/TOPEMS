@@ -23,10 +23,15 @@ pub mod settlement;
 pub mod statistics;
 
 use axum::Router;
+use std::sync::Arc;
+use topems_shared::event::EventPublisher;
 
-pub fn create_routes(pool: sqlx::PgPool) -> Router {
+pub fn create_routes(pool: sqlx::PgPool, event_publisher: Option<Arc<EventPublisher>>) -> Router {
     Router::new()
-        .merge(project::create_routes(pool.clone()))
+        .merge(project::create_routes(
+            pool.clone(),
+            event_publisher.clone(),
+        ))
         .merge(project_phase::create_routes(pool.clone()))
         .merge(project_milestone::create_routes(pool.clone()))
         .merge(project_member::create_routes(pool.clone()))

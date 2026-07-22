@@ -1,21 +1,30 @@
 pub mod api;
+pub mod api_security;
 pub mod api_version;
 pub mod audit;
+pub mod audit_soft_delete;
+pub mod performance;
 pub mod auth;
 pub mod backup;
 pub mod cache;
 pub mod cluster;
 pub mod compression;
 pub mod config;
+pub mod config_center;
 pub mod cors;
 pub mod crud;
+pub mod data_governance;
 pub mod database;
 pub mod embedding;
 pub mod error;
 pub mod event;
+pub mod feature_flag;
+#[cfg(feature = "grpc")]
+pub mod grpc;
 pub mod health;
 pub mod hrm;
 pub mod id;
+pub mod layers;
 pub mod logging;
 pub mod messaging;
 pub mod metrics;
@@ -23,14 +32,16 @@ pub mod middleware;
 pub mod migration;
 pub mod monitoring;
 pub mod notification;
+pub mod observability;
 pub mod ollama_client;
-pub mod performance;
 pub mod permission;
+pub mod permission_center;
 pub mod query_optimizer;
 pub mod redis;
 pub mod repository;
 pub mod response;
 pub mod rls;
+pub mod saga;
 pub mod schema;
 pub mod security;
 pub mod service_bootstrap;
@@ -64,8 +75,8 @@ pub use backup::{
     BackupStatistics, BackupStatus, BackupType, CompressionType, RestoreRequest,
 };
 pub use cache::{
-    CacheManager, CacheStatistics, EvictionPolicy, InMemoryCache, MultiLevelCacheManager,
-    MultiLevelCacheStatistics,
+    CacheKeyGenerator, CacheManager, CacheStatistics, CacheWarmer, DistributedCacheManager,
+    EvictionPolicy, InMemoryCache, MultiLevelCacheManager, MultiLevelCacheStatistics,
 };
 pub use cluster::{
     ClusterConfig, ClusterError, ClusterEvent, ClusterEventType, ClusterManager, ClusterMetrics,
@@ -78,21 +89,36 @@ pub use config::enhanced::{
 pub use config::{
     get_default_port, AppConfig, CacheConfig, Config, ServiceConfig, ServiceRegistry,
 };
+pub use config_center::{
+    ConfigAuditLog, ConfigCenter, ConfigSchema, ConfigType, ConfigVersion, ValidationRule,
+};
+pub use data_governance::{
+    BuiltInMaskingRules, ClassificationEngine, ClassificationRule, ComplianceAuditEvent,
+    ComplianceAuditor, ComplianceConfig, ComplianceEventType, ComplianceReport,
+    ComplianceReportGenerator, ComplianceReportType, ComplianceRequirement, ComplianceSummary,
+    DataClassification, DataErasureResult, DataExportResult, DataMaskingEngine, DataSubject,
+    DataSubjectRight, DataSubjectRightsManager, DataTag, DsrRequest, DsrRequestStatus,
+    DsrSummary, EntityAccessStats, EntityDataTags, MaskingRule, MaskingStrategy,
+};
 pub use cors::create_cors_layer;
 pub use database::{
     check_pool_health, create_database_pool, test_database_connection, HealthCheckResult,
+    ReadWriteConfig, ReadWritePool,
 };
 pub use error::{Result, TopemsError};
 pub use event::{
-    EhsAccidentReportedPayload, EhsHazardReportedPayload, Event, EventError, EventPublisher,
-    EventResult, EventSubscriber, EventType, HrmDepartmentCreatedPayload,
-    HrmDepartmentDeletedPayload, HrmDepartmentUpdatedPayload, HrmEmployeeCreatedPayload,
-    HrmEmployeeUpdatedPayload, LimsInspectionAbnormalDetectedPayload,
+    CacheInvalidatedPayload, EhsAccidentReportedPayload, EhsHazardReportedPayload, Event,
+    EventError, EventPublisher, EventResult, EventSubscriber, EventType,
+    HrmDepartmentCreatedPayload, HrmDepartmentDeletedPayload, HrmDepartmentUpdatedPayload,
+    HrmEmployeeCreatedPayload, HrmEmployeeUpdatedPayload, LimsInspectionAbnormalDetectedPayload,
     LimsInspectionResultSubmittedPayload, LimsSampleRegisteredPayload, MasterDataAction,
     MasterDataDomain, MasterDataEvent, MasterDataPublisher, MasterDataRef, PermissionChangedPayload,
     PmProjectCreatedPayload, PmProjectUpdatedPayload, PmTaskCreatedPayload, PmTaskDeletedPayload,
     PmTaskUpdatedPayload, PositionCreatedPayload, PositionDeletedPayload, PositionUpdatedPayload,
     QmsCorrectiveActionCreatedPayload, QmsInspectionCompletedPayload,
+};
+pub use feature_flag::{
+    FeatureCondition, FeatureContext, FeatureFlag, FeatureFlagService, FeatureState,
 };
 pub use health::{
     build_health_response, check_http_health, create_health_router, create_metrics_router,
@@ -101,6 +127,7 @@ pub use health::{
     ServiceMonitor, SimpleHealthConfig, SystemMetrics,
 };
 pub use hrm::{AppState, PaginatedResult, PaginationQuery};
+pub use layers::{can_depend, module_layer, modules_by_layer, Layer};
 pub use logging::{
     create_log_filter, generate_request_id, generate_span_id, generate_trace_id, get_current_request_id,
     get_current_trace_id, init_logging, inject_request_context, request_context_middleware,
@@ -126,9 +153,13 @@ pub use performance::{
     MetricsSnapshot, PerformanceMetrics, RequestTimer, TableStats,
 };
 pub use permission::{
-    check_any_module_permission, check_module_permission, check_resource_permission, DataCondition,
-    DataPermission, ModulePermission, PermissionTemplate, Position, ResourcePermission,
+    check_any_module_permission, check_module_permission, check_resource_permission,
+    get_all_module_permissions, get_module_actions, DataCondition, DataPermission, ModuleCode,
+    ModulePermission, PermissionAction, PermissionCacheStats, PermissionChangeType,
+    PermissionMetadata, PermissionMetadataCache, PermissionScope, PermissionTemplate, Position,
+    ResourcePermission,
 };
+pub use permission_center::{check_permission_with_scope, PermissionCenterClient};
 
 pub use middleware::{
     current_timestamp, department_middleware, enhanced_rate_limit_middleware, generate_nonce,
@@ -141,8 +172,8 @@ pub use query_optimizer::{
     NPlusOneWarning, PaginationOptimizer, QueryOptimizationSuggestion,
 };
 pub use redis::{
-    BloomFilter, CacheKeyGenerator, CacheProtectionConfig, CacheService, CacheStatisticsCollector,
-    RedisCacheService, RedisPool, UnifiedCacheManager,
+    BloomFilter, CacheKeyGenerator as RedisCacheKeyGenerator, CacheProtectionConfig, CacheService,
+    CacheStatisticsCollector, RedisCacheService, RedisPool, UnifiedCacheManager,
 };
 pub use repository::{
     PaginatedQuery, PaginatedResult as RepoPaginatedResult, QueryBuilder, Repository,
@@ -231,3 +262,32 @@ pub use api::{
 
 // 数据压缩中间件模块导出
 pub use compression::{CompressionAlgorithm, CompressionConfig, CompressionMiddleware};
+
+// Saga 分布式事务编排器模块导出
+pub use saga::{
+    InMemorySagaStore, PostgresSagaStore, SagaError, SagaInstance, SagaOrchestrator, SagaResult,
+    SagaStatus, SagaStep, SagaStepDefinition, SagaStore, StepStatus,
+};
+
+// 可观测性聚合模块导出（SLO + 日志查询 + 告警分级）
+// 注意：AlertRule/AlertSeverity/LogQuery/LogEntry 与 monitoring/logging 模块重名，
+// 此处使用 Observability 前缀别名避免 E0252 重复定义错误。
+// 如需使用 observability 命名空间下的原始类型，可直接通过 `observability::` 路径访问。
+pub use observability::presets::{standard_slos_for_all_services, standard_slos_for_service};
+pub use observability::{
+    AlertEvent, AlertManager, AlertRule as ObservabilityAlertRule,
+    AlertSeverity as ObservabilityAlertSeverity, AlertState, AlertStats, InMemoryLogStore,
+    LogEntry as ObservabilityLogEntry, LogLevel, LogQuery as ObservabilityLogQuery, LogQueryError,
+    LogQueryProvider, LogQueryResult, LogStats as ObservabilityLogStats, ObservabilityAggregator,
+    ObservabilityDashboard, SLODefinition, SLOManager, SLOMeasurement, SLOReport, SLOStatus,
+    SLOType,
+};
+
+// gRPC 微服务基础模块导出（V24.0 模块 C）
+// 仅当启用 grpc feature 时生效
+#[cfg(feature = "grpc")]
+pub use grpc::{
+    DependencyProbe, GrpcChannelPool, GrpcHealthCheckResponse, GrpcHealthChecker, GrpcHealthServer,
+    GrpcHealthState, GrpcHealthStatus, GrpcPoolConfig, GrpcPoolError, GrpcPoolStats, HealthProbeId,
+    LoadBalancingStrategy, PooledChannel, ProbeKind,
+};

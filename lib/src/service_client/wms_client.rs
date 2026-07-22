@@ -29,5 +29,14 @@ crate::define_service_client!(
         list_stocktake(page: i32, page_size: i32) -> ApiResponse<Vec<serde_json::Value>> {
             get => "/api/wms/stocktake?page={}&pagesize={}"
         }
+        update_inventory(material_id: &str) -> ApiResponse<serde_json::Value> {
+            put => "/api/wms/inventory/{}"; body: data: &serde_json::Value
+        }
+        create_inventory_movement() -> ApiResponse<serde_json::Value> {
+            post => "/api/wms/inventory-movements"; body: data: &serde_json::Value
+        }
+        list_inventory_movements_by_ref(ref_id: &str, ref_type: &str) -> ApiResponse<serde_json::Value> {
+            get => "/api/wms/inventory-movements?ref_id={}&ref_type={}"
+        }
     }
 );

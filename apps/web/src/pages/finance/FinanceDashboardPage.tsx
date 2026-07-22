@@ -21,9 +21,11 @@ import { BarChartComponent } from '@/components/charts';
 import { LineChartComponent } from '@/components/charts';
 import { PieChartComponent } from '@/components/charts';
 
+import { useTranslation } from 'react-i18next';
 const ct = designTokens.colors;
 
 const FinanceDashboardPage: React.FC = () => {
+  const { t } = useTranslation();
   const navigate = useNavigate();
 
   const { data: statsData, isLoading: loading } = useQuery<FinanceDashboardStats | null>({
@@ -43,56 +45,56 @@ const FinanceDashboardPage: React.FC = () => {
     return [
       {
         id: 'voucher-total',
-        title: '凭证总数',
+        title: t('finance.finance_dashboard_page.text_551f4c'),
         value: statsData.total_vouchers.toLocaleString(),
         icon: <FileText size={24} />,
         change: 0,
-        changeLabel: '较上月',
+        changeLabel: t('finance.finance_dashboard_page.last_month'),
         color: 'primary',
       },
       {
         id: 'voucher-draft',
-        title: '草稿凭证',
+        title: t('finance.finance_dashboard_page.text_5c5e91'),
         value: statsData.draft_vouchers.toLocaleString(),
         icon: <FileText size={24} />,
         change: 0,
-        changeLabel: '较上月',
+        changeLabel: t('finance.finance_dashboard_page.last_month'),
         color: 'info',
       },
       {
         id: 'receivable',
-        title: '应收余额',
+        title: t('finance.finance_dashboard_page.text_c29613'),
         value: `¥${statsData.total_receivables.toLocaleString()}`,
         icon: <TrendingUp size={24} />,
         change: 0,
-        changeLabel: '较上月',
+        changeLabel: t('finance.finance_dashboard_page.last_month'),
         color: 'success',
       },
       {
         id: 'payable',
-        title: '应付余额',
+        title: t('finance.finance_dashboard_page.text_55c9eb'),
         value: `¥${statsData.total_payables.toLocaleString()}`,
         icon: <TrendingDown size={24} />,
         change: 0,
-        changeLabel: '较上月',
+        changeLabel: t('finance.finance_dashboard_page.last_month'),
         color: 'warning',
       },
       {
         id: 'pending-approvals',
-        title: '待审批',
+        title: t('finance.finance_dashboard_page.text_b0bf01'),
         value: statsData.pending_approvals.toLocaleString(),
         icon: <DollarSign size={24} />,
         change: 0,
-        changeLabel: '较上月',
+        changeLabel: t('finance.finance_dashboard_page.last_month'),
         color: 'success',
       },
       {
         id: 'pending-payments',
-        title: '待支付',
+        title: t('finance.finance_dashboard_page.text_9246fe'),
         value: statsData.pending_payments.toLocaleString(),
         icon: <BarChart3 size={24} />,
         change: 0,
-        changeLabel: '较上月',
+        changeLabel: t('finance.finance_dashboard_page.last_month'),
         color: 'primary',
       },
     ];
@@ -101,27 +103,27 @@ const FinanceDashboardPage: React.FC = () => {
   const charts: ChartCard[] = useMemo(() => {
     if (!statsData) return [];
     const voucherTrendData = [
-      { name: '草稿', value: statsData.draft_vouchers },
-      { name: '已提交', value: statsData.submitted_vouchers },
-      { name: '已审批', value: statsData.approved_vouchers },
-      { name: '已过账', value: statsData.posted_vouchers },
+      { name: t('finance.finance_dashboard_page.text_22b433'), value: statsData.draft_vouchers },
+      { name: t('finance.finance_dashboard_page.submit'), value: statsData.submitted_vouchers },
+      { name: t('finance.finance_dashboard_page.text_618acb'), value: statsData.approved_vouchers },
+      { name: t('finance.finance_dashboard_page.text_aaea67'), value: statsData.posted_vouchers },
     ];
     const receivablePayableData = [
-      { name: '应收', value: statsData.total_receivables },
-      { name: '逾期应收', value: statsData.overdue_receivables },
-      { name: '应付', value: statsData.total_payables },
-      { name: '逾期应付', value: statsData.overdue_payables },
+      { name: t('finance.finance_dashboard_page.text_fccab9'), value: statsData.total_receivables },
+      { name: t('finance.finance_dashboard_page.text_19a5b0'), value: statsData.overdue_receivables },
+      { name: t('finance.finance_dashboard_page.text_855bfd'), value: statsData.total_payables },
+      { name: t('finance.finance_dashboard_page.text_4f9d0d'), value: statsData.overdue_payables },
     ];
     const expenseCategoryData = [
-      { name: '待审批', value: statsData.pending_approvals },
-      { name: '待支付', value: statsData.pending_payments },
-      { name: '凭证', value: statsData.total_vouchers },
-      { name: '付款', value: statsData.total_payments },
+      { name: t('finance.finance_dashboard_page.text_b0bf01'), value: statsData.pending_approvals },
+      { name: t('finance.finance_dashboard_page.text_9246fe'), value: statsData.pending_payments },
+      { name: t('finance.finance_dashboard_page.text_94171c'), value: statsData.total_vouchers },
+      { name: t('finance.finance_dashboard_page.text_474cd0'), value: statsData.total_payments },
     ];
     return [
       {
         id: 'voucher-trend',
-        title: '凭证状态分布',
+        title: t('finance.finance_dashboard_page.status'),
         chart: (
           <BarChartComponent
             data={voucherTrendData}
@@ -133,7 +135,7 @@ const FinanceDashboardPage: React.FC = () => {
       },
       {
         id: 'receivable-payable',
-        title: '应收应付对比',
+        title: t('finance.finance_dashboard_page.text_b1b956'),
         chart: (
           <LineChartComponent
             data={receivablePayableData}
@@ -145,7 +147,7 @@ const FinanceDashboardPage: React.FC = () => {
       },
       {
         id: 'expense-category',
-        title: '业务概览',
+        title: t('finance.finance_dashboard_page.text_039481'),
         chart: <PieChartComponent data={expenseCategoryData} />,
         height: 300,
       },
@@ -156,42 +158,42 @@ const FinanceDashboardPage: React.FC = () => {
     () => [
       {
         id: 'voucher-manage',
-        label: '凭证管理',
+        label: t('finance.finance_dashboard_page.text_161d77'),
         icon: <FileText size={20} />,
         onClick: () => navigate(FINANCE_PATHS.vouchers),
         color: ct.primary.dark,
       },
       {
         id: 'ledger-manage',
-        label: '总账管理',
+        label: t('finance.finance_dashboard_page.text_3c213e'),
         icon: <BookOpen size={20} />,
         onClick: () => navigate(FINANCE_PATHS.ledger),
         color: ct.purple[700],
       },
       {
         id: 'receivable-manage',
-        label: '应收管理',
+        label: t('finance.finance_dashboard_page.text_96b3e0'),
         icon: <TrendingUp size={20} />,
         onClick: () => navigate(FINANCE_PATHS.receivablePayable),
         color: ct.success[700],
       },
       {
         id: 'payable-manage',
-        label: '应付管理',
+        label: t('finance.finance_dashboard_page.text_171e25'),
         icon: <TrendingDown size={20} />,
         onClick: () => navigate(FINANCE_PATHS.receivablePayable),
         color: ct.orange[600],
       },
       {
         id: 'report',
-        label: '报表',
+        label: t('finance.finance_dashboard_page.text_fc00f3'),
         icon: <BarChart3 size={20} />,
         onClick: () => navigate(FINANCE_PATHS.reports),
         color: ct.teal[700],
       },
       {
         id: 'budget-manage',
-        label: '预算管理',
+        label: t('finance.finance_dashboard_page.text_a6b2fe'),
         icon: <Target size={20} />,
         onClick: () => navigate(FINANCE_PATHS.budget),
         color: ct.error[700],
@@ -204,7 +206,7 @@ const FinanceDashboardPage: React.FC = () => {
 
   return (
     <PageContainer
-      title='财务仪表盘'
+      title={t('finance.finance_dashboard_page.text_ea1f99')}
       padding={false}
       maxWidth={false}
       autoTitle
@@ -215,9 +217,9 @@ const FinanceDashboardPage: React.FC = () => {
         stats={stats}
         charts={charts}
         recentItems={recentItems}
-        recentTitle='最近记录'
+        recentTitle={t('finance.finance_dashboard_page.text_b66b2e')}
         quickActions={quickActions}
-        quickActionsTitle='快捷操作'
+        quickActionsTitle={t('finance.finance_dashboard_page.action')}
         loading={loading}
       />
     </PageContainer>

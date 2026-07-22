@@ -108,6 +108,7 @@ export const Loading: React.FC<LoadingProps> = ({
 
   return (
     <Box
+      className={`cyber-loading ${className}`}
       sx={{
         display: 'flex',
         flexDirection: 'column',
@@ -115,7 +116,6 @@ export const Loading: React.FC<LoadingProps> = ({
         justifyContent: 'center',
         gap: 12,
       }}
-      className={className}
     >
       {renderLoader()}
       {text && (

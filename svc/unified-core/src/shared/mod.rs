@@ -12,7 +12,7 @@ use crate::middleware::versioning::VersionMiddleware;
 
 #[derive(Clone)]
 pub struct AppState {
-    pub auth_state: AuthState,
+    pub auth_state: Arc<AuthState>,
     pub pool: PgPool,
     pub health_config: SimpleHealthConfig,
     pub rate_limit_middleware: Arc<RateLimitMiddleware>,
@@ -21,7 +21,7 @@ pub struct AppState {
 
 impl FromRef<AppState> for AuthState {
     fn from_ref(state: &AppState) -> Self {
-        state.auth_state.clone()
+        (*state.auth_state).clone()
     }
 }
 

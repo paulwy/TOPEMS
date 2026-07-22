@@ -31,6 +31,7 @@ import {
 import { PageContainer } from '@/components/common';
 import { qmsApi } from '@/api/qms';
 import type { QualityIssue, AuditPlan } from '@/api/qms';
+import { useCrudMutations } from '@/hooks';
 
 const ct = designTokens.colors;
 
@@ -259,38 +260,20 @@ const QmsQualityControlPage: React.FC = () => {
     },
   ];
 
-  const deleteMutation = useMutation({
-    mutationFn: (id: string) => qmsApi.deleteIssue(id),
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['qms-issues'] });
-      addNotification({ title: '成功', message: '记录删除成功', type: 'success' });
-    },
-    onError: () => {
-      addNotification({ title: '错误', message: '删除记录时发生错误', type: 'error' });
-    },
-  });
-
-  const createIssueMutation = useMutation({
-    mutationFn: (data: Parameters<typeof qmsApi.createIssue>[0]) => qmsApi.createIssue(data),
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['qms-issues'] });
-      addNotification({ title: '成功', message: '记录创建成功', type: 'success' });
-    },
-    onError: () => {
-      addNotification({ title: '错误', message: '创建记录失败', type: 'error' });
-    },
-  });
-
-  const updateIssueMutation = useMutation({
-    mutationFn: ({ id, data }: { id: string; data: Parameters<typeof qmsApi.updateIssue>[1] }) =>
-      qmsApi.updateIssue(id, data),
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['qms-issues'] });
-      addNotification({ title: '成功', message: '记录更新成功', type: 'success' });
-    },
-    onError: () => {
-      addNotification({ title: '错误', message: '更新记录失败', type: 'error' });
-    },
+  const {
+    createMutation: createIssueMutation,
+    updateMutation: updateIssueMutation,
+    deleteMutation,
+  } = useCrudMutations<
+    Parameters<typeof qmsApi.createIssue>[0],
+    Parameters<typeof qmsApi.updateIssue>[1],
+    string
+  >({
+    queryKeyToInvalidate: ['qms-issues'],
+    createFn: (data) => qmsApi.createIssue(data),
+    updateFn: ({ id, data }) => qmsApi.updateIssue(String(id), data),
+    deleteFn: (id) => qmsApi.deleteIssue(String(id)),
+    entityName: '记录',
   });
 
   const viewItem = (item: QualityIssue | AuditPlan) => {

@@ -12,6 +12,7 @@ import { PageContainer } from '@/components/common';
 import { useCrudOperations } from '@/hooks/useCrudQueries';
 import { reportCrudApi, type Report as ApiReport } from '@/api/bi';
 
+import { useTranslation } from 'react-i18next';
 interface Report {
   id: string;
   name: string;
@@ -70,6 +71,7 @@ const apiReportToReport = (apiReport: ApiReport): Report => ({
 });
 
 const BIReportPage = () => {
+  const { t } = useTranslation();
   const [searchTerm, setSearchTerm] = useState('');
   const [filterType, setFilterType] = useState<string>('');
   const [filterStatus, setFilterStatus] = useState<string>('');
@@ -158,7 +160,7 @@ const BIReportPage = () => {
     () => [
       {
         id: 'name',
-        label: '报表名称',
+        label: t('bi.bi_report_page.name'),
         render: (row) => (
           <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5 }}>
             <FileText
@@ -176,7 +178,7 @@ const BIReportPage = () => {
                 variant='caption'
                 color='text.secondary'
               >
-                {row.description || '暂无描述'}
+                {row.description || t('bi.bi_report_page.description')}
               </Typography>
             </Box>
           </Box>
@@ -184,7 +186,7 @@ const BIReportPage = () => {
       },
       {
         id: 'type',
-        label: '类型',
+        label: t('bi.bi_report_page.type'),
         render: (row) => {
           const typeConfig = getTypeConfig(row.type);
           return (
@@ -199,7 +201,7 @@ const BIReportPage = () => {
       },
       {
         id: 'creator',
-        label: '创建人',
+        label: t('bi.bi_report_page.creator'),
         render: (row) => (
           <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
             <User
@@ -212,7 +214,7 @@ const BIReportPage = () => {
       },
       {
         id: 'created_at',
-        label: '创建时间',
+        label: t('bi.bi_report_page.created_at'),
         render: (row) => (
           <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
             <Calendar
@@ -230,7 +232,7 @@ const BIReportPage = () => {
       },
       {
         id: 'status',
-        label: '状态',
+        label: t('bi.bi_report_page.status'),
         render: (row) => {
           const statusConfig = getStatusConfig(row.status);
           return (
@@ -249,27 +251,27 @@ const BIReportPage = () => {
   const rowActions = useMemo<RowAction<Report>[]>(
     () => [
       {
-        label: '预览',
+        label: t('bi.bi_report_page.text_645dbc'),
         icon: <Eye size={16} />,
         onClick: (row) => logger.info('View:', row.id),
       },
       {
-        label: '下载',
+        label: t('bi.bi_report_page.download'),
         icon: <Download size={16} />,
         onClick: (row) => logger.info('Download:', row.id),
       },
       {
-        label: '编辑',
+        label: t('bi.bi_report_page.edit'),
         icon: <Edit size={16} />,
         onClick: (row) => logger.info('Edit:', row.id),
       },
       {
-        label: '删除',
+        label: t('bi.bi_report_page.delete'),
         icon: <Trash2 size={16} />,
         color: 'error',
         onClick: (row) => handleDeleteReport(row.id),
         confirm: true,
-        confirmMessage: '确定要删除这个报表吗?',
+        confirmMessage: t('bi.bi_report_page.confirm'),
       },
     ],
     [handleDeleteReport]
@@ -279,29 +281,29 @@ const BIReportPage = () => {
     () => [
       {
         id: 'type',
-        label: '报表类型',
+        label: t('bi.bi_report_page.type_1'),
         type: 'select',
         options: [
-          { value: '', label: '全部类型' },
-          { value: 'daily', label: '日报' },
-          { value: 'weekly', label: '周报' },
-          { value: 'monthly', label: '月报' },
-          { value: 'quarterly', label: '季报' },
-          { value: 'annual', label: '年报' },
-          { value: 'custom', label: '自定义' },
+          { value: '', label: t('bi.bi_report_page.type_2') },
+          { value: 'daily', label: t('bi.bi_report_page.text_843774') },
+          { value: 'weekly', label: t('bi.bi_report_page.text_242121') },
+          { value: 'monthly', label: t('bi.bi_report_page.text_1f904d') },
+          { value: 'quarterly', label: t('bi.bi_report_page.text_f7ff8b') },
+          { value: 'annual', label: t('bi.bi_report_page.text_958d52') },
+          { value: 'custom', label: t('bi.bi_report_page.text_f1d4ff') },
         ],
         value: filterType,
         onChange: (value) => handleFilterTypeChange(value as string),
       },
       {
         id: 'status',
-        label: '状态',
+        label: t('bi.bi_report_page.status'),
         type: 'select',
         options: [
-          { value: '', label: '全部' },
-          { value: 'active', label: '启用' },
-          { value: 'draft', label: '草稿' },
-          { value: 'archived', label: '归档' },
+          { value: '', label: t('bi.bi_report_page.all') },
+          { value: 'active', label: t('bi.bi_report_page.active') },
+          { value: 'draft', label: t('bi.bi_report_page.text_22b433') },
+          { value: 'archived', label: t('bi.bi_report_page.text_2f51c1') },
         ],
         value: filterStatus,
         onChange: (value) => handleFilterStatusChange(value as string),
@@ -323,8 +325,8 @@ const BIReportPage = () => {
 
   return (
     <PageContainer
-      title='报表管理'
-      subtitle='创建、管理和生成业务报表'
+      title={t('bi.bi_report_page.text_256969')}
+      subtitle={t('bi.bi_report_page.create')}
     >
       {error && (
         <Alert
@@ -341,7 +343,7 @@ const BIReportPage = () => {
         data={filteredReports}
         loading={loading}
         searchable
-        searchPlaceholder='搜索报表名称或创建人...'
+        searchPlaceholder={t('bi.bi_report_page.creator_1')}
         searchValue={searchTerm}
         onSearch={handleSearch}
         filters={filters}
@@ -350,12 +352,12 @@ const BIReportPage = () => {
         onRefresh={refresh}
         actions={[
           {
-            label: '返回数据大屏',
+            label: t('bi.bi_report_page.back'),
             variant: 'outlined',
             onClick: () => logger.info('Back to dashboard'),
           },
           {
-            label: '新建报表',
+            label: t('bi.bi_report_page.text_025119'),
             icon: <Plus size={16} />,
             variant: 'contained',
             onClick: () => logger.info('Create report'),

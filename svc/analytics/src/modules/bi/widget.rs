@@ -459,7 +459,7 @@ pub async fn get_widget_data(
 
     let row = match sqlx::query!(
         r#"
-        SELECT name, widget_type, config, position
+        SELECT name, widget_type, config, position, query_config, cache_ttl_seconds
         FROM analytics_widgets
         WHERE id = $1
         "#,
@@ -479,37 +479,71 @@ pub async fn get_widget_data(
 
     match row {
         Some(row) => {
-            let mock_data = match row.widget_type.as_str() {
-                "chart-bar" | "chart-line" | "chart-area" => serde_json::json!([
-                    { "name": "1月", "value": 400 },
-                    { "name": "2月", "value": 300 },
-                    { "name": "3月", "value": 500 },
-                    { "name": "4月", "value": 600 },
-                    { "name": "5月", "value": 450 },
-                    { "name": "6月", "value": 700 },
-                ]),
-                "chart-pie" => serde_json::json!([
-                    { "name": "产品A", "value": 400, "color": "#6366f1" },
-                    { "name": "产品B", "value": 300, "color": "#8b5cf6" },
-                    { "name": "产品C", "value": 200, "color": "#a855f7" },
-                    { "name": "产品D", "value": 100, "color": "#d946ef" },
-                ]),
-                "chart-gauge" => {
-                    serde_json::json!({ "value": 85.5, "min": 0, "max": 100, "label": "效率" })
-                }
-                "metric" => serde_json::json!({ "value": 1250000, "prefix": "¥", "label": "本月" }),
-                "pivot" => serde_json::json!([
-                    { "region": "华北", "category": "电子产品", "sales": 12000 },
-                    { "region": "华北", "category": "服装", "sales": 8000 },
-                    { "region": "华东", "category": "电子产品", "sales": 15000 },
-                    { "region": "华东", "category": "服装", "sales": 10000 },
-                ]),
-                _ => serde_json::json!([
-                    { "name": "数据1", "value": 100 },
-                    { "name": "数据2", "value": 200 },
-                    { "name": "数据3", "value": 150 },
-                ]),
+            let chart_type = match row.widget_type.as_str() {
+                "chart-bar" => ChartType::Bar,
+                "chart-line" => ChartType::Line,
+                "chart-pie" => ChartType::Pie,
+                "chart-area" => ChartType::Area,
+                "chart-scatter" => ChartType::Scatter,
+                "chart-histogram" => ChartType::Histogram,
+                "chart-gauge" => ChartType::Gauge,
+                "table" => ChartType::Table,
+                "metric" => ChartType::Table,
+                "pivot" => ChartType::Table,
+                _ => ChartType::Line,
             };
+
+            let data_source = row
+                .query_config
+                .as_ref()
+                .and_then(|c| c.get("data_source"))
+                .and_then(|v| v.as_str())
+                .unwrap_or("analytics_data")
+                .to_string();
+
+            let query_text = row
+                .query_config
+                .as_ref()
+                .and_then(|c| c.get("query"))
+                .and_then(|v| v.as_str())
+                .unwrap_or("")
+                .to_string();
+
+            let x_axis_label = row
+                .query_config
+                .as_ref()
+                .and_then(|c| c.get("x_axis"))
+                .and_then(|v| v.as_str())
+                .map(|s| s.to_string());
+
+            let y_axis_label = row
+                .query_config
+                .as_ref()
+                .and_then(|c| c.get("y_axis"))
+                .and_then(|v| v.as_str())
+                .map(|s| s.to_string());
+
+            let chart_service = ChartService::new(state.pool.clone());
+            let chart_query = ChartQuery {
+                chart_type,
+                data_source,
+                query: query_text,
+                params: std::collections::HashMap::new(),
+                title: Some(row.name.clone()),
+                x_axis_label,
+                y_axis_label,
+            };
+
+            let payload = match chart_service.generate_chart(chart_query).await {
+                Ok(chart_result) => serde_json::to_value(&chart_result).unwrap_or_default(),
+                Err(e) => {
+                    warn!("Failed to generate chart for widget {}: {}", id, e);
+                    serde_json::json!({ "error": e })
+                }
+            };
+
+            let ttl = row.cache_ttl_seconds.unwrap_or(60) as i64;
+            WIDGET_CACHE.set(id, payload.clone(), ttl);
 
             Json(serde_json::json!({
                 "success": true,
@@ -520,7 +554,7 @@ pub async fn get_widget_data(
                     "widget_type": row.widget_type,
                     "config": row.config,
                     "position": row.position,
-                    "payload": mock_data,
+                    "payload": payload,
                 }
             }))
         }
@@ -630,7 +664,6 @@ pub async fn get_widget_data_realtime(
                     let payload = serde_json::to_value(&chart_result).unwrap_or_default();
                     let ttl = row.cache_ttl_seconds.unwrap_or(60) as i64;
 
-                    // Cache the result
                     WIDGET_CACHE.set(id, payload.clone(), ttl);
 
                     Json(serde_json::json!({
@@ -647,21 +680,10 @@ pub async fn get_widget_data_realtime(
                     }))
                 }
                 Err(e) => {
-                    warn!("Failed to generate chart for widget {}: {}", id, e);
-                    // Fallback to mock data
-                    let mock_data = generate_mock_data_for_type(&row.widget_type);
+                    tracing::error!("Failed to generate chart for widget {}: {}", id, e);
                     Json(serde_json::json!({
-                        "success": true,
-                        "message": "Get widget data (fallback)",
-                        "data": {
-                            "widget_id": id,
-                            "name": row.name,
-                            "widget_type": row.widget_type,
-                            "config": row.config,
-                            "payload": mock_data,
-                            "cached": false,
-                            "fallback": true,
-                        }
+                        "success": false,
+                        "message": format!("Failed to generate chart data: {}", e)
                     }))
                 }
             }
@@ -691,38 +713,4 @@ pub async fn invalidate_all_widget_cache() -> Json<serde_json::Value> {
         "success": true,
         "message": "All widget cache invalidated"
     }))
-}
-
-fn generate_mock_data_for_type(widget_type: &str) -> serde_json::Value {
-    match widget_type {
-        "chart-bar" | "chart-line" | "chart-area" => serde_json::json!([
-            { "name": "1月", "value": 400 },
-            { "name": "2月", "value": 300 },
-            { "name": "3月", "value": 500 },
-            { "name": "4月", "value": 600 },
-            { "name": "5月", "value": 450 },
-            { "name": "6月", "value": 700 },
-        ]),
-        "chart-pie" => serde_json::json!([
-            { "name": "产品A", "value": 400, "color": "#6366f1" },
-            { "name": "产品B", "value": 300, "color": "#8b5cf6" },
-            { "name": "产品C", "value": 200, "color": "#a855f7" },
-            { "name": "产品D", "value": 100, "color": "#d946ef" },
-        ]),
-        "chart-gauge" => {
-            serde_json::json!({ "value": 85.5, "min": 0, "max": 100, "label": "效率" })
-        }
-        "metric" => serde_json::json!({ "value": 1250000, "prefix": "¥", "label": "本月" }),
-        "pivot" => serde_json::json!([
-            { "region": "华北", "category": "电子产品", "sales": 12000 },
-            { "region": "华北", "category": "服装", "sales": 8000 },
-            { "region": "华东", "category": "电子产品", "sales": 15000 },
-            { "region": "华东", "category": "服装", "sales": 10000 },
-        ]),
-        _ => serde_json::json!([
-            { "name": "数据1", "value": 100 },
-            { "name": "数据2", "value": 200 },
-            { "name": "数据3", "value": 150 },
-        ]),
-    }
 }

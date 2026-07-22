@@ -9,8 +9,8 @@
     "fullscreen",
     "minimal-ui"
   ],
-  "background_color": "#ffffff",
-  "theme_color": "#1976d2",
+  "background_color": "#0a0a0f",
+  "theme_color": "#00FFFF",
   "orientation": "any",
   "icons": [
     {
@@ -122,6 +122,30 @@
           "sizes": "96x96"
         }
       ]
+    },
+    {
+      "name": "采购订单",
+      "short_name": "采购",
+      "description": "查看采购订单",
+      "url": "/scm/purchase-orders",
+      "icons": [
+        {
+          "src": "/icons/icon-96x96.png",
+          "sizes": "96x96"
+        }
+      ]
+    },
+    {
+      "name": "销售订单",
+      "short_name": "销售",
+      "description": "查看销售订单",
+      "url": "/erp/sales-orders",
+      "icons": [
+        {
+          "src": "/icons/icon-96x96.png",
+          "sizes": "96x96"
+        }
+      ]
     }
   ],
   "protocol_handlers": [
@@ -129,5 +153,19 @@
       "protocol": "web+topems",
       "url": "/deeplink?path=%s"
     }
-  ]
+  ],
+  "screenshots": [
+    {
+      "src": "/icons/icon-512x512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "form_factor": "wide"
+    }
+  ],
+  "edge_side_panel": {
+    "preferred_width": 420
+  },
+  "launch_handler": {
+    "client_mode": "focus-existing"
+  }
 }

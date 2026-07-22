@@ -12,7 +12,7 @@ import {
 } from '@mui/material';
 import { PageContainer } from '@/components/common/PageContainerV2';
 import React, { useState, useMemo, useCallback } from 'react';
-import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { useQuery } from '@tanstack/react-query';
 import type {
   ProductionRecord,
   CreateProductionRecordRequest,
@@ -20,8 +20,8 @@ import type {
   ListParams,
 } from '@/api/mes';
 import { mesApi } from '@/api/mes';
-import { useNotificationStore } from '@/store';
 import { LoadingSpinner } from '@topems/shared-components';
+import { useCrudMutations } from '@/hooks';
 import {
   ListPageTemplate,
   type ColumnDef,
@@ -29,13 +29,13 @@ import {
   type FilterConfig,
 } from '@/components/templates';
 import { Plus, Edit, Eye, Trash2, Clock, User, Package, Settings, Activity } from 'lucide-react';
-import { apiLogger } from '@/utils/logger';
 import { designTokens } from '@/theme/tokens';
 
+import { useTranslation } from 'react-i18next';
 const ct = designTokens.colors;
 
 const ProductionRecordPage: React.FC = () => {
-  const queryClient = useQueryClient();
+  const { t } = useTranslation();
   const [searchTerm, setSearchTerm] = useState('');
   const [statusFilter, setStatusFilter] = useState<string>('');
   const [currentPage, setCurrentPage] = useState(1);
@@ -53,8 +53,6 @@ const ProductionRecordPage: React.FC = () => {
     start_time: '',
   });
 
-  const { addNotification } = useNotificationStore();
-
   const recordQuery = useQuery({
     queryKey: ['mes-records', currentPage, pageSize, searchTerm, statusFilter],
     queryFn: async () => {
@@ -67,7 +65,7 @@ const ProductionRecordPage: React.FC = () => {
 
       const response = await mesApi.records.list(params);
       if (!response.success || !response.data) {
-        throw new Error(response.message || '加载生产记录失败');
+        throw new Error(response.message || t('mes.production_record_page.fail'));
       }
       return {
         items: response.data.records || [],
@@ -82,81 +80,34 @@ const ProductionRecordPage: React.FC = () => {
   const total = recordQuery.data?.total ?? 0;
   const loading = recordQuery.isLoading;
 
-  const createMutation = useMutation({
-    mutationFn: async (data: CreateProductionRecordRequest) => {
+  const { createMutation, updateMutation, deleteMutation } = useCrudMutations<
+    CreateProductionRecordRequest,
+    UpdateProductionRecordRequest,
+    string
+  >({
+    queryKeyToInvalidate: ['mes-records'],
+    createFn: async (data) => {
       const response = await mesApi.records.create(data);
       if (!response.success) {
         throw new Error(response.message || '创建生产记录失败');
       }
       return response.data;
     },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['mes-records'] });
-      addNotification({
-        type: 'success',
-        title: '创建成功',
-        message: '新生产记录已创建',
-      });
-    },
-    onError: (error: unknown) => {
-      apiLogger.error('创建生产记录失败:', error);
-      addNotification({
-        type: 'error',
-        title: '操作失败',
-        message: '创建生产记录失败',
-      });
-    },
-  });
-
-  const updateMutation = useMutation({
-    mutationFn: async ({ id, data }: { id: string; data: UpdateProductionRecordRequest }) => {
-      const response = await mesApi.records.update(id, data);
+    updateFn: async ({ id, data }) => {
+      const response = await mesApi.records.update(String(id), data);
       if (!response.success) {
         throw new Error(response.message || '更新生产记录失败');
       }
       return response.data;
     },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['mes-records'] });
-      addNotification({
-        type: 'success',
-        title: '更新成功',
-        message: '生产记录已更新',
-      });
-    },
-    onError: (error: unknown) => {
-      apiLogger.error('更新生产记录失败:', error);
-      addNotification({
-        type: 'error',
-        title: '操作失败',
-        message: '更新生产记录失败',
-      });
-    },
-  });
-
-  const deleteMutation = useMutation({
-    mutationFn: async (id: string) => {
-      const response = await mesApi.records.delete(id);
+    deleteFn: async (id) => {
+      const response = await mesApi.records.delete(String(id));
       if (!response.success) {
         throw new Error(response.message || '删除生产记录失败');
       }
+      return response.data;
     },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['mes-records'] });
-      addNotification({
-        type: 'success',
-        title: '删除成功',
-        message: '生产记录已删除',
-      });
-    },
-    onError: (error: unknown) => {
-      apiLogger.error('删除生产记录失败:', error);
-      addNotification({
-        type: 'error',
-        title: '操作失败',
-        message: '删除生产记录失败',
-      });
-    },
+    entityName: '生产记录',
   });
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -197,7 +148,7 @@ const ProductionRecordPage: React.FC = () => {
 
   const handleDelete = useCallback(
     async (id: string) => {
-      if (!window.confirm('确定要删除这条生产记录吗?')) return;
+      if (!window.confirm(t('mes.production_record_page.confirm'))) return;
       await deleteMutation.mutateAsync(id);
     },
     [deleteMutation]
@@ -218,10 +169,10 @@ const ProductionRecordPage: React.FC = () => {
 
   const getStatusBadge = (status: string) => {
     const statusMap: Record<string, { label: string; bg: string; color: string }> = {
-      pending: { label: '待开始', bg: 'warning.light', color: 'warning.700' },
-      in_progress: { label: '进行中', bg: 'primary.100', color: 'primary.dark' },
-      completed: { label: '已完成', bg: 'success.lighter', color: 'success.700' },
-      cancelled: { label: '已取消', bg: 'error.lighter', color: 'error.dark' },
+      pending: { label: t('mes.production_record_page.text_1568ba'), bg: 'warning.light', color: 'warning.700' },
+      in_progress: { label: t('mes.production_record_page.status_in_progress'), bg: 'primary.100', color: 'primary.dark' },
+      completed: { label: t('mes.production_record_page.status_completed'), bg: 'success.lighter', color: 'success.700' },
+      cancelled: { label: t('mes.production_record_page.status_cancelled'), bg: 'error.lighter', color: 'error.dark' },
     };
     const s = statusMap[status] || { label: status, bg: 'grey.100', color: 'text.secondary' };
     return (
@@ -237,23 +188,23 @@ const ProductionRecordPage: React.FC = () => {
     () => [
       {
         id: 'order_id',
-        label: '订单ID',
+        label: t('mes.production_record_page.order'),
         sortable: true,
         render: (row) => <Box sx={{ fontWeight: 500 }}>{row.order_id}</Box>,
       },
       {
         id: 'process_id',
-        label: '工序',
+        label: t('mes.production_record_page.field_process'),
         render: (row) => row.process_id || '-',
       },
       {
         id: 'work_station_id',
-        label: '工作站',
+        label: t('mes.production_record_page.text_909250'),
         render: (row) => row.work_station_id || '-',
       },
       {
         id: 'operator',
-        label: '操作员',
+        label: t('mes.production_record_page.action'),
         render: (row) => (
           <Stack
             direction='row'
@@ -267,7 +218,7 @@ const ProductionRecordPage: React.FC = () => {
       },
       {
         id: 'quantity_completed',
-        label: '完成数量',
+        label: t('mes.production_record_page.completed_quantity'),
         sortable: true,
         render: (row) => (
           <Stack
@@ -282,17 +233,17 @@ const ProductionRecordPage: React.FC = () => {
       },
       {
         id: 'quantity_rejected',
-        label: '不良数量',
+        label: t('mes.production_record_page.field_defective_quantity'),
         render: (row) => row.quantity_rejected || 0,
       },
       {
         id: 'start_time',
-        label: '开始时间',
+        label: t('mes.production_record_page.column_start_time'),
         render: (row) => (row.start_time ? new Date(row.start_time).toLocaleString('zh-CN') : '-'),
       },
       {
         id: 'status',
-        label: '状态',
+        label: t('mes.production_record_page.filter_status'),
         render: (row) => getStatusBadge(row.status),
       },
     ],
@@ -303,14 +254,14 @@ const ProductionRecordPage: React.FC = () => {
     () => [
       {
         id: 'status',
-        label: '状态',
+        label: t('mes.production_record_page.filter_status'),
         type: 'select',
         options: [
-          { label: '全部', value: '' },
-          { label: '待开始', value: 'pending' },
-          { label: '进行中', value: 'in_progress' },
-          { label: '已完成', value: 'completed' },
-          { label: '已取消', value: 'cancelled' },
+          { label: t('mes.production_record_page.all'), value: '' },
+          { label: t('mes.production_record_page.text_1568ba'), value: 'pending' },
+          { label: t('mes.production_record_page.status_in_progress'), value: 'in_progress' },
+          { label: t('mes.production_record_page.status_completed'), value: 'completed' },
+          { label: t('mes.production_record_page.status_cancelled'), value: 'cancelled' },
         ],
         value: statusFilter,
         onChange: (value: unknown) => {
@@ -325,22 +276,22 @@ const ProductionRecordPage: React.FC = () => {
   const rowActions: RowAction<ProductionRecord>[] = useMemo(
     () => [
       {
-        label: '查看详情',
+        label: t('mes.production_record_page.action_view_detail'),
         icon: <Eye size={16} />,
         onClick: handleViewDetail,
       },
       {
-        label: '编辑',
+        label: t('mes.production_record_page.action_edit'),
         icon: <Edit size={16} />,
         onClick: handleEdit,
       },
       {
-        label: '删除',
+        label: t('mes.production_record_page.action_delete'),
         icon: <Trash2 size={16} />,
         color: 'error',
         onClick: (row) => handleDelete(row.id),
         confirm: true,
-        confirmMessage: '确定要删除这条生产记录吗?',
+        confirmMessage: t('mes.production_record_page.confirm'),
       },
     ],
     [handleViewDetail, handleEdit, handleDelete]
@@ -433,7 +384,7 @@ const ProductionRecordPage: React.FC = () => {
         loading={loading}
         filters={filters}
         searchable
-        searchPlaceholder='搜索订单ID或操作员...'
+        searchPlaceholder={t('mes.production_record_page.search')}
         searchValue={searchTerm}
         onSearch={handleSearch}
         pagination={{
@@ -444,7 +395,7 @@ const ProductionRecordPage: React.FC = () => {
         }}
         actions={[
           {
-            label: '新增生产记录',
+            label: t('mes.production_record_page.add'),
             icon: <Plus size={16} />,
             onClick: () => {
               resetForm();
@@ -454,7 +405,7 @@ const ProductionRecordPage: React.FC = () => {
         ]}
         rowActions={rowActions}
         headerContent={statsContent}
-        emptyMessage='暂无生产记录数据'
+        emptyMessage={t('mes.production_record_page.empty_message')}
         getRowId={(row) => row.id}
       />
 
@@ -464,7 +415,7 @@ const ProductionRecordPage: React.FC = () => {
         maxWidth='md'
         fullWidth
       >
-        <DialogTitle>{selectedRecord ? '编辑生产记录' : '新增生产记录'}</DialogTitle>
+        <DialogTitle>{selectedRecord ? t('mes.production_record_page.edit') : t('mes.production_record_page.add')}</DialogTitle>
         <DialogContent>
           <form onSubmit={handleSubmit}>
             <Box
@@ -476,7 +427,7 @@ const ProductionRecordPage: React.FC = () => {
               }}
             >
               <TextField
-                label='订单ID *'
+                label={t('mes.production_record_page.order_1')}
                 value={formData.order_id}
                 onChange={(e) => setFormData({ ...formData, order_id: e.target.value })}
                 size='small'
@@ -484,21 +435,21 @@ const ProductionRecordPage: React.FC = () => {
                 disabled={!!selectedRecord}
               />
               <TextField
-                label='工序ID'
+                label={t('mes.production_record_page.process')}
                 value={formData.process_id}
                 onChange={(e) => setFormData({ ...formData, process_id: e.target.value })}
                 size='small'
                 disabled={!!selectedRecord}
               />
               <TextField
-                label='工作站ID'
+                label={t('mes.production_record_page.text_e991a1')}
                 value={formData.work_station_id}
                 onChange={(e) => setFormData({ ...formData, work_station_id: e.target.value })}
                 size='small'
                 disabled={!!selectedRecord}
               />
               <TextField
-                label='操作员 *'
+                label={t('mes.production_record_page.action_1')}
                 value={formData.operator}
                 onChange={(e) => setFormData({ ...formData, operator: e.target.value })}
                 size='small'
@@ -506,7 +457,7 @@ const ProductionRecordPage: React.FC = () => {
                 disabled={!!selectedRecord}
               />
               <TextField
-                label='完成数量 *'
+                label={t('mes.production_record_page.completed_quantity_1')}
                 type='number'
                 value={formData.quantity_completed}
                 onChange={(e) =>
@@ -519,7 +470,7 @@ const ProductionRecordPage: React.FC = () => {
                 required
               />
               <TextField
-                label='不良数量'
+                label={t('mes.production_record_page.field_defective_quantity')}
                 type='number'
                 value={formData.quantity_rejected}
                 onChange={(e) =>
@@ -531,7 +482,7 @@ const ProductionRecordPage: React.FC = () => {
                 size='small'
               />
               <TextField
-                label='开始时间 *'
+                label={t('mes.production_record_page.start_time')}
                 type='datetime-local'
                 value={formData.start_time}
                 onChange={(e) => setFormData({ ...formData, start_time: e.target.value })}

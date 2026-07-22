@@ -35,9 +35,11 @@ import { Dialog } from '@/components/common/Dialog';
 import { PageContainer } from '@/components/common';
 import { designTokens } from '@/theme/tokens';
 
+import { useTranslation } from 'react-i18next';
 const ct = designTokens.colors;
 
 const HrmEmployeeDetailPage: React.FC = () => {
+  const { t } = useTranslation();
   const navigate = useNavigate();
   const { id } = useParams<{ id: string }>();
   const { error } = useNotification();
@@ -49,11 +51,11 @@ const HrmEmployeeDetailPage: React.FC = () => {
     enabled: !!id,
     queryFn: async () => {
       if (!id) {
-        throw new Error('员工ID为空');
+        throw new Error(t('hrm.hrm_employee_detail_page.text_8ce1a3'));
       }
       const res = await hrmApi.employees.get(id);
       if (!res.success || !res.data) {
-        throw new Error('获取员工详情失败');
+        throw new Error(t('hrm.hrm_employee_detail_page.detail'));
       }
       return res.data;
     },
@@ -61,7 +63,7 @@ const HrmEmployeeDetailPage: React.FC = () => {
 
   const employee = employeeQuery.data ?? null;
   const loading = employeeQuery.isLoading;
-  const errorMessage = employeeQuery.error ? '加载员工详情失败' : undefined;
+  const errorMessage = employeeQuery.error ? t('hrm.hrm_employee_detail_page.detail_1') : undefined;
 
   const handleTransfer = () => {
     navigate(HRM_PATHS.employeeDetail.replace(':id', id!));
@@ -72,29 +74,29 @@ const HrmEmployeeDetailPage: React.FC = () => {
       string,
       { color: 'success' | 'error' | 'default' | 'warning'; label: string }
     > = {
-      active: { color: 'success', label: '在职' },
-      probation: { color: 'warning', label: '试用期' },
-      leave: { color: 'default', label: '休假' },
-      resigned: { color: 'error', label: '已离职' },
-      terminated: { color: 'error', label: '已解雇' },
-      retired: { color: 'default', label: '已退休' },
+      active: { color: 'success', label: t('hrm.hrm_employee_detail_page.text_b5509b') },
+      probation: { color: 'warning', label: t('hrm.hrm_employee_detail_page.text_9a3256') },
+      leave: { color: 'default', label: t('hrm.hrm_employee_detail_page.text_62a8cf') },
+      resigned: { color: 'error', label: t('hrm.hrm_employee_detail_page.text_370e61') },
+      terminated: { color: 'error', label: t('hrm.hrm_employee_detail_page.text_43e92e') },
+      retired: { color: 'default', label: t('hrm.hrm_employee_detail_page.text_399695') },
     };
     return config[status] || config.active;
   };
 
   const getGenderLabel = (gender: string) => {
-    return gender === 'male' ? '男' : gender === 'female' ? '女' : '-';
+    return gender === 'male' ? t('hrm.hrm_employee_detail_page.text_36a490') : gender === 'female' ? t('hrm.hrm_employee_detail_page.text_87c835') : '-';
   };
 
   const getEducationLabel = (education: string) => {
     const labels: Record<string, string> = {
-      primary: '小学',
-      junior: '初中',
-      senior: '高中/中专',
-      college: '大专',
-      bachelor: '本科',
-      master: '硕士',
-      doctor: '博士',
+      primary: t('hrm.hrm_employee_detail_page.text_79898d'),
+      junior: t('hrm.hrm_employee_detail_page.text_b21914'),
+      senior: t('hrm.hrm_employee_detail_page.text_8d9a85'),
+      college: t('hrm.hrm_employee_detail_page.text_2aa9f5'),
+      bachelor: t('hrm.hrm_employee_detail_page.text_40b14f'),
+      master: t('hrm.hrm_employee_detail_page.text_e6de69'),
+      doctor: t('hrm.hrm_employee_detail_page.text_7d27be'),
     };
     return labels[education] || education;
   };
@@ -246,7 +248,7 @@ const HrmEmployeeDetailPage: React.FC = () => {
         <Box>
           <InputLabel sx={{ fontSize: 12, color: 'text.secondary' }}>员工类型</InputLabel>
           <Typography sx={{ mt: 0.5 }}>
-            {employee.employee_type === 'full_time' ? '全职' : '兼职'}
+            {employee.employee_type === 'full_time' ? t('hrm.hrm_employee_detail_page.text_63f85b') : t('hrm.hrm_employee_detail_page.text_7c4f46')}
           </Typography>
         </Box>
       </Box>
@@ -293,9 +295,9 @@ const HrmEmployeeDetailPage: React.FC = () => {
 
   const tabs = useMemo<TabConfig[]>(
     () => [
-      { id: 'basic', label: '基本信息', content: basicInfoContent || <></> },
-      { id: 'work', label: '工作信息', content: workInfoContent || <></> },
-      { id: 'emergency', label: '紧急联系人', content: emergencyInfoContent || <></> },
+      { id: 'basic', label: t('hrm.hrm_employee_detail_page.info'), content: basicInfoContent || <></> },
+      { id: 'work', label: t('hrm.hrm_employee_detail_page.info_1'), content: workInfoContent || <></> },
+      { id: 'emergency', label: t('hrm.hrm_employee_detail_page.contact'), content: emergencyInfoContent || <></> },
     ],
     [basicInfoContent, workInfoContent, emergencyInfoContent]
   );
@@ -312,8 +314,8 @@ const HrmEmployeeDetailPage: React.FC = () => {
       subtitle: employee?.employee_no || undefined,
       tags: [employee?.department_name || ''],
       stats: [
-        { label: '职位', value: employee?.position || '-' },
-        { label: '状态', value: getStatusConfig(employee?.status || '').label },
+        { label: t('hrm.hrm_employee_detail_page.text_b652de'), value: employee?.position || '-' },
+        { label: t('hrm.hrm_employee_detail_page.status'), value: getStatusConfig(employee?.status || '').label },
       ],
     }),
     [employee]
@@ -321,8 +323,8 @@ const HrmEmployeeDetailPage: React.FC = () => {
 
   return (
     <PageContainer
-      title='员工详情'
-      subtitle='查看和管理员工信息'
+      title={t('hrm.hrm_employee_detail_page.detail_2')}
+      subtitle={t('hrm.hrm_employee_detail_page.view')}
     >
       <DetailPageTemplate
         title=''
@@ -335,7 +337,7 @@ const HrmEmployeeDetailPage: React.FC = () => {
         tabs={tabs}
         actions={[
           {
-            label: '调岗',
+            label: t('hrm.hrm_employee_detail_page.text_94ddaa'),
             icon: <Briefcase style={{ width: 18, height: 18 }} />,
             onClick: () => setShowTransferDialog(true),
           },
@@ -345,11 +347,11 @@ const HrmEmployeeDetailPage: React.FC = () => {
       <Dialog
         open={showTransferDialog}
         onClose={() => setShowTransferDialog(false)}
-        title='确认调岗'
+        title={t('hrm.hrm_employee_detail_page.confirm')}
         maxWidth='sm'
         fullWidth
-        cancelButton={{ label: '取消' }}
-        confirmButton={{ label: '确认调岗', onClick: handleTransfer }}
+        cancelButton={{ label: t('hrm.hrm_employee_detail_page.cancel') }}
+        confirmButton={{ label: t('hrm.hrm_employee_detail_page.confirm'), onClick: handleTransfer }}
       >
         <Typography variant='body1'>
           确定要为 <strong>{employee?.name}</strong> 办理调岗手续吗？

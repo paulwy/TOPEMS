@@ -36,9 +36,11 @@ import { Plus, Edit, Trash2, Eye, GitBranch, Clock, TrendingUp, BarChart3 } from
 import { apiLogger } from '@/utils/logger';
 import { designTokens } from '@/theme/tokens';
 
+import { useTranslation } from 'react-i18next';
 const ct = designTokens.colors;
 
 const ProcessFlowPage: React.FC = () => {
+  const { t } = useTranslation();
   const queryClient = useQueryClient();
   const [searchTerm, setSearchTerm] = useState('');
   const [statusFilter, setStatusFilter] = useState<string>('all');
@@ -58,7 +60,7 @@ const ProcessFlowPage: React.FC = () => {
     route_id: '',
     production_line: '',
     capacity: 0,
-    unit: '件/小时',
+    unit: t('mes.process_flow_page.text_d5bfc3'),
   });
 
   const { addNotification } = useNotificationStore();
@@ -105,21 +107,21 @@ const ProcessFlowPage: React.FC = () => {
         setCapacityAnalysis(capacityResponse.data);
       }
     } catch (error: unknown) {
-      apiLogger.error('加载工艺流程详情失败:', error);
+      apiLogger.error(t('mes.process_flow_page.detail'), error);
     }
   };
 
   const createMutation = useMutation({
     mutationFn: (data: CreateProcessFlowRequest) => processFlowApi.create(data),
     onSuccess: () => {
-      addNotification({ type: 'success', title: '创建成功', message: '新工艺流程已创建' });
+      addNotification({ type: 'success', title: t('mes.process_flow_page.create'), message: t('mes.process_flow_page.create_1') });
       invalidateFlows();
       setShowDialog(false);
       resetForm();
     },
     onError: (error: unknown) => {
-      apiLogger.error('操作失败:', error);
-      addNotification({ type: 'error', title: '操作失败', message: '创建工艺流程失败' });
+      apiLogger.error(t('mes.process_flow_page.operation_failed'), error);
+      addNotification({ type: 'error', title: t('mes.process_flow_page.operation_failed_1'), message: t('mes.process_flow_page.create_2') });
     },
   });
 
@@ -127,26 +129,26 @@ const ProcessFlowPage: React.FC = () => {
     mutationFn: ({ id, data }: { id: string; data: UpdateProcessFlowRequest }) =>
       processFlowApi.update(id, data),
     onSuccess: () => {
-      addNotification({ type: 'success', title: '更新成功', message: '工艺流程信息已更新' });
+      addNotification({ type: 'success', title: t('mes.process_flow_page.update'), message: t('mes.process_flow_page.update_1') });
       invalidateFlows();
       setShowDialog(false);
       resetForm();
     },
     onError: (error: unknown) => {
-      apiLogger.error('操作失败:', error);
-      addNotification({ type: 'error', title: '操作失败', message: '更新工艺流程失败' });
+      apiLogger.error(t('mes.process_flow_page.operation_failed'), error);
+      addNotification({ type: 'error', title: t('mes.process_flow_page.operation_failed_1'), message: t('mes.process_flow_page.update_2') });
     },
   });
 
   const deleteMutation = useMutation({
     mutationFn: (id: string) => processFlowApi.delete(id),
     onSuccess: () => {
-      addNotification({ type: 'success', title: '删除成功', message: '工艺流程已删除' });
+      addNotification({ type: 'success', title: t('mes.process_flow_page.delete_success'), message: t('mes.process_flow_page.deleted') });
       invalidateFlows();
     },
     onError: (error: unknown) => {
-      apiLogger.error('删除失败:', error);
-      addNotification({ type: 'error', title: '删除失败', message: '无法删除工艺流程' });
+      apiLogger.error(t('mes.process_flow_page.delete'), error);
+      addNotification({ type: 'error', title: t('mes.process_flow_page.delete_1'), message: t('mes.process_flow_page.delete_2') });
     },
   });
 
@@ -160,7 +162,7 @@ const ProcessFlowPage: React.FC = () => {
   };
 
   const handleDelete = (id: string) => {
-    if (!window.confirm('确定要删除这个工艺流程吗?')) return;
+    if (!window.confirm(t('mes.process_flow_page.confirm'))) return;
     deleteMutation.mutate(id);
   };
 
@@ -174,7 +176,7 @@ const ProcessFlowPage: React.FC = () => {
       route_id: flow.route_id || '',
       production_line: flow.production_line || '',
       capacity: flow.capacity || 0,
-      unit: flow.unit || '件/小时',
+      unit: flow.unit || t('mes.process_flow_page.text_d5bfc3'),
     });
     setShowDialog(true);
   };
@@ -195,7 +197,7 @@ const ProcessFlowPage: React.FC = () => {
       route_id: '',
       production_line: '',
       capacity: 0,
-      unit: '件/小时',
+      unit: t('mes.process_flow_page.text_d5bfc3'),
     });
   };
 
@@ -208,9 +210,9 @@ const ProcessFlowPage: React.FC = () => {
         color: string;
       }
     > = {
-      active: { label: '启用', bg: 'success.lighter', color: 'success.dark' },
-      inactive: { label: '停用', bg: 'grey.100', color: 'text.secondary' },
-      draft: { label: '草稿', bg: 'warning.light', color: 'warning.dark' },
+      active: { label: t('mes.process_flow_page.active'), bg: 'success.lighter', color: 'success.dark' },
+      inactive: { label: t('mes.process_flow_page.inactive'), bg: 'grey.100', color: 'text.secondary' },
+      draft: { label: t('mes.process_flow_page.status_draft'), bg: 'warning.light', color: 'warning.dark' },
     };
     const s = statusMap[status] || { label: status, bg: 'grey.100', color: 'text.secondary' };
     return (
@@ -224,18 +226,18 @@ const ProcessFlowPage: React.FC = () => {
 
   const columns: ColumnDef<ProcessFlow>[] = useMemo(
     () => [
-      { id: 'code', label: '流程编号', sortable: true },
-      { id: 'name', label: '流程名称', sortable: true },
-      { id: 'production_line', label: '生产线', sortable: true },
+      { id: 'code', label: t('mes.process_flow_page.text_f1dbc1'), sortable: true },
+      { id: 'name', label: t('mes.process_flow_page.column_flow_name'), sortable: true },
+      { id: 'production_line', label: t('mes.process_flow_page.production_line'), sortable: true },
       {
         id: 'capacity',
-        label: '产能',
+        label: t('mes.process_flow_page.text_215586'),
         sortable: true,
         render: (row) => `${row.capacity || 0} ${row.unit || '件/小时'}`,
       },
       {
         id: 'status',
-        label: '状态',
+        label: t('mes.process_flow_page.filter_status'),
         render: (row) => getStatusBadge(row.status),
       },
     ],
@@ -246,13 +248,13 @@ const ProcessFlowPage: React.FC = () => {
     () => [
       {
         id: 'status',
-        label: '状态',
+        label: t('mes.process_flow_page.filter_status'),
         type: 'select',
         options: [
-          { label: '全部状态', value: 'all' },
-          { label: '启用', value: 'active' },
-          { label: '停用', value: 'inactive' },
-          { label: '草稿', value: 'draft' },
+          { label: t('mes.process_flow_page.filter_option_all_status'), value: 'all' },
+          { label: t('mes.process_flow_page.active'), value: 'active' },
+          { label: t('mes.process_flow_page.inactive'), value: 'inactive' },
+          { label: t('mes.process_flow_page.status_draft'), value: 'draft' },
         ],
         value: statusFilter,
         onChange: (value: unknown) => {
@@ -267,22 +269,22 @@ const ProcessFlowPage: React.FC = () => {
   const rowActions: RowAction<ProcessFlow>[] = useMemo(
     () => [
       {
-        label: '查看详情',
+        label: t('mes.process_flow_page.action_view_detail'),
         icon: <Eye size={16} />,
         onClick: handleViewDetail,
       },
       {
-        label: '编辑',
+        label: t('mes.process_flow_page.action_edit'),
         icon: <Edit size={16} />,
         onClick: handleEdit,
       },
       {
-        label: '删除',
+        label: t('mes.process_flow_page.action_delete'),
         icon: <Trash2 size={16} />,
         color: 'error',
         onClick: (row) => handleDelete(row.id),
         confirm: true,
-        confirmMessage: '确定要删除这个工艺流程吗?',
+        confirmMessage: t('mes.process_flow_page.confirm'),
       },
     ],
     [handleViewDetail, handleEdit, handleDelete]
@@ -317,7 +319,7 @@ const ProcessFlowPage: React.FC = () => {
         loading={loading}
         filters={filters}
         searchable
-        searchPlaceholder='搜索流程编号或名称...'
+        searchPlaceholder={t('mes.process_flow_page.search')}
         searchValue={searchTerm}
         onSearch={handleSearch}
         pagination={{
@@ -331,13 +333,13 @@ const ProcessFlowPage: React.FC = () => {
         onSelectionChange={(ids) => setSelectedIds(ids.map(String))}
         actions={[
           {
-            label: '新增流程',
+            label: t('mes.process_flow_page.add'),
             icon: <Plus size={16} />,
             onClick: handleOpenCreate,
           },
         ]}
         rowActions={rowActions}
-        emptyMessage='暂无工艺流程数据'
+        emptyMessage={t('mes.process_flow_page.empty_message')}
         getRowId={(row) => row.id}
       />
 
@@ -347,7 +349,7 @@ const ProcessFlowPage: React.FC = () => {
         onClose={() => setShowDialog(false)}
         maxWidth='md'
       >
-        <DialogTitle>{selectedFlow ? '编辑工艺流程' : '新增工艺流程'}</DialogTitle>
+        <DialogTitle>{selectedFlow ? t('mes.process_flow_page.dialog_edit_title') : t('mes.process_flow_page.dialog_create_title')}</DialogTitle>
         <DialogContent>
           <Box
             component='span'
@@ -358,7 +360,7 @@ const ProcessFlowPage: React.FC = () => {
               fontSize: 14,
             }}
           >
-            {selectedFlow ? '修改工艺流程信息' : '填写新工艺流程信息'}
+            {selectedFlow ? t('mes.process_flow_page.info') : t('mes.process_flow_page.info_1')}
           </Box>
           <form onSubmit={handleSubmit}>
             <Box
@@ -419,7 +421,7 @@ const ProcessFlowPage: React.FC = () => {
                 <TextField
                   id='unit'
                   size='small'
-                  value={formData.unit || '件/小时'}
+                  value={formData.unit || t('mes.process_flow_page.text_d5bfc3')}
                   onChange={(e) => setFormData({ ...formData, unit: e.target.value })}
                 />
               </Box>
@@ -500,7 +502,7 @@ const ProcessFlowPage: React.FC = () => {
                 <Box>
                   <InputLabel sx={{ color: 'text.secondary', fontSize: 12 }}>产能</InputLabel>
                   <Box component='span'>
-                    {selectedFlow.capacity || 0} {selectedFlow.unit || '件/小时'}
+                    {selectedFlow.capacity || 0} {selectedFlow.unit || t('mes.process_flow_page.text_d5bfc3')}
                   </Box>
                 </Box>
                 <Box>
@@ -630,7 +632,7 @@ const ProcessFlowPage: React.FC = () => {
                           color='text.secondary'
                         >
                           {step.process_code} | 标准工时: {step.standard_time || 0} 分钟
-                          {step.quality_check_required && ' | 需质检'}
+                          {step.quality_check_required && t('mes.process_flow_page.quality_inspection')}
                         </Typography>
                       </Box>
                       {step.work_station_name && (

@@ -17,6 +17,7 @@ import { ImageUpload } from '@/components/common';
 import { AIHelperButton } from '@/components/ai';
 import type { EmployeeFormDialogProps } from '../types';
 
+import { useTranslation } from 'react-i18next';
 const EmployeeFormDialog: React.FC<EmployeeFormDialogProps> = ({
   open,
   onClose,
@@ -30,14 +31,16 @@ const EmployeeFormDialog: React.FC<EmployeeFormDialogProps> = ({
   onOpenAICodeGenerator,
   onOpenAIDataCompleter,
   onOpenAIFormValidator,
-}) => (
+}) => {
+  const { t } = useTranslation();
+  return (
   <Dialog
     open={open}
     onClose={onClose}
     maxWidth='sm'
     fullWidth
   >
-    <DialogTitle>{mode === 'create' ? '新增员工' : '编辑员工'}</DialogTitle>
+    <DialogTitle>{mode === 'create' ? t('hrm.hrm_employee_page_components__employee_form_dialog.add') : t('hrm.hrm_employee_page_components__employee_form_dialog.edit')}</DialogTitle>
     <DialogContent>
       <Box
         component='form'
@@ -51,7 +54,7 @@ const EmployeeFormDialog: React.FC<EmployeeFormDialogProps> = ({
           <InputLabel>所属公司 *</InputLabel>
           <Select
             value={(formData as { company_id?: string })?.company_id || ''}
-            label='所属公司 *'
+            label={t('hrm.hrm_employee_page_components__employee_form_dialog.text_c3846b')}
             onChange={(e) => onChange('company_id', e.target.value)}
             required
           >
@@ -87,7 +90,7 @@ const EmployeeFormDialog: React.FC<EmployeeFormDialogProps> = ({
 
         <Box sx={{ display: 'grid', gridTemplateColumns: 2, gap: 2 }}>
           <TextField
-            label='员工姓名 *'
+            label={t('hrm.hrm_employee_page_components__employee_form_dialog.text_88eff5')}
             size='small'
             value={(formData as { name?: string })?.name || ''}
             onChange={(e) => onChange('name', e.target.value)}
@@ -95,7 +98,7 @@ const EmployeeFormDialog: React.FC<EmployeeFormDialogProps> = ({
           />
           <Box sx={{ position: 'relative' }}>
             <TextField
-              label='工号'
+              label={t('hrm.hrm_employee_page_components__employee_form_dialog.text_752d38')}
               size='small'
               value={(formData as { employee_no?: string })?.employee_no || ''}
               onChange={(e) => onChange('employee_no', e.target.value)}
@@ -106,14 +109,14 @@ const EmployeeFormDialog: React.FC<EmployeeFormDialogProps> = ({
 
         <Box sx={{ display: 'grid', gridTemplateColumns: 2, gap: 2 }}>
           <TextField
-            label='邮箱'
+            label={t('hrm.hrm_employee_page_components__employee_form_dialog.email')}
             type='email'
             size='small'
             value={(formData as { email?: string })?.email || ''}
             onChange={(e) => onChange('email', e.target.value)}
           />
           <TextField
-            label='电话'
+            label={t('hrm.hrm_employee_page_components__employee_form_dialog.phone')}
             size='small'
             value={(formData as { phone?: string })?.phone || ''}
             onChange={(e) => onChange('phone', e.target.value)}
@@ -127,7 +130,7 @@ const EmployeeFormDialog: React.FC<EmployeeFormDialogProps> = ({
           <InputLabel>所属部门</InputLabel>
           <Select
             value={(formData as { department_id?: string })?.department_id || ''}
-            label='所属部门'
+            label={t('hrm.hrm_employee_page_components__employee_form_dialog.text_68923b')}
             onChange={(e) => onChange('department_id', e.target.value)}
           >
             <MenuItem value=''>无</MenuItem>
@@ -143,14 +146,14 @@ const EmployeeFormDialog: React.FC<EmployeeFormDialogProps> = ({
         </FormControl>
 
         <TextField
-          label='职位'
+          label={t('hrm.hrm_employee_page_components__employee_form_dialog.text_b652de')}
           size='small'
           value={(formData as { position?: string })?.position || ''}
           onChange={(e) => onChange('position', e.target.value)}
         />
 
         <TextField
-          label='入职日期'
+          label={t('hrm.hrm_employee_page_components__employee_form_dialog.date')}
           type='date'
           size='small'
           value={(formData as { hire_date?: string })?.hire_date || ''}
@@ -165,7 +168,7 @@ const EmployeeFormDialog: React.FC<EmployeeFormDialogProps> = ({
           <InputLabel>状态</InputLabel>
           <Select
             value={(formData as { status?: string })?.status || 'active'}
-            label='状态'
+            label={t('hrm.hrm_employee_page_components__employee_form_dialog.status')}
             onChange={(e) => onChange('status', e.target.value)}
           >
             <MenuItem value='active'>在职</MenuItem>
@@ -179,19 +182,19 @@ const EmployeeFormDialog: React.FC<EmployeeFormDialogProps> = ({
               type='generate'
               onClick={() => onOpenAICodeGenerator(mode)}
               size='small'
-              label='生成工号'
+              label={t('hrm.hrm_employee_page_components__employee_form_dialog.text_0dd441')}
             />
             <AIHelperButton
               type='complete'
               onClick={onOpenAIDataCompleter}
               size='small'
-              label='智能补全'
+              label={t('hrm.hrm_employee_page_components__employee_form_dialog.text_e93748')}
             />
             <AIHelperButton
               type='validate'
               onClick={onOpenAIFormValidator}
               size='small'
-              label='AI校验'
+              label={t('hrm.hrm_employee_page_components__employee_form_dialog.text_6bc019')}
             />
           </Box>
           <Box sx={{ display: 'flex', gap: 1 }}>
@@ -205,13 +208,14 @@ const EmployeeFormDialog: React.FC<EmployeeFormDialogProps> = ({
               type='submit'
               variant='contained'
             >
-              {mode === 'create' ? '创建' : '保存'}
+              {mode === 'create' ? t('hrm.hrm_employee_page_components__employee_form_dialog.create') : t('hrm.hrm_employee_page_components__employee_form_dialog.save')}
             </Button>
           </Box>
         </DialogActions>
       </Box>
     </DialogContent>
   </Dialog>
-);
+  );
+};
 
 export default EmployeeFormDialog;

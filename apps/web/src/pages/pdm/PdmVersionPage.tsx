@@ -21,6 +21,7 @@ import { GitBranch, Plus, Check, Clock, User, Tag, Edit } from 'lucide-react';
 import { pdmApi } from '@/api/pdm';
 import type { DocumentVersion, Document } from '@/api/pdm';
 import { useNotificationStore } from '@/store';
+import { useUrlListState } from '@/hooks';
 import {
   ListPageTemplate,
   type ColumnDef,
@@ -73,13 +74,27 @@ const VERSION_TYPE_OPTIONS = [
 ];
 
 export const PdmVersionPage: React.FC = () => {
+  const listState = useUrlListState<{ type: string }>({
+    defaultSearch: '',
+    defaultPageSize: 20,
+    defaultFilters: { type: '' },
+    baseIndex: 0,
+    historyMode: 'replace',
+  });
+  const {
+    searchQuery,
+    debouncedSearch,
+    currentPage,
+    pageSize,
+    filters: urlFilters,
+    setSearchQuery,
+    setFilter,
+    setCurrentPage,
+    setPageSize,
+  } = listState;
+  const filterType = urlFilters.type;
   const [selectedDocument, setSelectedDocument] = useState('');
   const [openDialog, setOpenDialog] = useState(false);
-  const [searchQuery, setSearchQuery] = useState('');
-  const [debouncedSearch, setDebouncedSearch] = useState('');
-  const [filterType, setFilterType] = useState<string>('');
-  const [currentPage, setCurrentPage] = useState(0);
-  const [pageSize, setPageSize] = useState(20);
 
   const [formData, setFormData] = useState<FormData>({
     document_id: '',
@@ -91,14 +106,6 @@ export const PdmVersionPage: React.FC = () => {
 
   const addNotification = useNotificationStore((state) => state.addNotification);
   const queryClient = useQueryClient();
-
-  useEffect(() => {
-    const timer = setTimeout(() => {
-      setDebouncedSearch(searchQuery);
-      setCurrentPage(0);
-    }, 300);
-    return () => clearTimeout(timer);
-  }, [searchQuery]);
 
   const { data: documents = [] } = useQuery<Document[]>({
     queryKey: QUERY_KEYS.PDM.DOCUMENTS,
@@ -242,8 +249,7 @@ export const PdmVersionPage: React.FC = () => {
       handleDocumentChange(filters.document);
     }
     if (filters.type !== undefined) {
-      setFilterType(filters.type);
-      setCurrentPage(0);
+      setFilter('type', filters.type);
     }
   };
 
@@ -267,19 +273,15 @@ export const PdmVersionPage: React.FC = () => {
           { value: '', label: '全部文档' },
           ...documents.map((doc) => ({ value: doc.id, label: doc.name })),
         ],
-        value: selectedDocument,
-        onChange: (value: unknown) => handleDocumentChange(value as string),
       },
       {
         id: 'type',
         label: '版本类型',
         type: 'select',
         options: VERSION_TYPE_OPTIONS,
-        value: filterType,
-        onChange: (value: unknown) => setFilterType(value as string),
       },
     ],
-    [documents, selectedDocument, filterType]
+    [documents]
   );
 
   const columns = useMemo<ColumnDef<DocumentVersion>[]>(

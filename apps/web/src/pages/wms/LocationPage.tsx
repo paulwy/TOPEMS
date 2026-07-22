@@ -35,29 +35,33 @@ import { apiLogger } from '@/utils/logger';
 import { ConfirmDialog, PageContainer } from '@/components/common';
 import { designTokens } from '@/theme/tokens';
 
+import { useTranslation } from 'react-i18next';
 const ct = designTokens.colors;
 
-const statusConfig: Record<
-  string,
-  { label: string; color: 'success' | 'warning' | 'error' | 'default' }
-> = {
-  empty: { label: '空闲', color: 'success' },
-  partially_filled: { label: '部分占用', color: 'warning' },
-  full: { label: '已满', color: 'error' },
-  inactive: { label: '停用', color: 'default' },
-};
 
-const locationTypeConfig: Record<string, string> = {
-  storage: '存储区',
-  picking: '拣货区',
-  receiving: '收货区',
-  shipping: '发货区',
-  staging: '暂存区',
-  quarantine: '检疫区',
-  returned: '退货区',
-};
 
 const LocationPage: React.FC = () => {
+  const { t } = useTranslation();
+  const statusConfig: Record<
+    string,
+    { label: string; color: 'success' | 'warning' | 'error' | 'default' }
+  > = {
+    empty: { label: t('wms.location_page.idle'), color: 'success' },
+    partially_filled: { label: t('wms.location_page.text_01cdea'), color: 'warning' },
+    full: { label: t('wms.location_page.text_822faf'), color: 'error' },
+    inactive: { label: t('wms.location_page.action_disable'), color: 'default' },
+  };
+
+  const locationTypeConfig: Record<string, string> = {
+    storage: t('wms.location_page.text_12b387'),
+    picking: t('wms.location_page.text_cb8ea4'),
+    receiving: t('wms.location_page.text_d804f0'),
+    shipping: t('wms.location_page.text_63e819'),
+    staging: t('wms.location_page.text_15dc2f'),
+    quarantine: t('wms.location_page.text_c371b5'),
+    returned: t('wms.location_page.text_81a3ad'),
+  };
+
   const { addNotification } = useNotificationStore();
   const queryClient = useQueryClient();
 
@@ -136,7 +140,7 @@ const LocationPage: React.FC = () => {
     },
     onSuccess: (response) => {
       if (response.success) {
-        addNotification({ type: 'success', title: '创建成功', message: '库位已创建' });
+        addNotification({ type: 'success', title: t('wms.location_page.create'), message: t('wms.location_page.create_1') });
         setShowCreateDialog(false);
         resetNewItem();
         queryClient.invalidateQueries({ queryKey: ['wms-locations'] });
@@ -144,8 +148,8 @@ const LocationPage: React.FC = () => {
       }
     },
     onError: (error: unknown) => {
-      apiLogger.error('创建库位失败:', error);
-      addNotification({ type: 'error', title: '创建失败', message: '创建库位失败' });
+      apiLogger.error(t('wms.location_page.create_2'), error);
+      addNotification({ type: 'error', title: t('wms.location_page.create_3'), message: t('wms.location_page.create_4') });
     },
   });
 
@@ -155,15 +159,15 @@ const LocationPage: React.FC = () => {
     },
     onSuccess: (response) => {
       if (response.success) {
-        addNotification({ type: 'success', title: '更新成功', message: '库位已更新' });
+        addNotification({ type: 'success', title: t('wms.location_page.update'), message: t('wms.location_page.update_1') });
         setShowEditDialog(false);
         queryClient.invalidateQueries({ queryKey: ['wms-locations'] });
         queryClient.invalidateQueries({ queryKey: ['wms-location-status-summary'] });
       }
     },
     onError: (error: unknown) => {
-      apiLogger.error('更新库位失败:', error);
-      addNotification({ type: 'error', title: '更新失败', message: '更新库位失败' });
+      apiLogger.error(t('wms.location_page.update_2'), error);
+      addNotification({ type: 'error', title: t('wms.location_page.update_3'), message: t('wms.location_page.update_4') });
     },
   });
 
@@ -173,14 +177,14 @@ const LocationPage: React.FC = () => {
     },
     onSuccess: (response) => {
       if (response.success) {
-        addNotification({ type: 'success', title: '删除成功', message: '库位已删除' });
+        addNotification({ type: 'success', title: t('wms.location_page.delete_success'), message: t('wms.location_page.deleted') });
         queryClient.invalidateQueries({ queryKey: ['wms-locations'] });
         queryClient.invalidateQueries({ queryKey: ['wms-location-status-summary'] });
       }
     },
     onError: (error: unknown) => {
-      apiLogger.error('删除库位失败:', error);
-      addNotification({ type: 'error', title: '删除失败', message: '删除库位失败' });
+      apiLogger.error(t('wms.location_page.delete'), error);
+      addNotification({ type: 'error', title: t('wms.location_page.delete_1'), message: t('wms.location_page.delete_2') });
     },
   });
 
@@ -188,8 +192,8 @@ const LocationPage: React.FC = () => {
     if (!newItem.code || !newItem.name || !newItem.warehouse_id) {
       addNotification({
         type: 'warning',
-        title: '验证错误',
-        message: '请填写必要信息（库位编码、名称、仓库）',
+        title: t('wms.location_page.error'),
+        message: t('wms.location_page.location_code'),
       });
       return;
     }
@@ -286,18 +290,18 @@ const LocationPage: React.FC = () => {
 
   const columns: ColumnDef<Location>[] = useMemo(
     () => [
-      { id: 'code', label: '库位编码', sortable: true },
-      { id: 'name', label: '库位名称', sortable: true },
-      { id: 'warehouse_id', label: '仓库', render: (row) => getWarehouseName(row.warehouse_id) },
-      { id: 'zone_name', label: '库区' },
+      { id: 'code', label: t('wms.location_page.column_location_code'), sortable: true },
+      { id: 'name', label: t('wms.location_page.column_location_name'), sortable: true },
+      { id: 'warehouse_id', label: t('wms.location_page.filter_warehouse'), render: (row) => getWarehouseName(row.warehouse_id) },
+      { id: 'zone_name', label: t('wms.location_page.zone') },
       {
         id: 'location_type',
-        label: '类型',
+        label: t('wms.location_page.type'),
         render: (row) => locationTypeConfig[row.location_type] || row.location_type,
       },
-      { id: 'status', label: '状态', render: (row) => getStatusBadge(row.status) },
-      { id: 'capacity', label: '容量' },
-      { id: 'occupied_quantity', label: '已占用' },
+      { id: 'status', label: t('wms.location_page.filter_status'), render: (row) => getStatusBadge(row.status) },
+      { id: 'capacity', label: t('wms.location_page.field_capacity') },
+      { id: 'occupied_quantity', label: t('wms.location_page.status_occupied') },
     ],
     [getWarehouseName]
   );
@@ -306,14 +310,14 @@ const LocationPage: React.FC = () => {
     () => [
       {
         id: 'status',
-        label: '状态',
+        label: t('wms.location_page.filter_status'),
         type: 'select',
         options: [
-          { label: '全部状态', value: '' },
-          { label: '空闲', value: 'empty' },
-          { label: '部分占用', value: 'partially_filled' },
-          { label: '已满', value: 'full' },
-          { label: '停用', value: 'inactive' },
+          { label: t('wms.location_page.filter_option_all_status'), value: '' },
+          { label: t('wms.location_page.idle'), value: 'empty' },
+          { label: t('wms.location_page.text_01cdea'), value: 'partially_filled' },
+          { label: t('wms.location_page.text_822faf'), value: 'full' },
+          { label: t('wms.location_page.action_disable'), value: 'inactive' },
         ],
         value: statusFilter,
         onChange: (value) => {
@@ -323,10 +327,10 @@ const LocationPage: React.FC = () => {
       },
       {
         id: 'warehouse_id',
-        label: '仓库',
+        label: t('wms.location_page.filter_warehouse'),
         type: 'select',
         options: [
-          { label: '全部仓库', value: '' },
+          { label: t('wms.location_page.filter_option_all_warehouse'), value: '' },
           ...warehouses.map((w) => ({ label: w.name, value: w.id })),
         ],
         value: warehouseFilter,
@@ -341,10 +345,10 @@ const LocationPage: React.FC = () => {
 
   const rowActions: RowAction<Location>[] = useMemo(
     () => [
-      { label: '查看详情', icon: <Eye size={16} />, onClick: handleViewDetail },
-      { label: '编辑', icon: <Edit size={16} />, onClick: handleEdit },
+      { label: t('wms.location_page.action_view_detail'), icon: <Eye size={16} />, onClick: handleViewDetail },
+      { label: t('wms.location_page.action_edit'), icon: <Edit size={16} />, onClick: handleEdit },
       {
-        label: '删除',
+        label: t('wms.location_page.action_delete'),
         icon: <Trash2 size={16} />,
         color: 'error',
         onClick: (row) => handleDeleteClick(row.id),
@@ -433,8 +437,8 @@ const LocationPage: React.FC = () => {
 
   return (
     <PageContainer
-      title='库位管理'
-      subtitle='管理仓库库位信息，包括库位编码、类型、容量等'
+      title={t('wms.location_page.breadcrumb_current')}
+      subtitle={t('wms.location_page.location_code_1')}
       headerProps={{
         pageIcon: <MapPin style={{ width: 20, height: 20 }} />,
         pageGradient: `linear-gradient(135deg, ${ct.success.main}, ${ct.success.dark})`,
@@ -444,16 +448,16 @@ const LocationPage: React.FC = () => {
         title=''
         subtitle=''
         breadcrumbs={[
-          { label: '首页', href: '/dashboard' },
-          { label: '仓储', href: '/wms' },
-          { label: '库位管理' },
+          { label: t('wms.location_page.breadcrumb_home'), href: '/dashboard' },
+          { label: t('wms.location_page.breadcrumb_module'), href: '/wms' },
+          { label: t('wms.location_page.breadcrumb_current') },
         ]}
         columns={columns}
         data={locationsData.items}
         loading={locationsLoading}
         filters={filters}
         searchable
-        searchPlaceholder='搜索库位编码或名称...'
+        searchPlaceholder={t('wms.location_page.location_code_2')}
         onSearch={handleSearch}
         searchValue={searchTerm}
         pagination={{
@@ -462,19 +466,19 @@ const LocationPage: React.FC = () => {
           total: locationsData.total,
           onPageChange: setCurrentPage,
         }}
-        actions={[{ label: '新增库位', icon: <Plus size={16} />, onClick: handleOpenCreate }]}
+        actions={[{ label: t('wms.location_page.dialog_create_title'), icon: <Plus size={16} />, onClick: handleOpenCreate }]}
         rowActions={rowActions}
         headerContent={statsContent}
-        emptyMessage='暂无库位数据'
+        emptyMessage={t('wms.location_page.empty_message')}
         getRowId={(row) => row.id}
         mobileCardTitleKey='name'
         mobileCardSubtitleKey='code'
         mobileCardDisplayFields={['warehouse_name', 'zone_name', 'capacity', 'status']}
         mobileCardFieldLabels={{
-          warehouse_name: '仓库',
-          zone_name: '库区',
-          capacity: '容量',
-          status: '状态',
+          warehouse_name: t('wms.location_page.filter_warehouse'),
+          zone_name: t('wms.location_page.zone'),
+          capacity: t('wms.location_page.field_capacity'),
+          status: t('wms.location_page.filter_status'),
         }}
       />
 
@@ -495,7 +499,7 @@ const LocationPage: React.FC = () => {
             }}
           >
             <TextField
-              label='库位编码 *'
+              label={t('wms.location_page.field_location_code_required')}
               value={newItem.code}
               onChange={(e) => setNewItem({ ...newItem, code: e.target.value })}
               fullWidth
@@ -503,7 +507,7 @@ const LocationPage: React.FC = () => {
               size='small'
             />
             <TextField
-              label='库位名称 *'
+              label={t('wms.location_page.field_location_name_required')}
               value={newItem.name}
               onChange={(e) => setNewItem({ ...newItem, name: e.target.value })}
               fullWidth
@@ -517,7 +521,7 @@ const LocationPage: React.FC = () => {
               <InputLabel>仓库 *</InputLabel>
               <Select
                 value={newItem.warehouse_id}
-                label='仓库 *'
+                label={t('wms.location_page.warehouse')}
                 onChange={(e) => setNewItem({ ...newItem, warehouse_id: e.target.value })}
               >
                 {warehouses.map((w) => (
@@ -537,7 +541,7 @@ const LocationPage: React.FC = () => {
               <InputLabel>库位类型</InputLabel>
               <Select
                 value={newItem.location_type}
-                label='库位类型'
+                label={t('wms.location_page.field_location_type')}
                 onChange={(e) => setNewItem({ ...newItem, location_type: e.target.value })}
               >
                 {Object.entries(locationTypeConfig).map(([key, label]) => (
@@ -551,42 +555,42 @@ const LocationPage: React.FC = () => {
               </Select>
             </FormControl>
             <TextField
-              label='库区'
+              label={t('wms.location_page.zone')}
               value={newItem.zone_id}
               onChange={(e) => setNewItem({ ...newItem, zone_id: e.target.value })}
               fullWidth
               size='small'
             />
             <TextField
-              label='通道'
+              label={t('wms.location_page.text_e4f52e')}
               value={newItem.aisle}
               onChange={(e) => setNewItem({ ...newItem, aisle: e.target.value })}
               fullWidth
               size='small'
             />
             <TextField
-              label='排'
+              label={t('wms.location_page.field_row')}
               value={newItem.row}
               onChange={(e) => setNewItem({ ...newItem, row: e.target.value })}
               fullWidth
               size='small'
             />
             <TextField
-              label='列'
+              label={t('wms.location_page.field_column')}
               value={newItem.column}
               onChange={(e) => setNewItem({ ...newItem, column: e.target.value })}
               fullWidth
               size='small'
             />
             <TextField
-              label='层'
+              label={t('wms.location_page.field_layer')}
               value={newItem.layer}
               onChange={(e) => setNewItem({ ...newItem, layer: e.target.value })}
               fullWidth
               size='small'
             />
             <TextField
-              label='容量'
+              label={t('wms.location_page.field_capacity')}
               type='number'
               value={newItem.capacity}
               onChange={(e) =>
@@ -596,7 +600,7 @@ const LocationPage: React.FC = () => {
               size='small'
             />
             <TextField
-              label='体积'
+              label={t('wms.location_page.text_972d5f')}
               type='number'
               value={newItem.volume}
               onChange={(e) => setNewItem({ ...newItem, volume: parseFloat(e.target.value) || 0 })}
@@ -604,7 +608,7 @@ const LocationPage: React.FC = () => {
               size='small'
             />
             <TextField
-              label='重量限制'
+              label={t('wms.location_page.text_0115ce')}
               type='number'
               value={newItem.weight_limit}
               onChange={(e) =>
@@ -614,15 +618,15 @@ const LocationPage: React.FC = () => {
               size='small'
             />
             <TextField
-              label='温度区间'
+              label={t('wms.location_page.text_2d07cc')}
               value={newItem.temperature_zone}
               onChange={(e) => setNewItem({ ...newItem, temperature_zone: e.target.value })}
               fullWidth
               size='small'
-              placeholder='如：常温、冷藏、冷冻'
+              placeholder={t('wms.location_page.text_4c69af')}
             />
             <TextField
-              label='条码'
+              label={t('wms.location_page.text_39f76a')}
               value={newItem.barcode}
               onChange={(e) => setNewItem({ ...newItem, barcode: e.target.value })}
               fullWidth
@@ -636,7 +640,7 @@ const LocationPage: React.FC = () => {
               size='small'
             />
             <TextField
-              label='备注'
+              label={t('wms.location_page.remark')}
               value={newItem.remarks}
               onChange={(e) => setNewItem({ ...newItem, remarks: e.target.value })}
               fullWidth
@@ -681,14 +685,14 @@ const LocationPage: React.FC = () => {
               }}
             >
               <TextField
-                label='库位编码'
+                label={t('wms.location_page.column_location_code')}
                 value={selectedLocation.code}
                 fullWidth
                 size='small'
                 disabled
               />
               <TextField
-                label='库位名称'
+                label={t('wms.location_page.column_location_name')}
                 value={editItem.name || ''}
                 onChange={(e) => setEditItem({ ...editItem, name: e.target.value })}
                 fullWidth
@@ -701,7 +705,7 @@ const LocationPage: React.FC = () => {
                 <InputLabel>状态</InputLabel>
                 <Select
                   value={editItem.status || ''}
-                  label='状态'
+                  label={t('wms.location_page.filter_status')}
                   onChange={(e) => setEditItem({ ...editItem, status: e.target.value })}
                 >
                   <MenuItem value='empty'>空闲</MenuItem>
@@ -711,7 +715,7 @@ const LocationPage: React.FC = () => {
                 </Select>
               </FormControl>
               <TextField
-                label='容量'
+                label={t('wms.location_page.field_capacity')}
                 type='number'
                 value={editItem.capacity ?? ''}
                 onChange={(e) =>
@@ -721,7 +725,7 @@ const LocationPage: React.FC = () => {
                 size='small'
               />
               <TextField
-                label='体积'
+                label={t('wms.location_page.text_972d5f')}
                 type='number'
                 value={editItem.volume ?? ''}
                 onChange={(e) =>
@@ -731,7 +735,7 @@ const LocationPage: React.FC = () => {
                 size='small'
               />
               <TextField
-                label='重量限制'
+                label={t('wms.location_page.text_0115ce')}
                 type='number'
                 value={editItem.weight_limit ?? ''}
                 onChange={(e) =>
@@ -741,14 +745,14 @@ const LocationPage: React.FC = () => {
                 size='small'
               />
               <TextField
-                label='温度区间'
+                label={t('wms.location_page.text_2d07cc')}
                 value={editItem.temperature_zone || ''}
                 onChange={(e) => setEditItem({ ...editItem, temperature_zone: e.target.value })}
                 fullWidth
                 size='small'
               />
               <TextField
-                label='条码'
+                label={t('wms.location_page.text_39f76a')}
                 value={editItem.barcode || ''}
                 onChange={(e) => setEditItem({ ...editItem, barcode: e.target.value })}
                 fullWidth
@@ -762,7 +766,7 @@ const LocationPage: React.FC = () => {
                 size='small'
               />
               <TextField
-                label='备注'
+                label={t('wms.location_page.remark')}
                 value={editItem.remarks || ''}
                 onChange={(e) => setEditItem({ ...editItem, remarks: e.target.value })}
                 fullWidth
@@ -947,8 +951,8 @@ const LocationPage: React.FC = () => {
         isOpen={showDeleteConfirm}
         onClose={() => setShowDeleteConfirm(false)}
         onConfirm={handleDelete}
-        title='确认删除'
-        message='确定要删除这个库位吗？此操作不可撤销。'
+        title={t('wms.location_page.dialog_delete_title')}
+        message={t('wms.location_page.confirm')}
         danger
       />
     </PageContainer>

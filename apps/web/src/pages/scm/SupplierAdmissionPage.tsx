@@ -30,6 +30,7 @@ import { ConfirmDialog } from '@topems/shared-components';
 import { designTokens } from '@/theme/tokens';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { QUERY_KEYS } from '@/lib/reactQuery';
+import { useUrlListState, useUrlState } from '@/hooks';
 
 const ct = designTokens.colors;
 
@@ -66,8 +67,11 @@ const categoryConfig: Record<string, string> = {
 
 const SupplierAdmissionPage: React.FC = () => {
   const queryClient = useQueryClient();
-  const [currentPage, setCurrentPage] = useState(1);
-  const [pageSize, setPageSize] = useState(10);
+  const listState = useUrlListState({
+    defaultPageSize: 10,
+    baseIndex: 1,
+    historyMode: 'replace',
+  });
   const [showDialog, setShowDialog] = useState(false);
   const [isEditing, setIsEditing] = useState(false);
   const [selectedAdmission, setSelectedAdmission] = useState<SupplierAdmission | null>(null);
@@ -78,7 +82,7 @@ const SupplierAdmissionPage: React.FC = () => {
     onConfirm: () => void;
     danger?: boolean;
   } | null>(null);
-  const [activeTab, setActiveTab] = useState(0);
+  const [activeTab, setActiveTab] = useUrlState<number>('tab', 0);
   const [formData, setFormData] = useState<CreateSupplierAdmissionRequest>({
     admission_no: '',
     supplier_name: '',
@@ -102,11 +106,11 @@ const SupplierAdmissionPage: React.FC = () => {
   const { addNotification } = useNotificationStore();
 
   const admissionsQuery = useQuery<{ items: SupplierAdmission[]; total: number }>({
-    queryKey: [...QUERY_KEYS.SCM.SUPPLIER_ADMISSIONS, currentPage, pageSize],
+    queryKey: [...QUERY_KEYS.SCM.SUPPLIER_ADMISSIONS, listState.currentPage, listState.pageSize],
     queryFn: async () => {
       const response = await scmApi.supplierAdmissions.list({
-        page: currentPage,
-        pageSize,
+        page: listState.currentPage,
+        pageSize: listState.pageSize,
       });
       if (response.success && response.data) {
         return { items: response.data.items || [], total: response.data.total || 0 };
@@ -580,13 +584,13 @@ const SupplierAdmissionPage: React.FC = () => {
         data={admissions}
         loading={loading}
         pagination={{
-          page: currentPage - 1,
-          pageSize,
+          page: listState.currentPage - 1,
+          pageSize: listState.pageSize,
           total,
-          onPageChange: (page) => setCurrentPage(page + 1),
+          onPageChange: (page) => listState.setCurrentPage(page + 1),
           onPageSizeChange: (size) => {
-            setPageSize(size);
-            setCurrentPage(1);
+            listState.setPageSize(size);
+            listState.setCurrentPage(1);
           },
         }}
         actions={[

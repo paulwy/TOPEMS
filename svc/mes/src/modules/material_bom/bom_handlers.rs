@@ -470,6 +470,7 @@ pub async fn update_material_bom(
             auth_state: state.auth_state.clone(),
             pool: state.pool.clone(),
             health_config: state.health_config.clone(),
+            event_publisher: state.event_publisher.clone(),
         }),
         Extension(claims),
         Path(id),

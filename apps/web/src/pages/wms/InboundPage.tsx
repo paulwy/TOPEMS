@@ -43,29 +43,33 @@ import { apiLogger } from '@/utils/logger';
 import { ConfirmDialog, PageContainer, StatusBadge } from '@/components/common';
 import { designTokens } from '@/theme/tokens';
 
+import { useTranslation } from 'react-i18next';
 const ct = designTokens.colors;
 
-const statusConfig: Record<
-  string,
-  { label: string; color: 'success' | 'warning' | 'error' | 'info' | 'default' }
-> = {
-  pending: { label: '待确认', color: 'warning' },
-  confirmed: { label: '已确认', color: 'info' },
-  receiving: { label: '收货中', color: 'info' },
-  quality_check: { label: '质检中', color: 'warning' },
-  completed: { label: '已完成', color: 'success' },
-  cancelled: { label: '已取消', color: 'error' },
-};
 
-const orderTypeConfig: Record<string, string> = {
-  purchase: '采购入库',
-  return: '退货入库',
-  transfer: '调拨入库',
-  production: '生产入库',
-  other: '其他',
-};
 
 const InboundPage: React.FC = () => {
+  const { t } = useTranslation();
+  const statusConfig: Record<
+    string,
+    { label: string; color: 'success' | 'warning' | 'error' | 'info' | 'default' }
+  > = {
+    pending: { label: t('wms.inbound_page.confirm'), color: 'warning' },
+    confirmed: { label: t('wms.inbound_page.confirmed'), color: 'info' },
+    receiving: { label: t('wms.inbound_page.text_61cf24'), color: 'info' },
+    quality_check: { label: t('wms.inbound_page.quality_inspection'), color: 'warning' },
+    completed: { label: t('wms.inbound_page.stat_completed'), color: 'success' },
+    cancelled: { label: t('wms.inbound_page.status_cancelled'), color: 'error' },
+  };
+
+  const orderTypeConfig: Record<string, string> = {
+    purchase: t('wms.inbound_page.type_purchase'),
+    return: t('wms.inbound_page.type_return'),
+    transfer: t('wms.inbound_page.type_transfer'),
+    production: t('wms.inbound_page.type_production'),
+    other: t('wms.inbound_page.type_other'),
+  };
+
   const { addNotification } = useNotificationStore();
   const queryClient = useQueryClient();
   const { isMobile, isTablet } = useResponsive();
@@ -117,11 +121,11 @@ const InboundPage: React.FC = () => {
 
   useEffect(() => {
     if (ordersQuery.isError && ordersQuery.error) {
-      apiLogger.error('获取入库单列表失败:', ordersQuery.error);
+      apiLogger.error(t('wms.inbound_page.list'), ordersQuery.error);
       addNotification({
         type: 'error',
-        title: '加载失败',
-        message: '无法加载入库单列表',
+        title: t('wms.inbound_page.fail'),
+        message: t('wms.inbound_page.list_1'),
       });
     }
   }, [ordersQuery.isError, ordersQuery.error, addNotification]);
@@ -139,7 +143,7 @@ const InboundPage: React.FC = () => {
 
   useEffect(() => {
     if (warehousesQuery.isError && warehousesQuery.error) {
-      apiLogger.error('获取仓库列表失败:', warehousesQuery.error);
+      apiLogger.error(t('wms.inbound_page.list_2'), warehousesQuery.error);
     }
   }, [warehousesQuery.isError, warehousesQuery.error]);
 
@@ -173,7 +177,7 @@ const InboundPage: React.FC = () => {
 
   useEffect(() => {
     if (orderItemsQuery.isError && orderItemsQuery.error) {
-      apiLogger.error('获取入库单明细失败:', orderItemsQuery.error);
+      apiLogger.error(t('wms.inbound_page.fail_1'), orderItemsQuery.error);
     }
   }, [orderItemsQuery.isError, orderItemsQuery.error]);
 
@@ -182,19 +186,19 @@ const InboundPage: React.FC = () => {
     onSuccess: () => {
       addNotification({
         type: 'success',
-        title: '创建成功',
-        message: '入库单已创建',
+        title: t('wms.inbound_page.create'),
+        message: t('wms.inbound_page.create_1'),
       });
       setShowCreateDialog(false);
       resetNewItem();
       queryClient.invalidateQueries({ queryKey: ['wms-inbound-orders'] });
     },
     onError: (error) => {
-      apiLogger.error('创建入库单失败:', error);
+      apiLogger.error(t('wms.inbound_page.create_2'), error);
       addNotification({
         type: 'error',
-        title: '创建失败',
-        message: '创建入库单失败',
+        title: t('wms.inbound_page.create_3'),
+        message: t('wms.inbound_page.create_4'),
       });
     },
   });
@@ -204,17 +208,17 @@ const InboundPage: React.FC = () => {
     onSuccess: () => {
       addNotification({
         type: 'success',
-        title: '确认成功',
-        message: '入库单已确认',
+        title: t('wms.inbound_page.success'),
+        message: t('wms.inbound_page.confirmed_1'),
       });
       queryClient.invalidateQueries({ queryKey: ['wms-inbound-orders'] });
     },
     onError: (error) => {
-      apiLogger.error('确认入库单失败:', error);
+      apiLogger.error(t('wms.inbound_page.fail_2'), error);
       addNotification({
         type: 'error',
-        title: '确认失败',
-        message: '确认入库单失败',
+        title: t('wms.inbound_page.fail_3'),
+        message: t('wms.inbound_page.fail_4'),
       });
     },
   });
@@ -225,18 +229,18 @@ const InboundPage: React.FC = () => {
     onSuccess: () => {
       addNotification({
         type: 'success',
-        title: '收货成功',
-        message: '入库单已收货',
+        title: t('wms.inbound_page.success_1'),
+        message: t('wms.inbound_page.inbound'),
       });
       setShowReceiveDialog(false);
       queryClient.invalidateQueries({ queryKey: ['wms-inbound-orders'] });
     },
     onError: (error) => {
-      apiLogger.error('收货失败:', error);
+      apiLogger.error(t('wms.inbound_page.fail_5'), error);
       addNotification({
         type: 'error',
-        title: '收货失败',
-        message: '收货失败',
+        title: t('wms.inbound_page.fail_6'),
+        message: t('wms.inbound_page.fail_6'),
       });
     },
   });
@@ -246,17 +250,17 @@ const InboundPage: React.FC = () => {
     onSuccess: () => {
       addNotification({
         type: 'success',
-        title: '完成成功',
-        message: '入库单已完成',
+        title: t('wms.inbound_page.success_2'),
+        message: t('wms.inbound_page.completed'),
       });
       queryClient.invalidateQueries({ queryKey: ['wms-inbound-orders'] });
     },
     onError: (error) => {
-      apiLogger.error('完成入库单失败:', error);
+      apiLogger.error(t('wms.inbound_page.fail_7'), error);
       addNotification({
         type: 'error',
-        title: '完成失败',
-        message: '完成入库单失败',
+        title: t('wms.inbound_page.fail_8'),
+        message: t('wms.inbound_page.fail_9'),
       });
     },
   });
@@ -266,18 +270,18 @@ const InboundPage: React.FC = () => {
     onSuccess: () => {
       addNotification({
         type: 'success',
-        title: '删除成功',
-        message: '入库单已删除',
+        title: t('wms.inbound_page.delete_success'),
+        message: t('wms.inbound_page.deleted'),
       });
       setShowDeleteConfirm(false);
       queryClient.invalidateQueries({ queryKey: ['wms-inbound-orders'] });
     },
     onError: (error) => {
-      apiLogger.error('删除入库单失败:', error);
+      apiLogger.error(t('wms.inbound_page.delete'), error);
       addNotification({
         type: 'error',
-        title: '删除失败',
-        message: '删除入库单失败',
+        title: t('wms.inbound_page.delete_1'),
+        message: t('wms.inbound_page.delete_2'),
       });
     },
   });
@@ -286,8 +290,8 @@ const InboundPage: React.FC = () => {
     if (!newItem.order_number || !newItem.warehouse_id) {
       addNotification({
         type: 'warning',
-        title: '验证错误',
-        message: '请填写必要信息（入库单号、仓库）',
+        title: t('wms.inbound_page.error'),
+        message: t('wms.inbound_page.please_fill'),
       });
       return;
     }
@@ -366,11 +370,11 @@ const InboundPage: React.FC = () => {
   const columns: ColumnDef<InboundOrder>[] = useMemo(
     () => {
       const baseColumns = [
-        { id: 'order_number', label: '入库单号', sortable: true },
-        { id: 'total_quantity', label: '总数量' },
+        { id: 'order_number', label: t('wms.inbound_page.detail_order_number'), sortable: true },
+        { id: 'total_quantity', label: t('wms.inbound_page.detail_total_quantity') },
         {
           id: 'status',
-          label: '状态',
+          label: t('wms.inbound_page.detail_col_status'),
           render: (row: InboundOrder) => getStatusBadge(row.status),
         },
       ];
@@ -384,7 +388,7 @@ const InboundPage: React.FC = () => {
           ...baseColumns.slice(0, 1),
           {
             id: 'order_type',
-            label: '入库类型',
+            label: t('wms.inbound_page.detail_order_type'),
             render: (row: InboundOrder) => orderTypeConfig[row.order_type] || row.order_type,
           },
           ...baseColumns.slice(1),
@@ -395,17 +399,17 @@ const InboundPage: React.FC = () => {
         ...baseColumns.slice(0, 1),
         {
           id: 'order_type',
-          label: '入库类型',
+          label: t('wms.inbound_page.detail_order_type'),
           render: (row: InboundOrder) => orderTypeConfig[row.order_type] || row.order_type,
         },
         {
           id: 'warehouse_id',
-          label: '仓库',
+          label: t('wms.inbound_page.detail_warehouse'),
           render: (row: InboundOrder) => getWarehouseName(row.warehouse_id),
         },
-        { id: 'supplier_name', label: '供应商' },
+        { id: 'supplier_name', label: t('wms.inbound_page.detail_supplier') },
         ...baseColumns.slice(1),
-        { id: 'expected_date', label: '预计日期' },
+        { id: 'expected_date', label: t('wms.inbound_page.detail_expected_date') },
       ];
     },
     [getWarehouseName, isMobile, isTablet]
@@ -415,16 +419,16 @@ const InboundPage: React.FC = () => {
     () => [
       {
         id: 'status',
-        label: '状态',
+        label: t('wms.inbound_page.detail_col_status'),
         type: 'select',
         options: [
-          { label: '全部状态', value: '' },
-          { label: '待确认', value: 'pending' },
-          { label: '已确认', value: 'confirmed' },
-          { label: '收货中', value: 'receiving' },
-          { label: '质检中', value: 'quality_check' },
-          { label: '已完成', value: 'completed' },
-          { label: '已取消', value: 'cancelled' },
+          { label: t('wms.inbound_page.filter_option_all_status'), value: '' },
+          { label: t('wms.inbound_page.confirm'), value: 'pending' },
+          { label: t('wms.inbound_page.confirmed'), value: 'confirmed' },
+          { label: t('wms.inbound_page.text_61cf24'), value: 'receiving' },
+          { label: t('wms.inbound_page.quality_inspection'), value: 'quality_check' },
+          { label: t('wms.inbound_page.stat_completed'), value: 'completed' },
+          { label: t('wms.inbound_page.status_cancelled'), value: 'cancelled' },
         ],
         value: statusFilter,
         onChange: (value) => {
@@ -434,10 +438,10 @@ const InboundPage: React.FC = () => {
       },
       {
         id: 'warehouse_id',
-        label: '仓库',
+        label: t('wms.inbound_page.detail_warehouse'),
         type: 'select',
         options: [
-          { label: '全部仓库', value: '' },
+          { label: t('wms.inbound_page.filter_option_all_warehouse'), value: '' },
           ...warehouses.map((w) => ({ label: w.name, value: w.id })),
         ],
         value: warehouseFilter,
@@ -454,7 +458,7 @@ const InboundPage: React.FC = () => {
     (row: InboundOrder): React.ReactNode => {
       const actions: RowAction<InboundOrder>[] = [
         {
-          label: '查看详情',
+          label: t('wms.inbound_page.action_view_detail'),
           icon: <Eye size={16} />,
           onClick: () => handleViewDetail(row),
         },
@@ -462,7 +466,7 @@ const InboundPage: React.FC = () => {
 
       if (row.status === 'pending') {
         actions.push({
-          label: '确认',
+          label: t('wms.inbound_page.confirm_1'),
           icon: <Check size={16} />,
           onClick: () => handleConfirm(row.id),
         });
@@ -470,7 +474,7 @@ const InboundPage: React.FC = () => {
 
       if (row.status === 'confirmed' || row.status === 'receiving') {
         actions.push({
-          label: '收货',
+          label: t('wms.inbound_page.text_430f7d'),
           icon: <Package size={16} />,
           onClick: () => handleReceiveClick(row),
         });
@@ -478,7 +482,7 @@ const InboundPage: React.FC = () => {
 
       if (row.status === 'receiving' || row.status === 'quality_check') {
         actions.push({
-          label: '完成',
+          label: t('wms.inbound_page.completed_1'),
           icon: <ClipboardCheck size={16} />,
           onClick: () => handleComplete(row.id),
         });
@@ -486,7 +490,7 @@ const InboundPage: React.FC = () => {
 
       if (row.status === 'pending' || row.status === 'cancelled') {
         actions.push({
-          label: '删除',
+          label: t('wms.inbound_page.action_delete'),
           icon: <Trash2 size={16} />,
           color: 'error',
           onClick: () => handleDeleteClick(row.id),
@@ -594,8 +598,8 @@ const InboundPage: React.FC = () => {
 
   return (
     <PageContainer
-      title='入库管理'
-      subtitle='管理入库单，包括采购入库、退货入库、调拨入库等'
+      title={t('wms.inbound_page.breadcrumb_current')}
+      subtitle={t('wms.inbound_page.transfer_inbound')}
       headerProps={{
         pageIcon: <Download style={{ width: 20, height: 20 }} />,
         pageGradient: `linear-gradient(135deg, ${ct.success.main}, ${ct.success.dark})`,
@@ -605,16 +609,16 @@ const InboundPage: React.FC = () => {
         title=''
         subtitle=''
         breadcrumbs={[
-          { label: '首页', href: '/dashboard' },
-          { label: '仓储', href: WMS_PATHS.root },
-          { label: '入库管理' },
+          { label: t('wms.inbound_page.breadcrumb_home'), href: '/dashboard' },
+          { label: t('wms.inbound_page.breadcrumb_module'), href: WMS_PATHS.root },
+          { label: t('wms.inbound_page.breadcrumb_current') },
         ]}
         columns={columns}
         data={orders}
         loading={loading}
         filters={filters}
         searchable
-        searchPlaceholder='搜索入库单号...'
+        searchPlaceholder={t('wms.inbound_page.search_placeholder')}
         onSearch={handleSearch}
         searchValue={searchTerm}
         pagination={{
@@ -625,23 +629,23 @@ const InboundPage: React.FC = () => {
         }}
         actions={[
           {
-            label: '新增入库单',
+            label: t('wms.inbound_page.dialog_create_title'),
             icon: <Plus size={16} />,
             onClick: handleOpenCreate,
           },
         ]}
         renderRowActions={renderRowActions}
         headerContent={statsContent}
-        emptyMessage='暂无入库单数据'
+        emptyMessage={t('wms.inbound_page.empty_message')}
         getRowId={(row) => row.id}
         mobileCardTitleKey='order_number'
         mobileCardSubtitleKey='supplier_name'
         mobileCardDisplayFields={['order_type', 'status', 'expected_date', 'total_quantity']}
         mobileCardFieldLabels={{
-          order_type: '入库类型',
-          status: '状态',
-          expected_date: '预计日期',
-          total_quantity: '总数',
+          order_type: t('wms.inbound_page.detail_order_type'),
+          status: t('wms.inbound_page.detail_col_status'),
+          expected_date: t('wms.inbound_page.detail_expected_date'),
+          total_quantity: t('wms.inbound_page.text_9ed7d3'),
         }}
       />
 
@@ -662,7 +666,7 @@ const InboundPage: React.FC = () => {
             }}
           >
             <TextField
-              label='入库单号 *'
+              label={t('wms.inbound_page.field_order_number_required')}
               value={newItem.order_number}
               onChange={(e) => setNewItem({ ...newItem, order_number: e.target.value })}
               fullWidth
@@ -676,7 +680,7 @@ const InboundPage: React.FC = () => {
               <InputLabel>入库类型</InputLabel>
               <Select
                 value={newItem.order_type}
-                label='入库类型'
+                label={t('wms.inbound_page.detail_order_type')}
                 onChange={(e) => setNewItem({ ...newItem, order_type: e.target.value })}
               >
                 {Object.entries(orderTypeConfig).map(([key, label]) => (
@@ -696,7 +700,7 @@ const InboundPage: React.FC = () => {
               <InputLabel>仓库 *</InputLabel>
               <Select
                 value={newItem.warehouse_id}
-                label='仓库 *'
+                label={t('wms.inbound_page.field_warehouse_required')}
                 onChange={(e) => setNewItem({ ...newItem, warehouse_id: e.target.value })}
               >
                 {warehouses.map((w) => (
@@ -710,14 +714,14 @@ const InboundPage: React.FC = () => {
               </Select>
             </FormControl>
             <TextField
-              label='供应商'
+              label={t('wms.inbound_page.detail_supplier')}
               value={newItem.supplier_name}
               onChange={(e) => setNewItem({ ...newItem, supplier_name: e.target.value })}
               fullWidth
               size='small'
             />
             <TextField
-              label='预计日期'
+              label={t('wms.inbound_page.detail_expected_date')}
               type='date'
               value={newItem.expected_date}
               onChange={(e) => setNewItem({ ...newItem, expected_date: e.target.value })}
@@ -900,7 +904,7 @@ const InboundPage: React.FC = () => {
                       <Typography variant='caption'>{item.expected_quantity}</Typography>
                       <Typography variant='caption'>{item.received_quantity}</Typography>
                       <Typography variant='caption'>
-                        {item.status === 'completed' ? '已完成' : item.status}
+                        {item.status === 'completed' ? t('wms.inbound_page.stat_completed') : item.status}
                       </Typography>
                     </Box>
                   ))}
@@ -1015,10 +1019,10 @@ const InboundPage: React.FC = () => {
       <ConfirmDialog
         isOpen={showDeleteConfirm}
         onClose={() => setShowDeleteConfirm(false)}
-        title='确认删除'
-        message='确定要删除此入库单吗？此操作无法撤销。'
+        title={t('wms.inbound_page.dialog_delete_title')}
+        message={t('wms.inbound_page.confirm_2')}
         onConfirm={handleDelete}
-        confirmLabel='删除'
+        confirmLabel={t('wms.inbound_page.action_delete')}
         confirmColor='error'
       />
     </PageContainer>

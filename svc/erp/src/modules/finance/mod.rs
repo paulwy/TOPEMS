@@ -43,7 +43,6 @@ mod expenses;
 mod payables;
 mod payments;
 mod periods;
-mod proxy;
 mod receivables;
 mod reconciliation;
 
@@ -56,37 +55,50 @@ pub use expenses::*;
 pub use payables::*;
 pub use payments::*;
 pub use periods::*;
-pub use proxy::*;
 pub use receivables::*;
 pub use reconciliation::*;
 
 pub fn create_routes() -> Router<ApiState> {
     Router::new()
-        .route("/expenses", get(list_expenses).post(create_expense))
+        .route("/api/erp/expenses", get(list_expenses).post(create_expense))
         .route(
-            "/expenses/{id}",
+            "/api/erp/expenses/{id}",
             get(get_expense).put(update_expense).delete(delete_expense),
         )
-        .route("/budgets", get(list_budgets).post(create_budget))
+        .route("/api/erp/budgets", get(list_budgets).post(create_budget))
         .route(
-            "/budgets/{id}",
+            "/api/erp/budgets/{id}",
             get(get_budget).put(update_budget).delete(delete_budget),
         )
         .route(
-            "/receivables",
+            "/api/erp/receivables",
             get(list_receivables).post(create_receivable),
         )
         .route(
-            "/receivables/{id}",
+            "/api/erp/receivables/{id}",
             get(get_receivable)
                 .put(update_receivable)
                 .delete(delete_receivable),
         )
-        .route("/payables", get(list_payables).post(create_payable))
+        .route("/api/erp/payables", get(list_payables).post(create_payable))
         .route(
-            "/payables/{id}",
+            "/api/erp/payables/{id}",
             get(get_payable).put(update_payable).delete(delete_payable),
         )
-        // V15 Phase 3: 代理到 Finance 服务
-        .merge(proxy::proxy_routes())
+        // 余额查询
+        .route("/api/erp/finance/balances", get(get_account_balances))
+        // 会计期间管理
+        .route("/api/erp/finance/periods/current", get(get_current_period))
+        .route("/api/erp/finance/periods", get(list_periods))
+        .route("/api/erp/finance/periods/{period}/open", post(open_period))
+        .route(
+            "/api/erp/finance/periods/{period}/close",
+            post(close_period),
+        )
+        // 对账管理 - V19.5 恢复路由注册
+        .route(
+            "/api/erp/finance/reconciliation",
+            get(list_reconciliations).post(create_reconciliation),
+        )
+        .route("/api/erp/finance/reconciliation/auto", post(auto_reconcile))
 }
