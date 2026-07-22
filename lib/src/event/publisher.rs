@@ -40,8 +40,8 @@ impl EventPublisher {
     ) -> EventResult<()> {
         let payload_json = serde_json::to_value(&payload)?;
         let (trace_id, _) = crate::telemetry::get_current_trace_context();
-        let event = Event::new(event_type, &self.service_name, payload_json)
-            .with_trace_id(trace_id);
+        let event =
+            Event::new(event_type, &self.service_name, payload_json).with_trace_id(trace_id);
 
         let channel_name = format!("topems:events:{}", event_type);
         let event_json = serde_json::to_string(&event)?;

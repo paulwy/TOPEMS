@@ -206,8 +206,8 @@ use sha2::Sha256;
 type HmacSha256 = Hmac<Sha256>;
 
 pub fn sign_message(message: &str, secret: &str) -> String {
-    let mut mac = HmacSha256::new_from_slice(secret.as_bytes())
-        .expect("HMAC can take any size of key");
+    let mut mac =
+        HmacSha256::new_from_slice(secret.as_bytes()).expect("HMAC can take any size of key");
     mac.update(message.as_bytes());
     let result = mac.finalize();
     hex::encode(result.into_bytes())
@@ -551,7 +551,9 @@ fn is_plugin_public_path(path: &str, method: &str) -> bool {
     if path.starts_with("/api/plugins/health") || path.starts_with("/api/plugins/info") {
         return true;
     }
-    if path.starts_with("/api/core/plugin/marketplace") || path.starts_with("/api/v1/core/plugin/marketplace") {
+    if path.starts_with("/api/core/plugin/marketplace")
+        || path.starts_with("/api/v1/core/plugin/marketplace")
+    {
         return true;
     }
     if path.starts_with("/api/core/plugins/") || path.starts_with("/api/v1/core/plugins/") {

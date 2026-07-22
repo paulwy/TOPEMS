@@ -128,10 +128,7 @@ impl WorkflowServiceClient {
         page: i64,
         page_size: i64,
     ) -> ServiceClientResult<PaginatedResponse<WorkflowTask>> {
-        let path = format!(
-            "/tasks/my/pending?page={}&page_size={}",
-            page, page_size
-        );
+        let path = format!("/tasks/my/pending?page={}&page_size={}", page, page_size);
         self.get_and_unwrap(&path).await
     }
 
@@ -140,10 +137,7 @@ impl WorkflowServiceClient {
         page: i64,
         page_size: i64,
     ) -> ServiceClientResult<PaginatedResponse<WorkflowTask>> {
-        let path = format!(
-            "/tasks/my/completed?page={}&page_size={}",
-            page, page_size
-        );
+        let path = format!("/tasks/my/completed?page={}&page_size={}", page, page_size);
         self.get_and_unwrap(&path).await
     }
 
@@ -164,10 +158,7 @@ impl WorkflowServiceClient {
         page: i64,
         page_size: i64,
     ) -> ServiceClientResult<PaginatedResponse<WorkflowInstance>> {
-        let path = format!(
-            "/instances?page={}&page_size={}",
-            page, page_size
-        );
+        let path = format!("/instances?page={}&page_size={}", page, page_size);
         self.get_and_unwrap(&path).await
     }
 
@@ -175,21 +166,13 @@ impl WorkflowServiceClient {
         self.get_and_unwrap("/statistics").await
     }
 
-    pub async fn approve_task(
-        &self,
-        id: Uuid,
-        comment: Option<&str>,
-    ) -> ServiceClientResult<bool> {
+    pub async fn approve_task(&self, id: Uuid, comment: Option<&str>) -> ServiceClientResult<bool> {
         let body = serde_json::json!({ "comment": comment });
         self.post_and_check_success(&format!("/tasks/{}/approve", id), &body)
             .await
     }
 
-    pub async fn reject_task(
-        &self,
-        id: Uuid,
-        comment: Option<&str>,
-    ) -> ServiceClientResult<bool> {
+    pub async fn reject_task(&self, id: Uuid, comment: Option<&str>) -> ServiceClientResult<bool> {
         let body = serde_json::json!({ "comment": comment });
         self.post_and_check_success(&format!("/tasks/{}/reject", id), &body)
             .await

@@ -127,4 +127,3 @@ crate::define_service_client!(
         }
     }
 );
-

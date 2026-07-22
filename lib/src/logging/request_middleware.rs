@@ -19,7 +19,7 @@ pub struct RequestContext {
 
 pub async fn request_context_middleware(mut request: Request, next: Next) -> Response {
     let start = Instant::now();
-    
+
     let request_id = extract_or_generate_request_id(request.headers());
     let trace_context = extract_or_generate_trace_context(request.headers());
 
@@ -58,14 +58,16 @@ pub async fn request_context_middleware(mut request: Request, next: Next) -> Res
         span.record("otel.status_code", "OK");
     }
 
-    response
-        .headers_mut()
-        .insert(HeaderName::from_static("x-request-id"), HeaderValue::from_str(&request_id).unwrap());
-    
+    response.headers_mut().insert(
+        HeaderName::from_static("x-request-id"),
+        HeaderValue::from_str(&request_id).unwrap(),
+    );
+
     if let Some(trace_id) = &trace_context.trace_id {
-        response
-            .headers_mut()
-            .insert(HeaderName::from_static("x-trace-id"), HeaderValue::from_str(trace_id).unwrap());
+        response.headers_mut().insert(
+            HeaderName::from_static("x-trace-id"),
+            HeaderValue::from_str(trace_id).unwrap(),
+        );
     }
 
     response
@@ -84,7 +86,7 @@ fn extract_or_generate_trace_context(headers: &HeaderMap) -> TraceContext {
         .get("x-trace-id")
         .and_then(|v| v.to_str().ok())
         .map(String::from);
-    
+
     let span_id = headers
         .get("x-span-id")
         .and_then(|v| v.to_str().ok())
@@ -111,7 +113,12 @@ fn generate_span_id() -> String {
     full[..8].to_string()
 }
 
-pub fn inject_request_context(headers: &mut HeaderMap, request_id: &str, trace_id: &str, span_id: &str) {
+pub fn inject_request_context(
+    headers: &mut HeaderMap,
+    request_id: &str,
+    trace_id: &str,
+    span_id: &str,
+) {
     if let Ok(val) = HeaderValue::from_str(request_id) {
         headers.insert(HeaderName::from_static("x-request-id"), val);
     }
