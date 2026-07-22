@@ -61,6 +61,7 @@ impl ErpEventHandlers {
         let h14 = self.clone();
         let h15 = self.clone();
         let h16 = self.clone();
+        let h17 = self.clone();
 
         Ok(subscriber
             .subscribe(vec![EventType::SalesOrderApproved], move |event| {
@@ -191,6 +192,14 @@ impl ErpEventHandlers {
                 Box::pin(async move {
                     if let Err(e) = h.handle_master_data_customer_changed(event).await {
                         tracing::error!("[erp] handle_master_data_customer_changed 失败: {}", e);
+                    }
+                })
+            })
+            .subscribe_master_data(vec![MasterDataDomain::Material], move |event| {
+                let h = h17.clone();
+                Box::pin(async move {
+                    if let Err(e) = h.handle_master_data_material_changed(event).await {
+                        tracing::error!("[erp] handle_master_data_material_changed 失败: {}", e);
                     }
                 })
             }))
@@ -1801,6 +1810,72 @@ impl ErpEventHandlers {
                     status
                 );
                 // TODO: 更新 ERP 客户信用状态
+            }
+        }
+
+        Ok(())
+    }
+
+    /// MDM 物料变更事件处理
+    ///
+    /// 订阅 PDM 物料变更事件，同步更新 ERP 中的物料库存记录
+    async fn handle_master_data_material_changed(&self, event: MasterDataEvent) -> HandlerResult {
+        tracing::info!(
+            "[erp-mdm] 物料主数据变更事件 - domain={:?}, action={:?}, master_data_id={}, tenant_id={}",
+            event.domain,
+            event.action,
+            event.master_data_id,
+            event.tenant_id
+        );
+
+        let material_name = event
+            .payload
+            .get("name")
+            .and_then(|v| v.as_str())
+            .unwrap_or("");
+        let material_no = event.payload.get("material_no").and_then(|v| v.as_str());
+        let spec = event.payload.get("spec").and_then(|v| v.as_str());
+        let unit = event.payload.get("unit").and_then(|v| v.as_str());
+
+        match event.action {
+            MasterDataAction::Created => {
+                tracing::info!(
+                    "[erp-mdm] 物料创建 - name={}, material_no={:?}, spec={:?}, unit={:?}",
+                    material_name,
+                    material_no,
+                    spec,
+                    unit
+                );
+                // TODO: 创建 ERP 物料库存记录
+            }
+            MasterDataAction::Updated => {
+                tracing::info!(
+                    "[erp-mdm] 物料更新 - name={}, material_no={:?}, changed_fields={:?}",
+                    material_name,
+                    material_no,
+                    event.changed_fields
+                );
+                // TODO: 同步更新 ERP 物料库存记录
+            }
+            MasterDataAction::Deleted => {
+                tracing::info!(
+                    "[erp-mdm] 物料删除 - master_data_id={}",
+                    event.master_data_id
+                );
+                // TODO: 标记 ERP 物料为已删除
+            }
+            MasterDataAction::Activated | MasterDataAction::Deactivated => {
+                let status = if event.action == MasterDataAction::Activated {
+                    "active"
+                } else {
+                    "inactive"
+                };
+                tracing::info!(
+                    "[erp-mdm] 物料状态变更 - name={}, status={}",
+                    material_name,
+                    status
+                );
+                // TODO: 更新 ERP 物料状态
             }
         }
 

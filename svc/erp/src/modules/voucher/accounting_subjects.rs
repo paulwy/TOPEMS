@@ -14,8 +14,10 @@ use crate::models::finance::{
     AccountingSubject, CreateAccountingSubjectRequest, UpdateAccountingSubjectRequest,
 };
 use crate::modules::audit::{log_audit_event, AuditEventParams};
+use crate::services::mdm_event_service::MdmEventService;
 use crate::shared::permission::{check_permission, ModulePermission};
 use topems_shared::auth::Claims;
+use topems_shared::event::MasterDataAction;
 use topems_shared::{api_error, ApiResponse, PaginatedResponse};
 
 pub async fn list_subjects(
@@ -163,6 +165,37 @@ pub async fn create_subject(
     )
     .await;
 
+    // 发布 MDM 主数据事件
+    if let Ok(subject) = &result {
+        let mdm_service = MdmEventService::new();
+        let sid = subject.id;
+        let scode = subject.code.clone();
+        let sname = subject.name.clone();
+        let scategory = subject.category.clone();
+        let sparent_code = subject.parent_code.clone();
+        let sstatus = subject.status.clone();
+        let tid = claims
+            .tenant_id
+            .as_ref()
+            .and_then(|t| Uuid::parse_str(t).ok())
+            .unwrap_or_else(Uuid::new_v4);
+        tokio::spawn(async move {
+            mdm_service
+                .publish_account_subject_event(
+                    tid,
+                    sid,
+                    &scode,
+                    &sname,
+                    &scategory,
+                    sparent_code.as_deref(),
+                    &sstatus,
+                    MasterDataAction::Created,
+                    None,
+                )
+                .await;
+        });
+    }
+
     response
 }
 
@@ -288,6 +321,37 @@ pub async fn update_subject(
     )
     .await;
 
+    // 发布 MDM 主数据事件
+    if let Ok(subject) = &result {
+        let mdm_service = MdmEventService::new();
+        let sid = subject.id;
+        let scode = subject.code.clone();
+        let sname = subject.name.clone();
+        let scategory = subject.category.clone();
+        let sparent_code = subject.parent_code.clone();
+        let sstatus = subject.status.clone();
+        let tid = claims
+            .tenant_id
+            .as_ref()
+            .and_then(|t| Uuid::parse_str(t).ok())
+            .unwrap_or_else(Uuid::new_v4);
+        tokio::spawn(async move {
+            mdm_service
+                .publish_account_subject_event(
+                    tid,
+                    sid,
+                    &scode,
+                    &sname,
+                    &scategory,
+                    sparent_code.as_deref(),
+                    &sstatus,
+                    MasterDataAction::Updated,
+                    None,
+                )
+                .await;
+        });
+    }
+
     response
 }
 
@@ -333,6 +397,7 @@ pub async fn delete_subject(
         None
     };
 
+    let status_str_clone = status_str.clone();
     log_audit_event(
         &state.db,
         AuditEventParams {
@@ -350,6 +415,31 @@ pub async fn delete_subject(
         &headers,
     )
     .await;
+
+    // 发布 MDM 主数据事件
+    if status_str_clone == "success" {
+        let mdm_service = MdmEventService::new();
+        let tid = claims
+            .tenant_id
+            .as_ref()
+            .and_then(|t| Uuid::parse_str(t).ok())
+            .unwrap_or_else(Uuid::new_v4);
+        tokio::spawn(async move {
+            mdm_service
+                .publish_account_subject_event(
+                    tid,
+                    id,
+                    "",
+                    "",
+                    "",
+                    None,
+                    "deleted",
+                    MasterDataAction::Deleted,
+                    None,
+                )
+                .await;
+        });
+    }
 
     response
 }

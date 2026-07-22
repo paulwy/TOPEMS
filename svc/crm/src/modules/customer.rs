@@ -571,6 +571,7 @@ async fn delete_customer(
         None
     };
 
+    let status_str_clone = status_str.clone();
     log_audit_event(
         &state.db,
         "delete".to_string(),
@@ -588,7 +589,7 @@ async fn delete_customer(
     .await;
 
     // 发布 MDM 主数据事件
-    if status_str == "success" {
+    if status_str_clone == "success" {
         let mdm_service = MdmEventService::new();
         let tenant = tenant_id;
         tokio::spawn(async move {

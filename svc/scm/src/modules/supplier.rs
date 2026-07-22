@@ -516,6 +516,7 @@ pub async fn delete_supplier(
         tracing::debug!("🗑️ 供应商内存缓存已失效: {}", cache_key);
     }
 
+    let status_str_clone = status_str.clone();
     let redis_cache = state.cache.clone();
     tokio::spawn(async move {
         clear_supplier_redis_caches(&redis_cache).await;
@@ -538,7 +539,7 @@ pub async fn delete_supplier(
     .await;
 
     // 发布 MDM 主数据事件
-    if status_str == "success" {
+    if status_str_clone == "success" {
         let mdm_service = MdmEventService::new();
         tokio::spawn(async move {
             mdm_service

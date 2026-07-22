@@ -4,8 +4,10 @@ use serde::{Deserialize, Serialize};
 use sqlx::FromRow;
 use uuid::Uuid;
 
+use crate::services::mdm_event_service::MdmEventService;
 use crate::shared::AppState;
-use topems_shared::{event::EventType, event::PdmMaterialCreatedPayload, ApiResponse, Claims};
+use topems_shared::event::{EventType, MasterDataAction, PdmMaterialCreatedPayload};
+use topems_shared::{ApiResponse, Claims};
 
 fn get_tenant_id(claims: &Claims, headers: &axum::http::HeaderMap) -> Uuid {
     claims
@@ -177,6 +179,7 @@ pub async fn create_material(
 
     match result {
         Ok(material) => {
+            // 发布标准事件
             if let Some(ref publisher) = state.event_publisher {
                 let publisher = publisher.clone();
                 let mat_id = material.id;
@@ -208,6 +211,31 @@ pub async fn create_material(
                     }
                 });
             }
+
+            // 发布 MDM 主数据事件
+            let mdm_service = MdmEventService::new();
+            let mat_id = material.id;
+            let mat_no = material.material_no.clone();
+            let mat_name = material.name.clone();
+            let mat_spec = material.spec.clone();
+            let mat_unit = material.unit.clone();
+            let mat_status = material.status.clone();
+            let tid = tenant_id;
+            tokio::spawn(async move {
+                mdm_service
+                    .publish_material_event(
+                        tid,
+                        mat_id,
+                        &mat_no,
+                        &mat_name,
+                        mat_spec.as_deref(),
+                        mat_unit.as_deref(),
+                        &mat_status,
+                        MasterDataAction::Created,
+                        None,
+                    )
+                    .await;
+            });
 
             Json(ApiResponse::success(material, "物料创建成功"))
         }
@@ -304,7 +332,34 @@ pub async fn update_material(
     .await;
 
     match result {
-        Ok(material) => Json(ApiResponse::success(material, "物料更新成功")),
+        Ok(material) => {
+            // 发布 MDM 主数据事件
+            let mdm_service = MdmEventService::new();
+            let mat_id = material.id;
+            let mat_no = material.material_no.clone();
+            let mat_name = material.name.clone();
+            let mat_spec = material.spec.clone();
+            let mat_unit = material.unit.clone();
+            let mat_status = material.status.clone();
+            let tid = tenant_id;
+            tokio::spawn(async move {
+                mdm_service
+                    .publish_material_event(
+                        tid,
+                        mat_id,
+                        &mat_no,
+                        &mat_name,
+                        mat_spec.as_deref(),
+                        mat_unit.as_deref(),
+                        &mat_status,
+                        MasterDataAction::Updated,
+                        None,
+                    )
+                    .await;
+            });
+
+            Json(ApiResponse::success(material, "物料更新成功"))
+        }
         Err(e) => {
             tracing::error!("更新物料失败: {}", e);
             Json(ApiResponse::error(500, "更新物料失败"))
@@ -327,7 +382,29 @@ pub async fn delete_material(
         .await;
 
     match result {
-        Ok(r) if r.rows_affected() > 0 => Json(ApiResponse::success(true, "物料删除成功")),
+        Ok(r) if r.rows_affected() > 0 => {
+            // 发布 MDM 主数据事件
+            let mdm_service = MdmEventService::new();
+            let mat_id = id;
+            let tid = tenant_id;
+            tokio::spawn(async move {
+                mdm_service
+                    .publish_material_event(
+                        tid,
+                        mat_id,
+                        "",
+                        "",
+                        None,
+                        None,
+                        "deleted",
+                        MasterDataAction::Deleted,
+                        None,
+                    )
+                    .await;
+            });
+
+            Json(ApiResponse::success(true, "物料删除成功"))
+        }
         Ok(_) => Json(ApiResponse::error(404, "物料不存在")),
         Err(e) => {
             tracing::error!("删除物料失败: {}", e);
