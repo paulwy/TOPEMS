@@ -1,8 +1,9 @@
 use chrono::Utc;
 use sqlx::PgPool;
 use topems_shared::event::{
-    Event, EventResult, EventSubscriber, EventType, ProductionOrderCreatedPayload,
-    PurchaseOrderCreatedPayload, ScmShipmentReceivedPayload,
+    Event, EventResult, EventSubscriber, EventType, MasterDataAction, MasterDataDomain,
+    MasterDataEvent, ProductionOrderCreatedPayload, PurchaseOrderCreatedPayload,
+    ScmShipmentReceivedPayload,
 };
 
 type HandlerResult = std::result::Result<(), String>;
@@ -23,6 +24,7 @@ impl PdmEventHandlers {
         let h1 = self.clone();
         let h2 = self.clone();
         let h3 = self.clone();
+        let h4 = self.clone();
 
         Ok(subscriber
             .subscribe_handler(vec![EventType::PurchaseOrderCreated], move |event| {
@@ -36,6 +38,17 @@ impl PdmEventHandlers {
             .subscribe_handler(vec![EventType::ScmShipmentReceived], move |event| {
                 let h = h3.clone();
                 Box::pin(async move { h.handle_shipment_received(event).await })
+            })
+            .subscribe_master_data(vec![MasterDataDomain::AccountSubject], move |event| {
+                let h = h4.clone();
+                Box::pin(async move {
+                    if let Err(e) = h.handle_master_data_account_subject_changed(event).await {
+                        tracing::error!(
+                            "[pdm] handle_master_data_account_subject_changed 失败: {}",
+                            e
+                        );
+                    }
+                })
             }))
     }
 
@@ -144,6 +157,73 @@ impl PdmEventHandlers {
             "[pdm] 收货事件触发物料数据同步检查，当前物料总数: {}",
             material_count
         );
+
+        Ok(())
+    }
+
+    /// MDM 会计科目变更事件处理
+    ///
+    /// 订阅 ERP 会计科目变更事件，同步更新 PDM 中的相关财务配置
+    async fn handle_master_data_account_subject_changed(
+        &self,
+        event: MasterDataEvent,
+    ) -> HandlerResult {
+        tracing::info!(
+            "[pdm-mdm] 会计科目主数据变更事件 - domain={:?}, action={:?}, master_data_id={}, tenant_id={}",
+            event.domain,
+            event.action,
+            event.master_data_id,
+            event.tenant_id
+        );
+
+        let subject_name = event
+            .payload
+            .get("name")
+            .and_then(|v| v.as_str())
+            .unwrap_or("");
+        let subject_code = event.payload.get("code").and_then(|v| v.as_str());
+        let category = event.payload.get("category").and_then(|v| v.as_str());
+
+        match event.action {
+            MasterDataAction::Created => {
+                tracing::info!(
+                    "[pdm-mdm] 会计科目创建 - name={}, code={:?}, category={:?}",
+                    subject_name,
+                    subject_code,
+                    category
+                );
+                // TODO: 创建 PDM 会计科目关联配置
+            }
+            MasterDataAction::Updated => {
+                tracing::info!(
+                    "[pdm-mdm] 会计科目更新 - name={}, code={:?}, changed_fields={:?}",
+                    subject_name,
+                    subject_code,
+                    event.changed_fields
+                );
+                // TODO: 同步更新 PDM 会计科目配置
+            }
+            MasterDataAction::Deleted => {
+                tracing::info!(
+                    "[pdm-mdm] 会计科目删除 - master_data_id={}",
+                    event.master_data_id
+                );
+                // TODO: 标记 PDM 会计科目配置为已删除
+            }
+            MasterDataAction::Activated | MasterDataAction::Deactivated => {
+                let status = if event.action == MasterDataAction::Activated {
+                    "active"
+                } else {
+                    "inactive"
+                };
+                tracing::info!(
+                    "[pdm-mdm] 会计科目状态变更 - name={}, status={}",
+                    subject_name,
+                    status
+                );
+                // TODO: 更新 PDM 会计科目配置状态
+            }
+        }
 
         Ok(())
     }

@@ -157,6 +157,7 @@ impl EventSubscriber {
                     if domains.contains(&mdm_event.domain) {
                         let event_clone = mdm_event.clone();
                         let handler_clone = handler.clone();
+                        let master_data_id = event_clone.master_data_id.clone();
 
                         let span = tracing::info_span!(
                             "mdm_event_handler",
@@ -178,7 +179,7 @@ impl EventSubscriber {
                                     Err(e) => {
                                         warn!(
                                             "MDM 事件处理超时: {:?}, master_data_id: {}",
-                                            e, event_clone.master_data_id
+                                            e, master_data_id
                                         );
                                     }
                                 }
