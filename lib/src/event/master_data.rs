@@ -145,7 +145,12 @@ impl MasterDataEvent {
 
     /// 路由键（用于 Redis Pub/Sub）
     pub fn routing_key(&self) -> String {
-        format!("master.{}.{}.{}", self.domain.prefix(), self.tenant_id, action_to_str(self.action))
+        format!(
+            "master.{}.{}.{}",
+            self.domain.prefix(),
+            self.tenant_id,
+            action_to_str(self.action)
+        )
     }
 
     /// 频道名（Redis channel）
@@ -155,7 +160,8 @@ impl MasterDataEvent {
 
     /// 发布事件到 Redis
     pub async fn publish(&self) -> Result<(), Box<dyn std::error::Error + Send + Sync>> {
-        let redis_url = std::env::var("REDIS_URL").unwrap_or_else(|_| "redis://localhost:6379".to_string());
+        let redis_url =
+            std::env::var("REDIS_URL").unwrap_or_else(|_| "redis://localhost:6379".to_string());
         let client = redis::Client::open(redis_url)?;
         let mut con = client.get_multiplexed_async_connection().await?;
 
@@ -173,7 +179,8 @@ impl MasterDataEvent {
 
     /// 创建事件发布者（用于批量发布）
     pub fn create_publisher() -> Result<MasterDataPublisher, redis::RedisError> {
-        let redis_url = std::env::var("REDIS_URL").unwrap_or_else(|_| "redis://localhost:6379".to_string());
+        let redis_url =
+            std::env::var("REDIS_URL").unwrap_or_else(|_| "redis://localhost:6379".to_string());
         let client = redis::Client::open(redis_url)?;
         Ok(MasterDataPublisher { client })
     }
@@ -186,7 +193,10 @@ pub struct MasterDataPublisher {
 
 impl MasterDataPublisher {
     /// 发布单个事件
-    pub async fn publish(&self, event: &MasterDataEvent) -> Result<(), Box<dyn std::error::Error + Send + Sync>> {
+    pub async fn publish(
+        &self,
+        event: &MasterDataEvent,
+    ) -> Result<(), Box<dyn std::error::Error + Send + Sync>> {
         let mut con = self.client.get_multiplexed_async_connection().await?;
         let event_json = serde_json::to_string(event)?;
         let channel = event.channel();
@@ -201,7 +211,10 @@ impl MasterDataPublisher {
     }
 
     /// 批量发布事件
-    pub async fn publish_batch(&self, events: &[MasterDataEvent]) -> Result<(), Box<dyn std::error::Error + Send + Sync>> {
+    pub async fn publish_batch(
+        &self,
+        events: &[MasterDataEvent],
+    ) -> Result<(), Box<dyn std::error::Error + Send + Sync>> {
         let mut con = self.client.get_multiplexed_async_connection().await?;
 
         for event in events {
@@ -305,7 +318,8 @@ mod tests {
 
     #[tokio::test]
     async fn test_event_publish_and_subscribe() {
-        let redis_url = std::env::var("REDIS_URL").unwrap_or_else(|_| "redis://localhost:6379".to_string());
+        let redis_url =
+            std::env::var("REDIS_URL").unwrap_or_else(|_| "redis://localhost:6379".to_string());
         let client = redis::Client::open(redis_url.clone()).unwrap();
 
         let tenant_id = Uuid::new_v4();
@@ -428,7 +442,8 @@ mod tests {
 
     #[tokio::test]
     async fn test_event_deserialize_from_channel() {
-        let redis_url = std::env::var("REDIS_URL").unwrap_or_else(|_| "redis://localhost:6379".to_string());
+        let redis_url =
+            std::env::var("REDIS_URL").unwrap_or_else(|_| "redis://localhost:6379".to_string());
         let client = redis::Client::open(redis_url).unwrap();
 
         let tenant_id = Uuid::new_v4();

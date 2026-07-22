@@ -8,104 +8,107 @@ use crate::AppState;
 pub fn communication_routes(state: &AppState) -> Router<AppState> {
     let read = Router::new()
         .route(
-            "comm/notify/list",
+            "/comm/notify/list",
             get(modules::communication::notification::list_notifications),
         )
         .route(
-            "notification/notifications",
+            "/notification/notifications",
             get(modules::communication::notification::get_notifications),
         )
         .route(
-            "notification/notifications/unread-count",
+            "/notification/notifications/unread-count",
             get(modules::communication::notification::get_unread_count),
         )
         .route(
-            "notification/notifications/unread",
+            "/notification/notifications/unread",
             get(modules::communication::notification::get_unread_notifications),
         )
         .route(
-            "notification/notifications/{id}",
+            "/notification/notifications/{id}",
             get(modules::communication::notification::get_notification),
         )
         .route(
-            "notification/notifications/stats/me",
+            "/notification/notifications/stats/me",
             get(modules::communication::notification::get_notification_stats),
         )
         .route(
-            "notification/notifications/archived",
+            "/notification/notifications/archived",
             get(modules::communication::notification::list_archived_notifications),
         )
         .route(
-            "notification/notifications/archive/config",
+            "/notification/notifications/archive/config",
             get(modules::communication::notification::get_archive_config),
         )
         .route(
-            "notification/notification-templates",
+            "/notification/notification-templates",
             get(modules::communication::notification::list_templates),
         )
         .route(
-            "notification/notification-templates/{id}",
+            "/notification/notification-templates/{id}",
             get(modules::communication::notification::get_template),
         )
-        .route("comm/im/rooms", get(modules::communication::im::list_rooms))
         .route(
-            "comm/im/rooms/{id}",
+            "/comm/im/rooms",
+            get(modules::communication::im::list_rooms),
+        )
+        .route(
+            "/comm/im/rooms/{id}",
             get(modules::communication::im::get_room),
         )
         .route(
-            "comm/im/rooms/{id}/messages",
+            "/comm/im/rooms/{id}/messages",
             get(modules::communication::im::get_messages),
         )
         .route(
-            "comm/im/rooms/{id}/members",
+            "/comm/im/rooms/{id}/members",
             get(modules::communication::im::list_members),
         )
         .route(
-            "comm/im/rooms/search",
+            "/comm/im/rooms/search",
             get(modules::communication::im::search_rooms),
         )
         .route(
-            "comm/im/rooms/{id}/messages/search",
+            "/comm/im/rooms/{id}/messages/search",
             get(modules::communication::im::search_messages),
         )
         .route(
-            "comm/im/contacts",
+            "/comm/im/contacts",
             get(modules::communication::im::list_contacts),
         )
         .route(
-            "comm/im/contacts/{id}",
+            "/comm/im/contacts/{id}",
             get(modules::communication::im::get_contact),
         )
         .route(
-            "comm/im/contact-groups",
+            "/comm/im/contact-groups",
             get(modules::communication::im::list_contact_groups),
         )
         .route(
-            "comm/im/online-status/{user_id}",
+            "/comm/im/online-status/{user_id}",
             get(modules::communication::im::get_online_status),
         )
         .route(
-            "comm/im/notifications/{user_id}",
+            "/comm/im/notifications/{user_id}",
             get(modules::communication::im::list_im_notifications),
         )
         .route(
-            "comm/im/project-groups",
+            "/comm/im/project-groups",
             get(modules::communication::im::list_project_groups),
         )
         .route(
-            "comm/mail/emails",
+            "/comm/mail/emails",
             get(modules::communication::mail::list_emails),
         )
         .route(
-            "comm/mail/emails/{id}",
+            "/comm/mail/emails/{id}",
             get(modules::communication::mail::get_email),
         )
         .route(
-            "comm/mail/templates",
+            "/comm/mail/templates",
             get(modules::communication::mail::list_templates),
         )
         .route(
-            "comm/mail/templates/{id}",
+            "/comm/mail/templates/{id}",
             get(modules::communication::mail::get_template),
         )
         .layer(axum::middleware::from_fn_with_state(
@@ -115,171 +118,171 @@ pub fn communication_routes(state: &AppState) -> Router<AppState> {
 
     let write = Router::new()
         .route(
-            "comm/notify/send",
+            "/comm/notify/send",
             post(modules::communication::notification::send_notification),
         )
         .route(
-            "comm/notify/broadcast",
+            "/comm/notify/broadcast",
             post(modules::communication::notification::broadcast_notification),
         )
         .route(
-            "comm/notify/{id}/read",
+            "/comm/notify/{id}/read",
             post(modules::communication::notification::mark_as_read),
         )
         .route(
-            "comm/notify/read-all",
+            "/comm/notify/read-all",
             post(modules::communication::notification::mark_all_as_read),
         )
         .route(
-            "notification/notifications/{id}",
+            "/notification/notifications/{id}",
             put(modules::communication::notification::mark_as_read),
         )
         .route(
-            "notification/notifications/read-all",
+            "/notification/notifications/read-all",
             put(modules::communication::notification::mark_all_as_read),
         )
         .route(
-            "notification/notifications/{id}/unread",
+            "/notification/notifications/{id}/unread",
             put(modules::communication::notification::mark_as_unread),
         )
         .route(
-            "notification/notifications/bulk-read",
+            "/notification/notifications/bulk-read",
             post(modules::communication::notification::bulk_mark_read),
         )
         .route(
-            "notification/notifications/bulk-delete",
+            "/notification/notifications/bulk-delete",
             delete(modules::communication::notification::bulk_delete),
         )
         .route(
-            "notification/notifications/{id}/archive",
+            "/notification/notifications/{id}/archive",
             post(modules::communication::notification::archive_notification),
         )
         .route(
-            "notification/notifications/{id}/unarchive",
+            "/notification/notifications/{id}/unarchive",
             post(modules::communication::notification::unarchive_notification),
         )
         .route(
-            "notification/notifications/{id}",
+            "/notification/notifications/{id}",
             delete(modules::communication::notification::delete_notification),
         )
         .route(
-            "notification/notifications",
+            "/notification/notifications",
             delete(modules::communication::notification::delete_all_notifications),
         )
         .route(
-            "notification/notifications/archive/config",
+            "/notification/notifications/archive/config",
             put(modules::communication::notification::update_archive_config),
         )
         .route(
-            "notification/notifications/archive/run",
+            "/notification/notifications/archive/run",
             post(modules::communication::notification::run_auto_archive),
         )
         .route(
-            "notification/notification-templates",
+            "/notification/notification-templates",
             post(modules::communication::notification::create_template),
         )
         .route(
-            "notification/notification-templates/{id}",
+            "/notification/notification-templates/{id}",
             put(modules::communication::notification::update_template),
         )
         .route(
-            "notification/notification-templates/{id}",
+            "/notification/notification-templates/{id}",
             delete(modules::communication::notification::delete_template),
         )
         .route(
-            "comm/im/rooms",
+            "/comm/im/rooms",
             post(modules::communication::im::create_room),
         )
         .route(
-            "comm/im/rooms/{id}",
+            "/comm/im/rooms/{id}",
             put(modules::communication::im::update_room),
         )
         .route(
-            "comm/im/rooms/{id}",
+            "/comm/im/rooms/{id}",
             delete(modules::communication::im::delete_room),
         )
         .route(
-            "comm/im/rooms/{id}/messages",
+            "/comm/im/rooms/{id}/messages",
             post(modules::communication::im::send_message),
         )
         .route(
-            "comm/im/rooms/{id}/members",
+            "/comm/im/rooms/{id}/members",
             post(modules::communication::im::add_member),
         )
         .route(
-            "comm/im/rooms/{id}/members",
+            "/comm/im/rooms/{id}/members",
             delete(modules::communication::im::remove_member),
         )
         .route(
-            "comm/im/messages/{id}",
+            "/comm/im/messages/{id}",
             put(modules::communication::im::update_message),
         )
         .route(
-            "comm/im/messages/{id}",
+            "/comm/im/messages/{id}",
             delete(modules::communication::im::delete_message),
         )
         .route(
-            "comm/im/rooms/{id}/read",
+            "/comm/im/rooms/{id}/read",
             post(modules::communication::im::mark_messages_read),
         )
         .route(
-            "comm/im/rooms/{id}/mute",
+            "/comm/im/rooms/{id}/mute",
             post(modules::communication::im::mute_room),
         )
         .route(
-            "comm/im/rooms/{id}/pin",
+            "/comm/im/rooms/{id}/pin",
             post(modules::communication::im::pin_message),
         )
         .route(
-            "comm/im/contacts",
+            "/comm/im/contacts",
             post(modules::communication::im::add_contact),
         )
         .route(
-            "comm/im/contacts/{id}",
+            "/comm/im/contacts/{id}",
             put(modules::communication::im::update_contact),
         )
         .route(
-            "comm/im/contacts/{id}",
+            "/comm/im/contacts/{id}",
             delete(modules::communication::im::remove_contact),
         )
         .route(
-            "comm/im/contact-groups",
+            "/comm/im/contact-groups",
             post(modules::communication::im::create_contact_group),
         )
         .route(
-            "comm/im/contact-groups/{id}",
+            "/comm/im/contact-groups/{id}",
             put(modules::communication::im::update_contact_group),
         )
         .route(
-            "comm/im/contact-groups/{id}",
+            "/comm/im/contact-groups/{id}",
             delete(modules::communication::im::delete_contact_group),
         )
         .route(
-            "comm/im/project-groups",
+            "/comm/im/project-groups",
             post(modules::communication::im::create_project_group),
         )
         .route(
-            "comm/mail/emails",
+            "/comm/mail/emails",
             post(modules::communication::mail::send_email),
         )
         .route(
-            "comm/mail/emails/{id}/read",
+            "/comm/mail/emails/{id}/read",
             post(modules::communication::mail::mark_as_read),
         )
         .route(
-            "comm/mail/templates",
+            "/comm/mail/templates",
             post(modules::communication::mail::create_template),
         )
         .route(
-            "comm/mail/templates/{id}",
+            "/comm/mail/templates/{id}",
             put(modules::communication::mail::update_template),
         )
         .route(
-            "comm/mail/templates/{id}/send",
+            "/comm/mail/templates/{id}/send",
             post(modules::communication::mail::send_with_template),
         )
         .route(
-            "comm/mail/emails/{id}",
+            "/comm/mail/emails/{id}",
             delete(modules::communication::mail::delete_email),
         )
         .layer(axum::middleware::from_fn_with_state(

@@ -72,15 +72,60 @@ impl PermissionCenterClient {
 
     /// V21.0: 从 IAM 服务拉取全量权限元数据（远程模式）
     ///
-    /// 当 IAM 服务可用时，从远程拉取最新权限定义。
+    /// 从 IAM 服务拉取最新权限元数据。
     /// 失败时保留本地缓存，不影响服务启动。
-    #[allow(dead_code)]
     pub async fn fetch_from_iam(&self, iam_url: &str) -> Result<(), TopemsError> {
         info!("Fetching permission metadata from IAM service: {}", iam_url);
 
-        // TODO: 当 IAM 服务实现 /api/iam/permissions/metadata 接口后，启用远程拉取
-        // 当前阶段使用本地内置权限定义，保证 V21.0 架构落地不依赖 IAM 服务升级
-        warn!("IAM remote fetch not yet implemented, using builtin permissions");
+        let url = format!("{}/permissions/metadata", iam_url);
+        let client = reqwest::Client::new();
+
+        match client.get(&url).send().await {
+            Ok(response) => {
+                if response.status().is_success() {
+                    match response.json::<serde_json::Value>().await {
+                        Ok(json) => {
+                            if let Some(data) = json.get("data").and_then(|d| d.as_array()) {
+                                let mut permissions: Vec<PermissionMetadata> = Vec::new();
+                                for item in data {
+                                    let code = item.get("code").and_then(|c| c.as_str()).unwrap_or("").to_string();
+                                    let name = item.get("name").and_then(|n| n.as_str()).unwrap_or("").to_string();
+                                    let category = item.get("category").and_then(|c| c.as_str()).unwrap_or("").to_string();
+                                    let resource = item.get("resource").and_then(|r| r.as_str()).unwrap_or("").to_string();
+                                    let action = item.get("action").and_then(|a| a.as_str()).unwrap_or("").to_string();
+                                    let description = item.get("description").and_then(|d| d.as_str()).map(|s| s.to_string());
+
+                                    permissions.push(PermissionMetadata {
+                                        code,
+                                        module: category,
+                                        resource,
+                                        action,
+                                        scope: "all".to_string(),
+                                        name,
+                                        description,
+                                        is_builtin: false,
+                                    });
+                                }
+                                self.cache.load_all(permissions.clone());
+                                info!("Successfully fetched {} permissions from IAM", permissions.len());
+                                return Ok(());
+                            }
+                        }
+                        Err(e) => {
+                            warn!("Failed to parse IAM response: {}", e);
+                        }
+                    }
+                } else {
+                    warn!("IAM service returned status: {}", response.status());
+                }
+            }
+            Err(e) => {
+                warn!("Failed to fetch from IAM: {}", e);
+            }
+        }
+
+        // 降级到本地内置权限定义
+        warn!("IAM remote fetch failed, falling back to builtin permissions");
         self.initialize().await
     }
 

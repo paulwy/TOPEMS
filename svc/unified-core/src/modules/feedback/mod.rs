@@ -55,11 +55,11 @@ pub async fn init_database(pool: &PgPool) -> Result<(), sqlx::Error> {
 
 pub fn create_routes(state: AppState) -> Router<AppState> {
     Router::new()
-        .route("feedbacks", get(feedback::list_feedbacks))
-        .route("feedbacks/{id}", get(feedback::get_feedback))
-        .route("feedbacks", post(feedback::create_feedback))
-        .route("feedbacks/{id}", put(feedback::response_feedback))
-        .route("feedbacks/{id}", delete(feedback::delete_feedback))
-        .route("feedbacks/batch", delete(feedback::delete_feedback))
+        .route("/feedbacks", get(feedback::list_feedbacks))
+        .route("/feedbacks/{id}", get(feedback::get_feedback))
+        .route("/feedbacks", post(feedback::create_feedback))
+        .route("/feedbacks/{id}", put(feedback::response_feedback))
+        .route("/feedbacks/{id}", delete(feedback::delete_feedback))
+        .route("/feedbacks/batch", delete(feedback::delete_feedback))
         .with_state(state)
 }

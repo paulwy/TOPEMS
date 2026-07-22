@@ -59,7 +59,7 @@ pub mod vector_store;
 pub mod ai_client;
 
 pub use api_version::{
-    api_prefix, create_api_info, create_api_info_router, get_api_info_handler, new_service_prefix,
+    api_prefix, create_api_info, create_api_info_router, get_api_info_handler,
     register_routes_with_legacy_alias, versioned_router, ApiInfo, ApiVersionInfo,
 };
 pub use audit::{AuditLog, AuditLogQuery, CreateAuditLogRequest};

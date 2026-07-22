@@ -49,14 +49,14 @@ pub async fn init_database(pool: &PgPool) -> Result<(), sqlx::Error> {
 
 pub fn create_routes(state: AppState) -> Router<AppState> {
     Router::new()
-        .route("login-log/logs", get(handlers::list_login_logs))
-        .route("login-log/logs", post(handlers::record_login))
+        .route("/login-log/logs", get(handlers::list_login_logs))
+        .route("/login-log/logs", post(handlers::record_login))
         .route(
-            "login-log/logs/batch-delete",
+            "/login-log/logs/batch-delete",
             post(handlers::batch_delete_login_logs),
         )
-        .route("login-log/logs/{id}", get(handlers::get_login_log))
-        .route("login-log/logs/{id}", delete(handlers::delete_login_log))
+        .route("/login-log/logs/{id}", get(handlers::get_login_log))
+        .route("/login-log/logs/{id}", delete(handlers::delete_login_log))
         .with_state(state.clone())
         .layer(axum::middleware::from_fn_with_state(
             state,

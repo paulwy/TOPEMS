@@ -484,7 +484,7 @@ pub fn create_routes() -> Router<AppState> {
         .route("/energy/forecast", get(get_energy_forecast))
         .route("/energy/alerts", get(get_energy_alerts))
         .route(
-            "/energy/equipment/:equipment_id",
+            "/energy/equipment/{equipment_id}",
             get(get_equipment_consumption),
         )
         .route("/energy/export", get(export_energy_report))
