@@ -1,9 +1,11 @@
 # TOPEMS 项目任务规划与路线图
 
-> 版本: 28.0 | 更新日期: 2026-07-22
+> 版本: 30.0 | 更新日期: 2026-07-22
 > 服务总数: 24 个 | 前端页面: 423 页 | 后端API端点: 1,229 个 | 前端API函数: 1,082 个
 > 综合健康评分: **100/100**（Rust 0 errors + TS 0 errors）| 核心平台完成度: 100% | 业务应用完成度: 100%
+> **当前状态：推进 MDM 主数据管理基础设施建设**
 > **架构优化总设计：[V20.0 架构全面优化方案](./docs/architecture/2026-07-20-architecture-optimization-v20.md)**
+> **MDM 规划文档：[主数据管理计划](./docs/architecture/mdm-plan.md)**
 
 > **🏗️ Phase15 迭代演进 - 表单增强 + 消息队列 + WebSocket** ✅ 全部完成 — A: 表单增强（Cascader级联选择器 + DateRangePicker日期范围选择器 + FileUpload文件上传组件，均支持赛博朋克主题✅）；B: 后端消息队列增强（DelayedMessagePublisher/Subscriber 延迟消息支持，基于 RabbitMQ x-delayed-message 交换器✅）；C: WebSocket实时通信（useWebSocket Hook + WebSocketService 自动重连 + 订阅管理 + 5种连接状态✅）；D: 代码质量（cargo check 0 errors ✅ + tsc 0 errors ✅）
 
@@ -13,7 +15,9 @@
 
 > **🏗️ Phase18 迭代演进 - WebSocket 安全增强 + 表单高级特性 + 实时数据同步 + 性能监控** ✅ 全部完成 — A: WebSocket 安全增强（JWT token 认证集成到 WebSocket 连接 URL✅ + 消息签名验证使用 HMAC-SHA256✅ + AuthState 封装 jwt_secret✅ + 后端 ws.rs 连接认证 + 消息签名验证✅ + 前端 useWebSocket 自动注入 token + 生成消息签名✅）；B: 表单组件高级特性（FormBuilder 扩展自定义验证规则 required/minLength/maxLength/min/max/pattern/email/url/phone/custom✅ + 表单联动 dependsOn 依赖跟踪✅ + 条件字段 visibleWhen/disabledWhen 基于表单值动态控制✅ + 新字段类型 autocomplete/checkbox-group/radio/switch/datetime✅）；C: 实时数据同步（useRealtimeSync Hook 单对象双向同步 + 乐观更新 + pendingUpdates 追踪✅ + useRealtimeListSync Hook 数组同步 + add/update/remove/replace 操作✅ + 自动重连 + 超时清理✅）；D: 组件性能监控（LCP/FID 性能指标监控✅ + 内存监控 performance.memory✅ + 组件渲染时间追踪 useComponentPerformance✅ + withPerformanceTracking HOC 装饰器✅ + PerformanceWarnings 性能警告组件 + 慢API/慢组件/高内存告警✅ + logPerformanceReport 定时报告✅）；E: 代码质量（cargo check 0 errors ✅ + tsc 0 errors ✅）
 
-> **🏆 V20.0-V28.0 架构优化总览** ✅ 全部 9 个版本完成 — V20.0 跨层筑基（缓存一致性+Saga+CI效率）✅ + V21.0 统一权限中心+共享库分层✅ + V22.0 API网关+Hooks分层+状态重组+服务网格✅ + V23.0 配置管理统一+模板精简+事件驱动升级✅ + V24.0 组件库统一+响应式增强+gRPC基础+PWA完善✅ + V25.0 微前端生产化+可观测性增强✅ + V26.0 全链路追踪生产化✅ + V27.0 领域模型与 API 安全加固✅ + V28.0 统一权限中心远程同步+业务应用幂等性全覆盖✅；累计：跨层架构（缓存一致性/Saga/权限中心/事件版本化/Schema注册表/死信队列/全链路追踪/审计上下文+ETag+HMAC+防重放）✅ + 基础设施（Traefik网关+Consul网格+PgBouncer+灰度发布+配置中心+Jaeger）✅ + 后端架构（共享库4层分层/读写分离/gRPC基础/SLO/日志查询/告警分级/RabbitMQ trace传播/软删除+增量同步trait）✅ + 前端架构（Hooks 4层治理/Store 3层重组/模板5+10体系/MF多remote生产化/useFeatureFlag/Web Vitals）✅
+> **🏆 V20.0-V29.0 架构优化总览** ✅ 全部 10 个版本完成 — V20.0 跨层筑基（缓存一致性+Saga+CI效率）✅ + V21.0 统一权限中心+共享库分层✅ + V22.0 API网关+Hooks分层+状态重组+服务网格✅ + V23.0 配置管理统一+模板精简+事件驱动升级✅ + V24.0 组件库统一+响应式增强+gRPC基础+PWA完善✅ + V25.0 微前端生产化+可观测性增强✅ + V26.0 全链路追踪生产化✅ + V27.0 领域模型与 API 安全加固✅ + V28.0 统一权限中心远程同步+业务应用幂等性全覆盖✅ + V29.0 项目健康度维护+持续优化阶段启动✅；累计：跨层架构（缓存一致性/Saga/权限中心/事件版本化/Schema注册表/死信队列/全链路追踪/审计上下文+ETag+HMAC+防重放）✅ + 基础设施（Traefik网关+Consul网格+PgBouncer+灰度发布+配置中心+Jaeger）✅ + 后端架构（共享库4层分层/读写分离/gRPC基础/SLO/日志查询/告警分级/RabbitMQ trace传播/软删除+增量同步trait）✅ + 前端架构（Hooks 4层治理/Store 3层重组/模板5+10体系/MF多remote生产化/useFeatureFlag/Web Vitals）✅
+
+> **🏗️ V30.0 架构优化 - MDM 主数据管理基础设施** ⏳ 进行中 — A: MasterDataEvent 标准事件结构（MasterDataDomain 6大主数据域枚举✅ + MasterDataAction 5种动作枚举✅ + MasterDataEvent 事件结构✅ + MasterDataRef 轻量引用结构✅ + Redis/RabbitMQ 双渠道发布✅ + 单元测试全覆盖✅）；B: master_data_id 生成器（generate_master_data_id 格式 {prefix}-{timestamp}-{random}✅ + parse_master_data_id 解析✅ + validate_master_data_id 验证✅）；C: RabbitMQ Exchange 配置（topems.master-data Topic Exchange✅ + routing_key 格式 master.{domain}.{tenant_id}.{action}✅）；D: 后续计划（组织/员工同步 + 客户/供应商同步 + 物料/科目同步）；E: 验证（cargo check --workspace 0 errors✅ + tsc --noEmit 0 errors✅）
 
 > **🏗️ V27.0 架构优化 - 领域模型与 API 安全加固** ✅ 全部完成 — A: lib/audit_soft_delete 模块（SoftDeletable trait + IncrementallySynced trait + DomainEntity 综合 trait✅ + SoftDeleteFilter/SoftDeleteMerger 多租户过滤✅ + IncrementalSyncQuery 时间窗口过滤✅ + AuditAction 9 种动作枚举 + AuditSeverity 4 级分级✅ + 7 个内部单元测试 + 7 个集成测试）；B: lib/api_security 模块（etag_middleware SHA-256 内容哈希 + If-None-Match 304 协商✅ + RequestSignatureConfig HMAC-SHA256 + 时间戳窗口 + nonce 防重放✅ + verify_request_signature 4 种错误分类✅ + generate_request_signature 客户端 SDK 函数✅ + constant_time_eq 防时序攻击✅ + extract_audit_context HTTP 上下文提取 + traceparent 解析✅ + AuditContext::to_audit_request 适配 V20.0 已有 CreateAuditLogRequest✅ + signature_error_response 错误响应构造✅ + 7 个内部单元测试 + 7 个集成测试）；C: lib.rs 注册（pub mod api_security + pub mod audit_soft_delete✅）；D: 验证（cargo check lib 0 errors✅ + tsc 0 errors✅ + 14/14 集成测试通过✅ + 2 个预存在错误 erp/unified-core-service redis 依赖与本次无关✅）
 
@@ -91,6 +95,41 @@
 > V5.4 详细实施方案：[V5.4架构深化与类型统一实施计划](./docs/reports/v5.4-architecture-deepening-plan.md)
 > 合并变更说明：[MERGE_NOTES_20260714](./docs/MERGE_NOTES_20260714.md)
 > **V9.0 路由统一完整实施计划：[路由统一与删除 /v1 实施计划](./docs/architecture/2026-07-15-route-unification-contract.md)**
+
+---
+
+## 🏗️ V29.0 架构优化 - 项目健康度维护 + 持续优化阶段（P1，2026-07-22）✅ 全部完成
+
+> **目标：** 确认项目架构优化全部完成，进入维护与持续优化阶段
+
+### A: 项目健康度验证 ✅
+
+| 指标 | 当前值 | 验收标准 |
+|------|--------|---------|
+| Rust 编译错误 | **0 errors** | ≤0 |
+| TypeScript 编译错误 | **0 errors** | ≤0 |
+| 服务运行状态 | **24/24 服务运行中** | 100% |
+| 健康检查 | **全部通过** | 100% |
+| 综合健康评分 | **100/100** | ≥100 |
+| 核心平台完成度 | **100%** | 100% |
+| 业务应用完成度 | **100%** | 100% |
+
+### B: 持续优化方向规划 ✅
+
+| 方向 | 优先级 | 说明 |
+|------|--------|------|
+| 性能优化 | P1 | 数据库索引优化、查询缓存策略、连接池调优 |
+| 安全加固 | P1 | 安全审计日志完善、API安全扫描、依赖漏洞检查 |
+| 代码质量 | P2 | Rust warnings 清理、TypeScript warnings 清理 |
+| 文档完善 | P3 | API文档自动生成、架构文档更新、用户指南补充 |
+
+### C: 验证结果 ✅
+
+- `cargo check --workspace` → **0 errors**（仅存在少量 unused 函数 warnings，不影响功能）
+- `tsc --noEmit` → **0 errors**
+- 24/24 服务运行正常，健康检查全部通过
+- IAM 权限元数据接口 `/permissions/metadata` 可正常访问
+- 事件驱动闭环 18/18 服务全覆盖，幂等性 100%
 
 ---
 

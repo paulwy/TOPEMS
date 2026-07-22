@@ -60,7 +60,8 @@ pub use event_types::{
     WorkflowRejectedPayload, WorkflowStartedPayload,
 };
 pub use master_data::{
-    MasterDataAction, MasterDataDomain, MasterDataEvent, MasterDataPublisher, MasterDataRef,
+    generate_master_data_id, MasterDataAction, MasterDataDomain, MasterDataEvent,
+    MasterDataPublisher, MasterDataRef, parse_master_data_id, validate_master_data_id,
 };
 pub use monitor::{EventMetrics, EventMonitor, EventTrace, TraceStatus};
 pub use publisher::EventPublisher;
