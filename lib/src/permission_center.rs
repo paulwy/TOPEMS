@@ -88,12 +88,35 @@ impl PermissionCenterClient {
                             if let Some(data) = json.get("data").and_then(|d| d.as_array()) {
                                 let mut permissions: Vec<PermissionMetadata> = Vec::new();
                                 for item in data {
-                                    let code = item.get("code").and_then(|c| c.as_str()).unwrap_or("").to_string();
-                                    let name = item.get("name").and_then(|n| n.as_str()).unwrap_or("").to_string();
-                                    let category = item.get("category").and_then(|c| c.as_str()).unwrap_or("").to_string();
-                                    let resource = item.get("resource").and_then(|r| r.as_str()).unwrap_or("").to_string();
-                                    let action = item.get("action").and_then(|a| a.as_str()).unwrap_or("").to_string();
-                                    let description = item.get("description").and_then(|d| d.as_str()).map(|s| s.to_string());
+                                    let code = item
+                                        .get("code")
+                                        .and_then(|c| c.as_str())
+                                        .unwrap_or("")
+                                        .to_string();
+                                    let name = item
+                                        .get("name")
+                                        .and_then(|n| n.as_str())
+                                        .unwrap_or("")
+                                        .to_string();
+                                    let category = item
+                                        .get("category")
+                                        .and_then(|c| c.as_str())
+                                        .unwrap_or("")
+                                        .to_string();
+                                    let resource = item
+                                        .get("resource")
+                                        .and_then(|r| r.as_str())
+                                        .unwrap_or("")
+                                        .to_string();
+                                    let action = item
+                                        .get("action")
+                                        .and_then(|a| a.as_str())
+                                        .unwrap_or("")
+                                        .to_string();
+                                    let description = item
+                                        .get("description")
+                                        .and_then(|d| d.as_str())
+                                        .map(|s| s.to_string());
 
                                     permissions.push(PermissionMetadata {
                                         code,
@@ -107,7 +130,10 @@ impl PermissionCenterClient {
                                     });
                                 }
                                 self.cache.load_all(permissions.clone());
-                                info!("Successfully fetched {} permissions from IAM", permissions.len());
+                                info!(
+                                    "Successfully fetched {} permissions from IAM",
+                                    permissions.len()
+                                );
                                 return Ok(());
                             }
                         }
