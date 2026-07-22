@@ -272,7 +272,7 @@ async fn calculate_work_order_cost_detail_db(
     let work_order_no: String = work_order.try_get("work_order_no").unwrap_or_default();
     let order_no: Option<String> = work_order.try_get("order_no").ok().flatten();
     let product_code: String = work_order.try_get("product_code").unwrap_or_default();
-    let product_name: String = work_order.try_get("product_name").unwrap_or_default();
+    let _product_name: String = work_order.try_get("product_name").unwrap_or_default();
     let planned_qty = big_decimal_to_f64(
         work_order
             .try_get::<Option<BigDecimal>, _>("planned_quantity")
@@ -481,8 +481,8 @@ pub async fn calculate_production_order_cost(
 
     let order_id: Uuid = order.try_get("id").unwrap_or_default();
     let order_no: String = order.try_get("order_no").unwrap_or_default();
-    let product_code: String = order.try_get("product_code").unwrap_or_default();
-    let product_name: String = order.try_get("product_name").unwrap_or_default();
+    let _product_code: String = order.try_get("product_code").unwrap_or_default();
+    let _product_name: String = order.try_get("product_name").unwrap_or_default();
     let quantity = big_decimal_to_f64(
         order
             .try_get::<Option<BigDecimal>, _>("quantity")
@@ -668,7 +668,7 @@ pub async fn get_period_cost_report(
     let mut monthly_costs = Vec::new();
     for i in (0..6).rev() {
         let month_start = end_date - Duration::days(i * 30);
-        let month_end = month_start + Duration::days(30);
+        let _month_end = month_start + Duration::days(30);
         monthly_costs.push(MonthlyCostItem {
             month: format!("{}-{:02}", month_start.year(), month_start.month()),
             total_cost: total_cost / 6.0,
@@ -697,7 +697,7 @@ pub async fn get_period_cost_report(
 pub async fn get_cost_trend(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
-    Query(params): Query<PeriodQuery>,
+    Query(_params): Query<PeriodQuery>,
 ) -> Json<ApiResponse<CostTrendData>> {
     if let Err(e) =
         check_permission(&state.pool, &claims, &ModulePermission::ProductionCostRead).await
@@ -706,7 +706,7 @@ pub async fn get_cost_trend(
     }
 
     let end_date = Utc::now();
-    let start_date = end_date - Duration::days(90);
+    let _start_date = end_date - Duration::days(90);
 
     let mut labels = Vec::new();
     let mut total_costs = Vec::new();
@@ -814,7 +814,7 @@ pub async fn get_cost_comparison(
 pub async fn get_cost_forecast(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
-    Query(params): Query<PeriodQuery>,
+    Query(_params): Query<PeriodQuery>,
 ) -> Json<ApiResponse<CostForecastResult>> {
     if let Err(e) =
         check_permission(&state.pool, &claims, &ModulePermission::ProductionCostRead).await

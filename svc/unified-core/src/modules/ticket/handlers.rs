@@ -2,10 +2,10 @@
 
 use axum::{
     extract::{Path, Query, State},
-    routing::{delete, get, post, put},
+    routing::{get, post},
     Extension, Json, Router,
 };
-use chrono::{DateTime, Duration, Utc};
+use chrono::{Duration, Utc};
 use serde_json::json;
 use sqlx::{PgPool, Row};
 use std::str::FromStr;

@@ -106,12 +106,12 @@ pub async fn list_standards(
     let offset = (page - 1) * page_size;
     let tenant_id = get_tenant_id(&claims, &headers);
 
-    let mut params: Vec<serde_json::Value> = Vec::new();
-    let mut where_clause = String::from(" WHERE tenant_id = $1");
+    let _params: Vec<serde_json::Value> = Vec::new();
+    let where_clause = String::from(" WHERE tenant_id = $1");
 
     let count_sql = format!("SELECT COUNT(*) as total FROM qa_standards{}", where_clause);
 
-    let mut count_query = sqlx::query_scalar(&count_sql).bind(tenant_id);
+    let count_query = sqlx::query_scalar(&count_sql).bind(tenant_id);
 
     let total: Option<i64> = match count_query.fetch_one(&state.pool).await {
         Ok(c) => c,
@@ -134,7 +134,7 @@ pub async fn list_standards(
         where_clause,
     );
 
-    let mut fetch_query = sqlx::query_as::<_, QualityStandard>(&fetch_sql)
+    let fetch_query = sqlx::query_as::<_, QualityStandard>(&fetch_sql)
         .bind(tenant_id)
         .bind(page_size)
         .bind(offset);

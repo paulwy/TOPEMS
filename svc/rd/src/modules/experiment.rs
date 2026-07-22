@@ -480,7 +480,7 @@ async fn create_experiment_record(
     headers: HeaderMap,
     Json(req): Json<CreateRecordRequest>,
 ) -> Json<ApiResponse<serde_json::Value>> {
-    let tenant_id = get_tenant_id(&claims, &headers);
+    let _tenant_id = get_tenant_id(&claims, &headers);
     let record_id = Uuid::new_v4();
     let now = Utc::now();
 

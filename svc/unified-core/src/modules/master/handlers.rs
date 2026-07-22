@@ -5,7 +5,7 @@
 
 use axum::{
     extract::{Path, Query, State},
-    routing::{delete, get, post, put},
+    routing::{get, post},
     Extension, Json, Router,
 };
 use chrono::{DateTime, Duration, Utc};

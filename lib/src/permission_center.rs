@@ -8,9 +8,9 @@
 
 use crate::error::TopemsError;
 use crate::event::{
-    EventSubscriber, EventType, PermissionMetadataChangedPayload, RabbitMqSubscriber,
+    EventType, PermissionMetadataChangedPayload, RabbitMqSubscriber,
 };
-use crate::permission::{PermissionChangeType, PermissionMetadata, PermissionMetadataCache};
+use crate::permission::{PermissionMetadata, PermissionMetadataCache};
 use std::sync::Arc;
 use tracing::{error, info, warn};
 

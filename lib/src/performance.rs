@@ -458,7 +458,7 @@ impl CacheOperationRecorder {
 pub mod v28 {
     use crate::cache::{CacheStatistics, InMemoryCache};
     use crate::observability::{
-        AlertManager, AlertRule, AlertSeverity, SLOManager, SLOMeasurement, SLOType,
+        AlertManager, AlertRule, AlertSeverity, SLOManager, SLOMeasurement,
     };
     use chrono::{DateTime, Utc};
     use serde::{Deserialize, Serialize};
@@ -508,7 +508,7 @@ pub mod v28 {
     }
 
     impl QueryCache {
-        pub fn new(mut config: QueryCacheConfig) -> Self {
+        pub fn new(config: QueryCacheConfig) -> Self {
             let max_cache_size = config.max_cache_size;
             let default_ttl = config.default_ttl_secs;
             Self {

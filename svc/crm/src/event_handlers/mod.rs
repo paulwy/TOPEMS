@@ -10,7 +10,7 @@
 use sqlx::PgPool;
 use topems_shared::event::{
     AfterSalesTicketCreatedPayload, CustomerCreatedPayload, Event, EventResult, EventSubscriber,
-    EventType, OpportunityWonPayload,
+    EventType, MasterDataAction, MasterDataDomain, MasterDataEvent, OpportunityWonPayload,
 };
 
 type HandlerResult = std::result::Result<(), String>;
@@ -33,6 +33,8 @@ impl CrmEventHandlers {
         let h1 = self.clone();
         let h2 = self.clone();
         let h3 = self.clone();
+        let h4 = self.clone();
+        let h5 = self.clone();
 
         Ok(subscriber
             .subscribe(vec![EventType::AfterSalesTicketCreated], move |event| {
@@ -56,6 +58,25 @@ impl CrmEventHandlers {
                 Box::pin(async move {
                     if let Err(e) = h.handle_customer_created(event).await {
                         tracing::error!("[crm] handle_customer_created 失败: {}", e);
+                    }
+                })
+            })
+            .subscribe_master_data_employee(move |event| {
+                let h = h4.clone();
+                Box::pin(async move {
+                    if let Err(e) = h.handle_master_data_employee_changed(event).await {
+                        tracing::error!("[crm] handle_master_data_employee_changed 失败: {}", e);
+                    }
+                })
+            })
+            .subscribe_master_data_organization(move |event| {
+                let h = h5.clone();
+                Box::pin(async move {
+                    if let Err(e) = h.handle_master_data_organization_changed(event).await {
+                        tracing::error!(
+                            "[crm] handle_master_data_organization_changed 失败: {}",
+                            e
+                        );
                     }
                 })
             }))
@@ -236,6 +257,149 @@ impl CrmEventHandlers {
             email_target,
             payload.source
         );
+
+        Ok(())
+    }
+
+    /// MDM 员工变更事件处理
+    ///
+    /// 订阅 HRM 员工变更事件，更新 CRM 中的联系人信息
+    async fn handle_master_data_employee_changed(&self, event: MasterDataEvent) -> HandlerResult {
+        tracing::info!(
+            "[crm-mdm] 员工主数据变更事件 - domain={:?}, action={:?}, master_data_id={}, tenant_id={}",
+            event.domain,
+            event.action,
+            event.master_data_id,
+            event.tenant_id
+        );
+
+        match event.action {
+            MasterDataAction::Created => {
+                // 员工创建时，检查是否需要在 CRM 中创建关联联系人
+                let employee_name = event
+                    .payload
+                    .get("name")
+                    .and_then(|v| v.as_str())
+                    .unwrap_or("");
+                let email = event.payload.get("email").and_then(|v| v.as_str());
+                let phone = event.payload.get("phone").and_then(|v| v.as_str());
+
+                tracing::info!(
+                    "[crm-mdm] 员工创建 - name={}, email={:?}, phone={:?}",
+                    employee_name,
+                    email,
+                    phone
+                );
+
+                // TODO: 根据员工信息创建或关联 CRM 联系人
+            }
+            MasterDataAction::Updated => {
+                // 员工更新时，同步更新 CRM 中的联系人信息
+                let employee_name = event
+                    .payload
+                    .get("name")
+                    .and_then(|v| v.as_str())
+                    .unwrap_or("");
+                let email = event.payload.get("email").and_then(|v| v.as_str());
+
+                tracing::info!(
+                    "[crm-mdm] 员工更新 - name={}, email={:?}, changed_fields={:?}",
+                    employee_name,
+                    email,
+                    event.changed_fields
+                );
+
+                // TODO: 同步更新 CRM 联系人信息
+            }
+            MasterDataAction::Deleted => {
+                // 员工删除时，标记 CRM 中关联的联系人
+                tracing::info!(
+                    "[crm-mdm] 员工删除 - master_data_id={}",
+                    event.master_data_id
+                );
+
+                // TODO: 标记 CRM 联系人状态为已离职
+            }
+            MasterDataAction::Activated | MasterDataAction::Deactivated => {
+                // 员工激活/停用，更新 CRM 联系人状态
+                let status = if event.action == MasterDataAction::Activated {
+                    "active"
+                } else {
+                    "inactive"
+                };
+                tracing::info!(
+                    "[crm-mdm] 员工状态变更 - master_data_id={}, status={}",
+                    event.master_data_id,
+                    status
+                );
+
+                // TODO: 更新 CRM 联系人状态
+            }
+        }
+
+        Ok(())
+    }
+
+    /// MDM 组织变更事件处理
+    ///
+    /// 订阅 HRM 部门/公司变更事件，更新 CRM 中的客户所属组织信息
+    async fn handle_master_data_organization_changed(
+        &self,
+        event: MasterDataEvent,
+    ) -> HandlerResult {
+        tracing::info!(
+            "[crm-mdm] 组织主数据变更事件 - domain={:?}, action={:?}, master_data_id={}, tenant_id={}",
+            event.domain,
+            event.action,
+            event.master_data_id,
+            event.tenant_id
+        );
+
+        let org_name = event
+            .payload
+            .get("name")
+            .and_then(|v| v.as_str())
+            .unwrap_or("");
+        let org_code = event.payload.get("code").and_then(|v| v.as_str());
+
+        match event.action {
+            MasterDataAction::Created => {
+                tracing::info!(
+                    "[crm-mdm] 组织创建 - name={}, code={:?}",
+                    org_name,
+                    org_code
+                );
+                // TODO: 创建 CRM 组织记录
+            }
+            MasterDataAction::Updated => {
+                tracing::info!(
+                    "[crm-mdm] 组织更新 - name={}, code={:?}",
+                    org_name,
+                    org_code
+                );
+                // TODO: 更新 CRM 组织记录
+            }
+            MasterDataAction::Deleted => {
+                tracing::info!(
+                    "[crm-mdm] 组织删除 - master_data_id={}",
+                    event.master_data_id
+                );
+                // TODO: 标记 CRM 组织为已删除
+            }
+            MasterDataAction::Activated | MasterDataAction::Deactivated => {
+                let status = if event.action == MasterDataAction::Activated {
+                    "active"
+                } else {
+                    "inactive"
+                };
+                tracing::info!(
+                    "[crm-mdm] 组织状态变更 - name={}, status={}",
+                    org_name,
+                    status
+                );
+                // TODO: 更新 CRM 组织状态
+            }
+        }
 
         Ok(())
     }

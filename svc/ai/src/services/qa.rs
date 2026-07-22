@@ -506,7 +506,7 @@ impl QAService {
         &self,
         question: &str,
         context_chunks: &[SearchResult],
-        tenant_id: Uuid,
+        _tenant_id: Uuid,
     ) -> Result<StructuredAnswer, String> {
         // 分类问题类型
         let question_type = self.classify_question(question).await?;

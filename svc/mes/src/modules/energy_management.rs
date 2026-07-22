@@ -1,12 +1,11 @@
 use axum::{
     extract::{Path, Query, State},
-    routing::{get, post},
+    routing::get,
     Extension, Json, Router,
 };
-use chrono::{DateTime, Datelike, Duration, NaiveDateTime, Utc};
+use chrono::{DateTime, Datelike, Duration, Utc};
 use serde::{Deserialize, Serialize};
-use sqlx::{types::Uuid, PgPool};
-use std::collections::HashMap;
+use sqlx::types::Uuid;
 
 use crate::shared::permission::{check_permission, ModulePermission};
 use crate::AppState;
@@ -204,7 +203,7 @@ async fn get_real_time_consumption(
 
 async fn get_consumption_history(
     State(state): State<AppState>,
-    Query(params): Query<QueryParams>,
+    Query(_params): Query<QueryParams>,
     Extension(claims): Extension<Claims>,
 ) -> Result<Json<ApiResponse<Vec<EnergyConsumptionRecord>>>, Json<ApiResponse<()>>> {
     check_permission(&state.pool, &claims, &ModulePermission::EquipmentRead).await?;
@@ -236,7 +235,7 @@ async fn get_consumption_history(
 
 async fn get_energy_report(
     State(state): State<AppState>,
-    Query(params): Query<ReportParams>,
+    Query(_params): Query<ReportParams>,
     Extension(claims): Extension<Claims>,
 ) -> Result<Json<ApiResponse<EnergyReportResponse>>, Json<ApiResponse<()>>> {
     check_permission(&state.pool, &claims, &ModulePermission::EquipmentRead).await?;
@@ -368,7 +367,7 @@ async fn get_energy_forecast(
 
 async fn get_energy_alerts(
     State(state): State<AppState>,
-    Query(params): Query<QueryParams>,
+    Query(_params): Query<QueryParams>,
     Extension(claims): Extension<Claims>,
 ) -> Result<Json<ApiResponse<EnergyAlertsResponse>>, Json<ApiResponse<()>>> {
     check_permission(&state.pool, &claims, &ModulePermission::EquipmentRead).await?;
@@ -428,7 +427,7 @@ async fn get_energy_alerts(
 async fn get_equipment_consumption(
     State(state): State<AppState>,
     Path(equipment_id): Path<Uuid>,
-    Query(params): Query<QueryParams>,
+    Query(_params): Query<QueryParams>,
     Extension(claims): Extension<Claims>,
 ) -> Result<Json<ApiResponse<Vec<EnergyConsumptionRecord>>>, Json<ApiResponse<()>>> {
     check_permission(&state.pool, &claims, &ModulePermission::EquipmentRead).await?;
@@ -460,7 +459,7 @@ async fn get_equipment_consumption(
 
 async fn export_energy_report(
     State(state): State<AppState>,
-    Query(params): Query<ReportParams>,
+    Query(_params): Query<ReportParams>,
     Extension(claims): Extension<Claims>,
 ) -> Result<Json<ApiResponse<serde_json::Value>>, Json<ApiResponse<()>>> {
     check_permission(&state.pool, &claims, &ModulePermission::EquipmentRead).await?;
