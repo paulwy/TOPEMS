@@ -7,6 +7,33 @@ use chrono::{DateTime, Utc};
 use serde::{Deserialize, Serialize};
 use uuid::Uuid;
 
+/// master_data_id 生成器
+///
+/// 生成格式：{prefix}-{timestamp}-{random}
+/// 例如：cust-20260722-abc123
+pub fn generate_master_data_id(domain: MasterDataDomain) -> String {
+    let timestamp = Utc::now().format("%Y%m%d").to_string();
+    let uuid_str = Uuid::new_v4().to_string();
+    let random = uuid_str.split('-').next().unwrap_or("");
+    format!("{}-{}-{}", domain.prefix(), timestamp, random)
+}
+
+/// 解析 master_data_id 获取域信息
+pub fn parse_master_data_id(id: &str) -> Option<(MasterDataDomain, String)> {
+    let parts: Vec<&str> = id.split('-').collect();
+    if parts.is_empty() {
+        return None;
+    }
+    
+    let domain = MasterDataDomain::from_str(parts[0])?;
+    Some((domain, id.to_string()))
+}
+
+/// 验证 master_data_id 格式
+pub fn validate_master_data_id(id: &str) -> bool {
+    parse_master_data_id(id).is_some()
+}
+
 /// 5 大主数据域标识
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash, Serialize, Deserialize)]
 #[serde(rename_all = "snake_case")]
@@ -174,6 +201,68 @@ impl MasterDataEvent {
             .query_async(&mut con)
             .await?;
 
+        Ok(())
+    }
+
+    /// 发布事件到 RabbitMQ
+    ///
+    /// 使用 Topic Exchange: topems.master-data
+    /// routing_key: master.{domain_prefix}.{tenant_id}.{action}
+    pub async fn publish_to_rabbitmq(&self) -> Result<(), Box<dyn std::error::Error + Send + Sync>> {
+        use lapin::{
+            options::{BasicPublishOptions, ExchangeDeclareOptions},
+            types::FieldTable,
+            BasicProperties, Channel, Connection, ConnectionProperties, ExchangeKind,
+        };
+        
+        let rabbitmq_url =
+            std::env::var("RABBITMQ_URL").unwrap_or_else(|_| "amqp://guest:guest@localhost:5672/%2f".to_string());
+        
+        let connection = Connection::connect(&rabbitmq_url, ConnectionProperties::default()).await?;
+        let channel = connection.create_channel().await?;
+        
+        let exchange_name = "topems.master-data";
+        
+        // 声明 master-data Exchange
+        channel
+            .exchange_declare(
+                exchange_name,
+                ExchangeKind::Topic,
+                ExchangeDeclareOptions {
+                    durable: true,
+                    auto_delete: false,
+                    internal: false,
+                    nowait: false,
+                    passive: false,
+                },
+                FieldTable::default(),
+            )
+            .await?;
+        
+        let routing_key = self.routing_key();
+        let event_json = serde_json::to_string(self)?;
+        
+        let _confirm = channel
+            .basic_publish(
+                exchange_name,
+                &routing_key,
+                BasicPublishOptions {
+                    mandatory: false,
+                    immediate: false,
+                },
+                event_json.as_bytes(),
+                BasicProperties::default().with_delivery_mode(2),
+            )
+            .await?
+            .await?;
+        
+        tracing::info!(
+            "MasterDataEvent published to RabbitMQ - domain: {:?}, action: {:?}, routing_key: {}",
+            self.domain,
+            self.action,
+            routing_key
+        );
+        
         Ok(())
     }
 
