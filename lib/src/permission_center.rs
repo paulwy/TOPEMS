@@ -7,9 +7,7 @@
 // 3. 提供权限查询接口（检查权限是否存在、获取模块所有权限等）
 
 use crate::error::TopemsError;
-use crate::event::{
-    EventType, PermissionMetadataChangedPayload, RabbitMqSubscriber,
-};
+use crate::event::{EventType, PermissionMetadataChangedPayload, RabbitMqSubscriber};
 use crate::permission::{PermissionMetadata, PermissionMetadataCache};
 use std::sync::Arc;
 use tracing::{error, info, warn};

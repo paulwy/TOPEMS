@@ -24,7 +24,7 @@ pub fn parse_master_data_id(id: &str) -> Option<(MasterDataDomain, String)> {
     if parts.is_empty() {
         return None;
     }
-    
+
     let domain = MasterDataDomain::from_str(parts[0])?;
     Some((domain, id.to_string()))
 }
@@ -208,21 +208,24 @@ impl MasterDataEvent {
     ///
     /// 使用 Topic Exchange: topems.master-data
     /// routing_key: master.{domain_prefix}.{tenant_id}.{action}
-    pub async fn publish_to_rabbitmq(&self) -> Result<(), Box<dyn std::error::Error + Send + Sync>> {
+    pub async fn publish_to_rabbitmq(
+        &self,
+    ) -> Result<(), Box<dyn std::error::Error + Send + Sync>> {
         use lapin::{
             options::{BasicPublishOptions, ExchangeDeclareOptions},
             types::FieldTable,
             BasicProperties, Connection, ConnectionProperties, ExchangeKind,
         };
-        
-        let rabbitmq_url =
-            std::env::var("RABBITMQ_URL").unwrap_or_else(|_| "amqp://guest:guest@localhost:5672/%2f".to_string());
-        
-        let connection = Connection::connect(&rabbitmq_url, ConnectionProperties::default()).await?;
+
+        let rabbitmq_url = std::env::var("RABBITMQ_URL")
+            .unwrap_or_else(|_| "amqp://guest:guest@localhost:5672/%2f".to_string());
+
+        let connection =
+            Connection::connect(&rabbitmq_url, ConnectionProperties::default()).await?;
         let channel = connection.create_channel().await?;
-        
+
         let exchange_name = "topems.master-data";
-        
+
         // 声明 master-data Exchange
         channel
             .exchange_declare(
@@ -238,10 +241,10 @@ impl MasterDataEvent {
                 FieldTable::default(),
             )
             .await?;
-        
+
         let routing_key = self.routing_key();
         let event_json = serde_json::to_string(self)?;
-        
+
         let _confirm = channel
             .basic_publish(
                 exchange_name,
@@ -255,14 +258,14 @@ impl MasterDataEvent {
             )
             .await?
             .await?;
-        
+
         tracing::info!(
             "MasterDataEvent published to RabbitMQ - domain: {:?}, action: {:?}, routing_key: {}",
             self.domain,
             self.action,
             routing_key
         );
-        
+
         Ok(())
     }
 

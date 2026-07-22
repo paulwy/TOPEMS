@@ -60,6 +60,7 @@ impl ErpEventHandlers {
         let h13 = self.clone();
         let h14 = self.clone();
         let h15 = self.clone();
+        let h16 = self.clone();
 
         Ok(subscriber
             .subscribe(vec![EventType::SalesOrderApproved], move |event| {
@@ -182,6 +183,14 @@ impl ErpEventHandlers {
                             "[erp] handle_master_data_organization_changed 失败: {}",
                             e
                         );
+                    }
+                })
+            })
+            .subscribe_master_data(vec![MasterDataDomain::Customer], move |event| {
+                let h = h16.clone();
+                Box::pin(async move {
+                    if let Err(e) = h.handle_master_data_customer_changed(event).await {
+                        tracing::error!("[erp] handle_master_data_customer_changed 失败: {}", e);
                     }
                 })
             }))
@@ -1728,6 +1737,70 @@ impl ErpEventHandlers {
                     status
                 );
                 // TODO: 更新 ERP 组织状态
+            }
+        }
+
+        Ok(())
+    }
+
+    /// MDM 客户变更事件处理
+    ///
+    /// 订阅 CRM 客户变更事件，同步更新 ERP 中的客户相关财务记录
+    async fn handle_master_data_customer_changed(&self, event: MasterDataEvent) -> HandlerResult {
+        tracing::info!(
+            "[erp-mdm] 客户主数据变更事件 - domain={:?}, action={:?}, master_data_id={}, tenant_id={}",
+            event.domain,
+            event.action,
+            event.master_data_id,
+            event.tenant_id
+        );
+
+        let customer_name = event
+            .payload
+            .get("name")
+            .and_then(|v| v.as_str())
+            .unwrap_or("");
+        let customer_code = event.payload.get("code").and_then(|v| v.as_str());
+        let email = event.payload.get("email").and_then(|v| v.as_str());
+
+        match event.action {
+            MasterDataAction::Created => {
+                tracing::info!(
+                    "[erp-mdm] 客户创建 - name={}, code={:?}, email={:?}",
+                    customer_name,
+                    customer_code,
+                    email
+                );
+                // TODO: 创建 ERP 客户财务记录（客户档案、信用额度等）
+            }
+            MasterDataAction::Updated => {
+                tracing::info!(
+                    "[erp-mdm] 客户更新 - name={}, code={:?}, changed_fields={:?}",
+                    customer_name,
+                    customer_code,
+                    event.changed_fields
+                );
+                // TODO: 同步更新 ERP 客户财务记录
+            }
+            MasterDataAction::Deleted => {
+                tracing::info!(
+                    "[erp-mdm] 客户删除 - master_data_id={}",
+                    event.master_data_id
+                );
+                // TODO: 标记 ERP 客户为已停用（财务记录保留）
+            }
+            MasterDataAction::Activated | MasterDataAction::Deactivated => {
+                let status = if event.action == MasterDataAction::Activated {
+                    "active"
+                } else {
+                    "inactive"
+                };
+                tracing::info!(
+                    "[erp-mdm] 客户状态变更 - name={}, status={}",
+                    customer_name,
+                    status
+                );
+                // TODO: 更新 ERP 客户信用状态
             }
         }
 

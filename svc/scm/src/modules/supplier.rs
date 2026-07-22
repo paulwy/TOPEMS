@@ -12,7 +12,9 @@ use uuid::Uuid;
 use super::ApiState;
 use crate::models::{CreateSupplierRequest, Supplier, UpdateSupplierRequest};
 use crate::modules::audit::log_audit_event;
+use crate::services::mdm_event_service::MdmEventService;
 use crate::shared::permission::{check_permission, ModulePermission};
+use topems_shared::event::MasterDataAction;
 use topems_shared::{
     api_error,
     auth::Claims,
@@ -235,6 +237,32 @@ pub async fn create_supplier(
     )
     .await;
 
+    // 发布 MDM 主数据事件
+    if let Ok(supplier) = &result {
+        let mdm_service = MdmEventService::new();
+        let sid = supplier.id;
+        let sname = supplier.name.clone();
+        let scontact_name = supplier.contact_name.clone();
+        let scontact_phone = supplier.contact_phone.clone();
+        let semail = supplier.email.clone();
+        let sstatus = supplier.status.clone();
+        tokio::spawn(async move {
+            mdm_service
+                .publish_supplier_event(
+                    sid,
+                    "",
+                    &sname,
+                    scontact_name.as_deref(),
+                    scontact_phone.as_deref(),
+                    semail.as_deref(),
+                    &sstatus,
+                    MasterDataAction::Created,
+                    None,
+                )
+                .await;
+        });
+    }
+
     response
 }
 
@@ -410,6 +438,32 @@ pub async fn update_supplier(
     )
     .await;
 
+    // 发布 MDM 主数据事件
+    if let Ok(supplier) = &result {
+        let mdm_service = MdmEventService::new();
+        let sid = supplier.id;
+        let sname = supplier.name.clone();
+        let scontact_name = supplier.contact_name.clone();
+        let scontact_phone = supplier.contact_phone.clone();
+        let semail = supplier.email.clone();
+        let sstatus = supplier.status.clone();
+        tokio::spawn(async move {
+            mdm_service
+                .publish_supplier_event(
+                    sid,
+                    "",
+                    &sname,
+                    scontact_name.as_deref(),
+                    scontact_phone.as_deref(),
+                    semail.as_deref(),
+                    &sstatus,
+                    MasterDataAction::Updated,
+                    None,
+                )
+                .await;
+        });
+    }
+
     response
 }
 
@@ -482,6 +536,26 @@ pub async fn delete_supplier(
         &headers,
     )
     .await;
+
+    // 发布 MDM 主数据事件
+    if status_str == "success" {
+        let mdm_service = MdmEventService::new();
+        tokio::spawn(async move {
+            mdm_service
+                .publish_supplier_event(
+                    id,
+                    "",
+                    "",
+                    None,
+                    None,
+                    None,
+                    "deleted",
+                    MasterDataAction::Deleted,
+                    None,
+                )
+                .await;
+        });
+    }
 
     response
 }

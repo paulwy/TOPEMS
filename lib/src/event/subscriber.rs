@@ -269,7 +269,11 @@ impl EventSubscriber {
     }
 
     /// 订阅 MDM 主数据事件
-    pub fn subscribe_master_data<F, Fut>(mut self, domains: Vec<MasterDataDomain>, handler: F) -> Self
+    pub fn subscribe_master_data<F, Fut>(
+        mut self,
+        domains: Vec<MasterDataDomain>,
+        handler: F,
+    ) -> Self
     where
         F: Fn(MasterDataEvent) -> Fut + Send + Sync + 'static,
         Fut: Future<Output = ()> + Send + 'static,
