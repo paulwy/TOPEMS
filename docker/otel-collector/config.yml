@@ -1,0 +1,91 @@
+# OpenTelemetry Collector 配置
+# 接收 OTLP 数据，分发到 Jaeger(链路)、Prometheus(指标)、Loki(日志)
+
+receivers:
+  # OTLP gRPC 接收器 (端口 4317)
+  otlp:
+    protocols:
+      grpc:
+        endpoint: 0.0.0.0:4317
+      # OTLP HTTP 接收器 (端口 4318)
+      http:
+        endpoint: 0.0.0.0:4318
+
+processors:
+  # 批处理处理器 - 提高发送效率
+  batch:
+    timeout: 5s
+    send_batch_size: 1024
+
+  # 内存限制器 - 防止 OOM
+  memory_limiter:
+    check_interval: 1s
+    limit_mib: 512
+    spike_limit_mib: 128
+
+  # 资源处理器 - 添加服务标识
+  resource:
+    attributes:
+      - key: deployment.environment
+        value: production
+        action: upsert
+
+  # 属性处理器 - 采样控制
+  attributes:
+    actions:
+      - key: env
+        value: production
+        action: upsert
+
+exporters:
+  # Jaeger 导出器 (链路追踪) - 使用 OTLP 协议
+  otlp/jaeger:
+    endpoint: jaeger:4317
+    tls:
+      insecure: true
+
+  # Prometheus 导出器 (指标) - 暴露在 8889 端口供 Prometheus 拉取
+  prometheus:
+    endpoint: 0.0.0.0:8889
+    namespace: topems
+    send_timestamps: true
+    metric_expiration: 5m
+    enable_open_metrics: true
+
+  # Loki 导出器 (日志) - 通过 OTLP HTTP 协议
+  otlphttp/loki:
+    endpoint: http://loki:3100/otlp
+    tls:
+      insecure: true
+
+  # 调试导出器 (开发调试用)
+  debug:
+    verbosity: basic
+
+service:
+  # 遥测配置 - Collector 自身指标
+  telemetry:
+    logs:
+      level: info
+    metrics:
+      address: 0.0.0.0:8888
+
+  # 管道配置
+  pipelines:
+    # 链路追踪管道: 接收 -> 处理 -> 导出到 Jaeger
+    traces:
+      receivers: [otlp]
+      processors: [memory_limiter, resource, attributes, batch]
+      exporters: [otlp/jaeger, debug]
+
+    # 指标管道: 接收 -> 处理 -> 导出到 Prometheus
+    metrics:
+      receivers: [otlp]
+      processors: [memory_limiter, resource, attributes, batch]
+      exporters: [prometheus, debug]
+
+    # 日志管道: 接收 -> 处理 -> 导出到 Loki
+    logs:
+      receivers: [otlp]
+      processors: [memory_limiter, resource, attributes, batch]
+      exporters: [otlphttp/loki, debug]

@@ -146,22 +146,22 @@ async fn update_system_params(
 
 pub fn system_routes(state: &AppState) -> Router<AppState> {
     let read = Router::new()
-        .route("/api/core/system/config", get(get_system_config))
-        .route("/api/core/system/cache/config", get(get_cache_config))
-        .route("/api/core/system/cache/stats", get(get_cache_stats))
-        .route("/api/core/system/log/config", get(get_log_config))
-        .route("/api/core/system/params", get(get_system_params))
+        .route("system/v1/config", get(get_system_config))
+        .route("system/v1/cache/config", get(get_cache_config))
+        .route("system/v1/cache/stats", get(get_cache_stats))
+        .route("system/v1/log/config", get(get_log_config))
+        .route("system/v1/params", get(get_system_params))
         .layer(axum::middleware::from_fn_with_state(
             state.clone(),
             require_permission("system:read"),
         ));
 
     let write = Router::new()
-        .route("/api/core/system/config", put(update_system_config))
-        .route("/api/core/system/cache/config", put(update_cache_config))
-        .route("/api/core/system/cache/clear", post(clear_cache))
-        .route("/api/core/system/log/config", put(update_log_config))
-        .route("/api/core/system/params", put(update_system_params))
+        .route("system/v1/config", put(update_system_config))
+        .route("system/v1/cache/config", put(update_cache_config))
+        .route("system/v1/cache/clear", post(clear_cache))
+        .route("system/v1/log/config", put(update_log_config))
+        .route("system/v1/params", put(update_system_params))
         .layer(axum::middleware::from_fn_with_state(
             state.clone(),
             require_permission("system:write"),

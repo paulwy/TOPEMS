@@ -129,12 +129,12 @@ install_deps() {
     pnpm install
   fi
 
-  # Cargo workspace 检查
-  if [ ! -d "$PROJECT_ROOT/target" ]; then
-    info "编译 Rust workspace（首次会需要较长时间）..."
-    (cd "$PROJECT_ROOT" && cargo build --workspace) || warn "Rust 编译失败，请检查 Rust 工具链"
+  # Cargo workspace 检查（只编译核心服务）
+  if [ ! -f "$PROJECT_ROOT/target/release/unified-core-service" ]; then
+    info "编译 Rust 核心服务（首次会需要较长时间）..."
+    (cd "$PROJECT_ROOT" && SQLX_OFFLINE=true cargo build --release --bin unified-core-service 2>&1) || warn "Rust 编译失败，请检查 Rust 工具链"
   else
-    success "Rust target 目录已存在"
+    success "Rust 核心服务已编译"
   fi
 }
 

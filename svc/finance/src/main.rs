@@ -12,12 +12,38 @@ use axum_prometheus::PrometheusMetricLayer;
 use std::env;
 use std::net::SocketAddr;
 
+use std::sync::Arc;
+
 use crate::shared::AppState;
 use crate::workflow::WorkflowClient;
 use topems_shared::{
     auth_middleware, create_api_info_router, create_cors_layer, init_telemetry,
-    telemetry_middleware, ApiResponse, AuthState, DependencyHealth, HealthStatus, ServiceHealth,
+    rate_limit_middleware, register_routes_with_legacy_alias, telemetry_middleware, ApiResponse,
+    AuthState, DependencyHealth, HealthStatus, RateLimitConfig, RateLimitMiddleware, ServiceHealth,
 };
+use utoipa::OpenApi;
+
+#[derive(OpenApi)]
+#[openapi(
+    tags(
+        (name = "Finance", description = "财务管理"),
+        (name = "Voucher", description = "凭证管理"),
+        (name = "Accounting", description = "科目管理"),
+        (name = "Report", description = "报表生成"),
+        (name = "Cost", description = "成本核算"),
+        (name = "Reconciliation", description = "对账中心"),
+        (name = "Health", description = "健康检查"),
+    ),
+    info(
+        title = "TOPEMS-finance API",
+        version = "1.0.0",
+        description = "TOPEMS 财务服务 - 凭证管理、科目管理、报表生成、成本核算",
+    ),
+    servers(
+        (url = "http://localhost:8011", description = "本地开发环境"),
+    )
+)]
+struct ApiDoc;
 
 #[tokio::main]
 async fn main() -> anyhow::Result<()> {
@@ -58,7 +84,7 @@ async fn main() -> anyhow::Result<()> {
     let auth_state = AuthState::from_env();
 
     let workflow_url = std::env::var("WORKFLOW_SERVICE_URL")
-        .unwrap_or_else(|_| "http://localhost:8001".to_string());
+        .unwrap_or_else(|_| "http://localhost:8000".to_string());
     let workflow_client = WorkflowClient::new(&workflow_url);
 
     let state = AppState {
@@ -80,20 +106,45 @@ async fn main() -> anyhow::Result<()> {
             get(move || async move { metric_handle.render() }),
         );
 
+    let rate_limit_config = RateLimitConfig::new(200, 60)
+        .with_by_user_id(false)
+        .with_by_ip(true);
+    let rate_limiter = Arc::new(RateLimitMiddleware::new(rate_limit_config));
+    let rate_limit_layer = axum::middleware::from_fn({
+        let mw = rate_limiter.clone();
+        move |req, next| {
+            let mw = mw.clone();
+            async move { rate_limit_middleware(mw, req, next).await }
+        }
+    });
+
     let protected_routes = modules::create_routes()
         .layer(axum::middleware::from_fn_with_state(
             auth_state.clone(),
             auth_middleware,
         ))
+        .layer(rate_limit_layer)
         .with_state(state.clone());
 
-    let app = Router::new()
-        .merge(public_routes)
-        .nest("/api/finance", protected_routes)
-        .layer(axum::middleware::from_fn(telemetry_middleware))
-        .layer(cors)
-        .layer(prometheus_layer)
-        .with_state(state);
+    let app = register_routes_with_legacy_alias(
+        Router::new().merge(public_routes),
+        "/api/core/finance/v1",
+        &["/api/v1/finance", "/api/finance"],
+        protected_routes,
+    )
+    .route(
+        "/api-docs/openapi.json",
+        get(|| async {
+            serde_json::to_string_pretty(&ApiDoc::openapi()).unwrap_or_else(|e| {
+                tracing::error!("Failed to serialize OpenAPI spec: {}", e);
+                "{}".to_string()
+            })
+        }),
+    )
+    .layer(axum::middleware::from_fn(telemetry_middleware))
+    .layer(cors)
+    .layer(prometheus_layer)
+    .with_state(state);
 
     let port = std::env::var("FINANCE_PORT")
         .unwrap_or_else(|_| "8011".to_string())

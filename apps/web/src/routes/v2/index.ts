@@ -61,6 +61,10 @@ const moduleImports: Record<string, () => Promise<{ [key: string]: RouteModuleCo
       lowcodeModuleConfig: m.lowcodeModuleConfig,
     })),
   oa: () => import('@/modules/oa/config').then((m) => ({ oaModuleConfig: m.oaModuleConfig })),
+  ticket: () =>
+    import('@/modules/ticket/config').then((m) => ({
+      ticketModuleConfig: m.ticketModuleConfig,
+    })),
 };
 
 const loadedModules = new Map<string, RouteModuleConfig>();

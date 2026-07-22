@@ -26,5 +26,8 @@ crate::define_service_client!(
         list_logs(page: i32, page_size: i32) -> ApiResponse<Vec<serde_json::Value>> {
             get => "/api/monitor/logs?page={}&pagesize={}"
         }
+        acknowledge_alert(id: &str) -> ApiResponse<serde_json::Value> {
+            put => "/api/monitor/alerts/{}/acknowledge"; body: data: &serde_json::Value
+        }
     }
 );

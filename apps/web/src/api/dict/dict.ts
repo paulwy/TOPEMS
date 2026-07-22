@@ -23,7 +23,7 @@ export interface DictItem {
   updated_at: string;
 }
 
-const dictAxios = createAxiosClient({ baseURL: '/api/core/dict' });
+const dictAxios = createAxiosClient({ baseURL: '/api/v1/core/dict' });
 const API_BASE = '';
 
 export const dictApi = {

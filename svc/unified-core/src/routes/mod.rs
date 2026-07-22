@@ -20,7 +20,9 @@ mod system;
 use axum::routing::{get, post, put};
 use axum::Router;
 
-use topems_shared::{auth_middleware, get_api_info_handler};
+use topems_shared::{
+    api_version::register_routes_with_legacy_alias, auth_middleware, get_api_info_handler,
+};
 
 use crate::handlers;
 use crate::middleware;
@@ -42,7 +44,7 @@ pub fn create_routes(
     state: &AppState,
     metrics_render: impl Fn() -> String + Clone + Send + Sync + 'static,
 ) -> Router<AppState> {
-    // ===== Public routes (no auth required) =====
+    // ===== Public routes (no auth required, outside of /api/core/ dual-rail) =====
     let public_routes = Router::new()
         .route("/", get(handlers::home))
         .route("/health", get(handlers::health))
@@ -55,38 +57,8 @@ pub fn create_routes(
             "/api/plugins/info",
             get(modules::plugin::handlers::list_plugins_with_status),
         )
-        .route(
-            "/api/core/plugin/navigation-config",
-            get(modules::plugin::handlers::get_navigation_config),
-        )
         .route("/api/plugins/health", get(handlers::plugin_health_check))
-        .route(
-            "/api/core/notification/notifications/health/detailed",
-            get(modules::communication::notification::get_notification_health_detailed),
-        )
         .route("/metrics", get(move || async move { metrics_render() }))
-        // Auth endpoints (no auth required for login) - /v1 prefix aligned with frontend
-        .route("/api/core/iam/auth/login", post(modules::iam::auth::login))
-        .route(
-            "/api/core/iam/auth/register",
-            post(modules::iam::auth::register),
-        )
-        .route(
-            "/api/core/iam/auth/refresh",
-            post(modules::iam::auth::refresh_token),
-        )
-        .route(
-            "/api/core/iam/auth/logout",
-            post(modules::iam::auth::logout),
-        )
-        .route(
-            "/api/core/iam/auth/forgot-password",
-            post(modules::iam::auth::forgot_password),
-        )
-        .route(
-            "/api/core/iam/auth/reset-password",
-            post(modules::iam::auth::reset_password),
-        )
         // WebSocket endpoints (auth handled via token query param or subscribe message)
         // Unified WebSocket routes with module prefix
         .route(
@@ -101,31 +73,54 @@ pub fn create_routes(
         .route(
             "/api/plugins/{plugin_code}/{*path}",
             get(handlers::plugin_proxy),
+        );
+
+    // ===== Core API public routes (dual-rail: /api/core/ + /api/v1/core/) =====
+    let core_public_routes = Router::new()
+        .route(
+            "plugin/navigation-config",
+            get(modules::plugin::handlers::get_navigation_config),
+        )
+        .route(
+            "notification/notifications/health/detailed",
+            get(modules::communication::notification::get_notification_health_detailed),
+        )
+        // Auth endpoints (no auth required for login)
+        .route("iam/auth/login", post(modules::iam::auth::login))
+        .route("iam/auth/register", post(modules::iam::auth::register))
+        .route("iam/auth/refresh", post(modules::iam::auth::refresh_token))
+        .route("iam/auth/logout", post(modules::iam::auth::logout))
+        .route(
+            "iam/auth/forgot-password",
+            post(modules::iam::auth::forgot_password),
+        )
+        .route(
+            "iam/auth/reset-password",
+            post(modules::iam::auth::reset_password),
         )
         // Plugin registration routes (no auth required - for service startup auto-registration)
         .route(
-            "/api/core/plugin/dev/plugins/{code}/register",
+            "plugin/dev/plugins/{code}/register",
             post(modules::plugin::handlers::register_plugin),
         )
         .route(
-            "/api/core/plugin/dev/plugins/{code}/status",
+            "plugin/dev/plugins/{code}/status",
             put(modules::plugin::handlers::update_plugin_status),
         )
         .route(
-            "/api/core/plugin/dev/plugins/{code}/unregister",
+            "plugin/dev/plugins/{code}/unregister",
             post(modules::plugin::handlers::unregister_plugin),
         );
 
-    // ===== Protected routes =====
-    let protected_routes = iam::iam_routes(state)
+    // ===== Core API protected routes (dual-rail: /api/core/ + /api/v1/core/) =====
+    let core_protected_routes = iam::iam_routes(state)
         .merge(flow::flow_routes(state))
         .merge(file::file_routes(state))
         .merge(communication::communication_routes(state))
         .merge(master::master_routes(state))
         .merge(plugin::plugin_routes(state))
-        .merge(mobile::mobile_routes(state))
+        .merge(mobile::mobile_sync_routes(state))
         .merge(help::help_routes(state))
-        .merge(migration::migration_routes(state))
         .merge(monitor::monitor_routes(state))
         .merge(system::system_routes(state))
         .merge(modules::login_log::create_routes(state.clone()))
@@ -137,9 +132,26 @@ pub fn create_routes(
             auth_middleware,
         ));
 
+    // ===== Combine core public + protected routes =====
+    let core_routes = core_public_routes.merge(core_protected_routes);
+
+    // ===== Apply dual-rail registration (new: /api/core/, legacy: /api/v1/core/) =====
+    let core_router = register_routes_with_legacy_alias(
+        Router::new(),
+        "/api/core",
+        &["/api/v1/core"],
+        core_routes,
+    );
+
+    // ===== Legacy routes (non-core-prefixed, kept for backward compat) =====
+    let legacy_routes = flow::flow_legacy_routes(state)
+        .merge(migration::migration_routes(state))
+        .merge(modules::mobile::create_mobile_routes(state));
+
     Router::new()
         .merge(public_routes)
-        .merge(protected_routes)
+        .merge(core_router)
+        .merge(legacy_routes)
         .layer(axum::middleware::from_fn_with_state(
             state.clone(),
             middleware::input_validation::input_validation_middleware,

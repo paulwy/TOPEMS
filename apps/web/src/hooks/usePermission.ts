@@ -49,18 +49,35 @@ export const usePermission = () => {
   const { hasPermission, hasAnyPermission, hasAllPermissions, permissions, user } = useAuth();
   const [cachedInheritedPermissions, setCachedInheritedPermissions] = useState<string[]>([]);
   const cacheRef = useRef<PermissionCache | null>(null);
+  const prevPermissionsRef = useRef<string[]>([]);
 
   useEffect(() => {
+    const prevPermissions = prevPermissionsRef.current;
+    const permissionsChanged =
+      prevPermissions.length !== permissions.length ||
+      !prevPermissions.every((p, i) => p === permissions[i]);
+
+    if (!permissionsChanged) return;
+
+    prevPermissionsRef.current = permissions;
+
     const cached = getCachedPermissions();
     if (cached && cached.permissions.length === permissions.length) {
-      cacheRef.current = cached;
-      setCachedInheritedPermissions(cached.inheritedPermissions);
-    } else {
-      const inherited = getInheritedPermissions(permissions);
-      setCachedInheritedPermissions(inherited);
-      setCachedPermissions(permissions, inherited);
-      cacheRef.current = { permissions, inheritedPermissions: inherited, timestamp: Date.now() };
+      const cachedPermissionsChanged =
+        cached.permissions.length !== permissions.length ||
+        !cached.permissions.every((p, i) => p === permissions[i]);
+
+      if (!cachedPermissionsChanged) {
+        cacheRef.current = cached;
+        setCachedInheritedPermissions(cached.inheritedPermissions);
+        return;
+      }
     }
+
+    const inherited = getInheritedPermissions(permissions);
+    setCachedInheritedPermissions(inherited);
+    setCachedPermissions(permissions, inherited);
+    cacheRef.current = { permissions, inheritedPermissions: inherited, timestamp: Date.now() };
   }, [permissions]);
 
   useEffect(() => {

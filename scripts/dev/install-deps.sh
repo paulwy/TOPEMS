@@ -184,14 +184,42 @@ install_frontend_deps() {
   success "前端依赖安装完成"
 }
 
-# 编译后端服务
+# 编译后端服务（只编译服务包）
 build_backend() {
   info "编译后端服务..."
   cd "$PROJECT_ROOT"
   
-  cargo build --release --workspace
+  local services_conf="$PROJECT_ROOT/scripts/services.conf"
+  if [ -f "$services_conf" ]; then
+    local services=$(grep -v "^#" "$services_conf" | grep -v "^$" | awk '{print $3}' | sort -u)
+  else
+    local services="unified-core-service topems-pm topems-erp topems-finance topems-doc topems-ai topems-hrm topems-crm topems-mes topems-pdm topems-scm topems-wms topems-srm topems-qms topems-lims topems-ehs topems-rd analytics-service topems-monitor topems-portal topems-mobile topems-gis topems-integration"
+  fi
   
-  success "后端服务编译完成"
+  local success_count=0
+  local fail_count=0
+  
+  for exe in $services; do
+    info "编译 $exe..."
+    if SQLX_OFFLINE=true cargo build --release --bin "$exe" 2>&1; then
+      success_count=$((success_count + 1))
+    else
+      warning "$exe 离线编译失败，尝试在线编译..."
+      if cargo build --release --bin "$exe" 2>&1; then
+        success_count=$((success_count + 1))
+      else
+        error "$exe 编译失败"
+        fail_count=$((fail_count + 1))
+      fi
+    fi
+  done
+  
+  if [ $fail_count -eq 0 ]; then
+    success "后端服务编译完成 ($success_count 成功)"
+  else
+    error "后端编译失败 ($success_count 成功, $fail_count 失败)"
+    return 1
+  fi
 }
 
 # 创建配置文件

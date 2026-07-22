@@ -31,7 +31,7 @@ impl ServiceRegistry {
                 description: "统一身份认证与授权管理".to_string(),
                 port: 8000,
                 health_endpoint: "/health".to_string(),
-                api_prefix: "/api/core".to_string(),
+                api_prefix: "/api/v1/core".to_string(),
             },
             ServiceConfig {
                 name: "topems-doc".to_string(),
@@ -39,7 +39,7 @@ impl ServiceRegistry {
                 description: "文档管理与文件存储".to_string(),
                 port: 8000,
                 health_endpoint: "/health".to_string(),
-                api_prefix: "/api/core".to_string(),
+                api_prefix: "/api/v1/core".to_string(),
             },
             ServiceConfig {
                 name: "topems-pm".to_string(),
@@ -47,7 +47,7 @@ impl ServiceRegistry {
                 description: "项目管理与预算管理".to_string(),
                 port: 8023,
                 health_endpoint: "/health".to_string(),
-                api_prefix: "/api/pm".to_string(),
+                api_prefix: "/api/v1/pm".to_string(),
             },
             ServiceConfig {
                 name: "notification-service".to_string(),
@@ -55,7 +55,7 @@ impl ServiceRegistry {
                 description: "消息通知服务".to_string(),
                 port: 8000,
                 health_endpoint: "/health".to_string(),
-                api_prefix: "/api/core".to_string(),
+                api_prefix: "/api/v1/core".to_string(),
             },
             ServiceConfig {
                 name: "topems-integration".to_string(),
@@ -63,7 +63,7 @@ impl ServiceRegistry {
                 description: "系统集成服务".to_string(),
                 port: 8072,
                 health_endpoint: "/health".to_string(),
-                api_prefix: "/api/integration".to_string(),
+                api_prefix: "/api/v1/integration".to_string(),
             },
             ServiceConfig {
                 name: "topems-portal".to_string(),
@@ -71,7 +71,7 @@ impl ServiceRegistry {
                 description: "企业统一门户".to_string(),
                 port: 8063,
                 health_endpoint: "/health".to_string(),
-                api_prefix: "/api/portal".to_string(),
+                api_prefix: "/api/v1/portal".to_string(),
             },
             ServiceConfig {
                 name: "topems-flow".to_string(),
@@ -79,7 +79,7 @@ impl ServiceRegistry {
                 description: "工作流引擎与审批流程".to_string(),
                 port: 8000,
                 health_endpoint: "/health".to_string(),
-                api_prefix: "/api/core".to_string(),
+                api_prefix: "/api/v1/core".to_string(),
             },
             ServiceConfig {
                 name: "topems-erp".to_string(),
@@ -87,7 +87,7 @@ impl ServiceRegistry {
                 description: "企业资源规划管理".to_string(),
                 port: 8010,
                 health_endpoint: "/health".to_string(),
-                api_prefix: "/api/erp".to_string(),
+                api_prefix: "/api/v1/erp".to_string(),
             },
             ServiceConfig {
                 name: "topems-hrm".to_string(),
@@ -95,7 +95,7 @@ impl ServiceRegistry {
                 description: "人力资源管理".to_string(),
                 port: 8020,
                 health_endpoint: "/health".to_string(),
-                api_prefix: "/api/hrm".to_string(),
+                api_prefix: "/api/v1/hrm".to_string(),
             },
             ServiceConfig {
                 name: "topems-crm".to_string(),
@@ -103,7 +103,7 @@ impl ServiceRegistry {
                 description: "客户关系管理".to_string(),
                 port: 8029,
                 health_endpoint: "/health".to_string(),
-                api_prefix: "/api/crm".to_string(),
+                api_prefix: "/api/v1/crm".to_string(),
             },
             ServiceConfig {
                 name: "topems-ai".to_string(),
@@ -111,7 +111,7 @@ impl ServiceRegistry {
                 description: "AI智能服务".to_string(),
                 port: 8013,
                 health_endpoint: "/health".to_string(),
-                api_prefix: "/api/ai".to_string(),
+                api_prefix: "/api/v1/ai".to_string(),
             },
             ServiceConfig {
                 name: "topems-finance".to_string(),
@@ -119,7 +119,7 @@ impl ServiceRegistry {
                 description: "财务核算与报表管理".to_string(),
                 port: 8011,
                 health_endpoint: "/health".to_string(),
-                api_prefix: "/api/finance".to_string(),
+                api_prefix: "/api/v1/finance".to_string(),
             },
             ServiceConfig {
                 name: "topems-doc-standalone".to_string(),
@@ -127,7 +127,7 @@ impl ServiceRegistry {
                 description: "文档管理独立部署版".to_string(),
                 port: 8012,
                 health_endpoint: "/health".to_string(),
-                api_prefix: "/api/doc".to_string(),
+                api_prefix: "/api/v1/doc".to_string(),
             },
             ServiceConfig {
                 name: "topems-rs".to_string(),
@@ -135,7 +135,7 @@ impl ServiceRegistry {
                 description: "科研配方与实验管理".to_string(),
                 port: 8053,
                 health_endpoint: "/health".to_string(),
-                api_prefix: "/api/rd".to_string(),
+                api_prefix: "/api/v1/rd".to_string(),
             },
             ServiceConfig {
                 name: "topems-lims".to_string(),
@@ -143,7 +143,7 @@ impl ServiceRegistry {
                 description: "实验室信息管理".to_string(),
                 port: 8051,
                 health_endpoint: "/health".to_string(),
-                api_prefix: "/api/lims".to_string(),
+                api_prefix: "/api/v1/lims".to_string(),
             },
             ServiceConfig {
                 name: "topems-pdm".to_string(),
@@ -151,7 +151,7 @@ impl ServiceRegistry {
                 description: "产品数据管理".to_string(),
                 port: 8031,
                 health_endpoint: "/health".to_string(),
-                api_prefix: "/api/pdm".to_string(),
+                api_prefix: "/api/v1/pdm".to_string(),
             },
             ServiceConfig {
                 name: "topems-mes".to_string(),
@@ -159,7 +159,7 @@ impl ServiceRegistry {
                 description: "生产过程执行管理".to_string(),
                 port: 8030,
                 health_endpoint: "/health".to_string(),
-                api_prefix: "/api/mes".to_string(),
+                api_prefix: "/api/v1/mes".to_string(),
             },
             ServiceConfig {
                 name: "topems-qms".to_string(),
@@ -167,7 +167,7 @@ impl ServiceRegistry {
                 description: "质量检验与管理".to_string(),
                 port: 8050,
                 health_endpoint: "/health".to_string(),
-                api_prefix: "/api/qms".to_string(),
+                api_prefix: "/api/v1/qms".to_string(),
             },
             ServiceConfig {
                 name: "topems-ehs".to_string(),
@@ -175,7 +175,7 @@ impl ServiceRegistry {
                 description: "环境健康安全管理".to_string(),
                 port: 8052,
                 health_endpoint: "/health".to_string(),
-                api_prefix: "/api/ehs".to_string(),
+                api_prefix: "/api/v1/ehs".to_string(),
             },
             ServiceConfig {
                 name: "topems-scm".to_string(),
@@ -183,7 +183,7 @@ impl ServiceRegistry {
                 description: "供应链管理".to_string(),
                 port: 8040,
                 health_endpoint: "/health".to_string(),
-                api_prefix: "/api/scm".to_string(),
+                api_prefix: "/api/v1/scm".to_string(),
             },
             ServiceConfig {
                 name: "topems-srm".to_string(),
@@ -191,7 +191,7 @@ impl ServiceRegistry {
                 description: "供应商关系管理".to_string(),
                 port: 8042,
                 health_endpoint: "/health".to_string(),
-                api_prefix: "/api/srm".to_string(),
+                api_prefix: "/api/v1/srm".to_string(),
             },
             ServiceConfig {
                 name: "topems-wms".to_string(),
@@ -199,7 +199,7 @@ impl ServiceRegistry {
                 description: "仓储物流管理".to_string(),
                 port: 8041,
                 health_endpoint: "/health".to_string(),
-                api_prefix: "/api/wms".to_string(),
+                api_prefix: "/api/v1/wms".to_string(),
             },
             ServiceConfig {
                 name: "topems-gis".to_string(),
@@ -207,7 +207,7 @@ impl ServiceRegistry {
                 description: "地理信息管理".to_string(),
                 port: 8071,
                 health_endpoint: "/health".to_string(),
-                api_prefix: "/api/gis".to_string(),
+                api_prefix: "/api/v1/gis".to_string(),
             },
             ServiceConfig {
                 name: "topems-im".to_string(),
@@ -215,7 +215,7 @@ impl ServiceRegistry {
                 description: "即时通讯服务".to_string(),
                 port: 8000,
                 health_endpoint: "/health".to_string(),
-                api_prefix: "/api/core".to_string(),
+                api_prefix: "/api/v1/core".to_string(),
             },
             ServiceConfig {
                 name: "topems-bi".to_string(),
@@ -223,7 +223,7 @@ impl ServiceRegistry {
                 description: "数据分析与报表".to_string(),
                 port: 8060,
                 health_endpoint: "/health".to_string(),
-                api_prefix: "/api/bi".to_string(),
+                api_prefix: "/api/v1/bi".to_string(),
             },
             ServiceConfig {
                 name: "topems-mail".to_string(),
@@ -231,7 +231,7 @@ impl ServiceRegistry {
                 description: "邮件发送与模板管理".to_string(),
                 port: 8000,
                 health_endpoint: "/health".to_string(),
-                api_prefix: "/api/core".to_string(),
+                api_prefix: "/api/v1/core".to_string(),
             },
             ServiceConfig {
                 name: "topems-monitor".to_string(),
@@ -239,7 +239,7 @@ impl ServiceRegistry {
                 description: "系统监控服务".to_string(),
                 port: 8062,
                 health_endpoint: "/health".to_string(),
-                api_prefix: "/api/monitor".to_string(),
+                api_prefix: "/api/v1/monitor".to_string(),
             },
             ServiceConfig {
                 name: "topems-mobile".to_string(),
@@ -247,7 +247,7 @@ impl ServiceRegistry {
                 description: "移动端API服务".to_string(),
                 port: 8070,
                 health_endpoint: "/health".to_string(),
-                api_prefix: "/api/mobile".to_string(),
+                api_prefix: "/api/v1/mobile".to_string(),
             },
         ]
     }

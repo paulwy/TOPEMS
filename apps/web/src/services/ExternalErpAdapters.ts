@@ -217,7 +217,7 @@ export class KingdeeAdapter extends BaseAdapter {
   async authenticate(): Promise<string> {
     if (this.token) return this.token;
 
-    const response = await this.httpClient.post('/api/core/iam/auth/login', {
+    const response = await this.httpClient.post('/api/v1/core/iam/auth/login', {
       username: this.config.username,
       password: this.config.password,
     });

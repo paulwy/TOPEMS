@@ -19,6 +19,7 @@ import { mobileNavConfig } from '@/modules/mobile/config';
 import { monitorNavConfig } from '@/modules/monitor/config';
 import { notificationNavConfig } from '@/modules/notification/config';
 import { oaNavConfig } from '@/modules/oa/config';
+import { ticketNavConfig } from '@/modules/ticket/config';
 import { pdmNavConfig } from '@/modules/pdm/config';
 import { pmNavConfig } from '@/modules/pm/config';
 import { pluginNavConfig } from '@/modules/plugin/config';
@@ -41,6 +42,7 @@ export const coreModuleNavConfigs: ModuleNavConfig[] = [
   oaNavConfig,
   docNavConfig,
   monitorNavConfig,
+  ticketNavConfig,
   integrationNavConfig,
   aiNavConfig,
   mobileNavConfig,

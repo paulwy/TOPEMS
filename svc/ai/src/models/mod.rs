@@ -349,3 +349,108 @@ pub struct AiSearchResponse {
     pub total: usize,
     pub query_time_ms: u64,
 }
+
+// AI 智能助手 - 报表助手
+#[derive(Debug, Deserialize)]
+pub struct ReportAssistantRequest {
+    pub query: String,
+    pub data_source: Option<String>,
+    pub time_range: Option<String>,
+}
+
+#[derive(Debug, Serialize, Deserialize)]
+pub struct ReportMetric {
+    pub label: String,
+    pub value: f64,
+    pub unit: Option<String>,
+}
+
+#[derive(Debug, Serialize)]
+pub struct ReportAssistantResponse {
+    pub query: String,
+    pub chart_type: String,
+    pub title: String,
+    pub description: Option<String>,
+    pub sql: Option<String>,
+    pub data: Vec<serde_json::Value>,
+    pub x_axis: Option<String>,
+    pub y_axis: Option<serde_json::Value>,
+    pub metrics: Option<Vec<ReportMetric>>,
+}
+
+// AI 智能助手 - 流程助手
+#[derive(Debug, Deserialize)]
+pub struct FlowAssistantRequest {
+    pub query: String,
+    pub module: Option<String>,
+    pub context: Option<serde_json::Value>,
+}
+
+#[derive(Debug, Serialize)]
+pub struct FlowStep {
+    pub step: i32,
+    pub name: String,
+    pub description: String,
+    pub responsible: Option<String>,
+    pub estimated_time: Option<String>,
+}
+
+#[derive(Debug, Serialize)]
+pub struct FlowAssistantResponse {
+    pub query: String,
+    pub title: String,
+    pub description: Option<String>,
+    pub steps: Vec<FlowStep>,
+    pub suggestions: Option<Vec<String>>,
+}
+
+// AI 智能助手 - 异常预测
+#[derive(Debug, Deserialize)]
+pub struct AnomalyPredictRequest {
+    pub metric: String,
+    pub time_range: Option<String>,
+    pub data_source: Option<String>,
+    pub threshold: Option<f64>,
+}
+
+#[derive(Debug, Serialize)]
+pub struct AnomalyPoint {
+    pub timestamp: String,
+    pub value: f64,
+    pub expected: Option<f64>,
+    pub severity: String,
+    pub reason: Option<String>,
+}
+
+#[derive(Debug, Serialize)]
+pub struct AnomalyPredictResponse {
+    pub metric: String,
+    pub anomaly_count: i32,
+    pub summary: String,
+    pub anomalies: Vec<AnomalyPoint>,
+    pub suggestions: Option<Vec<String>>,
+}
+
+// AI 智能助手 - 知识库问答
+#[derive(Debug, Deserialize)]
+pub struct KnowledgeAskRequest {
+    pub question: String,
+    pub knowledge_base: Option<String>,
+    pub top_k: Option<usize>,
+}
+
+#[derive(Debug, Serialize)]
+pub struct KnowledgeSource {
+    pub title: String,
+    pub content: Option<String>,
+    pub relevance: Option<f64>,
+}
+
+#[derive(Debug, Serialize)]
+pub struct KnowledgeAskResponse {
+    pub question: String,
+    pub answer: String,
+    pub sources: Vec<KnowledgeSource>,
+    pub confidence: f64,
+    pub follow_up_questions: Option<Vec<String>>,
+}

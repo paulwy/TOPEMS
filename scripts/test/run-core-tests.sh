@@ -89,7 +89,7 @@ run_module_test() {
     echo -e "${BLUE}  ${module_upper} 模块测试${NC}"
     echo -e "${BLUE}----------------------------------------${NC}"
 
-    cargo test --package unified-core-service --test "$test_file" -- --test-threads=1 2>&1 | while IFS= read -r line; do
+    cargo test --package unified-core-service --test "$test_file" 2>&1 | while IFS= read -r line; do
         if [[ "$line" == *"test result: ok"* ]]; then
             echo -e "${GREEN}$line${NC}"
         elif [[ "$line" == *"FAILED"* ]]; then
@@ -114,7 +114,7 @@ run_all_tests() {
         local module_upper=$(echo "$module" | tr '[:lower:]' '[:upper:]')
         echo -e "${YELLOW}运行 ${module_upper} 模块测试...${NC}"
 
-        if cargo test --package unified-core-service --test "${module}_permission_tests" -- --test-threads=1 2>&1 | grep -q "test result: ok"; then
+        if cargo test --package unified-core-service --test "${module}_permission_tests" 2>&1 | grep -q "test result: ok"; then
             echo -e "${GREEN}✓ ${module_upper} 模块测试通过${NC}"
             passed=$((passed + 1))
         else
@@ -154,7 +154,7 @@ generate_report() {
         echo "## ${module_upper} 模块" >> "$report_file"
         echo "" >> "$report_file"
         echo '```' >> "$report_file"
-        cargo test --package unified-core-service --test "${module}_permission_tests" -- --test-threads=1 2>&1 >> "$report_file"
+        cargo test --package unified-core-service --test "${module}_permission_tests" 2>&1 >> "$report_file"
         echo '```' >> "$report_file"
         echo "" >> "$report_file"
     done

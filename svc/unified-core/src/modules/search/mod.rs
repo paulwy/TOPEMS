@@ -18,7 +18,7 @@ pub async fn init_database(_pool: &PgPool) -> Result<(), sqlx::Error> {
 
 pub fn create_routes(state: AppState) -> Router<AppState> {
     Router::new()
-        .route("/api/core/search", get(handlers::search))
+        .route("search", get(handlers::search))
         .with_state(state.clone())
         .layer(axum::middleware::from_fn_with_state(
             state,

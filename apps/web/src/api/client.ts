@@ -18,6 +18,7 @@ import {
   initCsrfProtection,
 } from '@/components/security';
 import { injectTraceContext } from '@/utils/telemetry';
+import { getCurrentTraceId, getCurrentSpanId, startTrace } from '@/utils/tracing';
 
 const logger = createLogger('ApiClient');
 
@@ -229,6 +230,18 @@ export const createAxiosClient = ({
       Object.entries(traceHeaders).forEach(([key, value]) => {
         requestConfig.headers[key] = value;
       });
+
+      // 补充后端 request_context_middleware 期望的自定义 trace headers
+      let traceId = getCurrentTraceId();
+      let spanId = getCurrentSpanId();
+      if (!traceId) {
+        const ctx = startTrace();
+        traceId = ctx.traceId;
+        spanId = ctx.spanId;
+      }
+      requestConfig.headers['x-trace-id'] = traceId;
+      requestConfig.headers['x-span-id'] = spanId || '';
+      requestConfig.headers['x-request-id'] = traceId;
 
       if (withCsrf) {
         return csrfRequestInterceptor(requestConfig);
@@ -499,17 +512,19 @@ class ApiClient {
   get pdm() {
     return this.clients.pdm;
   }
-  get report() {
-    return this.clients.report;
-  }
-  get gis() {
-    return this.clients.gis;
-  }
   get bi() {
     return this.clients.bi;
   }
+  /** @deprecated Use `bi` instead. analytics is an alias for BI service. */
   get analytics() {
-    return this.clients.analytics;
+    return this.clients.bi;
+  }
+  /** @deprecated Use `bi` instead. report is a sub-module of BI service. */
+  get report() {
+    return this.clients.bi;
+  }
+  get gis() {
+    return this.clients.gis;
   }
   get mobile() {
     return this.clients.mobile;
@@ -564,6 +579,9 @@ class ApiClient {
   }
   get monitor() {
     return this.clients.monitor;
+  }
+  get portal() {
+    return this.clients.portal;
   }
 
   async get<T = unknown>(url: string, config?: AxiosRequestConfig): Promise<ApiResponse<T>> {

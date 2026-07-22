@@ -1,6 +1,7 @@
 pub mod finance;
 
 pub use finance::FinanceService;
+pub use finance::ReconciliationService;
 
 use sqlx::PgPool;
 use topems_shared::error::TopemsError;

@@ -13,6 +13,7 @@ export const AI_PATHS = {
   knowledge: '/ai/knowledge',
   prompts: '/ai/prompts',
   settings: '/ai/settings',
+  assistant: '/ai/assistant',
 } as const;
 
 // ---- 路由配置（供路由系统使用） ----
@@ -107,6 +108,17 @@ export const aiModuleConfig: RouteModuleConfig = {
       requiredPermissions: ['ai:admin'],
       action: 'admin',
     },
+    {
+      path: AI_PATHS.assistant,
+      element: lazyWithRetry(() => import('@/pages/ai/AiAssistantPage'), 'AiAssistantPage'),
+      module: 'ai',
+      code: 'ai-assistant',
+      title: 'AI 智能助手',
+      template: 'form',
+      group: 'assistant',
+      requiredPermissions: ['ai:read'],
+      action: 'read',
+    },
   ],
 };
 
@@ -195,6 +207,17 @@ export const aiNavConfig: ModuleNavConfig = {
       order: 1,
       group: 'settings',
       description: '模型设置',
+    },
+    {
+      code: 'ai-assistant',
+      label: 'AI 智能助手',
+      icon: 'Sparkles',
+      path: AI_PATHS.assistant,
+      permission: 'ai:read',
+      order: 2,
+      group: 'analytics',
+      showInTabs: true,
+      description: '报表、流程、知识库智能助手',
     },
   ],
 };

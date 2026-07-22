@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo, useState, useCallback } from 'react';
+import React, { useEffect, useMemo, useState, useCallback, useRef } from 'react';
 import {
   Box,
   Paper,
@@ -27,6 +27,23 @@ import { useServiceStatus } from '@/hooks/useServiceStatus';
 import { navigationRegistryV2 } from '@/lib/navigation';
 import type { NavItem } from '@/lib/navigation/types';
 import { useUIStore } from '@/store';
+
+import {
+  ChevronLeft,
+  Home,
+  Search,
+  Star,
+  Clock,
+  X,
+  Bookmark,
+  BookmarkCheck,
+  LogOut,
+  User,
+  Settings,
+} from 'lucide-react';
+import { renderIcon } from '@/lib/iconMapping';
+import { DASHBOARD_PATHS } from '@/routes/dashboard';
+import { ADMIN_PATHS } from '@/modules/admin/config';
 
 const moduleToService: Record<string, string> = {
   rs: 'rs',
@@ -57,23 +74,6 @@ const moduleToService: Record<string, string> = {
   report: 'report',
   contract: 'hrm',
 };
-
-import {
-  ChevronLeft,
-  Home,
-  Search,
-  Star,
-  Clock,
-  X,
-  Bookmark,
-  BookmarkCheck,
-  LogOut,
-  User,
-  Settings,
-} from 'lucide-react';
-import { renderIcon } from '@/lib/iconMapping';
-import { DASHBOARD_PATHS } from '@/routes/dashboard';
-import { ADMIN_PATHS } from '@/modules/admin/config';
 
 // ---- 从路径解析模块 code（与 GlobalLayout / useTopNav 一致） ----
 function getModuleFromPath(pathname: string): string | null {
@@ -254,9 +254,15 @@ export const AppSidebar: React.FC<AppSidebarProps> = ({
   const [coreNavItems, setCoreNavItems] = useState<NavItem[]>([]);
   const [pluginNavItems, setPluginNavItems] = useState<NavItem[]>([]);
 
-  const updateGroupedNavItems = () => {
-    const coreModules = navigationRegistryV2.getCoreModules(checkPermission);
-    const businessModules = navigationRegistryV2.getBusinessModules(checkPermission);
+  const checkPermissionRef = useRef(checkPermission);
+  useEffect(() => {
+    checkPermissionRef.current = checkPermission;
+  }, [checkPermission]);
+
+  const updateGroupedNavItems = useCallback(() => {
+    const currentCheckPermission = checkPermissionRef.current;
+    const coreModules = navigationRegistryV2.getCoreModules(currentCheckPermission);
+    const businessModules = navigationRegistryV2.getBusinessModules(currentCheckPermission);
     const coreItems: NavItem[] = coreModules.map((m) => ({
       code: m.code,
       label: m.name,
@@ -279,7 +285,7 @@ export const AppSidebar: React.FC<AppSidebarProps> = ({
     }));
     setCoreNavItems(coreItems);
     setPluginNavItems(pluginItems);
-  };
+  }, []);
 
   useEffect(() => {
     updateGroupedNavItems();
@@ -287,7 +293,7 @@ export const AppSidebar: React.FC<AppSidebarProps> = ({
     return () => {
       navigationRegistryV2.emitter.off('navigationUpdated', updateGroupedNavItems);
     };
-  }, [checkPermission]);
+  }, [updateGroupedNavItems]);
 
   // ---- 模块级导航项（带权限过滤） ----
   const moduleNavItems = useMemo<NavItem[]>(() => {
@@ -653,78 +659,78 @@ export const AppSidebar: React.FC<AppSidebarProps> = ({
                         sx={navItemSx(isActive, true)}
                       >
                         {renderIcon(item.icon, 18) || (
-                              <Typography sx={{ width: 18, height: 18, fontSize: 18 }} />
-                            )}
-                            {!collapsed && (
-                              <Box sx={{ flex: 1, display: 'flex', alignItems: 'center', gap: 1 }}>
-                                <Typography sx={{ fontSize: 14, fontWeight: isActive ? 600 : 500 }}>
-                                  {item.label}
-                                </Typography>
-                                {item.badge && (
-                                  <Chip
-                                    size='small'
-                                    label={item.badge}
-                                    sx={{
-                                      height: 16,
-                                      fontSize: '0.625rem',
-                                      fontWeight: 600,
-                                      bgcolor: 'error.main',
-                                      color: 'white',
-                                      '& .MuiChip-label': {
-                                        px: 0.5,
-                                      },
-                                    }}
-                                  />
-                                )}
-                              </Box>
-                            )}
-                            {!collapsed && isServiceOffline(item.moduleCode || item.code) && (
-                              <Box
+                          <Typography sx={{ width: 18, height: 18, fontSize: 18 }} />
+                        )}
+                        {!collapsed && (
+                          <Box sx={{ flex: 1, display: 'flex', alignItems: 'center', gap: 1 }}>
+                            <Typography sx={{ fontSize: 14, fontWeight: isActive ? 600 : 500 }}>
+                              {item.label}
+                            </Typography>
+                            {item.badge && (
+                              <Chip
+                                size='small'
+                                label={item.badge}
                                 sx={{
-                                  width: 8,
-                                  height: 8,
-                                  borderRadius: '50%',
+                                  height: 16,
+                                  fontSize: '0.625rem',
+                                  fontWeight: 600,
                                   bgcolor: 'error.main',
-                                  animation: 'pulse 2s infinite',
-                                }}
-                              />
-                            )}
-                            {collapsed && item.badge && (
-                              <MuiBadge
-                                badgeContent={item.badge}
-                                color='error'
-                                sx={{
-                                  position: 'absolute',
-                                  top: 4,
-                                  right: 4,
-                                  '& .MuiBadge-badge': {
-                                    fontSize: '0.625rem',
-                                    height: 14,
-                                    minWidth: 14,
+                                  color: 'white',
+                                  '& .MuiChip-label': {
+                                    px: 0.5,
                                   },
                                 }}
                               />
                             )}
                           </Box>
-                        );
-                        return collapsed ? (
-                          <Tooltip
-                            key={item.code || `${item.label}-${index}`}
-                            title={item.label}
-                            placement='right'
-                            arrow
-                          >
-                            {NavButton}
-                          </Tooltip>
-                        ) : (
-                          NavButton
-                        );
-                      })}
-                    </Box>
-                  </>
-                )}
+                        )}
+                        {!collapsed && isServiceOffline(item.moduleCode || item.code) && (
+                          <Box
+                            sx={{
+                              width: 8,
+                              height: 8,
+                              borderRadius: '50%',
+                              bgcolor: 'error.main',
+                              animation: 'pulse 2s infinite',
+                            }}
+                          />
+                        )}
+                        {collapsed && item.badge && (
+                          <MuiBadge
+                            badgeContent={item.badge}
+                            color='error'
+                            sx={{
+                              position: 'absolute',
+                              top: 4,
+                              right: 4,
+                              '& .MuiBadge-badge': {
+                                fontSize: '0.625rem',
+                                height: 14,
+                                minWidth: 14,
+                              },
+                            }}
+                          />
+                        )}
+                      </Box>
+                    );
+                    return collapsed ? (
+                      <Tooltip
+                        key={item.code || `${item.label}-${index}`}
+                        title={item.label}
+                        placement='right'
+                        arrow
+                      >
+                        {NavButton}
+                      </Tooltip>
+                    ) : (
+                      NavButton
+                    );
+                  })}
+                </Box>
+              </>
+            )}
 
-                {pluginNavItems.length > 0 && (
+            {pluginNavItems.length > 0 && (
               <>
                 <Box sx={{ my: 1, mx: 1, borderBottom: 1, borderColor: 'divider' }} />
                 {!collapsed && (

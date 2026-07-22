@@ -108,6 +108,15 @@ impl TemplateService {
                 .await?;
         Ok(result.rows_affected() > 0)
     }
+
+    pub async fn list_categories(&self, tenant_id: Uuid) -> Result<Vec<String>> {
+        sqlx::query_scalar::<_, String>(
+            r#"SELECT DISTINCT category FROM core_doc_templates WHERE tenant_id = $1 AND category IS NOT NULL ORDER BY category"#,
+        )
+        .bind(tenant_id)
+        .fetch_all(&self.pool)
+        .await
+    }
 }
 
 pub async fn init_database(pool: &PgPool) -> Result<()> {

@@ -2,7 +2,7 @@ import React, { useMemo } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { designTokens } from '@/theme/tokens';
 import { useNavigate } from 'react-router-dom';
-import { FINANCE_PATHS } from '@/modules/finance/config';
+import { FINANCE_PATHS } from '@/modules/finance/paths';
 import { financeApi } from '@/api/finance';
 import type { FinanceDashboardStats } from '@/api/finance';
 import {
@@ -11,20 +11,15 @@ import {
   TrendingDown,
   DollarSign,
   BarChart3,
-  CreditCard,
-  Wallet,
-  Receipt,
-  Plus,
   BookOpen,
-  ClipboardList,
   Target,
 } from 'lucide-react';
 import { DashboardTemplate } from '@/components/templates';
 import type { StatCard, ChartCard, QuickAction, RecentItem } from '@/components/templates';
 import { PageContainer } from '@/components/common/PageContainerV2';
-import BarChartComponent from '../../components/charts/BarChart';
-import LineChartComponent from '../../components/charts/LineChart';
-import PieChartComponent from '../../components/charts/PieChart';
+import { BarChartComponent } from '@/components/charts';
+import { LineChartComponent } from '@/components/charts';
+import { PieChartComponent } from '@/components/charts';
 
 const ct = designTokens.colors;
 

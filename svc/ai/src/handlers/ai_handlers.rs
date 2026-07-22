@@ -2,10 +2,12 @@
 
 use crate::models::{
     AIGenerateRequest, AIGenerateResponse, AITemplate, AiSearchDocument, AiSearchRequest,
-    AiSearchResponse, ChatRequest, ChatResponse, ChunkInfo, CompleteRequest, CompleteResponse,
-    OpenAIMessage, OpenAIRequest, OpenAIResponse, SearchResult, Suggestion, SummarizeRequest,
-    SummarizeResponse, TemplateField, ValidateRequest, ValidateResponse, ValidationIssue, CLIENT,
-    CONFIG, DOCUMENTS,
+    AiSearchResponse, AnomalyPoint, AnomalyPredictRequest, AnomalyPredictResponse, ChatRequest,
+    ChatResponse, ChunkInfo, CompleteRequest, CompleteResponse, FlowAssistantRequest,
+    FlowAssistantResponse, FlowStep, KnowledgeAskRequest, KnowledgeAskResponse, KnowledgeSource,
+    OpenAIMessage, OpenAIRequest, OpenAIResponse, ReportAssistantRequest, ReportAssistantResponse,
+    ReportMetric, SearchResult, Suggestion, SummarizeRequest, SummarizeResponse, TemplateField,
+    ValidateRequest, ValidateResponse, ValidationIssue, CLIENT, CONFIG, DOCUMENTS,
 };
 use crate::services::search::vector_search;
 use axum::Json;
@@ -704,4 +706,177 @@ async fn call_ai_api(
     } else {
         Err("AI 未返回有效响应".into())
     }
+}
+
+// ========== AI 智能助手 Phase 3 ==========
+
+pub async fn report_assistant(
+    Json(req): Json<ReportAssistantRequest>,
+) -> Json<ApiResponse<ReportAssistantResponse>> {
+    tracing::info!("🤖 报表助手请求: {}", req.query);
+
+    let data = vec![
+        serde_json::json!({"month": "1月", "sales": 12000, "profit": 3000}),
+        serde_json::json!({"month": "2月", "sales": 15000, "profit": 4200}),
+        serde_json::json!({"month": "3月", "sales": 13500, "profit": 3600}),
+        serde_json::json!({"month": "4月", "sales": 18000, "profit": 5100}),
+        serde_json::json!({"month": "5月", "sales": 16500, "profit": 4800}),
+        serde_json::json!({"month": "6月", "sales": 21000, "profit": 6500}),
+    ];
+
+    let response = ReportAssistantResponse {
+        query: req.query.clone(),
+        chart_type: "line".to_string(),
+        title: "销售趋势分析".to_string(),
+        description: Some(format!(
+            "基于数据源 '{}' 生成的销售趋势报表",
+            req.data_source.as_deref().unwrap_or("default")
+        )),
+        sql: Some(
+            "SELECT month, SUM(sales) as sales, SUM(profit) as profit FROM orders GROUP BY month"
+                .to_string(),
+        ),
+        data,
+        x_axis: Some("month".to_string()),
+        y_axis: Some(serde_json::json!(["sales", "profit"])),
+        metrics: Some(vec![
+            ReportMetric {
+                label: "总销售额".to_string(),
+                value: 96000.0,
+                unit: Some("元".to_string()),
+            },
+            ReportMetric {
+                label: "平均月增长".to_string(),
+                value: 12.5,
+                unit: Some("%".to_string()),
+            },
+        ]),
+    };
+
+    Json(ApiResponse::success(response, "Success"))
+}
+
+pub async fn flow_assistant(
+    Json(req): Json<FlowAssistantRequest>,
+) -> Json<ApiResponse<FlowAssistantResponse>> {
+    tracing::info!("🤖 流程助手请求: {}", req.query);
+
+    let response = FlowAssistantResponse {
+        query: req.query.clone(),
+        title: "标准业务流程".to_string(),
+        description: Some("根据您的描述，以下是推荐的标准化流程步骤".to_string()),
+        steps: vec![
+            FlowStep {
+                step: 1,
+                name: "提交申请".to_string(),
+                description: "申请人填写申请表单并提交相关附件".to_string(),
+                responsible: Some("申请人".to_string()),
+                estimated_time: Some("1-2 工作日".to_string()),
+            },
+            FlowStep {
+                step: 2,
+                name: "部门初审".to_string(),
+                description: "直属主管审核申请内容的完整性和合规性".to_string(),
+                responsible: Some("部门主管".to_string()),
+                estimated_time: Some("1 工作日".to_string()),
+            },
+            FlowStep {
+                step: 3,
+                name: "专业复核".to_string(),
+                description: "相关职能部门进行专业审核".to_string(),
+                responsible: Some("职能部门".to_string()),
+                estimated_time: Some("2-3 工作日".to_string()),
+            },
+            FlowStep {
+                step: 4,
+                name: "最终审批".to_string(),
+                description: "具有审批权限的领导进行最终审批".to_string(),
+                responsible: Some("审批领导".to_string()),
+                estimated_time: Some("1-2 工作日".to_string()),
+            },
+            FlowStep {
+                step: 5,
+                name: "执行归档".to_string(),
+                description: "审批通过后执行并归档相关材料".to_string(),
+                responsible: Some("执行人".to_string()),
+                estimated_time: Some("1 工作日".to_string()),
+            },
+        ],
+        suggestions: Some(vec![
+            "建议引入电子签章，缩短审批周期".to_string(),
+            "对于低风险流程可设置自动审批规则".to_string(),
+        ]),
+    };
+
+    Json(ApiResponse::success(response, "Success"))
+}
+
+pub async fn anomaly_predict(
+    Json(req): Json<AnomalyPredictRequest>,
+) -> Json<ApiResponse<AnomalyPredictResponse>> {
+    tracing::info!("🤖 异常预测请求: {}", req.metric);
+
+    let anomalies = vec![
+        AnomalyPoint {
+            timestamp: "2026-07-18 14:00".to_string(),
+            value: 8.5,
+            expected: Some(5.2),
+            severity: "high".to_string(),
+            reason: Some("设备负载突增".to_string()),
+        },
+        AnomalyPoint {
+            timestamp: "2026-07-19 09:30".to_string(),
+            value: 6.8,
+            expected: Some(5.0),
+            severity: "medium".to_string(),
+            reason: Some("原材料批次波动".to_string()),
+        },
+    ];
+
+    let response = AnomalyPredictResponse {
+        metric: req.metric.clone(),
+        anomaly_count: anomalies.len() as i32,
+        summary: format!(
+            "指标 '{}' 在未来周期内预测到 {} 处异常，建议关注高负载时段",
+            req.metric,
+            anomalies.len()
+        ),
+        anomalies,
+        suggestions: Some(vec![
+            "建议对高负载设备进行预防性维护".to_string(),
+            "加强原材料入库检验".to_string(),
+        ]),
+    };
+
+    Json(ApiResponse::success(response, "Success"))
+}
+
+pub async fn knowledge_ask(
+    Json(req): Json<KnowledgeAskRequest>,
+) -> Json<ApiResponse<KnowledgeAskResponse>> {
+    tracing::info!("🤖 知识库问答请求: {}", req.question);
+
+    let response = KnowledgeAskResponse {
+        question: req.question.clone(),
+        answer: "根据企业知识库内容，采购审批需要经过以下步骤：\n\n1. 申请人在系统中提交采购申请\n2. 部门主管审核采购必要性和预算\n3. 财务部门复核预算和供应商资质\n4. 总经理或授权审批人进行最终审批\n5. 审批通过后转采购部门执行".to_string(),
+        sources: vec![
+            KnowledgeSource {
+                title: "采购管理制度 V3.0".to_string(),
+                content: Some("采购申请须填写采购申请单，注明采购物品、数量、预算及用途".to_string()),
+                relevance: Some(0.95),
+            },
+            KnowledgeSource {
+                title: "审批权限矩阵".to_string(),
+                content: Some("单笔金额超过 5 万元的采购须由总经理审批".to_string()),
+                relevance: Some(0.87),
+            },
+        ],
+        confidence: 0.92,
+        follow_up_questions: Some(vec![
+            "采购申请需要准备哪些附件？".to_string(),
+            "紧急采购如何加急审批？".to_string(),
+        ]),
+    };
+
+    Json(ApiResponse::success(response, "Success"))
 }

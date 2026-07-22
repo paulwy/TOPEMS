@@ -1,4 +1,7 @@
+pub mod anomaly_detection;
+pub mod aps_scheduling;
 pub mod dashboard_ws;
+pub mod energy_management;
 pub mod equipment;
 pub mod equipment_oee;
 pub mod material_bom;
@@ -7,6 +10,7 @@ pub mod mes_plugin;
 pub mod oee_logic;
 pub mod process_flow;
 pub mod process_route;
+pub mod production_cost;
 pub mod production_kanban;
 pub mod production_order;
 pub mod production_process;
@@ -26,6 +30,10 @@ use sqlx::PgPool;
 
 pub fn create_routes() -> Router<AppState> {
     Router::new()
+        .merge(anomaly_detection::create_routes())
+        .merge(aps_scheduling::create_routes())
+        .merge(production_cost::create_routes())
+        .merge(energy_management::create_routes())
         .merge(equipment::create_routes())
         .merge(equipment_oee::create_routes())
         .merge(material_bom::create_routes())

@@ -1,10 +1,7 @@
 use axum::{
-    extract::FromRef,
     routing::{delete, get, post, put},
     Json, Router,
 };
-use reqwest::Client;
-use sqlx::PgPool;
 use std::env;
 use std::sync::Arc;
 use std::time::Instant;
@@ -14,18 +11,43 @@ use axum_prometheus::PrometheusMetricLayer;
 use prometheus::{default_registry, Gauge};
 use topems_shared::{
     auth_middleware, build_health_response, create_api_info_router, create_cors_layer,
-    init_telemetry, rls_middleware, telemetry_middleware, ApiResponse, AuthState,
-    LocalServiceRegistry, PortalServiceAggregator, ServiceHealth,
+    init_telemetry, rate_limit_middleware, register_routes_with_legacy_alias,
+    request_context_middleware, rls_middleware, telemetry_middleware, ApiResponse, RateLimitConfig,
+    RateLimitMiddleware, ServiceHealth,
 };
+use utoipa::OpenApi;
 
 mod models;
 mod modules;
 mod services;
 mod shared;
+mod utils;
 
 use crate::shared::AppState;
 
 use crate::modules::portal_plugin::{auto_register_to_core, get_plugin_info, plugin_health_check};
+
+#[derive(OpenApi)]
+#[openapi(
+    tags(
+        (name = "Portal", description = "门户"),
+        (name = "Dashboard", description = "仪表盘"),
+        (name = "Search", description = "全局搜索"),
+        (name = "Todo", description = "待办聚合"),
+        (name = "Navigation", description = "导航"),
+        (name = "QuickActions", description = "快捷操作"),
+        (name = "Health", description = "健康检查"),
+    ),
+    info(
+        title = "TOPEMS-portal API",
+        version = "1.0.0",
+        description = "TOPEMS 门户服务 - BFF 聚合层、仪表盘、全局搜索、待办聚合",
+    ),
+    servers(
+        (url = "http://localhost:8063", description = "本地开发环境"),
+    )
+)]
+struct ApiDoc;
 
 static START_TIME: std::sync::OnceLock<Instant> = std::sync::OnceLock::new();
 
@@ -139,6 +161,10 @@ async fn main() -> anyhow::Result<()> {
             get(modules::dashboard::get_dashboard_stats),
         )
         .route(
+            "/dashboard/cache/stats",
+            get(modules::dashboard::get_cache_stats),
+        )
+        .route(
             "/dashboard/quick-access",
             get(modules::dashboard::get_quick_access),
         )
@@ -192,6 +218,11 @@ async fn main() -> anyhow::Result<()> {
             "/settings/languages",
             get(modules::settings::get_available_languages),
         )
+        .route("/search", get(modules::search::global_search))
+        .route(
+            "/search/suggestions",
+            get(modules::search::search_suggestions),
+        )
         .route(
             "/quick-actions",
             get(modules::quick_actions::get_quick_actions),
@@ -228,6 +259,20 @@ async fn main() -> anyhow::Result<()> {
             "/navigation/pinned/reorder",
             put(modules::navigation::reorder_pinned_apps),
         )
+        // V15 Phase 5+: 工单代理入口
+        .route("/tickets", get(modules::tickets::list_tickets))
+        .route("/tickets", post(modules::tickets::create_ticket))
+        .route("/tickets/{id}", get(modules::tickets::get_ticket))
+        .route("/tickets/{id}", put(modules::tickets::update_ticket))
+        .route(
+            "/tickets/{id}/comments",
+            get(modules::tickets::list_comments),
+        )
+        .route(
+            "/tickets/{id}/comments",
+            post(modules::tickets::add_comment),
+        )
+        .route("/tickets/stats", get(modules::tickets::get_ticket_stats))
         .layer(axum::middleware::from_fn_with_state(
             app_state.auth_state.clone(),
             auth_middleware,
@@ -235,17 +280,43 @@ async fn main() -> anyhow::Result<()> {
         .layer(axum::middleware::from_fn_with_state(
             app_state.pool.clone(),
             rls_middleware,
-        ))
-        .with_state(app_state.clone());
+        ));
 
-    let app = Router::new()
-        .merge(public_routes)
-        .nest("/api/portal", protected_routes)
-        .merge(create_api_info_router("topems-portal"))
-        .layer(axum::middleware::from_fn(telemetry_middleware))
-        .layer(cors)
-        .layer(CookieManagerLayer::new())
-        .layer(prometheus_layer);
+    let rate_limit_config = RateLimitConfig::new(200, 60)
+        .with_by_user_id(false)
+        .with_by_ip(true);
+    let rate_limiter = Arc::new(RateLimitMiddleware::new(rate_limit_config));
+    let protected_routes = protected_routes.layer(axum::middleware::from_fn({
+        let mw = rate_limiter.clone();
+        move |req, next| {
+            let mw = mw.clone();
+            async move { rate_limit_middleware(mw, req, next).await }
+        }
+    }));
+
+    let protected_routes = protected_routes.with_state(app_state.clone());
+
+    let app = register_routes_with_legacy_alias(
+        Router::new().merge(public_routes),
+        "/api/portal",
+        &["/api/v1/portal"],
+        protected_routes,
+    )
+    .merge(create_api_info_router("topems-portal"))
+    .route(
+        "/api-docs/openapi.json",
+        get(|| async {
+            serde_json::to_string_pretty(&ApiDoc::openapi()).unwrap_or_else(|e| {
+                tracing::error!("Failed to serialize OpenAPI spec: {}", e);
+                "{}".to_string()
+            })
+        }),
+    )
+    .layer(axum::middleware::from_fn(telemetry_middleware))
+    .layer(axum::middleware::from_fn(request_context_middleware))
+    .layer(cors)
+    .layer(CookieManagerLayer::new())
+    .layer(prometheus_layer);
 
     let port = env::var("PORTAL_PORT")
         .or_else(|_| env::var("SERVER_PORT"))

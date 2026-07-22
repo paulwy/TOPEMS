@@ -3,9 +3,12 @@
 use crate::handlers::{ai_handlers, connector_handlers, health};
 use crate::middleware;
 use crate::modules::{
-    AnalysisApi, DocumentApi, EmbeddingApi, MultimodalApi, QaApi, RecommendationApi, VectorApi,
+    AnalysisApi, CodeAssistantApi, DocumentApi, EmbeddingApi, MultimodalApi, QaApi,
+    RecommendationApi, VectorApi,
 };
 use crate::shared::AppState;
+use std::sync::Arc;
+
 use axum::{
     extract::DefaultBodyLimit,
     routing::{delete, get, post},
@@ -13,8 +16,34 @@ use axum::{
 };
 use axum_prometheus::{metrics_exporter_prometheus::PrometheusHandle, PrometheusMetricLayer};
 use topems_shared::{
-    auth_middleware, create_api_info_router, create_cors_layer, telemetry_middleware,
+    auth_middleware, create_api_info_router, create_cors_layer, rate_limit_middleware,
+    register_routes_with_legacy_alias, telemetry_middleware, RateLimitConfig, RateLimitMiddleware,
 };
+use utoipa::OpenApi;
+
+#[derive(OpenApi)]
+#[openapi(
+    tags(
+        (name = "AI", description = "人工智能服务 API"),
+        (name = "QA", description = "智能问答接口"),
+        (name = "Analysis", description = "智能分析接口"),
+        (name = "Document", description = "文档处理接口"),
+        (name = "Embedding", description = "向量化接口"),
+        (name = "Vector", description = "向量检索接口"),
+        (name = "Multimodal", description = "多模态接口"),
+        (name = "Recommendation", description = "推荐接口"),
+        (name = "Connector", description = "AI 连接器接口"),
+    ),
+    info(
+        title = "TOPEMS-AI API",
+        version = "1.0.0",
+        description = "TOPEMS 人工智能服务 API - 智能问答、文档处理、向量检索、多模态分析",
+    ),
+    servers(
+        (url = "http://localhost:8013", description = "本地开发环境"),
+    )
+)]
+struct AiApiDoc;
 
 pub fn create_routes(
     app_state: AppState,
@@ -49,6 +78,14 @@ pub fn create_routes(
         .route("/complete", post(ai_handlers::complete))
         .route("/summarize", post(ai_handlers::summarize))
         .route("/templates", get(ai_handlers::list_templates))
+        // AI 智能助手 Phase 3
+        .route("/assistant/report", post(ai_handlers::report_assistant))
+        .route("/assistant/flow", post(ai_handlers::flow_assistant))
+        .route(
+            "/assistant/anomaly/predict",
+            post(ai_handlers::anomaly_predict),
+        )
+        .route("/assistant/knowledge/ask", post(ai_handlers::knowledge_ask))
         // 文档处理 API - 使用 DocumentApi 模块
         .route("/documents", get(DocumentApi::list))
         .route("/documents/upload", post(DocumentApi::upload))
@@ -66,6 +103,12 @@ pub fn create_routes(
             post(DocumentApi::extract_key_points),
         )
         .route("/documents/qa", post(DocumentApi::document_qa))
+        // 代码助手 API - 使用 CodeAssistantApi 模块
+        .route("/code/generate", post(CodeAssistantApi::generate))
+        .route("/code/explain", post(CodeAssistantApi::explain))
+        .route("/code/fix", post(CodeAssistantApi::fix))
+        .route("/code/optimize", post(CodeAssistantApi::optimize))
+        .route("/code/review", post(CodeAssistantApi::review))
         // 向量检索 API - 使用 VectorApi 模块
         .route("/vectors/stats", get(VectorApi::stats))
         .route("/vectors/search", post(VectorApi::search))
@@ -202,18 +245,46 @@ pub fn create_routes(
         ))
         .with_state(app_state.clone());
 
-    let app = Router::new()
-        .merge(public_routes)
-        .nest("/api/ai", protected_routes)
-        .nest("/api/ai", analysis_router)
-        .nest("/api/ai", agent_router)
-        .nest("/api/ai", recommendation_router)
-        .nest("/api/ai", multimodal_router)
-        .merge(create_api_info_router("topems-ai"))
-        .layer(axum::middleware::from_fn(telemetry_middleware))
-        .layer(prometheus_layer)
-        .layer(cors)
-        .layer(DefaultBodyLimit::max(500 * 1024 * 1024));
+    let rate_limit_config = RateLimitConfig::new(200, 60)
+        .with_by_user_id(false)
+        .with_by_ip(true);
+    let rate_limiter = Arc::new(RateLimitMiddleware::new(rate_limit_config));
+    let rate_limit_layer = axum::middleware::from_fn({
+        let mw = rate_limiter.clone();
+        move |req, next| {
+            let mw = mw.clone();
+            async move { rate_limit_middleware(mw, req, next).await }
+        }
+    });
+
+    let all_protected_routes = Router::new()
+        .merge(protected_routes)
+        .merge(analysis_router)
+        .merge(agent_router)
+        .merge(recommendation_router)
+        .merge(multimodal_router)
+        .layer(rate_limit_layer);
+
+    let app = register_routes_with_legacy_alias(
+        Router::new().merge(public_routes),
+        "/api/core/ai/v1",
+        &["/api/v1/ai", "/api/ai"],
+        all_protected_routes,
+    )
+    .merge(create_api_info_router("topems-ai"))
+    .route(
+        "/api-docs/openapi.json",
+        get(|| async {
+            serde_json::to_string_pretty(&AiApiDoc::openapi()).unwrap_or_else(|e| {
+                tracing::error!("Failed to serialize OpenAPI spec: {}", e);
+                "{}".to_string()
+            })
+        }),
+    )
+    .layer(axum::middleware::from_fn(telemetry_middleware))
+    .layer(prometheus_layer)
+    .layer(cors)
+    .layer(DefaultBodyLimit::max(500 * 1024 * 1024));
 
     app
 }

@@ -26,11 +26,13 @@ pub mod finance;
 pub mod finance_reports;
 pub mod fixed_asset;
 pub mod health;
+pub mod hr_proxy;
 pub mod hrm_integration_example;
 pub mod inventory;
 pub mod material;
 pub mod meeting_room;
 pub mod office_supplies;
+pub mod openapi;
 pub mod opening_balance;
 pub mod production_order;
 pub mod purchase_order;
@@ -102,4 +104,6 @@ pub fn create_routes() -> Router<ApiState> {
         .merge(supplier::create_routes())
         .merge(sales_order::create_routes())
         .merge(search::create_routes())
+        // V15 Phase 3: HR 代理层
+        .merge(hr_proxy::proxy_routes())
 }

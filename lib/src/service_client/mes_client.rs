@@ -3,7 +3,7 @@ use super::generic::ApiResponse;
 crate::define_service_client!(
     MesServiceClient,
     "MES_SERVICE_URL",
-    "http://localhost:8007",
+    "http://localhost:8030",
     {
         list_production_orders(page: i32, page_size: i32) -> ApiResponse<Vec<serde_json::Value>> {
             get => "/api/mes/production-orders?page={}&pagesize={}"

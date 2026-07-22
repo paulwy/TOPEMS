@@ -21,6 +21,7 @@ export const ADMIN_PATHS = {
   migration: '/admin/migration',
   configDebug: '/admin/config-debug',
   auditLog: '/admin/audit-log',
+  rateLimit: '/admin/rate-limit',
   monitor: '/admin/monitor',
   performance: '/admin/performance',
   permissionAudit: '/admin/permission-audit',
@@ -247,6 +248,20 @@ export const adminModuleConfig: RouteModuleConfig = {
       group: 'analytics',
     },
     {
+      path: ADMIN_PATHS.rateLimit,
+      element: lazyWithRetry(
+        () => import('@/pages/admin/RateLimitConfigPage'),
+        'RateLimitConfigPage'
+      ),
+      module: 'admin',
+      title: '限流配置',
+      code: 'admin-rate-limit',
+      requiredPermissions: ['admin:system:write', 'admin:write'],
+      action: 'write',
+      template: 'settings',
+      group: 'settings',
+    },
+    {
       path: ADMIN_PATHS.monitor,
       element: lazyWithRetry(() => import('@/pages/admin/MonitorPage'), 'MonitorPage'),
       module: 'admin',
@@ -451,6 +466,16 @@ export const adminNavConfig: ModuleNavConfig = {
       group: 'analytics',
       showInTabs: true,
       description: '系统审计日志',
+    },
+    {
+      code: 'admin-rate-limit',
+      label: '限流配置',
+      icon: 'ShieldCheck',
+      path: ADMIN_PATHS.rateLimit,
+      permission: 'admin:system:write',
+      order: 23,
+      group: 'settings',
+      description: '多维度限流与防重放保护',
     },
     {
       code: 'admin-monitor',

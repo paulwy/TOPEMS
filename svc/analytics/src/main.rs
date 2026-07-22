@@ -22,6 +22,7 @@ use std::env;
 
 use shared::AppState;
 use std::net::SocketAddr;
+use std::sync::Arc;
 
 use axum::{
     extract::State,
@@ -32,12 +33,35 @@ use axum_prometheus::PrometheusMetricLayer;
 use sqlx::PgPool;
 
 use topems_shared::{
-    auth_middleware, create_cors_layer, get_api_info_handler, init_telemetry, rls_middleware,
-    simple_health_check, telemetry_middleware, ApiResponse, AuthState, ServiceHealth,
-    SimpleHealthConfig,
+    auth_middleware, create_cors_layer, get_api_info_handler, init_telemetry,
+    rate_limit_middleware, register_routes_with_legacy_alias, rls_middleware, simple_health_check,
+    telemetry_middleware, ApiResponse, AuthState, RateLimitConfig, RateLimitMiddleware,
+    ServiceHealth, SimpleHealthConfig,
 };
+use utoipa::OpenApi;
 
 pub use shared::*;
+
+#[derive(OpenApi)]
+#[openapi(
+    tags(
+        (name = "BI", description = "商业智能"),
+        (name = "Analytics", description = "数据分析"),
+        (name = "Report", description = "报表"),
+        (name = "Dashboard", description = "仪表盘"),
+        (name = "Visualization", description = "数据可视化"),
+        (name = "Health", description = "健康检查"),
+    ),
+    info(
+        title = "TOPEMS-analytics API",
+        version = "1.0.0",
+        description = "TOPEMS BI 数据分析服务 - 报表、仪表盘、数据可视化",
+    ),
+    servers(
+        (url = "http://localhost:8060", description = "本地开发环境"),
+    )
+)]
+struct ApiDoc;
 
 // ==================== 主入口 ====================
 
@@ -284,240 +308,6 @@ async fn main() -> anyhow::Result<()> {
         .route(
             "/data-sources/{id}/refresh",
             post(modules::bi::datasource::refresh_datasource),
-        )
-        // Data Source (frontend aligned paths)
-        .route(
-            "/data-sources",
-            get(modules::bi::datasource::list_datasources),
-        )
-        .route(
-            "/data-sources",
-            post(modules::bi::datasource::create_datasource),
-        )
-        .route(
-            "/data-sources/{id}",
-            get(modules::bi::datasource::get_datasource),
-        )
-        .route(
-            "/data-sources/{id}",
-            put(modules::bi::datasource::update_datasource),
-        )
-        .route(
-            "/data-sources/{id}",
-            delete(modules::bi::datasource::delete_datasource),
-        )
-        .route(
-            "/data-sources/{id}/test",
-            post(modules::bi::datasource::test_datasource),
-        )
-        .route(
-            "/data-sources/{id}/refresh",
-            post(modules::bi::datasource::refresh_datasource),
-        )
-        // Dashboard (frontend aligned paths)
-        .route("/dashboard", get(modules::bi::dashboard::list_dashboards))
-        .route("/dashboard", post(modules::bi::dashboard::create_dashboard))
-        .route(
-            "/dashboard/{id}",
-            get(modules::bi::dashboard::get_dashboard),
-        )
-        .route(
-            "/dashboard/{id}",
-            put(modules::bi::dashboard::update_dashboard),
-        )
-        .route(
-            "/dashboard/{id}",
-            delete(modules::bi::dashboard::delete_dashboard),
-        )
-        .route(
-            "/dashboard/{id}/clone",
-            post(modules::bi::dashboard::clone_dashboard),
-        )
-        .route(
-            "/dashboard/public",
-            get(modules::bi::dashboard::get_public_dashboards),
-        )
-        .route(
-            "/dashboard/user/{owner_id}",
-            get(modules::bi::dashboard::get_user_dashboards),
-        )
-        .route(
-            "/dashboard/template",
-            get(modules::bi::dashboard::list_dashboard_templates),
-        )
-        .route(
-            "/dashboard/template",
-            post(modules::bi::dashboard::create_dashboard_template),
-        )
-        .route(
-            "/dashboard/template/{id}",
-            get(modules::bi::dashboard::get_dashboard_template),
-        )
-        .route(
-            "/dashboard/template/{id}",
-            put(modules::bi::dashboard::update_dashboard_template),
-        )
-        .route(
-            "/dashboard/template/{id}",
-            delete(modules::bi::dashboard::delete_dashboard_template),
-        )
-        .route(
-            "/dashboard/template/{template_id}/create",
-            post(modules::bi::dashboard::create_dashboard_from_template),
-        )
-        // Widget (frontend aligned paths)
-        .route("/widget", get(modules::bi::widget::list_widgets))
-        .route("/widget", post(modules::bi::widget::create_widget))
-        .route("/widget/{id}", get(modules::bi::widget::get_widget))
-        .route("/widget/{id}", put(modules::bi::widget::update_widget))
-        .route("/widget/{id}", delete(modules::bi::widget::delete_widget))
-        .route(
-            "/widget/{id}/data",
-            get(modules::bi::widget::get_widget_data),
-        )
-        .route(
-            "/widget/dashboard/{dashboard_id}",
-            get(modules::bi::widget::get_widgets_by_dashboard),
-        )
-        // Permission (frontend aligned paths)
-        .route(
-            "/permissions/row-level",
-            get(modules::bi::row_level_permission::list_permission_rules),
-        )
-        .route(
-            "/permissions/row-level",
-            post(modules::bi::row_level_permission::create_permission_rule),
-        )
-        .route(
-            "/permissions/row-level/{id}",
-            get(modules::bi::row_level_permission::get_permission_rule),
-        )
-        .route(
-            "/permissions/row-level/{id}",
-            put(modules::bi::row_level_permission::update_permission_rule),
-        )
-        .route(
-            "/permissions/row-level/{id}",
-            delete(modules::bi::row_level_permission::delete_permission_rule),
-        )
-        .route(
-            "/permissions/row-level/{id}/test",
-            post(modules::bi::row_level_permission::validate_permission),
-        )
-        // Sync Records (frontend aligned paths)
-        .route(
-            "/sync-records",
-            get(modules::bi::sync_records::list_sync_records),
-        )
-        .route(
-            "/sync-records",
-            post(modules::bi::sync_records::create_sync_record),
-        )
-        .route(
-            "/sync-records/{id}",
-            get(modules::bi::sync_records::get_sync_record),
-        )
-        .route(
-            "/sync-records/{id}",
-            put(modules::bi::sync_records::update_sync_record),
-        )
-        .route(
-            "/sync-records/{id}",
-            delete(modules::bi::sync_records::delete_sync_record),
-        )
-        .route(
-            "/sync-records/{id}/retry",
-            post(modules::bi::sync_records::retry_sync),
-        )
-        // Comparison Analysis (frontend aligned paths)
-        .route(
-            "/comparison-analysis",
-            get(modules::bi::comparison_analysis::list_comparisons),
-        )
-        .route(
-            "/comparison-analysis",
-            post(modules::bi::comparison_analysis::create_comparison),
-        )
-        .route(
-            "/comparison-analysis/{id}",
-            get(modules::bi::comparison_analysis::get_comparison),
-        )
-        .route(
-            "/comparison-analysis/{id}",
-            put(modules::bi::comparison_analysis::update_comparison),
-        )
-        .route(
-            "/comparison-analysis/{id}",
-            delete(modules::bi::comparison_analysis::delete_comparison),
-        )
-        .route(
-            "/comparison-analysis/{id}/run",
-            post(modules::bi::comparison_analysis::run_comparison),
-        )
-        .route(
-            "/comparison-analysis/{id}/result",
-            get(modules::bi::comparison_analysis::get_comparison_result),
-        )
-        // Report (frontend aligned paths)
-        .route(
-            "/analytics/report",
-            get(modules::report::report::list_reports),
-        )
-        .route(
-            "/analytics/report",
-            post(modules::report::report::create_report),
-        )
-        .route(
-            "/analytics/report/{id}",
-            get(modules::report::report::get_report),
-        )
-        .route(
-            "/analytics/report/{id}",
-            put(modules::report::report::update_report),
-        )
-        .route(
-            "/analytics/report/{id}",
-            delete(modules::report::report::delete_report),
-        )
-        .route(
-            "/analytics/report/{id}/export",
-            post(modules::report::report::export_report),
-        )
-        .route(
-            "/analytics/report/{report_id}/exports",
-            get(modules::report::report::list_export_jobs),
-        )
-        .route(
-            "/analytics/report/exports/{job_id}",
-            get(modules::report::report::get_export_job),
-        )
-        .route(
-            "/analytics/report/exports/{job_id}/download",
-            get(modules::report::report::download_export),
-        )
-        .route(
-            "/analytics/report/{report_id}/schedules",
-            get(modules::report::schedule::list_schedules),
-        )
-        .route(
-            "/analytics/report/{report_id}/schedules",
-            post(modules::report::schedule::create_schedule),
-        )
-        .route(
-            "/analytics/report/schedules/{schedule_id}",
-            put(modules::report::schedule::update_schedule),
-        )
-        .route(
-            "/analytics/report/schedules/{schedule_id}",
-            delete(modules::report::schedule::delete_schedule),
-        )
-        .route(
-            "/analytics/report/schedules/{schedule_id}/run",
-            post(modules::report::schedule::run_schedule),
-        )
-        .route(
-            "/analytics/report/schedules/{schedule_id}/toggle",
-            post(modules::report::schedule::toggle_schedule),
         )
         // Dataset
         .merge(modules::bi::dataset::create_routes())
@@ -1039,13 +829,37 @@ async fn main() -> anyhow::Result<()> {
             rls_middleware,
         ));
 
-    let app = Router::new()
-        .merge(public_routes)
-        .nest("/api/bi", protected_routes)
-        .layer(axum::middleware::from_fn(telemetry_middleware))
-        .layer(cors)
-        .layer(prometheus_layer)
-        .with_state(state);
+    let rate_limit_config = RateLimitConfig::new(200, 60)
+        .with_by_user_id(false)
+        .with_by_ip(true);
+    let rate_limiter = Arc::new(RateLimitMiddleware::new(rate_limit_config));
+    let protected_routes = protected_routes.layer(axum::middleware::from_fn({
+        let mw = rate_limiter.clone();
+        move |req, next| {
+            let mw = mw.clone();
+            async move { rate_limit_middleware(mw, req, next).await }
+        }
+    }));
+
+    let app = register_routes_with_legacy_alias(
+        Router::new().merge(public_routes),
+        "/api/bi",
+        &["/api/v1/bi"],
+        protected_routes,
+    )
+    .route(
+        "/api-docs/openapi.json",
+        get(|| async {
+            serde_json::to_string_pretty(&ApiDoc::openapi()).unwrap_or_else(|e| {
+                tracing::error!("Failed to serialize OpenAPI spec: {}", e);
+                "{}".to_string()
+            })
+        }),
+    )
+    .layer(axum::middleware::from_fn(telemetry_middleware))
+    .layer(cors)
+    .layer(prometheus_layer)
+    .with_state(state);
 
     let port = std::env::var("ANALYTICS_PORT")
         .unwrap_or_else(|_| "8060".to_string())

@@ -22,9 +22,12 @@ use prometheus::{default_registry, Gauge};
 use std::env;
 use utoipa::OpenApi;
 
+use std::sync::Arc;
+
 use topems_shared::{
-    auth::Claims, create_api_info_router, create_cors_layer, init_telemetry, telemetry_middleware,
-    ApiResponse, AuthState, DependencyHealth, HealthStatus, ServiceHealth,
+    auth::Claims, create_api_info_router, create_cors_layer, init_telemetry, rate_limit_middleware,
+    register_routes_with_legacy_alias, telemetry_middleware, ApiResponse, AuthState,
+    DependencyHealth, HealthStatus, RateLimitConfig, RateLimitMiddleware, ServiceHealth,
 };
 
 mod db;
@@ -565,13 +568,31 @@ async fn main() -> Result<()> {
             topems_shared::auth_middleware,
         ));
 
-    let app = system_routes
-        .nest("/api/gis", public_business_routes.merge(protected_api))
-        .merge(create_api_info_router("topems-gis"))
-        .with_state(state)
-        .layer(axum::middleware::from_fn(telemetry_middleware))
-        .layer(prometheus_layer)
-        .layer(cors);
+    let rate_limit_config = RateLimitConfig::new(200, 60)
+        .with_by_user_id(false)
+        .with_by_ip(true);
+    let rate_limiter = Arc::new(RateLimitMiddleware::new(rate_limit_config));
+    let protected_api = protected_api.layer(axum::middleware::from_fn({
+        let mw = rate_limiter.clone();
+        move |req, next| {
+            let mw = mw.clone();
+            async move { rate_limit_middleware(mw, req, next).await }
+        }
+    }));
+
+    let gis_routes = public_business_routes.merge(protected_api);
+
+    let app = register_routes_with_legacy_alias(
+        system_routes,
+        "/api/core/gis/v1",
+        &["/api/v1/gis", "/api/gis"],
+        gis_routes,
+    )
+    .merge(create_api_info_router("topems-gis"))
+    .with_state(state)
+    .layer(axum::middleware::from_fn(telemetry_middleware))
+    .layer(prometheus_layer)
+    .layer(cors);
 
     let port = env::var("GIS_PORT")
         .or_else(|_| env::var("SERVER_PORT"))

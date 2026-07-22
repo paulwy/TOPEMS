@@ -14,11 +14,15 @@ use dotenv::dotenv;
 use serde_json::json;
 use sqlx::{postgres::PgPoolOptions, PgPool};
 use std::env;
+use std::sync::Arc;
+use utoipa::OpenApi;
 use uuid::Uuid;
 
 use topems_shared::{
     auth_middleware, build_health_response, create_api_info_router, create_cors_layer,
-    init_telemetry, rls_middleware, telemetry_middleware, ApiResponse, AuthState, ServiceHealth,
+    init_telemetry, rate_limit_middleware, register_routes_with_legacy_alias, rls_middleware,
+    telemetry_middleware, ApiResponse, AuthState, RateLimitConfig, RateLimitMiddleware,
+    ServiceHealth,
 };
 
 use db::repository::*;
@@ -544,13 +548,38 @@ async fn main() -> anyhow::Result<()> {
             rls_middleware,
         ));
 
-    let app = Router::new()
-        .merge(public_routes)
-        .nest("/api/mobile", protected_routes)
-        .merge(create_api_info_router("topems-mobile"))
-        .with_state(app_state)
-        .layer(axum::middleware::from_fn(telemetry_middleware))
-        .layer(cors);
+    let rate_limit_config = RateLimitConfig::new(200, 60)
+        .with_by_user_id(false)
+        .with_by_ip(true);
+    let rate_limiter = Arc::new(RateLimitMiddleware::new(rate_limit_config));
+    let protected_routes = protected_routes.layer(axum::middleware::from_fn({
+        let mw = rate_limiter.clone();
+        move |req, next| {
+            let mw = mw.clone();
+            async move { rate_limit_middleware(mw, req, next).await }
+        }
+    }));
+
+    let app = register_routes_with_legacy_alias(
+        Router::new().merge(public_routes),
+        "/api/core/mobile/v1",
+        &["/api/v1/mobile", "/api/mobile"],
+        protected_routes,
+    )
+    .merge(create_api_info_router("topems-mobile"))
+    .route(
+        "/api-docs/openapi.json",
+        axum::routing::get(|| async {
+            serde_json::to_string_pretty(&services::openapi::MobileApiDoc::openapi())
+                .unwrap_or_else(|e| {
+                    tracing::error!("Failed to serialize OpenAPI spec: {}", e);
+                    "{}".to_string()
+                })
+        }),
+    )
+    .with_state(app_state)
+    .layer(axum::middleware::from_fn(telemetry_middleware))
+    .layer(cors);
 
     let port = env::var("MOBILE_PORT")
         .or_else(|_| env::var("SERVER_PORT"))

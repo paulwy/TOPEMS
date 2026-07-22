@@ -5,6 +5,7 @@
 pub mod dead_letter_queue;
 pub mod error;
 pub mod event_types;
+pub mod master_data;
 pub mod monitor;
 pub mod publisher;
 pub mod rabbitmq;
@@ -12,6 +13,7 @@ pub mod subscriber;
 
 pub use dead_letter_queue::{DeadLetter, DeadLetterQueue};
 pub use error::{EventError, EventResult};
+pub use master_data::{MasterDataAction, MasterDataDomain, MasterDataEvent, MasterDataPublisher, MasterDataRef};
 pub use event_types::{
     EhsAccidentReportedPayload, EhsHazardReportedPayload, Event, EventType,
     HrmDepartmentCreatedPayload, HrmDepartmentDeletedPayload, HrmDepartmentUpdatedPayload,

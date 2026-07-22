@@ -54,6 +54,19 @@ impl GenericServiceClient {
         &self.service_name
     }
 
+    pub fn set_auth_token(&mut self, token: impl Into<String>) {
+        self.base_client.set_auth_token(token);
+    }
+
+    pub fn with_auth_token(mut self, token: impl Into<String>) -> Self {
+        self.base_client.set_auth_token(token);
+        self
+    }
+
+    pub fn add_header(&mut self, key: impl Into<String>, value: impl Into<String>) {
+        self.base_client.add_header(key, value);
+    }
+
     pub async fn get_health(&self) -> ServiceClientResult<bool> {
         match self.base_client.get_without_response("/health").await {
             Ok(_) => Ok(true),
@@ -140,6 +153,19 @@ macro_rules! define_service_client {
                 let base_url = std::env::var($env_var)
                     .unwrap_or_else(|_| $default_url.into());
                 Self::new(base_url)
+            }
+
+            pub fn set_auth_token(&mut self, token: impl Into<String>) {
+                self.base.set_auth_token(token);
+            }
+
+            pub fn with_auth_token(mut self, token: impl Into<String>) -> Self {
+                self.base.set_auth_token(token);
+                self
+            }
+
+            pub fn add_header(&mut self, key: impl Into<String>, value: impl Into<String>) {
+                self.base.add_header(key, value);
             }
 
             pub async fn get_health(&self) -> $crate::service_client::error::ServiceClientResult<bool> {

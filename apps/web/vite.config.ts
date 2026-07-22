@@ -6,7 +6,7 @@ import { federation } from '@module-federation/vite'
 import type { IncomingMessage, ServerResponse } from 'http';
 
 // Deployment mode: 'module-federation' | 'static' | 'hybrid'
-const DEPLOYMENT_MODE = process.env.VITE_DEPLOYMENT_MODE || 'module-federation';
+const DEPLOYMENT_MODE = process.env.VITE_DEPLOYMENT_MODE || 'static';
 
 // Remote entry URL for Module Federation
 const getRemoteEntryUrl = () => {
@@ -22,7 +22,7 @@ const getRemoteEntryUrl = () => {
 const createServiceProxyConfig = (serviceName: string, target: string, skipRewrite = false) => ({
   target,
   changeOrigin: true,
-  rewrite: skipRewrite ? undefined : (path: string) => path.replace(new RegExp(`^\\/${serviceName}\\/api`), `/api/${serviceName}`),
+  rewrite: skipRewrite ? undefined : (path: string) => path.replace(new RegExp(`^\\/${serviceName}\\/api`), `/api/v1/${serviceName}`),
   configure: (proxy: any) => {
     proxy.on('error', (err: Error, req: IncomingMessage, res: ServerResponse) => {
       if (!req.url?.includes('/health')) {
@@ -41,9 +41,31 @@ const createServiceProxyConfig = (serviceName: string, target: string, skipRewri
   }
 });
 
+const createNewApiProxyConfig = (servicePath: string, target: string) => ({
+  target,
+  changeOrigin: true,
+  configure: (proxy: any) => {
+    proxy.on('error', (err: Error, req: IncomingMessage, res: ServerResponse) => {
+      if (!req.url?.includes('/health')) {
+        console.warn(`[Vite Proxy] ${servicePath.toUpperCase()} service unavailable, error:`, err.message);
+      }
+      if (!res.headersSent) {
+        res.writeHead(503, { 'Content-Type': 'application/json' });
+        res.end(JSON.stringify({
+          code: 503,
+          success: false,
+          message: `${servicePath.toUpperCase()} service is currently unavailable`,
+          data: null
+        }));
+      }
+    });
+  }
+});
+
 const HEALTH_CHECK_PATHS: Record<string, string> = {
   'ai': '/health',
   'bi': '/health',
+  'analytics': '/health',
   'report': '/health',
   'monitor': '/health',
   'portal': '/health',
@@ -227,13 +249,48 @@ export default defineConfig({
       allow: ['..'],
     },
     proxy: {
+      // ========== [新路径直通] Group 1 核心服务 /api/core/* 直通 ==========
+      '/api/core/': createNewApiProxyConfig('api/core', 'http://localhost:8000'),
+      // ========== [新路径直通] Group 2 独立服务 /api/{service}/* 直通 ==========
+      '/api/erp/': createNewApiProxyConfig('api/erp', 'http://localhost:8010'),
+      '/api/finance/': createNewApiProxyConfig('api/finance', 'http://localhost:8011'),
+      '/api/doc/': createNewApiProxyConfig('api/doc', 'http://localhost:8012'),
+      '/api/hrm/': createNewApiProxyConfig('api/hrm', 'http://localhost:8020'),
+      '/api/pm/': createNewApiProxyConfig('api/pm', 'http://localhost:8023'),
+      '/api/crm/': createNewApiProxyConfig('api/crm', 'http://localhost:8029'),
+      '/api/mes/': createNewApiProxyConfig('api/mes', 'http://localhost:8030'),
+      '/api/pdm/': createNewApiProxyConfig('api/pdm', 'http://localhost:8031'),
+      '/api/scm/': createNewApiProxyConfig('api/scm', 'http://localhost:8040'),
+      '/api/wms/': createNewApiProxyConfig('api/wms', 'http://localhost:8041'),
+      '/api/srm/': createNewApiProxyConfig('api/srm', 'http://localhost:8042'),
+      '/api/qms/': createNewApiProxyConfig('api/qms', 'http://localhost:8050'),
+      '/api/lims/': createNewApiProxyConfig('api/lims', 'http://localhost:8051'),
+      '/api/ehs/': createNewApiProxyConfig('api/ehs', 'http://localhost:8052'),
+      '/api/rd/': createNewApiProxyConfig('api/rd', 'http://localhost:8053'),
+      '/api/bi/': createNewApiProxyConfig('api/bi', 'http://localhost:8060'),
+      '/api/report/': createNewApiProxyConfig('api/report', 'http://localhost:8060'),
+      '/api/analytics/': createNewApiProxyConfig('api/analytics', 'http://localhost:8060'),
+      '/api/monitor/': createNewApiProxyConfig('api/monitor', 'http://localhost:8062'),
+      '/api/portal/': createNewApiProxyConfig('api/portal', 'http://localhost:8063'),
+      '/api/ai/': createNewApiProxyConfig('api/ai', 'http://localhost:8013'),
+      '/api/mobile/': createNewApiProxyConfig('api/mobile', 'http://localhost:8070'),
+      '/api/gis/': createNewApiProxyConfig('api/gis', 'http://localhost:8071'),
+      // New /api/core/{service}/v1 paths
+      '/api/core/ai/': createNewApiProxyConfig('api/core/ai', 'http://localhost:8013'),
+      '/api/core/doc/': createNewApiProxyConfig('api/core/doc', 'http://localhost:8012'),
+      '/api/core/gis/': createNewApiProxyConfig('api/core/gis', 'http://localhost:8071'),
+      '/api/core/mobile/': createNewApiProxyConfig('api/core/mobile', 'http://localhost:8070'),
+      '/api/core/finance/': createNewApiProxyConfig('api/core/finance', 'http://localhost:8011'),
+      '/api/core/rd/': createNewApiProxyConfig('api/core/rd', 'http://localhost:8053'),
+      '/api/integration/': createNewApiProxyConfig('api/integration', 'http://localhost:8072'),
+
       // ========== [核心平台] 统一核心服务代理 ==========
       // unified-core: IAM + Doc + Flow + File + Communication
       // 所有核心服务统一到端口 8000
       '/core/api': {
         target: 'http://localhost:8000',
         changeOrigin: true,
-        rewrite: (path: string) => path.replace(/^\/core/, '/api/core'),
+        rewrite: (path: string) => path.replace(/^\/core/, '/api/v1/core'),
         configure: (proxy) => {
           proxy.on('error', (err: Error, req: any, res: any) => {
             console.warn(`[Vite Proxy] Core platform error:`, err.message);
@@ -255,7 +312,7 @@ export default defineConfig({
       '/comm/api': {
         target: 'http://localhost:8000',
         changeOrigin: true,
-        rewrite: (path: string) => path.replace(/^\/comm/, '/api/core/comm'),
+        rewrite: (path: string) => path.replace(/^\/comm/, '/api/v1/core/comm'),
       },
       '/comm/health': {
         target: 'http://localhost:8000',
@@ -288,7 +345,7 @@ export default defineConfig({
       '/iam/api': {
         target: 'http://localhost:8000',
         changeOrigin: true,
-        rewrite: (path: string) => path.replace(/^\/iam(\/api.*)$/, '/api/core$1'),
+        rewrite: (path: string) => path.replace(/^\/iam(\/api.*)$/, '/api/v1/core$1'),
       },
       
       // Doc 服务代理（独立服务，端口 8012）
@@ -303,7 +360,7 @@ export default defineConfig({
       '/flow/api': {
         target: 'http://localhost:8000',
         changeOrigin: true,
-        rewrite: (path: string) => path.replace(/^\/flow\/api(.*)$/, '/api/core/flow$1'),
+        rewrite: (path: string) => path.replace(/^\/flow\/api(.*)$/, '/api/v1/core/flow$1'),
       },
       '/flow/health': createHealthProxyConfig('flow', 'http://localhost:8000'),
 
@@ -313,7 +370,7 @@ export default defineConfig({
       '/file/api': {
         target: 'http://localhost:8000',
         changeOrigin: true,
-        rewrite: (path: string) => path.replace(/^\/file\/api(.*)$/, '/api/core/file$1'),
+        rewrite: (path: string) => path.replace(/^\/file\/api(.*)$/, '/api/v1/core/file$1'),
       },
       '/file/health': createHealthProxyConfig('file', 'http://localhost:8000'),
 
@@ -323,7 +380,7 @@ export default defineConfig({
       '/mail/api': {
         target: 'http://localhost:8000',
         changeOrigin: true,
-        rewrite: (path: string) => path.replace(/^\/mail\/api(.*)$/, '/api/core/mail$1'),
+        rewrite: (path: string) => path.replace(/^\/mail\/api(.*)$/, '/api/v1/core/mail$1'),
       },
       '/mail/health': createHealthProxyConfig('mail', 'http://localhost:8000'),
 
@@ -333,7 +390,7 @@ export default defineConfig({
       '/notification/api': {
         target: 'http://localhost:8000',
         changeOrigin: true,
-        rewrite: (path: string) => path.replace(/^\/notification\/api(.*)$/, '/api/core/notification$1'),
+        rewrite: (path: string) => path.replace(/^\/notification\/api(.*)$/, '/api/v1/core/notification$1'),
       },
       '/notification/health': createHealthProxyConfig('notification', 'http://localhost:8000'),
 
@@ -343,7 +400,7 @@ export default defineConfig({
       '/im/api': {
         target: 'http://localhost:8000',
         changeOrigin: true,
-        rewrite: (path: string) => path.replace(/^\/im\/api(.*)$/, '/api/core/im$1'),
+        rewrite: (path: string) => path.replace(/^\/im\/api(.*)$/, '/api/v1/core/im$1'),
       },
       '/im/health': createHealthProxyConfig('im', 'http://localhost:8000'),
       
@@ -354,7 +411,7 @@ export default defineConfig({
       '/hrm/health': {
         target: 'http://localhost:8020',
         changeOrigin: true,
-        rewrite: (path: string) => path.replace(/^\/hrm(\/health)$/, '/api/hrm$1'),
+        rewrite: (path: string) => '/health',
       },
       '/flow/health': createHealthProxyConfig('flow', 'http://localhost:8000'),
       '/integration/api': createServiceProxyConfig('integration', 'http://localhost:8072'),
@@ -363,7 +420,7 @@ export default defineConfig({
       '/erp/health': {
         target: 'http://localhost:8010',
         changeOrigin: true,
-        rewrite: (path: string) => path.replace(/^\/erp(\/health)$/, '/api/erp$1'),
+        rewrite: (path: string) => path.replace(/^\/erp(\/health)$/, '/api/v1/erp$1'),
       },
       // ERP 插件代理（通过 unified-core）
       '/api/plugins/erp': {
@@ -438,7 +495,7 @@ export default defineConfig({
       '/monitor/api': {
         target: 'http://localhost:8062',
         changeOrigin: true,
-        rewrite: (path: string) => path.replace(/^\/monitor\/api/, '/api/monitor'),
+        rewrite: (path: string) => path.replace(/^\/monitor\/api/, '/api/v1/monitor'),
       },
       '/monitor/health': createHealthProxyConfig('monitor', 'http://localhost:8062'),
       
@@ -446,13 +503,13 @@ export default defineConfig({
       // '/im/api': createServiceProxyConfig('im', 'http://localhost:8052'),
       // '/im/health': createServiceProxyConfig('im', 'http://localhost:8052'),
       
-      // 向后兼容：Report 服务代理 -> analytics
+      // 向后兼容：Report 服务代理 -> BI 服务
       // 注意：/report/* 是前端页面路由（如 /report/list），不可使用过于宽泛的代理
       // 实际 API 请求走 /api/report/* (见下方 /api/report 代理)
       '/report/api': {
         target: 'http://localhost:8060',
         changeOrigin: true,
-        rewrite: (path: string) => path.replace(/^\/report\/api(.*)$/, '/api/analytics/report$1'),
+        rewrite: (path: string) => path.replace(/^\/report\/api(.*)$/, '/api/bi/report$1'),
       },
       '/report/health': {
         target: 'http://localhost:8060',
@@ -468,139 +525,111 @@ export default defineConfig({
       '/quality-assurance/api': createServiceProxyConfig('quality-assurance', 'http://localhost:8050'),
       '/quality-assurance/health': createHealthProxyConfig('quality-assurance', 'http://localhost:8050'),
       
-      // ========== [API路径代理] /api/服务名 格式 ==========
-      // 前端直接请求 /api/doc/documents 等路径
-      // 统一核心服务
-      '/api/core': {
-        target: 'http://localhost:8000',
-        changeOrigin: true,
-        rewrite: (path: string) => path.replace(/^\/api\/core/, '/api/core'),
-      },
-      '/api/doc': {
+      // ========== [API路径代理] Group2 独立服务 /api/v1/{service} 格式 ==========
+      '/api/v1/doc': {
         target: 'http://localhost:8012',
         changeOrigin: true,
-        rewrite: (path: string) => path.replace(/^\/api\/doc/, '/api/doc'),
       },
-      '/api/qms': {
+      '/api/v1/qms': {
         target: 'http://localhost:8050',
         changeOrigin: true,
-        rewrite: (path: string) => path.replace(/^\/api\/qms/, '/api/qms'),
       },
-      '/api/lims': {
+      '/api/v1/lims': {
         target: 'http://localhost:8051',
         changeOrigin: true,
-        rewrite: (path: string) => path.replace(/^\/api\/lims/, '/api/lims'),
       },
-      '/api/ehs': {
+      '/api/v1/ehs': {
         target: 'http://localhost:8052',
         changeOrigin: true,
-        rewrite: (path: string) => path.replace(/^\/api\/ehs/, '/api/ehs'),
       },
-      '/api/rd': {
+      '/api/v1/rd': {
         target: 'http://localhost:8053',
         changeOrigin: true,
-        rewrite: (path: string) => path.replace(/^\/api\/rd/, '/api/rd'),
       },
-      '/api/scm': {
+      '/api/v1/scm': {
         target: 'http://localhost:8040',
         changeOrigin: true,
-        rewrite: (path: string) => path.replace(/^\/api\/scm/, '/api/scm'),
       },
-      '/api/srm': {
+      '/api/v1/srm': {
         target: 'http://localhost:8042',
         changeOrigin: true,
-        rewrite: (path: string) => path.replace(/^\/api\/srm/, '/api/srm'),
       },
-      '/api/wms': {
+      '/api/v1/wms': {
         target: 'http://localhost:8041',
         changeOrigin: true,
-        rewrite: (path: string) => path.replace(/^\/api\/wms/, '/api/wms'),
       },
-      '/api/bi': {
+      '/api/v1/bi': {
         target: 'http://localhost:8060',
         changeOrigin: true,
-        rewrite: (path: string) => path.replace(/^\/api\/bi/, '/api/bi'),
       },
-      '/api/report': {
+      '/api/v1/report': {
         target: 'http://localhost:8060',
         changeOrigin: true,
-        rewrite: (path: string) => path.replace(/^\/api\/report/, '/api/report'),
       },
-      '/api/erp': {
+      '/api/v1/analytics': {
+        target: 'http://localhost:8060',
+        changeOrigin: true,
+      },
+      '/api/v1/erp': {
         target: 'http://localhost:8010',
         changeOrigin: true,
-        rewrite: (path: string) => path.replace(/^\/api\/erp/, '/api/erp'),
       },
-      '/api/finance': {
+      '/api/v1/finance': {
         target: 'http://localhost:8011',
         changeOrigin: true,
-        rewrite: (path: string) => path.replace(/^\/api\/finance/, '/api/finance'),
       },
-      '/api/hrm': {
+      '/api/v1/hrm': {
         target: 'http://localhost:8020',
         changeOrigin: true,
-        rewrite: (path: string) => path.replace(/^\/api\/hrm/, '/api/hrm'),
       },
-      '/api/crm': {
+      '/api/v1/crm': {
         target: 'http://localhost:8029',
         changeOrigin: true,
-        rewrite: (path: string) => path.replace(/^\/api\/crm/, '/api/crm'),
       },
-      '/api/pm': {
+      '/api/v1/pm': {
         target: 'http://localhost:8023',
         changeOrigin: true,
-        rewrite: (path: string) => path.replace(/^\/api\/pm/, '/api/pm'),
       },
-      '/api/mes': {
+      '/api/v1/mes': {
         target: 'http://localhost:8030',
         changeOrigin: true,
-        rewrite: (path: string) => path.replace(/^\/api\/mes/, '/api/mes'),
       },
-      '/api/pdm': {
+      '/api/v1/pdm': {
         target: 'http://localhost:8031',
         changeOrigin: true,
-        rewrite: (path: string) => path.replace(/^\/api\/pdm/, '/api/pdm'),
       },
-      '/api/ai': {
+      '/api/v1/ai': {
         target: 'http://localhost:8013',
         changeOrigin: true,
-        rewrite: (path: string) => path.replace(/^\/api\/ai/, '/api/ai'),
       },
-      '/api/mobile': {
+      '/api/v1/mobile': {
         target: 'http://localhost:8070',
         changeOrigin: true,
-        rewrite: (path: string) => path.replace(/^\/api\/mobile/, '/api/mobile'),
       },
-      '/api/gis': {
+      '/api/v1/gis': {
         target: 'http://localhost:8071',
         changeOrigin: true,
-        rewrite: (path: string) => path.replace(/^\/api\/gis/, '/api/gis'),
       },
-      '/api/integration': {
+      '/api/v1/integration': {
         target: 'http://localhost:8072',
         changeOrigin: true,
-        configure: (proxy: any) => {
-          proxy.on('proxyReq', (proxyReq: any, req: any, res: any) => {
-            console.log(`[Vite Proxy] integration request: ${req.method} ${req.url}`);
-          });
-          proxy.on('proxyRes', (proxyRes: any, req: any, res: any) => {
-            console.log(`[Vite Proxy] integration response: ${proxyRes.statusCode} ${req.url}`);
-          });
-          proxy.on('error', (err: Error, req: any, res: any) => {
-            console.error(`[Vite Proxy] integration error:`, err.message);
-          });
-        }
       },
-      '/api/monitor': {
+      '/api/v1/monitor': {
         target: 'http://localhost:8062',
         changeOrigin: true,
-        rewrite: (path: string) => path.replace(/^\/api\/monitor/, '/api/monitor'),
       },
-      '/api/portal': {
+      '/api/v1/portal': {
         target: 'http://localhost:8063',
         changeOrigin: true,
-        rewrite: (path: string) => path.replace(/^\/api\/portal/, '/api/portal'),
       },
+      // ========== [API路径代理] Group1 核心服务 /api/v1/core/{service} 统一格式 ==========
+      // 前端请求 /api/v1/core/iam/auth/login 等路径，代理到 unified-core
+      '/api/v1/core': {
+        target: 'http://localhost:8000',
+        changeOrigin: true,
+        rewrite: (path: string) => path.replace(/^\/api\/v1\/core/, '/api/v1/core'),
+      },
+
       
       // ========== [Module Federation] Core Remote Module 代理 ==========
       // 将 /core-remote/* 请求代理到 apps/core 的 Vite dev server

@@ -52,7 +52,7 @@ pub struct MonitoringService {
     pub message: Option<String>,
 }
 
-#[derive(Serialize, Deserialize)]
+#[derive(Serialize, Deserialize, Default)]
 pub struct MonitoringMetrics {
     pub requests_total: u64,
     pub requests_success: u64,
@@ -136,6 +136,8 @@ pub struct DashboardStats {
     pub pending_tasks: u64,
     pub pending_approvals: u64,
     pub new_notifications: u64,
+    pub production_orders: u64,
+    pub wip_count: u64,
     pub system_uptime: u64,
 }
 
@@ -199,7 +201,7 @@ pub struct UpdateUserSettings {
     pub refresh_interval: Option<u32>,
 }
 
-#[derive(Serialize, Deserialize)]
+#[derive(Serialize, Deserialize, Clone)]
 pub struct QuickAction {
     pub id: String,
     pub name: String,

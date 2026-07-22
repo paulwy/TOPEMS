@@ -165,16 +165,16 @@ const DynamicRoutes: React.FC = () => {
     <Routes>
       {routes.map((route) => {
         const { element } = route;
-        const routeElement = React.isValidElement(element)
-          ? element
-          : React.createElement(element as React.ComponentType);
+        const Element = element as React.ComponentType;
         return (
           <Route
             key={route.path}
             path={route.path}
             element={
               <ProtectedRouteWrapper route={route}>
-                <Suspense fallback={<PageLoader />}>{routeElement}</Suspense>
+                <Suspense fallback={<PageLoader />}>
+                  <Element />
+                </Suspense>
               </ProtectedRouteWrapper>
             }
           />
@@ -208,16 +208,16 @@ const AppContent: React.FC = () => {
   const renderRoutes = (routes: RouteConfig[]) => {
     return routes.map((route) => {
       const { element } = route;
-      const routeElement = React.isValidElement(element)
-        ? element
-        : React.createElement(element as React.ComponentType);
+      const Element = element as React.ComponentType;
       return (
         <Route
           key={route.path}
           path={route.path}
           element={
             <ProtectedRouteWrapper route={route}>
-              <Suspense fallback={<PageLoader />}>{routeElement}</Suspense>
+              <Suspense fallback={<PageLoader />}>
+                <Element />
+              </Suspense>
             </ProtectedRouteWrapper>
           }
         />

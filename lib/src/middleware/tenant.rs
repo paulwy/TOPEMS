@@ -112,7 +112,7 @@ pub fn require_tenant_status(
        + Send
        + Sync {
     move |req: Request<Body>, next: Next| {
-        let status = status;
+        let _status = status;
         Box::pin(async move {
             let claims = match req.extensions().get::<Claims>() {
                 Some(c) => c,

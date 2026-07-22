@@ -19,6 +19,7 @@ tower-http.workspace = true
 thiserror.workspace = true
 sqlx.workspace = true
 topems-shared = { path = "../../lib" }
+utoipa.workspace = true
 axum-prometheus.workspace = true
 prometheus.workspace = true
 anyhow.workspace = true

@@ -111,12 +111,12 @@ run_backend_tests() {
 
     # 运行权限库测试
     echo -e "${YELLOW}1. 运行权限库测试 (lib/tests/permission_test.rs)${NC}"
-    cargo test --package topems-shared --test permission_test -- --test-threads=1 2>&1 || true
+    cargo test --package topems-shared --test permission_test 2>&1 || true
     echo ""
 
     # 运行 IAM 模块测试
     echo -e "${YELLOW}2. 运行 IAM 模块测试 (svc/unified-core/tests/iam_permission_tests.rs)${NC}"
-    cargo test --package unified-core-service --test iam_permission_tests -- --test-threads=1 2>&1 || true
+    cargo test --package unified-core-service --test iam_permission_tests 2>&1 || true
     echo ""
 
     echo -e "${GREEN}后端测试完成${NC}"

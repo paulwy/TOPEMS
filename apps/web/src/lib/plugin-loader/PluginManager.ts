@@ -522,7 +522,7 @@ export class PluginManager {
     }
 
     try {
-      const response = await fetch('/api/core/plugin/navigation-config');
+      const response = await fetch('/api/v1/core/plugin/navigation-config');
       const result = await response.json();
 
       if (result?.success && result?.data?.modules) {

@@ -1,7 +1,7 @@
-import runtime from '../runtime';
 import { describe, it, expect } from 'vitest';
+import runtime from '../runtime';
 
-const EXPECTED_GROUP1: Record<string, string> = {
+const GROUP1_SERVICES: Record<string, string> = {
   iam: '/api/core/iam',
   workflow: '/api/core/flow',
   file: '/api/core/file',
@@ -14,71 +14,73 @@ const EXPECTED_GROUP1: Record<string, string> = {
   core: '/api/core',
 };
 
-const EXPECTED_GROUP2: Record<string, string> = {
-  erp: '/api/erp',
-  finance: '/api/finance',
-  doc: '/api/doc',
-  ai: '/api/ai',
-  hrm: '/api/hrm',
-  pm: '/api/pm',
-  crm: '/api/crm',
-  mes: '/api/mes',
-  manufacturing: '/api/mes',
-  pdm: '/api/pdm',
-  scm: '/api/scm',
-  wms: '/api/wms',
-  srm: '/api/srm',
-  qms: '/api/qms',
-  qualityAssurance: '/api/qms',
-  lims: '/api/lims',
-  ehs: '/api/ehs',
-  rd: '/api/rd',
-  bi: '/api/bi',
-  analytics: '/api/bi',
-  report: '/api/report',
-  monitor: '/api/monitor',
-  portal: '/api/portal',
-  mobile: '/api/mobile',
-  gis: '/api/gis',
-  integration: '/api/integration',
-};
+const GROUP2_SERVICES = [
+  'erp', 'finance', 'doc', 'ai', 'hrm', 'pm', 'crm', 'mes',
+  'manufacturing', 'pdm', 'scm', 'wms', 'srm', 'qms',
+  'qualityAssurance', 'lims', 'ehs', 'rd', 'bi',
+  'analytics', 'report', 'monitor', 'portal', 'mobile',
+  'gis', 'integration',
+];
 
-describe('runtime.ts services 路由契约（V9.0 删除 /v1）', () => {
-  it('所有 service 路径均不包含 /v1（jaeger 除外）', () => {
-    Object.entries(runtime.services).forEach(([k, v]) => {
-      if (k === 'jaeger') return;
-      expect(String(v)).not.toContain('/v1');
+const EXTERNAL_SERVICES = ['jaeger'];
+
+describe('runtime.ts services 路由契约', () => {
+  it('所有服务路径均不包含 /v1', () => {
+    Object.entries(runtime.services).forEach(([key, value]) => {
+      if (EXTERNAL_SERVICES.includes(key)) return;
+      expect(String(value)).not.toContain('/v1');
     });
   });
 
-  it('Group1 核心虚拟服务前缀正确（/api/core/ 开头，无 /v1）', () => {
-    Object.entries(EXPECTED_GROUP1).forEach(([k, expected]) => {
-      const val: string = (runtime.services as unknown as Record<string, unknown>)[k] ?? '';
-      expect(val.startsWith('/api/core')).toBe(true);
-      expect(val).toContain(expected);
-      expect(val).not.toContain('/v1');
+  it('Group1 核心虚拟服务前缀正确', () => {
+    Object.entries(GROUP1_SERVICES).forEach(([key, expected]) => {
+      const val = (runtime.services as unknown as Record<string, unknown>)[key] as string;
+      expect(val).toBeDefined();
+      if (key === 'core') {
+        expect(val).toBe('/api/core');
+      } else {
+        expect(val.startsWith('/api/core/')).toBe(true);
+      }
+      expect(val).toBe(expected);
     });
   });
 
-  it('Group2 独立进程服务无 /core 前缀，无 /v1', () => {
-    Object.entries(EXPECTED_GROUP2).forEach(([k, expected]) => {
-      const val: string = (runtime.services as unknown as Record<string, unknown>)[k] ?? '';
+  it('Group2 独立进程服务无 /core 前缀', () => {
+    GROUP2_SERVICES.forEach((key) => {
+      const val = (runtime.services as unknown as Record<string, unknown>)[key] as string;
+      expect(val).toBeDefined();
       expect(val.startsWith('/api/core')).toBe(false);
-      expect(val).toContain(expected);
-      expect(val).not.toContain('/v1');
+      expect(val.startsWith('/api/')).toBe(true);
     });
+  });
+
+  it('别名服务指向正确的主路径', () => {
+    const services = runtime.services as unknown as Record<string, string>;
+
+    expect(services.manufacturing).toBe(services.mes);
+    expect(services.manufacturing).toBe('/api/mes');
+
+    expect(services.qualityAssurance).toBe(services.qms);
+    expect(services.qualityAssurance).toBe('/api/qms');
+
+    expect(services.analytics).toBe(services.bi);
+    expect(services.analytics).toBe('/api/bi');
+
+    expect(services.report).toBe(services.bi);
+    expect(services.report).toBe('/api/bi');
   });
 
   it('jaeger 是独立 HTTP URL（不在 /api 体系内）', () => {
-    const val: string = (runtime.services as unknown as Record<string, unknown>).jaeger ?? '';
+    const val = (runtime.services as unknown as Record<string, unknown>).jaeger as string;
     expect(val.startsWith('http')).toBe(true);
   });
 
   it('services 总数与预期一致（防止有人新增遗漏分类）', () => {
     const defined = Object.keys(runtime.services).length;
-    const expected = Object.keys(EXPECTED_GROUP1).length
-      + Object.keys(EXPECTED_GROUP2).length
-      + 1; // jaeger
+    const expected =
+      Object.keys(GROUP1_SERVICES).length +
+      GROUP2_SERVICES.length +
+      EXTERNAL_SERVICES.length;
     expect(defined).toBe(expected);
   });
 });

@@ -91,4 +91,17 @@ impl HrmServiceClient {
     pub async fn list_companies(&self) -> ServiceClientResult<Vec<Company>> {
         self.base_client.get("/api/companies").await
     }
+
+    pub fn set_auth_token(&mut self, token: impl Into<String>) {
+        self.base_client.set_auth_token(token);
+    }
+
+    pub fn with_auth_token(mut self, token: impl Into<String>) -> Self {
+        self.base_client.set_auth_token(token);
+        self
+    }
+
+    pub fn add_header(&mut self, key: impl Into<String>, value: impl Into<String>) {
+        self.base_client.add_header(key, value);
+    }
 }

@@ -1,3 +1,5 @@
+mod reconciliation;
+
 use axum::{
     extract::{Json, Path, Query, State},
     Extension, Router,
@@ -1091,6 +1093,7 @@ async fn get_dashboard_handler(
 
 pub fn create_routes() -> Router<AppState> {
     Router::new()
+        .merge(reconciliation::create_routes())
         .route("/dashboard", axum::routing::get(get_dashboard_handler))
         .route("/accounts", axum::routing::post(create_account))
         .route("/accounts", axum::routing::get(list_accounts))

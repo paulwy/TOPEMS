@@ -1,6 +1,7 @@
 packages:
   - 'apps/*'
   - 'packages/*'
+  - 'tests/integration'
 allowBuilds:
   canvas: true
   core-js-pure: true

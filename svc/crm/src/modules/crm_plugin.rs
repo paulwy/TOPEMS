@@ -128,8 +128,8 @@ pub async fn plugin_health_check(State(state): State<ApiState>) -> Json<ApiRespo
 
 pub fn create_routes() -> Router<ApiState> {
     Router::new()
-        .route("/api/plugins/info", get(get_plugin_info))
-        .route("/api/plugins/health", get(plugin_health_check))
+        .route("/plugins/info", get(get_plugin_info))
+        .route("/plugins/health", get(plugin_health_check))
 }
 
 /// 启动时自动注册到统一核心

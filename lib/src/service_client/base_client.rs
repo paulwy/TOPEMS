@@ -1,8 +1,17 @@
 use super::error::{ServiceClientError, ServiceClientResult};
+use opentelemetry::global;
 use reqwest::{Client, RequestBuilder};
 use serde::{de::DeserializeOwned, Serialize};
 use std::collections::HashMap;
 use std::time::Duration;
+
+struct TraceHeaderInjector(HashMap<String, String>);
+
+impl opentelemetry::propagation::Injector for TraceHeaderInjector {
+    fn set(&mut self, key: &str, value: String) {
+        self.0.insert(key.to_string(), value);
+    }
+}
 
 #[derive(Clone)]
 pub struct BaseServiceClient {
@@ -159,6 +168,15 @@ impl BaseServiceClient {
         }
 
         for (key, value) in &self.custom_headers {
+            request = request.header(key, value);
+        }
+
+        // 注入 OpenTelemetry trace context，实现跨服务链路追踪
+        let mut injector = TraceHeaderInjector(HashMap::new());
+        global::get_text_map_propagator(|propagator| {
+            propagator.inject_context(&opentelemetry::Context::current(), &mut injector);
+        });
+        for (key, value) in injector.0 {
             request = request.header(key, value);
         }
 

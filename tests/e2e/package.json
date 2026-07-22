@@ -1,0 +1,28 @@
+{
+  "name": "@topems/e2e",
+  "version": "1.0.0",
+  "description": "TOPEMS End-to-End (Playwright) test suite",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "test": "playwright test",
+    "test:ui": "playwright test --ui",
+    "test:debug": "playwright test --debug",
+    "test:auth": "playwright test tests/auth.spec.ts",
+    "test:production": "playwright test tests/production-order.spec.ts",
+    "test:purchase": "playwright test tests/purchase-order.spec.ts",
+    "test:finance": "playwright test tests/financial-voucher.spec.ts",
+    "test:headed": "playwright test --headed",
+    "test:chromium": "playwright test --project=chromium",
+    "test:firefox": "playwright test --project=firefox",
+    "test:webkit": "playwright test --project=webkit",
+    "report": "playwright show-report",
+    "install-browsers": "playwright install --with-deps",
+    "codegen": "playwright codegen"
+  },
+  "devDependencies": {
+    "@playwright/test": "^1.48.0",
+    "@types/node": "^20.14.0",
+    "typescript": "^5.4.5"
+  }
+}

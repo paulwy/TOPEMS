@@ -26,6 +26,7 @@ pub mod rs_client;
 pub mod scm_client;
 pub mod srm_client;
 pub mod wms_client;
+pub mod workflow_client;
 
 pub use ai_client::AiServiceClient;
 pub use base_client::BaseServiceClient;
@@ -55,6 +56,9 @@ pub use rs_client::RsServiceClient;
 pub use scm_client::ScmServiceClient;
 pub use srm_client::SrmServiceClient;
 pub use wms_client::WmsServiceClient;
+pub use workflow_client::{
+    TaskStats, WorkflowInstance, WorkflowServiceClient, WorkflowStatistics, WorkflowTask,
+};
 
 pub fn create_hrm_client() -> ServiceClientResult<HrmServiceClient> {
     HrmServiceClient::from_env()
@@ -146,6 +150,10 @@ pub fn create_portal_client() -> ServiceClientResult<PortalServiceClient> {
 
 pub fn create_monitor_client() -> ServiceClientResult<MonitorServiceClient> {
     MonitorServiceClient::from_env()
+}
+
+pub fn create_workflow_client() -> ServiceClientResult<WorkflowServiceClient> {
+    WorkflowServiceClient::from_env()
 }
 
 pub fn create_gis_client() -> ServiceClientResult<GisServiceClient> {

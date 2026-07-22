@@ -36,7 +36,7 @@ load_services_config() {
         SERVICES_CONFIG=$(grep -v "^#" "$config_file" | grep -v "^$" | grep -v "CORE_SERVICES")
         CORE_SERVICES=$(grep "CORE_SERVICES" "$config_file" | cut -d'=' -f2 | tr -d ' ')
     else
-        # 默认服务配置（与 config/services.yaml 保持一致）
+        # 默认服务配置（与 scripts/services.conf 保持一致）
         SERVICES_CONFIG="
 iam         svc/unified-core       unified-core-service        8000
 pm          svc/pm                 topems-pm                   8023
@@ -56,7 +56,6 @@ lims        svc/lims               topems-lims                 8051
 ehs         svc/ehs                topems-ehs                  8052
 rd          svc/rd                 topems-rd                   8053
 bi          svc/analytics          analytics-service           8060
-report      svc/analytics          analytics-service           8061
 monitor     svc/monitor            topems-monitor              8062
 portal      svc/portal             topems-portal               8063
 mobile      svc/mobile             topems-mobile               8070
@@ -119,27 +118,12 @@ build_service() {
     local executable_name=$(get_executable_name "$service_name")
     cd "$PROJECT_ROOT"
 
-    local build_output
-    local offline_result
-
-    set +e
-    build_output=$(SQLX_OFFLINE=true cargo build --release --bin "$executable_name" 2>&1)
-    offline_result=$?
-    set -e
-    echo "$build_output"
-
-    if [ $offline_result -eq 0 ]; then
+    if SQLX_OFFLINE=true cargo build --release --bin "$executable_name" 2>&1; then
         success "$service_name 编译成功"
         return 0
     else
         warning "$service_name 离线编译失败，尝试在线编译..."
-        local online_result
-        set +e
-        build_output=$(cargo build --release --bin "$executable_name" 2>&1)
-        online_result=$?
-        set -e
-        echo "$build_output"
-        if [ $online_result -eq 0 ]; then
+        if cargo build --release --bin "$executable_name" 2>&1; then
             success "$service_name 在线编译成功"
             return 0
         else
@@ -149,70 +133,28 @@ build_service() {
     fi
 }
 
-# 全量编译所有后端服务
-build_all_backend() {
-    info "全量编译所有后端服务..."
-
-    cd "$PROJECT_ROOT"
-
-    local build_output
-    local build_result
-
-    set +e
-    build_output=$(SQLX_OFFLINE=true cargo build --release --workspace 2>&1)
-    build_result=$?
-    set -e
-    echo "$build_output"
-
-    if [ $build_result -eq 0 ]; then
-        local total=$(get_all_services | wc -l | tr -d ' ')
-        success "所有后端服务编译完成 ($total 成功)"
-        return 0
-    else
-        warning "离线编译失败，尝试在线编译..."
-        local online_result
-        set +e
-        build_output=$(cargo build --release --workspace 2>&1)
-        online_result=$?
-        set -e
-        echo "$build_output"
-        if [ $online_result -eq 0 ]; then
-            local total=$(get_all_services | wc -l | tr -d ' ')
-            success "所有后端服务编译完成 ($total 成功)"
-            
-            info "生成 sqlx 查询缓存..."
-            if command -v cargo-sqlx &> /dev/null || command -v sqlx &> /dev/null; then
-                set +e
-                cargo sqlx prepare --workspace -- --release 2>&1
-                set -e
-                success "sqlx 查询缓存生成完成"
-            else
-                warning "cargo-sqlx 未安装，跳过 sqlx-data.json 生成"
-            fi
-            
-            return 0
-        else
-            error "后端编译失败"
-            return 1
-        fi
-    fi
+# 获取所有服务的二进制名（去重）
+get_all_executables() {
+    echo "$SERVICES_CONFIG" | grep -v "^$" | awk '{print $3}' | sort -u
 }
 
-# 编译前端
-build_frontend() {
-    info "编译前端..."
-    
-    local pkg_cmd
+# 检测包管理器（pnpm > yarn）
+get_pkg_cmd() {
     if command -v pnpm &> /dev/null; then
-        pkg_cmd="pnpm"
+        echo "pnpm"
     elif command -v yarn &> /dev/null; then
-        pkg_cmd="yarn"
+        echo "yarn"
     else
         error "pnpm 和 yarn 都未安装"
         return 1
     fi
-    
+}
+
+# 检查并安装前端依赖
+ensure_frontend_deps() {
+    local pkg_cmd=$1
     local web_dir="$PROJECT_ROOT/apps/web"
+    
     if [ ! -d "$web_dir" ]; then
         error "前端目录不存在: $web_dir"
         return 1
@@ -224,6 +166,59 @@ build_frontend() {
         info "安装前端依赖..."
         $pkg_cmd install --silent
     fi
+    
+    return 0
+}
+
+# 全量编译所有后端服务（只编译服务包，避免编译 workspace 中所有包）
+build_all_backend() {
+    info "全量编译所有后端服务..."
+
+    cd "$PROJECT_ROOT"
+
+    local executables=$(get_all_executables)
+    local build_success=0
+    local build_failed=0
+
+    for exe in $executables; do
+        info "编译 $exe..."
+        if SQLX_OFFLINE=true cargo build --release --bin "$exe" 2>&1; then
+            build_success=$((build_success + 1))
+        else
+            warning "$exe 离线编译失败，尝试在线编译..."
+            if cargo build --release --bin "$exe" 2>&1; then
+                build_success=$((build_success + 1))
+            else
+                error "$exe 编译失败"
+                build_failed=$((build_failed + 1))
+            fi
+        fi
+    done
+
+    if [ $build_failed -eq 0 ]; then
+        success "所有后端服务编译完成 ($build_success 成功)"
+        
+        info "生成 sqlx 查询缓存..."
+        if command -v cargo-sqlx &> /dev/null || command -v sqlx &> /dev/null; then
+            cargo sqlx prepare --workspace -- --release 2>&1 | tail -5
+            success "sqlx 查询缓存生成完成"
+        else
+            warning "cargo-sqlx 未安装，跳过 sqlx-data.json 生成"
+        fi
+        
+        return 0
+    else
+        error "后端编译失败 ($build_success 成功, $build_failed 失败)"
+        return 1
+    fi
+}
+
+# 编译前端
+build_frontend() {
+    info "编译前端..."
+    
+    local pkg_cmd=$(get_pkg_cmd) || return 1
+    ensure_frontend_deps "$pkg_cmd" || return 1
     
     $pkg_cmd build 2>&1 && success "前端编译成功" || { error "前端编译失败"; return 1; }
 }
@@ -255,12 +250,12 @@ build_all() {
     fi
 }
 
-# 运行后端测试
+# 运行后端测试（使用并行测试提高效率）
 test_backend() {
     info "运行后端测试..."
 
     cd "$PROJECT_ROOT"
-    if cargo test --release --workspace -- --test-threads=1 2>&1; then
+    if cargo test --release --workspace 2>&1; then
         success "所有后端测试通过"
         return 0
     else
@@ -273,28 +268,8 @@ test_backend() {
 test_frontend() {
     info "运行前端测试..."
     
-    local pkg_cmd
-    if command -v pnpm &> /dev/null; then
-        pkg_cmd="pnpm"
-    elif command -v yarn &> /dev/null; then
-        pkg_cmd="yarn"
-    else
-        error "pnpm 和 yarn 都未安装"
-        return 1
-    fi
-    
-    local web_dir="$PROJECT_ROOT/apps/web"
-    if [ ! -d "$web_dir" ]; then
-        error "前端目录不存在: $web_dir"
-        return 1
-    fi
-    
-    cd "$web_dir"
-    
-    if [ ! -d "node_modules" ]; then
-        info "安装前端依赖..."
-        $pkg_cmd install --silent
-    fi
+    local pkg_cmd=$(get_pkg_cmd) || return 1
+    ensure_frontend_deps "$pkg_cmd" || return 1
     
     $pkg_cmd test 2>&1 && success "前端测试通过" || { error "前端测试失败"; return 1; }
 }
@@ -627,6 +602,29 @@ check_and_restart_services() {
     fi
 }
 
+# 等待核心服务就绪
+wait_for_core_services() {
+    info "等待核心服务就绪..."
+    local max_wait=60
+    local wait_interval=2
+    local elapsed=0
+
+    for service in $CORE_SERVICES; do
+        local port=$(get_service_port "$service")
+        while [ $elapsed -lt $max_wait ]; do
+            if check_port $port && curl -s -f "http://localhost:$port/health" >/dev/null 2>&1; then
+                success "$service 服务就绪"
+                break
+            fi
+            sleep $wait_interval
+            elapsed=$((elapsed + wait_interval))
+        done
+        if [ $elapsed -ge $max_wait ]; then
+            warning "$service 服务未在 $max_wait 秒内就绪"
+        fi
+    done
+}
+
 # 启动所有服务
 start_all_services() {
     info "启动所有服务..."
@@ -643,6 +641,8 @@ start_all_services() {
             fail_count=$((fail_count + 1))
         fi
     done
+
+    wait_for_core_services
 
     info "启动其他服务..."
     for service in $(get_all_services); do
@@ -693,16 +693,7 @@ start_dev_macos() {
 
     check_command "cargo" || return 1
     check_command "node" || return 1
-    local pkg_cmd
-    if command -v pnpm &> /dev/null; then
-        pkg_cmd="pnpm"
-    elif command -v yarn &> /dev/null; then
-        pkg_cmd="yarn"
-        warning "未安装 pnpm，将使用 yarn"
-    else
-        error "pnpm 和 yarn 都未安装"
-        return 1
-    fi
+    local pkg_cmd=$(get_pkg_cmd) || return 1
     check_command "psql" || return 1
 
     db_start
@@ -720,17 +711,11 @@ start_dev_macos() {
     start_service "iam"
 
     info "启动前端服务..."
-    if ! lsof -Pi ":3000" -sTCP:LISTEN -t &> /dev/null; then
-        local web_dir="$PROJECT_ROOT/apps/web"
-        if [ -d "$web_dir" ]; then
-            cd "$web_dir"
-            [ ! -d "node_modules" ] && $pkg_cmd install --silent
-            nohup $pkg_cmd dev > "/tmp/topems-web.log" 2>&1 &
-            sleep 5
-            info "前端服务启动中..."
-        else
-            error "前端目录不存在: $web_dir"
-        fi
+    if ! check_port 3000; then
+        ensure_frontend_deps "$pkg_cmd" || return 1
+        nohup $pkg_cmd dev > "/tmp/topems-web.log" 2>&1 &
+        sleep 5
+        info "前端服务启动中..."
     else
         warning "前端已在端口 3000 运行"
     fi
@@ -745,29 +730,8 @@ start_dev_macos() {
 start_frontend() {
     info "启动前端服务..."
     
-    local pkg_cmd
-    if command -v pnpm &> /dev/null; then
-        pkg_cmd="pnpm"
-    elif command -v yarn &> /dev/null; then
-        pkg_cmd="yarn"
-        warning "使用 yarn"
-    else
-        error "pnpm 和 yarn 都未安装"
-        return 1
-    fi
-    
-    local web_dir="$PROJECT_ROOT/apps/web"
-    if [ ! -d "$web_dir" ]; then
-        error "前端目录不存在: $web_dir"
-        return 1
-    fi
-    
-    cd "$web_dir"
-    
-    if [ ! -d "node_modules" ]; then
-        info "安装前端依赖..."
-        $pkg_cmd install --silent
-    fi
+    local pkg_cmd=$(get_pkg_cmd) || return 1
+    ensure_frontend_deps "$pkg_cmd" || return 1
     
     if check_port 3000; then
         info "前端已在端口 3000 运行"
@@ -1066,13 +1030,25 @@ db_backup() {
         local db_name=${DATABASE_NAME:-topems}
         local db_user=${DATABASE_USER:-postgres}
 
+        local backup_success=false
+        
         if command -v docker &> /dev/null && docker ps | grep -q postgres; then
-            docker exec -t topems-postgres pg_dump -U "$db_user" "$db_name" > "$backup_file" 2>/dev/null
+            info "使用 Docker 执行备份..."
+            if docker exec -t topems-postgres pg_dump -U "$db_user" "$db_name" > "$backup_file" 2>&1; then
+                backup_success=true
+            fi
+        else
+            info "使用本地 psql 执行备份..."
+            if pg_dump -h localhost -U "$db_user" "$db_name" > "$backup_file" 2>&1; then
+                backup_success=true
+            fi
         fi
 
-        if [ $? -eq 0 ] && [ -s "$backup_file" ]; then
+        if [ "$backup_success" = true ] && [ -s "$backup_file" ]; then
             success "数据库备份成功: $backup_file ($(du -h "$backup_file" | cut -f1))"
+            return 0
         else
+            [ -f "$backup_file" ] && rm -f "$backup_file"
             error "数据库备份失败"
             return 1
         fi
