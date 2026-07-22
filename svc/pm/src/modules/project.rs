@@ -7,11 +7,19 @@ use axum::{
 use chrono::Utc;
 use serde::{Deserialize, Serialize};
 use sqlx::PgPool;
+use std::sync::Arc;
+use topems_shared::event::{EventPublisher, EventType, PmProjectCreatedPayload};
 use topems_shared::ApiResponse;
 use utoipa::{IntoParams, ToSchema};
 use uuid::Uuid;
 
 use crate::models::project::{CreateProjectRequest, Project, UpdateProjectRequest};
+
+#[derive(Clone)]
+pub struct AppState {
+    pub pool: PgPool,
+    pub event_publisher: Option<Arc<EventPublisher>>,
+}
 
 #[derive(Deserialize, ToSchema, IntoParams)]
 pub struct ProjectQuery {
@@ -76,21 +84,28 @@ pub struct ProjectGanttResponse {
     pub resources: Vec<GanttResource>,
 }
 
-pub fn create_routes(pool: PgPool) -> Router {
+pub fn create_routes(pool: PgPool, event_publisher: Option<Arc<EventPublisher>>) -> Router {
+    let state = AppState {
+        pool,
+        event_publisher,
+    };
     Router::new()
-        .route("/projects", get(list_projects).post(create_project))
+        .route("/api/pm/projects", get(list_projects).post(create_project))
         .route(
-            "/projects/{id}",
+            "/api/pm/projects/{id}",
             get(get_project).put(update_project).delete(delete_project),
         )
-        .route("/projects/{id}/dashboard", get(get_project_dashboard))
-        .route("/projects/{id}/gantt", get(get_project_gantt))
-        .with_state(pool)
+        .route(
+            "/api/pm/projects/{id}/dashboard",
+            get(get_project_dashboard),
+        )
+        .route("/api/pm/projects/{id}/gantt", get(get_project_gantt))
+        .with_state(state)
 }
 
 #[utoipa::path(
     get,
-    path = "/projects",
+    path = "/api/pm/projects",
     tag = "projects",
     params(
         ProjectQuery,
@@ -101,14 +116,14 @@ pub fn create_routes(pool: PgPool) -> Router {
     ),
 )]
 async fn list_projects(
-    State(pool): State<PgPool>,
+    State(state): State<AppState>,
     axum::extract::Query(query): axum::extract::Query<ProjectQuery>,
 ) -> Json<ApiResponse<ProjectListResponse>> {
     let page = query.page.unwrap_or(1).max(1);
     let page_size = query.page_size.unwrap_or(50).clamp(1, 1000);
 
     let result = sqlx::query_as::<_, Project>("SELECT * FROM pm.projects ORDER BY created_at DESC")
-        .fetch_all(&pool)
+        .fetch_all(&state.pool)
         .await;
 
     let projects = match result {
@@ -149,7 +164,7 @@ async fn list_projects(
 
 #[utoipa::path(
     post,
-    path = "/projects",
+    path = "/api/pm/projects",
     tag = "projects",
     request_body = CreateProjectRequest,
     responses(
@@ -158,7 +173,7 @@ async fn list_projects(
     ),
 )]
 async fn create_project(
-    State(pool): State<PgPool>,
+    State(state): State<AppState>,
     Json(req): Json<CreateProjectRequest>,
 ) -> Json<ApiResponse<Project>> {
     let id = Uuid::new_v4();
@@ -198,11 +213,45 @@ async fn create_project(
     .bind(Some("system"))
     .bind(now)
     .bind(now)
-    .fetch_one(&pool)
+    .fetch_one(&state.pool)
     .await;
 
     match result {
-        Ok(project) => Json(ApiResponse::success(project, "创建项目成功")),
+        Ok(project) => {
+            if let Some(ref publisher) = state.event_publisher {
+                let publisher = publisher.clone();
+                let project_id = project.id;
+                let project_name = project.name.clone();
+                let owner_id = project
+                    .leader
+                    .as_deref()
+                    .and_then(|s| Uuid::parse_str(s).ok())
+                    .unwrap_or(Uuid::nil());
+                tokio::spawn(async move {
+                    let payload = PmProjectCreatedPayload {
+                        project_id,
+                        project_name,
+                        owner_id,
+                    };
+                    if let Err(e) = publisher
+                        .publish_event(EventType::PmProjectCreated, payload)
+                        .await
+                    {
+                        tracing::warn!(
+                            "[pm] PmProjectCreated 事件发布失败（graceful fallback）: {}",
+                            e
+                        );
+                    } else {
+                        tracing::info!(
+                            "[pm] PmProjectCreated 事件发布成功 - project_id={}",
+                            project_id
+                        );
+                    }
+                });
+            }
+
+            Json(ApiResponse::success(project, "创建项目成功"))
+        }
         Err(sqlx::Error::RowNotFound) => Json(ApiResponse::error(409, "项目代码已存在")),
         Err(e) => {
             tracing::error!("创建项目失败: {}", e);
@@ -213,7 +262,7 @@ async fn create_project(
 
 #[utoipa::path(
     get,
-    path = "/projects/{id}",
+    path = "/api/pm/projects/{id}",
     tag = "projects",
     responses(
         (status = 200, description = "获取项目成功", body = ApiResponse<Project>),
@@ -222,12 +271,12 @@ async fn create_project(
     ),
 )]
 async fn get_project(
-    State(pool): State<PgPool>,
+    State(state): State<AppState>,
     Path(id): Path<Uuid>,
 ) -> Json<ApiResponse<Project>> {
     let result = sqlx::query_as::<_, Project>("SELECT * FROM pm.projects WHERE id = $1")
         .bind(id)
-        .fetch_optional(&pool)
+        .fetch_optional(&state.pool)
         .await;
 
     match result {
@@ -242,7 +291,7 @@ async fn get_project(
 
 #[utoipa::path(
     put,
-    path = "/projects/{id}",
+    path = "/api/pm/projects/{id}",
     tag = "projects",
     request_body = UpdateProjectRequest,
     responses(
@@ -252,7 +301,7 @@ async fn get_project(
     ),
 )]
 async fn update_project(
-    State(pool): State<PgPool>,
+    State(state): State<AppState>,
     Path(id): Path<Uuid>,
     Json(req): Json<UpdateProjectRequest>,
 ) -> Json<ApiResponse<Project>> {
@@ -296,7 +345,7 @@ async fn update_project(
     .bind(req.workspace_id)
     .bind(now)
     .bind(id)
-    .fetch_optional(&pool)
+    .fetch_optional(&state.pool)
     .await;
 
     match result {
@@ -311,7 +360,7 @@ async fn update_project(
 
 #[utoipa::path(
     delete,
-    path = "/projects/{id}",
+    path = "/api/pm/projects/{id}",
     tag = "projects",
     responses(
         (status = 200, description = "删除项目成功", body = ApiResponse<bool>),
@@ -320,12 +369,12 @@ async fn update_project(
     ),
 )]
 async fn delete_project(
-    State(pool): State<PgPool>,
+    State(state): State<AppState>,
     Path(id): Path<Uuid>,
 ) -> Json<ApiResponse<bool>> {
     let result = sqlx::query("DELETE FROM pm.projects WHERE id = $1")
         .bind(id)
-        .execute(&pool)
+        .execute(&state.pool)
         .await;
 
     match result {
@@ -342,7 +391,7 @@ async fn delete_project(
 
 #[utoipa::path(
     get,
-    path = "/projects/{id}/dashboard",
+    path = "/api/pm/projects/{id}/dashboard",
     tag = "projects",
     responses(
         (status = 200, description = "获取项目仪表盘成功", body = ApiResponse<ProjectDashboardResponse>),
@@ -351,12 +400,12 @@ async fn delete_project(
     ),
 )]
 async fn get_project_dashboard(
-    State(pool): State<PgPool>,
+    State(state): State<AppState>,
     Path(id): Path<Uuid>,
 ) -> Json<ApiResponse<ProjectDashboardResponse>> {
     let project_result = sqlx::query_as::<_, Project>("SELECT * FROM pm.projects WHERE id = $1")
         .bind(id)
-        .fetch_optional(&pool)
+        .fetch_optional(&state.pool)
         .await;
 
     let project = match project_result {
@@ -372,7 +421,7 @@ async fn get_project_dashboard(
         "SELECT * FROM pm.project_phases WHERE project_id = $1",
     )
     .bind(id)
-    .fetch_all(&pool)
+    .fetch_all(&state.pool)
     .await;
 
     let phases = phases_result.unwrap_or_default();
@@ -403,7 +452,7 @@ async fn get_project_dashboard(
         "SELECT * FROM pm.project_members WHERE project_id = $1",
     )
     .bind(id)
-    .fetch_all(&pool)
+    .fetch_all(&state.pool)
     .await;
 
     let members: Vec<serde_json::Value> = members_result
@@ -457,7 +506,7 @@ async fn get_project_dashboard(
 
 #[utoipa::path(
     get,
-    path = "/projects/{id}/gantt",
+    path = "/api/pm/projects/{id}/gantt",
     tag = "projects",
     responses(
         (status = 200, description = "获取甘特图数据成功", body = ApiResponse<ProjectGanttResponse>),
@@ -465,14 +514,14 @@ async fn get_project_dashboard(
     ),
 )]
 async fn get_project_gantt(
-    State(pool): State<PgPool>,
+    State(state): State<AppState>,
     Path(id): Path<Uuid>,
 ) -> Json<ApiResponse<ProjectGanttResponse>> {
     let phases_result = sqlx::query_as::<_, crate::models::project_phase::ProjectPhase>(
         "SELECT * FROM pm.project_phases WHERE project_id = $1 ORDER BY sequence_number ASC",
     )
     .bind(id)
-    .fetch_all(&pool)
+    .fetch_all(&state.pool)
     .await;
 
     let phases: Vec<GanttPhase> = match phases_result {
@@ -500,7 +549,7 @@ async fn get_project_gantt(
             "SELECT * FROM pm.project_milestones WHERE project_id = $1 ORDER BY date ASC",
         )
         .bind(id)
-        .fetch_all(&pool)
+        .fetch_all(&state.pool)
         .await;
 
     let milestones: Vec<GanttMilestone> = match milestones_result {

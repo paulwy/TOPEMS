@@ -1,4 +1,4 @@
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useEffect } from 'react';
 import {
   Box,
   Typography,
@@ -35,6 +35,7 @@ import { PageContainer, ConfirmDialog } from '@/components/common';
 import { designTokens } from '@/theme/tokens';
 import { monitorApi, alertCrudApi, type Alert } from '@/api/monitor';
 import { useCrudOperations } from '@/hooks/useCrudQueries';
+import { useUrlListState } from '@/hooks';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 
 const ct = designTokens.colors;
@@ -85,10 +86,26 @@ export const MonitorAlertsPage: React.FC = () => {
   const queryClient = useQueryClient();
 
   const [activeTab, setActiveTab] = useState<TabType>('all');
-  const [searchQuery, setSearchQuery] = useState('');
-  const [severityFilter, setSeverityFilter] = useState<string>('all');
-  const [statusFilter, setStatusFilter] = useState<string>('all');
-  const [serviceFilter, setServiceFilter] = useState<string>('all');
+
+  const {
+    searchQuery,
+    setSearchQuery,
+    debouncedSearch,
+    filters: urlFilters,
+    setFilter,
+    currentPage,
+    setCurrentPage,
+    pageSize,
+  } = useUrlListState<{ severity: string; status: string; service: string }>({
+    defaultPageSize: 10,
+    defaultFilters: { severity: 'all', status: 'all', service: 'all' },
+    baseIndex: 1,
+    historyMode: 'replace',
+  });
+
+  const severityFilter = urlFilters.severity;
+  const statusFilter = urlFilters.status;
+  const serviceFilter = urlFilters.service;
 
   const [selectedIds, setSelectedIds] = useState<(string | number)[]>([]);
   const [batchAcknowledgeDialogOpen, setBatchAcknowledgeDialogOpen] = useState(false);
@@ -136,6 +153,14 @@ export const MonitorAlertsPage: React.FC = () => {
 
   const actionLoading = acknowledgeMutation.isPending || resolveMutation.isPending;
 
+  useEffect(() => {
+    pagination.setPage(currentPage);
+  }, [currentPage]);
+
+  useEffect(() => {
+    pagination.setPageSize(pageSize);
+  }, [pageSize]);
+
   const filteredAlerts = useMemo(() => {
     let result = alerts;
 
@@ -149,8 +174,8 @@ export const MonitorAlertsPage: React.FC = () => {
       result = result.filter((a) => a.status === 'resolved');
     }
 
-    if (searchQuery) {
-      const query = searchQuery.toLowerCase();
+    if (debouncedSearch) {
+      const query = debouncedSearch.toLowerCase();
       result = result.filter(
         (a) => a.title.toLowerCase().includes(query) || a.service_name.toLowerCase().includes(query)
       );
@@ -169,7 +194,7 @@ export const MonitorAlertsPage: React.FC = () => {
     }
 
     return result;
-  }, [alerts, activeTab, searchQuery, severityFilter, statusFilter, serviceFilter]);
+  }, [alerts, activeTab, debouncedSearch, severityFilter, statusFilter, serviceFilter]);
 
   const stats = useMemo(() => {
     const activeCount = alerts.filter((a) => a.status === 'active').length;
@@ -340,20 +365,19 @@ export const MonitorAlertsPage: React.FC = () => {
 
   const handleTabChange = (_: unknown, newValue: TabType) => {
     setActiveTab(newValue);
-    pagination.setPage(1);
+    setCurrentPage(1);
   };
 
   const handleFilterChange = (filters: Record<string, unknown>) => {
     if (typeof filters.severity === 'string') {
-      setSeverityFilter(filters.severity);
+      setFilter('severity', filters.severity);
     }
     if (typeof filters.status === 'string') {
-      setStatusFilter(filters.status);
+      setFilter('status', filters.status);
     }
     if (typeof filters.service === 'string') {
-      setServiceFilter(filters.service);
+      setFilter('service', filters.service);
     }
-    pagination.setPage(1);
   };
 
   const columns: ColumnDef<Alert>[] = useMemo(
@@ -727,10 +751,10 @@ export const MonitorAlertsPage: React.FC = () => {
         }}
         onFilterChange={handleFilterChange}
         pagination={{
-          page: pagination.page,
-          pageSize: pagination.pageSize,
+          page: currentPage,
+          pageSize,
           total: pagination.total,
-          onPageChange: pagination.setPage,
+          onPageChange: setCurrentPage,
         }}
         selectable
         selectedIds={selectedIds}

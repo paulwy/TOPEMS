@@ -16,6 +16,7 @@ use topems_shared::{init_telemetry, AuthState};
 
 mod conversion_rules;
 mod event_bus;
+mod event_handlers;
 mod handlers;
 mod mes_erp_sync;
 mod mes_qms_integration;
@@ -53,6 +54,9 @@ async fn main() -> anyhow::Result<()> {
             tracing::info!("✅ Connected to PostgreSQL database");
             if let Err(e) = init_database(&pool).await {
                 tracing::warn!("⚠️ Database initialization warning: {}", e);
+            }
+            if let Err(e) = event_handlers::start_event_subscribers(pool.clone()).await {
+                tracing::warn!("⚠️ Integration 事件订阅者启动失败: {}", e);
             }
             pool
         }

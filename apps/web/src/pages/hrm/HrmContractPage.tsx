@@ -47,6 +47,7 @@ import { Dialog } from '@/components/common/Dialog';
 import { FileUpload, PageContainer } from '@/components/common';
 import { designTokens } from '@/theme/tokens';
 
+import { useTranslation } from 'react-i18next';
 const contractTypes = [
   { value: 'labor', label: '劳动合同' },
   { value: 'probation', label: '试用期合同' },
@@ -108,6 +109,7 @@ interface RenewFormState {
 }
 
 export default function ContractManagementPage() {
+  const { t } = useTranslation();
   const theme = useTheme();
   const ct = designTokens.colors;
   const queryClient = useQueryClient();
@@ -129,7 +131,7 @@ export default function ContractManagementPage() {
         if (result.code === 0 && result.data) {
           return result.data;
         }
-        throw new Error(result.message || '获取即将到期合同失败');
+        throw new Error(result.message || t('hrm.hrm_contract_page.fail'));
       } else {
         const params: Record<string, any> = { page: currentPage, pagesize: 20 };
         if (statusFilter) {
@@ -139,7 +141,7 @@ export default function ContractManagementPage() {
         if (result.code === 0 && result.data) {
           return result.data;
         }
-        throw new Error(result.message || '获取合同列表失败');
+        throw new Error(result.message || t('hrm.hrm_contract_page.list'));
       }
     },
   });
@@ -308,14 +310,14 @@ export default function ContractManagementPage() {
     mutationFn: async (id: string) => contractApi.delete(id),
     onSuccess: (result) => {
       if (result.code === 0) {
-        showNotification('success', '删除成功');
+        showNotification('success', t('hrm.hrm_contract_page.delete_success'));
         queryClient.invalidateQueries({ queryKey: QUERY_KEYS.HRM.CONTRACT });
       } else {
-        showNotification('error', result.message || '删除失败');
+        showNotification('error', result.message || t('hrm.hrm_contract_page.delete'));
       }
     },
     onError: () => {
-      showNotification('error', '删除失败');
+      showNotification('error', t('hrm.hrm_contract_page.delete'));
     },
   });
 
@@ -332,32 +334,32 @@ export default function ContractManagementPage() {
     },
     onSuccess: (result, variables) => {
       if (result.code === 0) {
-        showNotification('success', variables.type === 'create' ? '创建成功' : '更新成功');
+        showNotification('success', variables.type === 'create' ? t('hrm.hrm_contract_page.create') : t('hrm.hrm_contract_page.update'));
         setModalVisible(false);
         queryClient.invalidateQueries({ queryKey: QUERY_KEYS.HRM.CONTRACT });
       } else {
         showNotification(
           'error',
-          result.message || (variables.type === 'create' ? '创建失败' : '更新失败')
+          result.message || (variables.type === 'create' ? t('hrm.hrm_contract_page.create_1') : t('hrm.hrm_contract_page.update_1'))
         );
       }
     },
     onError: () => {
-      showNotification('error', '保存失败');
+      showNotification('error', t('hrm.hrm_contract_page.save'));
     },
   });
 
   const handleSave = () => {
     if (!formState.employee_id) {
-      showNotification('error', '请选择员工');
+      showNotification('error', t('hrm.hrm_contract_page.please_select'));
       return;
     }
     if (!formState.contract_type) {
-      showNotification('error', '请选择合同类型');
+      showNotification('error', t('hrm.hrm_contract_page.please_select_1'));
       return;
     }
     if (!formState.start_date) {
-      showNotification('error', '请选择开始日期');
+      showNotification('error', t('hrm.hrm_contract_page.start_date'));
       return;
     }
 
@@ -382,21 +384,21 @@ export default function ContractManagementPage() {
       contractApi.renew(args.contractId, args.values),
     onSuccess: (result) => {
       if (result.code === 0) {
-        showNotification('success', '续签申请提交成功');
+        showNotification('success', t('hrm.hrm_contract_page.submit'));
         setRenewModalVisible(false);
         queryClient.invalidateQueries({ queryKey: QUERY_KEYS.HRM.CONTRACT });
       } else {
-        showNotification('error', result.message || '提交失败');
+        showNotification('error', result.message || t('hrm.hrm_contract_page.submit_1'));
       }
     },
     onError: () => {
-      showNotification('error', '提交失败');
+      showNotification('error', t('hrm.hrm_contract_page.submit_1'));
     },
   });
 
   const handleSubmitRenew = () => {
     if (!renewFormState.new_start_date) {
-      showNotification('error', '请选择新合同开始日期');
+      showNotification('error', t('hrm.hrm_contract_page.start_date_1'));
       return;
     }
 
@@ -412,14 +414,14 @@ export default function ContractManagementPage() {
     mutationFn: async (id: string) => contractRenewalApi.approve(id),
     onSuccess: (result) => {
       if (result.code === 0) {
-        showNotification('success', '续签申请已批准');
+        showNotification('success', t('hrm.hrm_contract_page.text_b89d3c'));
         queryClient.invalidateQueries({ queryKey: QUERY_KEYS.HRM.CONTRACT });
       } else {
-        showNotification('error', result.message || '操作失败');
+        showNotification('error', result.message || t('hrm.hrm_contract_page.operation_failed'));
       }
     },
     onError: () => {
-      showNotification('error', '操作失败');
+      showNotification('error', t('hrm.hrm_contract_page.operation_failed'));
     },
   });
 
@@ -432,14 +434,14 @@ export default function ContractManagementPage() {
       contractRenewalApi.reject(args.id, args.reason),
     onSuccess: (result) => {
       if (result.code === 0) {
-        showNotification('success', '续签申请已拒绝');
+        showNotification('success', t('hrm.hrm_contract_page.text_998e3f'));
         queryClient.invalidateQueries({ queryKey: QUERY_KEYS.HRM.CONTRACT });
       } else {
-        showNotification('error', result.message || '操作失败');
+        showNotification('error', result.message || t('hrm.hrm_contract_page.operation_failed'));
       }
     },
     onError: () => {
-      showNotification('error', '操作失败');
+      showNotification('error', t('hrm.hrm_contract_page.operation_failed'));
     },
   });
 
@@ -453,14 +455,14 @@ export default function ContractManagementPage() {
     mutationFn: async (id: string) => contractRenewalApi.execute(id),
     onSuccess: (result) => {
       if (result.code === 0) {
-        showNotification('success', '合同续签已执行');
+        showNotification('success', t('hrm.hrm_contract_page.text_ffe1c6'));
         queryClient.invalidateQueries({ queryKey: QUERY_KEYS.HRM.CONTRACT });
       } else {
-        showNotification('error', result.message || '操作失败');
+        showNotification('error', result.message || t('hrm.hrm_contract_page.operation_failed'));
       }
     },
     onError: () => {
-      showNotification('error', '操作失败');
+      showNotification('error', t('hrm.hrm_contract_page.operation_failed'));
     },
   });
 
@@ -491,28 +493,28 @@ export default function ContractManagementPage() {
     () => [
       {
         id: 'total',
-        title: '合同总数',
+        title: t('hrm.hrm_contract_page.text_5b968a'),
         value: stats.total,
         icon: <FileText size={24} />,
         color: 'primary' as const,
       },
       {
         id: 'active',
-        title: '生效中',
+        title: t('hrm.hrm_contract_page.text_c062e3'),
         value: stats.active,
         icon: <Check size={24} />,
         color: 'success' as const,
       },
       {
         id: 'expiring',
-        title: '即将到期',
+        title: t('hrm.hrm_contract_page.text_1c97a7'),
         value: stats.expiring,
         icon: <AlertCircle size={24} />,
         color: 'warning' as const,
       },
       {
         id: 'expired',
-        title: '已到期',
+        title: t('hrm.hrm_contract_page.text_e5b59f'),
         value: stats.expired,
         icon: <Clock size={24} />,
         color: 'error' as const,
@@ -526,7 +528,7 @@ export default function ContractManagementPage() {
     () => [
       {
         id: 'contract_no',
-        label: '合同编号',
+        label: t('hrm.hrm_contract_page.text_889b64'),
         width: 128,
         render: (row) => (
           <Stack
@@ -546,24 +548,24 @@ export default function ContractManagementPage() {
       },
       {
         id: 'employee',
-        label: '员工',
+        label: t('hrm.hrm_contract_page.text_2ed392'),
         render: (row) => getEmployeeName(row.employee_id),
       },
       {
         id: 'contract_type',
-        label: '合同类型',
+        label: t('hrm.hrm_contract_page.type'),
         render: (row) =>
           contractTypes.find((t) => t.value === row.contract_type)?.label || row.contract_type,
       },
       {
         id: 'salary',
-        label: '薪资',
+        label: t('hrm.hrm_contract_page.text_e859da'),
         width: 96,
         render: (row) => (row.salary ? `${row.salary.toLocaleString()}` : '-'),
       },
       {
         id: 'validity',
-        label: '有效期',
+        label: t('hrm.hrm_contract_page.text_bb114a'),
         width: 192,
         render: (row) => {
           const days = getDaysUntilExpiry(row.end_date);
@@ -587,7 +589,7 @@ export default function ContractManagementPage() {
                   }}
                 >
                   {new Date(row.start_date).toLocaleDateString('zh-CN')} ~{' '}
-                  {row.end_date ? new Date(row.end_date).toLocaleDateString('zh-CN') : '无固定期限'}
+                  {row.end_date ? new Date(row.end_date).toLocaleDateString('zh-CN') : t('hrm.hrm_contract_page.text_974da9')}
                 </Typography>
               </Stack>
               {isExpiringSoon && days !== null && (
@@ -617,7 +619,7 @@ export default function ContractManagementPage() {
       },
       {
         id: 'status',
-        label: '状态',
+        label: t('hrm.hrm_contract_page.status'),
         width: 80,
         render: (row) => (
           <StatusBadge
@@ -636,28 +638,28 @@ export default function ContractManagementPage() {
   const rowActions: RowAction<Contract>[] = useMemo(
     () => [
       {
-        label: '查看',
+        label: t('hrm.hrm_contract_page.view'),
         icon: <Eye size={16} />,
         onClick: handleView,
       },
       {
-        label: '编辑',
+        label: t('hrm.hrm_contract_page.edit'),
         icon: <Edit2 size={16} />,
         onClick: handleEdit,
       },
       {
-        label: '续签',
+        label: t('hrm.hrm_contract_page.text_b53270'),
         icon: <RefreshCw size={16} />,
         color: 'success',
         show: (row) => row.status === 'active',
         onClick: handleRenew,
       },
       {
-        label: '删除',
+        label: t('hrm.hrm_contract_page.delete_1'),
         icon: <Trash2 size={16} />,
         color: 'error',
         confirm: true,
-        confirmMessage: '确定删除该合同吗?',
+        confirmMessage: t('hrm.hrm_contract_page.confirm'),
         onClick: (row) => handleDelete(row.id),
       },
     ],
@@ -689,9 +691,9 @@ export default function ContractManagementPage() {
         onClose={() => setConfirmDialog(null)}
         title={confirmDialog?.title}
         maxWidth='sm'
-        cancelButton={{ label: '取消' }}
+        cancelButton={{ label: t('hrm.hrm_contract_page.cancel') }}
         confirmButton={{
-          label: '确定',
+          label: t('hrm.hrm_contract_page.confirm_1'),
           onClick: () => {
             confirmDialog?.onConfirm();
             setConfirmDialog(null);
@@ -759,7 +761,7 @@ export default function ContractManagementPage() {
               </Typography>
             </Box>
             <ActionButton
-              label='新建合同'
+              label={t('hrm.hrm_contract_page.text_6aa9b8')}
               icon={<Plus size={18} />}
               onClick={handleCreate}
               variant='primary'
@@ -804,7 +806,7 @@ export default function ContractManagementPage() {
               onPageChange: setCurrentPage,
             }}
             searchable
-            searchPlaceholder='搜索合同编号或员工姓名'
+            searchPlaceholder={t('hrm.hrm_contract_page.search')}
             searchValue={searchText}
             onSearch={(value) => {
               setSearchText(value);
@@ -813,23 +815,23 @@ export default function ContractManagementPage() {
             filters={[
               {
                 id: 'status',
-                label: '状态',
+                label: t('hrm.hrm_contract_page.status'),
                 type: 'select',
                 options: [
-                  { label: '全部状态', value: '' },
-                  { label: '生效中', value: 'active' },
-                  { label: '已到期', value: 'expired' },
-                  { label: '已终止', value: 'terminated' },
+                  { label: t('hrm.hrm_contract_page.status_1'), value: '' },
+                  { label: t('hrm.hrm_contract_page.text_c062e3'), value: 'active' },
+                  { label: t('hrm.hrm_contract_page.text_e5b59f'), value: 'expired' },
+                  { label: t('hrm.hrm_contract_page.text_255412'), value: 'terminated' },
                 ],
                 value: statusFilter,
               },
               {
                 id: 'expiring',
-                label: '仅显示即将到期',
+                label: t('hrm.hrm_contract_page.text_c92e33'),
                 type: 'select',
                 options: [
-                  { label: '全部', value: 'false' },
-                  { label: '30天内到期', value: 'true' },
+                  { label: t('hrm.hrm_contract_page.all'), value: 'false' },
+                  { label: t('hrm.hrm_contract_page.text_2b9b5f'), value: 'true' },
                 ],
                 value: showExpiringOnly ? 'true' : 'false',
               },
@@ -845,18 +847,18 @@ export default function ContractManagementPage() {
             }}
             actions={[
               {
-                label: '刷新',
+                label: t('hrm.hrm_contract_page.refresh'),
                 icon: <RefreshCw size={16} />,
                 onClick: loadData,
               },
             ]}
-            emptyMessage='暂无合同数据'
+            emptyMessage={t('hrm.hrm_contract_page.no_data')}
             exportable
-            exportFileName='合同列表'
+            exportFileName={t('hrm.hrm_contract_page.list_1')}
             persistFilters
             persistSearch
             emptyActionButton={{
-              label: '新建合同',
+              label: t('hrm.hrm_contract_page.text_6aa9b8'),
               icon: <Plus size={16} />,
               onClick: handleCreate,
             }}
@@ -867,24 +869,24 @@ export default function ContractManagementPage() {
       <Dialog
         open={modalVisible}
         onClose={() => setModalVisible(false)}
-        title={modalType === 'create' ? '新建合同' : modalType === 'edit' ? '编辑合同' : '合同详情'}
+        title={modalType === 'create' ? t('hrm.hrm_contract_page.text_6aa9b8') : modalType === 'edit' ? t('hrm.hrm_contract_page.edit_1') : t('hrm.hrm_contract_page.detail')}
         maxWidth='md'
         fullWidth
-        cancelButton={modalType !== 'view' ? { label: '取消' } : undefined}
+        cancelButton={modalType !== 'view' ? { label: t('hrm.hrm_contract_page.cancel') } : undefined}
         confirmButton={
           modalType !== 'view'
-            ? { label: modalType === 'create' ? '创建' : '保存', onClick: handleSave }
-            : { label: '关闭' }
+            ? { label: modalType === 'create' ? t('hrm.hrm_contract_page.create_2') : t('hrm.hrm_contract_page.save_1'), onClick: handleSave }
+            : { label: t('hrm.hrm_contract_page.close') }
         }
       >
         {modalType !== 'view' ? (
           <Stack spacing={2}>
             <FormSelect
               name='employee_id'
-              label='员工 *'
+              label={t('hrm.hrm_contract_page.text_1a8eb0')}
               value={formState.employee_id}
               options={[
-                { value: '', label: '请选择员工' },
+                { value: '', label: t('hrm.hrm_contract_page.please_select') },
                 ...employees.map((e) => ({ value: e.id, label: e.name })),
               ]}
               onChange={(value) => setFormState((s) => ({ ...s, employee_id: value as string }))}
@@ -892,21 +894,21 @@ export default function ContractManagementPage() {
 
             <FormField
               name='contract_no'
-              label='合同编号'
+              label={t('hrm.hrm_contract_page.text_889b64')}
               value={formState.contract_no}
               onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
                 setFormState((s) => ({ ...s, contract_no: e.target.value }))
               }
               disabled={modalType === 'create'}
-              placeholder={modalType === 'create' ? '自动生成' : ''}
+              placeholder={modalType === 'create' ? t('hrm.hrm_contract_page.text_cc2177') : ''}
               fullWidth
             />
 
             <FormSelect
               name='contract_type'
-              label='合同类型 *'
+              label={t('hrm.hrm_contract_page.type_1')}
               value={formState.contract_type}
-              options={[{ value: '', label: '请选择合同类型' }, ...contractTypes]}
+              options={[{ value: '', label: t('hrm.hrm_contract_page.please_select_1') }, ...contractTypes]}
               onChange={(value) => setFormState((s) => ({ ...s, contract_type: value as string }))}
             />
 
@@ -916,22 +918,22 @@ export default function ContractManagementPage() {
             >
               <FormField
                 name='party_a_name'
-                label='甲方名称'
+                label={t('hrm.hrm_contract_page.name')}
                 value={formState.party_a_name}
                 onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
                   setFormState((s) => ({ ...s, party_a_name: e.target.value }))
                 }
-                placeholder='公司名称'
+                placeholder={t('hrm.hrm_contract_page.name_1')}
                 fullWidth
               />
               <FormField
                 name='party_a_contact'
-                label='甲方联系人'
+                label={t('hrm.hrm_contract_page.contact')}
                 value={formState.party_a_contact}
                 onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
                   setFormState((s) => ({ ...s, party_a_contact: e.target.value }))
                 }
-                placeholder='联系人姓名'
+                placeholder={t('hrm.hrm_contract_page.contact_1')}
                 fullWidth
               />
             </Stack>
@@ -942,22 +944,22 @@ export default function ContractManagementPage() {
             >
               <FormField
                 name='party_b_name'
-                label='乙方名称'
+                label={t('hrm.hrm_contract_page.name_2')}
                 value={formState.party_b_name}
                 onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
                   setFormState((s) => ({ ...s, party_b_name: e.target.value }))
                 }
-                placeholder='员工姓名'
+                placeholder={t('hrm.hrm_contract_page.text_50df90')}
                 fullWidth
               />
               <FormField
                 name='party_b_contact'
-                label='乙方联系人'
+                label={t('hrm.hrm_contract_page.contact_2')}
                 value={formState.party_b_contact}
                 onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
                   setFormState((s) => ({ ...s, party_b_contact: e.target.value }))
                 }
-                placeholder='员工联系方式'
+                placeholder={t('hrm.hrm_contract_page.text_6440e0')}
                 fullWidth
               />
             </Stack>
@@ -968,7 +970,7 @@ export default function ContractManagementPage() {
             >
               <FormField
                 name='start_date'
-                label='开始日期 *'
+                label={t('hrm.hrm_contract_page.start_date_2')}
                 type='date'
                 value={formState.start_date}
                 onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
@@ -979,13 +981,13 @@ export default function ContractManagementPage() {
               />
               <FormField
                 name='end_date'
-                label='结束日期'
+                label={t('hrm.hrm_contract_page.end_date')}
                 type='date'
                 value={formState.end_date}
                 onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
                   setFormState((s) => ({ ...s, end_date: e.target.value }))
                 }
-                placeholder='无固定期限'
+                placeholder={t('hrm.hrm_contract_page.text_974da9')}
                 fullWidth
                 slotProps={{ inputLabel: { shrink: true } } as const}
               />
@@ -997,7 +999,7 @@ export default function ContractManagementPage() {
             >
               <FormField
                 name='salary'
-                label='薪资'
+                label={t('hrm.hrm_contract_page.text_e859da')}
                 type='number'
                 value={formState.salary}
                 onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
@@ -1008,7 +1010,7 @@ export default function ContractManagementPage() {
               />
               <FormField
                 name='probation_period_days'
-                label='试用期(天)'
+                label={t('hrm.hrm_contract_page.text_9a6409')}
                 type='number'
                 value={formState.probation_period_days}
                 onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
@@ -1019,7 +1021,7 @@ export default function ContractManagementPage() {
               />
               <FormField
                 name='reminder_days'
-                label='提前提醒天数'
+                label={t('hrm.hrm_contract_page.text_c4a405')}
                 type='number'
                 value={formState.reminder_days}
                 onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
@@ -1039,20 +1041,20 @@ export default function ContractManagementPage() {
                 maxCount={5}
                 maxSize={20}
                 maxTotalSize={50}
-                uploadText='上传合同附件'
+                uploadText={t('hrm.hrm_contract_page.upload')}
               />
             </Box>
 
             <FormField
               name='notes'
-              label='备注'
+              label={t('hrm.hrm_contract_page.remark')}
               value={formState.notes}
               onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
                 setFormState((s) => ({ ...s, notes: e.target.value }))
               }
               multiline
               rows={3}
-              placeholder='备注信息'
+              placeholder={t('hrm.hrm_contract_page.remark_1')}
               fullWidth
             />
           </Stack>
@@ -1168,7 +1170,7 @@ export default function ContractManagementPage() {
                       {new Date(currentContract.start_date).toLocaleDateString('zh-CN')}~{' '}
                       {currentContract.end_date
                         ? new Date(currentContract.end_date).toLocaleDateString('zh-CN')
-                        : '无固定期限'}
+                        : t('hrm.hrm_contract_page.text_974da9')}
                     </Typography>
                   </CardContent>
                 </Card>
@@ -1270,7 +1272,7 @@ export default function ContractManagementPage() {
                             {new Date(renewal.new_start_date).toLocaleDateString('zh-CN')} ~{' '}
                             {renewal.new_end_date
                               ? new Date(renewal.new_end_date).toLocaleDateString('zh-CN')
-                              : '无固定期限'}
+                              : t('hrm.hrm_contract_page.text_974da9')}
                           </Typography>
                           {renewal.new_salary && (
                             <Typography
@@ -1304,14 +1306,14 @@ export default function ContractManagementPage() {
                             {renewal.status === 'pending' && (
                               <>
                                 <ActionButton
-                                  label='批准'
+                                  label={t('hrm.hrm_contract_page.text_7a712b')}
                                   icon={<Check size={12} />}
                                   onClick={() => handleApproveRenewal(renewal.id)}
                                   variant='success'
                                   size='small'
                                 />
                                 <ActionButton
-                                  label='拒绝'
+                                  label={t('hrm.hrm_contract_page.text_7173f8')}
                                   icon={<X size={12} />}
                                   onClick={() => handleRejectRenewal(renewal.id)}
                                   variant='danger'
@@ -1321,7 +1323,7 @@ export default function ContractManagementPage() {
                             )}
                             {renewal.status === 'approved' && (
                               <ActionButton
-                                label='执行续签'
+                                label={t('hrm.hrm_contract_page.text_895f5f')}
                                 icon={<RefreshCw size={12} />}
                                 onClick={() => handleExecuteRenewal(renewal.id)}
                                 variant='secondary'
@@ -1343,11 +1345,11 @@ export default function ContractManagementPage() {
       <Dialog
         open={renewModalVisible}
         onClose={() => setRenewModalVisible(false)}
-        title='合同续签申请'
+        title={t('hrm.hrm_contract_page.text_58f371')}
         maxWidth='sm'
         fullWidth
-        cancelButton={{ label: '取消' }}
-        confirmButton={{ label: '提交申请', onClick: handleSubmitRenew }}
+        cancelButton={{ label: t('hrm.hrm_contract_page.cancel') }}
+        confirmButton={{ label: t('hrm.hrm_contract_page.submit_2'), onClick: handleSubmitRenew }}
       >
         <Stack
           spacing={2}
@@ -1355,7 +1357,7 @@ export default function ContractManagementPage() {
         >
           <FormSelect
             name='renewal_type'
-            label='续签类型 *'
+            label={t('hrm.hrm_contract_page.type_2')}
             value={renewFormState.renewal_type}
             options={renewalTypes}
             onChange={(value) =>
@@ -1369,7 +1371,7 @@ export default function ContractManagementPage() {
           >
             <FormField
               name='new_start_date'
-              label='新合同开始日期 *'
+              label={t('hrm.hrm_contract_page.start_date_3')}
               type='date'
               value={renewFormState.new_start_date}
               onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
@@ -1380,13 +1382,13 @@ export default function ContractManagementPage() {
             />
             <FormField
               name='new_end_date'
-              label='新合同结束日期'
+              label={t('hrm.hrm_contract_page.end_date_1')}
               type='date'
               value={renewFormState.new_end_date}
               onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
                 setRenewFormState((s) => ({ ...s, new_end_date: e.target.value }))
               }
-              placeholder='无固定期限'
+              placeholder={t('hrm.hrm_contract_page.text_974da9')}
               fullWidth
               slotProps={{ inputLabel: { shrink: true } } as const}
             />
@@ -1394,26 +1396,26 @@ export default function ContractManagementPage() {
 
           <FormField
             name='new_salary'
-            label='新薪资'
+            label={t('hrm.hrm_contract_page.text_d0eef5')}
             type='number'
             value={renewFormState.new_salary}
             onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
               setRenewFormState((s) => ({ ...s, new_salary: e.target.value }))
             }
-            placeholder='不修改请留空'
+            placeholder={t('hrm.hrm_contract_page.text_67e9f7')}
             fullWidth
           />
 
           <FormField
             name='renewal_reason'
-            label='续签原因'
+            label={t('hrm.hrm_contract_page.text_0e623f')}
             value={renewFormState.renewal_reason}
             onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
               setRenewFormState((s) => ({ ...s, renewal_reason: e.target.value }))
             }
             multiline
             rows={3}
-            placeholder='请说明续签原因'
+            placeholder={t('hrm.hrm_contract_page.description')}
             fullWidth
           />
         </Stack>

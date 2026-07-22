@@ -278,6 +278,7 @@ export const CommandPalette: React.FC<CommandPaletteProps> = ({ open, onClose })
       onClose={onClose}
       maxWidth='sm'
       fullWidth
+      className='command-palette'
       sx={{
         '& .MuiDialog-paper': {
           mt: '20vh',

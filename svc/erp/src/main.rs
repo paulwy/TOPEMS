@@ -1,4 +1,6 @@
+mod event_handlers;
 mod models;
+mod sagas;
 mod services;
 mod shared;
 mod utils;
@@ -75,6 +77,22 @@ async fn main() -> Result<()> {
         tracing::warn!("数据库初始化警告: {}", e);
     }
 
+    // 启动事件订阅者（失败不阻塞启动，参考 CRM 模式）
+    if let Err(e) = event_handlers::start_event_subscribers(pool.clone()).await {
+        tracing::warn!("⚠️ ERP 事件订阅者启动失败: {}", e);
+    }
+
+    let event_publisher = match topems_shared::event::EventPublisher::new("topems-erp") {
+        Ok(publisher) => {
+            tracing::info!("📢 事件发布服务初始化成功");
+            Some(Arc::new(publisher))
+        }
+        Err(e) => {
+            tracing::warn!("⚠️ 事件发布服务初始化失败（不阻塞启动）: {}", e);
+            None
+        }
+    };
+
     let start_time = Instant::now();
     let metrics = Arc::new(SystemMetrics::new());
 
@@ -114,6 +132,7 @@ async fn main() -> Result<()> {
         budget_cache: Arc::new(utils::InMemoryCache::new(Duration::from_secs(300))),
         receivable_cache: Arc::new(utils::InMemoryCache::new(Duration::from_secs(300))),
         payable_cache: Arc::new(utils::InMemoryCache::new(Duration::from_secs(300))),
+        event_publisher,
     };
 
     let cors = create_cors_layer();

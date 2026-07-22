@@ -37,9 +37,11 @@ import { designTokens } from '@/theme/tokens';
 import { EHS_PATHS } from '@/modules/ehs/config';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 
+import { useTranslation } from 'react-i18next';
 const ct = designTokens.colors;
 
 const EhsAccidentPage: React.FC = () => {
+  const { t } = useTranslation();
   const navigate = useNavigate();
   const [searchQuery, setSearchQuery] = useState('');
   const [severityFilter, setSeverityFilter] = useState('');
@@ -67,21 +69,21 @@ const EhsAccidentPage: React.FC = () => {
 
   const translateStatus = (status: string) => {
     const statusMap: Record<string, string> = {
-      pending: '待处理',
-      investigating: '调查中',
-      processing: '处理中',
-      resolved: '已解决',
-      closed: '已结案',
+      pending: t('ehs.ehs_accident_page.pending'),
+      investigating: t('ehs.ehs_accident_page.text_913542'),
+      processing: t('ehs.ehs_accident_page.text_5d459d'),
+      resolved: t('ehs.ehs_accident_page.text_d7d257'),
+      closed: t('ehs.ehs_accident_page.text_039892'),
     };
     return statusMap[status] || status;
   };
 
   const translateSeverity = (severity: string) => {
     const severityMap: Record<string, string> = {
-      minor: '轻微',
-      moderate: '一般',
-      serious: '严重',
-      fatal: '致命',
+      minor: t('ehs.ehs_accident_page.text_b3bd3d'),
+      moderate: t('ehs.ehs_accident_page.text_2ab01e'),
+      serious: t('ehs.ehs_accident_page.text_e2e27a'),
+      fatal: t('ehs.ehs_accident_page.text_a7551e'),
     };
     return severityMap[severity] || severity;
   };
@@ -113,7 +115,7 @@ const EhsAccidentPage: React.FC = () => {
 
   useEffect(() => {
     if (accidentsQuery.isError) {
-      addNotification({ title: '错误', message: '加载事故列表失败', type: 'error' });
+      addNotification({ title: t('ehs.ehs_accident_page.error'), message: t('ehs.ehs_accident_page.list'), type: 'error' });
     }
   }, [accidentsQuery.isError, addNotification]);
 
@@ -148,12 +150,12 @@ const EhsAccidentPage: React.FC = () => {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['ehs-accidents'] });
-      addNotification({ title: '成功', message: '事故上报成功', type: 'success' });
+      addNotification({ title: t('ehs.ehs_accident_page.success'), message: t('ehs.ehs_accident_page.success_1'), type: 'success' });
       setShowCreateModal(false);
     },
     onError: (err) => {
-      addNotification({ title: '错误', message: '上报失败', type: 'error' });
-      apiLogger.error('创建事故记录失败:', err);
+      addNotification({ title: t('ehs.ehs_accident_page.error'), message: t('ehs.ehs_accident_page.fail'), type: 'error' });
+      apiLogger.error(t('ehs.ehs_accident_page.create'), err);
     },
   });
 
@@ -163,12 +165,12 @@ const EhsAccidentPage: React.FC = () => {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['ehs-accidents'] });
-      addNotification({ title: '成功', message: '删除成功', type: 'success' });
+      addNotification({ title: t('ehs.ehs_accident_page.success'), message: t('ehs.ehs_accident_page.delete_success'), type: 'success' });
       setShowDetailModal(false);
     },
     onError: (err) => {
-      addNotification({ title: '错误', message: '删除失败', type: 'error' });
-      apiLogger.error('删除事故记录失败:', err);
+      addNotification({ title: t('ehs.ehs_accident_page.error'), message: t('ehs.ehs_accident_page.delete'), type: 'error' });
+      apiLogger.error(t('ehs.ehs_accident_page.delete_1'), err);
     },
   });
 
@@ -235,11 +237,11 @@ const EhsAccidentPage: React.FC = () => {
   const stats = useMemo(
     () => ({
       total: accidents.length,
-      pending: accidents.filter((a) => a.status === '待处理').length,
-      investigating: accidents.filter((a) => a.status === '调查中').length,
-      processing: accidents.filter((a) => a.status === '处理中').length,
-      closed: accidents.filter((a) => a.status === '已结案').length,
-      serious: accidents.filter((a) => a.severity === '严重' || a.severity === '致命').length,
+      pending: accidents.filter((a) => a.status === t('ehs.ehs_accident_page.pending')).length,
+      investigating: accidents.filter((a) => a.status === t('ehs.ehs_accident_page.text_913542')).length,
+      processing: accidents.filter((a) => a.status === t('ehs.ehs_accident_page.text_5d459d')).length,
+      closed: accidents.filter((a) => a.status === t('ehs.ehs_accident_page.text_039892')).length,
+      serious: accidents.filter((a) => a.severity === t('ehs.ehs_accident_page.text_e2e27a') || a.severity === t('ehs.ehs_accident_page.text_a7551e')).length,
     }),
     [accidents]
   );
@@ -247,7 +249,7 @@ const EhsAccidentPage: React.FC = () => {
   const columns: ColumnDef<Accident>[] = [
     {
       id: 'accident_no',
-      label: '事故编号',
+      label: t('ehs.ehs_accident_page.text_854259'),
       width: 150,
       sortable: true,
       render: (row) => (
@@ -258,27 +260,27 @@ const EhsAccidentPage: React.FC = () => {
     },
     {
       id: 'title',
-      label: '事故标题',
+      label: t('ehs.ehs_accident_page.title'),
       width: 200,
       sortable: true,
       render: (row) => <Typography sx={{ fontWeight: 500 }}>{row.title}</Typography>,
     },
     {
       id: 'accident_type',
-      label: '事故类型',
+      label: t('ehs.ehs_accident_page.type'),
       width: 120,
       render: (row) => row.accident_type || '-',
     },
     {
       id: 'severity',
-      label: '严重程度',
+      label: t('ehs.ehs_accident_page.text_08fe50'),
       width: 100,
       align: 'center',
       render: (row) => getSeverityChip(row.severity),
     },
     {
       id: 'location',
-      label: '地点',
+      label: t('ehs.ehs_accident_page.text_fc1a7d'),
       width: 150,
       render: (row) => (
         <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
@@ -289,7 +291,7 @@ const EhsAccidentPage: React.FC = () => {
     },
     {
       id: 'occurred_at',
-      label: '发生时间',
+      label: t('ehs.ehs_accident_page.time'),
       width: 160,
       sortable: true,
       render: (row) => (
@@ -301,7 +303,7 @@ const EhsAccidentPage: React.FC = () => {
     },
     {
       id: 'reported_by',
-      label: '报告人',
+      label: t('ehs.ehs_accident_page.text_7a0acc'),
       width: 100,
       render: (row) => (
         <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
@@ -312,7 +314,7 @@ const EhsAccidentPage: React.FC = () => {
     },
     {
       id: 'status',
-      label: '状态',
+      label: t('ehs.ehs_accident_page.status'),
       width: 100,
       align: 'center',
       render: (row) => getStatusChip(row.status),
@@ -321,7 +323,7 @@ const EhsAccidentPage: React.FC = () => {
 
   const rowActions: RowAction<Accident>[] = [
     {
-      label: '详情',
+      label: t('ehs.ehs_accident_page.detail'),
       icon: <Eye size={16} />,
       onClick: (row) => {
         setSelectedAccident(row);
@@ -385,7 +387,7 @@ const EhsAccidentPage: React.FC = () => {
         }}
       >
         <StatCard
-          label='事故总数'
+          label={t('ehs.ehs_accident_page.text_03db7f')}
           value={stats.total}
           icon={<AlertCircle />}
           bgColor='error.light'
@@ -393,7 +395,7 @@ const EhsAccidentPage: React.FC = () => {
           iconColor='error.main'
         />
         <StatCard
-          label='待处理'
+          label={t('ehs.ehs_accident_page.pending')}
           value={stats.pending}
           icon={<AlertCircle />}
           bgColor='background.paper'
@@ -401,7 +403,7 @@ const EhsAccidentPage: React.FC = () => {
           iconColor={ct.yellow[600]}
         />
         <StatCard
-          label='调查中'
+          label={t('ehs.ehs_accident_page.text_913542')}
           value={stats.investigating}
           icon={<AlertTriangle />}
           bgColor='background.paper'
@@ -409,7 +411,7 @@ const EhsAccidentPage: React.FC = () => {
           iconColor='primary.dark'
         />
         <StatCard
-          label='已结案'
+          label={t('ehs.ehs_accident_page.text_039892')}
           value={stats.closed}
           icon={<AlertCircle />}
           bgColor='background.paper'
@@ -417,7 +419,7 @@ const EhsAccidentPage: React.FC = () => {
           iconColor='success.dark'
         />
         <StatCard
-          label='严重事故'
+          label={t('ehs.ehs_accident_page.text_7af942')}
           value={stats.serious}
           icon={<AlertTriangle />}
           bgColor='background.paper'
@@ -446,7 +448,7 @@ const EhsAccidentPage: React.FC = () => {
 
   const handleSave = () => {
     if (!formData.title.trim()) {
-      addNotification({ title: '错误', message: '请输入事故标题', type: 'error' });
+      addNotification({ title: t('ehs.ehs_accident_page.error'), message: t('ehs.ehs_accident_page.please_input'), type: 'error' });
       return;
     }
     createAccidentMutation.mutate({
@@ -463,7 +465,7 @@ const EhsAccidentPage: React.FC = () => {
   };
 
   const handleDelete = (id: string) => {
-    if (!confirm('确定要删除此事故记录吗？')) return;
+    if (!confirm(t('ehs.ehs_accident_page.confirm'))) return;
     deleteAccidentMutation.mutate(id);
   };
 
@@ -474,9 +476,9 @@ const EhsAccidentPage: React.FC = () => {
           title=''
           subtitle=''
           breadcrumbs={[
-            { label: '首页', href: '/dashboard' },
-            { label: 'EHS管理', href: EHS_PATHS.root },
-            { label: '事故记录' },
+            { label: t('ehs.ehs_accident_page.home'), href: '/dashboard' },
+            { label: t('ehs.ehs_accident_page.text_fc3b32'), href: EHS_PATHS.root },
+            { label: t('ehs.ehs_accident_page.text_53ac81') },
           ]}
           columns={columns}
           data={paginatedAccidents}
@@ -488,7 +490,7 @@ const EhsAccidentPage: React.FC = () => {
             onPageChange: setCurrentPage,
           }}
           searchable
-          searchPlaceholder='搜索事故编号、标题或地点...'
+          searchPlaceholder={t('ehs.ehs_accident_page.search')}
           searchValue={searchQuery}
           onSearch={(value) => {
             setSearchQuery(value);
@@ -497,7 +499,7 @@ const EhsAccidentPage: React.FC = () => {
           filters={[
             {
               id: 'severity',
-              label: '严重程度',
+              label: t('ehs.ehs_accident_page.text_08fe50'),
               type: 'select',
               value: severityFilter,
               onChange: (value) => {
@@ -505,16 +507,16 @@ const EhsAccidentPage: React.FC = () => {
                 setCurrentPage(0);
               },
               options: [
-                { label: '全部', value: '' },
-                { label: '轻微', value: '轻微' },
-                { label: '一般', value: '一般' },
-                { label: '严重', value: '严重' },
-                { label: '致命', value: '致命' },
+                { label: t('ehs.ehs_accident_page.all'), value: '' },
+                { label: t('ehs.ehs_accident_page.text_b3bd3d'), value: t('ehs.ehs_accident_page.text_b3bd3d') },
+                { label: t('ehs.ehs_accident_page.text_2ab01e'), value: t('ehs.ehs_accident_page.text_2ab01e') },
+                { label: t('ehs.ehs_accident_page.text_e2e27a'), value: t('ehs.ehs_accident_page.text_e2e27a') },
+                { label: t('ehs.ehs_accident_page.text_a7551e'), value: t('ehs.ehs_accident_page.text_a7551e') },
               ],
             },
             {
               id: 'status',
-              label: '状态',
+              label: t('ehs.ehs_accident_page.status'),
               type: 'select',
               value: statusFilter,
               onChange: (value) => {
@@ -522,17 +524,17 @@ const EhsAccidentPage: React.FC = () => {
                 setCurrentPage(0);
               },
               options: [
-                { label: '全部', value: '' },
-                { label: '待处理', value: '待处理' },
-                { label: '调查中', value: '调查中' },
-                { label: '处理中', value: '处理中' },
-                { label: '已结案', value: '已结案' },
+                { label: t('ehs.ehs_accident_page.all'), value: '' },
+                { label: t('ehs.ehs_accident_page.pending'), value: t('ehs.ehs_accident_page.pending') },
+                { label: t('ehs.ehs_accident_page.text_913542'), value: t('ehs.ehs_accident_page.text_913542') },
+                { label: t('ehs.ehs_accident_page.text_5d459d'), value: t('ehs.ehs_accident_page.text_5d459d') },
+                { label: t('ehs.ehs_accident_page.text_039892'), value: t('ehs.ehs_accident_page.text_039892') },
               ],
             },
           ]}
           actions={[
             {
-              label: '事故上报',
+              label: t('ehs.ehs_accident_page.text_e5f867'),
               icon: <Plus sx={{ width: 16, height: 16 }} />,
               onClick: handleCreate,
               variant: 'contained',
@@ -555,24 +557,24 @@ const EhsAccidentPage: React.FC = () => {
             <Box sx={{ pt: 1, display: 'flex', flexDirection: 'column', gap: 2 }}>
               <TextField
                 fullWidth
-                label='事故标题 *'
+                label={t('ehs.ehs_accident_page.title_1')}
                 value={formData.title}
                 onChange={(e) => setFormData({ ...formData, title: e.target.value })}
-                placeholder='请输入事故标题'
+                placeholder={t('ehs.ehs_accident_page.please_input')}
               />
               <Box sx={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 2 }}>
                 <TextField
                   fullWidth
-                  label='事故类型'
+                  label={t('ehs.ehs_accident_page.type')}
                   value={formData.accident_type}
                   onChange={(e) => setFormData({ ...formData, accident_type: e.target.value })}
-                  placeholder='如：物体打击、机械伤害等'
+                  placeholder={t('ehs.ehs_accident_page.text_a388a0')}
                 />
                 <FormControl fullWidth>
                   <InputLabel>严重程度 *</InputLabel>
                   <Select
                     value={formData.severity}
-                    label='严重程度'
+                    label={t('ehs.ehs_accident_page.text_08fe50')}
                     onChange={(e) => setFormData({ ...formData, severity: e.target.value })}
                   >
                     <MenuItem value='minor'>轻微</MenuItem>
@@ -584,23 +586,23 @@ const EhsAccidentPage: React.FC = () => {
               </Box>
               <TextField
                 fullWidth
-                label='发生地点'
+                label={t('ehs.ehs_accident_page.text_2630ba')}
                 value={formData.location}
                 onChange={(e) => setFormData({ ...formData, location: e.target.value })}
-                placeholder='请输入事故发生地点'
+                placeholder={t('ehs.ehs_accident_page.please_input_1')}
               />
               <Box sx={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 2 }}>
                 <TextField
                   fullWidth
-                  label='报告人'
+                  label={t('ehs.ehs_accident_page.text_7a0acc')}
                   value={formData.reported_by}
                   onChange={(e) => setFormData({ ...formData, reported_by: e.target.value })}
-                  placeholder='请输入报告人姓名'
+                  placeholder={t('ehs.ehs_accident_page.please_input_2')}
                 />
                 <TextField
                   fullWidth
                   type='datetime-local'
-                  label='发生时间'
+                  label={t('ehs.ehs_accident_page.time')}
                   value={formData.occurred_at}
                   onChange={(e) => setFormData({ ...formData, occurred_at: e.target.value })}
                   slotProps={{ inputLabel: { shrink: true } } as const}
@@ -610,7 +612,7 @@ const EhsAccidentPage: React.FC = () => {
                 <TextField
                   fullWidth
                   type='number'
-                  label='伤亡人数'
+                  label={t('ehs.ehs_accident_page.text_355a25')}
                   value={formData.casualties}
                   onChange={(e) =>
                     setFormData({ ...formData, casualties: parseInt(e.target.value) || 0 })
@@ -619,7 +621,7 @@ const EhsAccidentPage: React.FC = () => {
                 <TextField
                   fullWidth
                   type='number'
-                  label='经济损失（万元）'
+                  label={t('ehs.ehs_accident_page.text_b68683')}
                   value={formData.economic_loss}
                   onChange={(e) =>
                     setFormData({ ...formData, economic_loss: parseFloat(e.target.value) || 0 })
@@ -628,10 +630,10 @@ const EhsAccidentPage: React.FC = () => {
               </Box>
               <TextField
                 fullWidth
-                label='事故描述'
+                label={t('ehs.ehs_accident_page.description')}
                 value={formData.description}
                 onChange={(e) => setFormData({ ...formData, description: e.target.value })}
-                placeholder='请详细描述事故经过'
+                placeholder={t('ehs.ehs_accident_page.description_1')}
                 multiline
                 rows={4}
               />
@@ -775,7 +777,7 @@ const EhsAccidentPage: React.FC = () => {
                   >
                     事故描述
                   </Typography>
-                  <Typography>{accidentDetail.accident.description || '暂无描述'}</Typography>
+                  <Typography>{accidentDetail.accident.description || t('ehs.ehs_accident_page.description_2')}</Typography>
                 </Box>
 
                 {accidentDetail.investigation && (

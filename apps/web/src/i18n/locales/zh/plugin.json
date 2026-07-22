@@ -1,0 +1,265 @@
+{
+  "title": "插件管理",
+  "menu": {
+    "plugin": "插件",
+    "market": "市场",
+    "install": "安装",
+    "config": "配置",
+    "dependency": "依赖"
+  },
+  "status": {
+    "installed": "已安装",
+    "not_installed": "未安装",
+    "enabled": "已启用",
+    "disabled": "已禁用",
+    "updating": "更新中",
+    "error": "异常",
+    "running": "运行中",
+    "unhealthy": "不健康"
+  },
+  "action": {
+    "create": "创建",
+    "edit": "编辑",
+    "delete": "删除",
+    "view": "查看",
+    "install": "安装",
+    "uninstall": "卸载",
+    "enable": "启用",
+    "disable": "禁用",
+    "update": "更新",
+    "close": "关闭",
+    "refresh": "刷新",
+    "back": "上一步",
+    "next": "下一步",
+    "submit": "提交审核",
+    "continue_publish": "继续发布新插件"
+  },
+  "field": {
+    "plugin_name": "插件名称",
+    "plugin_code": "插件编码",
+    "version": "版本",
+    "author": "作者",
+    "description": "描述",
+    "category": "分类",
+    "dependencies": "依赖",
+    "installed_at": "安装时间",
+    "updated_at": "更新时间",
+    "status": "状态",
+    "tags": "标签",
+    "website": "官方网站",
+    "license": "许可证",
+    "min_app_version": "最低应用版本",
+    "price": "价格（元）",
+    "release_notes": "版本更新说明",
+    "plugin_type": "插件类型",
+    "rating": "评分",
+    "downloads": "下载量",
+    "type": "类型",
+    "latest_version": "最新版本",
+    "publish_time": "发布时间",
+    "review_title": "评价标题",
+    "review_content": "评价内容",
+    "title_field": "标题"
+  },
+  "message": {
+    "create_success": "创建成功",
+    "update_success": "更新成功",
+    "delete_success": "删除成功",
+    "install_success": "安装成功",
+    "install_failed": "安装失败",
+    "enable_success": "启用成功",
+    "confirm_delete": "确认删除？",
+    "no_data": "暂无数据",
+    "refresh_success": "刷新成功",
+    "plugin_list_updated": "插件列表已更新",
+    "review_success_title": "评价成功",
+    "review_success_message": "感谢您的评价",
+    "review_failed_title": "评价失败",
+    "review_failed_message": "无法提交评价",
+    "install_failed_message": "无法安装插件，请稍后重试",
+    "install_failed_short": "无法安装插件",
+    "plugin_not_exist": "插件不存在",
+    "plugin_code_empty": "插件代码不能为空"
+  },
+  "category": {
+    "finance": "财务管理",
+    "hr": "人力资源",
+    "manufacturing": "生产制造",
+    "quality": "质量管理",
+    "supply": "供应链",
+    "crm": "客户关系",
+    "project": "项目管理"
+  },
+  "plugin_type": {
+    "core": "核心插件",
+    "business": "业务插件"
+  },
+  "common": {
+    "no_description": "暂无描述",
+    "no_version_info": "暂无版本信息",
+    "no_reviews": "暂无评价",
+    "anonymous_user": "匿名用户",
+    "purchased": "已购买",
+    "featured": "精选",
+    "latest": "最新",
+    "stable": "稳定",
+    "free": "免费",
+    "installed": "已安装",
+    "installing": "安装中...",
+    "submitting": "提交中...",
+    "free_install": "免费安装",
+    "purchase": "购买",
+    "install_now": "立即安装",
+    "buy_now": "立即购买",
+    "details": "详情",
+    "submit_review": "提交评价",
+    "post_review": "发表评价",
+    "rating_label": "评分：",
+    "version_history": "版本历史",
+    "reviews_label": "用户评价",
+    "description_label": "描述",
+    "rating_overview": "评分概览",
+    "review_count": "{{count}} 条评价",
+    "star_label": "{{star}}星",
+    "unknown": "未知",
+    "unknown_author": "未知作者"
+  },
+  "upload_page": {
+    "title": "发布插件",
+    "subtitle": "将您的插件发布到 TOPEMS 插件市场，让更多用户使用",
+    "step": {
+      "basic": "基本信息",
+      "config": "插件配置",
+      "upload": "上传文件",
+      "submit": "提交审核"
+    },
+    "section": {
+      "basic_info": "基本信息",
+      "plugin_config": "插件配置",
+      "upload_files": "上传文件",
+      "preview": "插件信息预览"
+    },
+    "form": {
+      "name": "插件名称",
+      "code": "插件代码",
+      "version": "版本号",
+      "category": "插件分类",
+      "description": "插件描述",
+      "tags": "标签",
+      "plugin_type": "插件类型",
+      "author": "作者名称",
+      "website": "官方网站",
+      "license": "许可证",
+      "min_app_version": "最低应用版本",
+      "is_free": "免费插件",
+      "price": "价格（元）",
+      "release_notes": "版本更新说明"
+    },
+    "helper": {
+      "name": "显示在插件市场的名称",
+      "code": "唯一标识符，只能包含小写字母、数字和连字符",
+      "version": "遵循语义化版本规范，如 1.0.0",
+      "description": "简要描述插件的功能和用途",
+      "tags": "多个标签用逗号分隔",
+      "website": "可选，插件的官方网站地址",
+      "license": "如 MIT, Apache-2.0, GPL 等",
+      "min_app_version": "插件需要的最低 TOPEMS 版本",
+      "release_notes": "描述此版本的更新内容"
+    },
+    "validation": {
+      "name_required": "请输入插件名称",
+      "code_required": "请输入插件代码",
+      "code_format": "插件代码只能包含小写字母、数字和连字符，且以字母开头",
+      "version_required": "请输入版本号",
+      "description_required": "请输入插件描述",
+      "category_required": "请选择分类",
+      "author_required": "请输入作者名称"
+    },
+    "upload": {
+      "package_title": "上传插件包",
+      "package_hint": "点击或拖拽 .zip 或 .tar.gz 文件到此处",
+      "package_max_size": "最大 100MB",
+      "package_alert": "插件包需要包含 plugin.json 配置文件",
+      "screenshot_title": "上传截图",
+      "screenshot_hint": "点击或拖拽图片文件到此处",
+      "screenshot_format": "支持 JPG、PNG，最多 6 张",
+      "screenshot_alert": "建议上传 1280x800 分辨率的截图"
+    },
+    "preview": {
+      "name_placeholder": "插件名称",
+      "author_placeholder": "作者",
+      "category_placeholder": "分类",
+      "description_placeholder": "插件描述将显示在这里..."
+    },
+    "notification": {
+      "submit_success_title": "提交成功",
+      "submit_success_message": "{{name}} 插件已提交审核，我们会尽快处理",
+      "submit_failed_title": "提交失败",
+      "submit_failed_message": "提交失败，请稍后重试"
+    },
+    "success": {
+      "title": "提交成功！",
+      "message": "您的插件 {{name}} 已成功提交审核，我们会在 1-3 个工作日内完成审核并通知您。"
+    }
+  },
+  "marketplace_page": {
+    "title": "插件市场",
+    "subtitle": "发现和安装强大的插件，扩展您的 TOPEMS 功能",
+    "search_placeholder": "搜索插件...",
+    "filter": {
+      "suite_label": "套件分类",
+      "all_suites": "全部套件",
+      "sort_label": "排序方式"
+    },
+    "sort": {
+      "popular": "最受欢迎",
+      "rating": "评分最高",
+      "newest": "最新发布",
+      "price": "价格排序"
+    },
+    "plugin_count": "共 {{count}} 个插件",
+    "suite_plugin_count": "{{count}} 个插件",
+    "all_plugins": "全部插件",
+    "empty_title": "未找到匹配的插件",
+    "empty_hint": "尝试调整搜索条件或选择其他分类",
+    "install_success_message": "{{name}} 插件已安装",
+    "review_label": "用户评价 ({{count}})"
+  },
+  "detail_page": {
+    "back_to_market": "返回插件市场",
+    "install_count": "{{count}} 次安装",
+    "tabs": {
+      "intro": "介绍",
+      "version_history": "版本历史 ({{count}})",
+      "reviews": "用户评价 ({{count}})"
+    },
+    "section": {
+      "plugin_intro": "插件介绍",
+      "main_features": "主要功能",
+      "tags": "标签",
+      "version_history": "版本历史",
+      "post_review": "发表评价",
+      "all_reviews": "全部评价 ({{count}})"
+    },
+    "feature": {
+      "business_flow": "完整的业务流程支持",
+      "flexible_config": "灵活的配置选项",
+      "rich_api": "丰富的API接口",
+      "multi_platform": "多端适配支持",
+      "data_security": "数据安全保障",
+      "continuous_update": "持续更新维护"
+    },
+    "version": {
+      "update_notes": "更新说明",
+      "size_label": "大小: {{size}}",
+      "min_version_label": "最低版本: v{{version}}"
+    },
+    "review": {
+      "first_reviewer": "成为第一个评价的用户"
+    },
+    "pricing": {
+      "permanent_usage": "一次性购买，永久使用"
+    },
+    "install_success_message": "{{name}} 已成功安装"
+  }
+}

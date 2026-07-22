@@ -1,5 +1,6 @@
 import React, { useState, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { useTranslation } from 'react-i18next';
 import { Box, Chip, LinearProgress, Typography, Stack } from '@mui/material';
 import { Plus, Download, Eye, Edit, Trash2, Code2 } from 'lucide-react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
@@ -17,6 +18,7 @@ import { logger } from '@/utils/logger';
 const ct = designTokens.colors;
 
 const RsProjectListPage: React.FC = () => {
+  const { t } = useTranslation();
   const navigate = useNavigate();
   const queryClient = useQueryClient();
   const { addNotification } = useNotificationStore();
@@ -39,7 +41,7 @@ const RsProjectListPage: React.FC = () => {
 
       const response = await rdApi.listProjects(params);
       if (!response.success || !response.data) {
-        throw new Error(response.message || '加载项目列表失败');
+        throw new Error(response.message || t('rd.project_list_page.error.load_list_failed'));
       }
       return {
         projects: response.data.projects || [],
@@ -52,7 +54,7 @@ const RsProjectListPage: React.FC = () => {
     mutationFn: async (id: string) => {
       const response = await rdApi.deleteProject(id);
       if (!response.success) {
-        throw new Error(response.message || '删除项目失败');
+        throw new Error(response.message || t('rd.project_list_page.error.delete_failed'));
       }
       return response;
     },
@@ -60,16 +62,16 @@ const RsProjectListPage: React.FC = () => {
       queryClient.invalidateQueries({ queryKey: QUERY_KEYS.RD.PROJECTS });
       addNotification({
         type: 'success',
-        title: '删除成功',
-        message: '项目已删除',
+        title: t('rd.project_list_page.notification.delete_success_title'),
+        message: t('rd.project_list_page.notification.delete_success_message'),
       });
     },
     onError: (error: unknown) => {
       logger.error('删除项目失败:', error);
       addNotification({
         type: 'error',
-        title: '删除失败',
-        message: error instanceof Error ? error.message : '无法删除项目',
+        title: t('rd.project_list_page.notification.delete_failed_title'),
+        message: error instanceof Error ? error.message : t('rd.project_list_page.notification.delete_failed_message'),
       });
     },
   });
@@ -102,15 +104,15 @@ const RsProjectListPage: React.FC = () => {
   const getStatusLabel = (status: string): string => {
     switch (status) {
       case 'in_progress':
-        return '进行中';
+        return t('rd.project_list_page.status_filter.in_progress');
       case 'completed':
-        return '已完成';
+        return t('rd.project_list_page.status_filter.completed');
       case 'paused':
-        return '暂停';
+        return t('rd.project_list_page.status_filter.paused');
       case 'cancelled':
-        return '取消';
+        return t('rd.project_list_page.status_filter.cancelled');
       case 'pending':
-        return '待启动';
+        return t('rd.project_list_page.status_filter.pending');
       default:
         return status;
     }
@@ -140,7 +142,7 @@ const RsProjectListPage: React.FC = () => {
     () => [
       {
         id: 'code',
-        label: '项目编码',
+        label: t('rd.project_list_page.column.code'),
         render: (row) => (
           <Typography
             variant='body2'
@@ -152,12 +154,12 @@ const RsProjectListPage: React.FC = () => {
       },
       {
         id: 'name',
-        label: '项目名称',
+        label: t('rd.project_list_page.column.name'),
         render: (row) => <Typography variant='body2'>{row.name}</Typography>,
       },
       {
         id: 'project_type',
-        label: '项目类型',
+        label: t('rd.project_list_page.column.project_type'),
         render: (row) => (
           <Chip
             label={row.project_type}
@@ -168,11 +170,11 @@ const RsProjectListPage: React.FC = () => {
       },
       {
         id: 'leader',
-        label: '负责人',
+        label: t('rd.project_list_page.column.leader'),
       },
       {
         id: 'status',
-        label: '状态',
+        label: t('rd.project_list_page.column.status'),
         render: (row) => (
           <Chip
             label={getStatusLabel(row.status)}
@@ -183,7 +185,7 @@ const RsProjectListPage: React.FC = () => {
       },
       {
         id: 'progress',
-        label: '进度',
+        label: t('rd.project_list_page.column.progress'),
         render: (row) => (
           <Stack
             direction='row'
@@ -201,65 +203,65 @@ const RsProjectListPage: React.FC = () => {
       },
       {
         id: 'start_date',
-        label: '开始日期',
+        label: t('rd.project_list_page.column.start_date'),
       },
       {
         id: 'budget',
-        label: '预算(万元)',
+        label: t('rd.project_list_page.column.budget'),
         render: (row) => (row.budget ? (row.budget / 10000).toFixed(1) : '-'),
       },
     ],
-    []
+    [t]
   );
 
   const filters = useMemo<FilterConfig[]>(
     () => [
       {
         id: 'status',
-        label: '状态',
+        label: t('rd.project_list_page.filter.status'),
         type: 'select',
         options: [
-          { label: '全部', value: '' },
-          { label: '待启动', value: 'pending' },
-          { label: '进行中', value: 'in_progress' },
-          { label: '已完成', value: 'completed' },
-          { label: '暂停', value: 'paused' },
-          { label: '取消', value: 'cancelled' },
+          { label: t('rd.project_list_page.status_filter.all'), value: '' },
+          { label: t('rd.project_list_page.status_filter.pending'), value: 'pending' },
+          { label: t('rd.project_list_page.status_filter.in_progress'), value: 'in_progress' },
+          { label: t('rd.project_list_page.status_filter.completed'), value: 'completed' },
+          { label: t('rd.project_list_page.status_filter.paused'), value: 'paused' },
+          { label: t('rd.project_list_page.status_filter.cancelled'), value: 'cancelled' },
         ],
         value: statusFilter || '',
         onChange: (value: unknown) => setStatusFilter((value as string) || null),
       },
     ],
-    [statusFilter]
+    [statusFilter, t]
   );
 
   const rowActions = useMemo(
     () => [
       {
-        label: '查看详情',
+        label: t('rd.project_list_page.row_action.view_detail'),
         icon: <Eye size={16} />,
         onClick: (row: Project) => navigate(`${RD_PATHS.project}/${row.id}`),
       },
       {
-        label: '编辑',
+        label: t('rd.project_list_page.row_action.edit'),
         icon: <Edit size={16} />,
         onClick: (row: Project) => navigate(`${RD_PATHS.project}/${row.id}/edit`),
       },
       {
-        label: '删除',
+        label: t('rd.project_list_page.row_action.delete'),
         icon: <Trash2 size={16} />,
         color: 'error' as const,
         divider: true,
         onClick: handleDeleteClick,
       },
     ],
-    [navigate]
+    [navigate, t]
   );
 
   return (
     <PageContainer
-      title='研发项目管理'
-      subtitle='管理研发项目、跟踪进度、分配资源'
+      title={t('rd.project_list_page.title')}
+      subtitle={t('rd.project_list_page.subtitle')}
       headerProps={{
         pageIcon: <Code2 style={{ width: 20, height: 20 }} />,
         pageGradient: `linear-gradient(135deg, ${ct.secondary.main} 0%, ${ct.secondary.dark} 100%)`,
@@ -272,7 +274,7 @@ const RsProjectListPage: React.FC = () => {
         data={projects}
         loading={loading}
         searchable
-        searchPlaceholder='搜索项目名称或编码...'
+        searchPlaceholder={t('rd.project_list_page.search_placeholder')}
         searchValue={searchTerm}
         onSearch={setSearchTerm}
         filters={filters}
@@ -291,13 +293,13 @@ const RsProjectListPage: React.FC = () => {
         }}
         actions={[
           {
-            label: '导出',
+            label: t('rd.project_list_page.action_button.export'),
             variant: 'outlined',
             icon: <Download size={18} />,
             onClick: handleExport,
           },
           {
-            label: '新建项目',
+            label: t('rd.project_list_page.action_button.create_project'),
             variant: 'contained',
             icon: <Plus size={18} />,
             onClick: () => navigate(RD_PATHS.projectCreate),
@@ -305,7 +307,7 @@ const RsProjectListPage: React.FC = () => {
         ]}
         rowActions={rowActions}
         showRowNumber
-        emptyMessage='暂无项目数据'
+        emptyMessage={t('rd.project_list_page.empty_message')}
       />
 
       <ConfirmDialog
@@ -315,8 +317,8 @@ const RsProjectListPage: React.FC = () => {
           setSelectedProject(null);
         }}
         onConfirm={handleDeleteConfirm}
-        title='确认删除'
-        message={`确定要删除项目 "${selectedProject?.name}" 吗？此操作不可恢复。`}
+        title={t('rd.project_list_page.dialog.confirm_delete_title')}
+        message={t('rd.project_list_page.dialog.confirm_delete_message', { name: selectedProject?.name || '' })}
         danger
       />
     </PageContainer>

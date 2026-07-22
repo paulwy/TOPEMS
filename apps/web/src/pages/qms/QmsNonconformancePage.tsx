@@ -17,21 +17,19 @@ import {
   MenuItem,
   Button,
 } from '@mui/material';
-import { useNotificationStore } from '@/store';
 import * as z from 'zod';
 import { ListPageTemplate, type ColumnDef, type RowAction } from '@/components/templates';
 import { PageContainer } from '@/components/common';
+import { ConfirmDialog } from '@topems/shared-components';
+import { useConfirmDialog, useCrudMutations } from '@/hooks';
 import { qmsApi } from '@/api/qms';
 import type { QualityIssue } from '@/api/qms';
 import { designTokens } from '@/theme/tokens';
-import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { useQuery } from '@tanstack/react-query';
 
 const ct = designTokens.colors;
 
 const QmsNonconformancePage: React.FC = () => {
-  const queryClient = useQueryClient();
-  const addNotification = useNotificationStore((state) => state.addNotification);
-
   const [searchTerm, setSearchTerm] = useState('');
   const [showModal, setShowModal] = useState(false);
   const [showDetailModal, setShowDetailModal] = useState(false);
@@ -44,6 +42,12 @@ const QmsNonconformancePage: React.FC = () => {
     severity: 'medium' as 'high' | 'medium' | 'low',
     category: '',
   });
+  const {
+    confirmOpen: confirmDialogOpen,
+    confirmConfig: confirmDialogConfig,
+    openConfirm: openConfirmDialog,
+    closeConfirm: setConfirmDialogClosed,
+  } = useConfirmDialog();
 
   const [errors, setErrors] = useState<Record<string, string>>({});
 
@@ -64,88 +68,53 @@ const QmsNonconformancePage: React.FC = () => {
   const loading = issuesQuery.isLoading;
 
   // React Query - Mutations
-  const createMutation = useMutation({
-    mutationFn: (data: {
-      issue_no: string;
-      title: string;
-      description: string;
-      severity: 'high' | 'medium' | 'low';
-      category: string;
-      status: string;
-      assignee: string;
-    }) => qmsApi.createIssue(data),
-    onSuccess: (response) => {
-      if (response.success) {
-        addNotification({ title: '成功', message: '记录创建成功', type: 'success' });
-        queryClient.invalidateQueries({ queryKey: ['qms-issues'] });
-        setShowModal(false);
-        setIsEditing(false);
-        resetForm();
-      } else {
-        addNotification({
-          title: '失败',
-          message: response.message || '创建失败',
-          type: 'error',
-        });
-      }
-    },
-    onError: () => {
-      addNotification({ title: '错误', message: '操作失败，请重试', type: 'error' });
-    },
-  });
+  type CreateIssueRequest = {
+    issue_no: string;
+    title: string;
+    description: string;
+    severity: 'high' | 'medium' | 'low';
+    category: string;
+    status: string;
+    assignee: string;
+  };
 
-  const updateMutation = useMutation({
-    mutationFn: ({
-      id,
-      data,
-    }: {
-      id: string;
-      data: {
-        issue_no: string;
-        title: string;
-        description: string;
-        severity: 'high' | 'medium' | 'low';
-        category: string;
-        status: string;
-        assignee: string;
-      };
-    }) => qmsApi.updateIssue(id, data),
-    onSuccess: (response) => {
-      if (response.success) {
-        addNotification({ title: '成功', message: '记录更新成功', type: 'success' });
-        queryClient.invalidateQueries({ queryKey: ['qms-issues'] });
-        setShowModal(false);
-        setIsEditing(false);
-        resetForm();
-      } else {
-        addNotification({
-          title: '失败',
-          message: response.message || '更新失败',
-          type: 'error',
-        });
+  const { createMutation, updateMutation, deleteMutation } = useCrudMutations<
+    CreateIssueRequest,
+    CreateIssueRequest,
+    string
+  >({
+    queryKeyToInvalidate: ['qms-issues'],
+    createFn: async (data) => {
+      const response = await qmsApi.createIssue(data);
+      if (!response.success) {
+        throw new Error(response.message || '创建失败');
       }
+      return response;
     },
-    onError: () => {
-      addNotification({ title: '错误', message: '操作失败，请重试', type: 'error' });
-    },
-  });
-
-  const deleteMutation = useMutation({
-    mutationFn: (id: string) => qmsApi.deleteIssue(id),
-    onSuccess: (response) => {
-      if (response.success) {
-        addNotification({ title: '成功', message: '记录删除成功', type: 'success' });
-        queryClient.invalidateQueries({ queryKey: ['qms-issues'] });
-      } else {
-        addNotification({
-          title: '失败',
-          message: response.message || '删除失败',
-          type: 'error',
-        });
+    updateFn: async ({ id, data }) => {
+      const response = await qmsApi.updateIssue(String(id), data);
+      if (!response.success) {
+        throw new Error(response.message || '更新失败');
       }
+      return response;
     },
-    onError: () => {
-      addNotification({ title: '错误', message: '删除记录时发生错误', type: 'error' });
+    deleteFn: async (id) => {
+      const response = await qmsApi.deleteIssue(String(id));
+      if (!response.success) {
+        throw new Error(response.message || '删除失败');
+      }
+      return response;
+    },
+    entityName: '不合格品记录',
+    onCreateSuccess: () => {
+      setShowModal(false);
+      setIsEditing(false);
+      resetForm();
+    },
+    onUpdateSuccess: () => {
+      setShowModal(false);
+      setIsEditing(false);
+      resetForm();
     },
   });
 
@@ -288,9 +257,15 @@ const QmsNonconformancePage: React.FC = () => {
     });
   };
 
-  const deleteItem = async (id: string) => {
-    if (!window.confirm('确定要删除此记录吗？')) return;
-    await deleteMutation.mutateAsync(id);
+  const deleteItem = (id: string) => {
+    openConfirmDialog({
+      title: '确认删除',
+      message: '确定要删除此记录吗？',
+      danger: true,
+      onConfirm: () => {
+        deleteMutation.mutate(id);
+      },
+    });
   };
 
   const nonconformanceRowActions: RowAction<QualityIssue>[] = [
@@ -849,6 +824,18 @@ const QmsNonconformancePage: React.FC = () => {
           <Button onClick={() => setShowDetailModal(false)}>关闭</Button>
         </DialogActions>
       </Dialog>
+
+      <ConfirmDialog
+        isOpen={confirmDialogOpen}
+        onClose={setConfirmDialogClosed}
+        onConfirm={() => {
+          confirmDialogConfig?.onConfirm();
+          setConfirmDialogClosed();
+        }}
+        title={confirmDialogConfig?.title || ''}
+        message={confirmDialogConfig?.message || ''}
+        danger={confirmDialogConfig?.danger}
+      />
     </PageContainer>
   );
 };

@@ -11,6 +11,8 @@ import {
   Alert,
 } from '@mui/material';
 import { PageContainer } from '@/components/common';
+import { ConfirmDialog } from '@topems/shared-components';
+import { useConfirmDialog } from '@/hooks';
 import { logger } from '@/utils/logger';
 import type {
   InstrumentData,
@@ -102,6 +104,12 @@ const LimsInstrumentDataPage: React.FC = () => {
     raw_data: {},
   });
   const [parseTestResult, setParseTestResult] = useState<ParseResult | null>(null);
+  const {
+    confirmOpen: confirmDialogOpen,
+    confirmConfig: confirmDialogConfig,
+    openConfirm: openConfirmDialog,
+    closeConfirm: setConfirmDialogClosed,
+  } = useConfirmDialog();
 
   const showNotification = (
     message: string,
@@ -480,9 +488,15 @@ const LimsInstrumentDataPage: React.FC = () => {
     }
   };
 
-  const handleDeleteData = async (id: string) => {
-    if (!window.confirm('确定要删除这条数据吗？')) return;
-    await deleteDataMutation.mutateAsync(id);
+  const handleDeleteData = (id: string) => {
+    openConfirmDialog({
+      title: '确认删除',
+      message: '确定要删除这条数据吗？',
+      danger: true,
+      onConfirm: () => {
+        deleteDataMutation.mutate(id);
+      },
+    });
   };
 
   const handleCreateTask = () => {
@@ -534,9 +548,15 @@ const LimsInstrumentDataPage: React.FC = () => {
     await triggerTaskMutation.mutateAsync(id);
   };
 
-  const handleDeleteTask = async (id: string) => {
-    if (!window.confirm('确定要删除这个采集任务吗？')) return;
-    await deleteTaskMutation.mutateAsync(id);
+  const handleDeleteTask = (id: string) => {
+    openConfirmDialog({
+      title: '确认删除',
+      message: '确定要删除这个采集任务吗？',
+      danger: true,
+      onConfirm: () => {
+        deleteTaskMutation.mutate(id);
+      },
+    });
   };
 
   const handleCreateRule = () => {
@@ -582,9 +602,15 @@ const LimsInstrumentDataPage: React.FC = () => {
     }
   };
 
-  const handleDeleteRule = async (id: string) => {
-    if (!window.confirm('确定要删除这条解析规则吗？')) return;
-    await deleteRuleMutation.mutateAsync(id);
+  const handleDeleteRule = (id: string) => {
+    openConfirmDialog({
+      title: '确认删除',
+      message: '确定要删除这条解析规则吗？',
+      danger: true,
+      onConfirm: () => {
+        deleteRuleMutation.mutate(id);
+      },
+    });
   };
 
   const handleTestParse = async () => {
@@ -751,6 +777,18 @@ const LimsInstrumentDataPage: React.FC = () => {
           {notification.message}
         </Alert>
       </Snackbar>
+
+      <ConfirmDialog
+        isOpen={confirmDialogOpen}
+        onClose={setConfirmDialogClosed}
+        onConfirm={() => {
+          confirmDialogConfig?.onConfirm();
+          setConfirmDialogClosed();
+        }}
+        title={confirmDialogConfig?.title || ''}
+        message={confirmDialogConfig?.message || ''}
+        danger={confirmDialogConfig?.danger}
+      />
     </PageContainer>
   );
 };

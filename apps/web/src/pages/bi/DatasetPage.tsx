@@ -56,11 +56,13 @@ import {
 import { logger } from '@/utils/logger';
 import { designTokens } from '@/theme/tokens';
 
+import { useTranslation } from 'react-i18next';
 const ct = designTokens.colors;
 
 type ViewMode = 'list' | 'editor';
 
 const DatasetPage = () => {
+  const { t } = useTranslation();
   const queryClient = useQueryClient();
   const [viewMode, setViewMode] = useState<ViewMode>('list');
   const [searchTerm, setSearchTerm] = useState('');
@@ -147,7 +149,7 @@ const DatasetPage = () => {
     });
     setViewMode('editor');
     setEditorTab(0);
-  }, []);
+  }, [t]);
 
   const handleEdit = useCallback((dataset: Dataset) => {
     setSelectedDataset(dataset);
@@ -158,7 +160,7 @@ const DatasetPage = () => {
 
   const handleDelete = useCallback(
     async (id: string) => {
-      if (!confirm('确定要删除这个数据集吗？')) return;
+      if (!confirm(t('bi.dataset_page.confirm'))) return;
       try {
         await deleteItem(id);
       } catch (e: unknown) {
@@ -218,9 +220,9 @@ const DatasetPage = () => {
 
   const getStatusChip = (status: string) => {
     const configs: Record<string, { color: 'success' | 'warning' | 'primary'; label: string }> = {
-      published: { color: 'success', label: '已发布' },
-      draft: { color: 'warning', label: '草稿' },
-      archived: { color: 'primary', label: '已归档' },
+      published: { color: 'success', label: t('bi.dataset_page.text_dca0c1') },
+      draft: { color: 'warning', label: t('bi.dataset_page.text_22b433') },
+      archived: { color: 'primary', label: t('bi.dataset_page.text_c3ba16') },
     };
     const config = configs[status] || configs.draft;
     return (
@@ -290,7 +292,7 @@ const DatasetPage = () => {
 
       <Box sx={{ display: 'flex', alignItems: 'center', gap: 2, mb: 3 }}>
         <TextField
-          placeholder='搜索数据集...'
+          placeholder={t('bi.dataset_page.search')}
           value={searchTerm}
           onChange={(e) => handleSearch(e.target.value)}
           size='small'
@@ -394,50 +396,50 @@ const DatasetPage = () => {
                     {dataset.updated_at ? new Date(dataset.updated_at).toLocaleDateString() : '-'}
                   </TableCell>
                   <TableCell align='right'>
-                    <Tooltip title='编辑'>
+                    <Tooltip title={t('bi.dataset_page.edit')}>
                       <IconButton
                         size='small'
                         onClick={() => handleEdit(dataset)}
-                        aria-label='编辑数据集'
+                        aria-label={t('bi.dataset_page.edit_1')}
                       >
                         <Edit2 size={16} />
                       </IconButton>
                     </Tooltip>
-                    <Tooltip title='查看'>
+                    <Tooltip title={t('bi.dataset_page.view')}>
                       <IconButton
                         size='small'
-                        aria-label='查看数据集'
+                        aria-label={t('bi.dataset_page.view_1')}
                       >
                         <Eye size={16} />
                       </IconButton>
                     </Tooltip>
                     {dataset.status === 'draft' && (
-                      <Tooltip title='发布'>
+                      <Tooltip title={t('bi.dataset_page.text_83611a')}>
                         <IconButton
                           size='small'
                           onClick={() => handlePublish(dataset.id)}
-                          aria-label='发布数据集'
+                          aria-label={t('bi.dataset_page.text_490e76')}
                         >
                           <FileText size={16} />
                         </IconButton>
                       </Tooltip>
                     )}
                     {dataset.status === 'published' && (
-                      <Tooltip title='刷新数据'>
+                      <Tooltip title={t('bi.dataset_page.refresh')}>
                         <IconButton
                           size='small'
                           onClick={() => handleRefreshDataset(dataset.id)}
-                          aria-label='刷新数据集'
+                          aria-label={t('bi.dataset_page.refresh_1')}
                         >
                           <RefreshCw size={16} />
                         </IconButton>
                       </Tooltip>
                     )}
-                    <Tooltip title='删除'>
+                    <Tooltip title={t('bi.dataset_page.delete')}>
                       <IconButton
                         size='small'
                         onClick={() => handleDelete(dataset.id)}
-                        aria-label='删除数据集'
+                        aria-label={t('bi.dataset_page.delete_1')}
                       >
                         <Trash2 size={16} />
                       </IconButton>
@@ -474,7 +476,7 @@ const DatasetPage = () => {
             variant='h5'
             sx={{ fontWeight: 600 }}
           >
-            {selectedDataset ? '编辑数据集' : '创建数据集'}
+            {selectedDataset ? t('bi.dataset_page.edit_1') : t('bi.dataset_page.create')}
           </Typography>
         </Box>
         <Box sx={{ display: 'flex', gap: 2 }}>
@@ -503,23 +505,23 @@ const DatasetPage = () => {
             onChange={(_, v) => setEditorTab(v)}
             sx={{ mb: 3 }}
           >
-            <Tab label='基本信息' />
-            <Tab label='字段配置' />
-            <Tab label='SQL查询' />
+            <Tab label={t('bi.dataset_page.info')} />
+            <Tab label={t('bi.dataset_page.text_5656f1')} />
+            <Tab label={t('bi.dataset_page.search_1')} />
           </Tabs>
 
           {editorTab === 0 && (
             <Box sx={{ maxWidth: 600 }}>
               <TextField
                 fullWidth
-                label='数据集名称'
+                label={t('bi.dataset_page.name')}
                 value={formData.name || ''}
                 onChange={(e) => setFormData({ ...formData, name: e.target.value })}
                 sx={{ mb: 3 }}
               />
               <TextField
                 fullWidth
-                label='描述'
+                label={t('bi.dataset_page.description')}
                 multiline
                 rows={3}
                 value={formData.description || ''}
@@ -533,7 +535,7 @@ const DatasetPage = () => {
                 <InputLabel>数据源</InputLabel>
                 <Select
                   value={formData.data_source_id || ''}
-                  label='数据源'
+                  label={t('bi.dataset_page.text_c11322')}
                   onChange={(e) => setFormData({ ...formData, data_source_id: e.target.value })}
                 >
                   <MenuItem value='ds-mysql-001'>业务主数据库</MenuItem>
@@ -545,7 +547,7 @@ const DatasetPage = () => {
                 <InputLabel>状态</InputLabel>
                 <Select
                   value={formData.status || 'draft'}
-                  label='状态'
+                  label={t('bi.dataset_page.status')}
                   onChange={(e) =>
                     setFormData({
                       ...formData,
@@ -645,7 +647,7 @@ const DatasetPage = () => {
                           <IconButton
                             size='small'
                             onClick={() => removeField(field.id)}
-                            aria-label='删除字段'
+                            aria-label={t('bi.dataset_page.delete_2')}
                           >
                             <Trash2 size={14} />
                           </IconButton>
@@ -701,8 +703,8 @@ const DatasetPage = () => {
 
   return (
     <PageContainer
-      title='数据集管理'
-      subtitle='管理和配置数据分析数据集'
+      title={t('bi.dataset_page.text_db302a')}
+      subtitle={t('bi.dataset_page.text_3392ac')}
       headerProps={{
         pageIcon: <Database style={{ width: 20, height: 20 }} />,
         pageGradient: `linear-gradient(135deg, ${ct.success.main} 0%, ${ct.success.dark} 100%)`,
@@ -713,7 +715,7 @@ const DatasetPage = () => {
       <DashboardTemplate
         title=''
         subtitle=''
-        breadcrumbs={[{ label: '首页', href: '/dashboard' }, { label: 'BI' }, { label: '数据集' }]}
+        breadcrumbs={[{ label: t('bi.dataset_page.home'), href: '/dashboard' }, { label: 'BI' }, { label: t('bi.dataset_page.text_e20804') }]}
       >
         {viewMode === 'list' ? renderListView() : renderEditorView()}
       </DashboardTemplate>

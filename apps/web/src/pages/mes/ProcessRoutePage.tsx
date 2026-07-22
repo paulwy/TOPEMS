@@ -16,7 +16,7 @@ import {
 } from '@mui/material';
 import { PageContainer } from '@/components/common';
 import React, { useState, useMemo, useCallback } from 'react';
-import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { useQuery } from '@tanstack/react-query';
 import type {
   ProcessRoute,
   CreateProcessRouteRequest,
@@ -25,7 +25,6 @@ import type {
 } from '@/api/mes/process';
 import type { ListParams } from '@/api/mes';
 import { processRouteApi } from '@/api/mes/process';
-import { useNotificationStore } from '@/store';
 import { LoadingSpinner } from '@topems/shared-components';
 import {
   ListPageTemplate,
@@ -36,11 +35,13 @@ import {
 import { Plus, Edit, Trash2, Eye, Route, Clock } from 'lucide-react';
 import { apiLogger } from '@/utils/logger';
 import { designTokens } from '@/theme/tokens';
+import { useCrudMutations } from '@/hooks';
 
+import { useTranslation } from 'react-i18next';
 const ct = designTokens.colors;
 
 const ProcessRoutePage: React.FC = () => {
-  const queryClient = useQueryClient();
+  const { t } = useTranslation();
   const [searchTerm, setSearchTerm] = useState('');
   const [statusFilter, setStatusFilter] = useState<string>('all');
   const [currentPage, setCurrentPage] = useState(1);
@@ -58,8 +59,6 @@ const ProcessRoutePage: React.FC = () => {
     standard_time: 0,
   });
 
-  const { addNotification } = useNotificationStore();
-
   const routeQuery = useQuery({
     queryKey: ['mes-process-routes', currentPage, pageSize, searchTerm, statusFilter],
     queryFn: async () => {
@@ -72,7 +71,7 @@ const ProcessRoutePage: React.FC = () => {
 
       const response = await processRouteApi.list(params);
       if (!response.success || !response.data) {
-        throw new Error(response.message || '加载工序路线列表失败');
+        throw new Error(response.message || t('mes.process_route_page.list'));
       }
       return {
         items: response.data.routes || [],
@@ -87,81 +86,34 @@ const ProcessRoutePage: React.FC = () => {
   const total = routeQuery.data?.total ?? 0;
   const loading = routeQuery.isLoading;
 
-  const createMutation = useMutation({
-    mutationFn: async (data: CreateProcessRouteRequest) => {
+  const { createMutation, updateMutation, deleteMutation } = useCrudMutations<
+    CreateProcessRouteRequest,
+    UpdateProcessRouteRequest,
+    string
+  >({
+    queryKeyToInvalidate: ['mes-process-routes'],
+    createFn: async (data) => {
       const response = await processRouteApi.create(data);
       if (!response.success) {
         throw new Error(response.message || '创建工序路线失败');
       }
       return response.data;
     },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['mes-process-routes'] });
-      addNotification({
-        type: 'success',
-        title: '创建成功',
-        message: '新工序路线已创建',
-      });
-    },
-    onError: (error: unknown) => {
-      apiLogger.error('创建工序路线失败:', error);
-      addNotification({
-        type: 'error',
-        title: '操作失败',
-        message: '创建工序路线失败',
-      });
-    },
-  });
-
-  const updateMutation = useMutation({
-    mutationFn: async ({ id, data }: { id: string; data: UpdateProcessRouteRequest }) => {
-      const response = await processRouteApi.update(id, data);
+    updateFn: async ({ id, data }) => {
+      const response = await processRouteApi.update(String(id), data);
       if (!response.success) {
         throw new Error(response.message || '更新工序路线失败');
       }
       return response.data;
     },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['mes-process-routes'] });
-      addNotification({
-        type: 'success',
-        title: '更新成功',
-        message: '工序路线信息已更新',
-      });
-    },
-    onError: (error: unknown) => {
-      apiLogger.error('更新工序路线失败:', error);
-      addNotification({
-        type: 'error',
-        title: '操作失败',
-        message: '更新工序路线失败',
-      });
-    },
-  });
-
-  const deleteMutation = useMutation({
-    mutationFn: async (id: string) => {
-      const response = await processRouteApi.delete(id);
+    deleteFn: async (id) => {
+      const response = await processRouteApi.delete(String(id));
       if (!response.success) {
         throw new Error(response.message || '删除工序路线失败');
       }
+      return response.data;
     },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['mes-process-routes'] });
-      addNotification({
-        type: 'success',
-        title: '删除成功',
-        message: '工序路线已删除',
-      });
-    },
-    onError: (error: unknown) => {
-      apiLogger.error('删除工序路线失败:', error);
-      addNotification({
-        type: 'error',
-        title: '操作失败',
-        message: '删除工序路线失败',
-      });
-    },
+    entityName: '工序路线',
   });
 
   const loadRouteSteps = useCallback(async (routeId: string) => {
@@ -171,7 +123,7 @@ const ProcessRoutePage: React.FC = () => {
         setRouteSteps(response.data.steps || []);
       }
     } catch (error: unknown) {
-      apiLogger.error('加载工序路线步骤失败:', error);
+      apiLogger.error(t('mes.process_route_page.fail'), error);
     }
   }, []);
 
@@ -191,7 +143,7 @@ const ProcessRoutePage: React.FC = () => {
 
   const handleDelete = useCallback(
     async (id: string) => {
-      if (!window.confirm('确定要删除这个工序路线吗?')) return;
+      if (!window.confirm(t('mes.process_route_page.confirm'))) return;
       await deleteMutation.mutateAsync(id);
     },
     [deleteMutation]
@@ -231,9 +183,9 @@ const ProcessRoutePage: React.FC = () => {
 
   const getStatusText = (status: string) => {
     const statusMap: Record<string, string> = {
-      active: '启用',
-      inactive: '停用',
-      draft: '草稿',
+      active: t('mes.process_route_page.active'),
+      inactive: t('mes.process_route_page.inactive'),
+      draft: t('mes.process_route_page.status_draft'),
     };
     return statusMap[status] || status;
   };
@@ -247,9 +199,9 @@ const ProcessRoutePage: React.FC = () => {
         color: string;
       }
     > = {
-      active: { label: '启用', bg: 'success.lighter', color: 'success.dark' },
-      inactive: { label: '停用', bg: 'grey.100', color: 'text.secondary' },
-      draft: { label: '草稿', bg: 'warning.light', color: 'warning.dark' },
+      active: { label: t('mes.process_route_page.active'), bg: 'success.lighter', color: 'success.dark' },
+      inactive: { label: t('mes.process_route_page.inactive'), bg: 'grey.100', color: 'text.secondary' },
+      draft: { label: t('mes.process_route_page.status_draft'), bg: 'warning.light', color: 'warning.dark' },
     };
     const s = statusMap[status] || { label: status, bg: 'grey.100', color: 'text.secondary' };
     return (
@@ -263,19 +215,19 @@ const ProcessRoutePage: React.FC = () => {
 
   const columns: ColumnDef<ProcessRoute>[] = useMemo(
     () => [
-      { id: 'code', label: '路线编号', sortable: true },
-      { id: 'name', label: '路线名称', sortable: true },
-      { id: 'version', label: '版本', sortable: true },
-      { id: 'process_count', label: '工序数量', sortable: true },
+      { id: 'code', label: t('mes.process_route_page.text_3f16bf'), sortable: true },
+      { id: 'name', label: t('mes.process_route_page.column_route_name'), sortable: true },
+      { id: 'version', label: t('mes.process_route_page.field_version'), sortable: true },
+      { id: 'process_count', label: t('mes.process_route_page.quantity'), sortable: true },
       {
         id: 'total_standard_time',
-        label: '标准工时(分钟)',
+        label: t('mes.process_route_page.text_82fe5b'),
         sortable: true,
         render: (row) => row.total_standard_time || 0,
       },
       {
         id: 'status',
-        label: '状态',
+        label: t('mes.process_route_page.filter_status'),
         render: (row) => getStatusBadge(row.status),
       },
     ],
@@ -286,13 +238,13 @@ const ProcessRoutePage: React.FC = () => {
     () => [
       {
         id: 'status',
-        label: '状态',
+        label: t('mes.process_route_page.filter_status'),
         type: 'select',
         options: [
-          { label: '全部状态', value: 'all' },
-          { label: '启用', value: 'active' },
-          { label: '停用', value: 'inactive' },
-          { label: '草稿', value: 'draft' },
+          { label: t('mes.process_route_page.filter_option_all_status'), value: 'all' },
+          { label: t('mes.process_route_page.active'), value: 'active' },
+          { label: t('mes.process_route_page.inactive'), value: 'inactive' },
+          { label: t('mes.process_route_page.status_draft'), value: 'draft' },
         ],
         value: statusFilter,
         onChange: (value: unknown) => {
@@ -307,22 +259,22 @@ const ProcessRoutePage: React.FC = () => {
   const rowActions: RowAction<ProcessRoute>[] = useMemo(
     () => [
       {
-        label: '查看详情',
+        label: t('mes.process_route_page.action_view_detail'),
         icon: <Eye size={16} />,
         onClick: handleViewDetail,
       },
       {
-        label: '编辑',
+        label: t('mes.process_route_page.action_edit'),
         icon: <Edit size={16} />,
         onClick: handleEdit,
       },
       {
-        label: '删除',
+        label: t('mes.process_route_page.action_delete'),
         icon: <Trash2 size={16} />,
         color: 'error',
         onClick: (row) => handleDelete(row.id),
         confirm: true,
-        confirmMessage: '确定要删除这个工序路线吗?',
+        confirmMessage: t('mes.process_route_page.confirm'),
       },
     ],
     [handleViewDetail, handleEdit, handleDelete]
@@ -342,8 +294,8 @@ const ProcessRoutePage: React.FC = () => {
 
   return (
     <PageContainer
-      title='工序路线管理'
-      subtitle='管理生产工序路线,包括路线定义、工序顺序、标准工时等'
+      title={t('mes.process_route_page.process')}
+      subtitle={t('mes.process_route_page.process_1')}
       headerProps={{
         pageIcon: <Route style={{ width: 20, height: 20 }} />,
         pageGradient: `linear-gradient(135deg, ${ct.secondary.main} 0%, ${ct.secondary.dark} 100%)`,
@@ -357,7 +309,7 @@ const ProcessRoutePage: React.FC = () => {
         loading={loading}
         filters={filters}
         searchable
-        searchPlaceholder='搜索路线编号或名称...'
+        searchPlaceholder={t('mes.process_route_page.search')}
         searchValue={searchTerm}
         onSearch={handleSearch}
         pagination={{
@@ -371,13 +323,13 @@ const ProcessRoutePage: React.FC = () => {
         onSelectionChange={(ids) => setSelectedIds(ids.map(String))}
         actions={[
           {
-            label: '新增路线',
+            label: t('mes.process_route_page.add'),
             icon: <Plus size={16} />,
             onClick: handleOpenCreate,
           },
         ]}
         rowActions={rowActions}
-        emptyMessage='暂无工序路线数据'
+        emptyMessage={t('mes.process_route_page.no_data')}
         getRowId={(row) => row.id}
       />
 
@@ -386,7 +338,7 @@ const ProcessRoutePage: React.FC = () => {
         onClose={() => setShowDialog(false)}
         maxWidth='md'
       >
-        <DialogTitle>{selectedRoute ? '编辑工序路线' : '新增工序路线'}</DialogTitle>
+        <DialogTitle>{selectedRoute ? t('mes.process_route_page.edit') : t('mes.process_route_page.add_1')}</DialogTitle>
         <DialogContent>
           <Box
             component='span'
@@ -397,7 +349,7 @@ const ProcessRoutePage: React.FC = () => {
               fontSize: 14,
             }}
           >
-            {selectedRoute ? '修改工序路线信息' : '填写新工序路线信息'}
+            {selectedRoute ? t('mes.process_route_page.info') : t('mes.process_route_page.info_1')}
           </Box>
           <form onSubmit={handleSubmit}>
             <Box

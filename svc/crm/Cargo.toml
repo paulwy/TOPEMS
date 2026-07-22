@@ -24,6 +24,7 @@ topems-shared = { path = "../../lib" }
 utoipa.workspace = true
 axum-prometheus.workspace = true
 prometheus.workspace = true
+dashmap.workspace = true
 rust_decimal = { version = "1.35", features = ["serde"] }
 rand = "0.8"
 reqwest.workspace = true

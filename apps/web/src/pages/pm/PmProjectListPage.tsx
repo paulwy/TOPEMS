@@ -11,6 +11,8 @@ import { apiLogger } from '@/utils/logger';
 import { ListPageTemplate, type ColumnDef } from '@/components/templates';
 import { designTokens } from '@/theme/tokens';
 import { PM_PATHS } from '@/modules/pm/config';
+import { ConfirmDialog } from '@topems/shared-components';
+import { useConfirmDialog, useUrlListState } from '@/hooks';
 
 const ct = designTokens.colors;
 
@@ -63,18 +65,36 @@ const PmProjectListPage: React.FC = () => {
   const navigate = useNavigate();
   const queryClient = useQueryClient();
   const { addNotification } = useNotificationStore();
-  const [searchTerm, setSearchTerm] = useState('');
-  const [selectedType, setSelectedType] = useState('');
-  const [selectedStatus, setSelectedStatus] = useState('');
-  const [currentPage, setCurrentPage] = useState(1);
-  const pageSize = 10;
+  const {
+    searchQuery,
+    setSearchQuery,
+    debouncedSearch,
+    filters,
+    setFilter,
+    setFilters,
+    currentPage,
+    setCurrentPage,
+    pageSize,
+    resetPage,
+  } = useUrlListState<{ project_type: string; status: string }>({
+    defaultPageSize: 10,
+    defaultFilters: { project_type: '', status: '' },
+    baseIndex: 1,
+    historyMode: 'replace',
+  });
+  const {
+    confirmOpen: confirmDialogOpen,
+    confirmConfig: confirmDialogConfig,
+    openConfirm: openConfirmDialog,
+    closeConfirm: setConfirmDialogClosed,
+  } = useConfirmDialog();
 
   const projectListQuery = useQuery({
-    queryKey: ['pm-projects', currentPage, pageSize, selectedType, selectedStatus],
+    queryKey: ['pm-projects', currentPage, pageSize, filters.project_type, filters.status],
     queryFn: async () => {
       const response = await pmApi.projects.list({
-        project_type: selectedType || undefined,
-        status: selectedStatus || undefined,
+        project_type: filters.project_type || undefined,
+        status: filters.status || undefined,
         page: currentPage,
         pagesize: pageSize,
       });
@@ -124,18 +144,18 @@ const PmProjectListPage: React.FC = () => {
   };
 
   const handleDelete = useCallback(
-    async (id: string) => {
-      if (!window.confirm('确定要删除这个项目吗？')) return;
-      try {
-        await deleteProjectMutation.mutateAsync(id);
-      } catch {}
+    (id: string) => {
+      openConfirmDialog({
+        title: '确认删除',
+        message: '确定要删除这个项目吗？',
+        danger: true,
+        onConfirm: () => {
+          deleteProjectMutation.mutate(id);
+        },
+      });
     },
-    [deleteProjectMutation]
+    [deleteProjectMutation, openConfirmDialog]
   );
-
-  React.useEffect(() => {
-    setCurrentPage(1);
-  }, [selectedType, selectedStatus]);
 
   const formatDate = (dateStr?: string) => {
     if (!dateStr) return '-';
@@ -258,37 +278,37 @@ const PmProjectListPage: React.FC = () => {
   );
 
   // 筛选配置
-  const filters = useMemo(
+  const filterConfigs = useMemo(
     () => [
       {
         id: 'project_type',
         label: '类型',
         type: 'select' as const,
         options: PROJECT_TYPES,
-        value: selectedType,
-        onChange: (value: unknown) => setSelectedType(value as string),
+        value: filters.project_type,
+        onChange: (value: unknown) => setFilter('project_type', value as string),
       },
       {
         id: 'status',
         label: '状态',
         type: 'select' as const,
         options: STATUS_OPTIONS,
-        value: selectedStatus,
-        onChange: (value: unknown) => setSelectedStatus(value as string),
+        value: filters.status,
+        onChange: (value: unknown) => setFilter('status', value as string),
       },
     ],
-    [selectedType, selectedStatus]
+    [filters.project_type, filters.status, setFilter]
   );
 
   // 过滤后的数据
   const filteredData = useMemo(() => {
-    if (!searchTerm) return projects;
+    if (!debouncedSearch) return projects;
     return projects.filter(
       (project) =>
-        project.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        project.code.toLowerCase().includes(searchTerm.toLowerCase())
+        project.name.toLowerCase().includes(debouncedSearch.toLowerCase()) ||
+        project.code.toLowerCase().includes(debouncedSearch.toLowerCase())
     );
-  }, [projects, searchTerm]);
+  }, [projects, debouncedSearch]);
 
   // 统计卡片数据
   const activeCount = projects.filter((p) => p.status === 'active').length;
@@ -320,13 +340,12 @@ const PmProjectListPage: React.FC = () => {
         }}
         searchable
         searchPlaceholder='搜索项目名称或编号...'
-        searchValue={searchTerm}
-        onSearch={setSearchTerm}
-        filters={filters}
-        filtersValue={{ project_type: selectedType, status: selectedStatus }}
+        searchValue={searchQuery}
+        onSearch={setSearchQuery}
+        filters={filterConfigs}
+        filtersValue={{ project_type: filters.project_type, status: filters.status }}
         onFilterChange={(f) => {
-          if (f.project_type !== undefined) setSelectedType(f.project_type);
-          if (f.status !== undefined) setSelectedStatus(f.status);
+          setFilters(f as Partial<{ project_type: string; status: string }>);
         }}
         actions={[
           {
@@ -367,6 +386,18 @@ const PmProjectListPage: React.FC = () => {
           progress: '进度',
           start_date: '开始日期',
         }}
+      />
+
+      <ConfirmDialog
+        isOpen={confirmDialogOpen}
+        onClose={setConfirmDialogClosed}
+        onConfirm={() => {
+          confirmDialogConfig?.onConfirm();
+          setConfirmDialogClosed();
+        }}
+        title={confirmDialogConfig?.title || ''}
+        message={confirmDialogConfig?.message || ''}
+        danger={confirmDialogConfig?.danger}
       />
     </PageContainer>
   );

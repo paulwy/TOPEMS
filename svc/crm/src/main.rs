@@ -18,9 +18,11 @@ use prometheus::{Encoder, TextEncoder};
 use serde::Serialize;
 use std::env;
 use std::sync::Arc;
-use std::time::Instant;
+use std::time::{Duration, Instant};
 use utoipa::OpenApi;
 
+use topems_shared::event::EventPublisher;
+use topems_shared::service_client::{create_erp_client, create_wms_client};
 use topems_shared::{
     auth_middleware, check_http_health, create_api_info_router, create_cors_layer,
     create_database_pool, init_telemetry, rate_limit_middleware, register_routes_with_legacy_alias,
@@ -32,7 +34,9 @@ use topems_shared::{
 mod middleware;
 mod models;
 mod shared;
+mod workflow;
 
+mod event_handlers;
 pub mod modules;
 
 use modules::ApiState;
@@ -68,11 +72,54 @@ async fn main() -> Result<()> {
         tracing::warn!("数据库初始化警告: {}", e);
     }
 
+    if let Err(e) = event_handlers::start_event_subscribers(pool.clone()).await {
+        tracing::warn!("⚠️ CRM 事件订阅者启动失败: {}", e);
+    }
+
     let start_time = Instant::now();
     let metrics = Arc::new(SystemMetrics::new());
 
     let encryption_service = init_encryption_service();
     tracing::info!("🔐 字段加密服务初始化成功");
+
+    // 初始化事件发布服务（参考 WMS 模式，失败不阻塞启动）
+    let event_publisher = match EventPublisher::new("topems-crm") {
+        Ok(publisher) => {
+            tracing::info!("📢 事件发布服务初始化成功");
+            Some(Arc::new(publisher))
+        }
+        Err(e) => {
+            tracing::warn!("⚠️ 事件发布服务初始化失败: {}", e);
+            None
+        }
+    };
+
+    // 初始化 ERP / WMS 服务客户端（失败不阻塞启动，相关联动功能会优雅降级）
+    let erp_client = match create_erp_client() {
+        Ok(client) => {
+            tracing::info!("🔗 ERP 服务客户端初始化成功");
+            Some(Arc::new(client))
+        }
+        Err(e) => {
+            tracing::warn!("⚠️ ERP 服务客户端初始化失败: {}", e);
+            None
+        }
+    };
+    let wms_client = match create_wms_client() {
+        Ok(client) => {
+            tracing::info!("🔗 WMS 服务客户端初始化成功");
+            Some(Arc::new(client))
+        }
+        Err(e) => {
+            tracing::warn!("⚠️ WMS 服务客户端初始化失败: {}", e);
+            None
+        }
+    };
+
+    let workflow_url = std::env::var("WORKFLOW_SERVICE_URL")
+        .unwrap_or_else(|_| "http://localhost:8001".to_string());
+    let workflow_client = workflow::WorkflowClient::new(&workflow_url);
+    tracing::info!("🔗 工作流服务客户端初始化成功: {}", workflow_url);
 
     let api_state = ApiState {
         db: pool.clone(),
@@ -80,6 +127,12 @@ async fn main() -> Result<()> {
         metrics: metrics.clone(),
         start_time,
         encryption: Arc::new(encryption_service),
+        event_publisher,
+        erp_client,
+        wms_client,
+        workflow_client,
+        customer_cache: Arc::new(shared::InMemoryCache::new(Duration::from_secs(3600))),
+        dashboard_cache: Arc::new(shared::InMemoryCache::new(Duration::from_secs(300))),
     };
 
     let cors = create_cors_layer();

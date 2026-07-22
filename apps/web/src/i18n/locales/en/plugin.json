@@ -1,0 +1,265 @@
+{
+  "title": "Plugin Management",
+  "menu": {
+    "plugin": "Plugin",
+    "market": "Marketplace",
+    "install": "Install",
+    "config": "Configuration",
+    "dependency": "Dependency"
+  },
+  "status": {
+    "installed": "Installed",
+    "not_installed": "Not Installed",
+    "enabled": "Enabled",
+    "disabled": "Disabled",
+    "updating": "Updating",
+    "error": "Error",
+    "running": "Running",
+    "unhealthy": "Unhealthy"
+  },
+  "action": {
+    "create": "Create",
+    "edit": "Edit",
+    "delete": "Delete",
+    "view": "View",
+    "install": "Install",
+    "uninstall": "Uninstall",
+    "enable": "Enable",
+    "disable": "Disable",
+    "update": "Update",
+    "close": "Close",
+    "refresh": "Refresh",
+    "back": "Previous",
+    "next": "Next",
+    "submit": "Submit for Review",
+    "continue_publish": "Publish Another Plugin"
+  },
+  "field": {
+    "plugin_name": "Plugin Name",
+    "plugin_code": "Plugin Code",
+    "version": "Version",
+    "author": "Author",
+    "description": "Description",
+    "category": "Category",
+    "dependencies": "Dependencies",
+    "installed_at": "Installed At",
+    "updated_at": "Updated At",
+    "status": "Status",
+    "tags": "Tags",
+    "website": "Website",
+    "license": "License",
+    "min_app_version": "Minimum App Version",
+    "price": "Price (CNY)",
+    "release_notes": "Release Notes",
+    "plugin_type": "Plugin Type",
+    "rating": "Rating",
+    "downloads": "Downloads",
+    "type": "Type",
+    "latest_version": "Latest Version",
+    "publish_time": "Published At",
+    "review_title": "Review Title",
+    "review_content": "Review Content",
+    "title_field": "Title"
+  },
+  "message": {
+    "create_success": "Created successfully",
+    "update_success": "Updated successfully",
+    "delete_success": "Deleted successfully",
+    "install_success": "Installed successfully",
+    "install_failed": "Failed to install",
+    "enable_success": "Enabled successfully",
+    "confirm_delete": "Confirm deletion?",
+    "no_data": "No data",
+    "refresh_success": "Refreshed successfully",
+    "plugin_list_updated": "Plugin list has been updated",
+    "review_success_title": "Review Submitted",
+    "review_success_message": "Thank you for your review",
+    "review_failed_title": "Review Failed",
+    "review_failed_message": "Unable to submit review",
+    "install_failed_message": "Unable to install the plugin, please try again later",
+    "install_failed_short": "Unable to install the plugin",
+    "plugin_not_exist": "Plugin does not exist",
+    "plugin_code_empty": "Plugin code cannot be empty"
+  },
+  "category": {
+    "finance": "Finance Management",
+    "hr": "Human Resources",
+    "manufacturing": "Manufacturing",
+    "quality": "Quality Management",
+    "supply": "Supply Chain",
+    "crm": "Customer Relations",
+    "project": "Project Management"
+  },
+  "plugin_type": {
+    "core": "Core Plugin",
+    "business": "Business Plugin"
+  },
+  "common": {
+    "no_description": "No description",
+    "no_version_info": "No version information",
+    "no_reviews": "No reviews",
+    "anonymous_user": "Anonymous User",
+    "purchased": "Purchased",
+    "featured": "Featured",
+    "latest": "Latest",
+    "stable": "Stable",
+    "free": "Free",
+    "installed": "Installed",
+    "installing": "Installing...",
+    "submitting": "Submitting...",
+    "free_install": "Free Install",
+    "purchase": "Purchase",
+    "install_now": "Install Now",
+    "buy_now": "Buy Now",
+    "details": "Details",
+    "submit_review": "Submit Review",
+    "post_review": "Post Review",
+    "rating_label": "Rating:",
+    "version_history": "Version History",
+    "reviews_label": "User Reviews",
+    "description_label": "Description",
+    "rating_overview": "Rating Overview",
+    "review_count": "{{count}} reviews",
+    "star_label": "{{star}} star",
+    "unknown": "Unknown",
+    "unknown_author": "Unknown Author"
+  },
+  "upload_page": {
+    "title": "Publish Plugin",
+    "subtitle": "Publish your plugin to the TOPEMS marketplace and reach more users",
+    "step": {
+      "basic": "Basic Info",
+      "config": "Plugin Configuration",
+      "upload": "Upload Files",
+      "submit": "Submit for Review"
+    },
+    "section": {
+      "basic_info": "Basic Information",
+      "plugin_config": "Plugin Configuration",
+      "upload_files": "Upload Files",
+      "preview": "Plugin Information Preview"
+    },
+    "form": {
+      "name": "Plugin Name",
+      "code": "Plugin Code",
+      "version": "Version",
+      "category": "Plugin Category",
+      "description": "Plugin Description",
+      "tags": "Tags",
+      "plugin_type": "Plugin Type",
+      "author": "Author Name",
+      "website": "Official Website",
+      "license": "License",
+      "min_app_version": "Minimum App Version",
+      "is_free": "Free Plugin",
+      "price": "Price (CNY)",
+      "release_notes": "Release Notes"
+    },
+    "helper": {
+      "name": "Displayed in the plugin marketplace",
+      "code": "Unique identifier, can only contain lowercase letters, numbers, and hyphens",
+      "version": "Follow semantic versioning, e.g. 1.0.0",
+      "description": "Briefly describe the plugin's features and usage",
+      "tags": "Separate multiple tags with commas",
+      "website": "Optional, the official website URL of the plugin",
+      "license": "e.g. MIT, Apache-2.0, GPL, etc.",
+      "min_app_version": "The minimum TOPEMS version required by the plugin",
+      "release_notes": "Describe the updates in this version"
+    },
+    "validation": {
+      "name_required": "Please enter the plugin name",
+      "code_required": "Please enter the plugin code",
+      "code_format": "Plugin code can only contain lowercase letters, numbers, and hyphens, and must start with a letter",
+      "version_required": "Please enter the version number",
+      "description_required": "Please enter the plugin description",
+      "category_required": "Please select a category",
+      "author_required": "Please enter the author name"
+    },
+    "upload": {
+      "package_title": "Upload Plugin Package",
+      "package_hint": "Click or drag a .zip or .tar.gz file here",
+      "package_max_size": "Max 100MB",
+      "package_alert": "The plugin package must contain a plugin.json configuration file",
+      "screenshot_title": "Upload Screenshots",
+      "screenshot_hint": "Click or drag image files here",
+      "screenshot_format": "Supports JPG, PNG, up to 6 images",
+      "screenshot_alert": "Recommended screenshot resolution: 1280x800"
+    },
+    "preview": {
+      "name_placeholder": "Plugin Name",
+      "author_placeholder": "Author",
+      "category_placeholder": "Category",
+      "description_placeholder": "Plugin description will be shown here..."
+    },
+    "notification": {
+      "submit_success_title": "Submission Successful",
+      "submit_success_message": "Plugin {{name}} has been submitted for review. We will process it as soon as possible.",
+      "submit_failed_title": "Submission Failed",
+      "submit_failed_message": "Submission failed, please try again later"
+    },
+    "success": {
+      "title": "Submission Successful!",
+      "message": "Your plugin {{name}} has been successfully submitted for review. We will complete the review within 1-3 business days and notify you."
+    }
+  },
+  "marketplace_page": {
+    "title": "Plugin Marketplace",
+    "subtitle": "Discover and install powerful plugins to extend your TOPEMS functionality",
+    "search_placeholder": "Search plugins...",
+    "filter": {
+      "suite_label": "Suite Category",
+      "all_suites": "All Suites",
+      "sort_label": "Sort By"
+    },
+    "sort": {
+      "popular": "Most Popular",
+      "rating": "Highest Rated",
+      "newest": "Newest",
+      "price": "Price"
+    },
+    "plugin_count": "{{count}} plugins in total",
+    "suite_plugin_count": "{{count}} plugins",
+    "all_plugins": "All Plugins",
+    "empty_title": "No matching plugins found",
+    "empty_hint": "Try adjusting your search criteria or selecting another category",
+    "install_success_message": "Plugin {{name}} has been installed",
+    "review_label": "User Reviews ({{count}})"
+  },
+  "detail_page": {
+    "back_to_market": "Back to Marketplace",
+    "install_count": "{{count}} installs",
+    "tabs": {
+      "intro": "Introduction",
+      "version_history": "Version History ({{count}})",
+      "reviews": "User Reviews ({{count}})"
+    },
+    "section": {
+      "plugin_intro": "Plugin Introduction",
+      "main_features": "Main Features",
+      "tags": "Tags",
+      "version_history": "Version History",
+      "post_review": "Post a Review",
+      "all_reviews": "All Reviews ({{count}})"
+    },
+    "feature": {
+      "business_flow": "Complete business process support",
+      "flexible_config": "Flexible configuration options",
+      "rich_api": "Rich API interfaces",
+      "multi_platform": "Multi-platform support",
+      "data_security": "Data security guarantee",
+      "continuous_update": "Continuous updates and maintenance"
+    },
+    "version": {
+      "update_notes": "Release Notes",
+      "size_label": "Size: {{size}}",
+      "min_version_label": "Minimum Version: v{{version}}"
+    },
+    "review": {
+      "first_reviewer": "Be the first to review"
+    },
+    "pricing": {
+      "permanent_usage": "One-time purchase, permanent use"
+    },
+    "install_success_message": "{{name}} has been installed successfully"
+  }
+}

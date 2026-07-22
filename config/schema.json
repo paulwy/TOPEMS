@@ -1,0 +1,297 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "TOPEMS 配置中心 Schema 定义",
+  "description": "定义 TOPEMS 微服务标准配置项的元数据：类型、默认值、校验规则、环境变量映射、Consul KV 映射",
+  "version": "1.0.0",
+  "schemas": [
+    {
+      "name": "database.max_connections",
+      "description": "数据库连接池最大连接数",
+      "config_type": "integer",
+      "default_value": 10,
+      "required": false,
+      "env_var": "DB_POOL_MAX_SIZE",
+      "consul_key": "topems/database/max_connections",
+      "validation": {
+        "min": 1,
+        "max": 1000
+      }
+    },
+    {
+      "name": "database.min_connections",
+      "description": "数据库连接池最小连接数",
+      "config_type": "integer",
+      "default_value": 2,
+      "required": false,
+      "env_var": "DB_POOL_MIN_SIZE",
+      "consul_key": "topems/database/min_connections",
+      "validation": {
+        "min": 0,
+        "max": 100
+      }
+    },
+    {
+      "name": "database.idle_timeout",
+      "description": "数据库连接空闲超时时间（秒）",
+      "config_type": "duration",
+      "default_value": "300s",
+      "required": false,
+      "env_var": "DB_IDLE_TIMEOUT",
+      "consul_key": "topems/database/idle_timeout",
+      "validation": {
+        "min": "1s",
+        "max": "3600s"
+      }
+    },
+    {
+      "name": "database.max_lifetime",
+      "description": "数据库连接最大生命周期（秒）",
+      "config_type": "duration",
+      "default_value": "1800s",
+      "required": false,
+      "env_var": "DB_MAX_LIFETIME",
+      "consul_key": "topems/database/max_lifetime",
+      "validation": {
+        "min": "60s",
+        "max": "86400s"
+      }
+    },
+    {
+      "name": "redis.url",
+      "description": "Redis 连接 URL",
+      "config_type": "url",
+      "default_value": "redis://localhost:6379",
+      "required": true,
+      "env_var": "REDIS_URL",
+      "consul_key": "topems/redis/url",
+      "validation": {
+        "pattern": "^redis(s)?://.+"
+      }
+    },
+    {
+      "name": "redis.pool_size",
+      "description": "Redis 连接池大小",
+      "config_type": "integer",
+      "default_value": 5,
+      "required": false,
+      "env_var": "REDIS_POOL_MAX_SIZE",
+      "consul_key": "topems/redis/pool_size",
+      "validation": {
+        "min": 1,
+        "max": 100
+      }
+    },
+    {
+      "name": "redis.default_ttl",
+      "description": "Redis 默认 TTL（秒）",
+      "config_type": "duration",
+      "default_value": "3600s",
+      "required": false,
+      "env_var": "REDIS_DEFAULT_TTL",
+      "consul_key": "topems/redis/default_ttl",
+      "validation": {
+        "min": "1s",
+        "max": "604800s"
+      }
+    },
+    {
+      "name": "rabbitmq.url",
+      "description": "RabbitMQ 连接 URL",
+      "config_type": "url",
+      "default_value": "amqp://localhost:5672",
+      "required": true,
+      "env_var": "RABBITMQ_URL",
+      "consul_key": "topems/rabbitmq/url",
+      "validation": {
+        "pattern": "^amqp(s)?://.+"
+      }
+    },
+    {
+      "name": "rabbitmq.prefetch_count",
+      "description": "RabbitMQ 消费者预取消息数",
+      "config_type": "integer",
+      "default_value": 10,
+      "required": false,
+      "env_var": "RABBITMQ_PREFETCH_COUNT",
+      "consul_key": "topems/rabbitmq/prefetch_count",
+      "validation": {
+        "min": 1,
+        "max": 1000
+      }
+    },
+    {
+      "name": "rabbitmq.heartbeat",
+      "description": "RabbitMQ 心跳间隔（秒）",
+      "config_type": "duration",
+      "default_value": "60s",
+      "required": false,
+      "env_var": "RABBITMQ_HEARTBEAT",
+      "consul_key": "topems/rabbitmq/heartbeat",
+      "validation": {
+        "min": "0s",
+        "max": "3600s"
+      }
+    },
+    {
+      "name": "cache.default_ttl",
+      "description": "缓存默认 TTL（秒）",
+      "config_type": "duration",
+      "default_value": "3600s",
+      "required": false,
+      "env_var": "CACHE_DEFAULT_TTL",
+      "consul_key": "topems/cache/default_ttl",
+      "validation": {
+        "min": "1s",
+        "max": "604800s"
+      }
+    },
+    {
+      "name": "cache.max_entries",
+      "description": "缓存最大条目数",
+      "config_type": "integer",
+      "default_value": 10000,
+      "required": false,
+      "env_var": "CACHE_MAX_ENTRIES",
+      "consul_key": "topems/cache/max_entries",
+      "validation": {
+        "min": 1,
+        "max": 1000000
+      }
+    },
+    {
+      "name": "cache.eviction_policy",
+      "description": "缓存淘汰策略",
+      "config_type": "string",
+      "default_value": "LRU",
+      "required": false,
+      "env_var": "CACHE_EVICTION_POLICY",
+      "consul_key": "topems/cache/eviction_policy",
+      "validation": {
+        "allowed_values": ["LRU", "LFU", "FIFO", "TTL", "RANDOM"]
+      }
+    },
+    {
+      "name": "event.retry_count",
+      "description": "事件处理失败重试次数",
+      "config_type": "integer",
+      "default_value": 3,
+      "required": false,
+      "env_var": "EVENT_RETRY_COUNT",
+      "consul_key": "topems/event/retry_count",
+      "validation": {
+        "min": 0,
+        "max": 20
+      }
+    },
+    {
+      "name": "event.retry_delay",
+      "description": "事件重试间隔（秒）",
+      "config_type": "duration",
+      "default_value": "5s",
+      "required": false,
+      "env_var": "EVENT_RETRY_DELAY",
+      "consul_key": "topems/event/retry_delay",
+      "validation": {
+        "min": "1s",
+        "max": "3600s"
+      }
+    },
+    {
+      "name": "event.dead_letter_threshold",
+      "description": "事件进入死信队列的失败阈值",
+      "config_type": "integer",
+      "default_value": 5,
+      "required": false,
+      "env_var": "EVENT_DEAD_LETTER_THRESHOLD",
+      "consul_key": "topems/event/dead_letter_threshold",
+      "validation": {
+        "min": 1,
+        "max": 100
+      }
+    },
+    {
+      "name": "discovery.consul_url",
+      "description": "Consul 服务发现地址",
+      "config_type": "url",
+      "default_value": "http://localhost:8500",
+      "required": true,
+      "env_var": "CONSUL_URL",
+      "consul_key": "topems/discovery/consul_url",
+      "validation": {
+        "pattern": "^http(s)?://.+"
+      }
+    },
+    {
+      "name": "discovery.health_check_interval",
+      "description": "服务健康检查间隔（秒）",
+      "config_type": "duration",
+      "default_value": "10s",
+      "required": false,
+      "env_var": "HEALTH_CHECK_INTERVAL",
+      "consul_key": "topems/discovery/health_check_interval",
+      "validation": {
+        "min": "1s",
+        "max": "300s"
+      }
+    },
+    {
+      "name": "logging.level",
+      "description": "日志级别",
+      "config_type": "string",
+      "default_value": "info",
+      "required": false,
+      "env_var": "LOG_LEVEL",
+      "consul_key": "topems/logging/level",
+      "validation": {
+        "allowed_values": ["trace", "debug", "info", "warn", "error"]
+      }
+    },
+    {
+      "name": "logging.format",
+      "description": "日志输出格式",
+      "config_type": "string",
+      "default_value": "json",
+      "required": false,
+      "env_var": "LOG_FORMAT",
+      "consul_key": "topems/logging/format",
+      "validation": {
+        "allowed_values": ["json", "pretty", "compact"]
+      }
+    },
+    {
+      "name": "logging.output",
+      "description": "日志输出目标",
+      "config_type": "string",
+      "default_value": "stdout",
+      "required": false,
+      "env_var": "LOG_OUTPUT",
+      "consul_key": "topems/logging/output",
+      "validation": {
+        "allowed_values": ["stdout", "stderr", "file", "both"]
+      }
+    },
+    {
+      "name": "monitoring.metrics_enabled",
+      "description": "是否启用 metrics 指标暴露",
+      "config_type": "boolean",
+      "default_value": true,
+      "required": false,
+      "env_var": "METRICS_ENABLED",
+      "consul_key": "topems/monitoring/metrics_enabled",
+      "validation": null
+    },
+    {
+      "name": "monitoring.prometheus_port",
+      "description": "Prometheus 指标暴露端口",
+      "config_type": "integer",
+      "default_value": 9090,
+      "required": false,
+      "env_var": "PROMETHEUS_PORT",
+      "consul_key": "topems/monitoring/prometheus_port",
+      "validation": {
+        "min": 1024,
+        "max": 65535
+      }
+    }
+  ]
+}

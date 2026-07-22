@@ -24,6 +24,8 @@ import { PageContainer } from '@/components/common';
 import { migrationApi, type MigrationService, type MigrationStatus } from '@/api/migration';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { apiLogger } from '@/utils/logger';
+import { ConfirmDialog } from '@topems/shared-components';
+import { useConfirmDialog } from '@/hooks';
 
 interface ServiceStatusMap {
   [serviceName: string]: MigrationStatus;
@@ -40,6 +42,12 @@ const MigrationAdminPage: React.FC = () => {
   const [activeService, setActiveService] = useState<MigrationService | null>(null);
   const [statusDialogOpen, setStatusDialogOpen] = useState(false);
   const [searchValue, setSearchValue] = useState('');
+  const {
+    confirmOpen: confirmDialogOpen,
+    confirmConfig: confirmDialogConfig,
+    openConfirm: openConfirmDialog,
+    closeConfirm: setConfirmDialogClosed,
+  } = useConfirmDialog();
 
   const servicesQuery = useQuery({
     queryKey: ['migration-services'],
@@ -120,13 +128,17 @@ const MigrationAdminPage: React.FC = () => {
     setApplyingService(null);
   };
 
-  const handleRollback = async (service: MigrationService) => {
-    if (!window.confirm(`确认回滚 ${service.name} 最近一次迁移？该操作不可恢复。`)) {
-      return;
-    }
-    setRollingBackService(service.name);
-    await rollbackMutation.mutateAsync(service.name);
-    setRollingBackService(null);
+  const handleRollback = (service: MigrationService) => {
+    openConfirmDialog({
+      title: '确认回滚',
+      message: `确认回滚 ${service.name} 最近一次迁移？该操作不可恢复。`,
+      danger: true,
+      onConfirm: async () => {
+        setRollingBackService(service.name);
+        await rollbackMutation.mutateAsync(service.name);
+        setRollingBackService(null);
+      },
+    });
   };
 
   const handleShowStatus = async (service: MigrationService) => {
@@ -137,37 +149,41 @@ const MigrationAdminPage: React.FC = () => {
     }
   };
 
-  const handleBatchApply = async () => {
+  const handleBatchApply = () => {
     if (services.length === 0) return;
-    if (!window.confirm(`将对全部 ${services.length} 个服务执行 schema 迁移，确认继续？`)) {
-      return;
-    }
-    setBatchApplying(true);
-    let succeeded = 0;
-    let failed = 0;
+    openConfirmDialog({
+      title: '确认批量迁移',
+      message: `将对全部 ${services.length} 个服务执行 schema 迁移，确认继续？`,
+      danger: true,
+      onConfirm: async () => {
+        setBatchApplying(true);
+        let succeeded = 0;
+        let failed = 0;
 
-    for (const svc of services) {
-      try {
-        await migrationApi.applyMigration(svc.name, 'schema');
-        succeeded += 1;
-      } catch (err: unknown) {
-        failed += 1;
+        for (const svc of services) {
+          try {
+            await migrationApi.applyMigration(svc.name, 'schema');
+            succeeded += 1;
+          } catch (err: unknown) {
+            failed += 1;
+            addNotification({
+              title: '错误',
+              message: `${svc.name} 迁移失败：${(err as { message?: string }).message || '未知错误'}`,
+              type: 'error',
+            });
+          }
+        }
+
+        queryClient.invalidateQueries({ queryKey: ['migration-status'] });
+
         addNotification({
-          title: '错误',
-          message: `${svc.name} 迁移失败：${(err as { message?: string }).message || '未知错误'}`,
-          type: 'error',
+          title: failed === 0 ? '成功' : '警告',
+          message: `批量迁移完成：成功 ${succeeded} 个，失败 ${failed} 个`,
+          type: failed === 0 ? 'success' : 'warning',
         });
-      }
-    }
-
-    queryClient.invalidateQueries({ queryKey: ['migration-status'] });
-
-    addNotification({
-      title: failed === 0 ? '成功' : '警告',
-      message: `批量迁移完成：成功 ${succeeded} 个，失败 ${failed} 个`,
-      type: failed === 0 ? 'success' : 'warning',
+        setBatchApplying(false);
+      },
     });
-    setBatchApplying(false);
   };
 
   const getPendingCount = (serviceName: string) => statusMap[serviceName]?.pending?.length ?? 0;
@@ -482,6 +498,18 @@ const MigrationAdminPage: React.FC = () => {
           )}
         </DialogContent>
       </Dialog>
+
+      <ConfirmDialog
+        isOpen={confirmDialogOpen}
+        onClose={setConfirmDialogClosed}
+        onConfirm={() => {
+          confirmDialogConfig?.onConfirm();
+          setConfirmDialogClosed();
+        }}
+        title={confirmDialogConfig?.title || ''}
+        message={confirmDialogConfig?.message || ''}
+        danger={confirmDialogConfig?.danger}
+      />
     </PageContainer>
   );
 };

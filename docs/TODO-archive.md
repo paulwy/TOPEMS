@@ -1,7 +1,576 @@
 # TOPEMS 待办事项
 
-> 最后更新：2026-07-15（V5.19.0 已完成）
-> V5.19 运行时验证 + 遗留问题清理
+> 最后更新：2026-07-20（V37.0 赛博朋克主题 UI 优化 进行中）
+> V37.0 演进：赛博朋克主题 + 玻璃拟态 + 微动效 + 主题切换机制
+
+## 当前阶段：V37.0 赛博朋克主题 UI 优化 🚧
+
+> 目标：新增"赛博朋克"主题选项（与现有亮色/暗色并存），通过霓虹配色、玻璃拟态、发光动效打造科技感界面
+> 设计文档：[2026-07-20-cyberpunk-ui-design.md](./superpowers/specs/2026-07-20-cyberpunk-ui-design.md)
+
+### 四大优化方向
+
+| 方向 | 说明 | 涉及文件 |
+|------|------|----------|
+| **赛博朋克主题** | 霓虹青/品红/金黄配色、深空背景、科技感边框 | `theme/tokens/cyberpunk.tokens.ts`, `theme/theme.ts` |
+| **玻璃拟态升级** | 半透明卡片、模糊背景、发光边框、深度层次 | `theme/animations/glassmorphism.css` |
+| **深色模式精修** | OLED纯黑、霓虹点缀、优化对比度 | `theme/tokens/cyberpunk.tokens.ts` |
+| **微动效体验** | 悬浮发光、数字滚动、扫光效果、霓虹骨架屏 | `theme/animations/`, `hooks/useCountUp.ts` |
+
+### 实施计划
+
+#### Phase 1：基础层（核心）—— ✅ 已完成
+- [x] 赛博朋克主题配色 token 定义 → [cyberpunk.tokens.ts](../apps/web/src/theme/tokens/cyberpunk.tokens.ts)
+- [x] 主题切换机制（themeStore + MUI colorSchemes）→ [themeStore.ts](../apps/web/src/store/themeStore.ts) + [ThemeProvider.tsx](../apps/web/src/components/ThemeProvider.tsx)
+- [x] 主题选择器 UI → [ThemeSelector.tsx](../apps/web/src/components/ThemeSelector.tsx)
+- [x] 基础组件样式覆盖（Button, Input, Card, Table, AppBar, ListItemButton）→ [theme.ts](../apps/web/src/theme/theme.ts)
+- [x] 玻璃拟态工具类 + 霓虹动效 CSS → [cyberpunk.css.ts](../apps/web/src/theme/animations/cyberpunk.css.ts)
+- [x] TSC 验证：0 错误 ✅
+
+**Phase 1 交付内容**：
+- 新增 `cyberpunk` 色彩方案（霓虹青 #00FFFF + 霓虹品红 #FF00FF + 深空背景 #0A0A1A）
+- 主题选择器支持 亮色/暗色/赛博朋克/跟随系统 四种模式
+- 玻璃拟态卡片、霓虹发光按钮、毛玻璃顶栏、霓虹表格表头
+- 扫光效果、霓虹骨架屏、脉冲发光、数字滚动入场等动效
+- 支持 `prefers-reduced-motion` 无障碍访问
+
+#### Phase 2：组件层（完善）
+- [ ] 所有 MUI 组件的赛博朋克样式适配
+- [ ] 自定义组件（DataTable, FilterBar, StatusBadge 等）适配
+- [ ] 表单组件全套适配
+- [ ] 弹窗/抽屉/下拉菜单适配
+
+#### Phase 3：动效层（增强）
+- [ ] 悬浮发光动效
+- [ ] 数字滚动动画 Hook
+- [ ] 扫光效果组件
+- [ ] 霓虹骨架屏
+- [ ] 页面过渡动画
+
+#### Phase 4：页面层（全量）
+- [ ] Dashboard 页面赛博朋克优化
+- [ ] 列表页统一适配
+- [ ] 详情页/表单页适配
+- [ ] 特殊页面（GIS、数据大屏等）专项优化
+
+### 设计要点
+
+- **主题切换模式**：新增 cyberpunk 主题，与 light/dark 并存，低风险、可回滚
+- **CSS 变量驱动**：所有主题颜色通过 CSS 变量定义，切换性能最优
+- **向后兼容**：不修改现有 light/dark 主题代码，完全增量式
+- **可访问性**：霓虹色确保对比度 ≥ 4.5:1（WCAG AA），支持 `prefers-reduced-motion`
+
+---
+
+## V36.0 默认值移除 + 内置视图切换 + HRM迁移 ✅
+
+> 目标：在 V35.0 基础上继续演进 — URL 更干净、视图切换内置化、HRM 页面迁移范例
+
+### 三大演进方向
+
+| 方向 | 说明 | 涉及文件 |
+|------|------|----------|
+| **默认值 URL 移除优化** | `useUrlListState` 所有状态（搜索/分页/筛选/排序）等于默认值时自动从 URL 移除，URL 更干净可分享 | `useUrlListState.ts` |
+| **内置视图模式切换** | `ListPageTemplate` 内置 `viewMode`（表格/卡片）切换 + URL 同步，开箱即用，无需页面自行实现 | `ListPageTemplate.tsx`, `list/types.ts` |
+| **HrmLeavePage 迁移** | HRM 请假管理页从手动 state 迁移到 `useUrlListState` + URL 同步，作为 React Query 场景下的迁移范例 | `HrmLeavePage.tsx` |
+
+### 详细设计
+
+#### 1. 默认值 URL 移除优化
+
+**改动前**：只有空值（undefined/null/''）才从 URL 移除，`page=1`、`pageSize=10`、`status=all` 等默认值都留在 URL 中。
+
+**改动后**：所有状态等于默认值时自动移除，URL 最短最干净。
+
+**覆盖的状态维度：**
+
+| 状态 | 默认值 | URL 参数 | 移除条件 |
+|------|--------|----------|----------|
+| 搜索词 | `defaultSearch` | `q` | 等于默认值时移除 |
+| 页码 | `initialPage`（通常 1） | `page` | 等于第一页时移除 |
+| 每页条数 | `defaultPageSize`（10） | `pageSize` | 等于默认值时移除 |
+| 排序字段 | `defaultSortBy`（''） | `sortBy` | 等于默认值时移除 |
+| 排序方向 | `defaultSortOrder`（'asc'） | `sortOrder` | 等于默认值或无排序字段时移除 |
+| 筛选值 | `defaultFilters` 中对应值 | `f_xxx` | 等于默认值时移除（支持对象/数组深比较） |
+
+**实现亮点**：
+- 筛选默认值支持对象/数组深比较（`JSON.stringify` 对比）
+- `resetFilters` / `clearAll` 时不再回写默认值到 URL，直接清除所有筛选参数
+- `clearAll` 同时清除 `pageSize` 参数
+
+#### 2. 内置视图模式切换
+
+**定位**：ListPageTemplate 开箱即用的表格/卡片视图切换，带 URL 同步。
+
+**三种使用模式：**
+
+```tsx
+// 模式1：受控模式
+<ListPageTemplate
+  viewMode={viewMode}
+  onViewModeChange={setViewMode}
+  renderCardItem={(row) => <Card>...</Card>}
+/>
+
+// 模式2：非受控模式
+<ListPageTemplate
+  defaultViewMode="card"
+  renderCardView={(data) => <Grid>...</Grid>}
+/>
+
+// 模式3：URL 同步模式（配合 urlSync 使用）
+<ListPageTemplate
+  internalListState={{ urlSync: 'replace' }}
+  renderCardItem={(row) => <Card>...</Card>}
+/>
+```
+
+**自动判断是否显示切换按钮**：
+- 传入 `viewModes` 时按传入显示
+- 未传入时，根据是否提供 `renderCardView` / `renderCardItem` 自动判断
+- 只有一种视图时不显示切换按钮
+
+**UI 表现**：
+- 工具栏右侧分段式按钮组
+- 选中态白底 + 阴影 + 主色图标
+- 未选中态透明背景 + 次要色图标
+- Tooltip 提示
+
+**URL 同步**：`?view=card`，默认值 `table` 自动移除。
+
+#### 3. HrmLeavePage 迁移范例
+
+**迁移内容**：
+- 移除 4 个本地 state（`searchText`/`statusFilter`/`typeFilter`/`employeeFilter`）
+- 使用 `useUrlListState` 统一管理搜索、分页、筛选
+- React Query 的 `queryKey` 直接消费 listState 中的状态
+- 移除 `persistFilters` / `persistSearch`（URL 同步即持久化）
+
+**迁移前后对比**：
+
+| 维度 | 迁移前 | 迁移后 |
+|------|--------|--------|
+| 状态管理 | 4 个 useState 分散管理 | 1 个 useUrlListState 统一管理 |
+| URL 同步 | 不支持 | 全量同步（搜索/分页/筛选） |
+| 持久化 | localStorage | URL（可分享） |
+| 前进后退 | 不支持 | 支持 |
+| 代码量 | ~20 行 state + 回调 | ~10 行配置 |
+
+**迁移范例模式**：适用于所有使用 React Query + 手动状态管理的列表页。
+
+### 验收
+
+| 维度 | 指标 | 结果 |
+|------|------|------|
+| TypeScript 编译 | 全部文件 | ✅ 0 错误 |
+| 默认值 URL 移除 | 搜索/分页/筛选/排序 | ✅ 全部支持，默认值不出现在 URL |
+| 内置视图切换 | ListPageTemplate | ✅ 三种模式 + URL 同步 + 自动显隐 |
+| HrmLeavePage 迁移 | React Query 场景范例 | ✅ 完成，全量 URL 同步 |
+| 向后兼容 | 现有所有页面 | ✅ 全部正常（新增属性均可选） |
+
+### 后续演进方向
+
+- **更多页面迁移**：将 HrmContractPage、HrmAttendancePage 等 HRM 页面及 FIN/CRM 模块页面逐步迁移
+- **卡片视图标准化**：提供默认卡片布局（标题/副标题/字段列表/操作），减少重复代码
+- **视图模式记忆**：可选持久化到 localStorage，跨页面保持用户偏好
+- **抽屉式编辑集成到 crud 模式**：`crud.editMode = 'drawer' | 'dialog'`
+- **筛选操作符落地**：与后端约定格式，在 crud 模式中集成高级筛选 DSL
+
+---
+
+## V35.0 视图URL同步 + 抽屉编辑 + quickFilters落地 ✅
+
+| 方向 | 说明 | 涉及文件 |
+|------|------|----------|
+| **顶级 urlSync 便捷开关** | ListPageTemplate 新增 `urlSync` / `urlPrefix` prop，作为 internalListState.urlSync 的便捷写法；crud 模式下也可直接使用 | `ListPageTemplate.tsx`, `list/types.ts` |
+| **快速筛选 URL 同步** | quickFilters 选中状态同步到 URL（`?qf=xxx`），支持前进后退、刷新保持、链接分享；新增激活态高亮样式 | `ListPageTemplate.tsx`, `ListSearchBar.tsx`, `list/types.ts` |
+| **筛选值双向同步修复** | internalListState 模式下，localFilters 与 internalListStateResult.filters 双向同步，确保 URL 中的筛选值能正确回显到筛选面板 | `ListPageTemplate.tsx` |
+
+### 详细设计
+
+#### 1. 顶级 urlSync 便捷开关
+
+**使用方式：**
+
+```tsx
+// 方式一：internalListState + urlSync（原写法）
+<ListPageTemplate
+  internalListState={{ urlSync: 'replace', defaultPageSize: 10 }}
+/>
+
+// 方式二：顶级 urlSync（新写法，更简洁）
+<ListPageTemplate
+  urlSync="replace"
+  urlPrefix="users"
+/>
+
+// 方式三：crud 模式 + urlSync
+<ListPageTemplate
+  crud={{ api: userApi, queryKey: 'users' }}
+  urlSync="replace"
+/>
+```
+
+**优先级规则：**
+- `internalListState.urlSync` > 顶级 `urlSync`
+- `internalListState.urlPrefix` > 顶级 `urlPrefix`
+- crud 模式下，`crud.urlSync` > 顶级 `urlSync`
+
+#### 2. 快速筛选 URL 同步
+
+**特性：**
+- ✅ 选中的快速筛选同步到 URL（参数名：`qf`，支持前缀）
+- ✅ 页面加载时自动从 URL 恢复快速筛选状态
+- ✅ 前进/后退导航时自动切换对应的快速筛选
+- ✅ 激活态高亮（蓝色边框 + 蓝色文字 + 浅蓝背景）
+- ✅ 支持 `key` 字段标识快速筛选（推荐），未设置时用索引
+
+**使用方式：**
+
+```tsx
+<ListPageTemplate
+  urlSync="replace"
+  quickFilters={[
+    { key: 'active', label: '进行中', filters: { status: 'active' } },
+    { key: 'done', label: '已完成', filters: { status: 'done' } },
+  ]}
+/>
+```
+
+**URL 示例：** `?qf=active&f_status=active`
+
+#### 3. 筛选值双向同步修复
+
+**问题：** 启用 internalListState（含 urlSync）时，`localFilters` 是本地 useState，与 `internalListStateResult.filters` 不同步，导致：
+- URL 中的筛选值不能回显到筛选面板
+- 筛选面板修改的值不能同步到 URL
+
+**修复方案：**
+- `localFilters` 改为派生值：internalListState 启用时使用 `internalListStateResult.filters`
+- `setLocalFilters` 改为统一入口：internalListState 启用时调用 `internalListStateResult.setFilters`
+- 原有 localStorage 持久化逻辑保留（作为 URL 同步的补充）
+
+### 验收
+
+| 维度 | 指标 | 结果 |
+|------|------|------|
+| TypeScript 编译 | 全部文件 | ✅ 0 错误 |
+| 顶级 urlSync prop | ListPageTemplate 便捷开关 | ✅ 完成 |
+| 快速筛选 URL 同步 | qf 参数 + 激活态高亮 | ✅ 完成 |
+| 筛选值双向同步 | localFilters 与 URL 同步 | ✅ 完成 |
+| 向后兼容 | 现有所有页面 | ✅ 全部正常（新增字段均可选） |
+
+### 后续演进方向
+
+- **更多页面迁移**：将 HRM/FIN/CRM 等模块的列表页逐步迁移到 internalListState + urlSync 模式
+- **视图模式 URL 同步**：表格/卡片视图切换状态同步到 URL
+- **抽屉式编辑**：替代对话框的现代交互模式
+- **服务端响应标准化**：`parsePaginationFromResponse` 推广到所有列表页
+- **筛选操作符落地**：与后端约定具体格式，在 crud 模式中集成高级筛选 DSL
+
+---
+
+## V33.0 批量操作 + 筛选操作符 + URL 原语 ✅
+
+| 方向 | 说明 | 涉及文件 |
+|------|------|----------|
+| **批量页面迁移** | 4 个 SCM 常用列表页迁移到 `useUrlListState + urlSync` 模式：ScmEvaluationPage、ScmPurchaseItemPage、SupplierAdmissionPage、PurchaseContractPage | 4 个页面文件 |
+| **URL 状态原语** | 新增通用 `useUrlState` hook，支持任意简单值的 URL 同步（tab、视图模式、展开状态等）；SupplierAdmissionPage 示范 tab 状态 URL 同步 | `useUrlState.ts`, `SupplierAdmissionPage.tsx` |
+| **CRUD 批量操作** | crud 模式新增 `selectable` 自动启用批量选择，内置批量删除操作，支持 `onSelectionChange` 回调；批量操作自动合并到 `resolvedBatchActions` | `ListPageTemplate.tsx` |
+| **筛选操作符规范** | 新增 `FilterOperator` 类型（eq/ne/gt/gte/lt/lte/like/in/nin/between/null/notnull），提供 `buildStandardFilterParams` / `buildNestedFilterArray` / `serializeFiltersToUrl` / `parseFiltersFromUrl` 工具 | `listParamMapping.ts` |
+
+### 详细设计
+
+#### 1. 批量页面迁移（4 个 SCM 列表页）
+
+**迁移模式：页面层 `useUrlListState` + 受控传给模板**
+
+适用场景：
+- 数据获取逻辑复杂，暂不适合迁到完整 crud 模式
+- 需要在页面层直接访问分页/搜索状态（如构建 queryKey）
+- 希望渐进式引入 URL 同步
+
+**迁移收益：**
+- ✅ URL 同步（前进后退、刷新保持、链接分享）
+- ✅ 单一数据源（页面层管理，模板受控渲染）
+- ✅ 可平滑升级到 crud 模式（后续只需移除 useQuery，加 crud prop）
+
+**已迁移页面：**
+| 页面 | 迁移内容 |
+|------|----------|
+| ScmEvaluationPage | 分页 + URL 同步 |
+| ScmPurchaseItemPage | 分页 + URL 同步 |
+| SupplierAdmissionPage | 分页 + tab 状态 + URL 同步 |
+| PurchaseContractPage | 分页 + URL 同步 |
+
+#### 2. 通用 URL 状态原语 — `useUrlState`
+
+**API 设计：**
+
+```tsx
+const [tab, setTab] = useUrlState<number>('tab', 0);
+const [view, setView] = useUrlState<'table' | 'card'>('view', 'table');
+const [expanded, setExpanded] = useUrlState('expand', false);
+const [selected, setSelected] = useUrlState<string[]>('ids', []);
+```
+
+**特性：**
+- ✅ 支持 string / number / boolean / array / object 自动序列化
+- ✅ 值为默认值时自动从 URL 移除
+- ✅ 支持 'replace' / 'push' 两种历史模式
+- ✅ 监听 URL 变化（前进/后退）自动同步回内部状态
+- ✅ 与 React Router 的 useSearchParams 深度集成
+
+**典型应用场景：**
+- Tab 选中状态同步（?tab=1）
+- 视图模式切换（?view=card）
+- 筛选面板展开/折叠（?expand=true）
+- 任意简单状态的 URL 持久化
+
+#### 3. CRUD 批量操作
+
+**crud 配置新增：**
+
+```tsx
+<ListPageTemplate
+  crud={{
+    api: userApi,
+    queryKey: 'users',
+    entityName: '用户',
+    selectable: true,           // 启用批量选择
+    onSelectionChange: (ids, rows) => {
+      console.log(`选中 ${ids.length} 条`);
+    },
+  }}
+/>
+```
+
+**自动能力：**
+- ✅ 启用 `selectable` 后自动显示复选框列
+- ✅ 内置"批量删除"操作（自动调用 api.bulkDelete）
+- ✅ 自动合并外部 `batchActions` 与内置批量操作
+- ✅ 选中变化时触发 `onSelectionChange(ids, rows)` 回调
+- ✅ 全选 / 取消全选 / 单选 全部正常工作
+
+**优先级：** 内置批量操作 + 外部 batchActions = resolvedBatchActions
+
+#### 4. 筛选操作符规范
+
+**操作符类型：**
+
+| 操作符 | 含义 | 示例 |
+|--------|------|------|
+| `eq` | 等于 | `status eq 'active'` |
+| `ne` | 不等于 | `status ne 'deleted'` |
+| `gt` | 大于 | `age gt 18` |
+| `gte` | 大于等于 | `age gte 18` |
+| `lt` | 小于 | `score lt 60` |
+| `lte` | 小于等于 | `score lte 100` |
+| `like` | 模糊匹配 | `name like '张%'` |
+| `in` | 包含在数组中 | `status in ['active','pending']` |
+| `nin` | 不在数组中 | `status nin ['deleted']` |
+| `between` | 在区间内 | `date between ['2024-01-01','2024-12-31']` |
+| `null` | 为空 | `deletedAt null` |
+| `notnull` | 不为空 | `email notnull` |
+
+**工具函数：**
+
+```tsx
+import {
+  buildStandardFilterParams,  // 转平铺参数（age_gt=18&status=active）
+  buildNestedFilterArray,    // 转对象数组（[{field:'age',op:'gt',value:18}]）
+  serializeFiltersToUrl,     // 序列化为 URL search params
+  parseFiltersFromUrl,       // 从 URL 解析筛选条件
+} from '@/utils/listParamMapping';
+```
+
+**URL 格式约定：** `?f_status=active&f_age_gt=18&f_tags_in=a,b,c`
+
+### 验收
+
+| 维度 | 指标 | 结果 |
+|------|------|------|
+| TypeScript 编译 | 全部文件 | ✅ 0 错误 |
+| 页面迁移 | SCM 4 个列表页 | ✅ 完成（分页 + URL 同步） |
+| useUrlState hook | 通用 URL 状态原语 | ✅ 完成，支持多类型自动序列化 |
+| Tab URL 同步示范 | SupplierAdmissionPage | ✅ 完成 |
+| CRUD 批量操作 | selectable + 内置批量删除 | ✅ 完成 |
+| 筛选操作符 | 12 种操作符 + 4 个工具函数 | ✅ 完成 |
+| 向后兼容 | 现有所有页面 | ✅ 全部正常（新增字段均可选） |
+
+### 后续演进方向
+
+- **声明式 CRUD 进阶**：行内编辑、表单联动、自定义表单组件、抽屉式编辑
+- **更多页面迁移**：HRM/FIN/CRM 等模块的常用列表页批量迁移
+- **URL 同步深化**：高级筛选展开状态、视图模式（表格/卡片）、面板折叠状态
+- **服务端响应标准化**：`parsePaginationFromResponse` 推广到所有列表页
+- **筛选操作符落地**：与后端约定具体格式，在 crud 模式中集成高级筛选 DSL
+
+---
+
+## V32.0 声明式 CRUD 成熟化 + 深层 URL 同步 ✅
+
+### 四大演进方向
+
+| 方向 | 说明 | 涉及文件 |
+|------|------|----------|
+| **声明式 CRUD 成熟化** | `crud` 配置新增 `transformParams` / `paramStyle` / `fieldMapping` / `onDataLoaded` / `onDataError`，支持更多后端风格和自定义扩展 | `ListPageTemplate.tsx`, `list/types.ts` |
+| **深层 URL 同步** | 新增 `useColumnConfig` hook，表格列的显示/隐藏/顺序同步到 URL，支持链接分享和前进后退；ListPageTemplate 通过 `columnConfig` prop 一键启用 | `useColumnConfig.ts`, `ListPageTemplate.tsx`, `list/types.ts` |
+| **服务端参数规范** | 新增 `listParamMapping.ts` 统一参数映射层，支持 standard/nested/offset 三种后端风格，含字段名映射和排序值映射 | `listParamMapping.ts`, `utils/index.ts` |
+| **渐进迁移示范** | ScmEvaluationPage 迁移到 `useUrlListState` 模式（页面层管理状态 + URL 同步 + 受控传给模板） | `ScmEvaluationPage.tsx` |
+
+### 详细设计
+
+#### 1. 声明式 CRUD 成熟化
+
+**新增配置项：**
+
+```tsx
+<ListPageTemplate
+  crud={{
+    api: userApi,
+    queryKey: 'users',
+    entityName: '用户',
+    urlSync: 'replace',
+    // 后端参数风格预设
+    paramStyle: 'standard', // 'standard' | 'nested' | 'offset'
+    // 字段名映射（前端 -> 后端）
+    fieldMapping: {
+      userName: 'user_name',
+      createdAt: 'created_at',
+    },
+    // 完全自定义参数转换（最高优先级）
+    transformParams: (params) => ({
+      page_num: params.page,
+      page_size: params.pageSize,
+      keyword: params.search,
+      filters: params.filters,
+      sort_field: params.sortBy,
+      sort_type: params.sortOrder,
+    }),
+    // 数据回调
+    onDataLoaded: (data, total) => {
+      console.log(`加载了 ${total} 条数据`);
+    },
+    onDataError: (error) => {
+      reportError(error);
+    },
+  }}
+/>
+```
+
+**优先级：** `transformParams` > `paramStyle + fieldMapping` > 默认 standard
+
+#### 2. 深层 URL 同步 — 表格列配置
+
+**新 Hook：`useColumnConfig`**
+
+```tsx
+const {
+  visibleColumnIds,      // 可见列 ID（按顺序）
+  columnVisibility,       // 可见性映射
+  toggleColumn,           // 切换列可见性
+  setColumnVisible,       // 设置列可见性
+  reorderColumns,         // 重新排序
+  resetColumns,           // 重置为默认
+} = useColumnConfig({
+  storageKey: 'users-list',     // localStorage key
+  defaultColumns: columns,      // 默认列定义
+  urlSync: 'replace',           // URL 同步模式
+  urlPrefix: 'users_',          // URL 参数前缀
+});
+```
+
+**URL 参数格式：**
+```
+?cols=id,name,email,status,createdAt
+```
+
+**ListPageTemplate 集成：**
+```tsx
+<ListPageTemplate
+  columnConfigurable
+  columnConfig={{
+    key: 'users-list',
+    urlSync: 'replace',
+    urlPrefix: 'users_',
+  }}
+/>
+```
+
+**特性：**
+- ✅ 列显示/隐藏同步到 URL
+- ✅ 列顺序同步到 URL（拖拽重排后）
+- ✅ URL 优先级 > localStorage > 默认值
+- ✅ 支持浏览器前进/后退
+- ✅ 链接分享可恢复列配置
+- ✅ 向后兼容：不传 `columnConfig` 时行为完全不变
+
+#### 3. 服务端排序/筛选参数规范
+
+**统一参数映射层：`listParamMapping.ts`**
+
+三种预设风格：
+
+| 风格 | 分页参数 | 搜索参数 | 排序参数 | 筛选参数 |
+|------|----------|----------|----------|----------|
+| `standard` | page, pagesize | keyword | sortBy, sortOrder | 平铺 |
+| `nested` | page, pagesize | keyword | sort: { field, order } | filters: { ... } |
+| `offset` | offset, limit | keyword | sortBy, sortOrder | 平铺 |
+
+**使用方式：**
+
+```tsx
+import { mapListParamsToBackend, topemsStandardParams } from '@/utils/listParamMapping';
+
+const params = mapListParamsToBackend(state, {
+  style: 'nested',
+  fieldMapping: { userName: 'user_name' },
+  sortOrderValues: { asc: 'ASC', desc: 'DESC' },
+});
+```
+
+**预设配置：**
+- `topemsStandardParams` — TOPEMS 标准后端（standard 风格）
+- `nestedFilterParams` — 嵌套筛选风格（Java 后端常见）
+- `offsetStyleParams` — offset/limit 风格（NoSQL 常见）
+
+#### 4. 渐进迁移示范（ScmEvaluationPage）
+
+**迁移模式：页面层 `useUrlListState` + 受控传给模板**
+
+这种模式适用于：
+- 数据获取逻辑复杂，暂不适合迁到 crud 模式
+- 需要在页面层直接访问分页/搜索状态（如构建 queryKey）
+- 希望渐进式引入 URL 同步
+
+**迁移收益：**
+- URL 同步（前进后退、刷新保持、链接分享）
+- 单一数据源（页面层管理，模板受控渲染）
+- 可平滑升级到 crud 模式（后续只需移除 useQuery，加 crud prop）
+
+### 验收
+
+| 维度 | 指标 | 结果 |
+|------|------|------|
+| TypeScript 编译 | 全部文件 | ✅ 0 错误 |
+| 声明式 CRUD 配置 | transformParams / paramStyle / fieldMapping | ✅ 完成 |
+| 声明式 CRUD 回调 | onDataLoaded / onDataError | ✅ 完成 |
+| 列配置 URL 同步 | useColumnConfig hook | ✅ 完成 |
+| 列配置模板集成 | ListPageTemplate columnConfig prop | ✅ 完成 |
+| 服务端参数规范 | mapListParamsToBackend + 3 种风格 | ✅ 完成 |
+| 页面迁移示范 | ScmEvaluationPage | ✅ 完成 |
+| 向后兼容 | 现有所有页面 | ✅ 全部正常（新增字段均可选） |
+
+### 后续演进方向
+
+- **声明式 CRUD 进阶**：行内编辑、批量操作、表单联动、自定义表单组件
+- **更多页面迁移**：SCM/HRM/FIN 等模块的常用列表页批量迁移
+- **深层 URL 同步扩展**：视图模式（表格/卡片）、高级筛选展开状态、tab 选中状态
+- **服务端筛选操作符**：支持 gt/lt/in/like 等操作符的统一约定
+- **服务端分页响应标准化**：`parsePaginationFromResponse` 工具推广
+
+---
 
 ## 当前阶段：V5.19 运行时验证与遗留问题清理 🧹 ✅
 
@@ -1528,3 +2097,646 @@ Step 3: 搜索结果页
 | 登录功能 | ✅ admin/admin 可正常登录 |
 | 页面导航 | ✅ 所有页面可正常访问 |
 | 主题切换 | ✅ 深色/浅色模式切换正常 |
+
+---
+
+## V31.0 声明式列表页演进 ✅
+
+> 完成时间：2026-07-20
+> 目标：在 V30.0 架构基础上进一步演进 — URL 同步增强、声明式 CRUD、渐进迁移示范
+
+### 三大演进方向
+
+| 方向 | 说明 | 涉及文件 |
+|------|------|----------|
+| **URL 同步增强** | `useUrlListState` / `useListPageState` 新增 filters（筛选）和 sort（排序）字段，API 完全对齐，可无缝切换 | `useListPageState.ts`, `useUrlListState.ts` |
+| **声明式 CRUD** | ListPageTemplate 新增 `crud` prop，传入后内部自动完成数据获取 + 状态管理 + CRUD 操作（实验性） | `ListPageTemplate.tsx`, `list/types.ts` |
+| **渐进迁移示范** | ScmSupplierPage 完整迁移到 `ListPageTemplate + internalListState + urlSync` 模式 | `ScmSupplierPage.tsx` |
+
+### 详细设计
+
+#### 1. URL 同步增强（filters + sort）
+
+**useListPageState / useUrlListState API 完全对齐：**
+
+```tsx
+const {
+  // 搜索
+  searchQuery, setSearchQuery, debouncedSearch,
+  // 筛选（新增）
+  filters, setFilter, setFilters, resetFilters,
+  // 排序（新增）
+  sortBy, sortOrder, setSort, toggleSort,
+  // 分页
+  currentPage, setCurrentPage, pageSize, setPageSize, resetPage,
+  // 组合操作
+  clearSearch, clearAll,
+} = useUrlListState({
+  defaultFilters: { status: 'all' },
+  defaultSortBy: 'createdAt',
+  defaultSortOrder: 'desc',
+  resetPageOnFilterChange: true,
+  resetPageOnSortChange: true,
+});
+```
+
+**筛选值序列化：**
+- string/number/boolean：直接序列化
+- array/object：JSON.stringify
+- null/undefined/''：从 URL 中移除
+
+**URL 参数格式：**
+```
+?q=关键词&page=1&pageSize=10&sortBy=createdAt&sortOrder=desc&f_status=active&f_category=1
+```
+
+#### 2. 声明式 CRUD（实验性）
+
+**使用方式：**
+```tsx
+<ListPageTemplate
+  title="用户列表"
+  columns={columns}
+  crud={{
+    api: userApi,
+    queryKey: 'users',
+    entityName: '用户',
+    urlSync: 'replace',
+  }}
+  actions={[
+    { label: '新增用户', onClick: () => setShowCreate(true) },
+  ]}
+/>
+```
+
+**内部自动完成：**
+- ✅ 数据获取（useCrudOperations）
+- ✅ 搜索/防抖（internalListState）
+- ✅ 分页（internalListState + URL 同步）
+- ✅ 筛选/排序（URL 同步）
+- ✅ CRUD 操作（create/update/delete）
+- ✅ 语义化通知（entityName）
+
+**向后兼容：** 不传 `crud` 时行为完全不变。
+
+#### 3. 渐进迁移示范（ScmSupplierPage）
+
+**迁移前：**
+```tsx
+const [searchTerm, setSearchTerm] = useState('');
+const { data, loading, pagination, fetch } = useCrudOperations(...);
+
+const handleSearch = (value) => {
+  setSearchTerm(value);
+  fetch({ search: value });
+  pagination.setPage(1);
+};
+
+<ListPageTemplate
+  data={data}
+  pagination={{
+    page: pagination.page - 1,
+    pageSize: pagination.pageSize,
+    total: pagination.total,
+    onPageChange: (p) => pagination.setPage(p + 1),
+    onPageSizeChange: (s) => pagination.setPageSize(s),
+  }}
+  searchValue={searchTerm}
+  onSearch={handleSearch}
+/>
+```
+
+**迁移后：**
+```tsx
+const { data, loading, pagination, fetch, create } = useCrudOperations(...);
+
+const handleDebouncedSearch = (value) => {
+  fetch({ search: value });
+};
+
+<ListPageTemplate
+  data={data}
+  loading={loading}
+  total={pagination.total}
+  internalListState={{
+    defaultPageSize: 10,
+    baseIndex: 1,
+    urlSync: 'replace',
+  }}
+  onDebouncedSearch={handleDebouncedSearch}
+  onPageChange={(p) => pagination.setPage(p)}
+  onPageSizeChange={(s) => pagination.setPageSize(s)}
+  searchable
+/>
+```
+
+**收益：**
+- 消除了 `searchTerm` useState + 手动防抖样板
+- 消除了 0-based ↔ 1-based 分页转换
+- 自动 URL 同步（前进后退、刷新保持、链接分享）
+- 代码更简洁、状态来源更清晰
+
+### 验收
+
+| 维度 | 指标 | 结果 |
+|------|------|------|
+| TypeScript 编译 | 全部文件 | ✅ 0 错误 |
+| useListPageState 扩展 | filters + sort | ✅ 完成，API 与 useUrlListState 对齐 |
+| useUrlListState 扩展 | filters + sort + JSON 序列化 | ✅ 完成，支持 string/number/boolean/array/object |
+| 声明式 CRUD | ListPageTemplate crud prop | ✅ 完成（实验性） |
+| 渐进迁移示范 | ScmSupplierPage | ✅ 完成，迁移后代码更简洁 |
+| 向后兼容 | 现有 141+ 已迁移文件 | ✅ 全部正常（新增字段可选） |
+
+### 后续演进方向
+
+- **声明式 CRUD 成熟化**：完善 crud 模式，支持更多自定义配置（自定义搜索参数名、行内编辑、批量操作等）
+- **更多页面迁移**：将常用列表页逐步迁移到 `internalListState + urlSync` 模式
+- **深层 URL 同步**：高级筛选、表格列配置、视图模式等也纳入 URL 同步
+- **服务端排序/筛选**：与后端约定统一的排序/筛选参数规范
+
+---
+
+## V30.0 模板/架构层升级 ✅
+
+> 完成时间：2026-07-20
+> 目标：从模板/架构层入手，将 V25~V29 沉淀的 Hook 能力向上整合到模板层和统一模式中
+
+### 三大架构提升
+
+| 提升项 | 说明 | 涉及文件 |
+|--------|------|----------|
+| **ListPageTemplate 内置 useListPageState** | 新增 `internalListState` prop，模板内部统一管理搜索/防抖/分页，调用方无需手动写 useState/useEffect 样板代码；支持 `urlSync` 选项一键开启 URL 同步 | `ListPageTemplate.tsx`, `list/types.ts` |
+| **统一 CRUD 操作模式** | `useCrudOperations` / `useModuleQueries` / `useCrudQueries` 全部新增 `mutations` 字段，暴露原始 Mutation 对象（与 useCrudMutations 对齐）；`useCrudOperations` 新增 `entityName` 选项，支持语义化通知（"用户创建成功" vs "创建成功"） | `useCrudQueries.ts` |
+| **URL 状态同步 hook** | 新增 `useUrlListState`，将搜索/分页参数持久化到 URL search params，支持浏览器前进/后退、链接分享、刷新保持状态；API 与 `useListPageState` 完全一致，可无缝替换 | `useUrlListState.ts`（新增） |
+
+### 详细设计
+
+#### 1. ListPageTemplate 内置状态（`internalListState`）
+
+**使用方式：**
+```tsx
+<ListPageTemplate
+  title="用户列表"
+  columns={columns}
+  data={users}
+  internalListState={{
+    defaultPageSize: 10,
+    baseIndex: 1,
+    urlSync: 'replace',  // 可选：'replace' | 'push' | false
+  }}
+  onDebouncedSearch={(q) => fetch({ keyword: q })}
+  total={total}
+/>
+```
+
+**特性：**
+- 完全向后兼容：不传入 `internalListState` 时行为与之前完全一致
+- 搜索自动防抖（默认 300ms）
+- 搜索变化自动重置到第一页
+- 支持 0-based / 1-based 分页（`baseIndex` 选项）
+- `urlSync: 'replace'` 一键开启 URL 状态同步
+- `urlPrefix` 支持同页多列表参数隔离
+
+#### 2. 统一 CRUD 模式（`mutations` + `entityName`）
+
+**新增 `mutations` 字段：**
+```tsx
+const { create, update, mutations } = useCrudOperations<User>({
+  api: userApi,
+  queryKey: 'users',
+  entityName: '用户',  // 通知变为"用户创建成功"
+});
+
+// 便捷方法（Promise 风格）— 保持不变
+await create(userData);
+
+// 原始 Mutation 对象（新增强）— 用于访问 isPending/onMutate 等
+mutations.createMutation.isPending;
+mutations.updateMutation.mutate({ id, item });
+```
+
+**三个 hook 全部支持：**
+- `useCrudOperations`（最常用，标准 CrudOperations 接口）
+- `useModuleQueries`（模块级 API 对象）
+- `useCrudQueries`（Axios + basePath 模式）
+
+#### 3. URL 状态同步（`useUrlListState`）
+
+**API 与 useListPageState 完全对齐，可无缝替换：**
+```tsx
+const {
+  searchQuery, setSearchQuery,
+  debouncedSearch,
+  currentPage, setCurrentPage,
+  pageSize, setPageSize,
+  resetPage, clearSearch,
+} = useUrlListState({
+  defaultPageSize: 10,
+  historyMode: 'replace',  // 'replace' | 'push'
+  prefix: 'users_',        // 参数前缀，同页多列表隔离
+});
+```
+
+**特性：**
+- 搜索、页码、每页条数全部同步到 URL
+- 支持浏览器前进/后退（自动监听 URL 变化并同步状态）
+- 刷新页面后状态自动恢复
+- 支持链接分享（打开链接即恢复搜索/分页状态）
+- `historyMode: 'push'` 模式下每次搜索/翻页都产生历史记录
+
+### 验收
+
+| 维度 | 指标 | 结果 |
+|------|------|------|
+| TypeScript 编译 | 全部文件 | ✅ 0 错误 |
+| 向后兼容 | 现有 141 个已迁移文件 | ✅ 全部正常（新增字段不影响旧代码） |
+| ListPageTemplate internalListState | 新增 prop + URL 同步 | ✅ 实现完成 |
+| CRUD mutations 暴露 | 3 个 hook 全部新增 mutations 字段 | ✅ 实现完成 |
+| CRUD entityName 语义化 | useCrudOperations 新增 entityName | ✅ 实现完成 |
+| useUrlListState | 新增 URL 同步 hook | ✅ 实现完成 |
+
+### 后续演进方向
+
+- **渐进迁移**：后续新页面优先使用 `ListPageTemplate + internalListState + urlSync` 模式，逐步淘汰手动 useState/useEffect 写法
+- **与 useCrudOperations 深度整合**：探索 `ListPageTemplate` 直接接受 `crud` 配置，内部自动完成数据获取 + 状态管理 + CRUD 操作，实现"声明式列表页"
+- **更多 URL 同步字段**：筛选条件、排序等也可纳入 URL 同步范围
+
+---
+
+## V29.0 渐进式 Hook 迁移（第五轮）✅
+
+> 完成时间：2026-07-20
+> 目标：收尾剩余候选 — 非标准命名 useCrudMutations + 合并对象分页 useListPageState
+
+### 迁移成果
+
+| Hook | 本轮迁移数 | 累计迁移数 | 剩余 |
+|------|------------|------------|------|
+| useCrudMutations | 4 | 49 | 1（VoucherManagementPage 多语义 update，不迁移） |
+| useListPageState | 4 | 15 | ~2（URL 分页/特殊场景，需重构） |
+| useConfirmDialog | 0 | 77 | 0（已清零） |
+| **合计** | **8** | **141** | **~3** |
+
+### 本轮迁移文件清单
+
+**useCrudMutations（4 文件，非标准命名）**：
+- erp/PurchaseOrderPage.tsx（别名解构 createOrderMutation 等，保留 approve/cancel mutation）
+- qms/QmsEightDPage.tsx（别名解构 createReportMutation 等，保留 submitStep mutation）
+- qms/QmsQualityControlPage.tsx（别名解构 createIssueMutation 等）
+- qms/QmsSpcPage.tsx（别名解构 createSpcChartMutation 等，保留 addSpcDataPoint mutation）
+
+**useListPageState（4 文件，合并对象分页重构）**：
+- integration/IntegrationMesErpPage.tsx（客户端过滤 + 0-based 分页，新增防抖）
+- integration/IntegrationLimsQmsPage.tsx（客户端过滤 + 0-based 分页，新增防抖）
+- integration/IntegrationWmsScmPage.tsx（客户端过滤 + 0-based 分页，新增防抖）
+- crm/ReturnListPage.tsx（服务端搜索 + 0-based 分页，新增防抖 + 筛选重置页码）
+
+### 跳过文件（1 个，不建议迁移）
+
+| 文件 | 原因 |
+|------|------|
+| erp/VoucherManagementPage.tsx | updateMutation 被复用于多种语义（审核、记账），统一"更新成功"文案会丢失语义准确性 |
+
+### 技术要点
+
+1. **别名解构模式**：非标准命名的 mutation 全部通过别名解构保持原变量名不变，业务函数零修改
+2. **合并对象分页重构**：`useState({ page, pageSize, total })` → `useListPageState()` + 独立 `useState(0)` 维护 total
+3. **客户端过滤页面新增防抖**：integration 系列页面搜索是客户端 filter，原无防抖，迁移后增加 300ms 防抖
+4. **筛选变化重置页码**：ReturnListPage 的 statusFilter/returnTypeFilter 变化时调用 `resetPage()` 重置到第一页
+
+### 验收
+
+| 维度 | 指标 | 结果 |
+|------|------|------|
+| TypeScript 编译 | 迁移相关文件 | ✅ 0 错误 |
+| useCrudMutations 累计 | V25+V26+V27+V28+V29 | ✅ 49 文件 |
+| useListPageState 累计 | | ✅ 15 文件 |
+| useConfirmDialog 累计 | | ✅ 77 文件 |
+| **五轮累计迁移** | **V25 ~ V29** | **141 文件** |
+
+### 最终剩余评估
+
+- **useCrudMutations 剩余 1**：VoucherManagementPage 多语义 update，不建议迁移（语义损失大于收益）
+- **useListPageState 剩余 ~2**：URL 分页或特殊场景，需与路由/模板重构一并进行
+- **useConfirmDialog**：✅ 业务页面已全部清零
+
+> Hook 迁移工作基本收尾。后续建议从"模板/架构层"入手提升，例如：ListPageTemplate 内置 useListPageState、统一 CRUD 操作模式、路由层 URL 状态同步等。
+
+---
+
+## V28.0 渐进式 Hook 迁移（第四轮）✅
+
+> 完成时间：2026-07-19
+> 目标：精确识别并迁移剩余 useCrudMutations 标准候选 + 收尾 useListPageState
+
+### 迁移成果
+
+| Hook | 本轮迁移数 | 累计迁移数 | 剩余候选 |
+|------|------------|------------|----------|
+| useCrudMutations | 20 | 45 | ~5（非标准模式，收益有限） |
+| useListPageState | 1 | 11 | ~6（合并对象/URL 分页，需重构） |
+| useConfirmDialog | 0 | 77 | 0（已清零） |
+| **合计** | **21** | **133** | **~11** |
+
+### 本轮迁移文件清单
+
+**useCrudMutations（20 文件）**：
+
+| 模块 | 文件数 | 文件列表 |
+|------|--------|----------|
+| erp | 3 | InventoryManagementPage、MaterialManagementPage、SupplierManagementPage |
+| qms | 2 | QmsNonconformancePage、QmsStandardListPage |
+| mes | 4 | ProcessRoutePage、ProductionRecordPage、TeamManagementPage、WorkOrderPage |
+| asset | 3 | AssetListPage、CategoryManagementPage、DepreciationPage |
+| crm | 3 | ContactManagementPage、CustomerManagementPage、InteractionManagementPage |
+| report | 2 | ReportSubscriptionPage、TemplateManagementPage |
+| admin | 1 | AccountManagementPage |
+| hrm | 1 | HrmDepartmentPage |
+| wms | 1 | OutboundOrderPage |
+
+**useListPageState（1 文件）**：
+- notification/NotificationArchivePage.tsx（客户端过滤 + 1-based 分页）
+
+### 跳过原因汇总
+
+| 跳过类型 | 文件数 | 原因 |
+|----------|--------|------|
+| 变量名非标准 / 多语义 mutation | 5 | erp/PurchaseOrderPage、erp/VoucherManagementPage、qms/QmsEightDPage、qms/QmsQualityControlPage、qms/QmsSpcPage |
+| 已使用 useCrudOperations | 13 | finance/bi/ehs/srm 等模块上层 hook，不重复迁移 |
+| mutation 数量不足 3 个 | ~105 | 详情页、创建页等单操作页面 |
+| onSuccess 缺少通知+失效模式 | ~40 | 部分页面仅 logger.error 或仅 invalidateQueries |
+| 合并对象分页（非独立 useState） | 4 | integration/*、crm/ReturnListPage |
+| URL 分页 / 非标准模式 | ~2 | useSearchParams 等基于 URL 的分页 |
+
+### 精确分析方法
+
+使用了精确的 useMutation 配置块提取分析，从 100 个 useMutation 文件中筛选出 25 个符合 8 条判定标准的候选，实际迁移 20 个（5 个因变量名非标准/多语义 mutation 跳过）。
+
+**8 条判定标准**：
+1. ≥3 个独立 mutation 变量
+2. 变量名含 create/update/delete（含同义词）
+3. onSuccess 同时有 addNotification + invalidateQueries
+4. onError 有 addNotification 或 logger.error
+5. 未使用 useCrudMutations / useCrudOperations
+6. 单一 queryKey 失效
+7. 无乐观更新（setQueryData/getQueryData）
+8. 无批量操作（for 循环 + mutation）
+
+### 验收
+
+| 维度 | 指标 | 结果 |
+|------|------|------|
+| TypeScript 编译 | `npx tsc --noEmit`（排除 3 个原有错误文件） | ✅ 迁移相关文件 0 错误 |
+| useCrudMutations 累计 | V25+V26+V27+V28 | ✅ 45 文件 |
+| useListPageState 累计 | | ✅ 11 文件 |
+| useConfirmDialog 累计 | | ✅ 77 文件（pages/ 下 window.confirm 清零） |
+| **三轮累计迁移** | **V25+V26+V27+V28** | **133 文件** |
+
+### 剩余候选评估
+
+- **useCrudMutations 剩余 ~5**：多为变量名非标准或多语义 mutation 的文件，迁移收益有限（需大量别名 + 保留非 CRUD mutation），建议后续轮次按需处理
+- **useListPageState 剩余 ~6**：使用合并对象分页（`useState({ page, pageSize })`）或基于 URL 的分页，需先重构状态结构，建议与模板组件重构一并进行
+- **useConfirmDialog**：✅ 业务页面已全部清零
+
+---
+
+## V27.0 渐进式 Hook 迁移（第三轮）✅
+
+> 完成时间：2026-07-19
+> 目标：扩展 useListPageState 支持 0-based 分页 + 大规模 useConfirmDialog 迁移 + 收尾 useCrudMutations
+
+### 迁移成果
+
+| Hook | 本轮迁移数 | 累计迁移数 | 剩余候选 |
+|------|------------|------------|----------|
+| useConfirmDialog | 50 | 77 | 0（pages/ 下 window.confirm 全部清除） |
+| useCrudMutations | 2 | 25 | ~48（多为 useCrudOperations 或无通知模式） |
+| useListPageState | 6（含 0-based 分页） | 10 | ~7 |
+| **合计** | **58** | **112** | **~55** |
+
+### Hook 增强
+
+**useListPageState 扩展支持 0-based 分页**：
+
+```tsx
+const state = useListPageState({
+  baseIndex: 0,        // 新增：0-based 分页
+  defaultPage: 0,
+  defaultPageSize: 10,
+  debounceMs: 300,
+});
+// 默认 baseIndex=1（向后兼容）
+```
+
+### 本轮迁移文件清单
+
+**useConfirmDialog（50 文件，全部清除 pages/ 下 window.confirm）**：
+
+| 模块 | 文件数 | 文件列表 |
+|------|--------|----------|
+| mes | 13 | MaterialBOMPage、MaterialRequirementPage、WorkReportPage、WorkOrderPage、TeamManagementPage、QualityInspectionPage、ProductionSchedulePage、ProductionRecordPage、MesQualityPage（2 confirm）、EquipmentManagementPage、ProductionOrderManagementPage、ProcessRoutePage、ProcessFlowPage |
+| erp | 6 | SupplierManagementPage、PurchaseOrderPage、MaterialManagementPage、InventoryManagementPage、CustomerManagementPage、SalesOrderPage |
+| crm | 4 | OpportunityManagementPage、CustomerManagementPage、InteractionManagementPage、ContactManagementPage |
+| asset | 3 | DepreciationPage、CategoryManagementPage、AssetListPage |
+| admin | 3 | MigrationAdminPage（2 confirm）、DictManagementPage（2 confirm）、CompanyStructurePage |
+| lims | 4 | ReagentPage、LimsSamplePage、LimsInstrumentDataPage（3 confirm）、InstrumentPage |
+| iam | 1 | CompanyStructurePage |
+| finance | 4 | FinancePaymentPage（4 confirm）、ConsolidationScopePage、FinanceReceivablePayablePage（2 confirm） |
+| wms | 2 | SupplierManagementPage、StockTakePage |
+| scm | 2 | ScmPurchaseItemPage、ScmEvaluationPage |
+| qms | 2 | QmsStandardListPage、QmsNonconformancePage |
+| pm | 3 | PmResourcePage、PmProjectListPage、PmContractListPage |
+| report | 2 | ReportSchedulePage、ReportSubscriptionPage |
+| system | 1 | BackupPage |
+
+**useCrudMutations（2 文件）**：
+- finance/FinanceAssetPage.tsx（保留 disable/depreciation 非标准 mutation）
+- im/MailPage/hooks.tsx（保留 7 个非 CRUD mutation）
+
+**useListPageState（6 文件）**：
+- 1-based：notification/NotificationTemplatesPage、admin/TenantManagementPage、admin/UserManagementPage、iam/UserManagementPage
+- 0-based：lims/LimsProcessPage、pdm/PdmVersionPage
+
+### 跳过原因汇总
+
+| 跳过类型 | 数量 | 原因 |
+|----------|------|------|
+| 已使用 `useCrudOperations` | 多个 | finance/bi 多个文件已迁移到上层 hook，不重复迁移 |
+| onSuccess 无 addNotification | 多个 | bi 模块普遍仅 `logger.error` + `invalidateQueries` |
+| 仅 createMutation 无 update/delete | 多个 | 不符合标准 CRUD 三件套条件 |
+| 含批量操作 | 多个 | batchUpdate/batchDelete 不属于标准 CRUD |
+| 0-based 分页 + 非标准防抖 | 4 | integration/*Page 使用合并对象 `useState({ page, pageSize })` |
+| setTimeout 非搜索防抖 | 4 | 用于 abort controller 或通知自动消失 |
+
+### 验收
+
+| 维度 | 指标 | 结果 |
+|------|------|------|
+| TypeScript 编译 | `npx tsc --noEmit` | ✅ 0 错误（exit code 0） |
+| pages/ 下 window.confirm | `grep -rl "window\.confirm" apps/web/src/pages` | ✅ 0 匹配（全部清除） |
+| hooks 导出 | useListPageState（含 baseIndex）/ useCrudMutations / useConfirmDialog | ✅ 均从 `@/hooks` 正确导出 |
+| 本轮迁移文件数 | V27.0 | ✅ 58 |
+| 累计迁移文件数 | V25.0 + V26.0 + V27.0 | ✅ 112 |
+
+### 剩余候选（后续轮次）
+
+- **useCrudMutations 候选**（~48）：多为已使用 `useCrudOperations` 或 onSuccess 无 addNotification 的文件，需先调整通知模式或评估是否值得迁移
+- **useListPageState 候选**（~7）：使用合并对象分页（`useState({ page, pageSize })`）或基于 URL 的分页，需先重构状态结构
+- **useConfirmDialog 候选**：✅ 已全部清除业务页面 window.confirm
+
+---
+
+## V26.0 渐进式 Hook 迁移（第二轮）✅
+
+> 完成时间：2026-07-19
+> 目标：继续将剩余候选页面迁移到 useCrudMutations / useConfirmDialog / useListPageState 三个 hook
+
+### 迁移成果
+
+| Hook | 本轮迁移数 | 累计迁移数 | 剩余候选（后续轮次） |
+|------|------------|------------|----------------------|
+| useConfirmDialog | 12 | 27 | ~3 |
+| useCrudMutations | 16 | 23 | ~50+ |
+| useListPageState | 0（候选均 0-based 分页，跳过） | 4 | ~13 |
+| **合计** | **28** | **54** | **~70+** |
+
+### 本轮迁移文件清单
+
+**useConfirmDialog（12 文件）**：
+- admin/TenantDetailPage、admin/TenantManagementPage、admin/UserManagementPage
+- doc/DocumentsPage、hrm/HrmLeavePage
+- integration/IntegrationConnectionsPage、integration/IntegrationEventsPage
+- notification/NotificationTemplatesPage
+- scm/PurchaseContractPage、scm/ScmPurchaseOrderPage
+- wms/SerialNumberPage
+- workflow/WorkflowInstancesPage、workflow/WorkflowSettingsPage
+
+**useCrudMutations（16 文件）**：
+- pdm：MaterialPage、ProductPage、PdmBomPage、PdmProductConfigPage、BomPage、DocumentPage
+- mes：MaterialBOMPage、MaterialRequirementPage
+- qms：QmsInspectionPage、QmsStandardDetailPage
+- ehs：HealthManagementPage、EhsPlanPage、TrainingPage、CompliancePage
+- scm：ScmPurchaseItemPage
+- srm：SrmEvaluationPage
+
+### 跳过原因记录
+
+| 跳过类型 | 数量 | 原因 |
+|----------|------|------|
+| 0-based 分页 | 2 | useListPageState 仅支持 1-based 分页 |
+| 非 i18n 标准通知 | 13（lims） | onSuccess 中无 addNotification，不符合标准模式 |
+| 多 queryKey 失效 | 8 | 同时失效多个不相关 queryKey，hook 不支持 |
+| 乐观更新 | 6 | 使用 optimistic update，非标准模式 |
+| 批量操作 + i18n | 5 | mutations 内含复杂批量逻辑 + 国际化文案 |
+
+### 验收
+
+| 维度 | 指标 | 结果 |
+|------|------|------|
+| TypeScript 编译 | `npx tsc --noEmit` | ✅ 0 错误 |
+| hooks 导出 | useListPageState / useCrudMutations / useConfirmDialog | ✅ 均从 `@/hooks` 正确导出 |
+| 迁移文件数 | 本轮 | ✅ 28 |
+| 累计迁移文件数 | V25.0 + V26.0 | ✅ 54 |
+
+### 剩余候选（后续轮次渐进迁移）
+
+> 以下候选可在后续轮次按需迁移，预计可消除 30-50% 列表/表单页样板代码
+
+- **useCrudMutations 候选**（~50+）：主要集中在 finance、asset、bi、oa、lowcode、im、plugin 模块，部分需先调整 onSuccess 通知模式
+- **useListPageState 候选**（~13）：需先统一为 1-based 分页，或扩展 hook 支持 0-based
+- **useConfirmDialog 候选**（~3）：剩余少量使用原生 window.confirm 的页面
+
+---
+
+## V25.0 渐进式 Hook 迁移（第一轮）✅
+
+> 完成时间：2026-07-18
+> 目标：将 26 个代表性页面迁移到 3 个新 hook
+
+### 迁移成果
+
+| Hook | 迁移数 | 跳过数 |
+|------|--------|--------|
+| useConfirmDialog | 15 | - |
+| useListPageState | 4 | 2（0-based 分页） |
+| useCrudMutations | 7 | 3（非标准模式） |
+
+### 验收
+
+- TypeScript 编译：✅ 0 错误
+- 累计消除样板代码：约 1500+ 行
+
+---
+
+## V24.0 三个公共 Hook 创建 ✅
+
+> 完成时间：2026-07-17
+
+### 新增 Hook
+
+| Hook | 路径 | 用途 |
+|------|------|------|
+| useListPageState | `apps/web/src/hooks/useListPageState.ts` | 搜索防抖 + 分页状态自动管理 |
+| useCrudMutations | `apps/web/src/hooks/useCrudMutations.ts` | create/update/delete mutations + invalidateQueries + 通知 |
+| useConfirmDialog | `apps/web/src/hooks/useConfirmDialog.ts` | ConfirmDialog 开关 + 配置状态 |
+
+### API 设计
+
+```tsx
+// useListPageState
+const { searchTerm, debouncedSearch, page, pageSize, setSearchTerm, setPage, setPageSize } = useListPageState({ debounceMs: 300 });
+
+// useCrudMutations
+const { createMutation, updateMutation, deleteMutation } = useCrudMutations<TCreate, TUpdate, TDelete>({
+  queryKeyToInvalidate: ['entity'],
+  createFn, updateFn, deleteFn,
+  entityName: '实体名',
+});
+
+// useConfirmDialog
+const { confirmOpen, confirmConfig, openConfirm, closeConfirm } = useConfirmDialog();
+```
+
+---
+
+## V23.0 综合 UI 优化 ✅
+
+> 完成时间：2026-07-16
+> 基于四维度诊断报告（性能、组件、代码、构建）
+
+### 成果汇总
+
+| 维度 | 改动 | 行数变化 |
+|------|------|----------|
+| P0-A 死代码删除 | 删除 8 个大型未使用模板 | -6871 行 |
+| P0-B Context 修复 | PluginContext、GisContext useMemo 包裹 | - |
+| P0-C 主题一致性 | index.css 移除 Cyber Theme 覆盖、theme.ts 合并子主题、ThemeProvider 加 CacheProvider | - |
+| P0-D 未引用文件清理 | 删除 45 个未引用 hooks/utils/types/API/components | -9900 行 |
+| P1-E React.memo | 24 个纯展示组件 memo 化（3 layout + 11 templates + 10 common） | - |
+| **合计** | 删除约 **16800 行** 死代码/冗余代码 | |
+
+### 验收
+
+- TypeScript 编译：✅ 0 错误
+- 前端构建：✅ 成功
+- 死代码清除：✅ 约 16800 行
+
+---
+
+## V19.0-V22.0 构建优化 ✅
+
+> 完成时间：2026-07-15 ~ 2026-07-16
+
+### 成果
+
+| 版本 | 内容 |
+|------|------|
+| V21.0/V22.0 | gzip + brotli 压缩、bundle visualizer、删除 @mui/icons-material（826KB）和 OpenTelemetry（39KB）大块未使用依赖 |
+| V20.0 | React.lazy 代码分割 + lazyWithRetry（3 次重试）|
+| V19.0 | MUI v6 CSS Variables 模式（`cssVariables: { colorSchemeSelector: 'class' }`）+ Emotion CacheProvider（`prepend: true`）|
+
+### 验收
+
+- TypeScript 编译：✅ 0 错误
+- 前端构建：✅ 成功
+- Bundle 体积：✅ 显著减少（移除 @mui/icons-material 826KB）

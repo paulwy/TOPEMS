@@ -35,6 +35,7 @@ import {
 } from '@/api/finance/approvalConfig';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 
+import { useTranslation } from 'react-i18next';
 const priorityOptions = [
   { value: 1, label: '高' },
   { value: 2, label: '中' },
@@ -53,6 +54,7 @@ const approverTypeOptions = [
 ];
 
 export const FinanceApprovalConfigPage: React.FC = () => {
+  const { t } = useTranslation();
   const queryClient = useQueryClient();
 
   const configsQuery = useQuery<ApprovalConfig[]>({
@@ -223,7 +225,7 @@ export const FinanceApprovalConfigPage: React.FC = () => {
 
   return (
     <PageContainer
-      title='付款审批配置'
+      title={t('finance.finance_approval_config_page.text_cee253')}
       headerActions={
         <Button
           variant='contained'
@@ -311,7 +313,7 @@ export const FinanceApprovalConfigPage: React.FC = () => {
                         color: config.isActive ? '#2e7d32' : '#c62828',
                       }}
                     >
-                      {config.isActive ? '启用' : '禁用'}
+                      {config.isActive ? t('finance.finance_approval_config_page.active') : t('finance.finance_approval_config_page.text_710ad0')}
                     </Typography>
                   </TableCell>
                   <TableCell align='center'>
@@ -319,7 +321,7 @@ export const FinanceApprovalConfigPage: React.FC = () => {
                       direction='row'
                       spacing={1}
                     >
-                      <Tooltip title='查看详情'>
+                      <Tooltip title={t('finance.finance_approval_config_page.view_detail')}>
                         <IconButton
                           size='small'
                           onClick={() => handleView(config)}
@@ -327,7 +329,7 @@ export const FinanceApprovalConfigPage: React.FC = () => {
                           <Eye size={16} />
                         </IconButton>
                       </Tooltip>
-                      <Tooltip title='编辑'>
+                      <Tooltip title={t('finance.finance_approval_config_page.edit')}>
                         <IconButton
                           size='small'
                           onClick={() => handleEdit(config)}
@@ -335,7 +337,7 @@ export const FinanceApprovalConfigPage: React.FC = () => {
                           <Edit size={16} />
                         </IconButton>
                       </Tooltip>
-                      <Tooltip title='删除'>
+                      <Tooltip title={t('finance.finance_approval_config_page.delete')}>
                         <IconButton
                           size='small'
                           color='error'
@@ -385,7 +387,7 @@ export const FinanceApprovalConfigPage: React.FC = () => {
         maxWidth='lg'
         fullWidth
       >
-        <DialogTitle>{editingConfig ? '编辑审批配置' : '新建审批配置'}</DialogTitle>
+        <DialogTitle>{editingConfig ? t('finance.finance_approval_config_page.edit_1') : t('finance.finance_approval_config_page.text_011b9d')}</DialogTitle>
         <DialogContent dividers>
           <Stack
             spacing={3}
@@ -393,14 +395,14 @@ export const FinanceApprovalConfigPage: React.FC = () => {
           >
             <TextField
               fullWidth
-              label='配置名称'
+              label={t('finance.finance_approval_config_page.name')}
               value={formData.name}
               onChange={(e) => setFormData({ ...formData, name: e.target.value })}
               required
             />
             <TextField
               fullWidth
-              label='配置描述'
+              label={t('finance.finance_approval_config_page.description')}
               multiline
               rows={2}
               value={formData.description}
@@ -411,7 +413,7 @@ export const FinanceApprovalConfigPage: React.FC = () => {
               spacing={3}
             >
               <TextField
-                label='金额阈值（最低）'
+                label={t('finance.finance_approval_config_page.amount')}
                 type='number'
                 value={formData.amountThreshold}
                 onChange={(e) =>
@@ -421,7 +423,7 @@ export const FinanceApprovalConfigPage: React.FC = () => {
                 sx={{ flex: 1 }}
               />
               <TextField
-                label='金额上限（可选）'
+                label={t('finance.finance_approval_config_page.amount_1')}
                 type='number'
                 value={formData.maxAmount || ''}
                 onChange={(e) =>
@@ -441,7 +443,7 @@ export const FinanceApprovalConfigPage: React.FC = () => {
                 <InputLabel>审批层级</InputLabel>
                 <Select
                   value={formData.approvalLevels}
-                  label='审批层级'
+                  label={t('finance.finance_approval_config_page.text_118f28')}
                   onChange={(e) =>
                     setFormData({ ...formData, approvalLevels: e.target.value as number })
                   }
@@ -460,7 +462,7 @@ export const FinanceApprovalConfigPage: React.FC = () => {
                 <InputLabel>优先级</InputLabel>
                 <Select
                   value={formData.priority}
-                  label='优先级'
+                  label={t('finance.finance_approval_config_page.text_ee8ecb')}
                   onChange={(e) => setFormData({ ...formData, priority: e.target.value as number })}
                 >
                   {priorityOptions.map((opt) => (
@@ -476,10 +478,10 @@ export const FinanceApprovalConfigPage: React.FC = () => {
             </Stack>
             <TextField
               fullWidth
-              label='工作流 ID（可选）'
+              label={t('finance.finance_approval_config_page.text_3c69f6')}
               value={formData.workflowId}
               onChange={(e) => setFormData({ ...formData, workflowId: e.target.value })}
-              placeholder='关联的工作流引擎流程ID'
+              placeholder={t('finance.finance_approval_config_page.related')}
             />
 
             <Box>
@@ -527,7 +529,7 @@ export const FinanceApprovalConfigPage: React.FC = () => {
                     spacing={3}
                   >
                     <TextField
-                      label='节点名称'
+                      label={t('finance.finance_approval_config_page.name_1')}
                       value={node.nodeName}
                       onChange={(e) => updateNode(index, 'nodeName', e.target.value)}
                       sx={{ flex: 1 }}
@@ -536,7 +538,7 @@ export const FinanceApprovalConfigPage: React.FC = () => {
                       <InputLabel>审批人类型</InputLabel>
                       <Select
                         value={node.approverType}
-                        label='审批人类型'
+                        label={t('finance.finance_approval_config_page.approver')}
                         onChange={(e) => updateNode(index, 'approverType', e.target.value)}
                       >
                         {approverTypeOptions.map((opt) => (
@@ -552,14 +554,14 @@ export const FinanceApprovalConfigPage: React.FC = () => {
                   </Stack>
                   {node.approverType === 'role' ? (
                     <TextField
-                      label='审批角色'
+                      label={t('finance.finance_approval_config_page.text_c1c768')}
                       value={node.approverRole || ''}
                       onChange={(e) => updateNode(index, 'approverRole', e.target.value)}
                       sx={{ mt: 2 }}
                     />
                   ) : (
                     <TextField
-                      label='审批用户（逗号分隔）'
+                      label={t('finance.finance_approval_config_page.text_fc1db4')}
                       value={(node.approverUsers || []).join(',')}
                       onChange={(e) =>
                         updateNode(
@@ -583,7 +585,7 @@ export const FinanceApprovalConfigPage: React.FC = () => {
                       <InputLabel>审批方式</InputLabel>
                       <Select
                         value={node.approvalType}
-                        label='审批方式'
+                        label={t('finance.finance_approval_config_page.text_6c3c37')}
                         onChange={(e) => updateNode(index, 'approvalType', e.target.value)}
                       >
                         {approvalTypeOptions.map((opt) => (
@@ -597,7 +599,7 @@ export const FinanceApprovalConfigPage: React.FC = () => {
                       </Select>
                     </FormControl>
                     <TextField
-                      label='超时时间（小时）'
+                      label={t('finance.finance_approval_config_page.time')}
                       type='number'
                       value={node.timeoutHours || 48}
                       onChange={(e) => updateNode(index, 'timeoutHours', Number(e.target.value))}
@@ -615,7 +617,7 @@ export const FinanceApprovalConfigPage: React.FC = () => {
             variant='contained'
             onClick={handleSave}
           >
-            {editingConfig ? '保存修改' : '创建配置'}
+            {editingConfig ? t('finance.finance_approval_config_page.save') : t('finance.finance_approval_config_page.create')}
           </Button>
         </DialogActions>
       </Dialog>
@@ -665,7 +667,7 @@ export const FinanceApprovalConfigPage: React.FC = () => {
                       width: 'fit-content',
                     }}
                   >
-                    {selectedConfig.isActive ? '启用' : '禁用'}
+                    {selectedConfig.isActive ? t('finance.finance_approval_config_page.active') : t('finance.finance_approval_config_page.text_710ad0')}
                   </Typography>
                 </Box>
               </Stack>
@@ -703,7 +705,7 @@ export const FinanceApprovalConfigPage: React.FC = () => {
                   <Typography>
                     {selectedConfig.maxAmount
                       ? `¥${selectedConfig.maxAmount.toLocaleString()}`
-                      : '无限制'}
+                      : t('finance.finance_approval_config_page.text_bc4364')}
                   </Typography>
                 </Box>
                 <Box sx={{ flex: 1 }}>

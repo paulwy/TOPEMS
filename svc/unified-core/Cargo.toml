@@ -29,6 +29,7 @@ tower-util = { workspace = true }
 rust_decimal = { workspace = true, features = ["db-postgres"] }
 futures-util.workspace = true
 bcrypt.workspace = true
+redis = { version = "0.24", features = ["tokio-comp", "connection-manager"] }
 sha2 = "0.10"
 url.workspace = true
 reqwest.workspace = true
@@ -38,7 +39,6 @@ dashmap.workspace = true
 lazy_static = "1"
 regex.workspace = true
 migration-sdk = { path = "../migration-sdk" }
-redis = { version = "0.24", features = ["tokio-comp", "connection-manager"] }
 
 rand = "0.8"
 

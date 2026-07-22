@@ -21,37 +21,16 @@ use serde::Serialize;
 use std::env;
 use std::sync::Arc;
 use std::time::Instant;
-use utoipa::OpenApi;
 
 use topems_shared::{
     auth_middleware, check_http_health, create_api_info_router, create_cors_layer,
-    create_database_pool, init_telemetry, rate_limit_middleware, register_routes_with_legacy_alias,
-    request_context_middleware, security_headers_middleware, telemetry_middleware, ApiResponse,
-    AuthState, DatabaseConfig, DependencyHealth, HealthStatus, RateLimitConfig,
-    RateLimitMiddleware, SecurityHeadersConfig, SecurityHeadersLayer, ServiceHealth, SystemMetrics,
+    create_database_pool, init_telemetry, security_headers_middleware, telemetry_middleware,
+    wrap_group2_router, ApiResponse, AuthState, DatabaseConfig, DependencyHealth, HealthStatus,
+    RateLimitConfig, RateLimitMiddleware, RouteCompatConfig, SecurityHeadersConfig,
+    SecurityHeadersLayer, ServiceHealth, SystemMetrics,
 };
 
-#[derive(OpenApi)]
-#[openapi(
-    tags(
-        (name = "Monitor", description = "系统监控服务 API"),
-        (name = "Health", description = "健康检查接口"),
-        (name = "BusinessMetrics", description = "业务指标接口"),
-        (name = "SLO", description = "SLO 管理接口"),
-        (name = "Alerts", description = "告警管理接口"),
-        (name = "SystemMetrics", description = "系统性能指标接口"),
-    ),
-    info(
-        title = "TOPEMS-Monitor API",
-        version = "1.0.0",
-        description = "TOPEMS 系统监控服务 API 文档\n\n## 功能模块\n\n- **业务指标**: 业务指标采集与展示\n- **SLO 管理**: 服务等级目标管理\n- **告警管理**: 告警规则与通知\n- **系统指标**: CPU/内存/磁盘/网络监控\n- **性能分析**: API 性能与慢查询追踪",
-    ),
-    servers(
-        (url = "http://localhost:8062", description = "本地开发环境"),
-    )
-)]
-struct ApiDoc;
-
+mod event_handlers;
 mod middleware;
 mod models;
 mod modules;
@@ -88,20 +67,19 @@ async fn main() -> Result<()> {
         tracing::warn!("数据库初始化警告: {}", e);
     }
 
+    if let Err(e) = event_handlers::start_event_subscribers(pool.clone()).await {
+        tracing::warn!("⚠️ MONITOR 事件订阅者启动失败: {}", e);
+    }
+
     let start_time = Instant::now();
     let metrics = Arc::new(SystemMetrics::new());
 
-    let rate_limit_config = RateLimitConfig::new(200, 60)
-        .with_by_user_id(false)
-        .with_by_ip(true);
-    let rate_limiter = Arc::new(RateLimitMiddleware::new(rate_limit_config));
-    let rate_limit_layer = axum::middleware::from_fn({
-        let mw = rate_limiter.clone();
-        move |req, next| {
-            let mw = mw.clone();
-            async move { rate_limit_middleware(mw, req, next).await }
-        }
-    });
+    let rate_limit_config = RateLimitConfig {
+        enabled: true,
+        requests: 500,
+        window_secs: 60,
+    };
+    let rate_limit_middleware = Arc::new(RateLimitMiddleware::new(rate_limit_config));
 
     let security_headers_config = SecurityHeadersConfig::default();
     let security_headers_layer = Arc::new(SecurityHeadersLayer::new(security_headers_config));
@@ -121,10 +99,6 @@ async fn main() -> Result<()> {
         .route("/health", get(health_check))
         .route("/api/health/detailed", get(health_check_detailed))
         .route("/api/metrics", get(get_metrics))
-        .route(
-            "/api/monitor/health",
-            get(modules::health_check::get_service_health),
-        )
         .route(
             "/api/plugins/health",
             get(modules::monitor_plugin::plugin_health_check),
@@ -153,34 +127,27 @@ async fn main() -> Result<()> {
             api_state.auth_state.clone(),
             auth_middleware,
         ))
-        .layer(rate_limit_layer)
         .with_state(api_state.clone());
 
-    let app = register_routes_with_legacy_alias(
-        Router::new().merge(health_router),
-        "/api/monitor",
-        &["/api/v1/monitor"],
-        protected_routes,
-    )
-    .merge(create_api_info_router("topems-monitor"))
-    .route(
-        "/api-docs/openapi.json",
-        get(|| async {
-            serde_json::to_string_pretty(&ApiDoc::openapi()).unwrap_or_else(|e| {
-                tracing::error!("Failed to serialize OpenAPI spec: {}", e);
-                "{}".to_string()
-            })
-        }),
-    )
-    .layer(axum::middleware::from_fn(telemetry_middleware))
-    .layer(axum::middleware::from_fn(request_context_middleware))
-    .layer(axum::middleware::from_fn(move |req, next| {
-        let layer = security_headers_layer.clone();
-        async move { security_headers_middleware(layer, req, next).await }
-    }))
-    .layer(prometheus_layer)
-    .layer(cors)
-    .with_state(api_state.clone());
+    let app = Router::new()
+        .merge(health_router)
+        .nest("/api/monitor", protected_routes)
+        .merge(create_api_info_router("topems-monitor"))
+        .layer(axum::middleware::from_fn(telemetry_middleware))
+        .layer(axum::middleware::from_fn(move |req, next| {
+            let middleware = rate_limit_middleware.clone();
+            async move { middleware.middleware(req, next).await }
+        }))
+        .layer(axum::middleware::from_fn(move |req, next| {
+            let layer = security_headers_layer.clone();
+            async move { security_headers_middleware(layer, req, next).await }
+        }))
+        .layer(prometheus_layer)
+        .layer(cors)
+        .with_state(api_state.clone());
+
+    let cfg = RouteCompatConfig::new("monitor", "/api/monitor", &[]);
+    let app = wrap_group2_router(app, cfg);
 
     let port = env::var("MONITOR_PORT")
         .or_else(|_| env::var("SERVER_PORT"))

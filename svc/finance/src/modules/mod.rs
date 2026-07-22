@@ -5,13 +5,15 @@ use axum::{
     Extension, Router,
 };
 use chrono::{DateTime, Utc};
-use rust_decimal::Decimal;
+use rust_decimal::{prelude::ToPrimitive, Decimal};
 use serde::{Deserialize, Serialize};
+use tokio;
 use uuid::Uuid;
 
 use crate::models::*;
 use crate::services::FinanceService;
 use crate::shared::AppState;
+use topems_shared::event::{EventType, FinancePaymentMadePayload};
 use topems_shared::{ApiResponse, Claims};
 
 #[derive(Debug, Deserialize)]
@@ -711,7 +713,42 @@ async fn create_payment_handler(
     let tenant_id = get_tenant_id(&claims);
     let created_by = claims.username.clone();
     match service.create_payment(tenant_id, req, &created_by).await {
-        Ok(payment) => Json(ApiResponse::success(payment, "创建成功")),
+        Ok(payment) => {
+            if let Some(ref publisher) = state.event_publisher {
+                let publisher = publisher.clone();
+                let payment_id = payment.id;
+                let payment_no = payment.payment_no.clone();
+                let invoice_id = None;
+                let amount = payment.total_amount.to_f64().unwrap_or(0.0);
+                let paid_by = Some(created_by.clone());
+                let paid_at = Some(Utc::now());
+                tokio::spawn(async move {
+                    let payload = FinancePaymentMadePayload {
+                        payment_id,
+                        payment_no,
+                        invoice_id,
+                        amount,
+                        paid_by,
+                        paid_at,
+                    };
+                    if let Err(e) = publisher
+                        .publish_event(EventType::FinancePaymentMade, payload)
+                        .await
+                    {
+                        tracing::warn!(
+                            "[finance] FinancePaymentMade 事件发布失败（graceful fallback）: {}",
+                            e
+                        );
+                    } else {
+                        tracing::info!(
+                            "[finance] FinancePaymentMade 事件发布成功 - payment_id={}",
+                            payment_id
+                        );
+                    }
+                });
+            }
+            Json(ApiResponse::success(payment, "创建成功"))
+        }
         Err(e) => Json(ApiResponse::error(500, &e.to_string())),
     }
 }

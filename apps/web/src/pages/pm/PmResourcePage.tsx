@@ -22,6 +22,8 @@ import { apiLogger } from '@/utils/logger';
 import { useNotificationStore } from '@/store';
 import { ListPageTemplate, type ColumnDef } from '@/components/templates';
 import { PageContainer } from '@/components/common';
+import { ConfirmDialog } from '@topems/shared-components';
+import { useConfirmDialog } from '@/hooks';
 import { designTokens } from '@/theme/tokens';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { QUERY_KEYS } from '@/lib/reactQuery';
@@ -71,6 +73,12 @@ const PmResourcePage: React.FC = () => {
     start_date: '',
     end_date: '',
   });
+  const {
+    confirmOpen: confirmDialogOpen,
+    confirmConfig: confirmDialogConfig,
+    openConfirm: openConfirmDialog,
+    closeConfirm: setConfirmDialogClosed,
+  } = useConfirmDialog();
 
   const pageSize = 10;
 
@@ -170,10 +178,16 @@ const PmResourcePage: React.FC = () => {
 
   const handleDelete = useCallback(
     (resource: ProjectResource) => {
-      if (!window.confirm('确定要删除这个资源吗？')) return;
-      deleteMutation.mutate({ projectId: selectedProject, resourceId: resource.id });
+      openConfirmDialog({
+        title: '确认删除',
+        message: '确定要删除这个资源吗？',
+        danger: true,
+        onConfirm: () => {
+          deleteMutation.mutate({ projectId: selectedProject, resourceId: resource.id });
+        },
+      });
     },
-    [selectedProject, deleteMutation]
+    [selectedProject, deleteMutation, openConfirmDialog]
   );
 
   const handleOpenAddModal = () => {
@@ -631,6 +645,18 @@ const PmResourcePage: React.FC = () => {
           </Button>
         </DialogActions>
       </Dialog>
+
+      <ConfirmDialog
+        isOpen={confirmDialogOpen}
+        onClose={setConfirmDialogClosed}
+        onConfirm={() => {
+          confirmDialogConfig?.onConfirm();
+          setConfirmDialogClosed();
+        }}
+        title={confirmDialogConfig?.title || ''}
+        message={confirmDialogConfig?.message || ''}
+        danger={confirmDialogConfig?.danger}
+      />
     </PageContainer>
   );
 };

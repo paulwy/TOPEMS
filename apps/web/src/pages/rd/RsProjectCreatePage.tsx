@@ -1,29 +1,21 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
+import { useTranslation } from 'react-i18next';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import {
   FormPageTemplate,
   type FormSection,
-  type FormField,
 } from '@/components/templates/FormPageTemplate';
 import { PageContainer } from '@/components/common';
 import { rdApi } from '@/api/rd';
 import { useNotificationStore } from '@/store';
-import type { Project, TeamMember, CreateProjectRequest, UpdateProjectRequest } from '@/api/rd';
+import type { TeamMember, CreateProjectRequest, UpdateProjectRequest } from '@/api/rd';
 import { RD_PATHS } from '@/modules/rd/config';
 import { QUERY_KEYS } from '@/lib/reactQuery';
 import { logger } from '@/utils/logger';
 
-const projectTypes = ['新产品研发', '工艺改进', '配方优化', '技术攻关', '设备改造', '其他'];
-const riskLevels = ['低', '中', '高', '极高'];
-const priorities = [
-  { label: '普通', value: 2 },
-  { label: '重要', value: 3 },
-  { label: '紧急', value: 4 },
-  { label: '战略级', value: 5 },
-];
-
 const RsProjectCreatePage: React.FC = () => {
+  const { t } = useTranslation();
   const navigate = useNavigate();
   const { id } = useParams<{ id: string }>();
   const isEdit = Boolean(id);
@@ -32,6 +24,27 @@ const RsProjectCreatePage: React.FC = () => {
 
   const [teamMembers, setTeamMembers] = useState<TeamMember[]>([]);
   const [tags, setTags] = useState<string[]>([]);
+
+  const projectTypes = [
+    t('rd.project_type.new_product'),
+    t('rd.project_type.process_improvement'),
+    t('rd.project_type.formula_optimization'),
+    t('rd.project_type.technical_breakthrough'),
+    t('rd.project_type.equipment_modification'),
+    t('rd.project_type.other'),
+  ];
+  const riskLevels = [
+    t('rd.risk_level.low'),
+    t('rd.risk_level.medium'),
+    t('rd.risk_level.high'),
+    t('rd.risk_level.extreme'),
+  ];
+  const priorities = [
+    { label: t('rd.priority.normal'), value: 2 },
+    { label: t('rd.priority.important'), value: 3 },
+    { label: t('rd.priority.urgent'), value: 4 },
+    { label: t('rd.priority.strategic'), value: 5 },
+  ];
 
   const availableMembers = [
     { id: '1', name: '张三' },
@@ -50,7 +63,7 @@ const RsProjectCreatePage: React.FC = () => {
     queryFn: async () => {
       const response = await rdApi.getProject(id || '');
       if (!response.success || !response.data) {
-        throw new Error(response.message || '加载项目数据失败');
+        throw new Error(response.message || t('rd.project_create_page.error.load_project_failed'));
       }
       return response.data;
     },
@@ -76,7 +89,7 @@ const RsProjectCreatePage: React.FC = () => {
           params.requestData as unknown as UpdateProjectRequest
         );
         if (!response.success) {
-          throw new Error(response.message || '更新项目失败');
+          throw new Error(response.message || t('rd.project_create_page.error.update_failed'));
         }
         return response;
       } else {
@@ -84,7 +97,7 @@ const RsProjectCreatePage: React.FC = () => {
           params.requestData as unknown as CreateProjectRequest
         );
         if (!response.success) {
-          throw new Error(response.message || '创建项目失败');
+          throw new Error(response.message || t('rd.project_create_page.error.create_failed'));
         }
         return response;
       }
@@ -93,8 +106,12 @@ const RsProjectCreatePage: React.FC = () => {
       queryClient.invalidateQueries({ queryKey: QUERY_KEYS.RD.PROJECTS });
       addNotification({
         type: 'success',
-        title: isEdit ? '更新成功' : '创建成功',
-        message: isEdit ? '项目信息已更新' : '项目已创建',
+        title: isEdit
+          ? t('rd.project_create_page.notification.update_success_title')
+          : t('rd.project_create_page.notification.create_success_title'),
+        message: isEdit
+          ? t('rd.project_create_page.notification.update_success_message')
+          : t('rd.project_create_page.notification.create_success_message'),
       });
       navigate(RD_PATHS.project);
     },
@@ -102,119 +119,122 @@ const RsProjectCreatePage: React.FC = () => {
       logger.error('提交项目数据失败:', error);
       addNotification({
         type: 'error',
-        title: '提交失败',
-        message: error instanceof Error ? error.message : '无法提交项目数据',
+        title: t('rd.project_create_page.notification.submit_failed_title'),
+        message:
+          error instanceof Error
+            ? error.message
+            : t('rd.project_create_page.notification.submit_failed_message'),
       });
     },
   });
 
   const loading = projectQuery.isLoading;
   const submitting = submitMutation.isPending;
-  const error = projectQuery.error ? '加载项目数据失败' : undefined;
+  const error = projectQuery.error ? t('rd.project_create_page.error.load_project_failed') : undefined;
 
   const defaultValues = {
     name: '',
     code: '',
     description: '',
-    project_type: '新产品研发',
+    project_type: t('rd.project_type.new_product'),
     leader: '',
     start_date: '',
     end_date: '',
     budget: '',
-    risklevel: '中',
+    risklevel: t('rd.risk_level.medium'),
     priority: 2,
   };
 
   const sections: FormSection[] = [
     {
       id: 'basic',
-      title: '基本信息',
-      description: '项目核心信息',
+      title: t('rd.project_create_page.section.basic_title'),
+      description: t('rd.project_create_page.section.basic_description'),
       collapsible: true,
       defaultExpanded: true,
       fields: [
         {
           name: 'name',
-          label: '项目名称',
+          label: t('rd.project_create_page.field.name'),
           type: 'text',
           required: true,
-          placeholder: '请输入项目名称',
+          placeholder: t('rd.project_create_page.field.name_placeholder'),
         },
         {
           name: 'code',
-          label: '项目编码',
+          label: t('rd.project_create_page.field.code'),
           type: 'text',
           required: true,
           disabled: isEdit,
-          placeholder: '例如: RS-2024-001',
-          helperText: '编辑时编码不可修改',
+          placeholder: t('rd.project_create_page.field.code_placeholder'),
+          helperText: t('rd.project_create_page.field.code_helper'),
         },
         {
           name: 'project_type',
-          label: '项目类型',
+          label: t('rd.project_create_page.field.project_type'),
           type: 'select',
           required: true,
           options: projectTypes.map((type) => ({ label: type, value: type })),
         },
         {
           name: 'leader',
-          label: '项目负责人',
+          label: t('rd.project_create_page.field.leader'),
           type: 'text',
           required: true,
-          placeholder: '请输入负责人姓名',
+          placeholder: t('rd.project_create_page.field.leader_placeholder'),
         },
         {
           name: 'description',
-          label: '项目描述',
+          label: t('rd.project_create_page.field.description'),
           type: 'textarea',
           rows: 4,
-          placeholder: '请输入项目描述，包括目标、背景、预期成果等',
+          placeholder: t('rd.project_create_page.field.description_placeholder'),
         },
       ],
     },
     {
       id: 'timing',
-      title: '时间和预算',
-      description: '项目时间安排和预算规划',
+      title: t('rd.project_create_page.section.timing_title'),
+      description: t('rd.project_create_page.section.timing_description'),
       collapsible: true,
       defaultExpanded: true,
       fields: [
         {
           name: 'start_date',
-          label: '开始日期',
+          label: t('rd.project_create_page.field.start_date'),
           type: 'date',
           required: true,
         },
         {
           name: 'end_date',
-          label: '结束日期',
+          label: t('rd.project_create_page.field.end_date'),
           type: 'date',
         },
         {
           name: 'budget',
-          label: '预算金额',
+          label: t('rd.project_create_page.field.budget'),
           type: 'number',
-          placeholder: '请输入预算金额',
-          helperText: '单位：元',
+          placeholder: t('rd.project_create_page.field.budget_placeholder'),
+          helperText: t('rd.project_create_page.field.budget_helper'),
         },
       ],
     },
     {
       id: 'risk',
-      title: '风险评估',
-      description: '项目风险等级和优先级',
+      title: t('rd.project_create_page.section.risk_title'),
+      description: t('rd.project_create_page.section.risk_description'),
       collapsible: true,
       defaultExpanded: true,
       fields: [
         {
           name: 'risklevel',
-          label: '风险等级',
+          label: t('rd.project_create_page.field.risklevel'),
           type: 'select',
           options: riskLevels.map((level) => ({ label: level, value: level })),
         },
         {
           name: 'priority',
-          label: '优先级',
+          label: t('rd.project_create_page.field.priority'),
           type: 'select',
           options: priorities.map((p) => ({ label: p.label, value: p.value })),
         },
@@ -249,8 +269,16 @@ const RsProjectCreatePage: React.FC = () => {
 
   return (
     <PageContainer
-      title={isEdit ? '编辑研发项目' : '新建研发项目'}
-      subtitle={isEdit ? '修改项目基本信息和配置' : '创建新的研发项目，设置基本信息和团队'}
+      title={
+        isEdit
+          ? t('rd.project_create_page.title_edit')
+          : t('rd.project_create_page.title_create')
+      }
+      subtitle={
+        isEdit
+          ? t('rd.project_create_page.subtitle_edit')
+          : t('rd.project_create_page.subtitle_create')
+      }
     >
       <FormPageTemplate
         title=''
@@ -262,12 +290,16 @@ const RsProjectCreatePage: React.FC = () => {
         error={error}
         onSubmit={handleSubmit}
         onCancel={handleCancel}
-        submitText={isEdit ? '保存修改' : '创建项目'}
+        submitText={
+          isEdit
+            ? t('rd.project_create_page.submit_text_edit')
+            : t('rd.project_create_page.submit_text_create')
+        }
         columns={2}
         showValidationHints
         validationToasts={[
-          { message: '提交成功', type: 'success' },
-          { message: '提交失败，请检查表单', type: 'error' },
+          { message: t('rd.project_create_page.validation.submit_success'), type: 'success' },
+          { message: t('rd.project_create_page.validation.submit_failed'), type: 'error' },
         ]}
       />
     </PageContainer>

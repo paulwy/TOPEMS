@@ -9,7 +9,7 @@ import {
   Button,
 } from '@mui/material';
 import React, { useState, useMemo } from 'react';
-import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { useQuery, useQueryClient } from '@tanstack/react-query';
 import type {
   OutboundOrder,
   CreateOutboundOrderRequest,
@@ -27,20 +27,24 @@ import { Plus, Edit, Trash2, Eye } from 'lucide-react';
 import { apiLogger } from '@/utils/logger';
 import { ConfirmDialog, PageContainer } from '@/components/common';
 
-const statusConfig: Record<
-  string,
-  { label: string; color: 'default' | 'success' | 'warning' | 'error' }
-> = {
-  pending: { label: '待处理', color: 'warning' },
-  confirmed: { label: '已确认', color: 'success' },
-  picking: { label: '拣货中', color: 'default' },
-  packing: { label: '打包中', color: 'default' },
-  shipped: { label: '已发货', color: 'default' },
-  completed: { label: '已完成', color: 'success' },
-  cancelled: { label: '已取消', color: 'error' },
-};
+import { useTranslation } from 'react-i18next';
+import { useCrudMutations } from '@/hooks';
 
 const OutboundOrderPage: React.FC = () => {
+  const { t } = useTranslation();
+  const statusConfig: Record<
+    string,
+    { label: string; color: 'default' | 'success' | 'warning' | 'error' }
+  > = {
+    pending: { label: t('wms.outbound_order_page.pending'), color: 'warning' },
+    confirmed: { label: t('wms.outbound_order_page.confirmed'), color: 'success' },
+    picking: { label: t('wms.outbound_order_page.text_1e6430'), color: 'default' },
+    packing: { label: t('wms.outbound_order_page.text_7ced0c'), color: 'default' },
+    shipped: { label: t('wms.outbound_order_page.text_355409'), color: 'default' },
+    completed: { label: t('wms.outbound_order_page.status_completed'), color: 'success' },
+    cancelled: { label: t('wms.outbound_order_page.status_cancelled'), color: 'error' },
+  };
+
   const { addNotification } = useNotificationStore();
   const queryClient = useQueryClient();
 
@@ -84,60 +88,46 @@ const OutboundOrderPage: React.FC = () => {
     staleTime: 5 * 60 * 1000,
   });
 
-  const createMutation = useMutation({
-    mutationFn: async (data: CreateOutboundOrderRequest) => {
-      return await wmsApi.outboundOrders.create(data);
-    },
-    onSuccess: (response) => {
-      if (response.success) {
-        addNotification({ type: 'success', title: '创建成功', message: '新出库订单已创建' });
-        setShowCreateDialog(false);
-        resetForm();
-        queryClient.invalidateQueries({ queryKey: ['wms-outbound-orders-detail'] });
+  const { createMutation, updateMutation, deleteMutation } = useCrudMutations<
+    CreateOutboundOrderRequest,
+    UpdateOutboundOrderRequest,
+    string
+  >({
+    queryKeyToInvalidate: ['wms-outbound-orders-detail'],
+    createFn: async (data) => {
+      const response = await wmsApi.outboundOrders.create(data);
+      if (!response.success) {
+        throw new Error(response.message || '创建出库单失败');
       }
+      return response.data;
     },
-    onError: (error: unknown) => {
-      apiLogger.error('创建出库订单失败:', error);
-      addNotification({ type: 'error', title: '创建失败', message: '创建出库订单失败' });
-    },
-  });
-
-  const updateMutation = useMutation({
-    mutationFn: async ({ id, data }: { id: string; data: UpdateOutboundOrderRequest }) => {
-      return await wmsApi.outboundOrders.update(id, data);
-    },
-    onSuccess: (response) => {
-      if (response.success) {
-        addNotification({ type: 'success', title: '更新成功', message: '出库订单已更新' });
-        setShowEditDialog(false);
-        queryClient.invalidateQueries({ queryKey: ['wms-outbound-orders-detail'] });
+    updateFn: async ({ id, data }) => {
+      const response = await wmsApi.outboundOrders.update(String(id), data);
+      if (!response.success) {
+        throw new Error(response.message || '更新出库单失败');
       }
+      return response.data;
     },
-    onError: (error: unknown) => {
-      apiLogger.error('更新出库订单失败:', error);
-      addNotification({ type: 'error', title: '更新失败', message: '更新出库订单失败' });
-    },
-  });
-
-  const deleteMutation = useMutation({
-    mutationFn: async (id: string) => {
-      return await wmsApi.outboundOrders.delete(id);
-    },
-    onSuccess: (response) => {
-      if (response.success) {
-        addNotification({ type: 'success', title: '删除成功', message: '出库订单已删除' });
-        queryClient.invalidateQueries({ queryKey: ['wms-outbound-orders-detail'] });
+    deleteFn: async (id) => {
+      const response = await wmsApi.outboundOrders.delete(String(id));
+      if (!response.success) {
+        throw new Error(response.message || '删除出库单失败');
       }
+      return response.data;
     },
-    onError: (error: unknown) => {
-      apiLogger.error('删除出库订单失败:', error);
-      addNotification({ type: 'error', title: '删除失败', message: '删除出库订单失败' });
+    entityName: '出库单',
+    onCreateSuccess: () => {
+      setShowCreateDialog(false);
+      resetForm();
+    },
+    onUpdateSuccess: () => {
+      setShowEditDialog(false);
     },
   });
 
   const handleCreate = () => {
     if (!formData.order_number) {
-      addNotification({ type: 'warning', title: '验证错误', message: '请填写订单号' });
+      addNotification({ type: 'warning', title: t('wms.outbound_order_page.error'), message: t('wms.outbound_order_page.please_fill') });
       return;
     }
     createMutation.mutate(formData);
@@ -208,23 +198,23 @@ const OutboundOrderPage: React.FC = () => {
 
   const columns: ColumnDef<OutboundOrder>[] = useMemo(
     () => [
-      { id: 'order_number', label: '订单号', sortable: true },
-      { id: 'warehouse_id', label: '仓库' },
-      { id: 'customer_name', label: '客户' },
+      { id: 'order_number', label: t('wms.outbound_order_page.order_number'), sortable: true },
+      { id: 'warehouse_id', label: t('wms.outbound_order_page.filter_warehouse') },
+      { id: 'customer_name', label: t('wms.outbound_order_page.field_customer') },
       {
         id: 'order_date',
-        label: '订单日期',
+        label: t('wms.outbound_order_page.order_date'),
         render: (row) =>
           row.order_date ? new Date(row.order_date).toLocaleDateString('zh-CN') : '-',
       },
       {
         id: 'expected_delivery',
-        label: '预计发货',
+        label: t('wms.outbound_order_page.text_e5fa8a'),
         render: (row) =>
           row.expected_delivery ? new Date(row.expected_delivery).toLocaleDateString('zh-CN') : '-',
       },
-      { id: 'total_amount', label: '总金额' },
-      { id: 'status', label: '状态', render: (row) => getStatusBadge(row.status) },
+      { id: 'total_amount', label: t('wms.outbound_order_page.amount') },
+      { id: 'status', label: t('wms.outbound_order_page.filter_status'), render: (row) => getStatusBadge(row.status) },
     ],
     []
   );
@@ -233,17 +223,17 @@ const OutboundOrderPage: React.FC = () => {
     () => [
       {
         id: 'status',
-        label: '状态',
+        label: t('wms.outbound_order_page.filter_status'),
         type: 'select',
         options: [
-          { label: '全部状态', value: '' },
-          { label: '待处理', value: 'pending' },
-          { label: '已确认', value: 'confirmed' },
-          { label: '拣货中', value: 'picking' },
-          { label: '打包中', value: 'packing' },
-          { label: '已发货', value: 'shipped' },
-          { label: '已完成', value: 'completed' },
-          { label: '已取消', value: 'cancelled' },
+          { label: t('wms.outbound_order_page.filter_option_all_status'), value: '' },
+          { label: t('wms.outbound_order_page.pending'), value: 'pending' },
+          { label: t('wms.outbound_order_page.confirmed'), value: 'confirmed' },
+          { label: t('wms.outbound_order_page.text_1e6430'), value: 'picking' },
+          { label: t('wms.outbound_order_page.text_7ced0c'), value: 'packing' },
+          { label: t('wms.outbound_order_page.text_355409'), value: 'shipped' },
+          { label: t('wms.outbound_order_page.status_completed'), value: 'completed' },
+          { label: t('wms.outbound_order_page.status_cancelled'), value: 'cancelled' },
         ],
         value: statusFilter,
         onChange: (value) => {
@@ -257,10 +247,10 @@ const OutboundOrderPage: React.FC = () => {
 
   const rowActions: RowAction<OutboundOrder>[] = useMemo(
     () => [
-      { label: '查看详情', icon: <Eye size={16} />, onClick: handleViewDetail },
-      { label: '编辑', icon: <Edit size={16} />, onClick: handleEdit },
+      { label: t('wms.outbound_order_page.action_view_detail'), icon: <Eye size={16} />, onClick: handleViewDetail },
+      { label: t('wms.outbound_order_page.action_edit'), icon: <Edit size={16} />, onClick: handleEdit },
       {
-        label: '删除',
+        label: t('wms.outbound_order_page.action_delete'),
         icon: <Trash2 size={16} />,
         color: 'error',
         onClick: (row) => handleDeleteClick(row.id),
@@ -281,23 +271,23 @@ const OutboundOrderPage: React.FC = () => {
 
   return (
     <PageContainer
-      title='出库订单管理'
-      subtitle='管理出库订单,包括订单号、仓库、客户、订单日期等'
+      title={t('wms.outbound_order_page.outbound')}
+      subtitle={t('wms.outbound_order_page.order_date_1')}
     >
       <ListPageTemplate
         title=''
         subtitle=''
         breadcrumbs={[
-          { label: '首页', href: '/dashboard' },
-          { label: '仓储', href: '/wms' },
-          { label: '出库订单' },
+          { label: t('wms.outbound_order_page.breadcrumb_home'), href: '/dashboard' },
+          { label: t('wms.outbound_order_page.breadcrumb_module'), href: '/wms' },
+          { label: t('wms.outbound_order_page.outbound_1') },
         ]}
         columns={columns}
         data={ordersData.items}
         loading={ordersLoading}
         filters={filters}
         searchable
-        searchPlaceholder='搜索订单号或客户...'
+        searchPlaceholder={t('wms.outbound_order_page.order_number_1')}
         onSearch={handleSearch}
         searchValue={searchTerm}
         pagination={{
@@ -306,9 +296,9 @@ const OutboundOrderPage: React.FC = () => {
           total: ordersData.total,
           onPageChange: setCurrentPage,
         }}
-        actions={[{ label: '新增出库订单', icon: <Plus size={16} />, onClick: handleOpenCreate }]}
+        actions={[{ label: t('wms.outbound_order_page.add'), icon: <Plus size={16} />, onClick: handleOpenCreate }]}
         rowActions={rowActions}
-        emptyMessage='暂无出库订单数据'
+        emptyMessage={t('wms.outbound_order_page.no_data')}
         getRowId={(row) => row.id}
       />
 
@@ -329,7 +319,7 @@ const OutboundOrderPage: React.FC = () => {
             }}
           >
             <TextField
-              label='订单号 *'
+              label={t('wms.outbound_order_page.order_number_2')}
               value={formData.order_number}
               onChange={(e) => setFormData({ ...formData, order_number: e.target.value })}
               size='small'
@@ -337,28 +327,28 @@ const OutboundOrderPage: React.FC = () => {
               fullWidth
             />
             <TextField
-              label='仓库ID'
+              label={t('wms.outbound_order_page.warehouse')}
               value={formData.warehouse_id}
               onChange={(e) => setFormData({ ...formData, warehouse_id: e.target.value })}
               size='small'
               fullWidth
             />
             <TextField
-              label='客户ID'
+              label={t('wms.outbound_order_page.customer')}
               value={formData.customer_id}
               onChange={(e) => setFormData({ ...formData, customer_id: e.target.value })}
               size='small'
               fullWidth
             />
             <TextField
-              label='客户名称'
+              label={t('wms.outbound_order_page.customer_name')}
               value={formData.customer_name}
               onChange={(e) => setFormData({ ...formData, customer_name: e.target.value })}
               size='small'
               fullWidth
             />
             <TextField
-              label='订单日期 *'
+              label={t('wms.outbound_order_page.order_date_2')}
               type='date'
               value={formData.order_date}
               onChange={(e) => setFormData({ ...formData, order_date: e.target.value })}
@@ -368,7 +358,7 @@ const OutboundOrderPage: React.FC = () => {
               slotProps={{ inputLabel: { shrink: true } } as const}
             />
             <TextField
-              label='预计发货'
+              label={t('wms.outbound_order_page.text_e5fa8a')}
               type='date'
               value={formData.expected_delivery}
               onChange={(e) => setFormData({ ...formData, expected_delivery: e.target.value })}
@@ -377,7 +367,7 @@ const OutboundOrderPage: React.FC = () => {
               slotProps={{ inputLabel: { shrink: true } } as const}
             />
             <TextField
-              label='总金额'
+              label={t('wms.outbound_order_page.amount')}
               type='number'
               value={formData.total_amount}
               onChange={(e) =>
@@ -388,7 +378,7 @@ const OutboundOrderPage: React.FC = () => {
             />
           </Box>
           <TextField
-            label='备注'
+            label={t('wms.outbound_order_page.field_remark')}
             multiline
             rows={2}
             value={formData.remarks}
@@ -433,28 +423,28 @@ const OutboundOrderPage: React.FC = () => {
               }}
             >
               <TextField
-                label='订单号'
+                label={t('wms.outbound_order_page.order_number')}
                 value={editFormData.order_number || ''}
                 onChange={(e) => setEditFormData({ ...editFormData, order_number: e.target.value })}
                 size='small'
                 fullWidth
               />
               <TextField
-                label='仓库ID'
+                label={t('wms.outbound_order_page.warehouse')}
                 value={editFormData.warehouse_id || ''}
                 onChange={(e) => setEditFormData({ ...editFormData, warehouse_id: e.target.value })}
                 size='small'
                 fullWidth
               />
               <TextField
-                label='客户ID'
+                label={t('wms.outbound_order_page.customer')}
                 value={editFormData.customer_id || ''}
                 onChange={(e) => setEditFormData({ ...editFormData, customer_id: e.target.value })}
                 size='small'
                 fullWidth
               />
               <TextField
-                label='客户名称'
+                label={t('wms.outbound_order_page.customer_name')}
                 value={editFormData.customer_name || ''}
                 onChange={(e) =>
                   setEditFormData({ ...editFormData, customer_name: e.target.value })
@@ -463,7 +453,7 @@ const OutboundOrderPage: React.FC = () => {
                 fullWidth
               />
               <TextField
-                label='预计发货'
+                label={t('wms.outbound_order_page.text_e5fa8a')}
                 type='date'
                 value={editFormData.expected_delivery || ''}
                 onChange={(e) =>
@@ -474,7 +464,7 @@ const OutboundOrderPage: React.FC = () => {
                 slotProps={{ inputLabel: { shrink: true } } as const}
               />
               <TextField
-                label='总金额'
+                label={t('wms.outbound_order_page.amount')}
                 type='number'
                 value={editFormData.total_amount ?? ''}
                 onChange={(e) =>
@@ -489,7 +479,7 @@ const OutboundOrderPage: React.FC = () => {
             </Box>
           )}
           <TextField
-            label='备注'
+            label={t('wms.outbound_order_page.field_remark')}
             multiline
             rows={2}
             value={editFormData.remarks || ''}
@@ -534,28 +524,28 @@ const OutboundOrderPage: React.FC = () => {
               }}
             >
               <TextField
-                label='订单号'
+                label={t('wms.outbound_order_page.order_number')}
                 value={selectedOrder.order_number}
                 size='small'
                 fullWidth
                 slotProps={{ input: { readOnly: true } }}
               />
               <TextField
-                label='仓库'
+                label={t('wms.outbound_order_page.filter_warehouse')}
                 value={selectedOrder.warehouse_id}
                 size='small'
                 fullWidth
                 slotProps={{ input: { readOnly: true } }}
               />
               <TextField
-                label='客户'
+                label={t('wms.outbound_order_page.field_customer')}
                 value={selectedOrder.customer_name || selectedOrder.customer_id || '-'}
                 size='small'
                 fullWidth
                 slotProps={{ input: { readOnly: true } }}
               />
               <TextField
-                label='订单日期'
+                label={t('wms.outbound_order_page.order_date')}
                 value={
                   selectedOrder.order_date
                     ? new Date(selectedOrder.order_date).toLocaleDateString('zh-CN')
@@ -566,7 +556,7 @@ const OutboundOrderPage: React.FC = () => {
                 slotProps={{ input: { readOnly: true } }}
               />
               <TextField
-                label='预计发货'
+                label={t('wms.outbound_order_page.text_e5fa8a')}
                 value={
                   selectedOrder.expected_delivery
                     ? new Date(selectedOrder.expected_delivery).toLocaleDateString('zh-CN')
@@ -577,7 +567,7 @@ const OutboundOrderPage: React.FC = () => {
                 slotProps={{ input: { readOnly: true } }}
               />
               <TextField
-                label='总金额'
+                label={t('wms.outbound_order_page.amount')}
                 value={selectedOrder.total_amount || '-'}
                 size='small'
                 fullWidth
@@ -585,7 +575,7 @@ const OutboundOrderPage: React.FC = () => {
               />
               <Box>
                 <TextField
-                  label='状态'
+                  label={t('wms.outbound_order_page.filter_status')}
                   value={statusConfig[selectedOrder.status]?.label || selectedOrder.status}
                   size='small'
                   fullWidth
@@ -593,7 +583,7 @@ const OutboundOrderPage: React.FC = () => {
                 />
               </Box>
               <TextField
-                label='创建时间'
+                label={t('wms.outbound_order_page.column_created_at')}
                 value={new Date(selectedOrder.created_at).toLocaleString('zh-CN')}
                 size='small'
                 fullWidth
@@ -616,8 +606,8 @@ const OutboundOrderPage: React.FC = () => {
         isOpen={showDeleteConfirm}
         onClose={() => setShowDeleteConfirm(false)}
         onConfirm={handleDelete}
-        title='确认删除'
-        message='确定要删除这个出库订单吗？此操作不可撤销。'
+        title={t('wms.outbound_order_page.dialog_delete_title')}
+        message={t('wms.outbound_order_page.confirm')}
         danger
       />
     </PageContainer>

@@ -45,9 +45,11 @@ import {
 import { apiLogger } from '@/utils/logger';
 import { designTokens } from '@/theme/tokens';
 
+import { useTranslation } from 'react-i18next';
 const ct = designTokens.colors;
 
 const EquipmentOEEPage: React.FC = () => {
+  const { t } = useTranslation();
   const [searchTerm, setSearchTerm] = useState('');
   const [equipmentFilter, setEquipmentFilter] = useState<string>('all');
   const [currentPage, setCurrentPage] = useState(1);
@@ -152,19 +154,19 @@ const EquipmentOEEPage: React.FC = () => {
 
   const columns: ColumnDef<OeeRecord>[] = useMemo(
     () => [
-      { id: 'equipment_code', label: '设备编号', sortable: true },
-      { id: 'equipment_name', label: '设备名称', sortable: true },
+      { id: 'equipment_code', label: t('mes.equipment_oee_page.equipment'), sortable: true },
+      { id: 'equipment_name', label: t('mes.equipment_oee_page.column_equipment_name'), sortable: true },
       {
         id: 'record_date',
-        label: '记录日期',
+        label: t('mes.equipment_oee_page.date'),
         sortable: true,
         render: (row) =>
           row.record_date ? new Date(row.record_date).toLocaleDateString('zh-CN') : '-',
       },
-      { id: 'shift', label: '班次' },
+      { id: 'shift', label: t('mes.equipment_oee_page.text_b68919') },
       {
         id: 'availability',
-        label: '可用率',
+        label: t('mes.equipment_oee_page.column_availability'),
         render: (row) => (
           <Chip
             size='small'
@@ -179,7 +181,7 @@ const EquipmentOEEPage: React.FC = () => {
       },
       {
         id: 'performance',
-        label: '性能率',
+        label: t('mes.equipment_oee_page.column_performance'),
         render: (row) => (
           <Chip
             size='small'
@@ -194,7 +196,7 @@ const EquipmentOEEPage: React.FC = () => {
       },
       {
         id: 'quality',
-        label: '质量率',
+        label: t('mes.equipment_oee_page.column_quality'),
         render: (row) => (
           <Chip
             size='small'
@@ -209,7 +211,7 @@ const EquipmentOEEPage: React.FC = () => {
       },
       {
         id: 'oee',
-        label: '综合OEE',
+        label: t('mes.equipment_oee_page.oee'),
         render: (row) => (
           <Chip
             size='small'
@@ -229,7 +231,7 @@ const EquipmentOEEPage: React.FC = () => {
   const rowActions: RowAction<OeeRecord>[] = useMemo(
     () => [
       {
-        label: '查看详情',
+        label: t('mes.equipment_oee_page.view_detail'),
         icon: <Eye size={16} />,
         onClick: handleViewDetail,
       },
@@ -437,7 +439,7 @@ const EquipmentOEEPage: React.FC = () => {
         loading={loading}
         filters={[]}
         searchable
-        searchPlaceholder='搜索设备编号或名称...'
+        searchPlaceholder={t('mes.equipment_oee_page.search')}
         searchValue={searchTerm}
         onSearch={handleSearch}
         pagination={{
@@ -457,7 +459,7 @@ const EquipmentOEEPage: React.FC = () => {
             {filterBarContent}
           </Box>
         }
-        emptyMessage='暂无OEE记录数据'
+        emptyMessage={t('mes.equipment_oee_page.oee_1')}
         getRowId={(row) => row.id}
       />
 

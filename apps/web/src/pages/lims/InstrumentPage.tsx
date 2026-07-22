@@ -42,6 +42,8 @@ import { LIMS_PATHS } from '@/modules/lims/config';
 import { DASHBOARD_PATHS } from '@/routes/dashboard';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { QUERY_KEYS } from '@/lib/reactQuery';
+import { ConfirmDialog } from '@topems/shared-components';
+import { useConfirmDialog, useUrlListState } from '@/hooks';
 
 const ct = designTokens.colors;
 
@@ -50,10 +52,28 @@ const InstrumentPage: React.FC = () => {
   const queryClient = useQueryClient();
   const addNotification = useNotificationStore((state) => state.addNotification);
 
-  const [searchTerm, setSearchTerm] = useState('');
-  const [statusFilter, setStatusFilter] = useState('all');
-  const [currentPage, setCurrentPage] = useState(0);
-  const [pageSize] = useState(10);
+  const {
+    confirmOpen: confirmDialogOpen,
+    confirmConfig: confirmDialogConfig,
+    openConfirm: openConfirmDialog,
+    closeConfirm: setConfirmDialogClosed,
+  } = useConfirmDialog();
+
+  const {
+    searchQuery,
+    setSearchQuery,
+    debouncedSearch,
+    filters,
+    setFilter,
+    currentPage,
+    setCurrentPage,
+    pageSize,
+  } = useUrlListState<{ status: string }>({
+    defaultPageSize: 10,
+    defaultFilters: { status: 'all' },
+    baseIndex: 0,
+    historyMode: 'replace',
+  });
   const [showCreateModal, setShowCreateModal] = useState(false);
   const [showDetailModal, setShowDetailModal] = useState(false);
   const [selectedInstrument, setSelectedInstrument] = useState<Instrument | null>(null);
@@ -74,7 +94,7 @@ const InstrumentPage: React.FC = () => {
     description: '',
   });
 
-  const queryKey = [QUERY_KEYS.LIMS.INSTRUMENTS, currentPage, pageSize, searchTerm, statusFilter];
+  const queryKey = [QUERY_KEYS.LIMS.INSTRUMENTS, currentPage, pageSize, debouncedSearch, filters.status];
 
   const { data: instrumentsResponse, isLoading } = useQuery({
     queryKey,
@@ -83,8 +103,8 @@ const InstrumentPage: React.FC = () => {
         page: currentPage,
         pagesize: pageSize,
       };
-      if (searchTerm) params.search = searchTerm;
-      if (statusFilter !== 'all') params.status = statusFilter;
+      if (debouncedSearch) params.search = debouncedSearch;
+      if (filters.status !== 'all') params.status = filters.status;
 
       const response = await limsApi.listInstruments(params);
       if (!response.success) {
@@ -238,7 +258,7 @@ const InstrumentPage: React.FC = () => {
     []
   );
 
-  const filters: FilterConfig[] = useMemo(
+  const filterConfigs: FilterConfig[] = useMemo(
     () => [
       {
         id: 'status',
@@ -251,14 +271,13 @@ const InstrumentPage: React.FC = () => {
           { label: '维修中', value: '维修中' },
           { label: '停用', value: '停用' },
         ],
-        value: statusFilter,
+        value: filters.status,
         onChange: (value: unknown) => {
-          setStatusFilter(value as string);
-          setCurrentPage(0);
+          setFilter('status', value as string);
         },
       },
     ],
-    [statusFilter]
+    [filters.status, setFilter]
   );
 
   const handleView = (instrument: Instrument) => {
@@ -353,10 +372,16 @@ const InstrumentPage: React.FC = () => {
     }
   };
 
-  const handleDelete = async (instrument: Instrument) => {
-    if (!window.confirm(`确定要删除仪器 "${instrument.name}" 吗？`)) return;
-    await deleteMutation.mutateAsync(instrument.id);
-    setShowDetailModal(false);
+  const handleDelete = (instrument: Instrument) => {
+    openConfirmDialog({
+      title: '确认删除',
+      message: `确定要删除仪器 "${instrument.name}" 吗？`,
+      danger: true,
+      onConfirm: () => {
+        deleteMutation.mutateAsync(instrument.id);
+        setShowDetailModal(false);
+      },
+    });
   };
 
   const stats = useMemo(
@@ -553,8 +578,7 @@ const InstrumentPage: React.FC = () => {
   );
 
   const handleSearch = (value: string) => {
-    setSearchTerm(value);
-    setCurrentPage(0);
+    setSearchQuery(value);
   };
 
   return (
@@ -579,11 +603,15 @@ const InstrumentPage: React.FC = () => {
         data={instruments}
         loading={isLoading}
         getRowId={(row) => row.id}
-        filters={filters}
+        filters={filterConfigs}
+        filtersValue={{ status: filters.status }}
+        onFilterChange={(f) => {
+          if (f.status !== undefined) setFilter('status', f.status as string);
+        }}
         searchable
         searchPlaceholder='搜索仪器编号、名称或类型...'
-        searchValue={searchTerm}
-        onSearch={handleSearch}
+        searchValue={searchQuery}
+        onSearch={setSearchQuery}
         pagination={{
           page: currentPage,
           pageSize,
@@ -948,6 +976,18 @@ const InstrumentPage: React.FC = () => {
           </Button>
         </DialogActions>
       </Dialog>
+
+      <ConfirmDialog
+        isOpen={confirmDialogOpen}
+        onClose={setConfirmDialogClosed}
+        onConfirm={() => {
+          confirmDialogConfig?.onConfirm();
+          setConfirmDialogClosed();
+        }}
+        title={confirmDialogConfig?.title || ''}
+        message={confirmDialogConfig?.message || ''}
+        danger={confirmDialogConfig?.danger}
+      />
     </PageContainer>
   );
 };

@@ -42,6 +42,7 @@ import { designTokens } from '@/theme/tokens';
 import { useQuery } from '@tanstack/react-query';
 import { useNotificationStore } from '@/store';
 
+import { useTranslation } from 'react-i18next';
 const ct = designTokens.colors;
 
 interface TabPanelProps {
@@ -66,6 +67,7 @@ function TabPanel(props: TabPanelProps) {
 }
 
 const InventoryReportPage: React.FC = () => {
+  const { t } = useTranslation();
   const { addNotification } = useNotificationStore();
   const [currentTab, setCurrentTab] = useState(0);
   const [warehouseFilter, setWarehouseFilter] = useState<string>('');
@@ -85,7 +87,7 @@ const InventoryReportPage: React.FC = () => {
 
   useEffect(() => {
     if (warehousesQuery.isError && warehousesQuery.error) {
-      apiLogger.error('获取仓库列表失败:', warehousesQuery.error);
+      apiLogger.error(t('wms.inventory_report_page.list'), warehousesQuery.error);
     }
   }, [warehousesQuery.isError, warehousesQuery.error]);
 
@@ -107,11 +109,11 @@ const InventoryReportPage: React.FC = () => {
 
   useEffect(() => {
     if (statisticsQuery.isError && statisticsQuery.error) {
-      apiLogger.error('获取库存统计失败:', statisticsQuery.error);
+      apiLogger.error(t('wms.inventory_report_page.fail'), statisticsQuery.error);
       addNotification({
         type: 'error',
-        title: '加载失败',
-        message: '无法加载库存统计数据',
+        title: t('wms.inventory_report_page.fail_1'),
+        message: t('wms.inventory_report_page.text_d6c5e2'),
       });
     }
   }, [statisticsQuery.isError, statisticsQuery.error, addNotification]);
@@ -141,11 +143,11 @@ const InventoryReportPage: React.FC = () => {
 
   useEffect(() => {
     if (abcAnalysisQuery.isError && abcAnalysisQuery.error) {
-      apiLogger.error('获取ABC分析失败:', abcAnalysisQuery.error);
+      apiLogger.error(t('wms.inventory_report_page.fail_2'), abcAnalysisQuery.error);
       addNotification({
         type: 'error',
-        title: '加载失败',
-        message: '无法加载ABC分析数据',
+        title: t('wms.inventory_report_page.fail_1'),
+        message: t('wms.inventory_report_page.text_cb3845'),
       });
     }
   }, [abcAnalysisQuery.isError, abcAnalysisQuery.error, addNotification]);
@@ -172,11 +174,11 @@ const InventoryReportPage: React.FC = () => {
 
   useEffect(() => {
     if (turnoverQuery.isError && turnoverQuery.error) {
-      apiLogger.error('获取库存周转失败:', turnoverQuery.error);
+      apiLogger.error(t('wms.inventory_report_page.fail_3'), turnoverQuery.error);
       addNotification({
         type: 'error',
-        title: '加载失败',
-        message: '无法加载库存周转数据',
+        title: t('wms.inventory_report_page.fail_1'),
+        message: t('wms.inventory_report_page.text_898624'),
       });
     }
   }, [turnoverQuery.isError, turnoverQuery.error, addNotification]);
@@ -204,11 +206,11 @@ const InventoryReportPage: React.FC = () => {
 
   useEffect(() => {
     if (valueByWarehouseQuery.isError && valueByWarehouseQuery.error) {
-      apiLogger.error('获取仓库库存价值失败:', valueByWarehouseQuery.error);
+      apiLogger.error(t('wms.inventory_report_page.fail_4'), valueByWarehouseQuery.error);
       addNotification({
         type: 'error',
-        title: '加载失败',
-        message: '无法加载仓库库存价值数据',
+        title: t('wms.inventory_report_page.fail_1'),
+        message: t('wms.inventory_report_page.warehouse'),
       });
     }
   }, [valueByWarehouseQuery.isError, valueByWarehouseQuery.error, addNotification]);
@@ -593,17 +595,17 @@ const InventoryReportPage: React.FC = () => {
             <Typography variant='h6'>ABC分析概览</Typography>
             <Box sx={{ display: 'flex', gap: 2 }}>
               <Chip
-                label={`A类: 70%价值`}
+                label={t('wms.inventory_report_page.abc_a_label')}
                 color='error'
                 variant='outlined'
               />
               <Chip
-                label={`B类: 20%价值`}
+                label={t('wms.inventory_report_page.abc_b_label')}
                 color='warning'
                 variant='outlined'
               />
               <Chip
-                label={`C类: 10%价值`}
+                label={t('wms.inventory_report_page.abc_c_label')}
                 color='success'
                 variant='outlined'
               />
@@ -1041,8 +1043,8 @@ const InventoryReportPage: React.FC = () => {
 
   return (
     <PageContainer
-      title='库存报表'
-      subtitle='查看库存统计数据、库龄分析、周转分析等报表'
+      title={t('wms.inventory_report_page.title')}
+      subtitle={t('wms.inventory_report_page.subtitle')}
       headerProps={{
         pageIcon: <BarChart3 style={{ width: 20, height: 20 }} />,
         pageGradient: `linear-gradient(135deg, ${ct.secondary[400]}, ${ct.secondary[600]})`,
@@ -1055,10 +1057,10 @@ const InventoryReportPage: React.FC = () => {
               value={currentTab}
               onChange={(_, newValue) => setCurrentTab(newValue)}
             >
-              <Tab label='库存统计' />
-              <Tab label='ABC分析' />
-              <Tab label='周转分析' />
-              <Tab label='仓库分布' />
+              <Tab label={t('wms.inventory_report_page.tab_statistics')} />
+              <Tab label={t('wms.inventory_report_page.tab_abc')} />
+              <Tab label={t('wms.inventory_report_page.tab_turnover')} />
+              <Tab label={t('wms.inventory_report_page.tab_warehouse')} />
             </Tabs>
           </Box>
           <FormControl
@@ -1068,7 +1070,7 @@ const InventoryReportPage: React.FC = () => {
             <InputLabel>仓库筛选</InputLabel>
             <Select
               value={warehouseFilter}
-              label='仓库筛选'
+              label={t('wms.inventory_report_page.filter_warehouse')}
               onChange={(e) => setWarehouseFilter(e.target.value)}
             >
               <MenuItem value=''>全部仓库</MenuItem>

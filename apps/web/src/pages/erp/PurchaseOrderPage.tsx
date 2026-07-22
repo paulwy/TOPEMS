@@ -24,7 +24,7 @@ import type {
 } from '@/api/erp';
 import { erpApi } from '@/api/erp';
 import { useNotificationStore } from '@/store';
-import { LoadingSpinner } from '@topems/shared-components';
+import { LoadingSpinner, ConfirmDialog } from '@topems/shared-components';
 import {
   ListPageTemplate,
   type ColumnDef,
@@ -34,14 +34,27 @@ import {
 import { Plus, Edit, Trash2, Eye, CheckCircle, XCircle, ShoppingCart } from 'lucide-react';
 import { apiLogger } from '@/utils/logger';
 import { designTokens } from '@/theme/tokens';
+import { useConfirmDialog, useCrudMutations, useUrlListState } from '@/hooks';
 
 const ct = designTokens.colors;
 
 const PurchaseOrderPage: React.FC = () => {
-  const [searchTerm, setSearchTerm] = useState('');
-  const [statusFilter, setStatusFilter] = useState<string>('all');
-  const [currentPage, setCurrentPage] = useState(1);
-  const [pageSize] = useState(10);
+  const {
+    searchQuery,
+    setSearchQuery,
+    debouncedSearch,
+    filters: urlFilters,
+    setFilter,
+    currentPage,
+    setCurrentPage,
+    pageSize,
+  } = useUrlListState<{ status: string }>({
+    defaultPageSize: 10,
+    defaultFilters: { status: 'all' },
+    baseIndex: 1,
+    historyMode: 'replace',
+  });
+  const statusFilter = urlFilters.status;
   const [showDialog, setShowDialog] = useState(false);
   const [showDetailDialog, setShowDetailDialog] = useState(false);
   const [selectedOrder, setSelectedOrder] = useState<PurchaseOrder | null>(null);
@@ -55,18 +68,24 @@ const PurchaseOrderPage: React.FC = () => {
     expected_date: '',
     remark: '',
   });
+  const {
+    confirmOpen: confirmDialogOpen,
+    confirmConfig: confirmDialogConfig,
+    openConfirm: openConfirmDialog,
+    closeConfirm: setConfirmDialogClosed,
+  } = useConfirmDialog();
 
   const { addNotification } = useNotificationStore();
   const queryClient = useQueryClient();
 
   const ordersQuery = useQuery<{ orders: PurchaseOrder[]; total: number }>({
-    queryKey: ['erp-purchase-orders', searchTerm, statusFilter, currentPage, pageSize],
+    queryKey: ['erp-purchase-orders', debouncedSearch, statusFilter, currentPage, pageSize],
     queryFn: async () => {
       const params: Record<string, unknown> = {
         page: currentPage - 1,
         pagesize: pageSize,
       };
-      if (searchTerm) params.search = searchTerm;
+      if (debouncedSearch) params.search = debouncedSearch;
       if (statusFilter !== 'all') params.status = statusFilter;
 
       const response = await erpApi.purchaseOrders.list(params);
@@ -92,65 +111,16 @@ const PurchaseOrderPage: React.FC = () => {
     }
   }, [ordersQuery.isError, ordersQuery.error, apiLogger, addNotification]);
 
-  const createOrderMutation = useMutation({
-    mutationFn: (data: CreatePurchaseOrderRequest) => erpApi.purchaseOrders.create(data),
-    onSuccess: () => {
-      addNotification({
-        type: 'success',
-        title: '创建成功',
-        message: '新采购订单已创建',
-      });
-      queryClient.invalidateQueries({ queryKey: ['erp-purchase-orders'] });
-    },
-    onError: (error: unknown) => {
-      apiLogger.error('创建失败:', error);
-      addNotification({
-        type: 'error',
-        title: '操作失败',
-        message: '创建采购订单失败',
-      });
-    },
-  });
-
-  const updateOrderMutation = useMutation({
-    mutationFn: ({ id, data }: { id: string; data: UpdatePurchaseOrderRequest }) =>
-      erpApi.purchaseOrders.update(id, data),
-    onSuccess: () => {
-      addNotification({
-        type: 'success',
-        title: '更新成功',
-        message: '采购订单信息已更新',
-      });
-      queryClient.invalidateQueries({ queryKey: ['erp-purchase-orders'] });
-    },
-    onError: (error: unknown) => {
-      apiLogger.error('更新失败:', error);
-      addNotification({
-        type: 'error',
-        title: '操作失败',
-        message: '更新采购订单失败',
-      });
-    },
-  });
-
-  const deleteOrderMutation = useMutation({
-    mutationFn: (id: string) => erpApi.purchaseOrders.delete(id),
-    onSuccess: () => {
-      addNotification({
-        type: 'success',
-        title: '删除成功',
-        message: '采购订单已删除',
-      });
-      queryClient.invalidateQueries({ queryKey: ['erp-purchase-orders'] });
-    },
-    onError: (error: unknown) => {
-      apiLogger.error('删除失败:', error);
-      addNotification({
-        type: 'error',
-        title: '删除失败',
-        message: '无法删除采购订单',
-      });
-    },
+  const {
+    createMutation: createOrderMutation,
+    updateMutation: updateOrderMutation,
+    deleteMutation: deleteOrderMutation,
+  } = useCrudMutations<CreatePurchaseOrderRequest, UpdatePurchaseOrderRequest, string>({
+    queryKeyToInvalidate: ['erp-purchase-orders'],
+    createFn: (data) => erpApi.purchaseOrders.create(data),
+    updateFn: ({ id, data }) => erpApi.purchaseOrders.update(String(id), data),
+    deleteFn: (id) => erpApi.purchaseOrders.delete(String(id)),
+    entityName: '采购订单',
   });
 
   const approveOrderMutation = useMutation({
@@ -313,11 +283,17 @@ const PurchaseOrderPage: React.FC = () => {
   };
 
   const handleDelete = useCallback(
-    async (id: string) => {
-      if (!window.confirm('确定要删除这个采购订单吗?')) return;
-      await deleteOrderMutation.mutateAsync(id);
+    (id: string) => {
+      openConfirmDialog({
+        title: '确认删除',
+        message: '确定要删除这个采购订单吗?',
+        danger: true,
+        onConfirm: () => {
+          deleteOrderMutation.mutate(id);
+        },
+      });
     },
-    [deleteOrderMutation]
+    [deleteOrderMutation, openConfirmDialog]
   );
 
   const handleEdit = useCallback((order: PurchaseOrder) => {
@@ -428,7 +404,7 @@ const PurchaseOrderPage: React.FC = () => {
         ],
         value: statusFilter,
         onChange: (value: unknown) => {
-          setStatusFilter(value as string);
+          setFilter('status', value as string);
           setCurrentPage(1);
         },
       },
@@ -466,7 +442,7 @@ const PurchaseOrderPage: React.FC = () => {
   };
 
   const handleSearch = (value: string) => {
-    setSearchTerm(value);
+    setSearchQuery(value);
     setCurrentPage(1);
   };
 
@@ -578,7 +554,7 @@ const PurchaseOrderPage: React.FC = () => {
         filters={filters}
         searchable
         searchPlaceholder='搜索订单号或供应商名称...'
-        searchValue={searchTerm}
+        searchValue={searchQuery}
         onSearch={handleSearch}
         pagination={{
           page: currentPage - 1,
@@ -855,6 +831,18 @@ const PurchaseOrderPage: React.FC = () => {
           )}
         </DialogContent>
       </Dialog>
+
+      <ConfirmDialog
+        isOpen={confirmDialogOpen}
+        onClose={setConfirmDialogClosed}
+        onConfirm={() => {
+          confirmDialogConfig?.onConfirm();
+          setConfirmDialogClosed();
+        }}
+        title={confirmDialogConfig?.title || ''}
+        message={confirmDialogConfig?.message || ''}
+        danger={confirmDialogConfig?.danger}
+      />
     </PageContainer>
   );
 };

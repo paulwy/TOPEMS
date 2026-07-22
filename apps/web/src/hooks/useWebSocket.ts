@@ -1,325 +1,596 @@
-import { useEffect, useRef, useState, useCallback } from 'react';
-import config from '../config/runtime';
+import { useEffect, useCallback, useRef, useState } from 'react';
 import { logger } from '@/utils/logger';
+import { calculateBackoffDelay, HeartbeatMonitor, getNextReconnectDelay, DEFAULT_RECONNECT_STRATEGY } from '@/utils/websocket-optimizer';
+import { useAuthToken } from '@/store/authStore';
 
-export interface WsMessage {
-  msg_type: string;
-  chat_id?: string;
-  sender_id: string;
-  sender_name: string;
-  content: string;
-  timestamp: string;
+const WS_SIGNING_SECRET = process.env.NEXT_PUBLIC_WS_SIGNING_SECRET || 'topems-ws-signing-secret';
+
+async function generateSignature(message: string): Promise<string> {
+  if (!WS_SIGNING_SECRET) return '';
+  const encoder = new TextEncoder();
+  const secretBytes = encoder.encode(WS_SIGNING_SECRET);
+  const messageBytes = encoder.encode(message);
+  
+  try {
+    const key = await crypto.subtle.importKey('raw', secretBytes, { name: 'HMAC', hash: 'SHA-256' }, false, ['sign']);
+    const signature = await crypto.subtle.sign('HMAC', key, messageBytes);
+    return Array.from(new Uint8Array(signature))
+      .map((b) => b.toString(16).padStart(2, '0'))
+      .join('');
+  } catch {
+    return '';
+  }
 }
+
+export interface WebSocketMessage {
+  type: string;
+  payload: Record<string, unknown>;
+  timestamp: number;
+}
+
+export type WsMessage = WebSocketMessage;
 
 export type WsConnectionStatus = 'disconnected' | 'connecting' | 'connected' | 'reconnecting' | 'error';
 
 export interface UseWebSocketOptions {
-  onMessage?: (message: string | WsMessage) => void;
+  wsPath?: string;
+  queryParams?: Record<string, string>;
+  authMessage?: () => string;
+  onMessage?: (message: string | WebSocketMessage) => void;
   onOpen?: () => void;
   onClose?: (event: CloseEvent) => void;
-  onError?: (error: Event) => void;
+  onError?: (event: Event) => void;
   reconnectAttempts?: number;
-  reconnectInterval?: number;
   maxReconnectDelay?: number;
   minReconnectDelay?: number;
   connectionTimeout?: number;
-  wsPath?: string;
-  queryParams?: Record<string, string>;
-  authMessage?: string | (() => string);
   shouldReconnect?: (code: number) => boolean;
-  sendAuthOnOpen?: boolean;
   enabled?: boolean;
+  /** 启用心跳检测（默认 false） */
+  enableHeartbeat?: boolean;
+  /** 心跳间隔（毫秒） */
+  heartbeatInterval?: number;
+  /** 心跳超时（毫秒） */
+  heartbeatTimeout?: number;
+  /** 是否自动使用 JWT token 认证（默认 true） */
+  autoAuthToken?: boolean;
+}
+
+export interface SubscriptionConfig {
+  channel: string;
+  handler: (message: WebSocketMessage) => void;
+}
+
+const WS_URL = process.env.NEXT_PUBLIC_WS_URL || 'ws://localhost:8080/ws';
+
+class WebSocketService {
+  private socket: WebSocket | null = null;
+  private reconnectAttempts = 0;
+  private readonly maxReconnectAttempts = 10;
+  private readonly reconnectMinDelay = 1000;
+  private readonly reconnectMaxDelay = 30000;
+  private subscriptions: Map<string, Set<(message: WebSocketMessage) => void>> = new Map();
+  private connectionPromise: Promise<void> | null = null;
+  private isConnecting = false;
+  private heartbeatMonitor: HeartbeatMonitor | null = null;
+  private readonly enableHeartbeat = false;
+  private readonly heartbeatInterval = 30000;
+  private readonly heartbeatTimeout = 10000;
+  private authToken: string | null = null;
+  private onAuthFailed?: (error: string) => void;
+  private onAuthSuccess?: (data: Record<string, unknown>) => void;
+
+  setAuthToken(token: string | null): void {
+    this.authToken = token;
+  }
+
+  setAuthHandlers(onFailed: (error: string) => void, onSuccess: (data: Record<string, unknown>) => void): void {
+    this.onAuthFailed = onFailed;
+    this.onAuthSuccess = onSuccess;
+  }
+
+  private getWsUrl(): string {
+    if (this.authToken) {
+      return `${WS_URL}?token=${encodeURIComponent(this.authToken)}`;
+    }
+    return WS_URL;
+  }
+
+  connect(): Promise<void> {
+    if (this.socket?.readyState === WebSocket.OPEN) {
+      return Promise.resolve();
+    }
+
+    if (this.connectionPromise) {
+      return this.connectionPromise;
+    }
+
+    this.isConnecting = true;
+    this.connectionPromise = new Promise((resolve, reject) => {
+      try {
+        const wsUrl = this.getWsUrl();
+        this.socket = new WebSocket(wsUrl);
+
+        this.socket.onopen = () => {
+          logger.info('[WebSocket] Connected');
+          this.reconnectAttempts = 0;
+          this.isConnecting = false;
+          this.connectionPromise = null;
+          this.resubscribeAll();
+          this.startHeartbeatIfEnabled();
+          resolve();
+        };
+
+        this.socket.onmessage = (event) => {
+          try {
+            const message: WebSocketMessage = JSON.parse(event.data);
+            // 识别 pong 响应，重置心跳超时
+            if (message.type === 'pong' && this.heartbeatMonitor) {
+              this.heartbeatMonitor.recordPong();
+              return;
+            }
+            // 处理认证结果
+            if (message.type === 'auth_failed') {
+              const errorMsg = (message.payload as Record<string, unknown>)?.message as string || 'Authentication failed';
+              logger.error('[WebSocket] Authentication failed:', errorMsg);
+              this.onAuthFailed?.(errorMsg);
+              return;
+            }
+            if (message.type === 'auth_success') {
+              logger.info('[WebSocket] Authentication succeeded');
+              this.onAuthSuccess?.(message.payload as Record<string, unknown>);
+            }
+            this.notifySubscribers(message);
+          } catch (error) {
+            logger.error('[WebSocket] Failed to parse message:', error);
+          }
+        };
+
+        this.socket.onclose = () => {
+          logger.info('[WebSocket] Disconnected');
+          this.stopHeartbeat();
+          this.socket = null;
+          this.isConnecting = false;
+          this.connectionPromise = null;
+          this.scheduleReconnect();
+        };
+
+        this.socket.onerror = (error) => {
+          logger.error('[WebSocket] Error:', error);
+          this.isConnecting = false;
+          this.connectionPromise = null;
+          reject(error);
+        };
+      } catch (error) {
+        this.isConnecting = false;
+        this.connectionPromise = null;
+        reject(error);
+      }
+    });
+
+    return this.connectionPromise;
+  }
+
+  private startHeartbeatIfEnabled(): void {
+    if (!this.enableHeartbeat || !this.socket) return;
+    this.heartbeatMonitor = new HeartbeatMonitor(
+      () => {
+        this.send({ type: 'ping', payload: {} });
+      },
+      () => {
+        logger.warn('[WebSocket] Heartbeat timeout, forcing reconnect');
+        this.socket?.close(4001, 'Heartbeat timeout');
+      },
+      this.heartbeatInterval,
+      this.heartbeatTimeout
+    );
+    this.heartbeatMonitor.start();
+  }
+
+  private stopHeartbeat(): void {
+    this.heartbeatMonitor?.stop();
+    this.heartbeatMonitor = null;
+  }
+
+  private scheduleReconnect(): void {
+    if (this.reconnectAttempts >= this.maxReconnectAttempts) {
+      logger.error('[WebSocket] Max reconnect attempts reached');
+      return;
+    }
+
+    // 使用指数退避 + 抖动算法
+    const delay = getNextReconnectDelay(this.reconnectAttempts, {
+      ...DEFAULT_RECONNECT_STRATEGY,
+      minDelay: this.reconnectMinDelay,
+      maxDelay: this.reconnectMaxDelay,
+    });
+    this.reconnectAttempts++;
+    
+    setTimeout(() => {
+      logger.info(`[WebSocket] Reconnecting (attempt ${this.reconnectAttempts}, delay ${delay}ms)...`);
+      this.connect().catch(() => {});
+    }, delay);
+  }
+
+  subscribe(channel: string, handler: (message: WebSocketMessage) => void): () => void {
+    if (!this.subscriptions.has(channel)) {
+      this.subscriptions.set(channel, new Set());
+    }
+
+    this.subscriptions.get(channel)!.add(handler);
+
+    if (this.socket?.readyState === WebSocket.OPEN) {
+      this.send({ type: 'subscribe', payload: { channel } });
+    }
+
+    return () => {
+      this.unsubscribe(channel, handler);
+    };
+  }
+
+  unsubscribe(channel: string, handler: (message: WebSocketMessage) => void): void {
+    const handlers = this.subscriptions.get(channel);
+    if (handlers) {
+      handlers.delete(handler);
+
+      if (handlers.size === 0) {
+        this.subscriptions.delete(channel);
+        if (this.socket?.readyState === WebSocket.OPEN) {
+          this.send({ type: 'unsubscribe', payload: { channel } });
+        }
+      }
+    }
+  }
+
+  private resubscribeAll(): void {
+    this.subscriptions.forEach((_, channel) => {
+      this.send({ type: 'subscribe', payload: { channel } });
+    });
+  }
+
+  private notifySubscribers(message: WebSocketMessage): void {
+    const handlers = this.subscriptions.get(message.type);
+    if (handlers) {
+      handlers.forEach((handler) => {
+        try {
+          handler(message);
+        } catch (error) {
+          logger.error('[WebSocket] Handler error:', error);
+        }
+      });
+    }
+  }
+
+  async send(message: { type: string; payload?: Record<string, unknown> }): Promise<void> {
+    if (this.socket?.readyState !== WebSocket.OPEN) return;
+    
+    const plainMessage = JSON.stringify(message);
+    const signature = await generateSignature(plainMessage);
+    
+    const signedMessage = signature 
+      ? JSON.stringify({ ...message, signature })
+      : plainMessage;
+    
+    this.socket.send(signedMessage);
+  }
+
+  disconnect(): void {
+    this.stopHeartbeat();
+    if (this.socket) {
+      this.socket.close();
+      this.socket = null;
+    }
+    this.reconnectAttempts = this.maxReconnectAttempts;
+  }
+
+  isConnected(): boolean {
+    return this.socket?.readyState === WebSocket.OPEN;
+  }
+}
+
+export const webSocketService = new WebSocketService();
+
+export function useWebSocketSubscription(
+  channel: string,
+  handler: (message: WebSocketMessage) => void,
+  enabled = true
+): { isConnected: boolean; reconnect: () => void; authStatus: 'pending' | 'success' | 'failed' } {
+  const [isConnected, setIsConnected] = useState(false);
+  const [authStatus, setAuthStatus] = useState<'pending' | 'success' | 'failed'>('pending');
+  const handlerRef = useRef(handler);
+  const token = useAuthToken();
+
+  useEffect(() => {
+    handlerRef.current = handler;
+  }, [handler]);
+
+  useEffect(() => {
+    webSocketService.setAuthToken(token);
+    webSocketService.setAuthHandlers(
+      (error) => {
+        logger.error('[WebSocket] Auth failed:', error);
+        setAuthStatus('failed');
+        setIsConnected(false);
+      },
+      (data) => {
+        logger.info('[WebSocket] Auth success:', data);
+        setAuthStatus('success');
+      }
+    );
+  }, [token]);
+
+  useEffect(() => {
+    if (!enabled) return;
+
+    let unsubscribe: (() => void) | null = null;
+
+    const connectAndSubscribe = async () => {
+      try {
+        await webSocketService.connect();
+        setIsConnected(true);
+
+        unsubscribe = webSocketService.subscribe(channel, (message) => {
+          handlerRef.current(message);
+        });
+      } catch (error) {
+        setIsConnected(false);
+        setAuthStatus('failed');
+      }
+    };
+
+    connectAndSubscribe();
+
+    const checkConnection = setInterval(() => {
+      setIsConnected(webSocketService.isConnected());
+    }, 1000);
+
+    return () => {
+      clearInterval(checkConnection);
+      unsubscribe?.();
+    };
+  }, [channel, enabled]);
+
+  const reconnect = useCallback(() => {
+    setAuthStatus('pending');
+    webSocketService.connect();
+  }, []);
+
+  return { isConnected, reconnect, authStatus };
+}
+
+export function useWebSocketConnection(): { isConnected: boolean; connect: () => void; disconnect: () => void } {
+  const [isConnected, setIsConnected] = useState(false);
+
+  useEffect(() => {
+    const checkConnection = setInterval(() => {
+      setIsConnected(webSocketService.isConnected());
+    }, 1000);
+
+    return () => clearInterval(checkConnection);
+  }, []);
+
+  const connect = useCallback(() => {
+    webSocketService.connect();
+  }, []);
+
+  const disconnect = useCallback(() => {
+    webSocketService.disconnect();
+  }, []);
+
+  return { isConnected, connect, disconnect };
 }
 
 export function useWebSocket(options: UseWebSocketOptions = {}) {
   const {
+    wsPath,
+    queryParams,
+    authMessage,
     onMessage,
     onOpen,
     onClose,
     onError,
-    reconnectAttempts = config.ws.maxReconnectAttempts,
-    reconnectInterval = config.ws.reconnectInterval,
+    reconnectAttempts = 5,
     maxReconnectDelay = 30000,
     minReconnectDelay = 1000,
     connectionTimeout = 10000,
-    wsPath,
-    queryParams,
-    authMessage,
-    shouldReconnect = (code) => code !== 1000 && code !== 1001,
-    sendAuthOnOpen = true,
+    shouldReconnect,
     enabled = true,
+    enableHeartbeat = false,
+    heartbeatInterval = 30000,
+    heartbeatTimeout = 10000,
+    autoAuthToken = true,
   } = options;
 
   const [isConnected, setIsConnected] = useState(false);
   const [connectionStatus, setConnectionStatus] = useState<WsConnectionStatus>('disconnected');
   const [reconnectCount, setReconnectCount] = useState(0);
   const [error, setError] = useState<Event | null>(null);
+  const [authStatus, setAuthStatus] = useState<'pending' | 'success' | 'failed'>('pending');
 
-  const wsRef = useRef<WebSocket | null>(null);
-  const reconnectCountRef = useRef(0);
-  const reconnectTimeoutRef = useRef<NodeJS.Timeout | null>(null);
-  const connectTimeoutRef = useRef<NodeJS.Timeout | null>(null);
-  const isConnectingRef = useRef(false);
-  const isInitRef = useRef(false);
+  const socketRef = useRef<WebSocket | null>(null);
+  const reconnectTimeoutRef = useRef<number | null>(null);
+  const connectTimeoutRef = useRef<number | null>(null);
+  const heartbeatMonitorRef = useRef<HeartbeatMonitor | null>(null);
+  const token = autoAuthToken ? useAuthToken() : null;
 
-  const callbacksRef = useRef({ onMessage, onOpen, onClose, onError });
-  callbacksRef.current = { onMessage, onOpen, onClose, onError };
+  useEffect(() => {
+    if (!enabled) return;
 
-  const buildWsUrl = useCallback(() => {
-    const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
-    const path = wsPath || '/ws/core/im';
-    
-    let url = `${protocol}//${window.location.host}${path}`;
-    
-    if (queryParams && Object.keys(queryParams).length > 0) {
-      const params = new URLSearchParams(queryParams);
-      url += `?${params.toString()}`;
-    }
-    
-    return url;
-  }, [wsPath, queryParams]);
+    let url = wsPath
+      ? `${process.env.NEXT_PUBLIC_WS_URL || 'ws://localhost:8080'}${wsPath}`
+      : WS_URL;
 
-  const connect = useCallback(() => {
-    if (!enabled) {
-      logger.info('[useWebSocket] disabled, skipping connection');
-      return;
+    const params: Record<string, string> = { ...queryParams };
+    if (token && autoAuthToken) {
+      params.token = token;
     }
 
-    if (typeof window === 'undefined' || !('WebSocket' in window)) {
-      logger.warn('[useWebSocket] WebSocket not supported');
-      return;
-    }
+    const fullUrl = Object.keys(params).length > 0
+      ? `${url}?${new URLSearchParams(params).toString()}`
+      : url;
 
-    if (wsRef.current?.readyState === WebSocket.OPEN) {
-      logger.warn('[useWebSocket] WebSocket already connected');
-      return;
-    }
+    const startHeartbeat = (ws: WebSocket) => {
+      if (!enableHeartbeat) return;
+      heartbeatMonitorRef.current = new HeartbeatMonitor(
+        () => {
+          if (ws.readyState === WebSocket.OPEN) {
+            ws.send(JSON.stringify({ type: 'ping', payload: {} }));
+          }
+        },
+        () => {
+          logger.warn('[WebSocket] Heartbeat timeout, forcing reconnect');
+          ws.close(4001, 'Heartbeat timeout');
+        },
+        heartbeatInterval,
+        heartbeatTimeout
+      );
+      heartbeatMonitorRef.current.start();
+    };
 
-    if (isConnectingRef.current) {
-      logger.warn('[useWebSocket] WebSocket already connecting');
-      return;
-    }
+    const stopHeartbeat = () => {
+      heartbeatMonitorRef.current?.stop();
+      heartbeatMonitorRef.current = null;
+    };
 
-    if (!reconnectCountRef.current && isInitRef.current) {
-      logger.info('[useWebSocket] WebSocket already initialized');
-      return;
-    }
-
-    if (wsRef.current) {
-      try {
-        wsRef.current.close(1000, 'Reconnecting');
-      } catch (e) {
-        // ignore
+    const connect = () => {
+      if (reconnectTimeoutRef.current) {
+        clearTimeout(reconnectTimeoutRef.current);
       }
-      wsRef.current = null;
-    }
 
-    isConnectingRef.current = true;
-    const isReconnecting = reconnectCountRef.current > 0;
-    
-    if (isReconnecting) {
-      setConnectionStatus('reconnecting');
-      logger.info(`[useWebSocket] Reconnect attempt ${reconnectCountRef.current}/${reconnectAttempts}`);
-    } else {
+      if (connectTimeoutRef.current) {
+        clearTimeout(connectTimeoutRef.current);
+      }
+
       setConnectionStatus('connecting');
-    }
+      socketRef.current = new WebSocket(fullUrl);
 
-    const wsUrl = buildWsUrl();
-    logger.info(`[useWebSocket] Connecting to: ${wsUrl}`);
-
-    const ws = new WebSocket(wsUrl);
-    wsRef.current = ws;
-
-    connectTimeoutRef.current = setTimeout(() => {
-      if (ws.readyState === WebSocket.CONNECTING) {
-        logger.warn(`[useWebSocket] Connection timeout (${connectionTimeout}ms)`);
-        try {
-          ws.close(1006, 'Connection timeout');
-        } catch (e) {
-          logger.error('[useWebSocket] Failed to close timeout connection:', e);
+      connectTimeoutRef.current = window.setTimeout(() => {
+        if (socketRef.current?.readyState === WebSocket.CONNECTING) {
+          socketRef.current.close(4008, 'Connection timeout');
+          handleClose({ code: 4008, reason: 'Connection timeout', wasClean: false } as CloseEvent);
         }
-        wsRef.current = null;
-        isConnectingRef.current = false;
-      }
-    }, connectionTimeout);
+      }, connectionTimeout);
 
-    ws.onopen = () => {
-      if (connectTimeoutRef.current) {
-        clearTimeout(connectTimeoutRef.current);
-        connectTimeoutRef.current = null;
-      }
-      
-      isConnectingRef.current = false;
-      isInitRef.current = true;
-      reconnectCountRef.current = 0;
-      setReconnectCount(0);
-      setIsConnected(true);
-      setConnectionStatus('connected');
-      setError(null);
-      
-      logger.info('[useWebSocket] Connected');
-      callbacksRef.current.onOpen?.();
+      socketRef.current.onopen = () => {
+        if (connectTimeoutRef.current) {
+          clearTimeout(connectTimeoutRef.current);
+        }
+        setIsConnected(true);
+        setConnectionStatus('connected');
+        setReconnectCount(0);
+        setError(null);
+        authMessage?.();
+        onOpen?.();
+        startHeartbeat(socketRef.current!);
+      };
 
-      if (sendAuthOnOpen && authMessage) {
-        const message = typeof authMessage === 'function' ? authMessage() : authMessage;
-        logger.info(`[useWebSocket] Sending auth message: ${message.substring(0, 100)}`);
-        ws.send(message);
-      }
-    };
-
-    ws.onmessage = (event) => {
-      try {
-        logger.debug(`[useWebSocket] Received message: ${event.data.substring(0, 200)}`);
-        
-        let parsedMessage: string | WsMessage = event.data;
+      socketRef.current.onmessage = (event) => {
+        let message: string | WebSocketMessage = event.data;
         try {
-          parsedMessage = JSON.parse(event.data);
+          const parsed = JSON.parse(event.data) as WebSocketMessage;
+          // 识别 pong 响应，重置心跳超时
+          if (parsed.type === 'pong' && heartbeatMonitorRef.current) {
+            heartbeatMonitorRef.current.recordPong();
+            return;
+          }
+          // 处理认证结果
+          if (parsed.type === 'auth_failed') {
+            const errorMsg = (parsed.payload as Record<string, unknown>)?.message as string || 'Authentication failed';
+            logger.error('[WebSocket] Authentication failed:', errorMsg);
+            setAuthStatus('failed');
+            setIsConnected(false);
+            setConnectionStatus('error');
+          } else if (parsed.type === 'auth_success') {
+            logger.info('[WebSocket] Authentication succeeded');
+            setAuthStatus('success');
+          }
+          message = parsed;
         } catch {
-          // keep as string
         }
-        
-        callbacksRef.current.onMessage?.(parsedMessage);
-      } catch (err) {
-        logger.error('[useWebSocket] Failed to process message:', err);
-      }
+        onMessage?.(message);
+      };
+
+      socketRef.current.onclose = handleClose;
+      socketRef.current.onerror = handleError;
     };
 
-    ws.onclose = (event) => {
-      if (connectTimeoutRef.current) {
-        clearTimeout(connectTimeoutRef.current);
-        connectTimeoutRef.current = null;
-      }
-      
-      isConnectingRef.current = false;
+    const handleClose = (event: CloseEvent) => {
+      stopHeartbeat();
       setIsConnected(false);
       setConnectionStatus('disconnected');
-      wsRef.current = null;
+      onClose?.(event);
 
-      const { code, reason, wasClean } = event;
-      logger.info(`[useWebSocket] Disconnected: code=${code}, reason=${reason}, wasClean=${wasClean}`);
-      callbacksRef.current.onClose?.(event);
-
-      if (!enabled) {
-        logger.info('[useWebSocket] disabled, skipping reconnect');
-        return;
-      }
-
-      if (!shouldReconnect(code)) {
-        logger.info('[useWebSocket] Normal close, skipping reconnect');
-        return;
-      }
-
-      if (reconnectCountRef.current >= reconnectAttempts) {
-        logger.error(`[useWebSocket] Max reconnect attempts (${reconnectAttempts}) reached`);
-        setConnectionStatus('error');
-        reconnectCountRef.current = 0;
-        return;
-      }
-
-      reconnectCountRef.current += 1;
-      const attempt = reconnectCountRef.current;
-      
-      const delay = Math.min(
-        minReconnectDelay * Math.pow(2, attempt - 1),
-        maxReconnectDelay
-      ) + Math.random() * 1000;
-
-      setReconnectCount(attempt);
-      logger.info(`[useWebSocket] Reconnecting in ${Math.round(delay)}ms (attempt ${attempt}/${reconnectAttempts})`);
-
-      reconnectTimeoutRef.current = setTimeout(() => {
-        connect();
-      }, delay);
-    };
-
-    ws.onerror = (event) => {
-      if (connectTimeoutRef.current) {
-        clearTimeout(connectTimeoutRef.current);
-        connectTimeoutRef.current = null;
-      }
-      
-      setError(event);
-      setConnectionStatus('error');
-      logger.error('[useWebSocket] Error:', event);
-      callbacksRef.current.onError?.(event);
-
-      if (ws.readyState === WebSocket.CONNECTING || ws.readyState === WebSocket.OPEN) {
-        try {
-          ws.close(1011, 'WebSocket error occurred');
-        } catch (e) {
-          logger.error('[useWebSocket] Failed to close on error:', e);
+      if (enabled && (!shouldReconnect || shouldReconnect(event.code))) {
+        if (reconnectCount < reconnectAttempts) {
+          // 使用指数退避 + 抖动算法
+          const delay = calculateBackoffDelay(reconnectCount, minReconnectDelay, maxReconnectDelay);
+          setReconnectCount((prev) => prev + 1);
+          setConnectionStatus('reconnecting');
+          logger.info(`[WebSocket] Reconnecting in ${delay}ms (attempt ${reconnectCount + 1}/${reconnectAttempts})...`);
+          reconnectTimeoutRef.current = window.setTimeout(connect, delay);
+        } else {
+          setConnectionStatus('error');
+          logger.error('[WebSocket] Max reconnect attempts reached');
         }
       }
     };
-  }, [
-    enabled,
-    reconnectAttempts,
-    minReconnectDelay,
-    maxReconnectDelay,
-    connectionTimeout,
-    buildWsUrl,
-    authMessage,
-    sendAuthOnOpen,
-    shouldReconnect,
-  ]);
 
-  const disconnect = useCallback(() => {
-    if (reconnectTimeoutRef.current) {
-      clearTimeout(reconnectTimeoutRef.current);
-      reconnectTimeoutRef.current = null;
-    }
-    
-    if (connectTimeoutRef.current) {
-      clearTimeout(connectTimeoutRef.current);
-      connectTimeoutRef.current = null;
-    }
-    
-    if (wsRef.current) {
-      try {
-        wsRef.current.close(1000, 'Manual disconnect');
-      } catch (e) {
-        logger.error('[useWebSocket] Failed to disconnect:', e);
-      }
-      wsRef.current = null;
-    }
-    
-    isConnectingRef.current = false;
-    isInitRef.current = false;
-    reconnectCountRef.current = 0;
-    setReconnectCount(0);
-    setIsConnected(false);
-    setConnectionStatus('disconnected');
-    logger.info('[useWebSocket] Disconnected manually');
-  }, []);
-
-  const send = useCallback((message: string | object) => {
-    if (wsRef.current?.readyState === WebSocket.OPEN) {
-      const payload = typeof message === 'string' ? message : JSON.stringify(message);
-      wsRef.current.send(payload);
-    } else {
-      logger.error('[useWebSocket] Not connected');
-    }
-  }, []);
-
-  useEffect(() => {
-    if (enabled) {
-      connect();
-    }
-
-    return () => {
-      disconnect();
+    const handleError = (event: Event) => {
+      setError(event);
+      setConnectionStatus('error');
+      onError?.(event);
     };
-  }, [enabled, connect, disconnect]);
 
-  useEffect(() => {
+    connect();
+
     return () => {
+      stopHeartbeat();
       if (reconnectTimeoutRef.current) {
         clearTimeout(reconnectTimeoutRef.current);
       }
       if (connectTimeoutRef.current) {
         clearTimeout(connectTimeoutRef.current);
       }
+      socketRef.current?.close(1000, 'Component unmounted');
     };
+  }, [enabled, wsPath, queryParams, authMessage, onMessage, onOpen, onClose, onError, reconnectAttempts, maxReconnectDelay, minReconnectDelay, connectionTimeout, shouldReconnect, enableHeartbeat, heartbeatInterval, heartbeatTimeout, autoAuthToken, token]);
+
+  const send = useCallback(async (data: string | Record<string, unknown>) => {
+    if (socketRef.current?.readyState !== WebSocket.OPEN) return;
+    
+    const plainMessage = typeof data === 'string' ? data : JSON.stringify(data);
+    const signature = await generateSignature(plainMessage);
+    
+    const messageToSend = signature && typeof data !== 'string'
+      ? JSON.stringify({ ...data, signature })
+      : plainMessage;
+    
+    socketRef.current.send(messageToSend);
+  }, []);
+
+  const connect = useCallback(() => {
+    if (socketRef.current?.readyState !== WebSocket.OPEN) {
+      setReconnectCount(0);
+      setAuthStatus('pending');
+      let url = wsPath
+        ? `${process.env.NEXT_PUBLIC_WS_URL || 'ws://localhost:8080'}${wsPath}`
+        : WS_URL;
+      const params: Record<string, string> = { ...queryParams };
+      if (token && autoAuthToken) {
+        params.token = token;
+      }
+      const fullUrl = Object.keys(params).length > 0
+        ? `${url}?${new URLSearchParams(params).toString()}`
+        : url;
+      socketRef.current = new WebSocket(fullUrl);
+    }
+  }, [wsPath, queryParams, token, autoAuthToken]);
+
+  const disconnect = useCallback(() => {
+    heartbeatMonitorRef.current?.stop();
+    heartbeatMonitorRef.current = null;
+    socketRef.current?.close(1000, 'Manual disconnect');
+    socketRef.current = null;
   }, []);
 
   return {
@@ -327,6 +598,7 @@ export function useWebSocket(options: UseWebSocketOptions = {}) {
     connectionStatus,
     reconnectCount,
     error,
+    authStatus,
     connect,
     disconnect,
     send,

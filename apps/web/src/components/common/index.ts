@@ -195,3 +195,15 @@ export {
   TouchSwitch,
   type TouchFeedbackOptions,
 } from './TouchComponents';
+
+// Drawer - 抽屉组件
+export { Drawer } from './Drawer';
+export type { DrawerProps, DrawerAnchor, DrawerVariant } from './Drawer';
+
+// FormDrawer - 表单抽屉组件
+export { FormDrawer } from './FormDrawer';
+export type { FormDrawerProps } from './FormDrawer';
+
+// FormDialog - 表单对话框组件
+export { FormDialog } from './FormDialog';
+export type { FormDialogProps } from './FormDialog';

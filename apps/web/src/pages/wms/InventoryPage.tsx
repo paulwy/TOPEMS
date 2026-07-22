@@ -37,27 +37,44 @@ import { apiLogger } from '@/utils/logger';
 import { PageContainer } from '@/components/common';
 import { designTokens } from '@/theme/tokens';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { useUrlListState } from '@/hooks';
 
+import { useTranslation } from 'react-i18next';
 const ct = designTokens.colors;
 
-const statusConfig: Record<
-  string,
-  { label: string; color: 'success' | 'warning' | 'error' | 'default' }
-> = {
-  qualified: { label: '合格', color: 'success' },
-  unqualified: { label: '不合格', color: 'error' },
-  pending: { label: '待检验', color: 'warning' },
-};
 
 const InventoryPage: React.FC = () => {
+  const { t } = useTranslation();
+  const statusConfig: Record<
+    string,
+    { label: string; color: 'success' | 'warning' | 'error' | 'default' }
+  > = {
+    qualified: { label: t('wms.inventory_page.status_qualified'), color: 'success' },
+    unqualified: { label: t('wms.inventory_page.status_unqualified'), color: 'error' },
+    pending: { label: t('wms.inventory_page.status_pending'), color: 'warning' },
+  };
+
   const { addNotification } = useNotificationStore();
   const queryClient = useQueryClient();
 
-  const [searchTerm, setSearchTerm] = useState('');
-  const [statusFilter, setStatusFilter] = useState<string>('');
-  const [warehouseFilter, setWarehouseFilter] = useState<string>('');
-  const [currentPage, setCurrentPage] = useState(1);
-  const [pageSize] = useState(10);
+  const {
+    searchQuery,
+    setSearchQuery,
+    debouncedSearch,
+    filters: urlFilters,
+    setFilter,
+    currentPage,
+    setCurrentPage,
+    pageSize,
+  } = useUrlListState<{ status: string; warehouse_id: string }>({
+    defaultPageSize: 10,
+    defaultFilters: { status: '', warehouse_id: '' },
+    baseIndex: 1,
+    historyMode: 'replace',
+  });
+  const searchTerm = searchQuery;
+  const statusFilter = urlFilters.status;
+  const warehouseFilter = urlFilters.warehouse_id;
   const [showLowStockDialog, setShowLowStockDialog] = useState(false);
 
   // Dialog states
@@ -85,13 +102,13 @@ const InventoryPage: React.FC = () => {
 
   // React Query - 库存列表
   const inventoryQuery = useQuery({
-    queryKey: ['wms-inventory', currentPage, pageSize, searchTerm, statusFilter, warehouseFilter],
+    queryKey: ['wms-inventory', currentPage, pageSize, debouncedSearch, statusFilter, warehouseFilter],
     queryFn: async () => {
       const params: Record<string, unknown> = {
         page: currentPage,
         pagesize: pageSize,
       };
-      if (searchTerm) params.search = searchTerm;
+      if (debouncedSearch) params.search = debouncedSearch;
       if (statusFilter) params.status = statusFilter;
       if (warehouseFilter) params.warehouse_id = warehouseFilter;
       return wmsApi.inventory.list(params);
@@ -153,8 +170,8 @@ const InventoryPage: React.FC = () => {
     onSuccess: () => {
       addNotification({
         type: 'success',
-        title: '创建成功',
-        message: '库存记录已创建',
+        title: t('wms.inventory_page.create'),
+        message: t('wms.inventory_page.create_1'),
       });
       queryClient.invalidateQueries({ queryKey: ['wms-inventory'] });
       queryClient.invalidateQueries({ queryKey: ['wms-alert-stats'] });
@@ -163,8 +180,8 @@ const InventoryPage: React.FC = () => {
     onError: () => {
       addNotification({
         type: 'error',
-        title: '创建失败',
-        message: '创建库存记录失败',
+        title: t('wms.inventory_page.create_2'),
+        message: t('wms.inventory_page.create_3'),
       });
     },
   });
@@ -175,8 +192,8 @@ const InventoryPage: React.FC = () => {
     onSuccess: () => {
       addNotification({
         type: 'success',
-        title: '更新成功',
-        message: '库存记录已更新',
+        title: t('wms.inventory_page.update'),
+        message: t('wms.inventory_page.update_1'),
       });
       queryClient.invalidateQueries({ queryKey: ['wms-inventory'] });
       queryClient.invalidateQueries({ queryKey: ['wms-alert-stats'] });
@@ -185,8 +202,8 @@ const InventoryPage: React.FC = () => {
     onError: () => {
       addNotification({
         type: 'error',
-        title: '更新失败',
-        message: '更新库存记录失败',
+        title: t('wms.inventory_page.update_2'),
+        message: t('wms.inventory_page.update_3'),
       });
     },
   });
@@ -196,8 +213,8 @@ const InventoryPage: React.FC = () => {
     onSuccess: () => {
       addNotification({
         type: 'success',
-        title: '删除成功',
-        message: '库存记录已删除',
+        title: t('wms.inventory_page.delete_success'),
+        message: t('wms.inventory_page.deleted'),
       });
       queryClient.invalidateQueries({ queryKey: ['wms-inventory'] });
       queryClient.invalidateQueries({ queryKey: ['wms-alert-stats'] });
@@ -206,8 +223,8 @@ const InventoryPage: React.FC = () => {
     onError: () => {
       addNotification({
         type: 'error',
-        title: '删除失败',
-        message: '删除库存记录失败',
+        title: t('wms.inventory_page.delete'),
+        message: t('wms.inventory_page.delete_1'),
       });
     },
   });
@@ -228,7 +245,7 @@ const InventoryPage: React.FC = () => {
       }
       addNotification({
         type: 'success',
-        title: '批量删除成功',
+        title: t('wms.inventory_page.batch_delete'),
         message: `成功删除 ${batchDeleteIds.length} 条库存记录`,
       });
       setConfirmBatchDeleteOpen(false);
@@ -236,8 +253,8 @@ const InventoryPage: React.FC = () => {
     } catch {
       addNotification({
         type: 'error',
-        title: '批量删除失败',
-        message: '删除部分库存记录失败',
+        title: t('wms.inventory_page.batch_delete_1'),
+        message: t('wms.inventory_page.delete_3'),
       });
     }
   }, [batchDeleteIds, deleteMutation]);
@@ -246,8 +263,8 @@ const InventoryPage: React.FC = () => {
     if (!newItem.sku || !newItem.name || !newItem.warehouse_id) {
       addNotification({
         type: 'warning',
-        title: '验证错误',
-        message: '请填写必要信息（物料编码、名称、仓库）',
+        title: t('wms.inventory_page.error'),
+        message: t('wms.inventory_page.material_code'),
       });
       return;
     }
@@ -257,7 +274,7 @@ const InventoryPage: React.FC = () => {
       setShowCreateDialog(false);
       resetNewItem();
     } catch (error: unknown) {
-      apiLogger.error('创建库存失败:', error);
+      apiLogger.error(t('wms.inventory_page.create_4'), error);
     }
   };
 
@@ -268,7 +285,7 @@ const InventoryPage: React.FC = () => {
       await updateMutation.mutateAsync({ id: selectedItem.id, item: editItem });
       setShowEditDialog(false);
     } catch (error: unknown) {
-      apiLogger.error('更新库存失败:', error);
+      apiLogger.error(t('wms.inventory_page.update_4'), error);
     }
   };
 
@@ -283,7 +300,7 @@ const InventoryPage: React.FC = () => {
     try {
       await deleteMutation.mutateAsync(deleteItemId);
     } catch (error: unknown) {
-      apiLogger.error('删除库存失败:', error);
+      apiLogger.error(t('wms.inventory_page.delete_4'), error);
     }
   }, [deleteMutation, deleteItemId]);
 
@@ -341,23 +358,23 @@ const InventoryPage: React.FC = () => {
 
   const columns: ColumnDef<InventoryItem>[] = useMemo(
     () => [
-      { id: 'sku', label: '物料编码', sortable: true },
-      { id: 'name', label: '物料名称', sortable: true },
-      { id: 'specification', label: '规格' },
-      { id: 'unit', label: '单位' },
-      { id: 'quantity', label: '数量', sortable: true },
-      { id: 'available_quantity', label: '可用数量' },
+      { id: 'sku', label: t('wms.inventory_page.detail_sku'), sortable: true },
+      { id: 'name', label: t('wms.inventory_page.detail_name'), sortable: true },
+      { id: 'specification', label: t('wms.inventory_page.detail_specification') },
+      { id: 'unit', label: t('wms.inventory_page.detail_unit') },
+      { id: 'quantity', label: t('wms.inventory_page.detail_quantity'), sortable: true },
+      { id: 'available_quantity', label: t('wms.inventory_page.detail_available_quantity') },
       {
         id: 'warehouse_id',
-        label: '仓库',
+        label: t('wms.inventory_page.detail_warehouse'),
         render: (row) => getWarehouseName(row.warehouse_id),
       },
       {
         id: 'status',
-        label: '状态',
+        label: t('wms.inventory_page.detail_status'),
         render: (row) => getStatusBadge(row.status),
       },
-      { id: 'batch_number', label: '批次' },
+      { id: 'batch_number', label: t('wms.inventory_page.column_batch') },
     ],
     [getWarehouseName]
   );
@@ -366,52 +383,50 @@ const InventoryPage: React.FC = () => {
     () => [
       {
         id: 'status',
-        label: '状态',
+        label: t('wms.inventory_page.detail_status'),
         type: 'select',
         options: [
-          { label: '全部状态', value: '' },
-          { label: '合格', value: 'qualified' },
-          { label: '不合格', value: 'unqualified' },
-          { label: '待检验', value: 'pending' },
+          { label: t('wms.inventory_page.filter_option_all_status'), value: '' },
+          { label: t('wms.inventory_page.status_qualified'), value: 'qualified' },
+          { label: t('wms.inventory_page.status_unqualified'), value: 'unqualified' },
+          { label: t('wms.inventory_page.status_pending'), value: 'pending' },
         ],
         value: statusFilter,
         onChange: (value) => {
-          setStatusFilter(value as string);
-          setCurrentPage(1);
+          setFilter('status', value as string);
         },
       },
       {
         id: 'warehouse_id',
-        label: '仓库',
+        label: t('wms.inventory_page.detail_warehouse'),
         type: 'select',
         options: [
-          { label: '全部仓库', value: '' },
+          { label: t('wms.inventory_page.filter_option_all_warehouse'), value: '' },
           ...warehouses.map((w) => ({ label: w.name, value: w.id })),
         ],
         value: warehouseFilter,
         onChange: (value) => {
-          setWarehouseFilter(value as string);
-          setCurrentPage(1);
+          setFilter('warehouse_id', value as string);
         },
       },
     ],
-    [statusFilter, warehouseFilter, warehouses]
+    [statusFilter, warehouseFilter, warehouses, setFilter]
   );
 
   const rowActions: RowAction<InventoryItem>[] = useMemo(
     () => [
       {
-        label: '查看详情',
+        label: t('wms.inventory_page.action_view_detail'),
         icon: <Eye size={16} />,
         onClick: handleViewDetail,
       },
       {
-        label: '编辑',
+        label: t('wms.inventory_page.action_edit'),
         icon: <Edit size={16} />,
         onClick: handleEdit,
       },
       {
-        label: '删除',
+        label: t('wms.inventory_page.action_delete'),
         icon: <Trash2 size={16} />,
         color: 'error',
         onClick: (row) => handleDeleteClick(row.id),
@@ -421,8 +436,7 @@ const InventoryPage: React.FC = () => {
   );
 
   const handleSearch = (value: string) => {
-    setSearchTerm(value);
-    setCurrentPage(1);
+    setSearchQuery(value);
   };
 
   const handleOpenCreate = () => {
@@ -522,8 +536,8 @@ const InventoryPage: React.FC = () => {
 
   return (
     <PageContainer
-      title='库存管理'
-      subtitle='管理仓库库存，查看库存状态和低库存预警'
+      title={t('wms.inventory_page.breadcrumb_current')}
+      subtitle={t('wms.inventory_page.subtitle')}
       headerProps={{
         pageIcon: <Package style={{ width: 20, height: 20 }} />,
         pageGradient: `linear-gradient(135deg, ${ct.info.main}, ${ct.info.dark})`,
@@ -533,16 +547,16 @@ const InventoryPage: React.FC = () => {
         title=''
         subtitle=''
         breadcrumbs={[
-          { label: '首页', href: '/dashboard' },
-          { label: '仓储', href: WMS_PATHS.root },
-          { label: '库存管理' },
+          { label: t('wms.inventory_page.breadcrumb_home'), href: '/dashboard' },
+          { label: t('wms.inventory_page.breadcrumb_module'), href: WMS_PATHS.root },
+          { label: t('wms.inventory_page.breadcrumb_current') },
         ]}
         columns={columns}
         data={inventory}
         loading={loading}
         filters={filters}
         searchable
-        searchPlaceholder='搜索物料名称或编码...'
+        searchPlaceholder={t('wms.inventory_page.search_placeholder')}
         onSearch={handleSearch}
         searchValue={searchTerm}
         pagination={{
@@ -553,14 +567,14 @@ const InventoryPage: React.FC = () => {
         }}
         actions={[
           {
-            label: '新增库存',
+            label: t('wms.inventory_page.dialog_create_title'),
             icon: <Plus size={16} />,
             onClick: handleOpenCreate,
           },
         ]}
         rowActions={rowActions}
         headerContent={statsContent}
-        emptyMessage='暂无库存记录'
+        emptyMessage={t('wms.inventory_page.empty_message')}
         getRowId={(row) => row.id}
         mobileCardTitleKey='name'
         mobileCardSubtitleKey='sku'
@@ -571,23 +585,23 @@ const InventoryPage: React.FC = () => {
           'warehouse_name',
         ]}
         mobileCardFieldLabels={{
-          specification: '规格',
-          quantity: '数量',
-          available_quantity: '可用数量',
-          warehouse_name: '仓库',
+          specification: t('wms.inventory_page.detail_specification'),
+          quantity: t('wms.inventory_page.detail_quantity'),
+          available_quantity: t('wms.inventory_page.detail_available_quantity'),
+          warehouse_name: t('wms.inventory_page.detail_warehouse'),
         }}
         exportable
-        exportFileName='库存列表'
+        exportFileName={t('wms.inventory_page.export_filename')}
         persistFilters
         persistSearch
         emptyActionButton={{
-          label: '新增库存',
+          label: t('wms.inventory_page.dialog_create_title'),
           icon: <Plus size={16} />,
           onClick: handleOpenCreate,
         }}
         batchActions={[
           {
-            label: '批量删除',
+            label: t('wms.inventory_page.button_batch_delete'),
             icon: <Trash2 size={16} />,
             onClick: handleBatchDelete,
           },
@@ -612,7 +626,7 @@ const InventoryPage: React.FC = () => {
             }}
           >
             <TextField
-              label='物料编码 *'
+              label={t('wms.inventory_page.field_sku_required')}
               value={newItem.sku}
               onChange={(e) => setNewItem({ ...newItem, sku: e.target.value })}
               fullWidth
@@ -620,7 +634,7 @@ const InventoryPage: React.FC = () => {
               size='small'
             />
             <TextField
-              label='物料名称 *'
+              label={t('wms.inventory_page.field_name_required')}
               value={newItem.name}
               onChange={(e) => setNewItem({ ...newItem, name: e.target.value })}
               fullWidth
@@ -628,14 +642,14 @@ const InventoryPage: React.FC = () => {
               size='small'
             />
             <TextField
-              label='规格'
+              label={t('wms.inventory_page.detail_specification')}
               value={newItem.specification}
               onChange={(e) => setNewItem({ ...newItem, specification: e.target.value })}
               fullWidth
               size='small'
             />
             <TextField
-              label='单位 *'
+              label={t('wms.inventory_page.field_unit_required')}
               value={newItem.unit}
               onChange={(e) => setNewItem({ ...newItem, unit: e.target.value })}
               fullWidth
@@ -643,7 +657,7 @@ const InventoryPage: React.FC = () => {
               size='small'
             />
             <TextField
-              label='数量 *'
+              label={t('wms.inventory_page.field_quantity_required')}
               type='number'
               value={newItem.quantity}
               onChange={(e) =>
@@ -660,7 +674,7 @@ const InventoryPage: React.FC = () => {
               <InputLabel>仓库 *</InputLabel>
               <Select
                 value={newItem.warehouse_id}
-                label='仓库 *'
+                label={t('wms.inventory_page.field_warehouse_required')}
                 onChange={(e) => setNewItem({ ...newItem, warehouse_id: e.target.value })}
               >
                 {warehouses.map((w) => (
@@ -674,7 +688,7 @@ const InventoryPage: React.FC = () => {
               </Select>
             </FormControl>
             <TextField
-              label='最低库存'
+              label={t('wms.inventory_page.detail_min_quantity')}
               type='number'
               value={newItem.min_quantity}
               onChange={(e) =>
@@ -684,7 +698,7 @@ const InventoryPage: React.FC = () => {
               size='small'
             />
             <TextField
-              label='最高库存'
+              label={t('wms.inventory_page.detail_max_quantity')}
               type='number'
               value={newItem.max_quantity}
               onChange={(e) =>
@@ -730,35 +744,35 @@ const InventoryPage: React.FC = () => {
               }}
             >
               <TextField
-                label='物料编码'
+                label={t('wms.inventory_page.detail_sku')}
                 value={editItem.sku || ''}
                 onChange={(e) => setEditItem({ ...editItem, sku: e.target.value })}
                 fullWidth
                 size='small'
               />
               <TextField
-                label='物料名称'
+                label={t('wms.inventory_page.detail_name')}
                 value={editItem.name || ''}
                 onChange={(e) => setEditItem({ ...editItem, name: e.target.value })}
                 fullWidth
                 size='small'
               />
               <TextField
-                label='规格'
+                label={t('wms.inventory_page.detail_specification')}
                 value={editItem.specification || ''}
                 onChange={(e) => setEditItem({ ...editItem, specification: e.target.value })}
                 fullWidth
                 size='small'
               />
               <TextField
-                label='单位'
+                label={t('wms.inventory_page.detail_unit')}
                 value={editItem.unit || ''}
                 onChange={(e) => setEditItem({ ...editItem, unit: e.target.value })}
                 fullWidth
                 size='small'
               />
               <TextField
-                label='数量'
+                label={t('wms.inventory_page.detail_quantity')}
                 type='number'
                 value={editItem.quantity ?? ''}
                 onChange={(e) =>
@@ -774,7 +788,7 @@ const InventoryPage: React.FC = () => {
                 <InputLabel>状态</InputLabel>
                 <Select
                   value={editItem.status || ''}
-                  label='状态'
+                  label={t('wms.inventory_page.detail_status')}
                   onChange={(e) => setEditItem({ ...editItem, status: e.target.value })}
                 >
                   <MenuItem value='qualified'>合格</MenuItem>
@@ -783,7 +797,7 @@ const InventoryPage: React.FC = () => {
                 </Select>
               </FormControl>
               <TextField
-                label='最低库存'
+                label={t('wms.inventory_page.detail_min_quantity')}
                 type='number'
                 value={editItem.min_quantity ?? ''}
                 onChange={(e) =>
@@ -793,7 +807,7 @@ const InventoryPage: React.FC = () => {
                 size='small'
               />
               <TextField
-                label='最高库存'
+                label={t('wms.inventory_page.detail_max_quantity')}
                 type='number'
                 value={editItem.max_quantity ?? ''}
                 onChange={(e) =>
@@ -977,8 +991,8 @@ const InventoryPage: React.FC = () => {
         isOpen={showDeleteConfirm}
         onClose={() => setShowDeleteConfirm(false)}
         onConfirm={handleDelete}
-        title='确认删除'
-        message='确定要删除这条库存记录吗？此操作不可撤销。'
+        title={t('wms.inventory_page.dialog_delete_title')}
+        message={t('wms.inventory_page.dialog_delete_message')}
         danger
       />
 
@@ -1067,7 +1081,7 @@ const InventoryPage: React.FC = () => {
         isOpen={confirmBatchDeleteOpen}
         onClose={() => setConfirmBatchDeleteOpen(false)}
         onConfirm={handleBatchDeleteConfirm}
-        title='批量删除确认'
+        title={t('wms.inventory_page.dialog_batch_delete_title')}
         message={`确定要删除选中的 ${batchDeleteIds.length} 条库存记录吗？`}
         danger
       />

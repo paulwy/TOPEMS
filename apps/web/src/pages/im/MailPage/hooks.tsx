@@ -11,6 +11,7 @@ import {
 } from '@/api/mail';
 import { useNotificationStore } from '@/store';
 import { QUERY_KEYS } from '@/lib/reactQuery';
+import { useCrudMutations } from '@/hooks';
 import { validateEmailList, validateJson } from './utils';
 import { STATUS_MAP, PRIORITY_MAP, PREVIEW_SAMPLE_DATA } from './constants';
 import type { SendForm, TemplateForm, PreviewContent } from './types';
@@ -516,24 +517,42 @@ export function useMailPage() {
     setTimeout(() => setCopiedId(null), 2000);
   };
 
-  const createTemplateMutation = useMutation({
-    mutationFn: (data: Parameters<typeof templateApi.create>[0]) => templateApi.create(data),
-    onSuccess: (res) => {
-      if (res.success) {
-        addNotification({ title: '成功', message: '模板创建成功', type: 'success' });
-        setShowTemplateModal(false);
-        resetTemplateForm();
-        queryClient.invalidateQueries({ queryKey: QUERY_KEYS.MAIL.TEMPLATES_LIST });
-      } else {
-        addNotification({ title: '失败', message: res.message || '创建模板失败', type: 'error' });
+  const { createMutation: createTemplateMutation, updateMutation: updateTemplateMutation, deleteMutation: deleteTemplateMutation } = useCrudMutations<
+    Parameters<typeof templateApi.create>[0],
+    Parameters<typeof templateApi.update>[1],
+    string
+  >({
+    queryKeyToInvalidate: QUERY_KEYS.MAIL.TEMPLATES_LIST,
+    createFn: async (data) => {
+      const res = await templateApi.create(data);
+      if (!res.success) {
+        throw new Error(res.message || '创建模板失败');
       }
+      return res;
     },
-    onError: (err: unknown) => {
-      addNotification({
-        title: '失败',
-        message: (err as { message?: string }).message || '创建模板失败',
-        type: 'error',
-      });
+    updateFn: async ({ id, data }) => {
+      const res = await templateApi.update(String(id), data);
+      if (!res.success) {
+        throw new Error(res.message || '更新模板失败');
+      }
+      return res;
+    },
+    deleteFn: async (id) => {
+      const res = await templateApi.delete(String(id));
+      if (!res.success) {
+        throw new Error(res.message || '删除模板失败');
+      }
+      return res;
+    },
+    entityName: '模板',
+    onCreateSuccess: () => {
+      setShowTemplateModal(false);
+      resetTemplateForm();
+    },
+    onUpdateSuccess: () => {
+      setShowEditTemplateModal(false);
+      setSelectedTemplate(null);
+      resetTemplateForm();
     },
   });
 
@@ -555,29 +574,6 @@ export function useMailPage() {
     });
   };
 
-  const updateTemplateMutation = useMutation({
-    mutationFn: ({ id, data }: { id: string; data: Parameters<typeof templateApi.update>[1] }) =>
-      templateApi.update(id, data),
-    onSuccess: (res) => {
-      if (res.success) {
-        addNotification({ title: '成功', message: '模板更新成功', type: 'success' });
-        setShowEditTemplateModal(false);
-        setSelectedTemplate(null);
-        resetTemplateForm();
-        queryClient.invalidateQueries({ queryKey: QUERY_KEYS.MAIL.TEMPLATES_LIST });
-      } else {
-        addNotification({ title: '失败', message: res.message || '更新模板失败', type: 'error' });
-      }
-    },
-    onError: (err: unknown) => {
-      addNotification({
-        title: '失败',
-        message: (err as { message?: string }).message || '更新模板失败',
-        type: 'error',
-      });
-    },
-  });
-
   const handleUpdateTemplate = (e: React.FormEvent) => {
     e.preventDefault();
     if (!selectedTemplate) return;
@@ -598,25 +594,6 @@ export function useMailPage() {
       },
     });
   };
-
-  const deleteTemplateMutation = useMutation({
-    mutationFn: (id: string) => templateApi.delete(id),
-    onSuccess: (res) => {
-      if (res.success) {
-        addNotification({ title: '成功', message: '模板删除成功', type: 'success' });
-        queryClient.invalidateQueries({ queryKey: QUERY_KEYS.MAIL.TEMPLATES_LIST });
-      } else {
-        addNotification({ title: '失败', message: res.message || '删除失败', type: 'error' });
-      }
-    },
-    onError: (err: unknown) => {
-      addNotification({
-        title: '失败',
-        message: (err as { message?: string }).message || '删除失败',
-        type: 'error',
-      });
-    },
-  });
 
   const handleDeleteTemplate = () => {
     if (!deletingTemplateId) return;

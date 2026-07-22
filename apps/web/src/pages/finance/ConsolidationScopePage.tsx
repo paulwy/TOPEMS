@@ -60,6 +60,7 @@ import type {
 } from '@/types/consolidation';
 import { PageContainer } from '@/components/common';
 
+import { useTranslation } from 'react-i18next';
 const ct = designTokens.colors;
 
 // Helper to convert tailwind color class to sx
@@ -131,6 +132,7 @@ const CONTROL_TYPE_CONFIG = {
 };
 
 export default function ConsolidationScopePage() {
+  const { t } = useTranslation();
   const theme = useTheme();
   const { error: notifyError, success: notifySuccess } = useNotification();
 
@@ -194,13 +196,13 @@ export default function ConsolidationScopePage() {
 
   useEffect(() => {
     if (scopesError) {
-      notifyError('获取合并范围列表失败');
+      notifyError(t('finance.consolidation_scope_page.list'));
     }
   }, [scopesError, notifyError]);
 
   useEffect(() => {
     if (companiesError) {
-      notifyError('获取公司列表失败');
+      notifyError(t('finance.consolidation_scope_page.list_1'));
     }
   }, [companiesError, notifyError]);
 
@@ -238,7 +240,7 @@ export default function ConsolidationScopePage() {
       !scopeFormData.code.trim() ||
       !scopeFormData.name.trim()
     ) {
-      notifyError('请输入合并范围编码和名称');
+      notifyError(t('finance.consolidation_scope_page.please_input'));
       return;
     }
 
@@ -247,11 +249,11 @@ export default function ConsolidationScopePage() {
         scopeId: selectedScope.id,
         data: scopeFormData,
       });
-      notifySuccess('合并范围更新成功');
+      notifySuccess(t('finance.consolidation_scope_page.update'));
       setShowEditScopeModal(false);
     } else {
       await createScope.mutateAsync(scopeFormData);
-      notifySuccess('合并范围创建成功');
+      notifySuccess(t('finance.consolidation_scope_page.create'));
       setShowCreateScopeModal(false);
     }
   };
@@ -270,7 +272,7 @@ export default function ConsolidationScopePage() {
   // 添加公司
   const handleAddCompany = async () => {
     if (!companyFormData.company_id) {
-      notifyError('请选择公司');
+      notifyError(t('finance.consolidation_scope_page.please_select'));
       return;
     }
 
@@ -283,7 +285,7 @@ export default function ConsolidationScopePage() {
       ownership_percentage: companyFormData.ownership_percentage,
       consolidation_percentage: companyFormData.consolidation_percentage,
     });
-    notifySuccess('公司添加成功');
+    notifySuccess(t('finance.consolidation_scope_page.success'));
     setShowAddCompanyModal(false);
   };
 
@@ -296,25 +298,25 @@ export default function ConsolidationScopePage() {
 
     return [
       {
-        title: '总范围数',
+        title: t('finance.consolidation_scope_page.text_75028a'),
         value: totalCount,
         icon: <FolderOpen sx={{ width: 20, height: 20 }} />,
         color: 'primary' as const,
       },
       {
-        title: '启用数',
+        title: t('finance.consolidation_scope_page.active_1'),
         value: activeCount,
         icon: <PlayCircle sx={{ width: 20, height: 20 }} />,
         color: 'success' as const,
       },
       {
-        title: '公司总数',
+        title: t('finance.consolidation_scope_page.text_6e86b8'),
         value: totalCompanies,
         icon: <Users2 sx={{ width: 20, height: 20 }} />,
         color: 'info' as const,
       },
       {
-        title: '母公司数',
+        title: t('finance.consolidation_scope_page.text_5d26d3'),
         value: parentCount,
         icon: <Briefcase sx={{ width: 20, height: 20 }} />,
         color: 'secondary' as const,
@@ -329,7 +331,7 @@ export default function ConsolidationScopePage() {
 
   // 处理删除合并范围
   const handleDeleteScope = async (scopeId: string) => {
-    if (window.confirm('确定要删除此合并范围吗？')) {
+    if (window.confirm(t('finance.consolidation_scope_page.confirm'))) {
       deleteScope.mutate(scopeId);
     }
   };
@@ -338,7 +340,7 @@ export default function ConsolidationScopePage() {
   const scopeColumns: ColumnDef<ConsolidationScope>[] = [
     {
       id: 'code',
-      header: '合并范围编码',
+      header: t('finance.consolidation_scope_page.code'),
       accessorKey: 'code',
       cell: ({ row }) => (
         <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
@@ -349,13 +351,13 @@ export default function ConsolidationScopePage() {
     },
     {
       id: 'name',
-      header: '合并范围名称',
+      header: t('finance.consolidation_scope_page.name'),
       accessorKey: 'name',
       cell: ({ row }) => <div style={{ fontWeight: 500 }}>{row.getValue('name')}</div>,
     },
     {
       id: 'consolidation_method',
-      header: '合并方法',
+      header: t('finance.consolidation_scope_page.text_e15d05'),
       accessorKey: 'consolidation_method',
       cell: ({ row }) => {
         const method = row.getValue<string>('consolidation_method');
@@ -376,7 +378,7 @@ export default function ConsolidationScopePage() {
     },
     {
       id: 'description',
-      header: '说明',
+      header: t('finance.consolidation_scope_page.description'),
       accessorKey: 'description',
       cell: ({ row }) => (
         <span style={{ color: theme.palette.text.secondary, fontSize: 14 }}>
@@ -386,7 +388,7 @@ export default function ConsolidationScopePage() {
     },
     {
       id: 'status',
-      header: '状态',
+      header: t('finance.consolidation_scope_page.status'),
       accessorKey: 'status',
       cell: ({ row }) => {
         const status = row.getValue<string>('status');
@@ -413,7 +415,7 @@ export default function ConsolidationScopePage() {
     },
     {
       id: 'actions',
-      header: '操作',
+      header: t('finance.consolidation_scope_page.action'),
       cell: ({ row }) => (
         <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
           <Button
@@ -440,7 +442,7 @@ export default function ConsolidationScopePage() {
   const companyColumns: ColumnDef<ConsolidationCompany>[] = [
     {
       id: 'company_code',
-      header: '公司编码',
+      header: t('finance.consolidation_scope_page.code_1'),
       accessorKey: 'company_code',
       cell: ({ row }) => (
         <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
@@ -453,7 +455,7 @@ export default function ConsolidationScopePage() {
     },
     {
       id: 'company_name',
-      header: '公司名称',
+      header: t('finance.consolidation_scope_page.name_1'),
       accessorKey: 'company_name',
       cell: ({ row }) => (
         <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
@@ -462,7 +464,7 @@ export default function ConsolidationScopePage() {
             <Chip
               size='small'
               sx={{ backgroundColor: 'primary.100', color: 'primary.800' }}
-              label='母公司'
+              label={t('finance.consolidation_scope_page.text_0d1ada')}
             />
           )}
         </div>
@@ -470,7 +472,7 @@ export default function ConsolidationScopePage() {
     },
     {
       id: 'control_type',
-      header: '控制类型',
+      header: t('finance.consolidation_scope_page.type'),
       accessorKey: 'control_type',
       cell: ({ row }) => {
         const controlType = row.getValue<string>('control_type');
@@ -489,7 +491,7 @@ export default function ConsolidationScopePage() {
     },
     {
       id: 'ownership_percentage',
-      header: '持股比例',
+      header: t('finance.consolidation_scope_page.text_745ed7'),
       accessorKey: 'ownership_percentage',
       cell: ({ row }) => (
         <span style={{ fontFamily: 'monospace' }}>{row.getValue('ownership_percentage')}%</span>
@@ -497,7 +499,7 @@ export default function ConsolidationScopePage() {
     },
     {
       id: 'consolidation_percentage',
-      header: '合并比例',
+      header: t('finance.consolidation_scope_page.text_e40b32'),
       accessorKey: 'consolidation_percentage',
       cell: ({ row }) => (
         <span style={{ fontFamily: 'monospace' }}>{row.getValue('consolidation_percentage')}%</span>
@@ -505,7 +507,7 @@ export default function ConsolidationScopePage() {
     },
     {
       id: 'minority_interest',
-      header: '少数股东权益',
+      header: t('finance.consolidation_scope_page.text_4d013f'),
       accessorKey: 'minority_interest',
       cell: ({ row }) => (
         <span style={{ fontFamily: 'monospace', textAlign: 'right' }}>
@@ -519,7 +521,7 @@ export default function ConsolidationScopePage() {
     },
     {
       id: 'actions',
-      header: '操作',
+      header: t('finance.consolidation_scope_page.action'),
       cell: ({ row }) => (
         <Button
           variant='text'
@@ -535,13 +537,13 @@ export default function ConsolidationScopePage() {
 
   return (
     <PageContainer
-      title='合并范围管理'
-      subtitle='配置多公司合并报表的合并范围和抵消规则'
+      title={t('finance.consolidation_scope_page.text_1ef9d7')}
+      subtitle={t('finance.consolidation_scope_page.text_1dec08')}
       maxWidth='xl'
       headerProps={{
         actions: [
           {
-            label: '新建合并范围',
+            label: t('finance.consolidation_scope_page.text_425d69'),
             icon: <Plus sx={{ width: 16, height: 16 }} />,
             onClick: handleOpenCreateScopeModal,
             variant: 'contained',
@@ -566,7 +568,7 @@ export default function ConsolidationScopePage() {
                 }}
               />
               <TextField
-                placeholder='搜索合并范围名称或编码...'
+                placeholder={t('finance.consolidation_scope_page.search')}
                 value={searchKeyword}
                 onChange={(e) => setSearchKeyword(e.target.value)}
                 size='small'
@@ -668,7 +670,7 @@ export default function ConsolidationScopePage() {
                   variant='body2'
                   sx={{ color: 'text.secondary', mt: 1 }}
                 >
-                  {selectedScope.code} | {selectedScope.description || '无说明'}
+                  {selectedScope.code} | {selectedScope.description || t('finance.consolidation_scope_page.description_1')}
                 </Typography>
               </CardHeader>
               <CardContent>
@@ -683,11 +685,11 @@ export default function ConsolidationScopePage() {
                   />
                   <Tab
                     value='rules'
-                    label='抵消规则'
+                    label={t('finance.consolidation_scope_page.text_6d836a')}
                   />
                   <Tab
                     value='transactions'
-                    label='内部交易'
+                    label={t('finance.consolidation_scope_page.text_efd827')}
                   />
                 </Tabs>
 
@@ -812,29 +814,29 @@ export default function ConsolidationScopePage() {
         maxWidth='sm'
         fullWidth
       >
-        <DialogTitle>{showEditScopeModal ? '编辑合并范围' : '新建合并范围'}</DialogTitle>
+        <DialogTitle>{showEditScopeModal ? t('finance.consolidation_scope_page.edit') : t('finance.consolidation_scope_page.text_425d69')}</DialogTitle>
         <DialogContent>
           <Box sx={{ pt: 1, display: 'flex', flexDirection: 'column', gap: 2 }}>
             <TextField
               fullWidth
-              label='合并范围编码 *'
+              label={t('finance.consolidation_scope_page.code_2')}
               value={scopeFormData.code}
               onChange={(e) => setScopeFormData({ ...scopeFormData, code: e.target.value })}
-              placeholder='请输入合并范围编码'
+              placeholder={t('finance.consolidation_scope_page.please_input_1')}
               disabled={showEditScopeModal}
             />
             <TextField
               fullWidth
-              label='合并范围名称 *'
+              label={t('finance.consolidation_scope_page.name_2')}
               value={scopeFormData.name}
               onChange={(e) => setScopeFormData({ ...scopeFormData, name: e.target.value })}
-              placeholder='请输入合并范围名称'
+              placeholder={t('finance.consolidation_scope_page.please_input_2')}
             />
             <FormControl fullWidth>
               <InputLabel>合并方法</InputLabel>
               <Select
                 value={scopeFormData.consolidation_method}
-                label='合并方法'
+                label={t('finance.consolidation_scope_page.text_e15d05')}
                 onChange={(e) =>
                   setScopeFormData({ ...scopeFormData, consolidation_method: e.target.value })
                 }
@@ -848,7 +850,7 @@ export default function ConsolidationScopePage() {
               <InputLabel>状态</InputLabel>
               <Select
                 value={scopeFormData.status}
-                label='状态'
+                label={t('finance.consolidation_scope_page.status')}
                 onChange={(e) => setScopeFormData({ ...scopeFormData, status: e.target.value })}
               >
                 <MenuItem value='active'>启用</MenuItem>
@@ -858,10 +860,10 @@ export default function ConsolidationScopePage() {
             </FormControl>
             <TextField
               fullWidth
-              label='说明'
+              label={t('finance.consolidation_scope_page.description')}
               value={scopeFormData.description}
               onChange={(e) => setScopeFormData({ ...scopeFormData, description: e.target.value })}
-              placeholder='请输入说明'
+              placeholder={t('finance.consolidation_scope_page.please_input_3')}
               multiline
               rows={3}
             />
@@ -882,7 +884,7 @@ export default function ConsolidationScopePage() {
             onClick={handleSaveScope}
             disabled={createScope.isPending || updateScope.isPending}
           >
-            {createScope.isPending || updateScope.isPending ? '保存中...' : '保存'}
+            {createScope.isPending || updateScope.isPending ? t('finance.consolidation_scope_page.save') : t('finance.consolidation_scope_page.save_1')}
           </Button>
         </DialogActions>
       </Dialog>
@@ -901,7 +903,7 @@ export default function ConsolidationScopePage() {
               <InputLabel>选择公司 *</InputLabel>
               <Select
                 value={companyFormData.company_id}
-                label='选择公司'
+                label={t('finance.consolidation_scope_page.text_b868e7')}
                 onChange={(e) =>
                   setCompanyFormData({ ...companyFormData, company_id: e.target.value })
                 }
@@ -917,7 +919,7 @@ export default function ConsolidationScopePage() {
               <InputLabel>控制类型</InputLabel>
               <Select
                 value={companyFormData.control_type}
-                label='控制类型'
+                label={t('finance.consolidation_scope_page.type')}
                 onChange={(e) =>
                   setCompanyFormData({
                     ...companyFormData,
@@ -932,7 +934,7 @@ export default function ConsolidationScopePage() {
             </FormControl>
             <TextField
               fullWidth
-              label='持股比例 (%)'
+              label={t('finance.consolidation_scope_page.text_6563f0')}
               type='number'
               value={companyFormData.ownership_percentage}
               onChange={(e) =>
@@ -941,11 +943,11 @@ export default function ConsolidationScopePage() {
                   ownership_percentage: Number(e.target.value),
                 })
               }
-              placeholder='请输入持股比例'
+              placeholder={t('finance.consolidation_scope_page.please_input_4')}
             />
             <TextField
               fullWidth
-              label='合并比例 (%)'
+              label={t('finance.consolidation_scope_page.text_5c6273')}
               type='number'
               value={companyFormData.consolidation_percentage}
               onChange={(e) =>
@@ -954,7 +956,7 @@ export default function ConsolidationScopePage() {
                   consolidation_percentage: Number(e.target.value),
                 })
               }
-              placeholder='请输入合并比例'
+              placeholder={t('finance.consolidation_scope_page.please_input_5')}
             />
           </Box>
         </DialogContent>
@@ -970,7 +972,7 @@ export default function ConsolidationScopePage() {
             onClick={handleAddCompany}
             disabled={addCompany.isPending}
           >
-            {addCompany.isPending ? '添加中...' : '添加'}
+            {addCompany.isPending ? t('finance.consolidation_scope_page.text_745316') : t('finance.consolidation_scope_page.text_b58c75')}
           </Button>
         </DialogActions>
       </Dialog>
@@ -995,14 +997,14 @@ export default function ConsolidationScopePage() {
             <Box sx={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 2 }}>
               <TextField
                 fullWidth
-                label='规则名称 *'
-                placeholder='请输入规则名称'
+                label={t('finance.consolidation_scope_page.name_3')}
+                placeholder={t('finance.consolidation_scope_page.please_input_6')}
               />
               <FormControl fullWidth>
                 <InputLabel>规则类型</InputLabel>
                 <Select
                   value=''
-                  label='规则类型'
+                  label={t('finance.consolidation_scope_page.type_1')}
                 >
                   <MenuItem value=''>请选择类型</MenuItem>
                   <MenuItem value='intercompany'>内部交易抵消</MenuItem>
@@ -1013,19 +1015,19 @@ export default function ConsolidationScopePage() {
               </FormControl>
               <TextField
                 fullWidth
-                label='借方科目'
-                placeholder='请输入借方科目编码'
+                label={t('finance.consolidation_scope_page.text_0251e1')}
+                placeholder={t('finance.consolidation_scope_page.please_input_7')}
               />
               <TextField
                 fullWidth
-                label='贷方科目'
-                placeholder='请输入贷方科目编码'
+                label={t('finance.consolidation_scope_page.text_765fea')}
+                placeholder={t('finance.consolidation_scope_page.please_input_8')}
               />
               <FormControl fullWidth>
                 <InputLabel>计算方式</InputLabel>
                 <Select
                   value=''
-                  label='计算方式'
+                  label={t('finance.consolidation_scope_page.text_cbc6f6')}
                 >
                   <MenuItem value=''>请选择计算方式</MenuItem>
                   <MenuItem value='full'>全额抵消</MenuItem>
@@ -1035,15 +1037,15 @@ export default function ConsolidationScopePage() {
               </FormControl>
               <TextField
                 fullWidth
-                label='优先级'
+                label={t('finance.consolidation_scope_page.text_ee8ecb')}
                 type='number'
-                placeholder='数字越小优先级越高'
+                placeholder={t('finance.consolidation_scope_page.text_3446e5')}
               />
             </Box>
             <TextField
               fullWidth
-              label='规则说明'
-              placeholder='请输入规则说明'
+              label={t('finance.consolidation_scope_page.description_2')}
+              placeholder={t('finance.consolidation_scope_page.please_input_9')}
               multiline
               rows={3}
               sx={{ mt: 2 }}

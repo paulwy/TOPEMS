@@ -11,6 +11,7 @@ import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { QUERY_KEYS } from '@/lib/reactQuery';
 import { useNotificationStore } from '@/store';
 
+import { useTranslation } from 'react-i18next';
 const transferSchema = z.object({
   asset_id: z.string().min(1, '请选择资产'),
   asset_name: z.string().optional(),
@@ -47,6 +48,7 @@ const ASSETS = [
 ];
 
 const TransferPage: React.FC = () => {
+  const { t } = useTranslation();
   const navigate = useNavigate();
   const queryClient = useQueryClient();
   const { addNotification } = useNotificationStore();
@@ -59,8 +61,8 @@ const TransferPage: React.FC = () => {
     onSuccess: () => {
       addNotification({
         type: 'success',
-        title: '调拨成功',
-        message: '资产调拨申请已提交',
+        title: t('asset.transfer_page.success'),
+        message: t('asset.transfer_page.submit'),
       });
       queryClient.invalidateQueries({ queryKey: [QUERY_KEYS.ERP.ASSETS] });
       navigate(ASSET_PATHS.list);
@@ -69,8 +71,8 @@ const TransferPage: React.FC = () => {
       logger.error('Failed to create transfer:', error);
       addNotification({
         type: 'error',
-        title: '调拨失败',
-        message: '无法提交调拨申请',
+        title: t('asset.transfer_page.fail'),
+        message: t('asset.transfer_page.submit_1'),
       });
     },
   });
@@ -94,103 +96,103 @@ const TransferPage: React.FC = () => {
   const sections: FormSection[] = [
     {
       id: 'asset',
-      title: '资产信息',
-      description: '选择需要调拨的资产',
+      title: t('asset.transfer_page.info'),
+      description: t('asset.transfer_page.transfer'),
       icon: <Building2 style={{ width: 18, height: 18 }} />,
       collapsible: false,
       color: 'primary',
       fields: [
         {
           name: 'asset_id',
-          label: '资产编号',
+          label: t('asset.transfer_page.text_1b6830'),
           type: 'select',
           options: ASSETS.map((asset) => ({
             label: asset.label,
             value: asset.value,
           })),
           required: true,
-          placeholder: '请选择资产',
+          placeholder: t('asset.transfer_page.please_select'),
         },
       ],
     },
     {
       id: 'department',
-      title: '部门信息',
-      description: '选择调出和调入部门',
+      title: t('asset.transfer_page.info_1'),
+      description: t('asset.transfer_page.text_035d60'),
       icon: <MapPin style={{ width: 18, height: 18 }} />,
       collapsible: false,
       color: 'secondary',
       fields: [
         {
           name: 'from_department',
-          label: '调出部门',
+          label: t('asset.transfer_page.text_ca25ca'),
           type: 'select',
           options: DEPARTMENTS.map((dept) => ({
             label: dept.label,
             value: dept.value,
           })),
           required: true,
-          placeholder: '请选择调出部门',
+          placeholder: t('asset.transfer_page.please_select_1'),
         },
         {
           name: 'to_department',
-          label: '调入部门',
+          label: t('asset.transfer_page.text_d619c4'),
           type: 'select',
           options: DEPARTMENTS.map((dept) => ({
             label: dept.label,
             value: dept.value,
           })),
           required: true,
-          placeholder: '请选择调入部门',
+          placeholder: t('asset.transfer_page.please_select_2'),
         },
         {
           name: 'from_location',
-          label: '调出位置',
+          label: t('asset.transfer_page.text_8d9da7'),
           type: 'text',
-          placeholder: '请输入调出位置',
+          placeholder: t('asset.transfer_page.please_input'),
         },
         {
           name: 'to_location',
-          label: '调入位置',
+          label: t('asset.transfer_page.text_0cc4cd'),
           type: 'text',
-          placeholder: '请输入调入位置',
+          placeholder: t('asset.transfer_page.please_input_1'),
         },
       ],
     },
     {
       id: 'transfer',
-      title: '调拨信息',
-      description: '填写调拨日期、责任人及原因',
+      title: t('asset.transfer_page.info_2'),
+      description: t('asset.transfer_page.responsible_person'),
       icon: <Calendar style={{ width: 18, height: 18 }} />,
       collapsible: false,
       color: 'info',
       fields: [
         {
           name: 'transfer_date',
-          label: '调拨日期',
+          label: t('asset.transfer_page.date'),
           type: 'date',
           required: true,
         },
         {
           name: 'responsible_person',
-          label: '责任人',
+          label: t('asset.transfer_page.responsible_person_1'),
           type: 'text',
-          placeholder: '请输入责任人姓名',
+          placeholder: t('asset.transfer_page.please_input_2'),
         },
         {
           name: 'reason',
-          label: '调拨原因',
+          label: t('asset.transfer_page.transfer_1'),
           type: 'textarea',
           rows: 3,
           required: true,
-          placeholder: '请填写调拨原因...',
+          placeholder: t('asset.transfer_page.please_fill_1'),
         },
         {
           name: 'description',
-          label: '备注',
+          label: t('asset.transfer_page.remark'),
           type: 'textarea',
           rows: 2,
-          placeholder: '请填写备注信息...',
+          placeholder: t('asset.transfer_page.please_fill_2'),
         },
       ],
     },
@@ -198,8 +200,8 @@ const TransferPage: React.FC = () => {
 
   return (
     <PageContainer
-      title='资产调拨'
-      subtitle='提交资产调拨申请'
+      title={t('asset.transfer_page.transfer_2')}
+      subtitle={t('asset.transfer_page.submit_2')}
       autoTitle
       autoBreadcrumbs
     >
@@ -207,18 +209,18 @@ const TransferPage: React.FC = () => {
         title=''
         subtitle=''
         breadcrumbs={[
-          { label: '首页', href: '/dashboard' },
-          { label: '资产管理', href: ASSET_PATHS.root },
-          { label: '资产列表', href: ASSET_PATHS.list },
-          { label: '资产调拨' },
+          { label: t('asset.transfer_page.home'), href: '/dashboard' },
+          { label: t('asset.transfer_page.text_b1a8be'), href: ASSET_PATHS.root },
+          { label: t('asset.transfer_page.list'), href: ASSET_PATHS.list },
+          { label: t('asset.transfer_page.transfer_2') },
         ]}
         sections={sections}
         schema={transferSchema}
         submitting={createMutation.isPending}
         onSubmit={handleSubmit}
         onCancel={handleCancel}
-        submitText='提交调拨申请'
-        cancelText='取消'
+        submitText={t('asset.transfer_page.submit_3')}
+        cancelText={t('asset.transfer_page.cancel')}
         columns={2}
         stickyFooter={true}
         showProgress={true}

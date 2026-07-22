@@ -1,0 +1,51 @@
+{
+  "title": "文档管理",
+  "menu": {
+    "document": "文档",
+    "directory": "目录",
+    "version": "版本",
+    "approval": "审批",
+    "permission": "权限",
+    "template": "模板"
+  },
+  "status": {
+    "draft": "草稿",
+    "in_review": "审核中",
+    "published": "已发布",
+    "archived": "已归档",
+    "rejected": "已驳回",
+    "deprecated": "已废弃"
+  },
+  "action": {
+    "create": "创建",
+    "edit": "编辑",
+    "delete": "删除",
+    "view": "查看",
+    "upload": "上传",
+    "download": "下载",
+    "approve": "审批",
+    "reject": "驳回",
+    "share": "分享"
+  },
+  "field": {
+    "document_name": "文档名称",
+    "document_type": "文档类型",
+    "directory": "目录",
+    "version": "版本",
+    "author": "作者",
+    "owner": "负责人",
+    "tags": "标签",
+    "size": "大小",
+    "created_at": "创建时间",
+    "updated_at": "更新时间"
+  },
+  "message": {
+    "create_success": "创建成功",
+    "update_success": "更新成功",
+    "delete_success": "删除成功",
+    "upload_success": "上传成功",
+    "approve_success": "审批成功",
+    "confirm_delete": "确认删除？",
+    "no_data": "暂无数据"
+  }
+}

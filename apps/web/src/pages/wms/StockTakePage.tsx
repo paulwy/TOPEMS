@@ -35,25 +35,28 @@ import { Plus, Edit, Trash2, Play, CheckCircle2, Eye, Package } from 'lucide-rea
 import { apiLogger } from '@/utils/logger';
 import { PageContainer, StatusBadge } from '@/components/common';
 
-const statusConfig: Record<
-  string,
-  { label: string; color: 'default' | 'success' | 'warning' | 'error' }
-> = {
-  planned: { label: '计划中', color: 'warning' },
-  in_progress: { label: '进行中', color: 'default' },
-  completed: { label: '已完成', color: 'success' },
-};
+import { useTranslation } from 'react-i18next';
 
-const discrepancyTypeConfig: Record<
-  string,
-  { label: string; color: 'default' | 'success' | 'error' }
-> = {
-  over: { label: '盘盈', color: 'success' },
-  under: { label: '盘亏', color: 'error' },
-  none: { label: '无差异', color: 'default' },
-};
 
 const StockTakePage: React.FC = () => {
+  const { t } = useTranslation();
+  const statusConfig: Record<
+    string,
+    { label: string; color: 'default' | 'success' | 'warning' | 'error' }
+  > = {
+    planned: { label: t('wms.stocktake_page.plan'), color: 'warning' },
+    in_progress: { label: t('wms.stocktake_page.in_progress'), color: 'default' },
+    completed: { label: t('wms.stocktake_page.status_completed'), color: 'success' },
+  };
+  const discrepancyTypeConfig: Record<
+    string,
+    { label: string; color: 'default' | 'success' | 'error' }
+  > = {
+    over: { label: t('wms.stocktake_page.text_fc2783'), color: 'success' },
+    under: { label: t('wms.stocktake_page.text_ee0513'), color: 'error' },
+    none: { label: t('wms.stocktake_page.difference'), color: 'default' },
+  };
+
   const { addNotification } = useNotificationStore();
   const queryClient = useQueryClient();
 
@@ -92,7 +95,7 @@ const StockTakePage: React.FC = () => {
 
   useEffect(() => {
     if (warehousesQuery.isError && warehousesQuery.error) {
-      apiLogger.error('获取仓库列表失败:', warehousesQuery.error);
+      apiLogger.error(t('wms.stocktake_page.list'), warehousesQuery.error);
     }
   }, [warehousesQuery.isError, warehousesQuery.error]);
 
@@ -120,11 +123,11 @@ const StockTakePage: React.FC = () => {
 
   useEffect(() => {
     if (stockTakesQuery.isError && stockTakesQuery.error) {
-      apiLogger.error('获取盘点单失败:', stockTakesQuery.error);
+      apiLogger.error(t('wms.stocktake_page.fail'), stockTakesQuery.error);
       addNotification({
         type: 'error',
-        title: '加载失败',
-        message: '无法加载盘点单',
+        title: t('wms.stocktake_page.fail_1'),
+        message: t('wms.stocktake_page.stocktake'),
       });
     }
   }, [stockTakesQuery.isError, stockTakesQuery.error, addNotification]);
@@ -134,17 +137,17 @@ const StockTakePage: React.FC = () => {
     onSuccess: () => {
       addNotification({
         type: 'success',
-        title: '创建成功',
-        message: '盘点单创建成功',
+        title: t('wms.stocktake_page.create'),
+        message: t('wms.stocktake_page.create_1'),
       });
       queryClient.invalidateQueries({ queryKey: ['wms-stock-takes'] });
     },
     onError: (error: unknown) => {
-      apiLogger.error('创建盘点单失败:', error);
+      apiLogger.error(t('wms.stocktake_page.create_2'), error);
       addNotification({
         type: 'error',
-        title: '创建失败',
-        message: '创建盘点单失败',
+        title: t('wms.stocktake_page.create_3'),
+        message: t('wms.stocktake_page.create_4'),
       });
     },
   });
@@ -154,17 +157,17 @@ const StockTakePage: React.FC = () => {
     onSuccess: () => {
       addNotification({
         type: 'success',
-        title: '删除成功',
-        message: '盘点单删除成功',
+        title: t('wms.stocktake_page.delete_success'),
+        message: t('wms.stocktake_page.delete_success_1'),
       });
       queryClient.invalidateQueries({ queryKey: ['wms-stock-takes'] });
     },
     onError: (error: unknown) => {
-      apiLogger.error('删除盘点单失败:', error);
+      apiLogger.error(t('wms.stocktake_page.delete'), error);
       addNotification({
         type: 'error',
-        title: '删除失败',
-        message: '删除盘点单失败',
+        title: t('wms.stocktake_page.delete_1'),
+        message: t('wms.stocktake_page.delete_2'),
       });
     },
   });
@@ -174,17 +177,17 @@ const StockTakePage: React.FC = () => {
     onSuccess: () => {
       addNotification({
         type: 'success',
-        title: '操作成功',
-        message: '盘点单已开始',
+        title: t('wms.stocktake_page.operation_success'),
+        message: t('wms.stocktake_page.stocktake_1'),
       });
       queryClient.invalidateQueries({ queryKey: ['wms-stock-takes'] });
     },
     onError: (error: unknown) => {
-      apiLogger.error('开始盘点失败:', error);
+      apiLogger.error(t('wms.stocktake_page.fail_2'), error);
       addNotification({
         type: 'error',
-        title: '操作失败',
-        message: '开始盘点失败',
+        title: t('wms.stocktake_page.operation_failed'),
+        message: t('wms.stocktake_page.fail_3'),
       });
     },
   });
@@ -194,17 +197,17 @@ const StockTakePage: React.FC = () => {
     onSuccess: () => {
       addNotification({
         type: 'success',
-        title: '操作成功',
-        message: '盘点单已完成',
+        title: t('wms.stocktake_page.operation_success'),
+        message: t('wms.stocktake_page.completed'),
       });
       queryClient.invalidateQueries({ queryKey: ['wms-stock-takes'] });
     },
     onError: (error: unknown) => {
-      apiLogger.error('完成盘点失败:', error);
+      apiLogger.error(t('wms.stocktake_page.fail_4'), error);
       addNotification({
         type: 'error',
-        title: '操作失败',
-        message: '完成盘点失败',
+        title: t('wms.stocktake_page.operation_failed'),
+        message: t('wms.stocktake_page.fail_5'),
       });
     },
   });
@@ -214,17 +217,17 @@ const StockTakePage: React.FC = () => {
     onSuccess: () => {
       addNotification({
         type: 'success',
-        title: '操作成功',
-        message: '库存已调整',
+        title: t('wms.stocktake_page.operation_success'),
+        message: t('wms.stocktake_page.text_cd78ac'),
       });
       queryClient.invalidateQueries({ queryKey: ['wms-stock-takes'] });
     },
     onError: (error: unknown) => {
-      apiLogger.error('调整库存失败:', error);
+      apiLogger.error(t('wms.stocktake_page.fail_6'), error);
       addNotification({
         type: 'error',
-        title: '操作失败',
-        message: '调整库存失败',
+        title: t('wms.stocktake_page.operation_failed'),
+        message: t('wms.stocktake_page.fail_7'),
       });
     },
   });
@@ -235,8 +238,8 @@ const StockTakePage: React.FC = () => {
     onSuccess: async (_, { id }) => {
       addNotification({
         type: 'success',
-        title: '操作成功',
-        message: '盘点数量已更新',
+        title: t('wms.stocktake_page.operation_success'),
+        message: t('wms.stocktake_page.update'),
       });
       const detailResponse = await wmsApi.stockTakes.listItems(id);
       if (detailResponse.success && detailResponse.data) {
@@ -244,11 +247,11 @@ const StockTakePage: React.FC = () => {
       }
     },
     onError: (error: unknown) => {
-      apiLogger.error('更新盘点数量失败:', error);
+      apiLogger.error(t('wms.stocktake_page.update_1'), error);
       addNotification({
         type: 'error',
-        title: '操作失败',
-        message: '更新盘点数量失败',
+        title: t('wms.stocktake_page.operation_failed'),
+        message: t('wms.stocktake_page.update_2'),
       });
     },
   });
@@ -257,8 +260,8 @@ const StockTakePage: React.FC = () => {
     if (!newStockTake.stock_take_number || !newStockTake.warehouse_id) {
       addNotification({
         type: 'warning',
-        title: '验证错误',
-        message: '请填写完整信息（盘点单号、仓库）',
+        title: t('wms.stocktake_page.error'),
+        message: t('wms.stocktake_page.please_fill'),
       });
       return;
     }
@@ -270,7 +273,7 @@ const StockTakePage: React.FC = () => {
 
   const handleDeleteStockTake = useCallback(
     async (id: string) => {
-      if (!window.confirm('确定要删除这个盘点单吗？')) {
+      if (!window.confirm(t('wms.stocktake_page.confirm'))) {
         return;
       }
       await deleteStockTakeMutation.mutateAsync(id);
@@ -294,11 +297,11 @@ const StockTakePage: React.FC = () => {
           setStockTakeItems(response.data.items || []);
         }
       } catch (error: unknown) {
-        apiLogger.error('获取盘点明细失败:', error);
+        apiLogger.error(t('wms.stocktake_page.fail_8'), error);
         addNotification({
           type: 'error',
-          title: '加载失败',
-          message: '获取盘点明细失败',
+          title: t('wms.stocktake_page.fail_1'),
+          message: t('wms.stocktake_page.fail_9'),
         });
       }
       setShowDetailDialog(true);
@@ -374,23 +377,23 @@ const StockTakePage: React.FC = () => {
 
   const columns: ColumnDef<StockTake>[] = useMemo(
     () => [
-      { id: 'stock_take_number', label: '盘点单号', sortable: true },
+      { id: 'stock_take_number', label: t('wms.stocktake_page.column_stocktake_number'), sortable: true },
       {
         id: 'warehouse_id',
-        label: '仓库',
+        label: t('wms.stocktake_page.filter_warehouse'),
         render: (row) => getWarehouseName(row.warehouse_id),
       },
       {
         id: 'status',
-        label: '状态',
+        label: t('wms.stocktake_page.filter_status'),
         render: (row) => getStatusBadge(row.status),
       },
       {
         id: 'accuracy_rate',
-        label: '准确率',
+        label: t('wms.stocktake_page.text_3c7d9e'),
         render: (row) => (row.accuracy_rate ? `${row.accuracy_rate.toFixed(1)}%` : '-'),
       },
-      { id: 'created_at', label: '创建时间' },
+      { id: 'created_at', label: t('wms.stocktake_page.created_at') },
     ],
     [getWarehouseName]
   );
@@ -399,13 +402,13 @@ const StockTakePage: React.FC = () => {
     () => [
       {
         id: 'status',
-        label: '状态',
+        label: t('wms.stocktake_page.filter_status'),
         type: 'select',
         options: [
-          { label: '全部状态', value: '' },
-          { label: '计划中', value: 'planned' },
-          { label: '进行中', value: 'in_progress' },
-          { label: '已完成', value: 'completed' },
+          { label: t('wms.stocktake_page.filter_option_all_status'), value: '' },
+          { label: t('wms.stocktake_page.plan'), value: 'planned' },
+          { label: t('wms.stocktake_page.in_progress'), value: 'in_progress' },
+          { label: t('wms.stocktake_page.status_completed'), value: 'completed' },
         ],
         value: statusFilter,
         onChange: (value) => {
@@ -420,23 +423,23 @@ const StockTakePage: React.FC = () => {
   const rowActions: RowAction<StockTake>[] = useMemo(
     () => [
       {
-        label: '查看详情',
+        label: t('wms.stocktake_page.action_view_detail'),
         icon: <Eye size={16} />,
         onClick: handleViewDetail,
       },
       {
-        label: '开始',
+        label: t('wms.stocktake_page.text_a3e3b8'),
         icon: <Play size={16} />,
         onClick: (row) => handleStartStockTake(row.id),
         visible: (row: StockTake) => row.status === 'planned',
       },
       {
-        label: '删除',
+        label: t('wms.stocktake_page.action_delete'),
         icon: <Trash2 size={16} />,
         color: 'error',
         onClick: (row) => handleDeleteStockTake(row.id),
         confirm: true,
-        confirmMessage: '确定要删除这个盘点单吗？',
+        confirmMessage: t('wms.stocktake_page.confirm'),
         visible: (row: StockTake) => row.status === 'planned',
       },
     ],
@@ -455,23 +458,23 @@ const StockTakePage: React.FC = () => {
 
   return (
     <PageContainer
-      title='盘点管理'
-      subtitle='管理库存盘点，记录盘点结果并进行库存调整'
+      title={t('wms.stocktake_page.breadcrumb_current')}
+      subtitle={t('wms.stocktake_page.stocktake_2')}
     >
       <ListPageTemplate
         title=''
         subtitle=''
         breadcrumbs={[
-          { label: '首页', href: '/dashboard' },
-          { label: '仓储', href: WMS_PATHS.root },
-          { label: '盘点管理' },
+          { label: t('wms.stocktake_page.breadcrumb_home'), href: '/dashboard' },
+          { label: t('wms.stocktake_page.breadcrumb_module'), href: WMS_PATHS.root },
+          { label: t('wms.stocktake_page.breadcrumb_current') },
         ]}
         columns={columns}
         data={stockTakes}
         loading={loading}
         filters={filters}
         searchable
-        searchPlaceholder='搜索盘点单号...'
+        searchPlaceholder={t('wms.stocktake_page.search_placeholder')}
         onSearch={handleSearch}
         searchValue={searchTerm}
         pagination={{
@@ -482,13 +485,13 @@ const StockTakePage: React.FC = () => {
         }}
         actions={[
           {
-            label: '创建盘点单',
+            label: t('wms.stocktake_page.create_5'),
             icon: <Plus size={16} />,
             onClick: handleOpenCreate,
           },
         ]}
         rowActions={rowActions}
-        emptyMessage='暂无盘点单'
+        emptyMessage={t('wms.stocktake_page.no_data')}
         getRowId={(row) => row.id}
       />
 
@@ -509,14 +512,14 @@ const StockTakePage: React.FC = () => {
             }}
           >
             <TextField
-              label='盘点单号 *'
+              label={t('wms.stocktake_page.field_stocktake_number_required')}
               value={newStockTake.stock_take_number}
               onChange={(e) =>
                 setNewStockTake({ ...newStockTake, stock_take_number: e.target.value })
               }
               fullWidth
               size='small'
-              placeholder='输入盘点单号'
+              placeholder={t('wms.stocktake_page.stocktake_3')}
             />
             <FormControl
               fullWidth
@@ -525,7 +528,7 @@ const StockTakePage: React.FC = () => {
               <InputLabel>仓库 *</InputLabel>
               <Select
                 value={newStockTake.warehouse_id}
-                label='仓库 *'
+                label={t('wms.stocktake_page.warehouse')}
                 onChange={(e) => setNewStockTake({ ...newStockTake, warehouse_id: e.target.value })}
               >
                 {warehouses.map((w) => (
@@ -539,14 +542,14 @@ const StockTakePage: React.FC = () => {
               </Select>
             </FormControl>
             <TextField
-              label='备注'
+              label={t('wms.stocktake_page.field_remark')}
               multiline
               rows={3}
               value={newStockTake.remarks || ''}
               onChange={(e) => setNewStockTake({ ...newStockTake, remarks: e.target.value })}
               fullWidth
               size='small'
-              placeholder='输入备注信息'
+              placeholder={t('wms.stocktake_page.remark')}
             />
           </Box>
         </DialogContent>
@@ -824,7 +827,7 @@ const StockTakePage: React.FC = () => {
                 )}
                 {selectedStockTake.status === 'completed' && selectedStockTake.stock_adjusted && (
                   <Chip
-                    label='库存已调整'
+                    label={t('wms.stocktake_page.text_cd78ac')}
                     color='success'
                   />
                 )}
@@ -924,7 +927,7 @@ const StockTakePage: React.FC = () => {
                       [item.id]: parseFloat(e.target.value) || 0,
                     })
                   }
-                  placeholder='输入盘点数量'
+                  placeholder={t('wms.stocktake_page.quantity')}
                 />
                 <FormControl size='small'>
                   <Select

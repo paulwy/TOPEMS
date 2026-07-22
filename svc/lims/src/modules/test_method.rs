@@ -33,6 +33,10 @@ pub fn create_routes() -> Router<AppState> {
         )
 }
 
+fn test_method_cache_key(id: &str) -> String {
+    format!("test_method:{}", id)
+}
+
 #[derive(Debug, Deserialize)]
 pub struct TestMethodQuery {
     pub page: Option<i64>,
@@ -43,7 +47,7 @@ pub struct TestMethodQuery {
     pub method_code: Option<String>,
 }
 
-#[derive(Debug, Serialize)]
+#[derive(Debug, Clone, Serialize)]
 pub struct TestMethod {
     pub id: String,
     pub tenant_id: String,
@@ -458,6 +462,12 @@ pub async fn get_method(
         Err(_) => return Json(ApiResponse::error(400, "无效的方法ID")),
     };
 
+    let cache_key = test_method_cache_key(&id.to_string());
+
+    if let Some(cached) = state.test_method_cache.get(&cache_key) {
+        return Json(ApiResponse::success(cached, "从内存缓存获取检测方法成功"));
+    }
+
     let row = sqlx::query(
         r#"
         SELECT m.id, m.method_code, m.method_name, m.category_id, c.category_name,
@@ -475,8 +485,8 @@ pub async fn get_method(
     .await;
 
     match row {
-        Ok(r) => Json(ApiResponse::success(
-            TestMethod {
+        Ok(r) => {
+            let method = TestMethod {
                 id: r.get("id"),
                 tenant_id: r.get("tenant_id"),
                 method_code: r.get("method_code"),
@@ -500,9 +510,10 @@ pub async fn get_method(
                 created_by: r.get("created_by"),
                 created_at: r.get("created_at"),
                 updated_at: r.get("updated_at"),
-            },
-            "获取检测方法成功",
-        )),
+            };
+            state.test_method_cache.set(cache_key, method.clone());
+            Json(ApiResponse::success(method, "获取检测方法成功"))
+        }
         Err(e) => {
             tracing::error!("Failed to fetch test method: {}", e);
             Json(ApiResponse::error(500, "获取检测方法失败"))
@@ -561,34 +572,39 @@ pub async fn update_method(
     .await;
 
     match row {
-        Ok(r) => Json(ApiResponse::success(
-            TestMethod {
-                id: r.get("id"),
-                tenant_id: r.get("tenant_id"),
-                method_code: r.get("method_code"),
-                method_name: r.get("method_name"),
-                category_id: r.get("category_id"),
-                category_name: r.get("category_name"),
-                standard: r.get("standard"),
-                version: r.get("version"),
-                description: r.get("description"),
-                principle: r.get("principle"),
-                instruments: r.get("instruments"),
-                reagents: r.get("reagents"),
-                parameters: r.get("parameters"),
-                steps: r.get("steps"),
-                calculation_formula: r.get("calculation_formula"),
-                uncertainty_ref: r.get("uncertainty_ref"),
-                status: r.get("status"),
-                validated: r.get("validated"),
-                validated_at: r.get("validated_at"),
-                validated_by: r.get("validated_by"),
-                created_by: r.get("created_by"),
-                created_at: r.get("created_at"),
-                updated_at: r.get("updated_at"),
-            },
-            "检测方法更新成功",
-        )),
+        Ok(r) => {
+            state
+                .test_method_cache
+                .remove(&test_method_cache_key(&id.to_string()));
+            Json(ApiResponse::success(
+                TestMethod {
+                    id: r.get("id"),
+                    tenant_id: r.get("tenant_id"),
+                    method_code: r.get("method_code"),
+                    method_name: r.get("method_name"),
+                    category_id: r.get("category_id"),
+                    category_name: r.get("category_name"),
+                    standard: r.get("standard"),
+                    version: r.get("version"),
+                    description: r.get("description"),
+                    principle: r.get("principle"),
+                    instruments: r.get("instruments"),
+                    reagents: r.get("reagents"),
+                    parameters: r.get("parameters"),
+                    steps: r.get("steps"),
+                    calculation_formula: r.get("calculation_formula"),
+                    uncertainty_ref: r.get("uncertainty_ref"),
+                    status: r.get("status"),
+                    validated: r.get("validated"),
+                    validated_at: r.get("validated_at"),
+                    validated_by: r.get("validated_by"),
+                    created_by: r.get("created_by"),
+                    created_at: r.get("created_at"),
+                    updated_at: r.get("updated_at"),
+                },
+                "检测方法更新成功",
+            ))
+        }
         Err(e) => {
             tracing::error!("Failed to update test method: {}", e);
             Json(ApiResponse::error(500, "检测方法更新失败"))
@@ -611,7 +627,12 @@ pub async fn delete_method(
         .await;
 
     match result {
-        Ok(_) => Json(ApiResponse::success(true, "检测方法删除成功")),
+        Ok(_) => {
+            state
+                .test_method_cache
+                .remove(&test_method_cache_key(&id.to_string()));
+            Json(ApiResponse::success(true, "检测方法删除成功"))
+        }
         Err(e) => {
             tracing::error!("Failed to delete test method: {}", e);
             Json(ApiResponse::error(500, "检测方法删除失败"))

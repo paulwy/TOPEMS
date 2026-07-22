@@ -14,6 +14,7 @@ import {
 } from '@mui/material';
 import React, { useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
+import { useTranslation } from 'react-i18next';
 import {
   Truck,
   Edit2,
@@ -36,6 +37,7 @@ import { useQuery } from '@tanstack/react-query';
 import { QUERY_KEYS } from '@/lib/reactQuery';
 
 const SupplierDetailPage: React.FC = () => {
+  const { t } = useTranslation();
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
   const { error } = useNotification();
@@ -70,11 +72,11 @@ const SupplierDetailPage: React.FC = () => {
 
   const getStatusBadge = (status: string) => {
     const statusMap: Record<string, { label: string; color: 'success' | 'error' | 'default' }> = {
-      active: { label: '活跃', color: 'success' },
-      inactive: { label: '非活跃', color: 'default' },
-      blocked: { label: '已冻结', color: 'error' },
+      active: { label: t('wms.supplier_detail_page.status_active_label'), color: 'success' },
+      inactive: { label: t('wms.supplier_detail_page.status_inactive_label'), color: 'default' },
+      blocked: { label: t('wms.supplier_detail_page.status_blocked_label'), color: 'error' },
     };
-    const s = statusMap[status] || { label: status, color: 'default' };
+    const s = statusMap[status] || { label: status, color: 'default' as const };
     return (
       <Chip
         size='small'
@@ -86,22 +88,22 @@ const SupplierDetailPage: React.FC = () => {
 
   const statsData = [
     {
-      label: '应付账款',
+      label: t('wms.supplier_detail_page.stat_payable'),
       value: formatCurrency(0),
       icon: CreditCard,
     },
     {
-      label: '逾期应付',
+      label: t('wms.supplier_detail_page.stat_overdue_payable'),
       value: formatCurrency(0),
       icon: Clock,
     },
     {
-      label: '累计采购',
+      label: t('wms.supplier_detail_page.stat_total_purchase'),
       value: formatCurrency(0),
       icon: TrendingUp,
     },
     {
-      label: '累计付款',
+      label: t('wms.supplier_detail_page.stat_total_payment'),
       value: formatCurrency(0),
       icon: Wallet,
     },
@@ -110,7 +112,7 @@ const SupplierDetailPage: React.FC = () => {
   // 基本信息 Tab 内容
   const basicInfoSection: SectionConfig = {
     id: 'basic-info',
-    title: '基本信息',
+    title: t('wms.supplier_detail_page.section_basic_info'),
     content: (
       <Box
         sx={{
@@ -124,7 +126,7 @@ const SupplierDetailPage: React.FC = () => {
             variant='caption'
             sx={{ color: 'text.secondary' }}
           >
-            供应商名称
+            {t('wms.supplier_detail_page.field_supplier_name')}
           </Typography>
           <Typography sx={{ fontWeight: 500 }}>{supplier?.name}</Typography>
         </Box>
@@ -133,7 +135,7 @@ const SupplierDetailPage: React.FC = () => {
             variant='caption'
             sx={{ color: 'text.secondary' }}
           >
-            简称
+            {t('wms.supplier_detail_page.field_short_name')}
           </Typography>
           <Typography sx={{ fontWeight: 500 }}>{supplier?.short_name || '-'}</Typography>
         </Box>
@@ -142,7 +144,7 @@ const SupplierDetailPage: React.FC = () => {
             variant='caption'
             sx={{ color: 'text.secondary' }}
           >
-            状态
+            {t('wms.supplier_detail_page.field_status')}
           </Typography>
           <Box sx={{ mt: 0.5 }}>{getStatusBadge(supplier?.status || '')}</Box>
         </Box>
@@ -151,7 +153,7 @@ const SupplierDetailPage: React.FC = () => {
             variant='caption'
             sx={{ color: 'text.secondary' }}
           >
-            联系人
+            {t('wms.supplier_detail_page.field_contact_person')}
           </Typography>
           <Typography sx={{ fontWeight: 500 }}>{supplier?.contact_name || '-'}</Typography>
         </Box>
@@ -160,7 +162,7 @@ const SupplierDetailPage: React.FC = () => {
             variant='caption'
             sx={{ color: 'text.secondary' }}
           >
-            联系电话
+            {t('wms.supplier_detail_page.field_contact_phone')}
           </Typography>
           <Typography sx={{ fontWeight: 500 }}>{supplier?.contact_phone || '-'}</Typography>
         </Box>
@@ -169,7 +171,7 @@ const SupplierDetailPage: React.FC = () => {
             variant='caption'
             sx={{ color: 'text.secondary' }}
           >
-            邮箱
+            {t('wms.supplier_detail_page.field_email')}
           </Typography>
           <Typography sx={{ fontWeight: 500 }}>{supplier?.email || '-'}</Typography>
         </Box>
@@ -178,7 +180,7 @@ const SupplierDetailPage: React.FC = () => {
             variant='caption'
             sx={{ color: 'text.secondary' }}
           >
-            地址
+            {t('wms.supplier_detail_page.field_address')}
           </Typography>
           <Typography sx={{ fontWeight: 500 }}>{supplier?.address || '-'}</Typography>
         </Box>
@@ -189,7 +191,7 @@ const SupplierDetailPage: React.FC = () => {
   // 银行账户信息 Section
   const bankInfoSection: SectionConfig = {
     id: 'bank-info',
-    title: '银行账户信息',
+    title: t('wms.supplier_detail_page.section_bank_info'),
     content: (
       <Box
         sx={{
@@ -203,7 +205,7 @@ const SupplierDetailPage: React.FC = () => {
             variant='caption'
             sx={{ color: 'text.secondary' }}
           >
-            银行账户
+            {t('wms.supplier_detail_page.field_bank_account_label')}
           </Typography>
           <Typography sx={{ fontWeight: 500 }}>{supplier?.bank_account || '-'}</Typography>
         </Box>
@@ -212,7 +214,7 @@ const SupplierDetailPage: React.FC = () => {
             variant='caption'
             sx={{ color: 'text.secondary' }}
           >
-            税号
+            {t('wms.supplier_detail_page.field_tax_number')}
           </Typography>
           <Typography sx={{ fontWeight: 500 }}>{supplier?.tax_number || '-'}</Typography>
         </Box>
@@ -223,7 +225,7 @@ const SupplierDetailPage: React.FC = () => {
   // 时间信息 Section
   const timeInfoSection: SectionConfig = {
     id: 'time-info',
-    title: '时间信息',
+    title: t('wms.supplier_detail_page.section_time_info'),
     content: (
       <Box
         sx={{
@@ -237,7 +239,7 @@ const SupplierDetailPage: React.FC = () => {
             variant='caption'
             sx={{ color: 'text.secondary' }}
           >
-            创建时间
+            {t('wms.supplier_detail_page.field_created_at')}
           </Typography>
           <Typography
             variant='body2'
@@ -251,7 +253,7 @@ const SupplierDetailPage: React.FC = () => {
             variant='caption'
             sx={{ color: 'text.secondary' }}
           >
-            更新时间
+            {t('wms.supplier_detail_page.field_updated_at')}
           </Typography>
           <Typography
             variant='body2'
@@ -265,7 +267,7 @@ const SupplierDetailPage: React.FC = () => {
             variant='caption'
             sx={{ color: 'text.secondary' }}
           >
-            供应商ID
+            {t('wms.supplier_detail_page.field_supplier_id')}
           </Typography>
           <Typography
             variant='body2'
@@ -279,7 +281,7 @@ const SupplierDetailPage: React.FC = () => {
             variant='caption'
             sx={{ color: 'text.secondary' }}
           >
-            状态
+            {t('wms.supplier_detail_page.field_status')}
           </Typography>
           <Box sx={{ mt: 0.5 }}>{getStatusBadge(supplier?.status || '')}</Box>
         </Box>
@@ -290,7 +292,7 @@ const SupplierDetailPage: React.FC = () => {
   // 基本信息 Tab
   const basicInfoTab: TabConfig = {
     id: 'basic-info',
-    label: '基本信息',
+    label: t('wms.supplier_detail_page.tab_basic'),
     icon: <Truck size={16} />,
     content: (
       <Box sx={{ display: 'flex', flexDirection: 'column', gap: 3 }}>
@@ -300,7 +302,7 @@ const SupplierDetailPage: React.FC = () => {
               variant='subtitle1'
               sx={{ fontWeight: 600 }}
             >
-              基本信息
+              {t('wms.supplier_detail_page.section_basic_info')}
             </Typography>
           </Box>
           <Box sx={{ p: 3 }}>{basicInfoSection.content}</Box>
@@ -311,7 +313,7 @@ const SupplierDetailPage: React.FC = () => {
               variant='subtitle1'
               sx={{ fontWeight: 600 }}
             >
-              银行账户信息
+              {t('wms.supplier_detail_page.section_bank_info')}
             </Typography>
           </Box>
           <Box sx={{ p: 3 }}>{bankInfoSection.content}</Box>
@@ -322,7 +324,7 @@ const SupplierDetailPage: React.FC = () => {
               variant='subtitle1'
               sx={{ fontWeight: 600 }}
             >
-              时间信息
+              {t('wms.supplier_detail_page.section_time_info')}
             </Typography>
           </Box>
           <Box sx={{ p: 3 }}>{timeInfoSection.content}</Box>
@@ -334,7 +336,7 @@ const SupplierDetailPage: React.FC = () => {
   // 评估记录 Tab
   const evaluationsTab: TabConfig = {
     id: 'evaluations',
-    label: '评估记录',
+    label: t('wms.supplier_detail_page.tab_evaluation_records'),
     icon: <FileText size={16} />,
     badge: 0,
     content: (
@@ -342,13 +344,13 @@ const SupplierDetailPage: React.FC = () => {
         <Table>
           <TableHead>
             <TableRow>
-              <TableCell>评估日期</TableCell>
-              <TableCell>质量评分</TableCell>
-              <TableCell>交期评分</TableCell>
-              <TableCell>服务评分</TableCell>
-              <TableCell>价格评分</TableCell>
-              <TableCell>综合评分</TableCell>
-              <TableCell>评估人</TableCell>
+              <TableCell>{t('wms.supplier_detail_page.col_evaluation_date')}</TableCell>
+              <TableCell>{t('wms.supplier_detail_page.col_quality_score')}</TableCell>
+              <TableCell>{t('wms.supplier_detail_page.col_delivery_score')}</TableCell>
+              <TableCell>{t('wms.supplier_detail_page.col_service_score')}</TableCell>
+              <TableCell>{t('wms.supplier_detail_page.col_price_score')}</TableCell>
+              <TableCell>{t('wms.supplier_detail_page.col_total_score')}</TableCell>
+              <TableCell>{t('wms.supplier_detail_page.col_evaluator')}</TableCell>
             </TableRow>
           </TableHead>
           <TableBody>
@@ -357,7 +359,7 @@ const SupplierDetailPage: React.FC = () => {
                 colSpan={7}
                 sx={{ textAlign: 'center', py: 6, color: 'text.secondary' }}
               >
-                暂无评估记录
+                {t('wms.supplier_detail_page.empty_evaluations')}
               </TableCell>
             </TableRow>
           </TableBody>
@@ -369,7 +371,7 @@ const SupplierDetailPage: React.FC = () => {
   // 交易历史 Tab
   const transactionHistoryTab: TabConfig = {
     id: 'transactions',
-    label: '交易历史',
+    label: t('wms.supplier_detail_page.tab_transactions'),
     icon: <DollarSign size={16} />,
     badge: 0,
     content: (
@@ -377,10 +379,10 @@ const SupplierDetailPage: React.FC = () => {
         <Table>
           <TableHead>
             <TableRow>
-              <TableCell>订单号</TableCell>
-              <TableCell>订单日期</TableCell>
-              <TableCell align='right'>订单金额</TableCell>
-              <TableCell>状态</TableCell>
+              <TableCell>{t('wms.supplier_detail_page.col_order_number')}</TableCell>
+              <TableCell>{t('wms.supplier_detail_page.col_order_date')}</TableCell>
+              <TableCell align='right'>{t('wms.supplier_detail_page.col_order_amount')}</TableCell>
+              <TableCell>{t('wms.supplier_detail_page.col_status')}</TableCell>
             </TableRow>
           </TableHead>
           <TableBody>
@@ -389,7 +391,7 @@ const SupplierDetailPage: React.FC = () => {
                 colSpan={4}
                 sx={{ textAlign: 'center', py: 6, color: 'text.secondary' }}
               >
-                暂无交易记录
+                {t('wms.supplier_detail_page.empty_transactions')}
               </TableCell>
             </TableRow>
           </TableBody>
@@ -401,7 +403,7 @@ const SupplierDetailPage: React.FC = () => {
   // 付款记录 Tab
   const paymentRecordsTab: TabConfig = {
     id: 'payments',
-    label: '付款记录',
+    label: t('wms.supplier_detail_page.tab_payments'),
     icon: <Receipt size={16} />,
     badge: 0,
     content: (
@@ -409,11 +411,11 @@ const SupplierDetailPage: React.FC = () => {
         <Table>
           <TableHead>
             <TableRow>
-              <TableCell>付款单号</TableCell>
-              <TableCell align='right'>付款金额</TableCell>
-              <TableCell>付款方式</TableCell>
-              <TableCell>付款日期</TableCell>
-              <TableCell>状态</TableCell>
+              <TableCell>{t('wms.supplier_detail_page.col_payment_number')}</TableCell>
+              <TableCell align='right'>{t('wms.supplier_detail_page.col_payment_amount')}</TableCell>
+              <TableCell>{t('wms.supplier_detail_page.col_payment_method')}</TableCell>
+              <TableCell>{t('wms.supplier_detail_page.col_payment_date')}</TableCell>
+              <TableCell>{t('wms.supplier_detail_page.col_status')}</TableCell>
             </TableRow>
           </TableHead>
           <TableBody>
@@ -422,7 +424,7 @@ const SupplierDetailPage: React.FC = () => {
                 colSpan={5}
                 sx={{ textAlign: 'center', py: 6, color: 'text.secondary' }}
               >
-                暂无付款记录
+                {t('wms.supplier_detail_page.empty_payments')}
               </TableCell>
             </TableRow>
           </TableBody>
@@ -450,12 +452,12 @@ const SupplierDetailPage: React.FC = () => {
         }}
       >
         <Box sx={{ textAlign: 'center' }}>
-          <Typography sx={{ color: 'grey.500' }}>供应商不存在</Typography>
+          <Typography sx={{ color: 'grey.500' }}>{t('wms.supplier_detail_page.supplier_not_exist')}</Typography>
           <Button
             onClick={() => navigate(SCM_PATHS.suppliers)}
             sx={{ mt: 2 }}
           >
-            返回列表
+            {t('wms.supplier_detail_page.button_back_to_list')}
           </Button>
         </Box>
       </Box>
@@ -464,8 +466,8 @@ const SupplierDetailPage: React.FC = () => {
 
   return (
     <PageContainer
-      title='供应商详情'
-      subtitle='查看和编辑供应商档案信息'
+      title={t('wms.supplier_detail_page.title')}
+      subtitle={t('wms.supplier_detail_page.subtitle')}
     >
       <DetailPageTemplate
         title=''

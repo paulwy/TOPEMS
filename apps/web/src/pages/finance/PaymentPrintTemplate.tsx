@@ -14,28 +14,31 @@ import { FileText, Calendar, User, Building2, Banknote } from 'lucide-react';
 import type { Payment } from '@/api/finance/payment';
 import { PageContainer } from '@/components/common';
 
+import { useTranslation } from 'react-i18next';
+import i18n from '@/i18n';
 interface PaymentPrintTemplateProps {
   payment: Payment;
 }
 
 const paymentMethodOptions = [
-  { value: 'bank_transfer', label: '银行转账' },
-  { value: 'cash', label: '现金' },
-  { value: 'check', label: '支票' },
-  { value: 'acceptance_bill', label: '承兑汇票' },
-  { value: 'other', label: '其他' },
+  { value: 'bank_transfer', label: i18n.t('finance.payment_print_template.text_02ab80') },
+  { value: 'cash', label: i18n.t('finance.payment_print_template.text_e7c090') },
+  { value: 'check', label: i18n.t('finance.payment_print_template.text_5605e0') },
+  { value: 'acceptance_bill', label: i18n.t('finance.payment_print_template.text_6b4832') },
+  { value: 'other', label: i18n.t('finance.payment_print_template.other') },
 ];
 
 const statusOptions: Record<string, string> = {
-  draft: '草稿',
-  submitted: '待审批',
-  approved: '已审批',
-  posted: '已过账',
-  rejected: '已拒绝',
-  cancelled: '已取消',
+  draft: i18n.t('finance.payment_print_template.text_22b433'),
+  submitted: i18n.t('finance.payment_print_template.text_b0bf01'),
+  approved: i18n.t('finance.payment_print_template.text_618acb'),
+  posted: i18n.t('finance.payment_print_template.text_aaea67'),
+  rejected: i18n.t('finance.payment_print_template.text_81233d'),
+  cancelled: i18n.t('finance.payment_print_template.cancelled'),
 };
 
 export const PaymentPrintTemplate: React.FC<PaymentPrintTemplateProps> = ({ payment }) => {
+  const { t } = useTranslation();
   return (
     <PageContainer
       autoTitle={false}
@@ -325,10 +328,10 @@ export const PaymentPrintTemplate: React.FC<PaymentPrintTemplateProps> = ({ paym
                       </TableCell>
                       <TableCell>
                         {item.writeOffStatus === 'completed'
-                          ? '已核销'
+                          ? t('finance.payment_print_template.text_77af84')
                           : item.writeOffStatus === 'partial'
-                            ? '部分核销'
-                            : '待核销'}
+                            ? t('finance.payment_print_template.text_8f9319')
+                            : t('finance.payment_print_template.text_e9cbed')}
                       </TableCell>
                       <TableCell>{item.remark || '-'}</TableCell>
                     </TableRow>

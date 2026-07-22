@@ -16,6 +16,7 @@ use sqlx::{
 };
 use std::str::FromStr;
 use topems_shared::auth::Claims;
+use topems_shared::event::{EventType, ProductionOrderCreatedPayload};
 
 use crate::shared::permission::{check_permission, ModulePermission};
 use crate::AppState;
@@ -448,6 +449,42 @@ pub async fn create_production_order(
         created_at: naive_to_utc(result.created_at),
         updated_at: naive_to_utc(result.updated_at),
     };
+
+    if let Some(ref publisher) = state.event_publisher {
+        let publisher = publisher.clone();
+        let oid = order.id;
+        let ono = order.order_no.clone();
+        let pid = order.product_id;
+        let pname = order.product_name.clone();
+        let qty = order.quantity;
+        let psd = order.planned_start_date;
+        let cby = Some(claims.sub.clone());
+        tokio::spawn(async move {
+            let payload = ProductionOrderCreatedPayload {
+                order_id: oid,
+                order_no: ono,
+                product_id: pid,
+                product_name: Some(pname),
+                quantity: Some(qty),
+                planned_start_date: psd,
+                created_by: cby,
+            };
+            if let Err(e) = publisher
+                .publish_event(EventType::ProductionOrderCreated, payload)
+                .await
+            {
+                tracing::warn!(
+                    "[mes] ProductionOrderCreated 事件发布失败（graceful fallback）: {}",
+                    e
+                );
+            } else {
+                tracing::info!(
+                    "[mes] ProductionOrderCreated 事件发布成功 - order_id={}",
+                    oid
+                );
+            }
+        });
+    }
 
     Json(ApiResponse::success(order, "生产工单创建成功"))
 }

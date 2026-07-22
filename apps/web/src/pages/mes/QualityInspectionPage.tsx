@@ -38,9 +38,11 @@ import { apiLogger } from '@/utils/logger';
 import { designTokens } from '@/theme/tokens';
 import * as XLSX from 'xlsx';
 
+import { useTranslation } from 'react-i18next';
 const ct = designTokens.colors;
 
 const QualityInspectionPage: React.FC = () => {
+  const { t } = useTranslation();
   const queryClient = useQueryClient();
   const [searchTerm, setSearchTerm] = useState('');
   const [statusFilter, setStatusFilter] = useState<string>('all');
@@ -98,23 +100,23 @@ const QualityInspectionPage: React.FC = () => {
 
   const getStatusText = (status: string) => {
     const statusMap: Record<string, string> = {
-      pending: '待检验',
-      inspecting: '检验中',
-      passed: '合格',
-      failed: '不合格',
-      rework: '返工',
-      scrapped: '报废',
+      pending: t('mes.quality_inspection_page.status_pending'),
+      inspecting: t('mes.quality_inspection_page.status_in_progress'),
+      passed: t('mes.quality_inspection_page.result_qualified'),
+      failed: t('mes.quality_inspection_page.result_unqualified'),
+      rework: t('mes.quality_inspection_page.text_98e01c'),
+      scrapped: t('mes.quality_inspection_page.scrap'),
     };
     return statusMap[status] || status;
   };
 
   const getInspectionTypeText = (type: string) => {
     const typeMap: Record<string, string> = {
-      incoming: '来料检验',
-      process: '过程检验',
-      final: '成品检验',
-      outgoing: '出货检验',
-      patrol: '巡检',
+      incoming: t('mes.quality_inspection_page.inspection'),
+      process: t('mes.quality_inspection_page.type_process'),
+      final: t('mes.quality_inspection_page.inspection_1'),
+      outgoing: t('mes.quality_inspection_page.inspection_2'),
+      patrol: t('mes.quality_inspection_page.patrol'),
     };
     return typeMap[type] || type;
   };
@@ -122,14 +124,14 @@ const QualityInspectionPage: React.FC = () => {
   const createMutation = useMutation({
     mutationFn: (data: CreateQualityInspectionRequest) => qualityApi.createInspection(data),
     onSuccess: () => {
-      addNotification({ type: 'success', title: '创建成功', message: '新质检记录已创建' });
+      addNotification({ type: 'success', title: t('mes.quality_inspection_page.create'), message: t('mes.quality_inspection_page.create_1') });
       invalidateInspections();
       setShowDialog(false);
       resetForm();
     },
     onError: (error: unknown) => {
-      apiLogger.error('操作失败:', error);
-      addNotification({ type: 'error', title: '操作失败', message: '创建质检记录失败' });
+      apiLogger.error(t('mes.quality_inspection_page.operation_failed'), error);
+      addNotification({ type: 'error', title: t('mes.quality_inspection_page.operation_failed_1'), message: t('mes.quality_inspection_page.create_2') });
     },
   });
 
@@ -137,26 +139,26 @@ const QualityInspectionPage: React.FC = () => {
     mutationFn: ({ id, data }: { id: string; data: UpdateQualityInspectionRequest }) =>
       qualityApi.updateInspection(id, data),
     onSuccess: () => {
-      addNotification({ type: 'success', title: '更新成功', message: '质检记录已更新' });
+      addNotification({ type: 'success', title: t('mes.quality_inspection_page.update'), message: t('mes.quality_inspection_page.update_1') });
       invalidateInspections();
       setShowDialog(false);
       resetForm();
     },
     onError: (error: unknown) => {
-      apiLogger.error('操作失败:', error);
-      addNotification({ type: 'error', title: '操作失败', message: '更新质检记录失败' });
+      apiLogger.error(t('mes.quality_inspection_page.operation_failed'), error);
+      addNotification({ type: 'error', title: t('mes.quality_inspection_page.operation_failed_1'), message: t('mes.quality_inspection_page.update_2') });
     },
   });
 
   const deleteMutation = useMutation({
     mutationFn: (id: string) => qualityApi.deleteInspection(id),
     onSuccess: () => {
-      addNotification({ type: 'success', title: '删除成功', message: '质检记录已删除' });
+      addNotification({ type: 'success', title: t('mes.quality_inspection_page.delete_success'), message: t('mes.quality_inspection_page.deleted') });
       invalidateInspections();
     },
     onError: (error: unknown) => {
-      apiLogger.error('删除失败:', error);
-      addNotification({ type: 'error', title: '删除失败', message: '无法删除质检记录' });
+      apiLogger.error(t('mes.quality_inspection_page.delete'), error);
+      addNotification({ type: 'error', title: t('mes.quality_inspection_page.delete_1'), message: t('mes.quality_inspection_page.delete_2') });
     },
   });
 
@@ -191,7 +193,7 @@ const QualityInspectionPage: React.FC = () => {
   };
 
   const handleDelete = (id: string) => {
-    if (!window.confirm('确定要删除这条质检记录吗?')) return;
+    if (!window.confirm(t('mes.quality_inspection_page.confirm'))) return;
     deleteMutation.mutate(id);
   };
 
@@ -199,8 +201,8 @@ const QualityInspectionPage: React.FC = () => {
     if (inspections.length === 0) {
       addNotification({
         type: 'warning',
-        title: '提示',
-        message: '请选择要导出的质检记录',
+        title: t('mes.quality_inspection_page.hint'),
+        message: t('mes.quality_inspection_page.please_select'),
       });
       return;
     }
@@ -228,15 +230,15 @@ const QualityInspectionPage: React.FC = () => {
 
       addNotification({
         type: 'success',
-        title: '导出成功',
+        title: t('mes.quality_inspection_page.export'),
         message: `已导出 ${inspections.length} 条质检记录`,
       });
     } catch (error: unknown) {
-      apiLogger.error('批量导出失败:', error);
+      apiLogger.error(t('mes.quality_inspection_page.batch_export'), error);
       addNotification({
         type: 'error',
-        title: '导出失败',
-        message: '无法导出质检记录',
+        title: t('mes.quality_inspection_page.export_2'),
+        message: t('mes.quality_inspection_page.export_3'),
       });
     }
   };
@@ -292,12 +294,12 @@ const QualityInspectionPage: React.FC = () => {
         color: string;
       }
     > = {
-      pending: { label: '待检验', bg: 'warning.light', color: 'warning.700' },
-      inspecting: { label: '检验中', bg: 'primary.100', color: 'primary.dark' },
-      passed: { label: '合格', bg: 'success.lighter', color: 'success.700' },
-      failed: { label: '不合格', bg: 'error.lighter', color: 'error.dark' },
-      rework: { label: '返工', bg: 'warning.100', color: ct.warning[800] },
-      scrapped: { label: '报废', bg: 'grey.200', color: 'text.secondary' },
+      pending: { label: t('mes.quality_inspection_page.status_pending'), bg: 'warning.light', color: 'warning.700' },
+      inspecting: { label: t('mes.quality_inspection_page.status_in_progress'), bg: 'primary.100', color: 'primary.dark' },
+      passed: { label: t('mes.quality_inspection_page.result_qualified'), bg: 'success.lighter', color: 'success.700' },
+      failed: { label: t('mes.quality_inspection_page.result_unqualified'), bg: 'error.lighter', color: 'error.dark' },
+      rework: { label: t('mes.quality_inspection_page.text_98e01c'), bg: 'warning.100', color: ct.warning[800] },
+      scrapped: { label: t('mes.quality_inspection_page.scrap'), bg: 'grey.200', color: 'text.secondary' },
     };
     const s = statusMap[status] || { label: status, bg: 'grey.100', color: 'text.secondary' };
     return (
@@ -318,52 +320,52 @@ const QualityInspectionPage: React.FC = () => {
         color: string;
       }
     > = {
-      incoming: { label: '来料检验', bg: ct.secondary[100], color: 'secondary.700' },
-      process: { label: '过程检验', bg: 'primary.100', color: 'primary.dark' },
-      final: { label: '成品检验', bg: 'success.lighter', color: 'success.700' },
-      outgoing: { label: '出货检验', bg: 'warning.light', color: 'warning.700' },
-      patrol: { label: '巡检', bg: 'secondary.100', color: ct.secondary[700] },
+      incoming: { label: t('mes.quality_inspection_page.inspection'), bg: ct.secondary[100], color: 'secondary.700' },
+      process: { label: t('mes.quality_inspection_page.type_process'), bg: 'primary.100', color: 'primary.dark' },
+      final: { label: t('mes.quality_inspection_page.inspection_1'), bg: 'success.lighter', color: 'success.700' },
+      outgoing: { label: t('mes.quality_inspection_page.inspection_2'), bg: 'warning.light', color: 'warning.700' },
+      patrol: { label: t('mes.quality_inspection_page.patrol'), bg: 'secondary.100', color: ct.secondary[700] },
     };
-    const t = typeMap[type] || { label: type, bg: 'grey.100', color: 'text.secondary' };
+    const typeBadge = typeMap[type] || { label: type, bg: 'grey.100', color: 'text.secondary' };
     return (
       <Chip
         size='small'
-        label={t.label}
-        sx={{ backgroundColor: t.bg, color: t.color, fontWeight: 500 }}
+        label={typeBadge.label}
+        sx={{ backgroundColor: typeBadge.bg, color: typeBadge.color, fontWeight: 500 }}
       />
     );
   };
 
   const columns: ColumnDef<QualityInspection>[] = useMemo(
     () => [
-      { id: 'inspection_no', label: '检验单号', sortable: true },
-      { id: 'order_number', label: '生产订单', sortable: true },
-      { id: 'product_name', label: '产品名称', sortable: true },
-      { id: 'product_code', label: '产品编码', sortable: true },
-      { id: 'process_name', label: '工序', sortable: true },
+      { id: 'inspection_no', label: t('mes.quality_inspection_page.column_inspection_no'), sortable: true },
+      { id: 'order_number', label: t('mes.quality_inspection_page.production'), sortable: true },
+      { id: 'product_name', label: t('mes.quality_inspection_page.column_product_name'), sortable: true },
+      { id: 'product_code', label: t('mes.quality_inspection_page.product_code'), sortable: true },
+      { id: 'process_name', label: t('mes.quality_inspection_page.process'), sortable: true },
       {
         id: 'inspection_type',
-        label: '检验类型',
+        label: t('mes.quality_inspection_page.field_inspection_type'),
         render: (row) => getTypeBadge(row.inspection_type),
       },
-      { id: 'quantity', label: '检验数量', sortable: true },
-      { id: 'qualified_quantity', label: '合格数量', sortable: true },
-      { id: 'unqualified_quantity', label: '不合格数量', sortable: true },
+      { id: 'quantity', label: t('mes.quality_inspection_page.column_quantity'), sortable: true },
+      { id: 'qualified_quantity', label: t('mes.quality_inspection_page.field_qualified_quantity'), sortable: true },
+      { id: 'unqualified_quantity', label: t('mes.quality_inspection_page.field_defective_quantity'), sortable: true },
       {
         id: 'qualification_rate',
-        label: '合格率',
+        label: t('mes.quality_inspection_page.pass_rate'),
         render: (row) => `${row.qualification_rate?.toFixed(2) || 0}%`,
       },
-      { id: 'inspector', label: '检验员', sortable: true },
+      { id: 'inspector', label: t('mes.quality_inspection_page.column_inspector'), sortable: true },
       {
         id: 'inspection_time',
-        label: '检验时间',
+        label: t('mes.quality_inspection_page.column_inspection_time'),
         render: (row) =>
           row.inspection_time ? new Date(row.inspection_time).toLocaleString('zh-CN') : '-',
       },
       {
         id: 'status',
-        label: '状态',
+        label: t('mes.quality_inspection_page.filter_status'),
         render: (row) => getStatusBadge(row.status),
       },
     ],
@@ -374,16 +376,16 @@ const QualityInspectionPage: React.FC = () => {
     () => [
       {
         id: 'status',
-        label: '状态',
+        label: t('mes.quality_inspection_page.filter_status'),
         type: 'select',
         options: [
-          { label: '全部状态', value: 'all' },
-          { label: '待检验', value: 'pending' },
-          { label: '检验中', value: 'inspecting' },
-          { label: '合格', value: 'passed' },
-          { label: '不合格', value: 'failed' },
-          { label: '返工', value: 'rework' },
-          { label: '报废', value: 'scrapped' },
+          { label: t('mes.quality_inspection_page.filter_option_all_status'), value: 'all' },
+          { label: t('mes.quality_inspection_page.status_pending'), value: 'pending' },
+          { label: t('mes.quality_inspection_page.status_in_progress'), value: 'inspecting' },
+          { label: t('mes.quality_inspection_page.result_qualified'), value: 'passed' },
+          { label: t('mes.quality_inspection_page.result_unqualified'), value: 'failed' },
+          { label: t('mes.quality_inspection_page.text_98e01c'), value: 'rework' },
+          { label: t('mes.quality_inspection_page.scrap'), value: 'scrapped' },
         ],
         value: statusFilter,
         onChange: (value: unknown) => {
@@ -398,22 +400,22 @@ const QualityInspectionPage: React.FC = () => {
   const rowActions: RowAction<QualityInspection>[] = useMemo(
     () => [
       {
-        label: '查看详情',
+        label: t('mes.quality_inspection_page.action_view_detail'),
         icon: <Eye size={16} />,
         onClick: handleViewDetail,
       },
       {
-        label: '编辑',
+        label: t('mes.quality_inspection_page.action_edit'),
         icon: <Edit size={16} />,
         onClick: handleEdit,
       },
       {
-        label: '删除',
+        label: t('mes.quality_inspection_page.action_delete'),
         icon: <Trash2 size={16} />,
         color: 'error',
         onClick: (row) => handleDelete(row.id),
         confirm: true,
-        confirmMessage: '确定要删除这条质检记录吗?',
+        confirmMessage: t('mes.quality_inspection_page.confirm'),
       },
     ],
     [handleViewDetail, handleEdit, handleDelete]
@@ -543,7 +545,7 @@ const QualityInspectionPage: React.FC = () => {
         loading={loading}
         filters={filters}
         searchable
-        searchPlaceholder='搜索检验单号或产品名称...'
+        searchPlaceholder={t('mes.quality_inspection_page.product_name')}
         searchValue={searchTerm}
         onSearch={handleSearch}
         pagination={{
@@ -557,7 +559,7 @@ const QualityInspectionPage: React.FC = () => {
         onSelectionChange={(ids) => setSelectedIds(ids.map(String))}
         actions={[
           {
-            label: '新增质检',
+            label: t('mes.quality_inspection_page.add'),
             icon: <Plus size={16} />,
             onClick: handleOpenCreate,
           },
@@ -565,23 +567,23 @@ const QualityInspectionPage: React.FC = () => {
         rowActions={rowActions}
         batchActions={[
           {
-            label: '批量导出',
+            label: t('mes.quality_inspection_page.batch_export_1'),
             icon: <Download size={16} />,
             onClick: handleBatchExport,
             color: 'secondary',
           },
         ]}
         headerContent={statsContent}
-        emptyMessage='暂无质检数据'
+        emptyMessage={t('mes.quality_inspection_page.no_data')}
         getRowId={(row) => row.id}
         mobileCardTitleKey='product_name'
         mobileCardSubtitleKey='inspection_no'
         mobileCardDisplayFields={['inspection_type', 'status', 'sample_quantity', 'inspector']}
         mobileCardFieldLabels={{
-          inspection_type: '检验类型',
-          status: '状态',
-          sample_quantity: '抽样数',
-          inspector: '检验员',
+          inspection_type: t('mes.quality_inspection_page.field_inspection_type'),
+          status: t('mes.quality_inspection_page.filter_status'),
+          sample_quantity: t('mes.quality_inspection_page.text_660298'),
+          inspector: t('mes.quality_inspection_page.column_inspector'),
         }}
       />
 
@@ -590,7 +592,7 @@ const QualityInspectionPage: React.FC = () => {
         onClose={() => setShowDialog(false)}
         maxWidth='md'
       >
-        <DialogTitle>{selectedInspection ? '编辑质检记录' : '新增质检记录'}</DialogTitle>
+        <DialogTitle>{selectedInspection ? t('mes.quality_inspection_page.edit') : t('mes.quality_inspection_page.add_1')}</DialogTitle>
         <DialogContent>
           <Box
             component='span'
@@ -601,7 +603,7 @@ const QualityInspectionPage: React.FC = () => {
               fontSize: 14,
             }}
           >
-            {selectedInspection ? '修改质检记录信息' : '填写新质检记录信息'}
+            {selectedInspection ? t('mes.quality_inspection_page.info') : t('mes.quality_inspection_page.info_1')}
           </Box>
           <form onSubmit={handleSubmit}>
             <Box

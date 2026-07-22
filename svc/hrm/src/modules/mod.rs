@@ -1,8 +1,12 @@
+use crate::models::{Department, Employee};
+use crate::utils::InMemoryCache;
 use axum::{extract::FromRef, Router};
 use sqlx::postgres::PgPool;
 use std::sync::Arc;
 use std::time::Instant;
-use topems_shared::{AuthState, CacheService, FieldEncryptionService, SystemMetrics};
+use topems_shared::{
+    AuthState, CacheService, EventPublisher, FieldEncryptionService, SystemMetrics,
+};
 
 pub mod attendance;
 pub mod audit;
@@ -31,6 +35,9 @@ pub struct ApiState {
     pub start_time: Instant,
     pub cache: Arc<dyn CacheService + Send + Sync>,
     pub encryption: Arc<FieldEncryptionService>,
+    pub event_publisher: Option<Arc<EventPublisher>>,
+    pub employee_cache: Arc<InMemoryCache<Employee>>,
+    pub department_cache: Arc<InMemoryCache<Vec<Department>>>,
 }
 
 impl FromRef<ApiState> for AuthState {

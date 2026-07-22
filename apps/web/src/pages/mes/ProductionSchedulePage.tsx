@@ -55,9 +55,11 @@ import {
 import { apiLogger } from '@/utils/logger';
 import { designTokens } from '@/theme/tokens';
 
+import { useTranslation } from 'react-i18next';
 const ct = designTokens.colors;
 
 const ProductionSchedulePage: React.FC = () => {
+  const { t } = useTranslation();
   const queryClient = useQueryClient();
   const [searchTerm, setSearchTerm] = useState('');
   const [statusFilter, setStatusFilter] = useState<string>('all');
@@ -128,10 +130,10 @@ const ProductionSchedulePage: React.FC = () => {
 
   const getStatusText = (status: string) => {
     const statusMap: Record<string, string> = {
-      scheduled: '已排程',
-      in_progress: '执行中',
-      completed: '已完成',
-      cancelled: '已取消',
+      scheduled: t('mes.production_schedule_page.status_scheduled'),
+      in_progress: t('mes.production_schedule_page.text_46e386'),
+      completed: t('mes.production_schedule_page.status_completed'),
+      cancelled: t('mes.production_schedule_page.status_cancelled'),
     };
     return statusMap[status] || status;
   };
@@ -139,14 +141,14 @@ const ProductionSchedulePage: React.FC = () => {
   const createMutation = useMutation({
     mutationFn: (data: CreateProductionScheduleRequest) => mesApi.schedules.create(data),
     onSuccess: () => {
-      addNotification({ type: 'success', title: '创建成功', message: '新生产排程已创建' });
+      addNotification({ type: 'success', title: t('mes.production_schedule_page.create'), message: t('mes.production_schedule_page.create_1') });
       invalidateSchedules();
       setShowDialog(false);
       resetForm();
     },
     onError: (error: unknown) => {
-      apiLogger.error('操作失败:', error);
-      addNotification({ type: 'error', title: '操作失败', message: '创建生产排程失败' });
+      apiLogger.error(t('mes.production_schedule_page.operation_failed'), error);
+      addNotification({ type: 'error', title: t('mes.production_schedule_page.operation_failed_1'), message: t('mes.production_schedule_page.create_2') });
     },
   });
 
@@ -154,14 +156,14 @@ const ProductionSchedulePage: React.FC = () => {
     mutationFn: ({ id, data }: { id: string; data: UpdateProductionScheduleRequest }) =>
       mesApi.schedules.update(id, data),
     onSuccess: () => {
-      addNotification({ type: 'success', title: '更新成功', message: '生产排程信息已更新' });
+      addNotification({ type: 'success', title: t('mes.production_schedule_page.update'), message: t('mes.production_schedule_page.update_1') });
       invalidateSchedules();
       setShowDialog(false);
       resetForm();
     },
     onError: (error: unknown) => {
-      apiLogger.error('操作失败:', error);
-      addNotification({ type: 'error', title: '操作失败', message: '更新生产排程失败' });
+      apiLogger.error(t('mes.production_schedule_page.operation_failed'), error);
+      addNotification({ type: 'error', title: t('mes.production_schedule_page.operation_failed_1'), message: t('mes.production_schedule_page.update_2') });
     },
   });
 
@@ -169,26 +171,26 @@ const ProductionSchedulePage: React.FC = () => {
     mutationFn: ({ id, data }: { id: string; data: AdjustScheduleRequest }) =>
       mesApi.schedules.adjust(id, data),
     onSuccess: () => {
-      addNotification({ type: 'success', title: '调整成功', message: '生产排程已调整' });
+      addNotification({ type: 'success', title: t('mes.production_schedule_page.success'), message: t('mes.production_schedule_page.production') });
       invalidateSchedules();
       setShowAdjustDialog(false);
       resetForm();
     },
     onError: (error: unknown) => {
-      apiLogger.error('操作失败:', error);
-      addNotification({ type: 'error', title: '操作失败', message: '调整生产排程失败' });
+      apiLogger.error(t('mes.production_schedule_page.operation_failed'), error);
+      addNotification({ type: 'error', title: t('mes.production_schedule_page.operation_failed_1'), message: t('mes.production_schedule_page.fail') });
     },
   });
 
   const deleteMutation = useMutation({
     mutationFn: (id: string) => mesApi.schedules.delete(id),
     onSuccess: () => {
-      addNotification({ type: 'success', title: '删除成功', message: '生产排程已删除' });
+      addNotification({ type: 'success', title: t('mes.production_schedule_page.delete_success'), message: t('mes.production_schedule_page.deleted') });
       invalidateSchedules();
     },
     onError: (error: unknown) => {
-      apiLogger.error('删除失败:', error);
-      addNotification({ type: 'error', title: '删除失败', message: '无法删除生产排程' });
+      apiLogger.error(t('mes.production_schedule_page.delete'), error);
+      addNotification({ type: 'error', title: t('mes.production_schedule_page.delete_1'), message: t('mes.production_schedule_page.delete_2') });
     },
   });
 
@@ -207,7 +209,7 @@ const ProductionSchedulePage: React.FC = () => {
   };
 
   const handleDelete = (id: string) => {
-    if (!window.confirm('确定要删除这个生产排程吗?')) return;
+    if (!window.confirm(t('mes.production_schedule_page.confirm'))) return;
     deleteMutation.mutate(id);
   };
 
@@ -266,10 +268,10 @@ const ProductionSchedulePage: React.FC = () => {
         color: string;
       }
     > = {
-      scheduled: { label: '已排程', bg: ct.secondary[100], color: 'secondary.700' },
-      in_progress: { label: '执行中', bg: 'primary.100', color: 'primary.dark' },
-      completed: { label: '已完成', bg: 'success.lighter', color: 'success.700' },
-      cancelled: { label: '已取消', bg: 'error.lighter', color: 'error.dark' },
+      scheduled: { label: t('mes.production_schedule_page.status_scheduled'), bg: ct.secondary[100], color: 'secondary.700' },
+      in_progress: { label: t('mes.production_schedule_page.text_46e386'), bg: 'primary.100', color: 'primary.dark' },
+      completed: { label: t('mes.production_schedule_page.status_completed'), bg: 'success.lighter', color: 'success.700' },
+      cancelled: { label: t('mes.production_schedule_page.status_cancelled'), bg: 'error.lighter', color: 'error.dark' },
     };
     const s = statusMap[status] || { label: status, bg: 'grey.100', color: 'text.secondary' };
     return (
@@ -283,25 +285,25 @@ const ProductionSchedulePage: React.FC = () => {
 
   const columns: ColumnDef<ProductionSchedule>[] = useMemo(
     () => [
-      { id: 'order_number', label: '工单号', sortable: true },
-      { id: 'process_name', label: '工序', sortable: true },
-      { id: 'work_station_name', label: '工位', sortable: true },
-      { id: 'quantity', label: '数量', sortable: true },
+      { id: 'order_number', label: t('mes.production_schedule_page.field_work_order'), sortable: true },
+      { id: 'process_name', label: t('mes.production_schedule_page.process'), sortable: true },
+      { id: 'work_station_name', label: t('mes.production_schedule_page.text_ab5bf8'), sortable: true },
+      { id: 'quantity', label: t('mes.production_schedule_page.quantity'), sortable: true },
       {
         id: 'planned_start_time',
-        label: '计划开始时间',
+        label: t('mes.production_schedule_page.start_time'),
         render: (row) =>
           row.planned_start_time ? new Date(row.planned_start_time).toLocaleString('zh-CN') : '-',
       },
       {
         id: 'planned_end_time',
-        label: '计划结束时间',
+        label: t('mes.production_schedule_page.end_time'),
         render: (row) =>
           row.planned_end_time ? new Date(row.planned_end_time).toLocaleString('zh-CN') : '-',
       },
       {
         id: 'status',
-        label: '状态',
+        label: t('mes.production_schedule_page.filter_status'),
         render: (row) => getStatusBadge(row.status),
       },
     ],
@@ -312,14 +314,14 @@ const ProductionSchedulePage: React.FC = () => {
     () => [
       {
         id: 'status',
-        label: '状态',
+        label: t('mes.production_schedule_page.filter_status'),
         type: 'select',
         options: [
-          { label: '全部状态', value: 'all' },
-          { label: '已排程', value: 'scheduled' },
-          { label: '执行中', value: 'in_progress' },
-          { label: '已完成', value: 'completed' },
-          { label: '已取消', value: 'cancelled' },
+          { label: t('mes.production_schedule_page.filter_option_all_status'), value: 'all' },
+          { label: t('mes.production_schedule_page.status_scheduled'), value: 'scheduled' },
+          { label: t('mes.production_schedule_page.text_46e386'), value: 'in_progress' },
+          { label: t('mes.production_schedule_page.status_completed'), value: 'completed' },
+          { label: t('mes.production_schedule_page.status_cancelled'), value: 'cancelled' },
         ],
         value: statusFilter,
         onChange: (value: unknown) => {
@@ -334,27 +336,27 @@ const ProductionSchedulePage: React.FC = () => {
   const rowActions: RowAction<ProductionSchedule>[] = useMemo(
     () => [
       {
-        label: '查看详情',
+        label: t('mes.production_schedule_page.action_view_detail'),
         icon: <Eye size={16} />,
         onClick: handleViewDetail,
       },
       {
-        label: '调整排程',
+        label: t('mes.production_schedule_page.action_adjust'),
         icon: <RefreshCw size={16} />,
         onClick: handleAdjust,
       },
       {
-        label: '编辑',
+        label: t('mes.production_schedule_page.action_edit'),
         icon: <Edit size={16} />,
         onClick: handleEdit,
       },
       {
-        label: '删除',
+        label: t('mes.production_schedule_page.action_delete'),
         icon: <Trash2 size={16} />,
         color: 'error',
         onClick: (row) => handleDelete(row.id),
         confirm: true,
-        confirmMessage: '确定要删除这个生产排程吗?',
+        confirmMessage: t('mes.production_schedule_page.confirm'),
       },
     ],
     [handleViewDetail, handleAdjust, handleEdit, handleDelete]
@@ -582,12 +584,12 @@ const ProductionSchedulePage: React.FC = () => {
           <Tab
             icon={<Calendar size={16} />}
             iconPosition='start'
-            label='排程列表'
+            label={t('mes.production_schedule_page.list')}
           />
           <Tab
             icon={<GanttChart size={16} />}
             iconPosition='start'
-            label='甘特图视图'
+            label={t('mes.production_schedule_page.text_136365')}
           />
         </Tabs>
       </Box>
@@ -601,7 +603,7 @@ const ProductionSchedulePage: React.FC = () => {
           loading={loading}
           filters={filters}
           searchable
-          searchPlaceholder='搜索工单号或工序名称...'
+          searchPlaceholder={t('mes.production_schedule_page.process_name')}
           searchValue={searchTerm}
           onSearch={handleSearch}
           pagination={{
@@ -615,14 +617,14 @@ const ProductionSchedulePage: React.FC = () => {
           onSelectionChange={(ids) => setSelectedIds(ids.map(String))}
           actions={[
             {
-              label: '新增排程',
+              label: t('mes.production_schedule_page.dialog_create_title'),
               icon: <Plus size={16} />,
               onClick: handleOpenCreate,
             },
           ]}
           rowActions={rowActions}
           headerContent={statsContent}
-          emptyMessage='暂无生产排程数据'
+          emptyMessage={t('mes.production_schedule_page.no_data')}
           getRowId={(row) => row.id}
         />
       ) : (
@@ -653,7 +655,7 @@ const ProductionSchedulePage: React.FC = () => {
         onClose={() => setShowDialog(false)}
         maxWidth='md'
       >
-        <DialogTitle>{selectedSchedule ? '编辑生产排程' : '新增生产排程'}</DialogTitle>
+        <DialogTitle>{selectedSchedule ? t('mes.production_schedule_page.edit') : t('mes.production_schedule_page.add')}</DialogTitle>
         <DialogContent>
           <Box
             component='span'
@@ -664,7 +666,7 @@ const ProductionSchedulePage: React.FC = () => {
               fontSize: 14,
             }}
           >
-            {selectedSchedule ? '修改生产排程信息' : '填写新生产排程信息'}
+            {selectedSchedule ? t('mes.production_schedule_page.info') : t('mes.production_schedule_page.info_1')}
           </Box>
           <form onSubmit={handleSubmit}>
             <Box

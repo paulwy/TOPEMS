@@ -26,7 +26,9 @@ import { apiLogger } from '@/utils/logger';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { QUERY_KEYS } from '@/lib/reactQuery';
 
+import { useTranslation } from 'react-i18next';
 const SupplierManagementPage: React.FC = () => {
+  const { t } = useTranslation();
   const [searchTerm, setSearchTerm] = useState('');
   const [statusFilter, setStatusFilter] = useState<string>('');
   const [currentPage, setCurrentPage] = useState(1);
@@ -84,7 +86,7 @@ const SupplierManagementPage: React.FC = () => {
       resetForm();
     },
     onError: (error) => {
-      apiLogger.error('创建供应商失败:', error);
+      apiLogger.error(t('wms.supplier_management_page.supplier'), error);
     },
   });
 
@@ -102,7 +104,7 @@ const SupplierManagementPage: React.FC = () => {
       resetForm();
     },
     onError: (error) => {
-      apiLogger.error('更新供应商失败:', error);
+      apiLogger.error(t('wms.supplier_management_page.supplier_1'), error);
     },
   });
 
@@ -118,7 +120,7 @@ const SupplierManagementPage: React.FC = () => {
       queryClient.invalidateQueries({ queryKey: [QUERY_KEYS.SCM.SUPPLIERS] });
     },
     onError: (error) => {
-      apiLogger.error('删除供应商失败:', error);
+      apiLogger.error(t('wms.supplier_management_page.supplier_2'), error);
     },
   });
 
@@ -135,7 +137,7 @@ const SupplierManagementPage: React.FC = () => {
   };
 
   const handleDelete = async (id: string) => {
-    if (!window.confirm('确定要删除这个供应商吗?')) return;
+    if (!window.confirm(t('wms.supplier_management_page.supplier_3'))) return;
     await deleteMutation.mutateAsync(id);
   };
 
@@ -181,9 +183,9 @@ const SupplierManagementPage: React.FC = () => {
         variant: 'default' | 'secondary' | 'destructive' | 'outline';
       }
     > = {
-      active: { label: '活跃', variant: 'default' },
-      inactive: { label: '非活跃', variant: 'secondary' },
-      blocked: { label: '已冻结', variant: 'destructive' },
+      active: { label: t('wms.supplier_management_page.active'), variant: 'default' },
+      inactive: { label: t('wms.supplier_management_page.inactive'), variant: 'secondary' },
+      blocked: { label: t('wms.supplier_management_page.text_92cff4'), variant: 'destructive' },
     };
     const s = statusMap[status] || { label: status, variant: 'outline' };
     return (
@@ -198,41 +200,41 @@ const SupplierManagementPage: React.FC = () => {
   const columns: ColumnDef<Supplier>[] = [
     {
       id: 'name',
-      label: '供应商名称',
+      label: t('wms.supplier_management_page.column_supplier_name'),
       render: (row) => <Box sx={{ fontWeight: 500 }}>{row.name}</Box>,
     },
-    { id: 'short_name', label: '简称', render: (row) => row.short_name || '-' },
+    { id: 'short_name', label: t('wms.supplier_management_page.field_short_name'), render: (row) => row.short_name || '-' },
     {
       id: 'contact_name',
-      label: '联系人',
+      label: t('wms.supplier_management_page.field_contact_person'),
       render: (row) => row.contact_name || '-',
     },
     {
       id: 'contact_phone',
-      label: '联系电话',
+      label: t('wms.supplier_management_page.phone'),
       render: (row) => row.contact_phone || '-',
     },
-    { id: 'email', label: '邮箱', render: (row) => row.email || '-' },
+    { id: 'email', label: t('wms.supplier_management_page.field_email'), render: (row) => row.email || '-' },
     {
       id: 'status',
-      label: '状态',
+      label: t('wms.supplier_management_page.filter_status'),
       render: (row) => getStatusBadge(row.status),
     },
   ];
 
   const rowActions = [
     {
-      label: '查看详情',
+      label: t('wms.supplier_management_page.action_view_detail'),
       icon: <Eye style={{ width: 16, height: 16 }} />,
       onClick: handleViewDetail,
     },
     {
-      label: '编辑',
+      label: t('wms.supplier_management_page.action_edit'),
       icon: <Edit style={{ width: 16, height: 16 }} />,
       onClick: handleEdit,
     },
     {
-      label: '删除',
+      label: t('wms.supplier_management_page.action_delete'),
       icon: <Trash2 style={{ width: 16, height: 16 }} />,
       onClick: (row: Supplier) => handleDelete(row.id),
       color: 'error' as const,
@@ -243,14 +245,14 @@ const SupplierManagementPage: React.FC = () => {
   const filters: FilterConfig[] = [
     {
       id: 'status',
-      label: '状态筛选',
+      label: t('wms.supplier_management_page.status'),
       type: 'select',
       value: statusFilter,
       options: [
-        { label: '全部状态', value: '' },
-        { label: '活跃', value: 'active' },
-        { label: '非活跃', value: 'inactive' },
-        { label: '已冻结', value: 'blocked' },
+        { label: t('wms.supplier_management_page.filter_option_all_status'), value: '' },
+        { label: t('wms.supplier_management_page.active'), value: 'active' },
+        { label: t('wms.supplier_management_page.inactive'), value: 'inactive' },
+        { label: t('wms.supplier_management_page.text_92cff4'), value: 'blocked' },
       ],
       onChange: (value) => {
         setStatusFilter(value as string);
@@ -266,8 +268,8 @@ const SupplierManagementPage: React.FC = () => {
 
   return (
     <PageContainer
-      title='供应商管理'
-      subtitle='管理供应商信息,包括基本信息、联系方式、银行账户等'
+      title={t('wms.supplier_management_page.breadcrumb_current')}
+      subtitle={t('wms.supplier_management_page.supplier_4')}
     >
       <ListPageTemplate
         title=''
@@ -283,7 +285,7 @@ const SupplierManagementPage: React.FC = () => {
         }}
         globalSearch={{
           fields: ['name', 'contact_name'],
-          placeholder: '搜索供应商名称或联系人...',
+          placeholder: t('wms.supplier_management_page.supplier_name'),
         }}
         searchValue={searchTerm}
         onSearch={handleSearchChange}
@@ -293,7 +295,7 @@ const SupplierManagementPage: React.FC = () => {
         onSelectionChange={(ids) => setSelectedIds(ids.map(String))}
         actions={[
           {
-            label: '新增供应商',
+            label: t('wms.supplier_management_page.dialog_create_title'),
             icon: <Plus style={{ width: 16, height: 16 }} />,
             onClick: () => {
               resetForm();
@@ -302,7 +304,7 @@ const SupplierManagementPage: React.FC = () => {
           },
         ]}
         rowActions={rowActions}
-        emptyMessage='暂无供应商数据'
+        emptyMessage={t('wms.supplier_management_page.empty_message')}
       />
 
       {/* 新增/编辑对话框 */}
@@ -311,20 +313,20 @@ const SupplierManagementPage: React.FC = () => {
         onClose={() => setShowDialog(false)}
         maxWidth='md'
       >
-        <DialogTitle>{selectedSupplier ? '编辑供应商' : '新增供应商'}</DialogTitle>
+        <DialogTitle>{selectedSupplier ? t('wms.supplier_management_page.dialog_edit_title') : t('wms.supplier_management_page.dialog_create_title')}</DialogTitle>
         <DialogContent>
           <Typography
             variant='body2'
             sx={{ color: 'text.secondary', mb: 2 }}
           >
-            {selectedSupplier ? '修改供应商信息' : '填写新供应商信息'}
+            {selectedSupplier ? t('wms.supplier_management_page.supplier_5') : t('wms.supplier_management_page.supplier_6')}
           </Typography>
           <form onSubmit={handleSubmit}>
             <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2, pt: 1 }}>
               <Box sx={{ display: 'flex', gap: 2 }}>
                 <FormField
                   name='name'
-                  label='供应商名称 *'
+                  label={t('wms.supplier_management_page.field_supplier_name_required')}
                   value={formData.name}
                   onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
                     setFormData({ ...formData, name: e.target.value })
@@ -334,7 +336,7 @@ const SupplierManagementPage: React.FC = () => {
                 />
                 <FormField
                   name='short_name'
-                  label='简称'
+                  label={t('wms.supplier_management_page.field_short_name')}
                   value={formData.short_name}
                   onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
                     setFormData({ ...formData, short_name: e.target.value })
@@ -346,7 +348,7 @@ const SupplierManagementPage: React.FC = () => {
               <Box sx={{ display: 'flex', gap: 2 }}>
                 <FormField
                   name='contact_name'
-                  label='联系人'
+                  label={t('wms.supplier_management_page.field_contact_person')}
                   value={formData.contact_name}
                   onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
                     setFormData({ ...formData, contact_name: e.target.value })
@@ -356,7 +358,7 @@ const SupplierManagementPage: React.FC = () => {
                 />
                 <FormField
                   name='contact_phone'
-                  label='联系电话'
+                  label={t('wms.supplier_management_page.phone')}
                   value={formData.contact_phone}
                   onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
                     setFormData({ ...formData, contact_phone: e.target.value })
@@ -368,7 +370,7 @@ const SupplierManagementPage: React.FC = () => {
               <Box sx={{ display: 'flex', gap: 2 }}>
                 <FormField
                   name='email'
-                  label='邮箱'
+                  label={t('wms.supplier_management_page.field_email')}
                   type='email'
                   value={formData.email}
                   onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
@@ -379,7 +381,7 @@ const SupplierManagementPage: React.FC = () => {
                 />
                 <FormField
                   name='bank_account'
-                  label='银行账户'
+                  label={t('wms.supplier_management_page.text_c85e1d')}
                   value={formData.bank_account}
                   onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
                     setFormData({ ...formData, bank_account: e.target.value })
@@ -390,7 +392,7 @@ const SupplierManagementPage: React.FC = () => {
               </Box>
               <FormField
                 name='address'
-                label='地址'
+                label={t('wms.supplier_management_page.field_address')}
                 value={formData.address}
                 onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
                   setFormData({ ...formData, address: e.target.value })
@@ -400,7 +402,7 @@ const SupplierManagementPage: React.FC = () => {
               />
               <FormField
                 name='tax_number'
-                label='税号'
+                label={t('wms.supplier_management_page.text_98a33d')}
                 value={formData.tax_number}
                 onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
                   setFormData({ ...formData, tax_number: e.target.value })

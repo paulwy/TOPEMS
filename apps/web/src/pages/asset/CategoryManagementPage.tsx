@@ -24,6 +24,7 @@ import { QUERY_KEYS } from '@/lib/reactQuery';
 import { useNotificationStore } from '@/store';
 import { apiLogger } from '@/utils/logger';
 
+import { useTranslation } from 'react-i18next';
 interface AssetCategory {
   id: string;
   name: string;
@@ -36,6 +37,7 @@ interface AssetCategory {
 }
 
 const CategoryManagementPage: React.FC = () => {
+  const { t } = useTranslation();
   const [searchTerm, setSearchTerm] = useState('');
   const [statusFilter, setStatusFilter] = useState<string>('all');
   const [currentPage, setCurrentPage] = useState(1);
@@ -58,7 +60,7 @@ const CategoryManagementPage: React.FC = () => {
   const mockCategories: AssetCategory[] = [
     {
       id: '1',
-      name: '办公设备',
+      name: t('asset.category_management_page.equipment'),
       code: 'OA',
       status: 'active',
       created_at: '2024-01-01',
@@ -66,7 +68,7 @@ const CategoryManagementPage: React.FC = () => {
     },
     {
       id: '2',
-      name: '电脑设备',
+      name: t('asset.category_management_page.equipment_1'),
       code: 'PC',
       parent_id: '1',
       status: 'active',
@@ -75,7 +77,7 @@ const CategoryManagementPage: React.FC = () => {
     },
     {
       id: '3',
-      name: '服务器',
+      name: t('asset.category_management_page.text_c566ca'),
       code: 'SRV',
       parent_id: '1',
       status: 'active',
@@ -84,7 +86,7 @@ const CategoryManagementPage: React.FC = () => {
     },
     {
       id: '4',
-      name: '网络设备',
+      name: t('asset.category_management_page.equipment_2'),
       code: 'NET',
       parent_id: '1',
       status: 'active',
@@ -93,7 +95,7 @@ const CategoryManagementPage: React.FC = () => {
     },
     {
       id: '5',
-      name: '生产设备',
+      name: t('asset.category_management_page.equipment_3'),
       code: 'PROD',
       status: 'active',
       created_at: '2024-01-05',
@@ -101,7 +103,7 @@ const CategoryManagementPage: React.FC = () => {
     },
     {
       id: '6',
-      name: '运输工具',
+      name: t('asset.category_management_page.text_68f50e'),
       code: 'VEH',
       status: 'active',
       created_at: '2024-01-06',
@@ -109,7 +111,7 @@ const CategoryManagementPage: React.FC = () => {
     },
     {
       id: '7',
-      name: '办公家具',
+      name: t('asset.category_management_page.text_ee33f3'),
       code: 'FURN',
       status: 'inactive',
       created_at: '2024-01-07',
@@ -117,7 +119,7 @@ const CategoryManagementPage: React.FC = () => {
     },
     {
       id: '8',
-      name: '软件资产',
+      name: t('asset.category_management_page.text_7ea307'),
       code: 'SW',
       status: 'active',
       created_at: '2024-01-08',
@@ -168,19 +170,19 @@ const CategoryManagementPage: React.FC = () => {
     onSuccess: () => {
       addNotification({
         type: 'success',
-        title: '创建成功',
-        message: '新分类已创建',
+        title: t('asset.category_management_page.create'),
+        message: t('asset.category_management_page.create_1'),
       });
       queryClient.invalidateQueries({ queryKey: [QUERY_KEYS.ERP.ASSETS, 'categories'] });
       setShowDialog(false);
       resetForm();
     },
     onError: (error) => {
-      apiLogger.error('创建失败:', error);
+      apiLogger.error(t('asset.category_management_page.create_2'), error);
       addNotification({
         type: 'error',
-        title: '创建失败',
-        message: '无法创建分类',
+        title: t('asset.category_management_page.create_3'),
+        message: t('asset.category_management_page.create_4'),
       });
     },
   });
@@ -193,19 +195,19 @@ const CategoryManagementPage: React.FC = () => {
     onSuccess: () => {
       addNotification({
         type: 'success',
-        title: '更新成功',
-        message: '分类信息已更新',
+        title: t('asset.category_management_page.update'),
+        message: t('asset.category_management_page.update_1'),
       });
       queryClient.invalidateQueries({ queryKey: [QUERY_KEYS.ERP.ASSETS, 'categories'] });
       setShowDialog(false);
       resetForm();
     },
     onError: (error) => {
-      apiLogger.error('更新失败:', error);
+      apiLogger.error(t('asset.category_management_page.update_2'), error);
       addNotification({
         type: 'error',
-        title: '更新失败',
-        message: '无法更新分类',
+        title: t('asset.category_management_page.update_3'),
+        message: t('asset.category_management_page.update_4'),
       });
     },
   });
@@ -218,17 +220,17 @@ const CategoryManagementPage: React.FC = () => {
     onSuccess: () => {
       addNotification({
         type: 'success',
-        title: '删除成功',
-        message: '分类已删除',
+        title: t('asset.category_management_page.delete_success'),
+        message: t('asset.category_management_page.deleted'),
       });
       queryClient.invalidateQueries({ queryKey: [QUERY_KEYS.ERP.ASSETS, 'categories'] });
     },
     onError: (error) => {
-      apiLogger.error('删除失败:', error);
+      apiLogger.error(t('asset.category_management_page.delete'), error);
       addNotification({
         type: 'error',
-        title: '删除失败',
-        message: '无法删除分类',
+        title: t('asset.category_management_page.delete_1'),
+        message: t('asset.category_management_page.delete_2'),
       });
     },
   });
@@ -244,7 +246,7 @@ const CategoryManagementPage: React.FC = () => {
 
   const handleDelete = useCallback(
     async (id: string) => {
-      if (!window.confirm('确定要删除这个分类吗?')) return;
+      if (!window.confirm(t('asset.category_management_page.confirm'))) return;
       await deleteMutation.mutateAsync(id);
     },
     [deleteMutation]
@@ -287,8 +289,8 @@ const CategoryManagementPage: React.FC = () => {
         color: string;
       }
     > = {
-      active: { label: '启用', bg: 'success.lighter', color: 'success.700' },
-      inactive: { label: '停用', bg: 'grey.100', color: 'text.secondary' },
+      active: { label: t('asset.category_management_page.active'), bg: 'success.lighter', color: 'success.700' },
+      inactive: { label: t('asset.category_management_page.inactive'), bg: 'grey.100', color: 'text.secondary' },
     };
     const s = statusMap[status] || { label: status, bg: 'grey.100', color: 'text.secondary' };
     return (
@@ -302,27 +304,27 @@ const CategoryManagementPage: React.FC = () => {
 
   const columns: ColumnDef<AssetCategory>[] = useMemo(
     () => [
-      { id: 'code', label: '分类编码', sortable: true, width: 120 },
-      { id: 'name', label: '分类名称', sortable: true, width: 150 },
+      { id: 'code', label: t('asset.category_management_page.code'), sortable: true, width: 120 },
+      { id: 'name', label: t('asset.category_management_page.name'), sortable: true, width: 150 },
       {
         id: 'parent_id',
-        label: '上级分类',
+        label: t('asset.category_management_page.text_89a5f1'),
         width: 150,
         render: (row) =>
           row.parent_id
             ? mockCategories.find((p) => p.id === row.parent_id)?.name || '-'
-            : '顶级分类',
+            : t('asset.category_management_page.text_f038ff'),
       },
-      { id: 'description', label: '描述' },
+      { id: 'description', label: t('asset.category_management_page.description') },
       {
         id: 'status',
-        label: '状态',
+        label: t('asset.category_management_page.status'),
         width: 100,
         render: (row) => getStatusBadge(row.status),
       },
       {
         id: 'created_at',
-        label: '创建时间',
+        label: t('asset.category_management_page.created_at'),
         sortable: true,
         width: 160,
         render: (row) => new Date(row.created_at).toLocaleDateString('zh-CN'),
@@ -335,12 +337,12 @@ const CategoryManagementPage: React.FC = () => {
     () => [
       {
         id: 'status',
-        label: '状态',
+        label: t('asset.category_management_page.status'),
         type: 'select',
         options: [
-          { label: '全部状态', value: 'all' },
-          { label: '启用', value: 'active' },
-          { label: '停用', value: 'inactive' },
+          { label: t('asset.category_management_page.status_1'), value: 'all' },
+          { label: t('asset.category_management_page.active'), value: 'active' },
+          { label: t('asset.category_management_page.inactive'), value: 'inactive' },
         ],
         value: statusFilter,
         onChange: (value: unknown) => {
@@ -355,22 +357,22 @@ const CategoryManagementPage: React.FC = () => {
   const rowActions: RowAction<AssetCategory>[] = useMemo(
     () => [
       {
-        label: '查看详情',
+        label: t('asset.category_management_page.view_detail'),
         icon: <Eye size={16} />,
         onClick: handleViewDetail,
       },
       {
-        label: '编辑',
+        label: t('asset.category_management_page.edit'),
         icon: <Edit size={16} />,
         onClick: handleEdit,
       },
       {
-        label: '删除',
+        label: t('asset.category_management_page.delete_3'),
         icon: <Trash2 size={16} />,
         color: 'error',
         onClick: (row) => handleDelete(row.id),
         confirm: true,
-        confirmMessage: '确定要删除这个分类吗?',
+        confirmMessage: t('asset.category_management_page.confirm'),
       },
     ],
     [handleViewDetail, handleEdit, handleDelete]
@@ -450,8 +452,8 @@ const CategoryManagementPage: React.FC = () => {
 
   return (
     <PageContainer
-      title='资产分类管理'
-      subtitle='管理资产分类信息，支持多级分类'
+      title={t('asset.category_management_page.text_191d6a')}
+      subtitle={t('asset.category_management_page.info')}
     >
       <ListPageTemplate
         title=''
@@ -461,7 +463,7 @@ const CategoryManagementPage: React.FC = () => {
         loading={isLoading}
         filters={filters}
         searchable
-        searchPlaceholder='搜索分类编码、名称...'
+        searchPlaceholder={t('asset.category_management_page.search')}
         searchValue={searchTerm}
         onSearch={handleSearch}
         pagination={{
@@ -475,14 +477,14 @@ const CategoryManagementPage: React.FC = () => {
         onSelectionChange={(ids) => setSelectedIds(ids.map(String))}
         actions={[
           {
-            label: '新增分类',
+            label: t('asset.category_management_page.add'),
             icon: <Plus size={16} />,
             onClick: handleOpenCreate,
           },
         ]}
         rowActions={rowActions}
         headerContent={statsContent}
-        emptyMessage='暂无分类数据'
+        emptyMessage={t('asset.category_management_page.no_data')}
         getRowId={(row) => row.id}
       />
 
@@ -491,7 +493,7 @@ const CategoryManagementPage: React.FC = () => {
         onClose={() => setShowDialog(false)}
         maxWidth='md'
       >
-        <DialogTitle>{selectedCategory ? '编辑分类' : '新增分类'}</DialogTitle>
+        <DialogTitle>{selectedCategory ? t('asset.category_management_page.edit_1') : t('asset.category_management_page.add')}</DialogTitle>
         <DialogContent>
           <Box
             component='span'
@@ -502,7 +504,7 @@ const CategoryManagementPage: React.FC = () => {
               fontSize: 14,
             }}
           >
-            {selectedCategory ? '修改分类信息' : '填写新分类信息'}
+            {selectedCategory ? t('asset.category_management_page.info_1') : t('asset.category_management_page.info_2')}
           </Box>
           <form onSubmit={handleSubmit}>
             <Box
@@ -540,7 +542,7 @@ const CategoryManagementPage: React.FC = () => {
                   size='small'
                   value={formData.parent_id}
                   onChange={(e) => setFormData({ ...formData, parent_id: e.target.value })}
-                  placeholder='请选择上级分类'
+                  placeholder={t('asset.category_management_page.please_select')}
                 />
               </Box>
               <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1 }}>
@@ -581,7 +583,7 @@ const CategoryManagementPage: React.FC = () => {
                 variant='contained'
                 disabled={createMutation.isPending || updateMutation.isPending}
               >
-                {createMutation.isPending || updateMutation.isPending ? '保存中...' : '保存'}
+                {createMutation.isPending || updateMutation.isPending ? t('asset.category_management_page.save') : t('asset.category_management_page.save_1')}
               </Button>
             </DialogActions>
           </form>
@@ -622,7 +624,7 @@ const CategoryManagementPage: React.FC = () => {
                   <Box component='span'>
                     {selectedCategory.parent_id
                       ? mockCategories.find((p) => p.id === selectedCategory.parent_id)?.name || '-'
-                      : '顶级分类'}
+                      : t('asset.category_management_page.text_f038ff')}
                   </Box>
                 </Box>
                 <Box>

@@ -37,9 +37,11 @@ import { Plus, Edit, Trash2, Eye, Calculator, CheckCircle, Send } from 'lucide-r
 import { apiLogger } from '@/utils/logger';
 import { designTokens } from '@/theme/tokens';
 
+import { useTranslation } from 'react-i18next';
 const ct = designTokens.colors;
 
 const MaterialRequirementPage: React.FC = () => {
+  const { t } = useTranslation();
   const queryClient = useQueryClient();
   const [searchTerm, setSearchTerm] = useState('');
   const [statusFilter, setStatusFilter] = useState<string>('all');
@@ -93,14 +95,14 @@ const MaterialRequirementPage: React.FC = () => {
     mutationFn: (data: CreateMaterialRequirementRequest) =>
       mesApi.materialRequirements.create(data),
     onSuccess: () => {
-      addNotification({ type: 'success', title: '创建成功', message: '新物料需求已创建' });
+      addNotification({ type: 'success', title: t('mes.material_requirement_page.create'), message: t('mes.material_requirement_page.create_1') });
       invalidateRequirements();
       setShowDialog(false);
       resetForm();
     },
     onError: (error: unknown) => {
-      apiLogger.error('操作失败:', error);
-      addNotification({ type: 'error', title: '操作失败', message: '创建物料需求失败' });
+      apiLogger.error(t('mes.material_requirement_page.operation_failed'), error);
+      addNotification({ type: 'error', title: t('mes.material_requirement_page.operation_failed_1'), message: t('mes.material_requirement_page.create_2') });
     },
   });
 
@@ -108,50 +110,50 @@ const MaterialRequirementPage: React.FC = () => {
     mutationFn: ({ id, data }: { id: string; data: UpdateMaterialRequirementRequest }) =>
       mesApi.materialRequirements.update(id, data),
     onSuccess: () => {
-      addNotification({ type: 'success', title: '更新成功', message: '物料需求信息已更新' });
+      addNotification({ type: 'success', title: t('mes.material_requirement_page.update'), message: t('mes.material_requirement_page.update_1') });
       invalidateRequirements();
       setShowDialog(false);
       resetForm();
     },
     onError: (error: unknown) => {
-      apiLogger.error('操作失败:', error);
-      addNotification({ type: 'error', title: '操作失败', message: '更新物料需求失败' });
+      apiLogger.error(t('mes.material_requirement_page.operation_failed'), error);
+      addNotification({ type: 'error', title: t('mes.material_requirement_page.operation_failed_1'), message: t('mes.material_requirement_page.update_2') });
     },
   });
 
   const deleteMutation = useMutation({
     mutationFn: (id: string) => mesApi.materialRequirements.delete(id),
     onSuccess: () => {
-      addNotification({ type: 'success', title: '删除成功', message: '物料需求已删除' });
+      addNotification({ type: 'success', title: t('mes.material_requirement_page.delete_success'), message: t('mes.material_requirement_page.deleted') });
       invalidateRequirements();
     },
     onError: (error: unknown) => {
-      apiLogger.error('删除失败:', error);
-      addNotification({ type: 'error', title: '删除失败', message: '无法删除物料需求' });
+      apiLogger.error(t('mes.material_requirement_page.delete'), error);
+      addNotification({ type: 'error', title: t('mes.material_requirement_page.delete_1'), message: t('mes.material_requirement_page.delete_2') });
     },
   });
 
   const confirmMutation = useMutation({
     mutationFn: (id: string) => mesApi.materialRequirements.confirm(id),
     onSuccess: () => {
-      addNotification({ type: 'success', title: '确认成功', message: '物料需求已确认' });
+      addNotification({ type: 'success', title: t('mes.material_requirement_page.success'), message: t('mes.material_requirement_page.confirmed') });
       invalidateRequirements();
     },
     onError: (error: unknown) => {
-      apiLogger.error('确认失败:', error);
-      addNotification({ type: 'error', title: '确认失败', message: '无法确认物料需求' });
+      apiLogger.error(t('mes.material_requirement_page.fail'), error);
+      addNotification({ type: 'error', title: t('mes.material_requirement_page.fail_1'), message: t('mes.material_requirement_page.confirm') });
     },
   });
 
   const releaseMutation = useMutation({
     mutationFn: (id: string) => mesApi.materialRequirements.release(id),
     onSuccess: () => {
-      addNotification({ type: 'success', title: '下达成功', message: '物料需求已下达' });
+      addNotification({ type: 'success', title: t('mes.material_requirement_page.success_1'), message: t('mes.material_requirement_page.material') });
       invalidateRequirements();
     },
     onError: (error: unknown) => {
-      apiLogger.error('下达失败:', error);
-      addNotification({ type: 'error', title: '下达失败', message: '无法下达物料需求' });
+      apiLogger.error(t('mes.material_requirement_page.fail_2'), error);
+      addNotification({ type: 'error', title: t('mes.material_requirement_page.fail_3'), message: t('mes.material_requirement_page.material_1') });
     },
   });
 
@@ -161,35 +163,35 @@ const MaterialRequirementPage: React.FC = () => {
       if (response.success && response.data) {
         addNotification({
           type: 'success',
-          title: '计算成功',
+          title: t('mes.material_requirement_page.success_2'),
           message: `已生成 ${response.data.length} 条物料需求`,
         });
         invalidateRequirements();
       }
     },
     onError: (error: unknown) => {
-      apiLogger.error('计算失败:', error);
-      addNotification({ type: 'error', title: '计算失败', message: '无法计算物料需求' });
+      apiLogger.error(t('mes.material_requirement_page.fail_4'), error);
+      addNotification({ type: 'error', title: t('mes.material_requirement_page.fail_5'), message: t('mes.material_requirement_page.material_3') });
     },
   });
 
   const getStatusText = (status: string) => {
     const statusMap: Record<string, string> = {
-      draft: '草稿',
-      confirmed: '已确认',
-      released: '已下达',
-      completed: '已完成',
-      cancelled: '已取消',
+      draft: t('mes.material_requirement_page.text_22b433'),
+      confirmed: t('mes.material_requirement_page.confirmed_1'),
+      released: t('mes.material_requirement_page.text_d3c0ae'),
+      completed: t('mes.material_requirement_page.completed'),
+      cancelled: t('mes.material_requirement_page.cancelled'),
     };
     return statusMap[status] || status;
   };
 
   const getPriorityText = (priority?: string) => {
     const priorityMap: Record<string, string> = {
-      urgent: '紧急',
-      high: '高',
-      normal: '普通',
-      low: '低',
+      urgent: t('mes.material_requirement_page.text_cb0ed5'),
+      high: t('mes.material_requirement_page.text_4296d7'),
+      normal: t('mes.material_requirement_page.text_35242c'),
+      low: t('mes.material_requirement_page.text_19ac67'),
     };
     return priorityMap[priority || 'normal'] || priority || '-';
   };
@@ -207,7 +209,7 @@ const MaterialRequirementPage: React.FC = () => {
   };
 
   const handleDelete = (id: string) => {
-    if (!window.confirm('确定要删除这条物料需求吗?')) return;
+    if (!window.confirm(t('mes.material_requirement_page.confirm_1'))) return;
     deleteMutation.mutate(id);
   };
 
@@ -271,11 +273,11 @@ const MaterialRequirementPage: React.FC = () => {
         color: string;
       }
     > = {
-      draft: { label: '草稿', bg: 'grey.100', color: 'text.secondary' },
-      confirmed: { label: '已确认', bg: 'primary.100', color: 'primary.dark' },
-      released: { label: '已下达', bg: 'warning.light', color: 'warning.700' },
-      completed: { label: '已完成', bg: 'success.lighter', color: 'success.700' },
-      cancelled: { label: '已取消', bg: 'error.lighter', color: 'error.dark' },
+      draft: { label: t('mes.material_requirement_page.text_22b433'), bg: 'grey.100', color: 'text.secondary' },
+      confirmed: { label: t('mes.material_requirement_page.confirmed_1'), bg: 'primary.100', color: 'primary.dark' },
+      released: { label: t('mes.material_requirement_page.text_d3c0ae'), bg: 'warning.light', color: 'warning.700' },
+      completed: { label: t('mes.material_requirement_page.completed'), bg: 'success.lighter', color: 'success.700' },
+      cancelled: { label: t('mes.material_requirement_page.cancelled'), bg: 'error.lighter', color: 'error.dark' },
     };
     const s = statusMap[status] || { label: status, bg: 'grey.100', color: 'text.secondary' };
     return (
@@ -296,10 +298,10 @@ const MaterialRequirementPage: React.FC = () => {
         color: string;
       }
     > = {
-      urgent: { label: '紧急', bg: 'error.lighter', color: 'error.dark' },
-      high: { label: '高', bg: 'warning.light', color: 'warning.700' },
-      normal: { label: '普通', bg: 'primary.100', color: 'primary.dark' },
-      low: { label: '低', bg: 'grey.100', color: 'text.secondary' },
+      urgent: { label: t('mes.material_requirement_page.text_cb0ed5'), bg: 'error.lighter', color: 'error.dark' },
+      high: { label: t('mes.material_requirement_page.text_4296d7'), bg: 'warning.light', color: 'warning.700' },
+      normal: { label: t('mes.material_requirement_page.text_35242c'), bg: 'primary.100', color: 'primary.dark' },
+      low: { label: t('mes.material_requirement_page.text_19ac67'), bg: 'grey.100', color: 'text.secondary' },
     };
     const p = priorityMap[priority || 'normal'] || priorityMap.normal;
     return (
@@ -313,29 +315,29 @@ const MaterialRequirementPage: React.FC = () => {
 
   const columns: ColumnDef<MaterialRequirement>[] = useMemo(
     () => [
-      { id: 'mrp_no', label: '需求单号', sortable: true },
-      { id: 'order_number', label: '生产订单', sortable: true },
-      { id: 'product_name', label: '产品名称', sortable: true },
-      { id: 'material_name', label: '物料名称', sortable: true },
-      { id: 'material_code', label: '物料编码', sortable: true },
-      { id: 'specification', label: '规格型号', sortable: true },
-      { id: 'required_quantity', label: '需求数量', sortable: true },
-      { id: 'available_quantity', label: '可用数量', sortable: true },
-      { id: 'shortfall_quantity', label: '缺口数量', sortable: true },
+      { id: 'mrp_no', label: t('mes.material_requirement_page.text_dc8e6a'), sortable: true },
+      { id: 'order_number', label: t('mes.material_requirement_page.production'), sortable: true },
+      { id: 'product_name', label: t('mes.material_requirement_page.product_name'), sortable: true },
+      { id: 'material_name', label: t('mes.material_requirement_page.column_material_name'), sortable: true },
+      { id: 'material_code', label: t('mes.material_requirement_page.column_material_code'), sortable: true },
+      { id: 'specification', label: t('mes.material_requirement_page.spec'), sortable: true },
+      { id: 'required_quantity', label: t('mes.material_requirement_page.column_demand_quantity'), sortable: true },
+      { id: 'available_quantity', label: t('mes.material_requirement_page.quantity'), sortable: true },
+      { id: 'shortfall_quantity', label: t('mes.material_requirement_page.quantity_1'), sortable: true },
       {
         id: 'required_date',
-        label: '需求日期',
+        label: t('mes.material_requirement_page.field_required_date'),
         render: (row) =>
           row.required_date ? new Date(row.required_date).toLocaleDateString('zh-CN') : '-',
       },
       {
         id: 'priority',
-        label: '优先级',
+        label: t('mes.material_requirement_page.text_ee8ecb'),
         render: (row) => getPriorityBadge(row.priority),
       },
       {
         id: 'status',
-        label: '状态',
+        label: t('mes.material_requirement_page.filter_status'),
         render: (row) => getStatusBadge(row.status),
       },
     ],
@@ -346,15 +348,15 @@ const MaterialRequirementPage: React.FC = () => {
     () => [
       {
         id: 'status',
-        label: '状态',
+        label: t('mes.material_requirement_page.filter_status'),
         type: 'select',
         options: [
-          { label: '全部状态', value: 'all' },
-          { label: '草稿', value: 'draft' },
-          { label: '已确认', value: 'confirmed' },
-          { label: '已下达', value: 'released' },
-          { label: '已完成', value: 'completed' },
-          { label: '已取消', value: 'cancelled' },
+          { label: t('mes.material_requirement_page.filter_option_all_status'), value: 'all' },
+          { label: t('mes.material_requirement_page.text_22b433'), value: 'draft' },
+          { label: t('mes.material_requirement_page.confirmed_1'), value: 'confirmed' },
+          { label: t('mes.material_requirement_page.text_d3c0ae'), value: 'released' },
+          { label: t('mes.material_requirement_page.completed'), value: 'completed' },
+          { label: t('mes.material_requirement_page.cancelled'), value: 'cancelled' },
         ],
         value: statusFilter,
         onChange: (value: unknown) => {
@@ -369,36 +371,36 @@ const MaterialRequirementPage: React.FC = () => {
   const rowActions: RowAction<MaterialRequirement>[] = useMemo(
     () => [
       {
-        label: '查看详情',
+        label: t('mes.material_requirement_page.action_view_detail'),
         icon: <Eye size={16} />,
         onClick: handleViewDetail,
       },
       {
-        label: '编辑',
+        label: t('mes.material_requirement_page.action_edit'),
         icon: <Edit size={16} />,
         onClick: handleEdit,
       },
       {
-        label: '确认',
+        label: t('mes.material_requirement_page.confirm_2'),
         icon: <CheckCircle size={16} />,
         color: 'primary',
         onClick: (row) => handleConfirm(row.id),
         show: (row) => row.status === 'draft',
       },
       {
-        label: '下达',
+        label: t('mes.material_requirement_page.text_1d5fcd'),
         icon: <Send size={16} />,
         color: 'success',
         onClick: (row) => handleRelease(row.id),
         show: (row) => row.status === 'confirmed',
       },
       {
-        label: '删除',
+        label: t('mes.material_requirement_page.action_delete'),
         icon: <Trash2 size={16} />,
         color: 'error',
         onClick: (row) => handleDelete(row.id),
         confirm: true,
-        confirmMessage: '确定要删除这条物料需求吗?',
+        confirmMessage: t('mes.material_requirement_page.confirm_1'),
       },
     ],
     [handleViewDetail, handleEdit, handleDelete, handleConfirm, handleRelease]
@@ -525,7 +527,7 @@ const MaterialRequirementPage: React.FC = () => {
         loading={loading}
         filters={filters}
         searchable
-        searchPlaceholder='搜索物料名称或编码...'
+        searchPlaceholder={t('mes.material_requirement_page.material_name')}
         searchValue={searchTerm}
         onSearch={handleSearch}
         pagination={{
@@ -539,19 +541,19 @@ const MaterialRequirementPage: React.FC = () => {
         onSelectionChange={(ids) => setSelectedIds(ids.map(String))}
         actions={[
           {
-            label: '新增需求',
+            label: t('mes.material_requirement_page.dialog_create_title'),
             icon: <Plus size={16} />,
             onClick: handleOpenCreate,
           },
           {
-            label: 'MRP计算',
+            label: t('mes.material_requirement_page.text_3e1f1d'),
             icon: <Calculator size={16} />,
             onClick: handleCalculate,
           },
         ]}
         rowActions={rowActions}
         headerContent={statsContent}
-        emptyMessage='暂无物料需求数据'
+        emptyMessage={t('mes.material_requirement_page.empty_message')}
         getRowId={(row) => row.id}
       />
 
@@ -560,7 +562,7 @@ const MaterialRequirementPage: React.FC = () => {
         onClose={() => setShowDialog(false)}
         maxWidth='md'
       >
-        <DialogTitle>{selectedRequirement ? '编辑物料需求' : '新增物料需求'}</DialogTitle>
+        <DialogTitle>{selectedRequirement ? t('mes.material_requirement_page.edit') : t('mes.material_requirement_page.add')}</DialogTitle>
         <DialogContent>
           <Box
             component='span'
@@ -571,7 +573,7 @@ const MaterialRequirementPage: React.FC = () => {
               fontSize: 14,
             }}
           >
-            {selectedRequirement ? '修改物料需求信息' : '填写新物料需求信息'}
+            {selectedRequirement ? t('mes.material_requirement_page.info') : t('mes.material_requirement_page.info_1')}
           </Box>
           <form onSubmit={handleSubmit}>
             <Box

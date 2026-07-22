@@ -22,9 +22,11 @@ import { apiLogger } from '@/utils/logger';
 import { designTokens } from '@/theme/tokens';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 
+import { useTranslation } from 'react-i18next';
 const ct = designTokens.colors;
 
 const EhsDrillPage: React.FC = () => {
+  const { t } = useTranslation();
   const [searchTerm, setSearchTerm] = useState('');
   const [typeFilter, setTypeFilter] = useState('all');
   const [statusFilter, setStatusFilter] = useState('all');
@@ -50,9 +52,9 @@ const EhsDrillPage: React.FC = () => {
 
   const translateStatus = (status: string) => {
     const statusMap: Record<string, string> = {
-      completed: '已完成',
-      scheduled: '已计划',
-      in_progress: '进行中',
+      completed: t('ehs.ehs_drill_page.completed'),
+      scheduled: t('ehs.ehs_drill_page.plan'),
+      in_progress: t('ehs.ehs_drill_page.in_progress'),
     };
     return statusMap[status] || status;
   };
@@ -107,12 +109,12 @@ const EhsDrillPage: React.FC = () => {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['ehs-drills'] });
-      addNotification({ title: '成功', message: '演练记录创建成功', type: 'success' });
+      addNotification({ title: t('ehs.ehs_drill_page.success'), message: t('ehs.ehs_drill_page.create'), type: 'success' });
       setShowCreateModal(false);
     },
     onError: (err) => {
-      addNotification({ title: '错误', message: '创建失败', type: 'error' });
-      apiLogger.error('创建演练记录失败:', err);
+      addNotification({ title: t('ehs.ehs_drill_page.error'), message: t('ehs.ehs_drill_page.create_1'), type: 'error' });
+      apiLogger.error(t('ehs.ehs_drill_page.create_2'), err);
     },
   });
 
@@ -154,9 +156,9 @@ const EhsDrillPage: React.FC = () => {
   const stats = useMemo(
     () => ({
       total: drills.length,
-      completed: drills.filter((d) => d.status === '已完成').length,
-      scheduled: drills.filter((d) => d.status === '已计划').length,
-      inProgress: drills.filter((d) => d.status === '进行中').length,
+      completed: drills.filter((d) => d.status === t('ehs.ehs_drill_page.completed')).length,
+      scheduled: drills.filter((d) => d.status === t('ehs.ehs_drill_page.plan')).length,
+      inProgress: drills.filter((d) => d.status === t('ehs.ehs_drill_page.in_progress')).length,
     }),
     [drills]
   );
@@ -200,27 +202,27 @@ const EhsDrillPage: React.FC = () => {
   const columns: ColumnDef<DrillRecord>[] = [
     {
       id: 'drill_no',
-      label: '演练编号',
+      label: t('ehs.ehs_drill_page.text_855fce'),
       width: 120,
       sortable: true,
     },
     {
       id: 'drill_name',
-      label: '演练名称',
+      label: t('ehs.ehs_drill_page.name'),
       width: 200,
       sortable: true,
       render: (row) => <Typography sx={{ fontWeight: 500 }}>{row.drill_name}</Typography>,
     },
     {
       id: 'drill_date',
-      label: '演练日期',
+      label: t('ehs.ehs_drill_page.date'),
       width: 130,
       sortable: true,
       render: (row) => row.drill_date || '-',
     },
     {
       id: 'location',
-      label: '地点',
+      label: t('ehs.ehs_drill_page.text_fc1a7d'),
       width: 150,
       render: (row) => (
         <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
@@ -231,7 +233,7 @@ const EhsDrillPage: React.FC = () => {
     },
     {
       id: 'participants',
-      label: '参与人数',
+      label: t('ehs.ehs_drill_page.participant'),
       width: 100,
       align: 'center',
       render: (row) => {
@@ -242,7 +244,7 @@ const EhsDrillPage: React.FC = () => {
     },
     {
       id: 'status',
-      label: '状态',
+      label: t('ehs.ehs_drill_page.status'),
       width: 100,
       align: 'center',
       sortable: true,
@@ -252,7 +254,7 @@ const EhsDrillPage: React.FC = () => {
 
   const rowActions: RowAction<DrillRecord>[] = [
     {
-      label: '详情',
+      label: t('ehs.ehs_drill_page.detail'),
       icon: <Eye size={16} />,
       onClick: (row) => handleView(row),
       color: 'primary',
@@ -262,14 +264,14 @@ const EhsDrillPage: React.FC = () => {
   const filters = [
     {
       id: 'status',
-      label: '状态',
+      label: t('ehs.ehs_drill_page.status'),
       type: 'select' as const,
       value: statusFilter,
       options: [
-        { label: '全部', value: 'all' },
-        { label: '已完成', value: '已完成' },
-        { label: '已计划', value: '已计划' },
-        { label: '进行中', value: '进行中' },
+        { label: t('ehs.ehs_drill_page.all'), value: 'all' },
+        { label: t('ehs.ehs_drill_page.completed'), value: t('ehs.ehs_drill_page.completed') },
+        { label: t('ehs.ehs_drill_page.plan'), value: t('ehs.ehs_drill_page.plan') },
+        { label: t('ehs.ehs_drill_page.in_progress'), value: t('ehs.ehs_drill_page.in_progress') },
       ],
       onChange: (value: unknown) => {
         setStatusFilter(value as string);
@@ -289,28 +291,28 @@ const EhsDrillPage: React.FC = () => {
         }}
       >
         <StatCard
-          label='演练总数'
+          label={t('ehs.ehs_drill_page.text_f6b2fd')}
           value={stats.total}
           icon={<Clock sx={{ width: 20, height: 20, color: 'warning.main' }} />}
           bgColor='warning.light'
           iconBgColor='warning.lighter'
         />
         <StatCard
-          label='已完成'
+          label={t('ehs.ehs_drill_page.completed')}
           value={stats.completed}
           icon={<Clock sx={{ width: 20, height: 20, color: 'success.dark' }} />}
           bgColor='white'
           iconBgColor='success.lighter'
         />
         <StatCard
-          label='已计划'
+          label={t('ehs.ehs_drill_page.plan')}
           value={stats.scheduled}
           icon={<Clock sx={{ width: 20, height: 20, color: 'primary.main' }} />}
           bgColor='white'
           iconBgColor='primary.100'
         />
         <StatCard
-          label='进行中'
+          label={t('ehs.ehs_drill_page.in_progress')}
           value={stats.inProgress}
           icon={<Clock sx={{ width: 20, height: 20, color: ct.yellow[600] }} />}
           bgColor='white'
@@ -323,7 +325,7 @@ const EhsDrillPage: React.FC = () => {
 
   const headerActions = [
     {
-      label: '新增演练',
+      label: t('ehs.ehs_drill_page.add'),
       icon: <Plus size={16} />,
       onClick: handleCreate,
       variant: 'contained' as const,
@@ -352,7 +354,7 @@ const EhsDrillPage: React.FC = () => {
           onPageChange: setCurrentPage,
         }}
         searchable
-        searchPlaceholder='搜索演练名称或编号...'
+        searchPlaceholder={t('ehs.ehs_drill_page.search')}
         searchValue={searchTerm}
         onSearch={(value) => {
           setSearchTerm(value);
@@ -386,28 +388,28 @@ const EhsDrillPage: React.FC = () => {
           <Box sx={{ pt: 1, display: 'flex', flexDirection: 'column', gap: 2 }}>
             <TextField
               fullWidth
-              label='演练编号 *'
+              label={t('ehs.ehs_drill_page.text_ebb463')}
               value={formData.drill_no}
               onChange={(e) => setFormData({ ...formData, drill_no: e.target.value })}
-              placeholder='请输入演练编号'
+              placeholder={t('ehs.ehs_drill_page.please_input')}
             />
             <TextField
               fullWidth
-              label='演练名称 *'
+              label={t('ehs.ehs_drill_page.name_1')}
               value={formData.name}
               onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-              placeholder='请输入演练名称'
+              placeholder={t('ehs.ehs_drill_page.please_input_1')}
             />
             <TextField
               fullWidth
-              label='演练类型 *'
+              label={t('ehs.ehs_drill_page.type')}
               value={formData.drill_type}
               onChange={(e) => setFormData({ ...formData, drill_type: e.target.value })}
-              placeholder='请输入演练类型'
+              placeholder={t('ehs.ehs_drill_page.please_input_2')}
             />
             <TextField
               fullWidth
-              label='演练日期'
+              label={t('ehs.ehs_drill_page.date')}
               type='date'
               value={formData.date}
               onChange={(e) => setFormData({ ...formData, date: e.target.value })}
@@ -415,41 +417,41 @@ const EhsDrillPage: React.FC = () => {
             />
             <TextField
               fullWidth
-              label='参与人员'
+              label={t('ehs.ehs_drill_page.participant_1')}
               value={formData.participants}
               onChange={(e) => setFormData({ ...formData, participants: e.target.value })}
-              placeholder='多个人员用逗号分隔'
+              placeholder={t('ehs.ehs_drill_page.personnel')}
             />
             <TextField
               fullWidth
-              label='演练地点'
+              label={t('ehs.ehs_drill_page.text_836dce')}
               value={formData.location}
               onChange={(e) => setFormData({ ...formData, location: e.target.value })}
-              placeholder='请输入演练地点'
+              placeholder={t('ehs.ehs_drill_page.please_input_3')}
             />
             <TextField
               fullWidth
-              label='演练时长（小时）'
+              label={t('ehs.ehs_drill_page.text_3c7fbd')}
               value={formData.duration}
               onChange={(e) => setFormData({ ...formData, duration: e.target.value })}
-              placeholder='如：2'
+              placeholder={t('ehs.ehs_drill_page.text_c5f072')}
               type='number'
             />
             <TextField
               fullWidth
-              label='演练评估'
+              label={t('ehs.ehs_drill_page.text_022fe6')}
               value={formData.evaluation}
               onChange={(e) => setFormData({ ...formData, evaluation: e.target.value })}
-              placeholder='请输入演练评估'
+              placeholder={t('ehs.ehs_drill_page.please_input_4')}
               multiline
               rows={2}
             />
             <TextField
               fullWidth
-              label='发现问题'
+              label={t('ehs.ehs_drill_page.text_fa77ab')}
               value={formData.issues}
               onChange={(e) => setFormData({ ...formData, issues: e.target.value })}
-              placeholder='多个问题用逗号分隔'
+              placeholder={t('ehs.ehs_drill_page.text_adbc7e')}
               multiline
               rows={2}
             />

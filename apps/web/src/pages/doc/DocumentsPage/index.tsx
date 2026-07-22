@@ -33,6 +33,7 @@ import { useNotificationStore } from '@/store';
 import { DocumentPreviewModal } from '@/components/DocumentPreviewModal';
 import { apiLogger } from '@/utils/logger';
 import { ConfirmDialog } from '@topems/shared-components';
+import { useConfirmDialog } from '@/hooks';
 import { DOC_PATHS } from '@/modules/doc/config';
 import { DASHBOARD_PATHS } from '@/routes/dashboard';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
@@ -83,13 +84,12 @@ const DocumentsPage: React.FC = () => {
   const [sortOrder, setSortOrder] = useState<'asc' | 'desc'>('desc');
   const [fileTypeFilter, setFileTypeFilter] = useState<string>('all');
   const [isDragging, setIsDragging] = useState(false);
-  const [confirmDialogOpen, setConfirmDialogOpen] = useState(false);
-  const [confirmDialogConfig, setConfirmDialogConfig] = useState<{
-    title: string;
-    message: string;
-    onConfirm: () => void;
-    danger?: boolean;
-  } | null>(null);
+  const {
+    confirmOpen: confirmDialogOpen,
+    confirmConfig: confirmDialogConfig,
+    openConfirm: openConfirmDialog,
+    closeConfirm: setConfirmDialogClosed,
+  } = useConfirmDialog();
   const fileInputRef = useRef<HTMLInputElement>(null);
   const dropZoneRef = useRef<HTMLDivElement>(null);
 
@@ -202,16 +202,6 @@ const DocumentsPage: React.FC = () => {
         fileInputRef.current.value = '';
       }
     }
-  };
-
-  const openConfirmDialog = (config: {
-    title: string;
-    message: string;
-    onConfirm: () => void;
-    danger?: boolean;
-  }) => {
-    setConfirmDialogConfig(config);
-    setConfirmDialogOpen(true);
   };
 
   const handleDelete = (id: string) => {
@@ -1443,10 +1433,10 @@ const DocumentsPage: React.FC = () => {
 
       <ConfirmDialog
         isOpen={confirmDialogOpen}
-        onClose={() => setConfirmDialogOpen(false)}
+        onClose={setConfirmDialogClosed}
         onConfirm={() => {
           confirmDialogConfig?.onConfirm();
-          setConfirmDialogOpen(false);
+          setConfirmDialogClosed();
         }}
         title={confirmDialogConfig?.title || ''}
         message={confirmDialogConfig?.message || ''}

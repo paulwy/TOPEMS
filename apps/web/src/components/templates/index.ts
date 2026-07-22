@@ -1,156 +1,41 @@
-// 页面模板组件
-// 用于统一页面布局和样式
-// 核心8种模板：dashboard, list, detail, form, tree, stats, settings, kanban
+/**
+ * 页面模板体系（V23.0 精简版）
+ *
+ * 分层结构：
+ * - core/       5 个核心模板（覆盖 80% 场景，默认导入）
+ * - extensions/ 10 个扩展模板（按需导入，支持 lazy load）
+ *
+ * 使用建议：
+ * - 优先使用核心模板
+ * - 核心模板无法满足时，引入对应扩展
+ * - 使用 TemplateSelector 自动推荐合适模板
+ */
 
+// 核心模板
+export * from './core';
+
+// 扩展模板（按需导入，建议使用动态 import）
+export * from './extensions';
+
+// 通用组件
 export { PageHeader } from './PageHeader';
 export type { BreadcrumbItem, PageAction, PageHeaderProps } from './PageHeader';
 
-export { ListPageTemplate } from './ListPageTemplate';
+// 向后兼容别名导出（原 index.ts 中存在，部分业务页面在使用的别名）
+// 这些类型在 core/extensions 分层中未导出，单独保留以维持兼容性
+export type { StatCard as TreeStatCard } from './TreePageTemplate';
+export type { StatCard as StatsStatCard } from './StatsPageTemplate';
+export type { FilterConfig as CardFilterConfig } from './CardListTemplate';
 export type {
-  ColumnDef,
-  FilterConfig,
-  FilterOption,
-  RowAction,
-  BatchAction,
-  ListPageTemplateProps,
-  ExpandedRowRenderProps,
-  ColumnConfig,
-} from './ListPageTemplate';
-
-export { DetailPageTemplate } from './DetailPageTemplate';
-export type {
-  TabConfig,
-  SectionConfig,
-  DetailField,
-  DetailPageTemplateProps,
-} from './DetailPageTemplate';
-
-export { FormPageTemplate } from './FormPageTemplate';
-export type {
-  FormField,
-  FormSection,
-  FormPageTemplateProps,
-  FieldDependency,
-  ValidationToast,
-} from './FormPageTemplate';
-
-export { DashboardTemplate } from './DashboardTemplate';
-export type {
-  StatCard,
-  ChartCard,
-  RecentItem,
-  QuickAction,
-  DashboardTemplateProps,
-} from './DashboardTemplate';
-
-export { TreePageTemplate } from './TreePageTemplate';
-export type {
-  TreeNode,
-  TreeConfig,
-  StatCard as TreeStatCard,
-  TreeAction,
-  TreePageTemplateProps,
-} from './TreePageTemplate';
-
-export { CardListTemplate } from './CardListTemplate';
-export type {
-  MetricStatCard,
-  FilterConfig as CardFilterConfig,
-  CardAction,
-  CardRenderConfig,
-  CardListTemplateProps,
-} from './CardListTemplate';
-
-export { StatsPageTemplate } from './StatsPageTemplate';
-export type {
-  StatCard as StatsStatCard,
-  ChartData,
-  ChartConfig,
-  TableColumn,
-  DataTable,
-  TimeRangeOption,
-  TabItem,
-  StatsPageTemplateProps,
-} from './StatsPageTemplate';
-
-export { WizardPageTemplate } from './WizardPageTemplate';
-export type { WizardStep, WizardAction, WizardPageTemplateProps } from './WizardPageTemplate';
-
-export { KanbanPageTemplate } from './KanbanPageTemplate';
-export type {
-  KanbanCard,
-  KanbanColumn,
-  KanbanAction,
-  KanbanStats,
-  KanbanPageTemplateProps,
-} from './KanbanPageTemplate';
-
-export { TimelinePageTemplate } from './TimelinePageTemplate';
-export type {
-  TimelineNode,
-  TimelineGroup,
-  TimelineAction,
-  TimeRange,
-  TimelinePageTemplateProps,
-} from './TimelinePageTemplate';
-
-export { SettingsPageTemplate } from './SettingsPageTemplate';
-export type {
-  SettingValueType,
-  SettingOption,
-  SettingField,
-  SettingSection,
-  SettingTab,
-  SettingsPageTemplateProps,
-} from './SettingsPageTemplate';
-
-export { MarkdownEditorTemplate } from './MarkdownEditorTemplate';
-export type {
-  MarkdownVersion,
-  MarkdownEditorToolbarAction,
-  MarkdownEditorTemplateProps,
-} from './MarkdownEditorTemplate';
-
-export { default as TemplateDemoPage } from './TemplateDemoPage';
-
-export { ReportDesignerTemplate } from './ReportDesignerTemplate';
-export type {
-  DataSourceType,
-  LayoutType,
-  ChartType,
-  FilterOperator,
-  SortDirection,
-  DataSourceField,
-  DataSourceConfig,
-  SelectedField,
-  FilterCondition,
-  GroupByConfig,
-  ReportChartConfig,
-  LayoutConfig,
-  ReportDesignerTemplateProps,
-  ReportDesignerState,
-} from './ReportDesignerTemplate';
-
-export { GisMapTemplate } from './GisMapTemplate';
-export type {
-  MapMarker,
-  MapLayer,
-  GeoFence,
-  TrackPoint,
-  GisMapTemplateProps,
-} from './GisMapTemplate';
-
-export { MasterDetailPageTemplate } from './MasterDetailPageTemplate';
-export type {
-  MasterColumn,
-  MasterRowAction,
   SortConfig as MasterSortConfig,
   PaginationConfig as MasterPaginationConfig,
-  MasterDetailPageTemplateProps,
 } from './MasterDetailPageTemplate';
 
+// 模板分类与推荐
 export {
   TEMPLATE_CLASSIFICATIONS,
+  CORE_TEMPLATES,
+  EXTENSION_TEMPLATES,
   CORE_8_TEMPLATES,
   getTemplateByType,
   getTemplatesByCategory,
@@ -158,3 +43,6 @@ export {
   recommendTemplate,
 } from './classification';
 export type { PageTemplateType, TemplateClassification } from './classification';
+
+// 模板辅助工具
+export { default as TemplateDemoPage } from './TemplateDemoPage';

@@ -43,15 +43,32 @@ import { PageContainer } from '@/components/common/PageContainerV2';
 import type { SafetyIssue, SafetyIssueDetail, Rectification, Verification } from '@/api/ehs';
 import { useNotificationStore } from '@/store';
 import { designTokens } from '@/theme/tokens';
+import { useUrlListState } from '@/hooks';
 
+import { useTranslation } from 'react-i18next';
 const ct = designTokens.colors;
 
 const EhsHazardPage: React.FC = () => {
+  const { t } = useTranslation();
   const navigate = useNavigate();
   const queryClient = useQueryClient();
-  const [searchTerm, setSearchTerm] = useState('');
-  const [levelFilter, setLevelFilter] = useState('all');
-  const [statusFilter, setStatusFilter] = useState('all');
+
+  const {
+    searchQuery,
+    setSearchQuery,
+    debouncedSearch,
+    filters: urlFilters,
+    setFilter,
+    setCurrentPage,
+  } = useUrlListState<{ level: string; status: string }>({
+    defaultPageSize: 10,
+    defaultFilters: { level: 'all', status: 'all' },
+    baseIndex: 1,
+    historyMode: 'replace',
+  });
+  const levelFilter = urlFilters.level;
+  const statusFilter = urlFilters.status;
+
   const [showCreateModal, setShowCreateModal] = useState(false);
   const [showDetailModal, setShowDetailModal] = useState(false);
   const [showRectificationModal, setShowRectificationModal] = useState(false);
@@ -82,12 +99,12 @@ const EhsHazardPage: React.FC = () => {
 
   const translateStatus = (status: string) => {
     const statusMap: Record<string, string> = {
-      reported: '待整改',
-      rectifying: '整改中',
-      pending_verification: '待验收',
-      verified: '已验收',
-      closed: '已闭环',
-      rejected: '已驳回',
+      reported: t('ehs.ehs_hazard_page.text_e17445'),
+      rectifying: t('ehs.ehs_hazard_page.text_1aa44e'),
+      pending_verification: t('ehs.ehs_hazard_page.text_9e251a'),
+      verified: t('ehs.ehs_hazard_page.text_74fdfc'),
+      closed: t('ehs.ehs_hazard_page.text_653162'),
+      rejected: t('ehs.ehs_hazard_page.text_dbf36d'),
     };
     return statusMap[status] || status;
   };
@@ -122,51 +139,51 @@ const EhsHazardPage: React.FC = () => {
         setVerification(data.verification || null);
       }
     } catch (err: unknown) {
-      apiLogger.error('加载隐患详情失败:', err);
+      apiLogger.error(t('ehs.ehs_hazard_page.detail'), err);
     }
   };
 
   const getLevelLabel = (level: string) => {
     const levelMap: Record<string, string> = {
-      major: '重大隐患',
-      serious: '严重隐患',
-      general: '一般隐患',
-      minor: '轻微隐患',
+      major: t('ehs.ehs_hazard_page.text_3c2d0c'),
+      serious: t('ehs.ehs_hazard_page.text_fc35a0'),
+      general: t('ehs.ehs_hazard_page.text_879ee5'),
+      minor: t('ehs.ehs_hazard_page.text_545004'),
     };
     return levelMap[level] || level;
   };
 
   const getCategoryLabel = (category: string) => {
     const categoryMap: Record<string, string> = {
-      equipment: '设备隐患',
-      environment: '环境隐患',
-      behavior: '行为隐患',
-      management: '管理隐患',
-      fire: '消防隐患',
-      electrical: '电气隐患',
-      chemical: '化学品隐患',
-      structural: '结构隐患',
+      equipment: t('ehs.ehs_hazard_page.equipment'),
+      environment: t('ehs.ehs_hazard_page.text_38106d'),
+      behavior: t('ehs.ehs_hazard_page.text_db08bc'),
+      management: t('ehs.ehs_hazard_page.text_b22404'),
+      fire: t('ehs.ehs_hazard_page.text_a1c672'),
+      electrical: t('ehs.ehs_hazard_page.text_02d8cd'),
+      chemical: t('ehs.ehs_hazard_page.text_0922c5'),
+      structural: t('ehs.ehs_hazard_page.text_ace272'),
     };
     return categoryMap[category] || category;
   };
 
   const getSourceLabel = (source: string) => {
     const sourceMap: Record<string, string> = {
-      inspection: '检查发现',
-      reporting: '员工上报',
-      audit: '审计发现',
-      accident: '事故排查',
-      monitoring: '监测预警',
+      inspection: t('ehs.ehs_hazard_page.text_8f9df1'),
+      reporting: t('ehs.ehs_hazard_page.text_f3924b'),
+      audit: t('ehs.ehs_hazard_page.text_f6cc4d'),
+      accident: t('ehs.ehs_hazard_page.text_be9271'),
+      monitoring: t('ehs.ehs_hazard_page.text_522500'),
     };
     return sourceMap[source] || source;
   };
 
   const getLevelBadge = (level: string) => {
     const levelMap: Record<string, { bg: string; color: string; label: string }> = {
-      major: { bg: 'error.lighter', color: 'error.dark', label: '重大' },
-      serious: { bg: 'error.light', color: 'error.darker', label: '严重' },
-      general: { bg: 'warning.100', color: ct.yellow[600], label: '一般' },
-      minor: { bg: 'success.lighter', color: 'success.dark', label: '轻微' },
+      major: { bg: 'error.lighter', color: 'error.dark', label: t('ehs.ehs_hazard_page.text_5a558d') },
+      serious: { bg: 'error.light', color: 'error.darker', label: t('ehs.ehs_hazard_page.text_e2e27a') },
+      general: { bg: 'warning.100', color: ct.yellow[600], label: t('ehs.ehs_hazard_page.text_2ab01e') },
+      minor: { bg: 'success.lighter', color: 'success.dark', label: t('ehs.ehs_hazard_page.text_b3bd3d') },
     };
     const colors = levelMap[level] || { bg: 'grey.100', color: 'text.secondary', label: level };
     return (
@@ -218,21 +235,21 @@ const EhsHazardPage: React.FC = () => {
   };
 
   const columns: ColumnDef<SafetyIssue>[] = [
-    { id: 'hazard_no', label: '隐患编号' },
-    { id: 'title', label: '隐患名称' },
+    { id: 'hazard_no', label: t('ehs.ehs_hazard_page.text_10296d') },
+    { id: 'title', label: t('ehs.ehs_hazard_page.name') },
     {
       id: 'level',
-      label: '等级',
+      label: t('ehs.ehs_hazard_page.text_95e0d7'),
       render: (row) => getLevelBadge(row.level),
     },
     {
       id: 'category',
-      label: '类别',
+      label: t('ehs.ehs_hazard_page.text_383a6d'),
       render: (row) => getCategoryLabel(row.category),
     },
     {
       id: 'location',
-      label: '位置',
+      label: t('ehs.ehs_hazard_page.text_d4d2a6'),
       render: (row) => (
         <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
           <MapPin style={{ width: 14, height: 14 }} />
@@ -242,17 +259,17 @@ const EhsHazardPage: React.FC = () => {
     },
     {
       id: 'source',
-      label: '来源',
+      label: t('ehs.ehs_hazard_page.text_26ca20'),
       render: (row) => getSourceLabel(row.source),
     },
     {
       id: 'status',
-      label: '状态',
+      label: t('ehs.ehs_hazard_page.status'),
       render: (row) => getStatusBadge(row.status),
     },
     {
       id: 'actions',
-      label: '操作',
+      label: t('ehs.ehs_hazard_page.action'),
       render: (row) => (
         <Box sx={{ display: 'flex', gap: 1 }}>
           <Button
@@ -269,8 +286,8 @@ const EhsHazardPage: React.FC = () => {
 
   const filteredIssues = issues.filter((issue) => {
     const matchesSearch =
-      issue.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      issue.hazard_no.toLowerCase().includes(searchTerm.toLowerCase());
+      issue.title.toLowerCase().includes(debouncedSearch.toLowerCase()) ||
+      issue.hazard_no.toLowerCase().includes(debouncedSearch.toLowerCase());
     const matchesLevel = levelFilter === 'all' || issue.level === levelFilter;
     const matchesStatus = statusFilter === 'all' || issue.status === statusFilter;
     return matchesSearch && matchesLevel && matchesStatus;
@@ -298,13 +315,13 @@ const EhsHazardPage: React.FC = () => {
     mutationFn: (data: Parameters<typeof ehsApi.createSafetyIssue>[0]) =>
       ehsApi.createSafetyIssue(data),
     onSuccess: () => {
-      addNotification({ title: '成功', message: '隐患上报成功', type: 'success' });
+      addNotification({ title: t('ehs.ehs_hazard_page.success'), message: t('ehs.ehs_hazard_page.success_1'), type: 'success' });
       invalidateIssues();
       setShowCreateModal(false);
     },
     onError: (error: unknown) => {
-      apiLogger.error('创建隐患失败:', error);
-      addNotification({ title: '错误', message: '上报失败', type: 'error' });
+      apiLogger.error(t('ehs.ehs_hazard_page.create'), error);
+      addNotification({ title: t('ehs.ehs_hazard_page.error'), message: t('ehs.ehs_hazard_page.fail'), type: 'error' });
     },
   });
 
@@ -338,14 +355,14 @@ const EhsHazardPage: React.FC = () => {
       data: Parameters<typeof ehsApi.startRectification>[1];
     }) => ehsApi.startRectification(id, data),
     onSuccess: () => {
-      addNotification({ title: '成功', message: '整改任务创建成功', type: 'success' });
+      addNotification({ title: t('ehs.ehs_hazard_page.success'), message: t('ehs.ehs_hazard_page.create_1'), type: 'success' });
       invalidateIssues();
       setShowRectificationModal(false);
       if (selectedIssue) void loadIssueDetail(selectedIssue.id);
     },
     onError: (error: unknown) => {
-      apiLogger.error('创建整改任务失败:', error);
-      addNotification({ title: '错误', message: '创建失败', type: 'error' });
+      apiLogger.error(t('ehs.ehs_hazard_page.create_2'), error);
+      addNotification({ title: t('ehs.ehs_hazard_page.error'), message: t('ehs.ehs_hazard_page.create_3'), type: 'error' });
     },
   });
 
@@ -364,13 +381,13 @@ const EhsHazardPage: React.FC = () => {
   const submitRectificationMutation = useMutation({
     mutationFn: (id: string) => ehsApi.submitRectification(id),
     onSuccess: () => {
-      addNotification({ title: '成功', message: '整改完成，等待验收', type: 'success' });
+      addNotification({ title: t('ehs.ehs_hazard_page.success'), message: t('ehs.ehs_hazard_page.completed'), type: 'success' });
       invalidateIssues();
       if (selectedIssue) void loadIssueDetail(selectedIssue.id);
     },
     onError: (error: unknown) => {
-      apiLogger.error('提交整改失败:', error);
-      addNotification({ title: '错误', message: '提交失败', type: 'error' });
+      apiLogger.error(t('ehs.ehs_hazard_page.submit'), error);
+      addNotification({ title: t('ehs.ehs_hazard_page.error'), message: t('ehs.ehs_hazard_page.submit_1'), type: 'error' });
     },
   });
 
@@ -397,14 +414,14 @@ const EhsHazardPage: React.FC = () => {
       data: Parameters<typeof ehsApi.verifySafetyIssue>[1];
     }) => ehsApi.verifySafetyIssue(id, data),
     onSuccess: () => {
-      addNotification({ title: '成功', message: '验收完成', type: 'success' });
+      addNotification({ title: t('ehs.ehs_hazard_page.success'), message: t('ehs.ehs_hazard_page.completed_1'), type: 'success' });
       invalidateIssues();
       setShowVerificationModal(false);
       if (selectedIssue) void loadIssueDetail(selectedIssue.id);
     },
     onError: (error: unknown) => {
-      apiLogger.error('验收失败:', error);
-      addNotification({ title: '错误', message: '验收失败', type: 'error' });
+      apiLogger.error(t('ehs.ehs_hazard_page.fail_1'), error);
+      addNotification({ title: t('ehs.ehs_hazard_page.error'), message: t('ehs.ehs_hazard_page.fail_2'), type: 'error' });
     },
   });
 
@@ -423,13 +440,13 @@ const EhsHazardPage: React.FC = () => {
   const closeIssueMutation = useMutation({
     mutationFn: (id: string) => ehsApi.closeSafetyIssue(id),
     onSuccess: () => {
-      addNotification({ title: '成功', message: '隐患已闭环', type: 'success' });
+      addNotification({ title: t('ehs.ehs_hazard_page.success'), message: t('ehs.ehs_hazard_page.text_aa1147'), type: 'success' });
       invalidateIssues();
       setShowDetailModal(false);
     },
     onError: (error: unknown) => {
-      apiLogger.error('闭环失败:', error);
-      addNotification({ title: '错误', message: '闭环失败', type: 'error' });
+      apiLogger.error(t('ehs.ehs_hazard_page.fail_3'), error);
+      addNotification({ title: t('ehs.ehs_hazard_page.error'), message: t('ehs.ehs_hazard_page.fail_4'), type: 'error' });
     },
   });
 
@@ -442,50 +459,56 @@ const EhsHazardPage: React.FC = () => {
     total: issues.length,
     major: issues.filter((i) => i.level === 'major').length,
     serious: issues.filter((i) => i.level === 'serious').length,
-    pending: issues.filter((i) => i.status === '待整改').length,
-    rectifying: issues.filter((i) => i.status === '整改中').length,
-    pendingVerification: issues.filter((i) => i.status === '待验收').length,
-    closed: issues.filter((i) => i.status === '已闭环').length,
+    pending: issues.filter((i) => i.status === t('ehs.ehs_hazard_page.text_e17445')).length,
+    rectifying: issues.filter((i) => i.status === t('ehs.ehs_hazard_page.text_1aa44e')).length,
+    pendingVerification: issues.filter((i) => i.status === t('ehs.ehs_hazard_page.text_9e251a')).length,
+    closed: issues.filter((i) => i.status === t('ehs.ehs_hazard_page.text_653162')).length,
   };
 
   const filters = [
     {
       id: 'level',
-      label: '隐患等级',
+      label: t('ehs.ehs_hazard_page.text_fbad1c'),
       type: 'select' as const,
       options: [
-        { label: '全部', value: 'all' },
-        { label: '重大', value: 'major' },
-        { label: '严重', value: 'serious' },
-        { label: '一般', value: 'general' },
-        { label: '轻微', value: 'minor' },
+        { label: t('ehs.ehs_hazard_page.all'), value: 'all' },
+        { label: t('ehs.ehs_hazard_page.text_5a558d'), value: 'major' },
+        { label: t('ehs.ehs_hazard_page.text_e2e27a'), value: 'serious' },
+        { label: t('ehs.ehs_hazard_page.text_2ab01e'), value: 'general' },
+        { label: t('ehs.ehs_hazard_page.text_b3bd3d'), value: 'minor' },
       ],
       value: levelFilter,
-      onChange: (value: unknown) => setLevelFilter(value as string),
+      onChange: (value: unknown) => {
+        setFilter('level', value as string);
+        setCurrentPage(1);
+      },
     },
     {
       id: 'status',
-      label: '状态',
+      label: t('ehs.ehs_hazard_page.status'),
       type: 'select' as const,
       options: [
-        { label: '全部', value: 'all' },
-        { label: '待整改', value: '待整改' },
-        { label: '整改中', value: '整改中' },
-        { label: '待验收', value: '待验收' },
-        { label: '已验收', value: '已验收' },
-        { label: '已闭环', value: '已闭环' },
-        { label: '已驳回', value: '已驳回' },
+        { label: t('ehs.ehs_hazard_page.all'), value: 'all' },
+        { label: t('ehs.ehs_hazard_page.text_e17445'), value: t('ehs.ehs_hazard_page.text_e17445') },
+        { label: t('ehs.ehs_hazard_page.text_1aa44e'), value: t('ehs.ehs_hazard_page.text_1aa44e') },
+        { label: t('ehs.ehs_hazard_page.text_9e251a'), value: t('ehs.ehs_hazard_page.text_9e251a') },
+        { label: t('ehs.ehs_hazard_page.text_74fdfc'), value: t('ehs.ehs_hazard_page.text_74fdfc') },
+        { label: t('ehs.ehs_hazard_page.text_653162'), value: t('ehs.ehs_hazard_page.text_653162') },
+        { label: t('ehs.ehs_hazard_page.text_dbf36d'), value: t('ehs.ehs_hazard_page.text_dbf36d') },
       ],
       value: statusFilter,
-      onChange: (value: unknown) => setStatusFilter(value as string),
+      onChange: (value: unknown) => {
+        setFilter('status', value as string);
+        setCurrentPage(1);
+      },
     },
   ];
 
-  const steps = ['隐患上报', '整改中', '待验收', '已验收', '已闭环'];
+  const steps = [t('ehs.ehs_hazard_page.text_581f96'), t('ehs.ehs_hazard_page.text_1aa44e'), t('ehs.ehs_hazard_page.text_9e251a'), t('ehs.ehs_hazard_page.text_74fdfc'), t('ehs.ehs_hazard_page.text_653162')];
 
   const headerActions = [
     {
-      label: '上报隐患',
+      label: t('ehs.ehs_hazard_page.text_1ed126'),
       icon: <Plus style={{ width: 18, height: 18 }} />,
       onClick: handleCreate,
       variant: 'contained' as const,
@@ -654,10 +677,10 @@ const EhsHazardPage: React.FC = () => {
         loading={loading}
         filters={filters}
         searchable
-        searchPlaceholder='搜索隐患名称或编号...'
-        searchValue={searchTerm}
-        onSearch={(value) => setSearchTerm(value)}
-        emptyMessage='暂无隐患记录'
+        searchPlaceholder={t('ehs.ehs_hazard_page.search')}
+        searchValue={searchQuery}
+        onSearch={(value) => setSearchQuery(value)}
+        emptyMessage={t('ehs.ehs_hazard_page.no_data')}
         onRefresh={() => queryClient.invalidateQueries({ queryKey: QUERY_KEYS.EHS.SAFETY_ISSUES })}
       />
 
@@ -672,17 +695,17 @@ const EhsHazardPage: React.FC = () => {
           <Box sx={{ pt: 1, display: 'flex', flexDirection: 'column', gap: 2 }}>
             <TextField
               fullWidth
-              label='隐患名称 *'
+              label={t('ehs.ehs_hazard_page.name_1')}
               value={formData.title}
               onChange={(e) => setFormData({ ...formData, title: e.target.value })}
-              placeholder='请输入隐患名称'
+              placeholder={t('ehs.ehs_hazard_page.please_input')}
             />
             <TextField
               fullWidth
-              label='隐患描述'
+              label={t('ehs.ehs_hazard_page.description')}
               value={formData.description}
               onChange={(e) => setFormData({ ...formData, description: e.target.value })}
-              placeholder='请描述隐患详情'
+              placeholder={t('ehs.ehs_hazard_page.detail_1')}
               multiline
               rows={3}
             />
@@ -691,7 +714,7 @@ const EhsHazardPage: React.FC = () => {
                 <InputLabel>隐患类别 *</InputLabel>
                 <Select
                   value={formData.category}
-                  label='隐患类别'
+                  label={t('ehs.ehs_hazard_page.text_a812fd')}
                   onChange={(e) => setFormData({ ...formData, category: e.target.value })}
                 >
                   <MenuItem value='equipment'>设备隐患</MenuItem>
@@ -708,7 +731,7 @@ const EhsHazardPage: React.FC = () => {
                 <InputLabel>隐患等级 *</InputLabel>
                 <Select
                   value={formData.level}
-                  label='隐患等级'
+                  label={t('ehs.ehs_hazard_page.text_fbad1c')}
                   onChange={(e) => setFormData({ ...formData, level: e.target.value })}
                 >
                   <MenuItem value='major'>重大隐患</MenuItem>
@@ -723,7 +746,7 @@ const EhsHazardPage: React.FC = () => {
                 <InputLabel>来源 *</InputLabel>
                 <Select
                   value={formData.source}
-                  label='来源'
+                  label={t('ehs.ehs_hazard_page.text_26ca20')}
                   onChange={(e) => setFormData({ ...formData, source: e.target.value })}
                 >
                   <MenuItem value='inspection'>检查发现</MenuItem>
@@ -735,18 +758,18 @@ const EhsHazardPage: React.FC = () => {
               </FormControl>
               <TextField
                 fullWidth
-                label='位置'
+                label={t('ehs.ehs_hazard_page.text_d4d2a6')}
                 value={formData.location}
                 onChange={(e) => setFormData({ ...formData, location: e.target.value })}
-                placeholder='请输入隐患位置'
+                placeholder={t('ehs.ehs_hazard_page.please_input_1')}
               />
             </Box>
             <TextField
               fullWidth
-              label='上报人'
+              label={t('ehs.ehs_hazard_page.text_8a4b90')}
               value={formData.reported_by}
               onChange={(e) => setFormData({ ...formData, reported_by: e.target.value })}
-              placeholder='请输入上报人姓名'
+              placeholder={t('ehs.ehs_hazard_page.please_input_2')}
             />
           </Box>
         </DialogContent>
@@ -924,7 +947,7 @@ const EhsHazardPage: React.FC = () => {
                           整改状态
                         </Typography>
                         <Typography>
-                          {rectification.status === 'in_progress' ? '整改中' : '已完成'}
+                          {rectification.status === 'in_progress' ? t('ehs.ehs_hazard_page.text_1aa44e') : t('ehs.ehs_hazard_page.completed_2')}
                         </Typography>
                       </Box>
                       {rectification.progress !== undefined && (
@@ -991,13 +1014,13 @@ const EhsHazardPage: React.FC = () => {
                         <Typography>
                           {verification.result === 'passed' ? (
                             <Chip
-                              label='验收通过'
+                              label={t('ehs.ehs_hazard_page.text_5a726a')}
                               size='small'
                               sx={{ bgcolor: 'success.lighter', color: 'success.dark' }}
                             />
                           ) : (
                             <Chip
-                              label='验收未通过'
+                              label={t('ehs.ehs_hazard_page.text_3e6c60')}
                               size='small'
                               sx={{ bgcolor: 'error.lighter', color: 'error.dark' }}
                             />
@@ -1031,7 +1054,7 @@ const EhsHazardPage: React.FC = () => {
         <DialogActions>
           {selectedIssue && (
             <>
-              {selectedIssue.status === '待整改' && (
+              {selectedIssue.status === t('ehs.ehs_hazard_page.text_e17445') && (
                 <Button
                   variant='contained'
                   onClick={handleStartRectification}
@@ -1040,7 +1063,7 @@ const EhsHazardPage: React.FC = () => {
                   开始整改
                 </Button>
               )}
-              {selectedIssue.status === '整改中' && (
+              {selectedIssue.status === t('ehs.ehs_hazard_page.text_1aa44e') && (
                 <Button
                   variant='contained'
                   onClick={handleSubmitRectification}
@@ -1049,7 +1072,7 @@ const EhsHazardPage: React.FC = () => {
                   提交整改
                 </Button>
               )}
-              {selectedIssue.status === '待验收' && (
+              {selectedIssue.status === t('ehs.ehs_hazard_page.text_9e251a') && (
                 <Button
                   variant='contained'
                   onClick={handleStartVerification}
@@ -1058,7 +1081,7 @@ const EhsHazardPage: React.FC = () => {
                   开始验收
                 </Button>
               )}
-              {selectedIssue.status === '已验收' && (
+              {selectedIssue.status === t('ehs.ehs_hazard_page.text_74fdfc') && (
                 <Button
                   variant='contained'
                   onClick={handleCloseIssue}
@@ -1084,7 +1107,7 @@ const EhsHazardPage: React.FC = () => {
           <Box sx={{ pt: 1, display: 'flex', flexDirection: 'column', gap: 2 }}>
             <TextField
               fullWidth
-              label='整改措施 *'
+              label={t('ehs.ehs_hazard_page.text_7ca866')}
               value={rectificationFormData.description}
               onChange={(e) =>
                 setRectificationFormData({
@@ -1092,13 +1115,13 @@ const EhsHazardPage: React.FC = () => {
                   description: e.target.value,
                 })
               }
-              placeholder='请输入具体的整改措施'
+              placeholder={t('ehs.ehs_hazard_page.please_input_3')}
               multiline
               rows={3}
             />
             <TextField
               fullWidth
-              label='整改负责人 *'
+              label={t('ehs.ehs_hazard_page.manager')}
               value={rectificationFormData.responsible}
               onChange={(e) =>
                 setRectificationFormData({
@@ -1106,12 +1129,12 @@ const EhsHazardPage: React.FC = () => {
                   responsible: e.target.value,
                 })
               }
-              placeholder='请输入整改负责人姓名'
+              placeholder={t('ehs.ehs_hazard_page.manager_1')}
             />
             <TextField
               fullWidth
               type='date'
-              label='整改期限 *'
+              label={t('ehs.ehs_hazard_page.text_2ea30f')}
               value={rectificationFormData.deadline}
               onChange={(e) =>
                 setRectificationFormData({
@@ -1150,7 +1173,7 @@ const EhsHazardPage: React.FC = () => {
           <Box sx={{ pt: 1, display: 'flex', flexDirection: 'column', gap: 2 }}>
             <TextField
               fullWidth
-              label='验收人 *'
+              label={t('ehs.ehs_hazard_page.text_aed7fa')}
               value={verificationFormData.verifier}
               onChange={(e) =>
                 setVerificationFormData({
@@ -1158,13 +1181,13 @@ const EhsHazardPage: React.FC = () => {
                   verifier: e.target.value,
                 })
               }
-              placeholder='请输入验收人姓名'
+              placeholder={t('ehs.ehs_hazard_page.please_input_4')}
             />
             <FormControl fullWidth>
               <InputLabel>验收结果 *</InputLabel>
               <Select
                 value={verificationFormData.result}
-                label='验收结果'
+                label={t('ehs.ehs_hazard_page.text_9ff177')}
                 onChange={(e) =>
                   setVerificationFormData({
                     ...verificationFormData,
@@ -1178,7 +1201,7 @@ const EhsHazardPage: React.FC = () => {
             </FormControl>
             <TextField
               fullWidth
-              label='验收备注'
+              label={t('ehs.ehs_hazard_page.remark')}
               value={verificationFormData.remarks}
               onChange={(e) =>
                 setVerificationFormData({
@@ -1186,7 +1209,7 @@ const EhsHazardPage: React.FC = () => {
                   remarks: e.target.value,
                 })
               }
-              placeholder='请输入验收意见'
+              placeholder={t('ehs.ehs_hazard_page.please_input_5')}
               multiline
               rows={3}
             />

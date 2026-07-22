@@ -1,3 +1,5 @@
+import { logger } from '@/utils/logger';
+
 export type WorkerMessage<T = unknown> = {
   id: string;
   type: 'execute' | 'result' | 'error';
@@ -49,7 +51,7 @@ export class TaskWorker {
     };
 
     this.worker.onerror = (e) => {
-      console.error('[TaskWorker] Worker error:', e);
+      logger.error('[TaskWorker] Worker error:', e);
       e.preventDefault();
     };
   }

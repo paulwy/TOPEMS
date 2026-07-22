@@ -5,7 +5,7 @@ use sqlx::FromRow;
 use uuid::Uuid;
 
 use crate::shared::AppState;
-use topems_shared::{ApiResponse, Claims};
+use topems_shared::{event::EventType, event::PdmMaterialCreatedPayload, ApiResponse, Claims};
 
 fn get_tenant_id(claims: &Claims, headers: &axum::http::HeaderMap) -> Uuid {
     claims
@@ -176,7 +176,41 @@ pub async fn create_material(
     .await;
 
     match result {
-        Ok(material) => Json(ApiResponse::success(material, "物料创建成功")),
+        Ok(material) => {
+            if let Some(ref publisher) = state.event_publisher {
+                let publisher = publisher.clone();
+                let mat_id = material.id;
+                let mat_code = material.material_no.clone();
+                let mat_name = material.name.clone();
+                let mat_spec = material.spec.clone();
+                tokio::spawn(async move {
+                    let payload = PdmMaterialCreatedPayload {
+                        material_id: mat_id,
+                        material_code: mat_code,
+                        material_name: mat_name,
+                        material_type: None,
+                        specification: mat_spec,
+                        created_by: None,
+                    };
+                    if let Err(e) = publisher
+                        .publish_event(EventType::PdmMaterialCreated, payload)
+                        .await
+                    {
+                        tracing::warn!(
+                            "[pdm] PdmMaterialCreated 事件发布失败（graceful fallback）: {}",
+                            e
+                        );
+                    } else {
+                        tracing::info!(
+                            "[pdm] PdmMaterialCreated 事件发布成功 - material_id={}",
+                            mat_id
+                        );
+                    }
+                });
+            }
+
+            Json(ApiResponse::success(material, "物料创建成功"))
+        }
         Err(e) => {
             tracing::error!("创建物料失败: {}", e);
             Json(ApiResponse::error(500, "创建物料失败"))

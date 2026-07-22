@@ -1,0 +1,688 @@
+# TOPEMS Traefik 动态配置
+# 由 init-gateway.sh 自动生成或手动维护
+# 覆盖 26 个服务路由（含 analytics/rd 别名），统一中间件链：request-id → cors → rate-limit → jwt-auth → retry
+
+http:
+  # ================================================
+  # 路由规则（按路径前缀路由到各业务服务）
+  # ================================================
+  routers:
+    # ===== 核心平台 =====
+    router-core:
+      rule: "PathPrefix(`/api/core`)"
+      entryPoints:
+        - web
+      service: svc-core
+      middlewares:
+        - strip-prefix-core
+        - default-chain
+      priority: 100
+
+    # ===== 经营管理 =====
+    router-erp:
+      rule: "PathPrefix(`/api/erp`)"
+      entryPoints:
+        - web
+      service: svc-erp
+      middlewares:
+        - strip-prefix-erp
+        - default-chain
+      priority: 100
+
+    router-finance:
+      rule: "PathPrefix(`/api/finance`)"
+      entryPoints:
+        - web
+      service: svc-finance
+      middlewares:
+        - strip-prefix-finance
+        - default-chain
+      priority: 100
+
+    router-doc:
+      rule: "PathPrefix(`/api/doc`)"
+      entryPoints:
+        - web
+      service: svc-doc
+      middlewares:
+        - strip-prefix-doc
+        - default-chain
+      priority: 100
+
+    # ===== 协同办公 =====
+    router-hrm:
+      rule: "PathPrefix(`/api/hrm`)"
+      entryPoints:
+        - web
+      service: svc-hrm
+      middlewares:
+        - strip-prefix-hrm
+        - default-chain
+      priority: 100
+
+    router-pm:
+      rule: "PathPrefix(`/api/pm`)"
+      entryPoints:
+        - web
+      service: svc-pm
+      middlewares:
+        - strip-prefix-pm
+        - default-chain
+      priority: 100
+
+    router-crm:
+      rule: "PathPrefix(`/api/crm`)"
+      entryPoints:
+        - web
+      service: svc-crm
+      middlewares:
+        - strip-prefix-crm
+        - default-chain
+      priority: 100
+
+    # ===== 生产制造 =====
+    router-mes:
+      rule: "PathPrefix(`/api/mes`)"
+      entryPoints:
+        - web
+      service: svc-mes
+      middlewares:
+        - strip-prefix-mes
+        - default-chain
+      priority: 100
+
+    router-pdm:
+      rule: "PathPrefix(`/api/pdm`)"
+      entryPoints:
+        - web
+      service: svc-pdm
+      middlewares:
+        - strip-prefix-pdm
+        - default-chain
+      priority: 100
+
+    # ===== 供应链 =====
+    router-scm:
+      rule: "PathPrefix(`/api/scm`)"
+      entryPoints:
+        - web
+      service: svc-scm
+      middlewares:
+        - strip-prefix-scm
+        - default-chain
+      priority: 100
+
+    router-wms:
+      rule: "PathPrefix(`/api/wms`)"
+      entryPoints:
+        - web
+      service: svc-wms
+      middlewares:
+        - strip-prefix-wms
+        - default-chain
+      priority: 100
+
+    router-srm:
+      rule: "PathPrefix(`/api/srm`)"
+      entryPoints:
+        - web
+      service: svc-srm
+      middlewares:
+        - strip-prefix-srm
+        - default-chain
+      priority: 100
+
+    # ===== 质量研发 =====
+    router-qms:
+      rule: "PathPrefix(`/api/qms`)"
+      entryPoints:
+        - web
+      service: svc-qms
+      middlewares:
+        - strip-prefix-qms
+        - default-chain
+      priority: 100
+
+    router-lims:
+      rule: "PathPrefix(`/api/lims`)"
+      entryPoints:
+        - web
+      service: svc-lims
+      middlewares:
+        - strip-prefix-lims
+        - default-chain
+      priority: 100
+
+    router-ehs:
+      rule: "PathPrefix(`/api/ehs`)"
+      entryPoints:
+        - web
+      service: svc-ehs
+      middlewares:
+        - strip-prefix-ehs
+        - default-chain
+      priority: 100
+
+    router-rs:
+      rule: "PathPrefix(`/api/rs`)"
+      entryPoints:
+        - web
+      service: svc-rs
+      middlewares:
+        - strip-prefix-rs
+        - default-chain
+      priority: 100
+
+    router-rd:
+      rule: "PathPrefix(`/api/rd`)"
+      entryPoints:
+        - web
+      service: svc-rd
+      middlewares:
+        - strip-prefix-rd
+        - default-chain
+      priority: 100
+
+    # ===== 数据分析/门户 =====
+    router-bi:
+      rule: "PathPrefix(`/api/bi`)"
+      entryPoints:
+        - web
+      service: svc-bi
+      middlewares:
+        - strip-prefix-bi
+        - default-chain
+      priority: 100
+
+    router-analytics:
+      rule: "PathPrefix(`/api/analytics`)"
+      entryPoints:
+        - web
+      service: svc-analytics
+      middlewares:
+        - strip-prefix-analytics
+        - default-chain
+      priority: 100
+
+    router-report:
+      rule: "PathPrefix(`/api/report`)"
+      entryPoints:
+        - web
+      service: svc-report
+      middlewares:
+        - strip-prefix-report
+        - default-chain
+      priority: 100
+
+    router-monitor:
+      rule: "PathPrefix(`/api/monitor`)"
+      entryPoints:
+        - web
+      service: svc-monitor
+      middlewares:
+        - strip-prefix-monitor
+        - default-chain
+      priority: 100
+
+    router-portal:
+      rule: "PathPrefix(`/api/portal`)"
+      entryPoints:
+        - web
+      service: svc-portal
+      middlewares:
+        - strip-prefix-portal
+        - default-chain
+      priority: 100
+
+    # ===== AI / 基础设施 =====
+    router-ai:
+      rule: "PathPrefix(`/api/ai`)"
+      entryPoints:
+        - web
+      service: svc-ai
+      middlewares:
+        - strip-prefix-ai
+        - default-chain
+      priority: 100
+
+    router-mobile:
+      rule: "PathPrefix(`/api/mobile`)"
+      entryPoints:
+        - web
+      service: svc-mobile
+      middlewares:
+        - strip-prefix-mobile
+        - default-chain
+      priority: 100
+
+    router-gis:
+      rule: "PathPrefix(`/api/gis`)"
+      entryPoints:
+        - web
+      service: svc-gis
+      middlewares:
+        - strip-prefix-gis
+        - default-chain
+      priority: 100
+
+    router-integration:
+      rule: "PathPrefix(`/api/integration`)"
+      entryPoints:
+        - web
+      service: svc-integration
+      middlewares:
+        - strip-prefix-integration
+        - default-chain
+      priority: 100
+
+    # ===== 健康检查路由（无需认证）=====
+    router-health:
+      rule: "Path(`/health`)"
+      entryPoints:
+        - web
+      service: svc-core
+      middlewares:
+        - cors-headers
+      priority: 200
+
+    # ===== 静态资源路由（fallback 到 nginx）=====
+    # 最低优先级，兜底处理所有非 /api/* 请求，转发到 nginx 静态资源服务
+    router-static:
+      rule: "PathPrefix(`/`)"
+      entryPoints:
+        - web
+      service: svc-nginx
+      middlewares:
+        - gzip-compress
+        - cors-headers
+      priority: 1
+
+  # ================================================
+  # 中间件定义
+  # ================================================
+  middlewares:
+    # ----- 默认中间件链（统一应用到所有路由）-----
+    # 顺序: request-id → cors → rate-limit → jwt-auth → retry
+    default-chain:
+      chain:
+        middlewares:
+          - request-id
+          - cors-headers
+          - rate-limit
+          - jwt-auth
+          - retry
+
+    # ----- JWT 认证（forwardAuth 到 unified-core 验证）-----
+    jwt-auth:
+      forwardAuth:
+        address: "http://unified-core:8000/api/core/iam/auth/verify"
+        authResponseHeaders:
+          - X-Auth-User-Id
+          - X-Auth-Username
+          - X-Auth-Roles
+          - X-Auth-Tenant
+          - X-Auth-Permissions
+          - X-Auth-Token-Exp
+        trustForwardHeader: true
+        http:
+          timeout: "5s"
+          followRedirects: false
+
+    # ----- 全局限流（每秒 100 请求，突发 200）-----
+    rate-limit:
+      rateLimit:
+        average: 100
+        burst: 200
+        period: "1s"
+
+    # ----- CORS 头处理 -----
+    cors-headers:
+      headers:
+        accessControlAllowOriginList:
+          - "*"
+        accessControlAllowMethods:
+          - "GET"
+          - "POST"
+          - "PUT"
+          - "DELETE"
+          - "PATCH"
+          - "OPTIONS"
+        accessControlAllowHeaders:
+          - "*"
+        accessControlExposeHeaders:
+          - "*"
+        accessControlMaxAge: 100
+        addVaryHeader: true
+        accessControlAllowCredentials: true
+
+    # ----- Gzip 压缩 -----
+    gzip-compress:
+      compress:
+        minWidth: 1024
+        minResponseLength: 1024
+
+    # ----- 重试（最多 3 次）-----
+    retry:
+      retry:
+        attempts: 3
+        initialInterval: "100ms"
+
+    # ----- 请求 ID 注入（使用 requestid 插件，需在静态配置 experimental 中启用）-----
+    request-id:
+      plugin:
+        requestid:
+          headerName: "X-Request-Id"
+          overwrite: true
+
+    # ----- 租户头部转发 -----
+    tenant-header:
+      headers:
+        customRequestHeaders:
+          X-Tenant-Id: "default"
+        customResponseHeaders:
+          X-Tenant-Resolved: "true"
+
+    # ----- 各服务路径前缀剥离（保持与 nginx 行为一致）-----
+    strip-prefix-core:        { stripPrefix: { prefixes: ["/api/core"], forceSlash: false } }
+    strip-prefix-erp:         { stripPrefix: { prefixes: ["/api/erp"], forceSlash: false } }
+    strip-prefix-finance:     { stripPrefix: { prefixes: ["/api/finance"], forceSlash: false } }
+    strip-prefix-doc:         { stripPrefix: { prefixes: ["/api/doc"], forceSlash: false } }
+    strip-prefix-hrm:         { stripPrefix: { prefixes: ["/api/hrm"], forceSlash: false } }
+    strip-prefix-pm:          { stripPrefix: { prefixes: ["/api/pm"], forceSlash: false } }
+    strip-prefix-crm:         { stripPrefix: { prefixes: ["/api/crm"], forceSlash: false } }
+    strip-prefix-mes:         { stripPrefix: { prefixes: ["/api/mes"], forceSlash: false } }
+    strip-prefix-pdm:         { stripPrefix: { prefixes: ["/api/pdm"], forceSlash: false } }
+    strip-prefix-scm:         { stripPrefix: { prefixes: ["/api/scm"], forceSlash: false } }
+    strip-prefix-wms:         { stripPrefix: { prefixes: ["/api/wms"], forceSlash: false } }
+    strip-prefix-srm:         { stripPrefix: { prefixes: ["/api/srm"], forceSlash: false } }
+    strip-prefix-qms:         { stripPrefix: { prefixes: ["/api/qms"], forceSlash: false } }
+    strip-prefix-lims:        { stripPrefix: { prefixes: ["/api/lims"], forceSlash: false } }
+    strip-prefix-ehs:         { stripPrefix: { prefixes: ["/api/ehs"], forceSlash: false } }
+    strip-prefix-rs:          { stripPrefix: { prefixes: ["/api/rs"], forceSlash: false } }
+    strip-prefix-rd:          { stripPrefix: { prefixes: ["/api/rd"], forceSlash: false } }
+    strip-prefix-bi:          { stripPrefix: { prefixes: ["/api/bi"], forceSlash: false } }
+    strip-prefix-analytics:   { stripPrefix: { prefixes: ["/api/analytics"], forceSlash: false } }
+    strip-prefix-report:      { stripPrefix: { prefixes: ["/api/report"], forceSlash: false } }
+    strip-prefix-monitor:     { stripPrefix: { prefixes: ["/api/monitor"], forceSlash: false } }
+    strip-prefix-portal:      { stripPrefix: { prefixes: ["/api/portal"], forceSlash: false } }
+    strip-prefix-ai:          { stripPrefix: { prefixes: ["/api/ai"], forceSlash: false } }
+    strip-prefix-mobile:      { stripPrefix: { prefixes: ["/api/mobile"], forceSlash: false } }
+    strip-prefix-gis:         { stripPrefix: { prefixes: ["/api/gis"], forceSlash: false } }
+    strip-prefix-integration: { stripPrefix: { prefixes: ["/api/integration"], forceSlash: false } }
+
+  # ================================================
+  # 后端服务定义（含健康检查）
+  # ================================================
+  services:
+    svc-core:
+      loadBalancer:
+        passHostHeader: true
+        servers:
+          - url: "http://unified-core:8000"
+        healthCheck:
+          path: "/health"
+          interval: "10s"
+          timeout: "3s"
+
+    svc-erp:
+      loadBalancer:
+        passHostHeader: true
+        servers:
+          - url: "http://erp:8010"
+        healthCheck:
+          path: "/health"
+          interval: "10s"
+          timeout: "3s"
+
+    svc-finance:
+      loadBalancer:
+        passHostHeader: true
+        servers:
+          - url: "http://finance:8011"
+        healthCheck:
+          path: "/health"
+          interval: "10s"
+          timeout: "3s"
+
+    svc-doc:
+      loadBalancer:
+        passHostHeader: true
+        servers:
+          - url: "http://doc:8012"
+        healthCheck:
+          path: "/health"
+          interval: "10s"
+          timeout: "3s"
+
+    svc-hrm:
+      loadBalancer:
+        passHostHeader: true
+        servers:
+          - url: "http://hrm:8020"
+        healthCheck:
+          path: "/health"
+          interval: "10s"
+          timeout: "3s"
+
+    svc-pm:
+      loadBalancer:
+        passHostHeader: true
+        servers:
+          - url: "http://pm:8023"
+        healthCheck:
+          path: "/health"
+          interval: "10s"
+          timeout: "3s"
+
+    svc-crm:
+      loadBalancer:
+        passHostHeader: true
+        servers:
+          - url: "http://crm:8029"
+        healthCheck:
+          path: "/health"
+          interval: "10s"
+          timeout: "3s"
+
+    svc-mes:
+      loadBalancer:
+        passHostHeader: true
+        servers:
+          - url: "http://mes:8030"
+        healthCheck:
+          path: "/health"
+          interval: "10s"
+          timeout: "3s"
+
+    svc-pdm:
+      loadBalancer:
+        passHostHeader: true
+        servers:
+          - url: "http://pdm:8031"
+        healthCheck:
+          path: "/health"
+          interval: "10s"
+          timeout: "3s"
+
+    svc-scm:
+      loadBalancer:
+        passHostHeader: true
+        servers:
+          - url: "http://scm:8040"
+        healthCheck:
+          path: "/health"
+          interval: "10s"
+          timeout: "3s"
+
+    svc-wms:
+      loadBalancer:
+        passHostHeader: true
+        servers:
+          - url: "http://wms:8041"
+        healthCheck:
+          path: "/health"
+          interval: "10s"
+          timeout: "3s"
+
+    svc-srm:
+      loadBalancer:
+        passHostHeader: true
+        servers:
+          - url: "http://srm:8042"
+        healthCheck:
+          path: "/health"
+          interval: "10s"
+          timeout: "3s"
+
+    svc-qms:
+      loadBalancer:
+        passHostHeader: true
+        servers:
+          - url: "http://qms:8050"
+        healthCheck:
+          path: "/health"
+          interval: "10s"
+          timeout: "3s"
+
+    svc-lims:
+      loadBalancer:
+        passHostHeader: true
+        servers:
+          - url: "http://lims:8051"
+        healthCheck:
+          path: "/health"
+          interval: "10s"
+          timeout: "3s"
+
+    svc-ehs:
+      loadBalancer:
+        passHostHeader: true
+        servers:
+          - url: "http://ehs:8052"
+        healthCheck:
+          path: "/health"
+          interval: "10s"
+          timeout: "3s"
+
+    svc-rs:
+      loadBalancer:
+        passHostHeader: true
+        servers:
+          - url: "http://rs:8053"
+        healthCheck:
+          path: "/health"
+          interval: "10s"
+          timeout: "3s"
+
+    # rd 与 rs 指向同一后端
+    svc-rd:
+      loadBalancer:
+        passHostHeader: true
+        servers:
+          - url: "http://rs:8053"
+        healthCheck:
+          path: "/health"
+          interval: "10s"
+          timeout: "3s"
+
+    svc-bi:
+      loadBalancer:
+        passHostHeader: true
+        servers:
+          - url: "http://bi:8060"
+        healthCheck:
+          path: "/health"
+          interval: "10s"
+          timeout: "3s"
+
+    # analytics 与 bi 指向同一后端
+    svc-analytics:
+      loadBalancer:
+        passHostHeader: true
+        servers:
+          - url: "http://bi:8060"
+        healthCheck:
+          path: "/health"
+          interval: "10s"
+          timeout: "3s"
+
+    svc-report:
+      loadBalancer:
+        passHostHeader: true
+        servers:
+          - url: "http://report:8061"
+        healthCheck:
+          path: "/health"
+          interval: "10s"
+          timeout: "3s"
+
+    svc-monitor:
+      loadBalancer:
+        passHostHeader: true
+        servers:
+          - url: "http://monitor:8062"
+        healthCheck:
+          path: "/health"
+          interval: "10s"
+          timeout: "3s"
+
+    svc-portal:
+      loadBalancer:
+        passHostHeader: true
+        servers:
+          - url: "http://portal:8063"
+        healthCheck:
+          path: "/health"
+          interval: "10s"
+          timeout: "3s"
+
+    svc-ai:
+      loadBalancer:
+        passHostHeader: true
+        servers:
+          - url: "http://ai:8064"
+        healthCheck:
+          path: "/health"
+          interval: "10s"
+          timeout: "3s"
+
+    svc-mobile:
+      loadBalancer:
+        passHostHeader: true
+        servers:
+          - url: "http://mobile:8070"
+        healthCheck:
+          path: "/health"
+          interval: "10s"
+          timeout: "3s"
+
+    svc-gis:
+      loadBalancer:
+        passHostHeader: true
+        servers:
+          - url: "http://gis:8071"
+        healthCheck:
+          path: "/health"
+          interval: "10s"
+          timeout: "3s"
+
+    svc-integration:
+      loadBalancer:
+        passHostHeader: true
+        servers:
+          - url: "http://integration:8072"
+        healthCheck:
+          path: "/health"
+          interval: "10s"
+          timeout: "3s"
+
+    # ===== 静态资源服务（nginx 后端）=====
+    svc-nginx:
+      loadBalancer:
+        passHostHeader: true
+        servers:
+          - url: "http://nginx:80"
+        healthCheck:
+          path: "/"
+          interval: "30s"
+          timeout: "3s"

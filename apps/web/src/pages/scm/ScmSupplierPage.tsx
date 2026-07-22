@@ -27,7 +27,10 @@ import { useNotificationStore } from '@/store';
 import { apiLogger } from '@/utils/logger';
 import { designTokens } from '@/theme/tokens';
 import { SCM_PATHS } from '@/modules/scm/config';
-import { useCrudOperations, type CrudOperations } from '@/hooks/useCrudQueries';
+import {
+  useCrudOperations,
+  type CrudOperations,
+} from '@/hooks';
 import { useQuery } from '@tanstack/react-query';
 import { QUERY_KEYS } from '@/lib/reactQuery';
 
@@ -35,7 +38,6 @@ const ct = designTokens.colors;
 
 const ScmSupplierPage: React.FC = () => {
   const navigate = useNavigate();
-  const [searchTerm, setSearchTerm] = useState('');
   const [showCreateModal, setShowCreateModal] = useState(false);
   const [showDetailModal, setShowDetailModal] = useState(false);
   const [showPerformanceModal, setShowPerformanceModal] = useState(false);
@@ -66,12 +68,26 @@ const ScmSupplierPage: React.FC = () => {
     defaultPageSize: 10,
   });
 
-  const handleSearch = (value: string) => {
-    setSearchTerm(value);
+  const handleDebouncedSearch = (value: string) => {
     const params: Record<string, unknown> = {};
     if (value) params.search = value;
     fetch(params);
-    pagination.setPage(1);
+  };
+
+  const handleFilterChange = (filters: Record<string, any>) => {
+    const params: Record<string, unknown> = {};
+    if (filters.status && filters.status !== 'all') {
+      params.status = filters.status;
+    }
+    fetch(params);
+  };
+
+  const handlePageChange = (page: number) => {
+    pagination.setPage(page);
+  };
+
+  const handlePageSizeChange = (size: number) => {
+    pagination.setPageSize(size);
   };
 
   const performanceQuery = useQuery({
@@ -96,7 +112,6 @@ const ScmSupplierPage: React.FC = () => {
     try {
       await create(formData);
       setShowCreateModal(false);
-      pagination.setPage(1);
     } catch (error: unknown) {
       apiLogger.error('创建供应商失败:', error);
     }
@@ -251,17 +266,24 @@ const ScmSupplierPage: React.FC = () => {
         columns={columns}
         data={suppliers}
         loading={loading}
-        pagination={{
-          page: pagination.page - 1,
-          pageSize: pagination.pageSize,
-          total: pagination.total,
-          onPageChange: (page) => pagination.setPage(page + 1),
-          onPageSizeChange: (size) => pagination.setPageSize(size),
+        internalListState={{
+          defaultPageSize: 10,
+          baseIndex: 1,
+          urlSync: 'replace',
+          defaultFilters: { status: 'all' },
         }}
+        onDebouncedSearch={handleDebouncedSearch}
+        onFilterChange={handleFilterChange}
+        onPageChange={handlePageChange}
+        onPageSizeChange={handlePageSizeChange}
+        total={pagination.total}
         searchable
-        searchValue={searchTerm}
-        onSearch={handleSearch}
         searchPlaceholder='搜索供应商...'
+        quickFilters={[
+          { key: 'all', label: '全部', filters: { status: 'all' } },
+          { key: 'active', label: '活跃', filters: { status: 'active' } },
+          { key: 'inactive', label: '禁用', filters: { status: 'inactive' } },
+        ]}
         actions={[
           {
             label: '新增供应商',

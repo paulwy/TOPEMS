@@ -2,6 +2,7 @@ use axum::{extract::FromRef, Router};
 use sqlx::postgres::PgPool;
 use std::sync::Arc;
 use std::time::Instant;
+use topems_shared::event::EventPublisher;
 use topems_shared::SystemMetrics;
 use topems_shared::{AuthState, Config};
 
@@ -30,6 +31,7 @@ pub struct ApiState {
     pub config: Config,
     pub metrics: Arc<SystemMetrics>,
     pub start_time: Instant,
+    pub event_publisher: Option<Arc<EventPublisher>>,
 }
 
 impl FromRef<ApiState> for AuthState {

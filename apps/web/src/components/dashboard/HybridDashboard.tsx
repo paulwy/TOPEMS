@@ -173,6 +173,7 @@ const CompactHero: React.FC = () => {
 
   return (
     <Box
+      className='dashboard-hero'
       sx={{
         position: 'relative',
         background: 'linear-gradient(135deg, #3b82f6 0%, #6366f1 50%, #8b5cf6 100%)',
@@ -308,7 +309,7 @@ const RecentActivities: React.FC = () => {
   const navigate = useNavigate();
 
   return (
-    <Paper sx={{ borderRadius: 3, p: 2 }}>
+    <Paper className='recent-activities' sx={{ borderRadius: 3, p: 2 }}>
       <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', mb: 1 }}>
         <Typography
           variant='subtitle2'

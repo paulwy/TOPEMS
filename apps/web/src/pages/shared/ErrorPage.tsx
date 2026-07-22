@@ -6,6 +6,7 @@ import { BackButton } from '@topems/shared-components';
 const ErrorPage: React.FC = () => {
   return (
     <Box
+      className='error-page'
       sx={{
         minHeight: '100vh',
         bgcolor: 'grey.100',

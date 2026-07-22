@@ -17,8 +17,6 @@ import {
 import { Plus, Edit, Delete, Layers } from 'lucide-react';
 import { pdmApi } from '@/api/pdm';
 import type { Material, CreateMaterialRequest } from '@/api/pdm';
-import { useNotificationStore } from '@/store';
-import { apiLogger } from '@/utils/logger';
 import {
   ListPageTemplate,
   type ColumnDef,
@@ -27,8 +25,9 @@ import {
 } from '@/components/templates';
 import { PageContainer } from '@/components/common/PageContainerV2';
 import { designTokens } from '@/theme/tokens';
-import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { QUERY_KEYS } from '@/lib/reactQuery';
+import { useCrudMutations } from '@/hooks';
 
 const ct = designTokens.colors;
 
@@ -81,8 +80,6 @@ export const MaterialPage: React.FC = () => {
     inventory_quantity: 0,
     safety_stock: 0,
   });
-  const addNotification = useNotificationStore((state) => state.addNotification);
-
   const loadMaterials = useCallback(() => {
     queryClient.invalidateQueries({ queryKey: QUERY_KEYS.PDM.MATERIALS });
   }, [queryClient]);
@@ -100,41 +97,23 @@ export const MaterialPage: React.FC = () => {
     staleTime: 5 * 60 * 1000,
   });
 
-  const createMaterialMutation = useMutation({
-    mutationFn: (data: CreateMaterialRequest) => pdmApi.createMaterial(data),
-    onSuccess: () => {
-      addNotification({ title: '成功', message: '物料创建成功', type: 'success' });
+  const { createMutation: createMaterialMutation, updateMutation: updateMaterialMutation, deleteMutation: deleteMaterialMutation } = useCrudMutations<
+    CreateMaterialRequest,
+    CreateMaterialRequest,
+    string
+  >({
+    queryKeyToInvalidate: QUERY_KEYS.PDM.MATERIALS,
+    createFn: (data) => pdmApi.createMaterial(data),
+    updateFn: ({ id, data }) => pdmApi.updateMaterial(String(id), data),
+    deleteFn: (id) => pdmApi.deleteMaterial(String(id)),
+    entityName: '物料',
+    onCreateSuccess: () => {
       setOpenDialog(false);
       setEditingMaterial(null);
-      queryClient.invalidateQueries({ queryKey: QUERY_KEYS.PDM.MATERIALS });
     },
-    onError: () => {
-      addNotification({ title: '错误', message: '创建失败', type: 'error' });
-    },
-  });
-
-  const updateMaterialMutation = useMutation({
-    mutationFn: ({ id, data }: { id: string; data: CreateMaterialRequest }) =>
-      pdmApi.updateMaterial(id, data),
-    onSuccess: () => {
-      addNotification({ title: '成功', message: '物料更新成功', type: 'success' });
+    onUpdateSuccess: () => {
       setOpenDialog(false);
       setEditingMaterial(null);
-      queryClient.invalidateQueries({ queryKey: QUERY_KEYS.PDM.MATERIALS });
-    },
-    onError: () => {
-      addNotification({ title: '错误', message: '更新失败', type: 'error' });
-    },
-  });
-
-  const deleteMaterialMutation = useMutation({
-    mutationFn: (id: string) => pdmApi.deleteMaterial(id),
-    onSuccess: () => {
-      addNotification({ title: '成功', message: '物料删除成功', type: 'success' });
-      queryClient.invalidateQueries({ queryKey: QUERY_KEYS.PDM.MATERIALS });
-    },
-    onError: () => {
-      addNotification({ title: '错误', message: '删除失败', type: 'error' });
     },
   });
 

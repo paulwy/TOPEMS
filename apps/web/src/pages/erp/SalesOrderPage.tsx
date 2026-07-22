@@ -20,7 +20,7 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import type { SalesOrder, CreateSalesOrderRequest, UpdateSalesOrderRequest } from '@/api/erp';
 import { erpApi } from '@/api/erp';
 import { useNotificationStore } from '@/store';
-import { LoadingSpinner } from '@topems/shared-components';
+import { LoadingSpinner, ConfirmDialog } from '@topems/shared-components';
 import {
   ListPageTemplate,
   type ColumnDef,
@@ -31,6 +31,7 @@ import { Plus, Edit, Trash2, Eye, CheckCircle, XCircle, Truck, ShoppingBag } fro
 import { apiLogger } from '@/utils/logger';
 import { designTokens } from '@/theme/tokens';
 import { QUERY_KEYS } from '@/lib/reactQuery';
+import { useConfirmDialog } from '@/hooks';
 
 const ct = designTokens.colors;
 
@@ -52,6 +53,12 @@ const SalesOrderPage: React.FC = () => {
     delivery_date: '',
     remark: '',
   });
+  const {
+    confirmOpen: confirmDialogOpen,
+    confirmConfig: confirmDialogConfig,
+    openConfirm: openConfirmDialog,
+    closeConfirm: setConfirmDialogClosed,
+  } = useConfirmDialog();
 
   const { addNotification } = useNotificationStore();
 
@@ -303,8 +310,14 @@ const SalesOrderPage: React.FC = () => {
   };
 
   const handleDelete = (id: string) => {
-    if (!window.confirm('确定要删除这个销售订单吗?')) return;
-    deleteMutation.mutate(id);
+    openConfirmDialog({
+      title: '确认删除',
+      message: '确定要删除这个销售订单吗?',
+      danger: true,
+      onConfirm: () => {
+        deleteMutation.mutate(id);
+      },
+    });
   };
 
   const handleEdit = useCallback((order: SalesOrder) => {
@@ -848,6 +861,18 @@ const SalesOrderPage: React.FC = () => {
           )}
         </DialogContent>
       </Dialog>
+
+      <ConfirmDialog
+        isOpen={confirmDialogOpen}
+        onClose={setConfirmDialogClosed}
+        onConfirm={() => {
+          confirmDialogConfig?.onConfirm();
+          setConfirmDialogClosed();
+        }}
+        title={confirmDialogConfig?.title || ''}
+        message={confirmDialogConfig?.message || ''}
+        danger={confirmDialogConfig?.danger}
+      />
     </PageContainer>
   );
 };

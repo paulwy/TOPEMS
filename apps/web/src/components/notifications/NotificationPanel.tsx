@@ -1,12 +1,14 @@
-import React, { useState, useEffect } from 'react';
-import { useTheme } from '@mui/material';
-import { Check, Settings, RefreshCw } from 'lucide-react';
+import React, { useState, useEffect, useCallback } from 'react';
+import { useTheme, Box, Chip } from '@mui/material';
+import { Check, Settings, RefreshCw, Wifi, WifiOff } from 'lucide-react';
 import NotificationItem from './NotificationItem';
 import NotificationSettings from './NotificationSettings';
 import type { Notification } from '@/api/notification';
 import { getNotifications, getUnreadCount, markAllAsRead } from '@/api/notification';
 import { logger } from '@/utils/logger';
 import { NOTIFICATION_PATHS } from '@/modules/notification/config';
+import { useAuthStore } from '@/store/authStore';
+import { useNotificationWebSocket } from '@/hooks/useNotificationWebSocket';
 
 interface NotificationPanelProps {
   onClose: () => void;
@@ -21,12 +23,54 @@ const NotificationPanel: React.FC<NotificationPanelProps> = ({ onClose, onUnread
   const [showSettings, setShowSettings] = useState(false);
   const [totalUnread, setTotalUnread] = useState(0);
 
+  const { user } = useAuthStore();
+  const userId = user?.id || '';
+
+  // WebSocket 实时通知
+  const {
+    isConnected: wsConnected,
+    notifications: wsNotifications,
+    unreadCount: wsUnreadCount,
+  } = useNotificationWebSocket(userId, !!userId);
+
+  // 合并 WebSocket 实时通知到本地状态
+  useEffect(() => {
+    if (wsNotifications.length > 0) {
+      const mapped = wsNotifications.map((ws) => ({
+        id: ws.id,
+        title: ws.title || '新通知',
+        content: ws.message,
+        notification_type: ws.type,
+        is_read: false,
+        created_at: new Date(ws.timestamp).toISOString(),
+        data: ws.data,
+      } as unknown as Notification));
+
+      setNotifications((prev) => {
+        const existingIds = new Set(prev.map((n) => n.id));
+        const newItems = mapped.filter((n) => !existingIds.has(n.id));
+        return [...newItems, ...prev];
+      });
+    }
+  }, [wsNotifications]);
+
+  // WebSocket 未读数更新
+  useEffect(() => {
+    if (wsUnreadCount >= 0) {
+      setTotalUnread((prev) => {
+        const next = Math.max(wsUnreadCount, prev);
+        onUnreadCountChange(next);
+        return next;
+      });
+    }
+  }, [wsUnreadCount, onUnreadCountChange]);
+
   useEffect(() => {
     fetchNotifications();
     fetchUnreadCount();
   }, []);
 
-  const fetchNotifications = async () => {
+  const fetchNotifications = useCallback(async () => {
     setLoading(true);
     try {
       const response = await getNotifications(1, 50);
@@ -40,9 +84,9 @@ const NotificationPanel: React.FC<NotificationPanelProps> = ({ onClose, onUnread
     } finally {
       setLoading(false);
     }
-  };
+  }, [onUnreadCountChange]);
 
-  const fetchUnreadCount = async () => {
+  const fetchUnreadCount = useCallback(async () => {
     try {
       const response = await getUnreadCount();
       if (response.success && response.data !== undefined) {
@@ -52,7 +96,7 @@ const NotificationPanel: React.FC<NotificationPanelProps> = ({ onClose, onUnread
     } catch (error: unknown) {
       logger.error('Failed to fetch unread count:', error);
     }
-  };
+  }, [onUnreadCountChange]);
 
   const handleMarkAllAsRead = async () => {
     try {
@@ -81,6 +125,7 @@ const NotificationPanel: React.FC<NotificationPanelProps> = ({ onClose, onUnread
 
   return (
     <div
+      className='notification-panel'
       style={{
         position: 'absolute',
         right: 0,
@@ -107,6 +152,25 @@ const NotificationPanel: React.FC<NotificationPanelProps> = ({ onClose, onUnread
           通知中心
         </h3>
         <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+          {wsConnected ? (
+            <Chip
+              icon={<Wifi size={14} />}
+              label='实时'
+              size='small'
+              color='success'
+              variant='outlined'
+              sx={{ height: 24, fontSize: 12 }}
+            />
+          ) : (
+            <Chip
+              icon={<WifiOff size={14} />}
+              label='离线'
+              size='small'
+              color='default'
+              variant='outlined'
+              sx={{ height: 24, fontSize: 12 }}
+            />
+          )}
           <button
             onClick={() => setShowSettings(!showSettings)}
             style={{

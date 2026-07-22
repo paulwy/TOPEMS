@@ -40,6 +40,7 @@ import { apiLogger } from '@/utils/logger';
 import { DetailPageTemplate, type TabConfig, type SectionConfig } from '@/components/templates';
 import { PageContainer } from '@/components/common';
 
+import { useTranslation } from 'react-i18next';
 const ct = designTokens.colors;
 
 interface BudgetItem {
@@ -70,6 +71,7 @@ interface BudgetDetail {
 }
 
 const FinanceBudgetDetailPage: React.FC = () => {
+  const { t } = useTranslation();
   const navigate = useNavigate();
   const { id } = useParams<{ id: string }>();
   const { error, success } = useNotification();
@@ -81,7 +83,7 @@ const FinanceBudgetDetailPage: React.FC = () => {
     enabled: !!id,
     queryFn: async () => {
       if (!id) {
-        throw new Error('预算ID为空');
+        throw new Error(t('finance.finance_budget_detail_page.text_dba109'));
       }
 
       const [budgetRes, periodRes] = await Promise.all([
@@ -90,7 +92,7 @@ const FinanceBudgetDetailPage: React.FC = () => {
       ]);
 
       if (!budgetRes.success || !budgetRes.data) {
-        throw new Error('获取预算详情失败');
+        throw new Error(t('finance.finance_budget_detail_page.detail'));
       }
 
       const budgetData = budgetRes.data;
@@ -151,32 +153,32 @@ const FinanceBudgetDetailPage: React.FC = () => {
 
   const budget = budgetQuery.data ?? null;
   const loading = budgetQuery.isLoading;
-  const errorMessage = budgetQuery.error ? '加载预算详情失败' : undefined;
+  const errorMessage = budgetQuery.error ? t('finance.finance_budget_detail_page.detail_1') : undefined;
 
   const getCategoryLabel = (category?: string) => {
     const labels: Record<string, string> = {
-      asset: '资产类',
-      liability: '负债类',
-      equity: '权益类',
-      cost: '成本类',
-      expense: '费用类',
-      income: '收入类',
+      asset: t('finance.finance_budget_detail_page.text_8b786a'),
+      liability: t('finance.finance_budget_detail_page.text_299422'),
+      equity: t('finance.finance_budget_detail_page.text_17a475'),
+      cost: t('finance.finance_budget_detail_page.text_5a2da5'),
+      expense: t('finance.finance_budget_detail_page.text_239f3a'),
+      income: t('finance.finance_budget_detail_page.text_ef2827'),
     };
-    return labels[category || ''] || '其他';
+    return labels[category || ''] || t('finance.finance_budget_detail_page.other');
   };
 
   const getBudgetTypeName = (type: string) => {
     const labels: Record<string, string> = {
-      operating: '运营预算',
-      capital: '资本预算',
-      project: '项目预算',
-      marketing: '市场预算',
-      personnel: '人事预算',
-      office: '办公费',
-      development: '研发费',
-      travel: '差旅费',
-      training: '培训费',
-      other: '其他',
+      operating: t('finance.finance_budget_detail_page.text_e9e771'),
+      capital: t('finance.finance_budget_detail_page.text_2fc835'),
+      project: t('finance.finance_budget_detail_page.text_fa2986'),
+      marketing: t('finance.finance_budget_detail_page.text_fb0bc4'),
+      personnel: t('finance.finance_budget_detail_page.text_859388'),
+      office: t('finance.finance_budget_detail_page.text_976cad'),
+      development: t('finance.finance_budget_detail_page.text_6d566d'),
+      travel: t('finance.finance_budget_detail_page.text_2038cb'),
+      training: t('finance.finance_budget_detail_page.text_b11633'),
+      other: t('finance.finance_budget_detail_page.other'),
     };
     return labels[type] || type;
   };
@@ -189,16 +191,16 @@ const FinanceBudgetDetailPage: React.FC = () => {
       string,
       { color: 'success' | 'error' | 'default' | 'warning'; label: string }
     > = {
-      active: { color: 'success', label: '执行中' },
-      completed: { color: 'warning', label: '已完成' },
-      frozen: { color: 'default', label: '已冻结' },
-      expired: { color: 'error', label: '已过期' },
+      active: { color: 'success', label: t('finance.finance_budget_detail_page.text_46e386') },
+      completed: { color: 'warning', label: t('finance.finance_budget_detail_page.completed') },
+      frozen: { color: 'default', label: t('finance.finance_budget_detail_page.text_92cff4') },
+      expired: { color: 'error', label: t('finance.finance_budget_detail_page.text_4d5ccd') },
     };
     return config[status] || config.active;
   };
 
   const handleExport = () => {
-    success('预算明细已导出');
+    success(t('finance.finance_budget_detail_page.export'));
   };
 
   const basicInfoContent = useMemo(() => {
@@ -403,19 +405,19 @@ const FinanceBudgetDetailPage: React.FC = () => {
                   <TableCell>
                     {item.usageRate >= 80 ? (
                       <Chip
-                        label='超限预警'
+                        label={t('finance.finance_budget_detail_page.text_a9d127')}
                         size='small'
                         color='error'
                       />
                     ) : item.usageRate >= 60 ? (
                       <Chip
-                        label='正常'
+                        label={t('finance.finance_budget_detail_page.normal')}
                         size='small'
                         color='success'
                       />
                     ) : (
                       <Chip
-                        label='偏低'
+                        label={t('finance.finance_budget_detail_page.text_69bb0e')}
                         size='small'
                         color='warning'
                       />
@@ -490,7 +492,7 @@ const FinanceBudgetDetailPage: React.FC = () => {
             color='text.secondary'
             sx={{ mt: 1, display: 'block' }}
           >
-            {budget.usageRate > 80 ? '执行较快，需关注' : '执行进度正常'}
+            {budget.usageRate > 80 ? t('finance.finance_budget_detail_page.text_88bb52') : t('finance.finance_budget_detail_page.normal_1')}
           </Typography>
         </Box>
         <Box sx={{ p: 2, bgcolor: 'grey.50', borderRadius: 1 }}>
@@ -527,9 +529,9 @@ const FinanceBudgetDetailPage: React.FC = () => {
 
   const tabs = useMemo<TabConfig[]>(
     () => [
-      { id: 'basic', label: '基本信息', content: basicInfoContent || <></> },
-      { id: 'items', label: '预算明细', content: itemsContent || <></> },
-      { id: 'analysis', label: '执行分析', content: analysisContent || <></> },
+      { id: 'basic', label: t('finance.finance_budget_detail_page.info'), content: basicInfoContent || <></> },
+      { id: 'items', label: t('finance.finance_budget_detail_page.text_ffaebd'), content: itemsContent || <></> },
+      { id: 'analysis', label: t('finance.finance_budget_detail_page.text_986695'), content: analysisContent || <></> },
     ],
     [basicInfoContent, itemsContent, analysisContent]
   );
@@ -546,9 +548,9 @@ const FinanceBudgetDetailPage: React.FC = () => {
       subtitle: budget?.code || undefined,
       tags: [budget?.fiscalYear ? `${budget.fiscalYear}年度` : ''],
       stats: [
-        { label: '总预算', value: budget ? formatCurrency(budget.totalBudget) : '-' },
-        { label: '已使用', value: budget ? formatCurrency(budget.usedAmount) : '-' },
-        { label: '使用率', value: budget ? `${budget.usageRate}%` : '-' },
+        { label: t('finance.finance_budget_detail_page.text_b91eb1'), value: budget ? formatCurrency(budget.totalBudget) : '-' },
+        { label: t('finance.finance_budget_detail_page.text_b59b00'), value: budget ? formatCurrency(budget.usedAmount) : '-' },
+        { label: t('finance.finance_budget_detail_page.text_41d8b2'), value: budget ? `${budget.usageRate}%` : '-' },
       ],
     }),
     [budget]
@@ -556,8 +558,8 @@ const FinanceBudgetDetailPage: React.FC = () => {
 
   return (
     <PageContainer
-      title='预算详情'
-      subtitle='查看和管理预算执行情况'
+      title={t('finance.finance_budget_detail_page.detail_2')}
+      subtitle={t('finance.finance_budget_detail_page.view')}
     >
       <DetailPageTemplate
         title=''
@@ -570,7 +572,7 @@ const FinanceBudgetDetailPage: React.FC = () => {
         tabs={tabs}
         actions={[
           {
-            label: '执行分析',
+            label: t('finance.finance_budget_detail_page.text_986695'),
             icon: <PieChart style={{ width: 18, height: 18 }} />,
             variant: 'outlined',
             onClick: () => setShowAnalysis(true),
@@ -609,7 +611,7 @@ const FinanceBudgetDetailPage: React.FC = () => {
                 variant='body2'
                 sx={{ mt: 1 }}
               >
-                当前预算使用率{budget?.usageRate && budget.usageRate >= 80 ? '较高' : '正常'}
+                当前预算使用率{budget?.usageRate && budget.usageRate >= 80 ? t('finance.finance_budget_detail_page.text_6233c5') : t('finance.finance_budget_detail_page.normal')}
                 ，请关注后续支出情况。
               </Typography>
             </Box>

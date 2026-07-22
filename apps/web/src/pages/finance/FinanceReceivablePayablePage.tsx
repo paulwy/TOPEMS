@@ -36,9 +36,11 @@ import type { SalesInvoice, PurchaseInvoice, InvoiceStatus } from '../../types/f
 import { useNotificationStore } from '../../store';
 import { apiLogger } from '@/utils/logger';
 
+import { useTranslation } from 'react-i18next';
 const ct = designTokens.colors;
 
 const FinanceReceivablePayablePage: React.FC = () => {
+  const { t } = useTranslation();
   const addNotification = useNotificationStore((state) => state.addNotification);
   const queryClient = useQueryClient();
 
@@ -96,28 +98,28 @@ const FinanceReceivablePayablePage: React.FC = () => {
   const createReceivableMutation = useMutation({
     mutationFn: (data: any) => financeApi.receivablePayable.createSalesInvoice(data),
     onSuccess: () => {
-      addNotification({ title: '成功', message: '销售发票创建成功', type: 'success' });
+      addNotification({ title: t('finance.finance_receivable_payable_page.success'), message: t('finance.finance_receivable_payable_page.create'), type: 'success' });
       setShowCreateDialog(false);
       resetForm();
       invalidateInvoices();
     },
     onError: (err: unknown) => {
-      apiLogger.error('创建销售发票失败:', err);
-      addNotification({ title: '错误', message: '创建销售发票失败', type: 'error' });
+      apiLogger.error(t('finance.finance_receivable_payable_page.create_1'), err);
+      addNotification({ title: t('finance.finance_receivable_payable_page.error'), message: t('finance.finance_receivable_payable_page.create_2'), type: 'error' });
     },
   });
 
   const createPayableMutation = useMutation({
     mutationFn: (data: any) => financeApi.receivablePayable.createPurchaseInvoice(data),
     onSuccess: () => {
-      addNotification({ title: '成功', message: '采购发票创建成功', type: 'success' });
+      addNotification({ title: t('finance.finance_receivable_payable_page.success'), message: t('finance.finance_receivable_payable_page.create_3'), type: 'success' });
       setShowCreateDialog(false);
       resetForm();
       invalidateInvoices();
     },
     onError: (err: unknown) => {
-      apiLogger.error('创建采购发票失败:', err);
-      addNotification({ title: '错误', message: '创建采购发票失败', type: 'error' });
+      apiLogger.error(t('finance.finance_receivable_payable_page.create_4'), err);
+      addNotification({ title: t('finance.finance_receivable_payable_page.error'), message: t('finance.finance_receivable_payable_page.create_5'), type: 'error' });
     },
   });
 
@@ -125,15 +127,15 @@ const FinanceReceivablePayablePage: React.FC = () => {
     mutationFn: (params: { id: string; data: any }) =>
       financeApi.receivablePayable.updateSalesInvoice(params.id, params.data),
     onSuccess: () => {
-      addNotification({ title: '成功', message: '销售发票更新成功', type: 'success' });
+      addNotification({ title: t('finance.finance_receivable_payable_page.success'), message: t('finance.finance_receivable_payable_page.update'), type: 'success' });
       setEditingItem(null);
       setShowCreateDialog(false);
       resetForm();
       invalidateInvoices();
     },
     onError: (err: unknown) => {
-      apiLogger.error('更新销售发票失败:', err);
-      addNotification({ title: '错误', message: '更新销售发票失败', type: 'error' });
+      apiLogger.error(t('finance.finance_receivable_payable_page.update_1'), err);
+      addNotification({ title: t('finance.finance_receivable_payable_page.error'), message: t('finance.finance_receivable_payable_page.update_2'), type: 'error' });
     },
   });
 
@@ -141,39 +143,39 @@ const FinanceReceivablePayablePage: React.FC = () => {
     mutationFn: (params: { id: string; data: any }) =>
       financeApi.receivablePayable.updatePurchaseInvoice(params.id, params.data),
     onSuccess: () => {
-      addNotification({ title: '成功', message: '采购发票更新成功', type: 'success' });
+      addNotification({ title: t('finance.finance_receivable_payable_page.success'), message: t('finance.finance_receivable_payable_page.update_3'), type: 'success' });
       setEditingItem(null);
       setShowCreateDialog(false);
       resetForm();
       invalidateInvoices();
     },
     onError: (err: unknown) => {
-      apiLogger.error('更新采购发票失败:', err);
-      addNotification({ title: '错误', message: '更新采购发票失败', type: 'error' });
+      apiLogger.error(t('finance.finance_receivable_payable_page.update_4'), err);
+      addNotification({ title: t('finance.finance_receivable_payable_page.error'), message: t('finance.finance_receivable_payable_page.update_5'), type: 'error' });
     },
   });
 
   const deleteReceivableMutation = useMutation({
     mutationFn: (id: string) => financeApi.receivablePayable.deleteSalesInvoice(id),
     onSuccess: () => {
-      addNotification({ title: '成功', message: '销售发票删除成功', type: 'success' });
+      addNotification({ title: t('finance.finance_receivable_payable_page.success'), message: t('finance.finance_receivable_payable_page.delete_success'), type: 'success' });
       invalidateInvoices();
     },
     onError: (err: unknown) => {
-      apiLogger.error('删除销售发票失败:', err);
-      addNotification({ title: '错误', message: '删除销售发票失败', type: 'error' });
+      apiLogger.error(t('finance.finance_receivable_payable_page.delete'), err);
+      addNotification({ title: t('finance.finance_receivable_payable_page.error'), message: t('finance.finance_receivable_payable_page.delete_1'), type: 'error' });
     },
   });
 
   const deletePayableMutation = useMutation({
     mutationFn: (id: string) => financeApi.receivablePayable.deletePurchaseInvoice(id),
     onSuccess: () => {
-      addNotification({ title: '成功', message: '采购发票删除成功', type: 'success' });
+      addNotification({ title: t('finance.finance_receivable_payable_page.success'), message: t('finance.finance_receivable_payable_page.delete_success_1'), type: 'success' });
       invalidateInvoices();
     },
     onError: (err: unknown) => {
-      apiLogger.error('删除采购发票失败:', err);
-      addNotification({ title: '错误', message: '删除采购发票失败', type: 'error' });
+      apiLogger.error(t('finance.finance_receivable_payable_page.delete_2'), err);
+      addNotification({ title: t('finance.finance_receivable_payable_page.error'), message: t('finance.finance_receivable_payable_page.delete_3'), type: 'error' });
     },
   });
 
@@ -208,12 +210,12 @@ const FinanceReceivablePayablePage: React.FC = () => {
   };
 
   const handleDeleteReceivable = (id: string) => {
-    if (!window.confirm('确定要删除此销售发票吗？')) return;
+    if (!window.confirm(t('finance.finance_receivable_payable_page.confirm'))) return;
     deleteReceivableMutation.mutate(id);
   };
 
   const handleDeletePayable = (id: string) => {
-    if (!window.confirm('确定要删除此采购发票吗？')) return;
+    if (!window.confirm(t('finance.finance_receivable_payable_page.confirm_1'))) return;
     deletePayableMutation.mutate(id);
   };
 
@@ -282,12 +284,12 @@ const FinanceReceivablePayablePage: React.FC = () => {
       overdue: 'error',
     };
     const labelMap: Record<InvoiceStatus, string> = {
-      draft: '草稿',
-      approved: '已审核',
-      invoiced: '已开票',
-      partial_received: '部分收/付',
-      received: '已结清',
-      overdue: '已逾期',
+      draft: t('finance.finance_receivable_payable_page.text_22b433'),
+      approved: t('finance.finance_receivable_payable_page.approved'),
+      invoiced: t('finance.finance_receivable_payable_page.text_ca4355'),
+      partial_received: t('finance.finance_receivable_payable_page.text_94bfdb'),
+      received: t('finance.finance_receivable_payable_page.text_bbdd42'),
+      overdue: t('finance.finance_receivable_payable_page.text_5d8559'),
     };
     return (
       <Chip
@@ -328,25 +330,25 @@ const FinanceReceivablePayablePage: React.FC = () => {
   const statCards = useMemo(
     () => [
       {
-        title: '应收总额',
+        title: t('finance.finance_receivable_payable_page.text_9ef10c'),
         value: formatCurrency(totalReceivable),
         icon: <ArrowUpRight size={24} />,
         color: 'primary' as const,
       },
       {
-        title: '应付总额',
+        title: t('finance.finance_receivable_payable_page.text_1a8469'),
         value: formatCurrency(totalPayable),
         icon: <ArrowDownRight size={24} />,
         color: 'success' as const,
       },
       {
-        title: '待收金额',
+        title: t('finance.finance_receivable_payable_page.amount'),
         value: formatCurrency(pendingReceivable),
         icon: <CreditCard size={24} />,
         color: 'warning' as const,
       },
       {
-        title: '待付金额',
+        title: t('finance.finance_receivable_payable_page.amount_1'),
         value: formatCurrency(pendingPayable),
         icon: <CreditCard size={24} />,
         color: 'secondary' as const,
@@ -382,17 +384,17 @@ const FinanceReceivablePayablePage: React.FC = () => {
     () => [
       {
         id: 'invoice_no',
-        label: '发票编号',
+        label: t('finance.finance_receivable_payable_page.text_df5d06'),
         render: (row) => <Box sx={{ fontWeight: 'medium' }}>{row.invoice_no}</Box>,
       },
       {
         id: 'customer_name',
-        label: '客户名称',
+        label: t('finance.finance_receivable_payable_page.customer_name'),
         render: (row) => row.customer_name,
       },
       {
         id: 'total_amount',
-        label: '含税金额',
+        label: t('finance.finance_receivable_payable_page.amount_2'),
         align: 'right',
         render: (row) => (
           <Box sx={{ fontFamily: 'monospace' }}>{formatCurrency(row.total_amount)}</Box>
@@ -400,7 +402,7 @@ const FinanceReceivablePayablePage: React.FC = () => {
       },
       {
         id: 'received_amount',
-        label: '已收',
+        label: t('finance.finance_receivable_payable_page.text_b511e9'),
         align: 'right',
         render: (row) => (
           <Box sx={{ fontFamily: 'monospace', color: 'success.main' }}>
@@ -410,7 +412,7 @@ const FinanceReceivablePayablePage: React.FC = () => {
       },
       {
         id: 'pending_amount',
-        label: '待收',
+        label: t('finance.finance_receivable_payable_page.text_c75e2f'),
         align: 'right',
         render: (row) => (
           <Box
@@ -426,7 +428,7 @@ const FinanceReceivablePayablePage: React.FC = () => {
       },
       {
         id: 'due_date',
-        label: '到期日期',
+        label: t('finance.finance_receivable_payable_page.date'),
         render: (row) => (
           <Box
             sx={{
@@ -439,7 +441,7 @@ const FinanceReceivablePayablePage: React.FC = () => {
       },
       {
         id: 'status',
-        label: '状态',
+        label: t('finance.finance_receivable_payable_page.status'),
         render: (row) => getStatusBadge(row.status),
       },
     ],
@@ -451,17 +453,17 @@ const FinanceReceivablePayablePage: React.FC = () => {
     () => [
       {
         id: 'invoice_no',
-        label: '发票编号',
+        label: t('finance.finance_receivable_payable_page.text_df5d06'),
         render: (row) => <Box sx={{ fontWeight: 'medium' }}>{row.invoice_no}</Box>,
       },
       {
         id: 'supplier_name',
-        label: '供应商',
+        label: t('finance.finance_receivable_payable_page.supplier'),
         render: (row) => row.supplier_name,
       },
       {
         id: 'total_amount',
-        label: '含税金额',
+        label: t('finance.finance_receivable_payable_page.amount_2'),
         align: 'right',
         render: (row) => (
           <Box sx={{ fontFamily: 'monospace' }}>{formatCurrency(row.total_amount)}</Box>
@@ -469,7 +471,7 @@ const FinanceReceivablePayablePage: React.FC = () => {
       },
       {
         id: 'paid_amount',
-        label: '已付',
+        label: t('finance.finance_receivable_payable_page.text_57b642'),
         align: 'right',
         render: (row) => (
           <Box sx={{ fontFamily: 'monospace', color: 'success.main' }}>
@@ -479,7 +481,7 @@ const FinanceReceivablePayablePage: React.FC = () => {
       },
       {
         id: 'pending_amount',
-        label: '待付',
+        label: t('finance.finance_receivable_payable_page.text_931f1f'),
         align: 'right',
         render: (row) => (
           <Box
@@ -495,7 +497,7 @@ const FinanceReceivablePayablePage: React.FC = () => {
       },
       {
         id: 'due_date',
-        label: '到期日期',
+        label: t('finance.finance_receivable_payable_page.date'),
         render: (row) => (
           <Box
             sx={{
@@ -508,7 +510,7 @@ const FinanceReceivablePayablePage: React.FC = () => {
       },
       {
         id: 'status',
-        label: '状态',
+        label: t('finance.finance_receivable_payable_page.status'),
         render: (row) => getStatusBadge(row.status),
       },
     ],
@@ -519,18 +521,18 @@ const FinanceReceivablePayablePage: React.FC = () => {
   const receivableRowActions = useMemo<RowAction<SalesInvoice>[]>(
     () => [
       {
-        label: '查看',
+        label: t('finance.finance_receivable_payable_page.view'),
         icon: <Eye size={16} />,
         onClick: (row) => openDetailDialog(row),
       },
       {
-        label: '编辑',
+        label: t('finance.finance_receivable_payable_page.edit'),
         icon: <Edit2 size={16} />,
         onClick: (row) => openEditDialog(row),
         color: 'primary',
       },
       {
-        label: '删除',
+        label: t('finance.finance_receivable_payable_page.delete_4'),
         icon: <Trash2 size={16} />,
         onClick: (row) => handleDeleteReceivable(row.id),
         color: 'error',
@@ -543,18 +545,18 @@ const FinanceReceivablePayablePage: React.FC = () => {
   const payableRowActions = useMemo<RowAction<PurchaseInvoice>[]>(
     () => [
       {
-        label: '查看',
+        label: t('finance.finance_receivable_payable_page.view'),
         icon: <Eye size={16} />,
         onClick: (row) => openDetailDialog(row),
       },
       {
-        label: '编辑',
+        label: t('finance.finance_receivable_payable_page.edit'),
         icon: <Edit2 size={16} />,
         onClick: (row) => openEditDialog(row),
         color: 'primary',
       },
       {
-        label: '删除',
+        label: t('finance.finance_receivable_payable_page.delete_4'),
         icon: <Trash2 size={16} />,
         onClick: (row) => handleDeletePayable(row.id),
         color: 'error',
@@ -568,16 +570,16 @@ const FinanceReceivablePayablePage: React.FC = () => {
     () => [
       {
         id: 'status',
-        label: '状态',
+        label: t('finance.finance_receivable_payable_page.status'),
         type: 'select' as const,
         options: [
-          { value: '', label: '全部' },
-          { value: 'draft', label: '草稿' },
-          { value: 'approved', label: '已审核' },
-          { value: 'invoiced', label: '已开票' },
-          { value: 'partial_received', label: '部分收/付' },
-          { value: 'received', label: '已结清' },
-          { value: 'overdue', label: '已逾期' },
+          { value: '', label: t('finance.finance_receivable_payable_page.all') },
+          { value: 'draft', label: t('finance.finance_receivable_payable_page.text_22b433') },
+          { value: 'approved', label: t('finance.finance_receivable_payable_page.approved') },
+          { value: 'invoiced', label: t('finance.finance_receivable_payable_page.text_ca4355') },
+          { value: 'partial_received', label: t('finance.finance_receivable_payable_page.text_94bfdb') },
+          { value: 'received', label: t('finance.finance_receivable_payable_page.text_bbdd42') },
+          { value: 'overdue', label: t('finance.finance_receivable_payable_page.text_5d8559') },
         ],
         value: filterStatus,
         onChange: (value: unknown) => setFilterStatus(value as string),
@@ -599,8 +601,8 @@ const FinanceReceivablePayablePage: React.FC = () => {
     <PageContainer
       padding={false}
       maxWidth={false}
-      title='应收应付'
-      subtitle='管理应收账款和应付账款'
+      title={t('finance.finance_receivable_payable_page.text_4dd1f8')}
+      subtitle={t('finance.finance_receivable_payable_page.text_551864')}
       autoTitle
       autoBreadcrumbs
     >
@@ -631,7 +633,7 @@ const FinanceReceivablePayablePage: React.FC = () => {
           onClick={() => setShowCreateDialog(true)}
         >
           <Plus sx={{ width: 16, height: 16, mr: 1 }} />
-          <span>新增{activeTab === 'receivable' ? '应收' : '应付'}</span>
+          <span>新增{activeTab === 'receivable' ? t('finance.finance_receivable_payable_page.text_fccab9') : t('finance.finance_receivable_payable_page.text_855bfd')}</span>
         </Button>
       </Box>
 
@@ -689,7 +691,7 @@ const FinanceReceivablePayablePage: React.FC = () => {
           data={filteredReceivables}
           loading={loading}
           searchable
-          searchPlaceholder='搜索单据编号、客户名称或项目...'
+          searchPlaceholder={t('finance.finance_receivable_payable_page.customer_name_1')}
           searchValue={searchTerm}
           onSearch={setSearchTerm}
           filters={filters}
@@ -703,10 +705,10 @@ const FinanceReceivablePayablePage: React.FC = () => {
             payablesQuery.refetch();
           }}
           actions={[
-            { label: '搜索', variant: 'outlined', onClick: handleSearch },
-            { label: '重置', variant: 'outlined', onClick: handleReset },
+            { label: t('finance.finance_receivable_payable_page.search'), variant: 'outlined', onClick: handleSearch },
+            { label: t('finance.finance_receivable_payable_page.reset'), variant: 'outlined', onClick: handleReset },
           ]}
-          emptyMessage='暂无应收账款数据'
+          emptyMessage={t('finance.finance_receivable_payable_page.no_data')}
         />
       )}
 
@@ -717,7 +719,7 @@ const FinanceReceivablePayablePage: React.FC = () => {
           data={filteredPayables}
           loading={loading}
           searchable
-          searchPlaceholder='搜索单据编号、供应商或类别...'
+          searchPlaceholder={t('finance.finance_receivable_payable_page.supplier_1')}
           searchValue={searchTerm}
           onSearch={setSearchTerm}
           filters={filters}
@@ -731,10 +733,10 @@ const FinanceReceivablePayablePage: React.FC = () => {
             payablesQuery.refetch();
           }}
           actions={[
-            { label: '搜索', variant: 'outlined', onClick: handleSearch },
-            { label: '重置', variant: 'outlined', onClick: handleReset },
+            { label: t('finance.finance_receivable_payable_page.search'), variant: 'outlined', onClick: handleSearch },
+            { label: t('finance.finance_receivable_payable_page.reset'), variant: 'outlined', onClick: handleReset },
           ]}
-          emptyMessage='暂无应付账款数据'
+          emptyMessage={t('finance.finance_receivable_payable_page.no_data_1')}
         />
       )}
 
@@ -750,22 +752,22 @@ const FinanceReceivablePayablePage: React.FC = () => {
         fullWidth
       >
         <DialogTitle>
-          {editingItem ? '编辑' : '新增'}
-          {activeTab === 'receivable' ? '销售发票' : '采购发票'}
+          {editingItem ? t('finance.finance_receivable_payable_page.edit') : t('finance.finance_receivable_payable_page.add')}
+          {activeTab === 'receivable' ? t('finance.finance_receivable_payable_page.text_bd671b') : t('finance.finance_receivable_payable_page.text_3c218e')}
         </DialogTitle>
         <DialogContent>
           <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2, mt: 1 }}>
             <TextField
-              label='发票编号'
+              label={t('finance.finance_receivable_payable_page.text_df5d06')}
               value={formData.invoice_no}
               onChange={(e) => setFormData({ ...formData, invoice_no: e.target.value })}
-              placeholder='请输入发票编号'
+              placeholder={t('finance.finance_receivable_payable_page.please_input')}
               fullWidth
               size='small'
             />
             {activeTab === 'receivable' ? (
               <TextField
-                label='客户名称'
+                label={t('finance.finance_receivable_payable_page.customer_name')}
                 value={formData.customer_name}
                 onChange={(e) =>
                   setFormData({
@@ -773,13 +775,13 @@ const FinanceReceivablePayablePage: React.FC = () => {
                     customer_name: e.target.value,
                   })
                 }
-                placeholder='请输入客户名称'
+                placeholder={t('finance.finance_receivable_payable_page.customer_name_2')}
                 fullWidth
                 size='small'
               />
             ) : (
               <TextField
-                label='供应商名称'
+                label={t('finance.finance_receivable_payable_page.supplier_name')}
                 value={formData.supplier_name}
                 onChange={(e) =>
                   setFormData({
@@ -787,26 +789,26 @@ const FinanceReceivablePayablePage: React.FC = () => {
                     supplier_name: e.target.value,
                   })
                 }
-                placeholder='请输入供应商名称'
+                placeholder={t('finance.finance_receivable_payable_page.supplier_name_1')}
                 fullWidth
                 size='small'
               />
             )}
             <TextField
-              label='不含税金额'
+              label={t('finance.finance_receivable_payable_page.amount_3')}
               type='number'
               value={formData.amount}
               onChange={(e) => setFormData({ ...formData, amount: e.target.value })}
-              placeholder='请输入不含税金额'
+              placeholder={t('finance.finance_receivable_payable_page.please_input_1')}
               fullWidth
               size='small'
             />
             <TextField
-              label='税额'
+              label={t('finance.finance_receivable_payable_page.text_87b755')}
               type='number'
               value={formData.tax_amount}
               onChange={(e) => setFormData({ ...formData, tax_amount: e.target.value })}
-              placeholder='请输入税额'
+              placeholder={t('finance.finance_receivable_payable_page.please_input_2')}
               fullWidth
               size='small'
             />
@@ -817,7 +819,7 @@ const FinanceReceivablePayablePage: React.FC = () => {
               <InputLabel>发票类型</InputLabel>
               <Select
                 value={formData.invoice_type}
-                label='发票类型'
+                label={t('finance.finance_receivable_payable_page.type')}
                 onChange={(e) => setFormData({ ...formData, invoice_type: e.target.value })}
               >
                 <MenuItem value='normal'>普通发票</MenuItem>
@@ -826,7 +828,7 @@ const FinanceReceivablePayablePage: React.FC = () => {
             </FormControl>
             <Box sx={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 2 }}>
               <TextField
-                label='开票日期'
+                label={t('finance.finance_receivable_payable_page.date_1')}
                 type='date'
                 value={formData.invoice_date}
                 onChange={(e) => setFormData({ ...formData, invoice_date: e.target.value })}
@@ -834,7 +836,7 @@ const FinanceReceivablePayablePage: React.FC = () => {
                 slotProps={{ inputLabel: { shrink: true } } as const}
               />
               <TextField
-                label='到期日期'
+                label={t('finance.finance_receivable_payable_page.date')}
                 type='date'
                 value={formData.due_date}
                 onChange={(e) => setFormData({ ...formData, due_date: e.target.value })}
@@ -849,7 +851,7 @@ const FinanceReceivablePayablePage: React.FC = () => {
               <InputLabel>状态</InputLabel>
               <Select
                 value={formData.status}
-                label='状态'
+                label={t('finance.finance_receivable_payable_page.status')}
                 onChange={(e) =>
                   setFormData({ ...formData, status: e.target.value as InvoiceStatus })
                 }
@@ -887,7 +889,7 @@ const FinanceReceivablePayablePage: React.FC = () => {
                   : handleCreatePayable
             }
           >
-            {editingItem ? '更新' : '创建'}
+            {editingItem ? t('finance.finance_receivable_payable_page.update_6') : t('finance.finance_receivable_payable_page.create_6')}
           </Button>
         </DialogActions>
       </Dialog>
@@ -905,7 +907,7 @@ const FinanceReceivablePayablePage: React.FC = () => {
           ) : (
             <ArrowDownRight sx={{ width: 20, height: 20, mr: 1, color: 'indigo.600' }} />
           )}
-          {selectedItem && 'customer_name' in selectedItem ? '销售发票' : '采购发票'}
+          {selectedItem && 'customer_name' in selectedItem ? t('finance.finance_receivable_payable_page.text_bd671b') : t('finance.finance_receivable_payable_page.text_3c218e')}
           详情
         </DialogTitle>
         <DialogContent>
@@ -964,7 +966,7 @@ const FinanceReceivablePayablePage: React.FC = () => {
                   发票类型
                 </Typography>
                 <Typography sx={{ fontWeight: 'medium', mt: 0.5 }}>
-                  {selectedItem.invoice_type === 'special' ? '增值税专用发票' : '普通发票'}
+                  {selectedItem.invoice_type === 'special' ? t('finance.finance_receivable_payable_page.text_e3eaa7') : t('finance.finance_receivable_payable_page.text_747c7a')}
                 </Typography>
               </Box>
 
@@ -1045,7 +1047,7 @@ const FinanceReceivablePayablePage: React.FC = () => {
                       variant='body2'
                       color='text.secondary'
                     >
-                      {'received_amount' in selectedItem ? '已收' : '已付'}
+                      {'received_amount' in selectedItem ? t('finance.finance_receivable_payable_page.text_b511e9') : t('finance.finance_receivable_payable_page.text_57b642')}
                     </Typography>
                     <Typography
                       variant='h6'
@@ -1063,7 +1065,7 @@ const FinanceReceivablePayablePage: React.FC = () => {
                       variant='body2'
                       color='text.secondary'
                     >
-                      {'received_amount' in selectedItem ? '待收' : '待付'}
+                      {'received_amount' in selectedItem ? t('finance.finance_receivable_payable_page.text_c75e2f') : t('finance.finance_receivable_payable_page.text_931f1f')}
                     </Typography>
                     <Typography
                       variant='h6'

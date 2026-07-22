@@ -42,6 +42,7 @@ import { PageContainer } from '@/components/common/PageContainerV2';
 import { designTokens } from '@/theme/tokens';
 import { EHS_PATHS } from '@/modules/ehs/config';
 
+import { useTranslation } from 'react-i18next';
 const ct = designTokens.colors;
 
 interface ControlFormData {
@@ -52,6 +53,7 @@ interface ControlFormData {
 }
 
 const EhsHazardDetailPage: React.FC = () => {
+  const { t } = useTranslation();
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
   const queryClient = useQueryClient();
@@ -95,11 +97,11 @@ const EhsHazardDetailPage: React.FC = () => {
           description: safetyHazard.description,
           category: safetyHazard.category,
           location: safetyHazard.location,
-          severity: safetyHazard.level?.includes('高')
+          severity: safetyHazard.level?.includes(t('ehs.ehs_hazard_detail_page.text_4296d7'))
             ? 'high'
-            : safetyHazard.level?.includes('重大')
+            : safetyHazard.level?.includes(t('ehs.ehs_hazard_detail_page.text_5a558d'))
               ? 'high'
-              : safetyHazard.level?.includes('中')
+              : safetyHazard.level?.includes(t('ehs.ehs_hazard_detail_page.text_aed1df'))
                 ? 'medium'
                 : 'low',
           exposure: 'medium',
@@ -117,7 +119,7 @@ const EhsHazardDetailPage: React.FC = () => {
         };
         return hazardData;
       }
-      throw new Error(response.message || '加载危险源详情失败');
+      throw new Error(response.message || t('ehs.ehs_hazard_detail_page.detail'));
     },
   });
 
@@ -150,7 +152,7 @@ const EhsHazardDetailPage: React.FC = () => {
   const controls = (controlsData as ControlMeasure[]) || [];
 
   const loading = hazardLoading;
-  const errorMessage = hazardQueryError ? '加载危险源详情失败' : undefined;
+  const errorMessage = hazardQueryError ? t('ehs.ehs_hazard_detail_page.detail') : undefined;
 
   useEffect(() => {
     if (hazard) {
@@ -180,20 +182,20 @@ const EhsHazardDetailPage: React.FC = () => {
     mutationFn: (variables: { id: string; data: Parameters<typeof ehsApi.updateHazard>[1] }) =>
       ehsApi.updateHazard(variables.id, variables.data),
     onSuccess: () => {
-      success('危险源更新成功');
+      success(t('ehs.ehs_hazard_detail_page.update'));
       queryClient.invalidateQueries({ queryKey: QUERY_KEYS.EHS.HAZARD(id || '') });
       setShowEditModal(false);
     },
     onError: (err: unknown) => {
-      apiLogger.error('更新危险源失败:', err);
-      error('更新失败，请稍后重试');
+      apiLogger.error(t('ehs.ehs_hazard_detail_page.update_1'), err);
+      error(t('ehs.ehs_hazard_detail_page.update_2'));
     },
   });
 
   const handleUpdateHazard = () => {
     if (!hazard) return;
     if (!formData.name.trim()) {
-      error('请输入危险源名称');
+      error(t('ehs.ehs_hazard_detail_page.please_input'));
       return;
     }
     updateHazardMutation.mutate({
@@ -203,7 +205,7 @@ const EhsHazardDetailPage: React.FC = () => {
         description: formData.description,
         category: formData.category,
         location: formData.location,
-        level: formData.severity === 'high' ? '高' : formData.severity === 'medium' ? '中' : '低',
+        level: formData.severity === 'high' ? t('ehs.ehs_hazard_detail_page.text_4296d7') : formData.severity === 'medium' ? t('ehs.ehs_hazard_detail_page.text_aed1df') : t('ehs.ehs_hazard_detail_page.text_19ac67'),
         status: formData.status,
       },
     });
@@ -215,7 +217,7 @@ const EhsHazardDetailPage: React.FC = () => {
       data: Parameters<typeof ehsApi.createControlMeasure>[1];
     }) => ehsApi.createControlMeasure(variables.hazardId, variables.data),
     onSuccess: () => {
-      success('控制措施添加成功');
+      success(t('ehs.ehs_hazard_detail_page.success'));
       queryClient.invalidateQueries({ queryKey: QUERY_KEYS.EHS.HAZARD_CONTROL_MEASURES(id || '') });
       setShowControlModal(false);
       setControlFormData({
@@ -226,15 +228,15 @@ const EhsHazardDetailPage: React.FC = () => {
       });
     },
     onError: (err: unknown) => {
-      apiLogger.error('添加控制措施失败:', err);
-      error('添加失败，请稍后重试');
+      apiLogger.error(t('ehs.ehs_hazard_detail_page.fail'), err);
+      error(t('ehs.ehs_hazard_detail_page.fail_1'));
     },
   });
 
   const handleAddControl = () => {
     if (!hazard) return;
     if (!controlFormData.description.trim()) {
-      error('请输入措施描述');
+      error(t('ehs.ehs_hazard_detail_page.please_input_1'));
       return;
     }
     createControlMutation.mutate({
@@ -258,14 +260,14 @@ const EhsHazardDetailPage: React.FC = () => {
     mutationFn: (variables: { hazardId: string; measureId: string }) =>
       ehsApi.deleteControlMeasure(variables.hazardId, variables.measureId),
     onSuccess: () => {
-      success('控制措施删除成功');
+      success(t('ehs.ehs_hazard_detail_page.delete_success'));
       queryClient.invalidateQueries({ queryKey: QUERY_KEYS.EHS.HAZARD_CONTROL_MEASURES(id || '') });
       setDeleteDialogOpen(false);
       setDeletingMeasureId(null);
     },
     onError: (err: unknown) => {
-      apiLogger.error('删除控制措施失败:', err);
-      error('删除失败，请稍后重试');
+      apiLogger.error(t('ehs.ehs_hazard_detail_page.delete'), err);
+      error(t('ehs.ehs_hazard_detail_page.delete_1'));
       setDeleteDialogOpen(false);
       setDeletingMeasureId(null);
     },
@@ -279,7 +281,7 @@ const EhsHazardDetailPage: React.FC = () => {
   const assessmentColumns: ColumnDef<RiskAssessment>[] = [
     {
       accessorKey: 'assessment_date',
-      header: '评估日期',
+      header: t('ehs.ehs_hazard_detail_page.date'),
       cell: ({ row }) => (
         <span>
           {row.original.assessment_date
@@ -290,7 +292,7 @@ const EhsHazardDetailPage: React.FC = () => {
     },
     {
       accessorKey: 'assessor',
-      header: '评估人',
+      header: t('ehs.ehs_hazard_detail_page.text_ab3d92'),
       cell: ({ row }) => (
         <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
           <Box
@@ -303,7 +305,7 @@ const EhsHazardDetailPage: React.FC = () => {
     },
     {
       accessorKey: 'risklevel',
-      header: '风险等级',
+      header: t('ehs.ehs_hazard_detail_page.text_25eb6b'),
       cell: ({ row }) => {
         const riskResult = calculateRiskLevel(
           row.original.severity || 'medium',
@@ -327,19 +329,19 @@ const EhsHazardDetailPage: React.FC = () => {
         );
       },
     },
-    { accessorKey: 'recommendations', header: '建议措施' },
+    { accessorKey: 'recommendations', header: t('ehs.ehs_hazard_detail_page.text_6dca6f') },
   ];
 
   const controlColumns: ColumnDef<ControlMeasure>[] = [
     {
       accessorKey: 'measure_type',
-      header: '措施类型',
+      header: t('ehs.ehs_hazard_detail_page.type'),
       cell: ({ row }) => <EHSMeasureTypeBadge type={row.original.measure_type} />,
     },
-    { accessorKey: 'description', header: '措施描述' },
+    { accessorKey: 'description', header: t('ehs.ehs_hazard_detail_page.description') },
     {
       accessorKey: 'responsible',
-      header: '负责人',
+      header: t('ehs.ehs_hazard_detail_page.manager'),
       cell: ({ row }) => (
         <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
           <Box
@@ -352,7 +354,7 @@ const EhsHazardDetailPage: React.FC = () => {
     },
     {
       accessorKey: 'deadline',
-      header: '完成期限',
+      header: t('ehs.ehs_hazard_detail_page.completed'),
       cell: ({ row }) => (
         <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
           <Box
@@ -367,7 +369,7 @@ const EhsHazardDetailPage: React.FC = () => {
     },
     {
       accessorKey: 'status',
-      header: '状态',
+      header: t('ehs.ehs_hazard_detail_page.status'),
       cell: ({ row }) => (
         <EHSStatusBadge
           status={row.original.status}
@@ -377,7 +379,7 @@ const EhsHazardDetailPage: React.FC = () => {
     },
     {
       id: 'actions',
-      header: '操作',
+      header: t('ehs.ehs_hazard_detail_page.action'),
       cell: ({ row }) => (
         <Button
           variant='text'
@@ -456,19 +458,19 @@ const EhsHazardDetailPage: React.FC = () => {
           <Box sx={{ textAlign: 'center', p: 2, bgcolor: 'error.light', borderRadius: 1 }}>
             <Typography sx={{ color: 'error.dark', fontSize: 12 }}>严重程度</Typography>
             <Typography sx={{ fontWeight: 500, color: 'error.darker', mt: 0.5 }}>
-              {hazard.severity === 'high' ? '高' : hazard.severity === 'medium' ? '中' : '低'}
+              {hazard.severity === 'high' ? t('ehs.ehs_hazard_detail_page.text_4296d7') : hazard.severity === 'medium' ? t('ehs.ehs_hazard_detail_page.text_aed1df') : t('ehs.ehs_hazard_detail_page.text_19ac67')}
             </Typography>
           </Box>
           <Box sx={{ textAlign: 'center', p: 2, bgcolor: 'warning.lighter', borderRadius: 1 }}>
             <Typography sx={{ color: ct.yellow[600], fontSize: 12 }}>暴露频率</Typography>
             <Typography sx={{ fontWeight: 500, color: ct.yellow[700], mt: 0.5 }}>
-              {hazard.exposure === 'high' ? '高' : hazard.exposure === 'medium' ? '中' : '低'}
+              {hazard.exposure === 'high' ? t('ehs.ehs_hazard_detail_page.text_4296d7') : hazard.exposure === 'medium' ? t('ehs.ehs_hazard_detail_page.text_aed1df') : t('ehs.ehs_hazard_detail_page.text_19ac67')}
             </Typography>
           </Box>
           <Box sx={{ textAlign: 'center', p: 2, bgcolor: 'primary.light', borderRadius: 1 }}>
             <Typography sx={{ color: 'primary.dark', fontSize: 12 }}>发生概率</Typography>
             <Typography sx={{ fontWeight: 500, color: 'primary.dark', mt: 0.5 }}>
-              {hazard.likelihood === 'high' ? '高' : hazard.likelihood === 'medium' ? '中' : '低'}
+              {hazard.likelihood === 'high' ? t('ehs.ehs_hazard_detail_page.text_4296d7') : hazard.likelihood === 'medium' ? t('ehs.ehs_hazard_detail_page.text_aed1df') : t('ehs.ehs_hazard_detail_page.text_19ac67')}
             </Typography>
           </Box>
         </Box>
@@ -476,7 +478,7 @@ const EhsHazardDetailPage: React.FC = () => {
         <Box sx={{ pt: 2, borderTop: 1, borderColor: 'divider' }}>
           <Typography sx={{ color: 'text.secondary', fontSize: 14 }}>描述</Typography>
           <Typography sx={{ color: 'text.primary', mt: 0.5, fontSize: 14, lineHeight: 1.6 }}>
-            {hazard.description || '暂无描述'}
+            {hazard.description || t('ehs.ehs_hazard_detail_page.description_1')}
           </Typography>
         </Box>
       </Box>
@@ -571,9 +573,9 @@ const EhsHazardDetailPage: React.FC = () => {
 
   const tabs = useMemo<TabConfig[]>(
     () => [
-      { id: 'basic', label: '基本信息', content: basicInfoContent || <></> },
-      { id: 'assessments', label: '风险评估', content: assessmentsContent },
-      { id: 'controls', label: '控制措施', content: controlsContent },
+      { id: 'basic', label: t('ehs.ehs_hazard_detail_page.info'), content: basicInfoContent || <></> },
+      { id: 'assessments', label: t('ehs.ehs_hazard_detail_page.text_d0a11d'), content: assessmentsContent },
+      { id: 'controls', label: t('ehs.ehs_hazard_detail_page.text_e61c61'), content: controlsContent },
     ],
     [basicInfoContent, assessmentsContent, controlsContent]
   );
@@ -593,10 +595,10 @@ const EhsHazardDetailPage: React.FC = () => {
       tags: [hazard.category || ''],
       stats: [
         {
-          label: '严重程度',
-          value: hazard.severity === 'high' ? '高' : hazard.severity === 'medium' ? '中' : '低',
+          label: t('ehs.ehs_hazard_detail_page.text_08fe50'),
+          value: hazard.severity === 'high' ? t('ehs.ehs_hazard_detail_page.text_4296d7') : hazard.severity === 'medium' ? t('ehs.ehs_hazard_detail_page.text_aed1df') : t('ehs.ehs_hazard_detail_page.text_19ac67'),
         },
-        { label: '风险等级', value: `${riskInfo.level}风险` },
+        { label: t('ehs.ehs_hazard_detail_page.text_25eb6b'), value: `${riskInfo.level}风险` },
       ],
     };
   }, [hazard]);
@@ -619,7 +621,7 @@ const EhsHazardDetailPage: React.FC = () => {
         tabs={tabs}
         actions={[
           {
-            label: '添加控制措施',
+            label: t('ehs.ehs_hazard_detail_page.text_59b356'),
             icon: <Plus style={{ width: 18, height: 18 }} />,
             variant: 'outlined',
             onClick: () => setShowControlModal(true),
@@ -650,7 +652,7 @@ const EhsHazardDetailPage: React.FC = () => {
                 onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
                   setFormData((prev) => ({ ...prev, name: e.target.value }))
                 }
-                placeholder='请输入危险源名称'
+                placeholder={t('ehs.ehs_hazard_detail_page.please_input')}
               />
             </Box>
             <Box sx={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 2 }}>
@@ -668,7 +670,7 @@ const EhsHazardDetailPage: React.FC = () => {
                   onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
                     setFormData((prev) => ({ ...prev, category: e.target.value }))
                   }
-                  placeholder='请输入分类'
+                  placeholder={t('ehs.ehs_hazard_detail_page.please_input_2')}
                 />
               </Box>
               <Box>
@@ -685,7 +687,7 @@ const EhsHazardDetailPage: React.FC = () => {
                   onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
                     setFormData((prev) => ({ ...prev, location: e.target.value }))
                   }
-                  placeholder='请输入位置'
+                  placeholder={t('ehs.ehs_hazard_detail_page.please_input_3')}
                 />
               </Box>
             </Box>
@@ -704,7 +706,7 @@ const EhsHazardDetailPage: React.FC = () => {
                   <InputLabel>严重程度</InputLabel>
                   <Select
                     value={formData.severity}
-                    label='严重程度'
+                    label={t('ehs.ehs_hazard_detail_page.text_08fe50')}
                     onChange={(e) =>
                       setFormData((prev) => ({
                         ...prev,
@@ -732,7 +734,7 @@ const EhsHazardDetailPage: React.FC = () => {
                   <InputLabel>暴露频率</InputLabel>
                   <Select
                     value={formData.exposure}
-                    label='暴露频率'
+                    label={t('ehs.ehs_hazard_detail_page.text_f83966')}
                     onChange={(e) =>
                       setFormData((prev) => ({
                         ...prev,
@@ -760,7 +762,7 @@ const EhsHazardDetailPage: React.FC = () => {
                   <InputLabel>发生概率</InputLabel>
                   <Select
                     value={formData.likelihood}
-                    label='发生概率'
+                    label={t('ehs.ehs_hazard_detail_page.text_d7fbe9')}
                     onChange={(e) =>
                       setFormData((prev) => ({
                         ...prev,
@@ -789,7 +791,7 @@ const EhsHazardDetailPage: React.FC = () => {
                 <InputLabel>状态</InputLabel>
                 <Select
                   value={formData.status}
-                  label='状态'
+                  label={t('ehs.ehs_hazard_detail_page.status')}
                   onChange={(e) =>
                     setFormData((prev) => ({
                       ...prev,
@@ -819,7 +821,7 @@ const EhsHazardDetailPage: React.FC = () => {
                 onChange={(e: React.ChangeEvent<HTMLTextAreaElement>) =>
                   setFormData((prev) => ({ ...prev, description: e.target.value }))
                 }
-                placeholder='请描述危险源...'
+                placeholder={t('ehs.ehs_hazard_detail_page.description_2')}
               />
             </Box>
           </Box>
@@ -864,7 +866,7 @@ const EhsHazardDetailPage: React.FC = () => {
                 <InputLabel>措施类型</InputLabel>
                 <Select
                   value={controlFormData.measure_type}
-                  label='措施类型'
+                  label={t('ehs.ehs_hazard_detail_page.type')}
                   onChange={(e) =>
                     setControlFormData((prev) => ({
                       ...prev,
@@ -893,7 +895,7 @@ const EhsHazardDetailPage: React.FC = () => {
                 onChange={(e: React.ChangeEvent<HTMLTextAreaElement>) =>
                   setControlFormData((prev) => ({ ...prev, description: e.target.value }))
                 }
-                placeholder='请描述具体的控制措施...'
+                placeholder={t('ehs.ehs_hazard_detail_page.description_3')}
               />
             </Box>
             <Box sx={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 2 }}>
@@ -911,7 +913,7 @@ const EhsHazardDetailPage: React.FC = () => {
                   onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
                     setControlFormData((prev) => ({ ...prev, responsible: e.target.value }))
                   }
-                  placeholder='请输入负责人'
+                  placeholder={t('ehs.ehs_hazard_detail_page.manager_1')}
                 />
               </Box>
               <Box>
@@ -958,8 +960,8 @@ const EhsHazardDetailPage: React.FC = () => {
           setDeletingMeasureId(null);
         }}
         onConfirm={confirmDeleteControl}
-        title='确认删除'
-        message='确定要删除此控制措施吗？'
+        title={t('ehs.ehs_hazard_detail_page.confirm_delete')}
+        message={t('ehs.ehs_hazard_detail_page.confirm')}
         danger
       />
     </PageContainer>

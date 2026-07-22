@@ -28,6 +28,7 @@ import { Settings, Save, RotateCcw } from 'lucide-react';
 import { useNotificationStore } from '../../../store';
 import { PageContainer } from '@/components/common';
 import { ConfirmDialog } from '@topems/shared-components';
+import { useConfirmDialog } from '@/hooks';
 import { WORKFLOW_PATHS } from '@/modules/workflow/config';
 
 import { SETTING_GROUPS } from './constants';
@@ -121,15 +122,18 @@ export const WorkflowSettingsPage: React.FC = () => {
     apiRateLimit: 100,
   });
 
-  const [confirmDialogOpen, setConfirmDialogOpen] = useState(false);
   const [hasUnsavedChanges, setHasUnsavedChanges] = useState(false);
+
+  // 确认对话框状态
+  const {
+    confirmOpen: confirmDialogOpen,
+    confirmConfig: confirmDialogConfig,
+    openConfirm: openConfirmDialog,
+    closeConfirm: setConfirmDialogClosed,
+  } = useConfirmDialog();
 
   const markUnsaved = useCallback(() => {
     setHasUnsavedChanges(true);
-  }, []);
-
-  const handleSave = useCallback(() => {
-    setConfirmDialogOpen(true);
   }, []);
 
   const confirmSave = useCallback(() => {
@@ -139,8 +143,16 @@ export const WorkflowSettingsPage: React.FC = () => {
       type: 'success',
     });
     setHasUnsavedChanges(false);
-    setConfirmDialogOpen(false);
+    setConfirmDialogClosed();
   }, [addNotification]);
+
+  const handleSave = useCallback(() => {
+    openConfirmDialog({
+      title: '保存设置',
+      message: '确定要保存当前的工作流设置吗？',
+      onConfirm: confirmSave,
+    });
+  }, [confirmSave, openConfirmDialog]);
 
   const handleReset = useCallback(() => {
     addNotification({
@@ -307,10 +319,14 @@ export const WorkflowSettingsPage: React.FC = () => {
 
       <ConfirmDialog
         isOpen={confirmDialogOpen}
-        onClose={() => setConfirmDialogOpen(false)}
-        onConfirm={confirmSave}
-        title='保存设置'
-        message='确定要保存当前的工作流设置吗？'
+        onClose={setConfirmDialogClosed}
+        onConfirm={() => {
+          confirmDialogConfig?.onConfirm();
+          setConfirmDialogClosed();
+        }}
+        title={confirmDialogConfig?.title || ''}
+        message={confirmDialogConfig?.message || ''}
+        danger={confirmDialogConfig?.danger}
       />
     </PageContainer>
   );

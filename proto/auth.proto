@@ -1,0 +1,73 @@
+syntax = "proto3";
+
+package topems.auth;
+
+import "core.proto";
+
+option java_multiple_files = true;
+option java_package = "com.topems.auth";
+option java_outer_classname = "AuthProto";
+option objc_class_prefix = "TPM";
+
+option go_package = "github.com/topems/proto/auth";
+
+service AuthService {
+  rpc Login(LoginRequest) returns (LoginResponse);
+  rpc Logout(LogoutRequest) returns (LogoutResponse);
+  rpc RefreshToken(RefreshTokenRequest) returns (RefreshTokenResponse);
+  rpc ValidateToken(ValidateTokenRequest) returns (ValidateTokenResponse);
+  rpc GetUserInfo(GetUserInfoRequest) returns (GetUserInfoResponse);
+}
+
+message LoginRequest {
+  string username = 1;
+  string password = 2;
+  string tenant_id = 3;
+}
+
+message LoginResponse {
+  string access_token = 1;
+  string refresh_token = 2;
+  int64 expires_in = 3;
+  topems.core.UserContext user = 4;
+  topems.core.TenantContext tenant = 5;
+}
+
+message LogoutRequest {
+  string refresh_token = 1;
+  topems.core.RequestContext context = 2;
+}
+
+message LogoutResponse {
+  bool success = 1;
+}
+
+message RefreshTokenRequest {
+  string refresh_token = 1;
+}
+
+message RefreshTokenResponse {
+  string access_token = 1;
+  string refresh_token = 2;
+  int64 expires_in = 3;
+}
+
+message ValidateTokenRequest {
+  string token = 1;
+}
+
+message ValidateTokenResponse {
+  bool valid = 1;
+  topems.core.UserContext user = 2;
+  topems.core.TenantContext tenant = 3;
+}
+
+message GetUserInfoRequest {
+  topems.core.RequestContext context = 1;
+}
+
+message GetUserInfoResponse {
+  topems.core.UserContext user = 1;
+  topems.core.TenantContext tenant = 2;
+  map<string, string> permissions = 3;
+}

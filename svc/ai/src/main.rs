@@ -1,6 +1,7 @@
 // TOPEMS-AI Backend - with PostgreSQL/pgvector persistence and PDF support
 // =============================================================================
 
+mod event_handlers;
 mod handlers;
 mod middleware;
 mod models;
@@ -101,6 +102,23 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
 
     let db = Database::new(&database_url).await?;
     tracing::info!("✅ 数据库连接成功");
+
+    let event_publisher = match topems_shared::event::EventPublisher::new("topems-ai") {
+        Ok(publisher) => {
+            tracing::info!("📢 事件发布服务初始化成功");
+            Some(std::sync::Arc::new(publisher))
+        }
+        Err(e) => {
+            tracing::warn!("⚠️ 事件发布服务初始化失败（不阻塞启动）: {}", e);
+            None
+        }
+    };
+
+    if let Err(e) =
+        event_handlers::start_event_subscribers(db.pool().clone(), event_publisher.clone()).await
+    {
+        tracing::warn!("⚠️ AI 事件订阅者启动失败: {}", e);
+    }
 
     // 运行迁移
     db.run_migrations().await?;
@@ -234,6 +252,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
         agent_service,
         recommendation_service,
         multimodal_service,
+        event_publisher,
     };
 
     // 创建路由

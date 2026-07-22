@@ -1,3 +1,4 @@
+mod event_handlers;
 pub mod models;
 pub mod modules;
 pub mod services;
@@ -9,12 +10,11 @@ use modules::{auth, pm_plugin};
 use prometheus::{default_registry, Gauge};
 use std::env;
 use std::sync::Arc;
-
 use topems_shared::{
     auth_middleware, build_health_response, create_api_info_router, create_cors_layer,
-    create_database_pool, init_telemetry, rate_limit_middleware, register_routes_with_legacy_alias,
-    rls_middleware, telemetry_middleware, test_database_connection, AuthState, DatabaseConfig,
-    RateLimitConfig, RateLimitMiddleware, Result, ServiceHealth,
+    create_database_pool, init_telemetry, rls_middleware, telemetry_middleware,
+    test_database_connection, wrap_group2_router, AuthState, DatabaseConfig, EventPublisher,
+    Result, RouteCompatConfig, ServiceHealth,
 };
 use utoipa::OpenApi;
 
@@ -70,6 +70,23 @@ async fn main() -> Result<()> {
         tracing::warn!("数据库初始化警告: {}", e);
     }
 
+    let event_publisher = match EventPublisher::new("topems-pm") {
+        Ok(publisher) => {
+            tracing::info!("📢 事件发布服务初始化成功");
+            Some(Arc::new(publisher))
+        }
+        Err(e) => {
+            tracing::warn!("⚠️ 事件发布服务初始化失败（不阻塞启动）: {}", e);
+            None
+        }
+    };
+
+    if let Err(e) =
+        event_handlers::start_event_subscribers(pool.clone(), event_publisher.clone()).await
+    {
+        tracing::warn!("⚠️ PM 事件订阅者启动失败: {}", e);
+    }
+
     let cors = create_cors_layer();
 
     let auth_state = AuthState::from_env();
@@ -85,19 +102,7 @@ async fn main() -> Result<()> {
         .route("/api/plugins/health", get(pm_plugin::plugin_health_check))
         .merge(auth::create_routes());
 
-    let rate_limit_config = RateLimitConfig::new(200, 60)
-        .with_by_user_id(false)
-        .with_by_ip(true);
-    let rate_limiter = Arc::new(RateLimitMiddleware::new(rate_limit_config));
-    let rate_limit_layer = axum::middleware::from_fn({
-        let mw = rate_limiter.clone();
-        move |req, next| {
-            let mw = mw.clone();
-            async move { rate_limit_middleware(mw, req, next).await }
-        }
-    });
-
-    let protected_routes = modules::create_routes(pool.clone())
+    let protected_routes = modules::create_routes(pool.clone(), event_publisher.clone())
         .layer(axum::middleware::from_fn_with_state(
             auth_state.clone(),
             auth_middleware,
@@ -105,19 +110,18 @@ async fn main() -> Result<()> {
         .layer(axum::middleware::from_fn_with_state(
             pool.clone(),
             rls_middleware,
-        ))
-        .layer(rate_limit_layer);
+        ));
 
-    let app = register_routes_with_legacy_alias(
-        Router::new().merge(public_routes),
-        "/api/pm",
-        &["/api/v1/pm"],
-        protected_routes,
-    )
-    .merge(create_api_info_router("topems-pm"))
-    .layer(axum::middleware::from_fn(telemetry_middleware))
-    .layer(prometheus_layer)
-    .layer(cors);
+    let app = Router::new()
+        .merge(public_routes)
+        .nest("/api/pm", protected_routes)
+        .merge(create_api_info_router("topems-pm"))
+        .layer(axum::middleware::from_fn(telemetry_middleware))
+        .layer(prometheus_layer)
+        .layer(cors);
+
+    let cfg = RouteCompatConfig::new("pm", "/api/pm", &[]);
+    let app = wrap_group2_router(app, cfg);
 
     let port = std::env::var("PM_PORT").unwrap_or_else(|_| "8023".to_string());
     let addr = format!("0.0.0.0:{}", port);

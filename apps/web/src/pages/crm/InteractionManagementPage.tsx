@@ -12,18 +12,16 @@ import {
 import React, { useState, useMemo } from 'react';
 import type { Interaction, CreateInteractionRequest, UpdateInteractionRequest } from '@/api/crm';
 import { crmApi } from '@/api/crm';
-import { useNotificationStore } from '@/store';
 import { logger } from '@/utils/logger';
 import { Plus, Edit, Trash2, Eye } from 'lucide-react';
 import { ListPageTemplate, type ColumnDef } from '@/components/templates';
 import { PageContainer, StatusBadge, FormField } from '@/components/common';
 import type { RowAction, FilterConfig } from '@/components';
-import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { useQuery } from '@tanstack/react-query';
+import { ConfirmDialog } from '@topems/shared-components';
+import { useConfirmDialog, useCrudMutations } from '@/hooks';
 
 const InteractionManagementPage: React.FC = () => {
-  const { addNotification } = useNotificationStore();
-  const queryClient = useQueryClient();
-
   const [searchTerm, setSearchTerm] = useState('');
   const [statusFilter, setStatusFilter] = useState<string>('');
   const [typeFilter, setTypeFilter] = useState<string>('');
@@ -37,6 +35,12 @@ const InteractionManagementPage: React.FC = () => {
     scheduled_at: '',
     notes: '',
   });
+  const {
+    confirmOpen: confirmDialogOpen,
+    confirmConfig: confirmDialogConfig,
+    openConfirm: openConfirmDialog,
+    closeConfirm: setConfirmDialogClosed,
+  } = useConfirmDialog();
 
   const interactionsQuery = useQuery({
     queryKey: ['crm-interactions', searchTerm, statusFilter, typeFilter],
@@ -56,41 +60,16 @@ const InteractionManagementPage: React.FC = () => {
   const interactions = interactionsQuery.data || [];
   const loading = interactionsQuery.isLoading;
 
-  const createInteractionMutation = useMutation({
-    mutationFn: (data: CreateInteractionRequest) => crmApi.interactions.create(data),
-    onSuccess: () => {
-      addNotification({ type: 'success', title: '创建成功', message: '新交互记录已创建' });
-      queryClient.invalidateQueries({ queryKey: ['crm-interactions'] });
-    },
-    onError: (error: unknown) => {
-      logger.error('创建失败:', error);
-      addNotification({ type: 'error', title: '操作失败', message: '创建交互记录失败' });
-    },
-  });
-
-  const updateInteractionMutation = useMutation({
-    mutationFn: ({ id, data }: { id: string; data: UpdateInteractionRequest }) =>
-      crmApi.interactions.update(id, data),
-    onSuccess: () => {
-      addNotification({ type: 'success', title: '更新成功', message: '交互记录已更新' });
-      queryClient.invalidateQueries({ queryKey: ['crm-interactions'] });
-    },
-    onError: (error: unknown) => {
-      logger.error('更新失败:', error);
-      addNotification({ type: 'error', title: '操作失败', message: '更新交互记录失败' });
-    },
-  });
-
-  const deleteInteractionMutation = useMutation({
-    mutationFn: (id: string) => crmApi.interactions.delete(id),
-    onSuccess: () => {
-      addNotification({ type: 'success', title: '删除成功', message: '交互记录已删除' });
-      queryClient.invalidateQueries({ queryKey: ['crm-interactions'] });
-    },
-    onError: (error: unknown) => {
-      logger.error('删除失败:', error);
-      addNotification({ type: 'error', title: '删除失败', message: '无法删除交互记录' });
-    },
+  const {
+    createMutation: createInteractionMutation,
+    updateMutation: updateInteractionMutation,
+    deleteMutation: deleteInteractionMutation,
+  } = useCrudMutations<CreateInteractionRequest, UpdateInteractionRequest, string>({
+    queryKeyToInvalidate: ['crm-interactions'],
+    createFn: async (data) => crmApi.interactions.create(data),
+    updateFn: async ({ id, data }) => crmApi.interactions.update(String(id), data),
+    deleteFn: async (id) => crmApi.interactions.delete(String(id)),
+    entityName: '交互记录',
   });
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -111,13 +90,15 @@ const InteractionManagementPage: React.FC = () => {
     }
   };
 
-  const handleDelete = async (id: string) => {
-    if (!window.confirm('确定要删除这条交互记录吗?')) return;
-    try {
-      await deleteInteractionMutation.mutateAsync(id);
-    } catch (error: unknown) {
-      logger.error('删除失败:', error);
-    }
+  const handleDelete = (id: string) => {
+    openConfirmDialog({
+      title: '确认删除',
+      message: '确定要删除这条交互记录吗?',
+      danger: true,
+      onConfirm: () => {
+        deleteInteractionMutation.mutate(id);
+      },
+    });
   };
 
   const handleEdit = (interaction: Interaction) => {
@@ -506,6 +487,18 @@ const InteractionManagementPage: React.FC = () => {
           )}
         </Dialog>
       </>
+
+      <ConfirmDialog
+        isOpen={confirmDialogOpen}
+        onClose={setConfirmDialogClosed}
+        onConfirm={() => {
+          confirmDialogConfig?.onConfirm();
+          setConfirmDialogClosed();
+        }}
+        title={confirmDialogConfig?.title || ''}
+        message={confirmDialogConfig?.message || ''}
+        danger={confirmDialogConfig?.danger}
+      />
     </PageContainer>
   );
 };

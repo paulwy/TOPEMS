@@ -51,6 +51,7 @@ import {
 import { apiLogger } from '@/utils/logger';
 import { designTokens } from '@/theme/tokens';
 
+import { useTranslation } from 'react-i18next';
 const ct = designTokens.colors;
 
 interface TabPanelProps {
@@ -75,6 +76,7 @@ function TabPanel(props: TabPanelProps) {
 }
 
 const MesQualityPage: React.FC = () => {
+  const { t } = useTranslation();
   const queryClient = useQueryClient();
   const [tabValue, setTabValue] = useState(0);
 
@@ -182,14 +184,14 @@ const MesQualityPage: React.FC = () => {
     const s =
       type === 'patrol'
         ? {
-            qualified: { label: '正常', bg: 'success.lighter', color: 'success.dark' },
-            abnormal: { label: '异常', bg: 'error.lighter', color: 'error.dark' },
-            pending: { label: '待处理', bg: 'warning.light', color: 'warning.dark' },
+            qualified: { label: t('mes.mes_quality_page.normal'), bg: 'success.lighter', color: 'success.dark' },
+            abnormal: { label: t('mes.mes_quality_page.abnormal'), bg: 'error.lighter', color: 'error.dark' },
+            pending: { label: t('mes.mes_quality_page.status_open'), bg: 'warning.light', color: 'warning.dark' },
           }[status]
         : {
-            qualified: { label: '合格', bg: 'success.lighter', color: 'success.dark' },
-            unqualified: { label: '不合格', bg: 'error.lighter', color: 'error.dark' },
-            pending: { label: '待检', bg: 'warning.light', color: 'warning.dark' },
+            qualified: { label: t('mes.mes_quality_page.qualified'), bg: 'success.lighter', color: 'success.dark' },
+            unqualified: { label: t('mes.mes_quality_page.unqualified'), bg: 'error.lighter', color: 'error.dark' },
+            pending: { label: t('mes.mes_quality_page.text_5930e6'), bg: 'warning.light', color: 'warning.dark' },
           }[status];
 
     const info = s || { label: status, bg: 'grey.100', color: 'text.secondary' };
@@ -206,14 +208,14 @@ const MesQualityPage: React.FC = () => {
   const createInspectionMutation = useMutation({
     mutationFn: (data: CreateQualityInspectionRequest) => qualityApi.createInspection(data),
     onSuccess: () => {
-      addNotification({ type: 'success', title: '创建成功', message: '新质检记录已创建' });
+      addNotification({ type: 'success', title: t('mes.mes_quality_page.create'), message: t('mes.mes_quality_page.create_1') });
       invalidateQuality();
       setShowDialog(false);
       resetInspectionForm();
     },
     onError: (error: unknown) => {
-      apiLogger.error('操作失败:', error);
-      addNotification({ type: 'error', title: '操作失败', message: '创建质检记录失败' });
+      apiLogger.error(t('mes.mes_quality_page.operation_failed'), error);
+      addNotification({ type: 'error', title: t('mes.mes_quality_page.operation_failed_1'), message: t('mes.mes_quality_page.create_2') });
     },
   });
 
@@ -221,40 +223,40 @@ const MesQualityPage: React.FC = () => {
     mutationFn: ({ id, data }: { id: string; data: UpdateQualityInspectionRequest }) =>
       qualityApi.updateInspection(id, data),
     onSuccess: () => {
-      addNotification({ type: 'success', title: '更新成功', message: '质检记录已更新' });
+      addNotification({ type: 'success', title: t('mes.mes_quality_page.update'), message: t('mes.mes_quality_page.update_1') });
       invalidateQuality();
       setShowDialog(false);
       resetInspectionForm();
     },
     onError: (error: unknown) => {
-      apiLogger.error('操作失败:', error);
-      addNotification({ type: 'error', title: '操作失败', message: '更新质检记录失败' });
+      apiLogger.error(t('mes.mes_quality_page.operation_failed'), error);
+      addNotification({ type: 'error', title: t('mes.mes_quality_page.operation_failed_1'), message: t('mes.mes_quality_page.update_2') });
     },
   });
 
   const deleteInspectionMutation = useMutation({
     mutationFn: (id: string) => qualityApi.deleteInspection(id),
     onSuccess: () => {
-      addNotification({ type: 'success', title: '删除成功', message: '质检记录已删除' });
+      addNotification({ type: 'success', title: t('mes.mes_quality_page.delete_success'), message: t('mes.mes_quality_page.deleted') });
       invalidateQuality();
     },
     onError: (error: unknown) => {
-      apiLogger.error('删除失败:', error);
-      addNotification({ type: 'error', title: '删除失败', message: '无法删除质检记录' });
+      apiLogger.error(t('mes.mes_quality_page.delete'), error);
+      addNotification({ type: 'error', title: t('mes.mes_quality_page.delete_1'), message: t('mes.mes_quality_page.delete_2') });
     },
   });
 
   const createPatrolMutation = useMutation({
     mutationFn: (data: CreatePatrolInspectionRequest) => qualityApi.createPatrolInspection(data),
     onSuccess: () => {
-      addNotification({ type: 'success', title: '创建成功', message: '新巡检记录已创建' });
+      addNotification({ type: 'success', title: t('mes.mes_quality_page.create'), message: t('mes.mes_quality_page.create_3') });
       invalidateQuality();
       setShowDialog(false);
       resetPatrolForm();
     },
     onError: (error: unknown) => {
-      apiLogger.error('操作失败:', error);
-      addNotification({ type: 'error', title: '操作失败', message: '创建巡检记录失败' });
+      apiLogger.error(t('mes.mes_quality_page.operation_failed'), error);
+      addNotification({ type: 'error', title: t('mes.mes_quality_page.operation_failed_1'), message: t('mes.mes_quality_page.create_4') });
     },
   });
 
@@ -262,26 +264,26 @@ const MesQualityPage: React.FC = () => {
     mutationFn: ({ id, data }: { id: string; data: CreatePatrolInspectionRequest }) =>
       qualityApi.updatePatrolInspection(id, data),
     onSuccess: () => {
-      addNotification({ type: 'success', title: '更新成功', message: '巡检记录已更新' });
+      addNotification({ type: 'success', title: t('mes.mes_quality_page.update'), message: t('mes.mes_quality_page.update_3') });
       invalidateQuality();
       setShowDialog(false);
       resetPatrolForm();
     },
     onError: (error: unknown) => {
-      apiLogger.error('操作失败:', error);
-      addNotification({ type: 'error', title: '操作失败', message: '更新巡检记录失败' });
+      apiLogger.error(t('mes.mes_quality_page.operation_failed'), error);
+      addNotification({ type: 'error', title: t('mes.mes_quality_page.operation_failed_1'), message: t('mes.mes_quality_page.update_4') });
     },
   });
 
   const deletePatrolMutation = useMutation({
     mutationFn: (id: string) => qualityApi.deletePatrolInspection(id),
     onSuccess: () => {
-      addNotification({ type: 'success', title: '删除成功', message: '巡检记录已删除' });
+      addNotification({ type: 'success', title: t('mes.mes_quality_page.delete_success'), message: t('mes.mes_quality_page.deleted_1') });
       invalidateQuality();
     },
     onError: (error: unknown) => {
-      apiLogger.error('删除失败:', error);
-      addNotification({ type: 'error', title: '删除失败', message: '无法删除巡检记录' });
+      apiLogger.error(t('mes.mes_quality_page.delete'), error);
+      addNotification({ type: 'error', title: t('mes.mes_quality_page.delete_1'), message: t('mes.mes_quality_page.delete_3') });
     },
   });
 
@@ -307,12 +309,12 @@ const MesQualityPage: React.FC = () => {
   };
 
   const handleDeleteInspection = (id: string) => {
-    if (!window.confirm('确定要删除这条质检记录吗?')) return;
+    if (!window.confirm(t('mes.mes_quality_page.confirm'))) return;
     deleteInspectionMutation.mutate(id);
   };
 
   const handleDeletePatrol = (id: string) => {
-    if (!window.confirm('确定要删除这条巡检记录吗?')) return;
+    if (!window.confirm(t('mes.mes_quality_page.confirm_1'))) return;
     deletePatrolMutation.mutate(id);
   };
 
@@ -390,20 +392,20 @@ const MesQualityPage: React.FC = () => {
 
   const inspectionColumns: ColumnDef<QualityInspection>[] = useMemo(
     () => [
-      { id: 'inspection_no', label: '质检单号', sortable: true },
-      { id: 'product_name', label: '产品名称', sortable: true },
-      { id: 'inspection_type', label: '质检类型', sortable: true },
-      { id: 'quantity', label: '数量', sortable: true },
+      { id: 'inspection_no', label: t('mes.mes_quality_page.quality_inspection'), sortable: true },
+      { id: 'product_name', label: t('mes.mes_quality_page.column_product_name'), sortable: true },
+      { id: 'inspection_type', label: t('mes.mes_quality_page.type'), sortable: true },
+      { id: 'quantity', label: t('mes.mes_quality_page.quantity'), sortable: true },
       {
         id: 'qualification_rate',
-        label: '合格率',
+        label: t('mes.mes_quality_page.pass_rate'),
         sortable: true,
         render: (row) => `${(row.qualification_rate * 100).toFixed(1)}%`,
       },
-      { id: 'inspector', label: '质检员', sortable: true },
+      { id: 'inspector', label: t('mes.mes_quality_page.quality_inspection_1'), sortable: true },
       {
         id: 'status',
-        label: '状态',
+        label: t('mes.mes_quality_page.filter_status'),
         render: (row) => getStatusBadge(row.status),
       },
     ],
@@ -412,14 +414,14 @@ const MesQualityPage: React.FC = () => {
 
   const patrolColumns: ColumnDef<PatrolInspection>[] = useMemo(
     () => [
-      { id: 'patrol_no', label: '巡检单号', sortable: true },
-      { id: 'production_line', label: '生产线', sortable: true },
-      { id: 'workstation_name', label: '工位', sortable: true },
-      { id: 'inspector', label: '巡检员', sortable: true },
-      { id: 'patrol_time', label: '巡检时间', sortable: true },
+      { id: 'patrol_no', label: t('mes.mes_quality_page.patrol'), sortable: true },
+      { id: 'production_line', label: t('mes.mes_quality_page.production_line'), sortable: true },
+      { id: 'workstation_name', label: t('mes.mes_quality_page.text_ab5bf8'), sortable: true },
+      { id: 'inspector', label: t('mes.mes_quality_page.patrol_1'), sortable: true },
+      { id: 'patrol_time', label: t('mes.mes_quality_page.time'), sortable: true },
       {
         id: 'status',
-        label: '状态',
+        label: t('mes.mes_quality_page.filter_status'),
         render: (row) => getStatusBadge(row.status, 'patrol'),
       },
     ],
@@ -430,13 +432,13 @@ const MesQualityPage: React.FC = () => {
     () => [
       {
         id: 'status',
-        label: '状态',
+        label: t('mes.mes_quality_page.filter_status'),
         type: 'select',
         options: [
-          { label: '全部状态', value: 'all' },
-          { label: '合格', value: 'qualified' },
-          { label: '不合格', value: 'unqualified' },
-          { label: '待检', value: 'pending' },
+          { label: t('mes.mes_quality_page.filter_option_all_status'), value: 'all' },
+          { label: t('mes.mes_quality_page.qualified'), value: 'qualified' },
+          { label: t('mes.mes_quality_page.unqualified'), value: 'unqualified' },
+          { label: t('mes.mes_quality_page.text_5930e6'), value: 'pending' },
         ],
         value: statusFilter,
         onChange: (value: unknown) => {
@@ -452,13 +454,13 @@ const MesQualityPage: React.FC = () => {
     () => [
       {
         id: 'status',
-        label: '状态',
+        label: t('mes.mes_quality_page.filter_status'),
         type: 'select',
         options: [
-          { label: '全部状态', value: 'all' },
-          { label: '正常', value: 'normal' },
-          { label: '异常', value: 'abnormal' },
-          { label: '待处理', value: 'pending' },
+          { label: t('mes.mes_quality_page.filter_option_all_status'), value: 'all' },
+          { label: t('mes.mes_quality_page.normal'), value: 'normal' },
+          { label: t('mes.mes_quality_page.abnormal'), value: 'abnormal' },
+          { label: t('mes.mes_quality_page.status_open'), value: 'pending' },
         ],
         value: statusFilter,
         onChange: (value: unknown) => {
@@ -473,22 +475,22 @@ const MesQualityPage: React.FC = () => {
   const inspectionRowActions: RowAction<QualityInspection>[] = useMemo(
     () => [
       {
-        label: '查看详情',
+        label: t('mes.mes_quality_page.action_view_detail'),
         icon: <Eye size={16} />,
         onClick: handleViewDetail,
       },
       {
-        label: '编辑',
+        label: t('mes.mes_quality_page.action_edit'),
         icon: <Edit size={16} />,
         onClick: handleEditInspection,
       },
       {
-        label: '删除',
+        label: t('mes.mes_quality_page.action_delete'),
         icon: <Trash2 size={16} />,
         color: 'error',
         onClick: (row) => handleDeleteInspection(row.id),
         confirm: true,
-        confirmMessage: '确定要删除这条质检记录吗?',
+        confirmMessage: t('mes.mes_quality_page.confirm'),
       },
     ],
     [handleViewDetail, handleEditInspection, handleDeleteInspection]
@@ -497,22 +499,22 @@ const MesQualityPage: React.FC = () => {
   const patrolRowActions: RowAction<PatrolInspection>[] = useMemo(
     () => [
       {
-        label: '查看详情',
+        label: t('mes.mes_quality_page.action_view_detail'),
         icon: <Eye size={16} />,
         onClick: handleViewDetail,
       },
       {
-        label: '编辑',
+        label: t('mes.mes_quality_page.action_edit'),
         icon: <Edit size={16} />,
         onClick: handleEditPatrol,
       },
       {
-        label: '删除',
+        label: t('mes.mes_quality_page.action_delete'),
         icon: <Trash2 size={16} />,
         color: 'error',
         onClick: (row) => handleDeletePatrol(row.id),
         confirm: true,
-        confirmMessage: '确定要删除这条巡检记录吗?',
+        confirmMessage: t('mes.mes_quality_page.confirm_1'),
       },
     ],
     [handleViewDetail, handleEditPatrol, handleDeletePatrol]
@@ -535,17 +537,17 @@ const MesQualityPage: React.FC = () => {
           onChange={handleTabChange}
         >
           <Tab
-            label='生产质检'
+            label={t('mes.mes_quality_page.production')}
             icon={<ClipboardCheck size={18} />}
             iconPosition='start'
           />
           <Tab
-            label='巡检记录'
+            label={t('mes.mes_quality_page.patrol_2')}
             icon={<Search size={18} />}
             iconPosition='start'
           />
           <Tab
-            label='质检标准'
+            label={t('mes.mes_quality_page.quality_inspection_2')}
             icon={<FileCheck size={18} />}
             iconPosition='start'
           />
@@ -564,7 +566,7 @@ const MesQualityPage: React.FC = () => {
           loading={loading}
           filters={filters}
           searchable
-          searchPlaceholder='搜索质检单号或产品名称...'
+          searchPlaceholder={t('mes.mes_quality_page.product_name')}
           searchValue={searchTerm}
           onSearch={handleSearch}
           pagination={{
@@ -578,13 +580,13 @@ const MesQualityPage: React.FC = () => {
           onSelectionChange={(ids) => setSelectedIds(ids.map(String))}
           actions={[
             {
-              label: '新增质检',
+              label: t('mes.mes_quality_page.add'),
               icon: <Plus size={16} />,
               onClick: handleOpenCreate,
             },
           ]}
           rowActions={inspectionRowActions}
-          emptyMessage='暂无质检数据'
+          emptyMessage={t('mes.mes_quality_page.no_data')}
           getRowId={(row) => row.id}
         />
       </TabPanel>
@@ -601,7 +603,7 @@ const MesQualityPage: React.FC = () => {
           loading={loading}
           filters={patrolFilters}
           searchable
-          searchPlaceholder='搜索巡检单号或生产线...'
+          searchPlaceholder={t('mes.mes_quality_page.production_line_1')}
           searchValue={searchTerm}
           onSearch={handleSearch}
           pagination={{
@@ -615,13 +617,13 @@ const MesQualityPage: React.FC = () => {
           onSelectionChange={(ids) => setSelectedIds(ids.map(String))}
           actions={[
             {
-              label: '新增巡检',
+              label: t('mes.mes_quality_page.add_1'),
               icon: <Plus size={16} />,
               onClick: handleOpenCreate,
             },
           ]}
           rowActions={patrolRowActions}
-          emptyMessage='暂无巡检数据'
+          emptyMessage={t('mes.mes_quality_page.no_data_1')}
           getRowId={(row) => row.id}
         />
       </TabPanel>
@@ -634,14 +636,14 @@ const MesQualityPage: React.FC = () => {
           title=''
           subtitle=''
           columns={[
-            { id: 'code', label: '标准编号', sortable: true },
-            { id: 'name', label: '标准名称', sortable: true },
-            { id: 'product_name', label: '适用产品', sortable: true },
-            { id: 'inspection_type', label: '质检类型', sortable: true },
-            { id: 'version', label: '版本', sortable: true },
+            { id: 'code', label: t('mes.mes_quality_page.text_c926d5'), sortable: true },
+            { id: 'name', label: t('mes.mes_quality_page.name'), sortable: true },
+            { id: 'product_name', label: t('mes.mes_quality_page.product'), sortable: true },
+            { id: 'inspection_type', label: t('mes.mes_quality_page.type'), sortable: true },
+            { id: 'version', label: t('mes.mes_quality_page.text_fe2df0'), sortable: true },
             {
               id: 'status',
-              label: '状态',
+              label: t('mes.mes_quality_page.filter_status'),
               render: (row) => getStatusBadge(row.status),
             },
           ]}
@@ -649,7 +651,7 @@ const MesQualityPage: React.FC = () => {
           loading={loading}
           filters={filters}
           searchable
-          searchPlaceholder='搜索标准编号或名称...'
+          searchPlaceholder={t('mes.mes_quality_page.search')}
           searchValue={searchTerm}
           onSearch={handleSearch}
           pagination={{
@@ -663,19 +665,19 @@ const MesQualityPage: React.FC = () => {
           onSelectionChange={(ids) => setSelectedIds(ids.map(String))}
           actions={[
             {
-              label: '新增标准',
+              label: t('mes.mes_quality_page.add_2'),
               icon: <Plus size={16} />,
               onClick: handleOpenCreate,
             },
           ]}
           rowActions={[
             {
-              label: '查看详情',
+              label: t('mes.mes_quality_page.action_view_detail'),
               icon: <Eye size={16} />,
               onClick: handleViewDetail,
             },
           ]}
-          emptyMessage='暂无质检标准'
+          emptyMessage={t('mes.mes_quality_page.no_data_2')}
           getRowId={(row) => row.id}
         />
       </TabPanel>
@@ -686,7 +688,7 @@ const MesQualityPage: React.FC = () => {
         onClose={() => setShowDialog(false)}
         maxWidth='md'
       >
-        <DialogTitle>{selectedItem ? '编辑质检记录' : '新增质检记录'}</DialogTitle>
+        <DialogTitle>{selectedItem ? t('mes.mes_quality_page.edit') : t('mes.mes_quality_page.add_3')}</DialogTitle>
         <DialogContent>
           <Box
             component='span'
@@ -697,7 +699,7 @@ const MesQualityPage: React.FC = () => {
               fontSize: 14,
             }}
           >
-            {selectedItem ? '修改质检记录信息' : '填写新质检记录信息'}
+            {selectedItem ? t('mes.mes_quality_page.info') : t('mes.mes_quality_page.info_1')}
           </Box>
           <form onSubmit={handleSubmitInspection}>
             <Box
@@ -821,7 +823,7 @@ const MesQualityPage: React.FC = () => {
         onClose={() => setShowDialog(false)}
         maxWidth='md'
       >
-        <DialogTitle>{selectedItem ? '编辑巡检记录' : '新增巡检记录'}</DialogTitle>
+        <DialogTitle>{selectedItem ? t('mes.mes_quality_page.edit_1') : t('mes.mes_quality_page.add_4')}</DialogTitle>
         <DialogContent>
           <Box
             component='span'
@@ -832,7 +834,7 @@ const MesQualityPage: React.FC = () => {
               fontSize: 14,
             }}
           >
-            {selectedItem ? '修改巡检记录信息' : '填写新巡检记录信息'}
+            {selectedItem ? t('mes.mes_quality_page.info_2') : t('mes.mes_quality_page.info_3')}
           </Box>
           <form onSubmit={handleSubmitPatrol}>
             <Box

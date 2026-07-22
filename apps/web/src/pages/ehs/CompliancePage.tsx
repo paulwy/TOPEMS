@@ -29,9 +29,11 @@ import { useNotificationStore } from '@/store';
 import { apiLogger } from '@/utils/logger';
 import { designTokens } from '@/theme/tokens';
 
+import { useTranslation } from 'react-i18next';
 const ct = designTokens.colors;
 
 const CompliancePage: React.FC = () => {
+  const { t } = useTranslation();
   const queryClient = useQueryClient();
   const [activeTab, setActiveTab] = useState(0);
   const [searchTerm, setSearchTerm] = useState('');
@@ -101,20 +103,20 @@ const CompliancePage: React.FC = () => {
 
   const getStatusBadge = (status: string) => {
     const statusMap: Record<string, { bg: string; color: string; label: string }> = {
-      draft: { bg: 'grey.100', color: 'text.secondary', label: '草稿' },
-      published: { bg: 'info.lighter', color: 'info.dark', label: '已发布' },
-      effective: { bg: 'success.lighter', color: 'success.dark', label: '有效' },
-      expired: { bg: 'error.lighter', color: 'error.dark', label: '已过期' },
-      archived: { bg: 'grey.200', color: 'text.secondary', label: '已归档' },
-      in_progress: { bg: 'warning.lighter', color: 'warning.dark', label: '进行中' },
-      completed: { bg: 'success.lighter', color: 'success.dark', label: '已完成' },
-      approved: { bg: 'primary.lighter', color: 'primary.dark', label: '已批准' },
-      valid: { bg: 'success.lighter', color: 'success.dark', label: '有效' },
-      revoked: { bg: 'error.light', color: 'error.dark', label: '已撤销' },
-      pending_renewal: { bg: 'warning.lighter', color: 'warning.dark', label: '待续期' },
-      compliant: { bg: 'success.lighter', color: 'success.dark', label: '合规' },
-      partially_compliant: { bg: 'warning.lighter', color: 'warning.dark', label: '部分合规' },
-      non_compliant: { bg: 'error.lighter', color: 'error.dark', label: '不合规' },
+      draft: { bg: 'grey.100', color: 'text.secondary', label: t('ehs.compliance_page.text_22b433') },
+      published: { bg: 'info.lighter', color: 'info.dark', label: t('ehs.compliance_page.text_dca0c1') },
+      effective: { bg: 'success.lighter', color: 'success.dark', label: t('ehs.compliance_page.text_c6cc39') },
+      expired: { bg: 'error.lighter', color: 'error.dark', label: t('ehs.compliance_page.text_4d5ccd') },
+      archived: { bg: 'grey.200', color: 'text.secondary', label: t('ehs.compliance_page.text_c3ba16') },
+      in_progress: { bg: 'warning.lighter', color: 'warning.dark', label: t('ehs.compliance_page.in_progress') },
+      completed: { bg: 'success.lighter', color: 'success.dark', label: t('ehs.compliance_page.completed') },
+      approved: { bg: 'primary.lighter', color: 'primary.dark', label: t('ehs.compliance_page.text_337737') },
+      valid: { bg: 'success.lighter', color: 'success.dark', label: t('ehs.compliance_page.text_c6cc39') },
+      revoked: { bg: 'error.light', color: 'error.dark', label: t('ehs.compliance_page.text_50239f') },
+      pending_renewal: { bg: 'warning.lighter', color: 'warning.dark', label: t('ehs.compliance_page.text_45714f') },
+      compliant: { bg: 'success.lighter', color: 'success.dark', label: t('ehs.compliance_page.text_6d266c') },
+      partially_compliant: { bg: 'warning.lighter', color: 'warning.dark', label: t('ehs.compliance_page.text_b4ab6f') },
+      non_compliant: { bg: 'error.lighter', color: 'error.dark', label: t('ehs.compliance_page.text_0b181a') },
     };
     const colors = statusMap[status] || { bg: 'grey.100', color: 'text.secondary', label: status };
     return (
@@ -128,53 +130,53 @@ const CompliancePage: React.FC = () => {
 
   const getRegulationTypeLabel = (type: string) => {
     const typeMap: Record<string, string> = {
-      law: '法律',
-      regulation: '法规',
-      standard: '标准',
-      policy: '政策',
-      notice: '通知',
+      law: t('ehs.compliance_page.text_c47d7a'),
+      regulation: t('ehs.compliance_page.text_bfe798'),
+      standard: t('ehs.compliance_page.text_544fac'),
+      policy: t('ehs.compliance_page.text_2c973b'),
+      notice: t('ehs.compliance_page.text_5660bc'),
     };
     return typeMap[type] || type;
   };
 
   const regulationColumns: ColumnDef<EnvironmentalRegulation>[] = useMemo(
     () => [
-      { id: 'regulation_no', label: '法规编号' },
-      { id: 'title', label: '法规名称' },
+      { id: 'regulation_no', label: t('ehs.compliance_page.text_081b91') },
+      { id: 'title', label: t('ehs.compliance_page.name') },
       {
         id: 'regulation_type',
-        label: '类型',
+        label: t('ehs.compliance_page.type'),
         render: (row) => getRegulationTypeLabel(row.regulation_type),
       },
-      { id: 'issuing_authority', label: '发布机构', render: (row) => row.issuing_authority || '-' },
-      { id: 'issue_date', label: '发布日期', render: (row) => row.issue_date || '-' },
-      { id: 'status', label: '状态', render: (row) => getStatusBadge(row.status) },
+      { id: 'issuing_authority', label: t('ehs.compliance_page.text_6c7c79'), render: (row) => row.issuing_authority || '-' },
+      { id: 'issue_date', label: t('ehs.compliance_page.date'), render: (row) => row.issue_date || '-' },
+      { id: 'status', label: t('ehs.compliance_page.status'), render: (row) => getStatusBadge(row.status) },
     ],
     []
   );
 
   const assessmentColumns: ColumnDef<ComplianceAssessment>[] = useMemo(
     () => [
-      { id: 'assessment_no', label: '评估编号' },
-      { id: 'title', label: '评估名称' },
-      { id: 'assessment_type', label: '评估类型' },
-      { id: 'assessor', label: '评估人', render: (row) => row.assessor || '-' },
-      { id: 'assessment_date', label: '评估日期', render: (row) => row.assessment_date || '-' },
-      { id: 'result', label: '评估结果', render: (row) => getStatusBadge(row.result) },
-      { id: 'status', label: '状态', render: (row) => getStatusBadge(row.status) },
+      { id: 'assessment_no', label: t('ehs.compliance_page.text_3e9922') },
+      { id: 'title', label: t('ehs.compliance_page.name_1') },
+      { id: 'assessment_type', label: t('ehs.compliance_page.type_1') },
+      { id: 'assessor', label: t('ehs.compliance_page.text_ab3d92'), render: (row) => row.assessor || '-' },
+      { id: 'assessment_date', label: t('ehs.compliance_page.date_1'), render: (row) => row.assessment_date || '-' },
+      { id: 'result', label: t('ehs.compliance_page.text_37fa4b'), render: (row) => getStatusBadge(row.result) },
+      { id: 'status', label: t('ehs.compliance_page.status'), render: (row) => getStatusBadge(row.status) },
     ],
     []
   );
 
   const permitColumns: ColumnDef<DischargePermit>[] = useMemo(
     () => [
-      { id: 'permit_no', label: '许可证编号' },
-      { id: 'title', label: '许可证名称' },
-      { id: 'permit_type', label: '许可类型' },
-      { id: 'permit_category', label: '许可类别' },
-      { id: 'holder', label: '持证人', render: (row) => row.holder || '-' },
-      { id: 'expiry_date', label: '到期日期', render: (row) => row.expiry_date || '-' },
-      { id: 'status', label: '状态', render: (row) => getStatusBadge(row.status) },
+      { id: 'permit_no', label: t('ehs.compliance_page.text_c94e36') },
+      { id: 'title', label: t('ehs.compliance_page.name_2') },
+      { id: 'permit_type', label: t('ehs.compliance_page.type_2') },
+      { id: 'permit_category', label: t('ehs.compliance_page.text_eb20f1') },
+      { id: 'holder', label: t('ehs.compliance_page.text_2539a2'), render: (row) => row.holder || '-' },
+      { id: 'expiry_date', label: t('ehs.compliance_page.date_2'), render: (row) => row.expiry_date || '-' },
+      { id: 'status', label: t('ehs.compliance_page.status'), render: (row) => getStatusBadge(row.status) },
     ],
     []
   );
@@ -197,15 +199,15 @@ const CompliancePage: React.FC = () => {
     () => [
       {
         id: 'status',
-        label: '状态',
+        label: t('ehs.compliance_page.status'),
         type: 'select' as const,
         options: [
-          { value: 'all', label: '全部' },
-          { value: 'draft', label: '草稿' },
-          { value: 'published', label: '已发布' },
-          { value: 'effective', label: '有效' },
-          { value: 'expired', label: '已过期' },
-          { value: 'archived', label: '已归档' },
+          { value: 'all', label: t('ehs.compliance_page.all') },
+          { value: 'draft', label: t('ehs.compliance_page.text_22b433') },
+          { value: 'published', label: t('ehs.compliance_page.text_dca0c1') },
+          { value: 'effective', label: t('ehs.compliance_page.text_c6cc39') },
+          { value: 'expired', label: t('ehs.compliance_page.text_4d5ccd') },
+          { value: 'archived', label: t('ehs.compliance_page.text_c3ba16') },
         ],
         value: statusFilter,
         onChange: (value: unknown) => setStatusFilter(value as string),
@@ -231,13 +233,13 @@ const CompliancePage: React.FC = () => {
     mutationFn: (data: Parameters<typeof ehsApi.createEnvironmentalRegulation>[0]) =>
       ehsApi.createEnvironmentalRegulation(data),
     onSuccess: () => {
-      addNotification({ title: '成功', message: '法规创建成功', type: 'success' });
+      addNotification({ title: t('ehs.compliance_page.success'), message: t('ehs.compliance_page.create'), type: 'success' });
       queryClient.invalidateQueries({ queryKey: QUERY_KEYS.EHS.COMPLIANCE_REGULATIONS });
       setShowCreateModal(false);
     },
     onError: (error: unknown) => {
-      addNotification({ title: '错误', message: '创建失败', type: 'error' });
-      apiLogger.error('创建法规失败:', error);
+      addNotification({ title: t('ehs.compliance_page.error'), message: t('ehs.compliance_page.create_1'), type: 'error' });
+      apiLogger.error(t('ehs.compliance_page.create_2'), error);
     },
   });
 
@@ -256,7 +258,7 @@ const CompliancePage: React.FC = () => {
 
   const headerActions = [
     {
-      label: '新建法规',
+      label: t('ehs.compliance_page.text_ad9946'),
       icon: <Plus style={{ width: 18, height: 18 }} />,
       onClick: handleCreate,
       variant: 'contained' as const,
@@ -421,9 +423,9 @@ const CompliancePage: React.FC = () => {
           onChange={(_, newValue) => setActiveTab(newValue)}
           sx={{ borderBottom: 1, borderColor: 'divider', px: 2 }}
         >
-          <Tab label='法规清单' />
-          <Tab label='合规检查' />
-          <Tab label='许可证' />
+          <Tab label={t('ehs.compliance_page.text_b95fd3')} />
+          <Tab label={t('ehs.compliance_page.text_fd93f0')} />
+          <Tab label={t('ehs.compliance_page.text_20a284')} />
         </Tabs>
       </Card>
 
@@ -434,7 +436,7 @@ const CompliancePage: React.FC = () => {
         loading={loading}
         filters={filters}
         searchable
-        searchPlaceholder='搜索...'
+        searchPlaceholder={t('ehs.compliance_page.search')}
         searchValue={searchTerm}
         onSearch={(value) => setSearchTerm(value)}
         onRefresh={() => {
@@ -455,19 +457,19 @@ const CompliancePage: React.FC = () => {
           <Box sx={{ pt: 1, display: 'flex', flexDirection: 'column', gap: 2 }}>
             <TextField
               fullWidth
-              label='法规名称 *'
+              label={t('ehs.compliance_page.name_3')}
               value={regulationFormData.title}
               onChange={(e) =>
                 setRegulationFormData({ ...regulationFormData, title: e.target.value })
               }
-              placeholder='请输入法规名称'
+              placeholder={t('ehs.compliance_page.please_input')}
             />
             <Box sx={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 2 }}>
               <FormControl fullWidth>
                 <InputLabel>类别 *</InputLabel>
                 <Select
                   value={regulationFormData.category}
-                  label='类别'
+                  label={t('ehs.compliance_page.text_383a6d')}
                   onChange={(e) =>
                     setRegulationFormData({ ...regulationFormData, category: e.target.value })
                   }
@@ -482,7 +484,7 @@ const CompliancePage: React.FC = () => {
                 <InputLabel>法规类型 *</InputLabel>
                 <Select
                   value={regulationFormData.regulation_type}
-                  label='法规类型'
+                  label={t('ehs.compliance_page.type_3')}
                   onChange={(e) =>
                     setRegulationFormData({
                       ...regulationFormData,
@@ -501,7 +503,7 @@ const CompliancePage: React.FC = () => {
             <Box sx={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 2 }}>
               <TextField
                 fullWidth
-                label='发布机构'
+                label={t('ehs.compliance_page.text_6c7c79')}
                 value={regulationFormData.issuing_authority}
                 onChange={(e) =>
                   setRegulationFormData({
@@ -509,12 +511,12 @@ const CompliancePage: React.FC = () => {
                     issuing_authority: e.target.value,
                   })
                 }
-                placeholder='请输入发布机构'
+                placeholder={t('ehs.compliance_page.please_input_1')}
               />
               <TextField
                 fullWidth
                 type='date'
-                label='发布日期'
+                label={t('ehs.compliance_page.date')}
                 value={regulationFormData.issue_date}
                 onChange={(e) =>
                   setRegulationFormData({ ...regulationFormData, issue_date: e.target.value })
@@ -524,7 +526,7 @@ const CompliancePage: React.FC = () => {
             <TextField
               fullWidth
               type='date'
-              label='生效日期'
+              label={t('ehs.compliance_page.date_3')}
               value={regulationFormData.effective_date}
               onChange={(e) =>
                 setRegulationFormData({ ...regulationFormData, effective_date: e.target.value })
@@ -532,12 +534,12 @@ const CompliancePage: React.FC = () => {
             />
             <TextField
               fullWidth
-              label='法规内容'
+              label={t('ehs.compliance_page.content')}
               value={regulationFormData.content}
               onChange={(e) =>
                 setRegulationFormData({ ...regulationFormData, content: e.target.value })
               }
-              placeholder='请输入法规内容'
+              placeholder={t('ehs.compliance_page.please_input_2')}
               multiline
               rows={4}
             />

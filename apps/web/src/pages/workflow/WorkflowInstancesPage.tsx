@@ -32,6 +32,7 @@ import { WORKFLOW_PATHS } from '@/modules/workflow/config';
 import { instanceApi } from '@/api/workflow';
 import type { WorkflowInstance } from '@/api/workflow';
 import { apiLogger } from '@/utils/logger';
+import { useConfirmDialog } from '@/hooks';
 
 /**
  * 实例状态配置
@@ -73,13 +74,12 @@ export const WorkflowInstancesPage: React.FC = () => {
   const [page, setPage] = useState(1);
   const pageSize = 10;
 
-  const [confirmDialogOpen, setConfirmDialogOpen] = useState(false);
-  const [confirmDialogConfig, setConfirmDialogConfig] = useState<{
-    title: string;
-    message: string;
-    onConfirm: () => void;
-    danger?: boolean;
-  } | null>(null);
+  const {
+    confirmOpen: confirmDialogOpen,
+    confirmConfig: confirmDialogConfig,
+    openConfirm: openConfirmDialog,
+    closeConfirm: setConfirmDialogClosed,
+  } = useConfirmDialog();
 
   const { data: instances = [], isLoading: loading } = useQuery({
     queryKey: ['workflow-instances', page, pageSize, searchQuery, statusFilter, typeFilter],
@@ -121,14 +121,6 @@ export const WorkflowInstancesPage: React.FC = () => {
   const refresh = useCallback(() => {
     queryClient.invalidateQueries({ queryKey: ['workflow-instances'] });
   }, [queryClient]);
-
-  const openConfirmDialog = useCallback(
-    (config: { title: string; message: string; onConfirm: () => void; danger?: boolean }) => {
-      setConfirmDialogConfig(config);
-      setConfirmDialogOpen(true);
-    },
-    []
-  );
 
   const handleViewDetail = useCallback(
     (instance: WorkflowInstance) => {
@@ -528,13 +520,13 @@ export const WorkflowInstancesPage: React.FC = () => {
 
       <ConfirmDialog
         isOpen={confirmDialogOpen}
-        onClose={() => setConfirmDialogOpen(false)}
+        onClose={setConfirmDialogClosed}
         title={confirmDialogConfig?.title || ''}
         message={confirmDialogConfig?.message || ''}
         danger={confirmDialogConfig?.danger}
         onConfirm={() => {
           confirmDialogConfig?.onConfirm();
-          setConfirmDialogOpen(false);
+          setConfirmDialogClosed();
         }}
       />
     </PageContainer>
