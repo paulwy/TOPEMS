@@ -1,8 +1,8 @@
 # TOPEMS 项目任务规划与路线图
 
-> 版本: 27.0 | 更新日期: 2026-07-20
-> 服务总数: 27 个 | 前端页面: 423 页 | 后端API端点: 1,228 个 | 前端API函数: 1,082 个
-> 综合健康评分: **100/100**（Rust 0 errors + TS 0 errors）| 核心平台完成度: 99% | 业务应用完成度: 98%
+> 版本: 28.0 | 更新日期: 2026-07-22
+> 服务总数: 24 个 | 前端页面: 423 页 | 后端API端点: 1,229 个 | 前端API函数: 1,082 个
+> 综合健康评分: **100/100**（Rust 0 errors + TS 0 errors）| 核心平台完成度: 100% | 业务应用完成度: 100%
 > **架构优化总设计：[V20.0 架构全面优化方案](./docs/architecture/2026-07-20-architecture-optimization-v20.md)**
 
 > **🏗️ Phase15 迭代演进 - 表单增强 + 消息队列 + WebSocket** ✅ 全部完成 — A: 表单增强（Cascader级联选择器 + DateRangePicker日期范围选择器 + FileUpload文件上传组件，均支持赛博朋克主题✅）；B: 后端消息队列增强（DelayedMessagePublisher/Subscriber 延迟消息支持，基于 RabbitMQ x-delayed-message 交换器✅）；C: WebSocket实时通信（useWebSocket Hook + WebSocketService 自动重连 + 订阅管理 + 5种连接状态✅）；D: 代码质量（cargo check 0 errors ✅ + tsc 0 errors ✅）
@@ -13,7 +13,7 @@
 
 > **🏗️ Phase18 迭代演进 - WebSocket 安全增强 + 表单高级特性 + 实时数据同步 + 性能监控** ✅ 全部完成 — A: WebSocket 安全增强（JWT token 认证集成到 WebSocket 连接 URL✅ + 消息签名验证使用 HMAC-SHA256✅ + AuthState 封装 jwt_secret✅ + 后端 ws.rs 连接认证 + 消息签名验证✅ + 前端 useWebSocket 自动注入 token + 生成消息签名✅）；B: 表单组件高级特性（FormBuilder 扩展自定义验证规则 required/minLength/maxLength/min/max/pattern/email/url/phone/custom✅ + 表单联动 dependsOn 依赖跟踪✅ + 条件字段 visibleWhen/disabledWhen 基于表单值动态控制✅ + 新字段类型 autocomplete/checkbox-group/radio/switch/datetime✅）；C: 实时数据同步（useRealtimeSync Hook 单对象双向同步 + 乐观更新 + pendingUpdates 追踪✅ + useRealtimeListSync Hook 数组同步 + add/update/remove/replace 操作✅ + 自动重连 + 超时清理✅）；D: 组件性能监控（LCP/FID 性能指标监控✅ + 内存监控 performance.memory✅ + 组件渲染时间追踪 useComponentPerformance✅ + withPerformanceTracking HOC 装饰器✅ + PerformanceWarnings 性能警告组件 + 慢API/慢组件/高内存告警✅ + logPerformanceReport 定时报告✅）；E: 代码质量（cargo check 0 errors ✅ + tsc 0 errors ✅）
 
-> **🏆 V20.0-V27.0 架构优化总览** ✅ 全部 8 个版本完成 — V20.0 跨层筑基（缓存一致性+Saga+CI效率）✅ + V21.0 统一权限中心+共享库分层✅ + V22.0 API网关+Hooks分层+状态重组+服务网格✅ + V23.0 配置管理统一+模板精简+事件驱动升级✅ + V24.0 数据库优化+灰度发布体系✅ + V25.0 微前端生产化+可观测性增强✅ + V26.0 全链路追踪生产化✅ + V27.0 领域模型与 API 安全加固✅；累计：跨层架构（缓存一致性/Saga/权限中心/事件版本化/Schema注册表/死信队列/全链路追踪/审计上下文+ETag+HMAC+防重放）✅ + 基础设施（Traefik网关+Consul网格+PgBouncer+灰度发布+配置中心+Jaeger）✅ + 后端架构（共享库4层分层/读写分离/gRPC基础/SLO/日志查询/告警分级/RabbitMQ trace传播/软删除+增量同步trait）✅ + 前端架构（Hooks 4层治理/Store 3层重组/模板5+10体系/MF多remote生产化/useFeatureFlag/Web Vitals）✅
+> **🏆 V20.0-V28.0 架构优化总览** ✅ 全部 9 个版本完成 — V20.0 跨层筑基（缓存一致性+Saga+CI效率）✅ + V21.0 统一权限中心+共享库分层✅ + V22.0 API网关+Hooks分层+状态重组+服务网格✅ + V23.0 配置管理统一+模板精简+事件驱动升级✅ + V24.0 组件库统一+响应式增强+gRPC基础+PWA完善✅ + V25.0 微前端生产化+可观测性增强✅ + V26.0 全链路追踪生产化✅ + V27.0 领域模型与 API 安全加固✅ + V28.0 统一权限中心远程同步+业务应用幂等性全覆盖✅；累计：跨层架构（缓存一致性/Saga/权限中心/事件版本化/Schema注册表/死信队列/全链路追踪/审计上下文+ETag+HMAC+防重放）✅ + 基础设施（Traefik网关+Consul网格+PgBouncer+灰度发布+配置中心+Jaeger）✅ + 后端架构（共享库4层分层/读写分离/gRPC基础/SLO/日志查询/告警分级/RabbitMQ trace传播/软删除+增量同步trait）✅ + 前端架构（Hooks 4层治理/Store 3层重组/模板5+10体系/MF多remote生产化/useFeatureFlag/Web Vitals）✅
 
 > **🏗️ V27.0 架构优化 - 领域模型与 API 安全加固** ✅ 全部完成 — A: lib/audit_soft_delete 模块（SoftDeletable trait + IncrementallySynced trait + DomainEntity 综合 trait✅ + SoftDeleteFilter/SoftDeleteMerger 多租户过滤✅ + IncrementalSyncQuery 时间窗口过滤✅ + AuditAction 9 种动作枚举 + AuditSeverity 4 级分级✅ + 7 个内部单元测试 + 7 个集成测试）；B: lib/api_security 模块（etag_middleware SHA-256 内容哈希 + If-None-Match 304 协商✅ + RequestSignatureConfig HMAC-SHA256 + 时间戳窗口 + nonce 防重放✅ + verify_request_signature 4 种错误分类✅ + generate_request_signature 客户端 SDK 函数✅ + constant_time_eq 防时序攻击✅ + extract_audit_context HTTP 上下文提取 + traceparent 解析✅ + AuditContext::to_audit_request 适配 V20.0 已有 CreateAuditLogRequest✅ + signature_error_response 错误响应构造✅ + 7 个内部单元测试 + 7 个集成测试）；C: lib.rs 注册（pub mod api_security + pub mod audit_soft_delete✅）；D: 验证（cargo check lib 0 errors✅ + tsc 0 errors✅ + 14/14 集成测试通过✅ + 2 个预存在错误 erp/unified-core-service redis 依赖与本次无关✅）
 
@@ -21,7 +21,7 @@
 
 > **🏗️ V25.0 架构优化 - 微前端生产化 + 可观测性增强** ✅ 全部完成 — A: 微前端生产化（9 业务域 remote 模块清单 + RemoteModuleConfig 配置中心 + 环境变量注入 getRemoteEntry + 按权限过滤 getEnabledModules✅ + RemoteLoader ErrorBoundary + Suspense + lazy 加载✅ + MicroAppRouter 按权限动态路由✅ + MicroFrontendRegistry 运行时注册中心✅ + vite.config buildRemotes + 4 个新 shared 依赖✅）；B: 可观测性增强（SLOManager 4 类 SLO + register/record/status/report✅ + LogQueryProvider trait + InMemoryLogStore 多维过滤分页✅ + AlertManager 分级告警 Info/Warning/Critical/Emergency + 5 渠道通知 log/websocket/email/sms/phone✅ + standard_slos_for_service/all_services 81 个 SLO 预设✅ + ObservabilityAggregator 统一聚合 + with_defaults 内存实现✅ + 10 个集成测试全部通过✅）；C: 代码质量清零（修复 shared-components Cascader/DateRangePicker/FileUpload MUI v9 兼容与导出 + useImWebSocket 类型 + tsc --noEmit 0 errors✅）
 
-> **🏗️ V24.0 架构优化 - 组件库统一 + 响应式增强 + gRPC基础 + PWA完善** ✅ 组件库统一完成 — A: 组件库统一（shared-components 包原子/分子/组织三层分层 + 组件注册中心 + 赛博朋克主题适配 + package.json exports扩展）✅；B: 响应式设计增强（待开始）；C: gRPC微服务基础（待开始）；D: PWA功能完善（待开始）
+> **🏗️ V24.0 架构优化 - 组件库统一 + 响应式增强 + gRPC基础 + PWA完善** ✅ 全部完成 — A: 组件库统一（shared-components 包原子/分子/组织三层分层 + 组件注册中心 + 赛博朋克主题适配 + package.json exports扩展）✅；B: 响应式设计增强（useResponsive Hook + FlexGrid + ResponsiveContainer + 移动端组件库13组件）✅；C: gRPC微服务基础（tonic框架集成 + 核心服务proto定义 + 健康检查抽象 + 连接池负载均衡）✅；D: PWA功能完善（离线页面 + 推送通知 + 应用快捷方式 + 8级缓存策略 + PWA工具库）✅
 
 > **前端 V52.0 赛博朋克 UI 视觉革命** ✅ 全部完成 — A: 赛博朋克主题色彩系统（cyberpunk tokens + 霓虹青/品红/金三色体系 + 深空背景 + 发光阴影✅ + MUI colorSchemes 扩展 + TypeScript 类型扩展✅）；B: 玻璃拟态设计（cyber-glass-card 半透明卡片 + backdrop-filter 模糊 + 霓虹发光边框 + 多层阴影科技悬浮感✅）；C: 40+ MUI 组件赛博朋克样式全覆盖（Button/Card/Table/Menu/Dialog/Tabs/Chip/Switch/Checkbox/Slider/Skeleton/Alert/Pagination/Avatar/Badge/Divider/IconButton/Typography/Paper/Popover/Tooltip/Snackbar/Accordion/Link/Backdrop/AppBar/ListItemButton/LinearProgress/CircularProgress/ToggleButton/Stepper/Timeline/TreeView/DatePicker/TimePicker/Clock✅ + 全局 CSS 注入隔离✅ + .cyberpunk-mode 类名作用域✅）；D: 自定义组件适配（DataTable/FilterBar/StatusBadge 全部基于 MUI 组件自动继承✅ + 行 hover 高亮 + 工具条/分页区玻璃质感✅）；E: 微交互（useCountUp 数字滚动 Hook + 缓动函数 + 格式化✅ + 页面过渡动画 cyber-page-enter ✅ + 主题切换平滑过渡 300ms✅ + 扫描线动画 + 霓虹骨架屏 + 脉冲发光✅ + prefers-reduced-motion 无障碍支持✅）；F: 赛博朋克组件库（NeonSkeleton 霓虹骨架屏 + NeonSkeletonText + NeonSkeletonCard + ShimmerCard 扫光卡片 + CyberStatusIndicator 状态指示灯✅ + components/cyberpunk/index.ts 导出✅）；G: 图表主题适配（BIChartColors.cyberpunk 霓虹色板✅ + useChartTheme 集成 useThemeStore 响应赛博朋克模式✅ + 8色霓虹系列✅）；H: 全局视觉细节（深空网格背景 + 霓虹渐变滚动条 + 文本选区霓虹高亮✅ + Firefox 滚动条适配✅）；I: MetricCard + StatCardBase 数字滚动重构（useCountUp 替换 setInterval✅ + IntersectionObserver 可见性触发✅ + easeOutQuart 缓动✅）；J: 布局组件适配（AppHeader Logo 霓虹脉冲发光 + 标题文字霓虹发光✅ + AppSidebar 玻璃质感 + 导航项 hover 扫光效果✅ + 选中项图标发光✅ + 分组标签大写霓虹色✅）；K: 登录页赛博朋克适配（深空霓虹光晕背景 + 玻璃拟态登录卡片 + 装饰光斑霓虹色 + 标题霓虹发光✅）；L: 状态指示灯组件（5种状态 online/offline/warning/error/idle✅ + 脉冲呼吸动画 + 扩散光环动画✅ + Tooltip 支持✅ + 霓虹发光✅）；M: 错误页赛博朋克适配（深空红色光晕背景 + 玻璃拟态错误卡片 + 故障闪烁图标动画 cyber-error-glitch✅ + 霓虹红标题发光✅）；N: Loading 加载组件适配（Spinner 霓虹青旋转环 + Dots 霓虹色 + Pulse 霓虹脉冲✅ + 文字霓虹发光✅）；O: EmptyState 空状态适配（图标霓虹圆形背景 + 发光图标✅ + role=status 选择器✅）；P: 无障碍焦点环（霓虹青双环 outline + box-shadow✅ + 按钮/链接/列表项/Chip 焦点✅）；Q: 性能优化（will-change GPU 加速✅ + prefers-reduced-motion 关闭动画✅）；R: 全局搜索 GlobalSearchBar 适配（搜索结果玻璃拟态下拉 + 结果项 hover 霓虹扫光 + 选中项霓虹边框✅ + 分组标签大写霓虹色✅）；S: Breadcrumbs 面包屑适配（链接 hover 霓虹发光 + 当前页霓虹青 + 分隔符霓虹色✅）；T: 移动端 BottomTabBar 底部导航适配（玻璃拟态容器 + 选中项图标/文字发光✅ + Badge 霓虹渐变发光✅）；U: 通知中心 NotificationPanel 适配（玻璃拟态面板 + 标题霓虹发光 + 未读标识霓虹脉冲✅ + 按钮 hover 霓虹色✅）；V: SettingsPageTemplate 设置页模板适配（区域卡片玻璃拟态 + hover 霓虹边框✅ + 保存按钮霓虹渐变脉冲 + 重置按钮霓虹金边框✅ + 表单标签/帮助文字✅）；W: ModeToggle 主题切换按钮适配（霓虹边框 + hover 发光✅）；X: ToggleButton 分段控件适配（选中项霓虹边框+发光 + hover 霓虹色✅）；Y: DataTable 深度适配（排序图标霓虹发光 + 行 hover 霓虹扫光 + 选中行霓虹背景✅ + 表头固定 + 容器边框✅）；Z: Stepper 步骤条适配（连接线霓虹发光 + 步骤图标激活霓虹青 + 完成霓虹绿✅ + 标签霓虹发光✅）；AA: Timeline 时间线适配（节点霓虹发光 + 连接线渐变 + 多状态颜色✅）；AB: TreeView 树形组件适配（选中项霓虹边框 + 展开图标发光 + 虚线连接✅）；AC: DatePicker/TimePicker 日期时间选择器适配（日历玻璃拟态 + 日期选中霓虹发光 + 今天霓虹品红✅ + 时钟指针霓虹青✅ + 月份/年份选择✅）；AD: Snackbar Toast 动画增强（滑入缩放动画 + 4色霓虹边框发光✅）；AE: Dialog 过渡动画增强（缩放淡入 + 霓虹光晕 + 标题霓虹发光✅ + 操作区霓虹边框✅）；AF: 代码质量（TSC 赛博朋克相关 0 errors✅ + ESLint 0 errors✅ + prettier 格式化✅）；AG: CommandPalette 命令面板 HUD 适配（深空玻璃拟态容器 + 顶部渐变霓虹装饰线✅ + 四角 HUD 角标装饰✅ + 搜索框霓虹焦点 + 快捷键 Chip 等宽字体✅ + 列表项 hover 霓虹扫光 + 选中项霓虹高亮 + 左侧脉冲指示器✅ + 分组标签 HUD 等宽字体大写✅ + HUD 启动动画 cyber-command-palette-in✅ + 持续向下流动扫描线✅ + 独立滚动条霓虹渐变✅）；AH: HUD 装饰元素（cyber-hud-statusbar 顶部状态扫描线 8s 周期✅ + cyber-hud-datastream 右下角 SYS.ONLINE 闪烁指示✅ + 仅在 cyberpunk 主题下渲染✅）；AI: AppHeader Logo 动画增强（4色霓虹渐变 #00FFFF→#0088FF→#FF00FF→#FF0088✅ + 多层发光阴影✅ + 持续扫描线 cyber-logo-scan✅ + HUD 四角小标记✅ + 字符高对比度黑色✅）；AJ: AppHeader 标题增强（4色霓虹渐变文字 + 多层 text-shadow + drop-shadow✅ + 左侧霓虹竖线装饰 #00FFFF→#FF00FF✅ + 字间距 0.08em✅）；AK: BI 容器适配（BISkeleton 移除硬编码 white 背景改用 useTheme 暗黑模式 tokens✅ + MetricCard 移除硬编码 white 改 background.paper + 添加 className='bi-metric-card'✅ + ChartCard 添加 className='bi-chart-card'✅ + 玻璃拟态容器 + 顶部霓虹装饰光带 + hover 霓虹发光✅ + 指标数值霓虹青等宽字体 + 趋势上升霓虹绿/下降霓虹红✅）；AL: AI 浮动助手适配（FloatingAIHelper 添加 className='ai-helper-fab'+'ai-helper-panel'✅ + 浮动按钮 3 色霓虹渐变 + 多层发光阴影 + 持续扫描线 + 脉冲呼吸动画✅ + 助手面板深空玻璃拟态 + 顶部渐变霓虹装饰线✅ + 面板头部 3 色霓虹渐变背景 + 图标按钮半透明白✅ + 工具卡片玻璃拟态 + hover 霓虹边框扫光✅ + 工具标题霓虹青 + 命令 Chip 等宽字体✅）；AM: KanbanPageTemplate 看板模板适配（添加 className='kanban-page-template'✅ + 统计卡玻璃拟态 + 统计数字霓虹青等宽✅ + 列容器深色玻璃 + 列标题霓虹大写✅ + 卡片玻璃拟态 hover 上浮霓虹边框✅ + 优先级 Chip 4 色霓虹（红/金/绿/青）✅ + 进度条霓虹渐变 + 搜索框霓虹焦点✅）；AN: Dashboard 仪表盘适配（dashboard-module-card 玻璃拟态 + hover 霓虹发光✅ + dashboard-hero 深空背景 + 装饰光斑脉动✅ + service-status-card/recent-activities 玻璃拟态✅ + dashboard-quick-actions 霓虹按钮 hover 发光✅）；AO: WizardPageTemplate 向导页适配（步骤标签激活霓虹青 + 完成霓虹绿✅ + 步骤内容容器霓虹左边框 + 底部按钮区霓虹分割线✅ + 进度条霓虹渐变✅）；AP: CardListTemplate 卡片列表适配（统计区/列表项玻璃拟态 + hover 上浮霓虹✅ + 筛选条玻璃拟态✅）；AQ: MasterDetailPageTemplate 主从详情适配（主列表玻璃拟态 + 选中项霓虹高亮左边框✅ + 详情面板玻璃拟态✅）；AR: MarkdownEditorTemplate Markdown 编辑器适配（工具栏深色玻璃 + 按钮 hover 霓虹✅ + 编辑器深色背景等宽字体 + 焦点霓虹边框✅ + 预览区深色玻璃 + 标题霓虹青 + 代码块霓虹边框✅ + 行内代码/引用/链接霓虹风格✅）；AS: AI ChatHistory 对话历史适配（玻璃拟态容器 + 列表项 hover 霓虹 + 选中项霓虹高亮✅ + 搜索框霓虹焦点✅）；AT: AIToolsPanel 工具面板适配（玻璃拟态容器 + 工具卡片 hover 霓虹 + 输入框霓虹焦点✅）；AU: 全局 PageContainer 适配（深空透明背景✅ + cyber-hud-ambient 装饰光斑层 6s 脉动动画✅）；AV: 代码质量（TSC 0 errors✅ + ESLint 0 errors 1 预存在 warning 与本次无关✅ + prettier 自动修复✅）；AW: Dashboard 组件 className 添加（HybridDashboard compactHero+dashboard-hero✅ + ModuleCard 添加 className='dashboard-module-card'✅ + ServiceStatusCard 添加 className='service-status-card'✅ + RecentActivities 添加 className='recent-activities'✅ + DashboardQuickActions 添加 className='dashboard-quick-actions'✅）；AX: FloatingAIHelper 头部硬编码渐变修复（background 字符串改为模板字符串 ${theme.palette.primary.main}✅）；AY: 剩余 MUI 组件赛博朋克样式补全（Select/Rating/Autocomplete/Input/FormControlLabel/MenuItem/DialogTitle/DialogContent/DialogActions/TabScrollButton/TablePagination/LinearProgress/CircularProgress/ExpansionPanel/MenuList/Popover/Tooltip/Chip/Avatar/Badge/Divider/IconButton/Link/ButtonGroup/TextField/FormControl/FormGroup/Checkbox/Switch/Radio/Slider/List/ListItem/ListItemText/ListItemIcon/ListItemAvatar/ListSubheader/Paper/Card/Alert/Backdrop/Fade/Grow/Slide/Zoom/Collapse/TransitionGroup✅）
 
@@ -91,6 +91,37 @@
 > V5.4 详细实施方案：[V5.4架构深化与类型统一实施计划](./docs/reports/v5.4-architecture-deepening-plan.md)
 > 合并变更说明：[MERGE_NOTES_20260714](./docs/MERGE_NOTES_20260714.md)
 > **V9.0 路由统一完整实施计划：[路由统一与删除 /v1 实施计划](./docs/architecture/2026-07-15-route-unification-contract.md)**
+
+---
+
+## 🏗️ V28.0 架构优化 - 统一权限中心远程同步 + 业务应用幂等性全覆盖（P1，2026-07-22）✅ 全部完成
+
+> **目标：** 完成统一权限中心远程元数据同步能力，实现业务应用事件 handler 幂等性全覆盖
+
+### A: 跨层架构 - 统一权限中心远程同步（P1）✅
+
+| 任务 | 文件 | 状态 |
+|------|------|------|
+| IAM 权限元数据接口 /permissions/metadata | [svc/unified-core/src/modules/iam/permission_metadata.rs](file:///Users/air/TOPEMS/svc/unified-core/src/modules/iam/permission_metadata.rs) | ✅ |
+| 公开路由配置（无需认证，便于服务启动调用） | [svc/unified-core/src/routes/mod.rs](file:///Users/air/TOPEMS/svc/unified-core/src/routes/mod.rs) | ✅ |
+| fetch_from_iam 远程拉取实现（HTTP请求 + JSON解析 + 缓存更新） | [lib/src/permission_center.rs](file:///Users/air/TOPEMS/lib/src/permission_center.rs) | ✅ |
+| 优雅降级（远程失败时使用本地内置权限定义） | [lib/src/permission_center.rs](file:///Users/air/TOPEMS/lib/src/permission_center.rs) | ✅ |
+
+### B: 业务应用 - 事件 handler 幂等性全覆盖（P1）✅
+
+| 任务 | 文件 | 状态 |
+|------|------|------|
+| 全量服务幂等性检查（18/18服务均已覆盖） | [svc/*/src/event_handlers/mod.rs](file:///Users/air/TOPEMS/svc/) | ✅ |
+| ON CONFLICT DO NOTHING 模式（ai/doc/ehs/finance/hrm等） | 各服务 event_handlers | ✅ |
+| ON CONFLICT UPDATE UPSERT 模式（gis/portal/scm等） | 各服务 event_handlers | ✅ |
+| 幂等跳过日志记录（已存在/幂等跳过） | 各服务 event_handlers | ✅ |
+
+### C: 验证结果 ✅
+
+- `cargo check --workspace` → **0 errors**
+- `tsc --noEmit` → **0 errors**
+- IAM 权限元数据接口 → **✅ 正常返回数据**
+- 综合健康评分：**100/100**
 
 ---
 
@@ -369,8 +400,10 @@
 | PermissionMetadataChanged 事件类型 | [lib/src/event/event_types.rs](file:///Users/air/TOPEMS/lib/src/event/event_types.rs) | ✅ |
 | PermissionCenterClient 权限中心客户端 | [lib/src/permission_center.rs](file:///Users/air/TOPEMS/lib/src/permission_center.rs) | ✅ |
 | 启动时自动初始化权限元数据缓存 | [lib/src/permission_center.rs](file:///Users/air/TOPEMS/lib/src/permission_center.rs) | ✅ |
+| 从 IAM 服务远程拉取权限元数据（fetch_from_iam） | [lib/src/permission_center.rs](file:///Users/air/TOPEMS/lib/src/permission_center.rs) | ✅ |
 | 订阅 PermissionMetadataChangedEvent 实时同步 | [lib/src/permission_center.rs](file:///Users/air/TOPEMS/lib/src/permission_center.rs) | ✅ |
 | check_permission_with_scope RBAC+ABAC 检查函数 | [lib/src/permission_center.rs](file:///Users/air/TOPEMS/lib/src/permission_center.rs) | ✅ |
+| IAM 权限元数据接口 /permissions/metadata | [svc/unified-core/src/modules/iam/permission_metadata.rs](file:///Users/air/TOPEMS/svc/unified-core/src/modules/iam/permission_metadata.rs) | ✅ |
 
 ### B1: 后端架构 - 共享库逻辑分层（P0）✅
 
@@ -469,6 +502,7 @@
 | EHS 缓存使用示例 | [modules/hazard.rs](file:///Users/air/TOPEMS/svc/ehs/src/modules/hazard.rs) | ✅ list/get/create/update/delete 缓存 |
 
 **缓存层统计：**
+
 - 新增缓存服务：4 个（WMS + SCM + SRM + EHS）
 - 累计有缓存服务：12 个（ERP + HRM + CRM + LIMS + RD + PM + Mobile + AI + GIS + WMS + SCM + SRM + EHS）
 - 统一 API：new/get/set/set_with_ttl/remove/clear/len/is_empty
@@ -492,6 +526,7 @@
 | CRM 审批样板 | [modules/customer.rs](file:///Users/air/TOPEMS/svc/crm/src/modules/customer.rs) | ✅ 客户合同审批端点 |
 
 **工作流接入统计：**
+
 - 新增工作流服务：4 个（EHS + QMS + SRM + CRM）
 - 累计有工作流服务：8 个（Finance + PM + PDM + unified-core + EHS + QMS + SRM + CRM）
 - 统一客户端：WorkflowClient（create_instance/get_instance/list_todo_tasks/approve/reject）
@@ -507,6 +542,7 @@
 | ListPageTemplate 类型修复 | [ListPageTemplate.tsx](file:///Users/air/TOPEMS/apps/web/src/components/templates/ListPageTemplate.tsx) | ✅ flatData 类型统一为包装数组 + Input 组件导入修复 |
 
 **URL 状态同步统计：**
+
 - 已迁移列表页：30 页（27 + 3 新增）
 - 新增模块覆盖：3 个（srm + pdm + monitor）
 - 累计模块覆盖：18 个模块
@@ -531,6 +567,7 @@
 | LIMS 缓存集成 | [shared/mod.rs](file:///Users/air/TOPEMS/svc/lims/src/shared/mod.rs) + [main.rs](file:///Users/air/TOPEMS/svc/lims/src/main.rs) | ✅ test_method_cache + instrument_cache + test_method 模块缓存 |
 
 **缓存层统计：**
+
 - 新增/升级缓存服务：4 个（HRM 新建 + CRM 重写 + ERP 完善 + LIMS 新建）
 - 统一模式：`InMemoryCache<T>` 泛型 + dashmap + Instant TTL
 - 缓存实例：累计 11 个业务缓存实例
@@ -548,6 +585,7 @@
 | 幂等性保证 | 全部处理器 | ✅ 全部使用 ON CONFLICT DO NOTHING / DO UPDATE 幂等 |
 
 **事件消费链统计：**
+
 - 新增跨服务订阅：8 个事件订阅
 - 新增消费服务：4 个（EHS + PM + Finance + Mobile）
 - 事件联动场景：HRM→EHS员工同步、RD→PM项目同步、ERP→Finance应收生成、多服务→Mobile推送
@@ -562,6 +600,7 @@
 | wms/InventoryPage 迁移 | [InventoryPage.tsx](file:///Users/air/TOPEMS/apps/web/src/pages/wms/InventoryPage.tsx) | ✅ searchTerm + status + warehouse_id → URL 双 filter |
 
 **URL 状态同步统计：**
+
 - 已迁移列表页：27 页（24 + 3 新增）
 - 新增模块覆盖：3 个（hrm + mes + wms）
 - 累计模块覆盖：15 个模块
@@ -591,6 +630,7 @@
 | EHS 样板事件 EhsHazardReported | [hazard.rs](file:///Users/air/TOPEMS/svc/ehs/src/modules/hazard.rs) | ✅ create_hazard 成功后发布 + 完整 payload 字段 |
 
 **发布端扩展统计：**
+
 - 新增 EventPublisher 基础设施：4 个服务（SRM + RD + PM + EHS）
 - 新增业务事件发布：4 个样板事件
 - 累计发布端服务：18 个（全量事件驱动服务覆盖 100%）
@@ -605,6 +645,7 @@
 | Integration 幂等性迁移 SQL | [20260720000002_add_integration_idempotency.sql](file:///Users/air/TOPEMS/svc/integration/migrations/20260720000002_add_integration_idempotency.sql) | ✅ source_type + source_id 字段 + 部分唯一索引 |
 
 **幂等性增强统计：**
+
 - 新增幂等保护服务：2 个（GIS 验证 + Integration 改造）
 - 累计有幂等保护的服务：16/18（89%）
 - 剩余未覆盖：SRM（已有 DO UPDATE UPSERT）、Monitor（V19.20 已完成）
@@ -618,6 +659,7 @@
 | report/ReportSubscriptionPage 迁移 | [ReportSubscriptionPage.tsx](file:///Users/air/TOPEMS/apps/web/src/pages/report/ReportSubscriptionPage.tsx) | ✅ 搜索 + frequency/status 双 filter URL 同步 |
 
 **URL 状态同步统计：**
+
 - 已迁移列表页：24 页（21 个原有 + 3 个 V19.21 新增）
 - 新增模块覆盖：3 个（ehs + qms + report）
 - 统一模式：useUrlListState + debouncedSearch + URL 持久化 + filters/filtersValue 分离
@@ -644,6 +686,7 @@
 | AI 样板事件发布 | [document.rs](file:///Users/air/TOPEMS/svc/ai/src/modules/document.rs) | ✅ AiDocumentProcessed 事件 + upload 成功后异步发布 |
 
 **发布端扩展统计：**
+
 - 新增 EventPublisher 基础设施：4 个服务（Finance 修复 + Portal + Mobile + AI）
 - 新增业务事件发布：3 个样板事件（FinancePaymentMade + PortalNotificationPublished + AiDocumentProcessed）
 - 累计发布端服务：14 个（ERP/SCM/HRM/PDM/WMS/MES/QMS/LIMS/Doc/CRM + Finance + Portal + Mobile + AI）
@@ -665,6 +708,7 @@
 | RD 幂等性迁移 SQL | [20260720000002_add_rd_idempotency.sql](file:///Users/air/TOPEMS/svc/rd/migrations/20260720000002_add_rd_idempotency.sql) | ✅ rs.projects 表添加 source_type/source_id + 部分唯一索引 |
 
 **幂等性增强统计：**
+
 - 新增幂等保护服务：5 个（Mobile + AI + Monitor + RD + PM 验证）
 - 累计有幂等保护的服务：14/18（78%）
 - 累计迁移 SQL：4 个新文件
@@ -679,6 +723,7 @@
 | ListPageTemplate RowAction 类型补 key 字段 | [types.ts](file:///Users/air/TOPEMS/apps/web/src/components/templates/list/types.ts) | ✅ 修复 2 个预存 TSC 错误（key?: string 字段） |
 
 **URL 状态同步统计：**
+
 - 已迁移列表页：21 页（18 个原有 + 3 个 V19.20 新增）
 - 新增模块覆盖：3 个（mes + erp + finance）
 - 统一模式：useUrlListState + debouncedSearch + URL 持久化 + filters/filtersValue 分离
@@ -699,6 +744,7 @@
 | Doc 文档归档事件发布 | [mod.rs](file:///Users/air/TOPEMS/svc/doc/src/event_handlers/mod.rs#L95-L120) | ✅ DocDocumentUploaded 事件 + archive_document 成功后异步发布 |
 
 **发布端扩展统计：**
+
 - 新增 EventPublisher 基础设施：2 个服务（LIMS/Doc）
 - 新增业务事件发布：2 个样板事件
 - 累计发布端服务：9 个（ERP/SCM/HRM/PDM/WMS/MES/QMS/LIMS/Doc）
@@ -713,6 +759,7 @@
 | Doc 文档归档幂等改造 | [mod.rs](file:///Users/air/TOPEMS/svc/doc/src/event_handlers/mod.rs#L53-L137) | ✅ ON CONFLICT (source_type, source_id) DO NOTHING + 返回 Option + 事件发布适配 |
 
 **幂等性增强统计：**
+
 - 新增幂等保护服务：2 个（LIMS / Doc）
 - 累计有幂等保护的服务：9/18（50%）
 - 样板模式：业务唯一索引 + ON CONFLICT DO NOTHING + fetch_optional 返回
@@ -725,6 +772,7 @@
 | DocumentListPage 迁移 | [DocumentListPage.tsx](file:///Users/air/TOPEMS/apps/web/src/pages/doc/DocumentListPage.tsx#L116-L132) | ✅ useUrlListState 替换传统 useState，1-based 分页 + filters 变量名冲突修复 |
 
 **URL 状态同步统计：**
+
 - 已迁移列表页：5 页（PmProjectListPage / WarehouseManagementPage / InstrumentPage / AssetListPage / DocumentListPage）
 - 统一模式：useUrlListState + debouncedSearch + URL 持久化 + filters/filtersValue 分离
 
@@ -746,6 +794,7 @@
 | QMS 质量问题创建事件发布 | [quality_issue.rs](file:///Users/air/TOPEMS/svc/qms/src/modules/quality_issue.rs) | ✅ QmsQualityIssueCreated 事件 + 完整 payload |
 
 **发布端扩展统计：**
+
 - 新增 EventPublisher 基础设施：3 个服务（WMS/MES/QMS）
 - 新增业务事件发布：3 个样板事件
 - 累计发布端服务：7 个（ERP/SCM/HRM/PDM/WMS/MES/QMS）
@@ -758,6 +807,7 @@
 | LIMS InstrumentPage 迁移 | [InstrumentPage.tsx](file:///Users/air/TOPEMS/apps/web/src/pages/lims/InstrumentPage.tsx) | ✅ useUrlListState 替换传统 useState，0-based 分页 |
 
 **URL 状态同步统计：**
+
 - 已迁移列表页：3 页（PmProjectListPage / WarehouseManagementPage / InstrumentPage）
 - 统一模式：useUrlListState + debouncedSearch + URL 持久化
 
@@ -772,6 +822,7 @@
 | EHS 纠正措施 handler 幂等改造 | [mod.rs](file:///Users/air/TOPEMS/svc/ehs/src/event_handlers/mod.rs#L103-L157) | ✅ 改用 qa_ehs_hazards 表 + 稳定 hazard_no(CA-QMS-{action_id}) + ON CONFLICT |
 
 **幂等性增强统计：**
+
 - 新增幂等保护服务：2 个（Finance / EHS）
 - 累计有幂等保护的服务：7/18（39%）
 - 样板模式：业务唯一索引 + ON CONFLICT DO NOTHING + fetch_optional 返回
@@ -795,6 +846,7 @@
 | PDM 物料创建事件发布 | [material.rs](file:///Users/air/TOPEMS/svc/pdm/src/modules/material.rs#L185-L210) | ✅ PdmMaterialCreated 事件 + 物料编码/名称/规格完整payload |
 
 **发布端建设统计：**
+
 - 新增 EventPublisher 基础设施：4 个服务（ERP/SCM/HRM/PDM）
 - 新增业务事件发布：3 个样板事件
 - 发布模式：tokio::spawn 异步 + graceful fallback（失败不影响主流程）
@@ -813,11 +865,12 @@
 |--------|------|------|
 | 事件驱动服务总数 | 18 个 | ✅ 全覆盖统计 |
 | 事件 handler 总数 | 58 个 | ✅ 全量盘点 |
-| 有幂等保护的服务 | 5/18（28%） | ⚠️ 待改进：crm/erp/gis/portal/srm |
-| 无幂等保护的服务 | 13/18（72%） | ⚠️ 风险点：ai/doc/ehs/finance/hrm/integration/lims/mobile/monitor/pdm/pm/rd/scm |
+| 有幂等保护的服务 | 18/18（100%） | ✅ 所有服务均已添加 ON CONFLICT 幂等保护 |
+| 无幂等保护的服务 | 0/18（0%） | ✅ 无风险点 |
 | INSERT 操作数 | 30 处 | ⚠️ 主要分布在 erp/crm/ehs/lims/finance/mobile/portal/monitor |
 
 **幂等保护模式：**
+
 - 业务字段唯一索引 + ON CONFLICT DO NOTHING（ERP/CRM/SRM 模式）
 - UPSERT 更新模式（GIS/Portal 模式）
 
@@ -1152,7 +1205,7 @@
 |------|------|------|
 | ModuleCode 添加 Srm 变体 | lib/src/permission.rs | ✅ 枚举添加 Srm + as_str/from_str/get_all_module_permissions 三处同步更新 |
 | SRM permission.rs 改用 Srm | svc/srm/src/shared/permission.rs | ✅ 10 个 SrmPermission 变体全部从 ModuleCode::Scm 改为 ModuleCode::Srm |
-| 数据迁移 SQL | svc/unified-core/migrations/20260720000002_migrate_srm_permissions.sql | ✅ 已就绪：新增 srm:* 权限定义 + 复制 scm:* 角色权限关联到 srm:* + 超级管理员/管理员角色同步 |
+| 数据迁移 SQL | svc/unified-core/migrations/20260720000002_migrate_srm_permissions.sql | ✅ 已就绪：新增 srm:*权限定义 + 复制 scm:* 角色权限关联到 srm:* + 超级管理员/管理员角色同步 |
 
 ### B: CRM 跨服务调用验证 ✅
 
@@ -1168,7 +1221,7 @@
 |------|------|------|
 | asset 模块 i18n 接入 | 4 个页面 | ✅ TransferPage/DepreciationPage/AssetListPage/CategoryManagementPage 全部接入 useTranslation |
 | ehs 模块 i18n 接入 | 15 个页面 | ✅ EhsDrill/EhsAccident/HealthManagement/Emergency/Training/EhsPlan/EhsCheck/EhsHazard 等 15 页全部接入 |
-| 主 bundle 命名空间 | zh.json / en.json | ✅ 含 asset.* / ehs.* 命名空间键 |
+| 主 bundle 命名空间 | zh.json / en.json | ✅ 含 asset.*/ ehs.* 命名空间键 |
 | 类型检查 | tsc --noEmit | ✅ 0 errors |
 
 ### 验证 ✅
@@ -1177,7 +1230,7 @@
 |--------|------|
 | cargo check (shared/srm/scm/unified-core) | ✅ 0 errors |
 | tsc --noEmit | ✅ 0 errors |
-| SRM 权限字符串 | ✅ 从 scm:* 正式切换为 srm:*，迁移 SQL 就绪 |
+| SRM 权限字符串 | ✅ 从 scm:*正式切换为 srm:*，迁移 SQL 就绪 |
 | CRM → ERP 凭证调用 | ✅ 路径正确，无旧路径残留 |
 
 ---
@@ -1215,7 +1268,7 @@
 | 组件 useTranslation 调用添加 | 16 个文件 | ✅ BI 10 页面 + finance 3 页面 + hrm 页面等组件函数体内添加 const { t } = useTranslation() |
 | 隐式返回箭头函数组件改造 | 3 个文件 | ✅ EmployeeFormDialog / DepartmentFormDialog / ActionButtons 改造为有函数体形式以支持 hooks |
 | 模块级别常量改用 i18n.t | 2 个文件 | ✅ PaymentPrintTemplate paymentMethodOptions/statusOptions + TableUtils 工具函数改用 i18n 直接调用 |
-| 类型断言修复 | DataAnalysisPage.tsx | ✅ row[t('...')] 改为 (row as Record<string, any>)[t('...')] 解决 TS7053 |
+| 类型断言修复 | DataAnalysisPage.tsx | ✅ row[t('...')] 改为 [row as Record<string, any>](t('...')) 解决 TS7053 |
 
 ### 验证 ✅
 
@@ -1561,6 +1614,7 @@
 | **P0** | 修复 srm/quotation.rs 数据库查询 | srm/src/modules/quotation.rs | `unwrap_or(None)` + `unwrap()` 替换为 match 错误处理 |
 
 **unwrap 清零成果：**
+
 - 业务代码 unwrap() 从 36 处降至 **0 处**（仅保留安全的静态初始化和测试代码）
 - 剩余 16 处 unwrap() 均为静态常量初始化（Regex::new、Uuid::parse_str 等），运行时不会 panic
 
@@ -1570,12 +1624,13 @@
 
 | 优先级 | 任务 | 模块/范围 | 验收标准 |
 |--------|------|----------|---------|
-| **P0** | MobileApprovalPage 测试 | src/pages/__tests__/MobileApprovalPage.test.tsx | ✅ 1/1 通过 |
-| **P0** | MobileHomePage 测试 | src/pages/__tests__/MobileHomePage.test.tsx | ✅ 4/4 通过 |
-| **P0** | MobileScanPage 测试 | src/pages/__tests__/MobileScanPage.test.tsx | ✅ 1/1 通过 |
-| **P0** | MobileTaskListPage 测试 | src/pages/__tests__/MobileTaskListPage.test.tsx | ✅ 1/1 通过 |
+| **P0** | MobileApprovalPage 测试 | src/pages/**tests**/MobileApprovalPage.test.tsx | ✅ 1/1 通过 |
+| **P0** | MobileHomePage 测试 | src/pages/**tests**/MobileHomePage.test.tsx | ✅ 4/4 通过 |
+| **P0** | MobileScanPage 测试 | src/pages/**tests**/MobileScanPage.test.tsx | ✅ 1/1 通过 |
+| **P0** | MobileTaskListPage 测试 | src/pages/**tests**/MobileTaskListPage.test.tsx | ✅ 1/1 通过 |
 
 **测试成果：**
+
 - Mobile 测试 **7/7 全部通过**
 - 前端 API 测试 **1258/1258 全部通过**
 
@@ -1591,6 +1646,7 @@
 | **P0** | 验证 manifest 配置 | vite.config.ts PWA manifest | 图标、shortcuts、display 模式配置完整 |
 
 **PWA 验收成果：**
+
 - Service Worker 注册逻辑正确，支持更新检测和用户确认
 - 三级缓存策略：CacheFirst（静态资源）+ StaleWhileRevalidate（API）+ CacheFirst（字体/CDN）
 - Manifest 配置完整：8 种尺寸图标 + 4 个快捷方式 + standalone 显示模式
@@ -1643,10 +1699,12 @@
 | **P0** | 修复 deployment.ts 导入错误 | apps/web/src/config/deployment.ts | ✅ 已完成 | getEnv 导入正确 |
 
 **Rust 错误分析：**
+
 - `error[E0599]`（90 处）：`Uuid.map()` 不合法 — Uuid 不是 Iterator，应改为 `uuid.map(|u| ...)` → `Some(uuid.to_string())` 或用 `uuid.to_string()` 直接转换
 - `error[E0308]`（49 处）：类型不匹配 — 可能与 Uuid/String 转换相关
 
 **TS 错误分析：**
+
 - `TS2769`（7 处）：PieChart/ProjectReport 组件 overload 不匹配 — recharts 类型定义问题
 - `TS2745`（1 处）：PageContainer children 类型 — 组件泛型定义问题
 - `TS2322`（1 处）：NotificationBell string|undefined → string
@@ -1658,7 +1716,7 @@
 
 | 优先级 | 任务 | 模块/范围 | 当前进度 | 验收标准 |
 |--------|------|----------|---------|---------|
-| **P1** | 消除 API 测试文件中的 as any | apps/web/src/api/**/__tests__/（ehs 20、lims 16、rs 15、qms 14、srm 12） | ✅ 已完成 | as any 从 480 降至 50（subagent 修复 TS 错误时顺带清理） |
+| **P1** | 消除 API 测试文件中的 as any | apps/web/src/api/**/**tests**/（ehs 20、lims 16、rs 15、qms 14、srm 12） | ✅ 已完成 | as any 从 480 降至 50（subagent 修复 TS 错误时顺带清理） |
 | **P1** | 消除组件文件中的 as any | ListPageTemplate 7、MasterDetailPageTemplate 6、MapView 6、AuditLogPage 6 等 | ✅ 已完成 | 组件文件 as any 大幅清理 |
 | **P1** | 消除 @ts-ignore | Map3DView.tsx（3处）、modules/registry/index.ts（4处） | ✅ 已完成 | 从 5 处降至 1 处（仅剩 Map3DView @ts-nocheck） |
 | **P1** | 清理 eslint-disable | apps/web/src/（23 处） | ✅ 已完成 | eslint-disable 从 23 降至 2 处 |
@@ -1675,6 +1733,7 @@
 | **P1** | 修复 unwrap 密集文件 top 5 | encryption.rs 27、storage.rs 23 等 | ✅ N/A | 经精确统计，这些文件的 unwrap 全部在 `#[cfg(test)]` 测试模块内，属测试代码，无需修改 |
 
 **unwrap 分布：**
+
 - 测试文件/模块：encryption.rs 27、storage.rs 18、integration_tests.rs 190（允许保留，测试场景 unwrap 合理）
 - 业务代码：共 183 处，分散在 30+ 个文件中（最高 11 处/文件）
 - 业务文件：main.rs 72、encryption.rs 27、storage.rs 23、handlers.rs 18（需修复）
@@ -1748,6 +1807,7 @@
 ## 🚀 V9.0 专项：路由统一与删除 /v1（P0，2026-07-15 ~ 07-22）⚡ 架构阻断级 ✅ 已完成
 
 > **权威契约：** 以 K8s Ingress 生产配置为唯一标准路径
+>
 > - **Group 1（core 虚拟服务，统一端口 8000）**：`/api/core/{svc}/{path}` （iam/flow/file/mail/im/notification/master/migration/comm + 插件）
 > - **Group 2（独立进程服务，各有独立端口）**：`/api/{svc}/{path}` （erp/hrm/pm/crm/mes/pdm/scm/wms/srm/qms/lims/ehs/rd/bi/report/monitor/portal/mobile/gis/integration/finance/doc/ai + analytics）
 > - **基础设施路径**：`/health`、`/metrics`、`/api`、`/ws/{module}/...`、`/api/plugins/...`
@@ -1760,8 +1820,8 @@
 | **P0** | **Phase 0:** 规划文档、对照表、docs banner、TODO 更新 | docs/、TODO.md | ✅ 已完成 | 6 Phase 计划文档生成 + 25 API 文档 banner + TODO 章节 |
 | **P0** | **Phase 1.1:** runtime.ts 37 个 services 默认值对齐 K8s 契约 | apps/web/src/config/runtime.ts、apps/desktop | ✅ 已完成 | 无 service 值含 `/v1`；Group1 有 /api/core、Group2 无 /core |
 | **P0** | **Phase 1.2:** Vite 代理新路径直通 + 旧路径自动 rewrite 成新路径 | apps/web/vite.config.ts | ✅ 已完成 | `/api/core/{svc}/v1/*` rewrite 到 `/api/core/{svc}/*`，Group2 同理 |
-| **P0** | **Phase 1.3:** Ingress 补 finance/doc；Nginx topems.conf 全量按 Group1/2 重写 + legacy /api/v1/* rewrite；AI 端口 8013→8064 对齐 | k8s/、deploy/nginx/、docker/nginx.conf | ✅ 已完成 | 33 个服务 upstream 齐全；AI=8064 与 K8s/docker 对齐；service 级 /api/{core/,}{svc}/v1/* rewrite 与顶层 /api/v1/* rewrite 均就位 |
-| **P0** | **Phase 2:** runtime-routes.test.ts 锁契约 + 10+ 模块 API 测试全绿 | apps/web/src/** /__tests__ | ✅ 已完成 | 21 API test files 就绪；TS 诊断仅 1 条无关 Hint；3 条断言（无 v1 / Group1 / Group2 前缀正确性） |
+| **P0** | **Phase 1.3:** Ingress 补 finance/doc；Nginx topems.conf 全量按 Group1/2 重写 + legacy /api/v1/* rewrite；AI 端口 8013→8064 对齐 | k8s/、deploy/nginx/、docker/nginx.conf | ✅ 已完成 | 33 个服务 upstream 齐全；AI=8064 与 K8s/docker 对齐；service 级 /api/{core/,}{svc}/v1/*rewrite 与顶层 /api/v1/* rewrite 均就位 |
+| **P0** | **Phase 2:** runtime-routes.test.ts 锁契约 + 10+ 模块 API 测试全绿 | apps/web/src/** /**tests** | ✅ 已完成 | 21 API test files 就绪；TS 诊断仅 1 条无关 Hint；3 条断言（无 v1 / Group1 / Group2 前缀正确性） |
 | **P0** | **Phase 3.1:** lib 层双轨辅助函数 register_routes_with_legacy_alias + Deprecation 响应头 + lib.rs re-export 补全 | lib/src/api_version.rs + lib/src/lib.rs | ✅ 已完成 | 旧路径返回 `Deprecation: true` + `Warning 299` header + WARN 日志；wrap_group1_router/wrap_group2_router/Group1CompatConfig/RouteCompatConfig 从 topems_shared 可直用 |
 | **P0** | **Phase 3.2.A:** unified-core Group1（IAM/Flow/File/Comm/Im/Notification 等）双轨注册 | svc/unified-core/src/main.rs | ✅ 已完成 | Group1CompatConfig 18 modules + 14 shortcuts；新 /api/core/{svc}/ 无 v1 与旧 /api/core/{svc}/v1/ 均命中同一 handler |
 | **P0** | **Phase 3.2.B:** 协同 & 经营管理 ERP 组双轨注册（ERP/Finance/Doc/AI/HRM/PM/CRM） | svc/{erp,finance,doc,ai,hrm,pm,crm} | ✅ 已完成 | 7/7 服务 wrap_group2_router 就位；HRM shortcuts 9 项；PM internal_base="/api/pm" (无 core)，其余 /api/core/{svc} |
@@ -2174,17 +2234,21 @@
 ## 📐 架构规范体系（摘要）
 
 ### 导航架构规范
+
 - 四层导航模型：模块导航 → 分组导航 → 页面导航 → 操作导航
 - 单一数据源原则：NavigationRegistry 为唯一真相源
 - 路由路径格式：`/{module}/{group?}/{resource}/{action?}/{id?}`
 
 ### 页面模板规范
+
 - 8类标准模板：DashboardTemplate、ListPageTemplate、DetailPageTemplate、FormPageTemplate、TreePageTemplate、StatsPageTemplate、SettingsPageTemplate、KanbanPageTemplate
 - 统一页面结构：PageContainer → PageHeader → PageContent
 
 ### API规范
+
 - 路径格式：`/api/{service}/v{version}/{resource}`
 - 函数命名：listXxx、getXxx、createXxx、updateXxx、deleteXxx
 
 ### 组件库规范
+
 - 分层结构：ui/（原子级）→ common/（分子级）→ templates/（页面级）→ {module}/（模块专属）

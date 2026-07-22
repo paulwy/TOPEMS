@@ -78,37 +78,42 @@ pub fn create_routes(
     // ===== Core API public routes (dual-rail: /api/core/ + /api/v1/core/) =====
     let core_public_routes = Router::new()
         .route(
-            "plugin/navigation-config",
+            "/plugin/navigation-config",
             get(modules::plugin::handlers::get_navigation_config),
         )
         .route(
-            "notification/notifications/health/detailed",
+            "/notification/notifications/health/detailed",
             get(modules::communication::notification::get_notification_health_detailed),
         )
-        // Auth endpoints (no auth required for login)
-        .route("iam/auth/login", post(modules::iam::auth::login))
-        .route("iam/auth/register", post(modules::iam::auth::register))
-        .route("iam/auth/refresh", post(modules::iam::auth::refresh_token))
-        .route("iam/auth/logout", post(modules::iam::auth::logout))
+        // IAM permission metadata (public - for service startup auto-sync)
         .route(
-            "iam/auth/forgot-password",
+            "/iam/permissions/metadata",
+            get(modules::iam::permission_metadata::get_permission_metadata),
+        )
+        // Auth endpoints (no auth required for login)
+        .route("/iam/auth/login", post(modules::iam::auth::login))
+        .route("/iam/auth/register", post(modules::iam::auth::register))
+        .route("/iam/auth/refresh", post(modules::iam::auth::refresh_token))
+        .route("/iam/auth/logout", post(modules::iam::auth::logout))
+        .route(
+            "/iam/auth/forgot-password",
             post(modules::iam::auth::forgot_password),
         )
         .route(
-            "iam/auth/reset-password",
+            "/iam/auth/reset-password",
             post(modules::iam::auth::reset_password),
         )
         // Plugin registration routes (no auth required - for service startup auto-registration)
         .route(
-            "plugin/dev/plugins/{code}/register",
+            "/plugin/dev/plugins/{code}/register",
             post(modules::plugin::handlers::register_plugin),
         )
         .route(
-            "plugin/dev/plugins/{code}/status",
+            "/plugin/dev/plugins/{code}/status",
             put(modules::plugin::handlers::update_plugin_status),
         )
         .route(
-            "plugin/dev/plugins/{code}/unregister",
+            "/plugin/dev/plugins/{code}/unregister",
             post(modules::plugin::handlers::unregister_plugin),
         );
 

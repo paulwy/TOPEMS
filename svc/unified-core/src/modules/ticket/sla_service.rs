@@ -1,6 +1,8 @@
 //! 工单 SLA 服务：SLA 计算、升级机制、策略管理
 
-use chrono::{DateTime, Duration, DurationRound, Utc, Weekday};
+use chrono::Datelike;
+use chrono::Timelike;
+use chrono::{DateTime, Duration, DurationRound, NaiveDateTime, Utc, Weekday};
 use sqlx::{PgPool, Row};
 use uuid::Uuid;
 
@@ -48,7 +50,8 @@ impl TicketSlaService {
         let mut current = start_time;
 
         while remaining_hours > 0.0 {
-            let weekday = current.weekday();
+            let naive = current.naive_utc();
+            let weekday = naive.weekday();
 
             if weekend_excluded && (weekday == Weekday::Sat || weekday == Weekday::Sun) {
                 current = current + Duration::days(1);
@@ -68,7 +71,7 @@ impl TicketSlaService {
                     .and_then(|s| s.split(':').next()?.parse().ok())
                     .unwrap_or(18);
 
-                let current_hour = current.hour() as i32;
+                let current_hour = naive.hour() as i32;
 
                 if current_hour < start_hour {
                     current = current
@@ -89,7 +92,7 @@ impl TicketSlaService {
                 }
 
                 let hours_left_today =
-                    end_hour as f64 - current_hour as f64 - (current.minute() as f64 / 60.0);
+                    end_hour as f64 - current_hour as f64 - (naive.minute() as f64 / 60.0);
 
                 if remaining_hours <= hours_left_today {
                     current = current + Duration::seconds((remaining_hours * 3600.0) as i64);
@@ -691,7 +694,7 @@ impl TicketSlaService {
         let breach_trend: Vec<SlaBreachTrendItem> = trend_rows
             .into_iter()
             .map(|r| SlaBreachTrendItem {
-                date: r.get::<_, chrono::NaiveDate>("date").to_string(),
+                date: r.get::<chrono::NaiveDate, _>("date").to_string(),
                 total: r.get("total"),
                 breached: r.get("breached"),
             })

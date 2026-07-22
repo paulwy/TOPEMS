@@ -334,7 +334,11 @@ fn extract_tenant_id(req: &Request<Body>) -> Option<String> {
     {
         return Some(value.to_string());
     }
-    if let Some(value) = req.headers().get("X-Tenant-Id").and_then(|h| h.to_str().ok()) {
+    if let Some(value) = req
+        .headers()
+        .get("X-Tenant-Id")
+        .and_then(|h| h.to_str().ok())
+    {
         return Some(value.to_string());
     }
     req.extensions()
@@ -363,7 +367,10 @@ fn extract_client_ip(req: &Request<Body>) -> String {
 }
 
 /// 为路径解析规则
-fn resolve_rule<'a>(config: &'a EnhancedRateLimitConfig, path: &str) -> Option<&'a EnhancedRateLimitRule> {
+fn resolve_rule<'a>(
+    config: &'a EnhancedRateLimitConfig,
+    path: &str,
+) -> Option<&'a EnhancedRateLimitRule> {
     let mut best: Option<&'a EnhancedRateLimitRule> = None;
     let mut best_priority = i32::MIN;
     for (prefix, rule) in &config.path_rules {
@@ -377,9 +384,7 @@ fn resolve_rule<'a>(config: &'a EnhancedRateLimitConfig, path: &str) -> Option<&
 
 /// 校验时间戳
 fn validate_timestamp(value: &str, tolerance_secs: u64) -> Result<(), String> {
-    let ts: i64 = value
-        .parse()
-        .map_err(|_| "invalid timestamp".to_string())?;
+    let ts: i64 = value.parse().map_err(|_| "invalid timestamp".to_string())?;
     let now = SystemTime::now()
         .duration_since(UNIX_EPOCH)
         .map(|d| d.as_secs() as i64)
@@ -534,19 +539,31 @@ pub async fn enhanced_rate_limit_middleware(
     if let Some(tid) = &tenant_id {
         let rule = path_rule.unwrap_or(&config.tenant_default);
         let key = format!("tenant:{}", tid);
-        decisions.push(middleware.store().check_and_acquire(&key, LimitDimension::Tenant, rule));
+        decisions.push(
+            middleware
+                .store()
+                .check_and_acquire(&key, LimitDimension::Tenant, rule),
+        );
     }
 
     if let Some(uid) = &user_id {
         let rule = path_rule.unwrap_or(&config.user_default);
         let key = format!("user:{}", uid);
-        decisions.push(middleware.store().check_and_acquire(&key, LimitDimension::User, rule));
+        decisions.push(
+            middleware
+                .store()
+                .check_and_acquire(&key, LimitDimension::User, rule),
+        );
     }
 
     if let Some(ip) = &client_ip {
         let rule = path_rule.unwrap_or(&config.ip_default);
         let key = format!("ip:{}", ip);
-        decisions.push(middleware.store().check_and_acquire(&key, LimitDimension::Ip, rule));
+        decisions.push(
+            middleware
+                .store()
+                .check_and_acquire(&key, LimitDimension::Ip, rule),
+        );
     }
 
     if config.by_global && decisions.is_empty() {
@@ -610,8 +627,10 @@ mod tests {
             .body(Body::empty())
             .expect("failed to build request");
         if let Some(t) = tenant {
-            req.headers_mut()
-                .insert("X-Tenant-ID", HeaderValue::from_str(t).expect("invalid header"));
+            req.headers_mut().insert(
+                "X-Tenant-ID",
+                HeaderValue::from_str(t).expect("invalid header"),
+            );
         }
         if let Some(i) = ip {
             req.headers_mut().insert(
@@ -704,9 +723,10 @@ mod tests {
     #[test]
     fn test_resolve_rule() {
         let mut config = EnhancedRateLimitConfig::default();
-        config
-            .path_rules
-            .push(("/api/core/iam".to_string(), EnhancedRateLimitRule::new(10, 60).with_priority(5)));
+        config.path_rules.push((
+            "/api/core/iam".to_string(),
+            EnhancedRateLimitRule::new(10, 60).with_priority(5),
+        ));
         let rule = resolve_rule(&config, "/api/core/iam/users");
         assert!(rule.is_some());
         assert_eq!(rule.expect("rule").requests, 10);

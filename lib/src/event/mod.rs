@@ -13,6 +13,7 @@ pub mod dead_letter_queue;
 pub mod delayed_message;
 pub mod error;
 pub mod event_types;
+pub mod master_data;
 pub mod monitor;
 pub mod publisher;
 pub mod rabbitmq;
@@ -57,6 +58,9 @@ pub use event_types::{
     StockAdjustedPayload, StockInboundPayload, StockOutboundPayload, StockTakeCompletedPayload,
     StockTransferredPayload, WorkOrderCompletedPayload, WorkflowApprovedPayload,
     WorkflowRejectedPayload, WorkflowStartedPayload,
+};
+pub use master_data::{
+    MasterDataAction, MasterDataDomain, MasterDataEvent, MasterDataPublisher, MasterDataRef,
 };
 pub use monitor::{EventMetrics, EventMonitor, EventTrace, TraceStatus};
 pub use publisher::EventPublisher;

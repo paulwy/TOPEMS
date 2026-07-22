@@ -15,10 +15,10 @@ use crate::AppState;
 use topems_shared::{ApiResponse, Claims};
 
 use super::models::{
-    AddCommentRequest, CreateSlaPolicyRequest, CreateTicketRequest, SeverityCount, SourceCount,
-    Ticket, TicketActivity, TicketComment, TicketListResponse, TicketQuery, TicketSlaInfo,
-    TicketSlaPolicy, TicketSlaStats, TicketStats, TicketStatus, TicketType, TypeCount,
-    UpdateSlaPolicyRequest, UpdateTicketRequest,
+    AddCommentRequest, CreateSlaPolicyRequest, CreateTicketRequest, SeverityCount,
+    SlaEscalationEvent, SourceCount, Ticket, TicketActivity, TicketComment, TicketListResponse,
+    TicketQuery, TicketSlaInfo, TicketSlaPolicy, TicketSlaStats, TicketStats, TicketStatus,
+    TicketType, TypeCount, UpdateSlaPolicyRequest, UpdateTicketRequest,
 };
 use super::sla_service::TicketSlaService;
 

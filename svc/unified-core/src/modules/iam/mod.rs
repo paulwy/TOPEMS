@@ -2,6 +2,7 @@
 
 pub mod auth;
 pub mod permission;
+pub mod permission_metadata;
 pub mod permission_verify;
 pub mod position;
 pub mod role;
