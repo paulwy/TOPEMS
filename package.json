@@ -3,6 +3,7 @@
   "version": "5.14.0",
   "description": "TOPEMS - Enterprise Management System with Module Federation",
   "private": true,
+  "packageManager": "pnpm@9.15.9",
   "workspaces": [
     "apps/*",
     "packages/*"
