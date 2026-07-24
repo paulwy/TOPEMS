@@ -193,12 +193,11 @@
 | crm | 8029 |
 | pm | 8023 |
 | gis | 8071 |
-| rs | 8053 |
+| rd | 8053 |
 | scm | 8040 |
 | wms | 8041 |
 | srm | 8042 |
 | mobile | 8070 |
-| monitor | 8062 |
 | portal | 8063 |
 | ai | 8064 |
 | integration | 8072 |

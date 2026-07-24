@@ -18,7 +18,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout code
-        uses: actions/checkout@v4
+        uses: actions/checkout@v5
 
       - name: Set up Python
         uses: actions/setup-python@v5
@@ -48,7 +48,7 @@ jobs:
           echo "=== Component naming conventions check passed ==="
 
       - name: Setup Node.js
-        uses: actions/setup-node@v4
+        uses: actions/setup-node@v5
         with:
           node-version: ${{ env.NODE_VERSION }}
 
@@ -64,7 +64,7 @@ jobs:
           echo "STORE_PATH=$(pnpm store path --silent)" >> $GITHUB_ENV
 
       - name: Setup pnpm cache
-        uses: actions/cache@v4
+        uses: actions/cache@v5
         with:
           path: ${{ env.STORE_PATH }}
           key: ${{ runner.os }}-pnpm-store-${{ hashFiles('**/pnpm-lock.yaml') }}
@@ -84,6 +84,16 @@ jobs:
             echo "✅ No console.log statements found"
           fi
 
+      # 防止编译器警告回归：项目近期将 Rust 编译警告从 694 清零，通过在预留模块上
+      # 添加 #[allow(dead_code)] 属性实现。此步骤对 svc/ 下 allow(dead_code) 数量
+      # 做基线比较，一旦新增 allow 属性导致计数超出基线，则 CI 失败，强制开发者
+      # 显式更新基线 (scripts/allow_baseline.txt)，避免警告被静默吞掉。
+      - name: Check allow(dead_code) baseline (prevent warning regression)
+        run: |
+          echo "=== Checking allow(dead_code) baseline ==="
+          bash scripts/check_allow_baseline.sh
+          echo "=== Allow baseline check passed ==="
+
       - name: Generate quality check summary
         if: always()
         run: |
@@ -94,5 +104,6 @@ jobs:
           echo "| API Path Uniqueness | ✅ Passed |" >> $GITHUB_STEP_SUMMARY
           echo "| Component Naming Conventions | ✅ Passed |" >> $GITHUB_STEP_SUMMARY
           echo "| Console.log Check | ✅ Passed |" >> $GITHUB_STEP_SUMMARY
+          echo "| Allow(dead_code) Baseline | ✅ Passed |" >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY
           echo "**All code quality checks passed!**" >> $GITHUB_STEP_SUMMARY

@@ -9,11 +9,13 @@ on:
 
 env:
   CARGO_TERM_COLOR: always
-  RUST_VERSION: stable
   NODE_VERSION: '20'
   PNPM_VERSION: '9'
   RUSTC_WRAPPER: sccache
   SCCACHE_DIR: ${{ github.workspace }}/.sccache
+  CARGO_INCREMENTAL: 1
+  # cargo-nextest 配置（更快、并行测试）
+  NEXTEST_EXECS: "FIFO"
 
 jobs:
   changes:
@@ -25,10 +27,10 @@ jobs:
       docs: ${{ steps.filter.outputs.docs }}
       ci: ${{ steps.filter.outputs.ci }}
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
 
       - name: Detect changed paths
-        uses: dorny/paths-filter@v3
+        uses: dorny/paths-filter@v4
         id: filter
         with:
           filters: |
@@ -62,21 +64,21 @@ jobs:
     if: needs.changes.outputs.rust == 'true' || needs.changes.outputs.ci == 'true'
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
 
       - name: Install Rust
-        uses: dtolnay/rust-toolchain@stable
+        uses: dtolnay/rust-toolchain@master
         with:
-          toolchain: ${{ env.RUST_VERSION }}
+          toolchain: nightly-2026-07-01
           components: rustfmt, clippy
 
       - name: Install sccache
-        uses: mozilla-actions/sccache-action@v0.0.4
+        uses: mozilla-actions/sccache-action@v0.0.10
 
       - name: Cache Rust dependencies
         uses: Swatinem/rust-cache@v2
         with:
-          prefix-key: "rust-lint-${{ env.RUST_VERSION }}"
+          prefix-key: "rust-lint-nightly-2026-07-01"
 
       - name: Check code format
         run: cargo fmt --check --all
@@ -116,20 +118,32 @@ jobs:
           --health-retries 5
 
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
 
       - name: Install Rust
-        uses: dtolnay/rust-toolchain@stable
+        uses: dtolnay/rust-toolchain@master
         with:
-          toolchain: ${{ env.RUST_VERSION }}
+          toolchain: nightly-2026-07-01
 
       - name: Install sccache
-        uses: mozilla-actions/sccache-action@v0.0.4
+        uses: mozilla-actions/sccache-action@v0.0.10
+
+      - name: Install cargo-nextest
+        uses: taiki-e/install-action@v2
+        with:
+          tool: nextest
 
       - name: Cache Rust dependencies
         uses: Swatinem/rust-cache@v2
         with:
-          prefix-key: "rust-test-${{ env.RUST_VERSION }}"
+          prefix-key: "rust-test-nightly-2026-07-01"
+
+      - name: Cache nextest
+        uses: actions/cache@v5
+        with:
+          path: ~/.cache/nextest
+          key: nextest-${{ runner.os }}-${{ hashFiles('**/Cargo.lock') }}
+          restore-keys: nextest-${{ runner.os }}-
 
       - name: Install PostgreSQL client
         run: sudo apt-get update && sudo apt-get install -y postgresql-client
@@ -143,18 +157,21 @@ jobs:
       - name: Quick check (quality gate)
         run: cargo check --workspace
 
-      - name: Run unit tests (no database required)
+      - name: Build tests with nextest
+        run: cargo nextest run --workspace --no-run
+
+      - name: Run unit tests with nextest (no database required)
         env:
           APP_ENV: test
-        run: cargo test --workspace --test crm_tests --test unit_tests -p topems-crm -p topems-qms --no-fail-fast
+        run: cargo nextest run --workspace -p topems-crm -p topems-qms
 
-      - name: Run integration tests (with database)
+      - name: Run integration tests with nextest (with database)
         env:
           DATABASE_URL: postgres://topems_test:topems_test_secret@localhost:5432/topems_test
           REDIS_URL: redis://localhost:6379/0
           JWT_SECRET: test-jwt-secret-key-for-testing-only-32chars
           APP_ENV: test
-        run: cargo test --workspace --no-fail-fast
+        run: cargo nextest run --workspace --test-threads=4
 
       - name: Install cargo-llvm-cov
         run: cargo install cargo-llvm-cov
@@ -170,7 +187,7 @@ jobs:
         run: cargo llvm-cov test -p topems-mes -p topems-qms -p topems-erp --html --output-dir target/llvm-cov-report
 
       - name: Upload Rust coverage report
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v5
         if: always()
         with:
           name: rust-coverage
@@ -230,13 +247,46 @@ jobs:
             echo "✅ **All Rust coverage thresholds met.**" >> $GITHUB_STEP_SUMMARY
           fi
 
+  rust-audit:
+    name: Rust Security Audit
+    needs: [changes, rust-test]
+    if: needs.changes.outputs.rust == 'true' || needs.changes.outputs.ci == 'true'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+
+      - name: Install Rust
+        uses: dtolnay/rust-toolchain@master
+        with:
+          toolchain: nightly-2026-07-01
+
+      - name: Cache Rust dependencies
+        uses: Swatinem/rust-cache@v2
+        with:
+          prefix-key: "rust-audit-nightly-2026-07-01"
+
+      - name: Install cargo-audit
+        run: cargo install cargo-audit
+
+      - name: Run cargo audit (security scan)
+        run: |
+          echo "## Rust Security Audit (cargo-audit)" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "Scanning Cargo.lock for known Rust Security Advisory (RLSA) vulnerabilities..." >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          # `cargo audit` exits non-zero when known RLSA vulnerabilities are found,
+          # failing this job and the downstream quality gate.
+          cargo audit
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "| cargo audit | ✅ No known vulnerabilities |" >> $GITHUB_STEP_SUMMARY
+
   frontend-lint:
     name: Frontend Lint
     needs: changes
     if: needs.changes.outputs.frontend == 'true' || needs.changes.outputs.ci == 'true'
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
 
       - name: Install pnpm
         uses: pnpm/action-setup@v4
@@ -245,7 +295,7 @@ jobs:
           run_install: false
 
       - name: Setup Node.js
-        uses: actions/setup-node@v4
+        uses: actions/setup-node@v5
         with:
           node-version: ${{ env.NODE_VERSION }}
           cache: 'pnpm'
@@ -262,7 +312,7 @@ jobs:
     if: needs.changes.outputs.frontend == 'true' || needs.changes.outputs.ci == 'true'
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
 
       - name: Install pnpm
         uses: pnpm/action-setup@v4
@@ -271,7 +321,7 @@ jobs:
           run_install: false
 
       - name: Setup Node.js
-        uses: actions/setup-node@v4
+        uses: actions/setup-node@v5
         with:
           node-version: ${{ env.NODE_VERSION }}
           cache: 'pnpm'
@@ -291,7 +341,7 @@ jobs:
     if: needs.changes.outputs.frontend == 'true' || needs.changes.outputs.ci == 'true'
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
 
       - name: Install pnpm
         uses: pnpm/action-setup@v4
@@ -300,7 +350,7 @@ jobs:
           run_install: false
 
       - name: Setup Node.js
-        uses: actions/setup-node@v4
+        uses: actions/setup-node@v5
         with:
           node-version: ${{ env.NODE_VERSION }}
           cache: 'pnpm'
@@ -318,7 +368,7 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
 
       - name: Install pnpm
         uses: pnpm/action-setup@v4
@@ -327,7 +377,7 @@ jobs:
           run_install: false
 
       - name: Setup Node.js
-        uses: actions/setup-node@v4
+        uses: actions/setup-node@v5
         with:
           node-version: ${{ env.NODE_VERSION }}
           cache: 'pnpm'
@@ -339,7 +389,7 @@ jobs:
         run: pnpm --filter topems-portal test:coverage
 
       - name: Upload coverage report
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v5
         if: always()
         with:
           name: frontend-coverage
@@ -448,7 +498,7 @@ jobs:
           fi
 
       - name: Upload build artifacts
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v5
         if: always()
         with:
           name: frontend-build
@@ -461,7 +511,7 @@ jobs:
     if: needs.changes.outputs.frontend == 'true' || needs.changes.outputs.ci == 'true'
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
 
       - name: Install pnpm
         uses: pnpm/action-setup@v4
@@ -470,7 +520,7 @@ jobs:
           run_install: false
 
       - name: Setup Node.js
-        uses: actions/setup-node@v4
+        uses: actions/setup-node@v5
         with:
           node-version: ${{ env.NODE_VERSION }}
           cache: 'pnpm'
@@ -493,7 +543,7 @@ jobs:
   quality-gate:
     name: Quality Gate
     runs-on: ubuntu-latest
-    needs: [rust-lint, rust-test, frontend-lint, frontend-typecheck, frontend-test, design-system-check, security-scan]
+    needs: [rust-lint, rust-test, rust-audit, frontend-lint, frontend-typecheck, frontend-test, design-system-check, security-scan]
     if: always()
     steps:
       - name: Check all jobs passed or skipped
@@ -504,6 +554,7 @@ jobs:
           echo "|-------|--------|" >> $GITHUB_STEP_SUMMARY
           echo "| Rust Lint | ${{ needs.rust-lint.result }} |" >> $GITHUB_STEP_SUMMARY
           echo "| Rust Tests | ${{ needs.rust-test.result }} |" >> $GITHUB_STEP_SUMMARY
+          echo "| Rust Security Audit | ${{ needs.rust-audit.result }} |" >> $GITHUB_STEP_SUMMARY
           echo "| Frontend Lint | ${{ needs.frontend-lint.result }} |" >> $GITHUB_STEP_SUMMARY
           echo "| Frontend Type Check | ${{ needs.frontend-typecheck.result }} |" >> $GITHUB_STEP_SUMMARY
           echo "| Frontend Tests | ${{ needs.frontend-test.result }} |" >> $GITHUB_STEP_SUMMARY
@@ -525,7 +576,7 @@ jobs:
           echo "" >> $GITHUB_STEP_SUMMARY
 
           # Treat "skipped" as acceptable (path-filtered jobs); only fail on failure/cancelled.
-          RESULTS="${{ needs.rust-lint.result }} ${{ needs.rust-test.result }} ${{ needs.frontend-lint.result }} ${{ needs.frontend-typecheck.result }} ${{ needs.frontend-test.result }} ${{ needs.design-system-check.result }} ${{ needs.security-scan.result }}"
+          RESULTS="${{ needs.rust-lint.result }} ${{ needs.rust-test.result }} ${{ needs.rust-audit.result }} ${{ needs.frontend-lint.result }} ${{ needs.frontend-typecheck.result }} ${{ needs.frontend-test.result }} ${{ needs.design-system-check.result }} ${{ needs.security-scan.result }}"
 
           FAILED=false
           for result in $RESULTS; do

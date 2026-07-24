@@ -27,7 +27,6 @@ on:
 
 env:
   REGISTRY: ghcr.io
-  RUST_VERSION: stable
   CARGO_TERM_COLOR: always
 
 jobs:
@@ -42,8 +41,8 @@ jobs:
       bi: ${{ steps.changes.outputs.bi }}
       lib: ${{ steps.changes.outputs.lib }}
     steps:
-      - uses: actions/checkout@v4
-      - uses: dorny/paths-filter@v3
+      - uses: actions/checkout@v5
+      - uses: dorny/paths-filter@v4
         id: changes
         with:
           filters: |
@@ -87,19 +86,19 @@ jobs:
             changed: ${{ needs.detect-changes.outputs.ehs }}
     if: ${{ matrix.service.changed == 'true' || needs.detect-changes.outputs.lib == 'true' }}
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
 
       - name: Setup Rust toolchain
-        uses: dtolnay/rust-toolchain@stable
+        uses: dtolnay/rust-toolchain@master
         with:
-          toolchain: ${{ env.RUST_VERSION }}
+          toolchain: nightly-2026-07-01
           targets: x86_64-unknown-linux-musl
           components: rustfmt, clippy
 
       - name: Cache cargo dependencies
         uses: Swatinem/rust-cache@v2
         with:
-          prefix-key: "rust-${{ env.RUST_VERSION }}-${{ matrix.service.name }}"
+          prefix-key: "rust-nightly-2026-07-01-${{ matrix.service.name }}"
 
       - name: Format check
         run: cargo fmt --check -p topems-${{ matrix.service.name }}
@@ -114,7 +113,7 @@ jobs:
         run: cargo test -p topems-${{ matrix.service.name }} -- --test-threads=1
 
       - name: Upload build artifact
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v5
         with:
           name: topems-${{ matrix.service.name }}-binary
           path: target/release/topems-${{ matrix.service.name }}
@@ -143,10 +142,10 @@ jobs:
             changed: ${{ needs.detect-changes.outputs.ehs }}
     if: ${{ github.event_name == 'push' && (matrix.service.changed == 'true' || needs.detect-changes.outputs.lib == 'true') }}
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
 
       - name: Download build artifact
-        uses: actions/download-artifact@v4
+        uses: actions/download-artifact@v5
         with:
           name: topems-${{ matrix.service.name }}-binary
           path: target/release/
@@ -185,7 +184,7 @@ jobs:
     runs-on: ubuntu-latest
     if: ${{ github.event_name == 'push' && github.ref == 'refs/heads/develop' }}
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
 
       - name: Set up kubectl
         uses: azure/setup-kubectl@v3
@@ -218,7 +217,7 @@ jobs:
     if: ${{ github.event_name == 'push' && github.ref == 'refs/heads/main' }}
     environment: production
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
 
       - name: Set up kubectl
         uses: azure/setup-kubectl@v3
@@ -284,7 +283,7 @@ jobs:
     runs-on: ubuntu-latest
     if: ${{ github.event_name == 'workflow_dispatch' }}
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
 
       - name: Set up kubectl
         uses: azure/setup-kubectl@v3

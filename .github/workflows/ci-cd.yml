@@ -31,7 +31,6 @@ on:
 
 env:
   CARGO_TERM_COLOR: always
-  RUST_VERSION: stable
   NODE_VERSION: '20'
   PNPM_VERSION: '9'
   DOCKER_REGISTRY: ghcr.io
@@ -43,18 +42,18 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout code
-        uses: actions/checkout@v4
+        uses: actions/checkout@v5
 
       - name: Install Rust
-        uses: dtolnay/rust-toolchain@stable
+        uses: dtolnay/rust-toolchain@master
         with:
-          toolchain: ${{ env.RUST_VERSION }}
+          toolchain: nightly-2026-07-01
           components: rustfmt, clippy
 
       - name: Cache Rust dependencies
         uses: Swatinem/rust-cache@v2
         with:
-          prefix-key: "rust-${{ env.RUST_VERSION }}"
+          prefix-key: "rust-nightly-2026-07-01"
 
       - name: Run cargo fmt
         run: cargo fmt --check
@@ -74,7 +73,7 @@ jobs:
           echo "STORE_PATH=$(pnpm store path --silent)" >> $GITHUB_ENV
 
       - name: Setup pnpm cache
-        uses: actions/cache@v4
+        uses: actions/cache@v5
         with:
           path: ${{ env.STORE_PATH }}
           key: ${{ runner.os }}-pnpm-store-${{ hashFiles('**/pnpm-lock.yaml') }}
@@ -118,17 +117,17 @@ jobs:
 
     steps:
       - name: Checkout code
-        uses: actions/checkout@v4
+        uses: actions/checkout@v5
 
       - name: Install Rust
-        uses: dtolnay/rust-toolchain@stable
+        uses: dtolnay/rust-toolchain@master
         with:
-          toolchain: ${{ env.RUST_VERSION }}
+          toolchain: nightly-2026-07-01
 
       - name: Cache Rust dependencies
         uses: Swatinem/rust-cache@v2
         with:
-          prefix-key: "rust-${{ env.RUST_VERSION }}-test"
+          prefix-key: "rust-nightly-2026-07-01-test"
 
       - name: Install PostgreSQL client
         run: sudo apt-get update && sudo apt-get install -y postgresql-client
@@ -159,7 +158,7 @@ jobs:
           echo "STORE_PATH=$(pnpm store path --silent)" >> $GITHUB_ENV
 
       - name: Setup pnpm cache
-        uses: actions/cache@v4
+        uses: actions/cache@v5
         with:
           path: ${{ env.STORE_PATH }}
           key: ${{ runner.os }}-pnpm-store-${{ hashFiles('**/pnpm-lock.yaml') }}
@@ -184,7 +183,7 @@ jobs:
       version: ${{ steps.version.outputs.version }}
     steps:
       - name: Checkout code
-        uses: actions/checkout@v4
+        uses: actions/checkout@v5
 
       - name: Determine version
         id: version
@@ -200,20 +199,20 @@ jobs:
           echo "Building version: ${VERSION}"
 
       - name: Install Rust
-        uses: dtolnay/rust-toolchain@stable
+        uses: dtolnay/rust-toolchain@master
         with:
-          toolchain: ${{ env.RUST_VERSION }}
+          toolchain: nightly-2026-07-01
 
       - name: Cache Rust dependencies
         uses: Swatinem/rust-cache@v2
         with:
-          prefix-key: "rust-${{ env.RUST_VERSION }}-build"
+          prefix-key: "rust-nightly-2026-07-01-build"
 
       - name: Build all Rust services
         run: cargo build --release --all
 
       - name: Setup Node.js
-        uses: actions/setup-node@v4
+        uses: actions/setup-node@v5
         with:
           node-version: ${{ env.NODE_VERSION }}
 
@@ -229,7 +228,7 @@ jobs:
           echo "STORE_PATH=$(pnpm store path --silent)" >> $GITHUB_ENV
 
       - name: Setup pnpm cache
-        uses: actions/cache@v4
+        uses: actions/cache@v5
         with:
           path: ${{ env.STORE_PATH }}
           key: ${{ runner.os }}-pnpm-store-${{ hashFiles('**/pnpm-lock.yaml') }}
@@ -243,14 +242,14 @@ jobs:
         run: pnpm run build
 
       - name: Upload backend artifacts
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v5
         with:
           name: topems-backend-${{ github.sha }}
           path: target/release/
           retention-days: 7
 
       - name: Upload frontend artifacts
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v5
         with:
           name: topems-frontend-${{ github.sha }}
           path: |
@@ -291,9 +290,9 @@ jobs:
             path: svc/gis
             dockerfile: svc/gis/Dockerfile
             port: 8071
-          - service: rs
-            path: svc/rs
-            dockerfile: svc/rs/Dockerfile
+          - service: rd
+            path: svc/rd
+            dockerfile: svc/rd/Dockerfile
             port: 8053
           - service: scm
             path: svc/scm
@@ -311,10 +310,6 @@ jobs:
             path: svc/mobile
             dockerfile: svc/mobile/Dockerfile
             port: 8070
-          - service: monitor
-            path: svc/monitor
-            dockerfile: svc/monitor/Dockerfile
-            port: 8062
           - service: portal
             path: svc/portal
             dockerfile: svc/portal/Dockerfile
@@ -351,7 +346,7 @@ jobs:
 
     steps:
       - name: Checkout code
-        uses: actions/checkout@v4
+        uses: actions/checkout@v5
 
       - name: Set up QEMU
         uses: docker/setup-qemu-action@v3
@@ -392,7 +387,7 @@ jobs:
           build-args: |
             SERVICE_NAME=${{ matrix.service }}
             SERVICE_PORT=${{ matrix.port }}
-            RUST_VERSION=${{ env.RUST_VERSION }}
+            RUST_VERSION=nightly-2026-07-01
 
       - name: Generate SBOM
         uses: anchore/sbom-action@v0
@@ -402,7 +397,7 @@ jobs:
           output-file: sbom-${{ matrix.service }}.spdx.json
 
       - name: Upload SBOM
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v5
         with:
           name: sbom-${{ matrix.service }}
           path: sbom-${{ matrix.service }}.spdx.json
@@ -416,16 +411,16 @@ jobs:
     environment: staging
     steps:
       - name: Checkout code
-        uses: actions/checkout@v4
+        uses: actions/checkout@v5
 
       - name: Download backend artifacts
-        uses: actions/download-artifact@v4
+        uses: actions/download-artifact@v5
         with:
           name: topems-backend-${{ github.sha }}
           path: target/release/
 
       - name: Download frontend artifacts
-        uses: actions/download-artifact@v4
+        uses: actions/download-artifact@v5
         with:
           name: topems-frontend-${{ github.sha }}
           path: dist/
@@ -456,7 +451,7 @@ jobs:
               cp -r /opt/topems/staging/web /opt/topems/staging/web.backup.${TIMESTAMP}
             fi
 
-            for service in unified-core ai hrm crm pm erp gis rs scm wms srm mobile monitor portal mes pdm qms lims ehs; do
+            for service in unified-core ai hrm crm pm erp gis rd scm wms srm mobile portal mes pdm qms lims ehs; do
               sudo systemctl stop topems-${service}-staging 2>/dev/null || true
             done
           EOF
@@ -466,14 +461,14 @@ jobs:
           scp -P ${{ secrets.STAGING_PORT || 22 }} -r dist/apps/core/dist/* ${{ secrets.STAGING_USER }}@${{ secrets.STAGING_HOST }}:/opt/topems/staging/core-remote/
 
           ssh ${{ secrets.STAGING_USER }}@${{ secrets.STAGING_HOST }} -p ${{ secrets.STAGING_PORT || 22 }} << 'EOF'
-            for service in unified-core ai hrm crm pm erp gis rs scm wms srm mobile monitor portal mes pdm qms lims ehs; do
+            for service in unified-core ai hrm crm pm erp gis rd scm wms srm mobile portal mes pdm qms lims ehs; do
               sudo systemctl start topems-${service}-staging || true
             done
 
             sleep 15
 
             FAILURE=false
-            for port in 8000 8010 8011 8012 8013 8020 8023 8029 8030 8031 8040 8041 8042 8050 8051 8052 8053 8060 8061 8062 8063 8070 8071 8072; do
+            for port in 8000 8010 8011 8013 8020 8023 8029 8030 8031 8040 8041 8042 8050 8051 8052 8053 8060 8061 8063 8070 8071 8072; do
               if ! curl -s -f -m 5 http://localhost:${port}/health; then
                 echo "Service on port ${port} not responding"
                 FAILURE=true
@@ -482,7 +477,7 @@ jobs:
 
             if [ "$FAILURE" = true ]; then
               echo "Health check failed, rolling back..."
-              for service in unified-core ai hrm crm pm erp gis rs scm wms srm mobile monitor portal mes pdm qms lims ehs; do
+              for service in unified-core ai hrm crm pm erp gis rd scm wms srm mobile portal mes pdm qms lims ehs; do
                 sudo systemctl stop topems-${service}-staging 2>/dev/null || true
               done
 
@@ -496,7 +491,7 @@ jobs:
                 cp -r "$LATEST_WEB_BACKUP" /opt/topems/staging/web
               fi
 
-              for service in unified-core ai hrm crm pm erp gis rs scm wms srm mobile monitor portal mes pdm qms lims ehs; do
+              for service in unified-core ai hrm crm pm erp gis rd scm wms srm mobile portal mes pdm qms lims ehs; do
                 sudo systemctl start topems-${service}-staging || true
               done
               exit 1
@@ -517,16 +512,16 @@ jobs:
     concurrency: production
     steps:
       - name: Checkout code
-        uses: actions/checkout@v4
+        uses: actions/checkout@v5
 
       - name: Download backend artifacts
-        uses: actions/download-artifact@v4
+        uses: actions/download-artifact@v5
         with:
           name: topems-backend-${{ github.sha }}
           path: target/release/
 
       - name: Download frontend artifacts
-        uses: actions/download-artifact@v4
+        uses: actions/download-artifact@v5
         with:
           name: topems-frontend-${{ github.sha }}
           path: dist/
@@ -554,7 +549,7 @@ jobs:
               cp -r /opt/topems/web /opt/topems/web.backup.${TIMESTAMP}
             fi
 
-            for service in unified-core ai hrm crm pm erp gis rs scm wms srm mobile monitor portal mes pdm qms lims ehs; do
+            for service in unified-core ai hrm crm pm erp gis rd scm wms srm mobile portal mes pdm qms lims ehs; do
               sudo systemctl stop topems-${service} 2>/dev/null || true
             done
           EOF
@@ -565,14 +560,14 @@ jobs:
           scp -P ${{ secrets.PROD_PORT || 22 }} -r dist/apps/core/dist/* ${{ secrets.PROD_USER }}@${{ secrets.PROD_HOST }}:/opt/topems/core-remote/
 
           ssh ${{ secrets.PROD_USER }}@${{ secrets.PROD_HOST }} -p ${{ secrets.PROD_PORT || 22 }} << 'EOF'
-            for service in unified-core ai hrm crm pm erp gis rs scm wms srm mobile monitor portal mes pdm qms lims ehs; do
+            for service in unified-core ai hrm crm pm erp gis rd scm wms srm mobile portal mes pdm qms lims ehs; do
               sudo systemctl start topems-${service} || true
             done
 
             sleep 30
 
             FAILURE=false
-            for port in 8000 8010 8011 8012 8013 8020 8023 8029 8030 8031 8040 8041 8042 8050 8051 8052 8053 8060 8061 8062 8063 8070 8071 8072; do
+            for port in 8000 8010 8011 8013 8020 8023 8029 8030 8031 8040 8041 8042 8050 8051 8052 8053 8060 8061 8063 8070 8071 8072; do
               if ! curl -s -f -m 5 http://localhost:${port}/health; then
                 echo "Service on port ${port} not responding"
                 FAILURE=true
@@ -581,7 +576,7 @@ jobs:
 
             if [ "$FAILURE" = true ]; then
               echo "Health check failed, rolling back..."
-              for service in unified-core ai hrm crm pm erp gis rs scm wms srm mobile monitor portal mes pdm qms lims ehs; do
+              for service in unified-core ai hrm crm pm erp gis rd scm wms srm mobile portal mes pdm qms lims ehs; do
                 sudo systemctl stop topems-${service} 2>/dev/null || true
               done
 
@@ -595,7 +590,7 @@ jobs:
                 cp -r "$LATEST_WEB_BACKUP" /opt/topems/web
               fi
 
-              for service in unified-core ai hrm crm pm erp gis rs scm wms srm mobile monitor portal mes pdm qms lims ehs; do
+              for service in unified-core ai hrm crm pm erp gis rd scm wms srm mobile portal mes pdm qms lims ehs; do
                 sudo systemctl start topems-${service} || true
               done
               exit 1
@@ -622,20 +617,20 @@ jobs:
             target: windows
     steps:
       - name: Checkout code
-        uses: actions/checkout@v4
+        uses: actions/checkout@v5
 
       - name: Install Rust
-        uses: dtolnay/rust-toolchain@stable
+        uses: dtolnay/rust-toolchain@master
         with:
-          toolchain: ${{ env.RUST_VERSION }}
+          toolchain: nightly-2026-07-01
 
       - name: Cache Rust dependencies
         uses: Swatinem/rust-cache@v2
         with:
-          prefix-key: "rust-${{ env.RUST_VERSION }}-desktop-${{ matrix.os }}"
+          prefix-key: "rust-nightly-2026-07-01-desktop-${{ matrix.os }}"
 
       - name: Setup Node.js
-        uses: actions/setup-node@v4
+        uses: actions/setup-node@v5
         with:
           node-version: ${{ env.NODE_VERSION }}
 
@@ -651,7 +646,7 @@ jobs:
           echo "STORE_PATH=$(pnpm store path --silent)" >> $GITHUB_ENV
 
       - name: Setup pnpm cache
-        uses: actions/cache@v4
+        uses: actions/cache@v5
         with:
           path: ${{ env.STORE_PATH }}
           key: ${{ runner.os }}-pnpm-store-${{ hashFiles('**/pnpm-lock.yaml') }}
@@ -690,7 +685,7 @@ jobs:
 
       - name: Upload macOS artifact
         if: matrix.os == 'macos-latest'
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v5
         with:
           name: topems-desktop-macos-${{ github.sha }}
           path: apps/desktop/src-tauri/target/universal-apple-darwin/release/bundle/dmg/*.dmg
@@ -698,7 +693,7 @@ jobs:
 
       - name: Upload Windows artifact
         if: matrix.os == 'windows-latest'
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v5
         with:
           name: topems-desktop-windows-${{ github.sha }}
           path: apps/desktop/src-tauri/target/x86_64-pc-windows-msvc/release/bundle/nsis/*.exe
