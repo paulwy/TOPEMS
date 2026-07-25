@@ -1,7 +1,102 @@
 import type { ApiResponse } from '../client';
-import type { PaginatedResponse } from '@topems/shared-types';
+import type { PaginatedResponse, QmsTypes } from '@topems/shared-types';
 
 export { PaginatedResponse };
+
+// ============================================================================
+// OpenAPI 生成类型迁移映射（推广阶段）
+// ============================================================================
+// 当前策略：保留手写类型作为主类型，生成类型待 openapi.d.ts 聚合后启用。
+// 后端 svc/qms 已通过 utoipa 注册以下 Schema（quality_standard、quality_inspection、quality_issue），
+// 待运行 ./scripts/openapi/generate.sh --with-types 后可在此添加 Generated* 别名。
+//
+// 迁移映射（手写类型 → 生成类型 QmsTypes.*）：
+// - QualityStandardBackend         → QmsTypes.QualityStandard
+// - CreateQualityStandardRequestBackend → QmsTypes.CreateStandardRequest
+// - UpdateQualityStandardRequestBackend → QmsTypes.UpdateStandardRequest
+// - StandardRevision               → QmsTypes.StandardRevision
+// - QualityInspectionBackend       → QmsTypes.Inspection
+// - CreateQualityInspectionRequestBackend → QmsTypes.CreateInspectionRequest
+// - UpdateQualityInspectionRequestBackend → QmsTypes.UpdateInspectionRequest
+// - AssignInspectionRequestBackend → QmsTypes.AssignInspectionRequest
+// - SubmitInspectionResultRequestBackend → QmsTypes.SubmitInspectionResultRequest
+// - AuditInspectionRequestBackend  → QmsTypes.AuditInspectionRequest
+// - InspectionResultItem           → QmsTypes.InspectionResultItem
+// - InspectionAudit                → QmsTypes.InspectionAudit
+// - QualityIssueBackend            → QmsTypes.QualityIssue
+// - CreateQualityIssueRequestBackend → QmsTypes.CreateIssueRequest
+// - UpdateQualityIssueRequestBackend → QmsTypes.UpdateIssueRequest
+//
+// 已知差异（替换时需注意）：
+// 1. 生成类型字段全可选（openapi-typescript 默认行为）
+// 2. 手写类型区分 Backend（snake_case）/Frontend（camelCase）两套，生成类型统一 snake_case
+// 3. 手写 QualityInspectionBackend 有 assignee/inspected_at 字段，需核对后端 Inspection 定义
+// 4. 手写 QualityIssueBackend 字段（severity/source/related_inspection_id）需与后端 QualityIssue 对齐
+// 5. 待补充模块：quality_cost、apqp、fmea、eight_d、corrective_action、spc、dashboard
+//
+// 参考：apps/web/src/api/iam/types.ts 的 Generated* 别名试点模式
+
+// ============================================================================
+// OpenAPI 生成类型别名（推广阶段）
+// ============================================================================
+// 生成类型与手写 Backend 类型字段高度匹配，可作为 Backend 类型的类型源真相。
+// 手写 Backend 类型保留必填字段约束，生成类型字段全可选作为参考。
+export type GeneratedQualityStandard = QmsTypes.QualityStandard;
+export type GeneratedInspection = QmsTypes.Inspection;
+export type GeneratedInspectionAudit = QmsTypes.InspectionAudit;
+export type GeneratedInspectionResultItem = QmsTypes.InspectionResultItem;
+export type GeneratedQualityIssue = QmsTypes.QualityIssue;
+export type GeneratedQualityIssueWithWorkflow = QmsTypes.QualityIssueWithWorkflow;
+export type GeneratedStandardRevision = QmsTypes.StandardRevision;
+export type GeneratedCreateStandardRequest = QmsTypes.CreateStandardRequest;
+export type GeneratedUpdateStandardRequest = QmsTypes.UpdateStandardRequest;
+export type GeneratedCreateInspectionRequest = QmsTypes.CreateInspectionRequest;
+export type GeneratedUpdateInspectionRequest = QmsTypes.UpdateInspectionRequest;
+export type GeneratedAssignInspectionRequest = QmsTypes.AssignInspectionRequest;
+export type GeneratedSubmitInspectionResultRequest = QmsTypes.SubmitInspectionResultRequest;
+export type GeneratedAuditInspectionRequest = QmsTypes.AuditInspectionRequest;
+export type GeneratedCreateIssueRequest = QmsTypes.CreateIssueRequest;
+export type GeneratedUpdateIssueRequest = QmsTypes.UpdateIssueRequest;
+
+// ============================================================================
+// 适配类型：将生成类型字段重映射到手写命名（任务 2）
+// ============================================================================
+// QMS 手写 Backend 类型与生成类型字段命名基本一致（均 snake_case），
+// 主要差异在于：
+// 1. 生成类型字段全可选，手写 Backend 类型部分字段必填
+// 2. 手写 QualityIssueBackend 有 assigned_to/priority/due_date，生成类型无
+// 3. 生成 QualityIssue 有 issue_no/resolved_at/created_by/tenant_id，手写 Backend 无
+// 因此 QualityIssue 需要适配类型补充字段。
+
+/** 生成类型 QualityIssue 扩展手写 Backend 字段（assigned_to/priority/due_date） */
+export type AdaptedQualityIssue = QmsTypes.QualityIssue & {
+  assigned_to?: string;
+  priority?: string;
+  due_date?: string;
+};
+
+// ============================================================================
+// 字段适配函数：生成类型实例 → 手写 Backend 命名实例
+// ============================================================================
+
+/**
+ * 将生成类型 QualityIssue 转换为手写 Backend 命名的 AdaptedQualityIssue。
+ * 生成类型缺少 assigned_to/priority/due_date，这里补 undefined 占位。
+ */
+export const adaptQualityIssueFromGenerated = (
+  generated: QmsTypes.QualityIssue
+): AdaptedQualityIssue => {
+  return {
+    ...generated,
+    assigned_to: undefined,
+    priority: undefined,
+    due_date: undefined,
+  };
+};
+
+// ============================================================================
+// 手写类型（当前主类型）
+// ============================================================================
 
 // Backend returns data structures
 export interface QualityStandardBackend {

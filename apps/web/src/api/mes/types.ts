@@ -1,4 +1,133 @@
 import type { ApiResponse } from '../client';
+import type { MesTypes } from '@topems/shared-types';
+
+// ============================================================================
+// OpenAPI 生成类型迁移映射（推广阶段）
+// ============================================================================
+// 当前策略：保留手写类型作为主类型，生成类型待 openapi.d.ts 聚合后启用。
+// 后端 svc/mes 已通过 utoipa 注册以下 Schema（work_order、work_report、production_order），
+// 待运行 ./scripts/openapi/generate.sh --with-types 后可在此添加 Generated* 别名。
+//
+// 迁移映射（手写类型 → 生成类型 MesTypes.*）：
+// - WorkOrder               → MesTypes.WorkOrderResponse
+// - CreateWorkOrderRequest  → MesTypes.CreateWorkOrderRequest
+// - UpdateWorkOrderRequest  → MesTypes.UpdateWorkOrderRequest
+// - WorkReport              → MesTypes.WorkReportResponse
+// - CreateWorkReportRequest → MesTypes.CreateWorkReportRequest
+// - UpdateWorkReportRequest → MesTypes.UpdateWorkReportRequest
+// - ProductionOrder         → MesTypes.ProductionOrderResponse
+// - CreateProductionOrderRequest → MesTypes.CreateProductionOrderRequest
+// - UpdateProductionOrderRequest → MesTypes.UpdateProductionOrderRequest
+// - CreateFromErpRequest    → MesTypes.CreateFromErpRequest
+//
+// 已知差异（替换时需注意）：
+// 1. 生成类型字段全可选（openapi-typescript 默认行为）
+// 2. 手写 WorkOrder 用 order_id/order_number，后端 WorkOrderResponse 用 order_id/order_no
+// 3. 手写 WorkOrder 用 quantity/completed_quantity，后端用 planned_quantity/completed_quantity
+// 4. 手写 WorkReport 用 quantity_good/quantity_bad/quantity_total，后端字段命名可能不同
+// 5. 手写 ProductionOrder 用 order_number/scheduled_start_date，后端用 order_no/planned_start_date
+//
+// 参考：apps/web/src/api/iam/types.ts 的 Generated* 别名试点模式
+
+// ============================================================================
+// OpenAPI 生成类型别名（推广阶段）
+// ============================================================================
+export type GeneratedWorkOrderResponse = MesTypes.WorkOrderResponse;
+export type GeneratedWorkReportResponse = MesTypes.WorkReportResponse;
+export type GeneratedProductionOrderResponse = MesTypes.ProductionOrderResponse;
+export type GeneratedCreateWorkOrderRequest = MesTypes.CreateWorkOrderRequest;
+export type GeneratedUpdateWorkOrderRequest = MesTypes.UpdateWorkOrderRequest;
+export type GeneratedCreateWorkReportRequest = MesTypes.CreateWorkReportRequest;
+export type GeneratedUpdateWorkReportRequest = MesTypes.UpdateWorkReportRequest;
+export type GeneratedCreateProductionOrderRequest = MesTypes.CreateProductionOrderRequest;
+export type GeneratedUpdateProductionOrderRequest = MesTypes.UpdateProductionOrderRequest;
+export type GeneratedCreateFromErpRequest = MesTypes.CreateFromErpRequest;
+
+// ============================================================================
+// 适配类型：将生成类型字段重映射到手写命名（任务 2）
+// ============================================================================
+// 手写 WorkOrder 与生成 WorkOrderResponse 字段差异：
+// - order_number（手写） ↔ order_no（生成）
+// - quantity（手写） ↔ planned_quantity（生成）
+// - planned_start_time/planned_end_time（手写） ↔ plan_start_date/plan_end_date（生成）
+// - actual_start_time/actual_end_time（手写） ↔ actual_start_date/actual_end_date（生成）
+
+/** 生成类型 WorkOrderResponse 的字段重映射到手写 WorkOrder 命名 */
+export type AdaptedWorkOrder = Omit<
+  MesTypes.WorkOrderResponse,
+  'order_no' | 'planned_quantity' | 'plan_start_date' | 'plan_end_date' | 'actual_start_date' | 'actual_end_date'
+> & {
+  order_number?: MesTypes.WorkOrderResponse['order_no'];
+  quantity?: MesTypes.WorkOrderResponse['planned_quantity'];
+  planned_start_time?: MesTypes.WorkOrderResponse['plan_start_date'];
+  planned_end_time?: MesTypes.WorkOrderResponse['plan_end_date'];
+  actual_start_time?: MesTypes.WorkOrderResponse['actual_start_date'];
+  actual_end_time?: MesTypes.WorkOrderResponse['actual_end_date'];
+};
+
+/** 生成类型 ProductionOrderResponse 的字段重映射到手写 ProductionOrder 命名 */
+export type AdaptedProductionOrder = Omit<
+  MesTypes.ProductionOrderResponse,
+  'order_no' | 'planned_start_date' | 'planned_end_date'
+> & {
+  order_number?: MesTypes.ProductionOrderResponse['order_no'];
+  scheduled_start_date?: MesTypes.ProductionOrderResponse['planned_start_date'];
+  scheduled_end_date?: MesTypes.ProductionOrderResponse['planned_end_date'];
+};
+
+// ============================================================================
+// 字段适配函数：生成类型实例 → 手写命名实例
+// ============================================================================
+
+/**
+ * 将生成类型 WorkOrderResponse 转换为手写命名的 AdaptedWorkOrder。
+ * 字段映射：order_no → order_number, planned_quantity → quantity,
+ *           plan_start_date → planned_start_time, plan_end_date → planned_end_time,
+ *           actual_start_date → actual_start_time, actual_end_date → actual_end_time
+ */
+export const adaptWorkOrderFromGenerated = (
+  generated: MesTypes.WorkOrderResponse
+): AdaptedWorkOrder => {
+  const {
+    order_no,
+    planned_quantity,
+    plan_start_date,
+    plan_end_date,
+    actual_start_date,
+    actual_end_date,
+    ...rest
+  } = generated;
+  return {
+    ...rest,
+    order_number: order_no,
+    quantity: planned_quantity,
+    planned_start_time: plan_start_date,
+    planned_end_time: plan_end_date,
+    actual_start_time: actual_start_date,
+    actual_end_time: actual_end_date,
+  };
+};
+
+/**
+ * 将生成类型 ProductionOrderResponse 转换为手写命名的 AdaptedProductionOrder。
+ * 字段映射：order_no → order_number, planned_start_date → scheduled_start_date,
+ *           planned_end_date → scheduled_end_date
+ */
+export const adaptProductionOrderFromGenerated = (
+  generated: MesTypes.ProductionOrderResponse
+): AdaptedProductionOrder => {
+  const { order_no, planned_start_date, planned_end_date, ...rest } = generated;
+  return {
+    ...rest,
+    order_number: order_no,
+    scheduled_start_date: planned_start_date,
+    scheduled_end_date: planned_end_date,
+  };
+};
+
+// ============================================================================
+// 手写类型（当前主类型）
+// ============================================================================
 
 export interface ListParams {
   page?: number;

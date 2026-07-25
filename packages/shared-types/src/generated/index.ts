@@ -12,3 +12,5 @@
 export type { paths as ApiPaths } from './openapi';
 export type { components as ApiComponents } from './openapi';
 export type { operations as ApiOperations } from './openapi';
+
+export type { IamTypes, FinanceTypes, MasterDataTypes, QmsTypes, MesTypes, CommonTypes } from './api-types';

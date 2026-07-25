@@ -1,3 +1,76 @@
+import type { FinanceTypes } from './generated/api-types';
+
+// ============================================================================
+// OpenAPI 生成类型别名（推广阶段）
+// ============================================================================
+// 当前策略：保留手写类型作为主类型，生成类型作为参考。
+// 手写类型字段更丰富（含业务扩展字段），生成类型字段更精简（仅含后端 Schema）。
+//
+// 已知差异（替换时需注意）：
+// 1. 生成类型字段全可选（openapi-typescript 默认行为）
+// 2. 手写 Account 用 category/balance_direction/status/isactive，生成 Account 用 account_type/is_enabled
+// 3. 手写 Account 有大量业务扩展字段（dimensions/children/enable_quantity 等），生成类型无
+// 4. 手写 Voucher 有 entries/voucher_number/total_amount 等扩展字段，生成类型精简
+// 5. 手写 Voucher 字段命名与生成 Voucher 基本一致（voucher_no/voucher_type/voucher_date/status）
+export type GeneratedAccount = FinanceTypes.Account;
+export type GeneratedVoucher = FinanceTypes.Voucher;
+export type GeneratedVoucherLine = FinanceTypes.VoucherLine;
+export type GeneratedVoucherResponse = FinanceTypes.VoucherResponse;
+export type GeneratedCreateAccountRequest = FinanceTypes.CreateAccountRequest;
+export type GeneratedCreateVoucherRequest = FinanceTypes.CreateVoucherRequest;
+export type GeneratedVoucherLineRequest = FinanceTypes.VoucherLineRequest;
+export type GeneratedLedgerEntry = FinanceTypes.LedgerEntry;
+export type GeneratedTrialBalance = FinanceTypes.TrialBalance;
+export type GeneratedBalanceSheet = FinanceTypes.BalanceSheet;
+export type GeneratedIncomeStatement = FinanceTypes.IncomeStatement;
+export type GeneratedCashFlowStatement = FinanceTypes.CashFlowStatement;
+export type GeneratedPeriod = FinanceTypes.Period;
+export type GeneratedPayment = FinanceTypes.Payment;
+export type GeneratedPaymentItem = FinanceTypes.PaymentItem;
+export type GeneratedPaymentResponse = FinanceTypes.PaymentResponse;
+export type GeneratedCreatePaymentRequest = FinanceTypes.CreatePaymentRequest;
+export type GeneratedAuxType = FinanceTypes.AuxType;
+export type GeneratedAuxiliaryAccount = FinanceTypes.AuxiliaryAccount;
+
+// ============================================================================
+// 适配类型：将生成类型字段重映射到手写命名（任务 2）
+// ============================================================================
+// 手写 Account 与生成 Account 字段差异较大：
+// - isactive（手写） ↔ is_enabled（生成）—— 语义不同但都表示启用状态
+// - category（手写 AccountCategory） ↔ account_type（生成 AccountType）—— 枚举值一致，字段名不同
+// 由于手写 Account 有大量生成类型没有的业务扩展字段，这里仅做字段名映射演示，
+// 完整替换需后端补充更多 Schema 字段（TODO）。
+
+/** 生成类型 Account 的字段重映射：is_enabled → isactive, account_type → category */
+export type AdaptedAccount = Omit<FinanceTypes.Account, 'is_enabled' | 'account_type'> & {
+  isactive?: FinanceTypes.Account['is_enabled'];
+  category?: FinanceTypes.Account['account_type'];
+};
+
+// ============================================================================
+// 字段适配函数：生成类型实例 → 手写命名实例
+// ============================================================================
+
+/**
+ * 将生成类型 Account 转换为手写命名的 AdaptedAccount。
+ * 字段映射：is_enabled → isactive, account_type → category
+ * 注意：手写 Account 还有 balance_direction/status/children 等扩展字段，需在业务层补充。
+ */
+export const adaptAccountFromGenerated = (
+  generated: FinanceTypes.Account
+): AdaptedAccount => {
+  const { is_enabled, account_type, ...rest } = generated;
+  return {
+    ...rest,
+    isactive: is_enabled,
+    category: account_type,
+  };
+};
+
+// ============================================================================
+// 手写类型（当前主类型）
+// ============================================================================
+
 export type AccountCategory =
   | 'asset'
   | 'liability'

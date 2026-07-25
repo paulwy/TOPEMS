@@ -94,7 +94,32 @@ export type {
   VoucherQueryParams,
   ReportQueryParams,
   VoucherOperationResult,
+  // OpenAPI 生成类型别名（推广阶段）
+  GeneratedAccount,
+  GeneratedVoucher,
+  GeneratedVoucherLine,
+  GeneratedVoucherResponse,
+  GeneratedCreateAccountRequest,
+  GeneratedCreateVoucherRequest,
+  GeneratedVoucherLineRequest,
+  GeneratedLedgerEntry,
+  GeneratedTrialBalance,
+  GeneratedBalanceSheet,
+  GeneratedIncomeStatement,
+  GeneratedCashFlowStatement,
+  GeneratedPeriod,
+  GeneratedPayment,
+  GeneratedPaymentItem,
+  GeneratedPaymentResponse,
+  GeneratedCreatePaymentRequest,
+  GeneratedAuxType,
+  GeneratedAuxiliaryAccount,
+  // 适配类型
+  AdaptedAccount,
 } from './finance';
+
+// 字段适配函数（值导出）
+export { adaptAccountFromGenerated } from './finance';
 
 export type {
   AddressbookEntry,
@@ -275,3 +300,29 @@ export type {
   ApiComponents,
   ApiOperations,
 } from './generated';
+
+// OpenAPI 生成类型封装层（按模块命名空间导出，方便业务使用）
+export type {
+  IamTypes,
+  FinanceTypes,
+  MasterDataTypes,
+  QmsTypes,
+  MesTypes,
+  CommonTypes,
+} from './generated';
+
+// 类型桥接工具（连接生成类型与手写业务类型）
+export {
+  defineApiSchema,
+  createTypedApiClient,
+  typeCheck,
+} from './typeBridge';
+
+export type {
+  ApiSchemaMapping,
+  InferEntity,
+  InferCreateRequest,
+  InferUpdateRequest,
+  TypedCrudApiClient,
+  FieldsOf,
+} from './typeBridge';

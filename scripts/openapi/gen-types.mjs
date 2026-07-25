@@ -6,69 +6,182 @@
  *       消除手写 DTO 与后端 schema 的类型漂移。
  *
  * 用法：
- *   node scripts/openapi/gen-types.mjs                    # 使用默认 docs/api/openapi.yaml
+ *   node scripts/openapi/gen-types.mjs                    # 自动选择输入源（优先聚合 JSON，回退到手写 YAML）
  *   node scripts/openapi/gen-types.mjs --input <file>      # 指定输入文件
- *   node scripts/openapi/gen-types.mjs --aggregated        # 使用聚合 JSON（需服务运行）
+ *   node scripts/openapi/gen-types.mjs --aggregated        # 强制使用聚合 JSON
+ *   node scripts/openapi/gen-types.mjs --yaml              # 强制使用手写 YAML
+ *   node scripts/openapi/gen-types.mjs --output <dir>      # 指定输出目录
+ *   node scripts/openapi/gen-types.mjs --validate          # 生成前验证 OpenAPI 规范
  *
- * 输出：
+ * 一键流水线（抓取 + 聚合 + 生成类型）：
+ *   ./scripts/openapi/generate.sh --with-types
+ *
+ * 输出（默认）：
  *   packages/shared-types/src/generated/openapi.d.ts  — 完整类型定义
  *   packages/shared-types/src/generated/index.ts      — 命名空间导出
+ *
+ * 通过 @topems/shared-types 对前端导出：
+ *   import type { ApiPaths, ApiComponents, ApiOperations } from '@topems/shared-types';
  */
 
-import { readFileSync, writeFileSync, existsSync } from 'node:fs';
+import { readFileSync, writeFileSync, mkdirSync, existsSync, unlinkSync, statSync } from 'node:fs';
 import { resolve, dirname } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { createRequire } from 'node:module';
+import { execSync } from 'node:child_process';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const ROOT_DIR = resolve(__dirname, '../..');
 const require = createRequire(import.meta.url);
 
+// 颜色输出
+const colors = {
+  reset: '\x1b[0m',
+  red: '\x1b[0;31m',
+  green: '\x1b[0;32m',
+  yellow: '\x1b[1;33m',
+  blue: '\x1b[0;34m',
+  cyan: '\x1b[0;36m',
+};
+
+const log = {
+  info: (msg) => console.log(`${colors.blue}[INFO]${colors.reset} ${msg}`),
+  success: (msg) => console.log(`${colors.green}[OK]${colors.reset} ${msg}`),
+  warn: (msg) => console.log(`${colors.yellow}[WARN]${colors.reset} ${msg}`),
+  error: (msg) => console.error(`${colors.red}[ERROR]${colors.reset} ${msg}`),
+};
+
 // 解析命令行参数
 const args = process.argv.slice(2);
 let inputPath = null;
 let useAggregated = false;
+let forceYaml = false;
+let validate = false;
+let outputDir = resolve(ROOT_DIR, 'packages/shared-types/src/generated');
+
+function printHelp() {
+  console.log(`用法: node scripts/openapi/gen-types.mjs [options]
+
+选项:
+  --input <file>     指定 OpenAPI 输入文件 (JSON/YAML)
+  --aggregated       强制使用 docs/api/openapi-aggregated.json
+  --yaml             强制使用手写 docs/api/openapi.yaml
+  --output <dir>     TS 类型输出目录 (默认: packages/shared-types/src/generated)
+  --validate         生成前验证 OpenAPI 规范有效性
+  -h, --help         显示帮助
+
+默认行为:
+  自动选择输入源：优先聚合 JSON（如有内容），回退到手写 YAML
+
+示例:
+  node scripts/openapi/gen-types.mjs                        # 自动选择输入源
+  node scripts/openapi/gen-types.mjs --aggregated           # 强制从聚合 JSON 生成
+  node scripts/openapi/gen-types.mjs --yaml                 # 强制从手写 YAML 生成
+  node scripts/openapi/gen-types.mjs --validate             # 生成前验证规范
+  ./scripts/openapi/generate.sh --with-types                # 抓取 + 聚合 + 生成 TS 类型
+`);
+}
 
 for (let i = 0; i < args.length; i++) {
   if (args[i] === '--input' && args[i + 1]) {
     inputPath = args[++i];
   } else if (args[i] === '--aggregated') {
     useAggregated = true;
+  } else if (args[i] === '--yaml') {
+    forceYaml = true;
+  } else if (args[i] === '--output' && args[i + 1]) {
+    outputDir = resolve(args[++i]);
+  } else if (args[i] === '--validate') {
+    validate = true;
+  } else if (args[i] === '--help' || args[i] === '-h') {
+    printHelp();
+    process.exit(0);
   }
 }
 
-// 确定输入文件：优先聚合 JSON，其次手写 YAML
+const aggregatedPath = resolve(ROOT_DIR, 'docs/api/openapi-aggregated.json');
+const yamlPath = resolve(ROOT_DIR, 'docs/api/openapi.yaml');
+
+// 确定输入文件
 if (!inputPath) {
-  const aggregatedPath = resolve(ROOT_DIR, 'docs/api/openapi-aggregated.json');
-  if (useAggregated && existsSync(aggregatedPath)) {
+  if (useAggregated) {
     inputPath = aggregatedPath;
+  } else if (forceYaml) {
+    inputPath = yamlPath;
   } else {
-    inputPath = resolve(ROOT_DIR, 'docs/api/openapi.yaml');
+    // 自动选择：优先聚合 JSON（有实际内容时），回退到手写 YAML
+    const aggregatedExists = existsSync(aggregatedPath);
+    const yamlExists = existsSync(yamlPath);
+
+    if (aggregatedExists) {
+      try {
+        const aggContent = JSON.parse(readFileSync(aggregatedPath, 'utf-8'));
+        const hasContent =
+          Object.keys(aggContent.paths || {}).length > 0 ||
+          Object.keys(aggContent.components?.schemas || {}).length > 0;
+        if (hasContent) {
+          inputPath = aggregatedPath;
+          log.info('自动选择: 聚合 JSON（有实际内容）');
+        } else if (yamlExists) {
+          inputPath = yamlPath;
+          log.warn('聚合 JSON 为空骨架，回退到手写 YAML');
+        } else {
+          inputPath = aggregatedPath;
+          log.warn('聚合 JSON 为空且无手写 YAML，将使用空骨架');
+        }
+      } catch {
+        if (yamlExists) {
+          inputPath = yamlPath;
+          log.warn('聚合 JSON 解析失败，回退到手写 YAML');
+        } else {
+          inputPath = aggregatedPath;
+        }
+      }
+    } else if (yamlExists) {
+      inputPath = yamlPath;
+      log.info('自动选择: 手写 YAML（无聚合 JSON）');
+    } else {
+      log.error('未找到任何 OpenAPI 输入文件');
+      log.error(`  期望位置: ${aggregatedPath} 或 ${yamlPath}`);
+      process.exit(1);
+    }
   }
 }
 
 if (!existsSync(inputPath)) {
-  console.error(`❌ 输入文件不存在: ${inputPath}`);
+  log.error(`输入文件不存在: ${inputPath}`);
   process.exit(1);
 }
 
 console.log('==========================================');
 console.log('  TOPEMS OpenAPI → TypeScript 类型生成');
 console.log('==========================================');
-console.log(`  输入: ${inputPath}`);
+console.log('');
+log.info(`输入: ${inputPath}`);
+const fileSize = (statSync(inputPath).size / 1024).toFixed(1);
+log.info(`大小: ${fileSize} KB`);
+if (validate) log.info('模式: 验证 + 生成');
+console.log('');
 
 // 读取并解析 OpenAPI 规范
 let spec;
 try {
   const raw = readFileSync(inputPath, 'utf-8');
   if (inputPath.endsWith('.yaml') || inputPath.endsWith('.yml')) {
-    const yaml = require('js-yaml');
+    let yaml;
+    try {
+      yaml = require('js-yaml');
+    } catch (e) {
+      log.error('解析 YAML 需要 js-yaml 依赖，但未安装。');
+      log.error('   安装: pnpm add -D js-yaml -w   或改用 JSON 输入 (--aggregated)。');
+      process.exit(1);
+    }
     spec = yaml.load(raw);
   } else {
     spec = JSON.parse(raw);
   }
 } catch (e) {
-  console.error(`❌ 解析失败: ${e.message}`);
+  log.error(`解析失败: ${e.message}`);
   process.exit(1);
 }
 
@@ -88,7 +201,6 @@ function sanitizeSpec(spec) {
         if (!content || typeof content !== 'object') continue;
         for (const [mediaType, mediaTypeObj] of Object.entries(content)) {
           if (mediaTypeObj === null || mediaTypeObj === undefined) {
-            // 用空 schema 替代 null media type 对象
             content[mediaType] = { schema: { type: 'object' } };
             fixCount++;
           } else if (!mediaTypeObj.schema) {
@@ -104,48 +216,128 @@ function sanitizeSpec(spec) {
 
 const fixCount = sanitizeSpec(spec);
 if (fixCount > 0) {
-  console.log(`  清洗: 修复 ${fixCount} 个 null/缺失 schema 的 media type`);
+  log.warn(`清洗: 修复 ${fixCount} 个 null/缺失 schema 的 media type`);
 }
 
 // 检查 spec 是否有实际内容
 const pathCount = Object.keys(spec?.paths || {}).length;
 const schemaCount = Object.keys(spec?.components?.schemas || {}).length;
-console.log(`  规范: ${pathCount} 个路径, ${schemaCount} 个 Schema`);
+log.info(`规范: ${pathCount} 个路径, ${schemaCount} 个 Schema`);
 
 if (pathCount === 0 && schemaCount === 0) {
-  console.error('⚠️  输入规范为空（可能后端服务未运行）。跳过类型生成。');
-  console.error('   提示：启动后端服务后运行 ./scripts/openapi/generate.sh 生成聚合 JSON');
+  log.warn('输入规范为空（可能后端服务未运行）。跳过类型生成。');
+  log.warn('  提示：启动后端服务后运行 ./scripts/openapi/generate.sh 生成聚合 JSON');
   process.exit(0);
 }
 
+// OpenAPI 规范验证
+function validateSpec(spec) {
+  const errors = [];
+  const warnings = [];
+
+  if (!spec.openapi) {
+    errors.push('缺少 openapi 版本字段');
+  } else if (!spec.openapi.startsWith('3.')) {
+    warnings.push(`openapi 版本 ${spec.openapi} 可能不完全兼容（期望 3.x）`);
+  }
+
+  if (!spec.info) {
+    errors.push('缺少 info 字段');
+  } else {
+    if (!spec.info.title) warnings.push('缺少 info.title');
+    if (!spec.info.version) warnings.push('缺少 info.version');
+  }
+
+  if (!spec.paths || typeof spec.paths !== 'object') {
+    errors.push('缺少 paths 字段或格式错误');
+  } else {
+    let operationCount = 0;
+    for (const [path, methods] of Object.entries(spec.paths)) {
+      if (!methods || typeof methods !== 'object') continue;
+      for (const [method, operation] of Object.entries(methods)) {
+        if (!['get', 'post', 'put', 'delete', 'patch', 'options', 'head', 'trace'].includes(method)) continue;
+        operationCount++;
+        if (!operation || typeof operation !== 'object') continue;
+        if (!operation.responses) {
+          warnings.push(`路径 ${path} [${method}] 缺少 responses 定义`);
+        }
+      }
+    }
+    log.info(`验证: 发现 ${operationCount} 个操作`);
+  }
+
+  const schemas = spec.components?.schemas;
+  if (schemas && typeof schemas === 'object') {
+    log.info(`验证: 发现 ${Object.keys(schemas).length} 个 Schema`);
+  }
+
+  return { errors, warnings };
+}
+
+if (validate) {
+  log.info('正在验证 OpenAPI 规范...');
+  const { errors, warnings } = validateSpec(spec);
+
+  if (warnings.length > 0) {
+    log.warn(`发现 ${warnings.length} 个警告:`);
+    warnings.forEach((w) => console.log(`  ⚠️  ${w}`));
+  }
+
+  if (errors.length > 0) {
+    log.error(`发现 ${errors.length} 个错误:`);
+    errors.forEach((e) => console.log(`  ❌ ${e}`));
+    log.error('验证失败，终止生成。');
+    process.exit(1);
+  }
+
+  log.success('规范验证通过');
+}
+
 // 写入清洗后的 spec 到临时文件，供 CLI 使用
-const outputDir = resolve(ROOT_DIR, 'packages/shared-types/src/generated');
-import { mkdirSync, writeFileSync as writeFile } from 'node:fs';
 mkdirSync(outputDir, { recursive: true });
 
 const tmpSpecPath = resolve(outputDir, '.tmp-openapi-sanitized.json');
-writeFile(tmpSpecPath, JSON.stringify(spec, null, 2));
+writeFileSync(tmpSpecPath, JSON.stringify(spec, null, 2));
 
-// 使用 openapi-typescript CLI 生成类型（CLI 内部正确处理 AST → 字符串转换）
+// 解析 openapi-typescript CLI 二进制路径
+function resolveOpenapiTypescriptBin() {
+  try {
+    const pkgPath = require.resolve('openapi-typescript/package.json');
+    const pkg = JSON.parse(readFileSync(pkgPath, 'utf-8'));
+    const binRel = pkg.bin && (pkg.bin['openapi-typescript'] || (typeof pkg.bin === 'string' ? pkg.bin : null));
+    if (!binRel) {
+      throw new Error('openapi-typescript 未声明 bin 字段');
+    }
+    return resolve(dirname(pkgPath), binRel);
+  } catch (e) {
+    throw new Error(
+      `无法定位 openapi-typescript CLI。请确认已安装: pnpm add -D openapi-typescript -w\n  原因: ${e.message}`,
+    );
+  }
+}
+
+// 使用 openapi-typescript CLI 生成类型
 const outputFile = resolve(outputDir, 'openapi.d.ts');
 try {
-  const { execSync } = require('child_process');
-  execSync(`npx openapi-typescript "${tmpSpecPath}" -o "${outputFile}"`, {
+  const binPath = resolveOpenapiTypescriptBin();
+  log.info('正在生成 TypeScript 类型...');
+  execSync(`node "${binPath}" "${tmpSpecPath}" -o "${outputFile}"`, {
     stdio: 'pipe',
     cwd: ROOT_DIR,
   });
 } catch (e) {
-  console.error(`❌ 类型生成失败: ${e.message}`);
-  // 清理临时文件
-  try { require('node:fs').unlinkSync(tmpSpecPath); } catch {}
+  log.error(`类型生成失败: ${e.message}`);
+  if (e.stderr) console.error(e.stderr.toString());
+  try { unlinkSync(tmpSpecPath); } catch {}
   process.exit(1);
 }
 
 // 清理临时文件
-try { require('node:fs').unlinkSync(tmpSpecPath); } catch {}
+try { unlinkSync(tmpSpecPath); } catch {}
 
 // 在文件头添加生成信息注释
 const generatedContent = readFileSync(outputFile, 'utf-8');
+const outputSize = (Buffer.byteLength(generatedContent) / 1024).toFixed(1);
 const header = `/**
  * 此文件由 scripts/openapi/gen-types.mjs 自动生成，请勿手动编辑。
  * 生成时间: ${new Date().toISOString()}
@@ -154,8 +346,8 @@ const header = `/**
  */
 
 `;
-writeFile(outputFile, header + generatedContent);
-console.log(`  输出: ${outputFile}`);
+writeFileSync(outputFile, header + generatedContent);
+log.success(`输出: ${outputFile} (${outputSize} KB)`);
 
 // 生成命名空间导出文件
 const indexContent = `/**
@@ -176,15 +368,19 @@ export type { operations as ApiOperations } from './openapi';
 
 const indexFile = resolve(outputDir, 'index.ts');
 writeFileSync(indexFile, indexContent);
-console.log(`  索引: ${indexFile}`);
+log.info(`索引: ${indexFile}`);
 
 console.log('');
 console.log('==========================================');
 console.log('  生成完成');
 console.log('==========================================');
-console.log(`  路径: ${pathCount} | Schema: ${schemaCount}`);
+console.log('');
+log.success(`路径: ${pathCount} | Schema: ${schemaCount}`);
+log.success(`输出: ${outputFile}`);
 console.log('');
 console.log('  后续步骤:');
-console.log('    1. 在代码中使用: import type { ApiTypes } from "@topems/shared-types"');
-console.log('    2. 重新生成: node scripts/openapi/gen-types.mjs');
-console.log('    3. 从运行中的服务生成: ./scripts/openapi/generate.sh && node scripts/openapi/gen-types.mjs --aggregated');
+console.log('    1. 在代码中使用: import type { ApiPaths, ApiComponents } from "@topems/shared-types"');
+console.log('    2. 重新生成（自动选择输入源）: pnpm gen:types');
+console.log('    3. 从运行中的服务生成（聚合 + 类型）: ./scripts/openapi/generate.sh --with-types');
+console.log('    4. 仅从聚合 JSON 生成类型: node scripts/openapi/gen-types.mjs --aggregated');
+console.log('    5. 验证规范: node scripts/openapi/gen-types.mjs --validate');

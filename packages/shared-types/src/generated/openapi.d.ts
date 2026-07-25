@@ -1,8 +1,8 @@
 /**
  * 此文件由 scripts/openapi/gen-types.mjs 自动生成，请勿手动编辑。
- * 生成时间: 2026-07-22T05:47:05.942Z
- * 输入源: /Users/xingzhai/TOPEMS/docs/api/openapi.yaml
- * 路径数: 25 | Schema 数: 39
+ * 生成时间: 2026-07-25T02:14:36.152Z
+ * 输入源: /tmp/topems-aggregated-openapi.json
+ * 路径数: 53 | Schema 数: 117
  */
 
 /**
@@ -11,6 +11,454 @@
  */
 
 export interface paths {
+    "/accounts": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["list_accounts"];
+        put?: never;
+        post: operations["create_account"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/accounts/{account_id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["get_account"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/balance-sheet/{period}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["get_balance_sheet"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/income-statement/{period}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["get_income_statement"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/ledger": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["get_ledger"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/trial-balance/{period}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["get_trial_balance"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/vouchers": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["list_vouchers"];
+        put?: never;
+        post: operations["create_voucher"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/vouchers/{voucher_id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["get_voucher"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/vouchers/{voucher_id}/approve": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: operations["approve_voucher"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/vouchers/{voucher_id}/post": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: operations["post_voucher"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/vouchers/{voucher_id}/submit": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: operations["submit_voucher"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/mes/orders": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["list_production_orders"];
+        put?: never;
+        post: operations["create_production_order"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/mes/orders/{id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["get_production_order"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/mes/work-orders": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["list_work_orders"];
+        put?: never;
+        post: operations["create_work_order"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/mes/work-orders/{id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["get_work_order"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/mes/work-reports": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["list_work_reports"];
+        put?: never;
+        post: operations["create_work_report"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/mes/work-reports/{id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["get_work_report"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/master/quality-v51/ai/suggest": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: operations["generate_suggestions"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/master/quality-v51/auto-fix/run": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: operations["apply_auto_fix"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/master/quality-v51/checks": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["list_quality_checks"];
+        put?: never;
+        post: operations["run_quality_check"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/master/quality-v51/dashboard": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["get_quality_dashboard"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/master/quality-v51/rules": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["list_quality_rules"];
+        put?: never;
+        post: operations["create_quality_rule"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/master/quality-v51/score": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["get_quality_score"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/qms/checks": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["list_inspections"];
+        put?: never;
+        post: operations["create_inspection"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/qms/checks/{id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["get_inspection"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/qms/issues": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["list_issues"];
+        put?: never;
+        post: operations["create_issue"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/qms/standards": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["list_standards"];
+        put?: never;
+        post: operations["create_standard"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/qms/standards/{id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["get_standard"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/core/iam/auth/login": {
         parameters: {
             query?: never;
@@ -1942,6 +2390,791 @@ export interface paths {
 export type webhooks = Record<string, never>;
 export interface components {
     schemas: {
+        Account: {
+            account_type: components["schemas"]["AccountType"];
+            code: string;
+            created_at: components["schemas"]["DateTime"];
+            currency: string;
+            description?: string | null;
+            id: components["schemas"]["Uuid"];
+            is_enabled: boolean;
+            /** Format: int32 */
+            level: number;
+            name: string;
+            parent_id?: components["schemas"]["Uuid"] | null;
+            tenant_id: components["schemas"]["Uuid"];
+            updated_at: components["schemas"]["DateTime"];
+        };
+        /** @enum {string} */
+        AccountType: "asset" | "liability" | "equity" | "income" | "expense" | "cost";
+        /** @enum {string} */
+        AuxType: "project" | "department" | "customer" | "supplier" | "employee" | "custom1" | "custom2" | "custom3";
+        AuxiliaryAccount: {
+            aux_type: components["schemas"]["AuxType"];
+            code: string;
+            created_at: components["schemas"]["DateTime"];
+            description?: string | null;
+            id: components["schemas"]["Uuid"];
+            is_enabled: boolean;
+            /** Format: int32 */
+            level: number;
+            name: string;
+            parent_id?: components["schemas"]["Uuid"] | null;
+            tenant_id: components["schemas"]["Uuid"];
+            updated_at: components["schemas"]["DateTime"];
+        };
+        BalanceItem: {
+            account_code: string;
+            account_name: string;
+            amount: components["schemas"]["Decimal"];
+        };
+        BalanceSheet: {
+            assets: components["schemas"]["BalanceItem"][];
+            equity: components["schemas"]["BalanceItem"][];
+            liabilities: components["schemas"]["BalanceItem"][];
+            period: string;
+            total_assets: components["schemas"]["Decimal"];
+            total_equity: components["schemas"]["Decimal"];
+            total_liabilities: components["schemas"]["Decimal"];
+        };
+        CashFlowItem: {
+            amount: components["schemas"]["Decimal"];
+            children: components["schemas"]["CashFlowItem"][];
+            item_code: string;
+            item_name: string;
+            item_type: string;
+        };
+        CashFlowStatement: {
+            closing_balance: components["schemas"]["Decimal"];
+            items: components["schemas"]["CashFlowItem"][];
+            net_change: components["schemas"]["Decimal"];
+            opening_balance: components["schemas"]["Decimal"];
+            period: string;
+            total_inflow: components["schemas"]["Decimal"];
+            total_outflow: components["schemas"]["Decimal"];
+        };
+        CreateAccountRequest: {
+            account_type: components["schemas"]["AccountType"];
+            code: string;
+            currency: string;
+            description?: string | null;
+            name: string;
+            parent_id?: components["schemas"]["Uuid"] | null;
+        };
+        CreatePaymentRequest: {
+            bank_account_id?: components["schemas"]["Uuid"] | null;
+            bank_account_no?: string | null;
+            bank_name?: string | null;
+            currency?: string | null;
+            items: components["schemas"]["PaymentItemRequest"][];
+            payment_date?: components["schemas"]["chrono.NaiveDate"] | null;
+            payment_method: string;
+            remark?: string | null;
+            supplier_id?: components["schemas"]["Uuid"] | null;
+            supplier_name?: string | null;
+            total_amount: components["schemas"]["Decimal"];
+        };
+        CreateVoucherRequest: {
+            description?: string | null;
+            lines: components["schemas"]["VoucherLineRequest"][];
+            voucher_date: components["schemas"]["DateTime"];
+            voucher_type: components["schemas"]["VoucherType"];
+        };
+        IncomeItem: {
+            account_code: string;
+            account_name: string;
+            amount: components["schemas"]["Decimal"];
+        };
+        IncomeStatement: {
+            expenses: components["schemas"]["IncomeItem"][];
+            net_income: components["schemas"]["Decimal"];
+            period: string;
+            revenues: components["schemas"]["IncomeItem"][];
+            total_expense: components["schemas"]["Decimal"];
+            total_revenue: components["schemas"]["Decimal"];
+        };
+        LedgerEntry: {
+            account_code: string;
+            account_id: components["schemas"]["Uuid"];
+            account_name: string;
+            balance: components["schemas"]["Decimal"];
+            created_at: components["schemas"]["DateTime"];
+            credit: components["schemas"]["Decimal"];
+            debit: components["schemas"]["Decimal"];
+            description?: string | null;
+            id: components["schemas"]["Uuid"];
+            period: string;
+            tenant_id: components["schemas"]["Uuid"];
+            voucher_date: components["schemas"]["DateTime"];
+            voucher_id: components["schemas"]["Uuid"];
+            voucher_no: string;
+        };
+        Payment: {
+            actual_payment_date?: components["schemas"]["chrono.NaiveDate"] | null;
+            approved_by?: string | null;
+            attachment_url?: string | null;
+            bank_account_id?: components["schemas"]["Uuid"] | null;
+            bank_account_no?: string | null;
+            bank_name?: string | null;
+            bank_transaction_no?: string | null;
+            created_at: components["schemas"]["DateTime"];
+            created_by: string;
+            currency: string;
+            exchange_rate?: components["schemas"]["Decimal"] | null;
+            executed_at?: components["schemas"]["DateTime"] | null;
+            executed_by?: string | null;
+            id: components["schemas"]["Uuid"];
+            payment_date?: components["schemas"]["chrono.NaiveDate"] | null;
+            payment_method: string;
+            payment_no: string;
+            remark?: string | null;
+            supplier_id?: components["schemas"]["Uuid"] | null;
+            supplier_name?: string | null;
+            tenant_id: components["schemas"]["Uuid"];
+            total_amount: components["schemas"]["Decimal"];
+            updated_at: components["schemas"]["DateTime"];
+            voucher_id: components["schemas"]["Uuid"];
+        };
+        PaymentItem: {
+            created_at: components["schemas"]["DateTime"];
+            id: components["schemas"]["Uuid"];
+            invoice_id?: components["schemas"]["Uuid"] | null;
+            invoice_no?: string | null;
+            /** Format: int32 */
+            line_no: number;
+            payable_amount: components["schemas"]["Decimal"];
+            payable_id?: components["schemas"]["Uuid"] | null;
+            payment_amount: components["schemas"]["Decimal"];
+            payment_id: components["schemas"]["Uuid"];
+            remaining_amount?: components["schemas"]["Decimal"] | null;
+            remark?: string | null;
+            tenant_id: components["schemas"]["Uuid"];
+            write_off_amount?: components["schemas"]["Decimal"] | null;
+            write_off_by?: string | null;
+            write_off_date?: components["schemas"]["chrono.NaiveDate"] | null;
+            write_off_status?: string | null;
+        };
+        PaymentItemRequest: {
+            invoice_id?: components["schemas"]["Uuid"] | null;
+            invoice_no?: string | null;
+            payable_amount: components["schemas"]["Decimal"];
+            payable_id?: components["schemas"]["Uuid"] | null;
+            payment_amount: components["schemas"]["Decimal"];
+            remark?: string | null;
+        };
+        PaymentResponse: {
+            actual_payment_date?: components["schemas"]["chrono.NaiveDate"] | null;
+            bank_transaction_no?: string | null;
+            created_at: components["schemas"]["DateTime"];
+            currency: string;
+            executed_at?: components["schemas"]["DateTime"] | null;
+            executed_by?: string | null;
+            id: components["schemas"]["Uuid"];
+            items: components["schemas"]["PaymentItem"][];
+            payment_date?: components["schemas"]["chrono.NaiveDate"] | null;
+            payment_method: string;
+            payment_no: string;
+            remark?: string | null;
+            status: components["schemas"]["VoucherStatus"];
+            supplier_id?: components["schemas"]["Uuid"] | null;
+            supplier_name?: string | null;
+            total_amount: components["schemas"]["Decimal"];
+            voucher_id: components["schemas"]["Uuid"];
+        };
+        Period: {
+            closed_at?: components["schemas"]["DateTime"] | null;
+            closed_by?: string | null;
+            created_at: components["schemas"]["DateTime"];
+            end_date: components["schemas"]["DateTime"];
+            id: components["schemas"]["Uuid"];
+            /** Format: int32 */
+            month: number;
+            period_name: string;
+            start_date: components["schemas"]["DateTime"];
+            status: components["schemas"]["PeriodStatus"];
+            tenant_id: components["schemas"]["Uuid"];
+            updated_at: components["schemas"]["DateTime"];
+            /** Format: int32 */
+            year: number;
+        };
+        /** @enum {string} */
+        PeriodStatus: "open" | "closing" | "closed";
+        TrialBalance: {
+            account_code: string;
+            account_id: components["schemas"]["Uuid"];
+            account_name: string;
+            account_type: components["schemas"]["AccountType"];
+            credit_balance: components["schemas"]["Decimal"];
+            debit_balance: components["schemas"]["Decimal"];
+        };
+        Voucher: {
+            approved_by?: string | null;
+            created_at: components["schemas"]["DateTime"];
+            created_by: string;
+            description?: string | null;
+            id: components["schemas"]["Uuid"];
+            period: string;
+            posted_by?: string | null;
+            status: components["schemas"]["VoucherStatus"];
+            tenant_id: components["schemas"]["Uuid"];
+            total_credit: components["schemas"]["Decimal"];
+            total_debit: components["schemas"]["Decimal"];
+            updated_at: components["schemas"]["DateTime"];
+            voucher_date: components["schemas"]["DateTime"];
+            voucher_no: string;
+            voucher_type: components["schemas"]["VoucherType"];
+        };
+        VoucherLine: {
+            account_code: string;
+            account_id: components["schemas"]["Uuid"];
+            account_name: string;
+            created_at: components["schemas"]["DateTime"];
+            credit: components["schemas"]["Decimal"];
+            debit: components["schemas"]["Decimal"];
+            department_id?: components["schemas"]["Uuid"] | null;
+            description?: string | null;
+            id: components["schemas"]["Uuid"];
+            /** Format: int32 */
+            line_no: number;
+            project_id?: components["schemas"]["Uuid"] | null;
+            tenant_id: components["schemas"]["Uuid"];
+            voucher_id: components["schemas"]["Uuid"];
+        };
+        VoucherLineRequest: {
+            account_code: string;
+            credit: components["schemas"]["Decimal"];
+            debit: components["schemas"]["Decimal"];
+            department_id?: components["schemas"]["Uuid"] | null;
+            description?: string | null;
+            project_id?: components["schemas"]["Uuid"] | null;
+        };
+        VoucherResponse: {
+            created_at: components["schemas"]["DateTime"];
+            description?: string | null;
+            id: components["schemas"]["Uuid"];
+            lines: components["schemas"]["VoucherLine"][];
+            status: components["schemas"]["VoucherStatus"];
+            total_credit: components["schemas"]["Decimal"];
+            total_debit: components["schemas"]["Decimal"];
+            voucher_date: components["schemas"]["DateTime"];
+            voucher_no: string;
+            voucher_type: components["schemas"]["VoucherType"];
+        };
+        /** @enum {string} */
+        VoucherStatus: "draft" | "submitted" | "approved" | "posted" | "rejected" | "cancelled";
+        /** @enum {string} */
+        VoucherType: "general" | "payment" | "receipt" | "transfer";
+        CreateFromErpRequest: {
+            erp_order: components["schemas"]["ErpSalesOrderInfo"];
+            notes?: string | null;
+            planned_completion_date?: components["schemas"]["DateTime"] | null;
+            planned_start_date?: components["schemas"]["DateTime"] | null;
+            workshop_id?: components["schemas"]["Uuid"] | null;
+        };
+        CreateProductionOrderRequest: {
+            notes?: string | null;
+            planned_end_date?: components["schemas"]["DateTime"] | null;
+            planned_start_date?: components["schemas"]["DateTime"] | null;
+            product_code: string;
+            product_id?: components["schemas"]["Uuid"] | null;
+            product_name: string;
+            /** Format: double */
+            quantity: number;
+            workshop_id?: components["schemas"]["Uuid"] | null;
+        };
+        CreateWorkOrderRequest: {
+            operator?: string | null;
+            order_id?: string | null;
+            order_no?: string | null;
+            plan_end_date?: string | null;
+            plan_start_date?: string | null;
+            /** Format: double */
+            planned_quantity: number;
+            priority?: string | null;
+            process_id?: string | null;
+            product_code: string;
+            product_name: string;
+            remark?: string | null;
+            team_id?: string | null;
+            work_order_no: string;
+            work_station_id?: string | null;
+        };
+        CreateWorkReportRequest: {
+            /** Format: double */
+            defect_quantity?: number | null;
+            /** Format: double */
+            labor_hours?: number | null;
+            order_id?: string | null;
+            order_no?: string | null;
+            /** Format: double */
+            output_quantity?: number | null;
+            remark?: string | null;
+            report_date: string;
+            reporter_name: string;
+            shift?: string | null;
+            work_order_id?: string | null;
+            work_order_no?: string | null;
+            work_station_id?: string | null;
+            work_station_name?: string | null;
+        };
+        ErpSalesOrderInfo: {
+            customer_name: string;
+            delivery_date?: components["schemas"]["DateTime"] | null;
+            order_id: components["schemas"]["Uuid"];
+            order_number: string;
+            /** Format: int32 */
+            priority?: number | null;
+            product_code: string;
+            product_name: string;
+            /** Format: double */
+            quantity: number;
+            unit: string;
+        };
+        ListProductionOrdersResponse: {
+            orders: components["schemas"]["ProductionOrderResponse"][];
+            /** Format: int64 */
+            page: number;
+            /** Format: int64 */
+            pagesize: number;
+            /** Format: int64 */
+            total: number;
+        };
+        ProductionOrderResponse: {
+            actual_end_date?: components["schemas"]["DateTime"] | null;
+            actual_start_date?: components["schemas"]["DateTime"] | null;
+            /** Format: double */
+            completed_quantity: number;
+            created_at: components["schemas"]["DateTime"];
+            id: components["schemas"]["Uuid"];
+            notes?: string | null;
+            order_no: string;
+            planned_end_date?: components["schemas"]["DateTime"] | null;
+            planned_start_date?: components["schemas"]["DateTime"] | null;
+            product_code: string;
+            product_id?: components["schemas"]["Uuid"] | null;
+            product_name: string;
+            /** Format: double */
+            quantity: number;
+            source: string;
+            source_order_id?: components["schemas"]["Uuid"] | null;
+            source_order_number?: string | null;
+            status: string;
+            updated_at: components["schemas"]["DateTime"];
+            workshop_id?: components["schemas"]["Uuid"] | null;
+        };
+        /** @enum {string} */
+        ProductionOrderSource: "manual" | "erp_sales_order" | "mrp";
+        RejectWorkReportRequest: {
+            remark?: string | null;
+        };
+        UpdateProductionOrderRequest: {
+            notes?: string | null;
+            planned_end_date?: components["schemas"]["DateTime"] | null;
+            planned_start_date?: components["schemas"]["DateTime"] | null;
+            product_code?: string | null;
+            product_name?: string | null;
+            /** Format: double */
+            quantity?: number | null;
+            workshop_id?: components["schemas"]["Uuid"] | null;
+        };
+        UpdateWorkOrderRequest: {
+            /** Format: double */
+            completed_quantity?: number | null;
+            operator?: string | null;
+            order_id?: string | null;
+            order_no?: string | null;
+            plan_end_date?: string | null;
+            plan_start_date?: string | null;
+            /** Format: double */
+            planned_quantity?: number | null;
+            priority?: string | null;
+            process_id?: string | null;
+            product_code?: string | null;
+            product_name?: string | null;
+            remark?: string | null;
+            team_id?: string | null;
+            work_order_no?: string | null;
+            work_station_id?: string | null;
+        };
+        UpdateWorkReportRequest: {
+            /** Format: double */
+            defect_quantity?: number | null;
+            /** Format: double */
+            labor_hours?: number | null;
+            order_id?: string | null;
+            order_no?: string | null;
+            /** Format: double */
+            output_quantity?: number | null;
+            remark?: string | null;
+            report_date?: string | null;
+            reporter_name?: string | null;
+            shift?: string | null;
+            status?: string | null;
+            work_order_id?: string | null;
+            work_order_no?: string | null;
+            work_station_id?: string | null;
+            work_station_name?: string | null;
+        };
+        WorkOrderResponse: {
+            actual_end_date?: string | null;
+            actual_start_date?: string | null;
+            /** Format: double */
+            completed_quantity: number;
+            created_at: string;
+            id: string;
+            operator?: string | null;
+            order_id?: string | null;
+            order_no?: string | null;
+            plan_end_date?: string | null;
+            plan_start_date?: string | null;
+            /** Format: double */
+            planned_quantity: number;
+            priority?: string | null;
+            process_id?: string | null;
+            product_code: string;
+            product_name: string;
+            remark?: string | null;
+            status: string;
+            team_id?: string | null;
+            updated_at: string;
+            work_order_no: string;
+            work_station_id?: string | null;
+        };
+        WorkReportResponse: {
+            approval_remark?: string | null;
+            approved_at?: string | null;
+            approved_by?: string | null;
+            created_at: string;
+            /** Format: double */
+            defect_quantity: number;
+            id: string;
+            /** Format: double */
+            labor_hours: number;
+            order_id?: string | null;
+            order_no?: string | null;
+            /** Format: double */
+            output_quantity: number;
+            remark?: string | null;
+            report_date: string;
+            report_no: string;
+            reporter_name: string;
+            shift?: string | null;
+            status: string;
+            updated_at: string;
+            work_order_id?: string | null;
+            work_order_no?: string | null;
+            work_station_id?: string | null;
+            work_station_name?: string | null;
+        };
+        AutoFixAction: {
+            action_type: components["schemas"]["AutoFixActionType"];
+            after_value?: unknown;
+            applied_at?: string | null;
+            before_value: unknown;
+            /** Format: double */
+            confidence: number;
+            entity_id: string;
+            entity_type: string;
+            id: string;
+            rule_id: string;
+            status: components["schemas"]["FixStatus"];
+        };
+        AutoFixRequest: {
+            entity_id: string;
+            entity_type: string;
+            rule_id?: string | null;
+            strategy?: string | null;
+        };
+        CreateQualityRuleRequest: {
+            description: string;
+            entity_type: string;
+            name: string;
+            parameters?: unknown;
+            rule_type: string;
+            severity?: string | null;
+        };
+        GenerateSuggestionsRequest: {
+            entity_id?: string | null;
+            entity_type: string;
+            suggestion_types?: string[] | null;
+        };
+        GovernanceInsight: {
+            /** Format: int64 */
+            affected_records: number;
+            insight_type: string;
+            recommendations: string[];
+            severity: string;
+            trend_analysis: string;
+        };
+        GovernanceSuggestion: {
+            ai_model_version: string;
+            /** Format: double */
+            confidence: number;
+            created_at: string;
+            entity_id: string;
+            entity_type: string;
+            id: string;
+            rationale: string;
+            status: components["schemas"]["SuggestionStatus"];
+            suggested_action: string;
+            suggestion_type: components["schemas"]["SuggestionType"];
+        };
+        QualityCheckV51: {
+            checked_at: string;
+            details: unknown;
+            entity_id: string;
+            entity_type: string;
+            id: string;
+            rule_id: string;
+            /** Format: double */
+            score: number;
+            status: components["schemas"]["QualityStatus"];
+        };
+        QualityDashboard: {
+            /** Format: int64 */
+            checks_last_7d: number;
+            entity_type_distribution: {
+                [key: string]: number;
+            };
+            /** Format: int64 */
+            fix_actions_applied: number;
+            /** Format: int64 */
+            fix_actions_pending: number;
+            insights: components["schemas"]["GovernanceInsight"][];
+            /** Format: double */
+            quality_score: number;
+            /** Format: int64 */
+            suggestions_pending: number;
+            /** Format: int64 */
+            total_entities: number;
+        };
+        QualityRule: {
+            created_at: string;
+            description: string;
+            enabled: boolean;
+            entity_type: string;
+            id: string;
+            name: string;
+            parameters: unknown;
+            rule_type: string;
+            severity: string;
+            updated_at: string;
+        };
+        QualityScore: {
+            by_entity_type: {
+                [key: string]: number;
+            };
+            by_severity: {
+                [key: string]: number;
+            };
+            /** Format: int64 */
+            failed_checks: number;
+            /** Format: double */
+            overall_score: number;
+            /** Format: int64 */
+            passed_checks: number;
+            /** Format: int64 */
+            total_checks: number;
+            /** Format: int64 */
+            warning_checks: number;
+        };
+        /** @enum {string} */
+        QualityStatus: "passed" | "failed" | "warning";
+        RunQualityCheckRequest: {
+            entity_id: string;
+            entity_type: string;
+            rule_ids?: string[] | null;
+        };
+        AssignInspectionRequest: {
+            assignee: string;
+            operator: string;
+        };
+        AuditInspectionRequest: {
+            action: string;
+            comment?: string | null;
+            operator: string;
+        };
+        CreateInspectionRequest: {
+            created_by?: string | null;
+            inspection_type: string;
+            product_id?: string | null;
+            product_name?: string | null;
+            quantity: components["schemas"]["BigDecimal"];
+            standard_id?: string | null;
+        };
+        CreateIssueRequest: {
+            created_by?: string | null;
+            description?: string | null;
+            related_inspection_id?: string | null;
+            severity?: string | null;
+            source?: string | null;
+            title: string;
+            workflow_id?: components["schemas"]["Uuid"] | null;
+        };
+        CreateStandardRequest: {
+            category: string;
+            created_by?: string | null;
+            description?: string | null;
+            level?: string | null;
+            name: string;
+            specification?: string | null;
+            version?: string | null;
+        };
+        Inspection: {
+            assignee?: string | null;
+            created_at?: string | null;
+            created_by?: string | null;
+            id: string;
+            inspected_at?: string | null;
+            inspection_no: string;
+            inspection_type: string;
+            inspector?: string | null;
+            memo?: string | null;
+            product_id?: components["schemas"]["Uuid"] | null;
+            product_name?: string | null;
+            qualification_rate?: components["schemas"]["BigDecimal"] | null;
+            qualified_quantity?: components["schemas"]["BigDecimal"] | null;
+            quantity: components["schemas"]["BigDecimal"];
+            result?: string | null;
+            standard_id?: components["schemas"]["Uuid"] | null;
+            status?: string | null;
+            tenant_id: string;
+            unqualified_quantity?: components["schemas"]["BigDecimal"] | null;
+            updated_at?: string | null;
+        };
+        InspectionAudit: {
+            action: string;
+            comment?: string | null;
+            created_at?: string | null;
+            id: string;
+            inspection_id: string;
+            operator: string;
+            status_from: string;
+            status_to: string;
+            tenant_id: string;
+        };
+        InspectionResultItem: {
+            is_qualified: boolean;
+            item_name: string;
+            measured_value?: string | null;
+            remark?: string | null;
+            standard_value?: string | null;
+        };
+        ListInspectionsResponse: {
+            inspections: components["schemas"]["Inspection"][];
+            /** Format: int64 */
+            page: number;
+            /** Format: int64 */
+            page_size: number;
+            /** Format: int64 */
+            total: number;
+        };
+        ListStandardsResponse: {
+            /** Format: int64 */
+            page: number;
+            /** Format: int64 */
+            page_size: number;
+            standards: components["schemas"]["QualityStandard"][];
+            /** Format: int64 */
+            total: number;
+        };
+        QualityIssue: {
+            created_at?: string | null;
+            created_by?: string | null;
+            description?: string | null;
+            id: string;
+            issue_no: string;
+            related_inspection_id?: string | null;
+            resolved_at?: string | null;
+            severity?: string | null;
+            source?: string | null;
+            status?: string | null;
+            tenant_id: string;
+            title: string;
+            updated_at?: string | null;
+        };
+        QualityIssueWithWorkflow: components["schemas"]["QualityIssue"] & {
+            approval_status?: string | null;
+            approval_workflow_id?: string | null;
+        };
+        QualityStandard: {
+            category: string;
+            code: string;
+            created_at?: string | null;
+            created_by?: string | null;
+            description?: string | null;
+            id: string;
+            level?: string | null;
+            name: string;
+            specification?: string | null;
+            status?: string | null;
+            tenant_id: string;
+            updated_at?: string | null;
+            version?: string | null;
+        };
+        StandardRevision: {
+            category: string;
+            created_at?: string | null;
+            created_by?: string | null;
+            description?: string | null;
+            id: string;
+            level?: string | null;
+            name: string;
+            specification?: string | null;
+            standard_id: components["schemas"]["Uuid"];
+            status?: string | null;
+            tenant_id: string;
+            version?: string | null;
+        };
+        SubmitInspectionResultRequest: {
+            inspector: string;
+            memo?: string | null;
+            qualification_rate?: components["schemas"]["BigDecimal"] | null;
+            qualified_quantity: components["schemas"]["BigDecimal"];
+            result?: string | null;
+            results?: components["schemas"]["InspectionResultItem"][] | null;
+            unqualified_quantity: components["schemas"]["BigDecimal"];
+        };
+        UpdateInspectionRequest: {
+            inspection_type?: string | null;
+            product_id?: string | null;
+            product_name?: string | null;
+            quantity?: components["schemas"]["BigDecimal"] | null;
+            standard_id?: string | null;
+        };
+        UpdateIssueRequest: {
+            description?: string | null;
+            severity?: string | null;
+            status?: string | null;
+            title?: string | null;
+        };
+        UpdateStandardRequest: {
+            category?: string | null;
+            description?: string | null;
+            level?: string | null;
+            name?: string | null;
+            specification?: string | null;
+            status?: string | null;
+            version?: string | null;
+        };
+        /** Format: uuid */
+        Uuid: string;
+        /** Format: date-time */
+        DateTime: string;
+        Decimal: number;
+        BigDecimal: number;
+        /** Format: date */
+        "chrono.NaiveDate": string;
+        ApiResponse: {
+            success?: boolean;
+            message?: string;
+            data?: Record<string, never>;
+            code?: number;
+        };
+        AutoFixActionType: string;
+        FixStatus: string;
+        SuggestionStatus: string;
+        SuggestionType: string;
         SuccessResponse: {
             /** @example 200 */
             code?: number;
@@ -2340,96 +3573,6 @@ export interface components {
             /** Format: date-time */
             updated_at?: string;
         };
-        QualityStandard: {
-            /** Format: uuid */
-            id?: string;
-            /** @example 催化剂产品标准 */
-            name?: string;
-            /** @example QMS-STD-001 */
-            code?: string;
-            /** @example 产品标准 */
-            category?: string;
-            /** @example 2.0 */
-            version?: string;
-            /** @example 催化剂产品质量标准 */
-            description?: string;
-            /** @example 本标准规定了... */
-            content?: string;
-            /** @example active */
-            status?: string;
-            /**
-             * Format: date
-             * @example 2026-01-01
-             */
-            effective_date?: string;
-            /**
-             * Format: date
-             * @example 2027-12-31
-             */
-            expiry_date?: string;
-            /** Format: date-time */
-            created_at?: string;
-            /** Format: date-time */
-            updated_at?: string;
-        };
-        Inspection: {
-            /** Format: uuid */
-            id?: string;
-            /** @example QC-2026-0522-001 */
-            inspection_no?: string;
-            /** @example 巡检 */
-            inspection_type?: string;
-            /** @example 王质检员 */
-            inspector?: string;
-            /**
-             * Format: date
-             * @example 2026-05-22
-             */
-            inspection_date?: string;
-            /** @example A区生产车间 */
-            location?: string;
-            /** @example 发现1处问题 */
-            result?: string;
-            /** @example 需要整改 */
-            conclusion?: string;
-            /** @example completed */
-            status?: string;
-            /** Format: date-time */
-            created_at?: string;
-            /** Format: date-time */
-            updated_at?: string;
-        };
-        QualityIssue: {
-            /** Format: uuid */
-            id?: string;
-            /** @example QI-2026-001 */
-            issue_no?: string;
-            /** @example 反应釜温度偏差 */
-            title?: string;
-            /** @example 温度偏差超过±2°C */
-            description?: string;
-            /** @example major */
-            severity?: string;
-            /** @example 设备问题 */
-            category?: string;
-            /** @example open */
-            status?: string;
-            /** @example 设备部-张工 */
-            assignee?: string;
-            /**
-             * Format: date
-             * @example 2026-05-30
-             */
-            due_date?: string;
-            /** @example 更换传感器 */
-            resolution?: string;
-            /** Format: date-time */
-            closed_at?: string | null;
-            /** Format: date-time */
-            created_at?: string;
-            /** Format: date-time */
-            updated_at?: string;
-        };
         QualityImprovement: {
             /** Format: uuid */
             id?: string;
@@ -2761,4 +3904,1179 @@ export interface components {
     pathItems: never;
 }
 export type $defs = Record<string, never>;
-export type operations = Record<string, never>;
+export interface operations {
+    list_accounts: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                parent_id: components["schemas"]["Uuid"] | null;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description 获取会计科目列表成功 */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ApiResponse"];
+                };
+            };
+            /** @description 服务器内部错误 */
+            500: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    create_account: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["CreateAccountRequest"];
+            };
+        };
+        responses: {
+            /** @description 创建会计科目成功 */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ApiResponse"];
+                };
+            };
+            /** @description 服务器内部错误 */
+            500: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    get_account: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description 科目ID */
+                account_id: components["schemas"]["Uuid"];
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description 获取会计科目详情成功 */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ApiResponse"];
+                };
+            };
+            /** @description 科目不存在 */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description 服务器内部错误 */
+            500: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    get_balance_sheet: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description 会计期间 */
+                period: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description 获取资产负债表成功 */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ApiResponse"];
+                };
+            };
+            /** @description 服务器内部错误 */
+            500: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    get_income_statement: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description 会计期间 */
+                period: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description 获取利润表成功 */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ApiResponse"];
+                };
+            };
+            /** @description 服务器内部错误 */
+            500: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    get_ledger: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                account_id: components["schemas"]["Uuid"] | null;
+                account_code: string | null;
+                start_date: components["schemas"]["DateTime"] | null;
+                end_date: components["schemas"]["DateTime"] | null;
+                period: string | null;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description 获取明细账成功 */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ApiResponse"];
+                };
+            };
+            /** @description 服务器内部错误 */
+            500: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    get_trial_balance: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description 会计期间 */
+                period: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description 获取试算平衡表成功 */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ApiResponse"];
+                };
+            };
+            /** @description 服务器内部错误 */
+            500: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    list_vouchers: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                status: string | null;
+                period: string | null;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description 获取凭证列表成功 */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ApiResponse"];
+                };
+            };
+            /** @description 服务器内部错误 */
+            500: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    create_voucher: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["CreateVoucherRequest"];
+            };
+        };
+        responses: {
+            /** @description 创建凭证成功 */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ApiResponse"];
+                };
+            };
+            /** @description 服务器内部错误 */
+            500: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    get_voucher: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description 凭证ID */
+                voucher_id: components["schemas"]["Uuid"];
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description 获取凭证详情成功 */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ApiResponse"];
+                };
+            };
+            /** @description 凭证不存在 */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description 服务器内部错误 */
+            500: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    approve_voucher: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description 凭证ID */
+                voucher_id: components["schemas"]["Uuid"];
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description 审批凭证成功 */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ApiResponse"];
+                };
+            };
+            /** @description 服务器内部错误 */
+            500: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    post_voucher: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description 凭证ID */
+                voucher_id: components["schemas"]["Uuid"];
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description 过账凭证成功 */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ApiResponse"];
+                };
+            };
+            /** @description 服务器内部错误 */
+            500: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    submit_voucher: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description 凭证ID */
+                voucher_id: components["schemas"]["Uuid"];
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description 提交凭证成功 */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ApiResponse"];
+                };
+            };
+            /** @description 服务器内部错误 */
+            500: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    list_production_orders: {
+        parameters: {
+            query?: {
+                /** @description 页码 */
+                page?: number | null;
+                /** @description 每页数量 */
+                pagesize?: number | null;
+                /** @description 搜索关键词 */
+                search?: string | null;
+                /** @description 状态过滤 */
+                status?: string | null;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description 生产订单列表 */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ApiResponse"];
+                };
+            };
+            /** @description 服务器内部错误 */
+            500: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    create_production_order: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["CreateProductionOrderRequest"];
+            };
+        };
+        responses: {
+            /** @description 生产订单创建成功 */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ApiResponse"];
+                };
+            };
+            /** @description 服务器内部错误 */
+            500: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    get_production_order: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description 订单ID */
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description 生产订单详情 */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ApiResponse"];
+                };
+            };
+            /** @description 服务器内部错误 */
+            500: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    list_work_orders: {
+        parameters: {
+            query?: {
+                /** @description 页码 */
+                page?: number | null;
+                /** @description 每页数量 */
+                pagesize?: number | null;
+                /** @description 搜索关键词 */
+                search?: string | null;
+                /** @description 状态过滤 */
+                status?: string | null;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description 工单列表 */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ApiResponse"];
+                };
+            };
+            /** @description 服务器内部错误 */
+            500: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    create_work_order: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["CreateWorkOrderRequest"];
+            };
+        };
+        responses: {
+            /** @description 工单创建成功 */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ApiResponse"];
+                };
+            };
+            /** @description 服务器内部错误 */
+            500: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    get_work_order: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description 工单ID */
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description 工单详情 */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ApiResponse"];
+                };
+            };
+            /** @description 服务器内部错误 */
+            500: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    list_work_reports: {
+        parameters: {
+            query?: {
+                /** @description 页码 */
+                page?: number | null;
+                /** @description 每页数量 */
+                pagesize?: number | null;
+                /** @description 搜索关键词 */
+                search?: string | null;
+                /** @description 状态过滤 */
+                status?: string | null;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description 生产报工列表 */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ApiResponse"];
+                };
+            };
+            /** @description 服务器内部错误 */
+            500: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    create_work_report: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["CreateWorkReportRequest"];
+            };
+        };
+        responses: {
+            /** @description 生产报工创建成功 */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ApiResponse"];
+                };
+            };
+            /** @description 服务器内部错误 */
+            500: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    get_work_report: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description 报工ID */
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description 生产报工详情 */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ApiResponse"];
+                };
+            };
+            /** @description 服务器内部错误 */
+            500: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    generate_suggestions: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["GenerateSuggestionsRequest"];
+            };
+        };
+        responses: {
+            /** @description 治理建议已生成 */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ApiResponse"];
+                };
+            };
+        };
+    };
+    apply_auto_fix: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["AutoFixRequest"];
+            };
+        };
+        responses: {
+            /** @description 自动修复已应用 */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ApiResponse"];
+                };
+            };
+        };
+    };
+    list_quality_checks: {
+        parameters: {
+            query?: {
+                /** @description 实体类型过滤 */
+                entity_type?: string | null;
+                /** @description 实体ID过滤 */
+                entity_id?: string | null;
+                /** @description 状态过滤 */
+                status?: string | null;
+                /** @description 规则ID过滤 */
+                rule_id?: string | null;
+                /** @description 页码 */
+                page?: number | null;
+                /** @description 每页数量 */
+                page_size?: number | null;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description 质量检查列表 */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ApiResponse"];
+                };
+            };
+        };
+    };
+    run_quality_check: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["RunQualityCheckRequest"];
+            };
+        };
+        responses: {
+            /** @description 质量检查执行成功 */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ApiResponse"];
+                };
+            };
+            /** @description 服务器内部错误 */
+            500: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    get_quality_dashboard: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description 质量仪表盘 */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ApiResponse"];
+                };
+            };
+        };
+    };
+    list_quality_rules: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description 质量规则列表 */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ApiResponse"];
+                };
+            };
+        };
+    };
+    create_quality_rule: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["CreateQualityRuleRequest"];
+            };
+        };
+        responses: {
+            /** @description 质量规则创建成功 */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ApiResponse"];
+                };
+            };
+        };
+    };
+    get_quality_score: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description 质量评分 */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ApiResponse"];
+                };
+            };
+        };
+    };
+    list_inspections: {
+        parameters: {
+            query?: {
+                /** @description 页码 */
+                page?: number | null;
+                /** @description 每页数量 */
+                page_size?: number | null;
+                /** @description 状态过滤 */
+                status?: string | null;
+                /** @description 检验类型过滤 */
+                inspection_type?: string | null;
+                /** @description 搜索关键词 */
+                search?: string | null;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description 质量检验列表 */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ApiResponse"];
+                };
+            };
+            /** @description 服务器内部错误 */
+            500: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    create_inspection: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["CreateInspectionRequest"];
+            };
+        };
+        responses: {
+            /** @description 质量检验创建成功 */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ApiResponse"];
+                };
+            };
+            /** @description 服务器内部错误 */
+            500: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    get_inspection: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description 检验ID */
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description 质量检验详情 */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ApiResponse"];
+                };
+            };
+            /** @description 无效的检查ID */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description 服务器内部错误 */
+            500: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    list_issues: {
+        parameters: {
+            query?: {
+                /** @description 页码 */
+                page?: number | null;
+                /** @description 每页数量 */
+                page_size?: number | null;
+                /** @description 状态过滤 */
+                status?: string | null;
+                /** @description 严重程度过滤 */
+                severity?: string | null;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description 质量问题列表 */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ApiResponse"];
+                };
+            };
+            /** @description 服务器内部错误 */
+            500: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    create_issue: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["CreateIssueRequest"];
+            };
+        };
+        responses: {
+            /** @description 质量问题创建成功 */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ApiResponse"];
+                };
+            };
+            /** @description 服务器内部错误 */
+            500: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    list_standards: {
+        parameters: {
+            query?: {
+                /** @description 页码 */
+                page?: number | null;
+                /** @description 每页数量 */
+                page_size?: number | null;
+                /** @description 分类过滤 */
+                category?: string | null;
+                /** @description 状态过滤 */
+                status?: string | null;
+                /** @description 搜索关键词 */
+                search?: string | null;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description 质量标准列表 */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ApiResponse"];
+                };
+            };
+            /** @description 服务器内部错误 */
+            500: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    create_standard: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["CreateStandardRequest"];
+            };
+        };
+        responses: {
+            /** @description 质量标准创建成功 */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ApiResponse"];
+                };
+            };
+            /** @description 服务器内部错误 */
+            500: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    get_standard: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description 标准ID */
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description 质量标准详情 */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ApiResponse"];
+                };
+            };
+            /** @description 无效的标准ID */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description 服务器内部错误 */
+            500: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+}
