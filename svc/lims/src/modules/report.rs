@@ -1,4 +1,4 @@
-use axum::{extract::State, Extension, Json};
+use axum::{extract::State, Json};
 use serde::{Deserialize, Serialize};
 use sqlx::{types::Uuid, Row};
 use topems_shared::ApiResponse;

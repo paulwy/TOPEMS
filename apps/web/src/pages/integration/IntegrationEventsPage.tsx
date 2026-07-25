@@ -1,48 +1,24 @@
 /**
  * 事件日志页面 - V4.0 标准化改造
  *
+ * 使用 CrudPage 组件实现 schema 驱动的事件日志管理，
+ * 支持列表展示、详情查看、失败任务重试。
+ *
  * @module pages/integration
  * @path /integration/events
  */
 
-import React, { useState, useMemo, useCallback } from 'react';
-import {
-  Activity,
-  RefreshCw,
-  AlertCircle,
-  CheckCircle2,
-  AlertTriangle,
-  RotateCcw,
-  Eye,
-} from 'lucide-react';
-import { Box, Typography, Chip, Button } from '@mui/material';
-import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import React, { useMemo, useCallback } from 'react';
+import { useQueryClient } from '@tanstack/react-query';
+import { Activity, AlertCircle, CheckCircle2, AlertTriangle, RotateCcw } from 'lucide-react';
+import { Box, Typography, Paper, Stack } from '@mui/material';
 
-import { useNotificationStore } from '@/store';
-import { ListPageTemplate, type ColumnDef } from '@/components/templates';
-import { extractErrorMessage } from '@/utils/errors';
+import CrudPage, { type CrudApiAdapter } from '@/components/templates/CrudPage';
+import type { RowAction } from '@/components/templates/list/types';
 import { PageContainer } from '@/components/common';
+import { useNotificationStore } from '@/store';
 import { INTEGRATION_PATHS } from '@/modules/integration/config';
-import { ConfirmDialog } from '@topems/shared-components';
-import { useConfirmDialog } from '@/hooks';
-
-const EVENT_TYPE_CONFIG: Record<
-  string,
-  { label: string; color: 'success' | 'warning' | 'error' | 'info' }
-> = {
-  sync: { label: '同步', color: 'success' },
-  error: { label: '错误', color: 'error' },
-  warning: { label: '警告', color: 'warning' },
-};
-
-const STATUS_CONFIG: Record<
-  string,
-  { label: string; color: 'success' | 'warning' | 'error' | 'default' }
-> = {
-  success: { label: '成功', color: 'success' },
-  failed: { label: '失败', color: 'error' },
-  pending: { label: '进行中', color: 'warning' },
-};
+import { integrationEventSchema } from '@/schemas/integration';
 
 interface IntegrationEvent {
   id: string;
@@ -54,246 +30,144 @@ interface IntegrationEvent {
   status: string;
 }
 
-export const IntegrationEventsPage: React.FC = () => {
-  const addNotification = useNotificationStore((state) => state.addNotification);
-  const queryClient = useQueryClient();
+const CRUD_QUERY_KEY = ['crud', 'integration_event'];
 
-  const { data: events = [], isLoading: loading } = useQuery<IntegrationEvent[]>({
-    queryKey: ['integration-events'],
-    queryFn: async () => {
-      return [];
+const renderStatsCards = (rows: Record<string, unknown>[]) => {
+  const events = rows as unknown as IntegrationEvent[];
+  const stats = [
+    {
+      id: 'total',
+      title: '今日事件',
+      value: events.length,
+      icon: <Activity size={20} />,
+      color: 'primary' as const,
     },
-    staleTime: 5 * 60 * 1000,
-  });
-
-  const retryMutation = useMutation({
-    mutationFn: async (_eventId: string) => {
-      return;
+    {
+      id: 'success',
+      title: '同步成功',
+      value: events.filter((e) => e.status === 'success').length,
+      icon: <CheckCircle2 size={20} />,
+      color: 'success' as const,
     },
-    onSuccess: () => {
-      addNotification({ title: '成功', message: '重试任务已提交', type: 'success' });
+    {
+      id: 'failed',
+      title: '同步失败',
+      value: events.filter((e) => e.status === 'failed').length,
+      icon: <AlertCircle size={20} />,
+      color: 'error' as const,
     },
-    onError: () => {
-      addNotification({ title: '失败', message: '重试任务提交失败', type: 'error' });
+    {
+      id: 'warning',
+      title: '同步警告',
+      value: events.filter((e) => e.event_type === 'warning').length,
+      icon: <AlertTriangle size={20} />,
+      color: 'warning' as const,
     },
-  });
+  ];
 
-  const [searchQuery, setSearchQuery] = useState('');
-  const [typeFilter, setTypeFilter] = useState<string>('all');
-  const [statusFilter, setStatusFilter] = useState<string>('all');
-  const [page, setPage] = useState(1);
-  const pageSize = 10;
-  const {
-    confirmOpen: confirmDialogOpen,
-    confirmConfig: confirmDialogConfig,
-    openConfirm: openConfirmDialog,
-    closeConfirm: setConfirmDialogClosed,
-  } = useConfirmDialog();
-
-  const handleRefresh = useCallback(() => {
-    queryClient.invalidateQueries({ queryKey: ['integration-events'] });
-  }, [queryClient]);
-
-  const handleRetry = useCallback(
-    (eventId: string) => {
-      openConfirmDialog({
-        title: '确认重试',
-        message: '确定要重试此同步任务吗？',
-        onConfirm: () => {
-          retryMutation.mutate(eventId);
-        },
-      });
-    },
-    [retryMutation, openConfirmDialog]
-  );
-
-  const filteredEvents = useMemo(() => {
-    return events.filter((event) => {
-      const matchesSearch =
-        !searchQuery ||
-        event.description.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        event.connection_name.toLowerCase().includes(searchQuery.toLowerCase());
-      const matchesType = typeFilter === 'all' || event.event_type === typeFilter;
-      const matchesStatus = statusFilter === 'all' || event.status === statusFilter;
-      return matchesSearch && matchesType && matchesStatus;
-    });
-  }, [events, searchQuery, typeFilter, statusFilter]);
-
-  const stats = useMemo(
-    () => [
-      {
-        id: 'total',
-        title: '今日事件',
-        value: events.length,
-        icon: <Activity size={20} />,
-        color: 'primary' as const,
-      },
-      {
-        id: 'success',
-        title: '同步成功',
-        value: events.filter((e) => e.status === 'success').length,
-        icon: <CheckCircle2 size={20} />,
-        color: 'success' as const,
-      },
-      {
-        id: 'failed',
-        title: '同步失败',
-        value: events.filter((e) => e.status === 'failed').length,
-        icon: <AlertCircle size={20} />,
-        color: 'error' as const,
-      },
-      {
-        id: 'warning',
-        title: '同步警告',
-        value: events.filter((e) => e.event_type === 'warning').length,
-        icon: <AlertTriangle size={20} />,
-        color: 'warning' as const,
-      },
-    ],
-    [events]
-  );
-
-  const columns: ColumnDef<IntegrationEvent>[] = useMemo(
-    () => [
-      {
-        id: 'time',
-        label: '时间',
-        render: (row) => (
-          <Typography
-            variant='body2'
-            sx={{ fontFamily: 'monospace' }}
-          >
-            {row.time}
-          </Typography>
-        ),
-      },
-      {
-        id: 'event_type',
-        label: '事件类型',
-        render: (row) => {
-          const config = EVENT_TYPE_CONFIG[row.event_type] || {
-            label: row.event_type,
-            color: 'info' as const,
-          };
-          return (
-            <Chip
-              size='small'
-              color={config.color}
-              label={config.label}
-            />
-          );
-        },
-      },
-      {
-        id: 'connection_name',
-        label: '连接名称',
-        render: (row) => <Typography variant='body2'>{row.connection_name}</Typography>,
-      },
-      {
-        id: 'description',
-        label: '描述',
-        render: (row) => (
-          <Typography
-            variant='body2'
-            color='text.secondary'
+  return (
+    <Stack
+      direction='row'
+      spacing={2}
+      sx={{ mb: 2, flexWrap: 'wrap' }}
+    >
+      {stats.map((s) => (
+        <Paper
+          key={s.id}
+          sx={{
+            p: 2,
+            flex: '1 1 200px',
+            minWidth: 180,
+            display: 'flex',
+            alignItems: 'center',
+            gap: 2,
+            borderRadius: 2,
+          }}
+        >
+          <Box
             sx={{
-              maxWidth: 300,
-              overflow: 'hidden',
-              textOverflow: 'ellipsis',
-              whiteSpace: 'nowrap',
+              width: 44,
+              height: 44,
+              borderRadius: 2,
+              bgcolor: `${s.color}.light`,
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              color: `${s.color}.main`,
             }}
           >
-            {row.description}
-          </Typography>
-        ),
-      },
-      {
-        id: 'records_count',
-        label: '记录数',
-        render: (row) => (
-          <Typography
-            variant='body2'
-            sx={{ fontFamily: 'monospace' }}
-          >
-            {row.records_count > 0 ? row.records_count : '-'}
-          </Typography>
-        ),
-      },
-      {
-        id: 'status',
-        label: '状态',
-        render: (row) => {
-          const config = STATUS_CONFIG[row.status] || {
-            label: row.status,
-            color: 'default' as const,
-          };
-          return (
-            <Chip
-              size='small'
-              color={config.color}
-              label={config.label}
-            />
-          );
-        },
-      },
-      {
-        id: 'actions',
-        label: '操作',
-        align: 'right',
-        render: (row) => (
-          <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5, justifyContent: 'flex-end' }}>
-            <Button
-              size='small'
-              variant='text'
-              startIcon={<Eye size={14} />}
-            >
-              详情
-            </Button>
-            {row.status === 'failed' && (
-              <Button
-                size='small'
-                variant='text'
-                startIcon={<RotateCcw size={14} />}
-                onClick={() => handleRetry(row.id)}
-              >
-                重试
-              </Button>
-            )}
+            {s.icon}
           </Box>
-        ),
+          <Box>
+            <Typography
+              variant='caption'
+              color='text.secondary'
+            >
+              {s.title}
+            </Typography>
+            <Typography
+              variant='h5'
+              sx={{ fontWeight: 700 }}
+            >
+              {s.value}
+            </Typography>
+          </Box>
+        </Paper>
+      ))}
+    </Stack>
+  );
+};
+
+export const IntegrationEventsPage: React.FC = () => {
+  const queryClient = useQueryClient();
+  const addNotification = useNotificationStore((state) => state.addNotification);
+
+  const handleRetry = useCallback(
+    async (event: IntegrationEvent) => {
+      try {
+        // 重试任务占位调用（原页面同样为空实现）
+        addNotification({
+          title: '成功',
+          message: '重试任务已提交',
+          type: 'success',
+        });
+        void queryClient.invalidateQueries({ queryKey: CRUD_QUERY_KEY });
+      } catch (err) {
+        addNotification({
+          title: '失败',
+          message: err instanceof Error ? err.message : '重试任务提交失败',
+          type: 'error',
+        });
+      }
+    },
+    [addNotification, queryClient]
+  );
+
+  const apiAdapter = useMemo<CrudApiAdapter<IntegrationEvent>>(
+    () => ({
+      list: async () => {
+        // 占位实现：原页面 queryFn 返回空数组
+        return { data: [], total: 0 };
+      },
+      create: async () => ({}) as IntegrationEvent,
+      update: async (_id, data) => data as IntegrationEvent,
+      delete: async () => {},
+    }),
+    []
+  );
+
+  const customRowActions = useMemo<RowAction[]>(
+    () => [
+      {
+        label: '重试',
+        icon: <RotateCcw size={16} />,
+        show: (row) => row.status === 'failed',
+        onClick: (row) => {
+          void handleRetry(row as unknown as IntegrationEvent);
+        },
       },
     ],
     [handleRetry]
-  );
-
-  const filters = useMemo(
-    () => [
-      {
-        id: 'type',
-        label: '事件类型',
-        type: 'select' as const,
-        options: [
-          { label: '全部类型', value: 'all' },
-          ...Object.entries(EVENT_TYPE_CONFIG).map(([value, config]) => ({
-            label: config.label,
-            value,
-          })),
-        ],
-      },
-      {
-        id: 'status',
-        label: '状态',
-        type: 'select' as const,
-        options: [
-          { label: '全部状态', value: 'all' },
-          ...Object.entries(STATUS_CONFIG).map(([value, config]) => ({
-            label: config.label,
-            value,
-          })),
-        ],
-      },
-    ],
-    []
   );
 
   return (
@@ -303,45 +177,12 @@ export const IntegrationEventsPage: React.FC = () => {
         backButton: { href: INTEGRATION_PATHS.dashboard },
       }}
     >
-      <ListPageTemplate
-        title=''
-        subtitle=''
-        columns={columns}
-        data={filteredEvents}
-        loading={loading}
-        searchable
-        searchPlaceholder='搜索描述、连接名称...'
-        searchValue={searchQuery}
-        onSearch={setSearchQuery}
-        filters={filters}
-        filtersValue={{ type: typeFilter, status: statusFilter }}
-        onFilterChange={(f) => {
-          if (typeof f.type === 'string') setTypeFilter(f.type);
-          if (typeof f.status === 'string') setStatusFilter(f.status);
-          setPage(1);
-        }}
-        pagination={{ page, pageSize, total: filteredEvents.length, onPageChange: setPage }}
-        actions={[
-          {
-            label: '刷新',
-            icon: <RefreshCw size={16} />,
-            onClick: handleRefresh,
-            variant: 'outlined',
-          },
-        ]}
-        onRefresh={handleRefresh}
-        emptyMessage='暂无事件记录'
-      />
-      <ConfirmDialog
-        isOpen={confirmDialogOpen}
-        onClose={setConfirmDialogClosed}
-        onConfirm={() => {
-          confirmDialogConfig?.onConfirm();
-          setConfirmDialogClosed();
-        }}
-        title={confirmDialogConfig?.title || ''}
-        message={confirmDialogConfig?.message || ''}
-        danger={confirmDialogConfig?.danger}
+      <CrudPage
+        schema={integrationEventSchema}
+        apiAdapter={apiAdapter}
+        customRowActions={customRowActions}
+        headerContent={renderStatsCards}
+        breadcrumbs={[{ label: '集成' }, { label: '事件日志' }]}
       />
     </PageContainer>
   );

@@ -156,10 +156,10 @@ def db_migrate(service: str):
     else:
         # 迁移所有服务
         services = [
-            "iam", "pm", "notification", "portal", "flow", "integration",
-            "erp", "hrm", "crm", "rs", "lims", "pdm", "doc",
+            "unified-core", "pm", "portal", "integration",
+            "erp", "finance", "hrm", "crm", "rd", "lims", "pdm",
             "mes", "qms", "ehs", "scm", "srm", "wms",
-            "file", "mail", "im", "gis", "bi", "report", "ai", "mobile"
+            "gis", "analytics", "ai", "mobile", "master-data"
         ]
         
         for svc in services:

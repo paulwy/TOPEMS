@@ -1,0 +1,259 @@
+import type { EntitySchema } from '@/schema';
+
+export const supplierSchema: EntitySchema = {
+  entity: 'supplier',
+  title: '供应商',
+  description: '管理供应商基础信息，包括编号、名称、分类、联系方式、风险等级等',
+
+  api: {
+    module: 'srm',
+    resource: 'suppliers',
+    listMethod: 'listSuppliers',
+    getMethod: 'getSupplier',
+    createMethod: 'createSupplier',
+    updateMethod: 'updateSupplier',
+    deleteMethod: 'deleteSupplier',
+  },
+
+  fields: [
+    {
+      name: 'supplier_no',
+      label: '供应商编号',
+      type: 'text',
+      required: true,
+      readonlyOnEdit: true,
+      sortable: true,
+      listWidth: 140,
+    },
+    {
+      name: 'name',
+      label: '供应商名称',
+      type: 'text',
+      required: true,
+      sortable: true,
+      listWidth: 160,
+    },
+    {
+      name: 'legal_name',
+      label: '法定名称',
+      type: 'text',
+      listWidth: 160,
+      showInList: false,
+    },
+    {
+      name: 'category',
+      label: '分类',
+      type: 'select',
+      required: true,
+      options: {
+        type: 'static',
+        options: [
+          { value: 'raw_material', label: '原材料' },
+          { value: 'packaging', label: '包装辅料' },
+          { value: 'machinery', label: '机械设备' },
+          { value: 'electronics', label: '电子元器件' },
+          { value: 'chemicals', label: '化学用品' },
+          { value: 'services', label: '服务类' },
+          { value: 'other', label: '其他' },
+        ],
+      },
+      listWidth: 120,
+    },
+    {
+      name: 'status',
+      label: '状态',
+      type: 'select',
+      required: true,
+      defaultValue: 'active',
+      options: {
+        type: 'static',
+        options: [
+          { value: 'active', label: '启用' },
+          { value: 'inactive', label: '禁用' },
+        ],
+      },
+      listWidth: 100,
+    },
+    {
+      name: 'tax_id',
+      label: '税号',
+      type: 'text',
+      listWidth: 140,
+      showInList: false,
+    },
+    {
+      name: 'address',
+      label: '地址',
+      type: 'textarea',
+      listWidth: 200,
+      showInList: false,
+    },
+    {
+      name: 'contact_person',
+      label: '联系人',
+      type: 'text',
+      listWidth: 100,
+    },
+    {
+      name: 'phone',
+      label: '电话',
+      type: 'text',
+      listWidth: 120,
+    },
+    {
+      name: 'email',
+      label: '邮箱',
+      type: 'text',
+      listWidth: 160,
+      showInList: false,
+    },
+    {
+      name: 'website',
+      label: '网站',
+      type: 'text',
+      listWidth: 160,
+      showInList: false,
+    },
+    {
+      name: 'credit_rating',
+      label: '信用评级',
+      type: 'select',
+      options: {
+        type: 'static',
+        options: [
+          { value: 'AAA', label: 'AAA' },
+          { value: 'AA', label: 'AA' },
+          { value: 'A', label: 'A' },
+          { value: 'B', label: 'B' },
+          { value: 'C', label: 'C' },
+        ],
+      },
+      listWidth: 100,
+      showInList: false,
+    },
+    {
+      name: 'risklevel',
+      label: '风险等级',
+      type: 'select',
+      required: true,
+      defaultValue: 'medium',
+      options: {
+        type: 'static',
+        options: [
+          { value: 'low', label: '低风险' },
+          { value: 'medium', label: '中风险' },
+          { value: 'high', label: '高风险' },
+        ],
+      },
+      listWidth: 100,
+    },
+    {
+      name: 'created_at',
+      label: '创建时间',
+      type: 'datetime',
+      readonly: true,
+      hideInForm: true,
+      sortable: true,
+      listWidth: 160,
+    },
+    {
+      name: 'updated_at',
+      label: '更新时间',
+      type: 'datetime',
+      readonly: true,
+      hideInForm: true,
+      sortable: true,
+      listWidth: 160,
+    },
+  ],
+
+  list: {
+    columns: [
+      'supplier_no',
+      'name',
+      'category',
+      'contact_person',
+      'phone',
+      'risklevel',
+      'status',
+      'created_at',
+    ],
+    searchFields: ['supplier_no', 'name', 'contact_person'],
+    pageSize: 10,
+    statusBadge: {
+      field: 'status',
+      colorMap: {
+        active: 'success',
+        inactive: 'error',
+      },
+      labelMap: {
+        active: '启用',
+        inactive: '禁用',
+      },
+    },
+    filters: [
+      {
+        id: 'status',
+        label: '状态',
+        type: 'select',
+        options: [
+          { label: '全部状态', value: 'all' },
+          { label: '启用', value: 'active' },
+          { label: '禁用', value: 'inactive' },
+        ],
+      },
+      {
+        id: 'category',
+        label: '分类',
+        type: 'select',
+        options: [
+          { label: '全部分类', value: 'all' },
+          { label: '原材料', value: 'raw_material' },
+          { label: '包装辅料', value: 'packaging' },
+          { label: '机械设备', value: 'machinery' },
+          { label: '电子元器件', value: 'electronics' },
+          { label: '化学用品', value: 'chemicals' },
+          { label: '服务类', value: 'services' },
+          { label: '其他', value: 'other' },
+        ],
+      },
+      {
+        id: 'risklevel',
+        label: '风险等级',
+        type: 'select',
+        options: [
+          { label: '全部风险', value: 'all' },
+          { label: '低风险', value: 'low' },
+          { label: '中风险', value: 'medium' },
+          { label: '高风险', value: 'high' },
+        ],
+      },
+    ],
+  },
+
+  actions: ['create', 'edit', 'detail', 'delete'],
+
+  formSections: [
+    {
+      title: '基本信息',
+      fields: ['supplier_no', 'name', 'legal_name', 'category', 'status'],
+    },
+    {
+      title: '联系信息',
+      fields: ['contact_person', 'phone', 'email', 'address', 'website'],
+    },
+    {
+      title: '财务与税务',
+      fields: ['tax_id', 'credit_rating'],
+    },
+    {
+      title: '风险与系统信息',
+      fields: ['risklevel', 'created_at', 'updated_at'],
+    },
+  ],
+
+  formColCount: 2,
+  createTitle: '新增供应商',
+  editTitle: '编辑供应商',
+  detailTitle: '供应商详情',
+};

@@ -1,45 +1,36 @@
 import { QueryClient, QueryCache, MutationCache, type DefaultOptions } from '@tanstack/react-query';
 import { logger } from '@/utils/logger';
+import { useNotificationStore } from '../store';
 
-let queryCache: QueryCache;
-let mutationCache: MutationCache;
+const queryCache = new QueryCache({
+  onError: (error) => {
+    try {
+      const addNotification = useNotificationStore.getState().addNotification;
+      addNotification({
+        title: '数据加载失败',
+        message: error.message,
+        type: 'error',
+      });
+    } catch {
+      logger.error('Query error:', error);
+    }
+  },
+});
 
-try {
-  const { useNotificationStore } = require('../store');
-
-  queryCache = new QueryCache({
-    onError: (error) => {
-      try {
-        const addNotification = useNotificationStore.getState().addNotification;
-        addNotification({
-          title: '数据加载失败',
-          message: error.message,
-          type: 'error',
-        });
-      } catch {
-        logger.error('Query error:', error);
-      }
-    },
-  });
-
-  mutationCache = new MutationCache({
-    onError: (error) => {
-      try {
-        const addNotification = useNotificationStore.getState().addNotification;
-        addNotification({
-          title: '操作失败',
-          message: error.message,
-          type: 'error',
-        });
-      } catch {
-        logger.error('Mutation error:', error);
-      }
-    },
-  });
-} catch {
-  queryCache = new QueryCache();
-  mutationCache = new MutationCache();
-}
+const mutationCache = new MutationCache({
+  onError: (error) => {
+    try {
+      const addNotification = useNotificationStore.getState().addNotification;
+      addNotification({
+        title: '操作失败',
+        message: error.message,
+        type: 'error',
+      });
+    } catch {
+      logger.error('Mutation error:', error);
+    }
+  },
+});
 
 const defaultQueryOptions: DefaultOptions['queries'] = {
   retry: 2,
@@ -56,7 +47,7 @@ const defaultMutationOptions: DefaultOptions['mutations'] = {
   retry: 1,
   onSuccess: () => {
     try {
-      const addNotification = require('../store').useNotificationStore.getState().addNotification;
+      const addNotification = useNotificationStore.getState().addNotification;
       addNotification({
         title: '操作成功',
         message: '数据已更新',
@@ -176,10 +167,16 @@ export const QUERY_KEYS = {
     MEETING_ROOMS: ['erp', 'meeting-rooms'],
     MEETING_BOOKINGS: ['erp', 'meeting-bookings'],
     ANNOUNCEMENTS: ['erp', 'announcements'],
+    OFFICE_SUPPLIES: ['erp', 'office-supplies'],
     VEHICLE_REQUESTS: ['erp', 'vehicle-requests'],
     FINANCIAL_REPORTS: {
       BALANCE_SHEET: (period: string) => ['erp', 'financial-reports', 'balance-sheet', period],
-      INCOME_STATEMENT: (period: string) => ['erp', 'financial-reports', 'income-statement', period],
+      INCOME_STATEMENT: (period: string) => [
+        'erp',
+        'financial-reports',
+        'income-statement',
+        period,
+      ],
       CASH_FLOW: (period: string) => ['erp', 'financial-reports', 'cash-flow', period],
       BUSINESS_OVERVIEW: ['erp', 'financial-reports', 'business-overview'],
       PROJECT_SUMMARY: ['erp', 'financial-reports', 'project-summary'],

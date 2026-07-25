@@ -9,63 +9,63 @@ export const moduleMapping: Record<string, ModuleBackendMapping> = {
   iam: {
     service: 'unified-core',
     module: 'iam',
-    apiBasePath: '/api/v1/core/iam',
+    apiBasePath: '/api/core/iam',
   },
 
   admin: {
     service: 'unified-core',
     module: 'tenant',
-    apiBasePath: '/api/v1/core/tenant',
+    apiBasePath: '/api/core/tenant',
     subModules: {
       tenant: {
         service: 'unified-core',
         module: 'tenant',
-        apiBasePath: '/api/v1/core/tenant',
+        apiBasePath: '/api/core/tenant',
       },
       user: {
         service: 'unified-core',
         module: 'iam',
-        apiBasePath: '/api/v1/core/iam',
+        apiBasePath: '/api/core/iam',
       },
       role: {
         service: 'unified-core',
         module: 'iam',
-        apiBasePath: '/api/v1/core/iam',
+        apiBasePath: '/api/core/iam',
       },
       permission: {
         service: 'unified-core',
         module: 'iam',
-        apiBasePath: '/api/v1/core/iam',
+        apiBasePath: '/api/core/iam',
       },
       billing: {
         service: 'unified-core',
         module: 'billing',
-        apiBasePath: '/api/v1/core/billing',
+        apiBasePath: '/api/core/billing',
       },
       plugin: {
         service: 'unified-core',
         module: 'plugin',
-        apiBasePath: '/api/v1/core/plugin',
+        apiBasePath: '/api/core/plugin',
       },
       audit: {
         service: 'unified-core',
         module: 'iam',
-        apiBasePath: '/api/v1/core/iam',
+        apiBasePath: '/api/core/iam',
       },
       monitor: {
-        service: 'monitor',
+        service: 'unified-core',
         module: 'monitor',
-        apiBasePath: '/api/v1/monitor',
+        apiBasePath: '/api/core/monitor',
       },
       dictionary: {
         service: 'unified-core',
         module: 'iam',
-        apiBasePath: '/api/v1/core/iam',
+        apiBasePath: '/api/core/iam',
       },
       system: {
         service: 'unified-core',
         module: 'iam',
-        apiBasePath: '/api/v1/core/iam',
+        apiBasePath: '/api/core/iam',
       },
     },
   },
@@ -73,188 +73,188 @@ export const moduleMapping: Record<string, ModuleBackendMapping> = {
   workflow: {
     service: 'unified-core',
     module: 'flow',
-    apiBasePath: '/api/v1/core/flow',
+    apiBasePath: '/api/core/flow',
   },
 
   notification: {
     service: 'unified-core',
     module: 'communication',
-    apiBasePath: '/api/v1/core/comm',
+    apiBasePath: '/api/core/comm',
     subModules: {
       notification: {
         service: 'unified-core',
         module: 'communication',
-        apiBasePath: '/api/v1/core/comm',
+        apiBasePath: '/api/core/comm',
       },
     },
   },
 
   document: {
-    service: 'doc',
+    service: 'unified-core',
     module: 'doc',
-    apiBasePath: '/api/v1/doc',
+    apiBasePath: '/api/core/doc',
   },
 
   monitor: {
-    service: 'monitor',
+    service: 'unified-core',
     module: 'monitor',
-    apiBasePath: '/api/v1/monitor',
+    apiBasePath: '/api/core/monitor',
   },
 
   integration: {
     service: 'integration',
     module: 'integration',
-    apiBasePath: '/api/v1/integration',
+    apiBasePath: '/api/integration',
   },
 
   ai: {
     service: 'ai',
     module: 'ai',
-    apiBasePath: '/api/v1/ai',
+    apiBasePath: '/api/ai',
   },
 
   mobile: {
     service: 'mobile',
     module: 'mobile',
-    apiBasePath: '/api/v1/mobile',
+    apiBasePath: '/api/mobile',
   },
 
   hrm: {
     service: 'hrm',
     module: 'hrm',
-    apiBasePath: '/api/v1/hrm',
+    apiBasePath: '/api/hrm',
   },
 
   finance: {
     service: 'finance',
     module: 'finance',
-    apiBasePath: '/api/v1/finance',
+    apiBasePath: '/api/finance',
   },
 
   crm: {
     service: 'crm',
     module: 'crm',
-    apiBasePath: '/api/v1/crm',
+    apiBasePath: '/api/crm',
   },
 
   mes: {
     service: 'mes',
     module: 'mes',
-    apiBasePath: '/api/v1/mes',
+    apiBasePath: '/api/mes',
   },
 
   qms: {
     service: 'qms',
     module: 'qms',
-    apiBasePath: '/api/v1/qms',
+    apiBasePath: '/api/qms',
   },
 
   scm: {
     service: 'scm',
     module: 'scm',
-    apiBasePath: '/api/v1/scm',
+    apiBasePath: '/api/scm',
   },
 
   erp: {
     service: 'erp',
     module: 'erp',
-    apiBasePath: '/api/v1/erp',
+    apiBasePath: '/api/erp',
   },
 
   wms: {
     service: 'wms',
     module: 'wms',
-    apiBasePath: '/api/v1/wms',
+    apiBasePath: '/api/wms',
   },
 
   pm: {
     service: 'pm',
     module: 'pm',
-    apiBasePath: '/api/v1/pm',
+    apiBasePath: '/api/pm',
   },
 
   pdm: {
     service: 'pdm',
     module: 'pdm',
-    apiBasePath: '/api/v1/pdm',
+    apiBasePath: '/api/pdm',
   },
 
   srm: {
     service: 'srm',
     module: 'srm',
-    apiBasePath: '/api/v1/srm',
+    apiBasePath: '/api/srm',
   },
 
   oa: {
     service: 'erp',
     module: 'oa',
-    apiBasePath: '/api/v1/erp',
+    apiBasePath: '/api/erp',
   },
 
   lowcode: {
     service: 'unified-core',
     module: 'plugin',
-    apiBasePath: '/api/v1/core/plugin',
+    apiBasePath: '/api/core/plugin',
   },
 
   rs: {
-    service: 'rs',
+    service: 'rd',
     module: 'rs',
-    apiBasePath: '/api/v1/rs',
+    apiBasePath: '/api/rd',
   },
 
   asset: {
     service: 'erp',
     module: 'asset',
-    apiBasePath: '/api/v1/erp',
+    apiBasePath: '/api/erp',
   },
 
   docs: {
-    service: 'doc',
+    service: 'unified-core',
     module: 'doc',
-    apiBasePath: '/api/v1/doc',
+    apiBasePath: '/api/core/doc',
   },
 
   plugin: {
     service: 'unified-core',
     module: 'plugin',
-    apiBasePath: '/api/v1/core/plugin',
+    apiBasePath: '/api/core/plugin',
   },
 
   im: {
     service: 'unified-core',
     module: 'communication',
-    apiBasePath: '/api/v1/core/comm/im',
+    apiBasePath: '/api/core/comm/im',
   },
 
   bi: {
     service: 'analytics',
     module: 'bi',
-    apiBasePath: '/api/v1/bi',
+    apiBasePath: '/api/bi',
   },
 
   gis: {
     service: 'gis',
     module: 'gis',
-    apiBasePath: '/api/v1/gis',
+    apiBasePath: '/api/gis',
   },
 
   report: {
-    service: 'report',
+    service: 'analytics',
     module: 'report',
-    apiBasePath: '/api/v1/bi',
+    apiBasePath: '/api/bi',
   },
 
   lims: {
     service: 'lims',
     module: 'lims',
-    apiBasePath: '/api/v1/lims',
+    apiBasePath: '/api/lims',
   },
 
   ehs: {
     service: 'ehs',
     module: 'ehs',
-    apiBasePath: '/api/v1/ehs',
+    apiBasePath: '/api/ehs',
   },
 };
 

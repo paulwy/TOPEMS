@@ -11,6 +11,7 @@ use uuid::Uuid;
 type HandlerResult = std::result::Result<(), String>;
 
 #[derive(Clone)]
+#[allow(dead_code)]
 pub struct PmEventHandlers {
     pub db: PgPool,
     pub event_publisher: Option<Arc<EventPublisher>>,
@@ -81,6 +82,7 @@ impl PmEventHandlers {
                     .map_err(|e| format!("解析员工更新事件 payload 失败: {}", e))?;
                 employee_id = payload.employee_id;
                 employee_name = None;
+                let _ = employee_name;
                 tracing::info!(
                     "[pm] 员工更新: {}，更新字段: {:?}，刷新相关项目成员缓存",
                     employee_id,

@@ -3,6 +3,7 @@ import { Box, Tooltip, IconButton, Paper, Popover, useTheme } from '@mui/materia
 import { Search } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { useGlobalSearch } from '@/hooks/useGlobalSearch';
+import { SEARCH_SHORTCUTS, getShortcutKeyLabel } from '@/hooks/shortcuts';
 import { SearchInput } from './SearchInput';
 import { SearchResultList } from './SearchResultList';
 
@@ -33,7 +34,7 @@ export const GlobalSearchBar: React.FC<GlobalSearchBarProps> = ({ variant = 'ful
     clearHistory,
     filter,
     setFilter,
-    availableModules,
+    availableServices,
     availableTypes,
   } = useGlobalSearch(navigate);
 
@@ -54,10 +55,12 @@ export const GlobalSearchBar: React.FC<GlobalSearchBarProps> = ({ variant = 'ful
     onHistoryClear: clearHistory,
   };
 
+  const openShortcutLabel = getShortcutKeyLabel(SEARCH_SHORTCUTS.OPEN);
+
   if (variant === 'icon') {
     return (
       <>
-        <Tooltip title='搜索 (Ctrl+K)'>
+        <Tooltip title={`搜索 (${openShortcutLabel})`}>
           <IconButton
             onClick={() => {
               setOpen(true);
@@ -88,7 +91,7 @@ export const GlobalSearchBar: React.FC<GlobalSearchBarProps> = ({ variant = 'ful
                 autoFocus
                 filter={filter}
                 onFilterChange={setFilter}
-                availableModules={availableModules}
+                availableServices={availableServices}
                 availableTypes={availableTypes}
               />
             </Box>
@@ -114,7 +117,7 @@ export const GlobalSearchBar: React.FC<GlobalSearchBarProps> = ({ variant = 'ful
         showShortcut
         filter={filter}
         onFilterChange={setFilter}
-        availableModules={availableModules}
+        availableServices={availableServices}
         availableTypes={availableTypes}
       />
 

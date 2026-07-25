@@ -6,16 +6,18 @@ pub mod shared;
 
 use axum::{routing::get, Router};
 use axum_prometheus::PrometheusMetricLayer;
-use modules::{auth, pm_plugin};
+use modules::pm_plugin;
 use prometheus::{default_registry, Gauge};
 use std::env;
 use std::sync::Arc;
 use topems_shared::{
     auth_middleware, build_health_response, create_api_info_router, create_cors_layer,
     create_database_pool, init_telemetry, rls_middleware, telemetry_middleware,
-    test_database_connection, wrap_group2_router, AuthState, DatabaseConfig, EventPublisher,
-    Result, RouteCompatConfig, ServiceHealth,
+    test_database_connection, api_version::RouteCompatConfig, api_version::wrap_group2_router,
+    AuthState, DatabaseConfig, EventPublisher, Result, ServiceHealth,
 };
+use topems_shared_service_client::service_client::api::workflow_api::WorkflowApi;
+use topems_shared_service_client::TypedServiceClient;
 use utoipa::OpenApi;
 
 #[tokio::main]
@@ -91,6 +93,13 @@ async fn main() -> Result<()> {
 
     let auth_state = AuthState::from_env();
 
+    let workflow_client = TypedServiceClient::<WorkflowApi>::from_env_default()
+        .expect("工作流服务客户端初始化失败");
+    tracing::info!(
+        "🔗 工作流服务客户端初始化成功: {}",
+        std::env::var("WORKFLOW_SERVICE_URL").unwrap_or_else(|_| "http://localhost:8000".into())
+    );
+
     let public_routes = Router::new()
         .route("/health", get(health_check))
         .route("/api-docs/openapi.json", get(serve_openapi_json))
@@ -99,10 +108,13 @@ async fn main() -> Result<()> {
             get(move || async move { metric_handle.render() }),
         )
         .route("/api/plugins/info", get(pm_plugin::get_plugin_info))
-        .route("/api/plugins/health", get(pm_plugin::plugin_health_check))
-        .merge(auth::create_routes());
+        .route("/api/plugins/health", get(pm_plugin::plugin_health_check));
 
-    let protected_routes = modules::create_routes(pool.clone(), event_publisher.clone())
+    let protected_routes = modules::create_routes(
+        pool.clone(),
+        event_publisher.clone(),
+        workflow_client.clone(),
+    )
         .layer(axum::middleware::from_fn_with_state(
             auth_state.clone(),
             auth_middleware,

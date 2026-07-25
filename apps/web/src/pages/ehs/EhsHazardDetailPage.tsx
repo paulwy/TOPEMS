@@ -38,7 +38,7 @@ import { EHSStatusBadge, EHSMeasureTypeBadge, calculateRiskLevel } from '@/compo
 import { useNotification } from '@/hooks/useNotification';
 import { DetailPageTemplate, type TabConfig, type SectionConfig } from '@/components/templates';
 import { ConfirmDialog } from '@topems/shared-components';
-import { PageContainer } from '@/components/common/PageContainerV2';
+import { PageContainer } from '@/components/common/PageContainer';
 import { designTokens } from '@/theme/tokens';
 import { EHS_PATHS } from '@/modules/ehs/config';
 

@@ -1,8 +1,11 @@
+#![allow(dead_code)]
+
 use axum::http::HeaderMap;
 use axum::{extract::State, Json};
 use serde::{Deserialize, Serialize};
 use sha2::{Digest, Sha256};
 use sqlx::Row;
+use utoipa::ToSchema;
 use uuid::Uuid;
 
 use crate::modules::communication::mail::send_email_async;
@@ -17,7 +20,8 @@ fn hash_token(token: &str) -> String {
     format!("{:x}", result)
 }
 
-#[derive(Debug, Clone, Deserialize)]
+#[derive(Debug, Clone, Deserialize, ToSchema)]
+#[schema(as = LoginRequest)]
 struct LoginRequest {
     username: String,
     password: String,
@@ -37,7 +41,8 @@ struct UserRow {
     created_at: Option<chrono::DateTime<chrono::Utc>>,
 }
 
-#[derive(Debug, Clone, Serialize)]
+#[derive(Debug, Clone, Serialize, ToSchema)]
+#[schema(as = LoginResponseData)]
 struct LoginResponseData {
     access_token: String,
     refresh_token: String,
@@ -59,6 +64,19 @@ struct UserInfo {
     permissions: Vec<String>,
 }
 
+#[utoipa::path(
+    post,
+    path = "/iam/auth/login",
+    tag = "IAM-Auth",
+    request_body = LoginRequest,
+    responses(
+        (status = 200, description = "登录成功"),
+        (status = 400, description = "参数错误"),
+        (status = 401, description = "用户名或密码错误"),
+        (status = 500, description = "登录失败"),
+    ),
+    security(),
+)]
 #[axum::debug_handler]
 pub async fn login(
     State(state): State<crate::AppState>,
@@ -213,6 +231,22 @@ pub async fn login(
         user.permissions.clone().unwrap_or_default()
     };
 
+    // 查询用户所属租户
+    let tenant_id = match sqlx::query_scalar::<_, uuid::Uuid>(
+        "SELECT tenant_id FROM core_tenant_users WHERE user_id = $1 AND status = 'active' LIMIT 1",
+    )
+    .bind(&user.id)
+    .fetch_optional(&state.pool)
+    .await
+    {
+        Ok(Some(tid)) => Some(tid.to_string()),
+        Ok(None) => None,
+        Err(e) => {
+            tracing::warn!("查询用户租户信息失败: {}", e);
+            None
+        }
+    };
+
     // 创建完整的 Claims，包含用户的真实 is_superuser 状态
     let now = chrono::Utc::now();
     let exp = (now + chrono::Duration::minutes(jwt_expire_minutes)).timestamp() as usize;
@@ -231,7 +265,7 @@ pub async fn login(
         iat: now.timestamp() as usize,
         email: Some(user.email.clone()),
         department: None,
-        tenant_id: None,
+        tenant_id,
         department_id: None,
         position_id: None,
         position_code: None,
@@ -336,7 +370,8 @@ pub async fn login(
     }))
 }
 
-#[derive(Debug, Clone, Deserialize)]
+#[derive(Debug, Clone, Deserialize, ToSchema)]
+#[schema(as = RegisterRequest)]
 struct RegisterRequest {
     username: String,
     email: String,
@@ -344,6 +379,19 @@ struct RegisterRequest {
     full_name: Option<String>,
 }
 
+#[utoipa::path(
+    post,
+    path = "/iam/auth/register",
+    tag = "IAM-Auth",
+    request_body = RegisterRequest,
+    responses(
+        (status = 200, description = "注册成功"),
+        (status = 400, description = "参数错误"),
+        (status = 409, description = "用户名或邮箱已存在"),
+        (status = 500, description = "注册失败"),
+    ),
+    security(),
+)]
 pub async fn register(
     State(state): State<crate::AppState>,
     Json(payload): Json<serde_json::Value>,
@@ -604,6 +652,22 @@ pub async fn refresh_token(
             .unwrap_or_default()
     };
 
+    // 查询用户所属租户
+    let tenant_id = match sqlx::query_scalar::<_, uuid::Uuid>(
+        "SELECT tenant_id FROM core_tenant_users WHERE user_id = $1 AND status = 'active' LIMIT 1",
+    )
+    .bind(&user_id)
+    .fetch_optional(&state.pool)
+    .await
+    {
+        Ok(Some(tid)) => Some(tid.to_string()),
+        Ok(None) => None,
+        Err(e) => {
+            tracing::warn!("查询用户租户信息失败: {}", e);
+            None
+        }
+    };
+
     let claims = Claims {
         sub: user_id.to_string(),
         username: username.clone(),
@@ -619,7 +683,7 @@ pub async fn refresh_token(
         iat: now.timestamp() as usize,
         email: Some(email),
         department: None,
-        tenant_id: None,
+        tenant_id,
         department_id: None,
         position_id: None,
         position_code: None,

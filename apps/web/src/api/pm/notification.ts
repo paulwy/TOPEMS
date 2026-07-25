@@ -6,10 +6,6 @@ export const notificationApi = {
     return apiClient.pm.get(`/projects/${projectId}/notifications`);
   },
 
-  get: async (id: string) => {
-    return apiClient.pm.get(`/notifications/${id}`);
-  },
-
   create: async (data: {
     project_id: string;
     user_id?: string;
@@ -20,21 +16,7 @@ export const notificationApi = {
     metadata?: Record<string, any>;
     due_date?: string;
   }) => {
-    return apiClient.pm.post('/notifications', data);
-  },
-
-  update: async (
-    id: string,
-    data: {
-      status?: string;
-      read_at?: string;
-    }
-  ) => {
-    return apiClient.pm.put(`/notifications/${id}`, data);
-  },
-
-  markAsRead: async (id: string) => {
-    return apiClient.pm.post(`/notifications/${id}/read`);
+    return apiClient.pm.post(`/projects/${data.project_id}/notifications`, data);
   },
 };
 

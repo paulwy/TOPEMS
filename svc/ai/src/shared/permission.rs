@@ -94,6 +94,7 @@ impl std::fmt::Display for AiPermission {
     }
 }
 
+#[allow(dead_code)]
 pub type ModulePermission = AiPermission;
 
 #[allow(dead_code)]

@@ -1,7 +1,7 @@
 use axum::extract::FromRef;
 use sqlx::PgPool;
 use std::sync::Arc;
-use topems_shared::{event::EventPublisher, ApiResponse, AuthState, SimpleHealthConfig};
+use topems_shared::{event::EventPublisher, AuthState, SimpleHealthConfig};
 pub mod cache;
 use crate::modules::test_method::TestMethod;
 pub use cache::InMemoryCache;

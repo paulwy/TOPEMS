@@ -182,6 +182,20 @@ export const financeModuleConfig: RouteModuleConfig = {
       action: 'read',
     },
     {
+      path: FINANCE_PATHS.expenseApproval,
+      element: lazyWithRetry(
+        () => import('@/pages/finance/FinanceExpenseApprovalPage'),
+        'FinanceExpenseApprovalPage'
+      ),
+      module: 'finance',
+      code: 'finance-expense-approval',
+      title: '费用审批',
+      template: 'wizard',
+      group: 'business',
+      requiredPermissions: ['finance:expense_approval:read', 'finance:read'],
+      action: 'read',
+    },
+    {
       path: FINANCE_PATHS.cost,
       element: lazyWithRetry(() => import('@/pages/finance/FinanceCostPage'), 'FinanceCostPage'),
       module: 'finance',
@@ -394,6 +408,16 @@ export const financeNavConfig: ModuleNavConfig = {
       order: 7,
       group: 'business',
       description: '费用报销管理',
+    },
+    {
+      code: 'finance-expense-approval',
+      label: '费用审批',
+      icon: 'ClipboardList',
+      path: FINANCE_PATHS.expenseApproval,
+      permission: 'finance:expense_approval:read',
+      order: 8,
+      group: 'business',
+      description: '费用报销审批流程',
     },
     {
       code: 'finance-budget',

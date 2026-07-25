@@ -1,6 +1,7 @@
 import apiClient from '../client';
 import type { ApiResponse } from '../client';
 
+import { hrmDashboardApi } from './dashboard';
 import { companyApi } from './company';
 import { departmentApi } from './department';
 import { employeeApi, roleApi, positionApi, employeePerformanceApi } from './employee';
@@ -15,6 +16,7 @@ import { trainingPlanApi, trainingCourseApi, trainingRecordApi } from './trainin
 export * from './types';
 
 export { companyApi } from './company';
+export { hrmDashboardApi } from './dashboard';
 export { departmentApi } from './department';
 export { employeeApi, roleApi, positionApi, employeePerformanceApi } from './employee';
 export { attendanceApi } from './attendance';
@@ -26,6 +28,7 @@ export { contractApi, contractRenewalApi } from './contract';
 export { trainingPlanApi, trainingCourseApi, trainingRecordApi } from './training';
 
 export const hrmApi = {
+  dashboard: hrmDashboardApi,
   companies: companyApi,
   departments: departmentApi,
   employees: employeeApi,

@@ -105,7 +105,7 @@ const ForgotPasswordPage: React.FC = () => {
   const resetPasswordMutation = useMutation({
     mutationFn: async (values: ResetPasswordValues) => {
       return await authApi.confirmPasswordReset({
-        token: values.token,
+        reset_token: values.token,
         new_password: values.password,
       });
     },

@@ -4,6 +4,14 @@ const API_BASE_URL = process.env.API_BASE_URL ?? 'http://localhost:8080';
 const DEFAULT_USERNAME = process.env.E2E_USERNAME ?? 'admin';
 const DEFAULT_PASSWORD = process.env.E2E_PASSWORD ?? 'admin123';
 
+interface ApiEnvelope<T> {
+  success: boolean;
+  code: number;
+  message: string;
+  data: T;
+  timestamp: number;
+}
+
 export interface LoginResponse {
   access_token: string;
   refresh_token?: string;
@@ -42,7 +50,11 @@ export async function loginAsApiUser(
       data: { username, password },
     });
     if (res.ok()) {
-      return (await res.json()) as LoginResponse;
+      const envelope = (await res.json()) as ApiEnvelope<LoginResponse>;
+      if (envelope.success && envelope.data?.access_token) {
+        return envelope.data;
+      }
+      return envelope as unknown as LoginResponse;
     }
     if (res.status() === 404) {
       lastError = `404 at ${path}`;
@@ -89,7 +101,11 @@ export async function apiGet<T>(
 ): Promise<T> {
   const res = await ctx.get(`${API_BASE_URL}${path}`, { params });
   expect(res.ok(), `GET ${path} -> ${res.status()}`).toBeTruthy();
-  return (await res.json()) as T;
+  const json = await res.json();
+  if (json?.success === true && 'data' in json) {
+    return json.data as T;
+  }
+  return json as T;
 }
 
 /**
@@ -102,7 +118,11 @@ export async function apiPost<T>(
 ): Promise<T> {
   const res = await ctx.post(`${API_BASE_URL}${path}`, { data: body });
   expect(res.ok(), `POST ${path} -> ${res.status()}`).toBeTruthy();
-  return (await res.json()) as T;
+  const json = await res.json();
+  if (json?.success === true && 'data' in json) {
+    return json.data as T;
+  }
+  return json as T;
 }
 
 /**
@@ -115,7 +135,11 @@ export async function apiPut<T>(
 ): Promise<T> {
   const res = await ctx.put(`${API_BASE_URL}${path}`, { data: body });
   expect(res.ok(), `PUT ${path} -> ${res.status()}`).toBeTruthy();
-  return (await res.json()) as T;
+  const json = await res.json();
+  if (json?.success === true && 'data' in json) {
+    return json.data as T;
+  }
+  return json as T;
 }
 
 /**
@@ -130,6 +154,15 @@ export async function apiDelete(
     res.ok() || res.status() === 204,
     `DELETE ${path} -> ${res.status()}`
   ).toBeTruthy();
+}
+
+export async function apiDeleteExpectError(
+  ctx: APIRequestContext,
+  path: string,
+  expectedStatus: number = 404
+): Promise<void> {
+  const res = await ctx.delete(`${API_BASE_URL}${path}`);
+  expect(res.status(), `DELETE ${path} -> expected ${expectedStatus}`).toBe(expectedStatus);
 }
 
 export interface PaginatedResponse<T> {
@@ -167,10 +200,25 @@ export const API_PATHS = {
     purchaseOrder: '/api/scm/purchase-orders',
     purchaseRequest: '/api/scm/purchase-requests',
     supplier: '/api/scm/suppliers',
+    purchaseContract: '/api/scm/purchase-contracts',
   },
   finance: {
     voucher: '/api/finance/vouchers',
     account: '/api/finance/accounts',
     period: '/api/finance/periods',
+    expenseApproval: '/api/finance/expense-approvals',
+  },
+  qms: {
+    fmea: '/api/qms/fmea',
+    spc: '/api/qms/spc/charts',
+  },
+  hrm: {
+    organization: '/api/hrm/organizations',
+  },
+  pdm: {
+    productCategory: '/api/pdm/product-categories',
+  },
+  wms: {
+    area: '/api/wms/areas',
   },
 } as const;

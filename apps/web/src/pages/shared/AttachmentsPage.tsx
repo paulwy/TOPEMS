@@ -32,7 +32,7 @@ import {
   File as FileIcon,
   FileArchive,
 } from 'lucide-react';
-import { PageContainer } from '@/components/common/PageContainerV2';
+import { PageContainer } from '@/components/common/PageContainer';
 import { attachmentApi, type Attachment } from '@/api/shared';
 import { useNotificationStore } from '@/store';
 import { apiLogger } from '@/utils/logger';

@@ -134,7 +134,7 @@ pub async fn list_trainings(
     Extension(claims): Extension<Claims>,
     headers: HeaderMap,
 ) -> Json<ApiResponse<Vec<Training>>> {
-    let tenant_id = get_tenant_id(&claims, &headers);
+    let _tenant_id = get_tenant_id(&claims, &headers);
     tracing::info!("Listing trainings");
     Json(ApiResponse::success(
         Vec::<Training>::new(),
@@ -250,7 +250,7 @@ pub async fn delete_training(
     headers: HeaderMap,
     axum::extract::Path(id): axum::extract::Path<String>,
 ) -> Json<ApiResponse<()>> {
-    let tenant_id = get_tenant_id(&claims, &headers);
+    let _tenant_id = get_tenant_id(&claims, &headers);
     tracing::info!("Deleting training: {}", id);
     Json(ApiResponse::success((), "培训删除成功"))
 }
@@ -260,7 +260,7 @@ pub async fn list_training_plans(
     Extension(claims): Extension<Claims>,
     headers: HeaderMap,
 ) -> Json<ApiResponse<Vec<TrainingPlan>>> {
-    let tenant_id = get_tenant_id(&claims, &headers);
+    let _tenant_id = get_tenant_id(&claims, &headers);
     tracing::info!("Listing training plans");
     Json(ApiResponse::success(
         Vec::<TrainingPlan>::new(),
@@ -386,7 +386,7 @@ pub async fn delete_training_plan(
     headers: HeaderMap,
     axum::extract::Path(id): axum::extract::Path<String>,
 ) -> Json<ApiResponse<()>> {
-    let tenant_id = get_tenant_id(&claims, &headers);
+    let _tenant_id = get_tenant_id(&claims, &headers);
     tracing::info!("Deleting training plan: {}", id);
     Json(ApiResponse::success((), "培训计划删除成功"))
 }
@@ -396,7 +396,7 @@ pub async fn list_training_records(
     Extension(claims): Extension<Claims>,
     headers: HeaderMap,
 ) -> Json<ApiResponse<Vec<TrainingRecord>>> {
-    let tenant_id = get_tenant_id(&claims, &headers);
+    let _tenant_id = get_tenant_id(&claims, &headers);
     tracing::info!("Listing training records");
     Json(ApiResponse::success(
         Vec::<TrainingRecord>::new(),
@@ -528,7 +528,7 @@ pub async fn delete_training_record(
     headers: HeaderMap,
     axum::extract::Path(id): axum::extract::Path<String>,
 ) -> Json<ApiResponse<()>> {
-    let tenant_id = get_tenant_id(&claims, &headers);
+    let _tenant_id = get_tenant_id(&claims, &headers);
     tracing::info!("Deleting training record: {}", id);
     Json(ApiResponse::success((), "培训记录删除成功"))
 }
@@ -538,7 +538,7 @@ pub async fn list_certificates(
     Extension(claims): Extension<Claims>,
     headers: HeaderMap,
 ) -> Json<ApiResponse<Vec<TrainingCertificate>>> {
-    let tenant_id = get_tenant_id(&claims, &headers);
+    let _tenant_id = get_tenant_id(&claims, &headers);
     tracing::info!("Listing training certificates");
     Json(ApiResponse::success(
         Vec::<TrainingCertificate>::new(),
@@ -657,7 +657,7 @@ pub async fn delete_certificate(
     headers: HeaderMap,
     axum::extract::Path(id): axum::extract::Path<String>,
 ) -> Json<ApiResponse<()>> {
-    let tenant_id = get_tenant_id(&claims, &headers);
+    let _tenant_id = get_tenant_id(&claims, &headers);
     tracing::info!("Deleting certificate: {}", id);
     Json(ApiResponse::success((), "证书删除成功"))
 }

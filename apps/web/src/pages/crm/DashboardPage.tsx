@@ -21,7 +21,7 @@ import {
   type ChartCard,
   type QuickAction,
 } from '@/components/templates';
-import { PageContainer } from '@/components/common/PageContainerV2';
+import { PageContainer } from '@/components/common/PageContainer';
 import { crmApi } from '@/api/crm';
 import { logger } from '@/utils/logger';
 import type { FunnelStage, OpportunityStats } from '@/api/crm';

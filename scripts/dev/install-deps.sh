@@ -193,7 +193,7 @@ build_backend() {
   if [ -f "$services_conf" ]; then
     local services=$(grep -v "^#" "$services_conf" | grep -v "^$" | awk '{print $3}' | sort -u)
   else
-    local services="unified-core-service topems-pm topems-erp topems-finance topems-doc topems-ai topems-hrm topems-crm topems-mes topems-pdm topems-scm topems-wms topems-srm topems-qms topems-lims topems-ehs topems-rd analytics-service topems-monitor topems-portal topems-mobile topems-gis topems-integration"
+    local services="unified-core-service topems-pm topems-erp topems-finance topems-ai topems-hrm topems-crm topems-mes topems-pdm topems-scm topems-wms topems-srm topems-qms topems-lims topems-ehs topems-rd analytics-service topems-portal topems-mobile topems-gis topems-integration"
   fi
   
   local success_count=0
@@ -244,7 +244,7 @@ INTEGRATION_PORT=8072
 ERP_PORT=8010
 HRM_PORT=8020
 CRM_PORT=8029
-RS_PORT=8053
+RD_PORT=8053
 MANUFACTURING_PORT=8030
 QUALITY_ASSURANCE_PORT=8050
 SCM_PORT=8040

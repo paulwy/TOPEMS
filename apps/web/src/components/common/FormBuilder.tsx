@@ -15,6 +15,7 @@ import {
   Button,
   Autocomplete,
   Chip,
+  Typography,
 } from '@mui/material';
 import { DatePicker } from '@mui/x-date-pickers/DatePicker';
 import { LocalizationProvider } from '@mui/x-date-pickers/LocalizationProvider';
@@ -70,12 +71,10 @@ export type ValidationRule<T extends Record<string, unknown> = Record<string, un
     };
 
 export type FieldVisibility<T extends Record<string, unknown> = Record<string, unknown>> =
-  | boolean
-  | ((values: T) => boolean);
+  boolean | ((values: T) => boolean);
 
 export type FieldDisabled<T extends Record<string, unknown> = Record<string, unknown>> =
-  | boolean
-  | ((values: T) => boolean);
+  boolean | ((values: T) => boolean);
 
 export interface FormFieldConfig<T extends Record<string, unknown> = Record<string, unknown>> {
   name: string;
@@ -117,6 +116,14 @@ export interface FormFieldConfig<T extends Record<string, unknown> = Record<stri
   }) => React.ReactNode;
 }
 
+export type FormBuilderMode = 'create' | 'edit' | 'view';
+
+/** 表单分组配置 */
+export interface FormSectionConfig {
+  title: string;
+  fields: string[];
+}
+
 export interface FormBuilderConfig<T extends Record<string, unknown> = Record<string, unknown>> {
   fields: FormFieldConfig<T>[];
   onSubmit: (values: T) => Promise<void> | void;
@@ -127,6 +134,14 @@ export interface FormBuilderConfig<T extends Record<string, unknown> = Record<st
   initialValues?: Partial<T>;
   colCount?: number;
   onFieldChange?: (name: string, value: unknown, values: T) => void;
+  /** 提交成功后回调（onSubmit 不抛异常即视为成功） */
+  onSubmitSuccess?: () => void;
+  /** 重置/取消按钮回调，默认只清空表单 */
+  onReset?: () => void;
+  /** 表单模式：create=新建（默认）, edit=编辑（字段级 disabled 生效）, view=只读（全部禁用，隐藏提交按钮） */
+  mode?: FormBuilderMode;
+  /** 表单分组配置 */
+  formSections?: FormSectionConfig[];
 }
 
 export default function FormBuilder<T extends Record<string, unknown> = Record<string, unknown>>({
@@ -139,132 +154,156 @@ export default function FormBuilder<T extends Record<string, unknown> = Record<s
   initialValues = {},
   colCount = 2,
   onFieldChange,
+  onSubmitSuccess,
+  onReset,
+  mode = 'create',
+  formSections,
 }: FormBuilderConfig<T>) {
   const [values, setValues] = React.useState<T>(() => {
     const initial: Record<string, unknown> = {};
     fields.forEach((field) => {
-      initial[field.name] = (initialValues as Record<string, unknown>)[field.name] ?? field.defaultValue ?? '';
+      initial[field.name] =
+        (initialValues as Record<string, unknown>)[field.name] ?? field.defaultValue ?? '';
     });
     return initial as T;
   });
 
   const [errors, setErrors] = React.useState<Record<string, string>>({});
-  const [asyncOptions, setAsyncOptions] = React.useState<Record<string, { value: string | number; label: string }[]>>({});
+  const [asyncOptions, setAsyncOptions] = React.useState<
+    Record<string, { value: string | number; label: string }[]>
+  >({});
 
-  const validateField = useCallback((field: FormFieldConfig<T>, value: unknown, formValues: T): string => {
-    const isRequired = typeof field.required === 'function' ? field.required(formValues) : field.required ?? false;
-    
-    if (isRequired && !value) {
-      return `${field.label}为必填项`;
-    }
-    
-    if (field.validation) {
-      const stringValue = String(value ?? '');
-      
-      for (const rule of field.validation) {
-        switch (rule.type) {
-          case 'required':
-            if (!value) {
-              return rule.message || `${field.label}为必填项`;
-            }
-            break;
-          case 'minLength':
-            if (stringValue.length < rule.value) {
-              return rule.message || `${field.label}长度不能少于${rule.value}个字符`;
-            }
-            break;
-          case 'maxLength':
-            if (stringValue.length > rule.value) {
-              return rule.message || `${field.label}长度不能超过${rule.value}个字符`;
-            }
-            break;
-          case 'min':
-            if (Number(value) < rule.value) {
-              return rule.message || `${field.label}不能小于${rule.value}`;
-            }
-            break;
-          case 'max':
-            if (Number(value) > rule.value) {
-              return rule.message || `${field.label}不能大于${rule.value}`;
-            }
-            break;
-          case 'pattern':
-            if (!rule.value.test(stringValue)) {
-              return rule.message || `${field.label}格式不正确`;
-            }
-            break;
-          case 'email':
-            const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-            if (!emailRegex.test(stringValue)) {
-              return rule.message || `${field.label}邮箱格式不正确`;
-            }
-            break;
-          case 'url':
-            try {
-              new URL(stringValue);
-            } catch {
-              return rule.message || `${field.label}URL格式不正确`;
-            }
-            break;
-          case 'phone':
-            const phoneRegex = /^1[3-9]\d{9}$/;
-            if (!phoneRegex.test(stringValue)) {
-              return rule.message || `${field.label}手机号格式不正确`;
-            }
-            break;
-          case 'custom':
-            const customError = rule.validate(value, formValues);
-            if (customError) {
-              return customError;
-            }
-            break;
+  const validateField = useCallback(
+    (field: FormFieldConfig<T>, value: unknown, formValues: T): string => {
+      const isRequired =
+        typeof field.required === 'function'
+          ? field.required(formValues)
+          : (field.required ?? false);
+
+      if (isRequired && !value) {
+        return `${field.label}为必填项`;
+      }
+
+      if (field.validation) {
+        const stringValue = String(value ?? '');
+
+        for (const rule of field.validation) {
+          switch (rule.type) {
+            case 'required':
+              if (!value) {
+                return rule.message || `${field.label}为必填项`;
+              }
+              break;
+            case 'minLength':
+              if (stringValue.length < rule.value) {
+                return rule.message || `${field.label}长度不能少于${rule.value}个字符`;
+              }
+              break;
+            case 'maxLength':
+              if (stringValue.length > rule.value) {
+                return rule.message || `${field.label}长度不能超过${rule.value}个字符`;
+              }
+              break;
+            case 'min':
+              if (Number(value) < rule.value) {
+                return rule.message || `${field.label}不能小于${rule.value}`;
+              }
+              break;
+            case 'max':
+              if (Number(value) > rule.value) {
+                return rule.message || `${field.label}不能大于${rule.value}`;
+              }
+              break;
+            case 'pattern':
+              if (!rule.value.test(stringValue)) {
+                return rule.message || `${field.label}格式不正确`;
+              }
+              break;
+            case 'email':
+              const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+              if (!emailRegex.test(stringValue)) {
+                return rule.message || `${field.label}邮箱格式不正确`;
+              }
+              break;
+            case 'url':
+              try {
+                new URL(stringValue);
+              } catch {
+                return rule.message || `${field.label}URL格式不正确`;
+              }
+              break;
+            case 'phone':
+              const phoneRegex = /^1[3-9]\d{9}$/;
+              if (!phoneRegex.test(stringValue)) {
+                return rule.message || `${field.label}手机号格式不正确`;
+              }
+              break;
+            case 'custom':
+              const customError = rule.validate(value, formValues);
+              if (customError) {
+                return customError;
+              }
+              break;
+          }
         }
       }
-    }
-    return '';
-  }, []);
+      return '';
+    },
+    []
+  );
 
-  const handleChange = useCallback((name: string, value: unknown) => {
-    setValues((prev) => {
-      const newValues = { ...prev, [name]: value } as T;
-      
-      fields.forEach((field) => {
-        if (field.dependsOn?.includes(name)) {
-          const fieldErrors = validateField(field, newValues[field.name as keyof T] as unknown, newValues);
-          setErrors((e) => ({ ...e, [field.name]: fieldErrors }));
-        }
+  const handleChange = useCallback(
+    (name: string, value: unknown) => {
+      setValues((prev) => {
+        const newValues = { ...prev, [name]: value } as T;
+
+        fields.forEach((field) => {
+          if (field.dependsOn?.includes(name)) {
+            const fieldErrors = validateField(
+              field,
+              newValues[field.name as keyof T] as unknown,
+              newValues
+            );
+            setErrors((e) => ({ ...e, [field.name]: fieldErrors }));
+          }
+        });
+
+        return newValues;
       });
-      
-      return newValues;
-    });
-    
-    setErrors((prev) => ({ ...prev, [name]: '' }));
-    
-    setTimeout(() => {
-      const currentValues = { ...values, [name]: value } as T;
-      const field = fields.find((f) => f.name === name);
-      field?.onChange?.(name, value, currentValues);
-      onFieldChange?.(name, value, currentValues);
-    }, 0);
-  }, [fields, validateField, values, onFieldChange]);
 
-  const handleAsyncOptionsSearch = useCallback(async (fieldName: string, search: string) => {
-    const field = fields.find((f) => f.name === fieldName);
-    if (field?.optionsAsync) {
-      const results = await field.optionsAsync(search);
-      setAsyncOptions((prev) => ({ ...prev, [fieldName]: results }));
-    }
-  }, [fields]);
+      setErrors((prev) => ({ ...prev, [name]: '' }));
+
+      setTimeout(() => {
+        const currentValues = { ...values, [name]: value } as T;
+        const field = fields.find((f) => f.name === name);
+        field?.onChange?.(name, value, currentValues);
+        onFieldChange?.(name, value, currentValues);
+      }, 0);
+    },
+    [fields, validateField, values, onFieldChange]
+  );
+
+  const handleAsyncOptionsSearch = useCallback(
+    async (fieldName: string, search: string) => {
+      const field = fields.find((f) => f.name === fieldName);
+      if (field?.optionsAsync) {
+        const results = await field.optionsAsync(search);
+        setAsyncOptions((prev) => ({ ...prev, [fieldName]: results }));
+      }
+    },
+    [fields]
+  );
 
   const handleSubmit = useCallback(
     async (e: React.FormEvent) => {
       e.preventDefault();
       const newErrors: Record<string, string> = {};
-      
+
       fields.forEach((field) => {
-        const isVisible = typeof field.visible === 'function' ? field.visible(values) : field.visible ?? true;
+        const isVisible =
+          typeof field.visible === 'function' ? field.visible(values) : (field.visible ?? true);
         if (!isVisible) return;
-        
+
         const error = validateField(field, values[field.name as keyof T] as unknown, values);
         if (error) newErrors[field.name] = error;
       });
@@ -274,26 +313,36 @@ export default function FormBuilder<T extends Record<string, unknown> = Record<s
         return;
       }
 
-      await onSubmit(values);
+      try {
+        await onSubmit(values);
+        onSubmitSuccess?.();
+      } catch {
+        // onSubmit 负责自己的错误处理
+      }
     },
-    [fields, values, validateField, onSubmit]
+    [fields, values, validateField, onSubmit, onSubmitSuccess]
   );
 
   const handleReset = useCallback(() => {
     const initial: Record<string, unknown> = {};
     fields.forEach((field) => {
-      initial[field.name] = (initialValues as Record<string, unknown>)[field.name] ?? field.defaultValue ?? '';
+      initial[field.name] =
+        (initialValues as Record<string, unknown>)[field.name] ?? field.defaultValue ?? '';
     });
     setValues(initial as T);
     setErrors({});
     setAsyncOptions({});
-  }, [fields, initialValues]);
+    onReset?.();
+  }, [fields, initialValues, onReset]);
 
   const renderField = useCallback(
     (field: FormFieldConfig<T>) => {
-      const isRequired = typeof field.required === 'function' ? field.required(values) : field.required ?? false;
-      const isDisabled = typeof field.disabled === 'function' ? field.disabled(values) : field.disabled ?? false;
-      const isVisible = typeof field.visible === 'function' ? field.visible(values) : field.visible ?? true;
+      const isRequired =
+        typeof field.required === 'function' ? field.required(values) : (field.required ?? false);
+      const isDisabled =
+        typeof field.disabled === 'function' ? field.disabled(values) : (field.disabled ?? false);
+      const isVisible =
+        typeof field.visible === 'function' ? field.visible(values) : (field.visible ?? true);
       const value = values[field.name as keyof T] as unknown;
       const error = errors[field.name];
 
@@ -367,9 +416,7 @@ export default function FormBuilder<T extends Record<string, unknown> = Record<s
                 onChange={(e) => handleChange(field.name, e.target.value)}
                 displayEmpty
               >
-                {!isRequired && (
-                  <MenuItem value=''>请选择</MenuItem>
-                )}
+                {!isRequired && <MenuItem value=''>请选择</MenuItem>}
                 {(field.options || []).map((opt) => (
                   <MenuItem
                     key={opt.value}
@@ -381,13 +428,16 @@ export default function FormBuilder<T extends Record<string, unknown> = Record<s
               </Select>
             </FormControl>
           );
+        }
         case 'autocomplete':
           return (
             <Autocomplete
               key={field.name}
               options={asyncOptions[field.name] || field.options || []}
               getOptionLabel={(opt) => opt.label}
-              value={(field.options || asyncOptions[field.name] || []).find((opt) => opt.value === value)}
+              value={(field.options || asyncOptions[field.name] || []).find(
+                (opt) => opt.value === value
+              )}
               onChange={(_, newValue) => handleChange(field.name, newValue?.value ?? '')}
               onInputChange={(_, inputValue) => handleAsyncOptionsSearch(field.name, inputValue)}
               disabled={isDisabled}
@@ -420,7 +470,11 @@ export default function FormBuilder<T extends Record<string, unknown> = Record<s
           );
         case 'checkbox-group':
           return (
-            <FormControl key={field.name} fullWidth error={!!error}>
+            <FormControl
+              key={field.name}
+              fullWidth
+              error={!!error}
+            >
               <FormLabel>{field.label}</FormLabel>
               <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 2 }}>
                 {(field.options || []).map((opt) => (
@@ -431,7 +485,7 @@ export default function FormBuilder<T extends Record<string, unknown> = Record<s
                         checked={(value as string[])?.includes(String(opt.value)) ?? false}
                         disabled={isDisabled}
                         onChange={(e) => {
-                          const current = value as string[] || [];
+                          const current = (value as string[]) || [];
                           const newValue = e.target.checked
                             ? [...current, String(opt.value)]
                             : current.filter((v) => v !== String(opt.value));
@@ -448,7 +502,11 @@ export default function FormBuilder<T extends Record<string, unknown> = Record<s
           );
         case 'radio':
           return (
-            <FormControl key={field.name} fullWidth error={!!error}>
+            <FormControl
+              key={field.name}
+              fullWidth
+              error={!!error}
+            >
               <FormLabel>{field.label}</FormLabel>
               <Box sx={{ display: 'flex', gap: 2 }}>
                 {(field.options || []).map((opt) => (
@@ -570,6 +628,77 @@ export default function FormBuilder<T extends Record<string, unknown> = Record<s
   );
 
   const renderForm = () => {
+    // 如果有表单分组配置，使用分组渲染
+    if (formSections && formSections.length > 0) {
+      const fieldMap = new Map(fields.map((f) => [f.name, f]));
+
+      return (
+        <Box sx={{ display: 'flex', flexDirection: 'column', gap: 3 }}>
+          {formSections.map((section) => {
+            const sectionFields = section.fields
+              .map((name) => fieldMap.get(name))
+              .filter((f): f is FormFieldConfig<T> => !!f);
+
+            if (sectionFields.length === 0) return null;
+
+            return (
+              <Box key={section.title}>
+                <Typography
+                  variant='subtitle2'
+                  sx={{ mb: 1, fontWeight: 600, color: 'text.secondary' }}
+                >
+                  {section.title}
+                </Typography>
+                <Box
+                  sx={{
+                    display: 'grid',
+                    gap: 2,
+                    gridTemplateColumns: `repeat(${colCount}, 1fr)`,
+                  }}
+                >
+                  {sectionFields.map((field) => (
+                    <Box
+                      key={field.name}
+                      sx={{ gridColumn: `span ${field.colSpan || 1}` }}
+                    >
+                      {renderField(field)}
+                    </Box>
+                  ))}
+                </Box>
+              </Box>
+            );
+          })}
+          // 渲染未分组的字段
+          {(() => {
+            const groupedFieldNames = new Set(formSections.flatMap((s) => s.fields));
+            const ungroupedFields = fields.filter((f) => !groupedFieldNames.has(f.name));
+            if (ungroupedFields.length === 0) return null;
+
+            return (
+              <Box>
+                <Box
+                  sx={{
+                    display: 'grid',
+                    gap: 2,
+                    gridTemplateColumns: `repeat(${colCount}, 1fr)`,
+                  }}
+                >
+                  {ungroupedFields.map((field) => (
+                    <Box
+                      key={field.name}
+                      sx={{ gridColumn: `span ${field.colSpan || 1}` }}
+                    >
+                      {renderField(field)}
+                    </Box>
+                  ))}
+                </Box>
+              </Box>
+            );
+          })()}
+        </Box>
+      );
+    }
+
     if (fields.length === 1 || colCount === 1) {
       return (
         <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
@@ -615,15 +744,17 @@ export default function FormBuilder<T extends Record<string, unknown> = Record<s
                 type='reset'
                 variant='outlined'
               >
-                {resetLabel}
+                {mode === 'view' ? '关闭' : resetLabel}
               </Button>
             )}
-            <Button
-              type='submit'
-              variant='contained'
-            >
-              {submitLabel}
-            </Button>
+            {mode !== 'view' && (
+              <Button
+                type='submit'
+                variant='contained'
+              >
+                {submitLabel}
+              </Button>
+            )}
           </Box>
         </form>
       </CardContent>

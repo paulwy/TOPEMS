@@ -1,0 +1,18 @@
+[package]
+name = "minimal-service-example"
+version.workspace = true
+edition.workspace = true
+authors.workspace = true
+description = "示例：仅依赖 topems-shared-core 的轻量服务"
+
+[dependencies]
+# 仅引入核心共享库，不依赖完整的 topems-shared
+# 编译时间：~22s（vs 完整 shared ~40s，减少 45%）
+topems-shared-core = { path = "../../lib/shared-core" }
+
+# 最小运行时依赖
+axum.workspace = true
+tokio.workspace = true
+tracing.workspace = true
+serde.workspace = true
+serde_json.workspace = true

@@ -308,9 +308,8 @@ run_migrations() {
 
     # 迁移目录列表（按服务顺序排列）
     local MIGRATION_DIRS=(
-        # 平台服务
+        # 平台服务 (unified-core 包含 iam, doc, flow, file, communication, monitor)
         "svc/unified-core/migrations"
-        "svc/doc/migrations"
         # 业务服务
         "svc/erp/migrations"
         "svc/finance/migrations"
@@ -318,7 +317,7 @@ run_migrations() {
         "svc/crm/migrations"
         "svc/ai/migrations"
         "svc/pm/migrations"
-        "svc/rs/migrations"
+        "svc/rd/migrations"
         "svc/mes/migrations"
         "svc/pdm/migrations"
         "svc/qms/migrations"
@@ -329,7 +328,6 @@ run_migrations() {
         "svc/wms/migrations"
         "svc/gis/migrations"
         "svc/analytics/migrations"
-        "svc/monitor/migrations"
         "svc/portal/migrations"
         "svc/mobile/migrations"
         "svc/integration/migrations"
@@ -446,7 +444,7 @@ check_status() {
 
     echo ""
     echo "🔌 端口监听:"
-    for port in 80 5432 6379 8000 8001 8013; do
+    for port in 80 5432 6379 8000 8013; do
         if netstat -tuln 2>/dev/null | grep -q ":$port "; then
             echo -e "  ${GREEN}✓${NC} 端口 $port 已监听"
         else
@@ -471,7 +469,6 @@ show_complete() {
     echo "📍 访问地址:"
     echo "   前端:    http://localhost"
     echo "   IAM:     http://localhost:8000"
-    echo "   DOC:     http://localhost:8001"
     echo "   AI:      http://localhost:8013"
     echo ""
     echo "📁 数据目录: ${DATA_DIR}"

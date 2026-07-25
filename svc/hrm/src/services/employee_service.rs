@@ -34,17 +34,23 @@ impl EmployeeService {
 
         let employees = sqlx::query_as::<_, Employee>(
             r#"
-            SELECT id, tenant_id, company_id, department_id, position_id,
-                   employee_number, name, gender, hire_date, email, phone, 
-                   id_card_number, address, status,
-                   created_at, updated_at
-            FROM hrm.employees
-            WHERE tenant_id = $5
-              AND ($1::text IS NULL OR name ILIKE $1 OR employee_number ILIKE $1)
-              AND ($2::text IS NULL OR status = $2)
-              AND ($3::uuid IS NULL OR department_id = $3)
-              AND ($4::uuid IS NULL OR company_id = $4)
-            ORDER BY created_at DESC
+            SELECT e.id, e.tenant_id, e.company_id, e.department_id, e.position_id,
+                   e.employee_number, e.name, e.gender, e.hire_date, e.email, e.phone,
+                   e.id_card_number, e.address,
+                   e.birth_date, e.regular_date, e.probation_period,
+                   e.position, e.joblevel, e.work_location, e.report_to_name,
+                   e.education, e.emergency_contact_name, e.emergency_contact_phone,
+                   e.emergency_relation, e.hukou_location, e.remark, e.employee_type, e.user_id,
+                   e.status, e.created_at, e.updated_at,
+                   d.name as department_name
+            FROM hrm.employees e
+            LEFT JOIN hrm.departments d ON e.department_id = d.id
+            WHERE e.tenant_id = $5
+              AND ($1::text IS NULL OR e.name ILIKE $1 OR e.employee_number ILIKE $1)
+              AND ($2::text IS NULL OR e.status = $2)
+              AND ($3::uuid IS NULL OR e.department_id = $3)
+              AND ($4::uuid IS NULL OR e.company_id = $4)
+            ORDER BY e.created_at DESC
             LIMIT $6 OFFSET $7
             "#,
         )
@@ -103,11 +109,18 @@ impl EmployeeService {
     pub async fn get_employee(&self, id: &Uuid) -> ApiResponse<Employee> {
         let result = sqlx::query_as::<_, Employee>(
             r#"
-            SELECT id, tenant_id, company_id, department_id, position_id,
-                   employee_number, name, gender, hire_date, email, phone,
-                   id_card_number, address, status,
-                   created_at, updated_at
-            FROM hrm.employees WHERE id = $1 AND tenant_id = $2
+            SELECT e.id, e.tenant_id, e.company_id, e.department_id, e.position_id,
+                   e.employee_number, e.name, e.gender, e.hire_date, e.email, e.phone,
+                   e.id_card_number, e.address,
+                   e.birth_date, e.regular_date, e.probation_period,
+                   e.position, e.joblevel, e.work_location, e.report_to_name,
+                   e.education, e.emergency_contact_name, e.emergency_contact_phone,
+                   e.emergency_relation, e.hukou_location, e.remark, e.employee_type, e.user_id,
+                   e.status, e.created_at, e.updated_at,
+                   d.name as department_name
+            FROM hrm.employees e
+            LEFT JOIN hrm.departments d ON e.department_id = d.id
+            WHERE e.id = $1 AND e.tenant_id = $2
             "#,
         )
         .bind(id)
@@ -203,12 +216,22 @@ impl EmployeeService {
                 id, tenant_id, organization_id, company_id, department_id, position_id,
                 employee_number, name, gender, hire_date, email, phone,
                 id_card_number, address,
+                birth_date, regular_date, probation_period, position, joblevel,
+                work_location, report_to_name, education,
+                emergency_contact_name, emergency_contact_phone, emergency_relation,
+                hukou_location, remark, employee_type, user_id,
                 status, created_at, updated_at
-            ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, 'active', $15, $16)
-            RETURNING id, tenant_id, organization_id, company_id, department_id, position_id,
+            ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14,
+                      $15, $16, $17, $18, $19, $20, $21, $22, $23, $24, $25, $26, $27, $28, $29,
+                      'active', $30, $31)
+            RETURNING id, tenant_id, company_id, department_id, position_id,
                       employee_number, name, gender, hire_date, email, phone,
-                      id_card_number, address, status,
-                      created_at, updated_at
+                      id_card_number, address,
+                      birth_date, regular_date, probation_period, position, joblevel,
+                      work_location, report_to_name, education,
+                      emergency_contact_name, emergency_contact_phone, emergency_relation,
+                      hukou_location, remark, employee_type, user_id,
+                      status, created_at, updated_at
             "#,
         )
         .bind(id)
@@ -225,6 +248,21 @@ impl EmployeeService {
         .bind(&encrypted_phone)
         .bind(&encrypted_id_card)
         .bind(&encrypted_address)
+        .bind(req.birth_date)
+        .bind(req.regular_date)
+        .bind(req.probation_period)
+        .bind(&req.position)
+        .bind(&req.joblevel)
+        .bind(&req.work_location)
+        .bind(&req.report_to_name)
+        .bind(&req.education)
+        .bind(&req.emergency_contact)
+        .bind(&req.emergency_phone)
+        .bind(&req.emergency_relation)
+        .bind(&req.hukou_location)
+        .bind(&req.remark)
+        .bind(&req.employee_type)
+        .bind(req.user_id)
         .bind(now)
         .bind(now)
         .fetch_one(&self.db)
@@ -249,10 +287,18 @@ impl EmployeeService {
     ) -> ApiResponse<Employee> {
         let existing = sqlx::query_as::<_, Employee>(
             r#"
-            SELECT id, tenant_id, company_id, department_id, position_id,
-                   employee_number, name, gender, hire_date, email, phone,
-                   id_card_number, address, status,
-                   created_at, updated_at FROM hrm.employees WHERE id = $1 AND tenant_id = $2
+            SELECT e.id, e.tenant_id, e.company_id, e.department_id, e.position_id,
+                   e.employee_number, e.name, e.gender, e.hire_date, e.email, e.phone,
+                   e.id_card_number, e.address,
+                   e.birth_date, e.regular_date, e.probation_period,
+                   e.position, e.joblevel, e.work_location, e.report_to_name,
+                   e.education, e.emergency_contact_name, e.emergency_contact_phone,
+                   e.emergency_relation, e.hukou_location, e.remark, e.employee_type, e.user_id,
+                   e.status, e.created_at, e.updated_at,
+                   d.name as department_name
+            FROM hrm.employees e
+            LEFT JOIN hrm.departments d ON e.department_id = d.id
+            WHERE e.id = $1 AND e.tenant_id = $2
             "#,
         )
         .bind(id)
@@ -281,6 +327,22 @@ impl EmployeeService {
         let new_phone = req.phone.or(existing.phone.clone());
         let new_id_card = req.id_card_number.or(existing.id_card_number.clone());
         let new_address = req.address.or(existing.address.clone());
+
+        let birth_date = req.birth_date.or(existing.birth_date);
+        let regular_date = req.regular_date.or(existing.regular_date);
+        let probation_period = req.probation_period.or(existing.probation_period);
+        let position_title = req.position.or(existing.position);
+        let joblevel = req.joblevel.or(existing.joblevel);
+        let work_location = req.work_location.or(existing.work_location);
+        let report_to_name = req.report_to_name.or(existing.report_to_name);
+        let education = req.education.or(existing.education);
+        let emergency_contact = req.emergency_contact.or(existing.emergency_contact);
+        let emergency_phone = req.emergency_phone.or(existing.emergency_phone);
+        let emergency_relation = req.emergency_relation.or(existing.emergency_relation);
+        let hukou_location = req.hukou_location.or(existing.hukou_location);
+        let remark = req.remark.or(existing.remark);
+        let employee_type = req.employee_type.or(existing.employee_type);
+        let user_id = req.user_id.or(existing.user_id);
 
         let encrypted_email = match &new_email {
             Some(e) if !e.is_empty() => {
@@ -328,12 +390,21 @@ impl EmployeeService {
                 company_id = $3, department_id = $4, position_id = $5,
                 name = $6, gender = $7, hire_date = $8, email = $9, phone = $10,
                 id_card_number = $11, address = $12,
-                status = $13, updated_at = $14
+                birth_date = $13, regular_date = $14, probation_period = $15,
+                position = $16, joblevel = $17, work_location = $18, report_to_name = $19,
+                education = $20, emergency_contact_name = $21, emergency_contact_phone = $22,
+                emergency_relation = $23, hukou_location = $24, remark = $25,
+                employee_type = $26, user_id = $27,
+                status = $28, updated_at = $29
             WHERE id = $1 AND tenant_id = $2
             RETURNING id, tenant_id, company_id, department_id, position_id,
                       employee_number, name, gender, hire_date, email, phone,
-                      id_card_number, address, status,
-                      created_at, updated_at
+                      id_card_number, address,
+                      birth_date, regular_date, probation_period, position, joblevel,
+                      work_location, report_to_name, education,
+                      emergency_contact_name, emergency_contact_phone, emergency_relation,
+                      hukou_location, remark, employee_type, user_id,
+                      status, created_at, updated_at
             "#,
         )
         .bind(id)
@@ -348,6 +419,21 @@ impl EmployeeService {
         .bind(&encrypted_phone)
         .bind(&encrypted_id_card)
         .bind(&encrypted_address)
+        .bind(birth_date)
+        .bind(regular_date)
+        .bind(probation_period)
+        .bind(&position_title)
+        .bind(&joblevel)
+        .bind(&work_location)
+        .bind(&report_to_name)
+        .bind(&education)
+        .bind(&emergency_contact)
+        .bind(&emergency_phone)
+        .bind(&emergency_relation)
+        .bind(&hukou_location)
+        .bind(&remark)
+        .bind(&employee_type)
+        .bind(user_id)
         .bind(&status)
         .bind(now)
         .fetch_one(&self.db)

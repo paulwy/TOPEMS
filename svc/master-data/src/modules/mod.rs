@@ -18,7 +18,7 @@ pub mod schema_registry;
 pub fn create_routes() -> Router<AppState> {
     Router::new()
         .nest(
-            "/api/master/quality-v51",
+            "/quality-v51",
             Router::new()
                 .route("/checks", post(quality_v51::run_quality_check))
                 .route("/checks", get(quality_v51::list_quality_checks))
@@ -61,7 +61,7 @@ pub fn create_routes() -> Router<AppState> {
                 ),
         )
         .nest(
-            "/api/master/lineage-v52",
+            "/lineage-v52",
             Router::new()
                 .route("/register", post(lineage_v52::register_lineage))
                 .route("/graph", get(lineage_v52::get_lineage_graph))
@@ -110,7 +110,7 @@ pub fn create_routes() -> Router<AppState> {
                 ),
         )
         .nest(
-            "/api/master/kg-v53",
+            "/kg-v53",
             Router::new()
                 .route("/nodes", post(knowledge_v53::add_kg_node))
                 .route("/edges", post(knowledge_v53::add_kg_edge))
@@ -151,7 +151,7 @@ pub fn create_routes() -> Router<AppState> {
                 ),
         )
         .nest(
-            "/api/master/mdm-v54",
+            "/mdm-v54",
             Router::new()
                 .route(
                     "/version/snapshot",
@@ -235,7 +235,7 @@ pub fn create_routes() -> Router<AppState> {
                 ),
         )
         .nest(
-            "/api/master/mdm-v55",
+            "/mdm-v55",
             Router::new()
                 // --- API 商业化 ---
                 .route(
@@ -334,7 +334,7 @@ pub fn create_routes() -> Router<AppState> {
                 ),
         )
         .nest(
-            "/api/master/mdm-v56",
+            "/mdm-v56",
             Router::new()
                 // --- 灾难恢复 ---
                 .route(
@@ -437,7 +437,7 @@ pub fn create_routes() -> Router<AppState> {
                 ),
         )
         .nest(
-            "/api/master/mdm-v57",
+            "/mdm-v57",
             Router::new()
                 // --- 图谱增强 ---
                 .route("/graph/node", post(semantic_v57::add_graph_node))
@@ -493,7 +493,7 @@ pub fn create_routes() -> Router<AppState> {
                 .route("/tags/suggest", get(semantic_v57::suggest_tags)),
         )
         .nest(
-            "/api/master/mdm-v58",
+            "/mdm-v58",
             Router::new()
                 // --- 治理成熟度 ---
                 .route(
@@ -592,7 +592,7 @@ pub fn create_routes() -> Router<AppState> {
                 ),
         )
         .nest(
-            "/api/master/mdm-v59",
+            "/mdm-v59",
             Router::new()
                 // --- 数据治理 AI ---
                 .route(
@@ -691,7 +691,7 @@ pub fn create_routes() -> Router<AppState> {
                 ),
         )
         .nest(
-            "/api/master/mdm-v60",
+            "/mdm-v60",
             Router::new()
                 // --- 元数据管理 ---
                 .route(
@@ -799,7 +799,7 @@ pub fn create_routes() -> Router<AppState> {
         )
         // Schema Registry — 元数据驱动动态 API
         .nest(
-            "/api/master/schema-registry",
+            "/schema-registry",
             Router::new()
                 // Schema 管理
                 .route("/schemas", post(schema_registry::create_schema))

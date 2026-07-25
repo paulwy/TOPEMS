@@ -337,7 +337,7 @@ pub async fn list_exam_plans(
     Extension(claims): Extension<Claims>,
     headers: HeaderMap,
 ) -> Json<ApiResponse<Vec<HealthExamPlan>>> {
-    let tenant_id = get_tenant_id(&claims, &headers);
+    let _tenant_id = get_tenant_id(&claims, &headers);
     tracing::info!("Listing health exam plans");
     Json(ApiResponse::success(
         Vec::<HealthExamPlan>::new(),
@@ -450,7 +450,7 @@ pub async fn delete_exam_plan(
     headers: HeaderMap,
     axum::extract::Path(id): axum::extract::Path<String>,
 ) -> Json<ApiResponse<()>> {
-    let tenant_id = get_tenant_id(&claims, &headers);
+    let _tenant_id = get_tenant_id(&claims, &headers);
     tracing::info!("Deleting health exam plan: {}", id);
     Json(ApiResponse::success((), "体检计划删除成功"))
 }
@@ -460,7 +460,7 @@ pub async fn list_exam_records(
     Extension(claims): Extension<Claims>,
     headers: HeaderMap,
 ) -> Json<ApiResponse<Vec<HealthExamRecord>>> {
-    let tenant_id = get_tenant_id(&claims, &headers);
+    let _tenant_id = get_tenant_id(&claims, &headers);
     tracing::info!("Listing health exam records");
     Json(ApiResponse::success(
         Vec::<HealthExamRecord>::new(),
@@ -616,7 +616,7 @@ pub async fn delete_exam_record(
     headers: HeaderMap,
     axum::extract::Path(id): axum::extract::Path<String>,
 ) -> Json<ApiResponse<()>> {
-    let tenant_id = get_tenant_id(&claims, &headers);
+    let _tenant_id = get_tenant_id(&claims, &headers);
     tracing::info!("Deleting health exam record: {}", id);
     Json(ApiResponse::success((), "体检记录删除成功"))
 }
@@ -653,7 +653,7 @@ pub async fn list_contraindications(
     Extension(claims): Extension<Claims>,
     headers: HeaderMap,
 ) -> Json<ApiResponse<Vec<Contraindication>>> {
-    let tenant_id = get_tenant_id(&claims, &headers);
+    let _tenant_id = get_tenant_id(&claims, &headers);
     tracing::info!("Listing contraindications");
     Json(ApiResponse::success(
         Vec::<Contraindication>::new(),
@@ -736,7 +736,7 @@ pub async fn delete_contraindication(
     headers: HeaderMap,
     axum::extract::Path(id): axum::extract::Path<String>,
 ) -> Json<ApiResponse<()>> {
-    let tenant_id = get_tenant_id(&claims, &headers);
+    let _tenant_id = get_tenant_id(&claims, &headers);
     tracing::info!("Deleting contraindication: {}", id);
     Json(ApiResponse::success((), "职业禁忌症删除成功"))
 }
@@ -746,7 +746,7 @@ pub async fn list_abnormalities(
     Extension(claims): Extension<Claims>,
     headers: HeaderMap,
 ) -> Json<ApiResponse<Vec<HealthAbnormality>>> {
-    let tenant_id = get_tenant_id(&claims, &headers);
+    let _tenant_id = get_tenant_id(&claims, &headers);
     tracing::info!("Listing health abnormalities");
     Json(ApiResponse::success(
         Vec::<HealthAbnormality>::new(),
@@ -825,7 +825,7 @@ pub async fn list_exam_types(
     Extension(claims): Extension<Claims>,
     headers: HeaderMap,
 ) -> Json<ApiResponse<Vec<serde_json::Value>>> {
-    let tenant_id = get_tenant_id(&claims, &headers);
+    let _tenant_id = get_tenant_id(&claims, &headers);
     tracing::info!("Listing exam types");
     let types = vec![
         serde_json::json!({ "code": "pre_employment", "name": "上岗前体检" }),

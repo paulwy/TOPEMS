@@ -34,6 +34,7 @@ pub struct Employee {
     pub department_id: Option<Uuid>,
     #[schema(example = "550e8400-e29b-41d4-a716-446655440003")]
     pub position_id: Option<Uuid>,
+    #[serde(alias = "employee_no")]
     #[schema(example = "EMP001")]
     pub employee_number: String,
     #[schema(example = "张三")]
@@ -46,10 +47,46 @@ pub struct Employee {
     pub email: Option<String>,
     #[schema(example = "13800138000")]
     pub phone: Option<String>,
+    #[serde(alias = "id_number")]
     #[schema(example = "110101199001011234")]
     pub id_card_number: Option<String>,
     #[schema(example = "北京市朝阳区建国路88号")]
     pub address: Option<String>,
+    #[schema(example = "1990-01-01")]
+    pub birth_date: Option<NaiveDate>,
+    #[schema(example = "2020-07-01")]
+    pub regular_date: Option<NaiveDate>,
+    #[schema(example = 3)]
+    pub probation_period: Option<i32>,
+    #[sqlx(default)]
+    #[schema(example = "研发部")]
+    pub department_name: Option<String>,
+    #[schema(example = "高级工程师")]
+    pub position: Option<String>,
+    #[schema(example = "P6")]
+    pub joblevel: Option<String>,
+    #[schema(example = "北京")]
+    pub work_location: Option<String>,
+    #[schema(example = "李经理")]
+    pub report_to_name: Option<String>,
+    #[schema(example = "本科")]
+    pub education: Option<String>,
+    #[sqlx(rename = "emergency_contact_name")]
+    #[schema(example = "张父")]
+    pub emergency_contact: Option<String>,
+    #[sqlx(rename = "emergency_contact_phone")]
+    #[schema(example = "13900139000")]
+    pub emergency_phone: Option<String>,
+    #[schema(example = "父亲")]
+    pub emergency_relation: Option<String>,
+    #[schema(example = "北京市海淀区")]
+    pub hukou_location: Option<String>,
+    #[schema(example = "表现优秀")]
+    pub remark: Option<String>,
+    #[schema(example = "full-time")]
+    pub employee_type: Option<String>,
+    #[schema(example = "550e8400-e29b-41d4-a716-446655440099")]
+    pub user_id: Option<Uuid>,
     #[schema(example = "active")]
     pub status: String,
     #[schema(example = "2024-01-01T00:00:00Z")]
@@ -193,6 +230,7 @@ pub struct CreateEmployeeRequest {
     pub department_id: Option<Uuid>,
     #[schema(example = "550e8400-e29b-41d4-a716-446655440003")]
     pub position_id: Option<Uuid>,
+    #[serde(alias = "employee_no")]
     #[schema(example = "EMP001")]
     pub employee_number: String,
     #[schema(example = "张三")]
@@ -205,10 +243,41 @@ pub struct CreateEmployeeRequest {
     pub email: Option<String>,
     #[schema(example = "13800138000")]
     pub phone: Option<String>,
+    #[serde(alias = "id_number")]
     #[schema(example = "110101199001011234")]
     pub id_card_number: Option<String>,
     #[schema(example = "北京市朝阳区建国路88号")]
     pub address: Option<String>,
+    #[schema(example = "1990-01-01")]
+    pub birth_date: Option<NaiveDate>,
+    #[schema(example = "2024-07-01")]
+    pub regular_date: Option<NaiveDate>,
+    #[schema(example = 3)]
+    pub probation_period: Option<i32>,
+    #[schema(example = "高级工程师")]
+    pub position: Option<String>,
+    #[schema(example = "P6")]
+    pub joblevel: Option<String>,
+    #[schema(example = "北京")]
+    pub work_location: Option<String>,
+    #[schema(example = "李经理")]
+    pub report_to_name: Option<String>,
+    #[schema(example = "本科")]
+    pub education: Option<String>,
+    #[schema(example = "张父")]
+    pub emergency_contact: Option<String>,
+    #[schema(example = "13900139000")]
+    pub emergency_phone: Option<String>,
+    #[schema(example = "父亲")]
+    pub emergency_relation: Option<String>,
+    #[schema(example = "北京市海淀区")]
+    pub hukou_location: Option<String>,
+    #[schema(example = "表现优秀")]
+    pub remark: Option<String>,
+    #[schema(example = "full-time")]
+    pub employee_type: Option<String>,
+    #[schema(example = "550e8400-e29b-41d4-a716-446655440099")]
+    pub user_id: Option<Uuid>,
 }
 
 #[derive(Debug, Clone, Deserialize, Serialize, ToSchema)]
@@ -240,10 +309,41 @@ pub struct UpdateEmployeeRequest {
     pub email: Option<String>,
     #[schema(example = "13800138000")]
     pub phone: Option<String>,
+    #[serde(alias = "id_number")]
     #[schema(example = "110101199001011234")]
     pub id_card_number: Option<String>,
     #[schema(example = "北京市朝阳区建国路88号")]
     pub address: Option<String>,
+    #[schema(example = "1990-01-01")]
+    pub birth_date: Option<NaiveDate>,
+    #[schema(example = "2024-07-01")]
+    pub regular_date: Option<NaiveDate>,
+    #[schema(example = 3)]
+    pub probation_period: Option<i32>,
+    #[schema(example = "高级工程师")]
+    pub position: Option<String>,
+    #[schema(example = "P6")]
+    pub joblevel: Option<String>,
+    #[schema(example = "北京")]
+    pub work_location: Option<String>,
+    #[schema(example = "李经理")]
+    pub report_to_name: Option<String>,
+    #[schema(example = "本科")]
+    pub education: Option<String>,
+    #[schema(example = "张父")]
+    pub emergency_contact: Option<String>,
+    #[schema(example = "13900139000")]
+    pub emergency_phone: Option<String>,
+    #[schema(example = "父亲")]
+    pub emergency_relation: Option<String>,
+    #[schema(example = "北京市海淀区")]
+    pub hukou_location: Option<String>,
+    #[schema(example = "表现优秀")]
+    pub remark: Option<String>,
+    #[schema(example = "full-time")]
+    pub employee_type: Option<String>,
+    #[schema(example = "550e8400-e29b-41d4-a716-446655440099")]
+    pub user_id: Option<Uuid>,
     #[schema(example = "active")]
     pub status: Option<String>,
 }
@@ -280,6 +380,22 @@ mod tests {
             phone: Some("1234567890".to_string()),
             id_card_number: Some("110101199001011234".to_string()),
             address: Some("123 Main St".to_string()),
+            birth_date: None,
+            regular_date: None,
+            probation_period: None,
+            department_name: None,
+            position: None,
+            joblevel: None,
+            work_location: None,
+            report_to_name: None,
+            education: None,
+            emergency_contact: None,
+            emergency_phone: None,
+            emergency_relation: None,
+            hukou_location: None,
+            remark: None,
+            employee_type: None,
+            user_id: None,
             status: "active".to_string(),
             created_at,
             updated_at,
@@ -307,6 +423,21 @@ mod tests {
             phone: None,
             id_card_number: None,
             address: None,
+            birth_date: None,
+            regular_date: None,
+            probation_period: None,
+            position: None,
+            joblevel: None,
+            work_location: None,
+            report_to_name: None,
+            education: None,
+            emergency_contact: None,
+            emergency_phone: None,
+            emergency_relation: None,
+            hukou_location: None,
+            remark: None,
+            employee_type: None,
+            user_id: None,
         };
 
         assert_eq!(request.employee_number, "EMP002");
@@ -326,6 +457,21 @@ mod tests {
             phone: None,
             id_card_number: None,
             address: None,
+            birth_date: None,
+            regular_date: None,
+            probation_period: None,
+            position: None,
+            joblevel: None,
+            work_location: None,
+            report_to_name: None,
+            education: None,
+            emergency_contact: None,
+            emergency_phone: None,
+            emergency_relation: None,
+            hukou_location: None,
+            remark: None,
+            employee_type: None,
+            user_id: None,
             status: Some("inactive".to_string()),
         };
 
@@ -353,6 +499,22 @@ mod tests {
             phone: Some("13800138000".to_string()),
             id_card_number: Some("110101199001011234".to_string()),
             address: Some("北京市朝阳区建国路88号".to_string()),
+            birth_date: None,
+            regular_date: None,
+            probation_period: None,
+            department_name: None,
+            position: None,
+            joblevel: None,
+            work_location: None,
+            report_to_name: None,
+            education: None,
+            emergency_contact: None,
+            emergency_phone: None,
+            emergency_relation: None,
+            hukou_location: None,
+            remark: None,
+            employee_type: None,
+            user_id: None,
             status: "active".to_string(),
             created_at: now,
             updated_at: now,
@@ -422,6 +584,22 @@ mod tests {
             phone: Some("13800138000".to_string()),
             id_card_number: Some("110101199001011234".to_string()),
             address: Some("北京市朝阳区建国路88号".to_string()),
+            birth_date: None,
+            regular_date: None,
+            probation_period: None,
+            department_name: None,
+            position: None,
+            joblevel: None,
+            work_location: None,
+            report_to_name: None,
+            education: None,
+            emergency_contact: None,
+            emergency_phone: None,
+            emergency_relation: None,
+            hukou_location: None,
+            remark: None,
+            employee_type: None,
+            user_id: None,
             status: "active".to_string(),
             created_at: now,
             updated_at: now,

@@ -1,13 +1,14 @@
 //! Tenant API handlers
 
 use axum::{
-    extract::{Path, Query, State},
+    extract::{Extension, Path, Query, State},
     Json,
 };
 use uuid::Uuid;
 
 use super::models::*;
 use crate::{AppState, CoreResponse};
+use topems_shared::auth::Claims;
 
 /// List all tenants with pagination and filtering (super admin only)
 pub async fn list_tenants(
@@ -893,53 +894,124 @@ pub async fn get_current_tenant_context(
 }
 
 /// Get my tenants
-pub async fn get_my_tenants(State(state): State<AppState>) -> Json<CoreResponse<Vec<Tenant>>> {
-    tracing::info!("[Tenant] Getting my tenants");
+pub async fn get_my_tenants(
+    State(state): State<AppState>,
+    Extension(claims): Extension<Claims>,
+) -> Json<CoreResponse<Vec<Tenant>>> {
+    tracing::info!("[Tenant] Getting my tenants for user: {}", claims.sub);
 
-    let tenants: Vec<Tenant> =
-        sqlx::query_as("SELECT * FROM core_tenants ORDER BY created_at DESC")
-            .fetch_all(&state.pool)
-            .await
-            .unwrap_or_default();
+    let user_id = match Uuid::parse_str(&claims.sub) {
+        Ok(id) => id,
+        Err(_) => return Json(CoreResponse::error("Invalid user ID")),
+    };
+
+    let tenants: Vec<Tenant> = sqlx::query_as(
+        "SELECT t.* FROM core_tenants t
+         INNER JOIN core_tenant_users tu ON t.id = tu.tenant_id
+         WHERE tu.user_id = $1 AND tu.status = 'active'
+         ORDER BY t.created_at DESC",
+    )
+    .bind(user_id)
+    .fetch_all(&state.pool)
+    .await
+    .unwrap_or_default();
 
     Json(CoreResponse::success(tenants, "My tenants retrieved"))
+}
+
+/// Switch tenant response with new token
+#[derive(Debug, serde::Serialize)]
+pub struct SwitchTenantResponse {
+    pub access_token: String,
+    pub token_type: String,
+    pub expires_in: i64,
+    pub tenant: Tenant,
 }
 
 /// Switch tenant
 pub async fn switch_tenant(
     State(state): State<AppState>,
+    Extension(claims): Extension<Claims>,
     Json(req): Json<SwitchTenantRequest>,
-) -> Json<CoreResponse<TenantContext>> {
-    tracing::info!("[Tenant] Switching to tenant: {}", req.tenant_id);
+) -> Json<CoreResponse<SwitchTenantResponse>> {
+    tracing::info!("[Tenant] Switching to tenant: {} for user: {}", req.tenant_id, claims.sub);
 
     let tenant_id = match Uuid::parse_str(&req.tenant_id) {
         Ok(id) => id,
         Err(_) => return Json(CoreResponse::error("Invalid tenant ID")),
     };
 
+    let user_id = match Uuid::parse_str(&claims.sub) {
+        Ok(id) => id,
+        Err(_) => return Json(CoreResponse::error("Invalid user ID")),
+    };
+
+    // 验证用户是否属于该租户
+    let tenant_member: Option<(Uuid, String)> = sqlx::query_as(
+        "SELECT tenant_id, role FROM core_tenant_users
+         WHERE tenant_id = $1 AND user_id = $2 AND status = 'active'",
+    )
+    .bind(tenant_id)
+    .bind(user_id)
+    .fetch_optional(&state.pool)
+    .await
+    .unwrap_or(None);
+
+    let (_member_tenant_id, _member_role) = match tenant_member {
+        Some(m) => m,
+        None => return Json(CoreResponse::error("用户不属于该租户或租户已禁用")),
+    };
+
+    // 获取租户信息
     let tenant: Option<Tenant> = sqlx::query_as("SELECT * FROM core_tenants WHERE id = $1")
         .bind(tenant_id)
         .fetch_optional(&state.pool)
         .await
         .unwrap_or(None);
 
-    match tenant {
-        Some(_) => {
-            let context = TenantContext {
-                tenant_id,
-                user_id: Uuid::new_v4(),
-                role: "admin".to_string(),
-                permissions: vec![
-                    "tenant:read".to_string(),
-                    "tenant:write".to_string(),
-                    "data:read".to_string(),
-                    "data:write".to_string(),
-                ],
-            };
-            Json(CoreResponse::success(context, "Tenant switched"))
+    let tenant = match tenant {
+        Some(t) => t,
+        None => return Json(CoreResponse::error("Tenant not found")),
+    };
+
+    // 生成新的 JWT token（带新的 tenant_id）
+    let jwt_expire_minutes = state.auth_state.token_expiry_hours * 60;
+    let now = chrono::Utc::now();
+    let exp = (now + chrono::Duration::minutes(jwt_expire_minutes)).timestamp() as usize;
+
+    let new_claims = Claims {
+        sub: claims.sub.clone(),
+        username: claims.username.clone(),
+        role: claims.role.clone(),
+        roles: claims.roles.clone(),
+        permissions: claims.permissions.clone(),
+        is_superuser: claims.is_superuser,
+        exp,
+        iat: now.timestamp() as usize,
+        email: claims.email.clone(),
+        department: claims.department.clone(),
+        tenant_id: Some(tenant_id.to_string()),
+        department_id: claims.department_id.clone(),
+        position_id: claims.position_id.clone(),
+        position_code: claims.position_code.clone(),
+    };
+
+    let access_token = match new_claims.encode(&state.auth_state.jwt_secret) {
+        Ok(token) => token,
+        Err(e) => {
+            tracing::error!("JWT 编码失败: {:?}", e);
+            return Json(CoreResponse::error("Token 生成失败"));
         }
-        None => Json(CoreResponse::error("Tenant not found")),
-    }
+    };
+
+    let response = SwitchTenantResponse {
+        access_token,
+        token_type: "Bearer".to_string(),
+        expires_in: jwt_expire_minutes * 60,
+        tenant,
+    };
+
+    Json(CoreResponse::success(response, "Tenant switched"))
 }
 
 /// Get tenant by slug (alias for code)

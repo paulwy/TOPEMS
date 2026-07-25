@@ -1,0 +1,1 @@
+export { ticketSchema } from './ticket';

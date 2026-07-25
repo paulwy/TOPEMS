@@ -2,32 +2,88 @@
 //! Contains unified types and utilities for all core modules
 
 use axum::extract::FromRef;
+use reqwest::Client;
 use serde::{Deserialize, Serialize};
 use sqlx::PgPool;
 use std::sync::Arc;
-use topems_shared::{AuthState, SimpleHealthConfig};
+use topems_shared::{
+    AuditLoggerMiddleware, AuthState, BodyLimitMiddleware, CompressionMiddleware,
+    SecurityHeadersLayer, SimpleHealthConfig, SystemMetrics,
+};
 
+use crate::middleware::input_validation::InputValidationConfig;
 use crate::middleware::rate_limit::RateLimitMiddleware;
 use crate::middleware::versioning::VersionMiddleware;
+use crate::modules::communication::ws::WsState;
+use crate::modules::isolation::ModuleIsolationState;
 
+/// Application state shared across all unified-core handlers.
+///
+/// This is the single source of truth for `AppState`; both the library
+/// and binary crate use this definition.
 #[derive(Clone)]
 pub struct AppState {
-    pub auth_state: Arc<AuthState>,
+    pub auth_state: AuthState,
     pub pool: PgPool,
     pub health_config: SimpleHealthConfig,
+    pub ws_state: Arc<WsState>,
+    pub http_client: Client,
     pub rate_limit_middleware: Arc<RateLimitMiddleware>,
     pub versioning_middleware: Arc<VersionMiddleware>,
+    pub security_headers_layer: Arc<SecurityHeadersLayer>,
+    pub compression_middleware: Arc<CompressionMiddleware>,
+    pub body_limit_middleware: Arc<BodyLimitMiddleware>,
+    pub audit_logger_middleware: Arc<AuditLoggerMiddleware>,
+    pub input_validation_config: InputValidationConfig,
+    pub metrics: Arc<SystemMetrics>,
+    pub module_isolation: Option<Arc<ModuleIsolationState>>,
 }
 
 impl FromRef<AppState> for AuthState {
     fn from_ref(state: &AppState) -> Self {
-        (*state.auth_state).clone()
+        state.auth_state.clone()
+    }
+}
+
+impl FromRef<AppState> for Arc<WsState> {
+    fn from_ref(state: &AppState) -> Self {
+        state.ws_state.clone()
     }
 }
 
 impl FromRef<AppState> for Arc<RateLimitMiddleware> {
     fn from_ref(state: &AppState) -> Self {
         state.rate_limit_middleware.clone()
+    }
+}
+
+impl FromRef<AppState> for Arc<SecurityHeadersLayer> {
+    fn from_ref(state: &AppState) -> Self {
+        state.security_headers_layer.clone()
+    }
+}
+
+impl FromRef<AppState> for Arc<CompressionMiddleware> {
+    fn from_ref(state: &AppState) -> Self {
+        state.compression_middleware.clone()
+    }
+}
+
+impl FromRef<AppState> for Arc<BodyLimitMiddleware> {
+    fn from_ref(state: &AppState) -> Self {
+        state.body_limit_middleware.clone()
+    }
+}
+
+impl FromRef<AppState> for InputValidationConfig {
+    fn from_ref(state: &AppState) -> Self {
+        state.input_validation_config.clone()
+    }
+}
+
+impl FromRef<AppState> for Arc<AuditLoggerMiddleware> {
+    fn from_ref(state: &AppState) -> Self {
+        state.audit_logger_middleware.clone()
     }
 }
 

@@ -2,6 +2,7 @@ import apiClient from '../client';
 import type { ApiResponse } from '../client';
 
 import { sampleApi, lifecycleStageApi } from './sample';
+import { limsDashboardApi } from './dashboard';
 import { processApi, taskApi, recordApi } from './inspection';
 import { instrumentApi, maintenanceApi, instrumentDataApi } from './instrument';
 import { reagentApi } from './reagent';
@@ -28,6 +29,7 @@ export * from './types';
 export * from './utils';
 
 export { sampleApi, lifecycleStageApi } from './sample';
+export { limsDashboardApi } from './dashboard';
 export { processApi, taskApi, recordApi } from './inspection';
 export { instrumentApi, maintenanceApi, instrumentDataApi } from './instrument';
 export { reagentApi } from './reagent';
@@ -50,6 +52,7 @@ export { syncRecordApi } from './sync';
 export { auditLimsApi } from './audit';
 
 export const limsApi = {
+  dashboard: limsDashboardApi,
   samples: sampleApi,
   processes: processApi,
   tasks: taskApi,

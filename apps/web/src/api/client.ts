@@ -515,14 +515,6 @@ class ApiClient {
   get bi() {
     return this.clients.bi;
   }
-  /** @deprecated Use `bi` instead. analytics is an alias for BI service. */
-  get analytics() {
-    return this.clients.bi;
-  }
-  /** @deprecated Use `bi` instead. report is a sub-module of BI service. */
-  get report() {
-    return this.clients.bi;
-  }
   get gis() {
     return this.clients.gis;
   }
@@ -574,14 +566,17 @@ class ApiClient {
   get migration() {
     return this.clients.migration;
   }
-  get master() {
-    return this.clients.master;
-  }
   get monitor() {
     return this.clients.monitor;
   }
+  get master() {
+    return this.clients.master;
+  }
   get portal() {
     return this.clients.portal;
+  }
+  get search() {
+    return this.clients.search;
   }
 
   async get<T = unknown>(url: string, config?: AxiosRequestConfig): Promise<ApiResponse<T>> {

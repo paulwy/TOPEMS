@@ -275,7 +275,7 @@ pub async fn list_drill_plans(
     Extension(claims): Extension<Claims>,
     headers: HeaderMap,
 ) -> Json<ApiResponse<Vec<DrillPlan>>> {
-    let tenant_id = get_tenant_id(&claims, &headers);
+    let _tenant_id = get_tenant_id(&claims, &headers);
     tracing::info!("Listing drill plans");
     Json(ApiResponse::success(
         Vec::<DrillPlan>::new(),
@@ -391,7 +391,7 @@ pub async fn delete_drill_plan(
     headers: HeaderMap,
     axum::extract::Path(id): axum::extract::Path<String>,
 ) -> Json<ApiResponse<()>> {
-    let tenant_id = get_tenant_id(&claims, &headers);
+    let _tenant_id = get_tenant_id(&claims, &headers);
     tracing::info!("Deleting drill plan: {}", id);
     Json(ApiResponse::success((), "演练计划删除成功"))
 }
@@ -401,7 +401,7 @@ pub async fn list_drill_records(
     Extension(claims): Extension<Claims>,
     headers: HeaderMap,
 ) -> Json<ApiResponse<Vec<DrillRecord>>> {
-    let tenant_id = get_tenant_id(&claims, &headers);
+    let _tenant_id = get_tenant_id(&claims, &headers);
     tracing::info!("Listing drill records");
     Json(ApiResponse::success(
         Vec::<DrillRecord>::new(),
@@ -566,7 +566,7 @@ pub async fn delete_drill_record(
     headers: HeaderMap,
     axum::extract::Path(id): axum::extract::Path<String>,
 ) -> Json<ApiResponse<()>> {
-    let tenant_id = get_tenant_id(&claims, &headers);
+    let _tenant_id = get_tenant_id(&claims, &headers);
     tracing::info!("Deleting drill record: {}", id);
     Json(ApiResponse::success((), "演练记录删除成功"))
 }
@@ -607,7 +607,7 @@ pub async fn list_drill_problems(
     headers: HeaderMap,
     axum::extract::Path(id): axum::extract::Path<String>,
 ) -> Json<ApiResponse<Vec<DrillProblem>>> {
-    let tenant_id = get_tenant_id(&claims, &headers);
+    let _tenant_id = get_tenant_id(&claims, &headers);
     tracing::info!("Listing drill problems for: {}", id);
     Json(ApiResponse::success(
         Vec::<DrillProblem>::new(),
@@ -738,7 +738,7 @@ pub async fn list_drill_types(
     Extension(claims): Extension<Claims>,
     headers: HeaderMap,
 ) -> Json<ApiResponse<Vec<serde_json::Value>>> {
-    let tenant_id = get_tenant_id(&claims, &headers);
+    let _tenant_id = get_tenant_id(&claims, &headers);
     tracing::info!("Listing drill types");
     let types = vec![
         serde_json::json!({ "code": "fire", "name": "火灾演练" }),

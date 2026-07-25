@@ -2,12 +2,15 @@ import apiClient from '../client';
 import type { ApiResponse } from '../client';
 import type { PdmDocument } from './document';
 
+import { pdmDashboardApi } from './dashboard';
 import { bomApi } from './bom';
 import { documentApi } from './document';
 
 export * from './bom';
 export * from './project';
 export * from './document';
+
+export { pdmDashboardApi } from './dashboard';
 
 export type Document = import('./document').PdmDocument;
 
@@ -301,6 +304,7 @@ export interface CreateProductConfigRequest {
 }
 
 export const pdmApi = {
+  dashboard: pdmDashboardApi,
   ...bomApi,
   ...documentApi,
 

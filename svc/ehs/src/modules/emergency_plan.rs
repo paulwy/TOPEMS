@@ -196,7 +196,7 @@ pub async fn list_plans(
     Extension(claims): Extension<Claims>,
     headers: HeaderMap,
 ) -> Json<ApiResponse<Vec<EmergencyPlan>>> {
-    let tenant_id = get_tenant_id(&claims, &headers);
+    let _tenant_id = get_tenant_id(&claims, &headers);
     tracing::info!("Listing emergency plans");
     Json(ApiResponse::success(
         Vec::<EmergencyPlan>::new(),
@@ -395,7 +395,7 @@ pub async fn delete_plan(
     headers: HeaderMap,
     axum::extract::Path(id): axum::extract::Path<String>,
 ) -> Json<ApiResponse<()>> {
-    let tenant_id = get_tenant_id(&claims, &headers);
+    let _tenant_id = get_tenant_id(&claims, &headers);
     tracing::info!("Deleting emergency plan: {}", id);
     Json(ApiResponse::success((), "应急预案删除成功"))
 }
@@ -406,7 +406,7 @@ pub async fn list_plan_supplies(
     headers: HeaderMap,
     axum::extract::Path(id): axum::extract::Path<String>,
 ) -> Json<ApiResponse<Vec<PlanSupply>>> {
-    let tenant_id = get_tenant_id(&claims, &headers);
+    let _tenant_id = get_tenant_id(&claims, &headers);
     tracing::info!("Listing supplies for plan: {}", id);
     Json(ApiResponse::success(
         Vec::<PlanSupply>::new(),
@@ -448,7 +448,7 @@ pub async fn delete_plan_supply(
     headers: HeaderMap,
     axum::extract::Path((_plan_id, supply_id)): axum::extract::Path<(String, String)>,
 ) -> Json<ApiResponse<()>> {
-    let tenant_id = get_tenant_id(&claims, &headers);
+    let _tenant_id = get_tenant_id(&claims, &headers);
     tracing::info!("Deleting supply: {}", supply_id);
     Json(ApiResponse::success((), "应急物资删除成功"))
 }
@@ -523,7 +523,7 @@ pub async fn list_plan_versions(
     headers: HeaderMap,
     axum::extract::Path(id): axum::extract::Path<String>,
 ) -> Json<ApiResponse<Vec<PlanVersion>>> {
-    let tenant_id = get_tenant_id(&claims, &headers);
+    let _tenant_id = get_tenant_id(&claims, &headers);
     tracing::info!("Listing versions for plan: {}", id);
     Json(ApiResponse::success(
         Vec::<PlanVersion>::new(),
@@ -564,7 +564,7 @@ pub async fn list_plan_categories(
     Extension(claims): Extension<Claims>,
     headers: HeaderMap,
 ) -> Json<ApiResponse<Vec<serde_json::Value>>> {
-    let tenant_id = get_tenant_id(&claims, &headers);
+    let _tenant_id = get_tenant_id(&claims, &headers);
     tracing::info!("Listing plan categories");
     let categories = vec![
         serde_json::json!({ "code": "fire", "name": "火灾", "icon": "flame" }),

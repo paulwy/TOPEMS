@@ -60,7 +60,7 @@ pub async fn list_records(
     Extension(claims): Extension<Claims>,
     headers: HeaderMap,
 ) -> Json<ApiResponse<Vec<EnvironmentRecord>>> {
-    let tenant_id = get_tenant_id(&claims, &headers);
+    let _tenant_id = get_tenant_id(&claims, &headers);
     tracing::info!("Listing environment records");
     Json(ApiResponse::success(
         Vec::<EnvironmentRecord>::new(),

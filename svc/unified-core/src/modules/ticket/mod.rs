@@ -1,7 +1,14 @@
-//! V15 Phase 4: 工单体系 MVP
+#![allow(dead_code)]
+//! # [DEPRECATED] Ticket 模块已迁移为独立微服务
 //!
-//! 统一工单（Ticket）服务：为对账差异、流程异常、系统告警等场景提供工单闭环。
-//! 核心字段：工单号、来源、类型、严重级别、状态、SLA 截止、负责人、关联业务单据。
+//! 本模块已废弃，请使用独立服务 `svc/ticket`（端口 8086）。
+//!
+//! ## 迁移说明
+//! - 独立服务路径：`svc/ticket/`
+//! - API 路由：`/api/ticket/*`
+//! - 旧路由别名：`/api/core/ticket/*`（通过反向代理兼容）
+//!
+//! 本模块代码保留用于参考，将在未来版本中移除。
 
 pub mod handlers;
 pub mod models;

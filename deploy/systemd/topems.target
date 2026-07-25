@@ -1,26 +1,30 @@
 [Unit]
 Description=TOPEMS Enterprise Management System
 Documentation=https://github.com/topems/topems
+After=network.target postgresql.service redis.service
 
-[Install]
-WantedBy=multi-user.target
-
-[Unit]
 Requires=topems-unified-core.service
 Requires=topems-ai.service
 Requires=topems-analytics.service
-Requires=topems-manufacturing.service
-Requires=topems-quality-assurance.service
-Requires=topems-hrm.service
 Requires=topems-crm.service
-Requires=topems-pm.service
+Requires=topems-ehs.service
 Requires=topems-erp.service
+Requires=topems-finance.service
 Requires=topems-gis.service
-Requires=topems-rs.service
-Requires=topems-scm.service
-Requires=topems-wms.service
+Requires=topems-hrm.service
+Requires=topems-integration.service
+Requires=topems-lims.service
+Requires=topems-master-data.service
+Requires=topems-mes.service
 Requires=topems-mobile.service
-Requires=topems-monitor.service
+Requires=topems-pdm.service
+Requires=topems-pm.service
 Requires=topems-portal.service
+Requires=topems-qms.service
+Requires=topems-rd.service
+Requires=topems-scm.service
+Requires=topems-srm.service
+Requires=topems-wms.service
 
-After=network.target postgresql.service redis.service
+[Install]
+WantedBy=multi-user.target

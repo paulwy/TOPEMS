@@ -21,6 +21,7 @@ dotenv.workspace = true
 thiserror.workspace = true
 anyhow.workspace = true
 topems-shared = { path = "../../lib" }
+topems-shared-service-client = { path = "../../lib/shared-service-client" }
 utoipa.workspace = true
 utoipa-swagger-ui.workspace = true
 futures.workspace = true

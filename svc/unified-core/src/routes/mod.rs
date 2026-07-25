@@ -6,13 +6,13 @@
 //! that the caller finalises with telemetry, CORS, prometheus and state.
 
 mod communication;
+mod doc;
 mod file;
 mod flow;
 mod help;
 mod iam;
 mod master;
 mod migration;
-mod mobile;
 mod monitor;
 mod plugin;
 mod system;
@@ -58,6 +58,8 @@ pub fn create_routes(
             get(modules::plugin::handlers::list_plugins_with_status),
         )
         .route("/api/plugins/health", get(handlers::plugin_health_check))
+        // Monitor public health endpoint (no auth required)
+        .route("/api/monitor/health", get(handlers::detailed_health))
         .route("/metrics", get(move || async move { metrics_render() }))
         // WebSocket endpoints (auth handled via token query param or subscribe message)
         // Unified WebSocket routes with module prefix
@@ -124,10 +126,10 @@ pub fn create_routes(
         .merge(communication::communication_routes(state))
         .merge(master::master_routes(state))
         .merge(plugin::plugin_routes(state))
-        .merge(mobile::mobile_sync_routes(state))
         .merge(help::help_routes(state))
         .merge(monitor::monitor_routes(state))
         .merge(system::system_routes(state))
+        .merge(doc::doc_routes(state))
         .merge(modules::login_log::create_routes(state.clone()))
         .merge(modules::search::create_routes(state.clone()))
         .merge(modules::feedback::create_routes(state.clone()))
@@ -148,15 +150,9 @@ pub fn create_routes(
         core_routes,
     );
 
-    // ===== Legacy routes (non-core-prefixed, kept for backward compat) =====
-    let legacy_routes = flow::flow_legacy_routes(state)
-        .merge(migration::migration_routes(state))
-        .merge(modules::mobile::create_mobile_routes(state));
-
     Router::new()
         .merge(public_routes)
         .merge(core_router)
-        .merge(legacy_routes)
         .layer(axum::middleware::from_fn_with_state(
             state.clone(),
             middleware::input_validation::input_validation_middleware,

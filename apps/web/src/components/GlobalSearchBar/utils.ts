@@ -4,13 +4,15 @@ import type { GroupedResults, SearchFilter, SearchFilterOption } from './types';
 export const SEARCH_HISTORY_KEY = 'topems_search_history';
 export const MAX_HISTORY_ITEMS = 10;
 
-export const moduleLabels: Record<string, string> = {
-  user: '用户管理',
-  customer: '客户管理',
-  order: '订单管理',
-  product: '产品管理',
-  document: '文档中心',
-  admin: '系统管理',
+export const serviceLabels: Record<string, string> = {
+  erp: 'ERP系统',
+  crm: '客户管理',
+  bi: '商业智能',
+  notification: '通知中心',
+  doc: '文档中心',
+  hrm: '人力资源',
+  workflow: '审批中心',
+  mes: '生产制造',
 };
 
 export const typeLabels: Record<string, string> = {
@@ -74,35 +76,46 @@ export const searchSuggestions = [
   '消息通知',
 ];
 
-export const getModuleLabel = (module: string) => {
-  return moduleLabels[module] || module;
+export const getServiceLabel = (service: string) => {
+  return serviceLabels[service] || service;
+};
+
+export const getServiceColor = (service: string, theme: any) => {
+  const colors: Record<string, string> = {
+    erp: theme.palette.primary.main,
+    crm: theme.palette.success.main,
+    bi: theme.palette.warning.main,
+    doc: theme.palette.info.main,
+    hrm: theme.palette.secondary.main,
+    workflow: theme.palette.error.main,
+    mes: theme.palette.primary.dark,
+    notification: theme.palette.info.dark,
+  };
+  return colors[service] || theme.palette.text.secondary;
 };
 
 export const getModuleColor = (module: string, theme: any) => {
-  const colors: Record<string, string> = {
-    user: theme.palette.primary.main,
-    customer: theme.palette.success.main,
-    order: theme.palette.warning.main,
-    product: theme.palette.secondary.main,
-    document: theme.palette.info.main,
-    admin: theme.palette.error.main,
-  };
-  return colors[module] || theme.palette.text.secondary;
+  return getServiceColor(module, theme);
+};
+
+export const groupResultsByService = (results: SearchResult[]): GroupedResults[] => {
+  const groups = new Map<string, SearchResult[]>();
+  results.forEach((result) => {
+    if (!groups.has(result.service)) {
+      groups.set(result.service, []);
+    }
+    groups.get(result.service)!.push(result);
+  });
+  return Array.from(groups.entries()).map(([service, results]) => ({
+    service,
+    module: service,
+    label: getServiceLabel(service),
+    results,
+  }));
 };
 
 export const groupResultsByModule = (results: SearchResult[]): GroupedResults[] => {
-  const groups = new Map<string, SearchResult[]>();
-  results.forEach((result) => {
-    if (!groups.has(result.module)) {
-      groups.set(result.module, []);
-    }
-    groups.get(result.module)!.push(result);
-  });
-  return Array.from(groups.entries()).map(([module, results]) => ({
-    module,
-    label: getModuleLabel(module),
-    results,
-  }));
+  return groupResultsByService(results);
 };
 
 export const loadSearchHistory = (): string[] => {
@@ -149,27 +162,27 @@ export const fuzzySearch = (results: SearchResult[], query: string): SearchResul
   if (!query.trim()) return results;
 
   return results.filter((result) => {
-    const searchText = `${result.title} ${result.description || ''} ${result.type_name || ''}`;
+    const searchText = `${result.title} ${result.summary || ''} ${result.result_type || ''}`;
     return fuzzyMatch(searchText, query);
   });
 };
 
 export const filterResults = (results: SearchResult[], filter: SearchFilter): SearchResult[] => {
   return results.filter((result) => {
-    if (filter.module && result.module !== filter.module) return false;
-    if (filter.type && result.type_name !== filter.type) return false;
+    if (filter.service && result.service !== filter.service) return false;
+    if (filter.type && result.result_type !== filter.type) return false;
     return true;
   });
 };
 
-export const getAvailableModules = (results: SearchResult[]): SearchFilterOption[] => {
-  const moduleCounts = new Map<string, number>();
+export const getAvailableServices = (results: SearchResult[]): SearchFilterOption[] => {
+  const serviceCounts = new Map<string, number>();
   results.forEach((result) => {
-    moduleCounts.set(result.module, (moduleCounts.get(result.module) || 0) + 1);
+    serviceCounts.set(result.service, (serviceCounts.get(result.service) || 0) + 1);
   });
-  return Array.from(moduleCounts.entries()).map(([value, count]) => ({
+  return Array.from(serviceCounts.entries()).map(([value, count]) => ({
     value,
-    label: getModuleLabel(value),
+    label: getServiceLabel(value),
     count,
   }));
 };
@@ -177,7 +190,7 @@ export const getAvailableModules = (results: SearchResult[]): SearchFilterOption
 export const getAvailableTypes = (results: SearchResult[]): SearchFilterOption[] => {
   const typeCounts = new Map<string, number>();
   results.forEach((result) => {
-    const type = result.type_name || result.module;
+    const type = result.result_type || result.service;
     typeCounts.set(type, (typeCounts.get(type) || 0) + 1);
   });
   return Array.from(typeCounts.entries()).map(([value, count]) => ({

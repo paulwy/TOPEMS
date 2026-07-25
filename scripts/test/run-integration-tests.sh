@@ -61,7 +61,7 @@ get_package_name() {
     case "$service" in
         unified-core)   echo "unified-core-service" ;;
         finance)        echo "topems-finance" ;;
-        master-data)    echo "topems-metadata" ;;
+        master-data)    echo "topems-master-data" ;;
         portal)         echo "topems-portal" ;;
         mobile)         echo "topems-mobile" ;;
         crm)            echo "topems-crm" ;;

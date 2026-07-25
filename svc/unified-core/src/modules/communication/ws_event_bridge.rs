@@ -1,3 +1,5 @@
+#![allow(unused_imports)]
+
 //! WebSocket 事件桥接器
 //!
 //! 将 Redis 事件总线的事件实时转发到 WebSocket 连接的前端客户端。

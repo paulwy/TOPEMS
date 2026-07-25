@@ -280,7 +280,15 @@ impl TicketSlaService {
             }
 
             if let Some(hours) = hours {
-                let escalation_due = ticket.created_at + Duration::seconds((hours * 3600.0) as i64);
+                // V51.0 修复: 复用 calculate_due_time 确保升级点与 SLA 截止时间计算一致
+                let escalation_due = Self::calculate_due_time(
+                    ticket.created_at,
+                    *hours,
+                    policy.working_hours_only,
+                    policy.business_hours_start.as_deref(),
+                    policy.business_hours_end.as_deref(),
+                    policy.weekend_excluded,
+                );
 
                 let already_escalated =
                     sla_info.escalation_history.iter().any(|e| e.level == level);

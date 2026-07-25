@@ -19,7 +19,8 @@ mod shared_services;
 pub mod financial_reports;
 
 use axum::{
-    extract::{Json, Path, Query, State},
+    extract::{Json, Multipart, Path, Query, State},
+    response::IntoResponse,
     Extension, Router,
 };
 use chrono::{DateTime, Utc};
@@ -1416,6 +1417,517 @@ async fn apply_template_handler(
     }
 }
 
+// ========== V40.0 Phase 8 扩展: 凭证模板复制/切换/匹配/统计 ==========
+
+#[derive(Debug, Deserialize)]
+pub struct CopyTemplateRequest {
+    pub new_code: Option<String>,
+    pub new_name: String,
+}
+
+async fn copy_template_handler(
+    State(state): State<AppState>,
+    Extension(claims): Extension<Claims>,
+    Path(template_id): Path<Uuid>,
+    Json(req): Json<CopyTemplateRequest>,
+) -> Json<ApiResponse<serde_json::Value>> {
+    let service = FinanceService::new(state.pool.clone(), state.workflow_client.clone());
+    let tenant_id = get_tenant_id(&claims);
+    let created_by = claims.username.clone();
+    let source = match service.get_voucher_template(tenant_id, template_id).await {
+        Ok(t) => t,
+        Err(e) => return Json(ApiResponse::error(500, &e.to_string())),
+    };
+    let lines: Vec<crate::services::finance::voucher_template::CreateVoucherTemplateLineRequest> = source
+        .lines
+        .iter()
+        .map(|l| crate::services::finance::voucher_template::CreateVoucherTemplateLineRequest {
+            description: l.description.clone(),
+            account_code: l.account_code.clone(),
+            direction: l.direction.clone(),
+            amount_formula: l.amount_formula.clone(),
+            sort_order: Some(l.sort_order),
+        })
+        .collect();
+    let create_req = crate::services::finance::voucher_template::CreateVoucherTemplateRequest {
+        name: req.new_name,
+        description: source.description.clone(),
+        voucher_type: source.voucher_type.clone(),
+        default_debit_account: source.default_debit_account.clone(),
+        default_credit_account: source.default_credit_account.clone(),
+        lines,
+    };
+    match service
+        .create_voucher_template(tenant_id, create_req, &created_by)
+        .await
+    {
+        Ok(template) => Json(ApiResponse::success(
+            serde_json::to_value(template).unwrap_or(serde_json::json!({})),
+            "复制成功",
+        )),
+        Err(e) => Json(ApiResponse::error(500, &e.to_string())),
+    }
+}
+
+#[derive(Debug, Deserialize)]
+pub struct ToggleTemplateRequest {
+    pub isactive: bool,
+}
+
+async fn toggle_template_handler(
+    State(state): State<AppState>,
+    Extension(claims): Extension<Claims>,
+    Path(template_id): Path<Uuid>,
+    Json(req): Json<ToggleTemplateRequest>,
+) -> Json<ApiResponse<serde_json::Value>> {
+    let tenant_id = get_tenant_id(&claims);
+    let new_status = if req.isactive { "active" } else { "inactive" };
+    let now = Utc::now();
+    let res = sqlx::query(
+        "UPDATE finance_voucher_templates SET status = $1, updated_at = $2 WHERE tenant_id = $3 AND id = $4",
+    )
+    .bind(new_status)
+    .bind(now)
+    .bind(tenant_id)
+    .bind(template_id)
+    .execute(&state.pool)
+    .await;
+    match res {
+        Ok(r) => {
+            if r.rows_affected() == 0 {
+                return Json(ApiResponse::error(404, "凭证模板不存在"));
+            }
+            let service =
+                FinanceService::new(state.pool.clone(), state.workflow_client.clone());
+            match service.get_voucher_template(tenant_id, template_id).await {
+                Ok(template) => {
+                    let mut val =
+                        serde_json::to_value(template).unwrap_or(serde_json::json!({}));
+                    if let Some(obj) = val.as_object_mut() {
+                        obj.insert("isactive".to_string(), serde_json::json!(req.isactive));
+                    }
+                    Json(ApiResponse::success(val, "切换成功"))
+                }
+                Err(e) => Json(ApiResponse::error(500, &e.to_string())),
+            }
+        }
+        Err(e) => Json(ApiResponse::error(500, &e.to_string())),
+    }
+}
+
+#[derive(Debug, Deserialize)]
+pub struct MatchTemplateRequest {
+    pub source_module: Option<String>,
+    pub source_type: Option<String>,
+    pub company_id: Option<String>,
+    pub amount: Option<f64>,
+    pub extra_data: Option<serde_json::Value>,
+}
+
+async fn match_template_handler(
+    State(state): State<AppState>,
+    Extension(claims): Extension<Claims>,
+    Json(req): Json<MatchTemplateRequest>,
+) -> Json<ApiResponse<serde_json::Value>> {
+    let tenant_id = get_tenant_id(&claims);
+    let source_type = match req.source_type {
+        Some(s) => s,
+        None => return Json(ApiResponse::error(400, "source_type 为必填")),
+    };
+    let rule: Option<crate::services::finance::voucher_generation::VoucherGenerationRule> = match sqlx::query_as(
+        "SELECT * FROM finance_voucher_generation_rules WHERE tenant_id = $1 AND source_type = $2 AND status = 'active' ORDER BY priority ASC LIMIT 1",
+    )
+    .bind(tenant_id)
+    .bind(&source_type)
+    .fetch_optional(&state.pool)
+    .await
+    {
+        Ok(r) => r,
+        Err(e) => return Json(ApiResponse::error(500, &e.to_string())),
+    };
+    match rule {
+        Some(r) => {
+            let template_id_opt = r
+                .mapping_config
+                .get("template_id")
+                .and_then(|v| v.as_str())
+                .and_then(|s| Uuid::parse_str(s).ok());
+            let template_val = if let Some(tid) = template_id_opt {
+                let service =
+                    FinanceService::new(state.pool.clone(), state.workflow_client.clone());
+                match service.get_voucher_template(tenant_id, tid).await {
+                    Ok(t) => serde_json::to_value(t).unwrap_or(serde_json::json!(null)),
+                    Err(_) => serde_json::json!(null),
+                }
+            } else {
+                serde_json::json!(null)
+            };
+            Json(ApiResponse::success(
+                serde_json::json!({
+                    "matched": true,
+                    "rule": serde_json::to_value(&r).unwrap_or(serde_json::json!({})),
+                    "template": template_val,
+                }),
+                "匹配成功",
+            ))
+        }
+        None => Json(ApiResponse::success(
+            serde_json::json!({
+                "matched": false,
+                "rule": null,
+                "template": null,
+            }),
+            "未找到匹配的规则",
+        )),
+    }
+}
+
+#[derive(Debug, Deserialize)]
+pub struct UsageStatsQueryParams {
+    pub start_date: Option<String>,
+    pub end_date: Option<String>,
+}
+
+async fn get_template_usage_stats_handler(
+    State(state): State<AppState>,
+    Extension(claims): Extension<Claims>,
+    Path(template_id): Path<Uuid>,
+    Query(_params): Query<UsageStatsQueryParams>,
+) -> Json<ApiResponse<serde_json::Value>> {
+    let tenant_id = get_tenant_id(&claims);
+    let rule_count: i64 = sqlx::query_scalar(
+        "SELECT COUNT(*) FROM finance_voucher_generation_rules WHERE tenant_id = $1 AND mapping_config->>'template_id' = $2",
+    )
+    .bind(tenant_id)
+    .bind(template_id.to_string())
+    .fetch_one(&state.pool)
+    .await
+    .unwrap_or(0);
+    Json(ApiResponse::success(
+        serde_json::json!({
+            "template_id": template_id,
+            "usage_count": rule_count,
+            "generated_voucher_count": 0,
+            "last_used_at": null,
+        }),
+        "查询成功",
+    ))
+}
+
+// ========== 模板分录 CRUD ==========
+
+#[derive(Debug, Deserialize)]
+pub struct AddTemplateEntryRequest {
+    pub description: Option<String>,
+    pub account_code: String,
+    pub direction: String,
+    pub amount_formula: Option<String>,
+    pub sort_order: Option<i32>,
+}
+
+async fn add_template_entry_handler(
+    State(state): State<AppState>,
+    Extension(claims): Extension<Claims>,
+    Path(template_id): Path<Uuid>,
+    Json(req): Json<AddTemplateEntryRequest>,
+) -> Json<ApiResponse<serde_json::Value>> {
+    let tenant_id = get_tenant_id(&claims);
+    let count: i64 = sqlx::query_scalar(
+        "SELECT COUNT(*) FROM finance_voucher_templates WHERE tenant_id = $1 AND id = $2",
+    )
+    .bind(tenant_id)
+    .bind(template_id)
+    .fetch_one(&state.pool)
+    .await
+    .unwrap_or(0);
+    if count == 0 {
+        return Json(ApiResponse::error(404, "凭证模板不存在"));
+    }
+    let sort_order: i32 = match req.sort_order {
+        Some(s) => s,
+        None => {
+            let max_order: i32 = sqlx::query_scalar(
+                "SELECT COALESCE(MAX(sort_order), 0) FROM finance_voucher_template_lines WHERE template_id = $1",
+            )
+            .bind(template_id)
+            .fetch_one(&state.pool)
+            .await
+            .unwrap_or(0);
+            max_order + 1
+        }
+    };
+    let line_id = Uuid::new_v4();
+    let now = Utc::now();
+    let line: Result<
+        crate::services::finance::voucher_template::VoucherTemplateLine,
+        sqlx::Error,
+    > = sqlx::query_as(
+        r#"INSERT INTO finance_voucher_template_lines
+            (id, template_id, description, account_code, direction, amount_formula, sort_order, created_at)
+           VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
+           RETURNING *"#,
+    )
+    .bind(line_id)
+    .bind(template_id)
+    .bind(&req.description)
+    .bind(&req.account_code)
+    .bind(&req.direction)
+    .bind(&req.amount_formula)
+    .bind(sort_order)
+    .bind(now)
+    .fetch_one(&state.pool)
+    .await;
+    match line {
+        Ok(l) => Json(ApiResponse::success(
+            serde_json::to_value(l).unwrap_or(serde_json::json!({})),
+            "新增分录成功",
+        )),
+        Err(e) => Json(ApiResponse::error(500, &e.to_string())),
+    }
+}
+
+#[derive(Debug, Deserialize)]
+pub struct UpdateTemplateEntryRequest {
+    pub description: Option<String>,
+    pub account_code: Option<String>,
+    pub direction: Option<String>,
+    pub amount_formula: Option<String>,
+    pub sort_order: Option<i32>,
+}
+
+async fn update_template_entry_handler(
+    State(state): State<AppState>,
+    Extension(claims): Extension<Claims>,
+    Path((template_id, entry_id)): Path<(Uuid, Uuid)>,
+    Json(req): Json<UpdateTemplateEntryRequest>,
+) -> Json<ApiResponse<serde_json::Value>> {
+    let tenant_id = get_tenant_id(&claims);
+    let owns: i64 = sqlx::query_scalar(
+        "SELECT COUNT(*) FROM finance_voucher_template_lines l JOIN finance_voucher_templates t ON l.template_id = t.id WHERE t.tenant_id = $1 AND l.template_id = $2 AND l.id = $3",
+    )
+    .bind(tenant_id)
+    .bind(template_id)
+    .bind(entry_id)
+    .fetch_one(&state.pool)
+    .await
+    .unwrap_or(0);
+    if owns == 0 {
+        return Json(ApiResponse::error(404, "模板分录不存在"));
+    }
+    let existing: crate::services::finance::voucher_template::VoucherTemplateLine =
+        match sqlx::query_as("SELECT * FROM finance_voucher_template_lines WHERE id = $1")
+            .bind(entry_id)
+            .fetch_one(&state.pool)
+            .await
+        {
+            Ok(l) => l,
+            Err(e) => return Json(ApiResponse::error(500, &e.to_string())),
+        };
+    let description = req.description.or(existing.description);
+    let account_code = req.account_code.unwrap_or(existing.account_code);
+    let direction = req.direction.unwrap_or(existing.direction);
+    let amount_formula = req.amount_formula.or(existing.amount_formula);
+    let sort_order = req.sort_order.unwrap_or(existing.sort_order);
+    let line: Result<
+        crate::services::finance::voucher_template::VoucherTemplateLine,
+        sqlx::Error,
+    > = sqlx::query_as(
+        r#"UPDATE finance_voucher_template_lines
+              SET description = $1, account_code = $2, direction = $3,
+                  amount_formula = $4, sort_order = $5
+            WHERE id = $6
+           RETURNING *"#,
+    )
+    .bind(description)
+    .bind(account_code)
+    .bind(direction)
+    .bind(amount_formula)
+    .bind(sort_order)
+    .bind(entry_id)
+    .fetch_one(&state.pool)
+    .await;
+    match line {
+        Ok(l) => Json(ApiResponse::success(
+            serde_json::to_value(l).unwrap_or(serde_json::json!({})),
+            "更新分录成功",
+        )),
+        Err(e) => Json(ApiResponse::error(500, &e.to_string())),
+    }
+}
+
+async fn delete_template_entry_handler(
+    State(state): State<AppState>,
+    Extension(claims): Extension<Claims>,
+    Path((template_id, entry_id)): Path<(Uuid, Uuid)>,
+) -> Json<ApiResponse<serde_json::Value>> {
+    let tenant_id = get_tenant_id(&claims);
+    let res = sqlx::query(
+        "DELETE FROM finance_voucher_template_lines WHERE id = $1 AND template_id = $2 AND EXISTS (SELECT 1 FROM finance_voucher_templates WHERE id = $2 AND tenant_id = $3)",
+    )
+    .bind(entry_id)
+    .bind(template_id)
+    .bind(tenant_id)
+    .execute(&state.pool)
+    .await;
+    match res {
+        Ok(r) => {
+            if r.rows_affected() == 0 {
+                return Json(ApiResponse::error(404, "模板分录不存在"));
+            }
+            Json(ApiResponse::success(
+                serde_json::json!({"deleted": true, "entry_id": entry_id}),
+                "删除分录成功",
+            ))
+        }
+        Err(e) => Json(ApiResponse::error(500, &e.to_string())),
+    }
+}
+
+#[derive(Debug, Deserialize)]
+pub struct ReorderEntriesRequest {
+    pub entry_ids: Vec<Uuid>,
+}
+
+async fn reorder_template_entries_handler(
+    State(state): State<AppState>,
+    Extension(claims): Extension<Claims>,
+    Path(template_id): Path<Uuid>,
+    Json(req): Json<ReorderEntriesRequest>,
+) -> Json<ApiResponse<serde_json::Value>> {
+    let tenant_id = get_tenant_id(&claims);
+    let count: i64 = sqlx::query_scalar(
+        "SELECT COUNT(*) FROM finance_voucher_templates WHERE tenant_id = $1 AND id = $2",
+    )
+    .bind(tenant_id)
+    .bind(template_id)
+    .fetch_one(&state.pool)
+    .await
+    .unwrap_or(0);
+    if count == 0 {
+        return Json(ApiResponse::error(404, "凭证模板不存在"));
+    }
+    for (idx, entry_id) in req.entry_ids.iter().enumerate() {
+        let sort_order = (idx + 1) as i32;
+        if let Err(e) = sqlx::query(
+            "UPDATE finance_voucher_template_lines SET sort_order = $1 WHERE id = $2 AND template_id = $3",
+        )
+        .bind(sort_order)
+        .bind(entry_id)
+        .bind(template_id)
+        .execute(&state.pool)
+        .await
+        {
+            return Json(ApiResponse::error(500, &e.to_string()));
+        }
+    }
+    let lines: Result<
+        Vec<crate::services::finance::voucher_template::VoucherTemplateLine>,
+        sqlx::Error,
+    > = sqlx::query_as(
+        "SELECT * FROM finance_voucher_template_lines WHERE template_id = $1 ORDER BY sort_order, created_at",
+    )
+    .bind(template_id)
+    .fetch_all(&state.pool)
+    .await;
+    match lines {
+        Ok(ls) => {
+            let json_lines: Vec<serde_json::Value> = ls
+                .iter()
+                .map(|l| serde_json::to_value(l).unwrap_or(serde_json::json!({})))
+                .collect();
+            Json(ApiResponse::success(
+                serde_json::json!({"template_id": template_id, "entries": json_lines}),
+                "重排成功",
+            ))
+        }
+        Err(e) => Json(ApiResponse::error(500, &e.to_string())),
+    }
+}
+
+// ========== 模板导入导出 ==========
+
+#[derive(Debug, Deserialize)]
+pub struct ExportQueryParams {
+    pub format: Option<String>,
+}
+
+async fn export_template_handler(
+    State(state): State<AppState>,
+    Extension(claims): Extension<Claims>,
+    Path(template_id): Path<Uuid>,
+    Query(_params): Query<ExportQueryParams>,
+) -> axum::response::Response {
+    let tenant_id = get_tenant_id(&claims);
+    let service = FinanceService::new(state.pool.clone(), state.workflow_client.clone());
+    let template = match service.get_voucher_template(tenant_id, template_id).await {
+        Ok(t) => t,
+        Err(e) => {
+            return Json(ApiResponse::<serde_json::Value>::error(500, &e.to_string()))
+                .into_response()
+        }
+    };
+    let json = serde_json::to_value(template).unwrap_or(serde_json::json!({}));
+    let filename = format!("template-{}.json", template_id);
+    (
+        [(
+            axum::http::header::CONTENT_DISPOSITION,
+            format!("attachment; filename=\"{}\"", filename),
+        )],
+        Json(json),
+    )
+        .into_response()
+}
+
+async fn import_template_handler(
+    State(state): State<AppState>,
+    Extension(claims): Extension<Claims>,
+    mut multipart: Multipart,
+) -> Json<ApiResponse<serde_json::Value>> {
+    let service = FinanceService::new(state.pool.clone(), state.workflow_client.clone());
+    let tenant_id = get_tenant_id(&claims);
+    let created_by = claims.username.clone();
+
+    let mut file_content: Option<Vec<u8>> = None;
+    while let Ok(Some(field)) = multipart.next_field().await {
+        let name = field.name().unwrap_or("").to_string();
+        if name == "file" {
+            let data = field.bytes().await.unwrap_or_default();
+            file_content = Some(data.to_vec());
+        }
+    }
+
+    let file_data = match file_content {
+        Some(data) => data,
+        None => return Json(ApiResponse::error(400, "缺少 file 字段")),
+    };
+
+    let json_str = match String::from_utf8(file_data) {
+        Ok(s) => s,
+        Err(e) => return Json(ApiResponse::error(400, &format!("文件编码错误: {}", e))),
+    };
+
+    let template_data: serde_json::Value = match serde_json::from_str(&json_str) {
+        Ok(v) => v,
+        Err(e) => return Json(ApiResponse::error(400, &format!("JSON 解析失败: {}", e))),
+    };
+
+    let create_req: crate::services::finance::voucher_template::CreateVoucherTemplateRequest =
+        match serde_json::from_value(template_data) {
+            Ok(r) => r,
+            Err(e) => return Json(ApiResponse::error(400, &format!("参数错误: {}", e))),
+        };
+    match service
+        .create_voucher_template(tenant_id, create_req, &created_by)
+        .await
+    {
+        Ok(template) => Json(ApiResponse::success(
+            serde_json::to_value(template).unwrap_or(serde_json::json!({})),
+            "导入成功",
+        )),
+        Err(e) => Json(ApiResponse::error(500, &e.to_string())),
+    }
+}
+
 // ========== V40.0 Phase 8: 凭证生成规则 ==========
 
 #[derive(Debug, Deserialize)]
@@ -1525,6 +2037,59 @@ async fn delete_generation_rule_handler(
     }
 }
 
+#[derive(Debug, Deserialize)]
+pub struct ToggleRuleRequest {
+    pub isactive: bool,
+}
+
+async fn toggle_generation_rule_handler(
+    State(state): State<AppState>,
+    Extension(claims): Extension<Claims>,
+    Path(rule_id): Path<Uuid>,
+    Json(req): Json<ToggleRuleRequest>,
+) -> Json<ApiResponse<serde_json::Value>> {
+    let tenant_id = get_tenant_id(&claims);
+    let new_status = if req.isactive { "active" } else { "inactive" };
+    let now = Utc::now();
+    let res = sqlx::query(
+        "UPDATE finance_voucher_generation_rules SET status = $1, updated_at = $2 WHERE tenant_id = $3 AND id = $4",
+    )
+    .bind(new_status)
+    .bind(now)
+    .bind(tenant_id)
+    .bind(rule_id)
+    .execute(&state.pool)
+    .await;
+    match res {
+        Ok(r) => {
+            if r.rows_affected() == 0 {
+                return Json(ApiResponse::error(404, "生成规则不存在"));
+            }
+            let rule: Result<
+                crate::services::finance::voucher_generation::VoucherGenerationRule,
+                sqlx::Error,
+            > = sqlx::query_as(
+                "SELECT * FROM finance_voucher_generation_rules WHERE tenant_id = $1 AND id = $2",
+            )
+            .bind(tenant_id)
+            .bind(rule_id)
+            .fetch_one(&state.pool)
+            .await;
+            match rule {
+                Ok(r) => {
+                    let mut val = serde_json::to_value(r).unwrap_or(serde_json::json!({}));
+                    if let Some(obj) = val.as_object_mut() {
+                        obj.insert("isactive".to_string(), serde_json::json!(req.isactive));
+                    }
+                    Json(ApiResponse::success(val, "切换成功"))
+                }
+                Err(e) => Json(ApiResponse::error(500, &e.to_string())),
+            }
+        }
+        Err(e) => Json(ApiResponse::error(500, &e.to_string())),
+    }
+}
+
 async fn test_rule_handler(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
@@ -1566,6 +2131,89 @@ async fn generate_vouchers_handler(
         )),
         Err(e) => Json(ApiResponse::error(500, &e.to_string())),
     }
+}
+
+// ========== 凭证自动生成（占位实现，返回 501 Not Implemented） ==========
+
+async fn preview_generated_vouchers_handler(
+    State(_state): State<AppState>,
+    Extension(_claims): Extension<Claims>,
+) -> (axum::http::StatusCode, Json<serde_json::Value>) {
+    (
+        axum::http::StatusCode::NOT_IMPLEMENTED,
+        Json(serde_json::json!({
+            "success": false,
+            "message": "此功能尚未实现",
+            "data": null,
+            "code": 501,
+            "todo": "凭证自动生成功能将在后续版本实现"
+        })),
+    )
+}
+
+async fn generate_voucher_from_source_handler(
+    State(_state): State<AppState>,
+    Extension(_claims): Extension<Claims>,
+) -> (axum::http::StatusCode, Json<serde_json::Value>) {
+    (
+        axum::http::StatusCode::NOT_IMPLEMENTED,
+        Json(serde_json::json!({
+            "success": false,
+            "message": "此功能尚未实现",
+            "data": null,
+            "code": 501,
+            "todo": "凭证自动生成功能将在后续版本实现"
+        })),
+    )
+}
+
+async fn batch_generate_vouchers_handler(
+    State(_state): State<AppState>,
+    Extension(_claims): Extension<Claims>,
+) -> (axum::http::StatusCode, Json<serde_json::Value>) {
+    (
+        axum::http::StatusCode::NOT_IMPLEMENTED,
+        Json(serde_json::json!({
+            "success": false,
+            "message": "此功能尚未实现",
+            "data": null,
+            "code": 501,
+            "todo": "凭证自动生成功能将在后续版本实现"
+        })),
+    )
+}
+
+async fn auto_generate_vouchers_handler(
+    State(_state): State<AppState>,
+    Extension(_claims): Extension<Claims>,
+) -> (axum::http::StatusCode, Json<serde_json::Value>) {
+    (
+        axum::http::StatusCode::NOT_IMPLEMENTED,
+        Json(serde_json::json!({
+            "success": false,
+            "message": "此功能尚未实现",
+            "data": null,
+            "code": 501,
+            "todo": "凭证自动生成功能将在后续版本实现"
+        })),
+    )
+}
+
+async fn regenerate_reversed_voucher_handler(
+    State(_state): State<AppState>,
+    Extension(_claims): Extension<Claims>,
+    Path(_original_voucher_id): Path<Uuid>,
+) -> (axum::http::StatusCode, Json<serde_json::Value>) {
+    (
+        axum::http::StatusCode::NOT_IMPLEMENTED,
+        Json(serde_json::json!({
+            "success": false,
+            "message": "此功能尚未实现",
+            "data": null,
+            "code": 501,
+            "todo": "凭证自动生成功能将在后续版本实现"
+        })),
+    )
 }
 
 // ========== V40.0 Phase 8: U8 导入 ==========
@@ -2475,6 +3123,74 @@ pub fn create_routes() -> Router<AppState> {
         .route(
             "/voucher-generation-rules/generate",
             axum::routing::post(generate_vouchers_handler),
+        )
+        // V40.0 Phase 8 扩展: 凭证模板复制/切换/匹配/统计/分录/导入导出
+        .route(
+            "/voucher-templates/match",
+            axum::routing::post(match_template_handler),
+        )
+        .route(
+            "/voucher-templates/import",
+            axum::routing::post(import_template_handler),
+        )
+        .route(
+            "/voucher-templates/{template_id}/copy",
+            axum::routing::post(copy_template_handler),
+        )
+        .route(
+            "/voucher-templates/{template_id}/toggle",
+            axum::routing::put(toggle_template_handler),
+        )
+        .route(
+            "/voucher-templates/{template_id}/usage-stats",
+            axum::routing::get(get_template_usage_stats_handler),
+        )
+        .route(
+            "/voucher-templates/{template_id}/export",
+            axum::routing::get(export_template_handler),
+        )
+        .route(
+            "/voucher-templates/{template_id}/entries",
+            axum::routing::post(add_template_entry_handler),
+        )
+        // 注意: reorder 必须在 entries/{entry_id} 之前注册以避免路径匹配冲突
+        .route(
+            "/voucher-templates/{template_id}/entries/reorder",
+            axum::routing::put(reorder_template_entries_handler),
+        )
+        .route(
+            "/voucher-templates/{template_id}/entries/{entry_id}",
+            axum::routing::put(update_template_entry_handler),
+        )
+        .route(
+            "/voucher-templates/{template_id}/entries/{entry_id}",
+            axum::routing::delete(delete_template_entry_handler),
+        )
+        // 凭证生成规则切换
+        .route(
+            "/voucher-generation-rules/{rule_id}/toggle",
+            axum::routing::put(toggle_generation_rule_handler),
+        )
+        // 凭证自动生成（占位实现，返回 501）
+        .route(
+            "/voucher/generate/preview",
+            axum::routing::post(preview_generated_vouchers_handler),
+        )
+        .route(
+            "/voucher/generate/from-source",
+            axum::routing::post(generate_voucher_from_source_handler),
+        )
+        .route(
+            "/voucher/generate/batch",
+            axum::routing::post(batch_generate_vouchers_handler),
+        )
+        .route(
+            "/voucher/generate/auto",
+            axum::routing::post(auto_generate_vouchers_handler),
+        )
+        .route(
+            "/voucher/generate/regenerate/{original_voucher_id}",
+            axum::routing::post(regenerate_reversed_voucher_handler),
         )
         // V40.0 Phase 8: U8 导入
         .route(

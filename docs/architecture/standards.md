@@ -290,7 +290,7 @@ HTTP Request → API Handler → Service → Model → Database
 | scm | /scm | 供应链 |
 | wms | /wms | 仓储管理 |
 | pm | /pm | 项目管理 |
-| rs | /rs | 研发管理 |
+| rd | /rd | 研发管理 |
 | ai | /ai | AI 服务 |
 | gis | /gis | 地理信息 |
 | workflow | /flow | 工作流（前端统一使用 workflow 命名） |

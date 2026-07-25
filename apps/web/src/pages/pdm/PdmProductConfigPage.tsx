@@ -1,296 +1,165 @@
-import React, { useState, useMemo, useCallback } from 'react';
-import {
-  Box,
-  Dialog,
-  DialogTitle,
-  DialogContent,
-  DialogActions,
-  TextField,
-  FormControl,
-  InputLabel,
-  Select,
-  MenuItem,
-  Grid,
-  Chip,
-  Checkbox,
-  FormGroup,
-  FormControlLabel,
-  Button,
-} from '@mui/material';
-import { Settings, Plus, Edit, Delete, Zap, Package, Shield } from 'lucide-react';
-import { pdmApi } from '@/api/pdm';
-import type { ProductConfig } from '@/api/pdm';
-import {
-  ListPageTemplate,
-  type ColumnDef,
-  type RowAction,
-  type FilterConfig,
-} from '@/components/templates';
-import { PageContainer } from '@/components/common/PageContainerV2';
+import React, { useMemo } from 'react';
+import { Box, Chip, Grid } from '@mui/material';
+import { Settings, Zap, Package, Shield } from 'lucide-react';
+import { useQuery } from '@tanstack/react-query';
+
+import CrudPage, { type CrudApiAdapter } from '@/components/templates/CrudPage';
+import type { ColumnDef } from '@/components/templates/list/types';
+import { PageContainer } from '@/components/common/PageContainer';
 import { designTokens } from '@/theme/tokens';
-import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { QUERY_KEYS } from '@/lib/reactQuery';
-import { useCrudMutations } from '@/hooks';
+import { pdmApi, type ProductConfig } from '@/api/pdm';
+import { productConfigSchema } from '@/schemas/pdm/productConfig';
 
 const ct = designTokens.colors;
 
-interface ConfigAttribute {
-  name: string;
-  type: 'select' | 'text' | 'number' | 'boolean';
-  values?: string[];
-  required: boolean;
-}
-
-interface FormData {
+interface FlatProductConfig {
+  id: string;
   name: string;
   code: string;
   status: string;
-  attributes: {
-    color: string;
-    size: string;
-    material: string;
-    grade: string;
+  color: string;
+  size: string;
+  material: string;
+  grade: string;
+  options: string[];
+  created_at: string;
+}
+
+function flattenConfig(config: ProductConfig): FlatProductConfig {
+  return {
+    id: config.id,
+    name: config.name,
+    code: config.code,
+    status: config.status,
+    color: config.attributes?.color || '',
+    size: config.attributes?.size || '',
+    material: config.attributes?.material || '',
+    grade: config.attributes?.grade || '',
+    options: config.options || [],
+    created_at: config.created_at,
   };
-  options: string[];
 }
 
-interface ProductConfigRequest {
-  name: string;
-  code: string;
-  status: string;
-  attributes: FormData['attributes'];
-  options: string[];
+function nestConfig(flat: Partial<FlatProductConfig>) {
+  return {
+    name: flat.name as string,
+    code: flat.code as string,
+    status: flat.status as string,
+    attributes: {
+      color: flat.color as string,
+      size: flat.size as string,
+      material: flat.material as string,
+      grade: flat.grade as string,
+    },
+    options: (flat.options as string[]) || [],
+  };
+}
+
+const apiAdapter: CrudApiAdapter = {
+  list: async () => {
+    const response = await pdmApi.listProductConfigs();
+    if (response.success && response.data) {
+      const data = response.data as unknown as Record<string, unknown>;
+      const items = Array.isArray(data) ? data : data.configs || [];
+      const flatItems = (items as ProductConfig[]).map(flattenConfig);
+      return { data: flatItems as unknown as Record<string, unknown>[], total: flatItems.length };
+    }
+    return { data: [], total: 0 };
+  },
+  create: async (data) => {
+    const response = await pdmApi.createProductConfig(
+      nestConfig(data as unknown as Partial<FlatProductConfig>)
+    );
+    if (response.success && response.data) {
+      return flattenConfig(response.data) as unknown as Record<string, unknown>;
+    }
+    throw new Error('创建失败');
+  },
+  update: async (id, data) => {
+    const response = await pdmApi.updateProductConfig(
+      id,
+      nestConfig(data as unknown as Partial<FlatProductConfig>)
+    );
+    if (response.success && response.data) {
+      return flattenConfig(response.data) as unknown as Record<string, unknown>;
+    }
+    throw new Error('更新失败');
+  },
+  delete: async (id) => {
+    const response = await pdmApi.deleteProductConfig(id);
+    if (!response.success) {
+      throw new Error('删除失败');
+    }
+  },
+};
+
+function getStatusColor(status: string): 'success' | 'warning' | 'error' | 'default' {
+  switch (status) {
+    case 'active':
+      return 'success';
+    case 'draft':
+      return 'warning';
+    case 'archived':
+      return 'error';
+    default:
+      return 'default';
+  }
+}
+
+function getStatusLabel(status: string): string {
+  switch (status) {
+    case 'active':
+      return '启用';
+    case 'draft':
+      return '草稿';
+    case 'archived':
+      return '归档';
+    default:
+      return status;
+  }
 }
 
 export const PdmProductConfigPage: React.FC = () => {
-  const queryClient = useQueryClient();
-  const [searchTerm, setSearchTerm] = useState('');
-  const [statusFilter, setStatusFilter] = useState('');
-  const [openDialog, setOpenDialog] = useState(false);
-  const [editingConfig, setEditingConfig] = useState<ProductConfig | null>(null);
-  const [formData, setFormData] = useState<FormData>({
-    name: '',
-    code: '',
-    status: 'draft',
-    attributes: {
-      color: '',
-      size: '',
-      material: '',
-      grade: '',
-    },
-    options: [],
-  });
-  const configAttributes: ConfigAttribute[] = [
-    {
-      name: '颜色',
-      type: 'select',
-      values: ['红色', '蓝色', '绿色', '黑色', '白色'],
-      required: true,
-    },
-    {
-      name: '尺寸',
-      type: 'select',
-      values: ['S', 'M', 'L', 'XL', 'XXL'],
-      required: true,
-    },
-    {
-      name: '材质',
-      type: 'select',
-      values: ['塑料', '金属', '玻璃', '木材'],
-      required: true,
-    },
-    {
-      name: '等级',
-      type: 'select',
-      values: ['A级', 'B级', 'C级'],
-      required: false,
-    },
-    { name: '自定义标签', type: 'text', required: false },
-    { name: '单价', type: 'number', required: true },
-    { name: '是否可定制', type: 'boolean', required: false },
-  ];
-
-  const loadConfigs = useCallback(() => {
-    queryClient.invalidateQueries({ queryKey: QUERY_KEYS.PDM.PRODUCT_CONFIGS });
-  }, [queryClient]);
-
-  const { data: configs = [], isLoading: loading } = useQuery<ProductConfig[]>({
+  const { data: configs = [] } = useQuery<FlatProductConfig[]>({
     queryKey: QUERY_KEYS.PDM.PRODUCT_CONFIGS,
-    queryFn: async (): Promise<ProductConfig[]> => {
+    queryFn: async (): Promise<FlatProductConfig[]> => {
       const response = await pdmApi.listProductConfigs();
       if (response.success && response.data) {
         const data = response.data as unknown as Record<string, unknown>;
         const items = Array.isArray(data) ? data : data.configs || [];
-        return items as unknown as ProductConfig[];
+        return (items as ProductConfig[]).map(flattenConfig);
       }
       return [];
     },
     staleTime: 5 * 60 * 1000,
   });
 
-  const { createMutation: createConfigMutation, updateMutation: updateConfigMutation, deleteMutation: deleteConfigMutation } = useCrudMutations<
-    ProductConfigRequest,
-    ProductConfigRequest,
-    string
-  >({
-    queryKeyToInvalidate: QUERY_KEYS.PDM.PRODUCT_CONFIGS,
-    createFn: (data) => pdmApi.createProductConfig(data),
-    updateFn: ({ id, data }) => pdmApi.updateProductConfig(String(id), data),
-    deleteFn: (id) => pdmApi.deleteProductConfig(String(id)),
-    entityName: '产品配置',
-    onCreateSuccess: () => {
-      setOpenDialog(false);
-      setEditingConfig(null);
-    },
-    onUpdateSuccess: () => {
-      setOpenDialog(false);
-      setEditingConfig(null);
-    },
-  });
-
-  const getStatusColor = (status: string) => {
-    switch (status) {
-      case 'active':
-        return 'success';
-      case 'draft':
-        return 'warning';
-      case 'archived':
-        return 'error';
-      default:
-        return 'default';
-    }
-  };
-
-  const getStatusLabel = (status: string) => {
-    switch (status) {
-      case 'active':
-        return '启用';
-      case 'draft':
-        return '草稿';
-      case 'archived':
-        return '归档';
-      default:
-        return status;
-    }
-  };
-
-  const handleEdit = (config: ProductConfig) => {
-    setEditingConfig(config);
-    setFormData({
-      name: config.name,
-      code: config.code,
-      status: config.status,
-      attributes: config.attributes,
-      options: config.options || [],
-    });
-    setOpenDialog(true);
-  };
-
-  const handleDelete = (id: string) => {
-    deleteConfigMutation.mutate(id);
-  };
-
-  const handleCreate = () => {
-    setEditingConfig(null);
-    setFormData({
-      name: '',
-      code: '',
-      status: 'draft',
-      attributes: {
-        color: '',
-        size: '',
-        material: '',
-        grade: '',
-      },
-      options: [],
-    });
-    setOpenDialog(true);
-  };
-
-  const handleSave = () => {
-    const requestData = {
-      name: formData.name,
-      code: formData.code,
-      status: formData.status,
-      attributes: formData.attributes,
-      options: formData.options,
-    };
-
-    if (editingConfig) {
-      updateConfigMutation.mutate({ id: editingConfig.id, data: requestData });
-    } else {
-      createConfigMutation.mutate(requestData);
-    }
-  };
-
-  const handleOptionChange = (option: string, checked: boolean) => {
-    if (checked) {
-      setFormData({ ...formData, options: [...formData.options, option] });
-    } else {
-      setFormData({ ...formData, options: formData.options.filter((o) => o !== option) });
-    }
-  };
-
-  const filteredConfigs = useMemo(() => {
-    return configs.filter((config: any) => {
-      const matchesSearch =
-        !searchTerm ||
-        config.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        config.code.toLowerCase().includes(searchTerm.toLowerCase());
-      const matchesStatus = !statusFilter || config.status === statusFilter;
-      return matchesSearch && matchesStatus;
-    });
-  }, [configs, searchTerm, statusFilter]);
-
   const stats = useMemo(
     () => ({
       total: configs.length,
-      active: configs.filter((c: any) => c.status === 'active').length,
-      draft: configs.filter((c: any) => c.status === 'draft').length,
-      archived: configs.filter((c: any) => c.status === 'archived').length,
+      active: configs.filter((c) => c.status === 'active').length,
+      draft: configs.filter((c) => c.status === 'draft').length,
+      archived: configs.filter((c) => c.status === 'archived').length,
     }),
     [configs]
   );
 
-  const filters: FilterConfig[] = useMemo(
-    () => [
-      {
-        id: 'status',
-        label: '状态',
-        type: 'select',
-        options: [
-          { label: '草稿', value: 'draft' },
-          { label: '启用', value: 'active' },
-          { label: '归档', value: 'archived' },
-        ],
-      },
-    ],
-    []
-  );
-
-  const handleFilterChange = useCallback((values: Record<string, any>) => {
-    setStatusFilter(values.status || '');
-  }, []);
-
-  const handleSearch = useCallback((value: string) => {
-    setSearchTerm(value);
-  }, []);
-
-  const columns: ColumnDef<ProductConfig>[] = useMemo(
+  const customColumns: ColumnDef[] = useMemo(
     () => [
       { id: 'name', label: '配置名称', minWidth: 140 },
       { id: 'code', label: '配置编码', minWidth: 120 },
       {
         id: 'attributes',
         label: '属性',
-        minWidth: 160,
+        minWidth: 180,
         render: (row) => (
           <Box sx={{ display: 'flex', flexDirection: 'column', gap: 0.5 }}>
             <span style={{ fontSize: '0.875rem' }}>
-              {row.attributes?.color || '-'} / {row.attributes?.size || '-'}
+              {row.color || '-'} / {row.size || '-'}
             </span>
             <span style={{ fontSize: '0.75rem', color: ct.text.muted }}>
-              {row.attributes?.material || '-'} / {row.attributes?.grade || '-'}
+              {row.material || '-'} / {row.grade || '-'}
             </span>
           </Box>
         ),
@@ -301,7 +170,7 @@ export const PdmProductConfigPage: React.FC = () => {
         minWidth: 160,
         render: (row) => (
           <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 0.5 }}>
-            {(row.options || []).map((option, idx) => (
+            {((row.options as string[]) || []).map((option, idx) => (
               <Chip
                 key={idx}
                 size='small'
@@ -321,29 +190,9 @@ export const PdmProductConfigPage: React.FC = () => {
           <Chip
             size='small'
             label={getStatusLabel(row.status)}
-            color={getStatusColor(row.status) as React.ComponentProps<typeof import('@mui/material/Chip').default>['color']}
+            color={getStatusColor(row.status)}
           />
         ),
-      },
-    ],
-    []
-  );
-
-  const rowActions: RowAction<ProductConfig>[] = useMemo(
-    () => [
-      {
-        label: '编辑',
-        icon: <Edit size={16} />,
-        color: 'primary',
-        onClick: (row) => handleEdit(row),
-      },
-      {
-        label: '删除',
-        icon: <Delete size={16} />,
-        color: 'error',
-        onClick: (row) => handleDelete(row.id),
-        confirm: true,
-        confirmMessage: '确定要删除这个配置吗？',
       },
     ],
     []
@@ -392,60 +241,6 @@ export const PdmProductConfigPage: React.FC = () => {
           </Grid>
         ))}
       </Grid>
-
-      <Box
-        sx={{
-          p: 2,
-          borderRadius: 3,
-          bgcolor: 'background.paper',
-          border: 1,
-          borderColor: 'divider',
-          mb: 2,
-        }}
-      >
-        <Box sx={{ fontWeight: 600, mb: 2 }}>属性定义</Box>
-        <Grid
-          container
-          spacing={2}
-        >
-          {configAttributes.map((attr) => (
-            <Grid
-              size={{ xs: 12, sm: 6, md: 4 }}
-              key={attr.name}
-            >
-              <Box
-                sx={{
-                  p: 2,
-                  borderRadius: 1,
-                  backgroundColor: attr.required ? 'primary.50' : 'grey.50',
-                }}
-              >
-                <Box
-                  sx={{
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'space-between',
-                    mb: 1,
-                  }}
-                >
-                  <Box sx={{ fontWeight: 500 }}>{attr.name}</Box>
-                  <Chip
-                    size='small'
-                    label={attr.required ? '必填' : '选填'}
-                    color={attr.required ? 'primary' : 'default'}
-                  />
-                </Box>
-                <Box sx={{ fontSize: '0.75rem', color: 'text.secondary' }}>
-                  类型: {attr.type}
-                  {attr.values && attr.values.length > 0 && (
-                    <span> - 可选值: {attr.values.join(', ')}</span>
-                  )}
-                </Box>
-              </Box>
-            </Grid>
-          ))}
-        </Grid>
-      </Box>
     </Box>
   );
 
@@ -456,183 +251,13 @@ export const PdmProductConfigPage: React.FC = () => {
         pageGradient: `linear-gradient(135deg, ${ct.secondary[400]} 0%, ${ct.secondary[600]} 100%)`,
       }}
     >
-      <ListPageTemplate
-        title=''
-        subtitle=''
-        columns={columns}
-        data={filteredConfigs}
-        loading={loading}
-        searchable
-        searchPlaceholder='搜索配置名称或编码...'
-        onSearch={handleSearch}
-        filters={filters}
-        filtersValue={{ status: statusFilter }}
-        onFilterChange={handleFilterChange}
-        rowActions={rowActions}
-        actions={[
-          {
-            label: '创建配置',
-            icon: <Plus size={16} />,
-            onClick: handleCreate,
-            variant: 'contained',
-          },
-        ]}
-        onRefresh={loadConfigs}
+      <CrudPage
+        schema={productConfigSchema}
+        apiAdapter={apiAdapter}
+        customColumns={customColumns}
+        breadcrumbs={[{ label: 'PDM' }, { label: '产品配置' }]}
         headerContent={headerContent}
-        emptyMessage='暂无配置数据'
       />
-
-      <Dialog
-        open={openDialog}
-        onClose={() => setOpenDialog(false)}
-        maxWidth='sm'
-        fullWidth
-      >
-        <DialogTitle>{editingConfig ? '编辑产品配置' : '创建产品配置'}</DialogTitle>
-        <DialogContent>
-          <Box sx={{ display: 'flex', flexDirection: 'column', gap: 3, mt: 2 }}>
-            <TextField
-              label='配置名称 *'
-              value={formData.name}
-              onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-              placeholder='输入配置名称'
-              fullWidth
-              required
-            />
-            <TextField
-              label='配置编码 *'
-              value={formData.code}
-              onChange={(e) => setFormData({ ...formData, code: e.target.value })}
-              placeholder='输入配置编码'
-              fullWidth
-              required
-            />
-            <FormControl fullWidth>
-              <InputLabel>状态</InputLabel>
-              <Select
-                value={formData.status}
-                label='状态'
-                onChange={(e) => setFormData({ ...formData, status: e.target.value })}
-              >
-                <MenuItem value='draft'>草稿</MenuItem>
-                <MenuItem value='active'>启用</MenuItem>
-                <MenuItem value='archived'>归档</MenuItem>
-              </Select>
-            </FormControl>
-            <Box sx={{ fontWeight: 500 }}>属性配置</Box>
-            <Grid
-              container
-              spacing={3}
-            >
-              <Grid size={{ xs: 6 }}>
-                <FormControl fullWidth>
-                  <InputLabel>颜色</InputLabel>
-                  <Select
-                    value={formData.attributes.color}
-                    label='颜色'
-                    onChange={(e) =>
-                      setFormData({
-                        ...formData,
-                        attributes: { ...formData.attributes, color: e.target.value },
-                      })
-                    }
-                  >
-                    <MenuItem value='红色'>红色</MenuItem>
-                    <MenuItem value='蓝色'>蓝色</MenuItem>
-                    <MenuItem value='绿色'>绿色</MenuItem>
-                    <MenuItem value='黑色'>黑色</MenuItem>
-                    <MenuItem value='白色'>白色</MenuItem>
-                  </Select>
-                </FormControl>
-              </Grid>
-              <Grid size={{ xs: 6 }}>
-                <FormControl fullWidth>
-                  <InputLabel>尺寸</InputLabel>
-                  <Select
-                    value={formData.attributes.size}
-                    label='尺寸'
-                    onChange={(e) =>
-                      setFormData({
-                        ...formData,
-                        attributes: { ...formData.attributes, size: e.target.value },
-                      })
-                    }
-                  >
-                    <MenuItem value='S'>S</MenuItem>
-                    <MenuItem value='M'>M</MenuItem>
-                    <MenuItem value='L'>L</MenuItem>
-                    <MenuItem value='XL'>XL</MenuItem>
-                    <MenuItem value='XXL'>XXL</MenuItem>
-                  </Select>
-                </FormControl>
-              </Grid>
-              <Grid size={{ xs: 6 }}>
-                <FormControl fullWidth>
-                  <InputLabel>材质</InputLabel>
-                  <Select
-                    value={formData.attributes.material}
-                    label='材质'
-                    onChange={(e) =>
-                      setFormData({
-                        ...formData,
-                        attributes: { ...formData.attributes, material: e.target.value },
-                      })
-                    }
-                  >
-                    <MenuItem value='塑料'>塑料</MenuItem>
-                    <MenuItem value='金属'>金属</MenuItem>
-                    <MenuItem value='玻璃'>玻璃</MenuItem>
-                    <MenuItem value='木材'>木材</MenuItem>
-                  </Select>
-                </FormControl>
-              </Grid>
-              <Grid size={{ xs: 6 }}>
-                <FormControl fullWidth>
-                  <InputLabel>等级</InputLabel>
-                  <Select
-                    value={formData.attributes.grade}
-                    label='等级'
-                    onChange={(e) =>
-                      setFormData({
-                        ...formData,
-                        attributes: { ...formData.attributes, grade: e.target.value },
-                      })
-                    }
-                  >
-                    <MenuItem value='A级'>A级</MenuItem>
-                    <MenuItem value='B级'>B级</MenuItem>
-                    <MenuItem value='C级'>C级</MenuItem>
-                  </Select>
-                </FormControl>
-              </Grid>
-            </Grid>
-            <Box sx={{ fontWeight: 500 }}>可选服务</Box>
-            <FormGroup>
-              {['快速发货', '免费配送', '质量保证', '专属客服'].map((option) => (
-                <FormControlLabel
-                  key={option}
-                  control={
-                    <Checkbox
-                      checked={formData.options.includes(option)}
-                      onChange={(e) => handleOptionChange(option, e.target.checked)}
-                    />
-                  }
-                  label={option}
-                />
-              ))}
-            </FormGroup>
-          </Box>
-        </DialogContent>
-        <DialogActions>
-          <Button onClick={() => setOpenDialog(false)}>取消</Button>
-          <Button
-            variant='contained'
-            onClick={handleSave}
-          >
-            {editingConfig ? '更新配置' : '创建配置'}
-          </Button>
-        </DialogActions>
-      </Dialog>
     </PageContainer>
   );
 };

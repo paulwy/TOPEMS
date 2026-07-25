@@ -11,7 +11,7 @@ import { apiLogger } from '@/utils/logger';
 import { designTokens } from '@/theme/tokens';
 import { DetailPageTemplate, type TabConfig, type SectionConfig } from '@/components/templates';
 import { ConfirmDialog } from '@topems/shared-components';
-import { PageContainer } from '@/components/common/PageContainerV2';
+import { PageContainer } from '@/components/common/PageContainer';
 import { MES_PATHS } from '@/modules/mes/config';
 
 const ct = designTokens.colors;

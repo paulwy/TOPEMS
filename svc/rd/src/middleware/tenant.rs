@@ -1,3 +1,5 @@
+#![allow(dead_code)] // Reserved: 租户中间件预留扩展，待多租户完整接入后启用
+
 use axum::extract::FromRequestParts;
 use axum::http::request::Parts;
 use axum::Extension;

@@ -20,6 +20,7 @@ export const EHS_PATHS = {
   emergency: '/ehs/emergency',
   drill: '/ehs/drill',
   incidentReport: '/ehs/incident-report',
+  dashboard: '/ehs/dashboard',
 } as const;
 
 // ---- 路由配置（供路由系统使用） ----
@@ -204,6 +205,17 @@ export const ehsModuleConfig: RouteModuleConfig = {
       requiredPermissions: ['ehs:incident:read', 'ehs:read'],
       action: 'read',
     },
+    {
+      path: EHS_PATHS.dashboard,
+      element: lazyWithRetry(() => import('@/pages/ehs/EhsDashboardPage'), 'EhsDashboardPage'),
+      module: 'ehs',
+      code: 'ehs-dashboard',
+      title: '仪表盘',
+      template: 'dashboard',
+      group: 'overview',
+      requiredPermissions: ['ehs:read'],
+      action: 'read',
+    },
   ],
 };
 
@@ -220,6 +232,17 @@ export const ehsNavConfig: ModuleNavConfig = {
   order: 10,
   description: '安全检查、隐患排查、环保监测、事故管理',
   navItems: [
+    {
+      code: 'ehs-dashboard',
+      label: '仪表盘',
+      icon: 'LayoutDashboard',
+      path: EHS_PATHS.dashboard,
+      permission: 'ehs:read',
+      order: 0,
+      group: 'overview',
+      showInTabs: true,
+      description: 'EHS数据概览',
+    },
     {
       code: 'ehs-check',
       label: '安全检查',

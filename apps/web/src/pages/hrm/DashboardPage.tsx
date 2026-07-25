@@ -13,7 +13,7 @@ import {
   type ChartCard,
   type QuickAction,
 } from '@/components/templates';
-import { PageContainer } from '@/components/common/PageContainerV2';
+import { PageContainer } from '@/components/common/PageContainer';
 import {
   employeeApi,
   attendanceApi,

@@ -1,3 +1,5 @@
+#![allow(dead_code)] // Reserved: 文件管理模块预留扩展，待文件服务接入后启用
+
 //! Manage submodule - File management handlers
 
 use axum::{

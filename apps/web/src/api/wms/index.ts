@@ -1,4 +1,5 @@
 import { inventoryApi, inventoryAlertsApi, inventoryStatsApi } from './inventory';
+import { wmsDashboardApi } from './dashboard';
 import { warehouseApi } from './warehouse';
 import { locationApi } from './location';
 import { inboundOrderApi } from './inbound';
@@ -14,6 +15,7 @@ import { serialNumberApi } from './serialNumber';
 export * from './types';
 
 export { inventoryApi, inventoryAlertsApi, inventoryStatsApi } from './inventory';
+export { wmsDashboardApi } from './dashboard';
 export * from './inventory';
 
 export { warehouseApi } from './warehouse';
@@ -50,6 +52,7 @@ export { serialNumberApi } from './serialNumber';
 export * from './serialNumber';
 
 export const wmsApi = {
+  dashboard: wmsDashboardApi,
   inventory: inventoryApi,
   inboundOrders: inboundOrderApi,
   outboundOrders: outboundOrderApi,

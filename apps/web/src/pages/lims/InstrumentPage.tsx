@@ -1,420 +1,117 @@
-import React, { useState, useMemo } from 'react';
-import { PageContainer } from '@/components/common';
+import React, { useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
-import {
-  Microscope,
-  Plus,
-  Edit,
-  Eye,
-  Download,
-  Upload,
-  Filter,
-  Trash2,
-  AlertTriangle,
-  Settings,
-} from 'lucide-react';
-import {
-  Box,
-  Dialog,
-  DialogTitle,
-  DialogContent,
-  DialogActions,
-  TextField,
-  Chip,
-  Card,
-  CardContent,
-  Typography,
-  MenuItem,
-  Button,
-} from '@mui/material';
-import {
-  ListPageTemplate,
-  type ColumnDef,
-  type FilterConfig,
-  type RowAction,
-} from '@/components/templates';
-import { limsApi } from '@/api/lims';
-import type { Instrument, CreateInstrumentRequest } from '@/api/lims';
-import { useNotificationStore } from '@/store';
-import { apiLogger } from '@/utils/logger';
+import { Box, Typography, Card, CardContent } from '@mui/material';
+import { Microscope, Settings, AlertTriangle } from 'lucide-react';
+
+import CrudPage, { type CrudApiAdapter } from '@/components/templates/CrudPage';
+import type { RowAction } from '@/components/templates/list/types';
+import { PageContainer } from '@/components/common';
+import { instrumentSchema } from '@/schemas/lims';
+import { limsApi, type Instrument, type CreateInstrumentRequest } from '@/api/lims';
 import { designTokens } from '@/theme/tokens';
 import { LIMS_PATHS } from '@/modules/lims/config';
-import { DASHBOARD_PATHS } from '@/routes/dashboard';
-import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { QUERY_KEYS } from '@/lib/reactQuery';
-import { ConfirmDialog } from '@topems/shared-components';
-import { useConfirmDialog, useUrlListState } from '@/hooks';
 
 const ct = designTokens.colors;
 
 const InstrumentPage: React.FC = () => {
   const navigate = useNavigate();
-  const queryClient = useQueryClient();
-  const addNotification = useNotificationStore((state) => state.addNotification);
 
-  const {
-    confirmOpen: confirmDialogOpen,
-    confirmConfig: confirmDialogConfig,
-    openConfirm: openConfirmDialog,
-    closeConfirm: setConfirmDialogClosed,
-  } = useConfirmDialog();
+  const instrumentApiAdapter: CrudApiAdapter<Instrument> = useMemo(
+    () => ({
+      list: async (params) => {
+        const response = await limsApi.listInstruments({
+          page: params?.page !== undefined ? params.page : 0,
+          pagesize: params?.pageSize ?? 10,
+          search: params?.search as string | undefined,
+          status: params?.status && params.status !== 'all' ? (params.status as string) : undefined,
+        });
+        if (!response.success || !response.data) {
+          throw new Error('加载仪器列表失败');
+        }
+        return {
+          data: response.data.items,
+          total: response.data.total,
+        };
+      },
 
-  const {
-    searchQuery,
-    setSearchQuery,
-    debouncedSearch,
-    filters,
-    setFilter,
-    currentPage,
-    setCurrentPage,
-    pageSize,
-  } = useUrlListState<{ status: string }>({
-    defaultPageSize: 10,
-    defaultFilters: { status: 'all' },
-    baseIndex: 0,
-    historyMode: 'replace',
-  });
-  const [showCreateModal, setShowCreateModal] = useState(false);
-  const [showDetailModal, setShowDetailModal] = useState(false);
-  const [selectedInstrument, setSelectedInstrument] = useState<Instrument | null>(null);
-  const [isEditing, setIsEditing] = useState(false);
-  const [formData, setFormData] = useState<CreateInstrumentRequest>({
-    name: '',
-    code: '',
-    type: '',
-    manufacturer: '',
-    model: '',
-    serial_number: '',
-    location: '',
-    status: '正常',
-    purchase_date: '',
-    calibration_date: '',
-    next_calibration_date: '',
-    responsible_person: '',
-    description: '',
-  });
+      create: async (data) => {
+        const response = await limsApi.createInstrument(data as unknown as CreateInstrumentRequest);
+        if (!response.success) {
+          throw new Error(response.message || '创建仪器失败');
+        }
+        return response.data as unknown as Instrument;
+      },
 
-  const queryKey = [QUERY_KEYS.LIMS.INSTRUMENTS, currentPage, pageSize, debouncedSearch, filters.status];
+      update: async (id, data) => {
+        const response = await limsApi.updateInstrument(
+          id,
+          data as unknown as Partial<CreateInstrumentRequest>
+        );
+        if (!response.success) {
+          throw new Error(response.message || '更新仪器失败');
+        }
+        return response.data as unknown as Instrument;
+      },
 
-  const { data: instrumentsResponse, isLoading } = useQuery({
-    queryKey,
-    queryFn: async () => {
-      const params: { page: number; pagesize: number; search?: string; status?: string } = {
-        page: currentPage,
-        pagesize: pageSize,
-      };
-      if (debouncedSearch) params.search = debouncedSearch;
-      if (filters.status !== 'all') params.status = filters.status;
+      delete: async (id) => {
+        const response = await limsApi.deleteInstrument(id);
+        if (!response.success) {
+          throw new Error(response.message || '删除仪器失败');
+        }
+      },
+    }),
+    []
+  );
 
-      const response = await limsApi.listInstruments(params);
-      if (!response.success) {
-        throw new Error('Failed to fetch instruments');
-      }
-      return response.data;
-    },
-    staleTime: 5 * 60 * 1000,
-    gcTime: 10 * 60 * 1000,
-  });
-
-  const instruments = instrumentsResponse?.items || [];
-  const total = instrumentsResponse?.total || instruments.length;
-
-  const createMutation = useMutation({
-    mutationFn: async (data: CreateInstrumentRequest) => {
-      const response = await limsApi.createInstrument(data);
-      if (!response.success) {
-        throw new Error('Failed to create instrument');
-      }
-      return response;
-    },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: QUERY_KEYS.LIMS.INSTRUMENTS });
-      setShowCreateModal(false);
-      resetForm();
-    },
-    onError: (error) => {
-      apiLogger.error('创建失败:', error);
-    },
-  });
-
-  const updateMutation = useMutation({
-    mutationFn: async ({ id, data }: { id: string; data: Partial<CreateInstrumentRequest> }) => {
-      const response = await limsApi.updateInstrument(id, data);
-      if (!response.success) {
-        throw new Error('Failed to update instrument');
-      }
-      return response;
-    },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: QUERY_KEYS.LIMS.INSTRUMENTS });
-      setShowCreateModal(false);
-      resetForm();
-    },
-    onError: (error) => {
-      apiLogger.error('更新失败:', error);
-    },
-  });
-
-  const deleteMutation = useMutation({
-    mutationFn: async (id: string) => {
-      const response = await limsApi.deleteInstrument(id);
-      if (!response.success) {
-        throw new Error('Failed to delete instrument');
-      }
-      return response;
-    },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: QUERY_KEYS.LIMS.INSTRUMENTS });
-    },
-    onError: (error) => {
-      apiLogger.error('删除失败:', error);
-    },
-  });
-
-  const getStatusBadge = (status: string) => {
-    const statusMap: Record<string, { bg: string; color: string }> = {
-      正常: { bg: 'success.lighter', color: 'success.dark' },
-      校准中: { bg: 'info.lighter', color: 'info.dark' },
-      维修中: { bg: 'warning.lighter', color: 'warning.dark' },
-      停用: { bg: 'grey.100', color: 'text.secondary' },
-      normal: { bg: 'success.lighter', color: 'success.dark' },
-      calibrating: { bg: 'info.lighter', color: 'info.dark' },
-      maintenance: { bg: 'warning.lighter', color: 'warning.dark' },
-      disabled: { bg: 'grey.100', color: 'text.secondary' },
-    };
-    const colors = statusMap[status] || { bg: 'grey.100', color: 'text.secondary' };
-    return (
-      <Chip
-        label={status}
-        size='small'
-        sx={{
-          backgroundColor: colors.bg,
-          color: colors.color,
-          fontWeight: 500,
-        }}
-      />
-    );
-  };
+  const customRowActions: RowAction[] = useMemo(
+    () => [
+      {
+        key: 'maintenance',
+        label: '维护记录',
+        icon: <Settings size={14} />,
+        color: 'info',
+        onClick: (row: Record<string, unknown>) =>
+          navigate(`${LIMS_PATHS.instrumentDetail}?id=${row.id}`),
+      },
+    ],
+    [navigate]
+  );
 
   const needsCalibration = (instrument: Instrument): boolean => {
     if (!instrument.next_calibration_date) return false;
     return new Date(instrument.next_calibration_date) < new Date();
   };
 
-  const columns: ColumnDef<Instrument>[] = useMemo(
-    () => [
-      { id: 'code', label: '仪器编号' },
-      { id: 'name', label: '仪器名称' },
-      { id: 'type', label: '类型' },
-      { id: 'manufacturer', label: '生产厂家' },
-      {
-        id: 'location',
-        label: '存放位置',
-        render: (row) => row.location || '-',
-      },
-      {
-        id: 'status',
-        label: '状态',
-        render: (row) => getStatusBadge(row.status || '正常'),
-      },
-      {
-        id: 'next_calibration_date',
-        label: '下次校准',
-        render: (row) => {
-          if (!row.next_calibration_date) return '-';
-          const needs = needsCalibration(row);
-          return (
-            <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
-              {needs && <AlertTriangle style={{ width: 14, height: 14, color: ct.yellow[600] }} />}
-              <span style={{ color: needs ? ct.yellow[600] : 'inherit' }}>
-                {new Date(row.next_calibration_date).toLocaleDateString('zh-CN')}
-              </span>
-            </Box>
-          );
-        },
-      },
-    ],
-    []
-  );
+  const statsContent = (rows: Record<string, unknown>[]) => {
+    const items = rows as unknown as Instrument[];
+    const stats = {
+      total: items.length,
+      normal: items.filter((i) => i.status === '正常' || i.status === 'normal').length,
+      calibrating: items.filter((i) => i.status === '校准中' || i.status === 'calibrating').length,
+      maintenance: items.filter((i) => i.status === '维修中' || i.status === 'maintenance').length,
+      needsCalibration: items.filter((i) => needsCalibration(i)).length,
+    };
 
-  const rowActions: RowAction<Instrument>[] = useMemo(
-    () => [
-      {
-        label: '查看',
-        icon: <Eye style={{ width: 16, height: 16 }} />,
-        onClick: (row) => handleView(row),
-      },
-      {
-        label: '编辑',
-        icon: <Edit style={{ width: 16, height: 16 }} />,
-        onClick: (row) => handleEdit(row),
-      },
-      {
-        label: '维护记录',
-        icon: <Settings style={{ width: 16, height: 16 }} />,
-        onClick: (row) => navigate(`${LIMS_PATHS.instrumentDetail}?id=${row.id}`),
-      },
-    ],
-    []
-  );
-
-  const filterConfigs: FilterConfig[] = useMemo(
-    () => [
-      {
-        id: 'status',
-        label: '状态',
-        type: 'select',
-        options: [
-          { label: '全部', value: 'all' },
-          { label: '正常', value: '正常' },
-          { label: '校准中', value: '校准中' },
-          { label: '维修中', value: '维修中' },
-          { label: '停用', value: '停用' },
-        ],
-        value: filters.status,
-        onChange: (value: unknown) => {
-          setFilter('status', value as string);
-        },
-      },
-    ],
-    [filters.status, setFilter]
-  );
-
-  const handleView = (instrument: Instrument) => {
-    setSelectedInstrument(instrument);
-    setShowDetailModal(true);
-  };
-
-  const handleEdit = (instrument: Instrument) => {
-    setSelectedInstrument(instrument);
-    setIsEditing(true);
-    setFormData({
-      name: instrument.name,
-      code: instrument.code,
-      type: instrument.type,
-      manufacturer: instrument.manufacturer || '',
-      model: instrument.model || '',
-      serial_number: instrument.serial_number || '',
-      location: instrument.location || '',
-      status: instrument.status,
-      purchase_date: instrument.purchase_date || '',
-      calibration_date: instrument.calibration_date || '',
-      next_calibration_date: instrument.next_calibration_date || '',
-      responsible_person: instrument.responsible_person || '',
-      description: instrument.description || '',
-    });
-    setShowCreateModal(true);
-  };
-
-  const handleCreate = () => {
-    setSelectedInstrument(null);
-    setIsEditing(false);
-    setFormData({
-      name: '',
-      code: '',
-      type: '',
-      manufacturer: '',
-      model: '',
-      serial_number: '',
-      location: '',
-      status: '正常',
-      purchase_date: '',
-      calibration_date: '',
-      next_calibration_date: '',
-      responsible_person: '',
-      description: '',
-    });
-    setShowCreateModal(true);
-  };
-
-  const resetForm = () => {
-    setSelectedInstrument(null);
-    setIsEditing(false);
-    setFormData({
-      name: '',
-      code: '',
-      type: '',
-      manufacturer: '',
-      model: '',
-      serial_number: '',
-      location: '',
-      status: '正常',
-      purchase_date: '',
-      calibration_date: '',
-      next_calibration_date: '',
-      responsible_person: '',
-      description: '',
-    });
-  };
-
-  const handleSave = async () => {
-    if (!formData.name.trim()) {
-      addNotification({
-        title: '错误',
-        message: '请输入仪器名称',
-        type: 'error',
-      });
-      return;
-    }
-    if (!formData.code.trim()) {
-      addNotification({
-        title: '错误',
-        message: '请输入仪器编号',
-        type: 'error',
-      });
-      return;
-    }
-
-    if (isEditing && selectedInstrument) {
-      await updateMutation.mutateAsync({ id: selectedInstrument.id, data: formData });
-    } else {
-      await createMutation.mutateAsync(formData);
-    }
-  };
-
-  const handleDelete = (instrument: Instrument) => {
-    openConfirmDialog({
-      title: '确认删除',
-      message: `确定要删除仪器 "${instrument.name}" 吗？`,
-      danger: true,
-      onConfirm: () => {
-        deleteMutation.mutateAsync(instrument.id);
-        setShowDetailModal(false);
-      },
-    });
-  };
-
-  const stats = useMemo(
-    () => ({
-      total,
-      normal: instruments.filter((i) => i.status === '正常' || i.status === 'normal').length,
-      calibrating: instruments.filter((i) => i.status === '校准中' || i.status === 'calibrating')
-        .length,
-      maintenance: instruments.filter((i) => i.status === '维修中' || i.status === 'maintenance')
-        .length,
-      needsCalibration: instruments.filter((i) => needsCalibration(i)).length,
-    }),
-    [instruments, total]
-  );
-
-  const statsCards = useMemo(
-    () => (
+    return (
       <Box
         sx={{
           display: 'grid',
-          gridTemplateColumns: { xs: 'repeat(1, 1fr)', md: 'repeat(5, 1fr)' },
+          gridTemplateColumns: {
+            xs: 'repeat(1, 1fr)',
+            md: 'repeat(5, 1fr)',
+          },
           gap: 2,
           mb: 3,
         }}
       >
-        <Card sx={{ bgcolor: 'teal.light' }}>
+        <Card>
           <CardContent sx={{ p: 2 }}>
             <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5 }}>
               <Box
                 sx={{
                   width: 40,
                   height: 40,
-                  bgcolor: 'success.lighter',
+                  bgcolor: 'info.lighter',
                   borderRadius: 3,
                   display: 'flex',
                   alignItems: 'center',
@@ -426,13 +123,14 @@ const InstrumentPage: React.FC = () => {
               <Box>
                 <Typography
                   variant='body2'
-                  sx={{ color: 'slate.600', fontSize: '0.875rem' }}
+                  color='text.secondary'
+                  sx={{ fontSize: '0.875rem' }}
                 >
                   仪器总数
                 </Typography>
                 <Typography
                   variant='h5'
-                  sx={{ fontWeight: 700, color: 'slate.900' }}
+                  sx={{ fontWeight: 700 }}
                 >
                   {stats.total}
                 </Typography>
@@ -459,13 +157,14 @@ const InstrumentPage: React.FC = () => {
               <Box>
                 <Typography
                   variant='body2'
-                  sx={{ color: 'slate.600', fontSize: '0.875rem' }}
+                  color='text.secondary'
+                  sx={{ fontSize: '0.875rem' }}
                 >
                   正常
                 </Typography>
                 <Typography
                   variant='h5'
-                  sx={{ fontWeight: 700, color: 'slate.900' }}
+                  sx={{ fontWeight: 700 }}
                 >
                   {stats.normal}
                 </Typography>
@@ -492,13 +191,14 @@ const InstrumentPage: React.FC = () => {
               <Box>
                 <Typography
                   variant='body2'
-                  sx={{ color: 'slate.600', fontSize: '0.875rem' }}
+                  color='text.secondary'
+                  sx={{ fontSize: '0.875rem' }}
                 >
                   校准中
                 </Typography>
                 <Typography
                   variant='h5'
-                  sx={{ fontWeight: 700, color: 'slate.900' }}
+                  sx={{ fontWeight: 700 }}
                 >
                   {stats.calibrating}
                 </Typography>
@@ -525,13 +225,14 @@ const InstrumentPage: React.FC = () => {
               <Box>
                 <Typography
                   variant='body2'
-                  sx={{ color: 'slate.600', fontSize: '0.875rem' }}
+                  color='text.secondary'
+                  sx={{ fontSize: '0.875rem' }}
                 >
                   维修中
                 </Typography>
                 <Typography
                   variant='h5'
-                  sx={{ fontWeight: 700, color: 'slate.900' }}
+                  sx={{ fontWeight: 700 }}
                 >
                   {stats.maintenance}
                 </Typography>
@@ -558,13 +259,14 @@ const InstrumentPage: React.FC = () => {
               <Box>
                 <Typography
                   variant='body2'
-                  sx={{ color: 'slate.600', fontSize: '0.875rem' }}
+                  color='text.secondary'
+                  sx={{ fontSize: '0.875rem' }}
                 >
                   待校准
                 </Typography>
                 <Typography
                   variant='h5'
-                  sx={{ fontWeight: 700, color: 'slate.900' }}
+                  sx={{ fontWeight: 700 }}
                 >
                   {stats.needsCalibration}
                 </Typography>
@@ -573,12 +275,7 @@ const InstrumentPage: React.FC = () => {
           </CardContent>
         </Card>
       </Box>
-    ),
-    [stats]
-  );
-
-  const handleSearch = (value: string) => {
-    setSearchQuery(value);
+    );
   };
 
   return (
@@ -590,403 +287,17 @@ const InstrumentPage: React.FC = () => {
         pageGradient: `linear-gradient(135deg, ${ct.teal[400]} 0%, ${ct.teal[600]} 100%)`,
       }}
     >
-      <ListPageTemplate
-        title=''
-        subtitle=''
+      <CrudPage
+        schema={instrumentSchema}
+        apiAdapter={instrumentApiAdapter}
+        customRowActions={customRowActions}
+        headerContent={statsContent}
         breadcrumbs={[
-          { label: '首页', href: DASHBOARD_PATHS.dashboard },
-          { label: 'LIMS' },
+          { label: '首页', href: '/dashboard' },
+          { label: 'LIMS', href: LIMS_PATHS.root },
           { label: '仪器管理' },
         ]}
-        backButton={{ onClick: () => navigate(DASHBOARD_PATHS.dashboard) }}
-        columns={columns}
-        data={instruments}
-        loading={isLoading}
-        getRowId={(row) => row.id}
-        filters={filterConfigs}
-        filtersValue={{ status: filters.status }}
-        onFilterChange={(f) => {
-          if (f.status !== undefined) setFilter('status', f.status as string);
-        }}
-        searchable
-        searchPlaceholder='搜索仪器编号、名称或类型...'
-        searchValue={searchQuery}
-        onSearch={setSearchQuery}
-        pagination={{
-          page: currentPage,
-          pageSize,
-          total,
-          onPageChange: setCurrentPage,
-          onPageSizeChange: () => {},
-        }}
-        actions={[
-          {
-            label: '导入',
-            icon: <Upload style={{ width: 18, height: 18 }} />,
-            variant: 'outlined',
-          },
-          {
-            label: '导出',
-            icon: <Download style={{ width: 18, height: 18 }} />,
-            variant: 'outlined',
-          },
-          {
-            label: '添加仪器',
-            icon: <Plus style={{ width: 18, height: 18 }} />,
-            onClick: handleCreate,
-            variant: 'contained',
-          },
-        ]}
-        rowActions={rowActions}
-        headerContent={statsCards}
-      />
-
-      <Dialog
-        open={showCreateModal}
-        onClose={() => setShowCreateModal(false)}
-        maxWidth='sm'
-        fullWidth
-      >
-        <DialogTitle>{isEditing ? '编辑仪器' : '添加仪器'}</DialogTitle>
-        <DialogContent>
-          <Box sx={{ pt: 1, display: 'flex', flexDirection: 'column', gap: 2 }}>
-            <Box sx={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 2 }}>
-              <TextField
-                fullWidth
-                label='仪器名称 *'
-                value={formData.name}
-                onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-                placeholder='请输入仪器名称'
-              />
-              <TextField
-                fullWidth
-                label='仪器编号 *'
-                value={formData.code}
-                onChange={(e) => setFormData({ ...formData, code: e.target.value })}
-                placeholder='请输入仪器编号'
-              />
-            </Box>
-            <Box sx={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 2 }}>
-              <TextField
-                fullWidth
-                label='类型'
-                value={formData.type}
-                onChange={(e) => setFormData({ ...formData, type: e.target.value })}
-                placeholder='请输入仪器类型'
-              />
-              <TextField
-                fullWidth
-                label='型号'
-                value={formData.model}
-                onChange={(e) => setFormData({ ...formData, model: e.target.value })}
-                placeholder='请输入型号'
-              />
-            </Box>
-            <Box sx={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 2 }}>
-              <TextField
-                fullWidth
-                label='生产厂家'
-                value={formData.manufacturer}
-                onChange={(e) => setFormData({ ...formData, manufacturer: e.target.value })}
-                placeholder='请输入生产厂家'
-              />
-              <TextField
-                fullWidth
-                label='序列号'
-                value={formData.serial_number}
-                onChange={(e) => setFormData({ ...formData, serial_number: e.target.value })}
-                placeholder='请输入序列号'
-              />
-            </Box>
-            <Box sx={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 2 }}>
-              <TextField
-                fullWidth
-                label='存放位置'
-                value={formData.location}
-                onChange={(e) => setFormData({ ...formData, location: e.target.value })}
-                placeholder='请输入存放位置'
-              />
-              <TextField
-                fullWidth
-                label='负责人'
-                value={formData.responsible_person}
-                onChange={(e) => setFormData({ ...formData, responsible_person: e.target.value })}
-                placeholder='请输入负责人'
-              />
-            </Box>
-            <Box sx={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 2 }}>
-              <TextField
-                fullWidth
-                label='购买日期'
-                type='date'
-                value={formData.purchase_date}
-                onChange={(e) => setFormData({ ...formData, purchase_date: e.target.value })}
-                slotProps={{ inputLabel: { shrink: true } } as const}
-              />
-              <TextField
-                fullWidth
-                label='最近校准日期'
-                type='date'
-                value={formData.calibration_date}
-                onChange={(e) => setFormData({ ...formData, calibration_date: e.target.value })}
-                slotProps={{ inputLabel: { shrink: true } } as const}
-              />
-            </Box>
-            <Box sx={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 2 }}>
-              <TextField
-                fullWidth
-                label='下次校准日期'
-                type='date'
-                value={formData.next_calibration_date}
-                onChange={(e) =>
-                  setFormData({ ...formData, next_calibration_date: e.target.value })
-                }
-                slotProps={{ inputLabel: { shrink: true } } as const}
-              />
-              <TextField
-                fullWidth
-                select
-                label='状态'
-                value={formData.status}
-                onChange={(e) => setFormData({ ...formData, status: e.target.value })}
-              >
-                <MenuItem value='正常'>正常</MenuItem>
-                <MenuItem value='校准中'>校准中</MenuItem>
-                <MenuItem value='维修中'>维修中</MenuItem>
-                <MenuItem value='停用'>停用</MenuItem>
-              </TextField>
-            </Box>
-            <TextField
-              fullWidth
-              label='备注'
-              value={formData.description}
-              onChange={(e) => setFormData({ ...formData, description: e.target.value })}
-              placeholder='请输入备注'
-              multiline
-              rows={2}
-            />
-          </Box>
-        </DialogContent>
-        <DialogActions>
-          <Button
-            variant='outlined'
-            onClick={() => setShowCreateModal(false)}
-          >
-            取消
-          </Button>
-          <Button
-            variant='contained'
-            onClick={handleSave}
-            disabled={createMutation.isPending || updateMutation.isPending}
-            sx={{ bgcolor: 'info.main' }}
-          >
-            {createMutation.isPending || updateMutation.isPending ? '保存中...' : '保存'}
-          </Button>
-        </DialogActions>
-      </Dialog>
-
-      <Dialog
-        open={showDetailModal}
-        onClose={() => setShowDetailModal(false)}
-        maxWidth='md'
-        fullWidth
-      >
-        <DialogTitle>仪器详情</DialogTitle>
-        <DialogContent>
-          {selectedInstrument && (
-            <Box
-              sx={{
-                pt: 2,
-                display: 'grid',
-                gridTemplateColumns: '1fr 1fr',
-                gap: 2,
-              }}
-            >
-              <Box>
-                <Box
-                  component='span'
-                  sx={{ color: 'text.secondary', fontSize: '0.875rem' }}
-                >
-                  仪器编号
-                </Box>
-                <Box sx={{ fontWeight: 500 }}>
-                  {selectedInstrument.code || selectedInstrument.id}
-                </Box>
-              </Box>
-              <Box>
-                <Box
-                  component='span'
-                  sx={{ color: 'text.secondary', fontSize: '0.875rem' }}
-                >
-                  仪器名称
-                </Box>
-                <Box sx={{ fontWeight: 500 }}>{selectedInstrument.name}</Box>
-              </Box>
-              <Box>
-                <Box
-                  component='span'
-                  sx={{ color: 'text.secondary', fontSize: '0.875rem' }}
-                >
-                  类型
-                </Box>
-                <Box>{selectedInstrument.type || '-'}</Box>
-              </Box>
-              <Box>
-                <Box
-                  component='span'
-                  sx={{ color: 'text.secondary', fontSize: '0.875rem' }}
-                >
-                  型号
-                </Box>
-                <Box>{selectedInstrument.model || '-'}</Box>
-              </Box>
-              <Box>
-                <Box
-                  component='span'
-                  sx={{ color: 'text.secondary', fontSize: '0.875rem' }}
-                >
-                  生产厂家
-                </Box>
-                <Box>{selectedInstrument.manufacturer || '-'}</Box>
-              </Box>
-              <Box>
-                <Box
-                  component='span'
-                  sx={{ color: 'text.secondary', fontSize: '0.875rem' }}
-                >
-                  序列号
-                </Box>
-                <Box>{selectedInstrument.serial_number || '-'}</Box>
-              </Box>
-              <Box>
-                <Box
-                  component='span'
-                  sx={{ color: 'text.secondary', fontSize: '0.875rem' }}
-                >
-                  存放位置
-                </Box>
-                <Box>{selectedInstrument.location || '-'}</Box>
-              </Box>
-              <Box>
-                <Box
-                  component='span'
-                  sx={{ color: 'text.secondary', fontSize: '0.875rem' }}
-                >
-                  负责人
-                </Box>
-                <Box>{selectedInstrument.responsible_person || '-'}</Box>
-              </Box>
-              <Box>
-                <Box
-                  component='span'
-                  sx={{ color: 'text.secondary', fontSize: '0.875rem' }}
-                >
-                  购买日期
-                </Box>
-                <Box>
-                  {selectedInstrument.purchase_date
-                    ? new Date(selectedInstrument.purchase_date).toLocaleDateString('zh-CN')
-                    : '-'}
-                </Box>
-              </Box>
-              <Box>
-                <Box
-                  component='span'
-                  sx={{ color: 'text.secondary', fontSize: '0.875rem' }}
-                >
-                  最近校准日期
-                </Box>
-                <Box>
-                  {selectedInstrument.calibration_date
-                    ? new Date(selectedInstrument.calibration_date).toLocaleDateString('zh-CN')
-                    : '-'}
-                </Box>
-              </Box>
-              <Box>
-                <Box
-                  component='span'
-                  sx={{ color: 'text.secondary', fontSize: '0.875rem' }}
-                >
-                  下次校准日期
-                </Box>
-                <Box>
-                  {selectedInstrument.next_calibration_date ? (
-                    <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
-                      {needsCalibration(selectedInstrument) && (
-                        <AlertTriangle style={{ width: 14, height: 14, color: ct.yellow[600] }} />
-                      )}
-                      <span
-                        style={{
-                          color: needsCalibration(selectedInstrument) ? ct.yellow[600] : 'inherit',
-                        }}
-                      >
-                        {new Date(selectedInstrument.next_calibration_date).toLocaleDateString(
-                          'zh-CN'
-                        )}
-                      </span>
-                    </Box>
-                  ) : (
-                    '-'
-                  )}
-                </Box>
-              </Box>
-              <Box>
-                <Box
-                  component='span'
-                  sx={{ color: 'text.secondary', fontSize: '0.875rem' }}
-                >
-                  状态
-                </Box>
-                <Box sx={{ mt: 0.5 }}>{getStatusBadge(selectedInstrument.status || '正常')}</Box>
-              </Box>
-              <Box>
-                <Box
-                  component='span'
-                  sx={{ color: 'text.secondary', fontSize: '0.875rem' }}
-                >
-                  备注
-                </Box>
-                <Box>{selectedInstrument.description || '-'}</Box>
-              </Box>
-            </Box>
-          )}
-        </DialogContent>
-        <DialogActions>
-          <Button
-            variant='outlined'
-            color='error'
-            startIcon={<Trash2 style={{ width: 16, height: 16 }} />}
-            onClick={() => selectedInstrument && handleDelete(selectedInstrument)}
-          >
-            删除
-          </Button>
-          <Box sx={{ flex: 1 }} />
-          <Button onClick={() => setShowDetailModal(false)}>关闭</Button>
-          <Button
-            variant='contained'
-            onClick={() => {
-              setShowDetailModal(false);
-              if (selectedInstrument) {
-                handleEdit(selectedInstrument);
-              }
-            }}
-            sx={{ bgcolor: 'info.main' }}
-          >
-            编辑
-          </Button>
-        </DialogActions>
-      </Dialog>
-
-      <ConfirmDialog
-        isOpen={confirmDialogOpen}
-        onClose={setConfirmDialogClosed}
-        onConfirm={() => {
-          confirmDialogConfig?.onConfirm();
-          setConfirmDialogClosed();
-        }}
-        title={confirmDialogConfig?.title || ''}
-        message={confirmDialogConfig?.message || ''}
-        danger={confirmDialogConfig?.danger}
+        idField='id'
       />
     </PageContainer>
   );

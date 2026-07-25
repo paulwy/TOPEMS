@@ -1,103 +1,17 @@
-import { useState, useMemo, useCallback } from 'react';
-import { logger } from '@/utils/logger';
-import { useMutation, useQueryClient } from '@tanstack/react-query';
-import {
-  Plus,
-  RefreshCw,
-  Edit,
-  Trash2,
-  Eye,
-  TestTube,
-  CheckCircle,
-  XCircle,
-  Clock,
-  Database,
-  Server,
-} from 'lucide-react';
-import { Chip, Box, Typography, Tooltip, IconButton, Alert, Button } from '@mui/material';
-import {
-  ListPageTemplate,
-  type ColumnDef,
-  type RowAction,
-  type FilterConfig,
-} from '@/components/templates';
-import { PageContainer } from '@/components/common';
-import { useCrudOperations } from '@/hooks/useCrudQueries';
-import { dataSourceCrudApi, testDataSource, refreshDataSource, type DataSource } from '@/api/bi';
-
+import React from 'react';
 import { useTranslation } from 'react-i18next';
-const getStatusConfig = (status: string) => {
-  switch (status) {
-    case 'active':
-      return {
-        color: 'success' as const,
-        icon: <CheckCircle size={14} />,
-        label: '已连接',
-      };
-    case 'inactive':
-      return {
-        color: 'default' as const,
-        icon: <Clock size={14} />,
-        label: '未激活',
-      };
-    case 'error':
-      return {
-        color: 'error' as const,
-        icon: <XCircle size={14} />,
-        label: '异常',
-      };
-    default:
-      return {
-        color: 'default' as const,
-        icon: <Clock size={14} />,
-        label: status,
-      };
-  }
-};
+import { useMutation, useQueryClient } from '@tanstack/react-query';
+import { RefreshCw, TestTube, Eye, Edit, Trash2 } from 'lucide-react';
+import { PageContainer } from '@/components/common';
+import CrudPage, { type CrudApiAdapter } from '@/components/templates/CrudPage';
+import { dataSourceSchema } from '@/schemas/bi';
+import { dataSourceCrudApi, testDataSource, refreshDataSource } from '@/api/bi';
+import type { DataSource } from '@/api/bi';
+import { logger } from '@/utils/logger';
 
-const getTypeConfig = (type: string) => {
-  switch (type) {
-    case 'postgresql':
-      return { icon: '🐘', label: 'PostgreSQL' };
-    case 'mysql':
-      return { icon: '🐬', label: 'MySQL' };
-    case 'mongodb':
-      return { icon: '🍃', label: 'MongoDB' };
-    case 'redis':
-      return { icon: '🔴', label: 'Redis' };
-    case 'elasticsearch':
-      return { icon: '🔍', label: 'Elasticsearch' };
-    case 'api':
-      return { icon: '🌐', label: 'API' };
-    case 'file':
-      return { icon: '📁', label: '文件' };
-    default:
-      return { icon: '💾', label: type };
-  }
-};
-
-const BIDataSourcePage = () => {
+const BIDataSourcePage: React.FC = () => {
   const { t } = useTranslation();
   const queryClient = useQueryClient();
-  const [searchTerm, setSearchTerm] = useState('');
-  const [filterType, setFilterType] = useState<string>('');
-  const [filterStatus, setFilterStatus] = useState<string>('');
-
-  const {
-    data: datasources,
-    loading,
-    error,
-    pagination,
-    fetch,
-    refresh,
-    delete: deleteItem,
-  } = useCrudOperations<DataSource>({
-    api: dataSourceCrudApi,
-    queryKey: 'bi-data-sources',
-    defaultPageSize: 10,
-    pageParamName: 'page',
-    pageSizeParamName: 'pageSize',
-  });
 
   const testConnectionMutation = useMutation({
     mutationFn: (id: string) => testDataSource(id),
@@ -109,289 +23,61 @@ const BIDataSourcePage = () => {
   const refreshMutation = useMutation({
     mutationFn: (id: string) => refreshDataSource(id),
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['bi-data-sources'] });
+      queryClient.invalidateQueries({ queryKey: ['bi_data_source'] });
       logger.info('Sync successful');
     },
   });
 
-  const handleSearch = useCallback(
-    (value: string) => {
-      setSearchTerm(value);
-      fetch({
-        search: value || undefined,
-        type: filterType || undefined,
-        status: filterStatus || undefined,
-      });
-    },
-    [fetch, filterType, filterStatus]
-  );
-
-  const handleFilterTypeChange = useCallback(
-    (value: string) => {
-      setFilterType(value);
-      pagination.setPage(1);
-      fetch({
-        search: searchTerm || undefined,
-        type: value || undefined,
-        status: filterStatus || undefined,
-      });
-    },
-    [fetch, searchTerm, filterStatus, pagination]
-  );
-
-  const handleFilterStatusChange = useCallback(
-    (value: string) => {
-      setFilterStatus(value);
-      pagination.setPage(1);
-      fetch({
-        search: searchTerm || undefined,
-        type: filterType || undefined,
-        status: value || undefined,
-      });
-    },
-    [fetch, searchTerm, filterType, pagination]
-  );
-
-  const handleSync = useCallback(
-    async (ds: DataSource) => {
-      try {
-        await refreshMutation.mutateAsync(ds.id);
-      } catch (e: unknown) {
-        logger.error('Failed to sync datasource:', e);
+  const apiAdapter: CrudApiAdapter<DataSource> = {
+    list: async (params) => {
+      const res = await dataSourceCrudApi.list(params);
+      if (res.success && res.data) {
+        return { data: res.data.items, total: res.data.total };
       }
+      throw new Error(res.message || '加载数据源失败');
     },
-    [refreshMutation]
-  );
-
-  const handleTestConnection = useCallback(
-    async (ds: DataSource) => {
-      try {
-        await testConnectionMutation.mutateAsync(ds.id);
-      } catch (e: unknown) {
-        logger.error('Connection test failed:', e);
-      }
+    create: async (data) => {
+      const res = await dataSourceCrudApi.create(data as Partial<DataSource>);
+      if (!res.success || !res.data) throw new Error(res.message || '创建失败');
+      return res.data;
     },
-    [testConnectionMutation]
-  );
-
-  const handleDelete = useCallback(
-    async (ds: DataSource) => {
-      try {
-        await deleteItem(ds.id);
-      } catch (e: unknown) {
-        logger.error('Failed to delete datasource:', e);
-      }
+    update: async (id, data) => {
+      const res = await dataSourceCrudApi.update(id, data as Partial<DataSource>);
+      if (!res.success || !res.data) throw new Error(res.message || '更新失败');
+      return res.data;
     },
-    [deleteItem]
-  );
+    delete: async (id) => {
+      const res = await dataSourceCrudApi.delete(id);
+      if (!res.success) throw new Error(res.message || '删除失败');
+    },
+  };
 
-  const columns = useMemo<ColumnDef<DataSource>[]>(
-    () => [
-      {
-        id: 'name',
-        label: t('bi.bi_data_source_page.name'),
-        render: (row) => (
-          <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5 }}>
-            <Database
-              size={18}
-              color='grey.600'
-            />
-            <Box>
-              <Typography
-                variant='body2'
-                sx={{ fontWeight: 500 }}
-              >
-                {row.name}
-              </Typography>
-              <Typography
-                variant='caption'
-                color='text.secondary'
-              >
-                <Server size={12} /> {row.host}
-              </Typography>
-            </Box>
-          </Box>
-        ),
+  const customRowActions = [
+    {
+      label: t('bi.bi_data_source_page.text_6a620e', '同步'),
+      icon: <RefreshCw size={16} />,
+      onClick: (row: Record<string, unknown>) => {
+        refreshMutation.mutate(String(row.id));
       },
-      {
-        id: 'type',
-        label: t('bi.bi_data_source_page.type'),
-        render: (row) => {
-          const typeConfig = getTypeConfig(row.type);
-          return (
-            <Chip
-              icon={<Typography component='span'>{typeConfig.icon}</Typography>}
-              label={typeConfig.label}
-              size='small'
-              variant='outlined'
-            />
-          );
-        },
+    },
+    {
+      label: t('bi.bi_data_source_page.test', '测试连接'),
+      icon: <TestTube size={16} />,
+      onClick: (row: Record<string, unknown>) => {
+        testConnectionMutation.mutate(String(row.id));
       },
-      {
-        id: 'status',
-        label: t('bi.bi_data_source_page.status'),
-        render: (row) => {
-          const statusConfig = getStatusConfig(row.status);
-          return (
-            <Chip
-              icon={statusConfig.icon}
-              label={statusConfig.label}
-              size='small'
-              color={statusConfig.color}
-            />
-          );
-        },
-      },
-      {
-        id: 'last_sync',
-        label: t('bi.bi_data_source_page.time'),
-        render: (row) =>
-          row.last_sync ? (
-            <Typography
-              variant='body2'
-              color='text.secondary'
-            >
-              <Clock size={12} /> {new Date(row.last_sync).toLocaleString('zh-CN')}
-            </Typography>
-          ) : (
-            <Typography
-              variant='body2'
-              color='text.secondary'
-            >
-              未同步
-            </Typography>
-          ),
-      },
-      {
-        id: 'dataVolume',
-        label: t('bi.bi_data_source_page.text_6c8266'),
-        render: (row) => (
-          <Typography variant='body2'>
-            {row.data_volume ? `${(row.data_volume / 1000).toFixed(1)}K` : '-'}
-          </Typography>
-        ),
-      },
-    ],
-    []
-  );
-
-  const rowActions = useMemo<RowAction<DataSource>[]>(
-    () => [
-      {
-        label: t('bi.bi_data_source_page.text_6a620e'),
-        icon: <RefreshCw size={16} />,
-        onClick: (row) => handleSync(row),
-      },
-      {
-        label: t('bi.bi_data_source_page.test'),
-        icon: <TestTube size={16} />,
-        onClick: (row) => handleTestConnection(row),
-      },
-      {
-        label: t('bi.bi_data_source_page.view'),
-        icon: <Eye size={16} />,
-        onClick: (row) => logger.info('View:', row.id),
-      },
-      {
-        label: t('bi.bi_data_source_page.edit'),
-        icon: <Edit size={16} />,
-        onClick: (row) => logger.info('Edit:', row.id),
-      },
-      {
-        label: t('bi.bi_data_source_page.delete'),
-        icon: <Trash2 size={16} />,
-        color: 'error',
-        onClick: (row) => handleDelete(row),
-        confirm: true,
-        confirmMessage: t('bi.bi_data_source_page.confirm'),
-      },
-    ],
-    [handleSync, handleTestConnection, handleDelete]
-  );
-
-  const filters = useMemo<FilterConfig[]>(
-    () => [
-      {
-        id: 'type',
-        label: t('bi.bi_data_source_page.type_1'),
-        type: 'select',
-        options: [
-          { value: '', label: t('bi.bi_data_source_page.type_2') },
-          { value: 'postgresql', label: 'PostgreSQL' },
-          { value: 'mysql', label: 'MySQL' },
-          { value: 'mongodb', label: 'MongoDB' },
-          { value: 'redis', label: 'Redis' },
-          { value: 'elasticsearch', label: 'Elasticsearch' },
-          { value: 'api', label: 'API' },
-          { value: 'file', label: t('bi.bi_data_source_page.text_2a0c47') },
-        ],
-        value: filterType,
-        onChange: (value) => handleFilterTypeChange(value as string),
-      },
-      {
-        id: 'status',
-        label: t('bi.bi_data_source_page.status_1'),
-        type: 'select',
-        options: [
-          { value: '', label: t('bi.bi_data_source_page.all') },
-          { value: 'active', label: t('bi.bi_data_source_page.text_c5ea9c') },
-          { value: 'inactive', label: t('bi.bi_data_source_page.text_d70e9b') },
-          { value: 'error', label: t('bi.bi_data_source_page.abnormal') },
-        ],
-        value: filterStatus,
-        onChange: (value) => handleFilterStatusChange(value as string),
-      },
-    ],
-    [filterType, filterStatus, handleFilterTypeChange, handleFilterStatusChange]
-  );
-
-  const paginationConfig = useMemo(
-    () => ({
-      page: pagination.page - 1,
-      pageSize: pagination.pageSize,
-      total: pagination.total,
-      onPageChange: (newPage: number) => pagination.setPage(newPage + 1),
-      onPageSizeChange: (newPageSize: number) => pagination.setPageSize(newPageSize),
-    }),
-    [pagination]
-  );
-
-  const actionLoading = loading || testConnectionMutation.isPending || refreshMutation.isPending;
+    },
+  ];
 
   return (
     <PageContainer
-      title={t('bi.bi_data_source_page.text_4feab2')}
-      subtitle={t('bi.bi_data_source_page.text_b72c3a')}
+      title={t('bi.bi_data_source_page.text_4feab2', 'BI 数据源')}
+      subtitle={t('bi.bi_data_source_page.text_b72c3a', '管理 BI 数据源连接')}
     >
-      <ListPageTemplate<DataSource>
-        title=''
-        subtitle=''
-        columns={columns}
-        data={datasources}
-        loading={actionLoading}
-        error={error || undefined}
-        searchable
-        searchPlaceholder={t('bi.bi_data_source_page.search')}
-        searchValue={searchTerm}
-        onSearch={handleSearch}
-        filters={filters}
-        pagination={paginationConfig}
-        rowActions={rowActions}
-        onRefresh={refresh}
-        actions={[
-          {
-            label: t('bi.bi_data_source_page.back'),
-            variant: 'outlined',
-            onClick: () => logger.info('Back to dashboard'),
-          },
-          {
-            label: t('bi.bi_data_source_page.add'),
-            icon: <Plus size={16} />,
-            variant: 'contained',
-            onClick: () => logger.info('Add datasource'),
-          },
-        ]}
+      <CrudPage
+        schema={dataSourceSchema}
+        apiAdapter={apiAdapter}
+        customRowActions={customRowActions}
       />
     </PageContainer>
   );

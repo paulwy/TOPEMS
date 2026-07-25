@@ -1,259 +1,182 @@
-import React, { useState, useMemo } from 'react';
-import { useQuery } from '@tanstack/react-query';
-import { QUERY_KEYS } from '@/lib/reactQuery';
-import { FINANCE_PATHS } from '@/modules/finance/config';
-import {
-  TrendingUp,
-  TrendingDown,
-  AlertCircle,
-  BarChart3,
-  DollarSign,
-  Wallet,
-  Download,
-} from 'lucide-react';
-import { useTranslation } from 'react-i18next';
-import { DataExport, BackButton, PageContainer } from '@/components/common';
-import { useNotificationStore } from '@/store';
-import { ListPageTemplate, StatCardGroup } from '@/components';
-import { financeApi, accountApi } from '@/api/finance';
-import type { Account, AccountBalance } from '@/types/finance';
-import { apiLogger } from '@/utils/logger';
+/**
+ * 成本管理页面
+ *
+ * 使用 CrudPage + costSchema 实现 schema 驱动的 CRUD。
+ * 支持列表展示、创建、编辑、删除、筛选，以及余额展示和成本分析。
+ */
 
+import React, { useMemo, useState, useCallback } from 'react';
 import {
+  Box,
+  Typography,
   Dialog,
   DialogTitle,
   DialogContent,
   DialogActions,
-  Chip,
-  Box as MuiBox,
-  Typography,
-  Stack,
   Button,
+  Stack,
 } from '@mui/material';
+import { TrendingUp, Wallet, DollarSign, BarChart3, Download } from 'lucide-react';
+import CrudPage, { type CrudApiAdapter } from '@/components/templates/CrudPage';
+import type { RowAction } from '@/components/templates/list/types';
+import { costSchema } from '@/schemas/finance/cost';
+import { accountApi } from '@/api/finance/account';
+import type { Account, AccountBalance } from '@/types/finance';
+import { BackButton, PageContainer } from '@/components/common';
+import { StatCardGroup } from '@/components';
+import { FINANCE_PATHS } from '@/modules/finance/config';
+import { useNotificationStore } from '@/store';
+import { useTranslation } from 'react-i18next';
 
 const FinanceCostPage: React.FC = () => {
   const { t } = useTranslation();
   const addNotification = useNotificationStore((state) => state.addNotification);
+  const [analysisTarget, setAnalysisTarget] = useState<Account | null>(null);
 
-  const [filterCenter, setFilterCenter] = useState('');
-  const [searchQuery, setSearchQuery] = useState('');
-  const [showAnalysisModal, setShowAnalysisModal] = useState(false);
-  const [selectedCost, setSelectedCost] = useState<Account | null>(null);
+  const apiAdapter: CrudApiAdapter = useMemo(
+    () => ({
+      list: async (params) => {
+        const page = (params?.page as number) || 1;
+        const pageSize = (params?.pageSize as number) || 10;
+        const search = (params?.search as string) || '';
+        const statusFilter = (params?.status as string) || undefined;
 
-  const currentPeriod = new Date().toISOString().slice(0, 7);
+        const queryParams: Record<string, unknown> = {
+          category: 'cost',
+          page,
+          pagesize: pageSize,
+        };
+        if (search) queryParams.keyword = search;
+        if (statusFilter && statusFilter !== 'all') queryParams.status = statusFilter;
 
-  const accountsQuery = useQuery<Account[]>({
-    queryKey: [...QUERY_KEYS.FINANCE.COST, { searchQuery, type: 'accounts' }],
-    queryFn: async () => {
-      const accountsRes = await financeApi.account.list({
-        category: 'cost',
-        keyword: searchQuery || undefined,
-      });
-      if (accountsRes.success && accountsRes.data) {
-        return accountsRes.data.items || [];
-      }
-      return [];
-    },
-  });
-
-  const balancesQuery = useQuery<AccountBalance[]>({
-    queryKey: [...QUERY_KEYS.FINANCE.COST, { period: currentPeriod, type: 'balances' }],
-    queryFn: async () => {
-      const balancesRes = await financeApi.account.getBalances({
-        period: currentPeriod,
-      });
-      if (balancesRes.success && balancesRes.data) {
-        return balancesRes.data || [];
-      }
-      return [];
-    },
-  });
-
-  const costData = accountsQuery.data || [];
-  const balanceData = balancesQuery.data || [];
-  const loading = accountsQuery.isLoading || balancesQuery.isLoading;
-  const error = accountsQuery.error || balancesQuery.error ? t('finance.finance_cost_page.fail') : undefined;
-
-  const getAccountBalance = (accountId: string): AccountBalance | undefined => {
-    return balanceData.find((b) => b.account_id === accountId);
-  };
-
-  const filteredData = useMemo(() => {
-    return costData.filter((cost) => {
-      if (searchQuery) {
-        const query = searchQuery.toLowerCase();
-        if (!cost.code.toLowerCase().includes(query) && !cost.name.toLowerCase().includes(query)) {
-          return false;
+        const response = await accountApi.list(queryParams);
+        if (!response.success || !response.data) {
+          return { data: [], total: 0 };
         }
-      }
-      return true;
-    });
-  }, [costData, filterCenter, searchQuery]);
 
-  const totalActual = useMemo(() => {
-    return balanceData
-      .filter((b) => b.category === 'cost')
-      .reduce((sum, b) => sum + b.debit_balance, 0);
-  }, [balanceData]);
+        const accounts = response.data.items || [];
 
-  const statCards = useMemo(() => {
-    return [
-      {
-        title: t('finance.finance_cost_page.text_27d98b'),
-        value: costData.length,
-        icon: <Wallet size={24} />,
-        color: 'primary' as const,
+        // 获取余额数据并合并
+        let balances: AccountBalance[] = [];
+        try {
+          const period = new Date().toISOString().slice(0, 7);
+          const balanceResp = await accountApi.getBalances({ period });
+          if (balanceResp.success && balanceResp.data) {
+            balances = balanceResp.data.filter((b) => b.category === 'cost');
+          }
+        } catch {
+          // 余额获取失败不阻塞列表
+        }
+
+        const merged = accounts.map((account: Account) => {
+          const balance = balances.find((b) => b.account_id === account.id);
+          return {
+            ...account,
+            debit_balance: balance?.debit_balance ?? 0,
+            period_debit: balance?.period_debit ?? 0,
+            period_credit: balance?.period_credit ?? 0,
+          };
+        });
+
+        return {
+          data: merged as unknown as Record<string, unknown>[],
+          total: response.data.total || accounts.length,
+        };
       },
-      {
-        title: t('finance.finance_cost_page.actual'),
-        value: `¥${totalActual.toLocaleString()}`,
-        icon: <DollarSign size={24} />,
-        color: 'secondary' as const,
+      create: async (data) => {
+        const payload = { ...(data as Partial<Account>), category: 'cost' };
+        const response = await accountApi.create(payload);
+        if (!response.success) {
+          throw new Error(response.message || '创建成本科目失败');
+        }
+        addNotification({
+          title: t('finance.finance_cost_page.text_7f9f6f'),
+          message: '成本科目已创建',
+          type: 'success',
+        });
+        return response.data as unknown as Record<string, unknown>;
       },
-      {
-        title: t('finance.finance_cost_page.text_2058a6'),
-        value: `¥${balanceData
-          .filter((b) => b.category === 'cost')
-          .reduce((sum, b) => sum + b.period_debit, 0)
-          .toLocaleString()}`,
-        icon: <TrendingDown size={24} />,
-        color: 'success' as const,
+      update: async (id, data) => {
+        const response = await accountApi.update(String(id), data as Partial<Account>);
+        if (!response.success) {
+          throw new Error(response.message || '更新成本科目失败');
+        }
+        addNotification({
+          title: t('finance.finance_cost_page.text_7f9f6f'),
+          message: '成本科目已更新',
+          type: 'success',
+        });
+        return response.data as unknown as Record<string, unknown>;
       },
-    ];
-  }, [costData, balanceData, totalActual]);
+      delete: async (id) => {
+        const response = await accountApi.delete(String(id));
+        if (!response.success) {
+          throw new Error(response.message || '删除成本科目失败');
+        }
+        addNotification({
+          title: t('finance.finance_cost_page.text_7f9f6f'),
+          message: '成本科目已删除',
+          type: 'success',
+        });
+      },
+    }),
+    [addNotification, t]
+  );
 
-  const handleAnalysis = (cost: Account) => {
-    setSelectedCost(cost);
-    setShowAnalysisModal(true);
-  };
-
-  const handleExport = () => {
+  const handleExport = useCallback(() => {
     addNotification({
       title: t('finance.finance_cost_page.export'),
       message: t('finance.finance_cost_page.export_1'),
       type: 'success',
     });
-  };
+  }, [addNotification, t]);
 
-  const handleReset = () => {
-    setSearchQuery('');
-    setFilterCenter('');
-  };
-
-  const columns = useMemo(
-    () => [
-      {
-        id: 'code',
-        label: t('finance.finance_cost_page.code'),
-        render: (row: Account) => (
-          <MuiBox sx={{ fontWeight: 600, color: 'primary.main' }}>{row.code}</MuiBox>
-        ),
-      },
-      {
-        id: 'name',
-        label: t('finance.finance_cost_page.text_6c5f2d'),
-        render: (row: Account) => <MuiBox sx={{ fontWeight: 500 }}>{row.name}</MuiBox>,
-      },
-      {
-        id: 'balance',
-        label: t('finance.finance_cost_page.text_23a35c'),
-        render: (row: Account) => {
-          const balance = getAccountBalance(row.id);
-          return (
-            <MuiBox sx={{ fontFamily: 'monospace', fontWeight: 600 }}>
-              ¥{(balance?.debit_balance || 0).toLocaleString()}
-            </MuiBox>
-          );
-        },
-      },
-      {
-        id: 'period_debit',
-        label: t('finance.finance_cost_page.text_2058a6'),
-        render: (row: Account) => {
-          const balance = getAccountBalance(row.id);
-          return (
-            <MuiBox sx={{ fontFamily: 'monospace', color: 'success.main' }}>
-              ¥{(balance?.period_debit || 0).toLocaleString()}
-            </MuiBox>
-          );
-        },
-      },
-      {
-        id: 'period_credit',
-        label: t('finance.finance_cost_page.text_1d91a4'),
-        render: (row: Account) => {
-          const balance = getAccountBalance(row.id);
-          return (
-            <MuiBox sx={{ fontFamily: 'monospace', color: 'error.main' }}>
-              ¥{(balance?.period_credit || 0).toLocaleString()}
-            </MuiBox>
-          );
-        },
-      },
-      {
-        id: 'status',
-        label: t('finance.finance_cost_page.status'),
-        render: (row: Account) => {
-          const statusColors: Record<string, 'success' | 'warning' | 'error' | 'default'> = {
-            active: 'success',
-            disabled: 'error',
-          };
-          const statusLabels: Record<string, string> = {
-            active: t('finance.finance_cost_page.active'),
-            disabled: t('finance.finance_cost_page.inactive'),
-          };
-          return (
-            <Chip
-              label={statusLabels[row.status] || row.status}
-              size='small'
-              color={statusColors[row.status] || 'default'}
-            />
-          );
-        },
-      },
-    ],
-    [balanceData]
-  );
-
-  const rowActions = useMemo(
+  const customRowActions: RowAction[] = useMemo(
     () => [
       {
         label: t('finance.finance_cost_page.text_7f9f6f'),
         icon: <BarChart3 size={16} />,
-        color: 'success' as const,
-        onClick: (row: Account) => handleAnalysis(row),
+        color: 'success',
+        onClick: (row) => setAnalysisTarget(row as unknown as Account),
       },
     ],
-    []
+    [t]
   );
 
-  const advancedFilters = useMemo(
-    () => [
-      {
-        id: 'status',
-        label: t('finance.finance_cost_page.status'),
-        type: 'select' as const,
-        options: [
-          { value: 'active', label: t('finance.finance_cost_page.active') },
-          { value: 'disabled', label: t('finance.finance_cost_page.inactive') },
-        ],
-        value: filterCenter,
-        onChange: (value: unknown) => setFilterCenter(value as string),
-      },
-    ],
-    [filterCenter]
-  );
+  const headerContent = useCallback(
+    (rows: Record<string, unknown>[]) => {
+      const totalActual = rows.reduce((sum, r) => sum + (Number(r.debit_balance) || 0), 0);
+      const totalPeriodDebit = rows.reduce((sum, r) => sum + (Number(r.period_debit) || 0), 0);
 
-  const exportFields = useMemo(
-    () => [
-      { key: 'code', title: t('finance.finance_cost_page.code') },
-      { key: 'name', title: t('finance.finance_cost_page.text_6c5f2d') },
-      { key: 'category', title: t('finance.finance_cost_page.text_f31b4e') },
-      { key: 'balance_direction', title: t('finance.finance_cost_page.text_98f933') },
-      { key: 'level', title: t('finance.finance_cost_page.text_6896da') },
-      { key: 'status', title: t('finance.finance_cost_page.status') },
-    ],
-    []
+      const statCards = [
+        {
+          title: t('finance.finance_cost_page.text_27d98b'),
+          value: rows.length,
+          icon: <Wallet size={24} />,
+          color: 'primary' as const,
+        },
+        {
+          title: t('finance.finance_cost_page.actual'),
+          value: `¥${totalActual.toLocaleString()}`,
+          icon: <DollarSign size={24} />,
+          color: 'secondary' as const,
+        },
+        {
+          title: t('finance.finance_cost_page.text_2058a6'),
+          value: `¥${totalPeriodDebit.toLocaleString()}`,
+          icon: <TrendingUp size={24} />,
+          color: 'success' as const,
+        },
+      ];
+
+      return (
+        <StatCardGroup
+          stats={statCards}
+          columns={3}
+        />
+      );
+    },
+    [t]
   );
 
   return (
@@ -265,7 +188,7 @@ const FinanceCostPage: React.FC = () => {
       autoTitle
       autoBreadcrumbs
     >
-      <MuiBox
+      <Box
         sx={{
           bgcolor: 'background.paper',
           boxShadow: 'sm',
@@ -273,14 +196,7 @@ const FinanceCostPage: React.FC = () => {
           borderColor: 'divider',
         }}
       >
-        <MuiBox
-          sx={{
-            maxWidth: 1280,
-            mx: 'auto',
-            px: { xs: 2, sm: 3, lg: 4 },
-            py: 3,
-          }}
-        >
+        <Box sx={{ maxWidth: 1280, mx: 'auto', px: { xs: 2, sm: 3, lg: 4 }, py: 3 }}>
           <Stack
             direction='row'
             sx={{ justifyContent: 'space-between', alignItems: 'center' }}
@@ -291,16 +207,12 @@ const FinanceCostPage: React.FC = () => {
               spacing={2}
             >
               <BackButton href={FINANCE_PATHS.dashboard} />
-              <MuiBox>
+              <Box>
                 <Typography
                   variant='h5'
-                  sx={{
-                    display: 'flex',
-                    alignItems: 'center',
-                    fontWeight: 700,
-                  }}
+                  sx={{ display: 'flex', alignItems: 'center', fontWeight: 700 }}
                 >
-                  <MuiBox
+                  <Box
                     component='span'
                     sx={{
                       width: 28,
@@ -312,7 +224,7 @@ const FinanceCostPage: React.FC = () => {
                     }}
                   >
                     <TrendingUp size={28} />
-                  </MuiBox>
+                  </Box>
                   成本管理
                 </Typography>
                 <Typography
@@ -321,7 +233,7 @@ const FinanceCostPage: React.FC = () => {
                 >
                   管理成本中心预算和实际成本，分析成本差异
                 </Typography>
-              </MuiBox>
+              </Box>
             </Stack>
             <Stack
               direction='row'
@@ -334,69 +246,41 @@ const FinanceCostPage: React.FC = () => {
               >
                 导出报表
               </Button>
-              <DataExport
-                data={costData as unknown as Record<string, unknown>[]}
-                fields={exportFields}
-                defaultFileName={t('finance.finance_cost_page.text_50e24e')}
-                buttonText={t('finance.finance_cost_page.export_2')}
-              />
             </Stack>
           </Stack>
-        </MuiBox>
-      </MuiBox>
+        </Box>
+      </Box>
 
-      <MuiBox sx={{ maxWidth: 1280, mx: 'auto', px: { xs: 2, sm: 3, lg: 4 }, py: 3 }}>
-        <StatCardGroup
-          stats={statCards}
-          columns={3}
+      <Box sx={{ maxWidth: 1280, mx: 'auto', px: { xs: 2, sm: 3, lg: 4 }, py: 3 }}>
+        <CrudPage
+          schema={costSchema}
+          apiAdapter={apiAdapter}
+          customRowActions={customRowActions}
+          headerContent={headerContent}
         />
-
-        <ListPageTemplate
-          columns={columns}
-          data={filteredData}
-          loading={loading}
-          error={error}
-          searchable
-          searchPlaceholder={t('finance.finance_cost_page.search')}
-          searchValue={searchQuery}
-          onSearch={setSearchQuery}
-          filters={advancedFilters}
-          filtersValue={{
-            department_id: filterCenter,
-          }}
-          onFilterChange={(filters) => {
-            if (filters.department_id !== undefined)
-              setFilterCenter(filters.department_id as string);
-          }}
-          rowActions={rowActions}
-          onRefresh={() => {
-            accountsQuery.refetch();
-            balancesQuery.refetch();
-          }}
-        />
-      </MuiBox>
+      </Box>
 
       <Dialog
-        open={showAnalysisModal}
-        onClose={() => setShowAnalysisModal(false)}
+        open={!!analysisTarget}
+        onClose={() => setAnalysisTarget(null)}
         maxWidth='sm'
         fullWidth
       >
-        <DialogTitle>成本分析 - {selectedCost?.name}</DialogTitle>
+        <DialogTitle>成本分析 - {analysisTarget?.name}</DialogTitle>
         <DialogContent>
-          {selectedCost && (
+          {analysisTarget && (
             <Stack
               spacing={3}
               sx={{ pt: 2 }}
             >
-              <MuiBox
+              <Box
                 sx={{
                   display: 'grid',
                   gridTemplateColumns: 'repeat(2, 1fr)',
                   gap: 2,
                 }}
               >
-                <MuiBox sx={{ p: 2, bgcolor: 'grey.50', borderRadius: 1 }}>
+                <Box sx={{ p: 2, bgcolor: 'grey.50', borderRadius: 1 }}>
                   <Typography
                     variant='body2'
                     color='text.secondary'
@@ -407,10 +291,10 @@ const FinanceCostPage: React.FC = () => {
                     variant='body1'
                     sx={{ fontWeight: 500 }}
                   >
-                    {selectedCost.code}
+                    {analysisTarget.code}
                   </Typography>
-                </MuiBox>
-                <MuiBox sx={{ p: 2, bgcolor: 'grey.50', borderRadius: 1 }}>
+                </Box>
+                <Box sx={{ p: 2, bgcolor: 'grey.50', borderRadius: 1 }}>
                   <Typography
                     variant='body2'
                     color='text.secondary'
@@ -421,11 +305,11 @@ const FinanceCostPage: React.FC = () => {
                     variant='body1'
                     sx={{ fontWeight: 500 }}
                   >
-                    {selectedCost.name}
+                    {analysisTarget.name}
                   </Typography>
-                </MuiBox>
-              </MuiBox>
-              <MuiBox sx={{ p: 2, bgcolor: 'primary.light', borderRadius: 1 }}>
+                </Box>
+              </Box>
+              <Box sx={{ p: 2, bgcolor: 'primary.light', borderRadius: 1 }}>
                 <Typography
                   variant='body2'
                   color='text.secondary'
@@ -436,17 +320,20 @@ const FinanceCostPage: React.FC = () => {
                   variant='h6'
                   sx={{ fontWeight: 700 }}
                 >
-                  ¥{(getAccountBalance(selectedCost.id)?.debit_balance || 0).toLocaleString()}
+                  ¥
+                  {Number(
+                    (analysisTarget as unknown as Record<string, unknown>).debit_balance || 0
+                  ).toLocaleString()}
                 </Typography>
-              </MuiBox>
-              <MuiBox
+              </Box>
+              <Box
                 sx={{
                   display: 'grid',
                   gridTemplateColumns: 'repeat(2, 1fr)',
                   gap: 2,
                 }}
               >
-                <MuiBox sx={{ p: 2, bgcolor: 'success.light', borderRadius: 1 }}>
+                <Box sx={{ p: 2, bgcolor: 'success.light', borderRadius: 1 }}>
                   <Typography
                     variant='body2'
                     color='text.secondary'
@@ -457,10 +344,13 @@ const FinanceCostPage: React.FC = () => {
                     variant='body1'
                     sx={{ fontWeight: 700, color: 'success.main' }}
                   >
-                    ¥{(getAccountBalance(selectedCost.id)?.period_debit || 0).toLocaleString()}
+                    ¥
+                    {Number(
+                      (analysisTarget as unknown as Record<string, unknown>).period_debit || 0
+                    ).toLocaleString()}
                   </Typography>
-                </MuiBox>
-                <MuiBox sx={{ p: 2, bgcolor: 'error.light', borderRadius: 1 }}>
+                </Box>
+                <Box sx={{ p: 2, bgcolor: 'error.light', borderRadius: 1 }}>
                   <Typography
                     variant='body2'
                     color='text.secondary'
@@ -471,12 +361,15 @@ const FinanceCostPage: React.FC = () => {
                     variant='body1'
                     sx={{ fontWeight: 700, color: 'error.main' }}
                   >
-                    ¥{(getAccountBalance(selectedCost.id)?.period_credit || 0).toLocaleString()}
+                    ¥
+                    {Number(
+                      (analysisTarget as unknown as Record<string, unknown>).period_credit || 0
+                    ).toLocaleString()}
                   </Typography>
-                </MuiBox>
-              </MuiBox>
-              {selectedCost.description && (
-                <MuiBox sx={{ p: 2, bgcolor: 'grey.100', borderRadius: 1 }}>
+                </Box>
+              </Box>
+              {analysisTarget.description && (
+                <Box sx={{ p: 2, bgcolor: 'grey.100', borderRadius: 1 }}>
                   <Typography
                     variant='body2'
                     color='text.secondary'
@@ -487,15 +380,15 @@ const FinanceCostPage: React.FC = () => {
                     variant='body1'
                     sx={{ mt: 1 }}
                   >
-                    {selectedCost.description}
+                    {analysisTarget.description}
                   </Typography>
-                </MuiBox>
+                </Box>
               )}
             </Stack>
           )}
         </DialogContent>
         <DialogActions>
-          <Button onClick={() => setShowAnalysisModal(false)}>关闭</Button>
+          <Button onClick={() => setAnalysisTarget(null)}>关闭</Button>
         </DialogActions>
       </Dialog>
     </PageContainer>

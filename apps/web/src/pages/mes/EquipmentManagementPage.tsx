@@ -1,123 +1,46 @@
+import { useState, useMemo } from 'react';
 import {
-  Chip,
+  Box,
   Dialog,
   DialogTitle,
   DialogContent,
   DialogActions,
-  TextField,
-  Box,
+  Button,
   InputLabel,
+  TextField,
+  FormControl,
   Select,
   MenuItem,
-  FormControl,
-  IconButton,
-  Tooltip,
-  Stack,
   Typography,
-  Button,
 } from '@mui/material';
 import { PageContainer } from '@/components/common';
-import React, { useState, useMemo, useCallback } from 'react';
-import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { designTokens } from '@/theme/tokens';
-import type {
-  Equipment,
-  CreateEquipmentRequest,
-  UpdateEquipmentRequest,
-  EquipmentStatistics,
-  MaintenanceEquipmentRequest,
-  ListParams,
-} from '@/api/mes';
+import CrudPage from '@/components/templates/CrudPage';
+import { createCrudPageAdapter } from '@/schema/crudPageAdapter';
+import { equipmentSchema } from '@/schemas/mes';
 import { mesApi } from '@/api/mes';
-import { useNotificationStore } from '@/store';
-import { LoadingSpinner } from '@topems/shared-components';
-import {
-  ListPageTemplate,
-  type ColumnDef,
-  type RowAction,
-  type FilterConfig,
-} from '@/components/templates';
-import {
-  Search,
-  Plus,
-  Edit,
-  Trash2,
-  Eye,
-  Wrench,
-  BarChart3,
-  Monitor,
-  Power,
-  AlertTriangle,
-} from 'lucide-react';
-import { apiLogger } from '@/utils/logger';
-import { useUrlListState } from '@/hooks';
-
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { useTranslation } from 'react-i18next';
-const ct = designTokens.colors;
+import { Wrench, Power, Monitor, AlertTriangle } from 'lucide-react';
+import { designTokens } from '@/theme/tokens';
+import { useNotificationStore } from '@/store';
+import { apiLogger } from '@/utils/logger';
+import type { Equipment, MaintenanceEquipmentRequest } from '@/api/mes';
 
-const EquipmentManagementPage: React.FC = () => {
+const ct = designTokens.colors;
+const apiAdapter = createCrudPageAdapter(mesApi.equipment);
+
+export default function EquipmentManagementPage() {
   const { t } = useTranslation();
   const queryClient = useQueryClient();
-  const {
-    searchQuery,
-    setSearchQuery,
-    debouncedSearch,
-    filters: urlFilters,
-    setFilter,
-    currentPage,
-    setCurrentPage,
-    pageSize,
-  } = useUrlListState<{ status: string }>({
-    defaultPageSize: 10,
-    defaultFilters: { status: 'all' },
-    baseIndex: 1,
-    historyMode: 'replace',
-  });
-  const statusFilter = urlFilters.status;
-  const [showDialog, setShowDialog] = useState(false);
-  const [showDetailDialog, setShowDetailDialog] = useState(false);
+  const { addNotification } = useNotificationStore();
+
   const [showMaintenanceDialog, setShowMaintenanceDialog] = useState(false);
   const [selectedEquipment, setSelectedEquipment] = useState<Equipment | null>(null);
-  const [selectedIds, setSelectedIds] = useState<string[]>([]);
-  const [formData, setFormData] = useState<CreateEquipmentRequest>({
-    code: '',
-    name: '',
-    type: '',
-    model: '',
-    manufacturer: '',
-    location: '',
-    status: 'idle',
-  });
   const [maintenanceData, setMaintenanceData] = useState<MaintenanceEquipmentRequest>({
     maintenance_type: 'routine',
     description: '',
     maintainer: '',
     start_time: '',
-  });
-
-  const { addNotification } = useNotificationStore();
-
-  const equipmentQuery = useQuery({
-    queryKey: ['mes-equipment', currentPage, pageSize, debouncedSearch, statusFilter],
-    queryFn: async () => {
-      const params: ListParams = {
-        page: currentPage - 1,
-        pagesize: pageSize,
-      };
-      if (debouncedSearch) params.search = debouncedSearch;
-      if (statusFilter !== 'all') params.status = statusFilter;
-
-      const response = await mesApi.equipment.list(params);
-      if (!response.success || !response.data) {
-        throw new Error(response.message || t('mes.equipment_management_page.list'));
-      }
-      return {
-        items: response.data.equipments || [],
-        total: response.data.total || 0,
-      };
-    },
-    staleTime: 5 * 60 * 1000,
-    retry: 2,
   });
 
   const statisticsQuery = useQuery({
@@ -133,90 +56,7 @@ const EquipmentManagementPage: React.FC = () => {
     retry: 2,
   });
 
-  const equipment = equipmentQuery.data?.items ?? [];
-  const total = equipmentQuery.data?.total ?? 0;
-  const loading = equipmentQuery.isLoading || statisticsQuery.isLoading;
   const statistics = statisticsQuery.data ?? null;
-
-  const createMutation = useMutation({
-    mutationFn: async (data: CreateEquipmentRequest) => {
-      const response = await mesApi.equipment.create(data);
-      if (!response.success) {
-        throw new Error(response.message || t('mes.equipment_management_page.create'));
-      }
-      return response.data;
-    },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['mes-equipment'] });
-      queryClient.invalidateQueries({ queryKey: ['mes-equipment-statistics'] });
-      addNotification({
-        type: 'success',
-        title: t('mes.equipment_management_page.create_1'),
-        message: t('mes.equipment_management_page.create_2'),
-      });
-    },
-    onError: (error: unknown) => {
-      apiLogger.error(t('mes.equipment_management_page.create_3'), error);
-      addNotification({
-        type: 'error',
-        title: t('mes.equipment_management_page.operation_failed'),
-        message: t('mes.equipment_management_page.create'),
-      });
-    },
-  });
-
-  const updateMutation = useMutation({
-    mutationFn: async ({ id, data }: { id: string; data: UpdateEquipmentRequest }) => {
-      const response = await mesApi.equipment.update(id, data);
-      if (!response.success) {
-        throw new Error(response.message || t('mes.equipment_management_page.update'));
-      }
-      return response.data;
-    },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['mes-equipment'] });
-      queryClient.invalidateQueries({ queryKey: ['mes-equipment-statistics'] });
-      addNotification({
-        type: 'success',
-        title: t('mes.equipment_management_page.update_1'),
-        message: t('mes.equipment_management_page.update_2'),
-      });
-    },
-    onError: (error: unknown) => {
-      apiLogger.error(t('mes.equipment_management_page.update_3'), error);
-      addNotification({
-        type: 'error',
-        title: t('mes.equipment_management_page.operation_failed'),
-        message: t('mes.equipment_management_page.update'),
-      });
-    },
-  });
-
-  const deleteMutation = useMutation({
-    mutationFn: async (id: string) => {
-      const response = await mesApi.equipment.delete(id);
-      if (!response.success) {
-        throw new Error(response.message || t('mes.equipment_management_page.delete'));
-      }
-    },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['mes-equipment'] });
-      queryClient.invalidateQueries({ queryKey: ['mes-equipment-statistics'] });
-      addNotification({
-        type: 'success',
-        title: t('mes.equipment_management_page.delete_success'),
-        message: t('mes.equipment_management_page.deleted'),
-      });
-    },
-    onError: (error: unknown) => {
-      apiLogger.error(t('mes.equipment_management_page.delete_1'), error);
-      addNotification({
-        type: 'error',
-        title: t('mes.equipment_management_page.operation_failed'),
-        message: t('mes.equipment_management_page.delete'),
-      });
-    },
-  });
 
   const maintenanceMutation = useMutation({
     mutationFn: async ({ id, data }: { id: string; data: MaintenanceEquipmentRequest }) => {
@@ -245,34 +85,7 @@ const EquipmentManagementPage: React.FC = () => {
     },
   });
 
-  const getStatusText = (status: string) => {
-    const statusMap: Record<string, string> = {
-      running: t('mes.equipment_management_page.status_running'),
-      idle: t('mes.equipment_management_page.idle'),
-      maintenance: t('mes.equipment_management_page.status_maintenance'),
-      fault: t('mes.equipment_management_page.status_fault'),
-    };
-    return statusMap[status] || status;
-  };
-
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    try {
-      if (selectedEquipment) {
-        await updateMutation.mutateAsync({
-          id: selectedEquipment.id,
-          data: formData as UpdateEquipmentRequest,
-        });
-      } else {
-        await createMutation.mutateAsync(formData);
-      }
-      setShowDialog(false);
-      resetForm();
-    } catch {}
-  };
-
-  const handleMaintenanceSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
+  const handleMaintenanceSubmit = async () => {
     if (!selectedEquipment) return;
     try {
       await maintenanceMutation.mutateAsync({
@@ -284,62 +97,6 @@ const EquipmentManagementPage: React.FC = () => {
     } catch {}
   };
 
-  const handleDelete = useCallback(
-    async (id: string) => {
-      if (!window.confirm(t('mes.equipment_management_page.confirm'))) return;
-      try {
-        await deleteMutation.mutateAsync(id);
-      } catch {}
-    },
-    [deleteMutation]
-  );
-
-  const handleEdit = useCallback((eq: Equipment) => {
-    setSelectedEquipment(eq);
-    setFormData({
-      code: eq.code,
-      name: eq.name,
-      type: eq.type,
-      model: eq.model,
-      manufacturer: eq.manufacturer,
-      purchase_date: eq.purchase_date,
-      location: eq.location,
-      status: eq.status,
-      value: eq.value,
-      description: eq.description,
-    });
-    setShowDialog(true);
-  }, []);
-
-  const handleViewDetail = useCallback((eq: Equipment) => {
-    setSelectedEquipment(eq);
-    setShowDetailDialog(true);
-  }, []);
-
-  const handleMaintenance = useCallback((eq: Equipment) => {
-    setSelectedEquipment(eq);
-    setMaintenanceData({
-      maintenance_type: 'routine',
-      description: '',
-      maintainer: '',
-      start_time: new Date().toISOString().slice(0, 16),
-    });
-    setShowMaintenanceDialog(true);
-  }, []);
-
-  const resetForm = () => {
-    setSelectedEquipment(null);
-    setFormData({
-      code: '',
-      name: '',
-      type: '',
-      model: '',
-      manufacturer: '',
-      location: '',
-      status: 'idle',
-    });
-  };
-
   const resetMaintenanceForm = () => {
     setMaintenanceData({
       maintenance_type: 'routine',
@@ -349,206 +106,120 @@ const EquipmentManagementPage: React.FC = () => {
     });
   };
 
-  const getStatusBadge = (status: string) => {
-    const statusMap: Record<
-      string,
-      {
-        label: string;
-        bg: string;
-        color: string;
-      }
-    > = {
-      running: { label: t('mes.equipment_management_page.status_running'), bg: 'success.lighter', color: 'success.700' },
-      idle: { label: t('mes.equipment_management_page.idle'), bg: 'grey.100', color: 'text.secondary' },
-      maintenance: { label: t('mes.equipment_management_page.status_maintenance'), bg: 'warning.light', color: 'warning.700' },
-      fault: { label: t('mes.equipment_management_page.status_fault'), bg: 'error.lighter', color: 'error.dark' },
-    };
-    const s = statusMap[status] || { label: status, bg: 'grey.100', color: 'text.secondary' };
-    return (
-      <Chip
-        size='small'
-        label={s.label}
-        sx={{ backgroundColor: s.bg, color: s.color, fontWeight: 500 }}
-      />
-    );
+  const handleOpenMaintenance = (row: Equipment) => {
+    setSelectedEquipment(row);
+    setMaintenanceData({
+      maintenance_type: 'routine',
+      description: '',
+      maintainer: '',
+      start_time: new Date().toISOString().slice(0, 16),
+    });
+    setShowMaintenanceDialog(true);
   };
 
-  const isMutationPending =
-    createMutation.isPending ||
-    updateMutation.isPending ||
-    deleteMutation.isPending ||
-    maintenanceMutation.isPending;
+  const statsContent = useMemo(() => {
+    return (rows: Equipment[]) => (
+      <Box
+        sx={{
+          display: 'grid',
+          gridTemplateColumns: { xs: 'repeat(2, 1fr)', md: 'repeat(4, 1fr)' },
+          gap: 2,
+          mb: 3,
+        }}
+      >
+        <Box sx={{ p: 2, bgcolor: 'success.lighter', borderRadius: 3 }}>
+          <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 1 }}>
+            <Power
+              size={18}
+              sx={{ color: 'success.700' }}
+            />
+            <Typography
+              variant='body2'
+              sx={{ color: 'text.secondary' }}
+            >
+              运行中
+            </Typography>
+          </Box>
+          <Typography
+            variant='h5'
+            sx={{ fontWeight: 700, color: 'success.700' }}
+          >
+            {statistics?.in_use || rows.filter((e) => e.status === 'running').length}
+          </Typography>
+        </Box>
+        <Box sx={{ p: 2, bgcolor: 'grey.100', borderRadius: 3 }}>
+          <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 1 }}>
+            <Monitor
+              size={18}
+              sx={{ color: 'text.secondary' }}
+            />
+            <Typography
+              variant='body2'
+              sx={{ color: 'text.secondary' }}
+            >
+              空闲
+            </Typography>
+          </Box>
+          <Typography
+            variant='h5'
+            sx={{ fontWeight: 700 }}
+          >
+            {statistics?.idle || rows.filter((e) => e.status === 'idle').length}
+          </Typography>
+        </Box>
+        <Box sx={{ p: 2, bgcolor: 'warning.light', borderRadius: 3 }}>
+          <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 1 }}>
+            <Wrench
+              size={18}
+              sx={{ color: 'warning.700' }}
+            />
+            <Typography
+              variant='body2'
+              sx={{ color: 'text.secondary' }}
+            >
+              维护中
+            </Typography>
+          </Box>
+          <Typography
+            variant='h5'
+            sx={{ fontWeight: 700, color: 'warning.700' }}
+          >
+            {statistics?.maintenance || rows.filter((e) => e.status === 'maintenance').length}
+          </Typography>
+        </Box>
+        <Box sx={{ p: 2, bgcolor: 'error.lighter', borderRadius: 3 }}>
+          <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 1 }}>
+            <AlertTriangle
+              size={18}
+              sx={{ color: 'error.dark' }}
+            />
+            <Typography
+              variant='body2'
+              sx={{ color: 'text.secondary' }}
+            >
+              故障
+            </Typography>
+          </Box>
+          <Typography
+            variant='h5'
+            sx={{ fontWeight: 700, color: 'error.dark' }}
+          >
+            {rows.filter((e) => e.status === 'fault').length}
+          </Typography>
+        </Box>
+      </Box>
+    );
+  }, [statistics]);
 
-  const columns: ColumnDef<Equipment>[] = useMemo(
+  const customRowActions = useMemo(
     () => [
-      { id: 'code', label: t('mes.equipment_management_page.equipment'), sortable: true },
-      { id: 'name', label: t('mes.equipment_management_page.column_equipment_name'), sortable: true },
-      { id: 'type', label: t('mes.equipment_management_page.equipment_type'), sortable: true },
-      { id: 'model', label: t('mes.equipment_management_page.text_ac4190'), sortable: true },
-      { id: 'location', label: t('mes.equipment_management_page.text_d4d2a6'), sortable: true },
-      {
-        id: 'status',
-        label: t('mes.equipment_management_page.filter_status'),
-        render: (row) => getStatusBadge(row.status),
-      },
-    ],
-    []
-  );
-
-  const filters: FilterConfig[] = useMemo(
-    () => [
-      {
-        id: 'status',
-        label: t('mes.equipment_management_page.filter_status'),
-        type: 'select',
-        options: [
-          { label: t('mes.equipment_management_page.filter_option_all_status'), value: 'all' },
-          { label: t('mes.equipment_management_page.status_running'), value: 'running' },
-          { label: t('mes.equipment_management_page.idle'), value: 'idle' },
-          { label: t('mes.equipment_management_page.status_maintenance'), value: 'maintenance' },
-          { label: t('mes.equipment_management_page.status_fault'), value: 'fault' },
-        ],
-        value: statusFilter,
-        onChange: (value: unknown) => {
-          setFilter('status', value as string);
-          setCurrentPage(1);
-        },
-      },
-    ],
-    [statusFilter]
-  );
-
-  const rowActions: RowAction<Equipment>[] = useMemo(
-    () => [
-      {
-        label: t('mes.equipment_management_page.action_view_detail'),
-        icon: <Eye size={16} />,
-        onClick: handleViewDetail,
-      },
       {
         label: t('mes.equipment_management_page.equipment_1'),
         icon: <Wrench size={16} />,
-        onClick: handleMaintenance,
-      },
-      {
-        label: t('mes.equipment_management_page.action_edit'),
-        icon: <Edit size={16} />,
-        onClick: handleEdit,
-      },
-      {
-        label: t('mes.equipment_management_page.action_delete'),
-        icon: <Trash2 size={16} />,
-        color: 'error',
-        onClick: (row) => handleDelete(row.id),
-        confirm: true,
-        confirmMessage: t('mes.equipment_management_page.confirm'),
+        onClick: (row: Equipment) => handleOpenMaintenance(row),
       },
     ],
-    [handleViewDetail, handleMaintenance, handleEdit, handleDelete]
-  );
-
-  const handleOpenCreate = () => {
-    resetForm();
-    setShowDialog(true);
-  };
-
-  const handleSearch = (value: string) => {
-    setSearchQuery(value);
-    setCurrentPage(1);
-  };
-
-  if (loading) return <LoadingSpinner />;
-
-  const statsContent = (
-    <Box
-      sx={{
-        display: 'grid',
-        gridTemplateColumns: { xs: 'repeat(2, 1fr)', md: 'repeat(4, 1fr)' },
-        gap: 2,
-        mb: 3,
-      }}
-    >
-      <Box sx={{ p: 2, bgcolor: 'success.lighter', borderRadius: 3 }}>
-        <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 1 }}>
-          <Power
-            size={18}
-            sx={{ color: 'success.700' }}
-          />
-          <Typography
-            variant='body2'
-            sx={{ color: 'text.secondary' }}
-          >
-            运行中
-          </Typography>
-        </Box>
-        <Typography
-          variant='h5'
-          sx={{ fontWeight: 700, color: 'success.700' }}
-        >
-          {statistics?.in_use || equipment.filter((e) => e.status === 'running').length}
-        </Typography>
-      </Box>
-      <Box sx={{ p: 2, bgcolor: 'grey.100', borderRadius: 3 }}>
-        <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 1 }}>
-          <Monitor
-            size={18}
-            sx={{ color: 'text.secondary' }}
-          />
-          <Typography
-            variant='body2'
-            sx={{ color: 'text.secondary' }}
-          >
-            空闲
-          </Typography>
-        </Box>
-        <Typography
-          variant='h5'
-          sx={{ fontWeight: 700 }}
-        >
-          {statistics?.idle || equipment.filter((e) => e.status === 'idle').length}
-        </Typography>
-      </Box>
-      <Box sx={{ p: 2, bgcolor: 'warning.light', borderRadius: 3 }}>
-        <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 1 }}>
-          <Wrench
-            size={18}
-            sx={{ color: 'warning.700' }}
-          />
-          <Typography
-            variant='body2'
-            sx={{ color: 'text.secondary' }}
-          >
-            维护中
-          </Typography>
-        </Box>
-        <Typography
-          variant='h5'
-          sx={{ fontWeight: 700, color: 'warning.700' }}
-        >
-          {statistics?.maintenance || equipment.filter((e) => e.status === 'maintenance').length}
-        </Typography>
-      </Box>
-      <Box sx={{ p: 2, bgcolor: 'error.lighter', borderRadius: 3 }}>
-        <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 1 }}>
-          <AlertTriangle
-            size={18}
-            sx={{ color: 'error.dark' }}
-          />
-          <Typography
-            variant='body2'
-            sx={{ color: 'text.secondary' }}
-          >
-            故障
-          </Typography>
-        </Box>
-        <Typography
-          variant='h5'
-          sx={{ fontWeight: 700, color: 'error.dark' }}
-        >
-          {equipment.filter((e) => e.status === 'fault').length}
-        </Typography>
-      </Box>
-    </Box>
+    [t]
   );
 
   return (
@@ -560,212 +231,14 @@ const EquipmentManagementPage: React.FC = () => {
         pageGradient: `linear-gradient(135deg, ${ct.warning.main} 0%, ${ct.warning.dark} 100%)`,
       }}
     >
-      <ListPageTemplate
-        title=''
-        subtitle=''
-        columns={columns}
-        data={equipment}
-        loading={loading || isMutationPending}
-        filters={filters}
-        searchable
-        searchPlaceholder={t('mes.equipment_management_page.search')}
-        searchValue={searchQuery}
-        onSearch={handleSearch}
-        pagination={{
-          page: currentPage - 1,
-          pageSize,
-          total,
-          onPageChange: (page) => setCurrentPage(page + 1),
-        }}
-        selectable
-        selectedIds={selectedIds}
-        onSelectionChange={(ids) => setSelectedIds(ids.map(String))}
-        actions={[
-          {
-            label: t('mes.equipment_management_page.dialog_create_title'),
-            icon: <Plus size={16} />,
-            onClick: handleOpenCreate,
-          },
-        ]}
-        rowActions={rowActions}
+      <CrudPage
+        schema={equipmentSchema}
+        apiAdapter={apiAdapter}
+        breadcrumbs={[{ label: 'MES' }, { label: '设备管理' }]}
         headerContent={statsContent}
-        emptyMessage={t('mes.equipment_management_page.empty_message')}
-        getRowId={(row) => row.id}
-        mobileCardTitleKey='name'
-        mobileCardSubtitleKey='code'
-        mobileCardDisplayFields={['status', 'location', 'department', 'next_maintenance_date']}
-        mobileCardFieldLabels={{
-          status: t('mes.equipment_management_page.filter_status'),
-          location: t('mes.equipment_management_page.text_d4d2a6'),
-          department: t('mes.equipment_management_page.text_1e1459'),
-          next_maintenance_date: t('mes.equipment_management_page.column_next_maintenance'),
-        }}
-        onRefresh={() => {
-          queryClient.invalidateQueries({ queryKey: ['mes-equipment'] });
-          queryClient.invalidateQueries({ queryKey: ['mes-equipment-statistics'] });
-        }}
+        customRowActions={customRowActions}
       />
 
-      {/* 新增/编辑对话框 */}
-      <Dialog
-        open={showDialog}
-        onClose={() => setShowDialog(false)}
-        maxWidth='md'
-      >
-        <DialogTitle>{selectedEquipment ? t('mes.equipment_management_page.dialog_edit_title') : t('mes.equipment_management_page.dialog_create_title')}</DialogTitle>
-        <DialogContent>
-          <Box
-            component='span'
-            sx={{
-              display: 'block',
-              color: 'text.secondary',
-              mb: 2,
-              fontSize: 14,
-            }}
-          >
-            {selectedEquipment ? t('mes.equipment_management_page.info') : t('mes.equipment_management_page.info_1')}
-          </Box>
-          <form onSubmit={handleSubmit}>
-            <Box
-              sx={{
-                display: 'grid',
-                gridTemplateColumns: { xs: '1fr', sm: '1fr 1fr' },
-                gap: 2,
-                py: 2,
-              }}
-            >
-              <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1 }}>
-                <InputLabel htmlFor='code'>设备编号 *</InputLabel>
-                <TextField
-                  id='code'
-                  required
-                  size='small'
-                  value={formData.code}
-                  onChange={(e) => setFormData({ ...formData, code: e.target.value })}
-                />
-              </Box>
-              <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1 }}>
-                <InputLabel htmlFor='name'>设备名称 *</InputLabel>
-                <TextField
-                  id='name'
-                  required
-                  size='small'
-                  value={formData.name}
-                  onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-                />
-              </Box>
-              <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1 }}>
-                <InputLabel htmlFor='type'>设备类型</InputLabel>
-                <TextField
-                  id='type'
-                  size='small'
-                  value={formData.type || ''}
-                  onChange={(e) => setFormData({ ...formData, type: e.target.value })}
-                />
-              </Box>
-              <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1 }}>
-                <InputLabel htmlFor='model'>型号</InputLabel>
-                <TextField
-                  id='model'
-                  size='small'
-                  value={formData.model || ''}
-                  onChange={(e) => setFormData({ ...formData, model: e.target.value })}
-                />
-              </Box>
-              <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1 }}>
-                <InputLabel htmlFor='manufacturer'>制造商</InputLabel>
-                <TextField
-                  id='manufacturer'
-                  size='small'
-                  value={formData.manufacturer || ''}
-                  onChange={(e) => setFormData({ ...formData, manufacturer: e.target.value })}
-                />
-              </Box>
-              <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1 }}>
-                <InputLabel htmlFor='purchase_date'>购置日期</InputLabel>
-                <TextField
-                  id='purchase_date'
-                  type='date'
-                  size='small'
-                  value={formData.purchase_date || ''}
-                  onChange={(e) => setFormData({ ...formData, purchase_date: e.target.value })}
-                />
-              </Box>
-              <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1 }}>
-                <InputLabel htmlFor='location'>位置</InputLabel>
-                <TextField
-                  id='location'
-                  size='small'
-                  value={formData.location || ''}
-                  onChange={(e) => setFormData({ ...formData, location: e.target.value })}
-                />
-              </Box>
-              <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1 }}>
-                <InputLabel htmlFor='value'>设备价值</InputLabel>
-                <TextField
-                  id='value'
-                  type='number'
-                  size='small'
-                  value={formData.value || ''}
-                  onChange={(e) =>
-                    setFormData({
-                      ...formData,
-                      value: parseFloat(e.target.value),
-                    })
-                  }
-                />
-              </Box>
-              <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1 }}>
-                <InputLabel htmlFor='status'>状态</InputLabel>
-                <FormControl
-                  fullWidth
-                  size='small'
-                >
-                  <Select
-                    id='status'
-                    value={formData.status || 'idle'}
-                    onChange={(e) => setFormData({ ...formData, status: e.target.value })}
-                  >
-                    <MenuItem value='idle'>空闲</MenuItem>
-                    <MenuItem value='running'>运行中</MenuItem>
-                    <MenuItem value='maintenance'>维护中</MenuItem>
-                    <MenuItem value='fault'>故障</MenuItem>
-                  </Select>
-                </FormControl>
-              </Box>
-              <Box sx={{ gridColumn: '1 / -1', display: 'flex', flexDirection: 'column', gap: 1 }}>
-                <InputLabel htmlFor='description'>描述</InputLabel>
-                <TextField
-                  id='description'
-                  size='small'
-                  multiline
-                  rows={2}
-                  value={formData.description || ''}
-                  onChange={(e) => setFormData({ ...formData, description: e.target.value })}
-                />
-              </Box>
-            </Box>
-            <DialogActions>
-              <Button
-                type='button'
-                variant='outlined'
-                onClick={() => setShowDialog(false)}
-              >
-                取消
-              </Button>
-              <Button
-                type='submit'
-                variant='contained'
-                disabled={createMutation.isPending || updateMutation.isPending}
-              >
-                保存
-              </Button>
-            </DialogActions>
-          </form>
-        </DialogContent>
-      </Dialog>
-
-      {/* 设备维护对话框 */}
       <Dialog
         open={showMaintenanceDialog}
         onClose={() => setShowMaintenanceDialog(false)}
@@ -784,229 +257,138 @@ const EquipmentManagementPage: React.FC = () => {
           >
             {selectedEquipment?.name} - 创建设备维护记录
           </Box>
-          <form onSubmit={handleMaintenanceSubmit}>
-            <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2, py: 2 }}>
-              <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1 }}>
-                <InputLabel htmlFor='maintenance_type'>维护类型 *</InputLabel>
-                <FormControl
-                  fullWidth
-                  size='small'
-                >
-                  <Select
-                    id='maintenance_type'
-                    value={maintenanceData.maintenance_type}
-                    onChange={(e) =>
-                      setMaintenanceData({
-                        ...maintenanceData,
-                        maintenance_type: e.target.value,
-                      })
-                    }
-                  >
-                    <MenuItem value='routine'>例行维护</MenuItem>
-                    <MenuItem value='repair'>故障维修</MenuItem>
-                    <MenuItem value='preventive'>预防性维护</MenuItem>
-                    <MenuItem value='inspection'>检查保养</MenuItem>
-                  </Select>
-                </FormControl>
-              </Box>
-              <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1 }}>
-                <InputLabel htmlFor='maintainer'>维护人员 *</InputLabel>
-                <TextField
-                  id='maintainer'
-                  required
-                  size='small'
-                  value={maintenanceData.maintainer}
-                  onChange={(e) =>
-                    setMaintenanceData({ ...maintenanceData, maintainer: e.target.value })
-                  }
-                />
-              </Box>
-              <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1 }}>
-                <InputLabel htmlFor='start_time'>开始时间 *</InputLabel>
-                <TextField
-                  id='start_time'
-                  type='datetime-local'
-                  required
-                  size='small'
-                  value={maintenanceData.start_time}
-                  onChange={(e) =>
-                    setMaintenanceData({ ...maintenanceData, start_time: e.target.value })
-                  }
-                />
-              </Box>
-              <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1 }}>
-                <InputLabel htmlFor='end_time'>结束时间</InputLabel>
-                <TextField
-                  id='end_time'
-                  type='datetime-local'
-                  size='small'
-                  value={maintenanceData.end_time || ''}
-                  onChange={(e) =>
-                    setMaintenanceData({ ...maintenanceData, end_time: e.target.value })
-                  }
-                />
-              </Box>
-              <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1 }}>
-                <InputLabel htmlFor='cost'>费用</InputLabel>
-                <TextField
-                  id='cost'
-                  type='number'
-                  size='small'
-                  value={maintenanceData.cost || ''}
+          <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2, py: 2 }}>
+            <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1 }}>
+              <InputLabel htmlFor='maintenance_type'>维护类型 *</InputLabel>
+              <FormControl
+                fullWidth
+                size='small'
+              >
+                <Select
+                  id='maintenance_type'
+                  value={maintenanceData.maintenance_type}
                   onChange={(e) =>
                     setMaintenanceData({
                       ...maintenanceData,
-                      cost: parseFloat(e.target.value),
+                      maintenance_type: e.target.value,
                     })
                   }
-                />
-              </Box>
-              <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1 }}>
-                <InputLabel htmlFor='description'>维护描述 *</InputLabel>
-                <TextField
-                  id='description'
-                  required
-                  size='small'
-                  multiline
-                  rows={3}
-                  value={maintenanceData.description}
-                  onChange={(e) =>
-                    setMaintenanceData({ ...maintenanceData, description: e.target.value })
-                  }
-                />
-              </Box>
-              <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1 }}>
-                <InputLabel htmlFor='result'>维护结果</InputLabel>
-                <TextField
-                  id='result'
-                  size='small'
-                  value={maintenanceData.result || ''}
-                  onChange={(e) =>
-                    setMaintenanceData({ ...maintenanceData, result: e.target.value })
-                  }
-                />
-              </Box>
-              <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1 }}>
-                <InputLabel htmlFor='remarks'>备注</InputLabel>
-                <TextField
-                  id='remarks'
-                  size='small'
-                  multiline
-                  rows={2}
-                  value={maintenanceData.remarks || ''}
-                  onChange={(e) =>
-                    setMaintenanceData({ ...maintenanceData, remarks: e.target.value })
-                  }
-                />
-              </Box>
+                >
+                  <MenuItem value='routine'>例行维护</MenuItem>
+                  <MenuItem value='repair'>故障维修</MenuItem>
+                  <MenuItem value='preventive'>预防性维护</MenuItem>
+                  <MenuItem value='inspection'>检查保养</MenuItem>
+                </Select>
+              </FormControl>
             </Box>
-            <DialogActions>
-              <Button
-                type='button'
-                variant='outlined'
-                onClick={() => setShowMaintenanceDialog(false)}
-              >
-                取消
-              </Button>
-              <Button
-                type='submit'
-                variant='contained'
-                disabled={maintenanceMutation.isPending}
-              >
-                创建维护
-              </Button>
-            </DialogActions>
-          </form>
-        </DialogContent>
-      </Dialog>
-
-      {/* 详情对话框 */}
-      <Dialog
-        open={showDetailDialog}
-        onClose={() => setShowDetailDialog(false)}
-        maxWidth='md'
-      >
-        <DialogTitle>设备详情</DialogTitle>
-        <DialogContent>
-          {selectedEquipment && (
-            <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
-              <Box
-                sx={{
-                  display: 'grid',
-                  gridTemplateColumns: { xs: '1fr', sm: '1fr 1fr' },
-                  gap: 2,
-                }}
-              >
-                <Box>
-                  <InputLabel sx={{ color: 'text.secondary', fontSize: 12 }}>设备编号</InputLabel>
-                  <Box
-                    component='span'
-                    sx={{ fontWeight: 500 }}
-                  >
-                    {selectedEquipment.code}
-                  </Box>
-                </Box>
-                <Box>
-                  <InputLabel sx={{ color: 'text.secondary', fontSize: 12 }}>设备名称</InputLabel>
-                  <Box component='span'>{selectedEquipment.name}</Box>
-                </Box>
-                <Box>
-                  <InputLabel sx={{ color: 'text.secondary', fontSize: 12 }}>设备类型</InputLabel>
-                  <Box component='span'>{selectedEquipment.type || '-'}</Box>
-                </Box>
-                <Box>
-                  <InputLabel sx={{ color: 'text.secondary', fontSize: 12 }}>型号</InputLabel>
-                  <Box component='span'>{selectedEquipment.model || '-'}</Box>
-                </Box>
-                <Box>
-                  <InputLabel sx={{ color: 'text.secondary', fontSize: 12 }}>制造商</InputLabel>
-                  <Box component='span'>{selectedEquipment.manufacturer || '-'}</Box>
-                </Box>
-                <Box>
-                  <InputLabel sx={{ color: 'text.secondary', fontSize: 12 }}>位置</InputLabel>
-                  <Box component='span'>{selectedEquipment.location || '-'}</Box>
-                </Box>
-                <Box>
-                  <InputLabel sx={{ color: 'text.secondary', fontSize: 12 }}>状态</InputLabel>
-                  <Box>{getStatusBadge(selectedEquipment.status)}</Box>
-                </Box>
-                <Box>
-                  <InputLabel sx={{ color: 'text.secondary', fontSize: 12 }}>设备价值</InputLabel>
-                  <Box component='span'>
-                    {selectedEquipment.value ? `¥${selectedEquipment.value.toLocaleString()}` : '-'}
-                  </Box>
-                </Box>
-                <Box>
-                  <InputLabel sx={{ color: 'text.secondary', fontSize: 12 }}>购置日期</InputLabel>
-                  <Box component='span'>
-                    {selectedEquipment.purchase_date
-                      ? new Date(selectedEquipment.purchase_date).toLocaleDateString('zh-CN')
-                      : '-'}
-                  </Box>
-                </Box>
-                <Box sx={{ gridColumn: '1 / -1' }}>
-                  <InputLabel sx={{ color: 'text.secondary', fontSize: 12 }}>描述</InputLabel>
-                  <Box component='span'>{selectedEquipment.description || '-'}</Box>
-                </Box>
-                <Box>
-                  <InputLabel sx={{ color: 'text.secondary', fontSize: 12 }}>创建时间</InputLabel>
-                  <Box component='span'>
-                    {new Date(selectedEquipment.created_at).toLocaleString('zh-CN')}
-                  </Box>
-                </Box>
-                <Box>
-                  <InputLabel sx={{ color: 'text.secondary', fontSize: 12 }}>更新时间</InputLabel>
-                  <Box component='span'>
-                    {new Date(selectedEquipment.updated_at).toLocaleString('zh-CN')}
-                  </Box>
-                </Box>
-              </Box>
+            <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1 }}>
+              <InputLabel htmlFor='maintainer'>维护人员 *</InputLabel>
+              <TextField
+                id='maintainer'
+                required
+                size='small'
+                value={maintenanceData.maintainer}
+                onChange={(e) =>
+                  setMaintenanceData({ ...maintenanceData, maintainer: e.target.value })
+                }
+              />
             </Box>
-          )}
+            <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1 }}>
+              <InputLabel htmlFor='start_time'>开始时间 *</InputLabel>
+              <TextField
+                id='start_time'
+                type='datetime-local'
+                required
+                size='small'
+                value={maintenanceData.start_time}
+                onChange={(e) =>
+                  setMaintenanceData({ ...maintenanceData, start_time: e.target.value })
+                }
+              />
+            </Box>
+            <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1 }}>
+              <InputLabel htmlFor='end_time'>结束时间</InputLabel>
+              <TextField
+                id='end_time'
+                type='datetime-local'
+                size='small'
+                value={maintenanceData.end_time || ''}
+                onChange={(e) =>
+                  setMaintenanceData({ ...maintenanceData, end_time: e.target.value })
+                }
+              />
+            </Box>
+            <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1 }}>
+              <InputLabel htmlFor='cost'>费用</InputLabel>
+              <TextField
+                id='cost'
+                type='number'
+                size='small'
+                value={maintenanceData.cost || ''}
+                onChange={(e) =>
+                  setMaintenanceData({
+                    ...maintenanceData,
+                    cost: parseFloat(e.target.value),
+                  })
+                }
+              />
+            </Box>
+            <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1 }}>
+              <InputLabel htmlFor='description'>维护描述 *</InputLabel>
+              <TextField
+                id='description'
+                required
+                size='small'
+                multiline
+                rows={3}
+                value={maintenanceData.description}
+                onChange={(e) =>
+                  setMaintenanceData({ ...maintenanceData, description: e.target.value })
+                }
+              />
+            </Box>
+            <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1 }}>
+              <InputLabel htmlFor='result'>维护结果</InputLabel>
+              <TextField
+                id='result'
+                size='small'
+                value={maintenanceData.result || ''}
+                onChange={(e) => setMaintenanceData({ ...maintenanceData, result: e.target.value })}
+              />
+            </Box>
+            <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1 }}>
+              <InputLabel htmlFor='remarks'>备注</InputLabel>
+              <TextField
+                id='remarks'
+                size='small'
+                multiline
+                rows={2}
+                value={maintenanceData.remarks || ''}
+                onChange={(e) =>
+                  setMaintenanceData({ ...maintenanceData, remarks: e.target.value })
+                }
+              />
+            </Box>
+          </Box>
+          <DialogActions>
+            <Button
+              type='button'
+              variant='outlined'
+              onClick={() => setShowMaintenanceDialog(false)}
+            >
+              取消
+            </Button>
+            <Button
+              type='submit'
+              variant='contained'
+              disabled={maintenanceMutation.isPending}
+              onClick={handleMaintenanceSubmit}
+            >
+              创建维护
+            </Button>
+          </DialogActions>
         </DialogContent>
       </Dialog>
     </PageContainer>
   );
-};
-
-export default EquipmentManagementPage;
+}

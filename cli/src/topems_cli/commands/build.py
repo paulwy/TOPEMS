@@ -27,12 +27,12 @@ def build_all(release: bool, jobs: int):
     
     services = [
         "lib",
-        "svc/iam", "svc/pm", "svc/notification", "svc/portal",
-        "svc/flow", "svc/integration", "svc/erp", "svc/hrm",
-        "svc/crm", "svc/rs", "svc/lims", "svc/pdm", "svc/doc",
+        "svc/unified-core", "svc/pm", "svc/portal",
+        "svc/integration", "svc/erp", "svc/hrm",
+        "svc/crm", "svc/rd", "svc/lims", "svc/pdm",
         "svc/mes", "svc/qms", "svc/ehs", "svc/scm", "svc/srm",
-        "svc/wms", "svc/file", "svc/mail", "svc/im", "svc/gis",
-        "svc/bi", "svc/ai", "svc/mobile",
+        "svc/wms", "svc/gis", "svc/analytics", "svc/ai", "svc/mobile",
+        "svc/finance", "svc/master-data",
     ]
     
     build_type = "release" if release else "debug"

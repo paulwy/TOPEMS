@@ -22,6 +22,7 @@ export const WMS_PATHS = {
   inventoryReport: '/wms/inventory-report',
   supplierManagement: '/wms/supplier-management',
   supplierDetail: '/wms/supplier-detail/:id',
+  area: '/wms/area',
 } as const;
 
 // ---- 路由配置（供路由系统使用） ----
@@ -225,6 +226,17 @@ export const wmsModuleConfig: RouteModuleConfig = {
       requiredPermissions: ['wms:supplier:read', 'wms:read'],
       action: 'read',
     },
+    {
+      path: WMS_PATHS.area,
+      element: lazyWithRetry(() => import('@/pages/wms/WmsAreaPage'), 'WmsAreaPage'),
+      module: 'wms',
+      code: 'wms-area',
+      title: '库区管理',
+      template: 'tree',
+      group: 'business',
+      requiredPermissions: ['wms:area:read', 'wms:read'],
+      action: 'read',
+    },
   ],
 };
 
@@ -394,6 +406,16 @@ export const wmsNavConfig: ModuleNavConfig = {
       group: 'analytics',
       showInTabs: true,
       description: '库存数据分析报表',
+    },
+    {
+      code: 'wms-area',
+      label: '库区管理',
+      icon: 'Map',
+      path: WMS_PATHS.area,
+      permission: 'wms:area:read',
+      order: 6,
+      group: 'business',
+      description: '库区树形管理',
     },
   ],
 };

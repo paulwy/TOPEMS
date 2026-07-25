@@ -2,7 +2,6 @@ import React, { useState, useMemo } from 'react';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { QUERY_KEYS } from '@/lib/reactQuery';
 import {
-  Download,
   Receipt,
   CheckCircle,
   Clock,
@@ -13,199 +12,172 @@ import {
 } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 import { useNotificationStore } from '@/store';
-import { DataExport, PageContainer } from '@/components/common';
-import { ListPageTemplate } from '@/components/templates/ListPageTemplate';
+import { DataExport } from '@/components/common';
 import { StatCardGroup } from '@/components';
 import type { StatCard } from '@/components/templates/DashboardTemplate';
+import CrudPage, { type CrudApiAdapter } from '@/components/templates/CrudPage';
+import type { RowAction } from '@/components/templates/list/types';
 import { financeApi } from '@/api/finance';
 import type { SalesInvoice, PurchaseInvoice } from '@/types/finance';
-import { apiLogger } from '@/utils/logger';
+import { taxSchema, TAX_TYPE_LABELS } from '@/schemas/finance';
 
 import {
   Dialog,
   DialogTitle,
   DialogContent,
   DialogActions,
-  Chip,
   Box as MuiBox,
   Typography,
   Stack,
-  IconButton,
-  Tooltip,
   Button,
 } from '@mui/material';
 
+// ============ 类型定义 ============
+
+type TaxType = 'vat' | 'output' | 'input' | 'income' | 'other';
+type TaxStatus = 'declared' | 'paid' | 'overdue' | 'pending';
+
 interface TaxEntry {
   id: string;
-  tax_type: string;
+  tax_type: TaxType;
   declaration_period: string;
   taxable_income: number;
   tax_rate: number;
   tax_amount: number;
   paid_amount: number;
   owed_amount: number;
-  status: string;
+  status: TaxStatus;
   related_document?: string;
 }
 
-const FinanceTaxPage: React.FC = () => {
-  const { t } = useTranslation();
-  const addNotification = useNotificationStore((state) => state.addNotification);
-  const queryClient = useQueryClient();
+// ============ 数据聚合逻辑 ============
+// 保留原有聚合逻辑：同时获取销售发票（销项税）和采购发票（进项税），合并为 TaxEntry 列表
 
-  const [filterType, setFilterType] = useState('');
-  const [filterStatus, setFilterStatus] = useState('');
-  const [searchQuery, setSearchQuery] = useState('');
-  const [showDeclareModal, setShowDeclareModal] = useState(false);
-  const [showPayModal, setShowPayModal] = useState(false);
-  const [showAnalysisModal, setShowAnalysisModal] = useState(false);
-  const [selectedTax, setSelectedTax] = useState<TaxEntry | null>(null);
+const aggregateTaxEntries = async (): Promise<TaxEntry[]> => {
+  const [salesInvoicesRes, purchaseInvoicesRes] = await Promise.all([
+    financeApi.receivablePayable.listSalesInvoices(),
+    financeApi.receivablePayable.listPurchaseInvoices(),
+  ]);
 
-  const taxQuery = useQuery<TaxEntry[]>({
-    queryKey: QUERY_KEYS.FINANCE.TAX,
-    queryFn: async () => {
-      const [salesInvoicesRes, purchaseInvoicesRes] = await Promise.all([
-        financeApi.receivablePayable.listSalesInvoices(),
-        financeApi.receivablePayable.listPurchaseInvoices(),
-      ]);
-
-      const receivableTaxEntries: TaxEntry[] = (
-        (salesInvoicesRes.success && salesInvoicesRes.data?.items) ||
-        []
-      ).map((r: SalesInvoice) => ({
-        id: r.id,
-        tax_type: t('finance.finance_tax_page.text_1b244b'),
-        declaration_period: r.invoice_date?.slice(0, 7) || new Date().toISOString().slice(0, 7),
-        taxable_income: r.amount,
-        tax_rate: 13,
-        tax_amount: r.tax_amount || Math.round(r.amount * 0.13),
-        paid_amount: r.received_amount || 0,
-        owed_amount: Math.max(
-          0,
-          (r.tax_amount || Math.round(r.amount * 0.13)) - (r.received_amount || 0)
-        ),
-        status:
-          r.status === 'received'
-            ? t('finance.finance_tax_page.text_f4668a')
-            : r.status === 'partial_received'
-              ? t('finance.finance_tax_page.text_ee4231')
-              : t('finance.finance_tax_page.text_ee8231'),
-        related_document: r.invoice_no,
-      }));
-
-      const payableTaxEntries: TaxEntry[] = (
-        (purchaseInvoicesRes.success && purchaseInvoicesRes.data?.items) ||
-        []
-      ).map((p: PurchaseInvoice) => ({
-        id: p.id,
-        tax_type: t('finance.finance_tax_page.text_19c319'),
-        declaration_period: p.invoice_date?.slice(0, 7) || new Date().toISOString().slice(0, 7),
-        taxable_income: p.amount,
-        tax_rate: 25,
-        tax_amount: p.tax_amount || Math.round(p.amount * 0.25),
-        paid_amount: p.paid_amount || 0,
-        owed_amount: Math.max(
-          0,
-          (p.tax_amount || Math.round(p.amount * 0.25)) - (p.paid_amount || 0)
-        ),
-        status: p.status === 'received' ? t('finance.finance_tax_page.text_f4668a') : t('finance.finance_tax_page.text_ee4231'),
-        related_document: p.invoice_no,
-      }));
-
-      return [...receivableTaxEntries, ...payableTaxEntries];
-    },
+  const receivableTaxEntries: TaxEntry[] = (
+    (salesInvoicesRes.success && salesInvoicesRes.data?.items) ||
+    []
+  ).map((r: SalesInvoice) => {
+    const taxAmount = r.tax_amount || Math.round(r.amount * 0.13);
+    const paidAmount = r.received_amount || 0;
+    return {
+      id: r.id,
+      tax_type: 'output',
+      declaration_period: r.invoice_date?.slice(0, 7) || new Date().toISOString().slice(0, 7),
+      taxable_income: r.amount,
+      tax_rate: 13,
+      tax_amount: taxAmount,
+      paid_amount: paidAmount,
+      owed_amount: Math.max(0, taxAmount - paidAmount),
+      status:
+        r.status === 'received' ? 'paid' : r.status === 'partial_received' ? 'overdue' : 'pending',
+      related_document: r.invoice_no,
+    };
   });
 
-  const taxData = taxQuery.data || [];
-  const loading = taxQuery.isLoading;
-  const error = taxQuery.error ? t('finance.finance_tax_page.fail') : undefined;
-
-  const filteredData = useMemo(() => {
-    return taxData.filter((tax) => {
-      if (filterType && tax.tax_type !== filterType) return false;
-      if (filterStatus && tax.status !== filterStatus) return false;
-      if (searchQuery) {
-        const query = searchQuery.toLowerCase();
-        if (
-          !tax.tax_type.toLowerCase().includes(query) &&
-          !tax.declaration_period.toLowerCase().includes(query)
-        ) {
-          return false;
-        }
-      }
-      return true;
-    });
-  }, [taxData, filterType, filterStatus, searchQuery]);
-
-  const totalOwed = useMemo(
-    () => taxData.filter((item) => item.status === t('finance.finance_tax_page.text_ee4231')).reduce((sum, item) => sum + item.owed_amount, 0),
-    [taxData]
-  );
-  const totalPaid = useMemo(() => taxData.reduce((sum, t) => sum + t.paid_amount, 0), [taxData]);
-
-  const getStatusConfig = (status: string) => {
-    const configs: Record<
-      string,
-      {
-        color: 'success' | 'warning' | 'error' | 'default';
-        icon: React.ReactNode;
-      }
-    > = {
-      已申报: { color: 'success', icon: <CheckCircle size={12} /> },
-      已缴纳: { color: 'success', icon: <CheckCircle size={12} /> },
-      待申报: { color: 'warning', icon: <Clock size={12} /> },
-      待缴纳: { color: 'error', icon: <AlertTriangle size={12} /> },
+  const payableTaxEntries: TaxEntry[] = (
+    (purchaseInvoicesRes.success && purchaseInvoicesRes.data?.items) ||
+    []
+  ).map((p: PurchaseInvoice) => {
+    const taxAmount = p.tax_amount || Math.round(p.amount * 0.25);
+    const paidAmount = p.paid_amount || 0;
+    return {
+      id: p.id,
+      tax_type: 'input',
+      declaration_period: p.invoice_date?.slice(0, 7) || new Date().toISOString().slice(0, 7),
+      taxable_income: p.amount,
+      tax_rate: 25,
+      tax_amount: taxAmount,
+      paid_amount: paidAmount,
+      owed_amount: Math.max(0, taxAmount - paidAmount),
+      status: p.status === 'received' ? 'paid' : 'overdue',
+      related_document: p.invoice_no,
     };
-    return configs[status] || { color: 'default', icon: null };
-  };
+  });
 
-  const handleDeclare = (tax: TaxEntry) => {
-    setSelectedTax(tax);
-    setShowDeclareModal(true);
-  };
+  return [...receivableTaxEntries, ...payableTaxEntries];
+};
 
-  const confirmDeclare = () => {
-    if (!selectedTax) return;
-    addNotification({
-      title: t('finance.finance_tax_page.success'),
-      message: t('finance.finance_tax_page.success_1'),
-      type: 'success',
-    });
-    setShowDeclareModal(false);
-    queryClient.invalidateQueries({ queryKey: QUERY_KEYS.FINANCE.TAX });
-  };
+// ============ API 适配器 ============
+// list 方法保留聚合逻辑，并在前端执行筛选、搜索和分页
 
-  const handlePay = (tax: TaxEntry) => {
-    setSelectedTax(tax);
-    setShowPayModal(true);
-  };
+const taxApiAdapter: CrudApiAdapter<TaxEntry> = {
+  list: async (params) => {
+    const all = await aggregateTaxEntries();
 
-  const confirmPay = () => {
-    if (!selectedTax) return;
-    addNotification({
-      title: t('finance.finance_tax_page.success'),
-      message: t('finance.finance_tax_page.success_2'),
-      type: 'success',
-    });
-    setShowPayModal(false);
-    queryClient.invalidateQueries({ queryKey: QUERY_KEYS.FINANCE.TAX });
-  };
+    let filtered = all;
 
-  const handleAnalysis = (tax: TaxEntry) => {
-    setSelectedTax(tax);
-    setShowAnalysisModal(true);
-  };
+    // 应用筛选
+    if (params?.tax_type && params.tax_type !== 'all') {
+      filtered = filtered.filter((t) => t.tax_type === params.tax_type);
+    }
+    if (params?.status && params.status !== 'all') {
+      filtered = filtered.filter((t) => t.status === params.status);
+    }
 
-  const handleExport = () => {
-    addNotification({
-      title: t('finance.finance_tax_page.export'),
-      message: t('finance.finance_tax_page.export_1'),
-      type: 'success',
-    });
-  };
+    // 应用搜索（同时匹配枚举值和中文标签）
+    if (params?.search) {
+      const query = params.search.toLowerCase();
+      filtered = filtered.filter((t) => {
+        const typeLabel = TAX_TYPE_LABELS[t.tax_type] || t.tax_type;
+        return (
+          t.tax_type.toLowerCase().includes(query) ||
+          typeLabel.toLowerCase().includes(query) ||
+          t.declaration_period.toLowerCase().includes(query)
+        );
+      });
+    }
+
+    const total = filtered.length;
+    const page = params?.page || 1;
+    const pageSize = params?.pageSize || 10;
+    const start = (page - 1) * pageSize;
+    const data = filtered.slice(start, start + pageSize);
+
+    return { data, total };
+  },
+  create: async () => {
+    throw new Error('税务记录为聚合数据，不支持创建');
+  },
+  update: async () => {
+    throw new Error('税务记录为聚合数据，不支持编辑');
+  },
+  delete: async () => {
+    throw new Error('税务记录为聚合数据，不支持删除');
+  },
+};
+
+// ============ 统计卡片 + 导出 ============
+
+const TaxHeader: React.FC = () => {
+  const { t } = useTranslation();
+  const { data: taxData = [] } = useQuery<TaxEntry[]>({
+    queryKey: QUERY_KEYS.FINANCE.TAX,
+    queryFn: aggregateTaxEntries,
+  });
 
   const totalTaxAmount = useMemo(
-    () => taxData.reduce((sum, t) => sum + t.tax_amount, 0),
+    () => taxData.reduce((sum, item) => sum + item.tax_amount, 0),
+    [taxData]
+  );
+  const totalPaid = useMemo(
+    () => taxData.reduce((sum, item) => sum + item.paid_amount, 0),
+    [taxData]
+  );
+  const totalOwed = useMemo(
+    () =>
+      taxData
+        .filter((item) => item.status === 'overdue')
+        .reduce((sum, item) => sum + item.owed_amount, 0),
+    [taxData]
+  );
+  const pendingCount = useMemo(
+    () => taxData.filter((item) => item.status === 'pending').length,
     [taxData]
   );
 
@@ -231,39 +203,14 @@ const FinanceTaxPage: React.FC = () => {
       color: totalOwed > 0 ? 'error' : 'success',
       icon: totalOwed > 0 ? <AlertTriangle size={24} /> : <CheckCircle size={24} />,
     },
+    {
+      id: 'pending',
+      title: t('finance.finance_tax_page.text_ee8231'),
+      value: `${pendingCount} 笔`,
+      color: 'warning',
+      icon: <Clock size={24} />,
+    },
   ];
-
-  const filters = useMemo(
-    () => [
-      {
-        id: 'tax_type',
-        label: t('finance.finance_tax_page.text_185dea'),
-        type: 'select' as const,
-        options: [
-          { value: t('finance.finance_tax_page.text_1b244b'), label: t('finance.finance_tax_page.text_1b244b') },
-          { value: t('finance.finance_tax_page.text_19c319'), label: t('finance.finance_tax_page.text_19c319') },
-          { value: t('finance.finance_tax_page.text_b7432c'), label: t('finance.finance_tax_page.text_b7432c') },
-          { value: t('finance.finance_tax_page.text_33bde8'), label: t('finance.finance_tax_page.text_33bde8') },
-        ],
-        value: filterType,
-        onChange: (value: unknown) => setFilterType(value as string),
-      },
-      {
-        id: 'status',
-        label: t('finance.finance_tax_page.status'),
-        type: 'select' as const,
-        options: [
-          { value: t('finance.finance_tax_page.text_f4668a'), label: t('finance.finance_tax_page.text_f4668a') },
-          { value: t('finance.finance_tax_page.text_610406'), label: t('finance.finance_tax_page.text_610406') },
-          { value: t('finance.finance_tax_page.text_ee8231'), label: t('finance.finance_tax_page.text_ee8231') },
-          { value: t('finance.finance_tax_page.text_ee4231'), label: t('finance.finance_tax_page.text_ee4231') },
-        ],
-        value: filterStatus,
-        onChange: (value: unknown) => setFilterStatus(value as string),
-      },
-    ],
-    [filterType, filterStatus]
-  );
 
   const exportFields = useMemo(
     () => [
@@ -276,177 +223,116 @@ const FinanceTaxPage: React.FC = () => {
       { key: 'owed_amount', title: t('finance.finance_tax_page.amount_2') },
       { key: 'status', title: t('finance.finance_tax_page.status_1') },
     ],
-    []
+    [t]
   );
 
   return (
-    <PageContainer
-      padding={false}
-      maxWidth={false}
-    >
-      <MuiBox sx={{ maxWidth: 1280, mx: 'auto', px: { xs: 2, sm: 3, lg: 4 }, pt: 3 }}>
-        <StatCardGroup
-          stats={statCards}
-          columns={3}
+    <>
+      <StatCardGroup
+        stats={statCards}
+        columns={4}
+      />
+      <MuiBox sx={{ display: 'flex', justifyContent: 'flex-end', mb: 2 }}>
+        <DataExport
+          data={taxData as unknown as Record<string, unknown>[]}
+          fields={exportFields}
+          defaultFileName={t('finance.finance_tax_page.text_f50d30')}
+          buttonText=''
         />
       </MuiBox>
+    </>
+  );
+};
 
-      <MuiBox sx={{ maxWidth: 1280, mx: 'auto', px: { xs: 2, sm: 3, lg: 4 }, py: 3 }}>
-        <ListPageTemplate
-          title={t('finance.finance_tax_page.text_6ba595')}
-          subtitle={t('finance.finance_tax_page.text_2302ff')}
-          backButton={{
-            href: '/dashboard',
-          }}
-          columns={[
-            {
-              id: 'tax_type',
-              label: t('finance.finance_tax_page.text_185dea'),
-              render: (row: TaxEntry) => (
-                <Chip
-                  label={row.tax_type}
-                  size='small'
-                  color='primary'
-                />
-              ),
-            },
-            {
-              id: 'declaration_period',
-              label: t('finance.finance_tax_page.text_39b541'),
-              render: (row: TaxEntry) => (
-                <MuiBox sx={{ fontWeight: 500 }}>{row.declaration_period}</MuiBox>
-              ),
-            },
-            {
-              id: 'taxable_income',
-              label: t('finance.finance_tax_page.text_45aec3'),
-              render: (row: TaxEntry) => (
-                <MuiBox sx={{ fontFamily: 'monospace', color: 'text.secondary' }}>
-                  ¥{row.taxable_income.toLocaleString()}
-                </MuiBox>
-              ),
-            },
-            {
-              id: 'tax_rate',
-              label: t('finance.finance_tax_page.text_2a79a7'),
-              render: (row: TaxEntry) => (
-                <Chip
-                  label={`${row.tax_rate}%`}
-                  size='small'
-                  variant='outlined'
-                />
-              ),
-            },
-            {
-              id: 'tax_amount',
-              label: t('finance.finance_tax_page.text_7f363e'),
-              render: (row: TaxEntry) => (
-                <MuiBox
-                  sx={{
-                    fontWeight: 700,
-                    color: 'primary.main',
-                    fontFamily: 'monospace',
-                  }}
-                >
-                  ¥{row.tax_amount.toLocaleString()}
-                </MuiBox>
-              ),
-            },
-            {
-              id: 'paid_amount',
-              label: t('finance.finance_tax_page.text_585a98'),
-              render: (row: TaxEntry) => (
-                <MuiBox sx={{ color: 'success.main', fontFamily: 'monospace' }}>
-                  ¥{row.paid_amount.toLocaleString()}
-                </MuiBox>
-              ),
-            },
-            {
-              id: 'owed_amount',
-              label: t('finance.finance_tax_page.amount'),
-              render: (row: TaxEntry) => (
-                <MuiBox
-                  sx={{
-                    fontWeight: 600,
-                    color: row.owed_amount > 0 ? 'error.main' : 'success.main',
-                    fontFamily: 'monospace',
-                  }}
-                >
-                  ¥{row.owed_amount.toLocaleString()}
-                </MuiBox>
-              ),
-            },
-            {
-              id: 'status',
-              label: t('finance.finance_tax_page.status_1'),
-              render: (row: TaxEntry) => {
-                const config = getStatusConfig(row.status);
-                return (
-                  <Chip
-                    label={row.status}
-                    size='small'
-                    color={config.color}
-                    icon={config.icon as React.ReactElement}
-                  />
-                );
-              },
-            },
-          ]}
-          data={filteredData}
-          loading={loading}
-          error={error}
-          filters={filters}
-          searchable
-          searchPlaceholder={t('finance.finance_tax_page.search')}
-          searchValue={searchQuery}
-          onSearch={setSearchQuery}
-          actions={[
-            {
-              label: t('finance.finance_tax_page.export_2'),
-              icon: <Download size={18} />,
-              onClick: handleExport,
-              variant: 'outlined',
-            },
-            {
-              label: t('finance.finance_tax_page.export_3'),
-              icon: <Download size={18} />,
-              onClick: () => {},
-              variant: 'outlined',
-            },
-          ]}
-          headerContent={
-            <DataExport
-              data={taxData as unknown as Record<string, unknown>[]}
-              fields={exportFields}
-              defaultFileName={t('finance.finance_tax_page.text_f50d30')}
-              buttonText=''
-            />
-          }
-          rowActions={[
-            {
-              label: t('finance.finance_tax_page.text_e54080'),
-              icon: <FileText sx={{ width: 16, height: 16 }} />,
-              color: 'success' as const,
-              onClick: (row: TaxEntry) => row.status === t('finance.finance_tax_page.text_ee8231') && handleDeclare(row),
-              show: (row: TaxEntry) => row.status === t('finance.finance_tax_page.text_ee8231'),
-            },
-            {
-              label: t('finance.finance_tax_page.text_78da3e'),
-              icon: <DollarSign sx={{ width: 16, height: 16 }} />,
-              color: 'warning' as const,
-              onClick: (row: TaxEntry) => row.status === t('finance.finance_tax_page.text_ee4231') && handlePay(row),
-              show: (row: TaxEntry) => row.status === t('finance.finance_tax_page.text_ee4231'),
-            },
-            {
-              label: t('finance.finance_tax_page.text_5ddaa7'),
-              icon: <TrendingUp sx={{ width: 16, height: 16 }} />,
-              onClick: (row: TaxEntry) => handleAnalysis(row),
-            },
-          ]}
-          onRefresh={() => taxQuery.refetch()}
-        />
-      </MuiBox>
+// ============ 页面组件 ============
 
+const FinanceTaxPage: React.FC = () => {
+  const { t } = useTranslation();
+  const addNotification = useNotificationStore((state) => state.addNotification);
+  const queryClient = useQueryClient();
+
+  // 页面级 Dialog 状态
+  const [showDeclareModal, setShowDeclareModal] = useState(false);
+  const [showPayModal, setShowPayModal] = useState(false);
+  const [showAnalysisModal, setShowAnalysisModal] = useState(false);
+  const [selectedTax, setSelectedTax] = useState<TaxEntry | null>(null);
+
+  const invalidateTaxData = () => {
+    queryClient.invalidateQueries({ queryKey: QUERY_KEYS.FINANCE.TAX });
+    queryClient.invalidateQueries({ queryKey: ['finance_tax'] });
+  };
+
+  const handleDeclare = (tax: TaxEntry) => {
+    setSelectedTax(tax);
+    setShowDeclareModal(true);
+  };
+
+  const confirmDeclare = () => {
+    if (!selectedTax) return;
+    addNotification({
+      title: t('finance.finance_tax_page.success'),
+      message: t('finance.finance_tax_page.success_1'),
+      type: 'success',
+    });
+    setShowDeclareModal(false);
+    invalidateTaxData();
+  };
+
+  const handlePay = (tax: TaxEntry) => {
+    setSelectedTax(tax);
+    setShowPayModal(true);
+  };
+
+  const confirmPay = () => {
+    if (!selectedTax) return;
+    addNotification({
+      title: t('finance.finance_tax_page.success'),
+      message: t('finance.finance_tax_page.success_2'),
+      type: 'success',
+    });
+    setShowPayModal(false);
+    invalidateTaxData();
+  };
+
+  const handleAnalysis = (tax: TaxEntry) => {
+    setSelectedTax(tax);
+    setShowAnalysisModal(true);
+  };
+
+  // 自定义行操作：申报 / 缴税 / 分析
+  const customRowActions: RowAction[] = [
+    {
+      label: t('finance.finance_tax_page.text_e54080'),
+      icon: <FileText sx={{ width: 16, height: 16 }} />,
+      color: 'success',
+      show: (row) => row.status === 'pending',
+      onClick: (row) => handleDeclare(row as unknown as TaxEntry),
+    },
+    {
+      label: t('finance.finance_tax_page.text_78da3e'),
+      icon: <DollarSign sx={{ width: 16, height: 16 }} />,
+      color: 'warning',
+      show: (row) => row.status === 'overdue',
+      onClick: (row) => handlePay(row as unknown as TaxEntry),
+    },
+    {
+      label: t('finance.finance_tax_page.text_5ddaa7'),
+      icon: <TrendingUp sx={{ width: 16, height: 16 }} />,
+      onClick: (row) => handleAnalysis(row as unknown as TaxEntry),
+    },
+  ];
+
+  return (
+    <>
+      <CrudPage
+        schema={taxSchema}
+        apiAdapter={taxApiAdapter}
+        breadcrumbs={[{ label: '财务管理' }, { label: '税务管理' }]}
+        headerContent={<TaxHeader />}
+        customRowActions={customRowActions}
+      />
+
+      {/* 申报 Dialog */}
       <Dialog
         open={showDeclareModal}
         onClose={() => setShowDeclareModal(false)}
@@ -478,7 +364,7 @@ const FinanceTaxPage: React.FC = () => {
                     variant='body1'
                     sx={{ fontWeight: 600 }}
                   >
-                    {selectedTax.tax_type}
+                    {TAX_TYPE_LABELS[selectedTax.tax_type] || selectedTax.tax_type}
                   </Typography>
                 </MuiBox>
                 <MuiBox>
@@ -568,6 +454,7 @@ const FinanceTaxPage: React.FC = () => {
         </DialogActions>
       </Dialog>
 
+      {/* 缴税 Dialog */}
       <Dialog
         open={showPayModal}
         onClose={() => setShowPayModal(false)}
@@ -599,7 +486,7 @@ const FinanceTaxPage: React.FC = () => {
                     variant='body1'
                     sx={{ fontWeight: 600 }}
                   >
-                    {selectedTax.tax_type}
+                    {TAX_TYPE_LABELS[selectedTax.tax_type] || selectedTax.tax_type}
                   </Typography>
                 </MuiBox>
                 <MuiBox>
@@ -689,6 +576,7 @@ const FinanceTaxPage: React.FC = () => {
         </DialogActions>
       </Dialog>
 
+      {/* 分析 Dialog */}
       <Dialog
         open={showAnalysisModal}
         onClose={() => setShowAnalysisModal(false)}
@@ -720,7 +608,7 @@ const FinanceTaxPage: React.FC = () => {
                     variant='body1'
                     sx={{ fontWeight: 600 }}
                   >
-                    {selectedTax.tax_type}
+                    {TAX_TYPE_LABELS[selectedTax.tax_type] || selectedTax.tax_type}
                   </Typography>
                 </MuiBox>
                 <MuiBox>
@@ -811,7 +699,7 @@ const FinanceTaxPage: React.FC = () => {
           <Button onClick={() => setShowAnalysisModal(false)}>关闭</Button>
         </DialogActions>
       </Dialog>
-    </PageContainer>
+    </>
   );
 };
 

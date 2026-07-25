@@ -3,7 +3,7 @@ use crate::services::tenant_service::{get_tenant_id, TenantService};
 use crate::shared::permission::{check_permission, GisPermission};
 use axum::{
     extract::{Extension, Path, State},
-    Json, Router,
+    Json,
 };
 use serde::{Deserialize, Serialize};
 use sqlx::PgPool;

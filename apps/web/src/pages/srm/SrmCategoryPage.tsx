@@ -1,26 +1,11 @@
-import React, { useState, useMemo } from 'react';
-import {
-  Box,
-  Dialog,
-  DialogTitle,
-  DialogContent,
-  DialogActions,
-  TextField,
-  Chip,
-  Button,
-  Select,
-  MenuItem,
-  InputLabel,
-  FormControl,
-  Typography,
-  useTheme,
-} from '@mui/material';
-import { Plus, Edit2, Trash2, Eye, FolderTree } from 'lucide-react';
-import { ListPageTemplate, type ColumnDef, type RowAction } from '@/components/templates';
-import { PageContainer } from '@/components/common';
+import React from 'react';
+import CrudPage from '@/components/templates/CrudPage';
+import type { CrudApiAdapter } from '@/components/templates/CrudPage';
+import { categorySchema } from '@/schemas/srm';
 import { useNotificationStore } from '@/store';
+import { Box, Card, CardContent, Typography } from '@mui/material';
+import { FolderTree, Users } from 'lucide-react';
 import { designTokens } from '@/theme/tokens';
-import { useQuery, useQueryClient } from '@tanstack/react-query';
 
 const ct = designTokens.colors;
 
@@ -35,11 +20,6 @@ interface SupplierCategory {
   created_at: string;
   updated_at: string;
 }
-
-const STATUS_MAP: Record<string, { label: string; bg: string; color: string }> = {
-  active: { label: '启用', bg: 'success.lighter', color: 'success.700' },
-  inactive: { label: '禁用', bg: 'error.lighter', color: ct.error[700] },
-};
 
 const mockCategories: SupplierCategory[] = [
   {
@@ -57,7 +37,7 @@ const mockCategories: SupplierCategory[] = [
     id: '2',
     code: 'CAT-002',
     name: '零部件供应商',
-    description: '提供零部件的供应商分类',
+    description: '提供零部件的供应商',
     supplier_count: 45,
     level: 1,
     status: 'active',
@@ -132,347 +112,138 @@ const mockCategories: SupplierCategory[] = [
   },
 ];
 
-interface CategoryFormData {
-  code: string;
-  name: string;
-  description: string;
-  level: number;
-  status: string;
-}
+let categoryStore = [...mockCategories];
 
-const defaultFormData: CategoryFormData = {
-  code: '',
-  name: '',
-  description: '',
-  level: 1,
-  status: 'active',
-};
+const categoryApiAdapter: CrudApiAdapter = {
+  list: async (params) => {
+    const search = params?.search?.toLowerCase() || '';
+    const page = params?.page || 0;
+    const pageSize = params?.pageSize || 10;
 
-const SrmCategoryPage: React.FC = () => {
-  const queryClient = useQueryClient();
-  const theme = useTheme();
-  const [searchTerm, setSearchTerm] = useState('');
-  const [showCreateModal, setShowCreateModal] = useState(false);
-  const [showEditModal, setShowEditModal] = useState(false);
-  const [editingId, setEditingId] = useState<string | null>(null);
-  const [formData, setFormData] = useState<CategoryFormData>(defaultFormData);
-  const [page, setPage] = useState(0);
-  const [pageSize, setPageSize] = useState(10);
-  const addNotification = useNotificationStore((state) => state.addNotification);
+    let filtered = categoryStore;
+    if (search) {
+      filtered = filtered.filter(
+        (c) => c.name.toLowerCase().includes(search) || c.code.toLowerCase().includes(search)
+      );
+    }
 
-  const categoriesQuery = useQuery<SupplierCategory[]>({
-    queryKey: ['srm-supplier-categories'],
-    queryFn: async () => mockCategories,
-    staleTime: 5 * 60 * 1000,
-  });
+    const total = filtered.length;
+    const data = filtered.slice(page * pageSize, (page + 1) * pageSize);
 
-  const categories = categoriesQuery.data ?? [];
-  const loading = categoriesQuery.isLoading;
-
-  const getStatusBadge = (status: string) => {
-    const config = STATUS_MAP[status] || {
-      label: status,
-      bg: 'grey.100',
-      color: ct.text.secondary,
-    };
-    return (
-      <Chip
-        label={config.label}
-        size='small'
-        sx={{ bgcolor: config.bg, color: config.color, fontWeight: 500 }}
-      />
-    );
-  };
-
-  const columns: ColumnDef<SupplierCategory>[] = [
-    {
-      id: 'code',
-      label: '分类编码',
-      render: (row) => <Box sx={{ fontWeight: 500 }}>{row.code}</Box>,
-    },
-    { id: 'name', label: '分类名称' },
-    {
-      id: 'description',
-      label: '描述',
-      render: (row) => (
-        <Typography
-          component='span'
-          variant='body2'
-          sx={{
-            color: 'text.secondary',
-            maxWidth: 200,
-            overflow: 'hidden',
-            textOverflow: 'ellipsis',
-            display: 'block',
-            whiteSpace: 'nowrap',
-          }}
-        >
-          {row.description || '-'}
-        </Typography>
-      ),
-    },
-    {
-      id: 'supplier_count',
-      label: '供应商数量',
-      align: 'right',
-      render: (row) => (
-        <Chip
-          label={row.supplier_count}
-          size='small'
-          variant='outlined'
-        />
-      ),
-    },
-    {
-      id: 'level',
-      label: '层级',
-      align: 'center',
-      render: (row) => (
-        <Box sx={{ display: 'flex', gap: 0.5, justifyContent: 'center' }}>
-          {Array.from({ length: row.level }).map((_, i) => (
-            <FolderTree
-              key={i}
-              style={{ width: 14, height: 14, color: theme.palette.primary.main }}
-            />
-          ))}
-        </Box>
-      ),
-    },
-    { id: 'status', label: '状态', render: (row) => getStatusBadge(row.status) },
-  ];
-
-  const filteredCategories = useMemo(
-    () =>
-      categories.filter(
-        (c) =>
-          c.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-          c.code.toLowerCase().includes(searchTerm.toLowerCase())
-      ),
-    [categories, searchTerm]
-  );
-  const paginatedData = filteredCategories.slice(page * pageSize, page * pageSize + pageSize);
-
-  const rowActions: RowAction<SupplierCategory>[] = [
-    {
-      label: '查看',
-      icon: <Eye style={{ width: 16, height: 16 }} />,
-      onClick: (row) =>
-        addNotification({ title: '查看', message: `查看分类: ${row.name}`, type: 'info' }),
-    },
-    {
-      label: '编辑',
-      icon: <Edit2 style={{ width: 16, height: 16 }} />,
-      color: 'primary',
-      onClick: (row) => handleEdit(row),
-    },
-    {
-      label: '删除',
-      icon: <Trash2 style={{ width: 16, height: 16 }} />,
-      color: 'error',
-      onClick: (row) => {
-        queryClient.setQueryData<SupplierCategory[]>(['srm-supplier-categories'], (old) =>
-          (old || []).filter((c) => c.id !== row.id)
-        );
-        addNotification({ title: '成功', message: '分类删除成功', type: 'success' });
-      },
-    },
-  ];
-
-  const handleCreate = () => {
-    setFormData(defaultFormData);
-    setShowCreateModal(true);
-  };
-  const handleEdit = (row: SupplierCategory) => {
-    setEditingId(row.id);
-    setFormData({
-      code: row.code,
-      name: row.name,
-      description: row.description,
-      level: row.level,
-      status: row.status,
-    });
-    setShowEditModal(true);
-  };
-  const handleSaveCreate = () => {
+    return { data: data as unknown as Record<string, unknown>[], total };
+  },
+  create: async (data) => {
     const newCategory: SupplierCategory = {
       id: Date.now().toString(),
-      ...formData,
+      code: (data.code as string) || '',
+      name: (data.name as string) || '',
+      description: (data.description as string) || '',
       supplier_count: 0,
+      level: (data.level as number) || 1,
+      status: (data.status as string) || 'active',
       created_at: new Date().toISOString().split('T')[0],
       updated_at: new Date().toISOString().split('T')[0],
     };
-    queryClient.setQueryData<SupplierCategory[]>(['srm-supplier-categories'], (old) => [
-      newCategory,
-      ...(old || []),
-    ]);
-    setShowCreateModal(false);
-    addNotification({ title: '成功', message: '供应商分类创建成功', type: 'success' });
-  };
-  const handleSaveEdit = () => {
-    queryClient.setQueryData<SupplierCategory[]>(['srm-supplier-categories'], (old) =>
-      (old || []).map((c) =>
-        c.id === editingId
-          ? { ...c, ...formData, updated_at: new Date().toISOString().split('T')[0] }
-          : c
-      )
-    );
-    setShowEditModal(false);
-    setEditingId(null);
-    addNotification({ title: '成功', message: '供应商分类更新成功', type: 'success' });
-  };
+    categoryStore = [newCategory, ...categoryStore];
+    return newCategory as unknown as Record<string, unknown>;
+  },
+  update: async (id, data) => {
+    const idx = categoryStore.findIndex((c) => c.id === id);
+    if (idx === -1) throw new Error('分类不存在');
+    const updated = {
+      ...categoryStore[idx],
+      ...data,
+      updated_at: new Date().toISOString().split('T')[0],
+    };
+    categoryStore[idx] = updated;
+    return updated as unknown as Record<string, unknown>;
+  },
+  delete: async (id) => {
+    categoryStore = categoryStore.filter((c) => c.id !== id);
+  },
+};
 
-  const renderFormFields = (
-    data: CategoryFormData,
-    onChange: (d: CategoryFormData) => void,
-    editing: boolean
-  ) => (
-    <Box sx={{ pt: 1, display: 'flex', flexDirection: 'column', gap: 2 }}>
-      <Box sx={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 2 }}>
-        <TextField
-          fullWidth
-          label='分类编码 *'
-          value={data.code}
-          onChange={(e) => onChange({ ...data, code: e.target.value })}
-          placeholder='请输入分类编码'
-          disabled={editing}
-        />
-        <TextField
-          fullWidth
-          label='分类名称 *'
-          value={data.name}
-          onChange={(e) => onChange({ ...data, name: e.target.value })}
-          placeholder='请输入分类名称'
-        />
-      </Box>
-      <TextField
-        fullWidth
-        label='描述'
-        value={data.description}
-        onChange={(e) => onChange({ ...data, description: e.target.value })}
-        placeholder='请输入描述'
-        multiline
-        rows={2}
-      />
-      <Box sx={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 2 }}>
-        <FormControl fullWidth>
-          <InputLabel>层级</InputLabel>
-          <Select
-            value={data.level}
-            label='层级'
-            onChange={(e) => onChange({ ...data, level: Number(e.target.value) })}
-          >
-            <MenuItem value={1}>一级</MenuItem>
-            <MenuItem value={2}>二级</MenuItem>
-            <MenuItem value={3}>三级</MenuItem>
-          </Select>
-        </FormControl>
-        <FormControl fullWidth>
-          <InputLabel>状态</InputLabel>
-          <Select
-            value={data.status}
-            label='状态'
-            onChange={(e) => onChange({ ...data, status: e.target.value })}
-          >
-            <MenuItem value='active'>启用</MenuItem>
-            <MenuItem value='inactive'>禁用</MenuItem>
-          </Select>
-        </FormControl>
-      </Box>
-    </Box>
+const CategoryStats: React.FC<{ rows: SupplierCategory[] }> = ({ rows }) => {
+  const stats = React.useMemo(
+    () => ({
+      total: rows.length,
+      active: rows.filter((r) => r.status === 'active').length,
+      withSuppliers: rows.filter((r) => r.supplier_count > 0).length,
+      totalSuppliers: rows.reduce((sum, r) => sum + (r.supplier_count || 0), 0),
+    }),
+    [rows]
   );
 
+  const statCards = [
+    { label: '分类总数', value: stats.total, color: ct.purple[500], bgColor: 'secondary.light' },
+    { label: '已启用', value: stats.active, color: 'success.dark', bgColor: 'success.lighter' },
+    { label: '含供应商', value: stats.withSuppliers, color: 'info.dark', bgColor: 'info.lighter' },
+    {
+      label: '供应商总数',
+      value: stats.totalSuppliers,
+      color: 'primary.dark',
+      bgColor: 'primary.lighter',
+    },
+  ];
+
   return (
-    <PageContainer
-      title='供应商分类'
-      subtitle='Supplier Category Management'
+    <Box
+      sx={{
+        display: 'grid',
+        gridTemplateColumns: { xs: 'repeat(1, 1fr)', md: 'repeat(4, 1fr)' },
+        gap: 2,
+        mb: 4,
+      }}
     >
-      <ListPageTemplate
-        title=''
-        subtitle=''
-        breadcrumbs={[
-          { label: '首页', href: '/dashboard' },
-          { label: 'SRM' },
-          { label: '供应商分类' },
-        ]}
-        columns={columns}
-        data={paginatedData}
-        loading={loading}
-        getRowId={(row) => row.id}
-        searchable
-        searchPlaceholder='搜索分类名称或编码...'
-        searchValue={searchTerm}
-        onSearch={setSearchTerm}
-        pagination={{
-          page,
-          pageSize,
-          total: filteredCategories.length,
-          onPageChange: setPage,
-          onPageSizeChange: setPageSize,
-        }}
-        actions={[
-          {
-            label: '新增分类',
-            icon: <Plus style={{ width: 18, height: 18 }} />,
-            onClick: handleCreate,
-            variant: 'contained',
-          },
-        ]}
-        rowActions={rowActions}
-        emptyMessage='暂无供应商分类数据'
-      />
-      <Dialog
-        open={showCreateModal}
-        onClose={() => setShowCreateModal(false)}
-        maxWidth='sm'
-        fullWidth
-      >
-        <DialogTitle>新增供应商分类</DialogTitle>
-        <DialogContent>{renderFormFields(formData, setFormData, false)}</DialogContent>
-        <DialogActions>
-          <Button
-            variant='outlined'
-            onClick={() => setShowCreateModal(false)}
-          >
-            取消
-          </Button>
-          <Button
-            variant='contained'
-            onClick={handleSaveCreate}
-          >
-            保存
-          </Button>
-        </DialogActions>
-      </Dialog>
-      <Dialog
-        open={showEditModal}
-        onClose={() => {
-          setShowEditModal(false);
-          setEditingId(null);
-        }}
-        maxWidth='sm'
-        fullWidth
-      >
-        <DialogTitle>编辑供应商分类</DialogTitle>
-        <DialogContent>{renderFormFields(formData, setFormData, true)}</DialogContent>
-        <DialogActions>
-          <Button
-            variant='outlined'
-            onClick={() => {
-              setShowEditModal(false);
-              setEditingId(null);
-            }}
-          >
-            取消
-          </Button>
-          <Button
-            variant='contained'
-            onClick={handleSaveEdit}
-          >
-            更新
-          </Button>
-        </DialogActions>
-      </Dialog>
-    </PageContainer>
+      {statCards.map((card) => (
+        <Card key={card.label}>
+          <CardContent sx={{ p: 2 }}>
+            <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5 }}>
+              <Box
+                sx={{
+                  width: 40,
+                  height: 40,
+                  bgcolor: card.bgColor,
+                  borderRadius: 3,
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                }}
+              >
+                <FolderTree sx={{ width: 20, height: 20, color: card.color }} />
+              </Box>
+              <Box>
+                <Typography
+                  variant='body2'
+                  sx={{ color: 'text.secondary', fontSize: '0.875rem' }}
+                >
+                  {card.label}
+                </Typography>
+                <Typography
+                  variant='h5'
+                  sx={{ fontWeight: 700, color: 'slate.900' }}
+                >
+                  {card.value}
+                </Typography>
+              </Box>
+            </Box>
+          </CardContent>
+        </Card>
+      ))}
+    </Box>
+  );
+};
+
+const SrmCategoryPage: React.FC = () => {
+  const addNotification = useNotificationStore((state) => state.addNotification);
+
+  return (
+    <CrudPage
+      schema={categorySchema}
+      apiAdapter={categoryApiAdapter}
+      breadcrumbs={[{ label: 'SRM' }, { label: '供应商分类' }]}
+      headerContent={(rows) => <CategoryStats rows={rows as SupplierCategory[]} />}
+    />
   );
 };
 

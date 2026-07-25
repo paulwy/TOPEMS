@@ -1,109 +1,65 @@
-import React, { useState, useMemo } from 'react';
-import {
-  Box,
-  Typography,
-  Chip,
-  Paper,
-  IconButton,
-  Dialog,
-  DialogTitle,
-  DialogContent,
-  DialogActions,
-  Tooltip,
-  Stack,
-  TextField,
-  FormControl,
-  InputLabel,
-  Select,
-  MenuItem,
-  Button,
-} from '@mui/material';
-import { FileUpload, PageContainer } from '@/components/common';
-import { Plus, Eye, RotateCcw, Tag, Calendar, User } from 'lucide-react';
-import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import {
-  ListPageTemplate,
-  type ColumnDef,
-  type FilterConfig,
-  type RowAction,
-} from '@/components/templates';
-import { rdApi } from '@/api/rd';
-import { useNotificationStore } from '@/store';
+import React, { useState } from 'react';
+import { Box, Chip, Stack, Typography, Paper } from '@mui/material';
+import { Eye, RotateCcw, Tag, Calendar, User } from 'lucide-react';
+import { useMutation, useQueryClient } from '@tanstack/react-query';
+import CrudPage from '@/components/templates/CrudPage';
+import type { CrudApiAdapter } from '@/components/templates/CrudPage';
+import type { RowAction } from '@/components/templates';
+import { createCrudPageAdapter } from '@/schema/crudPageAdapter';
+import { releaseSchema } from '@/schemas/rd';
+import { deployApi } from '@/api/rd';
 import type { Deploy, CreateDeployRequest } from '@/api/rd';
-import { logger } from '@/utils/logger';
+import { PageContainer } from '@/components/common/PageContainer';
+import { useNotificationStore } from '@/store';
 import { QUERY_KEYS } from '@/lib/reactQuery';
+import { logger } from '@/utils/logger';
 
-interface Release {
-  id: string;
-  version: string;
-  release_time: string;
-  release_note: string;
-  environment: string;
-  status: string;
-  release_by: string;
+const baseAdapter = createCrudPageAdapter<Deploy, CreateDeployRequest>(deployApi);
+
+const releaseAdapter: CrudApiAdapter<Deploy> = {
+  list: baseAdapter.list,
+  create: baseAdapter.create,
+  update: baseAdapter.update,
+  delete: baseAdapter.delete,
+};
+
+const STATUS_COLOR_MAP: Record<string, 'success' | 'warning' | 'error' | 'default'> = {
+  released: 'success',
+  planning: 'warning',
+  rolled_back: 'error',
+};
+
+const STATUS_LABEL_MAP: Record<string, string> = {
+  released: '已发布',
+  planning: '规划中',
+  rolled_back: '已回滚',
+};
+
+const ENV_COLOR_MAP: Record<string, 'error' | 'warning' | 'success' | 'default'> = {
+  production: 'error',
+  staging: 'warning',
+  development: 'success',
+};
+
+const ENV_LABEL_MAP: Record<string, string> = {
+  production: '生产环境',
+  staging: '预发布环境',
+  development: '开发环境',
+};
+
+function transformStatus(status: string): string {
+  if (status === 'success') return 'released';
+  if (status === 'failed') return 'rolled_back';
+  return 'planning';
 }
 
 const RsReleasePage: React.FC = () => {
   const queryClient = useQueryClient();
   const { addNotification } = useNotificationStore();
-  const [page, setPage] = useState(0);
-  const [rowsPerPage, setRowsPerPage] = useState(10);
-  const [searchTerm, setSearchTerm] = useState('');
-  const [envFilter, setEnvFilter] = useState<string>('');
-  const [statusFilter, setStatusFilter] = useState<string>('');
-  const [dateRange, setDateRange] = useState<{ start: string; end: string }>({
-    start: '',
-    end: '',
-  });
-  const [detailDialogOpen, setDetailDialogOpen] = useState(false);
-  const [newReleaseDialogOpen, setNewReleaseDialogOpen] = useState(false);
-  const [selectedRelease, setSelectedRelease] = useState<Release | null>(null);
-  const [newReleaseForm, setNewReleaseForm] = useState({
-    version: '',
-    environment: 'staging',
-    release_note: '',
-  });
-  const [releasePackageAttachments, setReleasePackageAttachments] = useState<string[]>([]);
-
-  const releaseListQuery = useQuery({
-    queryKey: [
-      ...QUERY_KEYS.RD.RELEASES,
-      { page, rowsPerPage, searchTerm, envFilter, statusFilter },
-    ],
-    queryFn: async () => {
-      const params: Record<string, unknown> = {
-        page: page + 1,
-        pagesize: rowsPerPage,
-      };
-      if (searchTerm) params.search = searchTerm;
-      if (envFilter) params.env = envFilter;
-      if (statusFilter) params.status = statusFilter;
-
-      const response = await rdApi.listDeploys(params);
-      if (!response.success || !response.data) {
-        throw new Error(response.message || '加载发布数据失败');
-      }
-      const deploys = response.data.deploys || [];
-      const transformed = deploys.map((d: Deploy) => ({
-        id: d.id,
-        version: d.version || d.deploy_no,
-        release_time: d.deploy_time || d.created_at || '',
-        release_note: d.app_name || d.deploy_no,
-        environment: d.env || d.environment || '',
-        status:
-          d.status === 'success' ? 'released' : d.status === 'failed' ? 'rolled_back' : 'planning',
-        release_by: d.deployer || d.operator || '',
-      }));
-      return {
-        releases: transformed,
-        total: response.data.total || 0,
-      };
-    },
-  });
 
   const createDeployMutation = useMutation({
     mutationFn: async (data: CreateDeployRequest) => {
-      const response = await rdApi.createDeploy(data);
+      const response = await deployApi.createDeploy(data);
       if (!response.success) {
         throw new Error(response.message || '创建发布失败');
       }
@@ -123,92 +79,16 @@ const RsReleasePage: React.FC = () => {
     },
   });
 
-  const releases = releaseListQuery.data?.releases || [];
-  const total = releaseListQuery.data?.total || 0;
-  const loading = releaseListQuery.isLoading || createDeployMutation.isPending;
-
-  const getEnvColor = (env: string): 'error' | 'warning' | 'success' => {
-    switch (env) {
-      case 'production':
-        return 'error';
-      case 'staging':
-        return 'warning';
-      case 'development':
-        return 'success';
-      default:
-        return 'success';
-    }
-  };
-
-  const getEnvLabel = (env: string): string => {
-    switch (env) {
-      case 'production':
-        return '生产环境';
-      case 'staging':
-        return '预发布环境';
-      case 'development':
-        return '开发环境';
-      default:
-        return env;
-    }
-  };
-
-  const getStatusColor = (status: string): 'success' | 'warning' | 'error' | 'default' => {
-    switch (status) {
-      case 'released':
-        return 'success';
-      case 'planning':
-        return 'warning';
-      case 'rolled_back':
-        return 'error';
-      default:
-        return 'default';
-    }
-  };
-
-  const getStatusLabel = (status: string): string => {
-    switch (status) {
-      case 'released':
-        return '已发布';
-      case 'planning':
-        return '规划中';
-      case 'rolled_back':
-        return '已回滚';
-      default:
-        return status;
-    }
-  };
-
-  const filteredReleases = useMemo(() => {
-    return releases.filter((release) => {
-      const matchesSearch =
-        release.version.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        release.release_note.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        release.release_by.toLowerCase().includes(searchTerm.toLowerCase());
-      const matchesEnv = !envFilter || release.environment === envFilter;
-      const matchesStatus = !statusFilter || release.status === statusFilter;
-      const matchesDateRange =
-        (!dateRange.start || release.release_time >= dateRange.start) &&
-        (!dateRange.end || release.release_time <= dateRange.end);
-      return matchesSearch && matchesEnv && matchesStatus && matchesDateRange;
-    });
-  }, [releases, searchTerm, envFilter, statusFilter, dateRange]);
-
-  const handleViewDetail = (release: Release) => {
-    setSelectedRelease(release);
-    setDetailDialogOpen(true);
-  };
-
-  const handleRollback = async (release: Release) => {
+  const handleRollback = async (row: Record<string, unknown>) => {
     try {
       const createData: CreateDeployRequest = {
         project_id: 'default',
         build_id: 'default',
-        env: release.environment,
+        env: String(row.environment || row.env || ''),
         deploy_type: 'full',
-        environment: release.environment,
-        app_name: release.release_note,
-        version: release.version,
+        environment: String(row.environment || row.env || ''),
+        app_name: String(row.release_note || row.app_name || ''),
+        version: String(row.version || ''),
       };
       await createDeployMutation.mutateAsync(createData);
       addNotification({
@@ -216,376 +96,122 @@ const RsReleasePage: React.FC = () => {
         title: '操作成功',
         message: '回滚任务已提交',
       });
-    } catch {
-      // 错误已在 mutation onError 中处理
-    }
+    } catch {}
   };
 
-  const handleCreateRelease = async () => {
-    try {
-      const createData: CreateDeployRequest = {
-        project_id: 'default',
-        build_id: 'default',
-        env: newReleaseForm.environment,
-        deploy_type: 'full',
-        environment: newReleaseForm.environment,
-        app_name: newReleaseForm.release_note,
-        version: newReleaseForm.version,
-      };
-      await createDeployMutation.mutateAsync(createData);
-      addNotification({
-        type: 'success',
-        title: '创建成功',
-        message: '新发布已创建',
-      });
-      setNewReleaseDialogOpen(false);
-      setNewReleaseForm({
-        version: '',
-        environment: 'staging',
-        release_note: '',
-      });
-    } catch {
-      // 错误已在 mutation onError 中处理
-    }
-  };
-
-  // 表格列定义
-  const columns: ColumnDef<Release>[] = [
-    {
-      id: 'version',
-      label: '版本号',
-      render: (row) => (
-        <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-          <Tag
-            size={16}
-            color='primary.main'
-          />
-          {row.version}
-        </Box>
-      ),
-    },
-    {
-      id: 'release_time',
-      label: '发布时间',
-      render: (row) => (
-        <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
-          <Calendar size={14} />
-          {row.release_time}
-        </Box>
-      ),
-    },
-    {
-      id: 'release_note',
-      label: '发布说明',
-      render: (row) => (
-        <Tooltip title={row.release_note}>
-          <Box
-            sx={{
-              maxWidth: 250,
-              overflow: 'hidden',
-              textOverflow: 'ellipsis',
-              whiteSpace: 'nowrap',
-            }}
-          >
-            {row.release_note}
-          </Box>
-        </Tooltip>
-      ),
-    },
-    {
-      id: 'environment',
-      label: '发布环境',
-      render: (row) => (
-        <Chip
-          label={getEnvLabel(row.environment)}
-          size='small'
-          color={getEnvColor(row.environment)}
-        />
-      ),
-    },
-    {
-      id: 'status',
-      label: '状态',
-      render: (row) => (
-        <Chip
-          label={getStatusLabel(row.status)}
-          size='small'
-          color={getStatusColor(row.status)}
-        />
-      ),
-    },
-    {
-      id: 'release_by',
-      label: '发布人',
-      render: (row) => (
-        <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
-          <User size={14} />
-          {row.release_by}
-        </Box>
-      ),
-    },
-  ];
-
-  // 筛选器定义
-  const filters: FilterConfig[] = [
-    {
-      id: 'env',
-      label: '环境',
-      type: 'select',
-      options: [
-        { label: '全部', value: '' },
-        { label: '生产环境', value: 'production' },
-        { label: '预发布环境', value: 'staging' },
-        { label: '开发环境', value: 'development' },
-      ],
-      value: envFilter || '',
-      onChange: (value: unknown) => setEnvFilter((value as string) || ''),
-    },
-    {
-      id: 'status',
-      label: '状态',
-      type: 'select',
-      options: [
-        { label: '全部', value: '' },
-        { label: '已发布', value: 'released' },
-        { label: '规划中', value: 'planning' },
-        { label: '已回滚', value: 'rolled_back' },
-      ],
-      value: statusFilter || '',
-      onChange: (value: unknown) => setStatusFilter((value as string) || ''),
-    },
-    {
-      id: 'dateRange',
-      label: '日期范围',
-      type: 'dateRange',
-      value: dateRange,
-      onChange: (value: unknown) =>
-        setDateRange((value as { start: string; end: string }) || { start: '', end: '' }),
-    },
-  ];
-
-  // 行操作定义
-  const rowActions: RowAction<Release>[] = [
+  const customRowActions: RowAction<Record<string, unknown>>[] = [
     {
       label: '查看详情',
       icon: <Eye size={16} />,
-      onClick: handleViewDetail,
+      onClick: () => {},
     },
     {
       label: '回滚',
       icon: <RotateCcw size={16} />,
       onClick: handleRollback,
-      show: (row) => row.status === 'released',
+      show: (row) => transformStatus(String(row.status ?? '')) === 'released',
     },
   ];
 
-  // 分页配置
-  const pagination = {
-    page,
-    pageSize: rowsPerPage,
-    total,
-    onPageChange: setPage,
-    onPageSizeChange: setRowsPerPage,
+  const detailContent = (row: Record<string, unknown>) => {
+    const status = transformStatus(String(row.status ?? ''));
+    const statusLabel = STATUS_LABEL_MAP[status] || status;
+    const statusColor = STATUS_COLOR_MAP[status] || 'default';
+    const env = String(row.environment || row.env || '');
+    const envLabel = ENV_LABEL_MAP[env] || env;
+    const envColor = ENV_COLOR_MAP[env] || 'default';
+
+    return (
+      <Box sx={{ py: 2 }}>
+        <Typography
+          variant='h6'
+          sx={{ fontWeight: 'bold' }}
+        >
+          {row.version || row.deploy_no}
+        </Typography>
+        <Stack
+          direction='row'
+          spacing={2}
+          sx={{ mt: 2 }}
+        >
+          <Chip
+            label={envLabel}
+            size='small'
+            color={envColor}
+          />
+          <Chip
+            label={statusLabel}
+            size='small'
+            color={statusColor}
+          />
+        </Stack>
+        <Box sx={{ mt: 3 }}>
+          <Typography
+            variant='subtitle2'
+            color='text.secondary'
+          >
+            发布说明
+          </Typography>
+          <Paper sx={{ p: 2, mt: 1, bgcolor: 'grey.100' }}>
+            <Typography variant='body2'>{row.release_note || row.app_name || '-'}</Typography>
+          </Paper>
+        </Box>
+        <Stack
+          direction='row'
+          spacing={4}
+          sx={{ mt: 3 }}
+        >
+          <Box>
+            <Typography
+              variant='caption'
+              color='text.secondary'
+            >
+              发布时间
+            </Typography>
+            <Typography
+              variant='body1'
+              sx={{ fontWeight: 'bold' }}
+            >
+              {row.deploy_time || row.release_time || row.created_at || '-'}
+            </Typography>
+          </Box>
+          <Box>
+            <Typography
+              variant='caption'
+              color='text.secondary'
+            >
+              发布人
+            </Typography>
+            <Typography
+              variant='body1'
+              sx={{ fontWeight: 'bold' }}
+            >
+              {row.deployer || row.operator || row.release_by || '-'}
+            </Typography>
+          </Box>
+        </Stack>
+      </Box>
+    );
   };
 
-  // 操作按钮
-  const actions = [
-    {
-      label: '新建发布',
-      icon: <Plus size={18} />,
-      onClick: () => {
-        setReleasePackageAttachments([]);
-        setNewReleaseDialogOpen(true);
-      },
-    },
-  ];
-
   return (
-    <PageContainer>
-      <ListPageTemplate
-        columns={columns}
-        data={filteredReleases}
-        loading={loading}
-        filters={filters}
-        globalSearch={{
-          fields: ['version', 'release_note', 'release_by'],
-          placeholder: '搜索版本、说明...',
-        }}
-        pagination={pagination}
-        actions={actions}
-        rowActions={rowActions}
-        onSearch={setSearchTerm}
+    <PageContainer
+      title='配方发布'
+      subtitle='管理配方发布和版本部署'
+      maxWidth='xl'
+    >
+      <CrudPage
+        schema={releaseSchema}
+        apiAdapter={releaseAdapter}
+        breadcrumbs={[
+          { label: '首页', href: '/dashboard' },
+          { label: '研发', href: '/rs' },
+          { label: '配方发布' },
+        ]}
+        customRowActions={customRowActions}
+        detailContent={detailContent}
+        detailMaxWidth='md'
       />
-
-      <Dialog
-        open={detailDialogOpen}
-        onClose={() => setDetailDialogOpen(false)}
-        maxWidth='md'
-        fullWidth
-      >
-        <DialogTitle>发布详情</DialogTitle>
-        <DialogContent>
-          {selectedRelease && (
-            <Box sx={{ py: 2 }}>
-              <Typography
-                variant='h6'
-                sx={{ fontWeight: 'bold' }}
-              >
-                {selectedRelease.version}
-              </Typography>
-              <Stack
-                direction='row'
-                spacing={2}
-                sx={{ mt: 2 }}
-              >
-                <Chip
-                  label={getEnvLabel(selectedRelease.environment)}
-                  size='small'
-                  color={getEnvColor(selectedRelease.environment)}
-                />
-                <Chip
-                  label={getStatusLabel(selectedRelease.status)}
-                  size='small'
-                  color={getStatusColor(selectedRelease.status)}
-                />
-              </Stack>
-              <Box sx={{ mt: 3 }}>
-                <Typography
-                  variant='subtitle2'
-                  color='text.secondary'
-                >
-                  发布说明
-                </Typography>
-                <Paper sx={{ p: 2, mt: 1, bgcolor: 'grey.100' }}>
-                  <Typography variant='body2'>{selectedRelease.release_note}</Typography>
-                </Paper>
-              </Box>
-              <Stack
-                direction='row'
-                spacing={4}
-                sx={{ mt: 3 }}
-              >
-                <Box>
-                  <Typography
-                    variant='caption'
-                    color='text.secondary'
-                  >
-                    发布时间
-                  </Typography>
-                  <Typography
-                    variant='body1'
-                    sx={{ fontWeight: 'bold' }}
-                  >
-                    {selectedRelease.release_time}
-                  </Typography>
-                </Box>
-                <Box>
-                  <Typography
-                    variant='caption'
-                    color='text.secondary'
-                  >
-                    发布人
-                  </Typography>
-                  <Typography
-                    variant='body1'
-                    sx={{ fontWeight: 'bold' }}
-                  >
-                    {selectedRelease.release_by}
-                  </Typography>
-                </Box>
-              </Stack>
-            </Box>
-          )}
-        </DialogContent>
-        <DialogActions>
-          <Button onClick={() => setDetailDialogOpen(false)}>关闭</Button>
-        </DialogActions>
-      </Dialog>
-
-      <Dialog
-        open={newReleaseDialogOpen}
-        onClose={() => setNewReleaseDialogOpen(false)}
-        maxWidth='sm'
-        fullWidth
-      >
-        <DialogTitle>新建发布</DialogTitle>
-        <DialogContent>
-          <Stack
-            spacing={2}
-            sx={{ mt: 2 }}
-          >
-            <TextField
-              label='版本号'
-              fullWidth
-              value={newReleaseForm.version}
-              onChange={(e) =>
-                setNewReleaseForm({
-                  ...newReleaseForm,
-                  version: e.target.value,
-                })
-              }
-            />
-            <FormControl fullWidth>
-              <InputLabel>发布环境</InputLabel>
-              <Select
-                value={newReleaseForm.environment}
-                label='发布环境'
-                onChange={(e) =>
-                  setNewReleaseForm({
-                    ...newReleaseForm,
-                    environment: e.target.value,
-                  })
-                }
-              >
-                <MenuItem value='production'>生产环境</MenuItem>
-                <MenuItem value='staging'>预发布环境</MenuItem>
-                <MenuItem value='development'>开发环境</MenuItem>
-              </Select>
-            </FormControl>
-            <TextField
-              label='发布说明'
-              fullWidth
-              multiline
-              rows={4}
-              value={newReleaseForm.release_note}
-              onChange={(e) =>
-                setNewReleaseForm({
-                  ...newReleaseForm,
-                  release_note: e.target.value,
-                })
-              }
-            />
-            <Box>
-              <Typography
-                variant='subtitle2'
-                color='text.secondary'
-                sx={{ mb: 1 }}
-              >
-                发布包附件
-              </Typography>
-              <FileUpload
-                value={releasePackageAttachments}
-                onChange={setReleasePackageAttachments}
-                accept={['.zip', '.tar', '.gz', '.jar', '.war', '.pdf', '.doc', '.docx']}
-                maxCount={10}
-                maxSize={500}
-                maxTotalSize={2000}
-                uploadText='上传发布包'
-              />
-            </Box>
-          </Stack>
-        </DialogContent>
-        <DialogActions>
-          <Button onClick={() => setNewReleaseDialogOpen(false)}>取消</Button>
-          <Button
-            variant='contained'
-            sx={{ bgcolor: 'primary.main' }}
-            onClick={handleCreateRelease}
-          >
-            创建
-          </Button>
-        </DialogActions>
-      </Dialog>
     </PageContainer>
   );
 };

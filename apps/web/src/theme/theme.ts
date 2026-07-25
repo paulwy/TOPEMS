@@ -55,61 +55,8 @@ const lightShadows = [
 
 export const createCustomTheme = (): Theme => {
   return createTheme({
-    cssVariables: {
-      colorSchemeSelector: 'class',
-    },
-    colorSchemes: {
-      light: {
-        palette: {
-          background: {
-            default: designTokens.colors.background.default,
-            paper: designTokens.colors.background.paper,
-          },
-          text: {
-            primary: designTokens.colors.text.primary,
-            secondary: designTokens.colors.text.secondary,
-          },
-          divider: designTokens.colors.border.default,
-        },
-      },
-      dark: {
-        palette: {
-          background: {
-            default: designTokens.colors.grey[900],
-            paper: designTokens.colors.grey[800],
-          },
-          text: {
-            primary: designTokens.colors.grey[100],
-            secondary: designTokens.colors.grey[400],
-          },
-          divider: designTokens.colors.grey[700],
-        },
-      },
-      cyberpunk: {
-        palette: {
-          primary: { ...cyberpunkTokens.colors.primary },
-          secondary: { ...cyberpunkTokens.colors.secondary },
-          success: { ...cyberpunkTokens.colors.success },
-          warning: { ...cyberpunkTokens.colors.warning },
-          error: { ...cyberpunkTokens.colors.error },
-          info: { ...cyberpunkTokens.colors.info },
-          grey: cyberpunkTokens.colors.grey,
-          background: {
-            default: cyberpunkTokens.colors.background.default,
-            paper: cyberpunkTokens.colors.background.paper,
-          },
-          text: {
-            primary: cyberpunkTokens.colors.text.primary,
-            secondary: cyberpunkTokens.colors.text.secondary,
-            disabled: cyberpunkTokens.colors.text.disabled,
-          },
-          divider: cyberpunkTokens.colors.border.default,
-          action: { ...cyberpunkTokens.colors.action },
-          accent: { ...cyberpunkTokens.colors.accent },
-        },
-      },
-    } as ThemeOptions['colorSchemes'],
     palette: {
+      mode: 'light',
       primary: {
         ...designTokens.colors.primary,
       },
@@ -129,6 +76,15 @@ export const createCustomTheme = (): Theme => {
         ...designTokens.colors.info,
       },
       grey: designTokens.colors.grey,
+      background: {
+        default: designTokens.colors.background.default,
+        paper: designTokens.colors.background.paper,
+      },
+      text: {
+        primary: designTokens.colors.text.primary,
+        secondary: designTokens.colors.text.secondary,
+      },
+      divider: designTokens.colors.border.default,
     },
     typography: {
       fontFamily: designTokens.typography.fontFamily,

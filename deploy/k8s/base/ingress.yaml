@@ -1,0 +1,227 @@
+# TOPEMS Ingress Configuration
+# 使用 Nginx Ingress Controller 作为统一入口
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: topems-ingress
+  namespace: topems
+  annotations:
+    nginx.ingress.kubernetes.io/ssl-redirect: "false"
+    nginx.ingress.kubernetes.io/use-regex: "true"
+    nginx.ingress.kubernetes.io/rewrite-target: /$2
+    nginx.ingress.kubernetes.io/proxy-body-size: "50m"
+    nginx.ingress.kubernetes.io/proxy-read-timeout: "300"
+    nginx.ingress.kubernetes.io/proxy-send-timeout: "300"
+spec:
+  rules:
+  - host: topems.local
+    http:
+      paths:
+      # Core API
+      - path: /api/core(/|$)(.*)
+        pathType: Prefix
+        backend:
+          service:
+            name: unified-core-service
+            port:
+              number: 8000
+      # ERP API
+      - path: /api/erp(/|$)(.*)
+        pathType: Prefix
+        backend:
+          service:
+            name: erp-service
+            port:
+              number: 8010
+      # HRM API
+      - path: /api/hrm(/|$)(.*)
+        pathType: Prefix
+        backend:
+          service:
+            name: hrm-service
+            port:
+              number: 8020
+      # PM API
+      - path: /api/pm(/|$)(.*)
+        pathType: Prefix
+        backend:
+          service:
+            name: pm-service
+            port:
+              number: 8023
+      # CRM API
+      - path: /api/crm(/|$)(.*)
+        pathType: Prefix
+        backend:
+          service:
+            name: crm-service
+            port:
+              number: 8029
+      # MES API
+      - path: /api/mes(/|$)(.*)
+        pathType: Prefix
+        backend:
+          service:
+            name: mes-service
+            port:
+              number: 8030
+      # PDM API
+      - path: /api/pdm(/|$)(.*)
+        pathType: Prefix
+        backend:
+          service:
+            name: pdm-service
+            port:
+              number: 8031
+      # SCM API
+      - path: /api/scm(/|$)(.*)
+        pathType: Prefix
+        backend:
+          service:
+            name: scm-service
+            port:
+              number: 8040
+      # WMS API
+      - path: /api/wms(/|$)(.*)
+        pathType: Prefix
+        backend:
+          service:
+            name: wms-service
+            port:
+              number: 8041
+      # SRM API
+      - path: /api/srm(/|$)(.*)
+        pathType: Prefix
+        backend:
+          service:
+            name: srm-service
+            port:
+              number: 8042
+      # QMS API
+      - path: /api/qms(/|$)(.*)
+        pathType: Prefix
+        backend:
+          service:
+            name: qms-service
+            port:
+              number: 8050
+      # LIMS API
+      - path: /api/lims(/|$)(.*)
+        pathType: Prefix
+        backend:
+          service:
+            name: lims-service
+            port:
+              number: 8051
+      # EHS API
+      - path: /api/ehs(/|$)(.*)
+        pathType: Prefix
+        backend:
+          service:
+            name: ehs-service
+            port:
+              number: 8052
+      # BI API
+      - path: /api/bi(/|$)(.*)
+        pathType: Prefix
+        backend:
+          service:
+            name: bi-service
+            port:
+              number: 8060
+      # Report API (已整合到BI服务)
+      - path: /api/report(/|$)(.*)
+        pathType: Prefix
+        backend:
+          service:
+            name: bi-service
+            port:
+              number: 8060
+      # Monitor API (已合并到 unified-core，路由 /api/core/monitor/*)
+      - path: /api/monitor(/|$)(.*)
+        pathType: Prefix
+        backend:
+          service:
+            name: unified-core-service
+            port:
+              number: 8000
+      # Portal API
+      - path: /api/portal(/|$)(.*)
+        pathType: Prefix
+        backend:
+          service:
+            name: portal-service
+            port:
+              number: 8063
+      # Finance API
+      - path: /api/finance(/|$)(.*)
+        pathType: Prefix
+        backend:
+          service:
+            name: finance-service
+            port:
+              number: 8011
+      # Doc API (已合并到 unified-core，路由 /api/core/doc/*)
+      - path: /api/doc(/|$)(.*)
+        pathType: Prefix
+        backend:
+          service:
+            name: unified-core-service
+            port:
+              number: 8000
+      # Analytics API（与 BI 共端口）
+      - path: /api/analytics(/|$)(.*)
+        pathType: Prefix
+        backend:
+          service:
+            name: bi-service
+            port:
+              number: 8060
+      # R&D (RD) API
+      - path: /api/rd(/|$)(.*)
+        pathType: Prefix
+        backend:
+          service:
+            name: rd-service
+            port:
+              number: 8053
+      # AI API
+      - path: /api/ai(/|$)(.*)
+        pathType: Prefix
+        backend:
+          service:
+            name: ai-service
+            port:
+              number: 8013
+      # Mobile API
+      - path: /api/mobile(/|$)(.*)
+        pathType: Prefix
+        backend:
+          service:
+            name: mobile-service
+            port:
+              number: 8070
+      # GIS API
+      - path: /api/gis(/|$)(.*)
+        pathType: Prefix
+        backend:
+          service:
+            name: gis-service
+            port:
+              number: 8071
+      # Integration API
+      - path: /api/integration(/|$)(.*)
+        pathType: Prefix
+        backend:
+          service:
+            name: integration-service
+            port:
+              number: 8072
+      # Default path for web frontend
+      - path: /
+        pathType: Prefix
+        backend:
+          service:
+            name: unified-core-service
+            port:
+              number: 8000

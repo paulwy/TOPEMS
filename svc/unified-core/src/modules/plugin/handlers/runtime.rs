@@ -14,9 +14,16 @@ fn verify_registration_token(headers: &HeaderMap) -> bool {
     let expected_token = match std::env::var("PLUGIN_REGISTRATION_TOKEN") {
         Ok(token) if !token.is_empty() => token,
         _ => {
-            // 开发模式：未配置注册令牌，允许所有注册
-            tracing::debug!(
-                "[Plugin] Registration token not configured, allowing registration (dev mode)"
+            // 未配置注册令牌：生产环境拒绝，开发环境允许
+            let profile = std::env::var("PROFILE").unwrap_or_default();
+            if profile == "prod" || profile == "production" {
+                tracing::error!(
+                    "[Plugin] PLUGIN_REGISTRATION_TOKEN not set - plugin registration blocked in production"
+                );
+                return false;
+            }
+            tracing::warn!(
+                "[Plugin] PLUGIN_REGISTRATION_TOKEN not set - allowing all registrations in dev mode"
             );
             return true;
         }

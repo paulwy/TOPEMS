@@ -26,6 +26,14 @@ export interface RemoteModuleConfig {
   preload: 'eager' | 'lazy' | 'visible' | 'network';
   /** 权限码（检查用户是否有权限访问该模块） */
   permission?: string;
+  /** V39.0: 当前模块版本（由 version-manager 维护，初始化时可留空） */
+  version?: string;
+  /** V39.0: 灰度入口 URL（灰度发布时使用，与 entry 共存） */
+  canaryEntry?: string;
+  /** V39.0: 热更新策略：'silent' | 'prompt' | 'force' */
+  updateStrategy?: 'silent' | 'prompt' | 'force';
+  /** V39.0: 模块关键等级（critical 模块更新时强制刷新） */
+  critical?: boolean;
 }
 
 /**
@@ -48,6 +56,8 @@ export const REMOTE_MODULES: RemoteModuleConfig[] = [
     routePrefix: '/core',
     isCore: true,
     preload: 'eager',
+    updateStrategy: 'force',
+    critical: true,
   },
   {
     name: 'topems_erp',
@@ -56,8 +66,9 @@ export const REMOTE_MODULES: RemoteModuleConfig[] = [
     icon: 'AccountBalance',
     routePrefix: '/erp',
     isCore: false,
-    preload: 'lazy',
+    preload: 'network',
     permission: 'erp:view',
+    updateStrategy: 'prompt',
   },
   {
     name: 'topems_hrm',
@@ -66,7 +77,7 @@ export const REMOTE_MODULES: RemoteModuleConfig[] = [
     icon: 'People',
     routePrefix: '/hrm',
     isCore: false,
-    preload: 'lazy',
+    preload: 'network',
     permission: 'hrm:view',
   },
   {
@@ -76,8 +87,18 @@ export const REMOTE_MODULES: RemoteModuleConfig[] = [
     icon: 'ContactPhone',
     routePrefix: '/crm',
     isCore: false,
-    preload: 'lazy',
+    preload: 'network',
     permission: 'crm:view',
+  },
+  {
+    name: 'topems_mes',
+    entry: getRemoteEntry('topems_mes', 'http://localhost:3007/remoteEntry.js'),
+    displayName: 'MES',
+    icon: 'PrecisionManufacturing',
+    routePrefix: '/mes',
+    isCore: false,
+    preload: 'network',
+    permission: 'mes:view',
   },
   {
     name: 'topems_scm',
@@ -100,14 +121,14 @@ export const REMOTE_MODULES: RemoteModuleConfig[] = [
     permission: 'wms:view',
   },
   {
-    name: 'topems_mes',
-    entry: getRemoteEntry('topems_mes', 'http://localhost:3007/remoteEntry.js'),
-    displayName: 'MES',
-    icon: 'PrecisionManufacturing',
-    routePrefix: '/mes',
+    name: 'topems_srm',
+    entry: getRemoteEntry('topems_srm', 'http://localhost:3010/remoteEntry.js'),
+    displayName: 'SRM',
+    icon: 'Handshake',
+    routePrefix: '/srm',
     isCore: false,
     preload: 'lazy',
-    permission: 'mes:view',
+    permission: 'srm:view',
   },
   {
     name: 'topems_pm',
@@ -129,6 +150,96 @@ export const REMOTE_MODULES: RemoteModuleConfig[] = [
     preload: 'lazy',
     permission: 'finance:view',
   },
+  {
+    name: 'topems_pdm',
+    entry: getRemoteEntry('topems_pdm', 'http://localhost:3011/remoteEntry.js'),
+    displayName: 'PDM',
+    icon: 'FolderOpen',
+    routePrefix: '/pdm',
+    isCore: false,
+    preload: 'lazy',
+    permission: 'pdm:view',
+  },
+  {
+    name: 'topems_qms',
+    entry: getRemoteEntry('topems_qms', 'http://localhost:3012/remoteEntry.js'),
+    displayName: 'QMS',
+    icon: 'CheckCircle',
+    routePrefix: '/qms',
+    isCore: false,
+    preload: 'lazy',
+    permission: 'qms:view',
+  },
+  {
+    name: 'topems_lims',
+    entry: getRemoteEntry('topems_lims', 'http://localhost:3013/remoteEntry.js'),
+    displayName: 'LIMS',
+    icon: 'FlaskConical',
+    routePrefix: '/lims',
+    isCore: false,
+    preload: 'lazy',
+    permission: 'lims:view',
+  },
+  {
+    name: 'topems_ehs',
+    entry: getRemoteEntry('topems_ehs', 'http://localhost:3014/remoteEntry.js'),
+    displayName: 'EHS',
+    icon: 'ShieldCheck',
+    routePrefix: '/ehs',
+    isCore: false,
+    preload: 'lazy',
+    permission: 'ehs:view',
+  },
+  {
+    name: 'topems_bi',
+    entry: getRemoteEntry('topems_bi', 'http://localhost:3015/remoteEntry.js'),
+    displayName: 'BI',
+    icon: 'BarChart3',
+    routePrefix: '/bi',
+    isCore: false,
+    preload: 'lazy',
+    permission: 'bi:view',
+  },
+  {
+    name: 'topems_monitor',
+    entry: getRemoteEntry('topems_monitor', 'http://localhost:3016/remoteEntry.js'),
+    displayName: 'Monitor',
+    icon: 'Activity',
+    routePrefix: '/monitor',
+    isCore: false,
+    preload: 'visible',
+    permission: 'monitor:view',
+  },
+  {
+    name: 'topems_ai',
+    entry: getRemoteEntry('topems_ai', 'http://localhost:3017/remoteEntry.js'),
+    displayName: 'AI',
+    icon: 'Sparkles',
+    routePrefix: '/ai',
+    isCore: false,
+    preload: 'lazy',
+    permission: 'ai:view',
+  },
+  {
+    name: 'topems_gis',
+    entry: getRemoteEntry('topems_gis', 'http://localhost:3018/remoteEntry.js'),
+    displayName: 'GIS',
+    icon: 'Map',
+    routePrefix: '/gis',
+    isCore: false,
+    preload: 'lazy',
+    permission: 'gis:view',
+  },
+  {
+    name: 'topems_doc',
+    entry: getRemoteEntry('topems_doc', 'http://localhost:3019/remoteEntry.js'),
+    displayName: '文档管理',
+    icon: 'FileText',
+    routePrefix: '/doc',
+    isCore: false,
+    preload: 'lazy',
+    permission: 'doc:view',
+  },
 ];
 
 /**
@@ -149,7 +260,7 @@ export function getEnabledModules(userPermissions: string[]): RemoteModuleConfig
  * 按预加载策略分组
  */
 export function getModulesByPreloadStrategy(
-  strategy: RemoteModuleConfig['preload'],
+  strategy: RemoteModuleConfig['preload']
 ): RemoteModuleConfig[] {
   return REMOTE_MODULES.filter((m) => m.preload === strategy);
 }

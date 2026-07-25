@@ -15,13 +15,10 @@ import {
   Target,
 } from 'lucide-react';
 import { DashboardTemplate } from '@/components/templates';
-import type { StatCard, ChartCard, QuickAction, RecentItem } from '@/components/templates';
-import { PageContainer } from '@/components/common/PageContainerV2';
-import { BarChartComponent } from '@/components/charts';
-import { LineChartComponent } from '@/components/charts';
-import { PieChartComponent } from '@/components/charts';
-
+import type { StatCardConfig, ChartConfig } from '@/components/templates/DashboardTemplate';
+import { PageContainer } from '@/components/common/PageContainer';
 import { useTranslation } from 'react-i18next';
+
 const ct = designTokens.colors;
 
 const FinanceDashboardPage: React.FC = () => {
@@ -40,121 +37,142 @@ const FinanceDashboardPage: React.FC = () => {
     staleTime: 5 * 60 * 1000,
   });
 
-  const stats: StatCard[] = useMemo(() => {
+  const statCards = useMemo<StatCardConfig[]>(() => {
     if (!statsData) return [];
     return [
       {
-        id: 'voucher-total',
         title: t('finance.finance_dashboard_page.text_551f4c'),
         value: statsData.total_vouchers.toLocaleString(),
         icon: <FileText size={24} />,
-        change: 0,
-        changeLabel: t('finance.finance_dashboard_page.last_month'),
-        color: 'primary',
+        color: 'primary' as const,
+        trend: { value: 0, label: t('finance.finance_dashboard_page.last_month') },
+        loading,
       },
       {
-        id: 'voucher-draft',
         title: t('finance.finance_dashboard_page.text_5c5e91'),
         value: statsData.draft_vouchers.toLocaleString(),
         icon: <FileText size={24} />,
-        change: 0,
-        changeLabel: t('finance.finance_dashboard_page.last_month'),
-        color: 'info',
+        color: 'info' as const,
+        trend: { value: 0, label: t('finance.finance_dashboard_page.last_month') },
+        loading,
       },
       {
-        id: 'receivable',
         title: t('finance.finance_dashboard_page.text_c29613'),
         value: `¥${statsData.total_receivables.toLocaleString()}`,
         icon: <TrendingUp size={24} />,
-        change: 0,
-        changeLabel: t('finance.finance_dashboard_page.last_month'),
-        color: 'success',
+        color: 'success' as const,
+        trend: { value: 0, label: t('finance.finance_dashboard_page.last_month') },
+        loading,
       },
       {
-        id: 'payable',
         title: t('finance.finance_dashboard_page.text_55c9eb'),
         value: `¥${statsData.total_payables.toLocaleString()}`,
         icon: <TrendingDown size={24} />,
-        change: 0,
-        changeLabel: t('finance.finance_dashboard_page.last_month'),
-        color: 'warning',
+        color: 'warning' as const,
+        trend: { value: 0, label: t('finance.finance_dashboard_page.last_month') },
+        loading,
       },
       {
-        id: 'pending-approvals',
         title: t('finance.finance_dashboard_page.text_b0bf01'),
         value: statsData.pending_approvals.toLocaleString(),
         icon: <DollarSign size={24} />,
-        change: 0,
-        changeLabel: t('finance.finance_dashboard_page.last_month'),
-        color: 'success',
+        color: 'success' as const,
+        trend: { value: 0, label: t('finance.finance_dashboard_page.last_month') },
+        loading,
       },
       {
-        id: 'pending-payments',
         title: t('finance.finance_dashboard_page.text_9246fe'),
         value: statsData.pending_payments.toLocaleString(),
         icon: <BarChart3 size={24} />,
-        change: 0,
-        changeLabel: t('finance.finance_dashboard_page.last_month'),
-        color: 'primary',
+        color: 'primary' as const,
+        trend: { value: 0, label: t('finance.finance_dashboard_page.last_month') },
+        loading,
       },
     ];
-  }, [statsData]);
+  }, [statsData, loading, t]);
 
-  const charts: ChartCard[] = useMemo(() => {
+  const chartConfigs = useMemo<ChartConfig[]>(() => {
     if (!statsData) return [];
-    const voucherTrendData = [
-      { name: t('finance.finance_dashboard_page.text_22b433'), value: statsData.draft_vouchers },
-      { name: t('finance.finance_dashboard_page.submit'), value: statsData.submitted_vouchers },
-      { name: t('finance.finance_dashboard_page.text_618acb'), value: statsData.approved_vouchers },
-      { name: t('finance.finance_dashboard_page.text_aaea67'), value: statsData.posted_vouchers },
-    ];
-    const receivablePayableData = [
-      { name: t('finance.finance_dashboard_page.text_fccab9'), value: statsData.total_receivables },
-      { name: t('finance.finance_dashboard_page.text_19a5b0'), value: statsData.overdue_receivables },
-      { name: t('finance.finance_dashboard_page.text_855bfd'), value: statsData.total_payables },
-      { name: t('finance.finance_dashboard_page.text_4f9d0d'), value: statsData.overdue_payables },
-    ];
-    const expenseCategoryData = [
-      { name: t('finance.finance_dashboard_page.text_b0bf01'), value: statsData.pending_approvals },
-      { name: t('finance.finance_dashboard_page.text_9246fe'), value: statsData.pending_payments },
-      { name: t('finance.finance_dashboard_page.text_94171c'), value: statsData.total_vouchers },
-      { name: t('finance.finance_dashboard_page.text_474cd0'), value: statsData.total_payments },
-    ];
     return [
       {
-        id: 'voucher-trend',
         title: t('finance.finance_dashboard_page.status'),
-        chart: (
-          <BarChartComponent
-            data={voucherTrendData}
-            xKey='name'
-            yKey='value'
-          />
-        ),
+        type: 'bar' as const,
+        data: [
+          {
+            name: t('finance.finance_dashboard_page.text_22b433'),
+            value: statsData.draft_vouchers,
+          },
+          { name: t('finance.finance_dashboard_page.submit'), value: statsData.submitted_vouchers },
+          {
+            name: t('finance.finance_dashboard_page.text_618acb'),
+            value: statsData.approved_vouchers,
+          },
+          {
+            name: t('finance.finance_dashboard_page.text_aaea67'),
+            value: statsData.posted_vouchers,
+          },
+        ],
+        xField: 'name',
+        yField: 'value',
         height: 300,
+        loading,
       },
       {
-        id: 'receivable-payable',
         title: t('finance.finance_dashboard_page.text_b1b956'),
-        chart: (
-          <LineChartComponent
-            data={receivablePayableData}
-            xKey='name'
-            yKey='value'
-          />
-        ),
+        type: 'line' as const,
+        data: [
+          {
+            name: t('finance.finance_dashboard_page.text_fccab9'),
+            value: statsData.total_receivables,
+          },
+          {
+            name: t('finance.finance_dashboard_page.text_19a5b0'),
+            value: statsData.overdue_receivables,
+          },
+          {
+            name: t('finance.finance_dashboard_page.text_855bfd'),
+            value: statsData.total_payables,
+          },
+          {
+            name: t('finance.finance_dashboard_page.text_4f9d0d'),
+            value: statsData.overdue_payables,
+          },
+        ],
+        xField: 'name',
+        yField: 'value',
         height: 300,
+        loading,
       },
       {
-        id: 'expense-category',
         title: t('finance.finance_dashboard_page.text_039481'),
-        chart: <PieChartComponent data={expenseCategoryData} />,
+        type: 'pie' as const,
+        data: [
+          {
+            name: t('finance.finance_dashboard_page.text_b0bf01'),
+            value: statsData.pending_approvals,
+          },
+          {
+            name: t('finance.finance_dashboard_page.text_9246fe'),
+            value: statsData.pending_payments,
+          },
+          {
+            name: t('finance.finance_dashboard_page.text_94171c'),
+            value: statsData.total_vouchers,
+          },
+          {
+            name: t('finance.finance_dashboard_page.text_474cd0'),
+            value: statsData.total_payments,
+          },
+        ],
+        xField: 'name',
+        yField: 'value',
         height: 300,
+        loading,
       },
     ];
-  }, [statsData]);
+  }, [statsData, loading, t]);
 
-  const quickActions: QuickAction[] = useMemo(
+  const quickActions = useMemo(
     () => [
       {
         id: 'voucher-manage',
@@ -202,7 +220,7 @@ const FinanceDashboardPage: React.FC = () => {
     [navigate]
   );
 
-  const recentItems: RecentItem[] = [];
+  const recentItems: Array<{ id: string; title: string }> = [];
 
   return (
     <PageContainer
@@ -214,11 +232,11 @@ const FinanceDashboardPage: React.FC = () => {
     >
       <DashboardTemplate
         title=''
-        stats={stats}
-        charts={charts}
-        recentItems={recentItems}
+        statCards={statCards}
+        charts={chartConfigs as any}
+        recentItems={recentItems as any}
         recentTitle={t('finance.finance_dashboard_page.text_b66b2e')}
-        quickActions={quickActions}
+        quickActions={quickActions as any}
         quickActionsTitle={t('finance.finance_dashboard_page.action')}
         loading={loading}
       />

@@ -3,6 +3,15 @@
   "version": "5.14.0",
   "type": "module",
   "private": true,
+  "sideEffects": [
+    "*.css",
+    "*.scss",
+    "*.less",
+    "src/index.css",
+    "src/main.tsx",
+    "src/sw.ts",
+    "src/i18n/**/*"
+  ],
   "scripts": {
     "dev": "vite",
     "build": "tsc && vite build",
@@ -30,7 +39,9 @@
     "perf": "lighthouse --view http://localhost:8063/ --output=html --output-path=./reports/lighthouse-report.html",
     "perf:ci": "lhci autorun",
     "perf:mobile": "lighthouse http://localhost:3000/ --preset=desktop --output=html --output-path=./reports/lighthouse-mobile.html --view",
-    "perf:analyze": "webpack-bundle-analyzer ./dist/stats.json"
+    "perf:analyze": "webpack-bundle-analyzer ./dist/stats.json",
+    "gen:api": "node ../../scripts/openapi/gen-types.mjs",
+    "openapi:gen": "bash ../../scripts/openapi/generate.sh --with-types"
   },
   "dependencies": {
     "@amap/amap-jsapi-loader": "^1.0.1",

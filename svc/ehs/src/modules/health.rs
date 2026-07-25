@@ -51,7 +51,7 @@ pub async fn list_records(
     Extension(claims): Extension<Claims>,
     headers: HeaderMap,
 ) -> Json<ApiResponse<Vec<HealthRecord>>> {
-    let tenant_id = get_tenant_id(&claims, &headers);
+    let _tenant_id = get_tenant_id(&claims, &headers);
     tracing::info!("Listing health records");
     Json(ApiResponse::success(
         Vec::<HealthRecord>::new(),

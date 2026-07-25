@@ -1,0 +1,29 @@
+[Unit]
+Description=TOPEMS RD Service
+Documentation=https://github.com/topems/topems
+After=network.target postgresql.service redis.service
+Wants=postgresql.service redis.service
+
+[Service]
+Type=simple
+User=topems
+Group=topems
+WorkingDirectory=/opt/topems/svc/rd
+ExecStart=/opt/topems/bin/rd-service
+Restart=on-failure
+RestartSec=5
+
+EnvironmentFile=/opt/topems/config/rd.env
+
+StandardOutput=journal
+StandardError=journal
+SyslogIdentifier=topems-rd
+
+NoNewPrivileges=true
+PrivateTmp=true
+ReadWritePaths=/opt/topems/logs
+
+LimitNOFILE=65536
+
+[Install]
+WantedBy=multi-user.target

@@ -1,10 +1,8 @@
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useEffect } from 'react';
 import {
   Box,
   Paper,
   Typography,
-  IconButton,
-  Chip,
   Dialog,
   DialogTitle,
   DialogContent,
@@ -12,81 +10,56 @@ import {
   Avatar,
   Stack,
   Button,
+  IconButton,
 } from '@mui/material';
 import { PageContainer } from '@/components/common';
-import { ClipboardList, ChevronRight, FileText, Play, Clock, CheckCircle, X } from 'lucide-react';
+import { ClipboardList, FileText, Play, CheckCircle, X } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
-import { limsApi, type InspectionProcess, type LimsStatistics, type ListParams } from '@/api/lims';
-import { useNotificationStore } from '@/store';
-import { useUrlListState } from '@/hooks';
-import {
-  ListPageTemplate,
-  type ColumnDef,
-  type RowAction,
-  type FilterConfig,
-} from '@/components/templates';
+import { limsApi, type InspectionProcess, type LimsStatistics } from '@/api/lims';
+import { useQuery, useQueryClient } from '@tanstack/react-query';
+
+import CrudPage from '@/components/templates/CrudPage';
+import type { CrudApiAdapter } from '@/components/templates/CrudPage';
+import { processSchema } from '@/schemas/lims';
 import { MetricCard } from '@/components/bi/MetricCard';
-import { apiLogger } from '@/utils/logger';
 import { designTokens } from '@/theme/tokens';
 import { LIMS_PATHS } from '@/modules/lims/config';
 import { DASHBOARD_PATHS } from '@/routes/dashboard';
-import { useQuery, useQueryClient } from '@tanstack/react-query';
 
 const ct = designTokens.colors;
 
-const STATUS_COLOR_MAP: Record<string, 'success' | 'warning' | 'default'> = {
-  active: 'success',
-  inactive: 'warning',
-  draft: 'default',
+const processAdapter: CrudApiAdapter<InspectionProcess> = {
+  list: async (params) => {
+    const response = await limsApi.processes.list({
+      page: params?.page,
+      pagesize: params?.pageSize,
+      search: params?.search,
+      status: params?.status as string | undefined,
+    });
+    if (!response.success) {
+      throw new Error('加载检验流程失败');
+    }
+    const data = response.data as unknown as Record<string, unknown>;
+    const items =
+      (data.items as InspectionProcess[]) || (data.processes as InspectionProcess[]) || [];
+    const total = (data.total as number) || items.length;
+    return { data: items, total };
+  },
+  create: async () => ({}) as InspectionProcess,
+  update: async () => ({}) as InspectionProcess,
+  delete: async () => {},
 };
-
-const STATUS_LABEL_MAP: Record<string, string> = {
-  active: '启用',
-  inactive: '禁用',
-  draft: '草稿',
-};
-
-const STATUS_OPTIONS = [
-  { value: '', label: '全部状态' },
-  { value: 'active', label: '启用' },
-  { value: 'inactive', label: '禁用' },
-  { value: 'draft', label: '草稿' },
-];
 
 const LimsProcessPage: React.FC = () => {
   const navigate = useNavigate();
-  const addNotification = useNotificationStore((state) => state.addNotification);
-  const listState = useUrlListState<{ status: string }>({
-    defaultSearch: '',
-    defaultPageSize: 10,
-    defaultFilters: { status: '' },
-    baseIndex: 0,
-    historyMode: 'replace',
-    defaultSortBy: 'created_at',
-    defaultSortOrder: 'desc',
-  });
-  const {
-    searchQuery,
-    debouncedSearch,
-    currentPage,
-    pageSize,
-    filters: urlFilters,
-    setSearchQuery,
-    setFilter,
-    setCurrentPage,
-    setPageSize,
-  } = listState;
-  const filterStatus = urlFilters.status;
+  const queryClient = useQueryClient();
   const [serviceStatuses, setServiceStatuses] = useState<{
     [key: string]: boolean;
   }>({
     lims: false,
   });
-
   const [showTaskModal, setShowTaskModal] = useState(false);
   const [selectedProcess, setSelectedProcess] = useState<InspectionProcess | null>(null);
-
-  const queryClient = useQueryClient();
 
   const isServiceUp = (serviceName: string): boolean => {
     return serviceStatuses[serviceName] || false;
@@ -108,7 +81,7 @@ const LimsProcessPage: React.FC = () => {
     }
   };
 
-  React.useEffect(() => {
+  useEffect(() => {
     const checkAllServices = () => {
       checkServiceStatus('lims', (up) => setServiceStatuses((prev) => ({ ...prev, lims: up })));
     };
@@ -150,193 +123,65 @@ const LimsProcessPage: React.FC = () => {
     disabled_instruments: 0,
   };
 
-  const processesQuery = useQuery<{ items: InspectionProcess[]; total: number }>({
-    queryKey: ['lims-processes', currentPage, pageSize, debouncedSearch, filterStatus],
-    queryFn: async (): Promise<{ items: InspectionProcess[]; total: number }> => {
-      const params: ListParams = {
-        page: currentPage + 1,
-        pagesize: pageSize,
-      };
-      if (debouncedSearch) {
-        params.search = debouncedSearch;
-      }
-      if (filterStatus) {
-        params.status = filterStatus;
-      }
-
-      const response = await limsApi.processes.list(params);
-      if (response.success && response.data) {
-        const data = response.data as unknown as Record<string, unknown>;
-        const items = (data.items as InspectionProcess[]) || (data.processes as InspectionProcess[]) || [];
-        const total = (data.total as number) || items.length;
-        return { items, total };
-      }
-      return { items: [], total: 0 };
-    },
-    enabled: isServiceUp('lims'),
-    staleTime: 5 * 60 * 1000,
-  });
-
-  const processes = processesQuery.data?.items || [];
-  const totalProcesses = processesQuery.data?.total || 0;
-  const loading = processesQuery.isLoading || statisticsQuery.isLoading;
-  const error = processesQuery.error ? '加载数据失败' : null;
-
   const openTaskModal = (process?: InspectionProcess) => {
     setSelectedProcess(process || null);
     setShowTaskModal(true);
   };
 
-  const handlePageChange = (page: number) => {
-    setCurrentPage(page);
-  };
+  const customRowActions = [
+    {
+      label: '使用此流程',
+      icon: <Play sx={{ width: 16, height: 16 }} />,
+      color: 'secondary' as const,
+      onClick: (row: Record<string, unknown>) => openTaskModal(row as unknown as InspectionProcess),
+    },
+  ];
 
-  const handlePageSizeChange = (size: number) => {
-    setPageSize(size);
-    setCurrentPage(0);
-  };
-
-  const handleFilterChange = (filters: Record<string, unknown>) => {
-    if (filters.status !== undefined) {
-      setFilter('status', String(filters.status || ''));
-    }
-  };
-
-  const getStatusBadge = (status: string) => (
-    <Chip
-      size='small'
-      color={STATUS_COLOR_MAP[status] || 'default'}
-      label={STATUS_LABEL_MAP[status] || status}
-      variant='outlined'
-    />
-  );
-
-  const filters = useMemo<FilterConfig[]>(
-    () => [
-      {
-        id: 'status',
-        label: '状态',
-        type: 'select',
-        options: STATUS_OPTIONS,
-      },
-    ],
-    []
-  );
-
-  const columns = useMemo<ColumnDef<InspectionProcess>[]>(
-    () => [
-      {
-        id: 'name',
-        label: '流程名称',
-        width: 200,
-        sortable: true,
-        render: (row) => (
-          <Typography sx={{ fontWeight: 600, color: 'grey.900' }}>{row.name}</Typography>
-        ),
-      },
-      {
-        id: 'description',
-        label: '描述',
-        minWidth: 250,
-        render: (row) => (
-          <Typography sx={{ fontSize: '0.875rem', color: 'grey.600' }}>
-            {row.description || '-'}
-          </Typography>
-        ),
-      },
-      {
-        id: 'steps',
-        label: '步骤数',
-        width: 100,
-        align: 'center',
-        sortable: true,
-        render: (row) => (
-          <Typography sx={{ fontSize: '0.875rem', fontWeight: 500, color: 'grey.900' }}>
-            {row.steps?.length || 0}
-          </Typography>
-        ),
-      },
-      {
-        id: 'status',
-        label: '状态',
-        width: 100,
-        render: (row) => getStatusBadge(row.status),
-      },
-      {
-        id: 'created_at',
-        label: '创建时间',
-        width: 130,
-        sortable: true,
-        render: (row) => (
-          <Typography sx={{ fontSize: '0.875rem', color: 'grey.600' }}>
-            {row.created_at?.substring(0, 10) || '-'}
-          </Typography>
-        ),
-      },
-    ],
-    []
-  );
-
-  const rowActions = useMemo<RowAction<InspectionProcess>[]>(
-    () => [
-      {
-        label: '使用此流程',
-        icon: <Play sx={{ width: 16, height: 16 }} />,
-        color: 'secondary',
-        onClick: (row) => openTaskModal(row),
-      },
-    ],
-    []
-  );
-
-  const headerContent = useMemo(
-    () => (
-      <Box sx={{ mb: 4 }}>
-        <Box
-          sx={{
-            display: 'grid',
-            gridTemplateColumns: { xs: '1fr', sm: 'repeat(2, 1fr)', lg: 'repeat(4, 1fr)' },
-            gap: 2,
-            mb: 4,
-          }}
-        >
-          <MetricCard
-            title='样品总数'
-            value={stats.total_samples}
-            icon={<ClipboardList size={24} />}
-            gradient={[ct.secondary.main, ct.secondary.dark]}
-            subtitle={`待测试: ${stats.pending_samples}`}
-            trend={stats.pending_samples > 0 ? 'up' : 'neutral'}
-          />
-          <MetricCard
-            title='检验任务'
-            value={stats.total_tasks}
-            icon={<ClipboardList size={24} />}
-            gradient={[ct.secondary[400], ct.secondary[600]]}
-            subtitle={`进行中: ${stats.in_progress_tasks}`}
-            trend={stats.in_progress_tasks > 0 ? 'up' : 'neutral'}
-          />
-          <MetricCard
-            title='检验流程'
-            value={stats.total_processes}
-            icon={<FileText size={24} />}
-            gradient={[ct.warning.main, ct.warning.dark]}
-            trend='neutral'
-          />
-          <MetricCard
-            title='已完成样品'
-            value={stats.completed_samples}
-            icon={<CheckCircle size={24} />}
-            gradient={[ct.success.main, ct.success.dark]}
-            trend='up'
-          />
-        </Box>
+  const headerContent = () => (
+    <Box sx={{ mb: 4 }}>
+      <Box
+        sx={{
+          display: 'grid',
+          gridTemplateColumns: { xs: '1fr', sm: 'repeat(2, 1fr)', lg: 'repeat(4, 1fr)' },
+          gap: 2,
+          mb: 4,
+        }}
+      >
+        <MetricCard
+          title='样品总数'
+          value={stats.total_samples}
+          icon={<ClipboardList size={24} />}
+          gradient={[ct.secondary.main, ct.secondary.dark]}
+          subtitle={`待测试: ${stats.pending_samples}`}
+          trend={stats.pending_samples > 0 ? 'up' : 'neutral'}
+        />
+        <MetricCard
+          title='检验任务'
+          value={stats.total_tasks}
+          icon={<ClipboardList size={24} />}
+          gradient={[ct.secondary[400], ct.secondary[600]]}
+          subtitle={`进行中: ${stats.in_progress_tasks}`}
+          trend={stats.in_progress_tasks > 0 ? 'up' : 'neutral'}
+        />
+        <MetricCard
+          title='检验流程'
+          value={stats.total_processes}
+          icon={<FileText size={24} />}
+          gradient={[ct.warning.main, ct.warning.dark]}
+          trend='neutral'
+        />
+        <MetricCard
+          title='已完成样品'
+          value={stats.completed_samples}
+          icon={<CheckCircle size={24} />}
+          gradient={[ct.success.main, ct.success.dark]}
+          trend='up'
+        />
       </Box>
-    ),
-    [stats]
+    </Box>
   );
 
-  if (!isServiceUp('lims') && !loading) {
+  if (!isServiceUp('lims') && !statisticsQuery.isLoading) {
     return (
       <Box
         sx={{
@@ -403,52 +248,12 @@ const LimsProcessPage: React.FC = () => {
         pageGradient: `linear-gradient(135deg, ${ct.teal[400]} 0%, ${ct.teal[600]} 100%)`,
       }}
     >
-      <ListPageTemplate
-        title=''
-        subtitle=''
-        backButton={{
-          onClick: () => navigate(DASHBOARD_PATHS.dashboard),
-        }}
-        columns={columns}
-        data={processes}
-        loading={loading}
-        error={error || undefined}
-        getRowId={(row) => row.id}
-        sortable
-        defaultSortBy='created_at'
-        defaultSortOrder='desc'
-        searchable
-        searchPlaceholder='搜索检验流程名称...'
-        searchValue={searchQuery}
-        onSearch={setSearchQuery}
-        filters={filters}
-        filtersValue={{ status: filterStatus }}
-        onFilterChange={handleFilterChange}
-        pagination={{
-          page: currentPage,
-          pageSize,
-          total: totalProcesses,
-          onPageChange: handlePageChange,
-          onPageSizeChange: handlePageSizeChange,
-        }}
-        rowActions={rowActions}
-        onRefresh={() => {
-          queryClient.invalidateQueries({ queryKey: ['lims-processes'] });
-          queryClient.invalidateQueries({ queryKey: ['lims-statistics'] });
-        }}
+      <CrudPage
+        schema={processSchema}
+        apiAdapter={processAdapter}
+        breadcrumbs={[{ label: 'LIMS' }, { label: '检验流程' }]}
         headerContent={headerContent}
-        actions={[
-          {
-            label: '新建任务',
-            icon: <Play sx={{ width: 16, height: 16 }} />,
-            onClick: () => openTaskModal(),
-            variant: 'contained',
-          },
-        ]}
-        showRowNumber
-        columnConfigurable
-        persistColumnConfig
-        columnConfigStorageKey='lims-processes-columns'
+        customRowActions={customRowActions}
       />
 
       <Dialog

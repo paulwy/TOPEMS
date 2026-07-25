@@ -28,6 +28,13 @@ const SERVICES = [
   'scm',
   'srm',
   'wms',
+  // V63.3: 新增外迁服务（2026-07-25）
+  'billing',
+  'ticket',
+  'feedback',
+  'communication',
+  'master-data',
+  'search',
 ] as const;
 
 async function probeService(

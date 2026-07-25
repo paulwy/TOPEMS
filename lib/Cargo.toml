@@ -6,12 +6,69 @@ authors.workspace = true
 description = "Shared library for TOPEMS microservices"
 
 [features]
-pgvector = []
+default = ["full"]
+full = [
+    "database",
+    "auth",
+    "service-client",
+    "event",
+    "observability",
+    "ai",
+    "cache",
+    "business-utils",
+    "infra",
+    "grpc",
+]
+
+# 核心基础模块（始终启用）
+# - error, response, validation, config, health, id, api_version, api, api_security
+# - cors, layers, logging, feature_flag, hrm, crud, metrics
+
+# 数据库相关
+database = []
+
+# 认证与权限
+auth = ["database"]
+
+# 服务客户端
+service-client = []
+
+# 事件驱动
+event = []
+
+# 可观测性
+observability = []
+
+# AI 相关
+ai = ["embedding", "vector-store", "ai-client", "ollama-client"]
+embedding = ["database"]
+vector-store = ["embedding"]
+ai-client = []
+ollama-client = ["ai-client"]
+
+# 缓存
+cache = []
+
+# 业务工具
+business-utils = ["auth", "database"]
+
+# 基础设施
+infra = []
+
+pgvector = ["vector-store"]
 # V24.0 模块 C: gRPC 微服务基础特性开关
 # 启用后激活 tonic/prost 依赖与 grpc 模块；服务可基于此构建 gRPC server/client
-grpc = ["dep:tonic", "dep:prost"]
+grpc = ["topems-shared-core/grpc"]
 
 [dependencies]
+topems-shared-core = { path = "shared-core" }
+topems-shared-db = { path = "shared-db" }
+topems-shared-auth = { path = "shared-auth" }
+topems-shared-event = { path = "shared-event" }
+topems-shared-service-client = { path = "shared-service-client" }
+topems-shared-ai = { path = "shared-ai" }
+topems-shared-observability = { path = "shared-observability" }
+topems-shared-bootstrap = { path = "shared-bootstrap" }
 dotenv.workspace = true
 envy = "0.4"
 serde.workspace = true
@@ -41,6 +98,7 @@ redis = { version = "0.24", features = ["tokio-comp", "connection-manager"] }
 regex.workspace = true
 url = "2.5"
 urlencoding = "2.1"
+serde_urlencoded = "0.7"
 futures-util = "0.3"
 futures = "0.3"
 async-stream = "0.3"
@@ -48,7 +106,7 @@ futures-lite = "2.3"
 parking_lot = "0.12"
 dashmap.workspace = true
 amqprs = { version = "1.1.0-rc.2", features = ["tokio-rustls"] }
-lapin = { version = "2.3", features = ["rustls"] }
+lapin = { version = "4.10", features = ["rustls"] }
 etcd-client = { version = "0.19", features = ["tls"] }
 event-listener = "2.5"
 flate2 = "1.0"
@@ -65,7 +123,9 @@ opentelemetry-stdout = { version = "0.32", features = ["trace"] }
 opentelemetry-semantic-conventions = "0.32"
 tracing-opentelemetry = "0.33"
 prometheus = "0.13"
+axum-prometheus.workspace = true
 tracing-appender = "0.2"
+utoipa.workspace = true
 
 # gRPC 微服务基础（V24.0 模块 C）
 # tonic 工作区已锁定 0.14，与 axum 0.8 兼容

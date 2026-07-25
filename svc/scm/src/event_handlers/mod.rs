@@ -1,8 +1,9 @@
 use chrono::Utc;
 use sqlx::PgPool;
 use topems_shared::event::{
-    Event, EventResult, EventSubscriber, EventType, PurchaseOrderApprovedPayload,
-    PurchaseOrderCreatedPayload, StockInboundPayload, StockOutboundPayload,
+    Event, EventResult, EventSubscriber, EventType, MasterDataAction, MasterDataDomain,
+    MasterDataEvent, PurchaseOrderApprovedPayload, PurchaseOrderCreatedPayload,
+    StockInboundPayload, StockOutboundPayload,
 };
 
 type HandlerResult = std::result::Result<(), String>;
@@ -22,6 +23,8 @@ impl ScmEventHandlers {
 
         let h1 = self.clone();
         let h2 = self.clone();
+        let h3 = self.clone();
+        let h4 = self.clone();
 
         Ok(subscriber
             .subscribe_handler(
@@ -40,7 +43,23 @@ impl ScmEventHandlers {
                     let h = h2.clone();
                     Box::pin(async move { h.handle_stock_change(event).await })
                 },
-            ))
+            )
+            .subscribe_master_data(vec![MasterDataDomain::Supplier], move |event| {
+                let h = h3.clone();
+                Box::pin(async move {
+                    if let Err(e) = h.handle_master_data_supplier_changed(event).await {
+                        tracing::error!("[scm] handle_master_data_supplier_changed 失败: {}", e);
+                    }
+                })
+            })
+            .subscribe_master_data(vec![MasterDataDomain::Material], move |event| {
+                let h = h4.clone();
+                Box::pin(async move {
+                    if let Err(e) = h.handle_master_data_material_changed(event).await {
+                        tracing::error!("[scm] handle_master_data_material_changed 失败: {}", e);
+                    }
+                })
+            }))
     }
 
     async fn handle_purchase_order(&self, event: Event) -> HandlerResult {
@@ -206,13 +225,139 @@ impl ScmEventHandlers {
 
         Ok(())
     }
+
+    /// MDM 供应商变更事件处理
+    ///
+    /// 订阅 CRM/ERP 供应商变更事件，同步更新 SCM 中的供应商相关记录
+    async fn handle_master_data_supplier_changed(
+        &self,
+        event: MasterDataEvent,
+    ) -> HandlerResult {
+        tracing::info!(
+            "[scm-mdm] 供应商主数据变更事件 - domain={:?}, action={:?}, master_data_id={}, tenant_id={}",
+            event.domain,
+            event.action,
+            event.master_data_id,
+            event.tenant_id
+        );
+
+        let supplier_name = event
+            .payload
+            .get("name")
+            .and_then(|v| v.as_str())
+            .unwrap_or("");
+
+        let status = match event.action {
+            MasterDataAction::Deleted => "deleted",
+            MasterDataAction::Deactivated => "inactive",
+            _ => "active",
+        };
+
+        self.upsert_local_master_data_ref(&event, "supplier", supplier_name, status)
+            .await?;
+
+        Ok(())
+    }
+
+    /// MDM 物料变更事件处理
+    ///
+    /// 订阅 PDM 物料变更事件，同步更新 SCM 中的物料相关记录
+    async fn handle_master_data_material_changed(
+        &self,
+        event: MasterDataEvent,
+    ) -> HandlerResult {
+        tracing::info!(
+            "[scm-mdm] 物料主数据变更事件 - domain={:?}, action={:?}, master_data_id={}, tenant_id={}",
+            event.domain,
+            event.action,
+            event.master_data_id,
+            event.tenant_id
+        );
+
+        let material_name = event
+            .payload
+            .get("name")
+            .and_then(|v| v.as_str())
+            .unwrap_or("");
+
+        let status = match event.action {
+            MasterDataAction::Deleted => "deleted",
+            MasterDataAction::Deactivated => "inactive",
+            _ => "active",
+        };
+
+        self.upsert_local_master_data_ref(&event, "material", material_name, status)
+            .await?;
+
+        Ok(())
+    }
+
+    /// AC-5: 将主数据变更事件持久化到本地 ref 表
+    ///
+    /// 通过 master_data_id（而非业务编码）建立跨服务关联。
+    /// 消费端查询时使用 master_data_id 定位本地业务记录。
+    async fn upsert_local_master_data_ref(
+        &self,
+        event: &MasterDataEvent,
+        local_entity_type: &str,
+        name: &str,
+        status: &str,
+    ) -> HandlerResult {
+        let domain_str = format!("{:?}", event.domain).to_lowercase();
+
+        let result = sqlx::query(
+            r#"INSERT INTO scm_master_data_refs
+               (master_data_id, tenant_id, domain, code, name, status, source_service,
+                local_entity_type, payload_snapshot, last_synced_at, created_at, updated_at)
+               VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, NOW(), NOW(), NOW())
+               ON CONFLICT (master_data_id) DO UPDATE
+               SET name = EXCLUDED.name,
+                   status = EXCLUDED.status,
+                   code = EXCLUDED.code,
+                   payload_snapshot = EXCLUDED.payload_snapshot,
+                   last_synced_at = NOW(),
+                   updated_at = NOW()"#,
+        )
+        .bind(&event.master_data_id)
+        .bind(event.tenant_id)
+        .bind(&domain_str)
+        .bind(&event.code)
+        .bind(name)
+        .bind(status)
+        .bind(&event.source_service)
+        .bind(local_entity_type)
+        .bind(&event.payload)
+        .execute(&self.db)
+        .await;
+
+        match result {
+            Ok(_) => {
+                tracing::info!(
+                    "[scm-mdm] 本地 ref 已同步 - master_data_id={}, domain={}, action={:?}, local_entity_type={}",
+                    event.master_data_id,
+                    domain_str,
+                    event.action,
+                    local_entity_type
+                );
+            }
+            Err(e) => {
+                tracing::warn!(
+                    "[scm-mdm] 本地 ref 同步失败（graceful fallback）- master_data_id={}: {}",
+                    event.master_data_id,
+                    e
+                );
+            }
+        }
+
+        Ok(())
+    }
 }
 
 pub async fn start_event_subscribers(db: PgPool) -> Result<(), String> {
     let handlers = ScmEventHandlers::new(db);
     let subscriber = handlers.build_subscriber().map_err(|e| e.to_string())?;
 
-    tracing::info!("[scm] 启动事件订阅者，注册 2 类业务事件 handler");
+    tracing::info!("[scm] 启动事件订阅者，注册 2 类业务事件 + 2 个 MDM 主数据事件 handler");
     tokio::spawn(async move {
         if let Err(e) = subscriber.start_listening().await {
             tracing::error!("[scm] 事件订阅者异常退出: {}", e);

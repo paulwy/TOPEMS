@@ -11,8 +11,38 @@ pub fn iam_routes(state: &AppState) -> Router<AppState> {
         .route("/users/{id}", get(modules::iam::user::get_user))
         .route("/users/me", get(modules::iam::user::get_current_user))
         .route(
+            "/users/me/permissions",
+            get(modules::iam::user::get_my_permissions),
+        )
+        .route(
             "/users/me/preferences",
             get(modules::iam::user::get_preferences),
+        )
+        .route(
+            "/users/{user_id}/permissions",
+            get(modules::iam::user::get_user_permissions),
+        )
+        .route(
+            "/users/{user_id}/roles",
+            get(modules::iam::user::get_user_roles),
+        )
+        .route(
+            "/users/{user_id}/effective-permissions",
+            get(modules::iam::user::get_effective_permissions),
+        )
+        .route(
+            "/users/{user_id}/login-history",
+            get(modules::iam::user::get_login_history),
+        )
+        .route("/users/check-email", get(modules::iam::user::check_email_availability))
+        .route(
+            "/users/check-username",
+            get(modules::iam::user::check_username_availability),
+        )
+        .route("/access-logs", get(modules::iam::user::list_access_logs))
+        .route(
+            "/access-logs/user/{user_id}",
+            get(modules::iam::user::get_user_access_logs),
         )
         .route("/roles", get(modules::iam::role::list_roles))
         .route("/roles/{id}", get(modules::iam::role::get_role))
@@ -54,6 +84,23 @@ pub fn iam_routes(state: &AppState) -> Router<AppState> {
     let write = Router::new()
         .route("/users", post(modules::iam::user::create_user))
         .route("/users/{id}", put(modules::iam::user::update_user))
+        .route("/users/me", put(modules::iam::user::update_current_user))
+        .route(
+            "/users/me/permissions/check",
+            post(modules::iam::user::check_my_permission),
+        )
+        .route("/users/me/password", post(modules::iam::user::change_my_password))
+        .route("/users/me/avatar", post(modules::iam::user::update_my_avatar))
+        .route(
+            "/users/me/preferences",
+            put(modules::iam::user::update_preferences),
+        )
+        .route("/users/batch-delete", post(modules::iam::user::batch_delete_users))
+        .route("/users/batch-update", put(modules::iam::user::batch_update_users))
+        .route(
+            "/users/{user_id}/roles/{role_id}",
+            post(modules::iam::user::assign_user_role),
+        )
         .route(
             "/users/{id}/disable",
             post(modules::iam::user::disable_user),
@@ -63,10 +110,7 @@ pub fn iam_routes(state: &AppState) -> Router<AppState> {
             "/users/{id}/password",
             put(modules::iam::user::change_password),
         )
-        .route(
-            "/users/me/preferences",
-            put(modules::iam::user::update_preferences),
-        )
+        .route("/access-logs", post(modules::iam::user::create_access_log))
         .route("/roles", post(modules::iam::role::create_role))
         .route("/roles/{id}", put(modules::iam::role::update_role))
         .route(
@@ -101,6 +145,10 @@ pub fn iam_routes(state: &AppState) -> Router<AppState> {
 
     let delete_routes = Router::new()
         .route("/users/{id}", delete(modules::iam::user::delete_user))
+        .route(
+            "/users/{user_id}/roles/{role_id}",
+            delete(modules::iam::user::remove_user_role),
+        )
         .route("/roles/{id}", delete(modules::iam::role::delete_role))
         .route(
             "/positions/{id}",
@@ -111,5 +159,5 @@ pub fn iam_routes(state: &AppState) -> Router<AppState> {
             require_permission("iam:delete"),
         ));
 
-    read.merge(write).merge(delete_routes)
+    Router::new().nest("/iam", read.merge(write).merge(delete_routes))
 }

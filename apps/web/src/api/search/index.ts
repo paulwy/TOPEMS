@@ -4,10 +4,27 @@ import type { ApiResponse } from '../client';
 export interface SearchResult {
   id: string;
   title: string;
+  summary: string;
   description?: string;
-  module: string;
-  path: string;
-  type_name: string;
+  highlight_title: string;
+  highlight_summary: string;
+  service: string;
+  service_name: string;
+  module?: string;
+  result_type: string;
+  type_name?: string;
+  url: string;
+}
+
+export interface SearchResponse {
+  total: number;
+  by_service: Record<string, number>;
+  results: SearchResult[];
+  duration_ms: number;
+}
+
+export interface SearchSuggestionsResponse {
+  suggestions: string[];
 }
 
 export const searchApi = {
@@ -15,11 +32,18 @@ export const searchApi = {
     query: string,
     limit = 20,
     signal?: AbortSignal
-  ): Promise<ApiResponse<SearchResult[]>> {
-    return apiClient.core.get('/search/v1', {
-      params: { query, limit },
-      signal,
-    });
+  ): Promise<ApiResponse<SearchResponse>> {
+    const searchParams = new URLSearchParams();
+    searchParams.set('q', query);
+    searchParams.set('limit', limit.toString());
+    return apiClient.portal.get(`/search?${searchParams.toString()}`, { signal });
+  },
+
+  async getSuggestions(
+    query: string,
+    signal?: AbortSignal
+  ): Promise<ApiResponse<SearchSuggestionsResponse>> {
+    return apiClient.portal.get(`/search/suggestions?q=${encodeURIComponent(query)}`, { signal });
   },
 };
 

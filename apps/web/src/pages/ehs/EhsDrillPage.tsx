@@ -1,641 +1,351 @@
-import React, { useState, useMemo } from 'react';
-import {
-  Box,
-  Chip,
-  Dialog,
-  DialogTitle,
-  DialogContent,
-  DialogActions,
-  TextField,
-  Typography,
-  Card,
-  CardContent,
-  Button,
-} from '@mui/material';
-import { Plus, Eye, Clock, Users, Calendar } from 'lucide-react';
-import { ListPageTemplate, type ColumnDef, type RowAction } from '@/components/templates';
-import { ehsApi } from '@/api/ehs';
-import { PageContainer } from '@/components/common/PageContainerV2';
-import type { DrillRecord } from '@/api/ehs';
-import { useNotificationStore } from '@/store';
-import { apiLogger } from '@/utils/logger';
-import { designTokens } from '@/theme/tokens';
-import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import React, { useMemo } from 'react';
+import { Box, Card, CardContent, Typography, Chip } from '@mui/material';
+import { Clock, Activity, AlertCircle, Users } from 'lucide-react';
+import { useQuery } from '@tanstack/react-query';
 
-import { useTranslation } from 'react-i18next';
+import CrudPage from '@/components/templates/CrudPage';
+import type { CrudApiAdapter } from '@/components/templates/CrudPage';
+import { createCrudPageAdapter } from '@/schema/crudPageAdapter';
+import { drillSchema } from '@/schemas/ehs';
+import { ehsApi } from '@/api/ehs';
+import type { DrillRecord, CreateDrillRecordRequest } from '@/api/ehs';
+import { PageContainer } from '@/components/common/PageContainer';
+import { designTokens } from '@/theme/tokens';
+
 const ct = designTokens.colors;
 
-const EhsDrillPage: React.FC = () => {
-  const { t } = useTranslation();
-  const [searchTerm, setSearchTerm] = useState('');
-  const [typeFilter, setTypeFilter] = useState('all');
-  const [statusFilter, setStatusFilter] = useState('all');
-  const [showCreateModal, setShowCreateModal] = useState(false);
-  const [showDetailModal, setShowDetailModal] = useState(false);
-  const [selectedDrill, setSelectedDrill] = useState<DrillRecord | null>(null);
-  const [currentPage, setCurrentPage] = useState(0);
-  const pageSize = 10;
-  const [formData, setFormData] = useState({
-    drill_no: '',
-    name: '',
-    drill_type: '',
-    date: '',
-    participants: '',
-    location: '',
-    duration: '',
-    evaluation: '',
-    issues: '',
-  });
+const drillApi = {
+  list: ehsApi.listDrills,
+  create: ehsApi.createDrill,
+  update: ehsApi.updateDrill,
+  delete: ehsApi.deleteDrill,
+};
 
-  const addNotification = useNotificationStore((state) => state.addNotification);
-  const queryClient = useQueryClient();
+const baseAdapter = createCrudPageAdapter<DrillRecord, CreateDrillRecordRequest>(drillApi);
 
-  const translateStatus = (status: string) => {
-    const statusMap: Record<string, string> = {
-      completed: t('ehs.ehs_drill_page.completed'),
-      scheduled: t('ehs.ehs_drill_page.plan'),
-      in_progress: t('ehs.ehs_drill_page.in_progress'),
-    };
-    return statusMap[status] || status;
-  };
-
-  const drillsQuery = useQuery<DrillRecord[]>({
-    queryKey: ['ehs-drills'],
-    queryFn: async () => {
-      const response = await ehsApi.listDrills();
-      if (response.success && response.data) {
-        const data = response.data as unknown as Record<string, unknown>;
-        const drillsData = (
-          Array.isArray(data)
-            ? (data as unknown as Record<string, unknown>[])
-            : (data.data as unknown as Record<string, unknown>[]) || []
-        ) as unknown as Record<string, unknown>[];
-        return drillsData.map((item) => ({
-          ...item,
-          status: translateStatus(item.status as string),
-        })) as DrillRecord[];
-      }
-      return [];
-    },
-    staleTime: 5 * 60 * 1000,
-  });
-
-  const drills = drillsQuery.data || [];
-  const loading = drillsQuery.isLoading;
-
-  const drillDetailQuery = useQuery<DrillRecord | null>({
-    queryKey: ['ehs-drill-detail', selectedDrill?.id],
-    queryFn: async () => {
-      if (!selectedDrill?.id) return null;
-      const response = await ehsApi.getDrill(selectedDrill.id);
-      if (response.success && response.data) {
-        const drillData = response.data as unknown as Record<string, unknown>;
-        return {
-          ...drillData,
-          status: translateStatus(drillData.status as string),
-        } as DrillRecord;
-      }
-      return null;
-    },
-    enabled: !!selectedDrill?.id && showDetailModal,
-    staleTime: 5 * 60 * 1000,
-  });
-
-  const detailLoading = drillDetailQuery.isFetching;
-
-  const createDrillMutation = useMutation({
-    mutationFn: async (data: any) => {
-      return ehsApi.createDrill(data);
-    },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['ehs-drills'] });
-      addNotification({ title: t('ehs.ehs_drill_page.success'), message: t('ehs.ehs_drill_page.create'), type: 'success' });
-      setShowCreateModal(false);
-    },
-    onError: (err) => {
-      addNotification({ title: t('ehs.ehs_drill_page.error'), message: t('ehs.ehs_drill_page.create_1'), type: 'error' });
-      apiLogger.error(t('ehs.ehs_drill_page.create_2'), err);
-    },
-  });
-
-  const getStatusBadge = (status: string) => {
-    const statusMap: Record<string, { bg: string; color: string }> = {
-      已完成: { bg: 'success.lighter', color: 'success.dark' },
-      已计划: { bg: 'primary.100', color: 'primary.main' },
-      进行中: { bg: 'warning.100', color: ct.yellow[600] },
-    };
-    const colors = statusMap[status] || { bg: 'grey.100', color: 'text.secondary' };
-    return (
-      <Chip
-        label={status}
-        size='small'
-        sx={{
-          backgroundColor: colors.bg,
-          color: colors.color,
-          fontWeight: 500,
-        }}
-      />
-    );
-  };
-
-  const filteredDrills = useMemo(() => {
-    return drills.filter((drill) => {
-      const matchesSearch =
-        drill.drill_name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        drill.drill_no.toLowerCase().includes(searchTerm.toLowerCase());
-      const matchesStatus = statusFilter === 'all' || drill.status === statusFilter;
-      return matchesSearch && matchesStatus;
-    });
-  }, [drills, searchTerm, statusFilter]);
-
-  const paginatedDrills = useMemo(() => {
-    const start = currentPage * pageSize;
-    return filteredDrills.slice(start, start + pageSize);
-  }, [filteredDrills, currentPage]);
-
-  const stats = useMemo(
-    () => ({
-      total: drills.length,
-      completed: drills.filter((d) => d.status === t('ehs.ehs_drill_page.completed')).length,
-      scheduled: drills.filter((d) => d.status === t('ehs.ehs_drill_page.plan')).length,
-      inProgress: drills.filter((d) => d.status === t('ehs.ehs_drill_page.in_progress')).length,
-    }),
-    [drills]
-  );
-
-  const handleView = (drill: DrillRecord) => {
-    setSelectedDrill(drill);
-    setShowDetailModal(true);
-  };
-
-  const handleCreate = () => {
-    setFormData({
-      drill_no: '',
-      name: '',
-      drill_type: '',
-      date: '',
-      participants: '',
-      location: '',
-      duration: '',
-      evaluation: '',
-      issues: '',
-    });
-    setShowCreateModal(true);
-  };
-
-  const handleSave = () => {
-    createDrillMutation.mutate({
-      drill_no: formData.drill_no,
-      drill_name: formData.name,
-      drill_date: formData.date || null,
-      participants: formData.participants
+const drillAdapter: CrudApiAdapter<DrillRecord> = {
+  list: baseAdapter.list,
+  create: async (data) => {
+    const transformed = { ...data };
+    if (typeof transformed.participants === 'string') {
+      transformed.participants = (transformed.participants as string)
         .split(',')
         .map((s) => s.trim())
-        .filter((s) => s),
-      location: formData.location || null,
-      duration_hours: parseInt(formData.duration) || 0,
-      summary: formData.evaluation || null,
-      issues_found: formData.issues || null,
-    });
-  };
+        .filter((s) => s);
+    }
+    return baseAdapter.create(transformed);
+  },
+  update: async (id, data) => {
+    const transformed = { ...data };
+    if (typeof transformed.participants === 'string') {
+      transformed.participants = (transformed.participants as string)
+        .split(',')
+        .map((s) => s.trim())
+        .filter((s) => s);
+    }
+    return baseAdapter.update(id, transformed);
+  },
+  delete: baseAdapter.delete,
+};
 
-  const columns: ColumnDef<DrillRecord>[] = [
-    {
-      id: 'drill_no',
-      label: t('ehs.ehs_drill_page.text_855fce'),
-      width: 120,
-      sortable: true,
-    },
-    {
-      id: 'drill_name',
-      label: t('ehs.ehs_drill_page.name'),
-      width: 200,
-      sortable: true,
-      render: (row) => <Typography sx={{ fontWeight: 500 }}>{row.drill_name}</Typography>,
-    },
-    {
-      id: 'drill_date',
-      label: t('ehs.ehs_drill_page.date'),
-      width: 130,
-      sortable: true,
-      render: (row) => row.drill_date || '-',
-    },
-    {
-      id: 'location',
-      label: t('ehs.ehs_drill_page.text_fc1a7d'),
-      width: 150,
-      render: (row) => (
-        <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-          <Calendar style={{ width: 14, height: 14 }} />
-          {row.location || '-'}
-        </Box>
-      ),
-    },
-    {
-      id: 'participants',
-      label: t('ehs.ehs_drill_page.participant'),
-      width: 100,
-      align: 'center',
-      render: (row) => {
-        const count = row.participants;
-        if (Array.isArray(count)) return count.length;
-        return count || '-';
-      },
-    },
-    {
-      id: 'status',
-      label: t('ehs.ehs_drill_page.status'),
-      width: 100,
-      align: 'center',
-      sortable: true,
-      render: (row) => getStatusBadge(row.status),
-    },
-  ];
+const statusColorMap: Record<string, { bg: string; color: string }> = {
+  scheduled: { bg: 'info.lighter', color: 'info.dark' },
+  in_progress: { bg: 'warning.lighter', color: 'warning.dark' },
+  completed: { bg: 'success.lighter', color: 'success.dark' },
+};
 
-  const rowActions: RowAction<DrillRecord>[] = [
-    {
-      label: t('ehs.ehs_drill_page.detail'),
-      icon: <Eye size={16} />,
-      onClick: (row) => handleView(row),
-      color: 'primary',
-    },
-  ];
+const statusLabelMap: Record<string, string> = {
+  scheduled: '已计划',
+  in_progress: '进行中',
+  completed: '已完成',
+};
 
-  const filters = [
-    {
-      id: 'status',
-      label: t('ehs.ehs_drill_page.status'),
-      type: 'select' as const,
-      value: statusFilter,
-      options: [
-        { label: t('ehs.ehs_drill_page.all'), value: 'all' },
-        { label: t('ehs.ehs_drill_page.completed'), value: t('ehs.ehs_drill_page.completed') },
-        { label: t('ehs.ehs_drill_page.plan'), value: t('ehs.ehs_drill_page.plan') },
-        { label: t('ehs.ehs_drill_page.in_progress'), value: t('ehs.ehs_drill_page.in_progress') },
-      ],
-      onChange: (value: unknown) => {
-        setStatusFilter(value as string);
-        setCurrentPage(0);
-      },
-    },
-  ];
+function extractListData(response: unknown): DrillRecord[] {
+  if (!response || typeof response !== 'object') return [];
+  const obj = response as Record<string, unknown>;
+  const data = obj.data;
+  if (!data) return [];
+  if (Array.isArray(data)) return data as DrillRecord[];
+  if (typeof data === 'object') {
+    const d = data as Record<string, unknown>;
+    if (Array.isArray(d.items)) return d.items as DrillRecord[];
+    if (Array.isArray(d.data)) return d.data as DrillRecord[];
+  }
+  return [];
+}
 
-  const headerContent = useMemo(
-    () => (
-      <Box
-        sx={{
-          display: 'grid',
-          gridTemplateColumns: { xs: 'repeat(2, 1fr)', md: 'repeat(4, 1fr)' },
-          gap: 2,
-          mb: 3,
-        }}
-      >
-        <StatCard
-          label={t('ehs.ehs_drill_page.text_f6b2fd')}
-          value={stats.total}
-          icon={<Clock sx={{ width: 20, height: 20, color: 'warning.main' }} />}
-          bgColor='warning.light'
-          iconBgColor='warning.lighter'
-        />
-        <StatCard
-          label={t('ehs.ehs_drill_page.completed')}
-          value={stats.completed}
-          icon={<Clock sx={{ width: 20, height: 20, color: 'success.dark' }} />}
-          bgColor='white'
-          iconBgColor='success.lighter'
-        />
-        <StatCard
-          label={t('ehs.ehs_drill_page.plan')}
-          value={stats.scheduled}
-          icon={<Clock sx={{ width: 20, height: 20, color: 'primary.main' }} />}
-          bgColor='white'
-          iconBgColor='primary.100'
-        />
-        <StatCard
-          label={t('ehs.ehs_drill_page.in_progress')}
-          value={stats.inProgress}
-          icon={<Clock sx={{ width: 20, height: 20, color: ct.yellow[600] }} />}
-          bgColor='white'
-          iconBgColor='warning.100'
-        />
-      </Box>
-    ),
-    [stats]
+const EhsDrillPage: React.FC = () => {
+  const { data: drillsResp } = useQuery({
+    queryKey: ['ehs', 'drills', 'stats'],
+    queryFn: async () => ehsApi.listDrills({ pagesize: 500 }),
+  });
+
+  const stats = useMemo(() => {
+    const drills = extractListData(drillsResp);
+    return {
+      total: drills.length,
+      completed: drills.filter((d) => d.status === 'completed').length,
+      scheduled: drills.filter((d) => d.status === 'scheduled' || d.status === 'in_progress')
+        .length,
+    };
+  }, [drillsResp]);
+
+  const headerContent = () => (
+    <Box
+      sx={{
+        display: 'grid',
+        gridTemplateColumns: { xs: 'repeat(1, 1fr)', md: 'repeat(3, 1fr)' },
+        gap: 2,
+        mb: 3,
+      }}
+    >
+      <Card sx={{ bgcolor: 'warning.light' }}>
+        <CardContent sx={{ p: 2 }}>
+          <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5 }}>
+            <Box
+              sx={{
+                width: 40,
+                height: 40,
+                bgcolor: 'warning.lighter',
+                borderRadius: 3,
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+              }}
+            >
+              <Clock sx={{ width: 20, height: 20, color: 'warning.dark' }} />
+            </Box>
+            <Box>
+              <Typography
+                variant='body2'
+                sx={{ color: 'slate.600', fontSize: '0.875rem' }}
+              >
+                演练总数
+              </Typography>
+              <Typography
+                variant='h5'
+                sx={{ fontWeight: 700, color: 'slate.900' }}
+              >
+                {stats.total}
+              </Typography>
+            </Box>
+          </Box>
+        </CardContent>
+      </Card>
+      <Card>
+        <CardContent sx={{ p: 2 }}>
+          <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5 }}>
+            <Box
+              sx={{
+                width: 40,
+                height: 40,
+                bgcolor: 'success.lighter',
+                borderRadius: 3,
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+              }}
+            >
+              <Activity sx={{ width: 20, height: 20, color: 'success.dark' }} />
+            </Box>
+            <Box>
+              <Typography
+                variant='body2'
+                sx={{ color: 'slate.600', fontSize: '0.875rem' }}
+              >
+                已完成
+              </Typography>
+              <Typography
+                variant='h5'
+                sx={{ fontWeight: 700, color: 'slate.900' }}
+              >
+                {stats.completed}
+              </Typography>
+            </Box>
+          </Box>
+        </CardContent>
+      </Card>
+      <Card>
+        <CardContent sx={{ p: 2 }}>
+          <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5 }}>
+            <Box
+              sx={{
+                width: 40,
+                height: 40,
+                bgcolor: 'info.lighter',
+                borderRadius: 3,
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+              }}
+            >
+              <AlertCircle sx={{ width: 20, height: 20, color: 'info.dark' }} />
+            </Box>
+            <Box>
+              <Typography
+                variant='body2'
+                sx={{ color: 'slate.600', fontSize: '0.875rem' }}
+              >
+                计划/进行中
+              </Typography>
+              <Typography
+                variant='h5'
+                sx={{ fontWeight: 700, color: 'slate.900' }}
+              >
+                {stats.scheduled}
+              </Typography>
+            </Box>
+          </Box>
+        </CardContent>
+      </Card>
+    </Box>
   );
 
-  const headerActions = [
-    {
-      label: t('ehs.ehs_drill_page.add'),
-      icon: <Plus size={16} />,
-      onClick: handleCreate,
-      variant: 'contained' as const,
-      color: 'warning' as const,
-    },
-  ];
+  const detailContent = (row: Record<string, unknown>) => {
+    const drill = row as unknown as DrillRecord;
+    const statusColors = statusColorMap[drill.status] || {
+      bg: 'grey.100',
+      color: 'text.secondary',
+    };
+    const statusLabel = statusLabelMap[drill.status] || drill.status;
+    const participantsText = Array.isArray(drill.participants)
+      ? drill.participants.join(', ')
+      : drill.participants || '-';
+
+    return (
+      <Box
+        sx={{
+          pt: 2,
+          display: 'grid',
+          gridTemplateColumns: '1fr 1fr',
+          gap: 2,
+        }}
+      >
+        <Box>
+          <Box
+            component='span'
+            sx={{ color: 'text.secondary', fontSize: '0.875rem' }}
+          >
+            演练编号
+          </Box>
+          <Box sx={{ fontWeight: 500 }}>{drill.drill_no}</Box>
+        </Box>
+        <Box>
+          <Box
+            component='span'
+            sx={{ color: 'text.secondary', fontSize: '0.875rem' }}
+          >
+            演练名称
+          </Box>
+          <Box>{drill.drill_name}</Box>
+        </Box>
+        <Box>
+          <Box
+            component='span'
+            sx={{ color: 'text.secondary', fontSize: '0.875rem' }}
+          >
+            演练日期
+          </Box>
+          <Box>{drill.drill_date || '-'}</Box>
+        </Box>
+        <Box>
+          <Box
+            component='span'
+            sx={{ color: 'text.secondary', fontSize: '0.875rem' }}
+          >
+            时长(小时)
+          </Box>
+          <Box>{drill.duration_hours ?? '-'}</Box>
+        </Box>
+        <Box>
+          <Box
+            component='span'
+            sx={{ color: 'text.secondary', fontSize: '0.875rem' }}
+          >
+            地点
+          </Box>
+          <Box>{drill.location || '-'}</Box>
+        </Box>
+        <Box>
+          <Box
+            component='span'
+            sx={{ color: 'text.secondary', fontSize: '0.875rem' }}
+          >
+            状态
+          </Box>
+          <Box sx={{ mt: 0.5 }}>
+            <Chip
+              label={statusLabel}
+              size='small'
+              sx={{
+                backgroundColor: statusColors.bg,
+                color: statusColors.color,
+                fontWeight: 500,
+              }}
+            />
+          </Box>
+        </Box>
+        <Box sx={{ gridColumn: '1 / -1' }}>
+          <Box
+            component='span'
+            sx={{ color: 'text.secondary', fontSize: '0.875rem' }}
+          >
+            参与人员
+          </Box>
+          <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
+            <Users style={{ width: 16, height: 16 }} />
+            {participantsText}
+          </Box>
+        </Box>
+        <Box sx={{ gridColumn: '1 / -1' }}>
+          <Box
+            component='span'
+            sx={{ color: 'text.secondary', fontSize: '0.875rem' }}
+          >
+            演练评估
+          </Box>
+          <Box>{drill.summary || '-'}</Box>
+        </Box>
+        <Box sx={{ gridColumn: '1 / -1' }}>
+          <Box
+            component='span'
+            sx={{ color: 'text.secondary', fontSize: '0.875rem' }}
+          >
+            发现问题
+          </Box>
+          <Box>{drill.issues_found || '-'}</Box>
+        </Box>
+        <Box sx={{ gridColumn: '1 / -1' }}>
+          <Box
+            component='span'
+            sx={{ color: 'text.secondary', fontSize: '0.875rem' }}
+          >
+            改进措施
+          </Box>
+          <Box>{drill.improvements || '-'}</Box>
+        </Box>
+      </Box>
+    );
+  };
 
   return (
     <PageContainer
       headerProps={{
-        actions: headerActions,
         pageIcon: <Clock sx={{ width: 20, height: 20 }} />,
         pageGradient: `linear-gradient(135deg, ${ct.warning.main} 0%, ${ct.warning.dark} 100%)`,
       }}
       maxWidth='xl'
     >
-      <ListPageTemplate
-        title=''
-        columns={columns}
-        data={paginatedDrills}
-        loading={loading}
-        pagination={{
-          page: currentPage,
-          pageSize,
-          total: filteredDrills.length,
-          onPageChange: setCurrentPage,
-        }}
-        searchable
-        searchPlaceholder={t('ehs.ehs_drill_page.search')}
-        searchValue={searchTerm}
-        onSearch={(value) => {
-          setSearchTerm(value);
-          setCurrentPage(0);
-        }}
-        filters={filters}
-        filtersValue={{ status: statusFilter }}
-        onFilterChange={(f) => {
-          if (f.status !== undefined) {
-            setStatusFilter(f.status);
-            setCurrentPage(0);
-          }
-        }}
-        rowActions={rowActions}
-        onRefresh={() => drillsQuery.refetch()}
-        showRowNumber
-        columnConfigurable
-        persistColumnConfig
-        columnConfigStorageKey='ehs-drill-columns'
+      <CrudPage
+        schema={drillSchema}
+        apiAdapter={drillAdapter}
+        breadcrumbs={[{ label: 'EHS' }, { label: '应急演练' }]}
         headerContent={headerContent}
+        detailContent={detailContent}
+        detailMaxWidth='lg'
       />
-
-      <Dialog
-        open={showCreateModal}
-        onClose={() => setShowCreateModal(false)}
-        maxWidth='md'
-        fullWidth
-      >
-        <DialogTitle>新增演练记录</DialogTitle>
-        <DialogContent>
-          <Box sx={{ pt: 1, display: 'flex', flexDirection: 'column', gap: 2 }}>
-            <TextField
-              fullWidth
-              label={t('ehs.ehs_drill_page.text_ebb463')}
-              value={formData.drill_no}
-              onChange={(e) => setFormData({ ...formData, drill_no: e.target.value })}
-              placeholder={t('ehs.ehs_drill_page.please_input')}
-            />
-            <TextField
-              fullWidth
-              label={t('ehs.ehs_drill_page.name_1')}
-              value={formData.name}
-              onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-              placeholder={t('ehs.ehs_drill_page.please_input_1')}
-            />
-            <TextField
-              fullWidth
-              label={t('ehs.ehs_drill_page.type')}
-              value={formData.drill_type}
-              onChange={(e) => setFormData({ ...formData, drill_type: e.target.value })}
-              placeholder={t('ehs.ehs_drill_page.please_input_2')}
-            />
-            <TextField
-              fullWidth
-              label={t('ehs.ehs_drill_page.date')}
-              type='date'
-              value={formData.date}
-              onChange={(e) => setFormData({ ...formData, date: e.target.value })}
-              slotProps={{ inputLabel: { shrink: true } } as const}
-            />
-            <TextField
-              fullWidth
-              label={t('ehs.ehs_drill_page.participant_1')}
-              value={formData.participants}
-              onChange={(e) => setFormData({ ...formData, participants: e.target.value })}
-              placeholder={t('ehs.ehs_drill_page.personnel')}
-            />
-            <TextField
-              fullWidth
-              label={t('ehs.ehs_drill_page.text_836dce')}
-              value={formData.location}
-              onChange={(e) => setFormData({ ...formData, location: e.target.value })}
-              placeholder={t('ehs.ehs_drill_page.please_input_3')}
-            />
-            <TextField
-              fullWidth
-              label={t('ehs.ehs_drill_page.text_3c7fbd')}
-              value={formData.duration}
-              onChange={(e) => setFormData({ ...formData, duration: e.target.value })}
-              placeholder={t('ehs.ehs_drill_page.text_c5f072')}
-              type='number'
-            />
-            <TextField
-              fullWidth
-              label={t('ehs.ehs_drill_page.text_022fe6')}
-              value={formData.evaluation}
-              onChange={(e) => setFormData({ ...formData, evaluation: e.target.value })}
-              placeholder={t('ehs.ehs_drill_page.please_input_4')}
-              multiline
-              rows={2}
-            />
-            <TextField
-              fullWidth
-              label={t('ehs.ehs_drill_page.text_fa77ab')}
-              value={formData.issues}
-              onChange={(e) => setFormData({ ...formData, issues: e.target.value })}
-              placeholder={t('ehs.ehs_drill_page.text_adbc7e')}
-              multiline
-              rows={2}
-            />
-          </Box>
-        </DialogContent>
-        <DialogActions>
-          <Button
-            variant='outlined'
-            onClick={() => setShowCreateModal(false)}
-          >
-            取消
-          </Button>
-          <Button
-            variant='contained'
-            onClick={handleSave}
-            color='warning'
-          >
-            保存
-          </Button>
-        </DialogActions>
-      </Dialog>
-
-      <Dialog
-        open={showDetailModal}
-        onClose={() => setShowDetailModal(false)}
-        maxWidth='lg'
-        fullWidth
-      >
-        <DialogTitle>演练记录详情</DialogTitle>
-        <DialogContent>
-          {detailLoading ? (
-            <Box sx={{ textAlign: 'center', py: 6 }}>
-              <Box
-                sx={{
-                  width: 32,
-                  height: 32,
-                  border: 3,
-                  borderColor: 'warning.main',
-                  borderTopColor: 'warning.dark',
-                  borderRadius: '50%',
-                  animation: 'spin 1s linear infinite',
-                  mx: 'auto',
-                  mb: 2,
-                }}
-              />
-              <Typography sx={{ color: 'slate.600' }}>加载中...</Typography>
-            </Box>
-          ) : (
-            (drillDetailQuery.data || selectedDrill) && (
-              <Box
-                sx={{
-                  pt: 2,
-                  display: 'grid',
-                  gridTemplateColumns: '1fr 1fr',
-                  gap: 2,
-                }}
-              >
-                <Box>
-                  <Typography sx={{ color: 'text.secondary', fontSize: '0.875rem' }}>
-                    演练编号
-                  </Typography>
-                  <Typography sx={{ fontWeight: 500 }}>
-                    {(drillDetailQuery.data || selectedDrill)?.drill_no}
-                  </Typography>
-                </Box>
-                <Box>
-                  <Typography sx={{ color: 'text.secondary', fontSize: '0.875rem' }}>
-                    演练名称
-                  </Typography>
-                  <Typography>{(drillDetailQuery.data || selectedDrill)?.drill_name}</Typography>
-                </Box>
-                <Box>
-                  <Typography sx={{ color: 'text.secondary', fontSize: '0.875rem' }}>
-                    状态
-                  </Typography>
-                  <Box sx={{ mt: 0.5 }}>
-                    {getStatusBadge((drillDetailQuery.data || selectedDrill)?.status || '')}
-                  </Box>
-                </Box>
-                <Box>
-                  <Typography sx={{ color: 'text.secondary', fontSize: '0.875rem' }}>
-                    演练日期
-                  </Typography>
-                  <Typography sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
-                    <Calendar style={{ width: 16, height: 16 }} />
-                    {(drillDetailQuery.data || selectedDrill)?.drill_date || '-'}
-                  </Typography>
-                </Box>
-                <Box>
-                  <Typography sx={{ color: 'text.secondary', fontSize: '0.875rem' }}>
-                    参与人员
-                  </Typography>
-                  <Typography sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
-                    <Users style={{ width: 16, height: 16 }} />
-                    {Array.isArray((drillDetailQuery.data || selectedDrill)?.participants)
-                      ? (drillDetailQuery.data || selectedDrill)?.participants?.join(', ')
-                      : (drillDetailQuery.data || selectedDrill)?.participants || '-'}
-                  </Typography>
-                </Box>
-                <Box>
-                  <Typography sx={{ color: 'text.secondary', fontSize: '0.875rem' }}>
-                    演练地点
-                  </Typography>
-                  <Typography>
-                    {(drillDetailQuery.data || selectedDrill)?.location || '-'}
-                  </Typography>
-                </Box>
-                <Box>
-                  <Typography sx={{ color: 'text.secondary', fontSize: '0.875rem' }}>
-                    演练时长
-                  </Typography>
-                  <Typography sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
-                    <Clock style={{ width: 16, height: 16 }} />
-                    {(drillDetailQuery.data || selectedDrill)?.duration_hours || '-'}小时
-                  </Typography>
-                </Box>
-                <Box sx={{ gridColumn: '1 / -1' }}>
-                  <Typography sx={{ color: 'text.secondary', fontSize: '0.875rem' }}>
-                    演练评估
-                  </Typography>
-                  <Typography>
-                    {(drillDetailQuery.data || selectedDrill)?.summary || '-'}
-                  </Typography>
-                </Box>
-                <Box sx={{ gridColumn: '1 / -1' }}>
-                  <Typography sx={{ color: 'text.secondary', fontSize: '0.875rem' }}>
-                    发现问题
-                  </Typography>
-                  <Typography>
-                    {(drillDetailQuery.data || selectedDrill)?.issues_found || '-'}
-                  </Typography>
-                </Box>
-              </Box>
-            )
-          )}
-        </DialogContent>
-        <DialogActions>
-          <Button onClick={() => setShowDetailModal(false)}>关闭</Button>
-        </DialogActions>
-      </Dialog>
     </PageContainer>
   );
 };
-
-const StatCard: React.FC<{
-  label: string;
-  value: number;
-  icon: React.ReactNode;
-  bgColor: string;
-  iconBgColor: string;
-}> = ({ label, value, icon, bgColor, iconBgColor }) => (
-  <Card sx={{ bgcolor: bgColor }}>
-    <CardContent sx={{ p: 2 }}>
-      <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5 }}>
-        <Box
-          sx={{
-            width: 40,
-            height: 40,
-            bgcolor: iconBgColor,
-            borderRadius: 3,
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-          }}
-        >
-          {icon}
-        </Box>
-        <Box>
-          <Typography
-            variant='body2'
-            sx={{ color: 'text.secondary', fontSize: '0.875rem' }}
-          >
-            {label}
-          </Typography>
-          <Typography
-            variant='h5'
-            sx={{ fontWeight: 700, color: 'text.primary' }}
-          >
-            {value}
-          </Typography>
-        </Box>
-      </Box>
-    </CardContent>
-  </Card>
-);
 
 export default EhsDrillPage;

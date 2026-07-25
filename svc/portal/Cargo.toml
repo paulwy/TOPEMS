@@ -21,11 +21,17 @@ thiserror.workspace = true
 chrono.workspace = true
 reqwest.workspace = true
 topems-shared = { path = "../../lib" }
+topems-shared-service-client = { path = "../../lib/shared-service-client" }
+async-graphql.workspace = true
+async-graphql-axum.workspace = true
+futures-util.workspace = true
+tokio-stream.workspace = true
 utoipa.workspace = true
 axum-prometheus.workspace = true
 prometheus.workspace = true
 tower-cookies.workspace = true
 sqlx = { workspace = true, features = ["runtime-tokio-native-tls", "postgres", "uuid"] }
+sha2 = "0.10"
 
 [dev-dependencies]
 tokio-test.workspace = true

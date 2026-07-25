@@ -242,6 +242,7 @@ async fn health_check_detailed(
 }
 
 #[derive(Serialize, Clone)]
+#[allow(dead_code)]
 struct RdServiceMetrics {
     service_name: String,
     uptime_seconds: u64,
@@ -253,6 +254,7 @@ struct RdServiceMetrics {
     database_pool_idle: usize,
 }
 
+#[allow(dead_code)]
 async fn get_metrics(
     axum::extract::State(state): axum::extract::State<modules::ApiState>,
 ) -> Json<ApiResponse<RdServiceMetrics>> {

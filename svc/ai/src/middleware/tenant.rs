@@ -5,11 +5,13 @@ use uuid::Uuid;
 use topems_shared::ApiResponse;
 
 #[derive(Debug, Clone)]
+#[allow(dead_code)]
 pub struct TenantContext {
     pub tenant_id: Uuid,
     pub user_id: Uuid,
 }
 
+#[allow(dead_code)]
 pub struct TenantRequest {
     pub ctx: TenantContext,
 }
@@ -31,11 +33,13 @@ where
     }
 }
 
+#[allow(dead_code)]
 pub fn extract_tenant_id(ctx: &TenantContext) -> Uuid {
     ctx.tenant_id
 }
 
 impl TenantContext {
+    #[allow(dead_code)]
     pub fn into_extension(self) -> Extension<Self> {
         Extension(self)
     }

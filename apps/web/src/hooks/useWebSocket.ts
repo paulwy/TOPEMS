@@ -1,18 +1,29 @@
 import { useEffect, useCallback, useRef, useState } from 'react';
 import { logger } from '@/utils/logger';
-import { calculateBackoffDelay, HeartbeatMonitor, getNextReconnectDelay, DEFAULT_RECONNECT_STRATEGY } from '@/utils/websocket-optimizer';
+import {
+  calculateBackoffDelay,
+  HeartbeatMonitor,
+  getNextReconnectDelay,
+  DEFAULT_RECONNECT_STRATEGY,
+} from '@/utils/websocket-optimizer';
 import { useAuthToken } from '@/store/authStore';
 
-const WS_SIGNING_SECRET = process.env.NEXT_PUBLIC_WS_SIGNING_SECRET || 'topems-ws-signing-secret';
+const WS_SIGNING_SECRET = import.meta.env.VITE_WS_SIGNING_SECRET || 'topems-ws-signing-secret';
 
 async function generateSignature(message: string): Promise<string> {
   if (!WS_SIGNING_SECRET) return '';
   const encoder = new TextEncoder();
   const secretBytes = encoder.encode(WS_SIGNING_SECRET);
   const messageBytes = encoder.encode(message);
-  
+
   try {
-    const key = await crypto.subtle.importKey('raw', secretBytes, { name: 'HMAC', hash: 'SHA-256' }, false, ['sign']);
+    const key = await crypto.subtle.importKey(
+      'raw',
+      secretBytes,
+      { name: 'HMAC', hash: 'SHA-256' },
+      false,
+      ['sign']
+    );
     const signature = await crypto.subtle.sign('HMAC', key, messageBytes);
     return Array.from(new Uint8Array(signature))
       .map((b) => b.toString(16).padStart(2, '0'))
@@ -30,7 +41,8 @@ export interface WebSocketMessage {
 
 export type WsMessage = WebSocketMessage;
 
-export type WsConnectionStatus = 'disconnected' | 'connecting' | 'connected' | 'reconnecting' | 'error';
+export type WsConnectionStatus =
+  'disconnected' | 'connecting' | 'connected' | 'reconnecting' | 'error';
 
 export interface UseWebSocketOptions {
   wsPath?: string;
@@ -84,7 +96,10 @@ class WebSocketService {
     this.authToken = token;
   }
 
-  setAuthHandlers(onFailed: (error: string) => void, onSuccess: (data: Record<string, unknown>) => void): void {
+  setAuthHandlers(
+    onFailed: (error: string) => void,
+    onSuccess: (data: Record<string, unknown>) => void
+  ): void {
     this.onAuthFailed = onFailed;
     this.onAuthSuccess = onSuccess;
   }
@@ -131,7 +146,9 @@ class WebSocketService {
             }
             // 处理认证结果
             if (message.type === 'auth_failed') {
-              const errorMsg = (message.payload as Record<string, unknown>)?.message as string || 'Authentication failed';
+              const errorMsg =
+                ((message.payload as Record<string, unknown>)?.message as string) ||
+                'Authentication failed';
               logger.error('[WebSocket] Authentication failed:', errorMsg);
               this.onAuthFailed?.(errorMsg);
               return;
@@ -205,9 +222,11 @@ class WebSocketService {
       maxDelay: this.reconnectMaxDelay,
     });
     this.reconnectAttempts++;
-    
+
     setTimeout(() => {
-      logger.info(`[WebSocket] Reconnecting (attempt ${this.reconnectAttempts}, delay ${delay}ms)...`);
+      logger.info(
+        `[WebSocket] Reconnecting (attempt ${this.reconnectAttempts}, delay ${delay}ms)...`
+      );
       this.connect().catch(() => {});
     }, delay);
   }
@@ -263,14 +282,12 @@ class WebSocketService {
 
   async send(message: { type: string; payload?: Record<string, unknown> }): Promise<void> {
     if (this.socket?.readyState !== WebSocket.OPEN) return;
-    
+
     const plainMessage = JSON.stringify(message);
     const signature = await generateSignature(plainMessage);
-    
-    const signedMessage = signature 
-      ? JSON.stringify({ ...message, signature })
-      : plainMessage;
-    
+
+    const signedMessage = signature ? JSON.stringify({ ...message, signature }) : plainMessage;
+
     this.socket.send(signedMessage);
   }
 
@@ -358,7 +375,11 @@ export function useWebSocketSubscription(
   return { isConnected, reconnect, authStatus };
 }
 
-export function useWebSocketConnection(): { isConnected: boolean; connect: () => void; disconnect: () => void } {
+export function useWebSocketConnection(): {
+  isConnected: boolean;
+  connect: () => void;
+  disconnect: () => void;
+} {
   const [isConnected, setIsConnected] = useState(false);
 
   useEffect(() => {
@@ -416,7 +437,7 @@ export function useWebSocket(options: UseWebSocketOptions = {}) {
   useEffect(() => {
     if (!enabled) return;
 
-    let url = wsPath
+    const url = wsPath
       ? `${process.env.NEXT_PUBLIC_WS_URL || 'ws://localhost:8080'}${wsPath}`
       : WS_URL;
 
@@ -425,9 +446,8 @@ export function useWebSocket(options: UseWebSocketOptions = {}) {
       params.token = token;
     }
 
-    const fullUrl = Object.keys(params).length > 0
-      ? `${url}?${new URLSearchParams(params).toString()}`
-      : url;
+    const fullUrl =
+      Object.keys(params).length > 0 ? `${url}?${new URLSearchParams(params).toString()}` : url;
 
     const startHeartbeat = (ws: WebSocket) => {
       if (!enableHeartbeat) return;
@@ -495,7 +515,9 @@ export function useWebSocket(options: UseWebSocketOptions = {}) {
           }
           // 处理认证结果
           if (parsed.type === 'auth_failed') {
-            const errorMsg = (parsed.payload as Record<string, unknown>)?.message as string || 'Authentication failed';
+            const errorMsg =
+              ((parsed.payload as Record<string, unknown>)?.message as string) ||
+              'Authentication failed';
             logger.error('[WebSocket] Authentication failed:', errorMsg);
             setAuthStatus('failed');
             setIsConnected(false);
@@ -505,8 +527,7 @@ export function useWebSocket(options: UseWebSocketOptions = {}) {
             setAuthStatus('success');
           }
           message = parsed;
-        } catch {
-        }
+        } catch {}
         onMessage?.(message);
       };
 
@@ -526,7 +547,9 @@ export function useWebSocket(options: UseWebSocketOptions = {}) {
           const delay = calculateBackoffDelay(reconnectCount, minReconnectDelay, maxReconnectDelay);
           setReconnectCount((prev) => prev + 1);
           setConnectionStatus('reconnecting');
-          logger.info(`[WebSocket] Reconnecting in ${delay}ms (attempt ${reconnectCount + 1}/${reconnectAttempts})...`);
+          logger.info(
+            `[WebSocket] Reconnecting in ${delay}ms (attempt ${reconnectCount + 1}/${reconnectAttempts})...`
+          );
           reconnectTimeoutRef.current = window.setTimeout(connect, delay);
         } else {
           setConnectionStatus('error');
@@ -553,18 +576,36 @@ export function useWebSocket(options: UseWebSocketOptions = {}) {
       }
       socketRef.current?.close(1000, 'Component unmounted');
     };
-  }, [enabled, wsPath, queryParams, authMessage, onMessage, onOpen, onClose, onError, reconnectAttempts, maxReconnectDelay, minReconnectDelay, connectionTimeout, shouldReconnect, enableHeartbeat, heartbeatInterval, heartbeatTimeout, autoAuthToken, token]);
+  }, [
+    enabled,
+    wsPath,
+    queryParams,
+    authMessage,
+    onMessage,
+    onOpen,
+    onClose,
+    onError,
+    reconnectAttempts,
+    maxReconnectDelay,
+    minReconnectDelay,
+    connectionTimeout,
+    shouldReconnect,
+    enableHeartbeat,
+    heartbeatInterval,
+    heartbeatTimeout,
+    autoAuthToken,
+    token,
+  ]);
 
   const send = useCallback(async (data: string | Record<string, unknown>) => {
     if (socketRef.current?.readyState !== WebSocket.OPEN) return;
-    
+
     const plainMessage = typeof data === 'string' ? data : JSON.stringify(data);
     const signature = await generateSignature(plainMessage);
-    
-    const messageToSend = signature && typeof data !== 'string'
-      ? JSON.stringify({ ...data, signature })
-      : plainMessage;
-    
+
+    const messageToSend =
+      signature && typeof data !== 'string' ? JSON.stringify({ ...data, signature }) : plainMessage;
+
     socketRef.current.send(messageToSend);
   }, []);
 
@@ -572,16 +613,15 @@ export function useWebSocket(options: UseWebSocketOptions = {}) {
     if (socketRef.current?.readyState !== WebSocket.OPEN) {
       setReconnectCount(0);
       setAuthStatus('pending');
-      let url = wsPath
+      const url = wsPath
         ? `${process.env.NEXT_PUBLIC_WS_URL || 'ws://localhost:8080'}${wsPath}`
         : WS_URL;
       const params: Record<string, string> = { ...queryParams };
       if (token && autoAuthToken) {
         params.token = token;
       }
-      const fullUrl = Object.keys(params).length > 0
-        ? `${url}?${new URLSearchParams(params).toString()}`
-        : url;
+      const fullUrl =
+        Object.keys(params).length > 0 ? `${url}?${new URLSearchParams(params).toString()}` : url;
       socketRef.current = new WebSocket(fullUrl);
     }
   }, [wsPath, queryParams, token, autoAuthToken]);

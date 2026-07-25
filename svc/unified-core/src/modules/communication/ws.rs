@@ -1,3 +1,5 @@
+#![allow(dead_code)] // Reserved: WebSocket 通信模块预留扩展，待实时通信接入后启用
+
 use axum::{
     extract::ws::{Message, WebSocket},
     extract::{Query, State, WebSocketUpgrade},

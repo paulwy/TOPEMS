@@ -57,10 +57,7 @@ export const erpModuleConfig: RouteModuleConfig = {
     },
     {
       path: ERP_PATHS.voucherManagement,
-      element: lazyWithRetry(
-        () => import('@/pages/erp/VoucherManagementPage'),
-        'VoucherManagementPage'
-      ),
+      element: lazyWithRetry(() => import('@/pages/erp/VoucherPage'), 'VoucherPage'),
       module: 'erp',
       code: 'erp-general-ledger',
       title: '总账管理',
@@ -221,7 +218,10 @@ export const erpModuleConfig: RouteModuleConfig = {
     },
     {
       path: ERP_PATHS.receivablePayable,
-      element: lazyWithRetry(() => import('@/pages/erp/ReceivablePayablePage'), 'ReceivablePayablePage'),
+      element: lazyWithRetry(
+        () => import('@/pages/erp/ReceivablePayablePage'),
+        'ReceivablePayablePage'
+      ),
       module: 'erp',
       code: 'erp-receivable-payable',
       title: '应收应付管理',
@@ -232,7 +232,10 @@ export const erpModuleConfig: RouteModuleConfig = {
     },
     {
       path: ERP_PATHS.assetManagement,
-      element: lazyWithRetry(() => import('@/pages/erp/AssetManagementPage'), 'AssetManagementPage'),
+      element: lazyWithRetry(
+        () => import('@/pages/erp/AssetManagementPage'),
+        'AssetManagementPage'
+      ),
       module: 'erp',
       code: 'erp-asset-management',
       title: '资产管理',
@@ -243,7 +246,10 @@ export const erpModuleConfig: RouteModuleConfig = {
     },
     {
       path: ERP_PATHS.budgetManagement,
-      element: lazyWithRetry(() => import('@/pages/erp/BudgetManagementPage'), 'BudgetManagementPage'),
+      element: lazyWithRetry(
+        () => import('@/pages/erp/BudgetManagementPage'),
+        'BudgetManagementPage'
+      ),
       module: 'erp',
       code: 'erp-budget-management',
       title: '预算与费用管理',
@@ -265,7 +271,10 @@ export const erpModuleConfig: RouteModuleConfig = {
     },
     {
       path: ERP_PATHS.accountingManagement,
-      element: lazyWithRetry(() => import('@/pages/erp/AccountingManagementPage'), 'AccountingManagementPage'),
+      element: lazyWithRetry(
+        () => import('@/pages/erp/AccountingManagementPage'),
+        'AccountingManagementPage'
+      ),
       module: 'erp',
       code: 'erp-accounting-management',
       title: '会计科目管理',
@@ -309,7 +318,10 @@ export const erpModuleConfig: RouteModuleConfig = {
     },
     {
       path: ERP_PATHS.financialAnalysis,
-      element: lazyWithRetry(() => import('@/pages/erp/FinancialAnalysisPage'), 'FinancialAnalysisPage'),
+      element: lazyWithRetry(
+        () => import('@/pages/erp/FinancialAnalysisPage'),
+        'FinancialAnalysisPage'
+      ),
       module: 'erp',
       code: 'erp-financial-analysis',
       title: '财务分析',

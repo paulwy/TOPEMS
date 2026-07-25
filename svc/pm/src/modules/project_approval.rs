@@ -6,11 +6,22 @@ use axum::{
 use chrono::Utc;
 use sqlx::PgPool;
 use topems_shared::ApiResponse;
+use topems_shared_service_client::service_client::api::workflow_api::{
+    CreateInstanceRequest, WorkflowApi, WorkflowInstance,
+};
+use topems_shared_service_client::TypedServiceClient;
 use uuid::Uuid;
 
 use crate::models::project_approval::{ApprovalRequest, ProjectApproval};
 
-pub fn create_routes(pool: PgPool) -> Router {
+/// 项目审批状态：组合数据库连接池与 Flow 工作流客户端
+#[derive(Clone)]
+pub struct ApprovalState {
+    pub pool: PgPool,
+    pub workflow_client: TypedServiceClient<WorkflowApi>,
+}
+
+pub fn create_routes(pool: PgPool, workflow_client: TypedServiceClient<WorkflowApi>) -> Router {
     Router::new()
         .route(
             "/projects/{project_id}/approval",
@@ -20,7 +31,14 @@ pub fn create_routes(pool: PgPool) -> Router {
             "/projects/{project_id}/approval/action",
             post(handle_approval_action),
         )
-        .with_state(pool)
+        .with_state(ApprovalState { pool, workflow_client })
+}
+
+/// 从环境变量读取项目审批关联的 Flow 工作流定义 ID
+fn get_approval_workflow_id() -> Option<Uuid> {
+    std::env::var("PM_APPROVAL_WORKFLOW_ID")
+        .ok()
+        .and_then(|s| Uuid::parse_str(&s).ok())
 }
 
 #[utoipa::path(
@@ -34,14 +52,14 @@ pub fn create_routes(pool: PgPool) -> Router {
     ),
 )]
 async fn get_approval(
-    State(pool): State<PgPool>,
+    State(state): State<ApprovalState>,
     Path(project_id): Path<Uuid>,
 ) -> Json<ApiResponse<ProjectApproval>> {
     let result = sqlx::query_as::<_, ProjectApproval>(
         "SELECT * FROM pm.project_approvals WHERE project_id = $1 ORDER BY created_at DESC LIMIT 1",
     )
     .bind(project_id)
-    .fetch_optional(&pool)
+    .fetch_optional(&state.pool)
     .await;
 
     match result {
@@ -65,20 +83,59 @@ async fn get_approval(
     ),
 )]
 async fn submit_approval(
-    State(pool): State<PgPool>,
+    State(state): State<ApprovalState>,
     Path(project_id): Path<Uuid>,
     Json(req): Json<ApprovalRequest>,
 ) -> Json<ApiResponse<ProjectApproval>> {
     let id = Uuid::new_v4();
     let now = Utc::now();
 
+    // 委托 Flow 引擎创建工作流实例（审批流程编排统一到 Flow）
+    let mut workflow_instance_id: Option<Uuid> = None;
+    if let Some(workflow_id) = get_approval_workflow_id() {
+        let request = CreateInstanceRequest {
+            workflow_id,
+            title: format!("项目审批: {}", project_id),
+            variables: Some(serde_json::json!({
+                "project_id": project_id.to_string(),
+                "approver_id": req.approver_id,
+                "comment": req.comment,
+            })),
+        };
+
+        match state.workflow_client.create_instance(request).await {
+            Ok(instance) => {
+                tracing::info!(
+                    "Flow 工作流实例创建成功, instance_id={}, project_id={}",
+                    instance.id,
+                    project_id
+                );
+                workflow_instance_id = Some(instance.id);
+            }
+            Err(e) => {
+                tracing::warn!(
+                    "Flow 工作流实例创建失败，回退到本地审批流程: project_id={}, error={}",
+                    project_id,
+                    e
+                );
+            }
+        }
+    } else {
+        tracing::debug!(
+            "未配置 PM_APPROVAL_WORKFLOW_ID，使用本地审批流程: project_id={}",
+            project_id
+        );
+    }
+
+    // 本地审批记录（保留业务数据跟踪）
     let approval_steps = serde_json::json!({
         "steps": [
             {"step": 1, "role": "project_manager", "approver_id": null, "approved": false, "comment": null, "approved_at": null},
             {"step": 2, "role": "department_head", "approver_id": null, "approved": false, "comment": null, "approved_at": null},
             {"step": 3, "role": "finance", "approver_id": null, "approved": false, "comment": null, "approved_at": null},
         ],
-        "history": []
+        "history": [],
+        "workflow_instance_id": workflow_instance_id,
     });
 
     let result = sqlx::query_as::<_, ProjectApproval>(
@@ -101,12 +158,13 @@ async fn submit_approval(
     .bind(&req.approver_id)
     .bind(now)
     .bind(now)
-    .fetch_one(&pool)
+    .fetch_one(&state.pool)
     .await;
 
     match result {
         Ok(approval) => {
-            let _ = update_project_status(&pool, project_id, "pending_approval").await;
+            // 业务逻辑：更新项目状态为待审批
+            let _ = update_project_status(&state.pool, project_id, "pending_approval").await;
             Json(ApiResponse::success(approval, "提交审批成功"))
         }
         Err(e) => {
@@ -129,7 +187,7 @@ async fn submit_approval(
     ),
 )]
 async fn handle_approval_action(
-    State(pool): State<PgPool>,
+    State(state): State<ApprovalState>,
     Path(project_id): Path<Uuid>,
     Json(req): Json<ApprovalRequest>,
 ) -> Json<ApiResponse<ProjectApproval>> {
@@ -142,7 +200,7 @@ async fn handle_approval_action(
         "SELECT * FROM pm.project_approvals WHERE project_id = $1 AND status = 'pending' ORDER BY created_at DESC LIMIT 1 FOR UPDATE"
     )
     .bind(project_id)
-    .fetch_optional(&pool)
+    .fetch_optional(&state.pool)
     .await;
 
     let approval = match result {
@@ -156,6 +214,58 @@ async fn handle_approval_action(
 
     let now = Utc::now();
     let mut approvals: serde_json::Value = approval.approvals.clone();
+
+    // 委托 Flow 引擎执行审批操作（审批流程编排统一到 Flow）
+    let workflow_instance_id = approvals
+        .get("workflow_instance_id")
+        .and_then(|v| v.as_str())
+        .and_then(|s| Uuid::parse_str(s).ok());
+
+    if let Some(instance_id) = workflow_instance_id {
+        let flow_result = if action == "approve" {
+            state
+                .workflow_client
+                .approve_instance(instance_id, req.comment.clone())
+                .await
+                .map(|inst| {
+                    tracing::info!(
+                        "Flow 审批操作完成, action=approve, instance_id={}, status={}",
+                        instance_id,
+                        inst.status
+                    );
+                })
+        } else if action == "reject" {
+            state
+                .workflow_client
+                .reject_instance(instance_id, req.comment.clone())
+                .await
+                .map(|inst| {
+                    tracing::info!(
+                        "Flow 审批操作完成, action=reject, instance_id={}, status={}",
+                        instance_id,
+                        inst.status
+                    );
+                })
+        } else {
+            // cancel: Flow 无直接取消接口，跳过
+            Ok(())
+        };
+
+        if let Err(e) = &flow_result {
+            tracing::warn!(
+                "Flow 审批操作失败，回退到本地审批处理: action={}, instance_id={}, error={}",
+                action,
+                instance_id,
+                e
+            );
+        }
+    } else {
+        tracing::debug!(
+            "无关联 Flow 工作流实例，使用本地审批处理: project_id={}, action={}",
+            project_id,
+            action
+        );
+    }
 
     if action == "reject" || action == "cancel" {
         let new_history = serde_json::json!({
@@ -189,17 +299,18 @@ async fn handle_approval_action(
         .bind(req.comment)
         .bind(now)
         .bind(approval.id)
-        .fetch_one(&pool)
+        .fetch_one(&state.pool)
         .await;
 
         match update_result {
             Ok(updated) => {
+                // 业务逻辑：更新项目状态
                 let status = if action == "reject" {
                     "rejected"
                 } else {
                     "draft"
                 };
-                let _ = update_project_status(&pool, project_id, status).await;
+                let _ = update_project_status(&state.pool, project_id, status).await;
                 Json(ApiResponse::success(
                     updated,
                     if action == "reject" {
@@ -272,13 +383,14 @@ async fn handle_approval_action(
         .bind(req.comment)
         .bind(now)
         .bind(approval.id)
-        .fetch_one(&pool)
+        .fetch_one(&state.pool)
         .await;
 
         match update_result {
             Ok(updated) => {
                 if is_final_step {
-                    let _ = update_project_status(&pool, project_id, "approved").await;
+                    // 业务逻辑：审批通过，更新项目状态
+                    let _ = update_project_status(&state.pool, project_id, "approved").await;
                     Json(ApiResponse::success(updated, "审批已通过"))
                 } else {
                     Json(ApiResponse::success(updated, "审批步骤已通过，等待下一步"))

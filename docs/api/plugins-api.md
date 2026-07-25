@@ -55,10 +55,9 @@ TOPEMS 采用插件化架构，所有业务模块作为独立插件运行，通�
 | QMS | 8050 | /api/qms/* | ✅ 业务插件 | 质量管理 | erp, mes |
 | LIMS | 8051 | /api/lims/* | ✅ 业务插件 | 实验室信息管理 | - |
 | EHS | 8052 | /api/ehs/* | ✅ 业务插件 | 环境健康安全 | - |
-| RS | 8053 | /api/rs/* | ✅ 业务插件 | 研发管理 | pm, mes |
+| RD | 8053 | /api/rd/* | ✅ 业务插件 | 研发管理 | pm, mes |
 | BI | 8060 | /api/bi/* | ✅ 业务插件 | 商业智能 | - |
 | Report | 8061 | /api/report/* | ✅ 业务插件 | 报表服务 | - |
-| Monitor | 8062 | /api/monitor/* | ✅ 业务插件 | 监控告警 | - |
 | Portal | 8063 | /api/portal/* | ✅ 业务插件 | 企业门户 | - |
 | AI | 8013 AI 智能服务 | - |
 | Mobile | 8070 | /api/mobile/* | ✅ 业务插件 | 移动端服务 | - |
@@ -126,7 +125,7 @@ TOPEMS 采用插件化架构，所有业务模块作为独立插件运行，通�
 ```json
 {
   "success": false,
-  "message": "Cannot uninstall: [qms, rs] depend(s) on this plugin. Please uninstall them first or use disable tier."
+  "message": "Cannot uninstall: [qms, rd] depend(s) on this plugin. Please uninstall them first or use disable tier."
 }
 ```
 
@@ -395,12 +394,12 @@ X-Plugin-Token: <PLUGIN_REGISTRATION_TOKEN>
 | GET | /api/qms/fmea | FMEA 分析 | qms:fmea:read |
 | GET | /api/qms/nonconformities | 不合格品 | qms:nonconformity:read |
 
-### 3.4 RS (/api/rs/*) — 依赖: pm, mes
+### 3.4 RD (/api/rd/*) — 依赖: pm, mes
 
 | 方法 | 路径 | 功能 | 权限 |
 |------|------|------|------|
-| GET | /api/rs/projects | 研发项目 | rs:project:read |
-| POST | /api/rs/projects | 创建研发项目 | rs:project:write |
+| GET | /api/rd/projects | 研发项目 | rd:project:read |
+| POST | /api/rd/projects | 创建研发项目 | rd:project:write |
 
 ---
 

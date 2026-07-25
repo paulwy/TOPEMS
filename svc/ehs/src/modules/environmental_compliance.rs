@@ -384,7 +384,7 @@ pub async fn list_regulations(
     Extension(claims): Extension<Claims>,
     headers: HeaderMap,
 ) -> Json<ApiResponse<Vec<EnvironmentalRegulation>>> {
-    let tenant_id = get_tenant_id(&claims, &headers);
+    let _tenant_id = get_tenant_id(&claims, &headers);
     tracing::info!("Listing environmental regulations");
     Json(ApiResponse::success(
         Vec::<EnvironmentalRegulation>::new(),
@@ -508,7 +508,7 @@ pub async fn delete_regulation(
     headers: HeaderMap,
     axum::extract::Path(id): axum::extract::Path<String>,
 ) -> Json<ApiResponse<()>> {
-    let tenant_id = get_tenant_id(&claims, &headers);
+    let _tenant_id = get_tenant_id(&claims, &headers);
     tracing::info!("Deleting environmental regulation: {}", id);
     Json(ApiResponse::success((), "法规删除成功"))
 }
@@ -518,7 +518,7 @@ pub async fn list_evaluations(
     Extension(claims): Extension<Claims>,
     headers: HeaderMap,
 ) -> Json<ApiResponse<Vec<ComplianceEvaluation>>> {
-    let tenant_id = get_tenant_id(&claims, &headers);
+    let _tenant_id = get_tenant_id(&claims, &headers);
     tracing::info!("Listing compliance evaluations");
     Json(ApiResponse::success(
         Vec::<ComplianceEvaluation>::new(),
@@ -648,7 +648,7 @@ pub async fn delete_evaluation(
     headers: HeaderMap,
     axum::extract::Path(id): axum::extract::Path<String>,
 ) -> Json<ApiResponse<()>> {
-    let tenant_id = get_tenant_id(&claims, &headers);
+    let _tenant_id = get_tenant_id(&claims, &headers);
     tracing::info!("Deleting compliance evaluation: {}", id);
     Json(ApiResponse::success((), "评价删除成功"))
 }
@@ -658,7 +658,7 @@ pub async fn list_monitor_records(
     Extension(claims): Extension<Claims>,
     headers: HeaderMap,
 ) -> Json<ApiResponse<Vec<EnvironmentMonitor>>> {
-    let tenant_id = get_tenant_id(&claims, &headers);
+    let _tenant_id = get_tenant_id(&claims, &headers);
     tracing::info!("Listing environment monitor records");
     Json(ApiResponse::success(
         Vec::<EnvironmentMonitor>::new(),
@@ -749,7 +749,7 @@ pub async fn delete_monitor_record(
     headers: HeaderMap,
     axum::extract::Path(id): axum::extract::Path<String>,
 ) -> Json<ApiResponse<()>> {
-    let tenant_id = get_tenant_id(&claims, &headers);
+    let _tenant_id = get_tenant_id(&claims, &headers);
     tracing::info!("Deleting environment monitor record: {}", id);
     Json(ApiResponse::success((), "监测记录删除成功"))
 }
@@ -759,7 +759,7 @@ pub async fn list_permits(
     Extension(claims): Extension<Claims>,
     headers: HeaderMap,
 ) -> Json<ApiResponse<Vec<DischargePermit>>> {
-    let tenant_id = get_tenant_id(&claims, &headers);
+    let _tenant_id = get_tenant_id(&claims, &headers);
     tracing::info!("Listing discharge permits");
     Json(ApiResponse::success(
         Vec::<DischargePermit>::new(),
@@ -886,7 +886,7 @@ pub async fn delete_permit(
     headers: HeaderMap,
     axum::extract::Path(id): axum::extract::Path<String>,
 ) -> Json<ApiResponse<()>> {
-    let tenant_id = get_tenant_id(&claims, &headers);
+    let _tenant_id = get_tenant_id(&claims, &headers);
     tracing::info!("Deleting discharge permit: {}", id);
     Json(ApiResponse::success((), "排污许可删除成功"))
 }
@@ -896,7 +896,7 @@ pub async fn list_incidents(
     Extension(claims): Extension<Claims>,
     headers: HeaderMap,
 ) -> Json<ApiResponse<Vec<EnvironmentIncident>>> {
-    let tenant_id = get_tenant_id(&claims, &headers);
+    let _tenant_id = get_tenant_id(&claims, &headers);
     tracing::info!("Listing environment incidents");
     Json(ApiResponse::success(
         Vec::<EnvironmentIncident>::new(),
@@ -1041,7 +1041,7 @@ pub async fn delete_incident(
     headers: HeaderMap,
     axum::extract::Path(id): axum::extract::Path<String>,
 ) -> Json<ApiResponse<()>> {
-    let tenant_id = get_tenant_id(&claims, &headers);
+    let _tenant_id = get_tenant_id(&claims, &headers);
     tracing::info!("Deleting environment incident: {}", id);
     Json(ApiResponse::success((), "环境事件删除成功"))
 }
@@ -1088,7 +1088,7 @@ pub async fn list_regulation_categories(
     Extension(claims): Extension<Claims>,
     headers: HeaderMap,
 ) -> Json<ApiResponse<Vec<serde_json::Value>>> {
-    let tenant_id = get_tenant_id(&claims, &headers);
+    let _tenant_id = get_tenant_id(&claims, &headers);
     tracing::info!("Listing regulation categories");
     let categories = vec![
         serde_json::json!({ "code": "law", "name": "法律" }),
@@ -1106,7 +1106,7 @@ pub async fn list_monitor_types(
     Extension(claims): Extension<Claims>,
     headers: HeaderMap,
 ) -> Json<ApiResponse<Vec<serde_json::Value>>> {
-    let tenant_id = get_tenant_id(&claims, &headers);
+    let _tenant_id = get_tenant_id(&claims, &headers);
     tracing::info!("Listing monitor types");
     let types = vec![
         serde_json::json!({ "code": "wastewater", "name": "废水监测" }),

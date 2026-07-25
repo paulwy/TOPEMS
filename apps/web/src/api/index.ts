@@ -61,5 +61,21 @@ export * as financeApi from './finance';
 export { helpApi } from './help';
 export { feedbackApi } from './feedback';
 
+// V33.0/V34.0 Portal BFF 聚合 API
+export {
+  bffApi,
+  bffGraphQL,
+  getDashboard,
+  getBusinessStatsGql,
+  getUnifiedTodosGql,
+  getServiceHealthGql,
+  createTodoGql,
+  completeTodoGql,
+  deleteTodoGql,
+  subscribeServiceHealth,
+  masterDataApi,
+} from './bff';
+export type { ServiceStats, BusinessStatsAggregation, UnifiedTodo, MasterDataRef } from './bff';
+
 // Plugin system
 export * as pluginApi from './plugin';

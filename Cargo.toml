@@ -2,10 +2,21 @@
 members = [
     # [桌面应用] 排除在工作区外，独立构建
     "lib",
-    # [核心平台] 统一核心平台
-    "svc/unified-core",      # IAM + Doc + Flow + File + Communication
+    # [共享库子 crate] topems-shared 按功能域拆分的子 crate
+    "lib/shared-core",
+    "lib/shared-db",
+    "lib/shared-auth",
+    "lib/shared-service-client",
+    "lib/shared-event",
+    "lib/shared-observability",
+    "lib/shared-ai",
+    "lib/shared-bootstrap",
+    # [示例] 按需引入示例
+    "examples/minimal-service",
+    # [核心平台] 统一核心平台 (IAM + Doc + Flow + File + Communication + Monitor)
+    "svc/unified-core",
     # [SDK] 共享工具库
-    "svc/migration-sdk",     # 数据库迁移SDK
+    "tools/migration-sdk",
     # [独立服务] 业务模块（插件式架构）
     "svc/ai",
     "svc/erp",
@@ -20,7 +31,6 @@ members = [
     "svc/gis",
     "svc/integration",
     "svc/mobile",
-    "svc/monitor",
     # [生产制造]
     "svc/mes",
     "svc/pdm",
@@ -30,9 +40,16 @@ members = [
     "svc/ehs",
     # [财务与文档]
     "svc/finance",
-    "svc/doc",
     # [数据分析]
     "svc/analytics",
+    # [主数据管理]
+    "svc/master-data",
+    # [统一核心模块独立]
+    "svc/billing",
+    "svc/ticket",
+    "svc/feedback",
+    "svc/search",
+    "svc/communication",
 ]
 exclude = [
     "apps/desktop/src-tauri",
@@ -50,6 +67,10 @@ resolver = "2"
 # svc/shared           → 功能已整合到 lib/topems_shared
 # svc/user-service     → 功能已整合到 unified-core/iam/user（用户管理由 /api/core/iam/users 提供，2026-07）
 #                        原服务使用 .merge()+硬编码全路径（/api/users/users）非统一模式，且端口 8060 与 BI 冲突
+# svc/monitor          → 功能已整合到 unified-core/modules/monitor（2026-07）
+#                        告警、指标、SLO、健康检查路由由 /api/core/monitor/* 提供
+# svc/doc              → 功能已整合到 unified-core/modules/doc（2026-07）
+#                        文档、模板、文件夹管理由 /api/core/doc/* 提供
 # ================================================
 
 [workspace.package]
@@ -116,6 +137,10 @@ tokio-util = { version = "0.7", features = ["io"] }
 tower-cookies = "0.11"
 tower-util = "0.1"
 walkdir = "2"
+
+# GraphQL BFF 聚合层（V33.0 Portal BFF Phase 3）
+async-graphql = { version = "7", features = ["tokio", "chrono", "uuid", "dataloader", "apollo_persisted_queries"] }
+async-graphql-axum = "7"
 libc = "0.2"
 cron = "0.12"
 job_scheduler_ng = "2.0"
@@ -128,7 +153,9 @@ mockall = "0.11"
 [patch.crates-io]
 
 [profile.release]
-strip = true
+opt-level = "z"
+lto = true
 codegen-units = 1
-lto = "thin"
-opt-level = 3
+strip = true
+panic = "abort"
+incremental = false

@@ -1,19 +1,19 @@
 /**
- * API 路径构造工具（V14.0 版本化路由统一契约版）
+ * API 路径构造工具（V16.2 统一路由契约版）
  *
- *  权威契约参考：docs/superpowers/plans/2026-07-15-route-unification-contract.md
+ *  权威契约参考：project_memory hard constraints
  *  ┌──────────────────────────────────────────────────────────────────────────────┐
- *  │ Group 1 — core 虚拟服务（unified-core:8000 承载） →  /api/v1/core/{svc}/... │
- *  │ Group 2 — 独立进程服务（各有独立 K8s deployment） →  /api/v1/{svc}/...      │
- *  │ 统一版本前缀 /v1（全系统版本策略一致）                                         │
+ *  │ Group 1 — core 虚拟服务（unified-core:8000 承载） →  /api/core/{svc}/...    │
+ *  │ Group 2 — 独立进程服务（各有独立 K8s deployment） →  /api/{svc}/...         │
+ *  │ 无版本前缀（/api/v1/ 已废弃，统一使用 /api/）                                  │
  *  └──────────────────────────────────────────────────────────────────────────────┘
  */
 
-export const API_VERSION = 'v1';
+export const API_VERSION = '';
 
 /**
- * Group1 核心虚拟服务（K8s ingress `/api/v1/core/*` 转发到 unified-core:8000）
- * 这些服务的路径必须以 `/api/v1/core/{svc}/` 开头。
+ * Group1 核心虚拟服务（K8s ingress `/api/core/*` 转发到 unified-core:8000）
+ * 这些服务的路径必须以 `/api/core/{svc}/` 开头。
  */
 export const GROUP1_CORE_SERVICES = new Set<string>([
   'iam',
@@ -23,6 +23,8 @@ export const GROUP1_CORE_SERVICES = new Set<string>([
   'mail',
   'im',
   'notification',
+  'doc', // 文档管理 (unified-core 虚拟服务)
+  'monitor', // 系统监控 (unified-core 虚拟服务)
   'master',
   'migration',
   'comm',
@@ -35,7 +37,6 @@ export const GROUP1_CORE_SERVICES = new Set<string>([
 export const GROUP2_INDEPENDENT_SERVICES = new Set<string>([
   'erp',
   'finance',
-  'doc',
   'ai',
   'hrm',
   'pm',
@@ -51,11 +52,8 @@ export const GROUP2_INDEPENDENT_SERVICES = new Set<string>([
   'lims',
   'ehs',
   'rd',
-  'rs',
   'bi',
   'analytics',
-  'report',
-  'monitor',
   'portal',
   'mobile',
   'gis',
@@ -86,13 +84,12 @@ export const SERVICE_CODES = {
   pm: 'pm',
   pdm: 'pdm',
   bi: 'bi',
-  report: 'report',
   gis: 'gis',
   mobile: 'mobile',
   integration: 'integration',
   master: 'master',
   migration: 'migration',
-  rs: 'rs',
+  rd: 'rd',
   finance: 'finance',
   monitor: 'monitor',
   oa: 'oa',
@@ -110,13 +107,13 @@ export interface ApiPathOptions {
 
 /**
  * 根据服务归属 Group1/Group2 自动选择正确的前缀
- *   Group1（iam/workflow/file/...） →  /api/v1/core/{svc}/{path}
- *   Group2（erp/hrm/pm/...）       →  /api/v1/{svc}/{path}
+ *   Group1（iam/workflow/file/...） →  /api/core/{svc}/{path}
+ *   Group2（erp/hrm/pm/...）       →  /api/{svc}/{path}
  */
 export function buildApiPath(options: ApiPathOptions): string {
   const { service, path } = options;
   const cleanPath = path.startsWith('/') ? path : `/${path}`;
-  const prefix = GROUP1_CORE_SERVICES.has(service) ? '/api/v1/core' : '/api/v1';
+  const prefix = GROUP1_CORE_SERVICES.has(service) ? '/api/core' : '/api';
   return `${prefix}/${service}${cleanPath}`;
 }
 
@@ -158,11 +155,10 @@ export const SERVICES = {
   pm: createServiceApi('pm'),
   pdm: createServiceApi('pdm'),
   bi: createServiceApi('bi'),
-  report: createServiceApi('report'),
   gis: createServiceApi('gis'),
   mobile: createServiceApi('mobile'),
   integration: createServiceApi('integration'),
-  rs: createServiceApi('rs'),
+  rd: createServiceApi('rd'),
   finance: createServiceApi('finance'),
   monitor: createServiceApi('monitor'),
   oa: createServiceApi('oa'),

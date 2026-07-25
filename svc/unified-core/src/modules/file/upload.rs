@@ -1,3 +1,5 @@
+#![allow(dead_code)] // Reserved: 文件上传模块预留扩展，待文件服务接入后启用
+
 //! Upload submodule - File upload handlers with multipart support
 
 use axum::{

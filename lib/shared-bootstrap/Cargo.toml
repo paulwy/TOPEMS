@@ -1,0 +1,34 @@
+[package]
+name = "topems-shared-bootstrap"
+version.workspace = true
+edition.workspace = true
+authors.workspace = true
+description = "TOPEMS shared service bootstrap library - unified service startup framework"
+
+[dependencies]
+topems-shared-core = { path = "../shared-core" }
+topems-shared-db = { path = "../shared-db" }
+topems-shared-auth = { path = "../shared-auth" }
+topems-shared-event = { path = "../shared-event" }
+topems-shared-observability = { path = "../shared-observability" }
+
+# Web framework
+axum.workspace = true
+
+# Database
+sqlx.workspace = true
+
+# Observability
+prometheus = "0.13"
+axum-prometheus.workspace = true
+tracing.workspace = true
+
+# Async runtime
+tokio.workspace = true
+
+# Utilities
+anyhow.workspace = true
+dotenv = "0.15"
+chrono.workspace = true
+serde.workspace = true
+serde_json.workspace = true

@@ -1,70 +1,52 @@
 import React, { useState, useMemo } from 'react';
-import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { useQuery } from '@tanstack/react-query';
 import { QUERY_KEYS } from '@/lib/reactQuery';
-import { designTokens } from '@/theme/tokens';
-import { PageContainer } from '@/components/common';
-import {
-  Chip,
-  Typography,
-  TextField,
-  FormControl,
-  InputLabel,
-  Select,
-  MenuItem,
-  Dialog,
-  DialogContent,
-  DialogTitle,
-  DialogActions,
-  Tabs,
-  Tab,
-  Box,
-  Button,
-} from '@mui/material';
-import {
-  Plus,
-  Edit2,
-  Trash2,
-  Eye,
-  CreditCard,
-  RefreshCw,
-  ArrowUpRight,
-  ArrowDownRight,
-} from 'lucide-react';
-import { ListPageTemplate, StatCardGroup, type ColumnDef, type RowAction } from '@/components';
+import { PageContainer, StatCardGroup } from '@/components/common';
+import { Tabs, Tab, Box, Typography, Chip } from '@mui/material';
+import { ArrowUpRight, ArrowDownRight, CreditCard } from 'lucide-react';
+import CrudPage from '@/components/templates/CrudPage';
+import { createCrudPageAdapter } from '@/schema/crudPageAdapter';
+import { receivableSchema, payableSchema } from '@/schemas/finance';
 import { financeApi } from '@/api/finance';
-import type { SalesInvoice, PurchaseInvoice, InvoiceStatus } from '../../types/finance';
-import { useNotificationStore } from '../../store';
-import { apiLogger } from '@/utils/logger';
-
 import { useTranslation } from 'react-i18next';
-const ct = designTokens.colors;
+import type { EntitySchema } from '@/schema';
+import type { SchemaExtensions } from '@/schema/schemaExtensions';
 
-const FinanceReceivablePayablePage: React.FC = () => {
+const receivableAdapter = createCrudPageAdapter({
+  list: (params?: Record<string, unknown>) =>
+    financeApi.receivablePayable.listSalesInvoices(params),
+  create: (data: unknown) =>
+    financeApi.receivablePayable.createSalesInvoice(
+      data as Parameters<typeof financeApi.receivablePayable.createSalesInvoice>[0]
+    ),
+  update: (id: string, data: unknown) =>
+    financeApi.receivablePayable.updateSalesInvoice(
+      id,
+      data as Parameters<typeof financeApi.receivablePayable.updateSalesInvoice>[1]
+    ),
+  delete: (id: string) => financeApi.receivablePayable.deleteSalesInvoice(id),
+});
+
+const payableAdapter = createCrudPageAdapter({
+  list: (params?: Record<string, unknown>) =>
+    financeApi.receivablePayable.listPurchaseInvoices(params),
+  create: (data: unknown) =>
+    financeApi.receivablePayable.createPurchaseInvoice(
+      data as Parameters<typeof financeApi.receivablePayable.createPurchaseInvoice>[0]
+    ),
+  update: (id: string, data: unknown) =>
+    financeApi.receivablePayable.updatePurchaseInvoice(
+      id,
+      data as Parameters<typeof financeApi.receivablePayable.updatePurchaseInvoice>[1]
+    ),
+  delete: (id: string) => financeApi.receivablePayable.deletePurchaseInvoice(id),
+});
+
+export default function FinanceReceivablePayablePage() {
   const { t } = useTranslation();
-  const addNotification = useNotificationStore((state) => state.addNotification);
-  const queryClient = useQueryClient();
+  const [activeTab, setActiveTab] = useState('receivable');
 
-  const [activeTab, setActiveTab] = useState<string>('receivable');
-  const [searchTerm, setSearchTerm] = useState('');
-  const [filterStatus, setFilterStatus] = useState('');
-  const [showCreateDialog, setShowCreateDialog] = useState(false);
-  const [editingItem, setEditingItem] = useState<SalesInvoice | PurchaseInvoice | null>(null);
-  const [showDetailDialog, setShowDetailDialog] = useState(false);
-  const [selectedItem, setSelectedItem] = useState<SalesInvoice | PurchaseInvoice | null>(null);
-
-  const [formData, setFormData] = useState({
-    invoice_no: '',
-    customer_name: '',
-    supplier_name: '',
-    amount: '',
-    tax_amount: '',
-    invoice_date: '',
-    due_date: '',
-    invoice_type: 'normal' as 'normal' | 'special',
-    status: 'draft' as InvoiceStatus,
-  });
-
-  const receivablesQuery = useQuery<SalesInvoice[]>({
+  const receivablesQuery = useQuery({
     queryKey: QUERY_KEYS.FINANCE.RECEIVABLES,
     queryFn: async () => {
       const res = await financeApi.receivablePayable.listSalesInvoices();
@@ -75,7 +57,7 @@ const FinanceReceivablePayablePage: React.FC = () => {
     },
   });
 
-  const payablesQuery = useQuery<PurchaseInvoice[]>({
+  const payablesQuery = useQuery({
     queryKey: QUERY_KEYS.FINANCE.PAYABLES,
     queryFn: async () => {
       const res = await financeApi.receivablePayable.listPurchaseInvoices();
@@ -88,245 +70,36 @@ const FinanceReceivablePayablePage: React.FC = () => {
 
   const receivables = receivablesQuery.data || [];
   const payables = payablesQuery.data || [];
-  const loading = receivablesQuery.isLoading || payablesQuery.isLoading;
-
-  const invalidateInvoices = () => {
-    queryClient.invalidateQueries({ queryKey: QUERY_KEYS.FINANCE.RECEIVABLES });
-    queryClient.invalidateQueries({ queryKey: QUERY_KEYS.FINANCE.PAYABLES });
-  };
-
-  const createReceivableMutation = useMutation({
-    mutationFn: (data: any) => financeApi.receivablePayable.createSalesInvoice(data),
-    onSuccess: () => {
-      addNotification({ title: t('finance.finance_receivable_payable_page.success'), message: t('finance.finance_receivable_payable_page.create'), type: 'success' });
-      setShowCreateDialog(false);
-      resetForm();
-      invalidateInvoices();
-    },
-    onError: (err: unknown) => {
-      apiLogger.error(t('finance.finance_receivable_payable_page.create_1'), err);
-      addNotification({ title: t('finance.finance_receivable_payable_page.error'), message: t('finance.finance_receivable_payable_page.create_2'), type: 'error' });
-    },
-  });
-
-  const createPayableMutation = useMutation({
-    mutationFn: (data: any) => financeApi.receivablePayable.createPurchaseInvoice(data),
-    onSuccess: () => {
-      addNotification({ title: t('finance.finance_receivable_payable_page.success'), message: t('finance.finance_receivable_payable_page.create_3'), type: 'success' });
-      setShowCreateDialog(false);
-      resetForm();
-      invalidateInvoices();
-    },
-    onError: (err: unknown) => {
-      apiLogger.error(t('finance.finance_receivable_payable_page.create_4'), err);
-      addNotification({ title: t('finance.finance_receivable_payable_page.error'), message: t('finance.finance_receivable_payable_page.create_5'), type: 'error' });
-    },
-  });
-
-  const updateReceivableMutation = useMutation({
-    mutationFn: (params: { id: string; data: any }) =>
-      financeApi.receivablePayable.updateSalesInvoice(params.id, params.data),
-    onSuccess: () => {
-      addNotification({ title: t('finance.finance_receivable_payable_page.success'), message: t('finance.finance_receivable_payable_page.update'), type: 'success' });
-      setEditingItem(null);
-      setShowCreateDialog(false);
-      resetForm();
-      invalidateInvoices();
-    },
-    onError: (err: unknown) => {
-      apiLogger.error(t('finance.finance_receivable_payable_page.update_1'), err);
-      addNotification({ title: t('finance.finance_receivable_payable_page.error'), message: t('finance.finance_receivable_payable_page.update_2'), type: 'error' });
-    },
-  });
-
-  const updatePayableMutation = useMutation({
-    mutationFn: (params: { id: string; data: any }) =>
-      financeApi.receivablePayable.updatePurchaseInvoice(params.id, params.data),
-    onSuccess: () => {
-      addNotification({ title: t('finance.finance_receivable_payable_page.success'), message: t('finance.finance_receivable_payable_page.update_3'), type: 'success' });
-      setEditingItem(null);
-      setShowCreateDialog(false);
-      resetForm();
-      invalidateInvoices();
-    },
-    onError: (err: unknown) => {
-      apiLogger.error(t('finance.finance_receivable_payable_page.update_4'), err);
-      addNotification({ title: t('finance.finance_receivable_payable_page.error'), message: t('finance.finance_receivable_payable_page.update_5'), type: 'error' });
-    },
-  });
-
-  const deleteReceivableMutation = useMutation({
-    mutationFn: (id: string) => financeApi.receivablePayable.deleteSalesInvoice(id),
-    onSuccess: () => {
-      addNotification({ title: t('finance.finance_receivable_payable_page.success'), message: t('finance.finance_receivable_payable_page.delete_success'), type: 'success' });
-      invalidateInvoices();
-    },
-    onError: (err: unknown) => {
-      apiLogger.error(t('finance.finance_receivable_payable_page.delete'), err);
-      addNotification({ title: t('finance.finance_receivable_payable_page.error'), message: t('finance.finance_receivable_payable_page.delete_1'), type: 'error' });
-    },
-  });
-
-  const deletePayableMutation = useMutation({
-    mutationFn: (id: string) => financeApi.receivablePayable.deletePurchaseInvoice(id),
-    onSuccess: () => {
-      addNotification({ title: t('finance.finance_receivable_payable_page.success'), message: t('finance.finance_receivable_payable_page.delete_success_1'), type: 'success' });
-      invalidateInvoices();
-    },
-    onError: (err: unknown) => {
-      apiLogger.error(t('finance.finance_receivable_payable_page.delete_2'), err);
-      addNotification({ title: t('finance.finance_receivable_payable_page.error'), message: t('finance.finance_receivable_payable_page.delete_3'), type: 'error' });
-    },
-  });
-
-  const buildInvoiceData = () => ({
-    invoice_no: formData.invoice_no,
-    customer_name: formData.customer_name,
-    supplier_name: formData.supplier_name,
-    amount: parseFloat(formData.amount) || 0,
-    tax_amount: parseFloat(formData.tax_amount) || 0,
-    invoice_date: formData.invoice_date,
-    due_date: formData.due_date,
-    invoice_type: formData.invoice_type,
-    status: formData.status,
-  });
-
-  const handleCreateReceivable = () => {
-    createReceivableMutation.mutate(buildInvoiceData());
-  };
-
-  const handleCreatePayable = () => {
-    createPayableMutation.mutate(buildInvoiceData());
-  };
-
-  const handleUpdateReceivable = () => {
-    if (!editingItem) return;
-    updateReceivableMutation.mutate({ id: editingItem.id, data: buildInvoiceData() });
-  };
-
-  const handleUpdatePayable = () => {
-    if (!editingItem) return;
-    updatePayableMutation.mutate({ id: editingItem.id, data: buildInvoiceData() });
-  };
-
-  const handleDeleteReceivable = (id: string) => {
-    if (!window.confirm(t('finance.finance_receivable_payable_page.confirm'))) return;
-    deleteReceivableMutation.mutate(id);
-  };
-
-  const handleDeletePayable = (id: string) => {
-    if (!window.confirm(t('finance.finance_receivable_payable_page.confirm_1'))) return;
-    deletePayableMutation.mutate(id);
-  };
-
-  const openEditDialog = (item: SalesInvoice | PurchaseInvoice) => {
-    setEditingItem(item);
-    if ('customer_name' in item) {
-      setFormData({
-        invoice_no: item.invoice_no,
-        customer_name: item.customer_name,
-        supplier_name: '',
-        amount: item.amount.toString(),
-        tax_amount: item.tax_amount.toString(),
-        invoice_date: item.invoice_date,
-        due_date: item.due_date,
-        invoice_type: item.invoice_type as 'normal' | 'special',
-        status: item.status,
-      });
-    } else {
-      setFormData({
-        invoice_no: item.invoice_no,
-        customer_name: '',
-        supplier_name: item.supplier_name,
-        amount: item.amount.toString(),
-        tax_amount: item.tax_amount.toString(),
-        invoice_date: item.invoice_date,
-        due_date: item.due_date,
-        invoice_type: item.invoice_type as 'normal' | 'special',
-        status: item.status,
-      });
-    }
-    setShowCreateDialog(true);
-  };
-
-  const openDetailDialog = (item: SalesInvoice | PurchaseInvoice) => {
-    setSelectedItem(item);
-    setShowDetailDialog(true);
-  };
-
-  const resetForm = () => {
-    setFormData({
-      invoice_no: '',
-      customer_name: '',
-      supplier_name: '',
-      amount: '',
-      tax_amount: '',
-      invoice_date: '',
-      due_date: '',
-      invoice_type: 'normal',
-      status: 'draft',
-    });
-  };
 
   const formatCurrency = (amount: number) =>
     `¥${amount.toLocaleString('zh-CN', { minimumFractionDigits: 2 })}`;
-
-  const getStatusBadge = (status: InvoiceStatus) => {
-    const colorMap: Record<
-      InvoiceStatus,
-      'default' | 'primary' | 'secondary' | 'success' | 'error' | 'info' | 'warning'
-    > = {
-      draft: 'default',
-      approved: 'info',
-      invoiced: 'primary',
-      partial_received: 'warning',
-      received: 'success',
-      overdue: 'error',
-    };
-    const labelMap: Record<InvoiceStatus, string> = {
-      draft: t('finance.finance_receivable_payable_page.text_22b433'),
-      approved: t('finance.finance_receivable_payable_page.approved'),
-      invoiced: t('finance.finance_receivable_payable_page.text_ca4355'),
-      partial_received: t('finance.finance_receivable_payable_page.text_94bfdb'),
-      received: t('finance.finance_receivable_payable_page.text_bbdd42'),
-      overdue: t('finance.finance_receivable_payable_page.text_5d8559'),
-    };
-    return (
-      <Chip
-        size='small'
-        color={colorMap[status] || 'default'}
-        label={labelMap[status] || status}
-      />
-    );
-  };
 
   const isOverdue = (dueDate?: string) => {
     if (!dueDate) return false;
     return new Date(dueDate) < new Date();
   };
 
-  const isPaid = (status: InvoiceStatus) => status === 'received';
+  const isPaid = (status: string) => status === 'posted';
 
-  // 统计数据计算
-  const totalReceivable = receivables.reduce((sum, r) => sum + r.total_amount, 0);
-  const receivedAmount = receivables.reduce((sum, r) => sum + r.received_amount, 0);
+  const totalReceivable = receivables.reduce(
+    (sum: number, r: any) => sum + (r.total_amount || 0),
+    0
+  );
   const pendingReceivable = receivables
-    .filter((r) => !isPaid(r.status))
-    .reduce((sum, r) => sum + (r.total_amount - r.received_amount), 0);
+    .filter((r: any) => !isPaid(r.status))
+    .reduce((sum: number, r: any) => sum + ((r.total_amount || 0) - (r.received_amount || 0)), 0);
   const overdueReceivable = receivables
-    .filter((r) => isOverdue(r.due_date) && !isPaid(r.status))
-    .reduce((sum, r) => sum + (r.total_amount - r.received_amount), 0);
+    .filter((r: any) => isOverdue(r.due_date) && !isPaid(r.status))
+    .reduce((sum: number, r: any) => sum + ((r.total_amount || 0) - (r.received_amount || 0)), 0);
 
-  const totalPayable = payables.reduce((sum, p) => sum + p.total_amount, 0);
-  const paidAmount = payables.reduce((sum, p) => sum + p.paid_amount, 0);
+  const totalPayable = payables.reduce((sum: number, p: any) => sum + (p.total_amount || 0), 0);
   const pendingPayable = payables
-    .filter((p) => !isPaid(p.status))
-    .reduce((sum, p) => sum + (p.total_amount - p.paid_amount), 0);
+    .filter((p: any) => !isPaid(p.status))
+    .reduce((sum: number, p: any) => sum + ((p.total_amount || 0) - (p.paid_amount || 0)), 0);
   const overduePayable = payables
-    .filter((p) => isOverdue(p.due_date) && !isPaid(p.status))
-    .reduce((sum, p) => sum + (p.total_amount - p.paid_amount), 0);
+    .filter((p: any) => isOverdue(p.due_date) && !isPaid(p.status))
+    .reduce((sum: number, p: any) => sum + ((p.total_amount || 0) - (p.paid_amount || 0)), 0);
 
-  // 统计卡片配置
   const statCards = useMemo(
     () => [
       {
@@ -356,246 +129,6 @@ const FinanceReceivablePayablePage: React.FC = () => {
     ],
     [totalReceivable, totalPayable, pendingReceivable, pendingPayable]
   );
-
-  // 筛选后的应收账款数据
-  const filteredReceivables = useMemo(() => {
-    return receivables.filter((r) => {
-      const matchesSearch =
-        r.invoice_no.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        r.customer_name.toLowerCase().includes(searchTerm.toLowerCase());
-      const matchesStatus = !filterStatus || r.status === filterStatus;
-      return matchesSearch && matchesStatus;
-    });
-  }, [receivables, searchTerm, filterStatus]);
-
-  // 筛选后的应付账款数据
-  const filteredPayables = useMemo(() => {
-    return payables.filter((p) => {
-      const matchesSearch =
-        p.invoice_no.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        p.supplier_name.toLowerCase().includes(searchTerm.toLowerCase());
-      const matchesStatus = !filterStatus || p.status === filterStatus;
-      return matchesSearch && matchesStatus;
-    });
-  }, [payables, searchTerm, filterStatus]);
-
-  // 应收账款列定义
-  const receivableColumns = useMemo<ColumnDef<SalesInvoice>[]>(
-    () => [
-      {
-        id: 'invoice_no',
-        label: t('finance.finance_receivable_payable_page.text_df5d06'),
-        render: (row) => <Box sx={{ fontWeight: 'medium' }}>{row.invoice_no}</Box>,
-      },
-      {
-        id: 'customer_name',
-        label: t('finance.finance_receivable_payable_page.customer_name'),
-        render: (row) => row.customer_name,
-      },
-      {
-        id: 'total_amount',
-        label: t('finance.finance_receivable_payable_page.amount_2'),
-        align: 'right',
-        render: (row) => (
-          <Box sx={{ fontFamily: 'monospace' }}>{formatCurrency(row.total_amount)}</Box>
-        ),
-      },
-      {
-        id: 'received_amount',
-        label: t('finance.finance_receivable_payable_page.text_b511e9'),
-        align: 'right',
-        render: (row) => (
-          <Box sx={{ fontFamily: 'monospace', color: 'success.main' }}>
-            {formatCurrency(row.received_amount)}
-          </Box>
-        ),
-      },
-      {
-        id: 'pending_amount',
-        label: t('finance.finance_receivable_payable_page.text_c75e2f'),
-        align: 'right',
-        render: (row) => (
-          <Box
-            sx={{
-              fontFamily: 'monospace',
-              fontWeight: 'medium',
-              color: isOverdue(row.due_date) && !isPaid(row.status) ? 'error.main' : 'warning.main',
-            }}
-          >
-            {formatCurrency(row.total_amount - row.received_amount)}
-          </Box>
-        ),
-      },
-      {
-        id: 'due_date',
-        label: t('finance.finance_receivable_payable_page.date'),
-        render: (row) => (
-          <Box
-            sx={{
-              color: isOverdue(row.due_date) && !isPaid(row.status) ? 'error.main' : 'text.primary',
-            }}
-          >
-            {row.due_date ? new Date(row.due_date).toLocaleDateString() : '-'}
-          </Box>
-        ),
-      },
-      {
-        id: 'status',
-        label: t('finance.finance_receivable_payable_page.status'),
-        render: (row) => getStatusBadge(row.status),
-      },
-    ],
-    []
-  );
-
-  // 应付账款列定义
-  const payableColumns = useMemo<ColumnDef<PurchaseInvoice>[]>(
-    () => [
-      {
-        id: 'invoice_no',
-        label: t('finance.finance_receivable_payable_page.text_df5d06'),
-        render: (row) => <Box sx={{ fontWeight: 'medium' }}>{row.invoice_no}</Box>,
-      },
-      {
-        id: 'supplier_name',
-        label: t('finance.finance_receivable_payable_page.supplier'),
-        render: (row) => row.supplier_name,
-      },
-      {
-        id: 'total_amount',
-        label: t('finance.finance_receivable_payable_page.amount_2'),
-        align: 'right',
-        render: (row) => (
-          <Box sx={{ fontFamily: 'monospace' }}>{formatCurrency(row.total_amount)}</Box>
-        ),
-      },
-      {
-        id: 'paid_amount',
-        label: t('finance.finance_receivable_payable_page.text_57b642'),
-        align: 'right',
-        render: (row) => (
-          <Box sx={{ fontFamily: 'monospace', color: 'success.main' }}>
-            {formatCurrency(row.paid_amount)}
-          </Box>
-        ),
-      },
-      {
-        id: 'pending_amount',
-        label: t('finance.finance_receivable_payable_page.text_931f1f'),
-        align: 'right',
-        render: (row) => (
-          <Box
-            sx={{
-              fontFamily: 'monospace',
-              fontWeight: 'medium',
-              color: isOverdue(row.due_date) && !isPaid(row.status) ? 'error.main' : 'warning.main',
-            }}
-          >
-            {formatCurrency(row.total_amount - row.paid_amount)}
-          </Box>
-        ),
-      },
-      {
-        id: 'due_date',
-        label: t('finance.finance_receivable_payable_page.date'),
-        render: (row) => (
-          <Box
-            sx={{
-              color: isOverdue(row.due_date) && !isPaid(row.status) ? 'error.main' : 'text.primary',
-            }}
-          >
-            {row.due_date ? new Date(row.due_date).toLocaleDateString() : '-'}
-          </Box>
-        ),
-      },
-      {
-        id: 'status',
-        label: t('finance.finance_receivable_payable_page.status'),
-        render: (row) => getStatusBadge(row.status),
-      },
-    ],
-    []
-  );
-
-  // 应收账款行操作
-  const receivableRowActions = useMemo<RowAction<SalesInvoice>[]>(
-    () => [
-      {
-        label: t('finance.finance_receivable_payable_page.view'),
-        icon: <Eye size={16} />,
-        onClick: (row) => openDetailDialog(row),
-      },
-      {
-        label: t('finance.finance_receivable_payable_page.edit'),
-        icon: <Edit2 size={16} />,
-        onClick: (row) => openEditDialog(row),
-        color: 'primary',
-      },
-      {
-        label: t('finance.finance_receivable_payable_page.delete_4'),
-        icon: <Trash2 size={16} />,
-        onClick: (row) => handleDeleteReceivable(row.id),
-        color: 'error',
-      },
-    ],
-    []
-  );
-
-  // 应付账款行操作
-  const payableRowActions = useMemo<RowAction<PurchaseInvoice>[]>(
-    () => [
-      {
-        label: t('finance.finance_receivable_payable_page.view'),
-        icon: <Eye size={16} />,
-        onClick: (row) => openDetailDialog(row),
-      },
-      {
-        label: t('finance.finance_receivable_payable_page.edit'),
-        icon: <Edit2 size={16} />,
-        onClick: (row) => openEditDialog(row),
-        color: 'primary',
-      },
-      {
-        label: t('finance.finance_receivable_payable_page.delete_4'),
-        icon: <Trash2 size={16} />,
-        onClick: (row) => handleDeletePayable(row.id),
-        color: 'error',
-      },
-    ],
-    []
-  );
-
-  // 筛选器配置
-  const filters = useMemo(
-    () => [
-      {
-        id: 'status',
-        label: t('finance.finance_receivable_payable_page.status'),
-        type: 'select' as const,
-        options: [
-          { value: '', label: t('finance.finance_receivable_payable_page.all') },
-          { value: 'draft', label: t('finance.finance_receivable_payable_page.text_22b433') },
-          { value: 'approved', label: t('finance.finance_receivable_payable_page.approved') },
-          { value: 'invoiced', label: t('finance.finance_receivable_payable_page.text_ca4355') },
-          { value: 'partial_received', label: t('finance.finance_receivable_payable_page.text_94bfdb') },
-          { value: 'received', label: t('finance.finance_receivable_payable_page.text_bbdd42') },
-          { value: 'overdue', label: t('finance.finance_receivable_payable_page.text_5d8559') },
-        ],
-        value: filterStatus,
-        onChange: (value: unknown) => setFilterStatus(value as string),
-      },
-    ],
-    [filterStatus, activeTab]
-  );
-
-  const handleSearch = () => {
-    // 搜索逻辑已通过 useMemo 实现前端筛选
-  };
-
-  const handleReset = () => {
-    setSearchTerm('');
-    setFilterStatus('');
-  };
 
   return (
     <PageContainer
@@ -628,22 +161,13 @@ const FinanceReceivablePayablePage: React.FC = () => {
             管理企业应收账款和应付账款
           </Typography>
         </Box>
-        <Button
-          variant='contained'
-          onClick={() => setShowCreateDialog(true)}
-        >
-          <Plus sx={{ width: 16, height: 16, mr: 1 }} />
-          <span>新增{activeTab === 'receivable' ? t('finance.finance_receivable_payable_page.text_fccab9') : t('finance.finance_receivable_payable_page.text_855bfd')}</span>
-        </Button>
       </Box>
 
-      {/* 统计卡片 */}
       <StatCardGroup
         stats={statCards}
         columns={4}
       />
 
-      {/* Tab 切换 */}
       <Box sx={{ borderBottom: 1, borderColor: 'divider' }}>
         <Tabs
           value={activeTab}
@@ -684,499 +208,21 @@ const FinanceReceivablePayablePage: React.FC = () => {
         </Tabs>
       </Box>
 
-      {/* 应收账款列表 */}
       {activeTab === 'receivable' && (
-        <ListPageTemplate
-          columns={receivableColumns}
-          data={filteredReceivables}
-          loading={loading}
-          searchable
-          searchPlaceholder={t('finance.finance_receivable_payable_page.customer_name_1')}
-          searchValue={searchTerm}
-          onSearch={setSearchTerm}
-          filters={filters}
-          filtersValue={{ status: filterStatus }}
-          onFilterChange={(filters) => {
-            if (filters.status !== undefined) setFilterStatus(filters.status as string);
-          }}
-          rowActions={receivableRowActions}
-          onRefresh={() => {
-            receivablesQuery.refetch();
-            payablesQuery.refetch();
-          }}
-          actions={[
-            { label: t('finance.finance_receivable_payable_page.search'), variant: 'outlined', onClick: handleSearch },
-            { label: t('finance.finance_receivable_payable_page.reset'), variant: 'outlined', onClick: handleReset },
-          ]}
-          emptyMessage={t('finance.finance_receivable_payable_page.no_data')}
+        <CrudPage
+          schema={receivableSchema as EntitySchema & SchemaExtensions}
+          apiAdapter={receivableAdapter}
+          breadcrumbs={[{ label: '财务' }, { label: '应收应付' }, { label: '应收单' }]}
         />
       )}
 
-      {/* 应付账款列表 */}
       {activeTab === 'payable' && (
-        <ListPageTemplate
-          columns={payableColumns}
-          data={filteredPayables}
-          loading={loading}
-          searchable
-          searchPlaceholder={t('finance.finance_receivable_payable_page.supplier_1')}
-          searchValue={searchTerm}
-          onSearch={setSearchTerm}
-          filters={filters}
-          filtersValue={{ status: filterStatus }}
-          onFilterChange={(filters) => {
-            if (filters.status !== undefined) setFilterStatus(filters.status as string);
-          }}
-          rowActions={payableRowActions}
-          onRefresh={() => {
-            receivablesQuery.refetch();
-            payablesQuery.refetch();
-          }}
-          actions={[
-            { label: t('finance.finance_receivable_payable_page.search'), variant: 'outlined', onClick: handleSearch },
-            { label: t('finance.finance_receivable_payable_page.reset'), variant: 'outlined', onClick: handleReset },
-          ]}
-          emptyMessage={t('finance.finance_receivable_payable_page.no_data_1')}
+        <CrudPage
+          schema={payableSchema as EntitySchema & SchemaExtensions}
+          apiAdapter={payableAdapter}
+          breadcrumbs={[{ label: '财务' }, { label: '应收应付' }, { label: '应付单' }]}
         />
       )}
-
-      {/* 创建/编辑对话框 */}
-      <Dialog
-        open={showCreateDialog}
-        onClose={() => {
-          setShowCreateDialog(false);
-          setEditingItem(null);
-          resetForm();
-        }}
-        maxWidth='sm'
-        fullWidth
-      >
-        <DialogTitle>
-          {editingItem ? t('finance.finance_receivable_payable_page.edit') : t('finance.finance_receivable_payable_page.add')}
-          {activeTab === 'receivable' ? t('finance.finance_receivable_payable_page.text_bd671b') : t('finance.finance_receivable_payable_page.text_3c218e')}
-        </DialogTitle>
-        <DialogContent>
-          <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2, mt: 1 }}>
-            <TextField
-              label={t('finance.finance_receivable_payable_page.text_df5d06')}
-              value={formData.invoice_no}
-              onChange={(e) => setFormData({ ...formData, invoice_no: e.target.value })}
-              placeholder={t('finance.finance_receivable_payable_page.please_input')}
-              fullWidth
-              size='small'
-            />
-            {activeTab === 'receivable' ? (
-              <TextField
-                label={t('finance.finance_receivable_payable_page.customer_name')}
-                value={formData.customer_name}
-                onChange={(e) =>
-                  setFormData({
-                    ...formData,
-                    customer_name: e.target.value,
-                  })
-                }
-                placeholder={t('finance.finance_receivable_payable_page.customer_name_2')}
-                fullWidth
-                size='small'
-              />
-            ) : (
-              <TextField
-                label={t('finance.finance_receivable_payable_page.supplier_name')}
-                value={formData.supplier_name}
-                onChange={(e) =>
-                  setFormData({
-                    ...formData,
-                    supplier_name: e.target.value,
-                  })
-                }
-                placeholder={t('finance.finance_receivable_payable_page.supplier_name_1')}
-                fullWidth
-                size='small'
-              />
-            )}
-            <TextField
-              label={t('finance.finance_receivable_payable_page.amount_3')}
-              type='number'
-              value={formData.amount}
-              onChange={(e) => setFormData({ ...formData, amount: e.target.value })}
-              placeholder={t('finance.finance_receivable_payable_page.please_input_1')}
-              fullWidth
-              size='small'
-            />
-            <TextField
-              label={t('finance.finance_receivable_payable_page.text_87b755')}
-              type='number'
-              value={formData.tax_amount}
-              onChange={(e) => setFormData({ ...formData, tax_amount: e.target.value })}
-              placeholder={t('finance.finance_receivable_payable_page.please_input_2')}
-              fullWidth
-              size='small'
-            />
-            <FormControl
-              fullWidth
-              size='small'
-            >
-              <InputLabel>发票类型</InputLabel>
-              <Select
-                value={formData.invoice_type}
-                label={t('finance.finance_receivable_payable_page.type')}
-                onChange={(e) => setFormData({ ...formData, invoice_type: e.target.value })}
-              >
-                <MenuItem value='normal'>普通发票</MenuItem>
-                <MenuItem value='special'>增值税专用发票</MenuItem>
-              </Select>
-            </FormControl>
-            <Box sx={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 2 }}>
-              <TextField
-                label={t('finance.finance_receivable_payable_page.date_1')}
-                type='date'
-                value={formData.invoice_date}
-                onChange={(e) => setFormData({ ...formData, invoice_date: e.target.value })}
-                size='small'
-                slotProps={{ inputLabel: { shrink: true } } as const}
-              />
-              <TextField
-                label={t('finance.finance_receivable_payable_page.date')}
-                type='date'
-                value={formData.due_date}
-                onChange={(e) => setFormData({ ...formData, due_date: e.target.value })}
-                size='small'
-                slotProps={{ inputLabel: { shrink: true } } as const}
-              />
-            </Box>
-            <FormControl
-              fullWidth
-              size='small'
-            >
-              <InputLabel>状态</InputLabel>
-              <Select
-                value={formData.status}
-                label={t('finance.finance_receivable_payable_page.status')}
-                onChange={(e) =>
-                  setFormData({ ...formData, status: e.target.value as InvoiceStatus })
-                }
-              >
-                <MenuItem value='draft'>草稿</MenuItem>
-                <MenuItem value='approved'>已审核</MenuItem>
-                <MenuItem value='invoiced'>已开票</MenuItem>
-                <MenuItem value='partial_received'>部分收/付</MenuItem>
-                <MenuItem value='received'>已结清</MenuItem>
-                <MenuItem value='overdue'>已逾期</MenuItem>
-              </Select>
-            </FormControl>
-          </Box>
-        </DialogContent>
-        <DialogActions>
-          <Button
-            variant='outlined'
-            onClick={() => {
-              setShowCreateDialog(false);
-              setEditingItem(null);
-              resetForm();
-            }}
-          >
-            取消
-          </Button>
-          <Button
-            variant='contained'
-            onClick={
-              editingItem
-                ? activeTab === 'receivable'
-                  ? handleUpdateReceivable
-                  : handleUpdatePayable
-                : activeTab === 'receivable'
-                  ? handleCreateReceivable
-                  : handleCreatePayable
-            }
-          >
-            {editingItem ? t('finance.finance_receivable_payable_page.update_6') : t('finance.finance_receivable_payable_page.create_6')}
-          </Button>
-        </DialogActions>
-      </Dialog>
-
-      {/* 详情对话框 */}
-      <Dialog
-        open={showDetailDialog}
-        onClose={() => setShowDetailDialog(false)}
-        maxWidth='sm'
-        fullWidth
-      >
-        <DialogTitle sx={{ display: 'flex', alignItems: 'center' }}>
-          {selectedItem && 'customer_name' in selectedItem ? (
-            <ArrowUpRight sx={{ width: 20, height: 20, mr: 1, color: 'indigo.600' }} />
-          ) : (
-            <ArrowDownRight sx={{ width: 20, height: 20, mr: 1, color: 'indigo.600' }} />
-          )}
-          {selectedItem && 'customer_name' in selectedItem ? t('finance.finance_receivable_payable_page.text_bd671b') : t('finance.finance_receivable_payable_page.text_3c218e')}
-          详情
-        </DialogTitle>
-        <DialogContent>
-          {selectedItem && (
-            <Box sx={{ display: 'flex', flexDirection: 'column', gap: 3, mt: 1 }}>
-              <Box
-                sx={{
-                  display: 'grid',
-                  gridTemplateColumns: 'repeat(2, 1fr)',
-                  gap: 2,
-                }}
-              >
-                <Box sx={{ p: 2, bgcolor: 'grey.50', borderRadius: 1 }}>
-                  <Typography
-                    variant='body2'
-                    color='text.secondary'
-                  >
-                    发票编号
-                  </Typography>
-                  <Typography sx={{ fontWeight: 'medium', mt: 0.5 }}>
-                    {selectedItem.invoice_no}
-                  </Typography>
-                </Box>
-                {'customer_name' in selectedItem ? (
-                  <Box sx={{ p: 2, bgcolor: 'grey.50', borderRadius: 1 }}>
-                    <Typography
-                      variant='body2'
-                      color='text.secondary'
-                    >
-                      客户名称
-                    </Typography>
-                    <Typography sx={{ fontWeight: 'medium', mt: 0.5 }}>
-                      {selectedItem.customer_name}
-                    </Typography>
-                  </Box>
-                ) : (
-                  <Box sx={{ p: 2, bgcolor: 'grey.50', borderRadius: 1 }}>
-                    <Typography
-                      variant='body2'
-                      color='text.secondary'
-                    >
-                      供应商
-                    </Typography>
-                    <Typography sx={{ fontWeight: 'medium', mt: 0.5 }}>
-                      {selectedItem.supplier_name}
-                    </Typography>
-                  </Box>
-                )}
-              </Box>
-
-              <Box sx={{ p: 2, bgcolor: 'grey.50', borderRadius: 1 }}>
-                <Typography
-                  variant='body2'
-                  color='text.secondary'
-                >
-                  发票类型
-                </Typography>
-                <Typography sx={{ fontWeight: 'medium', mt: 0.5 }}>
-                  {selectedItem.invoice_type === 'special' ? t('finance.finance_receivable_payable_page.text_e3eaa7') : t('finance.finance_receivable_payable_page.text_747c7a')}
-                </Typography>
-              </Box>
-
-              <Box
-                sx={{
-                  p: 3,
-                  bgcolor: `linear-gradient(135deg, primary.light 0%, ${ct.primary[50]} 100%)`,
-                  borderRadius: 3,
-                }}
-              >
-                <Box
-                  sx={{
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'space-between',
-                    mb: 2,
-                  }}
-                >
-                  <Typography
-                    variant='body2'
-                    color='text.secondary'
-                  >
-                    含税金额
-                  </Typography>
-                  <Typography
-                    variant='h5'
-                    sx={{ fontWeight: 'bold', color: 'primary.main' }}
-                  >
-                    {formatCurrency(selectedItem.total_amount)}
-                  </Typography>
-                </Box>
-                <Box
-                  sx={{
-                    display: 'grid',
-                    gridTemplateColumns: 'repeat(3, 1fr)',
-                    gap: 2,
-                    mb: 2,
-                  }}
-                >
-                  <Box>
-                    <Typography
-                      variant='body2'
-                      color='text.secondary'
-                    >
-                      不含税金额
-                    </Typography>
-                    <Typography
-                      variant='body1'
-                      sx={{ fontWeight: 'medium' }}
-                    >
-                      {formatCurrency(selectedItem.amount)}
-                    </Typography>
-                  </Box>
-                  <Box>
-                    <Typography
-                      variant='body2'
-                      color='text.secondary'
-                    >
-                      税额
-                    </Typography>
-                    <Typography
-                      variant='body1'
-                      sx={{ fontWeight: 'medium' }}
-                    >
-                      {formatCurrency(selectedItem.tax_amount)}
-                    </Typography>
-                  </Box>
-                </Box>
-                <Box
-                  sx={{
-                    display: 'grid',
-                    gridTemplateColumns: 'repeat(2, 1fr)',
-                    gap: 2,
-                  }}
-                >
-                  <Box>
-                    <Typography
-                      variant='body2'
-                      color='text.secondary'
-                    >
-                      {'received_amount' in selectedItem ? t('finance.finance_receivable_payable_page.text_b511e9') : t('finance.finance_receivable_payable_page.text_57b642')}
-                    </Typography>
-                    <Typography
-                      variant='h6'
-                      sx={{ fontWeight: 'bold', color: 'success.main' }}
-                    >
-                      {formatCurrency(
-                        'received_amount' in selectedItem
-                          ? selectedItem.received_amount
-                          : selectedItem.paid_amount
-                      )}
-                    </Typography>
-                  </Box>
-                  <Box>
-                    <Typography
-                      variant='body2'
-                      color='text.secondary'
-                    >
-                      {'received_amount' in selectedItem ? t('finance.finance_receivable_payable_page.text_c75e2f') : t('finance.finance_receivable_payable_page.text_931f1f')}
-                    </Typography>
-                    <Typography
-                      variant='h6'
-                      sx={{
-                        fontWeight: 'bold',
-                        color:
-                          isOverdue(selectedItem.due_date) && !isPaid(selectedItem.status)
-                            ? 'error.main'
-                            : 'warning.main',
-                      }}
-                    >
-                      {formatCurrency(
-                        selectedItem.total_amount -
-                          ('received_amount' in selectedItem
-                            ? selectedItem.received_amount
-                            : selectedItem.paid_amount)
-                      )}
-                    </Typography>
-                  </Box>
-                </Box>
-              </Box>
-
-              <Box
-                sx={{
-                  display: 'grid',
-                  gridTemplateColumns: 'repeat(2, 1fr)',
-                  gap: 2,
-                }}
-              >
-                <Box sx={{ p: 2, bgcolor: 'grey.50', borderRadius: 1 }}>
-                  <Typography
-                    variant='body2'
-                    color='text.secondary'
-                  >
-                    开票日期
-                  </Typography>
-                  <Typography sx={{ fontWeight: 'medium', mt: 0.5 }}>
-                    {selectedItem.invoice_date
-                      ? new Date(selectedItem.invoice_date).toLocaleDateString()
-                      : '-'}
-                  </Typography>
-                </Box>
-                <Box
-                  sx={{
-                    p: 2,
-                    bgcolor:
-                      isOverdue(selectedItem.due_date) && !isPaid(selectedItem.status)
-                        ? 'error.50'
-                        : 'grey.50',
-                    borderRadius: 1,
-                  }}
-                >
-                  <Typography
-                    variant='body2'
-                    color='text.secondary'
-                  >
-                    到期日期
-                  </Typography>
-                  <Typography
-                    sx={{
-                      fontWeight: 'medium',
-                      mt: 0.5,
-                      color:
-                        isOverdue(selectedItem.due_date) && !isPaid(selectedItem.status)
-                          ? 'error.main'
-                          : 'text.primary',
-                    }}
-                  >
-                    {selectedItem.due_date
-                      ? new Date(selectedItem.due_date).toLocaleDateString()
-                      : '-'}
-                  </Typography>
-                </Box>
-              </Box>
-
-              <Box
-                sx={{
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'space-between',
-                  p: 2,
-                  bgcolor: 'grey.50',
-                  borderRadius: 1,
-                }}
-              >
-                <Typography
-                  variant='body2'
-                  color='text.secondary'
-                >
-                  状态
-                </Typography>
-                {getStatusBadge(selectedItem.status)}
-              </Box>
-
-              <Box
-                sx={{
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'flex-start',
-                  typography: 'body2',
-                  color: 'text.secondary',
-                }}
-              >
-                <span>创建时间: {new Date(selectedItem.created_at).toLocaleString()}</span>
-              </Box>
-            </Box>
-          )}
-        </DialogContent>
-      </Dialog>
     </PageContainer>
   );
-};
-
-export default FinanceReceivablePayablePage;
+}

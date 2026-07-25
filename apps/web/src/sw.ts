@@ -9,7 +9,8 @@ import { ExpirationPlugin } from 'workbox-expiration';
 import { logger } from '@/utils/logger';
 
 // V24.0 模块 D: PWA 缓存版本（用于强制更新缓存）
-const CACHE_VERSION = 'v24.0';
+// V37.0 Phase 7: 升级缓存版本，新增远程模块入口缓存 + 智能预加载
+const CACHE_VERSION = 'v37.0';
 const CACHE_NAME = {
   PRECACHE: `topems-precache-${CACHE_VERSION}`,
   API: `topems-api-${CACHE_VERSION}`,
@@ -19,6 +20,10 @@ const CACHE_NAME = {
   CDN: `topems-cdn-${CACHE_VERSION}`,
   SYNC_QUEUE: `topems-sync-queue-${CACHE_VERSION}`,
   RUNTIME: `topems-runtime-${CACHE_VERSION}`,
+  // V37.0: 微前端远程模块入口缓存
+  REMOTE_ENTRIES: `topems-remote-entries-${CACHE_VERSION}`,
+  // V37.0: GraphQL 响应缓存
+  GRAPHQL: `topems-graphql-${CACHE_VERSION}`,
 } as const;
 
 // V26.0：性能优化 - 智能预缓存关键路由
@@ -210,6 +215,43 @@ registerRoute(
   })
 );
 
+// V37.0 Phase 7: 微前端远程模块入口缓存（Stale-While-Revalidate）
+// 远程入口 JS 文件（remoteEntry.js）缓存后支持离线加载微前端模块
+registerRoute(
+  ({ url }: { url: URL }) =>
+    url.pathname.includes('remoteEntry') ||
+    url.pathname.includes('/microfrontend/') ||
+    url.pathname.endsWith('/remote.js'),
+  new StaleWhileRevalidate({
+    cacheName: CACHE_NAME.REMOTE_ENTRIES,
+    plugins: [
+      new CacheableResponsePlugin({ statuses: [200] }),
+      new ExpirationPlugin({
+        maxAgeSeconds: 24 * 60 * 60, // 24 小时
+        maxEntries: 50,
+      }),
+    ],
+  })
+);
+
+// V37.0 Phase 7: GraphQL GET 请求缓存（基于 ETag 的条件请求）
+// POST 请求不缓存（可能包含敏感变量），仅缓存 GET 查询
+registerRoute(
+  ({ url, request }: { url: URL; request: Request }) =>
+    url.pathname === '/api/portal/graphql' && request.method === 'GET',
+  new NetworkFirst({
+    cacheName: CACHE_NAME.GRAPHQL,
+    networkTimeoutSeconds: 3,
+    plugins: [
+      new CacheableResponsePlugin({ statuses: [200] }),
+      new ExpirationPlugin({
+        maxAgeSeconds: 60, // 60 秒（与后端 Cache-Control 一致）
+        maxEntries: 30,
+      }),
+    ],
+  })
+);
+
 // V24.0 模块 D 增强：GET 请求的 NetworkFirst（关键 API 数据，如用户信息/权限）
 registerRoute(
   ({ url, request }: { url: URL; request: Request }) =>
@@ -389,10 +431,111 @@ self.addEventListener('message', (event) => {
         payload: cacheStats.getStats(),
       });
       break;
+    // V37.0 Phase 7: 记录用户导航历史（用于智能预加载）
+    case 'RECORD_NAVIGATION':
+      if (messageEvent.data.payload) {
+        recordNavigation(messageEvent.data.payload as string);
+      }
+      break;
+    // V37.0 Phase 7: 智能预加载（基于导航历史预测下一个可能访问的路由）
+    case 'PREFETCH_INTELLIGENT':
+      prefetchIntelligent(messageEvent.source);
+      break;
+    // V37.0 Phase 7: 预缓存远程模块入口
+    case 'PREFETCH_REMOTE_ENTRIES':
+      if (messageEvent.data.payload) {
+        const entries = messageEvent.data.payload as string[];
+        caches.open(CACHE_NAME.REMOTE_ENTRIES).then((cache) => {
+          entries.forEach((url) => {
+            cache.add(url).catch(() => {
+              // 静默失败
+            });
+          });
+        });
+      }
+      break;
     default:
       break;
   }
 });
+
+// ==================== V37.0 Phase 7: 智能预加载策略 ====================
+
+/**
+ * 导航历史记录（用于预测用户下一步访问的路由）
+ * 保留最近 50 条导航记录，基于马尔可夫链模型预测下一个路由
+ */
+const NAVIGATION_HISTORY_MAX = 50;
+let navigationHistory: string[] = [];
+
+/**
+ * 记录用户导航
+ * 客户端在路由变化时发送当前路径，Service Worker 据此学习导航模式
+ */
+function recordNavigation(path: string): void {
+  navigationHistory.push(path);
+  if (navigationHistory.length > NAVIGATION_HISTORY_MAX) {
+    navigationHistory.shift();
+  }
+}
+
+/**
+ * 基于导航历史预测下一个可能访问的路由
+ * 使用简单的马尔可夫链：统计从当前路由到其他路由的转移频率
+ */
+function predictNextRoutes(currentPath: string, topN = 3): string[] {
+  const transitions: Record<string, number> = {};
+
+  // 统计从 currentPath 到下一个路径的转移次数
+  for (let i = 0; i < navigationHistory.length - 1; i++) {
+    if (navigationHistory[i] === currentPath) {
+      const next = navigationHistory[i + 1];
+      transitions[next] = (transitions[next] || 0) + 1;
+    }
+  }
+
+  // 按转移频率排序，取前 N 个
+  return Object.entries(transitions)
+    .sort((a, b) => b[1] - a[1])
+    .slice(0, topN)
+    .map(([path]) => path);
+}
+
+/**
+ * 执行智能预加载
+ * 根据当前路由预测下一个可能访问的路由，提前缓存对应的远程模块入口
+ */
+async function prefetchIntelligent(client: Client | undefined): Promise<void> {
+  const currentPath = navigationHistory[navigationHistory.length - 1];
+  if (!currentPath) return;
+
+  const predictedRoutes = predictNextRoutes(currentPath);
+  if (predictedRoutes.length === 0) {
+    // 无历史数据时，回退到预缓存所有核心路由
+    return;
+  }
+
+  logger.info('[SW] 智能预加载预测路由:', predictedRoutes);
+
+  // 预缓存预测的路由页面
+  const cache = await caches.open(CACHE_NAME.PRECACHE);
+  for (const route of predictedRoutes) {
+    try {
+      const response = await fetch(route, { credentials: 'same-origin' });
+      if (response.ok) {
+        await cache.put(route, response);
+      }
+    } catch {
+      // 静默失败
+    }
+  }
+
+  // 通知客户端预加载结果
+  client?.postMessage({
+    type: 'PREFETCH_INTELLIGENT_RESULT',
+    payload: { predictedRoutes, currentPath },
+  });
+}
 
 // Activate 事件 - 清理旧版本缓存
 self.addEventListener('activate', (event) => {

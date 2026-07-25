@@ -1,0 +1,1149 @@
+# TOPEMS Docker Compose 配置
+# 用于开发和生产环境的数据库基础设施、API网关和监控系统
+# 版本: v5.0 - 与 plugin-architecture-design.md 端口规范同步
+
+version: '3.8'
+
+volumes:
+  postgres_data:
+  redis_data:
+  rabbitmq_data:
+  grafana_data:
+  prometheus_data:
+  consul_data:
+  jaeger_data:
+  traefik_logs:
+
+services:
+  postgres:
+    image: postgres:latest
+    container_name: topems-postgres
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER:-topems}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-topems_secret}
+      POSTGRES_DB: ${POSTGRES_DB:-topems}
+      PGDATA: /var/lib/postgresql/data/pgdata
+      TZ: UTC
+      PGTZ: UTC
+    ports:
+      - "${POSTGRES_PORT:-5432}:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+      - ./init-scripts:/docker-entrypoint-initdb.d:ro
+    networks:
+      - topems-network
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-topems} -d ${POSTGRES_DB:-topems}"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 30s
+    restart: unless-stopped
+
+  pgbouncer:
+    image: edoburu/pgbouncer:latest
+    container_name: topems-pgbouncer
+    environment:
+      - DATABASE_URL=postgres://topems:topems_secret@postgres:5432/topems
+      - PGBOUNCER_MAX_CLIENT_CONN=500
+      - PGBOUNCER_DEFAULT_POOL_SIZE=25
+      - PGBOUNCER_MAX_DB_CONNECTIONS=100
+    ports:
+      - "${PGBOUNCER_PORT:-6432}:6432"
+    volumes:
+      - ./pgbouncer/pgbouncer.ini:/etc/pgbouncer/pgbouncer.ini:ro
+      - ./pgbouncer/userlist.txt:/etc/pgbouncer/userlist.txt:ro
+    networks:
+      - topems-network
+    depends_on:
+      postgres:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "pg_isready", "-h", "localhost", "-p", "6432"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    restart: unless-stopped
+
+  redis:
+    image: redis:latest
+    container_name: topems-redis
+    command: redis-server --appendonly yes --maxmemory 256mb --maxmemory-policy allkeys-lru
+    ports:
+      - "${REDIS_PORT:-6379}:6379"
+    volumes:
+      - redis_data:/data
+    networks:
+      - topems-network
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 5s
+    restart: unless-stopped
+
+  rabbitmq:
+    image: rabbitmq:management
+    container_name: topems-rabbitmq
+    environment:
+      RABBITMQ_DEFAULT_USER: ${RABBITMQ_USER:-topems}
+      RABBITMQ_DEFAULT_PASS: ${RABBITMQ_PASSWORD:-topems_secret}
+    ports:
+      - "${RABBITMQ_PORT:-5672}:5672"
+      - "${RABBITMQ_MANAGEMENT_PORT:-15672}:15672"
+    volumes:
+      - rabbitmq_data:/var/lib/rabbitmq
+    networks:
+      - topems-network
+    healthcheck:
+      test: ["CMD", "rabbitmqctl", "status"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 30s
+    restart: unless-stopped
+
+  # ================================================
+  # 服务注册与发现
+  # ================================================
+  consul:
+    image: consul:latest
+    container_name: topems-consul
+    ports:
+      - "${CONSUL_HTTP_PORT:-8500}:8500"
+      - "${CONSUL_DNS_PORT:-8600}:8600/udp"
+    volumes:
+      - consul_data:/consul/data
+      - ./consul:/consul/config
+    networks:
+      - topems-network
+    command: >
+      agent -server -ui
+      -bootstrap-expect=1
+      -data-dir=/consul/data
+      -config-dir=/consul/config
+      -bind=0.0.0.0
+      -client=0.0.0.0
+      -log-level=info
+    healthcheck:
+      test: ["CMD", "consul", "members"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 10s
+    restart: unless-stopped
+
+  # ================================================
+  # 核心平台服务 (unified-core)
+  # 包含: IAM + Doc + Flow + File + Communication + Tenant + Billing + AI + Monitor
+  # ================================================
+  unified-core:
+    build:
+      context: ../svc/unified-core
+      dockerfile: Dockerfile
+    container_name: topems-unified-core
+    environment:
+      - DATABASE_URL=postgres://${POSTGRES_USER:-topems}:${POSTGRES_PASSWORD:-topems_secret}@postgres:5432/${POSTGRES_DB:-topems}
+      - CORE_PORT=8000
+      - REDIS_URL=redis://redis:6379
+      - RABBITMQ_URL=amqp://${RABBITMQ_USER:-topems}:${RABBITMQ_PASSWORD:-topems_secret}@rabbitmq:5672/%2f
+      - CONSUL_URL=http://consul:8500
+      - CONSUL_ENABLED=${CONSUL_ENABLED:-false}
+      - PLUGIN_REGISTRATION_TOKEN=${PLUGIN_REGISTRATION_TOKEN:-}
+      - PLUGIN_HEARTBEAT_TIMEOUT=${PLUGIN_HEARTBEAT_TIMEOUT:-90}
+      - JAEGER_ENDPOINT=http://jaeger:14268/api/traces
+      - TRACING_SAMPLING_RATIO=1.0
+      # P0-3: 模块级故障隔离配置
+      - MODULE_IAM_ENABLED=${MODULE_IAM_ENABLED:-true}
+      - MODULE_IAM_MAX_CONNECTIONS=${MODULE_IAM_MAX_CONNECTIONS:-20}
+      - MODULE_IAM_RATE_LIMIT=${MODULE_IAM_RATE_LIMIT:-100}
+      - MODULE_FLOW_ENABLED=${MODULE_FLOW_ENABLED:-true}
+      - MODULE_FLOW_MAX_CONNECTIONS=${MODULE_FLOW_MAX_CONNECTIONS:-30}
+      - MODULE_FLOW_RATE_LIMIT=${MODULE_FLOW_RATE_LIMIT:-200}
+      - MODULE_FILE_ENABLED=${MODULE_FILE_ENABLED:-true}
+      - MODULE_FILE_MAX_CONNECTIONS=${MODULE_FILE_MAX_CONNECTIONS:-15}
+      - MODULE_FILE_RATE_LIMIT=${MODULE_FILE_RATE_LIMIT:-50}
+      - MODULE_DOC_ENABLED=${MODULE_DOC_ENABLED:-true}
+      - MODULE_DOC_MAX_CONNECTIONS=${MODULE_DOC_MAX_CONNECTIONS:-15}
+      - MODULE_DOC_RATE_LIMIT=${MODULE_DOC_RATE_LIMIT:-50}
+      - MODULE_MAIL_ENABLED=${MODULE_MAIL_ENABLED:-true}
+      - MODULE_MAIL_MAX_CONNECTIONS=${MODULE_MAIL_MAX_CONNECTIONS:-10}
+      - MODULE_MAIL_RATE_LIMIT=${MODULE_MAIL_RATE_LIMIT:-20}
+      - MODULE_IM_ENABLED=${MODULE_IM_ENABLED:-true}
+      - MODULE_IM_MAX_CONNECTIONS=${MODULE_IM_MAX_CONNECTIONS:-10}
+      - MODULE_IM_RATE_LIMIT=${MODULE_IM_RATE_LIMIT:-100}
+      - MODULE_NOTIFICATION_ENABLED=${MODULE_NOTIFICATION_ENABLED:-true}
+      - MODULE_NOTIFICATION_MAX_CONNECTIONS=${MODULE_NOTIFICATION_MAX_CONNECTIONS:-10}
+      - MODULE_NOTIFICATION_RATE_LIMIT=${MODULE_NOTIFICATION_RATE_LIMIT:-100}
+      - MODULE_MONITOR_ENABLED=${MODULE_MONITOR_ENABLED:-true}
+      - MODULE_MONITOR_MAX_CONNECTIONS=${MODULE_MONITOR_MAX_CONNECTIONS:-5}
+      - MODULE_MONITOR_RATE_LIMIT=${MODULE_MONITOR_RATE_LIMIT:-100}
+      # P0-4: Prometheus 监控配置
+      - METRICS_ENABLED=${METRICS_ENABLED:-true}
+      - METRICS_PATH=${METRICS_PATH:-/metrics}
+      # P0-1: OpenAPI 文档配置
+      - OPENAPI_ENABLED=${OPENAPI_ENABLED:-true}
+      - OPENAPI_PATH=${OPENAPI_PATH:-/swagger-ui}
+    ports:
+      - "${CORE_PORT:-8000}:8000"
+    volumes:
+      - ../svc/unified-core:/app
+    networks:
+      - topems-network
+    depends_on:
+      consul:
+        condition: service_healthy
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+      rabbitmq:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8000/health"]
+      interval: 10s
+      timeout: 5s
+      retries: 3
+      start_period: 30s
+    restart: unless-stopped
+
+  # ================================================
+  # 经营管理服务
+  # ================================================
+  erp:
+    build:
+      context: ../svc/erp
+      dockerfile: Dockerfile
+    container_name: topems-erp
+    environment:
+      - DATABASE_URL=postgres://${POSTGRES_USER:-topems}:${POSTGRES_PASSWORD:-topems_secret}@postgres:5432/${POSTGRES_DB:-topems}
+      - ERP_PORT=8010
+      - CORE_URL=http://unified-core:8000
+      - CONSUL_URL=http://consul:8500
+      - REDIS_URL=redis://redis:6379
+      - RABBITMQ_URL=amqp://${RABBITMQ_USER:-topems}:${RABBITMQ_PASSWORD:-topems_secret}@rabbitmq:5672/%2f
+    ports:
+      - "${ERP_PORT:-8010}:8010"
+    volumes:
+      - ../svc/erp:/app
+    networks:
+      - topems-network
+    depends_on:
+      consul:
+        condition: service_healthy
+      unified-core:
+        condition: service_healthy
+      postgres:
+        condition: service_healthy
+      rabbitmq:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8010/health"]
+      interval: 10s
+      timeout: 5s
+      retries: 3
+      start_period: 30s
+    restart: unless-stopped
+
+  # ================================================
+  # 协同办公服务
+  # ================================================
+  hrm:
+    build:
+      context: ../svc/hrm
+      dockerfile: Dockerfile
+    container_name: topems-hrm
+    environment:
+      - DATABASE_URL=postgres://${POSTGRES_USER:-topems}:${POSTGRES_PASSWORD:-topems_secret}@postgres:5432/${POSTGRES_DB:-topems}
+      - HRM_PORT=8020
+      - CORE_URL=http://unified-core:8000
+      - CONSUL_URL=http://consul:8500
+      - REDIS_URL=redis://redis:6379
+      - RABBITMQ_URL=amqp://${RABBITMQ_USER:-topems}:${RABBITMQ_PASSWORD:-topems_secret}@rabbitmq:5672/%2f
+    ports:
+      - "${HRM_PORT:-8020}:8020"
+    volumes:
+      - ../svc/hrm:/app
+    networks:
+      - topems-network
+    depends_on:
+      consul:
+        condition: service_healthy
+      unified-core:
+        condition: service_healthy
+      postgres:
+        condition: service_healthy
+      rabbitmq:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8020/health"]
+      interval: 10s
+      timeout: 5s
+      retries: 3
+      start_period: 30s
+    restart: unless-stopped
+
+  pm:
+    build:
+      context: ../svc/pm
+      dockerfile: Dockerfile
+    container_name: topems-pm
+    environment:
+      - DATABASE_URL=postgres://${POSTGRES_USER:-topems}:${POSTGRES_PASSWORD:-topems_secret}@postgres:5432/${POSTGRES_DB:-topems}
+      - PM_PORT=8023
+      - CORE_URL=http://unified-core:8000
+      - CONSUL_URL=http://consul:8500
+      - REDIS_URL=redis://redis:6379
+      - RABBITMQ_URL=amqp://${RABBITMQ_USER:-topems}:${RABBITMQ_PASSWORD:-topems_secret}@rabbitmq:5672/%2f
+    ports:
+      - "${PM_PORT:-8023}:8023"
+    volumes:
+      - ../svc/pm:/app
+    networks:
+      - topems-network
+    depends_on:
+      consul:
+        condition: service_healthy
+      unified-core:
+        condition: service_healthy
+      postgres:
+        condition: service_healthy
+      rabbitmq:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8023/health"]
+      interval: 10s
+      timeout: 5s
+      retries: 3
+      start_period: 30s
+    restart: unless-stopped
+
+  crm:
+    build:
+      context: ../svc/crm
+      dockerfile: Dockerfile
+    container_name: topems-crm
+    environment:
+      - DATABASE_URL=postgres://${POSTGRES_USER:-topems}:${POSTGRES_PASSWORD:-topems_secret}@postgres:5432/${POSTGRES_DB:-topems}
+      - CRM_PORT=8029
+      - CORE_URL=http://unified-core:8000
+      - CONSUL_URL=http://consul:8500
+      - REDIS_URL=redis://redis:6379
+      - RABBITMQ_URL=amqp://${RABBITMQ_USER:-topems}:${RABBITMQ_PASSWORD:-topems_secret}@rabbitmq:5672/%2f
+    ports:
+      - "${CRM_PORT:-8029}:8029"
+    volumes:
+      - ../svc/crm:/app
+    networks:
+      - topems-network
+    depends_on:
+      consul:
+        condition: service_healthy
+      unified-core:
+        condition: service_healthy
+      postgres:
+        condition: service_healthy
+      rabbitmq:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8029/health"]
+      interval: 10s
+      timeout: 5s
+      retries: 3
+      start_period: 30s
+    restart: unless-stopped
+
+  # ================================================
+  # 生产制造服务 (拆分后独立部署)
+  # ================================================
+  mes:
+    build:
+      context: ..
+      dockerfile: svc/mes/Dockerfile
+    container_name: topems-mes
+    environment:
+      - DATABASE_URL=postgres://${POSTGRES_USER:-topems}:${POSTGRES_PASSWORD:-topems_secret}@postgres:5432/${POSTGRES_DB:-topems}
+      - MES_PORT=8030
+      - CORE_URL=http://unified-core:8000
+      - CONSUL_URL=http://consul:8500
+      - RUST_LOG=info
+    ports:
+      - "${MES_PORT:-8030}:8030"
+    networks:
+      - topems-network
+    depends_on:
+      consul:
+        condition: service_healthy
+      postgres:
+        condition: service_healthy
+      unified-core:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://localhost:8030/health"]
+      interval: 30s
+      timeout: 3s
+      retries: 3
+      start_period: 10s
+    restart: unless-stopped
+
+  pdm:
+    build:
+      context: ..
+      dockerfile: svc/pdm/Dockerfile
+    container_name: topems-pdm
+    environment:
+      - DATABASE_URL=postgres://${POSTGRES_USER:-topems}:${POSTGRES_PASSWORD:-topems_secret}@postgres:5432/${POSTGRES_DB:-topems}
+      - PDM_PORT=8031
+      - CORE_URL=http://unified-core:8000
+      - CONSUL_URL=http://consul:8500
+      - MES_URL=http://mes:8030
+      - RUST_LOG=info
+    ports:
+      - "${PDM_PORT:-8031}:8031"
+    networks:
+      - topems-network
+    depends_on:
+      postgres:
+        condition: service_healthy
+      mes:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://localhost:8031/health"]
+      interval: 30s
+      timeout: 3s
+      retries: 3
+      start_period: 10s
+    restart: unless-stopped
+
+  # ================================================
+  # 供应链服务
+  # ================================================
+  scm:
+    build:
+      context: ../svc/scm
+      dockerfile: Dockerfile
+    container_name: topems-scm
+    environment:
+      - DATABASE_URL=postgres://${POSTGRES_USER:-topems}:${POSTGRES_PASSWORD:-topems_secret}@postgres:5432/${POSTGRES_DB:-topems}
+      - SCM_PORT=8040
+      - CORE_URL=http://unified-core:8000
+      - CONSUL_URL=http://consul:8500
+      - ERP_URL=http://erp:8010
+    ports:
+      - "${SCM_PORT:-8040}:8040"
+    volumes:
+      - ../svc/scm:/app
+    networks:
+      - topems-network
+    depends_on:
+      consul:
+        condition: service_healthy
+      unified-core:
+        condition: service_healthy
+      erp:
+        condition: service_healthy
+      postgres:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8040/health"]
+      interval: 10s
+      timeout: 5s
+      retries: 3
+      start_period: 30s
+    restart: unless-stopped
+
+  wms:
+    build:
+      context: ../svc/wms
+      dockerfile: Dockerfile
+    container_name: topems-wms
+    environment:
+      - DATABASE_URL=postgres://${POSTGRES_USER:-topems}:${POSTGRES_PASSWORD:-topems_secret}@postgres:5432/${POSTGRES_DB:-topems}
+      - WMS_PORT=8041
+      - CORE_URL=http://unified-core:8000
+      - CONSUL_URL=http://consul:8500
+      - SCM_URL=http://scm:8040
+    ports:
+      - "${WMS_PORT:-8041}:8041"
+    volumes:
+      - ../svc/wms:/app
+    networks:
+      - topems-network
+    depends_on:
+      consul:
+        condition: service_healthy
+      unified-core:
+        condition: service_healthy
+      scm:
+        condition: service_healthy
+      postgres:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8041/health"]
+      interval: 10s
+      timeout: 5s
+      retries: 3
+      start_period: 30s
+    restart: unless-stopped
+
+  srm:
+    build:
+      context: ../svc/srm
+      dockerfile: Dockerfile
+    container_name: topems-srm
+    environment:
+      - DATABASE_URL=postgres://${POSTGRES_USER:-topems}:${POSTGRES_PASSWORD:-topems_secret}@postgres:5432/${POSTGRES_DB:-topems}
+      - SRM_PORT=8042
+      - CORE_URL=http://unified-core:8000
+      - CONSUL_URL=http://consul:8500
+      - SCM_URL=http://scm:8040
+    ports:
+      - "${SRM_PORT:-8042}:8042"
+    volumes:
+      - ../svc/srm:/app
+    networks:
+      - topems-network
+    depends_on:
+      consul:
+        condition: service_healthy
+      unified-core:
+        condition: service_healthy
+      scm:
+        condition: service_healthy
+      postgres:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8042/health"]
+      interval: 10s
+      timeout: 5s
+      retries: 3
+      start_period: 30s
+    restart: unless-stopped
+
+  # ================================================
+  # 质量/研发服务 (拆分后独立部署)
+  # ================================================
+  qms:
+    build:
+      context: ..
+      dockerfile: svc/qms/Dockerfile
+    container_name: topems-qms
+    environment:
+      - DATABASE_URL=postgres://${POSTGRES_USER:-topems}:${POSTGRES_PASSWORD:-topems_secret}@postgres:5432/${POSTGRES_DB:-topems}
+      - QMS_PORT=8050
+      - CORE_URL=http://unified-core:8000
+      - CONSUL_URL=http://consul:8500
+      - CONSUL_ENABLED=${CONSUL_ENABLED:-false}
+      - PLUGIN_REGISTRATION_TOKEN=${PLUGIN_REGISTRATION_TOKEN:-}
+      - ERP_URL=http://erp:8010
+      - MES_URL=http://mes:8030
+      - RUST_LOG=info
+    ports:
+      - "${QMS_PORT:-8050}:8050"
+    networks:
+      - topems-network
+    depends_on:
+      consul:
+        condition: service_healthy
+      postgres:
+        condition: service_healthy
+      unified-core:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://localhost:8050/health"]
+      interval: 30s
+      timeout: 3s
+      retries: 3
+      start_period: 10s
+    restart: unless-stopped
+
+  lims:
+    build:
+      context: ..
+      dockerfile: svc/lims/Dockerfile
+    container_name: topems-lims
+    environment:
+      - DATABASE_URL=postgres://${POSTGRES_USER:-topems}:${POSTGRES_PASSWORD:-topems_secret}@postgres:5432/${POSTGRES_DB:-topems}
+      - LIMS_PORT=8051
+      - CORE_URL=http://unified-core:8000
+      - CONSUL_URL=http://consul:8500
+      - QMS_URL=http://qms:8050
+      - RUST_LOG=info
+    ports:
+      - "${LIMS_PORT:-8051}:8051"
+    networks:
+      - topems-network
+    depends_on:
+      consul:
+        condition: service_healthy
+      postgres:
+        condition: service_healthy
+      qms:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://localhost:8051/health"]
+      interval: 30s
+      timeout: 3s
+      retries: 3
+      start_period: 10s
+    restart: unless-stopped
+
+  ehs:
+    build:
+      context: ..
+      dockerfile: svc/ehs/Dockerfile
+    container_name: topems-ehs
+    environment:
+      - DATABASE_URL=postgres://${POSTGRES_USER:-topems}:${POSTGRES_PASSWORD:-topems_secret}@postgres:5432/${POSTGRES_DB:-topems}
+      - EHS_PORT=8052
+      - CORE_URL=http://unified-core:8000
+      - CONSUL_URL=http://consul:8500
+      - MES_URL=http://mes:8030
+      - QMS_URL=http://qms:8050
+      - RUST_LOG=info
+    ports:
+      - "${EHS_PORT:-8052}:8052"
+    networks:
+      - topems-network
+    depends_on:
+      consul:
+        condition: service_healthy
+      postgres:
+        condition: service_healthy
+      mes:
+        condition: service_healthy
+      qms:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://localhost:8052/health"]
+      interval: 30s
+      timeout: 3s
+      retries: 3
+      start_period: 10s
+    restart: unless-stopped
+
+  rd:
+    build:
+      context: ../svc/rd
+      dockerfile: Dockerfile
+    container_name: topems-rd
+    environment:
+      - DATABASE_URL=postgres://${POSTGRES_USER:-topems}:${POSTGRES_PASSWORD:-topems_secret}@postgres:5432/${POSTGRES_DB:-topems}
+      - RD_PORT=8053
+      - CORE_URL=http://unified-core:8000
+      - CONSUL_URL=http://consul:8500
+      - PM_URL=http://pm:8023
+      - MES_URL=http://mes:8030
+    ports:
+      - "${RD_PORT:-8053}:8053"
+    volumes:
+      - ../svc/rd:/app
+    networks:
+      - topems-network
+    depends_on:
+      consul:
+        condition: service_healthy
+      unified-core:
+        condition: service_healthy
+      pm:
+        condition: service_healthy
+      mes:
+        condition: service_healthy
+      postgres:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8053/health"]
+      interval: 10s
+      timeout: 5s
+      retries: 3
+      start_period: 30s
+    restart: unless-stopped
+
+  # ================================================
+  # 数据分析/门户服务 (拆分后独立部署)
+  # ================================================
+  bi:
+    build:
+      context: ..
+      dockerfile: svc/bi/Dockerfile
+    container_name: topems-bi
+    environment:
+      - DATABASE_URL=postgres://${POSTGRES_USER:-topems}:${POSTGRES_PASSWORD:-topems_secret}@postgres:5432/${POSTGRES_DB:-topems}
+      - BI_PORT=8060
+      - CORE_URL=http://unified-core:8000
+      - CONSUL_URL=http://consul:8500
+      - RUST_LOG=info
+    ports:
+      - "${BI_PORT:-8060}:8060"
+    networks:
+      - topems-network
+    depends_on:
+      consul:
+        condition: service_healthy
+      postgres:
+        condition: service_healthy
+      unified-core:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://localhost:8060/health"]
+      interval: 30s
+      timeout: 3s
+      retries: 3
+      start_period: 10s
+    restart: unless-stopped
+
+  # monitor 服务已整合到 unified-core/modules/monitor (2026-07)
+  # 路由: /api/core/monitor/* (由 unified-core 提供)
+
+  portal:
+    build:
+      context: ../svc/portal
+      dockerfile: Dockerfile
+    container_name: topems-portal
+    environment:
+      - DATABASE_URL=postgres://${POSTGRES_USER:-topems}:${POSTGRES_PASSWORD:-topems_secret}@postgres:5432/${POSTGRES_DB:-topems}
+      - PORTAL_PORT=8063
+      - CORE_URL=http://unified-core:8000
+      - CONSUL_URL=http://consul:8500
+    ports:
+      - "${PORTAL_PORT:-8063}:8063"
+    volumes:
+      - ../svc/portal:/app
+    networks:
+      - topems-network
+    depends_on:
+      consul:
+        condition: service_healthy
+      unified-core:
+        condition: service_healthy
+      postgres:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8063/health"]
+      interval: 10s
+      timeout: 5s
+      retries: 3
+      start_period: 30s
+    restart: unless-stopped
+
+  finance:
+    build:
+      context: ../svc/finance
+      dockerfile: Dockerfile
+    container_name: topems-finance
+    environment:
+      - DATABASE_URL=postgres://${POSTGRES_USER:-topems}:${POSTGRES_PASSWORD:-topems_secret}@postgres:5432/${POSTGRES_DB:-topems}
+      - FINANCE_PORT=8011
+      - CORE_URL=http://unified-core:8000
+      - CONSUL_URL=http://consul:8500
+      - ERP_URL=http://erp:8010
+    ports:
+      - "${FINANCE_PORT:-8011}:8011"
+    volumes:
+      - ../svc/finance:/app
+    networks:
+      - topems-network
+    depends_on:
+      consul:
+        condition: service_healthy
+      unified-core:
+        condition: service_healthy
+      erp:
+        condition: service_healthy
+      postgres:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8011/health"]
+      interval: 10s
+      timeout: 5s
+      retries: 3
+      start_period: 30s
+    restart: unless-stopped
+
+  # doc 服务已整合到 unified-core/modules/doc (2026-07)
+  # 路由: /api/core/doc/* (由 unified-core 提供)
+
+  # report 服务已整合到 svc/analytics (bi) 中 (2026-07)
+  # 路由: /api/bi/* (由 analytics 服务提供)
+
+  # ================================================
+  # AI服务
+  # ================================================
+  ai:
+    build:
+      context: ../svc/ai
+      dockerfile: Dockerfile
+    container_name: topems-ai
+    environment:
+      - DATABASE_URL=postgres://${POSTGRES_USER:-topems}:${POSTGRES_PASSWORD:-topems_secret}@postgres:5432/${POSTGRES_DB:-topems}
+      - AI_PORT=8064
+      - CORE_URL=http://unified-core:8000
+      - CONSUL_URL=http://consul:8500
+      - OLLAMA_BASE_URL=http://host.docker.internal:11434/v1
+    ports:
+      - "${AI_PORT:-8064}:8064"
+    volumes:
+      - ../svc/ai:/app
+    networks:
+      - topems-network
+    depends_on:
+      consul:
+        condition: service_healthy
+      unified-core:
+        condition: service_healthy
+      postgres:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8064/health"]
+      interval: 10s
+      timeout: 5s
+      retries: 3
+      start_period: 30s
+    restart: unless-stopped
+
+  # ================================================
+  # 基础设施服务
+  # ================================================
+  mobile:
+    build:
+      context: ../svc/mobile
+      dockerfile: Dockerfile
+    container_name: topems-mobile
+    environment:
+      - DATABASE_URL=postgres://${POSTGRES_USER:-topems}:${POSTGRES_PASSWORD:-topems_secret}@postgres:5432/${POSTGRES_DB:-topems}
+      - MOBILE_PORT=8070
+      - CORE_URL=http://unified-core:8000
+      - CONSUL_URL=http://consul:8500
+    ports:
+      - "${MOBILE_PORT:-8070}:8070"
+    volumes:
+      - ../svc/mobile:/app
+    networks:
+      - topems-network
+    depends_on:
+      consul:
+        condition: service_healthy
+      unified-core:
+        condition: service_healthy
+      postgres:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8070/health"]
+      interval: 10s
+      timeout: 5s
+      retries: 3
+      start_period: 30s
+    restart: unless-stopped
+
+  gis:
+    build:
+      context: ../svc/gis
+      dockerfile: Dockerfile
+    container_name: topems-gis
+    environment:
+      - DATABASE_URL=postgres://${POSTGRES_USER:-topems}:${POSTGRES_PASSWORD:-topems_secret}@postgres:5432/${POSTGRES_DB:-topems}
+      - GIS_PORT=8071
+      - CORE_URL=http://unified-core:8000
+      - CONSUL_URL=http://consul:8500
+      - MES_URL=http://mes:8030
+    ports:
+      - "${GIS_PORT:-8071}:8071"
+    volumes:
+      - ../svc/gis:/app
+    networks:
+      - topems-network
+    depends_on:
+      consul:
+        condition: service_healthy
+      unified-core:
+        condition: service_healthy
+      mes:
+        condition: service_healthy
+      postgres:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8071/health"]
+      interval: 10s
+      timeout: 5s
+      retries: 3
+      start_period: 30s
+    restart: unless-stopped
+
+  integration:
+    build:
+      context: ../svc/integration
+      dockerfile: Dockerfile
+    container_name: topems-integration
+    environment:
+      - DATABASE_URL=postgres://${POSTGRES_USER:-topems}:${POSTGRES_PASSWORD:-topems_secret}@postgres:5432/${POSTGRES_DB:-topems}
+      - INTEGRATION_PORT=8072
+      - CORE_URL=http://unified-core:8000
+      - CONSUL_URL=http://consul:8500
+    ports:
+      - "${INTEGRATION_PORT:-8072}:8072"
+    volumes:
+      - ../svc/integration:/app
+    networks:
+      - topems-network
+    depends_on:
+      consul:
+        condition: service_healthy
+      unified-core:
+        condition: service_healthy
+      postgres:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8072/health"]
+      interval: 10s
+      timeout: 5s
+      retries: 3
+      start_period: 30s
+    restart: unless-stopped
+
+  # ================================================
+  # API网关（Traefik 统一入口 + nginx 静态资源）
+  # ================================================
+  traefik:
+    image: traefik:v3.0
+    container_name: topems-traefik
+    ports:
+      - "80:80"      # HTTP 入口
+      - "443:443"    # HTTPS 入口
+      - "8080:8080"  # Traefik Dashboard / API
+    volumes:
+      - ./traefik/traefik.yml:/etc/traefik/traefik.yml:ro
+      - ./traefik/dynamic.yml:/etc/traefik/dynamic/dynamic.yml:ro
+      - traefik_logs:/var/log/traefik
+    networks:
+      - topems-network
+    depends_on:
+      nginx:
+        condition: service_healthy
+      unified-core:
+        condition: service_healthy
+      erp:
+        condition: service_healthy
+      hrm:
+        condition: service_healthy
+      pm:
+        condition: service_healthy
+      crm:
+        condition: service_healthy
+      mes:
+        condition: service_healthy
+      pdm:
+        condition: service_healthy
+      scm:
+        condition: service_healthy
+      wms:
+        condition: service_healthy
+      srm:
+        condition: service_healthy
+      qms:
+        condition: service_healthy
+      lims:
+        condition: service_healthy
+      ehs:
+        condition: service_healthy
+      rd:
+        condition: service_healthy
+      bi:
+        condition: service_healthy
+      finance:
+        condition: service_healthy
+      report:
+        condition: service_healthy
+      portal:
+        condition: service_healthy
+      ai:
+        condition: service_healthy
+      mobile:
+        condition: service_healthy
+      gis:
+        condition: service_healthy
+      integration:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "traefik", "healthcheck", "--ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 3
+      start_period: 10s
+    restart: unless-stopped
+
+  nginx:
+    image: nginx:latest
+    container_name: topems-nginx
+    # Traefik 已接管 80/443，nginx 仅作为静态资源后端
+    # 通过 docker 网络内部访问 nginx:80（由 Traefik 路由 / 到此服务）
+    # 8081 端口用于直接调试访问（可选）
+    ports:
+      - "8081:80"
+    volumes:
+      - ./nginx.conf:/etc/nginx/nginx.conf:ro
+      - ../apps/web/dist:/usr/share/nginx/html:ro
+    networks:
+      - topems-network
+    depends_on:
+      consul:
+        condition: service_healthy
+      unified-core:
+        condition: service_healthy
+      erp:
+        condition: service_healthy
+      hrm:
+        condition: service_healthy
+      pm:
+        condition: service_healthy
+      crm:
+        condition: service_healthy
+      mes:
+        condition: service_healthy
+      pdm:
+        condition: service_healthy
+      scm:
+        condition: service_healthy
+      wms:
+        condition: service_healthy
+      srm:
+        condition: service_healthy
+      qms:
+        condition: service_healthy
+      lims:
+        condition: service_healthy
+      ehs:
+        condition: service_healthy
+      rd:
+        condition: service_healthy
+      bi:
+        condition: service_healthy
+      finance:
+        condition: service_healthy
+      report:
+        condition: service_healthy
+      portal:
+        condition: service_healthy
+      ai:
+        condition: service_healthy
+      mobile:
+        condition: service_healthy
+      gis:
+        condition: service_healthy
+      integration:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost/health"]
+      interval: 10s
+      timeout: 5s
+      retries: 3
+      start_period: 10s
+    restart: unless-stopped
+
+  # ================================================
+  # 链路追踪系统
+  # ================================================
+  jaeger:
+    image: jaegertracing/all-in-one:latest
+    container_name: topems-jaeger
+    environment:
+      - COLLECTOR_OTLP_ENABLED=true
+      - COLLECTOR_ZIPKIN_HOST_PORT=:9411
+    ports:
+      - "5775:5775/udp"
+      - "6831:6831/udp"
+      - "6832:6832/udp"
+      - "5778:5778"
+      - "16686:16686"
+      - "14268:14268"
+      - "14250:14250"
+      - "9411:9411"
+    volumes:
+      - jaeger_data:/var/lib/jaeger
+    networks:
+      - topems-network
+    healthcheck:
+      test: ["CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://localhost:14268/"]
+      interval: 10s
+      timeout: 5s
+      retries: 3
+      start_period: 10s
+    restart: unless-stopped
+
+  # ================================================
+  # 监控系统
+  # ================================================
+  prometheus:
+    image: prom/prometheus:latest
+    container_name: topems-prometheus
+    ports:
+      - "9090:9090"
+    volumes:
+      - ./prometheus.yml:/etc/prometheus/prometheus.yml:ro
+      - prometheus_data:/prometheus
+    networks:
+      - topems-network
+    command:
+      - '--config.file=/etc/prometheus/prometheus.yml'
+      - '--storage.tsdb.path=/prometheus'
+      - '--web.console.libraries=/etc/prometheus/console_libraries'
+      - '--web.console.templates=/etc/prometheus/consoles'
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:9090/-/healthy"]
+      interval: 10s
+      timeout: 5s
+      retries: 3
+      start_period: 10s
+    restart: unless-stopped
+
+  grafana:
+    image: grafana/grafana:latest
+    container_name: topems-grafana
+    ports:
+      - "3001:3000"
+    volumes:
+      - grafana_data:/var/lib/grafana
+      - ./grafana/provisioning:/etc/grafana/provisioning:ro
+    environment:
+      - GF_SECURITY_ADMIN_USER=${GRAFANA_USER:-admin}
+      - GF_SECURITY_ADMIN_PASSWORD=${GRAFANA_PASSWORD:-admin}
+      - GF_USERS_ALLOW_SIGN_UP=false
+    networks:
+      - topems-network
+    depends_on:
+      - prometheus
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:3000/api/health"]
+      interval: 10s
+      timeout: 5s
+      retries: 3
+      start_period: 10s
+    restart: unless-stopped
+
+  alertmanager:
+    image: prom/alertmanager:latest
+    container_name: topems-alertmanager
+    ports:
+      - "9093:9093"
+    volumes:
+      - ./alertmanager/alertmanager.yml:/etc/alertmanager/alertmanager.yml:ro
+      - ./alertmanager/templates:/etc/alertmanager/templates:ro
+    environment:
+      - FEISHU_WEBHOOK_URL=${FEISHU_WEBHOOK_URL:-}
+    networks:
+      - topems-network
+    command:
+      - '--config.file=/etc/alertmanager/alertmanager.yml'
+      - '--web.external-url=http://localhost:9093'
+      - '--config.expand-env=true'
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:9093/-/healthy"]
+      interval: 10s
+      timeout: 5s
+      retries: 3
+      start_period: 10s
+    restart: unless-stopped
+
+networks:
+  topems-network:
+    driver: bridge

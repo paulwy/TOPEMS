@@ -98,6 +98,38 @@ export const precacheRoutes = async (): Promise<void> => {
   logger.info('Precache routes triggered');
 };
 
+// V37.0 Phase 7: 智能预加载 — 导航历史记录 + 预测性缓存
+
+/**
+ * 记录用户导航到 Service Worker
+ * 应在路由变化时调用，Service Worker 据此学习导航模式
+ */
+export const recordNavigation = (path: string): void => {
+  if (!registration?.active) return;
+  registration.active.postMessage({ type: 'RECORD_NAVIGATION', payload: path });
+};
+
+/**
+ * 触发智能预加载
+ * Service Worker 基于导航历史预测下一个可能访问的路由，提前缓存
+ */
+export const prefetchIntelligent = (): void => {
+  if (!registration?.active) return;
+  registration.active.postMessage({ type: 'PREFETCH_INTELLIGENT' });
+};
+
+/**
+ * 预缓存微前端远程模块入口
+ * 在用户认证后调用，提前缓存所有远程入口 JS 文件
+ */
+export const prefetchRemoteEntries = (entryUrls: string[]): void => {
+  if (!registration?.active) return;
+  registration.active.postMessage({
+    type: 'PREFETCH_REMOTE_ENTRIES',
+    payload: entryUrls,
+  });
+};
+
 // V24.0 模块 D: 自定义安装提示（PWA install prompt）
 export const promptInstall = async (): Promise<boolean> => {
   if (!deferredInstallPrompt) {
@@ -146,7 +178,9 @@ export const requestNotificationPermission = async (): Promise<NotificationPermi
  * 订阅 Web Push 服务
  * @returns PushSubscription 订阅对象（需发送到后端保存）
  */
-export const subscribePush = async (options: PushSubscriptionOptions): Promise<PushSubscription | null> => {
+export const subscribePush = async (
+  options: PushSubscriptionOptions
+): Promise<PushSubscription | null> => {
   if (!registration) {
     logger.error('Service Worker not registered, cannot subscribe push');
     return null;
@@ -171,9 +205,8 @@ export const subscribePush = async (options: PushSubscriptionOptions): Promise<P
 
     // 转换 VAPID 公钥为 applicationServerKey
     // TS 6.x 对 ArrayBufferLike 与 ArrayBuffer 的类型校验更严格，需显式断言为 BufferSource
-    const applicationServerKey: BufferSource = (
-      options.applicationServerKey ?? urlBase64ToUint8Array(options.vapidPublicKey)
-    ) as unknown as BufferSource;
+    const applicationServerKey: BufferSource = (options.applicationServerKey ??
+      urlBase64ToUint8Array(options.vapidPublicKey)) as unknown as BufferSource;
     const subscription = await registration.pushManager.subscribe({
       userVisibleOnly: true,
       applicationServerKey,
@@ -303,7 +336,9 @@ export const enqueueSyncRequest = async (
   if ('serviceWorker' in navigator && 'SyncManager' in window) {
     try {
       const reg = await navigator.serviceWorker.ready;
-      await (reg as unknown as { sync: { register: (tag: string) => Promise<void> } }).sync.register('sync-data');
+      await (
+        reg as unknown as { sync: { register: (tag: string) => Promise<void> } }
+      ).sync.register('sync-data');
     } catch (error) {
       logger.debug('Background sync registration failed (will retry on next sync):', error);
     }

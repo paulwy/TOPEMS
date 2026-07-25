@@ -16,6 +16,7 @@ export * from './core';
 export { voucherApi } from './finance/voucher';
 export { receivableApi, payableApi } from './finance/receivablePayable';
 export { assetApi, fixedAssetApi } from './finance/asset';
+export { assetCategoryApi } from './finance/assetCategory';
 export { budgetApi, expenseApi } from './finance/budget';
 export { accountingSubjectApi, openingBalanceApi } from './finance/accounting';
 export { financeReportApi } from './finance/report';
@@ -33,6 +34,7 @@ export { announcementApi, announcementCrudApi } from './admin/announcement';
 
 export { auditApi } from './audit';
 export { databaseApi } from './database';
+export { masterDataSyncApi } from './masterData';
 
 export interface ErpDashboardStats {
   total_assets: number;

@@ -13,8 +13,8 @@ FROM alpine:3.19
 
 RUN apk add --no-cache libssl3 ca-certificates
 
-COPY --from=builder /app/target/release/topems-rs /usr/local/bin/topems-rs
+COPY --from=builder /app/target/release/topems-rd /usr/local/bin/topems-rd
 
-EXPOSE 8005
+EXPOSE 8053
 
-CMD ["topems-rs"]
+CMD ["topems-rd"]

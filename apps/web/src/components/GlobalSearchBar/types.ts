@@ -1,13 +1,14 @@
 import type { SearchResult } from '@/api/search';
 
 export interface GroupedResults {
+  service: string;
   module: string;
   label: string;
   results: SearchResult[];
 }
 
 export interface SearchFilter {
-  module?: string;
+  service?: string;
   type?: string;
 }
 
@@ -41,7 +42,7 @@ export interface SearchInputProps {
   autoFocus?: boolean;
   filter?: SearchFilter;
   onFilterChange?: (filter: SearchFilter) => void;
-  availableModules?: SearchFilterOption[];
+  availableServices?: SearchFilterOption[];
   availableTypes?: SearchFilterOption[];
 }
 

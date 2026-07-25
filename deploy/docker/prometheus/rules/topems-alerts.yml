@@ -1,0 +1,180 @@
+# TOPEMS Prometheus 告警规则
+#
+# 覆盖 P0（服务可用性/错误率/数据库）和 P1（延迟/资源）级别指标
+# 告警通过 Alertmanager（或 Grafana Alerting）转发到通知中心
+
+groups:
+  # ================================================
+  # P0 级告警 — 服务可用性与关键基础设施
+  # ================================================
+  - name: topems-p0-critical
+    rules:
+      # 服务宕机 — 任何 TOPEMS 服务 1 分钟内不可达
+      - alert: TopemsServiceDown
+        expr: up{job=~"topems-.*"} == 0
+        for: 1m
+        labels:
+          severity: critical
+          team: platform
+          slo_impact: "true"
+        annotations:
+          summary: "服务 {{ $labels.job }} 宕机"
+          description: "服务 {{ $labels.job }} ({{ $labels.instance }}) 已离线超过 1 分钟。"
+
+      # 核心服务（unified-core）宕机 — 30 秒内不可达
+      - alert: TopemsCoreServiceDown
+        expr: up{job="topems-unified-core"} == 0
+        for: 30s
+        labels:
+          severity: critical
+          team: platform
+          slo_impact: "true"
+        annotations:
+          summary: "核心服务 unified-core 宕机"
+          description: "统一核心服务 (unified-core) 已离线超过 30 秒，影响所有认证请求。"
+
+      # 数据库宕机
+      - alert: PostgresDown
+        expr: up{job="postgres"} == 0
+        for: 30s
+        labels:
+          severity: critical
+          team: platform
+          slo_impact: "true"
+        annotations:
+          summary: "PostgreSQL 数据库宕机"
+          description: "PostgreSQL 数据库已离线，所有依赖数据库的服务将受影响。"
+
+      # 高错误率 — 任何服务 5xx 错误率 >5% 持续 2 分钟
+      - alert: TopemsHighErrorRate
+        expr: |
+          sum(rate(http_requests_total{job=~"topems-.*",status=~"5.."}[2m])) by (job)
+          /
+          sum(rate(http_requests_total{job=~"topems-.*"}[2m])) by (job)
+          > 0.05
+        for: 2m
+        labels:
+          severity: critical
+          team: platform
+          slo_impact: "true"
+        annotations:
+          summary: "服务 {{ $labels.job }} 错误率过高"
+          description: "服务 {{ $labels.job }} 的 5xx 错误率超过 5%，已持续 2 分钟。"
+
+      # 可观测性基础设施自身告警
+      - alert: PrometheusTargetMissing
+        expr: up == 0 unless on(instance) up{job=~"topems-.*|postgres|redis|rabbitmq|nginx"}
+        for: 5m
+        labels:
+          severity: warning
+          team: platform
+        annotations:
+          summary: "Prometheus 采集目标缺失: {{ $labels.instance }}"
+          description: "Prometheus 无法采集 {{ $labels.instance }} 的指标超过 5 分钟。"
+
+  # ================================================
+  # P1 级告警 — 性能与资源
+  # ================================================
+  - name: topems-p1-performance
+    rules:
+      # 高延迟 — p99 延迟 >2s 持续 5 分钟
+      - alert: TopemsHighLatencyP99
+        expr: |
+          histogram_quantile(0.99,
+            sum(rate(http_request_duration_seconds_bucket{job=~"topems-.*"}[5m])) by (le, job)
+          ) > 2
+        for: 5m
+        labels:
+          severity: warning
+          team: platform
+          slo_impact: "true"
+        annotations:
+          summary: "服务 {{ $labels.job }} P99 延迟过高"
+          description: "服务 {{ $labels.job }} 的 P99 延迟超过 2 秒，已持续 5 分钟。"
+
+      # 高内存使用 — >85% 持续 5 分钟
+      - alert: TopemsHighMemoryUsage
+        expr: |
+          (1 - node_memory_MemAvailable_bytes / node_memory_MemTotal_bytes) > 0.85
+        for: 5m
+        labels:
+          severity: warning
+          team: platform
+        annotations:
+          summary: "内存使用率过高"
+          description: "内存使用率超过 85%，已持续 5 分钟。当前值: {{ $value | humanizePercentage }}"
+
+      # Redis 不可达
+      - alert: RedisDown
+        expr: up{job="redis"} == 0
+        for: 1m
+        labels:
+          severity: warning
+          team: platform
+        annotations:
+          summary: "Redis 不可达"
+          description: "Redis 缓存服务已离线超过 1 分钟。"
+
+      # RabbitMQ 不可达
+      - alert: RabbitMQDown
+        expr: up{job="rabbitmq"} == 0
+        for: 1m
+        labels:
+          severity: warning
+          team: platform
+        annotations:
+          summary: "RabbitMQ 不可达"
+          description: "RabbitMQ 消息队列已离线超过 1 分钟。"
+
+      # Nginx 不可达
+      - alert: NginxDown
+        expr: up{job="nginx"} == 0
+        for: 1m
+        labels:
+          severity: warning
+          team: platform
+        annotations:
+          summary: "Nginx 不可达"
+          description: "Nginx 反向代理已离线超过 1 分钟。"
+
+  # ================================================
+  # SLO 错误预算告警
+  # ================================================
+  - name: topems-slo-budget
+    rules:
+      # SLO 错误预算快速消耗 — 1 小时内消耗 >2% 的月度预算
+      - alert: TopemsSloErrorBudgetBurnFast
+        expr: |
+          (
+            sum(rate(http_requests_total{job=~"topems-.*",status=~"5.."}[1h])) by (job)
+            /
+            sum(rate(http_requests_total{job=~"topems-.*"}[1h])) by (job)
+          ) > 0.01
+        for: 10m
+        labels:
+          severity: warning
+          team: platform
+          slo_impact: "true"
+        annotations:
+          summary: "SLO 错误预算快速消耗: {{ $labels.job }}"
+          description: "服务 {{ $labels.job }} 在过去 1 小时内错误率 >1%，月度 99.9% SLO 预算正在快速消耗。"
+
+      # SLO 月度错误预算即将耗尽 — 剩余 <20%
+      - alert: TopemsSloBudgetExhausted
+        expr: |
+          (
+            1 -
+            (
+              sum(rate(http_requests_total{job=~"topems-.*",status!~"5.."}[30d])) by (job)
+              /
+              sum(rate(http_requests_total{job=~"topems-.*"}[30d])) by (job)
+            )
+          ) / 0.001 > 0.8
+        for: 1h
+        labels:
+          severity: critical
+          team: platform
+          slo_impact: "true"
+        annotations:
+          summary: "SLO 错误预算即将耗尽: {{ $labels.job }}"
+          description: "服务 {{ $labels.job }} 的月度 99.9% SLO 错误预算已消耗 >80%。"

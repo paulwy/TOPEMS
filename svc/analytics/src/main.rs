@@ -18,9 +18,7 @@ mod shared;
 
 pub mod modules;
 
-use std::env;
 
-use shared::AppState;
 use std::net::SocketAddr;
 use std::sync::Arc;
 
@@ -30,7 +28,6 @@ use axum::{
     Json, Router,
 };
 use axum_prometheus::PrometheusMetricLayer;
-use sqlx::PgPool;
 
 use topems_shared::{
     auth_middleware, create_cors_layer, get_api_info_handler, init_telemetry,

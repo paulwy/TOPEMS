@@ -16,9 +16,12 @@ use crate::models::{
 };
 use crate::shared::cache::InMemoryCache;
 use crate::shared::permission::{check_permission, ModulePermission};
-use crate::workflow::{CreateInstanceRequest, WorkflowClient};
+use topems_shared::service_client::{CreateInstanceRequest, WorkflowServiceClient};
 use topems_shared::auth::Claims;
-use topems_shared::event::{EventPublisher, EventType, SrmSupplierRegisteredPayload};
+use topems_shared::event::{
+    EventPublisher, EventType, SrmSupplierCreatedPayload, SrmSupplierRegisteredPayload,
+    SrmSupplierStatusChangedPayload, SrmSupplierUpdatedPayload,
+};
 use topems_shared::ApiResponse;
 
 #[derive(Debug, Deserialize)]
@@ -35,14 +38,14 @@ pub struct ListQueryParams {
 pub struct AppState {
     pub db: PgPool,
     pub event_publisher: Option<Arc<EventPublisher>>,
-    pub workflow_client: WorkflowClient,
+    pub workflow_client: WorkflowServiceClient,
     pub supplier_cache: Arc<InMemoryCache<serde_json::Value>>,
 }
 
 pub async fn create_routes(
     db: PgPool,
     event_publisher: Option<Arc<EventPublisher>>,
-    workflow_client: WorkflowClient,
+    workflow_client: WorkflowServiceClient,
     supplier_cache: Arc<InMemoryCache<serde_json::Value>>,
 ) -> Result<Router> {
     let state = Arc::new(AppState {
@@ -336,22 +339,28 @@ async fn create_supplier(
             if let Some(ref publisher) = state.event_publisher {
                 let publisher = publisher.clone();
                 let supplier_id = id;
+                let supplier_no = supplier.supplier_no.clone();
                 let supplier_name = supplier.name.clone();
+                let category = Some(supplier.category.clone());
+                let status = supplier.status.clone();
                 let contact_person = supplier.contact_person.clone();
                 let contact_email = supplier.email.clone();
                 let registered_by = user_id.map(|u| u.to_string());
                 let registered_at = Some(now);
+                let created_by = user_id;
+                let created_at = Some(now);
+                let tenant_id_evt = tenant_id;
                 tokio::spawn(async move {
-                    let payload = SrmSupplierRegisteredPayload {
+                    let registered_payload = SrmSupplierRegisteredPayload {
                         supplier_id,
-                        supplier_name,
-                        contact_person,
-                        contact_email,
+                        supplier_name: supplier_name.clone(),
+                        contact_person: contact_person.clone(),
+                        contact_email: contact_email.clone(),
                         registered_by,
                         registered_at,
                     };
                     if let Err(e) = publisher
-                        .publish_event(EventType::SrmSupplierRegistered, payload)
+                        .publish_event(EventType::SrmSupplierRegistered, registered_payload)
                         .await
                     {
                         tracing::warn!(
@@ -361,6 +370,34 @@ async fn create_supplier(
                     } else {
                         tracing::info!(
                             "[srm] SrmSupplierRegistered 事件发布成功 - supplier_id={}",
+                            supplier_id
+                        );
+                    }
+
+                    // P3 事件驱动规范化：发布供应商主数据创建事件，通知 SCM/Finance 同步供应商主数据
+                    let created_payload = SrmSupplierCreatedPayload {
+                        supplier_id,
+                        supplier_no,
+                        supplier_name,
+                        category,
+                        status,
+                        contact_person,
+                        contact_email,
+                        tenant_id: Some(tenant_id_evt),
+                        created_by,
+                        created_at,
+                    };
+                    if let Err(e) = publisher
+                        .publish_event(EventType::SrmSupplierCreated, created_payload)
+                        .await
+                    {
+                        tracing::warn!(
+                            "[srm] SrmSupplierCreated 事件发布失败（graceful fallback）: {}",
+                            e
+                        );
+                    } else {
+                        tracing::info!(
+                            "[srm] SrmSupplierCreated 事件发布成功 - supplier_id={}",
                             supplier_id
                         );
                     }
@@ -508,17 +545,59 @@ async fn update_supplier(
             state.supplier_cache.clear();
             tracing::debug!("🗑️ 供应商缓存已失效: {}", cache_key);
 
+            let new_data = serde_json::to_value(&supplier).ok();
             record_audit_log(
                 &state.db,
                 "suppliers",
                 id,
                 "update",
-                Some(old_values),
-                Some(serde_json::to_value(&supplier).ok()),
+                Some(old_values.clone()),
+                Some(new_data.clone()),
                 user_id,
                 tenant_id,
             )
             .await;
+
+            // P3 事件驱动规范化：发布供应商更新事件，通知 SCM/Finance 同步供应商快照
+            if let Some(ref publisher) = state.event_publisher {
+                let updated_fields = diff_json_fields(&old_values, &new_data);
+                let publisher = publisher.clone();
+                let supplier_id = id;
+                let supplier_no = supplier.supplier_no.clone();
+                let supplier_name = supplier.name.clone();
+                let tenant_id_evt = tenant_id;
+                let updated_by = user_id;
+                let updated_at = Some(now);
+                let old_data_evt = old_values.clone();
+                let new_data_evt = new_data.clone();
+                tokio::spawn(async move {
+                    let payload = SrmSupplierUpdatedPayload {
+                        supplier_id,
+                        supplier_no,
+                        supplier_name,
+                        updated_fields,
+                        old_data: old_data_evt,
+                        new_data: new_data_evt,
+                        tenant_id: Some(tenant_id_evt),
+                        updated_by,
+                        updated_at,
+                    };
+                    if let Err(e) = publisher
+                        .publish_event(EventType::SrmSupplierUpdated, payload)
+                        .await
+                    {
+                        tracing::warn!(
+                            "[srm] SrmSupplierUpdated 事件发布失败（graceful fallback）: {}",
+                            e
+                        );
+                    } else {
+                        tracing::info!(
+                            "[srm] SrmSupplierUpdated 事件发布成功 - supplier_id={}",
+                            supplier_id
+                        );
+                    }
+                });
+            }
 
             Json(ApiResponse::success(supplier, "供应商更新成功"))
         }
@@ -789,6 +868,27 @@ async fn get_supplier_performance(
 
 // ==================== Audit Log Helper ====================
 
+/// 比较两个 JSON 对象，返回值不同的顶层字段名列表（用于事件 payload 的 updated_fields）
+fn diff_json_fields(
+    old: &Option<serde_json::Value>,
+    new: &Option<serde_json::Value>,
+) -> Vec<String> {
+    let (Some(old_obj), Some(new_obj)) = (
+        old.as_ref().and_then(|v| v.as_object()),
+        new.as_ref().and_then(|v| v.as_object()),
+    ) else {
+        return Vec::new();
+    };
+    let mut fields = Vec::new();
+    for (key, new_val) in new_obj {
+        match old_obj.get(key) {
+            Some(old_val) if old_val == new_val => {}
+            _ => fields.push(key.clone()),
+        }
+    }
+    fields
+}
+
 async fn record_audit_log(
     db: &PgPool,
     table_name: &str,
@@ -864,6 +964,11 @@ async fn start_supplier_approval(
         return Json(ApiResponse::<serde_json::Value>::error(404, "供应商不存在"));
     }
 
+    let supplier_ref = supplier.as_ref().expect("supplier checked above");
+    let old_status = supplier_ref.status.clone();
+    let supplier_no = supplier_ref.supplier_no.clone();
+    let supplier_name = supplier_ref.name.clone();
+
     tracing::info!(
         "Starting approval for supplier {}: workflow_id={}",
         id,
@@ -899,6 +1004,43 @@ async fn start_supplier_approval(
 
     if result.is_ok() {
         state.supplier_cache.clear();
+
+        // P3 事件驱动规范化：状态变更 → pending_approval，通知 SCM/Finance/Portal
+        if let Some(ref publisher) = state.event_publisher {
+            let publisher = publisher.clone();
+            let supplier_id = id;
+            let tenant_id_evt = tenant_id;
+            let changed_by = user_id;
+            let change_reason = req.comment.clone();
+            let changed_at = Some(Utc::now());
+            tokio::spawn(async move {
+                let payload = SrmSupplierStatusChangedPayload {
+                    supplier_id,
+                    supplier_no,
+                    supplier_name,
+                    old_status,
+                    new_status: "pending_approval".to_string(),
+                    change_reason,
+                    tenant_id: Some(tenant_id_evt),
+                    changed_by,
+                    changed_at,
+                };
+                if let Err(e) = publisher
+                    .publish_event(EventType::SrmSupplierStatusChanged, payload)
+                    .await
+                {
+                    tracing::warn!(
+                        "[srm] SrmSupplierStatusChanged 事件发布失败（graceful fallback）: {}",
+                        e
+                    );
+                } else {
+                    tracing::info!(
+                        "[srm] SrmSupplierStatusChanged 事件发布成功 - supplier_id={}",
+                        supplier_id
+                    );
+                }
+            });
+        }
     }
 
     record_audit_log(
@@ -931,7 +1073,7 @@ async fn approve_supplier(
     Extension(claims): Extension<Claims>,
     headers: axum::http::HeaderMap,
     Path(id): Path<Uuid>,
-    Json(_req): Json<ApprovalActionRequest>,
+    Json(req): Json<ApprovalActionRequest>,
 ) -> Json<ApiResponse<serde_json::Value>> {
     match check_permission(&state.db, &claims, &ModulePermission::SupplierWrite).await {
         Ok(_) => {}
@@ -953,6 +1095,11 @@ async fn approve_supplier(
         return Json(ApiResponse::<serde_json::Value>::error(404, "供应商不存在"));
     }
 
+    let supplier_ref = supplier.as_ref().expect("supplier checked above");
+    let old_status = supplier_ref.status.clone();
+    let supplier_no = supplier_ref.supplier_no.clone();
+    let supplier_name = supplier_ref.name.clone();
+
     let result = sqlx::query(
         "UPDATE plugin_srm.suppliers SET status = 'approved', updated_at = NOW() WHERE id = $1",
     )
@@ -962,6 +1109,43 @@ async fn approve_supplier(
 
     if result.is_ok() {
         state.supplier_cache.clear();
+
+        // P3 事件驱动规范化：状态变更 → approved，通知 SCM（采购资格）/Finance（应付启用）
+        if let Some(ref publisher) = state.event_publisher {
+            let publisher = publisher.clone();
+            let supplier_id = id;
+            let tenant_id_evt = tenant_id;
+            let changed_by = user_id;
+            let change_reason = req.comment.clone();
+            let changed_at = Some(Utc::now());
+            tokio::spawn(async move {
+                let payload = SrmSupplierStatusChangedPayload {
+                    supplier_id,
+                    supplier_no,
+                    supplier_name,
+                    old_status,
+                    new_status: "approved".to_string(),
+                    change_reason,
+                    tenant_id: Some(tenant_id_evt),
+                    changed_by,
+                    changed_at,
+                };
+                if let Err(e) = publisher
+                    .publish_event(EventType::SrmSupplierStatusChanged, payload)
+                    .await
+                {
+                    tracing::warn!(
+                        "[srm] SrmSupplierStatusChanged 事件发布失败（graceful fallback）: {}",
+                        e
+                    );
+                } else {
+                    tracing::info!(
+                        "[srm] SrmSupplierStatusChanged 事件发布成功 - supplier_id={}",
+                        supplier_id
+                    );
+                }
+            });
+        }
     }
 
     record_audit_log(
@@ -992,7 +1176,7 @@ async fn reject_supplier(
     Extension(claims): Extension<Claims>,
     headers: axum::http::HeaderMap,
     Path(id): Path<Uuid>,
-    Json(_req): Json<ApprovalActionRequest>,
+    Json(req): Json<ApprovalActionRequest>,
 ) -> Json<ApiResponse<serde_json::Value>> {
     match check_permission(&state.db, &claims, &ModulePermission::SupplierWrite).await {
         Ok(_) => {}
@@ -1014,6 +1198,11 @@ async fn reject_supplier(
         return Json(ApiResponse::<serde_json::Value>::error(404, "供应商不存在"));
     }
 
+    let supplier_ref = supplier.as_ref().expect("supplier checked above");
+    let old_status = supplier_ref.status.clone();
+    let supplier_no = supplier_ref.supplier_no.clone();
+    let supplier_name = supplier_ref.name.clone();
+
     let result = sqlx::query(
         "UPDATE plugin_srm.suppliers SET status = 'rejected', updated_at = NOW() WHERE id = $1",
     )
@@ -1023,6 +1212,43 @@ async fn reject_supplier(
 
     if result.is_ok() {
         state.supplier_cache.clear();
+
+        // P3 事件驱动规范化：状态变更 → rejected，通知 SCM（采购冻结）/Finance/Portal
+        if let Some(ref publisher) = state.event_publisher {
+            let publisher = publisher.clone();
+            let supplier_id = id;
+            let tenant_id_evt = tenant_id;
+            let changed_by = user_id;
+            let change_reason = req.comment.clone();
+            let changed_at = Some(Utc::now());
+            tokio::spawn(async move {
+                let payload = SrmSupplierStatusChangedPayload {
+                    supplier_id,
+                    supplier_no,
+                    supplier_name,
+                    old_status,
+                    new_status: "rejected".to_string(),
+                    change_reason,
+                    tenant_id: Some(tenant_id_evt),
+                    changed_by,
+                    changed_at,
+                };
+                if let Err(e) = publisher
+                    .publish_event(EventType::SrmSupplierStatusChanged, payload)
+                    .await
+                {
+                    tracing::warn!(
+                        "[srm] SrmSupplierStatusChanged 事件发布失败（graceful fallback）: {}",
+                        e
+                    );
+                } else {
+                    tracing::info!(
+                        "[srm] SrmSupplierStatusChanged 事件发布成功 - supplier_id={}",
+                        supplier_id
+                    );
+                }
+            });
+        }
     }
 
     record_audit_log(

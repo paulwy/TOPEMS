@@ -1,0 +1,19 @@
+[package]
+name = "topems-feedback"
+version = "0.1.0"
+edition = "2021"
+description = "TOPEMS Feedback Service - 客户反馈管理"
+
+[dependencies]
+axum = { version = "0.7", features = ["macros"] }
+chrono = { version = "0.4", features = ["serde"] }
+sqlx = { version = "0.8", features = ["runtime-tokio", "postgres", "uuid", "chrono", "json"] }
+uuid = { version = "1", features = ["serde"] }
+serde = { version = "1", features = ["derive"] }
+serde_json = "1"
+tracing = "0.1"
+tracing-subscriber = { version = "0.3", features = ["env-filter"] }
+tokio = { version = "1", features = ["full"] }
+dotenv = "0.15"
+
+topems-shared = { path = "../../lib" }

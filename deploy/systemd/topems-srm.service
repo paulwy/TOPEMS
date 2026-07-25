@@ -1,0 +1,35 @@
+[Unit]
+Description=TOPEMS SRM 服务
+Documentation=https://github.com/topems/topems
+After=network.target postgresql.service redis.service
+Wants=postgresql.service redis.service
+
+[Service]
+Type=simple
+User=topems
+Group=topems
+WorkingDirectory=/opt/topems/svc/srm
+ExecStart=/opt/topems/bin/srm-service
+ExecReload=/bin/kill -HUP $MAINPID
+Restart=on-failure
+RestartSec=5
+TimeoutStartSec=30
+TimeoutStopSec=30
+
+EnvironmentFile=/opt/topems/config/srm.env
+
+StandardOutput=journal
+StandardError=journal
+SyslogIdentifier=topems-srm
+
+NoNewPrivileges=true
+PrivateTmp=true
+ProtectSystem=strict
+ProtectHome=true
+ReadWritePaths=/opt/topems/logs /opt/topems/data
+
+LimitNOFILE=65536
+LimitNPROC=4096
+
+[Install]
+WantedBy=multi-user.target

@@ -20,4 +20,5 @@ export const FINANCE_PATHS = {
   consolidation: '/finance/consolidation',
   consolidationReports: '/finance/consolidation-reports',
   reports: '/finance/reports',
+  expenseApproval: '/finance/expense-approval',
 } as const;

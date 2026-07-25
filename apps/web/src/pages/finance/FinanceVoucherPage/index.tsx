@@ -1,9 +1,6 @@
-import { Typography, Tabs, Tab, Box } from '@mui/material';
-import { designTokens } from '@/theme/tokens';
 import React, { useState, useMemo } from 'react';
-import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { useCrudOperations, type CrudOperations } from '@/hooks/useCrudQueries';
-import { FINANCE_PATHS } from '@/modules/finance/config';
+import { Typography, Box } from '@mui/material';
+import { useQuery, useQueryClient } from '@tanstack/react-query';
 import {
   FileText,
   Plus,
@@ -20,12 +17,12 @@ import {
   Clock,
   Building2,
 } from 'lucide-react';
-import {
-  ActionButton,
-  StatusBadge,
-  PageContainer,
-} from '@/components/common';
+import { useTranslation } from 'react-i18next';
 import { useNavigate } from 'react-router-dom';
+
+import CrudPage, { type CrudTab } from '@/components/templates/CrudPage';
+import { createCrudPageAdapter } from '@/schema/crudPageAdapter';
+import { PageContainer, StatCardGroup, ActionButton, StatusBadge } from '@/components/common';
 import {
   voucherApi,
   accountingSubjectApi,
@@ -35,20 +32,54 @@ import {
   type AccountingSubject,
 } from '@/api/erp';
 import { useNotificationStore } from '@/store';
-import { ListPageTemplate } from '@/components/templates';
-import type { ColumnDef, RowAction, FilterConfig } from '@/components/templates';
-import { StatCardGroup } from '@/components';
 import { apiLogger } from '@/utils/logger';
+import { FINANCE_PATHS } from '@/modules/finance/config';
+import { designTokens } from '@/theme/tokens';
+import { voucherSchema, accountingSubjectSchema } from '@/schemas/finance';
+import type { EntitySchema, BatchActionConfig } from '@/schema';
+import type { RowAction } from '@/components/templates';
 
-import VoucherListPanel from './components/VoucherListPanel';
-import SubjectListPanel from './components/SubjectListPanel';
 import VoucherFormModal from './components/VoucherFormModal';
 import VoucherImportModal from './components/VoucherImportModal';
 import VoucherDetailModal from './components/VoucherDetailModal';
 import ConfirmDialogs from './components/ConfirmDialogs';
 
-import { useTranslation } from 'react-i18next';
 const ct = designTokens.colors;
+
+// ============ 科目 Tab 面板（嵌套 CrudPage） ============
+
+interface SubjectCrudPanelProps {
+  statCards: Array<{
+    title: string;
+    value: string | number;
+    icon: React.ReactNode;
+    color: 'primary' | 'secondary' | 'success' | 'warning' | 'error' | 'info';
+  }>;
+}
+
+const SubjectCrudPanel: React.FC<SubjectCrudPanelProps> = ({ statCards }) => {
+  const apiAdapter = useMemo(() => createCrudPageAdapter(accountingSubjectApi), []);
+  const headerContent = useMemo(
+    () => (
+      <StatCardGroup
+        stats={statCards}
+        columns={4}
+      />
+    ),
+    [statCards]
+  );
+
+  return (
+    <CrudPage
+      schema={accountingSubjectSchema}
+      apiAdapter={apiAdapter}
+      headerContent={headerContent}
+      breadcrumbs={[{ label: '财务' }, { label: '凭证管理' }, { label: '会计科目' }]}
+    />
+  );
+};
+
+// ============ 主页面 ============
 
 const FinanceVoucherPage: React.FC = () => {
   const { t } = useTranslation();
@@ -56,17 +87,12 @@ const FinanceVoucherPage: React.FC = () => {
   const addNotification = useNotificationStore((state) => state.addNotification);
   const queryClient = useQueryClient();
 
-  const [activeTab, setActiveTab] = useState<string>('vouchers');
-  const [searchQuery, setSearchQuery] = useState('');
-  const [periodFilter, setPeriodFilter] = useState('');
-  const [statusFilter, setStatusFilter] = useState('');
-
-  const [voucherItems, setVoucherItems] = useState<VoucherItem[]>([]);
-
+  // ── 弹窗状态 ──
   const [showCreateModal, setShowCreateModal] = useState(false);
   const [showImportModal, setShowImportModal] = useState(false);
   const [showDetailModal, setShowDetailModal] = useState(false);
   const [currentVoucher, setCurrentVoucher] = useState<FinancialVoucher | null>(null);
+  const [voucherItems, setVoucherItems] = useState<VoucherItem[]>([]);
   const [selectedIds, setSelectedIds] = useState<string[]>([]);
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [deletingId, setDeletingId] = useState<string | null>(null);
@@ -82,34 +108,44 @@ const FinanceVoucherPage: React.FC = () => {
     items: [] as VoucherItemRequest[],
   });
 
-  const {
-    data: vouchers,
-    loading: vouchersLoading,
-    create: createVoucher,
-    update: updateVoucher,
-    delete: deleteVoucher,
-    fetch: fetchVouchers,
-  } = useCrudOperations<FinancialVoucher>({
-    api: voucherApi as unknown as CrudOperations<FinancialVoucher>,
-    queryKey: 'finance-vouchers',
-    defaultPageSize: 50,
-  });
-
-  const subjectsQuery = useQuery({
-    queryKey: ['finance-accounting-subjects'],
+  // ── 凭证统计查询（用于 headerContent 统计卡片）──
+  const voucherStatsQuery = useQuery({
+    queryKey: ['finance_voucher', 'stats'],
     queryFn: async () => {
-      const response = await accountingSubjectApi.list();
-      if (!response.success || !response.data) {
-        throw new Error(response.message || t('finance.finance_voucher_page_index.fail'));
+      const res = await voucherApi.list({ pagesize: 999 } as Record<string, unknown>);
+      if (!res.success || !res.data) {
+        throw new Error(res.message || t('finance.finance_voucher_page_index.fail'));
       }
-      return response.data.items || [];
+      return res.data.items || [];
+    },
+    staleTime: 30 * 1000,
+  });
+  const allVouchers = voucherStatsQuery.data || [];
+
+  // ── 会计科目查询（科目 Tab 统计 + 凭证表单科目下拉）──
+  const subjectsQuery = useQuery({
+    queryKey: ['finance_accounting_subject', 'stats'],
+    queryFn: async () => {
+      const res = await accountingSubjectApi.list({ pagesize: 999 } as Record<string, unknown>);
+      if (!res.success || !res.data) {
+        throw new Error(res.message || t('finance.finance_voucher_page_index.fail_1'));
+      }
+      return res.data.items || [];
     },
     staleTime: 5 * 60 * 1000,
   });
-
   const subjects = subjectsQuery.data || [];
-  const loading = vouchersLoading || subjectsQuery.isLoading;
 
+  // ── CrudPage 适配器 ──
+  const voucherAdapter = useMemo(() => createCrudPageAdapter(voucherApi), []);
+  const formatCurrency = (amount: number) =>
+    `¥${amount.toLocaleString('zh-CN', { minimumFractionDigits: 2 })}`;
+
+  const refreshVouchers = () => {
+    queryClient.invalidateQueries({ queryKey: ['finance_voucher'] });
+  };
+
+  // ── 凭证操作 ──
   const loadVoucherItems = async (voucherId: string) => {
     try {
       const result = await voucherApi.getItems(voucherId);
@@ -119,6 +155,18 @@ const FinanceVoucherPage: React.FC = () => {
     } catch (err: unknown) {
       apiLogger.error(t('finance.finance_voucher_page_index.fail_1'), err);
     }
+  };
+
+  const resetForm = () => {
+    setNewVoucher({
+      voucher_number: '',
+      voucher_date: '',
+      period: '',
+      attachment_count: 0,
+      summary: '',
+      maker_name: '',
+      items: [],
+    });
   };
 
   const handleCreate = async () => {
@@ -144,17 +192,24 @@ const FinanceVoucherPage: React.FC = () => {
     }
 
     try {
-      const result = await createVoucher({
-        ...newVoucher,
-        items: newVoucher.items,
-      } as unknown as Record<string, unknown>);
-
-      if (result) {
-        setShowCreateModal(false);
-        resetForm();
+      const result = await voucherApi.create(newVoucher);
+      if (!result.success) {
+        throw new Error(result.message || t('finance.finance_voucher_page_index.create'));
       }
+      addNotification({
+        title: t('finance.finance_voucher_page_index.success'),
+        message: t('finance.finance_voucher_page_index.create_1'),
+        type: 'success',
+      });
+      refreshVouchers();
+      setShowCreateModal(false);
+      resetForm();
     } catch (err: unknown) {
-      // 错误已在 mutation 中处理
+      addNotification({
+        title: t('finance.finance_voucher_page_index.error'),
+        message: (err as Error).message,
+        type: 'error',
+      });
     }
   };
 
@@ -166,23 +221,37 @@ const FinanceVoucherPage: React.FC = () => {
   const confirmDelete = async () => {
     if (!deletingId) return;
     try {
-      await deleteVoucher(deletingId);
+      const result = await voucherApi.delete(deletingId);
+      if (!result.success) {
+        throw new Error(result.message || t('finance.finance_voucher_page_index.delete_1'));
+      }
+      addNotification({
+        title: t('finance.finance_voucher_page_index.success'),
+        message: t('finance.finance_voucher_page_index.delete_2'),
+        type: 'success',
+      });
+      refreshVouchers();
     } catch (err: unknown) {
-      // 错误已在 mutation 中处理
+      addNotification({
+        title: t('finance.finance_voucher_page_index.error'),
+        message: (err as Error).message,
+        type: 'error',
+      });
     } finally {
       setDeleteDialogOpen(false);
       setDeletingId(null);
     }
   };
 
-  const handleBatchDelete = () => {
-    if (selectedIds.length === 0) return;
+  const handleBatchDelete = (ids: string[]) => {
+    if (ids.length === 0) return;
+    setSelectedIds(ids);
     setBatchDeleteDialogOpen(true);
   };
 
   const confirmBatchDelete = async () => {
     try {
-      const promises = selectedIds.map((id) => deleteVoucher(id));
+      const promises = selectedIds.map((id) => voucherApi.delete(id));
       const results = await Promise.allSettled(promises);
       const successCount = results.filter((r) => r.status === 'fulfilled').length;
 
@@ -201,10 +270,13 @@ const FinanceVoucherPage: React.FC = () => {
       }
 
       setSelectedIds([]);
+      refreshVouchers();
     } catch (err: unknown) {
       addNotification({
         title: t('finance.finance_voucher_page_index.error'),
-        message: (err as { message?: string }).message || t('finance.finance_voucher_page_index.batch_delete_1'),
+        message:
+          (err as { message?: string }).message ||
+          t('finance.finance_voucher_page_index.batch_delete_1'),
         type: 'error',
       });
     } finally {
@@ -212,15 +284,15 @@ const FinanceVoucherPage: React.FC = () => {
     }
   };
 
-  const handleBatchAudit = async () => {
-    if (selectedIds.length === 0) return;
+  const handleBatchAudit = async (ids: string[]) => {
+    if (ids.length === 0) return;
 
     try {
-      const promises = selectedIds.map((id) => updateVoucher(id, { status: 'approved' } as unknown as Record<string, unknown>));
+      const promises = ids.map((id) => voucherApi.update(id, { status: 'approved' }));
       const results = await Promise.allSettled(promises);
       const successCount = results.filter((r) => r.status === 'fulfilled').length;
 
-      if (successCount === selectedIds.length) {
+      if (successCount === ids.length) {
         addNotification({
           title: t('finance.finance_voucher_page_index.success'),
           message: `批量审核成功，共 ${successCount} 条记录`,
@@ -229,23 +301,67 @@ const FinanceVoucherPage: React.FC = () => {
       } else {
         addNotification({
           title: t('finance.finance_voucher_page_index.success_1'),
-          message: `成功审核 ${successCount} 条，失败 ${selectedIds.length - successCount} 条`,
+          message: `成功审核 ${successCount} 条，失败 ${ids.length - successCount} 条`,
           type: 'warning',
         });
       }
 
       setSelectedIds([]);
+      refreshVouchers();
     } catch (err: unknown) {
       addNotification({
         title: t('finance.finance_voucher_page_index.error'),
-        message: (err as { message?: string }).message || t('finance.finance_voucher_page_index.fail_2'),
+        message:
+          (err as { message?: string }).message || t('finance.finance_voucher_page_index.fail_2'),
         type: 'error',
       });
     }
   };
 
-  const importMutation = useMutation({
-    mutationFn: async (fileContent: string) => {
+  const handleAudit = async (id: string) => {
+    try {
+      const result = await voucherApi.update(id, { status: 'approved' });
+      if (!result.success) {
+        throw new Error(result.message || t('finance.finance_voucher_page_index.fail_2'));
+      }
+      addNotification({
+        title: t('finance.finance_voucher_page_index.success'),
+        message: t('finance.finance_voucher_page_index.approved'),
+        type: 'success',
+      });
+      refreshVouchers();
+    } catch (err: unknown) {
+      addNotification({
+        title: t('finance.finance_voucher_page_index.error'),
+        message: (err as Error).message,
+        type: 'error',
+      });
+    }
+  };
+
+  const handleUnaudit = async (id: string) => {
+    try {
+      const result = await voucherApi.update(id, { status: 'pending' });
+      if (!result.success) {
+        throw new Error(result.message || t('finance.finance_voucher_page_index.fail_2'));
+      }
+      addNotification({
+        title: t('finance.finance_voucher_page_index.success'),
+        message: t('finance.finance_voucher_page_index.pending_review'),
+        type: 'success',
+      });
+      refreshVouchers();
+    } catch (err: unknown) {
+      addNotification({
+        title: t('finance.finance_voucher_page_index.error'),
+        message: (err as Error).message,
+        type: 'error',
+      });
+    }
+  };
+
+  const handleImport = async (fileContent: string) => {
+    try {
       const result = await voucherApi.importU8({
         file_name: 'u8_vouchers.json',
         file_content: fileContent,
@@ -254,15 +370,12 @@ const FinanceVoucherPage: React.FC = () => {
       if (!result.success) {
         throw new Error(result.message || t('finance.finance_voucher_page_index.import'));
       }
-      return result.data;
-    },
-    onSuccess: (data) => {
-      queryClient.invalidateQueries({ queryKey: ['finance-vouchers'] });
       const {
         success_count: successCount,
         failed_count: failedCount,
         errors,
-      } = data || ({} as { success_count?: number; failed_count?: number; errors?: unknown[] });
+      } = result.data ||
+      ({} as { success_count?: number; failed_count?: number; errors?: unknown[] });
       if (failedCount === 0) {
         addNotification({
           title: t('finance.finance_voucher_page_index.success'),
@@ -275,34 +388,20 @@ const FinanceVoucherPage: React.FC = () => {
           message: `成功导入${successCount}张，失败${failedCount}张`,
           type: 'warning',
         });
-        errors?.forEach((err: string) => apiLogger.warn(t('finance.finance_voucher_page_index.import_3'), err));
+        errors?.forEach((err: unknown) =>
+          apiLogger.warn(t('finance.finance_voucher_page_index.import_3'), err)
+        );
       }
+      refreshVouchers();
       setShowImportModal(false);
-    },
-    onError: (err: unknown) => {
+    } catch (err: unknown) {
       apiLogger.error(t('finance.finance_voucher_page_index.import_4'), err);
       addNotification({
         title: t('finance.finance_voucher_page_index.error'),
         message: (err as Error).message || t('finance.finance_voucher_page_index.import'),
         type: 'error',
       });
-    },
-  });
-
-  const handleImport = async (fileContent: string) => {
-    await importMutation.mutateAsync(fileContent);
-  };
-
-  const resetForm = () => {
-    setNewVoucher({
-      voucher_number: '',
-      voucher_date: '',
-      period: '',
-      attachment_count: 0,
-      summary: '',
-      maker_name: '',
-      items: [],
-    });
+    }
   };
 
   const addVoucherItem = () => {
@@ -370,249 +469,179 @@ const FinanceVoucherPage: React.FC = () => {
     );
   };
 
-  const formatCurrency = (amount: number) =>
-    `¥${amount.toLocaleString('zh-CN', { minimumFractionDigits: 2 })}`;
-
+  // ── 凭证统计卡片（通过 headerContent 渲染）──
   const voucherStatCards = useMemo(
     () => [
       {
-        id: 'total',
         title: t('finance.finance_voucher_page_index.text_551f4c'),
-        value: vouchers.length,
+        value: allVouchers.length,
         icon: <FileText size={24} />,
         color: 'primary' as const,
       },
       {
-        id: 'approved',
         title: t('finance.finance_voucher_page_index.approved'),
-        value: vouchers.filter((v) => v.status === 'approved' || v.status === 'posted').length,
+        value: allVouchers.filter((v) => v.status === 'approved' || v.status === 'posted').length,
         icon: <FileCheck size={24} />,
         color: 'success' as const,
       },
       {
-        id: 'pending',
         title: t('finance.finance_voucher_page_index.pending_review'),
-        value: vouchers.filter((v) => v.status === 'pending').length,
+        value: allVouchers.filter((v) => v.status === 'pending').length,
         icon: <Clock size={24} />,
         color: 'warning' as const,
       },
       {
-        id: 'total_amount',
         title: t('finance.finance_voucher_page_index.amount'),
-        value: formatCurrency(vouchers.reduce((sum, v) => sum + v.total_debit, 0)),
+        value: formatCurrency(allVouchers.reduce((sum, v) => sum + v.total_debit, 0)),
         icon: <DollarSign size={24} />,
         color: 'secondary' as const,
       },
     ],
-    [vouchers]
+    [allVouchers, t]
   );
 
+  // ── 科目统计卡片 ──
   const subjectStatCards = useMemo(
     () => [
       {
-        id: 'total',
         title: t('finance.finance_voucher_page_index.text_3eb8d3'),
         value: subjects.length,
         icon: <Building2 size={24} />,
         color: 'primary' as const,
       },
       {
-        id: 'active',
         title: t('finance.finance_voucher_page_index.active'),
         value: subjects.filter((s) => s.status === 'active').length,
         icon: <FileCheck size={24} />,
         color: 'success' as const,
       },
       {
-        id: 'level1',
         title: t('finance.finance_voucher_page_index.text_6772b0'),
         value: subjects.filter((s) => s.level === 1).length,
         icon: <DollarSign size={24} />,
         color: 'warning' as const,
       },
       {
-        id: 'cash_flow',
         title: t('finance.finance_voucher_page_index.text_07d5bc'),
         value: subjects.filter((s) => s.is_cash_flow).length,
         icon: <Clock size={24} />,
         color: 'info' as const,
       },
     ],
-    [subjects]
+    [subjects, t]
   );
 
-  const voucherColumns = useMemo(
-    () => [
-      {
-        id: 'voucher_number',
-        label: t('finance.finance_voucher_page_index.text_846d88'),
-        render: (row: FinancialVoucher) => (
-          <Typography sx={{ fontWeight: 500, color: 'primary.main' }}>
-            {row.voucher_number}
-          </Typography>
-        ),
-      },
-      {
-        id: 'voucher_date',
-        label: t('finance.finance_voucher_page_index.date'),
-        render: (row: FinancialVoucher) => (
-          <Typography
-            variant='body2'
-            sx={{ color: 'text.primary' }}
-          >
-            {row.voucher_date?.split('T')[0] || '-'}
-          </Typography>
-        ),
-      },
-      {
-        id: 'period',
-        label: t('finance.finance_voucher_page_index.text_2f4339'),
-        render: (row: FinancialVoucher) => (
-          <Typography
-            variant='body2'
-            sx={{ color: 'text.secondary' }}
-          >
-            {row.period}
-          </Typography>
-        ),
-      },
-      {
-        id: 'total_debit',
-        label: t('finance.finance_voucher_page_index.amount_1'),
-        render: (row: FinancialVoucher) => (
-          <Typography sx={{ fontWeight: 'bold', color: 'error.main' }}>
-            {formatCurrency(row.total_debit)}
-          </Typography>
-        ),
-      },
-      {
-        id: 'total_credit',
-        label: t('finance.finance_voucher_page_index.amount_2'),
-        render: (row: FinancialVoucher) => (
-          <Typography sx={{ fontWeight: 'bold', color: 'success.main' }}>
-            {formatCurrency(row.total_credit)}
-          </Typography>
-        ),
-      },
-      {
-        id: 'maker_name',
-        label: t('finance.finance_voucher_page_index.document_maker'),
-        render: (row: FinancialVoucher) => (
-          <Typography
-            variant='body2'
-            sx={{ color: 'text.primary' }}
-          >
-            {row.maker_name || '-'}
-          </Typography>
-        ),
-      },
-      {
-        id: 'status',
-        label: t('finance.finance_voucher_page_index.status'),
-        render: (row: FinancialVoucher) => getStatusBadge(row.status),
-      },
-    ],
-    []
+  // ── 凭证 headerContent（统计卡片）──
+  const voucherHeaderContent = useMemo(
+    () => (
+      <StatCardGroup
+        stats={voucherStatCards}
+        columns={4}
+      />
+    ),
+    [voucherStatCards]
   );
 
-  const voucherRowActions = useMemo(
+  // ── 自定义行操作（含审核/反审核）──
+  const customRowActions: RowAction[] = useMemo(
     () => [
       {
         label: t('finance.finance_voucher_page_index.view_detail'),
         icon: <Eye size={16} />,
-        onClick: (row: FinancialVoucher) => {
-          setCurrentVoucher(row);
-          loadVoucherItems(row.id);
+        onClick: (row: Record<string, unknown>) => {
+          const voucher = row as unknown as FinancialVoucher;
+          setCurrentVoucher(voucher);
+          loadVoucherItems(voucher.id);
           setShowDetailModal(true);
         },
       },
       {
         label: t('finance.finance_voucher_page_index.edit'),
         icon: <Edit size={16} />,
-        color: 'primary' as const,
-        onClick: (row: FinancialVoucher) => {
+        color: 'primary',
+        onClick: (row: Record<string, unknown>) => {
+          const voucher = row as unknown as FinancialVoucher;
           setNewVoucher({
-            voucher_number: row.voucher_number,
-            voucher_date: row.voucher_date?.split('T')[0] || '',
-            period: row.period,
-            attachment_count: row.attachment_count || 0,
-            summary: row.summary || '',
-            maker_name: row.maker_name || '',
+            voucher_number: voucher.voucher_number,
+            voucher_date: voucher.voucher_date?.split('T')[0] || '',
+            period: voucher.period,
+            attachment_count: voucher.attachment_count || 0,
+            summary: voucher.summary || '',
+            maker_name: voucher.maker_name || '',
             items: [],
           });
           setShowCreateModal(true);
         },
       },
       {
+        label: t('finance.finance_voucher_page_index.approved'),
+        icon: <Check size={16} />,
+        color: 'success',
+        onClick: (row: Record<string, unknown>) => handleAudit(String(row.id)),
+        show: (row: Record<string, unknown>) =>
+          row.status !== 'approved' && row.status !== 'posted',
+      },
+      {
+        label: t('finance.finance_voucher_page_index.pending_review'),
+        icon: <RefreshCw size={16} />,
+        color: 'warning',
+        onClick: (row: Record<string, unknown>) => handleUnaudit(String(row.id)),
+        show: (row: Record<string, unknown>) =>
+          row.status === 'approved' || row.status === 'posted',
+      },
+      {
         label: t('finance.finance_voucher_page_index.delete_1'),
         icon: <Trash2 size={16} />,
-        color: 'error' as const,
-        onClick: (row: FinancialVoucher) => handleDelete(row.id),
+        color: 'error',
+        onClick: (row: Record<string, unknown>) => handleDelete(String(row.id)),
       },
     ],
-
-    []
+    [t]
   );
 
-  const voucherFilters = useMemo(
+  // ── 批量操作（合并到 schema）──
+  const voucherSchemaWithBatch = useMemo<EntitySchema>(
+    () => ({
+      ...voucherSchema,
+      batchActions: [
+        {
+          key: 'batch-audit',
+          label: t('finance.finance_voucher_page_index.approved'),
+          icon: <Check size={16} />,
+          color: 'success',
+          onClick: handleBatchAudit,
+          confirm: true,
+        },
+        {
+          key: 'batch-delete',
+          label: t('finance.finance_voucher_page_index.batch_delete'),
+          icon: <Trash2 size={16} />,
+          color: 'error',
+          onClick: handleBatchDelete,
+          confirm: true,
+        },
+      ] as BatchActionConfig[],
+    }),
+    [t]
+  );
+
+  // ── Tab 配置 ──
+  const tabs: CrudTab[] = useMemo(
     () => [
       {
-        id: 'status',
-        label: t('finance.finance_voucher_page_index.status'),
-        type: 'select' as const,
-        options: [
-          { value: '', label: t('finance.finance_voucher_page_index.status_1') },
-          { value: 'draft', label: t('finance.finance_voucher_page_index.text_22b433') },
-          { value: 'pending', label: t('finance.finance_voucher_page_index.pending_review') },
-          { value: 'approved', label: t('finance.finance_voucher_page_index.approved') },
-          { value: 'posted', label: t('finance.finance_voucher_page_index.text_4ab08f') },
-          { value: 'imported', label: t('finance.finance_voucher_page_index.import_5') },
-        ],
+        id: 'vouchers',
+        label: t('finance.finance_voucher_page_index.text_755348'),
+        icon: <FileText size={16} />,
       },
       {
-        id: 'period',
-        label: t('finance.finance_voucher_page_index.text_2f4339'),
-        type: 'select' as const,
-        options: [
-          { value: '', label: t('finance.finance_voucher_page_index.all') },
-          { value: '2024-01', label: t('finance.finance_voucher_page_index.text_a5afc4') },
-          { value: '2024-02', label: t('finance.finance_voucher_page_index.text_b5dbfd') },
-          { value: '2024-03', label: t('finance.finance_voucher_page_index.text_29a209') },
-          { value: '2024-04', label: t('finance.finance_voucher_page_index.text_839676') },
-          { value: '2024-05', label: t('finance.finance_voucher_page_index.text_69ccfd') },
-          { value: '2024-06', label: t('finance.finance_voucher_page_index.text_c62e26') },
-        ],
+        id: 'subjects',
+        label: t('finance.finance_voucher_page_index.text_d64865'),
+        icon: <Building2 size={16} />,
+        content: <SubjectCrudPanel statCards={subjectStatCards} />,
       },
     ],
-    []
+    [t, subjectStatCards]
   );
-
-  const filteredVouchers = useMemo(() => {
-    return vouchers.filter((voucher) => {
-      const matchesSearch =
-        !searchQuery ||
-        voucher.voucher_number.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        voucher.summary?.toLowerCase().includes(searchQuery.toLowerCase());
-      const matchesPeriod = !periodFilter || voucher.period === periodFilter;
-      const matchesStatus = !statusFilter || voucher.status === statusFilter;
-      return matchesSearch && matchesPeriod && matchesStatus;
-    });
-  }, [vouchers, searchQuery, periodFilter, statusFilter]);
-
-  const handleSearch = () => {
-    // 搜索逻辑已通过 filteredVouchers 实现
-  };
-
-  const handleReset = () => {
-    setSearchQuery('');
-    setPeriodFilter('');
-    setStatusFilter('');
-  };
-
-  const handleFilterChange = (filters: Record<string, unknown>) => {
-    if (filters.status !== undefined) setStatusFilter(filters.status as string);
-    if (filters.period !== undefined) setPeriodFilter(filters.period as string);
-  };
 
   return (
     <PageContainer
@@ -692,53 +721,14 @@ const FinanceVoucherPage: React.FC = () => {
       </Box>
 
       <Box sx={{ maxWidth: 1200, mx: 'auto', px: 2, py: 3 }}>
-        <Tabs
-          value={activeTab}
-          onChange={(_: React.SyntheticEvent, newValue: string) => setActiveTab(newValue)}
-          sx={{ mb: 2 }}
-        >
-          <Tab
-            value='vouchers'
-            label={t('finance.finance_voucher_page_index.text_755348')}
-            icon={<FileText sx={{ width: 16, height: 16 }} />}
-            iconPosition='start'
-          />
-          <Tab
-            value='subjects'
-            label={t('finance.finance_voucher_page_index.text_d64865')}
-            icon={<Building2 sx={{ width: 16, height: 16 }} />}
-            iconPosition='start'
-          />
-        </Tabs>
-
-        <Box sx={{ display: activeTab === 'vouchers' ? 'block' : 'none' }}>
-          <VoucherListPanel
-            voucherStatCards={voucherStatCards}
-            selectedIds={selectedIds}
-            onSelectionChange={setSelectedIds}
-            onBatchAudit={handleBatchAudit}
-            onBatchDelete={handleBatchDelete}
-            voucherColumns={voucherColumns as ColumnDef<FinancialVoucher>[]}
-            filteredVouchers={filteredVouchers}
-            loading={loading}
-            voucherFilters={voucherFilters as FilterConfig[]}
-            filtersValue={{
-              status: statusFilter,
-              period: periodFilter,
-            }}
-            onFilterChange={handleFilterChange}
-            onSearch={handleSearch}
-            onReset={handleReset}
-            voucherRowActions={voucherRowActions as RowAction<FinancialVoucher>[]}
-          />
-        </Box>
-
-        <Box sx={{ display: activeTab === 'subjects' ? 'block' : 'none' }}>
-          <SubjectListPanel
-            subjects={subjects}
-            subjectStatCards={subjectStatCards}
-          />
-        </Box>
+        <CrudPage
+          schema={voucherSchemaWithBatch}
+          apiAdapter={voucherAdapter}
+          customRowActions={customRowActions}
+          headerContent={voucherHeaderContent}
+          tabs={tabs}
+          defaultTab='vouchers'
+        />
       </Box>
 
       <VoucherFormModal
@@ -747,7 +737,11 @@ const FinanceVoucherPage: React.FC = () => {
           setShowCreateModal(false);
           resetForm();
         }}
-        title={newVoucher.voucher_number ? t('finance.finance_voucher_page_index.edit_1') : t('finance.finance_voucher_page_index.add_1')}
+        title={
+          newVoucher.voucher_number
+            ? t('finance.finance_voucher_page_index.edit_1')
+            : t('finance.finance_voucher_page_index.add_1')
+        }
         newVoucher={newVoucher}
         setNewVoucher={setNewVoucher}
         onSubmit={handleCreate}

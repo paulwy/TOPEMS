@@ -23,6 +23,7 @@ export const LIMS_PATHS = {
   uncertainty: '/lims/uncertainty',
   inspectionResult: '/lims/inspection-result',
   proficiencyTesting: '/lims/proficiency-testing',
+  dashboard: '/lims/dashboard',
 } as const;
 
 // ---- 路由配置（供路由系统使用） ----
@@ -246,6 +247,17 @@ export const limsModuleConfig: RouteModuleConfig = {
       template: 'list',
       group: 'analytics',
     },
+    {
+      path: LIMS_PATHS.dashboard,
+      element: lazyWithRetry(() => import('@/pages/lims/LimsDashboardPage'), 'LimsDashboardPage'),
+      module: 'lims',
+      title: '仪表盘',
+      code: 'lims-dashboard',
+      requiredPermissions: ['lims:read'],
+      action: 'read',
+      template: 'dashboard',
+      group: 'overview',
+    },
   ],
 };
 
@@ -262,6 +274,17 @@ export const limsNavConfig: ModuleNavConfig = {
   order: 11,
   description: '样品管理、检验流程、仪器设备、试剂管理',
   navItems: [
+    {
+      code: 'lims-dashboard',
+      label: '仪表盘',
+      icon: 'LayoutDashboard',
+      path: LIMS_PATHS.dashboard,
+      permission: 'lims:read',
+      order: 0,
+      group: 'overview',
+      showInTabs: true,
+      description: 'LIMS数据概览',
+    },
     {
       code: 'lims-sample',
       label: '样品管理',

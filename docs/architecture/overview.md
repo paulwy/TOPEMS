@@ -55,13 +55,13 @@ TOPEMS 是一个基于微服务架构的企业级数字化平台，提供统一�
 └─────────────────────────────┬───────────────────────────────┘
                               │ REST API / EventBus
 ┌─────────────────────────────┴───────────────────────────────┐
-│                    Business Services (21)                    │
+│                    Business Services (19)                    │
 │                                                              │
 │  ERP(8010) │ HRM(8020) │ PM(8023) │ CRM(8029)             │
 │  MES(8030) │ PDM(8031) │ SCM(8040) │ WMS(8041) │ SRM(8042) │
-│  QMS(8050) │ LIMS(8051)│ EHS(8052) │ RS(8053)             │
-│  BI(8060)  │ Monitor(8062) │ Portal(8063)                  │
-│  Doc(8012) │ AI(8013)  │ Mobile(8070) │ GIS(8071) │ Integration(8072) │
+│  QMS(8050) │ LIMS(8051)│ EHS(8052) │ RD(8053)             │
+│  BI(8060)  │ Portal(8063)                                    │
+│  AI(8013)  │ Mobile(8070) │ GIS(8071) │ Integration(8072) │
 └─────────────────────────────┬───────────────────────────────┘
                               │
 ┌─────────────────────────────┴───────────────────────────────┐
@@ -106,10 +106,9 @@ TOPEMS 是一个基于微服务架构的企业级数字化平台，提供统一�
 | 服务 | 端口 | 业务域 | 说明 | API 前缀 | 状态 |
 |------|------|--------|------|----------|------|
 | **核心服务** | | | | | |
-| unified-core | 8000 | Core | 含 IAM/Flow/File/Communication | /api/iam/, /api/flow/... | ✅ 核心 |
+| unified-core | 8000 | Core | 含 IAM/Doc/Flow/File/Communication/Monitor | /api/core/iam/, /api/core/doc/... | ✅ 核心 |
 | **经营管理 (8010-8019)** | | | | | |
 | erp | 8010 | ERP | 企业资源计划 | /api/erp/ | 🔶 部分实现 |
-| doc | 8012 | ERP | 文档管理服务 | /api/doc/ | ✅ 已实现 |
 | ai | 8013 | ERP | AI 智能服务 | /api/ai/ | 🔶 部分实现 |
 | **协同办公 (8020-8029)** | | | | | |
 | hrm | 8020 | Collab | 人力资源管理 | /api/hrm/ | ✅ 已实现 |
@@ -126,10 +125,9 @@ TOPEMS 是一个基于微服务架构的企业级数字化平台，提供统一�
 | qms | 8050 | QA/R&D | 质量管理 | /api/qms/ | ✅ 已实现 |
 | lims | 8051 | QA/R&D | 实验室信息管理 | /api/lims/ | ✅ 已实现 |
 | ehs | 8052 | QA/R&D | 环境健康安全 | /api/ehs/ | ✅ 已实现 |
-| rs | 8053 | QA/R&D | 研发管理 | /api/rs/ | ✅ 已实现 |
+| rd | 8053 | QA/R&D | 研发管理 | /api/rd/ | ✅ 已实现 |
 | **数据分析 (8060-8069)** | | | | | |
 | bi | 8060 | BI | 商业智能（含报表服务） | /api/bi/, /api/report/ | ✅ 已实现 |
-| monitor | 8062 | BI | 系统监控 | /api/monitor/ | 🔶 部分实现 |
 | portal | 8063 | BI | 企业门户 | /api/portal/ | 📋 规划中 |
 | **基础设施 (8070-8079)** | | | | | |
 | mobile | 8070 | Infra | 移动服务 | /api/mobile/ | 📋 规划中 |
@@ -153,6 +151,7 @@ TOPEMS 是一个基于微服务架构的企业级数字化平台，提供统一�
 | mail | /api/mail/ | 邮件发送、模板管理 |
 | im | /api/comm/ | 即时通讯、消息收发 |
 | notification | /api/notification/ | 通知服务、消息推送 |
+| monitor | /api/core/monitor/ | 系统监控、健康检查、指标采集 |
 
 ### 核心基础设施组件
 
@@ -240,7 +239,7 @@ unified-core 验证令牌
     ▼
 查找依赖 ERP 的已安装插件
     │  ├─ 无依赖 → 允许卸载
-    │  └─ 有依赖（如 QMS、RS）→ "Cannot uninstall: [qms, rs] depend(s) on this plugin"
+    │  └─ 有依赖（如 QMS、RD）→ "Cannot uninstall: [qms, rd] depend(s) on this plugin"
 ```
 
 #### 服务发现架构
@@ -310,11 +309,11 @@ unified-core 现仅保留核心模块：iam、doc、flow、file、mail、im、no
 
 ```
 unified-core (8000) ←→ 所有业务服务 (认证、权限、导航)
-qms (8050) ←→ lims (8051) ←→ ehs (8052) ←→ rs (8053)
+qms (8050) ←→ lims (8051) ←→ ehs (8052) ←→ rd (8053)
 scm (8040) ←→ wms (8041) ←→ srm (8042)
 mes (8030) ←→ pdm (8031)
-bi (8060, 含报表) ←→ monitor (8062)
-ai (8013) ←→ doc (8012) ←→ flow (智能审批)
+bi (8060, 含报表) ←→ unified-core (8000, 监控)
+ai (8013) ←→ unified-core (8000, doc/flow 智能审批)
 ```
 
 ## 前端架构
@@ -408,14 +407,14 @@ ai (8013) ←→ doc (8012) ←→ flow (智能审批)
 | iam | unified-core | 用户、角色、权限 |
 | flow | unified-core | 流程定义、实例 |
 | notification | unified-core | 通知、消息 |
-| core_doc | doc | 文档管理 |
+| core_doc | unified-core | 文档管理 |
 | core_ai | ai | AI 智能服务 |
 | plugin_erp | erp | 财务、采购、销售 |
 | plugin_hrm | hrm | 员工、考勤、绩效 |
 | plugin_qms | qms | 质量标准、检验 |
 | plugin_lims | lims | 样品、仪器、试剂 |
 | plugin_ehs | ehs | 安全事件、环保 |
-| plugin_rs | rs | 研发管理 |
+| plugin_rs | rd | 研发管理 |
 | ... | ... | 各业务模块独立 Schema |
 
 ### 数据库扩展
@@ -550,7 +549,7 @@ cp .env.example .env
 ---
 **版本**: 3.2.0  
 **最后更新**: 2026-06-29  
-**服务总数**: 21 个 (Doc/AI 已独立 - Phase 8)  
-**已实现服务**: 7 个 (unified-core, hrm, qms, lims, ehs, rs, doc)  
+**服务总数**: 20 个 (Doc/Monitor/User-service 已合并到 unified-core)
+**已实现服务**: 6 个 (unified-core, hrm, qms, lims, ehs, rd)
 **部分实现**: 10 个  
 **规划中**: 4 个

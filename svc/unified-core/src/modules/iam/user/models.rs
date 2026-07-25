@@ -1,13 +1,15 @@
 use lazy_static::lazy_static;
 use regex::Regex;
 use serde::{Deserialize, Serialize};
+use utoipa::ToSchema;
 
 lazy_static! {
     static ref EMAIL_REGEX: Regex = Regex::new(r"^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$")
         .expect("invalid EMAIL_REGEX pattern");
 }
 
-#[derive(Debug, Deserialize)]
+#[derive(Debug, Deserialize, ToSchema)]
+#[schema(as = ListUsersParams)]
 pub struct ListUsersParams {
     pub(crate) page: Option<i64>,
     pub(crate) page_size: Option<i64>,
@@ -48,7 +50,8 @@ pub(crate) fn is_valid_email(email: &str) -> bool {
     EMAIL_REGEX.is_match(email)
 }
 
-#[derive(Debug, Clone, Serialize)]
+#[derive(Debug, Clone, Serialize, ToSchema)]
+#[schema(as = UserResponse)]
 pub(crate) struct UserResponse {
     pub id: String,
     pub username: String,

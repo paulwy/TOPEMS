@@ -1,362 +1,272 @@
-import React, { useState, useMemo, useCallback, useEffect } from 'react';
-import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { QUERY_KEYS } from '@/lib/reactQuery';
-import { Box, Chip, Rating } from '@mui/material';
-import { Plus, Eye, Edit, Trash2 } from 'lucide-react';
-import { useNavigate } from 'react-router-dom';
-import { ListPageTemplate, type ColumnDef, type RowAction } from '@/components/templates';
-import { srmApi, type SupplierEvaluation, type Supplier } from '@/api/srm';
-import { useNotificationStore } from '@/store';
-import { apiLogger } from '@/utils/logger';
-import { ConfirmDialog } from '@topems/shared-components';
-import { PageContainer } from '@/components/common';
-import { SRM_PATHS } from '@/modules/srm/config';
+import React from 'react';
+import CrudPage from '@/components/templates/CrudPage';
+import type { CrudApiAdapter } from '@/components/templates/CrudPage';
+import type { ColumnDef, RowAction } from '@/components/templates/list/types';
+import { evaluationSchema } from '@/schemas/srm';
+import { srmApi } from '@/api/srm';
+import { useQuery } from '@tanstack/react-query';
+import { Box, Card, CardContent, Typography, Rating, Chip } from '@mui/material';
+import { FileText, CheckCircle, Clock, XCircle } from 'lucide-react';
+import { designTokens } from '@/theme/tokens';
 
-interface EvaluationWithSupplier extends SupplierEvaluation {
+const ct = designTokens.colors;
+
+interface SupplierEvaluation {
+  id: string;
+  evaluation_no: string;
+  supplier_id: string;
   supplier_name?: string;
+  evaluation_date?: string;
+  overall_score?: number;
+  quality_score?: number;
+  delivery_score?: number;
+  service_score?: number;
+  price_score?: number;
+  evaluator?: string;
+  status: string;
+  created_at: string;
 }
 
-const STATUS_OPTIONS = [
-  { label: '全部', value: '' },
-  { label: '进行中', value: 'in_progress' },
-  { label: '待审核', value: 'pending' },
-  { label: '已完成', value: 'completed' },
-  { label: '已驳回', value: 'rejected' },
+const evaluationApiAdapter: CrudApiAdapter = {
+  list: async (params) => {
+    const response = await srmApi.listEvaluations();
+    if (!response.success || !response.data) {
+      return { data: [], total: 0 };
+    }
+
+    const items = response.data;
+    const search = params?.search?.toLowerCase() || '';
+    const status = params?.status as string | undefined;
+    const page = params?.page || 0;
+    const pageSize = params?.pageSize || 10;
+
+    let filtered = items;
+    if (search) {
+      filtered = items.filter(
+        (e) =>
+          e.evaluation_no.toLowerCase().includes(search) ||
+          e.supplier_name?.toLowerCase().includes(search) ||
+          (e.evaluator?.toLowerCase().includes(search) ?? false)
+      );
+    }
+    if (status && status !== 'all') {
+      filtered = filtered.filter((e) => e.status === status);
+    }
+
+    const total = filtered.length;
+    const data = filtered.slice(page * pageSize, (page + 1) * pageSize);
+    return { data: data as unknown as Record<string, unknown>[], total };
+  },
+  create: async (data) => {
+    const response = await srmApi.createEvaluation(
+      data as Parameters<typeof srmApi.createEvaluation>[0]
+    );
+    if (!response.success || !response.data) throw new Error('创建评估失败');
+    return response.data as unknown as Record<string, unknown>;
+  },
+  update: async (id, data) => {
+    const response = await srmApi.updateEvaluation(
+      id,
+      data as Parameters<typeof srmApi.updateEvaluation>[1]
+    );
+    if (!response.success || !response.data) throw new Error('更新评估失败');
+    return response.data as unknown as Record<string, unknown>;
+  },
+  delete: async (id) => {
+    const response = await srmApi.deleteEvaluation(id);
+    if (!response.success) throw new Error('删除评估失败');
+  },
+};
+
+const getStatusColor = (
+  status: string
+): 'primary' | 'success' | 'warning' | 'error' | 'default' => {
+  switch (status) {
+    case 'in_progress':
+      return 'primary';
+    case 'completed':
+      return 'success';
+    case 'pending':
+      return 'warning';
+    case 'rejected':
+      return 'error';
+    default:
+      return 'default';
+  }
+};
+
+const getStatusLabel = (status: string): string => {
+  switch (status) {
+    case 'in_progress':
+      return '进行中';
+    case 'completed':
+      return '已完成';
+    case 'pending':
+      return '待审核';
+    case 'rejected':
+      return '已驳回';
+    default:
+      return status;
+  }
+};
+
+const customColumns: ColumnDef[] = [
+  {
+    id: 'overall_score',
+    label: '综合评分',
+    width: 180,
+    sortable: true,
+    render: (row) => {
+      const r = row as unknown as SupplierEvaluation;
+      return (
+        <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+          <Rating
+            value={r.overall_score || 0}
+            readOnly
+            max={10}
+            precision={0.5}
+            size='small'
+          />
+          <span>{r.overall_score || '-'}</span>
+        </Box>
+      );
+    },
+  },
+  {
+    id: 'status',
+    label: '状态',
+    width: 100,
+    sortable: true,
+    render: (row) => {
+      const r = row as unknown as SupplierEvaluation;
+      return (
+        <Chip
+          label={getStatusLabel(r.status)}
+          size='small'
+          color={getStatusColor(r.status)}
+        />
+      );
+    },
+  },
 ];
 
-const SrmEvaluationPage: React.FC = () => {
-  const navigate = useNavigate();
-  const addNotification = useNotificationStore((state) => state.addNotification);
-  const queryClient = useQueryClient();
-  const [page, setPage] = useState(0);
-  const [rowsPerPage, setRowsPerPage] = useState(10);
-  const [searchTerm, setSearchTerm] = useState('');
-  const [statusFilter, setStatusFilter] = useState<string>('');
-  const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
-  const [selectedEvaluation, setSelectedEvaluation] = useState<EvaluationWithSupplier | null>(null);
-
-  const suppliersQuery = useQuery<Supplier[]>({
-    queryKey: QUERY_KEYS.SRM.SUPPLIERS,
+const EvaluationStats: React.FC = () => {
+  const { data: evaluations = [] } = useQuery({
+    queryKey: ['srm-evaluations-stats'],
     queryFn: async () => {
-      const response = await srmApi.listSuppliers();
+      const response = await srmApi.listEvaluations();
       if (response.success && response.data) return response.data;
       return [];
     },
+    staleTime: 5 * 60 * 1000,
   });
 
-  const evaluationsQuery = useQuery<EvaluationWithSupplier[]>({
-    queryKey: QUERY_KEYS.SRM.EVALUATIONS,
-    queryFn: async () => {
-      const [evalResponse, supplierResponse] = await Promise.all([
-        srmApi.listEvaluations(),
-        srmApi.listSuppliers(),
-      ]);
-
-      const supplierMap = new Map(
-        (supplierResponse.data || []).map((s) => [s.id, s.name])
-      );
-
-      if (evalResponse.success && evalResponse.data) {
-        return evalResponse.data.map((evalItem) => ({
-          ...evalItem,
-          supplier_name: supplierMap.get(evalItem.supplier_id),
-        }));
-      }
-      return [];
-    },
-  });
-
-  const suppliers = suppliersQuery.data || [];
-  const allEvaluations = evaluationsQuery.data || [];
-  const loading = evaluationsQuery.isLoading || suppliersQuery.isLoading;
-  const error = evaluationsQuery.error
-    ? evaluationsQuery.error instanceof Error
-      ? evaluationsQuery.error.message
-      : '加载评估数据失败'
-    : '';
-
-  const deleteMutation = useMutation({
-    mutationFn: async (evaluationId: string) => {
-      const response = await srmApi.deleteEvaluation(evaluationId);
-      if (!response.success) {
-        throw new Error(response.message || '删除评估失败');
-      }
-      return response;
-    },
-    onSuccess: () => {
-      addNotification({
-        type: 'success',
-        title: '删除成功',
-        message: '删除评估成功',
-      });
-      queryClient.invalidateQueries({ queryKey: QUERY_KEYS.SRM.EVALUATIONS });
-    },
-    onError: (err: unknown) => {
-      apiLogger.error('删除评估失败:', err);
-      addNotification({
-        type: 'error',
-        title: '删除失败',
-        message: '删除评估失败',
-      });
-    },
-  });
-
-  const handleDeleteClick = useCallback((evaluation: EvaluationWithSupplier) => {
-    setSelectedEvaluation(evaluation);
-    setDeleteDialogOpen(true);
-  }, []);
-
-  const handleDeleteConfirm = useCallback(() => {
-    if (!selectedEvaluation) return;
-    deleteMutation.mutate(selectedEvaluation.id);
-    setDeleteDialogOpen(false);
-    setSelectedEvaluation(null);
-  }, [selectedEvaluation, deleteMutation]);
-
-  const filteredEvaluations = useMemo(() => {
-    return allEvaluations.filter((e) => {
-      const matchesSearch =
-        !searchTerm ||
-        e.evaluation_no.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        e.supplier_name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        e.evaluator?.toLowerCase().includes(searchTerm.toLowerCase());
-      const matchesStatus = !statusFilter || e.status === statusFilter;
-      return matchesSearch && matchesStatus;
-    });
-  }, [allEvaluations, searchTerm, statusFilter]);
-
-  const paginatedEvaluations = useMemo(() => {
-    const start = page * rowsPerPage;
-    return filteredEvaluations.slice(start, start + rowsPerPage);
-  }, [filteredEvaluations, page, rowsPerPage]);
-
-  const getStatusColor = useCallback(
-    (status: string): 'primary' | 'success' | 'warning' | 'error' | 'default' => {
-      switch (status) {
-        case '进行中':
-        case 'in_progress':
-          return 'primary';
-        case '已完成':
-        case 'completed':
-          return 'success';
-        case '待审核':
-        case 'pending':
-          return 'warning';
-        case '已驳回':
-        case 'rejected':
-          return 'error';
-        default:
-          return 'default';
-      }
-    },
-    []
+  const stats = React.useMemo(
+    () => ({
+      total: evaluations.length,
+      inProgress: evaluations.filter((e: SupplierEvaluation) => e.status === 'in_progress').length,
+      completed: evaluations.filter((e: SupplierEvaluation) => e.status === 'completed').length,
+      pending: evaluations.filter((e: SupplierEvaluation) => e.status === 'pending').length,
+    }),
+    [evaluations]
   );
 
-  const getStatusLabel = useCallback((status: string): string => {
-    switch (status) {
-      case 'in_progress':
-        return '进行中';
-      case 'completed':
-        return '已完成';
-      case 'pending':
-        return '待审核';
-      case 'rejected':
-        return '已驳回';
-      default:
-        return status;
-    }
-  }, []);
-
-  const columns: ColumnDef<EvaluationWithSupplier>[] = useMemo(
-    () => [
-      {
-        id: 'evaluation_no',
-        label: '评估编号',
-        width: 150,
-        sortable: true,
-        render: (row) => <Box sx={{ fontWeight: 'medium' }}>{row.evaluation_no}</Box>,
-      },
-      {
-        id: 'supplier',
-        label: '供应商',
-        width: 180,
-        sortable: true,
-        render: (row) => row.supplier_name || '-',
-      },
-      { id: 'evaluation_date', label: '评估日期', width: 120, sortable: true },
-      {
-        id: 'overall_score',
-        label: '综合评分',
-        width: 180,
-        sortable: true,
-        render: (row) => (
-          <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-            <Rating
-              value={row.overall_score || 0}
-              readOnly
-              max={10}
-              precision={0.5}
-              size='small'
-            />
-            <span>{row.overall_score || '-'}</span>
-          </Box>
-        ),
-      },
-      {
-        id: 'quality_score',
-        label: '质量',
-        width: 100,
-        sortable: true,
-        render: (row) => row.quality_score || '-',
-      },
-      {
-        id: 'delivery_score',
-        label: '交付',
-        width: 100,
-        sortable: true,
-        render: (row) => row.delivery_score || '-',
-      },
-      {
-        id: 'service_score',
-        label: '服务',
-        width: 100,
-        sortable: true,
-        render: (row) => row.service_score || '-',
-      },
-      {
-        id: 'price_score',
-        label: '价格',
-        width: 100,
-        sortable: true,
-        render: (row) => row.price_score || '-',
-      },
-      {
-        id: 'evaluator',
-        label: '评估人',
-        width: 100,
-        render: (row) => row.evaluator || '-',
-      },
-      {
-        id: 'status',
-        label: '状态',
-        width: 100,
-        sortable: true,
-        render: (row) => (
-          <Chip
-            label={getStatusLabel(row.status)}
-            size='small'
-            color={getStatusColor(row.status)}
-          />
-        ),
-      },
-    ],
-    [getStatusColor, getStatusLabel]
-  );
-
-  const rowActions: RowAction<EvaluationWithSupplier>[] = useMemo(
-    () => [
-      {
-        label: '查看详情',
-        icon: <Eye size={16} />,
-        onClick: (row) => navigate(SRM_PATHS.evaluation),
-      },
-      {
-        label: '编辑',
-        icon: <Edit size={16} />,
-        onClick: (row) => navigate(SRM_PATHS.evaluation),
-      },
-      {
-        label: '删除',
-        icon: <Trash2 size={16} />,
-        color: 'error',
-        onClick: handleDeleteClick,
-      },
-    ],
-    [navigate, handleDeleteClick]
-  );
-
-  const filters = useMemo(
-    () => [
-      {
-        id: 'status',
-        label: '状态',
-        type: 'select' as const,
-        options: STATUS_OPTIONS,
-        value: statusFilter,
-        onChange: (value: unknown) => {
-          setStatusFilter(value as string);
-          setPage(0);
-        },
-      },
-    ],
-    [statusFilter]
-  );
+  const statCards = [
+    {
+      label: '评估总数',
+      value: stats.total,
+      color: ct.purple[500],
+      bgColor: 'secondary.light',
+      icon: <FileText sx={{ width: 20, height: 20 }} />,
+    },
+    {
+      label: '进行中',
+      value: stats.inProgress,
+      color: 'primary.dark',
+      bgColor: 'primary.lighter',
+      icon: <Clock sx={{ width: 20, height: 20 }} />,
+    },
+    {
+      label: '已完成',
+      value: stats.completed,
+      color: 'success.dark',
+      bgColor: 'success.lighter',
+      icon: <CheckCircle sx={{ width: 20, height: 20 }} />,
+    },
+    {
+      label: '待审核',
+      value: stats.pending,
+      color: 'warning.dark',
+      bgColor: 'warning.lighter',
+      icon: <XCircle sx={{ width: 20, height: 20 }} />,
+    },
+  ];
 
   return (
-    <PageContainer
-      title='供应商评估'
-      subtitle='管理供应商评估、跟踪评估进度、分析评分数据'
+    <Box
+      sx={{
+        display: 'grid',
+        gridTemplateColumns: { xs: 'repeat(1, 1fr)', md: 'repeat(4, 1fr)' },
+        gap: 2,
+        mb: 4,
+      }}
     >
-      <ListPageTemplate
-        title=''
-        subtitle=''
-        breadcrumbs={[
-          { label: '首页', href: '/dashboard' },
-          { label: '供应商管理', href: '/srm' },
-          { label: '供应商评估' },
-        ]}
-        columns={columns}
-        data={paginatedEvaluations}
-        loading={loading}
-        error={error}
-        pagination={{
-          page,
-          pageSize: rowsPerPage,
-          total: filteredEvaluations.length,
-          onPageChange: setPage,
-          onPageSizeChange: (size) => {
-            setRowsPerPage(size);
-            setPage(0);
-          },
-        }}
-        searchable
-        searchPlaceholder='搜索评估编号、供应商或评估人...'
-        searchValue={searchTerm}
-        onSearch={(value) => {
-          setSearchTerm(value);
-          setPage(0);
-        }}
-        filters={filters}
-        filtersValue={{ status: statusFilter }}
-        onFilterChange={(f) => {
-          if (f.status !== undefined) {
-            setStatusFilter(f.status);
-            setPage(0);
-          }
-        }}
-        actions={[]}
-        rowActions={rowActions}
-        getRowId={(row) => row.id}
-        onRefresh={() => evaluationsQuery.refetch()}
-        emptyMessage='暂无评估数据'
-        showRowNumber
-        columnConfigurable
-        persistColumnConfig
-        columnConfigStorageKey='srm-evaluation-list-columns'
-      />
+      {statCards.map((card) => (
+        <Card key={card.label}>
+          <CardContent sx={{ p: 2 }}>
+            <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5 }}>
+              <Box
+                sx={{
+                  width: 40,
+                  height: 40,
+                  bgcolor: card.bgColor,
+                  borderRadius: 3,
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                }}
+              >
+                {React.cloneElement(card.icon, { style: { color: card.color } })}
+              </Box>
+              <Box>
+                <Typography
+                  variant='body2'
+                  sx={{ color: 'text.secondary', fontSize: '0.875rem' }}
+                >
+                  {card.label}
+                </Typography>
+                <Typography
+                  variant='h5'
+                  sx={{ fontWeight: 700, color: 'slate.900' }}
+                >
+                  {card.value}
+                </Typography>
+              </Box>
+            </Box>
+          </CardContent>
+        </Card>
+      ))}
+    </Box>
+  );
+};
 
-      <ConfirmDialog
-        isOpen={deleteDialogOpen}
-        onClose={() => {
-          setDeleteDialogOpen(false);
-          setSelectedEvaluation(null);
-        }}
-        onConfirm={handleDeleteConfirm}
-        title='确认删除'
-        message={`确定要删除评估 "${selectedEvaluation?.evaluation_no}" 吗？此操作不可恢复。`}
-        danger
-      />
-    </PageContainer>
+const SrmEvaluationPage: React.FC = () => {
+  const customRowActions: RowAction[] = [
+    {
+      label: '查看详情',
+      onClick: () => {},
+    },
+  ];
+
+  return (
+    <CrudPage
+      schema={evaluationSchema}
+      apiAdapter={evaluationApiAdapter}
+      customColumns={customColumns}
+      breadcrumbs={[{ label: 'SRM' }, { label: '供应商评估' }]}
+      headerContent={<EvaluationStats />}
+      customRowActions={customRowActions}
+    />
   );
 };
 

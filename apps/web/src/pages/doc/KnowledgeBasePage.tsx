@@ -1,16 +1,12 @@
 import { Box, Typography, Chip, Stack, useTheme } from '@mui/material';
 import React, { useState, useMemo, useCallback } from 'react';
-import { useQuery } from '@tanstack/react-query';
 import { BookOpen, FolderOpen, FileText, Eye, User, Calendar, BarChart3 } from 'lucide-react';
 
 import { useNotificationStore } from '@/store';
-import {
-  TreePageTemplate,
-  type TreeNode,
-  ListPageTemplate,
-  type ColumnDef,
-} from '@/components/templates';
+import { TreePageTemplate, type TreeNode } from '@/components/templates';
+import CrudPage, { type CrudApiAdapter } from '@/components/templates/CrudPage';
 import { PageContainer } from '@/components/common';
+import { documentSchema } from '@/schemas/doc';
 import { designTokens } from '@/theme/tokens';
 
 const ct = designTokens.colors;
@@ -198,13 +194,6 @@ export const DocumentKnowledgeBasePage: React.FC = () => {
   const theme = useTheme();
   const addNotification = useNotificationStore((state) => state.addNotification);
 
-  const loadingQuery = useQuery<boolean>({
-    queryKey: ['doc-knowledgebase'],
-    queryFn: async () => true,
-    staleTime: Infinity,
-  });
-  const loading = loadingQuery.isLoading;
-
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedNode, setSelectedNode] = useState<TreeNode | null>(null);
   const [selectedCategory, setSelectedCategory] = useState<KnowledgeCategory | null>(null);
@@ -308,123 +297,47 @@ export const DocumentKnowledgeBasePage: React.FC = () => {
     return MOCK_DOCS.filter((d) => d.categoryId === selectedCategory.id);
   }, [selectedCategory]);
 
-  const columns: ColumnDef<KnowledgeDoc>[] = useMemo(
-    () => [
-      {
-        id: 'title',
-        label: '标题',
-        render: (row) => (
-          <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5 }}>
-            <Box
-              sx={{
-                width: 32,
-                height: 32,
-                borderRadius: 1,
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                bgcolor: 'primary.50',
-              }}
-            >
-              <FileText
-                size={16}
-                style={{ color: ct.primary.main }}
-              />
-            </Box>
-            <Typography
-              variant='body2'
-              sx={{ fontWeight: 500 }}
-            >
-              {row.title}
-            </Typography>
-          </Box>
-        ),
+  const mockDocAdapter: CrudApiAdapter = useMemo(
+    () => ({
+      list: async (params) => {
+        let filtered = categoryDocs.map((doc) => ({
+          id: doc.id,
+          name: doc.title,
+          author: doc.author,
+          updated_at: doc.updatedAt,
+          views: doc.views,
+          status: doc.status,
+          category_id: doc.categoryId,
+          content_type: 'application/pdf',
+          size: 1024 * 1024,
+          folder_id: doc.categoryId,
+          created_at: doc.updatedAt,
+        }));
+
+        if (params.search) {
+          const search = params.search.toLowerCase();
+          filtered = filtered.filter((d) => d.name.toLowerCase().includes(search));
+        }
+
+        const page = params.page || 1;
+        const pageSize = params.pageSize || 10;
+        const start = (page - 1) * pageSize;
+        const end = start + pageSize;
+
+        return {
+          data: filtered.slice(start, end),
+          total: filtered.length,
+        };
       },
-      {
-        id: 'author',
-        label: '作者',
-        width: 120,
-        render: (row) => (
-          <Stack
-            direction='row'
-            spacing={0.5}
-            sx={{ alignItems: 'center' }}
-          >
-            <User
-              size={14}
-              style={{ color: ct.grey[500] }}
-            />
-            <Typography
-              variant='body2'
-              color='text.secondary'
-            >
-              {row.author}
-            </Typography>
-          </Stack>
-        ),
+      create: async (data) => {
+        return { id: Date.now().toString(), ...data };
       },
-      {
-        id: 'updatedAt',
-        label: '更新时间',
-        width: 140,
-        render: (row) => (
-          <Stack
-            direction='row'
-            spacing={0.5}
-            sx={{ alignItems: 'center' }}
-          >
-            <Calendar
-              size={14}
-              style={{ color: ct.grey[500] }}
-            />
-            <Typography
-              variant='body2'
-              color='text.secondary'
-            >
-              {row.updatedAt}
-            </Typography>
-          </Stack>
-        ),
+      update: async (id, data) => {
+        return { id, ...data };
       },
-      {
-        id: 'views',
-        label: '阅读量',
-        width: 100,
-        render: (row) => (
-          <Stack
-            direction='row'
-            spacing={0.5}
-            sx={{ alignItems: 'center' }}
-          >
-            <BarChart3
-              size={14}
-              style={{ color: ct.grey[500] }}
-            />
-            <Typography
-              variant='body2'
-              color='text.secondary'
-            >
-              {row.views.toLocaleString()}
-            </Typography>
-          </Stack>
-        ),
-      },
-      {
-        id: 'status',
-        label: '状态',
-        width: 100,
-        render: (row) => (
-          <Chip
-            size='small'
-            label={STATUS_LABELS[row.status]}
-            color={STATUS_COLORS[row.status] as React.ComponentProps<typeof import('@mui/material/Chip').default>['color']}
-            variant='outlined'
-            sx={{ fontWeight: 500 }}
-          />
-        ),
-      },
-    ],
-    []
+      delete: async () => {},
+    }),
+    [categoryDocs]
   );
 
   const detailPanel = useCallback(
@@ -502,34 +415,15 @@ export const DocumentKnowledgeBasePage: React.FC = () => {
             </Stack>
           </Box>
 
-          <ListPageTemplate
-            title=''
-            subtitle=''
-            columns={columns}
-            data={categoryDocs}
-            loading={loading}
-            searchable
-            searchPlaceholder='搜索文档标题...'
-            onRowClick={(doc) => {
-              addNotification({
-                title: '打开文档',
-                message: `正在打开"${doc.title}"...`,
-                type: 'info',
-              });
-            }}
-            onRefresh={() => {
-              addNotification({
-                title: '成功',
-                message: '刷新成功',
-                type: 'success',
-              });
-            }}
-            emptyMessage='暂无文档'
+          <CrudPage
+            schema={documentSchema}
+            apiAdapter={mockDocAdapter}
+            breadcrumbs={[]}
           />
         </Box>
       );
     },
-    [selectedCategory, categoryDocs, columns, loading, addNotification]
+    [selectedCategory, categoryDocs, theme.palette.text.disabled, mockDocAdapter]
   );
 
   return (
@@ -545,7 +439,7 @@ export const DocumentKnowledgeBasePage: React.FC = () => {
         title=''
         subtitle=''
         data={filteredTreeData}
-        loading={loading}
+        loading={false}
         searchPlaceholder='搜索知识库分类、文档...'
         onSearch={setSearchQuery}
         onSelect={handleSelectNode}
@@ -553,7 +447,6 @@ export const DocumentKnowledgeBasePage: React.FC = () => {
         detailPanel={detailPanel}
         detailPanelTitle={selectedCategory ? '文档列表' : undefined}
         onRefresh={() => {
-          loadingQuery.refetch();
           addNotification({
             title: '成功',
             message: '刷新成功',

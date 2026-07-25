@@ -271,58 +271,6 @@ pub fn master_routes(state: &AppState) -> Router<AppState> {
             require_permission("system:write"),
         ));
 
-    let monitor_read = Router::new()
-        .route(
-            "/master/monitor/health",
-            get(modules::monitor::handlers::get_service_health),
-        )
-        .route(
-            "/master/monitor/alerts",
-            get(modules::monitor::handlers::list_alerts),
-        )
-        .route(
-            "/master/monitor/alerts/{id}",
-            get(modules::monitor::handlers::get_alert),
-        )
-        .route(
-            "/master/monitor/metrics/system",
-            get(modules::monitor::handlers::get_system_metrics),
-        )
-        .route(
-            "/master/monitor/metrics/database",
-            get(modules::monitor::handlers::get_database_metrics),
-        )
-        .route(
-            "/master/monitor/performance/api",
-            get(modules::monitor::handlers::get_api_performance),
-        )
-        .route(
-            "/master/monitor/metrics/realtime",
-            get(modules::monitor::handlers::get_realtime_metrics),
-        )
-        .route(
-            "/master/monitor/reports/performance",
-            get(modules::monitor::handlers::get_performance_report),
-        )
-        .layer(axum::middleware::from_fn_with_state(
-            state.clone(),
-            require_permission("system:read"),
-        ));
-
-    let monitor_write = Router::new()
-        .route(
-            "/master/monitor/alerts/{id}/acknowledge",
-            put(modules::monitor::handlers::acknowledge_alert),
-        )
-        .route(
-            "/master/monitor/alerts/{id}/resolve",
-            put(modules::monitor::handlers::resolve_alert),
-        )
-        .layer(axum::middleware::from_fn_with_state(
-            state.clone(),
-            require_permission("system:write"),
-        ));
-
     // ===== MDM 主数据路由（V15 新增）=====
     let mdm_read = Router::new()
         .route(
@@ -423,8 +371,6 @@ pub fn master_routes(state: &AppState) -> Router<AppState> {
         .merge(dict_write)
         .merge(menu_read)
         .merge(menu_write)
-        .merge(monitor_read)
-        .merge(monitor_write)
         .merge(mdm_read)
         .merge(mdm_write)
         .merge(ticket_read)

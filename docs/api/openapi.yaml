@@ -35,7 +35,7 @@ servers:
   - url: "http://localhost:8054"
     description: "GIS 地理信息系统"
   - url: "http://localhost:8058"
-    description: "RS 研发管理"
+    description: "RD 研发管理"
   - url: "http://localhost:8060"
     description: "BI 商业智能"
   - url: "http://localhost:8061"

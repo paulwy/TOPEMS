@@ -1,4 +1,4 @@
-import React, { useState, useMemo, useCallback } from 'react';
+import React, { useState, useCallback, useMemo } from 'react';
 import {
   Box,
   Typography,
@@ -7,87 +7,81 @@ import {
   TextField,
   Switch,
   FormControlLabel,
-  Divider,
   Card,
   CardContent,
   List,
-  ListItem,
   ListItemButton,
   ListItemIcon,
   ListItemText,
-  ListItemSecondaryAction,
-  Chip,
-  Dialog,
-  DialogTitle,
-  DialogContent,
-  DialogActions,
-  IconButton,
   Button,
 } from '@mui/material';
-import {
-  GitBranch,
-  Layers,
-  Code2,
-  Plug,
-  Save,
-  Plus,
-  Trash2,
-  ExternalLink,
-  X,
-  ArrowRight,
-} from 'lucide-react';
+import { GitBranch, Layers, Code2, Plug, Plus, ArrowRight } from 'lucide-react';
 import { useQuery } from '@tanstack/react-query';
-import { ListPageTemplate, type ColumnDef } from '@/components/templates';
+
+import { CrudPage } from '@/components/templates/CrudPage';
+import type { CrudApiAdapter } from '@/components/templates/CrudPage';
+import { settingSchema } from '@/schemas/rd';
+import type { EntitySchema } from '@/schema';
 import { PageContainer } from '@/components/common';
 import { rdApi } from '@/api/rd';
-import type { RsStatistics } from '@/api/rd';
 import { designTokens } from '@/theme/tokens';
 import { QUERY_KEYS } from '@/lib/reactQuery';
-import { logger } from '@/utils/logger';
 
 const ct = designTokens.colors;
 
-interface RepoConfig {
-  id: string;
-  name: string;
-  url: string;
-  type: string;
-  enabled: boolean;
-}
-
-interface SettingItem {
+interface SettingItem extends Record<string, unknown> {
   id: string;
   name: string;
   description: string;
   enabled: boolean;
-  type?: string;
 }
 
-const RsSettingsPage: React.FC = () => {
-  const [activeTab, setActiveTab] = useState<string>('repo');
-  const [repos, setRepos] = useState<RepoConfig[]>([
+// 默认数据
+const defaultData: Record<string, SettingItem[]> = {
+  repo: [
     {
       id: '1',
       name: 'frontend-app',
-      url: 'git@example.com:frontend-app.git',
-      type: 'gitlab',
+      description: 'git@example.com:frontend-app.git',
       enabled: true,
     },
     {
       id: '2',
       name: 'backend-api',
-      url: 'git@example.com:backend-api.git',
-      type: 'gitlab',
+      description: 'git@example.com:backend-api.git',
       enabled: true,
     },
     {
       id: '3',
       name: 'mobile-app',
-      url: 'git@example.com:mobile-app.git',
-      type: 'github',
+      description: 'git@example.com:mobile-app.git',
       enabled: false,
     },
-  ]);
+  ],
+  cicd: [
+    { id: '1', name: '前端构建流水线', description: '触发方式: push', enabled: true },
+    { id: '2', name: '后端构建流水线', description: '触发方式: push', enabled: true },
+    { id: '3', name: '移动端构建流水线', description: '触发方式: tag', enabled: true },
+    { id: '4', name: '定时回归测试', description: '触发方式: schedule', enabled: false },
+  ],
+  quality: [
+    { id: '1', name: '代码覆盖率门槛', description: '单元测试覆盖率不低于80%', enabled: true },
+    { id: '2', name: '禁止提交敏感信息', description: '检测密码、密钥等敏感信息', enabled: true },
+    { id: '3', name: '代码风格检查', description: '使用ESLint进行代码风格检查', enabled: true },
+    { id: '4', name: '安全漏洞扫描', description: '检测已知安全漏洞', enabled: false },
+  ],
+  integration: [
+    { id: '1', name: 'GitLab', description: '类型: code', enabled: true },
+    { id: '2', name: 'Jenkins', description: '类型: ci', enabled: true },
+    { id: '3', name: 'SonarQube', description: '类型: quality', enabled: true },
+    { id: '4', name: 'Jira', description: '类型: project', enabled: false },
+    { id: '5', name: 'Slack', description: '类型: notification', enabled: false },
+  ],
+};
+
+const RsSettingsPage: React.FC = () => {
+  const [activeTab, setActiveTab] = useState<string>('repo');
+  const [localData, setLocalData] = useState<Record<string, SettingItem[]>>(defaultData);
 
   const statisticsQuery = useQuery({
     queryKey: QUERY_KEYS.RD.STATISTICS,
@@ -103,12 +97,6 @@ const RsSettingsPage: React.FC = () => {
   const statistics = statisticsQuery.data || null;
   const loading = statisticsQuery.isLoading;
 
-  React.useEffect(() => {
-    if (statisticsQuery.error) {
-      logger.error('加载统计数据失败:', statisticsQuery.error);
-    }
-  }, [statisticsQuery.error]);
-
   const tabs = [
     { id: 'repo', label: '仓库管理', icon: <GitBranch size={18} /> },
     { id: 'cicd', label: 'CI/CD配置', icon: <Layers size={18} /> },
@@ -116,202 +104,44 @@ const RsSettingsPage: React.FC = () => {
     { id: 'integration', label: '集成设置', icon: <Plug size={18} /> },
   ];
 
-  // 根据当前Tab获取数据
-  const getCurrentData = useCallback(() => {
-    switch (activeTab) {
-      case 'repo':
-        return repos.map((r) => ({
-          id: r.id,
-          name: r.name,
-          description: r.url,
-          enabled: r.enabled,
-        }));
-      case 'cicd':
-        return [
-          {
-            id: '1',
-            name: '前端构建流水线',
-            description: '触发方式: push',
-            enabled: true,
-          },
-          {
-            id: '2',
-            name: '后端构建流水线',
-            description: '触发方式: push',
-            enabled: true,
-          },
-          {
-            id: '3',
-            name: '移动端构建流水线',
-            description: '触发方式: tag',
-            enabled: true,
-          },
-          {
-            id: '4',
-            name: '定时回归测试',
-            description: '触发方式: schedule',
-            enabled: false,
-          },
-        ];
-      case 'quality':
-        return [
-          {
-            id: '1',
-            name: '代码覆盖率门槛',
-            description: '单元测试覆盖率不低于80%',
-            enabled: true,
-          },
-          {
-            id: '2',
-            name: '禁止提交敏感信息',
-            description: '检测密码、密钥等敏感信息',
-            enabled: true,
-          },
-          {
-            id: '3',
-            name: '代码风格检查',
-            description: '使用ESLint进行代码风格检查',
-            enabled: true,
-          },
-          {
-            id: '4',
-            name: '安全漏洞扫描',
-            description: '检测已知安全漏洞',
-            enabled: false,
-          },
-        ];
-      case 'integration':
-        return [
-          { id: '1', name: 'GitLab', description: '类型: code', enabled: true },
-          { id: '2', name: 'Jenkins', description: '类型: ci', enabled: true },
-          {
-            id: '3',
-            name: 'SonarQube',
-            description: '类型: quality',
-            enabled: true,
-          },
-          {
-            id: '4',
-            name: 'Jira',
-            description: '类型: project',
-            enabled: false,
-          },
-          {
-            id: '5',
-            name: 'Slack',
-            description: '类型: notification',
-            enabled: false,
-          },
-        ];
-      default:
-        return [];
-    }
-  }, [activeTab, repos]);
+  // 当前Tab的数据
+  const currentData = localData[activeTab] || [];
 
-  const currentData = useMemo(() => getCurrentData(), [getCurrentData]);
-
-  const handleToggle = (id: string) => {
-    if (activeTab === 'repo') {
-      setRepos(repos.map((r) => (r.id === id ? { ...r, enabled: !r.enabled } : r)));
-    }
+  // 创建本地数据的API适配器（支持所有Tab）
+  const localApiAdapter: CrudApiAdapter<SettingItem> = {
+    list: async () => ({ data: currentData, total: currentData.length }),
+    create: async (data) => {
+      const newItem: SettingItem = {
+        id: String(Date.now()),
+        name: String(data.name || ''),
+        description: String(data.description || ''),
+        enabled: data.enabled ?? true,
+      };
+      setLocalData((prev) => ({
+        ...prev,
+        [activeTab]: [...(prev[activeTab] || []), newItem],
+      }));
+      return newItem;
+    },
+    update: async (id, data) => {
+      setLocalData((prev) => ({
+        ...prev,
+        [activeTab]: (prev[activeTab] || []).map((item) =>
+          item.id === id ? { ...item, ...data } : item
+        ),
+      }));
+      const updatedItem = currentData.find((item) => item.id === id);
+      return updatedItem
+        ? { ...updatedItem, ...data }
+        : ({ id, name: '', description: '', enabled: false } as SettingItem);
+    },
+    delete: async (id) => {
+      setLocalData((prev) => ({
+        ...prev,
+        [activeTab]: (prev[activeTab] || []).filter((item) => item.id !== id),
+      }));
+    },
   };
-
-  const handleDelete = (id: string) => {
-    if (activeTab === 'repo') {
-      setRepos(repos.filter((r) => r.id !== id));
-    }
-  };
-
-  // 表格列定义
-  const columns: ColumnDef<any>[] = [
-    {
-      id: 'name',
-      label: '名称',
-      render: (row) => (
-        <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-          {activeTab === 'repo' && (
-            <GitBranch
-              size={16}
-              color='primary.main'
-            />
-          )}
-          {activeTab === 'cicd' && (
-            <Layers
-              size={16}
-              color='primary.main'
-            />
-          )}
-          {activeTab === 'quality' && (
-            <Code2
-              size={16}
-              color='primary.main'
-            />
-          )}
-          {activeTab === 'integration' && (
-            <Plug
-              size={16}
-              color={row.enabled ? 'primary.main' : ct.grey[400]}
-            />
-          )}
-          <Box>
-            <Typography
-              variant='body2'
-              sx={{ fontWeight: 500 }}
-            >
-              {row.name}
-            </Typography>
-            {activeTab === 'repo' && (
-              <Typography
-                variant='caption'
-                color='text.secondary'
-              >
-                {row.description}
-              </Typography>
-            )}
-          </Box>
-        </Box>
-      ),
-    },
-    {
-      id: 'description',
-      label: '描述',
-      render: (row) => (
-        <Typography
-          variant='body2'
-          color='text.secondary'
-        >
-          {row.description}
-        </Typography>
-      ),
-    },
-    {
-      id: 'enabled',
-      label: '状态',
-      render: (row) => (
-        <FormControlLabel
-          control={
-            <Switch
-              checked={row.enabled}
-              onChange={() => handleToggle(row.id)}
-            />
-          }
-          label=''
-        />
-      ),
-    },
-    {
-      id: 'actions',
-      label: '操作',
-      render: (row) => (
-        <IconButton
-          size='small'
-          onClick={() => handleDelete(row.id)}
-        >
-          <Trash2 size={16} />
-        </IconButton>
-      ),
-    },
-  ];
 
   // 获取当前Tab的标题
   const getTabTitle = () => {
@@ -441,20 +271,33 @@ const RsSettingsPage: React.FC = () => {
             </List>
           </Paper>
 
-          {/* 右侧内容区 - 使用ListPageTemplate */}
+          {/* 右侧内容区 - 使用CrudPage */}
           <Box sx={{ flex: 1 }}>
-            <ListPageTemplate
-              title={getTabTitle()}
-              columns={columns}
-              data={currentData}
-              filters={[]}
-              actions={[
-                {
-                  label: '添加',
-                  icon: <Plus size={18} />,
-                  onClick: () => {},
-                },
-              ]}
+            <CrudPage<SettingItem>
+              schema={settingSchema as EntitySchema<SettingItem>}
+              apiAdapter={localApiAdapter}
+              breadcrumbs={[]}
+              headerContent={
+                <Box
+                  sx={{
+                    display: 'flex',
+                    justifyContent: 'space-between',
+                    alignItems: 'center',
+                    mb: 2,
+                  }}
+                >
+                  <Typography variant='h6'>{getTabTitle()}</Typography>
+                  {activeTab === 'repo' && (
+                    <Button
+                      variant='contained'
+                      startIcon={<Plus size={18} />}
+                      onClick={() => {}}
+                    >
+                      添加
+                    </Button>
+                  )}
+                </Box>
+              }
             />
 
             {/* 各Tab特有的额外内容 */}
@@ -506,11 +349,6 @@ const RsSettingsPage: React.FC = () => {
                     type='number'
                     size='small'
                     defaultValue={80}
-                    slotProps={{
-                      input: {
-                        endAdornment: <Typography variant='body2'>%</Typography>,
-                      },
-                    }}
                     sx={{ width: 200 }}
                   />
                   <TextField
@@ -518,11 +356,6 @@ const RsSettingsPage: React.FC = () => {
                     type='number'
                     size='small'
                     defaultValue={500}
-                    slotProps={{
-                      input: {
-                        endAdornment: <Typography variant='body2'>行</Typography>,
-                      },
-                    }}
                     sx={{ width: 200 }}
                   />
                 </Stack>

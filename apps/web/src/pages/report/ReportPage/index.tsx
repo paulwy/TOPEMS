@@ -15,7 +15,7 @@ import { reportApi } from '@/api/report';
 import { useNotificationStore } from '@/store';
 import ReportBuilder from '../ReportBuilder';
 import ReportViewer from '../ReportViewer';
-import ExportModal from '@/components/export/ExportModal';
+import { ExportModal } from '@/components/export';
 import { apiLogger } from '@/utils/logger';
 import { designTokens } from '@/theme/tokens';
 import { QUERY_KEYS } from '@/lib/reactQuery';
@@ -68,7 +68,7 @@ const ReportPage: React.FC = () => {
 
   useEffect(() => {
     const checkAllServices = () => {
-      checkServiceStatus('report', 8053, (up) =>
+      checkServiceStatus('bi', 8060, (up) =>
         setServiceStatuses((prev) => ({ ...prev, report: up }))
       );
     };

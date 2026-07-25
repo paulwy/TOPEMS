@@ -297,7 +297,7 @@ curl -s http://localhost:8000/api/plugins/info | python3 -m json.tool
 | 8030-8039 | 制造服务 | MES, PDM |
 | 8040-8049 | 供应链服务 | SCM, WMS |
 | 8050-8059 | 质量与实验室服务 | QMS, LIMS, EHS, AI |
-| 8060-8069 | 分析与扩展服务 | BI, Report, Monitor, Portal |
+| 8060-8069 | 分析与扩展服务 | BI, Report, Portal |
 | 8000 | 核心服务 | Unified-Core (IAM) |
 | 3000 | 前端 | Host Shell 开发服务器 |
 
@@ -305,7 +305,7 @@ curl -s http://localhost:8000/api/plugins/info | python3 -m json.tool
 
 | 服务名 | 端口 | 服务路径 | 说明 |
 |-------|------|---------|------|
-| unified-core | 8000 | svc/unified-core | 统一核心服务（IAM, Doc, Flow, File, Communication, Tenant, Billing, Plugin） |
+| unified-core | 8000 | svc/unified-core | 统一核心服务（IAM, Doc, Flow, File, Monitor, Communication, Tenant, Billing, Plugin） |
 | mes | 8030 | svc/mes | 制造执行系统 |
 | pdm | 8031 | svc/pdm | 产品数据管理 |
 | qms | 8050 | svc/qms | 质量管理系统 |
@@ -321,8 +321,7 @@ curl -s http://localhost:8000/api/plugins/info | python3 -m json.tool
 | pm | 8023 | svc/pm | 项目管理 |
 | gis | 8071 | svc/gis | 地理信息系统 |
 | mobile | 8070 | svc/mobile | 移动端服务 |
-| rs | 8053 | svc/rs | 研发管理 |
-| monitor | 8062 | svc/monitor | 监控服务 |
+| rd | 8053 | svc/rd | 研发管理 |
 | portal | 8063 | svc/portal | 企业门户 |
 | integration | 8072 | svc/integration | 系统集成服务 |
 

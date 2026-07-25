@@ -252,21 +252,30 @@ export function useKeyboardShortcuts(bindings: ShortcutBinding[], enabled = true
   }, [handleKeyDown]);
 }
 
+export function isMacOS(): boolean {
+  if (typeof navigator !== 'undefined') {
+    return /Mac|iPod|iPhone|iPad/.test(navigator.platform);
+  }
+  return false;
+}
+
 export function getShortcutKeyLabel(config: ShortcutConfig): string {
   const parts: string[] = [];
+  const mac = isMacOS();
 
-  if (config.ctrl || config.meta) {
-    parts.push('Ctrl');
-  }
-  if (config.meta && !config.ctrl) {
-    parts.push('Cmd');
+  if (config.ctrl && config.meta) {
+    parts.push(mac ? '⌘' : 'Ctrl');
+  } else if (config.ctrl) {
+    parts.push(mac ? '⌃' : 'Ctrl');
+  } else if (config.meta) {
+    parts.push(mac ? '⌘' : 'Win');
   }
   if (config.shift) {
-    parts.push('Shift');
+    parts.push(mac ? '⇧' : 'Shift');
   }
-  parts.push(config.key);
+  parts.push(config.key.toUpperCase());
 
-  return parts.join(' + ');
+  return parts.join(mac ? '' : ' + ');
 }
 
 export function getShortcutsByCategory(

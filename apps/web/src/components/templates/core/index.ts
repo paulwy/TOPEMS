@@ -37,13 +37,18 @@ export type {
   DetailPageTemplateProps,
 } from '../DetailPageTemplate';
 
-export { DashboardTemplate } from '../DashboardTemplate';
+export { DashboardTemplate, DashboardPage } from '../DashboardTemplate';
 export type {
   StatCard,
   ChartCard,
   RecentItem,
   QuickAction,
   DashboardTemplateProps,
+  DashboardPageProps,
+  StatCardConfig,
+  ChartConfig,
+  DataTableConfig,
+  DashboardColor,
 } from '../DashboardTemplate';
 
 export { KanbanPageTemplate } from '../KanbanPageTemplate';

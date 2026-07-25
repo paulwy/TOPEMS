@@ -15,7 +15,8 @@ use crate::modules::ApiState;
 use crate::shared::permission::{check_permission, ModulePermission};
 use topems_shared::auth::Claims;
 use topems_shared::{
-    api_error, event::EventType, event::StockInboundPayload, ApiResponse, PaginationParams,
+    api_error, event::EventType, event::StockInboundPayload, event::WmsInventoryItemReceivedPayload,
+    ApiResponse, PaginationParams,
 };
 
 #[derive(Debug, Deserialize, Serialize)]
@@ -974,6 +975,54 @@ pub async fn receive_inbound_order(
 
     let (response, status_str, error_msg, response_data) = match order_result {
         Ok(order) => {
+            // P3 事件驱动规范化：入库收货完成后发布 WmsInventoryItemReceived 事件，
+            // 通知 SCM（采购履约）/Finance（应付确认）。仅发布成功收货的订单。
+            if let Some(ref publisher) = state.event_publisher {
+                let publisher = publisher.clone();
+                let inbound_id = order.id;
+                let inbound_no = order.order_number.clone();
+                let warehouse_id = order.warehouse_id;
+                let supplier_id = order.supplier_id;
+                let received_at = order.actual_arrival;
+                let total_qty = order.total_amount.unwrap_or(0.0);
+                let reference_order_id = Some(order.id);
+                let now_val = Utc::now();
+                tokio::spawn(async move {
+                    let payload = WmsInventoryItemReceivedPayload {
+                        inbound_id,
+                        inbound_no,
+                        warehouse_id,
+                        warehouse_name: None,
+                        material_id: None,
+                        material_code: String::new(),
+                        material_name: "汇总入库".to_string(),
+                        quantity: total_qty,
+                        unit: None,
+                        quality_status: Some("qualified".to_string()),
+                        reference_order_id,
+                        reference_order_no: None,
+                        supplier_id,
+                        supplier_name: None,
+                        received_by: None,
+                        received_at: received_at.or(Some(now_val)),
+                    };
+                    if let Err(e) = publisher
+                        .publish_event(EventType::WmsInventoryItemReceived, payload)
+                        .await
+                    {
+                        tracing::warn!(
+                            "[wms] WmsInventoryItemReceived 事件发布失败（graceful fallback）: {}",
+                            e
+                        );
+                    } else {
+                        tracing::info!(
+                            "[wms] WmsInventoryItemReceived 事件发布成功 - inbound_id={}",
+                            inbound_id
+                        );
+                    }
+                });
+            }
+
             let order_json = serde_json::to_value(order.clone()).ok();
             (
                 Json(ApiResponse::success(

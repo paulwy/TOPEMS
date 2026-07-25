@@ -1,3 +1,5 @@
+#![allow(dead_code)] // Reserved: 权限共享模块预留扩展，待 RBAC 完整接入后启用
+
 use sqlx::PgPool;
 use topems_shared::auth::Claims;
 use topems_shared::permission::{

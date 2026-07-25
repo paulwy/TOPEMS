@@ -14,6 +14,7 @@ export const REPORT_PATHS = {
   schedule: '/report/schedule',
   subscription: '/report/subscription',
   template: '/report/template',
+  report: '/report/report',
 } as const;
 
 // ---- 路由配置（供路由系统使用） ----
@@ -126,6 +127,17 @@ export const reportModuleConfig: RouteModuleConfig = {
       template: 'list',
       group: 'settings',
     },
+    {
+      path: REPORT_PATHS.report,
+      element: lazyWithRetry(() => import('@/pages/report/ReportPage'), 'ReportPage'),
+      module: 'report',
+      title: '报表',
+      code: 'report-report',
+      requiredPermissions: ['report:read'],
+      action: 'read',
+      template: 'list',
+      group: 'business',
+    },
   ],
 };
 
@@ -215,6 +227,16 @@ export const reportNavConfig: ModuleNavConfig = {
       order: 1,
       group: 'settings',
       description: '报表模板管理',
+    },
+    {
+      code: 'report-report',
+      label: '报表',
+      icon: 'FileSpreadsheet',
+      path: REPORT_PATHS.report,
+      permission: 'report:read',
+      order: 4,
+      group: 'business',
+      description: '报表查看与管理',
     },
   ],
 };

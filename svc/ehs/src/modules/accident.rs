@@ -214,7 +214,7 @@ pub async fn list_accidents(
     Extension(claims): Extension<Claims>,
     headers: HeaderMap,
 ) -> Json<ApiResponse<Vec<Accident>>> {
-    let tenant_id = get_tenant_id(&claims, &headers);
+    let _tenant_id = get_tenant_id(&claims, &headers);
     tracing::info!("Listing accidents");
     Json(ApiResponse::success(
         Vec::<Accident>::new(),
@@ -358,7 +358,7 @@ pub async fn delete_accident(
     headers: HeaderMap,
     axum::extract::Path(id): axum::extract::Path<String>,
 ) -> Json<ApiResponse<()>> {
-    let tenant_id = get_tenant_id(&claims, &headers);
+    let _tenant_id = get_tenant_id(&claims, &headers);
     tracing::info!("Deleting accident: {}", id);
     Json(ApiResponse::success((), "事故删除成功"))
 }

@@ -582,6 +582,24 @@ pub async fn get_alert_summary(
                 expiry_count: r.expiry_count.unwrap_or(0) as i64,
                 out_of_stock_count: r.out_of_stock_count.unwrap_or(0) as i64,
             };
+
+            // P3 事件驱动规范化：查询预警汇总时异步触发低库存事件发布，
+            // 通知 SCM（补货计划）/Portal（用户提醒）。事件消费者需做幂等处理。
+            if summary.total_alerts > 0 {
+                let db = state.db.clone();
+                let publisher = state.event_publisher.clone();
+                tokio::spawn(async move {
+                    if let Err(e) =
+                        crate::event_handlers::emit_low_stock_alerts(&db, &publisher).await
+                    {
+                        tracing::warn!(
+                            "[wms] 触发 WmsInventoryLowStock 事件发布失败: {}",
+                            e
+                        );
+                    }
+                });
+            }
+
             Json(ApiResponse::success(summary, "获取预警汇总成功"))
         }
         Err(e) => {

@@ -1,9 +1,11 @@
 use chrono::{DateTime, Utc};
 use serde::{Deserialize, Serialize};
 use sqlx::FromRow;
+use utoipa::ToSchema;
 use uuid::Uuid;
 
-#[derive(Debug, Clone, FromRow, Serialize, Deserialize)]
+#[derive(Debug, Clone, FromRow, Serialize, Deserialize, ToSchema)]
+#[schema(as = Workflow)]
 pub struct Workflow {
     pub id: Uuid,
     pub tenant_id: Uuid,
@@ -18,7 +20,8 @@ pub struct Workflow {
     pub published_at: Option<DateTime<Utc>>,
 }
 
-#[derive(Debug, Clone, Serialize, Deserialize)]
+#[derive(Debug, Clone, Serialize, Deserialize, ToSchema)]
+#[schema(as = CreateWorkflowRequest)]
 pub struct CreateWorkflowRequest {
     pub name: String,
     pub description: Option<String>,
@@ -27,7 +30,8 @@ pub struct CreateWorkflowRequest {
     pub created_by: Option<Uuid>,
 }
 
-#[derive(Debug, Clone, Serialize, Deserialize)]
+#[derive(Debug, Clone, Serialize, Deserialize, ToSchema)]
+#[schema(as = UpdateWorkflowRequest)]
 pub struct UpdateWorkflowRequest {
     pub name: Option<String>,
     pub description: Option<String>,
@@ -35,7 +39,8 @@ pub struct UpdateWorkflowRequest {
     pub status: Option<String>,
 }
 
-#[derive(Debug, Clone, FromRow, Serialize, Deserialize)]
+#[derive(Debug, Clone, FromRow, Serialize, Deserialize, ToSchema)]
+#[schema(as = WorkflowInstance)]
 pub struct WorkflowInstance {
     pub id: Uuid,
     pub tenant_id: Uuid,
@@ -51,7 +56,8 @@ pub struct WorkflowInstance {
     pub updated_at: DateTime<Utc>,
 }
 
-#[derive(Debug, Clone, Serialize, Deserialize)]
+#[derive(Debug, Clone, Serialize, Deserialize, ToSchema)]
+#[schema(as = CreateInstanceRequest)]
 pub struct CreateInstanceRequest {
     pub workflow_id: Uuid,
     pub title: String,
@@ -59,7 +65,8 @@ pub struct CreateInstanceRequest {
     pub variables: Option<serde_json::Value>,
 }
 
-#[derive(Debug, Clone, FromRow, Serialize, Deserialize)]
+#[derive(Debug, Clone, FromRow, Serialize, Deserialize, ToSchema)]
+#[schema(as = WorkflowTask)]
 pub struct WorkflowTask {
     pub id: Uuid,
     pub tenant_id: Uuid,
@@ -75,33 +82,38 @@ pub struct WorkflowTask {
     pub claimed_at: Option<DateTime<Utc>>,
 }
 
-#[derive(Debug, Clone, Serialize, Deserialize)]
+#[derive(Debug, Clone, Serialize, Deserialize, ToSchema)]
+#[schema(as = TaskActionRequest)]
 pub struct TaskActionRequest {
     pub comment: Option<String>,
     pub variables: Option<serde_json::Value>,
 }
 
-#[derive(Debug, Clone, Serialize, Deserialize)]
+#[derive(Debug, Clone, Serialize, Deserialize, ToSchema)]
+#[schema(as = TaskBatchRequest)]
 pub struct TaskBatchRequest {
     pub task_ids: Vec<String>,
     pub comment: Option<String>,
     pub action: String,
 }
 
-#[derive(Debug, Clone, Serialize, Deserialize)]
+#[derive(Debug, Clone, Serialize, Deserialize, ToSchema)]
+#[schema(as = TaskBatchResult)]
 pub struct TaskBatchResult {
     pub success_count: i32,
     pub failed_count: i32,
     pub failed_tasks: Vec<TaskFailure>,
 }
 
-#[derive(Debug, Clone, Serialize, Deserialize)]
+#[derive(Debug, Clone, Serialize, Deserialize, ToSchema)]
+#[schema(as = TaskFailure)]
 pub struct TaskFailure {
     pub task_id: String,
     pub error: String,
 }
 
-#[derive(Debug, Clone, Serialize, Deserialize)]
+#[derive(Debug, Clone, Serialize, Deserialize, ToSchema)]
+#[schema(as = TaskStats)]
 pub struct TaskStats {
     pub todo: i32,
     pub done: i32,
@@ -114,7 +126,8 @@ pub struct TaskStats {
     pub candidate: i32,
 }
 
-#[derive(Debug, Clone, FromRow, Serialize, Deserialize)]
+#[derive(Debug, Clone, FromRow, Serialize, Deserialize, ToSchema)]
+#[schema(as = WorkflowCategory)]
 pub struct WorkflowCategory {
     pub id: Uuid,
     pub tenant_id: Uuid,
@@ -126,7 +139,8 @@ pub struct WorkflowCategory {
     pub created_at: DateTime<Utc>,
 }
 
-#[derive(Debug, Clone, Serialize, Deserialize)]
+#[derive(Debug, Clone, Serialize, Deserialize, ToSchema)]
+#[schema(as = CreateCategoryRequest)]
 pub struct CreateCategoryRequest {
     pub name: String,
     pub code: Option<String>,
@@ -134,7 +148,8 @@ pub struct CreateCategoryRequest {
     pub sort_order: Option<i32>,
 }
 
-#[derive(Debug, Clone, FromRow, Serialize, Deserialize)]
+#[derive(Debug, Clone, FromRow, Serialize, Deserialize, ToSchema)]
+#[schema(as = WorkflowDelegate)]
 pub struct WorkflowDelegate {
     pub id: Uuid,
     pub tenant_id: Uuid,
@@ -150,7 +165,8 @@ pub struct WorkflowDelegate {
     pub created_at: DateTime<Utc>,
 }
 
-#[derive(Debug, Clone, Serialize, Deserialize)]
+#[derive(Debug, Clone, Serialize, Deserialize, ToSchema)]
+#[schema(as = CreateDelegateRequest)]
 pub struct CreateDelegateRequest {
     pub attorney_id: Uuid,
     pub attorney_name: Option<String>,
@@ -160,7 +176,8 @@ pub struct CreateDelegateRequest {
     pub reason: Option<String>,
 }
 
-#[derive(Debug, Clone, FromRow, Serialize, Deserialize)]
+#[derive(Debug, Clone, FromRow, Serialize, Deserialize, ToSchema)]
+#[schema(as = FormDefinition)]
 pub struct FormDefinition {
     pub id: Uuid,
     pub tenant_id: Uuid,
@@ -176,7 +193,8 @@ pub struct FormDefinition {
     pub updated_at: DateTime<Utc>,
 }
 
-#[derive(Debug, Clone, Serialize, Deserialize)]
+#[derive(Debug, Clone, Serialize, Deserialize, ToSchema)]
+#[schema(as = CreateFormDefinitionRequest)]
 pub struct CreateFormDefinitionRequest {
     pub name: String,
     pub description: Option<String>,
@@ -186,7 +204,8 @@ pub struct CreateFormDefinitionRequest {
     pub is_active: Option<bool>,
 }
 
-#[derive(Debug, Clone, FromRow, Serialize, Deserialize)]
+#[derive(Debug, Clone, FromRow, Serialize, Deserialize, ToSchema)]
+#[schema(as = FormInstance)]
 pub struct FormInstance {
     pub id: Uuid,
     pub tenant_id: Uuid,
@@ -201,14 +220,16 @@ pub struct FormInstance {
     pub updated_at: DateTime<Utc>,
 }
 
-#[derive(Debug, Clone, Serialize, Deserialize)]
+#[derive(Debug, Clone, Serialize, Deserialize, ToSchema)]
+#[schema(as = CreateFormInstanceRequest)]
 pub struct CreateFormInstanceRequest {
     pub form_definition_id: Uuid,
     pub workflow_instance_id: Option<Uuid>,
     pub data: serde_json::Value,
 }
 
-#[derive(Debug, Clone, FromRow, Serialize, Deserialize)]
+#[derive(Debug, Clone, FromRow, Serialize, Deserialize, ToSchema)]
+#[schema(as = WorkflowHistory)]
 pub struct WorkflowHistory {
     pub id: Uuid,
     pub tenant_id: Uuid,
@@ -227,7 +248,8 @@ pub struct WorkflowHistory {
     pub created_at: DateTime<Utc>,
 }
 
-#[derive(Debug, Clone, FromRow, Serialize, Deserialize)]
+#[derive(Debug, Clone, FromRow, Serialize, Deserialize, ToSchema)]
+#[schema(as = WorkflowSetting)]
 pub struct WorkflowSetting {
     pub id: Uuid,
     pub tenant_id: Uuid,
@@ -239,7 +261,8 @@ pub struct WorkflowSetting {
     pub updated_at: DateTime<Utc>,
 }
 
-#[derive(Debug, Clone, Serialize, Deserialize)]
+#[derive(Debug, Clone, Serialize, Deserialize, ToSchema)]
+#[schema(as = CreateSettingRequest)]
 pub struct CreateSettingRequest {
     pub key: String,
     pub value: String,
@@ -247,7 +270,8 @@ pub struct CreateSettingRequest {
     pub category: String,
 }
 
-#[derive(Debug, Clone, FromRow, Serialize, Deserialize)]
+#[derive(Debug, Clone, FromRow, Serialize, Deserialize, ToSchema)]
+#[schema(as = WorkflowTemplate)]
 pub struct WorkflowTemplate {
     pub id: Uuid,
     pub tenant_id: Uuid,
@@ -263,7 +287,8 @@ pub struct WorkflowTemplate {
     pub updated_at: DateTime<Utc>,
 }
 
-#[derive(Debug, Clone, Serialize, Deserialize)]
+#[derive(Debug, Clone, Serialize, Deserialize, ToSchema)]
+#[schema(as = StatisticsResponse)]
 pub struct StatisticsResponse {
     pub total_workflows: i64,
     pub active_workflows: i64,
@@ -280,7 +305,8 @@ pub struct StatisticsResponse {
     pub rejection_rate: f64,
 }
 
-#[derive(Debug, Clone, FromRow, Serialize, Deserialize)]
+#[derive(Debug, Clone, FromRow, Serialize, Deserialize, ToSchema)]
+#[schema(as = ProcessLog)]
 pub struct ProcessLog {
     pub id: Uuid,
     pub tenant_id: Uuid,
@@ -299,7 +325,8 @@ pub struct ProcessLog {
     pub created_at: DateTime<Utc>,
 }
 
-#[derive(Debug, Clone, FromRow, Serialize, Deserialize)]
+#[derive(Debug, Clone, FromRow, Serialize, Deserialize, ToSchema)]
+#[schema(as = WorkflowRule)]
 pub struct WorkflowRule {
     pub id: Uuid,
     pub tenant_id: Uuid,
@@ -315,7 +342,8 @@ pub struct WorkflowRule {
     pub updated_at: DateTime<Utc>,
 }
 
-#[derive(Debug, Clone, Serialize, Deserialize)]
+#[derive(Debug, Clone, Serialize, Deserialize, ToSchema)]
+#[schema(as = CreateRuleRequest)]
 pub struct CreateRuleRequest {
     pub name: String,
     pub rule_type: String,

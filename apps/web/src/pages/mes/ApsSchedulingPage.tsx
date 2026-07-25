@@ -30,7 +30,7 @@ import {
   DialogContent,
   DialogActions,
 } from '@mui/material';
-import { PageContainer } from '@/components/common/PageContainerV2';
+import { PageContainer } from '@/components/common/PageContainer';
 import { useMutation, useQuery } from '@tanstack/react-query';
 import { useNotificationStore } from '@/store';
 import { LoadingSpinner } from '@topems/shared-components';

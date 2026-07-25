@@ -17,35 +17,22 @@ mod models;
 mod modules;
 mod services;
 mod shared;
-mod workflow;
 
 use shared::cache::InMemoryCache;
 
 use anyhow::Result;
-use axum::{
-    extract::{FromRef, State},
-    routing::get,
-    Json, Router,
-};
+use axum::routing::get;
 use std::env;
 use std::sync::Arc;
-use std::time::Instant;
+use std::time::Duration;
 use utoipa::OpenApi;
 
-use axum_prometheus::PrometheusMetricLayer;
 use prometheus::{default_registry, Gauge};
-use topems_shared::{
-    auth_middleware, build_health_response, create_api_info_router, create_cors_layer,
-    create_database_pool, init_telemetry, rate_limit_middleware, register_routes_with_legacy_alias,
-    rls_middleware, telemetry_middleware, ApiResponse, AuthState, DatabaseConfig, RateLimitConfig,
-    RateLimitMiddleware, ServiceHealth,
+use topems_shared::service_bootstrap::{
+    bootstrap_service, build_application, create_health_state, create_standard_health_routes, run,
+    ServiceConfig,
 };
-
-static START_TIME: std::sync::OnceLock<Instant> = std::sync::OnceLock::new();
-
-fn get_uptime() -> u64 {
-    START_TIME.get_or_init(Instant::now).elapsed().as_secs()
-}
+use topems_shared::service_client::create_workflow_client;
 
 use modules::{
     create_bid_price_routes, create_category_routes, create_contract_routes,
@@ -55,45 +42,22 @@ use modules::{
     create_tender_routes,
 };
 
-#[derive(Clone)]
-struct AppState {
-    pool: sqlx::PgPool,
-    auth_state: AuthState,
-    event_publisher: Option<std::sync::Arc<topems_shared::event::EventPublisher>>,
-    workflow_client: workflow::WorkflowClient,
-    supplier_cache: std::sync::Arc<InMemoryCache<serde_json::Value>>,
-    product_cache: std::sync::Arc<InMemoryCache<serde_json::Value>>,
-    dict_cache: std::sync::Arc<InMemoryCache<String>>,
-}
-
-impl FromRef<AppState> for AuthState {
-    fn from_ref(state: &AppState) -> Self {
-        state.auth_state.clone()
-    }
-}
-
-impl FromRef<AppState> for sqlx::PgPool {
-    fn from_ref(state: &AppState) -> Self {
-        state.pool.clone()
-    }
-}
-
-impl FromRef<AppState> for workflow::WorkflowClient {
-    fn from_ref(state: &AppState) -> Self {
-        state.workflow_client.clone()
-    }
-}
-
 #[tokio::main]
 async fn main() -> Result<()> {
-    dotenv::dotenv().ok();
-
-    let _telemetry_guard = init_telemetry("topems-srm");
-    START_TIME.get_or_init(Instant::now);
-
     env::set_var("SEARCH_PATH", "srm, shared, public");
 
-    let (prometheus_layer, metric_handle) = PrometheusMetricLayer::pair();
+    let config = ServiceConfig {
+        name: "topems-srm",
+        port: 8042,
+        port_env_var: Some("SRM_PORT"),
+        max_db_connections: 10,
+        enable_events: true,
+        api_prefix: "/api/srm",
+        legacy_prefixes: &["/api/v1/srm"],
+        ..Default::default()
+    };
+
+    // 注册自定义 Prometheus 指标
     let custom_gauge = Gauge::new(
         "topems_srm_custom_metric",
         "This is a custom metric for TOPEMS-SRM",
@@ -115,78 +79,59 @@ async fn main() -> Result<()> {
 
     tracing::info!("🚀 TOPEMS-SRM 供应商关系管理系统启动中...");
 
-    let db_config = DatabaseConfig {
-        url: env::var("DATABASE_URL").map_err(|_| {
-            tracing::error!("DATABASE_URL environment variable is required");
-            anyhow::anyhow!("DATABASE_URL environment variable is required")
-        })?,
-        max_connections: 10,
-        min_connections: Some(2),
-        connect_timeout: Some(30),
-        idle_timeout: Some(60),
-        max_lifetime: Some(1800),
-        test_interval: Some(60),
-        enable_connection_reuse: Some(true),
-    };
+    let ctx = bootstrap_service(&config).await?;
 
-    let pool = create_database_pool(&db_config).await?;
-
-    tracing::info!("🔗 数据库连接成功");
-
-    if let Err(e) = init_db(&pool).await {
+    if let Err(e) = init_db(&ctx.db).await {
         tracing::warn!("数据库初始化警告: {}", e);
     }
 
-    let event_publisher = match topems_shared::event::EventPublisher::new("topems-srm") {
-        Ok(publisher) => {
-            tracing::info!("📢 事件发布服务初始化成功");
-            Some(std::sync::Arc::new(publisher))
-        }
-        Err(e) => {
-            tracing::warn!("⚠️ 事件发布服务初始化失败（不阻塞启动）: {}", e);
-            None
-        }
-    };
-
     if let Err(e) =
-        event_handlers::start_event_subscribers(pool.clone(), event_publisher.clone()).await
+        event_handlers::start_event_subscribers(ctx.db.clone(), ctx.event_publisher.clone()).await
     {
         tracing::warn!("⚠️ SRM 事件订阅者启动失败: {}", e);
     }
 
-    let supplier_cache =
-        std::sync::Arc::new(InMemoryCache::new(std::time::Duration::from_secs(300)));
-    let product_cache =
-        std::sync::Arc::new(InMemoryCache::new(std::time::Duration::from_secs(120)));
-    let dict_cache = std::sync::Arc::new(InMemoryCache::new(std::time::Duration::from_secs(600)));
+    let supplier_cache = Arc::new(InMemoryCache::new(Duration::from_secs(300)));
+    tracing::info!("💾 内存缓存初始化完成（供应商）");
 
-    tracing::info!("💾 内存缓存初始化完成（供应商/产品/字典）");
-
-    let workflow_url = std::env::var("WORKFLOW_SERVICE_URL")
-        .unwrap_or_else(|_| "http://localhost:8001".to_string());
-    let workflow_client = workflow::WorkflowClient::new(&workflow_url);
+    let workflow_url = env::var("WORKFLOW_SERVICE_URL")
+        .unwrap_or_else(|_| "http://localhost:8000".to_string());
+    let workflow_client =
+        create_workflow_client().expect("工作流服务客户端初始化失败");
     tracing::info!("🔗 工作流服务客户端初始化成功: {}", workflow_url);
 
-    let app_state = AppState {
-        pool: pool.clone(),
-        auth_state: AuthState::from_env(),
-        event_publisher,
-        workflow_client,
-        supplier_cache,
-        product_cache,
-        dict_cache,
-    };
-
-    let cors = create_cors_layer();
-
-    let health_router = Router::new()
-        .route("/health", get(health_check))
-        .route("/api/srm/health/detailed", get(health_check_detailed))
-        .route("/api-docs/openapi.json", get(serve_openapi_json))
-        .route(
-            "/metrics",
-            get(move || async move { metric_handle.render() }),
+    // 构建业务路由（各模块 create_routes 自行管理内部状态）
+    let protected_routes = axum::Router::new()
+        .merge(
+            create_supplier_routes(
+                ctx.db.clone(),
+                ctx.event_publisher.clone(),
+                workflow_client,
+                supplier_cache,
+            )
+            .await?,
         )
+        .merge(create_category_routes(ctx.db.clone()).await?)
+        .merge(create_evaluation_routes(ctx.db.clone()).await?)
+        .merge(create_contract_routes(ctx.db.clone()).await?)
+        .merge(create_product_routes(ctx.db.clone()).await?)
+        .merge(create_purchase_order_routes(ctx.db.clone()).await?)
+        .merge(create_bid_price_routes(ctx.db.clone()).await?)
+        .merge(create_tender_routes(ctx.db.clone()).await?)
+        .merge(create_supplier_portal_routes(ctx.db.clone()).await?)
+        .merge(create_performance_routes(ctx.db.clone()).await?)
+        .merge(create_data_sync_routes(ctx.db.clone()).await?)
+        .merge(create_scoring_dimension_routes(ctx.db.clone()).await?)
+        .merge(create_statistics_routes(ctx.db.clone()))
+        // 预应用 tenant_middleware（build_application 会叠加 auth + rls + rate_limit）
+        .layer(axum::middleware::from_fn_with_state(
+            ctx.db.clone(),
+            middleware::tenant::tenant_middleware,
+        ));
+
+    // 标准健康检查路由 + 插件路由
+    let health_state = create_health_state(&ctx, &config);
+    let public_routes = create_standard_health_routes(health_state)
         .route(
             "/api/plugins/info",
             get(modules::srm_plugin::get_plugin_info),
@@ -194,171 +139,30 @@ async fn main() -> Result<()> {
         .route(
             "/api/plugins/health",
             get(modules::srm_plugin::plugin_health_check),
-        )
-        .with_state(app_state.clone());
+        );
 
-    let rate_limit_config = RateLimitConfig::new(200, 60)
-        .with_by_user_id(false)
-        .with_by_ip(true);
-    let rate_limiter = Arc::new(RateLimitMiddleware::new(rate_limit_config));
-    let rate_limit_layer = axum::middleware::from_fn({
-        let mw = rate_limiter.clone();
-        move |req, next| {
-            let mw = mw.clone();
-            async move { rate_limit_middleware(mw, req, next).await }
-        }
-    });
+    // OpenAPI 文档
+    let openapi_json = Some(
+        serde_json::to_string_pretty(&modules::openapi::SrmApiDoc::openapi()).unwrap_or_else(|e| {
+            tracing::error!("Failed to serialize OpenAPI spec: {}", e);
+            "{}".to_string()
+        }),
+    );
 
-    let protected_routes = Router::new()
-        .merge(
-            create_supplier_routes(
-                pool.clone(),
-                app_state.event_publisher.clone(),
-                app_state.workflow_client.clone(),
-                app_state.supplier_cache.clone(),
-            )
-            .await?,
-        )
-        .merge(create_category_routes(pool.clone()).await?)
-        .merge(create_evaluation_routes(pool.clone()).await?)
-        .merge(create_contract_routes(pool.clone()).await?)
-        .merge(create_product_routes(pool.clone()).await?)
-        .merge(create_purchase_order_routes(pool.clone()).await?)
-        .merge(create_bid_price_routes(pool.clone()).await?)
-        .merge(create_tender_routes(pool.clone()).await?)
-        .merge(create_supplier_portal_routes(pool.clone()).await?)
-        .merge(create_performance_routes(pool.clone()).await?)
-        .merge(create_data_sync_routes(pool.clone()).await?)
-        .merge(create_scoring_dimension_routes(pool.clone()).await?)
-        .merge(create_statistics_routes(pool.clone()))
-        .layer(axum::middleware::from_fn_with_state(
-            app_state.pool.clone(),
-            rls_middleware,
-        ))
-        .layer(axum::middleware::from_fn_with_state(
-            app_state.pool.clone(),
-            middleware::tenant::tenant_middleware,
-        ))
-        .layer(axum::middleware::from_fn_with_state(
-            app_state.auth_state.clone(),
-            auth_middleware,
-        ))
-        .layer(rate_limit_layer);
+    let app = build_application(&ctx, &config, public_routes, protected_routes, openapi_json);
 
-    let app = register_routes_with_legacy_alias(
-        Router::new().merge(health_router),
-        "/api/srm",
-        &["/api/v1/srm"],
-        protected_routes,
-    )
-    .merge(create_api_info_router("topems-srm"))
-    .layer(axum::middleware::from_fn(telemetry_middleware))
-    .layer(cors)
-    .layer(prometheus_layer);
-
-    let port = env::var("SRM_PORT")
-        .or_else(|_| env::var("SERVER_PORT"))
-        .unwrap_or_else(|_| "8042".to_string());
-    let addr = format!("0.0.0.0:{}", port);
-
-    tracing::info!("📦 端口: {}", port);
-    tracing::info!("✅ TOPEMS-SRM 已就绪");
-    tracing::info!("🔒 认证保护已启用");
-
+    // 启动时自动注册到统一核心
     let core_url = env::var("CORE_URL").ok();
     tokio::spawn(async move {
         modules::srm_plugin::auto_register_to_core(core_url.as_deref()).await;
     });
 
-    let listener = tokio::net::TcpListener::bind(&addr).await?;
-    axum::serve(listener, app).await?;
+    tracing::info!("✅ TOPEMS-SRM 已就绪");
+    tracing::info!("🔒 认证保护已启用");
 
-    Ok(())
-}
-
-async fn health_check() -> ServiceHealth {
-    build_health_response("topems-srm", true)
-}
-
-#[derive(Debug, Clone, serde::Serialize, PartialEq)]
-enum HealthStatus {
-    #[serde(rename = "healthy")]
-    Healthy,
-    #[serde(rename = "degraded")]
-    Degraded,
-    #[serde(rename = "unhealthy")]
-    Unhealthy,
-}
-
-#[derive(Debug, Clone, serde::Serialize)]
-struct DependencyHealth {
-    name: String,
-    status: HealthStatus,
-    message: String,
-}
-
-#[derive(Debug, Clone, serde::Serialize)]
-struct DetailedHealth {
-    service_name: String,
-    status: HealthStatus,
-    message: String,
-    timestamp: String,
-    uptime: Option<u64>,
-    dependencies: Option<Vec<DependencyHealth>>,
-    response_time_ms: Option<u64>,
-    last_check: Option<String>,
-}
-
-async fn health_check_detailed(State(state): State<AppState>) -> Json<ApiResponse<DetailedHealth>> {
-    let mut dependencies = Vec::new();
-
-    let db_result = sqlx::query("SELECT 1").fetch_one(&state.pool).await;
-    let db_health = match db_result {
-        Ok(_) => DependencyHealth {
-            name: "database".to_string(),
-            status: HealthStatus::Healthy,
-            message: "PostgreSQL 数据库连接正常".to_string(),
-        },
-        Err(e) => DependencyHealth {
-            name: "database".to_string(),
-            status: HealthStatus::Unhealthy,
-            message: format!("数据库连接失败: {}", e),
-        },
-    };
-    dependencies.push(db_health);
-
-    let status = if dependencies
-        .iter()
-        .all(|d| d.status == HealthStatus::Healthy)
-    {
-        HealthStatus::Healthy
-    } else if dependencies
-        .iter()
-        .any(|d| d.status == HealthStatus::Unhealthy)
-    {
-        HealthStatus::Unhealthy
-    } else {
-        HealthStatus::Degraded
-    };
-
-    let health = DetailedHealth {
-        service_name: "topems-srm".to_string(),
-        status,
-        message: "健康检查完成".to_string(),
-        timestamp: chrono::Utc::now().to_rfc3339(),
-        uptime: Some(get_uptime()),
-        dependencies: Some(dependencies),
-        response_time_ms: None,
-        last_check: Some(chrono::Utc::now().to_rfc3339()),
-    };
-
-    Json(ApiResponse::success(health, "健康检查完成"))
+    run(app).await
 }
 
 async fn init_db(_pool: &sqlx::PgPool) -> Result<()> {
     Ok(())
-}
-
-async fn serve_openapi_json() -> axum::Json<utoipa::openapi::OpenApi> {
-    axum::Json(modules::openapi::SrmApiDoc::openapi())
 }

@@ -31,6 +31,11 @@ export const authModuleApi = {
   },
 
   logout: async (): Promise<void> => {
+    try {
+      await apiClient.iam.post('/auth/logout');
+    } catch (error) {
+      // Backend logout failed; continue with local cleanup
+    }
     localStorage.removeItem('token');
     localStorage.removeItem('user');
     localStorage.removeItem('roles');
@@ -55,11 +60,11 @@ export const authModuleApi = {
   },
 
   requestPasswordReset: async (data: ResetPasswordRequest): Promise<ApiResponse<string>> => {
-    return apiClient.iam.post<string>('/auth/reset-password', data);
+    return apiClient.iam.post<string>('/auth/forgot-password', data);
   },
 
   confirmPasswordReset: async (data: SetNewPasswordRequest): Promise<ApiResponse<string>> => {
-    return apiClient.iam.post<string>('/auth/set-new-password', data);
+    return apiClient.iam.post<string>('/auth/reset-password', data);
   },
 
   getPasswordPolicy: async (): Promise<

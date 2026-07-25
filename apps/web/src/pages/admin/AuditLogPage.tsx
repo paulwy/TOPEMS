@@ -1,240 +1,447 @@
+import React, { useState, useCallback, useMemo } from 'react';
 import {
-  Card,
-  CardContent,
-  Chip,
-  Typography,
   Box,
+  Typography,
   TextField,
+  Button,
+  Grid,
+  Paper,
+  Chip,
+  MenuItem,
   FormControl,
   InputLabel,
   Select,
-  MenuItem,
-  Dialog,
-  DialogTitle,
-  DialogContent,
-  DialogActions,
-  Grid,
-  Paper,
-  IconButton,
-  Button,
 } from '@mui/material';
-import React, { useState, useEffect, useMemo } from 'react';
-import { useQuery, useMutation } from '@tanstack/react-query';
-import {
-  Clock,
-  Search,
-  Shield,
-  User,
-  Activity,
-  FileText,
-  FlaskConical,
-  Database,
-  Filter,
-  RefreshCw,
-  Download,
-  Eye,
-  Calendar,
-  X,
-} from 'lucide-react';
-import { BackButton, PageContainer } from '@/components/common';
-import type { AuditLog as LimsAuditLog } from '@/api/lims';
-import { auditLimsApi } from '@/api/lims';
-import type { AuditLog as RdAuditLog } from '@/api/rd';
-import { auditRdApi } from '@/api/rd';
+import { User, FileText, FlaskConical, Database, Download, Calendar, X } from 'lucide-react';
+import { useMutation } from '@tanstack/react-query';
+import CrudPage, { type CrudApiAdapter } from '@/components/templates/CrudPage';
+import type { ColumnDef } from '@/components/templates/list/types';
+import { auditLogSchema } from '@/schemas/monitor';
 import { apiClient } from '@/api/client';
+import { auditLimsApi } from '@/api/lims';
+import { auditRdApi } from '@/api/rd';
 import { useNotificationStore } from '@/store';
-import { apiLogger } from '@/utils/logger';
-import { ListPageTemplate, type ColumnDef, type FilterConfig } from '@/components/templates';
 import { extractErrorMessage } from '@/utils/errors';
+import { apiLogger } from '@/utils/logger';
 import { designTokens } from '@/theme/tokens';
 
-import { ModeToggle } from '@/components/theme/ModeToggle';
-
 const ct = designTokens.colors;
+type AuditLogSource = 'lims' | 'rd' | 'core';
 
 const formatDateTimeForApi = (dateTimeString: string): string => {
   if (!dateTimeString) return '';
   try {
-    const date = new Date(dateTimeString);
-    return date.toISOString();
+    return new Date(dateTimeString).toISOString();
   } catch {
     return dateTimeString;
   }
 };
 
-interface AuditLogPageProps {
-  onNavigate?: (page: string) => void;
-}
+const formatAction = (action: string): string => {
+  const map: Record<string, string> = {
+    batch_create: '批量创建',
+    batch_delete: '批量删除',
+    export: '导出',
+    import: '导入',
+    create: '创建',
+    update: '更新',
+    delete: '删除',
+    read: '读取',
+  };
+  return map[action] || action;
+};
 
-type AuditLogSource = 'lims' | 'rd' | 'core';
-
-interface UnifiedAuditLog {
-  id: string;
-  source: string;
-  tenant_id?: string | null;
-  user_id?: string | null;
-  username?: string | null;
-  user_name?: string | null;
-  action: string;
-  entity_type?: string | null;
-  entity_id?: string | null;
-  resource?: string | null;
-  ip_address?: string | null;
-  user_agent?: string | null;
-  status?: string | null;
-  success?: boolean | null;
-  error_message?: string | null;
-  request_details?: Record<string, unknown> | string | null;
-  response_details?: Record<string, unknown> | string | null;
-  created_at: string;
-}
-
-type AuditLog = LimsAuditLog | RdAuditLog | UnifiedAuditLog;
-
-const AuditLogPage: React.FC<AuditLogPageProps> = ({ onNavigate }) => {
-  const addNotification = useNotificationStore((state) => state.addNotification);
-
-  const [searchQuery, setSearchQuery] = useState('');
-  const [filterStatus, setFilterStatus] = useState<string>('all');
-  const [filterAction, setFilterAction] = useState<string>('all');
-  const [filterEntityType, setFilterEntityType] = useState<string>('all');
-  const [source, setSource] = useState<AuditLogSource>('core');
-  const [currentPage, setCurrentPage] = useState(1);
-  const [startDate, setStartDate] = useState<string>('');
-  const [endDate, setEndDate] = useState<string>('');
-  const [selectedLog, setSelectedLog] = useState<AuditLog | null>(null);
-  const pageSize = 20;
-
-  const logsQuery = useQuery<{ items: AuditLog[]; total: number }>({
-    queryKey: [
-      'admin-audit-logs',
-      source,
-      currentPage,
-      filterStatus,
-      filterAction,
-      filterEntityType,
-      startDate,
-      endDate,
-    ],
-    queryFn: async () => {
-      if (source === 'core') {
-        const params: Record<string, unknown> = {
-          page: Math.max(1, currentPage),
-          pagesize: Math.min(200, Math.max(1, pageSize)),
-          source: 'audit_logs',
-        };
-        if (filterStatus !== 'all') {
-          params.status = filterStatus;
-        }
-        if (filterAction !== 'all') {
-          params.action = filterAction;
-        }
-        if (filterEntityType !== 'all') {
-          params.entity_type = filterEntityType;
-        }
-        if (startDate) {
-          params.start_date = formatDateTimeForApi(startDate);
-        }
-        if (endDate) {
-          params.end_date = formatDateTimeForApi(endDate);
-        }
-        const response = await apiClient.core.get<{
-          items: UnifiedAuditLog[];
-          total: number;
-        }>('/api/core/iam/v1/audit/logs', { params });
-        if (response.success && response.data) {
-          return {
-            items: response.data.items || [],
-            total: response.data.total || 0,
-          };
-        }
-        return { items: [], total: 0 };
-      }
-
-      const api = source === 'lims' ? auditLimsApi : auditRdApi;
-      const params: Record<string, unknown> = {
-        page: Math.max(1, currentPage),
-        pagesize: Math.min(100, Math.max(1, pageSize)),
-      };
-      if (filterStatus !== 'all') {
-        params.status = filterStatus;
-      }
-      if (filterAction !== 'all') {
-        params.action = filterAction;
-      }
-      if (filterEntityType !== 'all') {
-        params.entity_type = filterEntityType;
-      }
-      if (startDate) {
-        params.start_date = formatDateTimeForApi(startDate);
-      }
-      if (endDate) {
-        params.end_date = formatDateTimeForApi(endDate);
-      }
-      apiLogger.debug('加载审计日志参数:', { source, params });
-      const response = await api.listAuditLogs(params);
-      apiLogger.debug('审计日志响应:', response);
-      if (response.success && response.data) {
-        return {
-          items: response.data.audit_logs || [],
-          total: response.data.total || 0,
-        };
-      }
-      if (response.message) {
-        addNotification({
-          title: '提示',
-          message: response.message,
-          type: 'info',
-        });
-      }
-      return { items: [], total: 0 };
-    },
-    staleTime: 5 * 60 * 1000,
-  });
-
-  const logs = logsQuery.data?.items ?? [];
-  const total = logsQuery.data?.total ?? 0;
-  const loading = logsQuery.isLoading;
-
-  useEffect(() => {
-    if (logsQuery.isError) {
-      apiLogger.error('加载审计日志失败:', logsQuery.error);
-      const errorMsg = extractErrorMessage(logsQuery.error, '加载审计日志失败');
-      if (errorMsg.includes('401') || errorMsg.includes('未授权')) {
-        addNotification({
-          title: '登录失效',
-          message: '登录已过期，请重新登录',
-          type: 'error',
-        });
-      } else {
-        addNotification({
-          title: '加载失败',
-          message: errorMsg,
-          type: 'error',
-        });
-      }
+const getStatusChip = (status: string | null | undefined): React.ReactNode => {
+  const configs: Record<
+    string,
+    {
+      color: 'default' | 'primary' | 'secondary' | 'error' | 'info' | 'success' | 'warning';
+      label: string;
     }
-  }, [logsQuery.isError, logsQuery.error, addNotification]);
+  > = {
+    success: { color: 'success', label: '成功' },
+    partial: { color: 'warning', label: '部分成功' },
+    error: { color: 'error', label: '失败' },
+  };
+  const config = configs[status ?? ''] || {
+    color: 'default' as const,
+    label: status || '-',
+  };
+  return (
+    <Chip
+      size='small'
+      color={config.color}
+      label={config.label}
+    />
+  );
+};
+
+const DetailContent: React.FC<{ row: Record<string, unknown> }> = ({ row }) => {
+  const formatDate = (val: unknown) =>
+    val ? new Date(val as string).toLocaleString('zh-CN') : '-';
+
+  const renderJson = (val: unknown) => {
+    if (!val) return '-';
+    if (typeof val === 'string') return val;
+    return JSON.stringify(val, null, 2);
+  };
+
+  return (
+    <Grid
+      container
+      spacing={3}
+    >
+      <Grid size={{ xs: 6 }}>
+        <Paper sx={{ p: 3, height: '100%' }}>
+          <Typography
+            variant='subtitle2'
+            color='text.secondary'
+            gutterBottom
+          >
+            基本信息
+          </Typography>
+          <Grid
+            container
+            spacing={2}
+          >
+            <Grid size={{ xs: 12 }}>
+              <Box sx={{ display: 'flex', justifyContent: 'space-between' }}>
+                <Typography
+                  variant='body2'
+                  color='text.secondary'
+                >
+                  ID:
+                </Typography>
+                <Typography
+                  variant='body2'
+                  sx={{ fontWeight: 500 }}
+                >
+                  {row.id as string}
+                </Typography>
+              </Box>
+            </Grid>
+            <Grid size={{ xs: 12 }}>
+              <Box sx={{ display: 'flex', justifyContent: 'space-between' }}>
+                <Typography
+                  variant='body2'
+                  color='text.secondary'
+                >
+                  操作:
+                </Typography>
+                <Typography
+                  variant='body2'
+                  sx={{ fontWeight: 500 }}
+                >
+                  {formatAction(row.action as string)}
+                </Typography>
+              </Box>
+            </Grid>
+            <Grid size={{ xs: 12 }}>
+              <Box sx={{ display: 'flex', justifyContent: 'space-between' }}>
+                <Typography
+                  variant='body2'
+                  color='text.secondary'
+                >
+                  实体类型:
+                </Typography>
+                <Typography
+                  variant='body2'
+                  sx={{ fontWeight: 500 }}
+                >
+                  {(row.entity_type as string) || (row.resource as string) || '-'}
+                </Typography>
+              </Box>
+            </Grid>
+            <Grid size={{ xs: 12 }}>
+              <Box sx={{ display: 'flex', justifyContent: 'space-between' }}>
+                <Typography
+                  variant='body2'
+                  color='text.secondary'
+                >
+                  实体ID:
+                </Typography>
+                <Typography
+                  variant='body2'
+                  sx={{ fontWeight: 500 }}
+                >
+                  {(row.entity_id as string) || '-'}
+                </Typography>
+              </Box>
+            </Grid>
+            <Grid size={{ xs: 12 }}>
+              <Box sx={{ display: 'flex', justifyContent: 'space-between' }}>
+                <Typography
+                  variant='body2'
+                  color='text.secondary'
+                >
+                  状态:
+                </Typography>
+                {getStatusChip(row.status as string)}
+              </Box>
+            </Grid>
+          </Grid>
+        </Paper>
+      </Grid>
+      <Grid size={{ xs: 6 }}>
+        <Paper sx={{ p: 3, height: '100%' }}>
+          <Typography
+            variant='subtitle2'
+            color='text.secondary'
+            gutterBottom
+          >
+            用户信息
+          </Typography>
+          <Grid
+            container
+            spacing={2}
+          >
+            <Grid size={{ xs: 12 }}>
+              <Box sx={{ display: 'flex', justifyContent: 'space-between' }}>
+                <Typography
+                  variant='body2'
+                  color='text.secondary'
+                >
+                  用户ID:
+                </Typography>
+                <Typography
+                  variant='body2'
+                  sx={{ fontWeight: 500 }}
+                >
+                  {(row.user_id as string) || '-'}
+                </Typography>
+              </Box>
+            </Grid>
+            <Grid size={{ xs: 12 }}>
+              <Box sx={{ display: 'flex', justifyContent: 'space-between' }}>
+                <Typography
+                  variant='body2'
+                  color='text.secondary'
+                >
+                  用户名:
+                </Typography>
+                <Typography
+                  variant='body2'
+                  sx={{ fontWeight: 500 }}
+                >
+                  {(row.user_name as string) || (row.username as string) || '-'}
+                </Typography>
+              </Box>
+            </Grid>
+            <Grid size={{ xs: 12 }}>
+              <Box sx={{ display: 'flex', justifyContent: 'space-between' }}>
+                <Typography
+                  variant='body2'
+                  color='text.secondary'
+                >
+                  IP地址:
+                </Typography>
+                <Typography
+                  variant='body2'
+                  sx={{ fontWeight: 500 }}
+                >
+                  {(row.ip_address as string) || '-'}
+                </Typography>
+              </Box>
+            </Grid>
+            <Grid size={{ xs: 12 }}>
+              <Box sx={{ display: 'flex', justifyContent: 'space-between' }}>
+                <Typography
+                  variant='body2'
+                  color='text.secondary'
+                >
+                  创建时间:
+                </Typography>
+                <Typography
+                  variant='body2'
+                  sx={{ fontWeight: 500 }}
+                >
+                  {formatDate(row.created_at)}
+                </Typography>
+              </Box>
+            </Grid>
+          </Grid>
+        </Paper>
+      </Grid>
+      {row.error_message && (
+        <Grid size={{ xs: 12 }}>
+          <Paper sx={{ p: 3, bgcolor: 'error.light' }}>
+            <Typography
+              variant='subtitle2'
+              color='error.main'
+              gutterBottom
+            >
+              错误信息
+            </Typography>
+            <Typography
+              variant='body2'
+              color='error.main'
+            >
+              {row.error_message as string}
+            </Typography>
+          </Paper>
+        </Grid>
+      )}
+      {row.request_details && (
+        <Grid size={{ xs: 12 }}>
+          <Paper sx={{ p: 3 }}>
+            <Typography
+              variant='subtitle2'
+              color='text.secondary'
+              gutterBottom
+            >
+              请求详情
+            </Typography>
+            <pre
+              style={{
+                whiteSpace: 'pre-wrap',
+                wordBreak: 'break-all',
+                fontSize: '0.875rem',
+                color: ct.grey[800],
+                margin: 0,
+              }}
+            >
+              {renderJson(row.request_details)}
+            </pre>
+          </Paper>
+        </Grid>
+      )}
+      {row.response_details && (
+        <Grid size={{ xs: 12 }}>
+          <Paper sx={{ p: 3 }}>
+            <Typography
+              variant='subtitle2'
+              color='text.secondary'
+              gutterBottom
+            >
+              响应详情
+            </Typography>
+            <pre
+              style={{
+                whiteSpace: 'pre-wrap',
+                wordBreak: 'break-all',
+                fontSize: '0.875rem',
+                color: ct.grey[800],
+                margin: 0,
+              }}
+            >
+              {renderJson(row.response_details)}
+            </pre>
+          </Paper>
+        </Grid>
+      )}
+    </Grid>
+  );
+};
+
+const AuditLogPage: React.FC = () => {
+  const addNotification = useNotificationStore((state) => state.addNotification);
+  const [source, setSource] = useState<AuditLogSource>('core');
+  const [startDate, setStartDate] = useState('');
+  const [endDate, setEndDate] = useState('');
+  const [entityTypeFilter, setEntityTypeFilter] = useState<string>('all');
+
+  const handleClearDateFilters = useCallback(() => {
+    setStartDate('');
+    setEndDate('');
+  }, []);
+
+  const apiAdapter: CrudApiAdapter = useMemo(
+    () => ({
+      list: async (params?: Record<string, unknown>) => {
+        const queryParams: Record<string, unknown> = {
+          page: params?.page ?? 1,
+          pagesize: Math.min(200, Math.max(1, (params?.pageSize as number) ?? 20)),
+        };
+
+        if (params?.status && params.status !== 'all') {
+          queryParams.status = params.status;
+        }
+        if (params?.action && params.action !== 'all') {
+          queryParams.action = params.action;
+        }
+        if (params?.entity_type && params.entity_type !== 'all') {
+          queryParams.entity_type = params.entity_type;
+        }
+        if (params?.start_date) {
+          queryParams.start_date = formatDateTimeForApi(params.start_date as string);
+        }
+        if (params?.end_date) {
+          queryParams.end_date = formatDateTimeForApi(params.end_date as string);
+        }
+        if (params?.search) {
+          queryParams.search = params.search;
+        }
+
+        apiLogger.debug('加载审计日志参数:', { source, queryParams });
+
+        if (source === 'core') {
+          queryParams.source = 'audit_logs';
+          try {
+            const response = await apiClient.core.get<{
+              items: Record<string, unknown>[];
+              total: number;
+            }>('/api/core/iam/v1/audit/logs', { params: queryParams });
+            if (response.success && response.data) {
+              const items = (response.data.items || []).map((item) => ({
+                ...item,
+                source: 'core',
+              }));
+              return { data: items, total: response.data.total || 0 };
+            }
+            return { data: [], total: 0 };
+          } catch (error) {
+            apiLogger.error('加载核心审计日志失败:', error);
+            throw new Error(extractErrorMessage(error, '加载审计日志失败'));
+          }
+        }
+
+        const api = source === 'lims' ? auditLimsApi : auditRdApi;
+        try {
+          const response = await api.listAuditLogs(queryParams);
+          apiLogger.debug('审计日志响应:', response);
+          if (response.success && response.data) {
+            const items = (response.data.audit_logs || []).map((item) => ({
+              ...item,
+              source,
+            }));
+            return { data: items, total: response.data.total || 0 };
+          }
+          if (response.message) {
+            addNotification({
+              title: '提示',
+              message: response.message,
+              type: 'info',
+            });
+          }
+          return { data: [], total: 0 };
+        } catch (error) {
+          apiLogger.error(`加载${source}审计日志失败:`, error);
+          throw new Error(extractErrorMessage(error, '加载审计日志失败'));
+        }
+      },
+      create: async () => {
+        throw new Error('审计日志为只读数据，不支持创建');
+      },
+      update: async () => {
+        throw new Error('审计日志为只读数据，不支持更新');
+      },
+      delete: async () => {
+        throw new Error('审计日志为只读数据，不支持删除');
+      },
+    }),
+    [source, addNotification]
+  );
 
   const exportMutation = useMutation({
     mutationFn: async () => {
+      const params: Record<string, unknown> = {};
+      if (startDate) params.start_date = formatDateTimeForApi(startDate);
+      if (endDate) params.end_date = formatDateTimeForApi(endDate);
+      if (entityTypeFilter !== 'all') params.entity_type = entityTypeFilter;
+
       if (source === 'core') {
-        const params: Record<string, unknown> = { format: 'csv', source: 'audit_logs' };
-        if (filterStatus !== 'all') {
-          params.status = filterStatus;
-        }
-        if (filterAction !== 'all') {
-          params.action = filterAction;
-        }
-        if (filterEntityType !== 'all') {
-          params.entity_type = filterEntityType;
-        }
-        if (startDate) {
-          params.start_date = formatDateTimeForApi(startDate);
-        }
-        if (endDate) {
-          params.end_date = formatDateTimeForApi(endDate);
-        }
+        params.format = 'csv';
+        params.source = 'audit_logs';
         const response = await apiClient.core.get<unknown>('/api/core/iam/v1/audit/logs/export', {
           params,
           responseType: 'blob' as never,
@@ -242,23 +449,6 @@ const AuditLogPage: React.FC<AuditLogPageProps> = ({ onNavigate }) => {
         return response;
       }
       const api = source === 'lims' ? auditLimsApi : auditRdApi;
-      const params: Record<string, unknown> = {};
-      if (filterStatus !== 'all') {
-        params.status = filterStatus;
-      }
-      if (filterAction !== 'all') {
-        params.action = filterAction;
-      }
-      if (filterEntityType !== 'all') {
-        params.entity_type = filterEntityType;
-      }
-      if (startDate) {
-        params.start_date = formatDateTimeForApi(startDate);
-      }
-      if (endDate) {
-        params.end_date = formatDateTimeForApi(endDate);
-      }
-      apiLogger.debug('导出审计日志参数:', { source, params });
       return api.exportAuditLogs(params);
     },
     onSuccess: (blob: unknown) => {
@@ -296,161 +486,109 @@ const AuditLogPage: React.FC<AuditLogPageProps> = ({ onNavigate }) => {
     },
   });
 
-  const exporting = exportMutation.isPending;
-
-  const handleExport = () => {
+  const handleExport = useCallback(() => {
     exportMutation.mutate();
-  };
+  }, [exportMutation]);
 
-  const handleViewDetail = (log: AuditLog) => {
-    setSelectedLog(log);
-  };
-
-  const clearDateFilters = () => {
-    setStartDate('');
-    setEndDate('');
-    setCurrentPage(1);
-  };
-
-  const getStatusBadge = (status: string | null | undefined) => {
-    const badges: Record<
-      string,
-      {
-        color: 'default' | 'primary' | 'secondary' | 'error' | 'info' | 'success' | 'warning';
-        label: string;
-      }
-    > = {
-      success: { color: 'success', label: '成功' },
-      partial: { color: 'warning', label: '部分成功' },
-      error: { color: 'error', label: '失败' },
-    };
-    const config = badges[status ?? ''] || {
-      color: 'default' as const,
-      label: status || '-',
-    };
-    return (
-      <Chip
-        size='small'
-        color={config.color}
-        label={config.label}
-      />
-    );
-  };
-
-  const formatAction = (action: string) => {
-    const map: Record<string, string> = {
-      batch_create: '批量创建',
-      batch_delete: '批量删除',
-      export: '导出',
-      import: '导入',
-      create: '创建',
-      update: '更新',
-      delete: '删除',
-      read: '读取',
-    };
-    return map[action] || action;
-  };
-
-  const filteredLogs = logs.filter((log) => {
-    if (!searchQuery) return true;
-    const query = searchQuery.toLowerCase();
-    return (
-      (log.user_name?.toLowerCase() || '').includes(query) ||
-      (log.user_id?.toLowerCase() || '').includes(query) ||
-      (log.action?.toLowerCase() || '').includes(query) ||
-      (log.entity_type?.toLowerCase() || '').includes(query) ||
-      (log.ip_address?.toLowerCase() || '').includes(query)
-    );
-  });
-
-  const uniqueActions = Array.from(new Set(logs.map((log) => log.action)))
-    .filter((action): action is string => Boolean(action))
-    .sort();
-  const uniqueEntityTypes = Array.from(new Set(logs.map((log) => log.entity_type)))
-    .filter((type): type is string => Boolean(type))
-    .sort();
-
-  const columns: ColumnDef<AuditLog>[] = useMemo(
+  const customColumns: ColumnDef[] = useMemo(
     () => [
       {
         id: 'created_at',
         label: '时间',
+        width: 180,
+        sortable: true,
         render: (row) => (
           <Typography
             variant='body2'
             color='text.secondary'
           >
-            {new Date(row.created_at).toLocaleString('zh-CN')}
+            {new Date((row.created_at as string) || '').toLocaleString('zh-CN')}
           </Typography>
         ),
       },
       {
         id: 'user',
         label: '用户',
-        render: (row) => (
-          <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-            <Box
-              sx={{
-                width: 32,
-                height: 32,
-                borderRadius: '50%',
-                bgcolor: 'primary.light',
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-              }}
-            >
-              <User
-                size={16}
-                color={ct.primary.dark}
-              />
+        width: 160,
+        render: (row) => {
+          const name = (row.user_name || row.username || row.user_id || '-') as string;
+          return (
+            <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+              <Box
+                sx={{
+                  width: 32,
+                  height: 32,
+                  borderRadius: '50%',
+                  bgcolor: 'primary.light',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                }}
+              >
+                <User
+                  size={16}
+                  color={ct.primary.dark}
+                />
+              </Box>
+              <Typography
+                variant='body2'
+                sx={{ fontWeight: 500 }}
+              >
+                {name}
+              </Typography>
             </Box>
-            <Typography
-              variant='body2'
-              sx={{ fontWeight: 500 }}
-            >
-              {row.user_name || row.user_id || '-'}
-            </Typography>
-          </Box>
-        ),
+          );
+        },
       },
       {
         id: 'action',
         label: '操作',
-        render: (row) => <Typography variant='body2'>{formatAction(row.action)}</Typography>,
+        width: 110,
+        render: (row) => (
+          <Typography variant='body2'>{formatAction(row.action as string)}</Typography>
+        ),
       },
       {
         id: 'entity_type',
         label: '实体类型',
+        width: 120,
         render: (row) => (
           <Typography
             variant='body2'
             color='text.secondary'
           >
-            {row.entity_type}
+            {(row.entity_type as string) || (row.resource as string) || '-'}
           </Typography>
         ),
       },
       {
         id: 'ip_address',
         label: 'IP地址',
+        width: 130,
         render: (row) => (
           <Typography
             variant='body2'
             color='text.secondary'
           >
-            {row.ip_address || '-'}
+            {(row.ip_address as string) || '-'}
           </Typography>
         ),
       },
       {
         id: 'status',
         label: '状态',
-        render: (row) => getStatusBadge(row.status),
+        width: 100,
+        render: (row) => {
+          const status =
+            (row.status as string) ||
+            (row.success === true ? 'success' : row.success === false ? 'error' : '');
+          return getStatusChip(status);
+        },
       },
       {
-        id: 'details',
+        id: '_detail_summary',
         label: '详情',
+        width: 200,
         render: (row) => (
           <Box sx={{ maxWidth: 200 }}>
             {row.error_message && (
@@ -458,7 +596,7 @@ const AuditLogPage: React.FC<AuditLogPageProps> = ({ onNavigate }) => {
                 variant='body2'
                 sx={{ fontSize: '0.75rem', color: 'error.main' }}
               >
-                {row.error_message}
+                {row.error_message as string}
               </Typography>
             )}
             {!row.error_message && row.request_details && (
@@ -472,7 +610,7 @@ const AuditLogPage: React.FC<AuditLogPageProps> = ({ onNavigate }) => {
                 }}
               >
                 {typeof row.request_details === 'string'
-                  ? row.request_details
+                  ? (row.request_details as string)
                   : JSON.stringify(row.request_details)}
               </Typography>
             )}
@@ -480,519 +618,190 @@ const AuditLogPage: React.FC<AuditLogPageProps> = ({ onNavigate }) => {
           </Box>
         ),
       },
-      {
-        id: 'actions',
-        label: '操作',
-        render: (row) => (
-          <IconButton
-            size='small'
-            onClick={() => handleViewDetail(row)}
-            title='查看详情'
-          >
-            <Eye size={16} />
-          </IconButton>
-        ),
-      },
     ],
     []
   );
 
-  const filters: FilterConfig[] = useMemo(
-    () => [
-      {
-        id: 'status',
-        label: '状态',
-        options: [
-          { value: 'all', label: '全部状态' },
-          { value: 'success', label: '成功' },
-          { value: 'partial', label: '部分成功' },
-          { value: 'error', label: '失败' },
-        ],
-      },
-      {
-        id: 'action',
-        label: '操作',
-        options: [
-          { value: 'all', label: '全部操作' },
-          ...uniqueActions.map((action) => ({
-            value: action,
-            label: formatAction(action),
-          })),
-        ],
-      },
-      {
-        id: 'entity_type',
-        label: '实体',
-        options: [
-          { value: 'all', label: '全部实体' },
-          ...uniqueEntityTypes.map((type) => ({ value: type, label: type })),
-        ],
-      },
-    ],
-    [uniqueActions, uniqueEntityTypes]
-  );
+  const headerContent = useCallback(
+    (rows: Record<string, unknown>[], _total: number) => {
+      const uniqueEntityTypes = Array.from(
+        new Set(
+          rows
+            .map((r) => (r.entity_type || r.resource) as string)
+            .filter((v): v is string => Boolean(v))
+        )
+      ).sort();
 
-  const handleFilterChange = (filters: Record<string, unknown>) => {
-    if (typeof filters.status === 'string' || filters.status === null) {
-      setFilterStatus(filters.status as string);
-    }
-    if (typeof filters.action === 'string' || filters.action === null) {
-      setFilterAction(filters.action as string);
-    }
-    if (typeof filters.entity_type === 'string' || filters.entity_type === null) {
-      setFilterEntityType(filters.entity_type as string);
-    }
-    setCurrentPage(1);
-  };
+      return (
+        <Box sx={{ mb: 2 }}>
+          <Paper sx={{ p: 2 }}>
+            <Box sx={{ display: 'flex', gap: 2, alignItems: 'center', flexWrap: 'wrap' }}>
+              <Box
+                sx={{
+                  display: 'flex',
+                  bgcolor: 'grey.100',
+                  borderRadius: 2,
+                  p: 0.5,
+                }}
+              >
+                <Button
+                  size='small'
+                  variant={source === 'core' ? 'contained' : 'text'}
+                  onClick={() => {
+                    setSource('core');
+                    setEntityTypeFilter('all');
+                  }}
+                  startIcon={<Database size={16} />}
+                >
+                  统一审计
+                </Button>
+                <Button
+                  size='small'
+                  variant={source === 'lims' ? 'contained' : 'text'}
+                  onClick={() => {
+                    setSource('lims');
+                    setEntityTypeFilter('all');
+                  }}
+                  startIcon={<FileText size={16} />}
+                >
+                  LIMS
+                </Button>
+                <Button
+                  size='small'
+                  variant={source === 'rd' ? 'contained' : 'text'}
+                  onClick={() => {
+                    setSource('rd');
+                    setEntityTypeFilter('all');
+                  }}
+                  startIcon={<FlaskConical size={16} />}
+                >
+                  RD
+                </Button>
+              </Box>
 
-  const customToolbar = (
-    <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
-      <ModeToggle />
-      <Box
-        sx={{
-          display: 'flex',
-          bgcolor: 'grey.100',
-          borderRadius: 2,
-          p: 0.5,
-        }}
-      >
-        <Button
-          size='small'
-          variant={source === 'core' ? 'contained' : 'text'}
-          onClick={() => {
-            setSource('core');
-            setCurrentPage(1);
-          }}
-          startIcon={<Database size={16} />}
-        >
-          统一审计
-        </Button>
-        <Button
-          size='small'
-          variant={source === 'lims' ? 'contained' : 'text'}
-          onClick={() => {
-            setSource('lims');
-            setCurrentPage(1);
-          }}
-          startIcon={<FileText size={16} />}
-        >
-          LIMS
-        </Button>
-        <Button
-          size='small'
-          variant={source === 'rd' ? 'contained' : 'text'}
-          onClick={() => {
-            setSource('rd');
-            setCurrentPage(1);
-          }}
-          startIcon={<FlaskConical size={16} />}
-        >
-          RD
-        </Button>
-      </Box>
-    </Box>
-  );
-
-  const headerActions = [
-    {
-      label: exporting ? '导出中...' : '导出',
-      icon: <Download size={16} />,
-      onClick: handleExport,
-      variant: 'contained' as const,
-      disabled: exporting,
-    },
-    {
-      label: '刷新',
-      icon: <RefreshCw size={16} />,
-      onClick: () => logsQuery.refetch(),
-      variant: 'contained' as const,
-    },
-  ];
-
-  return (
-    <PageContainer
-      title='安全审计'
-      subtitle='访问日志、操作审计'
-      headerProps={{
-        backButton: { href: '/dashboard' },
-        customToolbar,
-        actions: headerActions,
-        pageIcon: <Shield size={20} />,
-        pageColor: ct.primary.dark,
-      }}
-      maxWidth='xl'
-    >
-      {/* 时间范围筛选 */}
-      <Box sx={{ mb: 3 }}>
-        <Card>
-          <CardContent sx={{ display: 'flex', gap: 3, alignItems: 'center', flexWrap: 'wrap' }}>
-            <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-              <Calendar
-                size={18}
-                color={ct.grey[600]}
+              <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                <Calendar
+                  size={18}
+                  color={ct.grey[600]}
+                />
+                <Typography
+                  variant='body2'
+                  color='text.secondary'
+                >
+                  时间范围:
+                </Typography>
+              </Box>
+              <TextField
+                label='开始时间'
+                type='datetime-local'
+                value={startDate}
+                onChange={(e) => setStartDate(e.target.value)}
+                sx={{ width: 220 }}
+                slotProps={{ inputLabel: { shrink: true } } as const}
+                size='small'
               />
               <Typography
                 variant='body2'
                 color='text.secondary'
               >
-                时间范围:
+                至
               </Typography>
-            </Box>
-            <TextField
-              label='开始时间'
-              type='datetime-local'
-              value={startDate}
-              onChange={(e) => {
-                setStartDate(e.target.value);
-                setCurrentPage(1);
-              }}
-              sx={{ width: 220 }}
-              slotProps={{ inputLabel: { shrink: true } } as const}
-            />
-            <Typography
-              variant='body2'
-              color='text.secondary'
-            >
-              至
-            </Typography>
-            <TextField
-              label='结束时间'
-              type='datetime-local'
-              value={endDate}
-              onChange={(e) => {
-                setEndDate(e.target.value);
-                setCurrentPage(1);
-              }}
-              sx={{ width: 220 }}
-              slotProps={{ inputLabel: { shrink: true } } as const}
-            />
-            {(startDate || endDate) && (
-              <Button
-                variant='text'
-                color='error'
-                onClick={clearDateFilters}
-                startIcon={<X size={14} />}
-              >
-                清除时间筛选
-              </Button>
-            )}
-          </CardContent>
-        </Card>
-      </Box>
-
-      <Card>
-        <CardContent sx={{ p: 0 }}>
-          <ListPageTemplate
-            title='审计日志'
-            subtitle={`共 ${total} 条记录`}
-            data={filteredLogs}
-            columns={columns}
-            loading={loading}
-            searchPlaceholder='搜索用户名、操作、实体类型、IP...'
-            searchValue={searchQuery}
-            onSearch={setSearchQuery}
-            filters={filters}
-            filtersValue={{
-              status: filterStatus,
-              action: filterAction,
-              entity_type: filterEntityType,
-            }}
-            onFilterChange={handleFilterChange}
-            pagination={{
-              page: currentPage,
-              pageSize,
-              total,
-              onPageChange: setCurrentPage,
-            }}
-            emptyIcon={
-              <Clock
-                size={48}
-                color={ct.grey[400]}
+              <TextField
+                label='结束时间'
+                type='datetime-local'
+                value={endDate}
+                onChange={(e) => setEndDate(e.target.value)}
+                sx={{ width: 220 }}
+                slotProps={{ inputLabel: { shrink: true } } as const}
+                size='small'
               />
-            }
-            emptyMessage='暂无审计日志'
-          />
-        </CardContent>
-      </Card>
+              {(startDate || endDate) && (
+                <Button
+                  variant='text'
+                  color='error'
+                  onClick={handleClearDateFilters}
+                  startIcon={<X size={14} />}
+                  size='small'
+                >
+                  清除
+                </Button>
+              )}
 
-      {/* 详情弹窗 */}
-      <Dialog
-        open={!!selectedLog}
-        onClose={() => setSelectedLog(null)}
-        maxWidth='lg'
-        fullWidth
-      >
-        <DialogTitle
-          sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}
-        >
-          <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
-            <Activity
-              size={24}
-              color={ct.primary.dark}
-            />
-            <Typography variant='h6'>审计日志详情</Typography>
-          </Box>
-          <IconButton
-            onClick={() => setSelectedLog(null)}
-            aria-label='关闭审计日志详情对话框'
-          >
-            <X size={20} />
-          </IconButton>
-        </DialogTitle>
-        <DialogContent>
-          {selectedLog && (
-            <Grid
-              container
-              spacing={3}
-            >
-              <Grid size={{ xs: 6 }}>
-                <Paper sx={{ p: 3 }}>
-                  <Typography
-                    variant='subtitle2'
-                    color='text.secondary'
-                    gutterBottom
-                  >
-                    基本信息
-                  </Typography>
-                  <Grid
-                    container
-                    spacing={2}
-                  >
-                    <Grid size={{ xs: 12 }}>
-                      <Box sx={{ display: 'flex', justifyContent: 'space-between' }}>
-                        <Typography
-                          variant='body2'
-                          color='text.secondary'
-                        >
-                          ID:
-                        </Typography>
-                        <Typography
-                          variant='body2'
-                          sx={{ fontWeight: 500 }}
-                        >
-                          {selectedLog.id}
-                        </Typography>
-                      </Box>
-                    </Grid>
-                    <Grid size={{ xs: 12 }}>
-                      <Box sx={{ display: 'flex', justifyContent: 'space-between' }}>
-                        <Typography
-                          variant='body2'
-                          color='text.secondary'
-                        >
-                          操作:
-                        </Typography>
-                        <Typography
-                          variant='body2'
-                          sx={{ fontWeight: 500 }}
-                        >
-                          {formatAction(selectedLog.action)}
-                        </Typography>
-                      </Box>
-                    </Grid>
-                    <Grid size={{ xs: 12 }}>
-                      <Box sx={{ display: 'flex', justifyContent: 'space-between' }}>
-                        <Typography
-                          variant='body2'
-                          color='text.secondary'
-                        >
-                          实体类型:
-                        </Typography>
-                        <Typography
-                          variant='body2'
-                          sx={{ fontWeight: 500 }}
-                        >
-                          {selectedLog.entity_type}
-                        </Typography>
-                      </Box>
-                    </Grid>
-                    <Grid size={{ xs: 12 }}>
-                      <Box sx={{ display: 'flex', justifyContent: 'space-between' }}>
-                        <Typography
-                          variant='body2'
-                          color='text.secondary'
-                        >
-                          实体ID:
-                        </Typography>
-                        <Typography
-                          variant='body2'
-                          sx={{ fontWeight: 500 }}
-                        >
-                          {selectedLog.entity_id || '-'}
-                        </Typography>
-                      </Box>
-                    </Grid>
-                    <Grid size={{ xs: 12 }}>
-                      <Box sx={{ display: 'flex', justifyContent: 'space-between' }}>
-                        <Typography
-                          variant='body2'
-                          color='text.secondary'
-                        >
-                          状态:
-                        </Typography>
-                        {getStatusBadge(selectedLog.status)}
-                      </Box>
-                    </Grid>
-                  </Grid>
-                </Paper>
-              </Grid>
-              <Grid size={{ xs: 6 }}>
-                <Paper sx={{ p: 3 }}>
-                  <Typography
-                    variant='subtitle2'
-                    color='text.secondary'
-                    gutterBottom
-                  >
-                    用户信息
-                  </Typography>
-                  <Grid
-                    container
-                    spacing={2}
-                  >
-                    <Grid size={{ xs: 12 }}>
-                      <Box sx={{ display: 'flex', justifyContent: 'space-between' }}>
-                        <Typography
-                          variant='body2'
-                          color='text.secondary'
-                        >
-                          用户ID:
-                        </Typography>
-                        <Typography
-                          variant='body2'
-                          sx={{ fontWeight: 500 }}
-                        >
-                          {selectedLog.user_id || '-'}
-                        </Typography>
-                      </Box>
-                    </Grid>
-                    <Grid size={{ xs: 12 }}>
-                      <Box sx={{ display: 'flex', justifyContent: 'space-between' }}>
-                        <Typography
-                          variant='body2'
-                          color='text.secondary'
-                        >
-                          用户名:
-                        </Typography>
-                        <Typography
-                          variant='body2'
-                          sx={{ fontWeight: 500 }}
-                        >
-                          {selectedLog.user_name || '-'}
-                        </Typography>
-                      </Box>
-                    </Grid>
-                    <Grid size={{ xs: 12 }}>
-                      <Box sx={{ display: 'flex', justifyContent: 'space-between' }}>
-                        <Typography
-                          variant='body2'
-                          color='text.secondary'
-                        >
-                          IP地址:
-                        </Typography>
-                        <Typography
-                          variant='body2'
-                          sx={{ fontWeight: 500 }}
-                        >
-                          {selectedLog.ip_address || '-'}
-                        </Typography>
-                      </Box>
-                    </Grid>
-                    <Grid size={{ xs: 12 }}>
-                      <Box sx={{ display: 'flex', justifyContent: 'space-between' }}>
-                        <Typography
-                          variant='body2'
-                          color='text.secondary'
-                        >
-                          创建时间:
-                        </Typography>
-                        <Typography
-                          variant='body2'
-                          sx={{ fontWeight: 500 }}
-                        >
-                          {new Date(selectedLog.created_at).toLocaleString('zh-CN')}
-                        </Typography>
-                      </Box>
-                    </Grid>
-                  </Grid>
-                </Paper>
-              </Grid>
-              {selectedLog.error_message && (
-                <Grid size={{ xs: 12 }}>
-                  <Paper sx={{ p: 3, bgcolor: 'error.light' }}>
-                    <Typography
-                      variant='subtitle2'
-                      color='error.main'
-                      gutterBottom
+              <FormControl
+                size='small'
+                sx={{ minWidth: 140 }}
+              >
+                <InputLabel>实体类型</InputLabel>
+                <Select
+                  value={entityTypeFilter}
+                  label='实体类型'
+                  onChange={(e) => setEntityTypeFilter(e.target.value)}
+                >
+                  <MenuItem value='all'>全部实体</MenuItem>
+                  {uniqueEntityTypes.map((type) => (
+                    <MenuItem
+                      key={type}
+                      value={type}
                     >
-                      错误信息
-                    </Typography>
-                    <Typography
-                      variant='body2'
-                      color='error.main'
-                    >
-                      {selectedLog.error_message}
-                    </Typography>
-                  </Paper>
-                </Grid>
-              )}
-              {selectedLog.request_details && (
-                <Grid size={{ xs: 12 }}>
-                  <Paper sx={{ p: 3 }}>
-                    <Typography
-                      variant='subtitle2'
-                      color='text.secondary'
-                      gutterBottom
-                    >
-                      请求详情
-                    </Typography>
-                    <pre
-                      style={{
-                        whiteSpace: 'pre-wrap',
-                        wordBreak: 'break-all',
-                        fontSize: '0.875rem',
-                        color: ct.grey[800],
-                      }}
-                    >
-                      {typeof selectedLog.request_details === 'string'
-                        ? selectedLog.request_details
-                        : JSON.stringify(selectedLog.request_details, null, 2)}
-                    </pre>
-                  </Paper>
-                </Grid>
-              )}
-              {selectedLog.response_details && (
-                <Grid size={{ xs: 12 }}>
-                  <Paper sx={{ p: 3 }}>
-                    <Typography
-                      variant='subtitle2'
-                      color='text.secondary'
-                      gutterBottom
-                    >
-                      响应详情
-                    </Typography>
-                    <pre
-                      style={{
-                        whiteSpace: 'pre-wrap',
-                        wordBreak: 'break-all',
-                        fontSize: '0.875rem',
-                        color: ct.grey[800],
-                      }}
-                    >
-                      {typeof selectedLog.response_details === 'string'
-                        ? selectedLog.response_details
-                        : JSON.stringify(selectedLog.response_details, null, 2)}
-                    </pre>
-                  </Paper>
-                </Grid>
-              )}
-            </Grid>
-          )}
-        </DialogContent>
-        <DialogActions>
-          <Button onClick={() => setSelectedLog(null)}>关闭</Button>
-        </DialogActions>
-      </Dialog>
-    </PageContainer>
+                      {type}
+                    </MenuItem>
+                  ))}
+                </Select>
+              </FormControl>
+
+              <Box sx={{ flexGrow: 1 }} />
+
+              <Button
+                variant='contained'
+                startIcon={<Download size={16} />}
+                onClick={handleExport}
+                disabled={exportMutation.isPending}
+                size='small'
+              >
+                {exportMutation.isPending ? '导出中...' : '导出'}
+              </Button>
+            </Box>
+          </Paper>
+        </Box>
+      );
+    },
+    [
+      source,
+      startDate,
+      endDate,
+      entityTypeFilter,
+      handleClearDateFilters,
+      handleExport,
+      exportMutation.isPending,
+    ]
+  );
+
+  const extraQueryParams = useMemo(
+    () => ({
+      source,
+      start_date: startDate,
+      end_date: endDate,
+      entity_type: entityTypeFilter,
+    }),
+    [source, startDate, endDate, entityTypeFilter]
+  );
+
+  return (
+    <CrudPage
+      key={source}
+      schema={auditLogSchema}
+      apiAdapter={apiAdapter}
+      customColumns={customColumns}
+      extraQueryParams={extraQueryParams}
+      detailContent={(row) => <DetailContent row={row} />}
+      detailMaxWidth='lg'
+      headerContent={headerContent}
+      breadcrumbs={[
+        { label: '首页', href: '/dashboard' },
+        { label: '系统管理' },
+        { label: '审计日志' },
+      ]}
+    />
   );
 };
 

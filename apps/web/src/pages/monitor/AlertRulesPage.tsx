@@ -1,20 +1,17 @@
 /**
- * 告警规则配置页面 (Phase 4 可观测性增强)
+ * 告警规则配置页面
  *
- * 接入 monitor 后端 /rules 接口，支持告警规则的 CRUD 与启停管理。
+ * 使用 CrudPage 组件实现 schema 驱动的告警规则管理，
+ * 支持列表展示、创建、编辑、删除、启停等完整 CRUD 功能。
  *
  * @module pages/monitor
- * @path /monitor/alert-rules-v2
+ * @path /monitor/alert-rules
  */
 
-import React, { useState, useMemo, useCallback } from 'react';
-import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import React, { useMemo, useCallback } from 'react';
+import { useQueryClient } from '@tanstack/react-query';
 import {
   Bell,
-  Plus,
-  Edit,
-  Trash2,
-  RefreshCw,
   Power,
   PowerOff,
   AlertTriangle,
@@ -28,31 +25,16 @@ import {
   Webhook,
   Activity,
 } from 'lucide-react';
-import {
-  Box,
-  Typography,
-  Chip,
-  Button,
-  Switch,
-  Stack,
-  Skeleton,
-  Paper,
-  Table,
-  TableBody,
-  TableCell,
-  TableContainer,
-  TableHead,
-  TableRow,
-  useTheme,
-} from '@mui/material';
+import { Box, Typography, Chip, Switch, Stack, Paper } from '@mui/material';
+import { useTheme } from '@mui/material/styles';
 
+import CrudPage, { type CrudApiAdapter } from '@/components/templates/CrudPage';
+import type { ColumnDef, RowAction } from '@/components/templates/list/types';
 import { useNotificationStore } from '@/store';
 import { PageContainer } from '@/components/common';
-import { ConfirmDialog } from '@topems/shared-components';
-import { ListPageTemplate, type ColumnDef, type StatCard } from '@/components/templates';
-import { extractErrorMessage } from '@/utils/errors';
 import { MONITOR_PATHS } from '@/modules/monitor/config';
 import { metricsApi, type AlertRuleRecord, type RuleAction } from '@/api/monitor/metrics';
+import { alertRuleSchema } from '@/schemas/monitor';
 
 const SEVERITY_CONFIG: Record<
   string,
@@ -91,466 +73,119 @@ const FIELD_ICONS: Record<string, React.ReactNode> = {
   request_count: <Globe size={14} />,
 };
 
-export const AlertRulesPage: React.FC = () => {
-  const theme = useTheme();
-  const queryClient = useQueryClient();
-  const addNotification = useNotificationStore((state) => state.addNotification);
+const CRUD_QUERY_KEY = ['crud', 'monitor_alert_rule'];
 
-  const [search, setSearch] = useState('');
-  const [statusFilter, setStatusFilter] = useState('all');
-  const [severityFilter, setSeverityFilter] = useState('all');
-  const [serviceFilter, setServiceFilter] = useState('all');
-  const [page, setPage] = useState(1);
-  const pageSize = 10;
+type SwitchWithMissingProps = React.ComponentProps<typeof Switch> & {
+  checked?: boolean;
+  onChange?: (event: React.ChangeEvent<HTMLInputElement>, checked: boolean) => void;
+};
 
-  const [confirmDialog, setConfirmDialog] = useState<{
-    open: boolean;
-    title: string;
-    message: string;
-    onConfirm: () => void;
-    danger?: boolean;
-  } | null>(null);
+const ToggleSwitch = Switch as React.ComponentType<SwitchWithMissingProps>;
 
-  const openConfirm = useCallback(
-    (config: { title: string; message: string; onConfirm: () => void; danger?: boolean }) => {
-      setConfirmDialog({ ...config, open: true });
-    },
-    []
+const renderConditionCell = (row: Record<string, unknown>) => {
+  const rule = row as unknown as AlertRuleRecord;
+  const op = OPERATOR_LABELS[rule.condition.operator] ?? rule.condition.operator;
+  const fieldIcon = FIELD_ICONS[rule.condition.field];
+  return (
+    <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+      {fieldIcon}
+      <Typography
+        variant='body2'
+        sx={{ fontFamily: 'monospace' }}
+      >
+        {rule.condition.field} {op} {String(rule.condition.value)}
+        {rule.condition.comparison_type ? ` (${rule.condition.comparison_type})` : ''}
+      </Typography>
+    </Box>
   );
+};
 
-  const closeConfirm = () => setConfirmDialog(null);
-
-  const rulesQuery = useQuery({
-    queryKey: ['monitor', 'alert-rules', 'list'],
-    queryFn: async () => {
-      const res = await metricsApi.listAlertRules();
-      return res.data ?? [];
-    },
-  });
-
-  const enableMutation = useMutation({
-    mutationFn: (id: string) => metricsApi.enableAlertRule(id),
-    onSuccess: () => {
-      addNotification({ type: 'success', title: '已启用', message: '告警规则已启用' });
-      void queryClient.invalidateQueries({ queryKey: ['monitor', 'alert-rules'] });
-    },
-    onError: (err: unknown) =>
-      addNotification({
-        type: 'error',
-        title: '启用失败',
-        message: extractErrorMessage(err, '启用失败'),
-      }),
-  });
-
-  const disableMutation = useMutation({
-    mutationFn: (id: string) => metricsApi.disableAlertRule(id),
-    onSuccess: () => {
-      addNotification({ type: 'success', title: '已禁用', message: '告警规则已禁用' });
-      void queryClient.invalidateQueries({ queryKey: ['monitor', 'alert-rules'] });
-    },
-    onError: (err: unknown) =>
-      addNotification({
-        type: 'error',
-        title: '禁用失败',
-        message: extractErrorMessage(err, '禁用失败'),
-      }),
-  });
-
-  const deleteMutation = useMutation({
-    mutationFn: (id: string) => metricsApi.deleteAlertRule(id),
-    onSuccess: () => {
-      addNotification({ type: 'success', title: '已删除', message: '告警规则已删除' });
-      void queryClient.invalidateQueries({ queryKey: ['monitor', 'alert-rules'] });
-    },
-    onError: (err: unknown) =>
-      addNotification({
-        type: 'error',
-        title: '删除失败',
-        message: extractErrorMessage(err, '删除失败'),
-      }),
-  });
-
-  const rules: AlertRuleRecord[] = rulesQuery.data ?? [];
-  const loading = rulesQuery.isLoading;
-
-  const filteredRules = useMemo(() => {
-    return rules.filter((r) => {
-      if (search) {
-        const k = search.toLowerCase();
-        if (
-          !r.name.toLowerCase().includes(k) &&
-          !(r.description?.toLowerCase().includes(k) ?? false) &&
-          !(r.service_name?.toLowerCase().includes(k) ?? false)
-        ) {
-          return false;
-        }
-      }
-      if (statusFilter === 'enabled' && !r.enabled) return false;
-      if (statusFilter === 'disabled' && r.enabled) return false;
-      if (severityFilter !== 'all' && r.severity !== severityFilter) return false;
-      if (serviceFilter !== 'all' && r.service_name !== serviceFilter) return false;
-      return true;
-    });
-  }, [rules, search, statusFilter, severityFilter, serviceFilter]);
-
-  const stats: StatCard[] = useMemo(() => {
-    const total = rules.length;
-    const enabled = rules.filter((r) => r.enabled).length;
-    const disabled = rules.filter((r) => !r.enabled).length;
-    const critical = rules.filter(
-      (r) => r.severity === 'critical' || r.severity === 'error'
-    ).length;
-    return [
-      {
-        id: 'total',
-        title: '规则总数',
-        value: total,
-        unit: '条',
-        icon: <Bell size={20} />,
-        color: 'primary',
-      },
-      {
-        id: 'enabled',
-        title: '已启用',
-        value: enabled,
-        unit: '条',
-        icon: <Power size={20} />,
-        color: 'success',
-      },
-      {
-        id: 'disabled',
-        title: '已禁用',
-        value: disabled,
-        unit: '条',
-        icon: <PowerOff size={20} />,
-        color: 'info',
-      },
-      {
-        id: 'critical',
-        title: '高严重度',
-        value: critical,
-        unit: '条',
-        icon: <AlertTriangle size={20} />,
-        color: 'error',
-      },
-    ];
-  }, [rules]);
-
-  const serviceOptions = useMemo(() => {
-    const set = new Set<string>();
-    rules.forEach((r) => r.service_name && set.add(r.service_name));
-    return Array.from(set);
-  }, [rules]);
-
-  const handleToggle = useCallback(
-    (rule: AlertRuleRecord) => {
-      const action = rule.enabled ? '禁用' : '启用';
-      openConfirm({
-        title: `确认${action}`,
-        message: `确定要${action}告警规则"${rule.name}"吗？`,
-        danger: rule.enabled,
-        onConfirm: () => {
-          if (rule.enabled) {
-            disableMutation.mutate(rule.id);
-          } else {
-            enableMutation.mutate(rule.id);
-          }
-        },
-      });
-    },
-    [openConfirm, enableMutation, disableMutation]
-  );
-
-  const handleDelete = useCallback(
-    (rule: AlertRuleRecord) => {
-      openConfirm({
-        title: '确认删除',
-        message: `确定要删除告警规则"${rule.name}"吗？此操作不可恢复。`,
-        danger: true,
-        onConfirm: () => deleteMutation.mutate(rule.id),
-      });
-    },
-    [openConfirm, deleteMutation]
-  );
-
-  const renderCondition = (rule: AlertRuleRecord) => {
-    const op = OPERATOR_LABELS[rule.condition.operator] ?? rule.condition.operator;
-    const fieldIcon = FIELD_ICONS[rule.condition.field];
+const renderActionsCell = (row: Record<string, unknown>) => {
+  const rule = row as unknown as AlertRuleRecord;
+  const actions = rule.actions as RuleAction[];
+  if (actions.length === 0) {
     return (
-      <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-        {fieldIcon}
-        <Typography
-          variant='body2'
-          sx={{ fontFamily: 'monospace' }}
-        >
-          {rule.condition.field} {op} {String(rule.condition.value)}
-          {rule.condition.comparison_type ? ` (${rule.condition.comparison_type})` : ''}
-        </Typography>
-      </Box>
+      <Typography
+        variant='caption'
+        color='text.disabled'
+      >
+        无
+      </Typography>
     );
-  };
-
-  const renderActions = (actions: RuleAction[]) => {
-    if (actions.length === 0) {
-      return (
-        <Typography
-          variant='caption'
-          color='text.disabled'
-        >
-          无
-        </Typography>
-      );
-    }
-    return (
-      <Box sx={{ display: 'flex', gap: 0.5, flexWrap: 'wrap' }}>
-        {actions.slice(0, 3).map((a, idx) => {
-          const cfg = ACTION_TYPE_CONFIG[a.action_type] || {
-            label: a.action_type,
-            icon: <Bell size={14} />,
-          };
-          return (
-            <Chip
-              key={idx}
-              size='small'
-              icon={cfg.icon as React.ReactElement}
-              label={`${cfg.label}${a.target ? `:${a.target}` : ''}`}
-              variant='outlined'
-              sx={{ height: 24, '& .MuiChip-icon': { ml: 0.5 } }}
-            />
-          );
-        })}
-        {actions.length > 3 && (
+  }
+  return (
+    <Box sx={{ display: 'flex', gap: 0.5, flexWrap: 'wrap' }}>
+      {actions.slice(0, 3).map((a, idx) => {
+        const cfg = ACTION_TYPE_CONFIG[a.action_type] || {
+          label: a.action_type,
+          icon: <Bell size={14} />,
+        };
+        return (
           <Chip
+            key={idx}
             size='small'
-            label={`+${actions.length - 3}`}
+            icon={cfg.icon as React.ReactElement}
+            label={`${cfg.label}${a.target ? `:${a.target}` : ''}`}
             variant='outlined'
-            sx={{ height: 24 }}
+            sx={{ height: 24, '& .MuiChip-icon': { ml: 0.5 } }}
           />
-        )}
-      </Box>
-    );
-  };
-
-  const columns: ColumnDef<AlertRuleRecord>[] = useMemo(
-    () => [
-      {
-        id: 'name',
-        label: '规则名称',
-        minWidth: 220,
-        render: (row) => (
-          <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5 }}>
-            <Box
-              sx={{
-                width: 36,
-                height: 36,
-                borderRadius: 1,
-                bgcolor: 'primary.light',
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-              }}
-            >
-              <Bell
-                size={18}
-                color={theme.palette.primary.main}
-              />
-            </Box>
-            <Box>
-              <Typography
-                variant='body2'
-                sx={{ fontWeight: 500 }}
-              >
-                {row.name}
-              </Typography>
-              {row.description && (
-                <Typography
-                  variant='caption'
-                  color='text.secondary'
-                >
-                  {row.description}
-                </Typography>
-              )}
-            </Box>
-          </Box>
-        ),
-      },
-      {
-        id: 'service',
-        label: '服务',
-        render: (row) =>
-          row.service_name ? (
-            <Chip
-              size='small'
-              label={row.service_name}
-              variant='outlined'
-            />
-          ) : (
-            <Typography
-              variant='caption'
-              color='text.disabled'
-            >
-              全局
-            </Typography>
-          ),
-      },
-      {
-        id: 'condition',
-        label: '触发条件',
-        minWidth: 240,
-        render: (row) => renderCondition(row),
-      },
-      {
-        id: 'severity',
-        label: '严重级别',
-        render: (row) => {
-          const cfg = SEVERITY_CONFIG[row.severity] || {
-            label: row.severity,
-            color: 'default' as const,
-          };
-          return (
-            <Chip
-              size='small'
-              label={cfg.label}
-              color={cfg.color}
-            />
-          );
-        },
-      },
-      {
-        id: 'actions',
-        label: '通知动作',
-        minWidth: 220,
-        render: (row) => renderActions(row.actions),
-      },
-      {
-        id: 'status',
-        label: '状态',
-        render: (row) => (
-          <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-            <Switch
-              size='small'
-              color='success'
-              checked={row.enabled}
-              onChange={() => handleToggle(row)}
-            />
-            <Typography
-              variant='body2'
-              color={row.enabled ? 'success.main' : 'text.disabled'}
-              sx={{ fontWeight: 500 }}
-            >
-              {row.enabled ? '启用' : '禁用'}
-            </Typography>
-          </Box>
-        ),
-      },
-      {
-        id: 'updated_at',
-        label: '更新时间',
-        render: (row) => (
-          <Typography
-            variant='caption'
-            color='text.secondary'
-          >
-            {new Date(row.updated_at).toLocaleString('zh-CN')}
-          </Typography>
-        ),
-      },
-      {
-        id: 'row_actions',
-        label: '操作',
-        align: 'right',
-        render: (row) => (
-          <Box sx={{ display: 'flex', justifyContent: 'flex-end', gap: 0.5 }}>
-            <Button
-              size='small'
-              variant='text'
-              onClick={() =>
-                addNotification({
-                  type: 'info',
-                  title: '提示',
-                  message: '编辑功能开发中',
-                })
-              }
-              startIcon={<Edit size={14} />}
-            >
-              编辑
-            </Button>
-            <Button
-              size='small'
-              variant='text'
-              color={row.enabled ? 'warning' : 'success'}
-              onClick={() => handleToggle(row)}
-              startIcon={row.enabled ? <PowerOff size={14} /> : <Power size={14} />}
-            >
-              {row.enabled ? '禁用' : '启用'}
-            </Button>
-            <Button
-              size='small'
-              variant='text'
-              color='error'
-              onClick={() => handleDelete(row)}
-              startIcon={<Trash2 size={14} />}
-            >
-              删除
-            </Button>
-          </Box>
-        ),
-      },
-    ],
-    [theme, handleToggle, handleDelete, addNotification]
+        );
+      })}
+      {actions.length > 3 && (
+        <Chip
+          size='small'
+          label={`+${actions.length - 3}`}
+          variant='outlined'
+          sx={{ height: 24 }}
+        />
+      )}
+    </Box>
   );
+};
 
-  const filters = useMemo(
-    () => [
-      {
-        id: 'status',
-        label: '状态',
-        type: 'select' as const,
-        options: [
-          { label: '全部状态', value: 'all' },
-          { label: '启用', value: 'enabled' },
-          { label: '禁用', value: 'disabled' },
-        ],
-      },
-      {
-        id: 'severity',
-        label: '严重级别',
-        type: 'select' as const,
-        options: [
-          { label: '全部级别', value: 'all' },
-          ...Object.entries(SEVERITY_CONFIG).map(([v, c]) => ({ label: c.label, value: v })),
-        ],
-      },
-      {
-        id: 'service',
-        label: '服务',
-        type: 'select' as const,
-        options: [
-          { label: '全部服务', value: 'all' },
-          ...serviceOptions.map((s) => ({ label: s, value: s })),
-        ],
-      },
-    ],
-    [serviceOptions]
-  );
+const renderStatsCards = (rows: Record<string, unknown>[]) => {
+  const rules = rows as unknown as AlertRuleRecord[];
+  const total = rules.length;
+  const enabled = rules.filter((r) => r.enabled).length;
+  const disabled = rules.filter((r) => !r.enabled).length;
+  const critical = rules.filter((r) => r.severity === 'critical' || r.severity === 'error').length;
 
-  const handleFilterChange = useCallback((next: Record<string, unknown>) => {
-    if (typeof next.status === 'string') setStatusFilter(next.status);
-    if (typeof next.severity === 'string') setSeverityFilter(next.severity);
-    if (typeof next.service === 'string') setServiceFilter(next.service);
-    setPage(1);
-  }, []);
+  const stats = [
+    {
+      id: 'total',
+      title: '规则总数',
+      value: total,
+      unit: '条',
+      icon: <Bell size={20} />,
+      color: 'primary' as const,
+    },
+    {
+      id: 'enabled',
+      title: '已启用',
+      value: enabled,
+      unit: '条',
+      icon: <Power size={20} />,
+      color: 'success' as const,
+    },
+    {
+      id: 'disabled',
+      title: '已禁用',
+      value: disabled,
+      unit: '条',
+      icon: <PowerOff size={20} />,
+      color: 'info' as const,
+    },
+    {
+      id: 'critical',
+      title: '高严重度',
+      value: critical,
+      unit: '条',
+      icon: <AlertTriangle size={20} />,
+      color: 'error' as const,
+    },
+  ];
 
-  const handleRefresh = () => rulesQuery.refetch();
-
-  const handleCreate = () =>
-    addNotification({
-      type: 'info',
-      title: '提示',
-      message: '告警规则创建向导开发中',
-    });
-
-  const renderStats = () => (
+  return (
     <Stack
       direction='row'
       spacing={2}
@@ -609,6 +244,240 @@ export const AlertRulesPage: React.FC = () => {
       ))}
     </Stack>
   );
+};
+
+export const AlertRulesPage: React.FC = () => {
+  const theme = useTheme();
+  const queryClient = useQueryClient();
+  const addNotification = useNotificationStore((state) => state.addNotification);
+
+  const handleToggleRule = useCallback(
+    async (rule: AlertRuleRecord) => {
+      const action = rule.enabled ? '禁用' : '启用';
+      try {
+        if (rule.enabled) {
+          await metricsApi.disableAlertRule(rule.id);
+        } else {
+          await metricsApi.enableAlertRule(rule.id);
+        }
+        addNotification({
+          type: 'success',
+          title: `已${action}`,
+          message: `告警规则已${action}`,
+        });
+        void queryClient.invalidateQueries({ queryKey: CRUD_QUERY_KEY });
+      } catch (err) {
+        addNotification({
+          type: 'error',
+          title: `${action}失败`,
+          message: err instanceof Error ? err.message : `${action}失败`,
+        });
+      }
+    },
+    [addNotification, queryClient]
+  );
+
+  const apiAdapter = useMemo<CrudApiAdapter<AlertRuleRecord>>(
+    () => ({
+      list: async () => {
+        const res = await metricsApi.listAlertRules();
+        const data = res.data ?? [];
+        return { data, total: data.length };
+      },
+      create: async (data) => {
+        const payload = {
+          name: data.name as string,
+          description: (data.description as string) ?? null,
+          service_name: (data.service_name as string) ?? null,
+          severity: data.severity as string,
+          enabled: (data.enabled as boolean) ?? true,
+          condition: {
+            field: 'cpu_usage',
+            operator: 'gt',
+            value: 80,
+            comparison_type: null,
+          },
+          actions: [],
+        };
+        const res = await metricsApi.createAlertRule(payload);
+        return res.data ?? ({} as AlertRuleRecord);
+      },
+      update: async (id, data) => {
+        const existing = await metricsApi.getAlertRule(id);
+        const existingData = existing.data;
+        if (!existingData) throw new Error('规则不存在');
+        const payload = {
+          name: data.name as string,
+          description: (data.description as string) ?? null,
+          service_name: (data.service_name as string) ?? null,
+          severity: data.severity as string,
+          enabled: (data.enabled as boolean) ?? true,
+          condition: existingData.condition,
+          actions: existingData.actions,
+        };
+        const res = await metricsApi.updateAlertRule(id, payload);
+        return res.data ?? existingData;
+      },
+      delete: async (id) => {
+        await metricsApi.deleteAlertRule(id);
+      },
+    }),
+    []
+  );
+
+  const customColumns = useMemo<ColumnDef[]>(
+    () => [
+      {
+        id: 'name',
+        label: '规则名称',
+        minWidth: 220,
+        render: (row) => {
+          const r = row as unknown as AlertRuleRecord;
+          return (
+            <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5 }}>
+              <Box
+                sx={{
+                  width: 36,
+                  height: 36,
+                  borderRadius: 1,
+                  bgcolor: 'primary.light',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                }}
+              >
+                <Bell
+                  size={18}
+                  color={theme.palette.primary.main}
+                />
+              </Box>
+              <Box>
+                <Typography
+                  variant='body2'
+                  sx={{ fontWeight: 500 }}
+                >
+                  {r.name}
+                </Typography>
+                {r.description && (
+                  <Typography
+                    variant='caption'
+                    color='text.secondary'
+                  >
+                    {r.description}
+                  </Typography>
+                )}
+              </Box>
+            </Box>
+          );
+        },
+      },
+      {
+        id: 'service',
+        label: '服务',
+        render: (row) => {
+          const r = row as unknown as AlertRuleRecord;
+          return r.service_name ? (
+            <Chip
+              size='small'
+              label={r.service_name}
+              variant='outlined'
+            />
+          ) : (
+            <Typography
+              variant='caption'
+              color='text.disabled'
+            >
+              全局
+            </Typography>
+          );
+        },
+      },
+      {
+        id: 'condition',
+        label: '触发条件',
+        minWidth: 240,
+        render: (row) => renderConditionCell(row),
+      },
+      {
+        id: 'severity',
+        label: '严重级别',
+        render: (row) => {
+          const r = row as unknown as AlertRuleRecord;
+          const cfg = SEVERITY_CONFIG[r.severity] || {
+            label: r.severity,
+            color: 'default' as const,
+          };
+          return (
+            <Chip
+              size='small'
+              label={cfg.label}
+              color={cfg.color}
+            />
+          );
+        },
+      },
+      {
+        id: 'actions',
+        label: '通知动作',
+        minWidth: 220,
+        render: (row) => renderActionsCell(row),
+      },
+      {
+        id: 'status',
+        label: '状态',
+        render: (row) => {
+          const r = row as unknown as AlertRuleRecord;
+          return (
+            <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+              <ToggleSwitch
+                checked={r.enabled}
+                size='small'
+                color='success'
+                onChange={() => handleToggleRule(r)}
+              />
+              <Typography
+                variant='body2'
+                color={r.enabled ? 'success.main' : 'text.disabled'}
+                sx={{ fontWeight: 500 }}
+              >
+                {r.enabled ? '启用' : '禁用'}
+              </Typography>
+            </Box>
+          );
+        },
+      },
+      {
+        id: 'updated_at',
+        label: '更新时间',
+        render: (row) => {
+          const r = row as unknown as AlertRuleRecord;
+          return (
+            <Typography
+              variant='caption'
+              color='text.secondary'
+            >
+              {new Date(r.updated_at).toLocaleString('zh-CN')}
+            </Typography>
+          );
+        },
+      },
+    ],
+    [theme, handleToggleRule]
+  );
+
+  const customRowActions = useMemo<RowAction[]>(
+    () => [
+      {
+        label: '启用/禁用',
+        icon: <Power size={16} />,
+        onClick: (row: Record<string, unknown>) => {
+          const r = row as unknown as AlertRuleRecord;
+          void handleToggleRule(r);
+        },
+      },
+    ],
+    [handleToggleRule]
+  );
 
   return (
     <PageContainer
@@ -617,72 +486,13 @@ export const AlertRulesPage: React.FC = () => {
         backButton: { href: MONITOR_PATHS.dashboard },
       }}
     >
-      {loading ? (
-        <Paper sx={{ p: 2, borderRadius: 2, mb: 2 }}>
-          <Skeleton
-            variant='rectangular'
-            height={80}
-            sx={{ mb: 2 }}
-          />
-          <Skeleton
-            variant='rectangular'
-            height={400}
-          />
-        </Paper>
-      ) : (
-        renderStats()
-      )}
-      <ListPageTemplate
-        title=''
-        subtitle=''
-        columns={columns}
-        data={filteredRules}
-        loading={loading}
-        searchable
-        searchPlaceholder='搜索规则名称、描述、服务'
-        searchValue={search}
-        onSearch={setSearch}
-        filters={filters}
-        filtersValue={{
-          status: statusFilter,
-          severity: severityFilter,
-          service: serviceFilter,
-        }}
-        onFilterChange={handleFilterChange}
-        pagination={{
-          page,
-          pageSize,
-          total: filteredRules.length,
-          onPageChange: setPage,
-        }}
-        actions={[
-          {
-            label: '刷新',
-            icon: <RefreshCw size={16} />,
-            onClick: handleRefresh,
-            variant: 'outlined',
-          },
-          {
-            label: '新建规则',
-            icon: <Plus size={16} />,
-            onClick: handleCreate,
-            variant: 'contained',
-          },
-        ]}
-        onRefresh={handleRefresh}
-        emptyMessage='暂无告警规则'
-      />
-
-      <ConfirmDialog
-        isOpen={confirmDialog?.open ?? false}
-        onClose={closeConfirm}
-        onConfirm={() => {
-          confirmDialog?.onConfirm();
-          closeConfirm();
-        }}
-        title={confirmDialog?.title || ''}
-        message={confirmDialog?.message || ''}
-        danger={confirmDialog?.danger}
+      <CrudPage
+        schema={alertRuleSchema}
+        apiAdapter={apiAdapter}
+        customColumns={customColumns}
+        customRowActions={customRowActions}
+        headerContent={renderStatsCards}
+        breadcrumbs={[{ label: '监控' }, { label: '告警规则' }]}
       />
     </PageContainer>
   );

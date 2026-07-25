@@ -289,7 +289,7 @@ pub async fn list_materials(
     Extension(claims): Extension<Claims>,
     headers: HeaderMap,
 ) -> Json<ApiResponse<Vec<HazardousMaterial>>> {
-    let tenant_id = get_tenant_id(&claims, &headers);
+    let _tenant_id = get_tenant_id(&claims, &headers);
     tracing::info!("Listing hazardous materials");
     Json(ApiResponse::success(
         Vec::<HazardousMaterial>::new(),
@@ -498,7 +498,7 @@ pub async fn delete_material(
     headers: HeaderMap,
     axum::extract::Path(id): axum::extract::Path<String>,
 ) -> Json<ApiResponse<()>> {
-    let tenant_id = get_tenant_id(&claims, &headers);
+    let _tenant_id = get_tenant_id(&claims, &headers);
     tracing::info!("Deleting hazardous material: {}", id);
     Json(ApiResponse::success((), "危险品删除成功"))
 }
@@ -509,7 +509,7 @@ pub async fn list_material_stocks(
     headers: HeaderMap,
     axum::extract::Path(id): axum::extract::Path<String>,
 ) -> Json<ApiResponse<Vec<MaterialStock>>> {
-    let tenant_id = get_tenant_id(&claims, &headers);
+    let _tenant_id = get_tenant_id(&claims, &headers);
     tracing::info!("Listing stocks for material: {}", id);
     Json(ApiResponse::success(
         Vec::<MaterialStock>::new(),
@@ -522,7 +522,7 @@ pub async fn list_stock_records(
     Extension(claims): Extension<Claims>,
     headers: HeaderMap,
 ) -> Json<ApiResponse<Vec<StockRecord>>> {
-    let tenant_id = get_tenant_id(&claims, &headers);
+    let _tenant_id = get_tenant_id(&claims, &headers);
     tracing::info!("Listing stock records");
     Json(ApiResponse::success(
         Vec::<StockRecord>::new(),
@@ -758,7 +758,7 @@ pub async fn list_material_categories(
     Extension(claims): Extension<Claims>,
     headers: HeaderMap,
 ) -> Json<ApiResponse<Vec<serde_json::Value>>> {
-    let tenant_id = get_tenant_id(&claims, &headers);
+    let _tenant_id = get_tenant_id(&claims, &headers);
     tracing::info!("Listing material categories");
     let categories = vec![
         serde_json::json!({ "code": "flammable", "name": "易燃" }),

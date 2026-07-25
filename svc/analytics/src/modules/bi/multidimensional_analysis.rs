@@ -8,6 +8,21 @@ use tracing::info;
 
 use crate::shared::AppState;
 
+use super::chart_service::quote_identifier;
+
+/// Validates a list of column names and returns them as quoted identifiers.
+fn validate_identifiers(names: &[String]) -> Result<Vec<String>, String> {
+    names.iter().map(|n| quote_identifier(n)).collect()
+}
+
+/// Validates that a sort order is either ASC or DESC.
+fn validate_sort_order(order: &str) -> Result<String, String> {
+    match order.to_uppercase().as_str() {
+        "ASC" | "DESC" => Ok(order.to_uppercase()),
+        _ => Err(format!("Invalid sort order '{}': must be ASC or DESC", order)),
+    }
+}
+
 #[derive(Debug, Deserialize)]
 pub struct CubeQueryRequest {
     pub datasource_id: Uuid,
@@ -97,7 +112,15 @@ pub async fn query_cube(
     let select_clause = if select_cols.is_empty() {
         "*".to_string()
     } else {
-        select_cols.join(", ")
+        match validate_identifiers(&select_cols) {
+            Ok(quoted) => quoted.join(", "),
+            Err(e) => {
+                return Json(serde_json::json!({
+                    "success": false,
+                    "message": format!("Invalid column name: {}", e)
+                }));
+            }
+        }
     };
 
     let sort_by = req.sort_by.unwrap_or_else(|| {
@@ -106,7 +129,25 @@ pub async fn query_cube(
             .cloned()
             .unwrap_or_else(|| "id".to_string())
     });
+    let sort_by = match quote_identifier(&sort_by) {
+        Ok(q) => q,
+        Err(e) => {
+            return Json(serde_json::json!({
+                "success": false,
+                "message": format!("Invalid sort column: {}", e)
+            }));
+        }
+    };
     let sort_order = req.sort_order.unwrap_or_else(|| "DESC".to_string());
+    let sort_order = match validate_sort_order(&sort_order) {
+        Ok(o) => o,
+        Err(e) => {
+            return Json(serde_json::json!({
+                "success": false,
+                "message": e
+            }));
+        }
+    };
     let limit = req.limit.unwrap_or(100);
     let offset = req.offset.unwrap_or(0);
 
@@ -173,7 +214,15 @@ pub async fn slice_cube(
     let select_clause = if select_cols.is_empty() {
         "*".to_string()
     } else {
-        select_cols.join(", ")
+        match validate_identifiers(&select_cols) {
+            Ok(quoted) => quoted.join(", "),
+            Err(e) => {
+                return Json(serde_json::json!({
+                    "success": false,
+                    "message": format!("Invalid column name: {}", e)
+                }));
+            }
+        }
     };
 
     let sort_by = req.sort_by.unwrap_or_else(|| {
@@ -182,7 +231,25 @@ pub async fn slice_cube(
             .cloned()
             .unwrap_or_else(|| "id".to_string())
     });
+    let sort_by = match quote_identifier(&sort_by) {
+        Ok(q) => q,
+        Err(e) => {
+            return Json(serde_json::json!({
+                "success": false,
+                "message": format!("Invalid sort column: {}", e)
+            }));
+        }
+    };
     let sort_order = req.sort_order.unwrap_or_else(|| "DESC".to_string());
+    let sort_order = match validate_sort_order(&sort_order) {
+        Ok(o) => o,
+        Err(e) => {
+            return Json(serde_json::json!({
+                "success": false,
+                "message": e
+            }));
+        }
+    };
     let limit = req.limit.unwrap_or(100);
     let offset = req.offset.unwrap_or(0);
 
@@ -250,7 +317,15 @@ pub async fn dice_cube(
     let select_clause = if select_cols.is_empty() {
         "*".to_string()
     } else {
-        select_cols.join(", ")
+        match validate_identifiers(&select_cols) {
+            Ok(quoted) => quoted.join(", "),
+            Err(e) => {
+                return Json(serde_json::json!({
+                    "success": false,
+                    "message": format!("Invalid column name: {}", e)
+                }));
+            }
+        }
     };
 
     let sort_by = req.sort_by.unwrap_or_else(|| {
@@ -259,7 +334,25 @@ pub async fn dice_cube(
             .cloned()
             .unwrap_or_else(|| "id".to_string())
     });
+    let sort_by = match quote_identifier(&sort_by) {
+        Ok(q) => q,
+        Err(e) => {
+            return Json(serde_json::json!({
+                "success": false,
+                "message": format!("Invalid sort column: {}", e)
+            }));
+        }
+    };
     let sort_order = req.sort_order.unwrap_or_else(|| "DESC".to_string());
+    let sort_order = match validate_sort_order(&sort_order) {
+        Ok(o) => o,
+        Err(e) => {
+            return Json(serde_json::json!({
+                "success": false,
+                "message": e
+            }));
+        }
+    };
     let limit = req.limit.unwrap_or(100);
     let offset = req.offset.unwrap_or(0);
 
@@ -326,7 +419,15 @@ pub async fn pivot_table(
     let select_clause = if all_dims.is_empty() {
         "*".to_string()
     } else {
-        all_dims.join(", ")
+        match validate_identifiers(&all_dims) {
+            Ok(quoted) => quoted.join(", "),
+            Err(e) => {
+                return Json(serde_json::json!({
+                    "success": false,
+                    "message": format!("Invalid column name: {}", e)
+                }));
+            }
+        }
     };
 
     let query = format!("SELECT {} FROM analytics_data LIMIT 100", select_clause);
@@ -392,9 +493,37 @@ pub async fn rank_data(
     let top_n = req.top_n.unwrap_or(10);
     let rank_by = req.rank_by.clone().unwrap_or_else(|| "desc".to_string());
 
+    let dimension = match quote_identifier(&req.dimension) {
+        Ok(q) => q,
+        Err(e) => {
+            return Json(serde_json::json!({
+                "success": false,
+                "message": format!("Invalid dimension: {}", e)
+            }));
+        }
+    };
+    let measure = match quote_identifier(&req.measure) {
+        Ok(q) => q,
+        Err(e) => {
+            return Json(serde_json::json!({
+                "success": false,
+                "message": format!("Invalid measure: {}", e)
+            }));
+        }
+    };
+    let sort_order = match validate_sort_order(&rank_by) {
+        Ok(o) => o,
+        Err(e) => {
+            return Json(serde_json::json!({
+                "success": false,
+                "message": e
+            }));
+        }
+    };
+
     let query = format!(
         "SELECT {}, {} FROM analytics_data ORDER BY {} {} LIMIT {}",
-        req.dimension, req.measure, req.measure, rank_by, top_n
+        dimension, measure, measure, sort_order, top_n
     );
 
     let data_result = sqlx::query(&query).fetch_all(&state.pool).await;
