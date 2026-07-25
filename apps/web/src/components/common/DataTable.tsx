@@ -28,6 +28,9 @@ import {
   Chip,
   Button,
   useTheme,
+  Stack,
+  FormControl,
+  InputLabel,
 } from '@mui/material';
 import {
   Search,
@@ -43,6 +46,8 @@ import {
   MoreVertical,
   ChevronDown,
   ChevronUp,
+  Save,
+  XCircle,
 } from 'lucide-react';
 import {
   flexRender,
@@ -83,7 +88,6 @@ export interface AdvancedFilter {
 }
 
 // ============ 虚拟滚动行数据 ============
-/* eslint-disable @typescript-eslint/no-explicit-any -- VirtualRowData acts as a type-erased data bag for react-window virtual rows, where the concrete row type is determined by the DataTable generic at the call site */
 
 interface VirtualRowData {
   rows: Row<any>[];
@@ -99,13 +103,8 @@ interface VirtualRowData {
   compact: boolean;
   striped: boolean;
 }
-/* eslint-enable @typescript-eslint/no-explicit-any */
 
-function DataTableVirtualRow({
-  index,
-  style,
-  ...data
-}: RowComponentProps<VirtualRowData>) {
+function DataTableVirtualRow({ index, style, ...data }: RowComponentProps<VirtualRowData>) {
   const {
     rows,
     getRowKey,
@@ -213,11 +212,173 @@ function DataTableVirtualRow({
 }
 
 /**
+ * 行内编辑单元格组件
+ */
+function EditCellComponent({
+  cell,
+  editValue,
+  currentValue,
+  rowKey,
+  onEditChange,
+  onSaveEdit,
+  inlineEditMode,
+}: {
+  cell: Cell<any, any>;
+  editValue: unknown;
+  currentValue: unknown;
+  rowKey: string;
+  onEditChange: (rowKey: string, cellId: string, value: unknown) => void;
+  onSaveEdit: () => void;
+  inlineEditMode: 'cell' | 'row';
+}) {
+  const effectiveValue = editValue !== undefined ? editValue : currentValue;
+  const inlineEditConfig = (cell.column.columnDef as unknown as { inlineEdit?: InlineEditConfig })
+    ?.inlineEdit;
+  const editType = inlineEditConfig?.type ?? 'text';
+  const options = inlineEditConfig?.options ?? [];
+
+  const handleBlur = () => {
+    if (inlineEditMode === 'cell') {
+      onSaveEdit();
+    }
+  };
+
+  switch (editType) {
+    case 'select':
+      return (
+        <FormControl
+          size='small'
+          sx={{ width: '100%', minWidth: 100 }}
+        >
+          <Select
+            value={String(effectiveValue)}
+            onChange={(e) => onEditChange(rowKey, cell.id, e.target.value)}
+            autoFocus
+            onBlur={handleBlur}
+            displayEmpty
+          >
+            {options.map((opt) => (
+              <MenuItem
+                key={opt.value}
+                value={opt.value}
+              >
+                {opt.label}
+              </MenuItem>
+            ))}
+          </Select>
+        </FormControl>
+      );
+
+    case 'number':
+      return (
+        <TextField
+          size='small'
+          type='number'
+          value={effectiveValue !== undefined ? String(effectiveValue) : ''}
+          onChange={(e) =>
+            onEditChange(rowKey, cell.id, e.target.value ? Number(e.target.value) : '')
+          }
+          autoFocus
+          onBlur={handleBlur}
+          sx={{ width: '100%', minWidth: 100 }}
+        />
+      );
+
+    case 'date':
+      return (
+        <TextField
+          size='small'
+          type='date'
+          value={effectiveValue !== undefined ? String(effectiveValue).split('T')[0] : ''}
+          onChange={(e) => onEditChange(rowKey, cell.id, e.target.value)}
+          autoFocus
+          onBlur={handleBlur}
+          sx={{ width: '100%', minWidth: 120 }}
+          slotProps={{ inputLabel: { shrink: true } }}
+        />
+      );
+
+    case 'datetime':
+      return (
+        <TextField
+          size='small'
+          type='datetime-local'
+          value={effectiveValue !== undefined ? String(effectiveValue).replace('Z', '') : ''}
+          onChange={(e) => onEditChange(rowKey, cell.id, e.target.value)}
+          autoFocus
+          onBlur={handleBlur}
+          sx={{ width: '100%', minWidth: 150 }}
+          slotProps={{ inputLabel: { shrink: true } }}
+        />
+      );
+
+    case 'checkbox':
+      return (
+        <Checkbox
+          checked={Boolean(effectiveValue)}
+          onChange={(e) => onEditChange(rowKey, cell.id, e.target.checked)}
+          onBlur={handleBlur}
+        />
+      );
+
+    case 'text':
+    default:
+      return (
+        <TextField
+          size='small'
+          value={effectiveValue !== undefined ? String(effectiveValue) : ''}
+          onChange={(e) => onEditChange(rowKey, cell.id, e.target.value)}
+          autoFocus
+          onBlur={handleBlur}
+          sx={{ width: '100%', minWidth: 100 }}
+        />
+      );
+  }
+}
+
+/**
+ * 行内编辑保存回调类型
+ */
+export type InlineEditSaveCallback<TData> = (row: TData, changes: Partial<TData>) => void;
+
+/**
+ * 行内编辑类型
+ */
+export type InlineEditType = 'text' | 'select' | 'number' | 'date' | 'datetime' | 'checkbox';
+
+/**
+ * 行内编辑配置
+ */
+export interface InlineEditConfig {
+  type?: InlineEditType;
+  options?: { value: string | number; label: string }[];
+}
+
+/**
+ * 带行内编辑配置的列定义
+ */
+export type DataTableColumnDef<TData, TValue = unknown> = ColumnDef<TData, TValue> & {
+  inlineEdit?: InlineEditConfig;
+};
+
+/**
  * DataTable属性
  */
 export interface DataTableProps<TData, TValue> {
   /** 列定义 */
-  columns: ColumnDef<TData, TValue>[];
+  columns: (ColumnDef<TData, TValue> & { inlineEdit?: InlineEditConfig })[];
+
+  /** 是否启用行内编辑 */
+  enableInlineEdit?: boolean;
+
+  /** 行内编辑模式：cell（单元格编辑）或 row（整行编辑） */
+  inlineEditMode?: 'cell' | 'row';
+
+  /** 可编辑的列key列表 */
+  editableColumns?: string[];
+
+  /** 行内编辑保存回调 */
+  onInlineEditSave?: InlineEditSaveCallback<TData>;
 
   /** 数据 */
   data: TData[];
@@ -458,7 +619,9 @@ export function DataTable<TData, TValue>({
   responsive = true,
   emptyMessage = '暂无数据',
   getRowKey = (row: TData): string =>
-    (row as unknown as Record<string, unknown>).id?.toString() || (row as unknown as Record<string, unknown>).key?.toString() || Math.random().toString(),
+    (row as unknown as Record<string, unknown>).id?.toString() ||
+    (row as unknown as Record<string, unknown>).key?.toString() ||
+    Math.random().toString(),
   extraActions,
   sx,
   persistColumnConfig = false,
@@ -479,6 +642,10 @@ export function DataTable<TData, TValue>({
   mobileCardRender,
   mobileCardTitleKey,
   mobileCardSubtitleKey,
+  enableInlineEdit = false,
+  inlineEditMode = 'cell',
+  editableColumns = [],
+  onInlineEditSave,
 }: DataTableProps<TData, TValue>) {
   const [sorting, setSorting] = useState<SortingState>([]);
   const [columnFilters, setColumnFilters] = useState<ColumnFiltersState>([]);
@@ -500,6 +667,11 @@ export function DataTable<TData, TValue>({
 
   const [anchorEl, setAnchorEl] = useState<null | HTMLElement>(null);
   const [expandedRows, setExpandedRows] = useState<Set<string>>(new Set());
+
+  // 行内编辑状态
+  const [editingRowId, setEditingRowId] = useState<string | null>(null);
+  const [editingCellId, setEditingCellId] = useState<string | null>(null);
+  const [editValues, setEditValues] = useState<Record<string, unknown>>({});
 
   // Unified selection state - prefer selectedRows, fall back to selectedIds for backward compat
   const effectiveSelectedIds = selectedRows ?? selectedIds ?? [];
@@ -605,6 +777,59 @@ export function DataTable<TData, TValue>({
     },
     [expandedRows, getRowKey]
   );
+
+  // 行内编辑处理函数
+  const handleStartEdit = useCallback(
+    (rowId: string, cellId: string, value: unknown) => {
+      if (inlineEditMode === 'row') {
+        setEditingRowId(rowId);
+        setEditingCellId(null);
+      } else {
+        setEditingRowId(rowId);
+        setEditingCellId(cellId);
+      }
+      setEditValues((prev) => ({ ...prev, [`${rowId}-${cellId}`]: value }));
+    },
+    [inlineEditMode]
+  );
+
+  const handleEditChange = useCallback((rowId: string, cellId: string, value: unknown) => {
+    setEditValues((prev) => ({ ...prev, [`${rowId}-${cellId}`]: value }));
+  }, []);
+
+  const handleSaveEdit = useCallback(
+    async (row: TData, rowId: string) => {
+      if (!onInlineEditSave) return;
+
+      const rowChanges: Partial<TData> = {};
+      Object.entries(editValues).forEach(([key, value]) => {
+        if (key.startsWith(`${rowId}-`)) {
+          const fieldKey = key.replace(`${rowId}-`, '') as keyof TData;
+          rowChanges[fieldKey] = value as TData[keyof TData];
+        }
+      });
+
+      if (Object.keys(rowChanges).length > 0) {
+        await onInlineEditSave(row, rowChanges);
+        addNotification({
+          title: '保存成功',
+          message: '数据已成功更新',
+          type: 'success',
+        });
+      }
+
+      setEditingRowId(null);
+      setEditingCellId(null);
+      setEditValues({});
+    },
+    [editValues, onInlineEditSave, addNotification]
+  );
+
+  const handleCancelEdit = useCallback(() => {
+    setEditingRowId(null);
+    setEditingCellId(null);
+    setEditValues({});
+  }, []);
 
   const handleExportCSV = useCallback(() => {
     setExportAnchorEl(null);
@@ -1154,18 +1379,83 @@ export function DataTable<TData, TValue>({
                                 </IconButton>
                               </TableCell>
                             )}
-                            {row.getVisibleCells().map((cell: Cell<any, any>) => (
-                              <TableCell
-                                key={cell.id}
-                                sx={{
-                                  whiteSpace: 'nowrap',
-                                  fontSize: 14,
-                                  ...(compact && { py: 1 }),
-                                }}
-                              >
-                                {flexRender(cell.column.columnDef.cell, cell.getContext())}
-                              </TableCell>
-                            ))}
+                            {row.getVisibleCells().map((cell: Cell<any, any>) => {
+                              const isEditable =
+                                enableInlineEdit && editableColumns.includes(cell.id);
+                              const isEditing =
+                                editingRowId === rowKey &&
+                                (inlineEditMode === 'row' || editingCellId === cell.id);
+                              const editValue = editValues[`${rowKey}-${cell.id}`];
+                              const currentValue = cell.getValue() ?? '';
+
+                              return (
+                                <TableCell
+                                  key={cell.id}
+                                  sx={{
+                                    whiteSpace: 'nowrap',
+                                    fontSize: 14,
+                                    ...(compact && { py: 1 }),
+                                    ...(isEditing && { backgroundColor: '#fffbe6' }),
+                                  }}
+                                >
+                                  {isEditable && isEditing ? (
+                                    <EditCellComponent
+                                      cell={cell}
+                                      editValue={editValue}
+                                      currentValue={currentValue}
+                                      rowKey={rowKey}
+                                      onEditChange={handleEditChange}
+                                      onSaveEdit={() => {
+                                        inlineEditMode === 'cell' &&
+                                          handleSaveEdit(row.original, rowKey);
+                                      }}
+                                      inlineEditMode={inlineEditMode}
+                                    />
+                                  ) : isEditable && !isEditing ? (
+                                    <div
+                                      onClick={(e) => {
+                                        e.stopPropagation();
+                                        handleStartEdit(rowKey, cell.id, currentValue);
+                                      }}
+                                      style={{
+                                        cursor: 'pointer',
+                                        textDecoration: 'underline',
+                                        color: theme.palette.primary.main,
+                                      }}
+                                    >
+                                      {flexRender(cell.column.columnDef.cell, cell.getContext())}
+                                    </div>
+                                  ) : (
+                                    flexRender(cell.column.columnDef.cell, cell.getContext())
+                                  )}
+                                </TableCell>
+                              );
+                            })}
+                            {enableInlineEdit &&
+                              editingRowId === rowKey &&
+                              inlineEditMode === 'row' && (
+                                <TableCell sx={{ whiteSpace: 'nowrap' }}>
+                                  <Stack
+                                    direction='row'
+                                    spacing={1}
+                                  >
+                                    <IconButton
+                                      size='small'
+                                      color='success'
+                                      onClick={() => handleSaveEdit(row.original, rowKey)}
+                                    >
+                                      <Save sx={{ width: 16, height: 16 }} />
+                                    </IconButton>
+                                    <IconButton
+                                      size='small'
+                                      color='error'
+                                      onClick={handleCancelEdit}
+                                    >
+                                      <XCircle sx={{ width: 16, height: 16 }} />
+                                    </IconButton>
+                                  </Stack>
+                                </TableCell>
+                              )}
                           </TableRow>
                           {enableRowExpansion && isExpanded && expandedRowRender && (
                             <TableRow key={`${row.id}-expanded`}>
@@ -1476,7 +1766,8 @@ export function MobileCardView<TData>({
   onRowClick,
   loading = false,
   emptyMessage = '暂无数据',
-  getRowKey = (row: TData) => (row as unknown as Record<string, unknown>).id?.toString() || Math.random().toString(),
+  getRowKey = (row: TData) =>
+    (row as unknown as Record<string, unknown>).id?.toString() || Math.random().toString(),
   showSelection = false,
   selectedIds = [],
   onSelectionChange,

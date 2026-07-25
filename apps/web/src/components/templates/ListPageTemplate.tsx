@@ -60,13 +60,28 @@ import {
 } from 'lucide-react';
 import { EmptyState, ErrorEmptyState, BackButton } from '@topems/shared-components';
 import { Link as RouterLink } from 'react-router-dom';
-import { useAutoBreadcrumbs, useListPageState, useUrlListState, useCrudOperations, useColumnConfig, useColumnWidth, useUrlState } from '@/hooks';
+import {
+  useAutoBreadcrumbs,
+  useListPageState,
+  useUrlListState,
+  useCrudOperations,
+  useColumnConfig,
+  useColumnWidth,
+  useUrlState,
+} from '@/hooks';
 import { logger } from '@/utils/logger';
 import { mapListParamsToBackend } from '@/utils/listParamMapping';
 import { FormDialog, FormDrawer } from '@/components/common';
 
 // 从子组件导入类型和组件
-import type { ListPageTemplateProps, ColumnConfig, RowAction, BatchAction, ListViewMode, ColumnDef } from './list';
+import type {
+  ListPageTemplateProps,
+  ColumnConfig,
+  RowAction,
+  BatchAction,
+  ListViewMode,
+  ColumnDef,
+} from './list';
 import type { FilterConfig } from '@topems/shared-components';
 import { loadColumnConfig, saveColumnConfig } from './list/types';
 import { ListSearchBar } from './list/ListSearchBar';
@@ -237,7 +252,8 @@ export function ListPageTemplate<T>({
   // ---- 声明式 CRUD（仅当传入 crud 时启用） ----
   // 注意：crudResult 使用 `any` 类型以避免影响组件泛型 T 的推断
   const dummyApi: any = {
-    list: () => Promise.resolve({ success: true, code: 0, message: '', data: { items: [], total: 0 } }),
+    list: () =>
+      Promise.resolve({ success: true, code: 0, message: '', data: { items: [], total: 0 } }),
     get: () => Promise.resolve({ success: true, code: 0, message: '', data: undefined }),
     create: () => Promise.resolve({ success: true, code: 0, message: '', data: undefined }),
     update: () => Promise.resolve({ success: true, code: 0, message: '', data: undefined }),
@@ -316,20 +332,29 @@ export function ListPageTemplate<T>({
 
         // 自定义渲染（优先级最高）
         if (field.tableRender) {
-          col.render = (row: any, index: number) =>
-            field.tableRender!(row[field.key], row, index);
+          col.render = (row: any, index: number) => field.tableRender!(row[field.key], row, index);
           return col;
         }
 
         // 状态 Chip 渲染（tableStatus 显式标记，或 select 类型且有状态映射）
-        if (field.tableStatus || (field.type === 'select' && (field.tableStatusColorMap || field.tableStatusLabelMap))) {
+        if (
+          field.tableStatus ||
+          (field.type === 'select' && (field.tableStatusColorMap || field.tableStatusLabelMap))
+        ) {
           const colorMap = field.tableStatusColorMap || {};
           const labelMap = field.tableStatusLabelMap || {};
           col.render = (row: any) => {
             const value = row[field.key];
             const label = labelMap[value] || value || '-';
             const color = colorMap[value] || 'default';
-            return <Chip label={label} size='small' color={color as any} variant='outlined' />;
+            return (
+              <Chip
+                label={label}
+                size='small'
+                color={color as any}
+                variant='outlined'
+              />
+            );
           };
           return col;
         }
@@ -365,7 +390,10 @@ export function ListPageTemplate<T>({
 
   // 列宽调整
   const columnWidthResult = useColumnWidth({
-    storageKey: (columnResizable || crud?.columnResizable) && persistColumnWidth ? columnWidthStorageKey : undefined,
+    storageKey:
+      (columnResizable || crud?.columnResizable) && persistColumnWidth
+        ? columnWidthStorageKey
+        : undefined,
     defaultWidth: defaultColumnWidth ?? crud?.defaultColumnWidth,
     minWidth: minColumnWidth ?? crud?.minColumnWidth,
     maxWidth: maxColumnWidth ?? crud?.maxColumnWidth,
@@ -428,28 +456,28 @@ export function ListPageTemplate<T>({
   // crud 模式下从 formFields 自动生成 cardViewConfig
   const resolvedCardViewConfig = useMemo(() => {
     if (cardViewConfig) return cardViewConfig;
-    if (!crud?.formFields || !crud.cardView) return undefined;
+    if (!crud?.formFields || !crud.cardView) return;
 
     const fields = crud.formFields;
-    
+
     // 查找标题字段（第一个 cardTitle 为 true 的字段，或 name/title/code 字段）
     let titleField = fields.find((f) => f.cardTitle);
     if (!titleField) {
       titleField = fields.find((f) => ['name', 'title', 'code'].includes(f.key));
     }
-    
+
     // 查找副标题字段（第一个 cardSubtitle 为 true 的字段）
     let subtitleField = fields.find((f) => f.cardSubtitle);
     if (!subtitleField) {
       subtitleField = fields.find((f) => ['description', 'remark', 'note'].includes(f.key));
     }
-    
+
     // 查找状态字段（第一个 cardStatus 为 true 的字段，或 status/state 字段）
     let statusField = fields.find((f) => f.cardStatus);
     if (!statusField) {
       statusField = fields.find((f) => ['status', 'state'].includes(f.key));
     }
-    
+
     // 构建卡片显示字段（排除标题、副标题、状态字段和 hideInCard 的字段）
     const cardFields = fields
       .filter((f) => {
@@ -510,17 +538,13 @@ export function ListPageTemplate<T>({
   const flatData = useMemo<Array<{ row: T; level: number; parentKey?: string | number }>>(() => {
     if (!resolvedTreeView) return data.map((row) => ({ row, level: 0 }));
     const result: Array<{ row: T; level: number; parentKey?: string | number }> = [];
-    const flatten = (
-      items: T[],
-      level: number,
-      parentKey?: string | number
-    ) => {
+    const flatten = (items: T[], level: number, parentKey?: string | number) => {
       items.forEach((item) => {
-        const key = (item as unknown as Record<string, unknown>)[treeNodeKeyField] as string | number;
+        const key = (item as unknown as Record<string, unknown>)[treeNodeKeyField] as
+          string | number;
         result.push({ row: item, level, parentKey });
-        const children = (item as unknown as Record<string, unknown>)[
-          treeChildrenField
-        ] as T[] | undefined;
+        const children = (item as unknown as Record<string, unknown>)[treeChildrenField] as
+          T[] | undefined;
         if (children && children.length > 0 && resolvedExpandedKeys.includes(key)) {
           flatten(children, level + 1, key);
         }
@@ -541,8 +565,7 @@ export function ListPageTemplate<T>({
     (rowId: string | number): number => {
       if (!resolvedTreeView) return 0;
       const item = flatData.find(
-        (f) =>
-          (f.row as unknown as Record<string, unknown>)[treeNodeKeyField] === rowId
+        (f) => (f.row as unknown as Record<string, unknown>)[treeNodeKeyField] === rowId
       );
       return item?.level ?? 0;
     },
@@ -553,9 +576,8 @@ export function ListPageTemplate<T>({
   const hasChildren = useCallback(
     (row: T): boolean => {
       if (!resolvedTreeView) return false;
-      const children = (row as unknown as Record<string, unknown>)[
-        treeChildrenField
-      ] as T[] | undefined;
+      const children = (row as unknown as Record<string, unknown>)[treeChildrenField] as
+        T[] | undefined;
       return !!(children && children.length > 0);
     },
     [resolvedTreeView, treeChildrenField]
@@ -585,7 +607,8 @@ export function ListPageTemplate<T>({
   // 开始编辑行
   const startEditing = useCallback(
     (row: T) => {
-      const rowId = getRowId?.(row) ?? (row as unknown as Record<string, unknown>).id as string | number;
+      const rowId =
+        getRowId?.(row) ?? ((row as unknown as Record<string, unknown>).id as string | number);
       setEditingData({ ...row } as Partial<T>);
       setEditingRowId(rowId);
     },
@@ -619,12 +642,131 @@ export function ListPageTemplate<T>({
   );
 
   // 更新编辑中的字段值
-  const updateEditingField = useCallback(
-    (field: keyof T, value: unknown) => {
-      setEditingData((prev) => ({
-        ...prev,
-        [field]: value,
-      }));
+  const updateEditingField = useCallback((field: keyof T, value: unknown) => {
+    setEditingData((prev) => ({
+      ...prev,
+      [field]: value,
+    }));
+  }, []);
+
+  // 行内编辑单元格组件
+  const EditCellComponent = useCallback(
+    ({
+      column,
+      value,
+      onChange,
+      onSave,
+      onCancel,
+    }: {
+      column: ColumnDef<T>;
+      value: unknown;
+      onChange: (value: unknown) => void;
+      onSave: () => void;
+      onCancel: () => void;
+    }) => {
+      const inlineEdit = column.inlineEdit;
+      const editType = inlineEdit?.type ?? 'text';
+      const options = inlineEdit?.options ?? [];
+
+      const handleKeyDown = (e: React.KeyboardEvent) => {
+        if (e.key === 'Enter') {
+          e.preventDefault();
+          onSave();
+        } else if (e.key === 'Escape') {
+          e.preventDefault();
+          onCancel();
+        }
+      };
+
+      switch (editType) {
+        case 'select':
+          return (
+            <FormControl
+              size='small'
+              sx={{ width: '100%', minWidth: 120 }}
+            >
+              <Select
+                value={String(value)}
+                onChange={(e) => onChange(e.target.value)}
+                autoFocus
+                onKeyDown={handleKeyDown}
+                displayEmpty
+              >
+                {options.map((opt) => (
+                  <MenuItem
+                    key={opt.value}
+                    value={opt.value}
+                  >
+                    {opt.label}
+                  </MenuItem>
+                ))}
+              </Select>
+            </FormControl>
+          );
+
+        case 'number':
+          return (
+            <TextField
+              size='small'
+              type='number'
+              value={value !== undefined ? String(value) : ''}
+              onChange={(e) => onChange(e.target.value ? Number(e.target.value) : '')}
+              autoFocus
+              onKeyDown={handleKeyDown}
+              sx={{ width: '100%', minWidth: 100 }}
+            />
+          );
+
+        case 'date':
+          return (
+            <TextField
+              size='small'
+              type='date'
+              value={value !== undefined ? String(value).split('T')[0] : ''}
+              onChange={(e) => onChange(e.target.value)}
+              autoFocus
+              onKeyDown={handleKeyDown}
+              sx={{ width: '100%', minWidth: 120 }}
+              slotProps={{ inputLabel: { shrink: true } }}
+            />
+          );
+
+        case 'datetime':
+          return (
+            <TextField
+              size='small'
+              type='datetime-local'
+              value={value !== undefined ? String(value).replace('Z', '') : ''}
+              onChange={(e) => onChange(e.target.value)}
+              autoFocus
+              onKeyDown={handleKeyDown}
+              sx={{ width: '100%', minWidth: 150 }}
+              slotProps={{ inputLabel: { shrink: true } }}
+            />
+          );
+
+        case 'checkbox':
+          return (
+            <Checkbox
+              checked={Boolean(value)}
+              onChange={(e) => onChange(e.target.checked)}
+              onKeyDown={handleKeyDown}
+            />
+          );
+
+        case 'text':
+        default:
+          return (
+            <Input
+              value={value !== undefined ? String(value) : ''}
+              onChange={(e) => onChange(e.target.value)}
+              size='small'
+              fullWidth
+              autoFocus
+              onKeyDown={handleKeyDown}
+            />
+          );
+      }
     },
     []
   );
@@ -649,7 +791,7 @@ export function ListPageTemplate<T>({
   const resolvedFilters = useMemo<FilterConfig[]>(() => {
     if (filters && filters.length > 0) return filters;
     if (!crud?.formFields || !crud.autoGenerateFilters) return filters || [];
-    
+
     // 自动从 select 类型的字段生成筛选器
     return crud.formFields
       .filter((field) => {
@@ -693,21 +835,21 @@ export function ListPageTemplate<T>({
     });
 
     // 状态统计卡片
-    const statusField = crud.statsStatusField || 
+    const statusField =
+      crud.statsStatusField ||
       crud.formFields.find((f) => f.tableStatus || f.key === 'status' || f.key === 'state');
-    
+
     if (statusField) {
-      const fieldKey = crud.statsStatusField || 
-        (typeof statusField !== 'string' ? statusField.key : statusField);
+      const fieldKey =
+        crud.statsStatusField || (typeof statusField !== 'string' ? statusField.key : statusField);
       const fieldConfig = crud.formFields.find((f) => f.key === fieldKey);
       const colorMap = fieldConfig?.tableStatusColorMap || {};
       const labelMap = fieldConfig?.tableStatusLabelMap || {};
       const options = fieldConfig?.options || [];
 
       options.forEach((opt) => {
-        const count = crudResult?.data?.items?.filter(
-          (item: any) => item[fieldKey] === opt.value
-        ).length || 0;
+        const count =
+          crudResult?.data?.items?.filter((item: any) => item[fieldKey] === opt.value).length || 0;
         cards.push({
           key: `status_${opt.value}`,
           label: labelMap[opt.value as string] || String(opt.label),
@@ -786,7 +928,13 @@ export function ListPageTemplate<T>({
     }
 
     // 使用统一参数映射层
-    if (crud.paramStyle || crud.fieldMapping || crud.searchParamName || crud.sortByParamName || crud.sortOrderParamName) {
+    if (
+      crud.paramStyle ||
+      crud.fieldMapping ||
+      crud.searchParamName ||
+      crud.sortByParamName ||
+      crud.sortOrderParamName
+    ) {
       return mapListParamsToBackend(stateParams, {
         style: crud.paramStyle ?? 'standard',
         searchParamName: crud.searchParamName,
@@ -842,21 +990,24 @@ export function ListPageTemplate<T>({
   const [formErrors, setFormErrors] = useState<Record<string, string>>({});
 
   // 从 formFields 构建初始表单数据
-  const buildInitialFormData = useCallback((mode: 'create' | 'edit' | 'view', record?: any): Record<string, unknown> => {
-    if (!crud?.formFields) return {};
-    const data: Record<string, unknown> = {};
-    crud.formFields.forEach((field) => {
-      if (mode === 'create' && field.hideInCreate) return;
-      if (mode === 'edit' && field.hideInEdit) return;
-      if (mode === 'view' && field.hideInView) return;
-      if (record && record[field.key] !== undefined) {
-        data[field.key] = record[field.key];
-      } else {
-        data[field.key] = field.defaultValue ?? (field.type === 'switch' ? false : '');
-      }
-    });
-    return data;
-  }, [crud]);
+  const buildInitialFormData = useCallback(
+    (mode: 'create' | 'edit' | 'view', record?: any): Record<string, unknown> => {
+      if (!crud?.formFields) return {};
+      const data: Record<string, unknown> = {};
+      crud.formFields.forEach((field) => {
+        if (mode === 'create' && field.hideInCreate) return;
+        if (mode === 'edit' && field.hideInEdit) return;
+        if (mode === 'view' && field.hideInView) return;
+        if (record && record[field.key] !== undefined) {
+          data[field.key] = record[field.key];
+        } else {
+          data[field.key] = field.defaultValue ?? (field.type === 'switch' ? false : '');
+        }
+      });
+      return data;
+    },
+    [crud]
+  );
 
   const openCreateForm = useCallback(() => {
     setCurrentRecord(null);
@@ -866,21 +1017,27 @@ export function ListPageTemplate<T>({
     setFormOpen(true);
   }, [buildInitialFormData]);
 
-  const openEditForm = useCallback((record: any) => {
-    setCurrentRecord(record);
-    setFormMode('edit');
-    setFormData(buildInitialFormData('edit', record));
-    setFormErrors({});
-    setFormOpen(true);
-  }, [buildInitialFormData]);
+  const openEditForm = useCallback(
+    (record: any) => {
+      setCurrentRecord(record);
+      setFormMode('edit');
+      setFormData(buildInitialFormData('edit', record));
+      setFormErrors({});
+      setFormOpen(true);
+    },
+    [buildInitialFormData]
+  );
 
-  const openViewForm = useCallback((record: any) => {
-    setCurrentRecord(record);
-    setFormMode('view');
-    setFormData(buildInitialFormData('view', record));
-    setFormErrors({});
-    setFormOpen(true);
-  }, [buildInitialFormData]);
+  const openViewForm = useCallback(
+    (record: any) => {
+      setCurrentRecord(record);
+      setFormMode('view');
+      setFormData(buildInitialFormData('view', record));
+      setFormErrors({});
+      setFormOpen(true);
+    },
+    [buildInitialFormData]
+  );
 
   const handleDelete = useCallback(
     async (record: any): Promise<boolean> => {
@@ -938,12 +1095,16 @@ export function ListPageTemplate<T>({
 
       // 必填验证（从 required 字段或 rules 中的 required 类型）
       const isRequired = field.required || field.rules?.some((r) => r.type === 'required');
-      if (isRequired) {
-        if (value === undefined || value === null || value === '' || (Array.isArray(value) && value.length === 0)) {
-          const rule = field.rules?.find((r) => r.type === 'required');
-          errors[field.key] = rule?.message || `${field.label}不能为空`;
-          return;
-        }
+      if (
+        isRequired &&
+        (value === undefined ||
+          value === null ||
+          value === '' ||
+          (Array.isArray(value) && value.length === 0))
+      ) {
+        const rule = field.rules?.find((r) => r.type === 'required');
+        errors[field.key] = rule?.message || `${field.label}不能为空`;
+        return;
       }
 
       // 跳过空值的其他验证
@@ -962,46 +1123,34 @@ export function ListPageTemplate<T>({
             }
           }
 
-          if (rule.type === 'number') {
-            if (isNaN(Number(value))) {
-              errors[field.key] = rule.message || '请输入有效的数字';
-              break;
-            }
+          if (rule.type === 'number' && isNaN(Number(value))) {
+            errors[field.key] = rule.message || '请输入有效的数字';
+            break;
           }
 
-          if (rule.type === 'min') {
-            if (Number(value) < (rule.min ?? 0)) {
-              errors[field.key] = rule.message || `不能小于${rule.min}`;
-              break;
-            }
+          if (rule.type === 'min' && Number(value) < (rule.min ?? 0)) {
+            errors[field.key] = rule.message || `不能小于${rule.min}`;
+            break;
           }
 
-          if (rule.type === 'max') {
-            if (Number(value) > (rule.max ?? Infinity)) {
-              errors[field.key] = rule.message || `不能大于${rule.max}`;
-              break;
-            }
+          if (rule.type === 'max' && Number(value) > (rule.max ?? Infinity)) {
+            errors[field.key] = rule.message || `不能大于${rule.max}`;
+            break;
           }
 
-          if (rule.type === 'minLength') {
-            if (String(value).length < (rule.minLength ?? 0)) {
-              errors[field.key] = rule.message || `最少${rule.minLength}个字符`;
-              break;
-            }
+          if (rule.type === 'minLength' && String(value).length < (rule.minLength ?? 0)) {
+            errors[field.key] = rule.message || `最少${rule.minLength}个字符`;
+            break;
           }
 
-          if (rule.type === 'maxLength') {
-            if (String(value).length > (rule.maxLength ?? Infinity)) {
-              errors[field.key] = rule.message || `最多${rule.maxLength}个字符`;
-              break;
-            }
+          if (rule.type === 'maxLength' && String(value).length > (rule.maxLength ?? Infinity)) {
+            errors[field.key] = rule.message || `最多${rule.maxLength}个字符`;
+            break;
           }
 
-          if (rule.type === 'pattern' && rule.pattern) {
-            if (!rule.pattern.test(String(value))) {
-              errors[field.key] = rule.message || '格式不正确';
-              break;
-            }
+          if (rule.type === 'pattern' && rule.pattern && !rule.pattern.test(String(value))) {
+            errors[field.key] = rule.message || '格式不正确';
+            break;
           }
 
           if (rule.validator) {
@@ -1057,93 +1206,121 @@ export function ListPageTemplate<T>({
 
     const renderField = (field: (typeof crud.formFields)[number]): React.ReactNode => {
       const value = formData[field.key];
-      const disabled = field.disabled || formMode === 'view' || (field.disabledWhen && field.disabledWhen(formData));
+      const disabled =
+        field.disabled ||
+        formMode === 'view' ||
+        (field.disabledWhen && field.disabledWhen(formData));
       const error = formErrors[field.key];
 
       const formatValue = (val: unknown, fieldType: string): React.ReactNode => {
-      if (val === null || val === undefined || val === '') return <span style={{ color: 'text.disabled' }}>-</span>;
+        if (val === null || val === undefined || val === '')
+          return <span style={{ color: 'text.disabled' }}>-</span>;
 
-      // 日期/时间格式化
-      if (fieldType === 'date' && typeof val === 'string') {
-        try {
-          const date = new Date(val);
-          if (!isNaN(date.getTime())) {
-            return date.toLocaleDateString('zh-CN', {
-              year: 'numeric',
-              month: '2-digit',
-              day: '2-digit',
-            });
+        // 日期/时间格式化
+        if (fieldType === 'date' && typeof val === 'string') {
+          try {
+            const date = new Date(val);
+            if (!isNaN(date.getTime())) {
+              return date.toLocaleDateString('zh-CN', {
+                year: 'numeric',
+                month: '2-digit',
+                day: '2-digit',
+              });
+            }
+          } catch {
+            // ignore
           }
-        } catch {
-          // ignore
         }
-      }
 
-      // 数组值（checkbox 等）
-      if (Array.isArray(val)) {
-        return val.length > 0 ? val.join(', ') : <span style={{ color: 'text.disabled' }}>-</span>;
-      }
+        // 数组值（checkbox 等）
+        if (Array.isArray(val)) {
+          return val.length > 0 ? (
+            val.join(', ')
+          ) : (
+            <span style={{ color: 'text.disabled' }}>-</span>
+          );
+        }
 
-      // switch 类型
-      if (fieldType === 'switch') {
-        return val ? (
-          <Chip label='是' size='small' color='success' variant='outlined' />
-        ) : (
-          <Chip label='否' size='small' color='default' variant='outlined' />
+        // switch 类型
+        if (fieldType === 'switch') {
+          return val ? (
+            <Chip
+              label='是'
+              size='small'
+              color='success'
+              variant='outlined'
+            />
+          ) : (
+            <Chip
+              label='否'
+              size='small'
+              color='default'
+              variant='outlined'
+            />
+          );
+        }
+
+        // select 类型带标签映射
+        const fieldConfig = crud?.formFields?.find((f) => f.key === field.key);
+        if (fieldConfig?.type === 'select' && fieldConfig.options) {
+          const option = fieldConfig.options.find((opt) => opt.value === val);
+          if (option) {
+            const colorMap = fieldConfig.tableStatusColorMap || {};
+            const color = (colorMap[val as string] || 'default') as
+              'default' | 'primary' | 'success' | 'warning' | 'error' | 'info';
+            return (
+              <Chip
+                label={option.label}
+                size='small'
+                color={color}
+                variant='outlined'
+              />
+            );
+          }
+        }
+
+        return String(val);
+      };
+
+      // view 模式下的信息卡片式渲染
+      if (formMode === 'view' && !field.render) {
+        return (
+          <Box
+            sx={{
+              display: 'flex',
+              flexDirection: 'column',
+              gap: 0.5,
+              py: 1,
+            }}
+          >
+            <Typography
+              variant='caption'
+              sx={{
+                color: 'text.secondary',
+                fontWeight: 500,
+                fontSize: 12,
+              }}
+            >
+              {field.label}
+            </Typography>
+            <Box sx={{ minHeight: 24 }}>{formatValue(value, field.type)}</Box>
+          </Box>
         );
       }
 
-      // select 类型带标签映射
-      const fieldConfig = crud?.formFields?.find((f) => f.key === field.key);
-      if (fieldConfig?.type === 'select' && fieldConfig.options) {
-        const option = fieldConfig.options.find((opt) => opt.value === val);
-        if (option) {
-          const colorMap = fieldConfig.tableStatusColorMap || {};
-          const color = (colorMap[val as string] || 'default') as 'default' | 'primary' | 'success' | 'warning' | 'error' | 'info';
-          return <Chip label={option.label} size='small' color={color} variant='outlined' />;
-        }
+      if (field.render) {
+        return field.render({
+          value,
+          onChange: (v) => handleFieldChange(field.key, v),
+          mode: formMode,
+        });
       }
 
-      return String(val);
-    };
-
-    // view 模式下的信息卡片式渲染
-    if (formMode === 'view' && !field.render) {
-      return (
-        <Box
-          sx={{
-            display: 'flex',
-            flexDirection: 'column',
-            gap: 0.5,
-            py: 1,
-          }}
-        >
-          <Typography
-            variant='caption'
-            sx={{
-              color: 'text.secondary',
-              fontWeight: 500,
-              fontSize: 12,
-            }}
-          >
-            {field.label}
-          </Typography>
-          <Box sx={{ minHeight: 24 }}>
-            {formatValue(value, field.type)}
-          </Box>
-        </Box>
-      );
-    }
-
-    if (field.render) {
-      return field.render({ value, onChange: (v) => handleFieldChange(field.key, v), mode: formMode });
-    }
-
-    switch (field.type) {
-      case 'text':
-      case 'email':
-      case 'password':
-        return (
+      switch (field.type) {
+        case 'text':
+        case 'email':
+        case 'password':
+          return (
             <TextField
               fullWidth
               size='small'
@@ -1210,7 +1387,10 @@ export function ListPageTemplate<T>({
                   },
                 }}
               />
-              <Typography variant='body2' sx={{ color: 'text.secondary' }}>
+              <Typography
+                variant='body2'
+                sx={{ color: 'text.secondary' }}
+              >
                 ~
               </Typography>
               <TextField
@@ -1257,7 +1437,12 @@ export function ListPageTemplate<T>({
           );
         case 'select':
           return (
-            <FormControl fullWidth size='small' disabled={disabled} error={!!error}>
+            <FormControl
+              fullWidth
+              size='small'
+              disabled={disabled}
+              error={!!error}
+            >
               <InputLabel>{field.label}</InputLabel>
               <Select
                 value={value ?? ''}
@@ -1266,20 +1451,28 @@ export function ListPageTemplate<T>({
                 readOnly={formMode === 'view'}
               >
                 {field.options?.map((opt) => (
-                  <MenuItem key={String(opt.value)} value={opt.value}>
+                  <MenuItem
+                    key={String(opt.value)}
+                    value={opt.value}
+                  >
                     {opt.label}
                   </MenuItem>
                 ))}
               </Select>
-              {error && (
-                <FormHelperText>{error}</FormHelperText>
-              )}
+              {error && <FormHelperText>{error}</FormHelperText>}
             </FormControl>
           );
         case 'radio':
           return (
-            <FormControl component='fieldset' disabled={disabled} error={!!error}>
-              <Typography variant='body2' sx={{ mb: 0.5, color: 'text.secondary' }}>
+            <FormControl
+              component='fieldset'
+              disabled={disabled}
+              error={!!error}
+            >
+              <Typography
+                variant='body2'
+                sx={{ mb: 0.5, color: 'text.secondary' }}
+              >
                 {field.label}
                 {field.required && <span style={{ color: 'error.main' }}> *</span>}
               </Typography>
@@ -1302,8 +1495,15 @@ export function ListPageTemplate<T>({
           );
         case 'checkbox':
           return (
-            <FormControl component='fieldset' disabled={disabled} error={!!error}>
-              <Typography variant='body2' sx={{ mb: 0.5, color: 'text.secondary' }}>
+            <FormControl
+              component='fieldset'
+              disabled={disabled}
+              error={!!error}
+            >
+              <Typography
+                variant='body2'
+                sx={{ mb: 0.5, color: 'text.secondary' }}
+              >
                 {field.label}
                 {field.required && <span style={{ color: 'error.main' }}> *</span>}
               </Typography>
@@ -1384,7 +1584,10 @@ export function ListPageTemplate<T>({
         }}
       >
         {fields.map((field) => (
-          <Box key={field.key} sx={{ gridColumn: `span ${field.colSpan ?? 1}` }}>
+          <Box
+            key={field.key}
+            sx={{ gridColumn: `span ${field.colSpan ?? 1}` }}
+          >
             {renderField(field)}
           </Box>
         ))}
@@ -1408,11 +1611,17 @@ export function ListPageTemplate<T>({
               return (
                 <Box key={group.key}>
                   <Box sx={{ mb: 2 }}>
-                    <Typography variant='subtitle2' sx={{ fontWeight: 600, color: 'text.primary' }}>
+                    <Typography
+                      variant='subtitle2'
+                      sx={{ fontWeight: 600, color: 'text.primary' }}
+                    >
                       {group.title}
                     </Typography>
                     {group.description && (
-                      <Typography variant='caption' sx={{ color: 'text.secondary' }}>
+                      <Typography
+                        variant='caption'
+                        sx={{ color: 'text.secondary' }}
+                      >
                         {group.description}
                       </Typography>
                     )}
@@ -1423,7 +1632,9 @@ export function ListPageTemplate<T>({
             })}
             {/* 未分组的字段放在最后 */}
             {(() => {
-              const ungroupedFields = visibleFields.filter((f) => !f.group || !groups.some((g) => g.key === f.group));
+              const ungroupedFields = visibleFields.filter(
+                (f) => !f.group || !groups.some((g) => g.key === f.group)
+              );
               if (ungroupedFields.length === 0) return null;
               return (
                 <Box>
@@ -1436,7 +1647,10 @@ export function ListPageTemplate<T>({
         ) : (
           renderFieldGroup(visibleFields)
         )}
-        <input type='submit' style={{ display: 'none' }} />
+        <input
+          type='submit'
+          style={{ display: 'none' }}
+        />
       </Box>
     );
   }, [crud, formMode, formData, handleAutoFormSubmit]);
@@ -1467,7 +1681,7 @@ export function ListPageTemplate<T>({
     if (crud && hasForm && crud.clickRowToView !== false) {
       return (row: T) => openViewForm(row);
     }
-    return undefined;
+    return;
   }, [onRowClick, crud, hasForm, openViewForm]);
 
   // crud 模式下自动推断双击行编辑行为
@@ -1475,7 +1689,7 @@ export function ListPageTemplate<T>({
     if (crud && hasForm && crud.doubleClickToEdit !== false) {
       return (row: T) => openEditForm(row);
     }
-    return undefined;
+    return;
   }, [crud, hasForm, openEditForm]);
 
   // crud 模式下，若提供了表单配置且未传自定义 actions，则自动添加新建按钮
@@ -1565,11 +1779,12 @@ export function ListPageTemplate<T>({
     }
     return searchValue || '';
   });
-  const searchInput = searchValue !== undefined
-    ? searchValue
-    : internalListStateResult
-      ? internalListStateResult.searchQuery
-      : localSearchInput;
+  const searchInput =
+    searchValue !== undefined
+      ? searchValue
+      : internalListStateResult
+        ? internalListStateResult.searchQuery
+        : localSearchInput;
   const [anchorEl, setAnchorEl] = useState<null | HTMLElement>(null);
   const [selectedRow, setSelectedRow] = useState<T | null>(null);
 
@@ -1636,11 +1851,13 @@ export function ListPageTemplate<T>({
       }
     }
     const cols = resolvedColumns || [];
-    setColumnConfig(cols.map((col, index) => ({
-      id: col.id,
-      visible: true,
-      order: col.order ?? index,
-    })));
+    setColumnConfig(
+      cols.map((col, index) => ({
+        id: col.id,
+        visible: true,
+        order: col.order ?? index,
+      }))
+    );
     columnConfigInitialized.current = true;
   }, [resolvedColumns, defaultColumnConfig, persistColumnConfig, columnConfigStorageKey]);
 
@@ -1705,7 +1922,7 @@ export function ListPageTemplate<T>({
       });
       return result;
     });
-  }, [columnConfigResult.visibleColumnIds]); // eslint-disable-line react-hooks/exhaustive-deps
+  }, [columnConfigResult.visibleColumnIds]);
 
   // 内部 columnConfig 变化时同步回 useColumnConfig（写 URL 和 localStorage）
   useEffect(() => {
@@ -1714,7 +1931,7 @@ export function ListPageTemplate<T>({
     if (ids.join(',') !== columnConfigResult.visibleColumnIds.join(',')) {
       columnConfigResult.reorderColumns(ids);
     }
-  }, [columnConfig]); // eslint-disable-line react-hooks/exhaustive-deps
+  }, [columnConfig]);
 
   // 列配置持久化
   useEffect(() => {
@@ -1971,10 +2188,16 @@ export function ListPageTemplate<T>({
   // 快速筛选 URL 同步（仅 urlSync 启用时）
   const isQuickFilterUrlSyncEnabled = !!effectiveListState?.urlSync;
   const qfUrlKey = `${effectiveListState?.urlPrefix ?? ''}qf`;
-  const [activeQuickFilterKey, setActiveQuickFilterKey] = useUrlState<string | null>(qfUrlKey, null, {
-    mode: isQuickFilterUrlSyncEnabled ? (effectiveListState!.urlSync as 'replace' | 'push') : 'replace',
-    removeDefault: true,
-  });
+  const [activeQuickFilterKey, setActiveQuickFilterKey] = useUrlState<string | null>(
+    qfUrlKey,
+    null,
+    {
+      mode: isQuickFilterUrlSyncEnabled
+        ? (effectiveListState!.urlSync as 'replace' | 'push')
+        : 'replace',
+      removeDefault: true,
+    }
+  );
 
   // 点击快速筛选时更新 URL 和激活态
   const effectiveOnQuickFilter = useCallback(
@@ -1991,7 +2214,9 @@ export function ListPageTemplate<T>({
   // URL 中 qf 变化时（前进后退），自动应用对应的快速筛选
   useEffect(() => {
     if (!isQuickFilterUrlSyncEnabled || !quickFilters || !activeQuickFilterKey) return;
-    const matched = quickFilters.find((qf, idx) => (qf.key ?? String(idx)) === activeQuickFilterKey);
+    const matched = quickFilters.find(
+      (qf, idx) => (qf.key ?? String(idx)) === activeQuickFilterKey
+    );
     if (matched) {
       handleQuickFilter({ filters: matched.filters, searchValue: matched.searchValue });
     }
@@ -2008,10 +2233,16 @@ export function ListPageTemplate<T>({
   // 视图模式 URL 同步（仅 urlSync 启用时）
   const isViewModeUrlSyncEnabled = !!effectiveListState?.urlSync && effectiveViewModes.length > 1;
   const viewModeUrlKey = `${effectiveListState?.urlPrefix ?? ''}view`;
-  const [viewModeUrlState, setViewModeUrlState] = useUrlState<ListViewMode>(viewModeUrlKey, defaultViewMode, {
-    mode: isViewModeUrlSyncEnabled ? (effectiveListState!.urlSync as 'replace' | 'push') : 'replace',
-    removeDefault: true,
-  });
+  const [viewModeUrlState, setViewModeUrlState] = useUrlState<ListViewMode>(
+    viewModeUrlKey,
+    defaultViewMode,
+    {
+      mode: isViewModeUrlSyncEnabled
+        ? (effectiveListState!.urlSync as 'replace' | 'push')
+        : 'replace',
+      removeDefault: true,
+    }
+  );
 
   // 视图模式本地 state（非受控模式）
   const [viewModeLocal, setViewModeLocal] = useState<ListViewMode>(defaultViewMode);
@@ -2070,10 +2301,12 @@ export function ListPageTemplate<T>({
   useEffect(() => {
     if (!crud?.onSelectionChange) return;
     const selectedRows = data.filter((row) =>
-      effectiveSelectedIds.includes(getRowId?.(row) ?? (row as unknown as Record<string, unknown>).id as string | number)
+      effectiveSelectedIds.includes(
+        getRowId?.(row) ?? ((row as unknown as Record<string, unknown>).id as string | number)
+      )
     );
     crud.onSelectionChange(effectiveSelectedIds, selectedRows);
-  }, [effectiveSelectedIds]); // eslint-disable-line react-hooks/exhaustive-deps
+  }, [effectiveSelectedIds]);
 
   // 处理排序
   const handleSort = useCallback(
@@ -2090,7 +2323,10 @@ export function ListPageTemplate<T>({
   const handleSelectAll = useCallback(
     (event: React.ChangeEvent<HTMLInputElement>) => {
       if (event.target.checked) {
-        const allIds = data.map((row) => getRowId?.(row) ?? (row as unknown as Record<string, unknown>).id as string | number);
+        const allIds = data.map(
+          (row) =>
+            getRowId?.(row) ?? ((row as unknown as Record<string, unknown>).id as string | number)
+        );
         effectiveOnSelectionChange?.(allIds);
       } else {
         effectiveOnSelectionChange?.([]);
@@ -2101,7 +2337,8 @@ export function ListPageTemplate<T>({
 
   const handleSelectRow = useCallback(
     (row: T) => {
-      const rowId = getRowId?.(row) ?? (row as unknown as Record<string, unknown>).id as string | number;
+      const rowId =
+        getRowId?.(row) ?? ((row as unknown as Record<string, unknown>).id as string | number);
       const newSelected = effectiveSelectedIds.includes(rowId)
         ? effectiveSelectedIds.filter((id) => id !== rowId)
         : [...effectiveSelectedIds, rowId];
@@ -2156,7 +2393,8 @@ export function ListPageTemplate<T>({
   // 处理行展开
   const handleExpandRow = useCallback(
     (row: T) => {
-      const rowId = getRowId?.(row) ?? (row as unknown as Record<string, unknown>).id as string | number;
+      const rowId =
+        getRowId?.(row) ?? ((row as unknown as Record<string, unknown>).id as string | number);
       const newExpanded = expandedIds.includes(rowId)
         ? expandedIds.filter((id) => id !== rowId)
         : [...expandedIds, rowId];
@@ -2222,7 +2460,8 @@ export function ListPageTemplate<T>({
 
   const resolvedExportScopes = useMemo((): Array<'current' | 'all' | 'selected'> => {
     if (exportScopes?.length) return exportScopes as Array<'current' | 'all' | 'selected'>;
-    if (crud?.exportScopes?.length) return crud.exportScopes as Array<'current' | 'all' | 'selected'>;
+    if (crud?.exportScopes?.length)
+      return crud.exportScopes as Array<'current' | 'all' | 'selected'>;
     return ['current', 'all', 'selected'];
   }, [exportScopes, crud]);
 
@@ -2230,16 +2469,17 @@ export function ListPageTemplate<T>({
   const resolvedExportColumns = useMemo(() => {
     if (exportColumns?.length) return exportColumns;
     if (crud?.formFields) {
-      return crud.formFields
-        .filter((f) => !f.hideInExport && f.key !== 'id')
-        .map((f) => f.key);
+      return crud.formFields.filter((f) => !f.hideInExport && f.key !== 'id').map((f) => f.key);
     }
     return visibleColumns.map((c) => c.id);
   }, [exportColumns, crud, visibleColumns]);
 
   // 导出功能
   const handleExport = useCallback(
-    async (format: 'csv' | 'excel' | 'json' = 'csv', scope: 'current' | 'all' | 'selected' = 'current') => {
+    async (
+      format: 'csv' | 'excel' | 'json' = 'csv',
+      scope: 'current' | 'all' | 'selected' = 'current'
+    ) => {
       if (!resolvedExportable || exporting) return;
 
       try {
@@ -2250,7 +2490,9 @@ export function ListPageTemplate<T>({
         let exportDataRows: T[] = [];
         if (scope === 'selected') {
           exportDataRows = data.filter((row) =>
-            effectiveSelectedIds.includes(getRowId?.(row) ?? (row as unknown as Record<string, unknown>).id as string | number)
+            effectiveSelectedIds.includes(
+              getRowId?.(row) ?? ((row as unknown as Record<string, unknown>).id as string | number)
+            )
           );
         } else if (scope === 'current') {
           exportDataRows = data;
@@ -2503,7 +2745,18 @@ export function ListPageTemplate<T>({
                 bgcolor: theme.palette.mode === 'dark' ? 'rgba(255,255,255,0.04)' : 'grey.50',
               }}
             >
-              <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: column.align === 'center' ? 'center' : column.align === 'right' ? 'flex-end' : 'flex-start' }}>
+              <Box
+                sx={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent:
+                    column.align === 'center'
+                      ? 'center'
+                      : column.align === 'right'
+                        ? 'flex-end'
+                        : 'flex-start',
+                }}
+              >
                 {column.renderHeader ? (
                   column.renderHeader(column)
                 ) : sortable && column.sortable !== false ? (
@@ -2688,7 +2941,8 @@ export function ListPageTemplate<T>({
     }
 
     return treeTableData.map((row, index) => {
-      const rowId = getRowId?.(row) ?? (row as unknown as Record<string, unknown>).id as string | number;
+      const rowId =
+        getRowId?.(row) ?? ((row as unknown as Record<string, unknown>).id as string | number);
       const isSelected = effectiveSelectedIds.includes(rowId);
       const isExpanded = expandedIds.includes(rowId);
       const rowLevel = resolvedTreeView ? getRowLevel(rowId) : 0;
@@ -2793,7 +3047,7 @@ export function ListPageTemplate<T>({
                 sx={{
                   width: 48,
                   position: 'sticky',
-                  left: (selectable || isBatchSelectionEnabled) ? 48 : 0,
+                  left: selectable || isBatchSelectionEnabled ? 48 : 0,
                   zIndex: 1,
                   bgcolor: 'inherit',
                 }}
@@ -2859,32 +3113,21 @@ export function ListPageTemplate<T>({
                       pl: isTreeColumn ? rowLevel * treeIndentSize : 0,
                     }}
                   >
-                    {isTreeColumn && (
-                      <Box sx={{ width: 24, flexShrink: 0 }} />
-                    )}
+                    {isTreeColumn && <Box sx={{ width: 24, flexShrink: 0 }} />}
                     {isEditing && canEdit ? (
-                      <Input
+                      <EditCellComponent
+                        column={column}
                         value={editingData?.[column.id as keyof T] ?? cellValue ?? ''}
-                        onChange={(e) => updateEditingField(column.id as keyof T, e.target.value)}
-                        size='small'
-                        fullWidth
-                        autoFocus
-                        onKeyDown={(e) => {
-                          if (e.key === 'Enter') {
-                            e.preventDefault();
-                            saveEditing(row);
-                          } else if (e.key === 'Escape') {
-                            e.preventDefault();
-                            cancelEditing(row);
-                          }
-                        }}
+                        onChange={(value) => updateEditingField(column.id as keyof T, value)}
+                        onSave={() => saveEditing(row)}
+                        onCancel={() => cancelEditing(row)}
                       />
+                    ) : column.render ? (
+                      column.render(row, index)
+                    ) : cellValue !== undefined && cellValue !== null ? (
+                      String(cellValue)
                     ) : (
-                      column.render
-                        ? column.render(row, index)
-                        : cellValue !== undefined && cellValue !== null
-                          ? String(cellValue)
-                          : '-'
+                      '-'
                     )}
                   </Box>
                 </TableCell>
@@ -2982,14 +3225,36 @@ export function ListPageTemplate<T>({
           fontWeight: 600,
         }}
       >
-        {selectable && <TableCell padding='checkbox' sx={{ position: 'sticky', left: 0, zIndex: 1, bgcolor: 'inherit' }} />}
-        {isBatchSelectionEnabled && !selectable && <TableCell padding='checkbox' sx={{ position: 'sticky', left: 0, zIndex: 1, bgcolor: 'inherit' }} />}
+        {selectable && (
+          <TableCell
+            padding='checkbox'
+            sx={{ position: 'sticky', left: 0, zIndex: 1, bgcolor: 'inherit' }}
+          />
+        )}
+        {isBatchSelectionEnabled && !selectable && (
+          <TableCell
+            padding='checkbox'
+            sx={{ position: 'sticky', left: 0, zIndex: 1, bgcolor: 'inherit' }}
+          />
+        )}
         {showRowNumber && (
-          <TableCell sx={{ position: selectable ? 'sticky' : 'relative', left: selectable ? 48 : 0, zIndex: 1, bgcolor: 'inherit' }}>
+          <TableCell
+            sx={{
+              position: selectable ? 'sticky' : 'relative',
+              left: selectable ? 48 : 0,
+              zIndex: 1,
+              bgcolor: 'inherit',
+            }}
+          >
             合计
           </TableCell>
         )}
-        {resolvedTreeView && <TableCell padding='checkbox' sx={{ width: 48 }} />}
+        {resolvedTreeView && (
+          <TableCell
+            padding='checkbox'
+            sx={{ width: 48 }}
+          />
+        )}
         {visibleColumns.map((column) => {
           const isFixed = column.fixed !== undefined;
           const leftPos = fixedColumnPositions.leftPositions[column.id];
@@ -3004,7 +3269,12 @@ export function ListPageTemplate<T>({
             summaryContent = column.summaryRender(summaryData);
           } else if (column.summaryType === 'count') {
             summaryContent = summaryData.length;
-          } else if (column.summaryType === 'sum' || column.summaryType === 'avg' || column.summaryType === 'max' || column.summaryType === 'min') {
+          } else if (
+            column.summaryType === 'sum' ||
+            column.summaryType === 'avg' ||
+            column.summaryType === 'max' ||
+            column.summaryType === 'min'
+          ) {
             const values = summaryData
               .map((row) => Number((row as unknown as Record<string, unknown>)[column.id]))
               .filter((v) => !isNaN(v));
@@ -3043,7 +3313,10 @@ export function ListPageTemplate<T>({
           );
         })}
         {resolvedRowActions && resolvedRowActions.length > 0 && (
-          <TableCell align='right' sx={{ width: 80 }} />
+          <TableCell
+            align='right'
+            sx={{ width: 80 }}
+          />
         )}
         {columnConfigurable && <TableCell sx={{ width: 48 }} />}
       </TableRow>
@@ -3120,7 +3393,9 @@ export function ListPageTemplate<T>({
     return (
       <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1.5, p: 1.5 }}>
         {data.map((row, index) => {
-          const rowId = getRowId ? getRowId(row) : ((row as unknown as Record<string, unknown>).id as string | number ?? index);
+          const rowId = getRowId
+            ? getRowId(row)
+            : (((row as unknown as Record<string, unknown>).id as string | number) ?? index);
           const isSelected = selectedIds.has(rowId);
 
           // 优先使用自定义渲染函数
@@ -3129,8 +3404,8 @@ export function ListPageTemplate<T>({
               <Box
                 key={rowId}
                 onClick={() => resolvedOnRowClick?.(row)}
-            sx={{
-              cursor: resolvedOnRowClick ? 'pointer' : 'default',
+                sx={{
+                  cursor: resolvedOnRowClick ? 'pointer' : 'default',
                   '&:active': resolvedOnRowClick ? { opacity: 0.8 } : {},
                 }}
               >
@@ -3413,8 +3688,13 @@ export function ListPageTemplate<T>({
                     >
                       {resolvedExportScopes.includes('current') && (
                         <>
-                          <MenuItem disabled sx={{ pointerEvents: 'none', opacity: 0.6 }}>
-                            <ListItemText sx={{ fontWeight: 600, fontSize: 12 }}>导出当前页</ListItemText>
+                          <MenuItem
+                            disabled
+                            sx={{ pointerEvents: 'none', opacity: 0.6 }}
+                          >
+                            <ListItemText sx={{ fontWeight: 600, fontSize: 12 }}>
+                              导出当前页
+                            </ListItemText>
                           </MenuItem>
                           {resolvedExportFormats.includes('csv') && (
                             <MenuItem onClick={() => handleExport('csv', 'current')}>
@@ -3442,12 +3722,14 @@ export function ListPageTemplate<T>({
                           )}
                         </>
                       )}
-                      {(resolvedExportScopes.includes('all') || resolvedExportScopes.includes('selected')) && (
-                        <Divider sx={{ my: 0.5 }} />
-                      )}
+                      {(resolvedExportScopes.includes('all') ||
+                        resolvedExportScopes.includes('selected')) && <Divider sx={{ my: 0.5 }} />}
                       {resolvedExportScopes.includes('selected') && (
                         <>
-                          <MenuItem disabled sx={{ pointerEvents: 'none', opacity: 0.6 }}>
+                          <MenuItem
+                            disabled
+                            sx={{ pointerEvents: 'none', opacity: 0.6 }}
+                          >
                             <ListItemText sx={{ fontWeight: 600, fontSize: 12 }}>
                               导出选中项 ({selectedIds.size})
                             </ListItemText>
@@ -3582,7 +3864,10 @@ export function ListPageTemplate<T>({
                   gap: 0.5,
                 }}
               >
-                <Typography variant='caption' sx={{ color: 'text.secondary' }}>
+                <Typography
+                  variant='caption'
+                  sx={{ color: 'text.secondary' }}
+                >
                   {card.label}
                 </Typography>
                 <Typography
@@ -3593,14 +3878,14 @@ export function ListPageTemplate<T>({
                       card.color === 'primary'
                         ? 'primary.main'
                         : card.color === 'success'
-                        ? 'success.main'
-                        : card.color === 'warning'
-                        ? 'warning.main'
-                        : card.color === 'error'
-                        ? 'error.main'
-                        : card.color === 'info'
-                        ? 'info.main'
-                        : 'text.primary',
+                          ? 'success.main'
+                          : card.color === 'warning'
+                            ? 'warning.main'
+                            : card.color === 'error'
+                              ? 'error.main'
+                              : card.color === 'info'
+                                ? 'info.main'
+                                : 'text.primary',
                   }}
                 >
                   {card.value}
@@ -3631,9 +3916,12 @@ export function ListPageTemplate<T>({
         <Box sx={{ display: 'flex', justifyContent: 'flex-end', mb: 2 }}>
           <Box sx={{ display: 'inline-flex', bgcolor: 'action.hover', borderRadius: 2, p: 0.5 }}>
             {effectiveViewModes.map((mode) => (
-              <Tooltip key={mode} title={mode === 'table' ? '表格视图' : '卡片视图'}>
+              <Tooltip
+                key={mode}
+                title={mode === 'table' ? '表格视图' : '卡片视图'}
+              >
                 <IconButton
-                  size="small"
+                  size='small'
                   onClick={() => handleViewModeChange(mode)}
                   sx={{
                     borderRadius: 1.5,
@@ -3662,7 +3950,8 @@ export function ListPageTemplate<T>({
           {renderMobileCardView()}
           {renderPagination()}
         </Paper>
-      ) : effectiveViewMode === 'card' && (renderCardView || renderCardItem || resolvedCardViewConfig) ? (
+      ) : effectiveViewMode === 'card' &&
+        (renderCardView || renderCardItem || resolvedCardViewConfig) ? (
         // 卡片视图
         <Box>
           {renderCardView ? (
@@ -3672,27 +3961,29 @@ export function ListPageTemplate<T>({
               data={data as any[]}
               config={{
                 ...(resolvedCardViewConfig as any),
-                onClick: crud && hasForm
-                  ? (row: any) => openViewForm(row)
-                  : (resolvedCardViewConfig as any).onClick,
-                actions: crud && hasForm
-                  ? [
-                      {
-                        key: 'edit',
-                        label: '编辑',
-                        icon: <Edit size={16} />,
-                        onClick: (row: any) => openEditForm(row),
-                      },
-                      {
-                        key: 'delete',
-                        label: '删除',
-                        icon: <Trash2 size={16} />,
-                        color: 'error' as const,
-                        onClick: (row: any) => handleDelete(row),
-                      },
-                      ...((resolvedCardViewConfig as any).actions || []),
-                    ]
-                  : (resolvedCardViewConfig as any).actions,
+                onClick:
+                  crud && hasForm
+                    ? (row: any) => openViewForm(row)
+                    : (resolvedCardViewConfig as any).onClick,
+                actions:
+                  crud && hasForm
+                    ? [
+                        {
+                          key: 'edit',
+                          label: '编辑',
+                          icon: <Edit size={16} />,
+                          onClick: (row: any) => openEditForm(row),
+                        },
+                        {
+                          key: 'delete',
+                          label: '删除',
+                          icon: <Trash2 size={16} />,
+                          color: 'error' as const,
+                          onClick: (row: any) => handleDelete(row),
+                        },
+                        ...((resolvedCardViewConfig as any).actions || []),
+                      ]
+                    : (resolvedCardViewConfig as any).actions,
               }}
               loading={loading}
               getRowId={getRowId as any}
@@ -3718,7 +4009,10 @@ export function ListPageTemplate<T>({
               }}
             >
               {data.map((row, index) => (
-                <Paper key={getRowId?.(row) ?? index} sx={{ borderRadius: 3, p: 2 }}>
+                <Paper
+                  key={getRowId?.(row) ?? index}
+                  sx={{ borderRadius: 3, p: 2 }}
+                >
                   {renderCardItem(row, index)}
                 </Paper>
               ))}

@@ -113,6 +113,11 @@ export interface ColumnDef<T = any> {
   summaryRender?: (data: T[]) => React.ReactNode;
   /** 是否可编辑（行内编辑），默认 false */
   editable?: boolean;
+  /** 行内编辑配置 */
+  inlineEdit?: {
+    type?: 'text' | 'select' | 'number' | 'date' | 'datetime' | 'checkbox';
+    options?: { value: string | number; label: string }[];
+  };
 }
 
 /**
@@ -620,7 +625,9 @@ export interface ListPageCrudConfig<T = any, TCreate = Partial<T>, TUpdate = Par
       data?: { items: T[]; total: number; page?: number; pagesize?: number };
     }>;
     get: (id: string) => Promise<{ success: boolean; code: number; message: string; data?: T }>;
-    create: (data: TCreate) => Promise<{ success: boolean; code: number; message: string; data?: T }>;
+    create: (
+      data: TCreate
+    ) => Promise<{ success: boolean; code: number; message: string; data?: T }>;
     update: (
       id: string,
       data: TUpdate
@@ -730,7 +737,10 @@ export interface ListPageCrudConfig<T = any, TCreate = Partial<T>, TUpdate = Par
   /** 表单每行显示的字段数，默认 1 */
   formColCount?: number;
   /** 表单提交前数据转换（将表单数据转换为 API 需要的格式） */
-  transformFormData?: (formData: Record<string, unknown>, mode: 'create' | 'edit') => TCreate | TUpdate;
+  transformFormData?: (
+    formData: Record<string, unknown>,
+    mode: 'create' | 'edit'
+  ) => TCreate | TUpdate;
   /**
    * 自定义行操作
    *
@@ -761,7 +771,10 @@ export interface ListPageCrudConfig<T = any, TCreate = Partial<T>, TUpdate = Par
   /**
    * 状态颜色映射（用于卡片视图的状态 Chip）
    */
-  cardStatusColorMap?: Record<string, 'default' | 'primary' | 'success' | 'warning' | 'error' | 'info'>;
+  cardStatusColorMap?: Record<
+    string,
+    'default' | 'primary' | 'success' | 'warning' | 'error' | 'info'
+  >;
   /**
    * 状态标签映射（用于卡片视图的状态 Chip）
    */
@@ -848,7 +861,10 @@ export interface ListPageCrudConfig<T = any, TCreate = Partial<T>, TUpdate = Par
   /**
    * 表单数据变化时的回调，可用于计算字段值、联动更新等
    */
-  onFormDataChange?: (formData: Record<string, unknown>, changedKey: string) => Record<string, unknown> | void;
+  onFormDataChange?: (
+    formData: Record<string, unknown>,
+    changedKey: string
+  ) => Record<string, unknown> | void;
   /**
    * 是否显示表单重置按钮（create模式下），默认 false
    */
@@ -934,7 +950,18 @@ export interface CrudFormFieldConfig {
   /** 显示标签 */
   label: string;
   /** 字段类型 */
-  type: 'text' | 'number' | 'select' | 'textarea' | 'email' | 'password' | 'date' | 'switch' | 'radio' | 'checkbox' | 'numberRange';
+  type:
+    | 'text'
+    | 'number'
+    | 'select'
+    | 'textarea'
+    | 'email'
+    | 'password'
+    | 'date'
+    | 'switch'
+    | 'radio'
+    | 'checkbox'
+    | 'numberRange';
   /** 数字类型的最小值 */
   min?: number;
   /** 数字类型的最大值 */
@@ -980,7 +1007,10 @@ export interface CrudFormFieldConfig {
   /** 表格列是否显示为状态 Chip，默认 false */
   tableStatus?: boolean;
   /** 状态颜色映射（用于表格列状态 Chip，与 tableStatus 配合使用） */
-  tableStatusColorMap?: Record<string, 'default' | 'primary' | 'success' | 'warning' | 'error' | 'info'>;
+  tableStatusColorMap?: Record<
+    string,
+    'default' | 'primary' | 'success' | 'warning' | 'error' | 'info'
+  >;
   /** 状态标签映射（用于表格列状态 Chip，与 tableStatus 配合使用） */
   tableStatusLabelMap?: Record<string, string>;
   /** 是否在卡片视图中隐藏，默认 false */
