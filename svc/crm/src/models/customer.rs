@@ -1,11 +1,12 @@
 use chrono::{DateTime, Utc};
 use serde::{Deserialize, Serialize};
 use sqlx::FromRow;
+use utoipa::ToSchema;
 use uuid::Uuid;
 
 use topems_shared::{DataMasking, EncryptionResult, FieldEncryptionService};
 
-#[derive(Debug, Clone, FromRow, Serialize, Deserialize)]
+#[derive(Debug, Clone, FromRow, Serialize, Deserialize, ToSchema)]
 pub struct Customer {
     pub id: Uuid,
     pub tenant_id: Uuid,
@@ -68,7 +69,7 @@ impl Customer {
     }
 }
 
-#[derive(Debug, Clone, Deserialize, Serialize)]
+#[derive(Debug, Clone, Deserialize, Serialize, ToSchema)]
 pub struct CreateCustomerRequest {
     pub name: String,
     pub code: Option<String>,
@@ -91,7 +92,7 @@ pub struct CreateCustomerRequest {
     pub notes: Option<String>,
 }
 
-#[derive(Debug, Clone, Deserialize, Serialize)]
+#[derive(Debug, Clone, Deserialize, Serialize, ToSchema)]
 pub struct UpdateCustomerRequest {
     pub name: Option<String>,
     pub code: Option<String>,

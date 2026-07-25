@@ -115,6 +115,7 @@ impl Employee {
     }
 }
 
+#[allow(dead_code)]
 pub struct EmployeeFinance {
     pub employee_id: Uuid,
     pub base_salary: Option<Decimal>,
@@ -137,6 +138,7 @@ pub struct EmployeeFinance {
     pub total_compensation: Option<Decimal>,
 }
 
+#[allow(dead_code)]
 impl EmployeeFinance {
     pub fn encrypt_fields(&mut self, service: &FieldEncryptionService) -> EncryptionResult<()> {
         if let Some(account) = &self.bank_account {

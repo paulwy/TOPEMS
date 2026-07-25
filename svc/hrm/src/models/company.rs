@@ -1,9 +1,10 @@
 use chrono::DateTime;
 use serde::{Deserialize, Serialize};
 use sqlx::FromRow;
+use utoipa::ToSchema;
 use uuid::Uuid;
 
-#[derive(Debug, Clone, FromRow, Serialize, Deserialize)]
+#[derive(Debug, Clone, FromRow, Serialize, Deserialize, ToSchema)]
 pub struct Company {
     pub id: Uuid,
     pub tenant_id: Uuid,
@@ -22,7 +23,7 @@ pub struct Company {
     pub updated_at: DateTime<chrono::Utc>,
 }
 
-#[derive(Debug, Clone, Deserialize)]
+#[derive(Debug, Clone, Deserialize, ToSchema)]
 pub struct CreateCompanyRequest {
     pub organization_id: Option<Uuid>,
     pub name: String,
@@ -36,7 +37,7 @@ pub struct CreateCompanyRequest {
     pub description: Option<String>,
 }
 
-#[derive(Debug, Clone, Deserialize)]
+#[derive(Debug, Clone, Deserialize, ToSchema)]
 pub struct UpdateCompanyRequest {
     pub name: Option<String>,
     pub short_name: Option<String>,

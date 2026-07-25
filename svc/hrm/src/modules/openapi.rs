@@ -1,4 +1,9 @@
-use crate::models::{CreateEmployeeRequest, Employee, UpdateEmployeeRequest};
+use crate::models::{
+    AttendanceRecord, Company, Contract, ContractRenewal, CreateAttendanceRequest, CreateCompanyRequest,
+    CreateContractRequest, CreateDepartmentRequest, CreateEmployeeRequest, Department, Employee,
+    UpdateAttendanceRequest, UpdateCompanyRequest, UpdateContractRequest, UpdateDepartmentRequest,
+    UpdateEmployeeRequest,
+};
 use utoipa::OpenApi;
 
 #[derive(OpenApi)]
@@ -9,12 +14,31 @@ use utoipa::OpenApi;
         crate::modules::employee::get_employee,
         crate::modules::employee::update_employee,
         crate::modules::employee::delete_employee,
+        crate::modules::department::list_departments,
+        crate::modules::department::create_department,
+        crate::modules::department::get_department,
+        crate::modules::company::list_companies,
+        crate::modules::company::create_company,
+        crate::modules::company::get_company,
     ),
     components(
         schemas(
             Employee,
             CreateEmployeeRequest,
             UpdateEmployeeRequest,
+            Department,
+            CreateDepartmentRequest,
+            UpdateDepartmentRequest,
+            Company,
+            CreateCompanyRequest,
+            UpdateCompanyRequest,
+            AttendanceRecord,
+            CreateAttendanceRequest,
+            UpdateAttendanceRequest,
+            Contract,
+            CreateContractRequest,
+            UpdateContractRequest,
+            ContractRenewal,
         )
     ),
     tags(

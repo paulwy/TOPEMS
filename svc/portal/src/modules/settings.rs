@@ -9,6 +9,8 @@ use axum::{
     Json,
 };
 use topems_shared::{auth::Claims, ApiResponse};
+use topems_shared_service_client::service_client::api::iam_api::IamApi;
+use topems_shared_service_client::TypedServiceClient;
 
 use crate::{
     models::{UpdateUserSettings, UserSettings},
@@ -32,9 +34,9 @@ fn default_settings(user_id: &str) -> UserSettings {
 }
 
 fn build_iam_client(
-    base: &topems_shared::IamServiceClient,
+    base: &TypedServiceClient<IamApi>,
     headers: &HeaderMap,
-) -> topems_shared::IamServiceClient {
+) -> TypedServiceClient<IamApi> {
     let client = base.clone();
     if let Some(token) = extract_bearer_token(headers) {
         client.with_auth_token(token)

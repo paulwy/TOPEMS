@@ -3,7 +3,5 @@ pub mod models;
 pub mod modules;
 pub mod services;
 pub mod shared;
-pub mod workflow;
 
 pub use shared::AppState;
-pub use workflow::WorkflowClient;

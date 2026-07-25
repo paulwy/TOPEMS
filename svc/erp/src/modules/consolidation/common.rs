@@ -1,8 +1,11 @@
-use reqwest::Client;
 use serde::Deserialize;
 use uuid::Uuid;
 
+use topems_shared::service_client::{api::finance_api::FinanceApi, TypedServiceClient};
+
+/// 调用 Finance Core 审批接口（使用共享 TypedServiceClient<FinanceApi>）
 pub async fn call_finance_core_approval(
+    finance_client: &TypedServiceClient<FinanceApi>,
     doc_type: &str,
     doc_id: Uuid,
     doc_no: &str,
@@ -11,20 +14,6 @@ pub async fn call_finance_core_approval(
     rejection_reason: Option<&str>,
     comment: Option<&str>,
 ) -> Result<(), String> {
-    let client = Client::new();
-    let finance_core_url =
-        std::env::var("FINANCE_CORE_URL").unwrap_or_else(|_| "http://localhost:8000".to_string());
-
-    let relative_path = match action {
-        "submit" => "/api/finance/approvals/submit",
-        "approve" => "/api/finance/approvals/approve",
-        "reject" => "/api/finance/approvals/reject",
-        "cancel" => "/api/finance/approvals/cancel",
-        _ => return Err(format!("Unknown action: {}", action)),
-    };
-
-    let url = format!("{}{}", finance_core_url, relative_path);
-
     let body = match action {
         "submit" => serde_json::json!({
             "doc_type": doc_type,
@@ -45,19 +34,17 @@ pub async fn call_finance_core_approval(
         _ => return Err(format!("Unknown action: {}", action)),
     };
 
-    let response = client
-        .post(&url)
-        .header("Content-Type", "application/json")
-        .json(&body)
-        .send()
-        .await
-        .map_err(|e| format!("Failed to call Finance Core: {}", e))?;
+    let result = match action {
+        "submit" => finance_client.submit_approval(&body).await,
+        "approve" => finance_client.approve_approval(&body).await,
+        "reject" => finance_client.reject_approval(&body).await,
+        "cancel" => finance_client.cancel_approval(&body).await,
+        _ => return Err(format!("Unknown action: {}", action)),
+    };
 
-    if response.status().is_success() {
-        Ok(())
-    } else {
-        let status = response.status();
-        Err(format!("Finance Core returned error: {}", status))
+    match result {
+        Ok(_) => Ok(()),
+        Err(e) => Err(format!("Finance Core returned error: {}", e)),
     }
 }
 

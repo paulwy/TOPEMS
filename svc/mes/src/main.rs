@@ -4,24 +4,60 @@
 
 use topems_mes::{modules, AppState};
 
-use std::env;
-use std::net::SocketAddr;
-use std::sync::Arc;
-
-use axum::{extract::State, routing::get, Json, Router};
-use axum_prometheus::PrometheusMetricLayer;
-
-use topems_shared::{
-    auth_middleware, create_cors_layer, get_api_info_handler, init_telemetry,
-    rate_limit_middleware, register_routes_with_legacy_alias, request_context_middleware,
-    rls_middleware, simple_health_check, telemetry_middleware, ApiResponse, AuthState,
-    RateLimitConfig, RateLimitMiddleware, ServiceHealth, SimpleHealthConfig,
-};
-
+use axum::routing::get;
 use utoipa::OpenApi;
+
+use topems_shared::service_bootstrap::{
+    bootstrap_service, build_application, create_health_state, create_standard_health_routes, run,
+    ServiceConfig,
+};
+use topems_shared::SimpleHealthConfig;
+
+use modules::production_order::{
+    CreateFromErpRequest, CreateProductionOrderRequest, ErpSalesOrderInfo, ListProductionOrdersResponse,
+    ProductionOrderResponse, ProductionOrderSource, UpdateProductionOrderRequest,
+};
+use modules::work_order::{
+    CreateWorkOrderRequest, UpdateWorkOrderRequest, WorkOrderResponse,
+};
+use modules::work_report::{
+    CreateWorkReportRequest, RejectWorkReportRequest, UpdateWorkReportRequest, WorkReportResponse,
+};
 
 #[derive(OpenApi)]
 #[openapi(
+    components(
+        schemas(
+            // work_order
+            CreateWorkOrderRequest,
+            UpdateWorkOrderRequest,
+            WorkOrderResponse,
+            // work_report
+            CreateWorkReportRequest,
+            UpdateWorkReportRequest,
+            RejectWorkReportRequest,
+            WorkReportResponse,
+            // production_order
+            ProductionOrderSource,
+            ErpSalesOrderInfo,
+            CreateFromErpRequest,
+            CreateProductionOrderRequest,
+            UpdateProductionOrderRequest,
+            ProductionOrderResponse,
+            ListProductionOrdersResponse,
+        ),
+    ),
+    paths(
+        modules::work_order::list_work_orders,
+        modules::work_order::create_work_order,
+        modules::work_order::get_work_order,
+        modules::work_report::list_work_reports,
+        modules::work_report::create_work_report,
+        modules::work_report::get_work_report,
+        modules::production_order::list_production_orders,
+        modules::production_order::create_production_order,
+        modules::production_order::get_production_order,
+    ),
     tags(
         (name = "MES", description = "生产执行系统 API"),
         (name = "Health", description = "健康检查接口"),
@@ -48,66 +84,37 @@ struct ApiDoc;
 
 #[tokio::main]
 async fn main() -> anyhow::Result<()> {
-    _ = dotenv::dotenv();
-
-    let _telemetry_guard = init_telemetry("topems-mes");
-
-    tracing::info!("🚀 TOPEMS MES Service starting...");
-
-    let database_url = std::env::var("DATABASE_URL").unwrap_or_else(|_| {
-        tracing::error!("DATABASE_URL environment variable is required");
-        std::process::exit(1);
-    });
-
-    let pool = match sqlx::postgres::PgPoolOptions::new()
-        .max_connections(10)
-        .connect(&database_url)
-        .await
-    {
-        Ok(p) => {
-            tracing::info!("Database connection successful");
-            p
-        }
-        Err(e) => {
-            tracing::error!("Failed to connect to database: {}", e);
-            panic!("Cannot connect to database: {}", e);
-        }
+    let config = ServiceConfig {
+        name: "topems-mes",
+        port: 8030,
+        port_env_var: Some("MES_PORT"),
+        max_db_connections: 10,
+        enable_events: true,
+        api_prefix: "/api/mes",
+        legacy_prefixes: &["/api/v1/mes"],
+        ..Default::default()
     };
 
-    if let Err(e) = modules::init_database(&pool).await {
+    let ctx = bootstrap_service(&config).await?;
+
+    if let Err(e) = modules::init_database(&ctx.db).await {
         tracing::warn!("MES database init warning: {}", e);
     }
 
-    let auth_state = AuthState::from_env();
-    let health_config = SimpleHealthConfig::new("topems-mes").with_db(pool.clone());
-
-    let event_publisher = match topems_shared::event::EventPublisher::new("topems-mes") {
-        Ok(publisher) => {
-            tracing::info!("📢 事件发布服务初始化成功");
-            Some(std::sync::Arc::new(publisher))
-        }
-        Err(e) => {
-            tracing::warn!("⚠️ 事件发布服务初始化失败（不阻塞启动）: {}", e);
-            None
-        }
-    };
+    let health_config = SimpleHealthConfig::new("topems-mes").with_db(ctx.db.clone());
 
     let state = AppState {
-        auth_state,
-        pool,
+        auth_state: ctx.auth_state.clone(),
+        pool: ctx.db.clone(),
         health_config,
-        event_publisher,
+        event_publisher: ctx.event_publisher.clone(),
     };
 
-    let cors = create_cors_layer();
-
-    let (prometheus_layer, metric_handle) = PrometheusMetricLayer::pair();
-
-    let public_routes = Router::new()
+    // 标准健康检查路由（使用 BootstrapAppState）
+    let health_state = create_health_state(&ctx, &config);
+    // 插件路由 + WebSocket 路由（需要 AppState）
+    let plugin_routes = axum::Router::new()
         .route("/", get(home))
-        .route("/health", get(health))
-        .route("/api", get(|| get_api_info_handler("mes-service")))
-        .route("/api/info", get(|| get_api_info_handler("mes-service")))
         .route(
             "/api/plugins/info",
             get(modules::mes_plugin::get_plugin_info),
@@ -117,78 +124,32 @@ async fn main() -> anyhow::Result<()> {
             get(modules::mes_plugin::plugin_health_check),
         )
         .route(
-            "/metrics",
-            get(move || async move { metric_handle.render() }),
-        )
-        .route(
             "/ws/mes/dashboard",
             axum::routing::get(modules::dashboard_ws::dashboard_websocket),
-        );
+        )
+        .with_state(state.clone());
+    let public_routes = create_standard_health_routes(health_state).merge(plugin_routes);
 
-    let rate_limit_config = RateLimitConfig::new(200, 60)
-        .with_by_user_id(false)
-        .with_by_ip(true);
-    let rate_limiter = Arc::new(RateLimitMiddleware::new(rate_limit_config));
-    let rate_limit_layer = axum::middleware::from_fn({
-        let mw = rate_limiter.clone();
-        move |req, next| {
-            let mw = mw.clone();
-            async move { rate_limit_middleware(mw, req, next).await }
-        }
-    });
+    // 业务路由
+    let protected_routes = modules::create_routes().with_state(state);
 
-    let protected_routes = Router::new()
-        .merge(modules::create_routes())
-        .layer(axum::middleware::from_fn_with_state(
-            state.auth_state.clone(),
-            auth_middleware,
-        ))
-        .layer(axum::middleware::from_fn_with_state(
-            state.pool.clone(),
-            rls_middleware,
-        ))
-        .layer(rate_limit_layer);
-
-    let app = register_routes_with_legacy_alias(
-        Router::new().merge(public_routes),
-        "/api/mes",
-        &["/api/v1/mes"],
-        protected_routes,
-    )
-    .route("/api/health/detailed", get(detailed_health))
-    .route(
-        "/api-docs/openapi.json",
-        get(|| async {
-            serde_json::to_string_pretty(&ApiDoc::openapi()).unwrap_or_else(|e| {
-                tracing::error!("Failed to serialize OpenAPI spec: {}", e);
-                "{}".to_string()
-            })
+    // OpenAPI 文档
+    let openapi_json = Some(
+        serde_json::to_string_pretty(&ApiDoc::openapi()).unwrap_or_else(|e| {
+            tracing::error!("Failed to serialize OpenAPI spec: {}", e);
+            "{}".to_string()
         }),
-    )
-    .layer(cors)
-    .layer(axum::middleware::from_fn(request_context_middleware))
-    .layer(axum::middleware::from_fn(telemetry_middleware))
-    .layer(prometheus_layer)
-    .with_state(state);
+    );
 
-    let port = std::env::var("MES_PORT")
-        .or_else(|_| std::env::var("SERVER_PORT"))
-        .or_else(|_| std::env::var("PORT"))
-        .unwrap_or_else(|_| "8030".to_string())
-        .parse()
-        .unwrap_or(8030);
-    let addr = SocketAddr::from(([0, 0, 0, 0], port));
-    tracing::info!("✅ MES Service is running at http://{}", addr);
+    let app = build_application(&ctx, &config, public_routes, protected_routes, openapi_json);
 
+    // 启动时自动注册到统一核心
     let core_url = std::env::var("CORE_URL").ok();
     tokio::spawn(async move {
         modules::mes_plugin::auto_register_to_core(core_url.as_deref()).await;
     });
 
-    let listener = tokio::net::TcpListener::bind(&addr).await?;
-    axum::serve(listener, app.into_make_service()).await?;
-
-    Ok(())
+    run(app).await
 }
 
 async fn home() -> &'static str {
@@ -197,31 +158,15 @@ async fn home() -> &'static str {
      - /health - Health check"
 }
 
-async fn health(State(state): State<AppState>) -> ServiceHealth {
-    simple_health_check(&state.health_config).await
-}
+#[cfg(test)]
+mod openapi_extract_tests {
+    use super::*;
 
-async fn detailed_health(State(state): State<AppState>) -> Json<ApiResponse<serde_json::Value>> {
-    let db_status = match sqlx::query("SELECT 1").fetch_one(&state.pool).await {
-        Ok(_) => "healthy",
-        Err(_) => "unhealthy",
-    };
-
-    let response = serde_json::json!({
-        "service": "mes-service",
-        "status": if db_status == "healthy" { "healthy" } else { "unhealthy" },
-        "timestamp": chrono::Utc::now().to_rfc3339(),
-        "modules": {
-            "mes": "active"
-        },
-        "dependencies": [
-            {
-                "name": "postgresql",
-                "status": db_status
-            }
-        ],
-        "version": "1.0.0"
-    });
-
-    Json(ApiResponse::success(response, "Detailed health check"))
+    #[test]
+    fn extract_openapi_spec() {
+        let spec = ApiDoc::openapi();
+        let json = serde_json::to_string_pretty(&spec).expect("Failed to serialize OpenAPI spec");
+        std::fs::write("/tmp/topems-mes-openapi.json", json).expect("Failed to write spec");
+        println!("OpenAPI spec written to /tmp/topems-mes-openapi.json");
+    }
 }

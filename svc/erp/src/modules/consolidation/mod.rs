@@ -19,15 +19,17 @@ pub use scope_companies::{
 };
 
 pub use elimination_rules::{
-    create_elimination_rule, delete_elimination_rule, get_elimination_rule, list_elimination_rules,
-    update_elimination_rule,
+    create_elimination_rule, delete_elimination_rule, export_elimination_worksheet,
+    get_elimination_rule, list_elimination_rules, update_elimination_rule,
 };
 
-pub use internal_transactions::{execute_elimination, list_internal_transactions};
+pub use internal_transactions::{
+    execute_elimination, get_internal_transaction, list_internal_transactions,
+};
 
 pub use reports::{
-    approve_report, delete_report, generate_report, get_report, get_report_lines, list_reports,
-    publish_report, submit_report,
+    approve_report, delete_report, export_report, generate_report, get_report, get_report_lines,
+    list_reports, publish_report, submit_report,
 };
 
 pub use company_relations::{
@@ -45,6 +47,10 @@ pub fn create_routes() -> Router<ApiState> {
         .route(
             "/consolidation/scopes/{scopeId}/companies",
             get(list_scope_companies),
+        )
+        .route(
+            "/consolidation/scopes/{scopeId}/elimination-worksheet/export",
+            get(export_elimination_worksheet),
         )
         .route("/consolidation/scopes/companies", post(add_scope_company))
         .route(
@@ -66,6 +72,10 @@ pub fn create_routes() -> Router<ApiState> {
             get(list_internal_transactions),
         )
         .route(
+            "/consolidation/internal-transactions/{transactionId}",
+            get(get_internal_transaction),
+        )
+        .route(
             "/consolidation/execute-elimination",
             post(execute_elimination),
         )
@@ -73,6 +83,7 @@ pub fn create_routes() -> Router<ApiState> {
             "/consolidation/reports",
             get(list_reports).post(generate_report),
         )
+        .route("/consolidation/reports/generate", post(generate_report))
         .route(
             "/consolidation/reports/{reportId}",
             get(get_report).delete(delete_report),
@@ -80,6 +91,10 @@ pub fn create_routes() -> Router<ApiState> {
         .route(
             "/consolidation/reports/{reportId}/lines",
             get(get_report_lines),
+        )
+        .route(
+            "/consolidation/reports/{reportId}/export",
+            get(export_report),
         )
         .route(
             "/consolidation/reports/{reportId}/approve",

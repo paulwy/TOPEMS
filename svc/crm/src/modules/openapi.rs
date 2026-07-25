@@ -1,85 +1,41 @@
 // CRM 服务 OpenAPI 文档
-use chrono::{DateTime, Utc};
-use serde::{Deserialize, Serialize};
-use utoipa::{OpenApi, ToSchema};
-use uuid::Uuid;
-
-#[derive(Debug, Clone, Serialize, Deserialize, ToSchema)]
-pub struct Customer {
-    pub id: Uuid,
-    pub name: String,
-    pub code: Option<String>,
-    pub customer_type: Option<String>,
-    pub industry: Option<String>,
-    pub contact: Option<String>,
-    pub phone: Option<String>,
-    pub email: Option<String>,
-    pub address: Option<String>,
-    pub status: String,
-    pub created_at: DateTime<Utc>,
-    pub updated_at: DateTime<Utc>,
-}
-
-#[derive(Debug, Clone, Serialize, Deserialize, ToSchema)]
-pub struct Contact {
-    pub id: Uuid,
-    pub customer_id: Option<Uuid>,
-    pub name: String,
-    pub title: Option<String>,
-    pub department: Option<String>,
-    pub phone: Option<String>,
-    pub email: Option<String>,
-    pub is_primary: Option<bool>,
-    pub created_at: DateTime<Utc>,
-}
-
-#[derive(Debug, Clone, Serialize, Deserialize, ToSchema)]
-pub struct Opportunity {
-    pub id: Uuid,
-    pub customer_id: Uuid,
-    pub name: String,
-    pub stage: String,
-    pub amount: Option<f64>,
-    pub probability: Option<i32>,
-    pub expected_close_date: Option<DateTime<Utc>>,
-    pub owner_id: Option<Uuid>,
-    pub status: String,
-    pub created_at: DateTime<Utc>,
-    pub updated_at: DateTime<Utc>,
-}
-
-#[derive(Debug, Clone, Serialize, Deserialize, ToSchema)]
-pub struct Interaction {
-    pub id: Uuid,
-    pub customer_id: Option<Uuid>,
-    pub contact_id: Option<Uuid>,
-    pub opportunity_id: Option<Uuid>,
-    pub interaction_type: String,
-    pub subject: String,
-    pub content: Option<String>,
-    pub occurred_at: Option<DateTime<Utc>>,
-    pub created_by: Option<Uuid>,
-    pub created_at: DateTime<Utc>,
-}
-
-#[derive(Debug, Clone, Serialize, Deserialize, ToSchema)]
-pub struct Tag {
-    pub id: Uuid,
-    pub name: String,
-    pub color: Option<String>,
-    pub category: Option<String>,
-    pub created_at: DateTime<Utc>,
-}
+use crate::models::{
+    AddTagToCustomerRequest, Contact, CreateContactRequest, CreateCustomerRequest,
+    CreateInteractionRequest, CreateOpportunityRequest, CreateTagRequest, Customer,
+    CustomerWithTags, Interaction, Opportunity, Tag, UpdateContactRequest,
+    UpdateCustomerRequest, UpdateInteractionRequest, UpdateOpportunityRequest, UpdateTagRequest,
+};
+use utoipa::OpenApi;
 
 #[derive(OpenApi)]
 #[openapi(
+    paths(
+        crate::modules::customer::list_customers,
+        crate::modules::customer::create_customer,
+        crate::modules::customer::get_customer,
+        crate::modules::contact::list_contacts,
+        crate::modules::contact::create_contact,
+        crate::modules::opportunity::list_opportunities,
+    ),
     components(
         schemas(
             Customer,
+            CreateCustomerRequest,
+            UpdateCustomerRequest,
             Contact,
+            CreateContactRequest,
+            UpdateContactRequest,
             Opportunity,
+            CreateOpportunityRequest,
+            UpdateOpportunityRequest,
             Interaction,
+            CreateInteractionRequest,
+            UpdateInteractionRequest,
             Tag,
+            CreateTagRequest,
+            UpdateTagRequest,
+            AddTagToCustomerRequest,
+            CustomerWithTags,
         ),
     ),
     tags(

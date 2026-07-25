@@ -236,6 +236,7 @@ fn big_decimal_to_f64(bd: Option<BigDecimal>) -> f64 {
         .unwrap_or(0.0)
 }
 
+#[allow(dead_code)]
 fn naive_to_utc(dt: Option<NaiveDateTime>) -> DateTime<Utc> {
     dt.map(|d| Utc.from_utc_datetime(&d))
         .unwrap_or_else(Utc::now)
@@ -243,6 +244,7 @@ fn naive_to_utc(dt: Option<NaiveDateTime>) -> DateTime<Utc> {
 
 // ==================== Cost Calculation Logic ====================
 
+#[allow(unused_assignments)]
 async fn calculate_work_order_cost_detail_db(
     pool: &sqlx::PgPool,
     work_order_id: Uuid,

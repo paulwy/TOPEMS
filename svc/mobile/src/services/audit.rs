@@ -1,14 +1,15 @@
-// Mobile 服务审计日志
-use sqlx::PgPool;
+use topems_shared::audit::{AuditLogQuery, AuditLogService, CreateAuditLogRequest};
 use uuid::Uuid;
 
 pub struct MobileAuditService {
-    pool: PgPool,
+    audit_service: AuditLogService,
 }
 
 impl MobileAuditService {
-    pub fn new(pool: PgPool) -> Self {
-        Self { pool }
+    pub fn new(pool: sqlx::PgPool) -> Self {
+        Self {
+            audit_service: AuditLogService::new(pool),
+        }
     }
 
     pub async fn log_patrol_operation(
@@ -20,28 +21,31 @@ impl MobileAuditService {
         status: &str,
         error_message: Option<&str>,
     ) -> Result<(), sqlx::Error> {
-        let details_str = request_details
-            .map(|d| serde_json::to_string(&d).ok())
-            .flatten();
-        let user_uuid = user_id.and_then(|s| Uuid::parse_str(s).ok());
+        let mut req = CreateAuditLogRequest::new(
+            action.to_string(),
+            "patrol".to_string(),
+            status.to_string(),
+        );
+        if let Some(eid) = entity_id {
+            req = req.with_entity_id(eid);
+        }
+        if let Some(uid) = user_id {
+            req = req.with_user(uid.to_string(), String::new());
+        }
+        if let Some(details) = request_details {
+            req = req.with_request_details(details);
+        }
+        if let Some(err) = error_message {
+            req = req.with_error(err.to_string());
+        }
 
-        sqlx::query(
-            r#"
-            INSERT INTO public.audit_logs (action, resource, resource_id, user_id, details, status, error_message)
-            VALUES ($1, $2, $3, $4, $5, $6, $7)
-            "#,
-        )
-        .bind(action)
-        .bind("patrol")
-        .bind(entity_id)
-        .bind(user_uuid)
-        .bind(details_str)
-        .bind(status)
-        .bind(error_message)
-        .execute(&self.pool)
-        .await?;
-
-        Ok(())
+        match self.audit_service.create_audit_log(&req).await {
+            Ok(_) => Ok(()),
+            Err(e) => {
+                tracing::error!("[MobileAudit] Failed to log patrol operation: {}", e);
+                Err(e)
+            }
+        }
     }
 
     pub async fn log_scan_operation(
@@ -53,28 +57,31 @@ impl MobileAuditService {
         status: &str,
         error_message: Option<&str>,
     ) -> Result<(), sqlx::Error> {
-        let details_str = request_details
-            .map(|d| serde_json::to_string(&d).ok())
-            .flatten();
-        let user_uuid = user_id.and_then(|s| Uuid::parse_str(s).ok());
+        let mut req = CreateAuditLogRequest::new(
+            action.to_string(),
+            "scan".to_string(),
+            status.to_string(),
+        );
+        if let Some(eid) = entity_id {
+            req = req.with_entity_id(eid);
+        }
+        if let Some(uid) = user_id {
+            req = req.with_user(uid.to_string(), String::new());
+        }
+        if let Some(details) = request_details {
+            req = req.with_request_details(details);
+        }
+        if let Some(err) = error_message {
+            req = req.with_error(err.to_string());
+        }
 
-        sqlx::query(
-            r#"
-            INSERT INTO public.audit_logs (action, resource, resource_id, user_id, details, status, error_message)
-            VALUES ($1, $2, $3, $4, $5, $6, $7)
-            "#,
-        )
-        .bind(action)
-        .bind("scan")
-        .bind(entity_id)
-        .bind(user_uuid)
-        .bind(details_str)
-        .bind(status)
-        .bind(error_message)
-        .execute(&self.pool)
-        .await?;
-
-        Ok(())
+        match self.audit_service.create_audit_log(&req).await {
+            Ok(_) => Ok(()),
+            Err(e) => {
+                tracing::error!("[MobileAudit] Failed to log scan operation: {}", e);
+                Err(e)
+            }
+        }
     }
 
     pub async fn log_task_operation(
@@ -86,28 +93,31 @@ impl MobileAuditService {
         status: &str,
         error_message: Option<&str>,
     ) -> Result<(), sqlx::Error> {
-        let details_str = request_details
-            .map(|d| serde_json::to_string(&d).ok())
-            .flatten();
-        let user_uuid = user_id.and_then(|s| Uuid::parse_str(s).ok());
+        let mut req = CreateAuditLogRequest::new(
+            action.to_string(),
+            "task".to_string(),
+            status.to_string(),
+        );
+        if let Some(eid) = entity_id {
+            req = req.with_entity_id(eid);
+        }
+        if let Some(uid) = user_id {
+            req = req.with_user(uid.to_string(), String::new());
+        }
+        if let Some(details) = request_details {
+            req = req.with_request_details(details);
+        }
+        if let Some(err) = error_message {
+            req = req.with_error(err.to_string());
+        }
 
-        sqlx::query(
-            r#"
-            INSERT INTO public.audit_logs (action, resource, resource_id, user_id, details, status, error_message)
-            VALUES ($1, $2, $3, $4, $5, $6, $7)
-            "#,
-        )
-        .bind(action)
-        .bind("task")
-        .bind(entity_id)
-        .bind(user_uuid)
-        .bind(details_str)
-        .bind(status)
-        .bind(error_message)
-        .execute(&self.pool)
-        .await?;
-
-        Ok(())
+        match self.audit_service.create_audit_log(&req).await {
+            Ok(_) => Ok(()),
+            Err(e) => {
+                tracing::error!("[MobileAudit] Failed to log task operation: {}", e);
+                Err(e)
+            }
+        }
     }
 
     pub async fn log_device_operation(
@@ -119,29 +129,32 @@ impl MobileAuditService {
         status: &str,
         error_message: Option<&str>,
     ) -> Result<(), sqlx::Error> {
-        let details_str = request_details
-            .map(|d| serde_json::to_string(&d).ok())
-            .flatten();
         let entity_uuid = entity_id.and_then(|s| Uuid::parse_str(s).ok());
-        let user_uuid = user_id.and_then(|s| Uuid::parse_str(s).ok());
+        let mut req = CreateAuditLogRequest::new(
+            action.to_string(),
+            "device".to_string(),
+            status.to_string(),
+        );
+        if let Some(eid) = entity_uuid {
+            req = req.with_entity_id(eid);
+        }
+        if let Some(uid) = user_id {
+            req = req.with_user(uid.to_string(), String::new());
+        }
+        if let Some(details) = request_details {
+            req = req.with_request_details(details);
+        }
+        if let Some(err) = error_message {
+            req = req.with_error(err.to_string());
+        }
 
-        sqlx::query(
-            r#"
-            INSERT INTO public.audit_logs (action, resource, resource_id, user_id, details, status, error_message)
-            VALUES ($1, $2, $3, $4, $5, $6, $7)
-            "#,
-        )
-        .bind(action)
-        .bind("device")
-        .bind(entity_uuid)
-        .bind(user_uuid)
-        .bind(details_str)
-        .bind(status)
-        .bind(error_message)
-        .execute(&self.pool)
-        .await?;
-
-        Ok(())
+        match self.audit_service.create_audit_log(&req).await {
+            Ok(_) => Ok(()),
+            Err(e) => {
+                tracing::error!("[MobileAudit] Failed to log device operation: {}", e);
+                Err(e)
+            }
+        }
     }
 
     pub async fn query_audit_logs(
@@ -153,36 +166,44 @@ impl MobileAuditService {
         limit: i64,
         offset: i64,
     ) -> Result<Vec<MobileAuditLogEntry>, sqlx::Error> {
-        let logs = sqlx::query_as::<_, MobileAuditLogEntry>(
-            r#"
-            SELECT 
-                id, action, resource as entity_type, resource_id as entity_id, 
-                user_id::text, details as request_details, status, error_message, 
-                ip_address, user_agent, created_at
-            FROM public.audit_logs
-            WHERE ($1::text IS NULL OR action = $1)
-              AND ($2::text IS NULL OR resource = $2)
-              AND ($3::text IS NULL OR user_id::text = $3)
-              AND ($4::text IS NULL OR status = $4)
-              AND resource IN ('patrol', 'scan', 'task', 'device')
-            ORDER BY created_at DESC
-            LIMIT $5 OFFSET $6
-            "#,
-        )
-        .bind(action)
-        .bind(resource)
-        .bind(user_id)
-        .bind(status)
-        .bind(limit)
-        .bind(offset)
-        .fetch_all(&self.pool)
-        .await?;
+        let page = offset / limit + 1;
+        let query = AuditLogQuery {
+            action: action.map(|s| s.to_string()),
+            entity_type: resource.map(|s| s.to_string()),
+            user_id: user_id.map(|s| s.to_string()),
+            status: status.map(|s| s.to_string()),
+            start_date: None,
+            end_date: None,
+            page: Some(page),
+            page_size: Some(limit),
+        };
 
-        Ok(logs)
+        let resources = &["patrol", "scan", "task", "device"];
+        let logs = self
+            .audit_service
+            .query_audit_logs(&query, Some(resources))
+            .await?;
+
+        Ok(logs
+            .into_iter()
+            .map(|log| MobileAuditLogEntry {
+                id: log.id,
+                action: log.action,
+                entity_type: log.entity_type,
+                entity_id: log.entity_id,
+                user_id: log.user_id,
+                request_details: log.request_details,
+                status: log.status,
+                error_message: log.error_message,
+                ip_address: log.ip_address,
+                user_agent: log.user_agent,
+                created_at: log.created_at,
+            })
+            .collect())
     }
 }
 
-#[derive(Debug, Clone, sqlx::FromRow)]
+#[derive(Debug, Clone)]
 pub struct MobileAuditLogEntry {
     pub id: Uuid,
     pub action: String,

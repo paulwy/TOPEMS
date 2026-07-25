@@ -1638,52 +1638,20 @@ impl ErpEventHandlers {
             .get("name")
             .and_then(|v| v.as_str())
             .unwrap_or("");
-        let email = event.payload.get("email").and_then(|v| v.as_str());
-        let department_id = event
-            .payload
-            .get("department_id")
-            .and_then(|v| v.as_str().and_then(|s| uuid::Uuid::parse_str(s).ok()));
 
-        match event.action {
-            MasterDataAction::Created => {
-                tracing::info!(
-                    "[erp-mdm] 员工创建 - name={}, email={:?}, department_id={:?}",
-                    employee_name,
-                    email,
-                    department_id
-                );
-                // TODO: 创建 ERP 员工记录，关联到部门
-            }
-            MasterDataAction::Updated => {
-                tracing::info!(
-                    "[erp-mdm] 员工更新 - name={}, email={:?}, changed_fields={:?}",
-                    employee_name,
-                    email,
-                    event.changed_fields
-                );
-                // TODO: 同步更新 ERP 员工记录
-            }
-            MasterDataAction::Deleted => {
-                tracing::info!(
-                    "[erp-mdm] 员工删除 - master_data_id={}",
-                    event.master_data_id
-                );
-                // TODO: 标记 ERP 员工记录为已离职
-            }
-            MasterDataAction::Activated | MasterDataAction::Deactivated => {
-                let status = if event.action == MasterDataAction::Activated {
-                    "active"
-                } else {
-                    "inactive"
-                };
-                tracing::info!(
-                    "[erp-mdm] 员工状态变更 - master_data_id={}, status={}",
-                    event.master_data_id,
-                    status
-                );
-                // TODO: 更新 ERP 员工状态
-            }
-        }
+        let status = match event.action {
+            MasterDataAction::Deleted => "deleted",
+            MasterDataAction::Deactivated => "inactive",
+            _ => "active",
+        };
+
+        self.upsert_local_master_data_ref(
+            &event,
+            "employee",
+            employee_name,
+            status,
+        )
+        .await?;
 
         Ok(())
     }
@@ -1708,46 +1676,20 @@ impl ErpEventHandlers {
             .get("name")
             .and_then(|v| v.as_str())
             .unwrap_or("");
-        let org_code = event.payload.get("code").and_then(|v| v.as_str());
 
-        match event.action {
-            MasterDataAction::Created => {
-                tracing::info!(
-                    "[erp-mdm] 组织创建 - name={}, code={:?}",
-                    org_name,
-                    org_code
-                );
-                // TODO: 创建 ERP 组织记录
-            }
-            MasterDataAction::Updated => {
-                tracing::info!(
-                    "[erp-mdm] 组织更新 - name={}, code={:?}",
-                    org_name,
-                    org_code
-                );
-                // TODO: 更新 ERP 组织记录
-            }
-            MasterDataAction::Deleted => {
-                tracing::info!(
-                    "[erp-mdm] 组织删除 - master_data_id={}",
-                    event.master_data_id
-                );
-                // TODO: 标记 ERP 组织为已删除
-            }
-            MasterDataAction::Activated | MasterDataAction::Deactivated => {
-                let status = if event.action == MasterDataAction::Activated {
-                    "active"
-                } else {
-                    "inactive"
-                };
-                tracing::info!(
-                    "[erp-mdm] 组织状态变更 - name={}, status={}",
-                    org_name,
-                    status
-                );
-                // TODO: 更新 ERP 组织状态
-            }
-        }
+        let status = match event.action {
+            MasterDataAction::Deleted => "deleted",
+            MasterDataAction::Deactivated => "inactive",
+            _ => "active",
+        };
+
+        self.upsert_local_master_data_ref(
+            &event,
+            "organization",
+            org_name,
+            status,
+        )
+        .await?;
 
         Ok(())
     }
@@ -1769,49 +1711,20 @@ impl ErpEventHandlers {
             .get("name")
             .and_then(|v| v.as_str())
             .unwrap_or("");
-        let customer_code = event.payload.get("code").and_then(|v| v.as_str());
-        let email = event.payload.get("email").and_then(|v| v.as_str());
 
-        match event.action {
-            MasterDataAction::Created => {
-                tracing::info!(
-                    "[erp-mdm] 客户创建 - name={}, code={:?}, email={:?}",
-                    customer_name,
-                    customer_code,
-                    email
-                );
-                // TODO: 创建 ERP 客户财务记录（客户档案、信用额度等）
-            }
-            MasterDataAction::Updated => {
-                tracing::info!(
-                    "[erp-mdm] 客户更新 - name={}, code={:?}, changed_fields={:?}",
-                    customer_name,
-                    customer_code,
-                    event.changed_fields
-                );
-                // TODO: 同步更新 ERP 客户财务记录
-            }
-            MasterDataAction::Deleted => {
-                tracing::info!(
-                    "[erp-mdm] 客户删除 - master_data_id={}",
-                    event.master_data_id
-                );
-                // TODO: 标记 ERP 客户为已停用（财务记录保留）
-            }
-            MasterDataAction::Activated | MasterDataAction::Deactivated => {
-                let status = if event.action == MasterDataAction::Activated {
-                    "active"
-                } else {
-                    "inactive"
-                };
-                tracing::info!(
-                    "[erp-mdm] 客户状态变更 - name={}, status={}",
-                    customer_name,
-                    status
-                );
-                // TODO: 更新 ERP 客户信用状态
-            }
-        }
+        let status = match event.action {
+            MasterDataAction::Deleted => "deleted",
+            MasterDataAction::Deactivated => "inactive",
+            _ => "active",
+        };
+
+        self.upsert_local_master_data_ref(
+            &event,
+            "customer",
+            customer_name,
+            status,
+        )
+        .await?;
 
         Ok(())
     }
@@ -1833,49 +1746,78 @@ impl ErpEventHandlers {
             .get("name")
             .and_then(|v| v.as_str())
             .unwrap_or("");
-        let material_no = event.payload.get("material_no").and_then(|v| v.as_str());
-        let spec = event.payload.get("spec").and_then(|v| v.as_str());
-        let unit = event.payload.get("unit").and_then(|v| v.as_str());
 
-        match event.action {
-            MasterDataAction::Created => {
+        let status = match event.action {
+            MasterDataAction::Deleted => "deleted",
+            MasterDataAction::Deactivated => "inactive",
+            _ => "active",
+        };
+
+        self.upsert_local_master_data_ref(
+            &event,
+            "material",
+            material_name,
+            status,
+        )
+        .await?;
+
+        Ok(())
+    }
+
+    /// AC-5: 将主数据变更事件持久化到本地 ref 表
+    ///
+    /// 通过 master_data_id（而非业务编码）建立跨服务关联。
+    /// 消费端查询时使用 master_data_id 定位本地业务记录。
+    async fn upsert_local_master_data_ref(
+        &self,
+        event: &MasterDataEvent,
+        local_entity_type: &str,
+        name: &str,
+        status: &str,
+    ) -> HandlerResult {
+        let domain_str = format!("{:?}", event.domain).to_lowercase();
+
+        let result = sqlx::query(
+            r#"INSERT INTO erp_master_data_refs
+               (master_data_id, tenant_id, domain, code, name, status, source_service,
+                local_entity_type, payload_snapshot, last_synced_at, created_at, updated_at)
+               VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, NOW(), NOW(), NOW())
+               ON CONFLICT (master_data_id) DO UPDATE
+               SET name = EXCLUDED.name,
+                   status = EXCLUDED.status,
+                   code = EXCLUDED.code,
+                   payload_snapshot = EXCLUDED.payload_snapshot,
+                   last_synced_at = NOW(),
+                   updated_at = NOW()"#,
+        )
+        .bind(&event.master_data_id)
+        .bind(event.tenant_id)
+        .bind(&domain_str)
+        .bind(&event.code)
+        .bind(name)
+        .bind(status)
+        .bind(&event.source_service)
+        .bind(local_entity_type)
+        .bind(&event.payload)
+        .execute(&self.db)
+        .await;
+
+        match result {
+            Ok(_) => {
                 tracing::info!(
-                    "[erp-mdm] 物料创建 - name={}, material_no={:?}, spec={:?}, unit={:?}",
-                    material_name,
-                    material_no,
-                    spec,
-                    unit
+                    "[erp-mdm] 本地 ref 已同步 - master_data_id={}, domain={}, action={:?}, local_entity_type={}",
+                    event.master_data_id,
+                    domain_str,
+                    event.action,
+                    local_entity_type
                 );
-                // TODO: 创建 ERP 物料库存记录
             }
-            MasterDataAction::Updated => {
-                tracing::info!(
-                    "[erp-mdm] 物料更新 - name={}, material_no={:?}, changed_fields={:?}",
-                    material_name,
-                    material_no,
-                    event.changed_fields
+            Err(e) => {
+                tracing::warn!(
+                    "[erp-mdm] 本地 ref 同步失败（graceful fallback）- master_data_id={}: {}",
+                    event.master_data_id,
+                    e
                 );
-                // TODO: 同步更新 ERP 物料库存记录
-            }
-            MasterDataAction::Deleted => {
-                tracing::info!(
-                    "[erp-mdm] 物料删除 - master_data_id={}",
-                    event.master_data_id
-                );
-                // TODO: 标记 ERP 物料为已删除
-            }
-            MasterDataAction::Activated | MasterDataAction::Deactivated => {
-                let status = if event.action == MasterDataAction::Activated {
-                    "active"
-                } else {
-                    "inactive"
-                };
-                tracing::info!(
-                    "[erp-mdm] 物料状态变更 - name={}, status={}",
-                    material_name,
-                    status
-                );
-                // TODO: 更新 ERP 物料状态
             }
         }
 
@@ -1888,7 +1830,7 @@ pub async fn start_event_subscribers(db: PgPool) -> Result<(), String> {
     let handlers = ErpEventHandlers::new(db);
     let subscriber = handlers.build_subscriber().map_err(|e| e.to_string())?;
 
-    tracing::info!("[erp] 启动事件订阅者，注册 13 个业务事件 handler");
+    tracing::info!("[erp] 启动事件订阅者，注册 13 个业务事件 + 4 个 MDM 主数据事件 handler");
     tokio::spawn(async move {
         if let Err(e) = subscriber.start_listening().await {
             tracing::error!("[erp] 事件订阅者异常退出: {}", e);

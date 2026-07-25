@@ -1,0 +1,85 @@
+//! ERP 服务 API trait 定义
+//!
+//! 展示如何用 `define_service_api!` 宏声明服务元数据，
+//! 并在 `TypedServiceClient<ErpApi>` 上实现业务方法。
+
+use super::super::error::ServiceClientResult;
+use super::super::trait_api::TypedServiceClient;
+use crate::define_service_api;
+use serde::{Deserialize, Serialize};
+
+define_service_api!(
+    ErpApi,
+    "topems-erp",
+    8010,
+    Some("ERP_SERVICE_URL"),
+    "/api/erp"
+);
+
+// ============ 业务数据类型 ============
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct ErpAsset {
+    pub id: String,
+    pub name: String,
+    pub asset_code: String,
+    pub status: String,
+}
+
+// ============ TypedServiceClient<ErpApi> 业务方法 ============
+
+impl TypedServiceClient<ErpApi> {
+    /// 列出资产
+    pub async fn list_assets(
+        &self,
+        page: i32,
+        page_size: i32,
+    ) -> ServiceClientResult<Vec<serde_json::Value>> {
+        let path = format!("/assets?page={}&pagesize={}", page, page_size);
+        self.get(&self.build_path(&path)).await
+    }
+
+    /// 获取单个资产
+    pub async fn get_asset(&self, id: &str) -> ServiceClientResult<serde_json::Value> {
+        let path = format!("/assets/{}", id);
+        self.get(&self.build_path(&path)).await
+    }
+
+    /// 列出凭证
+    pub async fn list_vouchers(
+        &self,
+        page: i32,
+        page_size: i32,
+    ) -> ServiceClientResult<Vec<serde_json::Value>> {
+        let path = format!("/vouchers?page={}&pagesize={}", page, page_size);
+        self.get(&self.build_path(&path)).await
+    }
+
+    /// 创建凭证
+    pub async fn create_voucher(
+        &self,
+        data: &serde_json::Value,
+    ) -> ServiceClientResult<serde_json::Value> {
+        self.post(&self.build_path("/vouchers"), data).await
+    }
+
+    /// 获取库存汇总
+    pub async fn get_inventory_summary(&self) -> ServiceClientResult<serde_json::Value> {
+        self.get(&self.build_path("/inventory/summary")).await
+    }
+
+    /// 列出客户
+    pub async fn list_customers(
+        &self,
+        page: i32,
+        page_size: i32,
+    ) -> ServiceClientResult<Vec<serde_json::Value>> {
+        let path = format!("/customers?page={}&pagesize={}", page, page_size);
+        self.get(&self.build_path(&path)).await
+    }
+
+    /// 获取财务汇总
+    pub async fn get_finance_summary(&self) -> ServiceClientResult<serde_json::Value> {
+        self.get(&self.build_path("/finance/summary")).await
+    }
+}

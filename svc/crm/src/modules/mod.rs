@@ -1,6 +1,5 @@
 use crate::models::Customer;
 use crate::shared::InMemoryCache;
-use crate::workflow::WorkflowClient;
 use axum::{extract::FromRef, Router};
 use sqlx::postgres::PgPool;
 use std::sync::Arc;
@@ -37,7 +36,7 @@ pub struct ApiState {
     pub event_publisher: Option<Arc<topems_shared::event::publisher::EventPublisher>>,
     pub erp_client: Option<Arc<topems_shared::service_client::ErpServiceClient>>,
     pub wms_client: Option<Arc<topems_shared::service_client::WmsServiceClient>>,
-    pub workflow_client: WorkflowClient,
+    pub workflow_client: topems_shared::service_client::WorkflowServiceClient,
     pub customer_cache: Arc<InMemoryCache<Customer>>,
     pub dashboard_cache: Arc<InMemoryCache<serde_json::Value>>,
 }
@@ -54,7 +53,7 @@ impl FromRef<ApiState> for PgPool {
     }
 }
 
-impl FromRef<ApiState> for WorkflowClient {
+impl FromRef<ApiState> for topems_shared::service_client::WorkflowServiceClient {
     fn from_ref(state: &ApiState) -> Self {
         state.workflow_client.clone()
     }

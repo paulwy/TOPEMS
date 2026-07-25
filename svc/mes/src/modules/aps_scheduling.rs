@@ -290,6 +290,7 @@ pub struct SimulateResult {
 // ==================== Internal Data Structures ====================
 
 #[derive(Debug, Clone)]
+#[allow(dead_code)]
 struct WorkOrderInfo {
     id: Uuid,
     order_no: String,
@@ -304,6 +305,7 @@ struct WorkOrderInfo {
 }
 
 #[derive(Debug, Clone)]
+#[allow(dead_code)]
 struct WorkStationInfo {
     id: Uuid,
     name: String,
@@ -314,6 +316,7 @@ struct WorkStationInfo {
 }
 
 #[derive(Debug, Clone)]
+#[allow(dead_code)]
 struct EquipmentInfo {
     id: Uuid,
     name: String,
@@ -322,6 +325,7 @@ struct EquipmentInfo {
 }
 
 #[derive(Debug, Clone)]
+#[allow(dead_code)]
 struct BomItemInfo {
     material_code: String,
     material_name: String,
@@ -330,6 +334,7 @@ struct BomItemInfo {
 }
 
 #[derive(Debug, Clone)]
+#[allow(dead_code)]
 struct MaterialAvailability {
     material_code: String,
     available_quantity: f64,
@@ -342,11 +347,13 @@ fn big_decimal_to_f64(bd: Option<BigDecimal>) -> f64 {
         .unwrap_or(0.0)
 }
 
+#[allow(dead_code)]
 fn naive_to_utc(dt: Option<NaiveDateTime>) -> DateTime<Utc> {
     dt.map(|d| Utc.from_utc_datetime(&d))
         .unwrap_or_else(Utc::now)
 }
 
+#[allow(dead_code)]
 fn opt_naive_to_utc(dt: Option<NaiveDateTime>) -> Option<DateTime<Utc>> {
     dt.map(|d| Utc.from_utc_datetime(&d))
 }

@@ -3,6 +3,7 @@ use uuid::Uuid;
 
 use super::super::super::models::*;
 use topems_shared::error::TopemsError;
+use topems_shared::service_client::CreateInstanceRequest;
 
 use super::FinanceService;
 
@@ -71,7 +72,7 @@ impl FinanceService {
                 payment.payment_no
             );
 
-            let request = crate::workflow::client::CreateInstanceRequest {
+            let request = CreateInstanceRequest {
                 workflow_id: wf_id,
                 title: format!("付款单审批: {}", payment.payment_no),
                 variables: Some(serde_json::json!({

@@ -235,3 +235,43 @@ pub async fn delete_elimination_rule(
         }
     }
 }
+
+pub async fn export_elimination_worksheet(
+    State(state): State<ApiState>,
+    Path(scope_id): Path<Uuid>,
+) -> Json<ApiResponse<serde_json::Value>> {
+    let rules = match sqlx::query_as::<_, EliminationRule>(
+        "SELECT * FROM plugin_erp.elimination_rules WHERE scope_id = $1 ORDER BY priority ASC",
+    )
+    .bind(scope_id)
+    .fetch_all(&state.db)
+    .await
+    {
+        Ok(r) => r,
+        Err(e) => {
+            tracing::error!("导出抵消工作底稿-查询规则失败: {}", e);
+            return Json(api_error(500, "导出抵消工作底稿失败"));
+        }
+    };
+
+    let transactions = match sqlx::query_as::<_, InternalTransaction>(
+        "SELECT * FROM plugin_erp.internal_transactions ORDER BY transaction_date DESC",
+    )
+    .fetch_all(&state.db)
+    .await
+    {
+        Ok(t) => t,
+        Err(e) => {
+            tracing::error!("导出抵消工作底稿-查询交易失败: {}", e);
+            return Json(api_error(500, "导出抵消工作底稿失败"));
+        }
+    };
+
+    let worksheet = serde_json::json!({
+        "scope_id": scope_id,
+        "elimination_rules": rules,
+        "internal_transactions": transactions,
+    });
+
+    Json(ApiResponse::success(worksheet, "导出抵消工作底稿成功"))
+}

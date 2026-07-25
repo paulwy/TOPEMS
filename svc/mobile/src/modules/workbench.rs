@@ -6,9 +6,15 @@ use axum::{
 };
 use serde::{Deserialize, Serialize};
 use sqlx::{PgPool, Row};
-use topems_shared::{ApiResponse, AuthState};
+use topems_shared::{
+    ApiResponse, AuthState, WorkflowServiceClient,
+};
+use topems_shared::service_client::{
+    api::hrm_api::HrmApi, api::mes_api::MesApi, api::notification_api::NotificationApi,
+    api::qms_api::QmsApi, TypedServiceClient,
+};
 
-use super::auth_utils::extract_user_id_from_token;
+use super::auth_utils::{extract_bearer_token, extract_user_id_from_token};
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct MobileWorkbenchData {
@@ -33,6 +39,11 @@ pub struct Shortcut {
 pub async fn get_workbench_data(
     State(auth_state): State<AuthState>,
     State(pool): State<PgPool>,
+    State(workflow_client): State<WorkflowServiceClient>,
+    State(notification_client): State<TypedServiceClient<NotificationApi>>,
+    State(hrm_client): State<TypedServiceClient<HrmApi>>,
+    State(mes_client): State<TypedServiceClient<MesApi>>,
+    State(qms_client): State<TypedServiceClient<QmsApi>>,
     headers: HeaderMap,
 ) -> impl IntoResponse {
     let user_id = match extract_user_id_from_token(&headers, &auth_state.jwt_secret) {
@@ -45,45 +56,46 @@ pub async fn get_workbench_data(
         }
     };
 
-    let pending_tasks = sqlx::query(
-        "SELECT COUNT(*) as count FROM plugin_mobile.mobile_tasks WHERE (assignee = $1 OR assignee IS NULL) AND status = 'pending'",
-    )
-    .bind(&user_id)
-    .fetch_one(&pool)
-    .await
-    .map(|r: sqlx::postgres::PgRow| r.get::<Option<i64>, _>("count").unwrap_or(0))
-    .unwrap_or(0);
+    let bearer_token = extract_bearer_token(&headers);
 
-    let pending_approvals = sqlx::query(
-        "SELECT COUNT(*) as count FROM mobile_approvals WHERE assignee_id = $1 AND status = 'pending'",
-    )
-    .bind(&user_id)
-    .fetch_one(&pool)
-    .await
-    .map(|r: sqlx::postgres::PgRow| r.get::<Option<i64>, _>("count").unwrap_or(0))
-    .unwrap_or(0);
+    let pending_tasks = match &bearer_token {
+        Some(token) => {
+            let mut client = workflow_client.clone();
+            client.set_auth_token(token);
+            match client.get_my_task_count().await {
+                Ok(count) => count,
+                Err(e) => {
+                    tracing::warn!("调用Workflow服务获取待办任务数失败: {}", e);
+                    0
+                }
+            }
+        }
+        None => 0,
+    };
 
-    let unread_notifications = sqlx::query(
-        "SELECT COUNT(*) as count FROM mobile_notifications WHERE user_id = $1 AND read = false",
-    )
-    .bind(&user_id)
-    .fetch_one(&pool)
-    .await
-    .map(|r: sqlx::postgres::PgRow| r.get::<Option<i64>, _>("count").unwrap_or(0))
-    .unwrap_or(0);
+    let pending_approvals: i64 = 0;
 
-    let today_attendance_status = check_attendance_status(&pool, &user_id).await;
+    let unread_notifications = match &bearer_token {
+        Some(token) => {
+            let mut client = notification_client.clone();
+            client.set_auth_token(token);
+            match client.get_unread_count().await {
+                Ok(count) => count as i64,
+                Err(e) => {
+                    tracing::warn!("调用Notification服务获取未读通知数失败: {}", e);
+                    0
+                }
+            }
+        }
+        None => 0,
+    };
 
-    let today_production_output = sqlx::query(
-        "SELECT COALESCE(SUM(good_quantity), 0) as output FROM plugin_mobile.work_reports WHERE operator = $1 AND created_at >= CURRENT_DATE",
-    )
-    .bind(&user_id)
-    .fetch_one(&pool)
-    .await
-    .map(|r: sqlx::postgres::PgRow| r.get::<Option<i64>, _>("output").unwrap_or(0))
-    .unwrap_or(0);
+    let today_attendance_status = check_attendance_status(&hrm_client, &bearer_token, &user_id).await;
 
-    let today_quality_pass_rate = calculate_quality_pass_rate(&pool).await;
+    let today_production_output =
+        get_today_production_output(&mes_client, &bearer_token, &user_id).await;
+
+    let today_quality_pass_rate = get_today_quality_pass_rate(&qms_client, &bearer_token).await;
 
     let shortcuts = get_shortcuts(&pool, &user_id).await;
 
@@ -103,49 +115,65 @@ pub async fn get_workbench_data(
     )
 }
 
-async fn check_attendance_status(pool: &PgPool, user_id: &str) -> String {
-    let today_check_in = sqlx::query(
-        "SELECT check_in_time FROM mobile_attendance WHERE user_id = $1 AND date = CURRENT_DATE ORDER BY created_at DESC LIMIT 1",
-    )
-    .bind(user_id)
-    .fetch_optional(pool)
-    .await;
-
-    let today_check_out = sqlx::query(
-        "SELECT check_out_time FROM mobile_attendance WHERE user_id = $1 AND date = CURRENT_DATE ORDER BY created_at DESC LIMIT 1",
-    )
-    .bind(user_id)
-    .fetch_optional(pool)
-    .await;
-
-    match (today_check_in, today_check_out) {
-        (Ok(Some(_)), Ok(Some(_))) => "checked_out".to_string(),
-        (Ok(Some(_)), Ok(None)) => "checked_in".to_string(),
-        _ => "not_checked_in".to_string(),
+async fn check_attendance_status(
+    hrm_client: &TypedServiceClient<HrmApi>,
+    bearer_token: &Option<String>,
+    user_id: &str,
+) -> String {
+    match bearer_token {
+        Some(token) => {
+            let mut client = hrm_client.clone();
+            client.set_auth_token(token);
+            match client.get_today_attendance_status(user_id).await {
+                Ok(status) => status,
+                Err(e) => {
+                    tracing::warn!("调用HRM服务获取今日考勤状态失败: {}", e);
+                    "not_checked_in".to_string()
+                }
+            }
+        }
+        None => "not_checked_in".to_string(),
     }
 }
 
-async fn calculate_quality_pass_rate(pool: &PgPool) -> f64 {
-    let total = sqlx::query(
-        "SELECT COUNT(*) as count FROM plugin_mobile.quality_tasks WHERE status = 'passed' AND created_at >= CURRENT_DATE",
-    )
-    .fetch_one(pool)
-    .await
-    .map(|r: sqlx::postgres::PgRow| r.get::<Option<i64>, _>("count").unwrap_or(0))
-    .unwrap_or(0);
+async fn get_today_production_output(
+    mes_client: &TypedServiceClient<MesApi>,
+    bearer_token: &Option<String>,
+    user_id: &str,
+) -> i64 {
+    match bearer_token {
+        Some(token) => {
+            let mut client = mes_client.clone();
+            client.set_auth_token(token);
+            match client.get_today_production_output(user_id).await {
+                Ok(output) => output,
+                Err(e) => {
+                    tracing::warn!("调用MES服务获取今日产量失败: {}", e);
+                    0
+                }
+            }
+        }
+        None => 0,
+    }
+}
 
-    let passed = sqlx::query(
-        "SELECT COUNT(*) as count FROM plugin_mobile.quality_tasks WHERE status = 'passed' AND created_at >= CURRENT_DATE",
-    )
-    .fetch_one(pool)
-    .await
-    .map(|r: sqlx::postgres::PgRow| r.get::<Option<i64>, _>("count").unwrap_or(0))
-    .unwrap_or(0);
-
-    if total == 0 {
-        0.0
-    } else {
-        (passed as f64 / total as f64) * 100.0
+async fn get_today_quality_pass_rate(
+    qms_client: &TypedServiceClient<QmsApi>,
+    bearer_token: &Option<String>,
+) -> f64 {
+    match bearer_token {
+        Some(token) => {
+            let mut client = qms_client.clone();
+            client.set_auth_token(token);
+            match client.get_today_quality_pass_rate().await {
+                Ok(rate) => rate,
+                Err(e) => {
+                    tracing::warn!("调用QMS服务获取今日质量合格率失败: {}", e);
+                    0.0
+                }
+            }
+        }
+        None => 0.0,
     }
 }
 

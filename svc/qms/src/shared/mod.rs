@@ -3,12 +3,12 @@
 
 pub mod permission;
 
-use crate::workflow::WorkflowClient;
 use axum::extract::FromRef;
 use serde::{Deserialize, Serialize};
 use sqlx::PgPool;
 use std::sync::Arc;
 use topems_shared::event::EventPublisher;
+use topems_shared::service_client::WorkflowServiceClient;
 use topems_shared::{AuthState, SimpleHealthConfig};
 
 #[derive(Clone)]
@@ -17,7 +17,7 @@ pub struct AppState {
     pub pool: PgPool,
     pub health_config: SimpleHealthConfig,
     pub event_publisher: Option<Arc<EventPublisher>>,
-    pub workflow_client: WorkflowClient,
+    pub workflow_client: WorkflowServiceClient,
 }
 
 impl FromRef<AppState> for AuthState {
@@ -32,7 +32,7 @@ impl FromRef<AppState> for PgPool {
     }
 }
 
-impl FromRef<AppState> for WorkflowClient {
+impl FromRef<AppState> for WorkflowServiceClient {
     fn from_ref(state: &AppState) -> Self {
         state.workflow_client.clone()
     }

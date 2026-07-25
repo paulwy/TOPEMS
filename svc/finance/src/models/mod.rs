@@ -4,8 +4,9 @@ use serde::{Deserialize, Serialize};
 use sqlx::FromRow;
 use std::fmt;
 use uuid::Uuid;
+use utoipa::ToSchema;
 
-#[derive(Debug, Clone, FromRow, Serialize)]
+#[derive(Debug, Clone, FromRow, Serialize, ToSchema)]
 pub struct Account {
     pub id: Uuid,
     pub tenant_id: Uuid,
@@ -21,7 +22,7 @@ pub struct Account {
     pub updated_at: DateTime<Utc>,
 }
 
-#[derive(Debug, Clone, PartialEq, Eq, sqlx::Type, Deserialize, Serialize)]
+#[derive(Debug, Clone, PartialEq, Eq, sqlx::Type, Deserialize, Serialize, ToSchema)]
 #[sqlx(type_name = "account_type")]
 #[sqlx(rename_all = "snake_case")]
 #[serde(rename_all = "snake_case")]
@@ -47,7 +48,7 @@ impl fmt::Display for AccountType {
     }
 }
 
-#[derive(Debug, Clone, FromRow, Serialize)]
+#[derive(Debug, Clone, FromRow, Serialize, ToSchema)]
 pub struct Voucher {
     pub id: Uuid,
     pub tenant_id: Uuid,
@@ -66,7 +67,7 @@ pub struct Voucher {
     pub updated_at: DateTime<Utc>,
 }
 
-#[derive(Debug, Clone, PartialEq, Eq, sqlx::Type, Deserialize, Serialize)]
+#[derive(Debug, Clone, PartialEq, Eq, sqlx::Type, Deserialize, Serialize, ToSchema)]
 #[sqlx(type_name = "voucher_type")]
 #[sqlx(rename_all = "snake_case")]
 #[serde(rename_all = "snake_case")]
@@ -88,7 +89,7 @@ impl fmt::Display for VoucherType {
     }
 }
 
-#[derive(Debug, Clone, PartialEq, Eq, sqlx::Type, Deserialize, Serialize)]
+#[derive(Debug, Clone, PartialEq, Eq, sqlx::Type, Deserialize, Serialize, ToSchema)]
 #[sqlx(type_name = "voucher_status")]
 #[sqlx(rename_all = "snake_case")]
 #[serde(rename_all = "snake_case")]
@@ -114,7 +115,7 @@ impl fmt::Display for VoucherStatus {
     }
 }
 
-#[derive(Debug, Clone, FromRow, Serialize)]
+#[derive(Debug, Clone, FromRow, Serialize, ToSchema)]
 pub struct VoucherLine {
     pub id: Uuid,
     pub tenant_id: Uuid,
@@ -131,7 +132,7 @@ pub struct VoucherLine {
     pub created_at: DateTime<Utc>,
 }
 
-#[derive(Debug, Clone, FromRow, Serialize)]
+#[derive(Debug, Clone, FromRow, Serialize, ToSchema)]
 pub struct LedgerEntry {
     pub id: Uuid,
     pub tenant_id: Uuid,
@@ -149,7 +150,7 @@ pub struct LedgerEntry {
     pub created_at: DateTime<Utc>,
 }
 
-#[derive(Debug, Clone, FromRow, Serialize)]
+#[derive(Debug, Clone, FromRow, Serialize, ToSchema)]
 pub struct TrialBalance {
     pub account_id: Uuid,
     pub account_code: String,
@@ -159,7 +160,7 @@ pub struct TrialBalance {
     pub credit_balance: Decimal,
 }
 
-#[derive(Debug, Clone, FromRow, Serialize)]
+#[derive(Debug, Clone, FromRow, Serialize, ToSchema)]
 pub struct Period {
     pub id: Uuid,
     pub tenant_id: Uuid,
@@ -175,7 +176,7 @@ pub struct Period {
     pub updated_at: DateTime<Utc>,
 }
 
-#[derive(Debug, Clone, PartialEq, Eq, sqlx::Type, Deserialize, Serialize)]
+#[derive(Debug, Clone, PartialEq, Eq, sqlx::Type, Deserialize, Serialize, ToSchema)]
 #[sqlx(type_name = "period_status")]
 #[sqlx(rename_all = "snake_case")]
 #[serde(rename_all = "snake_case")]
@@ -185,7 +186,7 @@ pub enum PeriodStatus {
     Closed,
 }
 
-#[derive(Debug, Clone, Deserialize)]
+#[derive(Debug, Clone, Deserialize, ToSchema)]
 pub struct CreateAccountRequest {
     pub code: String,
     pub name: String,
@@ -195,12 +196,22 @@ pub struct CreateAccountRequest {
     pub description: Option<String>,
 }
 
-#[derive(Debug, Clone, Deserialize)]
+#[derive(Debug, Clone, Deserialize, ToSchema)]
 pub struct CreateVoucherRequest {
     #[serde(deserialize_with = "deserialize_date")]
     pub voucher_date: DateTime<Utc>,
     pub voucher_type: VoucherType,
     pub lines: Vec<VoucherLineRequest>,
+    pub description: Option<String>,
+}
+
+/// V39.0 Phase 7: 凭证更新请求（仅 draft/submitted/rejected 状态可更新）
+#[derive(Debug, Clone, Deserialize)]
+pub struct UpdateVoucherRequest {
+    #[serde(default, deserialize_with = "deserialize_option_date")]
+    pub voucher_date: Option<DateTime<Utc>>,
+    pub voucher_type: Option<VoucherType>,
+    pub lines: Option<Vec<VoucherLineRequest>>,
     pub description: Option<String>,
 }
 
@@ -224,7 +235,33 @@ where
     )))
 }
 
-#[derive(Debug, Clone, Deserialize)]
+/// V39.0 Phase 7: Option<DateTime> 反序列化（缺失时返回 None）
+fn deserialize_option_date<'de, D>(deserializer: D) -> Result<Option<DateTime<Utc>>, D::Error>
+where
+    D: serde::Deserializer<'de>,
+{
+    let opt = Option::<String>::deserialize(deserializer)?;
+    match opt {
+        None => Ok(None),
+        Some(s) => {
+            if let Ok(dt) = DateTime::parse_from_rfc3339(&s) {
+                return Ok(Some(dt.with_timezone(&Utc)));
+            }
+            if let Ok(naive) = chrono::NaiveDate::parse_from_str(&s, "%Y-%m-%d") {
+                let naive_dt = naive.and_hms_opt(0, 0, 0).ok_or_else(|| {
+                    serde::de::Error::custom(format!("Invalid date format: {}", s))
+                })?;
+                return Ok(Some(DateTime::<Utc>::from_naive_utc_and_offset(naive_dt, Utc)));
+            }
+            Err(serde::de::Error::custom(format!(
+                "Invalid date format: {}",
+                s
+            )))
+        }
+    }
+}
+
+#[derive(Debug, Clone, Deserialize, ToSchema)]
 pub struct VoucherLineRequest {
     pub account_code: String,
     pub description: Option<String>,
@@ -262,7 +299,7 @@ pub struct YearEndCloseResult {
     pub expense_accounts_closed: i32,
 }
 
-#[derive(Debug, Clone, Serialize)]
+#[derive(Debug, Clone, Serialize, ToSchema)]
 pub struct VoucherResponse {
     pub id: Uuid,
     pub voucher_no: String,
@@ -304,7 +341,7 @@ pub struct JournalEntry {
     pub credit: Decimal,
 }
 
-#[derive(Debug, Clone, Serialize)]
+#[derive(Debug, Clone, Serialize, ToSchema)]
 pub struct BalanceSheet {
     pub period: String,
     pub assets: Vec<BalanceItem>,
@@ -315,14 +352,14 @@ pub struct BalanceSheet {
     pub total_equity: Decimal,
 }
 
-#[derive(Debug, Clone, Serialize)]
+#[derive(Debug, Clone, Serialize, ToSchema)]
 pub struct BalanceItem {
     pub account_code: String,
     pub account_name: String,
     pub amount: Decimal,
 }
 
-#[derive(Debug, Clone, Serialize)]
+#[derive(Debug, Clone, Serialize, ToSchema)]
 pub struct IncomeStatement {
     pub period: String,
     pub revenues: Vec<IncomeItem>,
@@ -332,14 +369,14 @@ pub struct IncomeStatement {
     pub net_income: Decimal,
 }
 
-#[derive(Debug, Clone, Serialize)]
+#[derive(Debug, Clone, Serialize, ToSchema)]
 pub struct IncomeItem {
     pub account_code: String,
     pub account_name: String,
     pub amount: Decimal,
 }
 
-#[derive(Debug, Clone, PartialEq, Eq, sqlx::Type, Deserialize, Serialize)]
+#[derive(Debug, Clone, PartialEq, Eq, sqlx::Type, Deserialize, Serialize, ToSchema)]
 #[sqlx(type_name = "aux_type")]
 #[sqlx(rename_all = "snake_case")]
 #[serde(rename_all = "snake_case")]
@@ -369,7 +406,7 @@ impl fmt::Display for AuxType {
     }
 }
 
-#[derive(Debug, Clone, FromRow, Serialize)]
+#[derive(Debug, Clone, FromRow, Serialize, ToSchema)]
 pub struct AuxiliaryAccount {
     pub id: Uuid,
     pub tenant_id: Uuid,
@@ -453,7 +490,7 @@ pub struct AuxBalanceItem {
     pub credit_balance: Decimal,
 }
 
-#[derive(Debug, Clone, Serialize)]
+#[derive(Debug, Clone, Serialize, ToSchema)]
 pub struct CashFlowStatement {
     pub period: String,
     pub items: Vec<CashFlowItem>,
@@ -464,7 +501,7 @@ pub struct CashFlowStatement {
     pub closing_balance: Decimal,
 }
 
-#[derive(Debug, Clone, Serialize)]
+#[derive(Debug, Clone, Serialize, ToSchema)]
 pub struct CashFlowItem {
     pub item_code: String,
     pub item_name: String,
@@ -586,120 +623,7 @@ pub struct VoucherExportRow {
     pub created_by: String,
 }
 
-#[derive(Debug, Clone, PartialEq, Eq, sqlx::Type, Deserialize, Serialize)]
-#[sqlx(type_name = "approval_doc_type")]
-#[sqlx(rename_all = "snake_case")]
-#[serde(rename_all = "snake_case")]
-pub enum ApprovalDocType {
-    Voucher,
-    ConsolidationReport,
-    FinancialStatement,
-    JournalEntry,
-}
-
-impl fmt::Display for ApprovalDocType {
-    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        match self {
-            ApprovalDocType::Voucher => write!(f, "voucher"),
-            ApprovalDocType::ConsolidationReport => write!(f, "consolidation_report"),
-            ApprovalDocType::FinancialStatement => write!(f, "financial_statement"),
-            ApprovalDocType::JournalEntry => write!(f, "journal_entry"),
-        }
-    }
-}
-
-#[derive(Debug, Clone, PartialEq, Eq, sqlx::Type, Deserialize, Serialize)]
-#[sqlx(type_name = "approval_status")]
-#[sqlx(rename_all = "snake_case")]
-#[serde(rename_all = "snake_case")]
-pub enum ApprovalStatus {
-    Pending,
-    Approved,
-    Rejected,
-    Cancelled,
-}
-
-impl fmt::Display for ApprovalStatus {
-    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        match self {
-            ApprovalStatus::Pending => write!(f, "pending"),
-            ApprovalStatus::Approved => write!(f, "approved"),
-            ApprovalStatus::Rejected => write!(f, "rejected"),
-            ApprovalStatus::Cancelled => write!(f, "cancelled"),
-        }
-    }
-}
-
-#[derive(Debug, Clone, FromRow, Serialize)]
-pub struct ApprovalWorkflow {
-    pub id: Uuid,
-    pub tenant_id: Uuid,
-    pub doc_type: ApprovalDocType,
-    pub doc_id: Uuid,
-    pub doc_no: String,
-    pub status: ApprovalStatus,
-    pub submitted_by: String,
-    pub submitted_at: DateTime<Utc>,
-    pub approved_by: Option<String>,
-    pub approved_at: Option<DateTime<Utc>>,
-    pub rejected_by: Option<String>,
-    pub rejected_at: Option<DateTime<Utc>>,
-    pub rejection_reason: Option<String>,
-    pub comment: Option<String>,
-    pub created_at: DateTime<Utc>,
-    pub updated_at: DateTime<Utc>,
-}
-
-#[derive(Debug, Clone, Deserialize)]
-pub struct SubmitApprovalRequest {
-    pub doc_type: ApprovalDocType,
-    pub doc_id: Uuid,
-    pub doc_no: String,
-}
-
-#[derive(Debug, Clone, Deserialize)]
-pub struct ApproveRequest {
-    pub comment: Option<String>,
-}
-
-#[derive(Debug, Clone, Deserialize)]
-pub struct RejectRequest {
-    pub reason: String,
-    pub comment: Option<String>,
-}
-
-#[derive(Debug, Clone, Serialize)]
-pub struct ApprovalResult {
-    pub workflow_id: Uuid,
-    pub doc_type: ApprovalDocType,
-    pub doc_id: Uuid,
-    pub status: ApprovalStatus,
-    pub action_by: String,
-    pub action_at: DateTime<Utc>,
-}
-
-#[derive(Debug, Clone, Deserialize)]
-pub struct ApprovalStatusQuery {
-    pub doc_type: ApprovalDocType,
-    pub doc_id: Uuid,
-}
-
-#[derive(Debug, Clone, Deserialize)]
-pub struct ApprovalListQuery {
-    pub doc_type: Option<ApprovalDocType>,
-    pub page: Option<i64>,
-    pub page_size: Option<i64>,
-}
-
-#[derive(Debug, Clone, Serialize)]
-pub struct ApprovalListResponse {
-    pub workflows: Vec<ApprovalWorkflow>,
-    pub total: i64,
-    pub page: i64,
-    pub page_size: i64,
-}
-
-#[derive(Debug, Clone, FromRow, Serialize)]
+#[derive(Debug, Clone, FromRow, Serialize, ToSchema)]
 pub struct Payment {
     pub id: Uuid,
     pub tenant_id: Uuid,
@@ -727,7 +651,7 @@ pub struct Payment {
     pub updated_at: DateTime<Utc>,
 }
 
-#[derive(Debug, Clone, FromRow, Serialize)]
+#[derive(Debug, Clone, FromRow, Serialize, ToSchema)]
 pub struct PaymentItem {
     pub id: Uuid,
     pub tenant_id: Uuid,
@@ -747,7 +671,7 @@ pub struct PaymentItem {
     pub created_at: DateTime<Utc>,
 }
 
-#[derive(Debug, Clone, Deserialize)]
+#[derive(Debug, Clone, Deserialize, ToSchema)]
 pub struct CreatePaymentRequest {
     pub supplier_id: Option<Uuid>,
     pub supplier_name: Option<String>,
@@ -762,7 +686,7 @@ pub struct CreatePaymentRequest {
     pub items: Vec<PaymentItemRequest>,
 }
 
-#[derive(Debug, Clone, Deserialize)]
+#[derive(Debug, Clone, Deserialize, ToSchema)]
 pub struct PaymentItemRequest {
     pub invoice_id: Option<Uuid>,
     pub invoice_no: Option<String>,
@@ -778,7 +702,7 @@ pub struct ExecutePaymentRequest {
     pub actual_payment_date: chrono::NaiveDate,
 }
 
-#[derive(Debug, Clone, Serialize)]
+#[derive(Debug, Clone, Serialize, ToSchema)]
 pub struct PaymentResponse {
     pub id: Uuid,
     pub payment_no: String,

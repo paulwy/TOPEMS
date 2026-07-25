@@ -159,6 +159,7 @@ impl MdmEventService {
     }
 
     /// 发布公司主数据变更事件
+    #[allow(dead_code)]
     pub async fn publish_company_event(
         &self,
         tenant_id: Uuid,

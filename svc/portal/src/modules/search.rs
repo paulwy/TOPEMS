@@ -261,30 +261,36 @@ async fn search_notifications(
     }
     match client.list_notifications(1, 20, None).await {
         Ok(resp) => resp
-            .notifications
+            .get("notifications")
+            .and_then(|v| v.as_array())
+            .unwrap_or(&vec![])
             .iter()
             .filter(|n| {
-                n.title.to_lowercase().contains(&query.to_lowercase())
-                    || n.content.to_lowercase().contains(&query.to_lowercase())
+                let title = n.get("title").and_then(|v| v.as_str()).unwrap_or("");
+                let content = n.get("content").and_then(|v| v.as_str()).unwrap_or("");
+                title.to_lowercase().contains(&query.to_lowercase())
+                    || content.to_lowercase().contains(&query.to_lowercase())
             })
             .take(10)
-            .map(|n| {
-                let title = n.title.clone();
-                let summary: String = n.content.chars().take(100).collect();
-                SearchResult {
-                    id: n.id.clone(),
+            .filter_map(|n| {
+                let title = n.get("title")?.as_str()?.to_string();
+                let content = n.get("content")?.as_str()?.to_string();
+                let summary: String = content.chars().take(100).collect();
+                Some(SearchResult {
+                    id: n.get("id")?.as_str()?.to_string(),
                     highlight_title: highlight_text(&title, query),
                     highlight_summary: highlight_text(&summary, query),
                     title,
                     summary,
                     service: "notification".to_string(),
                     service_name: "通知中心".to_string(),
-                    result_type: n.notification_type.clone(),
+                    result_type: n.get("notification_type")?.as_str()?.to_string(),
                     url: n
-                        .link_url
-                        .clone()
+                        .get("link_url")
+                        .and_then(|v| v.as_str())
+                        .map(|s| s.to_string())
                         .unwrap_or_else(|| "/notifications".to_string()),
-                }
+                })
             })
             .collect(),
         Err(e) => {
@@ -414,8 +420,7 @@ async fn search_mes_production_orders(
         client.set_auth_token(t.to_string());
     }
     match client.list_production_orders(1, 20).await {
-        Ok(resp) => {
-            let items = resp.data.unwrap_or_default();
+        Ok(items) => {
             let q = query.to_lowercase();
             items
                 .into_iter()

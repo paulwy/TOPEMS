@@ -95,6 +95,22 @@ pub fn create_routes() -> Router<ApiState> {
         )
 }
 
+#[utoipa::path(
+    get,
+    path = "/opportunities",
+    tag = "opportunity",
+    params(
+        ("page" = Option<i64>, Query, description = "页码"),
+        ("page_size" = Option<i64>, Query, description = "每页数量"),
+        ("search" = Option<String>, Query, description = "搜索关键词"),
+        ("stage" = Option<String>, Query, description = "阶段过滤"),
+        ("customer_id" = Option<Uuid>, Query, description = "客户ID过滤"),
+    ),
+    responses(
+        (status = 200, description = "商机列表", body = ApiResponse<serde_json::Value>),
+        (status = 500, description = "服务器内部错误"),
+    ),
+)]
 async fn list_opportunities(
     State(state): State<ApiState>,
     Extension(claims): Extension<Claims>,

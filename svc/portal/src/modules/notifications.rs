@@ -9,6 +9,9 @@ use axum::{
     Json,
 };
 use topems_shared::ApiResponse;
+use topems_shared::service_client::{
+    api::notification_api::NotificationApi, TypedServiceClient,
+};
 
 use crate::{models::Notification, shared::AppState, utils::user_context::extract_bearer_token};
 
@@ -32,18 +35,24 @@ pub async fn get_notifications(
     match client.list_notifications(1, 50, None).await {
         Ok(resp) => {
             let notifications: Vec<Notification> = resp
-                .notifications
+                .get("notifications")
+                .and_then(|v| v.as_array())
+                .unwrap_or(&vec![])
                 .iter()
-                .map(|n| Notification {
-                    id: n.id.clone(),
-                    title: n.title.clone(),
-                    content: n.content.clone(),
-                    service: n.notification_type.clone(),
-                    service_name: format_service_name(&n.notification_type),
-                    notification_type: n.notification_type.clone(),
-                    read: n.is_read,
-                    created_at: n.created_at,
-                    link_url: n.link_url.clone(),
+                .filter_map(|n| {
+                    Some(Notification {
+                        id: n.get("id")?.as_str()?.to_string(),
+                        title: n.get("title")?.as_str()?.to_string(),
+                        content: n.get("content")?.as_str()?.to_string(),
+                        service: n.get("notification_type")?.as_str()?.to_string(),
+                        service_name: format_service_name(n.get("notification_type")?.as_str()?),
+                        notification_type: n.get("notification_type")?.as_str()?.to_string(),
+                        read: n.get("is_read")?.as_bool()?,
+                        created_at: chrono::DateTime::parse_from_rfc3339(n.get("created_at")?.as_str()?)
+                            .ok()?
+                            .with_timezone(&chrono::Utc),
+                        link_url: n.get("link_url").and_then(|v| v.as_str()).map(|s| s.to_string()),
+                    })
                 })
                 .collect();
             Json(ApiResponse::success(notifications, "通知列表获取成功"))
@@ -91,9 +100,9 @@ pub async fn mark_all_notifications_read(
 }
 
 fn build_client(
-    base: &topems_shared::NotificationSvcClient,
+    base: &TypedServiceClient<NotificationApi>,
     headers: &HeaderMap,
-) -> topems_shared::NotificationSvcClient {
+) -> TypedServiceClient<NotificationApi> {
     let client = base.clone();
     if let Some(token) = extract_bearer_token(headers) {
         client.with_auth_token(token)

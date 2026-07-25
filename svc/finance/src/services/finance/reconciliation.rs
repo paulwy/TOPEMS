@@ -1,4 +1,4 @@
-use chrono::{DateTime, NaiveDate, Utc};
+use chrono::{NaiveDate, Utc};
 use rust_decimal::Decimal;
 use sqlx::PgPool;
 use uuid::Uuid;
@@ -94,7 +94,7 @@ impl ReconciliationService {
         let mut count_query = String::from(
             "SELECT COUNT(*) FROM core_finance_reconciliation_sessions WHERE tenant_id = $1",
         );
-        let mut params: Vec<String> = vec![];
+        let _params: Vec<String> = vec![];
 
         if let Some(rt) = &reco_type {
             query.push_str(&format!(" AND reco_type = '{}'", rt));

@@ -1,9 +1,10 @@
 use chrono::{DateTime, Utc};
 use serde::{Deserialize, Serialize};
 use sqlx::FromRow;
+use utoipa::ToSchema;
 use uuid::Uuid;
 
-#[derive(Debug, Clone, FromRow, Serialize, Deserialize)]
+#[derive(Debug, Clone, FromRow, Serialize, Deserialize, ToSchema)]
 pub struct Contract {
     pub id: Uuid,
     pub tenant_id: Uuid,
@@ -26,7 +27,7 @@ pub struct Contract {
     pub updated_at: DateTime<Utc>,
 }
 
-#[derive(Debug, Clone, Deserialize, Serialize)]
+#[derive(Debug, Clone, Deserialize, Serialize, ToSchema)]
 pub struct CreateContractRequest {
     pub employee_id: Uuid,
     pub contract_no: Option<String>,
@@ -44,7 +45,7 @@ pub struct CreateContractRequest {
     pub notes: Option<String>,
 }
 
-#[derive(Debug, Clone, Deserialize, Serialize)]
+#[derive(Debug, Clone, Deserialize, Serialize, ToSchema)]
 pub struct UpdateContractRequest {
     pub contract_no: Option<String>,
     pub contract_type: Option<String>,
@@ -62,7 +63,7 @@ pub struct UpdateContractRequest {
     pub notes: Option<String>,
 }
 
-#[derive(Debug, Clone, FromRow, Serialize, Deserialize)]
+#[derive(Debug, Clone, FromRow, Serialize, Deserialize, ToSchema)]
 pub struct ContractRenewal {
     pub id: Uuid,
     pub tenant_id: Uuid,

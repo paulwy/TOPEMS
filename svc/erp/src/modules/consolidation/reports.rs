@@ -219,6 +219,52 @@ pub async fn get_report_lines(
     }
 }
 
+pub async fn export_report(
+    State(state): State<ApiState>,
+    Path(report_id): Path<Uuid>,
+) -> Json<ApiResponse<serde_json::Value>> {
+    let report = match sqlx::query_as::<_, ConsolidationReport>(
+        r#"
+        SELECT cr.*, cs.name as scope_name
+        FROM plugin_erp.consolidation_reports cr
+        LEFT JOIN plugin_erp.consolidation_scopes cs ON cs.id = cr.scope_id
+        WHERE cr.id = $1
+        "#,
+    )
+    .bind(report_id)
+    .fetch_optional(&state.db)
+    .await
+    {
+        Ok(Some(r)) => r,
+        Ok(None) => return Json(api_error(404, "合并报表不存在")),
+        Err(e) => {
+            tracing::error!("导出合并报表失败: {}", e);
+            return Json(api_error(500, "导出合并报表失败"));
+        }
+    };
+
+    let lines = match sqlx::query_as::<_, ConsolidationReportLine>(
+        "SELECT * FROM plugin_erp.consolidation_report_lines WHERE report_id = $1 ORDER BY line_no ASC",
+    )
+    .bind(report_id)
+    .fetch_all(&state.db)
+    .await
+    {
+        Ok(l) => l,
+        Err(e) => {
+            tracing::error!("导出合并报表行项目失败: {}", e);
+            return Json(api_error(500, "导出合并报表行项目失败"));
+        }
+    };
+
+    let export_data = serde_json::json!({
+        "report": report,
+        "lines": lines,
+    });
+
+    Json(ApiResponse::success(export_data, "导出合并报表成功"))
+}
+
 pub async fn submit_report(
     State(state): State<ApiState>,
     Path(report_id): Path<Uuid>,
@@ -245,6 +291,7 @@ pub async fn submit_report(
     };
 
     if let Err(e) = call_finance_core_approval(
+        &state.finance_client,
         "consolidation_report",
         report_id,
         &report.report_no,
@@ -314,6 +361,7 @@ pub async fn approve_report(
     };
 
     if let Err(e) = call_finance_core_approval(
+        &state.finance_client,
         "consolidation_report",
         report_id,
         &report.report_no,

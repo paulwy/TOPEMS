@@ -1,3 +1,5 @@
+#![allow(dead_code)]
+
 pub mod announcement;
 pub mod asset;
 pub mod audit_log;
@@ -24,7 +26,7 @@ pub use meeting_room::{
     UpdateMeetingBookingRequest, UpdateMeetingRoomRequest,
 };
 pub use migration::{
-    AddColumnRequest, ColumnInfo, DbChange, DbColumnDefinition, DropColumnRequest,
+    AddColumnRequest, ColumnInfo, DbChange,
     ModifyColumnRequest, TableInfo,
 };
 pub use office_supplies::{CreateOfficeSupplyRequest, OfficeSupply, UpdateOfficeSupplyRequest};

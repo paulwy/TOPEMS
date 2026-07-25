@@ -6,7 +6,8 @@
 
 use crate::modules::ApiState;
 use axum::{extract::State, routing::get, Json, Router};
-use topems_shared::{ApiResponse, Company, Department, Employee};
+use topems_shared::ApiResponse;
+use topems_shared::service_client::api::hrm_api::{HrmCompany, HrmDepartment, HrmEmployee};
 
 pub fn create_routes() -> Router<ApiState> {
     Router::new()
@@ -19,7 +20,7 @@ pub fn create_routes() -> Router<ApiState> {
 /// 从 HRM 服务获取所有员工列表
 pub async fn list_employees_from_hrm(
     State(state): State<ApiState>,
-) -> Json<ApiResponse<Vec<Employee>>> {
+) -> Json<ApiResponse<Vec<HrmEmployee>>> {
     match state.hrm_client.list_employees().await {
         Ok(employees) => Json(ApiResponse::success(employees, "从HRM服务获取员工列表成功")),
         Err(e) => Json(ApiResponse::error(
@@ -33,7 +34,7 @@ pub async fn list_employees_from_hrm(
 pub async fn get_employee_from_hrm(
     axum::extract::Path(id): axum::extract::Path<String>,
     State(state): State<ApiState>,
-) -> Json<ApiResponse<Employee>> {
+) -> Json<ApiResponse<HrmEmployee>> {
     use uuid::Uuid;
     match Uuid::parse_str(&id) {
         Ok(uuid) => match state.hrm_client.get_employee(uuid).await {
@@ -50,7 +51,7 @@ pub async fn get_employee_from_hrm(
 /// 从 HRM 服务获取所有部门列表
 pub async fn list_departments_from_hrm(
     State(state): State<ApiState>,
-) -> Json<ApiResponse<Vec<Department>>> {
+) -> Json<ApiResponse<Vec<HrmDepartment>>> {
     match state.hrm_client.list_departments().await {
         Ok(departments) => Json(ApiResponse::success(
             departments,
@@ -66,7 +67,7 @@ pub async fn list_departments_from_hrm(
 /// 从 HRM 服务获取所有公司列表
 pub async fn list_companies_from_hrm(
     State(state): State<ApiState>,
-) -> Json<ApiResponse<Vec<Company>>> {
+) -> Json<ApiResponse<Vec<HrmCompany>>> {
     match state.hrm_client.list_companies().await {
         Ok(companies) => Json(ApiResponse::success(companies, "从HRM服务获取公司列表成功")),
         Err(e) => Json(ApiResponse::error(

@@ -9,8 +9,9 @@ use bigdecimal::BigDecimal;
 use serde::{Deserialize, Serialize};
 use sqlx::{types::Uuid, FromRow, Row};
 use topems_shared::{ApiResponse, Claims};
+use utoipa::ToSchema;
 
-#[derive(Debug, Deserialize)]
+#[derive(Debug, Deserialize, ToSchema)]
 pub struct InspectionQuery {
     pub page: Option<i64>,
     pub page_size: Option<i64>,
@@ -19,7 +20,7 @@ pub struct InspectionQuery {
     pub search: Option<String>,
 }
 
-#[derive(Debug, Serialize)]
+#[derive(Debug, Serialize, ToSchema)]
 pub struct ListInspectionsResponse {
     pub inspections: Vec<Inspection>,
     pub total: i64,
@@ -27,7 +28,7 @@ pub struct ListInspectionsResponse {
     pub page_size: i64,
 }
 
-#[derive(Debug, Serialize, FromRow)]
+#[derive(Debug, Serialize, FromRow, ToSchema)]
 pub struct Inspection {
     pub id: String,
     pub tenant_id: String,
@@ -51,7 +52,7 @@ pub struct Inspection {
     pub updated_at: Option<String>,
 }
 
-#[derive(Debug, Deserialize)]
+#[derive(Debug, Deserialize, ToSchema)]
 pub struct CreateInspectionRequest {
     pub inspection_type: String,
     pub product_id: Option<String>,
@@ -61,13 +62,13 @@ pub struct CreateInspectionRequest {
     pub created_by: Option<String>,
 }
 
-#[derive(Debug, Deserialize)]
+#[derive(Debug, Deserialize, ToSchema)]
 pub struct AssignInspectionRequest {
     pub assignee: String,
     pub operator: String,
 }
 
-#[derive(Debug, Deserialize)]
+#[derive(Debug, Deserialize, ToSchema)]
 pub struct SubmitInspectionResultRequest {
     pub qualified_quantity: BigDecimal,
     pub unqualified_quantity: BigDecimal,
@@ -78,7 +79,7 @@ pub struct SubmitInspectionResultRequest {
     pub results: Option<Vec<InspectionResultItem>>,
 }
 
-#[derive(Debug, Deserialize, Serialize)]
+#[derive(Debug, Deserialize, Serialize, ToSchema)]
 pub struct InspectionResultItem {
     pub item_name: String,
     pub standard_value: Option<String>,
@@ -87,14 +88,14 @@ pub struct InspectionResultItem {
     pub remark: Option<String>,
 }
 
-#[derive(Debug, Deserialize)]
+#[derive(Debug, Deserialize, ToSchema)]
 pub struct AuditInspectionRequest {
     pub action: String,
     pub operator: String,
     pub comment: Option<String>,
 }
 
-#[derive(Debug, Deserialize)]
+#[derive(Debug, Deserialize, ToSchema)]
 pub struct UpdateInspectionRequest {
     pub inspection_type: Option<String>,
     pub product_id: Option<String>,
@@ -103,7 +104,7 @@ pub struct UpdateInspectionRequest {
     pub quantity: Option<BigDecimal>,
 }
 
-#[derive(Debug, Serialize, FromRow)]
+#[derive(Debug, Serialize, FromRow, ToSchema)]
 pub struct InspectionAudit {
     pub id: String,
     pub tenant_id: String,
@@ -171,6 +172,22 @@ fn get_tenant_id(claims: &Claims, headers: &axum::http::HeaderMap) -> Uuid {
         .unwrap_or_else(Uuid::new_v4)
 }
 
+#[utoipa::path(
+    get,
+    path = "/api/qms/checks",
+    tag = "quality_inspection",
+    params(
+        ("page" = Option<i64>, Query, description = "页码"),
+        ("page_size" = Option<i64>, Query, description = "每页数量"),
+        ("status" = Option<String>, Query, description = "状态过滤"),
+        ("inspection_type" = Option<String>, Query, description = "检验类型过滤"),
+        ("search" = Option<String>, Query, description = "搜索关键词"),
+    ),
+    responses(
+        (status = 200, description = "质量检验列表", body = ApiResponse<ListInspectionsResponse>),
+        (status = 500, description = "服务器内部错误"),
+    ),
+)]
 pub async fn list_inspections(
     State(state): State<crate::AppState>,
     Extension(claims): Extension<Claims>,
@@ -250,6 +267,16 @@ pub async fn list_inspections(
     ))
 }
 
+#[utoipa::path(
+    post,
+    path = "/api/qms/checks",
+    tag = "quality_inspection",
+    request_body = CreateInspectionRequest,
+    responses(
+        (status = 200, description = "质量检验创建成功", body = ApiResponse<Inspection>),
+        (status = 500, description = "服务器内部错误"),
+    ),
+)]
 pub async fn create_inspection(
     State(state): State<crate::AppState>,
     Extension(claims): Extension<Claims>,
@@ -284,6 +311,19 @@ pub async fn create_inspection(
     }
 }
 
+#[utoipa::path(
+    get,
+    path = "/api/qms/checks/{id}",
+    tag = "quality_inspection",
+    params(
+        ("id" = String, Path, description = "检验ID"),
+    ),
+    responses(
+        (status = 200, description = "质量检验详情", body = ApiResponse<Inspection>),
+        (status = 400, description = "无效的检查ID"),
+        (status = 500, description = "服务器内部错误"),
+    ),
+)]
 pub async fn get_inspection(
     State(state): State<crate::AppState>,
     Extension(claims): Extension<Claims>,
