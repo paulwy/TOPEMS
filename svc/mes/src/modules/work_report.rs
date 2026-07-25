@@ -11,6 +11,7 @@ use sqlx::{
 };
 use std::str::FromStr;
 use topems_shared::auth::Claims;
+use utoipa::ToSchema;
 
 use crate::shared::permission::{check_permission, ModulePermission};
 use crate::AppState;
@@ -21,6 +22,10 @@ pub fn create_routes() -> Router<AppState> {
         .route(
             "/work-reports",
             get(list_work_reports).post(create_work_report),
+        )
+        .route(
+            "/work-reports/today-output",
+            get(get_today_production_output),
         )
         .route(
             "/work-reports/{id}",
@@ -34,7 +39,7 @@ pub fn create_routes() -> Router<AppState> {
 
 // ==================== Request / Response Types ====================
 
-#[derive(Debug, Clone, Deserialize)]
+#[derive(Debug, Clone, Deserialize, ToSchema)]
 pub struct ListWorkReportsQuery {
     page: Option<i32>,
     pagesize: Option<i32>,
@@ -42,7 +47,7 @@ pub struct ListWorkReportsQuery {
     status: Option<String>,
 }
 
-#[derive(Debug, Clone, Deserialize)]
+#[derive(Debug, Clone, Deserialize, ToSchema)]
 pub struct CreateWorkReportRequest {
     pub work_order_id: Option<String>,
     pub work_order_no: Option<String>,
@@ -59,7 +64,7 @@ pub struct CreateWorkReportRequest {
     pub remark: Option<String>,
 }
 
-#[derive(Debug, Clone, Deserialize)]
+#[derive(Debug, Clone, Deserialize, ToSchema)]
 pub struct UpdateWorkReportRequest {
     pub work_order_id: Option<String>,
     pub work_order_no: Option<String>,
@@ -77,12 +82,12 @@ pub struct UpdateWorkReportRequest {
     pub status: Option<String>,
 }
 
-#[derive(Debug, Clone, Deserialize)]
+#[derive(Debug, Clone, Deserialize, ToSchema)]
 pub struct RejectWorkReportRequest {
     pub remark: Option<String>,
 }
 
-#[derive(Debug, Clone, Serialize)]
+#[derive(Debug, Clone, Serialize, ToSchema)]
 pub struct WorkReportResponse {
     pub id: String,
     pub report_no: String,
@@ -140,6 +145,96 @@ fn generate_report_no() -> String {
 
 // ==================== Handlers ====================
 
+#[derive(Debug, Clone, Deserialize)]
+pub struct TodayOutputQuery {
+    pub operator: Option<String>,
+}
+
+pub async fn get_today_production_output(
+    State(state): State<AppState>,
+    Query(query): Query<TodayOutputQuery>,
+) -> Json<ApiResponse<serde_json::Value>> {
+    // TODO(Mobile-BFF 数据迁移): 跨 schema 查询旧表待迁移
+    //
+    // 当前实现：跨 schema 查询 `plugin_mobile.work_reports`（mobile 服务私有表）
+    // 按 operator 聚合 good_quantity，违反服务边界原则。MES 已有自有表
+    // `work_reports`（见 list_work_reports/create_work_report 使用的表），
+    // 但 mobile 端通过 plugin_mobile.work_reports 写入的产量未同步过来。
+    //
+    // 迁移方案（5 阶段）：
+    //
+    // 阶段 1 — 数据导出：
+    //   从 plugin_mobile.work_reports 导出（operator, good_quantity,
+    //   defect_quantity, created_at, work_order_no 等），并按 operator 与
+    //   mes.work_reports.reporter_name 或员工表做映射。
+    //
+    // 阶段 2 — 表结构映射：
+    //   plugin_mobile.work_reports    →  mes.work_reports（已存在）
+    //     operator        (text)     →  reporter_name   (text)
+    //     good_quantity   (numeric)   →  output_quantity  (numeric)
+    //     defect_quantity (numeric)   →  defect_quantity  (numeric)
+    //     created_at      (timestamptz) →  created_at     (timestamptz)
+    //     work_order_no   (text, 可选) →  work_order_no   (text, 可选)
+    //   缺失字段 report_no 自动生成（WR+timestamp），status 默认 'imported'，
+    //   report_date 取 created_at::date，labor_hours 默认 0。
+    //
+    // 阶段 3 — 数据导入：
+    //   INSERT INTO mes.work_reports (...) SELECT ... FROM
+    //   plugin_mobile.work_reports WHERE NOT EXISTS (...); 导入后比对
+    //   SUM(good_quantity) 与原表一致。
+    //
+    // 阶段 4 — 端点切换：
+    //   将下方 SQL 改为 `SELECT COALESCE(SUM(output_quantity), 0) as output
+    //   FROM mes.work_reports WHERE reporter_name = $1 AND created_at >=
+    //   CURRENT_DATE`，并要求 Mobile BFF 传 operator 作为 reporter_name。
+    //   注意 MES 字段为 output_quantity（非 good_quantity），类型 BigDecimal。
+    //
+    // 阶段 5 — 旧表清理：
+    //   确认 mobile 端不再写入 plugin_mobile.work_reports 后 DROP 该表，
+    //   并从 svc/mobile/src/init.sql 中移除建表语句。Mobile 端报工应改为
+    //   通过 MesApi.create_work_report 调用 MES 服务。
+    //
+    // 跟踪: docs/roadmap/TODO.md "V62.x Mobile BFF 数据迁移" 章节
+    let operator = match query.operator {
+        Some(op) => op,
+        None => {
+            return Json(ApiResponse::<serde_json::Value>::error(
+                400,
+                "operator 参数是必需的",
+            ));
+        }
+    };
+
+    let output = sqlx::query(
+        "SELECT COALESCE(SUM(good_quantity), 0) as output FROM plugin_mobile.work_reports WHERE operator = $1 AND created_at >= CURRENT_DATE",
+    )
+    .bind(&operator)
+    .fetch_one(&state.pool)
+    .await
+    .map(|r: sqlx::postgres::PgRow| r.get::<Option<i64>, _>("output").unwrap_or(0))
+    .unwrap_or(0);
+
+    Json(ApiResponse::success(
+        serde_json::json!({ "output": output }),
+        "获取今日产量成功",
+    ))
+}
+
+#[utoipa::path(
+    get,
+    path = "/api/mes/work-reports",
+    tag = "WorkOrder",
+    params(
+        ("page" = Option<i32>, Query, description = "页码"),
+        ("pagesize" = Option<i32>, Query, description = "每页数量"),
+        ("search" = Option<String>, Query, description = "搜索关键词"),
+        ("status" = Option<String>, Query, description = "状态过滤"),
+    ),
+    responses(
+        (status = 200, description = "生产报工列表", body = ApiResponse<serde_json::Value>),
+        (status = 500, description = "服务器内部错误"),
+    ),
+)]
 pub async fn list_work_reports(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
@@ -321,6 +416,18 @@ pub async fn list_work_reports(
     ))
 }
 
+#[utoipa::path(
+    get,
+    path = "/api/mes/work-reports/{id}",
+    tag = "WorkOrder",
+    params(
+        ("id" = String, Path, description = "报工ID"),
+    ),
+    responses(
+        (status = 200, description = "生产报工详情", body = ApiResponse<WorkReportResponse>),
+        (status = 500, description = "服务器内部错误"),
+    ),
+)]
 pub async fn get_work_report(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
@@ -390,6 +497,16 @@ pub async fn get_work_report(
     }
 }
 
+#[utoipa::path(
+    post,
+    path = "/api/mes/work-reports",
+    tag = "WorkOrder",
+    request_body = CreateWorkReportRequest,
+    responses(
+        (status = 200, description = "生产报工创建成功", body = ApiResponse<WorkReportResponse>),
+        (status = 500, description = "服务器内部错误"),
+    ),
+)]
 pub async fn create_work_report(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,

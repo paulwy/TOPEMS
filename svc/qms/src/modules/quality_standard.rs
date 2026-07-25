@@ -8,8 +8,9 @@ use axum::{
 use serde::{Deserialize, Serialize};
 use sqlx::{types::Uuid, FromRow};
 use topems_shared::{ApiResponse, Claims};
+use utoipa::ToSchema;
 
-#[derive(Debug, Deserialize)]
+#[derive(Debug, Deserialize, ToSchema)]
 pub struct StandardQuery {
     pub page: Option<i64>,
     pub page_size: Option<i64>,
@@ -18,7 +19,7 @@ pub struct StandardQuery {
     pub search: Option<String>,
 }
 
-#[derive(Debug, Serialize)]
+#[derive(Debug, Serialize, ToSchema)]
 pub struct ListStandardsResponse {
     pub standards: Vec<QualityStandard>,
     pub total: i64,
@@ -26,7 +27,7 @@ pub struct ListStandardsResponse {
     pub page_size: i64,
 }
 
-#[derive(Debug, Serialize, FromRow)]
+#[derive(Debug, Serialize, FromRow, ToSchema)]
 pub struct QualityStandard {
     pub id: String,
     pub tenant_id: String,
@@ -43,7 +44,7 @@ pub struct QualityStandard {
     pub updated_at: Option<String>,
 }
 
-#[derive(Debug, Deserialize)]
+#[derive(Debug, Deserialize, ToSchema)]
 pub struct CreateStandardRequest {
     pub name: String,
     pub category: String,
@@ -54,7 +55,7 @@ pub struct CreateStandardRequest {
     pub created_by: Option<String>,
 }
 
-#[derive(Debug, Deserialize)]
+#[derive(Debug, Deserialize, ToSchema)]
 pub struct UpdateStandardRequest {
     pub name: Option<String>,
     pub category: Option<String>,
@@ -65,7 +66,7 @@ pub struct UpdateStandardRequest {
     pub status: Option<String>,
 }
 
-#[derive(Debug, Serialize, FromRow)]
+#[derive(Debug, Serialize, FromRow, ToSchema)]
 pub struct StandardRevision {
     pub id: String,
     pub tenant_id: String,
@@ -95,6 +96,22 @@ fn get_tenant_id(claims: &Claims, headers: &axum::http::HeaderMap) -> Uuid {
         .unwrap_or_else(Uuid::new_v4)
 }
 
+#[utoipa::path(
+    get,
+    path = "/api/qms/standards",
+    tag = "quality_standard",
+    params(
+        ("page" = Option<i64>, Query, description = "页码"),
+        ("page_size" = Option<i64>, Query, description = "每页数量"),
+        ("category" = Option<String>, Query, description = "分类过滤"),
+        ("status" = Option<String>, Query, description = "状态过滤"),
+        ("search" = Option<String>, Query, description = "搜索关键词"),
+    ),
+    responses(
+        (status = 200, description = "质量标准列表", body = ApiResponse<ListStandardsResponse>),
+        (status = 500, description = "服务器内部错误"),
+    ),
+)]
 pub async fn list_standards(
     State(state): State<crate::AppState>,
     Extension(claims): Extension<Claims>,
@@ -156,6 +173,16 @@ pub async fn list_standards(
     }
 }
 
+#[utoipa::path(
+    post,
+    path = "/api/qms/standards",
+    tag = "quality_standard",
+    request_body = CreateStandardRequest,
+    responses(
+        (status = 200, description = "质量标准创建成功", body = ApiResponse<QualityStandard>),
+        (status = 500, description = "服务器内部错误"),
+    ),
+)]
 pub async fn create_standard(
     State(state): State<crate::AppState>,
     Extension(claims): Extension<Claims>,
@@ -190,6 +217,19 @@ pub async fn create_standard(
     }
 }
 
+#[utoipa::path(
+    get,
+    path = "/api/qms/standards/{id}",
+    tag = "quality_standard",
+    params(
+        ("id" = String, Path, description = "标准ID"),
+    ),
+    responses(
+        (status = 200, description = "质量标准详情", body = ApiResponse<QualityStandard>),
+        (status = 400, description = "无效的标准ID"),
+        (status = 500, description = "服务器内部错误"),
+    ),
+)]
 pub async fn get_standard(
     State(state): State<crate::AppState>,
     Extension(claims): Extension<Claims>,

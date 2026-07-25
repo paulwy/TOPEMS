@@ -14,3 +14,16 @@ pub fn extract_user_id_from_token(headers: &HeaderMap, secret: &str) -> Result<S
         Err(_) => Err(()),
     }
 }
+
+pub fn extract_bearer_token(headers: &HeaderMap) -> Option<String> {
+    headers
+        .get("authorization")
+        .and_then(|v| v.to_str().ok())
+        .and_then(|v| {
+            if v.starts_with("Bearer ") {
+                Some(v["Bearer ".len()..].to_string())
+            } else {
+                None
+            }
+        })
+}

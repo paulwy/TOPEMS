@@ -74,7 +74,7 @@ pub async fn get_dashboard_stats(
 }
 
 async fn get_public_stats(state: &AppState) -> PublicDashboardStats {
-    if let Some(cached_str) = state.dashboard_cache.get(DASHBOARD_CACHE_KEY).await {
+    if let Ok(Some(cached_str)) = state.dashboard_cache.get::<String>(DASHBOARD_CACHE_KEY).await {
         if let Ok(cached) = serde_json::from_str::<PublicDashboardStats>(&cached_str) {
             tracing::debug!("Dashboard public stats cache hit");
             return cached;
@@ -84,11 +84,11 @@ async fn get_public_stats(state: &AppState) -> PublicDashboardStats {
     let stats = fetch_public_stats(state).await;
 
     if let Ok(json_str) = serde_json::to_string(&stats) {
-        state
+        let _ = state
             .dashboard_cache
             .set(
-                DASHBOARD_CACHE_KEY.to_string(),
-                json_str,
+                DASHBOARD_CACHE_KEY,
+                &json_str,
                 Some(Duration::from_secs(CACHE_TTL)),
             )
             .await;
@@ -139,7 +139,11 @@ async fn fetch_user_notification_unread(state: &AppState, headers: &HeaderMap) -
     client.set_auth_token(token);
 
     match client.get_stats().await {
-        Ok(stats) => stats.unread.max(stats.unread_notifications) as u64,
+        Ok(stats) => {
+            let unread = stats.get("unread").and_then(|v| v.as_i64()).unwrap_or(0);
+            let unread_notifications = stats.get("unread_notifications").and_then(|v| v.as_i64()).unwrap_or(0);
+            unread.max(unread_notifications) as u64
+        }
         Err(e) => {
             tracing::warn!("Failed to fetch notification stats: {}", e);
             0
@@ -191,7 +195,7 @@ async fn fetch_mes_stats(state: &AppState) -> (u64, u64) {
     let (orders_result, wip_result) = tokio::join!(
         async {
             match client.list_production_orders(1, 1).await {
-                Ok(resp) => resp.data.as_ref().map(|d| d.len() as u64).unwrap_or(0),
+                Ok(items) => items.len() as u64,
                 Err(e) => {
                     tracing::warn!("Failed to fetch MES production orders: {}", e);
                     0
@@ -200,15 +204,10 @@ async fn fetch_mes_stats(state: &AppState) -> (u64, u64) {
         },
         async {
             match client.get_wip_summary().await {
-                Ok(resp) => resp
-                    .data
-                    .as_ref()
-                    .and_then(|d| d.get("total_count").and_then(|v| v.as_u64()))
-                    .or_else(|| {
-                        resp.data
-                            .as_ref()
-                            .and_then(|d| d.get("count").and_then(|v| v.as_u64()))
-                    })
+                Ok(data) => data
+                    .get("total_count")
+                    .and_then(|v| v.as_u64())
+                    .or_else(|| data.get("count").and_then(|v| v.as_u64()))
                     .unwrap_or(0),
                 Err(e) => {
                     tracing::warn!("Failed to fetch MES WIP summary: {}", e);
@@ -302,6 +301,7 @@ pub async fn remove_quick_access(
     ))
 }
 
+#[allow(dead_code)]
 pub async fn warmup_dashboard_cache(state: AppState) {
     tokio::time::sleep(std::time::Duration::from_secs(2)).await;
     let stats = fetch_public_stats(&state).await;
@@ -310,11 +310,11 @@ pub async fn warmup_dashboard_cache(state: AppState) {
             state
                 .dashboard_cache
                 .set(
-                    DASHBOARD_CACHE_KEY.to_string(),
-                    json_str,
+                    DASHBOARD_CACHE_KEY,
+                    &json_str,
                     Some(std::time::Duration::from_secs(CACHE_TTL)),
                 )
-                .await;
+                .await.ok();
             tracing::info!("Dashboard public cache warmed up successfully");
         }
         Err(e) => {

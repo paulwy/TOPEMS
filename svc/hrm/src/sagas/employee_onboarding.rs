@@ -14,8 +14,10 @@ use uuid::Uuid;
 use topems_shared::saga::{SagaInstance, SagaOrchestrator, SagaResult, SagaStepDefinition};
 
 /// 员工入职 Saga
+#[allow(dead_code)]
 pub struct EmployeeOnboardingSaga;
 
+#[allow(dead_code)]
 impl EmployeeOnboardingSaga {
     pub fn new() -> Self {
         Self

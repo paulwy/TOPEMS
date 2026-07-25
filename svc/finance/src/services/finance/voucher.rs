@@ -532,6 +532,220 @@ impl FinanceService {
         })
     }
 
+    /// V39.0 Phase 7: 更新凭证（仅 draft/submitted/rejected 状态可更新）
+    pub async fn update_voucher(
+        &self,
+        tenant_id: Uuid,
+        voucher_id: Uuid,
+        req: UpdateVoucherRequest,
+        _updated_by: &str,
+    ) -> Result<VoucherResponse, TopemsError> {
+        let existing: Voucher = sqlx::query_as(
+            "SELECT * FROM core_finance_vouchers WHERE tenant_id = $1 AND id = $2",
+        )
+        .bind(tenant_id)
+        .bind(voucher_id)
+        .fetch_one(&self.db_pool)
+        .await?;
+
+        if existing.status == VoucherStatus::Posted {
+            return Err(TopemsError::ValidationFailed(
+                "已过账的凭证不能修改".to_string(),
+            ));
+        }
+
+        let voucher_date = req.voucher_date.unwrap_or(existing.voucher_date);
+        let voucher_type = req.voucher_type.unwrap_or(existing.voucher_type);
+        let description = req.description.or(existing.description);
+
+        let period = format!(
+            "{:04}{:02}",
+            voucher_date.year(),
+            voucher_date.month()
+        );
+
+        if let Some(ref lines) = req.lines {
+            let total_debit: Decimal = lines.iter().map(|l| l.debit).sum();
+            let total_credit: Decimal = lines.iter().map(|l| l.credit).sum();
+
+            if (total_debit - total_credit).abs() > Decimal::new(1, 4) {
+                return Err(TopemsError::ValidationFailed("借贷不平".to_string()));
+            }
+
+            sqlx::query(
+                "UPDATE core_finance_vouchers SET voucher_date = $1, period = $2, voucher_type = $3, description = $4, total_debit = $5, total_credit = $6, updated_at = CURRENT_TIMESTAMP WHERE tenant_id = $7 AND id = $8",
+            )
+            .bind(voucher_date)
+            .bind(&period)
+            .bind(&voucher_type)
+            .bind(&description)
+            .bind(total_debit)
+            .bind(total_credit)
+            .bind(tenant_id)
+            .bind(voucher_id)
+            .execute(&self.db_pool)
+            .await?;
+
+            sqlx::query("DELETE FROM core_finance_voucher_lines WHERE voucher_id = $1")
+                .bind(voucher_id)
+                .execute(&self.db_pool)
+                .await?;
+
+            let mut new_lines = Vec::new();
+            for (i, line) in lines.iter().enumerate() {
+                let account = self
+                    .get_account_by_code(tenant_id, &line.account_code)
+                    .await?;
+
+                let voucher_line = sqlx::query_as(
+                    "INSERT INTO core_finance_voucher_lines (voucher_id, line_no, account_id, account_code, account_name, description, debit, credit, project_id, department_id)
+                     VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10)
+                     RETURNING *",
+                )
+                .bind(voucher_id)
+                .bind(i as i32 + 1)
+                .bind(account.id)
+                .bind(account.code)
+                .bind(account.name)
+                .bind(line.description.clone())
+                .bind(line.debit)
+                .bind(line.credit)
+                .bind(line.project_id)
+                .bind(line.department_id)
+                .fetch_one(&self.db_pool)
+                .await?;
+
+                new_lines.push(voucher_line);
+            }
+
+            let updated: Voucher = sqlx::query_as(
+                "SELECT * FROM core_finance_vouchers WHERE tenant_id = $1 AND id = $2",
+            )
+            .bind(tenant_id)
+            .bind(voucher_id)
+            .fetch_one(&self.db_pool)
+            .await?;
+
+            Ok(VoucherResponse {
+                id: updated.id,
+                voucher_no: updated.voucher_no,
+                voucher_date: updated.voucher_date,
+                voucher_type: updated.voucher_type,
+                status: updated.status,
+                total_debit: updated.total_debit,
+                total_credit: updated.total_credit,
+                lines: new_lines,
+                description: updated.description,
+                created_at: updated.created_at,
+            })
+        } else {
+            let updated: Voucher = sqlx::query_as(
+                "UPDATE core_finance_vouchers SET voucher_date = $1, period = $2, voucher_type = $3, description = $4, updated_at = CURRENT_TIMESTAMP WHERE tenant_id = $5 AND id = $6 RETURNING *",
+            )
+            .bind(voucher_date)
+            .bind(&period)
+            .bind(&voucher_type)
+            .bind(&description)
+            .bind(tenant_id)
+            .bind(voucher_id)
+            .fetch_one(&self.db_pool)
+            .await?;
+
+            let existing_lines: Vec<VoucherLine> = sqlx::query_as(
+                "SELECT * FROM core_finance_voucher_lines WHERE voucher_id = $1 ORDER BY line_no",
+            )
+            .bind(voucher_id)
+            .fetch_all(&self.db_pool)
+            .await?;
+
+            Ok(VoucherResponse {
+                id: updated.id,
+                voucher_no: updated.voucher_no,
+                voucher_date: updated.voucher_date,
+                voucher_type: updated.voucher_type,
+                status: updated.status,
+                total_debit: updated.total_debit,
+                total_credit: updated.total_credit,
+                lines: existing_lines,
+                description: updated.description,
+                created_at: updated.created_at,
+            })
+        }
+    }
+
+    /// V39.0 Phase 7: 删除凭证（仅 draft/submitted/rejected/cancelled 状态可删除）
+    pub async fn delete_voucher(
+        &self,
+        tenant_id: Uuid,
+        voucher_id: Uuid,
+    ) -> Result<(), TopemsError> {
+        let existing: Voucher = sqlx::query_as(
+            "SELECT * FROM core_finance_vouchers WHERE tenant_id = $1 AND id = $2",
+        )
+        .bind(tenant_id)
+        .bind(voucher_id)
+        .fetch_optional(&self.db_pool)
+        .await?
+        .ok_or_else(|| TopemsError::NotFound("凭证不存在".to_string()))?;
+
+        if existing.status == VoucherStatus::Posted {
+            return Err(TopemsError::ValidationFailed(
+                "已过账的凭证不能删除".to_string(),
+            ));
+        }
+
+        sqlx::query("DELETE FROM core_finance_voucher_lines WHERE voucher_id = $1")
+            .bind(voucher_id)
+            .execute(&self.db_pool)
+            .await?;
+
+        sqlx::query("DELETE FROM core_finance_vouchers WHERE tenant_id = $1 AND id = $2")
+            .bind(tenant_id)
+            .bind(voucher_id)
+            .execute(&self.db_pool)
+            .await?;
+
+        Ok(())
+    }
+
+    /// V39.0 Phase 7: 反过账凭证（将已过账凭证回退到 approved 状态，并删除相关总账分录）
+    pub async fn unpost_voucher(
+        &self,
+        tenant_id: Uuid,
+        voucher_id: Uuid,
+    ) -> Result<Voucher, TopemsError> {
+        let existing: Voucher = sqlx::query_as(
+            "SELECT * FROM core_finance_vouchers WHERE tenant_id = $1 AND id = $2",
+        )
+        .bind(tenant_id)
+        .bind(voucher_id)
+        .fetch_optional(&self.db_pool)
+        .await?
+        .ok_or_else(|| TopemsError::NotFound("凭证不存在".to_string()))?;
+
+        if existing.status != VoucherStatus::Posted {
+            return Err(TopemsError::ValidationFailed(
+                "只有已过账的凭证才能反过账".to_string(),
+            ));
+        }
+
+        sqlx::query("DELETE FROM core_finance_ledger WHERE tenant_id = $1 AND voucher_id = $2")
+            .bind(tenant_id)
+            .bind(voucher_id)
+            .execute(&self.db_pool)
+            .await?;
+
+        let voucher = sqlx::query_as(
+            "UPDATE core_finance_vouchers SET status = 'approved', posted_by = NULL, updated_at = CURRENT_TIMESTAMP WHERE tenant_id = $1 AND id = $2 RETURNING *",
+        )
+        .bind(tenant_id)
+        .bind(voucher_id)
+        .fetch_one(&self.db_pool)
+        .await?;
+
+        Ok(voucher)
+    }
+
     pub(super) async fn create_voucher_with_tx(
         &self,
         tx: &mut sqlx::PgConnection,

@@ -16,23 +16,24 @@
 
 mod middleware;
 mod shared;
-mod workflow;
+mod openapi;
 
 pub mod modules;
 
-use std::env;
 
 use std::net::SocketAddr;
 
 use axum::{extract::State, routing::get, Json, Router};
 use axum_prometheus::PrometheusMetricLayer;
 use sqlx::PgPool;
+use utoipa::OpenApi;
 
 use topems_shared::{
     auth_middleware, create_cors_layer, event::EventPublisher, get_api_info_handler,
     init_telemetry, rls_middleware, simple_health_check, telemetry_middleware, wrap_group2_router,
     ApiResponse, AuthState, RouteCompatConfig, ServiceHealth, SimpleHealthConfig,
 };
+use topems_shared::service_client::{create_workflow_client, WorkflowServiceClient};
 
 pub use shared::*;
 
@@ -44,7 +45,7 @@ pub struct AppState {
     pub pool: PgPool,
     pub health_config: SimpleHealthConfig,
     pub event_publisher: Option<std::sync::Arc<EventPublisher>>,
-    pub workflow_client: workflow::WorkflowClient,
+    pub workflow_client: WorkflowServiceClient,
 }
 
 impl axum::extract::FromRef<AppState> for AuthState {
@@ -53,7 +54,7 @@ impl axum::extract::FromRef<AppState> for AuthState {
     }
 }
 
-impl axum::extract::FromRef<AppState> for workflow::WorkflowClient {
+impl axum::extract::FromRef<AppState> for WorkflowServiceClient {
     fn from_ref(state: &AppState) -> Self {
         state.workflow_client.clone()
     }
@@ -109,8 +110,9 @@ async fn main() -> anyhow::Result<()> {
     };
 
     let workflow_url = std::env::var("WORKFLOW_SERVICE_URL")
-        .unwrap_or_else(|_| "http://localhost:8001".to_string());
-    let workflow_client = workflow::WorkflowClient::new(&workflow_url);
+        .unwrap_or_else(|_| "http://localhost:8000".to_string());
+    let workflow_client =
+        create_workflow_client().expect("工作流服务客户端初始化失败");
     tracing::info!("🔗 工作流服务客户端初始化成功: {}", workflow_url);
 
     let state = AppState {
@@ -153,6 +155,10 @@ async fn main() -> anyhow::Result<()> {
     let app = Router::new()
         .merge(public_routes)
         .nest("/api/qms", protected_routes)
+        .route(
+            "/api-docs/openapi.json",
+            get(|| async move { axum::Json(openapi::QmsApiDoc::openapi()) }),
+        )
         .layer(cors)
         .layer(axum::middleware::from_fn(telemetry_middleware))
         .layer(prometheus_layer)

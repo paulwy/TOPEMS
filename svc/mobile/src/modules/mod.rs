@@ -1,14 +1,12 @@
 pub mod attendance;
-pub mod auth;
 pub mod auth_utils;
 pub mod barcode_scanner;
 pub mod device;
 pub mod inventory;
 pub mod media;
-pub mod mobile_approval;
 pub mod mobile_plugin;
-pub mod notification;
 pub mod offline;
+pub mod offline_records;
 pub mod offline_sync;
 pub mod patrol;
 pub mod photo_upload;

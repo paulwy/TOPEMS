@@ -9,6 +9,8 @@ use axum::{
     Json,
 };
 use topems_shared::{auth::Claims, ApiResponse};
+use topems_shared_service_client::service_client::api::iam_api::IamApi;
+use topems_shared_service_client::TypedServiceClient;
 
 use crate::{models::UserInfo, shared::AppState, utils::user_context::extract_bearer_token};
 
@@ -28,12 +30,12 @@ pub async fn get_user_info(
     match client.get_user(user_id).await {
         Ok(user) => {
             let user_info = UserInfo {
-                id: user.id.to_string(),
-                name: user.username.clone(),
-                email: user.email.clone(),
+                id: user.get("id").and_then(|v| v.as_str()).unwrap_or_default().to_string(),
+                name: user.get("username").and_then(|v| v.as_str()).unwrap_or_default().to_string(),
+                email: user.get("email").and_then(|v| v.as_str()).unwrap_or_default().to_string(),
                 avatar: "".to_string(),
                 department: claims.department.clone().unwrap_or_default(),
-                role: if user.is_superuser {
+                role: if user.get("is_superuser").and_then(|v| v.as_bool()).unwrap_or(false) {
                     "超级管理员".to_string()
                 } else {
                     claims.role.clone()
@@ -59,9 +61,9 @@ pub async fn get_user_info(
 }
 
 fn build_iam_client(
-    base: &topems_shared::IamServiceClient,
+    base: &TypedServiceClient<IamApi>,
     headers: &HeaderMap,
-) -> topems_shared::IamServiceClient {
+) -> TypedServiceClient<IamApi> {
     let client = base.clone();
     if let Some(token) = extract_bearer_token(headers) {
         client.with_auth_token(token)

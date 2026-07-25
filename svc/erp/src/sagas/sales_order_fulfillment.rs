@@ -6,6 +6,9 @@
 //! 3. 创建应收凭证（forward: 调用 Finance 创建应收凭证，compensate: 冲销凭证）
 //!
 //! 本文件为样板实现，forward/compensate 仅记录日志，不做真实数据库操作。
+//! V20.0 Saga 架构模板，保留供未来集成使用。
+
+#![allow(dead_code)]
 
 use tracing::info;
 use uuid::Uuid;

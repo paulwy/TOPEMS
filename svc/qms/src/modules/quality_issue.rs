@@ -8,10 +8,11 @@ use axum::{
 use serde::{Deserialize, Serialize};
 use sqlx::{types::Uuid, FromRow};
 use topems_shared::{event::EventType, event::QmsQualityIssueCreatedPayload, ApiResponse, Claims};
+use utoipa::ToSchema;
 
-use crate::workflow::CreateInstanceRequest;
+use topems_shared::service_client::CreateInstanceRequest;
 
-#[derive(Debug, Serialize, Deserialize)]
+#[derive(Debug, Serialize, Deserialize, ToSchema)]
 pub struct IssueQuery {
     pub page: Option<i64>,
     pub page_size: Option<i64>,
@@ -19,7 +20,7 @@ pub struct IssueQuery {
     pub severity: Option<String>,
 }
 
-#[derive(Debug, Serialize, FromRow)]
+#[derive(Debug, Serialize, FromRow, ToSchema)]
 pub struct QualityIssue {
     pub id: String,
     pub tenant_id: String,
@@ -36,7 +37,7 @@ pub struct QualityIssue {
     pub updated_at: Option<String>,
 }
 
-#[derive(Debug, Serialize)]
+#[derive(Debug, Serialize, ToSchema)]
 pub struct QualityIssueWithWorkflow {
     #[serde(flatten)]
     pub issue: QualityIssue,
@@ -44,7 +45,7 @@ pub struct QualityIssueWithWorkflow {
     pub approval_status: Option<String>,
 }
 
-#[derive(Debug, Serialize, Deserialize)]
+#[derive(Debug, Serialize, Deserialize, ToSchema)]
 pub struct CreateIssueRequest {
     pub title: String,
     pub description: Option<String>,
@@ -55,7 +56,7 @@ pub struct CreateIssueRequest {
     pub workflow_id: Option<Uuid>,
 }
 
-#[derive(Debug, Serialize, Deserialize)]
+#[derive(Debug, Serialize, Deserialize, ToSchema)]
 pub struct UpdateIssueRequest {
     pub title: Option<String>,
     pub description: Option<String>,
@@ -77,6 +78,21 @@ fn get_tenant_id(claims: &Claims, headers: &axum::http::HeaderMap) -> Uuid {
         .unwrap_or_else(Uuid::new_v4)
 }
 
+#[utoipa::path(
+    get,
+    path = "/api/qms/issues",
+    tag = "quality_issue",
+    params(
+        ("page" = Option<i64>, Query, description = "页码"),
+        ("page_size" = Option<i64>, Query, description = "每页数量"),
+        ("status" = Option<String>, Query, description = "状态过滤"),
+        ("severity" = Option<String>, Query, description = "严重程度过滤"),
+    ),
+    responses(
+        (status = 200, description = "质量问题列表", body = ApiResponse<Vec<QualityIssue>>),
+        (status = 500, description = "服务器内部错误"),
+    ),
+)]
 pub async fn list_issues(
     State(state): State<crate::AppState>,
     Extension(claims): Extension<Claims>,
@@ -112,6 +128,16 @@ pub async fn list_issues(
     }
 }
 
+#[utoipa::path(
+    post,
+    path = "/api/qms/issues",
+    tag = "quality_issue",
+    request_body = CreateIssueRequest,
+    responses(
+        (status = 200, description = "质量问题创建成功", body = ApiResponse<QualityIssue>),
+        (status = 500, description = "服务器内部错误"),
+    ),
+)]
 pub async fn create_issue(
     State(state): State<crate::AppState>,
     Extension(claims): Extension<Claims>,

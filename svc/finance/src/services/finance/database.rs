@@ -147,6 +147,20 @@ pub async fn init_database(pool: &PgPool) -> Result<(), TopemsError> {
 
     init_reconciliation_tables(pool).await?;
 
+    crate::modules::risk_v54::init_risk_v54_tables(pool).await?;
+
+    crate::modules::settlement_v55::init_settlement_v55_tables(pool).await?;
+
+    crate::modules::tax_v56::init_tax_v56_tables(pool).await?;
+
+    crate::modules::reports_v57::init_reports_v57_tables(pool).await?;
+
+    crate::modules::treasury_v58::init_treasury_v58_tables(pool).await?;
+
+    crate::modules::risk_v59::init_risk_v59_tables(pool).await?;
+
+    crate::modules::decision_v60::init_decision_v60_tables(pool).await?;
+
     Ok(())
 }
 

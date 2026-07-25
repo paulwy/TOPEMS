@@ -14,7 +14,7 @@ use crate::models::{CreateCustomerRequest, Customer, UpdateCustomerRequest};
 use crate::modules::audit::log_audit_event;
 use crate::services::mdm_event_service::MdmEventService;
 use crate::shared::permission::{check_permission, ModulePermission};
-use crate::workflow::CreateInstanceRequest;
+use topems_shared::service_client::CreateInstanceRequest;
 use topems_shared::auth::Claims;
 use topems_shared::event::MasterDataAction;
 use topems_shared::{api_error, ApiResponse};
@@ -57,6 +57,24 @@ fn customer_cache_key(id: &Uuid) -> String {
     format!("customer:{}", id)
 }
 
+#[utoipa::path(
+    get,
+    path = "/customers",
+    tag = "customer",
+    params(
+        ("page" = Option<i64>, Query, description = "页码"),
+        ("page_size" = Option<i64>, Query, description = "每页数量"),
+        ("search" = Option<String>, Query, description = "搜索关键词"),
+        ("status" = Option<String>, Query, description = "状态过滤"),
+        ("customer_type" = Option<String>, Query, description = "客户类型过滤"),
+        ("rating" = Option<String>, Query, description = "评级过滤"),
+        ("industry" = Option<String>, Query, description = "行业过滤"),
+    ),
+    responses(
+        (status = 200, description = "客户列表", body = ApiResponse<serde_json::Value>),
+        (status = 500, description = "服务器内部错误"),
+    ),
+)]
 async fn list_customers(
     State(state): State<ApiState>,
     Extension(claims): Extension<Claims>,
@@ -148,6 +166,17 @@ async fn list_customers(
     }
 }
 
+#[utoipa::path(
+    post,
+    path = "/customers",
+    tag = "customer",
+    request_body = CreateCustomerRequest,
+    responses(
+        (status = 200, description = "客户创建成功", body = ApiResponse<Customer>),
+        (status = 400, description = "请求参数错误"),
+        (status = 500, description = "服务器内部错误"),
+    ),
+)]
 async fn create_customer(
     State(state): State<ApiState>,
     Extension(claims): Extension<Claims>,
@@ -293,6 +322,19 @@ async fn create_customer(
     response
 }
 
+#[utoipa::path(
+    get,
+    path = "/customers/{id}",
+    tag = "customer",
+    params(
+        ("id" = Uuid, Path, description = "客户ID"),
+    ),
+    responses(
+        (status = 200, description = "客户详情", body = ApiResponse<Customer>),
+        (status = 404, description = "客户不存在"),
+        (status = 500, description = "服务器内部错误"),
+    ),
+)]
 async fn get_customer(
     State(state): State<ApiState>,
     Extension(claims): Extension<Claims>,

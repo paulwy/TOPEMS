@@ -32,6 +32,22 @@ pub fn create_routes() -> Router<ApiState> {
         )
 }
 
+#[utoipa::path(
+    get,
+    path = "/materials",
+    tag = "ERP",
+    params(
+        ("page" = Option<i64>, Query, description = "页码"),
+        ("pagesize" = Option<i64>, Query, description = "每页数量"),
+        ("search" = Option<String>, Query, description = "搜索关键词"),
+        ("status" = Option<String>, Query, description = "状态过滤"),
+        ("category" = Option<String>, Query, description = "分类过滤"),
+    ),
+    responses(
+        (status = 200, description = "物料列表", body = ApiResponse<PaginatedResponse<Material>>),
+        (status = 500, description = "服务器内部错误"),
+    ),
+)]
 pub async fn list_materials(
     State(state): State<ApiState>,
     Extension(claims): Extension<Claims>,
@@ -133,6 +149,17 @@ pub async fn get_material(
     }
 }
 
+#[utoipa::path(
+    post,
+    path = "/materials",
+    tag = "ERP",
+    request_body = CreateMaterialRequest,
+    responses(
+        (status = 200, description = "物料创建成功", body = ApiResponse<Material>),
+        (status = 400, description = "请求参数错误"),
+        (status = 500, description = "服务器内部错误"),
+    ),
+)]
 pub async fn create_material(
     State(state): State<ApiState>,
     Extension(claims): Extension<Claims>,

@@ -82,6 +82,7 @@ fn big_decimal_to_f64(bd: Option<BigDecimal>) -> f64 {
         .unwrap_or(0.0)
 }
 
+#[allow(dead_code)]
 fn big_decimal_to_f64_non_opt(bd: BigDecimal) -> f64 {
     bd.to_string().parse::<f64>().unwrap_or(0.0)
 }
@@ -90,6 +91,7 @@ fn parse_opt_datetime(s: Option<String>) -> Option<NaiveDateTime> {
     s.and_then(|s| NaiveDateTime::parse_from_str(&s, "%Y-%m-%dT%H:%M:%S").ok())
 }
 
+#[allow(dead_code)]
 fn parse_opt_date(s: Option<String>) -> Option<NaiveDateTime> {
     s.and_then(|s| NaiveDateTime::parse_from_str(&s, "%Y-%m-%d").ok())
 }

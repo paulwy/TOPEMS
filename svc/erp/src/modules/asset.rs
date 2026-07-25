@@ -32,6 +32,21 @@ pub fn create_routes() -> Router<ApiState> {
         )
 }
 
+#[utoipa::path(
+    get,
+    path = "/assets",
+    tag = "Assets",
+    params(
+        ("page" = Option<i64>, Query, description = "页码"),
+        ("page_size" = Option<i64>, Query, description = "每页数量"),
+        ("search" = Option<String>, Query, description = "搜索关键词"),
+        ("status" = Option<String>, Query, description = "状态过滤"),
+    ),
+    responses(
+        (status = 200, description = "资产列表", body = ApiResponse<PaginatedResponse<Asset>>),
+        (status = 500, description = "服务器内部错误"),
+    ),
+)]
 pub async fn list_assets(
     State(state): State<ApiState>,
     Extension(claims): Extension<Claims>,
@@ -94,6 +109,17 @@ pub async fn list_assets(
     }
 }
 
+#[utoipa::path(
+    post,
+    path = "/assets",
+    tag = "Assets",
+    request_body = CreateAssetRequest,
+    responses(
+        (status = 200, description = "资产创建成功", body = ApiResponse<Asset>),
+        (status = 400, description = "请求参数错误"),
+        (status = 500, description = "服务器内部错误"),
+    ),
+)]
 pub async fn create_asset(
     State(state): State<ApiState>,
     Extension(claims): Extension<Claims>,
@@ -191,6 +217,19 @@ pub async fn create_asset(
     response
 }
 
+#[utoipa::path(
+    get,
+    path = "/assets/{id}",
+    tag = "Assets",
+    params(
+        ("id" = Uuid, Path, description = "资产ID"),
+    ),
+    responses(
+        (status = 200, description = "资产详情", body = ApiResponse<Asset>),
+        (status = 404, description = "资产不存在"),
+        (status = 500, description = "服务器内部错误"),
+    ),
+)]
 pub async fn get_asset(
     State(state): State<ApiState>,
     Extension(claims): Extension<Claims>,

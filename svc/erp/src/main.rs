@@ -8,29 +8,21 @@ mod utils;
 pub mod modules;
 
 use anyhow::Result;
-use axum::{
-    routing::{delete, get, post, put},
-    Json, Router,
-};
-use axum_prometheus::PrometheusMetricLayer;
-use prometheus::{
-    register_int_counter, register_int_gauge, Encoder, IntCounter, IntGauge, TextEncoder,
-};
-use serde::Serialize;
+use prometheus::{register_int_counter, register_int_gauge, IntCounter, IntGauge};
 use std::env;
 use std::sync::Arc;
-use std::time::{Duration, Instant};
+use std::time::Duration;
 use utoipa::OpenApi;
 
 use modules::ApiState;
-use topems_shared::{
-    auth_middleware, check_http_health, create_api_info_router, create_cors_layer,
-    create_database_pool, create_hrm_client, init_telemetry, rate_limit_middleware,
-    register_routes_with_legacy_alias, request_context_middleware, rls_middleware,
-    telemetry_middleware, ApiResponse, AuthState, DatabaseConfig, DependencyHealth,
-    FieldEncryptionService, HealthStatus, KeyManager, NotificationServiceClient, RateLimitConfig,
-    RateLimitMiddleware, ServiceHealth, SystemMetrics,
+use topems_shared::service_bootstrap::{
+    bootstrap_service, build_application, create_health_state, create_standard_health_routes, run,
+    ServiceConfig,
 };
+use topems_shared::{
+    FieldEncryptionService, KeyManager, NotificationServiceClient,
+};
+use topems_shared::service_client::{api::finance_api::FinanceApi, api::hrm_api::HrmApi, TypedServiceClient};
 
 lazy_static::lazy_static! {
     pub static ref ASSET_COUNT: IntGauge = register_int_gauge!("topems_erp_asset_count", "Total number of assets in ERP system").expect("Failed to register asset_count gauge - check for duplicate metric registrations");
@@ -42,29 +34,31 @@ lazy_static::lazy_static! {
 
 #[tokio::main]
 async fn main() -> Result<()> {
-    dotenv::dotenv().ok();
-
-    let _telemetry_guard = init_telemetry("topems-erp");
-
-    let db_config = DatabaseConfig {
-        url: env::var("DATABASE_URL").map_err(|_| {
-            tracing::error!("DATABASE_URL environment variable is required");
-            anyhow::anyhow!("DATABASE_URL environment variable is required")
-        })?,
-        max_connections: 20,
-        min_connections: Some(5),
-        connect_timeout: Some(30),
-        idle_timeout: Some(300),
-        max_lifetime: Some(1800),
-        test_interval: Some(60),
-        enable_connection_reuse: Some(true),
+    let config = ServiceConfig {
+        name: "topems-erp",
+        port: 8010,
+        port_env_var: Some("ERP_PORT"),
+        max_db_connections: 20,
+        enable_events: true,
+        api_prefix: "/api/erp",
+        legacy_prefixes: &["/api/v1/erp"],
+        ..Default::default()
     };
 
-    let pool = create_database_pool(&db_config).await?;
+    let ctx = bootstrap_service(&config).await?;
 
-    tracing::info!("🔗 数据库连接成功");
+    // 数据库初始化
+    if let Err(e) = init_db(&ctx.db).await {
+        tracing::warn!("数据库初始化警告: {}", e);
+    }
 
-    let pool_clone = pool.clone();
+    // 事件订阅者（失败不阻塞启动）
+    if let Err(e) = event_handlers::start_event_subscribers(ctx.db.clone()).await {
+        tracing::warn!("⚠️ ERP 事件订阅者启动失败: {}", e);
+    }
+
+    // 后台业务指标更新
+    let pool_clone = ctx.db.clone();
     tokio::spawn(async move {
         let mut interval = tokio::time::interval(Duration::from_secs(60));
         loop {
@@ -73,150 +67,70 @@ async fn main() -> Result<()> {
         }
     });
 
-    if let Err(e) = init_db(&pool).await {
-        tracing::warn!("数据库初始化警告: {}", e);
-    }
-
-    // 启动事件订阅者（失败不阻塞启动，参考 CRM 模式）
-    if let Err(e) = event_handlers::start_event_subscribers(pool.clone()).await {
-        tracing::warn!("⚠️ ERP 事件订阅者启动失败: {}", e);
-    }
-
-    let event_publisher = match topems_shared::event::EventPublisher::new("topems-erp") {
-        Ok(publisher) => {
-            tracing::info!("📢 事件发布服务初始化成功");
-            Some(Arc::new(publisher))
-        }
-        Err(e) => {
-            tracing::warn!("⚠️ 事件发布服务初始化失败（不阻塞启动）: {}", e);
-            None
-        }
-    };
-
-    let start_time = Instant::now();
-    let metrics = Arc::new(SystemMetrics::new());
-
     // 初始化加密服务
     let encryption_service = init_encryption_service();
     tracing::info!("🔐 字段加密服务初始化成功");
 
-    // 初始化通知服务客户端
+    // 通知服务客户端
     let notification_service_url = env::var("NOTIFICATION_SERVICE_URL")
-        .unwrap_or_else(|_| "http://localhost:8003".to_string());
+        .unwrap_or_else(|_| "http://localhost:8000".to_string());
     let notification_client = Arc::new(NotificationServiceClient::with_base_url(
         notification_service_url,
     ));
 
-    // 初始化 HRM 服务客户端
-    let hrm_client = create_hrm_client().map(Arc::new).unwrap_or_else(|e| {
-        tracing::warn!("HRM服务客户端初始化失败: {}, 将使用mock模式", e);
-        use topems_shared::service_client::HrmServiceClient;
-        let default_url = "http://localhost:8011".to_string();
-        Arc::new(HrmServiceClient::new(default_url).unwrap_or_else(|e| {
-            tracing::error!("默认HRM客户端创建失败: {}", e);
-            panic!("HRM客户端创建失败，请检查HRM服务配置")
-        }))
-    });
+    // HRM 服务客户端
+    let hrm_client = TypedServiceClient::<HrmApi>::from_env_default()
+        .map(Arc::new)
+        .unwrap_or_else(|e| {
+            tracing::warn!("HRM服务客户端初始化失败: {}, 将使用mock模式", e);
+            let default_url = "http://localhost:8020".to_string();
+            Arc::new(TypedServiceClient::new(HrmApi, default_url).unwrap_or_else(|e| {
+                tracing::error!("默认HRM客户端创建失败: {}", e);
+                panic!("HRM客户端创建失败，请检查HRM服务配置")
+            }))
+        });
+
+    // Finance 服务客户端
+    let finance_client = TypedServiceClient::<FinanceApi>::from_env_default()
+        .map(Arc::new)
+        .unwrap_or_else(|e| {
+            tracing::warn!("Finance服务客户端初始化失败: {}, 将使用mock模式", e);
+            let default_url = "http://localhost:8011".to_string();
+            Arc::new(TypedServiceClient::new(FinanceApi, default_url).unwrap_or_else(|e| {
+                tracing::error!("默认Finance客户端创建失败: {}", e);
+                panic!("Finance客户端创建失败，请检查Finance服务配置")
+            }))
+        });
 
     let api_state = ApiState {
-        db: pool.clone(),
-        auth_state: AuthState::from_env(),
-        metrics: metrics.clone(),
-        start_time,
+        db: ctx.db.clone(),
+        auth_state: ctx.auth_state.clone(),
+        metrics: ctx.metrics.clone(),
+        start_time: ctx.start_time,
         dict_cache: Arc::new(utils::InMemoryCache::new(Duration::from_secs(600))),
         notification_client,
         hrm_client,
         encryption: Arc::new(encryption_service),
-        // 初始化财务数据缓存 (5分钟 TTL)
-        expense_cache: Arc::new(utils::InMemoryCache::new(Duration::from_secs(300))),
-        budget_cache: Arc::new(utils::InMemoryCache::new(Duration::from_secs(300))),
-        receivable_cache: Arc::new(utils::InMemoryCache::new(Duration::from_secs(300))),
-        payable_cache: Arc::new(utils::InMemoryCache::new(Duration::from_secs(300))),
-        event_publisher,
+        event_publisher: ctx.event_publisher.clone(),
+        finance_client,
     };
 
-    let cors = create_cors_layer();
+    // 标准健康检查路由（使用 BootstrapAppState）
+    let health_state = create_health_state(&ctx, &config);
+    let public_routes = create_standard_health_routes(health_state);
 
-    let (prometheus_layer, _metric_handle) = PrometheusMetricLayer::pair();
+    // 业务路由
+    let protected_routes = modules::create_routes().with_state(api_state);
 
-    let health_router = Router::new()
-        .route("/health", get(modules::health::health_check))
-        .route("/api/health/detailed", get(health_check_detailed))
-        .route("/api/metrics", get(get_metrics))
-        .route(
-            "/metrics",
-            get(move || async move {
-                let encoder = TextEncoder::new();
-                let metrics = prometheus::gather();
-                let mut buffer = Vec::new();
-                if encoder.encode(&metrics, &mut buffer).is_err() {
-                    return "Prometheus encoding error".to_string();
-                }
-                String::from_utf8(buffer).unwrap_or_else(|e| {
-                    tracing::error!("Failed to convert Prometheus output to UTF-8: {}", e);
-                    "Prometheus output encoding error".to_string()
-                })
-            }),
-        )
-        .with_state(api_state.clone());
-
-    let rate_limit_config = RateLimitConfig::new(200, 60)
-        .with_by_user_id(false)
-        .with_by_ip(true);
-    let rate_limiter = Arc::new(RateLimitMiddleware::new(rate_limit_config));
-    let rate_limit_layer = axum::middleware::from_fn({
-        let mw = rate_limiter.clone();
-        move |req, next| {
-            let mw = mw.clone();
-            async move { rate_limit_middleware(mw, req, next).await }
-        }
-    });
-
-    let protected_routes = modules::create_routes()
-        // Admin middleware
-        .layer(axum::middleware::from_fn_with_state(
-            api_state.auth_state.clone(),
-            auth_middleware,
-        ))
-        .layer(axum::middleware::from_fn_with_state(
-            api_state.db.clone(),
-            rls_middleware,
-        ))
-        .layer(rate_limit_layer)
-        .with_state(api_state.clone());
-
-    let app = register_routes_with_legacy_alias(
-        Router::new().merge(health_router),
-        "/api/erp",
-        &["/api/v1/erp"],
-        protected_routes,
-    )
-    .merge(create_api_info_router("topems-erp"))
-    .route(
-        "/api-docs/openapi.json",
-        get(|| async {
-            serde_json::to_string_pretty(&modules::openapi::ErpApiDoc::openapi()).unwrap_or_else(
-                |e| {
-                    tracing::error!("Failed to serialize OpenAPI spec: {}", e);
-                    "{}".to_string()
-                },
-            )
+    // OpenAPI 文档
+    let openapi_json = Some(
+        serde_json::to_string_pretty(&modules::openapi::ErpApiDoc::openapi()).unwrap_or_else(|e| {
+            tracing::error!("Failed to serialize OpenAPI spec: {}", e);
+            "{}".to_string()
         }),
-    )
-    .layer(axum::middleware::from_fn(telemetry_middleware))
-    .layer(axum::middleware::from_fn(request_context_middleware))
-    .layer(prometheus_layer)
-    .layer(cors);
+    );
 
-    let port = env::var("ERP_PORT")
-        .or_else(|_| env::var("SERVER_PORT"))
-        .or_else(|_| env::var("PORT"))
-        .unwrap_or_else(|_| "8010".to_string());
-    let addr = format!("0.0.0.0:{}", port);
-
-    tracing::info!("🚀 TOPEMS-ERP 企业资源计划系统启动中...");
-    tracing::info!("📦 端口: {}", port);
-    tracing::info!("🔒 认证保护已启用");
+    let app = build_application(&ctx, &config, public_routes, protected_routes, openapi_json);
 
     // 启动时自动注册到统一核心
     let core_url = env::var("CORE_URL").ok();
@@ -224,130 +138,7 @@ async fn main() -> Result<()> {
         modules::erp_plugin::auto_register_to_core(core_url.as_deref()).await;
     });
 
-    let listener = tokio::net::TcpListener::bind(&addr).await?;
-    axum::serve(listener, app).await?;
-
-    Ok(())
-}
-
-#[allow(dead_code)]
-async fn health_check(
-    axum::extract::State(state): axum::extract::State<ApiState>,
-) -> Json<ApiResponse<String>> {
-    let database_health = check_database_health(&state.db).await;
-    let iam_health = check_iam_health().await;
-
-    let overall_status = if database_health.status == HealthStatus::Healthy
-        && iam_health.status == HealthStatus::Healthy
-    {
-        HealthStatus::Healthy
-    } else if database_health.status == HealthStatus::Unhealthy
-        || iam_health.status == HealthStatus::Unhealthy
-    {
-        HealthStatus::Unhealthy
-    } else {
-        HealthStatus::Degraded
-    };
-
-    let status_str = match overall_status {
-        HealthStatus::Healthy => "healthy".to_string(),
-        HealthStatus::Degraded => "degraded".to_string(),
-        HealthStatus::Unhealthy => "unhealthy".to_string(),
-    };
-
-    Json(ApiResponse::success(status_str, "健康检查"))
-}
-
-#[allow(dead_code)]
-#[derive(Serialize, Clone)]
-struct ErpHealthSummary {
-    service_name: String,
-    status: HealthStatus,
-    uptime: String,
-    dependencies: Vec<DependencyHealth>,
-}
-
-async fn health_check_detailed(
-    axum::extract::State(state): axum::extract::State<ApiState>,
-) -> Json<ApiResponse<ServiceHealth>> {
-    let dependencies = vec![
-        check_database_health(&state.db).await,
-        check_iam_health().await,
-    ];
-
-    let all_healthy = dependencies
-        .iter()
-        .all(|d| d.status == HealthStatus::Healthy);
-    let any_unhealthy = dependencies
-        .iter()
-        .any(|d| d.status == HealthStatus::Unhealthy);
-
-    let overall_status = if all_healthy {
-        HealthStatus::Healthy
-    } else if any_unhealthy {
-        HealthStatus::Unhealthy
-    } else {
-        HealthStatus::Degraded
-    };
-
-    let message = match overall_status {
-        HealthStatus::Healthy => "所有服务运行正常",
-        HealthStatus::Degraded => "部分服务存在问题",
-        HealthStatus::Unhealthy => "存在关键服务故障",
-    };
-
-    let health = ServiceHealth::healthy_with_message("topems-erp", message)
-        .with_uptime(&state.metrics.get_uptime())
-        .with_dependencies(dependencies);
-
-    Json(ApiResponse::success(health, "详细健康检查"))
-}
-
-async fn get_metrics(
-    axum::extract::State(state): axum::extract::State<ApiState>,
-) -> Json<ApiResponse<ErpServiceMetrics>> {
-    let metrics = ErpServiceMetrics {
-        service_name: "topems-erp".to_string(),
-        uptime_seconds: state.metrics.get_uptime_seconds(),
-        uptime_formatted: state.metrics.get_uptime(),
-        request_count: state.metrics.get_request_count(),
-        error_count: state.metrics.get_error_count(),
-        active_connections: state.metrics.get_active_connections(),
-        database_pool_size: state.db.size(),
-        database_pool_idle: state.db.num_idle(),
-    };
-
-    Json(ApiResponse::success(metrics, "服务指标"))
-}
-
-#[derive(Serialize, Clone)]
-struct ErpServiceMetrics {
-    service_name: String,
-    uptime_seconds: u64,
-    uptime_formatted: String,
-    request_count: u64,
-    error_count: u64,
-    active_connections: u64,
-    database_pool_size: u32,
-    database_pool_idle: usize,
-}
-
-async fn check_database_health(pool: &sqlx::PgPool) -> DependencyHealth {
-    match sqlx::query("SELECT 1").execute(pool).await {
-        Ok(_) => DependencyHealth {
-            name: "database".to_string(),
-            status: HealthStatus::Healthy,
-            message: "数据库连接正常".to_string(),
-        },
-        Err(e) => {
-            tracing::error!("数据库健康检查失败: {}", e);
-            DependencyHealth {
-                name: "database".to_string(),
-                status: HealthStatus::Unhealthy,
-                message: format!("数据库连接失败: {}", e),
-            }
-        }
-    }
+    run(app).await
 }
 
 async fn update_business_metrics(pool: &sqlx::PgPool) {
@@ -379,36 +170,31 @@ async fn update_business_metrics(pool: &sqlx::PgPool) {
     }
 }
 
-async fn check_iam_health() -> DependencyHealth {
-    let iam_url =
-        env::var("IAM_SERVICE_URL").unwrap_or_else(|_| "http://localhost:8000".to_string());
-    let health_url = format!("{}/health", iam_url);
-
-    match check_http_health(&health_url).await {
-        Ok(status) => {
-            let message = match status {
-                HealthStatus::Healthy => "IAM 服务正常",
-                HealthStatus::Degraded => "IAM 服务响应异常",
-                HealthStatus::Unhealthy => "IAM 服务不可用",
-            };
-            DependencyHealth {
-                name: "iam-service".to_string(),
-                status,
-                message: message.to_string(),
-            }
-        }
-        Err(e) => {
-            tracing::warn!("IAM 服务健康检查失败: {}", e);
-            DependencyHealth {
-                name: "iam-service".to_string(),
-                status: HealthStatus::Degraded,
-                message: format!("IAM 服务连接异常: {}", e),
-            }
-        }
-    }
-}
-
-async fn init_db(_pool: &sqlx::PgPool) -> Result<()> {
+async fn init_db(pool: &sqlx::PgPool) -> Result<()> {
+    // V32.0 AC-5: 本地主数据引用表，用于跨服务 master_data_id 关联
+    // 消费端通过 master_data_id 查找本地业务记录，而非依赖业务编码
+    sqlx::query(
+        r#"
+        CREATE TABLE IF NOT EXISTS erp_master_data_refs (
+            master_data_id   VARCHAR(128) PRIMARY KEY,
+            tenant_id        UUID NOT NULL,
+            domain           VARCHAR(32) NOT NULL,
+            code             VARCHAR(128) NOT NULL,
+            name             VARCHAR(256),
+            status           VARCHAR(32) DEFAULT 'active',
+            source_service   VARCHAR(64) NOT NULL,
+            local_entity_type VARCHAR(64),
+            local_entity_id  UUID,
+            payload_snapshot JSONB,
+            last_synced_at   TIMESTAMPTZ DEFAULT NOW(),
+            created_at       TIMESTAMPTZ DEFAULT NOW(),
+            updated_at       TIMESTAMPTZ DEFAULT NOW()
+        )
+        "#,
+    )
+    .execute(pool)
+    .await?;
+    tracing::info!("[erp] erp_master_data_refs 表已就绪（AC-5 本地主数据引用）");
     Ok(())
 }
 

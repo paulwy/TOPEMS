@@ -2,9 +2,10 @@ use chrono::{DateTime, Utc};
 use rust_decimal::Decimal;
 use serde::{Deserialize, Serialize};
 use sqlx::FromRow;
+use utoipa::ToSchema;
 use uuid::Uuid;
 
-#[derive(Debug, Clone, FromRow, Serialize, Deserialize)]
+#[derive(Debug, Clone, FromRow, Serialize, Deserialize, ToSchema)]
 pub struct Opportunity {
     pub id: Uuid,
     pub tenant_id: Uuid,
@@ -19,7 +20,7 @@ pub struct Opportunity {
     pub updated_at: DateTime<Utc>,
 }
 
-#[derive(Debug, Clone, Deserialize, Serialize)]
+#[derive(Debug, Clone, Deserialize, Serialize, ToSchema)]
 pub struct CreateOpportunityRequest {
     pub name: String,
     pub customer_id: Option<Uuid>,
@@ -29,7 +30,7 @@ pub struct CreateOpportunityRequest {
     pub notes: Option<String>,
 }
 
-#[derive(Debug, Clone, Deserialize, Serialize)]
+#[derive(Debug, Clone, Deserialize, Serialize, ToSchema)]
 pub struct UpdateOpportunityRequest {
     pub name: Option<String>,
     pub customer_id: Option<Uuid>,

@@ -8,7 +8,7 @@ mod services;
 mod shared;
 
 use axum::{
-    extract::{FromRef, State},
+    extract::State,
     Json, Router,
 };
 use dotenv::dotenv;
@@ -21,9 +21,16 @@ use uuid::Uuid;
 
 use topems_shared::{
     auth_middleware, build_health_response, create_api_info_router, create_cors_layer,
+    create_workflow_client,
     init_telemetry, rate_limit_middleware, register_routes_with_legacy_alias, rls_middleware,
-    telemetry_middleware, ApiResponse, AuthState, RateLimitConfig, RateLimitMiddleware,
-    ServiceHealth,
+    telemetry_middleware, ApiResponse, AuthState,
+    RateLimitConfig, RateLimitMiddleware, ServiceHealth,
+    WorkflowServiceClient,
+};
+use topems_shared::service_client::{
+    api::hrm_api::HrmApi, api::mes_api::MesApi, api::notification_api::NotificationApi,
+    api::qms_api::QmsApi, create_wms_client,
+    TypedServiceClient, WmsServiceClient,
 };
 
 use db::repository::*;
@@ -32,7 +39,6 @@ use modules::attendance::{
     apply_leave, check_in, check_out, get_attendance_overview, get_attendance_stats,
     list_attendance_records, list_leave_applications,
 };
-use modules::auth::{login, logout, refresh_token, verify_code};
 use modules::barcode_scanner::{
     delete_scan_record, get_scan_by_id, get_scan_history, get_supported_barcode_types, scan_barcode,
 };
@@ -42,15 +48,14 @@ use modules::inventory::{
     list_outbound_orders, list_stocktake_tasks,
 };
 use modules::media::{delete_media, get_audio, get_photos, get_video, upload_media};
-use modules::mobile_approval::{
-    approve_task, get_approval_by_id, get_approval_stats, get_approved_approvals,
-    get_pending_approvals, get_rejected_approvals, reject_task, transfer_task,
-};
-use modules::notification::{get_notifications, get_unread_count, mark_all_read, mark_read};
 use modules::offline::{get_offline_status, sync_offline_data};
 use modules::offline_sync::{
     get_offline_status as get_offline_sync_status, get_sync_history, get_sync_policy,
     retry_failed_sync, sync_data, update_sync_policy,
+};
+use modules::offline_records::{
+    clear_synced as clear_offline_synced, get_pending_records as get_offline_pending_records,
+    mark_synced as mark_offline_record_synced, sync_records as sync_offline_records,
 };
 use modules::patrol::{
     create_patrol_record, delete_patrol_record, get_all_patrol_records, get_patrol_record,
@@ -271,6 +276,10 @@ async fn main() -> anyhow::Result<()> {
             } else {
                 tracing::info!("✅ 数据库表初始化完成");
             }
+            // 初始化离线记录表（从 unified-core 迁移，方案 C）
+            if let Err(e) = modules::offline_records::init_database(&p).await {
+                tracing::warn!("离线记录表初始化警告: {}", e);
+            }
             p
         }
         Err(e) => {
@@ -296,17 +305,97 @@ async fn main() -> anyhow::Result<()> {
         tracing::warn!("⚠️ MOBILE 事件订阅者启动失败: {}", e);
     }
 
+    let wms_client = match create_wms_client() {
+        Ok(client) => {
+            tracing::info!("✅ WMS服务客户端初始化成功");
+            client
+        }
+        Err(e) => {
+            tracing::warn!("⚠️ WMS服务客户端初始化失败（不阻塞启动）: {}", e);
+            create_wms_client().unwrap_or_else(|_| WmsServiceClient::new("http://localhost:8041").unwrap())
+        }
+    };
+
+    let mes_api_client = match TypedServiceClient::<MesApi>::from_env_default() {
+        Ok(client) => {
+            tracing::info!("✅ MES API服务客户端初始化成功");
+            client
+        }
+        Err(e) => {
+            tracing::warn!("⚠️ MES API服务客户端初始化失败（不阻塞启动）: {}", e);
+            TypedServiceClient::<MesApi>::from_env_default().unwrap_or_else(|_| {
+                TypedServiceClient::new(MesApi, "http://localhost:8030").unwrap()
+            })
+        }
+    };
+
+    let qms_api_client = match TypedServiceClient::<QmsApi>::from_env_default() {
+        Ok(client) => {
+            tracing::info!("✅ QMS API服务客户端初始化成功");
+            client
+        }
+        Err(e) => {
+            tracing::warn!("⚠️ QMS API服务客户端初始化失败（不阻塞启动）: {}", e);
+            TypedServiceClient::<QmsApi>::from_env_default().unwrap_or_else(|_| {
+                TypedServiceClient::new(QmsApi, "http://localhost:8050").unwrap()
+            })
+        }
+    };
+
+    let hrm_client = match TypedServiceClient::<HrmApi>::from_env_default() {
+        Ok(client) => {
+            tracing::info!("✅ HRM服务客户端初始化成功");
+            client
+        }
+        Err(e) => {
+            tracing::warn!("⚠️ HRM服务客户端初始化失败（不阻塞启动）: {}", e);
+            TypedServiceClient::<HrmApi>::from_env_default().unwrap_or_else(|_| {
+                TypedServiceClient::new(HrmApi, "http://localhost:8020").unwrap()
+            })
+        }
+    };
+
+    let workflow_client = match create_workflow_client() {
+        Ok(client) => {
+            tracing::info!("✅ Workflow服务客户端初始化成功");
+            client
+        }
+        Err(e) => {
+            tracing::warn!("⚠️ Workflow服务客户端初始化失败（不阻塞启动）: {}", e);
+            create_workflow_client().unwrap_or_else(|_| {
+                WorkflowServiceClient::new("http://localhost:8000").unwrap()
+            })
+        }
+    };
+
+    let notification_client = match TypedServiceClient::<NotificationApi>::from_env_default() {
+        Ok(client) => {
+            tracing::info!("✅ Notification服务客户端初始化成功");
+            client
+        }
+        Err(e) => {
+            tracing::warn!("⚠️ Notification服务客户端初始化失败（不阻塞启动）: {}", e);
+            TypedServiceClient::<NotificationApi>::from_env_default().unwrap_or_else(|_| {
+                TypedServiceClient::new(NotificationApi, "http://localhost:8000").unwrap()
+            })
+        }
+    };
+
     let app_state = AppState {
         auth_state: AuthState::from_env(),
         pool: pool.clone(),
         event_publisher,
+        wms_client,
+        hrm_client,
+        workflow_client,
+        notification_client,
+        mes_api_client,
+        qms_api_client,
     };
     let cors = create_cors_layer();
 
     let public_routes = Router::new()
         .route("/health", axum::routing::get(health_check))
-        .route("/auth/login", axum::routing::post(login))
-        .route("/auth/verify-code", axum::routing::post(verify_code))
         .merge(create_routes());
 
     let protected_routes = Router::new()
@@ -316,23 +405,12 @@ async fn main() -> anyhow::Result<()> {
         .route("/stats/dashboard", axum::routing::get(get_dashboard_stats))
         .route("/stats/patrol", axum::routing::get(get_patrol_stats))
         .route("/stats/task", axum::routing::get(get_task_stats))
-        // Auth Routes
-        .route("/auth/logout", axum::routing::post(logout))
-        .route("/auth/refresh", axum::routing::post(refresh_token))
         // User Routes
         .route(
             "/user/profile",
             axum::routing::get(get_profile).put(update_profile),
         )
         .route("/user/avatar", axum::routing::post(upload_avatar))
-        // Notification Routes
-        .route("/notifications", axum::routing::get(get_notifications))
-        .route(
-            "/notifications/unread-count",
-            axum::routing::get(get_unread_count),
-        )
-        .route("/notifications/read-all", axum::routing::put(mark_all_read))
-        .route("/notifications/{id}/read", axum::routing::put(mark_read))
         // Scan Routes
         .route("/scan/barcode", axum::routing::post(scan_barcode))
         .route("/scan/qrcode", axum::routing::post(scan_qrcode))
@@ -438,6 +516,20 @@ async fn main() -> anyhow::Result<()> {
             "/offline/retry-failed",
             axum::routing::post(retry_failed_sync),
         )
+        // 离线操作记录 CRUD（从 unified-core 迁移，方案 C）
+        .route("/offline/records", axum::routing::post(sync_offline_records))
+        .route(
+            "/offline/records/pending",
+            axum::routing::get(get_offline_pending_records),
+        )
+        .route(
+            "/offline/records/{record_id}/synced",
+            axum::routing::post(mark_offline_record_synced),
+        )
+        .route(
+            "/offline/records/synced/clear",
+            axum::routing::delete(clear_offline_synced),
+        )
         // Push Notification Routes
         .route("/push/devices", axum::routing::get(get_devices))
         .route(
@@ -489,27 +581,6 @@ async fn main() -> anyhow::Result<()> {
         .route(
             "/photos/{id}/progress",
             axum::routing::get(get_upload_progress),
-        )
-        // Mobile Approval Routes
-        .route(
-            "/approvals/pending",
-            axum::routing::get(get_pending_approvals),
-        )
-        .route(
-            "/approvals/approved",
-            axum::routing::get(get_approved_approvals),
-        )
-        .route(
-            "/approvals/rejected",
-            axum::routing::get(get_rejected_approvals),
-        )
-        .route("/approvals/stats", axum::routing::get(get_approval_stats))
-        .route("/approvals/{id}", axum::routing::get(get_approval_by_id))
-        .route("/approvals/{id}/approve", axum::routing::post(approve_task))
-        .route("/approvals/{id}/reject", axum::routing::post(reject_task))
-        .route(
-            "/approvals/{id}/transfer",
-            axum::routing::post(transfer_task),
         )
         // Inventory Routes
         .route("/inventory/items", axum::routing::get(list_inventory_items))

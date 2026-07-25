@@ -3,30 +3,13 @@ use serde::{Deserialize, Serialize};
 use utoipa::{OpenApi, ToSchema};
 use uuid::Uuid;
 
-#[derive(Debug, Clone, Serialize, Deserialize, ToSchema)]
-pub struct Asset {
-    pub id: Uuid,
-    pub asset_number: String,
-    pub name: String,
-    pub category: Option<String>,
-    pub brand: Option<String>,
-    pub model: Option<String>,
-    pub purchase_date: Option<DateTime<Utc>>,
-    pub purchase_amount: Option<f64>,
-    pub location: Option<String>,
-    pub responsible_id: Option<Uuid>,
-    pub status: String,
-    pub created_at: DateTime<Utc>,
-    pub updated_at: DateTime<Utc>,
-    pub serial_number: Option<String>,
-    pub manufacturer: Option<String>,
-    pub rated_power: Option<f64>,
-    pub rated_voltage: Option<f64>,
-    pub rated_current: Option<f64>,
-    pub specifications: Option<serde_json::Value>,
-    pub image_url: Option<String>,
-    pub department: Option<String>,
-}
+use crate::models::{
+    Asset, CreateAssetRequest, UpdateAssetRequest,
+};
+use crate::models::material::{
+    CreateCustomerRequest, CreateInventoryRequest, CreateMaterialRequest, CreateSupplierRequest,
+    Customer, Inventory, Material, Supplier,
+};
 
 #[derive(Debug, Clone, Serialize, Deserialize, ToSchema)]
 pub struct FixedAsset {
@@ -261,9 +244,26 @@ pub struct VehicleRequest {
 
 #[derive(OpenApi)]
 #[openapi(
+    paths(
+        crate::modules::asset::list_assets,
+        crate::modules::asset::create_asset,
+        crate::modules::asset::get_asset,
+        crate::modules::material::list_materials,
+        crate::modules::material::create_material,
+    ),
     components(
         schemas(
             Asset,
+            CreateAssetRequest,
+            UpdateAssetRequest,
+            Material,
+            CreateMaterialRequest,
+            Customer,
+            CreateCustomerRequest,
+            Supplier,
+            CreateSupplierRequest,
+            Inventory,
+            CreateInventoryRequest,
             FixedAsset,
             Budget,
             Expense,

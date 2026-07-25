@@ -96,6 +96,7 @@ pub async fn check_permission<T>(
     check_module_permission(db, claims, &shared_perm).await
 }
 
+#[allow(dead_code)]
 pub async fn check_employee_permission<T>(
     db: &PgPool,
     claims: &Claims,

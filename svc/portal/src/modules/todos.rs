@@ -244,20 +244,28 @@ async fn fetch_notification_todos(state: &AppState, token: Option<&str>) -> Vec<
         Ok(notifications) => notifications
             .iter()
             .filter(|n| {
-                n.notification_type.contains("todo")
-                    || n.notification_type.contains("task")
-                    || n.notification_type.contains("approval")
+                let nt = n.get("notification_type").and_then(|v| v.as_str()).unwrap_or("");
+                nt.contains("todo")
+                    || nt.contains("task")
+                    || nt.contains("approval")
             })
-            .map(|n| Todo {
-                id: format!("notif-{}", n.id),
-                title: n.title.clone(),
-                service: n.notification_type.clone(),
-                service_name: format_service_name(&n.notification_type),
-                due_date: n.created_at.format("%Y-%m-%d").to_string(),
-                priority: "medium".to_string(),
-                completed: n.is_read,
-                todo_type: "notification".to_string(),
-                link_url: n.link_url.clone(),
+            .filter_map(|n| {
+                let notification_type = n.get("notification_type")?.as_str()?.to_string();
+                let created_at_str = n.get("created_at")?.as_str()?;
+                let created_at = chrono::DateTime::parse_from_rfc3339(created_at_str)
+                    .ok()?
+                    .with_timezone(&chrono::Utc);
+                Some(Todo {
+                    id: format!("notif-{}", n.get("id")?.as_str()?),
+                    title: n.get("title")?.as_str()?.to_string(),
+                    service: notification_type.clone(),
+                    service_name: format_service_name(&notification_type),
+                    due_date: created_at.format("%Y-%m-%d").to_string(),
+                    priority: "medium".to_string(),
+                    completed: n.get("is_read")?.as_bool()?,
+                    todo_type: "notification".to_string(),
+                    link_url: n.get("link_url").and_then(|v| v.as_str()).map(|s| s.to_string()),
+                })
             })
             .collect(),
         Err(e) => {

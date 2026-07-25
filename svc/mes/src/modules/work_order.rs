@@ -14,6 +14,7 @@ use sqlx::{
 };
 use std::str::FromStr;
 use topems_shared::auth::Claims;
+use utoipa::ToSchema;
 
 use crate::shared::permission::{check_permission, ModulePermission};
 use crate::AppState;
@@ -40,7 +41,7 @@ pub fn create_routes() -> Router<AppState> {
 
 // ==================== Request / Response Types ====================
 
-#[derive(Debug, Clone, Deserialize)]
+#[derive(Debug, Clone, Deserialize, ToSchema)]
 pub struct ListWorkOrdersQuery {
     page: Option<i32>,
     pagesize: Option<i32>,
@@ -48,7 +49,7 @@ pub struct ListWorkOrdersQuery {
     status: Option<String>,
 }
 
-#[derive(Debug, Clone, Deserialize)]
+#[derive(Debug, Clone, Deserialize, ToSchema)]
 pub struct CreateWorkOrderRequest {
     pub work_order_no: String,
     pub order_id: Option<String>,
@@ -66,7 +67,7 @@ pub struct CreateWorkOrderRequest {
     pub remark: Option<String>,
 }
 
-#[derive(Debug, Clone, Deserialize)]
+#[derive(Debug, Clone, Deserialize, ToSchema)]
 pub struct UpdateWorkOrderRequest {
     pub work_order_no: Option<String>,
     pub order_id: Option<String>,
@@ -85,7 +86,7 @@ pub struct UpdateWorkOrderRequest {
     pub remark: Option<String>,
 }
 
-#[derive(Debug, Clone, Serialize)]
+#[derive(Debug, Clone, Serialize, ToSchema)]
 pub struct WorkOrderResponse {
     pub id: String,
     pub work_order_no: String,
@@ -154,6 +155,21 @@ fn parse_opt_big_decimal(v: &Option<f64>) -> Option<BigDecimal> {
 
 // ==================== Handlers ====================
 
+#[utoipa::path(
+    get,
+    path = "/api/mes/work-orders",
+    tag = "WorkOrder",
+    params(
+        ("page" = Option<i32>, Query, description = "页码"),
+        ("pagesize" = Option<i32>, Query, description = "每页数量"),
+        ("search" = Option<String>, Query, description = "搜索关键词"),
+        ("status" = Option<String>, Query, description = "状态过滤"),
+    ),
+    responses(
+        (status = 200, description = "工单列表", body = ApiResponse<serde_json::Value>),
+        (status = 500, description = "服务器内部错误"),
+    ),
+)]
 pub async fn list_work_orders(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
@@ -336,6 +352,18 @@ pub async fn list_work_orders(
     ))
 }
 
+#[utoipa::path(
+    get,
+    path = "/api/mes/work-orders/{id}",
+    tag = "WorkOrder",
+    params(
+        ("id" = String, Path, description = "工单ID"),
+    ),
+    responses(
+        (status = 200, description = "工单详情", body = ApiResponse<WorkOrderResponse>),
+        (status = 500, description = "服务器内部错误"),
+    ),
+)]
 pub async fn get_work_order(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
@@ -408,6 +436,16 @@ pub async fn get_work_order(
     }
 }
 
+#[utoipa::path(
+    post,
+    path = "/api/mes/work-orders",
+    tag = "WorkOrder",
+    request_body = CreateWorkOrderRequest,
+    responses(
+        (status = 200, description = "工单创建成功", body = ApiResponse<WorkOrderResponse>),
+        (status = 500, description = "服务器内部错误"),
+    ),
+)]
 pub async fn create_work_order(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,

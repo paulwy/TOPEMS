@@ -1,8 +1,9 @@
 use axum::{
-    extract::{Query, State},
+    extract::{Path, Query, State},
     http::HeaderMap,
     Json,
 };
+use uuid::Uuid;
 
 use crate::models::consolidation::*;
 use topems_shared::{api_error, ApiResponse, PaginatedResponse};
@@ -61,6 +62,28 @@ pub async fn list_internal_transactions(
         Err(e) => {
             tracing::error!("获取内部交易列表失败: {}", e);
             Json(api_error(500, "获取内部交易列表失败"))
+        }
+    }
+}
+
+pub async fn get_internal_transaction(
+    State(state): State<ApiState>,
+    Path(transaction_id): Path<Uuid>,
+) -> Json<ApiResponse<InternalTransaction>> {
+    match sqlx::query_as::<_, InternalTransaction>(
+        "SELECT * FROM plugin_erp.internal_transactions WHERE id = $1",
+    )
+    .bind(transaction_id)
+    .fetch_optional(&state.db)
+    .await
+    {
+        Ok(Some(transaction)) => {
+            Json(ApiResponse::success(transaction, "获取内部交易详情成功"))
+        }
+        Ok(None) => Json(api_error(404, "内部交易不存在")),
+        Err(e) => {
+            tracing::error!("获取内部交易详情失败: {}", e);
+            Json(api_error(500, "获取内部交易详情失败"))
         }
     }
 }

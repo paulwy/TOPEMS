@@ -35,6 +35,22 @@ pub struct DepartmentPaginationParams {
     pub company_id: Option<Uuid>,
 }
 
+#[utoipa::path(
+    get,
+    path = "/departments",
+    tag = "departments",
+    params(
+        ("page" = Option<i64>, Query, description = "页码"),
+        ("page_size" = Option<i64>, Query, description = "每页数量"),
+        ("search" = Option<String>, Query, description = "搜索关键词"),
+        ("status" = Option<String>, Query, description = "状态过滤"),
+        ("company_id" = Option<Uuid>, Query, description = "公司ID过滤"),
+    ),
+    responses(
+        (status = 200, description = "部门列表", body = ApiResponse<serde_json::Value>),
+        (status = 500, description = "服务器内部错误"),
+    ),
+)]
 async fn list_departments(
     State(state): State<ApiState>,
     Query(params): Query<DepartmentPaginationParams>,
@@ -101,6 +117,16 @@ async fn list_departments(
     }
 }
 
+#[utoipa::path(
+    post,
+    path = "/departments",
+    tag = "departments",
+    request_body = CreateDepartmentRequest,
+    responses(
+        (status = 200, description = "部门创建成功", body = ApiResponse<Department>),
+        (status = 500, description = "服务器内部错误"),
+    ),
+)]
 async fn create_department(
     State(state): State<ApiState>,
     Json(req): Json<CreateDepartmentRequest>,
@@ -169,6 +195,19 @@ async fn create_department(
     }
 }
 
+#[utoipa::path(
+    get,
+    path = "/departments/{id}",
+    tag = "departments",
+    params(
+        ("id" = Uuid, Path, description = "部门ID"),
+    ),
+    responses(
+        (status = 200, description = "部门详情", body = ApiResponse<Department>),
+        (status = 404, description = "部门不存在"),
+        (status = 500, description = "服务器内部错误"),
+    ),
+)]
 async fn get_department(
     State(state): State<ApiState>,
     Path(id): Path<Uuid>,

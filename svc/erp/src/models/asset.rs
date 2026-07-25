@@ -2,11 +2,12 @@ use chrono::{DateTime, Utc};
 use serde::{Deserialize, Serialize};
 use serde_json::Value;
 use sqlx::FromRow;
+use utoipa::ToSchema;
 use uuid::Uuid;
 
 use super::uuid_helpers::option_uuid;
 
-#[derive(Debug, Clone, FromRow, Serialize, Deserialize)]
+#[derive(Debug, Clone, FromRow, Serialize, Deserialize, ToSchema)]
 pub struct Asset {
     pub id: Uuid,
     pub asset_number: String,
@@ -32,7 +33,7 @@ pub struct Asset {
     pub department: Option<String>,
 }
 
-#[derive(Debug, Clone, Deserialize, Serialize)]
+#[derive(Debug, Clone, Deserialize, Serialize, ToSchema)]
 pub struct CreateAssetRequest {
     pub asset_number: String,
     pub name: String,
@@ -55,7 +56,7 @@ pub struct CreateAssetRequest {
     pub department: Option<String>,
 }
 
-#[derive(Debug, Clone, Deserialize, Serialize)]
+#[derive(Debug, Clone, Deserialize, Serialize, ToSchema)]
 pub struct UpdateAssetRequest {
     pub name: Option<String>,
     pub category: Option<String>,

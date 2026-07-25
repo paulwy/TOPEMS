@@ -6,6 +6,9 @@
 //! 3. 安排付款（forward: 创建付款计划，compensate: 取消付款计划）
 //!
 //! 本文件为样板实现，forward/compensate 仅记录日志，不做真实数据库操作。
+//! V20.0 Saga 架构模板，保留供未来集成使用。
+
+#![allow(dead_code)]
 
 use tracing::info;
 use uuid::Uuid;

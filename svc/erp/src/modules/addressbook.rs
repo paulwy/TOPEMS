@@ -6,7 +6,8 @@ use axum::extract::Query;
 use axum::{extract::State, Json, Router};
 use serde::Deserialize;
 use serde::Serialize;
-use topems_shared::{ApiResponse, Company, Department, Employee, PaginatedResponse};
+use topems_shared::{ApiResponse, PaginatedResponse};
+use topems_shared::service_client::api::hrm_api::{HrmCompany, HrmDepartment, HrmEmployee};
 use uuid::Uuid;
 
 #[derive(Deserialize)]
@@ -68,15 +69,15 @@ pub struct AddressbookDetail {
 }
 
 #[derive(Serialize)]
-pub struct DepartmentNode {
+pub struct HrmDepartmentNode {
     id: String,
     name: String,
     code: Option<String>,
-    children: Vec<DepartmentNode>,
+    children: Vec<HrmDepartmentNode>,
 }
 
-impl From<Employee> for AddressbookEntry {
-    fn from(e: Employee) -> Self {
+impl From<HrmEmployee> for AddressbookEntry {
+    fn from(e: HrmEmployee) -> Self {
         AddressbookEntry {
             id: e.id.to_string(),
             contact_type: "EMPLOYEE".to_string(),
@@ -95,8 +96,8 @@ impl From<Employee> for AddressbookEntry {
     }
 }
 
-impl From<Department> for AddressbookEntry {
-    fn from(d: Department) -> Self {
+impl From<HrmDepartment> for AddressbookEntry {
+    fn from(d: HrmDepartment) -> Self {
         AddressbookEntry {
             id: d.id.to_string(),
             contact_type: "DEPARTMENT".to_string(),
@@ -115,8 +116,8 @@ impl From<Department> for AddressbookEntry {
     }
 }
 
-impl From<Company> for AddressbookEntry {
-    fn from(c: Company) -> Self {
+impl From<HrmCompany> for AddressbookEntry {
+    fn from(c: HrmCompany) -> Self {
         AddressbookEntry {
             id: c.id.to_string(),
             contact_type: "COMPANY".to_string(),
@@ -135,9 +136,9 @@ impl From<Company> for AddressbookEntry {
     }
 }
 
-fn build_department_tree(departments: Vec<Department>) -> Vec<DepartmentNode> {
-    let mut nodes: Vec<DepartmentNode> = Vec::new();
-    let mut children_map: std::collections::HashMap<Uuid, Vec<Department>> =
+fn build_department_tree(departments: Vec<HrmDepartment>) -> Vec<HrmDepartmentNode> {
+    let mut nodes: Vec<HrmDepartmentNode> = Vec::new();
+    let mut children_map: std::collections::HashMap<Uuid, Vec<HrmDepartment>> =
         std::collections::HashMap::new();
 
     for dept in &departments {
@@ -159,16 +160,16 @@ fn build_department_tree(departments: Vec<Department>) -> Vec<DepartmentNode> {
 }
 
 fn build_node(
-    dept: Department,
-    children_map: &std::collections::HashMap<Uuid, Vec<Department>>,
-) -> DepartmentNode {
+    dept: HrmDepartment,
+    children_map: &std::collections::HashMap<Uuid, Vec<HrmDepartment>>,
+) -> HrmDepartmentNode {
     let children = children_map.get(&dept.id).cloned().unwrap_or_default();
-    let child_nodes: Vec<DepartmentNode> = children
+    let child_nodes: Vec<HrmDepartmentNode> = children
         .into_iter()
         .map(|c| build_node(c, children_map))
         .collect();
 
-    DepartmentNode {
+    HrmDepartmentNode {
         id: dept.id.to_string(),
         name: dept.name,
         code: None,
@@ -413,7 +414,7 @@ pub async fn search_contacts(
 
 pub async fn get_department_tree(
     State(state): State<ApiState>,
-) -> Json<ApiResponse<Vec<DepartmentNode>>> {
+) -> Json<ApiResponse<Vec<HrmDepartmentNode>>> {
     match state.hrm_client.list_departments().await {
         Ok(departments) => {
             let tree = build_department_tree(departments);
@@ -423,7 +424,7 @@ pub async fn get_department_tree(
             tracing::warn!("获取部门列表失败: {}", e);
             // 返回空部门树而不是错误，避免前端显示"加载失败"
             Json(ApiResponse::success(
-                Vec::<DepartmentNode>::new(),
+                Vec::<HrmDepartmentNode>::new(),
                 "获取部门树成功",
             ))
         }

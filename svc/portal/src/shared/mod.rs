@@ -3,7 +3,17 @@ use reqwest::Client;
 use sqlx::PgPool;
 use std::sync::Arc;
 use topems_shared::{
-    event::EventPublisher, AuthState, LocalServiceRegistry, PortalServiceAggregator,
+    cache::CacheManager,
+    config::CacheConfig,
+    event::EventPublisher,
+    service_client::{
+        api::crm_api::CrmApi, api::finance_api::FinanceApi, api::hrm_api::HrmApi,
+        api::iam_api::IamApi, api::mes_api::MesApi, api::notification_api::NotificationApi,
+        create_erp_client, create_iam_client, create_monitor_client, create_workflow_client,
+        ErpServiceClient, IamServiceClient, MonitorServiceClient,
+        TypedServiceClient, WorkflowServiceClient,
+    },
+    AuthState, LocalServiceRegistry, PortalServiceAggregator,
 };
 
 #[derive(Clone)]
@@ -14,6 +24,16 @@ pub struct AppState {
     pub http_client: Client,
     pub pool: PgPool,
     pub event_publisher: Option<Arc<EventPublisher>>,
+    pub dashboard_cache: CacheManager,
+    pub notification_client: TypedServiceClient<NotificationApi>,
+    pub workflow_client: WorkflowServiceClient,
+    pub mes_client: TypedServiceClient<MesApi>,
+    pub monitor_client: MonitorServiceClient,
+    pub iam_client: TypedServiceClient<IamApi>,
+    pub hrm_client: TypedServiceClient<HrmApi>,
+    pub erp_client: ErpServiceClient,
+    pub crm_client: TypedServiceClient<CrmApi>,
+    pub finance_client: TypedServiceClient<FinanceApi>,
 }
 
 impl FromRef<AppState> for AuthState {
@@ -33,6 +53,9 @@ impl AppState {
         let aggregator = PortalServiceAggregator::new();
         aggregator.init_default_services().await;
 
+        let cache_config = CacheConfig::default();
+        let dashboard_cache = CacheManager::new(&cache_config);
+
         Self {
             auth_state: AuthState::from_env(),
             service_registry: Arc::new(LocalServiceRegistry::new()),
@@ -40,6 +63,25 @@ impl AppState {
             http_client: Client::new(),
             pool,
             event_publisher,
+            dashboard_cache,
+            notification_client: TypedServiceClient::<NotificationApi>::from_env_default()
+                .unwrap_or_else(|_| TypedServiceClient::new(NotificationApi, "http://localhost:8000".to_string()).unwrap()),
+            workflow_client: create_workflow_client()
+                .unwrap_or_else(|_| WorkflowServiceClient::from_env().unwrap_or_else(|_| WorkflowServiceClient::new("http://localhost:8000".to_string()).unwrap())),
+            mes_client: TypedServiceClient::<MesApi>::from_env_default()
+                .unwrap_or_else(|_| TypedServiceClient::new(MesApi, "http://localhost:8030".to_string()).unwrap()),
+            monitor_client: create_monitor_client()
+                .unwrap_or_else(|_| MonitorServiceClient::from_env().unwrap_or_else(|_| MonitorServiceClient::new("http://localhost:8000".to_string()).unwrap())),
+            iam_client: TypedServiceClient::<IamApi>::from_env_default()
+                .unwrap_or_else(|_| TypedServiceClient::new(IamApi, "http://localhost:8000".to_string()).unwrap()),
+            hrm_client: TypedServiceClient::<HrmApi>::from_env_default()
+                .unwrap_or_else(|_| TypedServiceClient::new(HrmApi, "http://localhost:8020".to_string()).unwrap()),
+            erp_client: create_erp_client()
+                .unwrap_or_else(|_| ErpServiceClient::from_env().unwrap_or_else(|_| ErpServiceClient::new("http://localhost:8010".to_string()).unwrap())),
+            crm_client: TypedServiceClient::<CrmApi>::from_env_default()
+                .unwrap_or_else(|_| TypedServiceClient::new(CrmApi, "http://localhost:8029".to_string()).unwrap()),
+            finance_client: TypedServiceClient::<FinanceApi>::from_env_default()
+                .unwrap_or_else(|_| TypedServiceClient::new(FinanceApi, "http://localhost:8011".to_string()).unwrap()),
         }
     }
 }

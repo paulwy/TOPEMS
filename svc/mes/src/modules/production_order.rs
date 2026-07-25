@@ -17,6 +17,7 @@ use sqlx::{
 use std::str::FromStr;
 use topems_shared::auth::Claims;
 use topems_shared::event::{EventType, ProductionOrderCreatedPayload};
+use utoipa::ToSchema;
 
 use crate::shared::permission::{check_permission, ModulePermission};
 use crate::AppState;
@@ -43,7 +44,7 @@ pub fn create_routes() -> Router<AppState> {
 
 // ==================== Data Types ====================
 
-#[derive(Debug, Clone, Deserialize)]
+#[derive(Debug, Clone, Deserialize, ToSchema)]
 pub struct ListProductionOrdersQuery {
     page: Option<i32>,
     pagesize: Option<i32>,
@@ -51,7 +52,7 @@ pub struct ListProductionOrdersQuery {
     status: Option<String>,
 }
 
-#[derive(Debug, Clone, Serialize, Deserialize)]
+#[derive(Debug, Clone, Serialize, Deserialize, ToSchema)]
 pub enum ProductionOrderSource {
     #[serde(rename = "manual")]
     Manual,
@@ -71,7 +72,7 @@ impl std::fmt::Display for ProductionOrderSource {
     }
 }
 
-#[derive(Debug, Clone, Serialize, Deserialize)]
+#[derive(Debug, Clone, Serialize, Deserialize, ToSchema)]
 pub struct ErpSalesOrderInfo {
     pub order_id: Uuid,
     pub order_number: String,
@@ -84,7 +85,7 @@ pub struct ErpSalesOrderInfo {
     pub priority: Option<i32>,
 }
 
-#[derive(Debug, Clone, Deserialize)]
+#[derive(Debug, Clone, Deserialize, ToSchema)]
 pub struct CreateFromErpRequest {
     pub erp_order: ErpSalesOrderInfo,
     pub planned_start_date: Option<DateTime<Utc>>,
@@ -93,7 +94,7 @@ pub struct CreateFromErpRequest {
     pub notes: Option<String>,
 }
 
-#[derive(Debug, Clone, Deserialize)]
+#[derive(Debug, Clone, Deserialize, ToSchema)]
 pub struct CreateProductionOrderRequest {
     pub product_id: Option<Uuid>,
     pub product_name: String,
@@ -105,7 +106,7 @@ pub struct CreateProductionOrderRequest {
     pub notes: Option<String>,
 }
 
-#[derive(Debug, Clone, Deserialize)]
+#[derive(Debug, Clone, Deserialize, ToSchema)]
 pub struct UpdateProductionOrderRequest {
     pub product_name: Option<String>,
     pub product_code: Option<String>,
@@ -116,7 +117,7 @@ pub struct UpdateProductionOrderRequest {
     pub notes: Option<String>,
 }
 
-#[derive(Debug, Clone, Serialize)]
+#[derive(Debug, Clone, Serialize, ToSchema)]
 pub struct ProductionOrderResponse {
     pub id: Uuid,
     pub order_no: String,
@@ -139,7 +140,7 @@ pub struct ProductionOrderResponse {
     pub updated_at: DateTime<Utc>,
 }
 
-#[derive(Debug, Clone, Serialize)]
+#[derive(Debug, Clone, Serialize, ToSchema)]
 pub struct ListProductionOrdersResponse {
     pub orders: Vec<ProductionOrderResponse>,
     pub total: i64,
@@ -194,6 +195,21 @@ pub fn validate_state_transition(current_status: &str, target_status: &str) -> R
 
 // ==================== Production Order Handlers ====================
 
+#[utoipa::path(
+    get,
+    path = "/api/mes/orders",
+    tag = "ProductionOrder",
+    params(
+        ("page" = Option<i32>, Query, description = "页码"),
+        ("pagesize" = Option<i32>, Query, description = "每页数量"),
+        ("search" = Option<String>, Query, description = "搜索关键词"),
+        ("status" = Option<String>, Query, description = "状态过滤"),
+    ),
+    responses(
+        (status = 200, description = "生产订单列表", body = ApiResponse<ListProductionOrdersResponse>),
+        (status = 500, description = "服务器内部错误"),
+    ),
+)]
 pub async fn list_production_orders(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
@@ -368,6 +384,16 @@ pub async fn list_production_orders(
     ))
 }
 
+#[utoipa::path(
+    post,
+    path = "/api/mes/orders",
+    tag = "ProductionOrder",
+    request_body = CreateProductionOrderRequest,
+    responses(
+        (status = 200, description = "生产订单创建成功", body = ApiResponse<ProductionOrderResponse>),
+        (status = 500, description = "服务器内部错误"),
+    ),
+)]
 pub async fn create_production_order(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
@@ -589,6 +615,18 @@ pub async fn create_from_erp(
     Json(ApiResponse::success(order, "从ERP订单创建生产工单成功"))
 }
 
+#[utoipa::path(
+    get,
+    path = "/api/mes/orders/{id}",
+    tag = "ProductionOrder",
+    params(
+        ("id" = String, Path, description = "订单ID"),
+    ),
+    responses(
+        (status = 200, description = "生产订单详情", body = ApiResponse<ProductionOrderResponse>),
+        (status = 500, description = "服务器内部错误"),
+    ),
+)]
 pub async fn get_production_order(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
