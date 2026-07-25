@@ -5,20 +5,20 @@ const GROUP1_SERVICES: Record<string, string> = {
   iam: '/api/core/iam',
   workflow: '/api/core/flow',
   file: '/api/core/file',
-  mail: '/api/core/mail',
-  im: '/api/core/im',
-  notification: '/api/core/notification',
   master: '/api/core/master',
   migration: '/api/core/migration',
-  communication: '/api/core/comm',
+  // doc/monitor 仍由 unified-core 承载（虚拟服务），路径含 /api/core 前缀
+  doc: '/api/core/doc',
+  monitor: '/api/core/monitor',
   core: '/api/core',
 };
 
 const GROUP2_SERVICES = [
-  'erp', 'finance', 'doc', 'ai', 'hrm', 'pm', 'crm', 'mes',
-  'manufacturing', 'pdm', 'scm', 'wms', 'srm', 'qms',
-  'qualityAssurance', 'lims', 'ehs', 'rd', 'bi',
-  'analytics', 'report', 'monitor', 'portal', 'mobile',
+  'mail', 'im', 'notification',
+  'erp', 'finance', 'ai', 'hrm', 'pm', 'crm', 'mes',
+  'pdm', 'scm', 'wms', 'srm', 'qms',
+  'lims', 'ehs', 'rd', 'bi',
+  'portal', 'mobile',
   'gis', 'integration',
 ];
 
@@ -52,22 +52,6 @@ describe('runtime.ts services 路由契约', () => {
       expect(val.startsWith('/api/core')).toBe(false);
       expect(val.startsWith('/api/')).toBe(true);
     });
-  });
-
-  it('别名服务指向正确的主路径', () => {
-    const services = runtime.services as unknown as Record<string, string>;
-
-    expect(services.manufacturing).toBe(services.mes);
-    expect(services.manufacturing).toBe('/api/mes');
-
-    expect(services.qualityAssurance).toBe(services.qms);
-    expect(services.qualityAssurance).toBe('/api/qms');
-
-    expect(services.analytics).toBe(services.bi);
-    expect(services.analytics).toBe('/api/bi');
-
-    expect(services.report).toBe(services.bi);
-    expect(services.report).toBe('/api/bi');
   });
 
   it('jaeger 是独立 HTTP URL（不在 /api 体系内）', () => {

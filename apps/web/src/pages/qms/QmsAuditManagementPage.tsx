@@ -1,129 +1,44 @@
-import React, { useState, useMemo } from 'react';
-import { useQuery } from '@tanstack/react-query';
-import { FileText, CheckCircle, Eye } from 'lucide-react';
-import {
-  Dialog,
-  DialogTitle,
-  DialogContent,
-  DialogActions,
-  Chip,
-  Card,
-  CardContent,
-  Box,
-  Typography,
-  Button,
-} from '@mui/material';
-import { ListPageTemplate, type ColumnDef, type RowAction } from '@/components/templates';
-import { PageContainer } from '@/components/common';
-import { qmsApi } from '@/api/qms';
+import React from 'react';
+import { Card, CardContent, Box, Typography } from '@mui/material';
+import { FileText, CheckCircle } from 'lucide-react';
+import CrudPage, { type CrudApiAdapter } from '@/components/templates/CrudPage';
+import { auditSchema } from '@/schemas/qms';
+import { auditApi } from '@/api/qms';
 import type { AuditPlan } from '@/api/qms';
-import { designTokens } from '@/theme/tokens';
 
-const ct = designTokens.colors;
+const apiAdapter: CrudApiAdapter<AuditPlan> = {
+  list: async () => {
+    const res = await auditApi.listAuditPlans();
+    if (!res.success) {
+      throw new Error(res.message || '加载审核计划失败');
+    }
+    const data = res.data || [];
+    return { data, total: data.length };
+  },
+  create: async () => {
+    throw new Error('暂不支持创建审核计划');
+  },
+  update: async () => {
+    throw new Error('暂不支持更新审核计划');
+  },
+  delete: async () => {
+    throw new Error('暂不支持删除审核计划');
+  },
+};
 
-const QmsAuditManagementPage: React.FC = () => {
-  const [searchTerm, setSearchTerm] = useState('');
-  const [showDetailModal, setShowDetailModal] = useState(false);
-  const [selectedItem, setSelectedItem] = useState<AuditPlan | null>(null);
-
-  const { data: auditPlans = [], isLoading: loading } = useQuery<AuditPlan[]>({
-    queryKey: ['qms-audit-plans'],
-    queryFn: async (): Promise<AuditPlan[]> => {
-      const response = await qmsApi.listAuditPlans();
-      if (response.success && response.data) {
-        return response.data;
-      }
-      return [];
-    },
-  });
-
-  const getStatusBadge = (status: string) => {
-    const colors: Record<string, { bg: string; color: string }> = {
-      scheduled: { bg: 'primary.100', color: 'primary.dark' },
-      planning: { bg: 'primary.100', color: 'primary.dark' },
-      计划中: { bg: 'primary.100', color: 'primary.dark' },
-      in_progress: { bg: 'warning.100', color: ct.warning[600] },
-      进行中: { bg: 'warning.100', color: ct.warning[600] },
-      completed: { bg: 'success.lighter', color: 'success.dark' },
-      已完成: { bg: 'success.lighter', color: 'success.dark' },
-      已计划: { bg: 'primary.100', color: 'primary.dark' },
-    };
-    const labels: Record<string, string> = {
-      scheduled: '已计划',
-      planning: '计划中',
-      计划中: '计划中',
-      in_progress: '进行中',
-      进行中: '进行中',
-      completed: '已完成',
-      已完成: '已完成',
-      已计划: '已计划',
-    };
-    const colorKey = status as keyof typeof colors;
-    return (
-      <Chip
-        label={labels[status] || status}
-        size='small'
-        sx={{
-          backgroundColor: colors[colorKey]?.bg || 'grey.100',
-          color: colors[colorKey]?.color || 'text.secondary',
-        }}
-      />
-    );
-  };
-
-  const auditColumns: ColumnDef<AuditPlan>[] = [
-    { id: 'plan_no', label: '审核编号' },
-    { id: 'title', label: '审核标题' },
-    { id: 'audit_type', label: '审核类型' },
-    {
-      id: 'status',
-      label: '状态',
-      render: (row) => getStatusBadge(row.status),
-    },
-    { id: 'auditor', label: '审核人' },
-    { id: 'start_date', label: '审核日期' },
-    { id: 'departments', label: '涉及部门', render: (row) => row.departments?.join(', ') || '-' },
-  ];
-
-  const viewItem = (item: AuditPlan) => {
-    setSelectedItem(item);
-    setShowDetailModal(true);
-  };
-
-  const auditRowActions: RowAction<AuditPlan>[] = [
-    {
-      label: '查看',
-      icon: <Eye style={{ width: 16, height: 16 }} />,
-      onClick: (row) => viewItem(row),
-    },
-  ];
-
-  const filteredAudits = useMemo(() => {
-    return auditPlans.filter(
-      (item: AuditPlan) =>
-        item.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        (item.plan_no && item.plan_no.toLowerCase().includes(searchTerm.toLowerCase()))
-    );
-  }, [auditPlans, searchTerm]);
-
+function AuditStatsCards({ rows }: { rows: AuditPlan[] }) {
   const stats = {
-    totalAudits: auditPlans.length,
-    completedAudits: auditPlans.filter(
-      (a: AuditPlan) => a.status === 'completed' || a.status === '已完成'
-    ).length,
-    inProgressAudits: auditPlans.filter(
-      (a: AuditPlan) => a.status === 'in_progress' || a.status === '进行中'
-    ).length,
+    totalAudits: rows.length,
+    completedAudits: rows.filter((a) => a.status === 'completed' || a.status === '已完成').length,
+    inProgressAudits: rows.filter((a) => a.status === 'in_progress' || a.status === '进行中')
+      .length,
   };
 
-  const statsCards = (
+  return (
     <Box
       sx={{
         display: 'grid',
-        gridTemplateColumns: {
-          xs: 'repeat(1, 1fr)',
-          md: 'repeat(3, 1fr)',
-        },
+        gridTemplateColumns: { xs: 'repeat(1, 1fr)', md: 'repeat(3, 1fr)' },
         gap: 2,
         mb: 4,
       }}
@@ -229,181 +144,17 @@ const QmsAuditManagementPage: React.FC = () => {
       </Card>
     </Box>
   );
+}
 
+const QmsAuditManagementPage: React.FC = () => {
   return (
-    <PageContainer
-      title='审核管理'
-      subtitle='Audit Management'
-      headerProps={{
-        pageIcon: <FileText style={{ width: 20, height: 20 }} />,
-        pageGradient: `linear-gradient(135deg, ${ct.primary.main}, ${ct.secondary[400]})`,
-        search: {
-          value: searchTerm,
-          onChange: setSearchTerm,
-          placeholder: '搜索编号或标题...',
-        },
-        actions: [],
-      }}
-      maxWidth='xl'
-    >
-      {statsCards}
-
-      <Card>
-        <CardContent sx={{ p: 0 }}>
-          <ListPageTemplate
-            columns={auditColumns}
-            data={filteredAudits}
-            loading={loading}
-            getRowId={(row) => row.id}
-            rowActions={auditRowActions}
-            searchable={false}
-            filters={[]}
-            actions={[]}
-            mobileCardTitleKey='title'
-            mobileCardSubtitleKey='plan_no'
-            mobileCardDisplayFields={['audit_type', 'status', 'auditor', 'start_date']}
-            mobileCardFieldLabels={{
-              audit_type: '审核类型',
-              status: '状态',
-              auditor: '审核人',
-              start_date: '审核日期',
-            }}
-          />
-        </CardContent>
-      </Card>
-
-      <Dialog
-        open={showDetailModal}
-        onClose={() => setShowDetailModal(false)}
-        maxWidth='lg'
-        fullWidth
-      >
-        <DialogTitle>
-          {selectedItem && selectedItem.plan_no
-            ? `${selectedItem.plan_no} - ${selectedItem.title}`
-            : selectedItem?.title || ''}
-        </DialogTitle>
-        <DialogContent>
-          {selectedItem && (
-            <Box sx={{ mt: 1, display: 'flex', flexDirection: 'column', gap: 2 }}>
-              <Box
-                sx={{
-                  display: 'grid',
-                  gridTemplateColumns: '1fr 1fr',
-                  gap: 2,
-                }}
-              >
-                <Box>
-                  <Typography
-                    component='label'
-                    sx={{
-                      display: 'block',
-                      fontSize: '0.875rem',
-                      color: 'text.secondary',
-                      mb: 0.5,
-                    }}
-                  >
-                    审核类型
-                  </Typography>
-                  <Typography sx={{ mt: 0.5 }}>
-                    {selectedItem.audit_type === 'internal' ? '内部审核' : '外部审核'}
-                  </Typography>
-                </Box>
-                <Box>
-                  <Typography
-                    component='label'
-                    sx={{
-                      display: 'block',
-                      fontSize: '0.875rem',
-                      color: 'text.secondary',
-                      mb: 0.5,
-                    }}
-                  >
-                    状态
-                  </Typography>
-                  <Box sx={{ mt: 0.5 }}>{getStatusBadge(selectedItem.status)}</Box>
-                </Box>
-              </Box>
-              <Box
-                sx={{
-                  display: 'grid',
-                  gridTemplateColumns: '1fr 1fr',
-                  gap: 2,
-                }}
-              >
-                <Box>
-                  <Typography
-                    component='label'
-                    sx={{
-                      display: 'block',
-                      fontSize: '0.875rem',
-                      color: 'text.secondary',
-                      mb: 0.5,
-                    }}
-                  >
-                    审核人
-                  </Typography>
-                  <Typography sx={{ mt: 0.5 }}>{selectedItem.auditor || '-'}</Typography>
-                </Box>
-                <Box>
-                  <Typography
-                    component='label'
-                    sx={{
-                      display: 'block',
-                      fontSize: '0.875rem',
-                      color: 'text.secondary',
-                      mb: 0.5,
-                    }}
-                  >
-                    开始日期
-                  </Typography>
-                  <Typography sx={{ mt: 0.5 }}>
-                    {selectedItem.start_date
-                      ? new Date(selectedItem.start_date).toLocaleDateString('zh-CN')
-                      : '-'}
-                  </Typography>
-                </Box>
-              </Box>
-              <Box>
-                <Typography
-                  component='label'
-                  sx={{
-                    display: 'block',
-                    fontSize: '0.875rem',
-                    color: 'text.secondary',
-                    mb: 0.5,
-                  }}
-                >
-                  涉及部门
-                </Typography>
-                <Typography sx={{ mt: 0.5 }}>
-                  {selectedItem.departments?.join(', ') || '-'}
-                </Typography>
-              </Box>
-              {selectedItem.description && (
-                <Box>
-                  <Typography
-                    component='label'
-                    sx={{
-                      display: 'block',
-                      fontSize: '0.875rem',
-                      color: 'text.secondary',
-                      mb: 0.5,
-                    }}
-                  >
-                    描述
-                  </Typography>
-                  <Typography sx={{ mt: 0.5 }}>{selectedItem.description}</Typography>
-                </Box>
-              )}
-            </Box>
-          )}
-        </DialogContent>
-        <DialogActions>
-          <Button onClick={() => setShowDetailModal(false)}>关闭</Button>
-        </DialogActions>
-      </Dialog>
-    </PageContainer>
+    <CrudPage
+      schema={auditSchema}
+      apiAdapter={apiAdapter}
+      breadcrumbs={[{ label: 'QMS' }, { label: '审核管理' }]}
+      headerContent={(rows) => <AuditStatsCards rows={rows as AuditPlan[]} />}
+      detailMaxWidth='lg'
+    />
   );
 };
 

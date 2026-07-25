@@ -1,10 +1,9 @@
 [build]
 target-dir = "target"
+rustc-wrapper = "sccache"
 
 [test]
-# 默认测试配置
 runner = "cargo-nextest run"
-# 使用 cargo-nextest 作为测试运行器，提供更好的测试体验
 
 [profile.release]
 opt-level = 3
@@ -21,5 +20,4 @@ debug = true
 split-debuginfo = "unpacked"
 
 [features]
-# 覆盖率相关特性
 coverage = ["instrument-coverage"]

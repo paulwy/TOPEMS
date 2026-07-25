@@ -20,6 +20,8 @@ export const PDM_PATHS = {
   batch: '/pdm/batch',
   step: '/pdm/step',
   stats: '/pdm/stats',
+  dashboard: '/pdm/dashboard',
+  productCategory: '/pdm/product-category',
 } as const;
 
 // ---- 路由配置（供路由系统使用） ----
@@ -192,6 +194,31 @@ export const pdmModuleConfig: RouteModuleConfig = {
       template: 'stats',
       group: 'analytics',
     },
+    {
+      path: PDM_PATHS.dashboard,
+      element: lazyWithRetry(() => import('@/pages/pdm/PdmDashboardPage'), 'PdmDashboardPage'),
+      module: 'pdm',
+      title: '仪表盘',
+      code: 'pdm-dashboard',
+      requiredPermissions: ['pdm:read'],
+      action: 'read',
+      template: 'dashboard',
+      group: 'overview',
+    },
+    {
+      path: PDM_PATHS.productCategory,
+      element: lazyWithRetry(
+        () => import('@/pages/pdm/PdmProductCategoryPage'),
+        'PdmProductCategoryPage'
+      ),
+      module: 'pdm',
+      title: '产品类别',
+      code: 'pdm-product-category',
+      requiredPermissions: ['pdm:product_category:read', 'pdm:read'],
+      action: 'read',
+      template: 'tree',
+      group: 'business',
+    },
   ],
 };
 
@@ -208,6 +235,17 @@ export const pdmNavConfig: ModuleNavConfig = {
   order: 13,
   description: '产品管理、BOM、文档、变更管理',
   navItems: [
+    {
+      code: 'pdm-dashboard',
+      label: '仪表盘',
+      icon: 'LayoutDashboard',
+      path: PDM_PATHS.dashboard,
+      permission: 'pdm:read',
+      order: 0,
+      group: 'overview',
+      showInTabs: true,
+      description: 'PDM数据概览',
+    },
     {
       code: 'pdm-product',
       label: '产品管理',
@@ -352,6 +390,16 @@ export const pdmNavConfig: ModuleNavConfig = {
       order: 1,
       group: 'analytics',
       description: 'PDM数据统计',
+    },
+    {
+      code: 'pdm-product-category',
+      label: '产品类别',
+      icon: 'Tags',
+      path: PDM_PATHS.productCategory,
+      permission: 'pdm:product_category:read',
+      order: 12,
+      group: 'business',
+      description: '产品类别树形管理',
     },
   ],
 };

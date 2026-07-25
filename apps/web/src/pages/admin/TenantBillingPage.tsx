@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useMemo } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { QUERY_KEYS } from '@/lib/reactQuery';
 import {
@@ -30,9 +30,11 @@ import {
   Crown,
 } from 'lucide-react';
 import { PageContainer, Grid } from '@/components/common';
-import { ListPageTemplate, type ColumnDef, type RowAction } from '@/components/templates';
+import CrudPage from '@/components/templates/CrudPage';
+import type { CrudApiAdapter, RowAction } from '@/components/templates/CrudPage';
 import { tenantApi } from '@/api/tenant';
 import type { TenantInvoice, Tenant, UsageMetrics, TenantBillingInfo } from '@/api/tenant/types';
+import { tenantInvoiceSchema } from '@/schemas/admin';
 
 const plans = [
   {
@@ -154,19 +156,6 @@ const TenantBillingPage: React.FC = () => {
     enabled: !!tenantId,
   });
 
-  const invoicesQuery = useQuery({
-    queryKey: QUERY_KEYS.TENANT.INVOICES(tenantId ?? ''),
-    queryFn: async () => {
-      if (!tenantId) return [];
-      const res = await tenantApi.getInvoices(tenantId);
-      if (res.success && res.data) {
-        return res.data;
-      }
-      throw new Error('加载账单失败');
-    },
-    enabled: !!tenantId,
-  });
-
   const usageQuery = useQuery({
     queryKey: QUERY_KEYS.TENANT.USAGE(tenantId ?? ''),
     queryFn: async () => {
@@ -182,92 +171,42 @@ const TenantBillingPage: React.FC = () => {
 
   const tenant = tenantQuery.data ?? null;
   const billingInfo = billingQuery.data ?? null;
-  const invoices = invoicesQuery.data ?? [];
   const usage = usageQuery.data ?? null;
   const loading = contextQuery.isLoading || tenantQuery.isLoading;
 
-  const invoiceColumns: ColumnDef<TenantInvoice>[] = [
-    {
-      id: 'id',
-      label: '账单编号',
-      render: (row) => (
-        <Typography
-          variant='body2'
-          sx={{ fontWeight: 500 }}
-        >
-          {row.id}
-        </Typography>
-      ),
-    },
-    {
-      id: 'period',
-      label: '账单周期',
-      render: (row) => (
-        <Typography
-          variant='body2'
-          color='text.secondary'
-        >
-          {row.period_start ? new Date(row.period_start).toLocaleDateString('zh-CN') : '-'} -{' '}
-          {row.period_end ? new Date(row.period_end).toLocaleDateString('zh-CN') : '-'}
-        </Typography>
-      ),
-    },
-    {
-      id: 'amount',
-      label: '金额',
-      render: (row) => (
-        <Typography
-          variant='body2'
-          sx={{ fontWeight: 600 }}
-        >
-          ¥{row.amount?.toLocaleString() || 0}
-        </Typography>
-      ),
-    },
-    {
-      id: 'status',
-      label: '状态',
-      render: (row) => {
-        const statusMap: Record<
-          string,
-          { label: string; color: 'success' | 'warning' | 'error' | 'default' }
-        > = {
-          paid: { label: '已支付', color: 'success' },
-          pending: { label: '待支付', color: 'warning' },
-          failed: { label: '支付失败', color: 'error' },
-          draft: { label: '草稿', color: 'default' },
-        };
-        const status = statusMap[row.status || 'draft'];
-        return (
-          <Chip
-            label={status.label}
-            color={status.color}
-            size='small'
-          />
-        );
+  const invoiceApiAdapter = useMemo<CrudApiAdapter<TenantInvoice> | null>(() => {
+    if (!tenantId) return null;
+    return {
+      list: async () => {
+        const res = await tenantApi.getInvoices(tenantId);
+        if (!res.success) {
+          throw new Error(res.message || '加载账单失败');
+        }
+        const data = res.data || [];
+        return { data, total: data.length };
       },
-    },
-    {
-      id: 'paid_at',
-      label: '支付时间',
-      render: (row) => (
-        <Typography
-          variant='body2'
-          color='text.secondary'
-        >
-          {row.paid_at ? new Date(row.paid_at).toLocaleDateString('zh-CN') : '-'}
-        </Typography>
-      ),
-    },
-  ];
+      create: async () => {
+        throw new Error('不支持创建账单');
+      },
+      update: async () => {
+        throw new Error('不支持更新账单');
+      },
+      delete: async () => {
+        throw new Error('不支持删除账单');
+      },
+    };
+  }, [tenantId]);
 
-  const invoiceRowActions: RowAction<TenantInvoice>[] = [
-    {
-      label: '下载发票',
-      icon: <Download size={16} />,
-      onClick: () => {},
-    },
-  ];
+  const invoiceRowActions = useMemo<RowAction[]>(
+    () => [
+      {
+        label: '下载发票',
+        icon: <Download size={16} />,
+        onClick: () => {},
+      },
+    ],
+    []
+  );
 
   if (loading || !tenant) {
     return (
@@ -581,21 +520,15 @@ const TenantBillingPage: React.FC = () => {
         </Grid>
       </Box>
 
-      <Box>
-        <ListPageTemplate
-          title='账单历史'
-          columns={invoiceColumns}
-          data={invoices}
-          rowActions={invoiceRowActions}
-          pagination={{
-            page: 0,
-            pageSize: 10,
-            total: invoices.length,
-            onPageChange: () => {},
-            onPageSizeChange: () => {},
-          }}
-        />
-      </Box>
+      {invoiceApiAdapter && (
+        <Box sx={{ mb: 4 }}>
+          <CrudPage
+            schema={tenantInvoiceSchema}
+            apiAdapter={invoiceApiAdapter}
+            customRowActions={invoiceRowActions}
+          />
+        </Box>
+      )}
 
       <Box sx={{ mt: 4 }}>
         <Card variant='outlined'>

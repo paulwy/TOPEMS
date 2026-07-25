@@ -1,37 +1,205 @@
-import React, { useState, useEffect, useMemo } from 'react';
-import { Box, Card, CardContent, Typography, Chip, Rating, Divider } from '@mui/material';
-import { TrendingUp, TrendingDown, Award, Target, BarChart3, RefreshCw } from 'lucide-react';
-import { ListPageTemplate, type ColumnDef } from '@/components/templates';
-import { srmApi, type SupplierPerformance, type PerformanceSummary } from '@/api/srm';
-import { useNotificationStore } from '@/store';
-import { apiLogger } from '@/utils/logger';
-import { PageContainer } from '@/components/common';
-import { designTokens } from '@/theme/tokens';
+import React from 'react';
+import CrudPage from '@/components/templates/CrudPage';
+import type { CrudApiAdapter } from '@/components/templates/CrudPage';
+import type { ColumnDef } from '@/components/templates/list/types';
+import { performanceSchema } from '@/schemas/srm';
+import { srmApi } from '@/api/srm';
 import { useQuery } from '@tanstack/react-query';
-import { QUERY_KEYS } from '@/lib/reactQuery';
+import { Box, Card, CardContent, Typography, Chip, Rating } from '@mui/material';
+import { TrendingUp, TrendingDown, Award, Target, BarChart3, RefreshCw } from 'lucide-react';
+import { designTokens } from '@/theme/tokens';
 
 const ct = designTokens.colors;
 
-const SrmPerformancePage: React.FC = () => {
-  const addNotification = useNotificationStore((state) => state.addNotification);
-  const [page, setPage] = useState(0);
-  const [rowsPerPage, setRowsPerPage] = useState(10);
-  const [searchTerm, setSearchTerm] = useState('');
+interface SupplierPerformance {
+  supplier_id: string;
+  supplier_name: string;
+  total_orders: number;
+  total_amount: number;
+  avg_overall_score?: number;
+  avg_quality_score?: number;
+  avg_delivery_score?: number;
+  on_time_delivery_rate?: number;
+  defect_rate?: number;
+  evaluation_count: number;
+}
 
-  const performancesQuery = useQuery<{ performances: SupplierPerformance[] }>({
-    queryKey: QUERY_KEYS.SRM.PERFORMANCE,
-    queryFn: async () => {
-      const response = await srmApi.getPerformanceReports();
-      if (!response.success || !response.data) {
-        throw new Error(response.message || '加载绩效数据失败');
-      }
-      return { performances: response.data.performances };
+interface PerformanceSummary {
+  total_suppliers: number;
+  evaluated_suppliers: number;
+  evaluation_rate: number;
+  avg_overall_score?: number;
+  top_supplier?: {
+    name: string;
+    avg_score: number;
+  };
+}
+
+const performanceApiAdapter: CrudApiAdapter = {
+  list: async (params) => {
+    const response = await srmApi.getPerformanceReports();
+    if (!response.success || !response.data) {
+      return { data: [], total: 0 };
+    }
+
+    const items = response.data.performances;
+    const search = params?.search?.toLowerCase() || '';
+    const page = params?.page || 0;
+    const pageSize = params?.pageSize || 10;
+
+    let filtered = items;
+    if (search) {
+      filtered = items.filter((p) => p.supplier_name.toLowerCase().includes(search));
+    }
+
+    const total = filtered.length;
+    const data = filtered.slice(page * pageSize, (page + 1) * pageSize);
+    return { data: data as unknown as Record<string, unknown>[], total };
+  },
+  create: async () => {
+    throw new Error('绩效数据不可创建');
+  },
+  update: async () => {
+    throw new Error('绩效数据不可更新');
+  },
+  delete: async () => {
+    throw new Error('绩效数据不可删除');
+  },
+};
+
+const getScoreColor = (score?: number): 'success' | 'warning' | 'error' | 'default' => {
+  if (!score) return 'default';
+  if (score >= 80) return 'success';
+  if (score >= 60) return 'warning';
+  return 'error';
+};
+
+const customColumns: ColumnDef[] = [
+  {
+    id: 'total_amount',
+    label: '订单金额',
+    width: 120,
+    render: (row) => {
+      const r = row as unknown as SupplierPerformance;
+      return `${(r.total_amount / 10000).toFixed(2)}万`;
     },
-    staleTime: 5 * 60 * 1000,
-  });
+  },
+  {
+    id: 'avg_overall_score',
+    label: '综合评分',
+    width: 180,
+    sortable: true,
+    render: (row) => {
+      const r = row as unknown as SupplierPerformance;
+      return (
+        <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+          <Rating
+            value={r.avg_overall_score || 0}
+            readOnly
+            max={100}
+            precision={1}
+            size='small'
+          />
+          <Chip
+            label={r.avg_overall_score?.toFixed(1) || '-'}
+            size='small'
+            color={getScoreColor(r.avg_overall_score)}
+          />
+        </Box>
+      );
+    },
+  },
+  {
+    id: 'avg_quality_score',
+    label: '质量评分',
+    width: 100,
+    sortable: true,
+    render: (row) => {
+      const r = row as unknown as SupplierPerformance;
+      return (
+        <Chip
+          label={r.avg_quality_score?.toFixed(1) || '-'}
+          size='small'
+          color={getScoreColor(r.avg_quality_score)}
+        />
+      );
+    },
+  },
+  {
+    id: 'avg_delivery_score',
+    label: '交付评分',
+    width: 100,
+    sortable: true,
+    render: (row) => {
+      const r = row as unknown as SupplierPerformance;
+      return (
+        <Chip
+          label={r.avg_delivery_score?.toFixed(1) || '-'}
+          size='small'
+          color={getScoreColor(r.avg_delivery_score)}
+        />
+      );
+    },
+  },
+  {
+    id: 'on_time_delivery_rate',
+    label: '准时交付率',
+    width: 140,
+    sortable: true,
+    render: (row) => {
+      const r = row as unknown as SupplierPerformance;
+      const rate = r.on_time_delivery_rate;
+      if (rate === undefined || rate === null) return '-';
+      return (
+        <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+          {rate >= 0.9 ? (
+            <TrendingUp
+              size={16}
+              color='green'
+            />
+          ) : (
+            <TrendingDown
+              size={16}
+              color='red'
+            />
+          )}
+          <Typography variant='body2'>{(rate * 100).toFixed(0)}%</Typography>
+        </Box>
+      );
+    },
+  },
+  {
+    id: 'defect_rate',
+    label: '缺陷率',
+    width: 120,
+    sortable: true,
+    render: (row) => {
+      const r = row as unknown as SupplierPerformance;
+      const rate = r.defect_rate;
+      if (rate === undefined || rate === null) return '-';
+      return (
+        <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+          {rate <= 0.02 ? (
+            <TrendingDown
+              size={16}
+              color='green'
+            />
+          ) : (
+            <TrendingUp
+              size={16}
+              color='red'
+            />
+          )}
+          <Typography variant='body2'>{(rate * 100).toFixed(2)}%</Typography>
+        </Box>
+      );
+    },
+  },
+];
 
+const PerformanceStats: React.FC = () => {
   const summaryQuery = useQuery<PerformanceSummary | null>({
-    queryKey: [...QUERY_KEYS.SRM.PERFORMANCE, 'summary'],
+    queryKey: ['srm-performance-summary'],
     queryFn: async () => {
       const response = await srmApi.getPerformanceSummary();
       if (response.success && response.data) return response.data;
@@ -40,434 +208,149 @@ const SrmPerformancePage: React.FC = () => {
     staleTime: 5 * 60 * 1000,
   });
 
-  const allPerformances = performancesQuery.data?.performances ?? [];
-  const summary = summaryQuery.data ?? null;
-  const loading = performancesQuery.isLoading || summaryQuery.isLoading;
+  const summary = summaryQuery.data;
 
-  const filteredPerformances = useMemo(() => {
-    if (!searchTerm) return allPerformances;
-    return allPerformances.filter((p) =>
-      p.supplier_name.toLowerCase().includes(searchTerm.toLowerCase())
-    );
-  }, [allPerformances, searchTerm]);
+  if (!summary) return null;
 
-  const total = filteredPerformances.length;
-  const performances = filteredPerformances.slice(page * rowsPerPage, (page + 1) * rowsPerPage);
-
-  useEffect(() => {
-    if (performancesQuery.isError) {
-      apiLogger.error('加载绩效数据失败:', performancesQuery.error);
-      addNotification({
-        type: 'error',
-        title: '加载失败',
-        message:
-          performancesQuery.error instanceof Error
-            ? performancesQuery.error.message
-            : '加载绩效数据失败',
-      });
-    }
-  }, [performancesQuery.isError, performancesQuery.error, addNotification]);
-
-  const handleRefresh = () => {
-    performancesQuery.refetch();
-    summaryQuery.refetch();
-  };
-
-  const getScoreColor = (score?: number): 'success' | 'warning' | 'error' | 'default' => {
-    if (!score) return 'default';
-    if (score >= 80) return 'success';
-    if (score >= 60) return 'warning';
-    return 'error';
-  };
-
-  const getRankIcon = (index: number) => {
-    if (index === 0)
-      return (
-        <Award
-          size={20}
-          color='gold'
-        />
-      );
-    if (index === 1)
-      return (
-        <Award
-          size={20}
-          color='silver'
-        />
-      );
-    if (index === 2)
-      return (
-        <Award
-          size={20}
-          color={ct.orange[700]}
-        />
-      );
-    return null;
-  };
-
-  const getRankBg = (index: number) => {
-    if (index === 0) return ct.warning[50];
-    if (index === 1) return 'grey.100';
-    if (index === 2) return ct.orange[50];
-    return 'transparent';
-  };
-
-  const columns: ColumnDef<SupplierPerformance>[] = [
+  const statCards = [
     {
-      id: 'rank',
-      label: '排名',
-      render: (_, index) => (
-        <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-          {getRankIcon(index)}
-          <Typography sx={{ ml: 1, fontWeight: 'bold' }}>{index + 1}</Typography>
-        </Box>
-      ),
+      label: '供应商总数',
+      value: summary.total_suppliers,
+      icon: <BarChart3 sx={{ width: 20, height: 20 }} />,
+      color: 'primary.dark',
+      bgColor: 'primary.lighter',
     },
     {
-      id: 'supplier_name',
-      label: '供应商名称',
-      render: (row, index) => (
-        <Box
-          sx={{
-            backgroundColor: getRankBg(index),
-            padding: 1,
-            borderRadius: 1,
-            fontWeight: 'medium',
-          }}
-        >
-          {row.supplier_name}
-        </Box>
-      ),
+      label: '已评估供应商',
+      value: summary.evaluated_suppliers,
+      icon: <Target sx={{ width: 20, height: 20 }} />,
+      color: 'info.dark',
+      bgColor: 'info.lighter',
     },
     {
-      id: 'total_orders',
-      label: '订单数量',
-      render: (row) => (
-        <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-          <Target size={16} />
-          {row.total_orders}
-        </Box>
-      ),
+      label: '评估覆盖率',
+      value: `${(summary.evaluation_rate * 100).toFixed(1)}%`,
+      icon: <TrendingUp sx={{ width: 20, height: 20 }} />,
+      color: 'success.dark',
+      bgColor: 'success.lighter',
     },
     {
-      id: 'total_amount',
-      label: '订单金额',
-      render: (row) => `${(row.total_amount / 10000).toFixed(2)}万`,
-    },
-    {
-      id: 'avg_overall_score',
-      label: '综合评分',
-      render: (row) => (
-        <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-          <Rating
-            value={row.avg_overall_score || 0}
-            readOnly
-            max={100}
-            precision={1}
-            size='small'
-          />
-          <Chip
-            label={row.avg_overall_score?.toFixed(1) || '-'}
-            size='small'
-            color={getScoreColor(row.avg_overall_score)}
-          />
-        </Box>
-      ),
-    },
-    {
-      id: 'avg_quality_score',
-      label: '质量评分',
-      render: (row) => (
-        <Chip
-          label={row.avg_quality_score?.toFixed(1) || '-'}
-          size='small'
-          color={getScoreColor(row.avg_quality_score)}
-        />
-      ),
-    },
-    {
-      id: 'avg_delivery_score',
-      label: '交付评分',
-      render: (row) => (
-        <Chip
-          label={row.avg_delivery_score?.toFixed(1) || '-'}
-          size='small'
-          color={getScoreColor(row.avg_delivery_score)}
-        />
-      ),
-    },
-    {
-      id: 'on_time_delivery_rate',
-      label: '准时交付率',
-      render: (row) => {
-        const rate = row.on_time_delivery_rate;
-        if (rate === undefined || rate === null) return '-';
-        return (
-          <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-            {rate >= 0.9 ? (
-              <TrendingUp
-                size={16}
-                color='green'
-              />
-            ) : (
-              <TrendingDown
-                size={16}
-                color='red'
-              />
-            )}
-            <Typography variant='body2'>{(rate * 100).toFixed(0)}%</Typography>
-          </Box>
-        );
-      },
-    },
-    {
-      id: 'defect_rate',
-      label: '缺陷率',
-      render: (row) => {
-        const rate = row.defect_rate;
-        if (rate === undefined || rate === null) return '-';
-        return (
-          <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-            {rate <= 0.02 ? (
-              <TrendingDown
-                size={16}
-                color='green'
-              />
-            ) : (
-              <TrendingUp
-                size={16}
-                color='red'
-              />
-            )}
-            <Typography variant='body2'>{(rate * 100).toFixed(2)}%</Typography>
-          </Box>
-        );
-      },
-    },
-    {
-      id: 'evaluation_count',
-      label: '评估次数',
-      render: (row) => row.evaluation_count,
+      label: '平均综合评分',
+      value: summary.avg_overall_score?.toFixed(1) || '-',
+      icon: <Award sx={{ width: 20, height: 20 }} />,
+      color:
+        summary.avg_overall_score >= 80
+          ? 'success.dark'
+          : summary.avg_overall_score >= 60
+            ? 'warning.dark'
+            : 'error.dark',
+      bgColor:
+        summary.avg_overall_score >= 80
+          ? 'success.lighter'
+          : summary.avg_overall_score >= 60
+            ? 'warning.lighter'
+            : 'error.lighter',
     },
   ];
 
-  const headerContent = (
+  return (
     <Box>
-      {summary && (
-        <Box sx={{ mb: 4 }}>
-          <Typography
-            variant='h6'
-            sx={{ mb: 3, fontWeight: 'bold' }}
-          >
-            绩效概览
-          </Typography>
-          <Box
-            sx={{
-              display: 'grid',
-              gridTemplateColumns: {
-                xs: 'repeat(2, 1fr)',
-                sm: 'repeat(4, 1fr)',
-              },
-              gap: 2,
-            }}
-          >
-            <Card>
-              <CardContent>
+      <Typography
+        variant='h6'
+        sx={{ mb: 2, fontWeight: 'bold' }}
+      >
+        绩效概览
+      </Typography>
+      <Box
+        sx={{
+          display: 'grid',
+          gridTemplateColumns: {
+            xs: 'repeat(2, 1fr)',
+            md: 'repeat(4, 1fr)',
+          },
+          gap: 2,
+          mb: 3,
+        }}
+      >
+        {statCards.map((card) => (
+          <Card key={card.label}>
+            <CardContent sx={{ p: 2 }}>
+              <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5 }}>
                 <Box
-                  sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}
+                  sx={{
+                    width: 40,
+                    height: 40,
+                    bgcolor: card.bgColor,
+                    borderRadius: 3,
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                  }}
                 >
-                  <div>
-                    <Typography
-                      color='text.secondary'
-                      variant='body2'
-                    >
-                      供应商总数
-                    </Typography>
-                    <Typography
-                      variant='h4'
-                      sx={{ fontWeight: 'bold' }}
-                    >
-                      {summary.total_suppliers}
-                    </Typography>
-                  </div>
-                  <BarChart3
-                    color='primary'
-                    fontSize='large'
-                  />
+                  {React.cloneElement(card.icon, { style: { color: card.color } })}
                 </Box>
-              </CardContent>
-            </Card>
-            <Card>
-              <CardContent>
-                <Box
-                  sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}
-                >
-                  <div>
-                    <Typography
-                      color='text.secondary'
-                      variant='body2'
-                    >
-                      已评估供应商
-                    </Typography>
-                    <Typography
-                      variant='h4'
-                      sx={{ fontWeight: 'bold' }}
-                    >
-                      {summary.evaluated_suppliers}
-                    </Typography>
-                  </div>
-                  <Target
-                    color='primary'
-                    fontSize='large'
-                  />
+                <Box>
+                  <Typography
+                    variant='body2'
+                    sx={{ color: 'text.secondary', fontSize: '0.875rem' }}
+                  >
+                    {card.label}
+                  </Typography>
+                  <Typography
+                    variant='h5'
+                    sx={{ fontWeight: 700, color: 'slate.900' }}
+                  >
+                    {card.value}
+                  </Typography>
                 </Box>
-              </CardContent>
-            </Card>
-            <Card>
-              <CardContent>
-                <Box
-                  sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}
+              </Box>
+            </CardContent>
+          </Card>
+        ))}
+      </Box>
+
+      {summary.top_supplier && (
+        <Card sx={{ mb: 3 }}>
+          <CardContent>
+            <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+              <Box>
+                <Typography
+                  variant='body2'
+                  sx={{ color: 'text.secondary' }}
                 >
-                  <div>
-                    <Typography
-                      color='text.secondary'
-                      variant='body2'
-                    >
-                      评估覆盖率
-                    </Typography>
-                    <Typography
-                      variant='h4'
-                      sx={{ fontWeight: 'bold' }}
-                    >
-                      {(summary.evaluation_rate * 100).toFixed(1)}%
-                    </Typography>
-                  </div>
-                  <TrendingUp
+                  最佳供应商
+                </Typography>
+                <Typography
+                  variant='h6'
+                  sx={{ fontWeight: 'bold' }}
+                >
+                  {summary.top_supplier.name}
+                  <Chip
+                    sx={{ ml: 2 }}
+                    label={`${summary.top_supplier.avg_score.toFixed(1)}分`}
                     color='success'
-                    fontSize='large'
+                    size='small'
                   />
-                </Box>
-              </CardContent>
-            </Card>
-            <Card>
-              <CardContent>
-                <Box
-                  sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}
-                >
-                  <div>
-                    <Typography
-                      color='text.secondary'
-                      variant='body2'
-                    >
-                      平均综合评分
-                    </Typography>
-                    <Typography
-                      variant='h4'
-                      sx={{
-                        fontWeight: 'bold',
-                        color:
-                          summary.avg_overall_score >= 80
-                            ? 'green'
-                            : summary.avg_overall_score >= 60
-                              ? 'orange'
-                              : 'red',
-                      }}
-                    >
-                      {summary.avg_overall_score?.toFixed(1)}
-                    </Typography>
-                  </div>
-                  <Award
-                    color='primary'
-                    fontSize='large'
-                  />
-                </Box>
-              </CardContent>
-            </Card>
-          </Box>
-
-          {summary.top_supplier && (
-            <Card sx={{ mt: 2 }}>
-              <CardContent>
-                <Box
-                  sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}
-                >
-                  <div>
-                    <Typography
-                      color='text.secondary'
-                      variant='body2'
-                    >
-                      最佳供应商
-                    </Typography>
-                    <Typography
-                      variant='h6'
-                      sx={{ fontWeight: 'bold' }}
-                    >
-                      {summary.top_supplier.name}
-                      <Chip
-                        sx={{ ml: 2 }}
-                        label={`${summary.top_supplier.avg_score.toFixed(1)}分`}
-                        color='success'
-                        size='small'
-                      />
-                    </Typography>
-                  </div>
-                  <Award
-                    color='gold'
-                    fontSize='large'
-                  />
-                </Box>
-              </CardContent>
-            </Card>
-          )}
-        </Box>
+                </Typography>
+              </Box>
+              <Award sx={{ color: ct.warning[500], width: 28, height: 28 }} />
+            </Box>
+          </CardContent>
+        </Card>
       )}
-
-      <Divider sx={{ mb: 3 }} />
     </Box>
   );
+};
 
+const SrmPerformancePage: React.FC = () => {
   return (
-    <PageContainer
-      title='供应商绩效'
-      subtitle='分析供应商绩效数据、评估供应商表现、优化供应链'
-    >
-      <ListPageTemplate
-        title=''
-        subtitle=''
-        columns={columns}
-        data={performances}
-        loading={loading}
-        pagination={{
-          page,
-          pageSize: rowsPerPage,
-          total,
-          onPageChange: setPage,
-          onPageSizeChange: (size) => {
-            setRowsPerPage(size);
-            setPage(0);
-          },
-        }}
-        searchable
-        searchPlaceholder='搜索供应商名称...'
-        searchValue={searchTerm}
-        onSearch={(value) => {
-          setSearchTerm(value);
-          setPage(0);
-        }}
-        actions={[
-          {
-            label: '刷新数据',
-            icon: <RefreshCw size={18} />,
-            onClick: handleRefresh,
-            variant: 'outlined',
-          },
-        ]}
-        headerContent={headerContent}
-        getRowId={(row) => row.supplier_id}
-        onRefresh={handleRefresh}
-        emptyMessage='暂无绩效数据'
-      />
-    </PageContainer>
+    <CrudPage
+      schema={performanceSchema}
+      apiAdapter={performanceApiAdapter}
+      customColumns={customColumns}
+      breadcrumbs={[{ label: 'SRM' }, { label: '供应商绩效' }]}
+      headerContent={<PerformanceStats />}
+    />
   );
 };
 

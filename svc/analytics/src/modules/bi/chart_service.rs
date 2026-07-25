@@ -75,8 +75,70 @@ pub struct TimeRange {
     pub end_date: Option<String>,
 }
 
+#[allow(dead_code)]
 pub struct ChartService {
     pool: PgPool,
+}
+
+/// Validates a SQL identifier (table or column name) to prevent SQL injection.
+/// Only allows alphanumeric characters and underscores, starting with a letter or underscore.
+pub fn validate_identifier(name: &str) -> Result<String, String> {
+    if name.is_empty() {
+        return Err("Identifier cannot be empty".to_string());
+    }
+    let lower = name.to_lowercase();
+    const FORBIDDEN: &[&str] = &[
+        ";",
+        "--",
+        "/*",
+        "*/",
+        "pg_",
+        "information_schema",
+        "pg_read_file",
+    ];
+    for fragment in FORBIDDEN {
+        if lower.contains(fragment) {
+            return Err(format!(
+                "Invalid identifier '{}': contains forbidden substring '{}'",
+                name, fragment
+            ));
+        }
+    }
+    let mut chars = name.chars();
+    let first = chars.next().unwrap();
+    if !(first.is_ascii_alphabetic() || first == '_') {
+        return Err(format!(
+            "Invalid identifier '{}': must start with a letter or underscore",
+            name
+        ));
+    }
+    if !chars.all(|c| c.is_ascii_alphanumeric() || c == '_') {
+        return Err(format!(
+            "Invalid identifier '{}': may only contain letters, digits, and underscores",
+            name
+        ));
+    }
+    Ok(name.to_string())
+}
+
+/// Wraps a validated SQL identifier in double quotes for PostgreSQL.
+pub fn quote_identifier(name: &str) -> Result<String, String> {
+    let validated = validate_identifier(name)?;
+    let escaped = validated.replace('"', "\"\"");
+    Ok(format!("\"{}\"", escaped))
+}
+
+/// Validates a dataset (table name + columns) and returns quoted versions safe for SQL.
+pub fn validate_dataset(
+    data_source: &str,
+    columns: &[String],
+) -> Result<(String, Vec<String>), String> {
+    let table = quote_identifier(data_source)?;
+    let mut quoted_cols = Vec::with_capacity(columns.len());
+    for col in columns {
+        quoted_cols.push(quote_identifier(col)?);
+    }
+    Ok((table, quoted_cols))
 }
 
 impl ChartService {
@@ -96,10 +158,13 @@ impl ChartService {
         y_columns: &[String],
         title: Option<String>,
     ) -> Result<ChartResult, String> {
+        let mut all_columns = vec![x_column.to_string()];
+        all_columns.extend(y_columns.iter().cloned());
+        let (table, cols) = validate_dataset(data_source, &all_columns)?;
         let query = ChartQuery {
             chart_type: ChartType::Line,
             data_source: data_source.to_string(),
-            query: format!("SELECT {} FROM {}", x_column, data_source),
+            query: format!("SELECT {} FROM {}", cols[0], table),
             params: HashMap::new(),
             title,
             x_axis_label: Some(x_column.to_string()),
@@ -115,10 +180,13 @@ impl ChartService {
         y_columns: &[String],
         title: Option<String>,
     ) -> Result<ChartResult, String> {
+        let mut all_columns = vec![x_column.to_string()];
+        all_columns.extend(y_columns.iter().cloned());
+        let (table, cols) = validate_dataset(data_source, &all_columns)?;
         let query = ChartQuery {
             chart_type: ChartType::Bar,
             data_source: data_source.to_string(),
-            query: format!("SELECT {} FROM {}", x_column, data_source),
+            query: format!("SELECT {} FROM {}", cols[0], table),
             params: HashMap::new(),
             title,
             x_axis_label: Some(x_column.to_string()),
@@ -134,10 +202,11 @@ impl ChartService {
         _value_column: &str,
         title: Option<String>,
     ) -> Result<ChartResult, String> {
+        let (table, cols) = validate_dataset(data_source, &[label_column.to_string()])?;
         let query = ChartQuery {
             chart_type: ChartType::Pie,
             data_source: data_source.to_string(),
-            query: format!("SELECT {} FROM {}", label_column, data_source),
+            query: format!("SELECT {} FROM {}", cols[0], table),
             params: HashMap::new(),
             title,
             x_axis_label: None,
@@ -436,5 +505,65 @@ impl ChartService {
             "gauge".to_string(),
             "table".to_string(),
         ]
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn test_validate_identifier_accepts_valid() {
+        assert!(validate_identifier("my_table").is_ok());
+        assert!(validate_identifier("_col_1").is_ok());
+        assert!(validate_identifier("ColumnA").is_ok());
+        assert!(validate_identifier("data_source").is_ok());
+    }
+
+    #[test]
+    fn test_validate_identifier_rejects_empty() {
+        assert!(validate_identifier("").is_err());
+    }
+
+    #[test]
+    fn test_validate_identifier_rejects_drop_table_injection() {
+        // Payload: '; DROP TABLE users; --
+        assert!(validate_identifier("users'; DROP TABLE users; --").is_err());
+    }
+
+    #[test]
+    fn test_validate_identifier_rejects_union_select() {
+        // Payload: col UNION SELECT password FROM users
+        assert!(validate_identifier("col UNION SELECT password").is_err());
+    }
+
+    #[test]
+    fn test_validate_identifier_rejects_pg_read_file() {
+        assert!(validate_identifier("pg_read_file").is_err());
+    }
+
+    #[test]
+    fn test_validate_identifier_rejects_information_schema() {
+        assert!(validate_identifier("information_schema.tables").is_err());
+        assert!(validate_identifier("information_schema").is_err());
+    }
+
+    #[test]
+    fn test_quote_identifier_wraps_in_double_quotes() {
+        assert_eq!(quote_identifier("my_col").unwrap(), "\"my_col\"");
+        assert_eq!(quote_identifier("orders").unwrap(), "\"orders\"");
+    }
+
+    #[test]
+    fn test_validate_dataset_returns_quoted_identifiers() {
+        let (table, cols) =
+            validate_dataset("orders", &["amount".to_string(), "quantity".to_string()]).unwrap();
+        assert_eq!(table, "\"orders\"");
+        assert_eq!(cols, vec!["\"amount\"".to_string(), "\"quantity\"".to_string()]);
+    }
+
+    #[test]
+    fn test_validate_dataset_rejects_malicious_table() {
+        assert!(validate_dataset("users; DROP TABLE users; --", &[]).is_err());
     }
 }

@@ -1,3 +1,5 @@
+// 迁移后的 DataTable 导出
+// 从项目内部的 common/DataTable 导出，保持 API 兼容
 export {
   DataTable,
   MobileCardView,
@@ -5,8 +7,6 @@ export {
   type DataTableRow,
   type ExpandedRowRender,
   type AdvancedFilter,
-  type ExportResult,
-  type ExportDataFn,
   type MobileCardViewProps,
-} from '@topems/shared-components';
-export { DataTable as default } from '@topems/shared-components';
+} from '@/components/common/DataTable';
+export { default } from '@/components/common/DataTable';

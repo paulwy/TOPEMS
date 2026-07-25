@@ -341,7 +341,7 @@ pub async fn list_hazard_factors(
     Extension(claims): Extension<Claims>,
     headers: HeaderMap,
 ) -> Json<ApiResponse<Vec<HazardFactor>>> {
-    let tenant_id = get_tenant_id(&claims, &headers);
+    let _tenant_id = get_tenant_id(&claims, &headers);
     tracing::info!("Listing hazard factors");
     Json(ApiResponse::success(
         Vec::<HazardFactor>::new(),
@@ -458,7 +458,7 @@ pub async fn delete_hazard_factor(
     headers: HeaderMap,
     axum::extract::Path(id): axum::extract::Path<String>,
 ) -> Json<ApiResponse<()>> {
-    let tenant_id = get_tenant_id(&claims, &headers);
+    let _tenant_id = get_tenant_id(&claims, &headers);
     tracing::info!("Deleting hazard factor: {}", id);
     Json(ApiResponse::success((), "危害因素删除成功"))
 }
@@ -468,7 +468,7 @@ pub async fn list_detection_records(
     Extension(claims): Extension<Claims>,
     headers: HeaderMap,
 ) -> Json<ApiResponse<Vec<DetectionRecord>>> {
-    let tenant_id = get_tenant_id(&claims, &headers);
+    let _tenant_id = get_tenant_id(&claims, &headers);
     tracing::info!("Listing detection records");
     Json(ApiResponse::success(
         Vec::<DetectionRecord>::new(),
@@ -557,7 +557,7 @@ pub async fn delete_detection_record(
     headers: HeaderMap,
     axum::extract::Path(id): axum::extract::Path<String>,
 ) -> Json<ApiResponse<()>> {
-    let tenant_id = get_tenant_id(&claims, &headers);
+    let _tenant_id = get_tenant_id(&claims, &headers);
     tracing::info!("Deleting detection record: {}", id);
     Json(ApiResponse::success((), "检测记录删除成功"))
 }
@@ -567,7 +567,7 @@ pub async fn list_disease_cases(
     Extension(claims): Extension<Claims>,
     headers: HeaderMap,
 ) -> Json<ApiResponse<Vec<DiseaseCase>>> {
-    let tenant_id = get_tenant_id(&claims, &headers);
+    let _tenant_id = get_tenant_id(&claims, &headers);
     tracing::info!("Listing disease cases");
     Json(ApiResponse::success(
         Vec::<DiseaseCase>::new(),
@@ -706,7 +706,7 @@ pub async fn delete_disease_case(
     headers: HeaderMap,
     axum::extract::Path(id): axum::extract::Path<String>,
 ) -> Json<ApiResponse<()>> {
-    let tenant_id = get_tenant_id(&claims, &headers);
+    let _tenant_id = get_tenant_id(&claims, &headers);
     tracing::info!("Deleting disease case: {}", id);
     Json(ApiResponse::success((), "职业病案例删除成功"))
 }
@@ -716,7 +716,7 @@ pub async fn list_protection_measures(
     Extension(claims): Extension<Claims>,
     headers: HeaderMap,
 ) -> Json<ApiResponse<Vec<ProtectionMeasure>>> {
-    let tenant_id = get_tenant_id(&claims, &headers);
+    let _tenant_id = get_tenant_id(&claims, &headers);
     tracing::info!("Listing protection measures");
     Json(ApiResponse::success(
         Vec::<ProtectionMeasure>::new(),
@@ -840,7 +840,7 @@ pub async fn delete_protection_measure(
     headers: HeaderMap,
     axum::extract::Path(id): axum::extract::Path<String>,
 ) -> Json<ApiResponse<()>> {
-    let tenant_id = get_tenant_id(&claims, &headers);
+    let _tenant_id = get_tenant_id(&claims, &headers);
     tracing::info!("Deleting protection measure: {}", id);
     Json(ApiResponse::success((), "防护措施删除成功"))
 }
@@ -850,7 +850,7 @@ pub async fn list_health_trainings(
     Extension(claims): Extension<Claims>,
     headers: HeaderMap,
 ) -> Json<ApiResponse<Vec<HealthTraining>>> {
-    let tenant_id = get_tenant_id(&claims, &headers);
+    let _tenant_id = get_tenant_id(&claims, &headers);
     tracing::info!("Listing health trainings");
     Json(ApiResponse::success(
         Vec::<HealthTraining>::new(),
@@ -931,7 +931,7 @@ pub async fn delete_health_training(
     headers: HeaderMap,
     axum::extract::Path(id): axum::extract::Path<String>,
 ) -> Json<ApiResponse<()>> {
-    let tenant_id = get_tenant_id(&claims, &headers);
+    let _tenant_id = get_tenant_id(&claims, &headers);
     tracing::info!("Deleting health training: {}", id);
     Json(ApiResponse::success((), "培训记录删除成功"))
 }
@@ -976,7 +976,7 @@ pub async fn list_factor_types(
     Extension(claims): Extension<Claims>,
     headers: HeaderMap,
 ) -> Json<ApiResponse<Vec<serde_json::Value>>> {
-    let tenant_id = get_tenant_id(&claims, &headers);
+    let _tenant_id = get_tenant_id(&claims, &headers);
     tracing::info!("Listing factor types");
     let types = vec![
         serde_json::json!({ "code": "physical", "name": "物理因素" }),

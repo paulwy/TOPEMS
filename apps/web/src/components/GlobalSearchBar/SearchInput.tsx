@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useMemo } from 'react';
 import {
   Paper,
   InputBase,
@@ -13,6 +13,7 @@ import {
   FormControlLabel,
 } from '@mui/material';
 import { Search, X, Filter, ChevronDown } from 'lucide-react';
+import { SEARCH_SHORTCUTS, getShortcutKeyLabel } from '@/hooks/shortcuts';
 import type { SearchInputProps } from './types';
 
 export const SearchInput: React.FC<SearchInputProps> = ({
@@ -25,7 +26,7 @@ export const SearchInput: React.FC<SearchInputProps> = ({
   autoFocus = false,
   filter,
   onFilterChange,
-  availableModules,
+  availableServices,
   availableTypes,
 }) => {
   const theme = useTheme();
@@ -33,7 +34,9 @@ export const SearchInput: React.FC<SearchInputProps> = ({
   const [anchorEl, setAnchorEl] = useState<HTMLElement | null>(null);
   const [activeTab, setActiveTab] = useState<'module' | 'type'>('module');
 
-  const hasFilter = filter && (filter.module || filter.type);
+  const openShortcutLabel = useMemo(() => getShortcutKeyLabel(SEARCH_SHORTCUTS.OPEN), []);
+
+  const hasFilter = filter && (filter.service || filter.type);
 
   const handleClear = () => {
     onChange('');
@@ -50,8 +53,8 @@ export const SearchInput: React.FC<SearchInputProps> = ({
 
   const handleModuleSelect = (module: string) => {
     if (!onFilterChange) return;
-    const newModule = filter?.module === module ? undefined : module;
-    onFilterChange({ ...filter, module: newModule, type: newModule ? filter?.type : undefined });
+    const newService = filter?.service === module ? undefined : module;
+    onFilterChange({ ...filter, service: newService, type: newService ? filter?.type : undefined });
   };
 
   const handleTypeSelect = (type: string) => {
@@ -62,7 +65,7 @@ export const SearchInput: React.FC<SearchInputProps> = ({
 
   const handleClearFilter = () => {
     if (!onFilterChange) return;
-    onFilterChange({ module: undefined, type: undefined });
+    onFilterChange({ service: undefined, type: undefined });
   };
 
   const open = Boolean(anchorEl);
@@ -124,16 +127,16 @@ export const SearchInput: React.FC<SearchInputProps> = ({
         <IconButton
           size='small'
           onClick={handleFilterClick}
-          sx={{ p: 0.5, opacity: availableModules?.length || availableTypes?.length ? 0.6 : 0.3 }}
-          disabled={!availableModules?.length && !availableTypes?.length}
+          sx={{ p: 0.5, opacity: availableServices?.length || availableTypes?.length ? 0.6 : 0.3 }}
+          disabled={!availableServices?.length && !availableTypes?.length}
         >
           <Filter size={14} />
         </IconButton>
         {hasFilter && (
           <Chip
             label={
-              filter?.module
-                ? `模块: ${availableModules?.find((m) => m.value === filter.module)?.label || filter.module}`
+              filter?.service
+                ? `服务: ${availableServices?.find((m) => m.value === filter.service)?.label || filter.service}`
                 : `类型: ${availableTypes?.find((t) => t.value === filter.type)?.label || filter.type}`
             }
             size='small'
@@ -150,7 +153,7 @@ export const SearchInput: React.FC<SearchInputProps> = ({
         )}
         {showShortcut && (
           <Chip
-            label='Ctrl K'
+            label={openShortcutLabel}
             size='small'
             sx={{
               ml: 1,
@@ -246,7 +249,7 @@ export const SearchInput: React.FC<SearchInputProps> = ({
 
           <Box sx={{ maxHeight: 200, overflowY: 'auto', mt: 2 }}>
             {activeTab === 'module'
-              ? (availableModules || []).map((module) => (
+              ? (availableServices || []).map((module) => (
                   <FormControlLabel
                     key={module.value}
                     control={

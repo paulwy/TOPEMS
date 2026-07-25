@@ -1,5 +1,4 @@
 pub mod acceptance;
-pub mod auth;
 pub mod budget;
 pub mod contract;
 pub mod document;
@@ -25,8 +24,14 @@ pub mod statistics;
 use axum::Router;
 use std::sync::Arc;
 use topems_shared::event::EventPublisher;
+use topems_shared_service_client::service_client::api::workflow_api::WorkflowApi;
+use topems_shared_service_client::TypedServiceClient;
 
-pub fn create_routes(pool: sqlx::PgPool, event_publisher: Option<Arc<EventPublisher>>) -> Router {
+pub fn create_routes(
+    pool: sqlx::PgPool,
+    event_publisher: Option<Arc<EventPublisher>>,
+    workflow_client: TypedServiceClient<WorkflowApi>,
+) -> Router {
     Router::new()
         .merge(project::create_routes(
             pool.clone(),
@@ -38,7 +43,7 @@ pub fn create_routes(pool: sqlx::PgPool, event_publisher: Option<Arc<EventPublis
         .merge(project_resource::create_routes(pool.clone()))
         .merge(project_expense::create_routes(pool.clone()))
         .merge(project_benefit::create_routes(pool.clone()))
-        .merge(project_approval::create_routes(pool.clone()))
+        .merge(project_approval::create_routes(pool.clone(), workflow_client.clone()))
         .merge(project_type_config::create_routes(pool.clone()))
         .merge(service_integration::create_routes(pool.clone()))
         .merge(contract::create_routes(pool.clone()))

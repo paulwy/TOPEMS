@@ -1,0 +1,479 @@
+export enum ProtectionType {
+  PrototypePollution = 'prototype_pollution',
+  GlobalTampering = 'global_tampering',
+  DangerousApi = 'dangerous_api',
+  MemoryLeak = 'memory_leak',
+  Anomaly = 'anomaly',
+}
+
+export enum ProtectionSeverity {
+  Critical = 'critical',
+  High = 'high',
+  Medium = 'medium',
+  Low = 'low',
+}
+
+export interface ProtectionConfig {
+  enablePrototypePollutionGuard: boolean;
+  enableGlobalIsolation: boolean;
+  enableDangerousApiInterception: boolean;
+  enableMemoryLeakDetection: boolean;
+  enableAnomalyDetection: boolean;
+}
+
+export interface ProtectionEvent {
+  type: ProtectionType;
+  severity: ProtectionSeverity;
+  target: string;
+  details: string;
+  timestamp: number;
+}
+
+export interface SandboxContext {
+  globals: Record<string, unknown>;
+  allowedApis: string[];
+  blockedApis: string[];
+  console: Console | null;
+}
+
+interface ProtectionStats {
+  totalEvents: number;
+  blockedCount: number;
+  typeCounts: Record<ProtectionType, number>;
+  severityCounts: Record<ProtectionSeverity, number>;
+}
+
+const DEFAULT_CONFIG: ProtectionConfig = {
+  enablePrototypePollutionGuard: true,
+  enableGlobalIsolation: false,
+  enableDangerousApiInterception: true,
+  enableMemoryLeakDetection: false,
+  enableAnomalyDetection: false,
+};
+
+export class RuntimeProtector {
+  private config: ProtectionConfig;
+  private events: ProtectionEvent[] = [];
+  private enabled = false;
+  private originalApis: Map<string, unknown> = new Map();
+  private maxEvents = 500;
+  private stats: ProtectionStats = {
+    totalEvents: 0,
+    blockedCount: 0,
+    typeCounts: {
+      [ProtectionType.PrototypePollution]: 0,
+      [ProtectionType.GlobalTampering]: 0,
+      [ProtectionType.DangerousApi]: 0,
+      [ProtectionType.MemoryLeak]: 0,
+      [ProtectionType.Anomaly]: 0,
+    },
+    severityCounts: {
+      [ProtectionSeverity.Critical]: 0,
+      [ProtectionSeverity.High]: 0,
+      [ProtectionSeverity.Medium]: 0,
+      [ProtectionSeverity.Low]: 0,
+    },
+  };
+  private globalSnapshot: Record<string, unknown> = {};
+  private leakDetectionInterval: number | null = null;
+
+  constructor(config?: Partial<ProtectionConfig>) {
+    this.config = { ...DEFAULT_CONFIG, ...config };
+  }
+
+  enableProtection(): void {
+    if (this.enabled) return;
+    this.enabled = true;
+
+    if (this.config.enablePrototypePollutionGuard) {
+      this.setupPrototypePollutionGuard();
+    }
+    if (this.config.enableGlobalIsolation) {
+      this.setupGlobalIsolation();
+    }
+    if (this.config.enableDangerousApiInterception) {
+      this.setupDangerousApiInterception();
+    }
+    if (this.config.enableMemoryLeakDetection) {
+      this.startMemoryLeakDetection();
+    }
+  }
+
+  disableProtection(): void {
+    if (!this.enabled) return;
+    this.enabled = false;
+
+    this.restoreDangerousApis();
+    this.stopMemoryLeakDetection();
+  }
+
+  configure(config: Partial<ProtectionConfig>): void {
+    const wasEnabled = this.enabled;
+    if (wasEnabled) {
+      this.disableProtection();
+    }
+
+    this.config = { ...this.config, ...config };
+
+    if (wasEnabled) {
+      this.enableProtection();
+    }
+  }
+
+  getEvents(filters?: {
+    type?: ProtectionType;
+    severity?: ProtectionSeverity;
+  }): ProtectionEvent[] {
+    let filtered = [...this.events];
+
+    if (filters?.type) {
+      filtered = filtered.filter((e) => e.type === filters.type);
+    }
+    if (filters?.severity) {
+      filtered = filtered.filter((e) => e.severity === filters.severity);
+    }
+
+    return filtered;
+  }
+
+  private addEvent(event: Omit<ProtectionEvent, 'timestamp'>): void {
+    const fullEvent: ProtectionEvent = {
+      ...event,
+      timestamp: Date.now(),
+    };
+
+    this.events.unshift(fullEvent);
+    if (this.events.length > this.maxEvents) {
+      this.events = this.events.slice(0, this.maxEvents);
+    }
+
+    this.stats.totalEvents++;
+    this.stats.typeCounts[event.type]++;
+    this.stats.severityCounts[event.severity]++;
+  }
+
+  private setupPrototypePollutionGuard(): void {
+    if (typeof Object === 'undefined') return;
+
+    const proto = Object.prototype;
+    const protectedProps = ['__proto__', 'prototype', 'constructor'];
+
+    protectedProps.forEach((prop) => {
+      try {
+        Object.defineProperty(proto, prop, {
+          set: (value) => {
+            this.addEvent({
+              type: ProtectionType.PrototypePollution,
+              severity: ProtectionSeverity.Critical,
+              target: `Object.prototype.${prop}`,
+              details: `检测到原型污染尝试，尝试设置 ${prop} 属性为 ${typeof value}`,
+            });
+            this.stats.blockedCount++;
+            throw new Error(`原型污染防护：禁止修改 Object.prototype.${prop}`);
+          },
+          get: () => {
+            if (prop === '__proto__') {
+              return Object.getPrototypeOf(this);
+            }
+            return undefined;
+          },
+          configurable: false,
+        });
+      } catch (e) {
+        // 某些环境可能无法重新定义这些属性
+      }
+    });
+  }
+
+  private setupGlobalIsolation(): void {
+    if (typeof window === 'undefined') return;
+
+    this.globalSnapshot = { ...window };
+
+    const handler: ProxyHandler<Window> = {
+      get: (target, prop) => {
+        return Reflect.get(target, prop);
+      },
+      set: (target, prop, value) => {
+        const propStr = String(prop);
+        if (!(prop in this.globalSnapshot)) {
+          this.addEvent({
+            type: ProtectionType.GlobalTampering,
+            severity: ProtectionSeverity.Medium,
+            target: `window.${propStr}`,
+            details: `检测到全局变量新增：${propStr}`,
+          });
+        } else if (this.globalSnapshot[propStr] !== value) {
+          this.addEvent({
+            type: ProtectionType.GlobalTampering,
+            severity: ProtectionSeverity.High,
+            target: `window.${propStr}`,
+            details: `检测到全局变量修改：${propStr}`,
+          });
+        }
+        return Reflect.set(target, prop, value);
+      },
+      deleteProperty: (target, prop) => {
+        const propStr = String(prop);
+        this.addEvent({
+          type: ProtectionType.GlobalTampering,
+          severity: ProtectionSeverity.High,
+          target: `window.${propStr}`,
+          details: `检测到全局变量删除：${propStr}`,
+        });
+        return Reflect.deleteProperty(target, prop);
+      },
+    };
+
+    try {
+      new Proxy(window, handler);
+    } catch (e) {
+      // window 可能无法被代理
+    }
+  }
+
+  private setupDangerousApiInterception(): void {
+    if (typeof window === 'undefined') return;
+
+    const dangerousApis: Array<{
+      name: string;
+      severity: ProtectionSeverity;
+      target: string;
+    }> = [
+      { name: 'eval', severity: ProtectionSeverity.Critical, target: 'eval' },
+      { name: 'Function', severity: ProtectionSeverity.Critical, target: 'Function' },
+      { name: 'setTimeout', severity: ProtectionSeverity.Low, target: 'setTimeout' },
+      { name: 'setInterval', severity: ProtectionSeverity.Low, target: 'setInterval' },
+    ];
+
+    dangerousApis.forEach(({ name, severity, target }) => {
+      const original = (window as Record<string, unknown>)[name];
+      if (typeof original === 'function') {
+        this.originalApis.set(name, original);
+
+        const protector = this;
+        const intercepted = function (this: unknown, ...args: unknown[]) {
+          protector.addEvent({
+            type: ProtectionType.DangerousApi,
+            severity,
+            target,
+            details: `调用了危险 API: ${name}`,
+          });
+
+          if (name === 'eval' || name === 'Function') {
+            protector.stats.blockedCount++;
+            throw new Error(`安全限制：${name} 已被禁用`);
+          }
+
+          return (original as Function).apply(this, args);
+        };
+
+        Object.defineProperty(window, name, {
+          value: intercepted,
+          writable: false,
+          configurable: false,
+        });
+      }
+    });
+
+    if (typeof Element !== 'undefined' && Element.prototype) {
+      const originalInnerHTMLDescriptor = Object.getOwnPropertyDescriptor(
+        Element.prototype,
+        'innerHTML'
+      );
+      if (originalInnerHTMLDescriptor && originalInnerHTMLDescriptor.set) {
+        const originalSet = originalInnerHTMLDescriptor.set;
+        const protector = this;
+
+        Object.defineProperty(Element.prototype, 'innerHTML', {
+          set: function (this: Element, value: string) {
+            protector.addEvent({
+              type: ProtectionType.DangerousApi,
+              severity: ProtectionSeverity.High,
+              target: 'Element.innerHTML',
+              details: '使用 innerHTML 设置 HTML 内容',
+            });
+            return originalSet.call(this, value);
+          },
+          get: originalInnerHTMLDescriptor.get,
+          configurable: true,
+        });
+      }
+    }
+  }
+
+  private restoreDangerousApis(): void {
+    this.originalApis.forEach((original, name) => {
+      if (typeof window !== 'undefined') {
+        try {
+          Object.defineProperty(window, name, {
+            value: original,
+            writable: true,
+            configurable: true,
+          });
+        } catch (e) {
+          // 忽略恢复失败
+        }
+      }
+    });
+    this.originalApis.clear();
+  }
+
+  private startMemoryLeakDetection(): void {
+    if (typeof performance === 'undefined') return;
+
+    this.leakDetectionInterval = window.setInterval(() => {
+      this.detectLeaks();
+    }, 30000);
+  }
+
+  private stopMemoryLeakDetection(): void {
+    if (this.leakDetectionInterval !== null) {
+      clearInterval(this.leakDetectionInterval);
+      this.leakDetectionInterval = null;
+    }
+  }
+
+  createSandbox(context?: Partial<SandboxContext>): SandboxContext {
+    const sandbox: SandboxContext = {
+      globals: {},
+      allowedApis: ['console.log', 'console.warn', 'console.error'],
+      blockedApis: ['eval', 'Function', 'fetch', 'XMLHttpRequest'],
+      console: null,
+      ...context,
+    };
+
+    return sandbox;
+  }
+
+  runInSandbox(code: string, context?: Partial<SandboxContext>): unknown {
+    const sandbox = this.createSandbox(context);
+
+    try {
+      const sandboxConsole = {
+        log: (...args: unknown[]) => {
+          if (sandbox.allowedApis.includes('console.log')) {
+            console.log('[Sandbox]', ...args);
+          }
+        },
+        warn: (...args: unknown[]) => {
+          if (sandbox.allowedApis.includes('console.warn')) {
+            console.warn('[Sandbox]', ...args);
+          }
+        },
+        error: (...args: unknown[]) => {
+          if (sandbox.allowedApis.includes('console.error')) {
+            console.error('[Sandbox]', ...args);
+          }
+        },
+      };
+
+      const sandboxGlobals = {
+        ...sandbox.globals,
+        console: sandboxConsole,
+      };
+
+      const fn = new Function(...Object.keys(sandboxGlobals), `
+        "use strict";
+        return eval(arguments[0]);
+      `);
+
+      this.addEvent({
+        type: ProtectionType.Anomaly,
+        severity: ProtectionSeverity.Medium,
+        target: 'Sandbox.execution',
+        details: '在沙箱中执行代码',
+      });
+
+      return fn(...Object.values(sandboxGlobals), code);
+    } catch (error) {
+      this.addEvent({
+        type: ProtectionType.DangerousApi,
+        severity: ProtectionSeverity.High,
+        target: 'Sandbox.execution',
+        details: `沙箱执行出错: ${error instanceof Error ? error.message : String(error)}`,
+      });
+      throw error;
+    }
+  }
+
+  detectLeaks(): {
+    detected: boolean;
+    details: string[];
+  } {
+    const details: string[] = [];
+    let detected = false;
+
+    if (typeof performance !== 'undefined' && 'memory' in performance) {
+      const mem = (performance as Performance & { memory?: {
+        usedJSHeapSize: number;
+        totalJSHeapSize: number;
+        jsHeapSizeLimit: number;
+      } }).memory;
+
+      if (mem) {
+        const usagePercent = (mem.usedJSHeapSize / mem.jsHeapSizeLimit) * 100;
+        if (usagePercent > 80) {
+          detected = true;
+          details.push(`内存使用率过高: ${usagePercent.toFixed(1)}%`);
+
+          this.addEvent({
+            type: ProtectionType.MemoryLeak,
+            severity: usagePercent > 90 ? ProtectionSeverity.Critical : ProtectionSeverity.High,
+            target: 'memory.heap',
+            details: `内存使用率达 ${usagePercent.toFixed(1)}%，可能存在内存泄漏`,
+          });
+        }
+      }
+    }
+
+    if (typeof window !== 'undefined') {
+      if (window.eventListeners && window.eventListeners.length > 1000) {
+        detected = true;
+        details.push(`事件监听器数量过多: ${window.eventListeners.length}`);
+      }
+    }
+
+    return { detected, details };
+  }
+
+  getStats(): ProtectionStats {
+    return {
+      ...this.stats,
+      typeCounts: { ...this.stats.typeCounts },
+      severityCounts: { ...this.stats.severityCounts },
+    };
+  }
+
+  clearEvents(): void {
+    this.events = [];
+    this.stats = {
+      totalEvents: 0,
+      blockedCount: 0,
+      typeCounts: {
+        [ProtectionType.PrototypePollution]: 0,
+        [ProtectionType.GlobalTampering]: 0,
+        [ProtectionType.DangerousApi]: 0,
+        [ProtectionType.MemoryLeak]: 0,
+        [ProtectionType.Anomaly]: 0,
+      },
+      severityCounts: {
+        [ProtectionSeverity.Critical]: 0,
+        [ProtectionSeverity.High]: 0,
+        [ProtectionSeverity.Medium]: 0,
+        [ProtectionSeverity.Low]: 0,
+      },
+    };
+  }
+
+  isEnabled(): boolean {
+    return this.enabled;
+  }
+
+  getConfig(): ProtectionConfig {
+    return { ...this.config };
+  }
+}
+
+export const runtimeProtector = new RuntimeProtector();
+export default runtimeProtector;

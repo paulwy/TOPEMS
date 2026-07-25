@@ -127,51 +127,61 @@ echo -e "${GREEN}✓ Directory structure created${NC}"
 echo ""
 
 # Build backend services
-if [[ "$SKIP_BUILD" == false ]]; then
-    echo -e "${YELLOW}Building backend services...${NC}"
+    if [[ "$SKIP_BUILD" == false ]]; then
+        echo -e "${YELLOW}Building backend services...${NC}"
 
-    # Get script directory (project root)
-    SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
+        # Get script directory (project root)
+        SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 
-    cd "${SCRIPT_DIR}"
+        cd "${SCRIPT_DIR}"
 
-    # Build release binaries
-    cargo build --release
+        # Build release binaries
+        cargo build --release
 
-    # Copy binaries to installation directory
-    SERVICES=(
-        "unified-core"
-        "ai"
-        "analytics"
-        "manufacturing"
-        "quality-assurance"
-        "hrm"
-        "crm"
-        "pm"
-        "erp"
-        "gis"
-        "rs"
-        "scm"
-        "wms"
-        "mobile"
-        "monitor"
-        "portal"
-    )
+        # Copy binaries to installation directory
+        # unified-core 包含: IAM + Doc + Flow + File + Communication + Tenant + Billing + AI + Monitor
+        SERVICES=(
+            "unified-core"
+            "ai"
+            "analytics"
+            "hrm"
+            "crm"
+            "pm"
+            "erp"
+            "finance"
+            "gis"
+            "mes"
+            "pdm"
+            "qms"
+            "lims"
+            "ehs"
+            "scm"
+            "wms"
+            "srm"
+            "rd"
+            "bi"
+            "mobile"
+            "portal"
+            "integration"
+        )
 
-    for svc in "${SERVICES[@]}"; do
-        if [[ -f "target/release/${svc}" ]]; then
-            cp "target/release/${svc}" "${PREFIX}/bin/${svc}-service"
-            echo -e "${GREEN}✓ Installed ${svc}-service${NC}"
-        elif [[ -f "target/release/topems-${svc}" ]]; then
-            cp "target/release/topems-${svc}" "${PREFIX}/bin/${svc}-service"
-            echo -e "${GREEN}✓ Installed ${svc}-service${NC}"
-        else
-            echo -e "${YELLOW}⚠ Binary for ${svc} not found, skipping${NC}"
-        fi
-    done
+        for svc in "${SERVICES[@]}"; do
+            if [[ -f "target/release/${svc}" ]]; then
+                cp "target/release/${svc}" "${PREFIX}/bin/${svc}-service"
+                echo -e "${GREEN}✓ Installed ${svc}-service${NC}"
+            elif [[ -f "target/release/topems-${svc}" ]]; then
+                cp "target/release/topems-${svc}" "${PREFIX}/bin/${svc}-service"
+                echo -e "${GREEN}✓ Installed ${svc}-service${NC}"
+            elif [[ -f "target/release/unified-core-service" && "$svc" == "unified-core" ]]; then
+                cp "target/release/unified-core-service" "${PREFIX}/bin/unified-core-service"
+                echo -e "${GREEN}✓ Installed unified-core-service${NC}"
+            else
+                echo -e "${YELLOW}⚠ Binary for ${svc} not found, skipping${NC}"
+            fi
+        done
 
-    chmod +x "${PREFIX}/bin/*"
-fi
+        chmod +x "${PREFIX}/bin/*"
+    fi
 
 echo ""
 

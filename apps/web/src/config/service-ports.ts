@@ -26,7 +26,7 @@ export const SERVICE_PORTS: Record<string, ServicePort> = {
   qms: { name: 'qms', port: 8050, description: '质量管理', category: 'quality-rd' },
   lims: { name: 'lims', port: 8051, description: '实验室信息管理', category: 'quality-rd' },
   ehs: { name: 'ehs', port: 8052, description: '环境健康安全', category: 'quality-rd' },
-  rs: { name: 'rs', port: 8053, description: '研发管理', category: 'quality-rd' },
+  rd: { name: 'rd', port: 8053, description: '研发管理', category: 'quality-rd' },
   bi: { name: 'bi', port: 8060, description: '商业智能', category: 'analytics' },
   report: {
     name: 'report',
@@ -34,7 +34,8 @@ export const SERVICE_PORTS: Record<string, ServicePort> = {
     description: '报表服务（统一到 analytics）',
     category: 'analytics',
   },
-  monitor: { name: 'monitor', port: 8062, description: '系统监控', category: 'analytics' },
+  doc: { name: 'doc', port: 8000, description: '文档管理（由 unified-core 提供）', category: 'core' },
+  monitor: { name: 'monitor', port: 8000, description: '系统监控（由 unified-core 提供）', category: 'core' },
   portal: { name: 'portal', port: 8063, description: '企业门户', category: 'analytics' },
   ai: { name: 'ai', port: 8013, description: 'AI智能服务', category: 'business' },
   mobile: { name: 'mobile', port: 8070, description: '移动服务', category: 'infrastructure' },
@@ -46,34 +47,3 @@ export const SERVICE_PORTS: Record<string, ServicePort> = {
     category: 'infrastructure',
   },
 };
-
-/** Generate Vite dev proxy config for all services */
-export function generateServiceProxies(): Record<string, any> {
-  const proxies: Record<string, any> = {};
-
-  for (const [key, service] of Object.entries(SERVICE_PORTS)) {
-    const target = `http://localhost:${service.port}`;
-
-    // Standard API proxy: /{service}/api -> http://localhost:{port}/api/{service}/
-    proxies[`/${key}/api`] = {
-      target,
-      changeOrigin: true,
-      rewrite: (path: string) => path.replace(new RegExp(`^/${key}`), ''),
-    };
-
-    // Health check proxy
-    proxies[`/${key}/health`] = {
-      target,
-      changeOrigin: true,
-    };
-
-    // Plugin health proxy
-    proxies[`/plugin-health/${key}`] = {
-      target,
-      changeOrigin: true,
-      rewrite: (path: string) => path.replace(new RegExp(`^/plugin-health/${key}`), ''),
-    };
-  }
-
-  return proxies;
-}

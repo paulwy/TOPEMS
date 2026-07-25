@@ -9,6 +9,7 @@ import React, {
   useContext,
 } from 'react';
 import { authApi } from '@/api/iam';
+import { tenantApi } from '@/api/tenant';
 import apiClient from '../api/client';
 import type { User } from '@topems/shared-types';
 import { mapApiUserToUser } from '@topems/shared-types';
@@ -74,6 +75,8 @@ const AuthContext = createContext<
       refreshToken: () => Promise<boolean>;
       isSessionExpiringSoon: () => boolean;
       getTimeUntilExpiry: () => number;
+      switchTenant: (tenantId: string) => Promise<boolean>;
+      getMyTenants: () => Promise<any[]>;
     })
   | null
 >(null);
@@ -317,24 +320,30 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     }
   }, []);
 
-  const logout = useCallback(() => {
-    localStorage.removeItem('token');
-    localStorage.removeItem('refresh_token');
-    localStorage.removeItem('user');
-    localStorage.removeItem('roles');
-    localStorage.removeItem('permissions');
-    localStorage.removeItem('token_expiry');
+  const logout = useCallback(async () => {
+    try {
+      await authApi.logout();
+    } catch (err) {
+      authLogger.warn('Logout API call failed, continuing with local cleanup', err);
+    } finally {
+      localStorage.removeItem('token');
+      localStorage.removeItem('refresh_token');
+      localStorage.removeItem('user');
+      localStorage.removeItem('roles');
+      localStorage.removeItem('permissions');
+      localStorage.removeItem('token_expiry');
 
-    setTokenExpiry(null);
+      setTokenExpiry(null);
 
-    setState({
-      user: null,
-      token: null,
-      isAuthenticated: false,
-      isLoading: false,
-      roles: [],
-      permissions: [],
-    });
+      setState({
+        user: null,
+        token: null,
+        isAuthenticated: false,
+        isLoading: false,
+        roles: [],
+        permissions: [],
+      });
+    }
   }, []);
 
   // Listen for unauthorized events from API client to sync React state with localStorage
@@ -464,6 +473,54 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     }
   }, []);
 
+  const switchTenant = useCallback(async (tenantId: string): Promise<boolean> => {
+    try {
+      const response = await tenantApi.switchTenant(tenantId);
+      if (response.success && response.data) {
+        const { access_token: accessToken, user, tenant_id: newTenantId } = response.data as any;
+
+        if (accessToken) {
+          localStorage.setItem('token', accessToken);
+          apiClient.setAuthToken(accessToken);
+
+          const newExpiry = parseTokenExpiryFromJWT(accessToken);
+          setTokenExpiry(newExpiry);
+          localStorage.setItem('token_expiry', newExpiry.toString());
+        }
+
+        if (user) {
+          const mappedUser = mapApiUserToUser(user);
+          localStorage.setItem('user', JSON.stringify(mappedUser));
+          setState((prev) => ({ ...prev, user: mappedUser }));
+        }
+
+        if (newTenantId) {
+          localStorage.setItem('current_tenant_id', newTenantId);
+        }
+
+        authLogger.info('Tenant switched successfully:', tenantId);
+        return true;
+      }
+      return false;
+    } catch (error: unknown) {
+      authLogger.error('Failed to switch tenant:', error);
+      return false;
+    }
+  }, []);
+
+  const getMyTenants = useCallback(async (): Promise<any[]> => {
+    try {
+      const response = await tenantApi.getMyTenants();
+      if (response.success && response.data) {
+        return response.data as any[];
+      }
+      return [];
+    } catch (error: unknown) {
+      authLogger.error('Failed to get my tenants:', error);
+      return [];
+    }
+  }, []);
+
   // 稳定 Context 值
   const contextValue = useMemo(
     () => ({
@@ -478,6 +535,8 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
       refreshToken,
       isSessionExpiringSoon,
       getTimeUntilExpiry,
+      switchTenant,
+      getMyTenants,
     }),
     [
       state.user,
@@ -496,6 +555,8 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
       refreshToken,
       isSessionExpiringSoon,
       getTimeUntilExpiry,
+      switchTenant,
+      getMyTenants,
     ]
   );
 

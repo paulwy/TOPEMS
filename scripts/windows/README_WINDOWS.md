@@ -90,15 +90,27 @@ Set-ExecutionPolicy -ExecutionPolicy RemoteSigned -Scope CurrentUser
 
 | 服务 | 端口 |
 |------|------|
-| IAM | 8000 |
-| PM | 8001 |
-| Notification | 8002 |
-| Portal | 8003 |
-| Flow | 8004 |
-| Integration | 8005 |
+| IAM (unified-core) | 8000 |
+| PM | 8023 |
 | ERP | 8010 |
-| HRM | 8011 |
-| CRM | 8012 |
+| Finance | 8011 |
+| AI | 8013 |
+| HRM | 8020 |
+| CRM | 8029 |
+| MES | 8030 |
+| PDM | 8031 |
+| SCM | 8040 |
+| WMS | 8041 |
+| SRM | 8042 |
+| QMS | 8050 |
+| LIMS | 8051 |
+| EHS | 8052 |
+| RD | 8053 |
+| BI | 8060 |
+| Portal | 8063 |
+| Mobile | 8070 |
+| GIS | 8071 |
+| Integration | 8072 |
 | ... | ... |
 
 ## 常见问题

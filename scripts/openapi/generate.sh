@@ -85,8 +85,10 @@ SERVICES=(
   "gis|8071|/api-docs/openapi.json|infrastructure"
   "integration|8072|/api-docs/openapi.json|infrastructure"
   # 扩展服务 (8080-8089)
-  "billing|8080|/api-docs/openapi.json|billing"
-  "ticket|8081|/api-docs/openapi.json|billing"
+  "billing|8085|/api-docs/openapi.json|billing"
+  "ticket|8086|/api-docs/openapi.json|billing"
+  "feedback|8087|/api-docs/openapi.json|billing"
+  "communication|8084|/api-docs/openapi.json|communication"
   # 主数据服务 (8090)
   "master-data|8090|/api-docs/openapi.json|master-data"
 )
@@ -95,8 +97,6 @@ SERVICES=(
 # 这些服务存在于 svc/ 目录但未实现 OpenAPI 端点
 MISSING_SERVICES=(
   "search|8082|search"
-  "feedback|8083|feedback"
-  "communication|8084|communication"
 )
 
 # 默认超时配置

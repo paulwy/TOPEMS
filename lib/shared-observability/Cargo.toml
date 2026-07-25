@@ -1,0 +1,38 @@
+[package]
+name = "topems-shared-observability"
+version.workspace = true
+edition.workspace = true
+authors.workspace = true
+description = "TOPEMS shared observability library - telemetry, tracing, metrics, alerting"
+
+[dependencies]
+topems-shared-core = { path = "../shared-core" }
+topems-shared-event = { path = "../shared-event" }
+
+# 可观测性依赖
+opentelemetry = { version = "0.32", features = ["trace"] }
+opentelemetry_sdk = { version = "0.32", features = ["rt-tokio", "trace"] }
+opentelemetry-otlp = { version = "0.32", features = ["tonic", "trace"] }
+opentelemetry-stdout = { version = "0.32", features = ["trace"] }
+opentelemetry-semantic-conventions = "0.32"
+tracing-opentelemetry = "0.33"
+tracing.workspace = true
+tracing-subscriber.workspace = true
+serde.workspace = true
+serde_json.workspace = true
+chrono.workspace = true
+uuid.workspace = true
+axum.workspace = true
+tokio.workspace = true
+async-trait.workspace = true
+parking_lot = "0.12"
+prometheus = "0.13"
+sha2 = "0.10"
+hex = "0.4"
+thiserror.workspace = true
+regex.workspace = true
+sqlx.workspace = true
+reqwest = { version = "0.12", features = ["json"] }
+amqprs = { version = "1.1.0-rc.2", features = ["tokio-rustls"] }
+redis = { version = "0.24", features = ["tokio-comp", "connection-manager"] }
+dotenv = "0.15"

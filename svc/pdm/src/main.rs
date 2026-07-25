@@ -21,13 +21,11 @@ mod modules;
 mod services;
 mod shared;
 
-use std::env;
 use std::net::SocketAddr;
 use std::sync::Arc;
 
 use axum::{extract::State, routing::get, Json, Router};
 use axum_prometheus::PrometheusMetricLayer;
-use sqlx::PgPool;
 
 use topems_shared::{
     auth_middleware, create_cors_layer, get_api_info_handler, init_telemetry,
@@ -94,6 +92,10 @@ async fn main() {
 
     if let Err(e) = models::init_database(&pool).await {
         tracing::warn!("PDM database init warning: {}", e);
+    }
+
+    if let Err(e) = init_db(&pool).await {
+        tracing::warn!("PDM AC-5 ref 表初始化警告: {}", e);
     }
 
     if let Err(e) = event_handlers::start_event_subscribers(pool.clone()).await {
@@ -250,4 +252,32 @@ async fn detailed_health(State(state): State<AppState>) -> Json<ApiResponse<serd
     });
 
     Json(ApiResponse::success(response, "Detailed health check"))
+}
+
+async fn init_db(pool: &sqlx::PgPool) -> Result<(), sqlx::Error> {
+    // V32.0 AC-5: 本地主数据引用表，用于跨服务 master_data_id 关联
+    // 消费端通过 master_data_id 查找本地业务记录，而非依赖业务编码
+    sqlx::query(
+        r#"
+        CREATE TABLE IF NOT EXISTS pdm_master_data_refs (
+            master_data_id   VARCHAR(128) PRIMARY KEY,
+            tenant_id        UUID NOT NULL,
+            domain           VARCHAR(32) NOT NULL,
+            code             VARCHAR(128) NOT NULL,
+            name             VARCHAR(256),
+            status           VARCHAR(32) DEFAULT 'active',
+            source_service   VARCHAR(64) NOT NULL,
+            local_entity_type VARCHAR(64),
+            local_entity_id  UUID,
+            payload_snapshot JSONB,
+            last_synced_at   TIMESTAMPTZ DEFAULT NOW(),
+            created_at       TIMESTAMPTZ DEFAULT NOW(),
+            updated_at       TIMESTAMPTZ DEFAULT NOW()
+        )
+        "#,
+    )
+    .execute(pool)
+    .await?;
+    tracing::info!("[pdm] pdm_master_data_refs 表已就绪（AC-5 本地主数据引用）");
+    Ok(())
 }

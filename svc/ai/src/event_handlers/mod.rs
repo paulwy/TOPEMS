@@ -9,6 +9,7 @@ use topems_shared::event::{
 type HandlerResult = std::result::Result<(), String>;
 
 #[derive(Clone)]
+#[allow(dead_code)]
 pub struct AiEventHandlers {
     pub db: PgPool,
     pub event_publisher: Option<Arc<EventPublisher>>,

@@ -4,7 +4,7 @@ use topems_shared::service_client::{
     create_hrm_client, create_iam_client, create_integration_client, create_lims_client,
     create_mes_client, create_mobile_client, create_monitor_client, create_notification_client,
     create_pdm_client, create_pm_client, create_portal_client, create_qms_client,
-    create_report_client, create_rs_client, create_scm_client, create_srm_client,
+    create_rd_client, create_scm_client, create_srm_client,
     create_wms_client, BaseServiceClient, ServiceClientError,
 };
 
@@ -274,20 +274,14 @@ fn test_create_ehs_client_returns_client() {
 }
 
 #[test]
-fn test_create_rs_client_returns_client() {
-    let result = create_rs_client();
+fn test_create_rd_client_returns_client() {
+    let result = create_rd_client();
     validate_client_result(result);
 }
 
 #[test]
 fn test_create_bi_client_returns_client() {
     let result = create_bi_client();
-    validate_client_result(result);
-}
-
-#[test]
-fn test_create_report_client_returns_client() {
-    let result = create_report_client();
     validate_client_result(result);
 }
 

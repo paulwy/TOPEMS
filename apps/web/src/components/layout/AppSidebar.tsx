@@ -25,7 +25,8 @@ import { useNavigate, useLocation } from 'react-router-dom';
 import { usePermission } from '@/hooks/usePermission';
 import { useServiceStatus } from '@/hooks/useServiceStatus';
 import { navigationRegistryV2 } from '@/lib/navigation';
-import type { NavItem } from '@/lib/navigation/types';
+import type { NavItem, ModuleCardConfig } from '@/lib/navigation/types';
+import { SUITE_GROUPS } from '@/lib/navigation/types';
 import { useUIStore } from '@/store';
 
 import {
@@ -250,9 +251,9 @@ export const AppSidebar: React.FC<AppSidebarProps> = ({
     return found?.label || currentModule;
   }, [currentModule]);
 
-  // ---- 平台级导航项（按核心/插件分组，带权限过滤） ----
-  const [coreNavItems, setCoreNavItems] = useState<NavItem[]>([]);
-  const [pluginNavItems, setPluginNavItems] = useState<NavItem[]>([]);
+  // ---- 平台级导航项（按业务域分组，带权限过滤） ----
+  const [groupedModules, setGroupedModules] = useState<Record<string, NavItem[]>>({});
+  const [suiteOrder, setSuiteOrder] = useState<string[]>([]);
 
   const checkPermissionRef = useRef(checkPermission);
   useEffect(() => {
@@ -261,30 +262,32 @@ export const AppSidebar: React.FC<AppSidebarProps> = ({
 
   const updateGroupedNavItems = useCallback(() => {
     const currentCheckPermission = checkPermissionRef.current;
-    const coreModules = navigationRegistryV2.getCoreModules(currentCheckPermission);
-    const businessModules = navigationRegistryV2.getBusinessModules(currentCheckPermission);
-    const coreItems: NavItem[] = coreModules.map((m) => ({
-      code: m.code,
-      label: m.name,
-      icon: m.icon,
-      path: m.path,
-      permission: m.permission,
-      order: m.order,
-      moduleCode: m.code,
-      moduleName: m.name,
-    }));
-    const pluginItems: NavItem[] = businessModules.map((m) => ({
-      code: m.code,
-      label: m.name,
-      icon: m.icon,
-      path: m.path,
-      permission: m.permission,
-      order: m.order,
-      moduleCode: m.code,
-      moduleName: m.name,
-    }));
-    setCoreNavItems(coreItems);
-    setPluginNavItems(pluginItems);
+    const groupedBySuite = navigationRegistryV2.getNavItemsGroupedByBusinessDomain(currentCheckPermission);
+
+    const result: Record<string, NavItem[]> = {};
+    const orders: Array<{ suite: string; order: number }> = [];
+
+    Object.entries(groupedBySuite).forEach(([suite, modules]) => {
+      const suiteKey = suite as keyof typeof SUITE_GROUPS;
+      const suiteInfo = SUITE_GROUPS[suiteKey] || SUITE_GROUPS.other;
+      orders.push({ suite, order: suiteInfo.order });
+
+      result[suite] = modules.map((m: ModuleCardConfig) => ({
+        code: m.code,
+        label: m.name,
+        icon: m.icon,
+        path: m.path,
+        permission: m.permission,
+        order: m.order,
+        moduleCode: m.code,
+        moduleName: m.name,
+        badge: m.status === 'beta' ? 'Beta' : m.status === 'new' ? 'New' : undefined,
+      }));
+    });
+
+    orders.sort((a, b) => a.order - b.order);
+    setSuiteOrder(orders.map((o) => o.suite));
+    setGroupedModules(result);
   }, []);
 
   useEffect(() => {
@@ -615,233 +618,130 @@ export const AppSidebar: React.FC<AppSidebarProps> = ({
         )}
 
         {/* ---- 导航项列表 ---- */}
-        {/* 平台模式：按核心/插件分组 */}
+        {/* 平台模式：按业务域分组 */}
         {!isModuleMode && (
           <>
-            {coreNavItems.length > 0 && (
-              <>
-                {!collapsed && (
-                  <Typography
-                    sx={{
-                      px: 2,
-                      py: 1,
-                      fontSize: 12,
-                      fontWeight: 600,
-                      color: 'text.secondary',
-                      textTransform: 'uppercase',
-                      letterSpacing: '0.5px',
-                      userSelect: 'none',
-                    }}
-                  >
-                    核心功能
-                  </Typography>
-                )}
-                <Box sx={{ display: 'flex', flexDirection: 'column', gap: 0.5 }}>
-                  {coreNavItems.map((item: NavItem, index: number) => {
-                    const isActive = Boolean(
-                      item.path === location.pathname ||
-                      (item.path && location.pathname.startsWith(`${item.path}/`))
-                    );
-                    const NavButton = (
-                      <Box
-                        component='button'
-                        role='menuitem'
-                        tabIndex={0}
-                        key={item.code || `${item.label}-${index}`}
-                        onClick={() => item.path && navigate(item.path)}
-                        onKeyDown={(e) => {
-                          if (e.key === 'Enter' || e.key === ' ') {
-                            e.preventDefault();
-                            item.path && navigate(item.path);
-                          }
-                        }}
-                        aria-current={isActive ? 'page' : undefined}
-                        sx={navItemSx(isActive, true)}
-                      >
-                        {renderIcon(item.icon, 18) || (
-                          <Typography sx={{ width: 18, height: 18, fontSize: 18 }} />
-                        )}
-                        {!collapsed && (
-                          <Box sx={{ flex: 1, display: 'flex', alignItems: 'center', gap: 1 }}>
-                            <Typography sx={{ fontSize: 14, fontWeight: isActive ? 600 : 500 }}>
-                              {item.label}
-                            </Typography>
-                            {item.badge && (
-                              <Chip
-                                size='small'
-                                label={item.badge}
-                                sx={{
-                                  height: 16,
-                                  fontSize: '0.625rem',
-                                  fontWeight: 600,
-                                  bgcolor: 'error.main',
-                                  color: 'white',
-                                  '& .MuiChip-label': {
-                                    px: 0.5,
-                                  },
-                                }}
-                              />
-                            )}
-                          </Box>
-                        )}
-                        {!collapsed && isServiceOffline(item.moduleCode || item.code) && (
-                          <Box
-                            sx={{
-                              width: 8,
-                              height: 8,
-                              borderRadius: '50%',
-                              bgcolor: 'error.main',
-                              animation: 'pulse 2s infinite',
-                            }}
-                          />
-                        )}
-                        {collapsed && item.badge && (
-                          <MuiBadge
-                            badgeContent={item.badge}
-                            color='error'
-                            sx={{
-                              position: 'absolute',
-                              top: 4,
-                              right: 4,
-                              '& .MuiBadge-badge': {
-                                fontSize: '0.625rem',
-                                height: 14,
-                                minWidth: 14,
-                              },
-                            }}
-                          />
-                        )}
-                      </Box>
-                    );
-                    return collapsed ? (
-                      <Tooltip
-                        key={item.code || `${item.label}-${index}`}
-                        title={item.label}
-                        placement='right'
-                        arrow
-                      >
-                        {NavButton}
-                      </Tooltip>
-                    ) : (
-                      NavButton
-                    );
-                  })}
-                </Box>
-              </>
-            )}
+            {suiteOrder.map((suiteKey, groupIndex) => {
+              const items = groupedModules[suiteKey] || [];
+              if (items.length === 0) return null;
+              const suiteInfo = SUITE_GROUPS[suiteKey as keyof typeof SUITE_GROUPS] || SUITE_GROUPS.other;
+              const isFirstGroup = groupIndex === 0;
 
-            {pluginNavItems.length > 0 && (
-              <>
-                <Box sx={{ my: 1, mx: 1, borderBottom: 1, borderColor: 'divider' }} />
-                {!collapsed && (
-                  <Typography
-                    sx={{
-                      px: 2,
-                      py: 1,
-                      fontSize: 12,
-                      fontWeight: 600,
-                      color: 'text.secondary',
-                      textTransform: 'uppercase',
-                      letterSpacing: '0.5px',
-                      userSelect: 'none',
-                    }}
-                  >
-                    业务应用
-                  </Typography>
-                )}
-                <Box sx={{ display: 'flex', flexDirection: 'column', gap: 0.5 }}>
-                  {pluginNavItems.map((item: NavItem, index: number) => {
-                    const isActive = Boolean(
-                      item.path === location.pathname ||
-                      (item.path && location.pathname.startsWith(`${item.path}/`))
-                    );
-                    const NavButton = (
-                      <Box
-                        component='button'
-                        role='menuitem'
-                        tabIndex={0}
-                        key={item.code || `${item.label}-${index}`}
-                        onClick={() => item.path && navigate(item.path)}
-                        onKeyDown={(e) => {
-                          if (e.key === 'Enter' || e.key === ' ') {
-                            e.preventDefault();
-                            item.path && navigate(item.path);
-                          }
-                        }}
-                        aria-current={isActive ? 'page' : undefined}
-                        sx={navItemSx(isActive, true)}
-                      >
-                        {renderIcon(item.icon, 18) || (
-                          <Typography sx={{ width: 18, height: 18, fontSize: 18 }} />
-                        )}
-                        {!collapsed && (
-                          <Box sx={{ flex: 1, display: 'flex', alignItems: 'center', gap: 1 }}>
-                            <Typography sx={{ fontSize: 14, fontWeight: isActive ? 600 : 500 }}>
-                              {item.label}
-                            </Typography>
-                            {item.badge && (
-                              <Chip
-                                size='small'
-                                label={item.badge}
-                                sx={{
-                                  height: 16,
+              return (
+                <React.Fragment key={suiteKey}>
+                  {!isFirstGroup && (
+                    <Box sx={{ my: 1, mx: 1, borderBottom: 1, borderColor: 'divider' }} />
+                  )}
+                  {!collapsed && (
+                    <Typography
+                      sx={{
+                        px: 2,
+                        py: 1,
+                        fontSize: 12,
+                        fontWeight: 600,
+                        color: 'text.secondary',
+                        textTransform: 'uppercase',
+                        letterSpacing: '0.5px',
+                        userSelect: 'none',
+                      }}
+                    >
+                      {suiteInfo.label}
+                    </Typography>
+                  )}
+                  <Box sx={{ display: 'flex', flexDirection: 'column', gap: 0.5 }}>
+                    {items.map((item: NavItem, index: number) => {
+                      const isActive = Boolean(
+                        item.path === location.pathname ||
+                        (item.path && location.pathname.startsWith(`${item.path}/`))
+                      );
+                      const NavButton = (
+                        <Box
+                          component='button'
+                          role='menuitem'
+                          tabIndex={0}
+                          key={item.code || `${item.label}-${index}`}
+                          onClick={() => item.path && navigate(item.path)}
+                          onKeyDown={(e) => {
+                            if (e.key === 'Enter' || e.key === ' ') {
+                              e.preventDefault();
+                              item.path && navigate(item.path);
+                            }
+                          }}
+                          aria-current={isActive ? 'page' : undefined}
+                          sx={navItemSx(isActive, true)}
+                        >
+                          {renderIcon(item.icon, 18) || (
+                            <Typography sx={{ width: 18, height: 18, fontSize: 18 }} />
+                          )}
+                          {!collapsed && (
+                            <Box sx={{ flex: 1, display: 'flex', alignItems: 'center', gap: 1 }}>
+                              <Typography sx={{ fontSize: 14, fontWeight: isActive ? 600 : 500 }}>
+                                {item.label}
+                              </Typography>
+                              {item.badge && (
+                                <Chip
+                                  size='small'
+                                  label={item.badge}
+                                  sx={{
+                                    height: 16,
+                                    fontSize: '0.625rem',
+                                    fontWeight: 600,
+                                    bgcolor: 'error.main',
+                                    color: 'white',
+                                    '& .MuiChip-label': {
+                                      px: 0.5,
+                                    },
+                                  }}
+                                />
+                              )}
+                            </Box>
+                          )}
+                          {!collapsed && isServiceOffline(item.moduleCode || item.code) && (
+                            <Box
+                              sx={{
+                                width: 8,
+                                height: 8,
+                                borderRadius: '50%',
+                                bgcolor: 'error.main',
+                                animation: 'pulse 2s infinite',
+                              }}
+                            />
+                          )}
+                          {collapsed && item.badge && (
+                            <MuiBadge
+                              badgeContent={item.badge}
+                              color='error'
+                              sx={{
+                                position: 'absolute',
+                                top: 4,
+                                right: 4,
+                                '& .MuiBadge-badge': {
                                   fontSize: '0.625rem',
-                                  fontWeight: 600,
-                                  bgcolor: 'error.main',
-                                  color: 'white',
-                                  '& .MuiChip-label': {
-                                    px: 0.5,
-                                  },
-                                }}
-                              />
-                            )}
-                          </Box>
-                        )}
-                        {!collapsed && isServiceOffline(item.moduleCode || item.code) && (
-                          <Box
-                            sx={{
-                              width: 8,
-                              height: 8,
-                              borderRadius: '50%',
-                              bgcolor: 'error.main',
-                              animation: 'pulse 2s infinite',
-                            }}
-                          />
-                        )}
-                        {collapsed && item.badge && (
-                          <MuiBadge
-                            badgeContent={item.badge}
-                            color='error'
-                            sx={{
-                              position: 'absolute',
-                              top: 4,
-                              right: 4,
-                              '& .MuiBadge-badge': {
-                                fontSize: '0.625rem',
-                                height: 14,
-                                minWidth: 14,
-                              },
-                            }}
-                          />
-                        )}
-                      </Box>
-                    );
-                    return collapsed ? (
-                      <Tooltip
-                        key={item.code || `${item.label}-${index}`}
-                        title={item.label}
-                        placement='right'
-                        arrow
-                      >
-                        {NavButton}
-                      </Tooltip>
-                    ) : (
-                      NavButton
-                    );
-                  })}
-                </Box>
-              </>
-            )}
+                                  height: 14,
+                                  minWidth: 14,
+                                },
+                              }}
+                            />
+                          )}
+                        </Box>
+                      );
+                      return collapsed ? (
+                        <Tooltip
+                          key={item.code || `${item.label}-${index}`}
+                          title={item.label}
+                          placement='right'
+                          arrow
+                        >
+                          {NavButton}
+                        </Tooltip>
+                      ) : (
+                        NavButton
+                      );
+                    })}
+                  </Box>
+                </React.Fragment>
+              );
+            })}
           </>
         )}
 

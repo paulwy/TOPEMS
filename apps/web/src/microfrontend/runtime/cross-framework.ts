@@ -1,0 +1,651 @@
+/**
+ * V45.0 Track F: 微前端终极形态 — 跨框架兼容层
+ *
+ * 提供统一的框架适配器，支持 React / Vue / Angular / Svelte 组件
+ * 在同一个微前端容器中混合挂载，并提供统一的生命周期与属性/事件传递。
+ *
+ * - FrameworkAdapter 接口：mount / unmount / update / getState / setErrorHandler
+ * - ReactAdapter / VueAdapter / AngularAdapter / SvelteAdapter
+ * - CrossFrameworkBridge: createAdapter / mountComponent / unmountComponent / transferProps / transferEvents
+ * - 统一 props 格式 → 框架特定格式
+ * - 统一事件 → 框架特定事件
+ *
+ * 注意：Vue / Angular / Svelte 适配器为模拟实现，不依赖实际框架包。
+ *
+ * @example
+ * const adapter = crossFrameworkBridge.createAdapter(FrameworkType.React, MyComponent);
+ * crossFrameworkBridge.mountComponent('widget-1', adapter, container, { title: 'Hello' });
+ */
+
+import React from 'react';
+import ReactDOM from 'react-dom/client';
+
+// ==================== 类型定义 ====================
+
+/** 支持的框架类型 */
+export enum FrameworkType {
+  React = 'react',
+  Vue = 'vue',
+  Angular = 'angular',
+  Svelte = 'svelte',
+  Vanilla = 'vanilla',
+}
+
+/** 统一属性格式 */
+export interface UnifiedProps {
+  [key: string]: any;
+}
+
+/** 统一事件格式 */
+export interface UnifiedEvents {
+  /** 事件名 -> 回调函数 */
+  [eventName: string]: (...args: any[]) => void;
+}
+
+/** 框架适配器接口 */
+export interface FrameworkAdapter {
+  /** 框架类型 */
+  framework: FrameworkType;
+  /** 将组件挂载到容器 */
+  mount(container: HTMLElement, props: UnifiedProps): void;
+  /** 卸载组件 */
+  unmount(container: HTMLElement): void;
+  /** 更新组件属性 */
+  update(container: HTMLElement, props: UnifiedProps): void;
+  /** 获取组件当前状态（模拟） */
+  getState(): Record<string, any>;
+  /** 设置错误处理回调 */
+  setErrorHandler(handler: (error: Error) => void): void;
+}
+
+/** 统一生命周期 */
+export interface UnifiedLifecycle {
+  /** 框架类型 */
+  framework: FrameworkType;
+  /** 挂载 */
+  mount: (container: HTMLElement, props: UnifiedProps) => void;
+  /** 卸载 */
+  unmount: (container: HTMLElement) => void;
+  /** 更新 */
+  update: (container: HTMLElement, props: UnifiedProps) => void;
+  /** 状态监听 */
+  watch: (callback: (state: Record<string, any>) => void) => () => void;
+  /** 错误回调 */
+  error: (error: Error) => void;
+}
+
+/** 生命周期钩子 */
+export interface LifecycleHook {
+  beforeMount?: (container: HTMLElement, props: UnifiedProps) => void;
+  mounted?: (container: HTMLElement) => void;
+  beforeUpdate?: (container: HTMLElement, props: UnifiedProps) => void;
+  updated?: (container: HTMLElement) => void;
+  beforeUnmount?: (container: HTMLElement) => void;
+  unmounted?: (container: HTMLElement) => void;
+  errorCaptured?: (error: Error, container: HTMLElement) => void;
+}
+
+/** 已挂载的组件实例 */
+export interface MountedComponent {
+  /** 实例 ID */
+  id: string;
+  /** 框架类型 */
+  framework: FrameworkType;
+  /** 适配器 */
+  adapter: FrameworkAdapter;
+  /** 挂载容器 */
+  container: HTMLElement;
+  /** 当前属性 */
+  props: UnifiedProps;
+  /** 事件映射 */
+  events: UnifiedEvents;
+  /** 挂载时间 */
+  mountedAt: number;
+}
+
+// ==================== React 适配器 ====================
+
+/**
+ * React 组件适配器
+ *
+ * 使用 ReactDOM.createRoot 将 React 组件挂载到 DOM 容器。
+ */
+export class ReactAdapter implements FrameworkAdapter {
+  readonly framework = FrameworkType.React;
+  private component: React.ComponentType<any>;
+  private root: ReactDOM.Root | null = null;
+  private currentProps: UnifiedProps = {};
+  private errorHandler: ((error: Error) => void) | null = null;
+  private state: Record<string, any> = {};
+
+  constructor(component: React.ComponentType<any>) {
+    this.component = component;
+  }
+
+  mount(container: HTMLElement, props: UnifiedProps): void {
+    try {
+      this.currentProps = props;
+      this.root = ReactDOM.createRoot(container);
+      this.root.render(React.createElement(this.component, this.transformProps(props)));
+      this.state = { mounted: true, framework: 'react', propsCount: Object.keys(props).length };
+    } catch (err) {
+      const error = err instanceof Error ? err : new Error(String(err));
+      this.errorHandler?.(error);
+      throw error;
+    }
+  }
+
+  unmount(container: HTMLElement): void {
+    if (this.root) {
+      this.root.unmount();
+      this.root = null;
+    }
+    this.state = { mounted: false };
+  }
+
+  update(container: HTMLElement, props: UnifiedProps): void {
+    if (!this.root) {
+      this.mount(container, props);
+      return;
+    }
+    this.currentProps = props;
+    this.root.render(React.createElement(this.component, this.transformProps(props)));
+    this.state = { mounted: true, framework: 'react', propsCount: Object.keys(props).length };
+  }
+
+  getState(): Record<string, any> {
+    return { ...this.state, currentProps: this.currentProps };
+  }
+
+  setErrorHandler(handler: (error: Error) => void): void {
+    this.errorHandler = handler;
+  }
+
+  /** React props 直接透传 */
+  protected transformProps(props: UnifiedProps): UnifiedProps {
+    return { ...props };
+  }
+}
+
+// ==================== Vue 适配器（模拟） ====================
+
+/**
+ * Vue 组件适配器（模拟实现）
+ *
+ * 模拟 Vue 3 的 createApp + mount 流程，不依赖实际 Vue 运行时。
+ */
+export class VueAdapter implements FrameworkAdapter {
+  readonly framework = FrameworkType.Vue;
+  private componentDef: any;
+  private app: any = null;
+  private currentProps: UnifiedProps = {};
+  private errorHandler: ((error: Error) => void) | null = null;
+  private state: Record<string, any> = {};
+
+  constructor(componentDef: any) {
+    this.componentDef = componentDef;
+  }
+
+  mount(container: HTMLElement, props: UnifiedProps): void {
+    try {
+      this.currentProps = props;
+      // 模拟 Vue createApp
+      this.app = {
+        mount: (el: HTMLElement) => {
+          el.innerHTML = this.renderTemplate(props);
+        },
+        unmount: () => {
+          container.innerHTML = '';
+        },
+      };
+      this.app.mount(container);
+      this.state = { mounted: true, framework: 'vue', propsCount: Object.keys(props).length };
+    } catch (err) {
+      const error = err instanceof Error ? err : new Error(String(err));
+      this.errorHandler?.(error);
+      throw error;
+    }
+  }
+
+  unmount(container: HTMLElement): void {
+    if (this.app) {
+      this.app.unmount();
+      this.app = null;
+    }
+    this.state = { mounted: false };
+  }
+
+  update(container: HTMLElement, props: UnifiedProps): void {
+    if (!this.app) {
+      this.mount(container, props);
+      return;
+    }
+    this.currentProps = props;
+    container.innerHTML = this.renderTemplate(props);
+    this.state = { mounted: true, framework: 'vue', propsCount: Object.keys(props).length };
+  }
+
+  getState(): Record<string, any> {
+    return { ...this.state, currentProps: this.currentProps };
+  }
+
+  setErrorHandler(handler: (error: Error) => void): void {
+    this.errorHandler = handler;
+  }
+
+  /** 模拟 Vue 模板渲染 */
+  private renderTemplate(props: UnifiedProps): string {
+    const entries = Object.entries(props)
+      .map(([k, v]) => `${k}: ${typeof v === 'object' ? JSON.stringify(v) : String(v)}`)
+      .join('<br/>');
+    return `<div data-framework="vue" style="padding:12px;border:1px solid #42b883;border-radius:6px;">
+      <strong>[Vue 模拟组件]</strong><br/>${entries || '(无属性)'}
+    </div>`;
+  }
+}
+
+// ==================== Angular 适配器（模拟） ====================
+
+/**
+ * Angular 组件适配器（模拟实现）
+ *
+ * 模拟 Angular 的 platformBrowserDynamic + bootstrapComponent 流程。
+ */
+export class AngularAdapter implements FrameworkAdapter {
+  readonly framework = FrameworkType.Angular;
+  private componentClass: any;
+  private platformRef: any = null;
+  private currentProps: UnifiedProps = {};
+  private errorHandler: ((error: Error) => void) | null = null;
+  private state: Record<string, any> = {};
+
+  constructor(componentClass: any) {
+    this.componentClass = componentClass;
+  }
+
+  mount(container: HTMLElement, props: UnifiedProps): void {
+    try {
+      this.currentProps = props;
+      // 模拟 Angular bootstrap
+      this.platformRef = {
+        destroy: () => {
+          container.innerHTML = '';
+        },
+      };
+      container.innerHTML = this.renderTemplate(props);
+      this.state = { mounted: true, framework: 'angular', propsCount: Object.keys(props).length };
+    } catch (err) {
+      const error = err instanceof Error ? err : new Error(String(err));
+      this.errorHandler?.(error);
+      throw error;
+    }
+  }
+
+  unmount(container: HTMLElement): void {
+    if (this.platformRef) {
+      this.platformRef.destroy();
+      this.platformRef = null;
+    }
+    this.state = { mounted: false };
+  }
+
+  update(container: HTMLElement, props: UnifiedProps): void {
+    if (!this.platformRef) {
+      this.mount(container, props);
+      return;
+    }
+    this.currentProps = props;
+    container.innerHTML = this.renderTemplate(props);
+    this.state = { mounted: true, framework: 'angular', propsCount: Object.keys(props).length };
+  }
+
+  getState(): Record<string, any> {
+    return { ...this.state, currentProps: this.currentProps };
+  }
+
+  setErrorHandler(handler: (error: Error) => void): void {
+    this.errorHandler = handler;
+  }
+
+  /** 模拟 Angular 模板渲染 */
+  private renderTemplate(props: UnifiedProps): string {
+    const entries = Object.entries(props)
+      .map(
+        ([k, v]) =>
+          `<li><strong>{{ ${k} }}</strong>: ${typeof v === 'object' ? JSON.stringify(v) : String(v)}</li>`
+      )
+      .join('');
+    return `<div data-framework="angular" style="padding:12px;border:1px solid #dd0031;border-radius:6px;">
+      <strong>[Angular 模拟组件]</strong>
+      <ul style="margin:8px 0 0;padding-left:20px;">${entries || '<li>(无属性)</li>'}</ul>
+    </div>`;
+  }
+}
+
+// ==================== Svelte 适配器（模拟） ====================
+
+/**
+ * Svelte 组件适配器（模拟实现）
+ *
+ * 模拟 Svelte 的 new Component({ target }) 流程。
+ */
+export class SvelteAdapter implements FrameworkAdapter {
+  readonly framework = FrameworkType.Svelte;
+  private componentDef: any;
+  private instance: any = null;
+  private currentProps: UnifiedProps = {};
+  private errorHandler: ((error: Error) => void) | null = null;
+  private state: Record<string, any> = {};
+
+  constructor(componentDef: any) {
+    this.componentDef = componentDef;
+  }
+
+  mount(container: HTMLElement, props: UnifiedProps): void {
+    try {
+      this.currentProps = props;
+      // 模拟 Svelte 组件实例化
+      this.instance = {
+        $destroy: () => {
+          container.innerHTML = '';
+        },
+        $set: (newProps: UnifiedProps) => {
+          this.currentProps = newProps;
+          container.innerHTML = this.renderTemplate(newProps);
+        },
+      };
+      container.innerHTML = this.renderTemplate(props);
+      this.state = { mounted: true, framework: 'svelte', propsCount: Object.keys(props).length };
+    } catch (err) {
+      const error = err instanceof Error ? err : new Error(String(err));
+      this.errorHandler?.(error);
+      throw error;
+    }
+  }
+
+  unmount(container: HTMLElement): void {
+    if (this.instance) {
+      this.instance.$destroy();
+      this.instance = null;
+    }
+    this.state = { mounted: false };
+  }
+
+  update(container: HTMLElement, props: UnifiedProps): void {
+    if (!this.instance) {
+      this.mount(container, props);
+      return;
+    }
+    this.instance.$set(props);
+    this.state = { mounted: true, framework: 'svelte', propsCount: Object.keys(props).length };
+  }
+
+  getState(): Record<string, any> {
+    return { ...this.state, currentProps: this.currentProps };
+  }
+
+  setErrorHandler(handler: (error: Error) => void): void {
+    this.errorHandler = handler;
+  }
+
+  /** 模拟 Svelte 模板渲染 */
+  private renderTemplate(props: UnifiedProps): string {
+    const entries = Object.entries(props)
+      .map(
+        ([k, v]) =>
+          `<span style="display:inline-block;margin:2px 6px;padding:2px 8px;background:#ff3e00;color:white;border-radius:3px;">${k}: ${typeof v === 'object' ? JSON.stringify(v) : String(v)}</span>`
+      )
+      .join('');
+    return `<div data-framework="svelte" style="padding:12px;border:1px solid #ff3e00;border-radius:6px;">
+      <strong>[Svelte 模拟组件]</strong><br/>${entries || '<span style="color:#999;">(无属性)</span>'}
+    </div>`;
+  }
+}
+
+// ==================== CrossFrameworkBridge ====================
+
+/**
+ * 跨框架桥接器
+ *
+ * 统一管理多框架适配器的创建、挂载、卸载与属性/事件传递。
+ */
+export class CrossFrameworkBridge {
+  /** 已挂载的组件: id -> MountedComponent */
+  private readonly mounted = new Map<string, MountedComponent>();
+  /** 适配器工厂注册表: framework -> 工厂函数 */
+  private readonly adapterFactories = new Map<
+    FrameworkType,
+    (component: any) => FrameworkAdapter
+  >();
+  /** 状态监听器 */
+  private readonly stateListeners = new Set<(components: MountedComponent[]) => void>();
+
+  constructor() {
+    this.registerBuiltInAdapters();
+  }
+
+  /** 注册内置适配器工厂 */
+  private registerBuiltInAdapters(): void {
+    this.adapterFactories.set(FrameworkType.React, (c) => new ReactAdapter(c));
+    this.adapterFactories.set(FrameworkType.Vue, (c) => new VueAdapter(c));
+    this.adapterFactories.set(FrameworkType.Angular, (c) => new AngularAdapter(c));
+    this.adapterFactories.set(FrameworkType.Svelte, (c) => new SvelteAdapter(c));
+  }
+
+  /**
+   * 创建框架适配器
+   */
+  createAdapter(framework: FrameworkType, component: any): FrameworkAdapter {
+    const factory = this.adapterFactories.get(framework);
+    if (!factory) {
+      throw new Error(`[CrossFrameworkBridge] 不支持的框架类型: ${framework}`);
+    }
+    return factory(component);
+  }
+
+  /**
+   * 挂载组件
+   */
+  mountComponent(
+    id: string,
+    adapter: FrameworkAdapter,
+    container: HTMLElement,
+    props: UnifiedProps = {},
+    events: UnifiedEvents = {}
+  ): MountedComponent {
+    // 若已存在则先卸载
+    if (this.mounted.has(id)) {
+      this.unmountComponent(id);
+    }
+
+    const mergedProps = this.transferProps(adapter.framework, props, events);
+    adapter.mount(container, mergedProps);
+
+    const mounted: MountedComponent = {
+      id,
+      framework: adapter.framework,
+      adapter,
+      container,
+      props: mergedProps,
+      events,
+      mountedAt: Date.now(),
+    };
+    this.mounted.set(id, mounted);
+    this.notifyListeners();
+    return mounted;
+  }
+
+  /**
+   * 卸载组件
+   */
+  unmountComponent(id: string): boolean {
+    const mounted = this.mounted.get(id);
+    if (!mounted) return false;
+    try {
+      mounted.adapter.unmount(mounted.container);
+    } catch (err) {
+      console.error(`[CrossFrameworkBridge] 卸载组件 ${id} 失败:`, err);
+    }
+    this.mounted.delete(id);
+    this.notifyListeners();
+    return true;
+  }
+
+  /**
+   * 更新组件属性
+   */
+  updateComponent(id: string, props: UnifiedProps): boolean {
+    const mounted = this.mounted.get(id);
+    if (!mounted) return false;
+    const mergedProps = this.transferProps(mounted.framework, props, mounted.events);
+    mounted.props = mergedProps;
+    mounted.adapter.update(mounted.container, mergedProps);
+    this.notifyListeners();
+    return true;
+  }
+
+  /**
+   * 属性传递：统一 props 格式 → 框架特定格式
+   *
+   * - React: 直接透传
+   * - Vue: 转为 props + attrs
+   * - Angular: 转为 @Input 绑定
+   * - Svelte: 转为 export let
+   */
+  transferProps(
+    framework: FrameworkType,
+    props: UnifiedProps,
+    events: UnifiedEvents = {}
+  ): UnifiedProps {
+    const eventProps = this.transferEvents(framework, events);
+    switch (framework) {
+      case FrameworkType.React:
+        // React: 事件作为 onXxx 回调属性
+        return { ...props, ...eventProps };
+      case FrameworkType.Vue:
+        // Vue: 事件通过 $emit 触发，这里将回调注入 $listeners 模拟
+        return { ...props, $listeners: eventProps, $attrs: { ...props } };
+      case FrameworkType.Angular:
+        // Angular: 事件通过 @Output EventEmitter
+        return { ...props, $outputs: eventProps };
+      case FrameworkType.Svelte:
+        // Svelte: 事件通过 createEventDispatcher
+        return { ...props, $callbacks: eventProps };
+      default:
+        return { ...props, ...eventProps };
+    }
+  }
+
+  /**
+   * 事件传递：统一事件 → 框架特定事件
+   *
+   * 统一格式: { onClick: fn, onSubmit: fn }
+   * - React: onClick={fn}
+   * - Vue: @click="fn"
+   * - Angular: (click)="fn($event)"
+   * - Svelte: on:click={fn}
+   */
+  transferEvents(framework: FrameworkType, events: UnifiedEvents): UnifiedProps {
+    const result: UnifiedProps = {};
+    switch (framework) {
+      case FrameworkType.React:
+        // React: onXxx 格式直接透传
+        Object.entries(events).forEach(([name, handler]) => {
+          const reactName = name.startsWith('on')
+            ? name
+            : `on${name.charAt(0).toUpperCase()}${name.slice(1)}`;
+          result[reactName] = handler;
+        });
+        break;
+      case FrameworkType.Vue:
+        // Vue: 转为 onXxx 格式（Vue 3 composition API）
+        Object.entries(events).forEach(([name, handler]) => {
+          const vueName = name.startsWith('on')
+            ? name
+            : `on${name.charAt(0).toUpperCase()}${name.slice(1)}`;
+          result[vueName] = handler;
+        });
+        break;
+      case FrameworkType.Angular:
+        // Angular: 转为 onXxx 格式
+        Object.entries(events).forEach(([name, handler]) => {
+          const ngName = name.startsWith('on')
+            ? name
+            : `on${name.charAt(0).toUpperCase()}${name.slice(1)}`;
+          result[ngName] = handler;
+        });
+        break;
+      case FrameworkType.Svelte:
+        // Svelte: 转为 onXxx 回调
+        Object.entries(events).forEach(([name, handler]) => {
+          const svelteName = name.startsWith('on')
+            ? name
+            : `on${name.charAt(0).toUpperCase()}${name.slice(1)}`;
+          result[svelteName] = handler;
+        });
+        break;
+      default:
+        Object.assign(result, events);
+    }
+    return result;
+  }
+
+  /** 获取已挂载的组件 */
+  getMountedComponent(id: string): MountedComponent | undefined {
+    return this.mounted.get(id);
+  }
+
+  /** 列出所有已挂载的组件 */
+  listMountedComponents(): MountedComponent[] {
+    return Array.from(this.mounted.values());
+  }
+
+  /** 按框架筛选已挂载的组件 */
+  getComponentsByFramework(framework: FrameworkType): MountedComponent[] {
+    return this.listMountedComponents().filter((c) => c.framework === framework);
+  }
+
+  /** 注册自定义适配器工厂 */
+  registerAdapterFactory(
+    framework: FrameworkType,
+    factory: (component: any) => FrameworkAdapter
+  ): void {
+    this.adapterFactories.set(framework, factory);
+  }
+
+  /** 订阅组件变更 */
+  onComponentsChange(callback: (components: MountedComponent[]) => void): () => void {
+    this.stateListeners.add(callback);
+    return () => this.stateListeners.delete(callback);
+  }
+
+  /** 卸载所有组件 */
+  unmountAll(): void {
+    for (const id of Array.from(this.mounted.keys())) {
+      this.unmountComponent(id);
+    }
+  }
+
+  /** 获取已挂载组件数量 */
+  get size(): number {
+    return this.mounted.size;
+  }
+
+  /** 通知监听器 */
+  private notifyListeners(): void {
+    const components = this.listMountedComponents();
+    this.stateListeners.forEach((l) => {
+      try {
+        l(components);
+      } catch {
+        // ignore
+      }
+    });
+  }
+}
+
+// ==================== 单例导出 ====================
+
+export const crossFrameworkBridge = new CrossFrameworkBridge();
+
+export default crossFrameworkBridge;

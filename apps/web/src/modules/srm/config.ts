@@ -21,6 +21,7 @@ export const SRM_PATHS = {
   bidding: '/srm/bidding',
   finance: '/srm/finance',
   portal: '/srm/portal',
+  quotation: '/srm/quotation',
 } as const;
 
 // ---- 路由配置（供路由系统使用） ----
@@ -216,6 +217,17 @@ export const srmModuleConfig: RouteModuleConfig = {
       template: 'dashboard',
       group: 'business',
     },
+    {
+      path: SRM_PATHS.quotation,
+      element: lazyWithRetry(() => import('@/pages/srm/SrmQuotationPage'), 'SrmQuotationPage'),
+      module: 'srm',
+      title: '报价管理',
+      code: 'srm-quotation',
+      requiredPermissions: ['srm:quotation:read', 'srm:read'],
+      action: 'read',
+      template: 'list',
+      group: 'process',
+    },
   ],
 };
 
@@ -345,6 +357,16 @@ export const srmNavConfig: ModuleNavConfig = {
       order: 2,
       group: 'process',
       description: '招标流程管理',
+    },
+    {
+      code: 'srm-quotation',
+      label: '报价管理',
+      icon: 'FileText',
+      path: SRM_PATHS.quotation,
+      permission: 'srm:quotation:read',
+      order: 3,
+      group: 'process',
+      description: '供应商报价管理',
     },
     {
       code: 'srm-finance',

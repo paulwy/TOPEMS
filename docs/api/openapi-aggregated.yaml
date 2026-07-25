@@ -1,0 +1,13 @@
+openapi: 3.0.3
+info:
+  title: TOPEMS API
+  version: 14.0.0
+  description: 'TOPEMS 企业级 SaaS 平台统一 API 文档（自动聚合生成）
+
+
+    聚合自 0 个服务，共 0 个端点、0 个 Schema。
+
+    生成时间: 2026-07-25T07:56:23.258215'
+paths: {}
+components:
+  schemas: {}

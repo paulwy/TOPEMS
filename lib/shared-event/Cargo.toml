@@ -1,0 +1,48 @@
+[package]
+name = "topems-shared-event"
+version.workspace = true
+edition.workspace = true
+authors.workspace = true
+description = "TOPEMS shared event library - event-driven, messaging, caching"
+
+[dependencies]
+topems-shared-core = { path = "../shared-core" }
+
+# 事件驱动依赖
+chrono.workspace = true
+serde.workspace = true
+serde_json.workspace = true
+uuid.workspace = true
+tracing.workspace = true
+tokio.workspace = true
+axum.workspace = true
+async-trait.workspace = true
+thiserror.workspace = true
+
+# 异步流依赖
+futures.workspace = true
+futures-util.workspace = true
+futures-lite = "2.3"
+
+# Redis/消息队列依赖
+redis = { version = "0.24", features = ["tokio-comp", "connection-manager"] }
+lapin = { version = "4.10", default-features = false, features = ["rustls"] }
+
+# 缓存依赖
+parking_lot = "0.12"
+rand = "0.8"
+
+# 主机名依赖
+hostname = "0.4"
+
+# 服务发现依赖
+reqwest = { version = "0.12", features = ["json"] }
+
+# SQL 依赖（saga store 用）
+sqlx.workspace = true
+
+# Consul 依赖
+serde_yaml = "0.9"
+
+# 正则表达式依赖（config_center 用）
+regex.workspace = true

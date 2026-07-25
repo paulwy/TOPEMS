@@ -1,5 +1,5 @@
 import React from 'react';
-import { PageContainer } from '@/components/common/PageContainerV2';
+import { PageContainer } from '@/components/common/PageContainer';
 import { MapPin } from 'lucide-react';
 import { designTokens } from '@/theme/tokens';
 

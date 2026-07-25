@@ -1,3 +1,9 @@
+// ═══════════════════════════════════════════════════════════
+// ⚠️ DEPRECATED: 此模块为 SRM 主数据的本地缓存副本
+// 供应商主数据管理（创建/审批/评估）应通过 SRM 服务进行
+// SCM 仅保留只读引用用于采购执行链路
+// ═══════════════════════════════════════════════════════════
+
 use axum::{
     extract::{Extension, Path, Query, State},
     http::HeaderMap,
@@ -516,7 +522,7 @@ pub async fn delete_supplier(
         tracing::debug!("🗑️ 供应商内存缓存已失效: {}", cache_key);
     }
 
-    let status_str_clone = status_str.clone();
+    let status_str_clone = status_str;
     let redis_cache = state.cache.clone();
     tokio::spawn(async move {
         clear_supplier_redis_caches(&redis_cache).await;

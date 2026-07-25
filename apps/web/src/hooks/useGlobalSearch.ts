@@ -6,7 +6,7 @@ import {
   MAX_HISTORY_ITEMS,
   fuzzySearch,
   filterResults,
-  getAvailableModules,
+  getAvailableServices,
   getAvailableTypes,
 } from '../components/GlobalSearchBar/utils';
 import { type SearchFilter, type SearchFilterOption } from '../components/GlobalSearchBar/types';
@@ -37,7 +37,7 @@ interface UseGlobalSearchReturn {
   clearHistory: () => void;
   filter: SearchFilter;
   setFilter: React.Dispatch<React.SetStateAction<SearchFilter>>;
-  availableModules: SearchFilterOption[];
+  availableServices: SearchFilterOption[];
   availableTypes: SearchFilterOption[];
 }
 
@@ -97,7 +97,7 @@ export function useGlobalSearch(
   const [loading, setLoading] = useState(false);
   const [selectedIndex, setSelectedIndex] = useState(-1);
   const [searchHistory, setSearchHistory] = useState<string[]>([]);
-  const [filter, setFilter] = useState<SearchFilter>({ module: undefined, type: undefined });
+  const [filter, setFilter] = useState<SearchFilter>({ service: undefined, type: undefined });
 
   const inputRef = useRef<HTMLInputElement>(null);
   const searchRef = useRef<HTMLDivElement>(null);
@@ -163,7 +163,7 @@ export function useGlobalSearch(
       try {
         const response = await searchApi.globalSearch(q, maxResults, controller.signal);
         if (response.success && response.data) {
-          setRawResults(response.data);
+          setRawResults(response.data.results);
         } else {
           setRawResults([]);
         }
@@ -219,21 +219,21 @@ export function useGlobalSearch(
     return filtered;
   }, [rawResults, filter, query]);
 
-  const availableModules = useMemo<SearchFilterOption[]>(() => {
-    return getAvailableModules(rawResults);
+  const availableServices = useMemo<SearchFilterOption[]>(() => {
+    return getAvailableServices(rawResults);
   }, [rawResults]);
 
   const availableTypes = useMemo<SearchFilterOption[]>(() => {
-    const filteredByModule = filter.module
-      ? rawResults.filter((r) => r.module === filter.module)
+    const filteredByService = filter.service
+      ? rawResults.filter((r) => r.service === filter.service)
       : rawResults;
-    return getAvailableTypes(filteredByModule);
-  }, [rawResults, filter.module]);
+    return getAvailableTypes(filteredByService);
+  }, [rawResults, filter.service]);
 
   const handleResultClick = useCallback(
     (result: SearchResult) => {
       addToHistory(query);
-      navigate(result.path);
+      navigate(result.url);
       setOpen(false);
       setQuery('');
     },
@@ -300,7 +300,7 @@ export function useGlobalSearch(
     clearHistory,
     filter,
     setFilter,
-    availableModules,
+    availableServices,
     availableTypes,
   };
 }

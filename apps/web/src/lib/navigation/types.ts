@@ -110,3 +110,18 @@ export const NAV_GROUPS: Record<NavGroup, { label: string; icon: string; order: 
   design: { label: '设计', icon: 'Palette', order: 5 },
   runtime: { label: '运行', icon: 'Play', order: 10 },
 };
+
+export const SUITE_GROUPS: Record<ModuleSuite | 'other' | 'platform', { label: string; icon: string; order: number }> = {
+  platform: { label: '平台中心', icon: 'LayoutDashboard', order: 0 },
+  finance: { label: '财务领域', icon: 'Wallet', order: 10 },
+  hr: { label: '人力领域', icon: 'Users', order: 20 },
+  manufacturing: { label: '制造领域', icon: 'Factory', order: 30 },
+  supply: { label: '供应链领域', icon: 'Truck', order: 40 },
+  crm: { label: '客户领域', icon: 'Users', order: 50 },
+  quality: { label: '质量领域', icon: 'ShieldCheck', order: 60 },
+  project: { label: '项目领域', icon: 'Briefcase', order: 70 },
+  gis: { label: '地理信息', icon: 'Map', order: 80 },
+  enterprise: { label: '企业管理', icon: 'Building2', order: 90 },
+  erp: { label: '资源计划', icon: 'Grid3X3', order: 100 },
+  other: { label: '其他应用', icon: 'MoreHorizontal', order: 999 },
+};

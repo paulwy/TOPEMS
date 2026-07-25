@@ -1,112 +1,91 @@
-import React, { useState, useMemo, useCallback } from 'react';
+import React, { useState, useMemo } from 'react';
 import {
   Box,
+  Card,
+  CardContent,
+  Typography,
+  Chip,
   Dialog,
   DialogTitle,
   DialogContent,
   DialogActions,
-  TextField,
+  Button,
   FormControl,
   InputLabel,
   Select,
   MenuItem,
-  Grid,
-  Button,
-  Chip,
-  Tabs,
-  Tab,
 } from '@mui/material';
-import { Plus, Edit, Delete, Package, GitCompare, CheckCircle, Archive } from 'lucide-react';
-import { bomApi, type BomVersion, type BomItem, type CreateBomVersionRequest } from '@/api/pdm/bom';
-import { useNotificationStore } from '@/store';
-import {
-  ListPageTemplate,
-  type ColumnDef,
-  type RowAction,
-  type FilterConfig,
-} from '@/components/templates';
+import { Package, GitCompare, CheckCircle, Archive } from 'lucide-react';
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+
+import CrudPage from '@/components/templates/CrudPage';
+import type { CrudApiAdapter, CrudTab } from '@/components/templates/CrudPage';
+import { createCrudPageAdapter } from '@/schema/crudPageAdapter';
+import { bomSchema, bomItemSchema } from '@/schemas/pdm';
+import { bomApi } from '@/api/pdm/bom';
+import type {
+  BomVersion,
+  BomItem,
+  CreateBomVersionRequest,
+  CreateBomItemRequest,
+} from '@/api/pdm/bom';
 import { PageContainer } from '@/components/common';
 import { designTokens } from '@/theme/tokens';
-import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { useNotificationStore } from '@/store';
 import { QUERY_KEYS } from '@/lib/reactQuery';
-import { useCrudMutations } from '@/hooks';
 
 const ct = designTokens.colors;
 
-const STATUS_COLORS: Record<
-  string,
-  'default' | 'primary' | 'secondary' | 'success' | 'warning' | 'error'
-> = {
-  draft: 'default',
-  active: 'success',
-  archived: 'default',
-  superseded: 'warning',
+const baseAdapter = createCrudPageAdapter<BomVersion, CreateBomVersionRequest>({
+  list: bomApi.listVersions,
+  create: bomApi.createVersion,
+  update: bomApi.updateVersion,
+  delete: bomApi.deleteVersion,
+});
+
+const statusColorMap: Record<string, { bg: string; color: string }> = {
+  draft: { bg: 'grey.100', color: 'text.secondary' },
+  active: { bg: 'success.lighter', color: 'success.dark' },
+  archived: { bg: 'grey.100', color: 'text.secondary' },
+  superseded: { bg: 'warning.lighter', color: 'warning.dark' },
 };
 
-const PHASE_STATUS_COLORS: Record<
-  string,
-  'default' | 'primary' | 'secondary' | 'success' | 'warning' | 'error'
-> = {
-  planning: 'warning',
-  active: 'success',
-  on_hold: 'warning',
-  completed: 'primary',
-  cancelled: 'error',
+const statusLabelMap: Record<string, string> = {
+  draft: '草稿',
+  active: '激活',
+  archived: '归档',
+  superseded: '替代',
 };
 
-interface BomFormData {
-  bom_no: string;
-  name: string;
-  product_id: string;
-  version: string;
-  status: string;
-  effective_date: string;
-  description: string;
+function extractListData(response: unknown): BomVersion[] {
+  if (!response || typeof response !== 'object') return [];
+  const obj = response as Record<string, unknown>;
+  const data = obj.data;
+  if (!data) return [];
+  if (Array.isArray(data)) return data as BomVersion[];
+  if (typeof data === 'object') {
+    const d = data as Record<string, unknown>;
+    if (Array.isArray(d.items)) return d.items as BomVersion[];
+    if (Array.isArray(d.data)) return d.data as BomVersion[];
+  }
+  return [];
 }
 
 export const BomPage: React.FC = () => {
   const queryClient = useQueryClient();
-  const [activeTab, setActiveTab] = useState(0);
-  const [searchTerm, setSearchTerm] = useState('');
-  const [openDialog, setOpenDialog] = useState(false);
-  const [compareDialogOpen, setCompareDialogOpen] = useState(false);
-  const [editingVersion, setEditingVersion] = useState<BomVersion | null>(null);
-  const [selectedVersionId, setSelectedVersionId] = useState<string | null>(null);
-  const [compareVersionA, setCompareVersionA] = useState<string>('');
-  const [compareVersionB, setCompareVersionB] = useState<string>('');
-  const [formData, setFormData] = useState<BomFormData>({
-    bom_no: '',
-    name: '',
-    product_id: '',
-    version: '1.0',
-    status: 'draft',
-    effective_date: '',
-    description: '',
-  });
   const addNotification = useNotificationStore((state) => state.addNotification);
+  const [selectedVersionId, setSelectedVersionId] = useState<string | null>(null);
+  const [compareDialogOpen, setCompareDialogOpen] = useState(false);
+  const [compareVersionA, setCompareVersionA] = useState('');
+  const [compareVersionB, setCompareVersionB] = useState('');
 
-  const loadVersions = useCallback(() => {
-    queryClient.invalidateQueries({ queryKey: QUERY_KEYS.PDM.BOM_VERSIONS });
-  }, [queryClient]);
-
-  const loadBomItems = useCallback(
-    (versionId: string) => {
-      queryClient.invalidateQueries({ queryKey: QUERY_KEYS.PDM.BOM_ITEMS });
-    },
-    [queryClient]
-  );
-
-  const { data: versions = [], isLoading: loading } = useQuery({
+  const { data: versionsResp } = useQuery({
     queryKey: QUERY_KEYS.PDM.BOM_VERSIONS,
-    queryFn: async () => {
-      const response = await bomApi.listVersions();
-      if (response.success && response.data) {
-        return response.data as BomVersion[];
-      }
-      return [];
-    },
+    queryFn: async () => bomApi.listVersions(),
     staleTime: 5 * 60 * 1000,
   });
+
+  const versions = extractListData(versionsResp);
 
   const { data: bomItems = [] } = useQuery({
     queryKey: QUERY_KEYS.PDM.BOM_ITEMS,
@@ -122,25 +101,13 @@ export const BomPage: React.FC = () => {
     enabled: !!selectedVersionId,
   });
 
-  const { createMutation: createVersionMutation, updateMutation: updateVersionMutation, deleteMutation: deleteVersionMutation } = useCrudMutations<
-    CreateBomVersionRequest,
-    CreateBomVersionRequest,
-    string
-  >({
-    queryKeyToInvalidate: QUERY_KEYS.PDM.BOM_VERSIONS,
-    createFn: (data) => bomApi.createVersion(data),
-    updateFn: ({ id, data }) => bomApi.updateVersion(String(id), data),
-    deleteFn: (id) => bomApi.deleteVersion(String(id)),
-    entityName: 'BOM版本',
-    onCreateSuccess: () => {
-      setOpenDialog(false);
-      setEditingVersion(null);
-    },
-    onUpdateSuccess: () => {
-      setOpenDialog(false);
-      setEditingVersion(null);
-    },
-  });
+  const stats = useMemo(() => {
+    return {
+      total: versions.length,
+      active: versions.filter((v) => v.status === 'active').length,
+      draft: versions.filter((v) => v.status === 'draft').length,
+    };
+  }, [versions]);
 
   const activateVersionMutation = useMutation({
     mutationFn: (id: string) => bomApi.activateVersion(id),
@@ -182,71 +149,292 @@ export const BomPage: React.FC = () => {
     },
   });
 
-  const handleTabChange = (_event: React.SyntheticEvent, newValue: number) => {
-    setActiveTab(newValue);
+  const customRowActions = [
+    {
+      label: '查看物料',
+      icon: <Package size={16} />,
+      color: 'primary' as const,
+      onClick: (row: Record<string, unknown>) => {
+        const version = row as unknown as BomVersion;
+        setSelectedVersionId(version.id);
+      },
+    },
+    {
+      label: '激活',
+      icon: <CheckCircle size={16} />,
+      color: 'success' as const,
+      onClick: (row: Record<string, unknown>) => {
+        const version = row as unknown as BomVersion;
+        activateVersionMutation.mutate(version.id);
+      },
+      show: (row: Record<string, unknown>) => {
+        const version = row as unknown as BomVersion;
+        return version.status === 'draft';
+      },
+    },
+    {
+      label: '归档',
+      icon: <Archive size={16} />,
+      color: 'warning' as const,
+      onClick: (row: Record<string, unknown>) => {
+        const version = row as unknown as BomVersion;
+        archiveVersionMutation.mutate(version.id);
+      },
+      show: (row: Record<string, unknown>) => {
+        const version = row as unknown as BomVersion;
+        return version.status === 'active';
+      },
+      divider: true,
+    },
+  ];
+
+  const bomItemAdapter: CrudApiAdapter<Record<string, unknown>> = {
+    list: async (params) => {
+      if (!selectedVersionId) return { data: [], total: 0 };
+      const response = await bomApi.listItems(selectedVersionId);
+      if (response.success && response.data) {
+        return {
+          data: response.data as unknown as Record<string, unknown>[],
+          total: (response.data as BomItem[]).length,
+        };
+      }
+      return { data: [], total: 0 };
+    },
+    create: async (data) => {
+      const itemData = {
+        ...data,
+        bom_version_id: selectedVersionId,
+      } as unknown as CreateBomItemRequest;
+      const response = await bomApi.createItem(itemData);
+      return (
+        (response.data as unknown as Record<string, unknown>) || ({} as Record<string, unknown>)
+      );
+    },
+    update: async (id, data) => {
+      const response = await bomApi.updateItem(id, data as unknown as CreateBomItemRequest);
+      return (
+        (response.data as unknown as Record<string, unknown>) || ({} as Record<string, unknown>)
+      );
+    },
+    delete: async (id) => {
+      await bomApi.deleteItem(id);
+    },
   };
 
-  const handleEditVersion = (version: BomVersion) => {
-    setEditingVersion(version);
-    setFormData({
-      bom_no: version.bom_no || '',
-      name: version.name || '',
-      product_id: version.product_id || '',
-      version: version.version || '1.0',
-      status: version.status || 'draft',
-      effective_date: version.effective_date || '',
-      description: version.description || '',
-    });
-    setOpenDialog(true);
-  };
+  const headerContent = () => (
+    <Box
+      sx={{
+        display: 'grid',
+        gridTemplateColumns: { xs: 'repeat(1, 1fr)', sm: 'repeat(2, 1fr)', md: 'repeat(3, 1fr)' },
+        gap: 2,
+        mb: 3,
+      }}
+    >
+      <Card>
+        <CardContent sx={{ p: 2 }}>
+          <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5 }}>
+            <Box
+              sx={{
+                width: 40,
+                height: 40,
+                bgcolor: 'secondary.lighter',
+                borderRadius: 3,
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+              }}
+            >
+              <Package sx={{ width: 20, height: 20, color: 'secondary.dark' }} />
+            </Box>
+            <Box>
+              <Typography
+                variant='body2'
+                sx={{ color: 'text.secondary', fontSize: '0.875rem' }}
+              >
+                BOM总数
+              </Typography>
+              <Typography
+                variant='h5'
+                sx={{ fontWeight: 700 }}
+              >
+                {stats.total}
+              </Typography>
+            </Box>
+          </Box>
+        </CardContent>
+      </Card>
+      <Card>
+        <CardContent sx={{ p: 2 }}>
+          <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5 }}>
+            <Box
+              sx={{
+                width: 40,
+                height: 40,
+                bgcolor: 'success.lighter',
+                borderRadius: 3,
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+              }}
+            >
+              <CheckCircle sx={{ width: 20, height: 20, color: 'success.dark' }} />
+            </Box>
+            <Box>
+              <Typography
+                variant='body2'
+                sx={{ color: 'text.secondary', fontSize: '0.875rem' }}
+              >
+                激活版本
+              </Typography>
+              <Typography
+                variant='h5'
+                sx={{ fontWeight: 700, color: 'success.main' }}
+              >
+                {stats.active}
+              </Typography>
+            </Box>
+          </Box>
+        </CardContent>
+      </Card>
+      <Card>
+        <CardContent sx={{ p: 2 }}>
+          <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5 }}>
+            <Box
+              sx={{
+                width: 40,
+                height: 40,
+                bgcolor: 'warning.lighter',
+                borderRadius: 3,
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+              }}
+            >
+              <Archive sx={{ width: 20, height: 20, color: 'warning.dark' }} />
+            </Box>
+            <Box>
+              <Typography
+                variant='body2'
+                sx={{ color: 'text.secondary', fontSize: '0.875rem' }}
+              >
+                草稿版本
+              </Typography>
+              <Typography
+                variant='h5'
+                sx={{ fontWeight: 700, color: 'warning.main' }}
+              >
+                {stats.draft}
+              </Typography>
+            </Box>
+          </Box>
+        </CardContent>
+      </Card>
+    </Box>
+  );
 
-  const handleDeleteVersion = (id: string) => {
-    deleteVersionMutation.mutate(id);
-  };
-
-  const handleActivateVersion = (id: string) => {
-    activateVersionMutation.mutate(id);
-  };
-
-  const handleArchiveVersion = (id: string) => {
-    archiveVersionMutation.mutate(id);
-  };
-
-  const handleViewItems = (version: BomVersion) => {
-    setSelectedVersionId(version.id);
-    setActiveTab(1);
-  };
-
-  const handleCreate = () => {
-    setEditingVersion(null);
-    setFormData({
-      bom_no: '',
-      name: '',
-      product_id: '',
-      version: '1.0',
-      status: 'draft',
-      effective_date: '',
-      description: '',
-    });
-    setOpenDialog(true);
-  };
-
-  const handleSaveVersion = () => {
-    const requestData: CreateBomVersionRequest = {
-      bom_no: formData.bom_no,
-      name: formData.name,
-      product_id: formData.product_id,
-      version: formData.version,
-      status: formData.status,
-      effective_date: formData.effective_date || undefined,
-      description: formData.description,
+  const detailContent = (row: Record<string, unknown>) => {
+    const bom = row as unknown as BomVersion;
+    const statusColors = statusColorMap[bom.status] || {
+      bg: 'grey.100',
+      color: 'text.secondary',
     };
+    const statusLabel = statusLabelMap[bom.status] || bom.status;
 
-    if (editingVersion) {
-      updateVersionMutation.mutate({ id: editingVersion.id, data: requestData });
-    } else {
-      createVersionMutation.mutate(requestData);
-    }
+    return (
+      <Box
+        sx={{
+          pt: 2,
+          display: 'grid',
+          gridTemplateColumns: '1fr 1fr',
+          gap: 2,
+        }}
+      >
+        <Box>
+          <Box
+            component='span'
+            sx={{ color: 'text.secondary', fontSize: '0.875rem' }}
+          >
+            BOM编号
+          </Box>
+          <Box sx={{ fontWeight: 500 }}>{bom.bom_no}</Box>
+        </Box>
+        <Box>
+          <Box
+            component='span'
+            sx={{ color: 'text.secondary', fontSize: '0.875rem' }}
+          >
+            版本
+          </Box>
+          <Box>v{bom.version || '1.0'}</Box>
+        </Box>
+        <Box sx={{ gridColumn: '1 / -1' }}>
+          <Box
+            component='span'
+            sx={{ color: 'text.secondary', fontSize: '0.875rem' }}
+          >
+            BOM名称
+          </Box>
+          <Box>{bom.name}</Box>
+        </Box>
+        <Box>
+          <Box
+            component='span'
+            sx={{ color: 'text.secondary', fontSize: '0.875rem' }}
+          >
+            产品
+          </Box>
+          <Box>{bom.product_name || '-'}</Box>
+        </Box>
+        <Box>
+          <Box
+            component='span'
+            sx={{ color: 'text.secondary', fontSize: '0.875rem' }}
+          >
+            状态
+          </Box>
+          <Box sx={{ mt: 0.5 }}>
+            <Chip
+              label={statusLabel}
+              size='small'
+              sx={{
+                backgroundColor: statusColors.bg,
+                color: statusColors.color,
+                fontWeight: 500,
+              }}
+            />
+          </Box>
+        </Box>
+        <Box>
+          <Box
+            component='span'
+            sx={{ color: 'text.secondary', fontSize: '0.875rem' }}
+          >
+            生效日期
+          </Box>
+          <Box>{bom.effective_date || '-'}</Box>
+        </Box>
+        <Box>
+          <Box
+            component='span'
+            sx={{ color: 'text.secondary', fontSize: '0.875rem' }}
+          >
+            创建时间
+          </Box>
+          <Box>{bom.created_at ? new Date(bom.created_at).toLocaleDateString('zh-CN') : '-'}</Box>
+        </Box>
+        {bom.description && (
+          <Box sx={{ gridColumn: '1 / -1' }}>
+            <Box
+              component='span'
+              sx={{ color: 'text.secondary', fontSize: '0.875rem' }}
+            >
+              描述
+            </Box>
+            <Box>{bom.description}</Box>
+          </Box>
+        )}
+      </Box>
+    );
   };
 
   const handleCompare = () => {
@@ -257,200 +445,76 @@ export const BomPage: React.FC = () => {
     compareVersionsMutation.mutate({ versionA: compareVersionA, versionB: compareVersionB });
   };
 
-  const filteredVersions = useMemo(() => {
-    return versions.filter((version) => {
-      const matchesSearch =
-        !searchTerm ||
-        version.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        version.bom_no.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        (version.product_name &&
-          version.product_name.toLowerCase().includes(searchTerm.toLowerCase()));
-      return matchesSearch;
-    });
-  }, [versions, searchTerm]);
-
-  const statusOptions = [
-    { label: '草稿', value: 'draft' },
-    { label: '激活', value: 'active' },
-    { label: '归档', value: 'archived' },
-    { label: '替代', value: 'superseded' },
-  ];
-
-  const statusFilterOptions = statusOptions.map((opt) => ({ label: opt.label, value: opt.value }));
-
-  const filters: FilterConfig[] = useMemo(
-    () => [
-      {
-        id: 'status',
-        label: '状态',
-        type: 'select',
-        options: statusFilterOptions,
-      },
-    ],
-    [statusFilterOptions]
-  );
-
-  const handleFilterChange = useCallback((values: Record<string, any>) => {
-    // Filter implementation
-  }, []);
-
-  const handleSearch = useCallback((value: string) => {
-    setSearchTerm(value);
-  }, []);
-
-  const columns: ColumnDef<BomVersion>[] = useMemo(
-    () => [
-      { id: 'bom_no', label: 'BOM编号', minWidth: 120 },
-      { id: 'name', label: 'BOM名称', minWidth: 160 },
-      { id: 'product_name', label: '产品', minWidth: 120 },
-      {
-        id: 'version',
-        label: '版本',
-        minWidth: 80,
-        render: (row) => `v${row.version || '1.0'}`,
-      },
-      {
-        id: 'status',
-        label: '状态',
-        minWidth: 100,
-        render: (row) => (
-          <Chip
-            label={statusOptions.find((s) => s.value === row.status)?.label || row.status}
-            color={STATUS_COLORS[row.status] || 'default'}
-            size='small'
+  const bomItemsTabContent = (
+    <Box sx={{ mt: 2 }}>
+      {selectedVersionId ? (
+        <CrudPage
+          schema={bomItemSchema}
+          apiAdapter={bomItemAdapter}
+          headerContent={
+            <Typography
+              variant='subtitle1'
+              sx={{ fontWeight: 600 }}
+            >
+              物料清单 - {versions.find((v) => v.id === selectedVersionId)?.name || ''}
+            </Typography>
+          }
+          customColumns={[
+            {
+              id: 'level',
+              label: '层级',
+              render: (row: Record<string, unknown>) =>
+                `第 ${(row as unknown as BomItem).level} 层`,
+            },
+          ]}
+        />
+      ) : (
+        <Box sx={{ textAlign: 'center', py: 6, color: 'text.secondary' }}>
+          <Package
+            size={48}
+            style={{ marginBottom: 16, opacity: 0.5 }}
           />
-        ),
-      },
-      { id: 'effective_date', label: '生效日期', minWidth: 120 },
-      {
-        id: 'created_at',
-        label: '创建时间',
-        minWidth: 160,
-        render: (row) => {
-          if (!row.created_at) return '-';
-          const date = new Date(row.created_at);
-          return date.toLocaleDateString('zh-CN');
-        },
-      },
-    ],
-    []
+          <Typography>请先选择一个BOM版本查看物料</Typography>
+        </Box>
+      )}
+    </Box>
   );
 
-  const rowActions: RowAction<BomVersion>[] = useMemo(
-    () => [
-      {
-        label: '查看物料',
-        icon: <Package size={16} />,
-        color: 'primary',
-        onClick: (row) => handleViewItems(row),
-      },
-      {
-        label: '编辑',
-        icon: <Edit size={16} />,
-        color: 'primary',
-        onClick: (row) => handleEditVersion(row),
-      },
-      {
-        label: '激活',
-        icon: <CheckCircle size={16} />,
-        color: 'success',
-        onClick: (row) => handleActivateVersion(row.id),
-        show: (row) => row.status === 'draft',
-      },
-      {
-        label: '归档',
-        icon: <Archive size={16} />,
-        color: 'warning',
-        onClick: (row) => handleArchiveVersion(row.id),
-        show: (row) => row.status === 'active',
-      },
-      {
-        label: '删除',
-        icon: <Delete size={16} />,
-        color: 'error',
-        onClick: (row) => handleDeleteVersion(row.id),
-        confirm: true,
-        confirmMessage: '确定要删除这个BOM版本吗？',
-      },
-    ],
-    []
+  const compareTabContent = (
+    <Box sx={{ p: 3, textAlign: 'center', color: 'text.secondary' }}>
+      <GitCompare
+        size={48}
+        style={{ marginBottom: 16, opacity: 0.5 }}
+      />
+      <Box>选择两个BOM版本进行对比，查看差异</Box>
+      <Button
+        variant='contained'
+        startIcon={<GitCompare size={16} />}
+        onClick={() => setCompareDialogOpen(true)}
+        sx={{ mt: 2 }}
+      >
+        开始对比
+      </Button>
+    </Box>
   );
 
-  const itemColumns: ColumnDef<BomItem>[] = useMemo(
-    () => [
-      { id: 'item_no', label: '项号', minWidth: 80 },
-      { id: 'part_number', label: '零件号', minWidth: 120 },
-      { id: 'part_name', label: '零件名称', minWidth: 160 },
-      { id: 'quantity', label: '数量', minWidth: 80 },
-      { id: 'unit', label: '单位', minWidth: 80 },
-      { id: 'unit_price', label: '单价', minWidth: 100 },
-      { id: 'total_price', label: '总价', minWidth: 100 },
-      {
-        id: 'level',
-        label: '层级',
-        minWidth: 80,
-        render: (row) => `第 ${row.level} 层`,
-      },
-    ],
-    []
-  );
-
-  const statsCards = (
-    <Grid
-      container
-      spacing={3}
-      sx={{ mb: 2 }}
-    >
-      <Grid size={{ xs: 12, sm: 4 }}>
-        <Box
-          sx={{
-            p: 2,
-            borderRadius: 3,
-            bgcolor: 'background.paper',
-            border: 1,
-            borderColor: 'divider',
-          }}
-        >
-          <Box sx={{ color: 'text.secondary', fontSize: '0.875rem', mb: 1 }}>BOM总数</Box>
-          <Box sx={{ fontWeight: 'bold', fontSize: '1.5rem' }}>
-            {loading ? '...' : `${filteredVersions.length} 个`}
-          </Box>
-        </Box>
-      </Grid>
-      <Grid size={{ xs: 12, sm: 4 }}>
-        <Box
-          sx={{
-            p: 2,
-            borderRadius: 3,
-            bgcolor: 'background.paper',
-            border: 1,
-            borderColor: 'divider',
-          }}
-        >
-          <Box sx={{ color: 'text.secondary', fontSize: '0.875rem', mb: 1 }}>激活版本</Box>
-          <Box sx={{ fontWeight: 'bold', fontSize: '1.5rem', color: 'success.main' }}>
-            {loading ? '...' : `${versions.filter((v) => v.status === 'active').length} 个`}
-          </Box>
-        </Box>
-      </Grid>
-      <Grid size={{ xs: 12, sm: 4 }}>
-        <Box
-          sx={{
-            p: 2,
-            borderRadius: 3,
-            bgcolor: 'background.paper',
-            border: 1,
-            borderColor: 'divider',
-          }}
-        >
-          <Box sx={{ color: 'text.secondary', fontSize: '0.875rem', mb: 1 }}>草稿版本</Box>
-          <Box sx={{ fontWeight: 'bold', fontSize: '1.5rem', color: 'warning.main' }}>
-            {loading ? '...' : `${versions.filter((v) => v.status === 'draft').length} 个`}
-          </Box>
-        </Box>
-      </Grid>
-    </Grid>
-  );
+  const tabs: CrudTab[] = [
+    {
+      id: 'versions',
+      label: 'BOM版本',
+      content: null,
+    },
+    {
+      id: 'items',
+      label: 'BOM物料',
+      content: bomItemsTabContent,
+    },
+    {
+      id: 'compare',
+      label: 'BOM对比',
+      content: compareTabContent,
+    },
+  ];
 
   return (
     <PageContainer
@@ -458,180 +522,19 @@ export const BomPage: React.FC = () => {
         pageIcon: <Package style={{ width: 20, height: 20 }} />,
         pageGradient: `linear-gradient(135deg, ${ct.secondary.main} 0%, ${ct.secondary.dark} 100%)`,
       }}
+      maxWidth='xl'
     >
-      <Tabs
-        value={activeTab}
-        onChange={handleTabChange}
-        sx={{ mb: 2 }}
-      >
-        <Tab label='BOM版本' />
-        <Tab label='BOM物料' />
-        <Tab label='BOM对比' />
-      </Tabs>
-
-      {activeTab === 0 && (
-        <ListPageTemplate
-          title=''
-          subtitle=''
-          columns={columns}
-          data={filteredVersions}
-          loading={loading}
-          searchable
-          searchPlaceholder='搜索BOM名称、编号或产品...'
-          onSearch={handleSearch}
-          filters={filters}
-          filtersValue={{}}
-          onFilterChange={handleFilterChange}
-          rowActions={rowActions}
-          actions={[
-            {
-              label: 'BOM对比',
-              icon: <GitCompare size={16} />,
-              onClick: () => setCompareDialogOpen(true),
-              variant: 'outlined',
-            },
-            {
-              label: '添加BOM',
-              icon: <Plus size={16} />,
-              onClick: handleCreate,
-              variant: 'contained',
-            },
-          ]}
-          onRefresh={loadVersions}
-          headerContent={statsCards}
-          emptyMessage='暂无BOM数据'
-        />
-      )}
-
-      {activeTab === 1 && (
-        <ListPageTemplate
-          title={
-            selectedVersionId
-              ? `物料清单 - ${versions.find((v) => v.id === selectedVersionId)?.name || ''}`
-              : '请选择BOM版本'
-          }
-          subtitle=''
-          columns={itemColumns}
-          data={bomItems}
-          loading={loading}
-          searchable
-          searchPlaceholder='搜索零件号或名称...'
-          onSearch={(v) => setSearchTerm(v)}
-          rowActions={[]}
-          actions={[]}
-          onRefresh={() => selectedVersionId && loadBomItems(selectedVersionId)}
-          emptyMessage={selectedVersionId ? '暂无物料数据' : '请先选择一个BOM版本查看物料'}
-        />
-      )}
-
-      {activeTab === 2 && (
-        <Box sx={{ p: 3, textAlign: 'center', color: 'text.secondary' }}>
-          <GitCompare
-            size={48}
-            style={{ marginBottom: 16, opacity: 0.5 }}
-          />
-          <Box>选择两个BOM版本进行对比，查看差异</Box>
-          <Button
-            variant='contained'
-            startIcon={<GitCompare size={16} />}
-            onClick={() => setCompareDialogOpen(true)}
-            sx={{ mt: 2 }}
-          >
-            开始对比
-          </Button>
-        </Box>
-      )}
-
-      <Dialog
-        open={openDialog}
-        onClose={() => setOpenDialog(false)}
-        maxWidth='sm'
-        fullWidth
-      >
-        <DialogTitle>{editingVersion ? '编辑BOM' : '添加BOM'}</DialogTitle>
-        <DialogContent>
-          <Box sx={{ display: 'flex', flexDirection: 'column', gap: 3, mt: 2 }}>
-            <TextField
-              label='BOM编号 *'
-              value={formData.bom_no}
-              onChange={(e) => setFormData({ ...formData, bom_no: e.target.value })}
-              fullWidth
-              required
-            />
-            <TextField
-              label='BOM名称 *'
-              value={formData.name}
-              onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-              fullWidth
-              required
-            />
-            <TextField
-              label='产品ID'
-              value={formData.product_id}
-              onChange={(e) => setFormData({ ...formData, product_id: e.target.value })}
-              fullWidth
-            />
-            <Grid
-              container
-              spacing={3}
-            >
-              <Grid size={{ xs: 6 }}>
-                <TextField
-                  label='版本'
-                  value={formData.version}
-                  onChange={(e) => setFormData({ ...formData, version: e.target.value })}
-                  fullWidth
-                />
-              </Grid>
-              <Grid size={{ xs: 6 }}>
-                <FormControl fullWidth>
-                  <InputLabel>状态</InputLabel>
-                  <Select
-                    value={formData.status}
-                    label='状态'
-                    onChange={(e) => setFormData({ ...formData, status: e.target.value })}
-                  >
-                    {statusOptions.map((option) => (
-                      <MenuItem
-                        key={option.value}
-                        value={option.value}
-                      >
-                        {option.label}
-                      </MenuItem>
-                    ))}
-                  </Select>
-                </FormControl>
-              </Grid>
-            </Grid>
-            <TextField
-              label='生效日期'
-              type='date'
-              value={formData.effective_date}
-              onChange={(e) => setFormData({ ...formData, effective_date: e.target.value })}
-              fullWidth
-              slotProps={{ inputLabel: { shrink: true } } as const}
-            />
-            <TextField
-              label='描述'
-              value={formData.description}
-              onChange={(e) => setFormData({ ...formData, description: e.target.value })}
-              fullWidth
-              multiline
-              rows={3}
-            />
-          </Box>
-        </DialogContent>
-        <DialogActions>
-          <Button onClick={() => setOpenDialog(false)}>取消</Button>
-          <Button
-            variant='contained'
-            onClick={handleSaveVersion}
-            disabled={!formData.bom_no || !formData.name}
-          >
-            保存
-          </Button>
-        </DialogActions>
-      </Dialog>
+      <CrudPage
+        schema={bomSchema}
+        apiAdapter={baseAdapter}
+        breadcrumbs={[{ label: 'PDM' }, { label: 'BOM管理' }]}
+        headerContent={headerContent}
+        detailContent={detailContent}
+        detailMaxWidth='lg'
+        customRowActions={customRowActions}
+        tabs={tabs}
+        defaultTab='versions'
+      />
 
       <Dialog
         open={compareDialogOpen}

@@ -1,4 +1,17 @@
-//! Communication module - Unified Messaging (Notification + IM + Mail)
+#![allow(dead_code)]
+//! # 通信模块（已废弃）
+//!
+//! **DEPRECATED**: 此模块已废弃，请使用独立的 `topems-communication` 服务
+//!
+//! - 独立服务路径: `svc/communication/`
+//! - API 前缀: `/api/communication`
+//! - 端口: 8084 (COMMUNICATION_PORT)
+//! - Legacy 别名: `/api/core/comm/*`, `/api/core/notification/*`
+//!
+//! 迁移说明：
+//! - 原 `/api/core/comm/*` 和 `/api/core/notification/*` 路径将逐步下线
+//! - 新代码请使用独立 communication 服务
+//! - 通知、邮件、IM 功能已迁移到 `svc/communication/`
 
 pub mod im;
 pub mod mail;

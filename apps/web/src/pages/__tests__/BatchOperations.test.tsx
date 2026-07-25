@@ -29,13 +29,16 @@ vi.mock('@/api/erp', () => ({
 vi.mock('@/api/mes', () => ({
   mesApi: {
     orders: {
-      list: vi
+      list: vi.fn().mockResolvedValue({ success: true, data: { orders: [], total: 0 } }),
+      create: vi.fn().mockResolvedValue({ success: true, data: { id: '1' } }),
+      update: vi.fn().mockResolvedValue({ success: true, data: { id: '1' } }),
+      delete: vi.fn().mockResolvedValue({ success: true }),
+      release: vi.fn().mockResolvedValue({ success: true, data: { id: '1', status: 'released' } }),
+      start: vi.fn().mockResolvedValue({ success: true, data: { id: '1', status: 'in_progress' } }),
+      complete: vi
         .fn()
-        .mockResolvedValue({ success: true, data: { data: [], pagination: { total: 0 } } }),
-      release: vi.fn().mockResolvedValue({ success: true }),
-      start: vi.fn().mockResolvedValue({ success: true }),
-      complete: vi.fn().mockResolvedValue({ success: true }),
-      cancel: vi.fn().mockResolvedValue({ success: true }),
+        .mockResolvedValue({ success: true, data: { id: '1', status: 'completed' } }),
+      cancel: vi.fn().mockResolvedValue({ success: true, data: { id: '1', status: 'cancelled' } }),
     },
   },
 }));
@@ -45,6 +48,9 @@ vi.mock('@/api/mes/quality', () => ({
     listInspections: vi
       .fn()
       .mockResolvedValue({ success: true, data: { inspections: [], total: 0 } }),
+    createInspection: vi.fn().mockResolvedValue({ success: true, data: { id: '1' } }),
+    updateInspection: vi.fn().mockResolvedValue({ success: true, data: { id: '1' } }),
+    deleteInspection: vi.fn().mockResolvedValue({ success: true }),
   },
 }));
 

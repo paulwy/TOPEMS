@@ -25,7 +25,7 @@ import {
 } from '@mui/material';
 import { LoadingSpinner } from '@topems/shared-components';
 import { useNotificationStore } from '@/store';
-import ExportButton from '@/components/export/ExportButton';
+import { ExportButton } from '@/components/export';
 import { DashboardTemplate, type StatCard } from '@/components/templates';
 import { PageContainer } from '@/components/common';
 import {

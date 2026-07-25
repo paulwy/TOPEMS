@@ -1,3 +1,5 @@
+#![allow(dead_code)] // Reserved: IAM 用户权限模块预留扩展，待权限服务接入后启用
+
 //! User Permission submodule - User permission management handlers
 
 use crate::AppState;

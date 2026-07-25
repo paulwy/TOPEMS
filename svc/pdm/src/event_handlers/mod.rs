@@ -1,4 +1,3 @@
-use chrono::Utc;
 use sqlx::PgPool;
 use topems_shared::event::{
     Event, EventResult, EventSubscriber, EventType, MasterDataAction, MasterDataDomain,
@@ -181,47 +180,73 @@ impl PdmEventHandlers {
             .get("name")
             .and_then(|v| v.as_str())
             .unwrap_or("");
-        let subject_code = event.payload.get("code").and_then(|v| v.as_str());
-        let category = event.payload.get("category").and_then(|v| v.as_str());
 
-        match event.action {
-            MasterDataAction::Created => {
+        let status = match event.action {
+            MasterDataAction::Deleted => "deleted",
+            MasterDataAction::Deactivated => "inactive",
+            _ => "active",
+        };
+
+        self.upsert_local_master_data_ref(&event, "account_subject", subject_name, status)
+            .await?;
+
+        Ok(())
+    }
+
+    /// AC-5: 将主数据变更事件持久化到本地 ref 表
+    ///
+    /// 通过 master_data_id（而非业务编码）建立跨服务关联。
+    /// 消费端查询时使用 master_data_id 定位本地业务记录。
+    async fn upsert_local_master_data_ref(
+        &self,
+        event: &MasterDataEvent,
+        local_entity_type: &str,
+        name: &str,
+        status: &str,
+    ) -> HandlerResult {
+        let domain_str = format!("{:?}", event.domain).to_lowercase();
+
+        let result = sqlx::query(
+            r#"INSERT INTO pdm_master_data_refs
+               (master_data_id, tenant_id, domain, code, name, status, source_service,
+                local_entity_type, payload_snapshot, last_synced_at, created_at, updated_at)
+               VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, NOW(), NOW(), NOW())
+               ON CONFLICT (master_data_id) DO UPDATE
+               SET name = EXCLUDED.name,
+                   status = EXCLUDED.status,
+                   code = EXCLUDED.code,
+                   payload_snapshot = EXCLUDED.payload_snapshot,
+                   last_synced_at = NOW(),
+                   updated_at = NOW()"#,
+        )
+        .bind(&event.master_data_id)
+        .bind(event.tenant_id)
+        .bind(&domain_str)
+        .bind(&event.code)
+        .bind(name)
+        .bind(status)
+        .bind(&event.source_service)
+        .bind(local_entity_type)
+        .bind(&event.payload)
+        .execute(&self.db)
+        .await;
+
+        match result {
+            Ok(_) => {
                 tracing::info!(
-                    "[pdm-mdm] 会计科目创建 - name={}, code={:?}, category={:?}",
-                    subject_name,
-                    subject_code,
-                    category
+                    "[pdm-mdm] 本地 ref 已同步 - master_data_id={}, domain={}, action={:?}, local_entity_type={}",
+                    event.master_data_id,
+                    domain_str,
+                    event.action,
+                    local_entity_type
                 );
-                // TODO: 创建 PDM 会计科目关联配置
             }
-            MasterDataAction::Updated => {
-                tracing::info!(
-                    "[pdm-mdm] 会计科目更新 - name={}, code={:?}, changed_fields={:?}",
-                    subject_name,
-                    subject_code,
-                    event.changed_fields
+            Err(e) => {
+                tracing::warn!(
+                    "[pdm-mdm] 本地 ref 同步失败（graceful fallback）- master_data_id={}: {}",
+                    event.master_data_id,
+                    e
                 );
-                // TODO: 同步更新 PDM 会计科目配置
-            }
-            MasterDataAction::Deleted => {
-                tracing::info!(
-                    "[pdm-mdm] 会计科目删除 - master_data_id={}",
-                    event.master_data_id
-                );
-                // TODO: 标记 PDM 会计科目配置为已删除
-            }
-            MasterDataAction::Activated | MasterDataAction::Deactivated => {
-                let status = if event.action == MasterDataAction::Activated {
-                    "active"
-                } else {
-                    "inactive"
-                };
-                tracing::info!(
-                    "[pdm-mdm] 会计科目状态变更 - name={}, status={}",
-                    subject_name,
-                    status
-                );
-                // TODO: 更新 PDM 会计科目配置状态
             }
         }
 

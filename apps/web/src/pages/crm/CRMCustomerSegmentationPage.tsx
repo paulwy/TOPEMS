@@ -1,298 +1,327 @@
-import React from 'react';
-import { Box, Typography, Card, CardContent, Chip, Button, Grid } from '@mui/material';
-import { Plus, Users, Tag, TrendingUp } from 'lucide-react';
+import React, { useCallback } from 'react';
+import { Box, Typography, Chip, Paper } from '@mui/material';
+import { Users, Tag, TrendingUp } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
-import { useQuery } from '@tanstack/react-query';
-import { ListPageTemplate, type ColumnDef, type RowAction } from '@/components/templates';
-import { PageContainer } from '@/components/common';
-import apiClient from '@/api/client';
+
+import CrudPage, { type CrudApiAdapter } from '@/components/templates/CrudPage';
+import type { ColumnDef, RowAction } from '@/components/templates/list/types';
+import { customerSegmentationSchema } from '@/schemas/crm';
+import { crmApi } from '@/api/crm';
+import type { CustomerSegment, CreateSegmentRequest, SegmentCriteria } from '@/api/crm';
 import { CRM_PATHS } from '@/modules/crm/config';
 
-interface SegmentRule {
-  field: string;
-  operator: string;
-  value: string;
-}
+// ============ API 适配器 ============
 
-interface SegmentCriteria {
-  rules?: SegmentRule[];
-  [key: string]: unknown;
-}
+const apiAdapter: CrudApiAdapter<CustomerSegment> = {
+  list: async (params) => {
+    const res = await crmApi.customerSegmentation.list({
+      page: params?.page,
+      pageSize: params?.pageSize,
+    });
+    if (res.success && res.data) {
+      return { data: res.data.items || [], total: res.data.total || 0 };
+    }
+    return { data: [], total: 0 };
+  },
+  create: async (data) => {
+    const criteria =
+      typeof data.criteria === 'string'
+        ? (JSON.parse(data.criteria as string) as SegmentCriteria)
+        : (data.criteria as SegmentCriteria);
+    const res = await crmApi.customerSegmentation.create({
+      name: data.name as string,
+      description: data.description as string | undefined,
+      criteria,
+    } as CreateSegmentRequest);
+    if (res.success && res.data) {
+      return res.data;
+    }
+    throw new Error(res.message || '创建分群失败');
+  },
+  update: async () => {
+    throw new Error('分群不支持编辑');
+  },
+  delete: async (id) => {
+    const res = await crmApi.customerSegmentation.delete(id);
+    if (res.success === false) {
+      throw new Error(res.message || '删除分群失败');
+    }
+  },
+};
 
-interface CustomerSegment {
-  id: string;
-  name: string;
-  description?: string;
-  criteria: SegmentCriteria;
-  customer_count: number;
-  created_at: string;
-  updated_at: string;
-}
+// ============ 列定义 ============
+
+const columns: ColumnDef<CustomerSegment>[] = [
+  {
+    id: 'name',
+    label: '分群名称',
+    width: 200,
+    render: (row) => (
+      <Box>
+        <Typography
+          variant='body2'
+          sx={{ fontWeight: 600 }}
+        >
+          {row.name}
+        </Typography>
+        {row.description && (
+          <Typography
+            variant='caption'
+            color='text.secondary'
+          >
+            {row.description}
+          </Typography>
+        )}
+      </Box>
+    ),
+  },
+  {
+    id: 'customer_count',
+    label: '客户数',
+    width: 100,
+    align: 'right',
+    render: (row) => (
+      <Chip
+        label={row.customer_count}
+        color='primary'
+        size='small'
+        icon={<Users size={14} />}
+      />
+    ),
+  },
+  {
+    id: 'criteria',
+    label: '分群条件',
+    render: (row) => (
+      <Typography
+        variant='caption'
+        color='text.secondary'
+        noWrap
+      >
+        {JSON.stringify(row.criteria)}
+      </Typography>
+    ),
+  },
+  {
+    id: 'created_at',
+    label: '创建时间',
+    width: 160,
+    render: (row) => (
+      <Typography
+        variant='caption'
+        color='text.secondary'
+      >
+        {new Date(row.created_at).toLocaleString('zh-CN')}
+      </Typography>
+    ),
+  },
+];
+
+// ============ 组件 ============
 
 const CRMCustomerSegmentationPage: React.FC = () => {
   const navigate = useNavigate();
 
-  const segmentsQuery = useQuery<CustomerSegment[]>({
-    queryKey: ['crm-customer-segments'],
-    queryFn: async () => {
-      const res = await apiClient.crm.get('/segments', {
-        params: { page: 1, pagesize: 50 },
-      });
-      if (res.success && res.data) {
-        const data = res.data as { items?: CustomerSegment[] };
-        return data.items || (res.data as CustomerSegment[]) || [];
-      }
-      return [];
-    },
-    staleTime: 5 * 60 * 1000,
-  });
-
-  const segments = segmentsQuery.data ?? [];
-  const loading = segmentsQuery.isLoading;
-
-  const columns: ColumnDef<CustomerSegment>[] = [
+  const customRowActions: RowAction<CustomerSegment>[] = [
     {
-      id: 'name',
-      label: '分群名称',
-      width: 200,
-      render: (row) => (
-        <Box>
-          <Typography
-            variant='body2'
-            sx={{ fontWeight: 600 }}
-          >
-            {row.name}
-          </Typography>
-          {row.description && (
-            <Typography
-              variant='caption'
-              color='text.secondary'
-            >
-              {row.description}
-            </Typography>
-          )}
-        </Box>
-      ),
-    },
-    {
-      id: 'customer_count',
-      label: '客户数',
-      width: 100,
-      align: 'right',
-      render: (row) => (
-        <Chip
-          label={row.customer_count}
-          color='primary'
-          size='small'
-          icon={<Users size={14} />}
-        />
-      ),
-    },
-    {
-      id: 'criteria',
-      label: '分群条件',
-      render: (row) => {
-        const rules = (row.criteria?.rules || [])
-          .map((r: SegmentRule) => `${r.field} ${r.operator} ${r.value}`)
-          .join(', ');
-        return (
-          <Typography
-            variant='caption'
-            color='text.secondary'
-            noWrap
-          >
-            {rules || JSON.stringify(row.criteria)}
-          </Typography>
-        );
-      },
-    },
-    {
-      id: 'created_at',
-      label: '创建时间',
-      width: 160,
-    },
-  ];
-
-  const actions: RowAction<CustomerSegment>[] = [
-    {
+      key: 'viewCustomers',
       label: '查看客户',
       icon: <Users size={16} />,
-      onClick: (row: CustomerSegment) => {
+      onClick: (row) => {
         navigate(`${CRM_PATHS.customers}?segment_id=${row.id}`);
       },
     },
-    {
-      label: '编辑',
-      icon: <Tag size={16} />,
-      onClick: (_row: CustomerSegment) => {},
-    },
   ];
 
-  return (
-    <PageContainer
-      title='客户分群'
-      subtitle='基于多维度条件对客户进行精细化分群运营'
-      autoTitle
-      autoBreadcrumbs
-    >
-      <Box>
-        <Box
-          sx={{ mb: 3, display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}
-        >
-          <Box>
-            <Typography
-              variant='h4'
-              sx={{ fontWeight: 700 }}
-            >
-              客户分群
-            </Typography>
-            <Typography color='text.secondary'>基于多维度条件对客户进行精细化分群运营</Typography>
-          </Box>
-          <Button
-            variant='contained'
-            startIcon={<Plus size={18} />}
+  const detailContent = useCallback((row: Record<string, unknown>) => {
+    const segment = row as unknown as CustomerSegment;
+    return (
+      <Box sx={{ pt: 2, display: 'flex', flexDirection: 'column', gap: 2 }}>
+        <Paper sx={{ p: 2, bgcolor: 'grey.50' }}>
+          <Typography
+            variant='subtitle2'
+            gutterBottom
           >
-            新建分群
-          </Button>
-        </Box>
-
-        <Grid
-          container
-          spacing={3}
-          sx={{ mb: 3 }}
-        >
-          <Grid size={{ xs: 12, md: 4 }}>
-            <Card variant='outlined'>
-              <CardContent>
-                <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
-                  <Box
-                    sx={{
-                      width: 48,
-                      height: 48,
-                      borderRadius: 3,
-                      bgcolor: 'primary.50',
-                      display: 'flex',
-                      alignItems: 'center',
-                      justifyContent: 'center',
-                    }}
-                  >
-                    <Tag
-                      size={24}
-                      color='primary.main'
-                    />
-                  </Box>
-                  <Box>
-                    <Typography
-                      variant='caption'
-                      color='text.secondary'
-                    >
-                      分群总数
-                    </Typography>
-                    <Typography
-                      variant='h4'
-                      sx={{ fontWeight: 700 }}
-                    >
-                      {segments.length}
-                    </Typography>
-                  </Box>
-                </Box>
-              </CardContent>
-            </Card>
-          </Grid>
-          <Grid size={{ xs: 12, md: 4 }}>
-            <Card variant='outlined'>
-              <CardContent>
-                <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
-                  <Box
-                    sx={{
-                      width: 48,
-                      height: 48,
-                      borderRadius: 3,
-                      bgcolor: 'success.50',
-                      display: 'flex',
-                      alignItems: 'center',
-                      justifyContent: 'center',
-                    }}
-                  >
-                    <Users
-                      size={24}
-                      color='success.main'
-                    />
-                  </Box>
-                  <Box>
-                    <Typography
-                      variant='caption'
-                      color='text.secondary'
-                    >
-                      覆盖客户
-                    </Typography>
-                    <Typography
-                      variant='h4'
-                      sx={{ fontWeight: 700 }}
-                    >
-                      {segments.reduce((sum, s) => sum + (s.customer_count || 0), 0)}
-                    </Typography>
-                  </Box>
-                </Box>
-              </CardContent>
-            </Card>
-          </Grid>
-          <Grid size={{ xs: 12, md: 4 }}>
-            <Card variant='outlined'>
-              <CardContent>
-                <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
-                  <Box
-                    sx={{
-                      width: 48,
-                      height: 48,
-                      borderRadius: 3,
-                      bgcolor: 'warning.50',
-                      display: 'flex',
-                      alignItems: 'center',
-                      justifyContent: 'center',
-                    }}
-                  >
-                    <TrendingUp
-                      size={24}
-                      color='warning.main'
-                    />
-                  </Box>
-                  <Box>
-                    <Typography
-                      variant='caption'
-                      color='text.secondary'
-                    >
-                      平均客户数
-                    </Typography>
-                    <Typography
-                      variant='h4'
-                      sx={{ fontWeight: 700 }}
-                    >
-                      {segments.length > 0
-                        ? Math.round(
-                            segments.reduce((sum, s) => sum + (s.customer_count || 0), 0) /
-                              segments.length
-                          )
-                        : 0}
-                    </Typography>
-                  </Box>
-                </Box>
-              </CardContent>
-            </Card>
-          </Grid>
-        </Grid>
-
-        <ListPageTemplate<CustomerSegment>
-          columns={columns}
-          data={segments}
-          loading={loading}
-          rowActions={actions}
-          onRefresh={() => segmentsQuery.refetch()}
-          searchable={true}
-          emptyMessage='暂无客户分群'
-        />
+            基本信息
+          </Typography>
+          <Box sx={{ display: 'flex', gap: 2, mt: 1, flexWrap: 'wrap' }}>
+            <Typography variant='body2'>分群名称: {segment.name}</Typography>
+            <Typography variant='body2'>客户数: {segment.customer_count}</Typography>
+            <Typography variant='body2'>
+              创建时间: {new Date(segment.created_at).toLocaleString('zh-CN')}
+            </Typography>
+          </Box>
+          {segment.description && (
+            <Typography
+              variant='body2'
+              sx={{ mt: 1 }}
+              color='text.secondary'
+            >
+              {segment.description}
+            </Typography>
+          )}
+        </Paper>
+        <Paper sx={{ p: 2, bgcolor: 'grey.50' }}>
+          <Typography
+            variant='subtitle2'
+            gutterBottom
+          >
+            分群条件
+          </Typography>
+          <Box
+            component='pre'
+            sx={{
+              mt: 1,
+              p: 1.5,
+              bgcolor: 'grey.100',
+              borderRadius: 1,
+              fontSize: '0.75rem',
+              overflow: 'auto',
+              whiteSpace: 'pre-wrap',
+              wordBreak: 'break-all',
+            }}
+          >
+            {JSON.stringify(segment.criteria, null, 2)}
+          </Box>
+        </Paper>
       </Box>
-    </PageContainer>
+    );
+  }, []);
+
+  const headerContent = useCallback((rows: unknown[], _total: number) => {
+    const segments = rows as CustomerSegment[];
+    const totalCustomers = segments.reduce((sum, s) => sum + (s.customer_count || 0), 0);
+    const avgCustomers = segments.length > 0 ? Math.round(totalCustomers / segments.length) : 0;
+
+    return (
+      <Box
+        sx={{
+          display: 'grid',
+          gridTemplateColumns: { xs: 'repeat(2, 1fr)', md: 'repeat(3, 1fr)' },
+          gap: 2,
+          mb: 3,
+        }}
+      >
+        <Box sx={{ bgcolor: 'primary.50', borderRadius: 3, p: 3 }}>
+          <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
+            <Box
+              sx={{
+                width: 48,
+                height: 48,
+                borderRadius: 3,
+                bgcolor: 'primary.main',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+              }}
+            >
+              <Tag
+                size={24}
+                color='white'
+              />
+            </Box>
+            <Box>
+              <Typography
+                variant='caption'
+                color='text.secondary'
+              >
+                分群总数
+              </Typography>
+              <Typography
+                variant='h4'
+                sx={{ fontWeight: 700 }}
+              >
+                {_total}
+              </Typography>
+            </Box>
+          </Box>
+        </Box>
+        <Box sx={{ bgcolor: 'success.50', borderRadius: 3, p: 3 }}>
+          <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
+            <Box
+              sx={{
+                width: 48,
+                height: 48,
+                borderRadius: 3,
+                bgcolor: 'success.main',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+              }}
+            >
+              <Users
+                size={24}
+                color='white'
+              />
+            </Box>
+            <Box>
+              <Typography
+                variant='caption'
+                color='text.secondary'
+              >
+                覆盖客户
+              </Typography>
+              <Typography
+                variant='h4'
+                sx={{ fontWeight: 700 }}
+              >
+                {totalCustomers}
+              </Typography>
+            </Box>
+          </Box>
+        </Box>
+        <Box sx={{ bgcolor: 'warning.50', borderRadius: 3, p: 3 }}>
+          <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
+            <Box
+              sx={{
+                width: 48,
+                height: 48,
+                borderRadius: 3,
+                bgcolor: 'warning.main',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+              }}
+            >
+              <TrendingUp
+                size={24}
+                color='white'
+              />
+            </Box>
+            <Box>
+              <Typography
+                variant='caption'
+                color='text.secondary'
+              >
+                平均客户数
+              </Typography>
+              <Typography
+                variant='h4'
+                sx={{ fontWeight: 700 }}
+              >
+                {avgCustomers}
+              </Typography>
+            </Box>
+          </Box>
+        </Box>
+      </Box>
+    );
+  }, []);
+
+  return (
+    <CrudPage
+      schema={customerSegmentationSchema}
+      apiAdapter={apiAdapter}
+      customColumns={columns as ColumnDef[]}
+      customRowActions={customRowActions as RowAction[]}
+      detailContent={detailContent}
+      headerContent={headerContent}
+      breadcrumbs={[
+        { label: '首页', href: '/dashboard' },
+        { label: '客户关系管理', href: CRM_PATHS.root },
+        { label: '客户分群' },
+      ]}
+    />
   );
 };
 

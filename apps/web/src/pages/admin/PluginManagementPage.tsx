@@ -1,6 +1,5 @@
-import React, { useState, useMemo } from 'react';
-import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { QUERY_KEYS } from '@/lib/reactQuery';
+import React, { useState, useMemo, useCallback } from 'react';
+import { useMutation, useQueryClient } from '@tanstack/react-query';
 import {
   Box,
   Chip,
@@ -37,16 +36,15 @@ import {
   Calendar,
   Shield,
   CheckCircle,
-  XCircle,
-  AlertCircle,
 } from 'lucide-react';
-import { ListPageTemplate, type ColumnDef, type RowAction } from '@/components/templates';
-import { PageContainer } from '@/components/common';
+import CrudPage, { type CrudApiAdapter } from '@/components/templates/CrudPage';
+import type { RowAction } from '@/components/templates/list/types';
+import { QUERY_KEYS } from '@/lib/reactQuery';
 import { useNotificationStore } from '@/store';
 import { type Plugin, fetchAllPluginInfo, PLUGIN_REGISTRY } from '@/api/plugin';
 import { usePluginStore } from '@/store/pluginStore';
 import { extractErrorMessage } from '@/utils/errors';
-import { logger } from '@/utils/logger';
+import { pluginSchema } from '@/schemas/admin';
 
 interface MarketplacePlugin {
   code: string;
@@ -104,10 +102,11 @@ const PLUGIN_CATEGORIES: Record<string, string> = {
   integration: 'System',
 };
 
+type UninstallTier = 'disable' | 'uninstall' | 'delete';
+
 const PluginManagementPage: React.FC = () => {
   const {
     installedPlugins,
-    healthStatus,
     fetchInstalledPlugins,
     fetchHealthStatus,
     enablePlugin,
@@ -120,8 +119,6 @@ const PluginManagementPage: React.FC = () => {
   const addNotification = useNotificationStore((state) => state.addNotification);
   const queryClient = useQueryClient();
 
-  const [searchQuery, setSearchQuery] = useState('');
-  const [typeFilter, setTypeFilter] = useState('all');
   const [marketplaceOpen, setMarketplaceOpen] = useState(false);
   const [marketplaceTab, setMarketplaceTab] = useState(0);
   const [marketplaceSearch, setMarketplaceSearch] = useState('');
@@ -129,49 +126,63 @@ const PluginManagementPage: React.FC = () => {
   const [installStep, setInstallStep] = useState(0);
   const [installLoading, setInstallLoading] = useState(false);
   const [installError, setInstallError] = useState<string | null>(null);
-  const [confirmDialog, setConfirmDialog] = useState<{
-    open: boolean;
-    title: string;
-    message: string;
-    action: () => void;
-  }>({
-    open: false,
-    title: '',
-    message: '',
-    action: () => {},
-  });
 
-  const pluginsQuery = useQuery({
-    queryKey: QUERY_KEYS.SYSTEM.PLUGINS,
-    queryFn: async () => {
-      await Promise.all([fetchInstalledPlugins(), fetchHealthStatus()]);
+  const [uninstallTarget, setUninstallTarget] = useState<{
+    code: string;
+    tier: UninstallTier;
+  } | null>(null);
 
-      const pluginInfoList = await fetchAllPluginInfo();
-
-      const runtimePlugins: Plugin[] = pluginInfoList.map((info, index) => ({
-        id: String(index + 1),
-        code: info.code,
-        name: PLUGIN_DISPLAY_NAMES[info.code] || info.name,
-        description: info.description,
-        version: info.version,
-        plugin_type: info.plugin_type,
-        is_published: true,
-        category: info.category,
-        runtime_status: 'running',
-        runtime_url: PLUGIN_REGISTRY[info.code]?.url || '',
-        base_path: `/api/${info.code}`,
-      }));
-      return runtimePlugins;
-    },
-  });
-
-  const plugins = pluginsQuery.data || [];
-  const loading = pluginsQuery.isLoading;
-  const error = pluginsQuery.error ? (pluginsQuery.error as Error).message : null;
-
-  const loadPlugins = () => {
+  const loadPlugins = useCallback(() => {
     queryClient.invalidateQueries({ queryKey: QUERY_KEYS.SYSTEM.PLUGINS });
-  };
+  }, [queryClient]);
+
+  const apiAdapter: CrudApiAdapter = useMemo(
+    () => ({
+      list: async (params) => {
+        await Promise.all([fetchInstalledPlugins(), fetchHealthStatus()]);
+        const pluginInfoList = await fetchAllPluginInfo();
+
+        const search = (params?.search as string) || '';
+        const typeFilter = (params?.plugin_type as string) || 'all';
+
+        const runtimePlugins: Plugin[] = pluginInfoList.map((info, index) => ({
+          id: String(index + 1),
+          code: info.code,
+          name: PLUGIN_DISPLAY_NAMES[info.code] || info.name,
+          description: info.description,
+          version: info.version,
+          plugin_type: info.plugin_type,
+          is_published: true,
+          category: info.category,
+          runtime_status: 'running',
+          runtime_url: PLUGIN_REGISTRY[info.code]?.url || '',
+          base_path: `/api/${info.code}`,
+        }));
+
+        const filtered = runtimePlugins.filter((plugin) => {
+          const matchesSearch =
+            !search ||
+            (plugin.name && plugin.name.toLowerCase().includes(search.toLowerCase())) ||
+            (plugin.code && plugin.code.toLowerCase().includes(search.toLowerCase())) ||
+            (plugin.description && plugin.description.toLowerCase().includes(search.toLowerCase()));
+          const matchesType = typeFilter === 'all' || plugin.plugin_type === typeFilter;
+          return matchesSearch && matchesType;
+        });
+
+        return { data: filtered as unknown as Record<string, unknown>[], total: filtered.length };
+      },
+      create: async () => {
+        throw new Error('插件通过市场安装，不支持直接创建');
+      },
+      update: async () => {
+        throw new Error('插件配置不支持直接编辑');
+      },
+      delete: async () => {
+        throw new Error('请使用卸载操作移除插件');
+      },
+    }),
+    [fetchInstalledPlugins, fetchHealthStatus]
+  );
 
   const enableMutation = useMutation({
     mutationFn: async (pluginCode: string) => {
@@ -217,49 +228,33 @@ const PluginManagementPage: React.FC = () => {
         type: 'error',
       });
     },
-    onSettled: () => {
-      setConfirmDialog((prev) => ({ ...prev, open: false }));
+  });
+
+  const upgradeMutation = useMutation({
+    mutationFn: async (pluginCode: string) => {
+      const success = await upgradePlugin(pluginCode);
+      if (!success) throw new Error('升级失败');
+      return pluginCode;
+    },
+    onSuccess: (pluginCode) => {
+      addNotification({
+        title: '升级成功',
+        message: `${pluginCode} 插件已升级`,
+        type: 'success',
+      });
+      loadPlugins();
+    },
+    onError: (err: unknown) => {
+      addNotification({
+        title: '失败',
+        message: (err as Error).message || '升级失败',
+        type: 'error',
+      });
     },
   });
 
-  const handleEnable = (pluginCode: string) => {
-    enableMutation.mutate(pluginCode);
-  };
-
-  const handleDisable = (pluginCode: string) => {
-    setConfirmDialog({
-      open: true,
-      title: '禁用插件',
-      message: `确定要禁用 "${pluginCode}" 插件吗？`,
-      action: () => disableMutation.mutate(pluginCode),
-    });
-  };
-
-  const [uninstallTier, setUninstallTier] = useState<'disable' | 'uninstall' | 'delete'>(
-    'uninstall'
-  );
-
-  const getUninstallMessage = (pluginCode: string, tier: 'disable' | 'uninstall' | 'delete') => {
-    switch (tier) {
-      case 'disable':
-        return `确定要禁用 "${pluginCode}" 插件吗？禁用后数据将保留，可重新启用。`;
-      case 'uninstall':
-        return `确定要卸载 "${pluginCode}" 插件吗？数据将保留90天，可重新安装恢复。`;
-      case 'delete':
-        return `确定要彻底删除 "${pluginCode}" 插件吗？此操作将删除所有相关数据，无法恢复！`;
-      default:
-        return `确定要卸载 "${pluginCode}" 插件吗？`;
-    }
-  };
-
   const uninstallMutation = useMutation({
-    mutationFn: async ({
-      pluginCode,
-      tier,
-    }: {
-      pluginCode: string;
-      tier: 'disable' | 'uninstall' | 'delete';
-    }) => {
+    mutationFn: async ({ pluginCode, tier }: { pluginCode: string; tier: UninstallTier }) => {
       const success = await uninstallPlugin(pluginCode, tier);
       if (!success) throw new Error('卸载失败');
       return { pluginCode, tier };
@@ -285,38 +280,9 @@ const PluginManagementPage: React.FC = () => {
       });
     },
     onSettled: () => {
-      setConfirmDialog((prev) => ({ ...prev, open: false }));
+      setUninstallTarget(null);
     },
   });
-
-  const handleUninstall = (pluginCode: string) => {
-    setUninstallTier('uninstall');
-    setConfirmDialog({
-      open: true,
-      title: '卸载插件',
-      message: getUninstallMessage(pluginCode, 'uninstall'),
-      action: () => uninstallMutation.mutate({ pluginCode, tier: uninstallTier }),
-    });
-  };
-
-  const handleOpenMarketplace = () => {
-    setMarketplaceOpen(true);
-    setMarketplaceTab(0);
-    setMarketplaceSearch('');
-  };
-
-  const handleCloseMarketplace = () => {
-    setMarketplaceOpen(false);
-    setInstallingPlugin(null);
-    setInstallStep(0);
-    setInstallError(null);
-  };
-
-  const handleInstallPlugin = (plugin: MarketplacePlugin) => {
-    setInstallingPlugin(plugin);
-    setInstallStep(0);
-    setInstallError(null);
-  };
 
   const installMutation = useMutation({
     mutationFn: async (pluginCode: string) => {
@@ -326,7 +292,65 @@ const PluginManagementPage: React.FC = () => {
     },
   });
 
-  const handleInstallNext = async () => {
+  const allMarketplacePlugins: MarketplacePlugin[] = useMemo(
+    () =>
+      Object.entries(PLUGIN_REGISTRY).map(([code, config]) => ({
+        code,
+        name: PLUGIN_DISPLAY_NAMES[code] || code.toUpperCase(),
+        version: '1.0.0',
+        latest_version: '1.0.0',
+        description: `${PLUGIN_DISPLAY_NAMES[code] || code} 服务运行在端口 ${config.port}`,
+        author: 'TOPEMS',
+        published_at: '2024-01-01',
+        downloads: 0,
+        category: PLUGIN_CATEGORIES[code] || 'Business',
+        plugin_type: code === 'workflow' ? 'core' : 'business',
+        permissions: [],
+      })),
+    []
+  );
+
+  const filteredMarketplace = useMemo(
+    () =>
+      allMarketplacePlugins.filter((plugin) => {
+        const searchLower = marketplaceSearch.toLowerCase();
+        return (
+          plugin.name.toLowerCase().includes(searchLower) ||
+          plugin.code.toLowerCase().includes(searchLower) ||
+          plugin.description.toLowerCase().includes(searchLower)
+        );
+      }),
+    [allMarketplacePlugins, marketplaceSearch]
+  );
+
+  const installedCodes = useMemo(
+    () => [
+      ...(queryClient.getQueryData<Plugin[]>(QUERY_KEYS.SYSTEM.PLUGINS) || []).map((p) => p.code),
+      ...installedPlugins.map((p) => p.plugin_id),
+    ],
+    [queryClient, installedPlugins]
+  );
+
+  const handleOpenMarketplace = useCallback(() => {
+    setMarketplaceOpen(true);
+    setMarketplaceTab(0);
+    setMarketplaceSearch('');
+  }, []);
+
+  const handleCloseMarketplace = useCallback(() => {
+    setMarketplaceOpen(false);
+    setInstallingPlugin(null);
+    setInstallStep(0);
+    setInstallError(null);
+  }, []);
+
+  const handleInstallPlugin = useCallback((plugin: MarketplacePlugin) => {
+    setInstallingPlugin(plugin);
+    setInstallStep(0);
+    setInstallError(null);
+  }, []);
+
+  const handleInstallNext = useCallback(async () => {
     if (installStep === 0) {
       setInstallStep(1);
     } else if (installStep === 1) {
@@ -344,435 +368,185 @@ const PluginManagementPage: React.FC = () => {
     } else if (installStep === 2) {
       handleCloseMarketplace();
     }
-  };
+  }, [installStep, installMutation, installingPlugin, loadPlugins, handleCloseMarketplace]);
 
-  const handleInstallBack = () => {
+  const handleInstallBack = useCallback(() => {
     if (installStep > 0) {
       setInstallStep(installStep - 1);
     }
-  };
+  }, [installStep]);
 
-  const getStatusChip = (status: string | undefined, code: string) => {
-    const health = healthStatus[code];
-    if (health) {
-      return health.healthy ? (
-        <Chip
-          icon={<CheckCircle size={14} />}
-          label='运行中'
-          color='success'
-          size='small'
-        />
-      ) : (
-        <Chip
-          icon={<XCircle size={14} />}
-          label='不健康'
-          color='error'
-          size='small'
-        />
-      );
-    }
-    switch (status) {
-      case 'running':
-        return (
-          <Chip
-            icon={<CheckCircle size={14} />}
-            label='运行中'
-            color='success'
-            size='small'
-          />
-        );
-      case 'stopped':
-        return (
-          <Chip
-            icon={<XCircle size={14} />}
-            label='已停止'
-            color='error'
-            size='small'
-          />
-        );
+  const getUninstallMessage = (pluginCode: string, tier: UninstallTier) => {
+    switch (tier) {
+      case 'disable':
+        return `确定要禁用 "${pluginCode}" 插件吗？禁用后数据将保留，可重新启用。`;
+      case 'uninstall':
+        return `确定要卸载 "${pluginCode}" 插件吗？数据将保留90天，可重新安装恢复。`;
+      case 'delete':
+        return `确定要彻底删除 "${pluginCode}" 插件吗？此操作将删除所有相关数据，无法恢复！`;
       default:
-        return (
-          <Chip
-            icon={<AlertCircle size={14} />}
-            label='未知'
-            color='warning'
-            size='small'
-          />
-        );
+        return `确定要卸载 "${pluginCode}" 插件吗？`;
     }
   };
 
-  const allMarketplacePlugins: MarketplacePlugin[] = Object.entries(PLUGIN_REGISTRY).map(
-    ([code, config]) => ({
-      code,
-      name: PLUGIN_DISPLAY_NAMES[code] || code.toUpperCase(),
-      version: '1.0.0',
-      latest_version: '1.0.0',
-      description: `${PLUGIN_DISPLAY_NAMES[code] || code} 服务运行在端口 ${config.port}`,
-      author: 'TOPEMS',
-      published_at: '2024-01-01',
-      downloads: 0,
-      category: PLUGIN_CATEGORIES[code] || 'Business',
-      plugin_type: code === 'workflow' ? 'core' : 'business',
-      permissions: [],
-    })
-  );
-
-  const filteredMarketplace = allMarketplacePlugins.filter((plugin) => {
-    const searchLower = marketplaceSearch.toLowerCase();
-    return (
-      plugin.name.toLowerCase().includes(searchLower) ||
-      plugin.code.toLowerCase().includes(searchLower) ||
-      plugin.description.toLowerCase().includes(searchLower)
-    );
-  });
-
-  const installedCodes = [
-    ...plugins.map((p) => p.code),
-    ...installedPlugins.map((p) => p.plugin_id),
-  ];
-
-  const filteredPlugins = useMemo(() => {
-    return plugins.filter((plugin) => {
-      const matchesSearch =
-        (plugin.name && plugin.name.toLowerCase().includes(searchQuery.toLowerCase())) ||
-        (plugin.code && plugin.code.toLowerCase().includes(searchQuery.toLowerCase())) ||
-        (plugin.description &&
-          plugin.description.toLowerCase().includes(searchQuery.toLowerCase()));
-      const matchesType = typeFilter === 'all' || plugin.plugin_type === typeFilter;
-      return matchesSearch && matchesType;
-    });
-  }, [plugins, searchQuery, typeFilter]);
-
-  const columns: ColumnDef<Plugin>[] = useMemo(
+  const customRowActions: RowAction[] = useMemo(
     () => [
       {
-        id: 'name',
-        label: '名称',
-        width: 250,
-        render: (row) => (
-          <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-            <Package size={18} />
-            <Box>
-              <Typography
-                variant='body2'
-                sx={{ fontWeight: 500 }}
-              >
-                {row.name}
-              </Typography>
-              {row.description && (
-                <Typography
-                  variant='caption'
-                  color='text.secondary'
-                  sx={{
-                    display: 'block',
-                    maxWidth: 300,
-                    overflow: 'hidden',
-                    textOverflow: 'ellipsis',
-                    whiteSpace: 'nowrap',
-                  }}
-                >
-                  {row.description}
-                </Typography>
-              )}
-            </Box>
-          </Box>
-        ),
+        label: '启用',
+        icon: <Play size={16} />,
+        onClick: (row) => enableMutation.mutate(String(row.code)),
+        color: 'success',
+        show: (row) => row.runtime_status !== 'running',
       },
       {
-        id: 'code',
-        label: '代码',
-        width: 120,
-        render: (row) => <code style={{ fontSize: 12 }}>{row.code}</code>,
+        label: '禁用',
+        icon: <Square size={16} />,
+        onClick: (row) => disableMutation.mutate(String(row.code)),
+        color: 'warning',
+        show: (row) => row.runtime_status === 'running',
       },
       {
-        id: 'version',
-        label: '版本',
-        width: 150,
-        render: (row) => {
+        label: '升级',
+        icon: <Download size={16} />,
+        onClick: (row) => upgradeMutation.mutate(String(row.code)),
+        color: 'primary',
+        show: (row) => {
           const marketplacePlugin = allMarketplacePlugins.find((p) => p.code === row.code);
-          const hasUpdate = marketplacePlugin && marketplacePlugin.latest_version !== row.version;
-          return (
-            <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-              <code style={{ fontSize: 12 }}>{row.version}</code>
-              {hasUpdate && (
-                <Chip
-                  label={`${marketplacePlugin?.latest_version}`}
-                  size='small'
-                  color='success'
-                  variant='outlined'
-                />
-              )}
-            </Box>
-          );
+          const currentVersion = String(row.version || '');
+          return !!marketplacePlugin && marketplacePlugin.latest_version !== currentVersion;
         },
       },
       {
-        id: 'plugin_type',
-        label: '类型',
-        width: 100,
-        render: (row) => (
-          <Chip
-            label={row.plugin_type}
-            size='small'
-            variant='outlined'
-          />
-        ),
-      },
-      {
-        id: 'runtime_status',
-        label: '状态',
-        width: 120,
-        render: (row) => getStatusChip(row.runtime_status, row.code),
-      },
-      {
-        id: 'runtime_url',
-        label: '运行地址',
-        width: 200,
-        render: (row) => (
-          <Typography
-            variant='caption'
-            color='text.secondary'
-            sx={{ fontFamily: 'monospace' }}
-          >
-            {row.runtime_url || '-'}
-          </Typography>
-        ),
+        label: '卸载',
+        icon: <Trash2 size={16} />,
+        onClick: (row) => setUninstallTarget({ code: String(row.code), tier: 'uninstall' }),
+        color: 'error',
+        divider: true,
       },
     ],
-    []
+    [enableMutation, disableMutation, upgradeMutation, allMarketplacePlugins]
   );
 
-  const upgradeMutation = useMutation({
-    mutationFn: async (pluginCode: string) => {
-      const success = await upgradePlugin(pluginCode);
-      if (!success) throw new Error('升级失败');
-      return pluginCode;
-    },
-    onSuccess: (pluginCode) => {
-      addNotification({
-        title: '升级成功',
-        message: `${pluginCode} 插件已升级`,
-        type: 'success',
-      });
-      loadPlugins();
-    },
-    onError: (err: unknown) => {
-      addNotification({
-        title: '失败',
-        message: (err as Error).message || '升级失败',
-        type: 'error',
-      });
-    },
-    onSettled: () => {
-      setConfirmDialog((prev) => ({ ...prev, open: false }));
-    },
-  });
-
-  const handleUpgrade = (pluginCode: string) => {
-    setConfirmDialog({
-      open: true,
-      title: '升级插件',
-      message: `确定要升级 "${pluginCode}" 插件吗？`,
-      action: () => upgradeMutation.mutate(pluginCode),
-    });
-  };
-
-  const rowActions: RowAction<Plugin>[] = [
-    {
-      label: '启用',
-      icon: <Play size={16} />,
-      onClick: (row) => handleEnable(row.code),
-      color: 'success',
-      show: (row) => row.runtime_status !== 'running',
-    },
-    {
-      label: '禁用',
-      icon: <Square size={16} />,
-      onClick: (row) => handleDisable(row.code),
-      color: 'warning',
-      show: (row) => row.runtime_status === 'running',
-    },
-    {
-      label: '升级',
-      icon: <Download size={16} />,
-      onClick: (row) => handleUpgrade(row.code),
-      color: 'primary',
-      show: (row) => {
-        const marketplacePlugin = allMarketplacePlugins.find((p) => p.code === row.code);
-        return !!marketplacePlugin && marketplacePlugin.latest_version !== row.version;
-      },
-    },
-    {
-      label: '卸载',
-      icon: <Trash2 size={16} />,
-      onClick: (row) => handleUninstall(row.code),
-      color: 'error',
-      divider: true,
-    },
-  ];
-
-  const filters = useMemo(
-    () => [
-      {
-        id: 'plugin_type',
-        label: '插件类型',
-        type: 'select' as const,
-        value: typeFilter,
-        options: [
-          { label: '全部类型', value: 'all' },
-          { label: '核心插件', value: 'core' },
-          { label: '业务插件', value: 'business' },
-        ],
-        onChange: (value: unknown) => setTypeFilter(value as string),
-      },
-    ],
-    [typeFilter]
+  const headerContent = useCallback(
+    () => (
+      <Box sx={{ display: 'flex', justifyContent: 'flex-end', mb: 2 }}>
+        <Button
+          variant='outlined'
+          startIcon={<Store size={16} />}
+          onClick={handleOpenMarketplace}
+        >
+          浏览市场
+        </Button>
+      </Box>
+    ),
+    [handleOpenMarketplace]
   );
 
   return (
-    <PageContainer
-      title='插件管理'
-      subtitle='管理系统插件，启用、禁用或卸载插件'
-    >
-      {error && (
-        <Alert
-          severity='error'
-          sx={{ mb: 2 }}
-          onClose={() => {}}
-        >
-          {error}
-        </Alert>
-      )}
-
-      <ListPageTemplate
-        title=''
-        subtitle=''
+    <>
+      <CrudPage
+        schema={pluginSchema}
+        apiAdapter={apiAdapter}
+        customRowActions={customRowActions}
+        headerContent={headerContent}
         breadcrumbs={[
           { label: '首页', href: '/dashboard' },
           { label: '系统管理' },
           { label: '插件管理' },
         ]}
-        columns={columns}
-        data={filteredPlugins}
-        loading={loading}
-        searchable
-        searchPlaceholder='搜索插件名称或代码...'
-        searchValue={searchQuery}
-        onSearch={setSearchQuery}
-        filters={filters}
-        filtersValue={{ plugin_type: typeFilter }}
-        onFilterChange={(f) => {
-          if (f.plugin_type !== undefined) setTypeFilter(f.plugin_type);
-        }}
-        actions={[
-          {
-            label: '浏览市场',
-            icon: <Store size={16} />,
-            onClick: handleOpenMarketplace,
-            variant: 'outlined',
-          },
-        ]}
-        rowActions={rowActions}
-        onRefresh={loadPlugins}
-        showRowNumber
-        columnConfigurable
-        persistColumnConfig
-        columnConfigStorageKey='admin-plugins-columns'
       />
 
+      {/* 卸载确认对话框（支持禁用/卸载/彻底删除三档） */}
       <Dialog
-        open={confirmDialog.open}
-        onClose={() => setConfirmDialog((prev) => ({ ...prev, open: false }))}
+        open={!!uninstallTarget}
+        onClose={() => setUninstallTarget(null)}
       >
-        <DialogTitle>{confirmDialog.title}</DialogTitle>
+        <DialogTitle>
+          {uninstallTarget?.tier === 'delete' ? '彻底删除插件' : '卸载插件'}
+        </DialogTitle>
         <DialogContent>
-          <Typography sx={{ mb: 3 }}>{confirmDialog.message}</Typography>
-          <Box sx={{ mb: 2 }}>
-            <Typography
-              variant='body2'
-              sx={{ fontWeight: 500, mb: 1 }}
-            >
-              卸载级别：
-            </Typography>
-            <Stack
-              direction='row'
-              spacing={2}
-            >
-              <Button
-                variant={uninstallTier === 'disable' ? 'contained' : 'outlined'}
-                size='small'
-                onClick={() => {
-                  setUninstallTier('disable');
-                  setConfirmDialog((prev) => ({
-                    ...prev,
-                    message: getUninstallMessage(
-                      prev.message.match(/"([^"]+)"/)?.[1] || '',
-                      'disable'
-                    ),
-                  }));
-                }}
+          {uninstallTarget && (
+            <>
+              <Typography sx={{ mb: 3 }}>
+                {getUninstallMessage(uninstallTarget.code, uninstallTarget.tier)}
+              </Typography>
+              <Box sx={{ mb: 2 }}>
+                <Typography
+                  variant='body2'
+                  sx={{ fontWeight: 500, mb: 1 }}
+                >
+                  卸载级别：
+                </Typography>
+                <Stack
+                  direction='row'
+                  spacing={2}
+                >
+                  <Button
+                    variant={uninstallTarget.tier === 'disable' ? 'contained' : 'outlined'}
+                    size='small'
+                    onClick={() =>
+                      setUninstallTarget((prev) => (prev ? { ...prev, tier: 'disable' } : null))
+                    }
+                  >
+                    禁用
+                  </Button>
+                  <Button
+                    variant={uninstallTarget.tier === 'uninstall' ? 'contained' : 'outlined'}
+                    size='small'
+                    onClick={() =>
+                      setUninstallTarget((prev) => (prev ? { ...prev, tier: 'uninstall' } : null))
+                    }
+                  >
+                    卸载
+                  </Button>
+                  <Button
+                    variant={uninstallTarget.tier === 'delete' ? 'contained' : 'outlined'}
+                    size='small'
+                    color='error'
+                    onClick={() =>
+                      setUninstallTarget((prev) => (prev ? { ...prev, tier: 'delete' } : null))
+                    }
+                  >
+                    彻底删除
+                  </Button>
+                </Stack>
+              </Box>
+              <Typography
+                variant='caption'
+                color='textSecondary'
               >
-                禁用
-              </Button>
-              <Button
-                variant={uninstallTier === 'uninstall' ? 'contained' : 'outlined'}
-                size='small'
-                onClick={() => {
-                  setUninstallTier('uninstall');
-                  setConfirmDialog((prev) => ({
-                    ...prev,
-                    message: getUninstallMessage(
-                      prev.message.match(/"([^"]+)"/)?.[1] || '',
-                      'uninstall'
-                    ),
-                  }));
-                }}
-              >
-                卸载
-              </Button>
-              <Button
-                variant={uninstallTier === 'delete' ? 'contained' : 'outlined'}
-                size='small'
-                color='error'
-                onClick={() => {
-                  setUninstallTier('delete');
-                  setConfirmDialog((prev) => ({
-                    ...prev,
-                    message: getUninstallMessage(
-                      prev.message.match(/"([^"]+)"/)?.[1] || '',
-                      'delete'
-                    ),
-                  }));
-                }}
-              >
-                彻底删除
-              </Button>
-            </Stack>
-          </Box>
-          <Typography
-            variant='caption'
-            color='textSecondary'
-          >
-            {uninstallTier === 'disable' && '禁用：仅停止插件运行，数据完整保留'}
-            {uninstallTier === 'uninstall' && '卸载：移除插件安装记录，数据保留90天'}
-            {uninstallTier === 'delete' && '彻底删除：删除所有数据，不可恢复'}
-          </Typography>
+                {uninstallTarget.tier === 'disable' && '禁用：仅停止插件运行，数据完整保留'}
+                {uninstallTarget.tier === 'uninstall' && '卸载：移除插件安装记录，数据保留90天'}
+                {uninstallTarget.tier === 'delete' && '彻底删除：删除所有数据，不可恢复'}
+              </Typography>
+            </>
+          )}
         </DialogContent>
         <DialogActions>
-          <Button onClick={() => setConfirmDialog((prev) => ({ ...prev, open: false }))}>
-            取消
-          </Button>
+          <Button onClick={() => setUninstallTarget(null)}>取消</Button>
           <Button
-            onClick={confirmDialog.action}
+            onClick={() => {
+              if (uninstallTarget) {
+                uninstallMutation.mutate({
+                  pluginCode: uninstallTarget.code,
+                  tier: uninstallTarget.tier,
+                });
+              }
+            }}
             variant='contained'
-            color={uninstallTier === 'delete' ? 'error' : 'primary'}
+            color={uninstallTarget?.tier === 'delete' ? 'error' : 'primary'}
+            disabled={uninstallMutation.isPending}
           >
-            {uninstallTier === 'delete' ? '确认删除' : '确认'}
+            {uninstallMutation.isPending
+              ? '处理中...'
+              : uninstallTarget?.tier === 'delete'
+                ? '确认删除'
+                : '确认'}
           </Button>
         </DialogActions>
       </Dialog>
 
+      {/* 插件市场对话框 */}
       <Dialog
         open={marketplaceOpen}
         onClose={handleCloseMarketplace}
@@ -1057,7 +831,7 @@ const PluginManagementPage: React.FC = () => {
           <Button onClick={handleCloseMarketplace}>关闭</Button>
         </DialogActions>
       </Dialog>
-    </PageContainer>
+    </>
   );
 };
 

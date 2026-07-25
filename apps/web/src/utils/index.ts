@@ -24,6 +24,32 @@ export { default as apiCache } from './apiCache';
 export * from './listParamMapping';
 export { default as listParamMapping } from './listParamMapping';
 
+// ==================== V48.0 零代码平台 ====================
+export {
+  apiVisualIntegration,
+  dataflowOrchestrator,
+  autoDocGenerator,
+  HttpMethod,
+  FlowNodeType,
+  DocFormat,
+  defaultApiVisualIntegration,
+  defaultDataflowOrchestrator,
+  defaultAutoDocGenerator,
+} from './zerocode';
+
+// ==================== V50.0 A2UI ====================
+export {
+  aiUiGenerator,
+  autoTestGenerator,
+  smartCodeReviewer,
+  UIGenerationMode,
+  TestGenerationStrategy,
+  ReviewSeverity,
+  defaultAiUiGenerator,
+  defaultAutoTestGenerator,
+  defaultSmartCodeReviewer,
+} from './a2ui';
+
 export const utils = {
   createLogger,
   session,

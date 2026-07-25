@@ -36,6 +36,8 @@ import { limsApi } from '@/api/lims';
 import { rdApi } from '@/api/rd';
 import { biApi } from '@/api/bi';
 import { scmApi } from '@/api/scm';
+// V34.0: BFF GraphQL 聚合 API
+import { getDashboard, completeTodoGql, subscribeServiceHealth } from '@/api/bff';
 import { useInstalledPlugins } from '../../context/PluginContext';
 import { usePermission } from '@/hooks/usePermission';
 import { useAuth } from '@/hooks/useAuth';
@@ -80,14 +82,6 @@ interface FlowMonthlyData {
   month: string;
   instances_started?: number;
   approvals_processed?: number;
-}
-
-interface WorkflowTask {
-  id: string | number;
-  task_name?: string;
-  name?: string;
-  workflow_name?: string;
-  status: string;
 }
 
 interface AuditLog {
@@ -252,22 +246,11 @@ const DashboardPage: React.FC<DashboardPageProps> = ({ onLogout }) => {
     staleTime: 5 * 60 * 1000,
   });
 
-  const todosQuery = useQuery<Array<{ id: number; title: string; type: string; done: boolean }>>({
-    queryKey: QUERY_KEYS.DASHBOARD.TODOS,
+  // V34.0: 使用 BFF GraphQL 替代多次 REST 调用获取待办 + 服务健康
+  const bffDashboardQuery = useQuery({
+    queryKey: [...QUERY_KEYS.DASHBOARD.TODOS, 'bff-graphql'],
     queryFn: async () => {
-      const [tasksRes] = await Promise.allSettled([
-        workflowApi.listApprovalTasks({ status: 'pending', page: 1, pagesize: 10 }),
-      ]);
-
-      if (tasksRes.status === 'fulfilled' && tasksRes.value.success && tasksRes.value.data?.items) {
-        return tasksRes.value.data.items.map((task: WorkflowTask, index: number) => ({
-          id: task.id ? parseInt(String(task.id), 10) || index + 1 : index + 1,
-          title: task.task_name || task.name || '待办任务',
-          type: task.workflow_name || 'workflow',
-          done: task.status === 'completed' || task.status === 'approved',
-        }));
-      }
-      return [];
+      return await getDashboard();
     },
     staleTime: 5 * 60 * 1000,
   });
@@ -346,13 +329,21 @@ const DashboardPage: React.FC<DashboardPageProps> = ({ onLogout }) => {
     monthlyTrend: [] as { name: string; value: number }[],
   };
   const recentActivities = activitiesQuery.data ?? [];
-  const todos = todosQuery.data ?? [];
+  // V34.0: 从 BFF GraphQL 数据中派生待办列表（保留原始 string id 供 mutation 使用）
+  const todos: Array<{ id: string; title: string; type: string; done: boolean }> = (
+    bffDashboardQuery.data?.todos ?? []
+  ).map((todo) => ({
+    id: todo.id,
+    title: todo.title,
+    type: todo.source,
+    done: todo.status === 'completed' || todo.status === 'read',
+  }));
 
   const loading =
     statsQuery.isLoading ||
     moduleStatsQuery.isLoading ||
     chartDataQuery.isLoading ||
-    todosQuery.isLoading ||
+    bffDashboardQuery.isLoading ||
     activitiesQuery.isLoading;
 
   useEffect(() => {
@@ -374,10 +365,10 @@ const DashboardPage: React.FC<DashboardPageProps> = ({ onLogout }) => {
   }, [chartDataQuery.isError, chartDataQuery.error]);
 
   useEffect(() => {
-    if (todosQuery.isError) {
-      apiLogger.error('加载待办任务失败:', todosQuery.error);
+    if (bffDashboardQuery.isError) {
+      apiLogger.error('BFF GraphQL 加载失败:', bffDashboardQuery.error);
     }
-  }, [todosQuery.isError, todosQuery.error]);
+  }, [bffDashboardQuery.isError, bffDashboardQuery.error]);
 
   useEffect(() => {
     if (activitiesQuery.isError) {
@@ -450,6 +441,15 @@ const DashboardPage: React.FC<DashboardPageProps> = ({ onLogout }) => {
     return () => clearInterval(intervalId);
   }, [navigate, isAuthenticated, refreshServiceStatuses]);
 
+  // V34.0: BFF GraphQL Subscription — 实时服务健康推送
+  useEffect(() => {
+    if (!isAuthenticated) return;
+    const unsubscribe = subscribeServiceHealth(() => {
+      refreshServiceStatuses();
+    });
+    return unsubscribe;
+  }, [isAuthenticated, refreshServiceStatuses]);
+
   const handleLogout = useCallback(() => {
     authLogout();
     navigate(AUTH_PATHS.login);
@@ -488,21 +488,41 @@ const DashboardPage: React.FC<DashboardPageProps> = ({ onLogout }) => {
 
   const systemServicesModules = useMemo((): ModuleItem[] => {
     const systemModules = ['iam', 'integration', 'report'];
-    const systemCards = allModuleCards.filter((m) => 
-      systemModules.includes(m.code) || 
-      m.permission?.includes('admin') || 
-      m.permission?.includes('system')
+    const systemCards = allModuleCards.filter(
+      (m) =>
+        systemModules.includes(m.code) ||
+        m.permission?.includes('admin') ||
+        m.permission?.includes('system')
     );
-    return convertModuleCardsToModuleItems(systemCards).filter((module) => shouldShowModule(module));
+    return convertModuleCardsToModuleItems(systemCards).filter((module) =>
+      shouldShowModule(module)
+    );
   }, [allModuleCards, shouldShowModule]);
 
   const businessModules = useMemo((): ModuleItem[] => {
     const systemModules = ['iam', 'integration', 'report'];
-    const businessCards = allModuleCards.filter((m) => 
-      m.source === 'plugin' && !systemModules.includes(m.code)
+    const businessCards = allModuleCards.filter(
+      (m) => m.source === 'plugin' && !systemModules.includes(m.code)
     );
-    return convertModuleCardsToModuleItems(businessCards).filter((module) => shouldShowModule(module));
+    return convertModuleCardsToModuleItems(businessCards).filter((module) =>
+      shouldShowModule(module)
+    );
   }, [allModuleCards, shouldShowModule]);
+
+  // V34.0: BFF Mutation — 完成待办（必须在所有 early return 之前调用 hooks）
+  const handleTodoToggle = useCallback(
+    async (id: string) => {
+      try {
+        await completeTodoGql(id);
+        queryClient.invalidateQueries({
+          queryKey: [...QUERY_KEYS.DASHBOARD.TODOS, 'bff-graphql'],
+        });
+      } catch (err) {
+        apiLogger.error('BFF Mutation 完成待办失败:', err);
+      }
+    },
+    [queryClient]
+  );
 
   if (loading) {
     return (
@@ -530,13 +550,6 @@ const DashboardPage: React.FC<DashboardPageProps> = ({ onLogout }) => {
 
   const pendingTodos = todos.filter((t) => !t.done);
   const completedTodos = todos.filter((t) => t.done);
-
-  const handleTodoToggle = (id: number) => {
-    queryClient.setQueryData<Array<{ id: number; title: string; type: string; done: boolean }>>(
-      QUERY_KEYS.DASHBOARD.TODOS,
-      (oldTodos) => (oldTodos ?? []).map((t) => (t.id === id ? { ...t, done: !t.done } : t))
-    );
-  };
 
   const getTodoIcon = (type: string) => {
     switch (type) {

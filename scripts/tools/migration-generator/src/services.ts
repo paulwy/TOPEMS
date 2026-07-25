@@ -919,7 +919,7 @@ const MES: ServiceConfig = {
     display_name: '制造执行系统',
     description: '生产订单、生产工艺、工艺路线、工作站、生产记录、设备管理、审计日志',
     schema: 'mes',
-    port: 8032,
+    port: 8030,
     tables: [
         {
             name: 'production_orders',
@@ -2354,14 +2354,14 @@ const BI: ServiceConfig = {
 };
 
 // ============================================================================
-// 8. RS - 项目管理
+// 8. RD - 研发管理
 // ============================================================================
-const RS: ServiceConfig = {
-    name: 'rs',
-    display_name: '项目管理',
-    description: '项目、项目阶段、里程碑、成员管理',
-    schema: 'rs',
-    port: 8071,
+const RD: ServiceConfig = {
+    name: 'rd',
+    display_name: '研发管理',
+    description: '研发项目、项目阶段、里程碑、成员管理',
+    schema: 'rd',
+    port: 8053,
     tables: [
         {
             name: 'projects',
@@ -2481,7 +2481,7 @@ const SRM: ServiceConfig = {
     display_name: '供应商关系管理',
     description: '供应商、采购订单、合同',
     schema: 'srm',
-    port: 8021,
+    port: 8042,
     tables: [
         {
             name: 'suppliers',
@@ -2647,7 +2647,7 @@ const GIS: ServiceConfig = {
     display_name: '地理信息',
     description: '地图数据、地理标记',
     schema: 'gis',
-    port: 8081,
+    port: 8071,
     tables: [
         {
             name: 'geo_locations',
@@ -2680,7 +2680,7 @@ const PDM: ServiceConfig = {
     display_name: '产品数据管理',
     description: '产品、BOM、版本',
     schema: 'pdm',
-    port: 8091,
+    port: 8031,
     tables: [
         {
             name: 'products',
@@ -2736,7 +2736,7 @@ const LIMS: ServiceConfig = {
     display_name: '实验室信息管理',
     description: '样品、检测、结果',
     schema: 'lims',
-    port: 8101,
+    port: 8051,
     tables: [
         {
             name: 'samples',
@@ -2861,7 +2861,7 @@ const MOBILE: ServiceConfig = {
     display_name: '移动端服务',
     description: '移动应用配置、推送、离线数据',
     schema: 'mobile',
-    port: 8131,
+    port: 8070,
     tables: [
         {
             name: 'devices',
@@ -2914,7 +2914,7 @@ const MOBILE: ServiceConfig = {
 // 服务聚合数组 - 按顺序列出所有服务
 // ============================================================================
 export const SERVICES: ServiceConfig[] = [
-    HRM, CRM, QMS, MES, WMS, AI, BI, RS, SRM, EHS, IM, GIS, PDM, LIMS, SCM, PM, MOBILE
+    HRM, CRM, QMS, MES, WMS, AI, BI, RD, SRM, EHS, IM, GIS, PDM, LIMS, SCM, PM, MOBILE
 ];
 
 

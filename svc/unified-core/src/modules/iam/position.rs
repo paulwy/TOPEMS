@@ -1,3 +1,5 @@
+#![allow(dead_code)] // Reserved: IAM 职位模块预留扩展，待组织架构接入后启用
+
 use crate::AppState;
 use axum::{extract::Path, extract::State, Json};
 use serde::{Deserialize, Serialize};

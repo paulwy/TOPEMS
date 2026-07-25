@@ -1,51 +1,32 @@
-import React, { useState, useCallback, useMemo } from 'react';
-import {
-  Box,
-  Typography,
-  Switch,
-  IconButton,
-  Tooltip,
-  Chip,
-  Paper,
-  Button,
-  TextField,
-  FormControl,
-  InputLabel,
-  Select,
-  MenuItem,
-  Alert,
-  InputAdornment,
-  Grid,
-  Divider,
-} from '@mui/material';
+/**
+ * 通知渠道配置页面
+ *
+ * 使用 CrudPage 组件实现 schema 驱动的通知渠道管理，
+ * 支持列表展示、创建、编辑、删除、测试通知、启用/停用等操作。
+ *
+ * @module pages/monitor
+ * @path /monitor/notifications
+ */
+
+import React, { useMemo, useRef, useCallback, useState } from 'react';
+import { Box, Typography, Paper, Alert } from '@mui/material';
+import { Bell, TestTube, Power, PowerOff } from 'lucide-react';
 import { LoadingSpinner } from '@topems/shared-components';
-import {
-  Plus,
-  Edit3,
-  Trash2,
-  TestTube,
-  Mail,
-  MessageSquare,
-  Smartphone,
-  Webhook,
-  CheckCircle,
-  XCircle,
-  Settings,
-  Bell,
-  Send,
-  Link,
-  Radio,
-} from 'lucide-react';
-import { PageContainer, Dialog } from '@/components/common';
-import { ListPageTemplate } from '@/components/templates/ListPageTemplate';
-import type { ColumnDef } from '@/components/templates/ListPageTemplate';
+
+import CrudPage, { type CrudApiAdapter } from '@/components/templates/CrudPage';
+import type { ColumnDef, RowAction } from '@/components/templates/list/types';
+import { PageContainer } from '@/components/common';
 import { useNotification } from '@/hooks/useNotification';
 import { apiLogger } from '@/utils/logger';
 import { designTokens } from '@/theme/tokens';
+import {
+  notificationChannelSchema,
+  CHANNEL_TYPE_OPTIONS,
+  getChannelTypeInfo,
+  ToggleSwitch,
+} from '@/schemas/monitor';
 
 const ct = designTokens.colors;
-
-// ============ 类型定义 ============
 
 interface NotificationChannel {
   id: string;
@@ -59,71 +40,6 @@ interface NotificationChannel {
   created_at?: string;
   updated_at?: string;
 }
-
-interface ChannelFormData {
-  name: string;
-  type: NotificationChannel['type'];
-  enabled: boolean;
-  description: string;
-  email_address?: string;
-  email_smtp_host?: string;
-  email_smtp_port?: string;
-  email_username?: string;
-  email_password?: string;
-  dingtalk_webhook?: string;
-  dingtalk_secret?: string;
-  wechat_webhook?: string;
-  wechat_corp_id?: string;
-  wechat_agent_id?: string;
-  sms_provider?: string;
-  sms_access_key?: string;
-  sms_access_secret?: string;
-  sms_sign_name?: string;
-  sms_template_code?: string;
-  webhook_url?: string;
-  webhook_method?: string;
-  webhook_headers?: string;
-}
-
-const initialFormData: ChannelFormData = {
-  name: '',
-  type: 'email',
-  enabled: true,
-  description: '',
-  email_address: '',
-  email_smtp_host: '',
-  email_smtp_port: '465',
-  email_username: '',
-  email_password: '',
-  dingtalk_webhook: '',
-  dingtalk_secret: '',
-  wechat_webhook: '',
-  wechat_corp_id: '',
-  wechat_agent_id: '',
-  sms_provider: 'aliyun',
-  sms_access_key: '',
-  sms_access_secret: '',
-  sms_sign_name: '',
-  sms_template_code: '',
-  webhook_url: '',
-  webhook_method: 'POST',
-  webhook_headers: '',
-};
-
-const CHANNEL_TYPE_OPTIONS: {
-  value: NotificationChannel['type'];
-  label: string;
-  icon: React.ReactNode;
-  color: string;
-}[] = [
-  { value: 'email', label: '邮件', icon: <Mail size={18} />, color: ct.primary.dark },
-  { value: 'dingtalk', label: '钉钉', icon: <MessageSquare size={18} />, color: ct.success.main },
-  { value: 'wechat', label: '企业微信', icon: <MessageSquare size={18} />, color: 'success.main' },
-  { value: 'sms', label: '短信', icon: <Smartphone size={18} />, color: 'secondary.main' },
-  { value: 'webhook', label: 'Webhook', icon: <Webhook size={18} />, color: 'warning.main' },
-];
-
-// ============ 示例数据 ============
 
 const MOCK_CHANNELS: NotificationChannel[] = [
   {
@@ -188,14 +104,46 @@ const MOCK_CHANNELS: NotificationChannel[] = [
   },
 ];
 
-// ============ 通知渠道配置页面 ============
+const buildConfigMap = (
+  data: Partial<NotificationChannel> & Record<string, unknown>
+): Record<string, string> => {
+  const type = data.type as NotificationChannel['type'];
+  const configMap: Record<string, Record<string, string>> = {
+    email: {
+      email_address: (data.email_address as string) || '',
+      smtp_host: (data.email_smtp_host as string) || '',
+      smtp_port: (data.email_smtp_port as string) || '465',
+      username: (data.email_username as string) || '',
+      password: (data.email_password as string) || '',
+    },
+    dingtalk: {
+      webhook: (data.dingtalk_webhook as string) || '',
+      secret: (data.dingtalk_secret as string) || '',
+    },
+    wechat: {
+      webhook: (data.wechat_webhook as string) || '',
+      corp_id: (data.wechat_corp_id as string) || '',
+      agent_id: (data.wechat_agent_id as string) || '',
+    },
+    sms: {
+      provider: (data.sms_provider as string) || 'aliyun',
+      access_key: (data.sms_access_key as string) || '',
+      access_secret: (data.sms_access_secret as string) || '',
+      sign_name: (data.sms_sign_name as string) || '',
+      template_code: (data.sms_template_code as string) || '',
+    },
+    webhook: {
+      url: (data.webhook_url as string) || '',
+      method: (data.webhook_method as string) || 'POST',
+      headers: (data.webhook_headers as string) || '',
+    },
+  };
+  return configMap[type] || {};
+};
 
 const MonitorNotificationPage: React.FC = () => {
   const { error: notifyError, success: notifySuccess } = useNotification();
-  const [channels, setChannels] = useState<NotificationChannel[]>(MOCK_CHANNELS);
-  const [dialogOpen, setDialogOpen] = useState(false);
-  const [editingChannel, setEditingChannel] = useState<NotificationChannel | null>(null);
-  const [formData, setFormData] = useState<ChannelFormData>(initialFormData);
+  const channelsRef = useRef<NotificationChannel[]>(MOCK_CHANNELS);
   const [testLoading, setTestLoading] = useState<string | null>(null);
   const [testResult, setTestResult] = useState<{
     channelId: string;
@@ -203,140 +151,18 @@ const MonitorNotificationPage: React.FC = () => {
     message: string;
   } | null>(null);
 
-  // 打开新建对话框
-  const handleCreate = useCallback(() => {
-    setEditingChannel(null);
-    setFormData(initialFormData);
-    setDialogOpen(true);
-  }, []);
-
-  // 打开编辑对话框
-  const handleEdit = useCallback((channel: NotificationChannel) => {
-    setEditingChannel(channel);
-    setFormData({
-      name: channel.name,
-      type: channel.type,
-      enabled: channel.enabled,
-      description: channel.description || '',
-      email_address: channel.config.email_address || '',
-      email_smtp_host: channel.config.smtp_host || '',
-      email_smtp_port: channel.config.smtp_port || '465',
-      email_username: channel.config.username || '',
-      email_password: channel.config.password || '',
-      dingtalk_webhook: channel.config.webhook || '',
-      dingtalk_secret: channel.config.secret || '',
-      wechat_webhook: channel.config.webhook || '',
-      wechat_corp_id: channel.config.corp_id || '',
-      wechat_agent_id: channel.config.agent_id || '',
-      sms_provider: channel.config.provider || 'aliyun',
-      sms_access_key: channel.config.access_key || '',
-      sms_access_secret: channel.config.access_secret || '',
-      sms_sign_name: channel.config.sign_name || '',
-      sms_template_code: channel.config.template_code || '',
-      webhook_url: channel.config.url || '',
-      webhook_method: channel.config.method || 'POST',
-      webhook_headers: channel.config.headers || '',
-    });
-    setDialogOpen(true);
-  }, []);
-
-  // 保存渠道
-  const handleSave = useCallback(() => {
-    if (!formData.name.trim()) {
-      notifyError('请输入渠道名称');
-      return;
-    }
-
-    const configMap: Record<string, Record<string, string>> = {
-      email: {
-        email_address: formData.email_address || '',
-        smtp_host: formData.email_smtp_host || '',
-        smtp_port: formData.email_smtp_port || '465',
-        username: formData.email_username || '',
-        password: formData.email_password || '',
-      },
-      dingtalk: {
-        webhook: formData.dingtalk_webhook || '',
-        secret: formData.dingtalk_secret || '',
-      },
-      wechat: {
-        webhook: formData.wechat_webhook || '',
-        corp_id: formData.wechat_corp_id || '',
-        agent_id: formData.wechat_agent_id || '',
-      },
-      sms: {
-        provider: formData.sms_provider || 'aliyun',
-        access_key: formData.sms_access_key || '',
-        access_secret: formData.sms_access_secret || '',
-        sign_name: formData.sms_sign_name || '',
-        template_code: formData.sms_template_code || '',
-      },
-      webhook: {
-        url: formData.webhook_url || '',
-        method: formData.webhook_method || 'POST',
-        headers: formData.webhook_headers || '',
-      },
-    };
-
-    if (editingChannel) {
-      setChannels((prev) =>
-        prev.map((ch) =>
-          ch.id === editingChannel.id
-            ? {
-                ...ch,
-                name: formData.name,
-                type: formData.type,
-                enabled: formData.enabled,
-                description: formData.description,
-                config: configMap[formData.type],
-                updated_at: new Date().toISOString(),
-              }
-            : ch
-        )
-      );
-      notifySuccess('通知渠道已更新');
-    } else {
-      const newChannel: NotificationChannel = {
-        id: `CH${String(channels.length + 1).padStart(3, '0')}`,
-        name: formData.name,
-        type: formData.type,
-        config: configMap[formData.type],
-        enabled: formData.enabled,
-        description: formData.description,
-        created_at: new Date().toISOString(),
-        updated_at: new Date().toISOString(),
-      };
-      setChannels((prev) => [...prev, newChannel]);
-      notifySuccess('通知渠道已创建');
-    }
-    setDialogOpen(false);
-  }, [formData, editingChannel, channels.length, notifySuccess, notifyError]);
-
-  // 删除渠道
-  const handleDelete = useCallback(
-    (channel: NotificationChannel) => {
-      setChannels((prev) => prev.filter((ch) => ch.id !== channel.id));
-      notifySuccess('通知渠道已删除');
-    },
-    [notifySuccess]
-  );
-
-  // 切换渠道启用状态
   const handleToggleEnabled = useCallback(
     (channel: NotificationChannel) => {
-      setChannels((prev) =>
-        prev.map((ch) =>
-          ch.id === channel.id
-            ? { ...ch, enabled: !ch.enabled, updated_at: new Date().toISOString() }
-            : ch
-        )
+      channelsRef.current = channelsRef.current.map((ch) =>
+        ch.id === channel.id
+          ? { ...ch, enabled: !ch.enabled, updated_at: new Date().toISOString() }
+          : ch
       );
       notifySuccess(channel.enabled ? '渠道已停用' : '渠道已启用');
     },
     [notifySuccess]
   );
 
-  // 测试通知
   const handleTest = useCallback(
     async (channel: NotificationChannel) => {
       setTestLoading(channel.id);
@@ -345,18 +171,15 @@ const MonitorNotificationPage: React.FC = () => {
       try {
         await new Promise((resolve) => setTimeout(resolve, 2000));
 
-        // 模拟测试结果
         const success = channel.last_test_status !== 'failed';
-        setChannels((prev) =>
-          prev.map((ch) =>
-            ch.id === channel.id
-              ? {
-                  ...ch,
-                  last_test_at: new Date().toISOString(),
-                  last_test_status: success ? 'success' : 'failed',
-                }
-              : ch
-          )
+        channelsRef.current = channelsRef.current.map((ch) =>
+          ch.id === channel.id
+            ? {
+                ...ch,
+                last_test_at: new Date().toISOString(),
+                last_test_status: success ? ('success' as const) : ('failed' as const),
+              }
+            : ch
         );
         setTestResult({
           channelId: channel.id,
@@ -385,294 +208,73 @@ const MonitorNotificationPage: React.FC = () => {
     [notifySuccess, notifyError]
   );
 
-  const getChannelTypeInfo = (type: string) => {
-    return (
-      CHANNEL_TYPE_OPTIONS.find((t) => t.value === type) || {
-        label: type,
-        icon: <Bell size={18} />,
-        color: 'grey.500',
-      }
-    );
-  };
+  const apiAdapter = useMemo<CrudApiAdapter<NotificationChannel>>(
+    () => ({
+      list: async (params) => {
+        let filtered = channelsRef.current;
+        const type = params?.type as string | undefined;
+        if (type && type !== 'all') {
+          filtered = filtered.filter((c) => c.type === type);
+        }
+        const search = params?.search as string | undefined;
+        if (search) {
+          const query = search.toLowerCase();
+          filtered = filtered.filter(
+            (c) =>
+              c.name.toLowerCase().includes(query) ||
+              (c.description || '').toLowerCase().includes(query)
+          );
+        }
+        return { data: [...filtered], total: filtered.length };
+      },
+      create: async (data) => {
+        const newChannel: NotificationChannel = {
+          id: `CH${String(channelsRef.current.length + 1).padStart(3, '0')}`,
+          name: (data.name as string) || '',
+          type: (data.type as NotificationChannel['type']) || 'email',
+          config: buildConfigMap(data),
+          enabled: data.enabled !== undefined ? !!data.enabled : true,
+          description: (data.description as string) || '',
+          created_at: new Date().toISOString(),
+          updated_at: new Date().toISOString(),
+        };
+        channelsRef.current = [...channelsRef.current, newChannel];
+        notifySuccess('通知渠道已创建');
+        return newChannel;
+      },
+      update: async (id, data) => {
+        const existing = channelsRef.current.find((c) => c.id === id);
+        if (!existing) throw new Error('渠道不存在');
+        const updated: NotificationChannel = {
+          ...existing,
+          name: (data.name as string) ?? existing.name,
+          type: (data.type as NotificationChannel['type']) ?? existing.type,
+          enabled: data.enabled !== undefined ? !!data.enabled : existing.enabled,
+          description: (data.description as string) ?? existing.description,
+          config: data.type !== undefined ? buildConfigMap(data) : existing.config,
+          updated_at: new Date().toISOString(),
+        };
+        channelsRef.current = channelsRef.current.map((c) => (c.id === id ? updated : c));
+        notifySuccess('通知渠道已更新');
+        return updated;
+      },
+      delete: async (id) => {
+        channelsRef.current = channelsRef.current.filter((c) => c.id !== id);
+        notifySuccess('通知渠道已删除');
+      },
+    }),
+    [notifySuccess, notifyError]
+  );
 
-  const renderConfigFields = () => {
-    switch (formData.type) {
-      case 'email':
-        return (
-          <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
-            <Typography
-              variant='subtitle2'
-              color='text.secondary'
-            >
-              邮件服务器配置
-            </Typography>
-            <TextField
-              label='SMTP 服务器地址'
-              value={formData.email_smtp_host}
-              onChange={(e) =>
-                setFormData((prev) => ({ ...prev, email_smtp_host: e.target.value }))
-              }
-              placeholder='smtp.example.com'
-              fullWidth
-              size='small'
-            />
-            <Box sx={{ display: 'flex', gap: 2 }}>
-              <TextField
-                label='SMTP 端口'
-                value={formData.email_smtp_port}
-                onChange={(e) =>
-                  setFormData((prev) => ({ ...prev, email_smtp_port: e.target.value }))
-                }
-                placeholder='465'
-                size='small'
-                sx={{ flex: 0.5 }}
-              />
-            </Box>
-            <TextField
-              label='发件人邮箱'
-              value={formData.email_address}
-              onChange={(e) => setFormData((prev) => ({ ...prev, email_address: e.target.value }))}
-              placeholder='noreply@example.com'
-              fullWidth
-              size='small'
-            />
-            <TextField
-              label='SMTP 用户名'
-              value={formData.email_username}
-              onChange={(e) => setFormData((prev) => ({ ...prev, email_username: e.target.value }))}
-              placeholder='user@example.com'
-              fullWidth
-              size='small'
-            />
-            <TextField
-              label='SMTP 密码'
-              value={formData.email_password}
-              onChange={(e) => setFormData((prev) => ({ ...prev, email_password: e.target.value }))}
-              type='password'
-              fullWidth
-              size='small'
-            />
-          </Box>
-        );
-      case 'dingtalk':
-        return (
-          <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
-            <Typography
-              variant='subtitle2'
-              color='text.secondary'
-            >
-              钉钉机器人配置
-            </Typography>
-            <TextField
-              label='Webhook 地址'
-              value={formData.dingtalk_webhook}
-              onChange={(e) =>
-                setFormData((prev) => ({ ...prev, dingtalk_webhook: e.target.value }))
-              }
-              placeholder='https://oapi.dingtalk.com/robot/send?access_token=...'
-              fullWidth
-              size='small'
-              slotProps={{
-                input: {
-                  startAdornment: (
-                    <InputAdornment position='start'>
-                      <Link size={16} />
-                    </InputAdornment>
-                  ),
-                },
-              }}
-            />
-            <TextField
-              label='加签密钥 (可选)'
-              value={formData.dingtalk_secret}
-              onChange={(e) =>
-                setFormData((prev) => ({ ...prev, dingtalk_secret: e.target.value }))
-              }
-              placeholder='SEC...'
-              fullWidth
-              size='small'
-            />
-          </Box>
-        );
-      case 'wechat':
-        return (
-          <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
-            <Typography
-              variant='subtitle2'
-              color='text.secondary'
-            >
-              企业微信配置
-            </Typography>
-            <TextField
-              label='Webhook 地址'
-              value={formData.wechat_webhook}
-              onChange={(e) => setFormData((prev) => ({ ...prev, wechat_webhook: e.target.value }))}
-              placeholder='https://qyapi.weixin.qq.com/cgi-bin/webhook/send?key=...'
-              fullWidth
-              size='small'
-              slotProps={{
-                input: {
-                  startAdornment: (
-                    <InputAdornment position='start'>
-                      <Link size={16} />
-                    </InputAdornment>
-                  ),
-                },
-              }}
-            />
-            <TextField
-              label='企业 ID (可选)'
-              value={formData.wechat_corp_id}
-              onChange={(e) => setFormData((prev) => ({ ...prev, wechat_corp_id: e.target.value }))}
-              placeholder='ww...'
-              fullWidth
-              size='small'
-            />
-            <TextField
-              label='应用 ID (可选)'
-              value={formData.wechat_agent_id}
-              onChange={(e) =>
-                setFormData((prev) => ({ ...prev, wechat_agent_id: e.target.value }))
-              }
-              placeholder='1000001'
-              fullWidth
-              size='small'
-            />
-          </Box>
-        );
-      case 'sms':
-        return (
-          <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
-            <Typography
-              variant='subtitle2'
-              color='text.secondary'
-            >
-              短信服务配置
-            </Typography>
-            <FormControl
-              size='small'
-              fullWidth
-            >
-              <InputLabel>短信服务商</InputLabel>
-              <Select
-                value={formData.sms_provider}
-                label='短信服务商'
-                onChange={(e) => setFormData((prev) => ({ ...prev, sms_provider: e.target.value }))}
-              >
-                <MenuItem value='aliyun'>阿里云短信</MenuItem>
-                <MenuItem value='tencent'>腾讯云短信</MenuItem>
-                <MenuItem value='huawei'>华为云短信</MenuItem>
-              </Select>
-            </FormControl>
-            <TextField
-              label='Access Key'
-              value={formData.sms_access_key}
-              onChange={(e) => setFormData((prev) => ({ ...prev, sms_access_key: e.target.value }))}
-              placeholder='LTAI...'
-              fullWidth
-              size='small'
-            />
-            <TextField
-              label='Access Secret'
-              value={formData.sms_access_secret}
-              onChange={(e) =>
-                setFormData((prev) => ({ ...prev, sms_access_secret: e.target.value }))
-              }
-              type='password'
-              fullWidth
-              size='small'
-            />
-            <TextField
-              label='短信签名'
-              value={formData.sms_sign_name}
-              onChange={(e) => setFormData((prev) => ({ ...prev, sms_sign_name: e.target.value }))}
-              placeholder='TOPEMS'
-              fullWidth
-              size='small'
-            />
-            <TextField
-              label='模板编码'
-              value={formData.sms_template_code}
-              onChange={(e) =>
-                setFormData((prev) => ({ ...prev, sms_template_code: e.target.value }))
-              }
-              placeholder='SMS_123456'
-              fullWidth
-              size='small'
-            />
-          </Box>
-        );
-      case 'webhook':
-        return (
-          <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
-            <Typography
-              variant='subtitle2'
-              color='text.secondary'
-            >
-              Webhook 配置
-            </Typography>
-            <TextField
-              label='Webhook URL'
-              value={formData.webhook_url}
-              onChange={(e) => setFormData((prev) => ({ ...prev, webhook_url: e.target.value }))}
-              placeholder='https://hooks.example.com/monitor'
-              fullWidth
-              size='small'
-              required
-              slotProps={{
-                input: {
-                  startAdornment: (
-                    <InputAdornment position='start'>
-                      <Link size={16} />
-                    </InputAdornment>
-                  ),
-                },
-              }}
-            />
-            <FormControl
-              size='small'
-              fullWidth
-            >
-              <InputLabel>请求方法</InputLabel>
-              <Select
-                value={formData.webhook_method}
-                label='请求方法'
-                onChange={(e) =>
-                  setFormData((prev) => ({ ...prev, webhook_method: e.target.value }))
-                }
-              >
-                <MenuItem value='POST'>POST</MenuItem>
-                <MenuItem value='PUT'>PUT</MenuItem>
-                <MenuItem value='GET'>GET</MenuItem>
-              </Select>
-            </FormControl>
-            <TextField
-              label='自定义 Headers (JSON 格式)'
-              value={formData.webhook_headers}
-              onChange={(e) =>
-                setFormData((prev) => ({ ...prev, webhook_headers: e.target.value }))
-              }
-              placeholder='{"Content-Type": "application/json"}'
-              fullWidth
-              size='small'
-              multiline
-              rows={2}
-            />
-          </Box>
-        );
-      default:
-        return null;
-    }
-  };
-
-  const columns = useMemo(
-    (): ColumnDef<NotificationChannel>[] => [
+  const customColumns = useMemo<ColumnDef[]>(
+    () => [
       {
         id: 'name',
         label: '渠道名称',
-        sortable: true,
-        render: (row: NotificationChannel) => {
-          const typeInfo = getChannelTypeInfo(row.type);
+        minWidth: 240,
+        render: (row) => {
+          const channel = row as unknown as NotificationChannel;
+          const typeInfo = getChannelTypeInfo(channel.type);
           return (
             <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5 }}>
               <Box
@@ -694,14 +296,14 @@ const MonitorNotificationPage: React.FC = () => {
                   variant='body2'
                   sx={{ fontWeight: 500 }}
                 >
-                  {row.name}
+                  {channel.name}
                 </Typography>
-                {row.description && (
+                {channel.description && (
                   <Typography
                     variant='caption'
                     color='text.secondary'
                   >
-                    {row.description}
+                    {channel.description}
                   </Typography>
                 )}
               </Box>
@@ -712,102 +314,174 @@ const MonitorNotificationPage: React.FC = () => {
       {
         id: 'type',
         label: '渠道类型',
-        render: (row: NotificationChannel) => {
-          const typeInfo = getChannelTypeInfo(row.type);
+        width: 140,
+        render: (row) => {
+          const channel = row as unknown as NotificationChannel;
+          const typeInfo = getChannelTypeInfo(channel.type);
           return (
-            <Chip
-              size='small'
-              label={typeInfo.label}
+            <Box
+              component='span'
               sx={{
-                fontWeight: 500,
+                display: 'inline-flex',
+                alignItems: 'center',
+                px: 1,
+                py: 0.5,
+                borderRadius: 1,
                 bgcolor: `${typeInfo.color}15`,
                 color: typeInfo.color,
                 border: `1px solid ${typeInfo.color}30`,
+                fontSize: '0.75rem',
+                fontWeight: 500,
               }}
-            />
+            >
+              {typeInfo.label}
+            </Box>
           );
         },
       },
       {
-        id: 'status',
+        id: 'enabled',
         label: '状态',
-        render: (row: NotificationChannel) => (
-          <Box sx={{ display: 'flex', flexDirection: 'column', gap: 0.5 }}>
-            <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-              <Switch
-                checked={row.enabled}
-                onChange={() => handleToggleEnabled(row)}
-                size='small'
-                color={row.enabled ? 'success' : 'default'}
-              />
-              <Typography
-                variant='body2'
-                color={row.enabled ? 'success.main' : 'text.disabled'}
-              >
-                {row.enabled ? '已启用' : '已停用'}
-              </Typography>
-            </Box>
-            {/* 上次测试状态 */}
-            {row.last_test_at && (
-              <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
-                {row.last_test_status === 'success' ? (
-                  <CheckCircle
-                    size={12}
-                    sx={{ color: 'success.main' }}
-                  />
-                ) : (
-                  <XCircle
-                    size={12}
-                    sx={{ color: 'error.main' }}
-                  />
-                )}
+        width: 200,
+        render: (row) => {
+          const channel = row as unknown as NotificationChannel;
+          return (
+            <Box sx={{ display: 'flex', flexDirection: 'column', gap: 0.5 }}>
+              <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                <ToggleSwitch
+                  checked={channel.enabled}
+                  size='small'
+                  color={channel.enabled ? 'success' : 'default'}
+                  onChange={() => handleToggleEnabled(channel)}
+                />
                 <Typography
-                  variant='caption'
-                  color='text.secondary'
+                  variant='body2'
+                  color={channel.enabled ? 'success.main' : 'text.disabled'}
                 >
-                  上次测试: {new Date(row.last_test_at).toLocaleString('zh-CN')}
+                  {channel.enabled ? '已启用' : '已停用'}
                 </Typography>
               </Box>
-            )}
-          </Box>
-        ),
-      },
-      {
-        id: 'actions',
-        label: '操作',
-        align: 'right',
-        render: (row: NotificationChannel) => (
-          <Box sx={{ display: 'flex', gap: 0.5, justifyContent: 'flex-end' }}>
-            <Tooltip title='编辑'>
-              <IconButton
-                size='small'
-                onClick={() => handleEdit(row)}
-              >
-                <Edit3 size={16} />
-              </IconButton>
-            </Tooltip>
-            <Tooltip title='发送测试通知'>
-              <IconButton
-                size='small'
-                onClick={() => handleTest(row)}
-              >
-                {testLoading === row.id ? <LoadingSpinner size='sm' /> : <TestTube size={16} />}
-              </IconButton>
-            </Tooltip>
-            <Tooltip title='删除'>
-              <IconButton
-                size='small'
-                color='error'
-                onClick={() => handleDelete(row)}
-              >
-                <Trash2 size={16} />
-              </IconButton>
-            </Tooltip>
-          </Box>
-        ),
+              {channel.last_test_at && (
+                <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
+                  {channel.last_test_status === 'success' ? (
+                    <Box
+                      component='span'
+                      sx={{ color: 'success.main', display: 'inline-flex' }}
+                    >
+                      ✓
+                    </Box>
+                  ) : (
+                    <Box
+                      component='span'
+                      sx={{ color: 'error.main', display: 'inline-flex' }}
+                    >
+                      ✗
+                    </Box>
+                  )}
+                  <Typography
+                    variant='caption'
+                    color='text.secondary'
+                  >
+                    上次测试: {new Date(channel.last_test_at).toLocaleString('zh-CN')}
+                  </Typography>
+                </Box>
+              )}
+            </Box>
+          );
+        },
       },
     ],
-    [handleToggleEnabled, handleEdit, handleDelete, handleTest, testLoading]
+    [handleToggleEnabled]
+  );
+
+  const customRowActions = useMemo<RowAction[]>(
+    () => [
+      {
+        label: '启用/停用',
+        icon: <Power size={16} />,
+        onClick: (row: Record<string, unknown>) => {
+          const channel = row as unknown as NotificationChannel;
+          handleToggleEnabled(channel);
+        },
+      },
+      {
+        label: '发送测试通知',
+        icon: testLoading ? <LoadingSpinner size='sm' /> : <TestTube size={16} />,
+        onClick: (row: Record<string, unknown>) => {
+          const channel = row as unknown as NotificationChannel;
+          void handleTest(channel);
+        },
+      },
+    ],
+    [handleToggleEnabled, handleTest, testLoading]
+  );
+
+  const headerContent = useCallback(
+    (rows: Record<string, unknown>[]) => {
+      const channels = rows as unknown as NotificationChannel[];
+      return (
+        <>
+          {testResult && (
+            <Alert
+              severity={testResult.success ? 'success' : 'error'}
+              sx={{ mb: 2 }}
+              onClose={() => setTestResult(null)}
+            >
+              {testResult.message}
+            </Alert>
+          )}
+          <Paper sx={{ p: 2, mb: 3, borderRadius: 3 }}>
+            <Typography
+              variant='subtitle2'
+              sx={{ mb: 1.5, fontWeight: 600 }}
+            >
+              支持的通知渠道类型
+            </Typography>
+            <Box sx={{ display: 'flex', gap: 2, flexWrap: 'wrap' }}>
+              {CHANNEL_TYPE_OPTIONS.map((type) => {
+                const count = channels.filter((ch) => ch.type === type.value).length;
+                const enabledCount = channels.filter(
+                  (ch) => ch.type === type.value && ch.enabled
+                ).length;
+                return (
+                  <Box
+                    key={type.value}
+                    sx={{
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: 1,
+                      px: 2,
+                      py: 1.5,
+                      borderRadius: 1.5,
+                      bgcolor: `${type.color}08`,
+                      border: `1px solid ${type.color}20`,
+                      minWidth: 140,
+                    }}
+                  >
+                    <Box sx={{ color: type.color }}>{type.icon}</Box>
+                    <Box>
+                      <Typography
+                        variant='body2'
+                        sx={{ fontWeight: 500 }}
+                      >
+                        {type.label}
+                      </Typography>
+                      <Typography
+                        variant='caption'
+                        color='text.secondary'
+                      >
+                        {count} 个渠道, {enabledCount} 已启用
+                      </Typography>
+                    </Box>
+                  </Box>
+                );
+              })}
+            </Box>
+          </Paper>
+        </>
+      );
+    },
+    [testResult]
   );
 
   return (
@@ -815,193 +489,18 @@ const MonitorNotificationPage: React.FC = () => {
       title='通知渠道配置'
       subtitle='管理系统告警的通知发送渠道'
       headerProps={{
-        pageIcon: <Bell style={{ width: 20, height: 20 }} />,
+        pageIcon: <Bell size={20} />,
         pageGradient: `linear-gradient(135deg, ${ct.primary.dark} 0%, ${ct.primary[800]} 100%)`,
       }}
     >
-      {/* 测试结果提示 */}
-      {testResult && (
-        <Alert
-          severity={testResult.success ? 'success' : 'error'}
-          sx={{ mb: 2 }}
-          onClose={() => setTestResult(null)}
-        >
-          {testResult.message}
-        </Alert>
-      )}
-
-      {/* 渠道类型概览 */}
-      <Paper sx={{ p: 2, mb: 3, borderRadius: 3 }}>
-        <Typography
-          variant='subtitle2'
-          sx={{ mb: 1.5, fontWeight: 600 }}
-        >
-          支持的通知渠道类型
-        </Typography>
-        <Box sx={{ display: 'flex', gap: 2, flexWrap: 'wrap' }}>
-          {CHANNEL_TYPE_OPTIONS.map((type) => {
-            const count = channels.filter((ch) => ch.type === type.value).length;
-            const enabledCount = channels.filter(
-              (ch) => ch.type === type.value && ch.enabled
-            ).length;
-            return (
-              <Box
-                key={type.value}
-                sx={{
-                  display: 'flex',
-                  alignItems: 'center',
-                  gap: 1,
-                  px: 2,
-                  py: 1.5,
-                  borderRadius: 1.5,
-                  bgcolor: `${type.color}08`,
-                  border: `1px solid ${type.color}20`,
-                  minWidth: 140,
-                }}
-              >
-                <Box sx={{ color: type.color }}>{type.icon}</Box>
-                <Box>
-                  <Typography
-                    variant='body2'
-                    sx={{ fontWeight: 500 }}
-                  >
-                    {type.label}
-                  </Typography>
-                  <Typography
-                    variant='caption'
-                    color='text.secondary'
-                  >
-                    {count} 个渠道, {enabledCount} 已启用
-                  </Typography>
-                </Box>
-              </Box>
-            );
-          })}
-        </Box>
-      </Paper>
-
-      <ListPageTemplate<NotificationChannel>
-        title='通知渠道'
-        subtitle={`共 ${channels.length} 个渠道`}
-        columns={columns}
-        data={channels}
-        getRowId={(row) => row.id}
-        searchable
-        searchPlaceholder='搜索渠道名称...'
-        primaryActionButton={{
-          label: '添加渠道',
-          icon: <Plus size={18} />,
-          onClick: handleCreate,
-        }}
-        onRefresh={() => {}}
-        filters={[
-          {
-            id: 'type',
-            label: '渠道类型',
-            options: CHANNEL_TYPE_OPTIONS.map((t) => ({ label: t.label, value: t.value })),
-          },
-        ]}
+      <CrudPage
+        schema={notificationChannelSchema}
+        apiAdapter={apiAdapter}
+        customColumns={customColumns}
+        customRowActions={customRowActions}
+        headerContent={headerContent}
+        breadcrumbs={[{ label: '监控' }, { label: '通知渠道' }]}
       />
-
-      {/* 渠道创建/编辑对话框 */}
-      <Dialog
-        open={dialogOpen}
-        onClose={() => setDialogOpen(false)}
-        title={editingChannel ? '编辑通知渠道' : '添加通知渠道'}
-        maxWidth='md'
-        confirmButton={{
-          label: editingChannel ? '保存' : '创建',
-          onClick: handleSave,
-        }}
-        cancelButton={{
-          label: '取消',
-          onClick: () => setDialogOpen(false),
-        }}
-      >
-        <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2.5, pt: 1 }}>
-          {/* 渠道名称 */}
-          <TextField
-            label='渠道名称'
-            value={formData.name}
-            onChange={(e) => setFormData((prev) => ({ ...prev, name: e.target.value }))}
-            placeholder='例如：运维组钉钉通知'
-            fullWidth
-            size='small'
-            required
-          />
-
-          {/* 描述 */}
-          <TextField
-            label='渠道描述'
-            value={formData.description}
-            onChange={(e) => setFormData((prev) => ({ ...prev, description: e.target.value }))}
-            placeholder='描述此通知渠道的用途'
-            fullWidth
-            size='small'
-            multiline
-            rows={2}
-          />
-
-          {/* 渠道类型 */}
-          <FormControl
-            size='small'
-            fullWidth
-          >
-            <InputLabel>渠道类型</InputLabel>
-            <Select
-              value={formData.type}
-              label='渠道类型'
-              onChange={(e) =>
-                setFormData((prev) => ({
-                  ...prev,
-                  type: e.target.value as NotificationChannel['type'],
-                }))
-              }
-            >
-              {CHANNEL_TYPE_OPTIONS.map((opt) => (
-                <MenuItem
-                  key={opt.value}
-                  value={opt.value}
-                >
-                  <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5 }}>
-                    <Box sx={{ color: opt.color }}>{opt.icon}</Box>
-                    {opt.label}
-                  </Box>
-                </MenuItem>
-              ))}
-            </Select>
-          </FormControl>
-
-          <Divider />
-
-          {/* 动态配置字段 */}
-          {renderConfigFields()}
-
-          <Divider />
-
-          {/* 启用状态 */}
-          <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-            <Box>
-              <Typography
-                variant='body2'
-                sx={{ fontWeight: 500 }}
-              >
-                启用此渠道
-              </Typography>
-              <Typography
-                variant='caption'
-                color='text.secondary'
-              >
-                启用后，关联的告警规则将通过此渠道发送通知
-              </Typography>
-            </Box>
-            <Switch
-              checked={formData.enabled}
-              onChange={(e) => setFormData((prev) => ({ ...prev, enabled: e.target.checked }))}
-            />
-          </Box>
-        </Box>
-      </Dialog>
     </PageContainer>
   );
 };

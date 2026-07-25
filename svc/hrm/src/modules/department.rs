@@ -1,5 +1,5 @@
 use axum::{
-    extract::{Path, Query, State},
+    extract::{Extension, Path, Query, State},
     routing::*,
     Json, Router,
 };
@@ -9,6 +9,7 @@ use uuid::Uuid;
 
 use super::ApiState;
 use crate::models::{CreateDepartmentRequest, Department, UpdateDepartmentRequest};
+use topems_shared::auth::Claims;
 use topems_shared::event::MasterDataAction;
 use topems_shared::{api_error, ApiResponse};
 
@@ -129,6 +130,7 @@ async fn list_departments(
 )]
 async fn create_department(
     State(state): State<ApiState>,
+    Extension(claims): Extension<Claims>,
     Json(req): Json<CreateDepartmentRequest>,
 ) -> Json<ApiResponse<Department>> {
     let id = Uuid::new_v4();
@@ -172,7 +174,7 @@ async fn create_department(
             tokio::spawn(async move {
                 mdm_service
                     .publish_department_event(
-                        Uuid::nil(), // TODO: 获取真实 tenant_id
+                        claims.tenant_id.as_deref().and_then(|s| Uuid::parse_str(s).ok()).unwrap_or(Uuid::nil()),
                         dept_id,
                         dept_code.as_deref(),
                         &dept_name,
@@ -234,6 +236,7 @@ async fn get_department(
 
 async fn update_department(
     State(state): State<ApiState>,
+    Extension(claims): Extension<Claims>,
     Path(id): Path<Uuid>,
     Json(req): Json<UpdateDepartmentRequest>,
 ) -> Json<ApiResponse<Department>> {
@@ -299,7 +302,7 @@ async fn update_department(
             tokio::spawn(async move {
                 mdm_service
                     .publish_department_event(
-                        Uuid::nil(), // TODO: 获取真实 tenant_id
+                        claims.tenant_id.as_deref().and_then(|s| Uuid::parse_str(s).ok()).unwrap_or(Uuid::nil()),
                         dept_id,
                         dept_code.as_deref(),
                         &dept_name,
@@ -324,6 +327,7 @@ async fn update_department(
 
 async fn delete_department(
     State(state): State<ApiState>,
+    Extension(claims): Extension<Claims>,
     Path(id): Path<Uuid>,
 ) -> Json<ApiResponse<String>> {
     let result = sqlx::query("DELETE FROM hrm.departments WHERE id = $1")
@@ -339,7 +343,7 @@ async fn delete_department(
             tokio::spawn(async move {
                 mdm_service
                     .publish_department_event(
-                        Uuid::nil(), // TODO: 获取真实 tenant_id
+                        claims.tenant_id.as_deref().and_then(|s| Uuid::parse_str(s).ok()).unwrap_or(Uuid::nil()),
                         dept_id,
                         None,
                         "DELETED",

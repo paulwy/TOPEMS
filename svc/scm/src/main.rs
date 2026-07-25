@@ -14,48 +14,41 @@ mod event_handlers;
 use topems_scm::modules;
 
 use anyhow::Result;
-use axum::{
-    extract::State,
-    http::StatusCode,
-    routing::{get, post},
-    Json, Router,
-};
+use axum::{routing::get, Router};
 use std::env;
-use std::time::Instant;
-use utoipa::OpenApi;
-
-use axum_prometheus::PrometheusMetricLayer;
-use modules::{scm_plugin, ApiState};
-use prometheus::{default_registry, Gauge};
 use std::sync::Arc;
 use std::time::Duration;
+use utoipa::OpenApi;
+
+use prometheus::{default_registry, Gauge};
 use topems_scm::shared::cache::InMemoryCache;
-use topems_shared::redis::RedisCacheService;
-use topems_shared::{
-    auth_middleware, build_health_response, create_api_info_router, create_cors_layer,
-    create_database_pool, init_telemetry, rate_limit_middleware, register_routes_with_legacy_alias,
-    rls_middleware, telemetry_middleware, ApiResponse, AuthState, DatabaseConfig, RateLimitConfig,
-    RateLimitMiddleware, RedisConfig, RedisPool as RedisPoolTrait, ServiceHealth,
+use topems_shared::redis::{RedisCacheService, RedisPool as RedisPoolTrait};
+use topems_shared::RedisConfig;
+use topems_shared::service_bootstrap::{
+    bootstrap_service, build_application, create_health_state, create_standard_health_routes, run,
+    Application, ServiceConfig,
 };
 use tower_http::{compression::CompressionLayer, timeout::TimeoutLayer};
 
-static START_TIME: std::sync::OnceLock<Instant> = std::sync::OnceLock::new();
-
-fn get_uptime() -> u64 {
-    START_TIME.get_or_init(Instant::now).elapsed().as_secs()
-}
+use modules::{scm_plugin, ApiState};
 
 #[tokio::main]
 async fn main() -> Result<()> {
-    dotenv::dotenv().ok();
-
-    let _telemetry_guard = init_telemetry("topems-scm");
-    START_TIME.get_or_init(Instant::now);
-
     // 设置search_path环境变量（供lib使用）
     env::set_var("SEARCH_PATH", "scm, shared, public");
 
-    let (prometheus_layer, metric_handle) = PrometheusMetricLayer::pair();
+    let config = ServiceConfig {
+        name: "topems-scm",
+        port: 8040,
+        port_env_var: Some("SCM_PORT"),
+        max_db_connections: 50,
+        enable_events: true,
+        api_prefix: "/api/scm",
+        legacy_prefixes: &["/api/v1/scm"],
+        ..Default::default()
+    };
+
+    // 注册自定义 Prometheus 指标（在 bootstrap_service 之前注册，确保 /metrics 可用）
     let custom_gauge = Gauge::new(
         "topems_scm_custom_metric",
         "This is a custom metric for TOPEMS-SCM",
@@ -75,24 +68,17 @@ async fn main() -> Result<()> {
     custom_gauge.set(42.0);
     tracing::info!("✅ Prometheus 监控已初始化");
 
-    let db_config = DatabaseConfig {
-        url: env::var("DATABASE_URL").map_err(|_| {
-            tracing::error!("DATABASE_URL environment variable is required");
-            anyhow::anyhow!("DATABASE_URL environment variable is required")
-        })?,
-        max_connections: 50,
-        min_connections: Some(10),
-        connect_timeout: Some(10),
-        idle_timeout: Some(300),
-        max_lifetime: Some(1800),
-        test_interval: Some(60),
-        enable_connection_reuse: Some(true),
-    };
+    let ctx = bootstrap_service(&config).await?;
 
-    let pool = create_database_pool(&db_config).await?;
+    if let Err(e) = init_db(&ctx.db).await {
+        tracing::warn!("数据库初始化警告: {}", e);
+    }
 
-    tracing::info!("🔗 数据库连接成功");
+    if let Err(e) = event_handlers::start_event_subscribers(ctx.db.clone()).await {
+        tracing::warn!("⚠️ SCM 事件订阅者启动失败: {}", e);
+    }
 
+    // Redis 缓存（可选，失败不阻塞启动）
     let redis_cache = match env::var("REDIS_URL").ok() {
         Some(url) => {
             let redis_config = RedisConfig {
@@ -100,8 +86,7 @@ async fn main() -> Result<()> {
                 max_connections: 20,
                 connect_timeout: Some(5),
             };
-            let redis_pool = RedisPoolTrait::new(&redis_config).await;
-            match redis_pool {
+            match RedisPoolTrait::new(&redis_config).await {
                 Ok(pool) => {
                     let cache = Arc::new(RedisCacheService::new(Arc::new(pool)));
                     tracing::info!("✅ Redis 缓存服务已初始化");
@@ -119,103 +104,51 @@ async fn main() -> Result<()> {
         }
     };
 
-    if let Err(e) = init_db(&pool).await {
-        tracing::warn!("数据库初始化警告: {}", e);
-    }
-
-    if let Err(e) = event_handlers::start_event_subscribers(pool.clone()).await {
-        tracing::warn!("⚠️ SCM 事件订阅者启动失败: {}", e);
-    }
-
-    let event_publisher = match topems_shared::event::EventPublisher::new("topems-scm") {
-        Ok(publisher) => {
-            tracing::info!("📢 事件发布服务初始化成功");
-            Some(Arc::new(publisher))
-        }
-        Err(e) => {
-            tracing::warn!("⚠️ 事件发布服务初始化失败（不阻塞启动）: {}", e);
-            None
-        }
-    };
-
     let supplier_cache = Arc::new(InMemoryCache::new(Duration::from_secs(300)));
     let purchase_cache = Arc::new(InMemoryCache::new(Duration::from_secs(120)));
     let dict_cache = Arc::new(InMemoryCache::new(Duration::from_secs(600)));
-
     tracing::info!("💾 内存缓存初始化完成（供应商/采购/字典）");
 
     let api_state = ApiState {
-        db: pool.clone(),
-        auth_state: AuthState::from_env(),
+        db: ctx.db.clone(),
+        auth_state: ctx.auth_state.clone(),
         cache: redis_cache,
-        event_publisher,
+        event_publisher: ctx.event_publisher.clone(),
         supplier_cache,
         purchase_cache,
         dict_cache,
     };
 
-    let cors = create_cors_layer();
-
-    let public_routes = Router::new()
-        .route("/health", get(health_check))
-        .route(
-            "/metrics",
-            get(move || async move { metric_handle.render() }),
-        )
+    // 标准健康检查路由（使用 BootstrapAppState）
+    let health_state = create_health_state(&ctx, &config);
+    // 插件路由（需要 ApiState）
+    let plugin_routes = Router::new()
         .route("/api/plugins/info", get(scm_plugin::get_plugin_info))
         .route("/api/plugins/health", get(scm_plugin::plugin_health_check))
-        .route("/api-docs/openapi.json", get(serve_openapi_json));
+        .with_state(api_state.clone());
+    let public_routes = create_standard_health_routes(health_state).merge(plugin_routes);
 
-    let rate_limit_config = RateLimitConfig::new(200, 60)
-        .with_by_user_id(false)
-        .with_by_ip(true);
-    let rate_limiter = Arc::new(RateLimitMiddleware::new(rate_limit_config));
-    let rate_limit_layer = axum::middleware::from_fn({
-        let mw = rate_limiter.clone();
-        move |req, next| {
-            let mw = mw.clone();
-            async move { rate_limit_middleware(mw, req, next).await }
-        }
-    });
+    // 业务路由
+    let protected_routes = modules::create_routes().with_state(api_state);
 
-    let protected_routes = modules::create_routes()
-        .layer(axum::middleware::from_fn_with_state(
-            api_state.auth_state.clone(),
-            auth_middleware,
-        ))
-        .layer(axum::middleware::from_fn_with_state(
-            api_state.db.clone(),
-            rls_middleware,
-        ))
-        .layer(rate_limit_layer);
+    // OpenAPI 文档
+    let openapi_json = Some(
+        serde_json::to_string_pretty(&modules::openapi::ScmApiDoc::openapi()).unwrap_or_else(|e| {
+            tracing::error!("Failed to serialize OpenAPI spec: {}", e);
+            "{}".to_string()
+        }),
+    );
 
-    let app = register_routes_with_legacy_alias(
-        Router::new().merge(public_routes),
-        "/api/scm",
-        &["/api/v1/scm"],
-        protected_routes,
-    )
-    .route("/api/health/detailed", get(health_check_detailed))
-    .merge(create_api_info_router("topems-scm"))
-    .with_state(api_state)
-    .layer(cors)
-    .layer(axum::middleware::from_fn(telemetry_middleware))
-    .layer(prometheus_layer)
-    .layer(CompressionLayer::new())
-    .layer(TimeoutLayer::with_status_code(
-        StatusCode::REQUEST_TIMEOUT,
-        Duration::from_secs(30),
-    ));
+    let app = build_application(&ctx, &config, public_routes, protected_routes, openapi_json);
 
-    let port = env::var("SCM_PORT")
-        .or_else(|_| env::var("SERVER_PORT"))
-        .or_else(|_| env::var("PORT"))
-        .unwrap_or_else(|_| "8040".to_string());
-    let addr = format!("0.0.0.0:{}", port);
-
-    tracing::info!("🚀 TOPEMS-SCM 供应链管理系统启动中...");
-    tracing::info!("📦 端口: {}", port);
-    tracing::info!("🔒 认证保护已启用");
+    // SCM 额外的全局中间件：压缩 + 超时
+    let router = app
+        .router
+        .layer(CompressionLayer::new())
+        .layer(TimeoutLayer::with_status_code(
+            axum::http::StatusCode::REQUEST_TIMEOUT,
+            Duration::from_secs(30),
+        ));
 
     // 启动时自动注册到统一核心
     let core_url = env::var("CORE_URL").ok();
@@ -223,95 +156,38 @@ async fn main() -> Result<()> {
         scm_plugin::auto_register_to_core(core_url.as_deref()).await;
     });
 
-    let listener = tokio::net::TcpListener::bind(&addr).await?;
-    axum::serve(listener, app).await?;
+    run(Application {
+        router,
+        port: app.port,
+        name: app.name,
+    })
+    .await
+}
 
+async fn init_db(pool: &sqlx::PgPool) -> Result<()> {
+    // V32.0 AC-5: 本地主数据引用表，用于跨服务 master_data_id 关联
+    // 消费端通过 master_data_id 查找本地业务记录，而非依赖业务编码
+    sqlx::query(
+        r#"
+        CREATE TABLE IF NOT EXISTS scm_master_data_refs (
+            master_data_id   VARCHAR(128) PRIMARY KEY,
+            tenant_id        UUID NOT NULL,
+            domain           VARCHAR(32) NOT NULL,
+            code             VARCHAR(128) NOT NULL,
+            name             VARCHAR(256),
+            status           VARCHAR(32) DEFAULT 'active',
+            source_service   VARCHAR(64) NOT NULL,
+            local_entity_type VARCHAR(64),
+            local_entity_id  UUID,
+            payload_snapshot JSONB,
+            last_synced_at   TIMESTAMPTZ DEFAULT NOW(),
+            created_at       TIMESTAMPTZ DEFAULT NOW(),
+            updated_at       TIMESTAMPTZ DEFAULT NOW()
+        )
+        "#,
+    )
+    .execute(pool)
+    .await?;
+    tracing::info!("[scm] scm_master_data_refs 表已就绪（AC-5 本地主数据引用）");
     Ok(())
-}
-
-async fn health_check() -> ServiceHealth {
-    build_health_response("topems-scm", true)
-}
-
-#[derive(Debug, Clone, serde::Serialize, PartialEq)]
-enum HealthStatus {
-    #[serde(rename = "healthy")]
-    Healthy,
-    #[serde(rename = "degraded")]
-    Degraded,
-    #[serde(rename = "unhealthy")]
-    Unhealthy,
-}
-
-#[derive(Debug, Clone, serde::Serialize)]
-struct DependencyHealth {
-    name: String,
-    status: HealthStatus,
-    message: String,
-}
-
-#[derive(Debug, Clone, serde::Serialize)]
-struct DetailedHealth {
-    service_name: String,
-    status: HealthStatus,
-    message: String,
-    timestamp: String,
-    uptime: Option<u64>,
-    dependencies: Option<Vec<DependencyHealth>>,
-    response_time_ms: Option<u64>,
-    last_check: Option<String>,
-}
-
-async fn health_check_detailed(State(state): State<ApiState>) -> Json<ApiResponse<DetailedHealth>> {
-    let mut dependencies = Vec::new();
-
-    let db_result = sqlx::query("SELECT 1").fetch_one(&state.db).await;
-    let db_health = match db_result {
-        Ok(_) => DependencyHealth {
-            name: "database".to_string(),
-            status: HealthStatus::Healthy,
-            message: "PostgreSQL 数据库连接正常".to_string(),
-        },
-        Err(e) => DependencyHealth {
-            name: "database".to_string(),
-            status: HealthStatus::Unhealthy,
-            message: format!("数据库连接失败: {}", e),
-        },
-    };
-    dependencies.push(db_health);
-
-    let status = if dependencies
-        .iter()
-        .all(|d| d.status == HealthStatus::Healthy)
-    {
-        HealthStatus::Healthy
-    } else if dependencies
-        .iter()
-        .any(|d| d.status == HealthStatus::Unhealthy)
-    {
-        HealthStatus::Unhealthy
-    } else {
-        HealthStatus::Degraded
-    };
-
-    let health = DetailedHealth {
-        service_name: "topems-scm".to_string(),
-        status,
-        message: "健康检查完成".to_string(),
-        timestamp: chrono::Utc::now().to_rfc3339(),
-        uptime: Some(get_uptime()),
-        dependencies: Some(dependencies),
-        response_time_ms: None,
-        last_check: Some(chrono::Utc::now().to_rfc3339()),
-    };
-
-    Json(ApiResponse::success(health, "健康检查完成"))
-}
-
-async fn init_db(_pool: &sqlx::PgPool) -> Result<()> {
-    Ok(())
-}
-
-async fn serve_openapi_json() -> axum::Json<utoipa::openapi::OpenApi> {
-    axum::Json(modules::openapi::ScmApiDoc::openapi())
 }

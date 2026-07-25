@@ -124,7 +124,7 @@ GET /health/details
 | 服务 | 端口 | API 前缀 | 说明 | 状态 |
 |------|------|----------|------|------|
 | **核心服务 (统一承载)** |
-| unified-core | 8000 | /api/iam/, /api/doc/, /api/flow/, /api/file/, /api/mail/, /api/comm/, /api/notification/ | 核心平台 | ✅ |
+| unified-core | 8000 | /api/iam/, /api/doc/, /api/flow/, /api/file/, /api/mail/, /api/comm/, /api/notification/, /api/core/monitor/ | 核心平台 | ✅ |
 | **经营管理 (8010-8019)** |
 | erp | 8010 | /api/erp/ | 企业资源计划 | ✅ |
 | **协同办公 (8020-8029)** |
@@ -142,11 +142,10 @@ GET /health/details
 | qms | 8050 | /api/qms/ | 质量管理 | ✅ |
 | lims | 8051 | /api/lims/ | 实验室信息管理 | ✅ |
 | ehs | 8052 | /api/ehs/ | 环境健康安全 | ✅ |
-| rs | 8053 | /api/rs/ | 研发管理 | ✅ |
+| rd | 8053 | /api/rd/ | 研发管理 | ✅ |
 | **数据分析 (8060-8069)** |
 | bi | 8060 | /api/bi/ | 商业智能 | ✅ |
 | report | 8061 | /api/report/ | 报表服务 | ✅ |
-| monitor | 8062 | /api/monitor/ | 系统监控 | ✅ |
 | portal | 8063 | /api/portal/ | 企业门户 | ✅ |
 | ai | 8013 AI 智能服务 | ✅ |
 | **基础设施 (8070-8079)** |

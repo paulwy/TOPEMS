@@ -419,11 +419,6 @@ const QmsDashboardPage: React.FC = () => {
         recentTitle='最近事项'
         loading={loading}
         onRefresh={loadDashboardData}
-        layout={{
-          statsLayout: 'grid',
-          chartsLayout: 'grid',
-          statsBreakpoints: { xs: 12, sm: 6, md: 4, lg: 2, xl: 2 },
-        }}
       />
     </PageContainer>
   );

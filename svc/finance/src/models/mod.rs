@@ -6,18 +6,58 @@ use std::fmt;
 use uuid::Uuid;
 use utoipa::ToSchema;
 
-#[derive(Debug, Clone, FromRow, Serialize, ToSchema)]
+#[derive(Debug, Clone, FromRow, Serialize, Deserialize, ToSchema)]
+#[schema(as = Account)]
 pub struct Account {
     pub id: Uuid,
     pub tenant_id: Uuid,
     pub code: String,
     pub name: String,
     pub parent_id: Option<Uuid>,
-    pub account_type: AccountType,
+    #[serde(alias = "category")]
+    pub account_type: Option<AccountType>,
     pub level: i32,
     pub currency: String,
-    pub is_enabled: bool,
+    #[serde(alias = "isactive")]
+    pub is_enabled: Option<bool>,
     pub description: Option<String>,
+    // === 新增字段（18 个） ===
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub name_en: Option<String>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub full_name: Option<String>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub balance_direction: Option<String>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub r#type: Option<String>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub parent_code: Option<String>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub haschildren: Option<bool>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    #[sqlx(skip)]
+    pub children: Option<Vec<Account>>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    #[sqlx(skip)]
+    pub dimensions: Option<Vec<serde_json::Value>>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub is_cash_flow: Option<bool>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub enable_quantity: Option<bool>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub unit: Option<String>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub enable_foreign_currency: Option<bool>,
+    #[serde(skip_serializing_if = "Option::is_none", alias = "default_currency")]
+    pub default_currency: Option<String>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub is_detail: Option<bool>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub status: Option<String>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub created_by: Option<Uuid>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub updated_by: Option<Uuid>,
     pub created_at: DateTime<Utc>,
     pub updated_at: DateTime<Utc>,
 }
@@ -48,7 +88,8 @@ impl fmt::Display for AccountType {
     }
 }
 
-#[derive(Debug, Clone, FromRow, Serialize, ToSchema)]
+#[derive(Debug, Clone, FromRow, Serialize, Deserialize, ToSchema)]
+#[schema(as = Voucher)]
 pub struct Voucher {
     pub id: Uuid,
     pub tenant_id: Uuid,
@@ -63,6 +104,66 @@ pub struct Voucher {
     pub created_by: String,
     pub approved_by: Option<String>,
     pub posted_by: Option<String>,
+    // === 新增字段（29 个） ===
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub voucher_number: Option<String>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub year: Option<i32>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub month: Option<i32>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub total_amount: Option<f64>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub currency_code: Option<String>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    #[sqlx(skip)]
+    pub entries: Option<Vec<VoucherLine>>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub submitter_id: Option<Uuid>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub submitter_name: Option<String>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub maker_id: Option<Uuid>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub maker_name: Option<String>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub submitted_at: Option<DateTime<Utc>>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub approver_id: Option<Uuid>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub approver_name: Option<String>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub checker_id: Option<Uuid>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub checker_name: Option<String>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub approved_at: Option<DateTime<Utc>>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub poster_id: Option<Uuid>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub poster_name: Option<String>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub bookkeeper_id: Option<Uuid>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub bookkeeper_name: Option<String>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub posted_at: Option<DateTime<Utc>>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub is_reversed: Option<bool>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub reverse_voucher_id: Option<Uuid>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub reversed_at: Option<DateTime<Utc>>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub attachment_count: Option<i32>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub summary: Option<String>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub source_module: Option<String>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub source_id: Option<String>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub updated_by: Option<Uuid>,
     pub created_at: DateTime<Utc>,
     pub updated_at: DateTime<Utc>,
 }
@@ -93,11 +194,13 @@ impl fmt::Display for VoucherType {
 #[sqlx(type_name = "voucher_status")]
 #[sqlx(rename_all = "snake_case")]
 #[serde(rename_all = "snake_case")]
+#[schema(as = VoucherStatus)]
 pub enum VoucherStatus {
     Draft,
     Submitted,
     Approved,
     Posted,
+    Reversed,
     Rejected,
     Cancelled,
 }
@@ -109,13 +212,14 @@ impl fmt::Display for VoucherStatus {
             VoucherStatus::Submitted => write!(f, "submitted"),
             VoucherStatus::Approved => write!(f, "approved"),
             VoucherStatus::Posted => write!(f, "posted"),
+            VoucherStatus::Reversed => write!(f, "reversed"),
             VoucherStatus::Rejected => write!(f, "rejected"),
             VoucherStatus::Cancelled => write!(f, "cancelled"),
         }
     }
 }
 
-#[derive(Debug, Clone, FromRow, Serialize, ToSchema)]
+#[derive(Debug, Clone, FromRow, Serialize, Deserialize, ToSchema)]
 pub struct VoucherLine {
     pub id: Uuid,
     pub tenant_id: Uuid,

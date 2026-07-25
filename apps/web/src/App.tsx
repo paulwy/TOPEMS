@@ -1,4 +1,4 @@
-import React, { Suspense, useState, useEffect, useRef } from 'react';
+import React, { Suspense, useState, useEffect, useRef, lazy } from 'react';
 import { BrowserRouter, Routes, Route, Navigate, useLocation } from 'react-router-dom';
 import { Box, Typography } from '@mui/material';
 import { AuthProvider, useAuth } from './hooks/useAuth';
@@ -28,6 +28,16 @@ import { HRM_PATHS } from './modules/hrm/config';
 import { CRM_PATHS } from './modules/crm/config';
 import { ADMIN_PATHS } from './modules/admin/config';
 import { eventBus, ModuleEvents } from './lib/plugin-loader/EventBus';
+// V35.0 Phase 7: 微前端智能预加载
+import { prefetchOnIdle } from './microfrontend/RemoteLoader';
+import { REMOTE_MODULES } from './microfrontend/config';
+// V37.0 Phase 7: Service Worker 离线缓存 + 智能预加载
+import { recordNavigation, prefetchIntelligent, prefetchRemoteEntries } from './lib/pwa';
+// V39.0 Track F: 微前端版本管理 + 热更新 + 灰度发布
+import { versionManager } from './microfrontend/version-manager';
+import { canaryRelease } from './microfrontend/canary-release';
+// V40.0 Track F: 微前端可观测性
+import { errorTracker, userBehaviorAnalytics, ObservabilityPanel } from './microfrontend/observability';
 
 const TemplateDemoPage = createSafeLazy(() =>
   import('./components/templates/index').then((m) => ({ default: m.TemplateDemoPage }))
@@ -37,9 +47,14 @@ const { lazy: PerformanceTestPage, preload: preloadPerformanceTest } = lazyWithP
   () => import('./pages/performance/PerformanceTestPage')
 );
 
+// DevTools 仅在开发模式按需加载，避免生产包体积膨胀
+const MicroFrontendDevTools = lazy(() => import('./dev-tools'));
+
 const IS_STATIC_MODE =
   (typeof import.meta !== 'undefined' && import.meta.env?.VITE_DEPLOYMENT_MODE) !==
   'module-federation';
+
+const IS_DEV = typeof import.meta !== 'undefined' && import.meta.env?.DEV === true;
 
 const PageLoader: React.FC = () => (
   <Box
@@ -104,6 +119,14 @@ const DynamicRoutes: React.FC = () => {
     }
     return null;
   };
+
+  // V37.0 Phase 7: 记录用户导航历史 + 触发智能预加载
+  useEffect(() => {
+    recordNavigation(location.pathname);
+    // 延迟触发智能预加载，避免与当前路由加载竞争
+    const timer = setTimeout(() => prefetchIntelligent(), 2000);
+    return () => clearTimeout(timer);
+  }, [location.pathname]);
 
   useEffect(() => {
     const moduleCode = detectModuleFromPath(location.pathname);
@@ -185,7 +208,7 @@ const DynamicRoutes: React.FC = () => {
 };
 
 const AppContent: React.FC = () => {
-  useAuth();
+  const { isAuthenticated } = useAuth();
 
   useEffect(() => {
     const handleModuleLoaded = (data: { moduleId: string; path: string }) => {
@@ -204,6 +227,49 @@ const AppContent: React.FC = () => {
       eventBus.off(ModuleEvents.MODULE_ERROR, handleModuleError);
     };
   }, []);
+
+  // V35.0 Phase 7: 用户认证后，浏览器空闲时预加载非核心模块的远程入口
+  // V37.0 Phase 7: 同时预缓存远程模块入口到 Service Worker
+  useEffect(() => {
+    if (!isAuthenticated) return;
+    const lazyEntries = REMOTE_MODULES.filter((m) => !m.isCore).map((m) => m.entry);
+    if (lazyEntries.length > 0) {
+      prefetchOnIdle(lazyEntries);
+      // V37.0: 预缓存远程入口到 Service Worker（离线可用）
+      prefetchRemoteEntries(lazyEntries);
+    }
+  }, [isAuthenticated]);
+
+  // V39.0 Track F: 启动微前端版本管理 + 灰度配置同步
+  // 用户认证后启动定时版本检查（5 分钟一次）+ 灰度配置服务端同步（2 分钟一次）
+  useEffect(() => {
+    if (!isAuthenticated) return;
+
+    // 初始化版本管理器
+    versionManager.init();
+
+    // 注册版本更新回调：当检测到新版本（prompt 策略）时记录日志
+    const unsubscribeVersion = versionManager.onVersionUpdate((event) => {
+      logger.info(
+        `[App] 版本更新通知: ${event.moduleId} ${event.oldVersion} → ${event.newVersion} (策略: ${event.strategy})`
+      );
+    });
+
+    // 启动定时版本检查（5 分钟一次，首次延迟 30 秒）
+    versionManager.startAutoCheck(5 * 60 * 1000);
+
+    // 初始化灰度发布管理器
+    canaryRelease.init();
+
+    // 启动灰度配置服务端同步（2 分钟一次）
+    canaryRelease.startServerSync(2 * 60 * 1000);
+
+    return () => {
+      unsubscribeVersion();
+      versionManager.stopAutoCheck();
+      canaryRelease.stopServerSync();
+    };
+  }, [isAuthenticated]);
 
   const renderRoutes = (routes: RouteConfig[]) => {
     return routes.map((route) => {
@@ -231,9 +297,11 @@ const AppContent: React.FC = () => {
         <Route
           path='/performance'
           element={
-            <Suspense fallback={<PageLoader />}>
-              <PerformanceTestPage />
-            </Suspense>
+            <ProtectedRoute>
+              <Suspense fallback={<PageLoader />}>
+                <PerformanceTestPage />
+              </Suspense>
+            </ProtectedRoute>
           }
         />
 
@@ -352,7 +420,11 @@ const AppContent: React.FC = () => {
         />
         <Route
           path='/template-demo'
-          element={<TemplateDemoPage />}
+          element={
+            <ProtectedRoute>
+              <TemplateDemoPage />
+            </ProtectedRoute>
+          }
         />
         <Route
           path='/'
@@ -369,6 +441,16 @@ const AppContent: React.FC = () => {
 };
 
 const App: React.FC = () => {
+  useEffect(() => {
+    errorTracker.loadFromStorage();
+    userBehaviorAnalytics.loadFromStorage();
+    errorTracker.startErrorTracking();
+
+    return () => {
+      errorTracker.stopErrorTracking();
+    };
+  }, []);
+
   return (
     <ErrorBoundary>
       <ThemeProvider>
@@ -377,6 +459,12 @@ const App: React.FC = () => {
             <AuthProvider>
               <PluginProvider>
                 <AppContent />
+                {IS_DEV && <ObservabilityPanel />}
+                {IS_DEV && (
+                  <Suspense fallback={null}>
+                    <MicroFrontendDevTools />
+                  </Suspense>
+                )}
               </PluginProvider>
             </AuthProvider>
           </LoadingProvider>

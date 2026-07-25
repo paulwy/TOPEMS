@@ -6,6 +6,88 @@ import { visualizer } from 'rollup-plugin-visualizer'
 
 import type { IncomingMessage, ServerResponse } from 'http';
 
+// ============================================================================
+// 服务配置（与 config/services.yaml 保持同步）
+// 新增服务只需在此处添加，proxy 会自动生成
+// ============================================================================
+
+interface ServiceConfig {
+  name: string;
+  port: number;
+  /** 是否为虚拟服务（由 unified-core 提供） */
+  isVirtual?: boolean;
+  /** 新 API 路径前缀，如 /api/erp 或 /api/core/iam */
+  apiPrefix?: string;
+  /** 旧路径前缀（向后兼容），如 /erp/api */
+  legacyPrefix?: string;
+  /** WebSocket 路径 */
+  wsPath?: string;
+}
+
+const CORE_PORT = 8000;
+
+const SERVICES: ServiceConfig[] = [
+  // 核心服务
+  { name: 'unified-core', port: CORE_PORT, apiPrefix: '/api/core', legacyPrefix: '/core/api', wsPath: '/ws/core' },
+  
+  // 虚拟服务（由 unified-core 提供）
+  { name: 'iam', port: CORE_PORT, isVirtual: true, apiPrefix: '/api/core/iam', legacyPrefix: '/iam/api' },
+  { name: 'doc', port: CORE_PORT, isVirtual: true, apiPrefix: '/api/core/doc', legacyPrefix: '/doc/api' },
+  { name: 'flow', port: CORE_PORT, isVirtual: true, apiPrefix: '/api/core/flow', legacyPrefix: '/flow/api' },
+  { name: 'file', port: CORE_PORT, isVirtual: true, apiPrefix: '/api/core/file', legacyPrefix: '/file/api' },
+
+  // 独立 communication 服务（从 unified-core 外迁，端口 8084）
+  // mail/notification/im 已外迁至此服务，路径为 /api/communication/{mail,notification,im}
+  { name: 'communication', port: 8084, apiPrefix: '/api/communication' },
+
+  // 独立 search 服务（全文搜索，端口 8082）
+  { name: 'search', port: 8082, apiPrefix: '/api/search' },
+
+  // 独立 billing/ticket/feedback 服务（从 unified-core 外迁）
+  // 旧路由 /api/core/{billing,ticket,feedback}/* 由 /api/core 通用代理兼容
+  { name: 'billing', port: 8085, apiPrefix: '/api/billing' },
+  { name: 'ticket', port: 8086, apiPrefix: '/api/ticket' },
+  { name: 'feedback', port: 8087, apiPrefix: '/api/feedback' },
+  
+  // 经营管理
+  { name: 'erp', port: 8010, apiPrefix: '/api/erp', legacyPrefix: '/erp/api' },
+  { name: 'finance', port: 8011, apiPrefix: '/api/finance', legacyPrefix: '/finance/api' },
+  { name: 'ai', port: 8013, apiPrefix: '/api/ai', legacyPrefix: '/ai/api' },
+  
+  // 协同办公
+  { name: 'hrm', port: 8020, apiPrefix: '/api/hrm', legacyPrefix: '/hrm/api' },
+  { name: 'pm', port: 8023, apiPrefix: '/api/pm', legacyPrefix: '/pm/api' },
+  { name: 'crm', port: 8029, apiPrefix: '/api/crm', legacyPrefix: '/crm/api' },
+  
+  // 生产制造
+  { name: 'mes', port: 8030, apiPrefix: '/api/mes', legacyPrefix: '/mes/api', wsPath: '/ws/mes' },
+  { name: 'pdm', port: 8031, apiPrefix: '/api/pdm', legacyPrefix: '/pdm/api' },
+  
+  // 供应链
+  { name: 'scm', port: 8040, apiPrefix: '/api/scm', legacyPrefix: '/scm/api' },
+  { name: 'wms', port: 8041, apiPrefix: '/api/wms', legacyPrefix: '/wms/api' },
+  { name: 'srm', port: 8042, apiPrefix: '/api/srm', legacyPrefix: '/srm/api' },
+  
+  // 质量/研发
+  { name: 'qms', port: 8050, apiPrefix: '/api/qms', legacyPrefix: '/qms/api' },
+  { name: 'lims', port: 8051, apiPrefix: '/api/lims', legacyPrefix: '/lims/api' },
+  { name: 'ehs', port: 8052, apiPrefix: '/api/ehs', legacyPrefix: '/ehs/api' },
+  { name: 'rd', port: 8053, apiPrefix: '/api/rd', legacyPrefix: '/rd/api' },
+  
+  // 数据分析
+  { name: 'bi', port: 8060, apiPrefix: '/api/bi' },
+  { name: 'monitor', port: CORE_PORT, isVirtual: true, apiPrefix: '/api/core/monitor', legacyPrefix: '/monitor/api' },
+  { name: 'portal', port: 8063, apiPrefix: '/api/portal' },
+
+  // 主数据服务（独立进程，端口 8090）
+  { name: 'master-data', port: 8090, apiPrefix: '/api/master-data' },
+  
+  // 基础设施
+  { name: 'mobile', port: 8070, apiPrefix: '/api/mobile', legacyPrefix: '/mobile/api' },
+  { name: 'gis', port: 8071, apiPrefix: '/api/gis', legacyPrefix: '/gis/api', wsPath: '/ws/gis' },
+  { name: 'integration', port: 8072, apiPrefix: '/api/integration', legacyPrefix: '/integration/api' },
+];
+
 // Deployment mode: 'module-federation' | 'static' | 'hybrid'
 const DEPLOYMENT_MODE = process.env.VITE_DEPLOYMENT_MODE || 'static';
 
@@ -68,7 +150,7 @@ const buildRemotes = (): Record<string, string> => {
 const createServiceProxyConfig = (serviceName: string, target: string, skipRewrite = false) => ({
   target,
   changeOrigin: true,
-  rewrite: skipRewrite ? undefined : (path: string) => path.replace(new RegExp(`^\\/${serviceName}\\/api`), `/api/v1/${serviceName}`),
+  rewrite: skipRewrite ? undefined : (path: string) => path.replace(new RegExp(`^\\/${serviceName}\\/api`), `/api/${serviceName}`),
   configure: (proxy: any) => {
     proxy.on('error', (err: Error, req: IncomingMessage, res: ServerResponse) => {
       if (!req.url?.includes('/health')) {
@@ -111,8 +193,6 @@ const createNewApiProxyConfig = (servicePath: string, target: string) => ({
 const HEALTH_CHECK_PATHS: Record<string, string> = {
   'ai': '/health',
   'bi': '/health',
-  'analytics': '/health',
-  'report': '/health',
   'monitor': '/health',
   'portal': '/health',
   'mobile': '/health',
@@ -129,18 +209,19 @@ const HEALTH_CHECK_PATHS: Record<string, string> = {
   'qms': '/health',
   'lims': '/health',
   'ehs': '/health',
-  'rs': '/health',
+  'rd': '/health',
   'erp': '/health',
   'finance': '/health',
   'doc': '/health',
-  'notification': '/health',
   'file': '/health',
-  'mail': '/health',
-  'im': '/health',
+  'communication': '/health',
   'unified-core': '/health',
   'flow': '/health',
-  'manufacturing': '/health',
-  'quality-assurance': '/health',
+  'billing': '/health',
+  'ticket': '/health',
+  'feedback': '/health',
+  'master-data': '/health',
+  'search': '/health',
 };
 
 const createHealthProxyConfig = (serviceName: string, target: string) => ({
@@ -165,6 +246,103 @@ const createHealthProxyConfig = (serviceName: string, target: string) => ({
     });
   }
 });
+
+// ============================================================================
+// 自动生成 proxy 配置
+// 从 SERVICES 数组自动生成所有 API proxy、legacy proxy、health proxy、WS proxy
+// ============================================================================
+
+const buildServiceProxies = (): Record<string, any> => {
+  const proxies: Record<string, any> = {};
+
+  // Dashboard backend proxy - routes /api/{module}/dashboard to port 8080
+  const DASHBOARD_PORT = 8080;
+  const DASHBOARD_MODULES = ['finance', 'ehs', 'lims', 'crm', 'wms', 'hrm', 'pdm', 'qms', 'mes', 'pm'];
+  for (const mod of DASHBOARD_MODULES) {
+    proxies[`/api/${mod}/dashboard`] = {
+      target: `http://localhost:${DASHBOARD_PORT}`,
+      changeOrigin: true,
+    };
+  }
+
+  for (const svc of SERVICES) {
+    const target = `http://localhost:${svc.port}`;
+
+    // 1. 新 API 路径: /api/{service}/* 或 /api/core/{service}/*
+    if (svc.apiPrefix) {
+      proxies[svc.apiPrefix + '/'] = createNewApiProxyConfig(svc.apiPrefix.slice(1), target);
+    }
+
+    // 2. 旧路径（向后兼容）: /{service}/api -> /api/{service}
+    if (svc.legacyPrefix) {
+      const serviceName = svc.name.replace('-virtual', '');
+      proxies[svc.legacyPrefix] = createServiceProxyConfig(serviceName, target);
+      
+      // health check
+      const healthPath = svc.legacyPrefix.replace('/api', '/health');
+      proxies[healthPath] = createHealthProxyConfig(serviceName, target);
+    }
+
+    // 3. WebSocket
+    if (svc.wsPath) {
+      proxies[svc.wsPath] = {
+        target,
+        changeOrigin: true,
+        ws: true,
+      };
+    }
+  }
+
+  // /api/* 路径
+  const apiV1Services = SERVICES.filter(s => s.apiPrefix && !s.isVirtual);
+  for (const svc of apiV1Services) {
+    const serviceName = svc.apiPrefix!.replace('/api/', '');
+    proxies[`/api/${serviceName}`] = {
+      target: `http://localhost:${svc.port}`,
+      changeOrigin: true,
+    };
+  }
+
+  // 核心服务 /api/core
+  proxies['/api/core'] = {
+    target: `http://localhost:${CORE_PORT}`,
+    changeOrigin: true,
+  };
+
+  // 通用 health 端点
+  proxies['/health'] = { target: `http://localhost:${CORE_PORT}`, changeOrigin: true };
+
+  // Module Federation remote
+  proxies['/core-remote'] = {
+    target: 'http://localhost:3001',
+    changeOrigin: true,
+    rewrite: (path: string) => path.replace(/^\/core-remote/, ''),
+  };
+
+  // ERP 插件代理（通过 unified-core）
+  proxies['/api/plugins/erp'] = {
+    target: `http://localhost:${CORE_PORT}`,
+    changeOrigin: true,
+  };
+
+  // 通讯服务向后兼容
+  proxies['/comm/api'] = {
+    target: `http://localhost:${CORE_PORT}`,
+    changeOrigin: true,
+    rewrite: (path: string) => path.replace(/^\/comm/, '/api/core/comm'),
+  };
+  proxies['/comm/health'] = {
+    target: `http://localhost:${CORE_PORT}`,
+    changeOrigin: true,
+  };
+  proxies['/ws/notifications'] = {
+    target: `http://localhost:${CORE_PORT}`,
+    changeOrigin: true,
+    ws: true,
+  };
+
+  return proxies;
+};
 
 export default defineConfig({
   plugins: [
@@ -219,7 +397,7 @@ export default defineConfig({
         },
         '@mui/material': {
           singleton: true,
-          requiredVersion: '^6.0.0',
+          requiredVersion: '^9.0.0',
           strictVersion: true,
         },
         '@emotion/react': {
@@ -234,14 +412,17 @@ export default defineConfig({
         },
         'zustand': {
           singleton: true,
+          requiredVersion: '^5.0.0',
           strictVersion: true,
         },
         'i18next': {
           singleton: true,
+          requiredVersion: '^26.0.0',
           strictVersion: true,
         },
         'react-i18next': {
           singleton: true,
+          requiredVersion: '^17.0.0',
           strictVersion: true,
         },
         'axios': {
@@ -254,23 +435,34 @@ export default defineConfig({
           requiredVersion: '^1.11.0',
           strictVersion: true,
         },
-        '@tanstack/react-query': {
-          singleton: true,
-          requiredVersion: '^5.0.0',
-          strictVersion: true,
-        },
-
         'react-hook-form': {
           singleton: true,
           requiredVersion: '^7.0.0',
+          strictVersion: true,
         },
         'zod': {
           singleton: true,
-          requiredVersion: '^3.0.0',
+          requiredVersion: '^4.0.0',
+          strictVersion: true,
+        },
+        '@tanstack/react-table': {
+          singleton: true,
+          requiredVersion: '^8.0.0',
+          strictVersion: true,
+        },
+        'framer-motion': {
+          singleton: true,
+          requiredVersion: '^12.0.0',
+          strictVersion: true,
         },
       },
     }),
   ],
+  define: {
+    'process.env.NODE_ENV': JSON.stringify(process.env.NODE_ENV || 'development'),
+    'process.env.NEXT_PUBLIC_WS_URL': JSON.stringify(process.env.VITE_WS_URL || 'ws://localhost:8080/ws'),
+    'process.env.NEXT_PUBLIC_WS_SIGNING_SECRET': JSON.stringify(process.env.VITE_WS_SIGNING_SECRET || 'topems-ws-signing-secret'),
+  },
   resolve: {
     alias: {
       '@': path.resolve(__dirname, './src'),
@@ -284,18 +476,58 @@ export default defineConfig({
     dedupe: ['react', 'react-dom', 'scheduler', 'react-router-dom', '@tanstack/react-query'],
   },
   build: {
+    target: 'es2022',
+    cssCodeSplit: true,
+    sourcemap: false,
+    minify: 'terser',
+    chunkSizeWarningLimit: 1500,
+    reportCompressedSize: false,
     rollupOptions: {
+      treeshake: true,
       output: {
-        manualChunks: {
-          vendor: ['react', 'react-dom', 'react-router-dom', '@tanstack/react-query', 'zustand'],
-          mui: ['@mui/material', '@emotion/react', '@emotion/styled'],
-          icons: ['lucide-react'],
-          charts: ['recharts'],
-          maps: ['leaflet', '@react-leaflet/core', 'react-leaflet'],
-          excel: ['xlsx'],
-          i18n: ['i18next', 'react-i18next'],
-          forms: ['react-hook-form', '@hookform/resolvers', 'zod'],
-          three: ['three', '@react-three/fiber', '@react-three/drei'],
+        manualChunks: (id: string) => {
+          if (id.includes('node_modules')) {
+            // React 核心
+            if (id.includes('react') || id.includes('scheduler')) return 'vendor';
+            // MUI 组件库
+            if (id.includes('@mui') || id.includes('@emotion')) return 'mui';
+            // 图标库
+            if (id.includes('lucide-react') || id.includes('@heroicons') || id.includes('react-icons')) return 'icons';
+            // 图表库（大型，单独分包）
+            if (id.includes('recharts')) return 'charts';
+            if (id.includes('echarts')) return 'echarts';
+            // 地图库（大型，单独分包）
+            if (id.includes('leaflet') || id.includes('react-leaflet')) return 'maps';
+            // Excel 处理库（大型，单独分包）
+            if (id.includes('xlsx') || id.includes('exceljs')) return 'excel';
+            // 国际化
+            if (id.includes('i18next') || id.includes('react-i18next')) return 'i18n';
+            // 表单库
+            if (id.includes('react-hook-form') || id.includes('zod') || id.includes('@hookform')) return 'forms';
+            // 3D 渲染库（大型，单独分包）
+            if (id.includes('three') || id.includes('@react-three')) return 'three';
+            // 数据获取和状态管理
+            if (id.includes('@tanstack/react-query') || id.includes('zustand')) return 'vendor';
+            // 日期处理（使用 dayjs，轻量）
+            if (id.includes('dayjs')) return 'vendor';
+            // HTTP 客户端
+            if (id.includes('axios')) return 'vendor';
+            // 动画库
+            if (id.includes('framer-motion')) return 'vendor';
+            // 工具库（大型，单独分包）
+            if (id.includes('lodash')) return 'lodash';
+            // 旧日期库（如存在，单独分包以便后续替换）
+            if (id.includes('moment')) return 'moment';
+            // 表格库（大型）
+            if (id.includes('@tanstack/react-table')) return 'tables';
+            // 数学计算库（大型）
+            if (id.includes('mathjs') || id.includes('decimal.js')) return 'math';
+            // Markdown 渲染
+            if (id.includes('react-markdown') || id.includes('remark') || id.includes('rehype')) return 'markdown';
+            // 富文本编辑器
+            if (id.includes('@tiptap') || id.includes('prosemirror')) return 'editor';
+            return 'vendor-misc';
+          }
         },
       },
       plugins: [
@@ -307,14 +539,18 @@ export default defineConfig({
         }),
       ],
     },
-    chunkSizeWarningLimit: 1500,
-    sourcemap: false,
-    minify: 'terser',
     terserOptions: {
       compress: {
         drop_console: true,
         drop_debugger: true,
         pure_funcs: ['console.log', 'console.info', 'console.debug'],
+        passes: 2,
+        pure_getters: true,
+        unsafe: true,
+        unsafe_comps: true,
+      },
+      mangle: {
+        safari10: true,
       },
     },
   },
@@ -328,396 +564,6 @@ export default defineConfig({
     fs: {
       allow: ['..'],
     },
-    proxy: {
-      // ========== [新路径直通] Group 1 核心服务 /api/core/* 直通 ==========
-      '/api/core/': createNewApiProxyConfig('api/core', 'http://localhost:8000'),
-      // ========== [新路径直通] Group 2 独立服务 /api/{service}/* 直通 ==========
-      '/api/erp/': createNewApiProxyConfig('api/erp', 'http://localhost:8010'),
-      '/api/finance/': createNewApiProxyConfig('api/finance', 'http://localhost:8011'),
-      '/api/doc/': createNewApiProxyConfig('api/doc', 'http://localhost:8012'),
-      '/api/hrm/': createNewApiProxyConfig('api/hrm', 'http://localhost:8020'),
-      '/api/pm/': createNewApiProxyConfig('api/pm', 'http://localhost:8023'),
-      '/api/crm/': createNewApiProxyConfig('api/crm', 'http://localhost:8029'),
-      '/api/mes/': createNewApiProxyConfig('api/mes', 'http://localhost:8030'),
-      '/api/pdm/': createNewApiProxyConfig('api/pdm', 'http://localhost:8031'),
-      '/api/scm/': createNewApiProxyConfig('api/scm', 'http://localhost:8040'),
-      '/api/wms/': createNewApiProxyConfig('api/wms', 'http://localhost:8041'),
-      '/api/srm/': createNewApiProxyConfig('api/srm', 'http://localhost:8042'),
-      '/api/qms/': createNewApiProxyConfig('api/qms', 'http://localhost:8050'),
-      '/api/lims/': createNewApiProxyConfig('api/lims', 'http://localhost:8051'),
-      '/api/ehs/': createNewApiProxyConfig('api/ehs', 'http://localhost:8052'),
-      '/api/rd/': createNewApiProxyConfig('api/rd', 'http://localhost:8053'),
-      '/api/bi/': createNewApiProxyConfig('api/bi', 'http://localhost:8060'),
-      '/api/report/': createNewApiProxyConfig('api/report', 'http://localhost:8060'),
-      '/api/analytics/': createNewApiProxyConfig('api/analytics', 'http://localhost:8060'),
-      '/api/monitor/': createNewApiProxyConfig('api/monitor', 'http://localhost:8062'),
-      '/api/portal/': createNewApiProxyConfig('api/portal', 'http://localhost:8063'),
-      '/api/ai/': createNewApiProxyConfig('api/ai', 'http://localhost:8013'),
-      '/api/mobile/': createNewApiProxyConfig('api/mobile', 'http://localhost:8070'),
-      '/api/gis/': createNewApiProxyConfig('api/gis', 'http://localhost:8071'),
-      // New /api/core/{service}/v1 paths
-      '/api/core/ai/': createNewApiProxyConfig('api/core/ai', 'http://localhost:8013'),
-      '/api/core/doc/': createNewApiProxyConfig('api/core/doc', 'http://localhost:8012'),
-      '/api/core/gis/': createNewApiProxyConfig('api/core/gis', 'http://localhost:8071'),
-      '/api/core/mobile/': createNewApiProxyConfig('api/core/mobile', 'http://localhost:8070'),
-      '/api/core/finance/': createNewApiProxyConfig('api/core/finance', 'http://localhost:8011'),
-      '/api/core/rd/': createNewApiProxyConfig('api/core/rd', 'http://localhost:8053'),
-      '/api/integration/': createNewApiProxyConfig('api/integration', 'http://localhost:8072'),
-
-      // ========== [核心平台] 统一核心服务代理 ==========
-      // unified-core: IAM + Doc + Flow + File + Communication
-      // 所有核心服务统一到端口 8000
-      '/core/api': {
-        target: 'http://localhost:8000',
-        changeOrigin: true,
-        rewrite: (path: string) => path.replace(/^\/core/, '/api/v1/core'),
-        configure: (proxy) => {
-          proxy.on('error', (err: Error, req: any, res: any) => {
-            console.warn(`[Vite Proxy] Core platform error:`, err.message);
-          });
-        }
-      },
-      '/core/health': {
-        target: 'http://localhost:8000',
-        changeOrigin: true,
-      },
-      '/ws/core': {
-        target: 'http://localhost:8000',
-        changeOrigin: true,
-        ws: true,
-      },
-      
-      // ========== [已整合] 通讯服务 - 向后兼容代理 ==========
-      // 新统一通讯服务 (notification + im + mail -> unified-core)
-      '/comm/api': {
-        target: 'http://localhost:8000',
-        changeOrigin: true,
-        rewrite: (path: string) => path.replace(/^\/comm/, '/api/v1/core/comm'),
-      },
-      '/comm/health': {
-        target: 'http://localhost:8000',
-        changeOrigin: true,
-      },
-      '/ws/notifications': {
-        target: 'http://localhost:8000',
-        changeOrigin: true,
-        ws: true,
-      },
-      '/ws/im': {
-        target: 'http://localhost:8000',
-        changeOrigin: true,
-        ws: true,
-      },
-      
-      // ========== [服务特定 WebSocket] ==========
-      '/ws/mes': {
-        target: 'http://localhost:8030',
-        changeOrigin: true,
-        ws: true,
-      },
-      '/ws/gis': {
-        target: 'http://localhost:8071',
-        changeOrigin: true,
-        ws: true,
-      },
-      
-      // IAM API 服务代理 (/iam/api/* -> /api/core/iam/*)
-      '/iam/api': {
-        target: 'http://localhost:8000',
-        changeOrigin: true,
-        rewrite: (path: string) => path.replace(/^\/iam(\/api.*)$/, '/api/v1/core$1'),
-      },
-      
-      // Doc 服务代理（独立服务，端口 8012）
-      // 注意：/doc/* 是前端页面路由（如 /doc/dashboard），不可使用过于宽泛的代理
-      // 实际 API 请求走 /api/doc/* (见下方 /api/doc 代理)
-      '/doc/api': createServiceProxyConfig('doc', 'http://localhost:8012'),
-      '/doc/health': createHealthProxyConfig('doc', 'http://localhost:8012'),
-
-      // Flow 服务代理
-      // 注意：/flow/* 是前端页面路由（如 /flow/dashboard），不可使用过于宽泛的代理
-      // 实际 API 请求走 /api/core/flow/* (见下方 /api/core 代理)
-      '/flow/api': {
-        target: 'http://localhost:8000',
-        changeOrigin: true,
-        rewrite: (path: string) => path.replace(/^\/flow\/api(.*)$/, '/api/v1/core/flow$1'),
-      },
-      '/flow/health': createHealthProxyConfig('flow', 'http://localhost:8000'),
-
-      // File 服务代理
-      // 注意：/file/* 是前端页面路由（如 /file/list），不可使用过于宽泛的代理
-      // 实际 API 请求走 /api/core/file/* (见下方 /api/core 代理)
-      '/file/api': {
-        target: 'http://localhost:8000',
-        changeOrigin: true,
-        rewrite: (path: string) => path.replace(/^\/file\/api(.*)$/, '/api/v1/core/file$1'),
-      },
-      '/file/health': createHealthProxyConfig('file', 'http://localhost:8000'),
-
-      // 邮件服务代理
-      // 注意：/mail/* 是前端页面路由（如 /mail/inbox），不可使用过于宽泛的代理
-      // 实际 API 请求走 /api/core/mail/* (见下方 /api/core 代理)
-      '/mail/api': {
-        target: 'http://localhost:8000',
-        changeOrigin: true,
-        rewrite: (path: string) => path.replace(/^\/mail\/api(.*)$/, '/api/v1/core/mail$1'),
-      },
-      '/mail/health': createHealthProxyConfig('mail', 'http://localhost:8000'),
-
-      // 通知服务代理
-      // 注意：/notification/* 是前端页面路由（如 /notification/dashboard），不可使用过于宽泛的代理
-      // 实际 API 请求走 /api/core/notification/* (见下方 /api/core 代理)
-      '/notification/api': {
-        target: 'http://localhost:8000',
-        changeOrigin: true,
-        rewrite: (path: string) => path.replace(/^\/notification\/api(.*)$/, '/api/v1/core/notification$1'),
-      },
-      '/notification/health': createHealthProxyConfig('notification', 'http://localhost:8000'),
-
-      // IM 服务代理
-      // 注意：/im/* 是前端页面路由（如 /im/chat），不可使用过于宽泛的代理
-      // 实际 API 请求走 /api/core/im/* (见下方 /api/core 代理)
-      '/im/api': {
-        target: 'http://localhost:8000',
-        changeOrigin: true,
-        rewrite: (path: string) => path.replace(/^\/im\/api(.*)$/, '/api/v1/core/im$1'),
-      },
-      '/im/health': createHealthProxyConfig('im', 'http://localhost:8000'),
-      
-      // 通用路由 - 放在所有服务特定路由之后
-      '/health': { target: 'http://localhost:8000', changeOrigin: true },
-      
-      '/hrm/api': createServiceProxyConfig('hrm', 'http://localhost:8020'),
-      '/hrm/health': {
-        target: 'http://localhost:8020',
-        changeOrigin: true,
-        rewrite: (path: string) => '/health',
-      },
-      '/flow/health': createHealthProxyConfig('flow', 'http://localhost:8000'),
-      '/integration/api': createServiceProxyConfig('integration', 'http://localhost:8072'),
-      '/integration/health': createHealthProxyConfig('integration', 'http://localhost:8072'),
-      '/erp/api': createServiceProxyConfig('erp', 'http://localhost:8010'),
-      '/erp/health': {
-        target: 'http://localhost:8010',
-        changeOrigin: true,
-        rewrite: (path: string) => path.replace(/^\/erp(\/health)$/, '/api/v1/erp$1'),
-      },
-      // ERP 插件代理（通过 unified-core）
-      '/api/plugins/erp': {
-        target: 'http://localhost:8000',
-        changeOrigin: true,
-        rewrite: (path: string) => path.replace(/^\/api\/plugins\/erp/, '/api/plugins/erp'),
-      },
-      '/crm/api': createServiceProxyConfig('crm', 'http://localhost:8029'),
-      '/crm/health': createHealthProxyConfig('crm', 'http://localhost:8029'),
-      '/ai/api': createServiceProxyConfig('ai', 'http://localhost:8013'),
-      '/ai/health': createHealthProxyConfig('ai', 'http://localhost:8013'),
-      '/rs/api': createServiceProxyConfig('rs', 'http://localhost:8053'),
-      '/rs/health': createHealthProxyConfig('rs', 'http://localhost:8053'),
-      
-      // ========== [已整合] 制造服务代理 ==========
-      // 新统一制造服务 (mes + pdm -> manufacturing)
-      '/mfg/api': {
-        target: 'http://localhost:8030',
-        changeOrigin: true,
-        rewrite: (path: string) => path.replace(/^\/mfg/, '/api/mfg'),
-      },
-      '/manufacturing/api': createServiceProxyConfig('manufacturing', 'http://localhost:8030'),
-      '/manufacturing/health': createServiceProxyConfig('manufacturing', 'http://localhost:8030'),
-      
-      // 向后兼容：MES 服务代理 -> manufacturing
-      // 注意：/mes/* 是前端页面路由（如 /mes/dashboard），不可使用过于宽泛的代理
-      // 实际 API 请求走 /api/mes/* (见下方 /api/mes 代理)
-      '/mes/api': {
-        target: 'http://localhost:8030',
-        changeOrigin: true,
-        rewrite: (path: string) => path.replace(/^\/mes\/api(.*)$/, '/api/mes$1'),
-      },
-      '/mes/health': createHealthProxyConfig('mes', 'http://localhost:8030'),
-      
-      // 向后兼容：PDM 服务代理 -> manufacturing
-      // 注意：/pdm/* 是前端页面路由（如 /pdm/dashboard），不可使用过于宽泛的代理
-      // 实际 API 请求走 /api/pdm/* (见下方 /api/pdm 代理)
-      '/pdm/api': {
-        target: 'http://localhost:8031',
-        changeOrigin: true,
-        rewrite: (path: string) => path.replace(/^\/pdm\/api(.*)$/, '/api/pdm$1'),
-      },
-      '/pdm/health': createHealthProxyConfig('pdm', 'http://localhost:8031'),
-      
-      // ========== [质量管控服务代理] ==========
-      // QMS 服务代理
-      '/qms/health': createHealthProxyConfig('qms', 'http://localhost:8050'),
-      '/qms/api': createServiceProxyConfig('qms', 'http://localhost:8050'),
-      
-      // LIMS 服务代理
-      '/lims/health': createHealthProxyConfig('lims', 'http://localhost:8051'),
-      '/lims/api': createServiceProxyConfig('lims', 'http://localhost:8051'),
-      
-      // EHS 服务代理
-      '/ehs/health': createHealthProxyConfig('ehs', 'http://localhost:8052'),
-      '/ehs/api': createServiceProxyConfig('ehs', 'http://localhost:8052'),
-      
-      '/scm/api': createServiceProxyConfig('scm', 'http://localhost:8040'),
-      '/scm/health': createHealthProxyConfig('scm', 'http://localhost:8040'),
-      '/srm/api': createServiceProxyConfig('srm', 'http://localhost:8042'),
-      '/srm/health': createHealthProxyConfig('srm', 'http://localhost:8042'),
-      '/wms/api': createServiceProxyConfig('wms', 'http://localhost:8041'),
-      '/wms/health': createHealthProxyConfig('wms', 'http://localhost:8041'),
-      '/pm/api': createServiceProxyConfig('pm', 'http://localhost:8023'),
-      '/pm/health': createHealthProxyConfig('pm', 'http://localhost:8023'),
-      '/unified-core/api': createServiceProxyConfig('unified-core', 'http://localhost:8000'),
-      '/unified-core/health': createHealthProxyConfig('unified-core', 'http://localhost:8000'),
-      '/gis/api': createServiceProxyConfig('gis', 'http://localhost:8071'),
-      '/gis/health': createHealthProxyConfig('gis', 'http://localhost:8071'),
-      
-      // Monitor 服务代理
-      '/monitor/api': {
-        target: 'http://localhost:8062',
-        changeOrigin: true,
-        rewrite: (path: string) => path.replace(/^\/monitor\/api/, '/api/v1/monitor'),
-      },
-      '/monitor/health': createHealthProxyConfig('monitor', 'http://localhost:8062'),
-      
-      // [已整合] IM API - 注释掉，使用 /comm/im/*
-      // '/im/api': createServiceProxyConfig('im', 'http://localhost:8052'),
-      // '/im/health': createServiceProxyConfig('im', 'http://localhost:8052'),
-      
-      // 向后兼容：Report 服务代理 -> BI 服务
-      // 注意：/report/* 是前端页面路由（如 /report/list），不可使用过于宽泛的代理
-      // 实际 API 请求走 /api/report/* (见下方 /api/report 代理)
-      '/report/api': {
-        target: 'http://localhost:8060',
-        changeOrigin: true,
-        rewrite: (path: string) => path.replace(/^\/report\/api(.*)$/, '/api/bi/report$1'),
-      },
-      '/report/health': {
-        target: 'http://localhost:8060',
-        changeOrigin: true,
-        rewrite: () => '/health',
-      },
-
-      '/mobile/api': createServiceProxyConfig('mobile', 'http://localhost:8070'),
-      '/mobile/health': createHealthProxyConfig('mobile', 'http://localhost:8070'),
-      '/migration/api': createServiceProxyConfig('migration', 'http://localhost:8787'),
-      '/migration/health': createHealthProxyConfig('migration', 'http://localhost:8787'),
-
-      '/quality-assurance/api': createServiceProxyConfig('quality-assurance', 'http://localhost:8050'),
-      '/quality-assurance/health': createHealthProxyConfig('quality-assurance', 'http://localhost:8050'),
-      
-      // ========== [API路径代理] Group2 独立服务 /api/v1/{service} 格式 ==========
-      '/api/v1/doc': {
-        target: 'http://localhost:8012',
-        changeOrigin: true,
-      },
-      '/api/v1/qms': {
-        target: 'http://localhost:8050',
-        changeOrigin: true,
-      },
-      '/api/v1/lims': {
-        target: 'http://localhost:8051',
-        changeOrigin: true,
-      },
-      '/api/v1/ehs': {
-        target: 'http://localhost:8052',
-        changeOrigin: true,
-      },
-      '/api/v1/rd': {
-        target: 'http://localhost:8053',
-        changeOrigin: true,
-      },
-      '/api/v1/scm': {
-        target: 'http://localhost:8040',
-        changeOrigin: true,
-      },
-      '/api/v1/srm': {
-        target: 'http://localhost:8042',
-        changeOrigin: true,
-      },
-      '/api/v1/wms': {
-        target: 'http://localhost:8041',
-        changeOrigin: true,
-      },
-      '/api/v1/bi': {
-        target: 'http://localhost:8060',
-        changeOrigin: true,
-      },
-      '/api/v1/report': {
-        target: 'http://localhost:8060',
-        changeOrigin: true,
-      },
-      '/api/v1/analytics': {
-        target: 'http://localhost:8060',
-        changeOrigin: true,
-      },
-      '/api/v1/erp': {
-        target: 'http://localhost:8010',
-        changeOrigin: true,
-      },
-      '/api/v1/finance': {
-        target: 'http://localhost:8011',
-        changeOrigin: true,
-      },
-      '/api/v1/hrm': {
-        target: 'http://localhost:8020',
-        changeOrigin: true,
-      },
-      '/api/v1/crm': {
-        target: 'http://localhost:8029',
-        changeOrigin: true,
-      },
-      '/api/v1/pm': {
-        target: 'http://localhost:8023',
-        changeOrigin: true,
-      },
-      '/api/v1/mes': {
-        target: 'http://localhost:8030',
-        changeOrigin: true,
-      },
-      '/api/v1/pdm': {
-        target: 'http://localhost:8031',
-        changeOrigin: true,
-      },
-      '/api/v1/ai': {
-        target: 'http://localhost:8013',
-        changeOrigin: true,
-      },
-      '/api/v1/mobile': {
-        target: 'http://localhost:8070',
-        changeOrigin: true,
-      },
-      '/api/v1/gis': {
-        target: 'http://localhost:8071',
-        changeOrigin: true,
-      },
-      '/api/v1/integration': {
-        target: 'http://localhost:8072',
-        changeOrigin: true,
-      },
-      '/api/v1/monitor': {
-        target: 'http://localhost:8062',
-        changeOrigin: true,
-      },
-      '/api/v1/portal': {
-        target: 'http://localhost:8063',
-        changeOrigin: true,
-      },
-      // ========== [API路径代理] Group1 核心服务 /api/v1/core/{service} 统一格式 ==========
-      // 前端请求 /api/v1/core/iam/auth/login 等路径，代理到 unified-core
-      '/api/v1/core': {
-        target: 'http://localhost:8000',
-        changeOrigin: true,
-        rewrite: (path: string) => path.replace(/^\/api\/v1\/core/, '/api/v1/core'),
-      },
-
-      
-      // ========== [Module Federation] Core Remote Module 代理 ==========
-      // 将 /core-remote/* 请求代理到 apps/core 的 Vite dev server
-      '/core-remote': {
-        target: 'http://localhost:3001',
-        changeOrigin: true,
-        rewrite: (path: string) => path.replace(/^\/core-remote/, ''),
-      },
-    },
+    proxy: buildServiceProxies(),
   },
 });

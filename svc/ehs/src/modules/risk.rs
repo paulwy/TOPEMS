@@ -83,7 +83,7 @@ pub async fn list_risks(
     Extension(claims): Extension<Claims>,
     headers: HeaderMap,
 ) -> Json<ApiResponse<Vec<Risk>>> {
-    let tenant_id = get_tenant_id(&claims, &headers);
+    let _tenant_id = get_tenant_id(&claims, &headers);
     tracing::info!("Listing risks");
     Json(ApiResponse::success(Vec::<Risk>::new(), "获取风险列表成功"))
 }
@@ -211,7 +211,7 @@ pub async fn delete_risk(
     headers: HeaderMap,
     axum::extract::Path(id): axum::extract::Path<String>,
 ) -> Json<ApiResponse<()>> {
-    let tenant_id = get_tenant_id(&claims, &headers);
+    let _tenant_id = get_tenant_id(&claims, &headers);
     tracing::info!("Deleting risk: {}", id);
     Json(ApiResponse::success((), "风险删除成功"))
 }
@@ -338,7 +338,7 @@ pub async fn delete_control_measure(
     headers: HeaderMap,
     axum::extract::Path((_id, measure_id)): axum::extract::Path<(String, String)>,
 ) -> Json<ApiResponse<()>> {
-    let tenant_id = get_tenant_id(&claims, &headers);
+    let _tenant_id = get_tenant_id(&claims, &headers);
     tracing::info!("Deleting control measure: {}", measure_id);
     Json(ApiResponse::success((), "控制措施删除成功"))
 }

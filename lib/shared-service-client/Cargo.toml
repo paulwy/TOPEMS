@@ -1,0 +1,28 @@
+[package]
+name = "topems-shared-service-client"
+version.workspace = true
+edition.workspace = true
+authors.workspace = true
+description = "TOPEMS shared service client library - typed HTTP clients for inter-service communication"
+
+[dependencies]
+topems-shared-core = { path = "../shared-core" }
+topems-shared-event = { path = "../shared-event" }
+
+# HTTP 客户端依赖
+reqwest = { version = "0.12", features = ["json"] }
+serde.workspace = true
+serde_json.workspace = true
+chrono.workspace = true
+uuid.workspace = true
+tracing.workspace = true
+tokio.workspace = true
+async-trait.workspace = true
+thiserror.workspace = true
+axum.workspace = true
+
+# 链路追踪依赖（base_client 注入 trace context）
+opentelemetry = { version = "0.32", features = ["trace"] }
+
+# URL 编码依赖（api 模块构造 query string）
+serde_urlencoded = "0.7"

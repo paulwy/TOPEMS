@@ -7,6 +7,7 @@ import { reportApi } from './report';
 import { periodApi } from './period';
 import { counterpartyFinanceApi } from './counterparty';
 import { paymentApi } from './payment';
+import { expenseApprovalApi } from './expenseApproval';
 
 export { accountApi } from './account';
 export { voucherApi } from './voucher';
@@ -15,6 +16,7 @@ export { reportApi } from './report';
 export { periodApi } from './period';
 export { counterpartyFinanceApi } from './counterparty';
 export { paymentApi } from './payment';
+export { expenseApprovalApi } from './expenseApproval';
 
 export interface FinanceDashboardStats {
   total_vouchers: number;
@@ -39,6 +41,7 @@ export const financeApi = {
   period: periodApi,
   counterparty: counterpartyFinanceApi,
   payment: paymentApi,
+  expenseApproval: expenseApprovalApi,
 
   async getDashboard(): Promise<ApiResponse<FinanceDashboardStats>> {
     return apiClient.finance.get<FinanceDashboardStats>('/dashboard');

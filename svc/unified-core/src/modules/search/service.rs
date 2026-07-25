@@ -1,3 +1,5 @@
+#![allow(dead_code)] // Reserved: 搜索服务模块预留扩展，待搜索服务接入后启用
+
 use sqlx::{FromRow, PgPool};
 use uuid::Uuid;
 

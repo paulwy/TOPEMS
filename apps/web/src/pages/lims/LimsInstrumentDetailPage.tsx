@@ -1,47 +1,27 @@
-import React, { useState } from 'react';
+import React, { useMemo } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
 import { QUERY_KEYS } from '@/lib/reactQuery';
-import {
-  Settings,
-  Wrench,
-  Clock,
-  Eye,
-  Calendar,
-  AlertCircle,
-  CheckCircle,
-  FileText,
-} from 'lucide-react';
+import { Settings, Wrench, Clock, Eye, AlertCircle, CheckCircle, FileText } from 'lucide-react';
 import {
   Box,
   Typography,
   Chip,
-  Paper,
-  Card,
-  CardContent,
-  Stack,
-  Button,
-  Grid,
   Table,
   TableBody,
   TableCell,
   TableContainer,
   TableHead,
   TableRow,
-  Divider,
-  Skeleton,
+  Paper,
+  Card,
+  CardContent,
+  Button,
 } from '@mui/material';
 import { PageContainer } from '@/components/common';
-import {
-  DetailPageTemplate,
-  ListPageTemplate,
-  type SectionConfig,
-  type ColumnDef,
-} from '@/components/templates';
+import { DetailPageTemplate, type SectionConfig } from '@/components/templates';
 import { limsApi } from '@/api/lims';
 import type { Instrument, CalibrationRecord, MaintenanceRecord, InspectionTask } from '@/api/lims';
-import { useNotificationStore } from '@/store';
-import { logger } from '@/utils/logger';
 import dayjs from 'dayjs';
 import { designTokens } from '@/theme/tokens';
 import { LIMS_PATHS } from '@/modules/lims/config';
@@ -55,160 +35,175 @@ interface LimsListResponse<T> {
   instruments?: T[];
 }
 
-interface UsageLog {
-  id: string;
-  time?: string;
-  user?: string;
-  task?: string;
-  purpose?: string;
-  notes?: string;
+const statusColorMap: Record<string, { bg: string; color: string }> = {
+  正常: { bg: 'success.lighter', color: 'success.700' },
+  校准中: { bg: 'primary.100', color: 'primary.dark' },
+  维修中: { bg: ct.error[50], color: 'error.700' },
+  停用: { bg: 'grey.100', color: 'grey.600' },
+  报废: { bg: 'grey.100', color: 'grey.600' },
+  normal: { bg: 'success.lighter', color: 'success.700' },
+  calibration: { bg: 'primary.100', color: 'primary.dark' },
+  maintenance: { bg: ct.error[50], color: 'error.700' },
+  disabled: { bg: 'grey.100', color: 'grey.600' },
+};
+
+function getStatusBadge(status: string) {
+  const colors = statusColorMap[status] || { bg: 'grey.100', color: ct.grey[600] };
+  return (
+    <Chip
+      label={status}
+      size='small'
+      sx={{
+        backgroundColor: colors.bg,
+        color: colors.color,
+        fontWeight: 500,
+      }}
+    />
+  );
 }
 
-const LimsInstrumentDetailPage: React.FC = () => {
-  const { id } = useParams<{ id: string }>();
-  const navigate = useNavigate();
-  const addNotification = useNotificationStore((state) => state.addNotification);
+function formatDate(dateStr?: string | null) {
+  if (!dateStr) return '-';
+  return new Date(dateStr).toLocaleDateString('zh-CN');
+}
 
-  const {
-    data: detailData,
-    isLoading: loading,
-    error: queryError,
-    refetch,
-  } = useQuery({
-    queryKey: QUERY_KEYS.LIMS.INSTRUMENT(id || ''),
-    queryFn: async () => {
-      if (!id) return null;
-      const [instrumentRes, calibrationRes, maintenanceRes, tasksRes] = await Promise.all([
-        limsApi.getInstrument(id),
-        limsApi.listCalibrationRecords(id),
-        limsApi.listMaintenanceByInstrument(id),
-        limsApi.listTasks().catch(() => null),
-      ]);
-
-      let instrument: Instrument | null = null;
-      let error: string | null = null;
-      if (instrumentRes.success && instrumentRes.data) {
-        instrument = instrumentRes.data as Instrument;
-      } else {
-        error = '仪器不存在或已被删除';
-      }
-
-      let calibrationRecords: CalibrationRecord[] = [];
-      if (calibrationRes.success && calibrationRes.data) {
-        const data = calibrationRes.data as
-          LimsListResponse<CalibrationRecord> | CalibrationRecord[];
-        calibrationRecords = Array.isArray(data) ? data : data.items || data.records || [];
-      }
-
-      let maintenanceRecords: MaintenanceRecord[] = [];
-      if (maintenanceRes.success && maintenanceRes.data) {
-        const data = maintenanceRes.data as
-          LimsListResponse<MaintenanceRecord> | MaintenanceRecord[];
-        maintenanceRecords = Array.isArray(data) ? data : data.items || [];
-      }
-
-      let relatedTasks: InspectionTask[] = [];
-      if (tasksRes?.success && tasksRes.data) {
-        const tasksData = tasksRes.data as LimsListResponse<InspectionTask> | InspectionTask[];
-        const allTasks = Array.isArray(tasksData)
-          ? tasksData
-          : tasksData.items || tasksData.tasks || [];
-        relatedTasks = allTasks.slice(0, 5);
-      }
-
-      return { instrument, calibrationRecords, maintenanceRecords, relatedTasks, error };
-    },
-    enabled: !!id,
-  });
-
-  const instrument = detailData?.instrument || null;
-  const calibrationRecords = detailData?.calibrationRecords || [];
-  const maintenanceRecords = detailData?.maintenanceRecords || [];
-  const relatedTasks = detailData?.relatedTasks || [];
-  const usageLogs: UsageLog[] = [];
-  const error = queryError ? '加载仪器详情失败' : detailData?.error || null;
-
-  const loadInstrumentData = () => {
-    refetch();
-  };
-
-  const getStatusBadge = (status: string) => {
-    const statusMap: Record<string, { bg: string; color: string }> = {
-      正常: { bg: 'success.lighter', color: 'success.700' },
-      校准中: { bg: 'primary.100', color: 'primary.dark' },
-      维修中: { bg: ct.error[50], color: 'error.700' },
-      停用: { bg: 'grey.100', color: 'grey.600' },
-      报废: { bg: 'grey.100', color: 'grey.600' },
-      normal: { bg: 'success.lighter', color: 'success.700' },
-      calibration: { bg: 'primary.100', color: 'primary.dark' },
-      maintenance: { bg: ct.error[50], color: 'error.700' },
-      disabled: { bg: 'grey.100', color: 'grey.600' },
-    };
-    const colors = statusMap[status] || { bg: 'grey.100', color: ct.grey[600] };
+function SimpleTable<T extends { id: string }>({
+  columns,
+  data,
+  emptyIcon,
+  emptyText,
+}: {
+  columns: { id: string; label: string; render?: (row: T) => React.ReactNode }[];
+  data: T[];
+  emptyIcon: React.ReactNode;
+  emptyText: string;
+}) {
+  if (data.length === 0) {
     return (
-      <Chip
-        label={status}
-        size='small'
-        sx={{
-          backgroundColor: colors.bg,
-          color: colors.color,
-          fontWeight: 500,
-        }}
-      />
+      <Box sx={{ textAlign: 'center', py: 4, color: 'text.secondary' }}>
+        <Box sx={{ opacity: 0.5, mb: 2 }}>{emptyIcon}</Box>
+        <Typography>{emptyText}</Typography>
+      </Box>
     );
-  };
+  }
+  return (
+    <TableContainer
+      component={Paper}
+      variant='outlined'
+      sx={{ borderRadius: 1.5 }}
+    >
+      <Table size='small'>
+        <TableHead>
+          <TableRow sx={{ bgcolor: 'grey.50' }}>
+            {columns.map((col) => (
+              <TableCell
+                key={col.id}
+                sx={{ fontWeight: 600 }}
+              >
+                {col.label}
+              </TableCell>
+            ))}
+          </TableRow>
+        </TableHead>
+        <TableBody>
+          {data.map((row) => (
+            <TableRow key={row.id}>
+              {columns.map((col) => (
+                <TableCell key={col.id}>
+                  {col.render
+                    ? col.render(row)
+                    : ((row as Record<string, unknown>)[col.id] as React.ReactNode)}
+                </TableCell>
+              ))}
+            </TableRow>
+          ))}
+        </TableBody>
+      </Table>
+    </TableContainer>
+  );
+}
 
-  const getUsageDays = (): number => {
-    if (!instrument) return 0;
-    const created = instrument.purchase_date || instrument.created_at;
-    if (!created) return 0;
-    return dayjs().diff(dayjs(created), 'day');
-  };
-
-  // calibration columns
-  const calibrationColumns: ColumnDef<CalibrationRecord>[] = [
-    {
-      id: 'calibration_date',
-      label: '校准日期',
-      render: (row) => new Date(row.calibration_date).toLocaleDateString('zh-CN'),
-    },
-    { id: 'calibration_type', label: '校准类型' },
-    { id: 'result', label: '校准结果' },
-    { id: 'certificate_no', label: '证书编号', render: (row) => row.certificate_no || '-' },
-    { id: 'performed_by', label: '校准人' },
-    {
-      id: 'next_calibration_date',
-      label: '下次校准',
-      render: (row) =>
-        row.next_calibration_date
-          ? new Date(row.next_calibration_date).toLocaleDateString('zh-CN')
-          : '-',
-    },
+function InfoGrid({ instrument }: { instrument: Instrument }) {
+  const fields = [
+    { label: '仪器名称', value: instrument.name },
+    { label: '仪器编号', value: instrument.code, mono: true },
+    { label: '型号', value: instrument.model },
+    { label: '序列号', value: instrument.serial_number, mono: true },
+    { label: '类型', value: instrument.type },
+    { label: '制造商', value: instrument.manufacturer },
+    { label: '存放位置', value: instrument.location },
+    { label: '负责人', value: instrument.responsible_person },
+    { label: '状态', value: instrument.status, isStatus: true },
+    { label: '购买日期', value: formatDate(instrument.purchase_date) },
+    { label: '上次校准日期', value: formatDate(instrument.calibration_date) },
+    { label: '下次校准日期', value: formatDate(instrument.next_calibration_date), isNextCal: true },
   ];
 
-  // maintenance columns
-  const maintenanceColumns: ColumnDef<MaintenanceRecord>[] = [
-    {
-      id: 'performed_at',
-      label: '维护日期',
-      render: (row) => new Date(row.performed_at).toLocaleDateString('zh-CN'),
-    },
-    { id: 'maintenance_type', label: '维护类型' },
-    { id: 'description', label: '维护描述' },
-    { id: 'performed_by', label: '执行人' },
-    {
-      id: 'next_maintenance_date',
-      label: '下次维护',
-      render: (row) =>
-        row.next_maintenance_date
-          ? new Date(row.next_maintenance_date).toLocaleDateString('zh-CN')
-          : '-',
-    },
-    { id: 'cost', label: '费用', render: (row) => (row.cost ? `¥${row.cost}` : '-') },
-  ];
+  return (
+    <Box
+      sx={{
+        display: 'grid',
+        gridTemplateColumns: { xs: '1fr 1fr', md: '1fr 1fr 1fr' },
+        gap: 2.5,
+        p: 2,
+        bgcolor: 'grey.50',
+        borderRadius: 1.5,
+      }}
+    >
+      {fields.map((field) => (
+        <Box key={field.label}>
+          <Typography
+            variant='body2'
+            color='text.secondary'
+            sx={{ mb: 0.5 }}
+          >
+            {field.label}
+          </Typography>
+          {field.isStatus ? (
+            <Box sx={{ mt: 0.5 }}>{getStatusBadge(field.value || '')}</Box>
+          ) : (
+            <Typography
+              sx={{
+                fontWeight: 'medium',
+                fontFamily: field.mono ? 'monospace' : undefined,
+                color: field.isNextCal && field.value !== '-' ? 'warning.600' : undefined,
+              }}
+            >
+              {field.value || '-'}
+            </Typography>
+          )}
+        </Box>
+      ))}
+      <Box sx={{ gridColumn: '1 / -1' }}>
+        <Typography
+          variant='body2'
+          color='text.secondary'
+          sx={{ mb: 0.5 }}
+        >
+          描述
+        </Typography>
+        <Typography sx={{ fontWeight: 'medium' }}>{instrument.description || '-'}</Typography>
+      </Box>
+    </Box>
+  );
+}
 
-  // Sidebar content - Related inspection tasks
-  const sidebarContent = (
+function SidebarTasks({
+  tasks,
+  navigate,
+}: {
+  tasks: InspectionTask[];
+  navigate: ReturnType<typeof useNavigate>;
+}) {
+  const taskStatusColor = (status: string) => {
+    if (status === '已完成' || status === 'completed')
+      return { bg: 'success.lighter', color: 'success.dark' };
+    if (status === '进行中' || status === 'in_progress')
+      return { bg: 'primary.100', color: 'primary.dark' };
+    return { bg: 'warning.100', color: ct.yellow[600] };
+  };
+
+  return (
     <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
       <Typography
         variant='subtitle1'
@@ -217,71 +212,56 @@ const LimsInstrumentDetailPage: React.FC = () => {
         <FileText sx={{ fontSize: 20, color: 'primary.dark' }} />
         相关检验任务
       </Typography>
-      {relatedTasks.length > 0 ? (
+      {tasks.length > 0 ? (
         <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1.5 }}>
-          {relatedTasks.map((task) => (
-            <Card
-              key={task.id}
-              sx={{
-                cursor: 'pointer',
-                '&:hover': { bgcolor: 'grey.50' },
-              }}
-              onClick={() => navigate(`${LIMS_PATHS.taskDetail}?id=${task.id}`)}
-            >
-              <CardContent sx={{ p: 2, '&:last-child': { pb: 2 } }}>
-                <Box
-                  sx={{
-                    display: 'flex',
-                    justifyContent: 'space-between',
-                    alignItems: 'flex-start',
-                    mb: 1,
-                  }}
-                >
-                  <Box>
+          {tasks.map((task) => {
+            const sc = taskStatusColor(task.status || '');
+            return (
+              <Card
+                key={task.id}
+                sx={{ cursor: 'pointer', '&:hover': { bgcolor: 'grey.50' } }}
+                onClick={() => navigate(`${LIMS_PATHS.taskDetail}?id=${task.id}`)}
+              >
+                <CardContent sx={{ p: 2, '&:last-child': { pb: 2 } }}>
+                  <Box
+                    sx={{
+                      display: 'flex',
+                      justifyContent: 'space-between',
+                      alignItems: 'flex-start',
+                      mb: 1,
+                    }}
+                  >
                     <Typography sx={{ fontWeight: 500, color: 'grey.900', fontSize: '0.875rem' }}>
                       {task.task_no || task.id}
                     </Typography>
+                    <Chip
+                      label={task.status || '待处理'}
+                      size='small'
+                      sx={{ backgroundColor: sc.bg, color: sc.color }}
+                    />
                   </Box>
-                  <Chip
-                    label={task.status || '待处理'}
-                    size='small'
+                  <Box
                     sx={{
-                      backgroundColor:
-                        task.status === '已完成' || task.status === 'completed'
-                          ? 'success.lighter'
-                          : task.status === '进行中' || task.status === 'in_progress'
-                            ? 'primary.100'
-                            : 'warning.100',
-                      color:
-                        task.status === '已完成' || task.status === 'completed'
-                          ? 'success.dark'
-                          : task.status === '进行中' || task.status === 'in_progress'
-                            ? 'primary.dark'
-                            : ct.yellow[600],
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: 2,
+                      fontSize: '0.875rem',
+                      color: 'text.secondary',
                     }}
-                  />
-                </Box>
-                <Box
-                  sx={{
-                    display: 'flex',
-                    alignItems: 'center',
-                    gap: 2,
-                    fontSize: '0.875rem',
-                    color: 'text.secondary',
-                  }}
-                >
-                  <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
-                    <Eye sx={{ width: 12, height: 12 }} />
-                    {task.inspector || '-'}
+                  >
+                    <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
+                      <Eye sx={{ width: 12, height: 12 }} />
+                      {task.inspector || '-'}
+                    </Box>
+                    <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
+                      <Clock sx={{ width: 12, height: 12 }} />
+                      {task.created_at ? dayjs(task.created_at).format('YYYY-MM-DD') : '-'}
+                    </Box>
                   </Box>
-                  <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
-                    <Clock sx={{ width: 12, height: 12 }} />
-                    {task.created_at ? dayjs(task.created_at).format('YYYY-MM-DD') : '-'}
-                  </Box>
-                </Box>
-              </CardContent>
-            </Card>
-          ))}
+                </CardContent>
+              </Card>
+            );
+          })}
         </Box>
       ) : (
         <Box sx={{ textAlign: 'center', py: 3, color: 'text.secondary' }}>
@@ -291,281 +271,157 @@ const LimsInstrumentDetailPage: React.FC = () => {
       )}
     </Box>
   );
+}
 
-  // Sections for tabs
+const LimsInstrumentDetailPage: React.FC = () => {
+  const { id } = useParams<{ id: string }>();
+  const navigate = useNavigate();
+
+  const { data, isLoading, error, refetch } = useQuery({
+    queryKey: QUERY_KEYS.LIMS.INSTRUMENT(id || ''),
+    queryFn: async () => {
+      if (!id) return { instrument: null, error: '无效的仪器ID' };
+      const [instrumentRes, calibrationRes, maintenanceRes, tasksRes] = await Promise.all([
+        limsApi.getInstrument(id),
+        limsApi.listCalibrationRecords(id),
+        limsApi.listMaintenanceByInstrument(id),
+        limsApi.listTasks().catch(() => null),
+      ]);
+
+      const instrument =
+        instrumentRes.success && instrumentRes.data ? (instrumentRes.data as Instrument) : null;
+      const instrError = instrument ? null : '仪器不存在或已被删除';
+
+      const extractList = <T,>(
+        res: { success?: boolean; data?: unknown },
+        keys: (keyof LimsListResponse<T>)[]
+      ): T[] => {
+        if (!res.success || !res.data) return [];
+        if (Array.isArray(res.data)) return res.data as T[];
+        const obj = res.data as LimsListResponse<T>;
+        for (const k of keys) {
+          if (Array.isArray(obj[k])) return obj[k] as T[];
+        }
+        return [];
+      };
+
+      const calibrationRecords = extractList<CalibrationRecord>(calibrationRes, [
+        'items',
+        'records',
+      ]);
+      const maintenanceRecords = extractList<MaintenanceRecord>(maintenanceRes, ['items']);
+      const allTasks = tasksRes ? extractList<InspectionTask>(tasksRes, ['items', 'tasks']) : [];
+      const relatedTasks = allTasks.slice(0, 5);
+
+      return {
+        instrument,
+        error: instrError,
+        calibrationRecords,
+        maintenanceRecords,
+        relatedTasks,
+      };
+    },
+    enabled: !!id,
+  });
+
+  const instrument = data?.instrument || null;
+  const calibrationRecords = data?.calibrationRecords || [];
+  const maintenanceRecords = data?.maintenanceRecords || [];
+  const relatedTasks = data?.relatedTasks || [];
+  const pageError = error ? '加载仪器详情失败' : data?.error || null;
+
+  const usageDays = useMemo(() => {
+    if (!instrument) return 0;
+    const created = instrument.purchase_date || instrument.created_at;
+    if (!created) return 0;
+    return dayjs().diff(dayjs(created), 'day');
+  }, [instrument]);
+
+  const calibrationColumns = [
+    {
+      id: 'calibration_date',
+      label: '校准日期',
+      render: (row: CalibrationRecord) => formatDate(row.calibration_date),
+    },
+    { id: 'calibration_type', label: '校准类型' },
+    { id: 'result', label: '校准结果' },
+    {
+      id: 'certificate_no',
+      label: '证书编号',
+      render: (row: CalibrationRecord) => row.certificate_no || '-',
+    },
+    { id: 'performed_by', label: '校准人' },
+    {
+      id: 'next_calibration_date',
+      label: '下次校准',
+      render: (row: CalibrationRecord) => formatDate(row.next_calibration_date),
+    },
+  ];
+
+  const maintenanceColumns = [
+    {
+      id: 'performed_at',
+      label: '维护日期',
+      render: (row: MaintenanceRecord) => formatDate(row.performed_at),
+    },
+    { id: 'maintenance_type', label: '维护类型' },
+    { id: 'description', label: '维护描述' },
+    { id: 'performed_by', label: '执行人' },
+    {
+      id: 'next_maintenance_date',
+      label: '下次维护',
+      render: (row: MaintenanceRecord) => formatDate(row.next_maintenance_date),
+    },
+    {
+      id: 'cost',
+      label: '费用',
+      render: (row: MaintenanceRecord) => (row.cost ? `¥${row.cost}` : '-'),
+    },
+  ];
+
   const sections: SectionConfig[] = [
     {
       id: 'basic',
       title: '基本信息',
-      content: instrument ? (
-        <Box
-          sx={{
-            display: 'grid',
-            gridTemplateColumns: { xs: '1fr 1fr', md: '1fr 1fr 1fr' },
-            gap: 2.5,
-            p: 2,
-            bgcolor: 'grey.50',
-            borderRadius: 1.5,
-          }}
-        >
-          <Box>
-            <Typography
-              variant='body2'
-              color='text.secondary'
-              sx={{ mb: 0.5 }}
-            >
-              仪器名称
-            </Typography>
-            <Typography sx={{ fontWeight: 'medium' }}>{instrument.name}</Typography>
-          </Box>
-          <Box>
-            <Typography
-              variant='body2'
-              color='text.secondary'
-              sx={{ mb: 0.5 }}
-            >
-              仪器编号
-            </Typography>
-            <Typography sx={{ fontWeight: 'medium', fontFamily: 'monospace' }}>
-              {instrument.code}
-            </Typography>
-          </Box>
-          <Box>
-            <Typography
-              variant='body2'
-              color='text.secondary'
-              sx={{ mb: 0.5 }}
-            >
-              型号
-            </Typography>
-            <Typography sx={{ fontWeight: 'medium' }}>{instrument.model || '-'}</Typography>
-          </Box>
-          <Box>
-            <Typography
-              variant='body2'
-              color='text.secondary'
-              sx={{ mb: 0.5 }}
-            >
-              序列号
-            </Typography>
-            <Typography sx={{ fontWeight: 'medium', fontFamily: 'monospace' }}>
-              {instrument.serial_number || '-'}
-            </Typography>
-          </Box>
-          <Box>
-            <Typography
-              variant='body2'
-              color='text.secondary'
-              sx={{ mb: 0.5 }}
-            >
-              类型
-            </Typography>
-            <Typography sx={{ fontWeight: 'medium' }}>{instrument.type || '-'}</Typography>
-          </Box>
-          <Box>
-            <Typography
-              variant='body2'
-              color='text.secondary'
-              sx={{ mb: 0.5 }}
-            >
-              制造商
-            </Typography>
-            <Typography sx={{ fontWeight: 'medium' }}>{instrument.manufacturer || '-'}</Typography>
-          </Box>
-          <Box>
-            <Typography
-              variant='body2'
-              color='text.secondary'
-              sx={{ mb: 0.5 }}
-            >
-              存放位置
-            </Typography>
-            <Typography sx={{ fontWeight: 'medium' }}>{instrument.location || '-'}</Typography>
-          </Box>
-          <Box>
-            <Typography
-              variant='body2'
-              color='text.secondary'
-              sx={{ mb: 0.5 }}
-            >
-              负责人
-            </Typography>
-            <Typography sx={{ fontWeight: 'medium' }}>
-              {instrument.responsible_person || '-'}
-            </Typography>
-          </Box>
-          <Box>
-            <Typography
-              variant='body2'
-              color='text.secondary'
-              sx={{ mb: 0.5 }}
-            >
-              状态
-            </Typography>
-            <Box sx={{ mt: 0.5 }}>{getStatusBadge(instrument.status)}</Box>
-          </Box>
-          <Box>
-            <Typography
-              variant='body2'
-              color='text.secondary'
-              sx={{ mb: 0.5 }}
-            >
-              购买日期
-            </Typography>
-            <Typography sx={{ fontWeight: 'medium' }}>
-              {instrument.purchase_date
-                ? new Date(instrument.purchase_date).toLocaleDateString('zh-CN')
-                : '-'}
-            </Typography>
-          </Box>
-          <Box>
-            <Typography
-              variant='body2'
-              color='text.secondary'
-              sx={{ mb: 0.5 }}
-            >
-              上次校准日期
-            </Typography>
-            <Typography sx={{ fontWeight: 'medium' }}>
-              {instrument.calibration_date
-                ? new Date(instrument.calibration_date).toLocaleDateString('zh-CN')
-                : '-'}
-            </Typography>
-          </Box>
-          <Box>
-            <Typography
-              variant='body2'
-              color='text.secondary'
-              sx={{ mb: 0.5 }}
-            >
-              下次校准日期
-            </Typography>
-            <Typography
-              sx={{
-                fontWeight: 'medium',
-                color: instrument.next_calibration_date ? 'warning.600' : 'text.primary',
-              }}
-            >
-              {instrument.next_calibration_date
-                ? new Date(instrument.next_calibration_date).toLocaleDateString('zh-CN')
-                : '-'}
-            </Typography>
-          </Box>
-          <Box sx={{ gridColumn: { xs: '1 / -1', md: '1 / -1' } }}>
-            <Typography
-              variant='body2'
-              color='text.secondary'
-              sx={{ mb: 0.5 }}
-            >
-              描述
-            </Typography>
-            <Typography sx={{ fontWeight: 'medium' }}>{instrument.description || '-'}</Typography>
-          </Box>
-        </Box>
-      ) : null,
+      content: instrument ? <InfoGrid instrument={instrument} /> : null,
     },
     {
       id: 'calibration',
       title: '校准记录',
       content: (
-        <Box>
-          {calibrationRecords.length > 0 ? (
-            <ListPageTemplate
-              title=''
-              columns={calibrationColumns}
-              data={calibrationRecords}
-              loading={false}
-              getRowId={(row) => row.id}
-              pagination={{
-                page: 0,
-                pageSize: 10,
-                total: calibrationRecords.length,
-                onPageChange: () => {},
-              }}
-            />
-          ) : (
-            <Box sx={{ textAlign: 'center', py: 4, color: 'text.secondary' }}>
-              <CheckCircle sx={{ width: 64, height: 64, opacity: 0.5, mx: 'auto', mb: 2 }} />
-              <Typography>暂无校准记录</Typography>
-            </Box>
-          )}
-        </Box>
+        <SimpleTable
+          columns={calibrationColumns}
+          data={calibrationRecords}
+          emptyIcon={<CheckCircle sx={{ width: 64, height: 64 }} />}
+          emptyText='暂无校准记录'
+        />
       ),
     },
     {
       id: 'maintenance',
       title: '维护保养',
       content: (
-        <Box>
-          {maintenanceRecords.length > 0 ? (
-            <ListPageTemplate
-              title=''
-              columns={maintenanceColumns}
-              data={maintenanceRecords}
-              loading={false}
-              getRowId={(row) => row.id}
-              pagination={{
-                page: 0,
-                pageSize: 10,
-                total: maintenanceRecords.length,
-                onPageChange: () => {},
-              }}
-            />
-          ) : (
-            <Box sx={{ textAlign: 'center', py: 4, color: 'text.secondary' }}>
-              <Wrench sx={{ width: 64, height: 64, opacity: 0.5, mx: 'auto', mb: 2 }} />
-              <Typography>暂无维护保养记录</Typography>
-            </Box>
-          )}
-        </Box>
+        <SimpleTable
+          columns={maintenanceColumns}
+          data={maintenanceRecords}
+          emptyIcon={<Wrench sx={{ width: 64, height: 64 }} />}
+          emptyText='暂无维护保养记录'
+        />
       ),
     },
     {
       id: 'usage',
       title: '使用日志',
       content: (
-        <Box>
-          {usageLogs.length > 0 ? (
-            <TableContainer
-              component={Paper}
-              variant='outlined'
-              sx={{ borderRadius: 1.5 }}
-            >
-              <Table size='small'>
-                <TableHead>
-                  <TableRow sx={{ bgcolor: 'grey.50' }}>
-                    <TableCell sx={{ fontWeight: 600 }}>使用时间</TableCell>
-                    <TableCell sx={{ fontWeight: 600 }}>使用人</TableCell>
-                    <TableCell sx={{ fontWeight: 600 }}>关联任务</TableCell>
-                    <TableCell sx={{ fontWeight: 600 }}>用途</TableCell>
-                    <TableCell sx={{ fontWeight: 600 }}>备注</TableCell>
-                  </TableRow>
-                </TableHead>
-                <TableBody>
-                  {usageLogs.map((log) => (
-                    <TableRow key={log.id}>
-                      <TableCell>{log.time || '-'}</TableCell>
-                      <TableCell>{log.user || '-'}</TableCell>
-                      <TableCell>{log.task || '-'}</TableCell>
-                      <TableCell>{log.purpose || '-'}</TableCell>
-                      <TableCell>{log.notes || '-'}</TableCell>
-                    </TableRow>
-                  ))}
-                </TableBody>
-              </Table>
-            </TableContainer>
-          ) : (
-            <Box sx={{ textAlign: 'center', py: 4, color: 'text.secondary' }}>
-              <Clock sx={{ width: 64, height: 64, opacity: 0.5, mx: 'auto', mb: 2 }} />
-              <Typography>暂无使用日志</Typography>
-            </Box>
-          )}
+        <Box sx={{ textAlign: 'center', py: 4, color: 'text.secondary' }}>
+          <Clock sx={{ width: 64, height: 64, opacity: 0.5, mx: 'auto', mb: 2 }} />
+          <Typography>暂无使用日志</Typography>
         </Box>
       ),
     },
   ];
 
-  if (loading) {
+  if (isLoading) {
     return (
       <Box
         sx={{
@@ -596,7 +452,7 @@ const LimsInstrumentDetailPage: React.FC = () => {
     );
   }
 
-  if (error || !instrument) {
+  if (pageError || !instrument) {
     return (
       <Box
         sx={{
@@ -609,14 +465,9 @@ const LimsInstrumentDetailPage: React.FC = () => {
       >
         <Box sx={{ textAlign: 'center' }}>
           <AlertCircle
-            sx={{
-              width: 64,
-              height: 64,
-              color: 'error.main',
-              margin: '0 auto 16px auto',
-            }}
+            sx={{ width: 64, height: 64, color: 'error.main', mb: 2, mx: 'auto', display: 'block' }}
           />
-          <p style={{ color: ct.grey[600] }}>{error || '仪器不存在或已被删除'}</p>
+          <p style={{ color: ct.grey[600] }}>{pageError || '仪器不存在或已被删除'}</p>
           <Button
             onClick={() => navigate(LIMS_PATHS.instrument)}
             sx={{ mt: 2 }}
@@ -647,8 +498,8 @@ const LimsInstrumentDetailPage: React.FC = () => {
           { label: '仪器详情' },
         ]}
         backHref={LIMS_PATHS.instrument}
-        loading={loading}
-        onRefresh={loadInstrumentData}
+        loading={isLoading}
+        onRefresh={() => refetch()}
         infoCard={{
           avatar: <Settings sx={{ fontSize: 40, color: 'cyan.dark' }} />,
           title: instrument.name,
@@ -657,10 +508,15 @@ const LimsInstrumentDetailPage: React.FC = () => {
           stats: [
             { label: '校准次数', value: calibrationRecords.length },
             { label: '维护次数', value: maintenanceRecords.length },
-            { label: '使用天数', value: getUsageDays() },
+            { label: '使用天数', value: usageDays },
           ],
         }}
-        sidebar={sidebarContent}
+        sidebar={
+          <SidebarTasks
+            tasks={relatedTasks}
+            navigate={navigate}
+          />
+        }
         sections={sections}
       />
     </PageContainer>

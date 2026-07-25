@@ -154,7 +154,7 @@ pub fn extract_tenant_id(req: &Request) -> Option<String> {
 }
 
 async fn set_rls_policy(pool: &PgPool, tenant_id: &str) -> Result<(), sqlx::Error> {
-    sqlx::query("SELECT set_config('app.current_tenant_id', $1, true)")
+    sqlx::query("SELECT set_config('app.tenant_id', $1, true)")
         .bind(tenant_id)
         .execute(pool)
         .await?;

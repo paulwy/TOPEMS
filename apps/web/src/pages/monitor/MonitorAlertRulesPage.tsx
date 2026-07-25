@@ -1,24 +1,24 @@
-/**
- * 告警规则管理页面 - V4.0 标准化改造
- *
- * @module pages/monitor
- * @path /monitor/alert-rules
- */
-
-import React, { useState, useMemo, useCallback } from 'react';
-import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import React, { useState, useMemo } from 'react';
+import {
+  Box,
+  Typography,
+  Chip,
+  Switch,
+} from '@mui/material';
+import { PageContainer } from '@/components/common';
+import CrudPage, { type CrudApiAdapter } from '@/components/templates/CrudPage';
+import { alertRuleSchema } from '@/schemas/monitor';
+import type { ColumnDef, RowAction } from '@/components/templates/list/types';
+import { useNotificationStore } from '@/store';
 import {
   Settings,
   Plus,
-  Edit,
-  Trash2,
   RefreshCw,
   Download,
   Upload,
   Copy,
   Power,
   PowerOff,
-  Clock,
   AlertTriangle,
   Cpu,
   HardDrive,
@@ -30,14 +30,23 @@ import {
   MessageSquare,
   Smartphone,
 } from 'lucide-react';
-import { Box, Typography, Chip, Button, Switch } from '@mui/material';
 
-import { useNotificationStore } from '@/store';
-import { ListPageTemplate, type ColumnDef } from '@/components/templates';
-import { extractErrorMessage } from '@/utils/errors';
-import { PageContainer } from '@/components/common';
-import { ConfirmDialog } from '@topems/shared-components';
-import { MONITOR_PATHS } from '@/modules/monitor/config';
+interface AlertRule {
+  id: string;
+  name: string;
+  metric_type: string;
+  metric_name: string;
+  condition: string;
+  threshold: string;
+  unit: string;
+  severity: string;
+  channels: string[];
+  enabled: boolean;
+  last_triggered_at: string | null;
+  trigger_count_today: number;
+  created_at: string;
+  updated_at: string;
+}
 
 const METRIC_TYPE_CONFIG: Record<
   string,
@@ -68,24 +77,7 @@ const CHANNEL_CONFIG: Record<string, { label: string; icon: React.ReactNode }> =
   wechat: { label: '企业微信', icon: <MessageSquare size={14} /> },
 };
 
-interface AlertRule {
-  id: string;
-  name: string;
-  metric_type: string;
-  metric_name: string;
-  condition: string;
-  threshold: string;
-  unit: string;
-  severity: string;
-  channels: string[];
-  enabled: boolean;
-  last_triggered_at: string | null;
-  trigger_count_today: number;
-  created_at: string;
-  updated_at: string;
-}
-
-const mockRules: AlertRule[] = [
+const initialMockRules: AlertRule[] = [
   {
     id: '1',
     name: 'CPU 使用率过高',
@@ -232,230 +224,79 @@ const mockRules: AlertRule[] = [
   },
 ];
 
-export const MonitorAlertRulesPage: React.FC = () => {
-  const queryClient = useQueryClient();
+const MonitorAlertRulesPage: React.FC = () => {
   const addNotification = useNotificationStore((state) => state.addNotification);
+  const [rules, setRules] = useState<AlertRule[]>(initialMockRules);
 
-  const [searchQuery, setSearchQuery] = useState('');
-  const [statusFilter, setStatusFilter] = useState<string>('all');
-  const [severityFilter, setSeverityFilter] = useState<string>('all');
-  const [metricTypeFilter, setMetricTypeFilter] = useState<string>('all');
-  const [page, setPage] = useState(1);
-  const pageSize = 10;
-
-  const [confirmDialogOpen, setConfirmDialogOpen] = useState(false);
-  const [confirmDialogConfig, setConfirmDialogConfig] = useState<{
-    title: string;
-    message: string;
-    onConfirm: () => void;
-    danger?: boolean;
-  } | null>(null);
-
-  const openConfirmDialog = useCallback(
-    (config: { title: string; message: string; onConfirm: () => void; danger?: boolean }) => {
-      setConfirmDialogConfig(config);
-      setConfirmDialogOpen(true);
+  const mockApiAdapter: CrudApiAdapter<AlertRule> = {
+    list: async () => {
+      return { data: rules, total: rules.length };
     },
-    []
-  );
-
-  const rulesQuery = useQuery<AlertRule[]>({
-    queryKey: ['monitor-alert-rules'],
-    queryFn: async () => {
-      return mockRules;
+    create: async (data) => {
+      const newRule: AlertRule = {
+        ...(data as AlertRule),
+        id: String(Date.now()),
+        created_at: new Date().toISOString().split('T')[0],
+        updated_at: new Date().toISOString().split('T')[0],
+      };
+      setRules([...rules, newRule]);
+      return newRule;
     },
-    staleTime: 5 * 60 * 1000,
-  });
-
-  const rules = rulesQuery.data ?? [];
-  const loading = rulesQuery.isLoading;
-
-  const toggleMutation = useMutation({
-    mutationFn: async (params: { ruleId: string; action: string }) => params,
-    onSuccess: ({ ruleId }) => {
-      queryClient.setQueryData<AlertRule[]>(['monitor-alert-rules'], (prev) =>
-        (prev ?? []).map((r) =>
-          r.id === ruleId
-            ? { ...r, enabled: !r.enabled, updated_at: new Date().toISOString().split('T')[0] }
+    update: async (id, data) => {
+      setRules(
+        rules.map((r) =>
+          r.id === id
+            ? { ...r, ...data, updated_at: new Date().toISOString().split('T')[0] }
             : r
         )
       );
+      return { ...rules.find((r) => r.id === id), ...data } as AlertRule;
     },
-    onError: (err: unknown, { action }) => {
-      addNotification({
-        title: '失败',
-        message: extractErrorMessage(err, `${action}告警规则失败`),
-        type: 'error',
-      });
+    delete: async (id) => {
+      setRules(rules.filter((r) => r.id !== id));
     },
-  });
+  };
 
-  const deleteMutation = useMutation({
-    mutationFn: async (ruleId: string) => ruleId,
-    onSuccess: (ruleId) => {
-      queryClient.setQueryData<AlertRule[]>(['monitor-alert-rules'], (prev) =>
-        (prev ?? []).filter((r) => r.id !== ruleId)
-      );
-    },
-    onError: (err: unknown) => {
-      addNotification({
-        title: '失败',
-        message: extractErrorMessage(err, '删除告警规则失败'),
-        type: 'error',
-      });
-    },
-  });
+  const handleToggleStatus = (ruleId: string) => {
+    const rule = rules.find((r) => r.id === ruleId);
+    if (!rule) return;
 
-  const copyMutation = useMutation({
-    mutationFn: async (ruleId: string) => ruleId,
-    onSuccess: (ruleId) => {
-      const currentRules = queryClient.getQueryData<AlertRule[]>(['monitor-alert-rules']) ?? [];
-      const rule = currentRules.find((r) => r.id === ruleId);
-      if (rule) {
-        const newRule: AlertRule = {
-          ...rule,
-          id: String(Date.now()),
-          name: `${rule.name} - 副本`,
-          enabled: false,
-          created_at: new Date().toISOString().split('T')[0],
-          updated_at: new Date().toISOString().split('T')[0],
-        };
-        queryClient.setQueryData<AlertRule[]>(['monitor-alert-rules'], [...currentRules, newRule]);
-      }
-    },
-    onError: (err: unknown) => {
-      addNotification({
-        title: '失败',
-        message: extractErrorMessage(err, '复制告警规则失败'),
-        type: 'error',
-      });
-    },
-  });
-
-  const handleToggleStatus = useCallback(
-    (ruleId: string) => {
-      const rule = rules.find((r) => r.id === ruleId);
-      if (!rule) return;
-
-      const action = rule.enabled ? '禁用' : '启用';
-      openConfirmDialog({
-        title: `确认${action}`,
-        message: `确定要${action}告警规则"${rule.name}"吗？`,
-        danger: rule.enabled,
-        onConfirm: () => {
-          toggleMutation.mutate(
-            { ruleId, action },
-            {
-              onSuccess: () => {
-                addNotification({
-                  title: '成功',
-                  message: `告警规则${action}成功`,
-                  type: 'success',
-                });
-              },
-            }
-          );
-        },
-      });
-    },
-    [rules, toggleMutation, addNotification, openConfirmDialog]
-  );
-
-  const handleDelete = useCallback(
-    (ruleId: string) => {
-      const rule = rules.find((r) => r.id === ruleId);
-      openConfirmDialog({
-        title: '确认删除',
-        message: `确定要删除告警规则"${rule?.name || ''}"吗？此操作不可恢复。`,
-        danger: true,
-        onConfirm: () => {
-          deleteMutation.mutate(ruleId, {
-            onSuccess: () => {
-              addNotification({
-                title: '成功',
-                message: '告警规则删除成功',
-                type: 'success',
-              });
-            },
-          });
-        },
-      });
-    },
-    [rules, deleteMutation, addNotification, openConfirmDialog]
-  );
-
-  const handleCopy = useCallback(
-    (ruleId: string) => {
-      copyMutation.mutate(ruleId, {
-        onSuccess: () => {
-          addNotification({
-            title: '成功',
-            message: '告警规则复制成功',
-            type: 'success',
-          });
-        },
-      });
-    },
-    [copyMutation, addNotification]
-  );
-
-  const filteredRules = useMemo(() => {
-    return rules.filter((rule) => {
-      const matchesSearch =
-        !searchQuery ||
-        rule.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        rule.metric_name.toLowerCase().includes(searchQuery.toLowerCase());
-
-      const matchesStatus =
-        statusFilter === 'all' ||
-        (statusFilter === 'enabled' && rule.enabled) ||
-        (statusFilter === 'disabled' && !rule.enabled);
-
-      const matchesSeverity = severityFilter === 'all' || rule.severity === severityFilter;
-      const matchesMetricType = metricTypeFilter === 'all' || rule.metric_type === metricTypeFilter;
-
-      return matchesSearch && matchesStatus && matchesSeverity && matchesMetricType;
+    const action = rule.enabled ? '禁用' : '启用';
+    setRules(
+      rules.map((r) =>
+        r.id === ruleId
+          ? { ...r, enabled: !r.enabled, updated_at: new Date().toISOString().split('T')[0] }
+          : r
+      )
+    );
+    addNotification({
+      title: '成功',
+      message: `告警规则${action}成功`,
+      type: 'success',
     });
-  }, [rules, searchQuery, statusFilter, severityFilter, metricTypeFilter]);
+  };
 
-  const stats = useMemo(() => {
-    const total = rules.length;
-    const enabledCount = rules.filter((r) => r.enabled).length;
-    const disabledCount = rules.filter((r) => !r.enabled).length;
-    const totalTriggersToday = rules.reduce((sum, r) => sum + r.trigger_count_today, 0);
-    return [
-      {
-        id: 'total',
-        title: '规则总数',
-        value: total,
-        icon: <Settings size={20} />,
-        color: 'primary' as const,
-      },
-      {
-        id: 'enabled',
-        title: '启用规则',
-        value: enabledCount,
-        icon: <Power size={20} />,
-        color: 'success' as const,
-      },
-      {
-        id: 'disabled',
-        title: '禁用规则',
-        value: disabledCount,
-        icon: <PowerOff size={20} />,
-        color: 'default' as const,
-      },
-      {
-        id: 'triggers',
-        title: '今日触发次数',
-        value: totalTriggersToday,
-        icon: <AlertTriangle size={20} />,
-        color: 'warning' as const,
-      },
-    ];
-  }, [rules]);
+  const handleCopy = (ruleId: string) => {
+    const rule = rules.find((r) => r.id === ruleId);
+    if (rule) {
+      const newRule: AlertRule = {
+        ...rule,
+        id: String(Date.now()),
+        name: `${rule.name} - 副本`,
+        enabled: false,
+        created_at: new Date().toISOString().split('T')[0],
+        updated_at: new Date().toISOString().split('T')[0],
+      };
+      setRules([...rules, newRule]);
+      addNotification({
+        title: '成功',
+        message: '告警规则复制成功',
+        type: 'success',
+      });
+    }
+  };
 
-  const columns: ColumnDef<AlertRule>[] = useMemo(
+  const customColumns: ColumnDef<AlertRule>[] = useMemo(
     () => [
       {
         id: 'name',
@@ -473,22 +314,13 @@ export const MonitorAlertRulesPage: React.FC = () => {
                 justifyContent: 'center',
               }}
             >
-              <AlertTriangle
-                size={18}
-                color='primary.main'
-              />
+              <AlertTriangle size={18} color='primary.main' />
             </Box>
             <Box>
-              <Typography
-                variant='body2'
-                sx={{ fontWeight: 500 }}
-              >
+              <Typography variant='body2' sx={{ fontWeight: 500 }}>
                 {row.name}
               </Typography>
-              <Typography
-                variant='caption'
-                color='text.secondary'
-              >
+              <Typography variant='caption' color='text.secondary'>
                 {row.metric_name}
               </Typography>
             </Box>
@@ -523,10 +355,7 @@ export const MonitorAlertRulesPage: React.FC = () => {
         id: 'condition',
         label: '触发条件',
         render: (row) => (
-          <Typography
-            variant='body2'
-            sx={{ fontFamily: 'monospace' }}
-          >
+          <Typography variant='body2' sx={{ fontFamily: 'monospace' }}>
             {row.condition} {row.threshold}
             {row.unit}
           </Typography>
@@ -540,13 +369,7 @@ export const MonitorAlertRulesPage: React.FC = () => {
             label: row.severity,
             color: 'default' as const,
           };
-          return (
-            <Chip
-              size='small'
-              color={config.color}
-              label={config.label}
-            />
-          );
+          return <Chip size='small' color={config.color} label={config.label} />;
         },
       },
       {
@@ -557,7 +380,7 @@ export const MonitorAlertRulesPage: React.FC = () => {
             {row.channels.slice(0, 3).map((channel) => {
               const config = CHANNEL_CONFIG[channel] || {
                 label: channel,
-                icon: (<Bell size={14} />) as React.ReactElement,
+                icon: <Bell size={14} />,
               };
               return (
                 <Chip
@@ -606,216 +429,109 @@ export const MonitorAlertRulesPage: React.FC = () => {
         id: 'last_triggered_at',
         label: '最后触发时间',
         render: (row) => (
-          <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-            <Clock
-              size={14}
-              color='action'
-            />
-            <Typography
-              variant='body2'
-              color='text.secondary'
-            >
-              {row.last_triggered_at || '-'}
-            </Typography>
-          </Box>
-        ),
-      },
-      {
-        id: 'actions',
-        label: '操作',
-        align: 'right',
-        render: (row) => (
-          <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5, justifyContent: 'flex-end' }}>
-            <Button
-              size='small'
-              variant='text'
-              onClick={() => {}}
-              startIcon={<Edit size={14} />}
-            >
-              编辑
-            </Button>
-            <Button
-              size='small'
-              variant='text'
-              onClick={() => handleCopy(row.id)}
-              startIcon={<Copy size={14} />}
-            >
-              复制
-            </Button>
-            <Button
-              size='small'
-              variant='text'
-              onClick={() => handleToggleStatus(row.id)}
-              startIcon={row.enabled ? <PowerOff size={14} /> : <Power size={14} />}
-              color={row.enabled ? 'warning' : 'success'}
-            >
-              {row.enabled ? '禁用' : '启用'}
-            </Button>
-            <Button
-              size='small'
-              color='error'
-              variant='text'
-              onClick={() => handleDelete(row.id)}
-              startIcon={<Trash2 size={14} />}
-            >
-              删除
-            </Button>
-          </Box>
+          <Typography variant='body2' color='text.secondary'>
+            {row.last_triggered_at || '-'}
+          </Typography>
         ),
       },
     ],
-    [handleToggleStatus, handleDelete, handleCopy]
+    [handleToggleStatus]
   );
 
-  const filters = useMemo(
+  const customRowActions: RowAction<AlertRule>[] = useMemo(
     () => [
       {
-        id: 'status',
-        label: '状态',
-        type: 'select' as const,
-        options: [
-          { label: '全部状态', value: 'all' },
-          { label: '启用', value: 'enabled' },
-          { label: '禁用', value: 'disabled' },
-        ],
+        label: '复制',
+        icon: <Copy size={16} />,
+        onClick: (row) => handleCopy(row.id),
       },
       {
-        id: 'severity',
-        label: '严重级别',
-        type: 'select' as const,
-        options: [
-          { label: '全部级别', value: 'all' },
-          ...Object.entries(SEVERITY_CONFIG).map(([value, config]) => ({
-            label: config.label,
-            value,
-          })),
-        ],
-      },
-      {
-        id: 'metricType',
-        label: '指标类型',
-        type: 'select' as const,
-        options: [
-          { label: '全部类型', value: 'all' },
-          ...Object.entries(METRIC_TYPE_CONFIG).map(([value, config]) => ({
-            label: config.label,
-            value,
-          })),
-        ],
+        label: '启用/禁用',
+        icon: <Power size={16} />,
+        onClick: (row) => handleToggleStatus(row.id),
       },
     ],
-    []
+    [handleCopy, handleToggleStatus]
   );
 
-  const handleFilterChange = useCallback((filters: Record<string, unknown>) => {
-    if (typeof filters.status === 'string') {
-      setStatusFilter(filters.status);
-    }
-    if (typeof filters.severity === 'string') {
-      setSeverityFilter(filters.severity);
-    }
-    if (typeof filters.metricType === 'string') {
-      setMetricTypeFilter(filters.metricType);
-    }
-    setPage(1);
-  }, []);
+  const headerContent = (rows: Record<string, unknown>[]) => {
+    const ruleList = rows as AlertRule[];
+    const total = ruleList.length;
+    const enabledCount = ruleList.filter((r) => r.enabled).length;
+    const disabledCount = ruleList.filter((r) => !r.enabled).length;
+    const totalTriggersToday = ruleList.reduce((sum, r) => sum + r.trigger_count_today, 0);
 
-  const handlePageChange = useCallback((newPage: number) => {
-    setPage(newPage);
-  }, []);
-
-  const handleCreate = useCallback(() => {
-    addNotification({
-      title: '提示',
-      message: '新建告警规则功能开发中',
-      type: 'info',
-    });
-  }, [addNotification]);
+    return (
+      <Box
+        sx={{
+          display: 'grid',
+          gridTemplateColumns: { xs: 'repeat(2, 1fr)', md: 'repeat(4, 1fr)' },
+          gap: 2,
+          mb: 3,
+        }}
+      >
+        <Box sx={{ p: 2, bgcolor: 'primary.100', borderRadius: 3 }}>
+          <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 1 }}>
+            <Settings size={18} sx={{ color: 'primary.dark' }} />
+            <Typography variant='body2' sx={{ color: 'text.secondary' }}>
+              规则总数
+            </Typography>
+          </Box>
+          <Typography variant='h5' sx={{ fontWeight: 700, color: 'primary.dark' }}>
+            {total}
+          </Typography>
+        </Box>
+        <Box sx={{ p: 2, bgcolor: 'success.lighter', borderRadius: 3 }}>
+          <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 1 }}>
+            <Power size={18} sx={{ color: 'success.700' }} />
+            <Typography variant='body2' sx={{ color: 'text.secondary' }}>
+              启用规则
+            </Typography>
+          </Box>
+          <Typography variant='h5' sx={{ fontWeight: 700, color: 'success.700' }}>
+            {enabledCount}
+          </Typography>
+        </Box>
+        <Box sx={{ p: 2, bgcolor: 'grey.100', borderRadius: 3 }}>
+          <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 1 }}>
+            <PowerOff size={18} sx={{ color: 'text.secondary' }} />
+            <Typography variant='body2' sx={{ color: 'text.secondary' }}>
+              禁用规则
+            </Typography>
+          </Box>
+          <Typography variant='h5' sx={{ fontWeight: 700 }}>
+            {disabledCount}
+          </Typography>
+        </Box>
+        <Box sx={{ p: 2, bgcolor: 'warning.light', borderRadius: 3 }}>
+          <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 1 }}>
+            <AlertTriangle size={18} sx={{ color: 'warning.700' }} />
+            <Typography variant='body2' sx={{ color: 'text.secondary' }}>
+              今日触发次数
+            </Typography>
+          </Box>
+          <Typography variant='h5' sx={{ fontWeight: 700, color: 'warning.700' }}>
+            {totalTriggersToday}
+          </Typography>
+        </Box>
+      </Box>
+    );
+  };
 
   return (
     <PageContainer
       headerProps={{
         pageIcon: <Settings size={20} />,
-        backButton: {
-          href: MONITOR_PATHS.dashboard,
-        },
       }}
     >
-      <ListPageTemplate
-        title=''
-        subtitle=''
-        columns={columns}
-        data={filteredRules}
-        loading={loading}
-        searchable
-        searchPlaceholder='搜索规则名称、指标名...'
-        searchValue={searchQuery}
-        onSearch={setSearchQuery}
-        filters={filters}
-        filtersValue={{
-          status: statusFilter,
-          severity: severityFilter,
-          metricType: metricTypeFilter,
-        }}
-        onFilterChange={handleFilterChange}
-        pagination={{
-          page,
-          pageSize,
-          total: filteredRules.length,
-          onPageChange: handlePageChange,
-        }}
-        actions={[
-          {
-            label: '刷新',
-            icon: <RefreshCw size={16} />,
-            onClick: () => rulesQuery.refetch(),
-            variant: 'outlined',
-          },
-          {
-            label: '导出',
-            icon: <Download size={16} />,
-            onClick: () => {
-              addNotification({
-                title: '提示',
-                message: '导出功能开发中',
-                type: 'info',
-              });
-            },
-            variant: 'outlined',
-          },
-          {
-            label: '导入',
-            icon: <Upload size={16} />,
-            onClick: () => {
-              addNotification({
-                title: '提示',
-                message: '导入功能开发中',
-                type: 'info',
-              });
-            },
-            variant: 'outlined',
-          },
-          {
-            label: '新建规则',
-            icon: <Plus size={16} />,
-            onClick: handleCreate,
-            variant: 'contained',
-          },
-        ]}
-        onRefresh={() => rulesQuery.refetch()}
-        emptyMessage='暂无告警规则'
-      />
-
-      <ConfirmDialog
-        isOpen={confirmDialogOpen}
-        onClose={() => setConfirmDialogOpen(false)}
-        onConfirm={() => {
-          confirmDialogConfig?.onConfirm();
-          setConfirmDialogOpen(false);
-        }}
-        title={confirmDialogConfig?.title || ''}
-        message={confirmDialogConfig?.message || ''}
-        danger={confirmDialogConfig?.danger}
+      <CrudPage
+        schema={alertRuleSchema}
+        apiAdapter={mockApiAdapter as CrudApiAdapter}
+        breadcrumbs={[{ label: '监控' }, { label: '告警规则' }]}
+        customColumns={customColumns as ColumnDef[]}
+        customRowActions={customRowActions as RowAction[]}
+        detailMaxWidth='md'
+        headerContent={headerContent}
       />
     </PageContainer>
   );

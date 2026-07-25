@@ -5,11 +5,36 @@ use axum::{
     extract::{Path, Query, State},
     Json,
 };
+use serde::{Deserialize, Serialize};
 use topems_shared::Claims;
+use utoipa::ToSchema;
 use uuid::Uuid;
 
 use super::models::{is_valid_email, record_audit_log, ListUsersParams, UserResponse, UserRow};
 
+#[derive(Debug, Serialize, ToSchema)]
+#[schema(as = ListUsersResponse)]
+struct ListUsersResponse {
+    users: Vec<UserResponse>,
+    total: i64,
+    page: i64,
+    page_size: i64,
+    total_pages: i64,
+}
+
+#[utoipa::path(
+    get,
+    path = "/users",
+    tag = "IAM",
+    params(
+        ("page" = Option<i64>, Query, description = "页码，默认1"),
+        ("page_size" = Option<i64>, Query, description = "每页条数，默认20"),
+    ),
+    responses(
+        (status = 200, description = "查询成功"),
+        (status = 500, description = "查询失败"),
+    ),
+)]
 pub async fn list_users(
     State(state): State<AppState>,
     Query(params): Query<ListUsersParams>,
@@ -109,6 +134,27 @@ pub async fn list_users(
     }
 }
 
+#[derive(Debug, Deserialize, ToSchema)]
+#[schema(as = CreateUserRequest)]
+struct CreateUserRequest {
+    username: String,
+    email: String,
+    password: String,
+    full_name: Option<String>,
+}
+
+#[utoipa::path(
+    post,
+    path = "/users",
+    tag = "IAM",
+    request_body = CreateUserRequest,
+    responses(
+        (status = 201, description = "创建成功"),
+        (status = 400, description = "参数错误"),
+        (status = 409, description = "用户名或邮箱已存在"),
+        (status = 500, description = "创建失败"),
+    ),
+)]
 pub async fn create_user(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,

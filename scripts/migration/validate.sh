@@ -17,7 +17,7 @@ while IFS= read -r -d '' svc_dir; do
   MIGRATION_DIRS+=("${svc_dir#"$REPO_ROOT"/}")
 done < <(find "$REPO_ROOT/svc" -mindepth 2 -maxdepth 2 -type d -name migrations -print0 2>/dev/null | sort -z)
 
-CHECKSUM_FILE="database/migrations/checksums.txt"
+CHECKSUM_FILE="database/checksums.txt"
 CHECKSUM_PATH="$REPO_ROOT/$CHECKSUM_FILE"
 
 # Counters and collectors

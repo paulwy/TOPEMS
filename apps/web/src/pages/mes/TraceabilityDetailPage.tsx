@@ -14,7 +14,7 @@ import { useQuery } from '@tanstack/react-query';
 import { useTranslation } from 'react-i18next';
 import { QUERY_KEYS } from '@/lib/reactQuery';
 import { Package, MapPin, CheckCircle, Factory, Truck, Boxes } from 'lucide-react';
-import { PageContainer } from '@/components/common/PageContainerV2';
+import { PageContainer } from '@/components/common/PageContainer';
 import { DetailPageTemplate, type TabConfig } from '@/components/templates';
 import { traceabilityApi } from '@/api/mes';
 import type { TraceChain, QualityRecord } from '@/api/mes';

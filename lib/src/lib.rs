@@ -1,68 +1,71 @@
-pub mod api;
-pub mod api_security;
-pub mod api_version;
-pub mod audit;
-pub mod audit_soft_delete;
-pub mod auth;
-pub mod backup;
-pub mod cache;
-pub mod cluster;
-pub mod compression;
-pub mod config;
-pub mod config_center;
-pub mod cors;
-pub mod crud;
-pub mod data_governance;
-pub mod database;
-pub mod embedding;
-pub mod error;
-pub mod event;
-pub mod feature_flag;
+pub use topems_shared_core::api;
+pub use topems_shared_core::api_security;
+pub use topems_shared_core::api_version;
+pub use topems_shared_db::audit;
+pub use topems_shared_db::audit_soft_delete;
+pub use topems_shared_auth::auth;
+pub use topems_shared_db::backup;
+pub use topems_shared_event::cache;
+pub use topems_shared_event::cluster;
+pub use topems_shared_core::compression;
+pub use topems_shared_core::config;
+pub use topems_shared_event::config_center;
+pub use topems_shared_event::consul;
+pub use topems_shared_core::cors;
+pub use topems_shared_core::crud;
+pub use topems_shared_db::data_governance;
+pub use topems_shared_db::database;
+pub use topems_shared_ai::embedding;
+pub use topems_shared_core::error;
+pub use topems_shared_event::event;
+pub use topems_shared_core::feature_flag;
 #[cfg(feature = "grpc")]
-pub mod grpc;
-pub mod health;
-pub mod hrm;
-pub mod id;
-pub mod layers;
-pub mod logging;
-pub mod messaging;
-pub mod metrics;
-pub mod middleware;
-pub mod migration;
-pub mod monitoring;
-pub mod notification;
-pub mod observability;
-pub mod ollama_client;
-pub mod performance;
-pub mod permission;
-pub mod permission_center;
-pub mod query_optimizer;
-pub mod redis;
-pub mod repository;
-pub mod response;
-pub mod rls;
-pub mod saga;
-pub mod schema;
-pub mod security;
-pub mod service_bootstrap;
-pub mod service_client;
-pub mod service_config;
-pub mod service_discovery;
-pub mod service_port;
-pub mod storage;
-pub mod telemetry;
-pub mod tenant;
-pub mod validation;
-pub mod vector_store;
+pub use topems_shared_core::grpc;
+pub use topems_shared_core::health;
+pub use topems_shared_core::hrm;
+pub use topems_shared_core::id;
+pub use topems_shared_core::layers;
+pub use topems_shared_core::logging;
+pub use topems_shared_event::messaging;
+pub use topems_shared_core::metrics;
+pub use topems_shared_auth::middleware;
+pub use topems_shared_db::migration;
+pub use topems_shared_observability::monitoring;
+pub use topems_shared_service_client::notification;
+pub use topems_shared_observability::observability;
+pub use topems_shared_ai::ollama_client;
+pub use topems_shared_observability::performance;
+pub use topems_shared_auth::permission;
+pub use topems_shared_auth::permission_center;
+pub use topems_shared_db::query_optimizer;
+pub use topems_shared_auth::rate_limit;
+pub use topems_shared_event::redis;
+pub use topems_shared_db::repository;
+pub use topems_shared_core::response;
+pub use topems_shared_db::rls;
+pub use topems_shared_event::saga;
+pub use topems_shared_db::schema;
+pub use topems_shared_auth::security;
+pub use topems_shared_bootstrap::*;
+pub use topems_shared_service_client::service_client;
+pub use topems_shared_core::service_config;
+pub use topems_shared_event::service_discovery;
+pub use topems_shared_core::service_port;
+pub use topems_shared_db::storage;
+pub use topems_shared_observability::telemetry;
+pub use topems_shared_auth::tenant;
+pub use topems_shared_core::validation;
+pub use topems_shared_ai::vector_store;
 
 // AI 客户端模块
-pub mod ai_client;
+pub use topems_shared_ai::ai_client;
 
 pub use api_version::{
     api_prefix, create_api_info, create_api_info_router, get_api_info_handler,
-    register_routes_with_legacy_alias, versioned_router, ApiInfo, ApiVersionInfo,
+    register_routes_with_legacy_alias, versioned_router, wrap_group2_router, ApiInfo,
+    ApiVersionInfo, RouteCompatConfig,
 };
-pub use audit::{AuditLog, AuditLogQuery, CreateAuditLogRequest};
+pub use audit::{AuditLog, AuditLogQuery, AuditLogService, CreateAuditLogRequest};
 pub use auth::{
     auth_middleware, check_permission, check_role, generate_jwt_token, generate_refresh_token,
     get_permission_by_id, get_permissions, get_role_by_id, get_roles, require_all_permissions,
@@ -189,6 +192,9 @@ pub use schema::{
     PORTAL_SCHEMA, QMS_SCHEMA, RS_SCHEMA, SCM_SCHEMA, SRM_SCHEMA, WMS_SCHEMA,
 };
 pub use security::*;
+pub mod service_bootstrap {
+    pub use topems_shared_bootstrap::*;
+}
 pub use service_bootstrap::{
     quick_bootstrap, quick_bootstrap_with_db, AppState as BootstrapAppState, BootstrapConfig,
     ServiceBootstrap,
@@ -241,7 +247,7 @@ pub mod ollama {
 }
 
 // File 服务客户端模块
-pub mod file_client;
+pub use topems_shared_ai::file_client;
 pub use file_client::{FileServiceClient, UploadResponse};
 
 // Migration SDK 模块
@@ -291,3 +297,48 @@ pub use grpc::{
     GrpcHealthState, GrpcHealthStatus, GrpcPoolConfig, GrpcPoolError, GrpcPoolStats, HealthProbeId,
     LoadBalancingStrategy, PooledChannel, ProbeKind,
 };
+
+// =============================================================================
+// 扩展 trait：为 shared-core 中的类型提供主 crate 特有的功能
+// =============================================================================
+
+/// AuditContext 扩展 trait
+///
+/// 为 `topems_shared_core::api_security::AuditContext` 提供 `to_audit_request` 方法，
+/// 将审计上下文转换为主 crate 的 `CreateAuditLogRequest`。
+/// 此 trait 仅在主 crate 中可用，保持 shared-core 对 audit 模块的零依赖。
+pub trait AuditContextExt {
+    fn to_audit_request(
+        &self,
+        action: &str,
+        entity_type: &str,
+        status: &str,
+    ) -> crate::audit::CreateAuditLogRequest;
+}
+
+impl AuditContextExt for topems_shared_core::api_security::AuditContext {
+    fn to_audit_request(
+        &self,
+        action: &str,
+        entity_type: &str,
+        status: &str,
+    ) -> crate::audit::CreateAuditLogRequest {
+        let mut req = crate::audit::CreateAuditLogRequest::new(
+            action.to_string(),
+            entity_type.to_string(),
+            status.to_string(),
+        )
+        .with_user(self.actor.clone(), String::new())
+        .with_request_info(Some(self.ip_address.clone()), Some(self.user_agent.clone()));
+
+        if let Some(ref tid) = self.trace_id {
+            req = req.with_request_details(serde_json::json!({
+                "trace_id": tid,
+                "method": self.method,
+                "path": self.path,
+            }));
+        }
+
+        req
+    }
+}

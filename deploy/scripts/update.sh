@@ -74,23 +74,30 @@ echo -e "${YELLOW}Building backend services...${NC}"
 cargo build --release
 
 # Determine which services to update
+# unified-core 包含: IAM + Doc + Flow + File + Communication + Tenant + Billing + AI + Monitor
 ALL_SERVICES=(
     "unified-core"
     "ai"
     "analytics"
-    "manufacturing"
-    "quality-assurance"
     "hrm"
     "crm"
     "pm"
     "erp"
+    "finance"
     "gis"
-    "rs"
+    "mes"
+    "pdm"
+    "qms"
+    "lims"
+    "ehs"
     "scm"
     "wms"
+    "srm"
+    "rd"
+    "bi"
     "mobile"
-    "monitor"
     "portal"
+    "integration"
 )
 
 if [[ -n "$SERVICES" ]]; then
@@ -104,18 +111,31 @@ echo -e "${YELLOW}Updating service binaries...${NC}"
 
 for svc in "${UPDATE_SERVICES[@]}"; do
     if [[ -f "target/release/${svc}" ]]; then
-        # Stop service before update
         systemctl stop "topems-${svc}.service" 2>/dev/null || true
-
         cp "target/release/${svc}" "${PREFIX}/bin/${svc}-service"
         chmod +x "${PREFIX}/bin/${svc}-service"
-
         echo -e "${GREEN}✓ Updated ${svc}-service${NC}"
-
-        # Start service if restart flag set
         if [[ "$RESTART" == true ]]; then
             systemctl start "topems-${svc}.service"
             echo -e "${GREEN}✓ Started ${svc}-service${NC}"
+        fi
+    elif [[ -f "target/release/topems-${svc}" ]]; then
+        systemctl stop "topems-${svc}.service" 2>/dev/null || true
+        cp "target/release/topems-${svc}" "${PREFIX}/bin/${svc}-service"
+        chmod +x "${PREFIX}/bin/${svc}-service"
+        echo -e "${GREEN}✓ Updated ${svc}-service${NC}"
+        if [[ "$RESTART" == true ]]; then
+            systemctl start "topems-${svc}.service"
+            echo -e "${GREEN}✓ Started ${svc}-service${NC}"
+        fi
+    elif [[ -f "target/release/unified-core-service" && "$svc" == "unified-core" ]]; then
+        systemctl stop "topems-unified-core.service" 2>/dev/null || true
+        cp "target/release/unified-core-service" "${PREFIX}/bin/unified-core-service"
+        chmod +x "${PREFIX}/bin/unified-core-service"
+        echo -e "${GREEN}✓ Updated unified-core-service${NC}"
+        if [[ "$RESTART" == true ]]; then
+            systemctl start "topems-unified-core.service"
+            echo -e "${GREEN}✓ Started unified-core-service${NC}"
         fi
     else
         echo -e "${YELLOW}⚠ Binary for ${svc} not found${NC}"

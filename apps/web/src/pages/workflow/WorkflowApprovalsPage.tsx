@@ -1,47 +1,40 @@
 import React, { useState, useMemo, useCallback } from 'react';
 import {
   Box,
-  Typography,
-  Chip,
-  IconButton,
-  Stack,
   Tabs,
   Tab,
   Card,
   CardContent,
-  Avatar,
+  Stack,
+  Typography,
   Button,
   TextField,
 } from '@mui/material';
 import {
   CheckSquare,
   Clock,
-  User,
-  Eye,
-  GitBranch,
-  AlertTriangle,
   CheckCircle,
   XCircle,
-  Send,
+  AlertTriangle,
+  Eye,
   ArrowRightLeft,
-  FileText,
-  AlertCircle,
 } from 'lucide-react';
-import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { useQueryClient } from '@tanstack/react-query';
 
 import { useNotificationStore } from '../../store';
-import { ListPageTemplate, type ColumnDef } from '@/components/templates';
-import { extractErrorMessage } from '@/utils/errors';
+import CrudPage, { type CrudApiAdapter } from '@/components/templates/CrudPage';
+import type { RowAction } from '@/components/templates/list/types';
 import { PageContainer, ConfirmDialog } from '@/components/common';
+import { useConfirmDialog } from '@/hooks';
+import { extractErrorMessage } from '@/utils/errors';
 import { designTokens } from '@/theme/tokens';
 import { WORKFLOW_PATHS } from '@/modules/workflow/config';
 import { approvalTaskApi } from '@/api/workflow/approval';
 import type { ApiResponse } from '@/api/client';
+import { workflowApprovalSchema } from '@/schemas/workflow';
 
 const ct = designTokens.colors;
 
-type ApprovalStatus = 'pending' | 'approved' | 'rejected' | 'claimed';
-type ApprovalPriority = 'high' | 'medium' | 'low';
 type TabType = 'pending' | 'approved' | 'initiated' | 'cc';
 
 interface ApprovalTask {
@@ -52,8 +45,8 @@ interface ApprovalTask {
   initiator: string;
   initiatorAvatar?: string;
   receivedAt: string;
-  priority: ApprovalPriority;
-  status: ApprovalStatus;
+  priority: 'high' | 'medium' | 'low';
+  status: 'pending' | 'approved' | 'rejected' | 'claimed';
   instanceId: string;
   nodeName: string;
 }
@@ -69,283 +62,134 @@ interface ApprovalTaskApiItem {
   priority?: string;
 }
 
-const PRIORITY_LABELS: Record<ApprovalPriority, string> = {
-  high: '高',
-  medium: '中',
-  low: '低',
-};
-
-const PRIORITY_COLORS: Record<ApprovalPriority, 'error' | 'warning' | 'default'> = {
-  high: 'error',
-  medium: 'warning',
-  low: 'default',
-};
-
-const STATUS_LABELS: Record<ApprovalStatus, string> = {
-  pending: '待审批',
-  approved: '已通过',
-  rejected: '已驳回',
-  claimed: '已认领',
-};
-
-const STATUS_COLORS: Record<ApprovalStatus, 'warning' | 'success' | 'error' | 'info'> = {
-  pending: 'warning',
-  approved: 'success',
-  rejected: 'error',
-  claimed: 'info',
-};
-
-const WORKFLOW_TYPE_COLORS: Record<string, string> = {
-  采购管理: 'primary.main',
-  人事管理: 'success.main',
-  财务管理: 'warning.main',
-  法务管理: 'secondary.main',
-  IT管理: ct.cyan[500],
-};
+const mapApiItemToTask = (item: ApprovalTaskApiItem): ApprovalTask => ({
+  id: item.id,
+  title: item.task_name,
+  workflowName: item.workflow_name || '工作流',
+  workflowType: '工作流管理',
+  initiator: item.initiator_id || '未知用户',
+  receivedAt: item.created_at || '',
+  priority: (item.priority as 'high' | 'medium' | 'low') || 'medium',
+  status: (item.status as 'pending' | 'approved' | 'rejected' | 'claimed') || 'pending',
+  instanceId: item.id,
+  nodeName: item.node_name || '审批节点',
+});
 
 export const WorkflowApprovalsPage: React.FC = () => {
   const addNotification = useNotificationStore((state) => state.addNotification);
   const queryClient = useQueryClient();
 
   const [activeTab, setActiveTab] = useState<TabType>('pending');
-  const [searchQuery, setSearchQuery] = useState('');
-  const [statusFilter, setStatusFilter] = useState<string>('all');
-  const [priorityFilter, setPriorityFilter] = useState<string>('all');
-  const [page, setPage] = useState(1);
-  const pageSize = 10;
-
   const [rejectDialogOpen, setRejectDialogOpen] = useState(false);
   const [rejectReason, setRejectReason] = useState('');
   const [selectedTask, setSelectedTask] = useState<ApprovalTask | null>(null);
 
-  const statusParam =
-    activeTab === 'pending' ? 'pending' : activeTab === 'approved' ? undefined : undefined;
+  const { confirmOpen, confirmConfig, openConfirm, closeConfirm } = useConfirmDialog();
 
-  const {
-    data: tasks = [],
-    isLoading: loading,
-    error,
-  } = useQuery({
-    queryKey: ['workflow-approvals', statusParam, page, pageSize],
-    queryFn: async () => {
-      const params = {
+  const getStatusParam = (tab: TabType): string | undefined => {
+    switch (tab) {
+      case 'pending':
+        return 'pending';
+      case 'approved':
+        return undefined;
+      default:
+        return undefined;
+    }
+  };
+
+  const filterByTab = (tasks: ApprovalTask[], tab: TabType): ApprovalTask[] => {
+    switch (tab) {
+      case 'pending':
+        return tasks.filter((t) => t.status === 'pending' || t.status === 'claimed');
+      case 'approved':
+        return tasks.filter((t) => t.status === 'approved' || t.status === 'rejected');
+      case 'initiated':
+        return tasks.filter((t) => t.initiator === '当前用户');
+      case 'cc':
+        return tasks.filter((t) => t.status === 'approved');
+      default:
+        return tasks;
+    }
+  };
+
+  const createApiAdapter = (tab: TabType): CrudApiAdapter<ApprovalTask> => ({
+    list: async (params) => {
+      const page = params?.page ?? 1;
+      const pageSize = params?.pageSize ?? 10;
+      const statusParam = getStatusParam(tab);
+
+      const res = await approvalTaskApi.listApprovalTasks({
         page,
         page_size: pageSize,
         status: statusParam,
-      };
-      const res = await approvalTaskApi.listApprovalTasks(params);
-      const apiRes = res as unknown as ApiResponse<{ items: ApprovalTaskApiItem[]; total: number }>;
+      });
+      const apiRes = res as unknown as ApiResponse<{
+        items: ApprovalTaskApiItem[];
+        total: number;
+      }>;
 
+      let tasks: ApprovalTask[] = [];
+      let total = 0;
       if (apiRes.success && apiRes.data) {
-        return apiRes.data.items.map((item: ApprovalTaskApiItem) => ({
-          id: item.id,
-          title: item.task_name,
-          workflowName: item.workflow_name || '工作流',
-          workflowType: '工作流管理',
-          initiator: item.initiator_id || '未知用户',
-          receivedAt: item.created_at || '',
-          priority: (item.priority as ApprovalPriority) || 'medium',
-          status: (item.status as ApprovalStatus) || 'pending',
-          instanceId: item.id,
-          nodeName: item.node_name || '审批节点',
-        }));
+        tasks = apiRes.data.items.map(mapApiItemToTask);
+        total = apiRes.data.total || tasks.length;
       }
-      return [];
-    },
-    staleTime: 5 * 60 * 1000,
-  });
 
-  const approveMutation = useMutation({
-    mutationFn: async (taskId: string) => {
-      const res = await approvalTaskApi.approveTask(taskId, { comment: '' });
-      return res;
-    },
-    onMutate: async (taskId) => {
-      await queryClient.cancelQueries({ queryKey: ['workflow-approvals'] });
-      const previousTasks = queryClient.getQueryData<ApprovalTask[]>(['workflow-approvals']);
-      queryClient.setQueryData<ApprovalTask[]>(['workflow-approvals'], (old) =>
-        old
-          ? old.map((t: ApprovalTask) =>
-              t.id === taskId ? { ...t, status: 'approved' as const } : t
-            )
-          : []
-      );
-      return { previousTasks };
-    },
-    onError: (_err, _id, context) => {
-      if (context?.previousTasks) {
-        queryClient.setQueryData(['workflow-approvals'], context.previousTasks);
+      tasks = filterByTab(tasks, tab);
+
+      if (params?.search) {
+        const q = (params.search as string).toLowerCase();
+        tasks = tasks.filter(
+          (t) =>
+            t.title.toLowerCase().includes(q) ||
+            t.workflowName.toLowerCase().includes(q) ||
+            t.initiator.toLowerCase().includes(q)
+        );
       }
-      addNotification({
-        title: '操作失败',
-        message: extractErrorMessage(_err, '审批操作失败'),
-        type: 'error',
-      });
-    },
-    onSuccess: (_data, taskId) => {
-      const task = tasks.find((t: ApprovalTask) => t.id === taskId);
-      addNotification({
-        title: '审批成功',
-        message: `已通过「${task?.title || ''}」的审批`,
-        type: 'success',
-      });
-      queryClient.invalidateQueries({ queryKey: ['workflow-approvals'] });
-    },
-  });
 
-  const rejectMutation = useMutation({
-    mutationFn: async ({ taskId, reason }: { taskId: string; reason: string }) => {
-      const res = await approvalTaskApi.rejectTask(taskId, { comment: reason });
-      return res;
-    },
-    onMutate: async ({ taskId }) => {
-      await queryClient.cancelQueries({ queryKey: ['workflow-approvals'] });
-      const previousTasks = queryClient.getQueryData<ApprovalTask[]>(['workflow-approvals']);
-      queryClient.setQueryData<ApprovalTask[]>(['workflow-approvals'], (old) =>
-        old
-          ? old.map((t: ApprovalTask) =>
-              t.id === taskId ? { ...t, status: 'rejected' as const } : t
-            )
-          : []
-      );
-      return { previousTasks };
-    },
-    onError: (_err, _vars, context) => {
-      if (context?.previousTasks) {
-        queryClient.setQueryData(['workflow-approvals'], context.previousTasks);
+      if (typeof params?.status === 'string' && params.status !== 'all') {
+        tasks = tasks.filter((t) => t.status === params.status);
       }
-      addNotification({
-        title: '操作失败',
-        message: extractErrorMessage(_err, '驳回操作失败'),
-        type: 'error',
-      });
+
+      if (typeof params?.priority === 'string' && params.priority !== 'all') {
+        tasks = tasks.filter((t) => t.priority === params.priority);
+      }
+
+      total = tasks.length;
+      const start = (page - 1) * pageSize;
+      const paged = tasks.slice(start, start + pageSize);
+
+      return { data: paged, total };
     },
-    onSuccess: () => {
-      setRejectDialogOpen(false);
-      setSelectedTask(null);
-      queryClient.invalidateQueries({ queryKey: ['workflow-approvals'] });
-    },
+    create: async () => ({}) as ApprovalTask,
+    update: async (_id, _data) => ({}) as ApprovalTask,
+    delete: async () => {},
   });
-
-  const actionLoading = approveMutation.isPending || rejectMutation.isPending;
-
-  const handleRefresh = useCallback(() => {
-    queryClient.invalidateQueries({ queryKey: ['workflow-approvals'] });
-  }, [queryClient]);
-
-  const filteredTasks = useMemo(() => {
-    let result: ApprovalTask[] = tasks;
-
-    if (activeTab === 'pending') {
-      result = result.filter((t: ApprovalTask) => t.status === 'pending' || t.status === 'claimed');
-    } else if (activeTab === 'approved') {
-      result = result.filter(
-        (t: ApprovalTask) => t.status === 'approved' || t.status === 'rejected'
-      );
-    } else if (activeTab === 'initiated') {
-      result = result.filter((t: ApprovalTask) => t.initiator === '当前用户');
-    } else if (activeTab === 'cc') {
-      result = result.filter((t: ApprovalTask) => t.status === 'approved');
-    }
-
-    if (searchQuery) {
-      const query = searchQuery.toLowerCase();
-      result = result.filter(
-        (t: ApprovalTask) =>
-          t.title.toLowerCase().includes(query) ||
-          t.workflowName.toLowerCase().includes(query) ||
-          t.initiator.toLowerCase().includes(query)
-      );
-    }
-
-    if (statusFilter !== 'all') {
-      result = result.filter((t: ApprovalTask) => t.status === statusFilter);
-    }
-
-    if (priorityFilter !== 'all') {
-      result = result.filter((t: ApprovalTask) => t.priority === priorityFilter);
-    }
-
-    return result;
-  }, [tasks, activeTab, searchQuery, statusFilter, priorityFilter]);
-
-  const pagedTasks = useMemo(() => {
-    const start = (page - 1) * pageSize;
-    return filteredTasks.slice(start, start + pageSize);
-  }, [filteredTasks, page]);
-
-  const total = filteredTasks.length;
-
-  const stats = useMemo(() => {
-    const pendingCount = tasks.filter((t: ApprovalTask) => t.status === 'pending').length;
-    const approvedCount = tasks.filter((t: ApprovalTask) => t.status === 'approved').length;
-    const rejectedCount = tasks.filter((t: ApprovalTask) => t.status === 'rejected').length;
-    const timeoutCount = tasks.filter(
-      (t: ApprovalTask) => t.status === 'pending' && t.priority === 'high'
-    ).length;
-
-    return [
-      {
-        id: 'pending',
-        title: '待审批',
-        value: pendingCount,
-        icon: <Clock size={20} />,
-        color: 'warning' as const,
-      },
-      {
-        id: 'approved',
-        title: '已通过',
-        value: approvedCount,
-        icon: <CheckCircle size={20} />,
-        color: 'success' as const,
-      },
-      {
-        id: 'rejected',
-        title: '已驳回',
-        value: rejectedCount,
-        icon: <XCircle size={20} />,
-        color: 'error' as const,
-      },
-      {
-        id: 'timeout',
-        title: '超时预警',
-        value: timeoutCount,
-        icon: <AlertTriangle size={20} />,
-        color: 'error' as const,
-      },
-    ];
-  }, [tasks]);
-
-  const getPriorityChip = useCallback((priority: ApprovalPriority) => {
-    return (
-      <Chip
-        size='small'
-        color={PRIORITY_COLORS[priority]}
-        label={PRIORITY_LABELS[priority]}
-        variant='outlined'
-      />
-    );
-  }, []);
-
-  const getStatusChip = useCallback((status: ApprovalStatus) => {
-    return (
-      <Chip
-        size='small'
-        color={STATUS_COLORS[status]}
-        label={STATUS_LABELS[status]}
-        variant='outlined'
-      />
-    );
-  }, []);
 
   const handleApprove = useCallback(
-    (task: ApprovalTask) => {
-      approveMutation.mutate(task.id);
+    async (row: Record<string, unknown>) => {
+      const task = row as ApprovalTask;
+      try {
+        await approvalTaskApi.approveTask(task.id, { comment: '' });
+        queryClient.invalidateQueries({ queryKey: [workflowApprovalSchema.entity] });
+        addNotification({
+          title: '审批成功',
+          message: `已通过「${task.title}」的审批`,
+          type: 'success',
+        });
+      } catch (err) {
+        addNotification({
+          title: '操作失败',
+          message: extractErrorMessage(err, '审批操作失败'),
+          type: 'error',
+        });
+      }
     },
-    [approveMutation]
+    [queryClient, addNotification]
   );
 
-  const handleRejectClick = useCallback((task: ApprovalTask) => {
+  const handleRejectClick = useCallback((row: Record<string, unknown>) => {
+    const task = row as ApprovalTask;
     setSelectedTask(task);
     setRejectReason('');
     setRejectDialogOpen(true);
@@ -353,16 +197,28 @@ export const WorkflowApprovalsPage: React.FC = () => {
 
   const handleRejectConfirm = useCallback(async () => {
     if (!selectedTask) return;
-    rejectMutation.mutate({ taskId: selectedTask.id, reason: rejectReason });
-    addNotification({
-      title: '已驳回',
-      message: `已驳回「${selectedTask.title}」的审批`,
-      type: 'warning',
-    });
-  }, [selectedTask, rejectMutation, rejectReason, addNotification]);
+    try {
+      await approvalTaskApi.rejectTask(selectedTask.id, { comment: rejectReason });
+      queryClient.invalidateQueries({ queryKey: [workflowApprovalSchema.entity] });
+      setRejectDialogOpen(false);
+      setSelectedTask(null);
+      addNotification({
+        title: '已驳回',
+        message: `已驳回「${selectedTask.title}」的审批`,
+        type: 'warning',
+      });
+    } catch (err) {
+      addNotification({
+        title: '操作失败',
+        message: extractErrorMessage(err, '驳回操作失败'),
+        type: 'error',
+      });
+    }
+  }, [selectedTask, rejectReason, queryClient, addNotification]);
 
   const handleViewDetail = useCallback(
-    (task: ApprovalTask) => {
+    (row: Record<string, unknown>) => {
+      const task = row as ApprovalTask;
       addNotification({
         title: '查看详情',
         message: `查看「${task.title}」的详情`,
@@ -373,7 +229,8 @@ export const WorkflowApprovalsPage: React.FC = () => {
   );
 
   const handleTransfer = useCallback(
-    (task: ApprovalTask) => {
+    (row: Record<string, unknown>) => {
+      const task = row as ApprovalTask;
       addNotification({
         title: '转交审批',
         message: `转交「${task.title}」的审批`,
@@ -383,282 +240,73 @@ export const WorkflowApprovalsPage: React.FC = () => {
     [addNotification]
   );
 
-  const columns: ColumnDef<ApprovalTask>[] = useMemo(
-    () => [
-      {
-        id: 'title',
-        label: '流程标题',
-        minWidth: 240,
-        render: (row) => (
-          <Stack
-            direction='row'
-            spacing={1.5}
-            sx={{ alignItems: 'center' }}
-          >
-            <Avatar
-              sx={{
-                width: 36,
-                height: 36,
-                bgcolor: 'primary.light',
-              }}
-            >
-              <GitBranch
-                size={18}
-                color='primary.main'
-              />
-            </Avatar>
-            <Box sx={{ minWidth: 0 }}>
-              <Typography
-                variant='body2'
-                sx={{
-                  fontWeight: 600,
-                  overflow: 'hidden',
-                  textOverflow: 'ellipsis',
-                  whiteSpace: 'nowrap',
-                }}
-              >
-                {row.title}
-              </Typography>
-              <Typography
-                variant='caption'
-                sx={{ color: 'text.secondary', display: 'flex', alignItems: 'center', gap: 0.5 }}
-              >
-                <FileText size={12} />
-                {row.workflowName}
-              </Typography>
-            </Box>
-          </Stack>
-        ),
-      },
-      {
-        id: 'workflowType',
-        label: '流程类型',
-        width: 120,
-        render: (row) => (
-          <Chip
-            size='small'
-            label={row.workflowType}
-            sx={{
-              bgcolor: `${WORKFLOW_TYPE_COLORS[row.workflowType] || 'grey.500'}15`,
-              color: WORKFLOW_TYPE_COLORS[row.workflowType] || 'grey.500',
-              border: 'none',
-            }}
-            variant='outlined'
-          />
-        ),
-      },
-      {
-        id: 'initiator',
-        label: '发起人',
-        width: 120,
-        render: (row) => (
-          <Stack
-            direction='row'
-            spacing={0.5}
-            sx={{ alignItems: 'center' }}
-          >
-            <User
-              size={14}
-              style={{ color: ct.grey[400] }}
-            />
-            <Typography
-              variant='body2'
-              color='text.secondary'
-            >
-              {row.initiator}
-            </Typography>
-          </Stack>
-        ),
-      },
-      {
-        id: 'receivedAt',
-        label: '接收时间',
-        width: 160,
-        render: (row) => (
-          <Stack
-            direction='row'
-            spacing={0.5}
-            sx={{ alignItems: 'center' }}
-          >
-            <Clock
-              size={14}
-              style={{ color: ct.grey[400] }}
-            />
-            <Typography
-              variant='body2'
-              color='text.secondary'
-            >
-              {row.receivedAt ? new Date(row.receivedAt).toLocaleString('zh-CN') : '-'}
-            </Typography>
-          </Stack>
-        ),
-      },
-      {
-        id: 'priority',
-        label: '优先级',
-        width: 100,
-        render: (row) => getPriorityChip(row.priority),
-      },
-      {
-        id: 'status',
-        label: '状态',
-        width: 110,
-        render: (row) => getStatusChip(row.status),
-      },
-      {
-        id: 'actions',
-        label: '操作',
-        align: 'right',
-        width: 180,
-        render: (row) => (
-          <Box
-            sx={{
-              display: 'flex',
-              justifyContent: 'flex-end',
-              gap: 0.5,
-            }}
-          >
-            {(row.status === 'pending' || row.status === 'claimed') && (
-              <>
-                <Button
-                  size='small'
-                  variant='contained'
-                  color='success'
-                  startIcon={<CheckCircle size={14} />}
-                  onClick={() => handleApprove(row)}
-                  disabled={actionLoading}
-                  sx={{ minWidth: 0, px: 1.5 }}
-                >
-                  审批
-                </Button>
-                <Button
-                  size='small'
-                  variant='outlined'
-                  color='error'
-                  startIcon={<XCircle size={14} />}
-                  onClick={() => handleRejectClick(row)}
-                  disabled={actionLoading}
-                  sx={{ minWidth: 0, px: 1.5 }}
-                >
-                  驳回
-                </Button>
-              </>
-            )}
-            <IconButton
-              size='small'
-              onClick={() => handleViewDetail(row)}
-              title='查看详情'
-            >
-              <Eye size={16} />
-            </IconButton>
-            {(row.status === 'pending' || row.status === 'claimed') && (
-              <IconButton
-                size='small'
-                onClick={() => handleTransfer(row)}
-                title='转交'
-              >
-                <ArrowRightLeft size={16} />
-              </IconButton>
-            )}
-          </Box>
-        ),
-      },
-    ],
-    [
-      getPriorityChip,
-      getStatusChip,
-      handleApprove,
-      handleRejectClick,
-      handleViewDetail,
-      handleTransfer,
-      actionLoading,
-    ]
-  );
+  const customRowActions: RowAction[] = [
+    {
+      key: 'approve',
+      label: '审批',
+      icon: <CheckCircle size={16} />,
+      color: 'success',
+      onClick: handleApprove,
+      show: (row) => row.status === 'pending' || row.status === 'claimed',
+    },
+    {
+      key: 'reject',
+      label: '驳回',
+      icon: <XCircle size={16} />,
+      color: 'error',
+      onClick: handleRejectClick,
+      show: (row) => row.status === 'pending' || row.status === 'claimed',
+    },
+    {
+      key: 'view',
+      label: '查看详情',
+      icon: <Eye size={16} />,
+      color: 'default',
+      onClick: handleViewDetail,
+    },
+    {
+      key: 'transfer',
+      label: '转交',
+      icon: <ArrowRightLeft size={16} />,
+      color: 'default',
+      onClick: handleTransfer,
+      show: (row) => row.status === 'pending' || row.status === 'claimed',
+    },
+  ];
 
-  const filterOptions = useMemo(
-    () => [
+  const renderStatsCards = (tab: TabType) => {
+    const stats = [
       {
-        id: 'status',
-        label: '状态',
-        type: 'select' as const,
-        options: [
-          { label: '全部状态', value: 'all' },
-          { label: '待审批', value: 'pending' },
-          { label: '已通过', value: 'approved' },
-          { label: '已驳回', value: 'rejected' },
-          { label: '已认领', value: 'claimed' },
-        ],
+        id: 'pending',
+        title: '待审批',
+        value: 0,
+        icon: <Clock size={20} />,
+        color: 'warning' as const,
       },
       {
-        id: 'priority',
-        label: '优先级',
-        type: 'select' as const,
-        options: [
-          { label: '全部优先级', value: 'all' },
-          { label: '高', value: 'high' },
-          { label: '中', value: 'medium' },
-          { label: '低', value: 'low' },
-        ],
+        id: 'approved',
+        title: '已通过',
+        value: 0,
+        icon: <CheckCircle size={20} />,
+        color: 'success' as const,
       },
-    ],
-    []
-  );
+      {
+        id: 'rejected',
+        title: '已驳回',
+        value: 0,
+        icon: <XCircle size={20} />,
+        color: 'error' as const,
+      },
+      {
+        id: 'timeout',
+        title: '超时预警',
+        value: 0,
+        icon: <AlertTriangle size={20} />,
+        color: 'error' as const,
+      },
+    ];
 
-  const handleFilterChange = useCallback((filters: Record<string, unknown>) => {
-    if (typeof filters.status === 'string') {
-      setStatusFilter(filters.status);
-    }
-    if (typeof filters.priority === 'string') {
-      setPriorityFilter(filters.priority);
-    }
-    setPage(1);
-  }, []);
-
-  const handlePageChange = useCallback((newPage: number) => {
-    setPage(newPage);
-  }, []);
-
-  const tabHeaders = useMemo(
-    () => (
-      <Box sx={{ borderBottom: 1, borderColor: 'divider', mb: 3 }}>
-        <Tabs
-          value={activeTab}
-          onChange={(_, newValue) => {
-            setActiveTab(newValue);
-            setPage(1);
-          }}
-          sx={{
-            '& .MuiTab-root': {
-              textTransform: 'none',
-              minHeight: 48,
-              fontWeight: 500,
-            },
-          }}
-        >
-          <Tab
-            label='待我审批'
-            value='pending'
-          />
-          <Tab
-            label='我已审批'
-            value='approved'
-          />
-          <Tab
-            label='我发起的'
-            value='initiated'
-          />
-          <Tab
-            label='抄送我的'
-            value='cc'
-          />
-        </Tabs>
-      </Box>
-    ),
-    [activeTab]
-  );
-
-  const statsCards = useMemo(
-    () => (
+    return (
       <Box
         sx={{
           display: 'grid',
@@ -714,8 +362,42 @@ export const WorkflowApprovalsPage: React.FC = () => {
           </Card>
         ))}
       </Box>
-    ),
-    [stats]
+    );
+  };
+
+  const tabHeaders = (
+    <Box sx={{ borderBottom: 1, borderColor: 'divider', mb: 3 }}>
+      <Tabs
+        value={activeTab}
+        onChange={(_, newValue) => {
+          setActiveTab(newValue);
+        }}
+        sx={{
+          '& .MuiTab-root': {
+            textTransform: 'none',
+            minHeight: 48,
+            fontWeight: 500,
+          },
+        }}
+      >
+        <Tab
+          label='待我审批'
+          value='pending'
+        />
+        <Tab
+          label='我已审批'
+          value='approved'
+        />
+        <Tab
+          label='我发起的'
+          value='initiated'
+        />
+        <Tab
+          label='抄送我的'
+          value='cc'
+        />
+      </Tabs>
+    </Box>
   );
 
   return (
@@ -728,39 +410,31 @@ export const WorkflowApprovalsPage: React.FC = () => {
       }}
     >
       {tabHeaders}
-      {statsCards}
+      {renderStatsCards(activeTab)}
 
-      <ListPageTemplate
-        title=''
-        subtitle=''
-        columns={columns}
-        data={pagedTasks}
-        loading={loading}
-        error={error ? extractErrorMessage(error, '加载失败') : undefined}
-        searchable
-        searchPlaceholder='搜索流程名称、发起人...'
-        searchValue={searchQuery}
-        onSearch={setSearchQuery}
-        filters={filterOptions}
-        filtersValue={{
-          status: statusFilter,
-          priority: priorityFilter,
+      <CrudPage
+        key={activeTab}
+        schema={workflowApprovalSchema}
+        apiAdapter={createApiAdapter(activeTab)}
+        customRowActions={customRowActions}
+        idField='id'
+      />
+
+      <ConfirmDialog
+        isOpen={confirmOpen}
+        onClose={closeConfirm}
+        onConfirm={() => {
+          confirmConfig?.onConfirm();
+          closeConfirm();
         }}
-        onFilterChange={handleFilterChange}
-        pagination={{
-          page,
-          pageSize,
-          total,
-          onPageChange: handlePageChange,
-        }}
-        onRefresh={handleRefresh}
-        emptyMessage='暂无审批任务'
-        getRowId={(row) => row.id}
+        title={confirmConfig?.title || ''}
+        message={confirmConfig?.message || ''}
+        danger={confirmConfig?.danger}
       />
 
       <ConfirmDialog
         isOpen={rejectDialogOpen}
-        onClose={() => !actionLoading && setRejectDialogOpen(false)}
+        onClose={() => !rejectReason && setRejectDialogOpen(false)}
         onConfirm={handleRejectConfirm}
         title='驳回审批'
         message={`确定要驳回「${selectedTask?.title}」的审批吗？`}

@@ -656,26 +656,6 @@ export const mobileApi = {
     });
   },
 
-  listNotifications: async (params?: {
-    type?: string;
-    read?: boolean;
-    page?: number;
-    pagesize?: number;
-  }): Promise<ApiResponse<ListResponse<PushNotification>>> => {
-    return apiClient.mobile.get<ListResponse<PushNotification>>('/mobile/notifications', {
-      params,
-    });
-  },
-  markNotificationRead: async (id: string): Promise<ApiResponse<void>> => {
-    return apiClient.mobile.put<void>(`/mobile/notifications/${id}/read`);
-  },
-  markAllNotificationsRead: async (): Promise<ApiResponse<void>> => {
-    return apiClient.mobile.put<void>('/mobile/notifications/read-all');
-  },
-  getUnreadCount: async (): Promise<ApiResponse<{ count: number }>> => {
-    return apiClient.mobile.get<{ count: number }>('/mobile/notifications/unread-count');
-  },
-
   getPushConfig: async (): Promise<ApiResponse<PushConfig>> => {
     return apiClient.mobile.get<PushConfig>('/mobile/push/config');
   },

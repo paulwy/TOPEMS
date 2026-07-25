@@ -3838,7 +3838,16 @@
       "text_a67937": "将对选中的资产执行折旧处理",
       "text_1162f9": "将对所有符合条件的资产执行折旧处理",
       "text_3afd7f": "折旧中...",
-      "confirm_2": "确认折旧"
+      "confirm_2": "确认折旧",
+      "total_assets": "资产总数",
+      "asset_value": "资产原值",
+      "accumulated_depreciation": "累计折旧",
+      "monthly_depreciation": "月折旧额",
+      "selected_assets": "已选择 {{count}} 项资产",
+      "depreciate_period": "折旧期间",
+      "cancel": "取消",
+      "breadcrumb_home": "首页",
+      "breadcrumb_module": "财务管理"
     }
   },
   "finance": {

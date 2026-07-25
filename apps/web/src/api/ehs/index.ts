@@ -3,6 +3,7 @@ import type { ApiResponse } from '../client';
 
 import { accidentApi } from './accident';
 import { complianceApi } from './compliance';
+import { ehsDashboardApi } from './dashboard';
 import { emergencyApi } from './emergency';
 import { environmentApi } from './environment';
 import { hazardApi } from './hazard';
@@ -21,6 +22,7 @@ export * from './types';
 
 export { accidentApi } from './accident';
 export { complianceApi } from './compliance';
+export { ehsDashboardApi } from './dashboard';
 export { emergencyApi } from './emergency';
 export { environmentApi } from './environment';
 export { hazardApi } from './hazard';
@@ -36,6 +38,7 @@ export { syncApi } from './sync';
 export { trainingApi } from './training';
 
 export const ehsApi = {
+  dashboard: ehsDashboardApi,
   hazards: hazardApi,
   inspections: inspectionApi,
   safetyIssues: safetyIssueApi,

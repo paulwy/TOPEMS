@@ -99,7 +99,7 @@ CREATE EXTENSION IF NOT EXISTS vector;
 | `plugin_lims` | 插件层 | LIMS | 实验室管理 |
 | `plugin_scm` | 插件层 | SCM | 供应链管理 |
 | `plugin_srm` | 插件层 | SRM | 供应商管理 |
-| `plugin_rs` | 插件层 | RS | 研发管理 |
+| `plugin_rd` | 插件层 | RD | 研发管理 |
 | `plugin_gis` | 插件层 | GIS | 地理信息服务 |
 | `plugin_bi` | 插件层 | BI | 商业智能 |
 | `plugin_report` | 插件层 | Report | 报表服务 |

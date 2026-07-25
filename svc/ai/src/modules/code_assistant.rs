@@ -31,6 +31,7 @@ pub struct CodeExplainResponse {
 }
 
 #[derive(Debug, Deserialize)]
+#[allow(dead_code)]
 pub struct CodeFixRequest {
     pub code: String,
     pub language: Option<String>,
@@ -45,6 +46,7 @@ pub struct CodeFixResponse {
 }
 
 #[derive(Debug, Deserialize)]
+#[allow(dead_code)]
 pub struct CodeOptimizeRequest {
     pub code: String,
     pub language: Option<String>,
@@ -59,6 +61,7 @@ pub struct CodeOptimizeResponse {
 }
 
 #[derive(Debug, Deserialize)]
+#[allow(dead_code)]
 pub struct CodeReviewRequest {
     pub code: String,
     pub language: Option<String>,

@@ -11,7 +11,7 @@ use topems_shared::{
 };
 use utoipa::OpenApi;
 
-use crate::handlers::{conversion_rules, events, lims_qms, mes_erp, mes_qms, wms_scm};
+use crate::handlers::{conversion_rules, events, lims_qms, mes_erp, mes_qms, sync, wms_scm};
 use crate::models::AppState;
 use crate::plugin;
 
@@ -82,6 +82,17 @@ pub fn create_routes(state: AppState) -> Router {
         .route("/wms-scm", post(wms_scm::create_wms_scm_sync))
         .route("/wms-scm/{id}", get(wms_scm::get_wms_scm_sync))
         .route("/wms-scm/{id}/sync", post(wms_scm::sync_wms_scm))
+        // 通用跨服务同步任务 CRUD（从 unified-core 迁移）
+        .route("/sync/tasks", post(sync::create_task))
+        .route("/sync/tasks/{task_id}", get(sync::get_task))
+        .route("/sync/tasks/{task_id}/status", post(sync::update_status))
+        .route("/sync/pending", get(sync::get_pending))
+        .route("/sync/statistics", get(sync::get_statistics))
+        .route("/sync/retry-failed", post(sync::retry_failed))
+        // 供应链同步触发器
+        .route("/sync/trigger/scm-to-wms", post(sync::trigger_scm_wms))
+        .route("/sync/trigger/wms-to-crm", post(sync::trigger_wms_crm))
+        .route("/sync/trigger/srm-to-scm", post(sync::trigger_srm_scm))
         // MES↔QMS 质检数据集成 API
         .route("/mes-qms", get(mes_qms::list_mes_qms_sync_api))
         .route("/mes-qms/{id}", get(mes_qms::get_mes_qms_sync_api))

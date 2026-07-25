@@ -46,12 +46,10 @@ import { useParams, useNavigate } from 'react-router-dom';
 import { PageContainer } from '@/components/common';
 import { ConfirmDialog } from '@topems/shared-components';
 import { useConfirmDialog } from '@/hooks';
-import {
-  DetailPageTemplate,
-  ListPageTemplate,
-  type ColumnDef,
-  type RowAction,
-} from '@/components/templates';
+import { DetailPageTemplate } from '@/components/templates';
+import CrudPage from '@/components/templates/CrudPage';
+import type { CrudApiAdapter } from '@/components/templates/CrudPage';
+import { tenantUserSchema, tenantInvoiceSchema } from '@/schemas/admin';
 import { tenantApi } from '@/api/tenant';
 import { logger } from '@/utils/logger';
 import type {
@@ -259,196 +257,6 @@ const TenantDetailPage: React.FC = () => {
     updateMemberRoleMutation.mutate({ tenantId, userId, role });
   };
 
-  const userColumns: ColumnDef<TenantUser>[] = useMemo(
-    () => [
-      {
-        id: 'email',
-        label: '成员',
-        render: (row) => (
-          <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
-            <Avatar sx={{ width: 36, height: 36, fontSize: 14 }}>
-              {row.email.charAt(0).toUpperCase()}
-            </Avatar>
-            <Box>
-              <Typography
-                variant='body2'
-                sx={{ fontWeight: 500 }}
-              >
-                {row.email}
-              </Typography>
-              <Typography
-                variant='caption'
-                color='text.secondary'
-              >
-                {row.role}
-              </Typography>
-            </Box>
-          </Box>
-        ),
-      },
-      {
-        id: 'role',
-        label: '角色',
-        render: (row) => (
-          <FormControl
-            size='small'
-            sx={{ minWidth: 100 }}
-          >
-            <Select
-              value={row.role}
-              size='small'
-              onChange={(e) => handleUpdateMemberRole(row.id, e.target.value as TenantRole)}
-            >
-              <MenuItem value='owner'>所有者</MenuItem>
-              <MenuItem value='admin'>管理员</MenuItem>
-              <MenuItem value='member'>成员</MenuItem>
-              <MenuItem value='guest'>访客</MenuItem>
-            </Select>
-          </FormControl>
-        ),
-      },
-      {
-        id: 'status',
-        label: '状态',
-        render: (row) => (
-          <Chip
-            label={userStatusLabels[row.status as UserStatus]}
-            color={userStatusColors[row.status as UserStatus]}
-            size='small'
-          />
-        ),
-      },
-      {
-        id: 'created_at',
-        label: '加入时间',
-        render: (row) => (
-          <Typography
-            variant='body2'
-            color='text.secondary'
-          >
-            {row.created_at ? new Date(row.created_at).toLocaleDateString('zh-CN') : '-'}
-          </Typography>
-        ),
-      },
-      {
-        id: 'last_login',
-        label: '最近登录',
-        render: (row) => (
-          <Typography
-            variant='body2'
-            color='text.secondary'
-          >
-            {row.last_login ? new Date(row.last_login).toLocaleDateString('zh-CN') : '从未登录'}
-          </Typography>
-        ),
-      },
-    ],
-    []
-  );
-
-  const userRowActions: RowAction<TenantUser>[] = useMemo(
-    () => [
-      {
-        label: '移除',
-        icon: <Trash2 size={16} />,
-        color: 'error',
-        onClick: (row) => handleRemoveMember(row),
-        confirm: true,
-        confirmMessage: '确定要移除该成员吗？',
-      },
-    ],
-    [handleRemoveMember]
-  );
-
-  const invoiceColumns: ColumnDef<TenantInvoice>[] = useMemo(
-    () => [
-      {
-        id: 'id',
-        label: '账单编号',
-        render: (row) => (
-          <Typography
-            variant='body2'
-            sx={{ fontWeight: 500 }}
-          >
-            {row.id}
-          </Typography>
-        ),
-      },
-      {
-        id: 'period',
-        label: '账单周期',
-        render: (row) => (
-          <Typography
-            variant='body2'
-            color='text.secondary'
-          >
-            {row.period_start ? new Date(row.period_start).toLocaleDateString('zh-CN') : '-'} -{' '}
-            {row.period_end ? new Date(row.period_end).toLocaleDateString('zh-CN') : '-'}
-          </Typography>
-        ),
-      },
-      {
-        id: 'amount',
-        label: '金额',
-        render: (row) => (
-          <Typography
-            variant='body2'
-            sx={{ fontWeight: 600 }}
-          >
-            ¥{row.amount?.toLocaleString() || 0}
-          </Typography>
-        ),
-      },
-      {
-        id: 'status',
-        label: '状态',
-        render: (row) => {
-          const statusMap: Record<
-            string,
-            { label: string; color: 'success' | 'warning' | 'error' | 'default' }
-          > = {
-            paid: { label: '已支付', color: 'success' },
-            pending: { label: '待支付', color: 'warning' },
-            failed: { label: '支付失败', color: 'error' },
-            draft: { label: '草稿', color: 'default' },
-          };
-          const status = statusMap[row.status || 'draft'];
-          return (
-            <Chip
-              label={status.label}
-              color={status.color}
-              size='small'
-            />
-          );
-        },
-      },
-      {
-        id: 'paid_at',
-        label: '支付时间',
-        render: (row) => (
-          <Typography
-            variant='body2'
-            color='text.secondary'
-          >
-            {row.paid_at ? new Date(row.paid_at).toLocaleDateString('zh-CN') : '-'}
-          </Typography>
-        ),
-      },
-    ],
-    []
-  );
-
-  const invoiceRowActions: RowAction<TenantInvoice>[] = useMemo(
-    () => [
-      {
-        label: '下载',
-        icon: <Download size={16} />,
-        onClick: () => {},
-      },
-    ],
-    []
-  );
-
   const overviewContent = useMemo(() => {
     if (!stats || !tenant) return null;
 
@@ -587,22 +395,41 @@ const TenantDetailPage: React.FC = () => {
 
   const membersContent = useMemo(
     () => (
-      <ListPageTemplate
-        columns={userColumns}
-        data={users}
-        loading={usersLoading}
-        rowActions={userRowActions}
-        actions={[
-          {
-            label: '邀请成员',
-            icon: <UserPlus size={20} />,
-            onClick: () => setShowInviteDialog(true),
+      <CrudPage
+        schema={tenantUserSchema}
+        apiAdapter={{
+          list: async () => ({ data: users, total: users.length }),
+          create: async () => ({}) as TenantUser,
+          update: async (id, data) => {
+            if (data.role && tenantId) {
+              await tenantApi.updateMemberRole(tenantId, id, { role: data.role as TenantRole });
+            }
+            return {} as TenantUser;
           },
-        ]}
-        onRefresh={() => usersQuery.refetch()}
+          delete: async (id) => {
+            if (tenantId) {
+              await tenantApi.removeMember(tenantId, id);
+            }
+          },
+        }}
+        breadcrumbs={[]}
+        headerContent={
+          <Box
+            sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 2 }}
+          >
+            <Typography variant='h6'>成员管理</Typography>
+            <Button
+              variant='contained'
+              startIcon={<UserPlus size={18} />}
+              onClick={() => setShowInviteDialog(true)}
+            >
+              邀请成员
+            </Button>
+          </Box>
+        }
       />
     ),
-    [userColumns, users, usersLoading, userRowActions]
+    [users, usersLoading, tenantId]
   );
 
   const settingsContent = useMemo(() => {
@@ -822,15 +649,20 @@ const TenantDetailPage: React.FC = () => {
           </CardContent>
         </Card>
 
-        <ListPageTemplate
-          columns={invoiceColumns}
-          data={invoices}
-          rowActions={invoiceRowActions}
-          title='账单历史'
+        <CrudPage
+          schema={tenantInvoiceSchema}
+          apiAdapter={{
+            list: async () => ({ data: invoices, total: invoices.length }),
+            create: async () => ({}) as TenantInvoice,
+            update: async () => ({}) as TenantInvoice,
+            delete: async () => {},
+          }}
+          breadcrumbs={[]}
+          headerContent={<Typography variant='h6'>账单历史</Typography>}
         />
       </Box>
     );
-  }, [tenant, invoices, invoiceColumns, invoiceRowActions]);
+  }, [tenant, invoices]);
 
   const infoCard = useMemo(() => {
     if (!tenant) return;

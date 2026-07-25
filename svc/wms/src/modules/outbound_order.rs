@@ -14,7 +14,10 @@ use crate::modules::audit::log_audit_event;
 use crate::modules::ApiState;
 use crate::shared::permission::{check_permission, ModulePermission};
 use topems_shared::auth::Claims;
-use topems_shared::{api_error, ApiResponse, PaginationParams};
+use topems_shared::{
+    api_error, event::EventType, event::WmsInventoryItemShippedPayload, ApiResponse,
+    PaginationParams,
+};
 
 #[derive(Debug, Deserialize, Serialize)]
 pub struct OutboundOrderItemRequest {
@@ -1078,6 +1081,53 @@ pub async fn ship_outbound_order(
 
     let (response, status_str, error_msg, response_data) = match order_result {
         Ok(order) => {
+            // P3 事件驱动规范化：出库发货完成后发布 WmsInventoryItemShipped 事件，
+            // 通知 SCM（销售履约）/Finance（成本结转）。
+            if let Some(ref publisher) = state.event_publisher {
+                let publisher = publisher.clone();
+                let outbound_id = order.id;
+                let outbound_no = order.order_number.clone();
+                let warehouse_id = order.warehouse_id;
+                let customer_id = order.customer_id;
+                let shipped_at = order.actual_delivery;
+                let total_qty = order.total_amount.unwrap_or(0.0);
+                let reference_order_id = Some(order.id);
+                let now_val = Utc::now();
+                tokio::spawn(async move {
+                    let payload = WmsInventoryItemShippedPayload {
+                        outbound_id,
+                        outbound_no,
+                        warehouse_id,
+                        warehouse_name: None,
+                        material_id: None,
+                        material_code: String::new(),
+                        material_name: "汇总出库".to_string(),
+                        quantity: total_qty,
+                        unit: None,
+                        reference_order_id,
+                        reference_order_no: None,
+                        customer_id,
+                        customer_name: None,
+                        shipped_by: None,
+                        shipped_at: shipped_at.or(Some(now_val)),
+                    };
+                    if let Err(e) = publisher
+                        .publish_event(EventType::WmsInventoryItemShipped, payload)
+                        .await
+                    {
+                        tracing::warn!(
+                            "[wms] WmsInventoryItemShipped 事件发布失败（graceful fallback）: {}",
+                            e
+                        );
+                    } else {
+                        tracing::info!(
+                            "[wms] WmsInventoryItemShipped 事件发布成功 - outbound_id={}",
+                            outbound_id
+                        );
+                    }
+                });
+            }
+
             let order_json = serde_json::to_value(order.clone()).ok();
             (
                 Json(ApiResponse::success(

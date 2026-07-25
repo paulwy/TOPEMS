@@ -1,817 +1,613 @@
-import React, { useState, useMemo, useCallback, useRef, useEffect } from 'react';
+import React, { useState, useMemo } from 'react';
 import {
   Box,
+  Card,
+  CardContent,
+  Typography,
+  Chip,
   Dialog,
   DialogTitle,
   DialogContent,
   DialogActions,
-  TextField,
-  FormControl,
-  InputLabel,
-  Select,
-  MenuItem,
-  Grid,
   Button,
-  Chip,
-  Tabs,
-  Tab,
+  IconButton,
+  Tooltip,
   List,
   ListItem,
   ListItemText,
-  IconButton,
-  Typography,
-  LinearProgress,
-  Card,
-  CardContent,
+  ListItemIcon,
 } from '@mui/material';
 import {
-  Plus,
-  Edit,
-  Delete,
   FileText,
   Upload,
   Download,
-  Search,
-  History,
   Eye,
-  CheckCircle,
+  History,
   Clock,
+  CheckCircle,
   AlertCircle,
-  File,
+  Plus,
 } from 'lucide-react';
-import {
-  documentApi,
-  type PdmDocument,
-  type DocumentVersion,
-  type CreatePdmDocumentRequest,
-  type DocumentSearchParams,
-} from '@/api/pdm/document';
-import { useNotificationStore } from '@/store';
-import {
-  ListPageTemplate,
-  type ColumnDef,
-  type RowAction,
-  type FilterConfig,
-} from '@/components/templates';
-import { PageContainer } from '@/components/common/PageContainerV2';
-import { designTokens } from '@/theme/tokens';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+
+import CrudPage from '@/components/templates/CrudPage';
+import type { CrudApiAdapter, CrudTab } from '@/components/templates/CrudPage';
+import { createCrudPageAdapter } from '@/schema/crudPageAdapter';
+import { documentSchema } from '@/schemas/pdm';
+import { documentApi } from '@/api/pdm/document';
+import type {
+  PdmDocument as Document,
+  DocumentVersion,
+  CreatePdmDocumentRequest as CreateDocumentRequest,
+} from '@/api/pdm/document';
+import { PageContainer } from '@/components/common';
+import { designTokens } from '@/theme/tokens';
+import { useNotificationStore } from '@/store';
 import { QUERY_KEYS } from '@/lib/reactQuery';
-import { useCrudMutations } from '@/hooks';
 
 const ct = designTokens.colors;
 
-const STATUS_COLORS: Record<
-  string,
-  'default' | 'primary' | 'secondary' | 'success' | 'warning' | 'error'
-> = {
-  draft: 'default',
-  review: 'warning',
-  approved: 'success',
-  published: 'primary',
-  archived: 'default',
+const baseAdapter = createCrudPageAdapter<Document, CreateDocumentRequest>({
+  list: documentApi.list,
+  create: documentApi.create,
+  update: documentApi.update,
+  delete: documentApi.delete,
+});
+
+const statusColorMap: Record<string, { bg: string; color: string }> = {
+  draft: { bg: 'grey.100', color: 'text.secondary' },
+  review: { bg: 'warning.lighter', color: 'warning.dark' },
+  approved: { bg: 'info.lighter', color: 'info.dark' },
+  published: { bg: 'success.lighter', color: 'success.dark' },
+  archived: { bg: 'grey.100', color: 'text.secondary' },
 };
 
-const TYPE_COLORS: Record<
-  string,
-  'default' | 'primary' | 'secondary' | 'success' | 'warning' | 'error'
-> = {
-  specification: 'primary',
-  manual: 'success',
-  drawing: 'warning',
-  report: 'secondary',
-  procedure: 'default',
-  other: 'default',
+const statusLabelMap: Record<string, string> = {
+  draft: '草稿',
+  review: '审核中',
+  approved: '已批准',
+  published: '已发布',
+  archived: '已归档',
 };
 
-const VERSION_STATUS_COLORS: Record<
-  string,
-  'default' | 'primary' | 'secondary' | 'success' | 'warning' | 'error'
-> = {
-  draft: 'default',
-  review: 'warning',
-  approved: 'success',
-  published: 'primary',
+const typeLabelMap: Record<string, string> = {
+  specification: '规格书',
+  manual: '手册',
+  drawing: '图纸',
+  report: '报告',
+  procedure: '程序文件',
+  other: '其他',
 };
 
-interface DocumentFormData {
-  document_no: string;
-  name: string;
-  type: string;
-  category: string;
-  status: string;
-  tags: string;
-  description: string;
+function extractListData(response: unknown): Document[] {
+  if (!response || typeof response !== 'object') return [];
+  const obj = response as Record<string, unknown>;
+  const data = obj.data;
+  if (!data) return [];
+  if (Array.isArray(data)) return data as Document[];
+  if (typeof data === 'object') {
+    const d = data as Record<string, unknown>;
+    if (Array.isArray(d.items)) return d.items as Document[];
+    if (Array.isArray(d.data)) return d.data as Document[];
+  }
+  return [];
 }
 
 export const DocumentPage: React.FC = () => {
   const queryClient = useQueryClient();
-  const [activeTab, setActiveTab] = useState(0);
-  const [searchTerm, setSearchTerm] = useState('');
-  const [keyword, setKeyword] = useState('');
-  const [uploading, setUploading] = useState(false);
-  const [openDialog, setOpenDialog] = useState(false);
-  const [versionDialogOpen, setVersionDialogOpen] = useState(false);
-  const [editingDocument, setEditingDocument] = useState<PdmDocument | null>(null);
-  const [selectedDocumentId, setSelectedDocumentId] = useState<string | null>(null);
-  const [formData, setFormData] = useState<DocumentFormData>({
-    document_no: '',
-    name: '',
-    type: 'other',
-    category: '',
-    status: 'draft',
-    tags: '',
-    description: '',
-  });
-  const fileInputRef = useRef<HTMLInputElement>(null);
   const addNotification = useNotificationStore((state) => state.addNotification);
+  const [selectedDocId, setSelectedDocId] = useState<string | null>(null);
+  const [versionDialogOpen, setVersionDialogOpen] = useState(false);
+  const [uploadDialogOpen, setUploadDialogOpen] = useState(false);
 
-  const loadDocuments = useCallback(() => {
-    queryClient.invalidateQueries({ queryKey: QUERY_KEYS.PDM.DOCUMENTS });
-  }, [queryClient]);
-
-  const { data: documents = [], isLoading: loading } = useQuery({
+  const { data: docsResp } = useQuery({
     queryKey: QUERY_KEYS.PDM.DOCUMENTS,
-    queryFn: async () => {
-      const response = await documentApi.list();
-      if (response.success && response.data) {
-        return response.data as PdmDocument[];
-      }
-      return [];
-    },
+    queryFn: async () => documentApi.list(),
     staleTime: 5 * 60 * 1000,
   });
 
-  const { data: versions = [] } = useQuery({
-    queryKey: QUERY_KEYS.PDM.DOCUMENT_VERSIONS(selectedDocumentId || ''),
+  const documents = extractListData(docsResp);
+
+  const { data: versions = [] } = useQuery<DocumentVersion[]>({
+    queryKey: QUERY_KEYS.PDM.DOCUMENT_VERSIONS(selectedDocId || ''),
     queryFn: async () => {
-      if (!selectedDocumentId) return [];
-      const response = await documentApi.listVersions(selectedDocumentId);
+      if (!selectedDocId) return [];
+      const response = await documentApi.listVersions(selectedDocId);
       if (response.success && response.data) {
         return response.data as DocumentVersion[];
       }
       return [];
     },
     staleTime: 5 * 60 * 1000,
-    enabled: !!selectedDocumentId,
+    enabled: !!selectedDocId,
   });
 
-  const handleTabChange = (_event: React.SyntheticEvent, newValue: number) => {
-    setActiveTab(newValue);
-  };
+  const stats = useMemo(() => {
+    return {
+      total: documents.length,
+      published: documents.filter((d) => d.status === 'published').length,
+      review: documents.filter((d) => d.status === 'review').length,
+    };
+  }, [documents]);
 
-  const searchDocumentsMutation = useMutation({
-    mutationFn: (keyword: string) => documentApi.search({ keyword }),
-    onSuccess: (response) => {
-      if (response.success && response.data) {
-        queryClient.setQueryData(QUERY_KEYS.PDM.DOCUMENTS, response.data.documents || []);
-      }
-    },
-    onError: () => {
-      addNotification({ title: '错误', message: '搜索失败', type: 'error' });
-    },
-  });
-
-  const handleSearchDocuments = () => {
-    if (!keyword.trim()) {
+  const publishMutation = useMutation({
+    mutationFn: (id: string) => documentApi.updateStatus(id, 'published'),
+    onSuccess: () => {
+      addNotification({ title: '成功', message: '文档已发布', type: 'success' });
       queryClient.invalidateQueries({ queryKey: QUERY_KEYS.PDM.DOCUMENTS });
-      return;
-    }
-    searchDocumentsMutation.mutate(keyword);
-  };
-
-  const { createMutation: createDocumentMutation, updateMutation: updateDocumentMutation, deleteMutation: deleteDocumentMutation } = useCrudMutations<
-    CreatePdmDocumentRequest,
-    CreatePdmDocumentRequest,
-    string
-  >({
-    queryKeyToInvalidate: QUERY_KEYS.PDM.DOCUMENTS,
-    createFn: (data) => documentApi.create(data),
-    updateFn: ({ id, data }) => documentApi.update(String(id), data),
-    deleteFn: (id) => documentApi.delete(String(id)),
-    entityName: '文档',
-    onCreateSuccess: () => {
-      setOpenDialog(false);
-      setEditingDocument(null);
-    },
-    onUpdateSuccess: () => {
-      setOpenDialog(false);
-      setEditingDocument(null);
-    },
-  });
-
-  const uploadVersionMutation = useMutation({
-    mutationFn: ({ documentId, file }: { documentId: string; file: File }) =>
-      documentApi.upload(documentId, file),
-    onSuccess: (_data, variables) => {
-      addNotification({ title: '成功', message: '文件上传成功', type: 'success' });
-      queryClient.invalidateQueries({
-        queryKey: QUERY_KEYS.PDM.DOCUMENT_VERSIONS(variables.documentId),
-      });
-    },
-    onError: () => {
-      addNotification({ title: '错误', message: '上传失败', type: 'error' });
-    },
-  });
-
-  const publishVersionMutation = useMutation({
-    mutationFn: ({ documentId, versionId }: { documentId: string; versionId: string }) =>
-      documentApi.publishVersion(documentId, versionId),
-    onSuccess: (_data, variables) => {
-      addNotification({ title: '成功', message: '版本发布成功', type: 'success' });
-      queryClient.invalidateQueries({
-        queryKey: QUERY_KEYS.PDM.DOCUMENT_VERSIONS(variables.documentId),
-      });
     },
     onError: () => {
       addNotification({ title: '错误', message: '发布失败', type: 'error' });
     },
   });
 
-  const handleViewDocument = (doc: PdmDocument) => {
-    setSelectedDocumentId(doc.id);
-    setActiveTab(1);
-  };
+  const approveMutation = useMutation({
+    mutationFn: (id: string) => documentApi.updateStatus(id, 'approved'),
+    onSuccess: () => {
+      addNotification({ title: '成功', message: '文档已批准', type: 'success' });
+      queryClient.invalidateQueries({ queryKey: QUERY_KEYS.PDM.DOCUMENTS });
+    },
+    onError: () => {
+      addNotification({ title: '错误', message: '批准失败', type: 'error' });
+    },
+  });
 
-  const handleEditDocument = (doc: PdmDocument) => {
-    setEditingDocument(doc);
-    setFormData({
-      document_no: doc.document_no || '',
-      name: doc.name || '',
-      type: doc.type || 'other',
-      category: doc.category || '',
-      status: doc.status || 'draft',
-      tags: doc.tags?.join(', ') || '',
-      description: doc.description || '',
-    });
-    setOpenDialog(true);
-  };
-
-  const handleDeleteDocument = (id: string) => {
-    deleteDocumentMutation.mutate(id);
-  };
-
-  const handleCreate = () => {
-    setEditingDocument(null);
-    setFormData({
-      document_no: '',
-      name: '',
-      type: 'other',
-      category: '',
-      status: 'draft',
-      tags: '',
-      description: '',
-    });
-    setOpenDialog(true);
-  };
-
-  const handleSaveDocument = () => {
-    const requestData: CreatePdmDocumentRequest = {
-      document_no: formData.document_no,
-      name: formData.name,
-      type: formData.type,
-      category: formData.category || undefined,
-      status: formData.status,
-      tags: formData.tags ? formData.tags.split(',').map((t) => t.trim()) : undefined,
-      description: formData.description || undefined,
-    };
-
-    if (editingDocument) {
-      updateDocumentMutation.mutate({ id: editingDocument.id, data: requestData });
-    } else {
-      createDocumentMutation.mutate(requestData);
-    }
-  };
-
-  const handleUpload = (event: React.ChangeEvent<HTMLInputElement>) => {
-    const file = event.target.files?.[0];
-    if (!file || !selectedDocumentId) return;
-
-    setUploading(true);
-    uploadVersionMutation.mutate({ documentId: selectedDocumentId, file });
-    setUploading(false);
-    if (fileInputRef.current) {
-      fileInputRef.current.value = '';
-    }
-  };
-
-  const handlePublishVersion = (documentId: string, versionId: string) => {
-    publishVersionMutation.mutate({ documentId, versionId });
-  };
-
-  const filteredDocuments = useMemo(() => {
-    return documents.filter((doc) => {
-      const matchesSearch =
-        !searchTerm ||
-        doc.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        doc.document_no.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        (doc.category && doc.category.toLowerCase().includes(searchTerm.toLowerCase()));
-      return matchesSearch;
-    });
-  }, [documents, searchTerm]);
-
-  const typeOptions = [
-    { label: '规格说明', value: 'specification' },
-    { label: '手册', value: 'manual' },
-    { label: '图纸', value: 'drawing' },
-    { label: '报告', value: 'report' },
-    { label: '程序文件', value: 'procedure' },
-    { label: '其他', value: 'other' },
+  const customRowActions = [
+    {
+      label: '查看版本',
+      icon: <History size={16} />,
+      color: 'info' as const,
+      onClick: (row: Record<string, unknown>) => {
+        const doc = row as unknown as Document;
+        setSelectedDocId(doc.id);
+        setVersionDialogOpen(true);
+      },
+    },
+    {
+      label: '预览',
+      icon: <Eye size={16} />,
+      color: 'primary' as const,
+      onClick: (row: Record<string, unknown>) => {
+        const doc = row as unknown as Document;
+        addNotification({ title: '提示', message: '预览功能开发中', type: 'info' });
+      },
+    },
+    {
+      label: '下载',
+      icon: <Download size={16} />,
+      color: 'success' as const,
+      onClick: (row: Record<string, unknown>) => {
+        const doc = row as unknown as Document;
+        addNotification({ title: '提示', message: '下载功能开发中', type: 'info' });
+      },
+    },
+    {
+      label: '批准',
+      icon: <CheckCircle size={16} />,
+      color: 'success' as const,
+      onClick: (row: Record<string, unknown>) => {
+        const doc = row as unknown as Document;
+        approveMutation.mutate(doc.id);
+      },
+      show: (row: Record<string, unknown>) => {
+        const doc = row as unknown as Document;
+        return doc.status === 'review';
+      },
+    },
+    {
+      label: '发布',
+      icon: <Upload size={16} />,
+      color: 'primary' as const,
+      onClick: (row: Record<string, unknown>) => {
+        const doc = row as unknown as Document;
+        publishMutation.mutate(doc.id);
+      },
+      show: (row: Record<string, unknown>) => {
+        const doc = row as unknown as Document;
+        return doc.status === 'approved';
+      },
+      divider: true,
+    },
   ];
 
-  const statusOptions = [
-    { label: '草稿', value: 'draft' },
-    { label: '审核中', value: 'review' },
-    { label: '已批准', value: 'approved' },
-    { label: '已发布', value: 'published' },
-    { label: '已归档', value: 'archived' },
-  ];
-
-  const statusFilterOptions = statusOptions.map((opt) => ({ label: opt.label, value: opt.value }));
-  const typeFilterOptions = typeOptions.map((opt) => ({ label: opt.label, value: opt.value }));
-
-  const filters: FilterConfig[] = useMemo(
-    () => [
-      {
-        id: 'status',
-        label: '状态',
-        type: 'select',
-        options: statusFilterOptions,
-      },
-      {
-        id: 'type',
-        label: '类型',
-        type: 'select',
-        options: typeFilterOptions,
-      },
-    ],
-    [statusFilterOptions, typeFilterOptions]
-  );
-
-  const handleFilterChange = useCallback((values: Record<string, any>) => {
-    // Filter implementation
-  }, []);
-
-  const handleSearch = useCallback((value: string) => {
-    setSearchTerm(value);
-  }, []);
-
-  const columns: ColumnDef<PdmDocument>[] = useMemo(
-    () => [
-      { id: 'document_no', label: '文档编号', minWidth: 120 },
-      { id: 'name', label: '文档名称', minWidth: 180 },
-      {
-        id: 'type',
-        label: '类型',
-        minWidth: 100,
-        render: (row) => (
-          <Chip
-            label={typeOptions.find((t) => t.value === row.type)?.label || row.type}
-            color={TYPE_COLORS[row.type] || 'default'}
-            size='small'
-          />
-        ),
-      },
-      { id: 'category', label: '分类', minWidth: 100 },
-      {
-        id: 'current_version',
-        label: '版本',
-        minWidth: 80,
-        render: (row) => `v${row.current_version || '1.0'}`,
-      },
-      {
-        id: 'status',
-        label: '状态',
-        minWidth: 100,
-        render: (row) => (
-          <Chip
-            label={statusOptions.find((s) => s.value === row.status)?.label || row.status}
-            color={STATUS_COLORS[row.status] || 'default'}
-            size='small'
-          />
-        ),
-      },
-      {
-        id: 'version_count',
-        label: '版本数',
-        minWidth: 80,
-        render: (row) => (
-          <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
-            <History size={14} />
-            <span>{row.version_count || 0}</span>
-          </Box>
-        ),
-      },
-      {
-        id: 'created_at',
-        label: '创建时间',
-        minWidth: 160,
-        render: (row) => {
-          if (!row.created_at) return '-';
-          const date = new Date(row.created_at);
-          return date.toLocaleDateString('zh-CN');
-        },
-      },
-    ],
-    []
-  );
-
-  const rowActions: RowAction<PdmDocument>[] = useMemo(
-    () => [
-      {
-        label: '查看版本',
-        icon: <History size={16} />,
-        color: 'primary',
-        onClick: (row) => handleViewDocument(row),
-      },
-      {
-        label: '编辑',
-        icon: <Edit size={16} />,
-        color: 'primary',
-        onClick: (row) => handleEditDocument(row),
-      },
-      {
-        label: '删除',
-        icon: <Delete size={16} />,
-        color: 'error',
-        onClick: (row) => handleDeleteDocument(row.id),
-        confirm: true,
-        confirmMessage: '确定要删除这个文档吗？',
-      },
-    ],
-    []
-  );
-
-  const statsCards = (
-    <Grid
-      container
-      spacing={3}
-      sx={{ mb: 2 }}
+  const headerContent = () => (
+    <Box
+      sx={{
+        display: 'grid',
+        gridTemplateColumns: { xs: 'repeat(1, 1fr)', sm: 'repeat(2, 1fr)', md: 'repeat(3, 1fr)' },
+        gap: 2,
+        mb: 3,
+      }}
     >
-      <Grid size={{ xs: 12, sm: 4 }}>
-        <Box
-          sx={{
-            p: 2,
-            borderRadius: 3,
-            bgcolor: 'background.paper',
-            border: 1,
-            borderColor: 'divider',
-          }}
-        >
-          <Box sx={{ color: 'text.secondary', fontSize: '0.875rem', mb: 1 }}>文档总数</Box>
-          <Box sx={{ fontWeight: 'bold', fontSize: '1.5rem' }}>
-            {loading ? '...' : `${filteredDocuments.length} 个`}
+      <Card>
+        <CardContent sx={{ p: 2 }}>
+          <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5 }}>
+            <Box
+              sx={{
+                width: 40,
+                height: 40,
+                bgcolor: 'primary.lighter',
+                borderRadius: 3,
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+              }}
+            >
+              <FileText sx={{ width: 20, height: 20, color: 'primary.dark' }} />
+            </Box>
+            <Box>
+              <Typography
+                variant='body2'
+                sx={{ color: 'text.secondary', fontSize: '0.875rem' }}
+              >
+                文档总数
+              </Typography>
+              <Typography
+                variant='h5'
+                sx={{ fontWeight: 700 }}
+              >
+                {stats.total}
+              </Typography>
+            </Box>
           </Box>
-        </Box>
-      </Grid>
-      <Grid size={{ xs: 12, sm: 4 }}>
-        <Box
-          sx={{
-            p: 2,
-            borderRadius: 3,
-            bgcolor: 'background.paper',
-            border: 1,
-            borderColor: 'divider',
-          }}
-        >
-          <Box sx={{ color: 'text.secondary', fontSize: '0.875rem', mb: 1 }}>已发布</Box>
-          <Box sx={{ fontWeight: 'bold', fontSize: '1.5rem', color: 'success.main' }}>
-            {loading ? '...' : `${documents.filter((d) => d.status === 'published').length} 个`}
+        </CardContent>
+      </Card>
+      <Card>
+        <CardContent sx={{ p: 2 }}>
+          <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5 }}>
+            <Box
+              sx={{
+                width: 40,
+                height: 40,
+                bgcolor: 'success.lighter',
+                borderRadius: 3,
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+              }}
+            >
+              <CheckCircle sx={{ width: 20, height: 20, color: 'success.dark' }} />
+            </Box>
+            <Box>
+              <Typography
+                variant='body2'
+                sx={{ color: 'text.secondary', fontSize: '0.875rem' }}
+              >
+                已发布
+              </Typography>
+              <Typography
+                variant='h5'
+                sx={{ fontWeight: 700, color: 'success.main' }}
+              >
+                {stats.published}
+              </Typography>
+            </Box>
           </Box>
-        </Box>
-      </Grid>
-      <Grid size={{ xs: 12, sm: 4 }}>
-        <Box
-          sx={{
-            p: 2,
-            borderRadius: 3,
-            bgcolor: 'background.paper',
-            border: 1,
-            borderColor: 'divider',
-          }}
-        >
-          <Box sx={{ color: 'text.secondary', fontSize: '0.875rem', mb: 1 }}>审核中</Box>
-          <Box sx={{ fontWeight: 'bold', fontSize: '1.5rem', color: 'warning.main' }}>
-            {loading ? '...' : `${documents.filter((d) => d.status === 'review').length} 个`}
+        </CardContent>
+      </Card>
+      <Card>
+        <CardContent sx={{ p: 2 }}>
+          <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5 }}>
+            <Box
+              sx={{
+                width: 40,
+                height: 40,
+                bgcolor: 'warning.lighter',
+                borderRadius: 3,
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+              }}
+            >
+              <AlertCircle sx={{ width: 20, height: 20, color: 'warning.dark' }} />
+            </Box>
+            <Box>
+              <Typography
+                variant='body2'
+                sx={{ color: 'text.secondary', fontSize: '0.875rem' }}
+              >
+                审核中
+              </Typography>
+              <Typography
+                variant='h5'
+                sx={{ fontWeight: 700, color: 'warning.main' }}
+              >
+                {stats.review}
+              </Typography>
+            </Box>
           </Box>
-        </Box>
-      </Grid>
-    </Grid>
+        </CardContent>
+      </Card>
+    </Box>
   );
+
+  const detailContent = (row: Record<string, unknown>) => {
+    const doc = row as unknown as Document;
+    const statusColors = statusColorMap[doc.status] || {
+      bg: 'grey.100',
+      color: 'text.secondary',
+    };
+    const statusLabel = statusLabelMap[doc.status] || doc.status;
+    const typeLabel = typeLabelMap[doc.type] || doc.type;
+
+    return (
+      <Box
+        sx={{
+          pt: 2,
+          display: 'grid',
+          gridTemplateColumns: '1fr 1fr',
+          gap: 2,
+        }}
+      >
+        <Box>
+          <Box
+            component='span'
+            sx={{ color: 'text.secondary', fontSize: '0.875rem' }}
+          >
+            文档编号
+          </Box>
+          <Box sx={{ fontWeight: 500 }}>{doc.document_no}</Box>
+        </Box>
+        <Box>
+          <Box
+            component='span'
+            sx={{ color: 'text.secondary', fontSize: '0.875rem' }}
+          >
+            类型
+          </Box>
+          <Box>{typeLabel}</Box>
+        </Box>
+        <Box sx={{ gridColumn: '1 / -1' }}>
+          <Box
+            component='span'
+            sx={{ color: 'text.secondary', fontSize: '0.875rem' }}
+          >
+            文档名称
+          </Box>
+          <Box>{doc.name}</Box>
+        </Box>
+        <Box>
+          <Box
+            component='span'
+            sx={{ color: 'text.secondary', fontSize: '0.875rem' }}
+          >
+            当前版本
+          </Box>
+          <Box>v{doc.current_version || '1.0'}</Box>
+        </Box>
+        <Box>
+          <Box
+            component='span'
+            sx={{ color: 'text.secondary', fontSize: '0.875rem' }}
+          >
+            版本数
+          </Box>
+          <Box>{doc.version_count || 1}</Box>
+        </Box>
+        <Box>
+          <Box
+            component='span'
+            sx={{ color: 'text.secondary', fontSize: '0.875rem' }}
+          >
+            分类
+          </Box>
+          <Box>{doc.category || '-'}</Box>
+        </Box>
+        <Box>
+          <Box
+            component='span'
+            sx={{ color: 'text.secondary', fontSize: '0.875rem' }}
+          >
+            状态
+          </Box>
+          <Box sx={{ mt: 0.5 }}>
+            <Chip
+              label={statusLabel}
+              size='small'
+              sx={{
+                backgroundColor: statusColors.bg,
+                color: statusColors.color,
+                fontWeight: 500,
+              }}
+            />
+          </Box>
+        </Box>
+        <Box>
+          <Box
+            component='span'
+            sx={{ color: 'text.secondary', fontSize: '0.875rem' }}
+          >
+            上传人
+          </Box>
+          <Box>{doc.uploader_name || '-'}</Box>
+        </Box>
+        <Box>
+          <Box
+            component='span'
+            sx={{ color: 'text.secondary', fontSize: '0.875rem' }}
+          >
+            创建时间
+          </Box>
+          <Box>{doc.created_at ? new Date(doc.created_at).toLocaleDateString('zh-CN') : '-'}</Box>
+        </Box>
+        {doc.description && (
+          <Box sx={{ gridColumn: '1 / -1' }}>
+            <Box
+              component='span'
+              sx={{ color: 'text.secondary', fontSize: '0.875rem' }}
+            >
+              描述
+            </Box>
+            <Box>{doc.description}</Box>
+          </Box>
+        )}
+      </Box>
+    );
+  };
+
+  const selectedDoc = documents.find((d) => d.id === selectedDocId);
 
   return (
     <PageContainer
       headerProps={{
         pageIcon: <FileText style={{ width: 20, height: 20 }} />,
-        pageGradient: `linear-gradient(135deg, ${ct.secondary.main} 0%, ${ct.secondary.dark} 100%)`,
+        pageGradient: `linear-gradient(135deg, ${ct.primary.main} 0%, ${ct.primary.dark} 100%)`,
       }}
+      maxWidth='xl'
     >
-      <Tabs
-        value={activeTab}
-        onChange={handleTabChange}
-        sx={{ mb: 2 }}
-      >
-        <Tab label='文档列表' />
-        <Tab label='版本管理' />
-        <Tab label='文档检索' />
-      </Tabs>
-
-      {activeTab === 0 && (
-        <ListPageTemplate
-          title=''
-          subtitle=''
-          columns={columns}
-          data={filteredDocuments}
-          loading={loading}
-          searchable
-          searchPlaceholder='搜索文档名称、编号或分类...'
-          onSearch={handleSearch}
-          filters={filters}
-          filtersValue={{}}
-          onFilterChange={handleFilterChange}
-          rowActions={rowActions}
-          actions={[
-            {
-              label: '添加文档',
-              icon: <Plus size={16} />,
-              onClick: handleCreate,
-              variant: 'contained',
-            },
-          ]}
-          onRefresh={() => queryClient.invalidateQueries({ queryKey: QUERY_KEYS.PDM.DOCUMENTS })}
-          headerContent={statsCards}
-          emptyMessage='暂无文档数据'
-        />
-      )}
-
-      {activeTab === 1 && (
-        <Box>
-          {selectedDocumentId ? (
-            <Box>
-              <Box
-                sx={{
-                  display: 'flex',
-                  justifyContent: 'space-between',
-                  alignItems: 'center',
-                  mb: 2,
-                }}
-              >
-                <Typography variant='h6'>
-                  文档版本 - {documents.find((d) => d.id === selectedDocumentId)?.name || ''}
-                </Typography>
-                <Box sx={{ display: 'flex', gap: 1 }}>
-                  <input
-                    type='file'
-                    ref={fileInputRef}
-                    style={{ display: 'none' }}
-                    onChange={handleUpload}
-                  />
-                  <Button
-                    variant='contained'
-                    startIcon={<Upload size={16} />}
-                    onClick={() => fileInputRef.current?.click()}
-                    disabled={uploading}
-                  >
-                    上传新版本
-                  </Button>
-                </Box>
-              </Box>
-              {uploading && <LinearProgress sx={{ mb: 2 }} />}
-              <List>
-                {versions.map((version) => (
-                  <Card
-                    key={version.id}
-                    sx={{ mb: 1 }}
-                  >
-                    <CardContent sx={{ py: 1.5, '&:last-child': { pb: 1.5 } }}>
-                      <Box
-                        sx={{
-                          display: 'flex',
-                          justifyContent: 'space-between',
-                          alignItems: 'center',
-                        }}
-                      >
-                        <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
-                          <File size={20} />
-                          <Box>
-                            <Typography variant='subtitle2'>
-                              v{version.version_number} - {version.title}
-                            </Typography>
-                            <Box sx={{ display: 'flex', gap: 2, mt: 0.5 }}>
-                              <Chip
-                                label={
-                                  statusOptions.find((s) => s.value === version.status)?.label ||
-                                  version.status
-                                }
-                                color={VERSION_STATUS_COLORS[version.status] || 'default'}
-                                size='small'
-                              />
-                              <Typography
-                                variant='caption'
-                                color='text.secondary'
-                              >
-                                {version.created_by_name || version.created_by} 创建于{' '}
-                                {new Date(version.created_at).toLocaleDateString('zh-CN')}
-                              </Typography>
-                            </Box>
-                          </Box>
-                        </Box>
-                        <Box sx={{ display: 'flex', gap: 1 }}>
-                          {version.status !== 'published' && (
-                            <IconButton
-                              size='small'
-                              onClick={() => handlePublishVersion(selectedDocumentId, version.id)}
-                              aria-label='发布版本'
-                            >
-                              <CheckCircle size={16} />
-                            </IconButton>
-                          )}
-                          <IconButton
-                            size='small'
-                            aria-label='下载文档'
-                          >
-                            <Download size={16} />
-                          </IconButton>
-                        </Box>
-                      </Box>
-                      {version.description && (
-                        <Typography
-                          variant='body2'
-                          color='text.secondary'
-                          sx={{ mt: 1 }}
-                        >
-                          {version.description}
-                        </Typography>
-                      )}
-                      {version.changes && version.changes.length > 0 && (
-                        <Box sx={{ mt: 1, display: 'flex', gap: 0.5, flexWrap: 'wrap' }}>
-                          {version.changes.map((change, idx) => (
-                            <Chip
-                              key={idx}
-                              label={change}
-                              size='small'
-                              variant='outlined'
-                            />
-                          ))}
-                        </Box>
-                      )}
-                    </CardContent>
-                  </Card>
-                ))}
-                {versions.length === 0 && (
-                  <Box sx={{ textAlign: 'center', py: 4, color: 'text.secondary' }}>
-                    暂无版本数据
-                  </Box>
-                )}
-              </List>
-            </Box>
-          ) : (
-            <Box sx={{ p: 3, textAlign: 'center', color: 'text.secondary' }}>
-              <History
-                size={48}
-                style={{ marginBottom: 16, opacity: 0.5 }}
-              />
-              <Box>请先选择一个文档查看版本</Box>
-            </Box>
-          )}
-        </Box>
-      )}
-
-      {activeTab === 2 && (
-        <Box>
-          <Card sx={{ mb: 2 }}>
-            <CardContent>
-              <Box sx={{ display: 'flex', gap: 2, alignItems: 'center' }}>
-                <TextField
-                  label='关键词搜索'
-                  value={keyword}
-                  onChange={(e) => setKeyword(e.target.value)}
-                  fullWidth
-                  placeholder='输入文档名称、编号或标签...'
-                  onKeyPress={(e) => e.key === 'Enter' && handleSearchDocuments()}
-                />
-                <Button
-                  variant='contained'
-                  startIcon={<Search size={16} />}
-                  onClick={handleSearchDocuments}
-                >
-                  搜索
-                </Button>
-              </Box>
-            </CardContent>
-          </Card>
-          <ListPageTemplate
-            title='搜索结果'
-            subtitle=''
-            columns={columns}
-            data={filteredDocuments}
-            loading={loading}
-            searchable={false}
-            rowActions={rowActions}
-            actions={[]}
-            onRefresh={() => queryClient.invalidateQueries({ queryKey: QUERY_KEYS.PDM.DOCUMENTS })}
-            emptyMessage='输入关键词搜索文档'
-          />
-        </Box>
-      )}
+      <CrudPage
+        schema={documentSchema}
+        apiAdapter={baseAdapter}
+        breadcrumbs={[{ label: 'PDM' }, { label: '文档管理' }]}
+        headerContent={headerContent}
+        detailContent={detailContent}
+        detailMaxWidth='lg'
+        customRowActions={customRowActions}
+      />
 
       <Dialog
-        open={openDialog}
-        onClose={() => setOpenDialog(false)}
+        open={versionDialogOpen}
+        onClose={() => setVersionDialogOpen(false)}
+        maxWidth='md'
+        fullWidth
+      >
+        <DialogTitle>版本历史 - {selectedDoc?.name || ''}</DialogTitle>
+        <DialogContent dividers>
+          {versions.length === 0 ? (
+            <Box sx={{ py: 4, textAlign: 'center', color: 'text.secondary' }}>暂无版本历史</Box>
+          ) : (
+            <List>
+              {versions.map((version, index) => (
+                <ListItem
+                  key={version.id}
+                  divider={index < versions.length - 1}
+                  secondaryAction={
+                    <Box sx={{ display: 'flex', gap: 1 }}>
+                      <Tooltip title='下载'>
+                        <IconButton size='small'>
+                          <Download size={16} />
+                        </IconButton>
+                      </Tooltip>
+                      <Tooltip title='预览'>
+                        <IconButton size='small'>
+                          <Eye size={16} />
+                        </IconButton>
+                      </Tooltip>
+                    </Box>
+                  }
+                >
+                  <ListItemIcon>
+                    <Clock
+                      size={18}
+                      color='disabled'
+                    />
+                  </ListItemIcon>
+                  <ListItemText
+                    primary={
+                      <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                        <Typography
+                          variant='body2'
+                          sx={{ fontWeight: 600 }}
+                        >
+                          v{version.version_number}
+                        </Typography>
+                        {index === 0 && (
+                          <Chip
+                            label='当前版本'
+                            size='small'
+                            sx={{
+                              backgroundColor: 'success.lighter',
+                              color: 'success.dark',
+                              fontWeight: 500,
+                              fontSize: '0.75rem',
+                            }}
+                          />
+                        )}
+                      </Box>
+                    }
+                    secondary={
+                      <Box>
+                        <Typography
+                          variant='caption'
+                          sx={{ color: 'text.secondary', display: 'block' }}
+                        >
+                          {version.changes.join(', ') || version.description || '无变更说明'}
+                        </Typography>
+                        <Typography
+                          variant='caption'
+                          sx={{ color: 'text.secondary' }}
+                        >
+                          {version.created_at
+                            ? new Date(version.created_at).toLocaleString('zh-CN')
+                            : ''}
+                        </Typography>
+                      </Box>
+                    }
+                  />
+                </ListItem>
+              ))}
+            </List>
+          )}
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={() => setVersionDialogOpen(false)}>关闭</Button>
+          <Button
+            variant='outlined'
+            startIcon={<Plus size={16} />}
+            onClick={() => {
+              addNotification({ title: '提示', message: '上传新版本功能开发中', type: 'info' });
+            }}
+          >
+            上传新版本
+          </Button>
+        </DialogActions>
+      </Dialog>
+
+      <Dialog
+        open={uploadDialogOpen}
+        onClose={() => setUploadDialogOpen(false)}
         maxWidth='sm'
         fullWidth
       >
-        <DialogTitle>{editingDocument ? '编辑文档' : '添加文档'}</DialogTitle>
+        <DialogTitle>上传文档</DialogTitle>
         <DialogContent>
-          <Box sx={{ display: 'flex', flexDirection: 'column', gap: 3, mt: 2 }}>
-            <TextField
-              label='文档编号 *'
-              value={formData.document_no}
-              onChange={(e) => setFormData({ ...formData, document_no: e.target.value })}
-              fullWidth
-              required
+          <Box
+            sx={{
+              mt: 2,
+              p: 4,
+              border: '2px dashed',
+              borderColor: 'divider',
+              borderRadius: 2,
+              textAlign: 'center',
+              cursor: 'pointer',
+              '&:hover': {
+                borderColor: 'primary.main',
+                backgroundColor: 'action.hover',
+              },
+            }}
+            onClick={() => {
+              addNotification({ title: '提示', message: '文件上传功能开发中', type: 'info' });
+            }}
+          >
+            <Upload
+              size={32}
+              style={{ margin: '0 auto 8px', opacity: 0.5 }}
             />
-            <TextField
-              label='文档名称 *'
-              value={formData.name}
-              onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-              fullWidth
-              required
-            />
-            <Grid
-              container
-              spacing={3}
+            <Typography
+              variant='body2'
+              sx={{ color: 'text.secondary' }}
             >
-              <Grid size={{ xs: 6 }}>
-                <FormControl fullWidth>
-                  <InputLabel>类型</InputLabel>
-                  <Select
-                    value={formData.type}
-                    label='类型'
-                    onChange={(e) => setFormData({ ...formData, type: e.target.value })}
-                  >
-                    {typeOptions.map((option) => (
-                      <MenuItem
-                        key={option.value}
-                        value={option.value}
-                      >
-                        {option.label}
-                      </MenuItem>
-                    ))}
-                  </Select>
-                </FormControl>
-              </Grid>
-              <Grid size={{ xs: 6 }}>
-                <FormControl fullWidth>
-                  <InputLabel>状态</InputLabel>
-                  <Select
-                    value={formData.status}
-                    label='状态'
-                    onChange={(e) => setFormData({ ...formData, status: e.target.value })}
-                  >
-                    {statusOptions.map((option) => (
-                      <MenuItem
-                        key={option.value}
-                        value={option.value}
-                      >
-                        {option.label}
-                      </MenuItem>
-                    ))}
-                  </Select>
-                </FormControl>
-              </Grid>
-            </Grid>
-            <TextField
-              label='分类'
-              value={formData.category}
-              onChange={(e) => setFormData({ ...formData, category: e.target.value })}
-              fullWidth
-            />
-            <TextField
-              label='标签（逗号分隔）'
-              value={formData.tags}
-              onChange={(e) => setFormData({ ...formData, tags: e.target.value })}
-              fullWidth
-              placeholder='如：重要, 机密, 参考'
-            />
-            <TextField
-              label='描述'
-              value={formData.description}
-              onChange={(e) => setFormData({ ...formData, description: e.target.value })}
-              fullWidth
-              multiline
-              rows={3}
-            />
+              点击或拖拽文件到此处上传
+            </Typography>
           </Box>
         </DialogContent>
         <DialogActions>
-          <Button onClick={() => setOpenDialog(false)}>取消</Button>
+          <Button onClick={() => setUploadDialogOpen(false)}>取消</Button>
           <Button
             variant='contained'
-            onClick={handleSaveDocument}
-            disabled={!formData.document_no || !formData.name}
+            disabled
           >
-            保存
+            上传
           </Button>
         </DialogActions>
       </Dialog>

@@ -3,16 +3,22 @@
 
 use anyhow::Result;
 use axum::{extract::State, routing::get, Router};
+use axum_prometheus::PrometheusMetricLayer;
+use prometheus::{Encoder as _, TextEncoder};
 use sqlx::postgres::PgPoolOptions;
 use std::env;
 use std::sync::Arc;
 use std::time::Instant;
 
 use crate::{
-    auth_middleware, config::enhanced::DatabaseConfig, create_api_info_router, create_cors_layer,
-    init_logging, ApiResponse, AuthState, DependencyHealth, HealthStatus, ServiceHealth,
-    SystemMetrics,
+    auth_middleware, check_http_health, config::enhanced::DatabaseConfig, create_api_info_router,
+    create_cors_layer, create_database_pool, init_logging, init_telemetry,
+    register_routes_with_legacy_alias, request_context_middleware, rls_middleware,
+    telemetry_middleware, ApiResponse, AuthState, DependencyHealth, EventPublisher,
+    HealthStatus, ServiceHealth, SystemMetrics,
 };
+
+use crate::security::{rate_limit_middleware, RateLimitConfig, RateLimitMiddleware};
 
 /// 服务启动配置
 #[derive(Debug, Clone)]
@@ -81,7 +87,7 @@ pub struct AppState {
     pub db: sqlx::PgPool,
 
     /// 认证状态
-    pub auth_state: Arc<AuthState>,
+    pub auth_state: AuthState,
 
     /// 系统指标
     pub metrics: Arc<SystemMetrics>,
@@ -96,7 +102,7 @@ pub struct AppState {
 impl AppState {
     pub fn new(
         db: sqlx::PgPool,
-        auth_state: Arc<AuthState>,
+        auth_state: AuthState,
         metrics: Arc<SystemMetrics>,
         start_time: Instant,
         config: BootstrapConfig,
@@ -206,7 +212,7 @@ impl ServiceBootstrap {
         // 创建应用状态
         let start_time = Instant::now();
         let metrics = Arc::new(SystemMetrics::new());
-        let auth_state = Arc::new(AuthState::from_env());
+        let auth_state = AuthState::from_env();
 
         let app_state = AppState::new(
             db.clone(),
@@ -382,21 +388,21 @@ struct MetricsResponse {
 }
 
 /// 检查数据库健康状态
-async fn check_database_health(pool: &sqlx::PgPool) -> DependencyHealth {
-    let result = sqlx::query("SELECT 1").fetch_one(pool).await;
-
-    DependencyHealth {
-        name: "database".to_string(),
-        status: if result.is_ok() {
-            HealthStatus::Healthy
-        } else {
-            HealthStatus::Unhealthy
+pub async fn check_database_health(pool: &sqlx::PgPool) -> DependencyHealth {
+    match sqlx::query("SELECT 1").execute(pool).await {
+        Ok(_) => DependencyHealth {
+            name: "database".to_string(),
+            status: HealthStatus::Healthy,
+            message: "数据库连接正常".to_string(),
         },
-        message: if result.is_ok() {
-            "数据库连接正常".to_string()
-        } else {
-            "数据库连接失败".to_string()
-        },
+        Err(e) => {
+            tracing::error!("数据库健康检查失败: {}", e);
+            DependencyHealth {
+                name: "database".to_string(),
+                status: HealthStatus::Unhealthy,
+                message: format!("数据库连接失败: {}", e),
+            }
+        }
     }
 }
 
@@ -449,6 +455,389 @@ pub async fn quick_bootstrap_with_db(
         .with_custom_routes(routes)
         .bootstrap()
         .await
+}
+
+// =============================================================================
+// V2: 统一微服务启动模板
+// =============================================================================
+
+/// 服务配置（V2 统一模板）
+#[derive(Debug, Clone)]
+pub struct ServiceConfig {
+    /// 服务名称，如 "topems-erp"
+    pub name: &'static str,
+    /// 默认端口
+    pub port: u16,
+    /// 服务专属端口环境变量名，如 "ERP_PORT"
+    pub port_env_var: Option<&'static str>,
+    /// 数据库最大连接数
+    pub max_db_connections: u32,
+    /// 是否启用事件发布
+    pub enable_events: bool,
+    /// 是否启用 RLS 中间件
+    pub enable_rls: bool,
+    /// 是否启用 request_context 中间件
+    pub enable_request_context: bool,
+    /// API 前缀，如 "/api/erp"
+    pub api_prefix: &'static str,
+    /// 旧版 API 前缀列表，如 &["/api/v1/erp"]
+    pub legacy_prefixes: &'static [&'static str],
+}
+
+impl Default for ServiceConfig {
+    fn default() -> Self {
+        Self {
+            name: "unknown",
+            port: 8000,
+            port_env_var: None,
+            max_db_connections: 20,
+            enable_events: false,
+            enable_rls: true,
+            enable_request_context: true,
+            api_prefix: "",
+            legacy_prefixes: &[],
+        }
+    }
+}
+
+/// 服务启动后共享的通用资源
+pub struct ServiceContext {
+    /// 数据库连接池
+    pub db: sqlx::PgPool,
+    /// 认证状态
+    pub auth_state: AuthState,
+    /// 系统指标
+    pub metrics: Arc<SystemMetrics>,
+    /// 事件发布器（如果启用）
+    pub event_publisher: Option<Arc<EventPublisher>>,
+    /// 启动时间
+    pub start_time: Instant,
+}
+
+/// 组装完毕、可运行的应用
+pub struct Application {
+    /// 最终路由
+    pub router: Router,
+    /// 监听端口
+    pub port: u16,
+    /// 服务名称
+    pub name: &'static str,
+}
+
+/// 初始化通用资源：telemetry、数据库连接池、metrics、auth_state、event_publisher
+pub async fn bootstrap_service(config: &ServiceConfig) -> Result<ServiceContext> {
+    dotenv::dotenv().ok();
+
+    let _telemetry_guard = init_telemetry(config.name);
+
+    tracing::info!("🚀 {} 服务启动中...", config.name);
+
+    let db_url = env::var("DATABASE_URL").map_err(|_| {
+        tracing::error!("DATABASE_URL environment variable is required");
+        anyhow::anyhow!("DATABASE_URL environment variable is required")
+    })?;
+
+    let db_config = DatabaseConfig {
+        url: db_url,
+        max_connections: config.max_db_connections,
+        ..Default::default()
+    };
+
+    let db = create_database_pool(&db_config).await?;
+
+    let metrics = Arc::new(SystemMetrics::new());
+    let auth_state = AuthState::from_env();
+    let start_time = Instant::now();
+
+    let event_publisher = if config.enable_events {
+        match EventPublisher::new(config.name) {
+            Ok(publisher) => {
+                tracing::info!("📢 事件发布服务初始化成功");
+                Some(Arc::new(publisher))
+            }
+            Err(e) => {
+                tracing::warn!("⚠️ 事件发布服务初始化失败（不阻塞启动）: {}", e);
+                None
+            }
+        }
+    } else {
+        None
+    };
+
+    Ok(ServiceContext {
+        db,
+        auth_state,
+        metrics,
+        event_publisher,
+        start_time,
+    })
+}
+
+/// 组装最终的应用路由：rate_limit + auth + rls 中间件、CORS、Prometheus、telemetry 层
+pub fn build_application(
+    ctx: &ServiceContext,
+    config: &ServiceConfig,
+    public_routes: Router,
+    protected_routes: Router,
+    openapi_json: Option<String>,
+) -> Application {
+    let cors = create_cors_layer();
+    let (prometheus_layer, _metric_handle) = PrometheusMetricLayer::pair();
+
+    // 速率限制
+    let rate_limit_config = RateLimitConfig::new(200, 60)
+        .with_by_user_id(false)
+        .with_by_ip(true);
+    let rate_limiter = Arc::new(RateLimitMiddleware::new(rate_limit_config));
+    let rate_limit_layer = axum::middleware::from_fn({
+        let mw = rate_limiter.clone();
+        move |req, next| {
+            let mw = mw.clone();
+            async move { rate_limit_middleware(mw, req, next).await }
+        }
+    });
+
+    // 对 protected_routes 应用 auth + rls + rate_limit
+    let mut protected = protected_routes.layer(axum::middleware::from_fn_with_state(
+        ctx.auth_state.clone(),
+        auth_middleware,
+    ));
+
+    if config.enable_rls {
+        protected = protected.layer(axum::middleware::from_fn_with_state(
+            ctx.db.clone(),
+            rls_middleware,
+        ));
+    }
+
+    protected = protected.layer(rate_limit_layer);
+
+    // 组装路由
+    let mut app = register_routes_with_legacy_alias(
+        Router::new().merge(public_routes),
+        config.api_prefix,
+        config.legacy_prefixes,
+        protected,
+    )
+    .merge(create_api_info_router(config.name));
+
+    if let Some(json) = openapi_json {
+        app = app.route(
+            "/api-docs/openapi.json",
+            get(move || async move { json }),
+        );
+    }
+
+    // 全局中间件
+    app = app.layer(axum::middleware::from_fn(telemetry_middleware));
+
+    if config.enable_request_context {
+        app = app.layer(axum::middleware::from_fn(request_context_middleware));
+    }
+
+    app = app.layer(prometheus_layer).layer(cors);
+
+    let port = resolve_port(config);
+
+    Application {
+        router: app,
+        port,
+        name: config.name,
+    }
+}
+
+/// 启动 HTTP 服务
+pub async fn run(app: Application) -> Result<()> {
+    let addr = format!("0.0.0.0:{}", app.port);
+    tracing::info!("🌐 {} 服务地址: {}", app.name, addr);
+    tracing::info!("🔒 认证保护已启用");
+    let listener = tokio::net::TcpListener::bind(&addr).await?;
+    axum::serve(listener, app.router).await?;
+    Ok(())
+}
+
+/// 从环境变量解析端口
+pub fn resolve_port(config: &ServiceConfig) -> u16 {
+    if let Some(var) = config.port_env_var {
+        if let Ok(val) = env::var(var) {
+            if let Ok(port) = val.parse::<u16>() {
+                return port;
+            }
+        }
+    }
+    for var in &["SERVER_PORT", "PORT"] {
+        if let Ok(val) = env::var(var) {
+            if let Ok(port) = val.parse::<u16>() {
+                return port;
+            }
+        }
+    }
+    config.port
+}
+
+// ==================== 健康检查辅助函数 ====================
+
+/// 检查 IAM 服务健康状态
+pub async fn check_iam_health() -> DependencyHealth {
+    let iam_url =
+        env::var("IAM_SERVICE_URL").unwrap_or_else(|_| "http://localhost:8000".to_string());
+    let health_url = format!("{}/health", iam_url);
+
+    match check_http_health(&health_url).await {
+        Ok(status) => {
+            let message = match status {
+                HealthStatus::Healthy => "IAM 服务正常",
+                HealthStatus::Degraded => "IAM 服务响应异常",
+                HealthStatus::Unhealthy => "IAM 服务不可用",
+            };
+            DependencyHealth {
+                name: "iam-service".to_string(),
+                status,
+                message: message.to_string(),
+            }
+        }
+        Err(e) => {
+            tracing::warn!("IAM 服务健康检查失败: {}", e);
+            DependencyHealth {
+                name: "iam-service".to_string(),
+                status: HealthStatus::Degraded,
+                message: format!("IAM 服务连接异常: {}", e),
+            }
+        }
+    }
+}
+
+/// Prometheus 指标导出端点
+pub async fn prometheus_metrics_handler() -> String {
+    let encoder = TextEncoder::new();
+    let metrics = prometheus::gather();
+    let mut buffer = Vec::new();
+    match encoder.encode(&metrics, &mut buffer) {
+        Ok(()) => String::from_utf8(buffer)
+            .unwrap_or_else(|_| "Error: invalid UTF-8 in metrics".to_string()),
+        Err(e) => format!("Error encoding metrics: {}", e),
+    }
+}
+
+/// 标准服务指标响应
+#[derive(Debug, Clone, serde::Serialize)]
+pub struct ServiceMetricsResponse {
+    pub service_name: String,
+    pub uptime_seconds: u64,
+    pub uptime_formatted: String,
+    pub request_count: u64,
+    pub error_count: u64,
+    pub active_connections: u64,
+    pub database_pool_size: u32,
+    pub database_pool_idle: usize,
+}
+
+/// 从 ServiceContext 创建 AppState（用于标准健康检查路由）
+pub fn create_health_state(ctx: &ServiceContext, config: &ServiceConfig) -> AppState {
+    AppState::new(
+        ctx.db.clone(),
+        ctx.auth_state.clone(),
+        ctx.metrics.clone(),
+        ctx.start_time,
+        BootstrapConfig {
+            service_name: config.name,
+            default_port: config.port,
+            ..Default::default()
+        },
+    )
+}
+
+/// 创建标准健康检查路由（使用 AppState）
+pub fn create_standard_health_routes(state: AppState) -> Router {
+    Router::new()
+        .route("/health", get(standard_health_check))
+        .route("/api/health/detailed", get(standard_health_check_detailed))
+        .route("/api/metrics", get(standard_get_metrics))
+        .route("/metrics", get(prometheus_metrics_handler))
+        .with_state(state)
+}
+
+/// 标准健康检查（返回简短状态字符串）
+pub async fn standard_health_check(
+    State(state): State<AppState>,
+) -> axum::Json<ApiResponse<String>> {
+    let database_health = check_database_health(&state.db).await;
+    let iam_health = check_iam_health().await;
+
+    let overall_status = if database_health.status == HealthStatus::Healthy
+        && iam_health.status == HealthStatus::Healthy
+    {
+        HealthStatus::Healthy
+    } else if database_health.status == HealthStatus::Unhealthy
+        || iam_health.status == HealthStatus::Unhealthy
+    {
+        HealthStatus::Unhealthy
+    } else {
+        HealthStatus::Degraded
+    };
+
+    let status_str = match overall_status {
+        HealthStatus::Healthy => "healthy".to_string(),
+        HealthStatus::Degraded => "degraded".to_string(),
+        HealthStatus::Unhealthy => "unhealthy".to_string(),
+    };
+
+    axum::Json(ApiResponse::success(status_str, "健康检查"))
+}
+
+/// 标准详细健康检查
+pub async fn standard_health_check_detailed(
+    State(state): State<AppState>,
+) -> axum::Json<ApiResponse<ServiceHealth>> {
+    let dependencies = vec![
+        check_database_health(&state.db).await,
+        check_iam_health().await,
+    ];
+
+    let all_healthy = dependencies
+        .iter()
+        .all(|d| d.status == HealthStatus::Healthy);
+    let any_unhealthy = dependencies
+        .iter()
+        .any(|d| d.status == HealthStatus::Unhealthy);
+
+    let overall_status = if all_healthy {
+        HealthStatus::Healthy
+    } else if any_unhealthy {
+        HealthStatus::Unhealthy
+    } else {
+        HealthStatus::Degraded
+    };
+
+    let message = match overall_status {
+        HealthStatus::Healthy => "所有服务运行正常",
+        HealthStatus::Degraded => "部分服务存在问题",
+        HealthStatus::Unhealthy => "存在关键服务故障",
+    };
+
+    let health = ServiceHealth::healthy_with_message(state.config.service_name, message)
+        .with_uptime(&state.metrics.get_uptime())
+        .with_dependencies(dependencies);
+
+    axum::Json(ApiResponse::success(health, "详细健康检查"))
+}
+
+/// 标准服务指标
+pub async fn standard_get_metrics(
+    State(state): State<AppState>,
+) -> axum::Json<ApiResponse<ServiceMetricsResponse>> {
+    let metrics = ServiceMetricsResponse {
+        service_name: state.config.service_name.to_string(),
+        uptime_seconds: state.metrics.get_uptime_seconds(),
+        uptime_formatted: state.metrics.get_uptime(),
+        request_count: state.metrics.get_request_count(),
+        error_count: state.metrics.get_error_count(),
+        active_connections: state.metrics.get_active_connections(),
+        database_pool_size: state.db.size(),
+        database_pool_idle: state.db.num_idle(),
+    };
+
+    axum::Json(ApiResponse::success(metrics, "服务指标"))
 }
 
 #[cfg(test)]

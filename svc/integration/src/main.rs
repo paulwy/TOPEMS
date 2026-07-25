@@ -66,14 +66,14 @@ async fn main() -> anyhow::Result<()> {
         }
     };
 
-    let lims_url = std::env::var("QUALITY_ASSURANCE_URL")
-        .unwrap_or_else(|_| "http://localhost:8052".to_string());
-    let qms_url = std::env::var("QUALITY_ASSURANCE_URL")
-        .unwrap_or_else(|_| "http://localhost:8052".to_string());
-    let mes_url = std::env::var("MES_URL").unwrap_or_else(|_| "http://localhost:8030".to_string());
-    let erp_url = std::env::var("ERP_URL").unwrap_or_else(|_| "http://localhost:8010".to_string());
-    let wms_url = std::env::var("WMS_URL").unwrap_or_else(|_| "http://localhost:8042".to_string());
-    let scm_url = std::env::var("SCM_URL").unwrap_or_else(|_| "http://localhost:8040".to_string());
+    let lims_url =
+        std::env::var("LIMS_SERVICE_URL").unwrap_or_else(|_| "http://localhost:8051".to_string());
+    let qms_url =
+        std::env::var("QMS_SERVICE_URL").unwrap_or_else(|_| "http://localhost:8050".to_string());
+    let mes_url = std::env::var("MES_SERVICE_URL").unwrap_or_else(|_| "http://localhost:8030".to_string());
+    let erp_url = std::env::var("ERP_SERVICE_URL").unwrap_or_else(|_| "http://localhost:8010".to_string());
+    let wms_url = std::env::var("WMS_SERVICE_URL").unwrap_or_else(|_| "http://localhost:8041".to_string());
+    let scm_url = std::env::var("SCM_SERVICE_URL").unwrap_or_else(|_| "http://localhost:8040".to_string());
 
     let app_state = AppState {
         pool: pool.clone(),
@@ -116,5 +116,52 @@ async fn main() -> anyhow::Result<()> {
 async fn init_database(pool: &PgPool) -> Result<(), sqlx::Error> {
     init_conversion_rules_table(pool).await?;
     mes_qms_integration::init_mes_qms_tables(pool).await?;
+    init_sync_tables(pool).await?;
+    Ok(())
+}
+
+/// 初始化通用跨服务同步任务表（从 unified-core 迁移而来）
+async fn init_sync_tables(pool: &PgPool) -> Result<(), sqlx::Error> {
+    sqlx::query(
+        r#"
+        CREATE TABLE IF NOT EXISTS core_inter_module_sync (
+            id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+            tenant_id UUID NOT NULL,
+            sync_type VARCHAR(64) NOT NULL,
+            source_module VARCHAR(64) NOT NULL,
+            target_module VARCHAR(64) NOT NULL,
+            source_entity VARCHAR(128) NOT NULL,
+            source_id UUID,
+            source_code VARCHAR(128),
+            status VARCHAR(32) DEFAULT 'pending',
+            retry_count INTEGER DEFAULT 0,
+            max_retries INTEGER DEFAULT 3,
+            error_message TEXT,
+            next_retry_at TIMESTAMP,
+            executed_at TIMESTAMP,
+            created_at TIMESTAMP DEFAULT NOW(),
+            updated_at TIMESTAMP DEFAULT NOW()
+        )
+        "#,
+    )
+    .execute(pool)
+    .await?;
+
+    sqlx::query(
+        "CREATE INDEX IF NOT EXISTS idx_inter_module_sync_status ON core_inter_module_sync(status)",
+    )
+    .execute(pool)
+    .await?;
+    sqlx::query(
+        "CREATE INDEX IF NOT EXISTS idx_inter_module_sync_tenant ON core_inter_module_sync(tenant_id)",
+    )
+    .execute(pool)
+    .await?;
+    sqlx::query(
+        "CREATE INDEX IF NOT EXISTS idx_inter_module_sync_source ON core_inter_module_sync(source_module)",
+    )
+    .execute(pool)
+    .await?;
+
     Ok(())
 }

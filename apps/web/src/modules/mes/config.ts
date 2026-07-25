@@ -34,6 +34,8 @@ export const MES_PATHS = {
   productionCost: '/mes/production-cost',
   energyManagement: '/mes/energy-management',
   anomalyDetection: '/mes/anomaly-detection',
+  workOrder: '/mes/work-order',
+  quality: '/mes/quality',
 } as const;
 
 // ---- 路由配置（供路由系统使用） ----
@@ -354,10 +356,7 @@ export const mesModuleConfig: RouteModuleConfig = {
     },
     {
       path: MES_PATHS.apsScheduling,
-      element: lazyWithRetry(
-        () => import('@/pages/mes/ApsSchedulingPage'),
-        'ApsSchedulingPage'
-      ),
+      element: lazyWithRetry(() => import('@/pages/mes/ApsSchedulingPage'), 'ApsSchedulingPage'),
       module: 'mes',
       code: 'mes-aps-scheduling',
       title: 'APS 高级排程',
@@ -368,10 +367,7 @@ export const mesModuleConfig: RouteModuleConfig = {
     },
     {
       path: MES_PATHS.productionCost,
-      element: lazyWithRetry(
-        () => import('@/pages/mes/ProductionCostPage'),
-        'ProductionCostPage'
-      ),
+      element: lazyWithRetry(() => import('@/pages/mes/ProductionCostPage'), 'ProductionCostPage'),
       module: 'mes',
       code: 'mes-production-cost',
       title: '生产成本核算',
@@ -406,6 +402,28 @@ export const mesModuleConfig: RouteModuleConfig = {
       template: 'dashboard',
       group: 'analytics',
       requiredPermissions: ['mes:read'],
+      action: 'read',
+    },
+    {
+      path: MES_PATHS.workOrder,
+      element: lazyWithRetry(() => import('@/pages/mes/MesWorkOrderPage'), 'MesWorkOrderPage'),
+      module: 'mes',
+      code: 'mes-work-order',
+      title: '工单管理(新)',
+      template: 'list',
+      group: 'business',
+      requiredPermissions: ['mes:work_order:read', 'mes:read'],
+      action: 'read',
+    },
+    {
+      path: MES_PATHS.quality,
+      element: lazyWithRetry(() => import('@/pages/mes/MesQualityPage'), 'MesQualityPage'),
+      module: 'mes',
+      code: 'mes-quality',
+      title: '质量管理',
+      template: 'list',
+      group: 'process',
+      requiredPermissions: ['mes:quality:read', 'mes:read'],
       action: 'read',
     },
   ],
@@ -656,6 +674,26 @@ export const mesNavConfig: ModuleNavConfig = {
       order: 8,
       group: 'analytics',
       description: '设备/质量/生产异常实时检测与预警',
+    },
+    {
+      code: 'mes-work-order',
+      label: '工单管理(新)',
+      icon: 'ClipboardList',
+      path: MES_PATHS.workOrder,
+      permission: 'mes:work_order:read',
+      order: 7,
+      group: 'business',
+      description: '工单执行全流程管理',
+    },
+    {
+      code: 'mes-quality',
+      label: '质量管理',
+      icon: 'CheckCircle',
+      path: MES_PATHS.quality,
+      permission: 'mes:quality:read',
+      order: 8,
+      group: 'process',
+      description: '生产质量综合管理',
     },
   ],
 };

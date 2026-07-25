@@ -14,7 +14,10 @@ import {
   Button,
 } from '@mui/material';
 
-import { DetailPageTemplate, ListPageTemplate, type ColumnDef } from '@/components/templates';
+import { DetailPageTemplate } from '@/components/templates';
+import CrudPage from '@/components/templates/CrudPage';
+import type { CrudApiAdapter } from '@/components/templates/CrudPage';
+import { standardRevisionSchema } from '@/schemas/qms';
 import { PageContainer } from '@/components/common';
 import { qmsApi } from '@/api/qms';
 import type { QualityStandard, StandardRevision, CreateQualityStandardRequest } from '@/api/qms';
@@ -203,42 +206,6 @@ const QmsStandardDetailPage: React.FC = () => {
       effective_date: new Date().toISOString().split('T')[0],
     });
   };
-
-  const revisionColumns: ColumnDef<StandardRevision>[] = [
-    {
-      id: 'version',
-      label: '版本号',
-      render: (row) => (
-        <Chip
-          label={`v${row.version}`}
-          size='small'
-          sx={{ backgroundColor: 'secondary.100', color: 'secondary.dark' }}
-        />
-      ),
-    },
-    {
-      id: 'description',
-      label: '变更说明',
-      render: (row) => row.description,
-    },
-    {
-      id: 'created_at',
-      label: '创建时间',
-      render: (row) => (
-        <span>{row.created_at ? new Date(row.created_at).toLocaleString('zh-CN') : '-'}</span>
-      ),
-    },
-    {
-      id: 'created_by',
-      label: '创建人',
-      render: (row) => (
-        <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-          <User sx={{ width: 16, height: 16 }} />
-          <span>{row.created_by || '-'}</span>
-        </Box>
-      ),
-    },
-  ];
 
   if (!loading && !standard) {
     return (
@@ -440,41 +407,42 @@ const QmsStandardDetailPage: React.FC = () => {
             label: '版本历史',
             icon: <FileCheck style={{ width: 16, height: 16 }} />,
             badge: revisions.length,
-            content:
-              revisions.length > 0 ? (
-                <ListPageTemplate
-                  columns={revisionColumns}
-                  data={revisions}
-                  loading={loading}
-                  pagination={{
-                    page: 0,
-                    pageSize: 10,
-                    total: revisions.length,
-                    onPageChange: () => {},
-                  }}
-                />
-              ) : (
-                <Box sx={{ textAlign: 'center', py: 6, color: 'text.secondary' }}>
-                  <FileText
-                    style={{
-                      width: 64,
-                      height: 64,
-                      margin: '0 auto 16px auto',
-                      opacity: 0.5,
-                    }}
-                  />
-                  <Typography>暂无版本记录</Typography>
-                  <Button
-                    variant='outlined'
-                    size='small'
-                    sx={{ mt: 2 }}
-                    onClick={() => setShowRevisionModal(true)}
-                    startIcon={<Plus style={{ width: 12, height: 12 }} />}
-                  >
-                    创建第一个版本
-                  </Button>
-                </Box>
-              ),
+            content: (
+              <CrudPage
+                schema={standardRevisionSchema}
+                apiAdapter={{
+                  list: async () => ({ data: revisions, total: revisions.length }),
+                  create: async () => ({}) as StandardRevision,
+                  update: async () => ({}) as StandardRevision,
+                  delete: async () => {},
+                }}
+                breadcrumbs={[]}
+                headerContent={
+                  revisions.length === 0 ? (
+                    <Box sx={{ textAlign: 'center', py: 6, color: 'text.secondary' }}>
+                      <FileText
+                        style={{
+                          width: 64,
+                          height: 64,
+                          margin: '0 auto 16px auto',
+                          opacity: 0.5,
+                        }}
+                      />
+                      <Typography>暂无版本记录</Typography>
+                      <Button
+                        variant='outlined'
+                        size='small'
+                        sx={{ mt: 2 }}
+                        onClick={() => setShowRevisionModal(true)}
+                        startIcon={<Plus style={{ width: 12, height: 12 }} />}
+                      >
+                        创建第一个版本
+                      </Button>
+                    </Box>
+                  ) : null
+                }
+              />
+            ),
           },
         ]}
         actions={[

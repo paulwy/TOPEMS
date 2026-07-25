@@ -174,6 +174,11 @@ export const useAuthActions = () =>
     hasAnyRole: state.hasAnyRole,
   }));
 
+/**
+ * @deprecated Use `useAuth` from `@/hooks/useAuth` instead.
+ * The Context-based useAuth in hooks/useAuth.tsx is the single source of auth state.
+ * This Zustand-based useAuth is kept only for backward compatibility and should not be used directly.
+ */
 export const useAuth = () => {
   const user = useAuthUser();
   const token = useAuthToken();

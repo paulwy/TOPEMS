@@ -1,0 +1,1 @@
+export { notificationSchema } from './notification';

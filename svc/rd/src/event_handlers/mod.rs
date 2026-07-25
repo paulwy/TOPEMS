@@ -12,6 +12,7 @@ type HandlerResult = std::result::Result<(), String>;
 #[derive(Clone)]
 pub struct RdEventHandlers {
     pub db: PgPool,
+    #[allow(dead_code)]
     pub event_publisher: Option<Arc<EventPublisher>>,
 }
 

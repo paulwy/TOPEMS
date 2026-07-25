@@ -173,29 +173,28 @@ function Test-Migrations {
 
     # 定义有SQL迁移文件的服务
     $allServices = @(
-        @{Name="iam"; Schema="iam"; Path="svc/iam"},
+        @{Name="unified-core"; Schema="unified_core"; Path="svc/unified-core"},
         @{Name="pm"; Schema="pm"; Path="svc/pm"},
         @{Name="portal"; Schema="portal"; Path="svc/portal"},
         @{Name="integration"; Schema="integration"; Path="svc/integration"},
         @{Name="erp"; Schema="erp"; Path="svc/erp"},
         @{Name="hrm"; Schema="hrm"; Path="svc/hrm"},
         @{Name="crm"; Schema="crm"; Path="svc/crm"},
-        @{Name="rs"; Schema="rs"; Path="svc/rs"},
+        @{Name="rd"; Schema="rd"; Path="svc/rd"},
         @{Name="lims"; Schema="lims"; Path="svc/lims"},
+        @{Name="pdm"; Schema="pdm"; Path="svc/pdm"},
         @{Name="mes"; Schema="mes"; Path="svc/mes"},
         @{Name="qms"; Schema="qms"; Path="svc/qms"},
         @{Name="ehs"; Schema="ehs"; Path="svc/ehs"},
         @{Name="scm"; Schema="scm"; Path="svc/scm"},
         @{Name="srm"; Schema="srm"; Path="svc/srm"},
         @{Name="wms"; Schema="wms"; Path="svc/wms"},
-        @{Name="file"; Schema="storage"; Path="svc/file"},
-        @{Name="mail"; Schema="mail"; Path="svc/mail"},
-        @{Name="im"; Schema="im"; Path="svc/im"},
         @{Name="gis"; Schema="gis"; Path="svc/gis"},
-        @{Name="bi"; Schema="bi"; Path="svc/bi"},
-        @{Name="report"; Schema="report"; Path="svc/report"},
+        @{Name="analytics"; Schema="analytics"; Path="svc/analytics"},
         @{Name="ai"; Schema="ai"; Path="svc/ai"},
-        @{Name="doc"; Schema="doc_service"; Path="svc/doc"}
+        @{Name="mobile"; Schema="mobile"; Path="svc/mobile"},
+        @{Name="finance"; Schema="finance"; Path="svc/finance"},
+        @{Name="master-data"; Schema="master_data"; Path="svc/master-data"}
     )
 
     $missingMigrations = @()
@@ -266,10 +265,10 @@ function Stop-AllServices {
     Write-Info "停止所有服务..."
 
     $services = @(
-        "iam", "pm", "notification", "portal", "flow", "integration",
-        "erp", "hrm", "crm", "rs", "doc", "lims", "pdm",
+        "unified-core", "pm", "portal", "integration",
+        "erp", "hrm", "crm", "rd", "lims", "pdm",
         "mes", "qms", "ehs", "scm", "srm", "wms",
-        "file", "mail", "im", "gis", "bi", "report", "ai", "mobile"
+        "gis", "analytics", "ai", "mobile", "finance", "master-data"
     )
 
     # 停止后端服务 (匹配进程名)
@@ -384,12 +383,9 @@ function Start-CoreServices {
     Write-Info "启动核心服务..."
 
     $coreServices = @(
-        @{Name="iam"; Port=$IAM_PORT},
+        @{Name="unified-core"; Port=$UNIFIED_CORE_PORT},
         @{Name="pm"; Port=$PM_PORT},
-        @{Name="notification"; Port=$NOTIFICATION_PORT},
-        @{Name="portal"; Port=$PORTAL_PORT},
-        @{Name="flow"; Port=$FLOW_PORT},
-        @{Name="integration"; Port=$INTEGRATION_PORT}
+        @{Name="portal"; Port=$PORTAL_PORT}
     )
 
     foreach ($service in $coreServices) {
@@ -421,10 +417,9 @@ function Start-PLMServices {
     Write-Info "启动PLM服务..."
 
     $plmServices = @(
-        @{Name="rs"; Port=$RS_PORT},
+        @{Name="rd"; Port=$RD_PORT},
         @{Name="lims"; Port=$LIMS_PORT},
-        @{Name="pdm"; Port=$PDM_PORT},
-        @{Name="doc"; Port=$DOC_PORT}
+        @{Name="pdm"; Port=$PDM_PORT}
     )
 
     foreach ($service in $plmServices) {
@@ -473,10 +468,8 @@ function Start-InfraServices {
     Write-Info "启动基础设施服务..."
 
     $infraServices = @(
-        @{Name="file"; Port=$FILE_PORT},
-        @{Name="mail"; Port=$MAIL_PORT},
-        @{Name="im"; Port=$IM_PORT},
-        @{Name="gis"; Port=$GIS_PORT}
+        @{Name="gis"; Port=$GIS_PORT},
+        @{Name="integration"; Port=$INTEGRATION_PORT}
     )
 
     foreach ($service in $infraServices) {
@@ -491,8 +484,7 @@ function Start-AnalyticsServices {
     Write-Info "启动数据分析服务..."
 
     $analyticsServices = @(
-        @{Name="bi"; Port=$BI_PORT},
-        @{Name="report"; Port=$REPORT_PORT},
+        @{Name="analytics"; Port=$ANALYTICS_PORT},
         @{Name="ai"; Port=$AI_PORT}
     )
 
@@ -508,7 +500,9 @@ function Start-ExtensionServices {
     Write-Info "启动预留扩展服务..."
 
     $extensionServices = @(
-        @{Name="mobile"; Port=$MOBILE_PORT}
+        @{Name="mobile"; Port=$MOBILE_PORT},
+        @{Name="finance"; Port=$FINANCE_PORT},
+        @{Name="master-data"; Port=$MASTER_DATA_PORT}
     )
 
     foreach ($service in $extensionServices) {
@@ -631,33 +625,28 @@ function Show-ServiceStatus {
     Write-Host "TOPEMS 服务:" -ForegroundColor White
 
     $services = @(
-        @{Category="核心服务"; Name="iam"; Port=$IAM_PORT},
+        @{Category="核心服务"; Name="unified-core"; Port=$UNIFIED_CORE_PORT},
         @{Category="核心服务"; Name="pm"; Port=$PM_PORT},
-        @{Category="核心服务"; Name="notification"; Port=$NOTIFICATION_PORT},
         @{Category="核心服务"; Name="portal"; Port=$PORTAL_PORT},
-        @{Category="核心服务"; Name="flow"; Port=$FLOW_PORT},
-        @{Category="核心服务"; Name="integration"; Port=$INTEGRATION_PORT},
         @{Category="ERP服务"; Name="erp"; Port=$ERP_PORT},
         @{Category="ERP服务"; Name="hrm"; Port=$HRM_PORT},
         @{Category="ERP服务"; Name="crm"; Port=$CRM_PORT},
-        @{Category="PLM服务"; Name="rs"; Port=$RS_PORT},
+        @{Category="PLM服务"; Name="rd"; Port=$RD_PORT},
         @{Category="PLM服务"; Name="lims"; Port=$LIMS_PORT},
         @{Category="PLM服务"; Name="pdm"; Port=$PDM_PORT},
-        @{Category="PLM服务"; Name="doc"; Port=$DOC_PORT},
         @{Category="MES服务"; Name="mes"; Port=$MES_PORT},
         @{Category="MES服务"; Name="qms"; Port=$QMS_PORT},
         @{Category="MES服务"; Name="ehs"; Port=$EHS_PORT},
         @{Category="SCM服务"; Name="scm"; Port=$SCM_PORT},
         @{Category="SCM服务"; Name="srm"; Port=$SRM_PORT},
         @{Category="SCM服务"; Name="wms"; Port=$WMS_PORT},
-        @{Category="基础设施服务"; Name="file"; Port=$FILE_PORT},
-        @{Category="基础设施服务"; Name="mail"; Port=$MAIL_PORT},
-        @{Category="基础设施服务"; Name="im"; Port=$IM_PORT},
         @{Category="基础设施服务"; Name="gis"; Port=$GIS_PORT},
-        @{Category="数据分析服务"; Name="bi"; Port=$BI_PORT},
-        @{Category="数据分析服务"; Name="report"; Port=$REPORT_PORT},
+        @{Category="基础设施服务"; Name="integration"; Port=$INTEGRATION_PORT},
+        @{Category="数据分析服务"; Name="analytics"; Port=$ANALYTICS_PORT},
         @{Category="数据分析服务"; Name="ai"; Port=$AI_PORT},
-        @{Category="扩展服务"; Name="mobile"; Port=$MOBILE_PORT}
+        @{Category="扩展服务"; Name="mobile"; Port=$MOBILE_PORT},
+        @{Category="扩展服务"; Name="finance"; Port=$FINANCE_PORT},
+        @{Category="扩展服务"; Name="master-data"; Port=$MASTER_DATA_PORT}
     )
 
     $currentCategory = ""

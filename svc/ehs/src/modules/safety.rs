@@ -291,7 +291,7 @@ pub async fn delete_plan(
     headers: HeaderMap,
     axum::extract::Path(id): axum::extract::Path<String>,
 ) -> Json<ApiResponse<()>> {
-    let tenant_id = get_tenant_id(&claims, &headers);
+    let _tenant_id = get_tenant_id(&claims, &headers);
     tracing::info!("Deleting inspection plan: {}", id);
     Json(ApiResponse::success((), "检查计划删除成功"))
 }
@@ -382,7 +382,7 @@ pub async fn delete_plan_item(
     headers: HeaderMap,
     axum::extract::Path((plan_id, item_id)): axum::extract::Path<(String, String)>,
 ) -> Json<ApiResponse<()>> {
-    let tenant_id = get_tenant_id(&claims, &headers);
+    let _tenant_id = get_tenant_id(&claims, &headers);
     tracing::info!("Deleting inspection item {} from plan {}", item_id, plan_id);
     Json(ApiResponse::success((), "检查项删除成功"))
 }
@@ -392,7 +392,7 @@ pub async fn list_records(
     Extension(claims): Extension<Claims>,
     headers: HeaderMap,
 ) -> Json<ApiResponse<Vec<InspectionRecord>>> {
-    let tenant_id = get_tenant_id(&claims, &headers);
+    let _tenant_id = get_tenant_id(&claims, &headers);
     tracing::info!("Listing inspection records");
     Json(ApiResponse::success(
         Vec::<InspectionRecord>::new(),
@@ -539,7 +539,7 @@ pub async fn delete_record(
     headers: HeaderMap,
     axum::extract::Path(id): axum::extract::Path<String>,
 ) -> Json<ApiResponse<()>> {
-    let tenant_id = get_tenant_id(&claims, &headers);
+    let _tenant_id = get_tenant_id(&claims, &headers);
     tracing::info!("Deleting inspection record: {}", id);
     Json(ApiResponse::success((), "检查记录删除成功"))
 }

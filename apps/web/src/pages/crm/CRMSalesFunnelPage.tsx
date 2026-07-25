@@ -3,7 +3,8 @@ import { Box, Typography, Card, CardContent, LinearProgress, Chip } from '@mui/m
 import { TrendingUp, TrendingDown, Users, Target, DollarSign } from 'lucide-react';
 import { useQuery } from '@tanstack/react-query';
 import { useNotificationStore } from '../../store';
-import { StatsPageTemplate, type StatsStatCard, type ChartConfig } from '@/components/templates';
+import { StatsPageTemplate, type StatsStatCard } from '@/components/templates';
+import type { ChartConfig } from '@/components/templates/StatsPageTemplate';
 import apiClient from '@/api/client';
 import { PageContainer } from '@/components/common';
 

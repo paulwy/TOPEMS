@@ -1,86 +1,58 @@
-import React, { useState, useMemo, useCallback } from 'react';
-import { Plus, Search, Eye, Users, CheckCircle2, Trash2, Package, Clock } from 'lucide-react';
-import {
-  Box,
-  Chip,
-  Tooltip,
-  IconButton,
-  Dialog,
-  DialogTitle,
-  DialogContent,
-  DialogActions,
-  Button,
-  TextField,
-  FormControl,
-  InputLabel,
-  Select,
-  MenuItem,
-} from '@mui/material';
-import type { ProjectResource, Project } from '@/api/pm';
+import React, { useMemo, useState } from 'react';
+import { useQuery } from '@tanstack/react-query';
+import { Box, FormControl, InputLabel, MenuItem, Select, Typography } from '@mui/material';
+import { CheckCircle2, Clock, Package, Users } from 'lucide-react';
+import { CrudPage, type CrudApiAdapter } from '@/components/templates/CrudPage';
+import type { RowAction } from '@/components/templates/list/types';
+import { resourceSchema } from '@/schemas/pm';
 import { pmApi } from '@/api/pm';
-import { apiLogger } from '@/utils/logger';
-import { useNotificationStore } from '@/store';
-import { ListPageTemplate, type ColumnDef } from '@/components/templates';
-import { PageContainer } from '@/components/common';
-import { ConfirmDialog } from '@topems/shared-components';
-import { useConfirmDialog } from '@/hooks';
-import { designTokens } from '@/theme/tokens';
-import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import type { ProjectResource } from '@/api/pm';
 import { QUERY_KEYS } from '@/lib/reactQuery';
+import { designTokens } from '@/theme/tokens';
 
 const ct = designTokens.colors;
 
-const STATUS_LABELS: Record<string, string> = {
-  available: '可用',
-  in_use: '使用中',
-  maintenance: '维护中',
-  retired: '已退役',
-};
+interface StatCardProps {
+  label: string;
+  value: React.ReactNode;
+  valueColor: string;
+  bgColor: string;
+  icon: React.ReactNode;
+  iconColor: string;
+}
 
-const STATUS_COLORS: Record<string, 'success' | 'warning' | 'error' | 'default'> = {
-  available: 'success',
-  in_use: 'warning',
-  maintenance: 'error',
-  retired: 'default',
-};
-
-const RESOURCE_TYPE_LABELS: Record<string, string> = {
-  server: '服务器',
-  database: '数据库',
-  workstation: '工作站',
-  hardware: '硬件',
-  software: '软件',
-  network: '网络设备',
-};
+const StatCard: React.FC<StatCardProps> = ({
+  label,
+  value,
+  valueColor,
+  bgColor,
+  icon,
+  iconColor,
+}) => (
+  <Box
+    sx={{
+      bgcolor: 'background.paper',
+      borderRadius: 3,
+      boxShadow: 1,
+      p: 3,
+    }}
+  >
+    <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5 }}>
+      <Box sx={{ p: 1.5, bgcolor: bgColor, borderRadius: '50%' }}>
+        {React.cloneElement(icon as React.ReactElement<{ color?: string; size?: number }>, {
+          color: iconColor,
+        })}
+      </Box>
+      <Box>
+        <Box sx={{ fontSize: '0.875rem', color: 'grey.500' }}>{label}</Box>
+        <Box sx={{ fontSize: '1.5rem', fontWeight: 700, color: valueColor }}>{value}</Box>
+      </Box>
+    </Box>
+  </Box>
+);
 
 const PmResourcePage: React.FC = () => {
-  const addNotification = useNotificationStore((state) => state.addNotification);
-  const queryClient = useQueryClient();
-
   const [selectedProject, setSelectedProject] = useState<string>('');
-  const [selectedType, setSelectedType] = useState('');
-  const [selectedStatus, setSelectedStatus] = useState('');
-  const [searchTerm, setSearchTerm] = useState('');
-  const [currentPage, setCurrentPage] = useState(1);
-  const [showAddModal, setShowAddModal] = useState(false);
-
-  const [formData, setFormData] = useState({
-    resource_id: '',
-    resource_type: 'server',
-    resource_service: '',
-    role: '',
-    allocation_percent: 100,
-    start_date: '',
-    end_date: '',
-  });
-  const {
-    confirmOpen: confirmDialogOpen,
-    confirmConfig: confirmDialogConfig,
-    openConfirm: openConfirmDialog,
-    closeConfirm: setConfirmDialogClosed,
-  } = useConfirmDialog();
-
-  const pageSize = 10;
 
   const projectsQuery = useQuery({
     queryKey: QUERY_KEYS.PM.PROJECTS,
@@ -89,575 +61,201 @@ const PmResourcePage: React.FC = () => {
     gcTime: 10 * 60 * 1000,
   });
 
-  const projects =
-    projectsQuery.data?.success && projectsQuery.data.data
-      ? projectsQuery.data.data.items || projectsQuery.data.data || []
-      : [];
+  const projects = useMemo(() => {
+    const data = projectsQuery.data;
+    if (!data?.success || !data.data) return [];
+    const items = (data.data as { items?: ProjectResource[] }).items;
+    return items || (data.data as unknown as ProjectResource[]) || [];
+  }, [projectsQuery.data]);
 
-  const resourcesQuery = useQuery({
-    queryKey: [...QUERY_KEYS.PM.PROJECTS, selectedProject, selectedType, selectedStatus],
-    queryFn: () => pmApi.resources.list(selectedProject),
-    enabled: !!selectedProject,
-    staleTime: 5 * 60 * 1000,
-    gcTime: 10 * 60 * 1000,
-  });
+  const apiAdapter: CrudApiAdapter<ProjectResource> = useMemo(
+    () => ({
+      list: async (params) => {
+        if (!selectedProject) return { data: [], total: 0 };
+        const response = await pmApi.resources.list(selectedProject);
+        if (!response.success || !response.data) {
+          return { data: [], total: 0 };
+        }
+        let items = (response.data as ProjectResource[]) || [];
 
-  const resources =
-    resourcesQuery.data?.success && resourcesQuery.data.data ? resourcesQuery.data.data : [];
+        if (params?.resource_type && params.resource_type !== 'all') {
+          items = items.filter((r) => r.resource_type === params.resource_type);
+        }
+        if (params?.status && params.status !== 'all') {
+          items = items.filter((r) => r.status === params.status);
+        }
+        if (params?.search) {
+          const q = String(params.search).toLowerCase();
+          items = items.filter(
+            (r) =>
+              r.resource_id.toLowerCase().includes(q) ||
+              (r.resource_service?.toLowerCase().includes(q) ?? false) ||
+              r.resource_type.toLowerCase().includes(q)
+          );
+        }
 
-  const releaseMutation = useMutation({
-    mutationFn: ({ projectId, resourceId }: { projectId: string; resourceId: string }) =>
-      pmApi.resources.update(projectId, resourceId, { status: 'available' }),
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: [...QUERY_KEYS.PM.PROJECTS, selectedProject] });
+        const total = items.length;
+        const page = params?.page || 1;
+        const pageSize = params?.pageSize || 10;
+        const paged = items.slice((page - 1) * pageSize, page * pageSize);
+        return { data: paged as unknown as Record<string, unknown>[], total };
+      },
+      create: async (data) => {
+        const response = await pmApi.resources.create(
+          selectedProject,
+          data as Parameters<typeof pmApi.resources.create>[1]
+        );
+        if (!response.success) {
+          throw new Error(response.message || '创建资源失败');
+        }
+        return data as ProjectResource;
+      },
+      update: async (id, data) => {
+        const response = await pmApi.resources.update(
+          selectedProject,
+          id,
+          data as Parameters<typeof pmApi.resources.update>[2]
+        );
+        if (!response.success) {
+          throw new Error(response.message || '更新资源失败');
+        }
+        return { ...(data as ProjectResource), id } as ProjectResource;
+      },
+      delete: async (id) => {
+        const response = await pmApi.resources.delete(selectedProject, id);
+        if (!response.success) {
+          throw new Error(response.message || '删除资源失败');
+        }
+      },
+    }),
+    [selectedProject]
+  );
+
+  const customRowActions: RowAction[] = [
+    {
+      key: 'release',
+      label: '释放资源',
+      icon: <CheckCircle2 size={16} />,
+      color: 'success',
+      show: (row) => row.status === 'in_use',
+      onClick: async (row) => {
+        const resourceId = String(row.id);
+        await pmApi.resources.update(selectedProject, resourceId, { status: 'available' });
+      },
     },
-  });
+  ];
 
-  const deleteMutation = useMutation({
-    mutationFn: ({ projectId, resourceId }: { projectId: string; resourceId: string }) =>
-      pmApi.resources.delete(projectId, resourceId),
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: [...QUERY_KEYS.PM.PROJECTS, selectedProject] });
-    },
-  });
+  const headerContent = React.useCallback((rows: ProjectResource[]) => {
+    const availableCount = rows.filter((r) => r.status === 'available').length;
+    const inUseCount = rows.filter((r) => r.status === 'in_use').length;
+    const totalHours = rows.reduce((sum, r) => sum + (r.actual_hours || 0), 0);
 
-  const createMutation = useMutation({
-    mutationFn: ({ projectId, data }: { projectId: string; data: typeof formData }) =>
-      pmApi.resources.create(projectId, {
-        resource_id: data.resource_id,
-        resource_type: data.resource_type,
-        resource_service: data.resource_service,
-        role: data.role,
-        allocation_percent: data.allocation_percent,
-        start_date: data.start_date || undefined,
-        end_date: data.end_date || undefined,
-      }),
-    onSuccess: () => {
-      setShowAddModal(false);
-      queryClient.invalidateQueries({ queryKey: [...QUERY_KEYS.PM.PROJECTS, selectedProject] });
-    },
-    onError: () => {
-      addNotification({ type: 'error', title: '错误', message: '资源添加失败' });
-    },
-  });
-
-  const loading = resourcesQuery.isLoading;
-
-  const filteredResources = useMemo(() => {
-    let filtered = resources;
-    if (selectedType) {
-      filtered = filtered.filter((r: ProjectResource) => r.resource_type === selectedType);
-    }
-    if (selectedStatus) {
-      filtered = filtered.filter((r: ProjectResource) => r.status === selectedStatus);
-    }
-    return filtered;
-  }, [resources, selectedType, selectedStatus]);
-
-  const filteredData = useMemo(() => {
-    if (!searchTerm) return filteredResources;
-    const term = searchTerm.toLowerCase();
-    return filteredResources.filter(
-      (resource: { resource_id: string; resource_service?: string; resource_type: string }) =>
-        resource.resource_id.toLowerCase().includes(term) ||
-        (resource.resource_service && resource.resource_service.toLowerCase().includes(term)) ||
-        resource.resource_type.toLowerCase().includes(term)
+    return (
+      <Box
+        sx={{
+          display: 'grid',
+          gridTemplateColumns: { xs: '1fr', md: 'repeat(4, 1fr)' },
+          gap: 2,
+          mb: 3,
+        }}
+      >
+        <StatCard
+          label='资源总数'
+          value={rows.length}
+          valueColor='grey.900'
+          bgColor='primary.100'
+          icon={<Package size={24} />}
+          iconColor='primary.dark'
+        />
+        <StatCard
+          label='可用资源'
+          value={availableCount}
+          valueColor='success.dark'
+          bgColor='success.light'
+          icon={<CheckCircle2 size={24} />}
+          iconColor='success.dark'
+        />
+        <StatCard
+          label='使用中'
+          value={inUseCount}
+          valueColor='warning.dark'
+          bgColor='warning.light'
+          icon={<Users size={24} />}
+          iconColor={ct.yellow[600]}
+        />
+        <StatCard
+          label='累计工时'
+          value={`${totalHours.toFixed(0)}h`}
+          valueColor='secondary.dark'
+          bgColor={ct.purple[200]}
+          icon={<Clock size={24} />}
+          iconColor={ct.purple[700]}
+        />
+      </Box>
     );
-  }, [filteredResources, searchTerm]);
-
-  const handlePageChange = (page: number) => {
-    setCurrentPage(page);
-  };
-
-  const handleRelease = useCallback(
-    (resource: ProjectResource) => {
-      releaseMutation.mutate({ projectId: selectedProject, resourceId: resource.id });
-    },
-    [selectedProject, releaseMutation]
-  );
-
-  const handleDelete = useCallback(
-    (resource: ProjectResource) => {
-      openConfirmDialog({
-        title: '确认删除',
-        message: '确定要删除这个资源吗？',
-        danger: true,
-        onConfirm: () => {
-          deleteMutation.mutate({ projectId: selectedProject, resourceId: resource.id });
-        },
-      });
-    },
-    [selectedProject, deleteMutation, openConfirmDialog]
-  );
-
-  const handleOpenAddModal = () => {
-    setFormData({
-      resource_id: '',
-      resource_type: 'server',
-      resource_service: '',
-      role: '',
-      allocation_percent: 100,
-      start_date: '',
-      end_date: '',
-    });
-    setShowAddModal(true);
-  };
-
-  const handleSaveResource = () => {
-    if (!formData.resource_id.trim() || !selectedProject) {
-      addNotification({ type: 'error', title: '错误', message: '请输入资源标识并选择项目' });
-      return;
-    }
-    createMutation.mutate({ projectId: selectedProject, data: formData });
-  };
-
-  const formatDate = (dateStr?: string) => {
-    if (!dateStr) return '-';
-    return new Date(dateStr).toLocaleDateString('zh-CN');
-  };
-
-  const formatPercent = (percent?: number) => {
-    if (percent === undefined || percent === null) return '-';
-    return `${percent}%`;
-  };
-
-  const columns: ColumnDef<ProjectResource>[] = useMemo(
-    () => [
-      {
-        id: 'resource_id',
-        label: '资源标识',
-        width: 150,
-      },
-      {
-        id: 'resource_type',
-        label: '资源类型',
-        width: 100,
-        render: (row) => RESOURCE_TYPE_LABELS[row.resource_type] || row.resource_type,
-      },
-      {
-        id: 'resource_service',
-        label: '服务名称',
-        width: 150,
-        render: (row) => row.resource_service || '-',
-      },
-      {
-        id: 'role',
-        label: '角色',
-        width: 100,
-        render: (row) => row.role || '-',
-      },
-      {
-        id: 'allocation_percent',
-        label: '分配比例',
-        width: 120,
-        render: (row) => formatPercent(row.allocation_percent),
-      },
-      {
-        id: 'status',
-        label: '状态',
-        width: 100,
-        render: (row) => (
-          <Chip
-            size='small'
-            label={STATUS_LABELS[row.status || 'available'] || row.status}
-            color={STATUS_COLORS[row.status || 'available']}
-          />
-        ),
-      },
-      {
-        id: 'start_date',
-        label: '分配开始',
-        width: 120,
-        render: (row) => formatDate(row.start_date),
-      },
-      {
-        id: 'end_date',
-        label: '分配结束',
-        width: 120,
-        render: (row) => formatDate(row.end_date),
-      },
-      {
-        id: 'created_at',
-        label: '创建时间',
-        width: 150,
-        render: (row) => formatDate(row.created_at),
-      },
-      {
-        id: 'actions',
-        label: '操作',
-        width: 150,
-        align: 'center',
-        render: (row) => (
-          <Box sx={{ display: 'flex', gap: 0.5 }}>
-            <Tooltip title='查看详情'>
-              <IconButton
-                size='small'
-                aria-label='查看详情'
-              >
-                <Eye size={16} />
-              </IconButton>
-            </Tooltip>
-            {row.status === 'available' && (
-              <Tooltip title='分配资源'>
-                <IconButton
-                  size='small'
-                  aria-label='分配资源'
-                >
-                  <Users size={16} />
-                </IconButton>
-              </Tooltip>
-            )}
-            {row.status === 'in_use' && (
-              <Tooltip title='释放资源'>
-                <IconButton
-                  size='small'
-                  onClick={() => handleRelease(row)}
-                  aria-label='释放资源'
-                >
-                  <CheckCircle2 size={16} />
-                </IconButton>
-              </Tooltip>
-            )}
-            <Tooltip title='删除'>
-              <IconButton
-                size='small'
-                onClick={() => handleDelete(row)}
-                sx={{ color: 'error.main' }}
-                aria-label='删除资源'
-              >
-                <Trash2 size={16} />
-              </IconButton>
-            </Tooltip>
-          </Box>
-        ),
-      },
-    ],
-    [handleRelease, handleDelete]
-  );
-
-  const filters = useMemo(
-    () => [
-      {
-        id: 'project',
-        label: '项目',
-        type: 'select' as const,
-        options: [
-          { value: '', label: '请选择项目' },
-          ...projects.map((p: { id: string; name: string }) => ({ value: p.id, label: p.name })),
-        ],
-        value: selectedProject,
-        onChange: (value: unknown) => setSelectedProject(value as string),
-      },
-      {
-        id: 'resource_type',
-        label: '资源类型',
-        type: 'select' as const,
-        options: [
-          { value: '', label: '全部类型' },
-          { value: 'server', label: '服务器' },
-          { value: 'database', label: '数据库' },
-          { value: 'workstation', label: '工作站' },
-          { value: 'hardware', label: '硬件' },
-          { value: 'software', label: '软件' },
-          { value: 'network', label: '网络设备' },
-        ],
-        value: selectedType,
-        onChange: (value: unknown) => setSelectedType(value as string),
-      },
-      {
-        id: 'status',
-        label: '状态',
-        type: 'select' as const,
-        options: [
-          { value: '', label: '全部状态' },
-          { value: 'available', label: '可用' },
-          { value: 'in_use', label: '使用中' },
-          { value: 'maintenance', label: '维护中' },
-          { value: 'retired', label: '已退役' },
-        ],
-        value: selectedStatus,
-        onChange: (value: unknown) => setSelectedStatus(value as string),
-      },
-    ],
-    [projects, selectedProject, selectedType, selectedStatus]
-  );
-
-  const availableCount = filteredResources.filter((r: ProjectResource) => r.status === 'available').length;
-  const inUseCount = filteredResources.filter((r: ProjectResource) => r.status === 'in_use').length;
-  const totalHours = filteredResources.reduce((sum: number, r: ProjectResource) => sum + (r.actual_hours || 0), 0);
-  const totalCost = filteredResources.reduce((sum: number, r: ProjectResource) => sum + (r.actual_cost || 0), 0);
-
-  const handleRefresh = () => {
-    queryClient.invalidateQueries({ queryKey: QUERY_KEYS.PM.PROJECTS });
-    queryClient.invalidateQueries({ queryKey: [...QUERY_KEYS.PM.PROJECTS, selectedProject] });
-  };
+  }, []);
 
   return (
-    <PageContainer
-      title='资源管理'
-      subtitle='管理项目资源的分配与使用情况'
-    >
-      <ListPageTemplate
-        title=''
-        subtitle=''
-        breadcrumbs={[
-          { label: '首页', href: '/dashboard' },
-          { label: '项目管理' },
-          { label: '资源管理' },
-        ]}
-        columns={columns}
-        data={filteredData}
-        loading={loading}
-        selectable
-        pagination={{
-          page: currentPage,
-          pageSize,
-          total: filteredResources.length,
-          onPageChange: handlePageChange,
+    <Box>
+      <Box
+        sx={{
+          mb: 2,
+          display: 'flex',
+          alignItems: 'center',
+          gap: 2,
         }}
-        searchable
-        searchPlaceholder='搜索资源标识或服务名称...'
-        searchValue={searchTerm}
-        onSearch={setSearchTerm}
-        filters={filters}
-        filtersValue={{
-          project: selectedProject,
-          resource_type: selectedType,
-          status: selectedStatus,
-        }}
-        onFilterChange={(f) => {
-          if (f.project !== undefined) setSelectedProject(f.project);
-          if (f.resource_type !== undefined) setSelectedType(f.resource_type);
-          if (f.status !== undefined) setSelectedStatus(f.status);
-        }}
-        actions={[
-          {
-            label: '新增资源',
-            icon: <Plus size={16} />,
-            onClick: handleOpenAddModal,
-            variant: 'contained',
-          },
-        ]}
-        showRowNumber
-        columnConfigurable
-        persistColumnConfig
-        columnConfigStorageKey='pm-resources-columns'
-        onRefresh={handleRefresh}
-        headerContent={
-          <Box
-            sx={{
-              display: 'grid',
-              gridTemplateColumns: { xs: '1fr', md: 'repeat(4, 1fr)' },
-              gap: 2,
-              mb: 3,
-            }}
-          >
-            <Box
-              sx={{
-                bgcolor: 'background.paper',
-                borderRadius: 3,
-                boxShadow: 1,
-                p: 3,
-              }}
-            >
-              <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5 }}>
-                <Box sx={{ p: 1.5, bgcolor: 'primary.100', borderRadius: '50%' }}>
-                  <Package
-                    size={24}
-                    color='primary.dark'
-                  />
-                </Box>
-                <Box>
-                  <Box sx={{ fontSize: '0.875rem', color: 'grey.500' }}>资源总数</Box>
-                  <Box sx={{ fontSize: '1.5rem', fontWeight: 700, color: 'grey.900' }}>
-                    {filteredResources.length}
-                  </Box>
-                </Box>
-              </Box>
-            </Box>
-            <Box
-              sx={{
-                bgcolor: 'background.paper',
-                borderRadius: 3,
-                boxShadow: 1,
-                p: 3,
-              }}
-            >
-              <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5 }}>
-                <Box sx={{ p: 1.5, bgcolor: 'success.light', borderRadius: '50%' }}>
-                  <CheckCircle2
-                    size={24}
-                    color='success.dark'
-                  />
-                </Box>
-                <Box>
-                  <Box sx={{ fontSize: '0.875rem', color: 'grey.500' }}>可用资源</Box>
-                  <Box sx={{ fontSize: '1.5rem', fontWeight: 700, color: 'success.dark' }}>
-                    {availableCount}
-                  </Box>
-                </Box>
-              </Box>
-            </Box>
-            <Box
-              sx={{
-                bgcolor: 'background.paper',
-                borderRadius: 3,
-                boxShadow: 1,
-                p: 3,
-              }}
-            >
-              <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5 }}>
-                <Box sx={{ p: 1.5, bgcolor: 'warning.light', borderRadius: '50%' }}>
-                  <Users
-                    size={24}
-                    color={ct.yellow[600]}
-                  />
-                </Box>
-                <Box>
-                  <Box sx={{ fontSize: '0.875rem', color: 'grey.500' }}>使用中</Box>
-                  <Box sx={{ fontSize: '1.5rem', fontWeight: 700, color: 'warning.dark' }}>
-                    {inUseCount}
-                  </Box>
-                </Box>
-              </Box>
-            </Box>
-            <Box
-              sx={{
-                bgcolor: 'background.paper',
-                borderRadius: 3,
-                boxShadow: 1,
-                p: 3,
-              }}
-            >
-              <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5 }}>
-                <Box sx={{ p: 1.5, bgcolor: ct.purple[200], borderRadius: '50%' }}>
-                  <Clock
-                    size={24}
-                    color={ct.purple[700]}
-                  />
-                </Box>
-                <Box>
-                  <Box sx={{ fontSize: '0.875rem', color: 'grey.500' }}>累计工时</Box>
-                  <Box sx={{ fontSize: '1.5rem', fontWeight: 700, color: 'secondary.dark' }}>
-                    {totalHours.toFixed(0)}h
-                  </Box>
-                </Box>
-              </Box>
-            </Box>
-          </Box>
-        }
-        mobileCardTitleKey='resource_service'
-        mobileCardSubtitleKey='resource_id'
-        mobileCardDisplayFields={['resource_type', 'role', 'allocation_percent', 'status']}
-        mobileCardFieldLabels={{
-          resource_type: '资源类型',
-          role: '角色',
-          allocation_percent: '分配比例',
-          status: '状态',
-        }}
-      />
-
-      <Dialog
-        open={showAddModal}
-        onClose={() => setShowAddModal(false)}
-        maxWidth='sm'
-        fullWidth
       >
-        <DialogTitle>新增资源</DialogTitle>
-        <DialogContent>
-          <Box sx={{ pt: 1, display: 'flex', flexDirection: 'column', gap: 2 }}>
-            <TextField
-              fullWidth
-              label='资源标识 *'
-              value={formData.resource_id}
-              onChange={(e) => setFormData({ ...formData, resource_id: e.target.value })}
-              placeholder='请输入资源标识'
-            />
-            <FormControl fullWidth>
-              <InputLabel>资源类型</InputLabel>
-              <Select
-                value={formData.resource_type}
-                label='资源类型'
-                onChange={(e) => setFormData({ ...formData, resource_type: e.target.value })}
+        <FormControl
+          size='small'
+          sx={{ minWidth: 320 }}
+        >
+          <InputLabel>选择项目</InputLabel>
+          <Select
+            value={selectedProject}
+            label='选择项目'
+            onChange={(e) => setSelectedProject(e.target.value)}
+          >
+            <MenuItem value=''>
+              <em>请选择项目</em>
+            </MenuItem>
+            {projects.map((p: { id: string; name: string }) => (
+              <MenuItem
+                key={p.id}
+                value={p.id}
               >
-                {Object.entries(RESOURCE_TYPE_LABELS).map(([key, label]) => (
-                  <MenuItem
-                    key={key}
-                    value={key}
-                  >
-                    {label}
-                  </MenuItem>
-                ))}
-              </Select>
-            </FormControl>
-            <TextField
-              fullWidth
-              label='服务名称'
-              value={formData.resource_service}
-              onChange={(e) => setFormData({ ...formData, resource_service: e.target.value })}
-              placeholder='请输入服务名称'
-            />
-            <TextField
-              fullWidth
-              label='角色'
-              value={formData.role}
-              onChange={(e) => setFormData({ ...formData, role: e.target.value })}
-              placeholder='请输入角色'
-            />
-            <TextField
-              fullWidth
-              label='分配比例 (%)'
-              type='number'
-              value={formData.allocation_percent}
-              onChange={(e) =>
-                setFormData({ ...formData, allocation_percent: Number(e.target.value) })
-              }
-              placeholder='请输入分配比例'
-            />
-            <TextField
-              fullWidth
-              label='分配开始日期'
-              type='date'
-              value={formData.start_date}
-              onChange={(e) => setFormData({ ...formData, start_date: e.target.value })}
-            />
-            <TextField
-              fullWidth
-              label='分配结束日期'
-              type='date'
-              value={formData.end_date}
-              onChange={(e) => setFormData({ ...formData, end_date: e.target.value })}
-            />
-          </Box>
-        </DialogContent>
-        <DialogActions>
-          <Button
-            variant='outlined'
-            onClick={() => setShowAddModal(false)}
-          >
-            取消
-          </Button>
-          <Button
-            variant='contained'
-            onClick={handleSaveResource}
-          >
-            保存
-          </Button>
-        </DialogActions>
-      </Dialog>
+                {p.name}
+              </MenuItem>
+            ))}
+          </Select>
+        </FormControl>
+      </Box>
 
-      <ConfirmDialog
-        isOpen={confirmDialogOpen}
-        onClose={setConfirmDialogClosed}
-        onConfirm={() => {
-          confirmDialogConfig?.onConfirm();
-          setConfirmDialogClosed();
-        }}
-        title={confirmDialogConfig?.title || ''}
-        message={confirmDialogConfig?.message || ''}
-        danger={confirmDialogConfig?.danger}
-      />
-    </PageContainer>
+      {selectedProject ? (
+        <CrudPage
+          schema={resourceSchema}
+          apiAdapter={apiAdapter}
+          customRowActions={customRowActions}
+          breadcrumbs={[
+            { label: '首页', href: '/dashboard' },
+            { label: '项目管理' },
+            { label: '资源管理' },
+          ]}
+          headerContent={headerContent}
+        />
+      ) : (
+        <Box
+          sx={{
+            p: 6,
+            textAlign: 'center',
+            color: 'text.secondary',
+            bgcolor: 'background.paper',
+            borderRadius: 2,
+          }}
+        >
+          <Typography variant='body1'>请先选择一个项目以查看资源列表</Typography>
+        </Box>
+      )}
+    </Box>
   );
 };
 

@@ -598,12 +598,18 @@ async fn export_employees(
             }
             sqlx::query_as::<_, Employee>(
                 r#"
-                SELECT id, tenant_id, company_id, department_id, position_id,
-                       employee_number, name, gender, hire_date,
-                       email, phone, status,
-                       created_at, updated_at
-                FROM hrm.employees
-                WHERE tenant_id = $2 AND id = ANY($1)
+                SELECT e.id, e.tenant_id, e.company_id, e.department_id, e.position_id,
+                       e.employee_number, e.name, e.gender, e.hire_date,
+                       e.email, e.phone, e.id_card_number, e.address,
+                       e.birth_date, e.regular_date, e.probation_period,
+                       e.position, e.joblevel, e.work_location, e.report_to_name,
+                       e.education, e.emergency_contact_name, e.emergency_contact_phone,
+                       e.emergency_relation, e.hukou_location, e.remark, e.employee_type, e.user_id,
+                       e.status, e.created_at, e.updated_at,
+                       d.name as department_name
+                FROM hrm.employees e
+                LEFT JOIN hrm.departments d ON e.department_id = d.id
+                WHERE e.tenant_id = $2 AND e.id = ANY($1)
                 LIMIT $3
                 "#,
             )
@@ -616,12 +622,18 @@ async fn export_employees(
         None => {
             sqlx::query_as::<_, Employee>(
                 r#"
-                SELECT id, tenant_id, company_id, department_id, position_id,
-                       employee_number, name, gender, hire_date,
-                       email, phone, status,
-                       created_at, updated_at
-                FROM hrm.employees
-                WHERE tenant_id = $1
+                SELECT e.id, e.tenant_id, e.company_id, e.department_id, e.position_id,
+                       e.employee_number, e.name, e.gender, e.hire_date,
+                       e.email, e.phone, e.id_card_number, e.address,
+                       e.birth_date, e.regular_date, e.probation_period,
+                       e.position, e.joblevel, e.work_location, e.report_to_name,
+                       e.education, e.emergency_contact_name, e.emergency_contact_phone,
+                       e.emergency_relation, e.hukou_location, e.remark, e.employee_type, e.user_id,
+                       e.status, e.created_at, e.updated_at,
+                       d.name as department_name
+                FROM hrm.employees e
+                LEFT JOIN hrm.departments d ON e.department_id = d.id
+                WHERE e.tenant_id = $1
                 LIMIT $2
                 "#,
             )

@@ -1,3 +1,4 @@
+pub mod event_handlers;
 pub mod middleware;
 pub mod models;
 pub mod modules;

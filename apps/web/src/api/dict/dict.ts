@@ -1,4 +1,4 @@
-import { createAxiosClient } from '@/api/client';
+import apiClient from '@/api/client';
 import type { ApiResponse } from '@/api/client';
 
 export interface DictType {
@@ -23,18 +23,13 @@ export interface DictItem {
   updated_at: string;
 }
 
-const dictAxios = createAxiosClient({ baseURL: '/api/v1/core/dict' });
-const API_BASE = '';
-
 export const dictApi = {
   getTypes: async (): Promise<ApiResponse<DictType[]>> => {
-    const response = await dictAxios.get(`${API_BASE}/types`);
-    return response.data;
+    return apiClient.core.get<DictType[]>('/dict/types');
   },
 
   getType: async (code: string): Promise<ApiResponse<DictType>> => {
-    const response = await dictAxios.get(`${API_BASE}/types/${code}`);
-    return response.data;
+    return apiClient.core.get<DictType>(`/dict/types/${code}`);
   },
 
   createType: async (data: {
@@ -43,39 +38,33 @@ export const dictApi = {
     category?: string;
     description?: string;
   }): Promise<ApiResponse<DictType>> => {
-    const response = await dictAxios.post(`${API_BASE}/types`, data);
-    return response.data;
+    return apiClient.core.post<DictType>('/dict/types', data);
   },
 
   updateType: async (
     code: string,
     data: { name?: string; category?: string; description?: string }
   ): Promise<ApiResponse<DictType>> => {
-    const response = await dictAxios.put(`${API_BASE}/types/${code}`, data);
-    return response.data;
+    return apiClient.core.put<DictType>(`/dict/types/${code}`, data);
   },
 
   deleteType: async (code: string): Promise<ApiResponse<boolean>> => {
-    const response = await dictAxios.delete(`${API_BASE}/types/${code}`);
-    return response.data;
+    return apiClient.core.delete<boolean>(`/dict/types/${code}`);
   },
 
   getItems: async (typeCode: string): Promise<ApiResponse<DictItem[]>> => {
-    const response = await dictAxios.get(`${API_BASE}/types/${typeCode}/items`);
-    return response.data;
+    return apiClient.core.get<DictItem[]>(`/dict/types/${typeCode}/items`);
   },
 
   getItem: async (typeCode: string, itemCode: string): Promise<ApiResponse<DictItem>> => {
-    const response = await dictAxios.get(`${API_BASE}/types/${typeCode}/items/${itemCode}`);
-    return response.data;
+    return apiClient.core.get<DictItem>(`/dict/types/${typeCode}/items/${itemCode}`);
   },
 
   createItem: async (
     typeCode: string,
     data: { code: string; name: string; value?: string; sort_order?: number; is_default?: boolean }
   ): Promise<ApiResponse<DictItem>> => {
-    const response = await dictAxios.post(`${API_BASE}/types/${typeCode}/items`, data);
-    return response.data;
+    return apiClient.core.post<DictItem>(`/dict/types/${typeCode}/items`, data);
   },
 
   updateItem: async (
@@ -83,17 +72,17 @@ export const dictApi = {
     itemCode: string,
     data: { name?: string; value?: string; sort_order?: number; is_default?: boolean }
   ): Promise<ApiResponse<DictItem>> => {
-    const response = await dictAxios.put(`${API_BASE}/types/${typeCode}/items/${itemCode}`, data);
-    return response.data;
+    return apiClient.core.put<DictItem>(
+      `/dict/types/${typeCode}/items/${itemCode}`,
+      data
+    );
   },
 
   deleteItem: async (typeCode: string, itemCode: string): Promise<ApiResponse<boolean>> => {
-    const response = await dictAxios.delete(`${API_BASE}/types/${typeCode}/items/${itemCode}`);
-    return response.data;
+    return apiClient.core.delete<boolean>(`/dict/types/${typeCode}/items/${itemCode}`);
   },
 
   getAllByCategory: async (category: string): Promise<ApiResponse<DictType[]>> => {
-    const response = await dictAxios.get(`${API_BASE}/types`, { params: { category } });
-    return response.data;
+    return apiClient.core.get<DictType[]>('/dict/types', { params: { category } });
   },
 };

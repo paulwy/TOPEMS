@@ -1,3 +1,5 @@
+#![allow(dead_code)] // Reserved: IAM 角色模块预留扩展，待 RBAC 接入后启用
+
 //! Role submodule - Role management handlers
 
 use crate::AppState;

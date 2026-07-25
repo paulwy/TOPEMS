@@ -1,5 +1,5 @@
 import React, { useState, useMemo } from 'react';
-import { Play, Eye, RotateCcw, FileSearch } from 'lucide-react';
+import { Play, Eye, RotateCcw, FileSearch, Database } from 'lucide-react';
 import {
   Box,
   Dialog,
@@ -19,13 +19,15 @@ import {
   useTheme,
 } from '@mui/material';
 import { useNotificationStore } from '@/store';
-import { ListPageTemplate, type ColumnDef } from '@/components/templates';
+import CrudPage from '@/components/templates/CrudPage';
+import type { CrudApiAdapter, RowAction } from '@/components/templates/CrudPage';
 import { PageContainer } from '@/components/common';
 import { migrationApi, type MigrationService, type MigrationStatus } from '@/api/migration';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { apiLogger } from '@/utils/logger';
 import { ConfirmDialog } from '@topems/shared-components';
 import { useConfirmDialog } from '@/hooks';
+import { migrationSchema } from '@/schemas/admin';
 
 interface ServiceStatusMap {
   [serviceName: string]: MigrationStatus;
@@ -41,7 +43,6 @@ const MigrationAdminPage: React.FC = () => {
   const [batchApplying, setBatchApplying] = useState(false);
   const [activeService, setActiveService] = useState<MigrationService | null>(null);
   const [statusDialogOpen, setStatusDialogOpen] = useState(false);
-  const [searchValue, setSearchValue] = useState('');
   const {
     confirmOpen: confirmDialogOpen,
     confirmConfig: confirmDialogConfig,
@@ -79,8 +80,26 @@ const MigrationAdminPage: React.FC = () => {
   });
 
   const services = servicesQuery.data || [];
-  const loading = servicesQuery.isLoading;
   const statusMap = statusQuery.data || {};
+
+  const apiAdapter: CrudApiAdapter<MigrationService> = useMemo(
+    () => ({
+      list: async () => {
+        const data = await migrationApi.listServices();
+        return { data, total: data.length };
+      },
+      create: async () => {
+        throw new Error('不支持创建迁移服务');
+      },
+      update: async () => {
+        throw new Error('不支持更新迁移服务');
+      },
+      delete: async () => {
+        throw new Error('不支持删除迁移服务');
+      },
+    }),
+    []
+  );
 
   const applyMutation = useMutation({
     mutationFn: (serviceName: string) => migrationApi.applyMigration(serviceName, 'schema'),
@@ -189,160 +208,151 @@ const MigrationAdminPage: React.FC = () => {
   const getPendingCount = (serviceName: string) => statusMap[serviceName]?.pending?.length ?? 0;
   const getAppliedCount = (serviceName: string) => statusMap[serviceName]?.applied?.length ?? 0;
 
-  const filteredData = useMemo(() => {
-    if (!searchValue) return services;
-    const query = searchValue.toLowerCase();
-    return services.filter(
-      (svc) =>
-        svc.name.toLowerCase().includes(query) ||
-        svc.schema.toLowerCase().includes(query) ||
-        (svc.description || '').toLowerCase().includes(query)
-    );
-  }, [services, searchValue]);
-
-  const handleSearch = (value: string) => {
-    setSearchValue(value);
-  };
-
-  const columns: ColumnDef<MigrationService>[] = useMemo(
+  const customRowActions: RowAction[] = useMemo(
     () => [
       {
-        id: 'name',
-        label: '服务名',
-        minWidth: 180,
-        render: (row) => <span style={{ fontWeight: 500 }}>{row.name}</span>,
-      },
-      { id: 'schema', label: 'Schema', minWidth: 120 },
-      {
-        id: 'port',
-        label: '端口',
-        minWidth: 80,
-        align: 'right',
+        label: '查看状态',
+        icon: <Eye size={16} />,
+        onClick: (row) => handleShowStatus(row as MigrationService),
       },
       {
-        id: 'tables',
-        label: '表数',
-        minWidth: 80,
-        align: 'right',
+        label: '回滚',
+        icon: <RotateCcw size={16} />,
+        color: 'warning',
+        onClick: (row) => handleRollback(row as MigrationService),
       },
       {
-        id: 'description',
-        label: '描述',
-        minWidth: 200,
-        render: (row) => (
-          <Box
-            sx={{
-              maxWidth: 300,
-              overflow: 'hidden',
-              textOverflow: 'ellipsis',
-              whiteSpace: 'nowrap',
-            }}
-          >
-            {row.description || '-'}
-          </Box>
-        ),
-      },
-      {
-        id: 'status',
-        label: '状态',
-        minWidth: 140,
-        align: 'center',
-        render: (row) => {
-          const pending = getPendingCount(row.name);
-          const applied = getAppliedCount(row.name);
-          return (
-            <Box sx={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 0.5 }}>
-              <Chip
-                label={`待执行 ${pending}`}
-                size='small'
-                sx={{ bgcolor: 'warning.light', color: 'warning.main', fontSize: 11 }}
-              />
-              <Chip
-                label={`已执行 ${applied}`}
-                size='small'
-                sx={{ bgcolor: 'success.light', color: 'success.main', fontSize: 11 }}
-              />
-            </Box>
-          );
-        },
+        label: '执行迁移',
+        icon: <Play size={16} />,
+        onClick: (row) => handleApply(row as MigrationService),
       },
     ],
-    []
+    [statusMap]
   );
 
-  const renderRowActions = (row: MigrationService) => {
-    const isApplying = applyingService === row.name || applyMutation.isPending;
-    const isRolling = rollingBackService === row.name || rollbackMutation.isPending;
+  const headerContent = useMemo(() => {
+    const totalServices = services.length;
+    const totalPending = services.reduce((sum, svc) => sum + getPendingCount(svc.name), 0);
+    const totalApplied = services.reduce((sum, svc) => sum + getAppliedCount(svc.name), 0);
+
     return (
-      <Box sx={{ display: 'flex', justifyContent: 'flex-end', gap: 1 }}>
-        <Button
-          size='small'
-          variant='outlined'
-          onClick={(e) => {
-            e.stopPropagation();
-            handleShowStatus(row);
-          }}
-          startIcon={<Eye size={14} />}
-        >
-          查看状态
-        </Button>
-        <Button
-          size='small'
-          variant='text'
-          onClick={(e) => {
-            e.stopPropagation();
-            handleRollback(row);
-          }}
-          disabled={isRolling || isApplying || getAppliedCount(row.name) === 0}
-          sx={{ color: 'warning.main' }}
-          startIcon={isRolling ? <CircularProgress size={14} /> : <RotateCcw size={14} />}
-        >
-          回滚
-        </Button>
-        <Button
-          size='small'
-          variant='contained'
-          onClick={(e) => {
-            e.stopPropagation();
-            handleApply(row);
-          }}
-          disabled={isApplying || isRolling}
-          startIcon={isApplying ? <CircularProgress size={14} /> : <Play size={14} />}
-        >
-          生成迁移
-        </Button>
-      </Box>
+      <Paper sx={{ p: 3, mb: 3 }}>
+        <Box sx={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 3 }}>
+          <Box sx={{ textAlign: 'center' }}>
+            <Box
+              sx={{
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                gap: 1,
+                mb: 1,
+              }}
+            >
+              <Database sx={{ fontSize: 20, color: 'primary.main' }} />
+              <Typography
+                variant='body2'
+                color='text.secondary'
+              >
+                服务总数
+              </Typography>
+            </Box>
+            <Typography
+              variant='h4'
+              fontWeight={700}
+              color='primary.main'
+            >
+              {totalServices}
+            </Typography>
+          </Box>
+          <Box sx={{ textAlign: 'center' }}>
+            <Box
+              sx={{
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                gap: 1,
+                mb: 1,
+              }}
+            >
+              <FileSearch sx={{ fontSize: 20, color: 'warning.main' }} />
+              <Typography
+                variant='body2'
+                color='text.secondary'
+              >
+                待执行迁移
+              </Typography>
+            </Box>
+            <Typography
+              variant='h4'
+              fontWeight={700}
+              color='warning.main'
+            >
+              {totalPending}
+            </Typography>
+          </Box>
+          <Box sx={{ textAlign: 'center' }}>
+            <Box
+              sx={{
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                gap: 1,
+                mb: 1,
+              }}
+            >
+              <Play sx={{ fontSize: 20, color: 'success.main' }} />
+              <Typography
+                variant='body2'
+                color='text.secondary'
+              >
+                已执行迁移
+              </Typography>
+            </Box>
+            <Typography
+              variant='h4'
+              fontWeight={700}
+              color='success.main'
+            >
+              {totalApplied}
+            </Typography>
+          </Box>
+          <Box sx={{ textAlign: 'center' }}>
+            <Box
+              sx={{
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                gap: 1,
+                mb: 1,
+              }}
+            >
+              <Button
+                variant='contained'
+                startIcon={batchApplying ? <CircularProgress size={16} /> : <Play size={16} />}
+                onClick={batchApplying ? undefined : handleBatchApply}
+                disabled={batchApplying}
+                fullWidth
+              >
+                批量迁移
+              </Button>
+            </Box>
+          </Box>
+        </Box>
+      </Paper>
     );
-  };
+  }, [services, statusMap, batchApplying]);
 
   return (
     <PageContainer
       title='数据库迁移管理'
       subtitle='查看各服务迁移状态，生成并执行 schema / index / audit 迁移'
     >
-      <ListPageTemplate
-        title=''
-        subtitle=''
-        columns={columns}
-        data={filteredData}
-        loading={loading}
-        searchable
-        searchPlaceholder='搜索服务名、Schema或描述...'
-        onSearch={handleSearch}
-        renderRowActions={renderRowActions}
-        actions={[
-          {
-            label: '批量生成全部服务迁移',
-            icon: batchApplying ? <CircularProgress size={16} /> : <Play size={16} />,
-            onClick: batchApplying ? undefined : handleBatchApply,
-            variant: 'contained' as const,
-          },
-        ]}
-        onRefresh={() => queryClient.invalidateQueries({ queryKey: ['migration-services', 'migration-status'] })}
-        emptyMessage='暂无可管理的迁移服务'
-        emptyIcon={
-          <FileSearch style={{ width: 48, height: 48, color: theme.palette.text.disabled }} />
-        }
+      <CrudPage
+        schema={migrationSchema}
+        apiAdapter={apiAdapter}
+        headerContent={headerContent}
+        customRowActions={customRowActions}
+        idField='name'
       />
 
       <Dialog

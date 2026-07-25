@@ -1,0 +1,25 @@
+[package]
+name = "topems-shared-db"
+version.workspace = true
+edition.workspace = true
+authors.workspace = true
+description = "TOPEMS shared database library - database access, migrations, repositories"
+
+[dependencies]
+topems-shared-core = { path = "../shared-core" }
+
+# 数据库依赖
+sqlx.workspace = true
+chrono.workspace = true
+serde.workspace = true
+serde_json.workspace = true
+uuid.workspace = true
+tracing.workspace = true
+tokio.workspace = true
+axum.workspace = true
+regex.workspace = true
+async-trait.workspace = true
+thiserror.workspace = true
+sha2 = "0.10"
+hex = "0.4"
+md5 = "0.7"

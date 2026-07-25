@@ -232,9 +232,9 @@ export const ServiceStatusMonitor: React.FC<ServiceStatusMonitorProps> = ({
       services: [
         {
           name: '研发管理',
-          service: 'RS',
+          service: 'RD',
           port: 8053,
-          key: 'rs',
+          key: 'rd',
           icon: FlaskConical,
         },
         {
@@ -309,8 +309,6 @@ export const ServiceStatusMonitor: React.FC<ServiceStatusMonitorProps> = ({
       title: '数据/门户',
       services: [
         { name: '商业智能', service: 'BI', port: 8060, key: 'bi', icon: BarChart2 },
-        { name: '报表服务', service: 'REPORT', port: 8061, key: 'report', icon: ClipboardList },
-        { name: '系统监控', service: 'MONITOR', port: 8062, key: 'monitor', icon: Activity },
         { name: '企业门户', service: 'PORTAL', port: 8063, key: 'portal', icon: Building },
       ],
     },

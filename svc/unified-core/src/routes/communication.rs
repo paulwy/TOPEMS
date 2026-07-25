@@ -1,3 +1,6 @@
+//! **DEPRECATED**: 通信路由已迁移到独立 `topems-communication` 服务（端口 8084）
+//! 新代码请使用 `/api/communication/*` 路径
+
 use axum::routing::{delete, get, post, put};
 use axum::Router;
 
@@ -5,6 +8,7 @@ use crate::middleware::permission::require_permission;
 use crate::modules;
 use crate::AppState;
 
+#[deprecated(note = "Use communication service (/api/communication) instead")]
 pub fn communication_routes(state: &AppState) -> Router<AppState> {
     let read = Router::new()
         .route(

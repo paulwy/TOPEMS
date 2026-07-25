@@ -20,6 +20,7 @@ export const SCM_PATHS = {
   overview: '/scm/overview',
   inventoryTurnover: '/scm/inventory-turnover',
   priceComparison: '/scm/price-comparison',
+  purchaseContract: '/scm/purchase-contract',
 } as const;
 
 // ---- 路由配置（供路由系统使用） ----
@@ -213,6 +214,20 @@ export const scmModuleConfig: RouteModuleConfig = {
       requiredPermissions: ['scm:price_comparison:read', 'scm:read'],
       action: 'read',
     },
+    {
+      path: SCM_PATHS.purchaseContract,
+      element: lazyWithRetry(
+        () => import('@/pages/scm/ScmPurchaseContractPage'),
+        'ScmPurchaseContractPage'
+      ),
+      module: 'scm',
+      code: 'scm-purchase-contract',
+      title: '采购合同',
+      template: 'list',
+      group: 'process',
+      requiredPermissions: ['scm:contract:read', 'scm:read'],
+      action: 'read',
+    },
   ],
 };
 
@@ -371,6 +386,16 @@ export const scmNavConfig: ModuleNavConfig = {
       order: 3,
       group: 'analytics',
       description: '采购价格对比',
+    },
+    {
+      code: 'scm-purchase-contract',
+      label: '采购合同',
+      icon: 'FileText',
+      path: SCM_PATHS.purchaseContract,
+      permission: 'scm:contract:read',
+      order: 6,
+      group: 'process',
+      description: '采购合同管理',
     },
   ],
 };

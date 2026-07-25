@@ -1,0 +1,49 @@
+global:
+  resolve_timeout: 5m
+
+route:
+  group_by: ['alertname', 'cluster', 'service']
+  group_wait: 30s
+  group_interval: 5m
+  repeat_interval: 4h
+  receiver: 'default-receiver'
+  routes:
+    - match:
+        severity: critical
+      receiver: 'feishu-critical'
+      repeat_interval: 1m
+    - match:
+        severity: warning
+      receiver: 'feishu-warning'
+      repeat_interval: 15m
+
+receivers:
+  - name: 'default-receiver'
+    webhook_configs:
+      - url: 'http://localhost:8080/alert-webhook'
+        send_resolved: true
+
+  - name: 'feishu-critical'
+    webhook_configs:
+      - url: '{{ .Env.FEISHU_WEBHOOK_URL }}'
+        send_resolved: true
+        http_config:
+          tls_config:
+            insecure_skip_verify: true
+        max_alerts: 10
+
+  - name: 'feishu-warning'
+    webhook_configs:
+      - url: '{{ .Env.FEISHU_WEBHOOK_URL }}'
+        send_resolved: true
+        http_config:
+          tls_config:
+            insecure_skip_verify: true
+        max_alerts: 20
+
+inhibit_rules:
+  - source_match:
+      severity: 'critical'
+    target_match:
+      severity: 'warning'
+    equal: ['alertname', 'cluster', 'service']

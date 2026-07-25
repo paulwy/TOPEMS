@@ -1,93 +1,835 @@
-import React, { useState } from 'react';
-import type { BoxProps } from '@mui/material';
+import React, { useMemo, useState } from 'react';
+import { useQuery } from '@tanstack/react-query';
 import { alpha } from '@mui/material/styles';
 import {
   Box,
-  Paper,
-  Typography,
   Card,
   CardContent,
-  Skeleton,
-  useTheme,
-  useMediaQuery,
-  Tabs,
-  Tab,
-  IconButton,
-  Tooltip,
-  Menu,
-  MenuItem,
-  ListItemIcon,
-  ListItemText,
-  Chip,
-  Stack,
   Grid,
+  Typography,
+  Chip,
+  Table,
+  TableBody,
+  TableCell,
+  TableContainer,
+  TableHead,
+  TableRow,
+  Skeleton,
+  TextField,
+  InputAdornment,
+  useTheme,
 } from '@mui/material';
 import {
-  TrendingUp,
-  TrendingDown,
-  Minus,
-  MoreVertical,
-  RefreshCw,
-  Download,
-  Maximize,
-  LayoutGrid,
-  List,
-  LayoutDashboard,
+  TrendingUp as TrendingUpIcon,
+  TrendingDown as TrendingDownIcon,
+  Search as SearchIcon,
+  FileText,
+  DollarSign,
+  BarChart3,
+  Target,
+  CreditCard,
+  Calculator,
+  Building,
+  Users,
+  Package,
+  Warehouse,
+  ClipboardList,
+  CheckCircle,
+  AlertCircle,
+  Clock,
+  Activity,
 } from 'lucide-react';
-import type { BreadcrumbItem } from './PageHeader';
-import { PageHeader } from './PageHeader';
-import { logger } from '@/utils/logger';
+import type { LucideIcon } from 'lucide-react';
+import { PageContainer } from '@/components/common';
+import type { PageAction } from './PageHeader';
+import type {
+  EntitySchema,
+  DashboardSchema,
+  StatCardSchema,
+  ChartSchema,
+  DataTableSchema,
+  DashboardColor,
+  IconName,
+} from '@/schema';
+import { getColumns } from '@/schema';
 
-// ============ 类型定义 ============
+// ============ 图标解析 ============
 
-// 图表类型
-export type ChartType = 'line' | 'bar' | 'pie' | 'area' | 'scatter' | 'radar' | 'gauge';
+const ICON_MAP: Record<string, LucideIcon> = {
+  FileText,
+  TrendingUp: TrendingUpIcon,
+  TrendingDown: TrendingDownIcon,
+  DollarSign,
+  BarChart3,
+  Target,
+  CreditCard,
+  Calculator,
+  Building,
+  Users,
+  Package,
+  Warehouse,
+  ClipboardList,
+  CheckCircle,
+  AlertCircle,
+  Clock,
+  Activity,
+};
 
-// 图表数据点
-export interface ChartDataPoint {
-  label: string;
-  value: number;
-  color?: string;
-  [key: string]: unknown;
+function resolveIcon(icon: IconName | React.ReactNode | undefined): React.ReactNode | undefined {
+  if (!icon) return undefined;
+  if (typeof icon === 'string') {
+    const IconComponent = ICON_MAP[icon];
+    if (IconComponent) return <IconComponent size={24} />;
+    return undefined;
+  }
+  return icon;
 }
 
-// 图表系列
-export interface ChartSeries {
-  name: string;
-  data: ChartDataPoint[];
-  color?: string;
-  type?: ChartType;
+// ============ 类型定义（新 API）============
+
+export type { DashboardColor };
+
+export interface StatCardConfig {
+  title: string;
+  value: string | number;
+  icon?: React.ReactNode;
+  color?: DashboardColor;
+  trend?: { value: number; label?: string };
+  loading?: boolean;
 }
 
-// 图表配置
 export interface ChartConfig {
-  // 是否显示图例
-  showLegend?: boolean;
-  // 是否显示网格
-  showGrid?: boolean;
-  // 是否显示工具提示
-  showTooltip?: boolean;
-  // 是否动画
-  animated?: boolean;
-  // 颜色主题
-  colorTheme?: string[];
-  // X轴配置
-  xAxis?: {
-    label?: string;
-    show?: boolean;
-    type?: 'category' | 'value' | 'time';
-  };
-  // Y轴配置
-  yAxis?: {
-    label?: string;
-    show?: boolean;
-    min?: number;
-    max?: number;
-  };
-  // 自定义配置
-  customOptions?: Record<string, any>;
+  title: string;
+  type: 'bar' | 'line' | 'pie' | 'area' | 'scatter';
+  data: Array<Record<string, unknown>>;
+  xField: string;
+  yField?: string | string[];
+  seriesField?: string;
+  height?: number;
+  loading?: boolean;
+  emptyText?: string;
 }
 
+export interface DataTableConfig {
+  title: string;
+  columns: any[];
+  data: any[];
+  loading?: boolean;
+  searchable?: boolean;
+}
+
+// ============ 子组件 ============
+
+const TrendIndicator: React.FC<{ value: number; label?: string }> = ({ value, label }) => {
+  const theme = useTheme();
+  const isUp = value > 0;
+  const isDown = value < 0;
+  const color = isUp
+    ? theme.palette.success.main
+    : isDown
+      ? theme.palette.error.main
+      : theme.palette.text.secondary;
+
+  return (
+    <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
+      {isUp ? (
+        <TrendingUpIcon
+          size={14}
+          style={{ color }}
+        />
+      ) : isDown ? (
+        <TrendingDownIcon
+          size={14}
+          style={{ color }}
+        />
+      ) : null}
+      <Typography
+        variant='caption'
+        sx={{ color, fontWeight: 500 }}
+      >
+        {isUp ? '+' : ''}
+        {value}
+        {label ? ` ${label}` : ''}
+      </Typography>
+    </Box>
+  );
+};
+
+export const StatCard: React.FC<StatCardConfig> = ({
+  title,
+  value,
+  icon,
+  color = 'primary',
+  trend,
+  loading,
+}) => {
+  const theme = useTheme();
+  const paletteMap: Record<DashboardColor, string> = {
+    primary: theme.palette.primary.main,
+    secondary: theme.palette.secondary.main,
+    success: theme.palette.success.main,
+    error: theme.palette.error.main,
+    warning: theme.palette.warning.main,
+    info: theme.palette.info.main,
+  };
+  const accent = paletteMap[color];
+
+  if (loading) {
+    return (
+      <Card
+        variant='outlined'
+        sx={{ borderRadius: 3, height: '100%' }}
+      >
+        <CardContent>
+          <Skeleton
+            variant='text'
+            width='60%'
+          />
+          <Skeleton
+            variant='rectangular'
+            width='70%'
+            height={32}
+            sx={{ my: 1 }}
+          />
+          <Skeleton
+            variant='text'
+            width='40%'
+          />
+        </CardContent>
+      </Card>
+    );
+  }
+
+  return (
+    <Card
+      variant='outlined'
+      sx={{
+        borderRadius: 3,
+        height: '100%',
+        transition: 'transform 0.2s, box-shadow 0.2s',
+        '&:hover': {
+          transform: 'translateY(-2px)',
+          boxShadow: theme.shadows[3],
+        },
+      }}
+    >
+      <CardContent sx={{ p: 2.5 }}>
+        <Box sx={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between' }}>
+          <Box sx={{ flex: 1, minWidth: 0 }}>
+            <Typography
+              variant='body2'
+              color='text.secondary'
+              sx={{ mb: 1 }}
+            >
+              {title}
+            </Typography>
+            <Typography
+              variant='h4'
+              sx={{ fontWeight: 700, lineHeight: 1.2 }}
+            >
+              {value}
+            </Typography>
+            {trend && (
+              <Box sx={{ mt: 1 }}>
+                <TrendIndicator
+                  value={trend.value}
+                  label={trend.label}
+                />
+              </Box>
+            )}
+          </Box>
+          {icon && (
+            <Box
+              sx={{
+                width: 44,
+                height: 44,
+                borderRadius: 2,
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                color: accent,
+                bgcolor: alpha(accent, 0.1),
+              }}
+            >
+              <Box sx={{ fontSize: 24 }}>{icon}</Box>
+            </Box>
+          )}
+        </Box>
+      </CardContent>
+    </Card>
+  );
+};
+
+// ============ 占位图表（简化 SVG/div 实现）============
+
+const PlaceholderChart: React.FC<{ config: ChartConfig; isMain?: boolean }> = ({
+  config,
+  isMain,
+}) => {
+  const { title, type, data, xField, yField = 'value', height = 280, loading, emptyText } = config;
+  const theme = useTheme();
+  const [hovered, setHovered] = useState<number | null>(null);
+
+  const yFieldKey = Array.isArray(yField) ? yField[0] : yField;
+
+  if (loading) {
+    return (
+      <Card
+        variant='outlined'
+        sx={{ borderRadius: 3, height: '100%' }}
+      >
+        <CardContent>
+          <Skeleton
+            variant='text'
+            width='40%'
+            sx={{ mb: 2 }}
+          />
+          <Skeleton
+            variant='rectangular'
+            width='100%'
+            height={height}
+          />
+        </CardContent>
+      </Card>
+    );
+  }
+
+  if (!data || data.length === 0) {
+    return (
+      <Card
+        variant='outlined'
+        sx={{ borderRadius: 3, height: '100%' }}
+      >
+        <CardContent>
+          <Typography
+            variant='subtitle2'
+            gutterBottom
+          >
+            {title}
+          </Typography>
+          <Box
+            sx={{
+              height,
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              color: 'text.disabled',
+              fontSize: 14,
+            }}
+          >
+            {emptyText || '暂无数据'}
+          </Box>
+        </CardContent>
+      </Card>
+    );
+  }
+
+  const values = data.map((d) => Number(d[yFieldKey]) || 0);
+  const max = Math.max(...values, 1);
+  const W = 100;
+  const H = 100;
+
+  const barColor = theme.palette.primary.main;
+
+  const renderBody = () => {
+    switch (type) {
+      case 'bar':
+      case 'area':
+      case 'line': {
+        const points = values.map((v, i) => {
+          const x = (i / Math.max(values.length - 1, 1)) * W;
+          const y = H - (v / max) * (H - 10);
+          return { x, y, v };
+        });
+
+        if (type === 'bar') {
+          const barWidth = (W / values.length) * 0.7;
+          return (
+            <svg
+              viewBox={`0 0 ${W} ${H}`}
+              preserveAspectRatio='none'
+              width='100%'
+              height='100%'
+            >
+              {points.map((p, i) => (
+                <rect
+                  key={i}
+                  x={(i / values.length) * W + (W / values.length - barWidth) / 2}
+                  y={p.y}
+                  width={barWidth}
+                  height={H - p.y}
+                  fill={barColor}
+                  opacity={hovered === i ? 1 : 0.8}
+                  onMouseEnter={() => setHovered(i)}
+                  onMouseLeave={() => setHovered(null)}
+                />
+              ))}
+            </svg>
+          );
+        }
+
+        const path = points.map((p, i) => `${i === 0 ? 'M' : 'L'} ${p.x} ${p.y}`).join(' ');
+        const areaPath = `${path} L ${W} ${H} L 0 ${H} Z`;
+
+        return (
+          <svg
+            viewBox={`0 0 ${W} ${H}`}
+            preserveAspectRatio='none'
+            width='100%'
+            height='100%'
+          >
+            {type === 'area' && (
+              <path
+                d={areaPath}
+                fill={barColor}
+                opacity={0.15}
+              />
+            )}
+            <path
+              d={path}
+              fill='none'
+              stroke={barColor}
+              strokeWidth={1.5}
+              strokeLinejoin='round'
+            />
+            {points.map((p, i) => (
+              <circle
+                key={i}
+                cx={p.x}
+                cy={p.y}
+                r={hovered === i ? 2 : 1.2}
+                fill={barColor}
+                onMouseEnter={() => setHovered(i)}
+                onMouseLeave={() => setHovered(null)}
+              />
+            ))}
+          </svg>
+        );
+      }
+      case 'pie': {
+        const total = values.reduce((s, v) => s + v, 0) || 1;
+        const colors = [
+          theme.palette.primary.main,
+          theme.palette.secondary.main,
+          theme.palette.success.main,
+          theme.palette.warning.main,
+          theme.palette.error.main,
+          theme.palette.info.main,
+        ];
+        let acc = 0;
+        const cx = W / 2;
+        const cy = H / 2;
+        const r = Math.min(W, H) / 2 - 4;
+        return (
+          <svg
+            viewBox={`0 0 ${W} ${H}`}
+            preserveAspectRatio='xMidYMid meet'
+            width='100%'
+            height='100%'
+          >
+            {values.map((v, i) => {
+              const startAngle = (acc / total) * 2 * Math.PI - Math.PI / 2;
+              acc += v;
+              const endAngle = (acc / total) * 2 * Math.PI - Math.PI / 2;
+              const x1 = cx + r * Math.cos(startAngle);
+              const y1 = cy + r * Math.sin(startAngle);
+              const x2 = cx + r * Math.cos(endAngle);
+              const y2 = cy + r * Math.sin(endAngle);
+              const largeArc = endAngle - startAngle > Math.PI ? 1 : 0;
+              const d = `M ${cx} ${cy} L ${x1} ${y1} A ${r} ${r} 0 ${largeArc} 1 ${x2} ${y2} Z`;
+              return (
+                <path
+                  key={i}
+                  d={d}
+                  fill={colors[i % colors.length]}
+                  opacity={0.85}
+                />
+              );
+            })}
+          </svg>
+        );
+      }
+      case 'scatter': {
+        return (
+          <svg
+            viewBox={`0 0 ${W} ${H}`}
+            preserveAspectRatio='none'
+            width='100%'
+            height='100%'
+          >
+            {data.map((d, i) => {
+              const xv = Number(d[xField]) || i;
+              const yv = Number(d[yFieldKey]) || 0;
+              const xPos = (xv / Math.max(...data.map((r) => Number(r[xField]) || 1), 1)) * W;
+              const yPos = H - (yv / max) * (H - 10);
+              return (
+                <circle
+                  key={i}
+                  cx={xPos}
+                  cy={yPos}
+                  r={1.8}
+                  fill={barColor}
+                  opacity={0.7}
+                />
+              );
+            })}
+          </svg>
+        );
+      }
+      default:
+        return null;
+    }
+  };
+
+  return (
+    <Card
+      variant='outlined'
+      sx={{
+        borderRadius: 3,
+        height: '100%',
+        minHeight: isMain ? height : height,
+      }}
+    >
+      <CardContent sx={{ p: 2, height: '100%', display: 'flex', flexDirection: 'column' }}>
+        <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', mb: 1 }}>
+          <Typography
+            variant='subtitle2'
+            sx={{ fontWeight: 600 }}
+          >
+            {title}
+          </Typography>
+          <Chip
+            label={type}
+            size='small'
+            sx={{ height: 20, fontSize: '0.7rem' }}
+          />
+        </Box>
+        <Box sx={{ flex: 1, minHeight: height - 40, position: 'relative' }}>
+          {hovered !== null && data[hovered] && (
+            <Box
+              sx={{
+                position: 'absolute',
+                top: 8,
+                right: 8,
+                bgcolor: 'rgba(0,0,0,0.75)',
+                color: 'white',
+                px: 1,
+                py: 0.5,
+                borderRadius: 1,
+                fontSize: 12,
+                zIndex: 10,
+              }}
+            >
+              {String(data[hovered][xField])}: {String(data[hovered][yFieldKey])}
+            </Box>
+          )}
+          {renderBody()}
+        </Box>
+      </CardContent>
+    </Card>
+  );
+};
+
+// ============ DataTable ============
+
+const DataTable: React.FC<{ table: DataTableConfig }> = ({ table }) => {
+  const { title, columns, data, loading, searchable } = table;
+  const [search, setSearch] = useState('');
+
+  const filtered = useMemo(() => {
+    if (!searchable || !search.trim()) return data;
+    const q = search.toLowerCase();
+    return data.filter((row) =>
+      columns.some((col) => {
+        const v = row[col.id];
+        return v !== undefined && v !== null && String(v).toLowerCase().includes(q);
+      })
+    );
+  }, [data, search, searchable, columns]);
+
+  return (
+    <Card
+      variant='outlined'
+      sx={{ borderRadius: 3 }}
+    >
+      <CardContent sx={{ p: 2, borderBottom: 1, borderColor: 'divider' }}>
+        <Box
+          sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 2 }}
+        >
+          <Typography
+            variant='subtitle2'
+            sx={{ fontWeight: 600 }}
+          >
+            {title}
+          </Typography>
+          {searchable && (
+            <TextField
+              size='small'
+              value={search}
+              onChange={(e) => setSearch(e.target.value)}
+              placeholder='搜索...'
+              slotProps={{
+                input: {
+                  startAdornment: (
+                    <InputAdornment position='start'>
+                      <SearchIcon size={16} />
+                    </InputAdornment>
+                  ),
+                },
+              }}
+              sx={{ width: 240 }}
+            />
+          )}
+        </Box>
+      </CardContent>
+      <TableContainer>
+        <Table size='small'>
+          <TableHead>
+            <TableRow>
+              {columns.map((col) => (
+                <TableCell
+                  key={col.id}
+                  sx={{
+                    fontWeight: 600,
+                    bgcolor: 'action.hover',
+                    color: 'text.secondary',
+                  }}
+                >
+                  {col.label}
+                </TableCell>
+              ))}
+            </TableRow>
+          </TableHead>
+          <TableBody>
+            {loading ? (
+              Array.from({ length: 5 }).map((_, i) => (
+                <TableRow key={`sk-${i}`}>
+                  {columns.map((col) => (
+                    <TableCell key={col.id}>
+                      <Skeleton
+                        variant='text'
+                        width='80%'
+                      />
+                    </TableCell>
+                  ))}
+                </TableRow>
+              ))
+            ) : filtered.length === 0 ? (
+              <TableRow>
+                <TableCell
+                  colSpan={columns.length}
+                  align='center'
+                  sx={{ py: 4, color: 'text.disabled' }}
+                >
+                  暂无数据
+                </TableCell>
+              </TableRow>
+            ) : (
+              filtered.map((row, idx) => (
+                <TableRow
+                  key={idx}
+                  hover
+                >
+                  {columns.map((col) => (
+                    <TableCell key={col.id}>
+                      {col.render ? col.render(row[col.id], row, idx) : String(row[col.id] ?? '-')}
+                    </TableCell>
+                  ))}
+                </TableRow>
+              ))
+            )}
+          </TableBody>
+        </Table>
+      </TableContainer>
+    </Card>
+  );
+};
+
+// ============ 主组件 ============
+
+export interface DashboardTemplateProps {
+  title: string;
+  subtitle?: string;
+  breadcrumbs?: Array<{ label: string; href?: string; path?: string }>;
+  stats?: StatCard[];
+  charts?: ChartCard[];
+  recentItems?: RecentItem[];
+  recentTitle?: string;
+  quickActions?: QuickAction[];
+  quickActionsTitle?: string;
+  loading?: boolean;
+  onRefresh?: () => void;
+  children?: React.ReactNode;
+  statCards?: StatCardConfig[];
+  chartCols?: number;
+  mainChart?: ChartConfig;
+  table?: DataTableConfig;
+  actions?: Array<{ label: string; onClick: () => void; variant?: string }>;
+}
+
+const LEGACY_TO_CONFIG = (s: StatCard): StatCardConfig => ({
+  title: s.title,
+  value: s.value,
+  icon: s.icon,
+  color: s.color,
+  trend:
+    s.change !== undefined
+      ? { value: s.change, label: s.changeLabel }
+      : s.trend && s.trend.length > 0
+        ? { value: s.trend[s.trend.length - 1] - s.trend[0], label: '趋势' }
+        : undefined,
+});
+
+const LEGACY_CHART_TO_CONFIG = (c: ChartCard): ChartConfig => ({
+  title: c.title,
+  type: (c.type as ChartConfig['type']) || 'bar',
+  data: (c.data as Array<Record<string, unknown>>) || [],
+  xField: 'label',
+  yField: 'value',
+  height: c.height,
+  loading: c.loading,
+});
+
+export const DashboardTemplate: React.FC<DashboardTemplateProps> = ({
+  title,
+  subtitle,
+  breadcrumbs,
+  statCards: statCardsProp,
+  stats,
+  charts: chartsProp,
+  chartCols: chartColsProp,
+  mainChart,
+  table,
+  children,
+  actions,
+  loading,
+  onRefresh,
+  recentItems,
+  recentTitle = '最近事项',
+  quickActions,
+  quickActionsTitle = '快捷操作',
+}) => {
+  const resolvedStatCards = useMemo<StatCardConfig[] | undefined>(() => {
+    if (statCardsProp && statCardsProp.length > 0) return statCardsProp;
+    if (stats && stats.length > 0) return stats.map(LEGACY_TO_CONFIG);
+    return;
+  }, [statCardsProp, stats]);
+
+  const resolvedCharts = useMemo<ChartConfig[] | undefined>(() => {
+    if (chartsProp && chartsProp.length > 0) {
+      // 判断是 ChartConfig 还是 ChartCard
+      const first = chartsProp[0];
+      if (first && typeof first === 'object' && 'xField' in first) {
+        return chartsProp as unknown as ChartConfig[];
+      }
+      return (chartsProp as ChartCard[]).map(LEGACY_CHART_TO_CONFIG);
+    }
+    return;
+  }, [chartsProp]);
+
+  const resolvedChartCols = chartColsProp ?? 2;
+
+  const headerActions: PageAction[] | undefined = useMemo(() => {
+    const list: PageAction[] = [];
+    if (actions && actions.length > 0) {
+      actions.forEach((a) => {
+        list.push({
+          label: a.label,
+          onClick: a.onClick,
+          variant: (a.variant as 'contained' | 'outlined' | 'text') || 'outlined',
+        });
+      });
+    }
+    if (onRefresh) {
+      list.push({
+        label: '刷新',
+        onClick: onRefresh,
+        variant: 'outlined',
+      });
+    }
+    return list.length > 0 ? list : undefined;
+  }, [actions, onRefresh]);
+
+  const maxCols =
+    resolvedChartCols === 1 ? 1 : resolvedChartCols === 3 ? 3 : resolvedChartCols >= 4 ? 4 : 2;
+
+  return (
+    <PageContainer
+      title={title}
+      subtitle={subtitle}
+      autoBreadcrumbs={!breadcrumbs}
+      headerProps={{
+        breadcrumbs: breadcrumbs?.map((b) => ({
+          label: b.label,
+          href: b.path,
+        })),
+      }}
+      actions={headerActions}
+    >
+      <Box sx={{ display: 'flex', flexDirection: 'column', gap: 3 }}>
+        {/* StatCard 区域 */}
+        {resolvedStatCards && resolvedStatCards.length > 0 && (
+          <Grid
+            container
+            spacing={2}
+          >
+            {resolvedStatCards.map((card, i) => (
+              <Grid
+                key={i}
+                size={{ xs: 12, sm: 6, md: Math.floor(24 / Math.min(resolvedStatCards.length, 4)) }}
+              >
+                <StatCard {...card} />
+              </Grid>
+            ))}
+          </Grid>
+        )}
+
+        {/* 大图表区域 */}
+        {mainChart && (
+          <PlaceholderChart
+            config={mainChart}
+            isMain
+          />
+        )}
+
+        {/* 图表网格 */}
+        {resolvedCharts && resolvedCharts.length > 0 && (
+          <Grid
+            container
+            spacing={2}
+          >
+            {resolvedCharts.map((chart, i) => (
+              <Grid
+                key={i}
+                size={{
+                  xs: 12,
+                  md: 12 / maxCols,
+                  lg: 12 / maxCols,
+                }}
+              >
+                <PlaceholderChart config={chart} />
+              </Grid>
+            ))}
+          </Grid>
+        )}
+
+        {/* 数据表格 */}
+        {table && <DataTable table={table} />}
+
+        {/* 子组件 */}
+        {children}
+      </Box>
+    </PageContainer>
+  );
+};
+
+export default DashboardTemplate;
+
+// ============ 向后兼容类型别名 ============
+// 以下类型用于兼容 DashboardTemplate.stories.tsx 及其他旧版调用方。
+// 它们基于新 API 的简化派生，不保证与旧版完整行为一致。
+
+/** @deprecated 使用 {@link StatCardConfig} 代替 */
 export interface StatCard {
   id: string;
   title: string;
@@ -96,55 +838,40 @@ export interface StatCard {
   change?: number;
   changeLabel?: string;
   icon?: React.ReactNode;
-  color?: 'primary' | 'secondary' | 'success' | 'warning' | 'error' | 'info';
+  color?: DashboardColor;
   onClick?: () => void;
-  // 新增：趋势数据
   trend?: number[];
-  // 新增：进度条
   progress?: number;
   progressLabel?: string;
-  // 新增：副标题
   subtitle?: string;
-  // 新增：标签
   tags?: Array<{ label: string; color?: string }>;
-  // 新增：卡片样式
   variant?: 'elevation' | 'outlined';
-  // 新增：尺寸
   size?: 'small' | 'medium' | 'large';
-  // 新增：自定义渐变 CSS，用于图标背景和进度条填充
   customGradient?: string;
 }
 
+/** @deprecated 使用 {@link ChartConfig} 代替 */
 export interface ChartCard {
   id: string;
   title: string;
   subtitle?: string;
-  chart: React.ReactNode;
+  chart?: React.ReactNode;
   height?: number;
   actions?: React.ReactNode;
-  // 新增：图表类型
-  type?: ChartType;
-  // 新增：图表数据
-  data?: ChartDataPoint[] | ChartSeries[];
-  // 新增：图表配置
+  type?: 'bar' | 'line' | 'pie' | 'area' | 'scatter' | 'radar' | 'gauge';
+  data?: ChartConfig['data'];
   config?: ChartConfig;
-  // 新增：刷新回调
   onRefresh?: () => void;
-  // 新增：下载回调
   onDownload?: () => void;
-  // 新增：全屏回调
   onFullscreen?: () => void;
-  // 新增：加载状态
   loading?: boolean;
-  // 新增：错误状态
   error?: string;
-  // 新增：卡片样式
   variant?: 'elevation' | 'outlined';
-  // 新增：是否可展开
   expandable?: boolean;
   defaultExpanded?: boolean;
 }
 
+/** @deprecated 最近事项类型 */
 export interface RecentItem {
   id: string;
   title: string;
@@ -152,14 +879,12 @@ export interface RecentItem {
   time?: string;
   avatar?: React.ReactNode;
   onClick?: () => void;
-  // 新增：状态
   status?: 'success' | 'warning' | 'error' | 'info' | 'default';
-  // 新增：标签
   tags?: Array<{ label: string; color?: string }>;
-  // 新增：图标
   icon?: React.ReactNode;
 }
 
+/** @deprecated 快捷操作类型 */
 export interface QuickAction {
   id: string;
   label: string;
@@ -167,1382 +892,194 @@ export interface QuickAction {
   onClick?: () => void;
   href?: string;
   color?: string;
-  // 新增：描述
   description?: string;
-  // 新增：是否禁用
   disabled?: boolean;
-  // 新增：徽章
   badge?: number | string;
-  // 新增：样式变体
   variant?: 'card' | 'button' | 'icon';
 }
 
-// 卡片分组配置
-export interface CardGroup {
-  id: string;
-  title: string;
-  cards: StatCard[];
-  // 新增：布局配置
-  layout?: 'grid' | 'carousel' | 'tabs';
-  // 新增：是否可折叠
-  collapsible?: boolean;
-  defaultExpanded?: boolean;
-  // 新增：图标
-  icon?: React.ReactNode;
-  // 新增：操作按钮
-  actions?: React.ReactNode;
-}
+/** @deprecated 使用 {@link DashboardTemplateProps} 代替 */
+export type DashboardTemplateLegacyProps = DashboardTemplateProps;
 
-// 布局断点配置
-export interface LayoutBreakpoints {
-  xs?: number;
-  sm?: number;
-  md?: number;
-  lg?: number;
-  xl?: number;
-}
+// ============ Schema 派生工具 ============
 
-// 布局配置
-export interface LayoutConfig {
-  // 统计卡片布局
-  statsLayout?: 'grid' | 'carousel' | 'tabs';
-  // 统计卡片断点配置
-  statsBreakpoints?: LayoutBreakpoints;
-  // 图表布局
-  chartsLayout?: 'grid' | 'stack' | 'tabs';
-  // 图表断点配置
-  chartsBreakpoints?: LayoutBreakpoints;
-  // 是否启用拖拽排序
-  enableDragAndDrop?: boolean;
-  // 是否启用响应式
-  responsive?: boolean;
-  // 自定义间距
-  spacing?: number;
-  // 自定义内边距
-  padding?: number;
-}
+/**
+ * 从 EntitySchema 派生 DataTableConfig
+ *
+ * 让统计/分析页面可以直接使用 Schema 定义生成数据表格配置，
+ * 避免手写列定义和数据映射。
+ *
+ * @example
+ * ```tsx
+ * import { dataTableFromSchema } from '@/components/templates/DashboardTemplate';
+ *
+ * const tableConfig = dataTableFromSchema(voucherSchema, {
+ *   title: '最近凭证',
+ *   data: recentVouchers,
+ *   searchable: true,
+ * });
+ *
+ * <DashboardTemplate
+ *   title='财务统计'
+ *   statCards={statCards}
+ *   mainChart={chart}
+ *   table={tableConfig}
+ * />
+ * ```
+ */
 
-export interface DashboardTemplateProps extends BoxProps {
-  // 页面信息
-  title: string;
-  subtitle?: string;
-  breadcrumbs?: BreadcrumbItem[];
-
-  // 统计卡片
-  stats?: StatCard[];
-  // 新增：卡片分组
-  cardGroups?: CardGroup[];
-
-  // 图表
-  charts?: ChartCard[];
-
-  // 最近事项
-  recentItems?: RecentItem[];
-  recentTitle?: string;
-
-  // 快捷操作
-  quickActions?: QuickAction[];
-  quickActionsTitle?: string;
-
-  // 状态
+export interface DataTableFromSchemaOptions {
+  /** 表格标题（默认使用 Schema 的 title） */
+  title?: string;
+  /** 表格数据 */
+  data: Array<Record<string, unknown>>;
+  /** 是否可搜索 */
+  searchable?: boolean;
+  /** 仅显示指定字段（默认使用 Schema 中 showInList !== false 的字段） */
+  fields?: string[];
+  /** 列覆盖/自定义渲染 */
+  columnOverrides?: Record<
+    string,
+    Partial<{
+      label: string;
+      render: (value: unknown, row: Record<string, unknown>) => React.ReactNode;
+    }>
+  >;
+  /** 加载状态 */
   loading?: boolean;
-
-  // 子组件
-  headerContent?: React.ReactNode;
-  children?: React.ReactNode;
-  statsArea?: React.ReactNode;
-  chartsArea?: React.ReactNode;
-  recentItemsArea?: React.ReactNode;
-  quickActionsArea?: React.ReactNode;
-
-  // 新增：布局配置
-  layout?: LayoutConfig;
-  // 新增：刷新回调
-  onRefresh?: () => void;
-  // 新增：自定义渲染器
-  customRenderers?: {
-    statCard?: (stat: StatCard) => React.ReactNode;
-    chartCard?: (chart: ChartCard) => React.ReactNode;
-    recentItem?: (item: RecentItem) => React.ReactNode;
-    quickAction?: (action: QuickAction) => React.ReactNode;
-  };
-  // 新增：持久化配置
-  persistConfig?: boolean;
-  configKey?: string;
 }
 
-// ============ 统计卡片组件 ============
+export function dataTableFromSchema(
+  schema: EntitySchema,
+  options: DataTableFromSchemaOptions
+): DataTableConfig {
+  const allColumns = getColumns(schema) as Array<{
+    id: string;
+    label: string;
+    render?: (value: unknown, row: Record<string, unknown>, index: number) => React.ReactNode;
+  }>;
 
-const StatCardComponent: React.FC<StatCard & { loading?: boolean }> = ({
-  title,
-  value,
-  unit,
-  change,
-  changeLabel,
-  icon,
-  color = 'primary',
-  onClick,
-  loading,
-  trend,
-  progress,
-  progressLabel,
-  subtitle,
-  tags,
-  variant = 'elevation',
-  size = 'medium',
-  customGradient,
-}) => {
-  const theme = useTheme();
-  const colorMap: Record<string, string> = {
-    primary: theme.palette.primary.main,
-    secondary: theme.palette.secondary.main,
-    success: theme.palette.success.dark,
-    warning: theme.palette.warning.main,
-    error: theme.palette.error.main,
-    info: theme.palette.info.main,
+  let filteredColumns = allColumns;
+  if (options.fields && options.fields.length > 0) {
+    const fieldSet = new Set(options.fields);
+    filteredColumns = allColumns.filter((col) => fieldSet.has(col.id));
+  }
+
+  const columnsWithOverrides = filteredColumns.map((col) => {
+    const override = options.columnOverrides?.[col.id];
+    if (!override) return col;
+    return {
+      ...col,
+      ...(override.label !== undefined ? { label: override.label } : {}),
+      ...(override.render
+        ? {
+            render: (value: unknown, row: Record<string, unknown>, _index: number) =>
+              override.render!(value, row),
+          }
+        : {}),
+    };
+  });
+
+  return {
+    title: options.title || schema.title,
+    columns: columnsWithOverrides,
+    data: options.data,
+    loading: options.loading,
+    searchable: options.searchable ?? true,
   };
+}
 
-  const bgColor = colorMap[color] || colorMap.primary;
+// ============ DashboardPage (Schema 驱动) ============
 
-  const sizeStyles = {
-    small: {
-      padding: 1.5,
-      iconSize: 36,
-      titleSize: 'body2' as const,
-      valueSize: 'h5' as const,
+export interface DashboardPageProps {
+  schema: DashboardSchema;
+  queryKey?: string[];
+}
+
+export const DashboardPage: React.FC<DashboardPageProps> = ({ schema, queryKey }) => {
+  const { isLoading } = useQuery({
+    queryKey: queryKey || ['dashboard', schema.title],
+    queryFn: async () => {
+      if (schema.loader) return schema.loader();
+      return null;
     },
-    medium: {
-      padding: 2,
-      iconSize: 48,
-      titleSize: 'body2' as const,
-      valueSize: 'h4' as const,
-    },
-    large: {
-      padding: 3,
-      iconSize: 56,
-      titleSize: 'body1' as const,
-      valueSize: 'h3' as const,
-    },
-  };
+    enabled: !!schema.loader,
+  });
 
-  const currentSize = sizeStyles[size];
+  const resolvedStatCards = useMemo<StatCardConfig[] | undefined>(() => {
+    if (!schema.statCards) return undefined;
+    return schema.statCards.map((sc: StatCardSchema) => ({
+      title: sc.title,
+      value: typeof sc.value === 'function' ? sc.value() : sc.value,
+      icon: resolveIcon(sc.icon),
+      color: sc.color,
+      trend: sc.trend,
+      loading: isLoading,
+    }));
+  }, [schema.statCards, isLoading]);
+
+  const resolvedCharts = useMemo<ChartCard[] | undefined>(() => {
+    if (!schema.charts) return undefined;
+    return schema.charts.map((ch: ChartSchema) => {
+      const rawData =
+        typeof ch.data === 'function' ? [] : (ch.data as Array<Record<string, unknown>>);
+      return {
+        id: ch.id,
+        title: ch.title,
+        type: ch.type,
+        data: rawData,
+        height: ch.height,
+        loading: isLoading,
+      } as ChartCard;
+    });
+  }, [schema.charts, isLoading]);
+
+  const resolvedTable = useMemo<DataTableConfig | undefined>(() => {
+    if (!schema.table) return undefined;
+    const rawData =
+      typeof schema.table.data === 'function'
+        ? []
+        : (schema.table.data as Array<Record<string, unknown>>);
+
+    type ColumnDefLocal = {
+      id: string;
+      label: string;
+      render?: (value: unknown, row: Record<string, unknown>, index: number) => React.ReactNode;
+    };
+
+    let columns: ColumnDefLocal[] = [];
+    if (schema.table.entitySchema) {
+      const cols = getColumns(schema.table.entitySchema);
+      columns = cols.map((c) => ({
+        id: c.id,
+        label: String(c.label ?? c.id),
+        render: c.render
+          ? (_value: unknown, row: Record<string, unknown>, index: number) =>
+              c.render!(row as any, index)
+          : undefined,
+      }));
+    } else {
+      const firstRow = rawData.length > 0 ? rawData[0] : {};
+      columns = Object.keys(firstRow).map((key) => ({ id: key, label: key }));
+    }
+
+    return {
+      title: schema.table.title,
+      columns,
+      data: rawData,
+      loading: isLoading,
+      searchable: schema.table.searchable ?? true,
+    };
+  }, [schema.table, isLoading]);
 
   return (
-    <Card
-      variant={variant}
-      sx={{
-        borderRadius: 3,
-        cursor: onClick ? 'pointer' : 'default',
-        transition: 'transform 0.2s, box-shadow 0.2s',
-        '&:hover': onClick
-          ? {
-              transform: 'translateY(-2px)',
-              boxShadow: 4,
-            }
-          : {},
-      }}
-      onClick={onClick}
-    >
-      <CardContent sx={{ padding: currentSize.padding }}>
-        <Box
-          sx={{
-            display: 'flex',
-            alignItems: 'flex-start',
-            justifyContent: 'space-between',
-          }}
-        >
-          <Box sx={{ flex: 1 }}>
-            <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 0.5 }}>
-              <Typography
-                variant={currentSize.titleSize}
-                color='text.secondary'
-              >
-                {title}
-              </Typography>
-              {tags && tags.length > 0 && (
-                <Stack
-                  direction='row'
-                  spacing={0.5}
-                >
-                  {tags.map((tag, index) => (
-                    <Chip
-                      key={index}
-                      label={tag.label}
-                      size='small'
-                      sx={{
-                        height: 20,
-                        fontSize: '0.65rem',
-                        bgcolor: tag.color || `${bgColor}20`,
-                        color: tag.color || bgColor,
-                      }}
-                    />
-                  ))}
-                </Stack>
-              )}
-            </Box>
-            {subtitle && (
-              <Typography
-                variant='caption'
-                color='text.secondary'
-                sx={{ display: 'block', mb: 0.5 }}
-              >
-                {subtitle}
-              </Typography>
-            )}
-            {loading ? (
-              <>
-                <Skeleton
-                  width={80}
-                  height={32}
-                />
-                <Skeleton
-                  width={60}
-                  height={20}
-                />
-              </>
-            ) : (
-              <>
-                <Typography
-                  variant={currentSize.valueSize}
-                  sx={{ fontWeight: 700 }}
-                >
-                  {value}
-                  {unit && (
-                    <Typography
-                      component='span'
-                      variant='body2'
-                      color='text.secondary'
-                      sx={{ ml: 0.5 }}
-                    >
-                      {unit}
-                    </Typography>
-                  )}
-                </Typography>
-                {change !== undefined && (
-                  <Box
-                    sx={{
-                      display: 'flex',
-                      alignItems: 'center',
-                      gap: 0.5,
-                      mt: 0.5,
-                    }}
-                  >
-                    {change > 0 ? (
-                      <TrendingUp
-                        style={{ width: 14, height: 14, color: theme.palette.success.dark }}
-                      />
-                    ) : change < 0 ? (
-                      <TrendingDown
-                        style={{ width: 14, height: 14, color: theme.palette.error.main }}
-                      />
-                    ) : (
-                      <Minus
-                        style={{ width: 14, height: 14, color: theme.palette.text.disabled }}
-                      />
-                    )}
-                    <Typography
-                      variant='caption'
-                      sx={{
-                        color:
-                          change > 0
-                            ? 'success.main'
-                            : change < 0
-                              ? 'error.main'
-                              : 'text.secondary',
-                      }}
-                    >
-                      {change > 0 ? '+' : ''}
-                      {change}
-                      {changeLabel && ` ${changeLabel}`}
-                    </Typography>
-                  </Box>
-                )}
-                {progress !== undefined && (
-                  <Box sx={{ mt: 1 }}>
-                    <Box
-                      sx={{
-                        display: 'flex',
-                        justifyContent: 'space-between',
-                        mb: 0.5,
-                      }}
-                    >
-                      <Typography
-                        variant='caption'
-                        color='text.secondary'
-                      >
-                        {progressLabel || '进度'}
-                      </Typography>
-                      <Typography
-                        variant='caption'
-                        color='text.secondary'
-                      >
-                        {progress}%
-                      </Typography>
-                    </Box>
-                    <Box
-                      sx={{
-                        width: '100%',
-                        height: 6,
-                        bgcolor:
-                          theme.palette.mode === 'dark' ? 'rgba(255,255,255,0.1)' : 'grey.200',
-                        borderRadius: 3,
-                        overflow: 'hidden',
-                      }}
-                    >
-                      <Box
-                        sx={{
-                          width: `${progress}%`,
-                          height: '100%',
-                          bgcolor: bgColor,
-                          ...(customGradient
-                            ? { background: customGradient, bgcolor: 'unset' }
-                            : {}),
-                          transition: 'width 0.3s ease',
-                        }}
-                      />
-                    </Box>
-                  </Box>
-                )}
-              </>
-            )}
-          </Box>
-          {icon && (
-            <Box
-              sx={{
-                width: currentSize.iconSize,
-                height: currentSize.iconSize,
-                borderRadius: 2,
-                ...(customGradient
-                  ? { background: customGradient, color: '#fff' }
-                  : {
-                      bgcolor:
-                        theme.palette.mode === 'dark' ? alpha(bgColor, 0.15) : alpha(bgColor, 0.08),
-                      color: bgColor,
-                    }),
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-              }}
-            >
-              {icon}
-            </Box>
-          )}
-        </Box>
-        {trend && trend.length > 0 && !loading && (
-          <Box sx={{ mt: 2, height: 40 }}>
-            <MiniTrendChart
-              data={trend}
-              color={bgColor}
-            />
-          </Box>
-        )}
-      </CardContent>
-    </Card>
+    <DashboardTemplate
+      title={schema.title}
+      subtitle={schema.description}
+      statCards={resolvedStatCards}
+      charts={resolvedCharts}
+      table={resolvedTable}
+      loading={isLoading}
+    />
   );
 };
-
-// 迷你趋势图组件
-const MiniTrendChart: React.FC<{ data: number[]; color: string }> = ({ data, color }) => {
-  const max = Math.max(...data);
-  const min = Math.min(...data);
-  const range = max - min || 1;
-
-  const points = data
-    .map((value, index) => {
-      const x = (index / (data.length - 1)) * 100;
-      const y = 100 - ((value - min) / range) * 100;
-      return `${x},${y}`;
-    })
-    .join(' ');
-
-  return (
-    <svg
-      width='100%'
-      height='100%'
-      preserveAspectRatio='none'
-    >
-      <polyline
-        points={points}
-        fill='none'
-        stroke={color}
-        strokeWidth='2'
-        strokeLinecap='round'
-        strokeLinejoin='round'
-      />
-    </svg>
-  );
-};
-
-// ============ 图表卡片组件 ============
-
-const ChartCardComponent: React.FC<ChartCard> = ({
-  title,
-  subtitle,
-  chart,
-  height = 400,
-  actions,
-  type,
-  onRefresh,
-  onDownload,
-  onFullscreen,
-  loading,
-  error,
-  variant = 'elevation',
-  expandable,
-  defaultExpanded = true,
-}) => {
-  const [expanded, setExpanded] = useState(defaultExpanded);
-  const [anchorEl, setAnchorEl] = useState<null | HTMLElement>(null);
-
-  const handleMenuOpen = (event: React.MouseEvent<HTMLElement>) => {
-    setAnchorEl(event.currentTarget);
-  };
-
-  const handleMenuClose = () => {
-    setAnchorEl(null);
-  };
-
-  const handleRefresh = () => {
-    handleMenuClose();
-    onRefresh?.();
-  };
-
-  const handleDownload = () => {
-    handleMenuClose();
-    onDownload?.();
-  };
-
-  const handleFullscreen = () => {
-    handleMenuClose();
-    onFullscreen?.();
-  };
-
-  return (
-    <Paper
-      variant={variant}
-      sx={{
-        borderRadius: 3,
-        height: expandable && !expanded ? 'auto' : height,
-        display: 'flex',
-        flexDirection: 'column',
-        transition: 'height 0.3s ease',
-      }}
-    >
-      <Box
-        sx={{
-          p: 2,
-          borderBottom: 1,
-          borderColor: 'divider',
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'space-between',
-        }}
-      >
-        <Box sx={{ flex: 1 }}>
-          <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-            <Typography
-              variant='subtitle1'
-              sx={{ fontWeight: 600 }}
-            >
-              {title}
-            </Typography>
-            {type && (
-              <Chip
-                label={type}
-                size='small'
-                sx={{ height: 20, fontSize: '0.65rem' }}
-              />
-            )}
-          </Box>
-          {subtitle && (
-            <Typography
-              variant='caption'
-              color='text.secondary'
-            >
-              {subtitle}
-            </Typography>
-          )}
-        </Box>
-        <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-          {actions}
-          {(onRefresh || onDownload || onFullscreen || expandable) && (
-            <>
-              {expandable && (
-                <IconButton
-                  size='small'
-                  onClick={() => setExpanded(!expanded)}
-                  sx={{
-                    transform: expanded ? 'rotate(180deg)' : 'rotate(0deg)',
-                    transition: 'transform 0.3s',
-                  }}
-                >
-                  <TrendingUp style={{ width: 18, height: 18 }} />
-                </IconButton>
-              )}
-              <IconButton
-                size='small'
-                onClick={handleMenuOpen}
-              >
-                <MoreVertical style={{ width: 18, height: 18 }} />
-              </IconButton>
-              <Menu
-                anchorEl={anchorEl}
-                open={Boolean(anchorEl)}
-                onClose={handleMenuClose}
-              >
-                {onRefresh && (
-                  <MenuItem onClick={handleRefresh}>
-                    <ListItemIcon>
-                      <RefreshCw style={{ width: 18, height: 18 }} />
-                    </ListItemIcon>
-                    <ListItemText>刷新</ListItemText>
-                  </MenuItem>
-                )}
-                {onDownload && (
-                  <MenuItem onClick={handleDownload}>
-                    <ListItemIcon>
-                      <Download style={{ width: 18, height: 18 }} />
-                    </ListItemIcon>
-                    <ListItemText>下载</ListItemText>
-                  </MenuItem>
-                )}
-                {onFullscreen && (
-                  <MenuItem onClick={handleFullscreen}>
-                    <ListItemIcon>
-                      <Maximize style={{ width: 18, height: 18 }} />
-                    </ListItemIcon>
-                    <ListItemText>全屏</ListItemText>
-                  </MenuItem>
-                )}
-              </Menu>
-            </>
-          )}
-        </Box>
-      </Box>
-      {(!expandable || expanded) && (
-        <Box sx={{ p: 2, flex: 1, overflow: 'hidden' }}>
-          {loading ? (
-            <Skeleton
-              variant='rectangular'
-              width='100%'
-              height='100%'
-            />
-          ) : error ? (
-            <Box
-              sx={{
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                height: '100%',
-                color: 'error.main',
-              }}
-            >
-              <Typography>{error}</Typography>
-            </Box>
-          ) : (
-            chart
-          )}
-        </Box>
-      )}
-    </Paper>
-  );
-};
-
-// ============ 卡片分组组件 ============
-
-const CardGroupComponent: React.FC<CardGroup & { loading?: boolean }> = ({
-  title,
-  cards,
-  layout = 'grid',
-  collapsible,
-  defaultExpanded = true,
-  icon,
-  actions,
-  loading,
-}) => {
-  const [expanded, setExpanded] = useState(defaultExpanded);
-  const [activeTab, setActiveTab] = useState(0);
-
-  return (
-    <Paper sx={{ borderRadius: 3, mb: 2 }}>
-      <Box
-        sx={{
-          p: 2,
-          borderBottom: expanded ? 1 : 0,
-          borderColor: 'divider',
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'space-between',
-        }}
-      >
-        <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-          {icon}
-          <Typography
-            variant='subtitle1'
-            sx={{ fontWeight: 600 }}
-          >
-            {title}
-          </Typography>
-          {collapsible && (
-            <IconButton
-              size='small'
-              onClick={() => setExpanded(!expanded)}
-            >
-              <TrendingUp
-                style={{
-                  width: 18,
-                  height: 18,
-                  transform: expanded ? 'rotate(180deg)' : 'rotate(0deg)',
-                  transition: 'transform 0.3s',
-                }}
-              />
-            </IconButton>
-          )}
-        </Box>
-        {actions}
-      </Box>
-      {expanded && (
-        <Box sx={{ p: 2 }}>
-          {layout === 'tabs' && (
-            <Tabs
-              value={activeTab}
-              onChange={(_, newValue) => setActiveTab(newValue)}
-              sx={{ mb: 2 }}
-            >
-              {cards.map((card, index) => (
-                <Tab
-                  key={card.id}
-                  label={card.title}
-                  value={index}
-                />
-              ))}
-            </Tabs>
-          )}
-          {layout === 'tabs' ? (
-            <Box>
-              {cards[activeTab] && (
-                <StatCardComponent
-                  {...cards[activeTab]}
-                  loading={loading}
-                />
-              )}
-            </Box>
-          ) : (
-            <Grid
-              container
-              spacing={2}
-            >
-              {cards.map((card) => (
-                <Grid
-                  key={card.id}
-                  size={{ xs: 12, sm: 6, md: 3 }}
-                >
-                  <StatCardComponent
-                    {...card}
-                    loading={loading}
-                  />
-                </Grid>
-              ))}
-            </Grid>
-          )}
-        </Box>
-      )}
-    </Paper>
-  );
-};
-
-// ============ 仪表盘模板组件 ============
-
-export const DashboardTemplate: React.FC<DashboardTemplateProps> = ({
-  title,
-  subtitle,
-  breadcrumbs,
-  stats,
-  cardGroups,
-  charts,
-  recentItems,
-  recentTitle = '最近事项',
-  quickActions,
-  quickActionsTitle = '快捷操作',
-  loading,
-  headerContent,
-  children,
-  statsArea,
-  chartsArea,
-  recentItemsArea,
-  quickActionsArea,
-  layout,
-  onRefresh,
-  customRenderers,
-  persistConfig,
-  configKey = 'dashboard-config',
-  ...props
-}) => {
-  const theme = useTheme();
-  const isMobile = useMediaQuery(theme.breakpoints.down('md'));
-  const isTablet = useMediaQuery(theme.breakpoints.down('lg'));
-
-  // 状态管理
-  const [statsLayout, setStatsLayout] = useState<'grid' | 'carousel' | 'tabs'>(
-    layout?.statsLayout || 'grid'
-  );
-  const [chartsLayout, setChartsLayout] = useState<'grid' | 'stack' | 'tabs'>(
-    (layout?.chartsLayout || 'grid') as 'grid' | 'stack' | 'tabs'
-  );
-  const [activeChartTab, setActiveChartTab] = useState(0);
-  const [statsTab, setStatsTab] = useState(0);
-
-  // 从localStorage加载配置
-  React.useEffect(() => {
-    if (persistConfig) {
-      const savedConfig = localStorage.getItem(configKey);
-      if (savedConfig) {
-        try {
-          const config = JSON.parse(savedConfig) as {
-            statsLayout?: 'grid' | 'carousel' | 'tabs';
-            chartsLayout?: 'grid' | 'stack' | 'tabs';
-          };
-          if (config.statsLayout) setStatsLayout(config.statsLayout);
-          if (config.chartsLayout) setChartsLayout(config.chartsLayout);
-        } catch (e: unknown) {
-          logger.error('Failed to load dashboard config:', e);
-        }
-      }
-    }
-  }, [persistConfig, configKey]);
-
-  // 保存配置到localStorage
-  React.useEffect(() => {
-    if (persistConfig) {
-      const config = { statsLayout, chartsLayout };
-      localStorage.setItem(configKey, JSON.stringify(config));
-    }
-  }, [persistConfig, configKey, statsLayout, chartsLayout]);
-
-  // 响应式断点配置
-  const statsBreakpoints = layout?.statsBreakpoints || {
-    xs: 12,
-    sm: 6,
-    md: 4,
-    lg: 3,
-    xl: 3,
-  };
-
-  const _chartsBreakpoints = layout?.chartsBreakpoints || {
-    xs: 12,
-    sm: 12,
-    md: 6,
-    lg: 6,
-    xl: 6,
-  };
-
-  const spacing = layout?.spacing || 2;
-  const padding = layout?.padding || 0;
-
-  // 渲染统计卡片
-  const renderStats = () => {
-    // 如果有自定义统计区域，直接渲染
-    if (statsArea) return statsArea;
-
-    if (!stats || stats.length === 0) return null;
-
-    if (customRenderers?.statCard) {
-      return (
-        <Box sx={{ mb: 3 }}>
-          <Grid
-            container
-            spacing={spacing}
-          >
-            {stats.map((stat) => (
-              <Grid
-                key={stat.id}
-                size={12}
-              >
-                {customRenderers.statCard?.(stat)}
-              </Grid>
-            ))}
-          </Grid>
-        </Box>
-      );
-    }
-
-    if (statsLayout === 'tabs') {
-      return (
-        <Paper sx={{ borderRadius: 3, mb: 3 }}>
-          <Tabs
-            value={statsTab}
-            onChange={(_, newValue) => setStatsTab(newValue)}
-          >
-            {stats.map((stat, index) => (
-              <Tab
-                key={stat.id}
-                label={stat.title}
-                value={index}
-              />
-            ))}
-          </Tabs>
-          <Box sx={{ p: 2 }}>
-            {stats[statsTab] && (
-              <StatCardComponent
-                {...stats[statsTab]}
-                loading={loading}
-              />
-            )}
-          </Box>
-        </Paper>
-      );
-    }
-
-    return (
-      <Box sx={{ mb: 3 }}>
-        <Box sx={{ display: 'flex', justifyContent: 'flex-end', mb: 1 }}>
-          {layout?.statsLayout === undefined && (
-            <Stack
-              direction='row'
-              spacing={1}
-            >
-              <Tooltip title='网格视图'>
-                <IconButton
-                  size='small'
-                  color={statsLayout === 'grid' ? 'primary' : 'default'}
-                  onClick={() => setStatsLayout('grid')}
-                >
-                  <LayoutGrid style={{ width: 18, height: 18 }} />
-                </IconButton>
-              </Tooltip>
-              <Tooltip title='列表视图'>
-                <IconButton
-                  size='small'
-                  color={statsLayout === 'carousel' ? 'primary' : 'default'}
-                  onClick={() => setStatsLayout('carousel')}
-                >
-                  <List style={{ width: 18, height: 18 }} />
-                </IconButton>
-              </Tooltip>
-            </Stack>
-          )}
-        </Box>
-        <Grid
-          container
-          spacing={spacing}
-        >
-          {stats.map((stat) => (
-            <Grid
-              key={stat.id}
-              size={statsBreakpoints}
-            >
-              <StatCardComponent
-                {...stat}
-                loading={loading}
-              />
-            </Grid>
-          ))}
-        </Grid>
-      </Box>
-    );
-  };
-
-  // 渲染卡片分组
-  const renderCardGroups = () => {
-    if (!cardGroups || cardGroups.length === 0) return null;
-
-    return (
-      <Box sx={{ mb: 3 }}>
-        {cardGroups.map((group) => (
-          <CardGroupComponent
-            key={group.id}
-            {...group}
-            loading={loading}
-          />
-        ))}
-      </Box>
-    );
-  };
-
-  // 渲染图表
-  const renderCharts = () => {
-    // 如果有自定义图表区域，直接渲染
-    if (chartsArea) return chartsArea;
-
-    if (!charts || charts.length === 0) return null;
-
-    if (customRenderers?.chartCard) {
-      return (
-        <Box sx={{ mb: 3 }}>
-          <Grid
-            container
-            spacing={spacing}
-          >
-            {charts.map((chart) => (
-              <Grid
-                key={chart.id}
-                size={12}
-              >
-                {customRenderers.chartCard?.(chart)}
-              </Grid>
-            ))}
-          </Grid>
-        </Box>
-      );
-    }
-
-    if (chartsLayout === 'tabs') {
-      return (
-        <Paper sx={{ borderRadius: 3, mb: 3 }}>
-          <Tabs
-            value={activeChartTab}
-            onChange={(_, newValue) => setActiveChartTab(newValue)}
-          >
-            {charts.map((chart, index) => (
-              <Tab
-                key={chart.id}
-                label={chart.title}
-                value={index}
-              />
-            ))}
-          </Tabs>
-          <Box sx={{ p: 2 }}>
-            {charts[activeChartTab] && (
-              <ChartCardComponent
-                {...charts[activeChartTab]}
-                loading={loading}
-              />
-            )}
-          </Box>
-        </Paper>
-      );
-    }
-
-    if (chartsLayout === 'stack') {
-      return (
-        <Box sx={{ mb: 3 }}>
-          <Stack spacing={spacing}>
-            {charts.map((chart) => (
-              <ChartCardComponent
-                key={chart.id}
-                {...chart}
-                loading={loading}
-              />
-            ))}
-          </Stack>
-        </Box>
-      );
-    }
-
-    const currentChartsLayout = chartsLayout as 'grid' | 'stack' | 'tabs';
-
-    return (
-      <Box sx={{ mb: 3 }}>
-        <Box sx={{ display: 'flex', justifyContent: 'flex-end', mb: 1 }}>
-          {layout?.chartsLayout === undefined && (
-            <Stack
-              direction='row'
-              spacing={1}
-            >
-              <Tooltip title='网格视图'>
-                <IconButton
-                  size='small'
-                  color={currentChartsLayout === 'grid' ? 'primary' : 'default'}
-                  onClick={() => setChartsLayout('grid')}
-                >
-                  <LayoutGrid style={{ width: 18, height: 18 }} />
-                </IconButton>
-              </Tooltip>
-              <Tooltip title='堆叠视图'>
-                <IconButton
-                  size='small'
-                  color={currentChartsLayout === 'stack' ? 'primary' : 'default'}
-                  onClick={() => setChartsLayout('stack')}
-                >
-                  <LayoutDashboard style={{ width: 18, height: 18 }} />
-                </IconButton>
-              </Tooltip>
-              <Tooltip title='标签视图'>
-                <IconButton
-                  size='small'
-                  color={currentChartsLayout === 'tabs' ? 'primary' : 'default'}
-                  onClick={() => setChartsLayout('tabs')}
-                >
-                  <List style={{ width: 18, height: 18 }} />
-                </IconButton>
-              </Tooltip>
-            </Stack>
-          )}
-        </Box>
-        <Grid
-          container
-          spacing={spacing}
-        >
-          {charts.map((chart) => (
-            <Grid
-              key={chart.id}
-              size={charts.length === 1 ? 12 : 6}
-            >
-              <ChartCardComponent
-                {...chart}
-                loading={loading}
-              />
-            </Grid>
-          ))}
-        </Grid>
-      </Box>
-    );
-  };
-
-  // 渲染最近事项
-  const renderRecentItems = () => {
-    // 如果有自定义最近事项区域，直接渲染
-    if (recentItemsArea) return recentItemsArea;
-
-    if (!recentItems || recentItems.length === 0) return null;
-
-    if (customRenderers?.recentItem) {
-      return (
-        <Paper sx={{ borderRadius: 3 }}>
-          <Box sx={{ p: 2, borderBottom: 1, borderColor: 'divider' }}>
-            <Typography
-              variant='subtitle1'
-              sx={{ fontWeight: 600 }}
-            >
-              {recentTitle}
-            </Typography>
-          </Box>
-          <Box sx={{ p: 0 }}>
-            {customRenderers?.recentItem &&
-              recentItems.map((item) => customRenderers.recentItem?.(item))}
-          </Box>
-        </Paper>
-      );
-    }
-
-    return (
-      <Paper sx={{ borderRadius: 3 }}>
-        <Box sx={{ p: 2, borderBottom: 1, borderColor: 'divider' }}>
-          <Typography
-            variant='subtitle1'
-            sx={{ fontWeight: 600 }}
-          >
-            {recentTitle}
-          </Typography>
-        </Box>
-        <Box sx={{ p: 0 }}>
-          {loading
-            ? Array.from({ length: 5 }).map((_, index) => (
-                <Box
-                  key={index}
-                  sx={{
-                    p: 2,
-                    borderBottom: index < 4 ? 1 : 0,
-                    borderColor: 'divider',
-                  }}
-                >
-                  <Skeleton
-                    variant='text'
-                    width='60%'
-                  />
-                  <Skeleton
-                    variant='text'
-                    width='40%'
-                  />
-                </Box>
-              ))
-            : recentItems.map((item, index) => (
-                <Box
-                  key={item.id}
-                  sx={{
-                    p: 2,
-                    borderBottom: index < recentItems.length - 1 ? 1 : 0,
-                    borderColor: 'divider',
-                    display: 'flex',
-                    alignItems: 'center',
-                    gap: 2,
-                    cursor: item.onClick ? 'pointer' : 'default',
-                    '&:hover': item.onClick
-                      ? {
-                          bgcolor: 'action.hover',
-                        }
-                      : {},
-                  }}
-                  onClick={item.onClick}
-                >
-                  {(item.avatar || item.icon) && (
-                    <Box
-                      sx={{
-                        width: 40,
-                        height: 40,
-                        borderRadius: '50%',
-                        overflow: 'hidden',
-                        display: 'flex',
-                        alignItems: 'center',
-                        justifyContent: 'center',
-                        bgcolor: item.status ? `${item.status}.light` : 'grey.100',
-                        color: item.status ? `${item.status}.main` : 'grey.600',
-                      }}
-                    >
-                      {item.avatar || item.icon}
-                    </Box>
-                  )}
-                  <Box sx={{ flex: 1, minWidth: 0 }}>
-                    <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-                      <Typography
-                        variant='body2'
-                        sx={{
-                          fontWeight: 500,
-                          overflow: 'hidden',
-                          textOverflow: 'ellipsis',
-                          whiteSpace: 'nowrap',
-                        }}
-                      >
-                        {item.title}
-                      </Typography>
-                      {item.status && item.status !== 'default' && (
-                        <Chip
-                          label={item.status}
-                          size='small'
-                          color={item.status}
-                          sx={{ height: 20, fontSize: '0.65rem' }}
-                        />
-                      )}
-                    </Box>
-                    {item.description && (
-                      <Typography
-                        variant='caption'
-                        color='text.secondary'
-                        sx={{
-                          overflow: 'hidden',
-                          textOverflow: 'ellipsis',
-                          whiteSpace: 'nowrap',
-                          display: 'block',
-                        }}
-                      >
-                        {item.description}
-                      </Typography>
-                    )}
-                    {item.tags && item.tags.length > 0 && (
-                      <Stack
-                        direction='row'
-                        spacing={0.5}
-                        sx={{ mt: 0.5 }}
-                      >
-                        {item.tags.map((tag, tagIndex) => (
-                          <Chip
-                            key={tagIndex}
-                            label={tag.label}
-                            size='small'
-                            sx={{
-                              height: 18,
-                              fontSize: '0.6rem',
-                              bgcolor: tag.color || 'grey.100',
-                              color: tag.color || 'grey.700',
-                            }}
-                          />
-                        ))}
-                      </Stack>
-                    )}
-                  </Box>
-                  {item.time && (
-                    <Typography
-                      variant='caption'
-                      color='text.secondary'
-                    >
-                      {item.time}
-                    </Typography>
-                  )}
-                </Box>
-              ))}
-        </Box>
-      </Paper>
-    );
-  };
-
-  // 渲染快捷操作
-  const renderQuickActions = () => {
-    // 如果有自定义快捷操作区域，直接渲染
-    if (quickActionsArea) return quickActionsArea;
-
-    if (!quickActions || quickActions.length === 0) return null;
-
-    if (customRenderers?.quickAction) {
-      return (
-        <Paper sx={{ borderRadius: 3 }}>
-          <Box sx={{ p: 2, borderBottom: 1, borderColor: 'divider' }}>
-            <Typography
-              variant='subtitle1'
-              sx={{ fontWeight: 600 }}
-            >
-              {quickActionsTitle}
-            </Typography>
-          </Box>
-          <Box sx={{ p: 2 }}>
-            {customRenderers?.quickAction &&
-              quickActions.map((action) => customRenderers.quickAction?.(action))}
-          </Box>
-        </Paper>
-      );
-    }
-
-    return (
-      <Paper sx={{ borderRadius: 3 }}>
-        <Box sx={{ p: 2, borderBottom: 1, borderColor: 'divider' }}>
-          <Typography
-            variant='subtitle1'
-            sx={{ fontWeight: 600 }}
-          >
-            {quickActionsTitle}
-          </Typography>
-        </Box>
-        <Box
-          sx={{
-            p: 2,
-            display: 'grid',
-            gridTemplateColumns: `repeat(${isMobile ? 2 : isTablet ? 3 : 4}, 1fr)`,
-            gap: 2,
-          }}
-        >
-          {loading
-            ? Array.from({ length: 4 }).map((_, index) => (
-                <Skeleton
-                  key={index}
-                  variant='rectangular'
-                  height={80}
-                  sx={{ borderRadius: 1 }}
-                />
-              ))
-            : quickActions.map((action) => (
-                <Tooltip
-                  key={action.id}
-                  title={action.description || ''}
-                >
-                  <Box
-                    sx={{
-                      p: 2,
-                      borderRadius: 1,
-                      border: 1,
-                      borderColor: 'divider',
-                      display: 'flex',
-                      flexDirection: 'column',
-                      alignItems: 'center',
-                      gap: 1,
-                      cursor: action.disabled ? 'not-allowed' : 'pointer',
-                      opacity: action.disabled ? 0.5 : 1,
-                      transition: 'all 0.2s',
-                      '&:hover': action.disabled
-                        ? {}
-                        : {
-                            borderColor: 'primary.main',
-                            bgcolor: 'primary.light',
-                          },
-                    }}
-                    onClick={action.disabled ? undefined : action.onClick}
-                  >
-                    <Box
-                      sx={{
-                        width: 40,
-                        height: 40,
-                        borderRadius: 1,
-                        display: 'flex',
-                        alignItems: 'center',
-                        justifyContent: 'center',
-                        ...(action.color?.startsWith('linear-gradient')
-                          ? { background: action.color, color: '#fff' }
-                          : {
-                              bgcolor: action.color || 'primary.light',
-                              color: action.color || 'primary.main',
-                            }),
-                        position: 'relative',
-                      }}
-                    >
-                      {action.icon}
-                      {action.badge && (
-                        <Box
-                          sx={{
-                            position: 'absolute',
-                            top: -4,
-                            right: -4,
-                            minWidth: 18,
-                            height: 18,
-                            borderRadius: 9,
-                            bgcolor: 'error.main',
-                            color: 'error.contrastText',
-                            display: 'flex',
-                            alignItems: 'center',
-                            justifyContent: 'center',
-                            fontSize: '0.65rem',
-                            fontWeight: 600,
-                          }}
-                        >
-                          {action.badge}
-                        </Box>
-                      )}
-                    </Box>
-                    <Typography
-                      variant='caption'
-                      sx={{ fontWeight: 500 }}
-                    >
-                      {action.label}
-                    </Typography>
-                  </Box>
-                </Tooltip>
-              ))}
-        </Box>
-      </Paper>
-    );
-  };
-
-  return (
-    <Box
-      sx={{ padding }}
-      {...props}
-    >
-      {/* 页面头部 */}
-      <PageHeader
-        title={title}
-        subtitle={subtitle}
-        breadcrumbs={breadcrumbs}
-        loading={loading}
-      >
-        {headerContent}
-        {onRefresh && (
-          <Tooltip title='刷新'>
-            <IconButton
-              size='small'
-              onClick={onRefresh}
-              sx={{ ml: 1 }}
-            >
-              <RefreshCw style={{ width: 18, height: 18 }} />
-            </IconButton>
-          </Tooltip>
-        )}
-      </PageHeader>
-
-      {/* 统计卡片 */}
-      {renderStats()}
-
-      {/* 卡片分组 */}
-      {renderCardGroups()}
-
-      {/* 图表 */}
-      {renderCharts()}
-
-      {/* 最近事项和快捷操作 */}
-      {(recentItems || quickActions) && (
-        <Grid
-          container
-          spacing={spacing}
-        >
-          {recentItems && (
-            <Grid size={{ xs: 12, md: quickActions ? 8 : 12 }}>{renderRecentItems()}</Grid>
-          )}
-          {quickActions && (
-            <Grid size={{ xs: 12, md: recentItems ? 4 : 12 }}>{renderQuickActions()}</Grid>
-          )}
-        </Grid>
-      )}
-
-      {/* 子组件 */}
-      {children}
-    </Box>
-  );
-};
-
-export default DashboardTemplate;

@@ -27,7 +27,7 @@ service_groups:
     - name: unified-core
       port: 8000
       env_var: CORE_PORT
-      description: 统一核心服务 (IAM + Flow + File + Communication)
+      description: 统一核心服务 (IAM + Doc + Flow + File + Communication + Monitor)
       status: implemented
       dependencies: []
       service_dir: unified-core
@@ -48,14 +48,6 @@ service_groups:
       status: implemented
       dependencies: [unified-core, erp]
       service_dir: finance
-
-    - name: doc
-      port: 8012
-      env_var: DOC_STANDALONE_PORT
-      description: 文档管理服务
-      status: implemented
-      dependencies: [unified-core]
-      service_dir: doc
 
     - name: ai
       port: 8013
@@ -155,36 +147,23 @@ service_groups:
       dependencies: [unified-core, mes, qms]
       service_dir: ehs
 
-    - name: rs
+    - name: rd
       port: 8053
-      env_var: RS_PORT
+      env_var: RD_PORT
       description: 研发管理
       status: implemented
       dependencies: [unified-core, pm, mes]
 
   # 数据分析/门户服务 (8060-8069)
+  # NOTE: report 功能已整合到 analytics (bi) 服务中 (2026-07)
   analytics:
     - name: bi
       port: 8060
       env_var: BI_PORT
-      description: 商业智能
+      description: 商业智能（含原 report 报表功能）
       status: implemented
       dependencies: [unified-core]
-      service_dir: bi
-
-    - name: report
-      port: 8061
-      env_var: REPORT_PORT
-      description: 报表服务
-      status: implemented
-      dependencies: [unified-core, bi]
-
-    - name: monitor
-      port: 8062
-      env_var: MONITOR_PORT
-      description: 系统监控
-      status: implemented
-      dependencies: [unified-core]
+      service_dir: analytics
 
     - name: portal
       port: 8063
@@ -216,18 +195,65 @@ service_groups:
       status: implemented
       dependencies: [unified-core]
 
+  # 主数据服务 (8090)
+  master-data:
+    - name: master-data
+      port: 8090
+      env_var: MASTER_DATA_PORT
+      description: 主数据管理服务
+      status: implemented
+      dependencies: [unified-core]
+      service_dir: master-data
+
+  # 扩展服务 (8084-8089，从 unified-core 外迁为独立进程)
+  extension:
+    - name: communication
+      port: 8084
+      env_var: COMMUNICATION_PORT
+      description: 通讯服务（邮件/通知/IM，从 unified-core 外迁）
+      status: implemented
+      dependencies: [unified-core]
+      service_dir: communication
+
+    - name: billing
+      port: 8085
+      env_var: BILLING_PORT
+      description: 计费服务
+      status: implemented
+      dependencies: [unified-core]
+      service_dir: billing
+
+    - name: ticket
+      port: 8086
+      env_var: TICKET_PORT
+      description: 工单服务
+      status: implemented
+      dependencies: [unified-core]
+      service_dir: ticket
+
+    - name: feedback
+      port: 8087
+      env_var: FEEDBACK_PORT
+      description: 反馈服务
+      status: implemented
+      dependencies: [unified-core]
+      service_dir: feedback
+
+    - name: search
+      port: 8082
+      env_var: SEARCH_PORT
+      description: 搜索服务（全文搜索）
+      status: implemented
+      dependencies: [unified-core]
+      service_dir: search
+
 # 虚拟服务（由 unified-core 内部模块提供，不独立启动）
+# 注意：mail/im/notification 已外迁到 communication 服务（端口 8084）
 virtual_services:
   - name: iam
     port: 8000
     env_var: IAM_PORT
     description: 身份认证服务 (由 unified-core 提供)
-    provider: unified-core
-
-  - name: notification
-    port: 8000
-    env_var: NOTIFICATION_PORT
-    description: 通知服务 (由 unified-core 提供)
     provider: unified-core
 
   - name: flow
@@ -242,22 +268,16 @@ virtual_services:
     description: 文件存储服务 (由 unified-core 提供)
     provider: unified-core
 
-  - name: mail
-    port: 8000
-    env_var: MAIL_PORT
-    description: 邮件服务 (由 unified-core 提供)
-    provider: unified-core
-
-  - name: im
-    port: 8000
-    env_var: IM_PORT
-    description: 即时通讯 (由 unified-core 提供)
-    provider: unified-core
-
   - name: doc
     port: 8000
     env_var: DOC_PORT
     description: 文档管理服务 (由 unified-core 提供，虚拟服务)
+    provider: unified-core
+
+  - name: monitor
+    port: 8000
+    env_var: MONITOR_PORT
+    description: 系统监控服务 (由 unified-core 提供，虚拟服务)
     provider: unified-core
 
 # 特殊端口配置
@@ -302,7 +322,6 @@ module_groups:
   erp:
     - erp
     - finance
-    - doc
     - ai
 
   collaboration:
@@ -323,12 +342,10 @@ module_groups:
     - qms
     - lims
     - ehs
-    - rs
+    - rd
 
   analytics:
     - bi
-    - report
-    - monitor
     - portal
 
   infrastructure:
@@ -336,11 +353,13 @@ module_groups:
     - gis
     - integration
 
+  master-data:
+    - master-data
+
   all:
     - unified-core
     - erp
     - finance
-    - doc
     - ai
     - hrm
     - pm
@@ -353,11 +372,10 @@ module_groups:
     - qms
     - lims
     - ehs
-    - rs
+    - rd
     - bi
-    - report
-    - monitor
     - portal
     - mobile
     - gis
     - integration
+    - master-data

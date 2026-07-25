@@ -55,13 +55,13 @@ export const financialReportApi = {
     compare_period?: string; // 对比期间
     currency_code?: string; // 币种，默认人民币
     include_disabled_accounts?: boolean;
-  }) => apiClient.erp.post('/reports/balance-sheet/generate', params),
+  }) => apiClient.finance.post('/reports/balance-sheet/generate', params),
 
   /**
    * 获取资产负债表
    */
   getBalanceSheet: (params: { company_id: string; period: string; currency_code?: string }) =>
-    apiClient.erp.get('/reports/balance-sheet', { params }),
+    apiClient.finance.get('/reports/balance-sheet', { params }),
 
   /**
    * 获取资产负债表历史列表
@@ -73,7 +73,7 @@ export const financialReportApi = {
     currency_code?: string;
     page?: number;
     pagesize?: number;
-  }) => apiClient.erp.get('/reports/balance-sheet/history', { params }),
+  }) => apiClient.finance.get('/reports/balance-sheet/history', { params }),
 
   // -------- 利润表 --------
 
@@ -86,13 +86,13 @@ export const financialReportApi = {
     compare_period?: string;
     currency_code?: string;
     include_detail?: boolean;
-  }) => apiClient.erp.post('/reports/income-statement/generate', params),
+  }) => apiClient.finance.post('/reports/income-statement/generate', params),
 
   /**
    * 获取利润表
    */
   getIncomeStatement: (params: { company_id: string; period: string; currency_code?: string }) =>
-    apiClient.erp.get('/reports/income-statement', { params }),
+    apiClient.finance.get('/reports/income-statement', { params }),
 
   /**
    * 获取利润表历史列表
@@ -104,7 +104,7 @@ export const financialReportApi = {
     currency_code?: string;
     page?: number;
     pagesize?: number;
-  }) => apiClient.erp.get('/reports/income-statement/history', { params }),
+  }) => apiClient.finance.get('/reports/income-statement/history', { params }),
 
   // -------- 现金流量表 --------
 
@@ -117,13 +117,13 @@ export const financialReportApi = {
     compare_period?: string;
     currency_code?: string;
     method?: 'direct' | 'indirect'; // 编制方法
-  }) => apiClient.erp.post('/reports/cash-flow/generate', params),
+  }) => apiClient.finance.post('/reports/cash-flow/generate', params),
 
   /**
    * 获取现金流量表
    */
   getCashFlowStatement: (params: { company_id: string; period: string; currency_code?: string }) =>
-    apiClient.erp.get('/reports/cash-flow', { params }),
+    apiClient.finance.get('/reports/cash-flow', { params }),
 
   /**
    * 获取现金流量表历史列表
@@ -135,7 +135,7 @@ export const financialReportApi = {
     currency_code?: string;
     page?: number;
     pagesize?: number;
-  }) => apiClient.erp.get('/reports/cash-flow/history', { params }),
+  }) => apiClient.finance.get('/reports/cash-flow/history', { params }),
 
   // ============================================
   // 二、财务报表审批
@@ -147,7 +147,7 @@ export const financialReportApi = {
   submitReportForApproval: (data: {
     report_type: 'balance_sheet' | 'income_statement' | 'cash_flow';
     report_id: string;
-  }) => apiClient.erp.post('/reports/submit-approval', data),
+  }) => apiClient.finance.post('/reports/submit-approval', data),
 
   /**
    * 审批报表
@@ -156,7 +156,7 @@ export const financialReportApi = {
     report_type: 'balance_sheet' | 'income_statement' | 'cash_flow';
     report_id: string;
     comment?: string;
-  }) => apiClient.erp.post('/reports/approve', data),
+  }) => apiClient.finance.post('/reports/approve', data),
 
   /**
    * 驳回报表
@@ -165,7 +165,7 @@ export const financialReportApi = {
     report_type: 'balance_sheet' | 'income_statement' | 'cash_flow';
     report_id: string;
     reason: string;
-  }) => apiClient.erp.post('/reports/reject', data),
+  }) => apiClient.finance.post('/reports/reject', data),
 
   /**
    * 锁定报表（禁止修改）
@@ -173,7 +173,7 @@ export const financialReportApi = {
   lockReport: (data: {
     report_type: 'balance_sheet' | 'income_statement' | 'cash_flow';
     report_id: string;
-  }) => apiClient.erp.post('/reports/lock', data),
+  }) => apiClient.finance.post('/reports/lock', data),
 
   /**
    * 解锁报表
@@ -181,7 +181,7 @@ export const financialReportApi = {
   unlockReport: (data: {
     report_type: 'balance_sheet' | 'income_statement' | 'cash_flow';
     report_id: string;
-  }) => apiClient.erp.post('/reports/unlock', data),
+  }) => apiClient.finance.post('/reports/unlock', data),
 
   // ============================================
   // 三、报表项目明细
@@ -195,7 +195,7 @@ export const financialReportApi = {
     report_id: string;
     account_code: string;
     period?: string;
-  }) => apiClient.erp.get('/reports/item-details', { params }),
+  }) => apiClient.finance.get('/reports/item-details', { params }),
 
   /**
    * 获取报表项目凭证列表
@@ -207,7 +207,7 @@ export const financialReportApi = {
     period?: string;
     page?: number;
     pagesize?: number;
-  }) => apiClient.erp.get('/reports/item-vouchers', { params }),
+  }) => apiClient.finance.get('/reports/item-vouchers', { params }),
 
   // ============================================
   // 四、报表对比分析
@@ -222,7 +222,7 @@ export const financialReportApi = {
     period_from: string;
     period_to: string;
     currency_code?: string;
-  }) => apiClient.erp.get('/reports/comparison', { params }),
+  }) => apiClient.finance.get('/reports/comparison', { params }),
 
   /**
    * 获取报表趋势分析
@@ -234,7 +234,7 @@ export const financialReportApi = {
     period_to: string;
     account_codes?: string[]; // 指定科目，不指定则全部
     currency_code?: string;
-  }) => apiClient.erp.get('/reports/trend', { params }),
+  }) => apiClient.finance.get('/reports/trend', { params }),
 
   /**
    * 获取报表同比分析
@@ -245,7 +245,7 @@ export const financialReportApi = {
     current_period: string;
     previous_year_period: string;
     currency_code?: string;
-  }) => apiClient.erp.get('/reports/year-over-year', { params }),
+  }) => apiClient.finance.get('/reports/year-over-year', { params }),
 
   /**
    * 获取报表环比分析
@@ -256,7 +256,7 @@ export const financialReportApi = {
     current_period: string;
     previous_period: string;
     currency_code?: string;
-  }) => apiClient.erp.get('/reports/period-over-period', { params }),
+  }) => apiClient.finance.get('/reports/period-over-period', { params }),
 
   // ============================================
   // 五、多公司报表合并
@@ -271,7 +271,7 @@ export const financialReportApi = {
     period: string;
     currency_code?: string;
     eliminate_intercompany?: boolean; // 抵消内部交易
-  }) => apiClient.erp.post('/reports/consolidated/generate', params),
+  }) => apiClient.finance.post('/reports/consolidated/generate', params),
 
   /**
    * 获取合并报表
@@ -284,7 +284,7 @@ export const financialReportApi = {
       currency_code?: string;
     }
   ) =>
-    apiClient.erp.get(`/reports/consolidated/${consolidationId}`, {
+    apiClient.finance.get(`/reports/consolidated/${consolidationId}`, {
       params,
     }),
 
@@ -296,7 +296,7 @@ export const financialReportApi = {
     include_disabled?: boolean;
     page?: number;
     pagesize?: number;
-  }) => apiClient.erp.get('/reports/consolidated/entities', { params }),
+  }) => apiClient.finance.get('/reports/consolidated/entities', { params }),
 
   /**
    * 创建合并主体
@@ -308,19 +308,19 @@ export const financialReportApi = {
     entity_type: 'holding' | 'subsidiary' | 'associate' | 'joint_venture';
     ownership_percentage: number;
     currency_code?: string;
-  }) => apiClient.erp.post('/reports/consolidated/entities', data),
+  }) => apiClient.finance.post('/reports/consolidated/entities', data),
 
   /**
    * 更新合并主体
    */
   updateConsolidationEntity: (entityId: string, data: Partial<ConsolidationEntity>) =>
-    apiClient.erp.put(`/reports/consolidated/entities/${entityId}`, data),
+    apiClient.finance.put(`/reports/consolidated/entities/${entityId}`, data),
 
   /**
    * 删除合并主体
    */
   deleteConsolidationEntity: (entityId: string) =>
-    apiClient.erp.delete(`/reports/consolidated/entities/${entityId}`),
+    apiClient.finance.delete(`/reports/consolidated/entities/${entityId}`),
 
   /**
    * 获取内部交易抵消明细
@@ -330,7 +330,7 @@ export const financialReportApi = {
     period: string;
     page?: number;
     pagesize?: number;
-  }) => apiClient.erp.get('/reports/consolidated/elims', { params }),
+  }) => apiClient.finance.get('/reports/consolidated/elims', { params }),
 
   /**
    * 手动添加内部交易抵消
@@ -342,7 +342,7 @@ export const financialReportApi = {
     debit_account_code: string;
     credit_account_code: string;
     amount: number;
-  }) => apiClient.erp.post('/reports/consolidated/elims', data),
+  }) => apiClient.finance.post('/reports/consolidated/elims', data),
 
   // ============================================
   // 六、报表导出
@@ -360,7 +360,7 @@ export const financialReportApi = {
     include_notes?: boolean; // 包含附注
     include_comparison?: boolean; // 包含对比数据
   }): Promise<Blob> => {
-    const baseURL = apiClient.erp.defaults?.baseURL || config.services.erp;
+    const baseURL = apiClient.finance.defaults?.baseURL || config.services.finance;
     return downloadBlob(baseURL, '/reports/export', { params });
   },
 
@@ -373,7 +373,7 @@ export const financialReportApi = {
     periods: string[];
     currency_code?: string;
     format: 'pdf' | 'xlsx';
-  }) => apiClient.erp.post('/reports/export/batch', params),
+  }) => apiClient.finance.post('/reports/export/batch', params),
 
   /**
    * 导出合并报表
@@ -385,7 +385,7 @@ export const financialReportApi = {
     currency_code?: string;
     format: 'pdf' | 'xlsx';
   }): Promise<Blob> => {
-    const baseURL = apiClient.erp.defaults?.baseURL || config.services.erp;
+    const baseURL = apiClient.finance.defaults?.baseURL || config.services.finance;
     return downloadBlob(baseURL, `/reports/consolidated/${params.consolidation_id}/export`, {
       params: {
         report_type: params.report_type,
@@ -408,7 +408,7 @@ export const financialReportApi = {
     isactive?: boolean;
     page?: number;
     pagesize?: number;
-  }) => apiClient.erp.get('/reports/subscriptions', { params }),
+  }) => apiClient.finance.get('/reports/subscriptions', { params }),
 
   /**
    * 创建报表订阅
@@ -425,25 +425,25 @@ export const financialReportApi = {
     }[];
     format: 'pdf' | 'xlsx';
     isactive?: boolean;
-  }) => apiClient.erp.post('/reports/subscriptions', data),
+  }) => apiClient.finance.post('/reports/subscriptions', data),
 
   /**
    * 更新报表订阅
    */
   updateReportSubscription: (subscriptionId: string, data: Partial<ReportSubscription>) =>
-    apiClient.erp.put(`/reports/subscriptions/${subscriptionId}`, data),
+    apiClient.finance.put(`/reports/subscriptions/${subscriptionId}`, data),
 
   /**
    * 删除报表订阅
    */
   deleteReportSubscription: (subscriptionId: string) =>
-    apiClient.erp.delete(`/reports/subscriptions/${subscriptionId}`),
+    apiClient.finance.delete(`/reports/subscriptions/${subscriptionId}`),
 
   /**
    * 立即发送报表
    */
   sendReportNow: (subscriptionId: string) =>
-    apiClient.erp.post(`/reports/subscriptions/${subscriptionId}/send-now`, {}),
+    apiClient.finance.post(`/reports/subscriptions/${subscriptionId}/send-now`, {}),
 
   /**
    * 获取订阅发送历史
@@ -455,7 +455,7 @@ export const financialReportApi = {
       pagesize?: number;
     }
   ) =>
-    apiClient.erp.get(`/reports/subscriptions/${subscriptionId}/history`, {
+    apiClient.finance.get(`/reports/subscriptions/${subscriptionId}/history`, {
       params,
     }),
 };

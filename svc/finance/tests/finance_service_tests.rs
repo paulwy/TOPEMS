@@ -1,5 +1,3 @@
-use std::sync::Arc;
-
 use chrono::{DateTime, Utc};
 use rust_decimal::Decimal;
 use sqlx::postgres::PgPool;
@@ -7,7 +5,7 @@ use uuid::Uuid;
 
 use topems_finance::models::*;
 use topems_finance::services::FinanceService;
-use topems_finance::workflow::WorkflowClient;
+use topems_shared::service_client::WorkflowServiceClient;
 
 async fn create_test_pool() -> PgPool {
     let database_url = std::env::var("DATABASE_URL")
@@ -48,7 +46,7 @@ async fn test_create_account() {
     }
     let pool = create_test_pool().await;
     let tenant_id = create_test_tenant(&pool).await;
-    let service = FinanceService::new(pool.clone(), WorkflowClient::new("http://localhost:8080"));
+    let service = FinanceService::new(pool.clone(), WorkflowServiceClient::new("http://localhost:8080").expect("Failed to create workflow client"));
 
     let req = CreateAccountRequest {
         code: "1001".to_string(),
@@ -77,7 +75,7 @@ async fn test_get_account() {
     }
     let pool = create_test_pool().await;
     let tenant_id = create_test_tenant(&pool).await;
-    let service = FinanceService::new(pool.clone(), WorkflowClient::new("http://localhost:8080"));
+    let service = FinanceService::new(pool.clone(), WorkflowServiceClient::new("http://localhost:8080").expect("Failed to create workflow client"));
 
     let req = CreateAccountRequest {
         code: "1002".to_string(),
@@ -109,7 +107,7 @@ async fn test_voucher_lifecycle() {
     }
     let pool = create_test_pool().await;
     let tenant_id = create_test_tenant(&pool).await;
-    let service = FinanceService::new(pool.clone(), WorkflowClient::new("http://localhost:8080"));
+    let service = FinanceService::new(pool.clone(), WorkflowServiceClient::new("http://localhost:8080").expect("Failed to create workflow client"));
 
     let cash_req = CreateAccountRequest {
         code: "1001".to_string(),
@@ -197,7 +195,7 @@ async fn test_period_management() {
     }
     let pool = create_test_pool().await;
     let tenant_id = create_test_tenant(&pool).await;
-    let service = FinanceService::new(pool.clone(), WorkflowClient::new("http://localhost:8080"));
+    let service = FinanceService::new(pool.clone(), WorkflowServiceClient::new("http://localhost:8080").expect("Failed to create workflow client"));
 
     let period = service
         .open_period(tenant_id, 2024, 1)
@@ -223,7 +221,7 @@ async fn test_auxiliary_account() {
     }
     let pool = create_test_pool().await;
     let tenant_id = create_test_tenant(&pool).await;
-    let service = FinanceService::new(pool.clone(), WorkflowClient::new("http://localhost:8080"));
+    let service = FinanceService::new(pool.clone(), WorkflowServiceClient::new("http://localhost:8080").expect("Failed to create workflow client"));
 
     let req = CreateAuxiliaryAccountRequest {
         aux_type: AuxType::Project,

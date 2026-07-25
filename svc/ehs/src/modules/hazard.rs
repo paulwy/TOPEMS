@@ -12,7 +12,7 @@ use topems_shared::{ApiResponse, Claims};
 use uuid::Uuid;
 
 use crate::shared::AppState;
-use crate::workflow::{CreateInstanceRequest, WorkflowClient};
+use topems_shared::service_client::CreateInstanceRequest;
 
 fn get_tenant_id(claims: &Claims, headers: &HeaderMap) -> Uuid {
     claims
@@ -669,11 +669,11 @@ pub async fn start_hazard_approval(
 }
 
 pub async fn approve_hazard(
-    State(state): State<crate::shared::AppState>,
+    State(_state): State<crate::shared::AppState>,
     Extension(claims): Extension<Claims>,
     headers: HeaderMap,
     axum::extract::Path(id): axum::extract::Path<String>,
-    Json(req): Json<ApprovalActionRequest>,
+    Json(_req): Json<ApprovalActionRequest>,
 ) -> Json<ApiResponse<Hazard>> {
     let tenant_id = get_tenant_id(&claims, &headers);
     tracing::info!("Approving hazard {}", id);
@@ -703,11 +703,11 @@ pub async fn approve_hazard(
 }
 
 pub async fn reject_hazard(
-    State(state): State<crate::shared::AppState>,
+    State(_state): State<crate::shared::AppState>,
     Extension(claims): Extension<Claims>,
     headers: HeaderMap,
     axum::extract::Path(id): axum::extract::Path<String>,
-    Json(req): Json<ApprovalActionRequest>,
+    Json(_req): Json<ApprovalActionRequest>,
 ) -> Json<ApiResponse<Hazard>> {
     let tenant_id = get_tenant_id(&claims, &headers);
     tracing::info!("Rejecting hazard {}", id);

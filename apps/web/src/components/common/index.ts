@@ -148,9 +148,9 @@ export { LoadingSpinner } from '@topems/shared-components';
 export { default as AdvancedFilterPanel } from './AdvancedFilter';
 export type { AdvancedFilterProps, FilterCondition } from './AdvancedFilter';
 
-// PageContainer - 统一页面容器组件 (V2版本，支持autoTitle和autoBreadcrumbs)
-export { default as PageContainer } from './PageContainerV2';
-export type { PageContainerProps } from './PageContainerV2';
+// PageContainer - 统一页面容器组件 (支持autoTitle和autoBreadcrumbs)
+export { default as PageContainer } from './PageContainer';
+export type { PageContainerProps } from './PageContainer';
 
 // [shared] EmptyState - 已提升到 @topems/shared-components
 export {

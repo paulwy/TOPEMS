@@ -42,7 +42,6 @@ iam         svc/unified-core       unified-core-service        8000
 pm          svc/pm                 topems-pm                   8023
 erp         svc/erp                topems-erp                  8010
 finance     svc/finance            topems-finance              8011
-doc         svc/doc                topems-doc                  8012
 ai          svc/ai                 topems-ai                   8013
 hrm         svc/hrm                topems-hrm                  8020
 crm         svc/crm                topems-crm                  8029
@@ -56,11 +55,10 @@ lims        svc/lims               topems-lims                 8051
 ehs         svc/ehs                topems-ehs                  8052
 rd          svc/rd                 topems-rd                   8053
 bi          svc/analytics          analytics-service           8060
-monitor     svc/monitor            topems-monitor              8062
 portal      svc/portal             topems-portal               8063
 mobile      svc/mobile             topems-mobile               8070
 gis         svc/gis                topems-gis                  8071
-integration svc/integration        topems-integration          8072
+integration svc/integration        topems-integration           8072
 "
         CORE_SERVICES="iam"
     fi
@@ -516,7 +514,6 @@ get_service_display_name() {
         pm) echo "项目管理" ;;
         erp) echo "ERP系统" ;;
         finance) echo "财务管理" ;;
-        doc) echo "文档管理" ;;
         ai) echo "AI服务" ;;
         hrm) echo "人力资源" ;;
         crm) echo "客户关系" ;;
@@ -530,8 +527,6 @@ get_service_display_name() {
         ehs) echo "环境健康安全" ;;
         rd) echo "研发服务" ;;
         bi) echo "商业智能" ;;
-        report) echo "报表服务" ;;
-        monitor) echo "监控服务" ;;
         portal) echo "门户服务" ;;
         mobile) echo "移动服务" ;;
         gis) echo "地理信息" ;;
@@ -547,7 +542,6 @@ get_service_description() {
         pm) echo "项目管理服务" ;;
         erp) echo "企业资源计划系统" ;;
         finance) echo "财务管理服务" ;;
-        doc) echo "文档管理与协作服务" ;;
         ai) echo "AI智能服务" ;;
         hrm) echo "人力资源管理系统" ;;
         crm) echo "客户关系管理系统" ;;
@@ -561,8 +555,6 @@ get_service_description() {
         ehs) echo "环境健康安全管理" ;;
         rd) echo "研发服务管理" ;;
         bi) echo "商业智能分析服务" ;;
-        report) echo "报表生成服务" ;;
-        monitor) echo "系统监控与告警服务" ;;
         portal) echo "企业门户服务" ;;
         mobile) echo "移动应用服务" ;;
         gis) echo "地理信息服务" ;;

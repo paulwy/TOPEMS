@@ -203,7 +203,6 @@ export const DashboardPage: React.FC = () => {
         quickActions={quickActions}
         quickActionsTitle={t('wms.dashboard_page.quick_actions_title')}
         loading={loading}
-        headerContent={headerContent}
       />
     </PageContainer>
   );

@@ -2,11 +2,11 @@
 
 **版本**: v2
 **更新日期**: 2026-08-14
-**服务地址**: `http://localhost:8062`
+**服务地址**: `http://localhost:8000`（unified-core 统一核心服务）
 
 ---
 
-> **API 路径**: `/api/monitor/`
+> **API 路径**: `/api/core/monitor/`
 
 ## 目录
 
@@ -23,7 +23,7 @@
 
 ## 1. 服务概述
 
-TOPEMS-MONITOR 是系统监控服务，提供健康检查、指标采集、告警管理、性能监控等功能。
+TOPEMS-MONITOR 是系统监控服务（已合并到 unified-core），提供健康检查、指标采集、告警管理、性能监控等功能。
 
 ### 1.1 认证方式
 
@@ -81,7 +81,7 @@ GET /health/details
 ### 2.3 检查所有服务
 
 ```
-GET /api/monitor/health/all
+GET /api/core/monitor/health/all
 ```
 
 **响应示例**：
@@ -104,7 +104,7 @@ GET /api/monitor/health/all
 ### 3.1 获取系统指标
 
 ```
-GET /api/monitor/metrics/system
+GET /api/core/monitor/metrics/system
 ```
 
 **响应示例**：
@@ -124,7 +124,7 @@ GET /api/monitor/metrics/system
 ### 3.2 获取 API 指标
 
 ```
-GET /api/monitor/metrics/api?service=erp&period=24h
+GET /api/core/monitor/metrics/api?service=erp&period=24h
 ```
 
 **响应示例**：
@@ -147,7 +147,7 @@ GET /api/monitor/metrics/api?service=erp&period=24h
 ### 3.3 获取数据库指标
 
 ```
-GET /api/monitor/metrics/database
+GET /api/core/monitor/metrics/database
 ```
 
 **响应示例**：
@@ -168,7 +168,7 @@ GET /api/monitor/metrics/database
 ### 3.4 获取指标趋势
 
 ```
-GET /api/monitor/metrics/trend?metric=cpu&start_time=2026-08-14T00:00:00Z&end_time=2026-08-14T12:00:00Z
+GET /api/core/monitor/metrics/trend?metric=cpu&start_time=2026-08-14T00:00:00Z&end_time=2026-08-14T12:00:00Z
 ```
 
 ---
@@ -178,7 +178,7 @@ GET /api/monitor/metrics/trend?metric=cpu&start_time=2026-08-14T00:00:00Z&end_ti
 ### 4.1 获取告警列表
 
 ```
-GET /api/monitor/alerts?page=1&page_size=20&status=active&severity=critical
+GET /api/core/monitor/alerts?page=1&page_size=20&status=active&severity=critical
 ```
 
 **查询参数**：
@@ -217,13 +217,13 @@ GET /api/monitor/alerts?page=1&page_size=20&status=active&severity=critical
 ### 4.2 获取告警详情
 
 ```
-GET /api/monitor/alerts/{id}
+GET /api/core/monitor/alerts/{id}
 ```
 
 ### 4.3 确认告警
 
 ```
-POST /api/monitor/alerts/{id}/acknowledge
+POST /api/core/monitor/alerts/{id}/acknowledge
 ```
 
 **请求体**：
@@ -238,7 +238,7 @@ POST /api/monitor/alerts/{id}/acknowledge
 ### 4.4 解决告警
 
 ```
-POST /api/monitor/alerts/{id}/resolve
+POST /api/core/monitor/alerts/{id}/resolve
 ```
 
 **请求体**：
@@ -253,13 +253,13 @@ POST /api/monitor/alerts/{id}/resolve
 ### 4.5 获取告警规则
 
 ```
-GET /api/monitor/alerts/rules
+GET /api/core/monitor/alerts/rules
 ```
 
 ### 4.6 创建告警规则
 
 ```
-POST /api/monitor/alerts/rules
+POST /api/core/monitor/alerts/rules
 ```
 
 **请求体**：
@@ -284,7 +284,7 @@ POST /api/monitor/alerts/rules
 ### 5.1 获取服务列表
 
 ```
-GET /api/monitor/services?page=1&page_size=20&status=healthy
+GET /api/core/monitor/services?page=1&page_size=20&status=healthy
 ```
 
 **响应示例**：
@@ -312,13 +312,13 @@ GET /api/monitor/services?page=1&page_size=20&status=healthy
 ### 5.2 获取服务详情
 
 ```
-GET /api/monitor/services/{name}
+GET /api/core/monitor/services/{name}
 ```
 
 ### 5.3 手动检查服务
 
 ```
-POST /api/monitor/services/{name}/check
+POST /api/core/monitor/services/{name}/check
 ```
 
 ---
@@ -328,7 +328,7 @@ POST /api/monitor/services/{name}/check
 ### 6.1 获取性能概览
 
 ```
-GET /api/monitor/performance/overview
+GET /api/core/monitor/performance/overview
 ```
 
 **响应示例**：
@@ -348,7 +348,7 @@ GET /api/monitor/performance/overview
 ### 6.2 获取慢查询
 
 ```
-GET /api/monitor/performance/slow-queries?page=1&page_size=20
+GET /api/core/monitor/performance/slow-queries?page=1&page_size=20
 ```
 
 **响应示例**：
@@ -378,7 +378,7 @@ GET /api/monitor/performance/slow-queries?page=1&page_size=20
 ### 7.1 查询日志
 
 ```
-GET /api/monitor/logs?page=1&page_size=100&service=erp&level=error&start_time=2026-08-14T00:00:00Z
+GET /api/core/monitor/logs?page=1&page_size=100&service=erp&level=error&start_time=2026-08-14T00:00:00Z
 ```
 
 **响应示例**：
@@ -404,7 +404,7 @@ GET /api/monitor/logs?page=1&page_size=100&service=erp&level=error&start_time=20
 ### 7.2 搜索日志
 
 ```
-POST /api/monitor/logs/search
+POST /api/core/monitor/logs/search
 ```
 
 **请求体**：

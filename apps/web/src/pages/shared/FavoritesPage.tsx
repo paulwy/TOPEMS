@@ -40,7 +40,7 @@ import {
   RefreshCw,
   Plus,
 } from 'lucide-react';
-import { PageContainer } from '@/components/common/PageContainerV2';
+import { PageContainer } from '@/components/common/PageContainer';
 import { favoriteApi, searchApi, type Favorite, type SearchResult } from '@/api/shared';
 import { useNotificationStore } from '@/store';
 import { QUERY_KEYS } from '@/lib/reactQuery';

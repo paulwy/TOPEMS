@@ -3,4 +3,5 @@ pub mod events;
 pub mod lims_qms;
 pub mod mes_erp;
 pub mod mes_qms;
+pub mod sync;
 pub mod wms_scm;

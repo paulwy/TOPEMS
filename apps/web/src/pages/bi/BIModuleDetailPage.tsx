@@ -35,7 +35,7 @@ import {
 import { Grid } from '@/components';
 import { useNotificationStore } from '@/store';
 import { LoadingSpinner } from '@topems/shared-components';
-import ExportButton from '@/components/export/ExportButton';
+import { ExportButton } from '@/components/export';
 import { apiLogger, logger } from '@/utils/logger';
 import {
   DashboardTemplate,

@@ -28,11 +28,6 @@ export interface ServicesConfig {
   migration: string;
   file: string;
   jaeger: string;
-  // [已整合] 统一服务
-  communication: string;
-  manufacturing: string;
-  qualityAssurance: string;
-  analytics: string;
   // 独立服务路径
   mes: string;
   pdm: string;
@@ -40,7 +35,6 @@ export interface ServicesConfig {
   lims: string;
   ehs: string;
   bi: string;
-  report: string;
   monitor: string;
   // 统一核心服务
   core: string;
@@ -127,11 +121,10 @@ declare global {
     readonly VITE_LIMS_SERVICE_URL: string;
     readonly VITE_PDM_SERVICE_URL: string;
     readonly VITE_QMS_SERVICE_URL: string;
-    readonly VITE_RS_SERVICE_URL: string;
+    readonly VITE_RD_SERVICE_URL: string;
     readonly VITE_SRM_SERVICE_URL: string;
     readonly VITE_ERP_SERVICE_URL: string;
     readonly VITE_NOTIFICATION_SERVICE_URL: string;
-    readonly VITE_REPORT_SERVICE_URL: string;
     readonly VITE_PM_SERVICE_URL: string;
     readonly VITE_ENABLE_DEBUG_MODE: string;
     readonly VITE_ENABLE_HOT_RELOAD: string;

@@ -1,6 +1,7 @@
 import { apiClient } from '../client';
 import type { ApiResponse } from '../client';
 
+import { crmDashboardApi } from './dashboard';
 import { customerApi, tagApi } from './customer';
 import { contactApi } from './contact';
 import { opportunityApi } from './opportunity';
@@ -14,6 +15,7 @@ import { returnsApi } from './returns';
 export * from './types';
 
 export { customerApi, tagApi } from './customer';
+export { crmDashboardApi } from './dashboard';
 export { contactApi } from './contact';
 export { opportunityApi } from './opportunity';
 export { interactionApi } from './interaction';
@@ -24,6 +26,7 @@ export { customerSegmentationApi, customerRecommendationApi } from './segmentati
 export { returnsApi } from './returns';
 
 export const crmApi = {
+  dashboard: crmDashboardApi,
   customers: customerApi,
   tags: tagApi,
   contacts: contactApi,

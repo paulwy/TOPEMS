@@ -26,6 +26,9 @@ import { navigationRegistryV2 } from '../../lib/navigation';
 import type { NavItem } from '../../lib/navigation/types';
 import { usePermission } from '../../hooks/usePermission';
 import { DASHBOARD_PATHS } from '@/routes/dashboard';
+// V36.0 Phase 6: 路由级 hover 预加载
+import { prefetchOnHover } from '@/microfrontend/RemoteLoader';
+import { REMOTE_MODULES } from '@/microfrontend/config';
 
 function getNavigablePath(path: string): string | null {
   if (!path) return null;
@@ -38,6 +41,20 @@ function getNavigablePath(path: string): string | null {
     return null;
   }
   return path;
+}
+
+/**
+ * V36.0: 根据导航路径查找远程模块入口 URL
+ * 通过路径前缀匹配 REMOTE_MODULES 的 basePath
+ */
+function findRemoteEntryByPath(path: string): string | null {
+  if (!path) return null;
+  for (const mod of REMOTE_MODULES) {
+    if (mod.routePrefix && path.startsWith(mod.routePrefix)) {
+      return mod.entry;
+    }
+  }
+  return null;
 }
 
 interface SidebarProps {
@@ -111,6 +128,13 @@ export const Sidebar: React.FC<SidebarProps> = ({ open, onClose, pluginCode }) =
     return (
       <div key={item.code}>
         <ListItem
+          onMouseEnter={() => {
+            // V36.0: hover 时预加载远程模块入口
+            if (item.path) {
+              const entry = findRemoteEntryByPath(item.path);
+              if (entry) prefetchOnHover(entry);
+            }
+          }}
           onClick={() => {
             if (hasChildren) {
               toggleExpand(item.code);

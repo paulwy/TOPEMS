@@ -14,7 +14,7 @@ const services: ServiceInfo[] = [
   { key: 'erp', name: '企业资源', port: 8010 },
   { key: 'hrm', name: '人力资源', port: 8020 },
   { key: 'crm', name: '客户关系', port: 8029 },
-  { key: 'rs', name: '研发管理', port: 8053 },
+  { key: 'rd', name: '研发管理', port: 8053 },
   { key: 'mes', name: '生产执行', port: 8030 },
   { key: 'pdm', name: '产品数据', port: 8031 },
   { key: 'qms', name: '质量管理', port: 8050 },
@@ -24,11 +24,10 @@ const services: ServiceInfo[] = [
   { key: 'srm', name: '供应商管理', port: 8042 },
   { key: 'wms', name: '仓储管理', port: 8041 },
   { key: 'bi', name: '商业智能', port: 8060 },
-  { key: 'report', name: '报表服务', port: 8061 },
-  { key: 'monitor', name: '系统监控', port: 8062 },
   { key: 'portal', name: '企业门户', port: 8063 },
   { key: 'gis', name: '地理信息', port: 8071 },
   { key: 'mobile', name: '移动服务', port: 8070 },
+  { key: 'finance', name: '财务管理', port: 8011 },
 ];
 
 export const useServiceStatus = (autoRefreshInterval: number = PLUGIN_TIMEOUT.DEFAULT) => {

@@ -390,7 +390,7 @@ impl MesErpSyncService {
 
     async fn fetch_erp_order(
         &self,
-        tenant_id: Uuid,
+        _tenant_id: Uuid,
         erp_order_id: Uuid,
     ) -> Result<ErpProductionOrderData, String> {
         let client = reqwest::Client::new();
@@ -478,7 +478,7 @@ impl MesErpSyncService {
 
     async fn fetch_mes_order_progress(
         &self,
-        tenant_id: Uuid,
+        _tenant_id: Uuid,
         mes_order_id: Uuid,
     ) -> Result<MesOrderProgress, String> {
         let client = reqwest::Client::new();

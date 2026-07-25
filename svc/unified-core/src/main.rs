@@ -27,117 +27,83 @@ use std::net::SocketAddr;
 
 use axum_prometheus::PrometheusMetricLayer;
 use reqwest::Client;
-use sqlx::PgPool;
 
-use topems_shared::init_service_telemetry;
+use topems_shared::init_telemetry;
 use topems_shared::{
     create_cors_layer, AuditLoggerConfig, AuditLoggerMiddleware, AuthState, BodyLimitConfig,
     BodyLimitMiddleware, CompressionConfig, CompressionMiddleware, SecurityHeadersConfig,
-    SecurityHeadersLayer, SimpleHealthConfig, TelemetryExt,
+    SecurityHeadersLayer, SimpleHealthConfig, SystemMetrics, TelemetryExt,
 };
-use utoipa::OpenApi;
+use utoipa::{Modify, OpenApi};
+
+use crate::modules::isolation::{create_default_module_configs, ModuleIsolationState};
 
 pub use shared::*;
-
-// ==================== 应用状态 ====================
-
-#[derive(Clone)]
-pub struct AppState {
-    pub auth_state: std::sync::Arc<AuthState>,
-    pub pool: PgPool,
-    pub health_config: SimpleHealthConfig,
-    pub ws_state: std::sync::Arc<modules::communication::ws::WsState>,
-    pub http_client: Client,
-    pub rate_limit_middleware: std::sync::Arc<middleware::rate_limit::RateLimitMiddleware>,
-    pub versioning_middleware: std::sync::Arc<middleware::versioning::VersionMiddleware>,
-    pub security_headers_layer: std::sync::Arc<SecurityHeadersLayer>,
-    pub compression_middleware: std::sync::Arc<CompressionMiddleware>,
-    pub body_limit_middleware: std::sync::Arc<BodyLimitMiddleware>,
-    pub audit_logger_middleware: std::sync::Arc<AuditLoggerMiddleware>,
-    pub input_validation_config: middleware::input_validation::InputValidationConfig,
-}
-
-impl axum::extract::FromRef<AppState> for AuthState {
-    fn from_ref(state: &AppState) -> Self {
-        (*state.auth_state).clone()
-    }
-}
-
-impl axum::extract::FromRef<AppState> for std::sync::Arc<modules::communication::ws::WsState> {
-    fn from_ref(state: &AppState) -> Self {
-        state.ws_state.clone()
-    }
-}
-
-impl axum::extract::FromRef<AppState>
-    for std::sync::Arc<middleware::rate_limit::RateLimitMiddleware>
-{
-    fn from_ref(state: &AppState) -> Self {
-        state.rate_limit_middleware.clone()
-    }
-}
-
-impl axum::extract::FromRef<AppState> for std::sync::Arc<SecurityHeadersLayer> {
-    fn from_ref(state: &AppState) -> Self {
-        state.security_headers_layer.clone()
-    }
-}
-
-impl axum::extract::FromRef<AppState> for std::sync::Arc<CompressionMiddleware> {
-    fn from_ref(state: &AppState) -> Self {
-        state.compression_middleware.clone()
-    }
-}
-
-impl axum::extract::FromRef<AppState> for std::sync::Arc<BodyLimitMiddleware> {
-    fn from_ref(state: &AppState) -> Self {
-        state.body_limit_middleware.clone()
-    }
-}
-
-impl axum::extract::FromRef<AppState> for middleware::input_validation::InputValidationConfig {
-    fn from_ref(state: &AppState) -> Self {
-        state.input_validation_config.clone()
-    }
-}
-
-impl axum::extract::FromRef<AppState> for std::sync::Arc<AuditLoggerMiddleware> {
-    fn from_ref(state: &AppState) -> Self {
-        state.audit_logger_middleware.clone()
-    }
-}
 
 #[derive(OpenApi)]
 #[openapi(
     tags(
-        (name = "IAM", description = "身份与访问管理"),
-        (name = "Flow", description = "工作流"),
-        (name = "File", description = "文件管理"),
-        (name = "Communication", description = "通讯"),
-        (name = "IM", description = "即时消息"),
-        (name = "Notification", description = "通知"),
-        (name = "Master", description = "主数据"),
-        (name = "Migration", description = "数据迁移"),
-        (name = "Plugin", description = "插件管理"),
-        (name = "Search", description = "搜索"),
-        (name = "Health", description = "健康检查"),
+        (name = "IAM", description = "身份与访问管理 - 用户、角色、权限管理"),
+        (name = "IAM-Auth", description = "认证接口 - 登录、注册、Token刷新"),
+        (name = "IAM-Role", description = "角色管理 - 角色CRUD"),
+        (name = "IAM-Permission", description = "权限管理 - 权限验证、权限查询"),
+        (name = "IAM-Position", description = "岗位管理 - 岗位CRUD、用户岗位关联"),
+        (name = "Flow", description = "工作流 - 流程定义、实例、任务管理"),
+        (name = "Flow-Task", description = "任务管理 - 任务查询、认领、审批"),
+        (name = "Flow-Workflow", description = "流程管理 - 流程定义CRUD"),
+        (name = "Flow-Instance", description = "实例管理 - 流程实例CRUD"),
+        (name = "Flow-Approval", description = "审批管理 - 审批任务处理"),
+        (name = "Flow-Template", description = "模板管理 - 流程模板CRUD"),
+        (name = "Flow-History", description = "历史记录 - 流程历史查询"),
+        (name = "Flow-Monitor", description = "流程监控 - 运行监控、统计分析"),
+        (name = "File", description = "文件管理 - 文件上传、下载、共享"),
+        (name = "File-Folder", description = "文件夹管理 - 文件夹CRUD"),
+        (name = "Communication", description = "通讯服务 - 邮件、通知"),
+        (name = "IM", description = "即时消息 - WebSocket实时消息"),
+        (name = "Notification", description = "通知服务 - 通知管理"),
+        (name = "Master", description = "主数据 - 基础数据管理"),
+        (name = "Migration", description = "数据迁移 - 数据同步"),
+        (name = "Plugin", description = "插件管理 - 插件注册、运行时管理"),
+        (name = "Search", description = "搜索服务 - 全文搜索"),
+        (name = "Health", description = "健康检查 - 服务健康状态"),
+        (name = "Monitor", description = "监控服务 - 指标、告警"),
+        (name = "Tenant", description = "租户管理 - 租户CRUD"),
     ),
     info(
         title = "TOPEMS-unified-core API",
         version = "1.0.0",
-        description = "TOPEMS 统一核心服务 - IAM、Flow、File、Communication、IM、Notification、Master 等核心模块",
+        description = "TOPEMS 统一核心服务 API 文档\n\n包含以下核心模块:\n- **IAM**: 用户管理、角色管理、权限验证、认证授权\n- **Flow**: 工作流引擎、任务管理、审批流程\n- **File**: 文件上传下载、文件夹管理、权限控制\n- **Communication**: 邮件发送、通知服务\n- **IM**: 即时消息、WebSocket实时通信\n- **Master**: 主数据管理\n- **Plugin**: 插件系统管理\n- **Monitor**: 监控指标、健康检查\n\n所有接口路径前缀: `/api/core`\n认证方式: Bearer Token (JWT)",
     ),
     servers(
         (url = "http://localhost:8000", description = "本地开发环境"),
+        (url = "https://api.topems.local", description = "测试环境"),
+    ),
+    security(
+        ("BearerAuth" = [])
     )
 )]
 struct ApiDoc;
+
+impl Modify for ApiDoc {
+    fn modify(&self, openapi: &mut utoipa::openapi::OpenApi) {
+        let components = openapi.components.get_or_insert_with(Default::default);
+        components.security_schemes.insert(
+            "BearerAuth".to_string(),
+            utoipa::openapi::security::SecurityScheme::Http(
+                utoipa::openapi::security::HttpBuilder::new()
+                    .scheme(utoipa::openapi::security::HttpAuthScheme::Bearer)
+                    .bearer_format("JWT")
+                    .build(),
+            ),
+        );
+    }
+}
 
 // ==================== 主入口 ====================
 
 #[tokio::main]
 async fn main() {
-    let _telemetry_guard = init_service_telemetry!("topems-unified-core");
+    let _telemetry_guard = init_telemetry("topems-unified-core");
 
     tracing::info!("🚀 TOPEMS Unified Core Platform starting...");
     tracing::info!(
@@ -207,25 +173,25 @@ async fn main() {
     modules::help::init_database(&pool)
         .await
         .expect("Failed to init help database");
-    modules::sync::init_database(&pool)
-        .await
-        .expect("Failed to init sync database");
     modules::login_log::init_database(&pool)
         .await
         .expect("Failed to init login_log database");
     modules::search::init_database(&pool)
         .await
         .expect("Failed to init search database");
+    modules::doc::services::init_database(&pool)
+        .await
+        .expect("Failed to init doc database");
 
     // 初始化系统基础字典数据
     modules::dict::seed::seed_dict_data(&pool)
         .await
         .expect("Failed to seed dict data");
 
-    let auth_state = std::sync::Arc::new(AuthState::from_env());
+    let auth_state = AuthState::from_env();
     let health_config = SimpleHealthConfig::new("topems-unified-core").with_db(pool.clone());
     let ws_state =
-        std::sync::Arc::new(modules::communication::ws::WsState::new(auth_state.clone()));
+        std::sync::Arc::new(modules::communication::ws::WsState::new(std::sync::Arc::new(auth_state.clone())));
     let http_client = Client::new();
 
     let rate_limit_config = middleware::rate_limit::RateLimitConfig::default();
@@ -266,6 +232,19 @@ async fn main() {
     // Clone pool for background tasks before it is moved into AppState
     let pool_for_heartbeat = pool.clone();
 
+    let metrics = std::sync::Arc::new(SystemMetrics::new());
+
+    let module_isolation = match ModuleIsolationState::new(
+        &database_url,
+        create_default_module_configs(),
+    ).await {
+        Ok(isolation) => Some(std::sync::Arc::new(isolation)),
+        Err(e) => {
+            tracing::warn!("Failed to initialize module isolation: {}", e);
+            None
+        }
+    };
+
     let state = AppState {
         auth_state,
         pool,
@@ -275,10 +254,12 @@ async fn main() {
         rate_limit_middleware,
         versioning_middleware,
         security_headers_layer,
+        module_isolation,
         compression_middleware,
         body_limit_middleware: body_limit_mw,
         audit_logger_middleware: audit_logger_mw,
         input_validation_config,
+        metrics,
     };
 
     // Spawn background task to cleanup timeout WebSocket connections

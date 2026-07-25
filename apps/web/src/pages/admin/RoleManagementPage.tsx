@@ -3,20 +3,20 @@ import {
   DialogTitle,
   DialogContent,
   DialogActions,
-  TextField,
   Box,
   Typography,
-  IconButton,
-  Chip,
   Button,
+  Chip,
 } from '@mui/material';
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useCallback } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { QUERY_KEYS } from '@/lib/reactQuery';
-import { Shield, Plus, Trash2, Edit, Key, CheckCircle } from 'lucide-react';
-import { authApi, type Role, type Permission } from '@/api/iam';
-import { useNotificationStore } from '../../store';
-import { ListPageTemplate, type ColumnDef } from '@/components/templates';
+import { Key, CheckCircle } from 'lucide-react';
+import { roleApi, permissionApi, type Role, type Permission } from '@/api/iam';
+import { useNotificationStore } from '@/store';
+import CrudPage, { type CrudApiAdapter } from '@/components/templates/CrudPage';
+import type { RowAction } from '@/components/templates/list/types';
+import { roleSchema } from '@/schemas/iam';
 import { extractErrorMessage } from '@/utils/errors';
 import { PageContainer } from '@/components/common';
 
@@ -28,32 +28,52 @@ const RoleManagementPage: React.FC<RoleManagementPageProps> = ({ onNavigate: _on
   const addNotification = useNotificationStore((state) => state.addNotification);
   const queryClient = useQueryClient();
 
-  const [searchQuery, setSearchQuery] = useState('');
-  const [showCreateModal, setShowCreateModal] = useState(false);
-  const [showEditModal, setShowEditModal] = useState(false);
   const [showPermissionsModal, setShowPermissionsModal] = useState(false);
   const [selectedRole, setSelectedRole] = useState<Role | null>(null);
 
-  const [newRole, setNewRole] = useState({
-    name: '',
-    description: '',
-  });
-
-  const rolesQuery = useQuery({
-    queryKey: QUERY_KEYS.IAM.ROLES,
-    queryFn: async () => {
-      const res = await authApi.listRoles();
-      if (res.success && res.data) {
+  const roleAdapter: CrudApiAdapter<Role> = useMemo(
+    () => ({
+      list: async () => {
+        const res = await roleApi.listRoles();
+        if (res.success && res.data) {
+          return { data: res.data, total: res.data.length };
+        }
+        throw new Error(res.message || '加载数据失败');
+      },
+      create: async (data) => {
+        const res = await roleApi.createRole({
+          name: data.name as string,
+          description: data.description as string,
+        });
+        if (!res.success) {
+          throw new Error(res.message || '创建角色失败');
+        }
         return res.data;
-      }
-      throw new Error(res.message || '加载数据失败');
-    },
-  });
+      },
+      update: async (id, data) => {
+        const res = await roleApi.updateRole(id, {
+          name: data.name as string,
+          description: data.description as string,
+        });
+        if (!res.success) {
+          throw new Error(res.message || '更新角色失败');
+        }
+        return res.data;
+      },
+      delete: async (id) => {
+        const res = await roleApi.deleteRole(id);
+        if (!res.success) {
+          throw new Error(res.message || '删除角色失败');
+        }
+      },
+    }),
+    []
+  );
 
   const permissionsQuery = useQuery({
     queryKey: QUERY_KEYS.IAM.PERMISSIONS,
     queryFn: async () => {
-      const res = await authApi.listPermissions();
+      const res = await permissionApi.listPermissions();
       if (res.success && res.data) {
         return res.data;
       }
@@ -65,7 +85,7 @@ const RoleManagementPage: React.FC<RoleManagementPageProps> = ({ onNavigate: _on
     queryKey: QUERY_KEYS.IAM.ROLE_PERMISSIONS(selectedRole?.id ?? ''),
     queryFn: async () => {
       if (!selectedRole) return [];
-      const res = await authApi.getRolePermissions(selectedRole.id);
+      const res = await roleApi.getRolePermissions(selectedRole.id);
       if (res.success && res.data) {
         return res.data;
       }
@@ -74,100 +94,12 @@ const RoleManagementPage: React.FC<RoleManagementPageProps> = ({ onNavigate: _on
     enabled: showPermissionsModal && !!selectedRole,
   });
 
-  const roles = rolesQuery.data || [];
   const allPermissions = permissionsQuery.data || [];
   const rolePermissions = rolePermissionsQuery.data || [];
-  const loading = rolesQuery.isLoading;
-  const error = rolesQuery.error ? extractErrorMessage(rolesQuery.error, '加载数据失败') : null;
-
-  const createRoleMutation = useMutation({
-    mutationFn: async (data: { name: string; description: string }) => {
-      const res = await authApi.createRole(data);
-      if (!res.success) {
-        throw new Error(res.message || '创建角色失败');
-      }
-      return res.data;
-    },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: QUERY_KEYS.IAM.ROLES });
-      addNotification({
-        title: '成功',
-        message: '角色创建成功',
-        type: 'success',
-      });
-      setShowCreateModal(false);
-      setNewRole({ name: '', description: '' });
-    },
-    onError: (err: unknown) => {
-      addNotification({
-        title: '失败',
-        message: extractErrorMessage(err, '创建角色失败'),
-        type: 'error',
-      });
-    },
-  });
-
-  const updateRoleMutation = useMutation({
-    mutationFn: async ({
-      id,
-      data,
-    }: {
-      id: string;
-      data: { name: string; description?: string };
-    }) => {
-      const res = await authApi.updateRole(id, data);
-      if (!res.success) {
-        throw new Error(res.message || '更新角色失败');
-      }
-      return res.data;
-    },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: QUERY_KEYS.IAM.ROLES });
-      addNotification({
-        title: '成功',
-        message: '角色更新成功',
-        type: 'success',
-      });
-      setShowEditModal(false);
-      setSelectedRole(null);
-    },
-    onError: (err: unknown) => {
-      addNotification({
-        title: '失败',
-        message: extractErrorMessage(err, '更新角色失败'),
-        type: 'error',
-      });
-    },
-  });
-
-  const deleteRoleMutation = useMutation({
-    mutationFn: async (roleId: string) => {
-      const res = await authApi.deleteRole(roleId);
-      if (!res.success) {
-        throw new Error(res.message || '删除角色失败');
-      }
-      return res.data;
-    },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: QUERY_KEYS.IAM.ROLES });
-      addNotification({
-        title: '成功',
-        message: '角色删除成功',
-        type: 'success',
-      });
-    },
-    onError: (err: unknown) => {
-      addNotification({
-        title: '失败',
-        message: extractErrorMessage(err, '删除角色失败'),
-        type: 'error',
-      });
-    },
-  });
 
   const addPermissionMutation = useMutation({
     mutationFn: async ({ roleId, permissionId }: { roleId: string; permissionId: string }) => {
-      const res = await authApi.addRolePermission(roleId, permissionId);
+      const res = await roleApi.addRolePermission(roleId, permissionId);
       if (!res.success) {
         throw new Error(res.message || '添加权限失败');
       }
@@ -196,7 +128,7 @@ const RoleManagementPage: React.FC<RoleManagementPageProps> = ({ onNavigate: _on
 
   const removePermissionMutation = useMutation({
     mutationFn: async ({ roleId, permissionId }: { roleId: string; permissionId: string }) => {
-      const res = await authApi.removeRolePermission(roleId, permissionId);
+      const res = await roleApi.removeRolePermission(roleId, permissionId);
       if (!res.success) {
         throw new Error(res.message || '移除权限失败');
       }
@@ -223,276 +155,47 @@ const RoleManagementPage: React.FC<RoleManagementPageProps> = ({ onNavigate: _on
     },
   });
 
-  const handleCreateRole = (e: React.FormEvent) => {
-    e.preventDefault();
-    createRoleMutation.mutate(newRole);
-  };
-
-  const handleEditRole = (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!selectedRole) return;
-    updateRoleMutation.mutate({
-      id: selectedRole.id,
-      data: {
-        name: selectedRole.name,
-        description: selectedRole.description,
-      },
-    });
-  };
-
-  const handleDeleteRole = (roleId: string) => {
-    if (!confirm('确定要删除这个角色吗？删除后无法恢复。')) return;
-    deleteRoleMutation.mutate(roleId);
-  };
-
-  const handleAddPermission = (roleId: string, permissionId: string) => {
-    addPermissionMutation.mutate({ roleId, permissionId });
-  };
-
-  const handleRemovePermission = (roleId: string, permissionId: string) => {
-    removePermissionMutation.mutate({ roleId, permissionId });
-  };
-
-  const openPermissionsModal = (role: Role) => {
-    setSelectedRole(role);
-    setShowPermissionsModal(true);
-  };
-
-  const loadData = () => {
-    queryClient.invalidateQueries({ queryKey: QUERY_KEYS.IAM.ROLES });
-  };
-
-  const columns: ColumnDef<Role>[] = useMemo(
-    () => [
-      {
-        id: 'name',
-        label: '角色名称',
-        render: (row) => (
-          <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5 }}>
-            <Box
-              sx={{
-                width: 40,
-                height: 40,
-                borderRadius: 1,
-                bgcolor: 'primary.light',
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-              }}
-            >
-              <Shield
-                size={20}
-                color='primary.light'
-              />
-            </Box>
-            <Box>
-              <Typography
-                variant='body2'
-                sx={{ fontWeight: 500 }}
-              >
-                {row.name}
-              </Typography>
-              {row.description && (
-                <Typography
-                  variant='caption'
-                  color='text.secondary'
-                >
-                  {row.description}
-                </Typography>
-              )}
-            </Box>
-          </Box>
-        ),
-      },
-      {
-        id: 'created_at',
-        label: '创建时间',
-        render: (row) => (
-          <Typography
-            variant='body2'
-            color='text.secondary'
-          >
-            {new Date(row.created_at).toLocaleString('zh-CN')}
-          </Typography>
-        ),
-      },
-    ],
-
-    []
+  const handleAddPermission = useCallback(
+    (roleId: string, permissionId: string) => {
+      addPermissionMutation.mutate({ roleId, permissionId });
+    },
+    [addPermissionMutation]
   );
 
-  const rowActions = useMemo(
+  const handleRemovePermission = useCallback(
+    (roleId: string, permissionId: string) => {
+      removePermissionMutation.mutate({ roleId, permissionId });
+    },
+    [removePermissionMutation]
+  );
+
+  const openPermissionsModal = useCallback((role: Role) => {
+    setSelectedRole(role);
+    setShowPermissionsModal(true);
+  }, []);
+
+  const customRowActions: RowAction[] = useMemo(
     () => [
-      {
-        label: '编辑',
-        icon: <Edit size={16} />,
-        onClick: (row: Role) => {
-          setSelectedRole(row);
-          setShowEditModal(true);
-        },
-      },
       {
         label: '管理权限',
         icon: <Key size={16} />,
-        onClick: (row: Role) => openPermissionsModal(row),
-      },
-      {
-        label: '删除',
-        icon: <Trash2 size={16} />,
-        color: 'error' as const,
-        onClick: (row: Role) => handleDeleteRole(row.id),
-        confirm: true,
-        confirmMessage: '确定要删除这个角色吗？删除后无法恢复。',
+        onClick: (row: Record<string, unknown>) => openPermissionsModal(row as Role),
       },
     ],
-
-    []
+    [openPermissionsModal]
   );
-
-  // Filter roles based on search
-  const filteredRoles = useMemo(() => {
-    if (!searchQuery) return roles;
-    const query = searchQuery.toLowerCase();
-    return roles.filter(
-      (role) =>
-        role.name.toLowerCase().includes(query) || role.description?.toLowerCase().includes(query)
-    );
-  }, [roles, searchQuery]);
 
   return (
     <PageContainer
       title='角色管理'
       subtitle='管理用户角色、权限配置'
     >
-      <ListPageTemplate
-        title=''
-        subtitle=''
-        columns={columns}
-        data={filteredRoles}
-        loading={loading}
-        error={error || undefined}
-        rowActions={rowActions}
-        searchable
-        searchPlaceholder='搜索角色名称或描述...'
-        searchValue={searchQuery}
-        onSearch={setSearchQuery}
-        actions={[
-          {
-            label: '创建角色',
-            icon: <Plus size={20} />,
-            onClick: () => setShowCreateModal(true),
-          },
-        ]}
-        onRefresh={loadData}
-        backButton={{
-          href: '/dashboard',
-        }}
+      <CrudPage
+        schema={roleSchema}
+        apiAdapter={roleAdapter}
+        customRowActions={customRowActions}
+        breadcrumbs={[{ label: 'Admin' }, { label: '角色管理' }]}
       />
-
-      {/* 创建角色对话框 */}
-      <Dialog
-        open={showCreateModal}
-        onClose={() => setShowCreateModal(false)}
-        maxWidth='sm'
-        fullWidth
-      >
-        <DialogTitle>创建新角色</DialogTitle>
-        <form onSubmit={handleCreateRole}>
-          <DialogContent>
-            <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2, pt: 1 }}>
-              <TextField
-                label='角色名称 *'
-                required
-                value={newRole.name}
-                onChange={(e) => setNewRole({ ...newRole, name: e.target.value })}
-                placeholder='例如：管理员、普通用户'
-                fullWidth
-              />
-              <TextField
-                label='描述'
-                multiline
-                rows={3}
-                value={newRole.description}
-                onChange={(e) => setNewRole({ ...newRole, description: e.target.value })}
-                placeholder='描述这个角色的用途'
-                fullWidth
-              />
-            </Box>
-          </DialogContent>
-          <DialogActions>
-            <Button
-              onClick={() => {
-                setShowCreateModal(false);
-                setNewRole({ name: '', description: '' });
-              }}
-            >
-              取消
-            </Button>
-            <Button
-              type='submit'
-              variant='contained'
-            >
-              创建
-            </Button>
-          </DialogActions>
-        </form>
-      </Dialog>
-
-      {/* 编辑角色对话框 */}
-      <Dialog
-        open={showEditModal}
-        onClose={() => setShowEditModal(false)}
-        maxWidth='sm'
-        fullWidth
-      >
-        <DialogTitle>编辑角色</DialogTitle>
-        {selectedRole && (
-          <form onSubmit={handleEditRole}>
-            <DialogContent>
-              <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2, pt: 1 }}>
-                <TextField
-                  label='角色名称 *'
-                  required
-                  value={selectedRole.name}
-                  onChange={(e) => setSelectedRole({ ...selectedRole, name: e.target.value })}
-                  placeholder='例如：管理员、普通用户'
-                  fullWidth
-                />
-                <TextField
-                  label='描述'
-                  multiline
-                  rows={3}
-                  value={selectedRole.description || ''}
-                  onChange={(e) =>
-                    setSelectedRole({
-                      ...selectedRole,
-                      description: e.target.value,
-                    })
-                  }
-                  placeholder='描述这个角色的用途'
-                  fullWidth
-                />
-              </Box>
-            </DialogContent>
-            <DialogActions>
-              <Button
-                onClick={() => {
-                  setShowEditModal(false);
-                  setSelectedRole(null);
-                }}
-              >
-                取消
-              </Button>
-              <Button
-                type='submit'
-                variant='contained'
-              >
-                保存
-              </Button>
-            </DialogActions>
-          </form>
-        )}
-      </Dialog>
 
       {/* 权限管理对话框 */}
       <Dialog

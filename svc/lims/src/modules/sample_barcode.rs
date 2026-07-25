@@ -1,13 +1,11 @@
 use axum::{
     extract::State,
-    routing::{delete, get, post},
-    Extension, Json, Router,
+    routing::{delete, get, post}, Json, Router,
 };
 use serde::{Deserialize, Serialize};
 use sqlx::{types::Uuid, Row};
 use topems_shared::ApiResponse;
 
-use crate::middleware::tenant::TenantContext;
 use crate::shared::AppState;
 
 pub fn create_routes() -> Router<AppState> {

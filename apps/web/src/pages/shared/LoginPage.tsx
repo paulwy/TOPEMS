@@ -1,6 +1,7 @@
 import React, { useState, useMemo } from 'react';
 import { useMutation } from '@tanstack/react-query';
 import { apiLogger } from '@/utils/logger';
+import { authApi } from '@/api/iam';
 import { useAuth } from '@/hooks/useAuth';
 import { useNavigate } from 'react-router-dom';
 import { useForm } from 'react-hook-form';
@@ -98,13 +99,27 @@ const LoginPage: React.FC<LoginPageProps> = ({ onLogin }) => {
 
   const loading = loginMutation.isPending;
 
-  const handleSubmit = (values: LoginFormValues) => {
+  const handleSubmit = async (values: LoginFormValues) => {
     if (isRegister) {
-      addNotification({
-        title: '提示',
-        message: '注册功能已关闭,请联系管理员获取账号',
-        type: 'info',
-      });
+      try {
+        await authApi.register({
+          username: values.username,
+          email: values.email || '',
+          password: values.password,
+        });
+        addNotification({
+          title: '注册成功',
+          message: '请登录',
+          type: 'success',
+        });
+        setIsRegister(false);
+      } catch (err) {
+        addNotification({
+          title: '注册失败',
+          message: err instanceof Error ? err.message : '未知错误',
+          type: 'error',
+        });
+      }
       return;
     }
     loginMutation.mutate(values);

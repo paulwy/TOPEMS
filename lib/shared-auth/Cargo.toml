@@ -1,0 +1,42 @@
+[package]
+name = "topems-shared-auth"
+version.workspace = true
+edition.workspace = true
+authors.workspace = true
+description = "TOPEMS shared auth library - authentication, authorization, middleware"
+
+[dependencies]
+topems-shared-core = { path = "../shared-core" }
+topems-shared-event = { path = "../shared-event" }
+
+# 认证依赖
+jsonwebtoken.workspace = true
+chrono.workspace = true
+serde.workspace = true
+serde_json.workspace = true
+uuid.workspace = true
+axum.workspace = true
+tower.workspace = true
+tokio.workspace = true
+tracing.workspace = true
+async-trait.workspace = true
+regex.workspace = true
+thiserror.workspace = true
+reqwest = { version = "0.12", features = ["json"] }
+
+# 数据库依赖（permission/middleware/audit_logger 使用）
+sqlx.workspace = true
+
+# 安全依赖
+sha2 = "0.10"
+hmac = "0.12"
+hex = "0.4"
+base64 = "0.22"
+aes-gcm = "0.10"
+
+# 限流依赖
+parking_lot = "0.12"
+dashmap.workspace = true
+
+# 其他
+rand = "0.8"

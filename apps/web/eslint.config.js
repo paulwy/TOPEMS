@@ -11,8 +11,12 @@ import checkFile from 'eslint-plugin-check-file';
 import jsxA11y from 'eslint-plugin-jsx-a11y';
 import { dirname, join } from 'path';
 import { fileURLToPath } from 'url';
+import { createRequire } from 'module';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
+const require = createRequire(import.meta.url);
+
+const topemsDesignPlugin = require('./scripts/eslint-plugin-topems-design.cjs');
 
 export default [
   {
@@ -42,6 +46,7 @@ export default [
       unicorn,
       'check-file': checkFile,
       'jsx-a11y': jsxA11y,
+      'topems-design': topemsDesignPlugin,
     },
     settings: {
       react: {
@@ -267,6 +272,10 @@ export default [
         },
       ],
       'check-file/folder-naming-convention': 'off',
+
+      // TOPEMS Design System 规则 - 引导使用 design tokens
+      'topems-design/no-hardcoded-colors': 'warn',
+      'topems-design/no-hardcoded-spacing': 'warn',
     },
   },
   {

@@ -1,10 +1,3 @@
-/**
- * 移动端消息通知页面
- *
- * @module pages/mobile
- * @path /mobile/notifications
- */
-
 import React, { useState, useMemo, useCallback } from 'react';
 import {
   Box,
@@ -21,7 +14,6 @@ import {
   Button,
   TextField,
   InputAdornment,
-  Badge,
   Tabs,
   Tab,
   Paper,
@@ -35,10 +27,7 @@ import {
   CheckCheck,
   Trash2,
   Search,
-  Filter,
   MessageSquare,
-  AlertCircle,
-  Info,
   Clock,
   Settings,
   Volume2,
@@ -46,9 +35,10 @@ import {
 } from 'lucide-react';
 
 import { PageContainer } from '@/components/common';
-import { ListPageTemplate, type ColumnDef } from '@/components/templates';
+import CrudPage from '@/components/templates/CrudPage';
+import type { CrudApiAdapter, RowAction } from '@/components/templates/CrudPage';
 import { useNotificationStore } from '../../store';
-import { extractErrorMessage } from '@/utils/errors';
+import { notificationSchema } from '@/schemas/mobile';
 
 type NotificationType = 'system' | 'approval' | 'task' | 'message';
 type NotificationPriority = 'high' | 'medium' | 'low';
@@ -57,86 +47,85 @@ type TabType = 'all' | 'unread' | 'system' | 'approval' | 'task';
 interface Notification {
   id: string;
   title: string;
-  message: string;
+  content: string;
   type: NotificationType;
   priority: NotificationPriority;
-  isRead: boolean;
-  createdAt: string;
-  avatar?: string;
+  read: boolean;
+  created_at: string;
 }
 
 const MOCK_NOTIFICATIONS: Notification[] = [
   {
     id: 'notif-001',
     title: '审批通过',
-    message: '您的请假申请（2024-01-15 至 2024-01-17）已通过审批',
+    content: '您的请假申请（2024-01-15 至 2024-01-17）已通过审批',
     type: 'approval',
     priority: 'high',
-    isRead: false,
-    createdAt: '10分钟前',
+    read: false,
+    created_at: '10分钟前',
   },
   {
     id: 'notif-002',
     title: '新任务通知',
-    message: '您有一个新的生产任务等待处理：订单 #20240115001',
+    content: '您有一个新的生产任务等待处理：订单 #20240115001',
     type: 'task',
     priority: 'medium',
-    isRead: false,
-    createdAt: '30分钟前',
+    read: false,
+    created_at: '30分钟前',
   },
   {
     id: 'notif-003',
     title: '库存预警',
-    message: '原材料「钢材 A3」库存低于安全库存，请及时补货',
+    content: '原材料「钢材 A3」库存低于安全库存，请及时补货',
     type: 'system',
     priority: 'high',
-    isRead: true,
-    createdAt: '1小时前',
+    read: true,
+    created_at: '1小时前',
   },
   {
     id: 'notif-004',
     title: '消息提醒',
-    message: '张三：您好，关于上周的报表有什么问题可以咨询我',
+    content: '张三：您好，关于上周的报表有什么问题可以咨询我',
     type: 'message',
     priority: 'low',
-    isRead: true,
-    createdAt: '2小时前',
+    read: true,
+    created_at: '2小时前',
   },
   {
     id: 'notif-005',
     title: '审批提醒',
-    message: '您有 3 条待审批事项需要处理',
+    content: '您有 3 条待审批事项需要处理',
     type: 'approval',
     priority: 'medium',
-    isRead: true,
-    createdAt: '3小时前',
+    read: true,
+    created_at: '3小时前',
   },
   {
     id: 'notif-006',
     title: '系统更新',
-    message: 'TOPEMS 移动端 v2.5.0 已发布，更新了考勤打卡功能',
+    content: 'TOPEMS 移动端 v2.5.0 已发布，更新了考勤打卡功能',
     type: 'system',
     priority: 'low',
-    isRead: true,
-    createdAt: '1天前',
+    read: true,
+    created_at: '1天前',
   },
   {
     id: 'notif-007',
     title: '任务完成',
-    message: '质检任务「批次 #20240114-003」已完成检验',
+    content: '质检任务「批次 #20240114-003」已完成检验',
     type: 'task',
     priority: 'medium',
-    isRead: true,
-    createdAt: '1天前',
+    read: true,
+    created_at: '1天前',
   },
   {
     id: 'notif-008',
     title: '质量报警',
-    message: '检测到产品「零件编号 X-2024-001」质量异常，请及时处理',
+    content: '检测到产品「零件编号 X-2024-001」质量异常，请及时处理',
     type: 'system',
     priority: 'high',
-    isRead: false,
-    createdAt: '昨天',
+    read: false,
+    created_at: '昨天',
   },
 ];
 
@@ -154,44 +143,17 @@ const TYPE_ICONS: Record<NotificationType, React.ReactNode> = {
   message: <MessageSquare size={20} />,
 };
 
-const PRIORITY_COLORS: Record<NotificationPriority, 'error' | 'warning' | 'info'> = {
-  high: 'error',
-  medium: 'warning',
-  low: 'info',
-};
-
 const getTypeIcon = (type: NotificationType) => TYPE_ICONS[type];
 
 export const MobileNotificationPage: React.FC = () => {
   const addNotification = useNotificationStore((state) => state.addNotification);
 
   const [notifications, setNotifications] = useState<Notification[]>(MOCK_NOTIFICATIONS);
-  const [loading, setLoading] = useState(false);
-  const [searchQuery, setSearchQuery] = useState('');
   const [activeTab, setActiveTab] = useState<TabType>('all');
   const [soundEnabled, setSoundEnabled] = useState(true);
   const [vibrationEnabled, setVibrationEnabled] = useState(true);
 
-  const filteredNotifications = useMemo(() => {
-    let result = notifications;
-
-    if (activeTab === 'unread') {
-      result = result.filter((n) => !n.isRead);
-    } else if (activeTab !== 'all') {
-      result = result.filter((n) => n.type === activeTab);
-    }
-
-    if (searchQuery) {
-      const query = searchQuery.toLowerCase();
-      result = result.filter(
-        (n) => n.title.toLowerCase().includes(query) || n.message.toLowerCase().includes(query)
-      );
-    }
-
-    return result;
-  }, [notifications, activeTab, searchQuery]);
-
-  const unreadCount = useMemo(() => notifications.filter((n) => !n.isRead).length, [notifications]);
+  const unreadCount = useMemo(() => notifications.filter((n) => !n.read).length, [notifications]);
 
   const stats = useMemo(
     () => [
@@ -228,21 +190,24 @@ export const MobileNotificationPage: React.FC = () => {
   );
 
   const handleMarkAsRead = useCallback(
-    (notification: Notification) => {
+    (id: string) => {
+      const notification = notifications.find((n) => n.id === id);
       setNotifications((prev) =>
-        prev.map((n) => (n.id === notification.id ? { ...n, isRead: true } : n))
+        prev.map((n) => (n.id === id ? { ...n, read: true } : n))
       );
-      addNotification({
-        title: '标记已读',
-        message: `「${notification.title}」已标记为已读`,
-        type: 'success',
-      });
+      if (notification) {
+        addNotification({
+          title: '标记已读',
+          message: `「${notification.title}」已标记为已读`,
+          type: 'success',
+        });
+      }
     },
-    [addNotification]
+    [notifications, addNotification]
   );
 
   const handleMarkAllAsRead = useCallback(() => {
-    setNotifications((prev) => prev.map((n) => ({ ...n, isRead: true })));
+    setNotifications((prev) => prev.map((n) => ({ ...n, read: true })));
     addNotification({
       title: '全部已读',
       message: '所有通知已标记为已读',
@@ -251,15 +216,18 @@ export const MobileNotificationPage: React.FC = () => {
   }, [addNotification]);
 
   const handleDelete = useCallback(
-    (notification: Notification) => {
-      setNotifications((prev) => prev.filter((n) => n.id !== notification.id));
-      addNotification({
-        title: '删除成功',
-        message: `「${notification.title}」已删除`,
-        type: 'success',
-      });
+    (id: string) => {
+      const notification = notifications.find((n) => n.id === id);
+      setNotifications((prev) => prev.filter((n) => n.id !== id));
+      if (notification) {
+        addNotification({
+          title: '删除成功',
+          message: `「${notification.title}」已删除`,
+          type: 'success',
+        });
+      }
     },
-    [addNotification]
+    [notifications, addNotification]
   );
 
   const handleClearAll = useCallback(() => {
@@ -271,135 +239,89 @@ export const MobileNotificationPage: React.FC = () => {
     });
   }, [addNotification]);
 
-  const handleNotificationClick = useCallback(
-    (notification: Notification) => {
-      if (!notification.isRead) {
-        handleMarkAsRead(notification);
-      }
-      addNotification({
-        title: '查看详情',
-        message: notification.message,
-        type: 'info',
-      });
-    },
-    [handleMarkAsRead, addNotification]
+  const apiAdapter = useMemo<CrudApiAdapter<Notification>>(
+    () => ({
+      list: async (params) => {
+        let result = [...notifications];
+
+        const typeFilter = params?.type as string;
+        const readFilter = params?.read as string;
+        const search = params?.search as string;
+
+        if (readFilter === 'unread') {
+          result = result.filter((n) => !n.read);
+        } else if (typeFilter && typeFilter !== 'all') {
+          result = result.filter((n) => n.type === typeFilter);
+        }
+
+        if (search) {
+          const query = search.toLowerCase();
+          result = result.filter(
+            (n) => n.title.toLowerCase().includes(query) || n.content.toLowerCase().includes(query)
+          );
+        }
+
+        return { data: result, total: result.length };
+      },
+      create: async (data) => {
+        const newNotif = {
+          ...data,
+          id: `notif-${Date.now()}`,
+          read: false,
+          created_at: '刚刚',
+        } as Notification;
+        setNotifications((prev) => [newNotif, ...prev]);
+        return newNotif;
+      },
+      update: async (id, data) => {
+        setNotifications((prev) =>
+          prev.map((n) => (n.id === id ? { ...n, ...data } : n))
+        );
+        return { id, ...data } as Notification;
+      },
+      delete: async (id) => {
+        handleDelete(id);
+      },
+    }),
+    [notifications, handleDelete]
   );
 
-  const columns: ColumnDef<Notification>[] = useMemo(
+  const customRowActions = useMemo<RowAction[]>(
     () => [
       {
-        id: 'notification',
-        label: '通知内容',
-        minWidth: 200,
-        render: (row) => (
-          <Box sx={{ display: 'flex', alignItems: 'flex-start', gap: 1.5 }}>
-            <Avatar
-              sx={{
-                width: 40,
-                height: 40,
-                bgcolor: row.isRead ? 'action.disabledBackground' : 'primary.main',
-              }}
-            >
-              {getTypeIcon(row.type)}
-            </Avatar>
-            <Box sx={{ flex: 1, minWidth: 0 }}>
-              <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 0.5 }}>
-                <Typography
-                  variant='body2'
-                  sx={{ fontWeight: row.isRead ? 400 : 600 }}
-                  color={row.isRead ? 'text.secondary' : 'text.primary'}
-                  noWrap
-                >
-                  {row.title}
-                </Typography>
-                {!row.isRead && (
-                  <Box
-                    sx={{
-                      width: 8,
-                      height: 8,
-                      borderRadius: '50%',
-                      bgcolor: 'primary.main',
-                      flexShrink: 0,
-                    }}
-                  />
-                )}
-              </Box>
-              <Typography
-                variant='caption'
-                color='text.secondary'
-                sx={{
-                  display: '-webkit-box',
-                  WebkitLineClamp: 2,
-                  WebkitBoxOrient: 'vertical',
-                  overflow: 'hidden',
-                }}
-              >
-                {row.message}
-              </Typography>
-            </Box>
-          </Box>
-        ),
-      },
-      {
-        id: 'type',
-        label: '类型',
-        width: 80,
-        render: (row) => (
-          <Chip
-            size='small'
-            label={TYPE_LABELS[row.type]}
-            variant='outlined'
-          />
-        ),
-      },
-      {
-        id: 'time',
-        label: '时间',
-        width: 80,
-        render: (row) => (
-          <Typography
-            variant='caption'
-            color='text.secondary'
-          >
-            {row.createdAt}
-          </Typography>
-        ),
-      },
-      {
-        id: 'actions',
-        label: '操作',
-        width: 100,
-        fixed: 'right',
-        render: (row) => (
-          <Box sx={{ display: 'flex', gap: 0.5 }}>
-            {!row.isRead && (
-              <IconButton
-                size='small'
-                onClick={(e) => {
-                  e.stopPropagation();
-                  handleMarkAsRead(row);
-                }}
-                title='标记已读'
-              >
-                <Check size={16} />
-              </IconButton>
-            )}
-            <IconButton
-              size='small'
-              onClick={(e) => {
-                e.stopPropagation();
-                handleDelete(row);
-              }}
-              sx={{ color: 'error.main' }}
-              title='删除'
-            >
-              <Trash2 size={16} />
-            </IconButton>
-          </Box>
-        ),
+        label: '标记已读',
+        icon: <Check size={16} />,
+        onClick: (row: Record<string, unknown>) => handleMarkAsRead(String(row.id)),
       },
     ],
-    [handleMarkAsRead, handleDelete]
+    [handleMarkAsRead]
+  );
+
+  const headerContent = useMemo(
+    () => (
+      <Box sx={{ display: 'flex', gap: 1 }}>
+        <Button
+          variant='outlined'
+          size='small'
+          startIcon={<CheckCheck size={14} />}
+          onClick={handleMarkAllAsRead}
+          disabled={unreadCount === 0}
+        >
+          全部已读
+        </Button>
+        <Button
+          variant='outlined'
+          size='small'
+          color='error'
+          startIcon={<Trash2 size={14} />}
+          onClick={handleClearAll}
+          disabled={notifications.length === 0}
+        >
+          清空
+        </Button>
+      </Box>
+    ),
+    [handleMarkAllAsRead, handleClearAll, unreadCount, notifications.length]
   );
 
   return (
@@ -407,7 +329,6 @@ export const MobileNotificationPage: React.FC = () => {
       title='消息通知'
       subtitle={`${unreadCount} 条未读消息`}
     >
-      {/* Mobile Notification Settings */}
       <Paper
         variant='outlined'
         sx={{ p: 2, mb: 2 }}
@@ -447,7 +368,6 @@ export const MobileNotificationPage: React.FC = () => {
         </Box>
       </Paper>
 
-      {/* Tabs */}
       <Box sx={{ borderBottom: 1, borderColor: 'divider', mb: 2 }}>
         <Tabs
           value={activeTab}
@@ -490,7 +410,6 @@ export const MobileNotificationPage: React.FC = () => {
         </Tabs>
       </Box>
 
-      {/* Stats */}
       <Box
         sx={{
           display: 'grid',
@@ -526,167 +445,16 @@ export const MobileNotificationPage: React.FC = () => {
         ))}
       </Box>
 
-      {/* Actions */}
-      <Box sx={{ display: 'flex', gap: 1, mb: 2 }}>
-        <TextField
-          size='small'
-          placeholder='搜索通知...'
-          value={searchQuery}
-          onChange={(e) => setSearchQuery(e.target.value)}
-          slotProps={{
-            input: {
-              startAdornment: (
-                <InputAdornment position='start'>
-                  <Search size={16} />
-                </InputAdornment>
-              ),
-            },
-          }}
-          sx={{ flex: 1 }}
-        />
-        <Button
-          variant='outlined'
-          size='small'
-          startIcon={<CheckCheck size={14} />}
-          onClick={handleMarkAllAsRead}
-          disabled={unreadCount === 0}
-        >
-          全部已读
-        </Button>
-        <Button
-          variant='outlined'
-          size='small'
-          color='error'
-          startIcon={<Trash2 size={14} />}
-          onClick={handleClearAll}
-          disabled={notifications.length === 0}
-        >
-          清空
-        </Button>
-      </Box>
-
-      {/* Notification List */}
-      <List disablePadding>
-        {filteredNotifications.map((notification, index) => (
-          <React.Fragment key={notification.id}>
-            <ListItem
-              sx={{
-                px: 2,
-                py: 1.5,
-                bgcolor: notification.isRead ? 'transparent' : 'action.hover',
-                cursor: 'pointer',
-                '&:hover': { bgcolor: 'action.selected' },
-              }}
-              onClick={() => handleNotificationClick(notification)}
-            >
-              <ListItemIcon sx={{ minWidth: 48 }}>
-                <Avatar
-                  sx={{
-                    width: 36,
-                    height: 36,
-                    bgcolor: notification.isRead ? 'action.disabledBackground' : 'primary.main',
-                  }}
-                >
-                  {getTypeIcon(notification.type)}
-                </Avatar>
-              </ListItemIcon>
-              <ListItemText
-                primary={
-                  <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-                    <Typography
-                      variant='body2'
-                      sx={{ fontWeight: notification.isRead ? 400 : 600 }}
-                      color={notification.isRead ? 'text.secondary' : 'text.primary'}
-                    >
-                      {notification.title}
-                    </Typography>
-                    {notification.priority === 'high' && (
-                      <Chip
-                        size='small'
-                        label='紧急'
-                        color='error'
-                        sx={{ height: 18, fontSize: '0.65rem' }}
-                      />
-                    )}
-                  </Box>
-                }
-                secondary={
-                  <Box>
-                    <Typography
-                      variant='caption'
-                      color='text.secondary'
-                      sx={{
-                        display: '-webkit-box',
-                        WebkitLineClamp: 2,
-                        WebkitBoxOrient: 'vertical',
-                        overflow: 'hidden',
-                      }}
-                    >
-                      {notification.message}
-                    </Typography>
-                    <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mt: 0.5 }}>
-                      <Chip
-                        size='small'
-                        label={TYPE_LABELS[notification.type]}
-                        variant='outlined'
-                        sx={{ height: 18, fontSize: '0.65rem' }}
-                      />
-                      <Typography
-                        variant='caption'
-                        color='text.disabled'
-                      >
-                        {notification.createdAt}
-                      </Typography>
-                    </Box>
-                  </Box>
-                }
-              />
-              <ListItemSecondaryAction>
-                <Box sx={{ display: 'flex', gap: 0.5 }}>
-                  {!notification.isRead && (
-                    <IconButton
-                      size='small'
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        handleMarkAsRead(notification);
-                      }}
-                    >
-                      <Check size={16} />
-                    </IconButton>
-                  )}
-                  <IconButton
-                    size='small'
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      handleDelete(notification);
-                    }}
-                    sx={{ color: 'error.main' }}
-                  >
-                    <Trash2 size={16} />
-                  </IconButton>
-                </Box>
-              </ListItemSecondaryAction>
-            </ListItem>
-            {index < filteredNotifications.length - 1 && <Divider />}
-          </React.Fragment>
-        ))}
-
-        {filteredNotifications.length === 0 && (
-          <Box sx={{ py: 6, textAlign: 'center' }}>
-            <BellOff
-              size={48}
-              style={{ opacity: 0.3 }}
-            />
-            <Typography
-              variant='body2'
-              color='text.secondary'
-              sx={{ mt: 1 }}
-            >
-              暂无通知
-            </Typography>
-          </Box>
-        )}
-      </List>
+      <CrudPage
+        schema={notificationSchema}
+        apiAdapter={apiAdapter}
+        customRowActions={customRowActions}
+        headerContent={headerContent}
+        extraQueryParams={{
+          type: activeTab === 'all' ? 'all' : activeTab === 'unread' ? undefined : activeTab,
+          read: activeTab === 'unread' ? 'unread' : undefined,
+        }}
+      />
     </PageContainer>
   );
 };

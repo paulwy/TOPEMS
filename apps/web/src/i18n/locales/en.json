@@ -3817,8 +3817,17 @@
       "save_1": "Save",
       "text_a67937": "将对选中的资产执行折旧处理",
       "text_1162f9": "将对所有符合条件的资产执行折旧处理",
-      "text_3afd7f": "折旧中...",
-      "confirm_2": "Confirm折旧"
+      "text_3afd7f": "Depreciating...",
+      "confirm_2": "Confirm Depreciation",
+      "total_assets": "Total Assets",
+      "asset_value": "Asset Value",
+      "accumulated_depreciation": "Accumulated Depreciation",
+      "monthly_depreciation": "Monthly Depreciation",
+      "selected_assets": "Selected {{count}} assets",
+      "depreciate_period": "Depreciation Period",
+      "cancel": "Cancel",
+      "breadcrumb_home": "Home",
+      "breadcrumb_module": "Finance"
     }
   },
   "finance": {

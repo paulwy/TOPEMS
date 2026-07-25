@@ -248,3 +248,158 @@ impl MasterDataRef {
         }
     }
 }
+
+// ==================== V31.0 质量看板模型 ====================
+
+/// 主数据质量报告
+#[derive(Debug, Clone, Serialize)]
+pub struct QualityReport {
+    pub tenant_id: Uuid,
+    pub generated_at: DateTime<Utc>,
+    pub overall_score: f64,
+    pub total_count: i64,
+    pub duplicate_count: i64,
+    pub stale_count: i64,
+    pub inconsistency_count: i64,
+    pub duplicate_rate: f64,
+    pub stale_rate: f64,
+    pub inconsistency_rate: f64,
+    pub by_domain: Vec<DomainQualityDetail>,
+}
+
+/// 各域质量详情
+#[derive(Debug, Clone, Serialize)]
+pub struct DomainQualityDetail {
+    pub domain: String,
+    pub total: i64,
+    pub active: i64,
+    pub duplicates: i64,
+    pub stale: i64,
+    pub inconsistencies: i64,
+    pub last_synced: Option<DateTime<Utc>>,
+    pub quality_score: f64,
+}
+
+/// 重复编码记录
+#[derive(Debug, Clone, FromRow, Serialize, Deserialize)]
+pub struct DuplicateRecord {
+    pub domain: String,
+    pub code: String,
+    pub count: i64,
+    pub master_data_ids: Vec<String>,
+}
+
+/// 过期数据记录（超过阈值未同步）
+#[derive(Debug, Clone, FromRow, Serialize, Deserialize)]
+pub struct StaleRecord {
+    pub master_data_id: String,
+    pub domain: String,
+    pub code: String,
+    pub name: String,
+    pub source_service: String,
+    pub last_synced_at: DateTime<Utc>,
+    pub hours_since_sync: f64,
+}
+
+/// 对账结果
+#[derive(Debug, Clone, Serialize)]
+pub struct ReconciliationResult {
+    pub tenant_id: Uuid,
+    pub reconciled_at: DateTime<Utc>,
+    pub domains_checked: Vec<String>,
+    pub total_checked: i64,
+    pub consistent: i64,
+    pub inconsistent: i64,
+    pub missing_in_mdm: i64,
+    pub missing_in_source: i64,
+    pub details: Vec<ReconciliationDetail>,
+}
+
+/// 各域对账详情
+#[derive(Debug, Clone, Serialize)]
+pub struct ReconciliationDetail {
+    pub domain: String,
+    pub source_service: String,
+    pub mdm_count: i64,
+    pub source_count: i64,
+    pub consistent: i64,
+    pub inconsistent: i64,
+    pub status: String,
+}
+
+/// 对账日志记录
+#[derive(Debug, Clone, FromRow, Serialize, Deserialize)]
+pub struct ReconciliationLog {
+    pub id: Uuid,
+    pub tenant_id: Uuid,
+    pub domain: String,
+    pub master_data_id: String,
+    pub issue_type: String,
+    pub description: String,
+    pub detected_at: DateTime<Utc>,
+    pub resolved: bool,
+    pub resolved_at: Option<DateTime<Utc>>,
+}
+
+// ==================== V31.0 变更审批模型 ====================
+
+/// 需要审批的主数据域
+pub const APPROVAL_REQUIRED_DOMAINS: &[&str] = &["account_subject"];
+
+/// 审批状态
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub enum ApprovalStatus {
+    Pending,
+    Approved,
+    Rejected,
+    Cancelled,
+}
+
+impl std::fmt::Display for ApprovalStatus {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        match self {
+            ApprovalStatus::Pending => write!(f, "pending"),
+            ApprovalStatus::Approved => write!(f, "approved"),
+            ApprovalStatus::Rejected => write!(f, "rejected"),
+            ApprovalStatus::Cancelled => write!(f, "cancelled"),
+        }
+    }
+}
+
+/// 主数据变更审批请求
+#[derive(Debug, Clone, FromRow, Serialize, Deserialize)]
+pub struct MasterDataApproval {
+    pub id: Uuid,
+    pub tenant_id: Uuid,
+    pub master_data_id: String,
+    pub domain: String,
+    pub action: String,
+    pub requested_by: String,
+    pub requested_at: DateTime<Utc>,
+    pub status: String,
+    pub reviewed_by: Option<String>,
+    pub reviewed_at: Option<DateTime<Utc>>,
+    pub review_comment: Option<String>,
+    pub payload: Option<serde_json::Value>,
+}
+
+/// 创建审批请求
+#[derive(Debug, Clone, Deserialize)]
+pub struct CreateApprovalRequest {
+    pub master_data_id: String,
+    pub domain: String,
+    pub action: String,
+    pub payload: Option<serde_json::Value>,
+}
+
+/// 审批请求
+#[derive(Debug, Clone, Deserialize)]
+pub struct ReviewApprovalRequest {
+    pub approved: bool,
+    pub comment: Option<String>,
+}
+
+/// 判断域是否需要审批
+pub fn requires_approval(domain: &str) -> bool {
+    APPROVAL_REQUIRED_DOMAINS.contains(&domain)
+}

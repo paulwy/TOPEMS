@@ -1,221 +1,183 @@
-/**
- * 工作流实例列表页面 - V4.0 标准化改造 (React Query 迁移)
- *
- * @module pages/workflow
- * @path /workflow/instances
- */
-
-import React, { useState, useMemo, useCallback } from 'react';
+import React, { useCallback, useMemo } from 'react';
+import { Box, Typography } from '@mui/material';
 import {
   PlaySquare,
-  Eye,
+  GitBranch,
   Pause,
   XCircle,
-  GitBranch,
-  User,
-  Clock,
   Activity,
   CheckCircle,
-  AlertCircle,
   Calendar,
   Timer,
 } from 'lucide-react';
-import { Box, Typography, Chip, Avatar } from '@mui/material';
 import { useNavigate } from 'react-router-dom';
-import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { useQueryClient } from '@tanstack/react-query';
 
 import { useNotificationStore } from '../../store';
-import { ListPageTemplate, type ColumnDef } from '@/components/templates';
-import { extractErrorMessage } from '@/utils/errors';
+import CrudPage, { type CrudApiAdapter } from '@/components/templates/CrudPage';
+import type { RowAction } from '@/components/templates/list/types';
 import { PageContainer, ConfirmDialog } from '@/components/common';
+import { useConfirmDialog } from '@/hooks';
+import { extractErrorMessage } from '@/utils/errors';
 import { WORKFLOW_PATHS } from '@/modules/workflow/config';
 import { instanceApi } from '@/api/workflow';
 import type { WorkflowInstance } from '@/api/workflow';
-import { apiLogger } from '@/utils/logger';
-import { useConfirmDialog } from '@/hooks';
-
-/**
- * 实例状态配置
- */
-const STATUS_CONFIG: Record<
-  string,
-  { label: string; color: 'primary' | 'success' | 'error' | 'warning' | 'default' }
-> = {
-  running: { label: '运行中', color: 'primary' },
-  completed: { label: '已完成', color: 'success' },
-  cancelled: { label: '已取消', color: 'error' },
-  suspended: { label: '已挂起', color: 'warning' },
-  terminated: { label: '已终止', color: 'error' },
-  pending: { label: '待处理', color: 'warning' },
-  rejected: { label: '已拒绝', color: 'error' },
-};
-
-/**
- * 流程类型配置
- */
-const TYPE_CONFIG: Record<
-  string,
-  { label: string; color: 'primary' | 'success' | 'info' | 'warning' }
-> = {
-  approval: { label: '审批流', color: 'primary' },
-  business: { label: '业务流', color: 'success' },
-  notification: { label: '通知流', color: 'info' },
-  automation: { label: '自动化', color: 'warning' },
-};
+import { workflowInstanceSchema } from '@/schemas/workflow';
 
 export const WorkflowInstancesPage: React.FC = () => {
   const navigate = useNavigate();
   const addNotification = useNotificationStore((state) => state.addNotification);
   const queryClient = useQueryClient();
 
-  const [searchQuery, setSearchQuery] = useState('');
-  const [statusFilter, setStatusFilter] = useState<string>('all');
-  const [typeFilter, setTypeFilter] = useState<string>('all');
-  const [page, setPage] = useState(1);
-  const pageSize = 10;
+  const { confirmOpen, confirmConfig, openConfirm, closeConfirm } = useConfirmDialog();
 
-  const {
-    confirmOpen: confirmDialogOpen,
-    confirmConfig: confirmDialogConfig,
-    openConfirm: openConfirmDialog,
-    closeConfirm: setConfirmDialogClosed,
-  } = useConfirmDialog();
-
-  const { data: instances = [], isLoading: loading } = useQuery({
-    queryKey: ['workflow-instances', page, pageSize, searchQuery, statusFilter, typeFilter],
-    queryFn: async () => {
+  const apiAdapter: CrudApiAdapter<WorkflowInstance> = {
+    list: async (params) => {
+      const page = params?.page ?? 1;
+      const pageSize = params?.pageSize ?? 10;
       const response = await instanceApi.list({
         page,
         pagesize: pageSize,
-        ...(searchQuery ? { search: searchQuery } : {}),
-        ...(statusFilter !== 'all' ? { status: statusFilter } : {}),
+        ...(params?.search ? { search: params.search as string } : {}),
+        ...(typeof params?.status === 'string' && params.status !== 'all'
+          ? { status: params.status }
+          : {}),
       });
-      if (response.success && response.data?.items) {
-        return response.data.items;
+      let items: WorkflowInstance[] = [];
+      let total = 0;
+      if (response.success && response.data) {
+        items = (response.data as any).items || [];
+        total = (response.data as any).total || items.length;
       }
-      return [];
+      if (typeof params?.type === 'string' && params.type !== 'all') {
+        items = items.filter((item: WorkflowInstance) => {
+          const workflowType = (item.data as Record<string, unknown>)?.type as string;
+          return workflowType === params.type;
+        });
+        total = items.length;
+        const start = (page - 1) * pageSize;
+        items = items.slice(start, start + pageSize);
+      }
+      return { data: items, total };
     },
-  });
-
-  const deleteMutation = useMutation({
-    mutationFn: (id: string) => instanceApi.delete(id),
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['workflow-instances'] });
+    create: async () => ({}) as WorkflowInstance,
+    update: async (_id, _data) => ({}) as WorkflowInstance,
+    delete: async (id) => {
+      await instanceApi.delete(id);
     },
-  });
-
-  const suspendMutation = useMutation({
-    mutationFn: (id: string) => instanceApi.suspendInstance(id),
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['workflow-instances'] });
-    },
-  });
-
-  const cancelMutation = useMutation({
-    mutationFn: (id: string) => instanceApi.cancelInstance(id),
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['workflow-instances'] });
-    },
-  });
-
-  const refresh = useCallback(() => {
-    queryClient.invalidateQueries({ queryKey: ['workflow-instances'] });
-  }, [queryClient]);
+  };
 
   const handleViewDetail = useCallback(
-    (instance: WorkflowInstance) => {
+    (row: Record<string, unknown>) => {
+      const instance = row as WorkflowInstance;
       navigate(WORKFLOW_PATHS.instanceDetail.replace(':id', instance.id));
     },
     [navigate]
   );
 
   const handleViewDiagram = useCallback(
-    (instance: WorkflowInstance) => {
+    (row: Record<string, unknown>) => {
+      const instance = row as WorkflowInstance;
       navigate(WORKFLOW_PATHS.instanceDetail.replace(':id', instance.id));
     },
     [navigate]
   );
 
   const handleSuspend = useCallback(
-    (instance: WorkflowInstance) => {
-      openConfirmDialog({
+    (row: Record<string, unknown>) => {
+      const instance = row as WorkflowInstance;
+      openConfirm({
         title: '确认挂起',
         message: `确定要挂起流程"${instance.workflow_name || instance.name || ''}"吗？`,
         onConfirm: async () => {
           try {
-            await suspendMutation.mutateAsync(instance.id);
+            await instanceApi.suspendInstance(instance.id);
+            queryClient.invalidateQueries({ queryKey: [workflowInstanceSchema.entity] });
             addNotification({
               title: '成功',
               message: '流程已挂起',
               type: 'success',
             });
-          } catch (_err: unknown) {
+          } catch (err: unknown) {
             addNotification({
               title: '失败',
-              message: extractErrorMessage(_err, '挂起流程失败'),
+              message: extractErrorMessage(err, '挂起流程失败'),
               type: 'error',
             });
           }
         },
       });
     },
-    [addNotification, openConfirmDialog, suspendMutation]
+    [addNotification, openConfirm, queryClient]
   );
 
   const handleCancel = useCallback(
-    (instance: WorkflowInstance) => {
-      openConfirmDialog({
+    (row: Record<string, unknown>) => {
+      const instance = row as WorkflowInstance;
+      openConfirm({
         title: '确认取消',
         message: `确定要取消流程"${instance.workflow_name || instance.name || ''}"吗？此操作不可撤销。`,
         danger: true,
         onConfirm: async () => {
           try {
-            await cancelMutation.mutateAsync(instance.id);
+            await instanceApi.cancelInstance(instance.id);
+            queryClient.invalidateQueries({ queryKey: [workflowInstanceSchema.entity] });
             addNotification({
               title: '成功',
               message: '流程已取消',
               type: 'success',
             });
-          } catch (_err: unknown) {
+          } catch (err: unknown) {
             addNotification({
               title: '失败',
-              message: extractErrorMessage(_err, '取消流程失败'),
+              message: extractErrorMessage(err, '取消流程失败'),
               type: 'error',
             });
           }
         },
       });
     },
-    [addNotification, openConfirmDialog, cancelMutation]
+    [addNotification, openConfirm, queryClient]
   );
 
-  const filteredInstances = useMemo(() => {
-    return (instances as WorkflowInstance[]).filter((instance: WorkflowInstance) => {
-      const workflowName = instance.workflow_name || instance.name || '';
-      const initiatorName = instance.start_user_name || '';
-      const matchesSearch =
-        !searchQuery ||
-        workflowName.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        initiatorName.toLowerCase().includes(searchQuery.toLowerCase());
+  const customRowActions: RowAction[] = [
+    {
+      key: 'viewDetail',
+      label: '查看详情',
+      icon: <GitBranch size={16} />,
+      color: 'default',
+      onClick: handleViewDetail,
+    },
+    {
+      key: 'viewDiagram',
+      label: '查看流程图',
+      icon: <GitBranch size={16} />,
+      color: 'default',
+      onClick: handleViewDiagram,
+    },
+    {
+      key: 'suspend',
+      label: '挂起',
+      icon: <Pause size={16} />,
+      color: 'warning',
+      onClick: handleSuspend,
+      show: (row) => row.status === 'running',
+    },
+    {
+      key: 'cancel',
+      label: '取消',
+      icon: <XCircle size={16} />,
+      color: 'error',
+      onClick: handleCancel,
+      show: (row) => row.status === 'running',
+    },
+  ];
 
-      const matchesStatus = statusFilter === 'all' || instance.status === statusFilter;
-
-      const workflowType = instance.data?.type as string;
-      const matchesType = typeFilter === 'all' || workflowType === typeFilter;
-
-      return matchesSearch && matchesStatus && matchesType;
-    });
-  }, [instances, searchQuery, statusFilter, typeFilter]);
-
-  const stats = useMemo(() => {
-    const instancesArray = instances as WorkflowInstance[];
-    const runningCount = instancesArray.filter(
-      (i: WorkflowInstance) => i.status === 'running'
-    ).length;
-    const completedCount = instancesArray.filter(
-      (i: WorkflowInstance) => i.status === 'completed'
-    ).length;
-    const todayCount = instancesArray.filter((i: WorkflowInstance) => {
+  const renderHeaderContent = (rows: any[], _total: number) => {
+    const instances = rows as WorkflowInstance[];
+    const runningCount = instances.filter((i) => i.status === 'running').length;
+    const completedCount = instances.filter((i) => i.status === 'completed').length;
+    const todayCount = instances.filter((i) => {
       const today = new Date().toDateString();
       const date = i.started_at || i.created_at;
       return date && new Date(date).toDateString() === today;
@@ -229,10 +191,10 @@ export const WorkflowInstancesPage: React.FC = () => {
 
     let totalDuration = 0;
     let completedWithDuration = 0;
-    instancesArray.forEach((i: WorkflowInstance) => {
-      if (i.status === 'completed' && i.started_at && i.completed_at) {
+    instances.forEach((i) => {
+      if (i.status === 'completed' && i.started_at && (i as any).completed_at) {
         const duration =
-          (new Date(i.completed_at).getTime() - new Date(i.started_at).getTime()) / 1000;
+          (new Date((i as any).completed_at).getTime() - new Date(i.started_at!).getTime()) / 1000;
         totalDuration += duration;
         completedWithDuration++;
       }
@@ -240,7 +202,7 @@ export const WorkflowInstancesPage: React.FC = () => {
     const avgDuration =
       completedWithDuration > 0 ? Math.round(totalDuration / completedWithDuration) : 0;
 
-    return [
+    const stats = [
       {
         id: 'running',
         title: '运行中',
@@ -270,218 +232,45 @@ export const WorkflowInstancesPage: React.FC = () => {
         color: 'warning' as const,
       },
     ];
-  }, [instances]);
 
-  const columns: ColumnDef<WorkflowInstance>[] = useMemo(
-    () => [
-      {
-        id: 'workflow_name',
-        label: '流程名称',
-        render: (row) => (
-          <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5 }}>
-            <Box
-              sx={{
-                width: 36,
-                height: 36,
-                borderRadius: 1.5,
-                bgcolor: 'primary.light',
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-              }}
-            >
-              <PlaySquare
-                size={18}
-                color='primary.main'
-              />
-            </Box>
-            <Box>
+    return (
+      <Box
+        sx={{
+          display: 'grid',
+          gridTemplateColumns: { xs: 'repeat(1, 1fr)', md: 'repeat(4, 1fr)' },
+          gap: 2,
+          mb: 3,
+        }}
+      >
+        {stats.map((item) => (
+          <Box
+            key={item.id}
+            sx={{
+              p: 2,
+              bgcolor: `${item.color}.light`,
+              borderRadius: 2,
+            }}
+          >
+            <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 0.5 }}>
+              {item.icon}
               <Typography
                 variant='body2'
-                sx={{ fontWeight: 600 }}
+                sx={{ color: 'text.secondary' }}
               >
-                {row.workflow_name || row.name || '-'}
-              </Typography>
-              <Typography
-                variant='caption'
-                color='text.secondary'
-              >
-                {row.workflow_id || ''}
+                {item.title}
               </Typography>
             </Box>
-          </Box>
-        ),
-      },
-      {
-        id: 'workflow_type',
-        label: '流程类型',
-        render: (row) => {
-          const workflowType = row.data?.type as string;
-          const typeConfig = TYPE_CONFIG[workflowType];
-          return (
-            <Chip
-              size='small'
-              label={typeConfig?.label || workflowType || '-'}
-              color={typeConfig?.color || 'default'}
-              variant='outlined'
-            />
-          );
-        },
-      },
-      {
-        id: 'initiator_name',
-        label: '发起人',
-        render: (row) => (
-          <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-            <Avatar
-              sx={{
-                width: 24,
-                height: 24,
-                fontSize: '0.75rem',
-                bgcolor: 'primary.light',
-                color: 'primary.main',
-              }}
-            >
-              {(row.start_user_name || 'U').charAt(0)}
-            </Avatar>
-            <Typography variant='body2'>{row.start_user_name || '-'}</Typography>
-          </Box>
-        ),
-      },
-      {
-        id: 'current_node',
-        label: '当前节点',
-        render: (row) => (
-          <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-            <GitBranch
-              size={14}
-              color='text.disabled'
-            />
             <Typography
-              variant='body2'
-              color='text.secondary'
+              variant='h5'
+              sx={{ fontWeight: 700 }}
             >
-              {row.currentnode || '-'}
+              {item.value}
             </Typography>
           </Box>
-        ),
-      },
-      {
-        id: 'status',
-        label: '状态',
-        render: (row) => {
-          const statusConfig = STATUS_CONFIG[row.status];
-          return (
-            <Chip
-              size='small'
-              label={statusConfig?.label || row.status}
-              color={statusConfig?.color || 'default'}
-            />
-          );
-        },
-      },
-      {
-        id: 'started_at',
-        label: '发起时间',
-        render: (row) => (
-          <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-            <Clock
-              size={14}
-              color='text.disabled'
-            />
-            <Typography
-              variant='body2'
-              color='text.secondary'
-            >
-              {row.started_at || row.created_at || '-'}
-            </Typography>
-          </Box>
-        ),
-      },
-      {
-        id: 'actions',
-        label: '操作',
-        align: 'right',
-        render: (row) => (
-          <Box sx={{ display: 'flex', justifyContent: 'flex-end', gap: 0.5 }}>
-            <Eye
-              size={16}
-              style={{ cursor: 'pointer', color: 'var(--mui-palette-text-secondary)' }}
-              onClick={() => handleViewDetail(row)}
-              aria-label='查看详情'
-            />
-            {row.status === 'running' && (
-              <>
-                <Pause
-                  size={16}
-                  style={{ cursor: 'pointer', color: 'var(--mui-palette-warning-main)' }}
-                  onClick={() => handleSuspend(row)}
-                  aria-label='挂起'
-                />
-                <XCircle
-                  size={16}
-                  style={{ cursor: 'pointer', color: 'var(--mui-palette-error-main)' }}
-                  onClick={() => handleCancel(row)}
-                  aria-label='取消'
-                />
-              </>
-            )}
-            <GitBranch
-              size={16}
-              style={{ cursor: 'pointer', color: 'var(--mui-palette-text-secondary)' }}
-              onClick={() => handleViewDiagram(row)}
-              aria-label='查看流程图'
-            />
-          </Box>
-        ),
-      },
-    ],
-    [handleViewDetail, handleViewDiagram, handleSuspend, handleCancel]
-  );
-
-  const filterOptions = useMemo(
-    () => [
-      {
-        id: 'status',
-        label: '状态',
-        type: 'select' as const,
-        options: [
-          { label: '全部状态', value: 'all' },
-          ...Object.entries(STATUS_CONFIG).map(([value, config]) => ({
-            label: config.label,
-            value,
-          })),
-        ],
-      },
-      {
-        id: 'type',
-        label: '流程类型',
-        type: 'select' as const,
-        options: [
-          { label: '全部类型', value: 'all' },
-          ...Object.entries(TYPE_CONFIG).map(([value, config]) => ({
-            label: config.label,
-            value,
-          })),
-        ],
-      },
-    ],
-    []
-  );
-
-  const handleFilterChange = useCallback((filters: Record<string, unknown>) => {
-    if (typeof filters.status === 'string') {
-      setStatusFilter(filters.status);
-    }
-    if (typeof filters.type === 'string') {
-      setTypeFilter(filters.type);
-    }
-    setPage(1);
-  }, []);
-
-  const handlePageChange = useCallback((newPage: number) => {
-    setPage(newPage);
-  }, []);
+        ))}
+      </Box>
+    );
+  };
 
   return (
     <PageContainer
@@ -492,42 +281,24 @@ export const WorkflowInstancesPage: React.FC = () => {
         },
       }}
     >
-      <ListPageTemplate
-        title=''
-        subtitle=''
-        columns={columns}
-        data={filteredInstances}
-        loading={loading}
-        searchable
-        searchPlaceholder='搜索流程名称、发起人...'
-        searchValue={searchQuery}
-        onSearch={setSearchQuery}
-        filters={filterOptions}
-        filtersValue={{
-          status: statusFilter,
-          type: typeFilter,
-        }}
-        onFilterChange={handleFilterChange}
-        pagination={{
-          page,
-          pageSize,
-          total: filteredInstances.length,
-          onPageChange: handlePageChange,
-        }}
-        onRefresh={refresh}
-        emptyMessage='暂无流程实例'
+      <CrudPage
+        schema={workflowInstanceSchema}
+        apiAdapter={apiAdapter}
+        customRowActions={customRowActions}
+        headerContent={renderHeaderContent}
+        idField='id'
       />
 
       <ConfirmDialog
-        isOpen={confirmDialogOpen}
-        onClose={setConfirmDialogClosed}
-        title={confirmDialogConfig?.title || ''}
-        message={confirmDialogConfig?.message || ''}
-        danger={confirmDialogConfig?.danger}
+        isOpen={confirmOpen}
+        onClose={closeConfirm}
         onConfirm={() => {
-          confirmDialogConfig?.onConfirm();
-          setConfirmDialogClosed();
+          confirmConfig?.onConfirm();
+          closeConfirm();
         }}
+        title={confirmConfig?.title || ''}
+        message={confirmConfig?.message || ''}
+        danger={confirmConfig?.danger}
       />
     </PageContainer>
   );

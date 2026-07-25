@@ -1,0 +1,261 @@
+import type { EntitySchema } from '@/schema';
+
+export const serialNumberSchema: EntitySchema = {
+  entity: 'wms_serial_number',
+  title: '序列号管理',
+  description: '管理产品序列号信息，支持追溯、质保管理等',
+
+  api: {
+    module: 'wms',
+    resource: 'serialNumbers',
+  },
+
+  fields: [
+    {
+      name: 'serial_no',
+      label: '序列号',
+      type: 'text',
+      required: true,
+      readonlyOnEdit: true,
+      sortable: true,
+      listWidth: 160,
+    },
+    {
+      name: 'sku',
+      label: '物料编码',
+      type: 'text',
+      required: true,
+      readonlyOnEdit: true,
+      sortable: true,
+      listWidth: 120,
+    },
+    {
+      name: 'material_name',
+      label: '物料名称',
+      type: 'text',
+      required: true,
+      readonlyOnEdit: true,
+      sortable: true,
+      listWidth: 140,
+    },
+    {
+      name: 'specification',
+      label: '规格',
+      type: 'text',
+      listWidth: 100,
+    },
+    {
+      name: 'unit',
+      label: '单位',
+      type: 'text',
+      listWidth: 80,
+    },
+    {
+      name: 'batch_no',
+      label: '批次号',
+      type: 'text',
+      listWidth: 120,
+    },
+    {
+      name: 'warehouse_id',
+      label: '仓库',
+      type: 'text',
+      listWidth: 100,
+    },
+    {
+      name: 'location_id',
+      label: '库位',
+      type: 'text',
+      listWidth: 100,
+    },
+    {
+      name: 'supplier_id',
+      label: '供应商',
+      type: 'text',
+      listWidth: 120,
+    },
+    {
+      name: 'production_date',
+      label: '生产日期',
+      type: 'date',
+      listWidth: 120,
+    },
+    {
+      name: 'expiry_date',
+      label: '有效期',
+      type: 'date',
+      listWidth: 120,
+    },
+    {
+      name: 'quality_status',
+      label: '质检状态',
+      type: 'select',
+      defaultValue: 'qualified',
+      options: {
+        type: 'static',
+        options: [
+          { value: 'pending', label: '待检' },
+          { value: 'inspecting', label: '检验中' },
+          { value: 'qualified', label: '合格' },
+          { value: 'unqualified', label: '不合格' },
+        ],
+      },
+      listWidth: 100,
+    },
+    {
+      name: 'status',
+      label: '库存状态',
+      type: 'select',
+      defaultValue: 'in_stock',
+      options: {
+        type: 'static',
+        options: [
+          { value: 'in_stock', label: '在库' },
+          { value: 'out_stock', label: '出库' },
+          { value: 'reserved', label: '预留' },
+          { value: 'frozen', label: '冻结' },
+          { value: 'scrapped', label: '报废' },
+        ],
+      },
+      listWidth: 100,
+    },
+    {
+      name: 'warranty_start_date',
+      label: '质保开始',
+      type: 'date',
+      listWidth: 120,
+    },
+    {
+      name: 'warranty_end_date',
+      label: '质保结束',
+      type: 'date',
+      listWidth: 120,
+    },
+    {
+      name: 'unit_price',
+      label: '单价',
+      type: 'number',
+      listWidth: 80,
+    },
+    {
+      name: 'remark',
+      label: '备注',
+      type: 'textarea',
+      listWidth: 150,
+    },
+    {
+      name: 'created_at',
+      label: '创建时间',
+      type: 'datetime',
+      readonly: true,
+      hideInForm: true,
+      sortable: true,
+      listWidth: 160,
+    },
+    {
+      name: 'updated_at',
+      label: '更新时间',
+      type: 'datetime',
+      readonly: true,
+      hideInForm: true,
+      sortable: true,
+      listWidth: 160,
+    },
+  ],
+
+  list: {
+    columns: [
+      'serial_no',
+      'material_name',
+      'sku',
+      'batch_no',
+      'location_id',
+      'supplier_id',
+      'quality_status',
+      'status',
+      'warranty_start_date',
+      'warranty_end_date',
+    ],
+    searchFields: ['serial_no', 'sku', 'material_name'],
+    pageSize: 10,
+    statusBadge: {
+      field: 'status',
+      colorMap: {
+        in_stock: 'success',
+        out_stock: 'default',
+        reserved: 'warning',
+        frozen: 'error',
+        scrapped: 'default',
+      },
+      labelMap: {
+        in_stock: '在库',
+        out_stock: '出库',
+        reserved: '预留',
+        frozen: '冻结',
+        scrapped: '报废',
+      },
+    },
+    filters: [
+      {
+        id: 'status',
+        label: '库存状态',
+        type: 'select',
+        options: [
+          { label: '全部', value: 'all' },
+          { label: '在库', value: 'in_stock' },
+          { label: '出库', value: 'out_stock' },
+          { label: '预留', value: 'reserved' },
+          { label: '冻结', value: 'frozen' },
+          { label: '报废', value: 'scrapped' },
+        ],
+      },
+      {
+        id: 'quality_status',
+        label: '质检状态',
+        type: 'select',
+        options: [
+          { label: '全部', value: 'all' },
+          { label: '待检', value: 'pending' },
+          { label: '检验中', value: 'inspecting' },
+          { label: '合格', value: 'qualified' },
+          { label: '不合格', value: 'unqualified' },
+        ],
+      },
+      {
+        id: 'warehouse_id',
+        label: '仓库',
+        type: 'select',
+        options: [{ label: '全部仓库', value: 'all' }],
+      },
+    ],
+  },
+
+  actions: ['create', 'edit', 'detail', 'delete'],
+
+  formSections: [
+    {
+      title: '基本信息',
+      fields: ['serial_no', 'sku', 'material_name', 'specification', 'unit', 'batch_no'],
+    },
+    {
+      title: '位置与质量',
+      fields: [
+        'warehouse_id',
+        'location_id',
+        'supplier_id',
+        'production_date',
+        'expiry_date',
+        'quality_status',
+      ],
+    },
+    {
+      title: '质保与其他',
+      fields: ['warranty_start_date', 'warranty_end_date', 'unit_price', 'remark'],
+    },
+  ],
+
+  formColCount: 2,
+  createTitle: '新增序列号',
+  editTitle: '编辑序列号',
+  detailTitle: '序列号详情',
+};

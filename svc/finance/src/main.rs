@@ -97,8 +97,8 @@ async fn main() -> anyhow::Result<()> {
         max_db_connections: 20,
         enable_events: true,
         enable_rls: false,
-        api_prefix: "/api/core/finance/v1",
-        legacy_prefixes: &["/api/v1/finance", "/api/finance"],
+        api_prefix: "/api/finance",
+        legacy_prefixes: &["/api/v1/finance", "/api/core/finance/v1"],
         ..Default::default()
     };
 

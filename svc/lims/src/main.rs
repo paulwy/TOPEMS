@@ -16,11 +16,11 @@
 
 mod middleware;
 mod shared;
+mod openapi;
 
 pub mod models;
 pub mod modules;
 
-use std::env;
 use std::net::SocketAddr;
 use std::sync::Arc;
 use std::time::Duration;
@@ -33,7 +33,7 @@ use axum::{
     Json, Router,
 };
 use axum_prometheus::PrometheusMetricLayer;
-use sqlx::PgPool;
+use utoipa::OpenApi;
 
 use topems_shared::{
     auth_middleware, create_cors_layer, create_database_pool, get_api_info_handler, init_telemetry,
@@ -277,6 +277,10 @@ async fn main() -> anyhow::Result<()> {
     let app = Router::new()
         .merge(public_routes)
         .nest("/api/lims", protected_routes)
+        .route(
+            "/api-docs/openapi.json",
+            get(|| async move { axum::Json(openapi::LimsApiDoc::openapi()) }),
+        )
         .layer(axum::middleware::from_fn(telemetry_middleware))
         .layer(cors)
         .layer(prometheus_layer)

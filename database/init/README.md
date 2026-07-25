@@ -89,6 +89,15 @@ psql -h localhost -U topems -d topems -f database/init/01_rebuild_database.sql
 
 # 执行插件表结构脚本
 psql -h localhost -U topems -d topems -f database/init/02_create_plugin_tables.sql
+
+# 初始化权限数据
+psql -h localhost -U topems -d topems -f database/init/03_init_permissions.sql
+
+# 创建供应链模块表（SCM/WMS/SRM）
+psql -h localhost -U topems -d topems -f database/init/04_create_scm_wms_srm_tables.sql
+
+# 初始化移动端数据
+psql -h localhost -U topems -d topems -f database/init/05_mobile_init.sql
 ```
 
 #### 方式二：在 psql 中执行
@@ -97,6 +106,9 @@ psql -h localhost -U topems -d topems -f database/init/02_create_plugin_tables.s
 -- 连接数据库后执行
 \i database/init/01_rebuild_database.sql
 \i database/init/02_create_plugin_tables.sql
+\i database/init/03_init_permissions.sql
+\i database/init/04_create_scm_wms_srm_tables.sql
+\i database/init/05_mobile_init.sql
 ```
 
 ### 步骤 5：验证重建结果

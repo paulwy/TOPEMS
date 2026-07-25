@@ -21,7 +21,7 @@ export { Grid } from './common/Grid';
 export type { GridProps, GridSizeProps } from './common/Grid';
 
 // PageContainer - 使用 web 增强版本
-export { PageContainer, type PageContainerProps } from './common/PageContainerV2';
+export { PageContainer, type PageContainerProps } from './common/PageContainer';
 
 // [shared] BackButton - 已提升到 @topems/shared-components
 export { BackButton, type BackButtonProps } from '@topems/shared-components';
@@ -221,13 +221,18 @@ export type {
   ValidationToast,
 } from './templates/FormPageTemplate';
 
-export { DashboardTemplate } from './templates/DashboardTemplate';
+export { DashboardTemplate, DashboardPage } from './templates/DashboardTemplate';
 export type {
   StatCard,
   ChartCard as DashboardChartCard,
   RecentItem,
   QuickAction,
   DashboardTemplateProps,
+  DashboardPageProps,
+  StatCardConfig,
+  ChartConfig as DashboardChartConfig,
+  DataTableConfig,
+  DashboardColor,
 } from './templates/DashboardTemplate';
 
 export { TreePageTemplate } from './templates/TreePageTemplate';
@@ -381,3 +386,98 @@ export type {
 // ===== 访问日志组件 =====
 export { AccessLogger, useAccessLogger, PageAccessLogger, ActionLogger } from './AccessLogger';
 export type { AccessLogEntry } from './AccessLogger';
+
+// ===== V51.0 Design System =====
+export * as V51DesignSystem from '@/design-system';
+export { V51DesignSystemPanel } from '@/design-system';
+export {
+  V51Button,
+  V51Card,
+  V51Input,
+  V51Select,
+  V51Table,
+  V51Dialog,
+  V51ToastProvider,
+  useV51Toast,
+  V51Tabs,
+  V51Badge,
+  V51Skeleton,
+  V51SkeletonCard,
+  V51Avatar,
+} from '@/design-system/components';
+export type {
+  V51ButtonProps,
+  V51ButtonVariant,
+  V51ButtonSize,
+  V51ButtonColor,
+  V51CardProps,
+  V51InputProps,
+  V51InputValidationState,
+  V51SelectProps,
+  V51SelectOption,
+  V51TableProps,
+  V51TableColumn,
+  V51SortDirection,
+  V51DialogProps,
+  V51ToastMessage,
+  V51ToastContextValue,
+  V51TabsProps,
+  V51TabItem,
+  V51BadgeProps,
+  V51BadgeVariant,
+  V51BadgeSize,
+  V51SkeletonProps,
+  V51SkeletonCardProps,
+  V51AvatarProps,
+} from '@/design-system/components';
+export {
+  v51DesignTokens,
+  v51ColorPalette,
+  v51DarkColorPalette,
+  v51Typography,
+  v51Spacing,
+  v51BorderRadius,
+  v51Shadows,
+  v51DarkShadows,
+  v51ZIndex,
+  v51Breakpoints,
+  v51Motion,
+  v51SemanticTokens,
+  generateV51CSSVariables,
+  injectV51CSSVariables,
+} from '@/design-system/tokens/v51-tokens';
+export type {
+  V51DesignTokens,
+  V51ColorPalette,
+  V51Typography,
+  V51Spacing,
+  V51BorderRadius,
+  V51Shadows,
+  V51ZIndex,
+  V51Breakpoints,
+  V51Motion,
+  V51SemanticTokens,
+} from '@/design-system/tokens/v51-tokens';
+export {
+  V51ThemeProvider,
+  useV51Theme,
+  themeManager,
+} from '@/design-system/theme-manager';
+export type {
+  V51ThemeMode,
+  V51ThemeConfig,
+  V51ThemeContextValue,
+} from '@/design-system/theme-manager';
+export {
+  v51DesignLint,
+  runColorContrastChecks,
+  generateLintReport,
+  runAllChecks,
+  formatReport,
+} from '@/design-system/design-lint';
+export type {
+  LintIssue,
+  LintReport,
+  ColorContrastCheck,
+  ComponentUsageCheck,
+} from '@/design-system/design-lint';

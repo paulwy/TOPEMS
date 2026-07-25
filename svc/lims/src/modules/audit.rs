@@ -2,8 +2,7 @@ use axum::{
     extract::{Path, State},
     http::{HeaderMap, HeaderValue},
     response::IntoResponse,
-    routing::get,
-    Extension, Json, Router,
+    routing::get, Json, Router,
 };
 use chrono::{DateTime, Utc};
 use serde::{Deserialize, Serialize};
@@ -11,7 +10,6 @@ use serde_json;
 use sqlx::Row;
 use uuid::Uuid;
 
-use crate::middleware::tenant::TenantContext;
 use crate::shared::AppState;
 use topems_shared::ApiResponse;
 

@@ -12,7 +12,9 @@ use crate::models::{
 use crate::modules::ApiState;
 use crate::shared::permission::{check_permission, ModulePermission};
 use topems_shared::auth::Claims;
-use topems_shared::{api_error, ApiResponse};
+use topems_shared::{
+    api_error, event::EventType, event::WmsWarehouseTransferCompletedPayload, ApiResponse,
+};
 
 pub fn create_routes<S>() -> Router<S>
 where
@@ -566,7 +568,59 @@ pub async fn complete_transfer(
     .await;
 
     match result {
-        Ok(transfer) => Json(ApiResponse::success(transfer, "完成调拨单成功")),
+        Ok(transfer) => {
+            // P3 事件驱动规范化：调拨完成时发布 WmsWarehouseTransferCompleted 事件，
+            // 通知 SCM（库存可见性）/Finance（仓间成本结转）。
+            if let Some(ref publisher) = state.event_publisher {
+                let publisher = publisher.clone();
+                let transfer_id_evt = transfer.id;
+                let transfer_no = transfer.order_number.clone();
+                let from_warehouse_id = Uuid::parse_str(&transfer.from_warehouse_id).ok();
+                let from_warehouse_name = transfer.from_warehouse_name.clone();
+                let to_warehouse_id = Uuid::parse_str(&transfer.to_warehouse_id).ok();
+                let to_warehouse_name = transfer.to_warehouse_name.clone();
+                let quantity = transfer.total_quantity.unwrap_or(0) as f64;
+                let status = transfer.status.clone();
+                let completed_at = Some(now);
+                let transferred_by = transfer
+                    .created_by
+                    .as_deref()
+                    .and_then(|s| Uuid::parse_str(s).ok());
+                tokio::spawn(async move {
+                    let payload = WmsWarehouseTransferCompletedPayload {
+                        transfer_id: transfer_id_evt,
+                        transfer_no,
+                        from_warehouse_id: from_warehouse_id.unwrap_or_else(Uuid::nil),
+                        from_warehouse_name,
+                        to_warehouse_id: to_warehouse_id.unwrap_or_else(Uuid::nil),
+                        to_warehouse_name,
+                        material_code: String::new(),
+                        material_name: "汇总调拨".to_string(),
+                        quantity,
+                        unit: None,
+                        status,
+                        transferred_by,
+                        completed_at,
+                    };
+                    if let Err(e) = publisher
+                        .publish_event(EventType::WmsWarehouseTransferCompleted, payload)
+                        .await
+                    {
+                        tracing::warn!(
+                            "[wms] WmsWarehouseTransferCompleted 事件发布失败（graceful fallback）: {}",
+                            e
+                        );
+                    } else {
+                        tracing::info!(
+                            "[wms] WmsWarehouseTransferCompleted 事件发布成功 - transfer_id={}",
+                            transfer_id_evt
+                        );
+                    }
+                });
+            }
+
+            Json(ApiResponse::success(transfer, "完成调拨单成功"))
+        }
         Err(sqlx::Error::RowNotFound) => Json(api_error(404, "调拨单不存在或状态不正确")),
         Err(e) => {
             tracing::error!("完成调拨单失败: {}", e);

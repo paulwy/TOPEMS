@@ -1,39 +1,23 @@
-import React, { useState, useEffect, useMemo } from 'react';
-import { useQuery, useQueryClient } from '@tanstack/react-query';
-import { apiLogger, logger } from '@/utils/logger';
+import React, { useState } from 'react';
 import {
   Box,
-  Typography,
-  Chip,
-  TextField,
   Dialog,
   DialogTitle,
   DialogContent,
   DialogActions,
+  Button,
+  Typography,
   Stack,
   Paper,
-  Button,
 } from '@mui/material';
-import { FileUpload, PageContainer } from '@/components/common';
-import {
-  Plus,
-  Upload,
-  FileText,
-  Edit,
-  Trash2,
-  History,
-  Shield,
-  BookOpen,
-  File,
-  Folder,
-} from 'lucide-react';
-import { ListPageTemplate, type ColumnDef, type FilterConfig } from '@/components/templates';
+import { History, Shield } from 'lucide-react';
+import { CrudPage, type CrudApiAdapter } from '@/components/templates/CrudPage';
+import type { RowAction } from '@/components/templates/list/types';
+import { docSchema } from '@/schemas/rd';
 import { rdApi } from '@/api/rd';
-import { useNotificationStore } from '@/store';
 import type { RsStatistics } from '@/api/rd';
-import { QUERY_KEYS } from '@/lib/reactQuery';
 
-interface Document {
+interface Doc {
   id: string;
   doc_name: string;
   doc_type: string;
@@ -43,362 +27,106 @@ interface Document {
   status: string;
 }
 
+const buildDocsFromStatistics = (stats: RsStatistics): Doc[] => {
+  const docTypes = [
+    { type: '设计文档', count: stats.total_projects || 0 },
+    { type: '接口文档', count: stats.total_experiments || 0 },
+    { type: '用户文档', count: stats.total_formulas || 0 },
+    { type: '测试文档', count: stats.total_tasks || 0 },
+  ];
+
+  return docTypes.flatMap((dt, index) =>
+    Array.from({ length: Math.min(dt.count, 3) }, (_, i) => ({
+      id: `${index}-${i}`,
+      doc_name: `${dt.type} - 文档 ${i + 1}`,
+      doc_type: dt.type,
+      version: `v${index + 1}.${i}.0`,
+      author: '系统自动',
+      update_time: new Date().toISOString(),
+      status: i % 2 === 0 ? 'published' : 'draft',
+    }))
+  );
+};
+
+const docApiAdapter: CrudApiAdapter<Doc> = {
+  list: async (params) => {
+    const response = await rdApi.getStatistics();
+    if (!response.success || !response.data) {
+      throw new Error(response.message || '加载文档数据失败');
+    }
+    let allDocs = buildDocsFromStatistics(response.data);
+
+    if (params?.search) {
+      const q = String(params.search).toLowerCase();
+      allDocs = allDocs.filter(
+        (d) => d.doc_name.toLowerCase().includes(q) || d.author.toLowerCase().includes(q)
+      );
+    }
+    if (params?.doc_type && params.doc_type !== 'all') {
+      allDocs = allDocs.filter((d) => d.doc_type === params.doc_type);
+    }
+    if (params?.status && params.status !== 'all') {
+      allDocs = allDocs.filter((d) => d.status === params.status);
+    }
+
+    const total = allDocs.length;
+    const page = params?.page || 1;
+    const pageSize = params?.pageSize || 10;
+    const paged = allDocs.slice((page - 1) * pageSize, page * pageSize);
+    return { data: paged, total };
+  },
+
+  create: async (data) => {
+    return data as Doc;
+  },
+
+  update: async (id, data) => {
+    return { ...(data as Doc), id };
+  },
+
+  delete: async () => {
+    // 文档为统计派生数据，删除后重新查询将刷新列表
+  },
+};
+
+const VERSION_HISTORY = [
+  { version: 'v2.1.0', date: '2024-06-15', author: '张三', note: '更新架构设计' },
+  { version: 'v2.0.0', date: '2024-05-20', author: '张三', note: '重大改版' },
+  { version: 'v1.0.0', date: '2024-04-01', author: '李四', note: '初始版本' },
+];
+
 const RsDocPage: React.FC = () => {
-  const queryClient = useQueryClient();
-  const { addNotification } = useNotificationStore();
-  const [docs, setDocs] = useState<Document[]>([]);
-  const [page, setPage] = useState(0);
-  const [rowsPerPage, setRowsPerPage] = useState(10);
-  const [total, setTotal] = useState(0);
-  const [searchTerm, setSearchTerm] = useState('');
-  const [docTypeFilter, setDocTypeFilter] = useState<string>('');
-  const [statusFilter, setStatusFilter] = useState<string>('');
-  const [newDocDialogOpen, setNewDocDialogOpen] = useState(false);
   const [versionDialogOpen, setVersionDialogOpen] = useState(false);
-  const [uploadDialogOpen, setUploadDialogOpen] = useState(false);
-  const [selectedDoc, setSelectedDoc] = useState<Document | null>(null);
-  const [attachments, setAttachments] = useState<string[]>([]);
-  const [newDocForm, setNewDocForm] = useState({
-    doc_name: '',
-    doc_type: '设计文档',
-    description: '',
-  });
+  const [selectedDoc, setSelectedDoc] = useState<Doc | null>(null);
 
-  const statisticsQuery = useQuery({
-    queryKey: QUERY_KEYS.RD.STATISTICS,
-    queryFn: async () => {
-      const response = await rdApi.getStatistics();
-      if (!response.success || !response.data) {
-        throw new Error(response.message || '加载统计数据失败');
-      }
-      return response.data;
-    },
-  });
-
-  const statistics = statisticsQuery.data || null;
-  const loading = statisticsQuery.isLoading;
-
-  useEffect(() => {
-    if (statisticsQuery.data) {
-      const stats = statisticsQuery.data;
-      const docTypes = [
-        { type: '设计文档', count: stats.total_projects || 0 },
-        { type: '接口文档', count: stats.total_experiments || 0 },
-        { type: '用户文档', count: stats.total_formulas || 0 },
-        { type: '测试文档', count: stats.total_tasks || 0 },
-      ];
-
-      const newDocs: Document[] = docTypes.flatMap((dt, index) => {
-        return Array.from({ length: Math.min(dt.count, 3) }, (_, i) => ({
-          id: `${index}-${i}`,
-          doc_name: `${dt.type} - 文档 ${i + 1}`,
-          doc_type: dt.type,
-          version: `v${index + 1}.${i}.0`,
-          author: '系统自动',
-          update_time: new Date().toISOString(),
-          status: i % 2 === 0 ? 'published' : 'draft',
-        }));
-      });
-
-      setDocs(newDocs);
-      setTotal(newDocs.length);
-    }
-  }, [statisticsQuery.data]);
-
-  React.useEffect(() => {
-    if (statisticsQuery.error) {
-      logger.error('加载文档数据失败:', statisticsQuery.error);
-    }
-  }, [statisticsQuery.error]);
-
-  const getDocTypeIcon = (type: string) => {
-    switch (type) {
-      case '设计文档':
-        return (
-          <File
-            size={16}
-            color='primary.main'
-          />
-        );
-      case '接口文档':
-        return (
-          <FileText
-            size={16}
-            color='primary.main'
-          />
-        );
-      case '用户文档':
-        return (
-          <BookOpen
-            size={16}
-            color='primary.main'
-          />
-        );
-      default:
-        return (
-          <Folder
-            size={16}
-            color='primary.main'
-          />
-        );
-    }
-  };
-
-  const getStatusColor = (status: string): 'success' | 'warning' | 'default' => {
-    switch (status) {
-      case 'published':
-        return 'success';
-      case 'draft':
-        return 'warning';
-      default:
-        return 'default';
-    }
-  };
-
-  const getStatusLabel = (status: string): string => {
-    switch (status) {
-      case 'published':
-        return '已发布';
-      case 'draft':
-        return '草稿';
-      default:
-        return status;
-    }
-  };
-
-  const filteredDocs = useMemo(() => {
-    return docs.filter((doc) => {
-      const matchesSearch =
-        doc.doc_name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        doc.author.toLowerCase().includes(searchTerm.toLowerCase());
-      const matchesType = !docTypeFilter || doc.doc_type === docTypeFilter;
-      const matchesStatus = !statusFilter || doc.status === statusFilter;
-      return matchesSearch && matchesType && matchesStatus;
-    });
-  }, [docs, searchTerm, docTypeFilter, statusFilter]);
-
-  const paginatedDocs = filteredDocs.slice(page * rowsPerPage, page * rowsPerPage + rowsPerPage);
-
-  const uniqueDocTypes = [...new Set(docs.map((d) => d.doc_type))];
-
-  const handleCreateDoc = async () => {
-    addNotification({
-      type: 'success',
-      title: '创建成功',
-      message: '新文档已创建',
-    });
-    setNewDocDialogOpen(false);
-    setNewDocForm({ doc_name: '', doc_type: '设计文档', description: '' });
-    queryClient.invalidateQueries({ queryKey: QUERY_KEYS.RD.STATISTICS });
-  };
-
-  const handleViewVersion = (doc: Document) => {
-    setSelectedDoc(doc);
+  const handleViewVersion = (row: Record<string, unknown>) => {
+    setSelectedDoc(row as unknown as Doc);
     setVersionDialogOpen(true);
   };
 
-  const handleDelete = (docId: string) => {
-    setDocs(docs.filter((d) => d.id !== docId));
-  };
-
-  const columns: ColumnDef<Document>[] = [
+  const customRowActions: RowAction[] = [
     {
-      id: 'doc_name',
-      label: '文档名称',
-      render: (row) => (
-        <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-          {getDocTypeIcon(row.doc_type)}
-          {row.doc_name}
-        </Box>
-      ),
-    },
-    {
-      id: 'doc_type',
-      label: '文档类型',
-    },
-    {
-      id: 'version',
-      label: '版本',
-      render: (row) => (
-        <Chip
-          label={row.version}
-          size='small'
-          variant='outlined'
-        />
-      ),
-    },
-    {
-      id: 'author',
-      label: '作者',
-    },
-    {
-      id: 'update_time',
-      label: '更新时间',
-    },
-    {
-      id: 'status',
-      label: '状态',
-      render: (row) => (
-        <Chip
-          label={getStatusLabel(row.status)}
-          size='small'
-          color={getStatusColor(row.status)}
-        />
-      ),
-    },
-  ];
-
-  const filters: FilterConfig[] = [
-    {
-      id: 'doc_type',
-      label: '文档类型',
-      type: 'select',
-      options: [
-        { label: '全部', value: '' },
-        ...uniqueDocTypes.map((type) => ({ label: type, value: type })),
-      ],
-      value: docTypeFilter || '',
-      onChange: (value: unknown) => setDocTypeFilter((value as string) || ''),
-    },
-    {
-      id: 'status',
-      label: '状态',
-      type: 'select',
-      options: [
-        { label: '全部', value: '' },
-        { label: '已发布', value: 'published' },
-        { label: '草稿', value: 'draft' },
-      ],
-      value: statusFilter || '',
-      onChange: (value: unknown) => setStatusFilter((value as string) || ''),
-    },
-  ];
-
-  const rowActions = [
-    {
-      label: '编辑',
-      icon: <Edit size={16} />,
-      onClick: () => {},
-    },
-    {
+      key: 'version',
       label: '版本管理',
       icon: <History size={16} />,
       onClick: handleViewVersion,
     },
     {
+      key: 'permission',
       label: '权限设置',
       icon: <Shield size={16} />,
       onClick: () => {},
     },
-    {
-      label: '删除',
-      icon: <Trash2 size={16} />,
-      color: 'error' as const,
-      onClick: (row: Document) => handleDelete(row.id),
-    },
   ];
 
   return (
-    <PageContainer>
-      <ListPageTemplate
-        columns={columns}
-        data={paginatedDocs}
-        loading={loading}
-        searchable
-        searchPlaceholder='搜索文档名称、作者...'
-        searchValue={searchTerm}
-        onSearch={setSearchTerm}
-        filters={filters}
-        filtersValue={{
-          doc_type: docTypeFilter || '',
-          status: statusFilter || '',
-        }}
-        onFilterChange={(filters) => {
-          if (filters.doc_type !== undefined) {
-            setDocTypeFilter(filters.doc_type || null);
-          }
-          if (filters.status !== undefined) {
-            setStatusFilter(filters.status || null);
-          }
-        }}
-        pagination={{
-          page,
-          pageSize: rowsPerPage,
-          total,
-          onPageChange: setPage,
-          onPageSizeChange: setRowsPerPage,
-        }}
-        actions={[
-          {
-            label: '上传',
-            variant: 'outlined',
-            icon: <Upload size={18} />,
-            onClick: () => setUploadDialogOpen(true),
-          },
-          {
-            label: '新建文档',
-            variant: 'contained',
-            icon: <Plus size={18} />,
-            onClick: () => setNewDocDialogOpen(true),
-          },
-        ]}
-        rowActions={rowActions}
-        showRowNumber
-        emptyMessage='暂无文档数据'
+    <>
+      <CrudPage
+        schema={docSchema}
+        apiAdapter={docApiAdapter}
+        customRowActions={customRowActions}
+        breadcrumbs={[{ label: '研发管理', href: '/rd' }, { label: '文档管理' }]}
       />
-
-      <Dialog
-        open={newDocDialogOpen}
-        onClose={() => setNewDocDialogOpen(false)}
-        maxWidth='sm'
-        fullWidth
-      >
-        <DialogTitle>新建文档</DialogTitle>
-        <DialogContent>
-          <Stack
-            spacing={2}
-            sx={{ mt: 2 }}
-          >
-            <TextField
-              label='文档名称'
-              fullWidth
-              value={newDocForm.doc_name}
-              onChange={(e) => setNewDocForm({ ...newDocForm, doc_name: e.target.value })}
-            />
-            <TextField
-              select
-              label='文档类型'
-              fullWidth
-              value={newDocForm.doc_type}
-              onChange={(e) => setNewDocForm({ ...newDocForm, doc_type: e.target.value })}
-            >
-              <option value='设计文档'>设计文档</option>
-              <option value='接口文档'>接口文档</option>
-              <option value='用户文档'>用户文档</option>
-              <option value='测试文档'>测试文档</option>
-              <option value='运维文档'>运维文档</option>
-            </TextField>
-            <TextField
-              label='描述'
-              fullWidth
-              multiline
-              rows={3}
-              value={newDocForm.description}
-              onChange={(e) => setNewDocForm({ ...newDocForm, description: e.target.value })}
-            />
-          </Stack>
-        </DialogContent>
-        <DialogActions>
-          <Button onClick={() => setNewDocDialogOpen(false)}>取消</Button>
-          <Button
-            variant='contained'
-            sx={{ bgcolor: 'primary.main' }}
-            onClick={handleCreateDoc}
-          >
-            创建
-          </Button>
-        </DialogActions>
-      </Dialog>
 
       <Dialog
         open={versionDialogOpen}
@@ -420,26 +148,7 @@ const RsDocPage: React.FC = () => {
                 spacing={2}
                 sx={{ mt: 2 }}
               >
-                {[
-                  {
-                    version: 'v2.1.0',
-                    date: '2024-06-15',
-                    author: '张三',
-                    note: '更新架构设计',
-                  },
-                  {
-                    version: 'v2.0.0',
-                    date: '2024-05-20',
-                    author: '张三',
-                    note: '重大改版',
-                  },
-                  {
-                    version: 'v1.0.0',
-                    date: '2024-04-01',
-                    author: '李四',
-                    note: '初始版本',
-                  },
-                ].map((v, i) => (
+                {VERSION_HISTORY.map((v, i) => (
                   <Paper
                     key={i}
                     sx={{ p: 2 }}
@@ -477,41 +186,7 @@ const RsDocPage: React.FC = () => {
           <Button onClick={() => setVersionDialogOpen(false)}>关闭</Button>
         </DialogActions>
       </Dialog>
-
-      <Dialog
-        open={uploadDialogOpen}
-        onClose={() => setUploadDialogOpen(false)}
-        maxWidth='md'
-        fullWidth
-      >
-        <DialogTitle>上传文档</DialogTitle>
-        <DialogContent>
-          <Box sx={{ py: 2 }}>
-            <FileUpload
-              value={attachments}
-              onChange={setAttachments}
-              accept={['pdf', 'doc', 'docx', 'xls', 'xlsx', 'txt', 'md']}
-              maxCount={10}
-              maxSize={50}
-              maxTotalSize={200}
-            />
-          </Box>
-        </DialogContent>
-        <DialogActions>
-          <Button onClick={() => setUploadDialogOpen(false)}>关闭</Button>
-          <Button
-            variant='contained'
-            sx={{ bgcolor: 'primary.main' }}
-            onClick={() => {
-              apiLogger.info('上传的文件:', attachments);
-              setUploadDialogOpen(false);
-            }}
-          >
-            完成上传
-          </Button>
-        </DialogActions>
-      </Dialog>
-    </PageContainer>
+    </>
   );
 };
 

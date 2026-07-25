@@ -8,7 +8,6 @@ use topems_shared::{AuthState, Config};
 
 pub mod ai_integration;
 pub mod audit;
-pub mod auth;
 pub mod doc_integration;
 pub mod experiment;
 pub mod formula;
@@ -48,7 +47,6 @@ impl FromRef<ApiState> for PgPool {
 
 pub fn create_routes() -> Router<ApiState> {
     Router::new()
-        .merge(auth::create_routes())
         .merge(project::create_routes())
         .merge(formula::create_routes())
         .merge(experiment::create_routes())

@@ -1,0 +1,77 @@
+[package]
+name = "topems-shared-core"
+version.workspace = true
+edition.workspace = true
+authors.workspace = true
+description = "TOPEMS shared core library - foundational types and utilities"
+
+[dependencies]
+# ===== 基础依赖 =====
+chrono.workspace = true
+serde.workspace = true
+serde_json.workspace = true
+thiserror.workspace = true
+anyhow.workspace = true
+axum.workspace = true
+tower.workspace = true
+tower-http.workspace = true
+tokio.workspace = true
+tracing.workspace = true
+tracing-subscriber.workspace = true
+
+# ===== 工具依赖 =====
+regex.workspace = true
+url = "2"
+uuid.workspace = true
+utoipa.workspace = true
+reqwest = { version = "0.12", features = ["json"] }
+futures-util = "0.3"
+futures = "0.3"
+bytes = "1"
+hostname = "0.4"
+serde_yaml = "0.9"
+parking_lot = "0.12"
+envy = "0.4"
+
+# ===== 压缩依赖 =====
+flate2 = "1.0"
+brotli = "3.5"
+
+# ===== 数据库依赖 =====
+sqlx.workspace = true
+
+# ===== 指标依赖 =====
+prometheus = "0.13"
+axum-prometheus.workspace = true
+
+# ===== 日志依赖 =====
+tracing-appender = "0.2"
+
+# ===== OpenTelemetry 依赖 =====
+opentelemetry = { version = "0.32", features = ["trace"] }
+
+# ===== 认证依赖 =====
+jsonwebtoken.workspace = true
+
+# ===== Redis 依赖 =====
+redis = { version = "0.24", features = ["tokio-comp", "connection-manager"] }
+
+# ===== 安全依赖（api_security 模块）=====
+hmac = "0.12"
+sha2 = "0.10"
+hex = "0.4"
+
+# ===== gRPC 微服务基础（V24.0 模块 C）=====
+tonic = { workspace = true, optional = true }
+prost = { version = "0.13", optional = true }
+rand = { workspace = true, optional = true }
+async-trait = { workspace = true, optional = true }
+
+[features]
+default = ["full"]
+full = ["event-bridge", "service-client-bridge"]
+event-bridge = []
+service-client-bridge = []
+# V24.0 模块 C: gRPC 微服务基础特性开关
+# 启用后激活 tonic/prost/rand/async-trait 依赖与 grpc 模块
+grpc = ["dep:tonic", "dep:prost", "dep:rand", "dep:async-trait"]
