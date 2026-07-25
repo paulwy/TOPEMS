@@ -1,3 +1,88 @@
+import type { IamTypes } from '@topems/shared-types';
+
+// ============================================================================
+// OpenAPI 生成类型别名（试点）
+// ============================================================================
+// 当前策略：保留手写类型作为主类型，生成类型作为参考
+// 后续待 OpenAPI 规范完善后，可逐步替换手写类型
+//
+// 已知差异：
+// 1. 生成类型字段全可选（openapi-typescript 默认行为）
+// 2. User 字段命名差异：生成类型用 is_active，手写类型用 isactive
+// 3. User 生成类型缺少多租户相关字段（tenant_id/tenants/current_tenant_id）
+// 4. Role 生成类型有 code 字段，手写类型（旧版）暂无
+// 5. Permission 生成类型用 module 字段，手写类型用 category 字段
+
+export type GeneratedUser = IamTypes.User;
+export type GeneratedRole = IamTypes.Role;
+export type GeneratedPermission = IamTypes.Permission;
+
+// ============================================================================
+// 适配类型：将生成类型字段重映射到手写命名（任务 2）
+// ============================================================================
+// 通过 Omit + 交叉类型，把生成类型的字段名重映射为手写类型使用的命名，
+// 这样业务代码可继续使用 isactive / category，而类型源真相仍来自生成类型。
+// 注意：生成类型字段全可选，因此适配类型字段也全可选；手写类型仍作为
+// 主类型保留必填字段约束，适配类型用于新代码或与后端对接时。
+
+/** 生成类型 User 的字段重映射：is_active → isactive */
+export type AdaptedUser = Omit<IamTypes.User, 'is_active'> & {
+  isactive?: IamTypes.User['is_active'];
+};
+
+/** 生成类型 Permission 的字段重映射：module → category */
+export type AdaptedPermission = Omit<IamTypes.Permission, 'module'> & {
+  category?: IamTypes.Permission['module'];
+};
+
+// ============================================================================
+// 字段适配函数：生成类型实例 → 手写类型实例
+// ============================================================================
+
+/**
+ * 将生成类型 User（含 is_active）转换为手写命名（含 isactive）。
+ * 用于从后端响应到前端业务类型的边界转换。
+ */
+export const adaptUserFromGenerated = (generated: IamTypes.User): AdaptedUser => {
+  // 显式剔除 is_active，映射到 isactive
+  const { is_active, ...rest } = generated;
+  return {
+    ...rest,
+    isactive: is_active,
+  };
+};
+
+/**
+ * 将生成类型 Permission（含 module）转换为手写命名（含 category）。
+ */
+export const adaptPermissionFromGenerated = (
+  generated: IamTypes.Permission
+): AdaptedPermission => {
+  const { module, ...rest } = generated;
+  return {
+    ...rest,
+    category: module,
+  };
+};
+
+/**
+ * 将手写命名 User（含 isactive）转换为生成类型（含 is_active）。
+ * 用于向前端发送请求时，将业务字段名映射回后端字段名。
+ */
+export const adaptUserToGenerated = (
+  user: Pick<AdaptedUser, 'isactive'> & Omit<AdaptedUser, 'isactive'>
+): IamTypes.User => {
+  const { isactive, ...rest } = user;
+  return {
+    ...rest,
+    is_active: isactive,
+  };
+};
+
+// ============================================================================
+// 手写类型（当前主类型）
+// ============================================================================
+
 export interface User {
   id: string;
   username: string;
@@ -124,7 +209,7 @@ export interface ResetPasswordRequest {
 }
 
 export interface SetNewPasswordRequest {
-  token: string;
+  reset_token: string;
   new_password: string;
 }
 
