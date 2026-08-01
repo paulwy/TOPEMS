@@ -1,0 +1,583 @@
+{
+  "monitor": {
+    "common": {
+      "severity": {
+        "critical": "Critical",
+        "error": "Error",
+        "warning": "Warning",
+        "info": "Info"
+      },
+      "status": {
+        "enabled": "Enabled",
+        "disabled": "Disabled",
+        "enable": "Enable",
+        "disable": "Disable",
+        "active": "Active",
+        "resolved": "Resolved",
+        "pending": "Pending",
+        "confirmed": "Confirmed",
+        "normal": "Normal",
+        "abnormal": "Abnormal"
+      },
+      "action_type": {
+        "notification": "Notification",
+        "email": "Email",
+        "sms": "SMS",
+        "webhook": "Webhook",
+        "wechat": "WeCom",
+        "push": "Push"
+      },
+      "unit": {
+        "count": "items",
+        "piece": "pcs"
+      },
+      "label": {
+        "none": "None",
+        "global": "Global",
+        "all": "All",
+        "monitor": "Monitor",
+        "service": "Service",
+        "status": "Status",
+        "updated_at": "Updated At",
+        "actions": "Actions"
+      },
+      "message": {
+        "success": "Success",
+        "fail": "Failed",
+        "copy_success": "Copied",
+        "copy_fail": "Copy Failed",
+        "copied_to_clipboard": "{{label}} copied to clipboard",
+        "cannot_copy": "Cannot copy to clipboard",
+        "export_success": "Export Succeeded",
+        "export_fail": "Export Failed"
+      }
+    },
+    "settings": {
+      "general_settings": "General Settings",
+      "basic_config": "Basic Configuration",
+      "configure_basic_monitoring_params": "Configure basic monitoring parameters",
+      "enable_monitoring": "Enable Monitoring",
+      "toggle_global_monitoring": "Turn global monitoring on or off",
+      "data_retention_days": "Data Retention (Days)",
+      "monitoring_data_retention_days": "Monitoring data retention period in days",
+      "sample_rate_pct": "Sample Rate (%)",
+      "data_sample_pct_desc": "Set data sampling percentage to reduce storage pressure",
+      "auto_discovery": "Auto Discovery",
+      "auto_discover_new_targets": "Automatically discover new monitoring targets",
+      "check_config": "Check Configuration",
+      "configure_check_params": "Configure health check parameters",
+      "heartbeat_interval_sec": "Heartbeat Interval (sec)",
+      "heartbeat_interval_desc": "Heartbeat detection interval for monitoring targets",
+      "max_concurrent_checks": "Max Concurrent Checks",
+      "max_concurrent_checks_desc": "Maximum number of concurrent check tasks",
+      "observability": "Observability",
+      "configure_metrics_logs_traces": "Configure metrics, logs and traces",
+      "metrics_monitoring": "Metrics Monitoring",
+      "collect_store_metrics": "Collect and store metric data",
+      "log_monitoring": "Log Monitoring",
+      "collect_analyze_logs": "Collect and analyze system logs",
+      "trace_tracking": "Trace Tracking",
+      "collect_analyze_traces": "Collect and analyze distributed traces",
+      "alert_settings": "Alert Settings",
+      "alert_strategy": "Alert Strategy",
+      "configure_default_alert_strategy": "Configure default alert strategy",
+      "default_alert_strategy": "Default Alert Strategy",
+      "select_default_alert_strategy": "Select default alert strategy",
+      "threshold_alert": "Threshold Alert",
+      "anomaly_detection": "Anomaly Detection",
+      "forecast_alert": "Forecast Alert",
+      "composite_alert": "Composite Alert",
+      "auto_recover": "Auto Recovery",
+      "auto_recover_desc": "Attempt auto recovery after alert triggered",
+      "auto_recover_wait_min": "Auto Recovery Wait (min)",
+      "auto_recover_duration_desc": "Auto recovery wait duration",
+      "escalation_mechanism": "Escalation Mechanism",
+      "configure_escalation_rules": "Configure alert escalation rules",
+      "enable_escalation": "Enable Escalation",
+      "enable_escalation_desc": "Auto escalate unattended alerts",
+      "max_escalation_levels": "Max Escalation Levels",
+      "max_escalation_levels_desc": "Maximum number of escalation levels",
+      "escalation_interval_min": "Escalation Interval (min)",
+      "escalation_interval_desc": "Time interval between escalations",
+      "silence_rules": "Silence Rules",
+      "configure_silence_rules": "Configure alert silence rules",
+      "enable_silence_rules": "Enable Silence Rules",
+      "enable_silence_desc": "Suppress alert notifications during specified periods",
+      "max_silence_hours": "Max Silence Duration (hours)",
+      "max_silence_duration_desc": "Maximum duration of a single silence period",
+      "dedup_settings": "Dedup Settings",
+      "configure_dedup_rules": "Configure alert dedup rules",
+      "alert_dedup": "Alert Dedup",
+      "dedup_desc": "Merge duplicate alerts",
+      "dedup_window_min": "Dedup Window (min)",
+      "dedup_window_desc": "Dedup time window length",
+      "notification_settings": "Notification Settings",
+      "notification_channels": "Notification Channels",
+      "configure_notification_channels": "Configure alert notification channels",
+      "email_notification": "Email Notification",
+      "email_notification_desc": "Send alert notifications via email",
+      "sms_notification": "SMS Notification",
+      "sms_notification_desc": "Send alert notifications via SMS",
+      "in_app_push": "In-App Push",
+      "in_app_push_desc": "Push alert messages in app",
+      "wechat_work": "WeCom",
+      "wechat_work_desc": "Send alert notifications via WeCom",
+      "phone_notification": "Phone Notification",
+      "phone_notification_desc": "Send alert notifications via phone call",
+      "alert_levels": "Alert Levels",
+      "configure_alert_level_notifications": "Configure notification per alert level",
+      "critical_alert_notify": "Critical Alert Notification",
+      "critical_notify_desc": "Notification strategy for critical alerts",
+      "warning_notify": "Warning Notification",
+      "warning_notify_desc": "Notification strategy for warning alerts",
+      "info_notify": "Info Notification",
+      "info_notify_desc": "Notification strategy for info alerts",
+      "notification_config": "Notification Configuration",
+      "configure_template_and_contacts": "Configure notification template and contacts",
+      "default_notification_template": "Default Notification Template",
+      "select_default_template": "Select default notification template",
+      "standard_template": "Standard Template",
+      "concise_template": "Concise Template",
+      "detailed_template": "Detailed Template",
+      "custom_template": "Custom Template",
+      "default_notify_contacts": "Default Notification Contacts",
+      "contacts_separator_desc": "Separate multiple contacts with commas",
+      "datasource": "Datasource",
+      "datasource_config": "Datasource Configuration",
+      "configure_datasource_connection": "Configure datasource connection parameters",
+      "primary_datasource_type": "Primary Datasource Type",
+      "select_primary_datasource": "Select primary datasource type",
+      "connection_timeout_sec": "Connection Timeout (sec)",
+      "datasource_timeout_desc": "Datasource connection timeout",
+      "max_retries": "Max Retries",
+      "max_retries_desc": "Maximum retry attempts on connection failure",
+      "retry_interval_sec": "Retry Interval (sec)",
+      "retry_interval_desc": "Time interval between retries",
+      "ssl_config": "SSL Configuration",
+      "configure_ssl_connection": "Configure SSL secure connection",
+      "enable_ssl": "Enable SSL",
+      "use_ssl_tls": "Use SSL/TLS encrypted connection",
+      "ssl_verify": "SSL Certificate Verification",
+      "verify_ssl_cert": "Verify SSL certificate validity",
+      "query_optimization": "Query Optimization",
+      "configure_query_optimization": "Configure query performance optimization",
+      "batch_query": "Batch Query",
+      "batch_query_desc": "Enable batch query to improve performance",
+      "batch_size": "Batch Size",
+      "max_batch_size": "Maximum batch size per query",
+      "query_cache": "Query Cache",
+      "cache_query_desc": "Cache query results to speed up repeated queries",
+      "cache_ttl_sec": "Cache TTL (sec)",
+      "cache_ttl_desc": "Query cache time-to-live",
+      "permission_settings": "Permission Settings",
+      "access_control": "Access Control",
+      "configure_access_control": "Configure monitoring module access control",
+      "role_based_permission": "Role-Based Permission",
+      "use_system_roles": "Use system roles for permission control",
+      "dept_based_permission": "Department-Based Permission",
+      "use_org_structure": "Use organizational structure for permission control",
+      "admin_manage_all": "Admin Manage All",
+      "admin_manage_all_desc": "Admin can manage all monitoring resources",
+      "access_control_settings": "Access Control Settings",
+      "configure_permissions": "Configure monitoring operation permissions",
+      "view_all_dashboards": "View All Dashboards",
+      "view_all_dashboards_desc": "Allow viewing all monitoring dashboards",
+      "view_only_monitoring": "View Only Monitoring",
+      "create_alert_rules": "Create Alert Rules",
+      "allow_custom_alert_rules": "Allow Custom Alert Rules",
+      "edit_without_permission_mgmt": "Edit Without Permission Management",
+      "allow_api_operations": "Allow API Operations",
+      "allow_export_data": "Allow Export Data",
+      "export_data": "Export Data",
+      "role_config": "Role Configuration",
+      "configure_monitor_roles": "Configure monitoring module roles",
+      "monitor_admin_role": "Monitor Admin Role",
+      "monitor_admin_role_desc": "Full management permissions for monitoring module",
+      "monitor_editor_role": "Monitor Editor Role",
+      "monitor_viewer_role": "Monitor Viewer Role",
+      "api_access": "API Access",
+      "configure_api_access": "Configure API access permissions",
+      "enable_api_access": "Enable API Access",
+      "api_rate_limit": "API Rate Limit",
+      "api_rate_limit_desc": "API request rate limit",
+      "no_limit": "No Limit",
+      "integration_settings": "Integration Settings",
+      "integrate_prometheus": "Integrate Prometheus",
+      "enable_prometheus": "Enable Prometheus",
+      "configure_prometheus": "Configure Prometheus datasource",
+      "prometheus_url": "Prometheus URL",
+      "prometheus_url_desc": "Prometheus service access URL",
+      "integrate_grafana": "Integrate Grafana",
+      "enable_grafana": "Enable Grafana",
+      "configure_grafana": "Configure Grafana integration",
+      "grafana_url": "Grafana URL",
+      "grafana_url_desc": "Grafana service access URL",
+      "grafana_api_key_desc": "Grafana API access key",
+      "enable_webhook": "Enable Webhook",
+      "configure_webhook": "Configure Webhook integration",
+      "webhook_url": "Webhook URL",
+      "webhook_url_desc": "Webhook URL to receive alert pushes",
+      "webhook_secret": "Webhook Secret",
+      "webhook_secret_desc": "Webhook signature verification secret",
+      "webhook_push_desc": "Push alert notifications via Webhook",
+      "save_success": "Saved Successfully",
+      "monitor_settings_saved": "Monitoring settings saved"
+    },
+    "alert_rules": {
+      "title": "Alert Rules",
+      "subtitle": "Configure and manage monitoring alert rules",
+      "breadcrumb_monitor": "Monitor",
+      "breadcrumb_alert_rules": "Alert Rules",
+      "column": {
+        "name": "Rule Name",
+        "service": "Service",
+        "condition": "Trigger Condition",
+        "severity": "Severity",
+        "actions": "Notification Actions",
+        "status": "Status",
+        "updated_at": "Updated At"
+      },
+      "stat": {
+        "total": "Total Rules",
+        "enabled": "Enabled",
+        "disabled": "Disabled",
+        "critical": "High Severity"
+      },
+      "action": {
+        "toggle": "Enable/Disable",
+        "enable": "Enable",
+        "disable": "Disable"
+      },
+      "message": {
+        "rule_not_found": "Rule not found",
+        "toggle_success_title": "{{action}}d",
+        "toggle_success_body": "Alert rule {{action}}d",
+        "toggle_fail_title": "{{action}} Failed",
+        "toggle_fail_body": "{{action}} failed"
+      }
+    },
+    "logs": {
+      "tooltip": {
+        "export": "Export Logs"
+      },
+      "view": {
+        "table": "Table View",
+        "stream": "Stream View"
+      },
+      "tab": {
+        "all": "All",
+        "error": "Error Logs",
+        "access": "Access Logs",
+        "application": "Application Logs",
+        "slow_query": "Slow Queries"
+      },
+      "stat": {
+        "today": "Today's Logs",
+        "error": "Error Logs",
+        "warn": "Warning Logs",
+        "slow_query": "Slow Queries"
+      },
+      "action": {
+        "copy_log": "Copy Log",
+        "link_log": "Linked Logs"
+      },
+      "message": {
+        "readonly_create": "Logs are read-only and cannot be created",
+        "readonly_update": "Logs are read-only and cannot be modified",
+        "delete_success_title": "Deleted",
+        "delete_success_body": "Log deleted",
+        "copy_success_title": "Copied",
+        "copy_success_body": "{{label}} copied to clipboard",
+        "copy_fail_title": "Copy Failed",
+        "copy_fail_body": "Cannot copy to clipboard",
+        "export_success_title": "Success",
+        "export_success_body": "Logs exported successfully",
+        "export_fail_title": "Failed",
+        "link_filtered": "Filtered linked logs by Trace ID"
+      }
+    },
+    "metric_type": {
+      "cpu": "CPU",
+      "memory": "Memory",
+      "disk": "Disk",
+      "network": "Network",
+      "database": "Database",
+      "api": "API"
+    },
+    "alert_rules_v2": {
+      "column": {
+        "name": "Rule Name",
+        "metric_type": "Metric Type",
+        "condition": "Trigger Condition",
+        "severity": "Severity",
+        "channels": "Notification Channels",
+        "status": "Status",
+        "last_triggered": "Last Triggered"
+      },
+      "action": {
+        "copy": "Copy",
+        "toggle": "Enable/Disable"
+      },
+      "breadcrumb_monitor": "Monitor",
+      "breadcrumb_alert_rules": "Alert Rules"
+    },
+    "alert_history": {
+      "title": "Alert History",
+      "subtitle": "View and process all alert records",
+      "breadcrumb_monitor": "Monitor",
+      "breadcrumb_alert_history": "Alert History",
+      "stat": {
+        "total": "Total Alerts",
+        "critical": "Critical Alerts",
+        "warning": "Warning Alerts",
+        "active": "Pending",
+        "resolved": "Resolved",
+        "avg_resolution": "Avg Resolution Time"
+      },
+      "action": {
+        "confirm": "Confirm",
+        "resolve": "Resolve"
+      },
+      "tooltip": {
+        "export": "Export Alert History"
+      },
+      "message": {
+        "readonly": "Alert history is read-only and cannot be deleted",
+        "confirm_success": "Alert confirmed",
+        "confirm_fail": "Failed to confirm alert",
+        "resolve_success": "Alert resolved",
+        "resolve_fail": "Failed to resolve alert",
+        "export_success": "Export succeeded",
+        "export_fail": "Export failed"
+      }
+    },
+    "metrics_dashboard": {
+      "category": {
+        "all": "All Categories",
+        "sales": "Sales",
+        "production": "Production",
+        "inventory": "Inventory",
+        "finance": "Finance",
+        "hr": "HR",
+        "procurement": "Procurement",
+        "quality": "Quality"
+      },
+      "stat": {
+        "total": "Total Metrics",
+        "healthy": "Healthy",
+        "warning": "Attention Needed",
+        "error": "Abnormal"
+      },
+      "section": {
+        "kpi": "Key Metric Achievement",
+        "trend": "Metric Trends",
+        "trend_desc": "Selected metric over time",
+        "list": "Business Metric List",
+        "quick_actions": "Quick Actions"
+      },
+      "label": {
+        "metric": "Metric",
+        "period": "Period",
+        "category": "Category",
+        "service": "Service",
+        "all_services": "All Services",
+        "status": "Status",
+        "all_status": "All Status",
+        "current_value": "Current Value",
+        "target": "Target",
+        "trend": "Trend",
+        "updated_at": "Updated At",
+        "search": "Search metric name or code"
+      },
+      "period": {
+        "1h": "1 Hour",
+        "6h": "6 Hours",
+        "24h": "24 Hours"
+      },
+      "message": {
+        "refreshed": "Refreshed",
+        "refreshed_body": "Business metrics updated",
+        "refresh_fail": "Refresh failed",
+        "refresh": "Refresh Data",
+        "refresh_desc": "Reload latest metrics"
+      }
+    },
+    "alerts": {
+      "title": "All Alerts",
+      "subtitle": "View and process system alerts",
+      "breadcrumb_monitor": "Monitor",
+      "breadcrumb_alerts": "Alerts",
+      "stat": {
+        "active": "Active Alerts",
+        "critical": "Critical Alerts",
+        "warning": "Warning Alerts",
+        "today": "Today's Alerts"
+      },
+      "tab": {
+        "all": "All Alerts",
+        "warning": "Warning",
+        "notification": "Notification",
+        "processed": "Processed"
+      },
+      "action": {
+        "confirm": "Confirm",
+        "resolve": "Resolve",
+        "block": "Block",
+        "export": "Export Alert Data"
+      },
+      "message": {
+        "readonly": "Alerts cannot be deleted",
+        "confirm_success": "Confirmed",
+        "confirm_success_body": "Alert confirmed",
+        "confirm_fail": "Confirm operation failed",
+        "resolve_success": "Resolved",
+        "resolve_success_body": "Alert marked as resolved",
+        "resolve_fail": "Resolve operation failed",
+        "batch_confirm_success": "Batch confirm succeeded",
+        "batch_confirm_fail": "Batch confirm failed",
+        "batch_resolve_success": "Batch resolve succeeded",
+        "batch_resolve_fail": "Batch resolve failed",
+        "export_success": "Export succeeded",
+        "export_success_body": "Alert data exported successfully",
+        "export_fail": "Export failed"
+      }
+    },
+    "dashboard": {
+      "title": "Monitor Dashboard",
+      "subtitle": "System Monitoring Overview",
+      "breadcrumb_monitor": "Monitor",
+      "breadcrumb_dashboard": "Dashboard",
+      "stat": {
+        "online_services": "Online Services",
+        "alerts": "Alerts",
+        "cpu_usage": "CPU Usage",
+        "memory_usage": "Memory Usage",
+        "disk_usage": "Disk Usage"
+      },
+      "section": {
+        "resource_trend": "System Resource Trends",
+        "service_health": "Service Health Status",
+        "service_distribution": "Service Status Distribution",
+        "alert_distribution": "Alert Distribution",
+        "alert_by_service": "Alert Count by Service",
+        "recent_alerts": "Recent Alerts",
+        "quick_actions": "Quick Actions"
+      },
+      "action": {
+        "view_alerts": "View Alerts",
+        "view_alerts_desc": "View system alert list",
+        "view_metrics": "View Metrics",
+        "view_metrics_desc": "View detailed monitoring metrics",
+        "view_logs": "View Logs",
+        "view_logs_desc": "View system logs",
+        "alert_rules": "Alert Rules",
+        "alert_rules_desc": "Configure alert rules"
+      },
+      "label": {
+        "service_name": "Service Name",
+        "status": "Status",
+        "uptime": "Uptime",
+        "last_check": "Last Check",
+        "normal": "Normal",
+        "warning": "Warning",
+        "abnormal": "Abnormal"
+      },
+      "time": {
+        "just_now": "Just now"
+      },
+      "message": {
+        "refreshed": "Monitoring data refreshed"
+      }
+    },
+    "metrics": {
+      "title": "Monitor Metrics",
+      "subtitle": "View system monitoring metrics",
+      "breadcrumb_monitor": "Monitor",
+      "breadcrumb_metrics": "Metrics",
+      "stat": {
+        "total": "Total Metrics",
+        "healthy": "Healthy",
+        "warning": "Attention Needed",
+        "error": "Abnormal"
+      },
+      "label": {
+        "metric_name": "Metric Name",
+        "service": "Service",
+        "category": "Category",
+        "current_value": "Current Value",
+        "target": "Target",
+        "status": "Status",
+        "updated_at": "Updated At"
+      },
+      "message": {
+        "refreshed": "Refreshed",
+        "refreshed_body": "Metric data updated",
+        "refresh_fail": "Refresh failed"
+      }
+    },
+    "notification": {
+      "title": "Notification Management",
+      "subtitle": "Manage alert notification channels and rules",
+      "breadcrumb_monitor": "Monitor",
+      "breadcrumb_notification": "Notification",
+      "tab": {
+        "channels": "Channels",
+        "templates": "Templates",
+        "rules": "Rules",
+        "contacts": "Contacts"
+      },
+      "message": {
+        "save_success": "Saved successfully",
+        "delete_success": "Deleted successfully",
+        "test_sent": "Test notification sent"
+      }
+    },
+    "settings_page": {
+      "title": "Monitor Settings",
+      "subtitle": "Configure monitoring parameters and rules",
+      "breadcrumb_monitor": "Monitor",
+      "breadcrumb_settings": "Settings",
+      "tab": {
+        "general": "General",
+        "alert": "Alert",
+        "notification": "Notification",
+        "datasource": "Datasource",
+        "permission": "Permission",
+        "integration": "Integration"
+      },
+      "action": {
+        "save": "Save",
+        "reset": "Reset"
+      },
+      "message": {
+        "save_success": "Saved successfully",
+        "save_success_body": "Monitoring settings saved"
+      }
+    },
+    "slo": {
+      "title": "SLO Status",
+      "subtitle": "Service Level Objective Monitoring",
+      "breadcrumb_monitor": "Monitor",
+      "breadcrumb_slo": "SLO Status",
+      "stat": {
+        "total": "Total SLOs",
+        "met": "Met",
+        "at_risk": "At Risk",
+        "violated": "Violated"
+      },
+      "label": {
+        "slo_name": "SLO Name",
+        "service": "Service",
+        "target": "Target",
+        "current": "Current",
+        "status": "Status",
+        "updated_at": "Updated At"
+      },
+      "status": {
+        "met": "Met",
+        "at_risk": "At Risk",
+        "violated": "Violated"
+      }
+    }
+  }
+}

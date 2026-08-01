@@ -54,6 +54,7 @@ import { useNotificationStore } from '@/store';
 import { logger } from '@/utils/logger';
 import { designTokens } from '@/theme/tokens';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { useTranslation } from 'react-i18next';
 
 const ct = designTokens.colors;
 
@@ -160,14 +161,16 @@ const mockPrompts: PromptTemplate[] = [
   },
 ];
 
-const categories = [
-  { id: 'all', label: '全部', icon: <BookOpen size={18} /> },
-  { id: 'writing', label: '写作', icon: <FileText size={18} /> },
-  { id: 'code', label: '编程', icon: <Code2 size={18} /> },
-  { id: 'business', label: '商务', icon: <MessageSquare size={18} /> },
-  { id: 'analysis', label: '分析', icon: <BarChart3 size={18} /> },
-  { id: 'creative', label: '创意', icon: <Lightbulb size={18} /> },
-];
+const categoryIcons: Record<string, React.ReactNode> = {
+  all: <BookOpen size={18} />,
+  writing: <FileText size={18} />,
+  code: <Code2 size={18} />,
+  business: <MessageSquare size={18} />,
+  analysis: <BarChart3 size={18} />,
+  creative: <Lightbulb size={18} />,
+};
+
+const categoryIds = ['all', 'writing', 'code', 'business', 'analysis', 'creative'] as const;
 
 const getCategoryIcon = (category: string) => {
   const map: Record<string, React.ReactNode> = {
@@ -194,6 +197,13 @@ const getCategoryColor = (category: string) => {
 export const AiPromptLibraryPage: React.FC = () => {
   const addNotification = useNotificationStore((state) => state.addNotification);
   const queryClient = useQueryClient();
+  const { t } = useTranslation();
+
+  const categories = categoryIds.map((id) => ({
+    id,
+    label: t(`ai.prompt_library.category.${id}`),
+    icon: categoryIcons[id],
+  }));
 
   const { data: prompts = [] } = useQuery({
     queryKey: ['ai-prompts'],
@@ -291,8 +301,8 @@ export const AiPromptLibraryPage: React.FC = () => {
     if (generatedResult) {
       navigator.clipboard.writeText(generatedResult);
       addNotification({
-        title: '已复制',
-        message: '结果已复制到剪贴板',
+        title: t('ai.prompt_library.message.copied_title'),
+        message: t('ai.prompt_library.message.result_copied'),
         type: 'success',
       });
     }
@@ -301,8 +311,8 @@ export const AiPromptLibraryPage: React.FC = () => {
   const handleCopyPrompt = (content: string) => {
     navigator.clipboard.writeText(content);
     addNotification({
-      title: '已复制',
-      message: 'Prompt已复制到剪贴板',
+      title: t('ai.prompt_library.message.copied_title'),
+      message: t('ai.prompt_library.message.prompt_copied'),
       type: 'success',
     });
   };
@@ -311,8 +321,8 @@ export const AiPromptLibraryPage: React.FC = () => {
     toggleFavoriteMutation.mutate(id, {
       onSuccess: () => {
         addNotification({
-          title: '成功',
-          message: '收藏状态已更新',
+          title: t('ai.prompt_library.message.favorite_title'),
+          message: t('ai.prompt_library.message.favorite_updated'),
           type: 'success',
         });
       },
@@ -321,8 +331,8 @@ export const AiPromptLibraryPage: React.FC = () => {
 
   return (
     <PageContainer
-      title='Prompt模板库'
-      subtitle='高效管理和使用AI提示词模板'
+      title={t('ai.prompt_library.title')}
+      subtitle={t('ai.prompt_library.subtitle')}
       padding={false}
       maxWidth={false}
       headerProps={{
@@ -347,7 +357,7 @@ export const AiPromptLibraryPage: React.FC = () => {
                   variant='subtitle2'
                   sx={{ fontWeight: 600, mb: 1, color: 'text.secondary' }}
                 >
-                  分类
+                  {t('ai.prompt_library.label.category')}
                 </Typography>
                 <List
                   disablePadding
@@ -397,7 +407,7 @@ export const AiPromptLibraryPage: React.FC = () => {
               <Box>
                 <Chip
                   icon={<Star size={14} />}
-                  label='仅显示收藏'
+                  label={t('ai.prompt_library.label.favorites_only')}
                   variant={showFavoritesOnly ? 'filled' : 'outlined'}
                   color={showFavoritesOnly ? 'warning' : 'default'}
                   onClick={() => setShowFavoritesOnly(!showFavoritesOnly)}
@@ -430,12 +440,12 @@ export const AiPromptLibraryPage: React.FC = () => {
                   sx={{ minHeight: 36, '& .MuiTab-root': { minHeight: 36, py: 0.5 } }}
                 >
                   <Tab
-                    label='全部模板'
+                    label={t('ai.prompt_library.view.all_templates')}
                     value='all'
                     sx={{ textTransform: 'none' }}
                   />
                   <Tab
-                    label='我的模板'
+                    label={t('ai.prompt_library.view.my_templates')}
                     value='mine'
                     sx={{ textTransform: 'none' }}
                   />
@@ -444,7 +454,7 @@ export const AiPromptLibraryPage: React.FC = () => {
                 <Box sx={{ display: 'flex', gap: 1 }}>
                   <TextField
                     size='small'
-                    placeholder='搜索模板...'
+                    placeholder={t('ai.prompt_library.placeholder.search')}
                     value={searchQuery}
                     onChange={(e) => setSearchQuery(e.target.value)}
                     slotProps={{
@@ -465,13 +475,13 @@ export const AiPromptLibraryPage: React.FC = () => {
                     size='small'
                     onClick={() => {
                       addNotification({
-                        title: '新建模板',
-                        message: '打开新建模板对话框',
+                        title: t('ai.prompt_library.button.new_template'),
+                        message: t('ai.prompt_library.message.coming_soon'),
                         type: 'info',
                       });
                     }}
                   >
-                    新建模板
+                    {t('ai.prompt_library.button.new_template')}
                   </Button>
                 </Box>
               </Box>
@@ -599,7 +609,7 @@ export const AiPromptLibraryPage: React.FC = () => {
                                 sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}
                               >
                                 <ThumbsUp size={12} />
-                                {prompt.usage_count} 次使用
+                                {t('ai.prompt_library.label.usage_count', { count: prompt.usage_count })}
                               </Typography>
                               <Box sx={{ display: 'flex', gap: 0.5 }}>
                                 <IconButton
@@ -639,7 +649,7 @@ export const AiPromptLibraryPage: React.FC = () => {
                       variant='body1'
                       color='text.secondary'
                     >
-                      没有找到匹配的模板
+                      {t('ai.prompt_library.message.no_results')}
                     </Typography>
                   </Box>
                 )}
@@ -686,7 +696,7 @@ export const AiPromptLibraryPage: React.FC = () => {
               variant='subtitle2'
               sx={{ fontWeight: 600, mb: 1.5 }}
             >
-              填写变量
+              {t('ai.prompt_library.dialog.fill_variables')}
             </Typography>
             <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2, mb: 3 }}>
               {Object.keys(variables).map((key) => (
@@ -695,7 +705,7 @@ export const AiPromptLibraryPage: React.FC = () => {
                   label={key}
                   value={variables[key]}
                   onChange={(e) => setVariables((prev) => ({ ...prev, [key]: e.target.value }))}
-                  placeholder={`请输入 ${key}`}
+                  placeholder={t('ai.prompt_library.placeholder.enter_var', { var: key })}
                   size='small'
                   multiline
                   maxRows={3}
@@ -715,7 +725,7 @@ export const AiPromptLibraryPage: React.FC = () => {
                 variant='subtitle2'
                 sx={{ fontWeight: 600 }}
               >
-                生成结果
+                {t('ai.prompt_library.dialog.generated_result')}
               </Typography>
               {generatedResult && (
                 <Button
@@ -723,7 +733,7 @@ export const AiPromptLibraryPage: React.FC = () => {
                   startIcon={<Copy size={14} />}
                   onClick={handleCopyResult}
                 >
-                  复制
+                  {t('ai.prompt_library.button.copy')}
                 </Button>
               )}
             </Box>
@@ -748,7 +758,7 @@ export const AiPromptLibraryPage: React.FC = () => {
                     variant='body2'
                     color='text.secondary'
                   >
-                    正在生成...
+                    {t('ai.prompt_library.message.generating')}
                   </Typography>
                 </Box>
               ) : generatedResult ? (
@@ -774,7 +784,7 @@ export const AiPromptLibraryPage: React.FC = () => {
                     variant='body2'
                     color='text.secondary'
                   >
-                    填写变量后点击生成
+                    {t('ai.prompt_library.message.fill_then_generate')}
                   </Typography>
                 </Box>
               )}
@@ -782,14 +792,14 @@ export const AiPromptLibraryPage: React.FC = () => {
           </Box>
         </DialogContent>
         <DialogActions>
-          <Button onClick={() => setUseDialogOpen(false)}>取消</Button>
+          <Button onClick={() => setUseDialogOpen(false)}>{t('ai.prompt_library.button.cancel')}</Button>
           <Button
             variant='contained'
             startIcon={<Sparkles size={16} />}
             onClick={handleGenerate}
             disabled={generating}
           >
-            {generating ? '生成中...' : '生成'}
+            {generating ? t('ai.prompt_library.button.generating') : t('ai.prompt_library.button.generate')}
           </Button>
         </DialogActions>
       </Dialog>

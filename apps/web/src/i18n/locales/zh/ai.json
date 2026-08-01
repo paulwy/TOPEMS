@@ -168,7 +168,10 @@
         "upload_title": "上传文档"
       },
       "disclaimer": "免责声明：AI生成的内容仅供参考",
+      "disclaimer_bottom": "AI助手可能会产生不准确的信息，请谨慎使用",
       "empty": {
+        "start_subtitle": "选择功能模式，输入您的问题",
+        "start_title": "开始对话",
         "subtitle": "开始您的第一次AI对话",
         "title": "还没有消息"
       },
@@ -204,6 +207,12 @@
       },
       "model": {
         "ernie": "文心一言"
+      },
+      "mode": {
+        "code": "代码生成",
+        "general": "通用对话",
+        "qa": "智能问答",
+        "summary": "文档摘要"
       },
       "placeholder": {
         "code": "请描述您需要生成的代码...",
@@ -426,6 +435,7 @@
         "code_gen": "代码生成",
         "doc_analysis": "文档分析",
         "improvement": "提升",
+        "percent_improvement": "%提升",
         "satisfaction": "用户满意度",
         "seconds_down": "秒下降",
         "token_usage": "Token消耗",

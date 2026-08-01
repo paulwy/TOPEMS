@@ -40,6 +40,7 @@ import {
   Lightbulb,
   Zap,
 } from 'lucide-react';
+import { useTranslation } from 'react-i18next';
 import { PageContainer, Grid } from '@/components/common';
 import { useNotificationStore } from '@/store';
 import { logger } from '@/utils/logger';
@@ -95,6 +96,7 @@ const keyPoints = [
 
 export const AiDocumentAnalysisPage: React.FC = () => {
   const addNotification = useNotificationStore((state) => state.addNotification);
+  const { t } = useTranslation();
   const [activeTab, setActiveTab] = useState<AnalysisTab>('summary');
   const [selectedDocument, setSelectedDocument] = useState<string>('');
   const [uploadedFile, setUploadedFile] = useState<File | null>(null);
@@ -107,13 +109,18 @@ export const AiDocumentAnalysisPage: React.FC = () => {
   const [translatedText, setTranslatedText] = useState('');
   const [copied, setCopied] = useState(false);
 
-  const steps = ['上传文档', '文档解析', '智能分析', '生成结果'];
+  const steps = [
+    t('ai.document_analysis.step.upload'),
+    t('ai.document_analysis.step.parse'),
+    t('ai.document_analysis.step.analyze'),
+    t('ai.document_analysis.step.generate'),
+  ];
 
   const handleAnalyze = useCallback(() => {
     if (!selectedDocument && !uploadedFile) {
       addNotification({
-        title: '提示',
-        message: '请先选择或上传文档',
+        title: t('ai.document_analysis.message.notice'),
+        message: t('ai.document_analysis.message.select_document'),
         type: 'warning',
       });
       return;
@@ -130,8 +137,8 @@ export const AiDocumentAnalysisPage: React.FC = () => {
           setAnalyzing(false);
           setAnalysisComplete(true);
           addNotification({
-            title: '分析完成',
-            message: '文档分析已完成',
+            title: t('ai.document_analysis.message.analysis_complete'),
+            message: t('ai.document_analysis.message.analysis_complete_body'),
             type: 'success',
           });
           return 3;
@@ -139,14 +146,12 @@ export const AiDocumentAnalysisPage: React.FC = () => {
         return prev + 1;
       });
     }, 800);
-  }, [selectedDocument, uploadedFile, addNotification]);
+  }, [selectedDocument, uploadedFile, addNotification, t]);
 
   const handleAskQuestion = () => {
     if (!question.trim()) return;
 
-    const answer = `根据文档内容，关于您的问题：${
-      question
-    }\n\n答案如下：这是一个示例回答，实际使用时会基于文档内容进行智能问答。系统会从文档中找到最相关的段落，并综合生成准确的答案。`;
+    const answer = t('ai.document_analysis.mock.qa_answer', { question });
     setQaHistory((prev) => [...prev, { q: question, a: answer }]);
     setQuestion('');
   };
@@ -156,8 +161,8 @@ export const AiDocumentAnalysisPage: React.FC = () => {
     setCopied(true);
     setTimeout(() => setCopied(false), 2000);
     addNotification({
-      title: '已复制',
-      message: '内容已复制到剪贴板',
+      title: t('ai.document_analysis.message.copied'),
+      message: t('ai.document_analysis.message.copied_body'),
       type: 'success',
     });
   };
@@ -174,17 +179,17 @@ export const AiDocumentAnalysisPage: React.FC = () => {
   };
 
   const tabConfig = [
-    { id: 'summary' as AnalysisTab, label: '文档摘要', icon: <FileText size={18} /> },
-    { id: 'translate' as AnalysisTab, label: '智能翻译', icon: <Languages size={18} /> },
-    { id: 'qa' as AnalysisTab, label: '文档问答', icon: <MessageSquare size={18} /> },
-    { id: 'extract' as AnalysisTab, label: '信息提取', icon: <FileSearch size={18} /> },
-    { id: 'ocr' as AnalysisTab, label: 'OCR识别', icon: <BookOpen size={18} /> },
+    { id: 'summary' as AnalysisTab, label: t('ai.document_analysis.tab.summary'), icon: <FileText size={18} /> },
+    { id: 'translate' as AnalysisTab, label: t('ai.document_analysis.tab.translate'), icon: <Languages size={18} /> },
+    { id: 'qa' as AnalysisTab, label: t('ai.document_analysis.tab.qa'), icon: <MessageSquare size={18} /> },
+    { id: 'extract' as AnalysisTab, label: t('ai.document_analysis.tab.extract'), icon: <FileSearch size={18} /> },
+    { id: 'ocr' as AnalysisTab, label: t('ai.document_analysis.tab.ocr'), icon: <BookOpen size={18} /> },
   ];
 
   return (
     <PageContainer
-      title='文档智能分析'
-      subtitle='文档摘要、翻译、问答、信息提取'
+      title={t('ai.document_analysis.title')}
+      subtitle={t('ai.document_analysis.subtitle')}
       padding={false}
       maxWidth={false}
       headerProps={{
@@ -208,7 +213,7 @@ export const AiDocumentAnalysisPage: React.FC = () => {
                 variant='subtitle1'
                 sx={{ fontWeight: 600, mb: 2 }}
               >
-                选择文档
+                {t('ai.document_analysis.label.select_document')}
               </Typography>
               <Box
                 sx={{
@@ -243,12 +248,12 @@ export const AiDocumentAnalysisPage: React.FC = () => {
                   size={32}
                   style={{ margin: '0 auto 8px', color: ct.grey[400] }}
                 />
-                <Typography variant='body2'>点击上传文档</Typography>
+                <Typography variant='body2'>{t('ai.document_analysis.label.click_upload')}</Typography>
                 <Typography
                   variant='caption'
                   color='text.secondary'
                 >
-                  支持 PDF、Word、TXT
+                  {t('ai.document_analysis.label.support_format')}
                 </Typography>
               </Box>
 
@@ -297,7 +302,7 @@ export const AiDocumentAnalysisPage: React.FC = () => {
                 onClick={handleAnalyze}
                 disabled={analyzing || (!selectedDocument && !uploadedFile)}
               >
-                {analyzing ? '分析中...' : '开始分析'}
+                {analyzing ? t('ai.document_analysis.button.analyzing') : t('ai.document_analysis.button.start_analysis')}
               </Button>
             </Paper>
 
@@ -306,7 +311,7 @@ export const AiDocumentAnalysisPage: React.FC = () => {
                 variant='subtitle1'
                 sx={{ fontWeight: 600, mb: 2 }}
               >
-                最近文档
+                {t('ai.document_analysis.label.recent_documents')}
               </Typography>
               <List disablePadding>
                 {recentDocuments.map((doc) => (
@@ -416,7 +421,7 @@ export const AiDocumentAnalysisPage: React.FC = () => {
                       variant='body2'
                       color='text.secondary'
                     >
-                      请稍候，AI正在处理您的文档
+                      {t('ai.document_analysis.message.processing')}
                     </Typography>
                   </Box>
                 </Box>
@@ -433,13 +438,13 @@ export const AiDocumentAnalysisPage: React.FC = () => {
                     variant='h6'
                     sx={{ mb: 1 }}
                   >
-                    选择文档开始智能分析
+                    {t('ai.document_analysis.message.select_to_start')}
                   </Typography>
                   <Typography
                     variant='body2'
                     color='text.secondary'
                   >
-                    支持文档摘要、智能翻译、文档问答、信息提取、OCR识别等功能
+                    {t('ai.document_analysis.message.supported_features')}
                   </Typography>
                 </Box>
               )}
@@ -462,7 +467,7 @@ export const AiDocumentAnalysisPage: React.FC = () => {
                           variant='h6'
                           sx={{ fontWeight: 600 }}
                         >
-                          文档摘要
+                          {t('ai.document_analysis.tab.summary')}
                         </Typography>
                         <Box sx={{ display: 'flex', gap: 1 }}>
                           <Button
@@ -471,7 +476,7 @@ export const AiDocumentAnalysisPage: React.FC = () => {
                             startIcon={<RefreshCw size={16} />}
                             onClick={handleAnalyze}
                           >
-                            重新生成
+                            {t('ai.document_analysis.button.regenerate')}
                           </Button>
                           <Button
                             size='small'
@@ -479,7 +484,7 @@ export const AiDocumentAnalysisPage: React.FC = () => {
                             startIcon={<Copy size={16} />}
                             onClick={() => handleCopy(summaryResult)}
                           >
-                            {copied ? '已复制' : '复制'}
+                            {copied ? t('ai.document_analysis.button.copied') : t('ai.document_analysis.button.copy')}
                           </Button>
                         </Box>
                       </Box>
@@ -501,7 +506,7 @@ export const AiDocumentAnalysisPage: React.FC = () => {
                         variant='subtitle1'
                         sx={{ fontWeight: 600, mb: 2 }}
                       >
-                        关键要点
+                        {t('ai.document_analysis.label.key_points')}
                       </Typography>
                       <List disablePadding>
                         {keyPoints.map((point, index) => (
@@ -537,25 +542,25 @@ export const AiDocumentAnalysisPage: React.FC = () => {
                           variant='h6'
                           sx={{ fontWeight: 600 }}
                         >
-                          智能翻译
+                          {t('ai.document_analysis.tab.translate')}
                         </Typography>
                         <Box sx={{ display: 'flex', gap: 1, alignItems: 'center' }}>
                           <FormControl
                             size='small'
                             sx={{ width: 150 }}
                           >
-                            <InputLabel id='translate-target-label'>目标语言</InputLabel>
+                            <InputLabel id='translate-target-label'>{t('ai.document_analysis.label.target_language')}</InputLabel>
                             <Select
                               labelId='translate-target-label'
                               value={translateTarget}
-                              label='目标语言'
+                              label={t('ai.document_analysis.label.target_language')}
                               onChange={(e) => setTranslateTarget(e.target.value)}
                             >
-                              <MenuItem value='en'>英语</MenuItem>
-                              <MenuItem value='ja'>日语</MenuItem>
-                              <MenuItem value='ko'>韩语</MenuItem>
-                              <MenuItem value='fr'>法语</MenuItem>
-                              <MenuItem value='de'>德语</MenuItem>
+                              <MenuItem value='en'>{t('ai.document_analysis.language.english')}</MenuItem>
+                              <MenuItem value='ja'>{t('ai.document_analysis.language.japanese')}</MenuItem>
+                              <MenuItem value='ko'>{t('ai.document_analysis.language.korean')}</MenuItem>
+                              <MenuItem value='fr'>{t('ai.document_analysis.language.french')}</MenuItem>
+                              <MenuItem value='de'>{t('ai.document_analysis.language.german')}</MenuItem>
                             </Select>
                           </FormControl>
                           <Button
@@ -564,7 +569,7 @@ export const AiDocumentAnalysisPage: React.FC = () => {
                             startIcon={<Languages size={16} />}
                             onClick={handleTranslate}
                           >
-                            开始翻译
+                            {t('ai.document_analysis.button.start_translate')}
                           </Button>
                         </Box>
                       </Box>
@@ -580,7 +585,7 @@ export const AiDocumentAnalysisPage: React.FC = () => {
                                 startIcon={<Copy size={16} />}
                                 onClick={() => handleCopy(translatedText)}
                               >
-                                复制
+                                {t('ai.document_analysis.button.copy')}
                               </Button>
                             </Box>
                             <Typography
@@ -600,7 +605,7 @@ export const AiDocumentAnalysisPage: React.FC = () => {
                               variant='body2'
                               color='text.secondary'
                             >
-                              选择目标语言，点击开始翻译
+                              {t('ai.document_analysis.message.select_language')}
                             </Typography>
                           </Box>
                         )}
@@ -615,7 +620,7 @@ export const AiDocumentAnalysisPage: React.FC = () => {
                         variant='h6'
                         sx={{ fontWeight: 600, mb: 3 }}
                       >
-                        文档问答
+                        {t('ai.document_analysis.tab.qa')}
                       </Typography>
 
                       <Box sx={{ mb: 3 }}>
@@ -623,7 +628,7 @@ export const AiDocumentAnalysisPage: React.FC = () => {
                           fullWidth
                           multiline
                           rows={2}
-                          placeholder='基于文档内容提问，例如：公司年假有多少天？'
+                          placeholder={t('ai.document_analysis.placeholder.qa_input')}
                           value={question}
                           onChange={(e) => setQuestion(e.target.value)}
                           onKeyDown={(e) => e.key === 'Enter' && !e.shiftKey && handleAskQuestion()}
@@ -636,7 +641,7 @@ export const AiDocumentAnalysisPage: React.FC = () => {
                             onClick={handleAskQuestion}
                             disabled={!question.trim()}
                           >
-                            提问
+                            {t('ai.document_analysis.button.ask')}
                           </Button>
                         </Box>
                       </Box>
@@ -653,7 +658,7 @@ export const AiDocumentAnalysisPage: React.FC = () => {
                             variant='body2'
                             color='text.secondary'
                           >
-                            基于文档内容提问，获取精准答案
+                            {t('ai.document_analysis.message.empty_qa')}
                           </Typography>
                         </Box>
                       ) : (
@@ -713,13 +718,20 @@ export const AiDocumentAnalysisPage: React.FC = () => {
                         variant='h6'
                         sx={{ fontWeight: 600, mb: 3 }}
                       >
-                        信息提取
+                        {t('ai.document_analysis.tab.extract')}
                       </Typography>
                       <Grid
                         container
                         spacing={2}
                       >
-                        {['日期', '人名', '组织机构', '地点', '关键词', '金额'].map((type) => (
+                        {[
+                          t('ai.document_analysis.extract.date'),
+                          t('ai.document_analysis.extract.person'),
+                          t('ai.document_analysis.extract.organization'),
+                          t('ai.document_analysis.extract.location'),
+                          t('ai.document_analysis.extract.keyword'),
+                          t('ai.document_analysis.extract.amount'),
+                        ].map((type) => (
                           <Grid
                             item
                             xs={12}
@@ -740,17 +752,17 @@ export const AiDocumentAnalysisPage: React.FC = () => {
                                 </Typography>
                                 <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 1 }}>
                                   <Chip
-                                    label='示例1'
+                                    label={t('ai.document_analysis.extract.sample_1')}
                                     size='small'
                                     variant='outlined'
                                   />
                                   <Chip
-                                    label='示例2'
+                                    label={t('ai.document_analysis.extract.sample_2')}
                                     size='small'
                                     variant='outlined'
                                   />
                                   <Chip
-                                    label='示例3'
+                                    label={t('ai.document_analysis.extract.sample_3')}
                                     size='small'
                                     variant='outlined'
                                   />
@@ -770,22 +782,22 @@ export const AiDocumentAnalysisPage: React.FC = () => {
                         variant='h6'
                         sx={{ fontWeight: 600, mb: 3 }}
                       >
-                        OCR文字识别
+                        {t('ai.document_analysis.ocr.title')}
                       </Typography>
                       <Box sx={{ display: 'flex', gap: 2, mb: 3 }}>
                         <Chip
                           icon={<CheckCircle2 size={14} />}
-                          label='识别完成'
+                          label={t('ai.document_analysis.ocr.recognition_complete')}
                           color='success'
                           size='small'
                         />
                         <Chip
-                          label='共 12 页'
+                          label={t('ai.document_analysis.ocr.total_pages')}
                           size='small'
                           variant='outlined'
                         />
                         <Chip
-                          label='置信度 98.5%'
+                          label={t('ai.document_analysis.ocr.confidence')}
                           size='small'
                           variant='outlined'
                         />

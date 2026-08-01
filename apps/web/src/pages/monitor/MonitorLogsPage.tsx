@@ -38,6 +38,7 @@ import { useNotificationStore } from '../../store';
 import { extractErrorMessage } from '@/utils/errors';
 import { MONITOR_PATHS } from '@/modules/monitor/config';
 import { logSchema } from '@/schemas/monitor/logs';
+import { useTranslation } from 'react-i18next';
 
 type LogLevel = 'error' | 'warn' | 'info' | 'debug';
 type LogType = 'access' | 'error' | 'application' | 'slow_query';
@@ -59,6 +60,7 @@ const MOCK_LOGS: SystemLog[] = [];
 
 const MonitorLogsPage: React.FC = () => {
   const addNotification = useNotificationStore((state) => state.addNotification);
+  const { t } = useTranslation();
 
   const [activeTab, setActiveTab] = useState<LogTab>('all');
   const [viewMode, setViewMode] = useState<'table' | 'stream'>('table');
@@ -88,20 +90,20 @@ const MonitorLogsPage: React.FC = () => {
         return { data: filtered as unknown as Record<string, unknown>[], total: filtered.length };
       },
       create: async () => {
-        throw new Error('日志为只读数据，不可创建');
+        throw new Error(t('monitor.logs.message.readonly_create'));
       },
       update: async () => {
-        throw new Error('日志为只读数据，不可修改');
+        throw new Error(t('monitor.logs.message.readonly_update'));
       },
       delete: async () => {
         addNotification({
-          title: '删除成功',
-          message: '日志已删除',
+          title: t('monitor.logs.message.delete_success_title'),
+          message: t('monitor.logs.message.delete_success_body'),
           type: 'success',
         });
       },
     }),
-    [addNotification]
+    [addNotification, t]
   );
 
   const handleCopy = useCallback(
@@ -110,20 +112,20 @@ const MonitorLogsPage: React.FC = () => {
         .writeText(text)
         .then(() => {
           addNotification({
-            title: '复制成功',
-            message: `${label}已复制到剪贴板`,
+            title: t('monitor.logs.message.copy_success_title'),
+            message: t('monitor.logs.message.copy_success_body', { label }),
             type: 'success',
           });
         })
         .catch(() => {
           addNotification({
-            title: '复制失败',
-            message: '无法复制到剪贴板',
+            title: t('monitor.logs.message.copy_fail_title'),
+            message: t('monitor.logs.message.copy_fail_body'),
             type: 'error',
           });
         });
     },
-    [addNotification]
+    [addNotification, t]
   );
 
   const handleExport = useCallback(() => {
@@ -141,40 +143,40 @@ const MonitorLogsPage: React.FC = () => {
       URL.revokeObjectURL(url);
 
       addNotification({
-        title: '成功',
-        message: '日志导出成功',
+        title: t('monitor.logs.message.export_success_title'),
+        message: t('monitor.logs.message.export_success_body'),
         type: 'success',
       });
     } catch (_err: unknown) {
       addNotification({
-        title: '失败',
-        message: extractErrorMessage(_err, '导出失败'),
+        title: t('monitor.logs.message.export_fail_title'),
+        message: extractErrorMessage(_err, t('monitor.common.message.export_fail')),
         type: 'error',
       });
     }
-  }, [addNotification]);
+  }, [addNotification, t]);
 
   const customRowActions: RowAction[] = useMemo(
     () => [
       {
-        label: '复制日志',
+        label: t('monitor.logs.action.copy_log'),
         icon: <Copy size={16} />,
         onClick: (row: Record<string, unknown>) => {
-          handleCopy(row.message as string, '日志内容');
+          handleCopy(row.message as string, t('monitor.logs.action.copy_log'));
         },
       },
       {
-        label: '关联日志',
+        label: t('monitor.logs.action.link_log'),
         icon: <LinkIcon size={16} />,
         onClick: (row: Record<string, unknown>) => {
           addNotification({
             type: 'info',
-            message: '已按 Trace ID 筛选关联日志',
+            message: t('monitor.logs.message.link_filtered'),
           });
         },
       },
     ],
-    [handleCopy, addNotification]
+    [handleCopy, addNotification, t]
   );
 
   const statsContent = useCallback(
@@ -191,28 +193,28 @@ const MonitorLogsPage: React.FC = () => {
       const stats = [
         {
           id: 'today',
-          title: '今日日志数',
+          title: t('monitor.logs.stat.today'),
           value: todayLogs.length,
           icon: <FileText size={20} />,
           color: 'primary' as const,
         },
         {
           id: 'error',
-          title: '错误日志数',
+          title: t('monitor.logs.stat.error'),
           value: errorCount,
           icon: <AlertCircle size={20} />,
           color: 'error' as const,
         },
         {
           id: 'warn',
-          title: '警告日志数',
+          title: t('monitor.logs.stat.warn'),
           value: warnCount,
           icon: <AlertTriangle size={20} />,
           color: 'warning' as const,
         },
         {
           id: 'slow',
-          title: '慢查询数',
+          title: t('monitor.logs.stat.slow_query'),
           value: slowQueryCount,
           icon: <Zap size={20} />,
           color: 'secondary' as const,
@@ -241,29 +243,29 @@ const MonitorLogsPage: React.FC = () => {
                 }}
               >
                 <Tab
-                  label='全部'
+                  label={t('monitor.logs.tab.all')}
                   value='all'
                 />
                 <Tab
-                  label='错误日志'
+                  label={t('monitor.logs.tab.error')}
                   value='error'
                   icon={<AlertCircle size={14} />}
                   iconPosition='start'
                 />
                 <Tab
-                  label='访问日志'
+                  label={t('monitor.logs.tab.access')}
                   value='access'
                   icon={<Activity size={14} />}
                   iconPosition='start'
                 />
                 <Tab
-                  label='应用日志'
+                  label={t('monitor.logs.tab.application')}
                   value='application'
                   icon={<FileText size={14} />}
                   iconPosition='start'
                 />
                 <Tab
-                  label='慢查询'
+                  label={t('monitor.logs.tab.slow_query')}
                   value='slow_query'
                   icon={<Zap size={14} />}
                   iconPosition='start'
@@ -277,13 +279,13 @@ const MonitorLogsPage: React.FC = () => {
               >
                 <ToggleButton
                   value='table'
-                  title='表格视图'
+                  title={t('monitor.logs.view.table')}
                 >
                   <List size={16} />
                 </ToggleButton>
                 <ToggleButton
                   value='stream'
-                  title='流式视图'
+                  title={t('monitor.logs.view.stream')}
                 >
                   <Radio size={16} />
                 </ToggleButton>
@@ -343,7 +345,7 @@ const MonitorLogsPage: React.FC = () => {
         </>
       );
     },
-    [activeTab, viewMode]
+    [activeTab, viewMode, t]
   );
 
   return (
@@ -355,7 +357,7 @@ const MonitorLogsPage: React.FC = () => {
         },
         children: (
           <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-            <Tooltip title='导出日志'>
+            <Tooltip title={t('monitor.logs.tooltip.export')}>
               <IconButton
                 size='small'
                 onClick={handleExport}

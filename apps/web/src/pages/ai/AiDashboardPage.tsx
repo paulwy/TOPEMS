@@ -27,6 +27,8 @@ import {
 import { Box, Typography, Button, Paper, Chip, useTheme, useMediaQuery } from '@mui/material';
 import { useNavigate } from 'react-router-dom';
 
+import { useTranslation } from 'react-i18next';
+
 import { PageContainer } from '@/components/common';
 import { AI_PATHS } from '@/modules/ai/config';
 import { useNotificationStore } from '@/store';
@@ -439,210 +441,211 @@ export const AiDashboardPage: React.FC = () => {
   const [loading, setLoading] = useState(false);
   const theme = useTheme();
   const isMobile = useMediaQuery(theme.breakpoints.down('sm'));
+  const { t } = useTranslation();
 
   const stats: StatCardProps[] = useMemo(
     () => [
       {
         id: 'chat-count',
-        title: '对话次数',
+        title: t('ai.dashboard.stat.chat_count'),
         value: '1,256',
         icon: <MessageSquare size={22} />,
         change: 23,
-        changeLabel: '较上月',
+        changeLabel: t('ai.dashboard.stat.vs_last_month'),
         color: 'primary',
         onClick: () => navigate(AI_PATHS.chat),
       },
       {
         id: 'doc-analysis',
-        title: '文档分析',
+        title: t('ai.dashboard.stat.doc_analysis'),
         value: '89',
         icon: <FileText size={22} />,
         change: 15,
-        changeLabel: '较上月',
+        changeLabel: t('ai.dashboard.stat.vs_last_month'),
         color: 'info',
         onClick: () => navigate(AI_PATHS.document),
       },
       {
         id: 'code-gen',
-        title: '代码生成',
+        title: t('ai.dashboard.stat.code_gen'),
         value: '456',
         icon: <Code size={22} />,
         change: 45,
-        changeLabel: '较上月',
+        changeLabel: t('ai.dashboard.stat.vs_last_month'),
         color: 'success',
         onClick: () => navigate(AI_PATHS.code),
       },
       {
         id: 'token-usage',
-        title: 'Token消耗',
+        title: t('ai.dashboard.stat.token_usage'),
         value: '12.5M',
         icon: <Zap size={22} />,
         change: 8,
-        changeLabel: '较上月',
+        changeLabel: t('ai.dashboard.stat.vs_last_month'),
         color: 'warning',
       },
       {
         id: 'avg-response',
-        title: '平均响应',
+        title: t('ai.dashboard.stat.avg_response'),
         value: '1.2s',
         icon: <Clock size={22} />,
         change: -0.3,
-        changeLabel: '秒下降',
+        changeLabel: t('ai.dashboard.stat.seconds_down'),
         color: 'secondary',
       },
       {
         id: 'satisfaction',
-        title: '用户满意度',
+        title: t('ai.dashboard.stat.satisfaction'),
         value: '96.5%',
         icon: <Sparkles size={22} />,
         change: 2.1,
-        changeLabel: '%提升',
+        changeLabel: t('ai.dashboard.stat.percent_improvement'),
         color: 'success',
       },
     ],
-    [navigate]
+    [navigate, t]
   );
 
   const quickActions: QuickActionProps[] = useMemo(
     () => [
       {
         id: 'start-chat',
-        label: '智能对话',
+        label: t('ai.dashboard.quick_action.chat'),
         icon: <MessageSquare size={28} />,
         color: 'primary',
-        description: '与AI进行智能问答',
+        description: t('ai.dashboard.quick_action.chat_desc'),
         onClick: () => navigate(AI_PATHS.chat),
       },
       {
         id: 'doc-analysis',
-        label: '文档分析',
+        label: t('ai.dashboard.quick_action.doc_analysis'),
         icon: <FileText size={28} />,
         color: 'info',
-        description: '上传文档进行摘要分析',
+        description: t('ai.dashboard.quick_action.doc_analysis_desc'),
         onClick: () => navigate(AI_PATHS.document),
       },
       {
         id: 'code-assistant',
-        label: '代码助手',
+        label: t('ai.dashboard.quick_action.code_assistant'),
         icon: <Code size={28} />,
         color: 'success',
-        description: '生成和优化代码',
+        description: t('ai.dashboard.quick_action.code_assistant_desc'),
         onClick: () => navigate(AI_PATHS.code),
       },
       {
         id: 'knowledge-base',
-        label: '知识库',
+        label: t('ai.dashboard.quick_action.knowledge_base'),
         icon: <BookOpen size={28} />,
         color: 'warning',
-        description: '管理和查询知识库',
+        description: t('ai.dashboard.quick_action.knowledge_base_desc'),
         onClick: () => navigate(AI_PATHS.knowledge),
       },
     ],
-    [navigate]
+    [navigate, t]
   );
 
   const recentItems: RecentItemProps[] = useMemo(
     () => [
       {
         id: '1',
-        title: '系统架构优化建议',
-        description: '10分钟前 · 智能问答',
+        title: t('ai.dashboard.recent.item_1_title'),
+        description: t('ai.dashboard.recent.item_1_desc'),
         status: 'success',
         type: 'chat',
         onClick: () => navigate(AI_PATHS.chat),
       },
       {
         id: '2',
-        title: 'React表单组件生成',
-        description: '30分钟前 · 代码助手',
+        title: t('ai.dashboard.recent.item_2_title'),
+        description: t('ai.dashboard.recent.item_2_desc'),
         status: 'success',
         type: 'code',
         onClick: () => navigate(AI_PATHS.code),
       },
       {
         id: '3',
-        title: 'API文档摘要分析',
-        description: '1小时前 · 文档分析',
+        title: t('ai.dashboard.recent.item_3_title'),
+        description: t('ai.dashboard.recent.item_3_desc'),
         status: 'success',
         type: 'document',
         onClick: () => navigate(AI_PATHS.document),
       },
       {
         id: '4',
-        title: '销售报表数据解读',
-        description: '2小时前 · 智能问答',
+        title: t('ai.dashboard.recent.item_4_title'),
+        description: t('ai.dashboard.recent.item_4_desc'),
         status: 'info',
         type: 'chat',
         onClick: () => navigate(AI_PATHS.chat),
       },
       {
         id: '5',
-        title: '代码审查建议',
-        description: '3小时前 · 代码助手',
+        title: t('ai.dashboard.recent.item_5_title'),
+        description: t('ai.dashboard.recent.item_5_desc'),
         status: 'success',
         type: 'code',
         onClick: () => navigate(AI_PATHS.code),
       },
     ],
-    [navigate]
+    [navigate, t]
   );
 
   const features: FeatureCardProps[] = useMemo(
     () => [
       {
         id: 'qa-feature',
-        title: '智能问答',
-        description: '基于AI的智能问答系统，支持自然语言交互，提供专业、准确的问题解答。',
+        title: t('ai.dashboard.feature.qa_title'),
+        description: t('ai.dashboard.feature.qa_desc'),
         icon: <Lightbulb />,
         color: theme.palette.primary.main,
         stats: [
-          { label: '准确率', value: '92%' },
-          { label: '响应时间', value: '<2s' },
+          { label: t('ai.dashboard.feature.stat_accuracy'), value: '92%' },
+          { label: t('ai.dashboard.feature.stat_response_time'), value: '<2s' },
         ],
-        action: { label: '开始问答', onClick: () => navigate(AI_PATHS.chat) },
+        action: { label: t('ai.dashboard.feature.qa_action'), onClick: () => navigate(AI_PATHS.chat) },
       },
       {
         id: 'summary-feature',
-        title: '文档摘要',
-        description: '自动分析文档内容，生成结构化摘要，提取关键信息，提高阅读效率。',
+        title: t('ai.dashboard.feature.summary_title'),
+        description: t('ai.dashboard.feature.summary_desc'),
         icon: <FileText />,
         color: theme.palette.info.main,
         stats: [
-          { label: '支持格式', value: '10+' },
-          { label: '处理速度', value: '<30s' },
+          { label: t('ai.dashboard.feature.stat_support_format'), value: '10+' },
+          { label: t('ai.dashboard.feature.stat_process_speed'), value: '<30s' },
         ],
-        action: { label: '上传文档', onClick: () => navigate(AI_PATHS.document) },
+        action: { label: t('ai.dashboard.feature.summary_action'), onClick: () => navigate(AI_PATHS.document) },
       },
       {
         id: 'code-feature',
-        title: '代码生成',
-        description: '根据需求描述自动生成高质量代码，支持多种编程语言，提高开发效率。',
+        title: t('ai.dashboard.feature.code_title'),
+        description: t('ai.dashboard.feature.code_desc'),
         icon: <Code />,
         color: theme.palette.success.main,
         stats: [
-          { label: '支持语言', value: '20+' },
-          { label: '代码质量', value: '优秀' },
+          { label: t('ai.dashboard.feature.stat_support_language'), value: '20+' },
+          { label: t('ai.dashboard.feature.stat_code_quality'), value: t('ai.dashboard.feature.code_quality_excellent') },
         ],
-        action: { label: '生成代码', onClick: () => navigate(AI_PATHS.code) },
+        action: { label: t('ai.dashboard.feature.code_action'), onClick: () => navigate(AI_PATHS.code) },
       },
     ],
-    [navigate, theme.palette]
+    [navigate, theme.palette, t]
   );
 
   const handleRefresh = useCallback(() => {
     setLoading(true);
     setTimeout(() => {
       setLoading(false);
-      addNotification({ title: '刷新成功', message: '数据已更新', type: 'success' });
+      addNotification({ title: t('ai.dashboard.message.refresh_success_title'), message: t('ai.dashboard.message.refresh_success_body'), type: 'success' });
     }, 500);
-  }, [addNotification]);
+  }, [addNotification, t]);
 
   const usageData = [120, 150, 130, 180, 160, 200, 190];
 
   return (
     <PageContainer
-      title='AI智能助手'
-      subtitle='一站式AI辅助功能平台'
+      title={t('ai.dashboard.title')}
+      subtitle={t('ai.dashboard.subtitle')}
       padding={false}
     >
       <Box sx={{ p: 3 }}>
@@ -654,7 +657,7 @@ export const AiDashboardPage: React.FC = () => {
             onClick={handleRefresh}
             disabled={loading}
           >
-            {loading ? '刷新中...' : '刷新'}
+            {loading ? t('ai.dashboard.refreshing') : t('ai.dashboard.refresh')}
           </Button>
         </Box>
         {/* 欢迎区域 */}
@@ -673,12 +676,11 @@ export const AiDashboardPage: React.FC = () => {
               variant='h5'
               sx={{ fontWeight: 700 }}
             >
-              AI 智能助手
+              {t('ai.dashboard.hero_title')}
             </Typography>
           </Box>
           <Typography variant='body1'>
-            欢迎使用 TOPEMS AI
-            智能助手。在这里，您可以享受智能问答、文档分析、代码生成等全方位的AI服务。
+            {t('ai.dashboard.hero_welcome')} {t('ai.dashboard.hero_desc')}
           </Typography>
           <Box sx={{ mt: 3, display: 'flex', gap: 2 }}>
             <Button
@@ -687,7 +689,7 @@ export const AiDashboardPage: React.FC = () => {
               sx={{ bgcolor: 'white', color: 'primary.main', '&:hover': { bgcolor: 'grey.100' } }}
               onClick={() => navigate(AI_PATHS.chat)}
             >
-              开始对话
+              {t('ai.dashboard.button.start_chat')}
             </Button>
             <Button
               size='small'
@@ -699,7 +701,7 @@ export const AiDashboardPage: React.FC = () => {
               }}
               onClick={() => navigate(AI_PATHS.prompts)}
             >
-              查看提示词库
+              {t('ai.dashboard.button.view_prompts')}
             </Button>
           </Box>
         </Box>
@@ -710,7 +712,7 @@ export const AiDashboardPage: React.FC = () => {
             variant='h6'
             sx={{ fontWeight: 600, mb: 3 }}
           >
-            使用统计
+            {t('ai.dashboard.section.usage_stats')}
           </Typography>
           <Box
             sx={{
@@ -734,7 +736,7 @@ export const AiDashboardPage: React.FC = () => {
             variant='h6'
             sx={{ fontWeight: 600, mb: 3 }}
           >
-            使用趋势
+            {t('ai.dashboard.section.usage_trend')}
           </Typography>
           <Paper sx={{ p: 4, borderRadius: 2 }}>
             <Box
@@ -744,10 +746,10 @@ export const AiDashboardPage: React.FC = () => {
                 variant='subtitle1'
                 sx={{ fontWeight: 500 }}
               >
-                近7天对话次数
+                {t('ai.dashboard.trend.7_days_chat_count')}
               </Typography>
               <Chip
-                label='趋势良好'
+                label={t('ai.dashboard.trend.good')}
                 color='success'
                 size='small'
               />
@@ -757,7 +759,15 @@ export const AiDashboardPage: React.FC = () => {
               color={theme.palette.primary.main}
             />
             <Box sx={{ display: 'flex', justifyContent: 'space-between', mt: 2 }}>
-              {['周一', '周二', '周三', '周四', '周五', '周六', '周日'].map((day) => (
+              {[
+                t('ai.dashboard.day.mon'),
+                t('ai.dashboard.day.tue'),
+                t('ai.dashboard.day.wed'),
+                t('ai.dashboard.day.thu'),
+                t('ai.dashboard.day.fri'),
+                t('ai.dashboard.day.sat'),
+                t('ai.dashboard.day.sun'),
+              ].map((day) => (
                 <Typography
                   key={day}
                   variant='caption'
@@ -776,7 +786,7 @@ export const AiDashboardPage: React.FC = () => {
             variant='h6'
             sx={{ fontWeight: 600, mb: 3 }}
           >
-            核心功能
+            {t('ai.dashboard.section.core_features')}
           </Typography>
           <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
             {features.map((feature) => (
@@ -802,7 +812,7 @@ export const AiDashboardPage: React.FC = () => {
               variant='h6'
               sx={{ fontWeight: 600, mb: 3 }}
             >
-              快捷入口
+              {t('ai.dashboard.section.quick_entry')}
             </Typography>
             <Box
               sx={{
@@ -825,7 +835,7 @@ export const AiDashboardPage: React.FC = () => {
               variant='h6'
               sx={{ fontWeight: 600, mb: 3 }}
             >
-              最近使用
+              {t('ai.dashboard.section.recent_used')}
             </Typography>
             <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1 }}>
               {recentItems.map((item) => (
@@ -840,7 +850,7 @@ export const AiDashboardPage: React.FC = () => {
               sx={{ mt: 2, color: 'primary.main' }}
               onClick={() => navigate(AI_PATHS.chat)}
             >
-              查看更多记录
+              {t('ai.dashboard.button.view_more')}
             </Button>
           </Box>
         </Box>
