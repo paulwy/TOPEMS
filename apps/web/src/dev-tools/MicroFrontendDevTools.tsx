@@ -126,7 +126,7 @@ const MicroFrontendDevTools: React.FC = () => {
                 variant='caption'
                 sx={{ fontWeight: 600, lineHeight: 1.2 }}
               >
-                注册中心
+                {t('devtools.panels.registry.label')}
               </Typography>
               <Typography
                 variant='caption'
@@ -157,7 +157,7 @@ const MicroFrontendDevTools: React.FC = () => {
                 variant='caption'
                 sx={{ fontWeight: 600, lineHeight: 1.2 }}
               >
-                版本平台
+                {t('devtools.panels.version.label')}
               </Typography>
               <Typography
                 variant='caption'
@@ -188,7 +188,7 @@ const MicroFrontendDevTools: React.FC = () => {
                 variant='caption'
                 sx={{ fontWeight: 600, lineHeight: 1.2 }}
               >
-                仪表盘
+                {t('devtools.panels.dashboard.label')}
               </Typography>
               <Typography
                 variant='caption'
@@ -219,7 +219,7 @@ const MicroFrontendDevTools: React.FC = () => {
                 variant='caption'
                 sx={{ fontWeight: 600, lineHeight: 1.2 }}
               >
-                AI 运维
+                {t('devtools.panels.aiops.label')}
               </Typography>
               <Typography
                 variant='caption'
@@ -250,7 +250,7 @@ const MicroFrontendDevTools: React.FC = () => {
                 variant='caption'
                 sx={{ fontWeight: 600, lineHeight: 1.2 }}
               >
-                模块市场
+                {t('devtools.panels.marketplace.label')}
               </Typography>
               <Typography
                 variant='caption'
@@ -281,7 +281,7 @@ const MicroFrontendDevTools: React.FC = () => {
                 variant='caption'
                 sx={{ fontWeight: 600, lineHeight: 1.2 }}
               >
-                依赖治理
+                {t('devtools.panels.governance.label')}
               </Typography>
               <Typography
                 variant='caption'
@@ -312,7 +312,7 @@ const MicroFrontendDevTools: React.FC = () => {
                 variant='caption'
                 sx={{ fontWeight: 600, lineHeight: 1.2 }}
               >
-                安全中心
+                {t('devtools.panels.security.label')}
               </Typography>
               <Typography
                 variant='caption'
@@ -343,7 +343,7 @@ const MicroFrontendDevTools: React.FC = () => {
                 variant='caption'
                 sx={{ fontWeight: 600, lineHeight: 1.2 }}
               >
-                运行时
+                {t('devtools.panels.runtime.label')}
               </Typography>
               <Typography
                 variant='caption'
@@ -374,13 +374,13 @@ const MicroFrontendDevTools: React.FC = () => {
                 variant='caption'
                 sx={{ fontWeight: 600, lineHeight: 1.2 }}
               >
-                V47-V50
+                {t('devtools.panels.v47Integration.label')}
               </Typography>
               <Typography
                 variant='caption'
                 sx={{ fontSize: 10, opacity: 0.8 }}
               >
-                平台+Serverless
+                {t('devtools.panels.v47Integration.sublabel')}
               </Typography>
             </Box>
           </Button>
@@ -405,7 +405,7 @@ const MicroFrontendDevTools: React.FC = () => {
                 variant='caption'
                 sx={{ fontWeight: 600, lineHeight: 1.2 }}
               >
-                V51
+                {t('devtools.panels.v51Design.label')}
               </Typography>
               <Typography
                 variant='caption'
@@ -436,7 +436,7 @@ const MicroFrontendDevTools: React.FC = () => {
                 variant='caption'
                 sx={{ fontWeight: 600, lineHeight: 1.2 }}
               >
-                DevEx
+                {t('devtools.panels.v51DevEx.label')}
               </Typography>
               <Typography
                 variant='caption'
@@ -467,7 +467,7 @@ const MicroFrontendDevTools: React.FC = () => {
                 variant='caption'
                 sx={{ fontWeight: 600, lineHeight: 1.2 }}
               >
-                V53 AI
+                {t('devtools.panels.v53Ai.label')}
               </Typography>
               <Typography
                 variant='caption'
@@ -499,7 +499,7 @@ const MicroFrontendDevTools: React.FC = () => {
                 variant='caption'
                 sx={{ fontWeight: 600, lineHeight: 1.2 }}
               >
-                V53 平台
+                {t('devtools.panels.v53Platform.label')}
               </Typography>
               <Typography
                 variant='caption'
@@ -531,7 +531,7 @@ const MicroFrontendDevTools: React.FC = () => {
                 variant='caption'
                 sx={{ fontWeight: 600, lineHeight: 1.2 }}
               >
-                V54 AI
+                {t('devtools.panels.v54Native.label')}
               </Typography>
               <Typography
                 variant='caption'
@@ -563,7 +563,7 @@ const MicroFrontendDevTools: React.FC = () => {
                 variant='caption'
                 sx={{ fontWeight: 600, lineHeight: 1.2 }}
               >
-                V54 Agent
+                {t('devtools.panels.v54Agent.label')}
               </Typography>
               <Typography
                 variant='caption'
@@ -595,7 +595,7 @@ const MicroFrontendDevTools: React.FC = () => {
                 variant='caption'
                 sx={{ fontWeight: 600, lineHeight: 1.2 }}
               >
-                V55 Copilot
+                {t('devtools.panels.v55Copilot.label')}
               </Typography>
               <Typography
                 variant='caption'
@@ -627,7 +627,7 @@ const MicroFrontendDevTools: React.FC = () => {
                 variant='caption'
                 sx={{ fontWeight: 600, lineHeight: 1.2 }}
               >
-                V55 Auto
+                {t('devtools.panels.v55Automation.label')}
               </Typography>
               <Typography
                 variant='caption'
@@ -659,7 +659,7 @@ const MicroFrontendDevTools: React.FC = () => {
                 variant='caption'
                 sx={{ fontWeight: 600, lineHeight: 1.2 }}
               >
-                V56 Ops
+                {t('devtools.panels.v56Ops.label')}
               </Typography>
               <Typography
                 variant='caption'
@@ -691,7 +691,7 @@ const MicroFrontendDevTools: React.FC = () => {
                 variant='caption'
                 sx={{ fontWeight: 600, lineHeight: 1.2 }}
               >
-                V56 Review
+                {t('devtools.panels.v56Review.label')}
               </Typography>
               <Typography
                 variant='caption'
@@ -723,7 +723,7 @@ const MicroFrontendDevTools: React.FC = () => {
                 variant='caption'
                 sx={{ fontWeight: 600, lineHeight: 1.2 }}
               >
-                V57 AI
+                {t('devtools.panels.v57Governance.label')}
               </Typography>
               <Typography
                 variant='caption'
@@ -755,7 +755,7 @@ const MicroFrontendDevTools: React.FC = () => {
                 variant='caption'
                 sx={{ fontWeight: 600, lineHeight: 1.2 }}
               >
-                V57 Auto
+                {t('devtools.panels.v57Automation.label')}
               </Typography>
               <Typography
                 variant='caption'
@@ -787,7 +787,7 @@ const MicroFrontendDevTools: React.FC = () => {
                 variant='caption'
                 sx={{ fontWeight: 600, lineHeight: 1.2 }}
               >
-                V58 UX
+                {t('devtools.panels.v58Ux.label')}
               </Typography>
               <Typography
                 variant='caption'
@@ -819,7 +819,7 @@ const MicroFrontendDevTools: React.FC = () => {
                 variant='caption'
                 sx={{ fontWeight: 600, lineHeight: 1.2 }}
               >
-                V58 AI
+                {t('devtools.panels.v58Evolution.label')}
               </Typography>
               <Typography
                 variant='caption'
@@ -851,7 +851,7 @@ const MicroFrontendDevTools: React.FC = () => {
                 variant='caption'
                 sx={{ fontWeight: 600, lineHeight: 1.2 }}
               >
-                V59 DevEx
+                {t('devtools.panels.v59DevEx.label')}
               </Typography>
               <Typography
                 variant='caption'
@@ -883,7 +883,7 @@ const MicroFrontendDevTools: React.FC = () => {
                 variant='caption'
                 sx={{ fontWeight: 600, lineHeight: 1.2 }}
               >
-                V59 安全
+                {t('devtools.panels.v59Security.label')}
               </Typography>
               <Typography
                 variant='caption'
@@ -915,7 +915,7 @@ const MicroFrontendDevTools: React.FC = () => {
                 variant='caption'
                 sx={{ fontWeight: 600, lineHeight: 1.2 }}
               >
-                V60 伦理
+                {t('devtools.panels.v60Ethics.label')}
               </Typography>
               <Typography
                 variant='caption'
@@ -947,7 +947,7 @@ const MicroFrontendDevTools: React.FC = () => {
                 variant='caption'
                 sx={{ fontWeight: 600, lineHeight: 1.2 }}
               >
-                V60 质量
+                {t('devtools.panels.v60Quality.label')}
               </Typography>
               <Typography
                 variant='caption'
@@ -1002,7 +1002,7 @@ const MicroFrontendDevTools: React.FC = () => {
                 variant='h6'
                 sx={{ fontWeight: 600 }}
               >
-                模块注册中心
+                {t('devtools.panels.registry.title')}
               </Typography>
               <IconButton
                 size='small'
@@ -1061,7 +1061,7 @@ const MicroFrontendDevTools: React.FC = () => {
                 variant='h6'
                 sx={{ fontWeight: 600 }}
               >
-                版本管理平台
+                {t('devtools.panels.version.title')}
               </Typography>
               <IconButton
                 size='small'
@@ -1120,7 +1120,7 @@ const MicroFrontendDevTools: React.FC = () => {
                 variant='h6'
                 sx={{ fontWeight: 600 }}
               >
-                可观测性仪表盘
+                {t('devtools.panels.dashboard.title')}
               </Typography>
               <IconButton
                 size='small'
