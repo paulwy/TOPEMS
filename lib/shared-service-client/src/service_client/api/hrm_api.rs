@@ -127,15 +127,15 @@ impl TypedServiceClient<HrmApi> {
         employee_id: Uuid,
         month: &str,
     ) -> ServiceClientResult<serde_json::Value> {
-        let path = format!("/attendance/summary?employee_id={}&month={}", employee_id, month);
+        let path = format!(
+            "/attendance/summary?employee_id={}&month={}",
+            employee_id, month
+        );
         self.get(&self.build_path(&path)).await
     }
 
     /// 获取指定用户今日的打卡状态，返回 "checked_out" / "checked_in" / "not_checked_in"。
-    pub async fn get_today_attendance_status(
-        &self,
-        user_id: &str,
-    ) -> ServiceClientResult<String> {
+    pub async fn get_today_attendance_status(&self, user_id: &str) -> ServiceClientResult<String> {
         let path = format!("/attendance/today-status?user_id={}", user_id);
         let resp: serde_json::Value = self.get(&self.build_path(&path)).await?;
         let status = resp

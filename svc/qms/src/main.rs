@@ -15,11 +15,10 @@
 #![allow(dead_code)]
 
 mod middleware;
-mod shared;
 mod openapi;
+mod shared;
 
 pub mod modules;
-
 
 use std::net::SocketAddr;
 
@@ -28,12 +27,12 @@ use axum_prometheus::PrometheusMetricLayer;
 use sqlx::PgPool;
 use utoipa::OpenApi;
 
+use topems_shared::service_client::{create_workflow_client, WorkflowServiceClient};
 use topems_shared::{
     auth_middleware, create_cors_layer, event::EventPublisher, get_api_info_handler,
     init_telemetry, rls_middleware, simple_health_check, telemetry_middleware, wrap_group2_router,
     ApiResponse, AuthState, RouteCompatConfig, ServiceHealth, SimpleHealthConfig,
 };
-use topems_shared::service_client::{create_workflow_client, WorkflowServiceClient};
 
 pub use shared::*;
 
@@ -111,8 +110,7 @@ async fn main() -> anyhow::Result<()> {
 
     let workflow_url = std::env::var("WORKFLOW_SERVICE_URL")
         .unwrap_or_else(|_| "http://localhost:8000".to_string());
-    let workflow_client =
-        create_workflow_client().expect("工作流服务客户端初始化失败");
+    let workflow_client = create_workflow_client().expect("工作流服务客户端初始化失败");
     tracing::info!("🔗 工作流服务客户端初始化成功: {}", workflow_url);
 
     let state = AppState {

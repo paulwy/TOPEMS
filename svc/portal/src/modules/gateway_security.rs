@@ -654,7 +654,13 @@ impl GatewaySecurityV2 {
             let body_str = serde_json::to_string(body).unwrap_or_default();
             let lower_body = body_str.to_lowercase();
 
-            let sql_patterns = ["union select", "or 1=1", "drop table", "';--", "xp_cmdshell"];
+            let sql_patterns = [
+                "union select",
+                "or 1=1",
+                "drop table",
+                "';--",
+                "xp_cmdshell",
+            ];
             for pattern in &sql_patterns {
                 if lower_body.contains(pattern) {
                     threats_detected.push((
@@ -717,7 +723,9 @@ impl GatewaySecurityV2 {
         let filtered: Vec<SecurityIncident> = incidents
             .iter()
             .filter(|i| {
-                incident_type.as_ref().map_or(true, |t| &i.incident_type == t)
+                incident_type
+                    .as_ref()
+                    .map_or(true, |t| &i.incident_type == t)
                     && severity.as_ref().map_or(true, |s| &i.severity == s)
             })
             .cloned()
@@ -770,9 +778,7 @@ impl GatewaySecurityV2 {
         Ok(true)
     }
 
-    pub async fn create_policy(
-        policy: SecurityPolicyV2,
-    ) -> Result<SecurityPolicyV2, String> {
+    pub async fn create_policy(policy: SecurityPolicyV2) -> Result<SecurityPolicyV2, String> {
         let store = get_gateway_security_store();
         let mut policies = store.policies.lock().await;
 
@@ -863,9 +869,11 @@ impl AuditTrailV2 {
         entries
             .iter()
             .filter(|e| {
-                filter.actor_id.as_ref().map_or(true, |a| {
-                    e.actor_id.as_ref().map_or(false, |ai| ai == a)
-                }) && filter.action.as_ref().map_or(true, |a| &e.action == a)
+                filter
+                    .actor_id
+                    .as_ref()
+                    .map_or(true, |a| e.actor_id.as_ref().map_or(false, |ai| ai == a))
+                    && filter.action.as_ref().map_or(true, |a| &e.action == a)
                     && filter
                         .resource_type
                         .as_ref()
@@ -874,10 +882,7 @@ impl AuditTrailV2 {
                         .date_from
                         .as_ref()
                         .map_or(true, |d| e.timestamp >= *d)
-                    && filter
-                        .date_to
-                        .as_ref()
-                        .map_or(true, |d| e.timestamp <= *d)
+                    && filter.date_to.as_ref().map_or(true, |d| e.timestamp <= *d)
             })
             .cloned()
             .collect()
@@ -905,17 +910,15 @@ impl AuditTrailV2 {
             .iter()
             .filter(|e| {
                 e.resource_type == resource_type
-                    && resource_id
-                        .map_or(true, |rid| e.resource_id.as_ref().map_or(false, |eid| eid == rid))
+                    && resource_id.map_or(true, |rid| {
+                        e.resource_id.as_ref().map_or(false, |eid| eid == rid)
+                    })
             })
             .cloned()
             .collect()
     }
 
-    pub async fn get_audit_by_time_range(
-        from: &str,
-        to: &str,
-    ) -> Vec<AuditEntryV2> {
+    pub async fn get_audit_by_time_range(from: &str, to: &str) -> Vec<AuditEntryV2> {
         let store = get_gateway_security_store();
         let entries = store.audit_entries.lock().await;
 
@@ -1015,11 +1018,7 @@ impl AuditTrailV2 {
 pub struct AccessControlV2;
 
 impl AccessControlV2 {
-    pub async fn evaluate_access(
-        actor_id: &str,
-        resource: &str,
-        action: &str,
-    ) -> AccessDecision {
+    pub async fn evaluate_access(actor_id: &str, resource: &str, action: &str) -> AccessDecision {
         let store = get_gateway_security_store();
         let policies = store.access_policies.lock().await;
 
@@ -1143,9 +1142,7 @@ impl AccessControlV2 {
         Ok(perms.clone())
     }
 
-    pub async fn get_policies(
-        resource_type: Option<&str>,
-    ) -> Vec<AccessPolicy> {
+    pub async fn get_policies(resource_type: Option<&str>) -> Vec<AccessPolicy> {
         let store = get_gateway_security_store();
         let policies = store.access_policies.lock().await;
 
@@ -1160,19 +1157,14 @@ impl AccessControlV2 {
         }
     }
 
-    pub async fn create_policy(
-        policy: AccessPolicy,
-    ) -> Result<AccessPolicy, String> {
+    pub async fn create_policy(policy: AccessPolicy) -> Result<AccessPolicy, String> {
         let store = get_gateway_security_store();
         let mut policies = store.access_policies.lock().await;
         policies.push(policy.clone());
         Ok(policy)
     }
 
-    pub async fn update_policy(
-        id: &str,
-        updates: AccessPolicy,
-    ) -> Result<AccessPolicy, String> {
+    pub async fn update_policy(id: &str, updates: AccessPolicy) -> Result<AccessPolicy, String> {
         let store = get_gateway_security_store();
         let mut policies = store.access_policies.lock().await;
 
@@ -1205,11 +1197,7 @@ impl AccessControlV2 {
         user_permissions.get(actor_id).cloned()
     }
 
-    pub async fn simulate_access(
-        actor_id: &str,
-        resource: &str,
-        action: &str,
-    ) -> AccessDecision {
+    pub async fn simulate_access(actor_id: &str, resource: &str, action: &str) -> AccessDecision {
         Self::evaluate_access(actor_id, resource, action).await
     }
 
@@ -1217,11 +1205,9 @@ impl AccessControlV2 {
         let resource_match = if policy.resource_pattern == "*" {
             true
         } else if let Some(rest) = resource.strip_prefix(&policy.resource_type) {
-            rest.starts_with(&policy.resource_pattern)
-                || resource == policy.resource_pattern
+            rest.starts_with(&policy.resource_pattern) || resource == policy.resource_pattern
         } else {
-            resource == policy.resource_pattern
-                || resource.contains(&policy.resource_pattern)
+            resource == policy.resource_pattern || resource.contains(&policy.resource_pattern)
         };
 
         let action_match = if policy.actions.is_empty() {
@@ -1469,8 +1455,12 @@ pub async fn update_security_policy_handler(
         id: id.clone(),
         name: req.name.unwrap_or(existing.name),
         authentication_type: auth_type,
-        token_validity_sec: req.token_validity_sec.unwrap_or(existing.token_validity_sec),
-        rate_limit_per_min: req.rate_limit_per_min.unwrap_or(existing.rate_limit_per_min),
+        token_validity_sec: req
+            .token_validity_sec
+            .unwrap_or(existing.token_validity_sec),
+        rate_limit_per_min: req
+            .rate_limit_per_min
+            .unwrap_or(existing.rate_limit_per_min),
         ip_whitelist: req.ip_whitelist.unwrap_or(existing.ip_whitelist),
         require_https: req.require_https.unwrap_or(existing.require_https),
         enabled: req.enabled.unwrap_or(existing.enabled),
@@ -1541,8 +1531,7 @@ pub async fn get_audit_by_resource_handler(
     State(_state): State<AppState>,
     Path((resource_type, resource_id)): Path<(String, String)>,
 ) -> Json<ApiResponse<Vec<AuditEntryV2>>> {
-    let entries =
-        AuditTrailV2::get_audit_by_resource(&resource_type, Some(&resource_id)).await;
+    let entries = AuditTrailV2::get_audit_by_resource(&resource_type, Some(&resource_id)).await;
     Json(ApiResponse::success(entries, "资源审计记录"))
 }
 

@@ -1,0 +1,118 @@
+{
+  "user_management_page": {
+    "breadcrumbs": {
+      "home": "Home",
+      "iam": "Identity Management",
+      "user_management": "User Management"
+    }
+  },
+  "usermanagementpage": {
+    "创建用户失败": "Failed to create user",
+    "更新用户失败": "Failed to update user",
+    "删除用户失败": "Failed to delete user"
+  },
+  "company_structure_page": {
+    "relation_types": {
+      "parent": "Parent Company",
+      "subsidiary": "Subsidiary",
+      "associate": "Associate",
+      "joint_venture": "Joint Venture",
+      "branch": "Branch"
+    },
+    "status": {
+      "active": "Active",
+      "inactive": "Inactive",
+      "loading": "Loading..."
+    },
+    "dialog": {
+      "confirm_delete_title": "Confirm Delete",
+      "confirm_delete_message": "Are you sure you want to delete this company relationship?"
+    },
+    "columns": {
+      "parent_company": "Parent Company",
+      "relation_type": "Relation Type",
+      "child_company": "Subsidiary",
+      "ownership_percentage": "Ownership Percentage",
+      "control_percentage": "Control Percentage",
+      "effective_date": "Effective Date",
+      "status": "Status",
+      "actions": "Actions"
+    },
+    "page": {
+      "title": "Company Structure Management",
+      "subtitle": "Manage parent-subsidiary company relationships for consolidated reporting"
+    },
+    "search": {
+      "placeholder": "Search company name or code...",
+      "advanced": "Advanced Search"
+    },
+    "tabs": {
+      "structure_view": "Structure View",
+      "relation_list": "Relation List"
+    },
+    "empty": {
+      "no_data": "No company structure data"
+    },
+    "tree": {
+      "ownership": "Ownership {{percentage}}%"
+    },
+    "tips": {
+      "title": "Usage Tips",
+      "tip1": "Company structure is used for elimination calculation in consolidated reporting",
+      "tip2": "Ownership percentage determines the calculation of minority interests and net profit attributable to parent company",
+      "tip3": "Associate and joint venture companies use the equity method for accounting",
+      "tip4": "After adding company relationships, you can configure elimination rules in the consolidation scope management"
+    }
+  },
+  "permission_management_page": {
+    "messages": {
+      "list_failed": "Failed to load permissions",
+      "create_failed": "Failed to create permission",
+      "update_failed": "Failed to update permission",
+      "delete_failed": "Failed to delete permission"
+    },
+    "breadcrumbs": {
+      "home": "Home",
+      "iam": "Identity & Permissions",
+      "permission_management": "Permission Management"
+    },
+    "header": {
+      "title": "About Permission Management",
+      "description": "Permissions are system-level configurations, typically pre-defined by developers in backend code. You can view all available permissions here and assign them to different roles through the role management page."
+    }
+  },
+  "role_management_page": {
+    "messages": {
+      "list_failed": "Failed to load roles",
+      "create_failed": "Failed to create role",
+      "update_failed": "Failed to update role",
+      "delete_failed": "Failed to delete role",
+      "list_permissions_failed": "Failed to load permissions",
+      "list_role_permissions_failed": "Failed to load role permissions",
+      "add_permission_failed": "Failed to add permission",
+      "remove_permission_failed": "Failed to remove permission"
+    },
+    "notifications": {
+      "success_title": "Success",
+      "permission_added": "Permission added successfully",
+      "add_permission_error_log": "Failed to add permission: ",
+      "error_title": "Failed",
+      "permission_removed": "Permission removed successfully",
+      "remove_permission_error_log": "Failed to remove permission: "
+    },
+    "breadcrumbs": {
+      "role_management": "Role Management"
+    },
+    "actions": {
+      "manage_permissions": "Manage Permissions",
+      "remove": "Remove",
+      "add": "Add",
+      "close": "Close"
+    },
+    "dialog": {
+      "title": "Role Permissions - {{name}}",
+      "available_permissions": "Available Permissions",
+      "permission_meta": "Category: {{category}} | Permission Code: {{code}}"
+    }
+  }
+}

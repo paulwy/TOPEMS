@@ -8,10 +8,8 @@ use axum::{
     http::HeaderMap,
     Json,
 };
+use topems_shared::service_client::{api::notification_api::NotificationApi, TypedServiceClient};
 use topems_shared::ApiResponse;
-use topems_shared::service_client::{
-    api::notification_api::NotificationApi, TypedServiceClient,
-};
 
 use crate::{models::Notification, shared::AppState, utils::user_context::extract_bearer_token};
 
@@ -48,10 +46,15 @@ pub async fn get_notifications(
                         service_name: format_service_name(n.get("notification_type")?.as_str()?),
                         notification_type: n.get("notification_type")?.as_str()?.to_string(),
                         read: n.get("is_read")?.as_bool()?,
-                        created_at: chrono::DateTime::parse_from_rfc3339(n.get("created_at")?.as_str()?)
-                            .ok()?
-                            .with_timezone(&chrono::Utc),
-                        link_url: n.get("link_url").and_then(|v| v.as_str()).map(|s| s.to_string()),
+                        created_at: chrono::DateTime::parse_from_rfc3339(
+                            n.get("created_at")?.as_str()?,
+                        )
+                        .ok()?
+                        .with_timezone(&chrono::Utc),
+                        link_url: n
+                            .get("link_url")
+                            .and_then(|v| v.as_str())
+                            .map(|s| s.to_string()),
                     })
                 })
                 .collect();

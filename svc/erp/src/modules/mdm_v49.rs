@@ -511,7 +511,11 @@ fn default_tasks_for(stage: &LifecycleStage) -> Vec<LifecycleTask> {
             ("评审通过", "架构与数据治理评审", TaskStatus::Todo),
         ],
         LifecycleStage::InDevelopment => vec![
-            ("接口开发", "主数据接口与同步逻辑开发", TaskStatus::InProgress),
+            (
+                "接口开发",
+                "主数据接口与同步逻辑开发",
+                TaskStatus::InProgress,
+            ),
             ("单元测试", "覆盖率不低于 80%", TaskStatus::Todo),
         ],
         LifecycleStage::Testing => vec![
@@ -819,8 +823,14 @@ pub async fn create_lifecycle_entity(
             .unwrap_or("未命名")
             .to_string(),
         stage: LifecycleStage::Proposed,
-        owner: payload.get("owner").and_then(|v| v.as_str()).map(String::from),
-        steward: payload.get("steward").and_then(|v| v.as_str()).map(String::from),
+        owner: payload
+            .get("owner")
+            .and_then(|v| v.as_str())
+            .map(String::from),
+        steward: payload
+            .get("steward")
+            .and_then(|v| v.as_str())
+            .map(String::from),
         stage_entered_at: now.clone(),
         last_transition_at: now.clone(),
         tasks: default_tasks_for(&LifecycleStage::Proposed),
@@ -863,7 +873,10 @@ pub async fn transition_lifecycle_stage(
     };
 
     let target = LifecycleStage::from_str(&req.target_stage);
-    if target.order() <= entity.stage.order() && target != LifecycleStage::Archived && target != LifecycleStage::Destroyed {
+    if target.order() <= entity.stage.order()
+        && target != LifecycleStage::Archived
+        && target != LifecycleStage::Destroyed
+    {
         return Json(ApiResponse::error(
             400,
             &format!(
@@ -989,7 +1002,9 @@ pub async fn create_retirement_plan(
             ],
             risk_level: "medium".to_string(),
         },
-        notify_channels: req.notify_channels.unwrap_or_else(|| vec!["email".to_string()]),
+        notify_channels: req
+            .notify_channels
+            .unwrap_or_else(|| vec!["email".to_string()]),
         notify_status: "pending".to_string(),
         status: RetirementStatus::Draft,
         initiated_by: req.initiated_by.unwrap_or_else(|| "system".to_string()),
@@ -1113,8 +1128,16 @@ pub async fn assess_impact(
     // 简化版影响评估：基于实体类型模拟下游依赖
     let services = match plan.entity_type.as_str() {
         "customer" => vec!["finance".to_string(), "sales".to_string(), "ar".to_string()],
-        "supplier" => vec!["purchase".to_string(), "finance".to_string(), "ap".to_string()],
-        "product" => vec!["inventory".to_string(), "sales".to_string(), "production".to_string()],
+        "supplier" => vec![
+            "purchase".to_string(),
+            "finance".to_string(),
+            "ap".to_string(),
+        ],
+        "product" => vec![
+            "inventory".to_string(),
+            "sales".to_string(),
+            "production".to_string(),
+        ],
         _ => vec!["erp".to_string()],
     };
     let workflows = vec!["主数据同步".to_string(), "报表统计".to_string()];
@@ -1133,7 +1156,11 @@ pub async fn assess_impact(
             "准备替代实体映射".to_string(),
             "保留历史数据 7 年".to_string(),
         ],
-        risk_level: if total_refs > 10 { "high".to_string() } else { "medium".to_string() },
+        risk_level: if total_refs > 10 {
+            "high".to_string()
+        } else {
+            "medium".to_string()
+        },
     };
     plan.status = RetirementStatus::ImpactAssessed;
 
@@ -1195,9 +1222,10 @@ pub async fn execute_retirement_plan(
 
         plan.status = RetirementStatus::Completed;
         plan.executed_at = Some(chrono::Utc::now().to_rfc3339());
-        plan.post_retirement_review_at =
-            Some((chrono::Utc::now() + chrono::Duration::days(plan.rollback_window_days as i64))
-                .to_rfc3339());
+        plan.post_retirement_review_at = Some(
+            (chrono::Utc::now() + chrono::Duration::days(plan.rollback_window_days as i64))
+                .to_rfc3339(),
+        );
         let _ = req;
         (plan.master_data_id.clone(), plan.rollback_window_days)
     };
@@ -1500,9 +1528,10 @@ pub async fn run_archive(
             if entity.stage.order() >= LifecycleStage::Archived.order() {
                 continue;
             }
-            let age_days = (now - chrono::DateTime::parse_from_rfc3339(&entity.last_transition_at)
-                .map(|dt| dt.with_timezone(&chrono::Utc))
-                .unwrap_or(now))
+            let age_days = (now
+                - chrono::DateTime::parse_from_rfc3339(&entity.last_transition_at)
+                    .map(|dt| dt.with_timezone(&chrono::Utc))
+                    .unwrap_or(now))
             .num_days();
             if age_days < policy.archive_age_days as i64 {
                 if let Some(max_age) = req.max_age_days {
@@ -1535,7 +1564,10 @@ pub async fn run_archive(
                 last_restored_at: None,
                 status: if dry_run { "pending" } else { "archived" }.to_string(),
                 record_size_bytes: (entity.entity_name.len() as i64 + 1024) * 8,
-                checksum: format!("sha256:{}", uuid::Uuid::new_v4().to_string().replace('-', "")),
+                checksum: format!(
+                    "sha256:{}",
+                    uuid::Uuid::new_v4().to_string().replace('-', "")
+                ),
             });
 
             if !dry_run {
@@ -1568,7 +1600,11 @@ pub async fn run_archive(
 
     Json(ApiResponse::success(
         new_records,
-        if dry_run { "归档预演完成（dry run）" } else { "归档执行完成" },
+        if dry_run {
+            "归档预演完成（dry run）"
+        } else {
+            "归档执行完成"
+        },
     ))
 }
 
@@ -1762,9 +1798,7 @@ pub async fn get_lifecycle_stats(
     ))
 }
 
-pub async fn get_archive_stats(
-    State(_state): State<ApiState>,
-) -> Json<ApiResponse<ArchiveStats>> {
+pub async fn get_archive_stats(State(_state): State<ApiState>) -> Json<ApiResponse<ArchiveStats>> {
     ensure_initialized().await;
     let store = get_lifecycle_store();
     let records = store.archive_records.lock().await;
@@ -1783,7 +1817,10 @@ pub async fn get_archive_stats(
 
     for r in records.iter() {
         total_size += r.record_size_bytes;
-        if let Some((_, cnt)) = by_tier.iter_mut().find(|(k, _)| *k == r.archive_tier.as_str()) {
+        if let Some((_, cnt)) = by_tier
+            .iter_mut()
+            .find(|(k, _)| *k == r.archive_tier.as_str())
+        {
             *cnt += 1;
         }
         *by_domain.entry(r.domain.clone()).or_insert(0) += 1;
@@ -1863,9 +1900,7 @@ pub async fn get_retirement_stats(
     ))
 }
 
-pub async fn run_sla_check(
-    State(_state): State<ApiState>,
-) -> Json<ApiResponse<serde_json::Value>> {
+pub async fn run_sla_check(State(_state): State<ApiState>) -> Json<ApiResponse<serde_json::Value>> {
     ensure_initialized().await;
     let store = get_lifecycle_store();
     let mut entities = store.entities.lock().await;
@@ -2000,30 +2035,14 @@ pub fn create_routes() -> axum::Router<ApiState> {
             "/api/erp/mdm-v49/archive/records/:record_id/restore",
             post(restore_archive_record),
         )
-        .route(
-            "/api/erp/mdm-v49/archive/run",
-            post(run_archive),
-        )
+        .route("/api/erp/mdm-v49/archive/run", post(run_archive))
         // 统计仪表盘
-        .route(
-            "/api/erp/mdm-v49/stats/lifecycle",
-            get(get_lifecycle_stats),
-        )
-        .route(
-            "/api/erp/mdm-v49/stats/archive",
-            get(get_archive_stats),
-        )
+        .route("/api/erp/mdm-v49/stats/lifecycle", get(get_lifecycle_stats))
+        .route("/api/erp/mdm-v49/stats/archive", get(get_archive_stats))
         .route(
             "/api/erp/mdm-v49/stats/retirement",
             get(get_retirement_stats),
         )
-        .route(
-            "/api/erp/mdm-v49/sla/check",
-            post(run_sla_check),
-        )
-        .route(
-            "/api/erp/mdm-v49/dashboard",
-            get(get_lifecycle_dashboard),
-        )
+        .route("/api/erp/mdm-v49/sla/check", post(run_sla_check))
+        .route("/api/erp/mdm-v49/dashboard", get(get_lifecycle_dashboard))
 }
-

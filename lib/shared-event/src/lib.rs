@@ -28,6 +28,10 @@ pub use cluster::{
 pub use config_center::{
     ConfigAuditLog, ConfigCenter, ConfigSchema, ConfigType, ConfigVersion, ValidationRule,
 };
+pub use consul::{
+    try_register_service, ConsulClient, ConsulConfig, ConsulError, ConsulRegistrationGuard,
+    HealthCheck, ServiceRegistration,
+};
 pub use event::{
     CacheInvalidatedPayload, EhsAccidentReportedPayload, EhsHazardReportedPayload, Event,
     EventError, EventPublisher, EventResult, EventSubscriber, EventType,
@@ -55,8 +59,4 @@ pub use service_discovery::{
     ConsulDiscoveryClient, ConsulServiceRegistrar, LocalServiceRegistry, PortalServiceAggregator,
     ServiceCategory, ServiceDiscoveryClient, ServiceHealthStatus, ServiceInfo, ServiceInstance,
     ServiceRegistryStatus, SmartServiceClient,
-};
-pub use consul::{
-    try_register_service, ConsulClient, ConsulConfig, ConsulError, ConsulRegistrationGuard,
-    HealthCheck, ServiceRegistration,
 };

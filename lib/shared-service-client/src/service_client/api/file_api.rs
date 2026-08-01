@@ -44,6 +44,10 @@ impl TypedServiceClient<FileApi> {
 
     /// 获取文件下载 URL
     pub fn get_download_url(&self, file_id: Uuid) -> String {
-        format!("{}{}", self.base_url(), self.build_path(&format!("/download/{}", file_id)))
+        format!(
+            "{}{}",
+            self.base_url(),
+            self.build_path(&format!("/download/{}", file_id))
+        )
     }
 }

@@ -34,7 +34,7 @@ const eventFields: SchemaField[] = [
     type: 'datetime',
     sortable: true,
     listWidth: 180,
-    renderCell: (row) => (
+    renderCell: (row: Record<string, unknown>) => (
       <Typography
         variant='body2'
         sx={{ fontFamily: 'monospace' }}
@@ -56,7 +56,7 @@ const eventFields: SchemaField[] = [
         { value: 'warning', label: '警告' },
       ],
     },
-    renderCell: (row) => {
+    renderCell: (row: Record<string, unknown>) => {
       const cfg = EVENT_TYPE_CONFIG[row.event_type as string] || {
         label: String(row.event_type ?? ''),
         color: 'info' as const,
@@ -75,7 +75,7 @@ const eventFields: SchemaField[] = [
     label: '连接名称',
     type: 'text',
     listWidth: 160,
-    renderCell: (row) => (
+    renderCell: (row: Record<string, unknown>) => (
       <Typography variant='body2'>{String(row.connection_name ?? '')}</Typography>
     ),
   },
@@ -84,7 +84,7 @@ const eventFields: SchemaField[] = [
     label: '描述',
     type: 'textarea',
     listWidth: 300,
-    renderCell: (row) => (
+    renderCell: (row: Record<string, unknown>) => (
       <Typography
         variant='body2'
         color='text.secondary'
@@ -105,7 +105,7 @@ const eventFields: SchemaField[] = [
     type: 'number',
     align: 'right',
     listWidth: 100,
-    renderCell: (row) => {
+    renderCell: (row: Record<string, unknown>) => {
       const count = row.records_count as number;
       return (
         <Typography
@@ -130,7 +130,7 @@ const eventFields: SchemaField[] = [
         { value: 'pending', label: '进行中' },
       ],
     },
-    renderCell: (row) => {
+    renderCell: (row: Record<string, unknown>) => {
       const cfg = EVENT_STATUS_CONFIG[row.status as string] || {
         label: String(row.status ?? ''),
         color: 'default' as const,

@@ -37,7 +37,7 @@ export const processFlowSchema: EntitySchema = {
       label: '产能',
       type: 'number',
       listWidth: 120,
-      renderCell: (row): React.ReactNode => {
+      renderCell: (row: Record<string, unknown>): React.ReactNode => {
         const cap = row.capacity as number | undefined;
         const unit = row.unit as string | undefined;
         return cap ? `${cap} ${unit || '件/小时'}` : '-';

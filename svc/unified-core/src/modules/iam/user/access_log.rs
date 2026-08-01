@@ -78,27 +78,26 @@ pub async fn get_login_history(
 
     let limit = query.limit.unwrap_or(10).clamp(1, 100);
 
-    let total: i64 = match sqlx::query_scalar(
-        "SELECT COUNT(*) FROM core_login_logs WHERE user_id = $1",
-    )
-    .bind(user_uuid)
-    .fetch_one(&state.pool)
-    .await
-    {
-        Ok(t) => t,
-        Err(e) => {
-            tracing::error!("Failed to count login logs: {}", e);
-            return (
-                StatusCode::INTERNAL_SERVER_ERROR,
-                Json(serde_json::json!({
-                    "success": false,
-                    "message": format!("查询登录历史总数失败: {}", e),
-                    "data": null,
-                    "code": 500
-                })),
-            );
-        }
-    };
+    let total: i64 =
+        match sqlx::query_scalar("SELECT COUNT(*) FROM core_login_logs WHERE user_id = $1")
+            .bind(user_uuid)
+            .fetch_one(&state.pool)
+            .await
+        {
+            Ok(t) => t,
+            Err(e) => {
+                tracing::error!("Failed to count login logs: {}", e);
+                return (
+                    StatusCode::INTERNAL_SERVER_ERROR,
+                    Json(serde_json::json!({
+                        "success": false,
+                        "message": format!("查询登录历史总数失败: {}", e),
+                        "data": null,
+                        "code": 500
+                    })),
+                );
+            }
+        };
 
     let logs: Vec<LoginLogRow> = sqlx::query_as::<_, LoginLogRow>(
         r#"
@@ -313,10 +312,7 @@ pub async fn create_access_log(
         .get("username")
         .and_then(|v| v.as_str())
         .unwrap_or("");
-    let action = payload
-        .get("action")
-        .and_then(|v| v.as_str())
-        .unwrap_or("");
+    let action = payload.get("action").and_then(|v| v.as_str()).unwrap_or("");
     let resource = payload
         .get("resource")
         .and_then(|v| v.as_str())

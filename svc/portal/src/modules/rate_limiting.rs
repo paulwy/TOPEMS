@@ -506,7 +506,8 @@ impl CircuitBreaker {
             last_failure_time: last_failure,
             recovery_deadline,
             half_open_remaining: if self.state == CircuitState::HalfOpen {
-                self.half_open_max_requests.saturating_sub(self.success_count)
+                self.half_open_max_requests
+                    .saturating_sub(self.success_count)
             } else {
                 0
             },
@@ -560,11 +561,19 @@ impl CircuitBreakerManager {
     ) {
         self.configs.insert(
             service.to_string(),
-            (failure_threshold, recovery_timeout_sec, half_open_max_requests),
+            (
+                failure_threshold,
+                recovery_timeout_sec,
+                half_open_max_requests,
+            ),
         );
         self.breakers.insert(
             service.to_string(),
-            CircuitBreaker::new(failure_threshold, recovery_timeout_sec, half_open_max_requests),
+            CircuitBreaker::new(
+                failure_threshold,
+                recovery_timeout_sec,
+                half_open_max_requests,
+            ),
         );
     }
 
@@ -753,7 +762,10 @@ impl LoadAwareRouter {
             }
         }
         if let Some(metrics_list) = self.load_metrics.get_mut(service) {
-            if let Some(existing) = metrics_list.iter_mut().find(|m| m.instance_id == instance_id) {
+            if let Some(existing) = metrics_list
+                .iter_mut()
+                .find(|m| m.instance_id == instance_id)
+            {
                 *existing = metrics;
             } else {
                 metrics_list.push(metrics);
@@ -772,7 +784,10 @@ impl LoadAwareRouter {
                         instance_id: i.instance_id.clone(),
                         url: i.url.clone(),
                         healthy: i.healthy,
-                        last_health_check: format!("{}s ago", i.last_health_check.elapsed().as_secs()),
+                        last_health_check: format!(
+                            "{}s ago",
+                            i.last_health_check.elapsed().as_secs()
+                        ),
                         consecutive_failures: i.consecutive_failures,
                     })
                     .collect()
@@ -922,7 +937,8 @@ impl LoadAwareRouter {
         self.instances
             .get(service)
             .map(|instances| {
-                let healthy: Vec<&ServiceInstance> = instances.iter().filter(|i| i.healthy).collect();
+                let healthy: Vec<&ServiceInstance> =
+                    instances.iter().filter(|i| i.healthy).collect();
                 if healthy.is_empty() {
                     1.0
                 } else {
@@ -994,7 +1010,10 @@ pub fn reset_circuit_breaker(service: &str) {
 }
 
 pub fn circuit_record_failure(service: &str) {
-    circuit_breaker_manager().lock().unwrap().record_failure(service);
+    circuit_breaker_manager()
+        .lock()
+        .unwrap()
+        .record_failure(service);
 }
 
 pub fn get_degradation_configs() -> Vec<ServiceDegradationConfigGql> {
@@ -1011,17 +1030,23 @@ pub fn configure_degradation(
     fallback_ttl_sec: u64,
     max_degradation_duration_sec: u64,
 ) {
-    circuit_breaker_manager().lock().unwrap().configure_degradation(
-        service,
-        enabled,
-        strategy,
-        fallback_ttl_sec,
-        max_degradation_duration_sec,
-    );
+    circuit_breaker_manager()
+        .lock()
+        .unwrap()
+        .configure_degradation(
+            service,
+            enabled,
+            strategy,
+            fallback_ttl_sec,
+            max_degradation_duration_sec,
+        );
 }
 
 pub fn get_load_metrics(service: &str) -> Vec<LoadMetricsGql> {
-    load_aware_router().lock().unwrap().get_load_metrics(service)
+    load_aware_router()
+        .lock()
+        .unwrap()
+        .get_load_metrics(service)
 }
 
 pub fn get_all_load_metrics() -> Vec<LoadMetricsGql> {
@@ -1029,11 +1054,17 @@ pub fn get_all_load_metrics() -> Vec<LoadMetricsGql> {
 }
 
 pub fn get_instance_healths(service: &str) -> Vec<InstanceHealthGql> {
-    load_aware_router().lock().unwrap().get_instance_healths(service)
+    load_aware_router()
+        .lock()
+        .unwrap()
+        .get_instance_healths(service)
 }
 
 pub fn get_all_instance_healths() -> Vec<InstanceHealthGql> {
-    load_aware_router().lock().unwrap().get_all_instance_healths()
+    load_aware_router()
+        .lock()
+        .unwrap()
+        .get_all_instance_healths()
 }
 
 pub fn register_service_instance(service: &str, instance_id: &str, url: &str) {
@@ -1067,17 +1098,20 @@ pub fn update_instance_metrics(
     latency: f64,
     error_rate: f64,
 ) {
-    load_aware_router()
-        .lock()
-        .unwrap()
-        .update_metrics(service, instance_id, cpu, memory, active, queue, latency, error_rate);
+    load_aware_router().lock().unwrap().update_metrics(
+        service,
+        instance_id,
+        cpu,
+        memory,
+        active,
+        queue,
+        latency,
+        error_rate,
+    );
 }
 
 pub fn make_routing_decision(service: &str) -> RoutingDecisionGql {
-    load_aware_router()
-        .lock()
-        .unwrap()
-        .make_decision(service)
+    load_aware_router().lock().unwrap().make_decision(service)
 }
 
 pub fn get_routing_stats() -> AdaptiveRoutingStatsGql {
@@ -1090,10 +1124,12 @@ pub fn set_routing_rule(
     target_instance: &str,
     priority: i32,
 ) -> RoutingRuleGql {
-    load_aware_router()
-        .lock()
-        .unwrap()
-        .set_routing_rule(service, condition, target_instance, priority)
+    load_aware_router().lock().unwrap().set_routing_rule(
+        service,
+        condition,
+        target_instance,
+        priority,
+    )
 }
 
 pub fn delete_routing_rule(rule_id: &str) -> bool {
@@ -1141,15 +1177,16 @@ pub fn get_traffic_policy(service: &str) -> TrafficPolicyGql {
                 half_open_remaining: 0,
                 degradation_active: false,
             });
-        let degradation_config = cb_mgr
-            .get_degradation_config(service)
-            .unwrap_or_else(|| ServiceDegradationConfigGql {
-                service: service.to_string(),
-                enabled: false,
-                strategy: "CacheFallback".to_string(),
-                fallback_ttl_sec: 300,
-                max_degradation_duration_sec: 3600,
-            });
+        let degradation_config =
+            cb_mgr
+                .get_degradation_config(service)
+                .unwrap_or_else(|| ServiceDegradationConfigGql {
+                    service: service.to_string(),
+                    enabled: false,
+                    strategy: "CacheFallback".to_string(),
+                    fallback_ttl_sec: 300,
+                    max_degradation_duration_sec: 3600,
+                });
         drop(cb_mgr);
 
         let router = load_aware_router().lock().unwrap();
@@ -1323,7 +1360,10 @@ impl SubSchemaEntryInput {
             service: self.service.clone(),
             schema_url: self.schema_url.clone(),
             type_count: self.type_count.unwrap_or(0),
-            query_root: self.query_root.clone().unwrap_or_else(|| "Query".to_string()),
+            query_root: self
+                .query_root
+                .clone()
+                .unwrap_or_else(|| "Query".to_string()),
             mutation_root: self.mutation_root.clone(),
             subscription_root: self.subscription_root.clone(),
             version: self.version.clone().unwrap_or_else(|| "1.0.0".to_string()),
@@ -1532,11 +1572,7 @@ impl AiQueryRouter {
         matches
     }
 
-    fn decide_strategy(
-        &self,
-        intent: AiQueryIntent,
-        candidate_count: usize,
-    ) -> AiRoutingStrategy {
+    fn decide_strategy(&self, intent: AiQueryIntent, candidate_count: usize) -> AiRoutingStrategy {
         match intent {
             AiQueryIntent::EntityRead => AiRoutingStrategy::Direct,
             AiQueryIntent::MutationWrite => AiRoutingStrategy::Direct,
@@ -1559,14 +1595,14 @@ impl AiQueryRouter {
         }
     }
 
-    fn build_decision(
-        &mut self,
-        query: &str,
-    ) -> AiRoutingDecisionGql {
+    fn build_decision(&mut self, query: &str) -> AiRoutingDecisionGql {
         let intent = self.detect_intent(query);
         let services = self.match_services(query);
         let strategy = self.decide_strategy(intent, services.len());
-        let primary = services.first().map(|s| s.service.clone()).unwrap_or_default();
+        let primary = services
+            .first()
+            .map(|s| s.service.clone())
+            .unwrap_or_default();
         let fallback = services.get(1).map(|s| s.service.clone());
         let estimated_latency = match strategy {
             AiRoutingStrategy::Direct => 50,
@@ -1652,9 +1688,8 @@ impl SchemaStitcher {
 
     pub fn remove_field_mapping(&mut self, source_type: &str, source_field: &str) -> bool {
         let before = self.field_mappings.len();
-        self.field_mappings.retain(|m| {
-            !(m.source_type == source_type && m.source_field == source_field)
-        });
+        self.field_mappings
+            .retain(|m| !(m.source_type == source_type && m.source_field == source_field));
         self.field_mappings.len() < before
     }
 
@@ -1769,13 +1804,7 @@ impl IntelligentCache {
         }
     }
 
-    pub fn put(
-        &mut self,
-        key: &str,
-        value: Vec<u8>,
-        pattern: &str,
-        ttl_sec: Option<u64>,
-    ) {
+    pub fn put(&mut self, key: &str, value: Vec<u8>, pattern: &str, ttl_sec: Option<u64>) {
         let size = value.len() as u64;
         if self.total_size() + size > self.max_total_size {
             self.evict_one();
@@ -1867,8 +1896,7 @@ impl IntelligentCache {
             last_access: last_access.to_rfc3339(),
             avg_size_bytes,
         };
-        self.policy_patterns
-            .insert(key_pattern.to_string(), policy);
+        self.policy_patterns.insert(key_pattern.to_string(), policy);
     }
 
     pub fn get_policy(&self, key_pattern: &str) -> Option<CachePolicyGql> {
@@ -2000,10 +2028,7 @@ pub fn register_sub_schema(entry: SubSchemaEntryInput) -> async_graphql::Result<
 }
 
 pub fn remove_sub_schema(service: &str) -> async_graphql::Result<bool> {
-    Ok(schema_stitcher()
-        .lock()
-        .unwrap()
-        .remove_sub_schema(service))
+    Ok(schema_stitcher().lock().unwrap().remove_sub_schema(service))
 }
 
 pub fn set_merge_strategy(strategy: TypeMergeStrategy) -> async_graphql::Result<bool> {
@@ -2022,17 +2047,11 @@ pub fn add_field_mapping(rule: FieldMappingRuleInput) -> async_graphql::Result<b
         target_field: rule.target_field,
         required: rule.required.unwrap_or(false),
     };
-    schema_stitcher()
-        .lock()
-        .unwrap()
-        .add_field_mapping(mapping);
+    schema_stitcher().lock().unwrap().add_field_mapping(mapping);
     Ok(true)
 }
 
-pub fn remove_field_mapping(
-    source_type: &str,
-    source_field: &str,
-) -> async_graphql::Result<bool> {
+pub fn remove_field_mapping(source_type: &str, source_field: &str) -> async_graphql::Result<bool> {
     Ok(schema_stitcher()
         .lock()
         .unwrap()
@@ -2040,10 +2059,7 @@ pub fn remove_field_mapping(
 }
 
 pub fn refresh_stitched_schema(name: &str) -> async_graphql::Result<StitchedSchemaGql> {
-    Ok(schema_stitcher()
-        .lock()
-        .unwrap()
-        .stitched_schema(name))
+    Ok(schema_stitcher().lock().unwrap().stitched_schema(name))
 }
 
 pub fn cache_set(
@@ -2061,42 +2077,29 @@ pub fn cache_set(
         .lock()
         .unwrap()
         .put(key, bytes, pattern, ttl_sec);
-    Ok(intelligent_cache()
-        .lock()
-        .unwrap()
-        .get_entry(key))
+    Ok(intelligent_cache().lock().unwrap().get_entry(key))
 }
 
 pub fn cache_delete(key: &str) -> async_graphql::Result<bool> {
-    Ok(intelligent_cache()
-        .lock()
-        .unwrap()
-        .delete(key))
+    Ok(intelligent_cache().lock().unwrap().delete(key))
 }
 
 pub fn cache_clear(pattern: Option<&str>) -> async_graphql::Result<u64> {
     Ok(match pattern {
-        Some(p) => intelligent_cache()
-            .lock()
-            .unwrap()
-            .invalidate_pattern(p),
-        None => intelligent_cache()
-            .lock()
-            .unwrap()
-            .invalidate_pattern("*"),
+        Some(p) => intelligent_cache().lock().unwrap().invalidate_pattern(p),
+        None => intelligent_cache().lock().unwrap().invalidate_pattern("*"),
     })
 }
 
-pub fn cache_set_policy(
-    pattern: &str,
-    policy: CachePolicyInput,
-) -> async_graphql::Result<bool> {
+pub fn cache_set_policy(pattern: &str, policy: CachePolicyInput) -> async_graphql::Result<bool> {
     let consistency = policy.consistency.unwrap_or(ConsistencyLevel::Eventual);
     let invalidation = policy.invalidation.unwrap_or(InvalidationStrategy::TTL);
-    intelligent_cache()
-        .lock()
-        .unwrap()
-        .set_policy(pattern, policy.ttl_sec.unwrap_or(300), consistency, invalidation);
+    intelligent_cache().lock().unwrap().set_policy(
+        pattern,
+        policy.ttl_sec.unwrap_or(300),
+        consistency,
+        invalidation,
+    );
     Ok(true)
 }
 
@@ -2273,23 +2276,18 @@ impl RateLimitingMutationRoot {
         ttl_sec: Option<u64>,
     ) -> async_graphql::Result<bool> {
         let bytes = value.into_bytes();
-        intelligent_cache()
-            .lock()
-            .unwrap()
-            .put(&key, bytes, pattern.as_deref().unwrap_or("*"), ttl_sec);
+        intelligent_cache().lock().unwrap().put(
+            &key,
+            bytes,
+            pattern.as_deref().unwrap_or("*"),
+            ttl_sec,
+        );
         Ok(true)
     }
 
     /// 删除单个缓存条目
-    async fn cache_delete(
-        &self,
-        _ctx: &Context<'_>,
-        key: String,
-    ) -> async_graphql::Result<bool> {
-        Ok(intelligent_cache()
-            .lock()
-            .unwrap()
-            .delete(&key))
+    async fn cache_delete(&self, _ctx: &Context<'_>, key: String) -> async_graphql::Result<bool> {
+        Ok(intelligent_cache().lock().unwrap().delete(&key))
     }
 
     /// 按模式批量失效缓存
@@ -2313,10 +2311,12 @@ impl RateLimitingMutationRoot {
         let consistency = policy.consistency.unwrap_or(ConsistencyLevel::Eventual);
         let invalidation = policy.invalidation.unwrap_or(InvalidationStrategy::TTL);
         let ttl = policy.ttl_sec.unwrap_or(300);
-        intelligent_cache()
-            .lock()
-            .unwrap()
-            .set_policy(&policy.key_pattern, ttl, consistency, invalidation);
+        intelligent_cache().lock().unwrap().set_policy(
+            &policy.key_pattern,
+            ttl,
+            consistency,
+            invalidation,
+        );
         Ok(intelligent_cache()
             .lock()
             .unwrap()

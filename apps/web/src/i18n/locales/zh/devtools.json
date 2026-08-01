@@ -1,0 +1,186 @@
+{
+  "devtools": {
+    "common": {
+      "loaded": "✅ 已加载",
+      "modules": "模块"
+    },
+    "panels": {
+      "registry": {
+        "tooltip": "模块注册中心",
+        "title": "模块注册中心",
+        "label": "注册中心",
+        "sublabel": "{{count}} 模块"
+      },
+      "version": {
+        "tooltip": "版本管理平台",
+        "title": "版本管理平台",
+        "label": "版本平台",
+        "sublabel": "灰度发布"
+      },
+      "dashboard": {
+        "tooltip": "可观测性仪表盘",
+        "title": "可观测性仪表盘",
+        "label": "仪表盘",
+        "sublabel": "监控分析"
+      },
+      "aiops": {
+        "tooltip": "AI 运维中心",
+        "label": "AI 运维",
+        "sublabel": "智能告警"
+      },
+      "marketplace": {
+        "tooltip": "模块市场",
+        "label": "模块市场",
+        "sublabel": "{{count}} 模块"
+      },
+      "governance": {
+        "tooltip": "依赖治理",
+        "label": "依赖治理",
+        "sublabel": "版本冲突"
+      },
+      "security": {
+        "tooltip": "安全中心",
+        "label": "安全中心",
+        "sublabel": "安全扫描"
+      },
+      "runtime": {
+        "tooltip": "V45.0 运行时控制台",
+        "label": "运行时",
+        "sublabel": "终极形态"
+      },
+      "v47Integration": {
+        "tooltip": "V47-V50 集成面板",
+        "label": "V47-V50",
+        "sublabel": "平台+Serverless",
+        "title": "V47-V50 集成面板 — 平台 + Serverless + AI 运维",
+        "cards": {
+          "lowCode": {
+            "title": "V47.0 低代码引擎",
+            "subtitle": "LowCodeBuilder / lowCodeBuilder",
+            "status": "✅ 已加载 (模块市场 + 插件市场可用)"
+          },
+          "unifiedPlatform": {
+            "title": "V47.0 统一开发平台",
+            "subtitle": "UnifiedDevPlatform / unifiedDevPlatform",
+            "status": "✅ 已加载 (项目创建 + 开发服务器 + 构建部署)"
+          },
+          "serverless": {
+            "title": "V48.0 无服务器架构",
+            "subtitle": "edgeRenderer / faas / onDemandLoader",
+            "statusWithCache": "✅ 已加载 (缓存页: {{pages}}, 命中: {{hits}})"
+          },
+          "faas": {
+            "title": "V48.0 无服务器函数",
+            "subtitle": "FaaS 函数即模块",
+            "statusWithInvocations": "✅ {{functions}} 个函数, {{invocations}} 次调用"
+          },
+          "aiDriven": {
+            "title": "V48.0 AI 驱动",
+            "subtitle": "smartRouter / autoOps / predictiveScaler",
+            "status": "✅ 已加载 (智能路由 + 自动运维 + 预测扩展)"
+          },
+          "onDemand": {
+            "title": "V48.0 按需加载",
+            "subtitle": "onDemandLoader 引擎状态",
+            "statusWithLoader": "✅ 已加载 (已加载: {{loaded}}, 等待: {{pending}})"
+          },
+          "aiOpsV2": {
+            "title": "V50.0 AI 运维 V2",
+            "subtitle": "intelligentMonitor / rootCauseAnalyzer / autoRemediation",
+            "status": "✅ 已加载 (智能监控 + 根因分析 + 自动修复工作流)"
+          }
+        }
+      },
+      "v51Design": {
+        "tooltip": "V51.0 设计系统",
+        "label": "V51",
+        "sublabel": "Design System"
+      },
+      "v51DevEx": {
+        "tooltip": "V51.0 DevEx 开发体验",
+        "label": "DevEx",
+        "sublabel": "调试+性能"
+      },
+      "v53Ai": {
+        "tooltip": "V53.0 AI 增强",
+        "label": "V53 AI",
+        "sublabel": "智能增强"
+      },
+      "v53Platform": {
+        "tooltip": "V53.0 平台终局",
+        "label": "V53 平台",
+        "sublabel": "开发终局"
+      },
+      "v54Native": {
+        "tooltip": "V54.0 AI 原生平台",
+        "label": "V54 AI",
+        "sublabel": "原生平台"
+      },
+      "v54Agent": {
+        "tooltip": "V54.0 AI Agent 自主智能",
+        "label": "V54 Agent",
+        "sublabel": "自主智能"
+      },
+      "v55Copilot": {
+        "tooltip": "V55.0 AI Copilot 智能助手",
+        "label": "V55 Copilot",
+        "sublabel": "智能助手"
+      },
+      "v55Automation": {
+        "tooltip": "V55.0 全栈自动化 CI/CD",
+        "label": "V55 Auto",
+        "sublabel": "CI/CD · 部署"
+      },
+      "v56Ops": {
+        "tooltip": "V56.0 平台智能运维",
+        "label": "V56 Ops",
+        "sublabel": "智能运维"
+      },
+      "v56Review": {
+        "tooltip": "V56.0 AI 代码审查",
+        "label": "V56 Review",
+        "sublabel": "AI 代码审查"
+      },
+      "v57Governance": {
+        "tooltip": "V57.0 AI 治理",
+        "label": "V57 AI",
+        "sublabel": "治理·合规·风险"
+      },
+      "v57Automation": {
+        "tooltip": "V57.0 AI 自动化",
+        "label": "V57 Auto",
+        "sublabel": "测试·CI·质量"
+      },
+      "v58Ux": {
+        "tooltip": "V58.0 AI UX 智能体验",
+        "label": "V58 UX",
+        "sublabel": "智能·自适应·情感"
+      },
+      "v58Evolution": {
+        "tooltip": "V58.0 AI 演进",
+        "label": "V58 AI",
+        "sublabel": "模型·AB·安全"
+      },
+      "v59DevEx": {
+        "tooltip": "V59.0 AI DevEx 智能开发体验",
+        "label": "V59 DevEx",
+        "sublabel": "智能调试·性能·重构"
+      },
+      "v59Security": {
+        "tooltip": "V59.0 AI 安全",
+        "label": "V59 安全",
+        "sublabel": "审计·鲁棒·隐私"
+      },
+      "v60Ethics": {
+        "tooltip": "V60.0 AI 伦理",
+        "label": "V60 伦理",
+        "sublabel": "偏见·公平·可解释"
+      },
+      "v60Quality": {
+        "tooltip": "V60.0 AI Quality",
+        "label": "V60 质量",
+        "sublabel": "测试·性能·UX"
+      }
+    }
+  }
+}

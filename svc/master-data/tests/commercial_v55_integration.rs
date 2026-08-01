@@ -102,7 +102,11 @@ async fn test_list_subscriptions() {
     let ctx = TestContext::new().await;
 
     let (status, resp) = ctx
-        .request("GET", &format!("{}/subscriptions?tenant_id=tenant-001", BASE_PATH), None)
+        .request(
+            "GET",
+            &format!("{}/subscriptions?tenant_id=tenant-001", BASE_PATH),
+            None,
+        )
         .await
         .expect("请求失败");
 
@@ -157,7 +161,10 @@ async fn test_get_usage_summary() {
     let (status, resp) = ctx
         .request(
             "GET",
-            &format!("{}/usage/summary?tenant_id=tenant-integration-test", BASE_PATH),
+            &format!(
+                "{}/usage/summary?tenant_id=tenant-integration-test",
+                BASE_PATH
+            ),
             None,
         )
         .await

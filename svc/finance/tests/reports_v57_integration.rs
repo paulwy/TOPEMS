@@ -28,7 +28,10 @@ async fn test_generate_report() {
         .await;
 
     assert_eq!(status, 200, "生成报表应该返回 200");
-    assert!(resp["success"].as_bool().unwrap_or(false), "响应 success 应为 true");
+    assert!(
+        resp["success"].as_bool().unwrap_or(false),
+        "响应 success 应为 true"
+    );
 }
 
 #[tokio::test]
@@ -39,12 +42,13 @@ async fn test_list_reports() {
     }
     let ctx = TestContext::new().await;
 
-    let (status, resp) = ctx
-        .request("GET", "/finance-v57/reports", None)
-        .await;
+    let (status, resp) = ctx.request("GET", "/finance-v57/reports", None).await;
 
     assert_eq!(status, 200, "列出报表应该返回 200");
-    assert!(resp["success"].as_bool().unwrap_or(false), "响应 success 应为 true");
+    assert!(
+        resp["success"].as_bool().unwrap_or(false),
+        "响应 success 应为 true"
+    );
     assert!(resp["data"].is_array(), "data 应该是数组");
 }
 
@@ -72,7 +76,10 @@ async fn test_create_template() {
         .await;
 
     assert_eq!(status, 200, "创建模板应该返回 200");
-    assert!(resp["success"].as_bool().unwrap_or(false), "响应 success 应为 true");
+    assert!(
+        resp["success"].as_bool().unwrap_or(false),
+        "响应 success 应为 true"
+    );
 }
 
 #[tokio::test]
@@ -88,7 +95,10 @@ async fn test_list_templates() {
         .await;
 
     assert_eq!(status, 200, "列出模板应该返回 200");
-    assert!(resp["success"].as_bool().unwrap_or(false), "响应 success 应为 true");
+    assert!(
+        resp["success"].as_bool().unwrap_or(false),
+        "响应 success 应为 true"
+    );
     assert!(resp["data"].is_array(), "data 应该是数组");
 }
 
@@ -113,7 +123,10 @@ async fn test_analyze() {
         .await;
 
     assert_eq!(status, 200, "多维分析应该返回 200");
-    assert!(resp["success"].as_bool().unwrap_or(false), "响应 success 应为 true");
+    assert!(
+        resp["success"].as_bool().unwrap_or(false),
+        "响应 success 应为 true"
+    );
 }
 
 #[tokio::test]
@@ -136,5 +149,8 @@ async fn test_generate_forecast() {
         .await;
 
     assert_eq!(status, 200, "生成预测应该返回 200");
-    assert!(resp["success"].as_bool().unwrap_or(false), "响应 success 应为 true");
+    assert!(
+        resp["success"].as_bool().unwrap_or(false),
+        "响应 success 应为 true"
+    );
 }

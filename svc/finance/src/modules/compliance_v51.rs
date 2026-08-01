@@ -349,11 +349,9 @@ pub async fn init_database(pool: &PgPool) -> Result<(), sqlx::Error> {
     .execute(pool)
     .await?;
 
-    sqlx::query(
-        "CREATE INDEX IF NOT EXISTS idx_fcm_tenant ON finance_control_matrices(tenant_id)",
-    )
-    .execute(pool)
-    .await?;
+    sqlx::query("CREATE INDEX IF NOT EXISTS idx_fcm_tenant ON finance_control_matrices(tenant_id)")
+        .execute(pool)
+        .await?;
     sqlx::query("CREATE INDEX IF NOT EXISTS idx_fcm_period ON finance_control_matrices(period)")
         .execute(pool)
         .await?;
@@ -377,11 +375,9 @@ pub async fn init_database(pool: &PgPool) -> Result<(), sqlx::Error> {
     .execute(pool)
     .await?;
 
-    sqlx::query(
-        "CREATE INDEX IF NOT EXISTS idx_fra_tenant ON finance_risk_assessments(tenant_id)",
-    )
-    .execute(pool)
-    .await?;
+    sqlx::query("CREATE INDEX IF NOT EXISTS idx_fra_tenant ON finance_risk_assessments(tenant_id)")
+        .execute(pool)
+        .await?;
     sqlx::query(
         "CREATE INDEX IF NOT EXISTS idx_fra_control_point ON finance_risk_assessments(control_point_id)",
     )
@@ -390,8 +386,8 @@ pub async fn init_database(pool: &PgPool) -> Result<(), sqlx::Error> {
     sqlx::query(
         "CREATE INDEX IF NOT EXISTS idx_fra_risk_level ON finance_risk_assessments(risk_level)",
     )
-        .execute(pool)
-        .await?;
+    .execute(pool)
+    .await?;
 
     sqlx::query(
         r#"CREATE TABLE IF NOT EXISTS finance_compliance_reports (
@@ -446,8 +442,8 @@ pub async fn init_database(pool: &PgPool) -> Result<(), sqlx::Error> {
     sqlx::query(
         "CREATE INDEX IF NOT EXISTS idx_fci_severity ON finance_compliance_issues(severity)",
     )
-        .execute(pool)
-        .await?;
+    .execute(pool)
+    .await?;
 
     Ok(())
 }
@@ -621,8 +617,9 @@ impl ControlMatrix {
             100.0
         };
 
-        let controls_json = serde_json::json!(
-            active_controls.iter().map(|c| {
+        let controls_json = serde_json::json!(active_controls
+            .iter()
+            .map(|c| {
                 serde_json::json!({
                     "id": c.id,
                     "code": c.code,
@@ -632,8 +629,8 @@ impl ControlMatrix {
                     "control_type": c.control_type,
                     "frequency": c.frequency,
                 })
-            }).collect::<Vec<_>>()
-        );
+            })
+            .collect::<Vec<_>>());
 
         let id = Uuid::new_v4();
 
@@ -769,11 +766,7 @@ impl RiskAssessment {
         .await
     }
 
-    pub async fn get(
-        pool: &PgPool,
-        id: Uuid,
-        tenant_id: Uuid,
-    ) -> Result<Self, sqlx::Error> {
+    pub async fn get(pool: &PgPool, id: Uuid, tenant_id: Uuid) -> Result<Self, sqlx::Error> {
         sqlx::query_as::<_, Self>(
             "SELECT id, tenant_id, control_point_id, likelihood, impact, risk_score, \
              risk_level, mitigation_strategy, residual_risk, assessed_by, \
@@ -843,10 +836,7 @@ impl RiskAssessment {
             .iter()
             .filter(|a| a.risk_level == "medium")
             .count() as i64;
-        let low = assessments
-            .iter()
-            .filter(|a| a.risk_level == "low")
-            .count() as i64;
+        let low = assessments.iter().filter(|a| a.risk_level == "low").count() as i64;
         let avg = if total > 0 {
             assessments.iter().map(|a| a.risk_score as f64).sum::<f64>() / total as f64
         } else {
@@ -891,8 +881,9 @@ impl ComplianceReportV51 {
         .fetch_all(pool)
         .await?;
 
-        let risk_json = serde_json::json!(
-            risk_assessments.iter().map(|ra| {
+        let risk_json = serde_json::json!(risk_assessments
+            .iter()
+            .map(|ra| {
                 serde_json::json!({
                     "id": ra.id,
                     "control_point_id": ra.control_point_id,
@@ -901,8 +892,8 @@ impl ComplianceReportV51 {
                     "likelihood": ra.likelihood,
                     "impact": ra.impact,
                 })
-            }).collect::<Vec<_>>()
-        );
+            })
+            .collect::<Vec<_>>());
 
         let mut issues: Vec<ComplianceIssueV51> = Vec::new();
         let mut recommendations: Vec<String> = Vec::new();
@@ -1026,11 +1017,7 @@ impl ComplianceReportV51 {
         Ok((report, saved_issues))
     }
 
-    pub async fn get(
-        pool: &PgPool,
-        id: Uuid,
-        tenant_id: Uuid,
-    ) -> Result<Self, sqlx::Error> {
+    pub async fn get(pool: &PgPool, id: Uuid, tenant_id: Uuid) -> Result<Self, sqlx::Error> {
         sqlx::query_as::<_, Self>(
             "SELECT id, tenant_id, report_type, period_start, period_end, generated_at, \
              controls_checked, issues_found, risk_assessments, executive_summary, \
@@ -1266,10 +1253,7 @@ async fn generate_compliance_report_handler(
     let tenant_id = get_tenant_id(&claims);
     let created_by = claims.username.clone();
     match ComplianceReportV51::generate(&state.pool, tenant_id, req, &created_by).await {
-        Ok((report, issues)) => Json(ApiResponse::success(
-            (report, issues),
-            "合规报告生成成功",
-        )),
+        Ok((report, issues)) => Json(ApiResponse::success((report, issues), "合规报告生成成功")),
         Err(e) => Json(ApiResponse::error(500, &e.to_string())),
     }
 }

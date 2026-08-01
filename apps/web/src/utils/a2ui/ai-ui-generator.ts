@@ -3,6 +3,7 @@
  *
  * Stub 实现：仅满足类型检查与模块导出契约，完整功能待后续开发。
  * V63.5 F-9: 解决 TS2307 模块找不到错误。
+ * V63.5: 完善 stub 类型签名与占位组件树结构。
  */
 
 // ============ 枚举与类型定义 ============
@@ -51,8 +52,20 @@ export interface AccessibilityReport {
   issues: string[];
 }
 
+/**
+ * 生成的组件结构 — 占位的组件树节点。
+ * 后续接入真实 AI 生成 API 后将填充实际组件树。
+ */
+export interface GeneratedComponent {
+  name: string;
+  type: string;
+  props: Record<string, unknown>;
+  children: GeneratedComponent[];
+}
+
 export interface UIGenerationResult {
   component: string;
+  component_tree: GeneratedComponent;
   mode: UIGenerationMode;
   layout: LayoutStrategy;
   level: ComponentLevel;
@@ -62,21 +75,35 @@ export interface UIGenerationResult {
 
 // ============ 生成器 ============
 
-export interface AIUIGenerationRequest {
+/**
+ * 生成选项 — AI 生成 UI 的输入参数。
+ */
+export interface GenerateOptions {
   prompt: string;
   mode?: UIGenerationMode;
   constraints?: DesignConstraints;
 }
 
+/** 向后兼容别名，等价于 GenerateOptions。 */
+export type AIUIGenerationRequest = GenerateOptions;
+
+// TODO: 接入真实 AI 生成 API
 export class AIUIGenerator {
-  async generate(_request: AIUIGenerationRequest): Promise<UIGenerationResult> {
+  async generate(request: GenerateOptions): Promise<UIGenerationResult> {
+    const mode = request.mode ?? UIGenerationMode.TextToUI;
     return {
       component: '',
-      mode: UIGenerationMode.TextToUI,
+      component_tree: {
+        name: 'PlaceholderRoot',
+        type: 'Container',
+        props: { prompt: request.prompt },
+        children: [],
+      },
+      mode,
       layout: LayoutStrategy.Flexbox,
       level: ComponentLevel.Molecule,
       accessibility: { score: 100, issues: [] },
-      suggestions: [],
+      suggestions: ['占位生成结果，待接入真实 AI 生成 API'],
     };
   }
 }

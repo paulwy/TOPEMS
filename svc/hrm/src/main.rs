@@ -18,9 +18,7 @@ use topems_shared::service_bootstrap::{
     bootstrap_service, build_application, create_health_state, create_standard_health_routes, run,
     ServiceConfig,
 };
-use topems_shared::{
-    config::CacheConfig, CacheService, FieldEncryptionService, KeyManager,
-};
+use topems_shared::{config::CacheConfig, CacheService, FieldEncryptionService, KeyManager};
 
 #[tokio::main]
 async fn main() -> Result<()> {

@@ -1,0 +1,11 @@
+{
+  "gis.fence.warehouse": "Warehouse Area",
+  "gis.fence.danger_zone_a": "Danger Zone A",
+  "gis.fence.office_area": "Office Area",
+  "gis.fence.test_area": "Test Area",
+  "gis.fence.shape_circle": "Circle",
+  "gis.fence.shape_polygon": "Polygon",
+  "gis.fence.shape_rectangle": "Rectangle",
+  "gis.fence.enter": "Enter",
+  "gis.fence.leave": "Leave"
+}

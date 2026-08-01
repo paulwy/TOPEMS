@@ -557,13 +557,11 @@ impl AutomatedReportEngine {
         tenant_id: Uuid,
         report_id: Uuid,
     ) -> Result<(), sqlx::Error> {
-        sqlx::query(
-            "DELETE FROM finance_v57_generated_reports WHERE id = $1 AND tenant_id = $2",
-        )
-        .bind(report_id)
-        .bind(tenant_id)
-        .execute(pool)
-        .await?;
+        sqlx::query("DELETE FROM finance_v57_generated_reports WHERE id = $1 AND tenant_id = $2")
+            .bind(report_id)
+            .bind(tenant_id)
+            .execute(pool)
+            .await?;
         Ok(())
     }
 
@@ -590,9 +588,7 @@ impl AutomatedReportEngine {
         period_start: DateTime<Utc>,
         period_end: DateTime<Utc>,
     ) -> serde_json::Value {
-        let rt = report_type
-            .as_deref()
-            .unwrap_or("balance_sheet");
+        let rt = report_type.as_deref().unwrap_or("balance_sheet");
         serde_json::json!({
             "report_type": rt,
             "period_start": period_start,
@@ -710,7 +706,11 @@ impl MultiDimensionalAnalyzer {
         req: DrillDownRequest,
     ) -> Result<AnalysisResult, sqlx::Error> {
         let parent = Self::get_result(pool, tenant_id, req.result_id).await?;
-        let new_data = Self::apply_drill_down(parent.data.as_ref().unwrap_or(&serde_json::Value::Null), &req.dimension, &req.value);
+        let new_data = Self::apply_drill_down(
+            parent.data.as_ref().unwrap_or(&serde_json::Value::Null),
+            &req.dimension,
+            &req.value,
+        );
         let aggregations = Self::compute_aggregations(&new_data, &parent.measures);
 
         let id = Uuid::new_v4();
@@ -736,7 +736,10 @@ impl MultiDimensionalAnalyzer {
         req: RollUpRequest,
     ) -> Result<AnalysisResult, sqlx::Error> {
         let parent = Self::get_result(pool, tenant_id, req.result_id).await?;
-        let new_data = Self::apply_roll_up(parent.data.as_ref().unwrap_or(&serde_json::Value::Null), &req.dimension);
+        let new_data = Self::apply_roll_up(
+            parent.data.as_ref().unwrap_or(&serde_json::Value::Null),
+            &req.dimension,
+        );
         let aggregations = Self::compute_aggregations(&new_data, &parent.measures);
 
         let id = Uuid::new_v4();
@@ -762,7 +765,11 @@ impl MultiDimensionalAnalyzer {
         req: SliceRequest,
     ) -> Result<AnalysisResult, sqlx::Error> {
         let parent = Self::get_result(pool, tenant_id, req.result_id).await?;
-        let new_data = Self::apply_slice(parent.data.as_ref().unwrap_or(&serde_json::Value::Null), &req.dimension, &req.value);
+        let new_data = Self::apply_slice(
+            parent.data.as_ref().unwrap_or(&serde_json::Value::Null),
+            &req.dimension,
+            &req.value,
+        );
         let aggregations = Self::compute_aggregations(&new_data, &parent.measures);
 
         let id = Uuid::new_v4();
@@ -788,7 +795,10 @@ impl MultiDimensionalAnalyzer {
         req: DiceRequest,
     ) -> Result<AnalysisResult, sqlx::Error> {
         let parent = Self::get_result(pool, tenant_id, req.result_id).await?;
-        let new_data = Self::apply_dice(parent.data.as_ref().unwrap_or(&serde_json::Value::Null), &req.filters);
+        let new_data = Self::apply_dice(
+            parent.data.as_ref().unwrap_or(&serde_json::Value::Null),
+            &req.filters,
+        );
         let aggregations = Self::compute_aggregations(&new_data, &parent.measures);
 
         let id = Uuid::new_v4();
@@ -871,11 +881,12 @@ impl MultiDimensionalAnalyzer {
         serde_json::json!({ "rows": rows })
     }
 
-    fn compute_aggregations(
-        data: &serde_json::Value,
-        measures: &[String],
-    ) -> serde_json::Value {
-        let rows = data.get("rows").and_then(|r| r.as_array()).cloned().unwrap_or_default();
+    fn compute_aggregations(data: &serde_json::Value, measures: &[String]) -> serde_json::Value {
+        let rows = data
+            .get("rows")
+            .and_then(|r| r.as_array())
+            .cloned()
+            .unwrap_or_default();
         let mut agg = serde_json::Map::new();
 
         for measure in measures {
@@ -914,7 +925,11 @@ impl MultiDimensionalAnalyzer {
         dimension: &str,
         value: &str,
     ) -> serde_json::Value {
-        let rows = data.get("rows").and_then(|r| r.as_array()).cloned().unwrap_or_default();
+        let rows = data
+            .get("rows")
+            .and_then(|r| r.as_array())
+            .cloned()
+            .unwrap_or_default();
         let filtered: Vec<serde_json::Value> = rows
             .into_iter()
             .filter(|r| {
@@ -927,11 +942,12 @@ impl MultiDimensionalAnalyzer {
         serde_json::json!({ "rows": filtered })
     }
 
-    fn apply_roll_up(
-        data: &serde_json::Value,
-        _dimension: &str,
-    ) -> serde_json::Value {
-        let rows = data.get("rows").and_then(|r| r.as_array()).cloned().unwrap_or_default();
+    fn apply_roll_up(data: &serde_json::Value, _dimension: &str) -> serde_json::Value {
+        let rows = data
+            .get("rows")
+            .and_then(|r| r.as_array())
+            .cloned()
+            .unwrap_or_default();
         let mut aggregated: HashMap<String, serde_json::Value> = HashMap::new();
 
         for row in &rows {
@@ -950,12 +966,12 @@ impl MultiDimensionalAnalyzer {
         serde_json::json!({ "rows": result_rows })
     }
 
-    fn apply_slice(
-        data: &serde_json::Value,
-        dimension: &str,
-        value: &str,
-    ) -> serde_json::Value {
-        let rows = data.get("rows").and_then(|r| r.as_array()).cloned().unwrap_or_default();
+    fn apply_slice(data: &serde_json::Value, dimension: &str, value: &str) -> serde_json::Value {
+        let rows = data
+            .get("rows")
+            .and_then(|r| r.as_array())
+            .cloned()
+            .unwrap_or_default();
         let filtered: Vec<serde_json::Value> = rows
             .into_iter()
             .filter(|r| {
@@ -968,11 +984,12 @@ impl MultiDimensionalAnalyzer {
         serde_json::json!({ "rows": filtered })
     }
 
-    fn apply_dice(
-        data: &serde_json::Value,
-        filters: &serde_json::Value,
-    ) -> serde_json::Value {
-        let rows = data.get("rows").and_then(|r| r.as_array()).cloned().unwrap_or_default();
+    fn apply_dice(data: &serde_json::Value, filters: &serde_json::Value) -> serde_json::Value {
+        let rows = data
+            .get("rows")
+            .and_then(|r| r.as_array())
+            .cloned()
+            .unwrap_or_default();
         let filter_map = filters.as_object().cloned().unwrap_or_default();
 
         let filtered: Vec<serde_json::Value> = rows
@@ -1035,10 +1052,7 @@ impl PredictiveInsightEngine {
         )
         .bind(id)
         .bind(tenant_id)
-        .bind(format!(
-            "{} 未来 {} 期预测",
-            req.target_metric, periods
-        ))
+        .bind(format!("{} 未来 {} 期预测", req.target_metric, periods))
         .bind(Some(0.85))
         .bind(&forecast_data)
         .fetch_one(pool)
@@ -1064,10 +1078,7 @@ impl PredictiveInsightEngine {
         )
         .bind(id)
         .bind(tenant_id)
-        .bind(format!(
-            "{} 异常检测 (阈值: {})",
-            req.metric, threshold
-        ))
+        .bind(format!("{} 异常检测 (阈值: {})", req.metric, threshold))
         .bind(Some(0.90))
         .bind(&anomaly_data)
         .fetch_one(pool)
@@ -1205,11 +1216,8 @@ impl PredictiveInsightEngine {
             100.0, 120.0, 115.0, 130.0, 110.0, 500.0, 125.0, 140.0, 118.0, 135.0,
         ];
         let mean: f64 = data_points.iter().sum::<f64>() / data_points.len() as f64;
-        let variance: f64 = data_points
-            .iter()
-            .map(|x| (x - mean).powi(2))
-            .sum::<f64>()
-            / data_points.len() as f64;
+        let variance: f64 =
+            data_points.iter().map(|x| (x - mean).powi(2)).sum::<f64>() / data_points.len() as f64;
         let std_dev = variance.sqrt();
 
         let mut outliers = Vec::new();
@@ -1667,8 +1675,5 @@ pub fn create_routes() -> Router<AppState> {
             "/finance-v57/models",
             axum::routing::get(list_models_handler),
         )
-        .route(
-            "/finance-v57/trend",
-            axum::routing::get(get_trend_handler),
-        )
+        .route("/finance-v57/trend", axum::routing::get(get_trend_handler))
 }

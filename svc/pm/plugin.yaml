@@ -2,26 +2,47 @@ code: "pm"
 name: "项目管理"
 version: "1.0.0"
 description: "PM 项目管理系统，包含项目、任务、甘特图、合同、预算、风险、质量、验收、结算等模块"
+auth_required: true
 plugin_type: "system"
 
 deployment:
   port: 8023
   base_path: /api/pm
 
+# 模块分层 (P34-4 ERP/PM 基础 vs 高级分层)
+# tier: basic       -> CRUD/主数据，开箱即用
+# tier: advanced    -> 依赖外部配置或第三方服务 (如 WorkflowApi)
+# tier: infrastructure -> 始终启用，不参与分层
 permissions:
-  - project
-  - milestone
-  - phase
-  - member
-  - resource
-  - expense
-  - benefit
-  - approval
-  - contract
-  - budget
-  - risk
-  - quality
-  - acceptance
-  - settlement
-  - document
-  - report
+  - code: project
+    tier: basic
+  - code: milestone
+    tier: basic
+  - code: phase
+    tier: basic
+  - code: member
+    tier: basic
+  - code: resource
+    tier: basic
+  - code: expense
+    tier: basic
+  - code: benefit
+    tier: basic
+  - code: approval
+    tier: advanced
+  - code: contract
+    tier: basic
+  - code: budget
+    tier: basic
+  - code: risk
+    tier: basic
+  - code: quality
+    tier: basic
+  - code: acceptance
+    tier: basic
+  - code: settlement
+    tier: basic
+  - code: document
+    tier: basic
+  - code: report
+    tier: basic

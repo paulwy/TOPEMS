@@ -3,7 +3,10 @@ use serde::{Deserialize, Serialize};
 use std::sync::Arc;
 use uuid::Uuid;
 
-use topems_shared_core::{config::ServiceConfig, error::{Result, TopemsError}};
+use topems_shared_core::{
+    config::ServiceConfig,
+    error::{Result, TopemsError},
+};
 
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Default)]
 #[serde(rename_all = "lowercase")]
@@ -243,10 +246,11 @@ impl NotificationServiceClient {
             .await
             .map_err(|e| TopemsError::Internal(format!("Failed to send request: {}", e)))?;
 
-        let api_response: topems_shared_core::response::ApiResponse<NotificationTemplate> = response
-            .json()
-            .await
-            .map_err(|e| TopemsError::Internal(format!("Failed to parse response: {}", e)))?;
+        let api_response: topems_shared_core::response::ApiResponse<NotificationTemplate> =
+            response
+                .json()
+                .await
+                .map_err(|e| TopemsError::Internal(format!("Failed to parse response: {}", e)))?;
 
         if let Some(data) = api_response.data {
             Ok(data)
@@ -290,11 +294,10 @@ impl NotificationServiceClient {
             .await
             .map_err(|e| TopemsError::Internal(format!("Failed to send request: {}", e)))?;
 
-        let api_response: topems_shared_core::response::ApiResponse<NotificationStats> =
-            response
-                .json()
-                .await
-                .map_err(|e| TopemsError::Internal(format!("Failed to parse response: {}", e)))?;
+        let api_response: topems_shared_core::response::ApiResponse<NotificationStats> = response
+            .json()
+            .await
+            .map_err(|e| TopemsError::Internal(format!("Failed to parse response: {}", e)))?;
 
         if let Some(data) = api_response.data {
             Ok(data)
@@ -314,11 +317,10 @@ impl NotificationServiceClient {
             .await
             .map_err(|e| TopemsError::Internal(format!("Failed to send request: {}", e)))?;
 
-        let api_response: topems_shared_core::response::ApiResponse<NotificationStats> =
-            response
-                .json()
-                .await
-                .map_err(|e| TopemsError::Internal(format!("Failed to parse response: {}", e)))?;
+        let api_response: topems_shared_core::response::ApiResponse<NotificationStats> = response
+            .json()
+            .await
+            .map_err(|e| TopemsError::Internal(format!("Failed to parse response: {}", e)))?;
 
         if let Some(data) = api_response.data {
             Ok(data)
@@ -385,11 +387,10 @@ impl NotificationServiceClient {
             .await
             .map_err(|e| TopemsError::Internal(format!("Failed to send request: {}", e)))?;
 
-        let api_response: topems_shared_core::response::ApiResponse<serde_json::Value> =
-            response
-                .json()
-                .await
-                .map_err(|e| TopemsError::Internal(format!("Failed to parse response: {}", e)))?;
+        let api_response: topems_shared_core::response::ApiResponse<serde_json::Value> = response
+            .json()
+            .await
+            .map_err(|e| TopemsError::Internal(format!("Failed to parse response: {}", e)))?;
 
         if let Some(data) = api_response.data {
             Ok(data)
@@ -421,10 +422,11 @@ impl NotificationServiceClient {
             .await
             .map_err(|e| TopemsError::Internal(format!("Failed to send request: {}", e)))?;
 
-        let api_response: topems_shared_core::response::ApiResponse<NotificationListResponse> = response
-            .json()
-            .await
-            .map_err(|e| TopemsError::Internal(format!("Failed to parse response: {}", e)))?;
+        let api_response: topems_shared_core::response::ApiResponse<NotificationListResponse> =
+            response
+                .json()
+                .await
+                .map_err(|e| TopemsError::Internal(format!("Failed to parse response: {}", e)))?;
 
         api_response
             .data
@@ -553,11 +555,10 @@ impl NotificationServiceClient {
             .await
             .map_err(|e| TopemsError::Internal(format!("Failed to send request: {}", e)))?;
 
-        let api_response: topems_shared_core::response::ApiResponse<Vec<Notification>> =
-            response
-                .json()
-                .await
-                .map_err(|e| TopemsError::Internal(format!("Failed to parse response: {}", e)))?;
+        let api_response: topems_shared_core::response::ApiResponse<Vec<Notification>> = response
+            .json()
+            .await
+            .map_err(|e| TopemsError::Internal(format!("Failed to parse response: {}", e)))?;
 
         api_response
             .data

@@ -413,10 +413,7 @@ impl PersistedQueryV2 {
             .ok_or_else(|| format!("查询哈希不存在: {}", query_hash))?;
 
         if entry.status != QueryStatus::Active {
-            return Err(format!(
-                "查询状态为 {}，不可执行",
-                entry.status.as_str()
-            ));
+            return Err(format!("查询状态为 {}，不可执行", entry.status.as_str()));
         }
 
         entry.access_count += 1;
@@ -567,9 +564,8 @@ impl VersionedCache {
         drop(active_version);
 
         let now = chrono::Utc::now();
-        let expires_at = ttl_seconds.map(|sec| {
-            (now + chrono::Duration::seconds(sec as i64)).to_rfc3339()
-        });
+        let expires_at =
+            ttl_seconds.map(|sec| (now + chrono::Duration::seconds(sec as i64)).to_rfc3339());
 
         let size_bytes = serde_json::to_string(&value)
             .map(|s| s.len() as u64)
@@ -617,9 +613,7 @@ impl VersionedCache {
         Ok(removed)
     }
 
-    pub async fn create_version(
-        description: Option<String>,
-    ) -> Result<CacheVersion, String> {
+    pub async fn create_version(description: Option<String>) -> Result<CacheVersion, String> {
         let store = get_persisted_query_store();
 
         let mut versions = store.cache_versions.lock().await;
@@ -814,10 +808,8 @@ impl EdgePersistence {
 
         let mut statuses = Vec::new();
         for loc in EdgeCacheLocation::all() {
-            let loc_entries: Vec<&EdgeEntry> = entries
-                .values()
-                .filter(|e| e.location == loc)
-                .collect();
+            let loc_entries: Vec<&EdgeEntry> =
+                entries.values().filter(|e| e.location == loc).collect();
 
             let synced = loc_entries
                 .iter()
@@ -1002,7 +994,8 @@ pub async fn register_query_handler(
     State(_state): State<AppState>,
     Json(req): Json<RegisterQueryRequest>,
 ) -> Json<ApiResponse<PersistedEntryV2>> {
-    match PersistedQueryV2::register_query(req.query_text, req.operation_name, req.created_by).await {
+    match PersistedQueryV2::register_query(req.query_text, req.operation_name, req.created_by).await
+    {
         Ok(entry) => Json(ApiResponse::success(entry, "查询注册成功")),
         Err(e) => Json(ApiResponse::error(400, &e)),
     }
@@ -1126,16 +1119,12 @@ pub async fn cache_list_versions_handler(
     Json(ApiResponse::success(versions, "缓存版本列表"))
 }
 
-pub async fn cache_stats_handler(
-    State(_state): State<AppState>,
-) -> Json<ApiResponse<CacheStats>> {
+pub async fn cache_stats_handler(State(_state): State<AppState>) -> Json<ApiResponse<CacheStats>> {
     let stats = VersionedCache::get_cache_stats().await;
     Json(ApiResponse::success(stats, "缓存统计"))
 }
 
-pub async fn cache_purge_expired_handler(
-    State(_state): State<AppState>,
-) -> Json<ApiResponse<u64>> {
+pub async fn cache_purge_expired_handler(State(_state): State<AppState>) -> Json<ApiResponse<u64>> {
     let purged = VersionedCache::purge_expired().await;
     Json(ApiResponse::success(purged, "过期缓存已清理"))
 }
@@ -1163,10 +1152,7 @@ pub async fn edge_read_handler(
     Path(key): Path<String>,
     Query(params): Query<EdgeReadQuery>,
 ) -> Json<ApiResponse<EdgeEntry>> {
-    let location = params
-        .location
-        .as_deref()
-        .map(EdgeCacheLocation::from_str);
+    let location = params.location.as_deref().map(EdgeCacheLocation::from_str);
 
     match EdgePersistence::read_from_edge(&key, location).await {
         Some(entry) => Json(ApiResponse::success(entry, "边缘读取成功")),
@@ -1180,7 +1166,13 @@ pub async fn edge_sync_handler(
 ) -> Json<ApiResponse<u64>> {
     let target_locations = req
         .target_locations
-        .unwrap_or_else(|| vec!["cdn".to_string(), "regional".to_string(), "global".to_string()])
+        .unwrap_or_else(|| {
+            vec![
+                "cdn".to_string(),
+                "regional".to_string(),
+                "global".to_string(),
+            ]
+        })
         .iter()
         .map(|l| EdgeCacheLocation::from_str(l))
         .collect();
@@ -1202,10 +1194,7 @@ pub async fn edge_invalidate_handler(
     State(_state): State<AppState>,
     Json(req): Json<EdgeInvalidateRequest>,
 ) -> Json<ApiResponse<u64>> {
-    let location = req
-        .location
-        .as_deref()
-        .map(EdgeCacheLocation::from_str);
+    let location = req.location.as_deref().map(EdgeCacheLocation::from_str);
 
     match EdgePersistence::invalidate_edge(req.key, location).await {
         Ok(count) => Json(ApiResponse::success(count, "边缘缓存已失效")),
@@ -1226,7 +1215,14 @@ pub async fn edge_set_policy_handler(
 ) -> Json<ApiResponse<EdgeReplicationPolicy>> {
     let target_locations = req
         .target_locations
-        .unwrap_or_else(|| vec!["cdn".to_string(), "edge_node".to_string(), "regional".to_string(), "global".to_string()])
+        .unwrap_or_else(|| {
+            vec![
+                "cdn".to_string(),
+                "edge_node".to_string(),
+                "regional".to_string(),
+                "global".to_string(),
+            ]
+        })
         .iter()
         .map(|l| EdgeCacheLocation::from_str(l))
         .collect();

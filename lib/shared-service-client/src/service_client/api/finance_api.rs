@@ -57,7 +57,10 @@ impl TypedServiceClient<FinanceApi> {
     }
 
     /// 获取利润表
-    pub async fn get_income_statement(&self, period: &str) -> ServiceClientResult<serde_json::Value> {
+    pub async fn get_income_statement(
+        &self,
+        period: &str,
+    ) -> ServiceClientResult<serde_json::Value> {
         let path = format!("/income-statement/{}", period);
         self.get(&self.build_path(&path)).await
     }
@@ -80,7 +83,8 @@ impl TypedServiceClient<FinanceApi> {
         &self,
         data: &serde_json::Value,
     ) -> ServiceClientResult<serde_json::Value> {
-        self.post(&self.build_path("/approvals/approve"), data).await
+        self.post(&self.build_path("/approvals/approve"), data)
+            .await
     }
 
     /// 审批驳回

@@ -273,7 +273,8 @@ impl SharedServiceCenterAnalyzer {
         let total_cost: Decimal = items.iter().map(|i| i.total_cost).sum();
         let total_allocated: Decimal = items.iter().map(|i| i.allocated_cost).sum();
         let total_service_count: i64 = items.iter().map(|i| i.service_count).sum();
-        let avg_cost_per_service = safe_divide(total_allocated, Decimal::from(total_service_count.max(1)));
+        let avg_cost_per_service =
+            safe_divide(total_allocated, Decimal::from(total_service_count.max(1)));
         let overall_quality: Decimal = items.iter().map(|i| i.quality_score).sum::<Decimal>()
             / Decimal::from(items.len() as i64);
 
@@ -320,7 +321,8 @@ impl SharedServiceCenterAnalyzer {
             .into_iter()
             .map(|i| {
                 let capacity = Decimal::from(i.headcount * 160);
-                let utilized = capacity * (Decimal::from(85) + (i.quality_score / Decimal::from(10)))
+                let utilized = capacity
+                    * (Decimal::from(85) + (i.quality_score / Decimal::from(10)))
                     / Decimal::from(100);
                 let rate = safe_percentage(utilized, capacity);
                 ServiceUtilization {
@@ -534,9 +536,12 @@ impl ServiceCostAllocator {
 
         let mut summary_map: HashMap<Uuid, (String, Decimal, Decimal, i64)> = HashMap::new();
         for item in &items {
-            let entry = summary_map
-                .entry(item.target_center_id)
-                .or_insert((item.target_center_name.clone(), Decimal::ZERO, Decimal::ZERO, 0));
+            let entry = summary_map.entry(item.target_center_id).or_insert((
+                item.target_center_name.clone(),
+                Decimal::ZERO,
+                Decimal::ZERO,
+                0,
+            ));
             entry.2 += item.allocated_amount;
             entry.3 += 1;
         }
@@ -794,7 +799,8 @@ impl InternalPricingManager {
     }
 
     pub fn create_policy(req: CreatePricingPolicyRequest) -> PricingPolicy {
-        let transfer_price = req.base_cost * (Decimal::from(100) + req.markup_rate) / Decimal::from(100);
+        let transfer_price =
+            req.base_cost * (Decimal::from(100) + req.markup_rate) / Decimal::from(100);
         PricingPolicy {
             policy_id: Uuid::new_v4(),
             policy_code: req.policy_code,
@@ -812,7 +818,10 @@ impl InternalPricingManager {
         }
     }
 
-    pub fn update_policy(mut policy: PricingPolicy, req: UpdatePricingPolicyRequest) -> PricingPolicy {
+    pub fn update_policy(
+        mut policy: PricingPolicy,
+        req: UpdatePricingPolicyRequest,
+    ) -> PricingPolicy {
         if let Some(name) = req.policy_name {
             policy.policy_name = name;
         }
@@ -831,7 +840,8 @@ impl InternalPricingManager {
         if let Some(desc) = req.description {
             policy.description = Some(desc);
         }
-        policy.transfer_price = policy.base_cost * (Decimal::from(100) + policy.markup_rate) / Decimal::from(100);
+        policy.transfer_price =
+            policy.base_cost * (Decimal::from(100) + policy.markup_rate) / Decimal::from(100);
         policy
     }
 
@@ -892,11 +902,15 @@ impl InternalPricingManager {
         let settlements = Self::get_settlements(&req.period);
         let total_amount: Decimal = settlements.iter().map(|s| s.total_amount).sum();
 
-        let mut summary_map: HashMap<Uuid, (String, Decimal, i64, HashMap<String, Decimal>)> = HashMap::new();
+        let mut summary_map: HashMap<Uuid, (String, Decimal, i64, HashMap<String, Decimal>)> =
+            HashMap::new();
         for s in &settlements {
-            let entry = summary_map
-                .entry(s.provider_id)
-                .or_insert((s.provider_name.clone(), Decimal::ZERO, 0, HashMap::new()));
+            let entry = summary_map.entry(s.provider_id).or_insert((
+                s.provider_name.clone(),
+                Decimal::ZERO,
+                0,
+                HashMap::new(),
+            ));
             entry.1 += s.total_amount;
             entry.2 += 1;
             entry.3.insert(s.receiver_name.clone(), s.total_amount);

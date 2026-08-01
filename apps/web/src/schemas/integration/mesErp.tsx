@@ -19,7 +19,7 @@ const mesErpFields: SchemaField[] = [
     required: true,
     sortable: true,
     listWidth: 220,
-    renderCell: (row) => (
+    renderCell: (row: Record<string, unknown>) => (
       <Box>
         <Typography
           variant='body2'
@@ -50,7 +50,7 @@ const mesErpFields: SchemaField[] = [
     type: 'text',
     listWidth: 140,
     placeholder: '输入产品名称（可选）',
-    renderCell: (row) => (
+    renderCell: (row: Record<string, unknown>) => (
       <Typography variant='body2' color='text.secondary'>
         {String(row.product_name ?? '-')}
       </Typography>
@@ -63,8 +63,8 @@ const mesErpFields: SchemaField[] = [
     sortable: true,
     listWidth: 100,
     placeholder: '输入数量（可选）',
-    renderCell: (row) => (
-      <Typography variant='body2'>{row.quantity ?? '-'}</Typography>
+    renderCell: (row: Record<string, unknown>) => (
+      <Typography variant='body2'>{String(row.quantity ?? '-')}</Typography>
     ),
   },
   {
@@ -80,7 +80,7 @@ const mesErpFields: SchemaField[] = [
         label: cfg.label,
       })),
     },
-    renderCell: (row) => {
+    renderCell: (row: Record<string, unknown>) => {
       const cfg = MES_ERP_STATUS_CONFIG[row.sync_status as string] || MES_ERP_STATUS_CONFIG.pending;
       return (
         <Chip
@@ -97,7 +97,7 @@ const mesErpFields: SchemaField[] = [
     type: 'datetime',
     sortable: true,
     listWidth: 160,
-    renderCell: (row) => (
+    renderCell: (row: Record<string, unknown>) => (
       <Typography variant='body2' color='text.secondary'>
         {row.last_synced_at
           ? new Date(String(row.last_synced_at)).toLocaleString('zh-CN')
@@ -112,7 +112,7 @@ const mesErpFields: SchemaField[] = [
     sortable: true,
     listWidth: 160,
     hideInForm: true,
-    renderCell: (row) => (
+    renderCell: (row: Record<string, unknown>) => (
       <Typography variant='body2' color='text.secondary'>
         {new Date(String(row.created_at)).toLocaleString('zh-CN')}
       </Typography>

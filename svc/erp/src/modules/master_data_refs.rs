@@ -354,10 +354,7 @@ pub fn create_routes() -> axum::Router<ApiState> {
             "/api/erp/master-data-refs/conflicts/detect",
             post(detect_conflicts),
         )
-        .route(
-            "/api/erp/master-data-refs/conflicts",
-            get(list_conflicts),
-        )
+        .route("/api/erp/master-data-refs/conflicts", get(list_conflicts))
         .route(
             "/api/erp/master-data-refs/conflicts/{conflict_id}",
             get(get_conflict),
@@ -371,10 +368,7 @@ pub fn create_routes() -> axum::Router<ApiState> {
             post(auto_merge_conflict),
         )
         // V38.0 AC-10: 主数据生命周期管理
-        .route(
-            "/api/erp/master-data-refs/archived",
-            get(list_archived),
-        )
+        .route("/api/erp/master-data-refs/archived", get(list_archived))
         .route(
             "/api/erp/master-data-refs/pending-destruction",
             get(list_pending_destruction),
@@ -455,10 +449,7 @@ pub fn create_routes() -> axum::Router<ApiState> {
             "/api/erp/master-data/sync/jobs",
             post(create_sync_job).get(list_sync_jobs),
         )
-        .route(
-            "/api/erp/master-data/sync/jobs/:id",
-            get(get_sync_job),
-        )
+        .route("/api/erp/master-data/sync/jobs/:id", get(get_sync_job))
         .route(
             "/api/erp/master-data/sync/jobs/:id/retry",
             post(retry_sync_job),
@@ -471,10 +462,7 @@ pub fn create_routes() -> axum::Router<ApiState> {
             "/api/erp/master-data/sync/jobs/:id/compensate",
             post(trigger_compensation),
         )
-        .route(
-            "/api/erp/master-data/sync/stats",
-            get(get_sync_stats),
-        )
+        .route("/api/erp/master-data/sync/stats", get(get_sync_stats))
         .route(
             "/api/erp/master-data/sync/dead-letters",
             get(list_dead_letters),
@@ -579,10 +567,7 @@ pub fn create_routes() -> axum::Router<ApiState> {
             get(get_entity_owner),
         )
         // V43.0 AC-15: 主数据图谱
-        .route(
-            "/api/erp/master-data/graph",
-            get(get_master_data_graph),
-        )
+        .route("/api/erp/master-data/graph", get(get_master_data_graph))
         .route(
             "/api/erp/master-data/graph/nodes/:node_id",
             get(get_graph_node),
@@ -599,10 +584,7 @@ pub fn create_routes() -> axum::Router<ApiState> {
             "/api/erp/master-data/graph/nodes/:node_id/multi-hop",
             get(multi_hop_traversal),
         )
-        .route(
-            "/api/erp/master-data/graph/stats",
-            get(get_graph_stats),
-        )
+        .route("/api/erp/master-data/graph/stats", get(get_graph_stats))
         // V43.0 AC-15: 知识图谱
         .route(
             "/api/erp/master-data/knowledge/concepts",
@@ -612,10 +594,7 @@ pub fn create_routes() -> axum::Router<ApiState> {
             "/api/erp/master-data/knowledge/concepts/:concept_id",
             get(get_concept),
         )
-        .route(
-            "/api/erp/master-data/knowledge/triples",
-            get(list_triples),
-        )
+        .route("/api/erp/master-data/knowledge/triples", get(list_triples))
         .route(
             "/api/erp/master-data/knowledge/inference-rules",
             get(list_inference_rules),
@@ -638,10 +617,7 @@ pub fn create_routes() -> axum::Router<ApiState> {
             get(get_completion_suggestions),
         )
         // V44.0 AC-16: MDM GraphQL API
-        .route(
-            "/api/erp/master-data/graphql",
-            post(graphql_endpoint),
-        )
+        .route("/api/erp/master-data/graphql", post(graphql_endpoint))
         // V44.0 AC-16: 同步编排引擎 V2
         .route(
             "/api/erp/master-data/sync/v2/jobs",
@@ -676,10 +652,7 @@ pub fn create_routes() -> axum::Router<ApiState> {
             "/api/erp/master-data/services/:service_id/heartbeat",
             post(mdm_service_heartbeat),
         )
-        .route(
-            "/api/erp/master-data/services",
-            get(mdm_service_list),
-        )
+        .route("/api/erp/master-data/services", get(mdm_service_list))
         .route(
             "/api/erp/master-data/services/:service_id/health",
             get(mdm_service_health),
@@ -697,10 +670,7 @@ pub fn create_routes() -> axum::Router<ApiState> {
             "/api/erp/master-data/gateway/aggregate",
             post(mdm_gateway_aggregate),
         )
-        .route(
-            "/api/erp/master-data/gateway/stats",
-            get(mdm_gateway_stats),
-        )
+        .route("/api/erp/master-data/gateway/stats", get(mdm_gateway_stats))
         // V45.0 AC-17: 主数据质量 AI
         .route(
             "/api/erp/master-data/quality-ai/score/:id",
@@ -1076,15 +1046,24 @@ pub async fn get_audit_trail(
             let items: Vec<MasterDataAuditEvent> = rows
                 .iter()
                 .map(|r| MasterDataAuditEvent {
-                    id: r.try_get::<uuid::Uuid, _>("id").unwrap_or_default().to_string(),
+                    id: r
+                        .try_get::<uuid::Uuid, _>("id")
+                        .unwrap_or_default()
+                        .to_string(),
                     master_data_id: r.try_get::<String, _>("master_data_id").unwrap_or_default(),
                     domain: r.try_get::<String, _>("domain").unwrap_or_default(),
                     action: r.try_get::<String, _>("action").unwrap_or_default(),
                     source_service: r.try_get::<String, _>("source_service").unwrap_or_default(),
                     target_service: r.try_get::<String, _>("target_service").unwrap_or_default(),
                     changed_by: r.try_get::<Option<String>, _>("changed_by").ok().flatten(),
-                    old_values: r.try_get::<Option<serde_json::Value>, _>("old_values").ok().flatten(),
-                    new_values: r.try_get::<Option<serde_json::Value>, _>("new_values").ok().flatten(),
+                    old_values: r
+                        .try_get::<Option<serde_json::Value>, _>("old_values")
+                        .ok()
+                        .flatten(),
+                    new_values: r
+                        .try_get::<Option<serde_json::Value>, _>("new_values")
+                        .ok()
+                        .flatten(),
                     created_at: r
                         .try_get::<chrono::DateTime<chrono::Utc>, _>("created_at")
                         .unwrap_or_else(|_| chrono::Utc::now())
@@ -1176,9 +1155,11 @@ pub async fn get_data_lineage(
             let code: String = row.try_get("code").unwrap_or_default();
             let name: Option<String> = row.try_get("name").ok().flatten();
             let local_entity_type: Option<String> = row.try_get("local_entity_type").ok().flatten();
-            let local_entity_id: Option<uuid::Uuid> = row.try_get("local_entity_id").unwrap_or(None);
-            let last_synced_at: chrono::DateTime<chrono::Utc> =
-                row.try_get("last_synced_at").unwrap_or_else(|_| chrono::Utc::now());
+            let local_entity_id: Option<uuid::Uuid> =
+                row.try_get("local_entity_id").unwrap_or(None);
+            let last_synced_at: chrono::DateTime<chrono::Utc> = row
+                .try_get("last_synced_at")
+                .unwrap_or_else(|_| chrono::Utc::now());
             let status: String = row.try_get("status").unwrap_or_default();
 
             // 构建血缘节点：来源服务 → ERP 本地引用
@@ -1354,14 +1335,19 @@ pub async fn get_versions(
             let items: Vec<MasterDataVersion> = rows
                 .iter()
                 .map(|r| MasterDataVersion {
-                    id: r.try_get::<uuid::Uuid, _>("id").unwrap_or_default().to_string(),
+                    id: r
+                        .try_get::<uuid::Uuid, _>("id")
+                        .unwrap_or_default()
+                        .to_string(),
                     master_data_id: r.try_get::<String, _>("master_data_id").unwrap_or_default(),
                     version_number: r.try_get::<i32, _>("version_number").unwrap_or(0),
                     domain: r.try_get::<String, _>("domain").unwrap_or_default(),
                     code: r.try_get::<String, _>("code").unwrap_or_default(),
                     name: r.try_get::<Option<String>, _>("name").ok().flatten(),
                     status: r.try_get::<String, _>("status").unwrap_or_default(),
-                    snapshot: r.try_get::<serde_json::Value, _>("snapshot").unwrap_or_default(),
+                    snapshot: r
+                        .try_get::<serde_json::Value, _>("snapshot")
+                        .unwrap_or_default(),
                     changed_by: r.try_get::<Option<String>, _>("changed_by").ok().flatten(),
                     created_at: r
                         .try_get::<chrono::DateTime<chrono::Utc>, _>("created_at")
@@ -1418,15 +1404,25 @@ pub async fn get_version(
             use sqlx::Row;
             Json(ApiResponse::success(
                 MasterDataVersion {
-                    id: row.try_get::<uuid::Uuid, _>("id").unwrap_or_default().to_string(),
-                    master_data_id: row.try_get::<String, _>("master_data_id").unwrap_or_default(),
+                    id: row
+                        .try_get::<uuid::Uuid, _>("id")
+                        .unwrap_or_default()
+                        .to_string(),
+                    master_data_id: row
+                        .try_get::<String, _>("master_data_id")
+                        .unwrap_or_default(),
                     version_number: row.try_get::<i32, _>("version_number").unwrap_or(0),
                     domain: row.try_get::<String, _>("domain").unwrap_or_default(),
                     code: row.try_get::<String, _>("code").unwrap_or_default(),
                     name: row.try_get::<Option<String>, _>("name").ok().flatten(),
                     status: row.try_get::<String, _>("status").unwrap_or_default(),
-                    snapshot: row.try_get::<serde_json::Value, _>("snapshot").unwrap_or_default(),
-                    changed_by: row.try_get::<Option<String>, _>("changed_by").ok().flatten(),
+                    snapshot: row
+                        .try_get::<serde_json::Value, _>("snapshot")
+                        .unwrap_or_default(),
+                    changed_by: row
+                        .try_get::<Option<String>, _>("changed_by")
+                        .ok()
+                        .flatten(),
                     created_at: row
                         .try_get::<chrono::DateTime<chrono::Utc>, _>("created_at")
                         .unwrap_or_else(|_| chrono::Utc::now())
@@ -1751,9 +1747,9 @@ pub async fn detect_conflicts(
 
     for conflict in &mut conflicts {
         let should_auto_resolve = match strategy {
-            MergeStrategy::LastWriteWins => true,       // 远程数据时间戳更新，自动接受
-            MergeStrategy::SourcePriority => true,      // 简化：来源服务优先级高于本地
-            MergeStrategy::ManualReview => false,       // 不自动合并
+            MergeStrategy::LastWriteWins => true, // 远程数据时间戳更新，自动接受
+            MergeStrategy::SourcePriority => true, // 简化：来源服务优先级高于本地
+            MergeStrategy::ManualReview => false, // 不自动合并
         };
 
         if should_auto_resolve {
@@ -1789,7 +1785,13 @@ pub async fn detect_conflicts(
             .await;
 
             // 应用解决值到本地主数据引用
-            let _ = apply_resolved_value(&state.db, &conflict.master_data_id, &conflict.field_name, &conflict.remote_value).await;
+            let _ = apply_resolved_value(
+                &state.db,
+                &conflict.master_data_id,
+                &conflict.field_name,
+                &conflict.remote_value,
+            )
+            .await;
         } else {
             conflict.status = "pending_review".into();
             manual_review_required += 1;
@@ -1920,21 +1922,36 @@ pub async fn list_conflicts(
             let items: Vec<MasterDataConflict> = rows
                 .iter()
                 .map(|r| MasterDataConflict {
-                    id: r.try_get::<uuid::Uuid, _>("id").unwrap_or_default().to_string(),
+                    id: r
+                        .try_get::<uuid::Uuid, _>("id")
+                        .unwrap_or_default()
+                        .to_string(),
                     master_data_id: r.try_get::<String, _>("master_data_id").unwrap_or_default(),
                     domain: r.try_get::<String, _>("domain").unwrap_or_default(),
                     conflict_type: r.try_get::<String, _>("conflict_type").unwrap_or_default(),
                     field_name: r.try_get::<String, _>("field_name").unwrap_or_default(),
-                    local_value: r.try_get::<serde_json::Value, _>("local_value").unwrap_or_default(),
-                    remote_value: r.try_get::<serde_json::Value, _>("remote_value").unwrap_or_default(),
+                    local_value: r
+                        .try_get::<serde_json::Value, _>("local_value")
+                        .unwrap_or_default(),
+                    remote_value: r
+                        .try_get::<serde_json::Value, _>("remote_value")
+                        .unwrap_or_default(),
                     remote_service: r.try_get::<String, _>("remote_service").unwrap_or_default(),
                     status: r.try_get::<String, _>("status").unwrap_or_default(),
                     merge_strategy: r.try_get::<String, _>("merge_strategy").unwrap_or_default(),
-                    resolved_value: r.try_get::<Option<serde_json::Value>, _>("resolved_value").ok().flatten(),
-                    detected_at: r.try_get::<chrono::DateTime<chrono::Utc>, _>("detected_at")
-                        .unwrap_or_else(|_| chrono::Utc::now()).to_rfc3339(),
-                    resolved_at: r.try_get::<Option<chrono::DateTime<chrono::Utc>>, _>("resolved_at")
-                        .ok().flatten().map(|t| t.to_rfc3339()),
+                    resolved_value: r
+                        .try_get::<Option<serde_json::Value>, _>("resolved_value")
+                        .ok()
+                        .flatten(),
+                    detected_at: r
+                        .try_get::<chrono::DateTime<chrono::Utc>, _>("detected_at")
+                        .unwrap_or_else(|_| chrono::Utc::now())
+                        .to_rfc3339(),
+                    resolved_at: r
+                        .try_get::<Option<chrono::DateTime<chrono::Utc>>, _>("resolved_at")
+                        .ok()
+                        .flatten()
+                        .map(|t| t.to_rfc3339()),
                     resolved_by: r.try_get::<Option<String>, _>("resolved_by").ok().flatten(),
                 })
                 .collect();
@@ -1991,21 +2008,36 @@ pub async fn get_conflict(
             use sqlx::Row;
             Json(ApiResponse::success(
                 MasterDataConflict {
-                    id: r.try_get::<uuid::Uuid, _>("id").unwrap_or_default().to_string(),
+                    id: r
+                        .try_get::<uuid::Uuid, _>("id")
+                        .unwrap_or_default()
+                        .to_string(),
                     master_data_id: r.try_get::<String, _>("master_data_id").unwrap_or_default(),
                     domain: r.try_get::<String, _>("domain").unwrap_or_default(),
                     conflict_type: r.try_get::<String, _>("conflict_type").unwrap_or_default(),
                     field_name: r.try_get::<String, _>("field_name").unwrap_or_default(),
-                    local_value: r.try_get::<serde_json::Value, _>("local_value").unwrap_or_default(),
-                    remote_value: r.try_get::<serde_json::Value, _>("remote_value").unwrap_or_default(),
+                    local_value: r
+                        .try_get::<serde_json::Value, _>("local_value")
+                        .unwrap_or_default(),
+                    remote_value: r
+                        .try_get::<serde_json::Value, _>("remote_value")
+                        .unwrap_or_default(),
                     remote_service: r.try_get::<String, _>("remote_service").unwrap_or_default(),
                     status: r.try_get::<String, _>("status").unwrap_or_default(),
                     merge_strategy: r.try_get::<String, _>("merge_strategy").unwrap_or_default(),
-                    resolved_value: r.try_get::<Option<serde_json::Value>, _>("resolved_value").ok().flatten(),
-                    detected_at: r.try_get::<chrono::DateTime<chrono::Utc>, _>("detected_at")
-                        .unwrap_or_else(|_| chrono::Utc::now()).to_rfc3339(),
-                    resolved_at: r.try_get::<Option<chrono::DateTime<chrono::Utc>>, _>("resolved_at")
-                        .ok().flatten().map(|t| t.to_rfc3339()),
+                    resolved_value: r
+                        .try_get::<Option<serde_json::Value>, _>("resolved_value")
+                        .ok()
+                        .flatten(),
+                    detected_at: r
+                        .try_get::<chrono::DateTime<chrono::Utc>, _>("detected_at")
+                        .unwrap_or_else(|_| chrono::Utc::now())
+                        .to_rfc3339(),
+                    resolved_at: r
+                        .try_get::<Option<chrono::DateTime<chrono::Utc>>, _>("resolved_at")
+                        .ok()
+                        .flatten()
+                        .map(|t| t.to_rfc3339()),
                     resolved_by: r.try_get::<Option<String>, _>("resolved_by").ok().flatten(),
                 },
                 "冲突详情",
@@ -2071,7 +2103,8 @@ pub async fn resolve_conflict(
     }
 
     // 3. 应用解决值到本地主数据引用
-    let _ = apply_resolved_value(&state.db, &master_data_id, &field_name, &req.resolved_value).await;
+    let _ =
+        apply_resolved_value(&state.db, &master_data_id, &field_name, &req.resolved_value).await;
 
     Json(ApiResponse::success(
         serde_json::json!({
@@ -2116,8 +2149,10 @@ pub async fn auto_merge_conflict(
             (
                 r.try_get::<String, _>("master_data_id").unwrap_or_default(),
                 r.try_get::<String, _>("field_name").unwrap_or_default(),
-                r.try_get::<serde_json::Value, _>("local_value").unwrap_or_default(),
-                r.try_get::<serde_json::Value, _>("remote_value").unwrap_or_default(),
+                r.try_get::<serde_json::Value, _>("local_value")
+                    .unwrap_or_default(),
+                r.try_get::<serde_json::Value, _>("remote_value")
+                    .unwrap_or_default(),
                 r.try_get::<String, _>("remote_service").unwrap_or_default(),
             )
         }
@@ -2129,7 +2164,9 @@ pub async fn auto_merge_conflict(
         MergeStrategy::LastWriteWins => (remote_value.clone(), "last_write_wins"),
         MergeStrategy::SourcePriority => {
             // 检查来源服务优先级
-            let priority = req.service_priorities.as_ref()
+            let priority = req
+                .service_priorities
+                .as_ref()
                 .and_then(|p| p.get(&remote_service))
                 .copied()
                 .unwrap_or(0);
@@ -2582,7 +2619,10 @@ pub async fn cancel_destruction(
     match row {
         Ok(Some(existing)) => {
             if existing.status != "pending_destruction" {
-                return Json(ApiResponse::error(400, "只有待销毁状态的主数据才能取消销毁计划"));
+                return Json(ApiResponse::error(
+                    400,
+                    "只有待销毁状态的主数据才能取消销毁计划",
+                ));
             }
 
             let old_status = existing.status.clone();
@@ -2738,9 +2778,7 @@ pub async fn list_archived(
     let page_size = params.page_size.unwrap_or(20).min(100);
     let offset = (page - 1) * page_size;
 
-    let mut sql = String::from(
-        "SELECT * FROM erp_master_data_refs WHERE status = 'archived'",
-    );
+    let mut sql = String::from("SELECT * FROM erp_master_data_refs WHERE status = 'archived'");
     let mut binds: Vec<String> = Vec::new();
     let mut param_idx = 1;
 
@@ -2817,9 +2855,8 @@ pub async fn list_pending_destruction(
     let page_size = params.page_size.unwrap_or(20).min(100);
     let offset = (page - 1) * page_size;
 
-    let mut sql = String::from(
-        "SELECT * FROM erp_master_data_refs WHERE status = 'pending_destruction'",
-    );
+    let mut sql =
+        String::from("SELECT * FROM erp_master_data_refs WHERE status = 'pending_destruction'");
     let mut binds: Vec<String> = Vec::new();
     let mut param_idx = 1;
 
@@ -3220,9 +3257,9 @@ pub async fn list_quality_rules(
     let rows = match (params.domain.as_ref(), params.is_active) {
         (Some(domain), Some(is_active)) => {
             sqlx::query(&format!(
-                "{} WHERE domain = $1 AND is_active = $2 ORDER BY created_at DESC LIMIT $3 OFFSET $4",
-                sql_base
-            ))
+            "{} WHERE domain = $1 AND is_active = $2 ORDER BY created_at DESC LIMIT $3 OFFSET $4",
+            sql_base
+        ))
             .bind(domain)
             .bind(is_active)
             .bind(page_size)
@@ -3308,7 +3345,10 @@ pub async fn get_quality_rule(
         Err(_) => return Json(ApiResponse::error(400, "无效的规则 ID")),
     };
 
-    let sql = format!("SELECT {} FROM erp_master_data_quality_rules WHERE id = $1", QUALITY_RULE_COLUMNS);
+    let sql = format!(
+        "SELECT {} FROM erp_master_data_quality_rules WHERE id = $1",
+        QUALITY_RULE_COLUMNS
+    );
     match sqlx::query(&sql).bind(rid).fetch_optional(&state.db).await {
         Ok(Some(row)) => match quality_rule_from_row(&row) {
             Ok(rule) => Json(ApiResponse::success(rule, "质量规则详情")),
@@ -3341,7 +3381,11 @@ pub async fn update_quality_rule(
         "SELECT {} FROM erp_master_data_quality_rules WHERE id = $1",
         QUALITY_RULE_COLUMNS
     );
-    let existing = match sqlx::query(&sql_select).bind(rid).fetch_optional(&state.db).await {
+    let existing = match sqlx::query(&sql_select)
+        .bind(rid)
+        .fetch_optional(&state.db)
+        .await
+    {
         Ok(Some(row)) => quality_rule_from_row(&row),
         Ok(None) => return Json(ApiResponse::error(404, "未找到质量规则")),
         Err(e) => {
@@ -3518,7 +3562,10 @@ pub async fn run_quality_check(
 
     Json(ApiResponse::success(
         report,
-        &format!("质量检查完成：检查 {} 条记录，发现 {} 个问题", total_checked, total_issues),
+        &format!(
+            "质量检查完成：检查 {} 条记录，发现 {} 个问题",
+            total_checked, total_issues
+        ),
     ))
 }
 
@@ -3606,9 +3653,7 @@ async fn load_quality_rules(
         if ids.is_empty() {
             return vec![];
         }
-        let placeholders: Vec<String> = (1..=ids.len())
-            .map(|i| format!("${}", i))
-            .collect();
+        let placeholders: Vec<String> = (1..=ids.len()).map(|i| format!("${}", i)).collect();
         let sql = format!("{} WHERE id IN ({})", sql_base, placeholders.join(", "));
         let mut query = sqlx::query(&sql);
         for id in ids {
@@ -3642,10 +3687,7 @@ async fn load_quality_rules(
 }
 
 /// 加载主数据记录用于质量检查（排除已销毁）
-async fn load_records_for_quality(
-    pool: &sqlx::PgPool,
-    domain: Option<&str>,
-) -> Vec<MasterDataRef> {
+async fn load_records_for_quality(pool: &sqlx::PgPool, domain: Option<&str>) -> Vec<MasterDataRef> {
     let rows = if let Some(d) = domain {
         sqlx::query_as::<_, MasterDataRow>(
             r#"SELECT * FROM erp_master_data_refs WHERE status != 'destroyed' AND domain = $1"#,
@@ -4068,26 +4110,23 @@ pub async fn get_governance_dashboard(
     .await
     .unwrap_or(0);
 
-    let total_records: i64 = sqlx::query_scalar(
-        "SELECT COUNT(*) FROM erp_master_data_refs WHERE status != 'destroyed'",
-    )
-    .fetch_one(db)
-    .await
-    .unwrap_or(0);
+    let total_records: i64 =
+        sqlx::query_scalar("SELECT COUNT(*) FROM erp_master_data_refs WHERE status != 'destroyed'")
+            .fetch_one(db)
+            .await
+            .unwrap_or(0);
 
-    let active_records: i64 = sqlx::query_scalar(
-        "SELECT COUNT(*) FROM erp_master_data_refs WHERE status = 'active'",
-    )
-    .fetch_one(db)
-    .await
-    .unwrap_or(0);
+    let active_records: i64 =
+        sqlx::query_scalar("SELECT COUNT(*) FROM erp_master_data_refs WHERE status = 'active'")
+            .fetch_one(db)
+            .await
+            .unwrap_or(0);
 
-    let archived_records: i64 = sqlx::query_scalar(
-        "SELECT COUNT(*) FROM erp_master_data_refs WHERE status = 'archived'",
-    )
-    .fetch_one(db)
-    .await
-    .unwrap_or(0);
+    let archived_records: i64 =
+        sqlx::query_scalar("SELECT COUNT(*) FROM erp_master_data_refs WHERE status = 'archived'")
+            .fetch_one(db)
+            .await
+            .unwrap_or(0);
 
     let pending_destruction: i64 = sqlx::query_scalar(
         "SELECT COUNT(*) FROM erp_master_data_refs WHERE status = 'pending_destruction'",
@@ -4096,12 +4135,11 @@ pub async fn get_governance_dashboard(
     .await
     .unwrap_or(0);
 
-    let destroyed_records: i64 = sqlx::query_scalar(
-        "SELECT COUNT(*) FROM erp_master_data_refs WHERE status = 'destroyed'",
-    )
-    .fetch_one(db)
-    .await
-    .unwrap_or(0);
+    let destroyed_records: i64 =
+        sqlx::query_scalar("SELECT COUNT(*) FROM erp_master_data_refs WHERE status = 'destroyed'")
+            .fetch_one(db)
+            .await
+            .unwrap_or(0);
 
     let quality_rules_count: i64 = sqlx::query_scalar(
         "SELECT COUNT(*) FROM erp_master_data_quality_rules WHERE is_active = TRUE",
@@ -4138,12 +4176,10 @@ pub async fn get_governance_dashboard(
         (0u64, 100.0f64)
     };
 
-    let conflict_count: i64 = sqlx::query_scalar(
-        "SELECT COUNT(*) FROM erp_master_data_conflicts",
-    )
-    .fetch_one(db)
-    .await
-    .unwrap_or(0);
+    let conflict_count: i64 = sqlx::query_scalar("SELECT COUNT(*) FROM erp_master_data_conflicts")
+        .fetch_one(db)
+        .await
+        .unwrap_or(0);
 
     let unresolved_conflicts: i64 = sqlx::query_scalar(
         "SELECT COUNT(*) FROM erp_master_data_conflicts WHERE status IN ('detected', 'pending_review')",
@@ -4152,12 +4188,10 @@ pub async fn get_governance_dashboard(
     .await
     .unwrap_or(0);
 
-    let version_count: i64 = sqlx::query_scalar(
-        "SELECT COUNT(*) FROM erp_master_data_versions",
-    )
-    .fetch_one(db)
-    .await
-    .unwrap_or(0);
+    let version_count: i64 = sqlx::query_scalar("SELECT COUNT(*) FROM erp_master_data_versions")
+        .fetch_one(db)
+        .await
+        .unwrap_or(0);
 
     let seven_days_ago = chrono::Utc::now() - chrono::Duration::days(7);
     let audit_events_last_7d: i64 = sqlx::query_scalar(
@@ -4176,7 +4210,8 @@ pub async fn get_governance_dashboard(
     .unwrap_or_default();
 
     let all_services = vec!["erp", "crm", "hrm", "finance", "mes", "workflow"];
-    let synced_set: std::collections::HashSet<_> = synced_services_rows.iter().map(|s| s.as_str()).collect();
+    let synced_set: std::collections::HashSet<_> =
+        synced_services_rows.iter().map(|s| s.as_str()).collect();
     let sync_coverage = if all_services.is_empty() {
         0.0
     } else {
@@ -4380,7 +4415,8 @@ pub async fn list_data_assets(
                 let domain: String = row.try_get("domain").unwrap_or_default();
                 let total_count: i64 = row.try_get("total_count").unwrap_or(0);
                 let active_count: i64 = row.try_get("active_count").unwrap_or(0);
-                let last_updated: Option<chrono::DateTime<chrono::Utc>> = row.try_get("last_updated").ok().flatten();
+                let last_updated: Option<chrono::DateTime<chrono::Utc>> =
+                    row.try_get("last_updated").ok().flatten();
                 let owner_service: Option<String> = row.try_get("owner_service").ok().flatten();
 
                 let domain_quality_score = calculate_domain_quality_score(db, &domain).await;
@@ -4459,7 +4495,8 @@ pub async fn get_data_asset_detail(
             use sqlx::Row;
             let total_count: i64 = row.try_get("total_count").unwrap_or(0);
             let active_count: i64 = row.try_get("active_count").unwrap_or(0);
-            let last_updated: Option<chrono::DateTime<chrono::Utc>> = row.try_get("last_updated").ok().flatten();
+            let last_updated: Option<chrono::DateTime<chrono::Utc>> =
+                row.try_get("last_updated").ok().flatten();
             let owner_service: Option<String> = row.try_get("owner_service").ok().flatten();
 
             let quality_score = calculate_domain_quality_score(db, &domain).await;
@@ -4499,14 +4536,17 @@ pub async fn get_lineage_graph(
     let mut edges: Vec<LineageEdge> = Vec::new();
     let mut node_ids = std::collections::HashSet::new();
 
-    let add_node = |nodes: &mut Vec<LineageNode>, node_ids: &mut std::collections::HashSet<String>, node: LineageNode| {
+    let add_node = |nodes: &mut Vec<LineageNode>,
+                    node_ids: &mut std::collections::HashSet<String>,
+                    node: LineageNode| {
         if node_ids.insert(node.id.clone()) {
             nodes.push(node);
         }
     };
 
     if let Some(ref mid) = params.master_data_id {
-        build_lineage_for_master_data(db, mid, &mut nodes, &mut edges, &mut node_ids, add_node).await;
+        build_lineage_for_master_data(db, mid, &mut nodes, &mut edges, &mut node_ids, add_node)
+            .await;
     } else if let Some(ref domain) = params.domain {
         build_lineage_for_domain(db, domain, &mut nodes, &mut edges, &mut node_ids, add_node).await;
     } else {
@@ -4544,22 +4584,30 @@ async fn build_lineage_for_master_data(
         let label = name.clone().unwrap_or_else(|| code.clone());
 
         let source_service_id = format!("service:{}", source_service);
-        add_node(nodes, node_ids, LineageNode {
-            id: source_service_id.clone(),
-            label: source_service.clone(),
-            node_type: "service".to_string(),
-            domain: Some(domain.clone()),
-            service: Some(source_service.clone()),
-        });
+        add_node(
+            nodes,
+            node_ids,
+            LineageNode {
+                id: source_service_id.clone(),
+                label: source_service.clone(),
+                node_type: "service".to_string(),
+                domain: Some(domain.clone()),
+                service: Some(source_service.clone()),
+            },
+        );
 
         let md_node_id = format!("master_data:{}", master_data_id);
-        add_node(nodes, node_ids, LineageNode {
-            id: md_node_id.clone(),
-            label,
-            node_type: "master_data".to_string(),
-            domain: Some(domain.clone()),
-            service: None,
-        });
+        add_node(
+            nodes,
+            node_ids,
+            LineageNode {
+                id: md_node_id.clone(),
+                label,
+                node_type: "master_data".to_string(),
+                domain: Some(domain.clone()),
+                service: None,
+            },
+        );
 
         edges.push(LineageEdge {
             source: source_service_id,
@@ -4569,13 +4617,17 @@ async fn build_lineage_for_master_data(
         });
 
         let erp_service_id = "service:erp".to_string();
-        add_node(nodes, node_ids, LineageNode {
-            id: erp_service_id.clone(),
-            label: "erp".to_string(),
-            node_type: "service".to_string(),
-            domain: Some(domain.clone()),
-            service: Some("erp".to_string()),
-        });
+        add_node(
+            nodes,
+            node_ids,
+            LineageNode {
+                id: erp_service_id.clone(),
+                label: "erp".to_string(),
+                node_type: "service".to_string(),
+                domain: Some(domain.clone()),
+                service: Some("erp".to_string()),
+            },
+        );
 
         edges.push(LineageEdge {
             source: md_node_id,
@@ -4603,26 +4655,34 @@ async fn build_lineage_for_domain(
     .await;
 
     let domain_node_id = format!("domain:{}", domain);
-    add_node(nodes, node_ids, LineageNode {
-        id: domain_node_id.clone(),
-        label: domain_display_name(domain),
-        node_type: "master_data".to_string(),
-        domain: Some(domain.to_string()),
-        service: None,
-    });
+    add_node(
+        nodes,
+        node_ids,
+        LineageNode {
+            id: domain_node_id.clone(),
+            label: domain_display_name(domain),
+            node_type: "master_data".to_string(),
+            domain: Some(domain.to_string()),
+            service: None,
+        },
+    );
 
     if let Ok(rows) = rows {
         use sqlx::Row;
         for row in rows {
             let service: String = row.try_get("source_service").unwrap_or_default();
             let service_node_id = format!("service:{}", service);
-            add_node(nodes, node_ids, LineageNode {
-                id: service_node_id.clone(),
-                label: service.clone(),
-                node_type: "service".to_string(),
-                domain: Some(domain.to_string()),
-                service: Some(service),
-            });
+            add_node(
+                nodes,
+                node_ids,
+                LineageNode {
+                    id: service_node_id.clone(),
+                    label: service.clone(),
+                    node_type: "service".to_string(),
+                    domain: Some(domain.to_string()),
+                    service: Some(service),
+                },
+            );
             edges.push(LineageEdge {
                 source: service_node_id,
                 target: domain_node_id.clone(),
@@ -4633,13 +4693,17 @@ async fn build_lineage_for_domain(
     }
 
     let erp_service_id = "service:erp".to_string();
-    add_node(nodes, node_ids, LineageNode {
-        id: erp_service_id.clone(),
-        label: "erp".to_string(),
-        node_type: "service".to_string(),
-        domain: Some(domain.to_string()),
-        service: Some("erp".to_string()),
-    });
+    add_node(
+        nodes,
+        node_ids,
+        LineageNode {
+            id: erp_service_id.clone(),
+            label: "erp".to_string(),
+            node_type: "service".to_string(),
+            domain: Some(domain.to_string()),
+            service: Some("erp".to_string()),
+        },
+    );
     edges.push(LineageEdge {
         source: domain_node_id,
         target: erp_service_id,
@@ -4669,24 +4733,32 @@ async fn build_full_lineage_graph(
     if let Ok(rows) = rows {
         use sqlx::Row;
         let erp_service_id = "service:erp".to_string();
-        add_node(nodes, node_ids, LineageNode {
-            id: erp_service_id.clone(),
-            label: "erp".to_string(),
-            node_type: "service".to_string(),
-            domain: None,
-            service: Some("erp".to_string()),
-        });
+        add_node(
+            nodes,
+            node_ids,
+            LineageNode {
+                id: erp_service_id.clone(),
+                label: "erp".to_string(),
+                node_type: "service".to_string(),
+                domain: None,
+                service: Some("erp".to_string()),
+            },
+        );
 
         for row in rows {
             let domain: String = row.try_get("domain").unwrap_or_default();
             let domain_node_id = format!("domain:{}", domain);
-            add_node(nodes, node_ids, LineageNode {
-                id: domain_node_id.clone(),
-                label: domain_display_name(&domain),
-                node_type: "master_data".to_string(),
-                domain: Some(domain.clone()),
-                service: None,
-            });
+            add_node(
+                nodes,
+                node_ids,
+                LineageNode {
+                    id: domain_node_id.clone(),
+                    label: domain_display_name(&domain),
+                    node_type: "master_data".to_string(),
+                    domain: Some(domain.clone()),
+                    service: None,
+                },
+            );
             edges.push(LineageEdge {
                 source: domain_node_id,
                 target: erp_service_id.clone(),
@@ -4707,7 +4779,9 @@ pub async fn get_lineage_upstream(
     let mut edges: Vec<LineageEdge> = Vec::new();
     let mut node_ids = std::collections::HashSet::new();
 
-    let add_node = |nodes: &mut Vec<LineageNode>, node_ids: &mut std::collections::HashSet<String>, node: LineageNode| {
+    let add_node = |nodes: &mut Vec<LineageNode>,
+                    node_ids: &mut std::collections::HashSet<String>,
+                    node: LineageNode| {
         if node_ids.insert(node.id.clone()) {
             nodes.push(node);
         }
@@ -4730,22 +4804,30 @@ pub async fn get_lineage_upstream(
         let label = name.unwrap_or_else(|| code.clone());
 
         let source_service_id = format!("service:{}", source_service);
-        add_node(&mut nodes, &mut node_ids, LineageNode {
-            id: source_service_id.clone(),
-            label: source_service.clone(),
-            node_type: "service".to_string(),
-            domain: Some(domain.clone()),
-            service: Some(source_service),
-        });
+        add_node(
+            &mut nodes,
+            &mut node_ids,
+            LineageNode {
+                id: source_service_id.clone(),
+                label: source_service.clone(),
+                node_type: "service".to_string(),
+                domain: Some(domain.clone()),
+                service: Some(source_service),
+            },
+        );
 
         let md_node_id = format!("master_data:{}", id);
-        add_node(&mut nodes, &mut node_ids, LineageNode {
-            id: md_node_id.clone(),
-            label,
-            node_type: "master_data".to_string(),
-            domain: Some(domain),
-            service: None,
-        });
+        add_node(
+            &mut nodes,
+            &mut node_ids,
+            LineageNode {
+                id: md_node_id.clone(),
+                label,
+                node_type: "master_data".to_string(),
+                domain: Some(domain),
+                service: None,
+            },
+        );
 
         edges.push(LineageEdge {
             source: source_service_id,
@@ -4771,7 +4853,9 @@ pub async fn get_lineage_downstream(
     let mut edges: Vec<LineageEdge> = Vec::new();
     let mut node_ids = std::collections::HashSet::new();
 
-    let add_node = |nodes: &mut Vec<LineageNode>, node_ids: &mut std::collections::HashSet<String>, node: LineageNode| {
+    let add_node = |nodes: &mut Vec<LineageNode>,
+                    node_ids: &mut std::collections::HashSet<String>,
+                    node: LineageNode| {
         if node_ids.insert(node.id.clone()) {
             nodes.push(node);
         }
@@ -4795,22 +4879,30 @@ pub async fn get_lineage_downstream(
         let label = name.unwrap_or_else(|| code.clone());
 
         let md_node_id = format!("master_data:{}", id);
-        add_node(&mut nodes, &mut node_ids, LineageNode {
-            id: md_node_id.clone(),
-            label,
-            node_type: "master_data".to_string(),
-            domain: Some(domain.clone()),
-            service: None,
-        });
+        add_node(
+            &mut nodes,
+            &mut node_ids,
+            LineageNode {
+                id: md_node_id.clone(),
+                label,
+                node_type: "master_data".to_string(),
+                domain: Some(domain.clone()),
+                service: None,
+            },
+        );
 
         let erp_service_id = "service:erp".to_string();
-        add_node(&mut nodes, &mut node_ids, LineageNode {
-            id: erp_service_id.clone(),
-            label: "erp".to_string(),
-            node_type: "service".to_string(),
-            domain: Some(domain),
-            service: Some("erp".to_string()),
-        });
+        add_node(
+            &mut nodes,
+            &mut node_ids,
+            LineageNode {
+                id: erp_service_id.clone(),
+                label: "erp".to_string(),
+                node_type: "service".to_string(),
+                domain: Some(domain),
+                service: Some("erp".to_string()),
+            },
+        );
 
         edges.push(LineageEdge {
             source: md_node_id,
@@ -4821,13 +4913,17 @@ pub async fn get_lineage_downstream(
 
         if let Some(entity_type) = local_entity_type {
             let entity_node_id = format!("entity:{}", entity_type);
-            add_node(&mut nodes, &mut node_ids, LineageNode {
-                id: entity_node_id.clone(),
-                label: entity_type.clone(),
-                node_type: "system".to_string(),
-                domain: None,
-                service: Some("erp".to_string()),
-            });
+            add_node(
+                &mut nodes,
+                &mut node_ids,
+                LineageNode {
+                    id: entity_node_id.clone(),
+                    label: entity_type.clone(),
+                    node_type: "system".to_string(),
+                    domain: None,
+                    service: Some("erp".to_string()),
+                },
+            );
             edges.push(LineageEdge {
                 source: "service:erp".to_string(),
                 target: entity_node_id,
@@ -4881,12 +4977,15 @@ pub async fn get_quality_trend(
         .await
     };
 
-    let mut daily_scores: std::collections::BTreeMap<String, (f64, u64, u64)> = std::collections::BTreeMap::new();
+    let mut daily_scores: std::collections::BTreeMap<String, (f64, u64, u64)> =
+        std::collections::BTreeMap::new();
 
     if let Ok(rows) = report_rows {
         use sqlx::Row;
         for row in rows {
-            let generated_at: chrono::DateTime<chrono::Utc> = row.try_get("generated_at").unwrap_or_else(|_| chrono::Utc::now());
+            let generated_at: chrono::DateTime<chrono::Utc> = row
+                .try_get("generated_at")
+                .unwrap_or_else(|_| chrono::Utc::now());
             let date_str = generated_at.format("%Y-%m-%d").to_string();
             let total_checked: i64 = row.try_get("total_checked").unwrap_or(0);
             let total_issues: i64 = row.try_get("total_issues").unwrap_or(0);
@@ -5512,7 +5611,10 @@ pub async fn trigger_compensation(
     if jobs[job_pos].status != SyncStatus::Failed
         && jobs[job_pos].status != SyncStatus::PartiallyFailed
     {
-        return Json(ApiResponse::error(400, "只有失败或部分失败的任务才能触发补偿"));
+        return Json(ApiResponse::error(
+            400,
+            "只有失败或部分失败的任务才能触发补偿",
+        ));
     }
 
     jobs[job_pos].status = SyncStatus::Compensating;
@@ -5557,9 +5659,7 @@ fn simulate_compensation(target_system: &str, operation: &str) -> bool {
 }
 
 /// V41.0 AC-13: 同步统计
-pub async fn get_sync_stats(
-    State(state): State<ApiState>,
-) -> Json<ApiResponse<SyncStats>> {
+pub async fn get_sync_stats(State(state): State<ApiState>) -> Json<ApiResponse<SyncStats>> {
     let _ = &state;
     let store = get_sync_store();
     let jobs = store.jobs.lock().await;
@@ -5592,14 +5692,9 @@ pub async fn get_sync_stats(
     let total_duration: i64 = jobs
         .iter()
         .filter(|j| j.completed_at.is_some())
-        .map(|j| {
-            (j.completed_at.unwrap() - j.created_at).num_milliseconds()
-        })
+        .map(|j| (j.completed_at.unwrap() - j.created_at).num_milliseconds())
         .sum();
-    let completed_count = jobs
-        .iter()
-        .filter(|j| j.completed_at.is_some())
-        .count() as f64;
+    let completed_count = jobs.iter().filter(|j| j.completed_at.is_some()).count() as f64;
     let avg_duration_ms = if completed_count > 0.0 {
         total_duration as f64 / completed_count
     } else {
@@ -6400,7 +6495,10 @@ pub async fn verify_quality_ticket(
         timestamp: now,
     });
 
-    Json(ApiResponse::success(tickets[pos].clone(), "修复结果已验证通过"))
+    Json(ApiResponse::success(
+        tickets[pos].clone(),
+        "修复结果已验证通过",
+    ))
 }
 
 /// V42.0 AC-14: 关闭质量工单
@@ -6617,7 +6715,10 @@ pub async fn create_repair_workflow(
         execute_repair_workflow_internal(workflow.id.clone()).await;
         let workflows = store.repair_workflows.lock().await;
         if let Some(wf) = workflows.iter().find(|w| w.id == workflow.id) {
-            return Json(ApiResponse::success(wf.clone(), "修复工作流创建并自动执行完成"));
+            return Json(ApiResponse::success(
+                wf.clone(),
+                "修复工作流创建并自动执行完成",
+            ));
         }
     }
 
@@ -7053,7 +7154,10 @@ pub async fn get_entity_owner(
         Some(matrix) => {
             let domain_info = {
                 let domains = store.data_domains.lock().await;
-                domains.iter().find(|d| d.name == matrix.data_domain).cloned()
+                domains
+                    .iter()
+                    .find(|d| d.name == matrix.data_domain)
+                    .cloned()
             };
 
             Json(ApiResponse::success(
@@ -7122,10 +7226,7 @@ pub async fn get_quality_loop_stats(
 
     // 自动修复统计
     let auto_repair_count = workflows.len() as u64;
-    let auto_repair_success = workflows
-        .iter()
-        .filter(|w| w.status == "completed")
-        .count() as u64;
+    let auto_repair_success = workflows.iter().filter(|w| w.status == "completed").count() as u64;
     let auto_repair_success_rate = if auto_repair_count > 0 {
         (auto_repair_success as f64) / (auto_repair_count as f64) * 100.0
     } else {
@@ -7444,9 +7545,17 @@ async fn ensure_knowledge_graph_initialized() {
     let now = chrono::Utc::now().to_rfc3339();
 
     let domains = vec![
-        ("customer", "客户", vec!["C001", "C002", "C003", "C004", "C005"]),
+        (
+            "customer",
+            "客户",
+            vec!["C001", "C002", "C003", "C004", "C005"],
+        ),
         ("supplier", "供应商", vec!["S001", "S002", "S003", "S004"]),
-        ("material", "物料", vec!["M001", "M002", "M003", "M004", "M005", "M006"]),
+        (
+            "material",
+            "物料",
+            vec!["M001", "M002", "M003", "M004", "M005", "M006"],
+        ),
         ("employee", "员工", vec!["E001", "E002", "E003", "E004"]),
         ("account_subject", "会计科目", vec!["A001", "A002", "A003"]),
         ("organization", "组织", vec!["O001", "O002", "O003"]),
@@ -7458,15 +7567,47 @@ async fn ensure_knowledge_graph_initialized() {
 
     let default_names = vec!["未知", "未知", "未知", "未知"];
     let node_names: HashMap<&str, Vec<&str>> = [
-        ("C001", vec!["华信科技有限公司", "北京市朝阳区", "高新技术企业", "A级客户"]),
-        ("C002", vec!["盛达贸易集团", "上海市浦东新区", "贸易企业", "B级客户"]),
-        ("C003", vec!["恒泰制造股份", "广州市天河区", "制造企业", "A级客户"]),
-        ("C004", vec!["创新电子科技", "深圳市南山区", "电子企业", "A级客户"]),
-        ("C005", vec!["远景物流有限公司", "杭州市西湖区", "物流企业", "C级客户"]),
-        ("S001", vec!["原材料供应商A", "天津市滨海新区", "原材料", "合格供应商"]),
-        ("S002", vec!["零部件供应商B", "重庆市渝北区", "零部件", "优秀供应商"]),
-        ("S003", vec!["包装材料供应商C", "成都市武侯区", "包装材料", "合格供应商"]),
-        ("S004", vec!["设备供应商D", "武汉市洪山区", "生产设备", "战略供应商"]),
+        (
+            "C001",
+            vec![
+                "华信科技有限公司",
+                "北京市朝阳区",
+                "高新技术企业",
+                "A级客户",
+            ],
+        ),
+        (
+            "C002",
+            vec!["盛达贸易集团", "上海市浦东新区", "贸易企业", "B级客户"],
+        ),
+        (
+            "C003",
+            vec!["恒泰制造股份", "广州市天河区", "制造企业", "A级客户"],
+        ),
+        (
+            "C004",
+            vec!["创新电子科技", "深圳市南山区", "电子企业", "A级客户"],
+        ),
+        (
+            "C005",
+            vec!["远景物流有限公司", "杭州市西湖区", "物流企业", "C级客户"],
+        ),
+        (
+            "S001",
+            vec!["原材料供应商A", "天津市滨海新区", "原材料", "合格供应商"],
+        ),
+        (
+            "S002",
+            vec!["零部件供应商B", "重庆市渝北区", "零部件", "优秀供应商"],
+        ),
+        (
+            "S003",
+            vec!["包装材料供应商C", "成都市武侯区", "包装材料", "合格供应商"],
+        ),
+        (
+            "S004",
+            vec!["设备供应商D", "武汉市洪山区", "生产设备", "战略供应商"],
+        ),
         ("M001", vec!["产品甲", "电子产品", "成品", "高价值"]),
         ("M002", vec!["产品乙", "机械产品", "成品", "中价值"]),
         ("M003", vec!["原材料A", "金属材料", "原材料", "批量采购"]),
@@ -7479,11 +7620,17 @@ async fn ensure_knowledge_graph_initialized() {
         ("E004", vec!["赵六", "财务部", "财务主管", "中级"]),
         ("A001", vec!["应收账款", "资产类", "流动资产", "往来科目"]),
         ("A002", vec!["应付账款", "负债类", "流动负债", "往来科目"]),
-        ("A003", vec!["主营业务收入", "损益类", "营业收入", "收入科目"]),
+        (
+            "A003",
+            vec!["主营业务收入", "损益类", "营业收入", "收入科目"],
+        ),
         ("O001", vec!["总部", "集团总部", "一级组织", "北京"]),
         ("O002", vec!["华东分公司", "区域分公司", "二级组织", "上海"]),
         ("O003", vec!["华南分公司", "区域分公司", "二级组织", "广州"]),
-    ].iter().cloned().collect();
+    ]
+    .iter()
+    .cloned()
+    .collect();
 
     for (domain, domain_label, codes) in &domains {
         for code in codes {
@@ -7865,10 +8012,7 @@ fn calculate_degree_centrality(nodes: &[GraphNode]) -> HashMap<String, f64> {
         return centrality;
     }
     for node in nodes {
-        centrality.insert(
-            node.id.clone(),
-            node.degree as f64 / (n as f64 - 1.0),
-        );
+        centrality.insert(node.id.clone(), node.degree as f64 / (n as f64 - 1.0));
     }
     centrality
 }
@@ -7905,11 +8049,7 @@ fn detect_communities(nodes: &[GraphNode], edges: &[GraphEdge]) -> HashMap<Strin
     communities
 }
 
-fn shortest_path_bfs(
-    edges: &[GraphEdge],
-    source: &str,
-    target: &str,
-) -> Option<Vec<String>> {
+fn shortest_path_bfs(edges: &[GraphEdge], source: &str, target: &str) -> Option<Vec<String>> {
     let adj = build_adjacency_list(edges);
     let mut visited: HashSet<String> = HashSet::new();
     let mut parent: HashMap<String, String> = HashMap::new();
@@ -7944,11 +8084,7 @@ fn shortest_path_bfs(
     None
 }
 
-fn multi_hop_neighbors(
-    edges: &[GraphEdge],
-    start: &str,
-    max_hops: usize,
-) -> Vec<(String, usize)> {
+fn multi_hop_neighbors(edges: &[GraphEdge], start: &str, max_hops: usize) -> Vec<(String, usize)> {
     let adj = build_adjacency_list(edges);
     let mut visited: HashMap<String, usize> = HashMap::new();
     let mut queue: VecDeque<(String, usize)> = VecDeque::new();
@@ -8051,8 +8187,7 @@ fn calculate_graph_stats(nodes: &[GraphNode], edges: &[GraphEdge]) -> GraphStats
         .map(|n| (n.id.clone(), n.label.clone(), n.degree))
         .collect();
     sorted_nodes.sort_by(|a, b| b.2.cmp(&a.2));
-    let top_degree_nodes: Vec<(String, String, i32)> =
-        sorted_nodes.into_iter().take(10).collect();
+    let top_degree_nodes: Vec<(String, String, i32)> = sorted_nodes.into_iter().take(10).collect();
 
     let adj = build_adjacency_list(edges);
     let mut total_cc = 0.0;
@@ -8182,7 +8317,8 @@ fn calculate_similarity(
             0.0
         };
 
-        let total_similarity = ((jaccard * 0.5 + attr_sim * 0.3 + domain_bonus) * 100.0).min(100.0) / 100.0;
+        let total_similarity =
+            ((jaccard * 0.5 + attr_sim * 0.3 + domain_bonus) * 100.0).min(100.0) / 100.0;
 
         if total_similarity >= min_similarity {
             let mut reasons: Vec<String> = Vec::new();
@@ -8214,7 +8350,11 @@ fn calculate_similarity(
         }
     }
 
-    similarities.sort_by(|a, b| b.similarity.partial_cmp(&a.similarity).unwrap_or(std::cmp::Ordering::Equal));
+    similarities.sort_by(|a, b| {
+        b.similarity
+            .partial_cmp(&a.similarity)
+            .unwrap_or(std::cmp::Ordering::Equal)
+    });
     similarities.into_iter().take(top_k).collect()
 }
 
@@ -8263,13 +8403,13 @@ fn find_associations(
                     continue;
                 }
 
-                let entry = candidate_scores.entry(target.clone()).or_insert((0.0, Vec::new(), 0));
+                let entry = candidate_scores
+                    .entry(target.clone())
+                    .or_insert((0.0, Vec::new(), 0));
                 entry.0 += edge.weight * n_edge.weight;
-                entry.1.push(format!(
-                    "通过 {} ({})",
-                    other,
-                    edge.label.clone()
-                ));
+                entry
+                    .1
+                    .push(format!("通过 {} ({})", other, edge.label.clone()));
                 entry.2 += 1;
             }
         }
@@ -8299,7 +8439,11 @@ fn find_associations(
         }
     }
 
-    associations.sort_by(|a, b| b.confidence.partial_cmp(&a.confidence).unwrap_or(std::cmp::Ordering::Equal));
+    associations.sort_by(|a, b| {
+        b.confidence
+            .partial_cmp(&a.confidence)
+            .unwrap_or(std::cmp::Ordering::Equal)
+    });
     associations.into_iter().take(top_k).collect()
 }
 
@@ -8329,10 +8473,7 @@ fn suggest_completions(
     };
 
     let adj = build_adjacency_list(edges);
-    let neighbors: Vec<String> = adj
-        .get(entity_id)
-        .cloned()
-        .unwrap_or_default();
+    let neighbors: Vec<String> = adj.get(entity_id).cloned().unwrap_or_default();
 
     let mut suggestions: Vec<CompletionSuggestion> = Vec::new();
 
@@ -8365,7 +8506,9 @@ fn suggest_completions(
         for neighbor_id in &neighbors {
             if let Some(neighbor_node) = nodes.iter().find(|n| n.id == *neighbor_id) {
                 if let Some(val) = neighbor_node.properties.get(field).and_then(|v| v.as_str()) {
-                    let entry = value_counts.entry(val.to_string()).or_insert((0, Vec::new()));
+                    let entry = value_counts
+                        .entry(val.to_string())
+                        .or_insert((0, Vec::new()));
                     entry.0 += 1;
                     entry.1.push(neighbor_node.label.clone());
                 }
@@ -8388,7 +8531,12 @@ fn suggest_completions(
                     total_neighbors_with_field,
                     field,
                     value,
-                    examples.iter().take(3).cloned().collect::<Vec<_>>().join("、")
+                    examples
+                        .iter()
+                        .take(3)
+                        .cloned()
+                        .collect::<Vec<_>>()
+                        .join("、")
                 );
 
                 suggestions.push(CompletionSuggestion {
@@ -8404,7 +8552,11 @@ fn suggest_completions(
         }
     }
 
-    suggestions.sort_by(|a, b| b.confidence.partial_cmp(&a.confidence).unwrap_or(std::cmp::Ordering::Equal));
+    suggestions.sort_by(|a, b| {
+        b.confidence
+            .partial_cmp(&a.confidence)
+            .unwrap_or(std::cmp::Ordering::Equal)
+    });
     suggestions.into_iter().take(top_k).collect()
 }
 
@@ -8584,9 +8736,7 @@ pub async fn multi_hop_traversal(
     Json(ApiResponse::success(result, "多跳遍历结果"))
 }
 
-pub async fn get_graph_stats(
-    State(state): State<ApiState>,
-) -> Json<ApiResponse<GraphStats>> {
+pub async fn get_graph_stats(State(state): State<ApiState>) -> Json<ApiResponse<GraphStats>> {
     let _ = &state;
     ensure_knowledge_graph_initialized().await;
     let store = get_knowledge_graph_store();
@@ -8643,7 +8793,11 @@ pub async fn list_concepts(
     let total = filtered.len() as i64;
     let offset = ((page - 1) * page_size) as usize;
 
-    let items: Vec<Concept> = filtered.into_iter().skip(offset).take(page_size as usize).collect();
+    let items: Vec<Concept> = filtered
+        .into_iter()
+        .skip(offset)
+        .take(page_size as usize)
+        .collect();
 
     Json(ApiResponse::success(
         PaginatedResponse {
@@ -8712,7 +8866,11 @@ pub async fn list_triples(
     let total = filtered.len() as i64;
     let offset = ((page - 1) * page_size) as usize;
 
-    let items: Vec<KnowledgeTriple> = filtered.into_iter().skip(offset).take(page_size as usize).collect();
+    let items: Vec<KnowledgeTriple> = filtered
+        .into_iter()
+        .skip(offset)
+        .take(page_size as usize)
+        .collect();
 
     Json(ApiResponse::success(
         PaginatedResponse {
@@ -8899,7 +9057,11 @@ pub async fn run_inference(
     let used_rules_vec: Vec<String> = used_rules.into_iter().collect();
     let total_inferred = inferred.len();
 
-    inferred.sort_by(|a, b| b.confidence.partial_cmp(&a.confidence).unwrap_or(std::cmp::Ordering::Equal));
+    inferred.sort_by(|a, b| {
+        b.confidence
+            .partial_cmp(&a.confidence)
+            .unwrap_or(std::cmp::Ordering::Equal)
+    });
 
     drop(triples);
     drop(rules);
@@ -9154,7 +9316,12 @@ impl MdmGraphqlStore {
         let mut entities = std::collections::HashMap::new();
         let now = chrono::Utc::now().to_rfc3339();
         let domains = vec![
-            "customer", "supplier", "material", "employee", "account_subject", "organization",
+            "customer",
+            "supplier",
+            "material",
+            "employee",
+            "account_subject",
+            "organization",
         ];
         for (i, domain) in domains.iter().enumerate() {
             for j in 1..=5 {
@@ -9236,7 +9403,10 @@ pub async fn graphql_endpoint(
     Json(GraphqlResponse {
         data: None,
         errors: Some(vec![GraphqlError {
-            message: format!("Unsupported query: {}", query.chars().take(50).collect::<String>()),
+            message: format!(
+                "Unsupported query: {}",
+                query.chars().take(50).collect::<String>()
+            ),
             path: None,
         }]),
     })
@@ -9249,7 +9419,11 @@ async fn handle_master_data_query(req: &GraphqlRequest) -> Json<GraphqlResponse>
     let domain = vars.get("domain").and_then(|v| v.as_str());
     let status = vars.get("status").and_then(|v| v.as_str());
     let search = vars.get("search").and_then(|v| v.as_str());
-    let page = vars.get("page").and_then(|v| v.as_i64()).unwrap_or(1).max(1);
+    let page = vars
+        .get("page")
+        .and_then(|v| v.as_i64())
+        .unwrap_or(1)
+        .max(1);
     let page_size = vars
         .get("page_size")
         .and_then(|v| v.as_i64())
@@ -9272,9 +9446,7 @@ async fn handle_master_data_query(req: &GraphqlRequest) -> Json<GraphqlResponse>
             }
             if let Some(q) = search {
                 let q = q.to_lowercase();
-                if !e.name.to_lowercase().contains(&q)
-                    && !e.code.to_lowercase().contains(&q)
-                {
+                if !e.name.to_lowercase().contains(&q) && !e.code.to_lowercase().contains(&q) {
                     return false;
                 }
             }
@@ -9416,7 +9588,10 @@ async fn handle_master_data_lineage(req: &GraphqlRequest) -> Json<GraphqlRespons
         });
     }
 
-    let direction = vars.get("direction").and_then(|v| v.as_str()).unwrap_or("both");
+    let direction = vars
+        .get("direction")
+        .and_then(|v| v.as_str())
+        .unwrap_or("both");
     let max_depth = vars.get("max_depth").and_then(|v| v.as_i64()).unwrap_or(3);
 
     let lineage = LineageInfo {
@@ -9444,10 +9619,18 @@ async fn handle_master_data_lineage(req: &GraphqlRequest) -> Json<GraphqlRespons
 async fn handle_master_data_graph(req: &GraphqlRequest) -> Json<GraphqlResponse> {
     let store = MDM_GRAPHQL_STORE.lock().await;
     let vars = req.variables.as_ref().unwrap_or(&serde_json::Value::Null);
-    let limit = vars.get("limit").and_then(|v| v.as_i64()).unwrap_or(20).min(100);
+    let limit = vars
+        .get("limit")
+        .and_then(|v| v.as_i64())
+        .unwrap_or(20)
+        .min(100);
 
-    let entities: Vec<MasterDataEntity> =
-        store.entities.values().take(limit as usize).cloned().collect();
+    let entities: Vec<MasterDataEntity> = store
+        .entities
+        .values()
+        .take(limit as usize)
+        .cloned()
+        .collect();
 
     let nodes: Vec<serde_json::Value> = entities
         .iter()
@@ -9584,10 +9767,16 @@ async fn handle_create_master_data(req: &GraphqlRequest) -> Json<GraphqlResponse
     let vars = req.variables.as_ref().unwrap_or(&serde_json::Value::Null);
     let input = vars.get("input").unwrap_or(&serde_json::Value::Null);
 
-    let domain = input.get("domain").and_then(|v| v.as_str()).unwrap_or("unknown");
+    let domain = input
+        .get("domain")
+        .and_then(|v| v.as_str())
+        .unwrap_or("unknown");
     let code = input.get("code").and_then(|v| v.as_str()).unwrap_or("");
     let name = input.get("name").and_then(|v| v.as_str()).unwrap_or("");
-    let properties = input.get("properties").cloned().unwrap_or(serde_json::json!({}));
+    let properties = input
+        .get("properties")
+        .cloned()
+        .unwrap_or(serde_json::json!({}));
     let source_service = input
         .get("source_service")
         .and_then(|v| v.as_str())
@@ -9718,7 +9907,10 @@ async fn handle_sync_master_data(req: &GraphqlRequest) -> Json<GraphqlResponse> 
     let store = MDM_GRAPHQL_STORE.lock().await;
     let vars = req.variables.as_ref().unwrap_or(&serde_json::Value::Null);
     let domain = vars.get("domain").and_then(|v| v.as_str()).unwrap_or("");
-    let target_service = vars.get("target_service").and_then(|v| v.as_str()).unwrap_or("");
+    let target_service = vars
+        .get("target_service")
+        .and_then(|v| v.as_str())
+        .unwrap_or("");
 
     let count = store
         .entities
@@ -10018,14 +10210,17 @@ pub async fn create_sync_job_v2(
 
     store.jobs.insert(id.clone(), job.clone());
 
-    let stats = store.tenant_stats.entry(tenant_id).or_insert(TenantSyncStats {
-        total_jobs: 0,
-        successful: 0,
-        failed: 0,
-        in_progress: 0,
-        pending: 0,
-        dead_letter_count: 0,
-    });
+    let stats = store
+        .tenant_stats
+        .entry(tenant_id)
+        .or_insert(TenantSyncStats {
+            total_jobs: 0,
+            successful: 0,
+            failed: 0,
+            in_progress: 0,
+            pending: 0,
+            dead_letter_count: 0,
+        });
     stats.total_jobs += 1;
     stats.pending += 1;
 
@@ -10085,7 +10280,11 @@ pub async fn list_sync_jobs_v2(
 
     let total = filtered.len() as i64;
     let offset = ((page - 1) * page_size) as usize;
-    let items: Vec<SyncJobV2> = filtered.into_iter().skip(offset).take(page_size as usize).collect();
+    let items: Vec<SyncJobV2> = filtered
+        .into_iter()
+        .skip(offset)
+        .take(page_size as usize)
+        .collect();
 
     Json(ApiResponse::success(
         PaginatedResponse {
@@ -10285,10 +10484,25 @@ impl ServiceRegistryStore {
         let now = chrono::Utc::now().to_rfc3339();
 
         let default_services = vec![
-            ("svc-erp", "ERP 服务", "http://erp:8080", vec!["customer", "supplier", "material"]),
+            (
+                "svc-erp",
+                "ERP 服务",
+                "http://erp:8080",
+                vec!["customer", "supplier", "material"],
+            ),
             ("svc-crm", "CRM 服务", "http://crm:8081", vec!["customer"]),
-            ("svc-finance", "财务服务", "http://finance:8082", vec!["account_subject"]),
-            ("svc-hr", "人力资源", "http://hr:8083", vec!["employee", "organization"]),
+            (
+                "svc-finance",
+                "财务服务",
+                "http://finance:8082",
+                vec!["account_subject"],
+            ),
+            (
+                "svc-hr",
+                "人力资源",
+                "http://hr:8083",
+                vec!["employee", "organization"],
+            ),
         ];
 
         for (id, name, endpoint, domains) in default_services {
@@ -10537,7 +10751,10 @@ pub async fn mdm_gateway_route(
 
     let mut headers = std::collections::HashMap::new();
     headers.insert("Content-Type".to_string(), "application/json".to_string());
-    headers.insert("X-Gateway-Request-Id".to_string(), uuid::Uuid::new_v4().to_string());
+    headers.insert(
+        "X-Gateway-Request-Id".to_string(),
+        uuid::Uuid::new_v4().to_string(),
+    );
 
     let response = GatewayResponse {
         status: 200,
@@ -10916,10 +11133,7 @@ fn build_entity_profiles() -> Vec<EntityProfile> {
             fields.insert("code".to_string(), Some(code.to_string()));
             fields.insert("name".to_string(), name.map(|s| s.to_string()));
             fields.insert("status".to_string(), Some("active".to_string()));
-            fields.insert(
-                "last_synced_at".to_string(),
-                Some(rfc(days_ago)),
-            );
+            fields.insert("last_synced_at".to_string(), Some(rfc(days_ago)));
             // 给部分实体附加更多业务字段（用于完整性/准确性评分）
             match domain {
                 "customer" => {
@@ -11166,7 +11380,10 @@ fn build_risk_factors_and_recommendations(
         recs.push("核对状态与同步时间的逻辑一致性".to_string());
     }
     if t < 60.0 {
-        factors.push(format!("时效性差（{:.1}）：数据已过期 {} 天", t, profile.last_synced_days_ago));
+        factors.push(format!(
+            "时效性差（{:.1}）：数据已过期 {} 天",
+            t, profile.last_synced_days_ago
+        ));
         recs.push("立即触发主数据同步".to_string());
     }
     if u < 80.0 {
@@ -11226,10 +11443,7 @@ fn detect_anomalies_internal(profiles: &[EntityProfile]) -> Vec<QualityAnomaly> 
                 domain: p.domain.clone(),
                 anomaly_type: "threshold".to_string(),
                 severity: "critical".to_string(),
-                description: format!(
-                    "数据已 {} 天未同步，超过 90 天阈值",
-                    p.last_synced_days_ago
-                ),
+                description: format!("数据已 {} 天未同步，超过 90 天阈值", p.last_synced_days_ago),
                 detected_value: format!("{}天", p.last_synced_days_ago),
                 expected_range: "0-90天".to_string(),
                 confidence: 0.95,
@@ -11262,7 +11476,10 @@ fn detect_anomalies_internal(profiles: &[EntityProfile]) -> Vec<QualityAnomaly> 
     }
 
     // 3. Z-Score：基于 last_synced_days_ago 的统计离群点
-    let days: Vec<f64> = profiles.iter().map(|p| p.last_synced_days_ago as f64).collect();
+    let days: Vec<f64> = profiles
+        .iter()
+        .map(|p| p.last_synced_days_ago as f64)
+        .collect();
     if days.len() >= 3 {
         let mean = days.iter().sum::<f64>() / days.len() as f64;
         let variance = days.iter().map(|d| (d - mean).powi(2)).sum::<f64>() / days.len() as f64;
@@ -11277,15 +11494,9 @@ fn detect_anomalies_internal(profiles: &[EntityProfile]) -> Vec<QualityAnomaly> 
                         domain: p.domain.clone(),
                         anomaly_type: "z_score".to_string(),
                         severity: if z.abs() > 3.0 { "critical" } else { "warning" }.to_string(),
-                        description: format!(
-                            "同步时效 Z-Score={:.2}，偏离均值 {:.1} 天",
-                            z, mean
-                        ),
+                        description: format!("同步时效 Z-Score={:.2}，偏离均值 {:.1} 天", z, mean),
                         detected_value: format!("{}", p.last_synced_days_ago),
-                        expected_range: format!(
-                            "均值±2σ（均值 {:.1}, σ {:.1}）",
-                            mean, std
-                        ),
+                        expected_range: format!("均值±2σ（均值 {:.1}, σ {:.1}）", mean, std),
                         confidence: (1.0 - (z.abs() - 2.0).min(1.0) / 4.0).max(0.5),
                         detected_at: now.clone(),
                     });
@@ -11317,7 +11528,10 @@ fn detect_anomalies_internal(profiles: &[EntityProfile]) -> Vec<QualityAnomaly> 
                         domain: p.domain.clone(),
                         anomaly_type: "iqr".to_string(),
                         severity: "info".to_string(),
-                        description: format!("名称长度 {} 异常（IQR 区间 [{:.0}, {:.0}])", name, lower, upper),
+                        description: format!(
+                            "名称长度 {} 异常（IQR 区间 [{:.0}, {:.0}])",
+                            name, lower, upper
+                        ),
                         detected_value: format!("{}字符", len),
                         expected_range: format!("[{:.0}, {:.0}]", lower, upper),
                         confidence: 0.7,
@@ -11439,7 +11653,11 @@ pub async fn quality_ai_score_entity(
     };
     let score = score_entity_internal(profile);
     let store = get_quality_ai_store();
-    store.scores.lock().await.insert(entity_id.clone(), score.clone());
+    store
+        .scores
+        .lock()
+        .await
+        .insert(entity_id.clone(), score.clone());
     // 同时更新历史序列
     let mut history = store.quality_history.lock().await;
     let entry = history.entry(entity_id).or_default();
@@ -11491,7 +11709,10 @@ pub async fn quality_ai_batch_score(
         }
         scores.push(score);
     }
-    Json(ApiResponse::success(scores, &format!("批量评分完成（{} 条）", filtered.len())))
+    Json(ApiResponse::success(
+        scores,
+        &format!("批量评分完成（{} 条）", filtered.len()),
+    ))
 }
 
 /// GET /quality-ai/anomalies — 异常列表
@@ -11570,10 +11791,7 @@ pub async fn quality_ai_predict_quality(
         None => return Json(ApiResponse::error(404, "未找到实体")),
     };
     let history_store = get_quality_ai_store().quality_history.lock().await;
-    let history = history_store
-        .get(&entity_id)
-        .cloned()
-        .unwrap_or_default();
+    let history = history_store.get(&entity_id).cloned().unwrap_or_default();
     let prediction = predict_quality_internal(&entity_id, &profile.domain, &history);
     Json(ApiResponse::success(prediction, "质量预测完成"))
 }
@@ -11800,9 +12018,7 @@ fn levenshtein(a: &str, b: &str) -> usize {
         curr[0] = i;
         for j in 1..=n {
             let cost = if a[i - 1] == b[j - 1] { 0 } else { 1 };
-            curr[j] = (prev[j] + 1)
-                .min(curr[j - 1] + 1)
-                .min(prev[j - 1] + cost);
+            curr[j] = (prev[j] + 1).min(curr[j - 1] + 1).min(prev[j - 1] + cost);
         }
         std::mem::swap(&mut prev, &mut curr);
     }
@@ -11886,9 +12102,17 @@ fn phonetic_similarity(a: &str, b: &str) -> f64 {
     let set_b: HashSet<char> = b.chars().collect();
     let inter = set_a.intersection(&set_b).count();
     let union = set_a.union(&set_b).count();
-    let jaccard = if union == 0 { 0.0 } else { inter as f64 / union as f64 };
+    let jaccard = if union == 0 {
+        0.0
+    } else {
+        inter as f64 / union as f64
+    };
     // 首字母/首字符相同加分
-    let first_bonus = if a.chars().next() == b.chars().next() { 0.15 } else { 0.0 };
+    let first_bonus = if a.chars().next() == b.chars().next() {
+        0.15
+    } else {
+        0.0
+    };
     (jaccard + first_bonus).min(1.0)
 }
 
@@ -11910,10 +12134,7 @@ fn abbreviation_similarity(source: &str, target: &str) -> f64 {
         return 0.8;
     }
     // 共同首字母比例
-    let common = s_abbr
-        .chars()
-        .filter(|c| t_upper.starts_with(*c))
-        .count();
+    let common = s_abbr.chars().filter(|c| t_upper.starts_with(*c)).count();
     if common > 0 {
         common as f64 / s_abbr.len().max(t_upper.len()) as f64 * 0.6
     } else {
@@ -11950,10 +12171,7 @@ fn match_field_value(source: &str, target: &str) -> (f64, MatchType) {
 }
 
 /// 多字段加权匹配：name 40% + code 20% + address 15% + phone 10% + email 15%
-fn weighted_match(
-    source: &EntityProfile,
-    target: &EntityProfile,
-) -> (Vec<MatchField>, f64) {
+fn weighted_match(source: &EntityProfile, target: &EntityProfile) -> (Vec<MatchField>, f64) {
     let weights: [(&str, f64); 5] = [
         ("name", 0.40),
         ("code", 0.20),
@@ -12026,7 +12244,10 @@ async fn ensure_smart_matcher_initialized() {
         DuplicateGroup {
             group_id: "dup-group-001".to_string(),
             domain: "customer".to_string(),
-            entities: vec!["md-customer-C001".to_string(), "md-customer-C001-dup".to_string()],
+            entities: vec![
+                "md-customer-C001".to_string(),
+                "md-customer-C001-dup".to_string(),
+            ],
             confidence: 0.92,
             primary_entity_id: "md-customer-C001".to_string(),
             merge_recommendation: "manual_review".to_string(),
@@ -12034,7 +12255,10 @@ async fn ensure_smart_matcher_initialized() {
         DuplicateGroup {
             group_id: "dup-group-002".to_string(),
             domain: "supplier".to_string(),
-            entities: vec!["md-supplier-S001".to_string(), "md-supplier-S001-dup".to_string()],
+            entities: vec![
+                "md-supplier-S001".to_string(),
+                "md-supplier-S001-dup".to_string(),
+            ],
             confidence: 0.88,
             primary_entity_id: "md-supplier-S001".to_string(),
             merge_recommendation: "auto_merge".to_string(),
@@ -12080,10 +12304,7 @@ pub async fn matching_find_matches(
             } else {
                 "skip"
             };
-            let target_name = target
-                .name
-                .clone()
-                .unwrap_or_else(|| target.code.clone());
+            let target_name = target.name.clone().unwrap_or_else(|| target.code.clone());
             results.push(MatchResult {
                 source_id: source.id.clone(),
                 target_id: target.id.clone(),
@@ -12340,7 +12561,13 @@ fn build_preset_categories() -> Vec<Category> {
             parent_id: Some("cust-industry".to_string()),
             domain: "customer".to_string(),
             description: "从事科技/电子/软件行业的客户".to_string(),
-            keywords: vec!["科技".to_string(), "电子".to_string(), "技术".to_string(), "软件".to_string(), "信息".to_string()],
+            keywords: vec![
+                "科技".to_string(),
+                "电子".to_string(),
+                "技术".to_string(),
+                "软件".to_string(),
+                "信息".to_string(),
+            ],
             rules: vec!["name contains 科技/电子/技术".to_string()],
             entity_count: 0,
         },
@@ -12402,7 +12629,12 @@ fn build_preset_categories() -> Vec<Category> {
             parent_id: Some("mat".to_string()),
             domain: "material".to_string(),
             description: "原材料类物料".to_string(),
-            keywords: vec!["原材料".to_string(), "原料".to_string(), "金属".to_string(), "塑料".to_string()],
+            keywords: vec![
+                "原材料".to_string(),
+                "原料".to_string(),
+                "金属".to_string(),
+                "塑料".to_string(),
+            ],
             rules: vec!["name contains 原材料/原料".to_string()],
             entity_count: 0,
         },
@@ -12498,7 +12730,11 @@ fn build_preset_rules() -> Vec<ClassificationRule> {
             id: "rule-cust-tech".to_string(),
             name: "科技行业规则".to_string(),
             domain: "customer".to_string(),
-            conditions: vec!["name contains 科技".to_string(), "name contains 电子".to_string(), "name contains 技术".to_string()],
+            conditions: vec![
+                "name contains 科技".to_string(),
+                "name contains 电子".to_string(),
+                "name contains 技术".to_string(),
+            ],
             category_id: "cust-industry-tech".to_string(),
             priority: 90,
             confidence: 0.85,
@@ -12509,7 +12745,10 @@ fn build_preset_rules() -> Vec<ClassificationRule> {
             id: "rule-cust-trade".to_string(),
             name: "贸易行业规则".to_string(),
             domain: "customer".to_string(),
-            conditions: vec!["name contains 贸易".to_string(), "name contains 商贸".to_string()],
+            conditions: vec![
+                "name contains 贸易".to_string(),
+                "name contains 商贸".to_string(),
+            ],
             category_id: "cust-industry-trade".to_string(),
             priority: 85,
             confidence: 0.82,
@@ -12520,7 +12759,10 @@ fn build_preset_rules() -> Vec<ClassificationRule> {
             id: "rule-mat-raw".to_string(),
             name: "原材料规则".to_string(),
             domain: "material".to_string(),
-            conditions: vec!["name contains 原材料".to_string(), "name contains 原料".to_string()],
+            conditions: vec![
+                "name contains 原材料".to_string(),
+                "name contains 原料".to_string(),
+            ],
             category_id: "mat-raw".to_string(),
             priority: 90,
             confidence: 0.88,
@@ -12554,10 +12796,7 @@ fn build_preset_rules() -> Vec<ClassificationRule> {
 
 /// TF-IDF 简化版：基于关键词的词频加权打分
 /// 返回 (category_id, score, matched_keywords)
-fn tfidf_score(
-    text: &str,
-    categories: &[Category],
-) -> Vec<(String, f64, Vec<String>)> {
+fn tfidf_score(text: &str, categories: &[Category]) -> Vec<(String, f64, Vec<String>)> {
     let text_lower = text.to_lowercase();
     let total_docs = categories.len() as f64;
     let mut results = Vec::new();
@@ -12576,7 +12815,11 @@ fn tfidf_score(
         // idf：关键词在多少类别中出现（简化：用关键词数）
         let df: f64 = categories
             .iter()
-            .filter(|c| c.keywords.iter().any(|k| text_lower.contains(&k.to_lowercase())))
+            .filter(|c| {
+                c.keywords
+                    .iter()
+                    .any(|k| text_lower.contains(&k.to_lowercase()))
+            })
             .count() as f64;
         let idf = if df > 0.0 {
             (total_docs / df).ln() + 1.0
@@ -12591,10 +12834,7 @@ fn tfidf_score(
 }
 
 /// 规则推理：检查规则条件是否命中
-fn apply_rules(
-    profile: &EntityProfile,
-    rules: &[ClassificationRule],
-) -> Vec<(String, f64)> {
+fn apply_rules(profile: &EntityProfile, rules: &[ClassificationRule]) -> Vec<(String, f64)> {
     let mut hits: Vec<(String, f64)> = Vec::new();
     let name_val = profile.name.clone().unwrap_or_default();
     let name_lower = name_val.to_lowercase();
@@ -12635,10 +12875,7 @@ fn classify_entity_internal(
     categories: &[Category],
     rules: &[ClassificationRule],
 ) -> ClassificationResult {
-    let text = profile
-        .name
-        .clone()
-        .unwrap_or_default();
+    let text = profile.name.clone().unwrap_or_default();
     // 同时纳入其他字段值作为"文档"
     let mut doc = text.clone();
     for (k, v) in &profile.fields {
@@ -12651,7 +12888,14 @@ fn classify_entity_internal(
     }
 
     // 1. 关键词 + TF-IDF
-    let tfidf_results = tfidf_score(&doc, &categories.iter().filter(|c| c.domain == profile.domain).cloned().collect::<Vec<_>>());
+    let tfidf_results = tfidf_score(
+        &doc,
+        &categories
+            .iter()
+            .filter(|c| c.domain == profile.domain)
+            .cloned()
+            .collect::<Vec<_>>(),
+    );
     // 2. 规则推理
     let rule_hits = apply_rules(profile, rules);
 
@@ -12667,7 +12911,10 @@ fn classify_entity_internal(
     let mut ranked: Vec<(String, f64)> = combined.into_iter().collect();
     ranked.sort_by(|a, b| b.1.partial_cmp(&a.1).unwrap_or(std::cmp::Ordering::Equal));
 
-    let (suggested_cat_id, suggested_score) = ranked.first().cloned().unwrap_or(("unknown".to_string(), 0.0));
+    let (suggested_cat_id, suggested_score) = ranked
+        .first()
+        .cloned()
+        .unwrap_or(("unknown".to_string(), 0.0));
     let suggested_cat = categories
         .iter()
         .find(|c| c.id == suggested_cat_id)
@@ -12687,7 +12934,12 @@ fn classify_entity_internal(
         .iter()
         .skip(1)
         .take(3)
-        .filter_map(|(cid, _)| categories.iter().find(|c| c.id == *cid).map(|c| c.name.clone()))
+        .filter_map(|(cid, _)| {
+            categories
+                .iter()
+                .find(|c| c.id == *cid)
+                .map(|c| c.name.clone())
+        })
         .collect();
 
     let matched_keywords: Vec<String> = tfidf_results
@@ -12751,10 +13003,7 @@ fn build_category_path(cat_id: &str, categories: &[Category]) -> String {
 }
 
 /// 标签推荐：基于实体属性 + 同类实体标签
-fn suggest_tags_internal(
-    profile: &EntityProfile,
-    categories: &[Category],
-) -> Vec<String> {
+fn suggest_tags_internal(profile: &EntityProfile, categories: &[Category]) -> Vec<String> {
     let mut tags = Vec::new();
     // 域标签
     tags.push(format!("domain:{}", profile.domain));
@@ -12975,7 +13224,11 @@ pub async fn classification_learn_rule(
         enabled: true,
         learned: true,
     };
-    get_auto_classifier_store().rules.lock().await.push(rule.clone());
+    get_auto_classifier_store()
+        .rules
+        .lock()
+        .await
+        .push(rule.clone());
     Json(ApiResponse::success(rule, "规则学习完成"))
 }
 
@@ -13229,15 +13482,47 @@ async fn ensure_lineage_trace_initialized() {
     ];
 
     let entity_names: HashMap<&str, Vec<(&str, &str)>> = [
-        ("customer", vec![("CUST001", "华信科技"), ("CUST002", "盛达贸易"), ("CUST003", "恒泰制造")]),
-        ("supplier", vec![("SUPP001", "原材料供应商A"), ("SUPP002", "零部件供应商B")]),
-        ("material", vec![("MAT001", "原材料A"), ("MAT002", "原材料B"), ("MAT003", "零部件X")]),
-        ("product", vec![("PROD001", "产品甲"), ("PROD002", "产品乙")]),
-        ("order", vec![("ORD001", "销售订单001"), ("ORD002", "采购订单001")]),
-        ("finance", vec![("FIN001", "应收账款"), ("FIN002", "应付账款")]),
-        ("organization", vec![("ORG001", "总部"), ("ORG002", "华东分公司")]),
+        (
+            "customer",
+            vec![
+                ("CUST001", "华信科技"),
+                ("CUST002", "盛达贸易"),
+                ("CUST003", "恒泰制造"),
+            ],
+        ),
+        (
+            "supplier",
+            vec![("SUPP001", "原材料供应商A"), ("SUPP002", "零部件供应商B")],
+        ),
+        (
+            "material",
+            vec![
+                ("MAT001", "原材料A"),
+                ("MAT002", "原材料B"),
+                ("MAT003", "零部件X"),
+            ],
+        ),
+        (
+            "product",
+            vec![("PROD001", "产品甲"), ("PROD002", "产品乙")],
+        ),
+        (
+            "order",
+            vec![("ORD001", "销售订单001"), ("ORD002", "采购订单001")],
+        ),
+        (
+            "finance",
+            vec![("FIN001", "应收账款"), ("FIN002", "应付账款")],
+        ),
+        (
+            "organization",
+            vec![("ORG001", "总部"), ("ORG002", "华东分公司")],
+        ),
         ("employee", vec![("EMP001", "张三"), ("EMP002", "李四")]),
-    ].iter().cloned().collect();
+    ]
+    .iter()
+    .cloned()
+    .collect();
 
     let mut nodes: Vec<LineageGraphNode> = Vec::new();
     let mut edges: Vec<LineageGraphEdge> = Vec::new();
@@ -13262,19 +13547,84 @@ async fn ensure_lineage_trace_initialized() {
     }
 
     let edge_definitions = vec![
-        ("material:MAT001", "product:PROD001", LineageRelationship::Produces, 0.8),
-        ("material:MAT002", "product:PROD001", LineageRelationship::Consumes, 0.6),
-        ("material:MAT003", "product:PROD002", LineageRelationship::Transforms, 0.7),
-        ("supplier:SUPP001", "material:MAT001", LineageRelationship::References, 0.9),
-        ("supplier:SUPP002", "material:MAT003", LineageRelationship::DependsOn, 0.85),
-        ("product:PROD001", "order:ORD001", LineageRelationship::References, 0.75),
-        ("customer:CUST001", "order:ORD001", LineageRelationship::DependsOn, 0.9),
-        ("order:ORD001", "finance:FIN001", LineageRelationship::Produces, 0.8),
-        ("order:ORD002", "finance:FIN002", LineageRelationship::Consumes, 0.7),
-        ("employee:EMP001", "customer:CUST001", LineageRelationship::References, 0.5),
-        ("organization:ORG001", "employee:EMP001", LineageRelationship::DependsOn, 0.6),
-        ("organization:ORG002", "employee:EMP002", LineageRelationship::References, 0.55),
-        ("customer:CUST002", "order:ORD002", LineageRelationship::Transforms, 0.65),
+        (
+            "material:MAT001",
+            "product:PROD001",
+            LineageRelationship::Produces,
+            0.8,
+        ),
+        (
+            "material:MAT002",
+            "product:PROD001",
+            LineageRelationship::Consumes,
+            0.6,
+        ),
+        (
+            "material:MAT003",
+            "product:PROD002",
+            LineageRelationship::Transforms,
+            0.7,
+        ),
+        (
+            "supplier:SUPP001",
+            "material:MAT001",
+            LineageRelationship::References,
+            0.9,
+        ),
+        (
+            "supplier:SUPP002",
+            "material:MAT003",
+            LineageRelationship::DependsOn,
+            0.85,
+        ),
+        (
+            "product:PROD001",
+            "order:ORD001",
+            LineageRelationship::References,
+            0.75,
+        ),
+        (
+            "customer:CUST001",
+            "order:ORD001",
+            LineageRelationship::DependsOn,
+            0.9,
+        ),
+        (
+            "order:ORD001",
+            "finance:FIN001",
+            LineageRelationship::Produces,
+            0.8,
+        ),
+        (
+            "order:ORD002",
+            "finance:FIN002",
+            LineageRelationship::Consumes,
+            0.7,
+        ),
+        (
+            "employee:EMP001",
+            "customer:CUST001",
+            LineageRelationship::References,
+            0.5,
+        ),
+        (
+            "organization:ORG001",
+            "employee:EMP001",
+            LineageRelationship::DependsOn,
+            0.6,
+        ),
+        (
+            "organization:ORG002",
+            "employee:EMP002",
+            LineageRelationship::References,
+            0.55,
+        ),
+        (
+            "customer:CUST002",
+            "order:ORD002",
+            LineageRelationship::Transforms,
+            0.65,
+        ),
     ];
 
     for (source, target, relationship, weight) in &edge_definitions {
@@ -13333,7 +13683,10 @@ async fn trace_lineage(query: &LineageTraceQuery) -> LineageTraceResult {
                 for edge in &edges {
                     if edge.target == current_id && !visited_nodes.contains(&edge.source) {
                         if query.relationship_types.as_ref().map_or(true, |types| {
-                            types.iter().any(|t| std::mem::discriminant(t) == std::mem::discriminant(&edge.relationship))
+                            types.iter().any(|t| {
+                                std::mem::discriminant(t)
+                                    == std::mem::discriminant(&edge.relationship)
+                            })
                         }) {
                             visited_nodes.insert(edge.source.clone());
                             result_edges.push(edge.clone());
@@ -13346,7 +13699,10 @@ async fn trace_lineage(query: &LineageTraceQuery) -> LineageTraceResult {
                 for edge in &edges {
                     if edge.source == current_id && !visited_nodes.contains(&edge.target) {
                         if query.relationship_types.as_ref().map_or(true, |types| {
-                            types.iter().any(|t| std::mem::discriminant(t) == std::mem::discriminant(&edge.relationship))
+                            types.iter().any(|t| {
+                                std::mem::discriminant(t)
+                                    == std::mem::discriminant(&edge.relationship)
+                            })
                         }) {
                             visited_nodes.insert(edge.target.clone());
                             result_edges.push(edge.clone());
@@ -13359,7 +13715,10 @@ async fn trace_lineage(query: &LineageTraceQuery) -> LineageTraceResult {
                 for edge in &edges {
                     if edge.source == current_id && !visited_nodes.contains(&edge.target) {
                         if query.relationship_types.as_ref().map_or(true, |types| {
-                            types.iter().any(|t| std::mem::discriminant(t) == std::mem::discriminant(&edge.relationship))
+                            types.iter().any(|t| {
+                                std::mem::discriminant(t)
+                                    == std::mem::discriminant(&edge.relationship)
+                            })
                         }) {
                             visited_nodes.insert(edge.target.clone());
                             result_edges.push(edge.clone());
@@ -13368,7 +13727,10 @@ async fn trace_lineage(query: &LineageTraceQuery) -> LineageTraceResult {
                     }
                     if edge.target == current_id && !visited_nodes.contains(&edge.source) {
                         if query.relationship_types.as_ref().map_or(true, |types| {
-                            types.iter().any(|t| std::mem::discriminant(t) == std::mem::discriminant(&edge.relationship))
+                            types.iter().any(|t| {
+                                std::mem::discriminant(t)
+                                    == std::mem::discriminant(&edge.relationship)
+                            })
                         }) {
                             visited_nodes.insert(edge.source.clone());
                             result_edges.push(edge.clone());
@@ -13394,7 +13756,8 @@ async fn trace_upstream(entity_id: &str, depth: Option<usize>) -> LineageTraceRe
         trace_depth: depth,
         direction: Some(LineageDirection::Upstream),
         relationship_types: None,
-    }).await
+    })
+    .await
 }
 
 async fn trace_downstream(entity_id: &str, depth: Option<usize>) -> LineageTraceResult {
@@ -13403,7 +13766,8 @@ async fn trace_downstream(entity_id: &str, depth: Option<usize>) -> LineageTrace
         trace_depth: depth,
         direction: Some(LineageDirection::Downstream),
         relationship_types: None,
-    }).await
+    })
+    .await
 }
 
 async fn find_data_origin(entity_id: &str) -> Option<LineageGraphNode> {
@@ -13492,7 +13856,8 @@ pub async fn trace_lineage_handler(
         trace_depth: params.depth,
         direction: Some(direction),
         relationship_types: None,
-    }).await;
+    })
+    .await;
 
     Json(ApiResponse::success(result, "血缘溯源完成"))
 }
@@ -13589,23 +13954,36 @@ async fn analyze_impact(request: &ImpactAnalysisRequest) -> ImpactAnalysisResult
         });
     }
 
-    let risk_level = if impacted_entities.iter().any(|e| matches!(e.impact_severity, ImpactSeverity::Critical)) {
+    let risk_level = if impacted_entities
+        .iter()
+        .any(|e| matches!(e.impact_severity, ImpactSeverity::Critical))
+    {
         ImpactSeverity::Critical
-    } else if impacted_entities.iter().any(|e| matches!(e.impact_severity, ImpactSeverity::High)) {
+    } else if impacted_entities
+        .iter()
+        .any(|e| matches!(e.impact_severity, ImpactSeverity::High))
+    {
         ImpactSeverity::High
-    } else if impacted_entities.iter().any(|e| matches!(e.impact_severity, ImpactSeverity::Medium)) {
+    } else if impacted_entities
+        .iter()
+        .any(|e| matches!(e.impact_severity, ImpactSeverity::Medium))
+    {
         ImpactSeverity::Medium
-    } else if impacted_entities.iter().any(|e| matches!(e.impact_severity, ImpactSeverity::Low)) {
+    } else if impacted_entities
+        .iter()
+        .any(|e| matches!(e.impact_severity, ImpactSeverity::Low))
+    {
         ImpactSeverity::Low
     } else {
         ImpactSeverity::None
     };
 
-    let estimated_effort = impacted_entities.len() as f64 * match request.change_type {
-        ChangeType::SchemaChange => 8.0,
-        ChangeType::DataChange => 3.0,
-        ChangeType::BusinessRuleChange => 5.0,
-    };
+    let estimated_effort = impacted_entities.len() as f64
+        * match request.change_type {
+            ChangeType::SchemaChange => 8.0,
+            ChangeType::DataChange => 3.0,
+            ChangeType::BusinessRuleChange => 5.0,
+        };
 
     let mut recommendations = vec![
         "建议进行全面的影响范围评估".to_string(),
@@ -13613,7 +13991,8 @@ async fn analyze_impact(request: &ImpactAnalysisRequest) -> ImpactAnalysisResult
         "建议在测试环境充分验证".to_string(),
     ];
 
-    if matches!(risk_level, ImpactSeverity::Critical) || matches!(risk_level, ImpactSeverity::High) {
+    if matches!(risk_level, ImpactSeverity::Critical) || matches!(risk_level, ImpactSeverity::High)
+    {
         recommendations.push("建议成立专项变更小组".to_string());
         recommendations.push("建议制定回滚方案".to_string());
     }
@@ -13629,19 +14008,35 @@ async fn analyze_impact(request: &ImpactAnalysisRequest) -> ImpactAnalysisResult
         recommendations,
     };
 
-    store.impact_reports.lock().await.insert(request.entity_id.clone(), result.clone());
+    store
+        .impact_reports
+        .lock()
+        .await
+        .insert(request.entity_id.clone(), result.clone());
 
     result
 }
 
 fn calculate_risk_level(impacted: &[ImpactedEntity]) -> ImpactSeverity {
-    if impacted.iter().any(|e| matches!(e.impact_severity, ImpactSeverity::Critical)) {
+    if impacted
+        .iter()
+        .any(|e| matches!(e.impact_severity, ImpactSeverity::Critical))
+    {
         ImpactSeverity::Critical
-    } else if impacted.iter().any(|e| matches!(e.impact_severity, ImpactSeverity::High)) {
+    } else if impacted
+        .iter()
+        .any(|e| matches!(e.impact_severity, ImpactSeverity::High))
+    {
         ImpactSeverity::High
-    } else if impacted.iter().any(|e| matches!(e.impact_severity, ImpactSeverity::Medium)) {
+    } else if impacted
+        .iter()
+        .any(|e| matches!(e.impact_severity, ImpactSeverity::Medium))
+    {
         ImpactSeverity::Medium
-    } else if impacted.iter().any(|e| matches!(e.impact_severity, ImpactSeverity::Low)) {
+    } else if impacted
+        .iter()
+        .any(|e| matches!(e.impact_severity, ImpactSeverity::Low))
+    {
         ImpactSeverity::Low
     } else {
         ImpactSeverity::None
@@ -13673,8 +14068,14 @@ fn generate_impact_report(result: &ImpactAnalysisResult) -> String {
     let mut report = String::new();
     report.push_str("=== 影响分析报告 ===\n");
     report.push_str(&format!("风险等级: {:?}\n", result.risk_level));
-    report.push_str(&format!("预估工作量: {:.1} 人天\n", result.estimated_effort));
-    report.push_str(&format!("受影响实体数: {}\n", result.impacted_entities.len()));
+    report.push_str(&format!(
+        "预估工作量: {:.1} 人天\n",
+        result.estimated_effort
+    ));
+    report.push_str(&format!(
+        "受影响实体数: {}\n",
+        result.impacted_entities.len()
+    ));
     report.push_str("\n受影响实体:\n");
     for entity in &result.impacted_entities {
         report.push_str(&format!(
@@ -13742,20 +14143,22 @@ async fn filter_graph(
 ) -> DataLineageGraph {
     let graph = build_lineage_graph().await;
 
-    let filtered_nodes: Vec<LineageGraphNode> = graph.nodes
+    let filtered_nodes: Vec<LineageGraphNode> = graph
+        .nodes
         .into_iter()
         .filter(|n| {
-            domain.map_or(true, |d| n.domain == d)
-                && node_type.map_or(true, |t| n.node_type == t)
+            domain.map_or(true, |d| n.domain == d) && node_type.map_or(true, |t| n.node_type == t)
         })
         .collect();
 
     let node_ids: HashSet<String> = filtered_nodes.iter().map(|n| n.id.clone()).collect();
 
-    let filtered_edges: Vec<LineageGraphEdge> = graph.edges
+    let filtered_edges: Vec<LineageGraphEdge> = graph
+        .edges
         .into_iter()
         .filter(|e| {
-            node_ids.contains(&e.source) && node_ids.contains(&e.target)
+            node_ids.contains(&e.source)
+                && node_ids.contains(&e.target)
                 && relationship.map_or(true, |r| {
                     let rel_str = match e.relationship {
                         LineageRelationship::References => "references",
@@ -13796,7 +14199,8 @@ async fn get_lineage_graph_stats() -> LineageGraphStats {
             LineageRelationship::Produces => "produces",
             LineageRelationship::Consumes => "consumes",
             LineageRelationship::Transforms => "transforms",
-        }.to_string();
+        }
+        .to_string();
         *edges_by_relationship.entry(rel_str).or_insert(0) += 1;
 
         *degree_map.entry(edge.source.clone()).or_insert(0) += 1;
@@ -13874,8 +14278,12 @@ async fn export_graph(format: &str) -> Result<String, String> {
             let mut xml = String::new();
             xml.push_str("<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n");
             xml.push_str("<graphml xmlns=\"http://graphml.graphdrawing.org/xmlns\">\n");
-            xml.push_str("  <key id=\"label\" for=\"node\" attr.name=\"label\" attr.type=\"string\"/>\n");
-            xml.push_str("  <key id=\"domain\" for=\"node\" attr.name=\"domain\" attr.type=\"string\"/>\n");
+            xml.push_str(
+                "  <key id=\"label\" for=\"node\" attr.name=\"label\" attr.type=\"string\"/>\n",
+            );
+            xml.push_str(
+                "  <key id=\"domain\" for=\"node\" attr.name=\"domain\" attr.type=\"string\"/>\n",
+            );
             xml.push_str("  <key id=\"relationship\" for=\"edge\" attr.name=\"relationship\" attr.type=\"string\"/>\n");
             xml.push_str("  <graph id=\"G\" edgedefault=\"directed\">\n");
 
@@ -13918,11 +14326,18 @@ async fn find_critical_paths() -> Vec<Vec<String>> {
     let mut outgoing: HashMap<String, Vec<String>> = HashMap::new();
 
     for edge in &edges {
-        outgoing.entry(edge.source.clone()).or_insert_with(Vec::new).push(edge.target.clone());
-        incoming.entry(edge.target.clone()).or_insert_with(Vec::new).push(edge.source.clone());
+        outgoing
+            .entry(edge.source.clone())
+            .or_insert_with(Vec::new)
+            .push(edge.target.clone());
+        incoming
+            .entry(edge.target.clone())
+            .or_insert_with(Vec::new)
+            .push(edge.source.clone());
     }
 
-    let roots: Vec<String> = nodes.iter()
+    let roots: Vec<String> = nodes
+        .iter()
         .filter(|n| !incoming.contains_key(&n.id))
         .map(|n| n.id.clone())
         .collect();
@@ -13973,7 +14388,9 @@ async fn detect_circular_dependencies() -> Vec<Vec<String>> {
 
     let mut adj: HashMap<String, Vec<String>> = HashMap::new();
     for edge in &edges {
-        adj.entry(edge.source.clone()).or_insert_with(Vec::new).push(edge.target.clone());
+        adj.entry(edge.source.clone())
+            .or_insert_with(Vec::new)
+            .push(edge.target.clone());
     }
 
     let mut cycles: Vec<Vec<String>> = Vec::new();
@@ -14038,7 +14455,8 @@ pub async fn get_lineage_graph_handler(
         params.domain.as_deref(),
         params.node_type.as_deref(),
         params.relationship.as_deref(),
-    ).await;
+    )
+    .await;
     Json(ApiResponse::success(graph, "血缘图谱获取成功"))
 }
 
@@ -14386,10 +14804,7 @@ async fn assess_maturity() -> MaturityAssessment {
     ensure_maturity_initialized().await;
     let store = get_maturity_store();
     let mut assessments = store.assessments.lock().await;
-    let next_id = format!(
-        "maturity-{:03}",
-        assessments.len() + 1
-    );
+    let next_id = format!("maturity-{:03}", assessments.len() + 1);
     // 基于最近一次评估小幅提升，模拟持续改进
     let base = assessments
         .last()
@@ -14409,19 +14824,22 @@ async fn get_maturity_history() -> Vec<MaturityAssessment> {
 }
 
 /// 对比两次评估结果
-async fn compare_assessments(
-    baseline_id: &str,
-    current_id: &str,
-) -> Option<AssessmentComparison> {
+async fn compare_assessments(baseline_id: &str, current_id: &str) -> Option<AssessmentComparison> {
     ensure_maturity_initialized().await;
     let store = get_maturity_store();
     let assessments = store.assessments.lock().await;
-    let baseline = assessments.iter().find(|a| a.assessment_id == baseline_id)?;
+    let baseline = assessments
+        .iter()
+        .find(|a| a.assessment_id == baseline_id)?;
     let current = assessments.iter().find(|a| a.assessment_id == current_id)?;
 
     let mut dimension_deltas: Vec<DimensionDelta> = Vec::new();
     for cur in &current.dimensions {
-        if let Some(base_dim) = baseline.dimensions.iter().find(|d| d.dimension == cur.dimension) {
+        if let Some(base_dim) = baseline
+            .dimensions
+            .iter()
+            .find(|d| d.dimension == cur.dimension)
+        {
             dimension_deltas.push(DimensionDelta {
                 dimension: cur.dimension.clone(),
                 dimension_label: cur.dimension_label.clone(),
@@ -14439,10 +14857,7 @@ async fn compare_assessments(
             score_delta, level_delta
         )
     } else if score_delta < 0.0 {
-        format!(
-            "整体成熟度下降 {:.1} 分，需关注退步维度",
-            score_delta.abs()
-        )
+        format!("整体成熟度下降 {:.1} 分，需关注退步维度", score_delta.abs())
     } else {
         "整体成熟度保持稳定".to_string()
     };
@@ -14477,7 +14892,11 @@ async fn generate_improvement_plan() -> ImprovementPlan {
 
     if let Some(latest) = latest {
         let mut sorted = latest.dimensions.clone();
-        sorted.sort_by(|a, b| a.score.partial_cmp(&b.score).unwrap_or(std::cmp::Ordering::Equal));
+        sorted.sort_by(|a, b| {
+            a.score
+                .partial_cmp(&b.score)
+                .unwrap_or(std::cmp::Ordering::Equal)
+        });
         for (idx, dim) in sorted.iter().enumerate() {
             for (i, action_desc) in dim.improvement_actions.iter().enumerate() {
                 actions.push(ImprovementAction {
@@ -14693,19 +15112,129 @@ async fn ensure_catalog_initialized() {
     let now = chrono::Utc::now();
     let rfc = |days_ago: i64| (now - chrono::Duration::days(days_ago)).to_rfc3339();
 
-    let seeds: Vec<(&str, &str, &str, &str, &str, &str, CatalogClassification, &str, i64, f64, Vec<&str>)> = vec![
-        ("catalog-001", "客户主数据", "customer", "包含所有客户的基础信息、联系方式与信用等级", "销售部", "张三", CatalogClassification::Confidential, "CRM", 1280, 88.5, vec!["客户", "核心", "crm"]),
-        ("catalog-002", "供应商主数据", "supplier", "供应商档案、资质与供货范围", "采购部", "李四", CatalogClassification::Internal, "SRM", 860, 85.0, vec!["供应商", "采购"]),
-        ("catalog-003", "物料主数据", "material", "原材料、半成品、成品物料档案", "仓储部", "王五", CatalogClassification::Internal, "ERP", 2100, 90.2, vec!["物料", "核心"]),
-        ("catalog-004", "产品主数据", "product", "产品 SKU、规格与售价信息", "产品部", "赵六", CatalogClassification::Public, "PIM", 1540, 92.0, vec!["产品", "pim"]),
-        ("catalog-005", "员工主数据", "employee", "员工档案、组织归属与岗位信息", "人事部", "孙七", CatalogClassification::Restricted, "HRMS", 320, 86.5, vec!["员工", "敏感"]),
-        ("catalog-006", "组织主数据", "organization", "组织架构、部门与层级关系", "人事部", "孙七", CatalogClassification::Internal, "HRMS", 410, 89.0, vec!["组织", "架构"]),
-        ("catalog-007", "会计科目", "account_subject", "会计科目体系与余额方向", "财务部", "周八", CatalogClassification::Confidential, "Finance", 680, 94.0, vec!["财务", "科目"]),
-        ("catalog-008", "销售订单", "order", "销售订单头与明细数据集", "销售部", "张三", CatalogClassification::Confidential, "ERP", 1850, 83.5, vec!["订单", "销售"]),
+    let seeds: Vec<(
+        &str,
+        &str,
+        &str,
+        &str,
+        &str,
+        &str,
+        CatalogClassification,
+        &str,
+        i64,
+        f64,
+        Vec<&str>,
+    )> = vec![
+        (
+            "catalog-001",
+            "客户主数据",
+            "customer",
+            "包含所有客户的基础信息、联系方式与信用等级",
+            "销售部",
+            "张三",
+            CatalogClassification::Confidential,
+            "CRM",
+            1280,
+            88.5,
+            vec!["客户", "核心", "crm"],
+        ),
+        (
+            "catalog-002",
+            "供应商主数据",
+            "supplier",
+            "供应商档案、资质与供货范围",
+            "采购部",
+            "李四",
+            CatalogClassification::Internal,
+            "SRM",
+            860,
+            85.0,
+            vec!["供应商", "采购"],
+        ),
+        (
+            "catalog-003",
+            "物料主数据",
+            "material",
+            "原材料、半成品、成品物料档案",
+            "仓储部",
+            "王五",
+            CatalogClassification::Internal,
+            "ERP",
+            2100,
+            90.2,
+            vec!["物料", "核心"],
+        ),
+        (
+            "catalog-004",
+            "产品主数据",
+            "product",
+            "产品 SKU、规格与售价信息",
+            "产品部",
+            "赵六",
+            CatalogClassification::Public,
+            "PIM",
+            1540,
+            92.0,
+            vec!["产品", "pim"],
+        ),
+        (
+            "catalog-005",
+            "员工主数据",
+            "employee",
+            "员工档案、组织归属与岗位信息",
+            "人事部",
+            "孙七",
+            CatalogClassification::Restricted,
+            "HRMS",
+            320,
+            86.5,
+            vec!["员工", "敏感"],
+        ),
+        (
+            "catalog-006",
+            "组织主数据",
+            "organization",
+            "组织架构、部门与层级关系",
+            "人事部",
+            "孙七",
+            CatalogClassification::Internal,
+            "HRMS",
+            410,
+            89.0,
+            vec!["组织", "架构"],
+        ),
+        (
+            "catalog-007",
+            "会计科目",
+            "account_subject",
+            "会计科目体系与余额方向",
+            "财务部",
+            "周八",
+            CatalogClassification::Confidential,
+            "Finance",
+            680,
+            94.0,
+            vec!["财务", "科目"],
+        ),
+        (
+            "catalog-008",
+            "销售订单",
+            "order",
+            "销售订单头与明细数据集",
+            "销售部",
+            "张三",
+            CatalogClassification::Confidential,
+            "ERP",
+            1850,
+            83.5,
+            vec!["订单", "销售"],
+        ),
     ];
 
     let mut entries = Vec::new();
-    for (i, (id, name, domain, desc, owner, steward, cls, src, pop, qs, tags)) in seeds.iter().enumerate() {
+    for (i, (id, name, domain, desc, owner, steward, cls, src, pop, qs, tags)) in
+        seeds.iter().enumerate()
+    {
         entries.push(CatalogEntry {
             entry_id: id.to_string(),
             name: name.to_string(),
@@ -14766,7 +15295,9 @@ async fn search_catalog(query: &CatalogSearchQuery) -> CatalogSearchResult {
                 }
             }
             if let Some(ref c) = query.classification {
-                if e.classification_label != *c && format!("{:?}", e.classification).to_lowercase() != c.to_lowercase() {
+                if e.classification_label != *c
+                    && format!("{:?}", e.classification).to_lowercase() != c.to_lowercase()
+                {
                     return false;
                 }
             }
@@ -14804,7 +15335,9 @@ async fn search_catalog(query: &CatalogSearchQuery) -> CatalogSearchResult {
     let mut by_tag: HashMap<String, usize> = HashMap::new();
     for e in &filtered {
         *by_domain.entry(e.domain.clone()).or_insert(0) += 1;
-        *by_classification.entry(e.classification_label.clone()).or_insert(0) += 1;
+        *by_classification
+            .entry(e.classification_label.clone())
+            .or_insert(0) += 1;
         *by_owner.entry(e.owner.clone()).or_insert(0) += 1;
         for t in &e.tags {
             *by_tag.entry(t.clone()).or_insert(0) += 1;
@@ -14872,7 +15405,10 @@ async fn create_catalog_entry(req: &CatalogEntryRequest) -> CatalogEntry {
         tags: req.tags.clone().unwrap_or_default(),
         classification: cls.clone(),
         classification_label: cls.label().to_string(),
-        source_system: req.source_system.clone().unwrap_or_else(|| "未知".to_string()),
+        source_system: req
+            .source_system
+            .clone()
+            .unwrap_or_else(|| "未知".to_string()),
         created_at: now.clone(),
         updated_at: now,
         popularity: 0,
@@ -15490,7 +16026,10 @@ async fn update_schema(schema_id: &str, req: &SchemaRequest) -> Option<MetadataS
 }
 
 /// 验证记录是否符合 Schema
-fn validate_record_against_schema(schema: &MetadataSchema, values: &serde_json::Value) -> Vec<String> {
+fn validate_record_against_schema(
+    schema: &MetadataSchema,
+    values: &serde_json::Value,
+) -> Vec<String> {
     let mut errors: Vec<String> = Vec::new();
     let obj = match values.as_object() {
         Some(o) => o,
@@ -15663,7 +16202,10 @@ async fn create_relation(req: &RelationRequest) -> MetadataRelation {
         source_entity: req.source_entity.clone(),
         target_entity: req.target_entity.clone(),
         relation_type: req.relation_type.clone(),
-        cardinality: req.cardinality.clone().unwrap_or_else(|| "one_to_one".to_string()),
+        cardinality: req
+            .cardinality
+            .clone()
+            .unwrap_or_else(|| "one_to_one".to_string()),
     };
     relations.push(relation.clone());
     relation
@@ -15742,7 +16284,10 @@ pub async fn update_schema_handler(
 ) -> Json<ApiResponse<MetadataSchema>> {
     let _ = &state;
     match update_schema(&schema_id, &req).await {
-        Some(schema) => Json(ApiResponse::success(schema, "Schema 更新成功（已生成新版本）")),
+        Some(schema) => Json(ApiResponse::success(
+            schema,
+            "Schema 更新成功（已生成新版本）",
+        )),
         None => Json(ApiResponse::error(404, "未找到 Schema")),
     }
 }
@@ -16135,7 +16680,9 @@ async fn update_dashboard(dashboard_id: &str, req: &DashboardRequest) -> Option<
     ensure_dashboard_initialized().await;
     let store = get_dashboard_store();
     let mut dashboards = store.dashboards.lock().await;
-    let dashboard = dashboards.iter_mut().find(|d| d.dashboard_id == dashboard_id)?;
+    let dashboard = dashboards
+        .iter_mut()
+        .find(|d| d.dashboard_id == dashboard_id)?;
     dashboard.name = req.name.clone();
     if let Some(ref desc) = req.description {
         dashboard.description = desc.clone();
@@ -16326,7 +16873,9 @@ async fn refresh_dashboard(dashboard_id: &str) -> Option<DashboardData> {
     let store = get_dashboard_store();
     {
         let mut dashboards = store.dashboards.lock().await;
-        let dashboard = dashboards.iter_mut().find(|d| d.dashboard_id == dashboard_id)?;
+        let dashboard = dashboards
+            .iter_mut()
+            .find(|d| d.dashboard_id == dashboard_id)?;
         let now = chrono::Utc::now().to_rfc3339();
         for widget in &mut dashboard.widgets {
             widget.last_updated = now.clone();
@@ -16999,10 +17548,7 @@ async fn generate_report(req: &GenerateReportRequest) -> Option<GeneratedReport>
     };
 
     let now = chrono::Utc::now().to_rfc3339();
-    let period = req
-        .period
-        .clone()
-        .unwrap_or_else(|| now[..7].to_string());
+    let period = req.period.clone().unwrap_or_else(|| now[..7].to_string());
 
     let mut sections_data: HashMap<String, serde_json::Value> = HashMap::new();
     for section in &template_clone.sections {
@@ -17065,10 +17611,7 @@ async fn generate_report(req: &GenerateReportRequest) -> Option<GeneratedReport>
     );
 
     let report = GeneratedReport {
-        report_id: format!(
-            "report-{:03}",
-            store.generated.lock().await.len() + 1
-        ),
+        report_id: format!("report-{:03}", store.generated.lock().await.len() + 1),
         template_id: template_clone.template_id.clone(),
         generated_at: now,
         period,
@@ -17087,10 +17630,7 @@ async fn get_generated_report(report_id: &str) -> Option<GeneratedReport> {
     ensure_report_initialized().await;
     let store = get_report_store();
     let generated = store.generated.lock().await;
-    generated
-        .iter()
-        .find(|r| r.report_id == report_id)
-        .cloned()
+    generated.iter().find(|r| r.report_id == report_id).cloned()
 }
 
 /// 列出已生成报告
@@ -17128,8 +17668,7 @@ async fn schedule_report(req: &ScheduleReportRequest) -> Option<ReportTemplate> 
     let template = templates
         .iter_mut()
         .find(|t| t.template_id == req.template_id)?;
-    let frequency =
-        parse_report_frequency(&req.frequency).unwrap_or(ReportFrequency::OnDemand);
+    let frequency = parse_report_frequency(&req.frequency).unwrap_or(ReportFrequency::OnDemand);
     let next_run = calculate_next_run(&frequency);
     template.schedule = Some(ReportSchedule {
         frequency: frequency.clone(),
@@ -17238,11 +17777,8 @@ pub async fn list_generated_reports_handler(
     Query(params): Query<GeneratedReportQuery>,
 ) -> Json<ApiResponse<Vec<GeneratedReport>>> {
     let _ = &state;
-    let reports = list_generated_reports(
-        params.template_id.as_deref(),
-        params.status.as_deref(),
-    )
-    .await;
+    let reports =
+        list_generated_reports(params.template_id.as_deref(), params.status.as_deref()).await;
     Json(ApiResponse::success(reports, "已生成报告列表获取成功"))
 }
 
@@ -17563,17 +18099,105 @@ async fn ensure_compliance_audit_initialized() {
     let rfc = |days_ago: i64| (now - chrono::Duration::days(days_ago)).to_rfc3339();
 
     // 预置合规规则
-    let rule_seeds: Vec<(&str, AuditFramework, &str, &str, FindingSeverity, &str, ComplianceStatus)> = vec![
-        ("rule-001", AuditFramework::GDPR, "用户数据访问审计", "所有对个人数据的访问必须记录审计日志", FindingSeverity::High, "check_audit_log_exists", ComplianceStatus::Compliant),
-        ("rule-002", AuditFramework::GDPR, "数据主体权利响应", "必须在30天内响应数据主体的访问/删除请求", FindingSeverity::Critical, "check_dsar_response_time", ComplianceStatus::PartiallyCompliant),
-        ("rule-003", AuditFramework::GDPR, "数据加密传输", "个人数据传输必须使用加密通道", FindingSeverity::High, "check_encryption_enabled", ComplianceStatus::Compliant),
-        ("rule-004", AuditFramework::SOX, "财务数据完整性", "财务主数据变更必须有完整的审批记录", FindingSeverity::Critical, "check_approval_trail", ComplianceStatus::NonCompliant),
-        ("rule-005", AuditFramework::SOX, "数据访问权限分离", "财务数据的录入与审批必须由不同人员完成", FindingSeverity::High, "check_segregation_of_duties", ComplianceStatus::PartiallyCompliant),
-        ("rule-006", AuditFramework::ISO27001, "访问控制策略", "所有数据访问必须有明确的授权策略", FindingSeverity::Medium, "check_access_control_policy", ComplianceStatus::Compliant),
-        ("rule-007", AuditFramework::ISO27001, "数据分类标注", "所有数据资产必须有分类分级标注", FindingSeverity::Medium, "check_data_classification", ComplianceStatus::PartiallyCompliant),
-        ("rule-008", AuditFramework::DataGovernance, "数据质量监控", "核心主数据必须配置质量规则并定期执行", FindingSeverity::Medium, "check_quality_rules_configured", ComplianceStatus::Compliant),
-        ("rule-009", AuditFramework::DataGovernance, "数据血缘追溯", "核心数据必须可追溯至数据源", FindingSeverity::Low, "check_lineage_traceability", ComplianceStatus::Compliant),
-        ("rule-010", AuditFramework::InternalPolicy, "数据归档策略", "历史数据必须按策略归档", FindingSeverity::Low, "check_archive_policy", ComplianceStatus::PendingReview),
+    let rule_seeds: Vec<(
+        &str,
+        AuditFramework,
+        &str,
+        &str,
+        FindingSeverity,
+        &str,
+        ComplianceStatus,
+    )> = vec![
+        (
+            "rule-001",
+            AuditFramework::GDPR,
+            "用户数据访问审计",
+            "所有对个人数据的访问必须记录审计日志",
+            FindingSeverity::High,
+            "check_audit_log_exists",
+            ComplianceStatus::Compliant,
+        ),
+        (
+            "rule-002",
+            AuditFramework::GDPR,
+            "数据主体权利响应",
+            "必须在30天内响应数据主体的访问/删除请求",
+            FindingSeverity::Critical,
+            "check_dsar_response_time",
+            ComplianceStatus::PartiallyCompliant,
+        ),
+        (
+            "rule-003",
+            AuditFramework::GDPR,
+            "数据加密传输",
+            "个人数据传输必须使用加密通道",
+            FindingSeverity::High,
+            "check_encryption_enabled",
+            ComplianceStatus::Compliant,
+        ),
+        (
+            "rule-004",
+            AuditFramework::SOX,
+            "财务数据完整性",
+            "财务主数据变更必须有完整的审批记录",
+            FindingSeverity::Critical,
+            "check_approval_trail",
+            ComplianceStatus::NonCompliant,
+        ),
+        (
+            "rule-005",
+            AuditFramework::SOX,
+            "数据访问权限分离",
+            "财务数据的录入与审批必须由不同人员完成",
+            FindingSeverity::High,
+            "check_segregation_of_duties",
+            ComplianceStatus::PartiallyCompliant,
+        ),
+        (
+            "rule-006",
+            AuditFramework::ISO27001,
+            "访问控制策略",
+            "所有数据访问必须有明确的授权策略",
+            FindingSeverity::Medium,
+            "check_access_control_policy",
+            ComplianceStatus::Compliant,
+        ),
+        (
+            "rule-007",
+            AuditFramework::ISO27001,
+            "数据分类标注",
+            "所有数据资产必须有分类分级标注",
+            FindingSeverity::Medium,
+            "check_data_classification",
+            ComplianceStatus::PartiallyCompliant,
+        ),
+        (
+            "rule-008",
+            AuditFramework::DataGovernance,
+            "数据质量监控",
+            "核心主数据必须配置质量规则并定期执行",
+            FindingSeverity::Medium,
+            "check_quality_rules_configured",
+            ComplianceStatus::Compliant,
+        ),
+        (
+            "rule-009",
+            AuditFramework::DataGovernance,
+            "数据血缘追溯",
+            "核心数据必须可追溯至数据源",
+            FindingSeverity::Low,
+            "check_lineage_traceability",
+            ComplianceStatus::Compliant,
+        ),
+        (
+            "rule-010",
+            AuditFramework::InternalPolicy,
+            "数据归档策略",
+            "历史数据必须按策略归档",
+            FindingSeverity::Low,
+            "check_archive_policy",
+            ComplianceStatus::PendingReview,
+        ),
     ];
 
     let mut rules = store.rules.lock().await;
@@ -17591,12 +18215,72 @@ async fn ensure_compliance_audit_initialized() {
     }
 
     // 预置审计发现
-    let finding_seeds: Vec<(&str, &str, &str, &str, FindingSeverity, &str, &str, FindingStatus, i64)> = vec![
-        ("finding-001", "rule-002", "customer", "CUST-2026-001", FindingSeverity::Critical, "数据主体删除请求超期未响应（35天）", "建立 DSAR 工单自动跟踪与告警机制", FindingStatus::Open, 5),
-        ("finding-002", "rule-004", "account_subject", "ACC-1001", FindingSeverity::Critical, "会计科目变更缺少审批记录", "启用变更审批工作流，补录审批记录", FindingStatus::InProgress, 3),
-        ("finding-003", "rule-005", "vendor_payment", "VP-2026-089", FindingSeverity::High, "供应商付款录入与审批为同一人", "拆分录入与审批角色，复核历史记录", FindingStatus::Open, 2),
-        ("finding-004", "rule-007", "material", "MAT-001", FindingSeverity::Medium, "物料主数据缺少分类分级标注", "批量补充分类标注并更新元数据", FindingStatus::Open, 7),
-        ("finding-005", "rule-010", "customer", "CUST-2025-099", FindingSeverity::Low, "超过2年未活跃客户未归档", "执行归档操作并更新归档策略", FindingStatus::Resolved, 10),
+    let finding_seeds: Vec<(
+        &str,
+        &str,
+        &str,
+        &str,
+        FindingSeverity,
+        &str,
+        &str,
+        FindingStatus,
+        i64,
+    )> = vec![
+        (
+            "finding-001",
+            "rule-002",
+            "customer",
+            "CUST-2026-001",
+            FindingSeverity::Critical,
+            "数据主体删除请求超期未响应（35天）",
+            "建立 DSAR 工单自动跟踪与告警机制",
+            FindingStatus::Open,
+            5,
+        ),
+        (
+            "finding-002",
+            "rule-004",
+            "account_subject",
+            "ACC-1001",
+            FindingSeverity::Critical,
+            "会计科目变更缺少审批记录",
+            "启用变更审批工作流，补录审批记录",
+            FindingStatus::InProgress,
+            3,
+        ),
+        (
+            "finding-003",
+            "rule-005",
+            "vendor_payment",
+            "VP-2026-089",
+            FindingSeverity::High,
+            "供应商付款录入与审批为同一人",
+            "拆分录入与审批角色，复核历史记录",
+            FindingStatus::Open,
+            2,
+        ),
+        (
+            "finding-004",
+            "rule-007",
+            "material",
+            "MAT-001",
+            FindingSeverity::Medium,
+            "物料主数据缺少分类分级标注",
+            "批量补充分类标注并更新元数据",
+            FindingStatus::Open,
+            7,
+        ),
+        (
+            "finding-005",
+            "rule-010",
+            "customer",
+            "CUST-2025-099",
+            FindingSeverity::Low,
+            "超过2年未活跃客户未归档",
+            "执行归档操作并更新归档策略",
+            FindingStatus::Resolved,
+            10,
+        ),
     ];
 
     let mut findings = store.findings.lock().await;
@@ -17724,10 +18408,7 @@ async fn run_compliance_check(req: &ComplianceCheckRequest) -> Vec<AuditFinding>
                     entity_type: entity_type.clone(),
                     entity_id: entity_id.clone(),
                     severity: rule.severity.clone(),
-                    description: format!(
-                        "规则「{}」检查未通过：{}",
-                        rule.name, rule.description
-                    ),
+                    description: format!("规则「{}」检查未通过：{}", rule.name, rule.description),
                     evidence: serde_json::json!({
                         "checked_at": now,
                         "rule_name": rule.name,
@@ -17790,16 +18471,11 @@ async fn get_audit_findings(query: &AuditFindingQuery) -> Vec<AuditFinding> {
 }
 
 /// 解决审计发现
-async fn resolve_finding(
-    finding_id: &str,
-    req: &ResolveFindingRequest,
-) -> Option<AuditFinding> {
+async fn resolve_finding(finding_id: &str, req: &ResolveFindingRequest) -> Option<AuditFinding> {
     ensure_compliance_audit_initialized().await;
     let store = get_compliance_audit_store();
     let mut findings = store.findings.lock().await;
-    let finding = findings
-        .iter_mut()
-        .find(|f| f.finding_id == finding_id)?;
+    let finding = findings.iter_mut().find(|f| f.finding_id == finding_id)?;
     finding.status = parse_finding_status(&req.status).unwrap_or(FindingStatus::Resolved);
     if let Some(ref note) = req.resolution_note {
         finding.evidence = serde_json::json!({
@@ -17888,8 +18564,7 @@ async fn get_audit_scorecard(framework: Option<&str>) -> AuditScorecard {
         .and_then(parse_audit_framework)
         .unwrap_or(AuditFramework::DataGovernance);
 
-    let fw_rules: Vec<&ComplianceRule> =
-        rules.iter().filter(|r| r.framework == fw).collect();
+    let fw_rules: Vec<&ComplianceRule> = rules.iter().filter(|r| r.framework == fw).collect();
     let total = fw_rules.len();
     let compliant = fw_rules
         .iter()
@@ -18064,4 +18739,3 @@ pub async fn get_compliance_audit_stats_handler(
     let stats = get_compliance_audit_stats().await;
     Json(ApiResponse::success(stats, "合规审计统计获取成功"))
 }
-

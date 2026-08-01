@@ -34,7 +34,10 @@ pub fn iam_routes(state: &AppState) -> Router<AppState> {
             "/users/{user_id}/login-history",
             get(modules::iam::user::get_login_history),
         )
-        .route("/users/check-email", get(modules::iam::user::check_email_availability))
+        .route(
+            "/users/check-email",
+            get(modules::iam::user::check_email_availability),
+        )
         .route(
             "/users/check-username",
             get(modules::iam::user::check_username_availability),
@@ -89,14 +92,26 @@ pub fn iam_routes(state: &AppState) -> Router<AppState> {
             "/users/me/permissions/check",
             post(modules::iam::user::check_my_permission),
         )
-        .route("/users/me/password", post(modules::iam::user::change_my_password))
-        .route("/users/me/avatar", post(modules::iam::user::update_my_avatar))
+        .route(
+            "/users/me/password",
+            post(modules::iam::user::change_my_password),
+        )
+        .route(
+            "/users/me/avatar",
+            post(modules::iam::user::update_my_avatar),
+        )
         .route(
             "/users/me/preferences",
             put(modules::iam::user::update_preferences),
         )
-        .route("/users/batch-delete", post(modules::iam::user::batch_delete_users))
-        .route("/users/batch-update", put(modules::iam::user::batch_update_users))
+        .route(
+            "/users/batch-delete",
+            post(modules::iam::user::batch_delete_users),
+        )
+        .route(
+            "/users/batch-update",
+            put(modules::iam::user::batch_update_users),
+        )
         .route(
             "/users/{user_id}/roles/{role_id}",
             post(modules::iam::user::assign_user_role),

@@ -20,9 +20,10 @@ pub async fn list_production_orders(
     State(client): State<TypedServiceClient<MesApi>>,
 ) -> Json<ApiResponse<serde_json::Value>> {
     match client.list_production_orders(1, 100).await {
-        Ok(items) => {
-            Json(ApiResponse::success(serde_json::json!({ "items": items, "total": items.len() }), "获取生产订单列表成功"))
-        }
+        Ok(items) => Json(ApiResponse::success(
+            serde_json::json!({ "items": items, "total": items.len() }),
+            "获取生产订单列表成功",
+        )),
         Err(e) => {
             tracing::error!("调用MES服务获取生产订单列表失败: {}", e);
             Json(ApiResponse::error(500, "获取生产订单列表失败"))
@@ -35,9 +36,7 @@ pub async fn get_production_order(
     axum::extract::Path(id): axum::extract::Path<String>,
 ) -> Json<ApiResponse<serde_json::Value>> {
     match client.get_production_order(&id).await {
-        Ok(data) => {
-            Json(ApiResponse::success(data, "获取生产订单详情成功"))
-        }
+        Ok(data) => Json(ApiResponse::success(data, "获取生产订单详情成功")),
         Err(e) => {
             tracing::error!("调用MES服务获取生产订单详情失败: {}", e);
             Json(ApiResponse::error(500, "获取生产订单详情失败"))
@@ -49,9 +48,10 @@ pub async fn list_work_reports(
     State(client): State<TypedServiceClient<MesApi>>,
 ) -> Json<ApiResponse<serde_json::Value>> {
     match client.list_work_reports(1, 100).await {
-        Ok(items) => {
-            Json(ApiResponse::success(serde_json::json!({ "items": items, "total": items.len() }), "获取报工记录列表成功"))
-        }
+        Ok(items) => Json(ApiResponse::success(
+            serde_json::json!({ "items": items, "total": items.len() }),
+            "获取报工记录列表成功",
+        )),
         Err(e) => {
             tracing::error!("调用MES服务获取报工记录列表失败: {}", e);
             Json(ApiResponse::error(500, "获取报工记录列表失败"))
@@ -75,9 +75,7 @@ pub async fn submit_work_report(
     });
 
     match client.submit_work_report(&data).await {
-        Ok(data) => {
-            Json(ApiResponse::success(data, "提交报工记录成功"))
-        }
+        Ok(data) => Json(ApiResponse::success(data, "提交报工记录成功")),
         Err(e) => {
             tracing::error!("调用MES服务提交报工记录失败: {}", e);
             Json(ApiResponse::error(500, "提交报工记录失败"))
@@ -89,9 +87,10 @@ pub async fn list_equipment(
     State(client): State<TypedServiceClient<MesApi>>,
 ) -> Json<ApiResponse<serde_json::Value>> {
     match client.list_equipment(1, 100).await {
-        Ok(items) => {
-            Json(ApiResponse::success(serde_json::json!({ "items": items, "total": items.len() }), "获取设备列表成功"))
-        }
+        Ok(items) => Json(ApiResponse::success(
+            serde_json::json!({ "items": items, "total": items.len() }),
+            "获取设备列表成功",
+        )),
         Err(e) => {
             tracing::error!("调用MES服务获取设备列表失败: {}", e);
             Json(ApiResponse::error(500, "获取设备列表失败"))
@@ -104,9 +103,7 @@ pub async fn get_equipment(
     axum::extract::Path(id): axum::extract::Path<String>,
 ) -> Json<ApiResponse<serde_json::Value>> {
     match client.get_equipment(&id).await {
-        Ok(data) => {
-            Json(ApiResponse::success(data, "获取设备详情成功"))
-        }
+        Ok(data) => Json(ApiResponse::success(data, "获取设备详情成功")),
         Err(e) => {
             tracing::error!("调用MES服务获取设备详情失败: {}", e);
             Json(ApiResponse::error(500, "获取设备详情失败"))

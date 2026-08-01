@@ -3177,7 +3177,10 @@ async fn health_check_detailed() -> Json<ApiResponse<models::DetailedHealth>> {
             models::DependencyHealth {
                 name: "websocket".to_string(),
                 status: models::HealthStatus::Healthy,
-                message: format!("WS 连接: {}, 活跃订阅: {}", ws_connections, active_subscriptions),
+                message: format!(
+                    "WS 连接: {}, 活跃订阅: {}",
+                    ws_connections, active_subscriptions
+                ),
             },
             models::DependencyHealth {
                 name: "graphql".to_string(),

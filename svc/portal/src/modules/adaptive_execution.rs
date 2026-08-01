@@ -422,11 +422,7 @@ impl AdaptiveExecutorInner {
         complexity > threshold
     }
 
-    fn get_or_create_profile(
-        &mut self,
-        query_hash: &str,
-        query: &str,
-    ) -> ExecutionProfile {
+    fn get_or_create_profile(&mut self, query_hash: &str, query: &str) -> ExecutionProfile {
         if let Some(profile) = self.profiles.get(query_hash) {
             return profile.clone();
         }
@@ -452,11 +448,18 @@ impl AdaptiveExecutorInner {
             created_at: now_utc(),
         };
 
-        self.profiles.insert(query_hash.to_string(), profile.clone());
+        self.profiles
+            .insert(query_hash.to_string(), profile.clone());
         profile
     }
 
-    fn record_execution(&mut self, success: bool, complexity: f64, timeout_ms: u64, degraded: bool) {
+    fn record_execution(
+        &mut self,
+        success: bool,
+        complexity: f64,
+        timeout_ms: u64,
+        degraded: bool,
+    ) {
         self.metrics.total_queries += 1;
         if success {
             self.metrics.successful_queries += 1;
@@ -466,8 +469,7 @@ impl AdaptiveExecutorInner {
         if degraded {
             self.metrics.degraded_queries += 1;
         }
-        self.metrics.avg_complexity =
-            (self.metrics.avg_complexity * 0.9) + (complexity * 0.1);
+        self.metrics.avg_complexity = (self.metrics.avg_complexity * 0.9) + (complexity * 0.1);
         self.metrics.avg_timeout_ms =
             (self.metrics.avg_timeout_ms * 0.9) + (timeout_ms as f64 * 0.1);
         self.metrics.last_updated = now_utc();
@@ -609,11 +611,7 @@ impl AIQueryOptimizerInner {
         suggestions
     }
 
-    fn optimize(
-        &mut self,
-        query: &str,
-        apply: Option<Vec<SuggestionType>>,
-    ) -> OptimizedQueryPlan {
+    fn optimize(&mut self, query: &str, apply: Option<Vec<SuggestionType>>) -> OptimizedQueryPlan {
         let suggestions = self.analyze_query(query);
 
         let filtered: Vec<OptimizationSuggestion> = if let Some(types) = apply {
@@ -631,10 +629,7 @@ impl AIQueryOptimizerInner {
 
         let optimized_query = Self::apply_optimizations(query, &filtered);
 
-        let cache_key = format!(
-            "{:x}",
-            simple_hash(query)
-        );
+        let cache_key = format!("{:x}", simple_hash(query));
 
         let plan = OptimizedQueryPlan {
             original_query: query.to_string(),
@@ -658,9 +653,7 @@ impl AIQueryOptimizerInner {
             }
             match suggestion.suggestion_type {
                 SuggestionType::FieldPruning => {
-                    result = result
-                        .replace("...", "")
-                        .replace("fragment ", "# ");
+                    result = result.replace("...", "").replace("fragment ", "# ");
                 }
                 SuggestionType::PaginationOptimization => {
                     if !result.contains("first:") && !result.contains("last:") {
@@ -712,11 +705,7 @@ impl AIQueryOptimizer {
         }
     }
 
-    pub fn optimize(
-        &self,
-        query: &str,
-        apply: Option<Vec<SuggestionType>>,
-    ) -> OptimizedQueryPlan {
+    pub fn optimize(&self, query: &str, apply: Option<Vec<SuggestionType>>) -> OptimizedQueryPlan {
         let mut inner = self.inner.lock().unwrap();
         inner.optimize(query, apply)
     }
@@ -828,8 +817,7 @@ impl StreamManagerInner {
         self.subscribers
             .insert(id.clone(), StreamSubscribers::new());
         self.events.insert(id.clone(), Vec::new());
-        self.sequence_counters
-            .insert(id.clone(), AtomicU64::new(0));
+        self.sequence_counters.insert(id.clone(), AtomicU64::new(0));
 
         info
     }
@@ -877,8 +865,7 @@ impl StreamManagerInner {
             return Err(format!("Stream '{}' not found", stream_id));
         }
 
-        let sub_id = subscriber_id
-            .ok_or_else(|| "subscriber_id is required".to_string())?;
+        let sub_id = subscriber_id.ok_or_else(|| "subscriber_id is required".to_string())?;
 
         let removed = if let Some(subs) = self.subscribers.get_mut(stream_id) {
             subs.unsubscribe(&sub_id)
@@ -946,14 +933,7 @@ impl StreamManagerInner {
     fn get_events(&self, stream_id: &str, limit: usize) -> Vec<StreamEvent> {
         self.events
             .get(stream_id)
-            .map(|events| {
-                events
-                    .iter()
-                    .rev()
-                    .take(limit)
-                    .cloned()
-                    .collect()
-            })
+            .map(|events| events.iter().rev().take(limit).cloned().collect())
             .unwrap_or_default()
     }
 }
@@ -1100,10 +1080,7 @@ pub fn get_execution_metrics() -> ExecutionMetrics {
 
 // --- AI 查询优化 ---
 
-pub fn optimize_query(
-    query: &str,
-    apply: Option<Vec<SuggestionType>>,
-) -> OptimizedQueryPlan {
+pub fn optimize_query(query: &str, apply: Option<Vec<SuggestionType>>) -> OptimizedQueryPlan {
     ai_optimizer().optimize(query, apply)
 }
 
@@ -1123,25 +1100,15 @@ pub fn batch_optimize(
 
 // --- 流式订阅 ---
 
-pub fn create_stream(
-    name: String,
-    topic: String,
-    config: Option<StreamConfig>,
-) -> StreamInfo {
+pub fn create_stream(name: String, topic: String, config: Option<StreamConfig>) -> StreamInfo {
     stream_manager().create_stream(name, topic, config)
 }
 
-pub fn subscribe_stream(
-    stream_id: &str,
-    subscriber_id: Option<String>,
-) -> Result<String, String> {
+pub fn subscribe_stream(stream_id: &str, subscriber_id: Option<String>) -> Result<String, String> {
     stream_manager().subscribe(stream_id, subscriber_id)
 }
 
-pub fn unsubscribe_stream(
-    stream_id: &str,
-    subscriber_id: Option<String>,
-) -> Result<bool, String> {
+pub fn unsubscribe_stream(stream_id: &str, subscriber_id: Option<String>) -> Result<bool, String> {
     stream_manager().unsubscribe(stream_id, subscriber_id)
 }
 

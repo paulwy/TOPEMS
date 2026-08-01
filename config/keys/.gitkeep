@@ -1,0 +1,2 @@
+# 此目录用于存放 JWT RS256 非对称密钥对（jwt-private.pem / jwt-public.pem）。
+# 实际的 .pem 文件由 scripts/generate-jwt-keys.sh 本地生成，已被 .gitignore 排除，不会提交。

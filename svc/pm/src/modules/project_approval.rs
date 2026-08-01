@@ -31,7 +31,10 @@ pub fn create_routes(pool: PgPool, workflow_client: TypedServiceClient<WorkflowA
             "/projects/{project_id}/approval/action",
             post(handle_approval_action),
         )
-        .with_state(ApprovalState { pool, workflow_client })
+        .with_state(ApprovalState {
+            pool,
+            workflow_client,
+        })
 }
 
 /// 从环境变量读取项目审批关联的 Flow 工作流定义 ID

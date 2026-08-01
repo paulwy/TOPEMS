@@ -81,7 +81,8 @@ impl FinanceService {
         source_type: Option<String>,
         status: Option<String>,
     ) -> Result<Vec<VoucherGenerationRule>, TopemsError> {
-        let mut query = "SELECT * FROM finance_voucher_generation_rules WHERE tenant_id = $1".to_string();
+        let mut query =
+            "SELECT * FROM finance_voucher_generation_rules WHERE tenant_id = $1".to_string();
 
         if source_type.is_some() {
             query.push_str(" AND source_type = $2");
@@ -174,7 +175,9 @@ impl FinanceService {
         let source_type = req.source_type.unwrap_or(existing.source_type);
         let source_filter = req.source_filter.or(existing.source_filter);
         let mapping_config = req.mapping_config.unwrap_or(existing.mapping_config);
-        let output_voucher_type = req.output_voucher_type.unwrap_or(existing.output_voucher_type);
+        let output_voucher_type = req
+            .output_voucher_type
+            .unwrap_or(existing.output_voucher_type);
         let status = req.status.unwrap_or(existing.status);
         let priority = req.priority.unwrap_or(existing.priority);
         let description = req.description.or(existing.description);
@@ -223,11 +226,13 @@ impl FinanceService {
             return Err(TopemsError::NotFound("生成规则不存在".to_string()));
         }
 
-        sqlx::query("DELETE FROM finance_voucher_generation_rules WHERE tenant_id = $1 AND id = $2")
-            .bind(tenant_id)
-            .bind(rule_id)
-            .execute(&self.db_pool)
-            .await?;
+        sqlx::query(
+            "DELETE FROM finance_voucher_generation_rules WHERE tenant_id = $1 AND id = $2",
+        )
+        .bind(tenant_id)
+        .bind(rule_id)
+        .execute(&self.db_pool)
+        .await?;
 
         Ok(())
     }

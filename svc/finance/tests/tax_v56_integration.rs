@@ -31,8 +31,14 @@ async fn test_generate_tax_form() {
         .await;
 
     assert_eq!(status, 200, "生成税务表单应该返回 200");
-    assert!(resp["success"].as_bool().unwrap_or(false), "响应 success 应为 true");
-    assert!(resp["data"]["form"]["id"].is_string(), "data 应包含 form.id 字段");
+    assert!(
+        resp["success"].as_bool().unwrap_or(false),
+        "响应 success 应为 true"
+    );
+    assert!(
+        resp["data"]["form"]["id"].is_string(),
+        "data 应包含 form.id 字段"
+    );
 }
 
 #[tokio::test]
@@ -43,12 +49,13 @@ async fn test_get_tax_forms() {
     }
     let ctx = TestContext::new().await;
 
-    let (status, resp) = ctx
-        .request("GET", "/finance-v56/tax/forms", None)
-        .await;
+    let (status, resp) = ctx.request("GET", "/finance-v56/tax/forms", None).await;
 
     assert_eq!(status, 200, "获取税务表单列表应该返回 200");
-    assert!(resp["success"].as_bool().unwrap_or(false), "响应 success 应为 true");
+    assert!(
+        resp["success"].as_bool().unwrap_or(false),
+        "响应 success 应为 true"
+    );
     assert!(resp["data"].is_array(), "data 应该是数组");
 }
 
@@ -72,8 +79,14 @@ async fn test_calculate_tax() {
         .await;
 
     assert_eq!(status, 200, "计算税金应该返回 200");
-    assert!(resp["success"].as_bool().unwrap_or(false), "响应 success 应为 true");
-    assert!(resp["data"]["tax_amount"].is_number(), "data 应包含 tax_amount 字段");
+    assert!(
+        resp["success"].as_bool().unwrap_or(false),
+        "响应 success 应为 true"
+    );
+    assert!(
+        resp["data"]["tax_amount"].is_number(),
+        "data 应包含 tax_amount 字段"
+    );
     assert!(resp["data"]["rate"].is_number(), "data 应包含 rate 字段");
 }
 
@@ -85,12 +98,13 @@ async fn test_get_tax_rates() {
     }
     let ctx = TestContext::new().await;
 
-    let (status, resp) = ctx
-        .request("GET", "/finance-v56/tax/rates", None)
-        .await;
+    let (status, resp) = ctx.request("GET", "/finance-v56/tax/rates", None).await;
 
     assert_eq!(status, 200, "获取税率列表应该返回 200");
-    assert!(resp["success"].as_bool().unwrap_or(false), "响应 success 应为 true");
+    assert!(
+        resp["success"].as_bool().unwrap_or(false),
+        "响应 success 应为 true"
+    );
     assert!(resp["data"].is_array(), "data 应该是数组");
 }
 
@@ -103,11 +117,18 @@ async fn test_lookup_tax_rate() {
     let ctx = TestContext::new().await;
 
     let (status, resp) = ctx
-        .request("GET", "/finance-v56/tax/rates/lookup?tax_type=vat&jurisdiction=CN", None)
+        .request(
+            "GET",
+            "/finance-v56/tax/rates/lookup?tax_type=vat&jurisdiction=CN",
+            None,
+        )
         .await;
 
     assert_eq!(status, 200, "查询税率应该返回 200");
-    assert!(resp["success"].as_bool().unwrap_or(false), "响应 success 应为 true");
+    assert!(
+        resp["success"].as_bool().unwrap_or(false),
+        "响应 success 应为 true"
+    );
     assert!(resp["data"]["rate"].is_number(), "data 应包含 rate 字段");
 }
 
@@ -130,7 +151,10 @@ async fn test_create_tax_plan() {
         .await;
 
     assert_eq!(status, 200, "创建税务筹划方案应该返回 200");
-    assert!(resp["success"].as_bool().unwrap_or(false), "响应 success 应为 true");
+    assert!(
+        resp["success"].as_bool().unwrap_or(false),
+        "响应 success 应为 true"
+    );
     assert!(resp["data"]["id"].is_string(), "data 应包含 id 字段");
 }
 
@@ -155,8 +179,14 @@ async fn test_analyze_scenario() {
         .await;
 
     assert_eq!(status, 200, "税务场景分析应该返回 200");
-    assert!(resp["success"].as_bool().unwrap_or(false), "响应 success 应为 true");
-    assert!(resp["data"]["projected_tax"].is_number(), "data 应包含 projected_tax 字段");
+    assert!(
+        resp["success"].as_bool().unwrap_or(false),
+        "响应 success 应为 true"
+    );
+    assert!(
+        resp["data"]["projected_tax"].is_number(),
+        "data 应包含 projected_tax 字段"
+    );
 }
 
 #[tokio::test]
@@ -172,6 +202,12 @@ async fn test_get_tax_compliance() {
         .await;
 
     assert_eq!(status, 200, "获取税务合规状态应该返回 200");
-    assert!(resp["success"].as_bool().unwrap_or(false), "响应 success 应为 true");
-    assert!(resp["data"]["compliant"].is_boolean(), "data 应包含 compliant 字段");
+    assert!(
+        resp["success"].as_bool().unwrap_or(false),
+        "响应 success 应为 true"
+    );
+    assert!(
+        resp["data"]["compliant"].is_boolean(),
+        "data 应包含 compliant 字段"
+    );
 }

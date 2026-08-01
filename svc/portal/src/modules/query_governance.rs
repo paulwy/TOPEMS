@@ -426,7 +426,11 @@ impl PersistedQueryManager {
         self.queries.get(query_hash).map(|e| e.query_text.clone())
     }
 
-    fn update_status(&mut self, query_hash: &str, status: QueryStatus) -> Option<PersistedQueryGql> {
+    fn update_status(
+        &mut self,
+        query_hash: &str,
+        status: QueryStatus,
+    ) -> Option<PersistedQueryGql> {
         if let Some(entry) = self.queries.get_mut(query_hash) {
             entry.status = status;
             entry.updated_at = Utc::now();
@@ -439,11 +443,18 @@ impl PersistedQueryManager {
     fn record_usage(&self, query_hash: &str, latency_ms: u64) {
         if let Some(entry) = self.queries.get(query_hash) {
             entry.usage_count.fetch_add(1, Ordering::Relaxed);
-            entry.total_latency_ms.fetch_add(latency_ms, Ordering::Relaxed);
+            entry
+                .total_latency_ms
+                .fetch_add(latency_ms, Ordering::Relaxed);
         }
     }
 
-    fn list(&self, page: u32, page_size: u32, status: Option<QueryStatus>) -> PersistedQueryListGql {
+    fn list(
+        &self,
+        page: u32,
+        page_size: u32,
+        status: Option<QueryStatus>,
+    ) -> PersistedQueryListGql {
         let filtered: Vec<PersistedQueryGql> = self
             .queries
             .values()
@@ -506,12 +517,7 @@ impl PersistedQueryManager {
     fn search_by_tag(&self, tag: &str) -> Vec<PersistedQueryGql> {
         self.tag_index
             .get(tag)
-            .map(|hashes| {
-                hashes
-                    .iter()
-                    .filter_map(|h| self.get(h))
-                    .collect()
-            })
+            .map(|hashes| hashes.iter().filter_map(|h| self.get(h)).collect())
             .unwrap_or_default()
     }
 }
@@ -580,15 +586,23 @@ impl QueryAuditStore {
                 stats.total_queries += 1;
                 stats.failed_queries += 1;
             }
-            AuditEventType::QueryDenied | AuditEventType::QuotaExceeded | AuditEventType::UnauthorizedAccess => {
+            AuditEventType::QueryDenied
+            | AuditEventType::QuotaExceeded
+            | AuditEventType::UnauthorizedAccess => {
                 stats.denied_queries += 1;
             }
             _ => {}
         }
         stats.avg_latency_ms = (stats.avg_latency_ms * 0.95) + (entry.latency_ms as f64 * 0.05);
         stats.avg_complexity = (stats.avg_complexity * 0.95) + (entry.complexity as f64 * 0.05);
-        *stats.by_risk_level.entry(format!("{:?}", entry.risk_level)).or_insert(0) += 1;
-        *stats.by_event_type.entry(format!("{:?}", entry.event_type)).or_insert(0) += 1;
+        *stats
+            .by_risk_level
+            .entry(format!("{:?}", entry.risk_level))
+            .or_insert(0) += 1;
+        *stats
+            .by_event_type
+            .entry(format!("{:?}", entry.event_type))
+            .or_insert(0) += 1;
     }
 
     fn get_stats(&self) -> AuditStatsGql {
@@ -607,20 +621,32 @@ impl QueryAuditStore {
         }
         stats.top_users = user_counts
             .into_iter()
-            .map(|(k, v)| UserQueryCountGql { user_id: k, query_count: v })
+            .map(|(k, v)| UserQueryCountGql {
+                user_id: k,
+                query_count: v,
+            })
             .collect();
         stats.top_queries = query_counts
             .into_iter()
             .map(|(k, (count, total_lat))| QueryCountGql {
                 query_hash: k,
                 count,
-                avg_latency_ms: if count > 0 { total_lat / count as f64 } else { 0.0 },
+                avg_latency_ms: if count > 0 {
+                    total_lat / count as f64
+                } else {
+                    0.0
+                },
             })
             .collect();
         stats
     }
 
-    fn query(&self, filter: &QueryAuditFilterInput, page: u32, page_size: u32) -> Vec<QueryAuditEntryGql> {
+    fn query(
+        &self,
+        filter: &QueryAuditFilterInput,
+        page: u32,
+        page_size: u32,
+    ) -> Vec<QueryAuditEntryGql> {
         let filtered: Vec<&QueryAuditEntryGql> = self
             .entries
             .iter()
@@ -732,7 +758,12 @@ impl QueryAuditor {
         self.store.lock().unwrap().get_stats()
     }
 
-    fn query(&self, filter: QueryAuditFilterInput, page: u32, page_size: u32) -> Vec<QueryAuditEntryGql> {
+    fn query(
+        &self,
+        filter: QueryAuditFilterInput,
+        page: u32,
+        page_size: u32,
+    ) -> Vec<QueryAuditEntryGql> {
         self.store.lock().unwrap().query(&filter, page, page_size)
     }
 }
@@ -858,7 +889,8 @@ impl ApprovalWorkflow {
         request.reviewer_id = Some(input.reviewer_id);
         request.review_notes = input.review_notes;
         if let Some(hours) = input.expires_in_hours {
-            request.expires_at = Some((Utc::now() + chrono::Duration::hours(hours as i64)).to_rfc3339());
+            request.expires_at =
+                Some((Utc::now() + chrono::Duration::hours(hours as i64)).to_rfc3339());
         }
         Some(request.clone())
     }
@@ -876,18 +908,19 @@ impl ApprovalWorkflow {
     }
 
     fn is_approved(&self, query_hash: &str, user_id: &str) -> bool {
-        self.requests
-            .values()
-            .any(|r| {
-                r.query_hash == query_hash
-                    && r.requester_id == user_id
-                    && r.status == ApprovalStatus::Approved
-                    && r.expires_at.as_ref().map(|e| {
+        self.requests.values().any(|r| {
+            r.query_hash == query_hash
+                && r.requester_id == user_id
+                && r.status == ApprovalStatus::Approved
+                && r.expires_at
+                    .as_ref()
+                    .map(|e| {
                         chrono::DateTime::parse_from_rfc3339(e)
                             .map(|dt| dt.with_timezone(&Utc) > Utc::now())
                             .unwrap_or(false)
-                    }).unwrap_or(true)
-            })
+                    })
+                    .unwrap_or(true)
+        })
     }
 }
 
@@ -909,7 +942,10 @@ impl GovernanceEngine {
     }
 
     fn create_policy(&mut self, input: GovernancePolicyInput) -> GovernancePolicyGql {
-        let policy_id = format!("policy_{}", self.policy_counter.fetch_add(1, Ordering::Relaxed));
+        let policy_id = format!(
+            "policy_{}",
+            self.policy_counter.fetch_add(1, Ordering::Relaxed)
+        );
         let now = Utc::now();
         let rules = input
             .rules
@@ -958,7 +994,8 @@ impl GovernanceEngine {
             pii: input.pii.unwrap_or(false),
             audit: input.audit.unwrap_or(true),
         };
-        self.field_controls.insert(input.field_path, control.clone());
+        self.field_controls
+            .insert(input.field_path, control.clone());
         control
     }
 
@@ -993,7 +1030,10 @@ impl GovernanceEngine {
                         if control.denied_roles.contains(role) {
                             field_restrictions.push(field.clone());
                             if control.audit {
-                                warnings.push(format!("User role {} denied access to field {}", role, field));
+                                warnings.push(format!(
+                                    "User role {} denied access to field {}",
+                                    role, field
+                                ));
                             }
                         }
                     }
@@ -1014,7 +1054,10 @@ impl GovernanceEngine {
                 applied_policies.push(policy_id.clone());
                 for rule in &policy.rules {
                     if rule.enabled && rule.severity == "critical" {
-                        warnings.push(format!("Policy {} rule {} triggered", policy_id, rule.rule_id));
+                        warnings.push(format!(
+                            "Policy {} rule {} triggered",
+                            policy_id, rule.rule_id
+                        ));
                     }
                 }
             }
@@ -1057,15 +1100,24 @@ impl EnterpriseGovernance {
     }
 
     fn check_quota(&self, entity_type: &str, entity_id: &str) -> Option<(bool, u64)> {
-        self.quota_tracker.lock().unwrap().check_quota(entity_type, entity_id)
+        self.quota_tracker
+            .lock()
+            .unwrap()
+            .check_quota(entity_type, entity_id)
     }
 
     fn record_quota_usage(&self, entity_type: &str, entity_id: &str) -> u64 {
-        self.quota_tracker.lock().unwrap().record_usage(entity_type, entity_id)
+        self.quota_tracker
+            .lock()
+            .unwrap()
+            .record_usage(entity_type, entity_id)
     }
 
     fn get_quota(&self, entity_type: &str, entity_id: &str) -> Option<QueryQuotaGql> {
-        self.quota_tracker.lock().unwrap().get_quota(entity_type, entity_id)
+        self.quota_tracker
+            .lock()
+            .unwrap()
+            .get_quota(entity_type, entity_id)
     }
 
     fn create_approval_request(&self, input: ApprovalRequestInput) -> QueryApprovalRequestGql {
@@ -1077,7 +1129,10 @@ impl EnterpriseGovernance {
     }
 
     fn get_approval_request(&self, request_id: &str) -> Option<QueryApprovalRequestGql> {
-        self.approval_workflow.lock().unwrap().get_request(request_id)
+        self.approval_workflow
+            .lock()
+            .unwrap()
+            .get_request(request_id)
     }
 
     fn list_pending_approvals(&self) -> Vec<QueryApprovalRequestGql> {
@@ -1085,7 +1140,10 @@ impl EnterpriseGovernance {
     }
 
     fn is_query_approved(&self, query_hash: &str, user_id: &str) -> bool {
-        self.approval_workflow.lock().unwrap().is_approved(query_hash, user_id)
+        self.approval_workflow
+            .lock()
+            .unwrap()
+            .is_approved(query_hash, user_id)
     }
 
     fn create_policy(&self, input: GovernancePolicyInput) -> GovernancePolicyGql {
@@ -1101,11 +1159,17 @@ impl EnterpriseGovernance {
     }
 
     fn set_field_control(&self, input: FieldAccessControlInput) -> FieldAccessControlGql {
-        self.governance_engine.lock().unwrap().set_field_control(input)
+        self.governance_engine
+            .lock()
+            .unwrap()
+            .set_field_control(input)
     }
 
     fn get_field_control(&self, field_path: &str) -> Option<FieldAccessControlGql> {
-        self.governance_engine.lock().unwrap().get_field_control(field_path)
+        self.governance_engine
+            .lock()
+            .unwrap()
+            .get_field_control(field_path)
     }
 
     fn check_governance(
@@ -1115,10 +1179,12 @@ impl EnterpriseGovernance {
         user_roles: &[String],
         query_fields: &[String],
     ) -> GovernanceCheckResultGql {
-        self.governance_engine
-            .lock()
-            .unwrap()
-            .check_governance(query_hash, user_id, user_roles, query_fields)
+        self.governance_engine.lock().unwrap().check_governance(
+            query_hash,
+            user_id,
+            user_roles,
+            query_fields,
+        )
     }
 }
 
@@ -1151,15 +1217,31 @@ pub fn get_persisted_query(query_hash: &str) -> Option<PersistedQueryGql> {
 }
 
 pub fn get_persisted_query_text(query_hash: &str) -> Option<String> {
-    persisted_query_manager().lock().unwrap().get_by_hash(query_hash)
+    persisted_query_manager()
+        .lock()
+        .unwrap()
+        .get_by_hash(query_hash)
 }
 
-pub fn list_persisted_queries(page: u32, page_size: u32, status: Option<QueryStatus>) -> PersistedQueryListGql {
-    persisted_query_manager().lock().unwrap().list(page, page_size, status)
+pub fn list_persisted_queries(
+    page: u32,
+    page_size: u32,
+    status: Option<QueryStatus>,
+) -> PersistedQueryListGql {
+    persisted_query_manager()
+        .lock()
+        .unwrap()
+        .list(page, page_size, status)
 }
 
-pub fn update_persisted_query_status(query_hash: &str, status: QueryStatus) -> Option<PersistedQueryGql> {
-    persisted_query_manager().lock().unwrap().update_status(query_hash, status)
+pub fn update_persisted_query_status(
+    query_hash: &str,
+    status: QueryStatus,
+) -> Option<PersistedQueryGql> {
+    persisted_query_manager()
+        .lock()
+        .unwrap()
+        .update_status(query_hash, status)
 }
 
 pub fn delete_persisted_query(query_hash: &str) -> bool {
@@ -1167,11 +1249,17 @@ pub fn delete_persisted_query(query_hash: &str) -> bool {
 }
 
 pub fn add_persisted_query_tag(query_hash: &str, tag: &str) -> Option<PersistedQueryGql> {
-    persisted_query_manager().lock().unwrap().add_tag(query_hash, tag)
+    persisted_query_manager()
+        .lock()
+        .unwrap()
+        .add_tag(query_hash, tag)
 }
 
 pub fn remove_persisted_query_tag(query_hash: &str, tag: &str) -> Option<PersistedQueryGql> {
-    persisted_query_manager().lock().unwrap().remove_tag(query_hash, tag)
+    persisted_query_manager()
+        .lock()
+        .unwrap()
+        .remove_tag(query_hash, tag)
 }
 
 pub fn search_persisted_queries_by_tag(tag: &str) -> Vec<PersistedQueryGql> {
@@ -1179,7 +1267,10 @@ pub fn search_persisted_queries_by_tag(tag: &str) -> Vec<PersistedQueryGql> {
 }
 
 pub fn record_persisted_query_usage(query_hash: &str, latency_ms: u64) {
-    persisted_query_manager().lock().unwrap().record_usage(query_hash, latency_ms);
+    persisted_query_manager()
+        .lock()
+        .unwrap()
+        .record_usage(query_hash, latency_ms);
 }
 
 pub fn log_audit_event(
@@ -1222,7 +1313,11 @@ pub fn get_audit_stats() -> AuditStatsGql {
     query_auditor().get_stats()
 }
 
-pub fn query_audit_entries(filter: QueryAuditFilterInput, page: u32, page_size: u32) -> Vec<QueryAuditEntryGql> {
+pub fn query_audit_entries(
+    filter: QueryAuditFilterInput,
+    page: u32,
+    page_size: u32,
+) -> Vec<QueryAuditEntryGql> {
     query_auditor().query(filter, page, page_size)
 }
 
@@ -1350,7 +1445,8 @@ pub fn init_query_governance() {
         ("BusinessStats.*", vec!["*"], vec![], false, false),
     ];
 
-    for (field_path, allowed_roles, denied_roles, requires_approval, pii) in default_field_controls {
+    for (field_path, allowed_roles, denied_roles, requires_approval, pii) in default_field_controls
+    {
         set_field_access_control(FieldAccessControlInput {
             field_path: field_path.to_string(),
             allowed_roles: Some(allowed_roles.iter().map(|s| s.to_string()).collect()),
@@ -1440,7 +1536,11 @@ impl QueryGovernanceQueryRoot {
         page: Option<u32>,
         page_size: Option<u32>,
     ) -> async_graphql::Result<Vec<QueryAuditEntryGql>> {
-        Ok(query_audit_entries(filter, page.unwrap_or(1), page_size.unwrap_or(20)))
+        Ok(query_audit_entries(
+            filter,
+            page.unwrap_or(1),
+            page_size.unwrap_or(20),
+        ))
     }
 
     /// 获取查询配额
@@ -1505,7 +1605,12 @@ impl QueryGovernanceQueryRoot {
         user_roles: Vec<String>,
         query_fields: Vec<String>,
     ) -> async_graphql::Result<GovernanceCheckResultGql> {
-        Ok(check_query_governance(&query_hash, &user_id, &user_roles, &query_fields))
+        Ok(check_query_governance(
+            &query_hash,
+            &user_id,
+            &user_roles,
+            &query_fields,
+        ))
     }
 }
 

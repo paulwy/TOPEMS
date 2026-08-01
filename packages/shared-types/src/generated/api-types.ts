@@ -83,6 +83,31 @@ export namespace FinanceTypes {
 }
 
 // ============================================================================
+// HRM 模块类型
+// ============================================================================
+
+export namespace HrmTypes {
+  // 员工管理
+  export type Employee = ApiComponents['schemas']['Employee'];
+  // 部门管理
+  export type Department = ApiComponents['schemas']['Department'];
+  // 公司管理
+  export type Company = ApiComponents['schemas']['Company'];
+  // 合同管理
+  export type Contract = ApiComponents['schemas']['Contract'];
+  // 职位管理
+  export type Position = ApiComponents['schemas']['Position'];
+
+  // TODO: 以下类型待 OpenAPI 规范补充后生成
+  // - CreateEmployeeRequest, UpdateEmployeeRequest
+  // - CreateDepartmentRequest, UpdateDepartmentRequest
+  // - CreateCompanyRequest, UpdateCompanyRequest
+  // - AttendanceRecord, CreateAttendanceRequest, UpdateAttendanceRequest
+  // - CreateContractRequest, UpdateContractRequest, ContractRenewal
+  // - LeaveRequest, PayrollRecord, PerformanceReview, RecruitmentCandidate
+}
+
+// ============================================================================
 // MasterData 模块类型
 // ============================================================================
 

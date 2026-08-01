@@ -1645,13 +1645,8 @@ impl ErpEventHandlers {
             _ => "active",
         };
 
-        self.upsert_local_master_data_ref(
-            &event,
-            "employee",
-            employee_name,
-            status,
-        )
-        .await?;
+        self.upsert_local_master_data_ref(&event, "employee", employee_name, status)
+            .await?;
 
         Ok(())
     }
@@ -1683,13 +1678,8 @@ impl ErpEventHandlers {
             _ => "active",
         };
 
-        self.upsert_local_master_data_ref(
-            &event,
-            "organization",
-            org_name,
-            status,
-        )
-        .await?;
+        self.upsert_local_master_data_ref(&event, "organization", org_name, status)
+            .await?;
 
         Ok(())
     }
@@ -1718,13 +1708,8 @@ impl ErpEventHandlers {
             _ => "active",
         };
 
-        self.upsert_local_master_data_ref(
-            &event,
-            "customer",
-            customer_name,
-            status,
-        )
-        .await?;
+        self.upsert_local_master_data_ref(&event, "customer", customer_name, status)
+            .await?;
 
         Ok(())
     }
@@ -1753,13 +1738,8 @@ impl ErpEventHandlers {
             _ => "active",
         };
 
-        self.upsert_local_master_data_ref(
-            &event,
-            "material",
-            material_name,
-            status,
-        )
-        .await?;
+        self.upsert_local_master_data_ref(&event, "material", material_name, status)
+            .await?;
 
         Ok(())
     }

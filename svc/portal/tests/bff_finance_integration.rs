@@ -54,7 +54,10 @@ fn test_sla_policy_detail_url_formation() {
     let core_url = "http://localhost:8000";
     let policy_id = "policy-123";
     let url = format!("{}/api/core/master/sla-policies/{}", core_url, policy_id);
-    assert_eq!(url, "http://localhost:8000/api/core/master/sla-policies/policy-123");
+    assert_eq!(
+        url,
+        "http://localhost:8000/api/core/master/sla-policies/policy-123"
+    );
 }
 
 #[test]
@@ -72,7 +75,10 @@ fn test_ticket_sla_url_formation() {
 fn test_sla_stats_url_formation() {
     let core_url = "http://localhost:8000";
     let url = format!("{}/api/core/master/tickets/sla-stats", core_url);
-    assert_eq!(url, "http://localhost:8000/api/core/master/tickets/sla-stats");
+    assert_eq!(
+        url,
+        "http://localhost:8000/api/core/master/tickets/sla-stats"
+    );
 }
 
 #[test]
@@ -94,7 +100,10 @@ fn test_ticket_detail_url_formation() {
 fn test_ticket_comments_url_formation() {
     let core_url = "http://localhost:8000";
     let ticket_id = "t-789";
-    let url = format!("{}/api/core/master/tickets/{}/comments", core_url, ticket_id);
+    let url = format!(
+        "{}/api/core/master/tickets/{}/comments",
+        core_url, ticket_id
+    );
     assert_eq!(
         url,
         "http://localhost:8000/api/core/master/tickets/t-789/comments"
@@ -175,10 +184,7 @@ fn test_forward_headers_collects_all_present() {
 
     // 复现 forward_headers 的逻辑
     let mut result: Vec<(String, String)> = Vec::new();
-    if let Some(auth) = headers
-        .get("authorization")
-        .and_then(|v| v.to_str().ok())
-    {
+    if let Some(auth) = headers.get("authorization").and_then(|v| v.to_str().ok()) {
         result.push(("authorization".to_string(), auth.to_string()));
     }
     if let Some(tid) = headers.get("x-tenant-id").and_then(|v| v.to_str().ok()) {
@@ -303,10 +309,7 @@ fn test_portal_legacy_route_alias() {
 
     assert!(canonical.starts_with("/api/"));
     assert!(legacy_alias.starts_with("/api/v1/"));
-    assert!(
-        canonical != legacy_alias,
-        "标准路由和旧版别名不应相同"
-    );
+    assert!(canonical != legacy_alias, "标准路由和旧版别名不应相同");
 }
 
 /// ============ EventPublisher 不可用降级测试 ============
@@ -328,8 +331,8 @@ fn test_event_publisher_unavailable_does_not_block() {
 
 #[test]
 fn test_proxy_response_pattern_for_success() {
-    use topems_shared::ApiResponse;
     use serde_json::Value;
+    use topems_shared::ApiResponse;
 
     // 模拟代理成功响应的模式（对应 status.is_success() 分支）
     let upstream_json: Value = serde_json::json!({"policies": [], "total": 0});
@@ -342,16 +345,13 @@ fn test_proxy_response_pattern_for_success() {
 
 #[test]
 fn test_proxy_response_pattern_for_upstream_error() {
-    use topems_shared::ApiResponse;
     use serde_json::Value;
+    use topems_shared::ApiResponse;
 
     // 模拟上游返回错误的模式（对应 !status.is_success() 分支）
     let upstream_status: u16 = 404;
     let upstream_json: Value = serde_json::json!({"error": "not found"});
-    let resp: ApiResponse<Value> = ApiResponse::error(
-        upstream_status,
-        &upstream_json.to_string(),
-    );
+    let resp: ApiResponse<Value> = ApiResponse::error(upstream_status, &upstream_json.to_string());
 
     assert_eq!(resp.code, 404);
     assert!(!resp.success);
@@ -360,8 +360,8 @@ fn test_proxy_response_pattern_for_upstream_error() {
 
 #[test]
 fn test_proxy_response_pattern_for_connection_failure() {
-    use topems_shared::ApiResponse;
     use serde_json::Value;
+    use topems_shared::ApiResponse;
 
     // 模拟连接失败的响应模式（对应 Err(e) 分支）
     let error_msg = "工单服务不可用: error sending request";

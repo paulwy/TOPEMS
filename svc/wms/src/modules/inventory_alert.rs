@@ -592,10 +592,7 @@ pub async fn get_alert_summary(
                     if let Err(e) =
                         crate::event_handlers::emit_low_stock_alerts(&db, &publisher).await
                     {
-                        tracing::warn!(
-                            "[wms] 触发 WmsInventoryLowStock 事件发布失败: {}",
-                            e
-                        );
+                        tracing::warn!("[wms] 触发 WmsInventoryLowStock 事件发布失败: {}", e);
                     }
                 });
             }

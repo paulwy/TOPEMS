@@ -3,9 +3,8 @@ use topems_shared::service_client::{
     create_erp_client, create_finance_client, create_generic_client, create_gis_client,
     create_hrm_client, create_iam_client, create_integration_client, create_lims_client,
     create_mes_client, create_mobile_client, create_monitor_client, create_notification_client,
-    create_pdm_client, create_pm_client, create_portal_client, create_qms_client,
-    create_rd_client, create_scm_client, create_srm_client,
-    create_wms_client, BaseServiceClient, ServiceClientError,
+    create_pdm_client, create_pm_client, create_portal_client, create_qms_client, create_rd_client,
+    create_scm_client, create_srm_client, create_wms_client, BaseServiceClient, ServiceClientError,
 };
 
 #[test]

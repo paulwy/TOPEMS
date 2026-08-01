@@ -376,7 +376,13 @@ impl AutoAuditEngine {
         let has_schedule = req.schedule.is_some();
         let has_is_active = req.is_active.is_some();
 
-        if !has_name && !has_category && !has_condition && !has_severity && !has_schedule && !has_is_active {
+        if !has_name
+            && !has_category
+            && !has_condition
+            && !has_severity
+            && !has_schedule
+            && !has_is_active
+        {
             return Self::get_rule(pool, id, tenant_id).await;
         }
 
@@ -444,11 +450,7 @@ impl AutoAuditEngine {
         q.fetch_one(pool).await
     }
 
-    pub async fn delete_rule(
-        pool: &PgPool,
-        id: Uuid,
-        tenant_id: Uuid,
-    ) -> Result<(), sqlx::Error> {
+    pub async fn delete_rule(pool: &PgPool, id: Uuid, tenant_id: Uuid) -> Result<(), sqlx::Error> {
         sqlx::query("DELETE FROM finance_audit_rules_v52 WHERE id = $1 AND tenant_id = $2")
             .bind(id)
             .bind(tenant_id)
@@ -670,10 +672,7 @@ impl AutoAuditEngine {
                 &log_id.to_string(),
                 "unauthorized_access",
                 &rule.severity,
-                &format!(
-                    "检测到 {} 操作 {} 在 {}",
-                    entity_type, action, created_at
-                ),
+                &format!("检测到 {} 操作 {} 在 {}", entity_type, action, created_at),
                 serde_json::json!({
                     "log_id": log_id,
                     "entity_type": entity_type,
@@ -794,19 +793,15 @@ impl AutoAuditEngine {
         tenant_id: Uuid,
         rule: &AuditRule,
     ) -> Result<Vec<AuditFinding>, sqlx::Error> {
-        let query = rule
-            .condition
-            .get("sql")
-            .and_then(|v| v.as_str());
+        let query = rule.condition.get("sql").and_then(|v| v.as_str());
 
         if let Some(sql) = query {
             let sql_with_tenant = format!("{} AND tenant_id = ${}", sql, 1);
-            let rows: Vec<(Uuid, String, String)> =
-                sqlx::query_as(&sql_with_tenant)
-                    .bind(tenant_id)
-                    .fetch_all(pool)
-                    .await
-                    .unwrap_or_default();
+            let rows: Vec<(Uuid, String, String)> = sqlx::query_as(&sql_with_tenant)
+                .bind(tenant_id)
+                .fetch_all(pool)
+                .await
+                .unwrap_or_default();
 
             let mut findings = Vec::new();
             for (id, entity_type, description) in &rows {
@@ -867,9 +862,8 @@ impl AutoAuditEngine {
     ) -> Result<(Vec<AuditFinding>, i64), sqlx::Error> {
         let offset = (page - 1) * page_size;
 
-        let mut count_query = String::from(
-            "SELECT COUNT(*) FROM finance_audit_findings_v52 WHERE tenant_id = $1",
-        );
+        let mut count_query =
+            String::from("SELECT COUNT(*) FROM finance_audit_findings_v52 WHERE tenant_id = $1");
         let mut data_query = String::from(
             "SELECT id, tenant_id, rule_id, entity_type, entity_id, finding_type, severity, description, evidence, status, detected_at, resolved_at, resolved_by FROM finance_audit_findings_v52 WHERE tenant_id = $1",
         );
@@ -884,9 +878,8 @@ impl AutoAuditEngine {
             data_query.push_str(&format!(" AND severity = ${}", idx));
         }
         if entity_type.is_some() {
-            let base_idx = if status.is_some() { 1 } else { 0 }
-                + if severity.is_some() { 1 } else { 0 }
-                + 2;
+            let base_idx =
+                if status.is_some() { 1 } else { 0 } + if severity.is_some() { 1 } else { 0 } + 2;
             count_query.push_str(&format!(" AND entity_type = ${}", base_idx));
             data_query.push_str(&format!(" AND entity_type = ${}", base_idx));
         }
@@ -1051,11 +1044,8 @@ impl AnomalyDetector {
         }
 
         let mean: f64 = amounts.iter().sum::<f64>() / amounts.len() as f64;
-        let variance: f64 = amounts
-            .iter()
-            .map(|a| (a - mean).powi(2))
-            .sum::<f64>()
-            / amounts.len() as f64;
+        let variance: f64 =
+            amounts.iter().map(|a| (a - mean).powi(2)).sum::<f64>() / amounts.len() as f64;
         let std_dev = variance.sqrt();
 
         if std_dev < 0.001 {
@@ -1340,9 +1330,8 @@ impl AnomalyDetector {
     ) -> Result<(Vec<AnomalyAlert>, i64), sqlx::Error> {
         let offset = (page - 1) * page_size;
 
-        let mut count_query = String::from(
-            "SELECT COUNT(*) FROM finance_anomaly_alerts_v52 WHERE tenant_id = $1",
-        );
+        let mut count_query =
+            String::from("SELECT COUNT(*) FROM finance_anomaly_alerts_v52 WHERE tenant_id = $1");
         let mut data_query = String::from(
             "SELECT id, tenant_id, detection_type, entity_type, entity_id, metric_value, expected_range, confidence, severity, description, is_resolved, created_at FROM finance_anomaly_alerts_v52 WHERE tenant_id = $1",
         );
@@ -1546,11 +1535,7 @@ impl AlertManager {
         if configs.is_empty() {
             return false;
         }
-        tracing::info!(
-            "[AlertManager] 通过 {} 渠道发送预警: {}",
-            channel,
-            message
-        );
+        tracing::info!("[AlertManager] 通过 {} 渠道发送预警: {}", channel, message);
         true
     }
 
@@ -1565,9 +1550,8 @@ impl AlertManager {
     ) -> Result<(Vec<AlertHistory>, i64), sqlx::Error> {
         let offset = (page - 1) * page_size;
 
-        let mut count_query = String::from(
-            "SELECT COUNT(*) FROM finance_alert_history_v52 WHERE tenant_id = $1",
-        );
+        let mut count_query =
+            String::from("SELECT COUNT(*) FROM finance_alert_history_v52 WHERE tenant_id = $1");
         let mut data_query = String::from(
             "SELECT id, tenant_id, channel, alert_type, entity_id, severity, message, is_delivered, is_acknowledged, acknowledged_by, created_at FROM finance_alert_history_v52 WHERE tenant_id = $1",
         );
@@ -1661,11 +1645,7 @@ pub async fn auto_audit_scheduler(pool: PgPool) {
                     }
                 }
                 Err(e) => {
-                    tracing::error!(
-                        "[audit_v52] 租户 {} 自动审计失败: {}",
-                        tenant_id,
-                        e
-                    );
+                    tracing::error!("[audit_v52] 租户 {} 自动审计失败: {}", tenant_id, e);
                 }
             }
         }
@@ -1693,7 +1673,9 @@ async fn list_audit_rules_handler(
     Query(params): Query<AuditRuleQueryParams>,
 ) -> Json<ApiResponse<Vec<AuditRule>>> {
     let tenant_id = get_tenant_id(&claims);
-    match AutoAuditEngine::list_rules(&state.pool, tenant_id, params.category, params.is_active).await {
+    match AutoAuditEngine::list_rules(&state.pool, tenant_id, params.category, params.is_active)
+        .await
+    {
         Ok(rules) => Json(ApiResponse::success(rules, "查询成功")),
         Err(e) => Json(ApiResponse::error(500, &e.to_string())),
     }
@@ -1764,7 +1746,14 @@ async fn resolve_finding_handler(
 ) -> Json<ApiResponse<AuditFinding>> {
     let tenant_id = get_tenant_id(&claims);
     let resolved_by = claims.username.clone();
-    match AutoAuditEngine::resolve_finding(&state.pool, id, tenant_id, &req.resolution, &resolved_by).await
+    match AutoAuditEngine::resolve_finding(
+        &state.pool,
+        id,
+        tenant_id,
+        &req.resolution,
+        &resolved_by,
+    )
+    .await
     {
         Ok(finding) => Json(ApiResponse::success(finding, "问题已处理")),
         Err(e) => Json(ApiResponse::error(500, &e.to_string())),
@@ -1857,7 +1846,9 @@ async fn configure_detection_handler(
         .cloned()
         .unwrap_or(serde_json::json!({}));
 
-    match AnomalyDetector::configure(&state.pool, tenant_id, detection_type, enabled, parameters).await {
+    match AnomalyDetector::configure(&state.pool, tenant_id, detection_type, enabled, parameters)
+        .await
+    {
         Ok(_) => Json(ApiResponse::success((), "配置更新成功")),
         Err(e) => Json(ApiResponse::error(500, &e.to_string())),
     }
@@ -1962,10 +1953,7 @@ pub fn create_routes() -> Router<AppState> {
             axum::routing::post(resolve_finding_handler),
         )
         // C. 运行审计
-        .route(
-            "/audit-v52/run",
-            axum::routing::post(run_audit_handler),
-        )
+        .route("/audit-v52/run", axum::routing::post(run_audit_handler))
         // D. 异常检测
         .route(
             "/audit-v52/anomaly/detect",
@@ -1984,10 +1972,7 @@ pub fn create_routes() -> Router<AppState> {
             axum::routing::post(configure_detection_handler),
         )
         // E. 实时预警
-        .route(
-            "/audit-v52/alerts",
-            axum::routing::get(get_alerts_handler),
-        )
+        .route("/audit-v52/alerts", axum::routing::get(get_alerts_handler))
         .route(
             "/audit-v52/alerts/config",
             axum::routing::post(create_alert_config_handler),

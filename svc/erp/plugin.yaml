@@ -2,6 +2,7 @@ code: erp
 name: 企业资源计划
 version: 1.0.0
 description: ERP 企业资源计划系统，包含资产管理、财务管理、凭证管理、字典管理等模块
+auth_required: true
 plugin_type: system
 
 deployment:
@@ -9,123 +10,151 @@ deployment:
   port: 8010
   base_path: /api/erp
 
+# 模块分层 (P34-4 ERP/PM 基础 vs 高级分层)
+# tier: basic       -> CRUD/主数据，开箱即用
+# tier: advanced    -> 依赖外部配置或第三方服务
+# tier: infrastructure -> 始终启用，不参与分层
 permissions:
   # 资产管理
   - code: erp:read
     name: 查看资产
     resource_type: asset
     action: read
+    tier: basic
   - code: erp:write
     name: 管理资产
     resource_type: asset
     action: write
+    tier: basic
   - code: erp:delete
     name: 删除资产
     resource_type: asset
     action: delete
+    tier: basic
 
   # 固定资产
   - code: erp:read
     name: 查看固定资产
     resource_type: fixed_asset
     action: read
+    tier: basic
   - code: erp:write
     name: 管理固定资产
     resource_type: fixed_asset
     action: write
+    tier: basic
 
   # 财务账户
   - code: erp:read
     name: 查看财务
     resource_type: finance
     action: read
+    tier: basic
   - code: erp:write
     name: 管理财务
     resource_type: finance
     action: write
+    tier: basic
 
   # 凭证管理
   - code: erp:read
     name: 查看凭证
     resource_type: voucher
     action: read
+    tier: basic
   - code: erp:write
     name: 管理凭证
     resource_type: voucher
     action: write
+    tier: basic
   - code: erp:approve
     name: 审批凭证
     resource_type: voucher
     action: approve
+    tier: basic
 
   # 银行管理
   - code: erp:read
     name: 查看银行账户
     resource_type: bank
     action: read
+    tier: basic
   - code: erp:write
     name: 管理银行账户
     resource_type: bank
     action: write
+    tier: basic
 
   # 字典管理
   - code: erp:read
     name: 查看字典
     resource_type: dict
     action: read
+    tier: basic
   - code: erp:write
     name: 管理字典
     resource_type: dict
     action: write
+    tier: basic
 
   # 车辆管理
   - code: erp:read
     name: 查看车辆
     resource_type: vehicle
     action: read
+    tier: basic
   - code: erp:write
     name: 管理车辆
     resource_type: vehicle
     action: write
+    tier: basic
 
   # 会议室管理
   - code: erp:read
     name: 查看会议室
     resource_type: meeting_room
     action: read
+    tier: basic
   - code: erp:write
     name: 管理会议室
     resource_type: meeting_room
     action: write
+    tier: basic
 
   # 办公用品
   - code: erp:read
     name: 查看办公用品
     resource_type: office_supplies
     action: read
+    tier: basic
   - code: erp:write
     name: 管理办公用品
     resource_type: office_supplies
     action: write
+    tier: basic
 
   # 项目合同
   - code: erp:read
     name: 查看项目合同
     resource_type: project_contract
     action: read
+    tier: basic
   - code: erp:write
     name: 管理项目合同
     resource_type: project_contract
     action: write
+    tier: basic
 
   # 项目预算
   - code: erp:read
     name: 查看项目预算
     resource_type: project_budget
     action: read
+    tier: basic
   - code: erp:write
     name: 管理项目预算
     resource_type: project_budget
     action: write
+    tier: basic
 
 dependencies: []

@@ -34,7 +34,10 @@ async fn test_fraud_analyze_transaction() {
         .await;
 
     assert_eq!(status, 200, "欺诈分析应该返回 200");
-    assert!(resp["success"].as_bool().unwrap_or(false), "响应 success 应为 true");
+    assert!(
+        resp["success"].as_bool().unwrap_or(false),
+        "响应 success 应为 true"
+    );
 }
 
 #[tokio::test]
@@ -45,12 +48,13 @@ async fn test_fraud_get_signals() {
     }
     let ctx = TestContext::new().await;
 
-    let (status, resp) = ctx
-        .request("GET", "/finance-v59/fraud/signals", None)
-        .await;
+    let (status, resp) = ctx.request("GET", "/finance-v59/fraud/signals", None).await;
 
     assert_eq!(status, 200, "获取欺诈信号应该返回 200");
-    assert!(resp["success"].as_bool().unwrap_or(false), "响应 success 应为 true");
+    assert!(
+        resp["success"].as_bool().unwrap_or(false),
+        "响应 success 应为 true"
+    );
     assert!(resp["data"].is_array(), "data 应该是数组");
 }
 
@@ -77,7 +81,10 @@ async fn test_fraud_create_device() {
         .await;
 
     assert_eq!(status, 200, "创建设备画像应该返回 200");
-    assert!(resp["success"].as_bool().unwrap_or(false), "响应 success 应为 true");
+    assert!(
+        resp["success"].as_bool().unwrap_or(false),
+        "响应 success 应为 true"
+    );
 }
 
 // ==================== Credit 信用评分测试 ====================
@@ -105,7 +112,10 @@ async fn test_credit_calculate_score() {
         .await;
 
     assert_eq!(status, 200, "计算信用评分应该返回 200");
-    assert!(resp["success"].as_bool().unwrap_or(false), "响应 success 应为 true");
+    assert!(
+        resp["success"].as_bool().unwrap_or(false),
+        "响应 success 应为 true"
+    );
 }
 
 #[tokio::test]
@@ -116,12 +126,13 @@ async fn test_credit_get_models() {
     }
     let ctx = TestContext::new().await;
 
-    let (status, resp) = ctx
-        .request("GET", "/finance-v59/credit/models", None)
-        .await;
+    let (status, resp) = ctx.request("GET", "/finance-v59/credit/models", None).await;
 
     assert_eq!(status, 200, "获取评分模型应该返回 200");
-    assert!(resp["success"].as_bool().unwrap_or(false), "响应 success 应为 true");
+    assert!(
+        resp["success"].as_bool().unwrap_or(false),
+        "响应 success 应为 true"
+    );
     assert!(resp["data"].is_array(), "data 应该是数组");
 }
 
@@ -151,5 +162,8 @@ async fn test_credit_create_model() {
         .await;
 
     assert_eq!(status, 200, "创建评分模型应该返回 200");
-    assert!(resp["success"].as_bool().unwrap_or(false), "响应 success 应为 true");
+    assert!(
+        resp["success"].as_bool().unwrap_or(false),
+        "响应 success 应为 true"
+    );
 }

@@ -1,0 +1,11 @@
+{
+  "common.active": "Active",
+  "common.inactive": "Inactive",
+  "common.search": "Search",
+  "common.saving": "Saving...",
+  "common.save_changes": "Save Changes",
+  "common.submitting": "Submitting...",
+  "common.processing": "Processing...",
+  "common.selected": "Selected",
+  "common.start": "Start"
+}

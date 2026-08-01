@@ -7,8 +7,8 @@ use topems_shared::{
 };
 use utoipa::OpenApi;
 
-mod models;
 mod handlers;
+mod models;
 mod openapi;
 
 #[tokio::main]
@@ -48,12 +48,21 @@ async fn main() {
     let protected_routes = Router::new()
         .route("/plans", get(handlers::list_plans))
         .route("/plans/{id}", get(handlers::get_plan))
-        .route("/subscriptions/{tenant_id}", get(handlers::get_subscription))
+        .route(
+            "/subscriptions/{tenant_id}",
+            get(handlers::get_subscription),
+        )
         .route("/subscriptions", post(handlers::create_subscription))
-        .route("/subscriptions/{tenant_id}", put(handlers::cancel_subscription))
+        .route(
+            "/subscriptions/{tenant_id}",
+            put(handlers::cancel_subscription),
+        )
         .route("/invoices/{tenant_id}", get(handlers::list_invoices))
         .route("/usage/{tenant_id}", get(handlers::get_usage_summary))
-        .route("/usage/{tenant_id}/{metric_type}", post(handlers::record_usage))
+        .route(
+            "/usage/{tenant_id}/{metric_type}",
+            post(handlers::record_usage),
+        )
         .layer(axum::middleware::from_fn_with_state(
             auth_state.clone(),
             auth_middleware,
@@ -71,9 +80,7 @@ async fn main() {
         .route("/health", get(|| async { "OK" }))
         .route(
             "/api-docs/openapi.json",
-            get(|| async move {
-                axum::Json(openapi::BillingApiDoc::openapi())
-            }),
+            get(|| async move { axum::Json(openapi::BillingApiDoc::openapi()) }),
         )
         .layer(cors)
         .with_state(pool);

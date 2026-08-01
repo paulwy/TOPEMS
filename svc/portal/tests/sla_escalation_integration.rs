@@ -27,11 +27,11 @@ use chrono::{DateTime, Datelike, Duration, Timelike, Utc, Weekday};
 /// 返回 (response_hours, resolution_hours)
 fn default_sla_hours(severity: &str) -> (f64, f64) {
     match severity {
-        "critical" => (1.0, 4.0),   // 1小时响应，4小时解决
-        "high" => (2.0, 24.0),      // 2小时响应，24小时解决
-        "medium" => (8.0, 72.0),    // 8小时响应，72小时解决
-        "low" => (24.0, 168.0),     // 24小时响应，7天解决
-        _ => (8.0, 72.0),           // 未知严重级别使用 medium 默认值
+        "critical" => (1.0, 4.0), // 1小时响应，4小时解决
+        "high" => (2.0, 24.0),    // 2小时响应，24小时解决
+        "medium" => (8.0, 72.0),  // 8小时响应，72小时解决
+        "low" => (24.0, 168.0),   // 24小时响应，7天解决
+        _ => (8.0, 72.0),         // 未知严重级别使用 medium 默认值
     }
 }
 
@@ -953,5 +953,9 @@ fn test_sla_escalation_with_critical_severity_default_policy() {
     // 1.5小时后，应触发第一级和第二级
     let now = created_at + Duration::seconds(90 * 60);
     let triggered = compute_escalation_levels(&ticket, &policy, now, &[]);
-    assert_eq!(triggered, vec![1, 2], "1.5小时应触发 critical 第一、二级升级");
+    assert_eq!(
+        triggered,
+        vec![1, 2],
+        "1.5小时应触发 critical 第一、二级升级"
+    );
 }

@@ -1,0 +1,72 @@
+{
+  "applist": {
+    "低代码应用管理": "低代码应用管理",
+    "applist_低代码应用管理": "applist.低代码应用管理"
+  },
+  "appmanagement": {
+    "应用管理": "应用管理",
+    "appmanagement_应用管理": "appmanagement.应用管理"
+  },
+  "datamodellist": {
+    "数据模型列表": "数据模型列表",
+    "datamodellist_数据模型列表": "datamodellist.数据模型列表"
+  },
+  "datasource": {
+    "数据源管理": "数据源管理",
+    "datasource_数据源管理": "datasource.数据源管理"
+  },
+  "formdesign": {
+    "表单设计器": "表单设计器",
+    "formdesign_表单设计器": "formdesign.表单设计器"
+  },
+  "formlist": {
+    "表单列表": "表单列表",
+    "formlist_表单列表": "formlist.表单列表"
+  },
+  "lowcodehome": {
+    "低代码首页": "低代码首页",
+    "lowcodehome_低代码首页": "lowcodehome.低代码首页"
+  },
+  "pagedesign": {
+    "页面设计器": "页面设计器",
+    "pagedesign_页面设计器": "pagedesign.页面设计器"
+  },
+  "pagelist": {
+    "页面列表": "页面列表",
+    "pagelist_页面列表": "pagelist.页面列表"
+  },
+  "workflowconfig": {
+    "流程配置": "流程配置",
+    "workflowconfig_流程配置": "workflowconfig.流程配置"
+  },
+  "app_list_page": {
+    "title": "低代码应用管理"
+  },
+  "app_management_page": {
+    "title": "应用管理"
+  },
+  "data_model_list_page": {
+    "title": "数据模型列表"
+  },
+  "data_source_page": {
+    "title": "数据源管理"
+  },
+  "form_design_page": {
+    "title": "表单设计器"
+  },
+  "form_list_page": {
+    "title": "表单列表"
+  },
+  "lowcode_home_page": {
+    "title": "低代码首页"
+  },
+  "page_design_page": {
+    "title": "页面设计器"
+  },
+  "page_list_page": {
+    "title": "页面列表"
+  },
+  "workflow_config_page": {
+    "title": "流程配置"
+  }
+}

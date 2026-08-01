@@ -65,12 +65,7 @@ impl TestContext {
     /// ## endpoint 参数约定
     ///
     /// 必须以 `/` 开头（debug_assert 保护），例如 `/accounts`，不能写成 `accounts`。
-    pub async fn request(
-        &self,
-        method: &str,
-        endpoint: &str,
-        body: Option<Value>,
-    ) -> (u16, Value) {
+    pub async fn request(&self, method: &str, endpoint: &str, body: Option<Value>) -> (u16, Value) {
         debug_assert!(
             endpoint.starts_with('/'),
             "endpoint 必须以 '/' 开头，例如 '/accounts'，当前值: {}",
@@ -168,10 +163,7 @@ pub async fn login_admin(client: &Client) -> Result<String, String> {
 
 /// 检查 finance 服务是否可用（连接 /health 端点，2 秒超时）
 pub async fn service_available() -> bool {
-    let client = match ClientBuilder::new()
-        .timeout(Duration::from_secs(2))
-        .build()
-    {
+    let client = match ClientBuilder::new().timeout(Duration::from_secs(2)).build() {
         Ok(c) => c,
         Err(_) => return false,
     };

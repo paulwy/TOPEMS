@@ -117,7 +117,7 @@ const logFields: SchemaField[] = [
     type: 'datetime',
     sortable: true,
     listWidth: 180,
-    renderCell: (row) => {
+    renderCell: (row: Record<string, unknown>) => {
       const ts = row.timestamp as string;
       return (
         <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
@@ -134,14 +134,14 @@ const logFields: SchemaField[] = [
     label: '级别',
     type: 'select',
     listWidth: 100,
-    renderCell: (row) => getLevelChip(row.level as LogLevel),
+    renderCell: (row: Record<string, unknown>) => getLevelChip(row.level as LogLevel),
   },
   {
     name: 'service',
     label: '服务名',
     type: 'text',
     listWidth: 140,
-    renderCell: (row) => (
+    renderCell: (row: Record<string, unknown>) => (
       <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
         <Box
           sx={{
@@ -167,7 +167,7 @@ const logFields: SchemaField[] = [
     label: '日志内容',
     type: 'textarea',
     listWidth: 400,
-    renderCell: (row) => {
+    renderCell: (row: Record<string, unknown>) => {
       const msg = row.message as string;
       const keyword = (row._searchQuery as string) || '';
       return (
@@ -192,7 +192,7 @@ const logFields: SchemaField[] = [
     label: 'Trace ID',
     type: 'text',
     listWidth: 160,
-    renderCell: (row) => (
+    renderCell: (row: Record<string, unknown>) => (
       <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
         <Typography
           variant="body2"
@@ -208,7 +208,7 @@ const logFields: SchemaField[] = [
     label: '耗时',
     type: 'number',
     listWidth: 80,
-    renderCell: (row) => {
+    renderCell: (row: Record<string, unknown>) => {
       const dur = row.duration_ms as number | undefined;
       if (!dur)
         return <Typography variant="body2" color="text.disabled">-</Typography>;
@@ -225,7 +225,7 @@ const logFields: SchemaField[] = [
     label: '日志类型',
     type: 'select',
     listWidth: 110,
-    renderCell: (row) => {
+    renderCell: (row: Record<string, unknown>) => {
       const t = row.type as LogType;
       return <Chip size="small" label={TYPE_LABELS[t]} variant="outlined" />;
     },

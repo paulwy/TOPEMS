@@ -1,11 +1,11 @@
 pub mod read_write;
 
-use topems_shared_core::config::enhanced::DatabaseConfig;
-use topems_shared_core::error::TopemsError;
-use topems_shared_core::error::Result;
 use sqlx::postgres::PgPoolOptions;
 use sqlx::PgPool;
 use std::time::Duration;
+use topems_shared_core::config::enhanced::DatabaseConfig;
+use topems_shared_core::error::Result;
+use topems_shared_core::error::TopemsError;
 use tracing::{debug, error, info};
 
 // 导出读写分离模块

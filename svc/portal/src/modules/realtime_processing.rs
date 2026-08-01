@@ -239,7 +239,14 @@ impl AggregationType {
     }
 
     pub fn all() -> Vec<Self> {
-        vec![Self::Count, Self::Sum, Self::Avg, Self::Min, Self::Max, Self::HLL]
+        vec![
+            Self::Count,
+            Self::Sum,
+            Self::Avg,
+            Self::Min,
+            Self::Max,
+            Self::HLL,
+        ]
     }
 }
 
@@ -269,7 +276,11 @@ impl Aggregator {
     }
 
     pub fn all() -> Vec<Self> {
-        vec![Self::TumblingWindow, Self::HoppingWindow, Self::SessionWindow]
+        vec![
+            Self::TumblingWindow,
+            Self::HoppingWindow,
+            Self::SessionWindow,
+        ]
     }
 }
 
@@ -532,9 +543,7 @@ impl PersistentSubscription {
         let store = get_realtime_store();
 
         let mut sequences = store.subscription_sequences.lock().await;
-        let seq = sequences
-            .entry(subscription_id.to_string())
-            .or_insert(0);
+        let seq = sequences.entry(subscription_id.to_string()).or_insert(0);
         *seq += 1;
         let current_seq = *seq;
         drop(sequences);
@@ -742,13 +751,7 @@ impl MessageReplayEngine {
         event_type: String,
         payload: serde_json::Value,
     ) -> Result<SubscriptionEvent, String> {
-        PersistentSubscription::deliver_event(
-            &subscription_id,
-            event_type,
-            payload,
-            None,
-        )
-        .await
+        PersistentSubscription::deliver_event(&subscription_id, event_type, payload, None).await
     }
 
     pub async fn get_events_range(
@@ -764,9 +767,7 @@ impl MessageReplayEngine {
             .filter(|e| {
                 e.subscription_id == subscription_id
                     && e.sequence >= from_sequence
-                    && to_sequence
-                        .map(|to| e.sequence <= to)
-                        .unwrap_or(true)
+                    && to_sequence.map(|to| e.sequence <= to).unwrap_or(true)
             })
             .cloned()
             .collect()
@@ -857,9 +858,7 @@ impl RealtimeAggregator {
         Ok(true)
     }
 
-    pub async fn get_aggregation_result(
-        config_id: &str,
-    ) -> Option<AggregationResult> {
+    pub async fn get_aggregation_result(config_id: &str) -> Option<AggregationResult> {
         let store = get_realtime_store();
 
         let results = store.aggregation_results.lock().await;
@@ -913,17 +912,10 @@ impl RealtimeAggregator {
 
         drop(configs);
 
-        PersistentSubscription::create_subscription(
-            subscriber_id,
-            config.topic,
-            None,
-        )
-        .await
+        PersistentSubscription::create_subscription(subscriber_id, config.topic, None).await
     }
 
-    pub async fn compute_window(
-        config_id: &str,
-    ) -> Result<AggregationResult, String> {
+    pub async fn compute_window(config_id: &str) -> Result<AggregationResult, String> {
         let store = get_realtime_store();
 
         let config = {
@@ -936,11 +928,10 @@ impl RealtimeAggregator {
 
         let now = chrono::Utc::now();
         let window_end = now;
-        let window_start =
-            chrono::DateTime::<chrono::Utc>::from_timestamp_millis(
-                window_end.timestamp_millis() - config.window_size_ms as i64,
-            )
-            .unwrap_or(now);
+        let window_start = chrono::DateTime::<chrono::Utc>::from_timestamp_millis(
+            window_end.timestamp_millis() - config.window_size_ms as i64,
+        )
+        .unwrap_or(now);
 
         let results = store.aggregation_results.lock().await;
 
@@ -1117,12 +1108,8 @@ pub async fn create_subscription_handler(
     State(_state): State<AppState>,
     Json(req): Json<CreateSubscriptionRequest>,
 ) -> Json<ApiResponse<SubscriptionRecord>> {
-    match PersistentSubscription::create_subscription(
-        req.subscriber_id,
-        req.topic,
-        req.filter,
-    )
-    .await
+    match PersistentSubscription::create_subscription(req.subscriber_id, req.topic, req.filter)
+        .await
     {
         Ok(record) => Json(ApiResponse::success(record, "订阅创建成功")),
         Err(e) => Json(ApiResponse::error(500, &e)),
@@ -1189,8 +1176,7 @@ pub async fn get_pending_events_handler(
     Path(id): Path<String>,
     Query(params): Query<PendingEventsQuery>,
 ) -> Json<ApiResponse<PendingEventsList>> {
-    let list = PersistentSubscription::get_pending_events(&id, params.limit)
-        .await;
+    let list = PersistentSubscription::get_pending_events(&id, params.limit).await;
     Json(ApiResponse::success(list, "待投递事件列表"))
 }
 
@@ -1254,11 +1240,9 @@ pub async fn get_replay_history_handler(
     State(_state): State<AppState>,
     Query(params): Query<ReplayHistoryQuery>,
 ) -> Json<ApiResponse<Vec<ReplayHistoryEntry>>> {
-    let history = MessageReplayEngine::get_replay_history(
-        params.subscription_id.as_deref(),
-        params.limit,
-    )
-    .await;
+    let history =
+        MessageReplayEngine::get_replay_history(params.subscription_id.as_deref(), params.limit)
+            .await;
     Json(ApiResponse::success(history, "重放历史"))
 }
 
@@ -1268,8 +1252,7 @@ pub async fn get_events_range_handler(
     Query(params): Query<EventsRangeQuery>,
 ) -> Json<ApiResponse<Vec<SubscriptionEvent>>> {
     let events =
-        MessageReplayEngine::get_events_range(&id, params.from_sequence, params.to_sequence)
-            .await;
+        MessageReplayEngine::get_events_range(&id, params.from_sequence, params.to_sequence).await;
     Json(ApiResponse::success(events, "事件范围查询"))
 }
 
@@ -1334,12 +1317,10 @@ pub async fn get_aggregation_result_handler(
 ) -> Json<ApiResponse<AggregationResult>> {
     match RealtimeAggregator::get_aggregation_result(&id).await {
         Some(result) => Json(ApiResponse::success(result, "聚合结果")),
-        None => {
-            match RealtimeAggregator::compute_window(&id).await {
-                Ok(result) => Json(ApiResponse::success(result, "聚合结果（首次计算）")),
-                Err(e) => Json(ApiResponse::error(404, &e)),
-            }
-        }
+        None => match RealtimeAggregator::compute_window(&id).await {
+            Ok(result) => Json(ApiResponse::success(result, "聚合结果（首次计算）")),
+            Err(e) => Json(ApiResponse::error(404, &e)),
+        },
     }
 }
 
@@ -1347,11 +1328,8 @@ pub async fn list_aggregations_handler(
     State(_state): State<AppState>,
     Query(params): Query<ListAggregationsQuery>,
 ) -> Json<ApiResponse<Vec<AggregationConfig>>> {
-    let list = RealtimeAggregator::list_aggregations(
-        params.topic.as_deref(),
-        params.active_only,
-    )
-    .await;
+    let list =
+        RealtimeAggregator::list_aggregations(params.topic.as_deref(), params.active_only).await;
     Json(ApiResponse::success(list, "聚合配置列表"))
 }
 

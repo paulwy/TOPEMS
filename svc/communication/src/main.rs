@@ -2,8 +2,8 @@ use axum::{routing::delete, routing::get, routing::post, routing::put, Router};
 use sqlx::postgres::PgPoolOptions;
 use std::net::SocketAddr;
 use topems_shared::{
-    auth_middleware, create_cors_layer, init_telemetry,
-    register_routes_with_legacy_alias, AuthState,
+    auth_middleware, create_cors_layer, init_telemetry, register_routes_with_legacy_alias,
+    AuthState,
 };
 
 mod im;
@@ -49,36 +49,108 @@ async fn main() {
     // ===== 通知读取路由（需要认证） =====
     let notification_read = Router::new()
         .route("/notify/list", get(notification::list_notifications))
-        .route("/notification/notifications", get(notification::get_notifications))
-        .route("/notification/notifications/unread-count", get(notification::get_unread_count))
-        .route("/notification/notifications/unread", get(notification::get_unread_notifications))
-        .route("/notification/notifications/{id}", get(notification::get_notification))
-        .route("/notification/notifications/stats/me", get(notification::get_notification_stats))
-        .route("/notification/notifications/archived", get(notification::list_archived_notifications))
-        .route("/notification/notifications/archive/config", get(notification::get_archive_config))
-        .route("/notification/notification-templates", get(notification::list_templates))
-        .route("/notification/notification-templates/{id}", get(notification::get_template));
+        .route(
+            "/notification/notifications",
+            get(notification::get_notifications),
+        )
+        .route(
+            "/notification/notifications/unread-count",
+            get(notification::get_unread_count),
+        )
+        .route(
+            "/notification/notifications/unread",
+            get(notification::get_unread_notifications),
+        )
+        .route(
+            "/notification/notifications/{id}",
+            get(notification::get_notification),
+        )
+        .route(
+            "/notification/notifications/stats/me",
+            get(notification::get_notification_stats),
+        )
+        .route(
+            "/notification/notifications/archived",
+            get(notification::list_archived_notifications),
+        )
+        .route(
+            "/notification/notifications/archive/config",
+            get(notification::get_archive_config),
+        )
+        .route(
+            "/notification/notification-templates",
+            get(notification::list_templates),
+        )
+        .route(
+            "/notification/notification-templates/{id}",
+            get(notification::get_template),
+        );
 
     // ===== 通知写入路由（需要认证） =====
     let notification_write = Router::new()
         .route("/notify/send", post(notification::send_notification))
-        .route("/notify/broadcast", post(notification::broadcast_notification))
+        .route(
+            "/notify/broadcast",
+            post(notification::broadcast_notification),
+        )
         .route("/notify/{id}/read", post(notification::mark_as_read))
         .route("/notify/read-all", post(notification::mark_all_as_read))
-        .route("/notification/notifications/{id}", put(notification::mark_as_read))
-        .route("/notification/notifications/read-all", put(notification::mark_all_as_read))
-        .route("/notification/notifications/{id}/unread", put(notification::mark_as_unread))
-        .route("/notification/notifications/bulk-read", post(notification::bulk_mark_read))
-        .route("/notification/notifications/bulk-delete", delete(notification::bulk_delete))
-        .route("/notification/notifications/{id}/archive", post(notification::archive_notification))
-        .route("/notification/notifications/{id}/unarchive", post(notification::unarchive_notification))
-        .route("/notification/notifications/{id}", delete(notification::delete_notification))
-        .route("/notification/notifications", delete(notification::delete_all_notifications))
-        .route("/notification/notifications/archive/config", put(notification::update_archive_config))
-        .route("/notification/notifications/archive/run", post(notification::run_auto_archive))
-        .route("/notification/notification-templates", post(notification::create_template))
-        .route("/notification/notification-templates/{id}", put(notification::update_template))
-        .route("/notification/notification-templates/{id}", delete(notification::delete_template));
+        .route(
+            "/notification/notifications/{id}",
+            put(notification::mark_as_read),
+        )
+        .route(
+            "/notification/notifications/read-all",
+            put(notification::mark_all_as_read),
+        )
+        .route(
+            "/notification/notifications/{id}/unread",
+            put(notification::mark_as_unread),
+        )
+        .route(
+            "/notification/notifications/bulk-read",
+            post(notification::bulk_mark_read),
+        )
+        .route(
+            "/notification/notifications/bulk-delete",
+            delete(notification::bulk_delete),
+        )
+        .route(
+            "/notification/notifications/{id}/archive",
+            post(notification::archive_notification),
+        )
+        .route(
+            "/notification/notifications/{id}/unarchive",
+            post(notification::unarchive_notification),
+        )
+        .route(
+            "/notification/notifications/{id}",
+            delete(notification::delete_notification),
+        )
+        .route(
+            "/notification/notifications",
+            delete(notification::delete_all_notifications),
+        )
+        .route(
+            "/notification/notifications/archive/config",
+            put(notification::update_archive_config),
+        )
+        .route(
+            "/notification/notifications/archive/run",
+            post(notification::run_auto_archive),
+        )
+        .route(
+            "/notification/notification-templates",
+            post(notification::create_template),
+        )
+        .route(
+            "/notification/notification-templates/{id}",
+            put(notification::update_template),
+        )
+        .route(
+            "/notification/notification-templates/{id}",
+            delete(notification::delete_template),
+        );
 
     // ===== IM 路由（需要认证） =====
     let im_read = Router::new()
@@ -92,7 +164,10 @@ async fn main() {
         .route("/im/contacts/{id}", get(im::get_contact))
         .route("/im/contact-groups", get(im::list_contact_groups))
         .route("/im/online-status/{user_id}", get(im::get_online_status))
-        .route("/im/notifications/{user_id}", get(im::list_im_notifications))
+        .route(
+            "/im/notifications/{user_id}",
+            get(im::list_im_notifications),
+        )
         .route("/im/project-groups", get(im::list_project_groups));
 
     let im_write = Router::new()
@@ -321,15 +396,21 @@ async fn init_database(pool: &sqlx::PgPool) -> Result<(), sqlx::Error> {
     .await?;
 
     // 创建索引
-    sqlx::query("CREATE INDEX IF NOT EXISTS idx_core_notifications_user ON core_notifications(user_id)")
-        .execute(pool)
-        .await?;
-    sqlx::query("CREATE INDEX IF NOT EXISTS idx_core_chat_rooms_members ON core_chat_members(user_id)")
-        .execute(pool)
-        .await?;
-    sqlx::query("CREATE INDEX IF NOT EXISTS idx_core_chat_messages_room ON core_chat_messages(room_id)")
-        .execute(pool)
-        .await?;
+    sqlx::query(
+        "CREATE INDEX IF NOT EXISTS idx_core_notifications_user ON core_notifications(user_id)",
+    )
+    .execute(pool)
+    .await?;
+    sqlx::query(
+        "CREATE INDEX IF NOT EXISTS idx_core_chat_rooms_members ON core_chat_members(user_id)",
+    )
+    .execute(pool)
+    .await?;
+    sqlx::query(
+        "CREATE INDEX IF NOT EXISTS idx_core_chat_messages_room ON core_chat_messages(room_id)",
+    )
+    .execute(pool)
+    .await?;
 
     tracing::info!("Communication database tables initialized");
     Ok(())

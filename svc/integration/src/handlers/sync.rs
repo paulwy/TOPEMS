@@ -164,9 +164,10 @@ pub async fn get_task(
             .await;
 
             match row {
-                Ok(opt) => {
-                    Json(ApiResponse::success(opt.map(|r| r.into()), "查询同步任务成功"))
-                }
+                Ok(opt) => Json(ApiResponse::success(
+                    opt.map(|r| r.into()),
+                    "查询同步任务成功",
+                )),
                 Err(e) => {
                     tracing::error!("查询同步任务失败: {}", e);
                     Json(api_error(500, "查询同步任务失败"))

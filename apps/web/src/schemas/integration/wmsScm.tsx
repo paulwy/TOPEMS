@@ -19,7 +19,7 @@ const wmsScmFields: SchemaField[] = [
     required: true,
     sortable: true,
     listWidth: 240,
-    renderCell: (row) => (
+    renderCell: (row: Record<string, unknown>) => (
       <Box>
         <Typography
           variant='body2'
@@ -51,9 +51,9 @@ const wmsScmFields: SchemaField[] = [
     sortable: true,
     listWidth: 120,
     placeholder: '输入数量（可选）',
-    renderCell: (row) => (
+    renderCell: (row: Record<string, unknown>) => (
       <Typography variant='body2'>
-        {row.quantity ?? '-'} {String(row.unit ?? '')}
+        {String(row.quantity ?? '-')} {String(row.unit ?? '')}
       </Typography>
     ),
   },
@@ -77,7 +77,7 @@ const wmsScmFields: SchemaField[] = [
         label: cfg.label,
       })),
     },
-    renderCell: (row) => {
+    renderCell: (row: Record<string, unknown>) => {
       const cfg = WMS_SCM_STATUS_CONFIG[row.sync_status as string] || WMS_SCM_STATUS_CONFIG.pending;
       return (
         <Chip
@@ -94,7 +94,7 @@ const wmsScmFields: SchemaField[] = [
     type: 'datetime',
     sortable: true,
     listWidth: 160,
-    renderCell: (row) => (
+    renderCell: (row: Record<string, unknown>) => (
       <Typography variant='body2' color='text.secondary'>
         {row.last_synced_at
           ? new Date(String(row.last_synced_at)).toLocaleString('zh-CN')
@@ -109,7 +109,7 @@ const wmsScmFields: SchemaField[] = [
     sortable: true,
     listWidth: 160,
     hideInForm: true,
-    renderCell: (row) => (
+    renderCell: (row: Record<string, unknown>) => (
       <Typography variant='body2' color='text.secondary'>
         {new Date(String(row.created_at)).toLocaleString('zh-CN')}
       </Typography>

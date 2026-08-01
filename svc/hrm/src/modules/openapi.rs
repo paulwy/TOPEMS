@@ -1,8 +1,8 @@
 use crate::models::{
-    AttendanceRecord, Company, Contract, ContractRenewal, CreateAttendanceRequest, CreateCompanyRequest,
-    CreateContractRequest, CreateDepartmentRequest, CreateEmployeeRequest, Department, Employee,
-    UpdateAttendanceRequest, UpdateCompanyRequest, UpdateContractRequest, UpdateDepartmentRequest,
-    UpdateEmployeeRequest,
+    AttendanceRecord, Company, Contract, ContractRenewal, CreateAttendanceRequest,
+    CreateCompanyRequest, CreateContractRequest, CreateDepartmentRequest, CreateEmployeeRequest,
+    Department, Employee, UpdateAttendanceRequest, UpdateCompanyRequest, UpdateContractRequest,
+    UpdateDepartmentRequest, UpdateEmployeeRequest,
 };
 use utoipa::OpenApi;
 
@@ -69,3 +69,16 @@ use utoipa::OpenApi;
     )
 )]
 pub struct ApiDoc;
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn extract_openapi_spec() {
+        let spec = ApiDoc::openapi();
+        let json = serde_json::to_string_pretty(&spec).expect("Failed to serialize OpenAPI spec");
+        std::fs::write("/tmp/topems-hrm-openapi.json", json).expect("Failed to write spec");
+        tracing::info!("OpenAPI spec written to /tmp/topems-hrm-openapi.json");
+    }
+}

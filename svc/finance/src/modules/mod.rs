@@ -1,22 +1,22 @@
-mod compliance_v51;
 mod audit_v52;
-mod forecast_v53;
-pub mod risk_v54;
-pub mod settlement_v55;
-pub mod tax_v56;
-pub mod reports_v57;
-pub mod treasury_v58;
-pub mod risk_v59;
-pub mod decision_v60;
-mod operational;
-mod reconciliation;
+mod compliance_v51;
 mod cqrs_routes;
+pub mod decision_v60;
 mod event_routes;
-mod report_center;
+pub mod financial_reports;
+mod forecast_v53;
 mod forecasting;
 mod multi_dimensional;
+mod operational;
+mod reconciliation;
+mod report_center;
+pub mod reports_v57;
+pub mod risk_v54;
+pub mod risk_v59;
+pub mod settlement_v55;
 mod shared_services;
-pub mod financial_reports;
+pub mod tax_v56;
+pub mod treasury_v58;
 
 use axum::{
     extract::{Json, Multipart, Path, Query, State},
@@ -1377,7 +1377,10 @@ async fn delete_voucher_template_handler(
 ) -> Json<ApiResponse<()>> {
     let service = FinanceService::new(state.pool.clone(), state.workflow_client.clone());
     let tenant_id = get_tenant_id(&claims);
-    match service.delete_voucher_template(tenant_id, template_id).await {
+    match service
+        .delete_voucher_template(tenant_id, template_id)
+        .await
+    {
         Ok(_) => Json(ApiResponse::success((), "删除成功")),
         Err(e) => Json(ApiResponse::error(500, &e.to_string())),
     }
@@ -1438,17 +1441,20 @@ async fn copy_template_handler(
         Ok(t) => t,
         Err(e) => return Json(ApiResponse::error(500, &e.to_string())),
     };
-    let lines: Vec<crate::services::finance::voucher_template::CreateVoucherTemplateLineRequest> = source
-        .lines
-        .iter()
-        .map(|l| crate::services::finance::voucher_template::CreateVoucherTemplateLineRequest {
-            description: l.description.clone(),
-            account_code: l.account_code.clone(),
-            direction: l.direction.clone(),
-            amount_formula: l.amount_formula.clone(),
-            sort_order: Some(l.sort_order),
-        })
-        .collect();
+    let lines: Vec<crate::services::finance::voucher_template::CreateVoucherTemplateLineRequest> =
+        source
+            .lines
+            .iter()
+            .map(
+                |l| crate::services::finance::voucher_template::CreateVoucherTemplateLineRequest {
+                    description: l.description.clone(),
+                    account_code: l.account_code.clone(),
+                    direction: l.direction.clone(),
+                    amount_formula: l.amount_formula.clone(),
+                    sort_order: Some(l.sort_order),
+                },
+            )
+            .collect();
     let create_req = crate::services::finance::voucher_template::CreateVoucherTemplateRequest {
         name: req.new_name,
         description: source.description.clone(),
@@ -1497,12 +1503,10 @@ async fn toggle_template_handler(
             if r.rows_affected() == 0 {
                 return Json(ApiResponse::error(404, "凭证模板不存在"));
             }
-            let service =
-                FinanceService::new(state.pool.clone(), state.workflow_client.clone());
+            let service = FinanceService::new(state.pool.clone(), state.workflow_client.clone());
             match service.get_voucher_template(tenant_id, template_id).await {
                 Ok(template) => {
-                    let mut val =
-                        serde_json::to_value(template).unwrap_or(serde_json::json!({}));
+                    let mut val = serde_json::to_value(template).unwrap_or(serde_json::json!({}));
                     if let Some(obj) = val.as_object_mut() {
                         obj.insert("isactive".to_string(), serde_json::json!(req.isactive));
                     }
@@ -1603,12 +1607,25 @@ async fn get_template_usage_stats_handler(
     .fetch_one(&state.pool)
     .await
     .unwrap_or(0);
+    let generated_voucher_count: i64 =
+        sqlx::query_scalar("SELECT COUNT(*) FROM core_finance_vouchers WHERE template_id = $1")
+            .bind(template_id)
+            .fetch_one(&state.pool)
+            .await
+            .unwrap_or(0);
+    let last_used_at: Option<DateTime<Utc>> = sqlx::query_scalar(
+        "SELECT MAX(created_at) FROM core_finance_vouchers WHERE template_id = $1",
+    )
+    .bind(template_id)
+    .fetch_one(&state.pool)
+    .await
+    .unwrap_or(None);
     Json(ApiResponse::success(
         serde_json::json!({
             "template_id": template_id,
             "usage_count": rule_count,
-            "generated_voucher_count": 0,
-            "last_used_at": null,
+            "generated_voucher_count": generated_voucher_count,
+            "last_used_at": last_used_at,
         }),
         "查询成功",
     ))
@@ -1728,24 +1745,22 @@ async fn update_template_entry_handler(
     let direction = req.direction.unwrap_or(existing.direction);
     let amount_formula = req.amount_formula.or(existing.amount_formula);
     let sort_order = req.sort_order.unwrap_or(existing.sort_order);
-    let line: Result<
-        crate::services::finance::voucher_template::VoucherTemplateLine,
-        sqlx::Error,
-    > = sqlx::query_as(
-        r#"UPDATE finance_voucher_template_lines
+    let line: Result<crate::services::finance::voucher_template::VoucherTemplateLine, sqlx::Error> =
+        sqlx::query_as(
+            r#"UPDATE finance_voucher_template_lines
               SET description = $1, account_code = $2, direction = $3,
                   amount_formula = $4, sort_order = $5
             WHERE id = $6
            RETURNING *"#,
-    )
-    .bind(description)
-    .bind(account_code)
-    .bind(direction)
-    .bind(amount_formula)
-    .bind(sort_order)
-    .bind(entry_id)
-    .fetch_one(&state.pool)
-    .await;
+        )
+        .bind(description)
+        .bind(account_code)
+        .bind(direction)
+        .bind(amount_formula)
+        .bind(sort_order)
+        .bind(entry_id)
+        .fetch_one(&state.pool)
+        .await;
     match line {
         Ok(l) => Json(ApiResponse::success(
             serde_json::to_value(l).unwrap_or(serde_json::json!({})),
@@ -2124,7 +2139,10 @@ async fn generate_vouchers_handler(
             Ok(r) => r,
             Err(e) => return Json(ApiResponse::error(400, &format!("参数错误: {}", e))),
         };
-    match service.generate_vouchers(tenant_id, req, &generated_by).await {
+    match service
+        .generate_vouchers(tenant_id, req, &generated_by)
+        .await
+    {
         Ok(result) => Json(ApiResponse::success(
             serde_json::to_value(result).unwrap_or(serde_json::json!({})),
             "生成成功",
@@ -2383,7 +2401,10 @@ async fn update_receivable_handler(
 ) -> Json<ApiResponse<serde_json::Value>> {
     let service = FinanceService::new(state.pool.clone(), state.workflow_client.clone());
     let tenant_id = get_tenant_id(&claims);
-    match service.update_receivable(tenant_id, receivable_id, req).await {
+    match service
+        .update_receivable(tenant_id, receivable_id, req)
+        .await
+    {
         Ok(data) => Json(ApiResponse::success(data, "更新成功")),
         Err(e) => Json(ApiResponse::error(500, &e.to_string())),
     }
@@ -2623,7 +2644,10 @@ async fn update_collection_handler(
 ) -> Json<ApiResponse<serde_json::Value>> {
     let service = FinanceService::new(state.pool.clone(), state.workflow_client.clone());
     let tenant_id = get_tenant_id(&claims);
-    match service.update_collection(tenant_id, collection_id, req).await {
+    match service
+        .update_collection(tenant_id, collection_id, req)
+        .await
+    {
         Ok(data) => Json(ApiResponse::success(data, "更新成功")),
         Err(e) => Json(ApiResponse::error(500, &e.to_string())),
     }
@@ -2649,8 +2673,14 @@ async fn write_off_collection_handler(
 ) -> Json<ApiResponse<serde_json::Value>> {
     let service = FinanceService::new(state.pool.clone(), state.workflow_client.clone());
     let tenant_id = get_tenant_id(&claims);
-    let collection_id_str = req.get("collection_id").and_then(|v| v.as_str()).unwrap_or("");
-    let receivable_id_str = req.get("receivable_id").and_then(|v| v.as_str()).unwrap_or("");
+    let collection_id_str = req
+        .get("collection_id")
+        .and_then(|v| v.as_str())
+        .unwrap_or("");
+    let receivable_id_str = req
+        .get("receivable_id")
+        .and_then(|v| v.as_str())
+        .unwrap_or("");
     let amount = req.get("amount").and_then(|v| v.as_f64()).unwrap_or(0.0);
 
     match (
@@ -2658,7 +2688,10 @@ async fn write_off_collection_handler(
         uuid::Uuid::parse_str(receivable_id_str),
     ) {
         (Ok(cid), Ok(rid)) => {
-            match service.write_off_collection(tenant_id, cid, rid, amount).await {
+            match service
+                .write_off_collection(tenant_id, cid, rid, amount)
+                .await
+            {
                 Ok(data) => Json(ApiResponse::success(data, "核销成功")),
                 Err(e) => Json(ApiResponse::error(500, &e.to_string())),
             }
@@ -2738,7 +2771,10 @@ async fn create_payment_record_handler(
     let service = FinanceService::new(state.pool.clone(), state.workflow_client.clone());
     let tenant_id = get_tenant_id(&claims);
     let created_by = claims.username.clone();
-    match service.create_payment_record(tenant_id, req, &created_by).await {
+    match service
+        .create_payment_record(tenant_id, req, &created_by)
+        .await
+    {
         Ok(data) => Json(ApiResponse::success(data, "创建成功")),
         Err(e) => Json(ApiResponse::error(500, &e.to_string())),
     }
@@ -2752,7 +2788,10 @@ async fn update_payment_record_handler(
 ) -> Json<ApiResponse<serde_json::Value>> {
     let service = FinanceService::new(state.pool.clone(), state.workflow_client.clone());
     let tenant_id = get_tenant_id(&claims);
-    match service.update_payment_record(tenant_id, payment_id, req).await {
+    match service
+        .update_payment_record(tenant_id, payment_id, req)
+        .await
+    {
         Ok(data) => Json(ApiResponse::success(data, "更新成功")),
         Err(e) => Json(ApiResponse::error(500, &e.to_string())),
     }
@@ -2786,12 +2825,10 @@ async fn write_off_payment_record_handler(
         uuid::Uuid::parse_str(payment_id_str),
         uuid::Uuid::parse_str(payable_id_str),
     ) {
-        (Ok(pid), Ok(rid)) => {
-            match service.write_off_payment(tenant_id, pid, rid, amount).await {
-                Ok(data) => Json(ApiResponse::success(data, "核销成功")),
-                Err(e) => Json(ApiResponse::error(500, &e.to_string())),
-            }
-        }
+        (Ok(pid), Ok(rid)) => match service.write_off_payment(tenant_id, pid, rid, amount).await {
+            Ok(data) => Json(ApiResponse::success(data, "核销成功")),
+            Err(e) => Json(ApiResponse::error(500, &e.to_string())),
+        },
         _ => Json(ApiResponse::error(400, "无效的ID格式")),
     }
 }
@@ -2927,10 +2964,7 @@ pub fn create_routes() -> Router<AppState> {
         .route("/vouchers", axum::routing::post(create_voucher))
         .route("/vouchers", axum::routing::get(list_vouchers))
         .route("/vouchers/{voucher_id}", axum::routing::get(get_voucher))
-        .route(
-            "/vouchers/{voucher_id}",
-            axum::routing::put(update_voucher),
-        )
+        .route("/vouchers/{voucher_id}", axum::routing::put(update_voucher))
         .route(
             "/vouchers/{voucher_id}",
             axum::routing::delete(delete_voucher),
@@ -3050,22 +3084,10 @@ pub fn create_routes() -> Router<AppState> {
             axum::routing::delete(delete_approval_config_handler),
         )
         // 审批操作（供 ERP 合并报表审批流程调用）
-        .route(
-            "/approvals/submit",
-            axum::routing::post(submit_approval),
-        )
-        .route(
-            "/approvals/approve",
-            axum::routing::post(approve_approval),
-        )
-        .route(
-            "/approvals/reject",
-            axum::routing::post(reject_approval),
-        )
-        .route(
-            "/approvals/cancel",
-            axum::routing::post(cancel_approval),
-        )
+        .route("/approvals/submit", axum::routing::post(submit_approval))
+        .route("/approvals/approve", axum::routing::post(approve_approval))
+        .route("/approvals/reject", axum::routing::post(reject_approval))
+        .route("/approvals/cancel", axum::routing::post(cancel_approval))
         // V40.0 Phase 8: 凭证模板
         .route(
             "/voucher-templates",
@@ -3214,10 +3236,7 @@ pub fn create_routes() -> Router<AppState> {
             axum::routing::post(rollback_import_handler),
         )
         // V41.0 Phase 9: 应收账款
-        .route(
-            "/receivables",
-            axum::routing::get(list_receivables_handler),
-        )
+        .route("/receivables", axum::routing::get(list_receivables_handler))
         .route(
             "/receivables",
             axum::routing::post(create_receivable_handler),
@@ -3243,14 +3262,8 @@ pub fn create_routes() -> Router<AppState> {
             axum::routing::post(batch_create_receivables_handler),
         )
         // V41.0 Phase 9: 应付账款
-        .route(
-            "/payables",
-            axum::routing::get(list_payables_handler),
-        )
-        .route(
-            "/payables",
-            axum::routing::post(create_payable_handler),
-        )
+        .route("/payables", axum::routing::get(list_payables_handler))
+        .route("/payables", axum::routing::post(create_payable_handler))
         .route(
             "/payables/{payable_id}",
             axum::routing::get(get_payable_handler),
@@ -3272,10 +3285,7 @@ pub fn create_routes() -> Router<AppState> {
             axum::routing::post(batch_create_payables_handler),
         )
         // V41.0 Phase 9: 收款管理
-        .route(
-            "/collections",
-            axum::routing::get(list_collections_handler),
-        )
+        .route("/collections", axum::routing::get(list_collections_handler))
         .route(
             "/collections",
             axum::routing::post(create_collection_handler),
@@ -3346,8 +3356,5 @@ pub fn create_routes() -> Router<AppState> {
             "/aging/detail",
             axum::routing::get(get_aging_detail_handler),
         )
-        .route(
-            "/aging/trend",
-            axum::routing::get(get_aging_trend_handler),
-        )
+        .route("/aging/trend", axum::routing::get(get_aging_trend_handler))
 }

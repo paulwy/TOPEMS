@@ -57,11 +57,8 @@ impl MobileAuditService {
         status: &str,
         error_message: Option<&str>,
     ) -> Result<(), sqlx::Error> {
-        let mut req = CreateAuditLogRequest::new(
-            action.to_string(),
-            "scan".to_string(),
-            status.to_string(),
-        );
+        let mut req =
+            CreateAuditLogRequest::new(action.to_string(), "scan".to_string(), status.to_string());
         if let Some(eid) = entity_id {
             req = req.with_entity_id(eid);
         }
@@ -93,11 +90,8 @@ impl MobileAuditService {
         status: &str,
         error_message: Option<&str>,
     ) -> Result<(), sqlx::Error> {
-        let mut req = CreateAuditLogRequest::new(
-            action.to_string(),
-            "task".to_string(),
-            status.to_string(),
-        );
+        let mut req =
+            CreateAuditLogRequest::new(action.to_string(), "task".to_string(), status.to_string());
         if let Some(eid) = entity_id {
             req = req.with_entity_id(eid);
         }

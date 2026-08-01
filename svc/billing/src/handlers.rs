@@ -154,11 +154,12 @@ pub async fn get_plan(
     State(pool): State<PgPool>,
     Path(id): Path<Uuid>,
 ) -> Json<ApiResponse<BillingPlan>> {
-    let plan: Option<BillingPlan> = sqlx::query_as("SELECT * FROM core_billing_plans WHERE id = $1")
-        .bind(id)
-        .fetch_optional(&pool)
-        .await
-        .unwrap_or(None);
+    let plan: Option<BillingPlan> =
+        sqlx::query_as("SELECT * FROM core_billing_plans WHERE id = $1")
+            .bind(id)
+            .fetch_optional(&pool)
+            .await
+            .unwrap_or(None);
 
     match plan {
         Some(p) => Json(ApiResponse::success(p, "Plan retrieved")),
@@ -170,19 +171,21 @@ pub async fn get_subscription(
     State(pool): State<PgPool>,
     Path(tenant_id): Path<Uuid>,
 ) -> Json<ApiResponse<Option<(Subscription, BillingPlan)>>> {
-    let subscription: Option<Subscription> = sqlx::query_as("SELECT * FROM core_subscriptions WHERE tenant_id = $1")
-        .bind(tenant_id)
-        .fetch_optional(&pool)
-        .await
-        .unwrap_or(None);
+    let subscription: Option<Subscription> =
+        sqlx::query_as("SELECT * FROM core_subscriptions WHERE tenant_id = $1")
+            .bind(tenant_id)
+            .fetch_optional(&pool)
+            .await
+            .unwrap_or(None);
 
     match subscription {
         Some(sub) => {
-            let plan: Option<BillingPlan> = sqlx::query_as("SELECT * FROM core_billing_plans WHERE id = $1")
-                .bind(sub.plan_id)
-                .fetch_optional(&pool)
-                .await
-                .unwrap_or(None);
+            let plan: Option<BillingPlan> =
+                sqlx::query_as("SELECT * FROM core_billing_plans WHERE id = $1")
+                    .bind(sub.plan_id)
+                    .fetch_optional(&pool)
+                    .await
+                    .unwrap_or(None);
 
             let default_plan = BillingPlan {
                 id: Uuid::nil(),
@@ -251,7 +254,10 @@ pub async fn create_subscription(
         Ok(subscription) => Json(ApiResponse::success(subscription, "Subscription created")),
         Err(e) => {
             tracing::error!("Failed to create subscription: {}", e);
-            Json(ApiResponse::error(500, &format!("Failed to create subscription: {}", e)))
+            Json(ApiResponse::error(
+                500,
+                &format!("Failed to create subscription: {}", e),
+            ))
         }
     }
 }
@@ -313,11 +319,12 @@ pub async fn get_usage_summary(
     .unwrap_or(None);
 
     let (included_users, included_storage, included_api) = if let Some(sub) = &subscription {
-        let plan: Option<BillingPlan> = sqlx::query_as("SELECT * FROM core_billing_plans WHERE id = $1")
-            .bind(sub.plan_id)
-            .fetch_optional(&pool)
-            .await
-            .unwrap_or(None);
+        let plan: Option<BillingPlan> =
+            sqlx::query_as("SELECT * FROM core_billing_plans WHERE id = $1")
+                .bind(sub.plan_id)
+                .fetch_optional(&pool)
+                .await
+                .unwrap_or(None);
 
         if let Some(p) = plan {
             (
@@ -431,7 +438,10 @@ pub async fn record_usage(
         Ok(record) => Json(ApiResponse::success(record, "Usage recorded")),
         Err(e) => {
             tracing::error!("Failed to record usage: {}", e);
-            Json(ApiResponse::error(500, &format!("Failed to record usage: {}", e)))
+            Json(ApiResponse::error(
+                500,
+                &format!("Failed to record usage: {}", e),
+            ))
         }
     }
 }

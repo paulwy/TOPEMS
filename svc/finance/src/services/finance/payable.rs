@@ -96,14 +96,12 @@ impl FinanceService {
         tenant_id: Uuid,
         payable_id: Uuid,
     ) -> Result<Value, TopemsError> {
-        let row = sqlx::query(
-            "SELECT * FROM erp_payables WHERE tenant_id = $1 AND id = $2",
-        )
-        .bind(tenant_id)
-        .bind(payable_id)
-        .fetch_optional(&self.db_pool)
-        .await?
-        .ok_or_else(|| TopemsError::NotFound("应付账款不存在".to_string()))?;
+        let row = sqlx::query("SELECT * FROM erp_payables WHERE tenant_id = $1 AND id = $2")
+            .bind(tenant_id)
+            .bind(payable_id)
+            .fetch_optional(&self.db_pool)
+            .await?
+            .ok_or_else(|| TopemsError::NotFound("应付账款不存在".to_string()))?;
 
         let id: Uuid = sqlx::Row::get(&row, "id");
         let supplier_name: Option<String> = sqlx::Row::try_get(&row, "supplier_name").ok();
@@ -124,7 +122,10 @@ impl FinanceService {
         req: Value,
         created_by: &str,
     ) -> Result<Value, TopemsError> {
-        let supplier_name = req.get("supplier_name").and_then(|v| v.as_str()).unwrap_or("");
+        let supplier_name = req
+            .get("supplier_name")
+            .and_then(|v| v.as_str())
+            .unwrap_or("");
         let amount = req.get("amount").and_then(|v| v.as_f64()).unwrap_or(0.0);
 
         let row = sqlx::query(
@@ -197,13 +198,11 @@ impl FinanceService {
         tenant_id: Uuid,
         payable_id: Uuid,
     ) -> Result<(), TopemsError> {
-        let result = sqlx::query(
-            "DELETE FROM erp_payables WHERE tenant_id = $1 AND id = $2",
-        )
-        .bind(tenant_id)
-        .bind(payable_id)
-        .execute(&self.db_pool)
-        .await?;
+        let result = sqlx::query("DELETE FROM erp_payables WHERE tenant_id = $1 AND id = $2")
+            .bind(tenant_id)
+            .bind(payable_id)
+            .execute(&self.db_pool)
+            .await?;
 
         if result.rows_affected() == 0 {
             return Err(TopemsError::NotFound("应付账款不存在".to_string()));
@@ -212,10 +211,7 @@ impl FinanceService {
         Ok(())
     }
 
-    pub async fn get_payable_aging(
-        &self,
-        tenant_id: Uuid,
-    ) -> Result<Value, TopemsError> {
+    pub async fn get_payable_aging(&self, tenant_id: Uuid) -> Result<Value, TopemsError> {
         let rows = sqlx::query(
             "SELECT
                 '0-30天' as bucket,

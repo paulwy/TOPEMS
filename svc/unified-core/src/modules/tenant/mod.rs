@@ -15,7 +15,8 @@ pub async fn init_database(pool: &PgPool) -> Result<(), sqlx::Error> {
     sqlx::query(
         r#"
         CREATE TABLE IF NOT EXISTS core_tenants (
-            id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+        -- tenant_id Uuid NOT NULL DEFAULT '00000000-0000-0000-0000-000000000000'::uuid,
+id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
             name VARCHAR(128) NOT NULL,
             code VARCHAR(64) NOT NULL UNIQUE,  -- Used for subdomains
             tenant_type VARCHAR(32) DEFAULT 'shared',  -- 'independent' | 'shared'
@@ -92,12 +93,20 @@ pub async fn init_database(pool: &PgPool) -> Result<(), sqlx::Error> {
             tenant_id UUID NOT NULL REFERENCES core_tenants(id),
             module_code VARCHAR(64) NOT NULL,
             module_name VARCHAR(128),
+            tier VARCHAR(32) DEFAULT 'basic',  -- P34-4: 'basic' | 'advanced' | 'infrastructure'
             is_active BOOLEAN DEFAULT TRUE,
             activated_at TIMESTAMP DEFAULT NOW(),
             expires_at TIMESTAMP,
             UNIQUE(tenant_id, module_code)
         )
         "#,
+    )
+    .execute(pool)
+    .await?;
+
+    // P34-4: migration for existing databases — add tier column if missing.
+    sqlx::query(
+        "ALTER TABLE core_tenant_modules ADD COLUMN IF NOT EXISTS tier VARCHAR(32) DEFAULT 'basic'",
     )
     .execute(pool)
     .await?;

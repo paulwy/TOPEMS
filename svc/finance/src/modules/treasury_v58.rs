@@ -438,9 +438,7 @@ impl CashPoolManager {
             .as_deref()
             .map(PoolType::from_str)
             .unwrap_or(PoolType::Physical);
-        let currency = req
-            .currency
-            .unwrap_or_else(|| "CNY".to_string());
+        let currency = req.currency.unwrap_or_else(|| "CNY".to_string());
         let entities = req.entities.unwrap_or_default();
         let entities_array: Vec<String> = entities;
 
@@ -474,10 +472,7 @@ impl CashPoolManager {
         .await
     }
 
-    pub async fn list_pools(
-        pool: &PgPool,
-        tenant_id: Uuid,
-    ) -> Result<Vec<CashPool>, sqlx::Error> {
+    pub async fn list_pools(pool: &PgPool, tenant_id: Uuid) -> Result<Vec<CashPool>, sqlx::Error> {
         sqlx::query_as(
             "SELECT id, name, pool_type, currency, balance, entities, created_at FROM finance_v58_cash_pools WHERE tenant_id = $1 ORDER BY created_at DESC LIMIT 500",
         )
@@ -496,13 +491,9 @@ impl CashPoolManager {
 
         for item in &req.allocations {
             let allocation_id = Uuid::new_v4();
-            let percentage = item.percentage.unwrap_or_else(|| {
-                if item.amount > 0.0 {
-                    0.0
-                } else {
-                    0.0
-                }
-            });
+            let percentage =
+                item.percentage
+                    .unwrap_or_else(|| if item.amount > 0.0 { 0.0 } else { 0.0 });
 
             let allocation = sqlx::query_as::<_, PoolAllocation>(
                 r#"INSERT INTO finance_v58_pool_allocations
@@ -532,9 +523,7 @@ impl CashPoolManager {
         req: TransferRequest,
     ) -> Result<PoolTransfer, sqlx::Error> {
         let id = Uuid::new_v4();
-        let currency = req
-            .currency
-            .unwrap_or_else(|| "CNY".to_string());
+        let currency = req.currency.unwrap_or_else(|| "CNY".to_string());
         let now = Utc::now();
 
         let from_pool = Self::get_pool(pool, tenant_id, req.from_pool).await?;
@@ -985,7 +974,8 @@ impl LiquidityOptimizer {
         let mut total_max = 0.0_f64;
 
         for target in &targets {
-            let current_balance = Self::estimate_current_balance(pool, tenant_id, &target.entity_id).await;
+            let current_balance =
+                Self::estimate_current_balance(pool, tenant_id, &target.entity_id).await;
 
             let position = if current_balance < target.min_balance {
                 "below_minimum"
@@ -1020,11 +1010,7 @@ impl LiquidityOptimizer {
         }))
     }
 
-    async fn estimate_current_balance(
-        _pool: &PgPool,
-        _tenant_id: Uuid,
-        _entity_id: &str,
-    ) -> f64 {
+    async fn estimate_current_balance(_pool: &PgPool, _tenant_id: Uuid, _entity_id: &str) -> f64 {
         500_000.0 + (_entity_id.len() as f64 * 10_000.0)
     }
 
@@ -1144,7 +1130,11 @@ impl LiquidityOptimizer {
         actions
     }
 
-    fn calculate_projected_savings(actions: &[Action], current: f64, target: &LiquidityTarget) -> f64 {
+    fn calculate_projected_savings(
+        actions: &[Action],
+        current: f64,
+        target: &LiquidityTarget,
+    ) -> f64 {
         let mut total = 0.0;
         for action in actions {
             total += action.expected_return;
@@ -1219,9 +1209,7 @@ impl LiquidityOptimizer {
         target_id: Uuid,
         req: SetTargetRequest,
     ) -> Result<LiquidityTarget, sqlx::Error> {
-        let currency = req
-            .currency
-            .unwrap_or_else(|| "CNY".to_string());
+        let currency = req.currency.unwrap_or_else(|| "CNY".to_string());
 
         let updated = sqlx::query_as::<_, LiquidityTarget>(
             r#"INSERT INTO finance_v58_liquidity_targets
@@ -1562,10 +1550,7 @@ pub fn create_routes() -> Router<AppState> {
             "/finance-v58/pool",
             axum::routing::post(create_pool_handler),
         )
-        .route(
-            "/finance-v58/pools",
-            axum::routing::get(list_pools_handler),
-        )
+        .route("/finance-v58/pools", axum::routing::get(list_pools_handler))
         .route(
             "/finance-v58/pool/{id}",
             axum::routing::get(get_pool_handler),

@@ -162,11 +162,12 @@ impl ServiceDiscoveryClient {
             .await
             .map_err(|e| TopemsError::Internal(format!("Failed to fetch health: {}", e)))?;
 
-        let api_response: topems_shared_core::response::ApiResponse<HashMap<String, ServiceHealthStatus>> =
-            response
-                .json()
-                .await
-                .map_err(|e| TopemsError::Internal(format!("Failed to parse response: {}", e)))?;
+        let api_response: topems_shared_core::response::ApiResponse<
+            HashMap<String, ServiceHealthStatus>,
+        > = response
+            .json()
+            .await
+            .map_err(|e| TopemsError::Internal(format!("Failed to parse response: {}", e)))?;
 
         api_response
             .data

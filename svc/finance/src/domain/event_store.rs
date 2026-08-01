@@ -65,7 +65,10 @@ pub trait EventStore: Send + Sync {
     ) -> Result<Vec<EventRecord>, String>;
 
     async fn save_snapshot(&self, snapshot: SnapshotRecord) -> Result<(), String>;
-    async fn get_latest_snapshot(&self, aggregate_id: &str) -> Result<Option<SnapshotRecord>, String>;
+    async fn get_latest_snapshot(
+        &self,
+        aggregate_id: &str,
+    ) -> Result<Option<SnapshotRecord>, String>;
     async fn get_aggregate_version(&self, aggregate_id: &str) -> Result<u64, String>;
 }
 
@@ -184,7 +187,10 @@ impl EventStore for InMemoryEventStore {
         Ok(())
     }
 
-    async fn get_latest_snapshot(&self, aggregate_id: &str) -> Result<Option<SnapshotRecord>, String> {
+    async fn get_latest_snapshot(
+        &self,
+        aggregate_id: &str,
+    ) -> Result<Option<SnapshotRecord>, String> {
         let snapshots = self.snapshots.lock().map_err(|e| e.to_string())?;
 
         Ok(snapshots

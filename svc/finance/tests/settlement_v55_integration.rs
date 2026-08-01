@@ -44,8 +44,14 @@ async fn test_reconcile_single() {
         .await;
 
     assert_eq!(status, 200, "单笔对账应该返回 200");
-    assert!(resp["success"].as_bool().unwrap_or(false), "响应 success 应为 true");
-    assert!(resp["data"]["match_status"].is_string(), "data 应包含 match_status 字段");
+    assert!(
+        resp["success"].as_bool().unwrap_or(false),
+        "响应 success 应为 true"
+    );
+    assert!(
+        resp["data"]["match_status"].is_string(),
+        "data 应包含 match_status 字段"
+    );
 }
 
 #[tokio::test]
@@ -61,7 +67,10 @@ async fn test_get_reconcile_results() {
         .await;
 
     assert_eq!(status, 200, "获取对账结果列表应该返回 200");
-    assert!(resp["success"].as_bool().unwrap_or(false), "响应 success 应为 true");
+    assert!(
+        resp["success"].as_bool().unwrap_or(false),
+        "响应 success 应为 true"
+    );
     assert!(resp["data"].is_array(), "data 应该是数组");
 }
 
@@ -85,7 +94,10 @@ async fn test_create_reconcile_rule() {
         .await;
 
     assert_eq!(status, 200, "创建对账规则应该返回 200");
-    assert!(resp["success"].as_bool().unwrap_or(false), "响应 success 应为 true");
+    assert!(
+        resp["success"].as_bool().unwrap_or(false),
+        "响应 success 应为 true"
+    );
     assert!(resp["data"]["id"].is_string(), "data 应包含 id 字段");
 }
 
@@ -119,8 +131,14 @@ async fn test_recognize_invoice() {
         .await;
 
     assert_eq!(status, 200, "发票识别应该返回 200");
-    assert!(resp["success"].as_bool().unwrap_or(false), "响应 success 应为 true");
-    assert!(resp["data"]["invoice"]["id"].is_string(), "data 应包含 invoice.id 字段");
+    assert!(
+        resp["success"].as_bool().unwrap_or(false),
+        "响应 success 应为 true"
+    );
+    assert!(
+        resp["data"]["invoice"]["id"].is_string(),
+        "data 应包含 invoice.id 字段"
+    );
 }
 
 #[tokio::test]
@@ -131,12 +149,13 @@ async fn test_list_invoices() {
     }
     let ctx = TestContext::new().await;
 
-    let (status, resp) = ctx
-        .request("GET", "/finance-v55/invoices", None)
-        .await;
+    let (status, resp) = ctx.request("GET", "/finance-v55/invoices", None).await;
 
     assert_eq!(status, 200, "获取发票列表应该返回 200");
-    assert!(resp["success"].as_bool().unwrap_or(false), "响应 success 应为 true");
+    assert!(
+        resp["success"].as_bool().unwrap_or(false),
+        "响应 success 应为 true"
+    );
     assert!(resp["data"].is_array(), "data 应该是数组");
 }
 
@@ -162,8 +181,14 @@ async fn test_initiate_payment() {
         .await;
 
     assert_eq!(status, 200, "发起支付应该返回 200");
-    assert!(resp["success"].as_bool().unwrap_or(false), "响应 success 应为 true");
-    assert!(resp["data"]["request"]["id"].is_string(), "data 应包含 request.id 字段");
+    assert!(
+        resp["success"].as_bool().unwrap_or(false),
+        "响应 success 应为 true"
+    );
+    assert!(
+        resp["data"]["request"]["id"].is_string(),
+        "data 应包含 request.id 字段"
+    );
 }
 
 #[tokio::test]
@@ -179,6 +204,9 @@ async fn test_get_payment_methods() {
         .await;
 
     assert_eq!(status, 200, "获取支付方式列表应该返回 200");
-    assert!(resp["success"].as_bool().unwrap_or(false), "响应 success 应为 true");
+    assert!(
+        resp["success"].as_bool().unwrap_or(false),
+        "响应 success 应为 true"
+    );
     assert!(resp["data"].is_array(), "data 应该是数组");
 }

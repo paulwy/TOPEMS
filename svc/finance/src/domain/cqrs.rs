@@ -2,13 +2,13 @@ use serde::{Deserialize, Serialize};
 use std::sync::Arc;
 use uuid::Uuid;
 
+use super::async_projector::{AsyncProjector, AsyncProjectorConfig};
 use super::event_store::{EventMetadata, EventStore, InMemoryEventStore};
 use super::events::*;
 use super::materialized_view::*;
-use super::projector::EventProjector;
 use super::pg_event_store::PgEventStore;
-use super::pg_materialized_views::{PgVoucherSummaryView, PgReceivableAgingView};
-use super::async_projector::{AsyncProjector, AsyncProjectorConfig};
+use super::pg_materialized_views::{PgReceivableAgingView, PgVoucherSummaryView};
+use super::projector::EventProjector;
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct CommandResult {
@@ -35,7 +35,10 @@ impl<T: EventStore + Send + Sync + 'static> CommandHandler<T> {
         cmd: CreateVoucherCommand,
         metadata: Option<EventMetadata>,
     ) -> Result<CommandResult, String> {
-        let voucher_id = cmd.voucher_id.clone().unwrap_or_else(|| Uuid::new_v4().to_string());
+        let voucher_id = cmd
+            .voucher_id
+            .clone()
+            .unwrap_or_else(|| Uuid::new_v4().to_string());
         let event = FinanceDomainEvent::VoucherCreated(VoucherCreatedEvent {
             voucher_id: voucher_id.clone(),
             voucher_no: cmd.voucher_no,
@@ -176,9 +179,10 @@ impl CqrsContext {
         let receivable_aging_view = Arc::new(ReceivableAgingMaterializedView::new());
 
         let mut projector = EventProjector::new();
-        projector.register_view(Arc::<VoucherSummaryMaterializedView>::clone(
-            &voucher_summary_view,
-        ) as Arc<dyn MaterializedView>);
+        projector.register_view(
+            Arc::<VoucherSummaryMaterializedView>::clone(&voucher_summary_view)
+                as Arc<dyn MaterializedView>,
+        );
         projector.register_view(Arc::<ReceivableAgingMaterializedView>::clone(
             &receivable_aging_view,
         ) as Arc<dyn MaterializedView>);
@@ -228,24 +232,23 @@ impl PgCqrsContext {
         let receivable_aging_view = Arc::new(PgReceivableAgingView::new(pool.clone()));
 
         let mut sync_projector = EventProjector::new();
-        sync_projector.register_view(Arc::<PgVoucherSummaryView>::clone(
-            &voucher_summary_view,
-        ) as Arc<dyn MaterializedView>);
-        sync_projector.register_view(Arc::<PgReceivableAgingView>::clone(
-            &receivable_aging_view,
-        ) as Arc<dyn MaterializedView>);
+        sync_projector
+            .register_view(Arc::<PgVoucherSummaryView>::clone(&voucher_summary_view)
+                as Arc<dyn MaterializedView>);
+        sync_projector.register_view(Arc::<PgReceivableAgingView>::clone(&receivable_aging_view)
+            as Arc<dyn MaterializedView>);
         let sync_projector = Arc::new(sync_projector);
 
         let mut async_projector = AsyncProjector::new(pool.clone(), projector_config);
-        async_projector.register_view(Arc::<PgVoucherSummaryView>::clone(
-            &voucher_summary_view,
-        ) as Arc<dyn MaterializedView>);
-        async_projector.register_view(Arc::<PgReceivableAgingView>::clone(
-            &receivable_aging_view,
-        ) as Arc<dyn MaterializedView>);
+        async_projector
+            .register_view(Arc::<PgVoucherSummaryView>::clone(&voucher_summary_view)
+                as Arc<dyn MaterializedView>);
+        async_projector.register_view(Arc::<PgReceivableAgingView>::clone(&receivable_aging_view)
+            as Arc<dyn MaterializedView>);
         let async_projector = Arc::new(async_projector);
 
-        let command_handler = CommandHandler::new(Arc::clone(&event_store), Arc::clone(&sync_projector));
+        let command_handler =
+            CommandHandler::new(Arc::clone(&event_store), Arc::clone(&sync_projector));
 
         Self {
             event_store,

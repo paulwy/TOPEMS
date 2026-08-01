@@ -1,0 +1,66 @@
+/**
+ * @env-entry Singleton environment variable access
+ *
+ * Unified frontend environment variable access point.
+ * Eliminates scattered typeof import.meta !== 'undefined' checks.
+ * All frontend code should use the APIs exposed here to read env vars.
+ *
+ * @todo V79+
+ *   - This singleton covers 100% of frontend import.meta.env reads
+ *   - Global search for import.meta.env and replace with getEnv/isDev/isProd
+ *   - Align with backend Node-side lib/config-env singleton
+ */
+
+function getImportMetaEnvSafe(): Record<string, string | boolean | undefined> {
+  try {
+    if (typeof import.meta !== 'undefined' && import.meta.env) {
+      return import.meta.env as unknown as Record<string, string | boolean | undefined>;
+    }
+  } catch {
+    // ignore
+  }
+  return {};
+}
+
+/**
+ * Safely read environment variable (generic support, return type matches defaultValue)
+ * @param key Environment variable key (e.g. VITE_API_BASE_URL)
+ * @param defaultValue Default value when not set (undefined if not provided)
+ */
+export function getEnv<T = string>(key: string, defaultValue?: T): T | undefined {
+  const env = getImportMetaEnvSafe();
+  if (env && typeof env[key] !== 'undefined') {
+    const raw = env[key];
+    if (typeof defaultValue === 'boolean') {
+      return (String(raw) === 'true') as unknown as T;
+    }
+    if (typeof defaultValue === 'number') {
+      const n = Number(raw);
+      return (isNaN(n) ? defaultValue : n) as unknown as T;
+    }
+    return String(raw) as unknown as T;
+  }
+  return defaultValue;
+}
+
+/** Whether development mode (equivalent to import.meta.env.DEV) */
+export function isDev(): boolean {
+  return getEnv<boolean>('DEV', true) ?? true;
+}
+
+/** Whether production mode (equivalent to import.meta.env.PROD) */
+export function isProd(): boolean {
+  return getEnv<boolean>('PROD', false) ?? false;
+}
+
+/** Deployment mode: static | module-federation | standalone */
+export const VITE_DEPLOYMENT_MODE = (): string =>
+  getEnv('VITE_DEPLOYMENT_MODE', 'static') as string;
+
+/** Common quick getters (lazy evaluation via functions) */
+export const VITE_API_BASE_URL = (): string => getEnv('VITE_API_BASE_URL', '/api') as string;
+
+export const VITE_ENABLE_DEBUG_MODE = (): boolean =>
+  getEnv<boolean>('VITE_ENABLE_DEBUG_MODE', false) ?? false;
+
+export const VITE_LOG_LEVEL = (): string => getEnv('VITE_LOG_LEVEL', 'info') as string;

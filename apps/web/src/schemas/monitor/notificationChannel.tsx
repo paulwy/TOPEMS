@@ -69,7 +69,7 @@ const channelFields: SchemaField[] = [
     required: true,
     sortable: true,
     listWidth: 240,
-    renderCell: (row) => {
+    renderCell: (row: Record<string, unknown>) => {
       const typeInfo = getChannelTypeInfo(row.type as string);
       return (
         <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5 }}>
@@ -118,7 +118,7 @@ const channelFields: SchemaField[] = [
       type: 'static',
       options: CHANNEL_TYPE_OPTIONS.map((t) => ({ value: t.value, label: t.label })),
     },
-    renderCell: (row) => {
+    renderCell: (row: Record<string, unknown>) => {
       const typeInfo = getChannelTypeInfo(row.type as string);
       return (
         <Chip
@@ -147,7 +147,7 @@ const channelFields: SchemaField[] = [
     type: 'switch',
     defaultValue: true,
     listWidth: 200,
-    renderCell: (row) => (
+    renderCell: (row: Record<string, unknown>) => (
       <Box sx={{ display: 'flex', flexDirection: 'column', gap: 0.5 }}>
         <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
           <ToggleSwitch

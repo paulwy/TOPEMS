@@ -28,13 +28,13 @@ use std::sync::Arc;
 use axum::{extract::State, routing::get, Json, Router};
 use axum_prometheus::PrometheusMetricLayer;
 
+use topems_shared::service_client::create_workflow_client;
 use topems_shared::{
     auth_middleware, create_cors_layer, get_api_info_handler, init_telemetry,
     rate_limit_middleware, register_routes_with_legacy_alias, rls_middleware, simple_health_check,
     telemetry_middleware, ApiResponse, AuthState, RateLimitConfig, RateLimitMiddleware,
     ServiceHealth, SimpleHealthConfig,
 };
-use topems_shared::service_client::create_workflow_client;
 use utoipa::OpenApi;
 
 pub use shared::*;
@@ -115,8 +115,7 @@ async fn main() -> anyhow::Result<()> {
 
     let workflow_url = std::env::var("WORKFLOW_SERVICE_URL")
         .unwrap_or_else(|_| "http://localhost:8000".to_string());
-    let workflow_client =
-        create_workflow_client().expect("工作流服务客户端初始化失败");
+    let workflow_client = create_workflow_client().expect("工作流服务客户端初始化失败");
     tracing::info!("🔗 工作流服务客户端初始化成功: {}", workflow_url);
 
     let hazard_cache = Arc::new(shared::cache::InMemoryCache::new(

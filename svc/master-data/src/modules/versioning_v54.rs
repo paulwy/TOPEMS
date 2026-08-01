@@ -759,7 +759,11 @@ pub async fn create_branch(
     let store = get_v54_store();
     let mut branches = store.version_branches.lock().await;
 
-    let branch_type = req.branch_type.as_deref().map(branch_type_from_str).unwrap_or(BranchType::Feature);
+    let branch_type = req
+        .branch_type
+        .as_deref()
+        .map(branch_type_from_str)
+        .unwrap_or(BranchType::Feature);
     let now = chrono::Utc::now().to_rfc3339();
 
     let branch = VersionBranch {
@@ -1062,9 +1066,16 @@ pub async fn get_compliance_audit(
     let mut high_risk_count: i64 = 0;
 
     for e in events.iter() {
-        *by_category.entry(format!("{:?}", e.category).to_lowercase()).or_insert(0) += 1;
-        *by_event_type.entry(format!("{:?}", e.event_type).to_lowercase()).or_insert(0) += 1;
-        if matches!(e.event_type, AuditEventType::Delete | AuditEventType::Export) {
+        *by_category
+            .entry(format!("{:?}", e.category).to_lowercase())
+            .or_insert(0) += 1;
+        *by_event_type
+            .entry(format!("{:?}", e.event_type).to_lowercase())
+            .or_insert(0) += 1;
+        if matches!(
+            e.event_type,
+            AuditEventType::Delete | AuditEventType::Export
+        ) {
             high_risk_count += 1;
         }
     }
@@ -1185,7 +1196,11 @@ pub async fn check_permission(
             "has_permission": has_permission,
             "roles_checked": all_role_ids,
         }),
-        if has_permission { "权限检查通过" } else { "权限不足" },
+        if has_permission {
+            "权限检查通过"
+        } else {
+            "权限不足"
+        },
     ))
 }
 

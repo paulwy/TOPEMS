@@ -337,7 +337,11 @@ async fn ensure_initialized() {
             id: "sg-crm".to_string(),
             name: "CRM Subgraph".to_string(),
             url: "http://localhost:8029/graphql".to_string(),
-            types: vec!["Customer".to_string(), "Contact".to_string(), "Lead".to_string()],
+            types: vec![
+                "Customer".to_string(),
+                "Contact".to_string(),
+                "Lead".to_string(),
+            ],
             entities: vec!["Customer".to_string(), "Contact".to_string()],
             version: 1,
             health_status: HealthStatus::Healthy,
@@ -346,7 +350,11 @@ async fn ensure_initialized() {
             id: "sg-erp".to_string(),
             name: "ERP Subgraph".to_string(),
             url: "http://localhost:8002/graphql".to_string(),
-            types: vec!["Order".to_string(), "Product".to_string(), "Supplier".to_string()],
+            types: vec![
+                "Order".to_string(),
+                "Product".to_string(),
+                "Supplier".to_string(),
+            ],
             entities: vec!["Order".to_string(), "Product".to_string()],
             version: 2,
             health_status: HealthStatus::Healthy,
@@ -390,15 +398,13 @@ async fn ensure_initialized() {
             id: "tx-002".to_string(),
             participants: vec!["finance-service".to_string()],
             state: TransactionState::Preparing,
-            steps: vec![
-                CompensationStep {
-                    step_id: "step-003".to_string(),
-                    action: CompensationAction::Compensate,
-                    target_service: "finance-service".to_string(),
-                    payload: Some(serde_json::json!({"operation": "hold_funds"})),
-                    status: StepStatus::Executing,
-                },
-            ],
+            steps: vec![CompensationStep {
+                step_id: "step-003".to_string(),
+                action: CompensationAction::Compensate,
+                target_service: "finance-service".to_string(),
+                payload: Some(serde_json::json!({"operation": "hold_funds"})),
+                status: StepStatus::Executing,
+            }],
             timeout_ms: 15000,
             created_at: now,
         },
@@ -424,7 +430,14 @@ impl FederationGatewayV5 {
         let store = get_federation_store();
         let mut subgraphs = store.subgraphs.lock().await;
 
-        let id = format!("sg-{}", uuid::Uuid::new_v4().to_string().split('-').next().unwrap_or("new"));
+        let id = format!(
+            "sg-{}",
+            uuid::Uuid::new_v4()
+                .to_string()
+                .split('-')
+                .next()
+                .unwrap_or("new")
+        );
         let config = SubgraphConfig {
             id,
             name,
@@ -512,9 +525,18 @@ impl FederationGatewayV5 {
         let subgraphs = store.subgraphs.lock().await;
         let list = subgraphs.clone();
 
-        let healthy = list.iter().filter(|s| s.health_status == HealthStatus::Healthy).count() as i32;
-        let degraded = list.iter().filter(|s| s.health_status == HealthStatus::Degraded).count() as i32;
-        let unhealthy = list.iter().filter(|s| s.health_status == HealthStatus::Unhealthy).count() as i32;
+        let healthy = list
+            .iter()
+            .filter(|s| s.health_status == HealthStatus::Healthy)
+            .count() as i32;
+        let degraded = list
+            .iter()
+            .filter(|s| s.health_status == HealthStatus::Degraded)
+            .count() as i32;
+        let unhealthy = list
+            .iter()
+            .filter(|s| s.health_status == HealthStatus::Unhealthy)
+            .count() as i32;
         let total = list.len() as i32;
 
         FederationHealthReport {
@@ -609,10 +631,7 @@ impl TransactionCoordinator {
             .ok_or_else(|| "未找到事务".to_string())?;
 
         if tx.state != TransactionState::Preparing {
-            return Err(format!(
-                "事务状态不允许提交: {:?}",
-                tx.state
-            ));
+            return Err(format!("事务状态不允许提交: {:?}", tx.state));
         }
 
         tx.state = TransactionState::Committing;
@@ -721,17 +740,15 @@ impl TransactionCoordinator {
             .ok_or_else(|| "未找到事务".to_string())?;
 
         if tx.state != TransactionState::Failed && tx.state != TransactionState::Compensating {
-            return Err(format!(
-                "事务状态不允许恢复: {:?}",
-                tx.state
-            ));
+            return Err(format!("事务状态不允许恢复: {:?}", tx.state));
         }
 
         tx.state = TransactionState::Recovering;
 
-        let all_steps_ok = tx.steps.iter().all(|s| {
-            s.status == StepStatus::Completed || s.status == StepStatus::Compensated
-        });
+        let all_steps_ok = tx
+            .steps
+            .iter()
+            .all(|s| s.status == StepStatus::Completed || s.status == StepStatus::Compensated);
 
         if all_steps_ok {
             tx.state = TransactionState::Completed;
@@ -797,16 +814,13 @@ pub async fn register_subgraph_handler(
     }
 }
 
-pub async fn list_subgraphs_handler(
-) -> Json<ApiResponse<Vec<SubgraphConfig>>> {
+pub async fn list_subgraphs_handler() -> Json<ApiResponse<Vec<SubgraphConfig>>> {
     ensure_initialized().await;
     let subgraphs = FederationGatewayV5::list_subgraphs().await;
     Json(ApiResponse::success(subgraphs, "子图列表"))
 }
 
-pub async fn remove_subgraph_handler(
-    Path(id): Path<String>,
-) -> Json<ApiResponse<()>> {
+pub async fn remove_subgraph_handler(Path(id): Path<String>) -> Json<ApiResponse<()>> {
     ensure_initialized().await;
 
     match FederationGatewayV5::remove_subgraph(&id).await {
@@ -834,8 +848,7 @@ pub async fn get_federation_plan_handler(
     Json(ApiResponse::success(plan, "联邦查询计划"))
 }
 
-pub async fn federation_health_handler(
-) -> Json<ApiResponse<FederationHealthReport>> {
+pub async fn federation_health_handler() -> Json<ApiResponse<FederationHealthReport>> {
     ensure_initialized().await;
     let report = FederationGatewayV5::health_check_subgraphs().await;
     Json(ApiResponse::success(report, "联邦健康报告"))
@@ -848,12 +861,8 @@ pub async fn start_transaction_handler(
 ) -> Json<ApiResponse<TransactionContext>> {
     ensure_initialized().await;
 
-    match TransactionCoordinator::start_transaction(
-        req.participants,
-        req.steps,
-        req.timeout_ms,
-    )
-    .await
+    match TransactionCoordinator::start_transaction(req.participants, req.steps, req.timeout_ms)
+        .await
     {
         Ok(ctx) => Json(ApiResponse::success(ctx, "事务已启动")),
         Err(e) => Json(ApiResponse::error(500, &e)),

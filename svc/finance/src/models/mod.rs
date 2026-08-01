@@ -3,8 +3,8 @@ use rust_decimal::Decimal;
 use serde::{Deserialize, Serialize};
 use sqlx::FromRow;
 use std::fmt;
-use uuid::Uuid;
 use utoipa::ToSchema;
+use uuid::Uuid;
 
 #[derive(Debug, Clone, FromRow, Serialize, Deserialize, ToSchema)]
 #[schema(as = Account)]
@@ -163,6 +163,8 @@ pub struct Voucher {
     #[serde(skip_serializing_if = "Option::is_none")]
     pub source_id: Option<String>,
     #[serde(skip_serializing_if = "Option::is_none")]
+    pub template_id: Option<Uuid>,
+    #[serde(skip_serializing_if = "Option::is_none")]
     pub updated_by: Option<Uuid>,
     pub created_at: DateTime<Utc>,
     pub updated_at: DateTime<Utc>,
@@ -295,7 +297,8 @@ pub struct CreateAccountRequest {
     pub code: String,
     pub name: String,
     pub parent_id: Option<Uuid>,
-    pub account_type: AccountType,
+    #[serde(alias = "category")]
+    pub account_type: Option<AccountType>,
     pub currency: String,
     pub description: Option<String>,
 }
@@ -307,6 +310,8 @@ pub struct CreateVoucherRequest {
     pub voucher_type: VoucherType,
     pub lines: Vec<VoucherLineRequest>,
     pub description: Option<String>,
+    #[serde(default)]
+    pub template_id: Option<Uuid>,
 }
 
 /// V39.0 Phase 7: 凭证更新请求（仅 draft/submitted/rejected 状态可更新）
@@ -355,7 +360,9 @@ where
                 let naive_dt = naive.and_hms_opt(0, 0, 0).ok_or_else(|| {
                     serde::de::Error::custom(format!("Invalid date format: {}", s))
                 })?;
-                return Ok(Some(DateTime::<Utc>::from_naive_utc_and_offset(naive_dt, Utc)));
+                return Ok(Some(DateTime::<Utc>::from_naive_utc_and_offset(
+                    naive_dt, Utc,
+                )));
             }
             Err(serde::de::Error::custom(format!(
                 "Invalid date format: {}",

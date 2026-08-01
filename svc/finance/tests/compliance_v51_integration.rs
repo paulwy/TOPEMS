@@ -44,7 +44,10 @@ async fn test_create_control_point() {
         .await;
 
     assert_eq!(status, 200, "创建控制点应该返回 200");
-    assert!(resp["success"].as_bool().unwrap_or(false), "响应 success 应为 true");
+    assert!(
+        resp["success"].as_bool().unwrap_or(false),
+        "响应 success 应为 true"
+    );
 }
 
 #[tokio::test]
@@ -60,7 +63,10 @@ async fn test_list_control_points() {
         .await;
 
     assert_eq!(status, 200, "列出控制点应该返回 200");
-    assert!(resp["success"].as_bool().unwrap_or(false), "响应 success 应为 true");
+    assert!(
+        resp["success"].as_bool().unwrap_or(false),
+        "响应 success 应为 true"
+    );
 }
 
 #[tokio::test]
@@ -91,11 +97,18 @@ async fn test_get_control_point() {
         .expect("创建的控制点应该有 id");
 
     let (get_status, get_resp) = ctx
-        .request("GET", &format!("/compliance-v51/control-points/{}", cp_id), None)
+        .request(
+            "GET",
+            &format!("/compliance-v51/control-points/{}", cp_id),
+            None,
+        )
         .await;
 
     assert_eq!(get_status, 200, "获取控制点应该返回 200");
-    assert!(get_resp["success"].as_bool().unwrap_or(false), "响应 success 应为 true");
+    assert!(
+        get_resp["success"].as_bool().unwrap_or(false),
+        "响应 success 应为 true"
+    );
 }
 
 #[tokio::test]
@@ -141,7 +154,10 @@ async fn test_update_control_point() {
         .await;
 
     assert_eq!(update_status, 200, "更新控制点应该返回 200");
-    assert!(update_resp["success"].as_bool().unwrap_or(false), "响应 success 应为 true");
+    assert!(
+        update_resp["success"].as_bool().unwrap_or(false),
+        "响应 success 应为 true"
+    );
 }
 
 #[tokio::test]
@@ -180,7 +196,10 @@ async fn test_delete_control_point() {
         .await;
 
     assert_eq!(delete_status, 200, "删除控制点应该返回 200");
-    assert!(delete_resp["success"].as_bool().unwrap_or(false), "响应 success 应为 true");
+    assert!(
+        delete_resp["success"].as_bool().unwrap_or(false),
+        "响应 success 应为 true"
+    );
 }
 
 #[tokio::test]
@@ -223,7 +242,10 @@ async fn test_create_risk_assessment() {
         .await;
 
     assert_eq!(ra_status, 200, "创建风险评估应该返回 200");
-    assert!(ra_resp["success"].as_bool().unwrap_or(false), "响应 success 应为 true");
+    assert!(
+        ra_resp["success"].as_bool().unwrap_or(false),
+        "响应 success 应为 true"
+    );
 }
 
 #[tokio::test]
@@ -239,7 +261,10 @@ async fn test_list_risk_assessments() {
         .await;
 
     assert_eq!(status, 200, "列出风险评估应该返回 200");
-    assert!(resp["success"].as_bool().unwrap_or(false), "响应 success 应为 true");
+    assert!(
+        resp["success"].as_bool().unwrap_or(false),
+        "响应 success 应为 true"
+    );
 }
 
 #[tokio::test]
@@ -255,7 +280,10 @@ async fn test_risk_assessment_summary() {
         .await;
 
     assert_eq!(status, 200, "获取风险摘要应该返回 200");
-    assert!(resp["success"].as_bool().unwrap_or(false), "响应 success 应为 true");
+    assert!(
+        resp["success"].as_bool().unwrap_or(false),
+        "响应 success 应为 true"
+    );
 }
 
 #[tokio::test]
@@ -277,7 +305,10 @@ async fn test_generate_compliance_report() {
         .await;
 
     assert_eq!(status, 200, "生成合规报告应该返回 200");
-    assert!(resp["success"].as_bool().unwrap_or(false), "响应 success 应为 true");
+    assert!(
+        resp["success"].as_bool().unwrap_or(false),
+        "响应 success 应为 true"
+    );
 }
 
 #[tokio::test]
@@ -288,10 +319,11 @@ async fn test_list_compliance_reports() {
     }
     let ctx = TestContext::new().await;
 
-    let (status, resp) = ctx
-        .request("GET", "/compliance-v51/reports", None)
-        .await;
+    let (status, resp) = ctx.request("GET", "/compliance-v51/reports", None).await;
 
     assert_eq!(status, 200, "列出合规报告应该返回 200");
-    assert!(resp["success"].as_bool().unwrap_or(false), "响应 success 应为 true");
+    assert!(
+        resp["success"].as_bool().unwrap_or(false),
+        "响应 success 应为 true"
+    );
 }

@@ -25,10 +25,7 @@ impl EventPipeline {
     }
 
     /// 处理命令产生的事件: 发布 + 路由 + 触发 Saga
-    pub async fn process_events(
-        &self,
-        events: &[(FinanceDomainEvent, String)],
-    ) -> PipelineResult {
+    pub async fn process_events(&self, events: &[(FinanceDomainEvent, String)]) -> PipelineResult {
         // 1. 批量发布事件
         let events_published = events.len();
         if let Err(e) = self.publisher.publish_batch(events).await {
@@ -53,11 +50,7 @@ impl EventPipeline {
         for (event, aggregate_id) in events {
             if let Some(saga_type) = saga_type_for_event(event) {
                 let payload = saga_payload_for_event(event, aggregate_id);
-                match self
-                    .saga_coordinator
-                    .start_saga(saga_type, payload)
-                    .await
-                {
+                match self.saga_coordinator.start_saga(saga_type, payload).await {
                     Ok(saga_id) => {
                         tracing::info!(
                             "[event-pipeline] 已启动 Saga {} (id={}) 由事件 {} 触发",
@@ -68,11 +61,7 @@ impl EventPipeline {
                         sagas_started.push(saga_id);
                     }
                     Err(e) => {
-                        tracing::warn!(
-                            "[event-pipeline] 启动 Saga {} 失败: {}",
-                            saga_type,
-                            e
-                        );
+                        tracing::warn!("[event-pipeline] 启动 Saga {} 失败: {}", saga_type, e);
                     }
                 }
             }

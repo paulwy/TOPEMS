@@ -27,8 +27,8 @@ use topems_shared_db::database::create_database_pool;
 use topems_shared_db::rls::rls_middleware;
 
 use topems_shared_auth::auth::{auth_middleware, AuthState};
-use topems_shared_auth::security::{rate_limit_middleware, RateLimitConfig, RateLimitMiddleware};
 use topems_shared_auth::permission_center::PermissionCenterClient;
+use topems_shared_auth::security::{rate_limit_middleware, RateLimitConfig, RateLimitMiddleware};
 
 use topems_shared_observability::telemetry::{init_telemetry, telemetry_middleware};
 
@@ -313,9 +313,7 @@ impl ServiceBootstrap {
 }
 
 /// 基础健康检查
-async fn health_check(
-    State(state): State<AppState>,
-) -> axum::Json<ApiResponse<ServiceHealth>> {
+async fn health_check(State(state): State<AppState>) -> axum::Json<ApiResponse<ServiceHealth>> {
     let db_health = check_database_health(&state.db).await;
 
     let status = if db_health.status == HealthStatus::Healthy {
@@ -617,10 +615,7 @@ pub fn build_application(
     .merge(create_api_info_router(config.name));
 
     if let Some(json) = openapi_json {
-        app = app.route(
-            "/api-docs/openapi.json",
-            get(move || async move { json }),
-        );
+        app = app.route("/api-docs/openapi.json", get(move || async move { json }));
     }
 
     app = app.layer(axum::middleware::from_fn(telemetry_middleware));

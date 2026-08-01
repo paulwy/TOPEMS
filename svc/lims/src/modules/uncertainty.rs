@@ -1,6 +1,7 @@
 use axum::{
     extract::State,
-    routing::{get, post, put}, Json, Router,
+    routing::{get, post, put},
+    Json, Router,
 };
 use serde::{Deserialize, Serialize};
 use sqlx::{types::Uuid, Row};

@@ -6,10 +6,10 @@
 // 2. 订阅 PermissionMetadataChangedEvent 实时更新缓存
 // 3. 提供权限查询接口（检查权限是否存在、获取模块所有权限等）
 
-use topems_shared_core::error::TopemsError;
-use topems_shared_event::event::{EventType, PermissionMetadataChangedPayload, RabbitMqSubscriber};
 use crate::permission::{PermissionMetadata, PermissionMetadataCache};
 use std::sync::Arc;
+use topems_shared_core::error::TopemsError;
+use topems_shared_event::event::{EventType, PermissionMetadataChangedPayload, RabbitMqSubscriber};
 use tracing::{error, info, warn};
 
 /// V21.0: 统一权限中心客户端

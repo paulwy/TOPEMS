@@ -50,38 +50,37 @@ pub async fn get_effective_permissions(
         }
     };
 
-    let is_superuser: bool = match sqlx::query_scalar(
-        "SELECT is_superuser FROM core_users WHERE id = $1",
-    )
-    .bind(user_uuid)
-    .fetch_optional(&state.pool)
-    .await
-    {
-        Ok(Some(v)) => v,
-        Ok(None) => {
-            return (
-                StatusCode::NOT_FOUND,
-                Json(serde_json::json!({
-                    "success": false,
-                    "message": "用户不存在",
-                    "data": null,
-                    "code": 404
-                })),
-            );
-        }
-        Err(e) => {
-            tracing::error!("Failed to query user: {}", e);
-            return (
-                StatusCode::INTERNAL_SERVER_ERROR,
-                Json(serde_json::json!({
-                    "success": false,
-                    "message": format!("查询用户失败: {}", e),
-                    "data": null,
-                    "code": 500
-                })),
-            );
-        }
-    };
+    let is_superuser: bool =
+        match sqlx::query_scalar("SELECT is_superuser FROM core_users WHERE id = $1")
+            .bind(user_uuid)
+            .fetch_optional(&state.pool)
+            .await
+        {
+            Ok(Some(v)) => v,
+            Ok(None) => {
+                return (
+                    StatusCode::NOT_FOUND,
+                    Json(serde_json::json!({
+                        "success": false,
+                        "message": "用户不存在",
+                        "data": null,
+                        "code": 404
+                    })),
+                );
+            }
+            Err(e) => {
+                tracing::error!("Failed to query user: {}", e);
+                return (
+                    StatusCode::INTERNAL_SERVER_ERROR,
+                    Json(serde_json::json!({
+                        "success": false,
+                        "message": format!("查询用户失败: {}", e),
+                        "data": null,
+                        "code": 500
+                    })),
+                );
+            }
+        };
 
     let role_permissions: Vec<EffectivePermissionRow> = if is_superuser {
         sqlx::query_as::<_, EffectivePermissionRow>(
@@ -124,7 +123,8 @@ pub async fn get_effective_permissions(
     let direct_permissions: Vec<serde_json::Value> = vec![];
     let role_permissions_json: Vec<serde_json::Value> =
         role_permissions.iter().map(to_json).collect();
-    let all_permissions_json: Vec<serde_json::Value> = role_permissions.iter().map(to_json).collect();
+    let all_permissions_json: Vec<serde_json::Value> =
+        role_permissions.iter().map(to_json).collect();
     let total = all_permissions_json.len() as i64;
 
     (
@@ -185,7 +185,10 @@ pub async fn batch_delete_users(
 
     for id in &user_ids {
         if id == &claims.sub {
-            tracing::warn!("batch_delete_users: cannot delete yourself, skipping {}", id);
+            tracing::warn!(
+                "batch_delete_users: cannot delete yourself, skipping {}",
+                id
+            );
             failed_ids.push(id.clone());
             continue;
         }

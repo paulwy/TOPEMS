@@ -101,22 +101,14 @@ impl TypedServiceClient<WorkflowApi> {
     }
 
     /// 审批通过
-    pub async fn approve_task(
-        &self,
-        id: Uuid,
-        comment: Option<&str>,
-    ) -> ServiceClientResult<bool> {
+    pub async fn approve_task(&self, id: Uuid, comment: Option<&str>) -> ServiceClientResult<bool> {
         let body = serde_json::json!({ "comment": comment });
         let path = format!("/tasks/{}/approve", id);
         self.post_and_check_success(&path, &body).await
     }
 
     /// 审批拒绝
-    pub async fn reject_task(
-        &self,
-        id: Uuid,
-        comment: Option<&str>,
-    ) -> ServiceClientResult<bool> {
+    pub async fn reject_task(&self, id: Uuid, comment: Option<&str>) -> ServiceClientResult<bool> {
         let body = serde_json::json!({ "comment": comment });
         let path = format!("/tasks/{}/reject", id);
         self.post_and_check_success(&path, &body).await
@@ -179,7 +171,10 @@ impl TypedServiceClient<WorkflowApi> {
     }
 
     /// 列出指定用户的待办流程实例
-    pub async fn list_todo_tasks(&self, user_id: &str) -> ServiceClientResult<Vec<WorkflowInstance>> {
+    pub async fn list_todo_tasks(
+        &self,
+        user_id: &str,
+    ) -> ServiceClientResult<Vec<WorkflowInstance>> {
         let path = format!("/api/flow/tasks/todo?user_id={}", user_id);
         self.get_and_unwrap(&path).await
     }

@@ -30,7 +30,11 @@ async fn test_assess_maturity() {
     });
 
     let (status, resp) = ctx
-        .request("POST", &format!("{}/maturity/assess", BASE_PATH), Some(body))
+        .request(
+            "POST",
+            &format!("{}/maturity/assess", BASE_PATH),
+            Some(body),
+        )
         .await
         .expect("请求失败");
 
@@ -80,7 +84,11 @@ async fn test_create_improvement_plan() {
     });
 
     let (status, resp) = ctx
-        .request("POST", &format!("{}/maturity/improvement-plan", BASE_PATH), Some(body))
+        .request(
+            "POST",
+            &format!("{}/maturity/improvement-plan", BASE_PATH),
+            Some(body),
+        )
         .await
         .expect("请求失败");
 

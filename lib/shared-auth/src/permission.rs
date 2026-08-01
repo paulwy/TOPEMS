@@ -1,6 +1,6 @@
 use crate::auth::Claims;
-use topems_shared_core::response::ApiResponse;
 use sqlx::PgPool;
+use topems_shared_core::response::ApiResponse;
 use uuid::Uuid;
 
 #[derive(Debug, Clone, PartialEq, Eq, Hash)]

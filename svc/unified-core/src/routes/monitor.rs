@@ -21,10 +21,7 @@ pub fn monitor_routes(state: &AppState) -> Router<AppState> {
 /// Public monitor health endpoint (no auth required).
 pub fn monitor_public_routes() -> Router<AppState> {
     Router::new()
-        .route(
-            "/api/monitor/health",
-            get(handlers::detailed_health),
-        )
+        .route("/api/monitor/health", get(handlers::detailed_health))
         .route(
             "/api/plugins/info",
             get(modules::monitor::monitor_plugin::get_plugin_info),

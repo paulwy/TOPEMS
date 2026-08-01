@@ -11,7 +11,11 @@ define_service_api!(
 );
 
 impl TypedServiceClient<SearchApi> {
-    pub async fn search(&self, keyword: &str, modules: Option<Vec<String>>) -> ServiceClientResult<serde_json::Value> {
+    pub async fn search(
+        &self,
+        keyword: &str,
+        modules: Option<Vec<String>>,
+    ) -> ServiceClientResult<serde_json::Value> {
         let mut params = vec![("keyword".to_string(), keyword.to_string())];
         if let Some(modules) = modules {
             for m in modules {

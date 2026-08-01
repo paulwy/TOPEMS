@@ -16,7 +16,8 @@ impl FinanceService {
         let offset = (page - 1) * page_size;
 
         let mut sql = "SELECT * FROM erp_payment_records WHERE tenant_id = $1".to_string();
-        let mut count_sql = "SELECT COUNT(*) FROM erp_payment_records WHERE tenant_id = $1".to_string();
+        let mut count_sql =
+            "SELECT COUNT(*) FROM erp_payment_records WHERE tenant_id = $1".to_string();
 
         let mut cond = Vec::new();
         if status.is_some() {
@@ -98,14 +99,12 @@ impl FinanceService {
         tenant_id: Uuid,
         payment_id: Uuid,
     ) -> Result<Value, TopemsError> {
-        let row = sqlx::query(
-            "SELECT * FROM erp_payment_records WHERE tenant_id = $1 AND id = $2",
-        )
-        .bind(tenant_id)
-        .bind(payment_id)
-        .fetch_optional(&self.db_pool)
-        .await?
-        .ok_or_else(|| TopemsError::NotFound("付款记录不存在".to_string()))?;
+        let row = sqlx::query("SELECT * FROM erp_payment_records WHERE tenant_id = $1 AND id = $2")
+            .bind(tenant_id)
+            .bind(payment_id)
+            .fetch_optional(&self.db_pool)
+            .await?
+            .ok_or_else(|| TopemsError::NotFound("付款记录不存在".to_string()))?;
 
         let id: Uuid = sqlx::Row::get(&row, "id");
         let payment_no: Option<String> = sqlx::Row::try_get(&row, "payment_no").ok();
@@ -128,7 +127,10 @@ impl FinanceService {
         req: Value,
         created_by: &str,
     ) -> Result<Value, TopemsError> {
-        let supplier_name = req.get("supplier_name").and_then(|v| v.as_str()).unwrap_or("");
+        let supplier_name = req
+            .get("supplier_name")
+            .and_then(|v| v.as_str())
+            .unwrap_or("");
         let amount = req.get("amount").and_then(|v| v.as_f64()).unwrap_or(0.0);
         let payment_no = req.get("payment_no").and_then(|v| v.as_str()).unwrap_or("");
 
@@ -207,13 +209,12 @@ impl FinanceService {
         tenant_id: Uuid,
         payment_id: Uuid,
     ) -> Result<(), TopemsError> {
-        let result = sqlx::query(
-            "DELETE FROM erp_payment_records WHERE tenant_id = $1 AND id = $2",
-        )
-        .bind(tenant_id)
-        .bind(payment_id)
-        .execute(&self.db_pool)
-        .await?;
+        let result =
+            sqlx::query("DELETE FROM erp_payment_records WHERE tenant_id = $1 AND id = $2")
+                .bind(tenant_id)
+                .bind(payment_id)
+                .execute(&self.db_pool)
+                .await?;
 
         if result.rows_affected() == 0 {
             return Err(TopemsError::NotFound("付款记录不存在".to_string()));
@@ -263,8 +264,14 @@ impl FinanceService {
         let mut fail_count = 0;
 
         for item in items {
-            let payment_id_str = item.get("payment_id").and_then(|v| v.as_str()).unwrap_or("");
-            let payable_id_str = item.get("payable_id").and_then(|v| v.as_str()).unwrap_or("");
+            let payment_id_str = item
+                .get("payment_id")
+                .and_then(|v| v.as_str())
+                .unwrap_or("");
+            let payable_id_str = item
+                .get("payable_id")
+                .and_then(|v| v.as_str())
+                .unwrap_or("");
             let amount = item.get("amount").and_then(|v| v.as_f64()).unwrap_or(0.0);
 
             match (

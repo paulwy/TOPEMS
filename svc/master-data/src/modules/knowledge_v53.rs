@@ -397,7 +397,11 @@ async fn ensure_initialized() {
             description: "客户-订单关系".to_string(),
             owner: "master-data-team".to_string(),
             domain: "customer".to_string(),
-            tags: vec!["customer".to_string(), "order".to_string(), "relation".to_string()],
+            tags: vec![
+                "customer".to_string(),
+                "order".to_string(),
+                "relation".to_string(),
+            ],
             lineage_summary: serde_json::json!({
                 "source": "Customer Master",
                 "target": "Order Service",
@@ -603,10 +607,7 @@ impl KnowledgeGraphEngine {
         Ok(edge)
     }
 
-    async fn get_subgraph(
-        node_id: &str,
-        depth: Option<i32>,
-    ) -> Result<KnowledgeGraph, String> {
+    async fn get_subgraph(node_id: &str, depth: Option<i32>) -> Result<KnowledgeGraph, String> {
         let store = get_knowledge_v53_store();
         let nodes = store.kg_nodes.lock().await;
         let edges = store.kg_edges.lock().await;
@@ -655,10 +656,7 @@ impl KnowledgeGraphEngine {
         })
     }
 
-    async fn find_path(
-        start_id: &str,
-        end_id: &str,
-    ) -> Result<Vec<KGEdge>, String> {
+    async fn find_path(start_id: &str, end_id: &str) -> Result<Vec<KGEdge>, String> {
         let store = get_knowledge_v53_store();
         let nodes = store.kg_nodes.lock().await;
         let edges = store.kg_edges.lock().await;
@@ -698,10 +696,7 @@ impl KnowledgeGraphEngine {
         Err(format!("未找到从 {} 到 {} 的路径", start_id, end_id))
     }
 
-    async fn get_similar(
-        node_id: &str,
-        limit: Option<i32>,
-    ) -> Result<Vec<KGNode>, String> {
+    async fn get_similar(node_id: &str, limit: Option<i32>) -> Result<Vec<KGNode>, String> {
         let store = get_knowledge_v53_store();
         let nodes = store.kg_nodes.lock().await;
         let target = nodes
@@ -845,7 +840,11 @@ impl RecommendationEngine {
 
         if scores.is_empty() {
             let mut all_assets: Vec<&DataAsset> = assets.iter().collect();
-            all_assets.sort_by(|a, b| b.quality_score.partial_cmp(&a.quality_score).unwrap_or(std::cmp::Ordering::Equal));
+            all_assets.sort_by(|a, b| {
+                b.quality_score
+                    .partial_cmp(&a.quality_score)
+                    .unwrap_or(std::cmp::Ordering::Equal)
+            });
             for asset in all_assets.iter().take(limit) {
                 scores.push((
                     asset.quality_score,
@@ -920,14 +919,22 @@ impl RecommendationEngine {
             .map(|a| {
                 let tag_sim = jaccard_similarity(&target.tags, &a.tags);
                 let domain_sim = if target.domain == a.domain { 0.3 } else { 0.0 };
-                let type_sim = if target.asset_type == a.asset_type { 0.2 } else { 0.0 };
+                let type_sim = if target.asset_type == a.asset_type {
+                    0.2
+                } else {
+                    0.0
+                };
                 let score = tag_sim * 0.5 + domain_sim + type_sim;
                 (score, a)
             })
             .collect();
 
         scored.sort_by(|a, b| b.0.partial_cmp(&a.0).unwrap_or(std::cmp::Ordering::Equal));
-        let result: Vec<DataAsset> = scored.into_iter().take(limit).map(|(_, a)| a.clone()).collect();
+        let result: Vec<DataAsset> = scored
+            .into_iter()
+            .take(limit)
+            .map(|(_, a)| a.clone())
+            .collect();
         Ok(result)
     }
 
@@ -954,7 +961,11 @@ impl RecommendationEngine {
             .collect();
 
         scored.sort_by(|a, b| b.0.cmp(&a.0));
-        let result: Vec<DataAsset> = scored.into_iter().take(limit).map(|(_, a)| a.clone()).collect();
+        let result: Vec<DataAsset> = scored
+            .into_iter()
+            .take(limit)
+            .map(|(_, a)| a.clone())
+            .collect();
         result
     }
 
@@ -991,7 +1002,11 @@ impl RecommendationEngine {
             b.0.cmp(&a.0)
                 .then_with(|| b.1.partial_cmp(&a.1).unwrap_or(std::cmp::Ordering::Equal))
         });
-        let result: Vec<DataAsset> = scored.into_iter().take(limit).map(|(_, _, a)| a.clone()).collect();
+        let result: Vec<DataAsset> = scored
+            .into_iter()
+            .take(limit)
+            .map(|(_, _, a)| a.clone())
+            .collect();
         result
     }
 }
@@ -1127,16 +1142,25 @@ impl AssetCatalogManager {
 
         if let Some(n) = name {
             asset.name = n.clone();
-            search_index.entry(asset.name.to_lowercase()).or_default().push(asset.id.clone());
+            search_index
+                .entry(asset.name.to_lowercase())
+                .or_default()
+                .push(asset.id.clone());
         }
         if let Some(d) = description {
             asset.description = d.clone();
-            search_index.entry(asset.description.to_lowercase()).or_default().push(asset.id.clone());
+            search_index
+                .entry(asset.description.to_lowercase())
+                .or_default()
+                .push(asset.id.clone());
         }
         if let Some(t) = tags {
             asset.tags = t.clone();
             for tag in &t {
-                search_index.entry(tag.to_lowercase()).or_default().push(asset.id.clone());
+                search_index
+                    .entry(tag.to_lowercase())
+                    .or_default()
+                    .push(asset.id.clone());
             }
         }
         if let Some(q) = quality_score {
@@ -1172,9 +1196,7 @@ impl AssetCatalogManager {
             *by_type
                 .entry(format!("{:?}", asset.asset_type).to_lowercase())
                 .or_insert(0) += 1;
-            *by_domain
-                .entry(asset.domain.clone())
-                .or_insert(0) += 1;
+            *by_domain.entry(asset.domain.clone()).or_insert(0) += 1;
             quality_sum += asset.quality_score;
             if let Ok(ts) = chrono::DateTime::parse_from_rfc3339(&asset.updated_at) {
                 if ts > one_day_ago {
@@ -1421,12 +1443,8 @@ pub async fn record_interaction(
     ensure_initialized().await;
 
     let interaction_type = req.interaction_type.unwrap_or_else(|| "view".to_string());
-    let record = RecommendationEngine::record_interaction(
-        req.user_id,
-        req.item_id,
-        interaction_type,
-    )
-    .await;
+    let record =
+        RecommendationEngine::record_interaction(req.user_id, req.item_id, interaction_type).await;
 
     Json(ApiResponse::success(record, "交互记录已保存"))
 }
@@ -1560,9 +1578,7 @@ pub async fn list_categories(
     Json(ApiResponse::success(categories, "资产分类列表"))
 }
 
-pub async fn get_asset_stats(
-    State(_state): State<AppState>,
-) -> Json<ApiResponse<AssetStats>> {
+pub async fn get_asset_stats(State(_state): State<AppState>) -> Json<ApiResponse<AssetStats>> {
     ensure_initialized().await;
 
     let stats = AssetCatalogManager::get_asset_stats().await;

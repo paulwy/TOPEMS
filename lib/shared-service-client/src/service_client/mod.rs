@@ -43,7 +43,6 @@ pub use erp_client::ErpServiceClient;
 pub use error::{ServiceClientError, ServiceClientResult};
 pub use finance_client::FinanceServiceClient;
 pub use generic::GenericServiceClient;
-pub use trait_api::{ServiceApi, TypedServiceClient};
 pub use gis_client::GisServiceClient;
 pub use hrm_client::{
     AttendanceRecord, AttendanceStats, CheckInRequest, CheckOutRequest, Company,
@@ -63,6 +62,7 @@ pub use qms_client::QmsServiceClient;
 pub use rd_client::RdServiceClient;
 pub use scm_client::ScmServiceClient;
 pub use srm_client::SrmServiceClient;
+pub use trait_api::{ServiceApi, TypedServiceClient};
 pub use wms_client::WmsServiceClient;
 pub use workflow_client::{
     CreateInstanceRequest, TaskStats, WorkflowInstance, WorkflowServiceClient, WorkflowStatistics,

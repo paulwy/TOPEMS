@@ -99,11 +99,7 @@ impl EventRouter {
         self.handlers.push(handler);
     }
 
-    pub async fn route(
-        &self,
-        event: &FinanceDomainEvent,
-        aggregate_id: &str,
-    ) -> Vec<RouteResult> {
+    pub async fn route(&self, event: &FinanceDomainEvent, aggregate_id: &str) -> Vec<RouteResult> {
         let event_type = event_type_name(event);
         let mut results = Vec::new();
         for handler in &self.handlers {
@@ -141,7 +137,10 @@ impl EventRouter {
     }
 
     pub fn list_handlers(&self) -> Vec<String> {
-        self.handlers.iter().map(|h| h.handler_name().to_string()).collect()
+        self.handlers
+            .iter()
+            .map(|h| h.handler_name().to_string())
+            .collect()
     }
 }
 
@@ -200,9 +199,11 @@ impl DomainEventHandler for VoucherPostedHandler {
         aggregate_id: &str,
     ) -> Result<HandlerResult, String> {
         let (voucher_id, voucher_no, posted_by) = match event {
-            FinanceDomainEvent::VoucherPosted(e) => {
-                (e.voucher_id.clone(), e.voucher_no.clone(), e.posted_by.clone())
-            }
+            FinanceDomainEvent::VoucherPosted(e) => (
+                e.voucher_id.clone(),
+                e.voucher_no.clone(),
+                e.posted_by.clone(),
+            ),
             _ => return Err("VoucherPostedHandler received non-VoucherPosted event".to_string()),
         };
 
@@ -268,9 +269,7 @@ impl DomainEventHandler for VoucherReversedHandler {
                 e.reason.clone(),
             ),
             _ => {
-                return Err(
-                    "VoucherReversedHandler received non-VoucherReversed event".to_string(),
-                )
+                return Err("VoucherReversedHandler received non-VoucherReversed event".to_string())
             }
         };
 
@@ -402,11 +401,7 @@ impl DomainEventHandler for PayableSettledHandler {
             FinanceDomainEvent::PayableSettled(e) => {
                 (e.payable_id.clone(), e.settled_amount, e.remaining_amount)
             }
-            _ => {
-                return Err(
-                    "PayableSettledHandler received non-PayableSettled event".to_string(),
-                )
-            }
+            _ => return Err("PayableSettledHandler received non-PayableSettled event".to_string()),
         };
 
         let mut result = HandlerResult::success();

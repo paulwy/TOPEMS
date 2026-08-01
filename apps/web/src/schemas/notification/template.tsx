@@ -62,7 +62,7 @@ export const notificationTemplateSchema: EntitySchema = {
       required: true,
       sortable: true,
       listWidth: 280,
-      renderCell: (row) => {
+      renderCell: (row: Record<string, unknown>) => {
         const t = row as any;
         const type = t.notification_type || 'info';
         return (
@@ -130,7 +130,7 @@ export const notificationTemplateSchema: EntitySchema = {
           { value: 'alert', label: '告警' },
         ],
       },
-      renderCell: (row) => {
+      renderCell: (row: Record<string, unknown>) => {
         const type = (row as any).notification_type || 'info';
         const label = TYPE_LABELS[type] || type;
         const color = TYPE_COLORS[type] || 'primary';
@@ -160,7 +160,7 @@ export const notificationTemplateSchema: EntitySchema = {
           { value: 'deprecated', label: '已废弃' },
         ],
       },
-      renderCell: (row) => {
+      renderCell: (row: Record<string, unknown>) => {
         const status = (row as any).status || 'draft';
         const label = STATUS_LABELS[status] || status;
         const color = STATUS_COLORS[status] || 'default';
@@ -182,7 +182,7 @@ export const notificationTemplateSchema: EntitySchema = {
       type: 'datetime',
       listWidth: 160,
       hideInForm: true,
-      renderCell: (row) => (
+      renderCell: (row: Record<string, unknown>) => (
         <Typography
           variant='body2'
           color='text.secondary'

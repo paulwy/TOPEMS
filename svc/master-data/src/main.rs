@@ -5,23 +5,19 @@ use std::net::SocketAddr;
 use std::sync::Arc;
 use std::time::Instant;
 
-use axum::{
-    extract::State,
-    routing::get,
-    Json, Router,
-};
+use axum::{extract::State, routing::get, Json, Router};
 use axum_prometheus::PrometheusMetricLayer;
 use utoipa::OpenApi;
 
 use topems_shared::{
     auth_middleware, create_cors_layer, get_api_info_handler, init_telemetry,
-    rate_limit_middleware, rls_middleware, simple_health_check, telemetry_middleware,
-    ApiResponse, AuthState, RateLimitConfig, RateLimitMiddleware, ServiceHealth,
-    SimpleHealthConfig, SystemMetrics,
+    rate_limit_middleware, rls_middleware, simple_health_check, telemetry_middleware, ApiResponse,
+    AuthState, RateLimitConfig, RateLimitMiddleware, ServiceHealth, SimpleHealthConfig,
+    SystemMetrics,
 };
 
-mod shared;
 mod openapi;
+mod shared;
 
 pub mod modules;
 
@@ -71,8 +67,14 @@ async fn main() -> anyhow::Result<()> {
         .route("/", get(home))
         .route("/health", get(health))
         .route("/api", get(|| get_api_info_handler("master-data-service")))
-        .route("/api/info", get(|| get_api_info_handler("master-data-service")))
-        .route("/metrics", get(move || async move { metric_handle.render() }));
+        .route(
+            "/api/info",
+            get(|| get_api_info_handler("master-data-service")),
+        )
+        .route(
+            "/metrics",
+            get(move || async move { metric_handle.render() }),
+        );
 
     let protected_routes = Router::new()
         .merge(modules::create_routes())
@@ -86,7 +88,9 @@ async fn main() -> anyhow::Result<()> {
             rls_middleware,
         ));
 
-    let rate_limit_config = RateLimitConfig::new(200, 60).with_by_user_id(false).with_by_ip(true);
+    let rate_limit_config = RateLimitConfig::new(200, 60)
+        .with_by_user_id(false)
+        .with_by_ip(true);
     let rate_limiter = Arc::new(RateLimitMiddleware::new(rate_limit_config));
     let protected_routes = protected_routes.layer(axum::middleware::from_fn({
         let mw = rate_limiter.clone();

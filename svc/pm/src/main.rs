@@ -11,10 +11,10 @@ use prometheus::{default_registry, Gauge};
 use std::env;
 use std::sync::Arc;
 use topems_shared::{
-    auth_middleware, build_health_response, create_api_info_router, create_cors_layer,
-    create_database_pool, init_telemetry, rls_middleware, telemetry_middleware,
-    test_database_connection, api_version::RouteCompatConfig, api_version::wrap_group2_router,
-    AuthState, DatabaseConfig, EventPublisher, Result, ServiceHealth,
+    api_version::wrap_group2_router, api_version::RouteCompatConfig, auth_middleware,
+    build_health_response, create_api_info_router, create_cors_layer, create_database_pool,
+    init_telemetry, rls_middleware, telemetry_middleware, test_database_connection, AuthState,
+    DatabaseConfig, EventPublisher, Result, ServiceHealth,
 };
 use topems_shared_service_client::service_client::api::workflow_api::WorkflowApi;
 use topems_shared_service_client::TypedServiceClient;
@@ -93,8 +93,8 @@ async fn main() -> Result<()> {
 
     let auth_state = AuthState::from_env();
 
-    let workflow_client = TypedServiceClient::<WorkflowApi>::from_env_default()
-        .expect("工作流服务客户端初始化失败");
+    let workflow_client =
+        TypedServiceClient::<WorkflowApi>::from_env_default().expect("工作流服务客户端初始化失败");
     tracing::info!(
         "🔗 工作流服务客户端初始化成功: {}",
         std::env::var("WORKFLOW_SERVICE_URL").unwrap_or_else(|_| "http://localhost:8000".into())
@@ -115,14 +115,14 @@ async fn main() -> Result<()> {
         event_publisher.clone(),
         workflow_client.clone(),
     )
-        .layer(axum::middleware::from_fn_with_state(
-            auth_state.clone(),
-            auth_middleware,
-        ))
-        .layer(axum::middleware::from_fn_with_state(
-            pool.clone(),
-            rls_middleware,
-        ));
+    .layer(axum::middleware::from_fn_with_state(
+        auth_state.clone(),
+        auth_middleware,
+    ))
+    .layer(axum::middleware::from_fn_with_state(
+        pool.clone(),
+        rls_middleware,
+    ));
 
     let app = Router::new()
         .merge(public_routes)

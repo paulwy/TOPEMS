@@ -14,12 +14,11 @@ use topems_shared::service_bootstrap::{
 use topems_shared::SimpleHealthConfig;
 
 use modules::production_order::{
-    CreateFromErpRequest, CreateProductionOrderRequest, ErpSalesOrderInfo, ListProductionOrdersResponse,
-    ProductionOrderResponse, ProductionOrderSource, UpdateProductionOrderRequest,
+    CreateFromErpRequest, CreateProductionOrderRequest, ErpSalesOrderInfo,
+    ListProductionOrdersResponse, ProductionOrderResponse, ProductionOrderSource,
+    UpdateProductionOrderRequest,
 };
-use modules::work_order::{
-    CreateWorkOrderRequest, UpdateWorkOrderRequest, WorkOrderResponse,
-};
+use modules::work_order::{CreateWorkOrderRequest, UpdateWorkOrderRequest, WorkOrderResponse};
 use modules::work_report::{
     CreateWorkReportRequest, RejectWorkReportRequest, UpdateWorkReportRequest, WorkReportResponse,
 };

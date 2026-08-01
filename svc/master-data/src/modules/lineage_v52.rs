@@ -502,15 +502,12 @@ impl LineageTracker {
     async fn get_graph() -> LineageGraph {
         let store = get_lineage_v52_store();
         let graphs = store.lineage_graphs.lock().await;
-        graphs
-            .first()
-            .cloned()
-            .unwrap_or_else(|| LineageGraph {
-                nodes: Vec::new(),
-                edges: Vec::new(),
-                version: 0,
-                last_updated: chrono::Utc::now().to_rfc3339(),
-            })
+        graphs.first().cloned().unwrap_or_else(|| LineageGraph {
+            nodes: Vec::new(),
+            edges: Vec::new(),
+            version: 0,
+            last_updated: chrono::Utc::now().to_rfc3339(),
+        })
     }
 
     async fn get_upstream(node_id: &str, depth: Option<i32>) -> Vec<LineageNode> {
@@ -700,8 +697,13 @@ impl ImpactAnalyzer {
                                     .entry(node.entity_id.clone())
                                     .or_insert_with(|| AffectedService {
                                         service_name: node.name.clone(),
-                                        impact_type: format!("{:?}", req.change_type).to_lowercase(),
-                                        severity: if *is_direct { "high".to_string() } else { "medium".to_string() },
+                                        impact_type: format!("{:?}", req.change_type)
+                                            .to_lowercase(),
+                                        severity: if *is_direct {
+                                            "high".to_string()
+                                        } else {
+                                            "medium".to_string()
+                                        },
                                     });
                             }
                         }
@@ -1107,23 +1109,19 @@ pub async fn register_lineage(
     )
     .await
     {
-        Ok((from_node, to_node, edge)) => {
-            Json(ApiResponse::success(
-                serde_json::json!({
-                    "from_node": from_node,
-                    "to_node": to_node,
-                    "edge": edge,
-                }),
-                "血缘关系已注册",
-            ))
-        }
+        Ok((from_node, to_node, edge)) => Json(ApiResponse::success(
+            serde_json::json!({
+                "from_node": from_node,
+                "to_node": to_node,
+                "edge": edge,
+            }),
+            "血缘关系已注册",
+        )),
         Err(e) => Json(ApiResponse::error(500, &e)),
     }
 }
 
-pub async fn get_lineage_graph(
-    State(_state): State<AppState>,
-) -> Json<ApiResponse<LineageGraph>> {
+pub async fn get_lineage_graph(State(_state): State<AppState>) -> Json<ApiResponse<LineageGraph>> {
     ensure_initialized().await;
     let graph = LineageTracker::get_graph().await;
     Json(ApiResponse::success(graph, "血缘图谱"))

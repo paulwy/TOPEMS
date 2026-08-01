@@ -55,7 +55,11 @@ pub async fn send_message(
     Path(id): Path<String>,
     Json(payload): Json<serde_json::Value>,
 ) -> Json<serde_json::Value> {
-    tracing::info!("IM send_message called with room id: {} and payload: {:?}", id, payload);
+    tracing::info!(
+        "IM send_message called with room id: {} and payload: {:?}",
+        id,
+        payload
+    );
     Json(serde_json::json!({
         "success": true,
         "message": "send_message success",
@@ -100,7 +104,11 @@ pub async fn update_room(
     Path(id): Path<String>,
     Json(payload): Json<serde_json::Value>,
 ) -> Json<serde_json::Value> {
-    tracing::info!("IM update_room called with id: {} and payload: {:?}", id, payload);
+    tracing::info!(
+        "IM update_room called with id: {} and payload: {:?}",
+        id,
+        payload
+    );
     Json(serde_json::json!({
         "success": true,
         "message": "update_room success",
@@ -125,7 +133,11 @@ pub async fn add_member(
     Path(id): Path<String>,
     Json(payload): Json<serde_json::Value>,
 ) -> Json<serde_json::Value> {
-    tracing::info!("IM add_member called with room id: {} and payload: {:?}", id, payload);
+    tracing::info!(
+        "IM add_member called with room id: {} and payload: {:?}",
+        id,
+        payload
+    );
     Json(serde_json::json!({
         "success": true,
         "message": "add_member success",
@@ -138,7 +150,11 @@ pub async fn remove_member(
     Path(id): Path<String>,
     Json(payload): Json<serde_json::Value>,
 ) -> Json<serde_json::Value> {
-    tracing::info!("IM remove_member called with room id: {} and payload: {:?}", id, payload);
+    tracing::info!(
+        "IM remove_member called with room id: {} and payload: {:?}",
+        id,
+        payload
+    );
     Json(serde_json::json!({
         "success": true,
         "message": "remove_member success",
@@ -163,7 +179,11 @@ pub async fn update_message(
     Path(id): Path<String>,
     Json(payload): Json<serde_json::Value>,
 ) -> Json<serde_json::Value> {
-    tracing::info!("IM update_message called with message id: {} and payload: {:?}", id, payload);
+    tracing::info!(
+        "IM update_message called with message id: {} and payload: {:?}",
+        id,
+        payload
+    );
     Json(serde_json::json!({
         "success": true,
         "message": "update_message success",
@@ -252,7 +272,11 @@ pub async fn update_contact_group(
     Path(id): Path<String>,
     Json(payload): Json<serde_json::Value>,
 ) -> Json<serde_json::Value> {
-    tracing::info!("IM update_contact_group called with id: {} and payload: {:?}", id, payload);
+    tracing::info!(
+        "IM update_contact_group called with id: {} and payload: {:?}",
+        id,
+        payload
+    );
     Json(serde_json::json!({
         "success": true,
         "message": "update_contact_group success",
@@ -277,7 +301,11 @@ pub async fn mute_room(
     Path(id): Path<String>,
     Json(payload): Json<serde_json::Value>,
 ) -> Json<serde_json::Value> {
-    tracing::info!("IM mute_room called with room id: {} and payload: {:?}", id, payload);
+    tracing::info!(
+        "IM mute_room called with room id: {} and payload: {:?}",
+        id,
+        payload
+    );
     Json(serde_json::json!({
         "success": true,
         "message": "mute_room success",
@@ -290,7 +318,11 @@ pub async fn pin_message(
     Path(id): Path<String>,
     Json(payload): Json<serde_json::Value>,
 ) -> Json<serde_json::Value> {
-    tracing::info!("IM pin_message called with room id: {} and payload: {:?}", id, payload);
+    tracing::info!(
+        "IM pin_message called with room id: {} and payload: {:?}",
+        id,
+        payload
+    );
     Json(serde_json::json!({
         "success": true,
         "message": "pin_message success",
@@ -347,7 +379,11 @@ pub async fn update_contact(
     Path(id): Path<String>,
     Json(payload): Json<serde_json::Value>,
 ) -> Json<serde_json::Value> {
-    tracing::info!("IM update_contact called with id: {} and payload: {:?}", id, payload);
+    tracing::info!(
+        "IM update_contact called with id: {} and payload: {:?}",
+        id,
+        payload
+    );
     Json(serde_json::json!({
         "success": true,
         "message": "update_contact success",

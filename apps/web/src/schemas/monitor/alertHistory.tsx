@@ -67,7 +67,7 @@ const alertHistoryFields: SchemaField[] = [
     label: '级别',
     type: 'select',
     listWidth: 100,
-    renderCell: (row) => (
+    renderCell: (row: Record<string, unknown>) => (
       <Chip
         size='small'
         color={getSeverityColor(row.severity as string)}
@@ -81,7 +81,7 @@ const alertHistoryFields: SchemaField[] = [
     label: '告警标题',
     type: 'text',
     minWidth: 200,
-    renderCell: (row) => (
+    renderCell: (row: Record<string, unknown>) => (
       <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
         <Typography
           variant='body2'
@@ -110,7 +110,7 @@ const alertHistoryFields: SchemaField[] = [
     type: 'datetime',
     listWidth: 160,
     sortable: true,
-    renderCell: (row) =>
+    renderCell: (row: Record<string, unknown>) =>
       new Date(row.created_at as string).toLocaleString('zh-CN'),
   },
   {
@@ -118,7 +118,7 @@ const alertHistoryFields: SchemaField[] = [
     label: '状态',
     type: 'select',
     listWidth: 100,
-    renderCell: (row) => (
+    renderCell: (row: Record<string, unknown>) => (
       <Chip
         size='small'
         color={getStatusColor(row.status as string)}

@@ -1,8 +1,8 @@
 use axum::{extract::State, Json};
 use serde::{Deserialize, Serialize};
 
-use topems_shared::ApiResponse;
 use topems_shared::service_client::WmsServiceClient;
+use topems_shared::ApiResponse;
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct CreateStocktakeRecordRequest {
@@ -16,7 +16,10 @@ pub async fn list_inventory_items(
     match client.list_inventory_items(1, 100).await {
         Ok(response) => {
             if response.success {
-                Json(ApiResponse::success(response.data.unwrap_or_default(), "获取库存列表成功"))
+                Json(ApiResponse::success(
+                    response.data.unwrap_or_default(),
+                    "获取库存列表成功",
+                ))
             } else {
                 Json(ApiResponse::error(response.code as u16, &response.message))
             }
@@ -35,7 +38,10 @@ pub async fn get_inventory_item(
     match client.get_inventory_item(&id).await {
         Ok(response) => {
             if response.success {
-                Json(ApiResponse::success(response.data.unwrap_or_default(), "获取库存详情成功"))
+                Json(ApiResponse::success(
+                    response.data.unwrap_or_default(),
+                    "获取库存详情成功",
+                ))
             } else {
                 Json(ApiResponse::error(response.code as u16, &response.message))
             }
@@ -53,7 +59,10 @@ pub async fn list_stocktake_tasks(
     match client.list_stocktake_tasks(1, 100).await {
         Ok(response) => {
             if response.success {
-                Json(ApiResponse::success(response.data.unwrap_or_default(), "获取盘点任务列表成功"))
+                Json(ApiResponse::success(
+                    response.data.unwrap_or_default(),
+                    "获取盘点任务列表成功",
+                ))
             } else {
                 Json(ApiResponse::error(response.code as u16, &response.message))
             }
@@ -78,7 +87,10 @@ pub async fn create_stocktake_record(
     match client.create_stocktake_record(&task_id, &data).await {
         Ok(response) => {
             if response.success {
-                Json(ApiResponse::success(response.data.unwrap_or_default(), "创建盘点记录成功"))
+                Json(ApiResponse::success(
+                    response.data.unwrap_or_default(),
+                    "创建盘点记录成功",
+                ))
             } else {
                 Json(ApiResponse::error(response.code as u16, &response.message))
             }
@@ -97,7 +109,10 @@ pub async fn list_inbound_orders(
         Ok(response) => {
             if response.success {
                 let items = response.data.unwrap_or_default();
-                Json(ApiResponse::success(serde_json::json!({ "items": items, "total": items.len() }), "获取入库单列表成功"))
+                Json(ApiResponse::success(
+                    serde_json::json!({ "items": items, "total": items.len() }),
+                    "获取入库单列表成功",
+                ))
             } else {
                 Json(ApiResponse::error(response.code as u16, &response.message))
             }
@@ -116,7 +131,10 @@ pub async fn list_outbound_orders(
         Ok(response) => {
             if response.success {
                 let items = response.data.unwrap_or_default();
-                Json(ApiResponse::success(serde_json::json!({ "items": items, "total": items.len() }), "获取出库单列表成功"))
+                Json(ApiResponse::success(
+                    serde_json::json!({ "items": items, "total": items.len() }),
+                    "获取出库单列表成功",
+                ))
             } else {
                 Json(ApiResponse::error(response.code as u16, &response.message))
             }

@@ -207,7 +207,13 @@ impl MaskType {
     }
 
     pub fn all() -> Vec<Self> {
-        vec![Self::Full, Self::Partial, Self::Hash, Self::Range, Self::Null]
+        vec![
+            Self::Full,
+            Self::Partial,
+            Self::Hash,
+            Self::Range,
+            Self::Null,
+        ]
     }
 }
 
@@ -517,7 +523,9 @@ impl SecurityGateway {
 
         let now = std::time::Instant::now();
         let mut rate_limits = store.rate_limits.lock().await;
-        let entries = rate_limits.entry(identifier.to_string()).or_insert_with(Vec::new);
+        let entries = rate_limits
+            .entry(identifier.to_string())
+            .or_insert_with(Vec::new);
 
         entries.retain(|(_, t)| now.duration_since(*t).as_secs() < 1);
 
@@ -550,7 +558,11 @@ impl SecurityGateway {
         let limit = limit.unwrap_or(100).min(500) as usize;
 
         let filtered: Vec<SecurityEvent> = if let Some(et) = event_type {
-            events.iter().filter(|e| e.event_type == et).cloned().collect()
+            events
+                .iter()
+                .filter(|e| e.event_type == et)
+                .cloned()
+                .collect()
         } else {
             events.clone()
         };
@@ -747,10 +759,7 @@ impl ZeroTrustEngine {
         let store = get_security_store();
         let decisions = store.trust_decisions.lock().await;
 
-        let latest = decisions
-            .iter()
-            .filter(|d| d.identity == identity)
-            .last();
+        let latest = decisions.iter().filter(|d| d.identity == identity).last();
 
         match latest {
             Some(d) => Ok(1.0 - d.risk_score),
@@ -758,10 +767,7 @@ impl ZeroTrustEngine {
         }
     }
 
-    pub async fn verify_identity(
-        identity: &str,
-        context: IdentityContext,
-    ) -> Result<bool, String> {
+    pub async fn verify_identity(identity: &str, context: IdentityContext) -> Result<bool, String> {
         let store = get_security_store();
 
         let policies = store.identity_policies.lock().await;
@@ -780,9 +786,7 @@ impl ZeroTrustEngine {
         Ok(true)
     }
 
-    pub async fn create_identity_policy(
-        policy: IdentityPolicy,
-    ) -> Result<IdentityPolicy, String> {
+    pub async fn create_identity_policy(policy: IdentityPolicy) -> Result<IdentityPolicy, String> {
         let store = get_security_store();
         let mut policies = store.identity_policies.lock().await;
 
@@ -841,8 +845,7 @@ impl DataMasker {
             if let Some(value) = Self::get_nested_mut(&mut result, &rule.field_path) {
                 let original = serde_json::to_string(value).unwrap_or_default();
                 let masked_value = Self::apply_mask(value, rule);
-                let masked_str =
-                    serde_json::to_string(&masked_value).unwrap_or_default();
+                let masked_str = serde_json::to_string(&masked_value).unwrap_or_default();
 
                 let mut masked_fields = store.masked_fields.lock().await;
                 masked_fields.push(MaskedField {
@@ -929,10 +932,7 @@ impl DataMasker {
         Some(current)
     }
 
-    fn apply_mask(
-        value: &serde_json::Value,
-        rule: &MaskingRule,
-    ) -> serde_json::Value {
+    fn apply_mask(value: &serde_json::Value, rule: &MaskingRule) -> serde_json::Value {
         match rule.mask_type {
             MaskType::Full => serde_json::Value::String("***".to_string()),
             MaskType::Partial => {
@@ -1076,12 +1076,21 @@ pub async fn validate_query_handler(
     State(_state): State<AppState>,
     Json(req): Json<ValidateQueryRequest>,
 ) -> Json<ApiResponse<ValidationResult>> {
-    match SecurityGateway::validate_query(&req.query, req.client_ip.as_deref(), req.policy_id.as_deref()).await {
+    match SecurityGateway::validate_query(
+        &req.query,
+        req.client_ip.as_deref(),
+        req.policy_id.as_deref(),
+    )
+    .await
+    {
         Ok(result) => {
             if result.valid {
                 Json(ApiResponse::success(result, "查询验证通过"))
             } else {
-                Json(ApiResponse::error(400, result.reason.as_deref().unwrap_or("查询验证失败")))
+                Json(ApiResponse::error(
+                    400,
+                    result.reason.as_deref().unwrap_or("查询验证失败"),
+                ))
             }
         }
         Err(e) => Json(ApiResponse::error(500, &e)),
@@ -1143,11 +1152,15 @@ pub async fn update_policy_handler(
     let updates = SecurityPolicy {
         id: id.clone(),
         name: req.name.unwrap_or(existing.name),
-        rate_limit_per_sec: req.rate_limit_per_sec.unwrap_or(existing.rate_limit_per_sec),
+        rate_limit_per_sec: req
+            .rate_limit_per_sec
+            .unwrap_or(existing.rate_limit_per_sec),
         max_query_depth: req.max_query_depth.unwrap_or(existing.max_query_depth),
         max_complexity: req.max_complexity.unwrap_or(existing.max_complexity),
         require_auth: req.require_auth.unwrap_or(existing.require_auth),
-        allowed_operations: req.allowed_operations.unwrap_or(existing.allowed_operations),
+        allowed_operations: req
+            .allowed_operations
+            .unwrap_or(existing.allowed_operations),
         enabled: req.enabled.unwrap_or(existing.enabled),
     };
 

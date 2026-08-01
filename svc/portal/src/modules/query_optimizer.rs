@@ -394,19 +394,14 @@ fn get_query_optimizer_store() -> &'static QueryOptimizerStore {
 pub struct QueryCompiler;
 
 impl QueryCompiler {
-    pub async fn compile_query(
-        original_query: String,
-    ) -> Result<CompiledQuery, String> {
+    pub async fn compile_query(original_query: String) -> Result<CompiledQuery, String> {
         let store = get_query_optimizer_store();
 
         let query_hash = Self::compute_hash(&original_query);
 
         let rules = store.compilation_rules.lock().await;
-        let enabled_rules: Vec<CompilationRule> = rules
-            .values()
-            .filter(|r| r.enabled)
-            .cloned()
-            .collect();
+        let enabled_rules: Vec<CompilationRule> =
+            rules.values().filter(|r| r.enabled).cloned().collect();
 
         let mut optimizations_applied = Vec::new();
         let mut optimized_query = original_query.clone();
@@ -554,8 +549,7 @@ impl QueryCompiler {
             .lines()
             .filter(|line| {
                 let trimmed = line.trim();
-                !trimmed.starts_with('#')
-                    && !trimmed.is_empty()
+                !trimmed.starts_with('#') && !trimmed.is_empty()
             })
             .collect::<Vec<&str>>()
             .join("\n");
@@ -599,10 +593,7 @@ impl QueryCompiler {
     fn estimate_complexity(query: &str) -> f64 {
         let base = query.len() as f64;
         let depth_estimate = query.matches('{').count() as f64;
-        let breadth_estimate = query
-            .lines()
-            .filter(|l| l.trim().ends_with('{'))
-            .count() as f64;
+        let breadth_estimate = query.lines().filter(|l| l.trim().ends_with('{')).count() as f64;
         (base * 0.01) + (depth_estimate * 10.0) + (breadth_estimate * 5.0)
     }
 
@@ -642,7 +633,11 @@ impl QueryPlanner {
                 id: step_id.clone(),
                 service: service.clone(),
                 field_path: field_path.clone(),
-                depends_on: if idx == 0 { vec![] } else { vec![format!("step_{}", idx - 1)] },
+                depends_on: if idx == 0 {
+                    vec![]
+                } else {
+                    vec![format!("step_{}", idx - 1)]
+                },
                 estimated_time_ms,
                 strategy: if services_seen.contains_key(&service) {
                     PlanStepStrategy::Parallel
@@ -701,18 +696,18 @@ impl QueryPlanner {
         let cost_diff = plan_a.estimated_cost - plan_b.estimated_cost;
         let score_diff = plan_a.score - plan_b.score;
 
-        let recommendation = if plan_a.score > plan_b.score && plan_a.estimated_cost < plan_b.estimated_cost
-        {
-            "方案 A 更优: 得分更高且成本更低".to_string()
-        } else if plan_b.score > plan_a.score && plan_b.estimated_cost < plan_a.estimated_cost {
-            "方案 B 更优: 得分更高且成本更低".to_string()
-        } else if cost_diff.abs() < 1.0 && score_diff.abs() < 0.5 {
-            "两个方案性能接近，建议根据业务场景选择".to_string()
-        } else if cost_diff < 0.0 {
-            "方案 A 成本更低".to_string()
-        } else {
-            "方案 B 成本更低".to_string()
-        };
+        let recommendation =
+            if plan_a.score > plan_b.score && plan_a.estimated_cost < plan_b.estimated_cost {
+                "方案 A 更优: 得分更高且成本更低".to_string()
+            } else if plan_b.score > plan_a.score && plan_b.estimated_cost < plan_a.estimated_cost {
+                "方案 B 更优: 得分更高且成本更低".to_string()
+            } else if cost_diff.abs() < 1.0 && score_diff.abs() < 0.5 {
+                "两个方案性能接近，建议根据业务场景选择".to_string()
+            } else if cost_diff < 0.0 {
+                "方案 A 成本更低".to_string()
+            } else {
+                "方案 B 成本更低".to_string()
+            };
 
         Ok(PlanCompareResult {
             plan_a,
@@ -739,9 +734,7 @@ impl QueryPlanner {
             .ok_or_else(|| format!("计划不存在: {}", plan_id))?;
 
         for step in plan.steps.iter_mut() {
-            if step.strategy == PlanStepStrategy::Sequential
-                && !step.depends_on.is_empty()
-            {
+            if step.strategy == PlanStepStrategy::Sequential && !step.depends_on.is_empty() {
                 step.strategy = PlanStepStrategy::Parallel;
             }
             if step.estimated_time_ms > 200 {
@@ -759,15 +752,19 @@ impl QueryPlanner {
         };
 
         plan.parallelism = unique_services as u32;
-        plan.estimated_cost = plan.steps.iter().map(|s| {
-            let base = s.estimated_time_ms as f64;
-            match s.strategy {
-                PlanStepStrategy::Parallel => base * 0.7,
-                PlanStepStrategy::Pipelined => base * 0.6,
-                PlanStepStrategy::Batched => base * 0.8,
-                PlanStepStrategy::Sequential => base,
-            }
-        }).sum();
+        plan.estimated_cost = plan
+            .steps
+            .iter()
+            .map(|s| {
+                let base = s.estimated_time_ms as f64;
+                match s.strategy {
+                    PlanStepStrategy::Parallel => base * 0.7,
+                    PlanStepStrategy::Pipelined => base * 0.6,
+                    PlanStepStrategy::Batched => base * 0.8,
+                    PlanStepStrategy::Sequential => base,
+                }
+            })
+            .sum();
         plan.score = Self::calculate_plan_score(&plan.steps, plan.estimated_cost, plan.parallelism);
 
         Ok(plan.clone())
@@ -791,9 +788,8 @@ impl QueryPlanner {
                 *step_distribution
                     .entry(step.service.clone())
                     .or_insert(0u64) += 1;
-                *service_times
-                    .entry(step.service.clone())
-                    .or_insert(0.0) += step.estimated_time_ms as f64;
+                *service_times.entry(step.service.clone()).or_insert(0.0) +=
+                    step.estimated_time_ms as f64;
             }
         }
 
@@ -928,7 +924,8 @@ impl ExecutionAccelerator {
         let results = store.acceleration_results.lock().await;
 
         let limit = limit.unwrap_or(50).min(200) as usize;
-        let mut history: Vec<AccelerationResult> = results.iter().rev().take(limit).cloned().collect();
+        let mut history: Vec<AccelerationResult> =
+            results.iter().rev().take(limit).cloned().collect();
         history.reverse();
         history
     }
@@ -1186,14 +1183,12 @@ pub async fn accelerate_handler(
     State(_state): State<AppState>,
     Json(req): Json<AccelerateRequest>,
 ) -> Json<ApiResponse<AccelerationResult>> {
-    let strategies = req
-        .strategies
-        .map(|strats| {
-            strats
-                .iter()
-                .map(|s| AccelerationStrategy::from_str(s))
-                .collect()
-        });
+    let strategies = req.strategies.map(|strats| {
+        strats
+            .iter()
+            .map(|s| AccelerationStrategy::from_str(s))
+            .collect()
+    });
 
     match ExecutionAccelerator::accelerate(req.original_time_ms, req.field_count, strategies).await
     {

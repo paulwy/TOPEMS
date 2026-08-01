@@ -125,10 +125,7 @@ async fn test_login_success() {
     let client = Client::new();
     let token = login_and_get_token(&client).await;
 
-    assert!(
-        token.is_some(),
-        "登录失败，未能获取 token"
-    );
+    assert!(token.is_some(), "登录失败，未能获取 token");
 }
 
 #[tokio::test]

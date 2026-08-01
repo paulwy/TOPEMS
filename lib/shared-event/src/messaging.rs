@@ -1,7 +1,7 @@
-use topems_shared_core::error::TopemsError;
-use topems_shared_core::error::Result;
 use async_trait::async_trait;
 use serde::{Deserialize, Serialize};
+use topems_shared_core::error::Result;
+use topems_shared_core::error::TopemsError;
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct Message {

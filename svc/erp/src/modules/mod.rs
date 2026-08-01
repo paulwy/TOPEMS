@@ -6,11 +6,13 @@ use axum::{extract::FromRef, Router};
 use sqlx::postgres::PgPool;
 use std::sync::Arc;
 use std::time::Instant;
+use topems_shared::service_client::{
+    api::finance_api::FinanceApi, api::hrm_api::HrmApi, TypedServiceClient,
+};
 use topems_shared::{
     event::EventPublisher, AuthState, FieldEncryptionService, NotificationServiceClient,
     SystemMetrics,
 };
-use topems_shared::service_client::{api::finance_api::FinanceApi, api::hrm_api::HrmApi, TypedServiceClient};
 
 pub mod addressbook;
 pub mod announcement;
@@ -28,8 +30,8 @@ pub mod health;
 pub mod hr_proxy;
 pub mod hrm_integration_example;
 pub mod inventory;
-pub mod material;
 pub mod master_data_refs;
+pub mod material;
 pub mod mdm_v49;
 pub mod meeting_room;
 pub mod office_supplies;

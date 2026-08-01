@@ -52,7 +52,7 @@ const mappingFields: SchemaField[] = [
     required: true,
     sortable: true,
     listWidth: 200,
-    renderCell: (row) => (
+    renderCell: (row: Record<string, unknown>) => (
       <Box>
         <Typography
           variant='body2'
@@ -88,7 +88,7 @@ const mappingFields: SchemaField[] = [
         label,
       })),
     },
-    renderCell: (row) => {
+    renderCell: (row: Record<string, unknown>) => {
       const t = row.type as MappingType;
       return (
         <Chip
@@ -104,7 +104,7 @@ const mappingFields: SchemaField[] = [
     label: '源表',
     type: 'text',
     listWidth: 140,
-    renderCell: (row) => (
+    renderCell: (row: Record<string, unknown>) => (
       <Typography
         variant='body2'
         color='text.secondary'
@@ -118,7 +118,7 @@ const mappingFields: SchemaField[] = [
     label: '目标表',
     type: 'text',
     listWidth: 140,
-    renderCell: (row) => (
+    renderCell: (row: Record<string, unknown>) => (
       <Typography
         variant='body2'
         color='text.secondary'
@@ -133,7 +133,7 @@ const mappingFields: SchemaField[] = [
     type: 'number',
     align: 'center',
     listWidth: 90,
-    renderCell: (row) => (
+    renderCell: (row: Record<string, unknown>) => (
       <Typography
         variant='body2'
         sx={{ fontWeight: 500 }}
@@ -154,7 +154,7 @@ const mappingFields: SchemaField[] = [
         label,
       })),
     },
-    renderCell: (row) => {
+    renderCell: (row: Record<string, unknown>) => {
       const s = row.status as MappingStatus;
       return (
         <Chip
@@ -171,7 +171,7 @@ const mappingFields: SchemaField[] = [
     label: '最后同步',
     type: 'datetime',
     listWidth: 160,
-    renderCell: (row) => (
+    renderCell: (row: Record<string, unknown>) => (
       <Typography
         variant='body2'
         color='text.secondary'

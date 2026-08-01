@@ -456,7 +456,6 @@ impl CacheOperationRecorder {
 }
 
 pub mod v28 {
-    use topems_shared_event::cache::{CacheStatistics, InMemoryCache};
     use crate::observability::{
         AlertManager, AlertRule, AlertSeverity, SLOManager, SLOMeasurement,
     };
@@ -467,6 +466,7 @@ pub mod v28 {
     use std::sync::Arc;
     use std::time::{Duration, Instant};
     use tokio::sync::RwLock;
+    use topems_shared_event::cache::{CacheStatistics, InMemoryCache};
 
     #[derive(Debug, Clone)]
     pub struct QueryCacheConfig {

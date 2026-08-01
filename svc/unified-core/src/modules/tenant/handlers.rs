@@ -25,7 +25,7 @@ pub async fn list_tenants(
     let tenants: Vec<Tenant> = match (params.search, params.status, params.plan) {
         (Some(s), Some(st), Some(p)) => {
             sqlx::query_as(
-                "SELECT * FROM core_tenants WHERE (name ILIKE $1 OR code ILIKE $1) AND status = $2 AND plan = $3 ORDER BY created_at DESC LIMIT $4 OFFSET $5"
+                "SELECT id, tenant_type, plan, license_type, license_expires_at, database_host, database_port, database_name, quota_users, quota_storage_gb, quota_api_calls, quota_plugins, features, status, trial_expires_at, created_at, updated_at, activated_at, suspended_at  FROM core_tenants WHERE (name ILIKE $1 OR code ILIKE $1) AND status = $2 AND plan = $3 ORDER BY created_at DESC LIMIT $4 OFFSET $5"
             )
             .bind(format!("%{}%", s))
             .bind(st)
@@ -38,7 +38,7 @@ pub async fn list_tenants(
         }
         (Some(s), Some(st), None) => {
             sqlx::query_as(
-                "SELECT * FROM core_tenants WHERE (name ILIKE $1 OR code ILIKE $1) AND status = $2 ORDER BY created_at DESC LIMIT $3 OFFSET $4"
+                "SELECT id, tenant_type, plan, license_type, license_expires_at, database_host, database_port, database_name, quota_users, quota_storage_gb, quota_api_calls, quota_plugins, features, status, trial_expires_at, created_at, updated_at, activated_at, suspended_at  FROM core_tenants WHERE (name ILIKE $1 OR code ILIKE $1) AND status = $2 ORDER BY created_at DESC LIMIT $3 OFFSET $4"
             )
             .bind(format!("%{}%", s))
             .bind(st)
@@ -50,7 +50,7 @@ pub async fn list_tenants(
         }
         (Some(s), None, Some(p)) => {
             sqlx::query_as(
-                "SELECT * FROM core_tenants WHERE (name ILIKE $1 OR code ILIKE $1) AND plan = $2 ORDER BY created_at DESC LIMIT $3 OFFSET $4"
+                "SELECT id, tenant_type, plan, license_type, license_expires_at, database_host, database_port, database_name, quota_users, quota_storage_gb, quota_api_calls, quota_plugins, features, status, trial_expires_at, created_at, updated_at, activated_at, suspended_at  FROM core_tenants WHERE (name ILIKE $1 OR code ILIKE $1) AND plan = $2 ORDER BY created_at DESC LIMIT $3 OFFSET $4"
             )
             .bind(format!("%{}%", s))
             .bind(p)
@@ -62,7 +62,7 @@ pub async fn list_tenants(
         }
         (None, Some(st), Some(p)) => {
             sqlx::query_as(
-                "SELECT * FROM core_tenants WHERE status = $1 AND plan = $2 ORDER BY created_at DESC LIMIT $3 OFFSET $4"
+                "SELECT id, tenant_type, plan, license_type, license_expires_at, database_host, database_port, database_name, quota_users, quota_storage_gb, quota_api_calls, quota_plugins, features, status, trial_expires_at, created_at, updated_at, activated_at, suspended_at  FROM core_tenants WHERE status = $1 AND plan = $2 ORDER BY created_at DESC LIMIT $3 OFFSET $4"
             )
             .bind(st)
             .bind(p)
@@ -74,7 +74,7 @@ pub async fn list_tenants(
         }
         (Some(s), None, None) => {
             sqlx::query_as(
-                "SELECT * FROM core_tenants WHERE name ILIKE $1 OR code ILIKE $1 ORDER BY created_at DESC LIMIT $2 OFFSET $3"
+                "SELECT id, tenant_type, plan, license_type, license_expires_at, database_host, database_port, database_name, quota_users, quota_storage_gb, quota_api_calls, quota_plugins, features, status, trial_expires_at, created_at, updated_at, activated_at, suspended_at  FROM core_tenants WHERE name ILIKE $1 OR code ILIKE $1 ORDER BY created_at DESC LIMIT $2 OFFSET $3"
             )
             .bind(format!("%{}%", s))
             .bind(page_size)
@@ -85,7 +85,7 @@ pub async fn list_tenants(
         }
         (None, Some(st), None) => {
             sqlx::query_as(
-                "SELECT * FROM core_tenants WHERE status = $1 ORDER BY created_at DESC LIMIT $2 OFFSET $3"
+                "SELECT id, tenant_type, plan, license_type, license_expires_at, database_host, database_port, database_name, quota_users, quota_storage_gb, quota_api_calls, quota_plugins, features, status, trial_expires_at, created_at, updated_at, activated_at, suspended_at  FROM core_tenants WHERE status = $1 ORDER BY created_at DESC LIMIT $2 OFFSET $3"
             )
             .bind(st)
             .bind(page_size)
@@ -96,7 +96,7 @@ pub async fn list_tenants(
         }
         (None, None, Some(p)) => {
             sqlx::query_as(
-                "SELECT * FROM core_tenants WHERE plan = $1 ORDER BY created_at DESC LIMIT $2 OFFSET $3"
+                "SELECT id, tenant_type, plan, license_type, license_expires_at, database_host, database_port, database_name, quota_users, quota_storage_gb, quota_api_calls, quota_plugins, features, status, trial_expires_at, created_at, updated_at, activated_at, suspended_at  FROM core_tenants WHERE plan = $1 ORDER BY created_at DESC LIMIT $2 OFFSET $3"
             )
             .bind(p)
             .bind(page_size)
@@ -107,7 +107,7 @@ pub async fn list_tenants(
         }
         (None, None, None) => {
             sqlx::query_as(
-                "SELECT * FROM core_tenants ORDER BY created_at DESC LIMIT $1 OFFSET $2"
+                "SELECT id, tenant_type, plan, license_type, license_expires_at, database_host, database_port, database_name, quota_users, quota_storage_gb, quota_api_calls, quota_plugins, features, status, trial_expires_at, created_at, updated_at, activated_at, suspended_at  FROM core_tenants ORDER BY created_at DESC LIMIT $1 OFFSET $2"
             )
             .bind(page_size)
             .bind(offset)
@@ -147,7 +147,7 @@ pub async fn get_tenant(
 ) -> Json<CoreResponse<Tenant>> {
     tracing::info!("[Tenant] Getting tenant: {}", id);
 
-    let tenant: Option<Tenant> = sqlx::query_as("SELECT * FROM core_tenants WHERE id = $1")
+    let tenant: Option<Tenant> = sqlx::query_as("SELECT id, tenant_type, plan, license_type, license_expires_at, database_host, database_port, database_name, quota_users, quota_storage_gb, quota_api_calls, quota_plugins, features, status, trial_expires_at, created_at, updated_at, activated_at, suspended_at  FROM core_tenants WHERE id = $1")
         .bind(id)
         .fetch_optional(&state.pool)
         .await
@@ -166,7 +166,7 @@ pub async fn get_tenant_by_code(
 ) -> Json<CoreResponse<Tenant>> {
     tracing::info!("[Tenant] Getting tenant by code: {}", code);
 
-    let tenant: Option<Tenant> = sqlx::query_as("SELECT * FROM core_tenants WHERE code = $1")
+    let tenant: Option<Tenant> = sqlx::query_as("SELECT id, tenant_type, plan, license_type, license_expires_at, database_host, database_port, database_name, quota_users, quota_storage_gb, quota_api_calls, quota_plugins, features, status, trial_expires_at, created_at, updated_at, activated_at, suspended_at  FROM core_tenants WHERE code = $1")
         .bind(&code)
         .fetch_optional(&state.pool)
         .await
@@ -208,6 +208,299 @@ pub async fn create_tenant(
             Json(CoreResponse::error(&format!("Failed to create tenant: {}", e)))
         }
     }
+}
+
+/// Seed default admin user, tenant membership and role assignment for a
+/// freshly created tenant. Runs inside the caller's transaction so the whole
+/// onboarding is atomic.
+///
+/// MVP note: `core_roles.name` has a GLOBAL UNIQUE constraint (see
+/// `database/init/03_init_permissions.sql`), so per-tenant role cloning with
+/// identical names is not possible without a schema migration. We therefore
+/// reuse the global `superadmin` role template (which already carries all
+/// permissions via `core_role_permissions`) and mark the admin as
+/// `is_superuser = true`. Per-tenant role cloning is deferred pending a
+/// schema change to make `core_roles.(name, tenant_id)` the unique key.
+async fn seed_tenant_defaults(
+    tx: &mut sqlx::Transaction<'_, sqlx::Postgres>,
+    tenant_id: Uuid,
+    admin_username: &str,
+    admin_email: &str,
+    admin_password: &str,
+    default_department_name: &str,
+    default_department_description: Option<&str>,
+) -> Result<Uuid, String> {
+    // 1. Hash the admin password with bcrypt (same cost as IAM create_user).
+    let password_hash = bcrypt::hash(admin_password, bcrypt::DEFAULT_COST)
+        .map_err(|e| format!("Failed to hash admin password: {}", e))?;
+
+    // 2. Guard against duplicate admin credentials (username/email are unique).
+    let dup: i64 =
+        sqlx::query_scalar("SELECT COUNT(*) FROM core_users WHERE username = $1 OR email = $2")
+            .bind(admin_username)
+            .bind(admin_email)
+            .fetch_one(&mut **tx)
+            .await
+            .map_err(|e| format!("Failed to check existing admin user: {}", e))?;
+    if dup > 0 {
+        return Err("Admin username or email already exists".to_string());
+    }
+
+    // 3. Create the admin user tied to the new tenant.
+    let admin_user_id: Uuid = sqlx::query_scalar(
+        r#"
+        INSERT INTO core_users (username, email, password_hash, full_name, status, is_superuser, tenant_id)
+        VALUES ($1, $2, $3, $4, 'active', TRUE, $5)
+        RETURNING id
+        "#,
+    )
+    .bind(admin_username)
+    .bind(admin_email)
+    .bind(&password_hash)
+    .bind(admin_username)
+    .bind(tenant_id)
+    .fetch_one(&mut **tx)
+    .await
+    .map_err(|e| format!("Failed to create admin user: {}", e))?;
+
+    // 4. Create the core_tenant_users membership linking admin -> tenant.
+    sqlx::query(
+        r#"
+        INSERT INTO core_tenant_users (tenant_id, user_id, email, role, status)
+        VALUES ($1, $2, $3, 'superadmin', 'active')
+        "#,
+    )
+    .bind(tenant_id)
+    .bind(admin_user_id)
+    .bind(admin_email)
+    .execute(&mut **tx)
+    .await
+    .map_err(|e| format!("Failed to create tenant membership: {}", e))?;
+
+    // 5. Assign the admin to the global superadmin role (carries all perms).
+    sqlx::query(
+        r#"
+        INSERT INTO core_user_roles (user_id, role_id)
+        SELECT $1, r.id FROM core_roles r WHERE r.name = 'superadmin'
+        ON CONFLICT DO NOTHING
+        "#,
+    )
+    .bind(admin_user_id)
+    .execute(&mut **tx)
+    .await
+    .map_err(|e| format!("Failed to assign superadmin role: {}", e))?;
+
+    // 6. Persist the default department as a tenant setting (for the HRM
+    //    module to pick up when it provisions the org tree).
+    sqlx::query(
+        r#"
+        INSERT INTO core_tenant_settings (tenant_id, setting_key, setting_value, is_public)
+        VALUES
+            ($1, 'default_department_name', $2, FALSE),
+            ($1, 'default_department_description', $3, FALSE)
+        "#,
+    )
+    .bind(tenant_id)
+    .bind(default_department_name)
+    .bind(default_department_description)
+    .execute(&mut **tx)
+    .await
+    .map_err(|e| format!("Failed to seed default department setting: {}", e))?;
+
+    Ok(admin_user_id)
+}
+
+/// P34-4: hardcoded catalog of basic-tier modules that should be
+/// auto-activated for every newly onboarded tenant. Codes are namespaced
+/// as `<service>:<module>` to keep the (tenant_id, module_code) unique key
+/// unambiguous across ERP and PM.
+///
+/// Advanced modules (e.g. `erp:consolidation`, `erp:mdm_v49`,
+/// `pm:project_approval`, `pm:service_integration`) are intentionally
+/// absent — tenants opt into them via `POST /tenant/{id}/modules/{code}`.
+/// Infrastructure modules (`erp:db_structure`, `erp:openapi`, `pm:openapi`)
+/// are always-on at the service level and do not need a row here.
+const BASIC_MODULE_CODES: &[(&str, &str)] = &[
+    // ---- ERP basic ----
+    ("erp:addressbook", "通讯录"),
+    ("erp:announcement", "公告管理"),
+    ("erp:asset", "资产管理"),
+    ("erp:fixed_asset", "固定资产"),
+    ("erp:customer", "客户管理"),
+    ("erp:supplier", "供应商管理"),
+    ("erp:material", "物料管理"),
+    ("erp:inventory", "库存管理"),
+    ("erp:dict", "数据字典"),
+    ("erp:office_supplies", "办公用品"),
+    ("erp:vehicles", "车辆管理"),
+    ("erp:meeting_room", "会议室管理"),
+    ("erp:leave_request", "请假申请"),
+    ("erp:opening_balance", "期初余额"),
+    ("erp:production_order", "生产订单"),
+    ("erp:purchase_order", "采购订单"),
+    ("erp:sales_order", "销售订单"),
+    ("erp:dashboard", "仪表盘"),
+    ("erp:health", "健康检查"),
+    ("erp:audit", "审计日志"),
+    ("erp:search", "全文搜索"),
+    // ---- PM basic ----
+    ("pm:project", "项目管理"),
+    ("pm:project_phase", "项目阶段"),
+    ("pm:project_milestone", "项目里程碑"),
+    ("pm:project_member", "项目成员"),
+    ("pm:project_resource", "项目资源"),
+    ("pm:project_expense", "项目费用"),
+    ("pm:project_benefit", "项目效益"),
+    ("pm:project_type_config", "项目类型配置"),
+    ("pm:contract", "合同管理"),
+    ("pm:budget", "预算管理"),
+    ("pm:risk", "风险管理"),
+    ("pm:quality", "质量管理"),
+    ("pm:acceptance", "验收管理"),
+    ("pm:settlement", "结算管理"),
+    ("pm:document", "文档管理"),
+    ("pm:report", "项目报表"),
+    ("pm:notification", "通知"),
+    ("pm:statistics", "统计分析"),
+];
+
+/// P34-4: auto-activate all basic-tier modules for a freshly created tenant.
+/// Runs inside the caller's transaction so onboarding stays atomic. Rows
+/// that already exist (e.g. from a re-onboard attempt) are skipped via
+/// `ON CONFLICT DO NOTHING`.
+async fn activate_basic_modules(
+    tx: &mut sqlx::Transaction<'_, sqlx::Postgres>,
+    tenant_id: Uuid,
+) -> Result<(), String> {
+    for (module_code, module_name) in BASIC_MODULE_CODES.iter() {
+        sqlx::query(
+            r#"
+            INSERT INTO core_tenant_modules (tenant_id, module_code, module_name, tier, is_active)
+            VALUES ($1, $2, $3, 'basic', TRUE)
+            ON CONFLICT (tenant_id, module_code) DO NOTHING
+            "#,
+        )
+        .bind(tenant_id)
+        .bind(module_code)
+        .bind(module_name)
+        .execute(&mut **tx)
+        .await
+        .map_err(|e| format!("Failed to activate basic module {}: {}", module_code, e))?;
+    }
+    Ok(())
+}
+
+/// Onboard a new tenant in a single atomic transaction: create the tenant
+/// row, seed the default admin user + membership + role assignment, and
+/// persist the default department setting. Backs `POST /tenant/onboard`.
+pub async fn onboard_tenant(
+    State(state): State<AppState>,
+    Json(req): Json<OnboardTenantRequest>,
+) -> Json<CoreResponse<OnboardTenantResponse>> {
+    tracing::info!("[Tenant] Onboarding tenant: {}", req.name);
+
+    if req.name.trim().is_empty() || req.code.trim().is_empty() {
+        return Json(CoreResponse::error("Tenant name and code are required"));
+    }
+    if req.admin_username.trim().is_empty()
+        || req.admin_email.trim().is_empty()
+        || req.admin_password.len() < 6
+    {
+        return Json(CoreResponse::error(
+            "Admin username, email and a password (>=6 chars) are required",
+        ));
+    }
+
+    let mut tx = match state.pool.begin().await {
+        Ok(tx) => tx,
+        Err(e) => {
+            tracing::error!("Failed to begin onboarding transaction: {}", e);
+            return Json(CoreResponse::error(&format!(
+                "Failed to start transaction: {}",
+                e
+            )));
+        }
+    };
+
+    // 1. Create the tenant row (mirrors create_tenant, status starts as trial).
+    let tenant: Tenant = match sqlx::query_as::<_, Tenant>(
+        r#"
+        INSERT INTO core_tenants (name, code, tenant_type, plan, license_type)
+        VALUES ($1, $2, $3, $4, $5)
+        RETURNING id, name, code, tenant_type, plan, license_type, license_expires_at, database_host, database_port, database_name, quota_users, quota_storage_gb, quota_api_calls, quota_plugins, features, status, trial_expires_at, created_at, updated_at, activated_at, suspended_at
+        "#,
+    )
+    .bind(&req.name)
+    .bind(&req.code)
+    .bind(&req.tenant_type)
+    .bind(&req.plan)
+    .bind(&req.license_type)
+    .fetch_one(&mut *tx)
+    .await
+    {
+        Ok(t) => t,
+        Err(e) => {
+            let _ = tx.rollback().await;
+            tracing::error!("Failed to create tenant during onboarding: {}", e);
+            return Json(CoreResponse::error(&format!(
+                "Failed to create tenant: {}",
+                e
+            )));
+        }
+    };
+
+    // 2. Seed defaults (admin user, membership, role, department setting).
+    let admin_user_id = match seed_tenant_defaults(
+        &mut tx,
+        tenant.id,
+        &req.admin_username,
+        &req.admin_email,
+        &req.admin_password,
+        &req.default_department_name,
+        req.default_department_description.as_deref(),
+    )
+    .await
+    {
+        Ok(id) => id,
+        Err(e) => {
+            let _ = tx.rollback().await;
+            tracing::error!("Failed to seed tenant defaults: {}", e);
+            return Json(CoreResponse::error(&e));
+        }
+    };
+
+    // 3. P34-4: auto-activate all basic-tier modules so the new tenant can
+    //    use ERP/PM master-data features out of the box. Advanced modules
+    //    remain dormant until explicitly activated.
+    if let Err(e) = activate_basic_modules(&mut tx, tenant.id).await {
+        let _ = tx.rollback().await;
+        tracing::error!("Failed to activate basic modules: {}", e);
+        return Json(CoreResponse::error(&e));
+    }
+
+    if let Err(e) = tx.commit().await {
+        tracing::error!("Failed to commit onboarding: {}", e);
+        return Json(CoreResponse::error(&format!(
+            "Failed to commit onboarding: {}",
+            e
+        )));
+    }
+
+    tracing::info!(
+        "[Tenant] Onboarded tenant {} (admin {})",
+        tenant.id,
+        req.admin_username
+    );
+
+    Json(CoreResponse::success(
+        OnboardTenantResponse {
+            tenant,
+            admin_user_id,
+            admin_username: req.admin_username,
+            admin_email: req.admin_email,
+        },
+        "Tenant onboarded",
+    ))
 }
 
 /// Update tenant
@@ -311,7 +604,7 @@ pub async fn get_tenant_quota(
 ) -> Json<CoreResponse<TenantQuotaResponse>> {
     tracing::info!("[Tenant] Getting quota for tenant: {}", id);
 
-    let tenant: Option<Tenant> = sqlx::query_as("SELECT * FROM core_tenants WHERE id = $1")
+    let tenant: Option<Tenant> = sqlx::query_as("SELECT id, tenant_type, plan, license_type, license_expires_at, database_host, database_port, database_name, quota_users, quota_storage_gb, quota_api_calls, quota_plugins, features, status, trial_expires_at, created_at, updated_at, activated_at, suspended_at  FROM core_tenants WHERE id = $1")
         .bind(id)
         .fetch_optional(&state.pool)
         .await
@@ -384,7 +677,7 @@ pub async fn list_tenant_modules(
     tracing::info!("[Tenant] Listing modules for tenant: {}", tenant_id);
 
     let modules: Vec<TenantModule> = sqlx::query_as(
-        "SELECT * FROM core_tenant_modules WHERE tenant_id = $1 ORDER BY activated_at DESC",
+        "SELECT id, tenant_id, module_code, module_name, tier, is_active, activated_at, expires_at  FROM core_tenant_modules WHERE tenant_id = $1 ORDER BY activated_at DESC",
     )
     .bind(tenant_id)
     .fetch_all(&state.pool)
@@ -496,7 +789,7 @@ pub async fn get_tenant_users(
     let users: Vec<TenantUser> = match (params.search, params.role, params.status) {
         (Some(s), Some(r), Some(st)) => {
             sqlx::query_as(
-                "SELECT * FROM core_tenant_users WHERE tenant_id = $1 AND email ILIKE $2 AND role = $3 AND status = $4 ORDER BY created_at DESC LIMIT $5 OFFSET $6"
+                "SELECT id, tenant_id, user_id, created_at, last_login  FROM core_tenant_users WHERE tenant_id = $1 AND email ILIKE $2 AND role = $3 AND status = $4 ORDER BY created_at DESC LIMIT $5 OFFSET $6"
             )
             .bind(tenant_id)
             .bind(format!("%{}%", s))
@@ -510,7 +803,7 @@ pub async fn get_tenant_users(
         }
         (Some(s), Some(r), None) => {
             sqlx::query_as(
-                "SELECT * FROM core_tenant_users WHERE tenant_id = $1 AND email ILIKE $2 AND role = $3 ORDER BY created_at DESC LIMIT $4 OFFSET $5"
+                "SELECT id, tenant_id, user_id, created_at, last_login  FROM core_tenant_users WHERE tenant_id = $1 AND email ILIKE $2 AND role = $3 ORDER BY created_at DESC LIMIT $4 OFFSET $5"
             )
             .bind(tenant_id)
             .bind(format!("%{}%", s))
@@ -523,7 +816,7 @@ pub async fn get_tenant_users(
         }
         (Some(s), None, Some(st)) => {
             sqlx::query_as(
-                "SELECT * FROM core_tenant_users WHERE tenant_id = $1 AND email ILIKE $2 AND status = $3 ORDER BY created_at DESC LIMIT $4 OFFSET $5"
+                "SELECT id, tenant_id, user_id, created_at, last_login  FROM core_tenant_users WHERE tenant_id = $1 AND email ILIKE $2 AND status = $3 ORDER BY created_at DESC LIMIT $4 OFFSET $5"
             )
             .bind(tenant_id)
             .bind(format!("%{}%", s))
@@ -536,7 +829,7 @@ pub async fn get_tenant_users(
         }
         (None, Some(r), Some(st)) => {
             sqlx::query_as(
-                "SELECT * FROM core_tenant_users WHERE tenant_id = $1 AND role = $2 AND status = $3 ORDER BY created_at DESC LIMIT $4 OFFSET $5"
+                "SELECT id, tenant_id, user_id, created_at, last_login  FROM core_tenant_users WHERE tenant_id = $1 AND role = $2 AND status = $3 ORDER BY created_at DESC LIMIT $4 OFFSET $5"
             )
             .bind(tenant_id)
             .bind(r)
@@ -549,7 +842,7 @@ pub async fn get_tenant_users(
         }
         (Some(s), None, None) => {
             sqlx::query_as(
-                "SELECT * FROM core_tenant_users WHERE tenant_id = $1 AND email ILIKE $2 ORDER BY created_at DESC LIMIT $3 OFFSET $4"
+                "SELECT id, tenant_id, user_id, created_at, last_login  FROM core_tenant_users WHERE tenant_id = $1 AND email ILIKE $2 ORDER BY created_at DESC LIMIT $3 OFFSET $4"
             )
             .bind(tenant_id)
             .bind(format!("%{}%", s))
@@ -561,7 +854,7 @@ pub async fn get_tenant_users(
         }
         (None, Some(r), None) => {
             sqlx::query_as(
-                "SELECT * FROM core_tenant_users WHERE tenant_id = $1 AND role = $2 ORDER BY created_at DESC LIMIT $3 OFFSET $4"
+                "SELECT id, tenant_id, user_id, created_at, last_login  FROM core_tenant_users WHERE tenant_id = $1 AND role = $2 ORDER BY created_at DESC LIMIT $3 OFFSET $4"
             )
             .bind(tenant_id)
             .bind(r)
@@ -573,7 +866,7 @@ pub async fn get_tenant_users(
         }
         (None, None, Some(st)) => {
             sqlx::query_as(
-                "SELECT * FROM core_tenant_users WHERE tenant_id = $1 AND status = $2 ORDER BY created_at DESC LIMIT $3 OFFSET $4"
+                "SELECT id, tenant_id, user_id, created_at, last_login  FROM core_tenant_users WHERE tenant_id = $1 AND status = $2 ORDER BY created_at DESC LIMIT $3 OFFSET $4"
             )
             .bind(tenant_id)
             .bind(st)
@@ -585,7 +878,7 @@ pub async fn get_tenant_users(
         }
         (None, None, None) => {
             sqlx::query_as(
-                "SELECT * FROM core_tenant_users WHERE tenant_id = $1 ORDER BY created_at DESC LIMIT $2 OFFSET $3"
+                "SELECT id, tenant_id, user_id, created_at, last_login  FROM core_tenant_users WHERE tenant_id = $1 ORDER BY created_at DESC LIMIT $2 OFFSET $3"
             )
             .bind(tenant_id)
             .bind(page_size)
@@ -837,7 +1130,7 @@ pub async fn get_billing_info(
 ) -> Json<CoreResponse<TenantBillingInfo>> {
     tracing::info!("[Tenant] Getting billing info for tenant: {}", id);
 
-    let tenant: Option<Tenant> = sqlx::query_as("SELECT * FROM core_tenants WHERE id = $1")
+    let tenant: Option<Tenant> = sqlx::query_as("SELECT id, tenant_type, plan, license_type, license_expires_at, database_host, database_port, database_name, quota_users, quota_storage_gb, quota_api_calls, quota_plugins, features, status, trial_expires_at, created_at, updated_at, activated_at, suspended_at  FROM core_tenants WHERE id = $1")
         .bind(id)
         .fetch_optional(&state.pool)
         .await
@@ -908,10 +1201,16 @@ pub async fn get_my_tenants(
     let tenants: Vec<Tenant> = sqlx::query_as(
         "SELECT t.* FROM core_tenants t
          INNER JOIN core_tenant_users tu ON t.id = tu.tenant_id
-         WHERE tu.user_id = $1 AND tu.status = 'active'
+         WHERE tu.user_id = $1 AND tu.status = 'active' AND tenant_id = $2 
          ORDER BY t.created_at DESC",
     )
     .bind(user_id)
+    .bind(
+        claims
+            .tenant_id
+            .as_deref()
+            .unwrap_or("00000000-0000-0000-0000-000000000000"),
+    )
     .fetch_all(&state.pool)
     .await
     .unwrap_or_default();
@@ -934,7 +1233,11 @@ pub async fn switch_tenant(
     Extension(claims): Extension<Claims>,
     Json(req): Json<SwitchTenantRequest>,
 ) -> Json<CoreResponse<SwitchTenantResponse>> {
-    tracing::info!("[Tenant] Switching to tenant: {} for user: {}", req.tenant_id, claims.sub);
+    tracing::info!(
+        "[Tenant] Switching to tenant: {} for user: {}",
+        req.tenant_id,
+        claims.sub
+    );
 
     let tenant_id = match Uuid::parse_str(&req.tenant_id) {
         Ok(id) => id,
@@ -963,7 +1266,7 @@ pub async fn switch_tenant(
     };
 
     // 获取租户信息
-    let tenant: Option<Tenant> = sqlx::query_as("SELECT * FROM core_tenants WHERE id = $1")
+    let tenant: Option<Tenant> = sqlx::query_as("SELECT id, tenant_type, plan, license_type, license_expires_at, database_host, database_port, database_name, quota_users, quota_storage_gb, quota_api_calls, quota_plugins, features, status, trial_expires_at, created_at, updated_at, activated_at, suspended_at  FROM core_tenants WHERE id = $1")
         .bind(tenant_id)
         .fetch_optional(&state.pool)
         .await
@@ -994,6 +1297,7 @@ pub async fn switch_tenant(
         department_id: claims.department_id.clone(),
         position_id: claims.position_id.clone(),
         position_code: claims.position_code.clone(),
+        iss: claims.iss.clone(),
     };
 
     let access_token = match new_claims.encode(&state.auth_state.jwt_secret) {
@@ -1021,7 +1325,7 @@ pub async fn get_tenant_by_slug(
 ) -> Json<CoreResponse<Tenant>> {
     tracing::info!("[Tenant] Getting tenant by slug: {}", slug);
 
-    let tenant: Option<Tenant> = sqlx::query_as("SELECT * FROM core_tenants WHERE code = $1")
+    let tenant: Option<Tenant> = sqlx::query_as("SELECT id, tenant_type, plan, license_type, license_expires_at, database_host, database_port, database_name, quota_users, quota_storage_gb, quota_api_calls, quota_plugins, features, status, trial_expires_at, created_at, updated_at, activated_at, suspended_at  FROM core_tenants WHERE code = $1")
         .bind(&slug)
         .fetch_optional(&state.pool)
         .await

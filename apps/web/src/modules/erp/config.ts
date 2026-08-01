@@ -32,6 +32,8 @@ export const ERP_PATHS = {
 } as const;
 
 // ---- 路由配置（供路由系统使用） ----
+// P34-4: ERP 默认所有路由为 basic 层级；advanced 模块（consolidation/mdm_v49/...）
+// 在前端未提供独立页面，故不在此配置。
 export const erpModuleConfig: RouteModuleConfig = {
   code: 'erp',
   name: '企业资源计划',
@@ -43,6 +45,7 @@ export const erpModuleConfig: RouteModuleConfig = {
   order: 11,
   description: '财务会计、成本控制、资金管理、资产运营',
   permission: 'erp:read',
+  tier: 'basic',
   routes: [
     {
       path: ERP_PATHS.dashboard,
@@ -54,6 +57,7 @@ export const erpModuleConfig: RouteModuleConfig = {
       group: 'overview',
       requiredPermissions: ['erp:read'],
       action: 'read',
+      tier: 'basic',
     },
     {
       path: ERP_PATHS.voucherManagement,
@@ -65,6 +69,7 @@ export const erpModuleConfig: RouteModuleConfig = {
       group: 'business',
       requiredPermissions: ['erp:general_ledger:read', 'erp:read'],
       action: 'read',
+      tier: 'basic',
     },
     {
       path: ERP_PATHS.customerManagement,
@@ -79,6 +84,7 @@ export const erpModuleConfig: RouteModuleConfig = {
       group: 'business',
       requiredPermissions: ['erp:customer:read', 'erp:read'],
       action: 'read',
+      tier: 'basic',
     },
     {
       path: ERP_PATHS.supplierManagement,
@@ -93,6 +99,7 @@ export const erpModuleConfig: RouteModuleConfig = {
       group: 'business',
       requiredPermissions: ['erp:supplier:read', 'erp:read'],
       action: 'read',
+      tier: 'basic',
     },
     {
       path: ERP_PATHS.inventoryManagement,
@@ -107,6 +114,7 @@ export const erpModuleConfig: RouteModuleConfig = {
       group: 'business',
       requiredPermissions: ['erp:inventory:read', 'erp:read'],
       action: 'read',
+      tier: 'basic',
     },
     {
       path: ERP_PATHS.materialManagement,
@@ -121,6 +129,7 @@ export const erpModuleConfig: RouteModuleConfig = {
       group: 'business',
       requiredPermissions: ['erp:material:read', 'erp:read'],
       action: 'read',
+      tier: 'basic',
     },
     {
       path: ERP_PATHS.purchaseOrder,
@@ -132,6 +141,7 @@ export const erpModuleConfig: RouteModuleConfig = {
       group: 'process',
       requiredPermissions: ['erp:purchase_order:read', 'erp:read'],
       action: 'read',
+      tier: 'basic',
     },
     {
       path: ERP_PATHS.salesOrder,
@@ -143,6 +153,7 @@ export const erpModuleConfig: RouteModuleConfig = {
       group: 'process',
       requiredPermissions: ['erp:sales_order:read', 'erp:read'],
       action: 'read',
+      tier: 'basic',
     },
     {
       path: ERP_PATHS.financialReport,
@@ -157,6 +168,7 @@ export const erpModuleConfig: RouteModuleConfig = {
       group: 'analytics',
       requiredPermissions: ['erp:financial_statement:read', 'erp:read'],
       action: 'read',
+      tier: 'basic',
     },
     {
       path: ERP_PATHS.dictManagement,
@@ -168,6 +180,7 @@ export const erpModuleConfig: RouteModuleConfig = {
       group: 'settings',
       requiredPermissions: ['erp:dictionary:read', 'erp:read'],
       action: 'read',
+      tier: 'basic',
     },
     {
       path: ERP_PATHS.databaseManagement,
@@ -182,6 +195,7 @@ export const erpModuleConfig: RouteModuleConfig = {
       group: 'settings',
       requiredPermissions: ['erp:database:read', 'erp:read'],
       action: 'read',
+      tier: 'basic',
     },
     {
       path: ERP_PATHS.auditLog,
@@ -193,6 +207,7 @@ export const erpModuleConfig: RouteModuleConfig = {
       group: 'settings',
       requiredPermissions: ['erp:audit:read', 'erp:read'],
       action: 'read',
+      tier: 'basic',
     },
     {
       path: ERP_PATHS.officeSupplies,
@@ -204,6 +219,7 @@ export const erpModuleConfig: RouteModuleConfig = {
       group: 'business',
       requiredPermissions: ['erp:office_supply:read', 'erp:read'],
       action: 'read',
+      tier: 'basic',
     },
     {
       path: ERP_PATHS.vehicleManagement,
@@ -215,6 +231,7 @@ export const erpModuleConfig: RouteModuleConfig = {
       group: 'business',
       requiredPermissions: ['erp:vehicle:read', 'erp:read'],
       action: 'read',
+      tier: 'basic',
     },
     {
       path: ERP_PATHS.receivablePayable,
@@ -229,6 +246,7 @@ export const erpModuleConfig: RouteModuleConfig = {
       group: 'business',
       requiredPermissions: ['erp:receivable_payable:read', 'erp:read'],
       action: 'read',
+      tier: 'basic',
     },
     {
       path: ERP_PATHS.assetManagement,
@@ -243,6 +261,7 @@ export const erpModuleConfig: RouteModuleConfig = {
       group: 'business',
       requiredPermissions: ['erp:asset:read', 'erp:read'],
       action: 'read',
+      tier: 'basic',
     },
     {
       path: ERP_PATHS.budgetManagement,
@@ -257,6 +276,7 @@ export const erpModuleConfig: RouteModuleConfig = {
       group: 'business',
       requiredPermissions: ['erp:budget:read', 'erp:read'],
       action: 'read',
+      tier: 'basic',
     },
     {
       path: ERP_PATHS.bankAccount,
@@ -268,6 +288,7 @@ export const erpModuleConfig: RouteModuleConfig = {
       group: 'business',
       requiredPermissions: ['erp:bank_account:read', 'erp:read'],
       action: 'read',
+      tier: 'basic',
     },
     {
       path: ERP_PATHS.accountingManagement,
@@ -282,6 +303,7 @@ export const erpModuleConfig: RouteModuleConfig = {
       group: 'business',
       requiredPermissions: ['erp:accounting_subject:read', 'erp:read'],
       action: 'read',
+      tier: 'basic',
     },
     {
       path: ERP_PATHS.meetingRoom,
@@ -293,6 +315,7 @@ export const erpModuleConfig: RouteModuleConfig = {
       group: 'business',
       requiredPermissions: ['erp:meeting_room:read', 'erp:read'],
       action: 'read',
+      tier: 'basic',
     },
     {
       path: ERP_PATHS.announcement,
@@ -304,6 +327,7 @@ export const erpModuleConfig: RouteModuleConfig = {
       group: 'business',
       requiredPermissions: ['erp:announcement:read', 'erp:read'],
       action: 'read',
+      tier: 'basic',
     },
     {
       path: ERP_PATHS.vehicleRequest,
@@ -315,6 +339,7 @@ export const erpModuleConfig: RouteModuleConfig = {
       group: 'business',
       requiredPermissions: ['erp:vehicle_request:read', 'erp:read'],
       action: 'read',
+      tier: 'basic',
     },
     {
       path: ERP_PATHS.financialAnalysis,
@@ -329,6 +354,7 @@ export const erpModuleConfig: RouteModuleConfig = {
       group: 'analytics',
       requiredPermissions: ['erp:financial_analysis:read', 'erp:read'],
       action: 'read',
+      tier: 'basic',
     },
   ],
 };

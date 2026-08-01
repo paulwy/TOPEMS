@@ -1,0 +1,47 @@
+{
+  "module_name": "办公自动化",
+  "announcement_page": {
+    "title": "公告通知",
+    "subtitle": "管理系统公告，包括标题、内容、优先级、发布状态等",
+    "publish": "发布",
+    "unpublish": "撤回",
+    "publish_success": "发布成功",
+    "unpublish_success": "撤回成功",
+    "publish_failed": "发布失败",
+    "unpublish_failed": "撤回失败"
+  },
+  "meeting_page": {
+    "title": "会议管理",
+    "subtitle": "管理会议室及预订记录",
+    "rooms_tab": "会议室管理",
+    "bookings_tab": "会议预订"
+  },
+  "vehicle_page": {
+    "title": "车辆管理",
+    "subtitle": "管理公司车辆及用车申请",
+    "vehicles_tab": "车辆信息",
+    "requests_tab": "用车申请"
+  },
+  "document_page": {
+    "title": "公文管理",
+    "subtitle": "管理系统公文，包括通知、报告、决定等",
+    "create": "新建公文",
+    "col_title": "标题",
+    "col_type": "类型",
+    "col_status": "状态",
+    "col_created_at": "创建时间",
+    "content": "内容"
+  },
+  "announcement": {
+    "公告通知": "公告通知"
+  },
+  "documentmanagement": {
+    "公文管理": "公文管理"
+  },
+  "meetingmanagement": {
+    "会议管理": "会议管理"
+  },
+  "vehiclemanagement": {
+    "车辆管理": "车辆管理"
+  }
+}

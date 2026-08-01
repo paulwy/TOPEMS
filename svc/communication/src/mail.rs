@@ -968,11 +968,7 @@ pub async fn send_with_template(
     }
 }
 
-pub async fn send_notification_email(
-    to: &str,
-    subject: &str,
-    body: &str,
-) -> Result<(), String> {
+pub async fn send_notification_email(to: &str, subject: &str, body: &str) -> Result<(), String> {
     tracing::info!("Sending notification email to: {}", to);
 
     send_email_with_lettre("system@topems.io", to, subject, body, None, None, None)

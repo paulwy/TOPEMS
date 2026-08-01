@@ -190,8 +190,9 @@ async fn main() {
 
     let auth_state = AuthState::from_env();
     let health_config = SimpleHealthConfig::new("topems-unified-core").with_db(pool.clone());
-    let ws_state =
-        std::sync::Arc::new(modules::communication::ws::WsState::new(std::sync::Arc::new(auth_state.clone())));
+    let ws_state = std::sync::Arc::new(modules::communication::ws::WsState::new(
+        std::sync::Arc::new(auth_state.clone()),
+    ));
     let http_client = Client::new();
 
     let rate_limit_config = middleware::rate_limit::RateLimitConfig::default();
@@ -234,16 +235,14 @@ async fn main() {
 
     let metrics = std::sync::Arc::new(SystemMetrics::new());
 
-    let module_isolation = match ModuleIsolationState::new(
-        &database_url,
-        create_default_module_configs(),
-    ).await {
-        Ok(isolation) => Some(std::sync::Arc::new(isolation)),
-        Err(e) => {
-            tracing::warn!("Failed to initialize module isolation: {}", e);
-            None
-        }
-    };
+    let module_isolation =
+        match ModuleIsolationState::new(&database_url, create_default_module_configs()).await {
+            Ok(isolation) => Some(std::sync::Arc::new(isolation)),
+            Err(e) => {
+                tracing::warn!("Failed to initialize module isolation: {}", e);
+                None
+            }
+        };
 
     let state = AppState {
         auth_state,

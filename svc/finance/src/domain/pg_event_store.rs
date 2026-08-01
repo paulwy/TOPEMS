@@ -1,5 +1,5 @@
 use async_trait::async_trait;
-use sqlx::{Row, PgPool};
+use sqlx::{PgPool, Row};
 use uuid::Uuid;
 
 use super::event_store::{EventMetadata, EventRecord, EventStore, SnapshotRecord};
@@ -37,14 +37,14 @@ impl PgEventStore {
         let event_type: String = row.try_get("event_type").map_err(|e| e.to_string())?;
         let version: i64 = row.try_get("version").map_err(|e| e.to_string())?;
         let payload_json: serde_json::Value = row.try_get("payload").map_err(|e| e.to_string())?;
-        let metadata_json: serde_json::Value = row.try_get("metadata").map_err(|e| e.to_string())?;
+        let metadata_json: serde_json::Value =
+            row.try_get("metadata").map_err(|e| e.to_string())?;
         let occurred_at: chrono::DateTime<chrono::Utc> =
             row.try_get("occurred_at").map_err(|e| e.to_string())?;
 
         let payload: FinanceDomainEvent =
             serde_json::from_value(payload_json).map_err(|e| e.to_string())?;
-        let metadata: EventMetadata =
-            serde_json::from_value(metadata_json).unwrap_or_default();
+        let metadata: EventMetadata = serde_json::from_value(metadata_json).unwrap_or_default();
 
         Ok(EventRecord {
             id: id.to_string(),
@@ -76,13 +76,11 @@ impl PgEventStore {
             .await
             .map_err(|e| e.to_string())?
         } else {
-            sqlx::query(
-                "SELECT * FROM cqrs_events ORDER BY occurred_at ASC, id ASC LIMIT $1",
-            )
-            .bind(batch_i64)
-            .fetch_all(&self.pool)
-            .await
-            .map_err(|e| e.to_string())?
+            sqlx::query("SELECT * FROM cqrs_events ORDER BY occurred_at ASC, id ASC LIMIT $1")
+                .bind(batch_i64)
+                .fetch_all(&self.pool)
+                .await
+                .map_err(|e| e.to_string())?
         };
 
         let mut records = Vec::new();
@@ -110,13 +108,12 @@ impl PgEventStore {
         let offset = ((page - 1) * page_size) as i64;
         let limit = page_size as i64;
 
-        let count_row = sqlx::query(
-            "SELECT COUNT(*) as count FROM cqrs_events WHERE aggregate_type = $1",
-        )
-        .bind(aggregate_type)
-        .fetch_one(&self.pool)
-        .await
-        .map_err(|e| e.to_string())?;
+        let count_row =
+            sqlx::query("SELECT COUNT(*) as count FROM cqrs_events WHERE aggregate_type = $1")
+                .bind(aggregate_type)
+                .fetch_one(&self.pool)
+                .await
+                .map_err(|e| e.to_string())?;
         let total: i64 = count_row.try_get("count").map_err(|e| e.to_string())?;
 
         let rows = sqlx::query(
@@ -272,18 +269,18 @@ impl EventStore for PgEventStore {
         &self,
         aggregate_id: &str,
     ) -> Result<Option<SnapshotRecord>, String> {
-        let result = sqlx::query(
-            "SELECT * FROM cqrs_snapshots WHERE aggregate_id = $1",
-        )
-        .bind(aggregate_id)
-        .fetch_optional(&self.pool)
-        .await
-        .map_err(|e| e.to_string())?;
+        let result = sqlx::query("SELECT * FROM cqrs_snapshots WHERE aggregate_id = $1")
+            .bind(aggregate_id)
+            .fetch_optional(&self.pool)
+            .await
+            .map_err(|e| e.to_string())?;
 
         match result {
             Some(row) => {
-                let aggregate_id: String = row.try_get("aggregate_id").map_err(|e| e.to_string())?;
-                let aggregate_type: String = row.try_get("aggregate_type").map_err(|e| e.to_string())?;
+                let aggregate_id: String =
+                    row.try_get("aggregate_id").map_err(|e| e.to_string())?;
+                let aggregate_type: String =
+                    row.try_get("aggregate_type").map_err(|e| e.to_string())?;
                 let version: i64 = row.try_get("version").map_err(|e| e.to_string())?;
                 let state: serde_json::Value = row.try_get("state").map_err(|e| e.to_string())?;
                 let created_at: chrono::DateTime<chrono::Utc> =

@@ -11,7 +11,10 @@ define_service_api!(
 );
 
 impl TypedServiceClient<TicketApi> {
-    pub async fn list_tickets(&self, params: serde_json::Value) -> ServiceClientResult<serde_json::Value> {
+    pub async fn list_tickets(
+        &self,
+        params: serde_json::Value,
+    ) -> ServiceClientResult<serde_json::Value> {
         let query_string = serde_urlencoded::to_string(params).unwrap_or_default();
         let path = if query_string.is_empty() {
             "/tickets".to_string()

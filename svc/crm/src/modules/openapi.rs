@@ -2,8 +2,8 @@
 use crate::models::{
     AddTagToCustomerRequest, Contact, CreateContactRequest, CreateCustomerRequest,
     CreateInteractionRequest, CreateOpportunityRequest, CreateTagRequest, Customer,
-    CustomerWithTags, Interaction, Opportunity, Tag, UpdateContactRequest,
-    UpdateCustomerRequest, UpdateInteractionRequest, UpdateOpportunityRequest, UpdateTagRequest,
+    CustomerWithTags, Interaction, Opportunity, Tag, UpdateContactRequest, UpdateCustomerRequest,
+    UpdateInteractionRequest, UpdateOpportunityRequest, UpdateTagRequest,
 };
 use utoipa::OpenApi;
 

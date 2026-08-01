@@ -72,7 +72,7 @@ export const notificationSchema: EntitySchema = {
       label: '通知标题',
       type: 'text',
       listWidth: 280,
-      renderCell: (row) => {
+      renderCell: (row: Record<string, unknown>) => {
         const n = row as any;
         const type = n.notification_type || 'info';
         const bgColor = TYPE_BG_COLORS[type]?.bg || 'rgba(14, 165, 233, 0.1)';
@@ -145,7 +145,7 @@ export const notificationSchema: EntitySchema = {
           { value: 'error', label: '错误通知' },
         ],
       },
-      renderCell: (row) => {
+      renderCell: (row: Record<string, unknown>) => {
         const type = (row as any).notification_type || 'info';
         const color = TYPE_COLORS[type] || 'default';
         const label = TYPE_LABELS[type] || type;
@@ -164,7 +164,7 @@ export const notificationSchema: EntitySchema = {
       label: '状态',
       type: 'switch',
       listWidth: 100,
-      renderCell: (row) => (
+      renderCell: (row: Record<string, unknown>) => (
         <Chip
           size='small'
           label={(row as any).is_read ? '已读' : '未读'}
@@ -186,7 +186,7 @@ export const notificationSchema: EntitySchema = {
       type: 'datetime',
       listWidth: 160,
       hideInForm: true,
-      renderCell: (row) => (
+      renderCell: (row: Record<string, unknown>) => (
         <Typography variant='body2' color='text.secondary'>
           {new Date((row as any).created_at).toLocaleString('zh-CN')}
         </Typography>

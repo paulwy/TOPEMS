@@ -113,9 +113,7 @@ impl GovernanceMaturity {
     ) -> MaturityAssessment {
         let now = chrono::Utc::now().to_rfc3339();
         let current_score = self.dimension_scores.lock().await;
-        let existing = current_score
-            .iter()
-            .find(|s| s.dimension == dimension);
+        let existing = current_score.iter().find(|s| s.dimension == dimension);
         let current_level = existing
             .map(|s| s.maturity_level.clone())
             .unwrap_or(MaturityLevel::Initial);
@@ -453,7 +451,10 @@ impl MDMWorkflowEngine {
             workflow_id: workflow_id.to_string(),
             action: "approve".to_string(),
             step_id: Some(step_id.to_string()),
-            actor: step.assignee.clone().unwrap_or_else(|| "system".to_string()),
+            actor: step
+                .assignee
+                .clone()
+                .unwrap_or_else(|| "system".to_string()),
             comment: None,
             recorded_at: chrono::Utc::now().to_rfc3339(),
         });
@@ -481,7 +482,10 @@ impl MDMWorkflowEngine {
             workflow_id: workflow_id.to_string(),
             action: "reject".to_string(),
             step_id: Some(step_id.to_string()),
-            actor: step.assignee.clone().unwrap_or_else(|| "system".to_string()),
+            actor: step
+                .assignee
+                .clone()
+                .unwrap_or_else(|| "system".to_string()),
             comment: None,
             recorded_at: chrono::Utc::now().to_rfc3339(),
         });
@@ -720,7 +724,10 @@ impl DataProductManager {
         let exposure = ApiExposure {
             id: uuid::Uuid::new_v4().to_string(),
             product_id: product_id.to_string(),
-            endpoint: format!("/api/products/{}", product.name.to_lowercase().replace(' ', "-")),
+            endpoint: format!(
+                "/api/products/{}",
+                product.name.to_lowercase().replace(' ', "-")
+            ),
             auth_type,
             rate_limit,
             enabled: true,
@@ -752,9 +759,7 @@ impl DataProductManager {
     async fn get_product_lineage(&self, product_id: &str) -> ProductLineage {
         let products = self.products.lock().await;
         let product = products.iter().find(|p| p.id == product_id);
-        let consumers = product
-            .map(|p| p.consumers.clone())
-            .unwrap_or_default();
+        let consumers = product.map(|p| p.consumers.clone()).unwrap_or_default();
 
         ProductLineage {
             product_id: product_id.to_string(),
@@ -857,18 +862,12 @@ fn generate_gaps(
     target: &MaturityLevel,
 ) -> Vec<String> {
     let mut gaps = Vec::new();
-    gaps.push(format!(
-        "当前成熟度为 {:?}，目标为 {:?}",
-        current, target
-    ));
+    gaps.push(format!("当前成熟度为 {:?}，目标为 {:?}", current, target));
     gaps.push(format!("{} 维度存在提升空间", dimension_str(dimension)));
     gaps
 }
 
-fn generate_recommendations(
-    dimension: &GovernanceDimension,
-    gaps: &[String],
-) -> Vec<String> {
+fn generate_recommendations(dimension: &GovernanceDimension, gaps: &[String]) -> Vec<String> {
     let mut recs = Vec::new();
     match dimension {
         GovernanceDimension::Quality => {
@@ -934,10 +933,7 @@ async fn ensure_initialized() {
             score: 58.0,
             weight: 0.20,
             maturity_level: MaturityLevel::Developed,
-            evidence: vec![
-                "责任人覆盖率 70%".to_string(),
-                "认责流程已建立".to_string(),
-            ],
+            evidence: vec!["责任人覆盖率 70%".to_string(), "认责流程已建立".to_string()],
         },
         DimensionScore {
             dimension: GovernanceDimension::Process,
@@ -954,10 +950,7 @@ async fn ensure_initialized() {
             score: 45.0,
             weight: 0.15,
             maturity_level: MaturityLevel::Developed,
-            evidence: vec![
-                "MDM 工具已部署".to_string(),
-                "自动化率 50%".to_string(),
-            ],
+            evidence: vec!["MDM 工具已部署".to_string(), "自动化率 50%".to_string()],
         },
     ];
 
@@ -1159,10 +1152,7 @@ pub async fn get_assessment(
 
     if let Some(id) = params.id {
         match store.maturity.get_assessment(&id).await {
-            Some(a) => Json(ApiResponse::success(
-                serde_json::json!(a),
-                "成熟度评估详情",
-            )),
+            Some(a) => Json(ApiResponse::success(serde_json::json!(a), "成熟度评估详情")),
             None => Json(ApiResponse::error(404, "未找到评估记录")),
         }
     } else {
@@ -1255,16 +1245,16 @@ pub async fn create_workflow(
         .steps
         .into_iter()
         .map(|s| {
-            let step_type_str = s
-                .get("type")
-                .and_then(|t| t.as_str())
-                .unwrap_or("action");
+            let step_type_str = s.get("type").and_then(|t| t.as_str()).unwrap_or("action");
             let step_type = parse_step_type(step_type_str);
             WorkflowStepV58 {
                 id: uuid::Uuid::new_v4().to_string(),
                 step_type,
                 config: s.clone(),
-                depends_on: s.get("depends_on").and_then(|d| d.as_str()).map(String::from),
+                depends_on: s
+                    .get("depends_on")
+                    .and_then(|d| d.as_str())
+                    .map(String::from),
                 assignee: s.get("assignee").and_then(|a| a.as_str()).map(String::from),
                 status: WorkflowStepStatus::Pending,
                 started_at: None,
@@ -1460,9 +1450,7 @@ pub async fn update_contract(
         ]
     });
 
-    let sla = req
-        .freshness_sla
-        .unwrap_or_else(|| "24h".to_string());
+    let sla = req.freshness_sla.unwrap_or_else(|| "24h".to_string());
 
     match store
         .products

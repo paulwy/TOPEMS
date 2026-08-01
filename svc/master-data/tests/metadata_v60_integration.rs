@@ -35,7 +35,10 @@ async fn test_create_metadata() {
         .expect("请求失败");
 
     assert_eq!(status, 200);
-    assert!(resp["success"].as_bool().unwrap_or(false), "响应 success 应为 true");
+    assert!(
+        resp["success"].as_bool().unwrap_or(false),
+        "响应 success 应为 true"
+    );
     assert!(resp["data"]["id"].is_string(), "应返回创建的元数据 ID");
     assert_eq!(resp["data"]["name"], "集成测试-产品主数据表");
     assert_eq!(resp["data"]["object_type"], "table");
@@ -141,7 +144,11 @@ async fn test_update_metadata() {
     });
 
     let (status, resp) = ctx
-        .v60_request("PUT", &format!("/metadata/{}", metadata_id), Some(update_body))
+        .v60_request(
+            "PUT",
+            &format!("/metadata/{}", metadata_id),
+            Some(update_body),
+        )
         .await
         .expect("请求失败");
 
@@ -242,7 +249,11 @@ async fn test_add_metadata_attribute() {
     });
 
     let (status, resp) = ctx
-        .v60_request("POST", &format!("/metadata/{}/attribute", metadata_id), Some(attr_body))
+        .v60_request(
+            "POST",
+            &format!("/metadata/{}/attribute", metadata_id),
+            Some(attr_body),
+        )
         .await
         .expect("请求失败");
 

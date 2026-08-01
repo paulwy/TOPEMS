@@ -23,8 +23,14 @@ async fn test_get_risk_dashboard() {
         .await;
 
     assert_eq!(status, 200, "获取风险仪表盘应该返回 200");
-    assert!(resp["success"].as_bool().unwrap_or(false), "响应 success 应为 true");
-    assert!(resp["data"]["total_indicators"].is_number(), "data 应包含 total_indicators");
+    assert!(
+        resp["success"].as_bool().unwrap_or(false),
+        "响应 success 应为 true"
+    );
+    assert!(
+        resp["data"]["total_indicators"].is_number(),
+        "data 应包含 total_indicators"
+    );
 }
 
 #[tokio::test]
@@ -35,12 +41,13 @@ async fn test_get_risk_alerts() {
     }
     let ctx = TestContext::new().await;
 
-    let (status, resp) = ctx
-        .request("GET", "/finance-v54/risk/alerts", None)
-        .await;
+    let (status, resp) = ctx.request("GET", "/finance-v54/risk/alerts", None).await;
 
     assert_eq!(status, 200, "获取风险告警列表应该返回 200");
-    assert!(resp["success"].as_bool().unwrap_or(false), "响应 success 应为 true");
+    assert!(
+        resp["success"].as_bool().unwrap_or(false),
+        "响应 success 应为 true"
+    );
     assert!(resp["data"].is_array(), "data 应该是数组");
 }
 
@@ -70,9 +77,15 @@ async fn test_score_transaction() {
         .await;
 
     assert_eq!(status, 200, "交易反欺诈评分应该返回 200");
-    assert!(resp["success"].as_bool().unwrap_or(false), "响应 success 应为 true");
+    assert!(
+        resp["success"].as_bool().unwrap_or(false),
+        "响应 success 应为 true"
+    );
     assert!(resp["data"]["score"].is_number(), "data 应包含 score 字段");
-    assert!(resp["data"]["risk_level"].is_string(), "data 应包含 risk_level 字段");
+    assert!(
+        resp["data"]["risk_level"].is_string(),
+        "data 应包含 risk_level 字段"
+    );
 }
 
 #[tokio::test]
@@ -83,12 +96,13 @@ async fn test_get_fraud_rules() {
     }
     let ctx = TestContext::new().await;
 
-    let (status, resp) = ctx
-        .request("GET", "/finance-v54/fraud/rules", None)
-        .await;
+    let (status, resp) = ctx.request("GET", "/finance-v54/fraud/rules", None).await;
 
     assert_eq!(status, 200, "获取反欺诈规则列表应该返回 200");
-    assert!(resp["success"].as_bool().unwrap_or(false), "响应 success 应为 true");
+    assert!(
+        resp["success"].as_bool().unwrap_or(false),
+        "响应 success 应为 true"
+    );
     assert!(resp["data"].is_array(), "data 应该是数组");
 }
 
@@ -110,7 +124,10 @@ async fn test_compliance_review() {
         .await;
 
     assert_eq!(status, 200, "合规审查应该返回 200");
-    assert!(resp["success"].as_bool().unwrap_or(false), "响应 success 应为 true");
+    assert!(
+        resp["success"].as_bool().unwrap_or(false),
+        "响应 success 应为 true"
+    );
     assert!(resp["data"].is_array(), "data 应该是审查结果数组");
 }
 
@@ -127,7 +144,10 @@ async fn test_get_compliance_results() {
         .await;
 
     assert_eq!(status, 200, "获取合规审查结果应该返回 200");
-    assert!(resp["success"].as_bool().unwrap_or(false), "响应 success 应为 true");
+    assert!(
+        resp["success"].as_bool().unwrap_or(false),
+        "响应 success 应为 true"
+    );
     assert!(resp["data"].is_array(), "data 应该是数组");
 }
 
@@ -151,6 +171,9 @@ async fn test_create_compliance_workflow() {
         .await;
 
     assert_eq!(status, 200, "创建合规工作流应该返回 200");
-    assert!(resp["success"].as_bool().unwrap_or(false), "响应 success 应为 true");
+    assert!(
+        resp["success"].as_bool().unwrap_or(false),
+        "响应 success 应为 true"
+    );
     assert!(resp["data"]["id"].is_string(), "data 应包含 id 字段");
 }

@@ -19,6 +19,8 @@ export {
   type ThemeConfig,
   type UIGenerationResult,
   type AccessibilityReport,
+  type GenerateOptions,
+  type GeneratedComponent,
 } from './ai-ui-generator';
 
 // ==================== 自动测试生成 ====================
@@ -34,6 +36,8 @@ export {
   type TestCaseInfo,
   type MockDefinition,
   type CoverageEstimate,
+  type TestGenerationOptions,
+  type GeneratedTest,
 } from './auto-test-generator';
 
 // ==================== 智能代码审查 ====================

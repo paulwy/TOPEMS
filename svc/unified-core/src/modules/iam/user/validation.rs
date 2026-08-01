@@ -61,27 +61,26 @@ pub async fn check_email_availability(
         );
     }
 
-    let existing_count: i64 = match sqlx::query_scalar(
-        "SELECT COUNT(*) FROM core_users WHERE email = $1",
-    )
-    .bind(email)
-    .fetch_one(&state.pool)
-    .await
-    {
-        Ok(count) => count,
-        Err(e) => {
-            tracing::error!("Failed to check email: {}", e);
-            return (
-                StatusCode::INTERNAL_SERVER_ERROR,
-                Json(serde_json::json!({
-                    "success": false,
-                    "message": format!("查询邮箱失败: {}", e),
-                    "data": null,
-                    "code": 500
-                })),
-            );
-        }
-    };
+    let existing_count: i64 =
+        match sqlx::query_scalar("SELECT COUNT(*) FROM core_users WHERE email = $1")
+            .bind(email)
+            .fetch_one(&state.pool)
+            .await
+        {
+            Ok(count) => count,
+            Err(e) => {
+                tracing::error!("Failed to check email: {}", e);
+                return (
+                    StatusCode::INTERNAL_SERVER_ERROR,
+                    Json(serde_json::json!({
+                        "success": false,
+                        "message": format!("查询邮箱失败: {}", e),
+                        "data": null,
+                        "code": 500
+                    })),
+                );
+            }
+        };
 
     let available = existing_count == 0;
 
@@ -123,27 +122,26 @@ pub async fn check_username_availability(
         );
     }
 
-    let existing_count: i64 = match sqlx::query_scalar(
-        "SELECT COUNT(*) FROM core_users WHERE username = $1",
-    )
-    .bind(username)
-    .fetch_one(&state.pool)
-    .await
-    {
-        Ok(count) => count,
-        Err(e) => {
-            tracing::error!("Failed to check username: {}", e);
-            return (
-                StatusCode::INTERNAL_SERVER_ERROR,
-                Json(serde_json::json!({
-                    "success": false,
-                    "message": format!("查询用户名失败: {}", e),
-                    "data": null,
-                    "code": 500
-                })),
-            );
-        }
-    };
+    let existing_count: i64 =
+        match sqlx::query_scalar("SELECT COUNT(*) FROM core_users WHERE username = $1")
+            .bind(username)
+            .fetch_one(&state.pool)
+            .await
+        {
+            Ok(count) => count,
+            Err(e) => {
+                tracing::error!("Failed to check username: {}", e);
+                return (
+                    StatusCode::INTERNAL_SERVER_ERROR,
+                    Json(serde_json::json!({
+                        "success": false,
+                        "message": format!("查询用户名失败: {}", e),
+                        "data": null,
+                        "code": 500
+                    })),
+                );
+            }
+        };
 
     let available = existing_count == 0;
 

@@ -5,7 +5,11 @@ use uuid::Uuid;
 
 #[async_trait]
 pub trait Repository<T> {
-    async fn find_by_id(&self, pool: &PgPool, id: Uuid) -> topems_shared_core::error::Result<Option<T>>;
+    async fn find_by_id(
+        &self,
+        pool: &PgPool,
+        id: Uuid,
+    ) -> topems_shared_core::error::Result<Option<T>>;
     async fn find_all(&self, pool: &PgPool) -> topems_shared_core::error::Result<Vec<T>>;
     async fn create(&self, pool: &PgPool, entity: &T) -> topems_shared_core::error::Result<T>;
     async fn update(&self, pool: &PgPool, entity: &T) -> topems_shared_core::error::Result<T>;

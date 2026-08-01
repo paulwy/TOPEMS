@@ -28,8 +28,8 @@
 
 use super::base_client::BaseServiceClient;
 use super::error::{ServiceClientError, ServiceClientResult};
-use topems_shared_core::response::ApiResponse;
 use serde::{de::DeserializeOwned, Serialize};
+use topems_shared_core::response::ApiResponse;
 
 /// 服务 API trait — 所有服务 API 定义的基础。
 ///
@@ -190,7 +190,10 @@ impl<T: ServiceApi> TypedServiceClient<T> {
     }
 
     /// POST 请求 without body，反序列化为 `R`。
-    pub async fn post_without_body<R: DeserializeOwned>(&self, path: &str) -> ServiceClientResult<R> {
+    pub async fn post_without_body<R: DeserializeOwned>(
+        &self,
+        path: &str,
+    ) -> ServiceClientResult<R> {
         self.inner.post_without_body(path).await
     }
 
@@ -268,7 +271,9 @@ impl<T: ServiceApi> TypedServiceClient<T> {
         query: Option<&[(&str, &str)]>,
         extra_headers: &[(&str, &str)],
     ) -> Result<reqwest::Response, reqwest::Error> {
-        self.inner.get_raw_response(path, query, extra_headers).await
+        self.inner
+            .get_raw_response(path, query, extra_headers)
+            .await
     }
 
     /// 拼接 API 前缀与路径，例如 `api_prefix=/api/erp`、`path=/assets` → `/api/erp/assets`。

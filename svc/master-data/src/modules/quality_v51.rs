@@ -632,7 +632,11 @@ pub async fn run_quality_check(
         let (status, score, message) = match rule.rule_type.as_str() {
             "format" => (QualityStatus::Passed, 100.0, "格式校验通过".to_string()),
             "required" => (QualityStatus::Passed, 100.0, "必填字段校验通过".to_string()),
-            "range" => (QualityStatus::Warning, 75.0, "范围校验：部分值接近边界".to_string()),
+            "range" => (
+                QualityStatus::Warning,
+                75.0,
+                "范围校验：部分值接近边界".to_string(),
+            ),
             _ => (QualityStatus::Passed, 100.0, "校验通过".to_string()),
         };
 
@@ -749,10 +753,7 @@ pub async fn get_quality_check_results(
         .cloned()
         .collect();
 
-    Json(ApiResponse::success(
-        results,
-        "实体质量检查结果",
-    ))
+    Json(ApiResponse::success(results, "实体质量检查结果"))
 }
 
 // ==================== 处理器：质量规则 ====================
@@ -881,23 +882,33 @@ pub async fn delete_quality_rule(
         (status = 200, description = "质量评分", body = ApiResponse<QualityScore>),
     ),
 )]
-pub async fn get_quality_score(
-    State(_state): State<AppState>,
-) -> Json<ApiResponse<QualityScore>> {
+pub async fn get_quality_score(State(_state): State<AppState>) -> Json<ApiResponse<QualityScore>> {
     ensure_initialized().await;
     let store = get_quality_v51_store();
     let checks = store.quality_checks.lock().await;
 
     let total = checks.len() as i64;
-    let passed = checks.iter().filter(|c| matches!(c.status, QualityStatus::Passed)).count() as i64;
-    let failed = checks.iter().filter(|c| matches!(c.status, QualityStatus::Failed)).count() as i64;
-    let warning = checks.iter().filter(|c| matches!(c.status, QualityStatus::Warning)).count() as i64;
+    let passed = checks
+        .iter()
+        .filter(|c| matches!(c.status, QualityStatus::Passed))
+        .count() as i64;
+    let failed = checks
+        .iter()
+        .filter(|c| matches!(c.status, QualityStatus::Failed))
+        .count() as i64;
+    let warning = checks
+        .iter()
+        .filter(|c| matches!(c.status, QualityStatus::Warning))
+        .count() as i64;
 
     let by_entity_type: HashMap<String, f64> = {
         let mut map = HashMap::new();
         let mut grouped: HashMap<String, Vec<QualityCheckV51>> = HashMap::new();
         for c in checks.iter() {
-            grouped.entry(c.entity_type.clone()).or_default().push(c.clone());
+            grouped
+                .entry(c.entity_type.clone())
+                .or_default()
+                .push(c.clone());
         }
         for (et, group) in &grouped {
             map.insert(et.clone(), compute_score(group));
@@ -950,12 +961,23 @@ pub async fn get_quality_dashboard(
 
     let mut entity_type_distribution = HashMap::new();
     for c in checks.iter() {
-        *entity_type_distribution.entry(c.entity_type.clone()).or_insert(0) += 1;
+        *entity_type_distribution
+            .entry(c.entity_type.clone())
+            .or_insert(0) += 1;
     }
 
-    let fix_pending = fix_actions.iter().filter(|a| matches!(a.status, FixStatus::Pending)).count() as i64;
-    let fix_applied = fix_actions.iter().filter(|a| matches!(a.status, FixStatus::Applied | FixStatus::Verified)).count() as i64;
-    let suggestions_pending = suggestions.iter().filter(|s| matches!(s.status, SuggestionStatus::Pending)).count() as i64;
+    let fix_pending = fix_actions
+        .iter()
+        .filter(|a| matches!(a.status, FixStatus::Pending))
+        .count() as i64;
+    let fix_applied = fix_actions
+        .iter()
+        .filter(|a| matches!(a.status, FixStatus::Applied | FixStatus::Verified))
+        .count() as i64;
+    let suggestions_pending = suggestions
+        .iter()
+        .filter(|s| matches!(s.status, SuggestionStatus::Pending))
+        .count() as i64;
 
     let total_entities: i64 = entity_type_distribution.values().sum();
 
@@ -1197,9 +1219,9 @@ pub async fn generate_suggestions(
     let store = get_quality_v51_store();
 
     let now = chrono::Utc::now().to_rfc3339();
-    let types = req.suggestion_types.unwrap_or_else(|| {
-        vec!["standardize".to_string(), "enrich".to_string()]
-    });
+    let types = req
+        .suggestion_types
+        .unwrap_or_else(|| vec!["standardize".to_string(), "enrich".to_string()]);
 
     let mut suggestions = Vec::new();
     for st in &types {
@@ -1209,7 +1231,10 @@ pub async fn generate_suggestions(
             entity_id: req.entity_id.clone().unwrap_or_else(|| "-".to_string()),
             suggestion_type: suggestion_type_from_str(st),
             confidence: (0.7 + rand::random::<f64>() * 0.3),
-            rationale: format!("AI 分析发现 {} 类型实体存在 {} 优化空间", req.entity_type, st),
+            rationale: format!(
+                "AI 分析发现 {} 类型实体存在 {} 优化空间",
+                req.entity_type, st
+            ),
             suggested_action: format!("执行 {} 操作", st),
             ai_model_version: "mdm-gov-v1".to_string(),
             status: SuggestionStatus::Pending,
@@ -1221,10 +1246,7 @@ pub async fn generate_suggestions(
     let mut all = store.governance_suggestions.lock().await;
     all.extend(suggestions.clone());
 
-    Json(ApiResponse::success(
-        suggestions,
-        "治理建议已生成",
-    ))
+    Json(ApiResponse::success(suggestions, "治理建议已生成"))
 }
 
 pub async fn get_suggestions(
@@ -1367,7 +1389,9 @@ pub async fn predict_quality_trend(
     let now = chrono::Utc::now();
 
     for i in (0..days).rev() {
-        let date = (now - chrono::Duration::days(i as i64)).format("%Y-%m-%d").to_string();
+        let date = (now - chrono::Duration::days(i as i64))
+            .format("%Y-%m-%d")
+            .to_string();
         let variation = (rand::random::<f64>() - 0.5) * 10.0;
         let score = (base_score + variation).clamp(0.0, 100.0);
         trend.push(QualityTrendPoint {
@@ -1379,8 +1403,5 @@ pub async fn predict_quality_trend(
         });
     }
 
-    Json(ApiResponse::success(
-        trend,
-        "质量趋势预测",
-    ))
+    Json(ApiResponse::success(trend, "质量趋势预测"))
 }

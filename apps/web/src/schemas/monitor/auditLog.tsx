@@ -45,7 +45,7 @@ const auditLogFields: SchemaField[] = [
     type: 'datetime',
     sortable: true,
     listWidth: 180,
-    renderCell: (row) => (
+    renderCell: (row: Record<string, unknown>) => (
       <Typography variant="body2" color="text.secondary">
         {new Date(row.created_at as string).toLocaleString('zh-CN')}
       </Typography>
@@ -56,7 +56,7 @@ const auditLogFields: SchemaField[] = [
     label: '用户',
     type: 'text',
     listWidth: 160,
-    renderCell: (row) => {
+    renderCell: (row: Record<string, unknown>) => {
       const name = (row.user_name || row.username || row.user_id || '-') as string;
       return (
         <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
@@ -85,7 +85,7 @@ const auditLogFields: SchemaField[] = [
     label: '操作',
     type: 'text',
     listWidth: 110,
-    renderCell: (row) => (
+    renderCell: (row: Record<string, unknown>) => (
       <Typography variant="body2">
         {formatAction(row.action as string)}
       </Typography>
@@ -96,7 +96,7 @@ const auditLogFields: SchemaField[] = [
     label: '实体类型',
     type: 'text',
     listWidth: 120,
-    renderCell: (row) => (
+    renderCell: (row: Record<string, unknown>) => (
       <Typography variant="body2" color="text.secondary">
         {String(row.entity_type || row.resource || '-')}
       </Typography>
@@ -107,7 +107,7 @@ const auditLogFields: SchemaField[] = [
     label: 'IP地址',
     type: 'text',
     listWidth: 130,
-    renderCell: (row) => (
+    renderCell: (row: Record<string, unknown>) => (
       <Typography variant="body2" color="text.secondary">
         {String(row.ip_address || '-')}
       </Typography>
@@ -118,7 +118,7 @@ const auditLogFields: SchemaField[] = [
     label: '状态',
     type: 'text',
     listWidth: 100,
-    renderCell: (row) => {
+    renderCell: (row: Record<string, unknown>) => {
       const status = (row.status as string) || (row.success === true ? 'success' : row.success === false ? 'error' : '');
       return getStatusChip(status);
     },

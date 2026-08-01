@@ -19,7 +19,10 @@ fn validate_identifiers(names: &[String]) -> Result<Vec<String>, String> {
 fn validate_sort_order(order: &str) -> Result<String, String> {
     match order.to_uppercase().as_str() {
         "ASC" | "DESC" => Ok(order.to_uppercase()),
-        _ => Err(format!("Invalid sort order '{}': must be ASC or DESC", order)),
+        _ => Err(format!(
+            "Invalid sort order '{}': must be ASC or DESC",
+            order
+        )),
     }
 }
 

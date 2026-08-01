@@ -108,15 +108,14 @@ pub async fn get_business_stats(
 ) -> Json<ApiResponse<BusinessStatsAggregation>> {
     let token = extract_bearer_token(&headers);
 
-    let (erp_stats, crm_stats, hrm_stats, finance_stats, mes_stats, workflow_stats) =
-        tokio::join!(
-            fetch_erp_stats(&state),
-            fetch_crm_stats(&state),
-            fetch_hrm_stats(&state),
-            fetch_finance_stats(&state, token.as_deref()),
-            fetch_mes_stats(&state),
-            fetch_workflow_stats(&state, token.as_deref()),
-        );
+    let (erp_stats, crm_stats, hrm_stats, finance_stats, mes_stats, workflow_stats) = tokio::join!(
+        fetch_erp_stats(&state),
+        fetch_crm_stats(&state),
+        fetch_hrm_stats(&state),
+        fetch_finance_stats(&state, token.as_deref()),
+        fetch_mes_stats(&state),
+        fetch_workflow_stats(&state, token.as_deref()),
+    );
 
     let result = BusinessStatsAggregation {
         generated_at: chrono::Utc::now().to_rfc3339(),
@@ -147,8 +146,7 @@ pub async fn get_unified_todos(
     );
 
     let mut items = Vec::new();
-    let mut by_source: std::collections::HashMap<String, usize> =
-        std::collections::HashMap::new();
+    let mut by_source: std::collections::HashMap<String, usize> = std::collections::HashMap::new();
 
     for todo in workflow_todos {
         let source = "workflow".to_string();
@@ -182,27 +180,42 @@ async fn fetch_erp_stats(state: &AppState) -> ErpStats {
 
     let (sales, purchase, materials, customers, suppliers) = tokio::join!(
         async {
-            client.list_sales_orders(1, 1).await.ok()
+            client
+                .list_sales_orders(1, 1)
+                .await
+                .ok()
                 .and_then(|r| r.data.map(|d| d.len() as u64))
                 .unwrap_or(0)
         },
         async {
-            client.list_purchase_orders(1, 1).await.ok()
+            client
+                .list_purchase_orders(1, 1)
+                .await
+                .ok()
                 .and_then(|r| r.data.map(|d| d.len() as u64))
                 .unwrap_or(0)
         },
         async {
-            client.list_materials(1, 1).await.ok()
+            client
+                .list_materials(1, 1)
+                .await
+                .ok()
                 .and_then(|r| r.data.map(|d| d.len() as u64))
                 .unwrap_or(0)
         },
         async {
-            client.list_customers(1, 1).await.ok()
+            client
+                .list_customers(1, 1)
+                .await
+                .ok()
                 .and_then(|r| r.data.map(|d| d.len() as u64))
                 .unwrap_or(0)
         },
         async {
-            client.list_suppliers(1, 1).await.ok()
+            client
+                .list_suppliers(1, 1)
+                .await
+                .ok()
                 .and_then(|r| r.data.map(|d| d.len() as u64))
                 .unwrap_or(0)
         },
@@ -224,17 +237,26 @@ async fn fetch_crm_stats(state: &AppState) -> CrmStats {
 
     let (customers, leads, opportunities) = tokio::join!(
         async {
-            client.list_customers(1, 1).await.ok()
+            client
+                .list_customers(1, 1)
+                .await
+                .ok()
                 .map(|d| d.len() as u64)
                 .unwrap_or(0)
         },
         async {
-            client.list_leads(1, 1).await.ok()
+            client
+                .list_leads(1, 1)
+                .await
+                .ok()
                 .map(|d| d.len() as u64)
                 .unwrap_or(0)
         },
         async {
-            client.list_opportunities(1, 1).await.ok()
+            client
+                .list_opportunities(1, 1)
+                .await
+                .ok()
                 .map(|d| d.len() as u64)
                 .unwrap_or(0)
         },
@@ -401,13 +423,20 @@ async fn fetch_notification_todos(state: &AppState, token: Option<&str>) -> Vec<
                         title: n.get("title")?.as_str()?.to_string(),
                         description: n.get("content")?.as_str()?.to_string(),
                         source: "notification".to_string(),
-                        source_url: n.get("link_url").and_then(|v| v.as_str()).map(|s| s.to_string()).unwrap_or_else(|| "/notifications".to_string()),
+                        source_url: n
+                            .get("link_url")
+                            .and_then(|v| v.as_str())
+                            .map(|s| s.to_string())
+                            .unwrap_or_else(|| "/notifications".to_string()),
                         priority: match n.get("priority")?.as_i64()? {
                             0..=3 => "high".to_string(),
                             4..=6 => "normal".to_string(),
                             _ => "low".to_string(),
                         },
-                        created_at: n.get("created_at").and_then(|v| v.as_str()).map(|s| s.to_string()),
+                        created_at: n
+                            .get("created_at")
+                            .and_then(|v| v.as_str())
+                            .map(|s| s.to_string()),
                         due_date: None,
                     })
                 })
@@ -424,6 +453,12 @@ async fn fetch_notification_todos(state: &AppState, token: Option<&str>) -> Vec<
 pub fn aggregation_routes() -> axum::Router<AppState> {
     use axum::routing::get;
     axum::Router::new()
-        .route("/api/portal/dashboard/business-stats", get(get_business_stats))
-        .route("/api/portal/dashboard/unified-todos", get(get_unified_todos))
+        .route(
+            "/api/portal/dashboard/business-stats",
+            get(get_business_stats),
+        )
+        .route(
+            "/api/portal/dashboard/unified-todos",
+            get(get_unified_todos),
+        )
 }

@@ -39,9 +39,6 @@ pub trait ReceivableRepository: Send + Sync {
 pub trait PayableRepository: Send + Sync {
     async fn save(&self, aggregate: &PayableAggregate) -> Result<(), String>;
     async fn find_by_id(&self, id: &str) -> Result<Option<PayableAggregate>, String>;
-    async fn list(
-        &self,
-        page: i64,
-        page_size: i64,
-    ) -> Result<(Vec<PayableAggregate>, i64), String>;
+    async fn list(&self, page: i64, page_size: i64)
+        -> Result<(Vec<PayableAggregate>, i64), String>;
 }

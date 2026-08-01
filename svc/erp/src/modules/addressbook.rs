@@ -6,8 +6,8 @@ use axum::extract::Query;
 use axum::{extract::State, Json, Router};
 use serde::Deserialize;
 use serde::Serialize;
-use topems_shared::{ApiResponse, PaginatedResponse};
 use topems_shared::service_client::api::hrm_api::{HrmCompany, HrmDepartment, HrmEmployee};
+use topems_shared::{ApiResponse, PaginatedResponse};
 use uuid::Uuid;
 
 #[derive(Deserialize)]

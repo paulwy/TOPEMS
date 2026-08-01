@@ -16,7 +16,8 @@ impl FinanceService {
         let offset = (page - 1) * page_size;
 
         let mut sql = "SELECT * FROM erp_collection_records WHERE tenant_id = $1".to_string();
-        let mut count_sql = "SELECT COUNT(*) FROM erp_collection_records WHERE tenant_id = $1".to_string();
+        let mut count_sql =
+            "SELECT COUNT(*) FROM erp_collection_records WHERE tenant_id = $1".to_string();
 
         let mut cond = Vec::new();
         if status.is_some() {
@@ -98,14 +99,13 @@ impl FinanceService {
         tenant_id: Uuid,
         collection_id: Uuid,
     ) -> Result<Value, TopemsError> {
-        let row = sqlx::query(
-            "SELECT * FROM erp_collection_records WHERE tenant_id = $1 AND id = $2",
-        )
-        .bind(tenant_id)
-        .bind(collection_id)
-        .fetch_optional(&self.db_pool)
-        .await?
-        .ok_or_else(|| TopemsError::NotFound("收款记录不存在".to_string()))?;
+        let row =
+            sqlx::query("SELECT * FROM erp_collection_records WHERE tenant_id = $1 AND id = $2")
+                .bind(tenant_id)
+                .bind(collection_id)
+                .fetch_optional(&self.db_pool)
+                .await?
+                .ok_or_else(|| TopemsError::NotFound("收款记录不存在".to_string()))?;
 
         let id: Uuid = sqlx::Row::get(&row, "id");
         let collection_no: Option<String> = sqlx::Row::try_get(&row, "collection_no").ok();
@@ -128,9 +128,15 @@ impl FinanceService {
         req: Value,
         created_by: &str,
     ) -> Result<Value, TopemsError> {
-        let customer_name = req.get("customer_name").and_then(|v| v.as_str()).unwrap_or("");
+        let customer_name = req
+            .get("customer_name")
+            .and_then(|v| v.as_str())
+            .unwrap_or("");
         let amount = req.get("amount").and_then(|v| v.as_f64()).unwrap_or(0.0);
-        let collection_no = req.get("collection_no").and_then(|v| v.as_str()).unwrap_or("");
+        let collection_no = req
+            .get("collection_no")
+            .and_then(|v| v.as_str())
+            .unwrap_or("");
 
         let row = sqlx::query(
             "INSERT INTO erp_collection_records (tenant_id, collection_no, customer_name, amount, status, created_by)
@@ -207,13 +213,12 @@ impl FinanceService {
         tenant_id: Uuid,
         collection_id: Uuid,
     ) -> Result<(), TopemsError> {
-        let result = sqlx::query(
-            "DELETE FROM erp_collection_records WHERE tenant_id = $1 AND id = $2",
-        )
-        .bind(tenant_id)
-        .bind(collection_id)
-        .execute(&self.db_pool)
-        .await?;
+        let result =
+            sqlx::query("DELETE FROM erp_collection_records WHERE tenant_id = $1 AND id = $2")
+                .bind(tenant_id)
+                .bind(collection_id)
+                .execute(&self.db_pool)
+                .await?;
 
         if result.rows_affected() == 0 {
             return Err(TopemsError::NotFound("收款记录不存在".to_string()));
@@ -263,8 +268,14 @@ impl FinanceService {
         let mut fail_count = 0;
 
         for item in items {
-            let collection_id_str = item.get("collection_id").and_then(|v| v.as_str()).unwrap_or("");
-            let receivable_id_str = item.get("receivable_id").and_then(|v| v.as_str()).unwrap_or("");
+            let collection_id_str = item
+                .get("collection_id")
+                .and_then(|v| v.as_str())
+                .unwrap_or("");
+            let receivable_id_str = item
+                .get("receivable_id")
+                .and_then(|v| v.as_str())
+                .unwrap_or("");
             let amount = item.get("amount").and_then(|v| v.as_f64()).unwrap_or(0.0);
 
             match (

@@ -174,7 +174,11 @@ async fn create_department(
             tokio::spawn(async move {
                 mdm_service
                     .publish_department_event(
-                        claims.tenant_id.as_deref().and_then(|s| Uuid::parse_str(s).ok()).unwrap_or(Uuid::nil()),
+                        claims
+                            .tenant_id
+                            .as_deref()
+                            .and_then(|s| Uuid::parse_str(s).ok())
+                            .unwrap_or(Uuid::nil()),
                         dept_id,
                         dept_code.as_deref(),
                         &dept_name,
@@ -302,7 +306,11 @@ async fn update_department(
             tokio::spawn(async move {
                 mdm_service
                     .publish_department_event(
-                        claims.tenant_id.as_deref().and_then(|s| Uuid::parse_str(s).ok()).unwrap_or(Uuid::nil()),
+                        claims
+                            .tenant_id
+                            .as_deref()
+                            .and_then(|s| Uuid::parse_str(s).ok())
+                            .unwrap_or(Uuid::nil()),
                         dept_id,
                         dept_code.as_deref(),
                         &dept_name,
@@ -343,7 +351,11 @@ async fn delete_department(
             tokio::spawn(async move {
                 mdm_service
                     .publish_department_event(
-                        claims.tenant_id.as_deref().and_then(|s| Uuid::parse_str(s).ok()).unwrap_or(Uuid::nil()),
+                        claims
+                            .tenant_id
+                            .as_deref()
+                            .and_then(|s| Uuid::parse_str(s).ok())
+                            .unwrap_or(Uuid::nil()),
                         dept_id,
                         None,
                         "DELETED",

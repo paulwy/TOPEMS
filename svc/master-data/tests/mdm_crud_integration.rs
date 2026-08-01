@@ -17,8 +17,9 @@ use axum::extract::{Json, Path, Query, State};
 use sqlx::postgres::PgPoolOptions;
 use topems_master_data::modules::quality_v51;
 use topems_master_data::modules::quality_v51::{
-    AutoFixActionType, CreateQualityRuleRequest, FixStatus, QualityCheckQuery, QualityStatus,
-    QualityRule, RunQualityCheckRequest, SuggestionStatus, SuggestionType, UpdateQualityRuleRequest,
+    AutoFixActionType, CreateQualityRuleRequest, FixStatus, QualityCheckQuery, QualityRule,
+    QualityStatus, RunQualityCheckRequest, SuggestionStatus, SuggestionType,
+    UpdateQualityRuleRequest,
 };
 use topems_master_data::shared::AppState;
 use topems_shared::{AuthState, SystemMetrics};
@@ -213,12 +214,9 @@ async fn test_quality_rule_delete() {
     let rule_id = created.data.unwrap().id;
 
     // 删除规则
-    let delete_resp = quality_v51::delete_quality_rule(
-        State(state.clone()),
-        Path(rule_id.clone()),
-    )
-    .await
-    .0;
+    let delete_resp = quality_v51::delete_quality_rule(State(state.clone()), Path(rule_id.clone()))
+        .await
+        .0;
     assert_eq!(delete_resp.code, 200);
     assert!(delete_resp.success);
 
@@ -265,9 +263,7 @@ async fn test_run_quality_check_format_rule() {
     assert!(!checks.is_empty(), "应至少有一条质量检查结果");
 
     // format 规则应返回 Passed 状态
-    let has_passed = checks
-        .iter()
-        .any(|c| c.status == QualityStatus::Passed);
+    let has_passed = checks.iter().any(|c| c.status == QualityStatus::Passed);
     assert!(has_passed, "format 规则应返回 Passed 状态");
 }
 
@@ -290,9 +286,7 @@ async fn test_run_quality_check_range_rule_warns() {
     assert!(!checks.is_empty());
 
     // range 规则应返回 Warning 状态
-    let has_warning = checks
-        .iter()
-        .any(|c| c.status == QualityStatus::Warning);
+    let has_warning = checks.iter().any(|c| c.status == QualityStatus::Warning);
     assert!(
         has_warning,
         "range 规则应返回 Warning 状态（部分值接近边界）"
@@ -331,10 +325,7 @@ async fn test_list_quality_checks_with_filter() {
     let paginated = resp.data.unwrap();
     assert!(paginated.total > 0, "应能查询到刚执行的检查记录");
     assert!(
-        paginated
-            .items
-            .iter()
-            .all(|c| c.entity_id == "C9999"),
+        paginated.items.iter().all(|c| c.entity_id == "C9999"),
         "过滤结果应只包含指定实体的检查记录"
     );
 }
@@ -378,9 +369,7 @@ async fn test_get_quality_check_results_by_entity() {
 async fn test_get_quality_score() {
     let state = make_test_state();
 
-    let resp = quality_v51::get_quality_score(State(state.clone()))
-        .await
-        .0;
+    let resp = quality_v51::get_quality_score(State(state.clone())).await.0;
 
     assert_eq!(resp.code, 200);
     assert!(resp.success);
@@ -419,10 +408,7 @@ async fn test_get_quality_dashboard() {
     );
 
     // 仪表盘应包含治理洞察（包括重复检测洞察）
-    assert!(
-        !dashboard.insights.is_empty(),
-        "仪表盘应包含治理洞察信息"
-    );
+    assert!(!dashboard.insights.is_empty(), "仪表盘应包含治理洞察信息");
 
     // 验证存在 duplicate_detection（重复检测）洞察
     let has_duplicate_insight = dashboard
@@ -498,18 +484,9 @@ async fn test_duplicate_detection_insight() {
         .find(|i| i.insight_type == "duplicate_detection")
         .expect("应存在重复检测洞察");
 
-    assert!(
-        dup_insight.affected_records > 0,
-        "受影响的记录数应大于 0"
-    );
-    assert!(
-        !dup_insight.trend_analysis.is_empty(),
-        "趋势分析不应为空"
-    );
-    assert!(
-        !dup_insight.recommendations.is_empty(),
-        "应提供修复建议"
-    );
+    assert!(dup_insight.affected_records > 0, "受影响的记录数应大于 0");
+    assert!(!dup_insight.trend_analysis.is_empty(), "趋势分析不应为空");
+    assert!(!dup_insight.recommendations.is_empty(), "应提供修复建议");
 }
 
 /// ============ 数据模型序列化测试 ============
@@ -657,12 +634,9 @@ async fn test_quality_rule_full_lifecycle() {
     );
 
     // 5. 删除规则
-    let deleted = quality_v51::delete_quality_rule(
-        State(state.clone()),
-        Path(rule_id.clone()),
-    )
-    .await
-    .0;
+    let deleted = quality_v51::delete_quality_rule(State(state.clone()), Path(rule_id.clone()))
+        .await
+        .0;
     assert_eq!(deleted.code, 200);
 
     // 6. 确认规则已不存在

@@ -58,9 +58,7 @@ impl QmsServiceClient {
     /// 表/路由（QMS 使用 qa_quality_inspections 等表），无法在 QMS 侧直接提供等价聚合端点。
     /// 待数据归属迁移至 QMS 后，在此实现端点调用：
     /// `get => "/api/qms/quality-tasks/today-pass-rate"`。
-    pub async fn get_today_quality_pass_rate(
-        &self,
-    ) -> super::error::ServiceClientResult<f64> {
+    pub async fn get_today_quality_pass_rate(&self) -> super::error::ServiceClientResult<f64> {
         Err(super::error::ServiceClientError::ConfigError(
             "get_today_quality_pass_rate 尚未实现：待 QMS 服务提供今日合格率聚合端点（当前数据归属 plugin_mobile.quality_tasks）".to_string(),
         ))

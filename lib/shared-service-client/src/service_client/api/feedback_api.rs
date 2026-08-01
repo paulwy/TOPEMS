@@ -11,7 +11,10 @@ define_service_api!(
 );
 
 impl TypedServiceClient<FeedbackApi> {
-    pub async fn list_feedbacks(&self, params: serde_json::Value) -> ServiceClientResult<serde_json::Value> {
+    pub async fn list_feedbacks(
+        &self,
+        params: serde_json::Value,
+    ) -> ServiceClientResult<serde_json::Value> {
         let query_string = serde_urlencoded::to_string(params).unwrap_or_default();
         let path = if query_string.is_empty() {
             "/feedbacks".to_string()
@@ -42,7 +45,10 @@ impl TypedServiceClient<FeedbackApi> {
         self.put(&self.build_path(&path), &data).await
     }
 
-    pub async fn delete_feedback(&self, feedback_id: &str) -> ServiceClientResult<serde_json::Value> {
+    pub async fn delete_feedback(
+        &self,
+        feedback_id: &str,
+    ) -> ServiceClientResult<serde_json::Value> {
         let path = format!("/feedbacks/{}", feedback_id);
         self.delete(&self.build_path(&path)).await
     }

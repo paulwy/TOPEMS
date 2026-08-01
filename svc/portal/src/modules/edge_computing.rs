@@ -432,15 +432,10 @@ fn get_edge_store() -> &'static EdgeStore {
 pub struct EdgeRenderer;
 
 impl EdgeRenderer {
-    pub async fn render_at_edge(
-        req: RenderRequest,
-    ) -> Result<RenderResult, String> {
+    pub async fn render_at_edge(req: RenderRequest) -> Result<RenderResult, String> {
         let store = get_edge_store();
 
-        let location = req
-            .preferred_location
-            .clone()
-            .unwrap_or(EdgeLocation::APAC);
+        let location = req.preferred_location.clone().unwrap_or(EdgeLocation::APAC);
 
         let query_hash = Self::compute_query_hash(&req.query);
 
@@ -576,9 +571,7 @@ impl EdgeRenderer {
         history.iter().rev().take(limit as usize).cloned().collect()
     }
 
-    pub async fn deploy_edge_function(
-        function: EdgeFunction,
-    ) -> Result<EdgeFunction, String> {
+    pub async fn deploy_edge_function(function: EdgeFunction) -> Result<EdgeFunction, String> {
         let store = get_edge_store();
         let mut functions = store.edge_functions.lock().await;
 
@@ -673,9 +666,7 @@ impl GlobalAccelerator {
         Ok(Self::select_location(&config, client_location).await)
     }
 
-    pub async fn sync_config(
-        config: AccelConfig,
-    ) -> Result<AccelConfig, String> {
+    pub async fn sync_config(config: AccelConfig) -> Result<AccelConfig, String> {
         let store = get_edge_store();
         let mut configs = store.accel_configs.lock().await;
         let name = config.name.clone();
@@ -698,18 +689,28 @@ impl GlobalAccelerator {
         }
 
         match config.routing_strategy {
-            RoutingStrategy::Nearest => {
-                client_location.unwrap_or_else(|| config.locations.first().cloned().unwrap_or(EdgeLocation::APAC))
-            }
-            RoutingStrategy::Fastest => {
-                config.locations.first().cloned().unwrap_or(EdgeLocation::APAC)
-            }
+            RoutingStrategy::Nearest => client_location.unwrap_or_else(|| {
+                config
+                    .locations
+                    .first()
+                    .cloned()
+                    .unwrap_or(EdgeLocation::APAC)
+            }),
+            RoutingStrategy::Fastest => config
+                .locations
+                .first()
+                .cloned()
+                .unwrap_or(EdgeLocation::APAC),
             RoutingStrategy::RoundRobin => {
                 let store = get_edge_store();
                 let mut counter = store.accel_rr_counter.lock().await;
                 let idx = (*counter as usize) % config.locations.len();
                 *counter += 1;
-                config.locations.get(idx).cloned().unwrap_or(EdgeLocation::APAC)
+                config
+                    .locations
+                    .get(idx)
+                    .cloned()
+                    .unwrap_or(EdgeLocation::APAC)
             }
             RoutingStrategy::LoadBalanced => {
                 let store = get_edge_store();
@@ -726,12 +727,21 @@ impl GlobalAccelerator {
                         }
                     }
                 }
-                best.map(|b| b.location.clone())
-                    .unwrap_or_else(|| config.locations.first().cloned().unwrap_or(EdgeLocation::APAC))
+                best.map(|b| b.location.clone()).unwrap_or_else(|| {
+                    config
+                        .locations
+                        .first()
+                        .cloned()
+                        .unwrap_or(EdgeLocation::APAC)
+                })
             }
-            RoutingStrategy::GeoAffinity => {
-                client_location.unwrap_or_else(|| config.locations.first().cloned().unwrap_or(EdgeLocation::APAC))
-            }
+            RoutingStrategy::GeoAffinity => client_location.unwrap_or_else(|| {
+                config
+                    .locations
+                    .first()
+                    .cloned()
+                    .unwrap_or(EdgeLocation::APAC)
+            }),
         }
     }
 }
@@ -795,9 +805,7 @@ impl LatencyOptimizer {
         })
     }
 
-    pub async fn get_latency_budget(
-        budget_name: Option<&str>,
-    ) -> LatencyBudget {
+    pub async fn get_latency_budget(budget_name: Option<&str>) -> LatencyBudget {
         let store = get_edge_store();
         let budgets = store.latency_budgets.lock().await;
         budgets
@@ -980,10 +988,7 @@ pub async fn invalidate_cache_handler(
     State(_state): State<AppState>,
     Json(req): Json<InvalidateCacheRequest>,
 ) -> Json<ApiResponse<u64>> {
-    let location = req
-        .location
-        .as_deref()
-        .map(EdgeLocation::from_str);
+    let location = req.location.as_deref().map(EdgeLocation::from_str);
 
     match EdgeRenderer::invalidate_edge_cache(location, req.cache_key).await {
         Ok(count) => Json(ApiResponse::success(count, "缓存已失效")),
@@ -1031,12 +1036,11 @@ pub async fn accelerate_request_handler(
     State(_state): State<AppState>,
     Json(req): Json<AccelerateRequest>,
 ) -> Json<ApiResponse<AcceleratedResponse>> {
-    let client_loc = req
-        .client_location
-        .as_deref()
-        .map(EdgeLocation::from_str);
+    let client_loc = req.client_location.as_deref().map(EdgeLocation::from_str);
 
-    match GlobalAccelerator::accelerate_request(req.data, req.config_name.as_deref(), client_loc).await {
+    match GlobalAccelerator::accelerate_request(req.data, req.config_name.as_deref(), client_loc)
+        .await
+    {
         Ok(resp) => Json(ApiResponse::success(resp, "加速请求完成")),
         Err(e) => Json(ApiResponse::error(500, &e)),
     }

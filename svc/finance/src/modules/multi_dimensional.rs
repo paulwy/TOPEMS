@@ -303,7 +303,9 @@ impl CostCenterAnalyzer {
 
     pub fn get_trend(_period: &str) -> Vec<CostTrendPoint> {
         let base = Utc::now();
-        let labels = ["2026-01", "2026-02", "2026-03", "2026-04", "2026-05", "2026-06"];
+        let labels = [
+            "2026-01", "2026-02", "2026-03", "2026-04", "2026-05", "2026-06",
+        ];
         let mut prev = Decimal::from(3_850_000);
         labels
             .iter()
@@ -551,7 +553,9 @@ impl ProfitCenterAnalyzer {
     }
 
     pub fn get_trend(_period: &str) -> Vec<ProfitTrendPoint> {
-        let labels = ["2026-01", "2026-02", "2026-03", "2026-04", "2026-05", "2026-06"];
+        let labels = [
+            "2026-01", "2026-02", "2026-03", "2026-04", "2026-05", "2026-06",
+        ];
         let mut rev = Decimal::from(10_800_000);
         labels
             .iter()
@@ -584,8 +588,8 @@ impl ProfitCenterAnalyzer {
                 let margin_score = i.gross_margin.min(Decimal::from(100));
                 let growth_score = i.profit_growth.max(Decimal::ZERO).min(Decimal::from(100));
                 let roi_score = i.roi.min(Decimal::from(100));
-                let total = (revenue_score + margin_score + growth_score + roi_score)
-                    / Decimal::from(4);
+                let total =
+                    (revenue_score + margin_score + growth_score + roi_score) / Decimal::from(4);
                 ProfitCenterRanking {
                     rank: 0,
                     profit_center_id: i.profit_center_id,
@@ -600,7 +604,10 @@ impl ProfitCenterAnalyzer {
             .collect();
 
         rankings.sort_by(|a, b| b.total_score.cmp(&a.total_score));
-        rankings.iter_mut().enumerate().for_each(|(i, r)| r.rank = (i + 1) as i64);
+        rankings
+            .iter_mut()
+            .enumerate()
+            .for_each(|(i, r)| r.rank = (i + 1) as i64);
         rankings.truncate(limit as usize);
         rankings
     }
@@ -833,8 +840,8 @@ impl ProjectAccountingAnalyzer {
             .items
             .into_iter()
             .map(|i| {
-                let planned = i.budget_amount * Decimal::from(i.completion_percentage)
-                    / Decimal::from(100);
+                let planned =
+                    i.budget_amount * Decimal::from(i.completion_percentage) / Decimal::from(100);
                 let earned = i.earned_value;
                 let cv = earned - i.actual_cost;
                 let sv = earned - planned;
@@ -877,9 +884,8 @@ impl ProjectAccountingAnalyzer {
                 let gp = contract - cost;
                 let gm = safe_percentage(gp, contract);
                 let roi = safe_percentage(gp, cost);
-                let months = Decimal::from(
-                    (i.completion_percentage.to_f64().unwrap_or(1.0) * 12.0) as i64,
-                );
+                let months =
+                    Decimal::from((i.completion_percentage.to_f64().unwrap_or(1.0) * 12.0) as i64);
                 let payback = safe_divide(cost, gp.max(Decimal::from(1))).max(Decimal::ZERO);
                 let profit_per_month = safe_divide(gp, months.max(Decimal::from(1)));
                 ProjectProfitability {

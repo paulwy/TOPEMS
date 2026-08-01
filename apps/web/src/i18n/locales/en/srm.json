@@ -1,0 +1,136 @@
+{
+  "performance": {
+    "message": {
+      "create_fail": "Performance data cannot be created",
+      "update_fail": "Performance data cannot be updated",
+      "delete_fail": "Performance data cannot be deleted"
+    },
+    "column": {
+      "amount": "Order Amount",
+      "amount_value": "{{value}}0k",
+      "overall_score": "Overall Score",
+      "quality_score": "Quality Score",
+      "delivery_score": "Delivery Score",
+      "on_time_rate": "On-time Delivery Rate",
+      "defect_rate": "Defect Rate"
+    },
+    "stat": {
+      "total_suppliers": "Total Suppliers",
+      "evaluated": "Evaluated Suppliers",
+      "coverage_rate": "Evaluation Coverage",
+      "avg_overall": "Avg Overall Score"
+    },
+    "title": {
+      "overview": "Performance Overview",
+      "best_supplier": "Best Supplier",
+      "score_value": "{{value}} pts"
+    },
+    "breadcrumb": "Supplier Performance"
+  },
+  "evaluation": {
+    "message": {
+      "create_fail": "Failed to create evaluation",
+      "update_fail": "Failed to update evaluation",
+      "delete_fail": "Failed to delete evaluation"
+    },
+    "status": {
+      "in_progress": "In Progress",
+      "completed": "Completed",
+      "pending": "Pending Review",
+      "rejected": "Rejected"
+    },
+    "column": {
+      "overall_score": "Overall Score",
+      "status": "Status"
+    },
+    "stat": {
+      "total": "Total Evaluations",
+      "in_progress": "In Progress",
+      "completed": "Completed",
+      "pending": "Pending Review"
+    },
+    "action": {
+      "view_detail": "View Detail"
+    },
+    "breadcrumb": "Supplier Evaluation"
+  },
+  "quotation": {
+    "message": {
+      "load_fail": "Failed to load quotations",
+      "create_fail": "Failed to create quotation",
+      "update_fail": "Failed to update quotation",
+      "award_success": "Quotation awarded",
+      "award_fail": "Award operation failed",
+      "reject_success": "Quotation rejected",
+      "reject_fail": "Reject operation failed"
+    },
+    "action": {
+      "award": "Award",
+      "reject": "Reject"
+    },
+    "breadcrumb": "Quotation Management"
+  },
+  "order": {
+    "message": {
+      "load_stats_fail": "Failed to load order statistics",
+      "load_fail": "Failed to load orders",
+      "create_fail": "Failed to create order",
+      "update_fail": "Failed to update order",
+      "delete_fail": "Failed to delete order"
+    },
+    "stat": {
+      "total": "Total Orders",
+      "pending": "Pending",
+      "processing": "Processing",
+      "completed": "Completed",
+      "total_amount": "Total Order Amount"
+    },
+    "breadcrumb": {
+      "home": "Home",
+      "purchase_order": "Purchase Order"
+    }
+  },
+  "contract": {
+    "message": {
+      "create_fail": "Failed to create contract",
+      "update_fail": "Failed to update contract",
+      "delete_fail": "Failed to delete contract"
+    },
+    "stat": {
+      "total": "Total Contracts",
+      "active": "Active",
+      "completed": "Completed",
+      "total_amount": "Total Contract Amount"
+    },
+    "action": {
+      "view_detail": "View Detail"
+    },
+    "breadcrumb": "Contract Management"
+  },
+  "scoring": {
+    "message": {
+      "create_fail": "Failed to create scoring dimension",
+      "update_fail": "Failed to update scoring dimension",
+      "delete_fail": "Failed to delete scoring dimension"
+    },
+    "stat": {
+      "total": "Total Dimensions",
+      "active": "Enabled",
+      "total_weight": "Total Weight",
+      "inactive": "Disabled"
+    },
+    "breadcrumb": "Scoring Dimension Configuration"
+  },
+  "supplier": {
+    "status": {
+      "active": "Active"
+    },
+    "stat": {
+      "total": "Total Suppliers",
+      "active": "Enabled",
+      "low_risk": "Low Risk",
+      "high_risk": "High Risk"
+    },
+    "breadcrumb": "Supplier Management"
+  }
+}
