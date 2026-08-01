@@ -54,6 +54,8 @@ import {
   useTheme,
 } from '@mui/material';
 
+import { useTranslation } from 'react-i18next';
+
 import { PageContainer } from '@/components/common';
 import { AI_PATHS } from '@/modules/ai/config';
 import { useNotificationStore } from '@/store';
@@ -139,10 +141,10 @@ const mockMessages: Message[] = [
 ];
 
 const quickPrompts = [
-  { id: '1', label: '分析这个问题', icon: <Lightbulb size={16} />, category: 'qa' },
-  { id: '2', label: '总结这段文字', icon: <FileText size={16} />, category: 'summary' },
-  { id: '3', label: '生成代码', icon: <Code size={16} />, category: 'code' },
-  { id: '4', label: '解释这段代码', icon: <FileCode size={16} />, category: 'code' },
+  { id: '1', label: 'quick_prompt.analyze', icon: <Lightbulb size={16} />, category: 'qa' },
+  { id: '2', label: 'quick_prompt.summarize', icon: <FileText size={16} />, category: 'summary' },
+  { id: '3', label: 'quick_prompt.generate_code', icon: <Code size={16} />, category: 'code' },
+  { id: '4', label: 'quick_prompt.explain_code', icon: <FileCode size={16} />, category: 'code' },
 ];
 
 const getTypeIcon = (type: ChatSession['type']) => {
@@ -157,11 +159,11 @@ const getTypeIcon = (type: ChatSession['type']) => {
 
 const getTypeLabel = (type: Message['type']) => {
   const labels: Record<string, string> = {
-    qa: '问答',
-    summary: '摘要',
-    code: '代码',
-    general: '对话',
-    text: '文本',
+    qa: 'qa',
+    summary: 'summary',
+    code: 'code',
+    general: 'general',
+    text: 'text',
   };
   return labels[type || 'text'];
 };
@@ -169,6 +171,7 @@ const getTypeLabel = (type: Message['type']) => {
 export const AiChatPage: React.FC = () => {
   const theme = useTheme();
   const addNotification = useNotificationStore((state) => state.addNotification);
+  const { t } = useTranslation();
   const [messages, setMessages] = useState<Message[]>(mockMessages);
   const [inputValue, setInputValue] = useState('');
   const [selectedModel, setSelectedModel] = useState('gpt-4');
@@ -205,19 +208,16 @@ export const AiChatPage: React.FC = () => {
       let responseContent = '';
       switch (activeTab) {
         case 'qa':
-          responseContent =
-            '感谢您的提问！AI助手正在分析您的问题...\n\n根据分析，以下是详细解答：\n\n1. 问题理解：您的问题涉及系统架构优化\n2. 关键要点：性能、可扩展性、安全性\n3. 建议方案：请参考之前的详细建议';
+          responseContent = t('ai.chat.response.qa');
           break;
         case 'summary':
-          responseContent =
-            '文档摘要结果：\n\n**核心内容**\n- 本文档介绍了系统的主要功能模块\n- 包含架构设计和技术选型\n- 提供了部署和维护指南\n\n**关键点**\n- 系统采用微服务架构\n- 使用容器化部署\n- 支持水平扩展';
+          responseContent = t('ai.chat.response.summary');
           break;
         case 'code':
-          responseContent =
-            '```typescript\n// 生成的代码示例\ninterface User {\n  id: string;\n  name: string;\n  email: string;\n}\n\nconst getUser = async (id: string): Promise<User> => {\n  const response = await fetch(`/api/users/${id}`);\n  return response.json();\n};\n```\n\n**代码说明**\n- 定义了 User 接口\n- 实现了 getUser 异步函数\n- 使用 TypeScript 类型安全';
+          responseContent = t('ai.chat.response.code');
           break;
         default:
-          responseContent = '感谢您的提问！AI助手正在处理中，请稍候...';
+          responseContent = t('ai.chat.response.default');
       }
 
       const assistantMessage: Message = {
@@ -229,9 +229,9 @@ export const AiChatPage: React.FC = () => {
       };
       setMessages((prev) => [...prev, assistantMessage]);
       setIsTyping(false);
-      addNotification({ title: '消息发送', message: 'AI助手已回复', type: 'success' });
+      addNotification({ title: t('ai.chat.message.sent_title'), message: t('ai.chat.message.ai_replied'), type: 'success' });
     }, 1500);
-  }, [inputValue, activeTab, addNotification]);
+  }, [inputValue, activeTab, addNotification, t]);
 
   const handleKeyPress = (e: React.KeyboardEvent) => {
     if (e.key === 'Enter' && !e.shiftKey) {
@@ -244,13 +244,13 @@ export const AiChatPage: React.FC = () => {
     navigator.clipboard.writeText(content);
     setCopiedId(id);
     setTimeout(() => setCopiedId(null), 2000);
-    addNotification({ title: '复制成功', message: '内容已复制到剪贴板', type: 'success' });
+    addNotification({ title: t('ai.chat.message.copy_success_title'), message: t('ai.chat.message.copy_success_body'), type: 'success' });
   };
 
   const handleNewChat = () => {
     const newSession: ChatSession = {
       id: String(Date.now()),
-      title: '新对话',
+      title: t('ai.chat.session.new_title'),
       messages: [],
       timestamp: new Date(),
       type: activeTab,
@@ -258,7 +258,7 @@ export const AiChatPage: React.FC = () => {
     setSessions((prev) => [newSession, ...prev]);
     setSelectedSessionId(newSession.id);
     setMessages([]);
-    addNotification({ title: '新建对话', message: '对话已创建', type: 'info' });
+    addNotification({ title: t('ai.chat.message.new_session_title'), message: t('ai.chat.message.session_created'), type: 'info' });
   };
 
   const handleSelectSession = (sessionId: string) => {
@@ -280,11 +280,11 @@ export const AiChatPage: React.FC = () => {
         setMessages([]);
       }
     }
-    addNotification({ title: '删除对话', message: '对话已删除', type: 'info' });
+    addNotification({ title: t('ai.chat.message.delete_session_title'), message: t('ai.chat.message.session_deleted'), type: 'info' });
   };
 
   const handleQuickPrompt = (prompt: (typeof quickPrompts)[0]) => {
-    setInputValue(`请${prompt.label}`);
+    setInputValue(t('ai.chat.' + prompt.label));
     setActiveTab(prompt.category as typeof activeTab);
   };
 
@@ -293,8 +293,8 @@ export const AiChatPage: React.FC = () => {
     if (file) {
       setDocFile(file);
       addNotification({
-        title: '文件上传',
-        message: `已选择文件: ${file.name}`,
+        title: t('ai.chat.message.file_upload_title'),
+        message: t('ai.chat.dialog.file_selected', { name: file.name }),
         type: 'info',
       });
     }
@@ -304,12 +304,10 @@ export const AiChatPage: React.FC = () => {
     if (!docFile) return;
     setDocUploadDialog(false);
     setActiveTab('summary');
-    setInputValue(
-      `请总结以下文档内容：\n\n文件名：${docFile.name}\n文件大小：${docFile.size} bytes`
-    );
+    setInputValue(t('ai.chat.message.summary_prompt'));
     addNotification({
-      title: '开始摘要',
-      message: '正在分析文档内容...',
+      title: t('ai.chat.message.start_summary_title'),
+      message: t('ai.chat.message.analyzing_document'),
       type: 'info',
     });
   };
@@ -321,10 +319,10 @@ export const AiChatPage: React.FC = () => {
     const hours = Math.floor(diff / 3600000);
     const days = Math.floor(diff / 86400000);
 
-    if (minutes < 1) return '刚刚';
-    if (minutes < 60) return `${minutes}分钟前`;
-    if (hours < 24) return `${hours}小时前`;
-    if (days < 7) return `${days}天前`;
+    if (minutes < 1) return t('ai.chat.time.just_now');
+    if (minutes < 60) return t('ai.chat.time.minutes_ago', { count: minutes });
+    if (hours < 24) return t('ai.chat.time.hours_ago', { count: hours });
+    if (days < 7) return t('ai.chat.time.days_ago', { count: days });
     return date.toLocaleDateString();
   };
 
@@ -357,7 +355,7 @@ export const AiChatPage: React.FC = () => {
                 startIcon={<Plus size={16} />}
                 onClick={handleNewChat}
               >
-                新建对话
+                {t('ai.chat.action.new_chat')}
               </Button>
             </Box>
 
@@ -367,14 +365,14 @@ export const AiChatPage: React.FC = () => {
                 color='text.secondary'
                 sx={{ mb: 1, display: 'block' }}
               >
-                功能模式
+                {t('ai.chat.sidebar.mode')}
               </Typography>
               <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 0.5 }}>
                 {[
-                  { id: 'qa', label: '智能问答', icon: <Lightbulb size={14} /> },
-                  { id: 'summary', label: '文档摘要', icon: <FileText size={14} /> },
-                  { id: 'code', label: '代码生成', icon: <Code size={14} /> },
-                  { id: 'general', label: '通用对话', icon: <MessageSquare size={14} /> },
+                  { id: 'qa', label: t('ai.chat.mode.qa'), icon: <Lightbulb size={14} /> },
+                  { id: 'summary', label: t('ai.chat.mode.summary'), icon: <FileText size={14} /> },
+                  { id: 'code', label: t('ai.chat.mode.code'), icon: <Code size={14} /> },
+                  { id: 'general', label: t('ai.chat.mode.general'), icon: <MessageSquare size={14} /> },
                 ].map((tab) => (
                   <Chip
                     key={tab.id}
@@ -446,7 +444,7 @@ export const AiChatPage: React.FC = () => {
                   </Box>
                   <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
                     <Chip
-                      label={getTypeLabel(session.type)}
+                      label={t('ai.chat.type.' + getTypeLabel(session.type))}
                       size='small'
                       sx={{ fontSize: 10 }}
                     />
@@ -467,14 +465,14 @@ export const AiChatPage: React.FC = () => {
                 color='text.secondary'
                 sx={{ mb: 1, display: 'block' }}
               >
-                快捷提示
+                {t('ai.chat.sidebar.quick_prompts')}
               </Typography>
               <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 0.5 }}>
                 {quickPrompts.map((prompt) => (
                   <Chip
                     key={prompt.id}
                     icon={prompt.icon}
-                    label={prompt.label}
+                    label={t('ai.chat.' + prompt.label)}
                     size='small'
                     variant='outlined'
                     onClick={() => handleQuickPrompt(prompt)}
@@ -511,10 +509,10 @@ export const AiChatPage: React.FC = () => {
                 size={20}
                 color='primary.main'
               />
-              <Typography variant='h6'>{selectedSession?.title || 'AI 智能对话'}</Typography>
+              <Typography variant='h6'>{selectedSession?.title || t('ai.chat.title.default')}</Typography>
               {selectedSession && (
                 <Chip
-                  label={getTypeLabel(selectedSession.type)}
+                  label={t('ai.chat.type.' + getTypeLabel(selectedSession.type))}
                   size='small'
                   color='primary'
                 />
@@ -525,21 +523,21 @@ export const AiChatPage: React.FC = () => {
                 size='small'
                 sx={{ minWidth: 150 }}
               >
-                <InputLabel>模型</InputLabel>
+                <InputLabel>{t('ai.chat.field.model')}</InputLabel>
                 <Select
                   value={selectedModel}
-                  label='模型'
+                  label={t('ai.chat.field.model')}
                   onChange={(e) => setSelectedModel(e.target.value)}
                 >
                   <MenuItem value='gpt-4'>GPT-4</MenuItem>
                   <MenuItem value='gpt-3.5'>GPT-3.5</MenuItem>
                   <MenuItem value='claude'>Claude</MenuItem>
-                  <MenuItem value='ERNIE'>文心一言</MenuItem>
+                  <MenuItem value='ERNIE'>{t('ai.chat.model.ernie')}</MenuItem>
                 </Select>
               </FormControl>
               <IconButton
                 onClick={handleNewChat}
-                aria-label='新建对话'
+                aria-label={t('ai.chat.action.new_chat')}
               >
                 <RefreshCw size={20} />
               </IconButton>
@@ -561,19 +559,19 @@ export const AiChatPage: React.FC = () => {
               }}
             >
               <Tab
-                label='智能问答'
+                label={t('ai.chat.mode.qa')}
                 value='qa'
               />
               <Tab
-                label='文档摘要'
+                label={t('ai.chat.mode.summary')}
                 value='summary'
               />
               <Tab
-                label='代码生成'
+                label={t('ai.chat.mode.code')}
                 value='code'
               />
               <Tab
-                label='通用对话'
+                label={t('ai.chat.mode.general')}
                 value='general'
               />
             </Tabs>
@@ -595,7 +593,7 @@ export const AiChatPage: React.FC = () => {
                       variant='body2'
                       sx={{ fontWeight: 500 }}
                     >
-                      {msg.role === 'user' ? '我' : 'AI助手'}
+                      {msg.role === 'user' ? t('ai.chat.role.user') : t('ai.chat.role.assistant')}
                     </Typography>
                     <Typography
                       variant='caption'
@@ -605,7 +603,7 @@ export const AiChatPage: React.FC = () => {
                     </Typography>
                     {msg.type && (
                       <Chip
-                        label={getTypeLabel(msg.type)}
+                        label={t('ai.chat.type.' + getTypeLabel(msg.type))}
                         size='small'
                         variant='outlined'
                         sx={{ fontSize: 10 }}
@@ -614,7 +612,7 @@ export const AiChatPage: React.FC = () => {
                     <IconButton
                       size='small'
                       onClick={() => handleCopy(msg.content, msg.id)}
-                      aria-label='复制消息内容'
+                      aria-label={t('ai.chat.action.copy_message')}
                     >
                       {copiedId === msg.id ? (
                         <Check
@@ -689,7 +687,7 @@ export const AiChatPage: React.FC = () => {
                     variant='body2'
                     color='text.secondary'
                   >
-                    AI 正在输入...
+                    {t('ai.chat.status.typing')}
                   </Typography>
                 </Paper>
               </Box>
@@ -704,13 +702,13 @@ export const AiChatPage: React.FC = () => {
                   variant='h6'
                   sx={{ mb: 2 }}
                 >
-                  开始对话
+                  {t('ai.chat.empty.start_title')}
                 </Typography>
                 <Typography
                   variant='body2'
                   color='text.secondary'
                 >
-                  选择功能模式，输入您的问题
+                  {t('ai.chat.empty.start_subtitle')}
                 </Typography>
               </Box>
             )}
@@ -725,10 +723,10 @@ export const AiChatPage: React.FC = () => {
                   size='small'
                   sx={{ width: 200 }}
                 >
-                  <InputLabel>代码语言</InputLabel>
+                  <InputLabel>{t('ai.chat.field.code_language')}</InputLabel>
                   <Select
                     value={codeLanguage}
-                    label='代码语言'
+                    label={t('ai.chat.field.code_language')}
                     onChange={(e) => setCodeLanguage(e.target.value)}
                   >
                     <MenuItem value='typescript'>TypeScript</MenuItem>
@@ -751,7 +749,7 @@ export const AiChatPage: React.FC = () => {
                     startIcon={<FileText size={16} />}
                     onClick={() => setDocUploadDialog(true)}
                   >
-                    上传文档
+                    {t('ai.chat.action.upload_document')}
                   </Button>
                 )}
               </Box>
@@ -761,12 +759,12 @@ export const AiChatPage: React.FC = () => {
                 maxRows={4}
                 placeholder={
                   activeTab === 'qa'
-                    ? '输入您的问题...'
+                    ? t('ai.chat.placeholder.qa')
                     : activeTab === 'summary'
-                      ? '粘贴文本或上传文档进行摘要...'
+                      ? t('ai.chat.placeholder.summary')
                       : activeTab === 'code'
-                        ? '描述您需要的代码，或粘贴代码进行解释...'
-                        : '输入消息，Shift+Enter换行...'
+                        ? t('ai.chat.placeholder.code')
+                        : t('ai.chat.placeholder.general')
                 }
                 value={inputValue}
                 onChange={(e) => setInputValue(e.target.value)}
@@ -786,7 +784,7 @@ export const AiChatPage: React.FC = () => {
               color='text.secondary'
               sx={{ mt: 1, display: 'block' }}
             >
-              AI助手可能会产生不准确的信息，请谨慎使用
+              {t('ai.chat.disclaimer_bottom')}
             </Typography>
           </Box>
         </Box>
@@ -799,7 +797,7 @@ export const AiChatPage: React.FC = () => {
         maxWidth='sm'
         fullWidth
       >
-        <DialogTitle>上传文档</DialogTitle>
+        <DialogTitle>{t('ai.chat.dialog.upload_title')}</DialogTitle>
         <DialogContent>
           <Box sx={{ mt: 2 }}>
             <input
@@ -818,7 +816,7 @@ export const AiChatPage: React.FC = () => {
             >
               <FileText size={24} />
               <Typography sx={{ ml: 2 }}>
-                {docFile ? `已选择: ${docFile.name}` : '点击选择文档'}
+                {docFile ? t('ai.chat.dialog.file_selected', { name: docFile.name }) : t('ai.chat.dialog.click_to_select')}
               </Typography>
             </Button>
             <Typography
@@ -826,18 +824,18 @@ export const AiChatPage: React.FC = () => {
               color='text.secondary'
               sx={{ mt: 2, display: 'block' }}
             >
-              支持 .txt, .md, .docx, .pdf 格式
+              {t('ai.chat.dialog.supported_formats')}
             </Typography>
           </Box>
         </DialogContent>
         <DialogActions>
-          <Button onClick={() => setDocUploadDialog(false)}>取消</Button>
+          <Button onClick={() => setDocUploadDialog(false)}>{t('ai.chat.action.cancel')}</Button>
           <Button
             variant='contained'
             onClick={handleStartSummary}
             disabled={!docFile}
           >
-            开始摘要
+            {t('ai.chat.action.start_summary')}
           </Button>
         </DialogActions>
       </Dialog>

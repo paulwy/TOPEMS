@@ -45,6 +45,7 @@ import {
   Layers,
   Server,
 } from 'lucide-react';
+import { useTranslation } from 'react-i18next';
 import { PageContainer, Grid } from '@/components/common';
 import LineChartComponent from '@/components/charts/LineChart';
 import BarChartComponent from '@/components/charts/BarChart';
@@ -166,17 +167,18 @@ const modelUsageData = [
   { name: '通义千问', value: 4 },
 ];
 
-const getStatusConfig = (status: AIModel['status']) => {
+const getStatusConfig = (status: AIModel['status'], t: (key: string) => string) => {
   const configs = {
-    active: { label: '运行中', color: 'success' as const, icon: <CheckCircle2 size={14} /> },
-    inactive: { label: '已停用', color: 'default' as const, icon: <Clock size={14} /> },
-    maintenance: { label: '维护中', color: 'warning' as const, icon: <AlertCircle size={14} /> },
+    active: { label: t('ai.model_settings.status.active'), color: 'success' as const, icon: <CheckCircle2 size={14} /> },
+    inactive: { label: t('ai.model_settings.status.inactive'), color: 'default' as const, icon: <Clock size={14} /> },
+    maintenance: { label: t('ai.model_settings.status.maintenance'), color: 'warning' as const, icon: <AlertCircle size={14} /> },
   };
   return configs[status];
 };
 
 export const AiModelSettingsPage: React.FC = () => {
   const addNotification = useNotificationStore((state) => state.addNotification);
+  const { t } = useTranslation();
   const [activeTab, setActiveTab] = useState<SettingsTab>('models');
   const [selectedModel, setSelectedModel] = useState<AIModel>(mockModels[0]);
   const [temperature, setTemperature] = useState(0.7);
@@ -192,8 +194,8 @@ export const AiModelSettingsPage: React.FC = () => {
     setTimeout(() => {
       setSaving(false);
       addNotification({
-        title: '保存成功',
-        message: '模型配置已保存',
+        title: t('ai.model_settings.message.save_success_title'),
+        message: t('ai.model_settings.message.save_success_body'),
         type: 'success',
       });
     }, 1000);
@@ -206,16 +208,16 @@ export const AiModelSettingsPage: React.FC = () => {
   };
 
   const tabConfig = [
-    { id: 'models' as SettingsTab, label: '模型列表', icon: <Cpu size={18} /> },
-    { id: 'config' as SettingsTab, label: '参数配置', icon: <Settings size={18} /> },
-    { id: 'usage' as SettingsTab, label: '用量统计', icon: <BarChart3 size={18} /> },
-    { id: 'api' as SettingsTab, label: 'API密钥', icon: <Database size={18} /> },
+    { id: 'models' as SettingsTab, label: t('ai.model_settings.tab.models'), icon: <Cpu size={18} /> },
+    { id: 'config' as SettingsTab, label: t('ai.model_settings.tab.config'), icon: <Settings size={18} /> },
+    { id: 'usage' as SettingsTab, label: t('ai.model_settings.tab.usage'), icon: <BarChart3 size={18} /> },
+    { id: 'api' as SettingsTab, label: t('ai.model_settings.tab.api'), icon: <Database size={18} /> },
   ];
 
   return (
     <PageContainer
-      title='模型设置'
-      subtitle='模型管理、配置和用量统计'
+      title={t('ai.model_settings.title')}
+      subtitle={t('ai.model_settings.subtitle')}
       padding={false}
       maxWidth={false}
       headerProps={{
@@ -303,10 +305,10 @@ export const AiModelSettingsPage: React.FC = () => {
                               {model.type === 'chat' ? <Cpu size={24} /> : <Layers size={24} />}
                             </Avatar>
                             <Chip
-                              icon={getStatusConfig(model.status).icon}
-                              label={getStatusConfig(model.status).label}
+                              icon={getStatusConfig(model.status, t).icon}
+                              label={getStatusConfig(model.status, t).label}
                               size='small'
-                              color={getStatusConfig(model.status).color}
+                              color={getStatusConfig(model.status, t).color}
                               sx={{ height: 24 }}
                             />
                           </Box>
@@ -319,7 +321,7 @@ export const AiModelSettingsPage: React.FC = () => {
                               {model.name}
                               {model.is_default && (
                                 <Chip
-                                  label='默认'
+                                  label={t('ai.model_settings.label.default')}
                                   size='small'
                                   color='primary'
                                   sx={{ ml: 1, height: 20 }}
@@ -368,7 +370,7 @@ export const AiModelSettingsPage: React.FC = () => {
                                 variant='caption'
                                 color='text.secondary'
                               >
-                                最大Token
+                                {t('ai.model_settings.label.max_token')}
                               </Typography>
                               <Typography
                                 variant='body2'
@@ -385,7 +387,7 @@ export const AiModelSettingsPage: React.FC = () => {
                                 variant='caption'
                                 color='text.secondary'
                               >
-                                输入价格
+                                {t('ai.model_settings.label.input_price')}
                               </Typography>
                               <Typography
                                 variant='body2'
@@ -422,7 +424,7 @@ export const AiModelSettingsPage: React.FC = () => {
                       variant='h6'
                       sx={{ fontWeight: 600, mb: 2 }}
                     >
-                      当前模型：{selectedModel.name}
+                      {t('ai.model_settings.label.current_model')}{selectedModel.name}
                     </Typography>
                     <Divider sx={{ mb: 3 }} />
 
@@ -432,7 +434,7 @@ export const AiModelSettingsPage: React.FC = () => {
                           variant='body2'
                           sx={{ fontWeight: 500 }}
                         >
-                          Temperature (温度)
+                          {t('ai.model_settings.param.temperature')}
                         </Typography>
                         <Typography
                           variant='body2'
@@ -454,7 +456,7 @@ export const AiModelSettingsPage: React.FC = () => {
                         variant='caption'
                         color='text.secondary'
                       >
-                        控制输出随机性。值越高，输出越随机；值越低，输出越确定。
+                        {t('ai.model_settings.param.temperature_desc')}
                       </Typography>
                     </Box>
 
@@ -464,7 +466,7 @@ export const AiModelSettingsPage: React.FC = () => {
                           variant='body2'
                           sx={{ fontWeight: 500 }}
                         >
-                          最大生成长度 (Max Tokens)
+                          {t('ai.model_settings.param.max_tokens')}
                         </Typography>
                         <Typography
                           variant='body2'
@@ -486,7 +488,7 @@ export const AiModelSettingsPage: React.FC = () => {
                         variant='caption'
                         color='text.secondary'
                       >
-                        限制模型生成的最大token数量。
+                        {t('ai.model_settings.param.max_tokens_desc')}
                       </Typography>
                     </Box>
 
@@ -496,7 +498,7 @@ export const AiModelSettingsPage: React.FC = () => {
                           variant='body2'
                           sx={{ fontWeight: 500 }}
                         >
-                          Top P
+                          {t('ai.model_settings.param.top_p')}
                         </Typography>
                         <Typography
                           variant='body2'
@@ -518,7 +520,7 @@ export const AiModelSettingsPage: React.FC = () => {
                         variant='caption'
                         color='text.secondary'
                       >
-                        控制词的多样性，值越小，输出越保守。
+                        {t('ai.model_settings.param.top_p_desc')}
                       </Typography>
                     </Box>
 
@@ -527,7 +529,7 @@ export const AiModelSettingsPage: React.FC = () => {
                         variant='body2'
                         sx={{ fontWeight: 500, mb: 1 }}
                       >
-                        系统提示词 (System Prompt)
+                        {t('ai.model_settings.param.system_prompt')}
                       </Typography>
                       <TextField
                         fullWidth
@@ -535,7 +537,7 @@ export const AiModelSettingsPage: React.FC = () => {
                         rows={4}
                         value={systemPrompt}
                         onChange={(e) => setSystemPrompt(e.target.value)}
-                        placeholder='输入系统提示词...'
+                        placeholder={t('ai.model_settings.placeholder.system_prompt')}
                       />
                     </Box>
 
@@ -544,7 +546,7 @@ export const AiModelSettingsPage: React.FC = () => {
                         variant='outlined'
                         startIcon={<RefreshCw size={16} />}
                       >
-                        重置默认
+                        {t('ai.model_settings.action.reset_default')}
                       </Button>
                       <Button
                         variant='contained'
@@ -561,7 +563,7 @@ export const AiModelSettingsPage: React.FC = () => {
                         onClick={handleSaveConfig}
                         disabled={saving}
                       >
-                        {saving ? '保存中...' : '保存配置'}
+                        {saving ? t('ai.model_settings.status.saving') : t('ai.model_settings.action.save_config')}
                       </Button>
                     </Box>
                   </Paper>
@@ -580,7 +582,7 @@ export const AiModelSettingsPage: React.FC = () => {
                       variant='subtitle1'
                       sx={{ fontWeight: 600, mb: 2 }}
                     >
-                      其他设置
+                      {t('ai.model_settings.label.other_settings')}
                     </Typography>
                     <Divider sx={{ mb: 2 }} />
 
@@ -590,8 +592,8 @@ export const AiModelSettingsPage: React.FC = () => {
                           <Server size={18} />
                         </ListItemIcon>
                         <ListItemText
-                          primary='流式输出'
-                          secondary='逐步返回响应结果'
+                          primary={t('ai.model_settings.setting.stream')}
+                          secondary={t('ai.model_settings.setting.stream_desc')}
                         />
                         <Switch defaultChecked />
                       </ListItem>
@@ -600,8 +602,8 @@ export const AiModelSettingsPage: React.FC = () => {
                           <Activity size={18} />
                         </ListItemIcon>
                         <ListItemText
-                          primary='使用历史记录'
-                          secondary='保存对话历史用于改进'
+                          primary={t('ai.model_settings.setting.history')}
+                          secondary={t('ai.model_settings.setting.history_desc')}
                         />
                         <Switch defaultChecked />
                       </ListItem>
@@ -610,8 +612,8 @@ export const AiModelSettingsPage: React.FC = () => {
                           <Zap size={18} />
                         </ListItemIcon>
                         <ListItemText
-                          primary='自动重试'
-                          secondary='请求失败时自动重试'
+                          primary={t('ai.model_settings.setting.retry')}
+                          secondary={t('ai.model_settings.setting.retry_desc')}
                         />
                         <Switch defaultChecked />
                       </ListItem>
@@ -651,7 +653,7 @@ export const AiModelSettingsPage: React.FC = () => {
                             variant='body2'
                             color='text.secondary'
                           >
-                            总Token消耗
+                            {t('ai.model_settings.usage.total_tokens')}
                           </Typography>
                         </Box>
                       </Box>
@@ -678,7 +680,7 @@ export const AiModelSettingsPage: React.FC = () => {
                             variant='body2'
                             color='text.secondary'
                           >
-                            总请求次数
+                            {t('ai.model_settings.usage.total_requests')}
                           </Typography>
                         </Box>
                       </Box>
@@ -705,7 +707,7 @@ export const AiModelSettingsPage: React.FC = () => {
                             variant='body2'
                             color='text.secondary'
                           >
-                            总费用（预估）
+                            {t('ai.model_settings.usage.total_cost')}
                           </Typography>
                         </Box>
                       </Box>
@@ -730,7 +732,7 @@ export const AiModelSettingsPage: React.FC = () => {
                         variant='subtitle1'
                         sx={{ fontWeight: 600, mb: 2 }}
                       >
-                        用量趋势（近7天）
+                        {t('ai.model_settings.usage.trend_7days')}
                       </Typography>
                       <Box sx={{ height: 300 }}>
                         <LineChartComponent
@@ -754,7 +756,7 @@ export const AiModelSettingsPage: React.FC = () => {
                         variant='subtitle1'
                         sx={{ fontWeight: 600, mb: 2 }}
                       >
-                        模型使用占比
+                        {t('ai.model_settings.usage.model_ratio')}
                       </Typography>
                       <Box sx={{ height: 300 }}>
                         <PieChartComponent data={modelUsageData} />
@@ -773,17 +775,17 @@ export const AiModelSettingsPage: React.FC = () => {
                         variant='subtitle1'
                         sx={{ fontWeight: 600 }}
                       >
-                        每日用量明细
+                        {t('ai.model_settings.usage.daily_detail')}
                       </Typography>
                     </Box>
                     <TableContainer>
                       <Table size='small'>
                         <TableHead>
                           <TableRow>
-                            <TableCell>日期</TableCell>
-                            <TableCell align='right'>请求次数</TableCell>
-                            <TableCell align='right'>Token消耗</TableCell>
-                            <TableCell align='right'>费用（预估）</TableCell>
+                            <TableCell>{t('ai.model_settings.table.date')}</TableCell>
+                            <TableCell align='right'>{t('ai.model_settings.table.requests')}</TableCell>
+                            <TableCell align='right'>{t('ai.model_settings.table.tokens')}</TableCell>
+                            <TableCell align='right'>{t('ai.model_settings.table.cost')}</TableCell>
                           </TableRow>
                         </TableHead>
                         <TableBody>
@@ -822,14 +824,14 @@ export const AiModelSettingsPage: React.FC = () => {
                       variant='subtitle1'
                       sx={{ fontWeight: 600 }}
                     >
-                      API 密钥管理
+                      {t('ai.model_settings.api.key_management')}
                     </Typography>
                     <Button
                       variant='contained'
                       startIcon={<Edit3 size={16} />}
                       size='small'
                     >
-                      新增密钥
+                      {t('ai.model_settings.api.add_key')}
                     </Button>
                   </Box>
                   <Divider sx={{ mb: 2 }} />
@@ -838,24 +840,24 @@ export const AiModelSettingsPage: React.FC = () => {
                     <Table size='small'>
                       <TableHead>
                         <TableRow>
-                          <TableCell>名称</TableCell>
-                          <TableCell>密钥</TableCell>
-                          <TableCell>服务商</TableCell>
-                          <TableCell>状态</TableCell>
-                          <TableCell>创建时间</TableCell>
-                          <TableCell align='right'>操作</TableCell>
+                          <TableCell>{t('ai.model_settings.api.table.name')}</TableCell>
+                          <TableCell>{t('ai.model_settings.api.table.key')}</TableCell>
+                          <TableCell>{t('ai.model_settings.api.table.provider')}</TableCell>
+                          <TableCell>{t('ai.model_settings.api.table.status')}</TableCell>
+                          <TableCell>{t('ai.model_settings.api.table.created')}</TableCell>
+                          <TableCell align='right'>{t('ai.model_settings.api.table.actions')}</TableCell>
                         </TableRow>
                       </TableHead>
                       <TableBody>
                         <TableRow>
-                          <TableCell sx={{ fontWeight: 500 }}>生产环境密钥</TableCell>
+                          <TableCell sx={{ fontWeight: 500 }}>{t('ai.model_settings.api.key_production')}</TableCell>
                           <TableCell>
                             <code>sk-****************************</code>
                           </TableCell>
                           <TableCell>OpenAI</TableCell>
                           <TableCell>
                             <Chip
-                              label='启用'
+                              label={t('ai.model_settings.api.status_enabled')}
                               size='small'
                               color='success'
                               sx={{ height: 22 }}
@@ -865,21 +867,21 @@ export const AiModelSettingsPage: React.FC = () => {
                           <TableCell align='right'>
                             <IconButton
                               size='small'
-                              aria-label='编辑API密钥'
+                              aria-label={t('ai.model_settings.api.action.edit')}
                             >
                               <Edit3 size={16} />
                             </IconButton>
                           </TableCell>
                         </TableRow>
                         <TableRow>
-                          <TableCell sx={{ fontWeight: 500 }}>备用密钥</TableCell>
+                          <TableCell sx={{ fontWeight: 500 }}>{t('ai.model_settings.api.key_backup')}</TableCell>
                           <TableCell>
                             <code>sk-****************************</code>
                           </TableCell>
                           <TableCell>OpenAI</TableCell>
                           <TableCell>
                             <Chip
-                              label='启用'
+                              label={t('ai.model_settings.api.status_enabled')}
                               size='small'
                               color='success'
                               sx={{ height: 22 }}
@@ -889,21 +891,21 @@ export const AiModelSettingsPage: React.FC = () => {
                           <TableCell align='right'>
                             <IconButton
                               size='small'
-                              aria-label='编辑API密钥'
+                              aria-label={t('ai.model_settings.api.action.edit')}
                             >
                               <Edit3 size={16} />
                             </IconButton>
                           </TableCell>
                         </TableRow>
                         <TableRow>
-                          <TableCell sx={{ fontWeight: 500 }}>文心一言密钥</TableCell>
+                          <TableCell sx={{ fontWeight: 500 }}>{t('ai.model_settings.api.key_ernie')}</TableCell>
                           <TableCell>
                             <code>xx-****************************</code>
                           </TableCell>
-                          <TableCell>百度</TableCell>
+                          <TableCell>{t('ai.model_settings.provider.baidu')}</TableCell>
                           <TableCell>
                             <Chip
-                              label='启用'
+                              label={t('ai.model_settings.api.status_enabled')}
                               size='small'
                               color='success'
                               sx={{ height: 22 }}
@@ -913,7 +915,7 @@ export const AiModelSettingsPage: React.FC = () => {
                           <TableCell align='right'>
                             <IconButton
                               size='small'
-                              aria-label='编辑API密钥'
+                              aria-label={t('ai.model_settings.api.action.edit')}
                             >
                               <Edit3 size={16} />
                             </IconButton>
@@ -932,7 +934,7 @@ export const AiModelSettingsPage: React.FC = () => {
                     variant='subtitle1'
                     sx={{ fontWeight: 600, mb: 2 }}
                   >
-                    使用提示
+                    {t('ai.model_settings.api.usage_tips')}
                   </Typography>
                   <List disablePadding>
                     <ListItem sx={{ px: 0, py: 1 }}>
@@ -944,7 +946,7 @@ export const AiModelSettingsPage: React.FC = () => {
                       </ListItemIcon>
                       <ListItemText
                         primary={
-                          <Typography variant='body2'>请妥善保管API密钥，不要泄露给他人</Typography>
+                          <Typography variant='body2'>{t('ai.model_settings.api.tip_keep_safe')}</Typography>
                         }
                       />
                     </ListItem>
@@ -957,7 +959,7 @@ export const AiModelSettingsPage: React.FC = () => {
                       </ListItemIcon>
                       <ListItemText
                         primary={
-                          <Typography variant='body2'>建议定期轮换密钥以确保安全</Typography>
+                          <Typography variant='body2'>{t('ai.model_settings.api.tip_rotate_keys')}</Typography>
                         }
                       />
                     </ListItem>
@@ -971,7 +973,7 @@ export const AiModelSettingsPage: React.FC = () => {
                       <ListItemText
                         primary={
                           <Typography variant='body2'>
-                            可以为不同环境创建不同的密钥，便于管理和排查问题
+                            {t('ai.model_settings.api.tip_multi_env')}
                           </Typography>
                         }
                       />

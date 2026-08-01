@@ -34,6 +34,7 @@ import {
   HelpCircle,
   FolderOpen,
 } from 'lucide-react';
+import { useTranslation } from 'react-i18next';
 import { PageContainer, Grid } from '@/components/common';
 import { useNotificationStore } from '@/store';
 import { designTokens } from '@/theme/tokens';
@@ -76,6 +77,7 @@ type ChatMessage = {
 
 export const AiKnowledgeBasePage: React.FC = () => {
   const addNotification = useNotificationStore((state) => state.addNotification);
+  const { t } = useTranslation();
   const [query, setQuery] = useState('');
   const [selectedDocs, setSelectedDocs] = useState<string[]>([]);
   const [searching, setSearching] = useState(false);
@@ -86,8 +88,8 @@ export const AiKnowledgeBasePage: React.FC = () => {
   const handleSendQuery = useCallback(async () => {
     if (!query.trim()) {
       addNotification({
-        title: '提示',
-        message: '请输入您的问题',
+        title: t('ai.knowledge_base.message.notice'),
+        message: t('ai.knowledge_base.message.input_question'),
         type: 'warning',
       });
       return;
@@ -115,7 +117,7 @@ export const AiKnowledgeBasePage: React.FC = () => {
     setChatHistory((prev) => [...prev, aiMessage]);
     setSearching(false);
     setQuery('');
-  }, [query, addNotification]);
+  }, [query, addNotification, t]);
 
   const handleSelectDocument = (docId: string) => {
     setSelectedDocs((prev) =>
@@ -126,8 +128,8 @@ export const AiKnowledgeBasePage: React.FC = () => {
   const handleCopy = (text: string) => {
     navigator.clipboard.writeText(text);
     addNotification({
-      title: '已复制',
-      message: '内容已复制到剪贴板',
+      title: t('ai.knowledge_base.message.copied'),
+      message: t('ai.knowledge_base.message.copied_body'),
       type: 'success',
     });
   };
@@ -148,20 +150,20 @@ export const AiKnowledgeBasePage: React.FC = () => {
   const getTypeLabel = (type: string) => {
     switch (type) {
       case 'manual':
-        return '操作手册';
+        return t('ai.knowledge_base.type.manual');
       case 'guide':
-        return '指南';
+        return t('ai.knowledge_base.type.guide');
       case 'process':
-        return '流程文档';
+        return t('ai.knowledge_base.type.process');
       default:
-        return '文档';
+        return t('ai.knowledge_base.type.document');
     }
   };
 
   return (
     <PageContainer
-      title='知识库问答'
-      subtitle='基于企业文档的智能问答助手'
+      title={t('ai.knowledge_base.title')}
+      subtitle={t('ai.knowledge_base.subtitle')}
       padding={false}
       maxWidth={false}
       headerProps={{
@@ -174,14 +176,14 @@ export const AiKnowledgeBasePage: React.FC = () => {
           <Grid item xs={12} lg={3}>
             <Paper sx={{ borderRadius: 3, p: 3, height: '100%' }}>
               <Typography variant='subtitle1' sx={{ fontWeight: 600, mb: 2 }}>
-                文档库
+                {t('ai.knowledge_base.label.document_library')}
               </Typography>
 
               <Box sx={{ mb: 2 }}>
                 <TextField
                   fullWidth
                   size='small'
-                  placeholder='搜索文档...'
+                  placeholder={t('ai.knowledge_base.label.search_document')}
                   slotProps={{
                     input: {
                       startAdornment: (
@@ -197,7 +199,7 @@ export const AiKnowledgeBasePage: React.FC = () => {
                   {['all', 'manual', 'guide', 'process'].map((type) => (
                     <Chip
                       key={type}
-                      label={type === 'all' ? '全部' : getTypeLabel(type)}
+                      label={type === 'all' ? t('ai.knowledge_base.label.all') : getTypeLabel(type)}
                       size='small'
                       variant={filterType === type ? 'filled' : 'outlined'}
                       onClick={() => setFilterType(type)}
@@ -224,7 +226,7 @@ export const AiKnowledgeBasePage: React.FC = () => {
                     <ListItemIcon>{getTypeIcon(doc.type)}</ListItemIcon>
                     <ListItemText
                       primary={doc.title}
-                      secondary={`${doc.size} · 更新于 ${doc.updatedAt}`}
+                      secondary={`${doc.size} · ${t('ai.knowledge_base.label.updated_at')} ${doc.updatedAt}`}
                     />
                   </ListItemButton>
                 ))}
@@ -233,7 +235,7 @@ export const AiKnowledgeBasePage: React.FC = () => {
               {selectedDocs.length > 0 && (
                 <Box sx={{ mt: 2 }}>
                   <Typography variant='body2' color='text.secondary' sx={{ mb: 1 }}>
-                    已选择 {selectedDocs.length} 个文档
+                    {t('ai.knowledge_base.label.selected_docs', { count: selectedDocs.length })}
                   </Typography>
                   <Button
                     fullWidth
@@ -241,7 +243,7 @@ export const AiKnowledgeBasePage: React.FC = () => {
                     variant='outlined'
                     onClick={() => setSelectedDocs([])}
                   >
-                    清除选择
+                    {t('ai.knowledge_base.label.clear_selection')}
                   </Button>
                 </Box>
               )}
@@ -261,12 +263,12 @@ export const AiKnowledgeBasePage: React.FC = () => {
                 <Typography variant='subtitle1' sx={{ fontWeight: 600 }}>
                   <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
                     <Sparkles size={18} style={{ color: ct.yellow[500] }} />
-                    智能问答
+                    {t('ai.knowledge_base.label.smart_qa')}
                   </Box>
                 </Typography>
                 <Box sx={{ display: 'flex', gap: 1 }}>
                   <Chip
-                    label='知识库'
+                    label={t('ai.knowledge_base.label.knowledge_base')}
                     size='small'
                     color='primary'
                     variant='outlined'
@@ -298,13 +300,17 @@ export const AiKnowledgeBasePage: React.FC = () => {
                       style={{ color: ct.text.disabled, marginBottom: 12 }}
                     />
                     <Typography variant='body1' color='text.secondary'>
-                      欢迎使用知识库问答助手
+                      {t('ai.knowledge_base.message.welcome')}
                     </Typography>
                     <Typography variant='body2' color='text.secondary'>
-                      选择文档后输入问题，AI 将基于文档内容为您解答
+                      {t('ai.knowledge_base.message.welcome_desc')}
                     </Typography>
                     <Box sx={{ mt: 3, display: 'flex', gap: 2 }}>
-                      {['如何创建财务凭证？', '员工入职流程是什么？', '生产工单如何管理？'].map(
+                      {[
+                        t('ai.knowledge_base.mock.q_1'),
+                        t('ai.knowledge_base.example.q_2'),
+                        t('ai.knowledge_base.example.q_3'),
+                      ].map(
                         (example) => (
                           <Chip
                             key={example}
@@ -352,7 +358,7 @@ export const AiKnowledgeBasePage: React.FC = () => {
                           {msg.sources && msg.sources.length > 0 && (
                             <Box sx={{ mt: 2 }}>
                               <Typography variant='body2' color='text.secondary'>
-                                参考来源：
+                                {t('ai.knowledge_base.label.reference_source')}：
                               </Typography>
                               <Box sx={{ display: 'flex', gap: 1, flexWrap: 'wrap', mt: 1 }}>
                                 {msg.sources.map((source, idx) => (
@@ -369,7 +375,7 @@ export const AiKnowledgeBasePage: React.FC = () => {
                           {msg.confidence !== undefined && (
                             <Box sx={{ mt: 1 }}>
                               <Chip
-                                label={`置信度: ${Math.round(msg.confidence * 100)}%`}
+                                label={`${t('ai.knowledge_base.label.confidence')}: ${Math.round(msg.confidence * 100)}%`}
                                 size='small'
                                 color={msg.confidence >= 0.8 ? 'success' : 'warning'}
                                 variant='outlined'
@@ -394,7 +400,7 @@ export const AiKnowledgeBasePage: React.FC = () => {
               <Box sx={{ mt: 3, display: 'flex', gap: 2 }}>
                 <TextField
                   fullWidth
-                  placeholder='输入您的问题...'
+                  placeholder={t('ai.knowledge_base.label.input_question')}
                   value={query}
                   onChange={(e) => setQuery(e.target.value)}
                   onKeyDown={(e) => e.key === 'Enter' && handleSendQuery()}
@@ -408,14 +414,14 @@ export const AiKnowledgeBasePage: React.FC = () => {
                     searching ? <RefreshCw size={18} className='animate-spin' /> : <Search size={18} />
                   }
                 >
-                  {searching ? '搜索中' : '提问'}
+                  {searching ? t('ai.knowledge_base.button.searching') : t('ai.knowledge_base.button.ask')}
                 </Button>
               </Box>
 
               {chatHistory.length > 0 && !searching && (
                 <Box sx={{ mt: 3 }}>
                   <Typography variant='body2' color='text.secondary' sx={{ mb: 1 }}>
-                    相关问题：
+                    {t('ai.knowledge_base.label.related_questions')}：
                   </Typography>
                   <Box sx={{ display: 'flex', gap: 1, flexWrap: 'wrap' }}>
                     {sampleFollowUp.map((question) => (

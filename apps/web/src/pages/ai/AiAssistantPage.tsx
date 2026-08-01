@@ -54,6 +54,8 @@ import {
   Minus,
 } from 'lucide-react';
 
+import { useTranslation } from 'react-i18next';
+
 import { PageContainer } from '@/components/common';
 import { useNotificationStore } from '@/store';
 import { assistantApi } from '@/api/ai';
@@ -68,9 +70,9 @@ import { BIChartColors } from '@/components/charts/chartTheme';
 type TabValue = 'report' | 'flow' | 'knowledge';
 
 const TAB_CONFIG: { value: TabValue; label: string; icon: React.ReactNode }[] = [
-  { value: 'report', label: '报表助手', icon: <BarChart3 size={18} /> },
-  { value: 'flow', label: '流程助手', icon: <Workflow size={18} /> },
-  { value: 'knowledge', label: '知识库', icon: <BookOpen size={18} /> },
+  { value: 'report', label: 'assistant.tab.report', icon: <BarChart3 size={18} /> },
+  { value: 'flow', label: 'assistant.tab.flow', icon: <Workflow size={18} /> },
+  { value: 'knowledge', label: 'assistant.tab.knowledge', icon: <BookOpen size={18} /> },
 ];
 
 const DEFAULT_PIE_COLORS = [...BIChartColors.series, '#06B6D4', '#EC4899'];
@@ -88,18 +90,7 @@ const getSeverityColor = (severity: string) => {
   }
 };
 
-const getSeverityLabel = (severity: string) => {
-  switch (severity) {
-    case 'high':
-      return '高';
-    case 'medium':
-      return '中';
-    case 'low':
-      return '低';
-    default:
-      return severity;
-  }
-};
+const getSeverityLabel = (severity: string) => severity;
 
 const MetricCard: React.FC<{
   label: string;
@@ -339,7 +330,9 @@ const ReportResult: React.FC<{ result: ReportAssistantResponse }> = ({ result })
   );
 };
 
-const FlowResult: React.FC<{ result: FlowAssistantResponse }> = ({ result }) => (
+const FlowResult: React.FC<{ result: FlowAssistantResponse }> = ({ result }) => {
+  const { t } = useTranslation();
+  return (
   <Box sx={{ mt: 3 }}>
     <Typography
       variant='h6'
@@ -364,7 +357,7 @@ const FlowResult: React.FC<{ result: FlowAssistantResponse }> = ({ result }) => 
         >
           <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 0.5 }}>
             <Chip
-              label={`步骤 ${step.step}`}
+              label={t('ai.assistant.flow.step_label', { step: step.step })}
               size='small'
               color='primary'
             />
@@ -384,14 +377,14 @@ const FlowResult: React.FC<{ result: FlowAssistantResponse }> = ({ result }) => 
           <Box sx={{ display: 'flex', gap: 1, flexWrap: 'wrap' }}>
             {step.responsible && (
               <Chip
-                label={`负责人: ${step.responsible}`}
+                label={t('ai.assistant.flow.responsible', { person: step.responsible })}
                 size='small'
                 variant='outlined'
               />
             )}
             {step.estimated_time && (
               <Chip
-                label={`预计耗时: ${step.estimated_time}`}
+                label={t('ai.assistant.flow.estimated_time', { time: step.estimated_time })}
                 size='small'
                 variant='outlined'
               />
@@ -406,7 +399,7 @@ const FlowResult: React.FC<{ result: FlowAssistantResponse }> = ({ result }) => 
           variant='subtitle2'
           sx={{ mb: 1 }}
         >
-          优化建议
+          {t('ai.assistant.flow.optimization_suggestion')}
         </Typography>
         {result.suggestions.map((suggestion, index) => (
           <Alert
@@ -420,15 +413,18 @@ const FlowResult: React.FC<{ result: FlowAssistantResponse }> = ({ result }) => 
       </Box>
     )}
   </Box>
-);
+  );
+};
 
-const AnomalyResult: React.FC<{ result: AnomalyPredictResponse }> = ({ result }) => (
+const AnomalyResult: React.FC<{ result: AnomalyPredictResponse }> = ({ result }) => {
+  const { t } = useTranslation();
+  return (
   <Box sx={{ mt: 3 }}>
     <Typography
       variant='h6'
       sx={{ mb: 1 }}
     >
-      异常预测结果：{result.metric}
+      {t('ai.assistant.anomaly.result_title')}：{result.metric}
     </Typography>
     <Typography
       variant='body2'
@@ -444,7 +440,7 @@ const AnomalyResult: React.FC<{ result: AnomalyPredictResponse }> = ({ result })
     >
       <Grid size={{ xs: 12, sm: 6 }}>
         <MetricCard
-          label='异常数量'
+          label={t('ai.assistant.anomaly.count')}
           value={result.anomaly_count}
         />
       </Grid>
@@ -454,11 +450,11 @@ const AnomalyResult: React.FC<{ result: AnomalyPredictResponse }> = ({ result })
         <Table size='small'>
           <TableHead>
             <TableRow>
-              <TableCell>时间</TableCell>
-              <TableCell>实际值</TableCell>
-              <TableCell>预期值</TableCell>
-              <TableCell>严重程度</TableCell>
-              <TableCell>原因</TableCell>
+              <TableCell>{t('ai.assistant.anomaly.col_timestamp')}</TableCell>
+              <TableCell>{t('ai.assistant.anomaly.col_value')}</TableCell>
+              <TableCell>{t('ai.assistant.anomaly.col_expected')}</TableCell>
+              <TableCell>{t('ai.assistant.anomaly.col_severity')}</TableCell>
+              <TableCell>{t('ai.assistant.anomaly.col_reason')}</TableCell>
             </TableRow>
           </TableHead>
           <TableBody>
@@ -469,7 +465,7 @@ const AnomalyResult: React.FC<{ result: AnomalyPredictResponse }> = ({ result })
                 <TableCell>{anomaly.expected ?? '-'}</TableCell>
                 <TableCell>
                   <Chip
-                    label={getSeverityLabel(anomaly.severity)}
+                    label={t('ai.assistant.severity.' + getSeverityLabel(anomaly.severity))}
                     color={
                       getSeverityColor(anomaly.severity) as 'error' | 'warning' | 'info' | 'default'
                     }
@@ -497,9 +493,12 @@ const AnomalyResult: React.FC<{ result: AnomalyPredictResponse }> = ({ result })
       </Box>
     )}
   </Box>
-);
+  );
+};
 
-const KnowledgeResult: React.FC<{ result: KnowledgeAskResponse }> = ({ result }) => (
+const KnowledgeResult: React.FC<{ result: KnowledgeAskResponse }> = ({ result }) => {
+  const { t } = useTranslation();
+  return (
   <Box sx={{ mt: 3 }}>
     <Paper sx={{ p: 3, bgcolor: 'primary.50' }}>
       <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 1 }}>
@@ -508,7 +507,7 @@ const KnowledgeResult: React.FC<{ result: KnowledgeAskResponse }> = ({ result })
           variant='subtitle1'
           sx={{ fontWeight: 600 }}
         >
-          AI 回答
+          {t('ai.assistant.knowledge.ai_answer')}
         </Typography>
       </Box>
       <Typography
@@ -523,7 +522,7 @@ const KnowledgeResult: React.FC<{ result: KnowledgeAskResponse }> = ({ result })
         variant='subtitle2'
         sx={{ mb: 1 }}
       >
-        参考来源
+        {t('ai.assistant.knowledge.reference_source')}
       </Typography>
       {result.sources.map((source, index) => (
         <Paper
@@ -547,7 +546,7 @@ const KnowledgeResult: React.FC<{ result: KnowledgeAskResponse }> = ({ result })
           )}
           {source.relevance !== undefined && (
             <Chip
-              label={`相关度: ${(source.relevance * 100).toFixed(0)}%`}
+              label={t('ai.assistant.knowledge.relevance', { pct: (source.relevance * 100).toFixed(0) })}
               size='small'
               sx={{ mt: 0.5 }}
             />
@@ -561,7 +560,7 @@ const KnowledgeResult: React.FC<{ result: KnowledgeAskResponse }> = ({ result })
           variant='subtitle2'
           sx={{ mb: 1 }}
         >
-          推荐追问
+          {t('ai.assistant.knowledge.follow_up')}
         </Typography>
         <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 1 }}>
           {result.follow_up_questions.map((question, index) => (
@@ -576,10 +575,12 @@ const KnowledgeResult: React.FC<{ result: KnowledgeAskResponse }> = ({ result })
       </Box>
     )}
   </Box>
-);
+  );
+};
 
 export const AiAssistantPage: React.FC = () => {
   const addNotification = useNotificationStore((state) => state.addNotification);
+  const { t } = useTranslation();
   const [activeTab, setActiveTab] = useState<TabValue>('report');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -612,7 +613,7 @@ export const AiAssistantPage: React.FC = () => {
 
   const handleReportSubmit = async () => {
     if (!reportQuery.trim()) {
-      setError('请输入报表需求');
+      setError(t('ai.assistant.report.message.input_query'));
       return;
     }
     setLoading(true);
@@ -626,12 +627,12 @@ export const AiAssistantPage: React.FC = () => {
       if (response.success && response.data) {
         setReportResult(response.data);
       } else {
-        setError(response.message || '生成报表失败');
+        setError(response.message || t('ai.assistant.report.message.fail'));
       }
     } catch (err) {
-      const message = err instanceof Error ? err.message : '请求失败';
+      const message = err instanceof Error ? err.message : t('ai.assistant.common.error_unknown');
       setError(message);
-      addNotification({ title: '报表助手', message, type: 'error' });
+      addNotification({ title: t('ai.assistant.tab.report'), message, type: 'error' });
     } finally {
       setLoading(false);
     }
@@ -639,7 +640,7 @@ export const AiAssistantPage: React.FC = () => {
 
   const handleFlowSubmit = async () => {
     if (!flowQuery.trim()) {
-      setError('请输入流程问题');
+      setError(t('ai.assistant.flow.message.input_query'));
       return;
     }
     setLoading(true);
@@ -652,12 +653,12 @@ export const AiAssistantPage: React.FC = () => {
       if (response.success && response.data) {
         setFlowResult(response.data);
       } else {
-        setError(response.message || '流程分析失败');
+        setError(response.message || t('ai.assistant.flow.message.fail'));
       }
     } catch (err) {
-      const message = err instanceof Error ? err.message : '请求失败';
+      const message = err instanceof Error ? err.message : t('ai.assistant.common.error_unknown');
       setError(message);
-      addNotification({ title: '流程助手', message, type: 'error' });
+      addNotification({ title: t('ai.assistant.tab.flow'), message, type: 'error' });
     } finally {
       setLoading(false);
     }
@@ -665,7 +666,7 @@ export const AiAssistantPage: React.FC = () => {
 
   const handleAnomalySubmit = async () => {
     if (!anomalyMetric.trim()) {
-      setError('请输入监控指标');
+      setError(t('ai.assistant.anomaly.message.input_metric'));
       return;
     }
     setLoading(true);
@@ -678,12 +679,12 @@ export const AiAssistantPage: React.FC = () => {
       if (response.success && response.data) {
         setAnomalyResult(response.data);
       } else {
-        setError(response.message || '异常预测失败');
+        setError(response.message || t('ai.assistant.anomaly.message.fail'));
       }
     } catch (err) {
-      const message = err instanceof Error ? err.message : '请求失败';
+      const message = err instanceof Error ? err.message : t('ai.assistant.common.error_unknown');
       setError(message);
-      addNotification({ title: '异常预测', message, type: 'error' });
+      addNotification({ title: t('ai.assistant.anomaly.subtitle'), message, type: 'error' });
     } finally {
       setLoading(false);
     }
@@ -691,7 +692,7 @@ export const AiAssistantPage: React.FC = () => {
 
   const handleKnowledgeSubmit = async () => {
     if (!knowledgeQuestion.trim()) {
-      setError('请输入问题');
+      setError(t('ai.assistant.knowledge.message.input_question'));
       return;
     }
     setLoading(true);
@@ -704,12 +705,12 @@ export const AiAssistantPage: React.FC = () => {
       if (response.success && response.data) {
         setKnowledgeResult(response.data);
       } else {
-        setError(response.message || '知识库查询失败');
+        setError(response.message || t('ai.assistant.knowledge.message.fail'));
       }
     } catch (err) {
-      const message = err instanceof Error ? err.message : '请求失败';
+      const message = err instanceof Error ? err.message : t('ai.assistant.common.error_unknown');
       setError(message);
-      addNotification({ title: '知识库', message, type: 'error' });
+      addNotification({ title: t('ai.assistant.tab.knowledge'), message, type: 'error' });
     } finally {
       setLoading(false);
     }
@@ -717,8 +718,8 @@ export const AiAssistantPage: React.FC = () => {
 
   return (
     <PageContainer
-      title='AI 智能助手'
-      subtitle='报表分析、流程优化、知识问答一站式智能助手'
+      title={t('ai.assistant.title')}
+      subtitle={t('ai.assistant.subtitle')}
     >
       <Paper sx={{ mb: 2 }}>
         <Tabs
@@ -734,7 +735,7 @@ export const AiAssistantPage: React.FC = () => {
               label={
                 <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
                   {tab.icon}
-                  {tab.label}
+                  {t('ai.' + tab.label)}
                 </Box>
               }
             />
@@ -759,34 +760,34 @@ export const AiAssistantPage: React.FC = () => {
               variant='h6'
               sx={{ mb: 2 }}
             >
-              报表助手
+              {t('ai.assistant.report.title')}
             </Typography>
             <Typography
               variant='body2'
               color='text.secondary'
               sx={{ mb: 2 }}
             >
-              用自然语言描述您想要的报表，AI 将自动生成图表和数据分析。
+              {t('ai.assistant.report.desc')}
             </Typography>
             <TextField
               fullWidth
-              label='报表需求'
-              placeholder='例如：展示最近一个月各产品线的销售额趋势'
+              label={t('ai.assistant.report.field_query')}
+              placeholder={t('ai.assistant.report.placeholder_query')}
               value={reportQuery}
               onChange={(e) => setReportQuery(e.target.value)}
               sx={{ mb: 2 }}
             />
             <Box sx={{ display: 'flex', gap: 2, mb: 2 }}>
               <TextField
-                label='数据源'
-                placeholder='例如：sales_order'
+                label={t('ai.assistant.report.field_data_source')}
+                placeholder={t('ai.assistant.report.placeholder_data_source')}
                 value={reportDataSource}
                 onChange={(e) => setReportDataSource(e.target.value)}
                 fullWidth
               />
               <TextField
-                label='时间范围'
-                placeholder='例如：last_30_days'
+                label={t('ai.assistant.report.field_time_range')}
+                placeholder={t('ai.assistant.report.placeholder_time_range')}
                 value={reportTimeRange}
                 onChange={(e) => setReportTimeRange(e.target.value)}
                 fullWidth
@@ -807,7 +808,7 @@ export const AiAssistantPage: React.FC = () => {
               onClick={handleReportSubmit}
               disabled={loading || !reportQuery.trim()}
             >
-              生成报表
+              {t('ai.assistant.report.button_generate')}
             </Button>
           </Paper>
           {reportResult && <ReportResult result={reportResult} />}
@@ -821,27 +822,27 @@ export const AiAssistantPage: React.FC = () => {
               variant='h6'
               sx={{ mb: 2 }}
             >
-              流程助手
+              {t('ai.assistant.flow.title')}
             </Typography>
             <Typography
               variant='body2'
               color='text.secondary'
               sx={{ mb: 2 }}
             >
-              描述业务场景或流程问题，AI 将给出标准化流程步骤和优化建议。
+              {t('ai.assistant.flow.desc')}
             </Typography>
             <TextField
               fullWidth
-              label='流程问题'
-              placeholder='例如：请描述新员工入职审批流程'
+              label={t('ai.assistant.flow.label.query')}
+              placeholder={t('ai.assistant.flow.placeholder.query')}
               value={flowQuery}
               onChange={(e) => setFlowQuery(e.target.value)}
               sx={{ mb: 2 }}
             />
             <TextField
               fullWidth
-              label='业务模块（可选）'
-              placeholder='例如：hrm'
+              label={t('ai.assistant.flow.label.module')}
+              placeholder={t('ai.assistant.flow.placeholder.module')}
               value={flowModule}
               onChange={(e) => setFlowModule(e.target.value)}
               sx={{ mb: 2 }}
@@ -861,7 +862,7 @@ export const AiAssistantPage: React.FC = () => {
               onClick={handleFlowSubmit}
               disabled={loading || !flowQuery.trim()}
             >
-              分析流程
+              {t('ai.assistant.flow.button.analyze')}
             </Button>
           </Paper>
           {flowResult && <FlowResult result={flowResult} />}
@@ -873,27 +874,27 @@ export const AiAssistantPage: React.FC = () => {
               variant='h6'
               sx={{ mb: 2 }}
             >
-              异常预测
+              {t('ai.assistant.anomaly.section_title')}
             </Typography>
             <Typography
               variant='body2'
               color='text.secondary'
               sx={{ mb: 2 }}
             >
-              输入关键业务指标，AI 将基于历史数据预测潜在异常。
+              {t('ai.assistant.anomaly.desc')}
             </Typography>
             <TextField
               fullWidth
-              label='监控指标'
-              placeholder='例如：production_defect_rate'
+              label={t('ai.assistant.anomaly.label.metric')}
+              placeholder={t('ai.assistant.anomaly.placeholder.metric')}
               value={anomalyMetric}
               onChange={(e) => setAnomalyMetric(e.target.value)}
               sx={{ mb: 2 }}
             />
             <TextField
               fullWidth
-              label='时间范围（可选）'
-              placeholder='例如：last_7_days'
+              label={t('ai.assistant.anomaly.label.time_range')}
+              placeholder={t('ai.assistant.anomaly.placeholder.time_range')}
               value={anomalyTimeRange}
               onChange={(e) => setAnomalyTimeRange(e.target.value)}
               sx={{ mb: 2 }}
@@ -913,7 +914,7 @@ export const AiAssistantPage: React.FC = () => {
               onClick={handleAnomalySubmit}
               disabled={loading || !anomalyMetric.trim()}
             >
-              预测异常
+              {t('ai.assistant.anomaly.button.predict')}
             </Button>
           </Paper>
           {anomalyResult && <AnomalyResult result={anomalyResult} />}
@@ -927,27 +928,27 @@ export const AiAssistantPage: React.FC = () => {
               variant='h6'
               sx={{ mb: 2 }}
             >
-              知识库问答
+              {t('ai.assistant.knowledge.title')}
             </Typography>
             <Typography
               variant='body2'
               color='text.secondary'
               sx={{ mb: 2 }}
             >
-              向企业知识库提问，AI 将基于知识库内容给出答案和来源。
+              {t('ai.assistant.knowledge.desc')}
             </Typography>
             <TextField
               fullWidth
-              label='问题'
-              placeholder='例如：如何申请采购审批？'
+              label={t('ai.assistant.knowledge.label.question')}
+              placeholder={t('ai.assistant.knowledge.placeholder.question')}
               value={knowledgeQuestion}
               onChange={(e) => setKnowledgeQuestion(e.target.value)}
               sx={{ mb: 2 }}
             />
             <TextField
               fullWidth
-              label='知识库（可选）'
-              placeholder='例如：company_policy'
+              label={t('ai.assistant.knowledge.label.base')}
+              placeholder={t('ai.assistant.knowledge.placeholder.base')}
               value={knowledgeBase}
               onChange={(e) => setKnowledgeBase(e.target.value)}
               sx={{ mb: 2 }}
@@ -967,7 +968,7 @@ export const AiAssistantPage: React.FC = () => {
               onClick={handleKnowledgeSubmit}
               disabled={loading || !knowledgeQuestion.trim()}
             >
-              提问
+              {t('ai.assistant.knowledge.button.ask')}
             </Button>
           </Paper>
           {knowledgeResult && <KnowledgeResult result={knowledgeResult} />}

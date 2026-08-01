@@ -5,18 +5,45 @@ import { initReactI18next } from 'react-i18next';
 const loadTranslations = async () => {
   const savedLanguage = localStorage.getItem('language') || 'zh';
 
-  const [enTranslation, zhTranslation, enDevtools, zhDevtools] = await Promise.all([
+  const [
+    enTranslation,
+    zhTranslation,
+    enDevtools,
+    zhDevtools,
+    enAi,
+    zhAi,
+    enMonitor,
+    zhMonitor,
+  ] = await Promise.all([
     import('./locales/en.json').then((m) => m.default),
     import('./locales/zh.json').then((m) => m.default),
     import('./locales/en/devtools.json').then((m) => m.default),
     import('./locales/zh/devtools.json').then((m) => m.default),
+    import('./locales/en/ai.json').then((m) => m.default),
+    import('./locales/zh/ai.json').then((m) => m.default),
+    import('./locales/en/monitor.json').then((m) => m.default),
+    import('./locales/zh/monitor.json').then((m) => m.default),
   ]);
 
   return {
     lng: savedLanguage,
     resources: {
-      en: { translation: { ...enTranslation, devtools: enDevtools.devtools } },
-      zh: { translation: { ...zhTranslation, devtools: zhDevtools.devtools } },
+      en: {
+        translation: {
+          ...enTranslation,
+          devtools: enDevtools.devtools,
+          ...enAi,
+          ...enMonitor,
+        },
+      },
+      zh: {
+        translation: {
+          ...zhTranslation,
+          devtools: zhDevtools.devtools,
+          ...zhAi,
+          ...zhMonitor,
+        },
+      },
     },
   };
 };

@@ -1,13 +1,122 @@
 # TOPEMS 项目任务规划与路线图
 
-> **版本**: V63.7 | **更新日期**: 2026-08-01
+> **版本**: V63.8 | **更新日期**: 2026-08-01
 > **服务总数**: 27 个（含 master-data） | **前端页面**: 423 页 | **后端 API 端点**: 1,561 个 | **前端 API 函数**: 1,315 个
-> **综合健康评分**: **95/100**（V63.6 全部 6 项任务完成 ✅；V63.7 四路并行清理 498 类型错误 → 0；前端 typecheck 全绿）
+> **综合健康评分**: **96/100**（V63.7 前端 typecheck 全绿；V63.8 后端 workspace 全绿 + i18n 治理推进）
 > **微服务治理**: Phase 1-9 全部完成 ✅（ERP 瘦身 + 供应链边界 + 服务客户端统一 + unified-core 外迁 + 子 crate 拆分）
 
 ---
 
-## 🎯 V63.7 四路并行实施方案（2026-08-01 类型错误清零）
+## 🎯 V63.8 三路并行实施方案（2026-08-01 后端 workspace 全绿 + i18n 治理）
+
+> **背景**: V63.7 完成前端 typecheck 0 错误后，验收发现后端 `cargo check --workspace` 存在 116 个错误（topems-mes 114 + unified-core 2）。本次三路并行修复后端编译错误并继续前端 i18n 治理。
+> **执行原则**: 多任务并行 + 仅修复编译错误不重构 + i18n 治理不破坏功能 + 验收 workspace 全绿。
+
+### 📊 V63.8 三路并行总览
+
+```
+Track 1（后端 mes 修复）              Track 2（后端 unified-core 修复）     Track 3（前端 i18n 治理）
+─────────────────────────────────    ─────────────────────────────────    ─────────────────────────────────
+B-11: topems-mes 114 错误 → 0         B-12: unified-core 2 错误 → 0         F-20: pages/ai + pages/monitor i18n
+      Uuid/String/NaiveDateTime            Claims.iss 字段不存在                10 个组件 + 4 个 i18n 资源
+─────────────────────────────────    ─────────────────────────────────    ─────────────────────────────────
+依赖：无                              依赖：无                              依赖：无
+并行度：1 服务                        并行度：1 服务                        并行度：2 模块
+```
+
+### 🔵 后端 Track 1（topems-mes — 114 错误 → 0）
+
+**问题**: `cargo check -p topems-mes --lib` 存在 114 个错误，集中在：
+- `svc/mes/src/modules/quality_management/patrol.rs` — 巡检管理
+- `svc/mes/src/modules/quality_management/standard.rs` — 检验标准
+- `svc/mes/src/modules/team.rs` — 班组管理
+- `svc/mes/src/modules/process_route.rs` — 工艺路线
+- 其他模块
+
+**错误模式与修复**:
+
+| 错误类型 | 根因 | 修复模式 | 涉及位置 |
+|---------|------|---------|---------|
+| E0599 `Uuid` is not an iterator | `r.field` 是 `Uuid`（NOT NULL 列）但用了 `.map(\|v\| v.to_string()).unwrap_or_default()` | 改为 `r.field.to_string()` | patrol/standard/team/process_route 多处 |
+| E0599 `unwrap_or_default` not found on `String` | `r.field` 是 `String`（NOT NULL 列）但用了 `.unwrap_or_default()` | 改为 `r.field.clone()` | patrol/standard 的 inspector/inspection_type 等 |
+| E0599 `unwrap_or_default` not found on `Uuid` | `v.field` 是 `Uuid` 但用了 `.unwrap_or_default()` | 移除 `.unwrap_or_default()` | standard 的 standard_id |
+| E0308 `Option<&str>` vs `Option<NaiveDateTime>` | `parse_opt_datetime(body.field)` 期望 `Option<&str>` 但传入 `Option<NaiveDateTime>` | 移除 `parse_opt_datetime` 包装，直接传 `body.field` | patrol 的 patrol_time、standard 的 effective_date |
+| E0308 `Option<String>` 赋值给 `String` | `r.team_code` 是 `Option<String>`（可空列）但目标字段是 `String` | 添加 `.unwrap_or_default()` | team 的 team_code/team_name |
+
+**附带清理**: 移除未使用的 `parse_opt_datetime` 导入；为 `parse_opt_datetime` 函数添加 `#[allow(dead_code)]`（与同文件其他未使用函数处理方式一致）
+
+**验收**: `cargo check -p topems-mes --lib` 2.09s 零错误零警告 ✅
+
+---
+
+### 🔵 后端 Track 2（unified-core-service — 2 错误 → 0）
+
+**问题**: `svc/unified-core/src/modules/tenant/handlers.rs:1300` 引用 `claims.iss.clone()`，但 `Claims` 结构体（定义于 `lib/shared-auth/src/auth.rs:18-33`）无 `iss` 字段。
+
+**调查**:
+- `Claims` 结构体有 14 个字段：`sub`/`username`/`role`/`roles`/`permissions`/`is_superuser`/`exp`/`iat`/`email`/`department`/`tenant_id`/`department_id`/`position_id`/`position_code`
+- 所有其他 `Claims` 构造点（`generate_jwt_token`、`auth_middleware` 开发模式分支、auth.rs 单元测试）均不设置 `iss`
+- 测试文件 `lib/tests/auth_audit.rs`、`lib/tests/tenant_isolation.rs` 中的 `iss` 引用是它们各自本地定义的 Claims 结构体（带 `iss: Option<String>`），与 `shared_auth::Claims` 无关
+- 第 1300 行位于 `switch_tenant` 函数，逻辑是复制旧 claims 字段并更新 `exp`/`iat`/`tenant_id` 生成新 token
+
+**修复方案**: 方案 B（移除引用 `iss` 的代码行），因为生产 Claims 不使用 issuer claim
+
+**修改文件**: `/Users/air/TOPEMS/svc/unified-core/src/modules/tenant/handlers.rs`（删除第 1300 行）
+
+**验收**: `cargo check -p unified-core-service --lib` 零错误 ✅
+
+---
+
+### 🟢 前端 Track 3（pages/ai + pages/monitor i18n 治理）
+
+**范围**: 
+- `pages/ai/` 8 个组件：AiAssistantPage/AiChatPage/AiCodeAssistantPage/AiDashboardPage/AiDocumentAnalysisPage/AiKnowledgeBasePage/AiModelSettingsPage/AiPromptLibraryPage
+- `pages/monitor/` 2 个组件：AlertRulesPage/MonitorLogsPage
+
+**实施**:
+1. 补充 `i18n/locales/zh/ai.json` + `i18n/locales/en/ai.json`
+2. 补充 `i18n/locales/zh/monitor.json` + 新建 `i18n/locales/en/monitor.json`
+3. `i18n/index.ts` 注册 ai/monitor namespace
+4. 10 个组件添加 `useTranslation` hook，硬编码字符串替换为 `t('ai:xxx')` / `t('monitor:xxx')`
+
+**验收**: `pnpm typecheck` 0 错误 ✅；zh/en key 一一对应 ✅
+
+---
+
+### 📈 V63.8 三路并行进度追踪
+
+| 任务 | 优先级 | 状态 | 完成时间 | 备注 |
+|------|--------|------|---------|------|
+| 后端 B-11 topems-mes 114 错误修复 | P0 | ✅ 已完成 | 2026-08-01 | Uuid/String/NaiveDateTime 类型不匹配；5 个模块文件 |
+| 后端 B-12 unified-core 2 错误修复 | P0 | ✅ 已完成 | 2026-08-01 | Claims.iss 字段不存在；移除引用行 |
+| 前端 F-20 pages/ai + pages/monitor i18n | P2 | ✅ 已完成 | 2026-08-01 | 10 组件 + 4 i18n 资源；zh/en 同步 |
+
+### 🎯 V63.8 验收结果（2026-08-01）
+
+| 验收项 | 结果 | 证据 |
+|--------|------|------|
+| 后端 workspace 编译 | ✅ **零错误** | `cargo check --workspace` 通过（mes 114→0 + unified-core 2→0） |
+| 前端类型检查 | ✅ 0 错误 | `pnpm typecheck` 全绿（V63.7 成果保持） |
+| B-11 topems-mes | ✅ 完成 | 5 模块文件修复；Uuid.map().unwrap_or_default() → to_string()；parse_opt_datetime 移除 |
+| B-12 unified-core | ✅ 完成 | 移除 tenant/handlers.rs:1300 iss 行；Claims 不需 iss 字段 |
+| F-20 ai/monitor i18n | ✅ 完成 | 10 组件 i18n 化；4 资源文件；zh/en 同步 |
+
+### 📌 V63.8 遗留事项（非阻塞）
+
+1. **unified-core 5 个 warning**: 未使用导入（Uri、HealthStatus 等），非阻塞
+2. **i18n 治理仍需推进**: pages/ai 和 pages/monitor 已治理，但其他 pages/ 模块（pm/finance/crm/workflow/rd/ehs/doc/asset/srm/admin/erp 等）仍有大量 zh-CN 硬编码
+3. **数据库迁移待部署**: `20260725130000` + `20260801000000` 两个迁移文件
+4. **a2ui stub 仍为占位**: 待 V64.0+ AI 接入
+
+### 🎯 V63.8 关键技术发现
+
+1. **后端类型不匹配根因**: 数据库 FromRow 结构体的字段类型（NOT NULL → Uuid/String，NULL → Option<Uuid>/Option<String>）与代码中假设的类型不一致。建议后续引入 `sqlx::query_as!` 宏做编译期 SQL 类型检查
+2. **JWT Claims 精简**: 生产 `shared_auth::Claims` 不含 `iss`（issuer）字段，所有 token 生成点均不设置 iss，与测试中的本地 Claims 不同
+3. **i18n 治理模式**: 与 dev-tools/ 治理模式一致 — 先建 zh/en 资源文件 → 注册 namespace → 组件添加 useTranslation → 替换硬编码
+
+---
+
+## 📜 V63.7 四路并行实施方案（2026-08-01 类型错误清零，已归档）
 
 > **背景**: V63.6 完成后前端剩 498 个类型错误，集中在 pages/(243)、microfrontend/(81)、components/(44)、hooks/(39)、dev-platform/(37)、ai-*(22)、design-system/(13)、fullstack-automation/(10)、intelligent-ops/(6) 等非主线模块。本批次四路并行清理全部类型错误，达成前端 typecheck 0 错误。
 > **执行原则**: 多任务并行 + 仅类型修复不重构业务逻辑 + 不扩展 schema/types.ts + 不删除 V51-V60 已交付能力 + 阻塞记录跳过。

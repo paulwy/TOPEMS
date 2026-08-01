@@ -38,6 +38,7 @@ import {
   ChevronDown,
   FileCode,
 } from 'lucide-react';
+import { useTranslation } from 'react-i18next';
 import { PageContainer, Grid } from '@/components/common';
 import { useNotificationStore } from '@/store';
 import { logger } from '@/utils/logger';
@@ -47,11 +48,11 @@ const ct = designTokens.colors;
 
 type CodeTab = 'generate' | 'explain' | 'fix' | 'optimize' | 'review';
 
-const codeTemplates = [
-  { id: '1', name: 'React组件', language: 'tsx', description: '生成React函数组件' },
-  { id: '2', name: 'API接口', language: 'typescript', description: '生成REST API接口' },
-  { id: '3', name: '数据库查询', language: 'sql', description: '生成SQL查询语句' },
-  { id: '4', name: '工具函数', language: 'typescript', description: '生成常用工具函数' },
+const codeTemplateKeys = [
+  { id: '1', nameKey: 'ai.code_assistant.template.react_component', language: 'tsx', descKey: 'ai.code_assistant.template.react_component_desc' },
+  { id: '2', nameKey: 'ai.code_assistant.template.api', language: 'typescript', descKey: 'ai.code_assistant.template.api_desc' },
+  { id: '3', nameKey: 'ai.code_assistant.template.database_query', language: 'sql', descKey: 'ai.code_assistant.template.database_query_desc' },
+  { id: '4', nameKey: 'ai.code_assistant.template.util_function', language: 'typescript', descKey: 'ai.code_assistant.template.util_function_desc' },
 ];
 
 const sampleCode = `function calculateTotal(items) {
@@ -147,29 +148,30 @@ const codeExplanation = `这段代码是一个 React 的计数器组件 Counter�
 
 这是一个结构清晰、功能完整的可复用计数器组件。`;
 
-const reviewIssues = [
+const reviewIssueKeys = [
   {
     severity: 'warning' as const,
     line: 2,
-    description: '缺少类型定义',
-    suggestion: '应为 items 参数和返回值添加 TypeScript 类型定义',
+    descKey: 'ai.code_assistant.review.issue_1_desc',
+    suggestionKey: 'ai.code_assistant.review.issue_1_suggestion',
   },
   {
     severity: 'info' as const,
     line: 3,
-    description: '可以使用更函数式的写法',
-    suggestion: '考虑使用 Array.reduce() 方法替代 for 循环，代码更简洁',
+    descKey: 'ai.code_assistant.review.issue_2_desc',
+    suggestionKey: 'ai.code_assistant.review.issue_2_suggestion',
   },
   {
     severity: 'warning' as const,
     line: 4,
-    description: '缺少空值检查',
-    suggestion: '应检查 items 是否为数组，防止运行时错误',
+    descKey: 'ai.code_assistant.review.issue_3_desc',
+    suggestionKey: 'ai.code_assistant.review.issue_3_suggestion',
   },
 ];
 
 export const AiCodeAssistantPage: React.FC = () => {
   const addNotification = useNotificationStore((state) => state.addNotification);
+  const { t } = useTranslation();
   const [activeTab, setActiveTab] = useState<CodeTab>('generate');
   const [prompt, setPrompt] = useState('');
   const [language, setLanguage] = useState('typescript');
@@ -181,18 +183,18 @@ export const AiCodeAssistantPage: React.FC = () => {
   const [reviewScore, setReviewScore] = useState(0);
 
   const tabConfig = [
-    { id: 'generate' as CodeTab, label: '代码生成', icon: <Code2 size={18} /> },
-    { id: 'explain' as CodeTab, label: '代码解释', icon: <Lightbulb size={18} /> },
-    { id: 'fix' as CodeTab, label: 'Bug修复', icon: <Bug size={18} /> },
-    { id: 'optimize' as CodeTab, label: '代码优化', icon: <Zap size={18} /> },
-    { id: 'review' as CodeTab, label: '代码审查', icon: <FileCode size={18} /> },
+    { id: 'generate' as CodeTab, label: t('ai.code_assistant.tab.generate'), icon: <Code2 size={18} /> },
+    { id: 'explain' as CodeTab, label: t('ai.code_assistant.tab.explain'), icon: <Lightbulb size={18} /> },
+    { id: 'fix' as CodeTab, label: t('ai.code_assistant.tab.fix'), icon: <Bug size={18} /> },
+    { id: 'optimize' as CodeTab, label: t('ai.code_assistant.tab.optimize'), icon: <Zap size={18} /> },
+    { id: 'review' as CodeTab, label: t('ai.code_assistant.tab.review'), icon: <FileCode size={18} /> },
   ];
 
   const handleGenerate = useCallback(() => {
     if (!prompt.trim()) {
       addNotification({
-        title: '提示',
-        message: '请输入代码需求描述',
+        title: t('ai.code_assistant.message.notice_title'),
+        message: t('ai.code_assistant.message.input_prompt'),
         type: 'warning',
       });
       return;
@@ -205,18 +207,18 @@ export const AiCodeAssistantPage: React.FC = () => {
       setResult(generatedCode);
       setGenerating(false);
       addNotification({
-        title: '生成完成',
-        message: '代码已生成',
+        title: t('ai.code_assistant.message.generate_complete'),
+        message: t('ai.code_assistant.message.code_generated'),
         type: 'success',
       });
     }, 2000);
-  }, [prompt, addNotification]);
+  }, [prompt, addNotification, t]);
 
   const handleExplain = useCallback(() => {
     if (!codeInput.trim()) {
       addNotification({
-        title: '提示',
-        message: '请输入要解释的代码',
+        title: t('ai.code_assistant.message.notice_title'),
+        message: t('ai.code_assistant.message.input_explain_code'),
         type: 'warning',
       });
       return;
@@ -229,13 +231,13 @@ export const AiCodeAssistantPage: React.FC = () => {
       setResult(codeExplanation);
       setGenerating(false);
     }, 1500);
-  }, [codeInput, addNotification]);
+  }, [codeInput, addNotification, t]);
 
   const handleFixBug = useCallback(() => {
     if (!codeInput.trim()) {
       addNotification({
-        title: '提示',
-        message: '请输入包含Bug的代码',
+        title: t('ai.code_assistant.message.notice_title'),
+        message: t('ai.code_assistant.message.input_bug_code'),
         type: 'warning',
       });
       return;
@@ -250,13 +252,13 @@ export const AiCodeAssistantPage: React.FC = () => {
       );
       setGenerating(false);
     }, 2000);
-  }, [codeInput, addNotification]);
+  }, [codeInput, addNotification, t]);
 
   const handleOptimize = useCallback(() => {
     if (!codeInput.trim()) {
       addNotification({
-        title: '提示',
-        message: '请输入要优化的代码',
+        title: t('ai.code_assistant.message.notice_title'),
+        message: t('ai.code_assistant.message.input_optimize_code'),
         type: 'warning',
       });
       return;
@@ -271,13 +273,13 @@ export const AiCodeAssistantPage: React.FC = () => {
       );
       setGenerating(false);
     }, 1800);
-  }, [codeInput, addNotification]);
+  }, [codeInput, addNotification, t]);
 
   const handleReview = useCallback(() => {
     if (!codeInput.trim()) {
       addNotification({
-        title: '提示',
-        message: '请输入要审查的代码',
+        title: t('ai.code_assistant.message.notice_title'),
+        message: t('ai.code_assistant.message.input_review_code'),
         type: 'warning',
       });
       return;
@@ -290,15 +292,15 @@ export const AiCodeAssistantPage: React.FC = () => {
       setReviewScore(75);
       setGenerating(false);
     }, 1500);
-  }, [codeInput, addNotification]);
+  }, [codeInput, addNotification, t]);
 
   const handleCopy = (text: string) => {
     navigator.clipboard.writeText(text);
     setCopied(true);
     setTimeout(() => setCopied(false), 2000);
     addNotification({
-      title: '已复制',
-      message: '代码已复制到剪贴板',
+      title: t('ai.code_assistant.message.copied_title'),
+      message: t('ai.code_assistant.message.code_copied'),
       type: 'success',
     });
   };
@@ -331,8 +333,8 @@ export const AiCodeAssistantPage: React.FC = () => {
 
   return (
     <PageContainer
-      title='代码助手'
-      subtitle='代码生成、解释、优化、审查'
+      title={t('ai.code_assistant.title')}
+      subtitle={t('ai.code_assistant.subtitle')}
       padding={false}
       maxWidth={false}
       headerProps={{
@@ -389,7 +391,7 @@ export const AiCodeAssistantPage: React.FC = () => {
                       variant='subtitle1'
                       sx={{ fontWeight: 600, mb: 2 }}
                     >
-                      描述需求
+                      {t('ai.code_assistant.label.describe_requirement')}
                     </Typography>
 
                     <Box sx={{ display: 'flex', gap: 2, mb: 2 }}>
@@ -397,10 +399,10 @@ export const AiCodeAssistantPage: React.FC = () => {
                         size='small'
                         sx={{ flex: 1 }}
                       >
-                        <InputLabel>编程语言</InputLabel>
+                        <InputLabel>{t('ai.code_assistant.field.language')}</InputLabel>
                         <Select
                           value={language}
-                          label='编程语言'
+                          label={t('ai.code_assistant.field.language')}
                           onChange={(e) => setLanguage(e.target.value)}
                         >
                           <MenuItem value='typescript'>TypeScript</MenuItem>
@@ -415,17 +417,17 @@ export const AiCodeAssistantPage: React.FC = () => {
                         size='small'
                         sx={{ flex: 1 }}
                       >
-                        <InputLabel>框架</InputLabel>
+                        <InputLabel>{t('ai.code_assistant.field.framework')}</InputLabel>
                         <Select
                           value={framework}
-                          label='框架'
+                          label={t('ai.code_assistant.field.framework')}
                           onChange={(e) => setFramework(e.target.value)}
                         >
                           <MenuItem value='react'>React</MenuItem>
                           <MenuItem value='vue'>Vue</MenuItem>
                           <MenuItem value='nodejs'>Node.js</MenuItem>
                           <MenuItem value='spring'>Spring Boot</MenuItem>
-                          <MenuItem value='none'>无框架</MenuItem>
+                          <MenuItem value='none'>{t('ai.code_assistant.option.no_framework')}</MenuItem>
                         </Select>
                       </FormControl>
                     </Box>
@@ -434,7 +436,7 @@ export const AiCodeAssistantPage: React.FC = () => {
                       fullWidth
                       multiline
                       rows={8}
-                      placeholder='描述你想要生成的代码，例如：创建一个带加减按钮的计数器组件'
+                      placeholder={t('ai.code_assistant.placeholder.describe_code')}
                       value={prompt}
                       onChange={(e) => setPrompt(e.target.value)}
                       sx={{ mb: 2 }}
@@ -445,16 +447,16 @@ export const AiCodeAssistantPage: React.FC = () => {
                       color='text.secondary'
                       sx={{ mb: 1 }}
                     >
-                      快速模板：
+                      {t('ai.code_assistant.label.quick_template')}
                     </Typography>
                     <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 1, mb: 2 }}>
-                      {codeTemplates.map((tpl) => (
+                      {codeTemplateKeys.map((tpl) => (
                         <Chip
                           key={tpl.id}
-                          label={tpl.name}
+                          label={t(tpl.nameKey)}
                           size='small'
                           variant='outlined'
-                          onClick={() => setPrompt(tpl.description)}
+                          onClick={() => setPrompt(t(tpl.descKey))}
                           sx={{ cursor: 'pointer' }}
                         />
                       ))}
@@ -476,7 +478,7 @@ export const AiCodeAssistantPage: React.FC = () => {
                       onClick={handleGenerate}
                       disabled={generating || !prompt.trim()}
                     >
-                      {generating ? '生成中...' : '生成代码'}
+                      {generating ? t('ai.code_assistant.status.generating') : t('ai.code_assistant.action.generate_code')}
                     </Button>
                   </Box>
                 )}
@@ -488,10 +490,10 @@ export const AiCodeAssistantPage: React.FC = () => {
                       variant='subtitle1'
                       sx={{ fontWeight: 600, mb: 2 }}
                     >
-                      {activeTab === 'explain' && '输入要解释的代码'}
-                      {activeTab === 'fix' && '输入包含Bug的代码'}
-                      {activeTab === 'optimize' && '输入要优化的代码'}
-                      {activeTab === 'review' && '输入要审查的代码'}
+                      {activeTab === 'explain' && t('ai.code_assistant.label.input_explain')}
+                      {activeTab === 'fix' && t('ai.code_assistant.label.input_fix')}
+                      {activeTab === 'optimize' && t('ai.code_assistant.label.input_optimize')}
+                      {activeTab === 'review' && t('ai.code_assistant.label.input_review')}
                     </Typography>
                     <TextField
                       fullWidth
@@ -529,14 +531,14 @@ export const AiCodeAssistantPage: React.FC = () => {
                       disabled={generating || !codeInput.trim()}
                     >
                       {generating
-                        ? '处理中...'
+                        ? t('ai.code_assistant.status.processing')
                         : activeTab === 'explain'
-                          ? '解释代码'
+                          ? t('ai.code_assistant.action.explain_code')
                           : activeTab === 'fix'
-                            ? '修复Bug'
+                            ? t('ai.code_assistant.action.fix_bug')
                             : activeTab === 'optimize'
-                              ? '优化代码'
-                              : '开始审查'}
+                              ? t('ai.code_assistant.action.optimize_code')
+                              : t('ai.code_assistant.action.start_review')}
                     </Button>
                   </Box>
                 )}
@@ -560,20 +562,20 @@ export const AiCodeAssistantPage: React.FC = () => {
                     variant='subtitle1'
                     sx={{ fontWeight: 600 }}
                   >
-                    {activeTab === 'review' ? '审查结果' : '生成结果'}
+                    {activeTab === 'review' ? t('ai.code_assistant.label.review_result') : t('ai.code_assistant.label.generate_result')}
                   </Typography>
                   {result && (
                     <Box sx={{ display: 'flex', gap: 1 }}>
                       <IconButton
                         size='small'
                         onClick={() => handleCopy(result)}
-                        title='复制'
+                        title={t('ai.code_assistant.action.copy')}
                       >
                         <Copy size={16} />
                       </IconButton>
                       <IconButton
                         size='small'
-                        title='下载'
+                        title={t('ai.code_assistant.action.download')}
                       >
                         <Download size={16} />
                       </IconButton>
@@ -606,7 +608,7 @@ export const AiCodeAssistantPage: React.FC = () => {
                         variant='body2'
                         color='text.secondary'
                       >
-                        代码质量评分
+                        {t('ai.code_assistant.review.quality_score')}
                       </Typography>
                     </Paper>
 
@@ -614,10 +616,10 @@ export const AiCodeAssistantPage: React.FC = () => {
                       variant='subtitle2'
                       sx={{ fontWeight: 600, mb: 1 }}
                     >
-                      发现的问题 ({reviewIssues.length})
+                      {t('ai.code_assistant.review.issues_found', { count: reviewIssueKeys.length })}
                     </Typography>
                     <List disablePadding>
-                      {reviewIssues.map((issue, index) => (
+                      {reviewIssueKeys.map((issue, index) => (
                         <Accordion
                           key={index}
                           disableGutters
@@ -629,7 +631,7 @@ export const AiCodeAssistantPage: React.FC = () => {
                                 variant='body2'
                                 sx={{ fontWeight: 500 }}
                               >
-                                第 {issue.line} 行：{issue.description}
+                                {t('ai.code_assistant.review.line_issue', { line: issue.line })}：{t(issue.descKey)}
                               </Typography>
                             </Box>
                           </AccordionSummary>
@@ -638,7 +640,7 @@ export const AiCodeAssistantPage: React.FC = () => {
                               variant='body2'
                               color='text.secondary'
                             >
-                              建议：{issue.suggestion}
+                              {t('ai.code_assistant.review.suggestion_label')}：{t(issue.suggestionKey)}
                             </Typography>
                           </AccordionDetails>
                         </Accordion>
@@ -696,7 +698,7 @@ export const AiCodeAssistantPage: React.FC = () => {
                       variant='body2'
                       color='text.secondary'
                     >
-                      结果将在这里显示
+                      {t('ai.code_assistant.empty.result_placeholder')}
                     </Typography>
                   </Box>
                 )}
@@ -720,12 +722,12 @@ export const AiCodeAssistantPage: React.FC = () => {
                       className='animate-spin'
                       style={{ color: ct.secondary[400], marginBottom: 12 }}
                     />
-                    <Typography variant='body1'>AI 正在处理...</Typography>
+                    <Typography variant='body1'>{t('ai.code_assistant.status.ai_processing')}</Typography>
                     <Typography
                       variant='body2'
                       color='text.secondary'
                     >
-                      请稍候
+                      {t('ai.code_assistant.status.please_wait')}
                     </Typography>
                   </Box>
                 )}

@@ -27,6 +27,7 @@ import {
 } from 'lucide-react';
 import { Box, Typography, Chip, Switch, Stack, Paper } from '@mui/material';
 import { useTheme } from '@mui/material/styles';
+import { useTranslation } from 'react-i18next';
 
 import CrudPage, { type CrudApiAdapter } from '@/components/templates/CrudPage';
 import type { ColumnDef, RowAction } from '@/components/templates/list/types';
@@ -38,20 +39,20 @@ import { alertRuleSchema } from '@/schemas/monitor';
 
 const SEVERITY_CONFIG: Record<
   string,
-  { label: string; color: 'error' | 'warning' | 'info' | 'default' }
+  { labelKey: string; color: 'error' | 'warning' | 'info' | 'default' }
 > = {
-  critical: { label: '严重', color: 'error' },
-  error: { label: '错误', color: 'error' },
-  warning: { label: '警告', color: 'warning' },
-  info: { label: '信息', color: 'info' },
+  critical: { labelKey: 'monitor.common.severity.critical', color: 'error' },
+  error: { labelKey: 'monitor.common.severity.error', color: 'error' },
+  warning: { labelKey: 'monitor.common.severity.warning', color: 'warning' },
+  info: { labelKey: 'monitor.common.severity.info', color: 'info' },
 };
 
-const ACTION_TYPE_CONFIG: Record<string, { label: string; icon: React.ReactNode }> = {
-  notification: { label: '通知', icon: <Bell size={14} /> },
-  email: { label: '邮件', icon: <Mail size={14} /> },
-  sms: { label: '短信', icon: <Smartphone size={14} /> },
-  webhook: { label: 'Webhook', icon: <Webhook size={14} /> },
-  wechat: { label: '企业微信', icon: <MessageSquare size={14} /> },
+const ACTION_TYPE_CONFIG: Record<string, { labelKey: string; icon: React.ReactNode }> = {
+  notification: { labelKey: 'monitor.common.action_type.notification', icon: <Bell size={14} /> },
+  email: { labelKey: 'monitor.common.action_type.email', icon: <Mail size={14} /> },
+  sms: { labelKey: 'monitor.common.action_type.sms', icon: <Smartphone size={14} /> },
+  webhook: { labelKey: 'monitor.common.action_type.webhook', icon: <Webhook size={14} /> },
+  wechat: { labelKey: 'monitor.common.action_type.wechat', icon: <MessageSquare size={14} /> },
 };
 
 const OPERATOR_LABELS: Record<string, string> = {
@@ -100,7 +101,7 @@ const renderConditionCell = (row: Record<string, unknown>) => {
   );
 };
 
-const renderActionsCell = (row: Record<string, unknown>) => {
+const renderActionsCell = (row: Record<string, unknown>, t: (key: string) => string) => {
   const rule = row as unknown as AlertRuleRecord;
   const actions = rule.actions as RuleAction[];
   if (actions.length === 0) {
@@ -109,7 +110,7 @@ const renderActionsCell = (row: Record<string, unknown>) => {
         variant='caption'
         color='text.disabled'
       >
-        无
+        {t('monitor.common.label.none')}
       </Typography>
     );
   }
@@ -117,7 +118,7 @@ const renderActionsCell = (row: Record<string, unknown>) => {
     <Box sx={{ display: 'flex', gap: 0.5, flexWrap: 'wrap' }}>
       {actions.slice(0, 3).map((a, idx) => {
         const cfg = ACTION_TYPE_CONFIG[a.action_type] || {
-          label: a.action_type,
+          labelKey: a.action_type,
           icon: <Bell size={14} />,
         };
         return (
@@ -125,7 +126,7 @@ const renderActionsCell = (row: Record<string, unknown>) => {
             key={idx}
             size='small'
             icon={cfg.icon as React.ReactElement}
-            label={`${cfg.label}${a.target ? `:${a.target}` : ''}`}
+            label={`${t(cfg.labelKey)}${a.target ? `:${a.target}` : ''}`}
             variant='outlined'
             sx={{ height: 24, '& .MuiChip-icon': { ml: 0.5 } }}
           />
@@ -143,7 +144,7 @@ const renderActionsCell = (row: Record<string, unknown>) => {
   );
 };
 
-const renderStatsCards = (rows: Record<string, unknown>[]) => {
+const renderStatsCards = (rows: Record<string, unknown>[], t: (key: string) => string) => {
   const rules = rows as unknown as AlertRuleRecord[];
   const total = rules.length;
   const enabled = rules.filter((r) => r.enabled).length;
@@ -153,33 +154,33 @@ const renderStatsCards = (rows: Record<string, unknown>[]) => {
   const stats = [
     {
       id: 'total',
-      title: '规则总数',
+      title: t('monitor.alert_rules.stat.total'),
       value: total,
-      unit: '条',
+      unit: t('monitor.common.unit.count'),
       icon: <Bell size={20} />,
       color: 'primary' as const,
     },
     {
       id: 'enabled',
-      title: '已启用',
+      title: t('monitor.alert_rules.stat.enabled'),
       value: enabled,
-      unit: '条',
+      unit: t('monitor.common.unit.count'),
       icon: <Power size={20} />,
       color: 'success' as const,
     },
     {
       id: 'disabled',
-      title: '已禁用',
+      title: t('monitor.alert_rules.stat.disabled'),
       value: disabled,
-      unit: '条',
+      unit: t('monitor.common.unit.count'),
       icon: <PowerOff size={20} />,
       color: 'info' as const,
     },
     {
       id: 'critical',
-      title: '高严重度',
+      title: t('monitor.alert_rules.stat.critical'),
       value: critical,
-      unit: '条',
+      unit: t('monitor.common.unit.count'),
       icon: <AlertTriangle size={20} />,
       color: 'error' as const,
     },
@@ -250,10 +251,14 @@ export const AlertRulesPage: React.FC = () => {
   const theme = useTheme();
   const queryClient = useQueryClient();
   const addNotification = useNotificationStore((state) => state.addNotification);
+  const { t } = useTranslation();
 
   const handleToggleRule = useCallback(
     async (rule: AlertRuleRecord) => {
-      const action = rule.enabled ? '禁用' : '启用';
+      const actionKey = rule.enabled
+        ? 'monitor.alert_rules.action.disable'
+        : 'monitor.alert_rules.action.enable';
+      const action = t(actionKey);
       try {
         if (rule.enabled) {
           await metricsApi.disableAlertRule(rule.id);
@@ -262,19 +267,19 @@ export const AlertRulesPage: React.FC = () => {
         }
         addNotification({
           type: 'success',
-          title: `已${action}`,
-          message: `告警规则已${action}`,
+          title: t('monitor.alert_rules.message.toggle_success_title', { action }),
+          message: t('monitor.alert_rules.message.toggle_success_body', { action }),
         });
         void queryClient.invalidateQueries({ queryKey: CRUD_QUERY_KEY });
       } catch (err) {
         addNotification({
           type: 'error',
-          title: `${action}失败`,
-          message: err instanceof Error ? err.message : `${action}失败`,
+          title: t('monitor.alert_rules.message.toggle_fail_title', { action }),
+          message: err instanceof Error ? err.message : t('monitor.alert_rules.message.toggle_fail_body', { action }),
         });
       }
     },
-    [addNotification, queryClient]
+    [addNotification, queryClient, t]
   );
 
   const apiAdapter = useMemo<CrudApiAdapter<AlertRuleRecord>>(
@@ -305,7 +310,7 @@ export const AlertRulesPage: React.FC = () => {
       update: async (id, data) => {
         const existing = await metricsApi.getAlertRule(id);
         const existingData = existing.data;
-        if (!existingData) throw new Error('规则不存在');
+        if (!existingData) throw new Error(t('monitor.alert_rules.message.rule_not_found'));
         const payload = {
           name: data.name as string,
           description: (data.description as string) ?? null,
@@ -322,14 +327,14 @@ export const AlertRulesPage: React.FC = () => {
         await metricsApi.deleteAlertRule(id);
       },
     }),
-    []
+    [t]
   );
 
   const customColumns = useMemo<ColumnDef[]>(
     () => [
       {
         id: 'name',
-        label: '规则名称',
+        label: t('monitor.alert_rules.column.name'),
         minWidth: 220,
         render: (row) => {
           const r = row as unknown as AlertRuleRecord;
@@ -373,7 +378,7 @@ export const AlertRulesPage: React.FC = () => {
       },
       {
         id: 'service',
-        label: '服务',
+        label: t('monitor.alert_rules.column.service'),
         render: (row) => {
           const r = row as unknown as AlertRuleRecord;
           return r.service_name ? (
@@ -387,30 +392,30 @@ export const AlertRulesPage: React.FC = () => {
               variant='caption'
               color='text.disabled'
             >
-              全局
+              {t('monitor.common.label.global')}
             </Typography>
           );
         },
       },
       {
         id: 'condition',
-        label: '触发条件',
+        label: t('monitor.alert_rules.column.condition'),
         minWidth: 240,
         render: (row) => renderConditionCell(row),
       },
       {
         id: 'severity',
-        label: '严重级别',
+        label: t('monitor.alert_rules.column.severity'),
         render: (row) => {
           const r = row as unknown as AlertRuleRecord;
           const cfg = SEVERITY_CONFIG[r.severity] || {
-            label: r.severity,
+            labelKey: r.severity,
             color: 'default' as const,
           };
           return (
             <Chip
               size='small'
-              label={cfg.label}
+              label={t(cfg.labelKey)}
               color={cfg.color}
             />
           );
@@ -418,13 +423,13 @@ export const AlertRulesPage: React.FC = () => {
       },
       {
         id: 'actions',
-        label: '通知动作',
+        label: t('monitor.alert_rules.column.actions'),
         minWidth: 220,
-        render: (row) => renderActionsCell(row),
+        render: (row) => renderActionsCell(row, t),
       },
       {
         id: 'status',
-        label: '状态',
+        label: t('monitor.alert_rules.column.status'),
         render: (row) => {
           const r = row as unknown as AlertRuleRecord;
           return (
@@ -440,7 +445,7 @@ export const AlertRulesPage: React.FC = () => {
                 color={r.enabled ? 'success.main' : 'text.disabled'}
                 sx={{ fontWeight: 500 }}
               >
-                {r.enabled ? '启用' : '禁用'}
+                {r.enabled ? t('monitor.common.status.enable') : t('monitor.common.status.disable')}
               </Typography>
             </Box>
           );
@@ -448,7 +453,7 @@ export const AlertRulesPage: React.FC = () => {
       },
       {
         id: 'updated_at',
-        label: '更新时间',
+        label: t('monitor.alert_rules.column.updated_at'),
         render: (row) => {
           const r = row as unknown as AlertRuleRecord;
           return (
@@ -462,13 +467,13 @@ export const AlertRulesPage: React.FC = () => {
         },
       },
     ],
-    [theme, handleToggleRule]
+    [theme, handleToggleRule, t]
   );
 
   const customRowActions = useMemo<RowAction[]>(
     () => [
       {
-        label: '启用/禁用',
+        label: t('monitor.alert_rules.action.toggle'),
         icon: <Power size={16} />,
         onClick: (row: Record<string, unknown>) => {
           const r = row as unknown as AlertRuleRecord;
@@ -476,7 +481,7 @@ export const AlertRulesPage: React.FC = () => {
         },
       },
     ],
-    [handleToggleRule]
+    [handleToggleRule, t]
   );
 
   return (
@@ -491,8 +496,8 @@ export const AlertRulesPage: React.FC = () => {
         apiAdapter={apiAdapter}
         customColumns={customColumns}
         customRowActions={customRowActions}
-        headerContent={renderStatsCards}
-        breadcrumbs={[{ label: '监控' }, { label: '告警规则' }]}
+        headerContent={(rows: Record<string, unknown>[]) => renderStatsCards(rows, t)}
+        breadcrumbs={[{ label: t('monitor.alert_rules.breadcrumb_monitor') }, { label: t('monitor.alert_rules.breadcrumb_alert_rules') }]}
       />
     </PageContainer>
   );

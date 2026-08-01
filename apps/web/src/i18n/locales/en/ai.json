@@ -125,7 +125,10 @@
         "upload_title": "Upload Document"
       },
       "disclaimer": "Disclaimer: AI-generated content is for reference only",
+      "disclaimer_bottom": "AI assistant may produce inaccurate information, please use with caution",
       "empty": {
+        "start_subtitle": "Select a mode and enter your question",
+        "start_title": "Start Chat",
         "subtitle": "Start your first AI conversation",
         "title": "No messages yet"
       },
@@ -161,6 +164,12 @@
       },
       "model": {
         "ernie": "ERNIE Bot"
+      },
+      "mode": {
+        "code": "Code Generation",
+        "general": "General Chat",
+        "qa": "Smart Q&A",
+        "summary": "Document Summary"
       },
       "placeholder": {
         "code": "Describe the code you need to generate...",
@@ -383,6 +392,7 @@
         "code_gen": "Code Generation",
         "doc_analysis": "Document Analysis",
         "improvement": "Improvement",
+        "percent_improvement": "% Improvement",
         "satisfaction": "User Satisfaction",
         "seconds_down": "seconds down",
         "token_usage": "Token Usage",
