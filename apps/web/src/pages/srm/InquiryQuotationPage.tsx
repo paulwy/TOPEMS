@@ -227,7 +227,7 @@ const InquiryQuotationPage: React.FC = () => {
         apiAdapter={apiAdapter}
         customRowActions={customRowActions}
         headerContent={headerContent}
-        detailContent={(row) => detailContent(row as Inquiry)}
+        detailContent={(row) => detailContent(row as unknown as Inquiry)}
         breadcrumbs={[{ label: 'SRM' }, { label: '询报价管理' }]}
       />
 

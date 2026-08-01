@@ -832,7 +832,7 @@ const TestsTab: React.FC<{
               <Stack
                 direction='row'
                 spacing={1}
-                alignItems='center'
+                sx={{ alignItems: 'center' }}
               >
                 <Target
                   size={18}
@@ -1063,7 +1063,7 @@ const TestsTab: React.FC<{
                         <Stack
                           direction='row'
                           spacing={1}
-                          alignItems='center'
+                          sx={{ alignItems: 'center' }}
                         >
                           <Chip
                             size='small'
@@ -1133,11 +1133,11 @@ const TestsTab: React.FC<{
                         <Stack
                           direction='row'
                           spacing={1}
-                          alignItems='center'
+                          sx={{ alignItems: 'center' }}
                         >
                           <Typography
                             variant='body2'
-                            fontWeight={600}
+                            sx={{ fontWeight: 600 }}
                           >
                             {run.testCaseIds.length} 测试
                           </Typography>
@@ -1192,7 +1192,7 @@ const PerformanceTab: React.FC<{
             <Stack
               direction='row'
               spacing={1}
-              alignItems='center'
+              sx={{ alignItems: 'center' }}
             >
               <SpeedIcon
                 size={18}
@@ -1250,7 +1250,7 @@ const PerformanceTab: React.FC<{
                   <Stack
                     direction='row'
                     spacing={1}
-                    alignItems='baseline'
+                    sx={{ alignItems: 'baseline' }}
                   >
                     <Typography
                       variant='h6'
@@ -1408,7 +1408,7 @@ const PerformanceTab: React.FC<{
                       primary={
                         <Typography
                           variant='body2'
-                          fontWeight={500}
+                          sx={{ fontWeight: 500 }}
                         >
                           {b.name || b.version}
                         </Typography>
@@ -1485,7 +1485,7 @@ const UXTab: React.FC<{
             <Stack
               direction='row'
               spacing={1}
-              alignItems='center'
+              sx={{ alignItems: 'center' }}
             >
               <Eye
                 size={18}
@@ -1748,7 +1748,7 @@ const UXTab: React.FC<{
               <Stack
                 direction='row'
                 spacing={1}
-                flexWrap='wrap'
+                sx={{ flexWrap: 'wrap' }}
               >
                 {funnel.dropOff.map((d, i) => (
                   <Chip
@@ -1801,7 +1801,7 @@ const UXTab: React.FC<{
                     <Stack
                       direction='row'
                       spacing={1}
-                      alignItems='center'
+                      sx={{ alignItems: 'center' }}
                     >
                       <Chip
                         size='small'
@@ -1812,7 +1812,7 @@ const UXTab: React.FC<{
                       <Typography variant='body2'>{METRIC_LABELS[m.type]}</Typography>
                       <Typography
                         variant='body2'
-                        fontWeight={600}
+                        sx={{ fontWeight: 600 }}
                       >
                         {m.value.toFixed(2)}
                       </Typography>

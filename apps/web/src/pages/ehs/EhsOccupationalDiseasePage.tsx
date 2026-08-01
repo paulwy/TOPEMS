@@ -32,9 +32,9 @@ const baseAdapter = createCrudPageAdapter<
 >(occupationalDiseaseCaseApi);
 
 const occupationalDiseaseAdapter: CrudApiAdapter<OccupationalDiseaseCase> = {
-  list: baseAdapter.list,
-  create: baseAdapter.create,
-  update: baseAdapter.update,
+  list: baseAdapter.list as unknown as CrudApiAdapter<OccupationalDiseaseCase>['list'],
+  create: baseAdapter.create as unknown as CrudApiAdapter<OccupationalDiseaseCase>['create'],
+  update: baseAdapter.update as unknown as CrudApiAdapter<OccupationalDiseaseCase>['update'],
   delete: baseAdapter.delete,
 };
 

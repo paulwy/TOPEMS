@@ -10,6 +10,7 @@ export interface GroupedResults {
 export interface SearchFilter {
   service?: string;
   type?: string;
+  module?: string;
 }
 
 export interface SearchFilterOption {

@@ -10,3 +10,13 @@ export interface FileItem {
   content_type?: string;
   folder_id?: string | null;
 }
+
+export type SortField = 'date' | 'name' | 'size';
+
+export type SortOrder = 'asc' | 'desc';
+
+export type ViewMode = 'grid' | 'list';
+
+export interface DisplayItem extends FileItem {
+  updatedAtRaw: number;
+}

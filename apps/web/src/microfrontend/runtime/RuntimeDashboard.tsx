@@ -358,16 +358,16 @@ const DynamicLoaderTab: React.FC = () => {
     <Box>
       {/* 统计卡片 */}
       <Grid container spacing={2} sx={{ mb: 2 }}>
-        <Grid item xs={12} sm={6} md={3}>
+        <Grid size={{ xs: 12, sm: 6, md: 3 }}>
           <StatCard label='已注册模块' value={modules.length} icon={<PackageIcon size={20} />} color='#3b82f6' />
         </Grid>
-        <Grid item xs={12} sm={6} md={3}>
+        <Grid size={{ xs: 12, sm: 6, md: 3 }}>
           <StatCard label='已加载' value={loadedCount} icon={<CheckCircleIcon size={20} />} color='#10b981' />
         </Grid>
-        <Grid item xs={12} sm={6} md={3}>
+        <Grid size={{ xs: 12, sm: 6, md: 3 }}>
           <StatCard label='加载失败' value={failedCount} icon={<XCircleIcon size={20} />} color='#ef4444' />
         </Grid>
-        <Grid item xs={12} sm={6} md={3}>
+        <Grid size={{ xs: 12, sm: 6, md: 3 }}>
           <StatCard label='并发/等待' value={`${currentLoads}/${pendingCount}`} icon={<CpuIcon size={20} />} color='#f59e0b' />
         </Grid>
       </Grid>
@@ -591,16 +591,16 @@ const CrossFrameworkTab: React.FC = () => {
     <Box>
       {/* 统计 */}
       <Grid container spacing={2} sx={{ mb: 2 }}>
-        <Grid item xs={12} sm={6} md={3}>
+        <Grid size={{ xs: 12, sm: 6, md: 3 }}>
           <StatCard label='已挂载组件' value={mountedComponents.length} icon={<LayersIcon size={20} />} color='#8b5cf6' />
         </Grid>
-        <Grid item xs={12} sm={6} md={3}>
+        <Grid size={{ xs: 12, sm: 6, md: 3 }}>
           <StatCard label='React' value={mountedComponents.filter((c) => c.framework === FrameworkType.React).length} icon={<CodeIcon size={20} />} color='#61dafb' />
         </Grid>
-        <Grid item xs={12} sm={6} md={3}>
+        <Grid size={{ xs: 12, sm: 6, md: 3 }}>
           <StatCard label='Vue' value={mountedComponents.filter((c) => c.framework === FrameworkType.Vue).length} icon={<CodeIcon size={20} />} color='#42b883' />
         </Grid>
-        <Grid item xs={12} sm={6} md={3}>
+        <Grid size={{ xs: 12, sm: 6, md: 3 }}>
           <StatCard label='Angular+Svelte' value={mountedComponents.filter((c) => c.framework === FrameworkType.Angular || c.framework === FrameworkType.Svelte).length} icon={<CodeIcon size={20} />} color='#dd0031' />
         </Grid>
       </Grid>
@@ -770,16 +770,16 @@ const DesignSystemTab: React.FC = () => {
     <Box>
       {/* 统计 */}
       <Grid container spacing={2} sx={{ mb: 2 }}>
-        <Grid item xs={12} sm={6} md={3}>
+        <Grid size={{ xs: 12, sm: 6, md: 3 }}>
           <StatCard label='设计令牌总数' value={tokens.length} icon={<PaletteIcon size={20} />} color='#7c3aed' />
         </Grid>
-        <Grid item xs={12} sm={6} md={3}>
+        <Grid size={{ xs: 12, sm: 6, md: 3 }}>
           <StatCard label='CSS 变量数' value={cssVars.length} icon={<CodeIcon size={20} />} color='#3b82f6' />
         </Grid>
-        <Grid item xs={12} sm={6} md={3}>
+        <Grid size={{ xs: 12, sm: 6, md: 3 }}>
           <StatCard label='当前主题' value={theme.mode === 'dark' ? '暗色' : '亮色'} icon={theme.mode === 'dark' ? <MoonIcon size={20} /> : <SunIcon size={20} />} color={theme.mode === 'dark' ? '#1e293b' : '#f59e0b'} />
         </Grid>
-        <Grid item xs={12} sm={6} md={3}>
+        <Grid size={{ xs: 12, sm: 6, md: 3 }}>
           <StatCard label='组件覆盖' value={Object.keys(theme.component_overrides).length} icon={<BoxesIcon size={20} />} color='#10b981' />
         </Grid>
       </Grid>
@@ -806,7 +806,7 @@ const DesignSystemTab: React.FC = () => {
             </Box>
           </Box>
           <Grid container spacing={2}>
-            <Grid item xs={12} md={6}>
+            <Grid size={{ xs: 12, md: 6 }}>
               <Box sx={{ p: 1.5, bgcolor: theme.background, borderRadius: 1, border: 1, borderColor: 'divider' }}>
                 <Typography sx={{ color: theme.text_colors.primary, fontSize: 14, fontWeight: 600 }}>
                   主文字 (Primary Text)
@@ -823,7 +823,7 @@ const DesignSystemTab: React.FC = () => {
                 </Box>
               </Box>
             </Grid>
-            <Grid item xs={12} md={6}>
+            <Grid size={{ xs: 12, md: 6 }}>
               <Typography variant='caption' color='text.secondary'>
                 CSS 变量同步状态
               </Typography>
@@ -1068,16 +1068,16 @@ const LifecycleTab: React.FC = () => {
     <Box>
       {/* 统计 */}
       <Grid container spacing={2} sx={{ mb: 2 }}>
-        <Grid item xs={12} sm={6} md={3}>
+        <Grid size={{ xs: 12, sm: 6, md: 3 }}>
           <StatCard label='模块总数' value={records.length} icon={<ActivityIcon size={20} />} color='#8b5cf6' />
         </Grid>
-        <Grid item xs={12} sm={6} md={3}>
+        <Grid size={{ xs: 12, sm: 6, md: 3 }}>
           <StatCard label='已挂载' value={records.filter((r) => r.state === LifecycleState.Mounted).length} icon={<CheckCircleIcon size={20} />} color='#10b981' />
         </Grid>
-        <Grid item xs={12} sm={6} md={3}>
+        <Grid size={{ xs: 12, sm: 6, md: 3 }}>
           <StatCard label='事件总数' value={lifecycleManager.eventCount} icon={<ClockIcon size={20} />} color='#3b82f6' />
         </Grid>
-        <Grid item xs={12} sm={6} md={3}>
+        <Grid size={{ xs: 12, sm: 6, md: 3 }}>
           <StatCard label='错误状态' value={records.filter((r) => r.state === LifecycleState.Error).length} icon={<AlertCircleIcon size={20} />} color='#ef4444' />
         </Grid>
       </Grid>
@@ -1150,7 +1150,7 @@ const LifecycleTab: React.FC = () => {
 
       <Grid container spacing={2}>
         {/* 模块状态列表 */}
-        <Grid item xs={12} md={7}>
+        <Grid size={{ xs: 12, md: 7 }}>
           <Card>
             <CardContent>
               <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 1 }}>
@@ -1254,7 +1254,7 @@ const LifecycleTab: React.FC = () => {
         </Grid>
 
         {/* 选中模块的状态历史 */}
-        <Grid item xs={12} md={5}>
+        <Grid size={{ xs: 12, md: 5 }}>
           <Card sx={{ mb: 2 }}>
             <CardContent>
               <Typography variant='subtitle2' sx={{ mb: 1, fontWeight: 600 }}>

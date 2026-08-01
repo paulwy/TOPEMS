@@ -160,7 +160,7 @@ export class SmartDebugger {
 
     if (reactKey) {
       try {
-        const fiber = (element as Record<string, unknown>)[reactKey] as {
+        const fiber = (element as unknown as Record<string, unknown>)[reactKey] as {
           type?: { name?: string; displayName?: string };
           elementType?: { name?: string; displayName?: string };
           memoizedProps?: Record<string, unknown>;
@@ -220,7 +220,7 @@ export class SmartDebugger {
     const type = fiber.type || fiber.elementType;
     if (!type) return 'function';
     if (typeof type === 'function') {
-      const prototype = (type as unknown as { prototype?: unknown }).prototype;
+      const prototype = (type as unknown as { prototype?: { isReactComponent?: boolean } }).prototype;
       if (prototype && prototype.isReactComponent) return 'class';
       return 'function';
     }
@@ -290,7 +290,7 @@ export class SmartDebugger {
           (val as { getState?: () => unknown }).getState &&
           (val as { subscribe?: (fn: () => void) => () => void }).subscribe
         ) {
-          const store = val as { getState: () => Record<string, unknown>; subscribe: (fn: () => void) => () => void };
+          const store = val as unknown as { getState: () => Record<string, unknown>; subscribe: (fn: () => void) => () => void };
           const state = store.getState();
           results.push({
             type: 'zustand',
@@ -311,7 +311,7 @@ export class SmartDebugger {
   // ==================== Module Dependency Graph ====================
 
   getModuleDependencyGraph(): DependencyGraph {
-    return dependencyGovernor.getDependencyGraph();
+    return dependencyGovernor.analyzeDependencies().graph;
   }
 
   getModuleInfo(moduleId: string): ModuleRegistration | undefined {
@@ -387,7 +387,7 @@ export class SmartDebugger {
         const record: NetworkRequest = {
           id: requestId,
           url: xhr.responseURL || '',
-          method: xhr.method || 'GET',
+          method: (xhr as XMLHttpRequest & { method?: string }).method || 'GET',
           headers: {},
           timestamp: Date.now(),
           type: 'xhr',

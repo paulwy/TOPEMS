@@ -13,6 +13,7 @@ import {
   ChevronRight,
 } from 'lucide-react';
 import { useNavigate, useParams } from 'react-router-dom';
+import { useTranslation } from 'react-i18next';
 import {
   Box,
   Typography,
@@ -73,6 +74,7 @@ const PmProjectDetailPage: React.FC = () => {
   const navigate = useNavigate();
   const queryClient = useQueryClient();
   const { id } = useParams<{ id: string }>();
+  const { t } = useTranslation();
 
   const projectQuery = useQuery({
     queryKey: QUERY_KEYS.PM.PROJECT(id || ''),

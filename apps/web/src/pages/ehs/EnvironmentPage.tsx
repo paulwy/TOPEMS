@@ -6,7 +6,11 @@ import CrudPage from '@/components/templates/CrudPage';
 import { createCrudPageAdapter } from '@/schema/crudPageAdapter';
 import { environmentMonitorSchema } from '@/schemas/ehs';
 import { ehsApi } from '@/api/ehs';
-import type { EnvironmentMonitor } from '@/api/ehs';
+import type {
+  EnvironmentMonitor,
+  CreateEnvironmentMonitorRequest,
+  UpdateEnvironmentMonitorRequest,
+} from '@/api/ehs';
 import { PageContainer } from '@/components/common';
 import { designTokens } from '@/theme/tokens';
 import { useTranslation } from 'react-i18next';
@@ -20,7 +24,11 @@ const monitorApi = {
   delete: ehsApi.deleteEnvironmentMonitor,
 };
 
-const monitorAdapter = createCrudPageAdapter<EnvironmentMonitor>(monitorApi);
+const monitorAdapter = createCrudPageAdapter<
+  EnvironmentMonitor,
+  CreateEnvironmentMonitorRequest,
+  UpdateEnvironmentMonitorRequest
+>(monitorApi);
 
 const EnvironmentPage: React.FC = () => {
   const { t } = useTranslation();

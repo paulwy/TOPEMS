@@ -25,7 +25,7 @@ import {
   LAYOUT_COMPONENTS,
   type DesignerComponent,
   type ComponentCategory,
-} from '../types';
+} from './types';
 
 interface ComponentPaletteProps {
   /** 拖拽开始回调 */
@@ -112,7 +112,7 @@ export function ComponentPalette({ onDragStart, onDragEnd }: ComponentPalettePro
             >
               {comps.map((comp) => {
                 const IconComp = comp.icon
-                  ? (LucideIcons as Record<string, React.ComponentType<{ size?: number }>>)[
+                  ? (LucideIcons as unknown as Record<string, React.ComponentType<{ size?: number }>>)[
                       comp.icon
                     ]
                   : null;
@@ -142,7 +142,7 @@ export function ComponentPalette({ onDragStart, onDragEnd }: ComponentPalettePro
                       )}
                       <ListItemText
                         primary={comp.label}
-                        primaryTypographyProps={{ fontSize: '0.8rem' }}
+                        slotProps={{ primary: { sx: { fontSize: '0.8rem' } } }}
                       />
                       {comp.isContainer && (
                         <Chip

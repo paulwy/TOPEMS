@@ -23,6 +23,7 @@ import {
   DialogActions,
   List,
   ListItem,
+  ListItemButton,
   ListItemText,
   Avatar,
   Rating,
@@ -432,11 +433,7 @@ const ModuleDetailDialog: React.FC<{
               spacing={2}
               sx={{ mt: 2 }}
             >
-              <Grid
-                item
-                xs={6}
-                sm={3}
-              >
+              <Grid size={{ xs: 6, sm: 3 }}>
                 <Typography
                   variant='caption'
                   color='text.secondary'
@@ -450,11 +447,7 @@ const ModuleDetailDialog: React.FC<{
                   {mod.version}
                 </Typography>
               </Grid>
-              <Grid
-                item
-                xs={6}
-                sm={3}
-              >
+              <Grid size={{ xs: 6, sm: 3 }}>
                 <Typography
                   variant='caption'
                   color='text.secondary'
@@ -468,11 +461,7 @@ const ModuleDetailDialog: React.FC<{
                   {mod.size_kb} KB
                 </Typography>
               </Grid>
-              <Grid
-                item
-                xs={6}
-                sm={3}
-              >
+              <Grid size={{ xs: 6, sm: 3 }}>
                 <Typography
                   variant='caption'
                   color='text.secondary'
@@ -486,11 +475,7 @@ const ModuleDetailDialog: React.FC<{
                   {mod.license}
                 </Typography>
               </Grid>
-              <Grid
-                item
-                xs={6}
-                sm={3}
-              >
+              <Grid size={{ xs: 6, sm: 3 }}>
                 <Typography
                   variant='caption'
                   color='text.secondary'
@@ -825,8 +810,7 @@ const ModuleMarketplace: React.FC<ModuleMarketplaceProps> = ({ onClose }) => {
             dense
             sx={{ mb: 2 }}
           >
-            <ListItem
-              button
+            <ListItemButton
               selected={!selectedCategory}
               onClick={() => setSelectedCategory('')}
               sx={{ borderRadius: 1, mb: 0.5 }}
@@ -839,11 +823,10 @@ const ModuleMarketplace: React.FC<ModuleMarketplaceProps> = ({ onClose }) => {
                 primary='全部'
                 secondary={`${totalCount} 个模块`}
               />
-            </ListItem>
+            </ListItemButton>
             {categories.map((cat) => (
-              <ListItem
+              <ListItemButton
                 key={cat.id}
-                button
                 selected={selectedCategory === cat.id}
                 onClick={() => setSelectedCategory(cat.id)}
                 sx={{ borderRadius: 1, mb: 0.5 }}
@@ -863,7 +846,7 @@ const ModuleMarketplace: React.FC<ModuleMarketplaceProps> = ({ onClose }) => {
                     {cat.module_count} 个
                   </Typography>
                 </Box>
-              </ListItem>
+              </ListItemButton>
             ))}
           </List>
 
@@ -931,12 +914,14 @@ const ModuleMarketplace: React.FC<ModuleMarketplaceProps> = ({ onClose }) => {
               placeholder='搜索模块名称、描述或标签...'
               value={searchKeyword}
               onChange={(e) => setSearchKeyword(e.target.value)}
-              InputProps={{
-                startAdornment: (
-                  <InputAdornment position='start'>
-                    <SearchIcon size={18} />
-                  </InputAdornment>
-                ),
+              slotProps={{
+                input: {
+                  startAdornment: (
+                    <InputAdornment position='start'>
+                      <SearchIcon size={18} />
+                    </InputAdornment>
+                  ),
+                },
               }}
             />
           </Box>
@@ -956,14 +941,7 @@ const ModuleMarketplace: React.FC<ModuleMarketplaceProps> = ({ onClose }) => {
                 spacing={2}
               >
                 {modules.map((mod) => (
-                  <Grid
-                    item
-                    xs={12}
-                    sm={6}
-                    md={4}
-                    lg={3}
-                    key={mod.id}
-                  >
+                  <Grid size={{ xs: 12, sm: 6, md: 4, lg: 3 }} key={mod.id}>
                     <ModuleCard
                       module={mod}
                       onClick={() => openDetail(mod)}

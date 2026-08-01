@@ -455,7 +455,7 @@ const MonitorAlertRulesPage: React.FC = () => {
   );
 
   const headerContent = (rows: Record<string, unknown>[]) => {
-    const ruleList = rows as AlertRule[];
+    const ruleList = rows as unknown as AlertRule[];
     const total = ruleList.length;
     const enabledCount = ruleList.filter((r) => r.enabled).length;
     const disabledCount = ruleList.filter((r) => !r.enabled).length;
@@ -526,7 +526,7 @@ const MonitorAlertRulesPage: React.FC = () => {
     >
       <CrudPage
         schema={alertRuleSchema}
-        apiAdapter={mockApiAdapter as CrudApiAdapter}
+        apiAdapter={mockApiAdapter as unknown as CrudApiAdapter}
         breadcrumbs={[{ label: '监控' }, { label: '告警规则' }]}
         customColumns={customColumns as ColumnDef[]}
         customRowActions={customRowActions as RowAction[]}

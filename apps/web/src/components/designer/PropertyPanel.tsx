@@ -20,8 +20,8 @@ import {
   Divider,
   Alert,
 } from '@mui/material';
-import type { CanvasNode, PropertyPanelConfig } from '../types';
-import { getComponentByType } from '../types';
+import type { CanvasNode, PropertyPanelConfig } from './types';
+import { getComponentByType } from './types';
 
 interface PropertyPanelProps {
   node: CanvasNode | null;

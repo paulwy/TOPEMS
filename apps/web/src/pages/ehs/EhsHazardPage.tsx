@@ -40,8 +40,8 @@ const safetyIssueAdapter: CrudApiAdapter<SafetyIssue> = {
       total: data?.total || 0,
     };
   },
-  create: baseAdapter.create,
-  update: baseAdapter.update,
+  create: baseAdapter.create as unknown as CrudApiAdapter<SafetyIssue>['create'],
+  update: baseAdapter.update as unknown as CrudApiAdapter<SafetyIssue>['update'],
   delete: baseAdapter.delete,
 };
 

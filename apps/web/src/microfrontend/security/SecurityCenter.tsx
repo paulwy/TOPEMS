@@ -592,30 +592,18 @@ const SecurityCenter: React.FC<SecurityCenterProps> = ({ onClose }) => {
           spacing={2}
           sx={{ mb: 2 }}
         >
-          <Grid
-            item
-            xs={12}
-            sm={3}
-          >
+          <Grid size={{ xs: 12, sm: 3 }}>
             <Paper sx={{ p: 2, display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
               <SecurityScoreGauge score={overallScore} />
             </Paper>
           </Grid>
-          <Grid
-            item
-            xs={12}
-            sm={9}
-          >
+          <Grid size={{ xs: 12, sm: 9 }}>
             <Grid
               container
               spacing={2}
               sx={{ height: '100%' }}
             >
-              <Grid
-                item
-                xs={6}
-                sm={3}
-              >
+              <Grid size={{ xs: 6, sm: 3 }}>
                 <StatCard
                   label='已扫描模块'
                   value={scanResults.length}
@@ -623,11 +611,7 @@ const SecurityCenter: React.FC<SecurityCenterProps> = ({ onClose }) => {
                   color='#1976d2'
                 />
               </Grid>
-              <Grid
-                item
-                xs={6}
-                sm={3}
-              >
+              <Grid size={{ xs: 6, sm: 3 }}>
                 <StatCard
                   label='严重问题'
                   value={criticalCount}
@@ -635,11 +619,7 @@ const SecurityCenter: React.FC<SecurityCenterProps> = ({ onClose }) => {
                   color='#dc2626'
                 />
               </Grid>
-              <Grid
-                item
-                xs={6}
-                sm={3}
-              >
+              <Grid size={{ xs: 6, sm: 3 }}>
                 <StatCard
                   label='高危问题'
                   value={highCount}
@@ -647,11 +627,7 @@ const SecurityCenter: React.FC<SecurityCenterProps> = ({ onClose }) => {
                   color='#ef4444'
                 />
               </Grid>
-              <Grid
-                item
-                xs={6}
-                sm={3}
-              >
+              <Grid size={{ xs: 6, sm: 3 }}>
                 <StatCard
                   label='中低危问题'
                   value={mediumCount + lowCount}

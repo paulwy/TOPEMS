@@ -517,7 +517,7 @@ export class PredictiveScaler {
         for (let i = 0; i < period; i++) {
           const seasonValues = values.filter((_, idx) => idx % period === i);
           if (seasonValues.length > 0) {
-            seasonal.push(seasonalValues.reduce((a, b) => a + b, 0) / seasonValues.length);
+            seasonal.push(seasonValues.reduce((a, b) => a + b, 0) / seasonValues.length);
           }
         }
         const seasonalMean = seasonal.length > 0

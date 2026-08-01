@@ -12,7 +12,7 @@ import {
   InputLabel,
 } from '@mui/material';
 import CrudPage, { type CrudApiAdapter } from '@/components/templates/CrudPage';
-import { createCrudPageAdapter } from '@/schema/crudPageAdapter';
+import { createCrudPageAdapter, type CrudApi } from '@/schema/crudPageAdapter';
 import { materialIssueSchema } from '@/schemas/mes';
 import { mesApi } from '@/api/mes';
 import type { MaterialIssue, MaterialIssueItem } from '@/api/mes';
@@ -22,7 +22,7 @@ import { PageContainer } from '@/components/common/PageContainer';
 
 const ct = designTokens.colors;
 
-const apiAdapter = createCrudPageAdapter(mesApi.materialIssues, {
+const apiAdapter = createCrudPageAdapter(mesApi.materialIssues as unknown as CrudApi<MaterialIssue>, {
   itemsField: 'issues',
 });
 

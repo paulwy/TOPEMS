@@ -556,7 +556,7 @@ export class DependencyGovernor {
 
     return UPGRADE_SUGGESTIONS.filter((suggestion) => {
       const mod = installed.find(
-        (m) => m.name.includes(suggestion.module_name) || m.id === suggestion.module_id
+        (m) => m.name.includes(suggestion.module_name)
       );
       return mod !== undefined;
     });

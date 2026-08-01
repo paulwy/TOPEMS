@@ -36,10 +36,10 @@ const recordApi = {
   delete: ehsApi.deleteInspectionRecord,
 };
 
-const recordAdapter: CrudApiAdapter<InspectionRecord> = createCrudPageAdapter<
+const recordAdapter = createCrudPageAdapter<
   InspectionRecord,
   CreateInspectionRecordRequest
->(recordApi);
+>(recordApi) as unknown as CrudApiAdapter<InspectionRecord>;
 
 const RecordList: React.FC = () => {
   return (

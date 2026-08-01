@@ -9,10 +9,11 @@
  */
 
 import React from 'react';
-import { Box, Paper, Typography, IconButton, Tooltip, EmptyState } from '@topems/shared-components';
+import { Box, Paper, Typography, IconButton, Tooltip } from '@mui/material';
+import { EmptyState } from '@topems/shared-components';
 import * as LucideIcons from 'lucide-react';
-import type { CanvasNode, DesignerComponent } from '../types';
-import { getComponentByType, BUILTIN_COMPONENTS } from '../types';
+import type { CanvasNode, DesignerComponent } from './types';
+import { getComponentByType, BUILTIN_COMPONENTS } from './types';
 
 interface DesignCanvasProps {
   nodes: CanvasNode[];
@@ -79,15 +80,14 @@ export function DesignCanvas({
           icon='layout'
           title='空白画布'
           description='从左侧组件库拖拽组件到此处开始构建页面'
-          action={
-            <Typography
-              variant='caption'
-              sx={{ color: 'text.secondary' }}
-            >
-              或点击下方按钮添加
-            </Typography>
-          }
-        />
+        >
+          <Typography
+            variant='caption'
+            sx={{ color: 'text.secondary' }}
+          >
+            或点击下方按钮添加
+          </Typography>
+        </EmptyState>
       </Box>
     );
   }
@@ -145,7 +145,9 @@ function CanvasNodeItem({
 }: CanvasNodeItemProps) {
   const comp = getComponentByType(node.type);
   const IconComp = comp?.icon
-    ? (LucideIcons as Record<string, React.ComponentType<{ size?: number }>>)[comp.icon]
+    ? (LucideIcons as unknown as Record<string, React.ComponentType<{ size?: number }>>)[
+        comp.icon
+      ]
     : null;
 
   return (
@@ -187,7 +189,7 @@ function CanvasNodeItem({
           <Tooltip title='上移'>
             <IconButton
               size='small'
-              onClick={(e) => {
+              onClick={(e: React.MouseEvent) => {
                 e.stopPropagation();
                 onMoveUp();
               }}
@@ -198,7 +200,7 @@ function CanvasNodeItem({
           <Tooltip title='下移'>
             <IconButton
               size='small'
-              onClick={(e) => {
+              onClick={(e: React.MouseEvent) => {
                 e.stopPropagation();
                 onMoveDown();
               }}
@@ -209,7 +211,7 @@ function CanvasNodeItem({
           <Tooltip title='删除'>
             <IconButton
               size='small'
-              onClick={(e) => {
+              onClick={(e: React.MouseEvent) => {
                 e.stopPropagation();
                 onRemove();
               }}

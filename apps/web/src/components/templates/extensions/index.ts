@@ -11,7 +11,7 @@ export type { TreeNode, TreeConfig, TreeAction, TreePageTemplateProps } from '..
 export { StatsPageTemplate } from '../StatsPageTemplate';
 export type {
   ChartData,
-  ChartConfig,
+  ChartConfig as StatsChartConfig,
   TableColumn,
   DataTable,
   TimeRangeOption,

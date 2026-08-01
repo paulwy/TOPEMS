@@ -205,14 +205,14 @@ export function DesignerPage({ initialSchema, onSave, onCancel }: DesignerPagePr
         onClose={() => setSnack(null)}
         anchorOrigin={{ vertical: 'bottom', horizontal: 'center' }}
       >
-        {snack && (
+        {snack ? (
           <Alert
             severity={snack.severity}
             onClose={() => setSnack(null)}
           >
             {snack.msg}
           </Alert>
-        )}
+        ) : undefined}
       </Snackbar>
     </Box>
   );

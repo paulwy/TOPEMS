@@ -15,9 +15,79 @@ import { PageContainer } from '@/components/common';
 import CrudPage from '@/components/templates/CrudPage';
 import type { CrudApiAdapter, RowAction } from '@/components/templates/CrudPage';
 import { useNotificationStore } from '@/store/notificationStore';
-import { crmApi, type CRMBilling, type BillingStats } from '@/api/crm';
+import { crmApi } from '@/api/crm';
+import type { BillingRecord } from '@/api/crm';
 import { billingSchema, getBillingRowActions } from '@/schemas/crm';
-import { BillingAgingTable, BillingStatsCards } from './components';
+
+interface BillingStats {
+  total_amount: number;
+  paid_amount: number;
+  pending_amount: number;
+  overdue_amount: number;
+  total_count: number;
+  paid_count: number;
+  pending_count: number;
+  overdue_count: number;
+}
+
+const BillingStatsCards: React.FC<{ stats?: BillingStats; loading: boolean }> = ({
+  stats,
+  loading,
+}) => {
+  if (loading) {
+    return (
+      <Typography
+        variant='body2'
+        color='text.secondary'
+      >
+        加载中...
+      </Typography>
+    );
+  }
+  const cards = [
+    { label: '账单总数', value: stats?.total_count ?? 0, color: 'primary.main' },
+    { label: '已支付', value: stats?.paid_count ?? 0, color: 'success.main' },
+    { label: '待支付', value: stats?.pending_count ?? 0, color: 'warning.main' },
+    { label: '逾期', value: stats?.overdue_count ?? 0, color: 'error.main' },
+  ];
+  return (
+    <Stack
+      direction='row'
+      spacing={2}
+    >
+      {cards.map((card) => (
+        <Paper
+          key={card.label}
+          sx={{ p: 2, flex: 1 }}
+        >
+          <Typography
+            variant='caption'
+            color='text.secondary'
+          >
+            {card.label}
+          </Typography>
+          <Typography
+            variant='h6'
+            sx={{ color: card.color }}
+          >
+            {card.value}
+          </Typography>
+        </Paper>
+      ))}
+    </Stack>
+  );
+};
+
+const BillingAgingTable: React.FC = () => {
+  return (
+    <Typography
+      variant='body2'
+      color='text.secondary'
+    >
+      账龄分析
+    </Typography>
+  );
+};
 
 const CRMBillingPage: React.FC = () => {
   const theme = useTheme();
@@ -29,30 +99,46 @@ const CRMBillingPage: React.FC = () => {
   const { data: stats, isLoading: statsLoading } = useQuery<BillingStats>({
     queryKey: ['crm', 'billing', 'stats'],
     queryFn: async () => {
-      const response = await crmApi.billing.getStats();
-      return response.data!;
+      const response = await crmApi.billing.list();
+      const items = response.data?.items || [];
+      return {
+        total_amount: items.reduce((sum, r) => sum + (r.amount || 0), 0),
+        paid_amount: items
+          .filter((r) => r.status === 'paid')
+          .reduce((sum, r) => sum + (r.amount || 0), 0),
+        pending_amount: items
+          .filter((r) => r.status === 'pending')
+          .reduce((sum, r) => sum + (r.amount || 0), 0),
+        overdue_amount: items
+          .filter((r) => r.status === 'overdue')
+          .reduce((sum, r) => sum + (r.amount || 0), 0),
+        total_count: items.length,
+        paid_count: items.filter((r) => r.status === 'paid').length,
+        pending_count: items.filter((r) => r.status === 'pending').length,
+        overdue_count: items.filter((r) => r.status === 'overdue').length,
+      };
     },
   });
 
   const markPaidMutation = useMutation({
     mutationFn: (id: string) => crmApi.billing.markPaid(id),
     onSuccess: () => {
-      addNotification('success', '已标记为已支付');
+      addNotification({ type: 'success', message: '已标记为已支付' });
       queryClient.invalidateQueries({ queryKey: ['crm', 'billing'] });
       queryClient.invalidateQueries({ queryKey: ['crm', 'billing', 'stats'] });
     },
     onError: () => {
-      addNotification('error', '操作失败');
+      addNotification({ type: 'error', message: '操作失败' });
     },
   });
 
   const sendNotificationMutation = useMutation({
     mutationFn: (id: string) => crmApi.billing.sendNotification(id),
     onSuccess: () => {
-      addNotification('success', '通知已发送');
+      addNotification({ type: 'success', message: '通知已发送' });
     },
     onError: () => {
-      addNotification('error', '发送失败');
+      addNotification({ type: 'error', message: '发送失败' });
     },
   });
 
@@ -70,7 +156,7 @@ const CRMBillingPage: React.FC = () => {
     [sendNotificationMutation]
   );
 
-  const apiAdapter = useMemo<CrudApiAdapter<CRMBilling>>(
+  const apiAdapter = useMemo<CrudApiAdapter<BillingRecord>>(
     () => ({
       list: async (params) => {
         const response = await crmApi.billing.list(params);

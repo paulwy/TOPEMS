@@ -38,7 +38,7 @@ class AutoScalerImpl {
   private metricHistory: Map<string, MetricSample[]> = new Map();
   private demandPatterns: DemandPattern[] = [];
 
-  private constructor() {
+  constructor() {
     this.init_default_policies();
     this.init_demand_patterns();
   }

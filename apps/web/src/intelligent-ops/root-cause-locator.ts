@@ -53,7 +53,7 @@ class RootCauseLocatorImpl {
   private dependencyGraph: DependencyGraph;
   private eventLog: CorrelatedEvent[] = [];
 
-  private constructor() {
+  constructor() {
     this.dependencyGraph = this.build_default_graph();
     this.seed_event_log();
   }

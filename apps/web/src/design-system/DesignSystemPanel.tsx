@@ -24,7 +24,9 @@ import {
   V51Tabs,
   V51Badge,
   V51Skeleton,
+  V51SkeletonCard,
   V51Avatar,
+  V51Table,
 } from './components/index';
 import { useV51Theme, V51ThemeProvider } from './theme-manager';
 import { v51DesignLint, formatReport, runColorContrastChecks } from './design-lint';

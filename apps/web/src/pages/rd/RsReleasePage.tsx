@@ -14,14 +14,18 @@ import { useNotificationStore } from '@/store';
 import { QUERY_KEYS } from '@/lib/reactQuery';
 import { logger } from '@/utils/logger';
 
-const baseAdapter = createCrudPageAdapter<Deploy, CreateDeployRequest>(deployApi);
+const baseAdapter = createCrudPageAdapter<Deploy, CreateDeployRequest>({
+  list: deployApi.listDeploys,
+  create: deployApi.createDeploy,
+  update: async () => {
+    throw new Error('Deploy update not supported');
+  },
+  delete: async () => {
+    throw new Error('Deploy delete not supported');
+  },
+});
 
-const releaseAdapter: CrudApiAdapter<Deploy> = {
-  list: baseAdapter.list,
-  create: baseAdapter.create,
-  update: baseAdapter.update,
-  delete: baseAdapter.delete,
-};
+const releaseAdapter = baseAdapter as unknown as CrudApiAdapter<Deploy>;
 
 const STATUS_COLOR_MAP: Record<string, 'success' | 'warning' | 'error' | 'default'> = {
   released: 'success',
@@ -127,7 +131,7 @@ const RsReleasePage: React.FC = () => {
           variant='h6'
           sx={{ fontWeight: 'bold' }}
         >
-          {row.version || row.deploy_no}
+          {String(row.version || row.deploy_no || '')}
         </Typography>
         <Stack
           direction='row'
@@ -153,7 +157,7 @@ const RsReleasePage: React.FC = () => {
             发布说明
           </Typography>
           <Paper sx={{ p: 2, mt: 1, bgcolor: 'grey.100' }}>
-            <Typography variant='body2'>{row.release_note || row.app_name || '-'}</Typography>
+            <Typography variant='body2'>{String(row.release_note || row.app_name || '-')}</Typography>
           </Paper>
         </Box>
         <Stack
@@ -172,7 +176,7 @@ const RsReleasePage: React.FC = () => {
               variant='body1'
               sx={{ fontWeight: 'bold' }}
             >
-              {row.deploy_time || row.release_time || row.created_at || '-'}
+              {String(row.deploy_time || row.release_time || row.created_at || '-')}
             </Typography>
           </Box>
           <Box>
@@ -186,7 +190,7 @@ const RsReleasePage: React.FC = () => {
               variant='body1'
               sx={{ fontWeight: 'bold' }}
             >
-              {row.deployer || row.operator || row.release_by || '-'}
+              {String(row.deployer || row.operator || row.release_by || '-')}
             </Typography>
           </Box>
         </Stack>

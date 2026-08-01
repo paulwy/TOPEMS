@@ -85,19 +85,19 @@ function validateFieldValue(
           if (!value) return rule.message || `${field.label}为必填项`;
           break;
         case 'minLength':
-          if (stringValue.length < (rule.value ?? 0))
+          if (stringValue.length < Number(rule.value ?? 0))
             return rule.message || `${field.label}长度不能少于${rule.value}个字符`;
           break;
         case 'maxLength':
-          if (stringValue.length > (rule.value ?? Infinity))
+          if (stringValue.length > Number(rule.value ?? Infinity))
             return rule.message || `${field.label}长度不能超过${rule.value}个字符`;
           break;
         case 'min':
-          if (Number(value) < (rule.value ?? -Infinity))
+          if (Number(value) < Number(rule.value ?? -Infinity))
             return rule.message || `${field.label}不能小于${rule.value}`;
           break;
         case 'max':
-          if (Number(value) > (rule.value ?? Infinity))
+          if (Number(value) > Number(rule.value ?? Infinity))
             return rule.message || `${field.label}不能大于${rule.value}`;
           break;
         case 'pattern':
@@ -237,11 +237,13 @@ const RowFormDialog: React.FC<RowFormDialogProps> = ({
                 onChange={(e) => handleChange(field.name, e.target.value)}
                 required={field.required}
               >
-                {field.options?.type === 'static' &&
+                {field.options &&
+                  'type' in field.options &&
+                  field.options.type === 'static' &&
                   field.options.options.map((opt) => (
                     <MenuItem
-                      key={opt.value}
-                      value={opt.value}
+                      key={String(opt.value)}
+                      value={opt.value as string | number}
                     >
                       {opt.label}
                     </MenuItem>

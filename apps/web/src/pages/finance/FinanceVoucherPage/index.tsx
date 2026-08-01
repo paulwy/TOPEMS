@@ -632,6 +632,7 @@ const FinanceVoucherPage: React.FC = () => {
         id: 'vouchers',
         label: t('finance.finance_voucher_page_index.text_755348'),
         icon: <FileText size={16} />,
+        content: null,
       },
       {
         id: 'subjects',

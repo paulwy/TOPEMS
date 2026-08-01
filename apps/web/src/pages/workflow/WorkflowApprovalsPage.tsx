@@ -168,7 +168,7 @@ export const WorkflowApprovalsPage: React.FC = () => {
 
   const handleApprove = useCallback(
     async (row: Record<string, unknown>) => {
-      const task = row as ApprovalTask;
+      const task = row as unknown as ApprovalTask;
       try {
         await approvalTaskApi.approveTask(task.id, { comment: '' });
         queryClient.invalidateQueries({ queryKey: [workflowApprovalSchema.entity] });
@@ -189,7 +189,7 @@ export const WorkflowApprovalsPage: React.FC = () => {
   );
 
   const handleRejectClick = useCallback((row: Record<string, unknown>) => {
-    const task = row as ApprovalTask;
+    const task = row as unknown as ApprovalTask;
     setSelectedTask(task);
     setRejectReason('');
     setRejectDialogOpen(true);
@@ -218,7 +218,7 @@ export const WorkflowApprovalsPage: React.FC = () => {
 
   const handleViewDetail = useCallback(
     (row: Record<string, unknown>) => {
-      const task = row as ApprovalTask;
+      const task = row as unknown as ApprovalTask;
       addNotification({
         title: '查看详情',
         message: `查看「${task.title}」的详情`,
@@ -230,7 +230,7 @@ export const WorkflowApprovalsPage: React.FC = () => {
 
   const handleTransfer = useCallback(
     (row: Record<string, unknown>) => {
-      const task = row as ApprovalTask;
+      const task = row as unknown as ApprovalTask;
       addNotification({
         title: '转交审批',
         message: `转交「${task.title}」的审批`,
@@ -261,14 +261,14 @@ export const WorkflowApprovalsPage: React.FC = () => {
       key: 'view',
       label: '查看详情',
       icon: <Eye size={16} />,
-      color: 'default',
+      color: 'secondary',
       onClick: handleViewDetail,
     },
     {
       key: 'transfer',
       label: '转交',
       icon: <ArrowRightLeft size={16} />,
-      color: 'default',
+      color: 'secondary',
       onClick: handleTransfer,
       show: (row) => row.status === 'pending' || row.status === 'claimed',
     },

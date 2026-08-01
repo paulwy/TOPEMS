@@ -84,7 +84,7 @@ const FinanceCostPage: React.FC = () => {
         };
       },
       create: async (data) => {
-        const payload = { ...(data as Partial<Account>), category: 'cost' };
+        const payload = { ...(data as Partial<Account>), category: 'cost' as const };
         const response = await accountApi.create(payload);
         if (!response.success) {
           throw new Error(response.message || '创建成本科目失败');

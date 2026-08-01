@@ -143,19 +143,21 @@ export const MasterDataSelector: React.FC<MasterDataSelectorProps> = ({
           required={required}
           error={error}
           helperText={helperText}
-          InputProps={{
-            ...params.InputProps,
-            endAdornment: (
-              <>
-                {isLoading && (
-                  <CircularProgress
-                    color='inherit'
-                    size={16}
-                  />
-                )}
-                {params.InputProps.endAdornment}
-              </>
-            ),
+          slotProps={{
+            input: {
+              ...params.slotProps.input,
+              endAdornment: (
+                <>
+                  {isLoading && (
+                    <CircularProgress
+                      color='inherit'
+                      size={16}
+                    />
+                  )}
+                  {params.slotProps.input.endAdornment}
+                </>
+              ),
+            },
           }}
         />
       )}

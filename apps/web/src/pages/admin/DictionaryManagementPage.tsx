@@ -216,7 +216,7 @@ const DictionaryManagementPage: React.FC<DictionaryManagementPageProps> = ({ onN
 
   const handleToggleStatus = useCallback(
     (row: Record<string, unknown>) => {
-      const item = row as DictItem;
+      const item = row as unknown as DictItem;
       toggleStatusMutation.mutate({ id: item.id, status: item.status });
     },
     [toggleStatusMutation]

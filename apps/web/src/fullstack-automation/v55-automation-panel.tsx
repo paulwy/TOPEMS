@@ -426,7 +426,7 @@ const PipelinesTab: React.FC<{
                   selected={selectedPipeline?.id === p.id}
                 >
                   <TableCell>
-                    <Typography variant="caption" fontFamily="monospace">{p.id}</Typography>
+                    <Typography variant="caption" sx={{ fontFamily: 'monospace' }}>{p.id}</Typography>
                   </TableCell>
                   <TableCell>{p.name}</TableCell>
                   <TableCell>
@@ -493,7 +493,7 @@ const PipelinesTab: React.FC<{
               {runs.filter((r) => r.pipeline_id === selectedPipeline.id).slice(0, 10).map((run) => (
                 <TableRow key={run.id}>
                   <TableCell>
-                    <Typography variant="caption" fontFamily="monospace">{run.id}</Typography>
+                    <Typography variant="caption" sx={{ fontFamily: 'monospace' }}>{run.id}</Typography>
                   </TableCell>
                   <TableCell>
                     <StatusChip status={run.status} />
@@ -643,7 +643,7 @@ const DeploymentsTab: React.FC<{
                 <TableRow key={d.id}>
                   <TableCell>{d.name}</TableCell>
                   <TableCell>
-                    <Typography variant="caption" fontFamily="monospace">{d.version}</Typography>
+                    <Typography variant="caption" sx={{ fontFamily: 'monospace' }}>{d.version}</Typography>
                   </TableCell>
                   <TableCell>
                     <V51Badge label={d.strategy} variant="info" size="sm" icon={<GitBranch size={12} />} />
@@ -774,7 +774,7 @@ const RollbacksTab: React.FC<{
       <V51Card
         title="自动回滚配置"
         headerAction={
-          <Stack direction="row" spacing={1} alignItems="center">
+          <Stack direction="row" spacing={1} sx={{ alignItems: 'center' }}>
             <FormControlLabel
               control={<Switch checked={autoEnabled} onChange={(e) => onToggleAuto(e.target.checked)} size="small" />}
               label={<Typography variant="body2">自动回滚</Typography>}
@@ -816,7 +816,7 @@ const RollbacksTab: React.FC<{
                       </Typography>
                     </TableCell>
                     <TableCell>
-                      <Typography variant="caption" fontFamily="monospace">{c.threshold}</Typography>
+                      <Typography variant="caption" sx={{ fontFamily: 'monospace' }}>{c.threshold}</Typography>
                     </TableCell>
                     <TableCell>{c.duration_window}</TableCell>
                     <TableCell>
@@ -858,10 +858,10 @@ const RollbacksTab: React.FC<{
                 events.map((e) => (
                   <TableRow key={e.id}>
                     <TableCell>
-                      <Typography variant="caption" fontFamily="monospace">{e.id}</Typography>
+                      <Typography variant="caption" sx={{ fontFamily: 'monospace' }}>{e.id}</Typography>
                     </TableCell>
                     <TableCell>
-                      <Typography variant="caption" fontFamily="monospace">{e.deployment_id}</Typography>
+                      <Typography variant="caption" sx={{ fontFamily: 'monospace' }}>{e.deployment_id}</Typography>
                     </TableCell>
                     <TableCell>
                       <Stack direction="column" spacing={0}>
@@ -1179,7 +1179,7 @@ const CreatePipelineDialog: React.FC<{
             <Stack spacing={1}>
               {stageConfigs.map((stage, idx) => (
                 <Paper key={idx} sx={{ p: 2, borderRadius: 2 }}>
-                  <Grid container spacing={1} alignItems="center">
+                  <Grid container spacing={1} sx={{ alignItems: 'center' }}>
                     <Grid size={{ xs: 12, md: 3 }}>
                       <TextField
                         size="small"
@@ -1238,7 +1238,7 @@ const CreatePipelineDialog: React.FC<{
                           setStageConfigs(next);
                         }}
                         fullWidth
-                        inputProps={{ min: 0, max: 1, step: 0.1 }}
+                        slotProps={{ htmlInput: { min: 0, max: 1, step: 0.1 } }}
                       />
                     </Grid>
                     <Grid size={{ xs: 12, md: 2 }}>
@@ -1416,16 +1416,16 @@ const PolicyCard: React.FC<{
 );
 
 const StatusChip: React.FC<{ status: string }> = ({ status }) => {
-  const colorMap: Record<string, 'success' | 'error' | 'warning' | 'info' | 'default'> = {
-    idle: 'default',
+  const colorMap: Record<string, 'success' | 'error' | 'warning' | 'info' | 'neutral'> = {
+    idle: 'neutral',
     running: 'info',
     completed: 'success',
     failed: 'error',
     cancelled: 'warning',
     paused: 'warning',
-    pending: 'default',
+    pending: 'neutral',
   };
-  return <V51Badge label={status} variant={colorMap[status] || 'default'} size="sm" />;
+  return <V51Badge label={status} variant={colorMap[status] || 'neutral'} size="sm" />;
 };
 
 const DeploymentStatusChip: React.FC<{ status: string }> = ({ status }) => {

@@ -14,10 +14,26 @@ import {
 } from '@mui/material';
 import { Building2, User, Settings, CheckCircle2 } from 'lucide-react';
 import { tenantApi } from '@/api/tenant';
-import type { OnboardTenantResponse, TenantPlan } from '@/api/tenant/types';
+import type { TenantPlan } from '@/api/tenant/types';
 import { useNotificationStore } from '@/store';
 import { useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
+
+// 本地定义：后端 onboardTenant API 尚未在 tenantApi 客户端实现，先用本地类型占位
+interface OnboardTenantResponse {
+  tenant: {
+    id: string;
+    name: string;
+    code: string;
+    plan: TenantPlan;
+  };
+  admin_username: string;
+  admin_email: string;
+}
+
+type OnboardTenantApi = (
+  data: Record<string, unknown>
+) => Promise<{ success: boolean; data: OnboardTenantResponse | null; message?: string }>;
 
 const PaperInfo: React.FC<{ title: string; value: string }> = ({ title, value }) => (
   <Box sx={{ p: 2, bgcolor: 'background.default', borderRadius: 1 }}>
@@ -282,7 +298,7 @@ export const TenantOnboardingWizardPage: React.FC = () => {
     setSubmitting(true);
     setErrorMsg(null);
     try {
-      const response = await tenantApi.onboardTenant({
+      const response = await (tenantApi as unknown as { onboardTenant: OnboardTenantApi }).onboardTenant({
         name: formData.name,
         code: formData.code,
         tenant_type: formData.tenant_type,

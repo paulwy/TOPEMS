@@ -221,7 +221,7 @@ const BiddingPage: React.FC = () => {
         apiAdapter={apiAdapter}
         customRowActions={customRowActions}
         headerContent={headerContent}
-        detailContent={(row) => detailContent(row as Bidding)}
+        detailContent={(row) => detailContent(row as unknown as Bidding)}
         breadcrumbs={[{ label: 'SRM' }, { label: '招投标管理' }]}
       />
 

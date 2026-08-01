@@ -197,7 +197,7 @@ export const FinanceApprovalConfigPage: React.FC = () => {
           <Settings size={18} />
           <Typography
             variant='subtitle2'
-            fontWeight={600}
+            sx={{ fontWeight: 600 }}
           >
             审批节点（{nodes.length}）
           </Typography>

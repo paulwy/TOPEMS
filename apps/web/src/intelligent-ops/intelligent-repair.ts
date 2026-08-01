@@ -28,7 +28,7 @@ class IntelligentRepairImpl {
   private executions: Map<string, RepairAction[]> = new Map();
   private actionHistory: RepairAction[] = [];
 
-  private constructor() {
+  constructor() {
     this.init_default_playbooks();
   }
 

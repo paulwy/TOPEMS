@@ -433,7 +433,7 @@ const DashboardTab: React.FC<{
                         <TableCell>
                           <Typography
                             variant='body2'
-                            fontWeight={500}
+                            sx={{ fontWeight: 500 }}
                           >
                             {project.name}
                           </Typography>
@@ -485,7 +485,7 @@ const DashboardTab: React.FC<{
                             />
                             <Typography
                               variant='caption'
-                              fontWeight={600}
+                              sx={{ fontWeight: 600 }}
                             >
                               {project.health.score}
                             </Typography>
@@ -591,7 +591,7 @@ const DashboardTab: React.FC<{
                     <Box sx={{ flex: 1 }}>
                       <Typography
                         variant='body2'
-                        fontWeight={500}
+                        sx={{ fontWeight: 500 }}
                       >
                         {run.pipelineId}
                       </Typography>
@@ -645,7 +645,7 @@ const DashboardTab: React.FC<{
                     <Box sx={{ flex: 1 }}>
                       <Typography
                         variant='body2'
-                        fontWeight={500}
+                        sx={{ fontWeight: 500 }}
                       >
                         {page.name}
                       </Typography>
@@ -703,7 +703,7 @@ const StatCard: React.FC<{
         </Typography>
         <Typography
           variant='h5'
-          fontWeight={700}
+          sx={{ fontWeight: 700 }}
         >
           {value}
         </Typography>
@@ -729,7 +729,7 @@ const InfoRow: React.FC<{ icon: React.ReactNode; label: string; value: string }>
     </Box>
     <Typography
       variant='body2'
-      fontWeight={600}
+      sx={{ fontWeight: 600 }}
     >
       {value}
     </Typography>
@@ -765,7 +765,7 @@ const PlatformTab: React.FC<{ projects: DevProject[] }> = ({ projects }) => {
       <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', mb: 3 }}>
         <Typography
           variant='h6'
-          fontWeight={600}
+          sx={{ fontWeight: 600 }}
         >
           开发平台
         </Typography>
@@ -912,7 +912,7 @@ const PlatformTab: React.FC<{ projects: DevProject[] }> = ({ projects }) => {
           <Paper sx={{ p: 3, border: '2px dashed', borderColor: 'primary.main' }}>
             <Typography
               variant='subtitle1'
-              fontWeight={600}
+              sx={{ fontWeight: 600 }}
               gutterBottom
             >
               创建新项目
@@ -1002,7 +1002,7 @@ const ProjectDetailDialog: React.FC<{ project: DevProject; onClose: () => void }
       <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', mb: 2 }}>
         <Typography
           variant='h6'
-          fontWeight={600}
+          sx={{ fontWeight: 600 }}
         >
           {project.name}
         </Typography>
@@ -1067,13 +1067,13 @@ const ProjectDetailDialog: React.FC<{ project: DevProject; onClose: () => void }
                 >
                   <Typography
                     variant='caption'
-                    fontWeight={600}
+                    sx={{ fontWeight: 600 }}
                   >
                     {ENV_LABELS[key as EnvironmentName]}
                   </Typography>
                   <Typography
                     variant='caption'
-                    display='block'
+                    sx={{ display: 'block' }}
                     color='text.secondary'
                   >
                     {env.baseUrl}
@@ -1099,7 +1099,7 @@ const ProjectDetailDialog: React.FC<{ project: DevProject; onClose: () => void }
             />
             <Typography
               variant='body2'
-              fontWeight={600}
+              sx={{ fontWeight: 600 }}
             >
               {project.health.score}/100
             </Typography>
@@ -1215,9 +1215,9 @@ const BuilderTab: React.FC<{ pages: CanvasPage[] }> = ({ pages }) => {
                   <ListItem
                     key={page.id}
                     onClick={() => setSelectedPage(page)}
-                    selected={selectedPage?.id === page.id}
                     sx={{
                       cursor: 'pointer',
+                      backgroundColor: selectedPage?.id === page.id ? 'action.selected' : undefined,
                       borderRadius: 1,
                       '&.Mui-selected': { bgcolor: 'primary.light' },
                     }}
@@ -1304,7 +1304,7 @@ const BuilderTab: React.FC<{ pages: CanvasPage[] }> = ({ pages }) => {
                         <Box sx={{ flex: 1 }}>
                           <Typography
                             variant='body2'
-                            fontWeight={500}
+                            sx={{ fontWeight: 500 }}
                           >
                             {comp.name}
                           </Typography>
@@ -1513,7 +1513,7 @@ const MarketplaceTab: React.FC<{ installedPlugins: InstalledPlugin[] }> = ({
                         <Box sx={{ flex: 1 }}>
                           <Typography
                             variant='body2'
-                            fontWeight={600}
+                            sx={{ fontWeight: 600 }}
                           >
                             {plugin.name}
                           </Typography>
@@ -1621,8 +1621,7 @@ const MarketplaceTab: React.FC<{ installedPlugins: InstalledPlugin[] }> = ({
                       />
                       <Typography
                         variant='body2'
-                        fontWeight={500}
-                        sx={{ flex: 1 }}
+                        sx={{ fontWeight: 500, flex: 1 }}
                       >
                         {p.manifest.name}
                       </Typography>
@@ -1671,7 +1670,7 @@ const MarketplaceTab: React.FC<{ installedPlugins: InstalledPlugin[] }> = ({
             >
               <Typography
                 variant='h6'
-                fontWeight={600}
+                sx={{ fontWeight: 600 }}
               >
                 {selectedPlugin.name}
               </Typography>
@@ -1769,7 +1768,7 @@ const PipelinesTab: React.FC<{
     <Box sx={{ p: 3 }}>
       <Typography
         variant='h6'
-        fontWeight={600}
+        sx={{ fontWeight: 600 }}
         gutterBottom
       >
         流水线运行历史
@@ -1815,7 +1814,7 @@ const PipelinesTab: React.FC<{
                         <TableCell>
                           <Typography
                             variant='body2'
-                            fontWeight={500}
+                            sx={{ fontWeight: 500 }}
                           >
                             {run.pipelineId}
                           </Typography>
@@ -1896,7 +1895,7 @@ const PipelinesTab: React.FC<{
                 >
                   <Typography
                     variant='body2'
-                    fontWeight={500}
+                    sx={{ fontWeight: 500 }}
                     gutterBottom
                   >
                     {project.name}
@@ -1969,7 +1968,7 @@ const PipelineDetailDialog: React.FC<{ run: PipelineRun; onClose: () => void }> 
       <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', mb: 2 }}>
         <Typography
           variant='h6'
-          fontWeight={600}
+          sx={{ fontWeight: 600 }}
         >
           {run.pipelineId}
         </Typography>
@@ -2051,7 +2050,7 @@ const StageTimeline: React.FC<{ stage: PipelineStage; index: number }> = ({ stag
       <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
         <Typography
           variant='body2'
-          fontWeight={600}
+          sx={{ fontWeight: 600 }}
         >
           {stage.name}
         </Typography>
@@ -2148,7 +2147,7 @@ const ActivityTab: React.FC<{
     <Box sx={{ p: 3 }}>
       <Typography
         variant='h6'
-        fontWeight={600}
+        sx={{ fontWeight: 600 }}
         gutterBottom
       >
         活动日志

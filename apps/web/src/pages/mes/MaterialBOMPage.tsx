@@ -136,7 +136,7 @@ const MaterialBOMPage: React.FC = () => {
   };
 
   const headerContent = (rows: Record<string, unknown>[]) => {
-    const boms = rows as MaterialBom[];
+    const boms = rows as unknown as MaterialBom[];
     return (
       <Box
         sx={{

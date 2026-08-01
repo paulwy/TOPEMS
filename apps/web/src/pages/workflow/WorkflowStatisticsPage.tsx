@@ -448,9 +448,6 @@ export const WorkflowStatisticsPage: React.FC = () => {
         recentItems={topItems}
         recentTitle='Top 10 高频流程'
         onRefresh={handleRefresh}
-        layout={{
-          statsBreakpoints: { xs: 12, sm: 6, md: 4, lg: 4, xl: 4 },
-        }}
       />
     </PageContainer>
   );

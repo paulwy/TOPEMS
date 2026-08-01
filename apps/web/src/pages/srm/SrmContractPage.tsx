@@ -58,7 +58,7 @@ const contractApiAdapter: CrudApiAdapter = {
   },
   create: async (data) => {
     const response = await srmApi.createContract(
-      data as Parameters<typeof srmApi.createContract>[0]
+      data as unknown as Parameters<typeof srmApi.createContract>[0]
     );
     if (!response.success || !response.data) throw new Error('创建合同失败');
     return response.data as unknown as Record<string, unknown>;
@@ -66,7 +66,7 @@ const contractApiAdapter: CrudApiAdapter = {
   update: async (id, data) => {
     const response = await srmApi.updateContract(
       id,
-      data as Parameters<typeof srmApi.updateContract>[1]
+      data as unknown as Parameters<typeof srmApi.updateContract>[1]
     );
     if (!response.success || !response.data) throw new Error('更新合同失败');
     return response.data as unknown as Record<string, unknown>;

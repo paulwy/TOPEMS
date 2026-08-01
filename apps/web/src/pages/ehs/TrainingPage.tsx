@@ -29,10 +29,10 @@ const planApi = {
   delete: trainingApi.deleteTrainingPlan,
 };
 
-const planAdapter: CrudApiAdapter<TrainingPlan> = createCrudPageAdapter<
+const planAdapter = createCrudPageAdapter<
   TrainingPlan,
   CreateTrainingPlanRequest
->(planApi);
+>(planApi) as unknown as CrudApiAdapter<TrainingPlan>;
 
 const recordApi = {
   list: trainingApi.listTrainingRecords,
@@ -41,10 +41,10 @@ const recordApi = {
   delete: trainingApi.deleteTrainingRecord,
 };
 
-const recordAdapter: CrudApiAdapter<TrainingRecord> = createCrudPageAdapter<
+const recordAdapter = createCrudPageAdapter<
   TrainingRecord,
   CreateTrainingRecordRequest
->(recordApi);
+>(recordApi) as unknown as CrudApiAdapter<TrainingRecord>;
 
 const certificateApi = {
   list: trainingApi.listTrainingCertificates,
@@ -53,10 +53,10 @@ const certificateApi = {
   delete: trainingApi.deleteTrainingCertificate,
 };
 
-const certificateAdapter: CrudApiAdapter<TrainingCertificate> = createCrudPageAdapter<
+const certificateAdapter = createCrudPageAdapter<
   TrainingCertificate,
   CreateTrainingCertificateRequest
->(certificateApi);
+>(certificateApi) as unknown as CrudApiAdapter<TrainingCertificate>;
 
 const RecordList: React.FC = () => {
   return (

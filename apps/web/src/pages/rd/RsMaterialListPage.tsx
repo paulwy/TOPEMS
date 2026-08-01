@@ -14,16 +14,14 @@ import { PageContainer } from '@/components/common/PageContainer';
 import { useNotificationStore } from '@/store';
 import { logger } from '@/utils/logger';
 
-const baseAdapter = createCrudPageAdapter<Material, CreateMaterialRequest, UpdateMaterialRequest>(
-  materialApi
-);
+const baseAdapter = createCrudPageAdapter<Material, CreateMaterialRequest, UpdateMaterialRequest>({
+  list: materialApi.listMaterials,
+  create: materialApi.createMaterial,
+  update: materialApi.updateMaterial,
+  delete: materialApi.deleteMaterial,
+});
 
-const materialAdapter: CrudApiAdapter<Material> = {
-  list: baseAdapter.list,
-  create: baseAdapter.create,
-  update: baseAdapter.update,
-  delete: baseAdapter.delete,
-};
+const materialAdapter = baseAdapter as unknown as CrudApiAdapter<Material>;
 
 function getStockStatus(material: Material): string {
   const stock = material.stock_quantity || 0;

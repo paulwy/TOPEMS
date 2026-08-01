@@ -6,10 +6,11 @@
  */
 
 import React from 'react';
-import { Box, Paper, Typography, TreeView, TreeItem, IconButton, Tooltip } from '@mui/material';
+import { Box, Paper, Typography, IconButton, Tooltip } from '@mui/material';
+import { SimpleTreeView, TreeItem } from '@mui/x-tree-view';
 import * as LucideIcons from 'lucide-react';
-import type { CanvasNode } from '../types';
-import { getComponentByType } from '../types';
+import type { CanvasNode } from './types';
+import { getComponentByType } from './types';
 
 interface ComponentTreeProps {
   nodes: CanvasNode[];
@@ -45,7 +46,9 @@ export function ComponentTree({ nodes, selectedNodeId, onSelectNode }: Component
   const renderTreeItem = (node: CanvasNode) => {
     const comp = getComponentByType(node.type);
     const IconComp = comp?.icon
-      ? (LucideIcons as Record<string, React.ComponentType<{ size?: number }>>)[comp.icon]
+      ? (LucideIcons as unknown as Record<string, React.ComponentType<{ size?: number }>>)[
+          comp.icon
+        ]
       : null;
 
     const label = (
@@ -60,15 +63,14 @@ export function ComponentTree({ nodes, selectedNodeId, onSelectNode }: Component
       </Box>
     );
 
-    return (
-      <TreeItem
-        key={node.id}
-        nodeId={node.id}
-        label={label}
-      >
-        {node.children?.map(renderTreeItem)}
-      </TreeItem>
-    );
+    const treeItemProps = {
+      key: node.id,
+      nodeId: node.id,
+      label,
+      children: node.children?.map(renderTreeItem) ?? null,
+    };
+
+    return <TreeItem {...treeItemProps as any} />;
   };
 
   return (
@@ -89,14 +91,15 @@ export function ComponentTree({ nodes, selectedNodeId, onSelectNode }: Component
         组件结构
       </Typography>
 
-      <TreeView
-        selected={selectedNodeId ?? ''}
-        onNodeSelect={(_, nodeId) => onSelectNode(nodeId === selectedNodeId ? null : nodeId)}
-        defaultExpandIcon={<LucideIcons.ChevronRight size={16} />}
-        defaultCollapseIcon={<LucideIcons.ChevronDown size={16} />}
+      <SimpleTreeView
+        selectedItems={selectedNodeId ?? null}
+        onItemSelectionToggle={(_, nodeId, isSelected) =>
+          onSelectNode(isSelected ? nodeId : null)
+        }
+        slots={{ expandIcon: LucideIcons.ChevronRight, collapseIcon: LucideIcons.ChevronDown }}
       >
         {nodes.map(renderTreeItem)}
-      </TreeView>
+      </SimpleTreeView>
     </Paper>
   );
 }

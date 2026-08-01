@@ -34,7 +34,7 @@ const evaluationApiAdapter: CrudApiAdapter = {
       return { data: [], total: 0 };
     }
 
-    const items = response.data;
+    const items = response.data as unknown as SupplierEvaluation[];
     const search = params?.search?.toLowerCase() || '';
     const status = params?.status as string | undefined;
     const page = params?.page || 0;
@@ -59,7 +59,7 @@ const evaluationApiAdapter: CrudApiAdapter = {
   },
   create: async (data) => {
     const response = await srmApi.createEvaluation(
-      data as Parameters<typeof srmApi.createEvaluation>[0]
+      data as unknown as Parameters<typeof srmApi.createEvaluation>[0]
     );
     if (!response.success || !response.data) throw new Error('创建评估失败');
     return response.data as unknown as Record<string, unknown>;
@@ -67,7 +67,7 @@ const evaluationApiAdapter: CrudApiAdapter = {
   update: async (id, data) => {
     const response = await srmApi.updateEvaluation(
       id,
-      data as Parameters<typeof srmApi.updateEvaluation>[1]
+      data as unknown as Parameters<typeof srmApi.updateEvaluation>[1]
     );
     if (!response.success || !response.data) throw new Error('更新评估失败');
     return response.data as unknown as Record<string, unknown>;
