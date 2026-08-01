@@ -1,0 +1,377 @@
+{
+  "inspection": {
+    "message": {
+      "load_fail": "Failed to load inspection data",
+      "create_fail": "Failed to create inspection order",
+      "update_fail": "Failed to update inspection order",
+      "delete_fail": "Failed to delete inspection order",
+      "assign_fail": "Assignment failed",
+      "success": "Success",
+      "assign_success": "Inspection assigned successfully",
+      "error": "Error",
+      "assign_error": "An error occurred during assignment",
+      "submit_fail": "Submission failed",
+      "submit_success": "Inspection result submitted successfully",
+      "submit_error": "An error occurred while submitting results",
+      "action_fail": "Operation failed",
+      "action_error": "An error occurred during operation",
+      "action_success": "{{action}} successful"
+    },
+    "action": {
+      "approve": "Approve",
+      "reject": "Reject",
+      "rework": "Rework"
+    },
+    "button": {
+      "assign": "Assign",
+      "submit_result": "Submit Result",
+      "cancel": "Cancel",
+      "confirm_assign": "Confirm Assignment",
+      "assigning": "Assigning...",
+      "submitting": "Submitting...",
+      "processing": "Processing...",
+      "confirm_rework": "Confirm Rework",
+      "add_item": "Add Item",
+      "delete": "Delete"
+    },
+    "title": {
+      "page": "Quality Inspection",
+      "assign_dialog": "Assign Inspector",
+      "submit_dialog": "Submit Inspection Result",
+      "detail": "Inspection Item Details",
+      "rework_dialog": "Rework Request"
+    },
+    "label": {
+      "assignee": "Assignee *",
+      "operator": "Operator *",
+      "inspector": "Inspector *",
+      "remark": "Remark",
+      "auditor": "Auditor *",
+      "audit_opinion": "Audit Opinion",
+      "item": "Inspection Item",
+      "standard_value": "Standard Value",
+      "measured_value": "Measured Value",
+      "judgment": "Judgment",
+      "qualified_qty": "Qualified Quantity *",
+      "unqualified_qty": "Unqualified Quantity *"
+    },
+    "placeholder": {
+      "assignee": "Enter personnel name",
+      "operator": "Enter operator name",
+      "qualified_qty": "Enter qualified quantity",
+      "unqualified_qty": "Enter unqualified quantity",
+      "inspector": "Enter inspector name",
+      "remark": "Enter remark",
+      "auditor": "Enter auditor name",
+      "audit_opinion": "Enter audit opinion"
+    },
+    "stat": {
+      "total": "Total Inspections",
+      "pending": "Pending",
+      "in_progress": "In Progress",
+      "pending_audit": "Pending Audit",
+      "completed": "Completed",
+      "rejected": "Rejected"
+    },
+    "option": {
+      "qualified": "Qualified",
+      "unqualified": "Unqualified"
+    }
+  },
+  "standard_detail": {
+    "message": {
+      "load_detail_fail": "Failed to load quality standard detail",
+      "load_revisions_fail": "Failed to load version history",
+      "create_revision_fail": "Failed to create version",
+      "update_fail": "Failed to update quality standard",
+      "delete_fail": "Failed to delete quality standard",
+      "not_found": "Quality standard does not exist or has been deleted",
+      "upgrade_version": "Upgrade to version {{version}}"
+    },
+    "status": {
+      "active": "Active",
+      "draft": "Draft",
+      "expired": "Expired",
+      "archived": "Archived"
+    },
+    "entity": {
+      "name": "Quality Standard"
+    },
+    "title": {
+      "page": "Quality Standard Detail",
+      "edit_dialog": "Edit Quality Standard",
+      "new_revision": "New Version"
+    },
+    "tab": {
+      "info": "Standard Info",
+      "history": "Version History"
+    },
+    "label": {
+      "version": "Version",
+      "category": "Category",
+      "actions": "Actions",
+      "code": "Standard Code",
+      "status": "Status",
+      "name": "Standard Name",
+      "effective_date": "Effective Date",
+      "description": "Standard Description",
+      "code_required": "Standard Code *",
+      "version_no": "Version Number",
+      "name_required": "Standard Name *",
+      "desc": "Description",
+      "current_version": "Current Version:",
+      "change_note": "Change Note"
+    },
+    "placeholder": {
+      "code": "Enter standard code",
+      "version_example": "e.g. 1.0",
+      "name": "Enter standard name",
+      "category": "Enter category",
+      "description": "Enter standard description...",
+      "change_note": "Describe the changes in this version..."
+    },
+    "button": {
+      "back_to_list": "Back to List",
+      "cancel": "Cancel",
+      "saving": "Saving...",
+      "save": "Save Changes",
+      "creating": "Creating...",
+      "create": "Create Version",
+      "create_first": "Create First Version",
+      "download": "Download Standard Document",
+      "upload": "Upload New Version File"
+    },
+    "action": {
+      "new_revision": "New Version"
+    },
+    "text": {
+      "no_description": "No description",
+      "no_revisions": "No version records",
+      "version_increment_hint": "After creating a new version, the version number will auto-increment (e.g. 1.0 → 1.1)"
+    }
+  },
+  "eight_d": {
+    "message": {
+      "load_stats_fail": "Failed to load 8D statistics",
+      "load_list_fail": "Failed to load 8D report list",
+      "create_fail": "Failed to create 8D report",
+      "update_fail": "Failed to update 8D report",
+      "delete_fail": "Failed to delete 8D report"
+    },
+    "status": {
+      "pending": "Pending",
+      "in_progress": "In Progress",
+      "completed": "Completed",
+      "closed": "Closed"
+    },
+    "stat": {
+      "total": "Total Reports"
+    },
+    "label": {
+      "cause": "Cause Description",
+      "category": "Category",
+      "level": "Level",
+      "is_root": "Is Root Cause",
+      "analysis_method": "Analysis Method"
+    },
+    "button": {
+      "add_root": "Add Root Cause",
+      "clear": "Clear"
+    },
+    "text": {
+      "new_cause": "New Cause",
+      "root_cause_hint": "Use tree structure for fishbone / 5Why analysis. Click nodes to add sub-causes.",
+      "no_root_cause": "No root cause analysis data. Click \"Add Root Cause\" above to start analysis."
+    },
+    "breadcrumb": {
+      "quality": "Quality Management",
+      "eight_d": "8D Problem Solving"
+    }
+  },
+  "dashboard": {
+    "message": {
+      "load_fail": "Failed to load quality overview"
+    },
+    "stat": {
+      "inspection_total": "Total Inspections",
+      "pass_rate": "Pass Rate",
+      "defect_count": "Defect Count",
+      "eightd_count": "8D Reports",
+      "spc_count": "SPC Charts",
+      "audit_count": "Audit Plans"
+    },
+    "label": {
+      "vs_last_month": "vs last month"
+    },
+    "chart": {
+      "inspection_trend": "Monthly Inspection Trend",
+      "defect_distribution": "Defect Type Distribution",
+      "spc_overview": "SPC Control Chart Overview"
+    },
+    "text": {
+      "no_trend_data": "No trend data",
+      "no_distribution_data": "No distribution data",
+      "no_spc_data": "No SPC data"
+    },
+    "action": {
+      "new_inspection": "New Inspection",
+      "quality_standards": "Quality Standards",
+      "nonconformance": "Nonconformance Report",
+      "spc_analysis": "SPC Analysis",
+      "audit_management": "Audit Management"
+    },
+    "recent": {
+      "inspection_task": "Recent Inspections",
+      "inspection_desc": "{{count}} inspections in progress",
+      "nonconformance": "Recent Nonconformance",
+      "nonconformance_desc": "{{count}} nonconformance records",
+      "eightd": "Recent 8D",
+      "eightd_desc": "{{count}} 8D reports",
+      "audit": "Recent Audits",
+      "audit_desc": "{{count}} audit plans",
+      "apqp": "Recent APQP",
+      "apqp_desc": "{{count}} APQP projects"
+    },
+    "time": {
+      "today": "Today",
+      "this_week": "This Week",
+      "this_month": "This Month"
+    },
+    "title": {
+      "quick_actions": "Quick Actions",
+      "recent_items": "Recent Items"
+    }
+  },
+  "standard_list": {
+    "message": {
+      "load_fail": "Failed to load quality standard data",
+      "create_fail": "Creation failed",
+      "update_fail": "Update failed",
+      "delete_fail": "Deletion failed"
+    },
+    "status": {
+      "active": "Active",
+      "draft": "Draft"
+    },
+    "stat": {
+      "total": "Total Standards",
+      "active": "Active Standards",
+      "draft": "Draft Standards"
+    },
+    "action": {
+      "view": "View"
+    },
+    "title": {
+      "page": "Quality Standards"
+    },
+    "breadcrumb": {
+      "home": "Home"
+    }
+  },
+  "quality_control": {
+    "message": {
+      "audit_create_unsupported": "Audit plan creation is not supported",
+      "audit_update_unsupported": "Audit plan update is not supported",
+      "audit_delete_unsupported": "Audit plan deletion is not supported"
+    },
+    "stat": {
+      "total_nonconformance": "Total Nonconformances",
+      "pending": "Pending",
+      "closed": "Closed",
+      "audit_total": "Total Audits",
+      "audit_in_progress": "Audits In Progress",
+      "audit_completed": "Completed Audits"
+    },
+    "status": {
+      "pending": "Pending",
+      "closed": "Closed",
+      "completed": "Completed",
+      "in_progress": "In Progress"
+    },
+    "breadcrumb": {
+      "quality": "Quality Management"
+    },
+    "tab": {
+      "issues": "Nonconformance Management",
+      "audit": "Audit Management"
+    }
+  },
+  "audit": {
+    "message": {
+      "load_fail": "Failed to load audit plans",
+      "create_unsupported": "Creating audit plans is not yet supported",
+      "update_unsupported": "Updating audit plans is not yet supported",
+      "delete_unsupported": "Deleting audit plans is not yet supported"
+    },
+    "status": {
+      "completed": "Completed",
+      "in_progress": "In Progress"
+    },
+    "stat": {
+      "total": "Total Audits",
+      "in_progress": "Audits In Progress",
+      "completed": "Completed Audits"
+    },
+    "breadcrumb": {
+      "audit": "Audit Management"
+    }
+  },
+  "nonconformance": {
+    "message": {
+      "load_fail": "Failed to load nonconformance data",
+      "create_fail": "Creation failed",
+      "update_fail": "Update failed",
+      "delete_fail": "Deletion failed"
+    },
+    "status": {
+      "pending": "Pending",
+      "closed": "Closed"
+    },
+    "stat": {
+      "total": "Total Nonconformances"
+    },
+    "breadcrumb": {
+      "page": "Nonconformance Management"
+    }
+  },
+  "quality_cost": {
+    "stat": {
+      "total": "Total Quality Cost",
+      "prevention": "Prevention Cost",
+      "appraisal": "Appraisal Cost",
+      "internal": "Internal Failure",
+      "external": "External Failure"
+    },
+    "breadcrumb": {
+      "page": "Quality Cost Analysis"
+    }
+  },
+  "apqp": {
+    "breadcrumb": {
+      "page": "APQP Product Quality Planning"
+    }
+  },
+  "spc": {
+    "breadcrumb": {
+      "page": "SPC Statistical Process Control"
+    }
+  },
+  "fmea": {
+    "breadcrumb": {
+      "page": "FMEA Analysis"
+    }
+  },
+  "qms.status.pending": "Pending",
+  "qms.status.in_progress": "In Progress",
+  "qms.status.completed": "Completed",
+  "qms.status.closed": "Closed",
+  "qms.standard.entity_name": "Quality Standard",
+  "qms.inspection.approved": "Approved",
+  "qms.inspection.rejected": "Rejected",
+  "qms.inspection.rework": "Rework",
+  "qms.inspection.assigning": "Assigning...",
+  "qms.inspection.confirm_assignment": "Confirm Assignment",
+  "qms.inspection.submit_result": "Submit Result",
+  "qms.inspection.rework_request": "Rework Request",
+  "qms.inspection.confirm_rework": "Confirm Rework"
+}

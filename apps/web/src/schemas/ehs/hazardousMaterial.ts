@@ -91,7 +91,7 @@ function renderExpiryCell(row: Record<string, unknown>, _index: number) {
   const status = getExpiryStatus(expiryDate);
   const dateText = expiryDate ? new Date(expiryDate).toLocaleDateString('zh-CN') : '-';
 
-  const children = [
+  const children: React.ReactNode[] = [
     React.createElement(Clock, {
       key: 'icon',
       style: { width: 14, height: 14 },

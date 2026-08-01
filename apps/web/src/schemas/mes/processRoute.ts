@@ -50,7 +50,7 @@ export const processRouteSchema: EntitySchema = {
       sortable: true,
       listWidth: 140,
       readonly: true,
-      renderCell: (row): React.ReactNode => {
+      renderCell: (row: Record<string, unknown>): React.ReactNode => {
         const t = (row as Record<string, unknown>).total_standard_time as number | undefined;
         return t || 0;
       },

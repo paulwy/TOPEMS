@@ -40,7 +40,7 @@ export const productionProcessSchema: EntitySchema = {
       label: '标准工时(h)',
       type: 'number',
       listWidth: 110,
-      renderCell: (row): React.ReactNode => {
+      renderCell: (row: Record<string, unknown>): React.ReactNode => {
         const t = row.standard_time as number | undefined;
         return t ? `${t}h` : '-';
       },
@@ -50,7 +50,7 @@ export const productionProcessSchema: EntitySchema = {
       label: '工作站',
       type: 'text',
       listWidth: 140,
-      renderCell: (row): React.ReactNode => {
+      renderCell: (row: Record<string, unknown>): React.ReactNode => {
         const ws = row.work_station_id as string | undefined;
         return ws || '-';
       },

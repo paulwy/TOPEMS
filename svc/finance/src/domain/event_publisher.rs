@@ -26,16 +26,9 @@ pub fn event_type_name(event: &FinanceDomainEvent) -> &'static str {
 /// 扩展事件发布器 trait：携带 aggregate_id 与元数据
 #[async_trait]
 pub trait DomainEventPublisherExt: Send + Sync {
-    async fn publish(
-        &self,
-        event: &FinanceDomainEvent,
-        aggregate_id: &str,
-    ) -> Result<(), String>;
+    async fn publish(&self, event: &FinanceDomainEvent, aggregate_id: &str) -> Result<(), String>;
 
-    async fn publish_batch(
-        &self,
-        events: &[(FinanceDomainEvent, String)],
-    ) -> Result<(), String>;
+    async fn publish_batch(&self, events: &[(FinanceDomainEvent, String)]) -> Result<(), String>;
 
     async fn publish_with_metadata(
         &self,
@@ -131,23 +124,13 @@ impl Default for InMemoryEventPublisher {
 
 #[async_trait]
 impl DomainEventPublisherExt for InMemoryEventPublisher {
-    async fn publish(
-        &self,
-        event: &FinanceDomainEvent,
-        aggregate_id: &str,
-    ) -> Result<(), String> {
+    async fn publish(&self, event: &FinanceDomainEvent, aggregate_id: &str) -> Result<(), String> {
         self.publish_with_metadata(event, aggregate_id, EventPublishMetadata::default())
             .await
     }
 
-    async fn publish_batch(
-        &self,
-        events: &[(FinanceDomainEvent, String)],
-    ) -> Result<(), String> {
-        let mut store = self
-            .published_events
-            .lock()
-            .map_err(|e| e.to_string())?;
+    async fn publish_batch(&self, events: &[(FinanceDomainEvent, String)]) -> Result<(), String> {
+        let mut store = self.published_events.lock().map_err(|e| e.to_string())?;
         let now = chrono::Utc::now();
         for (event, aggregate_id) in events {
             store.push(PublishedEvent {
@@ -166,10 +149,7 @@ impl DomainEventPublisherExt for InMemoryEventPublisher {
         aggregate_id: &str,
         metadata: EventPublishMetadata,
     ) -> Result<(), String> {
-        let mut store = self
-            .published_events
-            .lock()
-            .map_err(|e| e.to_string())?;
+        let mut store = self.published_events.lock().map_err(|e| e.to_string())?;
         store.push(PublishedEvent {
             event: event.clone(),
             aggregate_id: aggregate_id.to_string(),
@@ -215,11 +195,7 @@ impl Default for CompositeEventPublisher {
 
 #[async_trait]
 impl DomainEventPublisherExt for CompositeEventPublisher {
-    async fn publish(
-        &self,
-        event: &FinanceDomainEvent,
-        aggregate_id: &str,
-    ) -> Result<(), String> {
+    async fn publish(&self, event: &FinanceDomainEvent, aggregate_id: &str) -> Result<(), String> {
         let mut errors = Vec::new();
         for publisher in &self.publishers {
             if let Err(e) = publisher.publish(event, aggregate_id).await {
@@ -237,10 +213,7 @@ impl DomainEventPublisherExt for CompositeEventPublisher {
         }
     }
 
-    async fn publish_batch(
-        &self,
-        events: &[(FinanceDomainEvent, String)],
-    ) -> Result<(), String> {
+    async fn publish_batch(&self, events: &[(FinanceDomainEvent, String)]) -> Result<(), String> {
         let mut errors = Vec::new();
         for publisher in &self.publishers {
             if let Err(e) = publisher.publish_batch(events).await {

@@ -618,12 +618,8 @@ impl AutoReconciler {
         }
 
         if rules.is_empty() {
-            let (status, confidence, diff, notes) = Self::apply_rule(
-                MatchType::Exact,
-                0.01,
-                bank_tx,
-                sys_rec,
-            );
+            let (status, confidence, diff, notes) =
+                Self::apply_rule(MatchType::Exact, 0.01, bank_tx, sys_rec);
             best_status = status;
             best_confidence = confidence;
             best_diff = diff;
@@ -657,11 +653,26 @@ impl AutoReconciler {
                 if reference_match && counterparty_match && amount_diff < tolerance {
                     (MatchStatus::Matched, 1.0, amount_diff, None)
                 } else if reference_match && amount_diff < tolerance {
-                    (MatchStatus::Partial, 0.8, amount_diff, Some("counterparty_mismatch".to_string()))
+                    (
+                        MatchStatus::Partial,
+                        0.8,
+                        amount_diff,
+                        Some("counterparty_mismatch".to_string()),
+                    )
                 } else if amount_diff < tolerance {
-                    (MatchStatus::Partial, 0.6, amount_diff, Some("reference_mismatch".to_string()))
+                    (
+                        MatchStatus::Partial,
+                        0.6,
+                        amount_diff,
+                        Some("reference_mismatch".to_string()),
+                    )
                 } else {
-                    (MatchStatus::Discrepancy, 0.2, amount_diff, Some("amount_mismatch".to_string()))
+                    (
+                        MatchStatus::Discrepancy,
+                        0.2,
+                        amount_diff,
+                        Some("amount_mismatch".to_string()),
+                    )
                 }
             }
             MatchType::Fuzzy => {
@@ -672,29 +683,64 @@ impl AutoReconciler {
                 if fuzzy_score >= 0.8 && amount_diff < tolerance {
                     (MatchStatus::Matched, fuzzy_score, amount_diff, None)
                 } else if fuzzy_score >= 0.5 {
-                    (MatchStatus::Partial, fuzzy_score, amount_diff, Some("fuzzy_match".to_string()))
+                    (
+                        MatchStatus::Partial,
+                        fuzzy_score,
+                        amount_diff,
+                        Some("fuzzy_match".to_string()),
+                    )
                 } else {
                     (MatchStatus::Unmatched, fuzzy_score, amount_diff, None)
                 }
             }
             MatchType::Amount => {
                 if amount_diff < tolerance {
-                    (MatchStatus::Matched, 1.0 - (amount_diff / bank_tx.amount.max(1.0)), amount_diff, None)
+                    (
+                        MatchStatus::Matched,
+                        1.0 - (amount_diff / bank_tx.amount.max(1.0)),
+                        amount_diff,
+                        None,
+                    )
                 } else if amount_diff < tolerance * 2.0 {
-                    (MatchStatus::Partial, 0.5, amount_diff, Some("within_double_tolerance".to_string()))
+                    (
+                        MatchStatus::Partial,
+                        0.5,
+                        amount_diff,
+                        Some("within_double_tolerance".to_string()),
+                    )
                 } else {
-                    (MatchStatus::Discrepancy, 0.1, amount_diff, Some("amount_exceeds_tolerance".to_string()))
+                    (
+                        MatchStatus::Discrepancy,
+                        0.1,
+                        amount_diff,
+                        Some("amount_exceeds_tolerance".to_string()),
+                    )
                 }
             }
             MatchType::Temporal => {
                 let temporal_window = tolerance.max(86400.0);
                 let date_diff_f64 = date_diff as f64;
                 if date_diff_f64 < temporal_window && amount_diff < tolerance {
-                    (MatchStatus::Matched, 1.0 - (date_diff_f64 / temporal_window), amount_diff, None)
+                    (
+                        MatchStatus::Matched,
+                        1.0 - (date_diff_f64 / temporal_window),
+                        amount_diff,
+                        None,
+                    )
                 } else if date_diff_f64 < temporal_window * 2.0 {
-                    (MatchStatus::Partial, 0.5, amount_diff, Some("outside_temporal_window".to_string()))
+                    (
+                        MatchStatus::Partial,
+                        0.5,
+                        amount_diff,
+                        Some("outside_temporal_window".to_string()),
+                    )
                 } else {
-                    (MatchStatus::Unmatched, 0.1, amount_diff, Some("date_outside_range".to_string()))
+                    (
+                        MatchStatus::Unmatched,
+                        0.1,
+                        amount_diff,
+                        Some("date_outside_range".to_string()),
+                    )
                 }
             }
         }
@@ -718,10 +764,7 @@ impl AutoReconciler {
         if len == 0 {
             return 1.0;
         }
-        let common: usize = a_chars
-            .iter()
-            .filter(|c| b_chars.contains(c))
-            .count();
+        let common: usize = a_chars.iter().filter(|c| b_chars.contains(c)).count();
         common as f64 / len as f64
     }
 
@@ -1268,7 +1311,10 @@ impl ElectronicPaymentProcessor {
         }
 
         let result_id = Uuid::new_v4();
-        let reversed_ref = format!("REV-{}", original.transaction_ref.as_deref().unwrap_or("unknown"));
+        let reversed_ref = format!(
+            "REV-{}",
+            original.transaction_ref.as_deref().unwrap_or("unknown")
+        );
         sqlx::query_as(
             r#"INSERT INTO finance_v55_payment_results
                 (id, tenant_id, request_id, status, transaction_ref, fee, processed_at)
@@ -1294,7 +1340,9 @@ impl ElectronicPaymentProcessor {
             "SELECT id, amount, currency, from_account, to_account, method, reference, scheduled_at FROM finance_v55_payment_requests WHERE tenant_id = $1",
         );
         if status.is_some() {
-            query.push_str(" AND id IN (SELECT request_id FROM finance_v55_payment_results WHERE status = $2)");
+            query.push_str(
+                " AND id IN (SELECT request_id FROM finance_v55_payment_results WHERE status = $2)",
+            );
         }
         query.push_str(" ORDER BY created_at DESC LIMIT 500");
 
@@ -1549,7 +1597,9 @@ async fn match_invoice_handler(
 ) -> Json<ApiResponse<Invoice>> {
     let pool = state.pool.clone();
     let tenant_id = get_tenant_id(&claims);
-    match InvoiceRecognizer::match_invoice_to_purchase(&pool, tenant_id, id, req.purchase_order_id).await {
+    match InvoiceRecognizer::match_invoice_to_purchase(&pool, tenant_id, id, req.purchase_order_id)
+        .await
+    {
         Ok(invoice) => Json(ApiResponse::success(invoice, "匹配成功")),
         Err(e) => Json(ApiResponse::error(500, &e.to_string())),
     }
@@ -1640,7 +1690,9 @@ async fn schedule_payment_handler(
         method: req.method,
         reference: req.reference,
     };
-    match ElectronicPaymentProcessor::schedule_payment(&pool, tenant_id, init_req, req.scheduled_at).await {
+    match ElectronicPaymentProcessor::schedule_payment(&pool, tenant_id, init_req, req.scheduled_at)
+        .await
+    {
         Ok(request) => Json(ApiResponse::success(request, "调度成功")),
         Err(e) => Json(ApiResponse::error(500, &e.to_string())),
     }

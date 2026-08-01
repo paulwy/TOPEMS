@@ -244,10 +244,11 @@ async fn fetch_notification_todos(state: &AppState, token: Option<&str>) -> Vec<
         Ok(notifications) => notifications
             .iter()
             .filter(|n| {
-                let nt = n.get("notification_type").and_then(|v| v.as_str()).unwrap_or("");
-                nt.contains("todo")
-                    || nt.contains("task")
-                    || nt.contains("approval")
+                let nt = n
+                    .get("notification_type")
+                    .and_then(|v| v.as_str())
+                    .unwrap_or("");
+                nt.contains("todo") || nt.contains("task") || nt.contains("approval")
             })
             .filter_map(|n| {
                 let notification_type = n.get("notification_type")?.as_str()?.to_string();
@@ -264,7 +265,10 @@ async fn fetch_notification_todos(state: &AppState, token: Option<&str>) -> Vec<
                     priority: "medium".to_string(),
                     completed: n.get("is_read")?.as_bool()?,
                     todo_type: "notification".to_string(),
-                    link_url: n.get("link_url").and_then(|v| v.as_str()).map(|s| s.to_string()),
+                    link_url: n
+                        .get("link_url")
+                        .and_then(|v| v.as_str())
+                        .map(|s| s.to_string()),
                 })
             })
             .collect(),

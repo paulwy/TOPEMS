@@ -22,7 +22,7 @@ export const productionRecordSchema: EntitySchema = {
       readonlyOnEdit: true,
       sortable: true,
       listWidth: 140,
-      renderCell: (row: Record<string, unknown>) => React.createElement(Box, { sx: { fontWeight: 500 } }, row.order_id),
+      renderCell: (row: Record<string, unknown>) => React.createElement(Box, { sx: { fontWeight: 500 } }, String(row.order_id ?? '')),
     },
     {
       name: 'process_id',
@@ -48,7 +48,7 @@ export const productionRecordSchema: EntitySchema = {
           Stack,
           { direction: 'row', spacing: 0.5, sx: { alignItems: 'center' } },
           React.createElement(User, { size: 14 }),
-          row.operator
+          String(row.operator ?? '')
         ),
     },
     {
@@ -63,7 +63,7 @@ export const productionRecordSchema: EntitySchema = {
           Stack,
           { direction: 'row', spacing: 0.5, sx: { alignItems: 'center' } },
           React.createElement(Package, { size: 14 }),
-          row.quantity_completed
+          String(row.quantity_completed ?? '')
         ),
     },
     {

@@ -23,6 +23,8 @@ export const PM_PATHS = {
 } as const;
 
 // ---- 路由配置（供路由系统使用） ----
+// P34-4: PM 默认所有路由为 basic 层级；advanced 模块（project_approval/service_integration/...）
+// 在前端未提供独立页面，故不在此配置。
 export const pmModuleConfig: RouteModuleConfig = {
   code: 'pm',
   name: '项目管理',
@@ -34,6 +36,7 @@ export const pmModuleConfig: RouteModuleConfig = {
   order: 13,
   description: '项目计划、任务分配、进度跟踪、资源管理',
   permission: 'pm:read',
+  tier: 'basic',
   routes: [
     {
       path: PM_PATHS.dashboard,
@@ -45,6 +48,7 @@ export const pmModuleConfig: RouteModuleConfig = {
       group: 'overview',
       requiredPermissions: ['pm:read'],
       action: 'read',
+      tier: 'basic',
     },
     {
       path: PM_PATHS.projects,
@@ -56,6 +60,7 @@ export const pmModuleConfig: RouteModuleConfig = {
       group: 'business',
       requiredPermissions: ['pm:project:read', 'pm:read'],
       action: 'read',
+      tier: 'basic',
     },
     {
       path: PM_PATHS.projectCreate,
@@ -67,6 +72,7 @@ export const pmModuleConfig: RouteModuleConfig = {
       group: 'business',
       requiredPermissions: ['pm:project:create', 'pm:write'],
       action: 'write',
+      tier: 'basic',
     },
     {
       path: PM_PATHS.projectDetail,
@@ -78,6 +84,7 @@ export const pmModuleConfig: RouteModuleConfig = {
       group: 'business',
       requiredPermissions: ['pm:project:read', 'pm:read'],
       action: 'read',
+      tier: 'basic',
     },
     {
       path: PM_PATHS.contracts,
@@ -89,6 +96,7 @@ export const pmModuleConfig: RouteModuleConfig = {
       group: 'business',
       requiredPermissions: ['pm:contract:read', 'pm:read'],
       action: 'read',
+      tier: 'basic',
     },
     {
       path: PM_PATHS.contractCreate,
@@ -103,6 +111,7 @@ export const pmModuleConfig: RouteModuleConfig = {
       group: 'business',
       requiredPermissions: ['pm:contract:create', 'pm:write'],
       action: 'write',
+      tier: 'basic',
     },
     {
       path: PM_PATHS.contractDetail,
@@ -117,6 +126,7 @@ export const pmModuleConfig: RouteModuleConfig = {
       group: 'business',
       requiredPermissions: ['pm:contract:read', 'pm:read'],
       action: 'read',
+      tier: 'basic',
     },
     {
       path: PM_PATHS.resources,
@@ -128,6 +138,7 @@ export const pmModuleConfig: RouteModuleConfig = {
       group: 'process',
       requiredPermissions: ['pm:resource:read', 'pm:read'],
       action: 'read',
+      tier: 'basic',
     },
     {
       path: PM_PATHS.templates,
@@ -139,6 +150,7 @@ export const pmModuleConfig: RouteModuleConfig = {
       group: 'process',
       requiredPermissions: ['pm:template:read', 'pm:read'],
       action: 'read',
+      tier: 'basic',
     },
     {
       path: PM_PATHS.reports,
@@ -150,6 +162,7 @@ export const pmModuleConfig: RouteModuleConfig = {
       group: 'analytics',
       requiredPermissions: ['pm:report:read', 'pm:read'],
       action: 'read',
+      tier: 'basic',
     },
     {
       path: PM_PATHS.taskKanban,
@@ -164,6 +177,7 @@ export const pmModuleConfig: RouteModuleConfig = {
       group: 'business',
       requiredPermissions: ['pm:task:read', 'pm:read'],
       action: 'read',
+      tier: 'basic',
     },
     {
       path: PM_PATHS.projectWizard,
@@ -178,6 +192,7 @@ export const pmModuleConfig: RouteModuleConfig = {
       group: 'business',
       requiredPermissions: ['pm:project:create', 'pm:write'],
       action: 'write',
+      tier: 'basic',
     },
     {
       path: PM_PATHS.timeline,
@@ -189,6 +204,7 @@ export const pmModuleConfig: RouteModuleConfig = {
       group: 'analytics',
       requiredPermissions: ['pm:read'],
       action: 'read',
+      tier: 'basic',
     },
     {
       path: PM_PATHS.projectList,
@@ -203,6 +219,7 @@ export const pmModuleConfig: RouteModuleConfig = {
       group: 'business',
       requiredPermissions: ['pm:project:read', 'pm:read'],
       action: 'read',
+      tier: 'basic',
     },
   ],
 };

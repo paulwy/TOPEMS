@@ -69,7 +69,13 @@ impl FinanceService {
     ) -> Result<ImportVouchersResponse, TopemsError> {
         let import_id = Uuid::new_v4();
         let now = Utc::now();
-        let batch_no = format!("U8IMP-{}{:02}{:02}-{}", now.year(), now.month(), now.day(), now.timestamp());
+        let batch_no = format!(
+            "U8IMP-{}{:02}{:02}-{}",
+            now.year(),
+            now.month(),
+            now.day(),
+            now.timestamp()
+        );
         let source_system = req.source_system.unwrap_or_else(|| "U8".to_string());
         let total_count = req.vouchers.len() as i32;
 

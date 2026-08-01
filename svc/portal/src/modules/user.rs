@@ -30,12 +30,28 @@ pub async fn get_user_info(
     match client.get_user(user_id).await {
         Ok(user) => {
             let user_info = UserInfo {
-                id: user.get("id").and_then(|v| v.as_str()).unwrap_or_default().to_string(),
-                name: user.get("username").and_then(|v| v.as_str()).unwrap_or_default().to_string(),
-                email: user.get("email").and_then(|v| v.as_str()).unwrap_or_default().to_string(),
+                id: user
+                    .get("id")
+                    .and_then(|v| v.as_str())
+                    .unwrap_or_default()
+                    .to_string(),
+                name: user
+                    .get("username")
+                    .and_then(|v| v.as_str())
+                    .unwrap_or_default()
+                    .to_string(),
+                email: user
+                    .get("email")
+                    .and_then(|v| v.as_str())
+                    .unwrap_or_default()
+                    .to_string(),
                 avatar: "".to_string(),
                 department: claims.department.clone().unwrap_or_default(),
-                role: if user.get("is_superuser").and_then(|v| v.as_bool()).unwrap_or(false) {
+                role: if user
+                    .get("is_superuser")
+                    .and_then(|v| v.as_bool())
+                    .unwrap_or(false)
+                {
                     "超级管理员".to_string()
                 } else {
                     claims.role.clone()

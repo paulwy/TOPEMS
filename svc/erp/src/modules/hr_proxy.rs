@@ -199,13 +199,7 @@ pub async fn proxy_list_payrolls(
     Extension(claims): Extension<Claims>,
     Query(query): Query<Vec<(String, String)>>,
 ) -> impl IntoResponse {
-    proxy_hrm_get(
-        &state.hrm_client,
-        "/api/hrm/payrolls",
-        Some(query),
-        &claims,
-    )
-    .await
+    proxy_hrm_get(&state.hrm_client, "/api/hrm/payrolls", Some(query), &claims).await
 }
 
 pub async fn proxy_get_payroll(

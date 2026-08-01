@@ -24,7 +24,7 @@ function renderStockStatusCell(row: Record<string, unknown>) {
   if (quantity <= 0) {
     label = '缺货';
     color = 'error';
-  } else if (safety_stock > 0 && quantity < safetyStock) {
+  } else if (safetyStock > 0 && quantity < safetyStock) {
     label = '低于安全库存';
     color = 'warning';
   }
@@ -33,7 +33,7 @@ function renderStockStatusCell(row: Record<string, unknown>) {
     label,
     size: 'small',
     color,
-    variant: color === 'default' ? 'outlined' : 'filled',
+    variant: (color as string) === 'default' ? 'outlined' : 'filled',
     sx: { fontWeight: 500 },
   });
 }

@@ -179,6 +179,9 @@ pub struct TenantModule {
     #[serde(rename = "module_name")]
     #[serde(skip_serializing_if = "Option::is_none")]
     pub module_name: Option<String>,
+    /// P34-4: 'basic' | 'advanced' | 'infrastructure'. Defaults to 'basic'.
+    #[serde(default = "default_module_tier")]
+    pub tier: String,
     #[serde(rename = "is_active")]
     pub is_active: bool,
     #[serde(rename = "activated_at")]
@@ -186,6 +189,10 @@ pub struct TenantModule {
     #[serde(rename = "expires_at")]
     #[serde(skip_serializing_if = "Option::is_none")]
     pub expires_at: Option<DateTime<Utc>>,
+}
+
+fn default_module_tier() -> String {
+    "basic".to_string()
 }
 
 /// Request to create a new tenant
@@ -220,6 +227,44 @@ pub struct UpdateTenantRequest {
     #[serde(rename = "quota_api_calls")]
     pub quota_api_calls: Option<i64>,
     pub features: Option<serde_json::Value>,
+}
+
+/// Default department name seeded for new tenants.
+fn default_department_name() -> String {
+    "总部".to_string()
+}
+
+/// Request to onboard a new tenant with a pre-seeded admin and defaults.
+/// Backs the `POST /tenant/onboard` endpoint (P36-2 初始化向导).
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct OnboardTenantRequest {
+    pub name: String,
+    pub code: String,
+    #[serde(default)]
+    pub tenant_type: String,
+    #[serde(default = "default_plan")]
+    pub plan: String,
+    #[serde(default)]
+    pub license_type: String,
+    pub admin_username: String,
+    pub admin_email: String,
+    pub admin_password: String,
+    #[serde(default = "default_department_name")]
+    pub default_department_name: String,
+    #[serde(default)]
+    pub default_department_description: Option<String>,
+}
+
+/// Response returned after a tenant has been onboarded.
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct OnboardTenantResponse {
+    pub tenant: Tenant,
+    #[serde(rename = "admin_user_id")]
+    pub admin_user_id: uuid::Uuid,
+    #[serde(rename = "admin_username")]
+    pub admin_username: String,
+    #[serde(rename = "admin_email")]
+    pub admin_email: String,
 }
 
 /// Tenant user entity

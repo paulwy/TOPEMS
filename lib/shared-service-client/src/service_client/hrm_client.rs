@@ -153,16 +153,35 @@ impl HrmServiceClient {
         self.base_client.get("/api/companies").await
     }
 
-    pub async fn get_attendance_overview(&self, user_id: &str) -> ServiceClientResult<serde_json::Value> {
-        self.base_client.get(&format!("/api/hrm/attendance/overview?user_id={}", user_id)).await
+    pub async fn get_attendance_overview(
+        &self,
+        user_id: &str,
+    ) -> ServiceClientResult<serde_json::Value> {
+        self.base_client
+            .get(&format!("/api/hrm/attendance/overview?user_id={}", user_id))
+            .await
     }
 
-    pub async fn get_attendance_stats(&self, user_id: &str) -> ServiceClientResult<AttendanceStats> {
-        self.base_client.get(&format!("/api/hrm/attendance/stats?user_id={}", user_id)).await
+    pub async fn get_attendance_stats(
+        &self,
+        user_id: &str,
+    ) -> ServiceClientResult<AttendanceStats> {
+        self.base_client
+            .get(&format!("/api/hrm/attendance/stats?user_id={}", user_id))
+            .await
     }
 
-    pub async fn list_attendance_records(&self, user_id: &str, month: Option<&str>, page: i32, page_size: i32) -> ServiceClientResult<serde_json::Value> {
-        let mut path = format!("/api/hrm/attendance/records?user_id={}&page={}&pagesize={}", user_id, page, page_size);
+    pub async fn list_attendance_records(
+        &self,
+        user_id: &str,
+        month: Option<&str>,
+        page: i32,
+        page_size: i32,
+    ) -> ServiceClientResult<serde_json::Value> {
+        let mut path = format!(
+            "/api/hrm/attendance/records?user_id={}&page={}&pagesize={}",
+            user_id, page, page_size
+        );
         if let Some(m) = month {
             path.push_str(&format!("&month={}", m));
         }
@@ -170,30 +189,45 @@ impl HrmServiceClient {
     }
 
     pub async fn check_in(&self, data: &CheckInRequest) -> ServiceClientResult<AttendanceRecord> {
-        self.base_client.post("/api/hrm/attendance/check-in", data).await
+        self.base_client
+            .post("/api/hrm/attendance/check-in", data)
+            .await
     }
 
     pub async fn check_out(&self, data: &CheckOutRequest) -> ServiceClientResult<AttendanceRecord> {
-        self.base_client.post("/api/hrm/attendance/check-out", data).await
+        self.base_client
+            .post("/api/hrm/attendance/check-out", data)
+            .await
     }
 
-    pub async fn list_leave_applications(&self, user_id: &str, status: Option<&str>, page: i32, page_size: i32) -> ServiceClientResult<serde_json::Value> {
-        let mut path = format!("/api/hrm/leave-applications?user_id={}&page={}&pagesize={}", user_id, page, page_size);
+    pub async fn list_leave_applications(
+        &self,
+        user_id: &str,
+        status: Option<&str>,
+        page: i32,
+        page_size: i32,
+    ) -> ServiceClientResult<serde_json::Value> {
+        let mut path = format!(
+            "/api/hrm/leave-applications?user_id={}&page={}&pagesize={}",
+            user_id, page, page_size
+        );
         if let Some(s) = status {
             path.push_str(&format!("&status={}", s));
         }
         self.base_client.get(&path).await
     }
 
-    pub async fn apply_leave(&self, data: &CreateLeaveRequest) -> ServiceClientResult<LeaveApplication> {
-        self.base_client.post("/api/hrm/leave-applications", data).await
+    pub async fn apply_leave(
+        &self,
+        data: &CreateLeaveRequest,
+    ) -> ServiceClientResult<LeaveApplication> {
+        self.base_client
+            .post("/api/hrm/leave-applications", data)
+            .await
     }
 
     /// 获取指定用户今日的打卡状态，返回 "checked_out" / "checked_in" / "not_checked_in"。
-    pub async fn get_today_attendance_status(
-        &self,
-        user_id: &str,
-    ) -> ServiceClientResult<String> {
+    pub async fn get_today_attendance_status(&self, user_id: &str) -> ServiceClientResult<String> {
         let path = format!("/api/hrm/attendance/today-status?user_id={}", user_id);
         let resp: serde_json::Value = self.base_client.get(&path).await?;
         let status = resp

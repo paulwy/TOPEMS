@@ -480,9 +480,7 @@ impl AutoTaxFiler {
         let form_type = req
             .form_type
             .unwrap_or_else(|| TaxFormType::VAT.as_str().to_string());
-        let jurisdiction = req
-            .jurisdiction
-            .unwrap_or_else(|| "CN".to_string());
+        let jurisdiction = req.jurisdiction.unwrap_or_else(|| "CN".to_string());
 
         sqlx::query(
             r#"INSERT INTO finance_v56_tax_forms
@@ -511,7 +509,10 @@ impl AutoTaxFiler {
             accepted_at: None,
         };
 
-        Ok(TaxFormWithLines { form, lines: vec![] })
+        Ok(TaxFormWithLines {
+            form,
+            lines: vec![],
+        })
     }
 
     pub async fn calculate_tax(
@@ -524,7 +525,8 @@ impl AutoTaxFiler {
         let mut saved_lines: Vec<TaxLine> = Vec::new();
 
         for line_input in &lines {
-            let tax_amount = (line_input.taxable_amount * line_input.tax_rate * 100.0).round() / 100.0;
+            let tax_amount =
+                (line_input.taxable_amount * line_input.tax_rate * 100.0).round() / 100.0;
             total_tax += tax_amount;
 
             let line_id = Uuid::new_v4();
@@ -655,19 +657,18 @@ impl AutoTaxFiler {
         form_id: Uuid,
         req: AmendTaxFormRequest,
     ) -> Result<TaxFormWithLines, sqlx::Error> {
-        sqlx::query(
-            "DELETE FROM finance_v56_tax_lines WHERE form_id = $1 AND tenant_id = $2",
-        )
-        .bind(form_id)
-        .bind(tenant_id)
-        .execute(pool)
-        .await?;
+        sqlx::query("DELETE FROM finance_v56_tax_lines WHERE form_id = $1 AND tenant_id = $2")
+            .bind(form_id)
+            .bind(tenant_id)
+            .execute(pool)
+            .await?;
 
         let mut total_tax: f64 = 0.0;
         let mut saved_lines: Vec<TaxLine> = Vec::new();
 
         for line_input in &req.lines {
-            let tax_amount = (line_input.taxable_amount * line_input.tax_rate * 100.0).round() / 100.0;
+            let tax_amount =
+                (line_input.taxable_amount * line_input.tax_rate * 100.0).round() / 100.0;
             total_tax += tax_amount;
 
             let line_id = Uuid::new_v4();
@@ -758,17 +759,12 @@ impl AutoTaxFiler {
             "SELECT form_type, COALESCE(SUM(total_tax_amount), 0) as total, COUNT(*) as cnt FROM finance_v56_tax_forms WHERE tenant_id = $1",
         );
         if let Some(y) = year {
-            sql.push_str(&format!(
-                " AND EXTRACT(YEAR FROM period_end) = {}",
-                y
-            ));
+            sql.push_str(&format!(" AND EXTRACT(YEAR FROM period_end) = {}", y));
         }
         sql.push_str(" GROUP BY form_type");
 
-        let rows: Vec<(String, f64, i64)> = sqlx::query_as(&sql)
-            .bind(tenant_id)
-            .fetch_all(pool)
-            .await?;
+        let rows: Vec<(String, f64, i64)> =
+            sqlx::query_as(&sql).bind(tenant_id).fetch_all(pool).await?;
 
         let mut summary = serde_json::json!({
             "total_tax_amount": 0.0,
@@ -1026,10 +1022,7 @@ impl TaxRateCalculator {
 
         if let Some(max) = max_rates.get(tax_type.as_str()) {
             if rate > *max {
-                issues.push(format!(
-                    "{} 税率超过最大合理值 {}",
-                    tax_type, max
-                ));
+                issues.push(format!("{} 税率超过最大合理值 {}", tax_type, max));
             }
         }
 
@@ -1180,7 +1173,10 @@ impl TaxRateCalculator {
         }
     }
 
-    fn apply_progressive_brackets(amount: f64, brackets: &[TaxBracket]) -> (f64, Vec<TaxBreakdown>) {
+    fn apply_progressive_brackets(
+        amount: f64,
+        brackets: &[TaxBracket],
+    ) -> (f64, Vec<TaxBreakdown>) {
         let mut remaining = amount;
         let mut total_tax = 0.0;
         let mut breakdown = Vec::new();
@@ -1480,11 +1476,7 @@ impl TaxPlanner {
         })
     }
 
-    async fn estimate_tax(
-        pool: &PgPool,
-        tenant_id: Uuid,
-        income: f64,
-    ) -> Result<f64, sqlx::Error> {
+    async fn estimate_tax(pool: &PgPool, tenant_id: Uuid, income: f64) -> Result<f64, sqlx::Error> {
         if income <= 0.0 {
             return Ok(0.0);
         }
@@ -1661,25 +1653,38 @@ async fn calculate_tax_handler(
     let tax_type = req.tax_type.unwrap_or_else(|| "vat".to_string());
     match tax_type.as_str() {
         "vat" => {
-            match TaxRateCalculator::calculate_vat(&pool, tenant_id, req.amount, req.jurisdiction).await {
+            match TaxRateCalculator::calculate_vat(&pool, tenant_id, req.amount, req.jurisdiction)
+                .await
+            {
                 Ok(result) => Json(ApiResponse::success(result, "计算成功")),
                 Err(e) => Json(ApiResponse::error(500, &e.to_string())),
             }
         }
         "cit" => {
-            match TaxRateCalculator::calculate_cit(&pool, tenant_id, req.amount, req.jurisdiction).await {
+            match TaxRateCalculator::calculate_cit(&pool, tenant_id, req.amount, req.jurisdiction)
+                .await
+            {
                 Ok(result) => Json(ApiResponse::success(result, "计算成功")),
                 Err(e) => Json(ApiResponse::error(500, &e.to_string())),
             }
         }
         "pit" => {
-            match TaxRateCalculator::calculate_pit(&pool, tenant_id, req.amount, req.jurisdiction).await {
+            match TaxRateCalculator::calculate_pit(&pool, tenant_id, req.amount, req.jurisdiction)
+                .await
+            {
                 Ok(result) => Json(ApiResponse::success(result, "计算成功")),
                 Err(e) => Json(ApiResponse::error(500, &e.to_string())),
             }
         }
         "withholding" => {
-            match TaxRateCalculator::calculate_withholding(&pool, tenant_id, req.amount, req.jurisdiction).await {
+            match TaxRateCalculator::calculate_withholding(
+                &pool,
+                tenant_id,
+                req.amount,
+                req.jurisdiction,
+            )
+            .await
+            {
                 Ok(result) => Json(ApiResponse::success(result, "计算成功")),
                 Err(e) => Json(ApiResponse::error(500, &e.to_string())),
             }
@@ -1695,7 +1700,14 @@ async fn get_rate_schedule_handler(
 ) -> Json<ApiResponse<Vec<TaxRate>>> {
     let pool = state.pool.clone();
     let tenant_id = get_tenant_id(&claims);
-    match TaxRateCalculator::get_rate_schedule(&pool, tenant_id, params.tax_type, params.jurisdiction).await {
+    match TaxRateCalculator::get_rate_schedule(
+        &pool,
+        tenant_id,
+        params.tax_type,
+        params.jurisdiction,
+    )
+    .await
+    {
         Ok(rates) => Json(ApiResponse::success(rates, "查询成功")),
         Err(e) => Json(ApiResponse::error(500, &e.to_string())),
     }
@@ -1709,7 +1721,15 @@ async fn lookup_rate_handler(
     let pool = state.pool.clone();
     let tenant_id = get_tenant_id(&claims);
     let tax_type = params.tax_type.unwrap_or_else(|| "vat".to_string());
-    match TaxRateCalculator::lookup_rate(&pool, tenant_id, tax_type, params.jurisdiction, params.date).await {
+    match TaxRateCalculator::lookup_rate(
+        &pool,
+        tenant_id,
+        tax_type,
+        params.jurisdiction,
+        params.date,
+    )
+    .await
+    {
         Ok(rate) => Json(ApiResponse::success(
             serde_json::json!({ "rate": rate }),
             "查询成功",
@@ -1725,7 +1745,15 @@ async fn get_tax_breakdown_handler(
 ) -> Json<ApiResponse<Vec<TaxBreakdown>>> {
     let pool = state.pool.clone();
     let tenant_id = get_tenant_id(&claims);
-    match TaxRateCalculator::get_tax_breakdown(&pool, tenant_id, params.amount, params.tax_type, params.jurisdiction).await {
+    match TaxRateCalculator::get_tax_breakdown(
+        &pool,
+        tenant_id,
+        params.amount,
+        params.tax_type,
+        params.jurisdiction,
+    )
+    .await
+    {
         Ok(breakdown) => Json(ApiResponse::success(breakdown, "查询成功")),
         Err(e) => Json(ApiResponse::error(500, &e.to_string())),
     }

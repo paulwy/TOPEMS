@@ -63,7 +63,7 @@ const alertFields: SchemaField[] = [
     label: '告警名称',
     type: 'text',
     minWidth: 200,
-    renderCell: (row) => {
+    renderCell: (row: Record<string, unknown>) => {
       const severity = row.severity as AlertSeverity;
       return (
         <Stack
@@ -110,7 +110,7 @@ const alertFields: SchemaField[] = [
     label: '严重级别',
     type: 'select',
     listWidth: 100,
-    renderCell: (row) => {
+    renderCell: (row: Record<string, unknown>) => {
       const severity = row.severity as AlertSeverity;
       return (
         <Chip
@@ -127,7 +127,7 @@ const alertFields: SchemaField[] = [
     label: '所属服务',
     type: 'text',
     listWidth: 140,
-    renderCell: (row) => (
+    renderCell: (row: Record<string, unknown>) => (
       <Stack
         direction='row'
         spacing={0.5}
@@ -152,7 +152,7 @@ const alertFields: SchemaField[] = [
     type: 'textarea',
     minWidth: 240,
     showInForm: false,
-    renderCell: (row) => (
+    renderCell: (row: Record<string, unknown>) => (
       <Typography
         variant='body2'
         color='text.secondary'
@@ -174,7 +174,7 @@ const alertFields: SchemaField[] = [
     listWidth: 160,
     hideInForm: true,
     sortable: true,
-    renderCell: (row) => (
+    renderCell: (row: Record<string, unknown>) => (
       <Stack
         direction='row'
         spacing={0.5}
@@ -198,7 +198,7 @@ const alertFields: SchemaField[] = [
     label: '状态',
     type: 'select',
     listWidth: 100,
-    renderCell: (row) => {
+    renderCell: (row: Record<string, unknown>) => {
       const status = row.status as AlertStatus;
       return (
         <Chip

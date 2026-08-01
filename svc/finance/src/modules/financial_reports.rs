@@ -47,11 +47,7 @@ fn period_string((y, m): (i32, i32)) -> String {
     format!("{:04}-{:02}", y, m)
 }
 
-async fn period_net_total(
-    pool: &sqlx::PgPool,
-    tenant_id: Uuid,
-    period: &str,
-) -> (f64, f64, f64) {
+async fn period_net_total(pool: &sqlx::PgPool, tenant_id: Uuid, period: &str) -> (f64, f64, f64) {
     let result: Result<(Option<Decimal>, Option<Decimal>, Option<Decimal>), _> = sqlx::query_as(
         "SELECT COALESCE(SUM(debit), 0) as td, COALESCE(SUM(credit), 0) as tc, COALESCE(SUM(debit - credit), 0) as net
          FROM core_finance_ledger WHERE tenant_id = $1 AND period = $2",
@@ -296,7 +292,12 @@ async fn get_report_trend(
     let tenant_id = get_tenant_id(&claims);
     let start = match params.period_from.as_deref().and_then(parse_period) {
         Some(p) => p,
-        None => return Json(ApiResponse::error(400, "period_from 格式无效，应为 YYYY-MM")),
+        None => {
+            return Json(ApiResponse::error(
+                400,
+                "period_from 格式无效，应为 YYYY-MM",
+            ))
+        }
     };
     let end = match params.period_to.as_deref().and_then(parse_period) {
         Some(p) => p,
@@ -416,7 +417,8 @@ async fn get_report_period_over_period(
         _ => return Json(ApiResponse::error(400, "previous_period 不能为空")),
     };
     let (cur_d, cur_c, cur_net) = period_net_total(&state.pool, tenant_id, current_period).await;
-    let (prev_d, prev_c, prev_net) = period_net_total(&state.pool, tenant_id, previous_period).await;
+    let (prev_d, prev_c, prev_net) =
+        period_net_total(&state.pool, tenant_id, previous_period).await;
     let net_change = cur_net - prev_net;
     let growth_rate = if prev_net.abs() > f64::EPSILON {
         (cur_net - prev_net) / prev_net.abs() * 100.0
@@ -512,7 +514,9 @@ async fn get_consolidated_report(
     Path(consolidation_id): Path<String>,
     Query(params): Query<ConsolidatedReportQuery>,
 ) -> Json<ApiResponse<serde_json::Value>> {
-    let report_type = params.report_type.unwrap_or_else(|| "balance_sheet".to_string());
+    let report_type = params
+        .report_type
+        .unwrap_or_else(|| "balance_sheet".to_string());
     let period = params.period.unwrap_or_default();
     let currency_code = params.currency_code.unwrap_or_else(|| "CNY".to_string());
     Json(ApiResponse::success(
@@ -556,11 +560,46 @@ async fn get_consolidation_entities(
     let now = Utc::now().to_rfc3339();
     let mut items: Vec<serde_json::Value> = Vec::new();
     let entities = [
-        ("00000000-0000-0000-0000-000000000001", "集团母公司", "GROUP-001", "holding", 100.0_f64, true),
-        ("00000000-0000-0000-0000-000000000002", "子公司A", "SUB-001", "subsidiary", 80.0, true),
-        ("00000000-0000-0000-0000-000000000003", "子公司B", "SUB-002", "subsidiary", 60.0, true),
-        ("00000000-0000-0000-0000-000000000004", "联营公司C", "ASSOC-001", "associate", 30.0, include_disabled),
-        ("00000000-0000-0000-0000-000000000005", "合营公司D", "JV-001", "joint_venture", 50.0, include_disabled),
+        (
+            "00000000-0000-0000-0000-000000000001",
+            "集团母公司",
+            "GROUP-001",
+            "holding",
+            100.0_f64,
+            true,
+        ),
+        (
+            "00000000-0000-0000-0000-000000000002",
+            "子公司A",
+            "SUB-001",
+            "subsidiary",
+            80.0,
+            true,
+        ),
+        (
+            "00000000-0000-0000-0000-000000000003",
+            "子公司B",
+            "SUB-002",
+            "subsidiary",
+            60.0,
+            true,
+        ),
+        (
+            "00000000-0000-0000-0000-000000000004",
+            "联营公司C",
+            "ASSOC-001",
+            "associate",
+            30.0,
+            include_disabled,
+        ),
+        (
+            "00000000-0000-0000-0000-000000000005",
+            "合营公司D",
+            "JV-001",
+            "joint_venture",
+            50.0,
+            include_disabled,
+        ),
     ];
     for (id, name, code, etype, own, active) in entities.iter() {
         if !include_disabled && !active {
@@ -745,7 +784,9 @@ async fn export_consolidated_report(
     Path(consolidation_id): Path<String>,
     Query(params): Query<ConsolidatedExportQuery>,
 ) -> Json<ApiResponse<serde_json::Value>> {
-    let report_type = params.report_type.unwrap_or_else(|| "balance_sheet".to_string());
+    let report_type = params
+        .report_type
+        .unwrap_or_else(|| "balance_sheet".to_string());
     let period = params.period.unwrap_or_default();
     let format = params.format.unwrap_or_else(|| "pdf".to_string());
     let url = format!(
@@ -846,9 +887,27 @@ async fn get_report_subscriptions(
     let now = Utc::now().to_rfc3339();
     let mut items: Vec<serde_json::Value> = Vec::new();
     let subs = [
-        ("月度资产负债表订阅", "balance_sheet", "monthly", "pdf", true),
-        ("季度利润表订阅", "income_statement", "quarterly", "xlsx", true),
-        ("年度现金流量表订阅", "cash_flow", "yearly", "pdf", params.isactive.unwrap_or(false)),
+        (
+            "月度资产负债表订阅",
+            "balance_sheet",
+            "monthly",
+            "pdf",
+            true,
+        ),
+        (
+            "季度利润表订阅",
+            "income_statement",
+            "quarterly",
+            "xlsx",
+            true,
+        ),
+        (
+            "年度现金流量表订阅",
+            "cash_flow",
+            "yearly",
+            "pdf",
+            params.isactive.unwrap_or(false),
+        ),
     ];
     for (i, (name, rt, freq, fmt, active)) in subs.iter().enumerate() {
         if let Some(rt_filter) = params.report_type.as_deref() {
@@ -915,7 +974,10 @@ async fn create_report_subscription(
                 .collect()
         })
         .unwrap_or_default();
-    let recipients = req.get("recipients").cloned().unwrap_or(serde_json::json!([]));
+    let recipients = req
+        .get("recipients")
+        .cloned()
+        .unwrap_or(serde_json::json!([]));
     Json(ApiResponse::success(
         serde_json::json!({
             "id": id,
@@ -960,7 +1022,10 @@ async fn update_report_subscription(
                 .collect()
         })
         .unwrap_or_default();
-    let recipients = req.get("recipients").cloned().unwrap_or(serde_json::json!([]));
+    let recipients = req
+        .get("recipients")
+        .cloned()
+        .unwrap_or(serde_json::json!([]));
     Json(ApiResponse::success(
         serde_json::json!({
             "id": subscription_id,
@@ -1142,18 +1207,20 @@ async fn fetch_report(
     .fetch_optional(pool)
     .await?;
 
-    Ok(row.map(|r| serde_json::json!({
-        "id": r.get::<Uuid, _>("id"),
-        "report_type": r.get::<String, _>("report_type"),
-        "company_id": r.get::<Option<Uuid>, _>("company_id"),
-        "period": r.get::<String, _>("period"),
-        "currency_code": r.get::<String, _>("currency_code"),
-        "status": r.get::<String, _>("status"),
-        "approval_status": r.get::<String, _>("approval_status"),
-        "data": r.get::<serde_json::Value, _>("data"),
-        "generated_at": r.get::<Option<chrono::DateTime<chrono::Utc>>, _>("generated_at"),
-        "approved_at": r.get::<Option<chrono::DateTime<chrono::Utc>>, _>("approved_at"),
-    })))
+    Ok(row.map(|r| {
+        serde_json::json!({
+            "id": r.get::<Uuid, _>("id"),
+            "report_type": r.get::<String, _>("report_type"),
+            "company_id": r.get::<Option<Uuid>, _>("company_id"),
+            "period": r.get::<String, _>("period"),
+            "currency_code": r.get::<String, _>("currency_code"),
+            "status": r.get::<String, _>("status"),
+            "approval_status": r.get::<String, _>("approval_status"),
+            "data": r.get::<serde_json::Value, _>("data"),
+            "generated_at": r.get::<Option<chrono::DateTime<chrono::Utc>>, _>("generated_at"),
+            "approved_at": r.get::<Option<chrono::DateTime<chrono::Utc>>, _>("approved_at"),
+        })
+    }))
 }
 
 async fn fetch_history(
@@ -1200,18 +1267,20 @@ async fn fetch_history(
 
     let items: Vec<serde_json::Value> = rows
         .into_iter()
-        .map(|r| serde_json::json!({
-            "id": r.get::<Uuid, _>("id"),
-            "report_type": r.get::<String, _>("report_type"),
-            "company_id": r.get::<Option<Uuid>, _>("company_id"),
-            "period": r.get::<String, _>("period"),
-            "currency_code": r.get::<String, _>("currency_code"),
-            "status": r.get::<String, _>("status"),
-            "approval_status": r.get::<String, _>("approval_status"),
-            "data": r.get::<serde_json::Value, _>("data"),
-            "generated_at": r.get::<Option<chrono::DateTime<chrono::Utc>>, _>("generated_at"),
-            "approved_at": r.get::<Option<chrono::DateTime<chrono::Utc>>, _>("approved_at"),
-        }))
+        .map(|r| {
+            serde_json::json!({
+                "id": r.get::<Uuid, _>("id"),
+                "report_type": r.get::<String, _>("report_type"),
+                "company_id": r.get::<Option<Uuid>, _>("company_id"),
+                "period": r.get::<String, _>("period"),
+                "currency_code": r.get::<String, _>("currency_code"),
+                "status": r.get::<String, _>("status"),
+                "approval_status": r.get::<String, _>("approval_status"),
+                "data": r.get::<serde_json::Value, _>("data"),
+                "generated_at": r.get::<Option<chrono::DateTime<chrono::Utc>>, _>("generated_at"),
+                "approved_at": r.get::<Option<chrono::DateTime<chrono::Utc>>, _>("approved_at"),
+            })
+        })
         .collect();
 
     Ok((items, total))
@@ -1228,7 +1297,17 @@ async fn generate_balance_sheet(
     match service.get_balance_sheet(tenant_id, &req.period).await {
         Ok(sheet) => {
             let data = serde_json::to_value(&sheet).unwrap_or(serde_json::json!({}));
-            match upsert_report(&state.pool, tenant_id, "balance_sheet", &req.period, currency, data, &claims.username).await {
+            match upsert_report(
+                &state.pool,
+                tenant_id,
+                "balance_sheet",
+                &req.period,
+                currency,
+                data,
+                &claims.username,
+            )
+            .await
+            {
                 Ok(report) => Json(ApiResponse::success(report, "生成资产负债表成功")),
                 Err(e) => Json(ApiResponse::error(500, &format!("持久化失败: {}", e))),
             }
@@ -1244,14 +1323,25 @@ async fn get_balance_sheet(
 ) -> Json<ApiResponse<serde_json::Value>> {
     let tenant_id = get_tenant_id(&claims);
     let currency = params.currency_code.as_deref().unwrap_or("CNY");
-    match fetch_report(&state.pool, tenant_id, "balance_sheet", &params.period, currency).await {
+    match fetch_report(
+        &state.pool,
+        tenant_id,
+        "balance_sheet",
+        &params.period,
+        currency,
+    )
+    .await
+    {
         Ok(Some(report)) => Json(ApiResponse::success(report, "查询成功")),
         Ok(None) => {
             let service = FinanceService::new(state.pool.clone(), state.workflow_client.clone());
             match service.get_balance_sheet(tenant_id, &params.period).await {
                 Ok(sheet) => {
                     let data = serde_json::to_value(&sheet).unwrap_or(serde_json::json!({}));
-                    Json(ApiResponse::success(serde_json::json!({"report_type": "balance_sheet", "period": params.period, "data": data, "status": "realtime"}), "查询成功(实时)"))
+                    Json(ApiResponse::success(
+                        serde_json::json!({"report_type": "balance_sheet", "period": params.period, "data": data, "status": "realtime"}),
+                        "查询成功(实时)",
+                    ))
                 }
                 Err(e) => Json(ApiResponse::error(500, &format!("查询失败: {}", e))),
             }
@@ -1268,8 +1358,22 @@ async fn get_balance_sheet_history(
     let tenant_id = get_tenant_id(&claims);
     let page = params.page.unwrap_or(1).max(1);
     let page_size = params.pagesize.unwrap_or(20).min(100);
-    match fetch_history(&state.pool, tenant_id, "balance_sheet", &params.start_period, &params.end_period, params.currency_code.as_deref(), page, page_size).await {
-        Ok((items, total)) => Json(ApiResponse::success(serde_json::json!({"items": items, "total": total, "page": page, "page_size": page_size}), "查询成功")),
+    match fetch_history(
+        &state.pool,
+        tenant_id,
+        "balance_sheet",
+        &params.start_period,
+        &params.end_period,
+        params.currency_code.as_deref(),
+        page,
+        page_size,
+    )
+    .await
+    {
+        Ok((items, total)) => Json(ApiResponse::success(
+            serde_json::json!({"items": items, "total": total, "page": page, "page_size": page_size}),
+            "查询成功",
+        )),
         Err(e) => Json(ApiResponse::error(500, &format!("查询失败: {}", e))),
     }
 }
@@ -1285,7 +1389,17 @@ async fn generate_income_statement(
     match service.get_income_statement(tenant_id, &req.period).await {
         Ok(stmt) => {
             let data = serde_json::to_value(&stmt).unwrap_or(serde_json::json!({}));
-            match upsert_report(&state.pool, tenant_id, "income_statement", &req.period, currency, data, &claims.username).await {
+            match upsert_report(
+                &state.pool,
+                tenant_id,
+                "income_statement",
+                &req.period,
+                currency,
+                data,
+                &claims.username,
+            )
+            .await
+            {
                 Ok(report) => Json(ApiResponse::success(report, "生成利润表成功")),
                 Err(e) => Json(ApiResponse::error(500, &format!("持久化失败: {}", e))),
             }
@@ -1301,14 +1415,28 @@ async fn get_income_statement(
 ) -> Json<ApiResponse<serde_json::Value>> {
     let tenant_id = get_tenant_id(&claims);
     let currency = params.currency_code.as_deref().unwrap_or("CNY");
-    match fetch_report(&state.pool, tenant_id, "income_statement", &params.period, currency).await {
+    match fetch_report(
+        &state.pool,
+        tenant_id,
+        "income_statement",
+        &params.period,
+        currency,
+    )
+    .await
+    {
         Ok(Some(report)) => Json(ApiResponse::success(report, "查询成功")),
         Ok(None) => {
             let service = FinanceService::new(state.pool.clone(), state.workflow_client.clone());
-            match service.get_income_statement(tenant_id, &params.period).await {
+            match service
+                .get_income_statement(tenant_id, &params.period)
+                .await
+            {
                 Ok(stmt) => {
                     let data = serde_json::to_value(&stmt).unwrap_or(serde_json::json!({}));
-                    Json(ApiResponse::success(serde_json::json!({"report_type": "income_statement", "period": params.period, "data": data, "status": "realtime"}), "查询成功(实时)"))
+                    Json(ApiResponse::success(
+                        serde_json::json!({"report_type": "income_statement", "period": params.period, "data": data, "status": "realtime"}),
+                        "查询成功(实时)",
+                    ))
                 }
                 Err(e) => Json(ApiResponse::error(500, &format!("查询失败: {}", e))),
             }
@@ -1325,8 +1453,22 @@ async fn get_income_statement_history(
     let tenant_id = get_tenant_id(&claims);
     let page = params.page.unwrap_or(1).max(1);
     let page_size = params.pagesize.unwrap_or(20).min(100);
-    match fetch_history(&state.pool, tenant_id, "income_statement", &params.start_period, &params.end_period, params.currency_code.as_deref(), page, page_size).await {
-        Ok((items, total)) => Json(ApiResponse::success(serde_json::json!({"items": items, "total": total, "page": page, "page_size": page_size}), "查询成功")),
+    match fetch_history(
+        &state.pool,
+        tenant_id,
+        "income_statement",
+        &params.start_period,
+        &params.end_period,
+        params.currency_code.as_deref(),
+        page,
+        page_size,
+    )
+    .await
+    {
+        Ok((items, total)) => Json(ApiResponse::success(
+            serde_json::json!({"items": items, "total": total, "page": page, "page_size": page_size}),
+            "查询成功",
+        )),
         Err(e) => Json(ApiResponse::error(500, &format!("查询失败: {}", e))),
     }
 }
@@ -1339,10 +1481,23 @@ async fn generate_cash_flow(
     let tenant_id = get_tenant_id(&claims);
     let currency = req.currency_code.as_deref().unwrap_or("CNY");
     let service = FinanceService::new(state.pool.clone(), state.workflow_client.clone());
-    match service.get_cash_flow_statement(tenant_id, &req.period).await {
+    match service
+        .get_cash_flow_statement(tenant_id, &req.period)
+        .await
+    {
         Ok(stmt) => {
             let data = serde_json::to_value(&stmt).unwrap_or(serde_json::json!({}));
-            match upsert_report(&state.pool, tenant_id, "cash_flow", &req.period, currency, data, &claims.username).await {
+            match upsert_report(
+                &state.pool,
+                tenant_id,
+                "cash_flow",
+                &req.period,
+                currency,
+                data,
+                &claims.username,
+            )
+            .await
+            {
                 Ok(report) => Json(ApiResponse::success(report, "生成现金流量表成功")),
                 Err(e) => Json(ApiResponse::error(500, &format!("持久化失败: {}", e))),
             }
@@ -1358,14 +1513,28 @@ async fn get_cash_flow(
 ) -> Json<ApiResponse<serde_json::Value>> {
     let tenant_id = get_tenant_id(&claims);
     let currency = params.currency_code.as_deref().unwrap_or("CNY");
-    match fetch_report(&state.pool, tenant_id, "cash_flow", &params.period, currency).await {
+    match fetch_report(
+        &state.pool,
+        tenant_id,
+        "cash_flow",
+        &params.period,
+        currency,
+    )
+    .await
+    {
         Ok(Some(report)) => Json(ApiResponse::success(report, "查询成功")),
         Ok(None) => {
             let service = FinanceService::new(state.pool.clone(), state.workflow_client.clone());
-            match service.get_cash_flow_statement(tenant_id, &params.period).await {
+            match service
+                .get_cash_flow_statement(tenant_id, &params.period)
+                .await
+            {
                 Ok(stmt) => {
                     let data = serde_json::to_value(&stmt).unwrap_or(serde_json::json!({}));
-                    Json(ApiResponse::success(serde_json::json!({"report_type": "cash_flow", "period": params.period, "data": data, "status": "realtime"}), "查询成功(实时)"))
+                    Json(ApiResponse::success(
+                        serde_json::json!({"report_type": "cash_flow", "period": params.period, "data": data, "status": "realtime"}),
+                        "查询成功(实时)",
+                    ))
                 }
                 Err(e) => Json(ApiResponse::error(500, &format!("查询失败: {}", e))),
             }
@@ -1382,8 +1551,22 @@ async fn get_cash_flow_history(
     let tenant_id = get_tenant_id(&claims);
     let page = params.page.unwrap_or(1).max(1);
     let page_size = params.pagesize.unwrap_or(20).min(100);
-    match fetch_history(&state.pool, tenant_id, "cash_flow", &params.start_period, &params.end_period, params.currency_code.as_deref(), page, page_size).await {
-        Ok((items, total)) => Json(ApiResponse::success(serde_json::json!({"items": items, "total": total, "page": page, "page_size": page_size}), "查询成功")),
+    match fetch_history(
+        &state.pool,
+        tenant_id,
+        "cash_flow",
+        &params.start_period,
+        &params.end_period,
+        params.currency_code.as_deref(),
+        page,
+        page_size,
+    )
+    .await
+    {
+        Ok((items, total)) => Json(ApiResponse::success(
+            serde_json::json!({"items": items, "total": total, "page": page, "page_size": page_size}),
+            "查询成功",
+        )),
         Err(e) => Json(ApiResponse::error(500, &format!("查询失败: {}", e))),
     }
 }
@@ -1544,7 +1727,9 @@ async fn export_report(
     Extension(_claims): Extension<Claims>,
     Query(params): Query<ExportQuery>,
 ) -> Json<ApiResponse<serde_json::Value>> {
-    let report_type = params.report_type.unwrap_or_else(|| "balance_sheet".to_string());
+    let report_type = params
+        .report_type
+        .unwrap_or_else(|| "balance_sheet".to_string());
     let period = params.period.unwrap_or_default();
     let format = params.format.unwrap_or_else(|| "pdf".to_string());
     let company_id = params.company_id.unwrap_or_default();
@@ -1608,14 +1793,8 @@ pub fn create_routes() -> Router<AppState> {
             "/reports/submit-approval",
             axum::routing::post(submit_report_for_approval),
         )
-        .route(
-            "/reports/approve",
-            axum::routing::post(approve_report),
-        )
-        .route(
-            "/reports/reject",
-            axum::routing::post(reject_report),
-        )
+        .route("/reports/approve", axum::routing::post(approve_report))
+        .route("/reports/reject", axum::routing::post(reject_report))
         .route("/reports/lock", axum::routing::post(lock_report))
         .route("/reports/unlock", axum::routing::post(unlock_report))
         .route(

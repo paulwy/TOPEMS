@@ -74,7 +74,11 @@ pub async fn get_dashboard_stats(
 }
 
 async fn get_public_stats(state: &AppState) -> PublicDashboardStats {
-    if let Ok(Some(cached_str)) = state.dashboard_cache.get::<String>(DASHBOARD_CACHE_KEY).await {
+    if let Ok(Some(cached_str)) = state
+        .dashboard_cache
+        .get::<String>(DASHBOARD_CACHE_KEY)
+        .await
+    {
         if let Ok(cached) = serde_json::from_str::<PublicDashboardStats>(&cached_str) {
             tracing::debug!("Dashboard public stats cache hit");
             return cached;
@@ -141,7 +145,10 @@ async fn fetch_user_notification_unread(state: &AppState, headers: &HeaderMap) -
     match client.get_stats().await {
         Ok(stats) => {
             let unread = stats.get("unread").and_then(|v| v.as_i64()).unwrap_or(0);
-            let unread_notifications = stats.get("unread_notifications").and_then(|v| v.as_i64()).unwrap_or(0);
+            let unread_notifications = stats
+                .get("unread_notifications")
+                .and_then(|v| v.as_i64())
+                .unwrap_or(0);
             unread.max(unread_notifications) as u64
         }
         Err(e) => {
@@ -314,7 +321,8 @@ pub async fn warmup_dashboard_cache(state: AppState) {
                     &json_str,
                     Some(std::time::Duration::from_secs(CACHE_TTL)),
                 )
-                .await.ok();
+                .await
+                .ok();
             tracing::info!("Dashboard public cache warmed up successfully");
         }
         Err(e) => {

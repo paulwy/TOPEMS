@@ -33,16 +33,14 @@ pub async fn list_schema_versions_handler(
 pub async fn get_schema_version_handler(
     Path(version): Path<String>,
 ) -> Result<Json<SchemaVersion>, (StatusCode, Json<Value>)> {
-    get_schema_version(&version)
-        .map(Json)
-        .ok_or_else(|| {
-            (
-                StatusCode::NOT_FOUND,
-                Json(serde_json::json!({
-                    "error": format!("Schema version '{}' not found", version)
-                })),
-            )
-        })
+    get_schema_version(&version).map(Json).ok_or_else(|| {
+        (
+            StatusCode::NOT_FOUND,
+            Json(serde_json::json!({
+                "error": format!("Schema version '{}' not found", version)
+            })),
+        )
+    })
 }
 
 pub async fn rollback_schema_handler(
@@ -108,8 +106,7 @@ pub async fn deprecate_version_handler(
         })
 }
 
-pub async fn get_current_schema_handler(
-) -> Result<Json<Value>, (StatusCode, Json<Value>)> {
+pub async fn get_current_schema_handler() -> Result<Json<Value>, (StatusCode, Json<Value>)> {
     let current = get_current_schema();
     match current {
         Some(schema) => Ok(Json(serde_json::json!({

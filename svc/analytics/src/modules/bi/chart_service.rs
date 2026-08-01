@@ -559,7 +559,10 @@ mod tests {
         let (table, cols) =
             validate_dataset("orders", &["amount".to_string(), "quantity".to_string()]).unwrap();
         assert_eq!(table, "\"orders\"");
-        assert_eq!(cols, vec!["\"amount\"".to_string(), "\"quantity\"".to_string()]);
+        assert_eq!(
+            cols,
+            vec!["\"amount\"".to_string(), "\"quantity\"".to_string()]
+        );
     }
 
     #[test]

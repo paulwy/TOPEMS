@@ -90,7 +90,11 @@ async fn test_restore_from_point() {
     });
 
     let (status, resp) = ctx
-        .request("POST", &format!("{}/recovery/restore", BASE_PATH), Some(body))
+        .request(
+            "POST",
+            &format!("{}/recovery/restore", BASE_PATH),
+            Some(body),
+        )
         .await
         .expect("请求失败");
 
@@ -184,7 +188,11 @@ async fn test_create_continuity_plan() {
     });
 
     let (status, resp) = ctx
-        .request("POST", &format!("{}/continuity/plan", BASE_PATH), Some(body))
+        .request(
+            "POST",
+            &format!("{}/continuity/plan", BASE_PATH),
+            Some(body),
+        )
         .await
         .expect("请求失败");
 
@@ -224,7 +232,10 @@ async fn test_assess_impact() {
     let (status, resp) = ctx
         .request(
             "GET",
-            &format!("{}/continuity/impact?entity_type=customer&scenario=outage", BASE_PATH),
+            &format!(
+                "{}/continuity/impact?entity_type=customer&scenario=outage",
+                BASE_PATH
+            ),
             None,
         )
         .await

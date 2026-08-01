@@ -76,7 +76,7 @@ export const documentSchema: EntitySchema = {
       label: '文档名称',
       type: 'text',
       listWidth: 240,
-      renderCell: (row) => {
+      renderCell: (row: Record<string, unknown>) => {
         const doc = row as any;
         const type = doc.content_type ? getFileType(doc.content_type) : 'pdf';
         return (
@@ -122,7 +122,7 @@ export const documentSchema: EntitySchema = {
           { value: 'image', label: '图片' },
         ],
       },
-      renderCell: (row) => {
+      renderCell: (row: Record<string, unknown>) => {
         const doc = row as any;
         const type = doc.content_type ? getFileType(doc.content_type) : 'pdf';
         const color = TYPE_COLORS[type] || '#9ca3af';
@@ -145,7 +145,7 @@ export const documentSchema: EntitySchema = {
       label: '大小',
       type: 'text',
       listWidth: 100,
-      renderCell: (row) => (
+      renderCell: (row: Record<string, unknown>) => (
         <Typography variant='body2' color='text.secondary'>
           {formatFileSize((row as any).size || 0)}
         </Typography>
@@ -156,7 +156,7 @@ export const documentSchema: EntitySchema = {
       label: '所在文件夹',
       type: 'text',
       listWidth: 140,
-      renderCell: (row) => (
+      renderCell: (row: Record<string, unknown>) => (
         <Stack direction='row' spacing={0.5} sx={{ alignItems: 'center' }}>
           <FolderOpen size={14} style={{ color: '#6b7280' }} />
           <Typography variant='body2' color='text.secondary'>
@@ -171,7 +171,7 @@ export const documentSchema: EntitySchema = {
       type: 'datetime',
       listWidth: 160,
       hideInForm: true,
-      renderCell: (row) => (
+      renderCell: (row: Record<string, unknown>) => (
         <Typography variant='body2' color='text.secondary'>
           {new Date((row as any).updated_at).toLocaleString('zh-CN')}
         </Typography>

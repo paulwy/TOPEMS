@@ -94,10 +94,9 @@ async fn main() -> Result<()> {
     let supplier_cache = Arc::new(InMemoryCache::new(Duration::from_secs(300)));
     tracing::info!("💾 内存缓存初始化完成（供应商）");
 
-    let workflow_url = env::var("WORKFLOW_SERVICE_URL")
-        .unwrap_or_else(|_| "http://localhost:8000".to_string());
-    let workflow_client =
-        create_workflow_client().expect("工作流服务客户端初始化失败");
+    let workflow_url =
+        env::var("WORKFLOW_SERVICE_URL").unwrap_or_else(|_| "http://localhost:8000".to_string());
+    let workflow_client = create_workflow_client().expect("工作流服务客户端初始化失败");
     tracing::info!("🔗 工作流服务客户端初始化成功: {}", workflow_url);
 
     // 构建业务路由（各模块 create_routes 自行管理内部状态）

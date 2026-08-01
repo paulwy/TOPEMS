@@ -57,7 +57,10 @@ async fn test_create_scenario() {
         .await;
 
     assert_eq!(status, 200, "创建场景应该返回 200");
-    assert!(resp["success"].as_bool().unwrap_or(false), "响应 success 应为 true");
+    assert!(
+        resp["success"].as_bool().unwrap_or(false),
+        "响应 success 应为 true"
+    );
 }
 
 #[tokio::test]
@@ -73,7 +76,10 @@ async fn test_list_scenarios() {
         .await;
 
     assert_eq!(status, 200, "列出场景应该返回 200");
-    assert!(resp["success"].as_bool().unwrap_or(false), "响应 success 应为 true");
+    assert!(
+        resp["success"].as_bool().unwrap_or(false),
+        "响应 success 应为 true"
+    );
     assert!(resp["data"].is_array(), "data 应该是数组");
 }
 
@@ -98,7 +104,10 @@ async fn test_evaluate_scenario() {
         .await;
 
     assert_eq!(create_status, 200, "创建场景应该返回 200");
-    assert!(create_resp["success"].as_bool().unwrap_or(false), "创建场景应成功");
+    assert!(
+        create_resp["success"].as_bool().unwrap_or(false),
+        "创建场景应成功"
+    );
 
     let scenario_id = create_resp["data"]["id"]
         .as_str()
@@ -119,9 +128,14 @@ async fn test_evaluate_scenario() {
         .await;
 
     assert_eq!(eval_status, 200, "评估场景应该返回 200");
-    assert!(eval_resp["success"].as_bool().unwrap_or(false), "响应 success 应为 true");
     assert!(
-        eval_resp["data"]["recommended_action"].is_string(), "应该有推荐行动");
+        eval_resp["success"].as_bool().unwrap_or(false),
+        "响应 success 应为 true"
+    );
+    assert!(
+        eval_resp["data"]["recommended_action"].is_string(),
+        "应该有推荐行动"
+    );
     assert!(eval_resp["data"]["confidence"].is_number(), "应该有置信度");
 }
 
@@ -166,7 +180,10 @@ async fn test_get_decision_result() {
         .await;
 
     assert_eq!(get_status, 200, "获取决策结果应该返回 200");
-    assert!(get_resp["success"].as_bool().unwrap_or(false), "响应 success 应为 true");
+    assert!(
+        get_resp["success"].as_bool().unwrap_or(false),
+        "响应 success 应为 true"
+    );
 }
 
 #[tokio::test]
@@ -182,6 +199,9 @@ async fn test_decision_history() {
         .await;
 
     assert_eq!(status, 200, "获取决策历史应该返回 200");
-    assert!(resp["success"].as_bool().unwrap_or(false), "响应 success 应为 true");
+    assert!(
+        resp["success"].as_bool().unwrap_or(false),
+        "响应 success 应为 true"
+    );
     assert!(resp["data"].is_array(), "data 应该是数组");
 }

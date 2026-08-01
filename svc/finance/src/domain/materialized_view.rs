@@ -189,9 +189,7 @@ impl ReceivableAgingMaterializedView {
         let mut bucket_map: HashMap<String, f64> = HashMap::new();
 
         for view in data.values() {
-            *bucket_map
-                .entry(view.aging_bucket.clone())
-                .or_insert(0.0) += view.remaining_amount;
+            *bucket_map.entry(view.aging_bucket.clone()).or_insert(0.0) += view.remaining_amount;
         }
 
         let labels = ["0-30天", "31-60天", "61-90天", "91-180天", "180天以上"];

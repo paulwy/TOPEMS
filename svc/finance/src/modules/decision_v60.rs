@@ -535,14 +535,8 @@ impl DecisionEngine {
             .clone()
             .unwrap_or_else(|| serde_json::json!({}));
 
-        let obj_count = objectives
-            .as_array()
-            .map(|arr| arr.len())
-            .unwrap_or(0);
-        let con_count = constraints
-            .as_array()
-            .map(|arr| arr.len())
-            .unwrap_or(0);
+        let obj_count = objectives.as_array().map(|arr| arr.len()).unwrap_or(0);
+        let con_count = constraints.as_array().map(|arr| arr.len()).unwrap_or(0);
 
         let base_score = 0.5f64;
         let objective_factor = if obj_count > 0 {
@@ -650,10 +644,7 @@ impl DecisionEngine {
         }
     }
 
-    fn generate_alternatives(
-        scenario: &DecisionScenario,
-        confidence: f64,
-    ) -> serde_json::Value {
+    fn generate_alternatives(scenario: &DecisionScenario, confidence: f64) -> serde_json::Value {
         let base_score = confidence;
         serde_json::json!([
             {
@@ -798,18 +789,19 @@ impl DecisionEngine {
         .fetch_optional(pool)
         .await?;
 
-        let base_confidence = base_result
-            .as_ref()
-            .map(|r| r.confidence)
-            .unwrap_or(0.5);
+        let base_confidence = base_result.as_ref().map(|r| r.confidence).unwrap_or(0.5);
 
         let variation = req.variation.unwrap_or(0.1);
-        let param_name = req
-            .parameter_name
-            .unwrap_or_else(|| "default".to_string());
+        let param_name = req.parameter_name.unwrap_or_else(|| "default".to_string());
 
         let mut variations = Vec::new();
-        for factor in &[-variation, -variation / 2.0, 0.0, variation / 2.0, variation] {
+        for factor in &[
+            -variation,
+            -variation / 2.0,
+            0.0,
+            variation / 2.0,
+            variation,
+        ] {
             let new_confidence = (base_confidence * (1.0 + factor)).clamp(0.0, 1.0);
             variations.push(serde_json::json!({
                 "factor": factor,
@@ -917,9 +909,7 @@ impl AlertEngine {
             .map(AlertCondition::from_str)
             .unwrap_or(AlertCondition::Above);
         let threshold = req.threshold.unwrap_or(0.0);
-        let severity = req
-            .severity
-            .unwrap_or_else(|| "medium".to_string());
+        let severity = req.severity.unwrap_or_else(|| "medium".to_string());
         let enabled = req.enabled.unwrap_or(true);
 
         sqlx::query_as::<_, AlertRule>(
@@ -970,11 +960,8 @@ impl AlertEngine {
         for rule in &rules {
             for item in &req.alerts {
                 if rule.metric_name == item.metric_name {
-                    let should_trigger = Self::check_condition(
-                        &rule.condition,
-                        item.current_value,
-                        rule.threshold,
-                    );
+                    let should_trigger =
+                        Self::check_condition(&rule.condition, item.current_value, rule.threshold);
 
                     if should_trigger {
                         let alert_id = Uuid::new_v4();
@@ -1026,7 +1013,11 @@ impl AlertEngine {
             query.push_str(" AND severity = $2");
         }
         if let Some(ref metric) = params.metric_name {
-            let placeholder = if params.severity.is_some() { "$3" } else { "$2" };
+            let placeholder = if params.severity.is_some() {
+                "$3"
+            } else {
+                "$2"
+            };
             query.push_str(&format!(" AND metric_name = {}", placeholder));
         }
 
@@ -1236,7 +1227,11 @@ impl IntelligentScheduler {
             query.push_str(" AND task_type = $2");
         }
         if let Some(ref status) = params.status {
-            let placeholder = if params.task_type.is_some() { "$3" } else { "$2" };
+            let placeholder = if params.task_type.is_some() {
+                "$3"
+            } else {
+                "$2"
+            };
             query.push_str(&format!(" AND status = {}", placeholder));
         }
 

@@ -299,7 +299,9 @@ impl PgReceivableAgingView {
             bucket_30_amount: row.try_get("bucket_30_amount").map_err(|e| e.to_string())?,
             bucket_60_amount: row.try_get("bucket_60_amount").map_err(|e| e.to_string())?,
             bucket_90_amount: row.try_get("bucket_90_amount").map_err(|e| e.to_string())?,
-            bucket_180_amount: row.try_get("bucket_180_amount").map_err(|e| e.to_string())?,
+            bucket_180_amount: row
+                .try_get("bucket_180_amount")
+                .map_err(|e| e.to_string())?,
             over_180_amount: row.try_get("over_180_amount").map_err(|e| e.to_string())?,
             status: row.try_get("status").map_err(|e| e.to_string())?,
             version: row.try_get("version").map_err(|e| e.to_string())?,

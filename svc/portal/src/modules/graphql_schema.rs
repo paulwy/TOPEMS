@@ -34,8 +34,8 @@ use tokio::sync::broadcast;
 use tokio::sync::mpsc;
 use tokio_stream::wrappers::ReceiverStream;
 
-use crate::modules::rate_limiting::*;
 use crate::modules::query_governance::*;
+use crate::modules::rate_limiting::*;
 use crate::modules::schema_versioning::*;
 use crate::shared::AppState;
 
@@ -906,7 +906,10 @@ impl EventBus {
     }
 
     /// 订阅指定频道，返回一个新的接收器
-    pub fn subscribe(&self, channel: SubscriptionChannel) -> broadcast::Receiver<serde_json::Value> {
+    pub fn subscribe(
+        &self,
+        channel: SubscriptionChannel,
+    ) -> broadcast::Receiver<serde_json::Value> {
         self.channels
             .get(&channel)
             .expect("事件频道必须存在")
@@ -940,10 +943,7 @@ impl Loader<String> for ServiceHealthLoader {
     type Value = ServiceHealthGql;
     type Error = std::convert::Infallible;
 
-    async fn load(
-        &self,
-        keys: &[String],
-    ) -> Result<HashMap<String, Self::Value>, Self::Error> {
+    async fn load(&self, keys: &[String]) -> Result<HashMap<String, Self::Value>, Self::Error> {
         // 并行批量检查所有请求的服务健康状态
         let futures = keys.iter().map(|service_name| async move {
             let url = service_url(service_name);
@@ -1002,8 +1002,9 @@ impl Loader<uuid::Uuid> for TodoLoader {
             for row in rows {
                 let id: uuid::Uuid = row.try_get("id").unwrap_or_default();
                 let title: String = row.try_get("title").unwrap_or_default();
-                let created_at: chrono::DateTime<chrono::Utc> =
-                    row.try_get("created_at").unwrap_or_else(|_| chrono::Utc::now());
+                let created_at: chrono::DateTime<chrono::Utc> = row
+                    .try_get("created_at")
+                    .unwrap_or_else(|_| chrono::Utc::now());
                 result.insert(
                     id,
                     UnifiedTodoGql {
@@ -1144,8 +1145,9 @@ impl QueryRoot {
             for row in rows {
                 let id: uuid::Uuid = row.try_get("id").unwrap_or_default();
                 let title: String = row.try_get("title").unwrap_or_default();
-                let created_at: chrono::DateTime<chrono::Utc> =
-                    row.try_get("created_at").unwrap_or_else(|_| chrono::Utc::now());
+                let created_at: chrono::DateTime<chrono::Utc> = row
+                    .try_get("created_at")
+                    .unwrap_or_else(|_| chrono::Utc::now());
                 if !title.is_empty() {
                     todos.push(UnifiedTodoGql {
                         id: id.to_string(),
@@ -1163,12 +1165,24 @@ impl QueryRoot {
         if let Ok(notifications) = state.notification_client.get_unread().await {
             for n in notifications {
                 todos.push(UnifiedTodoGql {
-                    id: n.get("id").and_then(|v| v.as_str()).unwrap_or("").to_string(),
-                    title: n.get("title").and_then(|v| v.as_str()).unwrap_or("").to_string(),
+                    id: n
+                        .get("id")
+                        .and_then(|v| v.as_str())
+                        .unwrap_or("")
+                        .to_string(),
+                    title: n
+                        .get("title")
+                        .and_then(|v| v.as_str())
+                        .unwrap_or("")
+                        .to_string(),
                     source: "notification".into(),
                     priority: n.get("priority").and_then(|v| v.as_i64()).unwrap_or(0) as i32,
                     status: "unread".into(),
-                    created_at: n.get("created_at").and_then(|v| v.as_str()).unwrap_or("").to_string(),
+                    created_at: n
+                        .get("created_at")
+                        .and_then(|v| v.as_str())
+                        .unwrap_or("")
+                        .to_string(),
                 });
             }
         }
@@ -1259,11 +1273,31 @@ impl QueryRoot {
     /// 通过 BFF 并行调用各服务列表端点，聚合 total count
     async fn module_stats(&self, _ctx: &Context<'_>) -> async_graphql::Result<Vec<ModuleStatGql>> {
         let modules = vec![
-            ("qms", "http://localhost:8050", "/api/qms/standards?page=1&page_size=1"),
-            ("srm", "http://localhost:8042", "/api/srm/suppliers?page=1&page_size=1"),
-            ("lims", "http://localhost:8051", "/api/lims/samples?page=1&page_size=1"),
-            ("rd", "http://localhost:8053", "/api/rd/projects?page=1&page_size=1"),
-            ("ehs", "http://localhost:8052", "/api/ehs/hazards?page=1&page_size=1"),
+            (
+                "qms",
+                "http://localhost:8050",
+                "/api/qms/standards?page=1&page_size=1",
+            ),
+            (
+                "srm",
+                "http://localhost:8042",
+                "/api/srm/suppliers?page=1&page_size=1",
+            ),
+            (
+                "lims",
+                "http://localhost:8051",
+                "/api/lims/samples?page=1&page_size=1",
+            ),
+            (
+                "rd",
+                "http://localhost:8053",
+                "/api/rd/projects?page=1&page_size=1",
+            ),
+            (
+                "ehs",
+                "http://localhost:8052",
+                "/api/ehs/hazards?page=1&page_size=1",
+            ),
         ];
 
         let futures = modules.iter().map(|(name, base, path)| async move {
@@ -1271,7 +1305,8 @@ impl QueryRoot {
             match reqwest::get(&url).await {
                 Ok(resp) if resp.status().is_success() => {
                     let json: serde_json::Value = resp.json().await.unwrap_or_default();
-                    let total = json.get("data")
+                    let total = json
+                        .get("data")
                         .and_then(|d| d.get("total"))
                         .and_then(|t| t.as_u64())
                         .unwrap_or(0);
@@ -1294,13 +1329,36 @@ impl QueryRoot {
 
     /// V36.0 Phase 6: 获取联邦服务注册表
     /// 返回所有已注册的联邦服务及其支持的实体类型
-    async fn federated_services(&self, _ctx: &Context<'_>) -> async_graphql::Result<Vec<FederatedServiceGql>> {
+    async fn federated_services(
+        &self,
+        _ctx: &Context<'_>,
+    ) -> async_graphql::Result<Vec<FederatedServiceGql>> {
         let registry = vec![
-            ("erp", "http://localhost:8010", vec!["customers", "suppliers", "materials", "orders"]),
-            ("crm", "http://localhost:8015", vec!["contacts", "leads", "opportunities"]),
-            ("hrm", "http://localhost:8011", vec!["employees", "departments", "positions"]),
-            ("finance", "http://localhost:8006", vec!["accounts", "vouchers", "expenses"]),
-            ("mes", "http://localhost:8022", vec!["work_orders", "production_lines"]),
+            (
+                "erp",
+                "http://localhost:8010",
+                vec!["customers", "suppliers", "materials", "orders"],
+            ),
+            (
+                "crm",
+                "http://localhost:8015",
+                vec!["contacts", "leads", "opportunities"],
+            ),
+            (
+                "hrm",
+                "http://localhost:8011",
+                vec!["employees", "departments", "positions"],
+            ),
+            (
+                "finance",
+                "http://localhost:8006",
+                vec!["accounts", "vouchers", "expenses"],
+            ),
+            (
+                "mes",
+                "http://localhost:8022",
+                vec!["work_orders", "production_lines"],
+            ),
         ];
 
         let futures = registry.iter().map(|(name, url, entities)| async move {
@@ -1346,7 +1404,9 @@ impl QueryRoot {
             Ok(resp) if resp.status().is_success() => {
                 resp.json::<serde_json::Value>().await.unwrap_or_default()
             }
-            _ => serde_json::json!({"error": "entity not found", "service": service, "entity_type": entity_type, "id": id}),
+            _ => {
+                serde_json::json!({"error": "entity not found", "service": service, "entity_type": entity_type, "id": id})
+            }
         };
 
         Ok(FederatedEntityGql {
@@ -1402,22 +1462,21 @@ impl QueryRoot {
         use std::collections::HashMap;
 
         let mut by_service: HashMap<String, Vec<(String, String, usize)>> = HashMap::new();
-        let mut results: Vec<Option<FederationRepresentationGql>> = vec![None; representations.len()];
+        let mut results: Vec<Option<FederationRepresentationGql>> =
+            vec![None; representations.len()];
 
         for (idx, rep) in representations.iter().enumerate() {
             let typename = rep
                 .get("__typename")
                 .and_then(|t| t.as_str())
                 .unwrap_or("Unknown");
-            let id = rep
-                .get("id")
-                .and_then(|i| i.as_str())
-                .unwrap_or("");
+            let id = rep.get("id").and_then(|i| i.as_str()).unwrap_or("");
             let service = service_for_typename(typename);
-            by_service
-                .entry(service.to_string())
-                .or_default()
-                .push((typename.to_string(), id.to_string(), idx));
+            by_service.entry(service.to_string()).or_default().push((
+                typename.to_string(),
+                id.to_string(),
+                idx,
+            ));
         }
 
         let futures = by_service.into_iter().map(|(_service, items)| async move {
@@ -1498,15 +1557,28 @@ impl QueryRoot {
 
         match tokio::time::timeout(
             std::time::Duration::from_secs(5),
-            client.post(&url).json(&serde_json::json!({ "ids": ids })).send(),
-        ).await {
+            client
+                .post(&url)
+                .json(&serde_json::json!({ "ids": ids }))
+                .send(),
+        )
+        .await
+        {
             Ok(Ok(resp)) if resp.status().is_success() => {
                 match resp.json::<serde_json::Value>().await {
                     Ok(json) => {
-                        let data_list = json.get("data").and_then(|d| d.as_array()).unwrap_or(&Vec::new()).clone();
+                        let data_list = json
+                            .get("data")
+                            .and_then(|d| d.as_array())
+                            .unwrap_or(&Vec::new())
+                            .clone();
                         let mut results = Vec::new();
                         for item in data_list {
-                            let id = item.get("id").and_then(|v| v.as_str()).unwrap_or("").to_string();
+                            let id = item
+                                .get("id")
+                                .and_then(|v| v.as_str())
+                                .unwrap_or("")
+                                .to_string();
                             results.push(FederatedEntityGql {
                                 service: service.clone(),
                                 entity_type: entity_type.clone(),
@@ -1596,13 +1668,38 @@ impl QueryRoot {
                 let json: serde_json::Value = resp.json().await.unwrap_or_default();
                 let data = json.get("data").unwrap_or(&json);
                 Ok(Some(CustomerEntityGql {
-                    id: data.get("id").and_then(|v| v.as_str()).unwrap_or(&id).to_string(),
-                    name: data.get("name").and_then(|v| v.as_str()).unwrap_or("").to_string(),
-                    code: data.get("code").and_then(|v| v.as_str()).unwrap_or("").to_string(),
-                    status: data.get("status").and_then(|v| v.as_str()).unwrap_or("active").to_string(),
-                    phone: data.get("phone").and_then(|v| v.as_str()).map(|s| s.to_string()),
-                    industry: data.get("industry").and_then(|v| v.as_str()).map(|s| s.to_string()),
-                    contact_person: data.get("contact_person").and_then(|v| v.as_str()).map(|s| s.to_string()),
+                    id: data
+                        .get("id")
+                        .and_then(|v| v.as_str())
+                        .unwrap_or(&id)
+                        .to_string(),
+                    name: data
+                        .get("name")
+                        .and_then(|v| v.as_str())
+                        .unwrap_or("")
+                        .to_string(),
+                    code: data
+                        .get("code")
+                        .and_then(|v| v.as_str())
+                        .unwrap_or("")
+                        .to_string(),
+                    status: data
+                        .get("status")
+                        .and_then(|v| v.as_str())
+                        .unwrap_or("active")
+                        .to_string(),
+                    phone: data
+                        .get("phone")
+                        .and_then(|v| v.as_str())
+                        .map(|s| s.to_string()),
+                    industry: data
+                        .get("industry")
+                        .and_then(|v| v.as_str())
+                        .map(|s| s.to_string()),
+                    contact_person: data
+                        .get("contact_person")
+                        .and_then(|v| v.as_str())
+                        .map(|s| s.to_string()),
                 }))
             }
             _ => Ok(None),
@@ -1621,17 +1718,40 @@ impl QueryRoot {
                 let json: serde_json::Value = resp.json().await.unwrap_or_default();
                 let data = json.get("data").unwrap_or(&json);
                 Ok(Some(EmployeeEntityGql {
-                    id: data.get("id").and_then(|v| v.as_str()).unwrap_or(&id).to_string(),
-                    name: data.get("name").and_then(|v| v.as_str()).unwrap_or("").to_string(),
-                    department: data.get("department_name").and_then(|v| v.as_str())
+                    id: data
+                        .get("id")
+                        .and_then(|v| v.as_str())
+                        .unwrap_or(&id)
+                        .to_string(),
+                    name: data
+                        .get("name")
+                        .and_then(|v| v.as_str())
+                        .unwrap_or("")
+                        .to_string(),
+                    department: data
+                        .get("department_name")
+                        .and_then(|v| v.as_str())
                         .or_else(|| data.get("department").and_then(|v| v.as_str()))
-                        .unwrap_or("").to_string(),
-                    position: data.get("position_name").and_then(|v| v.as_str())
+                        .unwrap_or("")
+                        .to_string(),
+                    position: data
+                        .get("position_name")
+                        .and_then(|v| v.as_str())
                         .or_else(|| data.get("position").and_then(|v| v.as_str()))
-                        .unwrap_or("").to_string(),
-                    email: data.get("email").and_then(|v| v.as_str()).map(|s| s.to_string()),
-                    phone: data.get("phone").and_then(|v| v.as_str()).map(|s| s.to_string()),
-                    status: data.get("status").and_then(|v| v.as_str()).map(|s| s.to_string()),
+                        .unwrap_or("")
+                        .to_string(),
+                    email: data
+                        .get("email")
+                        .and_then(|v| v.as_str())
+                        .map(|s| s.to_string()),
+                    phone: data
+                        .get("phone")
+                        .and_then(|v| v.as_str())
+                        .map(|s| s.to_string()),
+                    status: data
+                        .get("status")
+                        .and_then(|v| v.as_str())
+                        .map(|s| s.to_string()),
                 }))
             }
             _ => Ok(None),
@@ -1650,13 +1770,37 @@ impl QueryRoot {
                 let json: serde_json::Value = resp.json().await.unwrap_or_default();
                 let data = json.get("data").unwrap_or(&json);
                 Ok(Some(VoucherEntityGql {
-                    id: data.get("id").and_then(|v| v.as_str()).unwrap_or(&id).to_string(),
-                    voucher_number: data.get("voucher_number").and_then(|v| v.as_str()).unwrap_or("").to_string(),
-                    total_debit: data.get("total_debit").and_then(|v| v.as_f64()).unwrap_or(0.0),
-                    total_credit: data.get("total_credit").and_then(|v| v.as_f64()).unwrap_or(0.0),
-                    status: data.get("status").and_then(|v| v.as_str()).unwrap_or("draft").to_string(),
-                    voucher_date: data.get("voucher_date").and_then(|v| v.as_str()).map(|s| s.to_string()),
-                    created_by: data.get("created_by").and_then(|v| v.as_str()).map(|s| s.to_string()),
+                    id: data
+                        .get("id")
+                        .and_then(|v| v.as_str())
+                        .unwrap_or(&id)
+                        .to_string(),
+                    voucher_number: data
+                        .get("voucher_number")
+                        .and_then(|v| v.as_str())
+                        .unwrap_or("")
+                        .to_string(),
+                    total_debit: data
+                        .get("total_debit")
+                        .and_then(|v| v.as_f64())
+                        .unwrap_or(0.0),
+                    total_credit: data
+                        .get("total_credit")
+                        .and_then(|v| v.as_f64())
+                        .unwrap_or(0.0),
+                    status: data
+                        .get("status")
+                        .and_then(|v| v.as_str())
+                        .unwrap_or("draft")
+                        .to_string(),
+                    voucher_date: data
+                        .get("voucher_date")
+                        .and_then(|v| v.as_str())
+                        .map(|s| s.to_string()),
+                    created_by: data
+                        .get("created_by")
+                        .and_then(|v| v.as_str())
+                        .map(|s| s.to_string()),
                 }))
             }
             _ => Ok(None),
@@ -1744,7 +1888,10 @@ impl QueryRoot {
     }
 
     /// V40.0: 获取联邦网关性能统计
-    async fn federation_stats(&self, _ctx: &Context<'_>) -> async_graphql::Result<FederationStatsGql> {
+    async fn federation_stats(
+        &self,
+        _ctx: &Context<'_>,
+    ) -> async_graphql::Result<FederationStatsGql> {
         Ok(get_federation_stats())
     }
 
@@ -1783,7 +1930,10 @@ impl QueryRoot {
     }
 
     /// V41.0: 获取查询预取规则
-    async fn prefetch_rules(&self, _ctx: &Context<'_>) -> async_graphql::Result<Vec<QueryPrefetchRuleGql>> {
+    async fn prefetch_rules(
+        &self,
+        _ctx: &Context<'_>,
+    ) -> async_graphql::Result<Vec<QueryPrefetchRuleGql>> {
         Ok(prefetch_rules().clone())
     }
 
@@ -1893,10 +2043,7 @@ impl QueryRoot {
     }
 
     /// V42.0 Track E: 获取安全配置
-    async fn security_config(
-        &self,
-        _ctx: &Context<'_>,
-    ) -> async_graphql::Result<SecurityConfig> {
+    async fn security_config(&self, _ctx: &Context<'_>) -> async_graphql::Result<SecurityConfig> {
         Ok(get_security_config())
     }
 
@@ -2234,7 +2381,10 @@ impl QueryRoot {
         limit: Option<usize>,
         window: Option<MetricsWindow>,
     ) -> async_graphql::Result<Vec<TopSlowQueryGql>> {
-        Ok(get_top_slow_queries(limit, window.unwrap_or(MetricsWindow::FifteenMinutes)))
+        Ok(get_top_slow_queries(
+            limit,
+            window.unwrap_or(MetricsWindow::FifteenMinutes),
+        ))
     }
 
     /// V44.0 Track E: 错误率趋势
@@ -2283,7 +2433,10 @@ impl QueryRoot {
     }
 
     /// V45.0: 边缘函数列表
-    async fn edge_functions(&self, _ctx: &Context<'_>) -> async_graphql::Result<Vec<EdgeFunctionGql>> {
+    async fn edge_functions(
+        &self,
+        _ctx: &Context<'_>,
+    ) -> async_graphql::Result<Vec<EdgeFunctionGql>> {
         let state = edge_compute_state().lock().unwrap();
         Ok(state
             .functions
@@ -2302,7 +2455,10 @@ impl QueryRoot {
     }
 
     /// V45.0: 边缘计算统计
-    async fn edge_compute_stats(&self, _ctx: &Context<'_>) -> async_graphql::Result<EdgeComputeStatsGql> {
+    async fn edge_compute_stats(
+        &self,
+        _ctx: &Context<'_>,
+    ) -> async_graphql::Result<EdgeComputeStatsGql> {
         Ok(EdgeComputeManager::get_stats())
     }
 
@@ -2319,7 +2475,10 @@ impl QueryRoot {
         limit: Option<i32>,
     ) -> async_graphql::Result<Vec<CdnCacheEntryGql>> {
         let tags_ref = tags.as_deref();
-        Ok(CdnCacheManager::get_entries(tags_ref, limit.unwrap_or(50) as usize))
+        Ok(CdnCacheManager::get_entries(
+            tags_ref,
+            limit.unwrap_or(50) as usize,
+        ))
     }
 
     /// V45.0: 流式响应统计
@@ -2338,7 +2497,9 @@ impl QueryRoot {
         _ctx: &Context<'_>,
         query_hash: Option<String>,
     ) -> async_graphql::Result<Vec<DeferredFieldGql>> {
-        Ok(StreamingResponseManager::get_deferred_fields(query_hash.as_deref()))
+        Ok(StreamingResponseManager::get_deferred_fields(
+            query_hash.as_deref(),
+        ))
     }
 
     // ==================== V45.0 Track E: GraphQL 企业级治理 ====================
@@ -2571,8 +2732,9 @@ impl MutationRoot {
         use sqlx::Row;
         let id: uuid::Uuid = row.try_get("id")?;
         let title: String = row.try_get("title")?;
-        let created_at: chrono::DateTime<chrono::Utc> =
-            row.try_get("created_at").unwrap_or_else(|_| chrono::Utc::now());
+        let created_at: chrono::DateTime<chrono::Utc> = row
+            .try_get("created_at")
+            .unwrap_or_else(|_| chrono::Utc::now());
 
         Ok(UnifiedTodoGql {
             id: id.to_string(),
@@ -2585,11 +2747,7 @@ impl MutationRoot {
     }
 
     /// 完成待办事项
-    async fn complete_todo(
-        &self,
-        ctx: &Context<'_>,
-        id: String,
-    ) -> async_graphql::Result<bool> {
+    async fn complete_todo(&self, ctx: &Context<'_>, id: String) -> async_graphql::Result<bool> {
         let state = ctx.data::<AppState>()?;
         let uuid = uuid::Uuid::parse_str(&id)
             .map_err(|e| async_graphql::Error::new(format!("无效的 ID: {}", e)))?;
@@ -2648,7 +2806,12 @@ impl MutationRoot {
             ("finance", "vouchers") => "/api/finance/vouchers",
             ("finance", "expenses") => "/api/finance/expenses",
             ("mes", "work-orders") => "/api/mes/work-orders",
-            _ => return Err(async_graphql::Error::new(format!("不支持的服务或实体类型: {}/{}", service, entity_type))),
+            _ => {
+                return Err(async_graphql::Error::new(format!(
+                    "不支持的服务或实体类型: {}/{}",
+                    service, entity_type
+                )))
+            }
         };
 
         let url = format!("{}{}", base_url, path);
@@ -2657,15 +2820,23 @@ impl MutationRoot {
         match tokio::time::timeout(
             std::time::Duration::from_secs(10),
             client.post(&url).json(&data).send(),
-        ).await {
+        )
+        .await
+        {
             Ok(Ok(resp)) if resp.status().is_success() => {
-                let result: serde_json::Value = resp.json().await.unwrap_or(serde_json::json!({"success": true}));
+                let result: serde_json::Value = resp
+                    .json()
+                    .await
+                    .unwrap_or(serde_json::json!({"success": true}));
                 Ok(result)
             }
             Ok(Ok(resp)) => {
                 let status = resp.status();
                 let error_body = resp.text().await.unwrap_or_default();
-                Err(async_graphql::Error::new(format!("创建实体失败 ({}): {}", status, error_body)))
+                Err(async_graphql::Error::new(format!(
+                    "创建实体失败 ({}): {}",
+                    status, error_body
+                )))
             }
             Ok(Err(e)) => Err(async_graphql::Error::new(format!("HTTP 请求失败: {}", e))),
             Err(_) => Err(async_graphql::Error::new("创建实体超时")),
@@ -2695,7 +2866,12 @@ impl MutationRoot {
             ("finance", "vouchers") => format!("/api/finance/vouchers/{}", id),
             ("finance", "expenses") => format!("/api/finance/expenses/{}", id),
             ("mes", "work-orders") => format!("/api/mes/work-orders/{}", id),
-            _ => return Err(async_graphql::Error::new(format!("不支持的服务或实体类型: {}/{}", service, entity_type))),
+            _ => {
+                return Err(async_graphql::Error::new(format!(
+                    "不支持的服务或实体类型: {}/{}",
+                    service, entity_type
+                )))
+            }
         };
 
         let url = format!("{}{}", base_url, path);
@@ -2704,15 +2880,23 @@ impl MutationRoot {
         match tokio::time::timeout(
             std::time::Duration::from_secs(10),
             client.put(&url).json(&data).send(),
-        ).await {
+        )
+        .await
+        {
             Ok(Ok(resp)) if resp.status().is_success() => {
-                let result: serde_json::Value = resp.json().await.unwrap_or(serde_json::json!({"success": true}));
+                let result: serde_json::Value = resp
+                    .json()
+                    .await
+                    .unwrap_or(serde_json::json!({"success": true}));
                 Ok(result)
             }
             Ok(Ok(resp)) => {
                 let status = resp.status();
                 let error_body = resp.text().await.unwrap_or_default();
-                Err(async_graphql::Error::new(format!("更新实体失败 ({}): {}", status, error_body)))
+                Err(async_graphql::Error::new(format!(
+                    "更新实体失败 ({}): {}",
+                    status, error_body
+                )))
             }
             Ok(Err(e)) => Err(async_graphql::Error::new(format!("HTTP 请求失败: {}", e))),
             Err(_) => Err(async_graphql::Error::new("更新实体超时")),
@@ -2741,7 +2925,12 @@ impl MutationRoot {
             ("finance", "vouchers") => format!("/api/finance/vouchers/{}", id),
             ("finance", "expenses") => format!("/api/finance/expenses/{}", id),
             ("mes", "work-orders") => format!("/api/mes/work-orders/{}", id),
-            _ => return Err(async_graphql::Error::new(format!("不支持的服务或实体类型: {}/{}", service, entity_type))),
+            _ => {
+                return Err(async_graphql::Error::new(format!(
+                    "不支持的服务或实体类型: {}/{}",
+                    service, entity_type
+                )))
+            }
         };
 
         let url = format!("{}{}", base_url, path);
@@ -2750,7 +2939,9 @@ impl MutationRoot {
         match tokio::time::timeout(
             std::time::Duration::from_secs(10),
             client.delete(&url).send(),
-        ).await {
+        )
+        .await
+        {
             Ok(Ok(resp)) if resp.status().is_success() => Ok(true),
             Ok(Ok(_)) => Ok(false),
             Ok(Err(_)) => Ok(false),
@@ -2966,10 +3157,7 @@ impl MutationRoot {
     }
 
     /// V41.0 Track E: 手动触发自动审批扫描
-    async fn run_auto_approval_scan(
-        &self,
-        _ctx: &Context<'_>,
-    ) -> async_graphql::Result<i32> {
+    async fn run_auto_approval_scan(&self, _ctx: &Context<'_>) -> async_graphql::Result<i32> {
         Ok(run_auto_approval_scan() as i32)
     }
 
@@ -3163,11 +3351,7 @@ impl MutationRoot {
     }
 
     /// V44.0 Track E: 解决告警
-    async fn resolve_alert(
-        &self,
-        _ctx: &Context<'_>,
-        id: String,
-    ) -> async_graphql::Result<bool> {
+    async fn resolve_alert(&self, _ctx: &Context<'_>, id: String) -> async_graphql::Result<bool> {
         Ok(resolve_alert(&id))
     }
 
@@ -3412,7 +3596,9 @@ impl MutationRoot {
             config.burst_capacity,
             config.adaptive.unwrap_or(true),
         );
-        let limiter = crate::modules::rate_limiting::rate_limiter().lock().unwrap();
+        let limiter = crate::modules::rate_limiting::rate_limiter()
+            .lock()
+            .unwrap();
         limiter
             .get_configs()
             .into_iter()
@@ -3650,7 +3836,9 @@ impl MutationRoot {
         _ctx: &Context<'_>,
         query_hash: String,
     ) -> async_graphql::Result<Option<crate::modules::query_governance::PersistedQueryGql>> {
-        Ok(crate::modules::query_governance::get_persisted_query(&query_hash))
+        Ok(crate::modules::query_governance::get_persisted_query(
+            &query_hash,
+        ))
     }
 
     /// 列出持久化查询
@@ -3678,7 +3866,10 @@ impl MutationRoot {
     }
 
     /// 获取审计统计
-    async fn audit_stats(&self, _ctx: &Context<'_>) -> async_graphql::Result<crate::modules::query_governance::AuditStatsGql> {
+    async fn audit_stats(
+        &self,
+        _ctx: &Context<'_>,
+    ) -> async_graphql::Result<crate::modules::query_governance::AuditStatsGql> {
         Ok(crate::modules::query_governance::get_audit_stats())
     }
 
@@ -3704,7 +3895,10 @@ impl MutationRoot {
         entity_type: String,
         entity_id: String,
     ) -> async_graphql::Result<Option<crate::modules::query_governance::QueryQuotaGql>> {
-        Ok(crate::modules::query_governance::get_query_quota(&entity_type, &entity_id))
+        Ok(crate::modules::query_governance::get_query_quota(
+            &entity_type,
+            &entity_id,
+        ))
     }
 
     /// 获取审批请求
@@ -3712,8 +3906,11 @@ impl MutationRoot {
         &self,
         _ctx: &Context<'_>,
         request_id: String,
-    ) -> async_graphql::Result<Option<crate::modules::query_governance::QueryApprovalRequestGql>> {
-        Ok(crate::modules::query_governance::get_approval_request(&request_id))
+    ) -> async_graphql::Result<Option<crate::modules::query_governance::QueryApprovalRequestGql>>
+    {
+        Ok(crate::modules::query_governance::get_approval_request(
+            &request_id,
+        ))
     }
 
     /// 列出待审批请求
@@ -3730,7 +3927,9 @@ impl MutationRoot {
         _ctx: &Context<'_>,
         policy_id: String,
     ) -> async_graphql::Result<Option<crate::modules::query_governance::GovernancePolicyGql>> {
-        Ok(crate::modules::query_governance::get_governance_policy(&policy_id))
+        Ok(crate::modules::query_governance::get_governance_policy(
+            &policy_id,
+        ))
     }
 
     /// 列出治理策略
@@ -3746,8 +3945,11 @@ impl MutationRoot {
         &self,
         _ctx: &Context<'_>,
         field_path: String,
-    ) -> async_graphql::Result<Option<crate::modules::query_governance::FieldAccessControlGql>> {
-        Ok(crate::modules::query_governance::get_field_access_control(&field_path))
+    ) -> async_graphql::Result<Option<crate::modules::query_governance::FieldAccessControlGql>>
+    {
+        Ok(crate::modules::query_governance::get_field_access_control(
+            &field_path,
+        ))
     }
 
     /// 检查查询治理
@@ -3845,11 +4047,7 @@ impl MutationRoot {
     }
 
     /// 删除缓存条目
-    async fn cache_delete(
-        &self,
-        _ctx: &Context<'_>,
-        key: String,
-    ) -> async_graphql::Result<bool> {
+    async fn cache_delete(&self, _ctx: &Context<'_>, key: String) -> async_graphql::Result<bool> {
         crate::modules::rate_limiting::cache_delete(&key)
     }
 
@@ -3873,10 +4071,7 @@ impl MutationRoot {
     }
 
     /// 清空缓存策略
-    async fn cache_clear_policies(
-        &self,
-        _ctx: &Context<'_>,
-    ) -> async_graphql::Result<bool> {
+    async fn cache_clear_policies(&self, _ctx: &Context<'_>) -> async_graphql::Result<bool> {
         crate::modules::rate_limiting::cache_clear_policies()
     }
 
@@ -3888,7 +4083,9 @@ impl MutationRoot {
         _ctx: &Context<'_>,
         input: crate::modules::query_governance::PersistedQueryInput,
     ) -> async_graphql::Result<crate::modules::query_governance::PersistedQueryGql> {
-        Ok(crate::modules::query_governance::register_persisted_query(input))
+        Ok(crate::modules::query_governance::register_persisted_query(
+            input,
+        ))
     }
 
     /// 更新持久化查询状态
@@ -3907,7 +4104,9 @@ impl MutationRoot {
         _ctx: &Context<'_>,
         query_hash: String,
     ) -> async_graphql::Result<bool> {
-        Ok(crate::modules::query_governance::delete_persisted_query(&query_hash))
+        Ok(crate::modules::query_governance::delete_persisted_query(
+            &query_hash,
+        ))
     }
 
     /// 添加持久化查询标签
@@ -3917,7 +4116,10 @@ impl MutationRoot {
         query_hash: String,
         tag: String,
     ) -> async_graphql::Result<Option<crate::modules::query_governance::PersistedQueryGql>> {
-        Ok(crate::modules::query_governance::add_persisted_query_tag(&query_hash, &tag))
+        Ok(crate::modules::query_governance::add_persisted_query_tag(
+            &query_hash,
+            &tag,
+        ))
     }
 
     /// 移除持久化查询标签
@@ -3945,7 +4147,9 @@ impl MutationRoot {
         _ctx: &Context<'_>,
         input: crate::modules::query_governance::ApprovalRequestInput,
     ) -> async_graphql::Result<crate::modules::query_governance::QueryApprovalRequestGql> {
-        Ok(crate::modules::query_governance::create_approval_request(input))
+        Ok(crate::modules::query_governance::create_approval_request(
+            input,
+        ))
     }
 
     /// 审批请求
@@ -3953,8 +4157,11 @@ impl MutationRoot {
         &self,
         _ctx: &Context<'_>,
         input: crate::modules::query_governance::ApprovalReviewInput,
-    ) -> async_graphql::Result<Option<crate::modules::query_governance::QueryApprovalRequestGql>> {
-        Ok(crate::modules::query_governance::review_approval_request(input))
+    ) -> async_graphql::Result<Option<crate::modules::query_governance::QueryApprovalRequestGql>>
+    {
+        Ok(crate::modules::query_governance::review_approval_request(
+            input,
+        ))
     }
 
     /// 创建治理策略
@@ -3963,7 +4170,9 @@ impl MutationRoot {
         _ctx: &Context<'_>,
         input: crate::modules::query_governance::GovernancePolicyInput,
     ) -> async_graphql::Result<crate::modules::query_governance::GovernancePolicyGql> {
-        Ok(crate::modules::query_governance::create_governance_policy(input))
+        Ok(crate::modules::query_governance::create_governance_policy(
+            input,
+        ))
     }
 
     /// 设置字段访问控制
@@ -3972,7 +4181,9 @@ impl MutationRoot {
         _ctx: &Context<'_>,
         input: crate::modules::query_governance::FieldAccessControlInput,
     ) -> async_graphql::Result<crate::modules::query_governance::FieldAccessControlGql> {
-        Ok(crate::modules::query_governance::set_field_access_control(input))
+        Ok(crate::modules::query_governance::set_field_access_control(
+            input,
+        ))
     }
 }
 
@@ -4491,7 +4702,8 @@ pub fn invalidate_cache() {
 
 /// 全局活跃订阅数计数器
 /// 每个订阅开始时递增，结束时递减。
-static ACTIVE_SUBSCRIPTIONS: std::sync::atomic::AtomicUsize = std::sync::atomic::AtomicUsize::new(0);
+static ACTIVE_SUBSCRIPTIONS: std::sync::atomic::AtomicUsize =
+    std::sync::atomic::AtomicUsize::new(0);
 
 /// 获取当前活跃订阅数
 pub fn get_active_subscriptions() -> usize {
@@ -4542,7 +4754,9 @@ fn compose_federation_sdl() -> String {
     sdl.push_str("  dashboard: Dashboard!\n");
     sdl.push_str("  moduleStats: [ModuleStat!]!\n");
     sdl.push_str("  federatedServices: [FederatedService!]!\n");
-    sdl.push_str("  federatedEntity(service: String!, entityType: String!, id: String!): FederatedEntity!\n");
+    sdl.push_str(
+        "  federatedEntity(service: String!, entityType: String!, id: String!): FederatedEntity!\n",
+    );
     sdl.push_str("  federationSdl: String!\n");
     sdl.push_str("  federationServiceSdls: [FederationServiceSdl!]!\n");
     sdl.push_str("  federationEntities(representations: [JSON!]!): [FederationRepresentation!]!\n");
@@ -4567,7 +4781,9 @@ fn compose_federation_sdl() -> String {
     sdl.push_str("}\n\n");
     sdl.push_str("type FederationQueryPlan { queryHash: String! steps: [PlanStep!]! parallelGroups: [ParallelGroup!]! estimatedCost: Float! estimatedDurationMs: Int! }\n");
     sdl.push_str("type PlanStep { stepId: String! stepType: String! entity: String service: String dependsOn: [String!]! fields: [String!]! args: JSON! }\n");
-    sdl.push_str("type ParallelGroup { groupId: String! steps: [String!]! executionMode: String! }\n");
+    sdl.push_str(
+        "type ParallelGroup { groupId: String! steps: [String!]! executionMode: String! }\n",
+    );
     sdl.push_str("type FederationV2Stats { totalQueries: Int! totalSteps: Int! parallelSteps: Int! batchResolutions: Int! cacheHits: Int! cacheMisses: Int! avgPlanTimeMs: Float! avgExecuteTimeMs: Float! avgTotalTimeMs: Float! planCacheHits: Int! autoResolversUsed: Int! servicesRegistered: Int! entitiesRegistered: Int! }\n");
     sdl.push_str("type ServiceMetadata { name: String! baseUrl: String! entities: [EntityMetadata!]! healthCheckUrl: String version: String! }\n");
     sdl.push_str("type EntityMetadata { name: String! service: String! keyField: String! fields: [FieldMetadata!]! relations: [RelationMetadata!]! restEndpoint: String! listEndpoint: String! batchEndpoint: String }\n");
@@ -4634,14 +4850,35 @@ fn service_for_typename(typename: &str) -> &'static str {
 /// 根据 __typename 和 id 从对应的下游 REST 服务获取实体数据。
 async fn resolve_federated_entity(typename: &str, id: &str) -> serde_json::Value {
     let (base_url, path) = match typename {
-        "CustomerEntity" => ("http://localhost:8010", format!("/api/erp/customers/{}", id)),
-        "SupplierEntity" => ("http://localhost:8010", format!("/api/erp/suppliers/{}", id)),
-        "MaterialEntity" => ("http://localhost:8010", format!("/api/erp/materials/{}", id)),
+        "CustomerEntity" => (
+            "http://localhost:8010",
+            format!("/api/erp/customers/{}", id),
+        ),
+        "SupplierEntity" => (
+            "http://localhost:8010",
+            format!("/api/erp/suppliers/{}", id),
+        ),
+        "MaterialEntity" => (
+            "http://localhost:8010",
+            format!("/api/erp/materials/{}", id),
+        ),
         "OrderEntity" => ("http://localhost:8010", format!("/api/erp/orders/{}", id)),
-        "EmployeeEntity" => ("http://localhost:8011", format!("/api/hrm/employees/{}", id)),
-        "DepartmentEntity" => ("http://localhost:8011", format!("/api/hrm/departments/{}", id)),
-        "VoucherEntity" => ("http://localhost:8006", format!("/api/finance/vouchers/{}", id)),
-        "AccountSubjectEntity" => ("http://localhost:8006", format!("/api/finance/accounts/{}", id)),
+        "EmployeeEntity" => (
+            "http://localhost:8011",
+            format!("/api/hrm/employees/{}", id),
+        ),
+        "DepartmentEntity" => (
+            "http://localhost:8011",
+            format!("/api/hrm/departments/{}", id),
+        ),
+        "VoucherEntity" => (
+            "http://localhost:8006",
+            format!("/api/finance/vouchers/{}", id),
+        ),
+        "AccountSubjectEntity" => (
+            "http://localhost:8006",
+            format!("/api/finance/accounts/{}", id),
+        ),
         "ContactEntity" => ("http://localhost:8015", format!("/api/crm/contacts/{}", id)),
         _ => return serde_json::json!({"error": "unknown entity type", "__typename": typename}),
     };
@@ -4905,8 +5142,22 @@ pub fn record_query_audit(log: QueryAuditLog) {
     record_query_metric(operation_name.clone(), duration_ms, success, false, None);
 
     let trace_id = start_trace(query_hash, operation_name, user_id, None);
-    let _ = start_span(&trace_id, None, "audit_log".to_string(), "portal".to_string(), SpanType::Resolve, None);
-    end_trace(&trace_id, if success { None } else { Some("query_failed".to_string()) });
+    let _ = start_span(
+        &trace_id,
+        None,
+        "audit_log".to_string(),
+        "portal".to_string(),
+        SpanType::Resolve,
+        None,
+    );
+    end_trace(
+        &trace_id,
+        if success {
+            None
+        } else {
+            Some("query_failed".to_string())
+        },
+    );
 }
 
 /// 获取最近的查询审计日志（按时间倒序）
@@ -4963,7 +5214,10 @@ pub async fn try_redis_pubsub() -> bool {
             true
         }
         Err(e) => {
-            tracing::warn!("[event-bus] Redis PubSub 连接失败，将降级为内存广播模式: {}", e);
+            tracing::warn!(
+                "[event-bus] Redis PubSub 连接失败，将降级为内存广播模式: {}",
+                e
+            );
             false
         }
     }
@@ -5252,7 +5506,12 @@ impl MultiLevelCache {
     fn invalidate_pattern(&self, pattern: &str) -> usize {
         let mut count = 0;
         let mut l1 = self.l1.lock().unwrap();
-        let l1_keys: Vec<String> = l1.map.keys().filter(|k| k.contains(pattern)).cloned().collect();
+        let l1_keys: Vec<String> = l1
+            .map
+            .keys()
+            .filter(|k| k.contains(pattern))
+            .cloned()
+            .collect();
         count += l1_keys.len();
         for k in &l1_keys {
             l1.map.remove(k);
@@ -5261,7 +5520,12 @@ impl MultiLevelCache {
         drop(l1);
 
         let mut l2 = self.l2.lock().unwrap();
-        let l2_keys: Vec<String> = l2.map.keys().filter(|k| k.contains(pattern)).cloned().collect();
+        let l2_keys: Vec<String> = l2
+            .map
+            .keys()
+            .filter(|k| k.contains(pattern))
+            .cloned()
+            .collect();
         count += l2_keys.len();
         for k in &l2_keys {
             l2.map.remove(k);
@@ -5301,10 +5565,13 @@ impl MultiLevelCache {
         }
         drop(l2);
         all.sort_by(|a, b| b.hit_count.cmp(&a.hit_count));
-        all.into_iter().take(limit).map(|e| HotQueryEntry {
-            query_name: extract_query_name(&e.key),
-            hit_count: e.hit_count,
-        }).collect()
+        all.into_iter()
+            .take(limit)
+            .map(|e| HotQueryEntry {
+                query_name: extract_query_name(&e.key),
+                hit_count: e.hit_count,
+            })
+            .collect()
     }
 }
 
@@ -5338,17 +5605,20 @@ struct CacheStatsInternal {
     ttl_sample_count: u64,
 }
 
-static CACHE_STATS_INTERNAL: std::sync::OnceLock<Mutex<CacheStatsInternal>> = std::sync::OnceLock::new();
+static CACHE_STATS_INTERNAL: std::sync::OnceLock<Mutex<CacheStatsInternal>> =
+    std::sync::OnceLock::new();
 
 fn cache_stats_internal() -> &'static Mutex<CacheStatsInternal> {
-    CACHE_STATS_INTERNAL.get_or_init(|| Mutex::new(CacheStatsInternal {
-        l1_hits: 0,
-        l2_hits: 0,
-        total_requests: 0,
-        evictions: 0,
-        total_ttl_seconds: 0,
-        ttl_sample_count: 0,
-    }))
+    CACHE_STATS_INTERNAL.get_or_init(|| {
+        Mutex::new(CacheStatsInternal {
+            l1_hits: 0,
+            l2_hits: 0,
+            total_requests: 0,
+            evictions: 0,
+            total_ttl_seconds: 0,
+            ttl_sample_count: 0,
+        })
+    })
 }
 
 fn record_l1_hit() {
@@ -5461,10 +5731,7 @@ fn default_invalidation_rules() -> Vec<CacheInvalidationRuleGql> {
         });
         rules.push(CacheInvalidationRuleGql {
             mutation_name: format!("update{}", entity),
-            invalidation_patterns: vec![
-                format!("{}:", pattern),
-                format!("{}Entity", entity),
-            ],
+            invalidation_patterns: vec![format!("{}:", pattern), format!("{}Entity", entity)],
             entity_type: pattern.to_string(),
         });
         rules.push(CacheInvalidationRuleGql {
@@ -5495,7 +5762,8 @@ fn default_invalidation_rules() -> Vec<CacheInvalidationRuleGql> {
     rules
 }
 
-static CACHE_INVALIDATION_RULES: std::sync::OnceLock<Vec<CacheInvalidationRuleGql>> = std::sync::OnceLock::new();
+static CACHE_INVALIDATION_RULES: std::sync::OnceLock<Vec<CacheInvalidationRuleGql>> =
+    std::sync::OnceLock::new();
 
 fn cache_invalidation_rules() -> &'static Vec<CacheInvalidationRuleGql> {
     CACHE_INVALIDATION_RULES.get_or_init(default_invalidation_rules)
@@ -5513,7 +5781,11 @@ pub fn auto_invalidate_for_mutation(mutation_name: &str) -> usize {
         }
     }
     if total_invalidated > 0 {
-        tracing::debug!("[cache] Mutation '{}' 触发失效 {} 条缓存", mutation_name, total_invalidated);
+        tracing::debug!(
+            "[cache] Mutation '{}' 触发失效 {} 条缓存",
+            mutation_name,
+            total_invalidated
+        );
     }
     total_invalidated
 }
@@ -5577,38 +5849,32 @@ fn default_prefetch_rules() -> Vec<QueryPrefetchRuleGql> {
         },
         QueryPrefetchRuleGql {
             trigger_query: "employeeEntity".to_string(),
-            prefetch_queries: vec![
-                PrefetchTargetGql {
-                    query_name: "employeeEntity.departmentInfo".to_string(),
-                    query_hash: "employee_department".to_string(),
-                    variables_template: serde_json::json!({"department": "$department"}),
-                    priority: 9,
-                },
-            ],
+            prefetch_queries: vec![PrefetchTargetGql {
+                query_name: "employeeEntity.departmentInfo".to_string(),
+                query_hash: "employee_department".to_string(),
+                variables_template: serde_json::json!({"department": "$department"}),
+                priority: 9,
+            }],
             confidence: 0.9,
         },
         QueryPrefetchRuleGql {
             trigger_query: "voucherEntity".to_string(),
-            prefetch_queries: vec![
-                PrefetchTargetGql {
-                    query_name: "voucherEntity.accountSubject".to_string(),
-                    query_hash: "voucher_account".to_string(),
-                    variables_template: serde_json::json!({"voucherId": "$id"}),
-                    priority: 8,
-                },
-            ],
+            prefetch_queries: vec![PrefetchTargetGql {
+                query_name: "voucherEntity.accountSubject".to_string(),
+                query_hash: "voucher_account".to_string(),
+                variables_template: serde_json::json!({"voucherId": "$id"}),
+                priority: 8,
+            }],
             confidence: 0.8,
         },
         QueryPrefetchRuleGql {
             trigger_query: "businessStats".to_string(),
-            prefetch_queries: vec![
-                PrefetchTargetGql {
-                    query_name: "serviceHealth".to_string(),
-                    query_hash: "service_health".to_string(),
-                    variables_template: serde_json::json!({}),
-                    priority: 7,
-                },
-            ],
+            prefetch_queries: vec![PrefetchTargetGql {
+                query_name: "serviceHealth".to_string(),
+                query_hash: "service_health".to_string(),
+                variables_template: serde_json::json!({}),
+                priority: 7,
+            }],
             confidence: 0.75,
         },
     ]
@@ -5663,7 +5929,11 @@ pub fn trigger_prefetch(trigger_query: &str) -> bool {
     let mut triggered = false;
     for rule in rules {
         if rule.trigger_query.eq_ignore_ascii_case(trigger_query) {
-            tracing::debug!("[prefetch] 触发 '{}' 的预取，目标数: {}", trigger_query, rule.prefetch_queries.len());
+            tracing::debug!(
+                "[prefetch] 触发 '{}' 的预取，目标数: {}",
+                trigger_query,
+                rule.prefetch_queries.len()
+            );
             triggered = true;
         }
     }
@@ -5753,11 +6023,14 @@ pub fn get_cache_stats() -> CacheStatsV41Gql {
         0.0
     };
     let hot_entries = cache.top_hot_queries(10);
-    let top_hot_queries = hot_entries.into_iter().map(|e| HotQueryGql {
-        query_name: e.query_name,
-        hit_count: e.hit_count,
-        avg_latency_ms: if e.hit_count > 10 { 5.0 } else { 15.0 },
-    }).collect();
+    let top_hot_queries = hot_entries
+        .into_iter()
+        .map(|e| HotQueryGql {
+            query_name: e.query_name,
+            hit_count: e.hit_count,
+            avg_latency_ms: if e.hit_count > 10 { 5.0 } else { 15.0 },
+        })
+        .collect();
 
     CacheStatsV41Gql {
         l1_size: cache.l1_size(),
@@ -5790,7 +6063,10 @@ pub fn get_cache_optimization_suggestions() -> Vec<CacheOptimizationSuggestionGq
         suggestions.push(CacheOptimizationSuggestionGql {
             suggestion: "L1 缓存淘汰率过高，建议增加 L1 容量或启用自适应 TTL".to_string(),
             impact: "high".to_string(),
-            current_metric: format!("淘汰数 {} / 总请求 {}", stats.evictions, stats.total_requests),
+            current_metric: format!(
+                "淘汰数 {} / 总请求 {}",
+                stats.evictions, stats.total_requests
+            ),
             expected_improvement: "减少 30-50% 淘汰".to_string(),
         });
     }
@@ -5806,7 +6082,8 @@ pub fn get_cache_optimization_suggestions() -> Vec<CacheOptimizationSuggestionGq
 
     if stats.l1_hits < stats.l2_hits && stats.total_requests > 50 {
         suggestions.push(CacheOptimizationSuggestionGql {
-            suggestion: "L2 命中数高于 L1，说明热点识别阈值可能偏高，可降低 min_hits_for_l1".to_string(),
+            suggestion: "L2 命中数高于 L1，说明热点识别阈值可能偏高，可降低 min_hits_for_l1"
+                .to_string(),
             impact: "medium".to_string(),
             current_metric: format!("L1:{} / L2:{}", stats.l1_hits, stats.l2_hits),
             expected_improvement: "L1 命中率提升 10-20%".to_string(),
@@ -5903,7 +6180,8 @@ pub struct SecurityEvent {
 }
 
 /// V40.0: 全局安全事件存储（内存环形缓冲）
-static SECURITY_EVENTS: std::sync::OnceLock<Mutex<VecDeque<SecurityEvent>>> = std::sync::OnceLock::new();
+static SECURITY_EVENTS: std::sync::OnceLock<Mutex<VecDeque<SecurityEvent>>> =
+    std::sync::OnceLock::new();
 /// V40.0: 安全事件最大保留条数
 const MAX_SECURITY_EVENTS: usize = 500;
 
@@ -5956,13 +6234,14 @@ pub fn get_security_event_count() -> usize {
 /// V40.0: 验证查询深度
 ///
 /// 超过 MAX_QUERY_DEPTH 时返回错误并记录安全事件
-pub fn validate_query_depth(query: &str, ip: Option<&str>, query_hash: Option<&str>) -> Result<(), String> {
+pub fn validate_query_depth(
+    query: &str,
+    ip: Option<&str>,
+    query_hash: Option<&str>,
+) -> Result<(), String> {
     let depth = estimate_query_depth(query);
     if depth > MAX_QUERY_DEPTH {
-        let msg = format!(
-            "Query depth {} exceeds maximum {}",
-            depth, MAX_QUERY_DEPTH
-        );
+        let msg = format!("Query depth {} exceeds maximum {}", depth, MAX_QUERY_DEPTH);
         record_security_event(
             SecurityEventType::DepthExceeded,
             ip.map(|s| s.to_string()),
@@ -5978,7 +6257,11 @@ pub fn validate_query_depth(query: &str, ip: Option<&str>, query_hash: Option<&s
 /// V40.0: 验证查询复杂度
 ///
 /// 超过 MAX_QUERY_COMPLEXITY 时返回错误并记录安全事件
-pub fn validate_query_complexity(query: &str, ip: Option<&str>, query_hash: Option<&str>) -> Result<(), String> {
+pub fn validate_query_complexity(
+    query: &str,
+    ip: Option<&str>,
+    query_hash: Option<&str>,
+) -> Result<(), String> {
     let complexity = estimate_query_complexity(query);
     if complexity > MAX_QUERY_COMPLEXITY {
         let msg = format!(
@@ -6006,7 +6289,8 @@ struct RateLimitEntry {
 }
 
 /// V40.0: 全局速率限制器
-static RATE_LIMITER: std::sync::OnceLock<Mutex<HashMap<String, RateLimitEntry>>> = std::sync::OnceLock::new();
+static RATE_LIMITER: std::sync::OnceLock<Mutex<HashMap<String, RateLimitEntry>>> =
+    std::sync::OnceLock::new();
 
 fn rate_limiter() -> &'static Mutex<HashMap<String, RateLimitEntry>> {
     RATE_LIMITER.get_or_init(|| Mutex::new(HashMap::new()))
@@ -6536,9 +6820,18 @@ pub fn get_whitelist_health() -> WhitelistHealthGql {
     let queries = discovered_queries().lock().unwrap();
     let whitelist_size = get_whitelist_size();
     let total = queries.len();
-    let approved = queries.values().filter(|q| q.status == DiscoveryStatus::Approved).count();
-    let new_count = queries.values().filter(|q| q.status == DiscoveryStatus::New).count();
-    let under_review = queries.values().filter(|q| q.status == DiscoveryStatus::UnderReview).count();
+    let approved = queries
+        .values()
+        .filter(|q| q.status == DiscoveryStatus::Approved)
+        .count();
+    let new_count = queries
+        .values()
+        .filter(|q| q.status == DiscoveryStatus::New)
+        .count();
+    let under_review = queries
+        .values()
+        .filter(|q| q.status == DiscoveryStatus::UnderReview)
+        .count();
     let auto_approved = queries.values().filter(|q| q.auto_approved).count();
 
     let coverage_rate = if total > 0 {
@@ -6709,14 +7002,25 @@ pub fn generate_security_report(period: &str) -> SecurityAuditReportGql {
     if block_rate > 5.0 {
         recommendations.push("高拦截率检测：建议加强安全策略，审查 IP 黑名单配置".to_string());
     }
-    if event_counts.get("rate_limit_exceeded").copied().unwrap_or(0) > 10 {
+    if event_counts
+        .get("rate_limit_exceeded")
+        .copied()
+        .unwrap_or(0)
+        > 10
+    {
         recommendations.push("速率限制触发频繁：考虑调整速率限制阈值或增加 CDN 缓存".to_string());
     }
-    if event_counts.get("complexity_exceeded").copied().unwrap_or(0) > 5 {
+    if event_counts
+        .get("complexity_exceeded")
+        .copied()
+        .unwrap_or(0)
+        > 5
+    {
         recommendations.push("复杂度超限较多：建议审查复杂查询，优化查询结构".to_string());
     }
     if event_counts.get("depth_exceeded").copied().unwrap_or(0) > 5 {
-        recommendations.push("深度超限较多：建议优化查询嵌套结构，使用分页替代深度嵌套".to_string());
+        recommendations
+            .push("深度超限较多：建议优化查询嵌套结构，使用分页替代深度嵌套".to_string());
     }
     if recommendations.is_empty() {
         recommendations.push("安全状况良好，继续保持现有安全策略".to_string());
@@ -6809,11 +7113,15 @@ pub fn get_performance_tuning_suggestions() -> Vec<PerformanceTuningSuggestionGq
             category: "query_complexity".to_string(),
             severity: "warning".to_string(),
             title: "平均查询响应时间偏高".to_string(),
-            description: format!("平均查询耗时 {:.0}ms，超过 500ms 阈值，建议优化慢查询", avg_duration),
+            description: format!(
+                "平均查询耗时 {:.0}ms，超过 500ms 阈值，建议优化慢查询",
+                avg_duration
+            ),
             current_metric: format!("{:.0}ms avg", avg_duration),
             expected_improvement: "降低 30-50% 响应时间".to_string(),
             affected_queries: vec![],
-            implementation_hint: "使用 DataLoader 批量加载、增加查询缓存、优化数据库索引".to_string(),
+            implementation_hint: "使用 DataLoader 批量加载、增加查询缓存、优化数据库索引"
+                .to_string(),
         });
     }
 
@@ -6827,7 +7135,8 @@ pub fn get_performance_tuning_suggestions() -> Vec<PerformanceTuningSuggestionGq
             current_metric: format!("{}ms p95", p95_duration),
             expected_improvement: "P95 降低至 500ms 以内".to_string(),
             affected_queries: vec![],
-            implementation_hint: "识别慢查询、增加查询复杂度限制、使用分页减少单次数据量".to_string(),
+            implementation_hint: "识别慢查询、增加查询复杂度限制、使用分页减少单次数据量"
+                .to_string(),
         });
     }
 
@@ -6849,7 +7158,8 @@ pub fn get_performance_tuning_suggestions() -> Vec<PerformanceTuningSuggestionGq
             current_metric: format!("{:.1}% hit rate", cache_hit_rate),
             expected_improvement: "提升至 70% 以上".to_string(),
             affected_queries: vec![],
-            implementation_hint: "增加 APQ 白名单查询数量、启用 CDN 缓存、优化 Cache-Tier 策略".to_string(),
+            implementation_hint: "增加 APQ 白名单查询数量、启用 CDN 缓存、优化 Cache-Tier 策略"
+                .to_string(),
         });
     }
 
@@ -6877,7 +7187,11 @@ pub fn get_performance_tuning_suggestions() -> Vec<PerformanceTuningSuggestionGq
     let complex_queries: Vec<String> = audit_logs
         .iter()
         .filter(|l| l.complexity > 200)
-        .map(|l| l.operation_name.clone().unwrap_or_else(|| "unknown".to_string()))
+        .map(|l| {
+            l.operation_name
+                .clone()
+                .unwrap_or_else(|| "unknown".to_string())
+        })
         .collect();
 
     if !complex_queries.is_empty() {
@@ -6886,7 +7200,10 @@ pub fn get_performance_tuning_suggestions() -> Vec<PerformanceTuningSuggestionGq
             category: "query_complexity".to_string(),
             severity: "info".to_string(),
             title: "存在高复杂度查询".to_string(),
-            description: format!("发现 {} 个高复杂度查询（复杂度 > 200），建议优化", complex_queries.len()),
+            description: format!(
+                "发现 {} 个高复杂度查询（复杂度 > 200），建议优化",
+                complex_queries.len()
+            ),
             current_metric: format!("{} queries", complex_queries.len()),
             expected_improvement: "降低查询复杂度，提升吞吐量".to_string(),
             affected_queries: complex_queries,
@@ -6915,8 +7232,14 @@ pub fn get_performance_analysis() -> PerformanceAnalysisGql {
     let audit_logs = get_query_audit_logs(200);
 
     let total_suggestions = suggestions.len() as i32;
-    let critical_issues = suggestions.iter().filter(|s| s.severity == "critical").count() as i32;
-    let warning_issues = suggestions.iter().filter(|s| s.severity == "warning").count() as i32;
+    let critical_issues = suggestions
+        .iter()
+        .filter(|s| s.severity == "critical")
+        .count() as i32;
+    let warning_issues = suggestions
+        .iter()
+        .filter(|s| s.severity == "warning")
+        .count() as i32;
     let info_items = suggestions.iter().filter(|s| s.severity == "info").count() as i32;
 
     let durations: Vec<u64> = audit_logs.iter().map(|l| l.duration_ms).collect();
@@ -7182,9 +7505,7 @@ pub fn init_service_registry() {
                     f("phone", "String", true, false),
                     f("industry", "String", true, false),
                 ],
-                relations: vec![
-                    rel("contacts", "Contact", "crm", "one-to-many", "rest"),
-                ],
+                relations: vec![rel("contacts", "Contact", "crm", "one-to-many", "rest")],
                 rest_endpoint: "/api/erp/customers/:id".into(),
                 list_endpoint: "/api/erp/customers".into(),
                 batch_endpoint: Some("/api/erp/customers/batch".into()),
@@ -7245,9 +7566,13 @@ pub fn init_service_registry() {
                     f("email", "String", true, false),
                     f("phone", "String", true, false),
                 ],
-                relations: vec![
-                    rel("customer", "Customer", "erp", "many-to-one", "foreign_key"),
-                ],
+                relations: vec![rel(
+                    "customer",
+                    "Customer",
+                    "erp",
+                    "many-to-one",
+                    "foreign_key",
+                )],
                 rest_endpoint: "/api/crm/contacts/:id".into(),
                 list_endpoint: "/api/crm/contacts".into(),
                 batch_endpoint: Some("/api/crm/contacts/batch".into()),
@@ -7263,9 +7588,13 @@ pub fn init_service_registry() {
                     f("status", "String", false, false),
                     f("contact_id", "String", true, false),
                 ],
-                relations: vec![
-                    rel("contact", "Contact", "crm", "many-to-one", "foreign_key"),
-                ],
+                relations: vec![rel(
+                    "contact",
+                    "Contact",
+                    "crm",
+                    "many-to-one",
+                    "foreign_key",
+                )],
                 rest_endpoint: "/api/crm/leads/:id".into(),
                 list_endpoint: "/api/crm/leads".into(),
                 batch_endpoint: Some("/api/crm/leads/batch".into()),
@@ -7292,9 +7621,13 @@ pub fn init_service_registry() {
                     f("phone", "String", true, false),
                     f("status", "String", false, false),
                 ],
-                relations: vec![
-                    rel("department_info", "Department", "hrm", "many-to-one", "foreign_key"),
-                ],
+                relations: vec![rel(
+                    "department_info",
+                    "Department",
+                    "hrm",
+                    "many-to-one",
+                    "foreign_key",
+                )],
                 rest_endpoint: "/api/hrm/employees/:id".into(),
                 list_endpoint: "/api/hrm/employees".into(),
                 batch_endpoint: Some("/api/hrm/employees/batch".into()),
@@ -7337,9 +7670,13 @@ pub fn init_service_registry() {
                     f("voucher_date", "String", true, false),
                     f("created_by", "String", true, false),
                 ],
-                relations: vec![
-                    rel("account_subject", "AccountSubject", "finance", "many-to-one", "foreign_key"),
-                ],
+                relations: vec![rel(
+                    "account_subject",
+                    "AccountSubject",
+                    "finance",
+                    "many-to-one",
+                    "foreign_key",
+                )],
                 rest_endpoint: "/api/finance/vouchers/:id".into(),
                 list_endpoint: "/api/finance/vouchers".into(),
                 batch_endpoint: Some("/api/finance/vouchers/batch".into()),
@@ -7381,9 +7718,13 @@ pub fn init_service_registry() {
                     f("status", "String", false, false),
                     f("due_date", "String", true, false),
                 ],
-                relations: vec![
-                    rel("product", "Product", "mes", "many-to-one", "foreign_key"),
-                ],
+                relations: vec![rel(
+                    "product",
+                    "Product",
+                    "mes",
+                    "many-to-one",
+                    "foreign_key",
+                )],
                 rest_endpoint: "/api/mes/work-orders/:id".into(),
                 list_endpoint: "/api/mes/work-orders".into(),
                 batch_endpoint: Some("/api/mes/work-orders/batch".into()),
@@ -7444,25 +7785,20 @@ impl AutoGeneratedResolver {
         let url = format!("{}{}", base_url, path);
         let client = shared_http_client();
 
-        match tokio::time::timeout(
-            std::time::Duration::from_secs(5),
-            client.get(&url).send(),
-        )
-        .await
+        match tokio::time::timeout(std::time::Duration::from_secs(5), client.get(&url).send()).await
         {
-            Ok(Ok(resp)) if resp.status().is_success() => match resp
-                .json::<serde_json::Value>()
-                .await
-            {
-                Ok(val) => {
-                    if self.cache_enabled {
-                        cache_entity_result(&self.service, &self.entity_name, id, val.clone());
+            Ok(Ok(resp)) if resp.status().is_success() => {
+                match resp.json::<serde_json::Value>().await {
+                    Ok(val) => {
+                        if self.cache_enabled {
+                            cache_entity_result(&self.service, &self.entity_name, id, val.clone());
+                        }
+                        record_federation_v2_batch_resolutions();
+                        Ok(val)
                     }
-                    record_federation_v2_batch_resolutions();
-                    Ok(val)
+                    Err(e) => Err(format!("parse error: {}", e)),
                 }
-                Err(e) => Err(format!("parse error: {}", e)),
-            },
+            }
             Ok(Ok(resp)) => Err(format!("HTTP {}", resp.status())),
             Ok(Err(e)) => Err(format!("request error: {}", e)),
             Err(_) => Err("timeout".to_string()),
@@ -7470,10 +7806,7 @@ impl AutoGeneratedResolver {
     }
 
     /// 自动批量解析（去重 → 缓存分命中/未命中 → 批量调用 → 缓存 → 合并）
-    pub async fn resolve_batch(
-        &self,
-        ids: &[String],
-    ) -> Result<Vec<serde_json::Value>, String> {
+    pub async fn resolve_batch(&self, ids: &[String]) -> Result<Vec<serde_json::Value>, String> {
         // 1. 去重
         let mut seen = HashSet::new();
         let unique_ids: Vec<String> = ids
@@ -7523,9 +7856,9 @@ impl AutoGeneratedResolver {
                                 .unwrap_or(&Vec::new())
                                 .clone();
                             for (i, (idx, id)) in uncached_indices.iter().enumerate() {
-                                let val = data_list.get(i).cloned().unwrap_or_else(|| {
-                                    serde_json::json!({"id": id, "error": "not found"})
-                                });
+                                let val = data_list.get(i).cloned().unwrap_or_else(
+                                    || serde_json::json!({"id": id, "error": "not found"}),
+                                );
                                 if self.cache_enabled {
                                     cache_entity_result(
                                         &self.service,
@@ -7604,11 +7937,10 @@ impl AutoGeneratedResolver {
                 )
                 .await
                 {
-                    Ok(Ok(resp)) if resp.status().is_success() => {
-                        resp.json::<serde_json::Value>()
-                            .await
-                            .map_err(|e| e.to_string())
-                    }
+                    Ok(Ok(resp)) if resp.status().is_success() => resp
+                        .json::<serde_json::Value>()
+                        .await
+                        .map_err(|e| e.to_string()),
                     Ok(Ok(resp)) => Err(format!("HTTP {}", resp.status())),
                     Ok(Err(e)) => Err(format!("request error: {}", e)),
                     Err(_) => Err("timeout".to_string()),
@@ -7758,10 +8090,7 @@ fn cache_federation_v2_plan(query_hash: &str, plan: &FederationQueryPlan) {
 
 /// V42.0: 联邦查询计划器
 /// 解析查询 → 识别实体/服务 → 构建依赖图 → 生成执行计划
-pub fn plan_federation_query(
-    query: &str,
-    _variables: &serde_json::Value,
-) -> FederationQueryPlan {
+pub fn plan_federation_query(query: &str, _variables: &serde_json::Value) -> FederationQueryPlan {
     let query_hash = federation_v2_query_hash(query);
     let lower = query.to_lowercase();
     let mut steps: Vec<PlanStep> = Vec::new();
@@ -7861,8 +8190,7 @@ pub fn plan_federation_query(
     }
 
     let estimated_cost = steps.len() as f64 * 10.0 + parallel_groups.len() as f64 * 5.0;
-    let estimated_duration_ms =
-        (steps.len() as u64 * 50) + (parallel_groups.len() as u64 * 100);
+    let estimated_duration_ms = (steps.len() as u64 * 50) + (parallel_groups.len() as u64 * 100);
 
     FederationQueryPlan {
         query_hash,
@@ -7881,16 +8209,11 @@ async fn execute_step(
 ) -> serde_json::Value {
     let resolver = match get_resolver(&entity) {
         Some(r) => r,
-        None => {
-            return serde_json::json!({"error": format!("no resolver for {}", entity)})
-        }
+        None => return serde_json::json!({"error": format!("no resolver for {}", entity)}),
     };
     match step_type {
         PlanStepType::FetchEntity => {
-            let id = args
-                .get("id")
-                .and_then(|v| v.as_str())
-                .unwrap_or("1");
+            let id = args.get("id").and_then(|v| v.as_str()).unwrap_or("1");
             resolver
                 .resolve_single(id)
                 .await
@@ -8046,10 +8369,7 @@ fn generate_query_type(services: &[ServiceMetadata]) -> String {
 fn generate_relation_field(relation: &RelationMetadata) -> String {
     format!(
         "# relation: {} -> {} ({}, resolver: {})\n",
-        relation.field_name,
-        relation.target_entity,
-        relation.relation_type,
-        relation.resolver_type
+        relation.field_name, relation.target_entity, relation.relation_type, relation.resolver_type
     )
 }
 
@@ -8221,7 +8541,9 @@ fn simple_random_u64() -> u64 {
         .unwrap_or_default()
         .as_nanos() as u64;
     let count = COUNTER.fetch_add(1, Ordering::Relaxed);
-    timestamp.wrapping_mul(11400714819323198485).wrapping_add(count)
+    timestamp
+        .wrapping_mul(11400714819323198485)
+        .wrapping_add(count)
 }
 
 fn simple_random_u128() -> u128 {
@@ -8573,7 +8895,10 @@ impl Default for FederationV3StatsInternal {
     fn default() -> Self {
         let mut service_stats = HashMap::new();
         for svc in ["erp", "crm", "hrm", "finance", "mes"] {
-            service_stats.insert(svc.to_string(), FederationServiceStats::new(svc.to_string()));
+            service_stats.insert(
+                svc.to_string(),
+                FederationServiceStats::new(svc.to_string()),
+            );
         }
         Self {
             total_queries: 0,
@@ -8601,8 +8926,9 @@ fn federation_v3_stats_internal() -> &'static Mutex<FederationV3StatsInternal> {
     FEDERATION_V3_STATS.get_or_init(|| Mutex::new(FederationV3StatsInternal::default()))
 }
 
-static FEDERATION_V3_CIRCUIT_BREAKERS: std::sync::OnceLock<Mutex<HashMap<String, ServiceCircuitBreaker>>> =
-    std::sync::OnceLock::new();
+static FEDERATION_V3_CIRCUIT_BREAKERS: std::sync::OnceLock<
+    Mutex<HashMap<String, ServiceCircuitBreaker>>,
+> = std::sync::OnceLock::new();
 
 fn federation_v3_circuit_breakers() -> &'static Mutex<HashMap<String, ServiceCircuitBreaker>> {
     FEDERATION_V3_CIRCUIT_BREAKERS.get_or_init(|| {
@@ -8614,21 +8940,26 @@ fn federation_v3_circuit_breakers() -> &'static Mutex<HashMap<String, ServiceCir
             half_open_max_calls: 2,
         };
         for svc in ["erp", "crm", "hrm", "finance", "mes"] {
-            map.insert(svc.to_string(), ServiceCircuitBreaker::new(default_config.clone()));
+            map.insert(
+                svc.to_string(),
+                ServiceCircuitBreaker::new(default_config.clone()),
+            );
         }
         Mutex::new(map)
     })
 }
 
-static FEDERATION_V3_QUERY_CACHE: std::sync::OnceLock<Mutex<LruCacheV3<String, FederatedQueryCacheEntry>>> =
-    std::sync::OnceLock::new();
+static FEDERATION_V3_QUERY_CACHE: std::sync::OnceLock<
+    Mutex<LruCacheV3<String, FederatedQueryCacheEntry>>,
+> = std::sync::OnceLock::new();
 
 fn federation_v3_query_cache() -> &'static Mutex<LruCacheV3<String, FederatedQueryCacheEntry>> {
     FEDERATION_V3_QUERY_CACHE.get_or_init(|| Mutex::new(LruCacheV3::new(200)))
 }
 
-static FEDERATION_V3_ENTITY_CACHE: std::sync::OnceLock<Mutex<LruCacheV3<String, EntityCacheEntry>>> =
-    std::sync::OnceLock::new();
+static FEDERATION_V3_ENTITY_CACHE: std::sync::OnceLock<
+    Mutex<LruCacheV3<String, EntityCacheEntry>>,
+> = std::sync::OnceLock::new();
 
 fn federation_v3_entity_cache() -> &'static Mutex<LruCacheV3<String, EntityCacheEntry>> {
     FEDERATION_V3_ENTITY_CACHE.get_or_init(|| Mutex::new(LruCacheV3::new(500)))
@@ -8858,10 +9189,7 @@ impl FederationV3Planner {
             }
         }
 
-        let services: HashSet<String> = nodes
-            .iter()
-            .filter_map(|n| n.service.clone())
-            .collect();
+        let services: HashSet<String> = nodes.iter().filter_map(|n| n.service.clone()).collect();
 
         let (dependency_graph, execution_order) = Self::build_dependency_graph(&nodes);
         let parallel_groups = Self::detect_parallel_groups(&nodes, &dependency_graph);
@@ -8979,10 +9307,7 @@ impl FederationV3Planner {
             let mut current_group: Vec<String> = Vec::new();
             for node in nodes {
                 if remaining.contains(&node.id) {
-                    let deps_met = node
-                        .depends_on
-                        .iter()
-                        .all(|dep| !remaining.contains(dep));
+                    let deps_met = node.depends_on.iter().all(|dep| !remaining.contains(dep));
                     if deps_met {
                         current_group.push(node.id.clone());
                     }
@@ -9000,10 +9325,7 @@ impl FederationV3Planner {
         groups
     }
 
-    fn calculate_critical_path(
-        nodes: &[PlanNode],
-        _graph: &QueryDependencyGraph,
-    ) -> Vec<String> {
+    fn calculate_critical_path(nodes: &[PlanNode], _graph: &QueryDependencyGraph) -> Vec<String> {
         let mut longest: HashMap<String, u64> = HashMap::new();
         let mut prev: HashMap<String, Option<String>> = HashMap::new();
 
@@ -9243,10 +9565,7 @@ impl FederatedCacheManager {
         let key = format!("{}:{}:{}", service, entity_type, entity_id);
         let now = Utc::now();
         let mut cache = federation_v3_entity_cache().lock().unwrap();
-        let version = cache
-            .get(&key)
-            .map(|e| e.version + 1)
-            .unwrap_or(1);
+        let version = cache.get(&key).map(|e| e.version + 1).unwrap_or(1);
         cache.put(
             key,
             EntityCacheEntry {
@@ -9281,9 +9600,7 @@ impl FederatedCacheManager {
 pub struct FederationV3Executor;
 
 impl FederationV3Executor {
-    pub async fn execute_plan_v3(
-        plan: &FederationV3Plan,
-    ) -> Result<serde_json::Value, String> {
+    pub async fn execute_plan_v3(plan: &FederationV3Plan) -> Result<serde_json::Value, String> {
         let mut results: HashMap<String, serde_json::Value> = HashMap::new();
         let mut step_traces: Vec<PlanStepTrace> = Vec::new();
         let mut services_used: HashSet<String> = HashSet::new();
@@ -9316,8 +9633,10 @@ impl FederationV3Executor {
                         } else {
                             "success".to_string()
                         };
-                        let error_message =
-                            result.get("error").and_then(|v| v.as_str()).map(|s| s.to_string());
+                        let error_message = result
+                            .get("error")
+                            .and_then(|v| v.as_str())
+                            .map(|s| s.to_string());
                         (
                             node_id,
                             result,
@@ -9625,11 +9944,7 @@ fn plan_to_gql(plan: &FederationV3Plan) -> FederationV3PlanGql {
         execution_order: plan.execution_order.clone(),
         total_services: plan.total_services as i32,
         estimated_cost: plan.estimated_cost,
-        parallel_groups: plan
-            .parallel_groups
-            .iter()
-            .map(|g| g.join(","))
-            .collect(),
+        parallel_groups: plan.parallel_groups.iter().map(|g| g.join(",")).collect(),
         nodes: plan
             .nodes
             .iter()
@@ -9795,7 +10110,8 @@ impl FieldPermissionChecker {
 
         if let Some(entity_rules) = rules.get(entity_type) {
             if let Some(rule) = entity_rules.iter().find(|r| r.field_name == field_name) {
-                let role_names: Vec<String> = roles.iter().map(|r| r.as_str().to_string()).collect();
+                let role_names: Vec<String> =
+                    roles.iter().map(|r| r.as_str().to_string()).collect();
                 // 1. 检查拒绝列表
                 for denied in &rule.denied_roles {
                     if role_names.iter().any(|r| r == denied) {
@@ -9847,10 +10163,12 @@ impl FieldPermissionChecker {
     ) -> Vec<String> {
         fields
             .iter()
-            .filter(|f| matches!(
-                self.check(entity_type, f, roles),
-                PermissionResult::Allowed | PermissionResult::Conditional(_)
-            ))
+            .filter(|f| {
+                matches!(
+                    self.check(entity_type, f, roles),
+                    PermissionResult::Allowed | PermissionResult::Conditional(_)
+                )
+            })
             .cloned()
             .collect()
     }
@@ -9946,7 +10264,10 @@ pub fn init_field_permissions() {
         },
     ];
     for perm in defaults {
-        rules.entry(perm.entity_type.clone()).or_default().push(perm);
+        rules
+            .entry(perm.entity_type.clone())
+            .or_default()
+            .push(perm);
     }
 }
 
@@ -10074,7 +10395,11 @@ pub fn mask_value(value: &serde_json::Value, mask_type: &MaskType) -> serde_json
             let mut hasher = Sha256::new();
             hasher.update(s.as_bytes());
             let digest = hasher.finalize();
-            let hex: String = digest.iter().take(4).map(|b| format!("{:02x}", b)).collect();
+            let hex: String = digest
+                .iter()
+                .take(4)
+                .map(|b| format!("{:02x}", b))
+                .collect();
             serde_json::Value::String(format!("hash:{}", hex))
         }
         MaskType::Truncate => match value {
@@ -10183,7 +10508,10 @@ pub fn init_masking_rules() {
         },
     ];
     for rule in defaults {
-        rules.entry(rule.entity_type.clone()).or_default().push(rule);
+        rules
+            .entry(rule.entity_type.clone())
+            .or_default()
+            .push(rule);
     }
 }
 
@@ -10314,8 +10642,7 @@ pub fn check_and_record_field_access(
     let result = checker.check(entity_type, field_name, user_roles);
 
     let audit_enabled = config.field_audit_enabled
-        && (!config.audit_sensitive_fields_only
-            || is_sensitive_field(entity_type, field_name));
+        && (!config.audit_sensitive_fields_only || is_sensitive_field(entity_type, field_name));
 
     if audit_enabled {
         let (access_result, mask_type) = match &result {
@@ -10324,7 +10651,10 @@ pub fn check_and_record_field_access(
             PermissionResult::Conditional(_) => ("conditional".to_string(), None),
         };
         // 若允许且该字段有掩码规则，则标记为 masked
-        let (access_result, mask_type) = if matches!(result, PermissionResult::Allowed | PermissionResult::Conditional(_)) {
+        let (access_result, mask_type) = if matches!(
+            result,
+            PermissionResult::Allowed | PermissionResult::Conditional(_)
+        ) {
             let rules = masking_rules().read().unwrap();
             if let Some(entry) = rules.get(entity_type) {
                 if let Some(rule) = entry.iter().find(|r| r.field_name == field_name) {
@@ -10334,7 +10664,10 @@ pub fn check_and_record_field_access(
                         .iter()
                         .any(|er| role_names.iter().any(|r| *r == er.as_str()));
                     if !exempt {
-                        ("masked".to_string(), Some(rule.mask_type.as_str().to_string()))
+                        (
+                            "masked".to_string(),
+                            Some(rule.mask_type.as_str().to_string()),
+                        )
                     } else {
                         (access_result, mask_type)
                     }
@@ -10750,8 +11083,16 @@ impl QueryOptimizer {
         let mut suggestions = Vec::new();
 
         if metrics.nested_list_count >= 2 && metrics.depth >= 3 {
-            let confidence = if metrics.nested_list_count >= 3 { 0.85 } else { 0.65 };
-            let severity = if metrics.nested_list_count >= 3 { "critical" } else { "warning" };
+            let confidence = if metrics.nested_list_count >= 3 {
+                0.85
+            } else {
+                0.65
+            };
+            let severity = if metrics.nested_list_count >= 3 {
+                "critical"
+            } else {
+                "warning"
+            };
 
             suggestions.push(QueryOptimizationSuggestionGql {
                 id: format!("{}-nplusone-1", query_hash),
@@ -10796,9 +11137,11 @@ let results = loader.load_many(ids).await?;"#.to_string(),
                 expected_improvement: "减少 50-80% REST 请求数".to_string(),
                 confidence: 0.7,
                 affected_queries: 1,
-                implementation_hint: "使用 federation_entity_list_cached 批量解析，或按服务分组并行请求".to_string(),
+                implementation_hint:
+                    "使用 federation_entity_list_cached 批量解析，或按服务分组并行请求".to_string(),
                 code_snippet: r#"// 按服务分组批量解析
-let results = batch_resolve_entities(service, entity_type, ids).await;"#.to_string(),
+let results = batch_resolve_entities(service, entity_type, ids).await;"#
+                    .to_string(),
             });
         }
 
@@ -10868,14 +11211,16 @@ query CustomerDetail($id: ID!) {
                 expected_improvement: "降低 30-50% 服务端负载".to_string(),
                 confidence: 0.8,
                 affected_queries: 1,
-                implementation_hint: "减少嵌套层级、使用分页限制返回量、考虑将部分计算移至缓存预计算".to_string(),
+                implementation_hint:
+                    "减少嵌套层级、使用分页限制返回量、考虑将部分计算移至缓存预计算".to_string(),
                 code_snippet: r#"// 添加分页限制
 query Orders($first: Int = 20, $after: String) {
   orders(first: $first, after: $after) {
     edges { node { id status } }
     pageInfo { hasNextPage }
   }
-}"#.to_string(),
+}"#
+                .to_string(),
             });
         }
 
@@ -10936,7 +11281,11 @@ fn extract_query_operation_name(query: &str) -> String {
         let before = &trimmed[..pos];
         let words: Vec<&str> = before.split_whitespace().collect();
         for word in words.iter().rev() {
-            if *word != "query" && *word != "mutation" && *word != "subscription" && !word.starts_with('$') {
+            if *word != "query"
+                && *word != "mutation"
+                && *word != "subscription"
+                && !word.starts_with('$')
+            {
                 return word.trim_end_matches('(').to_string();
             }
         }
@@ -10948,7 +11297,8 @@ fn count_fields(query: &str) -> usize {
     let mut count = 0;
     let mut in_braces = false;
     for token in query.split_whitespace() {
-        let token = token.trim_matches(|c| c == '{' || c == '}' || c == '(' || c == ')' || c == ',');
+        let token =
+            token.trim_matches(|c| c == '{' || c == '}' || c == '(' || c == ')' || c == ',');
         if token == "{" {
             in_braces = true;
             continue;
@@ -10987,8 +11337,16 @@ fn count_nested_lists(query: &str) -> usize {
 
 fn count_cross_service_patterns(query: &str) -> usize {
     let service_keywords = [
-        "customer", "supplier", "material", "employee", "voucher",
-        "order", "contact", "department", "account", "work_order",
+        "customer",
+        "supplier",
+        "material",
+        "employee",
+        "voucher",
+        "order",
+        "contact",
+        "department",
+        "account",
+        "work_order",
     ];
     let mut found = HashSet::new();
     let lowercase = query.to_lowercase();
@@ -11003,10 +11361,7 @@ fn count_cross_service_patterns(query: &str) -> usize {
 // ---------------- V43.0: 查询健康度计算 ----------------
 
 /// V43.0: 计算查询健康度评分
-pub fn calculate_query_health_score(
-    query_hash: &str,
-    query: &str,
-) -> QueryHealthScoreGql {
+pub fn calculate_query_health_score(query_hash: &str, query: &str) -> QueryHealthScoreGql {
     let suggestions = QueryOptimizer::analyze_query(query_hash, query);
     let _query_name = extract_query_name(query);
 
@@ -11063,8 +11418,16 @@ pub fn calculate_query_health_score(
     };
 
     let overall_score: f64 = {
-        let raw = performance_score * 0.3 + cost_score * 0.2 + cache_score * 0.2 + security_score * 0.15 + maintainability_score * 0.15;
-        if raw > 100.0 { 100.0 } else { raw }
+        let raw = performance_score * 0.3
+            + cost_score * 0.2
+            + cache_score * 0.2
+            + security_score * 0.15
+            + maintainability_score * 0.15;
+        if raw > 100.0 {
+            100.0
+        } else {
+            raw
+        }
     };
 
     QueryHealthScoreGql {
@@ -11121,12 +11484,14 @@ pub fn generate_optimization_roadmap() -> OptimizationRoadmapGql {
 
 // ---------------- V43.0: 全局优化建议存储 ----------------
 
-static OPTIMIZATION_SUGGESTIONS: std::sync::OnceLock<Mutex<HashMap<String, Vec<QueryOptimizationSuggestionGql>>>> =
-    std::sync::OnceLock::new();
+static OPTIMIZATION_SUGGESTIONS: std::sync::OnceLock<
+    Mutex<HashMap<String, Vec<QueryOptimizationSuggestionGql>>>,
+> = std::sync::OnceLock::new();
 static HEALTH_SCORES: std::sync::OnceLock<Mutex<HashMap<String, QueryHealthScoreGql>>> =
     std::sync::OnceLock::new();
 
-fn optimization_suggestions_store() -> &'static Mutex<HashMap<String, Vec<QueryOptimizationSuggestionGql>>> {
+fn optimization_suggestions_store(
+) -> &'static Mutex<HashMap<String, Vec<QueryOptimizationSuggestionGql>>> {
     OPTIMIZATION_SUGGESTIONS.get_or_init(|| Mutex::new(HashMap::new()))
 }
 
@@ -11180,9 +11545,18 @@ pub fn apply_optimization_suggestion(query_hash: &str, suggestion_id: &str) -> b
 /// V43.0: 初始化示例优化数据
 fn seed_optimization_demo_data() {
     let demo_queries = vec![
-        ("demo_customer_list", r#"query CustomerList { customers { id name code status orders { id status totalAmount } contacts { id name email } } }"#),
-        ("demo_dashboard", r#"query Dashboard { businessStats { erp { total active } crm { total } hrm { total } } todos { id title status } services { service healthy } }"#),
-        ("demo_voucher_detail", r#"query VoucherDetail($id: ID!) { voucher(id: $id) { id voucherNumber totalDebit totalCredit status voucherDate accountSubject { id code name category balance } } }"#),
+        (
+            "demo_customer_list",
+            r#"query CustomerList { customers { id name code status orders { id status totalAmount } contacts { id name email } } }"#,
+        ),
+        (
+            "demo_dashboard",
+            r#"query Dashboard { businessStats { erp { total active } crm { total } hrm { total } } todos { id title status } services { service healthy } }"#,
+        ),
+        (
+            "demo_voucher_detail",
+            r#"query VoucherDetail($id: ID!) { voucher(id: $id) { id voucherNumber totalDebit totalCredit status voucherDate accountSubject { id code name category balance } } }"#,
+        ),
     ];
 
     for (_name, query) in demo_queries {
@@ -11205,16 +11579,76 @@ pub(crate) struct EntityKeyword {
 }
 
 static ENTITY_KEYWORDS: &[EntityKeyword] = &[
-    EntityKeyword { en: "customer", zh: "客户", entity: "Customer", service: "erp", default_fields: &["id", "name", "code", "status"] },
-    EntityKeyword { en: "supplier", zh: "供应商", entity: "Supplier", service: "erp", default_fields: &["id", "name", "code", "status"] },
-    EntityKeyword { en: "material", zh: "物料", entity: "Material", service: "erp", default_fields: &["id", "name", "code", "category"] },
-    EntityKeyword { en: "order", zh: "订单", entity: "Order", service: "erp", default_fields: &["id", "orderNumber", "status", "totalAmount"] },
-    EntityKeyword { en: "employee", zh: "员工", entity: "Employee", service: "hrm", default_fields: &["id", "name", "department", "position"] },
-    EntityKeyword { en: "department", zh: "部门", entity: "Department", service: "hrm", default_fields: &["id", "name", "code"] },
-    EntityKeyword { en: "voucher", zh: "凭证", entity: "Voucher", service: "finance", default_fields: &["id", "voucherNumber", "status", "totalDebit", "totalCredit"] },
-    EntityKeyword { en: "contact", zh: "联系人", entity: "Contact", service: "crm", default_fields: &["id", "name", "email", "customerId"] },
-    EntityKeyword { en: "todo", zh: "待办", entity: "Todo", service: "portal", default_fields: &["id", "title", "status", "source"] },
-    EntityKeyword { en: "service", zh: "服务", entity: "ServiceHealth", service: "portal", default_fields: &["service", "healthy", "url"] },
+    EntityKeyword {
+        en: "customer",
+        zh: "客户",
+        entity: "Customer",
+        service: "erp",
+        default_fields: &["id", "name", "code", "status"],
+    },
+    EntityKeyword {
+        en: "supplier",
+        zh: "供应商",
+        entity: "Supplier",
+        service: "erp",
+        default_fields: &["id", "name", "code", "status"],
+    },
+    EntityKeyword {
+        en: "material",
+        zh: "物料",
+        entity: "Material",
+        service: "erp",
+        default_fields: &["id", "name", "code", "category"],
+    },
+    EntityKeyword {
+        en: "order",
+        zh: "订单",
+        entity: "Order",
+        service: "erp",
+        default_fields: &["id", "orderNumber", "status", "totalAmount"],
+    },
+    EntityKeyword {
+        en: "employee",
+        zh: "员工",
+        entity: "Employee",
+        service: "hrm",
+        default_fields: &["id", "name", "department", "position"],
+    },
+    EntityKeyword {
+        en: "department",
+        zh: "部门",
+        entity: "Department",
+        service: "hrm",
+        default_fields: &["id", "name", "code"],
+    },
+    EntityKeyword {
+        en: "voucher",
+        zh: "凭证",
+        entity: "Voucher",
+        service: "finance",
+        default_fields: &["id", "voucherNumber", "status", "totalDebit", "totalCredit"],
+    },
+    EntityKeyword {
+        en: "contact",
+        zh: "联系人",
+        entity: "Contact",
+        service: "crm",
+        default_fields: &["id", "name", "email", "customerId"],
+    },
+    EntityKeyword {
+        en: "todo",
+        zh: "待办",
+        entity: "Todo",
+        service: "portal",
+        default_fields: &["id", "title", "status", "source"],
+    },
+    EntityKeyword {
+        en: "service",
+        zh: "服务",
+        entity: "ServiceHealth",
+        service: "portal",
+        default_fields: &["service", "healthy", "url"],
+    },
 ];
 
 /// V43.0: 动作关键词
@@ -11225,12 +11659,36 @@ struct ActionKeyword {
 }
 
 static ACTION_KEYWORDS: &[ActionKeyword] = &[
-    ActionKeyword { en: &["list", "get", "find", "search", "query", "show"], zh: &["列表", "查询", "搜索", "找", "显示", "所有"], action: "list" },
-    ActionKeyword { en: &["count", "total", "statistics", "stats"], zh: &["统计", "数量", "多少", "总计"], action: "count" },
-    ActionKeyword { en: &["create", "add", "new"], zh: &["创建", "新增", "添加"], action: "create" },
-    ActionKeyword { en: &["update", "modify", "edit"], zh: &["更新", "修改", "编辑"], action: "update" },
-    ActionKeyword { en: &["delete", "remove"], zh: &["删除", "移除"], action: "delete" },
-    ActionKeyword { en: &["detail", "by id", "get one"], zh: &["详情", "详细信息", "单个"], action: "detail" },
+    ActionKeyword {
+        en: &["list", "get", "find", "search", "query", "show"],
+        zh: &["列表", "查询", "搜索", "找", "显示", "所有"],
+        action: "list",
+    },
+    ActionKeyword {
+        en: &["count", "total", "statistics", "stats"],
+        zh: &["统计", "数量", "多少", "总计"],
+        action: "count",
+    },
+    ActionKeyword {
+        en: &["create", "add", "new"],
+        zh: &["创建", "新增", "添加"],
+        action: "create",
+    },
+    ActionKeyword {
+        en: &["update", "modify", "edit"],
+        zh: &["更新", "修改", "编辑"],
+        action: "update",
+    },
+    ActionKeyword {
+        en: &["delete", "remove"],
+        zh: &["删除", "移除"],
+        action: "delete",
+    },
+    ActionKeyword {
+        en: &["detail", "by id", "get one"],
+        zh: &["详情", "详细信息", "单个"],
+        action: "detail",
+    },
 ];
 
 /// V43.0: NL2GraphQL 解析器
@@ -11296,7 +11754,8 @@ impl Nl2GraphqlParser {
         let filters = Self::detect_filters(nl_lower, best_entity);
 
         let mut sorting = None;
-        if nl_lower.contains("排序") || nl_lower.contains("order by") || nl_lower.contains("sort") {
+        if nl_lower.contains("排序") || nl_lower.contains("order by") || nl_lower.contains("sort")
+        {
             sorting = Some("name".to_string());
         }
 
@@ -11306,7 +11765,8 @@ impl Nl2GraphqlParser {
         }
 
         let mut aggregation = None;
-        if nl_lower.contains("分组") || nl_lower.contains("group by") || nl_lower.contains("统计") {
+        if nl_lower.contains("分组") || nl_lower.contains("group by") || nl_lower.contains("统计")
+        {
             aggregation = Some("count".to_string());
         }
 
@@ -11332,7 +11792,13 @@ impl Nl2GraphqlParser {
         let filters_str: Vec<String> = intent
             .filters
             .iter()
-            .map(|f| format!("{}: {}", f.field, format_filter_value(&f.operator, &f.value)))
+            .map(|f| {
+                format!(
+                    "{}: {}",
+                    f.field,
+                    format_filter_value(&f.operator, &f.value)
+                )
+            })
             .collect();
 
         let _args_str = if filters_str.is_empty() {
@@ -11356,7 +11822,11 @@ impl Nl2GraphqlParser {
             "create" => format!("create{}", intent.entity),
             "update" => format!("update{}", intent.entity),
             "delete" => format!("delete{}", intent.entity),
-            _ => format!("{}{}s", to_camel_case_lower(&intent.entity), if intent.entity.ends_with('s') { "" } else { "" }),
+            _ => format!(
+                "{}{}s",
+                to_camel_case_lower(&intent.entity),
+                if intent.entity.ends_with('s') { "" } else { "" }
+            ),
         };
 
         let list_field = to_plural_camel(&intent.entity);
@@ -11400,9 +11870,7 @@ impl Nl2GraphqlParser {
     {}
   }}
 }}"#,
-                intent.entity,
-                list_field,
-                fields_str
+                intent.entity, list_field, fields_str
             )
         };
 
@@ -11447,7 +11915,10 @@ impl Nl2GraphqlParser {
     }
 
     /// 推荐字段
-    pub(crate) fn suggest_fields(entity_keyword: Option<&EntityKeyword>, nl_lower: &str) -> Vec<String> {
+    pub(crate) fn suggest_fields(
+        entity_keyword: Option<&EntityKeyword>,
+        nl_lower: &str,
+    ) -> Vec<String> {
         let mut fields: Vec<String> = entity_keyword
             .map(|e| e.default_fields.iter().map(|f| f.to_string()).collect())
             .unwrap_or_default();
@@ -11484,7 +11955,18 @@ impl Nl2GraphqlParser {
     fn detect_filters(nl_lower: &str, _entity_keyword: Option<&EntityKeyword>) -> Vec<NlFilterGql> {
         let mut filters = Vec::new();
 
-        let status_patterns = ["状态为", "状态是", "status =", "status is", "active", "活跃", "禁用", "disabled", "draft", "草稿"];
+        let status_patterns = [
+            "状态为",
+            "状态是",
+            "status =",
+            "status is",
+            "active",
+            "活跃",
+            "禁用",
+            "disabled",
+            "draft",
+            "草稿",
+        ];
         for p in status_patterns.iter() {
             if nl_lower.contains(p) {
                 let value = if nl_lower.contains("active") || nl_lower.contains("活跃") {
@@ -11686,13 +12168,21 @@ impl CacheRecommendationEngine {
         let avg_hit_rate_improvement = if recommendations.is_empty() {
             0.0
         } else {
-            recommendations.iter().map(|r| r.expected_hit_rate).sum::<f64>() / recommendations.len() as f64
+            recommendations
+                .iter()
+                .map(|r| r.expected_hit_rate)
+                .sum::<f64>()
+                / recommendations.len() as f64
         };
 
         let avg_latency_reduction = if recommendations.is_empty() {
             0.0
         } else {
-            recommendations.iter().map(|r| r.expected_latency_reduction_pct).sum::<f64>() / recommendations.len() as f64
+            recommendations
+                .iter()
+                .map(|r| r.expected_latency_reduction_pct)
+                .sum::<f64>()
+                / recommendations.len() as f64
         };
 
         CacheRecommendationReportGql {
@@ -11784,10 +12274,7 @@ impl CacheRecommendationEngine {
                 pattern.access_count
             )
         } else if suitability > 0.4 {
-            format!(
-                "中等访问频率（{} 次），建议中期缓存",
-                pattern.access_count
-            )
+            format!("中等访问频率（{} 次），建议中期缓存", pattern.access_count)
         } else {
             format!("低频访问（{} 次），短期缓存或不缓存", pattern.access_count)
         };
@@ -11816,12 +12303,54 @@ impl CacheRecommendationEngine {
         let now = Utc::now();
 
         let demo_patterns = vec![
-            ("customer_list", "CustomerList", 1500, 50, 200, CacheTier::MediumLived),
-            ("dashboard", "Dashboard", 3000, 200, 150, CacheTier::ShortLived),
-            ("voucher_detail", "VoucherDetail", 800, 100, 300, CacheTier::MediumLived),
-            ("service_health", "ServiceHealth", 5000, 1000, 50, CacheTier::ShortLived),
-            ("employee_list", "EmployeeList", 400, 20, 180, CacheTier::None),
-            ("order_detail", "OrderDetail", 1200, 300, 250, CacheTier::ShortLived),
+            (
+                "customer_list",
+                "CustomerList",
+                1500,
+                50,
+                200,
+                CacheTier::MediumLived,
+            ),
+            (
+                "dashboard",
+                "Dashboard",
+                3000,
+                200,
+                150,
+                CacheTier::ShortLived,
+            ),
+            (
+                "voucher_detail",
+                "VoucherDetail",
+                800,
+                100,
+                300,
+                CacheTier::MediumLived,
+            ),
+            (
+                "service_health",
+                "ServiceHealth",
+                5000,
+                1000,
+                50,
+                CacheTier::ShortLived,
+            ),
+            (
+                "employee_list",
+                "EmployeeList",
+                400,
+                20,
+                180,
+                CacheTier::None,
+            ),
+            (
+                "order_detail",
+                "OrderDetail",
+                1200,
+                300,
+                250,
+                CacheTier::ShortLived,
+            ),
         ];
 
         for (hash, name, access, change, exec_ms, tier) in demo_patterns {
@@ -11870,7 +12399,9 @@ pub fn generate_cache_recommendations() -> u32 {
 /// V43.0: 获取缓存推荐报告
 pub fn get_cache_recommendations() -> CacheRecommendationReportGql {
     let store = cache_recommendations_store().lock().unwrap();
-    store.clone().unwrap_or_else(|| CacheRecommendationEngine::analyze())
+    store
+        .clone()
+        .unwrap_or_else(|| CacheRecommendationEngine::analyze())
 }
 
 /// V43.0: 接受缓存推荐
@@ -11988,8 +12519,12 @@ fn check_condition(event: &serde_json::Value, condition: &FilterCondition) -> bo
     match condition.operator {
         FilterOperator::Eq => field_value == cond_value,
         FilterOperator::Ne => field_value != cond_value,
-        FilterOperator::Gt => compare_json_values(field_value, cond_value) == Some(std::cmp::Ordering::Greater),
-        FilterOperator::Lt => compare_json_values(field_value, cond_value) == Some(std::cmp::Ordering::Less),
+        FilterOperator::Gt => {
+            compare_json_values(field_value, cond_value) == Some(std::cmp::Ordering::Greater)
+        }
+        FilterOperator::Lt => {
+            compare_json_values(field_value, cond_value) == Some(std::cmp::Ordering::Less)
+        }
         FilterOperator::Gte => {
             matches!(
                 compare_json_values(field_value, cond_value),
@@ -12078,7 +12613,10 @@ fn filter_exclude_fields(event: serde_json::Value, fields: &[String]) -> serde_j
 
 /// 应用订阅过滤器
 /// 返回过滤后的事件，若被过滤掉则返回 None
-pub fn apply_filter(event: serde_json::Value, filter: &SubscriptionFilter) -> Option<serde_json::Value> {
+pub fn apply_filter(
+    event: serde_json::Value,
+    filter: &SubscriptionFilter,
+) -> Option<serde_json::Value> {
     if let Some(conditions) = &filter.conditions {
         for condition in conditions {
             if !check_condition(&event, condition) {
@@ -12165,14 +12703,20 @@ fn subscription_sessions() -> &'static Mutex<HashMap<String, SubscriptionSession
 pub fn register_session(session: SubscriptionSession) {
     let mut sessions = subscription_sessions().lock().unwrap();
     sessions.insert(session.session_id.clone(), session);
-    tracing::debug!("[subscription] 会话已注册，当前活跃会话: {}", sessions.len());
+    tracing::debug!(
+        "[subscription] 会话已注册，当前活跃会话: {}",
+        sessions.len()
+    );
 }
 
 /// 移除订阅会话
 pub fn remove_session(session_id: &str) -> Option<SubscriptionSession> {
     let mut sessions = subscription_sessions().lock().unwrap();
     let removed = sessions.remove(session_id);
-    tracing::debug!("[subscription] 会话已移除，当前活跃会话: {}", sessions.len());
+    tracing::debug!(
+        "[subscription] 会话已移除，当前活跃会话: {}",
+        sessions.len()
+    );
     removed
 }
 
@@ -12204,9 +12748,7 @@ pub fn get_active_connections() -> usize {
 pub fn add_subscription_to_session(session_id: &str, info: SubscriptionInfo) {
     let mut sessions = subscription_sessions().lock().unwrap();
     if let Some(session) = sessions.get_mut(session_id) {
-        session
-            .subscriptions
-            .insert(info.id.clone(), info);
+        session.subscriptions.insert(info.id.clone(), info);
         session.last_active = Utc::now();
     }
 }
@@ -12287,7 +12829,8 @@ pub struct BufferedEvent {
 }
 
 /// 事件环形缓冲（最多 1000 条）
-static EVENT_BUFFER: std::sync::OnceLock<Mutex<VecDeque<BufferedEvent>>> = std::sync::OnceLock::new();
+static EVENT_BUFFER: std::sync::OnceLock<Mutex<VecDeque<BufferedEvent>>> =
+    std::sync::OnceLock::new();
 
 const EVENT_BUFFER_CAPACITY: usize = 1000;
 
@@ -12885,8 +13428,13 @@ pub fn end_span(trace_id: &str, span_id: &str, error: Option<String>) {
         if let Some(span) = trace.spans.iter_mut().find(|s| s.span_id == span_id) {
             let end = Utc::now();
             span.end_time = Some(end);
-            span.duration_ms = (end - span.start_time).num_microseconds().unwrap_or(0) as f64 / 1000.0;
-            span.status = if error.is_some() { "error".to_string() } else { "ok".to_string() };
+            span.duration_ms =
+                (end - span.start_time).num_microseconds().unwrap_or(0) as f64 / 1000.0;
+            span.status = if error.is_some() {
+                "error".to_string()
+            } else {
+                "ok".to_string()
+            };
             span.error_message = error;
         }
     }
@@ -12898,8 +13446,13 @@ pub fn end_trace(trace_id: &str, error: Option<String>) {
     if let Some(trace) = traces_lock.iter_mut().find(|t| t.trace_id == trace_id) {
         let end = Utc::now();
         trace.end_time = Some(end);
-        trace.duration_ms = (end - trace.start_time).num_microseconds().unwrap_or(0) as f64 / 1000.0;
-        trace.status = if error.is_some() { "error".to_string() } else { "ok".to_string() };
+        trace.duration_ms =
+            (end - trace.start_time).num_microseconds().unwrap_or(0) as f64 / 1000.0;
+        trace.status = if error.is_some() {
+            "error".to_string()
+        } else {
+            "ok".to_string()
+        };
         trace.error_message = error;
     }
 }
@@ -13218,11 +13771,15 @@ pub fn get_metrics(window: MetricsWindow) -> GraphqlMetricsGql {
     let latency_p99 = percentile(&durations, 99.0);
 
     let error_count = window_records.iter().filter(|r| !r.success).count() as f64;
-    let error_rate = if count > 0.0 { error_count / count * 100.0 } else { 0.0 };
+    let error_rate = if count > 0.0 {
+        error_count / count * 100.0
+    } else {
+        0.0
+    };
 
     let cache_hit_count = window_records.iter().filter(|r| r.cache_hit).count() as f64;
-    let cache_total = cache_hit_count
-        + window_records.iter().filter(|r| !r.cache_hit).count() as f64;
+    let cache_total =
+        cache_hit_count + window_records.iter().filter(|r| !r.cache_hit).count() as f64;
     let cache_hit_rate = if cache_total > 0.0 {
         cache_hit_count / cache_total * 100.0
     } else {
@@ -13515,8 +14072,7 @@ struct AlertManagerState {
     last_check: Option<DateTime<Utc>>,
 }
 
-static ALERT_MANAGER: std::sync::OnceLock<Mutex<AlertManagerState>> =
-    std::sync::OnceLock::new();
+static ALERT_MANAGER: std::sync::OnceLock<Mutex<AlertManagerState>> = std::sync::OnceLock::new();
 
 const MAX_ALERTS: usize = 1000;
 
@@ -13769,8 +14325,7 @@ pub fn check_alerts() {
                     rule_mut.triggered_at = Some(now);
                 }
 
-                let triggered_duration = now
-                    - rule_mut.triggered_at.unwrap_or(now);
+                let triggered_duration = now - rule_mut.triggered_at.unwrap_or(now);
 
                 if triggered_duration.num_seconds() >= rule.duration_seconds {
                     let in_cooldown = if let Some(last) = rule_mut.last_triggered {
@@ -13912,7 +14467,9 @@ pub fn get_query_latency_distribution(window: MetricsWindow) -> QueryLatencyDist
     let window_duration = chrono::Duration::seconds(window.duration_seconds());
     let window_start = now - window_duration;
 
-    let buckets = vec![1.0, 5.0, 10.0, 25.0, 50.0, 100.0, 250.0, 500.0, 1000.0, 2500.0, 5000.0];
+    let buckets = vec![
+        1.0, 5.0, 10.0, 25.0, 50.0, 100.0, 250.0, 500.0, 1000.0, 2500.0, 5000.0,
+    ];
     let mut counts = vec![0u64; buckets.len() + 1];
 
     let mut total_count = 0u64;
@@ -13958,7 +14515,9 @@ pub fn get_top_slow_queries(limit: Option<usize>, window: MetricsWindow) -> Vec<
                 .operation_name
                 .clone()
                 .unwrap_or_else(|| "unknown".to_string());
-            let stats = by_operation.entry(key).or_insert_with(SlowQueryStats::default);
+            let stats = by_operation
+                .entry(key)
+                .or_insert_with(SlowQueryStats::default);
             stats.count += 1;
             stats.total_time_ms += record.duration_ms;
             if record.duration_ms > stats.max_duration_ms {
@@ -13983,7 +14542,11 @@ pub fn get_top_slow_queries(limit: Option<usize>, window: MetricsWindow) -> Vec<
         })
         .collect();
 
-    result.sort_by(|a, b| b.avg_duration_ms.partial_cmp(&a.avg_duration_ms).unwrap_or(std::cmp::Ordering::Equal));
+    result.sort_by(|a, b| {
+        b.avg_duration_ms
+            .partial_cmp(&a.avg_duration_ms)
+            .unwrap_or(std::cmp::Ordering::Equal)
+    });
     result.truncate(limit);
     result
 }
@@ -14267,8 +14830,8 @@ fn parse_sdl_types(sdl: &str) -> HashMap<String, Vec<String>> {
                         .to_string();
                     if !name.is_empty() {
                         current_type = Some(name);
-                        brace_depth = (line.matches('{').count() as i32)
-                            - (line.matches('}').count() as i32);
+                        brace_depth =
+                            (line.matches('{').count() as i32) - (line.matches('}').count() as i32);
                         brace_opened = brace_depth > 0;
                         // 单行定义：type X {}
                         if brace_opened && brace_depth <= 0 {
@@ -14430,10 +14993,7 @@ impl SchemaRegistry {
     }
 
     fn list_versions(&self, service: &str) -> Vec<SchemaRegistryEntryGql> {
-        self.entries
-            .get(service)
-            .cloned()
-            .unwrap_or_default()
+        self.entries.get(service).cloned().unwrap_or_default()
     }
 
     fn deprecate(&mut self, service: &str, version: &str) -> bool {
@@ -14542,10 +15102,7 @@ impl BreakingChangeDetector {
                         changes.push(SchemaChangeGql {
                             version: new_version.to_string(),
                             change_type: SchemaChangeTypeGql::FieldAdded,
-                            description: format!(
-                                "Field '{}' added to type '{}'",
-                                field, type_name
-                            ),
+                            description: format!("Field '{}' added to type '{}'", field, type_name),
                             breaking: false,
                             affected_types: vec![type_name.clone()],
                             timestamp: now.clone(),
@@ -14565,10 +15122,7 @@ impl BreakingChangeDetector {
     }
 
     /// 生成兼容性报告
-    fn diff_versions(
-        from: &SchemaRegistryEntryGql,
-        to: &SchemaRegistryEntryGql,
-    ) -> VersionDiffGql {
+    fn diff_versions(from: &SchemaRegistryEntryGql, to: &SchemaRegistryEntryGql) -> VersionDiffGql {
         let from_types = parse_sdl_types(&from.sdl);
         let to_types = parse_sdl_types(&to.sdl);
 
@@ -14612,10 +15166,11 @@ impl BreakingChangeDetector {
             }
         }
 
-        let breaking_changes: Vec<SchemaChangeGql> = Self::detect_changes(&from.sdl, &to.sdl, &to.version)
-            .into_iter()
-            .filter(|c| c.breaking)
-            .collect();
+        let breaking_changes: Vec<SchemaChangeGql> =
+            Self::detect_changes(&from.sdl, &to.sdl, &to.version)
+                .into_iter()
+                .filter(|c| c.breaking)
+                .collect();
 
         let compatible = breaking_changes.is_empty();
 
@@ -14849,8 +15404,7 @@ impl SchemaVersionManager {
         let (changes, breaking_count, additions_count) =
             if let Some(versions) = self.versions.get(service) {
                 if let Some(prev) = versions.last() {
-                    let detected =
-                        BreakingChangeDetector::detect_changes(&prev.sdl, sdl, version);
+                    let detected = BreakingChangeDetector::detect_changes(&prev.sdl, sdl, version);
                     let breaking = detected.iter().filter(|c| c.breaking).count() as u32;
                     let additions = detected
                         .iter()
@@ -14927,12 +15481,7 @@ impl SchemaVersionManager {
         self.get_version(service, version).map(|v| v.changelog)
     }
 
-    fn diff(
-        &self,
-        service: &str,
-        from: &str,
-        to: &str,
-    ) -> Option<VersionDiffGql> {
+    fn diff(&self, service: &str, from: &str, to: &str) -> Option<VersionDiffGql> {
         let from_version = self.get_version(service, from)?;
         let to_version = self.get_version(service, to)?;
 
@@ -15155,7 +15704,11 @@ pub fn get_service_governance_info() -> Vec<ServiceGovernanceInfoGql> {
             .filter(|c| c.breaking)
             .count() as u32;
 
-        let service_tests: Vec<&ContractTestGql> = runner.tests.values().filter(|t| t.service == service).collect();
+        let service_tests: Vec<&ContractTestGql> = runner
+            .tests
+            .values()
+            .filter(|t| t.service == service)
+            .collect();
         let tests_count = service_tests.len() as u32;
         let passing = service_tests
             .iter()
@@ -15187,7 +15740,9 @@ pub fn get_service_governance_info() -> Vec<ServiceGovernanceInfoGql> {
 pub fn init_schema_governance() {
     // 预置 5 个服务的初始 Schema
     let initial_schemas: Vec<(&str, &str)> = vec![
-        ("erp", r#"type Customer @key(fields: "id") {
+        (
+            "erp",
+            r#"type Customer @key(fields: "id") {
   id: ID!
   name: String!
   code: String!
@@ -15203,8 +15758,11 @@ type Query {
   customer(id: ID!): Customer
   customers: [Customer!]!
 }
-"#),
-        ("crm", r#"type Contact @key(fields: "id") {
+"#,
+        ),
+        (
+            "crm",
+            r#"type Contact @key(fields: "id") {
   id: ID!
   name: String!
   email: String
@@ -15228,8 +15786,11 @@ type Query {
   contacts: [Contact!]!
   lead(id: ID!): Lead
 }
-"#),
-        ("hrm", r#"type Employee @key(fields: "id") {
+"#,
+        ),
+        (
+            "hrm",
+            r#"type Employee @key(fields: "id") {
   id: ID!
   name: String!
   department: String
@@ -15253,8 +15814,11 @@ type Query {
   employees: [Employee!]!
   department(id: ID!): Department
 }
-"#),
-        ("finance", r#"type Voucher @key(fields: "id") {
+"#,
+        ),
+        (
+            "finance",
+            r#"type Voucher @key(fields: "id") {
   id: ID!
   voucher_number: String!
   voucher_date: String
@@ -15286,8 +15850,11 @@ type Query {
   vouchers: [Voucher!]!
   accountSubject(id: ID!): AccountSubject
 }
-"#),
-        ("mes", r#"type WorkOrder @key(fields: "id") {
+"#,
+        ),
+        (
+            "mes",
+            r#"type WorkOrder @key(fields: "id") {
   id: ID!
   order_number: String!
   product_code: String!
@@ -15320,7 +15887,8 @@ type Query {
   workOrders: [WorkOrder!]!
   material(id: ID!): Material
 }
-"#),
+"#,
+        ),
     ];
 
     // 注册到 Schema 注册表 + 版本管理器
@@ -15671,7 +16239,8 @@ impl EdgeComputeState {
     }
 }
 
-static EDGE_COMPUTE_STATE: std::sync::OnceLock<Mutex<EdgeComputeState>> = std::sync::OnceLock::new();
+static EDGE_COMPUTE_STATE: std::sync::OnceLock<Mutex<EdgeComputeState>> =
+    std::sync::OnceLock::new();
 
 fn edge_compute_state() -> &'static Mutex<EdgeComputeState> {
     EDGE_COMPUTE_STATE.get_or_init(|| Mutex::new(EdgeComputeState::new()))
@@ -15717,12 +16286,21 @@ impl EdgeComputeManager {
             candidates
                 .iter()
                 .find(|n| n.region == config.default_region)
-                .or_else(|| candidates.iter().find(|n| n.region == config.fallback_region))
+                .or_else(|| {
+                    candidates
+                        .iter()
+                        .find(|n| n.region == config.fallback_region)
+                })
                 .cloned()
         }
     }
 
-    pub fn deploy_function(name: &str, handler: &str, route_pattern: &str, cache_ttl_ms: i64) -> String {
+    pub fn deploy_function(
+        name: &str,
+        handler: &str,
+        route_pattern: &str,
+        cache_ttl_ms: i64,
+    ) -> String {
         let mut state = edge_compute_state().lock().unwrap();
         let id = format!("fn-{}", name);
         if let Some(existing) = state.functions.iter_mut().find(|f| f.name == name) {
@@ -15790,7 +16368,10 @@ impl EdgeComputeManager {
         let mut state = edge_compute_state().lock().unwrap();
         state.total_executions += 1;
         state.total_latency_ms += elapsed_ms;
-        *state.executions_by_region.entry(node_region.clone()).or_insert(0) += 1;
+        *state
+            .executions_by_region
+            .entry(node_region.clone())
+            .or_insert(0) += 1;
 
         // 模拟缓存命中（50% 概率命中）
         if elapsed_ms % 2 == 0 {
@@ -15813,10 +16394,7 @@ impl EdgeComputeManager {
     fn exec_simple_compute(input: &serde_json::Value) -> serde_json::Value {
         let a = input.get("a").and_then(|v| v.as_f64()).unwrap_or(0.0);
         let b = input.get("b").and_then(|v| v.as_f64()).unwrap_or(0.0);
-        let op = input
-            .get("op")
-            .and_then(|v| v.as_str())
-            .unwrap_or("add");
+        let op = input.get("op").and_then(|v| v.as_str()).unwrap_or("add");
         let result = match op {
             "add" => a + b,
             "sub" => a - b,
@@ -15828,14 +16406,21 @@ impl EdgeComputeManager {
     }
 
     fn exec_data_transform(input: &serde_json::Value) -> serde_json::Value {
-        let data = input.get("data").cloned().unwrap_or(serde_json::Value::Null);
+        let data = input
+            .get("data")
+            .cloned()
+            .unwrap_or(serde_json::Value::Null);
         let to_upper = input
             .get("uppercase")
             .and_then(|v| v.as_bool())
             .unwrap_or(false);
         match &data {
             serde_json::Value::String(s) => {
-                let transformed = if to_upper { s.to_uppercase() } else { s.to_lowercase() };
+                let transformed = if to_upper {
+                    s.to_uppercase()
+                } else {
+                    s.to_lowercase()
+                };
                 serde_json::json!({ "original": s, "transformed": transformed })
             }
             serde_json::Value::Array(arr) => {
@@ -15849,10 +16434,7 @@ impl EdgeComputeManager {
     }
 
     fn exec_cache_query(input: &serde_json::Value) -> serde_json::Value {
-        let key = input
-            .get("key")
-            .and_then(|v| v.as_str())
-            .unwrap_or("");
+        let key = input.get("key").and_then(|v| v.as_str()).unwrap_or("");
         let cached = CdnCacheManager::get(key);
         serde_json::json!({
             "key": key,
@@ -16107,21 +16689,16 @@ impl CdnCacheManager {
         ttl_ms: Option<i64>,
     ) {
         let now = Utc::now();
-        let ttl = ttl_ms.unwrap_or_else(|| {
-            cdn_cache_state().lock().unwrap().config.default_ttl_ms
-        });
+        let ttl = ttl_ms.unwrap_or_else(|| cdn_cache_state().lock().unwrap().config.default_ttl_ms);
         let expires = now + chrono::Duration::milliseconds(ttl);
         let value_str = serde_json::to_string(value).unwrap_or_default();
         let size_bytes = key.len() + value_str.len();
-        let etag = format!(
-            "\"{:x}\"",
-            {
-                let mut h = Sha256::new();
-                h.update(key.as_bytes());
-                h.update(value_str.as_bytes());
-                h.finalize()
-            }
-        );
+        let etag = format!("\"{:x}\"", {
+            let mut h = Sha256::new();
+            h.update(key.as_bytes());
+            h.update(value_str.as_bytes());
+            h.finalize()
+        });
         let entry = CdnCacheEntryData {
             key: key.to_string(),
             value: value_str,
@@ -16193,7 +16770,13 @@ impl CdnCacheManager {
                     "query_hash": hash,
                     "preloaded_at": Utc::now().to_rfc3339(),
                 });
-                Self::set(&key, &placeholder, "application/json", vec!["warmed".into()], None);
+                Self::set(
+                    &key,
+                    &placeholder,
+                    "application/json",
+                    vec!["warmed".into()],
+                    None,
+                );
                 warmed += 1;
             }
             let mut state = cdn_cache_state().lock().unwrap();
@@ -16282,8 +16865,7 @@ impl CdnCacheManager {
         let l1_size: usize = state.l1_memory.map.values().map(|e| e.size_bytes).sum();
         let l2_size: usize = state.l2_edge.map.values().map(|e| e.size_bytes).sum();
         let l3_size: usize = state.l3_origin.map.values().map(|e| e.size_bytes).sum();
-        let total_size_mb =
-            (l1_size + l2_size + l3_size) as f64 / (1024.0 * 1024.0);
+        let total_size_mb = (l1_size + l2_size + l3_size) as f64 / (1024.0 * 1024.0);
         let layer_stat = |entries: usize, size: usize, hits: u64| -> CdnLayerStatGql {
             let rate = if total > 0 {
                 hits as f64 / total as f64
@@ -16573,10 +17155,7 @@ impl StreamingResponseManager {
         result
     }
 
-    pub fn chunk_response(
-        query_hash: &str,
-        data: &serde_json::Value,
-    ) -> Vec<StreamChunkGql> {
+    pub fn chunk_response(query_hash: &str, data: &serde_json::Value) -> Vec<StreamChunkGql> {
         let mut state = stream_state().lock().unwrap();
         let session_id = format!("stream-{}-{}", query_hash, state.total_streams);
         let _ = session_id;
@@ -16817,11 +17396,23 @@ impl FederatedCacheV2State {
         }
     }
 
-    fn generate_cache_key(query_hash: &str, variables: &serde_json::Value, context: &serde_json::Value) -> String {
+    fn generate_cache_key(
+        query_hash: &str,
+        variables: &serde_json::Value,
+        context: &serde_json::Value,
+    ) -> String {
         let mut hasher = Sha256::new();
         hasher.update(query_hash.as_bytes());
-        hasher.update(serde_json::to_string(variables).unwrap_or_default().as_bytes());
-        hasher.update(serde_json::to_string(context).unwrap_or_default().as_bytes());
+        hasher.update(
+            serde_json::to_string(variables)
+                .unwrap_or_default()
+                .as_bytes(),
+        );
+        hasher.update(
+            serde_json::to_string(context)
+                .unwrap_or_default()
+                .as_bytes(),
+        );
         format!("{:x}", hasher.finalize())
     }
 
@@ -16844,7 +17435,8 @@ impl FederatedCacheV2State {
     }
 }
 
-static FEDERATED_CACHE_V2: std::sync::OnceLock<Mutex<FederatedCacheV2State>> = std::sync::OnceLock::new();
+static FEDERATED_CACHE_V2: std::sync::OnceLock<Mutex<FederatedCacheV2State>> =
+    std::sync::OnceLock::new();
 
 fn federated_cache_v2_state() -> &'static Mutex<FederatedCacheV2State> {
     FEDERATED_CACHE_V2.get_or_init(|| Mutex::new(FederatedCacheV2State::new()))
@@ -16854,7 +17446,11 @@ fn federated_cache_v2_state() -> &'static Mutex<FederatedCacheV2State> {
 pub struct FederatedQueryCacheV2;
 
 impl FederatedQueryCacheV2 {
-    pub fn generate_key(query_hash: &str, variables: &serde_json::Value, context: &serde_json::Value) -> String {
+    pub fn generate_key(
+        query_hash: &str,
+        variables: &serde_json::Value,
+        context: &serde_json::Value,
+    ) -> String {
         FederatedCacheV2State::generate_cache_key(query_hash, variables, context)
     }
 
@@ -16915,7 +17511,9 @@ impl FederatedQueryCacheV2 {
         let now = Utc::now();
         let ttl = ttl_seconds.unwrap_or(state.config.default_ttl_seconds);
         let expires_at = now + chrono::Duration::seconds(ttl as i64);
-        let size_bytes = serde_json::to_string(&data).map(|s| s.len() as u64).unwrap_or(0);
+        let size_bytes = serde_json::to_string(&data)
+            .map(|s| s.len() as u64)
+            .unwrap_or(0);
 
         let entry = FederatedCacheEntry {
             key: key.to_string(),
@@ -17013,7 +17611,11 @@ impl FederatedQueryCacheV2 {
     pub fn get_stats() -> CacheStatsV2Gql {
         let state = federated_cache_v2_state().lock().unwrap();
         let total = state.total_hits + state.total_misses;
-        let hit_rate = if total > 0 { state.total_hits as f64 / total as f64 } else { 0.0 };
+        let hit_rate = if total > 0 {
+            state.total_hits as f64 / total as f64
+        } else {
+            0.0
+        };
 
         let memory_size: u64 = state.memory_cache.values().map(|e| e.size_bytes).sum();
         let redis_size: u64 = state.redis_cache.values().map(|e| e.size_bytes).sum();
@@ -17041,7 +17643,9 @@ impl FederatedQueryCacheV2 {
         };
 
         CacheStatsV2Gql {
-            total_entries: (state.memory_cache.len() + state.redis_cache.len() + state.cdn_cache.len()) as i64,
+            total_entries: (state.memory_cache.len()
+                + state.redis_cache.len()
+                + state.cdn_cache.len()) as i64,
             memory_entries: state.memory_cache.len() as i64,
             redis_entries: state.redis_cache.len() as i64,
             cdn_entries: state.cdn_cache.len() as i64,
@@ -17275,7 +17879,8 @@ impl PrefetchEngineState {
     }
 }
 
-static PREFETCH_ENGINE_STATE: std::sync::OnceLock<Mutex<PrefetchEngineState>> = std::sync::OnceLock::new();
+static PREFETCH_ENGINE_STATE: std::sync::OnceLock<Mutex<PrefetchEngineState>> =
+    std::sync::OnceLock::new();
 
 fn prefetch_engine_state() -> &'static Mutex<PrefetchEngineState> {
     PREFETCH_ENGINE_STATE.get_or_init(|| Mutex::new(PrefetchEngineState::new()))
@@ -17301,7 +17906,11 @@ impl PrefetchEngine {
                 PrefetchRuleTypeGql::UserBehavior => {
                     if let Some(uid) = user_id {
                         if let Some(pattern) = state.user_patterns.get(uid) {
-                            let seq_match = pattern.query_sequence.windows(2).filter(|w| w[0] == trigger_query).count();
+                            let seq_match = pattern
+                                .query_sequence
+                                .windows(2)
+                                .filter(|w| w[0] == trigger_query)
+                                .count();
                             (seq_match as f64 / pattern.query_sequence.len().max(1) as f64).min(1.0)
                         } else {
                             0.5
@@ -17311,7 +17920,11 @@ impl PrefetchEngine {
                     }
                 }
                 PrefetchRuleTypeGql::NavigationPattern => {
-                    let total: u64 = state.navigation_patterns.values().map(|p| p.occurrence_count).sum();
+                    let total: u64 = state
+                        .navigation_patterns
+                        .values()
+                        .map(|p| p.occurrence_count)
+                        .sum();
                     if total > 0 {
                         let matched: u64 = state
                             .navigation_patterns
@@ -17324,15 +17937,13 @@ impl PrefetchEngine {
                         0.5
                     }
                 }
-                PrefetchRuleTypeGql::DataCorrelation => {
-                    state
-                        .data_correlations
-                        .iter()
-                        .filter(|c| c.source_query == trigger_query)
-                        .map(|c| c.correlation_score)
-                        .max_by(|a, b| a.partial_cmp(b).unwrap_or(std::cmp::Ordering::Equal))
-                        .unwrap_or(0.5)
-                }
+                PrefetchRuleTypeGql::DataCorrelation => state
+                    .data_correlations
+                    .iter()
+                    .filter(|c| c.source_query == trigger_query)
+                    .map(|c| c.correlation_score)
+                    .max_by(|a, b| a.partial_cmp(b).unwrap_or(std::cmp::Ordering::Equal))
+                    .unwrap_or(0.5),
             };
 
             if confidence >= rule.confidence_threshold {
@@ -17348,7 +17959,11 @@ impl PrefetchEngine {
             }
         }
 
-        predictions.sort_by(|a, b| b.confidence.partial_cmp(&a.confidence).unwrap_or(std::cmp::Ordering::Equal));
+        predictions.sort_by(|a, b| {
+            b.confidence
+                .partial_cmp(&a.confidence)
+                .unwrap_or(std::cmp::Ordering::Equal)
+        });
         predictions
     }
 
@@ -17459,7 +18074,11 @@ impl PrefetchEngine {
     pub fn get_stats() -> PrefetchStatsGql {
         let state = prefetch_engine_state().lock().unwrap();
         let total = state.hit_count + state.miss_count;
-        let hit_rate = if total > 0 { state.hit_count as f64 / total as f64 } else { 0.0 };
+        let hit_rate = if total > 0 {
+            state.hit_count as f64 / total as f64
+        } else {
+            0.0
+        };
         let avg_savings = if state.hit_count > 0 {
             state.total_savings_ms as f64 / state.hit_count as f64
         } else {
@@ -17721,7 +18340,8 @@ impl EdgeOrchestratorState {
     }
 }
 
-static EDGE_ORCHESTRATOR_STATE: std::sync::OnceLock<Mutex<EdgeOrchestratorState>> = std::sync::OnceLock::new();
+static EDGE_ORCHESTRATOR_STATE: std::sync::OnceLock<Mutex<EdgeOrchestratorState>> =
+    std::sync::OnceLock::new();
 
 fn edge_orchestrator_state() -> &'static Mutex<EdgeOrchestratorState> {
     EDGE_ORCHESTRATOR_STATE.get_or_init(|| Mutex::new(EdgeOrchestratorState::new()))
@@ -17738,7 +18358,11 @@ impl EdgeFunctionOrchestrator {
 
     pub fn get_function(id: &str) -> Option<EdgeOrchFunctionGql> {
         let state = edge_orchestrator_state().lock().unwrap();
-        state.functions.iter().find(|f| f.id == id).map(Self::fn_to_gql)
+        state
+            .functions
+            .iter()
+            .find(|f| f.id == id)
+            .map(Self::fn_to_gql)
     }
 
     pub fn register_function(input: EdgeOrchFunctionInput) -> EdgeOrchFunctionGql {
@@ -17790,9 +18414,9 @@ impl EdgeFunctionOrchestrator {
         let plan_id = format!("plan_{}", uuid_simple());
         let now = Utc::now();
 
-        let target_node_id = input.target_node_id.or_else(|| {
-            state.select_best_node().map(|n| n.id.clone())
-        });
+        let target_node_id = input
+            .target_node_id
+            .or_else(|| state.select_best_node().map(|n| n.id.clone()));
 
         let plan = EdgeOrchPlanData {
             plan_id: plan_id.clone(),
@@ -17825,12 +18449,20 @@ impl EdgeFunctionOrchestrator {
 
     pub fn get_plan(plan_id: &str) -> Option<EdgeExecutionPlanGql> {
         let state = edge_orchestrator_state().lock().unwrap();
-        state.plans.iter().find(|p| p.plan_id == plan_id).map(|p| Self::plan_to_gql(p, &state))
+        state
+            .plans
+            .iter()
+            .find(|p| p.plan_id == plan_id)
+            .map(|p| Self::plan_to_gql(p, &state))
     }
 
     pub fn list_plans() -> Vec<EdgeExecutionPlanGql> {
         let state = edge_orchestrator_state().lock().unwrap();
-        state.plans.iter().map(|p| Self::plan_to_gql(p, &state)).collect()
+        state
+            .plans
+            .iter()
+            .map(|p| Self::plan_to_gql(p, &state))
+            .collect()
     }
 
     fn fn_to_gql(f: &EdgeOrchFunctionData) -> EdgeOrchFunctionGql {
@@ -18056,7 +18688,8 @@ impl DeprecationManagerState {
     }
 }
 
-static DEPRECATION_MANAGER_STATE: std::sync::OnceLock<Mutex<DeprecationManagerState>> = std::sync::OnceLock::new();
+static DEPRECATION_MANAGER_STATE: std::sync::OnceLock<Mutex<DeprecationManagerState>> =
+    std::sync::OnceLock::new();
 
 fn deprecation_manager_state() -> &'static Mutex<DeprecationManagerState> {
     DEPRECATION_MANAGER_STATE.get_or_init(|| Mutex::new(DeprecationManagerState::new()))
@@ -18066,7 +18699,10 @@ fn deprecation_manager_state() -> &'static Mutex<DeprecationManagerState> {
 pub struct DeprecationManager;
 
 impl DeprecationManager {
-    pub fn list_deprecated_fields(type_filter: Option<String>, severity: Option<String>) -> Vec<DeprecatedFieldGql> {
+    pub fn list_deprecated_fields(
+        type_filter: Option<String>,
+        severity: Option<String>,
+    ) -> Vec<DeprecatedFieldGql> {
         let state = deprecation_manager_state().lock().unwrap();
         state
             .deprecated_fields
@@ -18101,18 +18737,22 @@ impl DeprecationManager {
 
     pub fn get_field(field_path: &str) -> Option<DeprecatedFieldGql> {
         let state = deprecation_manager_state().lock().unwrap();
-        state.deprecated_fields.iter().find(|f| f.field_path == field_path).map(|f| DeprecatedFieldGql {
-            field_path: f.field_path.clone(),
-            type_name: f.type_name.clone(),
-            field_name: f.field_name.clone(),
-            reason: f.reason.clone(),
-            deprecated_since: f.deprecated_since.to_rfc3339(),
-            planned_removal_version: f.planned_removal_version.clone(),
-            usage_count_30d: f.usage_count_30d as i64,
-            usage_count_7d: f.usage_count_7d as i64,
-            replacement: f.replacement.clone(),
-            severity: f.severity.clone(),
-        })
+        state
+            .deprecated_fields
+            .iter()
+            .find(|f| f.field_path == field_path)
+            .map(|f| DeprecatedFieldGql {
+                field_path: f.field_path.clone(),
+                type_name: f.type_name.clone(),
+                field_name: f.field_name.clone(),
+                reason: f.reason.clone(),
+                deprecated_since: f.deprecated_since.to_rfc3339(),
+                planned_removal_version: f.planned_removal_version.clone(),
+                usage_count_30d: f.usage_count_30d as i64,
+                usage_count_7d: f.usage_count_7d as i64,
+                replacement: f.replacement.clone(),
+                severity: f.severity.clone(),
+            })
     }
 
     pub fn add_deprecated_field(input: DeprecatedFieldInput) -> DeprecatedFieldGql {
@@ -18158,7 +18798,11 @@ impl DeprecationManager {
         let mut state = deprecation_manager_state().lock().unwrap();
         let auto_notify = state.policy.auto_notify_enabled;
         let threshold = state.policy.notification_threshold_usage;
-        if let Some(f) = state.deprecated_fields.iter_mut().find(|f| f.field_path == field_path) {
+        if let Some(f) = state
+            .deprecated_fields
+            .iter_mut()
+            .find(|f| f.field_path == field_path)
+        {
             f.usage_count_30d += 1;
             f.usage_count_7d += 1;
 
@@ -18174,7 +18818,11 @@ impl DeprecationManager {
     pub fn get_stats() -> DeprecationStatsGql {
         let state = deprecation_manager_state().lock().unwrap();
         let total = state.deprecated_fields.len();
-        let with_replacement = state.deprecated_fields.iter().filter(|f| f.replacement.is_some()).count();
+        let with_replacement = state
+            .deprecated_fields
+            .iter()
+            .filter(|f| f.replacement.is_some())
+            .count();
         let now = Utc::now();
         let upcoming = state
             .deprecated_fields
@@ -18188,8 +18836,16 @@ impl DeprecationManager {
         DeprecationStatsGql {
             total_deprecated_fields: total as i32,
             active_deprecations: total as i32,
-            total_usage_30d: state.deprecated_fields.iter().map(|f| f.usage_count_30d).sum::<u64>() as i64,
-            total_usage_7d: state.deprecated_fields.iter().map(|f| f.usage_count_7d).sum::<u64>() as i64,
+            total_usage_30d: state
+                .deprecated_fields
+                .iter()
+                .map(|f| f.usage_count_30d)
+                .sum::<u64>() as i64,
+            total_usage_7d: state
+                .deprecated_fields
+                .iter()
+                .map(|f| f.usage_count_7d)
+                .sum::<u64>() as i64,
             fields_with_replacement: with_replacement as i32,
             fields_without_replacement: (total - with_replacement) as i32,
             upcoming_removals: upcoming as i32,
@@ -18403,7 +19059,7 @@ const migration = {
     { type: "update_cache_keys", pattern: "v1:", replacement: "v2:" }
   ]
 };"#
-                .into(),
+            .into(),
             language: "javascript".into(),
             is_auto_generated: true,
             requires_manual_review: true,
@@ -18417,7 +19073,8 @@ const migration = {
     }
 }
 
-static MIGRATION_TOOLKIT_STATE: std::sync::OnceLock<Mutex<MigrationToolkitState>> = std::sync::OnceLock::new();
+static MIGRATION_TOOLKIT_STATE: std::sync::OnceLock<Mutex<MigrationToolkitState>> =
+    std::sync::OnceLock::new();
 
 fn migration_toolkit_state() -> &'static Mutex<MigrationToolkitState> {
     MIGRATION_TOOLKIT_STATE.get_or_init(|| Mutex::new(MigrationToolkitState::new()))
@@ -18508,7 +19165,11 @@ impl MigrationToolkit {
 
     pub fn list_scripts() -> Vec<MigrationScriptGql> {
         let state = migration_toolkit_state().lock().unwrap();
-        state.scripts.iter().map(|s| Self::script_to_gql(s)).collect()
+        state
+            .scripts
+            .iter()
+            .map(|s| Self::script_to_gql(s))
+            .collect()
     }
 
     pub fn check_compatibility(old_version: &str, new_version: &str) -> CompatibilityCheckGql {
@@ -18804,7 +19465,8 @@ impl DeploymentManagerState {
     }
 }
 
-static DEPLOYMENT_MANAGER_STATE: std::sync::OnceLock<Mutex<DeploymentManagerState>> = std::sync::OnceLock::new();
+static DEPLOYMENT_MANAGER_STATE: std::sync::OnceLock<Mutex<DeploymentManagerState>> =
+    std::sync::OnceLock::new();
 
 fn deployment_manager_state() -> &'static Mutex<DeploymentManagerState> {
     DEPLOYMENT_MANAGER_STATE.get_or_init(|| Mutex::new(DeploymentManagerState::new()))
@@ -18905,8 +19567,15 @@ impl DeploymentManager {
     pub fn promote_canary(deployment_id: &str) -> DeploymentStatusGql {
         let mut state = deployment_manager_state().lock().unwrap();
         let steps = state.config.canary.steps.clone();
-        if let Some(d) = state.deployments.iter_mut().find(|d| d.deployment_id == deployment_id) {
-            let current_idx = steps.iter().position(|s| *s == d.canary_percent).unwrap_or(0);
+        if let Some(d) = state
+            .deployments
+            .iter_mut()
+            .find(|d| d.deployment_id == deployment_id)
+        {
+            let current_idx = steps
+                .iter()
+                .position(|s| *s == d.canary_percent)
+                .unwrap_or(0);
             let next_idx = (current_idx + 1).min(steps.len().saturating_sub(1));
             d.canary_percent = steps[next_idx];
             d.traffic_percent = d.canary_percent;
@@ -18929,7 +19598,11 @@ impl DeploymentManager {
     pub fn rollback(deployment_id: &str, reason: Option<String>) -> bool {
         let mut state = deployment_manager_state().lock().unwrap();
         let rollback_enabled = state.config.rollback_enabled;
-        if let Some(d) = state.deployments.iter_mut().find(|d| d.deployment_id == deployment_id) {
+        if let Some(d) = state
+            .deployments
+            .iter_mut()
+            .find(|d| d.deployment_id == deployment_id)
+        {
             if !rollback_enabled {
                 return false;
             }
@@ -18954,7 +19627,11 @@ impl DeploymentManager {
 
     pub fn list_deployments() -> Vec<DeploymentRecordGql> {
         let state = deployment_manager_state().lock().unwrap();
-        state.deployments.iter().map(|d| Self::record_to_gql(d)).collect()
+        state
+            .deployments
+            .iter()
+            .map(|d| Self::record_to_gql(d))
+            .collect()
     }
 
     pub fn record_traffic_sample(deployment_id: &str, errors: u64, total: u64, avg_latency: f64) {
@@ -18962,7 +19639,11 @@ impl DeploymentManager {
         let auto_rollback = state.config.canary.auto_rollback;
         let max_error_rate = state.config.canary.max_error_rate;
         let max_latency_ms = state.config.canary.max_latency_ms;
-        if let Some(d) = state.deployments.iter_mut().find(|d| d.deployment_id == deployment_id) {
+        if let Some(d) = state
+            .deployments
+            .iter_mut()
+            .find(|d| d.deployment_id == deployment_id)
+        {
             d.error_count += errors;
             d.total_requests += total;
             if d.total_requests > 0 {
@@ -18977,8 +19658,7 @@ impl DeploymentManager {
 
             if auto_rollback
                 && d.status == DeploymentStatusGql::Canary
-                && (error_rate > max_error_rate
-                    || d.avg_latency_ms > max_latency_ms as f64)
+                && (error_rate > max_error_rate || d.avg_latency_ms > max_latency_ms as f64)
             {
                 d.status = DeploymentStatusGql::RolledBack;
                 d.traffic_percent = 0;
@@ -19393,11 +20073,9 @@ impl DistributedExecutionEngine {
         }
 
         let depth = if dependencies.is_empty() { 1 } else { 2 };
-        let cross_cluster = variables
-            .get("cluster")
-            .and_then(|v| v.as_str())
-            .is_some();
-        let strategy = ExecutionStrategyV4::from_query_complexity(tasks.len(), depth, cross_cluster);
+        let cross_cluster = variables.get("cluster").and_then(|v| v.as_str()).is_some();
+        let strategy =
+            ExecutionStrategyV4::from_query_complexity(tasks.len(), depth, cross_cluster);
 
         let estimated_total_time_ms = Self::estimate_total_time(&tasks, &state);
 
@@ -19895,8 +20573,7 @@ static ADAPTIVE_QUERY_OPTIMIZER_STATE: std::sync::OnceLock<Mutex<AdaptiveQueryOp
     std::sync::OnceLock::new();
 
 fn adaptive_query_optimizer_state() -> &'static Mutex<AdaptiveQueryOptimizerState> {
-    ADAPTIVE_QUERY_OPTIMIZER_STATE
-        .get_or_init(|| Mutex::new(AdaptiveQueryOptimizerState::new()))
+    ADAPTIVE_QUERY_OPTIMIZER_STATE.get_or_init(|| Mutex::new(AdaptiveQueryOptimizerState::new()))
 }
 
 /// V47.0: 自适应查询优化器
@@ -20056,22 +20733,25 @@ impl AdaptiveQueryOptimizer {
     pub fn get_query_profile(query: &str) -> Option<AdaptiveQueryProfileGql> {
         let state = adaptive_query_optimizer_state().lock().unwrap();
         let query_hash = Self::query_hash(query);
-        state.profiles.get(&query_hash).map(|p| AdaptiveQueryProfileGql {
-            query_hash: p.query_hash.clone(),
-            execution_count: p.execution_count as i64,
-            avg_latency_ms: if p.execution_count > 0 {
-                p.total_latency_ms as f64 / p.execution_count as f64
-            } else {
-                0.0
-            },
-            avg_cost: if p.execution_count > 0 {
-                p.total_cost / p.execution_count as f64
-            } else {
-                0.0
-            },
-            last_executed: p.last_executed.to_rfc3339(),
-            common_variables: p.common_variables.clone(),
-        })
+        state
+            .profiles
+            .get(&query_hash)
+            .map(|p| AdaptiveQueryProfileGql {
+                query_hash: p.query_hash.clone(),
+                execution_count: p.execution_count as i64,
+                avg_latency_ms: if p.execution_count > 0 {
+                    p.total_latency_ms as f64 / p.execution_count as f64
+                } else {
+                    0.0
+                },
+                avg_cost: if p.execution_count > 0 {
+                    p.total_cost / p.execution_count as f64
+                } else {
+                    0.0
+                },
+                last_executed: p.last_executed.to_rfc3339(),
+                common_variables: p.common_variables.clone(),
+            })
     }
 
     /// 获取优化统计
@@ -20375,7 +21055,11 @@ impl MultiClusterRouter {
             last_health_check: now,
         };
         let gql = Self::cluster_to_gql(&cluster);
-        if let Some(existing) = state.clusters.iter_mut().find(|c| c.cluster_id == cluster_id) {
+        if let Some(existing) = state
+            .clusters
+            .iter_mut()
+            .find(|c| c.cluster_id == cluster_id)
+        {
             *existing = cluster;
         } else {
             state.clusters.push(cluster);
@@ -20518,7 +21202,11 @@ impl MultiClusterRouter {
     pub fn health_check(cluster_id: &str) -> Option<MultiClusterInfoGql> {
         let mut state = multi_cluster_router_state().lock().unwrap();
         let now = Utc::now();
-        if let Some(c) = state.clusters.iter_mut().find(|c| c.cluster_id == cluster_id) {
+        if let Some(c) = state
+            .clusters
+            .iter_mut()
+            .find(|c| c.cluster_id == cluster_id)
+        {
             c.last_health_check = now;
             // 维护中的集群保持维护状态，不自动改变
             if c.status != ClusterStatusV4::Maintenance {
@@ -20569,10 +21257,7 @@ impl MultiClusterRouter {
             cross_cluster_queries: s.cross_cluster_queries as i64,
             avg_cross_cluster_latency_ms,
             schema_sync_count: s.schema_sync_count as i64,
-            last_rebalance: s
-                .last_rebalance
-                .map(|t| t.to_rfc3339())
-                .unwrap_or_default(),
+            last_rebalance: s.last_rebalance.map(|t| t.to_rfc3339()).unwrap_or_default(),
         }
     }
 
@@ -20799,10 +21484,7 @@ impl RealtimeStreamManager {
             .updates
             .entry(entity_type.to_string())
             .or_insert_with(VecDeque::new);
-        state
-            .sequences
-            .entry(entity_type.to_string())
-            .or_insert(0);
+        state.sequences.entry(entity_type.to_string()).or_insert(0);
         true
     }
 
@@ -20819,10 +21501,7 @@ impl RealtimeStreamManager {
         if !state.streams.contains_key(entity_type) {
             return None;
         }
-        let seq = state
-            .sequences
-            .entry(entity_type.to_string())
-            .or_insert(0);
+        let seq = state.sequences.entry(entity_type.to_string()).or_insert(0);
         *seq += 1;
         let update = RealtimeStreamUpdateData {
             update_id: uuid_simple(),
@@ -21120,10 +21799,9 @@ impl IncrementalUpdateEngine {
         base: serde_json::Value,
     ) -> Option<serde_json::Value> {
         let mut state = incremental_update_state().lock().unwrap();
-        let idx = state
-            .updates
-            .iter()
-            .position(|u| u.update_id == update_id && u.entity_type == entity_type && u.entity_id == entity_id)?;
+        let idx = state.updates.iter().position(|u| {
+            u.update_id == update_id && u.entity_type == entity_type && u.entity_id == entity_id
+        })?;
         if !state.updates[idx].valid {
             state.rejected_updates += 1;
             return None;
@@ -21198,7 +21876,9 @@ impl IncrementalUpdateEngine {
             .updates
             .iter()
             .filter(|u| {
-                u.entity_type == entity_type && u.entity_id == entity_id && u.version > client_version
+                u.entity_type == entity_type
+                    && u.entity_id == entity_id
+                    && u.version > client_version
             })
             .count() as i64;
         ReconcileResultGql {
@@ -21485,11 +22165,7 @@ impl StateSyncManager {
             .filter(|s| s.sync_state == SyncStateGql::Syncing)
             .count() as i64;
         let total_conflicts = state.conflicts.len() as i64;
-        let resolved = state
-            .conflicts
-            .iter()
-            .filter(|c| c.resolved)
-            .count() as i64;
+        let resolved = state.conflicts.iter().filter(|c| c.resolved).count() as i64;
         SyncStatsGql {
             total_sessions: state.sessions.len() as i64,
             active_sessions: active,
@@ -21638,7 +22314,17 @@ fn v48_sha256_hex(data: &[u8]) -> String {
 
 /// V48.0: 信任等级
 #[derive(
-    Debug, Clone, Copy, Serialize, Deserialize, async_graphql::Enum, PartialEq, Eq, PartialOrd, Ord, Hash,
+    Debug,
+    Clone,
+    Copy,
+    Serialize,
+    Deserialize,
+    async_graphql::Enum,
+    PartialEq,
+    Eq,
+    PartialOrd,
+    Ord,
+    Hash,
 )]
 pub enum TrustLevelGql {
     Untrusted,
@@ -22479,7 +23165,10 @@ impl RequestSignatureV2 {
             ));
         }
         // 7. 签名匹配
-        let message = format!("{}|{}|{}|{}", req.key_id, req.timestamp, req.nonce, req.body_hash);
+        let message = format!(
+            "{}|{}|{}|{}",
+            req.key_id, req.timestamp, req.nonce, req.body_hash
+        );
         let expected = v48_compute_signature(req.algorithm, &key.key_secret, message.as_bytes());
         if expected != req.signature {
             return Err(Self::record_rejection(
@@ -22553,7 +23242,9 @@ impl RequestSignatureV2 {
         let algo = new_algorithm.unwrap_or(old.algorithm);
         let secret = new_secret
             .map(|s| s.as_bytes().to_vec())
-            .unwrap_or_else(|| format!("{}-rotated-{}", old_key_id, Utc::now().timestamp_millis()).into_bytes());
+            .unwrap_or_else(|| {
+                format!("{}-rotated-{}", old_key_id, Utc::now().timestamp_millis()).into_bytes()
+            });
         let new_key = SignatureKey {
             key_id: format!("v48-{}", uuid_simple()),
             algorithm: algo,
@@ -22634,7 +23325,17 @@ impl RequestSignatureV2 {
 
 /// V48.0: 权限级别
 #[derive(
-    Debug, Clone, Copy, Serialize, Deserialize, async_graphql::Enum, PartialEq, Eq, PartialOrd, Ord, Hash,
+    Debug,
+    Clone,
+    Copy,
+    Serialize,
+    Deserialize,
+    async_graphql::Enum,
+    PartialEq,
+    Eq,
+    PartialOrd,
+    Ord,
+    Hash,
 )]
 pub enum PermissionLevelGql {
     None,
@@ -22825,7 +23526,11 @@ impl DataFieldPermission {
     fn to_gql(&self) -> DataFieldPermissionGql {
         DataFieldPermissionGql {
             field_name: self.field_name.clone(),
-            allowed_levels: self.allowed_levels.iter().map(|l| l.as_str().to_string()).collect(),
+            allowed_levels: self
+                .allowed_levels
+                .iter()
+                .map(|l| l.as_str().to_string())
+                .collect(),
             mask_strategy: self.mask_strategy,
         }
     }
@@ -22967,7 +23672,11 @@ impl DataLevelPermissions {
                 .iter()
                 .map(|f| DataFieldPermission {
                     field_name: f.field_name.clone(),
-                    allowed_levels: f.allowed_levels.iter().map(|s| PermissionLevelGql::from_str(s)).collect(),
+                    allowed_levels: f
+                        .allowed_levels
+                        .iter()
+                        .map(|s| PermissionLevelGql::from_str(s))
+                        .collect(),
                     mask_strategy: f.mask_strategy,
                 })
                 .collect(),
@@ -23003,7 +23712,11 @@ impl DataLevelPermissions {
             v48_push_audit(PermissionAuditLog {
                 action: "revoke".into(),
                 principal: format!("{}:{}", p.principal_type.as_str(), p.principal_id),
-                resource: format!("{}:{}", p.resource_type, p.resource_id.as_deref().unwrap_or("*")),
+                resource: format!(
+                    "{}:{}",
+                    p.resource_type,
+                    p.resource_id.as_deref().unwrap_or("*")
+                ),
                 permission_level: p.permission_level,
                 timestamp: Utc::now(),
                 result: "success".into(),
@@ -23042,7 +23755,11 @@ impl DataLevelPermissions {
             resource: format!("{}:{}", resource_type, resource_id.unwrap_or("*")),
             permission_level: required_level,
             timestamp: Utc::now(),
-            result: if allowed { "allowed".into() } else { "denied".into() },
+            result: if allowed {
+                "allowed".into()
+            } else {
+                "denied".into()
+            },
         });
         allowed
     }
@@ -23059,9 +23776,17 @@ impl DataLevelPermissions {
         state
             .permissions
             .values()
-            .filter(|p| principal_type.map(|pt| p.principal_type == pt).unwrap_or(true))
+            .filter(|p| {
+                principal_type
+                    .map(|pt| p.principal_type == pt)
+                    .unwrap_or(true)
+            })
             .filter(|p| principal_id.map(|id| p.principal_id == id).unwrap_or(true))
-            .filter(|p| resource_type.map(|rt| p.resource_type == rt).unwrap_or(true))
+            .filter(|p| {
+                resource_type
+                    .map(|rt| p.resource_type == rt)
+                    .unwrap_or(true)
+            })
             .take(limit)
             .map(|p| p.to_gql())
             .collect()
@@ -23115,7 +23840,13 @@ impl DataLevelPermissions {
                 .filter(|p| p.resource_type == resource_type)
                 .filter(|p| p.principal_type == principal_type && p.principal_id == principal_id)
                 .flat_map(|p| p.field_permissions.iter())
-                .map(|f| (f.field_name.clone(), f.allowed_levels.clone(), f.mask_strategy))
+                .map(|f| {
+                    (
+                        f.field_name.clone(),
+                        f.allowed_levels.clone(),
+                        f.mask_strategy,
+                    )
+                })
                 .collect()
         };
 
@@ -23123,7 +23854,10 @@ impl DataLevelPermissions {
         if let Some(obj) = row.as_object_mut() {
             for (field, allowed_levels, strategy) in &field_rules {
                 // 主体持有任一允许级别则不掩码
-                if principal_levels.iter().any(|pl| allowed_levels.contains(pl)) {
+                if principal_levels
+                    .iter()
+                    .any(|pl| allowed_levels.contains(pl))
+                {
                     continue;
                 }
                 if let Some(val) = obj.get_mut(field.as_str()) {
@@ -23557,7 +24291,9 @@ impl SemanticCacheEngine {
     fn extract_fields(query: &str) -> String {
         let keywords = ["query", "mutation", "subscription", "fragment", "on"];
         let mut words: Vec<String> = query
-            .split(|c: char| c.is_whitespace() || c == '{' || c == '}' || c == '(' || c == ')' || c == ',')
+            .split(|c: char| {
+                c.is_whitespace() || c == '{' || c == '}' || c == '(' || c == ')' || c == ','
+            })
             .filter(|w| !w.is_empty() && !keywords.contains(w))
             .map(|w| w.to_string())
             .collect();
@@ -23833,7 +24569,9 @@ impl SemanticCacheEngine {
     }
 
     /// 添加失效规则
-    pub fn add_invalidation_rule(rule: SemanticCacheInvalidationRuleGql) -> SemanticCacheInvalidationRuleGql {
+    pub fn add_invalidation_rule(
+        rule: SemanticCacheInvalidationRuleGql,
+    ) -> SemanticCacheInvalidationRuleGql {
         let mut state = semantic_cache_state().lock().unwrap();
         state.rules.push(rule.clone());
         rule
@@ -24082,7 +24820,10 @@ impl QueryResultCompressor {
                     i += 1;
                 }
                 while i < chars.len()
-                    && (chars[i].is_ascii_digit() || chars[i] == '.' || chars[i] == 'e' || chars[i] == 'E')
+                    && (chars[i].is_ascii_digit()
+                        || chars[i] == '.'
+                        || chars[i] == 'e'
+                        || chars[i] == 'E')
                 {
                     num_str.push(chars[i]);
                     i += 1;
@@ -24427,7 +25168,9 @@ impl OfflineFirstEngine {
         state
             .mutations
             .iter()
-            .filter(|m| m.status == MutationStatusGql::Pending || m.status == MutationStatusGql::Failed)
+            .filter(|m| {
+                m.status == MutationStatusGql::Pending || m.status == MutationStatusGql::Failed
+            })
             .map(|m| Self::mutation_to_gql(m))
             .collect()
     }
@@ -24483,11 +25226,7 @@ impl OfflineFirstEngine {
             .iter()
             .filter(|m| m.status == MutationStatusGql::Conflict)
             .count() as i64;
-        let cache_size = state
-            .prefetch_cache
-            .values()
-            .map(|v| v.len() as i64)
-            .sum();
+        let cache_size = state.prefetch_cache.values().map(|v| v.len() as i64).sum();
         let avg_sync_time = if state.sync_count > 0 {
             state.total_sync_time_ms / state.sync_count as f64
         } else {

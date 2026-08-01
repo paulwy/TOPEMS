@@ -389,7 +389,10 @@ async fn ensure_initialized() {
 
 fn generate_checksum(rp: &RecoveryPoint) -> String {
     let data_str = serde_json::to_string(&rp.data).unwrap_or_default();
-    let combined = format!("{}:{}:{}:{}", rp.entity_type, rp.entity_id, data_str, rp.created_at);
+    let combined = format!(
+        "{}:{}:{}:{}",
+        rp.entity_type, rp.entity_id, data_str, rp.created_at
+    );
     let mut hasher = simple_hash::SimpleHash::default();
     hasher.update(combined.as_bytes());
     hasher.finalize()
@@ -402,7 +405,9 @@ mod simple_hash {
 
     impl Default for SimpleHash {
         fn default() -> Self {
-            Self { state: 0xcbf29ce484222325 }
+            Self {
+                state: 0xcbf29ce484222325,
+            }
         }
     }
 
@@ -710,13 +715,28 @@ pub async fn get_recovery_status(
     let plans = store.recovery_plans.lock().await;
 
     let total_points = points.len() as i64;
-    let full_points = points.iter().filter(|p| matches!(p.snapshot_type, SnapshotType::Full)).count() as i64;
-    let inc_points = points.iter().filter(|p| matches!(p.snapshot_type, SnapshotType::Incremental)).count() as i64;
-    let diff_points = points.iter().filter(|p| matches!(p.snapshot_type, SnapshotType::Differential)).count() as i64;
+    let full_points = points
+        .iter()
+        .filter(|p| matches!(p.snapshot_type, SnapshotType::Full))
+        .count() as i64;
+    let inc_points = points
+        .iter()
+        .filter(|p| matches!(p.snapshot_type, SnapshotType::Incremental))
+        .count() as i64;
+    let diff_points = points
+        .iter()
+        .filter(|p| matches!(p.snapshot_type, SnapshotType::Differential))
+        .count() as i64;
 
     let total_plans = plans.len() as i64;
-    let active_plans = plans.iter().filter(|p| matches!(p.status, RecoveryPlanStatus::Active)).count() as i64;
-    let executing_plans = plans.iter().filter(|p| matches!(p.status, RecoveryPlanStatus::Executing)).count() as i64;
+    let active_plans = plans
+        .iter()
+        .filter(|p| matches!(p.status, RecoveryPlanStatus::Active))
+        .count() as i64;
+    let executing_plans = plans
+        .iter()
+        .filter(|p| matches!(p.status, RecoveryPlanStatus::Executing))
+        .count() as i64;
 
     let total_size: i64 = points.iter().map(|p| p.size_bytes).sum();
 
@@ -839,7 +859,11 @@ pub async fn get_plan_progress(
     };
 
     let total_steps = plan.steps.len() as i64;
-    let completed = plan.steps.iter().filter(|s| s.status == "completed").count() as i64;
+    let completed = plan
+        .steps
+        .iter()
+        .filter(|s| s.status == "completed")
+        .count() as i64;
     let progress = if total_steps > 0 {
         (completed as f64 / total_steps as f64) * 100.0
     } else {
@@ -930,7 +954,9 @@ pub async fn create_continuity_plan(
             description: cf.description,
             dependencies: cf.dependencies.unwrap_or_default(),
             max_downtime_minutes: cf.max_downtime_minutes.unwrap_or(30),
-            recovery_procedure: cf.recovery_procedure.unwrap_or_else(|| "标准恢复流程".to_string()),
+            recovery_procedure: cf
+                .recovery_procedure
+                .unwrap_or_else(|| "标准恢复流程".to_string()),
         })
         .collect();
 
@@ -940,7 +966,9 @@ pub async fn create_continuity_plan(
         scope: req.scope,
         critical_functions,
         recovery_strategy: strategy,
-        test_frequency: req.test_frequency.unwrap_or_else(|| "quarterly".to_string()),
+        test_frequency: req
+            .test_frequency
+            .unwrap_or_else(|| "quarterly".to_string()),
         last_tested: None,
         status: ContinuityPlanStatus::Draft,
     };
@@ -951,9 +979,7 @@ pub async fn create_continuity_plan(
     Json(ApiResponse::success(plan, "连续性计划已创建"))
 }
 
-pub async fn list_plans(
-    State(_state): State<AppState>,
-) -> Json<ApiResponse<Vec<ContinuityPlan>>> {
+pub async fn list_plans(State(_state): State<AppState>) -> Json<ApiResponse<Vec<ContinuityPlan>>> {
     ensure_initialized().await;
     let store = get_v56_store();
     let plans = store.continuity_plans.lock().await;
@@ -1091,10 +1117,22 @@ pub async fn assess_impact(
     }
 
     let total_functions = all_critical.len() as i64;
-    let max_downtime: i64 = all_critical.iter().map(|f| f.max_downtime_minutes).max().unwrap_or(0);
-    let min_downtime: i64 = all_critical.iter().map(|f| f.max_downtime_minutes).min().unwrap_or(0);
+    let max_downtime: i64 = all_critical
+        .iter()
+        .map(|f| f.max_downtime_minutes)
+        .max()
+        .unwrap_or(0);
+    let min_downtime: i64 = all_critical
+        .iter()
+        .map(|f| f.max_downtime_minutes)
+        .min()
+        .unwrap_or(0);
     let avg_downtime = if total_functions > 0 {
-        all_critical.iter().map(|f| f.max_downtime_minutes).sum::<i64>() as f64 / total_functions as f64
+        all_critical
+            .iter()
+            .map(|f| f.max_downtime_minutes)
+            .sum::<i64>() as f64
+            / total_functions as f64
     } else {
         0.0
     };
@@ -1137,7 +1175,12 @@ pub async fn get_continuity_score(
     let total_plans = plans.len() as f64;
     let tested_plans = plans
         .iter()
-        .filter(|p| matches!(p.status, ContinuityPlanStatus::Tested | ContinuityPlanStatus::Active))
+        .filter(|p| {
+            matches!(
+                p.status,
+                ContinuityPlanStatus::Tested | ContinuityPlanStatus::Active
+            )
+        })
         .count() as f64;
 
     let coverage_score = if total_plans > 0.0 {
@@ -1347,7 +1390,9 @@ pub async fn complete_failover(
     let store = get_v56_store();
     let mut records = store.failover_records.lock().await;
 
-    let record = records.iter_mut().find(|r| r.id == id || r.id == req.failover_id);
+    let record = records
+        .iter_mut()
+        .find(|r| r.id == id || r.id == req.failover_id);
     let Some(record) = record else {
         return Json(ApiResponse::error(404, "未找到故障转移记录"));
     };
@@ -1356,7 +1401,10 @@ pub async fn complete_failover(
     record.completed_at = Some(chrono::Utc::now().to_rfc3339());
 
     let mut regions = store.region_configs.lock().await;
-    if let Some(from) = regions.iter_mut().find(|r| r.region_id == record.from_region) {
+    if let Some(from) = regions
+        .iter_mut()
+        .find(|r| r.region_id == record.from_region)
+    {
         from.status = RegionStatus::Offline;
         from.primary = false;
     }
@@ -1395,7 +1443,9 @@ pub async fn switch_regions(
     let store = get_v56_store();
     let mut regions = store.region_configs.lock().await;
 
-    let target = regions.iter_mut().find(|r| r.region_id == req.primary_region);
+    let target = regions
+        .iter_mut()
+        .find(|r| r.region_id == req.primary_region);
     let Some(target) = target else {
         return Json(ApiResponse::error(404, "未找到目标地域"));
     };

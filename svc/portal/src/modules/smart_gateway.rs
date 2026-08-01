@@ -412,7 +412,11 @@ impl ProtocolRouter {
         self.inner.lock().unwrap().register_handler(handler);
     }
 
-    pub fn route_request(&self, protocol: SupportedProtocol, request: &str) -> Result<String, String> {
+    pub fn route_request(
+        &self,
+        protocol: SupportedProtocol,
+        request: &str,
+    ) -> Result<String, String> {
         self.inner.lock().unwrap().route_request(protocol, request)
     }
 
@@ -515,18 +519,10 @@ impl SmartRouterInner {
                     route.target_service.clone()
                 }
             }
-            RoutingStrategy::LeastLatency => {
-                route.target_service.clone()
-            }
-            RoutingStrategy::Weighted => {
-                route.target_service.clone()
-            }
-            RoutingStrategy::Geographic => {
-                route.target_service.clone()
-            }
-            RoutingStrategy::ContentBased => {
-                route.target_service.clone()
-            }
+            RoutingStrategy::LeastLatency => route.target_service.clone(),
+            RoutingStrategy::Weighted => route.target_service.clone(),
+            RoutingStrategy::Geographic => route.target_service.clone(),
+            RoutingStrategy::ContentBased => route.target_service.clone(),
         };
 
         let _ = headers;
@@ -615,7 +611,10 @@ impl SmartRouter {
         protocol: Option<SupportedProtocol>,
         headers: &HashMap<String, String>,
     ) -> RouteMatchResult {
-        self.inner.lock().unwrap().match_route(path, protocol, headers)
+        self.inner
+            .lock()
+            .unwrap()
+            .match_route(path, protocol, headers)
     }
 
     pub fn get_routing_table(&self) -> Vec<SmartRoute> {
@@ -731,7 +730,11 @@ impl AdaptiveDegradationControllerInner {
             metrics.error_rate = 0.0;
             metrics.latency_ms = 0;
         }
-        if self.health_metrics.values().all(|m| m.error_rate < self.policy.triggers.error_rate_threshold) {
+        if self
+            .health_metrics
+            .values()
+            .all(|m| m.error_rate < self.policy.triggers.error_rate_threshold)
+        {
             self.set_degradation_level(DegradationLevel::Normal);
         }
     }
@@ -979,7 +982,10 @@ pub async fn get_gateway_status_handler() -> Json<ApiResult<GatewayStatus>> {
     let routes = get_routing_table();
     let active_routes = routes.iter().filter(|r| r.enabled).count();
     let degradation = get_degradation_status();
-    let health = get_all_health_metrics().first().cloned().unwrap_or_default();
+    let health = get_all_health_metrics()
+        .first()
+        .cloned()
+        .unwrap_or_default();
 
     Json(ApiResult::ok(GatewayStatus {
         version: "v51.0".to_string(),
@@ -1013,7 +1019,10 @@ pub async fn list_routes_handler(
 pub async fn create_route_handler(
     Json(req): Json<CreateRouteRequest>,
 ) -> Result<Json<ApiResult<SmartRoute>>, (StatusCode, Json<Value>)> {
-    let route_id = format!("route_{}", uuid::Uuid::new_v4().to_string().replace('-', ""));
+    let route_id = format!(
+        "route_{}",
+        uuid::Uuid::new_v4().to_string().replace('-', "")
+    );
     let route = SmartRoute {
         id: route_id,
         name: req.name,
@@ -1022,7 +1031,9 @@ pub async fn create_route_handler(
         target_service: req.target_service,
         priority: req.priority.unwrap_or(100),
         conditions: req.conditions.unwrap_or_default(),
-        load_balancing_strategy: req.load_balancing_strategy.unwrap_or(RoutingStrategy::RoundRobin),
+        load_balancing_strategy: req
+            .load_balancing_strategy
+            .unwrap_or(RoutingStrategy::RoundRobin),
         circuit_breaker_config: req.circuit_breaker_config.unwrap_or_default(),
         enabled: true,
     };

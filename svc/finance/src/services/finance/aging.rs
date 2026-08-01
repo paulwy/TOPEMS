@@ -5,24 +5,15 @@ use super::FinanceService;
 use topems_shared::error::TopemsError;
 
 impl FinanceService {
-    pub async fn calculate_receivable_aging(
-        &self,
-        tenant_id: Uuid,
-    ) -> Result<Value, TopemsError> {
+    pub async fn calculate_receivable_aging(&self, tenant_id: Uuid) -> Result<Value, TopemsError> {
         self.get_receivable_aging(tenant_id).await
     }
 
-    pub async fn calculate_payable_aging(
-        &self,
-        tenant_id: Uuid,
-    ) -> Result<Value, TopemsError> {
+    pub async fn calculate_payable_aging(&self, tenant_id: Uuid) -> Result<Value, TopemsError> {
         self.get_payable_aging(tenant_id).await
     }
 
-    pub async fn get_aging_summary(
-        &self,
-        tenant_id: Uuid,
-    ) -> Result<Value, TopemsError> {
+    pub async fn get_aging_summary(&self, tenant_id: Uuid) -> Result<Value, TopemsError> {
         let receivable_aging = self.get_receivable_aging(tenant_id).await?;
         let payable_aging = self.get_payable_aging(tenant_id).await?;
 
@@ -136,10 +127,7 @@ impl FinanceService {
                 "DATE_TRUNC('month', CURRENT_DATE - INTERVAL '{} month') + INTERVAL '1 month' - INTERVAL '1 day'",
                 month_offset
             );
-            let month_label = format!(
-                "{}月前",
-                month_offset
-            );
+            let month_label = format!("{}月前", month_offset);
 
             let sql = format!(
                 "SELECT

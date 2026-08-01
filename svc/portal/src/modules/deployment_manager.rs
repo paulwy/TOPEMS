@@ -397,11 +397,7 @@ pub struct Deployment {
 }
 
 impl Deployment {
-    pub fn new(
-        version: String,
-        environment: Environment,
-        strategy: DeploymentStrategy,
-    ) -> Self {
+    pub fn new(version: String, environment: Environment, strategy: DeploymentStrategy) -> Self {
         Self {
             id: uuid::Uuid::new_v4().to_string(),
             version,
@@ -626,18 +622,16 @@ struct DeploymentStore {
 }
 
 fn get_deployment_store() -> &'static DeploymentStore {
-    static STORE: LazyLock<DeploymentStore> = LazyLock::new(|| {
-        DeploymentStore {
-            deployments: Mutex::new(Vec::new()),
-            deployment_steps: Mutex::new(Vec::new()),
-            deployment_rollouts: Mutex::new(HashMap::new()),
-            gateway_configs: Mutex::new(Vec::new()),
-            config_diffs: Mutex::new(Vec::new()),
-            config_environments: Mutex::new(Vec::new()),
-            rollback_policies: Mutex::new(Vec::new()),
-            rollback_actions: Mutex::new(Vec::new()),
-            rollback_counters: Mutex::new(HashMap::new()),
-        }
+    static STORE: LazyLock<DeploymentStore> = LazyLock::new(|| DeploymentStore {
+        deployments: Mutex::new(Vec::new()),
+        deployment_steps: Mutex::new(Vec::new()),
+        deployment_rollouts: Mutex::new(HashMap::new()),
+        gateway_configs: Mutex::new(Vec::new()),
+        config_diffs: Mutex::new(Vec::new()),
+        config_environments: Mutex::new(Vec::new()),
+        rollback_policies: Mutex::new(Vec::new()),
+        rollback_actions: Mutex::new(Vec::new()),
+        rollback_counters: Mutex::new(HashMap::new()),
     });
     &STORE
 }
@@ -684,9 +678,7 @@ impl DeploymentManager {
         let filtered: Vec<Deployment> = deployments
             .iter()
             .filter(|d| {
-                environment
-                    .as_ref()
-                    .map_or(true, |e| d.environment == *e)
+                environment.as_ref().map_or(true, |e| d.environment == *e)
                     && status.as_ref().map_or(true, |s| d.status == *s)
             })
             .rev()
@@ -874,11 +866,7 @@ impl DeploymentManager {
 
         deployments
             .iter()
-            .filter(|d| {
-                environment
-                    .as_ref()
-                    .map_or(true, |e| d.environment == *e)
-            })
+            .filter(|d| environment.as_ref().map_or(true, |e| d.environment == *e))
             .rev()
             .take(limit)
             .cloned()
@@ -925,9 +913,7 @@ impl ConfigurationManager {
         let filtered: Vec<GatewayConfig> = configs
             .iter()
             .filter(|c| {
-                environment
-                    .as_ref()
-                    .map_or(true, |e| c.environment == *e)
+                environment.as_ref().map_or(true, |e| c.environment == *e)
                     && is_active.map_or(true, |a| c.is_active == a)
             })
             .cloned()
@@ -1014,10 +1000,7 @@ impl ConfigurationManager {
         }
     }
 
-    pub async fn get_config_diff(
-        config_id: &str,
-        limit: Option<u32>,
-    ) -> Vec<ConfigDiff> {
+    pub async fn get_config_diff(config_id: &str, limit: Option<u32>) -> Vec<ConfigDiff> {
         let store = get_deployment_store();
         let diffs = store.config_diffs.lock().await;
         let limit = limit.unwrap_or(20).min(200) as usize;
@@ -1041,18 +1024,17 @@ impl ConfigurationManager {
 
         configs
             .iter()
-            .filter(|c| {
-                environment
-                    .as_ref()
-                    .map_or(true, |e| c.environment == *e)
-            })
+            .filter(|c| environment.as_ref().map_or(true, |e| c.environment == *e))
             .rev()
             .take(limit)
             .cloned()
             .collect()
     }
 
-    pub async fn rollback_config(config_id: &str, diff_id: Option<&str>) -> Result<GatewayConfig, String> {
+    pub async fn rollback_config(
+        config_id: &str,
+        diff_id: Option<&str>,
+    ) -> Result<GatewayConfig, String> {
         let store = get_deployment_store();
 
         let target_config = {
@@ -1066,10 +1048,7 @@ impl ConfigurationManager {
 
         let diff = if let Some(_did) = diff_id {
             let diffs = store.config_diffs.lock().await;
-            diffs
-                .iter()
-                .find(|d| d.config_id == config_id)
-                .cloned()
+            diffs.iter().find(|d| d.config_id == config_id).cloned()
         } else {
             let diffs = store.config_diffs.lock().await;
             diffs
@@ -1175,9 +1154,7 @@ impl RollbackManager {
         policies
             .iter()
             .filter(|p| {
-                trigger
-                    .as_ref()
-                    .map_or(true, |t| p.trigger == *t)
+                trigger.as_ref().map_or(true, |t| p.trigger == *t)
                     && enabled_only.map_or(true, |e| p.enabled == e)
             })
             .cloned()
@@ -1206,16 +1183,10 @@ impl RollbackManager {
 
         {
             let counters = store.rollback_counters.lock().await;
-            let counter = counters
-                .get(policy_id)
-                .cloned()
-                .unwrap_or((0, None, 0));
+            let counter = counters.get(policy_id).cloned().unwrap_or((0, None, 0));
 
             if counter.0 >= policy.max_rollbacks {
-                return Err(format!(
-                    "已达到最大回滚次数 ({})",
-                    policy.max_rollbacks
-                ));
+                return Err(format!("已达到最大回滚次数 ({})", policy.max_rollbacks));
             }
         }
 
@@ -1264,9 +1235,7 @@ impl RollbackManager {
             .collect()
     }
 
-    pub async fn test_rollback(
-        policy_id: &str,
-    ) -> Result<RollbackAction, String> {
+    pub async fn test_rollback(policy_id: &str) -> Result<RollbackAction, String> {
         let store = get_deployment_store();
 
         let policy = {
@@ -1508,10 +1477,12 @@ pub async fn list_deployments_handler(
         .environment
         .as_deref()
         .and_then(Environment::from_str);
-    let status = params.status.as_deref().and_then(DeploymentStatus::from_str);
+    let status = params
+        .status
+        .as_deref()
+        .and_then(DeploymentStatus::from_str);
 
-    let list =
-        DeploymentManager::list_deployments(environment, status, params.limit).await;
+    let list = DeploymentManager::list_deployments(environment, status, params.limit).await;
     Json(ApiResponse::success(list, "部署列表"))
 }
 
@@ -1574,8 +1545,7 @@ pub async fn get_deployment_history_handler(
         .environment
         .as_deref()
         .and_then(Environment::from_str);
-    let history =
-        DeploymentManager::get_deployment_history(environment, params.limit).await;
+    let history = DeploymentManager::get_deployment_history(environment, params.limit).await;
     Json(ApiResponse::success(history, "部署历史"))
 }
 
@@ -1591,18 +1561,9 @@ pub async fn create_config_handler(
         .and_then(Environment::from_str)
         .unwrap_or(Environment::Development);
 
-    let settings = req
-        .settings
-        .unwrap_or_else(|| serde_json::json!({}));
+    let settings = req.settings.unwrap_or_else(|| serde_json::json!({}));
 
-    match ConfigurationManager::create_config(
-        req.name,
-        req.version,
-        environment,
-        settings,
-    )
-    .await
-    {
+    match ConfigurationManager::create_config(req.name, req.version, environment, settings).await {
         Ok(config) => Json(ApiResponse::success(config, "配置创建成功")),
         Err(e) => Json(ApiResponse::error(500, &e)),
     }
@@ -1627,8 +1588,7 @@ pub async fn list_configs_handler(
         .as_deref()
         .and_then(Environment::from_str);
 
-    let list =
-        ConfigurationManager::list_configs(environment, params.is_active).await;
+    let list = ConfigurationManager::list_configs(environment, params.is_active).await;
     Json(ApiResponse::success(list, "配置列表"))
 }
 
@@ -1671,8 +1631,7 @@ pub async fn get_config_history_handler(
         .as_deref()
         .and_then(Environment::from_str);
 
-    let history =
-        ConfigurationManager::get_config_history(environment, params.limit).await;
+    let history = ConfigurationManager::get_config_history(environment, params.limit).await;
     Json(ApiResponse::success(history, "配置历史"))
 }
 
@@ -1740,8 +1699,7 @@ pub async fn get_rollback_policies_handler(
         .as_deref()
         .and_then(RollbackTrigger::from_str);
 
-    let list =
-        RollbackManager::get_rollback_policies(trigger, params.enabled_only).await;
+    let list = RollbackManager::get_rollback_policies(trigger, params.enabled_only).await;
     Json(ApiResponse::success(list, "回滚策略列表"))
 }
 

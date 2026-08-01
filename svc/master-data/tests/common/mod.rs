@@ -180,10 +180,7 @@ async fn login_admin(client: &Client) -> Result<String, String> {
 ///
 /// 返回 `true` 表示服务已启动且健康检查通过。
 pub async fn service_available() -> bool {
-    let client = match ClientBuilder::new()
-        .timeout(Duration::from_secs(2))
-        .build()
-    {
+    let client = match ClientBuilder::new().timeout(Duration::from_secs(2)).build() {
         Ok(c) => c,
         Err(_) => return false,
     };

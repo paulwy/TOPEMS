@@ -15,8 +15,8 @@
 #![allow(dead_code)]
 
 mod middleware;
-mod shared;
 mod openapi;
+mod shared;
 
 pub mod models;
 pub mod modules;

@@ -187,22 +187,10 @@ impl CashFlowForecaster {
     ) -> CashFlowForecast {
         let now = Utc::now();
         let (start_date, end_date) = match period_type {
-            ForecastPeriod::Daily => (
-                now,
-                now + chrono::Duration::days(30),
-            ),
-            ForecastPeriod::Weekly => (
-                now,
-                now + chrono::Duration::weeks(8),
-            ),
-            ForecastPeriod::Monthly => (
-                now,
-                now + chrono::Duration::days(90),
-            ),
-            ForecastPeriod::Quarterly => (
-                now,
-                now + chrono::Duration::days(365),
-            ),
+            ForecastPeriod::Daily => (now, now + chrono::Duration::days(30)),
+            ForecastPeriod::Weekly => (now, now + chrono::Duration::weeks(8)),
+            ForecastPeriod::Monthly => (now, now + chrono::Duration::days(90)),
+            ForecastPeriod::Quarterly => (now, now + chrono::Duration::days(365)),
         };
 
         let (inflow, outflow, confidence) = match scenario {
@@ -238,9 +226,11 @@ impl CashFlowForecaster {
 
     /// 生成多场景预测（乐观/中性/悲观）
     pub fn generate_scenarios(period: &str, period_type: ForecastPeriod) -> ScenarioForecasts {
-        let optimistic = Self::forecast_cash_flow(period, period_type.clone(), ForecastScenario::Optimistic);
+        let optimistic =
+            Self::forecast_cash_flow(period, period_type.clone(), ForecastScenario::Optimistic);
         let base = Self::forecast_cash_flow(period, period_type.clone(), ForecastScenario::Base);
-        let pessimistic = Self::forecast_cash_flow(period, period_type.clone(), ForecastScenario::Pessimistic);
+        let pessimistic =
+            Self::forecast_cash_flow(period, period_type.clone(), ForecastScenario::Pessimistic);
 
         let items = Self::build_forecast_items(&base);
 
@@ -268,7 +258,11 @@ impl CashFlowForecaster {
                 predicted_outflow: daily_outflow,
                 net,
                 cumulative_balance: cumulative,
-                confidence_interval: Self::calculate_confidence(daily_inflow, daily_outflow, base.confidence_level),
+                confidence_interval: Self::calculate_confidence(
+                    daily_inflow,
+                    daily_outflow,
+                    base.confidence_level,
+                ),
             });
         }
         items
@@ -300,8 +294,12 @@ impl CashFlowForecaster {
             CashFlowTrend::Stable
         };
         let description = match trend {
-            CashFlowTrend::Improving => format!("现金流状况持续改善，环比提升 {}%", change_percentage),
-            CashFlowTrend::Deteriorating => format!("现金流状况出现恶化，环比下降 {}%", change_percentage),
+            CashFlowTrend::Improving => {
+                format!("现金流状况持续改善，环比提升 {}%", change_percentage)
+            }
+            CashFlowTrend::Deteriorating => {
+                format!("现金流状况出现恶化，环比下降 {}%", change_percentage)
+            }
             CashFlowTrend::Stable => format!("现金流状况保持稳定，环比变化 {}%", change_percentage),
         };
         CashFlowTrendAnalysis {
@@ -622,12 +620,7 @@ impl BudgetVarianceAnalyzer {
         };
         format!(
             "{}差异{}：{}实际较预算{}，差异金额{}，差异率{}%",
-            account_name,
-            type_str,
-            account_name,
-            direction,
-            variance,
-            variance_percentage
+            account_name, type_str, account_name, direction, variance, variance_percentage
         )
     }
 
@@ -933,7 +926,10 @@ impl SmartAlertSystem {
     /// 获取告警摘要
     pub fn get_alert_summary() -> AlertSummary {
         let alerts = Self::evaluate_alerts();
-        let total_active = alerts.iter().filter(|a| a.status == AlertStatus::Active).count() as i64;
+        let total_active = alerts
+            .iter()
+            .filter(|a| a.status == AlertStatus::Active)
+            .count() as i64;
 
         let mut by_severity: HashMap<String, i64> = HashMap::new();
         let mut by_metric: HashMap<String, i64> = HashMap::new();

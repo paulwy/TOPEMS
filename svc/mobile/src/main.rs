@@ -7,10 +7,7 @@ mod modules;
 mod services;
 mod shared;
 
-use axum::{
-    extract::State,
-    Json, Router,
-};
+use axum::{extract::State, Json, Router};
 use dotenv::dotenv;
 use serde_json::json;
 use sqlx::{postgres::PgPoolOptions, PgPool};
@@ -19,18 +16,15 @@ use std::sync::Arc;
 use utoipa::OpenApi;
 use uuid::Uuid;
 
-use topems_shared::{
-    auth_middleware, build_health_response, create_api_info_router, create_cors_layer,
-    create_workflow_client,
-    init_telemetry, rate_limit_middleware, register_routes_with_legacy_alias, rls_middleware,
-    telemetry_middleware, ApiResponse, AuthState,
-    RateLimitConfig, RateLimitMiddleware, ServiceHealth,
-    WorkflowServiceClient,
-};
 use topems_shared::service_client::{
     api::hrm_api::HrmApi, api::mes_api::MesApi, api::notification_api::NotificationApi,
-    api::qms_api::QmsApi, create_wms_client,
-    TypedServiceClient, WmsServiceClient,
+    api::qms_api::QmsApi, create_wms_client, TypedServiceClient, WmsServiceClient,
+};
+use topems_shared::{
+    auth_middleware, build_health_response, create_api_info_router, create_cors_layer,
+    create_workflow_client, init_telemetry, rate_limit_middleware,
+    register_routes_with_legacy_alias, rls_middleware, telemetry_middleware, ApiResponse,
+    AuthState, RateLimitConfig, RateLimitMiddleware, ServiceHealth, WorkflowServiceClient,
 };
 
 use db::repository::*;
@@ -49,13 +43,13 @@ use modules::inventory::{
 };
 use modules::media::{delete_media, get_audio, get_photos, get_video, upload_media};
 use modules::offline::{get_offline_status, sync_offline_data};
-use modules::offline_sync::{
-    get_offline_status as get_offline_sync_status, get_sync_history, get_sync_policy,
-    retry_failed_sync, sync_data, update_sync_policy,
-};
 use modules::offline_records::{
     clear_synced as clear_offline_synced, get_pending_records as get_offline_pending_records,
     mark_synced as mark_offline_record_synced, sync_records as sync_offline_records,
+};
+use modules::offline_sync::{
+    get_offline_status as get_offline_sync_status, get_sync_history, get_sync_policy,
+    retry_failed_sync, sync_data, update_sync_policy,
 };
 use modules::patrol::{
     create_patrol_record, delete_patrol_record, get_all_patrol_records, get_patrol_record,
@@ -312,7 +306,8 @@ async fn main() -> anyhow::Result<()> {
         }
         Err(e) => {
             tracing::warn!("⚠️ WMS服务客户端初始化失败（不阻塞启动）: {}", e);
-            create_wms_client().unwrap_or_else(|_| WmsServiceClient::new("http://localhost:8041").unwrap())
+            create_wms_client()
+                .unwrap_or_else(|_| WmsServiceClient::new("http://localhost:8041").unwrap())
         }
     };
 
@@ -362,9 +357,8 @@ async fn main() -> anyhow::Result<()> {
         }
         Err(e) => {
             tracing::warn!("⚠️ Workflow服务客户端初始化失败（不阻塞启动）: {}", e);
-            create_workflow_client().unwrap_or_else(|_| {
-                WorkflowServiceClient::new("http://localhost:8000").unwrap()
-            })
+            create_workflow_client()
+                .unwrap_or_else(|_| WorkflowServiceClient::new("http://localhost:8000").unwrap())
         }
     };
 
@@ -517,7 +511,10 @@ async fn main() -> anyhow::Result<()> {
             axum::routing::post(retry_failed_sync),
         )
         // 离线操作记录 CRUD（从 unified-core 迁移，方案 C）
-        .route("/offline/records", axum::routing::post(sync_offline_records))
+        .route(
+            "/offline/records",
+            axum::routing::post(sync_offline_records),
+        )
         .route(
             "/offline/records/pending",
             axum::routing::get(get_offline_pending_records),

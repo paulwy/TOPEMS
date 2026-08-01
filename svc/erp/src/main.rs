@@ -19,10 +19,10 @@ use topems_shared::service_bootstrap::{
     bootstrap_service, build_application, create_health_state, create_standard_health_routes, run,
     ServiceConfig,
 };
-use topems_shared::{
-    FieldEncryptionService, KeyManager, NotificationServiceClient,
+use topems_shared::service_client::{
+    api::finance_api::FinanceApi, api::hrm_api::HrmApi, TypedServiceClient,
 };
-use topems_shared::service_client::{api::finance_api::FinanceApi, api::hrm_api::HrmApi, TypedServiceClient};
+use topems_shared::{FieldEncryptionService, KeyManager, NotificationServiceClient};
 
 lazy_static::lazy_static! {
     pub static ref ASSET_COUNT: IntGauge = register_int_gauge!("topems_erp_asset_count", "Total number of assets in ERP system").expect("Failed to register asset_count gauge - check for duplicate metric registrations");
@@ -84,10 +84,12 @@ async fn main() -> Result<()> {
         .unwrap_or_else(|e| {
             tracing::warn!("HRM服务客户端初始化失败: {}, 将使用mock模式", e);
             let default_url = "http://localhost:8020".to_string();
-            Arc::new(TypedServiceClient::new(HrmApi, default_url).unwrap_or_else(|e| {
-                tracing::error!("默认HRM客户端创建失败: {}", e);
-                panic!("HRM客户端创建失败，请检查HRM服务配置")
-            }))
+            Arc::new(
+                TypedServiceClient::new(HrmApi, default_url).unwrap_or_else(|e| {
+                    tracing::error!("默认HRM客户端创建失败: {}", e);
+                    panic!("HRM客户端创建失败，请检查HRM服务配置")
+                }),
+            )
         });
 
     // Finance 服务客户端
@@ -96,10 +98,12 @@ async fn main() -> Result<()> {
         .unwrap_or_else(|e| {
             tracing::warn!("Finance服务客户端初始化失败: {}, 将使用mock模式", e);
             let default_url = "http://localhost:8011".to_string();
-            Arc::new(TypedServiceClient::new(FinanceApi, default_url).unwrap_or_else(|e| {
-                tracing::error!("默认Finance客户端创建失败: {}", e);
-                panic!("Finance客户端创建失败，请检查Finance服务配置")
-            }))
+            Arc::new(
+                TypedServiceClient::new(FinanceApi, default_url).unwrap_or_else(|e| {
+                    tracing::error!("默认Finance客户端创建失败: {}", e);
+                    panic!("Finance客户端创建失败，请检查Finance服务配置")
+                }),
+            )
         });
 
     let api_state = ApiState {

@@ -2,7 +2,8 @@ use axum::{
     extract::{Path, State},
     http::{HeaderMap, HeaderValue},
     response::IntoResponse,
-    routing::get, Json, Router,
+    routing::get,
+    Json, Router,
 };
 use chrono::{DateTime, Utc};
 use serde::{Deserialize, Serialize};

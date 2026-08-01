@@ -157,9 +157,8 @@ impl<T: EventStore + Send + Sync + 'static> ComplianceChecker<T> {
 
         let mut gaps: Vec<String> = Vec::new();
         for log in &logs {
-            let has_critical_field = !log.actor.is_empty()
-                && !log.target_id.is_empty()
-                && !log.target_type.is_empty();
+            let has_critical_field =
+                !log.actor.is_empty() && !log.target_id.is_empty() && !log.target_type.is_empty();
 
             if !has_critical_field {
                 gaps.push(log.id.clone());

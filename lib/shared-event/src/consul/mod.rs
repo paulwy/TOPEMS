@@ -42,10 +42,8 @@ impl ConsulConfig {
     /// 从环境变量读取配置
     pub fn from_env() -> Self {
         Self {
-            host: env::var("CONSUL_HOST")
-                .unwrap_or_else(|_| "http://localhost:8500".to_string()),
-            datacenter: env::var("CONSUL_DATACENTER")
-                .unwrap_or_else(|_| "dc1".to_string()),
+            host: env::var("CONSUL_HOST").unwrap_or_else(|_| "http://localhost:8500".to_string()),
+            datacenter: env::var("CONSUL_DATACENTER").unwrap_or_else(|_| "dc1".to_string()),
             token: env::var("CONSUL_HTTP_TOKEN").ok(),
             check_interval_seconds: env::var("CONSUL_CHECK_INTERVAL")
                 .ok()
@@ -357,7 +355,10 @@ impl ConsulClient {
 
     /// 列出所有已注册的服务
     pub async fn list_services(&self) -> Result<HashMap<String, Vec<String>>, ConsulError> {
-        let url = self.url(&format!("/v1/catalog/services?dc={}", self.config.datacenter));
+        let url = self.url(&format!(
+            "/v1/catalog/services?dc={}",
+            self.config.datacenter
+        ));
 
         let resp = self
             .add_token(self.client.get(&url))
@@ -540,14 +541,14 @@ pub async fn try_register_service(
 
     match ConsulRegistrationGuard::register(client, registration).await {
         Ok(guard) => {
-            info!("✅ 服务 {} 已注册到 Consul (id={})", service_name, service_id);
+            info!(
+                "✅ 服务 {} 已注册到 Consul (id={})",
+                service_name, service_id
+            );
             Some(guard)
         }
         Err(e) => {
-            warn!(
-                "Consul 注册失败: {}，服务将在无 Consul 模式下运行",
-                e
-            );
+            warn!("Consul 注册失败: {}，服务将在无 Consul 模式下运行", e);
             None
         }
     }

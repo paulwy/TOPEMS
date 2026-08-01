@@ -16,7 +16,17 @@ use topems_shared::{ApiResponse, HealthStatus};
 
 use crate::AppState;
 
-pub const MODULES: &[&str] = &["iam", "flow", "file", "communication", "tenant", "billing", "plugin", "master", "dict"];
+pub const MODULES: &[&str] = &[
+    "iam",
+    "flow",
+    "file",
+    "communication",
+    "tenant",
+    "billing",
+    "plugin",
+    "master",
+    "dict",
+];
 
 #[derive(Debug, Clone)]
 pub struct ModuleConfig {
@@ -86,7 +96,11 @@ impl ModuleIsolationState {
                     .max_lifetime(std::time::Duration::from_secs(1800))
                     .connect(database_url)
                     .await?;
-                tracing::info!("Module '{}' connection pool created (max={})", name, config.max_connections);
+                tracing::info!(
+                    "Module '{}' connection pool created (max={})",
+                    name,
+                    config.max_connections
+                );
                 pools.insert(name.clone(), pool);
             }
             status.insert(name.clone(), ModuleHealthStatus::new(name));
@@ -127,7 +141,11 @@ impl ModuleIsolationState {
             if let Some(s) = status.get_mut(name) {
                 let total = pool.size() as f64;
                 let used = (pool.size() as usize - pool.num_idle()) as f64;
-                s.db_pool_usage = if total > 0.0 { (used / total) * 100.0 } else { 0.0 };
+                s.db_pool_usage = if total > 0.0 {
+                    (used / total) * 100.0
+                } else {
+                    0.0
+                };
                 if s.db_pool_usage > 90.0 {
                     s.status = "degraded".to_string();
                 } else if s.error_count <= 10 {
@@ -145,77 +163,104 @@ impl ModuleIsolationState {
 pub fn create_default_module_configs() -> HashMap<String, ModuleConfig> {
     let mut configs = HashMap::new();
 
-    configs.insert("iam".to_string(), ModuleConfig {
-        name: "iam".to_string(),
-        max_connections: 8,
-        rate_limit_requests: 200,
-        rate_limit_window_secs: 60,
-        enabled: true,
-    });
+    configs.insert(
+        "iam".to_string(),
+        ModuleConfig {
+            name: "iam".to_string(),
+            max_connections: 8,
+            rate_limit_requests: 200,
+            rate_limit_window_secs: 60,
+            enabled: true,
+        },
+    );
 
-    configs.insert("flow".to_string(), ModuleConfig {
-        name: "flow".to_string(),
-        max_connections: 10,
-        rate_limit_requests: 150,
-        rate_limit_window_secs: 60,
-        enabled: true,
-    });
+    configs.insert(
+        "flow".to_string(),
+        ModuleConfig {
+            name: "flow".to_string(),
+            max_connections: 10,
+            rate_limit_requests: 150,
+            rate_limit_window_secs: 60,
+            enabled: true,
+        },
+    );
 
-    configs.insert("file".to_string(), ModuleConfig {
-        name: "file".to_string(),
-        max_connections: 5,
-        rate_limit_requests: 50,
-        rate_limit_window_secs: 60,
-        enabled: true,
-    });
+    configs.insert(
+        "file".to_string(),
+        ModuleConfig {
+            name: "file".to_string(),
+            max_connections: 5,
+            rate_limit_requests: 50,
+            rate_limit_window_secs: 60,
+            enabled: true,
+        },
+    );
 
-    configs.insert("communication".to_string(), ModuleConfig {
-        name: "communication".to_string(),
-        max_connections: 5,
-        rate_limit_requests: 100,
-        rate_limit_window_secs: 60,
-        enabled: true,
-    });
+    configs.insert(
+        "communication".to_string(),
+        ModuleConfig {
+            name: "communication".to_string(),
+            max_connections: 5,
+            rate_limit_requests: 100,
+            rate_limit_window_secs: 60,
+            enabled: true,
+        },
+    );
 
-    configs.insert("tenant".to_string(), ModuleConfig {
-        name: "tenant".to_string(),
-        max_connections: 3,
-        rate_limit_requests: 50,
-        rate_limit_window_secs: 60,
-        enabled: true,
-    });
+    configs.insert(
+        "tenant".to_string(),
+        ModuleConfig {
+            name: "tenant".to_string(),
+            max_connections: 3,
+            rate_limit_requests: 50,
+            rate_limit_window_secs: 60,
+            enabled: true,
+        },
+    );
 
-    configs.insert("billing".to_string(), ModuleConfig {
-        name: "billing".to_string(),
-        max_connections: 5,
-        rate_limit_requests: 100,
-        rate_limit_window_secs: 60,
-        enabled: true,
-    });
+    configs.insert(
+        "billing".to_string(),
+        ModuleConfig {
+            name: "billing".to_string(),
+            max_connections: 5,
+            rate_limit_requests: 100,
+            rate_limit_window_secs: 60,
+            enabled: true,
+        },
+    );
 
-    configs.insert("plugin".to_string(), ModuleConfig {
-        name: "plugin".to_string(),
-        max_connections: 3,
-        rate_limit_requests: 50,
-        rate_limit_window_secs: 60,
-        enabled: true,
-    });
+    configs.insert(
+        "plugin".to_string(),
+        ModuleConfig {
+            name: "plugin".to_string(),
+            max_connections: 3,
+            rate_limit_requests: 50,
+            rate_limit_window_secs: 60,
+            enabled: true,
+        },
+    );
 
-    configs.insert("master".to_string(), ModuleConfig {
-        name: "master".to_string(),
-        max_connections: 5,
-        rate_limit_requests: 100,
-        rate_limit_window_secs: 60,
-        enabled: true,
-    });
+    configs.insert(
+        "master".to_string(),
+        ModuleConfig {
+            name: "master".to_string(),
+            max_connections: 5,
+            rate_limit_requests: 100,
+            rate_limit_window_secs: 60,
+            enabled: true,
+        },
+    );
 
-    configs.insert("dict".to_string(), ModuleConfig {
-        name: "dict".to_string(),
-        max_connections: 3,
-        rate_limit_requests: 200,
-        rate_limit_window_secs: 60,
-        enabled: true,
-    });
+    configs.insert(
+        "dict".to_string(),
+        ModuleConfig {
+            name: "dict".to_string(),
+            max_connections: 3,
+            rate_limit_requests: 200,
+            rate_limit_window_secs: 60,
+            enabled: true,
+        },
+    );
 
     configs
 }
@@ -245,7 +290,10 @@ pub async fn module_isolation_middleware(
                     warn!("Module '{}' is disabled", module_name);
                     return (
                         StatusCode::SERVICE_UNAVAILABLE,
-                        Json(ApiResponse::<()>::error(503, &format!("模块 {} 已禁用", module_name))),
+                        Json(ApiResponse::<()>::error(
+                            503,
+                            &format!("模块 {} 已禁用", module_name),
+                        )),
                     )
                         .into_response();
                 }
@@ -258,7 +306,9 @@ pub async fn module_isolation_middleware(
     if response.status().is_server_error() {
         if let Some(module_name) = module {
             if let Some(isolation) = &state.module_isolation {
-                isolation.record_error(module_name, &format!("HTTP {}", response.status())).await;
+                isolation
+                    .record_error(module_name, &format!("HTTP {}", response.status()))
+                    .await;
             }
         }
     }
@@ -284,9 +334,18 @@ mod tests {
     #[test]
     fn test_extract_module_from_path() {
         assert_eq!(extract_module_from_path("/api/core/iam/users"), Some("iam"));
-        assert_eq!(extract_module_from_path("/api/core/flow/tasks"), Some("flow"));
-        assert_eq!(extract_module_from_path("/api/core/file/upload"), Some("file"));
-        assert_eq!(extract_module_from_path("/api/core/communication/ws"), Some("communication"));
+        assert_eq!(
+            extract_module_from_path("/api/core/flow/tasks"),
+            Some("flow")
+        );
+        assert_eq!(
+            extract_module_from_path("/api/core/file/upload"),
+            Some("file")
+        );
+        assert_eq!(
+            extract_module_from_path("/api/core/communication/ws"),
+            Some("communication")
+        );
         assert_eq!(extract_module_from_path("/health"), None);
         assert_eq!(extract_module_from_path("/api/v1/users"), None);
     }

@@ -136,7 +136,12 @@ impl ConsistencyModel {
     }
 
     pub fn all() -> Vec<Self> {
-        vec![Self::StrongEventual, Self::Causal, Self::Sequential, Self::Strong]
+        vec![
+            Self::StrongEventual,
+            Self::Causal,
+            Self::Sequential,
+            Self::Strong,
+        ]
     }
 }
 
@@ -641,16 +646,12 @@ impl ConsistencyManager {
         default_model
     }
 
-    pub async fn set_consistency_model(model: ConsistencyModel) -> Result<ConsistencyModel, String> {
+    pub async fn set_consistency_model(
+        model: ConsistencyModel,
+    ) -> Result<ConsistencyModel, String> {
         let store = get_deep_federation_store();
 
-        let entity_ids: Vec<String> = store
-            .version_vectors
-            .lock()
-            .await
-            .keys()
-            .cloned()
-            .collect();
+        let entity_ids: Vec<String> = store.version_vectors.lock().await.keys().cloned().collect();
 
         if !entity_ids.is_empty() {
             let _ = Self::check_consistency(entity_ids, model.clone()).await;
@@ -871,7 +872,8 @@ impl DistributedQueryEngine {
             query_plan,
             sub_queries,
             routing_map,
-            consistency_requirement: consistency_requirement.unwrap_or(ConsistencyModel::StrongEventual),
+            consistency_requirement: consistency_requirement
+                .unwrap_or(ConsistencyModel::StrongEventual),
             timeout_ms: timeout_ms.unwrap_or(30000),
             status: QueryStatus::Pending,
             created_at: chrono::Utc::now().to_rfc3339(),
@@ -907,11 +909,7 @@ impl DistributedQueryEngine {
             let can_run = sq
                 .depends_on
                 .iter()
-                .all(|dep| {
-                    original_statuses
-                        .iter()
-                        .any(|(id, _)| id == dep)
-                });
+                .all(|dep| original_statuses.iter().any(|(id, _)| id == dep));
 
             if can_run {
                 sq.result = Some(serde_json::json!({
@@ -1035,7 +1033,9 @@ impl DistributedQueryEngine {
         history.iter().rev().take(limit).cloned().collect()
     }
 
-    pub async fn validate_query_plan(query_plan: serde_json::Value) -> Result<serde_json::Value, String> {
+    pub async fn validate_query_plan(
+        query_plan: serde_json::Value,
+    ) -> Result<serde_json::Value, String> {
         let sub_queries = query_plan
             .get("sub_queries")
             .and_then(|v| v.as_array())
@@ -1127,9 +1127,7 @@ impl FederatedAuthService {
         }))
     }
 
-    pub async fn verify_token_chain(
-        tokens: Vec<String>,
-    ) -> Result<TokenChain, String> {
+    pub async fn verify_token_chain(tokens: Vec<String>) -> Result<TokenChain, String> {
         if tokens.is_empty() {
             return Err("令牌链不能为空".to_string());
         }

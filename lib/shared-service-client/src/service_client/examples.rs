@@ -17,9 +17,9 @@
 #![allow(unused_variables)]
 
 use crate::service_client::api::{
-    crm_api::CrmApi, erp_api::ErpApi, file_api::FileApi, finance_api::FinanceApi,
-    hrm_api::HrmApi, iam_api::IamApi, mes_api::MesApi, monitor_api::MonitorApi,
-    notification_api::NotificationApi, wms_api::WmsApi, workflow_api::WorkflowApi,
+    crm_api::CrmApi, erp_api::ErpApi, file_api::FileApi, finance_api::FinanceApi, hrm_api::HrmApi,
+    iam_api::IamApi, mes_api::MesApi, monitor_api::MonitorApi, notification_api::NotificationApi,
+    wms_api::WmsApi, workflow_api::WorkflowApi,
 };
 use crate::service_client::trait_api::{ServiceApi, TypedServiceClient};
 use crate::service_client::{
@@ -99,8 +99,7 @@ pub mod cross_service {
     use super::*;
 
     /// 在一个方法中调用多个服务
-    pub async fn fetch_dashboard_data(
-    ) -> Result<(), Box<dyn std::error::Error>> {
+    pub async fn fetch_dashboard_data() -> Result<(), Box<dyn std::error::Error>> {
         let hrm = TypedServiceClient::<HrmApi>::discover_default().await?;
         let finance = TypedServiceClient::<FinanceApi>::discover_default().await?;
         let workflow = TypedServiceClient::<WorkflowApi>::discover_default().await?;
@@ -141,7 +140,10 @@ pub mod custom_service {
             self.get(&self.build_path(&path)).await
         }
 
-        pub async fn get_stock(&self, item_id: &str) -> crate::service_client::error::ServiceClientResult<serde_json::Value> {
+        pub async fn get_stock(
+            &self,
+            item_id: &str,
+        ) -> crate::service_client::error::ServiceClientResult<serde_json::Value> {
             let path = format!("/items/{}/stock", item_id);
             self.get(&self.build_path(&path)).await
         }

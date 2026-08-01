@@ -110,7 +110,11 @@ impl MetadataManager {
     async fn list_metadata(&self, object_type: Option<MetadataObjectType>) -> Vec<MetadataObject> {
         let objects = self.objects.lock().await;
         if let Some(ot) = object_type {
-            objects.iter().filter(|o| o.object_type == ot).cloned().collect()
+            objects
+                .iter()
+                .filter(|o| o.object_type == ot)
+                .cloned()
+                .collect()
         } else {
             objects.clone()
         }
@@ -191,12 +195,7 @@ impl MetadataManager {
         attr
     }
 
-    async fn add_tag(
-        &self,
-        name: String,
-        color: String,
-        description: String,
-    ) -> MetadataTag {
+    async fn add_tag(&self, name: String, color: String, description: String) -> MetadataTag {
         let tag = MetadataTag {
             id: uuid::Uuid::new_v4().to_string(),
             name,
@@ -438,11 +437,7 @@ impl EnhancedLineage {
         result
     }
 
-    async fn get_path(
-        &self,
-        source_id: &str,
-        target_id: &str,
-    ) -> Option<Vec<LineageEdgeV60>> {
+    async fn get_path(&self, source_id: &str, target_id: &str) -> Option<Vec<LineageEdgeV60>> {
         let edges = self.edges.lock().await;
 
         let mut adjacency: HashMap<String, Vec<LineageEdgeV60>> = HashMap::new();
@@ -453,7 +448,8 @@ impl EnhancedLineage {
                 .push(edge.clone());
         }
 
-        let mut queue: Vec<(String, Vec<LineageEdgeV60>)> = vec![(source_id.to_string(), Vec::new())];
+        let mut queue: Vec<(String, Vec<LineageEdgeV60>)> =
+            vec![(source_id.to_string(), Vec::new())];
         let mut visited = std::collections::HashSet::new();
 
         while let Some((current, path)) = queue.pop() {
@@ -477,18 +473,15 @@ impl EnhancedLineage {
         None
     }
 
-    async fn get_lineage_impact(
-        &self,
-        entity_id: &str,
-        entity_type: &str,
-    ) -> LineageImpact {
+    async fn get_lineage_impact(&self, entity_id: &str, entity_type: &str) -> LineageImpact {
         let downstream = self.get_downstream(entity_id).await;
         let upstream = self.get_upstream(entity_id).await;
 
         let affected_downstream = downstream.len();
         let affected_nodes = downstream.len() + upstream.len();
         let confidence = if downstream.is_empty() { 0.5 } else { 0.9 };
-        let impact_score = (affected_downstream as f64 * 0.3 + affected_nodes as f64 * 0.1).min(1.0);
+        let impact_score =
+            (affected_downstream as f64 * 0.3 + affected_nodes as f64 * 0.1).min(1.0);
 
         LineageImpact {
             entity_id: entity_id.to_string(),
@@ -638,10 +631,7 @@ impl LifecycleManager {
         history
     }
 
-    async fn get_lifecycle_history(
-        &self,
-        entity_id: &str,
-    ) -> Vec<LifecycleHistory> {
+    async fn get_lifecycle_history(&self, entity_id: &str) -> Vec<LifecycleHistory> {
         let history = self.history.lock().await;
         history
             .iter()
@@ -671,7 +661,11 @@ impl LifecycleManager {
     async fn get_policies(&self, entity_type: Option<String>) -> Vec<LifecyclePolicy> {
         let policies = self.policies.lock().await;
         if let Some(et) = entity_type {
-            policies.iter().filter(|p| p.entity_type == et).cloned().collect()
+            policies
+                .iter()
+                .filter(|p| p.entity_type == et)
+                .cloned()
+                .collect()
         } else {
             policies.clone()
         }
@@ -698,12 +692,14 @@ impl LifecycleManager {
 
                         for entity_id in matching {
                             if let Some(to_stage) = parse_lifecycle_stage(to) {
-                                let history = self.transition_stage(
-                                    &entity_id,
-                                    to_stage,
-                                    format!("auto_transition: {}", policy.entity_type),
-                                    "system".to_string(),
-                                ).await;
+                                let history = self
+                                    .transition_stage(
+                                        &entity_id,
+                                        to_stage,
+                                        format!("auto_transition: {}", policy.entity_type),
+                                        "system".to_string(),
+                                    )
+                                    .await;
                                 results.push(history);
                             }
                         }
@@ -748,7 +744,12 @@ impl LifecycleManager {
         let mut results = Vec::new();
         for entity_id in entity_ids {
             let history = self
-                .transition_stage(&entity_id, target_stage.clone(), reason.clone(), changed_by.clone())
+                .transition_stage(
+                    &entity_id,
+                    target_stage.clone(),
+                    reason.clone(),
+                    changed_by.clone(),
+                )
                 .await;
             results.push(history);
         }
@@ -918,11 +919,7 @@ async fn ensure_initialized() {
 
         let graph = store
             .lineage
-            .build_lineage_graph(
-                "customer_table".to_string(),
-                "table".to_string(),
-                3,
-            )
+            .build_lineage_graph("customer_table".to_string(), "table".to_string(), 3)
             .await;
         let _ = graph;
         *init = true;
@@ -934,23 +931,18 @@ async fn ensure_initialized() {
             return;
         }
 
-        let seed_policies = vec![
-            LifecyclePolicy {
-                id: uuid::Uuid::new_v4().to_string(),
-                entity_type: "customer".to_string(),
-                transitions: serde_json::json!([
-                    {"from": "created", "to": "active"},
-                    {"from": "active", "to": "maintenance"},
-                    {"from": "maintenance", "to": "deprecated"},
-                    {"from": "deprecated", "to": "archived"}
-                ]),
-                duration_days: 90,
-                actions: vec![
-                    "notify_owner".to_string(),
-                    "audit_log".to_string(),
-                ],
-            },
-        ];
+        let seed_policies = vec![LifecyclePolicy {
+            id: uuid::Uuid::new_v4().to_string(),
+            entity_type: "customer".to_string(),
+            transitions: serde_json::json!([
+                {"from": "created", "to": "active"},
+                {"from": "active", "to": "maintenance"},
+                {"from": "maintenance", "to": "deprecated"},
+                {"from": "deprecated", "to": "archived"}
+            ]),
+            duration_days: 90,
+            actions: vec!["notify_owner".to_string(), "audit_log".to_string()],
+        }];
         *store.lifecycle.policies.lock().await = seed_policies;
 
         let mut stages = HashMap::new();
@@ -1108,10 +1100,7 @@ pub async fn list_metadata(
     ensure_initialized().await;
     let store = get_v60_store();
 
-    let object_type = params
-        .object_type
-        .as_deref()
-        .and_then(parse_metadata_type);
+    let object_type = params.object_type.as_deref().and_then(parse_metadata_type);
 
     let list = store.metadata.list_metadata(object_type).await;
     Json(ApiResponse::success(list, "元数据对象列表"))
@@ -1321,12 +1310,10 @@ pub async fn get_current_stage(
     let store = get_v60_store();
 
     match store.lifecycle.get_current_stage(&id).await {
-        Some(stage) => {
-            Json(ApiResponse::success(
-                serde_json::json!({"stage": lifecycle_stage_str(&stage)}),
-                "当前生命周期阶段",
-            ))
-        }
+        Some(stage) => Json(ApiResponse::success(
+            serde_json::json!({"stage": lifecycle_stage_str(&stage)}),
+            "当前生命周期阶段",
+        )),
         None => Json(ApiResponse::error(404, "未找到实体的生命周期信息")),
     }
 }
@@ -1393,10 +1380,7 @@ pub async fn get_policies(
     ensure_initialized().await;
     let store = get_v60_store();
 
-    let policies = store
-        .lifecycle
-        .get_policies(params.entity_type)
-        .await;
+    let policies = store.lifecycle.get_policies(params.entity_type).await;
     Json(ApiResponse::success(policies, "生命周期策略列表"))
 }
 

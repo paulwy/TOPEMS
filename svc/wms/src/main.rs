@@ -84,11 +84,10 @@ async fn main() -> Result<()> {
 
     // OpenAPI 文档
     let openapi_json = Some(
-        serde_json::to_string_pretty(&modules::openapi::WmsApiDoc::openapi())
-            .unwrap_or_else(|e| {
-                tracing::error!("Failed to serialize OpenAPI spec: {}", e);
-                "{}".to_string()
-            }),
+        serde_json::to_string_pretty(&modules::openapi::WmsApiDoc::openapi()).unwrap_or_else(|e| {
+            tracing::error!("Failed to serialize OpenAPI spec: {}", e);
+            "{}".to_string()
+        }),
     );
 
     let app = build_application(&ctx, &config, public_routes, protected_routes, openapi_json);

@@ -1,8 +1,8 @@
 // TOPEMS Finance Service
 // =============================================================================
 
-pub mod event_handlers;
 pub mod domain;
+pub mod event_handlers;
 pub mod models;
 pub mod modules;
 pub mod services;
@@ -129,8 +129,7 @@ async fn main() -> anyhow::Result<()> {
 
     let workflow_url = std::env::var("WORKFLOW_SERVICE_URL")
         .unwrap_or_else(|_| "http://localhost:8000".to_string());
-    let workflow_client =
-        create_workflow_client().expect("工作流服务客户端初始化失败");
+    let workflow_client = create_workflow_client().expect("工作流服务客户端初始化失败");
     tracing::info!("🔗 工作流服务客户端初始化成功: {}", workflow_url);
 
     let state = AppState {

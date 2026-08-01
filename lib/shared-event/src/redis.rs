@@ -1,6 +1,3 @@
-use topems_shared_core::config::enhanced::RedisConfig;
-use topems_shared_core::error::TopemsError;
-use topems_shared_core::error::Result;
 use async_trait::async_trait;
 use futures::Future;
 use parking_lot::{Mutex, RwLock};
@@ -10,6 +7,9 @@ use serde::{Deserialize, Serialize};
 use std::hash::Hasher;
 use std::sync::Arc;
 use std::time::Duration;
+use topems_shared_core::config::enhanced::RedisConfig;
+use topems_shared_core::error::Result;
+use topems_shared_core::error::TopemsError;
 
 #[derive(Debug)]
 pub struct RedisPool {

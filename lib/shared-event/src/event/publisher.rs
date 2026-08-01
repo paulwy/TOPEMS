@@ -5,10 +5,10 @@ use super::event_types::{
     HrmEmployeeCreatedPayload, LimsInspectionAbnormalDetectedPayload,
     LimsInspectionResultSubmittedPayload, LimsSampleRegisteredPayload, PmProjectCreatedPayload,
     PmProjectUpdatedPayload, PmTaskCreatedPayload, PmTaskDeletedPayload, PmTaskUpdatedPayload,
-    QmsCorrectiveActionCreatedPayload, QmsInspectionCompletedPayload,
-    SrmSupplierCreatedPayload, SrmSupplierStatusChangedPayload, SrmSupplierUpdatedPayload,
-    WmsInventoryItemReceivedPayload, WmsInventoryItemShippedPayload,
-    WmsInventoryLowStockPayload, WmsWarehouseTransferCompletedPayload,
+    QmsCorrectiveActionCreatedPayload, QmsInspectionCompletedPayload, SrmSupplierCreatedPayload,
+    SrmSupplierStatusChangedPayload, SrmSupplierUpdatedPayload, WmsInventoryItemReceivedPayload,
+    WmsInventoryItemShippedPayload, WmsInventoryLowStockPayload,
+    WmsWarehouseTransferCompletedPayload,
 };
 use redis::Client;
 use serde::Serialize;

@@ -5,16 +5,18 @@ import { initReactI18next } from 'react-i18next';
 const loadTranslations = async () => {
   const savedLanguage = localStorage.getItem('language') || 'zh';
 
-  const [enTranslation, zhTranslation] = await Promise.all([
+  const [enTranslation, zhTranslation, enDevtools, zhDevtools] = await Promise.all([
     import('./locales/en.json').then((m) => m.default),
     import('./locales/zh.json').then((m) => m.default),
+    import('./locales/en/devtools.json').then((m) => m.default),
+    import('./locales/zh/devtools.json').then((m) => m.default),
   ]);
 
   return {
     lng: savedLanguage,
     resources: {
-      en: { translation: enTranslation },
-      zh: { translation: zhTranslation },
+      en: { translation: { ...enTranslation, devtools: enDevtools.devtools } },
+      zh: { translation: { ...zhTranslation, devtools: zhDevtools.devtools } },
     },
   };
 };

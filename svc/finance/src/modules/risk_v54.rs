@@ -559,9 +559,7 @@ impl RealTimeRiskMonitor {
             let score = (ratio * level.weight()).min(10.0);
             total_score += score;
 
-            *category_map
-                .entry(indicator.category.clone())
-                .or_insert(0) += 1;
+            *category_map.entry(indicator.category.clone()).or_insert(0) += 1;
 
             match level {
                 RiskLevel::Critical => critical_count += 1,
@@ -779,13 +777,22 @@ impl AntiFraudEngine {
                     Self::check_amount_anomaly(pool, tenant_id, tx.amount, rule.threshold).await
                 }
                 FraudRuleType::Location => {
-                    Self::check_location_anomaly(pool, tenant_id, &tx.location, rule.threshold).await
+                    Self::check_location_anomaly(pool, tenant_id, &tx.location, rule.threshold)
+                        .await
                 }
                 FraudRuleType::Device => {
-                    Self::check_device_fingerprint(pool, tenant_id, &tx.device_id, rule.threshold).await
+                    Self::check_device_fingerprint(pool, tenant_id, &tx.device_id, rule.threshold)
+                        .await
                 }
                 FraudRuleType::Behavior => {
-                    Self::check_behavior_internal(pool, tenant_id, &tx.account_id, tx.amount, rule.threshold).await
+                    Self::check_behavior_internal(
+                        pool,
+                        tenant_id,
+                        &tx.account_id,
+                        tx.amount,
+                        rule.threshold,
+                    )
+                    .await
                 }
             };
 
@@ -1139,8 +1146,8 @@ impl AutoComplianceReviewer {
         .fetch_one(pool)
         .await?;
 
-        let mut steps: Vec<serde_json::Value> = serde_json::from_value(workflow.steps.clone())
-            .unwrap_or_default();
+        let mut steps: Vec<serde_json::Value> =
+            serde_json::from_value(workflow.steps.clone()).unwrap_or_default();
 
         let mut all_done = true;
         for step in &mut steps {
@@ -1153,11 +1160,7 @@ impl AutoComplianceReviewer {
             }
         }
 
-        let new_status = if all_done {
-            "completed"
-        } else {
-            "in_progress"
-        };
+        let new_status = if all_done { "completed" } else { "in_progress" };
 
         let now = Utc::now();
         sqlx::query_as(
@@ -1197,13 +1200,9 @@ impl AutoComplianceReviewer {
         entity_type: Option<String>,
         entity_id: Option<String>,
     ) -> Result<ComplianceReport, sqlx::Error> {
-        let results = Self::get_review_results(
-            pool,
-            tenant_id,
-            entity_type.clone(),
-            entity_id.clone(),
-        )
-        .await?;
+        let results =
+            Self::get_review_results(pool, tenant_id, entity_type.clone(), entity_id.clone())
+                .await?;
 
         let total_rules = results.len() as i64;
         let passed_rules = results.iter().filter(|r| r.passed).count() as i64;
@@ -1469,7 +1468,8 @@ async fn get_compliance_status_handler(
     let pool = state.pool.clone();
     let tenant_id = get_tenant_id(&claims);
 
-    match AutoComplianceReviewer::get_compliance_status(&pool, tenant_id, entity_type, entity_id).await
+    match AutoComplianceReviewer::get_compliance_status(&pool, tenant_id, entity_type, entity_id)
+        .await
     {
         Ok(workflows) => Json(ApiResponse::success(workflows, "查询成功")),
         Err(e) => Json(ApiResponse::error(500, &e.to_string())),

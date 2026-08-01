@@ -631,11 +631,7 @@ pub struct HealingAction {
 }
 
 impl HealingAction {
-    pub fn new(
-        trigger: HealingTrigger,
-        action_type: HealingActionType,
-        target: String,
-    ) -> Self {
+    pub fn new(trigger: HealingTrigger, action_type: HealingActionType, target: String) -> Self {
         Self {
             id: uuid::Uuid::new_v4().to_string(),
             trigger,
@@ -663,11 +659,7 @@ pub struct RecoveryPlan {
 }
 
 impl RecoveryPlan {
-    pub fn new(
-        service_id: String,
-        steps: Vec<String>,
-        estimated_duration_ms: u64,
-    ) -> Self {
+    pub fn new(service_id: String, steps: Vec<String>, estimated_duration_ms: u64) -> Self {
         Self {
             id: uuid::Uuid::new_v4().to_string(),
             service_id,
@@ -787,7 +779,9 @@ impl SmartRouter {
             .iter()
             .filter(|r| {
                 enabled_only.map(|e| r.enabled == e).unwrap_or(true)
-                    && target_service.map(|s| r.target_service == s).unwrap_or(true)
+                    && target_service
+                        .map(|s| r.target_service == s)
+                        .unwrap_or(true)
             })
             .cloned()
             .collect()
@@ -807,7 +801,8 @@ impl SmartRouter {
         candidates.sort_by(|a, b| b.priority.cmp(&a.priority));
 
         if let Some(rule) = candidates.first() {
-            let confidence = Self::calculate_confidence(rule, query_hash.as_deref(), operation_name.as_deref());
+            let confidence =
+                Self::calculate_confidence(rule, query_hash.as_deref(), operation_name.as_deref());
             let decision = RoutingDecision {
                 id: uuid::Uuid::new_v4().to_string(),
                 query_hash,
@@ -858,9 +853,7 @@ impl SmartRouter {
         }
     }
 
-    pub async fn get_service_loads(
-        service_id: Option<&str>,
-    ) -> Vec<ServiceLoad> {
+    pub async fn get_service_loads(service_id: Option<&str>) -> Vec<ServiceLoad> {
         let store = get_smart_router_store();
         let loads = store.service_loads.lock().await;
 
@@ -889,7 +882,11 @@ impl SmartRouter {
         decisions
             .iter()
             .rev()
-            .filter(|d| target_service.map(|s| d.target_service == s).unwrap_or(true))
+            .filter(|d| {
+                target_service
+                    .map(|s| d.target_service == s)
+                    .unwrap_or(true)
+            })
             .take(limit)
             .cloned()
             .collect()
@@ -934,10 +931,7 @@ impl SmartRouter {
             0.0
         };
 
-        let mut top_rules: Vec<(String, u64)> = hits
-            .iter()
-            .map(|(k, v)| (k.clone(), *v))
-            .collect();
+        let mut top_rules: Vec<(String, u64)> = hits.iter().map(|(k, v)| (k.clone(), *v)).collect();
         top_rules.sort_by(|a, b| b.1.cmp(&a.1));
         top_rules.truncate(10);
 
@@ -966,7 +960,11 @@ impl SmartRouter {
         }
 
         if let Some(name) = operation_name {
-            if let Some(cond_name) = rule.condition.get("operation_name").and_then(|v| v.as_str()) {
+            if let Some(cond_name) = rule
+                .condition
+                .get("operation_name")
+                .and_then(|v| v.as_str())
+            {
                 if name == cond_name {
                     confidence = (confidence + 0.2).min(1.0);
                 }
@@ -1000,9 +998,7 @@ impl AutoCacheManager {
         policy
     }
 
-    pub async fn get_cache_policies(
-        scope: Option<CacheScope>,
-    ) -> Vec<CachePolicy> {
+    pub async fn get_cache_policies(scope: Option<CacheScope>) -> Vec<CachePolicy> {
         let store = get_auto_cache_store();
         let policies = store.policies.lock().await;
         policies
@@ -1149,9 +1145,7 @@ impl AutoCacheManager {
             .iter()
             .map(|(k, v)| (k.clone(), v.access_count, v.created_at.clone()))
             .collect();
-        sorted.sort_by(|a, b| {
-            b.1.cmp(&a.1).then_with(|| a.2.cmp(&b.2))
-        });
+        sorted.sort_by(|a, b| b.1.cmp(&a.1).then_with(|| a.2.cmp(&b.2)));
 
         let to_remove = current_size - max_size;
         let mut removed = 0u64;
@@ -1220,9 +1214,7 @@ impl SelfHealingEngine {
             .collect()
     }
 
-    pub async fn run_health_check(
-        check_id: &str,
-    ) -> Result<HealthCheck, String> {
+    pub async fn run_health_check(check_id: &str) -> Result<HealthCheck, String> {
         let store = get_self_healing_store();
         let checks = store.health_checks.lock().await;
         let check = checks
@@ -1283,20 +1275,14 @@ impl SelfHealingEngine {
         steps: Vec<String>,
         estimated_duration_ms: Option<u64>,
     ) -> RecoveryPlan {
-        let plan = RecoveryPlan::new(
-            service_id,
-            steps,
-            estimated_duration_ms.unwrap_or(30000),
-        );
+        let plan = RecoveryPlan::new(service_id, steps, estimated_duration_ms.unwrap_or(30000));
         let store = get_self_healing_store();
         let mut plans = store.recovery_plans.lock().await;
         plans.push(plan.clone());
         plan
     }
 
-    pub async fn get_recovery_status(
-        plan_id: &str,
-    ) -> Result<RecoveryPlan, String> {
+    pub async fn get_recovery_status(plan_id: &str) -> Result<RecoveryPlan, String> {
         let store = get_self_healing_store();
         let plans = store.recovery_plans.lock().await;
         plans
@@ -1510,7 +1496,8 @@ pub async fn get_routing_rules_handler(
     State(_state): State<AppState>,
     Query(params): Query<RoutingRulesQuery>,
 ) -> Json<ApiResponse<Vec<RoutingRule>>> {
-    let rules = SmartRouter::get_routing_rules(params.enabled, params.target_service.as_deref()).await;
+    let rules =
+        SmartRouter::get_routing_rules(params.enabled, params.target_service.as_deref()).await;
     Json(ApiResponse::success(rules, "路由规则列表"))
 }
 
@@ -1537,7 +1524,10 @@ pub async fn update_service_load_handler(
 ) -> Json<ApiResponse<ServiceLoad>> {
     let store = get_smart_router_store();
     let loads = store.service_loads.lock().await;
-    let current = loads.get(&id).cloned().unwrap_or_else(|| ServiceLoad::new(id.clone()));
+    let current = loads
+        .get(&id)
+        .cloned()
+        .unwrap_or_else(|| ServiceLoad::new(id.clone()));
     drop(loads);
 
     let load = ServiceLoad {
@@ -1662,9 +1652,7 @@ pub async fn cleanup_cache_handler(
     Json(ApiResponse::success(removed, "过期缓存已清理"))
 }
 
-pub async fn get_cache_hit_rate_handler(
-    State(_state): State<AppState>,
-) -> Json<ApiResponse<f64>> {
+pub async fn get_cache_hit_rate_handler(State(_state): State<AppState>) -> Json<ApiResponse<f64>> {
     let rate = AutoCacheManager::get_cache_hit_rate().await;
     Json(ApiResponse::success(rate, "缓存命中率"))
 }
@@ -1748,8 +1736,7 @@ pub async fn get_healing_history_handler(
 ) -> Json<ApiResponse<Vec<HealingAction>>> {
     let trigger = params.trigger.as_deref().map(HealingTrigger::from_str);
     let status = params.status.as_deref().map(HealingStatus::from_str);
-    let history =
-        SelfHealingEngine::get_healing_history(trigger, status, params.limit).await;
+    let history = SelfHealingEngine::get_healing_history(trigger, status, params.limit).await;
     Json(ApiResponse::success(history, "自愈历史"))
 }
 

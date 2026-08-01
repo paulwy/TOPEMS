@@ -77,9 +77,7 @@ pub async fn get_internal_transaction(
     .fetch_optional(&state.db)
     .await
     {
-        Ok(Some(transaction)) => {
-            Json(ApiResponse::success(transaction, "获取内部交易详情成功"))
-        }
+        Ok(Some(transaction)) => Json(ApiResponse::success(transaction, "获取内部交易详情成功")),
         Ok(None) => Json(api_error(404, "内部交易不存在")),
         Err(e) => {
             tracing::error!("获取内部交易详情失败: {}", e);

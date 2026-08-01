@@ -1638,10 +1638,7 @@ pub async fn delete_template(
     }
 }
 
-async fn send_notification_email(
-    pool: &PgPool,
-    req: &SendNotificationRequest,
-) -> Result<(), ()> {
+async fn send_notification_email(pool: &PgPool, req: &SendNotificationRequest) -> Result<(), ()> {
     let email: Option<String> = sqlx::query_scalar("SELECT email FROM core_users WHERE id = $1")
         .bind(req.user_id)
         .fetch_optional(pool)

@@ -202,10 +202,7 @@ pub async fn get_user_roles(
     Extension(_claims): Extension<Claims>,
     Path(user_id): Path<String>,
 ) -> (StatusCode, Json<serde_json::Value>) {
-    tracing::info!(
-        "IAM user get_user_roles called with user_id: {}",
-        user_id
-    );
+    tracing::info!("IAM user get_user_roles called with user_id: {}", user_id);
 
     let user_uuid = match Uuid::parse_str(&user_id) {
         Ok(id) => id,

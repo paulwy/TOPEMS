@@ -320,11 +320,18 @@ async fn get_dashboard_handler(
 ) -> Json<ApiResponse<DocDashboardStats>> {
     let tenant_id = get_tenant_id(&claims);
 
-    let total_documents = count_table_with_tenant(&state.pool, "core_doc_documents", tenant_id).await;
-    let published_documents =
-        count_table_with_tenant_and_status(&state.pool, "core_doc_documents", tenant_id, "published").await;
+    let total_documents =
+        count_table_with_tenant(&state.pool, "core_doc_documents", tenant_id).await;
+    let published_documents = count_table_with_tenant_and_status(
+        &state.pool,
+        "core_doc_documents",
+        tenant_id,
+        "published",
+    )
+    .await;
     let draft_documents =
-        count_table_with_tenant_and_status(&state.pool, "core_doc_documents", tenant_id, "draft").await;
+        count_table_with_tenant_and_status(&state.pool, "core_doc_documents", tenant_id, "draft")
+            .await;
     let archived_documents = count_table_with_tenant_and_condition(
         &state.pool,
         "core_doc_documents",
@@ -334,9 +341,11 @@ async fn get_dashboard_handler(
     .await;
 
     let total_folders = count_table_with_tenant(&state.pool, "core_doc_folders", tenant_id).await;
-    let total_templates = count_table_with_tenant(&state.pool, "core_doc_templates", tenant_id).await;
+    let total_templates =
+        count_table_with_tenant(&state.pool, "core_doc_templates", tenant_id).await;
     let active_templates =
-        count_table_with_tenant_and_enabled(&state.pool, "core_doc_templates", tenant_id, true).await;
+        count_table_with_tenant_and_enabled(&state.pool, "core_doc_templates", tenant_id, true)
+            .await;
 
     let this_month_created = count_table_with_tenant_and_condition(
         &state.pool,

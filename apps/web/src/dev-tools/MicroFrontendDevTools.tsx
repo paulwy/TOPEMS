@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { Box, Typography, Button, Tooltip, IconButton } from '@mui/material';
 import { X as XIcon } from 'lucide-react';
+import { useTranslation } from 'react-i18next';
 import {
   RegistryPanel,
   VersionPanel,
@@ -51,6 +52,7 @@ import { V60EthicsPanel } from '@/ai-ethics';
 import V47IntegrationPanel from './V47IntegrationPanel';
 
 const MicroFrontendDevTools: React.FC = () => {
+  const { t } = useTranslation();
   const [showRegistry, setShowRegistry] = React.useState(false);
   const [showVersion, setShowVersion] = React.useState(false);
   const [showDashboard, setShowDashboard] = React.useState(false);
@@ -104,7 +106,7 @@ const MicroFrontendDevTools: React.FC = () => {
           fontFamily: 'system-ui, -apple-system, sans-serif',
         }}
       >
-        <Tooltip title='模块注册中心'>
+        <Tooltip title={t('devtools.panels.registry.tooltip')}>
           <Button
             variant='contained'
             size='small'
@@ -130,12 +132,12 @@ const MicroFrontendDevTools: React.FC = () => {
                 variant='caption'
                 sx={{ fontSize: 10, opacity: 0.8 }}
               >
-                {moduleCount} 模块
+                {t('devtools.panels.registry.sublabel', { count: moduleCount })}
               </Typography>
             </Box>
           </Button>
         </Tooltip>
-        <Tooltip title='版本管理平台'>
+        <Tooltip title={t('devtools.panels.version.tooltip')}>
           <Button
             variant='contained'
             size='small'
@@ -161,12 +163,12 @@ const MicroFrontendDevTools: React.FC = () => {
                 variant='caption'
                 sx={{ fontSize: 10, opacity: 0.8 }}
               >
-                灰度发布
+                {t('devtools.panels.version.sublabel')}
               </Typography>
             </Box>
           </Button>
         </Tooltip>
-        <Tooltip title='可观测性仪表盘'>
+        <Tooltip title={t('devtools.panels.dashboard.tooltip')}>
           <Button
             variant='contained'
             size='small'
@@ -192,12 +194,12 @@ const MicroFrontendDevTools: React.FC = () => {
                 variant='caption'
                 sx={{ fontSize: 10, opacity: 0.8 }}
               >
-                监控分析
+                {t('devtools.panels.dashboard.sublabel')}
               </Typography>
             </Box>
           </Button>
         </Tooltip>
-        <Tooltip title='AI 运维中心'>
+        <Tooltip title={t('devtools.panels.aiops.tooltip')}>
           <Button
             variant='contained'
             size='small'
@@ -223,12 +225,12 @@ const MicroFrontendDevTools: React.FC = () => {
                 variant='caption'
                 sx={{ fontSize: 10, opacity: 0.8 }}
               >
-                智能告警
+                {t('devtools.panels.aiops.sublabel')}
               </Typography>
             </Box>
           </Button>
         </Tooltip>
-        <Tooltip title='模块市场'>
+        <Tooltip title={t('devtools.panels.marketplace.tooltip')}>
           <Button
             variant='contained'
             size='small'
@@ -254,12 +256,12 @@ const MicroFrontendDevTools: React.FC = () => {
                 variant='caption'
                 sx={{ fontSize: 10, opacity: 0.8 }}
               >
-                {marketplaceCount} 模块
+                {t('devtools.panels.marketplace.sublabel', { count: marketplaceCount })}
               </Typography>
             </Box>
           </Button>
         </Tooltip>
-        <Tooltip title='依赖治理'>
+        <Tooltip title={t('devtools.panels.governance.tooltip')}>
           <Button
             variant='contained'
             size='small'
@@ -285,12 +287,12 @@ const MicroFrontendDevTools: React.FC = () => {
                 variant='caption'
                 sx={{ fontSize: 10, opacity: 0.8 }}
               >
-                版本冲突
+                {t('devtools.panels.governance.sublabel')}
               </Typography>
             </Box>
           </Button>
         </Tooltip>
-        <Tooltip title='安全中心'>
+        <Tooltip title={t('devtools.panels.security.tooltip')}>
           <Button
             variant='contained'
             size='small'
@@ -316,12 +318,12 @@ const MicroFrontendDevTools: React.FC = () => {
                 variant='caption'
                 sx={{ fontSize: 10, opacity: 0.8 }}
               >
-                安全扫描
+                {t('devtools.panels.security.sublabel')}
               </Typography>
             </Box>
           </Button>
         </Tooltip>
-        <Tooltip title='V45.0 运行时控制台'>
+        <Tooltip title={t('devtools.panels.runtime.tooltip')}>
           <Button
             variant='contained'
             size='small'
@@ -347,12 +349,12 @@ const MicroFrontendDevTools: React.FC = () => {
                 variant='caption'
                 sx={{ fontSize: 10, opacity: 0.8 }}
               >
-                终极形态
+                {t('devtools.panels.runtime.sublabel')}
               </Typography>
             </Box>
           </Button>
         </Tooltip>
-        <Tooltip title='V47-V50 集成面板'>
+        <Tooltip title={t('devtools.panels.v47Integration.tooltip')}>
           <Button
             variant='contained'
             size='small'
@@ -383,7 +385,7 @@ const MicroFrontendDevTools: React.FC = () => {
             </Box>
           </Button>
         </Tooltip>
-        <Tooltip title='V51.0 设计系统'>
+        <Tooltip title={t('devtools.panels.v51Design.tooltip')}>
           <Button
             variant='contained'
             size='small'
@@ -409,12 +411,12 @@ const MicroFrontendDevTools: React.FC = () => {
                 variant='caption'
                 sx={{ fontSize: 10, opacity: 0.8 }}
               >
-                Design System
+                {t('devtools.panels.v51Design.sublabel')}
               </Typography>
             </Box>
           </Button>
         </Tooltip>
-        <Tooltip title='V51.0 DevEx 开发体验'>
+        <Tooltip title={t('devtools.panels.v51DevEx.tooltip')}>
           <Button
             variant='contained'
             size='small'
@@ -440,12 +442,12 @@ const MicroFrontendDevTools: React.FC = () => {
                 variant='caption'
                 sx={{ fontSize: 10, opacity: 0.8 }}
               >
-                调试+性能
+                {t('devtools.panels.v51DevEx.sublabel')}
               </Typography>
             </Box>
           </Button>
         </Tooltip>
-        <Tooltip title='V53.0 AI 增强'>
+        <Tooltip title={t('devtools.panels.v53Ai.tooltip')}>
           <Button
             variant='contained'
             size='small'
@@ -471,12 +473,12 @@ const MicroFrontendDevTools: React.FC = () => {
                 variant='caption'
                 sx={{ fontSize: 10, opacity: 0.8 }}
               >
-                智能增强
+                {t('devtools.panels.v53Ai.sublabel')}
               </Typography>
             </Box>
           </Button>
         </Tooltip>
-        <Tooltip title='V53.0 平台终局'>
+        <Tooltip title={t('devtools.panels.v53Platform.tooltip')}>
           <Button
             variant='contained'
             size='small'
@@ -503,12 +505,12 @@ const MicroFrontendDevTools: React.FC = () => {
                 variant='caption'
                 sx={{ fontSize: 10, opacity: 0.8 }}
               >
-                开发终局
+                {t('devtools.panels.v53Platform.sublabel')}
               </Typography>
             </Box>
           </Button>
         </Tooltip>
-        <Tooltip title='V54.0 AI 原生平台'>
+        <Tooltip title={t('devtools.panels.v54Native.tooltip')}>
           <Button
             variant='contained'
             size='small'
@@ -535,12 +537,12 @@ const MicroFrontendDevTools: React.FC = () => {
                 variant='caption'
                 sx={{ fontSize: 10, opacity: 0.8 }}
               >
-                原生平台
+                {t('devtools.panels.v54Native.sublabel')}
               </Typography>
             </Box>
           </Button>
         </Tooltip>
-        <Tooltip title='V54.0 AI Agent 自主智能'>
+        <Tooltip title={t('devtools.panels.v54Agent.tooltip')}>
           <Button
             variant='contained'
             size='small'
@@ -567,12 +569,12 @@ const MicroFrontendDevTools: React.FC = () => {
                 variant='caption'
                 sx={{ fontSize: 10, opacity: 0.8 }}
               >
-                自主智能
+                {t('devtools.panels.v54Agent.sublabel')}
               </Typography>
             </Box>
           </Button>
         </Tooltip>
-        <Tooltip title='V55.0 AI Copilot 智能助手'>
+        <Tooltip title={t('devtools.panels.v55Copilot.tooltip')}>
           <Button
             variant='contained'
             size='small'
@@ -599,12 +601,12 @@ const MicroFrontendDevTools: React.FC = () => {
                 variant='caption'
                 sx={{ fontSize: 10, opacity: 0.8 }}
               >
-                智能助手
+                {t('devtools.panels.v55Copilot.sublabel')}
               </Typography>
             </Box>
           </Button>
         </Tooltip>
-        <Tooltip title='V55.0 全栈自动化 CI/CD'>
+        <Tooltip title={t('devtools.panels.v55Automation.tooltip')}>
           <Button
             variant='contained'
             size='small'
@@ -631,12 +633,12 @@ const MicroFrontendDevTools: React.FC = () => {
                 variant='caption'
                 sx={{ fontSize: 10, opacity: 0.8 }}
               >
-                CI/CD · 部署
+                {t('devtools.panels.v55Automation.sublabel')}
               </Typography>
             </Box>
           </Button>
         </Tooltip>
-        <Tooltip title='V56.0 平台智能运维'>
+        <Tooltip title={t('devtools.panels.v56Ops.tooltip')}>
           <Button
             variant='contained'
             size='small'
@@ -663,12 +665,12 @@ const MicroFrontendDevTools: React.FC = () => {
                 variant='caption'
                 sx={{ fontSize: 10, opacity: 0.8 }}
               >
-                智能运维
+                {t('devtools.panels.v56Ops.sublabel')}
               </Typography>
             </Box>
           </Button>
         </Tooltip>
-        <Tooltip title='V56.0 AI 代码审查'>
+        <Tooltip title={t('devtools.panels.v56Review.tooltip')}>
           <Button
             variant='contained'
             size='small'
@@ -695,12 +697,12 @@ const MicroFrontendDevTools: React.FC = () => {
                 variant='caption'
                 sx={{ fontSize: 10, opacity: 0.8 }}
               >
-                AI 代码审查
+                {t('devtools.panels.v56Review.sublabel')}
               </Typography>
             </Box>
           </Button>
         </Tooltip>
-        <Tooltip title='V57.0 AI 治理'>
+        <Tooltip title={t('devtools.panels.v57Governance.tooltip')}>
           <Button
             variant='contained'
             size='small'
@@ -727,12 +729,12 @@ const MicroFrontendDevTools: React.FC = () => {
                 variant='caption'
                 sx={{ fontSize: 10, opacity: 0.8 }}
               >
-                治理·合规·风险
+                {t('devtools.panels.v57Governance.sublabel')}
               </Typography>
             </Box>
           </Button>
         </Tooltip>
-        <Tooltip title='V57.0 AI 自动化'>
+        <Tooltip title={t('devtools.panels.v57Automation.tooltip')}>
           <Button
             variant='contained'
             size='small'
@@ -759,12 +761,12 @@ const MicroFrontendDevTools: React.FC = () => {
                 variant='caption'
                 sx={{ fontSize: 10, opacity: 0.8 }}
               >
-                测试·CI·质量
+                {t('devtools.panels.v57Automation.sublabel')}
               </Typography>
             </Box>
           </Button>
         </Tooltip>
-        <Tooltip title='V58.0 AI UX 智能体验'>
+        <Tooltip title={t('devtools.panels.v58Ux.tooltip')}>
           <Button
             variant='contained'
             size='small'
@@ -791,12 +793,12 @@ const MicroFrontendDevTools: React.FC = () => {
                 variant='caption'
                 sx={{ fontSize: 10, opacity: 0.8 }}
               >
-                智能·自适应·情感
+                {t('devtools.panels.v58Ux.sublabel')}
               </Typography>
             </Box>
           </Button>
         </Tooltip>
-        <Tooltip title='V58.0 AI 演进'>
+        <Tooltip title={t('devtools.panels.v58Evolution.tooltip')}>
           <Button
             variant='contained'
             size='small'
@@ -823,12 +825,12 @@ const MicroFrontendDevTools: React.FC = () => {
                 variant='caption'
                 sx={{ fontSize: 10, opacity: 0.8 }}
               >
-                模型·AB·安全
+                {t('devtools.panels.v58Evolution.sublabel')}
               </Typography>
             </Box>
           </Button>
         </Tooltip>
-        <Tooltip title='V59.0 AI DevEx 智能开发体验'>
+        <Tooltip title={t('devtools.panels.v59DevEx.tooltip')}>
           <Button
             variant='contained'
             size='small'
@@ -855,12 +857,12 @@ const MicroFrontendDevTools: React.FC = () => {
                 variant='caption'
                 sx={{ fontSize: 10, opacity: 0.8 }}
               >
-                智能调试·性能·重构
+                {t('devtools.panels.v59DevEx.sublabel')}
               </Typography>
             </Box>
           </Button>
         </Tooltip>
-        <Tooltip title='V59.0 AI 安全'>
+        <Tooltip title={t('devtools.panels.v59Security.tooltip')}>
           <Button
             variant='contained'
             size='small'
@@ -887,12 +889,12 @@ const MicroFrontendDevTools: React.FC = () => {
                 variant='caption'
                 sx={{ fontSize: 10, opacity: 0.8 }}
               >
-                审计·鲁棒·隐私
+                {t('devtools.panels.v59Security.sublabel')}
               </Typography>
             </Box>
           </Button>
         </Tooltip>
-        <Tooltip title='V60.0 AI 伦理'>
+        <Tooltip title={t('devtools.panels.v60Ethics.tooltip')}>
           <Button
             variant='contained'
             size='small'
@@ -919,12 +921,12 @@ const MicroFrontendDevTools: React.FC = () => {
                 variant='caption'
                 sx={{ fontSize: 10, opacity: 0.8 }}
               >
-                偏见·公平·可解释
+                {t('devtools.panels.v60Ethics.sublabel')}
               </Typography>
             </Box>
           </Button>
         </Tooltip>
-        <Tooltip title='V60.0 AI Quality'>
+        <Tooltip title={t('devtools.panels.v60Quality.tooltip')}>
           <Button
             variant='contained'
             size='small'
@@ -951,7 +953,7 @@ const MicroFrontendDevTools: React.FC = () => {
                 variant='caption'
                 sx={{ fontSize: 10, opacity: 0.8 }}
               >
-                测试·性能·UX
+                {t('devtools.panels.v60Quality.sublabel')}
               </Typography>
             </Box>
           </Button>

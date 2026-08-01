@@ -59,7 +59,7 @@ export const notificationSchema: EntitySchema = {
         ],
       },
       listWidth: 100,
-      renderCell: (row) => TYPE_LABELS[row.type as NotificationType] || String(row.type ?? ''),
+      renderCell: (row: Record<string, unknown>) => TYPE_LABELS[row.type as NotificationType] || String(row.type ?? ''),
     },
     {
       name: 'priority',

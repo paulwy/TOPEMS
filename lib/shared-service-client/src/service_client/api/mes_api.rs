@@ -16,16 +16,10 @@ define_service_api!(
 
 impl TypedServiceClient<MesApi> {
     /// 获取指定操作员今日的生产合格品产量汇总（good_quantity 之和）。
-    pub async fn get_today_production_output(
-        &self,
-        operator: &str,
-    ) -> ServiceClientResult<i64> {
+    pub async fn get_today_production_output(&self, operator: &str) -> ServiceClientResult<i64> {
         let path = format!("/work-reports/today-output?operator={}", operator);
         let resp: serde_json::Value = self.get(&self.build_path(&path)).await?;
-        let output = resp
-            .get("output")
-            .and_then(|v| v.as_i64())
-            .unwrap_or(0);
+        let output = resp.get("output").and_then(|v| v.as_i64()).unwrap_or(0);
         Ok(output)
     }
 
@@ -77,7 +71,10 @@ impl TypedServiceClient<MesApi> {
     }
 
     /// 获取质量追溯
-    pub async fn get_quality_traceability(&self, batch_no: &str) -> ServiceClientResult<serde_json::Value> {
+    pub async fn get_quality_traceability(
+        &self,
+        batch_no: &str,
+    ) -> ServiceClientResult<serde_json::Value> {
         let path = format!("/quality-traceability/{}", batch_no);
         self.get(&self.build_path(&path)).await
     }

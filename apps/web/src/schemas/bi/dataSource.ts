@@ -76,7 +76,7 @@ const dataSourceFields: SchemaField[] = [
         label: String(row.type ?? ''),
       };
       return React.createElement(Chip, {
-        icon: React.createElement(Typography, { component: 'span' }, cfg.icon),
+        icon: React.createElement('span', null, cfg.icon),
         label: cfg.label,
         size: 'small',
         variant: 'outlined',

@@ -1,8 +1,5 @@
-use topems_shared_core::config::CacheConfig;
-use topems_shared_core::error::TopemsError;
 use crate::event::{CacheInvalidatedPayload, RabbitMqPublisher};
 use crate::redis::{CacheService, RedisCacheService};
-use topems_shared_core::error::Result;
 use async_trait::async_trait;
 use parking_lot::RwLock;
 use serde::{Deserialize, Serialize};
@@ -10,6 +7,9 @@ use std::collections::HashMap;
 use std::sync::Arc;
 use std::time::{Duration, Instant};
 use tokio::task;
+use topems_shared_core::config::CacheConfig;
+use topems_shared_core::error::Result;
+use topems_shared_core::error::TopemsError;
 use tracing::{debug, info, warn};
 
 #[derive(Debug, Clone)]

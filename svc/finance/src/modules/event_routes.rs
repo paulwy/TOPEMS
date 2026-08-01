@@ -111,9 +111,7 @@ async fn list_handlers() -> Json<ApiResponse<HandlersResponse>> {
     ))
 }
 
-async fn route_event(
-    Json(req): Json<RouteEventRequest>,
-) -> Json<ApiResponse<RouteEventResponse>> {
+async fn route_event(Json(req): Json<RouteEventRequest>) -> Json<ApiResponse<RouteEventResponse>> {
     let pipeline = get_event_pipeline();
     let results = pipeline
         .get_router()
@@ -156,9 +154,7 @@ async fn get_saga(Path(saga_id): Path<String>) -> Json<ApiResponse<SagaInstance>
     }
 }
 
-async fn start_saga(
-    Json(req): Json<StartSagaRequest>,
-) -> Json<ApiResponse<StartSagaResponse>> {
+async fn start_saga(Json(req): Json<StartSagaRequest>) -> Json<ApiResponse<StartSagaResponse>> {
     let pipeline = get_event_pipeline();
     match pipeline
         .get_saga_coordinator()
@@ -167,10 +163,7 @@ async fn start_saga(
     {
         Ok(saga_id) => {
             // 立即执行（内存模拟）
-            let _ = pipeline
-                .get_saga_coordinator()
-                .execute_saga(&saga_id)
-                .await;
+            let _ = pipeline.get_saga_coordinator().execute_saga(&saga_id).await;
             let status = pipeline
                 .get_saga_coordinator()
                 .get_saga(&saga_id)
@@ -186,9 +179,7 @@ async fn start_saga(
     }
 }
 
-async fn compensate_saga(
-    Path(saga_id): Path<String>,
-) -> Json<ApiResponse<CompensateSagaResponse>> {
+async fn compensate_saga(Path(saga_id): Path<String>) -> Json<ApiResponse<CompensateSagaResponse>> {
     let pipeline = get_event_pipeline();
     match pipeline
         .get_saga_coordinator()

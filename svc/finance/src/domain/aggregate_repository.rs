@@ -98,7 +98,11 @@ impl<T: EventStore> VoucherEventSourcedRepository<T> {
         }
     }
 
-    async fn save_snapshot_if_needed(&self, aggregate: &VoucherAggregate, version: u64) -> Result<(), String> {
+    async fn save_snapshot_if_needed(
+        &self,
+        aggregate: &VoucherAggregate,
+        version: u64,
+    ) -> Result<(), String> {
         if version % self.snapshot_threshold == 0 && version > 0 {
             let state = serde_json::to_value(aggregate)
                 .map_err(|e| format!("Failed to serialize snapshot: {}", e))?;
@@ -128,18 +132,15 @@ impl<T: EventStore + Send + Sync> EventSourcedRepository<VoucherAggregate>
         aggregate: &mut VoucherAggregate,
         metadata: Option<EventMetadata>,
     ) -> Result<(), String> {
-        let current_version = self.event_store.get_aggregate_version(&aggregate.id).await?;
+        let current_version = self
+            .event_store
+            .get_aggregate_version(&aggregate.id)
+            .await?;
 
         let events = vec![];
         let records = self
             .event_store
-            .append_events(
-                &aggregate.id,
-                "Voucher",
-                &events,
-                current_version,
-                metadata,
-            )
+            .append_events(&aggregate.id, "Voucher", &events, current_version, metadata)
             .await?;
 
         let new_version = current_version + records.len() as u64;
@@ -216,13 +217,12 @@ impl<T: EventStore> ReceivableEventSourcedRepository<T> {
             FinanceDomainEvent::ReceivableSettled(e) => {
                 aggregate.receivable.id = e.receivable_id.clone();
                 aggregate.receivable.settled_amount += e.settled_amount;
-                aggregate.receivable.status = if aggregate.receivable.settled_amount
-                    >= aggregate.receivable.amount
-                {
-                    SettlementStatus::Settled
-                } else {
-                    SettlementStatus::PartiallySettled
-                };
+                aggregate.receivable.status =
+                    if aggregate.receivable.settled_amount >= aggregate.receivable.amount {
+                        SettlementStatus::Settled
+                    } else {
+                        SettlementStatus::PartiallySettled
+                    };
             }
             FinanceDomainEvent::AgingCalculated(e) => {
                 if e.entity_type == "receivable" {
@@ -267,7 +267,10 @@ impl<T: EventStore + Send + Sync> EventSourcedRepository<ReceivableAggregate>
         aggregate: &mut ReceivableAggregate,
         metadata: Option<EventMetadata>,
     ) -> Result<(), String> {
-        let current_version = self.event_store.get_aggregate_version(&aggregate.receivable.id).await?;
+        let current_version = self
+            .event_store
+            .get_aggregate_version(&aggregate.receivable.id)
+            .await?;
 
         let events = vec![];
         let records = self
@@ -355,13 +358,12 @@ impl<T: EventStore> PayableEventSourcedRepository<T> {
             FinanceDomainEvent::PayableSettled(e) => {
                 aggregate.payable.id = e.payable_id.clone();
                 aggregate.payable.settled_amount += e.settled_amount;
-                aggregate.payable.status = if aggregate.payable.settled_amount
-                    >= aggregate.payable.amount
-                {
-                    SettlementStatus::Settled
-                } else {
-                    SettlementStatus::PartiallySettled
-                };
+                aggregate.payable.status =
+                    if aggregate.payable.settled_amount >= aggregate.payable.amount {
+                        SettlementStatus::Settled
+                    } else {
+                        SettlementStatus::PartiallySettled
+                    };
             }
             FinanceDomainEvent::AgingCalculated(e) => {
                 if e.entity_type == "payable" {

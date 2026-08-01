@@ -85,11 +85,9 @@ async fn main() -> anyhow::Result<()> {
     let db = Database::new(&database_url).await?;
     tracing::info!("✅ 数据库连接成功");
 
-    if let Err(e) = event_handlers::start_event_subscribers(
-        db.pool().clone(),
-        ctx.event_publisher.clone(),
-    )
-    .await
+    if let Err(e) =
+        event_handlers::start_event_subscribers(db.pool().clone(), ctx.event_publisher.clone())
+            .await
     {
         tracing::warn!("⚠️ AI 事件订阅者启动失败: {}", e);
     }
@@ -185,8 +183,11 @@ async fn main() -> anyhow::Result<()> {
         api_key: api_key.clone(),
         model: model.clone(),
     };
-    let analysis_service =
-        AnalysisService::new(vector_service.db().clone(), http_client.clone(), analysis_config);
+    let analysis_service = AnalysisService::new(
+        vector_service.db().clone(),
+        http_client.clone(),
+        analysis_config,
+    );
 
     // 初始化静态存储（向后兼容）
     let docs = load_documents_from_dir(DOCS_DIR).await;
@@ -249,7 +250,10 @@ async fn main() -> anyhow::Result<()> {
         modules::ai_plugin::auto_register_to_core(core_url.as_deref()).await;
     });
 
-    tracing::info!("✅ TOPEMS-AI 服务运行在 http://0.0.0.0:{}", resolve_port(&config));
+    tracing::info!(
+        "✅ TOPEMS-AI 服务运行在 http://0.0.0.0:{}",
+        resolve_port(&config)
+    );
     tracing::info!("🔒 认证保护已启用");
     tracing::info!("📊 向量库功能已启用，嵌入模型: {}", embedding_model);
     if use_ollama {

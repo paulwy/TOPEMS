@@ -43,7 +43,10 @@ pub fn create_routes(
         .merge(project_resource::create_routes(pool.clone()))
         .merge(project_expense::create_routes(pool.clone()))
         .merge(project_benefit::create_routes(pool.clone()))
-        .merge(project_approval::create_routes(pool.clone(), workflow_client.clone()))
+        .merge(project_approval::create_routes(
+            pool.clone(),
+            workflow_client.clone(),
+        ))
         .merge(project_type_config::create_routes(pool.clone()))
         .merge(service_integration::create_routes(pool.clone()))
         .merge(contract::create_routes(pool.clone()))

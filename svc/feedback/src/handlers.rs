@@ -1,6 +1,6 @@
 use axum::{
     extract::{Extension, Path, Query, State},
-    routing::{get, post, put, delete},
+    routing::{delete, get, post, put},
     Json, Router,
 };
 use serde::{Deserialize, Serialize};
@@ -297,5 +297,10 @@ pub async fn init_feedback_tables(pool: &PgPool) -> Result<(), sqlx::Error> {
 pub fn feedback_routes() -> Router<PgPool> {
     Router::new()
         .route("/feedbacks", post(create_feedback).get(list_feedbacks))
-        .route("/feedbacks/:id", get(get_feedback).put(response_feedback).delete(delete_feedback))
+        .route(
+            "/feedbacks/:id",
+            get(get_feedback)
+                .put(response_feedback)
+                .delete(delete_feedback),
+        )
 }

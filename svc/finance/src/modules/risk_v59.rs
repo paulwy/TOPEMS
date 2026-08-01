@@ -466,7 +466,9 @@ impl AntiFraudEngine {
         let mut total_score = 0.0f64;
 
         if let Some(ref did) = req.device_id {
-            let trust = Self::get_device_trust(pool, tenant_id, did).await.unwrap_or(1.0);
+            let trust = Self::get_device_trust(pool, tenant_id, did)
+                .await
+                .unwrap_or(1.0);
             if trust < 0.5 {
                 let signal = Self::create_signal(
                     pool,
@@ -733,10 +735,7 @@ impl AntiFraudEngine {
         .await
     }
 
-    pub async fn get_rules(
-        pool: &PgPool,
-        tenant_id: Uuid,
-    ) -> Result<Vec<FraudRule>, sqlx::Error> {
+    pub async fn get_rules(pool: &PgPool, tenant_id: Uuid) -> Result<Vec<FraudRule>, sqlx::Error> {
         sqlx::query_as(
             "SELECT id, name, signal_type, threshold, enabled FROM finance_v59_fraud_rules WHERE tenant_id = $1 ORDER BY signal_type, name",
         )
@@ -817,9 +816,7 @@ impl CreditScoringEngine {
             .and_then(|v| v.as_f64())
             .unwrap_or(0.5);
 
-        let score = (base_score
-            + payment_history * 100.0
-            - debt_ratio * 200.0
+        let score = (base_score + payment_history * 100.0 - debt_ratio * 200.0
             + income_stability * 80.0
             + history_length * 50.0)
             .clamp(300.0, 850.0) as i32;
@@ -952,11 +949,9 @@ impl CreditScoringEngine {
     ) -> Result<Vec<ScoreFactor>, sqlx::Error> {
         if let Some(ref eid) = entity_id {
             let profile = Self::get_credit_profile(pool, tenant_id, eid.clone()).await?;
-            let factors_json = profile
-                .factors
-                .unwrap_or_else(|| serde_json::json!([]));
-            let factors: Vec<ScoreFactor> = serde_json::from_value(factors_json)
-                .unwrap_or_default();
+            let factors_json = profile.factors.unwrap_or_else(|| serde_json::json!([]));
+            let factors: Vec<ScoreFactor> =
+                serde_json::from_value(factors_json).unwrap_or_default();
             return Ok(factors);
         }
 
@@ -1358,7 +1353,8 @@ impl StressTestEngine {
             let scenario_impact: f64 = results.iter().map(|r| r.impact_value).sum();
             total_impact += scenario_impact;
             pass_count += results.iter().filter(|r| r.pass_fail).count() as i64;
-            fail_count += results.len() as i64 - results.iter().filter(|r| r.pass_fail).count() as i64;
+            fail_count +=
+                results.len() as i64 - results.iter().filter(|r| r.pass_fail).count() as i64;
 
             summary_data.push(serde_json::json!({
                 "scenario_id": scenario.id,

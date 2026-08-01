@@ -57,10 +57,7 @@ async fn list_expenses(
 
     match rows {
         Ok(rows) => {
-            let items: Vec<Value> = rows
-                .iter()
-                .map(|r| row_to_expense_json(r))
-                .collect();
+            let items: Vec<Value> = rows.iter().map(|r| row_to_expense_json(r)).collect();
             let total: i64 = sqlx::query_scalar(
                 r#"SELECT COUNT(*) FROM expenses
                    WHERE ($1::text IS NULL OR expense_number ILIKE $1 OR applicant_name ILIKE $1)
@@ -90,7 +87,10 @@ async fn create_expense(
 ) -> Json<ApiResponse<Value>> {
     let id = Uuid::new_v4();
     let now = Utc::now();
-    let expense_number = req.get("expense_number").and_then(|v| v.as_str()).unwrap_or("");
+    let expense_number = req
+        .get("expense_number")
+        .and_then(|v| v.as_str())
+        .unwrap_or("");
     if expense_number.is_empty() {
         return Json(ApiResponse::error(400, "报销编号不能为空"));
     }
@@ -107,19 +107,39 @@ async fn create_expense(
     .bind(id)
     .bind(expense_number)
     .bind(req.get("applicant_name").and_then(|v| v.as_str()))
-    .bind(req.get("department_id").and_then(|v| v.as_str()).and_then(|s| Uuid::parse_str(s).ok()))
+    .bind(
+        req.get("department_id")
+            .and_then(|v| v.as_str())
+            .and_then(|s| Uuid::parse_str(s).ok()),
+    )
     .bind(req.get("expense_type").and_then(|v| v.as_str()))
     .bind(req.get("amount").and_then(|v| v.as_f64()).unwrap_or(0.0))
     .bind(req.get("description").and_then(|v| v.as_str()))
-    .bind(req.get("expense_date").and_then(|v| v.as_str()).and_then(|s| chrono::DateTime::parse_from_rfc3339(s).ok().map(|d| d.with_timezone(&Utc))))
-    .bind(req.get("receipt_count").and_then(|v| v.as_i64()).map(|i| i as i32).unwrap_or(0))
+    .bind(
+        req.get("expense_date")
+            .and_then(|v| v.as_str())
+            .and_then(|s| {
+                chrono::DateTime::parse_from_rfc3339(s)
+                    .ok()
+                    .map(|d| d.with_timezone(&Utc))
+            }),
+    )
+    .bind(
+        req.get("receipt_count")
+            .and_then(|v| v.as_i64())
+            .map(|i| i as i32)
+            .unwrap_or(0),
+    )
     .bind(now)
     .bind(now)
     .fetch_one(&state.pool)
     .await;
 
     match result {
-        Ok(row) => Json(ApiResponse::success(row_to_expense_json(&row), "费用报销创建成功")),
+        Ok(row) => Json(ApiResponse::success(
+            row_to_expense_json(&row),
+            "费用报销创建成功",
+        )),
         Err(e) => {
             tracing::error!("创建费用报销失败: {}", e);
             Json(ApiResponse::error(500, "费用报销创建失败"))
@@ -143,7 +163,10 @@ async fn get_expense(
     .await;
 
     match result {
-        Ok(Some(row)) => Json(ApiResponse::success(row_to_expense_json(&row), "获取费用报销成功")),
+        Ok(Some(row)) => Json(ApiResponse::success(
+            row_to_expense_json(&row),
+            "获取费用报销成功",
+        )),
         Ok(None) => Json(ApiResponse::error(404, "费用报销不存在")),
         Err(e) => {
             tracing::error!("获取费用报销失败: {}", e);
@@ -171,22 +194,66 @@ async fn update_expense(
     )
     .bind(id)
     .bind(req.get("applicant_name").and_then(|v| v.as_str()))
-    .bind(req.get("department_id").and_then(|v| v.as_str()).and_then(|s| Uuid::parse_str(s).ok()))
+    .bind(
+        req.get("department_id")
+            .and_then(|v| v.as_str())
+            .and_then(|s| Uuid::parse_str(s).ok()),
+    )
     .bind(req.get("expense_type").and_then(|v| v.as_str()))
     .bind(req.get("amount").and_then(|v| v.as_f64()).unwrap_or(0.0))
     .bind(req.get("description").and_then(|v| v.as_str()))
-    .bind(req.get("expense_date").and_then(|v| v.as_str()).and_then(|s| chrono::DateTime::parse_from_rfc3339(s).ok().map(|d| d.with_timezone(&Utc))))
-    .bind(req.get("receipt_count").and_then(|v| v.as_i64()).map(|i| i as i32).unwrap_or(0))
-    .bind(req.get("status").and_then(|v| v.as_str()).unwrap_or("pending"))
-    .bind(req.get("approver_id").and_then(|v| v.as_str()).and_then(|s| Uuid::parse_str(s).ok()))
-    .bind(req.get("approved_at").and_then(|v| v.as_str()).and_then(|s| chrono::DateTime::parse_from_rfc3339(s).ok().map(|d| d.with_timezone(&Utc))))
-    .bind(req.get("reimbursed_at").and_then(|v| v.as_str()).and_then(|s| chrono::DateTime::parse_from_rfc3339(s).ok().map(|d| d.with_timezone(&Utc))))
+    .bind(
+        req.get("expense_date")
+            .and_then(|v| v.as_str())
+            .and_then(|s| {
+                chrono::DateTime::parse_from_rfc3339(s)
+                    .ok()
+                    .map(|d| d.with_timezone(&Utc))
+            }),
+    )
+    .bind(
+        req.get("receipt_count")
+            .and_then(|v| v.as_i64())
+            .map(|i| i as i32)
+            .unwrap_or(0),
+    )
+    .bind(
+        req.get("status")
+            .and_then(|v| v.as_str())
+            .unwrap_or("pending"),
+    )
+    .bind(
+        req.get("approver_id")
+            .and_then(|v| v.as_str())
+            .and_then(|s| Uuid::parse_str(s).ok()),
+    )
+    .bind(
+        req.get("approved_at")
+            .and_then(|v| v.as_str())
+            .and_then(|s| {
+                chrono::DateTime::parse_from_rfc3339(s)
+                    .ok()
+                    .map(|d| d.with_timezone(&Utc))
+            }),
+    )
+    .bind(
+        req.get("reimbursed_at")
+            .and_then(|v| v.as_str())
+            .and_then(|s| {
+                chrono::DateTime::parse_from_rfc3339(s)
+                    .ok()
+                    .map(|d| d.with_timezone(&Utc))
+            }),
+    )
     .bind(now)
     .fetch_one(&state.pool)
     .await;
 
     match result {
-        Ok(row) => Json(ApiResponse::success(row_to_expense_json(&row), "费用报销更新成功")),
+        Ok(row) => Json(ApiResponse::success(
+            row_to_expense_json(&row),
+            "费用报销更新成功",
+        )),
         Err(e) => {
             tracing::error!("更新费用报销失败: {}", e);
             Json(ApiResponse::error(500, "费用报销更新失败"))
@@ -241,10 +308,11 @@ async fn list_budgets(
     match rows {
         Ok(rows) => {
             let items: Vec<Value> = rows.iter().map(|r| row_to_budget_json(r)).collect();
-            let total: i64 = sqlx::query_scalar("SELECT COUNT(*) FROM budgets WHERE deleted_at IS NULL")
-                .fetch_one(&state.pool)
-                .await
-                .unwrap_or(0);
+            let total: i64 =
+                sqlx::query_scalar("SELECT COUNT(*) FROM budgets WHERE deleted_at IS NULL")
+                    .fetch_one(&state.pool)
+                    .await
+                    .unwrap_or(0);
             Json(ApiResponse::success(
                 PaginatedResponse::new(items, total, page, page_size),
                 "获取预算列表成功",
@@ -264,7 +332,10 @@ async fn create_budget(
 ) -> Json<ApiResponse<Value>> {
     let id = Uuid::new_v4();
     let now = Utc::now();
-    let fiscal_year = req.get("fiscal_year").and_then(|v| v.as_str()).unwrap_or("");
+    let fiscal_year = req
+        .get("fiscal_year")
+        .and_then(|v| v.as_str())
+        .unwrap_or("");
     let total_budget: rust_decimal::Decimal = req
         .get("total_budget")
         .and_then(|v| v.as_str())
@@ -288,8 +359,16 @@ async fn create_budget(
                      created_at, updated_at, deleted_at"#,
     )
     .bind(id)
-    .bind(req.get("organization_id").and_then(|v| v.as_str()).and_then(|s| Uuid::parse_str(s).ok()))
-    .bind(req.get("department_id").and_then(|v| v.as_str()).and_then(|s| Uuid::parse_str(s).ok()))
+    .bind(
+        req.get("organization_id")
+            .and_then(|v| v.as_str())
+            .and_then(|s| Uuid::parse_str(s).ok()),
+    )
+    .bind(
+        req.get("department_id")
+            .and_then(|v| v.as_str())
+            .and_then(|s| Uuid::parse_str(s).ok()),
+    )
     .bind(req.get("budget_type").and_then(|v| v.as_str()))
     .bind(fiscal_year)
     .bind(total_budget)
@@ -302,7 +381,10 @@ async fn create_budget(
     .await;
 
     match result {
-        Ok(row) => Json(ApiResponse::success(row_to_budget_json(&row), "预算创建成功")),
+        Ok(row) => Json(ApiResponse::success(
+            row_to_budget_json(&row),
+            "预算创建成功",
+        )),
         Err(e) => {
             tracing::error!("创建预算失败: {}", e);
             Json(ApiResponse::error(500, "预算创建失败"))
@@ -326,7 +408,10 @@ async fn get_budget(
     .await;
 
     match result {
-        Ok(Some(row)) => Json(ApiResponse::success(row_to_budget_json(&row), "获取预算成功")),
+        Ok(Some(row)) => Json(ApiResponse::success(
+            row_to_budget_json(&row),
+            "获取预算成功",
+        )),
         Ok(None) => Json(ApiResponse::error(404, "预算不存在")),
         Err(e) => {
             tracing::error!("获取预算失败: {}", e);
@@ -370,20 +455,35 @@ async fn update_budget(
                      created_at, updated_at, deleted_at"#,
     )
     .bind(id)
-    .bind(req.get("department_id").and_then(|v| v.as_str()).and_then(|s| Uuid::parse_str(s).ok()))
+    .bind(
+        req.get("department_id")
+            .and_then(|v| v.as_str())
+            .and_then(|s| Uuid::parse_str(s).ok()),
+    )
     .bind(req.get("budget_type").and_then(|v| v.as_str()))
-    .bind(req.get("fiscal_year").and_then(|v| v.as_str()).unwrap_or(""))
+    .bind(
+        req.get("fiscal_year")
+            .and_then(|v| v.as_str())
+            .unwrap_or(""),
+    )
     .bind(total_budget)
     .bind(used_amount)
     .bind(remaining_amount)
     .bind(usage_rate)
-    .bind(req.get("status").and_then(|v| v.as_str()).unwrap_or("active"))
+    .bind(
+        req.get("status")
+            .and_then(|v| v.as_str())
+            .unwrap_or("active"),
+    )
     .bind(now)
     .fetch_one(&state.pool)
     .await;
 
     match result {
-        Ok(row) => Json(ApiResponse::success(row_to_budget_json(&row), "预算更新成功")),
+        Ok(row) => Json(ApiResponse::success(
+            row_to_budget_json(&row),
+            "预算更新成功",
+        )),
         Err(e) => {
             tracing::error!("更新预算失败: {}", e);
             Json(ApiResponse::error(500, "预算更新失败"))
@@ -397,11 +497,13 @@ async fn delete_budget(
     Path(id): Path<Uuid>,
 ) -> Json<ApiResponse<String>> {
     let now = Utc::now();
-    let result = sqlx::query("UPDATE budgets SET deleted_at = $2, updated_at = $2 WHERE id = $1 AND deleted_at IS NULL")
-        .bind(id)
-        .bind(now)
-        .execute(&state.pool)
-        .await;
+    let result = sqlx::query(
+        "UPDATE budgets SET deleted_at = $2, updated_at = $2 WHERE id = $1 AND deleted_at IS NULL",
+    )
+    .bind(id)
+    .bind(now)
+    .execute(&state.pool)
+    .await;
     match result {
         Ok(r) if r.rows_affected() > 0 => {
             Json(ApiResponse::success("".to_string(), "预算删除成功"))
@@ -475,7 +577,10 @@ async fn create_receivable(
 ) -> Json<ApiResponse<Value>> {
     let id = Uuid::new_v4();
     let now = Utc::now();
-    let invoice_number = req.get("invoice_number").and_then(|v| v.as_str()).unwrap_or("");
+    let invoice_number = req
+        .get("invoice_number")
+        .and_then(|v| v.as_str())
+        .unwrap_or("");
     if invoice_number.is_empty() {
         return Json(ApiResponse::error(400, "发票编号不能为空"));
     }
@@ -492,19 +597,42 @@ async fn create_receivable(
     .bind(id)
     .bind(invoice_number)
     .bind(req.get("customer_name").and_then(|v| v.as_str()))
-    .bind(req.get("project_id").and_then(|v| v.as_str()).and_then(|s| Uuid::parse_str(s).ok()))
-    .bind(req.get("contract_id").and_then(|v| v.as_str()).and_then(|s| Uuid::parse_str(s).ok()))
+    .bind(
+        req.get("project_id")
+            .and_then(|v| v.as_str())
+            .and_then(|s| Uuid::parse_str(s).ok()),
+    )
+    .bind(
+        req.get("contract_id")
+            .and_then(|v| v.as_str())
+            .and_then(|s| Uuid::parse_str(s).ok()),
+    )
     .bind(req.get("project_name").and_then(|v| v.as_str()))
     .bind(req.get("amount").and_then(|v| v.as_f64()).unwrap_or(0.0))
-    .bind(req.get("invoice_date").and_then(|v| v.as_str()).and_then(|s| chrono::DateTime::parse_from_rfc3339(s).ok().map(|d| d.with_timezone(&Utc))))
-    .bind(req.get("due_date").and_then(|v| v.as_str()).and_then(|s| chrono::DateTime::parse_from_rfc3339(s).ok().map(|d| d.with_timezone(&Utc))))
+    .bind(
+        req.get("invoice_date")
+            .and_then(|v| v.as_str())
+            .and_then(|s| {
+                chrono::DateTime::parse_from_rfc3339(s)
+                    .ok()
+                    .map(|d| d.with_timezone(&Utc))
+            }),
+    )
+    .bind(req.get("due_date").and_then(|v| v.as_str()).and_then(|s| {
+        chrono::DateTime::parse_from_rfc3339(s)
+            .ok()
+            .map(|d| d.with_timezone(&Utc))
+    }))
     .bind(now)
     .bind(now)
     .fetch_one(&state.pool)
     .await;
 
     match result {
-        Ok(row) => Json(ApiResponse::success(row_to_receivable_json(&row), "应收创建成功")),
+        Ok(row) => Json(ApiResponse::success(
+            row_to_receivable_json(&row),
+            "应收创建成功",
+        )),
         Err(e) => {
             tracing::error!("创建应收失败: {}", e);
             Json(ApiResponse::error(500, "创建应收失败"))
@@ -528,7 +656,10 @@ async fn get_receivable(
     .await;
 
     match result {
-        Ok(Some(row)) => Json(ApiResponse::success(row_to_receivable_json(&row), "获取应收成功")),
+        Ok(Some(row)) => Json(ApiResponse::success(
+            row_to_receivable_json(&row),
+            "获取应收成功",
+        )),
         Ok(None) => Json(ApiResponse::error(404, "应收不存在")),
         Err(e) => {
             tracing::error!("获取应收失败: {}", e);
@@ -558,17 +689,40 @@ async fn update_receivable(
     .bind(req.get("customer_name").and_then(|v| v.as_str()))
     .bind(req.get("project_name").and_then(|v| v.as_str()))
     .bind(req.get("amount").and_then(|v| v.as_f64()).unwrap_or(0.0))
-    .bind(req.get("invoice_date").and_then(|v| v.as_str()).and_then(|s| chrono::DateTime::parse_from_rfc3339(s).ok().map(|d| d.with_timezone(&Utc))))
-    .bind(req.get("due_date").and_then(|v| v.as_str()).and_then(|s| chrono::DateTime::parse_from_rfc3339(s).ok().map(|d| d.with_timezone(&Utc))))
-    .bind(req.get("status").and_then(|v| v.as_str()).unwrap_or("unpaid"))
-    .bind(req.get("received_amount").and_then(|v| v.as_f64()).unwrap_or(0.0))
+    .bind(
+        req.get("invoice_date")
+            .and_then(|v| v.as_str())
+            .and_then(|s| {
+                chrono::DateTime::parse_from_rfc3339(s)
+                    .ok()
+                    .map(|d| d.with_timezone(&Utc))
+            }),
+    )
+    .bind(req.get("due_date").and_then(|v| v.as_str()).and_then(|s| {
+        chrono::DateTime::parse_from_rfc3339(s)
+            .ok()
+            .map(|d| d.with_timezone(&Utc))
+    }))
+    .bind(
+        req.get("status")
+            .and_then(|v| v.as_str())
+            .unwrap_or("unpaid"),
+    )
+    .bind(
+        req.get("received_amount")
+            .and_then(|v| v.as_f64())
+            .unwrap_or(0.0),
+    )
     .bind(req.get("payment_schedule"))
     .bind(now)
     .fetch_one(&state.pool)
     .await;
 
     match result {
-        Ok(row) => Json(ApiResponse::success(row_to_receivable_json(&row), "应收更新成功")),
+        Ok(row) => Json(ApiResponse::success(
+            row_to_receivable_json(&row),
+            "应收更新成功",
+        )),
         Err(e) => {
             tracing::error!("更新应收失败: {}", e);
             Json(ApiResponse::error(500, "应收更新失败"))
@@ -658,7 +812,10 @@ async fn create_payable(
 ) -> Json<ApiResponse<Value>> {
     let id = Uuid::new_v4();
     let now = Utc::now();
-    let invoice_number = req.get("invoice_number").and_then(|v| v.as_str()).unwrap_or("");
+    let invoice_number = req
+        .get("invoice_number")
+        .and_then(|v| v.as_str())
+        .unwrap_or("");
     if invoice_number.is_empty() {
         return Json(ApiResponse::error(400, "发票编号不能为空"));
     }
@@ -675,19 +832,42 @@ async fn create_payable(
     .bind(id)
     .bind(invoice_number)
     .bind(req.get("supplier_name").and_then(|v| v.as_str()))
-    .bind(req.get("project_id").and_then(|v| v.as_str()).and_then(|s| Uuid::parse_str(s).ok()))
-    .bind(req.get("contract_id").and_then(|v| v.as_str()).and_then(|s| Uuid::parse_str(s).ok()))
+    .bind(
+        req.get("project_id")
+            .and_then(|v| v.as_str())
+            .and_then(|s| Uuid::parse_str(s).ok()),
+    )
+    .bind(
+        req.get("contract_id")
+            .and_then(|v| v.as_str())
+            .and_then(|s| Uuid::parse_str(s).ok()),
+    )
     .bind(req.get("category").and_then(|v| v.as_str()))
     .bind(req.get("amount").and_then(|v| v.as_f64()).unwrap_or(0.0))
-    .bind(req.get("invoice_date").and_then(|v| v.as_str()).and_then(|s| chrono::DateTime::parse_from_rfc3339(s).ok().map(|d| d.with_timezone(&Utc))))
-    .bind(req.get("due_date").and_then(|v| v.as_str()).and_then(|s| chrono::DateTime::parse_from_rfc3339(s).ok().map(|d| d.with_timezone(&Utc))))
+    .bind(
+        req.get("invoice_date")
+            .and_then(|v| v.as_str())
+            .and_then(|s| {
+                chrono::DateTime::parse_from_rfc3339(s)
+                    .ok()
+                    .map(|d| d.with_timezone(&Utc))
+            }),
+    )
+    .bind(req.get("due_date").and_then(|v| v.as_str()).and_then(|s| {
+        chrono::DateTime::parse_from_rfc3339(s)
+            .ok()
+            .map(|d| d.with_timezone(&Utc))
+    }))
     .bind(now)
     .bind(now)
     .fetch_one(&state.pool)
     .await;
 
     match result {
-        Ok(row) => Json(ApiResponse::success(row_to_payable_json(&row), "应付创建成功")),
+        Ok(row) => Json(ApiResponse::success(
+            row_to_payable_json(&row),
+            "应付创建成功",
+        )),
         Err(e) => {
             tracing::error!("创建应付失败: {}", e);
             Json(ApiResponse::error(500, "创建应付失败"))
@@ -711,7 +891,10 @@ async fn get_payable(
     .await;
 
     match result {
-        Ok(Some(row)) => Json(ApiResponse::success(row_to_payable_json(&row), "获取应付成功")),
+        Ok(Some(row)) => Json(ApiResponse::success(
+            row_to_payable_json(&row),
+            "获取应付成功",
+        )),
         Ok(None) => Json(ApiResponse::error(404, "应付不存在")),
         Err(e) => {
             tracing::error!("获取应付失败: {}", e);
@@ -741,17 +924,40 @@ async fn update_payable(
     .bind(req.get("supplier_name").and_then(|v| v.as_str()))
     .bind(req.get("category").and_then(|v| v.as_str()))
     .bind(req.get("amount").and_then(|v| v.as_f64()).unwrap_or(0.0))
-    .bind(req.get("invoice_date").and_then(|v| v.as_str()).and_then(|s| chrono::DateTime::parse_from_rfc3339(s).ok().map(|d| d.with_timezone(&Utc))))
-    .bind(req.get("due_date").and_then(|v| v.as_str()).and_then(|s| chrono::DateTime::parse_from_rfc3339(s).ok().map(|d| d.with_timezone(&Utc))))
-    .bind(req.get("status").and_then(|v| v.as_str()).unwrap_or("unpaid"))
-    .bind(req.get("paid_amount").and_then(|v| v.as_f64()).unwrap_or(0.0))
+    .bind(
+        req.get("invoice_date")
+            .and_then(|v| v.as_str())
+            .and_then(|s| {
+                chrono::DateTime::parse_from_rfc3339(s)
+                    .ok()
+                    .map(|d| d.with_timezone(&Utc))
+            }),
+    )
+    .bind(req.get("due_date").and_then(|v| v.as_str()).and_then(|s| {
+        chrono::DateTime::parse_from_rfc3339(s)
+            .ok()
+            .map(|d| d.with_timezone(&Utc))
+    }))
+    .bind(
+        req.get("status")
+            .and_then(|v| v.as_str())
+            .unwrap_or("unpaid"),
+    )
+    .bind(
+        req.get("paid_amount")
+            .and_then(|v| v.as_f64())
+            .unwrap_or(0.0),
+    )
     .bind(req.get("payment_schedule"))
     .bind(now)
     .fetch_one(&state.pool)
     .await;
 
     match result {
-        Ok(row) => Json(ApiResponse::success(row_to_payable_json(&row), "应付更新成功")),
+        Ok(row) => Json(ApiResponse::success(
+            row_to_payable_json(&row),
+            "应付更新成功",
+        )),
         Err(e) => {
             tracing::error!("更新应付失败: {}", e);
             Json(ApiResponse::error(500, "应付更新失败"))
@@ -865,14 +1071,31 @@ pub fn create_routes() -> Router<AppState> {
     Router::new()
         // 费用报销
         .route("/expenses", get(list_expenses).post(create_expense))
-        .route("/expenses/{id}", get(get_expense).put(update_expense).delete(delete_expense))
+        .route(
+            "/expenses/{id}",
+            get(get_expense).put(update_expense).delete(delete_expense),
+        )
         // 预算
         .route("/budgets", get(list_budgets).post(create_budget))
-        .route("/budgets/{id}", get(get_budget).put(update_budget).delete(delete_budget))
+        .route(
+            "/budgets/{id}",
+            get(get_budget).put(update_budget).delete(delete_budget),
+        )
         // 应收
-        .route("/receivables", get(list_receivables).post(create_receivable))
-        .route("/receivables/{id}", get(get_receivable).put(update_receivable).delete(delete_receivable))
+        .route(
+            "/receivables",
+            get(list_receivables).post(create_receivable),
+        )
+        .route(
+            "/receivables/{id}",
+            get(get_receivable)
+                .put(update_receivable)
+                .delete(delete_receivable),
+        )
         // 应付
         .route("/payables", get(list_payables).post(create_payable))
-        .route("/payables/{id}", get(get_payable).put(update_payable).delete(delete_payable))
+        .route(
+            "/payables/{id}",
+            get(get_payable).put(update_payable).delete(delete_payable),
+        )
 }

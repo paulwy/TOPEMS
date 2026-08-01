@@ -1,8 +1,8 @@
-use topems_shared_core::error::TopemsError;
-use topems_shared_core::error::Result;
 use async_trait::async_trait;
 use serde::{Deserialize, Serialize};
 use std::path::Path;
+use topems_shared_core::error::Result;
+use topems_shared_core::error::TopemsError;
 
 #[derive(Debug, Clone)]
 pub struct StorageConfig {

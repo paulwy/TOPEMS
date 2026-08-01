@@ -304,10 +304,12 @@ export type {
 // OpenAPI 生成类型封装层（按模块命名空间导出，方便业务使用）
 export type {
   IamTypes,
+  HrmTypes,
   FinanceTypes,
   MasterDataTypes,
   QmsTypes,
   MesTypes,
+  WmsTypes,
   CommonTypes,
 } from './generated';
 

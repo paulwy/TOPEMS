@@ -30,7 +30,11 @@ async fn test_analyze_governance() {
     });
 
     let (status, resp) = ctx
-        .request("POST", &format!("{}/governance/analyze", BASE_PATH), Some(body))
+        .request(
+            "POST",
+            &format!("{}/governance/analyze", BASE_PATH),
+            Some(body),
+        )
         .await
         .expect("请求失败");
 
@@ -49,7 +53,11 @@ async fn test_get_suggestions() {
     let ctx = TestContext::new().await;
 
     let (status, resp) = ctx
-        .request("GET", &format!("{}/governance/suggestions", BASE_PATH), None)
+        .request(
+            "GET",
+            &format!("{}/governance/suggestions", BASE_PATH),
+            None,
+        )
         .await
         .expect("请求失败");
 
@@ -143,7 +151,11 @@ async fn test_match_entities() {
     });
 
     let (status, resp) = ctx
-        .request("POST", &format!("{}/matching/entities", BASE_PATH), Some(body))
+        .request(
+            "POST",
+            &format!("{}/matching/entities", BASE_PATH),
+            Some(body),
+        )
         .await
         .expect("请求失败");
 

@@ -121,12 +121,14 @@ async fn get_today_status(
             let has_check_in: bool = if user_id.is_some() {
                 row.get::<Option<String>, _>("check_in_time").is_some()
             } else {
-                row.get::<Option<chrono::DateTime<Utc>>, _>("check_in").is_some()
+                row.get::<Option<chrono::DateTime<Utc>>, _>("check_in")
+                    .is_some()
             };
             let has_check_out: bool = if user_id.is_some() {
                 row.get::<Option<String>, _>("check_out_time").is_some()
             } else {
-                row.get::<Option<chrono::DateTime<Utc>>, _>("check_out").is_some()
+                row.get::<Option<chrono::DateTime<Utc>>, _>("check_out")
+                    .is_some()
             };
 
             if has_check_out {

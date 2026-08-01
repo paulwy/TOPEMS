@@ -304,7 +304,11 @@ impl SagaCoordinator {
             Err(_) => return Vec::new(),
         };
         match status {
-            Some(s) => instances.iter().filter(|i| i.status == s).cloned().collect(),
+            Some(s) => instances
+                .iter()
+                .filter(|i| i.status == s)
+                .cloned()
+                .collect(),
             None => instances.iter().cloned().collect(),
         }
     }
@@ -331,10 +335,7 @@ impl SagaCoordinator {
     }
 
     pub fn definition_count(&self) -> usize {
-        self.definitions
-            .lock()
-            .map(|d| d.len())
-            .unwrap_or(0)
+        self.definitions.lock().map(|d| d.len()).unwrap_or(0)
     }
 
     fn persist(&self, instance: SagaInstance) {

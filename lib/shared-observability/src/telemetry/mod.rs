@@ -31,8 +31,8 @@ use tracing_subscriber::{
     fmt::Layer, layer::SubscriberExt, util::SubscriberInitExt, EnvFilter, Registry,
 };
 
-use topems_shared_core::logging::init_logging;
 use std::sync::Mutex;
+use topems_shared_core::logging::init_logging;
 
 static TRACER_PROVIDER: Mutex<Option<SdkTracerProvider>> = Mutex::new(None);
 

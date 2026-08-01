@@ -42,7 +42,10 @@ async fn test_create_quality_rule() {
         .expect("请求失败");
 
     assert_eq!(status, 200);
-    assert!(resp["success"].as_bool().unwrap_or(false), "响应 success 应为 true");
+    assert!(
+        resp["success"].as_bool().unwrap_or(false),
+        "响应 success 应为 true"
+    );
     assert!(resp["data"]["id"].is_string(), "应返回创建的规则 ID");
     assert_eq!(resp["data"]["name"], "集成测试-客户邮箱格式校验");
     assert_eq!(resp["data"]["entity_type"], "customer");
@@ -132,7 +135,11 @@ async fn test_update_quality_rule() {
     });
 
     let (status, resp) = ctx
-        .request("PUT", &format!("{}/rules/{}", V51_PREFIX, rule_id), Some(update_body))
+        .request(
+            "PUT",
+            &format!("{}/rules/{}", V51_PREFIX, rule_id),
+            Some(update_body),
+        )
         .await
         .expect("请求失败");
 

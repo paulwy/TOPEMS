@@ -22,7 +22,7 @@ use topems_shared::service_bootstrap::{
     bootstrap_service, build_application, create_health_state, create_standard_health_routes, run,
     ServiceConfig,
 };
-use topems_shared::service_client::{create_erp_client, create_workflow_client, create_wms_client};
+use topems_shared::service_client::{create_erp_client, create_wms_client, create_workflow_client};
 use topems_shared::{FieldEncryptionService, KeyManager};
 
 mod middleware;
@@ -85,10 +85,9 @@ async fn main() -> Result<()> {
         }
     };
 
-    let workflow_url = env::var("WORKFLOW_SERVICE_URL")
-        .unwrap_or_else(|_| "http://localhost:8000".to_string());
-    let workflow_client =
-        create_workflow_client().expect("工作流服务客户端初始化失败");
+    let workflow_url =
+        env::var("WORKFLOW_SERVICE_URL").unwrap_or_else(|_| "http://localhost:8000".to_string());
+    let workflow_client = create_workflow_client().expect("工作流服务客户端初始化失败");
     tracing::info!("🔗 工作流服务客户端初始化成功: {}", workflow_url);
 
     let api_state = ApiState {
@@ -110,7 +109,10 @@ async fn main() -> Result<()> {
     // 插件路由（需要 ApiState）
     let plugin_routes = Router::new()
         .route("/plugins/info", get(modules::crm_plugin::get_plugin_info))
-        .route("/plugins/health", get(modules::crm_plugin::plugin_health_check))
+        .route(
+            "/plugins/health",
+            get(modules::crm_plugin::plugin_health_check),
+        )
         .with_state(api_state.clone());
     let public_routes = create_standard_health_routes(health_state).merge(plugin_routes);
 

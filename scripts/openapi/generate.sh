@@ -110,7 +110,7 @@ EXTRACT=false
 
 # --extract 模式下通过 cargo test extract_openapi_spec 提取 spec 的服务列表。
 # 这些服务已在源码中实现了 extract_openapi_spec 测试（将 spec 写到 /tmp/topems-<svc>-openapi.json）。
-EXTRACT_SERVICES=("finance" "mes" "master-data" "qms")
+EXTRACT_SERVICES=("finance" "hrm" "mes" "master-data" "qms" "unified-core" "wms")
 
 print_help() {
   cat << 'EOF'
@@ -191,7 +191,12 @@ extract_specs() {
   rm -f /tmp/topems-*-openapi.json 2>/dev/null || true
 
   for svc in "${services[@]}"; do
-    local pkg="topems-${svc}"
+    # 默认 cargo 包名 = topems-<svc>；unified-core 例外（包名为 unified-core-service）
+    local pkg
+    case "${svc}" in
+      unified-core) pkg="unified-core-service" ;;
+      *) pkg="topems-${svc}" ;;
+    esac
     log_info "  ${pkg} — cargo test extract_openapi_spec"
     if cargo test -p "${pkg}" --bin "${pkg}" extract_openapi_spec -- --nocapture >/dev/null 2>&1; then
       local spec_file="/tmp/topems-${svc}-openapi.json"

@@ -1,0 +1,740 @@
+{
+  "voucher_mgmt": {
+    "voucher_type_short": {
+      "receipt": "Rec",
+      "payment": "Pay",
+      "transfer": "Trn",
+      "accounting": "Acc"
+    },
+    "voucher_type": {
+      "receipt": "Receipt Voucher",
+      "payment": "Payment Voucher",
+      "transfer": "Transfer Voucher",
+      "accounting": "Accounting Voucher"
+    },
+    "status": {
+      "all": "All",
+      "draft": "Draft",
+      "pending": "Pending",
+      "approved": "Approved",
+      "posted": "Posted",
+      "closed": "Closed",
+      "imported": "Imported"
+    },
+    "message": {
+      "success": "Success",
+      "error": "Error",
+      "failure": "Failed",
+      "tip": "Tip",
+      "voucher_created": "Voucher created successfully",
+      "operation_failed": "Operation failed",
+      "delete_success": "Deleted successfully",
+      "fill_required_fields": "Please fill in the required fields",
+      "add_voucher_items": "Please add voucher entries",
+      "unbalanced_voucher": "Debit and credit are not balanced, cannot create voucher",
+      "create_failed": "Create failed",
+      "voucher_audited": "Voucher audited successfully",
+      "audit_failed": "Audit failed",
+      "voucher_posted": "Voucher posted successfully",
+      "post_failed": "Post failed",
+      "delete_failed": "Delete failed",
+      "export_success": "Exported successfully",
+      "voucher_data_exported": "Voucher data has been exported",
+      "close_period_success": "Period closed successfully",
+      "period_closed": "This period has been closed",
+      "no_voucher_data": "No voucher data",
+      "click_to_add_items": "Click \"Add Entry\" to add voucher entries",
+      "confirm_delete": "Confirm Delete",
+      "confirm_delete_message": "Are you sure you want to delete this voucher? This action cannot be undone."
+    },
+    "label": {
+      "page_title": "Accounting Voucher Management",
+      "page_subtitle": "Voucher list, create, audit, post, and close period",
+      "import_voucher": "Import Voucher",
+      "export": "Export",
+      "close_period": "Close Period",
+      "add_voucher": "Add Voucher",
+      "total_vouchers": "Total Vouchers",
+      "search_placeholder": "Search voucher number or summary...",
+      "voucher_type": "Voucher Type",
+      "all_types": "All Types",
+      "period": "Period",
+      "all_periods": "All Periods",
+      "refresh": "Refresh",
+      "voucher_number": "Voucher No.",
+      "type": "Type",
+      "date": "Date",
+      "summary": "Summary",
+      "debit_amount": "Debit Amount",
+      "credit_amount": "Credit Amount",
+      "maker": "Maker",
+      "status": "Status",
+      "operation": "Action",
+      "view_detail": "View Detail",
+      "edit": "Edit",
+      "audit": "Audit",
+      "post": "Post",
+      "delete": "Delete",
+      "rows_per_page": "Rows per page",
+      "add_accounting_voucher": "Add Accounting Voucher",
+      "voucher_prefix": "Voucher Prefix",
+      "receipt_short_label": "Rec - Receipt Voucher",
+      "payment_short_label": "Pay - Payment Voucher",
+      "transfer_short_label": "Trn - Transfer Voucher",
+      "accounting_short_label": "Acc - Accounting Voucher",
+      "voucher_number_required": "Voucher No. *",
+      "voucher_number_placeholder": "e.g. 001",
+      "voucher_date_required": "Voucher Date *",
+      "period_required": "Period *",
+      "period_placeholder": "e.g. 2024-06",
+      "attachment_count": "Attachment Count",
+      "voucher_items": "Voucher Entries",
+      "add_entry": "Add Entry",
+      "line_number": "Line No.",
+      "subject": "Subject",
+      "debit_total": "Debit Total",
+      "credit_total": "Credit Total",
+      "balance_status": "Balance Status",
+      "balanced": "Balanced",
+      "unbalanced": "Unbalanced",
+      "save_voucher": "Save Voucher",
+      "voucher_detail": "Voucher Detail",
+      "voucher_date": "Voucher Date",
+      "checker": "Checker",
+      "subject_code": "Subject Code",
+      "subject_name": "Subject Name",
+      "debit": "Debit",
+      "credit": "Credit",
+      "cancel": "Cancel",
+      "close": "Close",
+      "select_subject": "Select Subject",
+      "voucher_summary": "Voucher Summary"
+    },
+    "period": {
+      "2024_01": "Jan 2024",
+      "2024_02": "Feb 2024",
+      "2024_03": "Mar 2024",
+      "2024_04": "Apr 2024",
+      "2024_05": "May 2024",
+      "2024_06": "Jun 2024"
+    }
+  },
+  "database": {
+    "mock": {
+      "backup_daily_full": "Daily scheduled full backup",
+      "backup_incremental": "Incremental backup",
+      "backup_monthly_full": "Monthly full backup",
+      "admin": "Administrator",
+      "manual_backup_failed": "Manual backup failed",
+      "current_user": "Current User",
+      "manual_backup": "Manual backup"
+    },
+    "message": {
+      "error": "Error",
+      "load_tables_failed": "Failed to load tables",
+      "load_table_structure_failed": "Failed to get table structure",
+      "backup_success": "Backup Successful",
+      "backup_completed": "Database backup completed",
+      "restoring": "Restoring",
+      "restore_started": "Database restore task has started, please wait",
+      "success": "Success",
+      "backup_deleted": "Backup file deleted",
+      "operation_failed": "Operation failed"
+    },
+    "status": {
+      "success": "Success",
+      "failed": "Failed",
+      "running": "Running"
+    },
+    "label": {
+      "page_title": "Database Management",
+      "page_subtitle": "Table list, structure view, backup and restore",
+      "refresh": "Refresh",
+      "data_backup": "Data Backup",
+      "backing_up": "Backing up database...",
+      "table_count": "Table Count",
+      "available_backups": "Available Backups",
+      "tables": "Tables",
+      "backup_management": "Backup Management",
+      "search_table": "Search table name...",
+      "sort": "Sort",
+      "default_sort": "Default Sort",
+      "sort_by_name": "By Name",
+      "sort_by_time": "By Updated Time",
+      "table_name": "Table Name",
+      "type": "Type",
+      "operation": "Action",
+      "no_tables": "No tables",
+      "view_structure": "View Structure",
+      "rows_per_page": "Rows per page",
+      "upload_backup": "Upload Backup",
+      "backup_now": "Backup Now",
+      "backup_name": "Backup Name",
+      "file_size": "File Size",
+      "status": "Status",
+      "created_by": "Created By",
+      "created_at": "Created At",
+      "remark": "Remark",
+      "no_backups": "No backup records",
+      "full_backup": "Full Backup",
+      "incremental_backup": "Incremental Backup",
+      "download": "Download",
+      "restore": "Restore",
+      "delete": "Delete",
+      "table_structure": "Table Structure - {{name}}",
+      "record_count": "Row Count",
+      "field_list": "Field List",
+      "field_name": "Field Name",
+      "length": "Length",
+      "nullable": "Nullable",
+      "default_value": "Default Value",
+      "description": "Description",
+      "yes": "Yes",
+      "no": "No",
+      "close": "Close",
+      "create_backup": "Create Data Backup",
+      "backup_warning": "A full backup of the current database will be performed, including all table structures and data. The backup process may take a few minutes, please be patient.",
+      "backup_type": "Backup Type",
+      "backup_remark": "Backup Remark",
+      "backup_remark_placeholder": "Optional, enter backup description",
+      "cancel": "Cancel",
+      "start_backup": "Start Backup",
+      "restore_confirm_title": "Data Restore Confirmation",
+      "restore_warning": "Warning: Data restore will overwrite the current database!",
+      "restore_warning_desc": "This action cannot be undone. It is recommended to back up the current data before performing the restore.",
+      "backup_to_restore": "Backup to Restore",
+      "confirm_restore": "Confirm Restore",
+      "confirm_delete": "Confirm Delete",
+      "confirm_delete_message": "Are you sure you want to delete this backup file? This action cannot be undone."
+    }
+  },
+  "dict": {
+    "category": {
+      "system_dict": "System Dictionary",
+      "iam_dict": "IAM Dictionary",
+      "workflow_dict": "Workflow Dictionary",
+      "hrm_dict": "HRM Dictionary",
+      "crm_dict": "CRM Dictionary",
+      "erp_dict": "ERP Dictionary",
+      "wms_dict": "WMS Dictionary",
+      "mes_dict": "MES Dictionary",
+      "common_dict": "Common Dictionary",
+      "notification_dict": "Notification Dictionary",
+      "audit_dict": "Audit Dictionary",
+      "business_dict": "Business Dictionary",
+      "basic_data": "Basic Data",
+      "custom_dict": "Custom Dictionary"
+    },
+    "message": {
+      "success": "Success",
+      "error": "Error",
+      "tip": "Tip",
+      "type_created": "Dictionary type created successfully",
+      "create_failed": "Create failed",
+      "type_updated": "Dictionary type updated successfully",
+      "update_failed": "Update failed",
+      "delete_success": "Deleted successfully",
+      "delete_failed": "Delete failed",
+      "fill_code_and_name": "Please fill in code and name",
+      "select_type_first": "Please select a dictionary type first"
+    },
+    "label": {
+      "page_title": "Dictionary Management",
+      "page_subtitle": "Manage system dictionary types and items",
+      "refresh": "Refresh",
+      "dict_type": "Dictionary Type",
+      "add_dict_type": "Add Dictionary Type",
+      "no_dict_types": "No dictionary types",
+      "edit": "Edit",
+      "delete": "Delete",
+      "manage_items": "Manage items of \"{{name}}\"",
+      "select_type_prompt": "Please select a dictionary type from the left",
+      "edit_dict_type": "Edit Dictionary Type",
+      "code": "Code",
+      "code_readonly": "Code cannot be modified",
+      "code_helper": "Unique identifier, cannot be modified after creation",
+      "name": "Name",
+      "category": "Category",
+      "description": "Description",
+      "cancel": "Cancel",
+      "save": "Save",
+      "confirm_delete": "Confirm Delete",
+      "confirm_delete_message": "Are you sure you want to delete dictionary type \"{{name}}\"? All associated items will also be deleted. This action cannot be undone."
+    }
+  },
+  "financial_report": {
+    "label": {
+      "page_title": "Financial Report Center",
+      "page_subtitle": "Balance sheet, income statement, cash flow statement, statement of changes in equity",
+      "refresh": "Refresh",
+      "export_report": "Export Report",
+      "balance_sheet": "Balance Sheet",
+      "income_statement": "Income Statement",
+      "cash_flow_statement": "Cash Flow Statement",
+      "equity_change_statement": "Statement of Changes in Equity",
+      "total_assets": "Total Assets",
+      "total_liabilities": "Total Liabilities",
+      "total_equity": "Total Equity",
+      "total_revenue": "Total Revenue",
+      "total_cost": "Total Cost",
+      "operating_profit": "Operating Profit",
+      "net_profit": "Net Profit",
+      "operating_cash_flow": "Operating Cash Flow",
+      "investing_cash_flow": "Investing Cash Flow",
+      "financing_cash_flow": "Financing Cash Flow",
+      "net_cash_flow": "Net Cash Flow",
+      "item_code": "Item Code",
+      "item": "Item",
+      "amount": "Amount",
+      "percentage": "Percentage (%)",
+      "assets": "Assets",
+      "liabilities": "Liabilities",
+      "equity": "Equity",
+      "revenue": "Revenue",
+      "operating_cost_and_expenses": "Operating Cost & Expenses",
+      "gross_profit": "Gross Profit",
+      "operating_activities": "Cash Flows from Operating Activities",
+      "investing_activities": "Cash Flows from Investing Activities",
+      "financing_activities": "Cash Flows from Financing Activities",
+      "net_increase_in_cash": "Net Increase in Cash and Cash Equivalents",
+      "period_type": "Period Type",
+      "year": "Year",
+      "quarter": "Quarter",
+      "month": "Month",
+      "select_period": "Select Period",
+      "equity_change_loading": "Loading statement of changes in equity..."
+    },
+    "period": {
+      "year_2024": "FY 2024",
+      "year_2023": "FY 2023",
+      "year_2022": "FY 2022",
+      "year_2021": "FY 2021",
+      "quarter_2024_q1": "2024 Q1",
+      "quarter_2024_q2": "2024 Q2",
+      "quarter_2024_q3": "2024 Q3",
+      "quarter_2024_q4": "2024 Q4",
+      "month_2024_01": "2024-01",
+      "month_2024_02": "2024-02",
+      "month_2024_03": "2024-03",
+      "month_2024_04": "2024-04",
+      "month_2024_05": "2024-05",
+      "month_2024_06": "2024-06"
+    },
+    "message": {
+      "error": "Error",
+      "load_report_failed_retry": "Failed to load report data, please try again later",
+      "load_report_failed": "Failed to load report data",
+      "export_success": "Export Successful",
+      "exported_excel": "Report exported as Excel"
+    }
+  },
+  "audit_log": {
+    "label": {
+      "page_title": "Audit Log",
+      "page_subtitle": "Operation log list, filter by user/time/module",
+      "export_log": "Export Log",
+      "refresh": "Refresh",
+      "total_operations": "Total Operations",
+      "success": "Success",
+      "failed": "Failed",
+      "warning": "Warning",
+      "search_placeholder": "Search operator, content or IP...",
+      "operator": "Operator",
+      "all": "All",
+      "module": "Module",
+      "all_modules": "All Modules",
+      "operation_type": "Operation Type",
+      "all_types": "All Types",
+      "status": "Status",
+      "all_status": "All Status",
+      "start_date": "Start Date",
+      "end_date": "End Date",
+      "action": "Action",
+      "operation_content": "Operation Content",
+      "ip_address": "IP Address",
+      "operation_time": "Operation Time",
+      "no_audit_logs": "No audit logs",
+      "view_detail": "View Detail",
+      "rows_per_page": "Rows per page",
+      "log_detail": "Log Detail",
+      "operation_module": "Operation Module",
+      "browser_system": "Browser/OS",
+      "close": "Close",
+      "create": "Create",
+      "update": "Update",
+      "delete": "Delete",
+      "query": "Query",
+      "login": "Login",
+      "audit": "Audit",
+      "export": "Export",
+      "backup": "Backup"
+    },
+    "message": {
+      "error": "Error",
+      "load_audit_log_failed": "Failed to load audit logs",
+      "export_success": "Export Successful",
+      "audit_log_exported": "Audit logs exported"
+    }
+  },
+  "financial_analysis": {
+    "label": {
+      "total_assets": "Total Assets",
+      "total_liabilities": "Total Liabilities",
+      "net_assets": "Net Assets",
+      "revenue": "Revenue",
+      "operating_cost": "Operating Cost",
+      "operating_profit": "Operating Profit",
+      "net_profit": "Net Profit",
+      "operating_activities": "Operating Activities",
+      "investing_activities": "Investing Activities",
+      "financing_activities": "Financing Activities",
+      "net_cash_flow": "Net Cash Flow",
+      "aging_0_30": "0-30 days",
+      "aging_31_60": "31-60 days",
+      "aging_61_90": "61-90 days",
+      "aging_90_plus": "90+ days",
+      "budget_amount": "Budget Amount",
+      "actual_expenditure": "Actual Expenditure",
+      "difference": "Difference",
+      "current_period": "Current Period",
+      "operating_cash_flow": "Operating Cash Flow",
+      "investing_cash_flow": "Investing Cash Flow",
+      "overdue_total": "Overdue Total",
+      "budget_execution_rate": "Budget Execution Rate",
+      "balance_sheet": "Balance Sheet",
+      "income_statement": "Income Statement",
+      "cash_flow_statement": "Cash Flow Statement",
+      "aging_analysis": "Aging Analysis",
+      "budget_analysis": "Budget Analysis",
+      "period": "Period",
+      "refresh_data": "Refresh Data",
+      "export_report": "Export Report",
+      "indicator": "Indicator",
+      "amount_yuan": "Amount (CNY)",
+      "total": "Total"
+    },
+    "message": {
+      "refresh_success": "Refresh Successful",
+      "report_data_updated": "Report data has been updated",
+      "export_failed": "Export Failed",
+      "no_data_to_export": "No data to export",
+      "export_success": "Export Successful",
+      "exported_csv": "Report exported as CSV file",
+      "cannot_export": "Cannot export report"
+    },
+    "format": {
+      "amount_wan": "¥{{v0}}0k",
+      "chart_title": "{{v0}} - Visualization Chart",
+      "detail_title": "{{v0}} - Detail Data"
+    }
+  },
+  "accounting": {
+    "label": {
+      "accounting_subject": "Accounting Subject",
+      "opening_balance": "Opening Balance",
+      "carry_forward_opening_balance": "Carry Forward Opening Balance",
+      "carrying_forward": "Carrying forward..."
+    },
+    "message": {
+      "create_failed": "Create failed",
+      "update_failed": "Update failed",
+      "delete_failed": "Delete failed",
+      "carry_forward_success": "Carry Forward Successful",
+      "opening_balance_carried": "Opening balance has been carried forward",
+      "carry_forward_failed": "Carry Forward Failed",
+      "cannot_carry_forward": "Cannot carry forward opening balance"
+    }
+  },
+  "dashboard": {
+    "label": {
+      "good_morning": "Good morning",
+      "good_afternoon": "Good afternoon",
+      "good_evening": "Good evening",
+      "total_assets": "Total Assets",
+      "active_assets": "Active Assets",
+      "total_inventory": "Total Inventory",
+      "pending_orders": "Pending Orders",
+      "total_customers": "Total Customers",
+      "total_suppliers": "Total Suppliers",
+      "total_vouchers": "Total Vouchers",
+      "pending_vouchers": "Pending Vouchers",
+      "total_orders": "Total Orders",
+      "pending": "Pending",
+      "suppliers": "Suppliers",
+      "customers": "Customers",
+      "assets": "Assets",
+      "vouchers": "Vouchers",
+      "in_use": "In Use",
+      "inventory": "Inventory",
+      "low_stock": "Low Stock",
+      "pending_approval": "Pending Approval",
+      "data_overview": "Data Overview",
+      "trend_analysis": "Trend Analysis",
+      "create_voucher": "Create Voucher",
+      "create_budget": "Create Budget",
+      "purchase_order": "Purchase Order",
+      "asset_management": "Asset Management",
+      "customer_management": "Customer Management",
+      "supplier_management": "Supplier Management",
+      "erp_management": "Enterprise Resource Management",
+      "quick_actions": "Quick Actions"
+    },
+    "format": {
+      "vs_last_month_pct": "% vs last month",
+      "vs_last_week": "vs last week",
+      "vs_last_week_pct": "% vs last week",
+      "greeting_subtitle": "{{v0}}, financial management and inventory overview"
+    }
+  },
+  "voucher": {
+    "label": {
+      "voucher_total": "Total Vouchers",
+      "draft": "Draft",
+      "pending_review": "Pending Review",
+      "approved": "Approved",
+      "posted": "Posted",
+      "finance_management": "Financial Management",
+      "voucher_management": "Voucher Management"
+    },
+    "message": {
+      "load_voucher_stats_failed": "Failed to load voucher stats"
+    }
+  },
+  "material": {
+    "label": {
+      "material_total": "Total Materials",
+      "active": "Active",
+      "inactive": "Inactive",
+      "obsolete": "Obsolete",
+      "home": "Home",
+      "material_management": "Material Management"
+    },
+    "message": {
+      "load_material_stats_failed": "Failed to load material statistics",
+      "load_material_failed": "Failed to load materials",
+      "create_material_failed": "Failed to create material",
+      "update_material_failed": "Failed to update material",
+      "delete_material_failed": "Failed to delete material"
+    }
+  },
+  "customer": {
+    "label": {
+      "home": "Home",
+      "customer_management": "Customer Management"
+    },
+    "message": {
+      "load_customer_failed": "Failed to load customers",
+      "create_customer_failed": "Failed to create customer",
+      "update_customer_failed": "Failed to update customer",
+      "delete_customer_failed": "Failed to delete customer"
+    }
+  },
+  "supplier": {
+    "label": {
+      "home": "Home",
+      "supplier_management": "Supplier Management"
+    },
+    "message": {
+      "load_supplier_failed": "Failed to load suppliers",
+      "create_supplier_failed": "Failed to create supplier",
+      "update_supplier_failed": "Failed to update supplier",
+      "delete_supplier_failed": "Failed to delete supplier"
+    }
+  },
+  "bank_account_page": {
+    "label": {
+      "home": "Home",
+      "bank_account_management": "Bank Account Management"
+    },
+    "stats": {
+      "total_accounts": "Total Accounts",
+      "total_balance": "Total Balance",
+      "active_accounts": "Active Accounts",
+      "frozen_closed": "Frozen/Closed"
+    },
+    "message": {
+      "load_stats_failed": "Failed to load bank account statistics",
+      "load_failed": "Failed to load bank accounts",
+      "create_failed": "Failed to create bank account",
+      "update_failed": "Failed to update bank account",
+      "delete_failed": "Failed to delete bank account"
+    }
+  },
+  "budget_management_page": {
+    "tab": {
+      "budget_management": "Budget Management",
+      "expense_reimbursement": "Expense Reimbursement"
+    },
+    "stats": {
+      "budget_total": "Budget Total",
+      "total_budget": "Total Budget",
+      "used": "Used",
+      "exceeded_budget": "Exceeded Budget",
+      "expense_total": "Expense Total",
+      "total_expense": "Total Expense",
+      "pending": "Pending",
+      "completed": "Completed"
+    },
+    "message": {
+      "create_budget_failed": "Failed to create budget",
+      "update_budget_failed": "Failed to update budget",
+      "delete_budget_failed": "Failed to delete budget",
+      "create_expense_failed": "Failed to create expense",
+      "update_expense_failed": "Failed to update expense",
+      "delete_expense_failed": "Failed to delete expense"
+    }
+  },
+  "office_supplies_page": {
+    "label": {
+      "home": "Home",
+      "office_supplies_management": "Office Supplies Management"
+    },
+    "stats": {
+      "total_supplies": "Total Supplies",
+      "in_stock": "In Stock",
+      "low_stock": "Low Stock",
+      "out_of_stock": "Out of Stock"
+    },
+    "message": {
+      "load_stats_failed": "Failed to load office supplies statistics",
+      "load_failed": "Failed to load office supplies",
+      "create_failed": "Failed to create office supply",
+      "update_failed": "Failed to update office supply",
+      "delete_failed": "Failed to delete office supply"
+    }
+  },
+  "asset_management_page": {
+    "label": {
+      "home": "Home",
+      "asset_management": "Asset Management"
+    },
+    "stats": {
+      "total_assets": "Total Assets",
+      "total_value": "Total Value",
+      "active_assets": "Active Assets",
+      "retired_transferred": "Retired/Transferred"
+    },
+    "message": {
+      "load_stats_failed": "Failed to load asset statistics",
+      "load_failed": "Failed to load assets",
+      "create_failed": "Failed to create asset",
+      "update_failed": "Failed to update asset",
+      "delete_failed": "Failed to delete asset"
+    }
+  },
+  "inventory_management_page": {
+    "label": {
+      "inventory_management": "Inventory Management",
+      "subtitle": "Manage inventory information, including materials, quantities, warehouses, locations, etc."
+    },
+    "stats": {
+      "total_materials": "Total Materials",
+      "total_value": "Total Inventory Value",
+      "below_safety_stock": "Below Safety Stock",
+      "in_stock_materials": "In Stock Materials"
+    },
+    "message": {
+      "create_failed": "Failed to create inventory",
+      "update_failed": "Failed to update inventory",
+      "delete_failed": "Failed to delete inventory"
+    }
+  },
+  "announcement_page": {
+    "label": {
+      "home": "Home",
+      "announcement_management": "Announcement Management"
+    },
+    "stats": {
+      "total_announcements": "Total Announcements",
+      "published": "Published",
+      "drafts": "Drafts",
+      "urgent": "Urgent Announcements"
+    },
+    "message": {
+      "load_stats_failed": "Failed to load announcement statistics"
+    }
+  },
+  "vehicle_page": {
+    "label": {
+      "home": "Home",
+      "vehicle_management": "Vehicle Management"
+    },
+    "stats": {
+      "total_vehicles": "Total Vehicles",
+      "available": "Available",
+      "in_use": "In Use",
+      "maintenance": "Maintenance"
+    },
+    "message": {
+      "load_stats_failed": "Failed to load vehicle statistics",
+      "load_failed": "Failed to load vehicles",
+      "create_failed": "Failed to create vehicle",
+      "update_failed": "Failed to update vehicle",
+      "delete_failed": "Failed to delete vehicle"
+    }
+  },
+  "meeting_room_page": {
+    "label": {
+      "home": "Home",
+      "meeting_room_management": "Meeting Room Management"
+    },
+    "message": {
+      "load_failed": "Failed to load meeting room list",
+      "create_failed": "Failed to create meeting room",
+      "update_failed": "Failed to update meeting room",
+      "delete_failed": "Failed to delete meeting room"
+    }
+  },
+  "purchase_order_page": {
+    "label": {
+      "home": "Home",
+      "purchase_order_management": "Purchase Order Management"
+    },
+    "message": {
+      "load_failed": "Failed to load purchase order list",
+      "create_failed": "Failed to create purchase order",
+      "update_failed": "Failed to update purchase order",
+      "delete_failed": "Failed to delete purchase order"
+    }
+  },
+  "sales_order_page": {
+    "label": {
+      "home": "Home",
+      "sales_order_management": "Sales Order Management"
+    },
+    "message": {
+      "load_failed": "Failed to load sales order list",
+      "create_failed": "Failed to create sales order",
+      "update_failed": "Failed to update sales order",
+      "delete_failed": "Failed to delete sales order"
+    }
+  },
+  "vehicle_request_page": {
+    "label": {
+      "home": "Home",
+      "vehicle_request": "Vehicle Request"
+    },
+    "message": {
+      "load_failed": "Failed to load vehicle request list",
+      "create_failed": "Failed to create vehicle request",
+      "update_failed": "Failed to update vehicle request",
+      "delete_failed": "Failed to delete vehicle request"
+    }
+  },
+  "receivable_payable_page": {
+    "tab": {
+      "receivable": "Accounts Receivable",
+      "payable": "Accounts Payable"
+    },
+    "stats": {
+      "total_records": "Total Records",
+      "total_amount": "Total Amount",
+      "pending_amount": "Pending Amount",
+      "overdue_count": "Overdue Count"
+    },
+    "message": {
+      "create_failed": "Failed to create",
+      "update_failed": "Failed to update"
+    }
+  }
+}

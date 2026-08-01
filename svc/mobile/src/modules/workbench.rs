@@ -6,13 +6,11 @@ use axum::{
 };
 use serde::{Deserialize, Serialize};
 use sqlx::{PgPool, Row};
-use topems_shared::{
-    ApiResponse, AuthState, WorkflowServiceClient,
-};
 use topems_shared::service_client::{
     api::hrm_api::HrmApi, api::mes_api::MesApi, api::notification_api::NotificationApi,
     api::qms_api::QmsApi, TypedServiceClient,
 };
+use topems_shared::{ApiResponse, AuthState, WorkflowServiceClient};
 
 use super::auth_utils::{extract_bearer_token, extract_user_id_from_token};
 
@@ -90,7 +88,8 @@ pub async fn get_workbench_data(
         None => 0,
     };
 
-    let today_attendance_status = check_attendance_status(&hrm_client, &bearer_token, &user_id).await;
+    let today_attendance_status =
+        check_attendance_status(&hrm_client, &bearer_token, &user_id).await;
 
     let today_production_output =
         get_today_production_output(&mes_client, &bearer_token, &user_id).await;

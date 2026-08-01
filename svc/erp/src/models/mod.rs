@@ -25,10 +25,7 @@ pub use meeting_room::{
     CreateMeetingBookingRequest, CreateMeetingRoomRequest, MeetingBooking, MeetingRoom,
     UpdateMeetingBookingRequest, UpdateMeetingRoomRequest,
 };
-pub use migration::{
-    AddColumnRequest, ColumnInfo, DbChange,
-    ModifyColumnRequest, TableInfo,
-};
+pub use migration::{AddColumnRequest, ColumnInfo, DbChange, ModifyColumnRequest, TableInfo};
 pub use office_supplies::{CreateOfficeSupplyRequest, OfficeSupply, UpdateOfficeSupplyRequest};
 pub use vehicle::{
     CreateVehicleRequest, CreateVehicleRequestRequest, UpdateVehicleRequest,

@@ -5,10 +5,10 @@ use axum::{
 use serde::{Deserialize, Serialize};
 use sqlx::PgPool;
 
-use crate::domain::cqrs::*;
-use crate::domain::event_store::{EventMetadata, EventStore, EventRecord};
-use crate::domain::materialized_view::*;
 use crate::domain::async_projector::ProjectionProgress;
+use crate::domain::cqrs::*;
+use crate::domain::event_store::{EventMetadata, EventRecord, EventStore};
+use crate::domain::materialized_view::*;
 use crate::shared::AppState;
 use topems_shared::{ApiResponse, PaginatedResponse};
 
@@ -59,7 +59,11 @@ async fn handle_create_voucher(
         ..Default::default()
     });
 
-    match context.command_handler.handle_create_voucher(req, metadata).await {
+    match context
+        .command_handler
+        .handle_create_voucher(req, metadata)
+        .await
+    {
         Ok(result) => Json(ApiResponse::success(result, "创建凭证成功")),
         Err(e) => Json(ApiResponse::error(500, &e)),
     }
@@ -155,11 +159,13 @@ async fn list_receivable_aging(
     }
 }
 
-async fn get_events(
-    Path(aggregate_id): Path<String>,
-) -> Json<ApiResponse<Vec<EventRecord>>> {
+async fn get_events(Path(aggregate_id): Path<String>) -> Json<ApiResponse<Vec<EventRecord>>> {
     let context = get_cqrs_context();
-    match context.event_store.read_events(&aggregate_id, 0, None).await {
+    match context
+        .event_store
+        .read_events(&aggregate_id, 0, None)
+        .await
+    {
         Ok(events) => Json(ApiResponse::success(events, "查询成功")),
         Err(e) => Json(ApiResponse::error(500, &e)),
     }
@@ -175,10 +181,23 @@ async fn rebuild_views() -> Json<ApiResponse<()>> {
 
 async fn get_stats() -> Json<ApiResponse<CqrsStatsResponse>> {
     let context = get_cqrs_context();
-    let view_names: Vec<String> = context.projector.view_names().iter().map(|s| s.to_string()).collect();
+    let view_names: Vec<String> = context
+        .projector
+        .view_names()
+        .iter()
+        .map(|s| s.to_string())
+        .collect();
 
-    let (voucher_summary, _) = context.voucher_summary_view.list(1, 1, None).await.unwrap_or((vec![], 0));
-    let (receivable_aging, _) = context.receivable_aging_view.list(1, 1, None).await.unwrap_or((vec![], 0));
+    let (voucher_summary, _) = context
+        .voucher_summary_view
+        .list(1, 1, None)
+        .await
+        .unwrap_or((vec![], 0));
+    let (receivable_aging, _) = context
+        .receivable_aging_view
+        .list(1, 1, None)
+        .await
+        .unwrap_or((vec![], 0));
 
     let event_count = 0;
     let snapshot_count = 0;
@@ -211,7 +230,9 @@ async fn list_events_paginated(
 ) -> Json<ApiResponse<PaginatedEventsResponse>> {
     let page = params.page.unwrap_or(1);
     let page_size = params.page_size.unwrap_or(20);
-    let aggregate_type = params.aggregate_type.unwrap_or_else(|| "Voucher".to_string());
+    let aggregate_type = params
+        .aggregate_type
+        .unwrap_or_else(|| "Voucher".to_string());
 
     match get_pg_cqrs_context() {
         Some(ctx) => match ctx
@@ -234,9 +255,7 @@ async fn list_events_paginated(
     }
 }
 
-async fn replay_view(
-    Path(view_name): Path<String>,
-) -> Json<ApiResponse<()>> {
+async fn replay_view(Path(view_name): Path<String>) -> Json<ApiResponse<()>> {
     match get_pg_cqrs_context() {
         Some(ctx) => match ctx.async_projector.replay_view(&view_name).await {
             Ok(()) => Json(ApiResponse::success((), "重放成功")),
@@ -248,16 +267,37 @@ async fn replay_view(
 
 pub fn cqrs_routes() -> Router<AppState> {
     Router::new()
-        .route("/commands/create-voucher", axum::routing::post(handle_create_voucher))
-        .route("/commands/post-voucher/:id", axum::routing::post(handle_post_voucher))
-        .route("/commands/reverse-voucher/:id", axum::routing::post(handle_reverse_voucher))
-        .route("/views/voucher-summary", axum::routing::get(list_voucher_summary))
-        .route("/views/voucher-summary/:id", axum::routing::get(get_voucher_summary_by_id))
-        .route("/views/receivable-aging", axum::routing::get(list_receivable_aging))
+        .route(
+            "/commands/create-voucher",
+            axum::routing::post(handle_create_voucher),
+        )
+        .route(
+            "/commands/post-voucher/:id",
+            axum::routing::post(handle_post_voucher),
+        )
+        .route(
+            "/commands/reverse-voucher/:id",
+            axum::routing::post(handle_reverse_voucher),
+        )
+        .route(
+            "/views/voucher-summary",
+            axum::routing::get(list_voucher_summary),
+        )
+        .route(
+            "/views/voucher-summary/:id",
+            axum::routing::get(get_voucher_summary_by_id),
+        )
+        .route(
+            "/views/receivable-aging",
+            axum::routing::get(list_receivable_aging),
+        )
         .route("/events/:aggregate_id", axum::routing::get(get_events))
         .route("/views/rebuild", axum::routing::post(rebuild_views))
         .route("/stats", axum::routing::get(get_stats))
-        .route("/projection-progress", axum::routing::get(get_projection_progress))
+        .route(
+            "/projection-progress",
+            axum::routing::get(get_projection_progress),
+        )
         .route("/events", axum::routing::get(list_events_paginated))
         .route("/views/replay/:view_name", axum::routing::post(replay_view))
 }

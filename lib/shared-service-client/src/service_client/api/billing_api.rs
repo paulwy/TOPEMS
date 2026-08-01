@@ -45,7 +45,10 @@ impl TypedServiceClient<BillingApi> {
         self.get(&self.build_path("/subscriptions")).await
     }
 
-    pub async fn get_subscription(&self, subscription_id: &str) -> ServiceClientResult<serde_json::Value> {
+    pub async fn get_subscription(
+        &self,
+        subscription_id: &str,
+    ) -> ServiceClientResult<serde_json::Value> {
         let path = format!("/subscriptions/{}", subscription_id);
         self.get(&self.build_path(&path)).await
     }
@@ -66,9 +69,13 @@ impl TypedServiceClient<BillingApi> {
         self.put(&self.build_path(&path), &data).await
     }
 
-    pub async fn cancel_subscription(&self, subscription_id: &str) -> ServiceClientResult<serde_json::Value> {
+    pub async fn cancel_subscription(
+        &self,
+        subscription_id: &str,
+    ) -> ServiceClientResult<serde_json::Value> {
         let path = format!("/subscriptions/{}/cancel", subscription_id);
-        self.post(&self.build_path(&path), &serde_json::json!({})).await
+        self.post(&self.build_path(&path), &serde_json::json!({}))
+            .await
     }
 
     pub async fn list_invoices(&self) -> ServiceClientResult<serde_json::Value> {

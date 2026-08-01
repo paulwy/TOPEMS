@@ -423,16 +423,15 @@ struct IntelligentGwStore {
 }
 
 fn get_intelligent_gw_store() -> &'static IntelligentGwStore {
-    static STORE: LazyLock<IntelligentGwStore> =
-        LazyLock::new(|| IntelligentGwStore {
-            routing_table: Mutex::new(Vec::new()),
-            affinities: Mutex::new(Vec::new()),
-            service_loads: Mutex::new(HashMap::new()),
-            stitch_plans: Mutex::new(Vec::new()),
-            stitch_logs: Mutex::new(Vec::new()),
-            conflicts: Mutex::new(Vec::new()),
-            initialized: Mutex::new(false),
-        });
+    static STORE: LazyLock<IntelligentGwStore> = LazyLock::new(|| IntelligentGwStore {
+        routing_table: Mutex::new(Vec::new()),
+        affinities: Mutex::new(Vec::new()),
+        service_loads: Mutex::new(HashMap::new()),
+        stitch_plans: Mutex::new(Vec::new()),
+        stitch_logs: Mutex::new(Vec::new()),
+        conflicts: Mutex::new(Vec::new()),
+        initialized: Mutex::new(false),
+    });
     &STORE
 }
 
@@ -641,8 +640,7 @@ impl AIQueryRouter {
 
         let mut candidates: Vec<(String, f64)> = Vec::new();
         for service_id in loads.keys() {
-            let score =
-                Self::compute_service_score(service_id, &intent, &entity_types).await;
+            let score = Self::compute_service_score(service_id, &intent, &entity_types).await;
             candidates.push((service_id.clone(), score));
         }
 
@@ -698,9 +696,7 @@ impl AIQueryRouter {
         let reason = if top_score > 0.85 {
             format!(
                 "高亲和度匹配: {} 服务对 {:?} 查询类型得分最高 ({:.2})",
-                target_service,
-                intent,
-                top_score
+                target_service, intent, top_score
             )
         } else if top_score > 0.6 {
             format!(
@@ -787,25 +783,24 @@ impl AIQueryRouter {
         let store = get_intelligent_gw_store();
         let mut affinities = store.affinities.lock().await;
 
-        let affinity = if let Some(existing) =
-            affinities.iter_mut().find(|a| a.service_id == service_id)
-        {
-            existing.entity_types = entity_types;
-            if let Some(s) = score {
-                existing.score = s;
-            }
-            existing.last_updated = chrono::Utc::now().to_rfc3339();
-            existing.clone()
-        } else {
-            let new = ServiceAffinity {
-                service_id: service_id.to_string(),
-                entity_types,
-                score: score.unwrap_or(0.5),
-                last_updated: chrono::Utc::now().to_rfc3339(),
+        let affinity =
+            if let Some(existing) = affinities.iter_mut().find(|a| a.service_id == service_id) {
+                existing.entity_types = entity_types;
+                if let Some(s) = score {
+                    existing.score = s;
+                }
+                existing.last_updated = chrono::Utc::now().to_rfc3339();
+                existing.clone()
+            } else {
+                let new = ServiceAffinity {
+                    service_id: service_id.to_string(),
+                    entity_types,
+                    score: score.unwrap_or(0.5),
+                    last_updated: chrono::Utc::now().to_rfc3339(),
+                };
+                affinities.push(new.clone());
+                new
             };
-            affinities.push(new.clone());
-            new
-        };
 
         Ok(affinity)
     }
@@ -941,13 +936,15 @@ impl AutoSchemaStitcher {
 
         for (type_name, occurrences) in &type_map {
             if occurrences.len() > 1 {
-                let fields: Vec<serde_json::Value> =
-                    occurrences.iter().flat_map(|o| {
+                let fields: Vec<serde_json::Value> = occurrences
+                    .iter()
+                    .flat_map(|o| {
                         o.get("fields")
                             .and_then(|f| f.as_array())
                             .cloned()
                             .unwrap_or_default()
-                    }).collect();
+                    })
+                    .collect();
 
                 conflicts.push(TypeConflict {
                     id: uuid::Uuid::new_v4().to_string(),
@@ -1120,7 +1117,11 @@ impl AutoSchemaStitcher {
         let merged_type_names: std::collections::HashSet<String> = plan
             .merged_types
             .iter()
-            .filter_map(|mt| mt.get("type_name").and_then(|n| n.as_str()).map(|s| s.to_string()))
+            .filter_map(|mt| {
+                mt.get("type_name")
+                    .and_then(|n| n.as_str())
+                    .map(|s| s.to_string())
+            })
             .collect();
 
         let coverage = valid_entities
@@ -1216,10 +1217,7 @@ impl AutoSchemaStitcher {
             .ok_or_else(|| "未找到 Stitch 计划".to_string())?;
 
         if plan.status != StitchStatus::Completed && plan.status != StitchStatus::Failed {
-            return Err(format!(
-                "当前状态 ({}) 不允许回滚",
-                plan.status.as_str()
-            ));
+            return Err(format!("当前状态 ({}) 不允许回滚", plan.status.as_str()));
         }
 
         plan.status = StitchStatus::RolledBack;
@@ -1288,7 +1286,8 @@ pub async fn route_query_handler(
     let ab_test = req.ab_test_enabled.unwrap_or(false);
     let entity_types = req.entity_types.unwrap_or_default();
 
-    match AIQueryRouter::route_query(req.query, entity_types, req.preferred_service, ab_test).await {
+    match AIQueryRouter::route_query(req.query, entity_types, req.preferred_service, ab_test).await
+    {
         Ok(decision) => Json(ApiResponse::success(decision, "查询路由决策")),
         Err(e) => Json(ApiResponse::error(500, &e)),
     }
@@ -1350,7 +1349,11 @@ pub async fn warm_up_routing_handler(
     ensure_initialized().await;
 
     let entity_types = req.entity_types.unwrap_or_else(|| {
-        vec!["Customer".to_string(), "Order".to_string(), "Employee".to_string()]
+        vec![
+            "Customer".to_string(),
+            "Order".to_string(),
+            "Employee".to_string(),
+        ]
     });
     let target_services = req.target_services.unwrap_or_else(|| {
         vec![
@@ -1387,7 +1390,8 @@ pub async fn generate_stitch_plan_handler(
 ) -> Json<ApiResponse<StitchPlan>> {
     ensure_initialized().await;
 
-    match AutoSchemaStitcher::generate_stitch_plan(req.subgraph_ids, req.resolution_strategy).await {
+    match AutoSchemaStitcher::generate_stitch_plan(req.subgraph_ids, req.resolution_strategy).await
+    {
         Ok(plan) => Json(ApiResponse::success(plan, "Stitch 计划已生成")),
         Err(e) => Json(ApiResponse::error(500, &e)),
     }
@@ -1450,13 +1454,8 @@ pub async fn list_conflicts_handler(
     let page = params.page.unwrap_or(1).max(1);
     let page_size = params.page_size.unwrap_or(20).min(100);
 
-    let (items, total) = AutoSchemaStitcher::list_conflicts(
-        params.status,
-        params.type_name,
-        page,
-        page_size,
-    )
-    .await;
+    let (items, total) =
+        AutoSchemaStitcher::list_conflicts(params.status, params.type_name, page, page_size).await;
 
     Json(ApiResponse::success(
         PaginatedResponse {

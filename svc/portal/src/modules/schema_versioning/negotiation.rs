@@ -165,9 +165,7 @@ impl VersionNegotiator {
     }
 
     fn is_version_supported(&self, version: &str) -> bool {
-        self.supported_versions
-            .iter()
-            .any(|v| v.version == version)
+        self.supported_versions.iter().any(|v| v.version == version)
     }
 
     fn get_latest_active_version(&self) -> String {
@@ -219,7 +217,10 @@ impl VersionNegotiator {
         version: &str,
         sunset_at: Option<chrono::DateTime<chrono::Utc>>,
     ) -> Option<SupportedVersion> {
-        let entry = self.supported_versions.iter_mut().find(|v| v.version == version)?;
+        let entry = self
+            .supported_versions
+            .iter_mut()
+            .find(|v| v.version == version)?;
         entry.status = VersionStatus::Deprecated;
         entry.deprecated_at = Some(now_utc());
         entry.sunset_at = sunset_at;
@@ -236,7 +237,8 @@ impl VersionNegotiator {
 
 // ==================== 全局单例 ====================
 
-static VERSION_NEGOTIATOR: std::sync::OnceLock<Mutex<VersionNegotiator>> = std::sync::OnceLock::new();
+static VERSION_NEGOTIATOR: std::sync::OnceLock<Mutex<VersionNegotiator>> =
+    std::sync::OnceLock::new();
 
 fn version_negotiator() -> &'static Mutex<VersionNegotiator> {
     VERSION_NEGOTIATOR.get_or_init(|| Mutex::new(VersionNegotiator::new()))
@@ -286,10 +288,7 @@ pub fn set_default_version(version: String) {
 }
 
 pub fn set_negotiation_strategy(strategy: VersionNegotiationStrategy) {
-    version_negotiator()
-        .lock()
-        .unwrap()
-        .set_strategy(strategy);
+    version_negotiator().lock().unwrap().set_strategy(strategy);
 }
 
 pub fn add_supported_version(version: String, status: VersionStatus) -> SupportedVersion {

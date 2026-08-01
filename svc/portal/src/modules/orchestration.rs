@@ -207,7 +207,12 @@ impl HealthStatus {
     }
 
     pub fn all() -> Vec<Self> {
-        vec![Self::Healthy, Self::Degraded, Self::Unhealthy, Self::Unknown]
+        vec![
+            Self::Healthy,
+            Self::Degraded,
+            Self::Unhealthy,
+            Self::Unknown,
+        ]
     }
 }
 
@@ -418,26 +423,19 @@ impl GatewayOrchestrator {
         let updates: Vec<(String, StepStatus)> = steps
             .iter()
             .map(|step| {
-                let can_run = step
-                    .depends_on
-                    .iter()
-                    .all(|dep| {
-                        original_statuses
-                            .iter()
-                            .any(|(id, s)| id == dep && s == &StepStatus::Completed)
-                    });
+                let can_run = step.depends_on.iter().all(|dep| {
+                    original_statuses
+                        .iter()
+                        .any(|(id, s)| id == dep && s == &StepStatus::Completed)
+                });
 
                 if can_run {
                     (step.id.clone(), StepStatus::Completed)
-                } else if step
-                    .depends_on
-                    .iter()
-                    .any(|dep| {
-                        original_statuses
-                            .iter()
-                            .any(|(id, s)| id == dep && s == &StepStatus::Failed)
-                    })
-                {
+                } else if step.depends_on.iter().any(|dep| {
+                    original_statuses
+                        .iter()
+                        .any(|(id, s)| id == dep && s == &StepStatus::Failed)
+                }) {
                     (step.id.clone(), StepStatus::Failed)
                 } else {
                     (step.id.clone(), step.status.clone())
@@ -646,9 +644,7 @@ impl ServiceDiscoveryEngine {
         }
     }
 
-    pub async fn discover_services(
-        health_status: Option<HealthStatus>,
-    ) -> Vec<ServiceDescriptor> {
+    pub async fn discover_services(health_status: Option<HealthStatus>) -> Vec<ServiceDescriptor> {
         let store = get_orchestration_store();
         let services = store.services.lock().await;
 
@@ -863,10 +859,7 @@ impl DynamicRouter {
         Ok(rule)
     }
 
-    pub async fn update_rule(
-        id: &str,
-        updates: RouteRule,
-    ) -> Result<RouteRule, String> {
+    pub async fn update_rule(id: &str, updates: RouteRule) -> Result<RouteRule, String> {
         let store = get_orchestration_store();
         let mut rules = store.route_rules.lock().await;
 
@@ -899,7 +892,11 @@ impl DynamicRouter {
         let rules = store.route_rules.lock().await;
 
         if let Some(enabled) = enabled_only {
-            rules.iter().filter(|r| r.enabled == enabled).cloned().collect()
+            rules
+                .iter()
+                .filter(|r| r.enabled == enabled)
+                .cloned()
+                .collect()
         } else {
             rules.clone()
         }
@@ -1041,12 +1038,7 @@ pub async fn create_plan_handler(
     State(_state): State<AppState>,
     Json(req): Json<CreatePlanRequest>,
 ) -> Json<ApiResponse<OrchestrationPlan>> {
-    match GatewayOrchestrator::create_plan(
-        req.query_id,
-        req.execution_steps,
-        req.timeout_ms,
-    )
-    .await
+    match GatewayOrchestrator::create_plan(req.query_id, req.execution_steps, req.timeout_ms).await
     {
         Ok(plan) => Json(ApiResponse::success(plan, "编排计划创建成功")),
         Err(e) => Json(ApiResponse::error(500, &e)),
@@ -1088,8 +1080,7 @@ pub async fn get_execution_history_handler(
     Query(params): Query<HistoryQuery>,
 ) -> Json<ApiResponse<Vec<ExecutionHistoryEntry>>> {
     let history =
-        GatewayOrchestrator::get_execution_history(params.query_id.as_deref(), params.limit)
-            .await;
+        GatewayOrchestrator::get_execution_history(params.query_id.as_deref(), params.limit).await;
     Json(ApiResponse::success(history, "执行历史"))
 }
 
@@ -1138,10 +1129,7 @@ pub async fn discover_services_handler(
     State(_state): State<AppState>,
     Query(params): Query<DiscoverServicesQuery>,
 ) -> Json<ApiResponse<Vec<ServiceDescriptor>>> {
-    let status = params
-        .health_status
-        .as_deref()
-        .map(HealthStatus::from_str);
+    let status = params.health_status.as_deref().map(HealthStatus::from_str);
     let services = ServiceDiscoveryEngine::discover_services(status).await;
     Json(ApiResponse::success(services, "服务列表"))
 }
@@ -1188,8 +1176,7 @@ pub async fn route_request_handler(
     Json(req): Json<RouteRequest>,
 ) -> Json<ApiResponse<RoutingDecision>> {
     let request_id = uuid::Uuid::new_v4().to_string();
-    let decision =
-        DynamicRouter::route_request(request_id, req.path, req.headers).await;
+    let decision = DynamicRouter::route_request(request_id, req.path, req.headers).await;
     Json(ApiResponse::success(decision, "路由决策完成"))
 }
 

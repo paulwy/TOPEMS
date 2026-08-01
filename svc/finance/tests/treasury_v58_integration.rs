@@ -23,12 +23,13 @@ async fn test_create_pool() {
         "entities": ["entity_001", "entity_002"]
     });
 
-    let (status, resp) = ctx
-        .request("POST", "/finance-v58/pool", Some(body))
-        .await;
+    let (status, resp) = ctx.request("POST", "/finance-v58/pool", Some(body)).await;
 
     assert_eq!(status, 200, "创建现金池应该返回 200");
-    assert!(resp["success"].as_bool().unwrap_or(false), "响应 success 应为 true");
+    assert!(
+        resp["success"].as_bool().unwrap_or(false),
+        "响应 success 应为 true"
+    );
 }
 
 #[tokio::test]
@@ -39,12 +40,13 @@ async fn test_list_pools() {
     }
     let ctx = TestContext::new().await;
 
-    let (status, resp) = ctx
-        .request("GET", "/finance-v58/pools", None)
-        .await;
+    let (status, resp) = ctx.request("GET", "/finance-v58/pools", None).await;
 
     assert_eq!(status, 200, "列出现金池应该返回 200");
-    assert!(resp["success"].as_bool().unwrap_or(false), "响应 success 应为 true");
+    assert!(
+        resp["success"].as_bool().unwrap_or(false),
+        "响应 success 应为 true"
+    );
     assert!(resp["data"].is_array(), "data 应该是数组");
 }
 
@@ -92,7 +94,10 @@ async fn test_allocate_funds() {
         .await;
 
     assert_eq!(status, 200, "资金分配应该返回 200");
-    assert!(resp["success"].as_bool().unwrap_or(false), "响应 success 应为 true");
+    assert!(
+        resp["success"].as_bool().unwrap_or(false),
+        "响应 success 应为 true"
+    );
 }
 
 #[tokio::test]
@@ -118,7 +123,10 @@ async fn test_create_forecast_scenario() {
         .await;
 
     assert_eq!(status, 200, "创建预测场景应该返回 200");
-    assert!(resp["success"].as_bool().unwrap_or(false), "响应 success 应为 true");
+    assert!(
+        resp["success"].as_bool().unwrap_or(false),
+        "响应 success 应为 true"
+    );
 }
 
 #[tokio::test]
@@ -134,7 +142,10 @@ async fn test_list_forecast_scenarios() {
         .await;
 
     assert_eq!(status, 200, "列出预测场景应该返回 200");
-    assert!(resp["success"].as_bool().unwrap_or(false), "响应 success 应为 true");
+    assert!(
+        resp["success"].as_bool().unwrap_or(false),
+        "响应 success 应为 true"
+    );
     assert!(resp["data"].is_array(), "data 应该是数组");
 }
 
@@ -151,5 +162,8 @@ async fn test_get_liquidity_snapshot() {
         .await;
 
     assert_eq!(status, 200, "获取流动性快照应该返回 200");
-    assert!(resp["success"].as_bool().unwrap_or(false), "响应 success 应为 true");
+    assert!(
+        resp["success"].as_bool().unwrap_or(false),
+        "响应 success 应为 true"
+    );
 }

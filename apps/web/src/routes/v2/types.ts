@@ -20,15 +20,17 @@ export type LayoutType = 'default' | 'full' | 'mobile' | 'none';
 
 export interface RouteConfig {
   path: string;
-  element: ReactElement | LazyExoticComponent<ComponentType<any>>;
+  element: ReactElement | LazyExoticComponent<ComponentType<Record<string, unknown>>>;
   requiredPermissions?: string[];
   module?: string;
   action?: 'read' | 'write' | 'update' | 'delete' | 'admin';
 }
 
+export type ModuleTier = 'basic' | 'advanced';
+
 export interface RouteConfigV2 {
   path: string;
-  element: ReactElement | LazyExoticComponent<ComponentType<any>>;
+  element: ReactElement | LazyExoticComponent<ComponentType<Record<string, unknown>>>;
   module: string;
   title: string;
   code: string;
@@ -39,6 +41,8 @@ export interface RouteConfigV2 {
   group?: string;
   parentPath?: string;
   children?: RouteConfigV2[];
+  // P34-4: 模块分层 — 'basic' 默认显示；'advanced' 需 core_tenant_modules 中对应模块处于激活态
+  tier?: ModuleTier;
 }
 
 export interface RouteModuleConfig {
@@ -62,6 +66,8 @@ export interface RouteModuleConfig {
   order?: number;
   description?: string;
   permission?: string;
+  // P34-4: 模块分层 — 默认 'basic'；'advanced' 需要在 core_tenant_modules 中显式激活
+  tier?: ModuleTier;
   routes: RouteConfigV2[];
 }
 
@@ -79,6 +85,48 @@ export function flattenRoutes(routes: RouteConfigV2[]): RouteConfigV2[] {
 
   traverse(routes);
   return result;
+}
+
+/**
+ * P34-4: filter modules by tier.
+ *
+ * - `basic` modules are always visible (default).
+ * - `advanced` modules are only visible when their `code` appears in the
+ *   `activeAdvancedModuleCodes` set — typically populated from the
+ *   `core_tenant_modules` table where `tier = 'advanced' AND is_active = true`.
+ * - Modules without a `tier` field default to `basic` and are always shown.
+ *
+ * NOTE: The actual core_tenant_modules fetch is not wired up yet; callers
+ * currently pass an empty set, which means advanced modules are hidden
+ * until the integration is completed in a later phase.
+ */
+export function filterModulesByTier(
+  modules: RouteModuleConfig[],
+  activeAdvancedModuleCodes: Set<string> = new Set()
+): RouteModuleConfig[] {
+  return modules.filter((m) => {
+    const tier = m.tier ?? 'basic';
+    if (tier === 'basic') return true;
+    if (tier === 'advanced') return activeAdvancedModuleCodes.has(m.code);
+    return true;
+  });
+}
+
+/**
+ * P34-4: filter routes by tier. Same semantics as {@link filterModulesByTier}
+ * but operates on a flat list of routes. `advancedRouteCodes` is the set of
+ * route `code` values explicitly activated for the current tenant.
+ */
+export function filterRoutesByTier(
+  routes: RouteConfigV2[],
+  activeAdvancedRouteCodes: Set<string> = new Set()
+): RouteConfigV2[] {
+  return routes.filter((r) => {
+    const tier = r.tier ?? 'basic';
+    if (tier === 'basic') return true;
+    if (tier === 'advanced') return activeAdvancedRouteCodes.has(r.code);
+    return true;
+  });
 }
 
 export function toFlatRouteConfig(modules: RouteModuleConfig[]): RouteConfig[] {

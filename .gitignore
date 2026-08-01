@@ -215,4 +215,5 @@ build/
 *.code-workspace
 
 
-apps/web/dist/
+apps/web/dist/*.bak
+*.bak_pass*

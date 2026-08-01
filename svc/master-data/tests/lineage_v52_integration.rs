@@ -39,7 +39,10 @@ async fn test_register_lineage() {
         .expect("请求失败");
 
     assert_eq!(status, 200);
-    assert!(resp["success"].as_bool().unwrap_or(false), "响应 success 应为 true");
+    assert!(
+        resp["success"].as_bool().unwrap_or(false),
+        "响应 success 应为 true"
+    );
     assert!(resp["data"]["from_node"].is_object(), "应返回 from_node");
     assert!(resp["data"]["to_node"].is_object(), "应返回 to_node");
     assert!(resp["data"]["edge"].is_object(), "应返回 edge");
@@ -148,7 +151,11 @@ async fn test_analyze_impact() {
     });
 
     let (status, resp) = ctx
-        .request("POST", &format!("{}/impact/analyze", V52_PREFIX), Some(body))
+        .request(
+            "POST",
+            &format!("{}/impact/analyze", V52_PREFIX),
+            Some(body),
+        )
         .await
         .expect("请求失败");
 
@@ -177,7 +184,11 @@ async fn test_delete_lineage() {
     });
 
     let (_, register_resp) = ctx
-        .request("POST", &format!("{}/register", V52_PREFIX), Some(register_body))
+        .request(
+            "POST",
+            &format!("{}/register", V52_PREFIX),
+            Some(register_body),
+        )
         .await
         .expect("注册失败");
     let node_id = register_resp["data"]["from_node"]["id"].as_str().unwrap();
@@ -231,7 +242,11 @@ async fn test_add_propagation_rule() {
     });
 
     let (status, resp) = ctx
-        .request("POST", &format!("{}/propagation/rules", V52_PREFIX), Some(body))
+        .request(
+            "POST",
+            &format!("{}/propagation/rules", V52_PREFIX),
+            Some(body),
+        )
         .await
         .expect("请求失败");
 

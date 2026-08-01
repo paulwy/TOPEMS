@@ -3,13 +3,11 @@ use serde::{Deserialize, Serialize};
 use utoipa::{OpenApi, ToSchema};
 use uuid::Uuid;
 
-use crate::models::{
-    Asset, CreateAssetRequest, UpdateAssetRequest,
-};
 use crate::models::material::{
     CreateCustomerRequest, CreateInventoryRequest, CreateMaterialRequest, CreateSupplierRequest,
     Customer, Inventory, Material, Supplier,
 };
+use crate::models::{Asset, CreateAssetRequest, UpdateAssetRequest};
 
 #[derive(Debug, Clone, Serialize, Deserialize, ToSchema)]
 pub struct FixedAsset {

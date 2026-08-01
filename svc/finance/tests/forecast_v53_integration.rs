@@ -40,7 +40,10 @@ async fn test_predict_cash_flow() {
         .await;
 
     assert_eq!(status, 200, "现金流预测应该返回 200");
-    assert!(resp["success"].as_bool().unwrap_or(false), "响应 success 应为 true");
+    assert!(
+        resp["success"].as_bool().unwrap_or(false),
+        "响应 success 应为 true"
+    );
 }
 
 #[tokio::test]
@@ -56,7 +59,10 @@ async fn test_get_cash_flow_predictions() {
         .await;
 
     assert_eq!(status, 200, "获取预测列表应该返回 200");
-    assert!(resp["success"].as_bool().unwrap_or(false), "响应 success 应为 true");
+    assert!(
+        resp["success"].as_bool().unwrap_or(false),
+        "响应 success 应为 true"
+    );
 }
 
 #[tokio::test]
@@ -76,7 +82,10 @@ async fn test_retrain_model() {
         .await;
 
     assert_eq!(status, 200, "模型重训练应该返回 200");
-    assert!(resp["success"].as_bool().unwrap_or(false), "响应 success 应为 true");
+    assert!(
+        resp["success"].as_bool().unwrap_or(false),
+        "响应 success 应为 true"
+    );
 }
 
 #[tokio::test]
@@ -92,7 +101,10 @@ async fn test_get_prediction_accuracy() {
         .await;
 
     assert_eq!(status, 200, "获取预测准确率应该返回 200");
-    assert!(resp["success"].as_bool().unwrap_or(false), "响应 success 应为 true");
+    assert!(
+        resp["success"].as_bool().unwrap_or(false),
+        "响应 success 应为 true"
+    );
 }
 
 #[tokio::test]
@@ -133,7 +145,10 @@ async fn test_analyze_budget() {
         .await;
 
     assert_eq!(status, 200, "预算分析应该返回 200");
-    assert!(resp["success"].as_bool().unwrap_or(false), "响应 success 应为 true");
+    assert!(
+        resp["success"].as_bool().unwrap_or(false),
+        "响应 success 应为 true"
+    );
 }
 
 #[tokio::test]
@@ -149,7 +164,10 @@ async fn test_get_budget_variance() {
         .await;
 
     assert_eq!(status, 200, "获取预算差异应该返回 200");
-    assert!(resp["success"].as_bool().unwrap_or(false), "响应 success 应为 true");
+    assert!(
+        resp["success"].as_bool().unwrap_or(false),
+        "响应 success 应为 true"
+    );
 }
 
 #[tokio::test]
@@ -165,7 +183,10 @@ async fn test_get_budget_report() {
         .await;
 
     assert_eq!(status, 200, "获取预算报告应该返回 200");
-    assert!(resp["success"].as_bool().unwrap_or(false), "响应 success 应为 true");
+    assert!(
+        resp["success"].as_bool().unwrap_or(false),
+        "响应 success 应为 true"
+    );
 }
 
 #[tokio::test]
@@ -186,7 +207,10 @@ async fn test_detect_budget_anomalies() {
         .await;
 
     assert_eq!(status, 200, "预算异常检测应该返回 200");
-    assert!(resp["success"].as_bool().unwrap_or(false), "响应 success 应为 true");
+    assert!(
+        resp["success"].as_bool().unwrap_or(false),
+        "响应 success 应为 true"
+    );
 }
 
 #[tokio::test]
@@ -202,5 +226,8 @@ async fn test_get_budget_trends() {
         .await;
 
     assert_eq!(status, 200, "获取预算趋势应该返回 200");
-    assert!(resp["success"].as_bool().unwrap_or(false), "响应 success 应为 true");
+    assert!(
+        resp["success"].as_bool().unwrap_or(false),
+        "响应 success 应为 true"
+    );
 }

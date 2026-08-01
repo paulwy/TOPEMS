@@ -1,7 +1,7 @@
+use sqlx::{PgPool, Row};
 use std::sync::atomic::{AtomicBool, Ordering};
 use std::sync::Arc;
 use tokio::time::{self, Duration};
-use sqlx::{PgPool, Row};
 use uuid::Uuid;
 
 use super::event_store::EventRecord;
@@ -67,13 +67,11 @@ impl AsyncProjector {
     }
 
     async fn get_last_progress(&self, view_name: &str) -> Result<ProjectionProgress, String> {
-        let result = sqlx::query(
-            "SELECT * FROM cqrs_projection_progress WHERE view_name = $1",
-        )
-        .bind(view_name)
-        .fetch_optional(&self.pool)
-        .await
-        .map_err(|e| e.to_string())?;
+        let result = sqlx::query("SELECT * FROM cqrs_projection_progress WHERE view_name = $1")
+            .bind(view_name)
+            .fetch_optional(&self.pool)
+            .await
+            .map_err(|e| e.to_string())?;
 
         match result {
             Some(row) => {
@@ -83,8 +81,7 @@ impl AsyncProjector {
                     row.try_get("last_event_time").map_err(|e| e.to_string())?;
                 let processed_count: i64 =
                     row.try_get("processed_count").map_err(|e| e.to_string())?;
-                let error_count: i64 =
-                    row.try_get("error_count").map_err(|e| e.to_string())?;
+                let error_count: i64 = row.try_get("error_count").map_err(|e| e.to_string())?;
                 let last_error: Option<String> =
                     row.try_get("last_error").map_err(|e| e.to_string())?;
                 let updated_at: chrono::DateTime<chrono::Utc> =
@@ -257,7 +254,10 @@ impl AsyncProjector {
         let projector = Arc::clone(&self);
 
         tokio::spawn(async move {
-            tracing::info!("AsyncProjector started with {} views", projector.views.len());
+            tracing::info!(
+                "AsyncProjector started with {} views",
+                projector.views.len()
+            );
 
             while projector.running.load(Ordering::SeqCst) {
                 match projector.run_once().await {

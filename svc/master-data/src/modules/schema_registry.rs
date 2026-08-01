@@ -122,18 +122,17 @@ pub async fn get_schema(
     State(state): State<AppState>,
     Path(id): Path<Uuid>,
 ) -> Result<Json<Value>, (StatusCode, Json<Value>)> {
-    let schema = sqlx::query_as::<_, SchemaDefinition>(
-        "SELECT * FROM schema_registry WHERE id = $1",
-    )
-    .bind(id)
-    .fetch_optional(&state.db)
-    .await
-    .map_err(|e| {
-        (
-            StatusCode::INTERNAL_SERVER_ERROR,
-            Json(json!({ "success": false, "message": format!("Database error: {}", e) })),
-        )
-    })?;
+    let schema =
+        sqlx::query_as::<_, SchemaDefinition>("SELECT * FROM schema_registry WHERE id = $1")
+            .bind(id)
+            .fetch_optional(&state.db)
+            .await
+            .map_err(|e| {
+                (
+                    StatusCode::INTERNAL_SERVER_ERROR,
+                    Json(json!({ "success": false, "message": format!("Database error: {}", e) })),
+                )
+            })?;
 
     match schema {
         Some(s) => Ok(Json(json!({
@@ -511,7 +510,10 @@ pub async fn delete_data(
 
 // ============ 辅助函数 ============
 
-async fn get_schema_def(pool: &PgPool, id: Uuid) -> Result<SchemaDefinition, (StatusCode, Json<Value>)> {
+async fn get_schema_def(
+    pool: &PgPool,
+    id: Uuid,
+) -> Result<SchemaDefinition, (StatusCode, Json<Value>)> {
     sqlx::query_as::<_, SchemaDefinition>("SELECT * FROM schema_registry WHERE id = $1")
         .bind(id)
         .fetch_optional(pool)
@@ -529,8 +531,13 @@ async fn get_schema_def(pool: &PgPool, id: Uuid) -> Result<SchemaDefinition, (St
 }
 
 /// 根据 Schema JSON 动态创建数据表
-async fn create_dynamic_table(pool: &PgPool, table_name: &str, schema_json: &Value) -> Result<(), sqlx::Error> {
-    let fields = schema_json.get("fields")
+async fn create_dynamic_table(
+    pool: &PgPool,
+    table_name: &str,
+    schema_json: &Value,
+) -> Result<(), sqlx::Error> {
+    let fields = schema_json
+        .get("fields")
         .and_then(|f| f.as_array())
         .ok_or_else(|| sqlx::Error::Configuration("Schema JSON missing 'fields' array".into()))?;
 
@@ -538,7 +545,10 @@ async fn create_dynamic_table(pool: &PgPool, table_name: &str, schema_json: &Val
     let mut columns = vec!["id UUID PRIMARY KEY DEFAULT gen_random_uuid()".to_string()];
 
     for field in fields {
-        let name = field.get("name").and_then(|n| n.as_str()).unwrap_or("unknown");
+        let name = field
+            .get("name")
+            .and_then(|n| n.as_str())
+            .unwrap_or("unknown");
         let field_type = field.get("type").and_then(|t| t.as_str()).unwrap_or("text");
 
         let sql_type = match field_type {
@@ -550,7 +560,10 @@ async fn create_dynamic_table(pool: &PgPool, table_name: &str, schema_json: &Val
             _ => "TEXT",
         };
 
-        let required = field.get("required").and_then(|r| r.as_bool()).unwrap_or(false);
+        let required = field
+            .get("required")
+            .and_then(|r| r.as_bool())
+            .unwrap_or(false);
         let nullable = if required { " NOT NULL" } else { "" };
 
         columns.push(format!("\"{}\" {}{}", name, sql_type, nullable));
@@ -559,7 +572,11 @@ async fn create_dynamic_table(pool: &PgPool, table_name: &str, schema_json: &Val
     columns.push("created_at TIMESTAMPTZ DEFAULT NOW()".to_string());
     columns.push("updated_at TIMESTAMPTZ DEFAULT NOW()".to_string());
 
-    let sql = format!("CREATE TABLE IF NOT EXISTS {} ({})", table_name, columns.join(", "));
+    let sql = format!(
+        "CREATE TABLE IF NOT EXISTS {} ({})",
+        table_name,
+        columns.join(", ")
+    );
 
     sqlx::query(&sql).execute(pool).await?;
     Ok(())

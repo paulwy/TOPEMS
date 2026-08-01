@@ -15,8 +15,8 @@ use crate::modules::ApiState;
 use crate::shared::permission::{check_permission, ModulePermission};
 use topems_shared::auth::Claims;
 use topems_shared::{
-    api_error, event::EventType, event::StockInboundPayload, event::WmsInventoryItemReceivedPayload,
-    ApiResponse, PaginationParams,
+    api_error, event::EventType, event::StockInboundPayload,
+    event::WmsInventoryItemReceivedPayload, ApiResponse, PaginationParams,
 };
 
 #[derive(Debug, Deserialize, Serialize)]

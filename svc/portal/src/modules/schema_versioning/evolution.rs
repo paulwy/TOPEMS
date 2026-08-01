@@ -46,8 +46,7 @@ impl SchemaEvolutionManager {
         };
 
         self.versions.insert(id.clone(), schema_version.clone());
-        self.versions_by_number
-            .insert(version.clone(), id.clone());
+        self.versions_by_number.insert(version.clone(), id.clone());
         self.current_version_id = Some(id);
 
         if let Some(prev_id) = previous_current {
@@ -94,7 +93,12 @@ impl SchemaEvolutionManager {
         self.get_current().map(|v| v.version)
     }
 
-    fn rollback(&mut self, target_version: &str, rolled_back_by: Option<String>, notes: Option<String>) -> Option<SchemaVersion> {
+    fn rollback(
+        &mut self,
+        target_version: &str,
+        rolled_back_by: Option<String>,
+        notes: Option<String>,
+    ) -> Option<SchemaVersion> {
         let target_id = self.versions_by_number.get(target_version).cloned()?;
         let target = self.versions.get(&target_id).cloned()?;
 
@@ -126,13 +130,19 @@ impl SchemaEvolutionManager {
         let mut breaking_count = 0usize;
         let mut safe_count = 0usize;
 
-        let removed: Vec<_> = old_types.iter().filter(|t| !new_types.contains(t)).collect();
+        let removed: Vec<_> = old_types
+            .iter()
+            .filter(|t| !new_types.contains(t))
+            .collect();
         for t in &removed {
             changes.push(format!("Type removed: {}", t));
             breaking_count += 1;
         }
 
-        let added: Vec<_> = new_types.iter().filter(|t| !old_types.contains(t)).collect();
+        let added: Vec<_> = new_types
+            .iter()
+            .filter(|t| !old_types.contains(t))
+            .collect();
         for t in &added {
             changes.push(format!("Type added: {}", t));
             safe_count += 1;
@@ -199,30 +209,21 @@ pub fn publish_schema_version(
     change_description: Option<String>,
     approved_by: Option<String>,
 ) -> SchemaVersion {
-    schema_evolution_manager()
-        .lock()
-        .unwrap()
-        .publish(
-            version,
-            schema_definition,
-            change_type.unwrap_or_else(|| "minor".to_string()),
-            change_description.unwrap_or_default(),
-            approved_by,
-        )
+    schema_evolution_manager().lock().unwrap().publish(
+        version,
+        schema_definition,
+        change_type.unwrap_or_else(|| "minor".to_string()),
+        change_description.unwrap_or_default(),
+        approved_by,
+    )
 }
 
 pub fn get_schema_version(version: &str) -> Option<SchemaVersion> {
-    schema_evolution_manager()
-        .lock()
-        .unwrap()
-        .get(version)
+    schema_evolution_manager().lock().unwrap().get(version)
 }
 
 pub fn list_schema_versions() -> Vec<SchemaVersion> {
-    schema_evolution_manager()
-        .lock()
-        .unwrap()
-        .list()
+    schema_evolution_manager().lock().unwrap().list()
 }
 
 pub fn rollback_schema(
@@ -237,10 +238,7 @@ pub fn rollback_schema(
 }
 
 pub fn get_current_schema() -> Option<SchemaVersion> {
-    schema_evolution_manager()
-        .lock()
-        .unwrap()
-        .get_current()
+    schema_evolution_manager().lock().unwrap().get_current()
 }
 
 pub fn compare_schemas(old_schema: &str, new_schema: &str) -> SchemaCompareResult {
@@ -251,10 +249,7 @@ pub fn compare_schemas(old_schema: &str, new_schema: &str) -> SchemaCompareResul
 }
 
 pub fn get_schema_evolution() -> SchemaEvolution {
-    schema_evolution_manager()
-        .lock()
-        .unwrap()
-        .get_evolution()
+    schema_evolution_manager().lock().unwrap().get_evolution()
 }
 
 // ==================== 初始化函数 ====================

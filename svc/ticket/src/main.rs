@@ -7,10 +7,10 @@ use topems_shared::{
 };
 use utoipa::OpenApi;
 
-mod models;
-mod sla_service;
 mod handlers;
+mod models;
 mod openapi;
+mod sla_service;
 
 #[tokio::main]
 async fn main() {
@@ -66,9 +66,7 @@ async fn main() {
         .route("/health", get(|| async { "OK" }))
         .route(
             "/api-docs/openapi.json",
-            get(|| async move {
-                axum::Json(openapi::TicketApiDoc::openapi())
-            }),
+            get(|| async move { axum::Json(openapi::TicketApiDoc::openapi()) }),
         )
         .layer(cors)
         .with_state(pool);

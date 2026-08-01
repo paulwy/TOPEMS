@@ -1,23 +1,22 @@
+pub use topems_shared_ai::embedding;
+pub use topems_shared_ai::ollama_client;
+pub use topems_shared_ai::vector_store;
+pub use topems_shared_auth::auth;
+pub use topems_shared_auth::middleware;
+pub use topems_shared_auth::permission;
+pub use topems_shared_auth::permission_center;
+pub use topems_shared_auth::rate_limit;
+pub use topems_shared_auth::security;
+pub use topems_shared_auth::tenant;
+pub use topems_shared_bootstrap::*;
 pub use topems_shared_core::api;
 pub use topems_shared_core::api_security;
 pub use topems_shared_core::api_version;
-pub use topems_shared_db::audit;
-pub use topems_shared_db::audit_soft_delete;
-pub use topems_shared_auth::auth;
-pub use topems_shared_db::backup;
-pub use topems_shared_event::cache;
-pub use topems_shared_event::cluster;
 pub use topems_shared_core::compression;
 pub use topems_shared_core::config;
-pub use topems_shared_event::config_center;
-pub use topems_shared_event::consul;
 pub use topems_shared_core::cors;
 pub use topems_shared_core::crud;
-pub use topems_shared_db::data_governance;
-pub use topems_shared_db::database;
-pub use topems_shared_ai::embedding;
 pub use topems_shared_core::error;
-pub use topems_shared_event::event;
 pub use topems_shared_core::feature_flag;
 #[cfg(feature = "grpc")]
 pub use topems_shared_core::grpc;
@@ -26,36 +25,37 @@ pub use topems_shared_core::hrm;
 pub use topems_shared_core::id;
 pub use topems_shared_core::layers;
 pub use topems_shared_core::logging;
-pub use topems_shared_event::messaging;
 pub use topems_shared_core::metrics;
-pub use topems_shared_auth::middleware;
-pub use topems_shared_db::migration;
-pub use topems_shared_observability::monitoring;
-pub use topems_shared_service_client::notification;
-pub use topems_shared_observability::observability;
-pub use topems_shared_ai::ollama_client;
-pub use topems_shared_observability::performance;
-pub use topems_shared_auth::permission;
-pub use topems_shared_auth::permission_center;
-pub use topems_shared_db::query_optimizer;
-pub use topems_shared_auth::rate_limit;
-pub use topems_shared_event::redis;
-pub use topems_shared_db::repository;
 pub use topems_shared_core::response;
-pub use topems_shared_db::rls;
-pub use topems_shared_event::saga;
-pub use topems_shared_db::schema;
-pub use topems_shared_auth::security;
-pub use topems_shared_bootstrap::*;
-pub use topems_shared_service_client::service_client;
 pub use topems_shared_core::service_config;
-pub use topems_shared_event::service_discovery;
 pub use topems_shared_core::service_port;
-pub use topems_shared_db::storage;
-pub use topems_shared_observability::telemetry;
-pub use topems_shared_auth::tenant;
 pub use topems_shared_core::validation;
-pub use topems_shared_ai::vector_store;
+pub use topems_shared_db::audit;
+pub use topems_shared_db::audit_soft_delete;
+pub use topems_shared_db::backup;
+pub use topems_shared_db::data_governance;
+pub use topems_shared_db::database;
+pub use topems_shared_db::migration;
+pub use topems_shared_db::query_optimizer;
+pub use topems_shared_db::repository;
+pub use topems_shared_db::rls;
+pub use topems_shared_db::schema;
+pub use topems_shared_db::storage;
+pub use topems_shared_event::cache;
+pub use topems_shared_event::cluster;
+pub use topems_shared_event::config_center;
+pub use topems_shared_event::consul;
+pub use topems_shared_event::event;
+pub use topems_shared_event::messaging;
+pub use topems_shared_event::redis;
+pub use topems_shared_event::saga;
+pub use topems_shared_event::service_discovery;
+pub use topems_shared_observability::monitoring;
+pub use topems_shared_observability::observability;
+pub use topems_shared_observability::performance;
+pub use topems_shared_observability::telemetry;
+pub use topems_shared_service_client::notification;
+pub use topems_shared_service_client::service_client;
 
 // AI 客户端模块
 pub use topems_shared_ai::ai_client;
@@ -247,8 +247,8 @@ pub mod ollama {
 }
 
 // File 服务客户端模块
-pub use topems_shared_ai::file_client;
 pub use file_client::{FileServiceClient, UploadResponse};
+pub use topems_shared_ai::file_client;
 
 // Migration SDK 模块
 pub use migration::{MigrationHistory, MigrationResult, MigrationSDK, MigrationStatus};

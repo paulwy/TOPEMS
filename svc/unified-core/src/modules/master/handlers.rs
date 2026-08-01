@@ -21,11 +21,11 @@ use topems_shared::{
 };
 
 use super::models::{
-    CreateMasterDataRefRequest, DomainQualityDetail, DomainStats, DuplicateRecord,
-    MasterDataApproval, MasterDataChangeLog, MasterDataListResponse, MasterDataQuery,
-    MasterDataRef, MdmOverallStats, QualityReport, CreateApprovalRequest, ReconciliationDetail,
+    requires_approval, CreateApprovalRequest, CreateMasterDataRefRequest, DomainQualityDetail,
+    DomainStats, DuplicateRecord, MasterDataApproval, MasterDataChangeLog, MasterDataListResponse,
+    MasterDataQuery, MasterDataRef, MdmOverallStats, QualityReport, ReconciliationDetail,
     ReconciliationLog, ReconciliationResult, ReviewApprovalRequest, StaleRecord, SyncStatus,
-    UpdateMasterDataRefRequest, requires_approval,
+    UpdateMasterDataRefRequest,
 };
 
 /// MDM 服务
@@ -601,7 +601,9 @@ impl MasterDataService {
         } else {
             0.0
         };
-        let overall = (100.0 - dup_rate - stale_rate - incons_rate).max(0.0).round();
+        let overall = (100.0 - dup_rate - stale_rate - incons_rate)
+            .max(0.0)
+            .round();
 
         Ok(QualityReport {
             tenant_id,
@@ -782,11 +784,7 @@ impl MasterDataService {
         .execute(&self.pool)
         .await?;
 
-        tracing::warn!(
-            "[MDM] 对账发现 {} 条 {} 域待同步记录",
-            count,
-            domain
-        );
+        tracing::warn!("[MDM] 对账发现 {} 条 {} 域待同步记录", count, domain);
         Ok(())
     }
 
@@ -869,7 +867,10 @@ impl MasterDataService {
 
         tracing::info!(
             "[MDM] 变更审批请求已创建: domain={}, master_data_id={}, action={}, requested_by={}",
-            req.domain, req.master_data_id, req.action, requested_by
+            req.domain,
+            req.master_data_id,
+            req.action,
+            requested_by
         );
 
         Ok(approval)
@@ -906,7 +907,9 @@ impl MasterDataService {
 
         tracing::info!(
             "[MDM] 变更审批已处理: approval_id={}, status={}, reviewer={}",
-            approval_id, status, reviewer
+            approval_id,
+            status,
+            reviewer
         );
 
         Ok(approval)
@@ -1282,7 +1285,10 @@ pub async fn list_reconciliation_logs_handler(
     let limit = params.limit.unwrap_or(50).min(200);
     let service = MasterDataService::new(state.pool.clone());
 
-    match service.list_reconciliation_logs(tenant_id, unresolved, limit).await {
+    match service
+        .list_reconciliation_logs(tenant_id, unresolved, limit)
+        .await
+    {
         Ok(logs) => Json(ApiResponse::success(logs, "查询成功")),
         Err(e) => Json(ApiResponse::error(500, &e.to_string())),
     }
@@ -1297,7 +1303,10 @@ pub async fn resolve_reconciliation_issue_handler(
     let tenant_id = get_tenant_id(&claims);
     let service = MasterDataService::new(state.pool.clone());
 
-    match service.resolve_reconciliation_issue(tenant_id, issue_id).await {
+    match service
+        .resolve_reconciliation_issue(tenant_id, issue_id)
+        .await
+    {
         Ok(true) => Json(ApiResponse::success(true, "对账问题已标记为解决")),
         Ok(false) => Json(ApiResponse::error(404, "对账问题不存在或已解决")),
         Err(e) => Json(ApiResponse::error(500, &e.to_string())),
@@ -1336,7 +1345,10 @@ pub async fn create_approval_handler(
     let service = MasterDataService::new(state.pool.clone());
 
     if !requires_approval(&req.domain) {
-        return Json(ApiResponse::error(400, &format!("域 {} 不需要审批", req.domain)));
+        return Json(ApiResponse::error(
+            400,
+            &format!("域 {} 不需要审批", req.domain),
+        ));
     }
 
     match service.create_approval(tenant_id, req, requested_by).await {
@@ -1361,12 +1373,14 @@ pub async fn review_approval_handler(
         .await
     {
         Ok(approval) => {
-            let msg = if req.approved { "审批已通过" } else { "审批已拒绝" };
+            let msg = if req.approved {
+                "审批已通过"
+            } else {
+                "审批已拒绝"
+            };
             Json(ApiResponse::success(approval, msg))
         }
-        Err(sqlx::Error::RowNotFound) => {
-            Json(ApiResponse::error(404, "审批请求不存在或已处理"))
-        }
+        Err(sqlx::Error::RowNotFound) => Json(ApiResponse::error(404, "审批请求不存在或已处理")),
         Err(e) => Json(ApiResponse::error(500, &e.to_string())),
     }
 }
@@ -1399,7 +1413,10 @@ pub async fn list_approval_history_handler(
     let tenant_id = get_tenant_id(&claims);
     let service = MasterDataService::new(state.pool.clone());
 
-    match service.list_approval_history(tenant_id, &master_data_id).await {
+    match service
+        .list_approval_history(tenant_id, &master_data_id)
+        .await
+    {
         Ok(history) => Json(ApiResponse::success(history, "查询成功")),
         Err(e) => Json(ApiResponse::error(500, &e.to_string())),
     }
@@ -1440,7 +1457,10 @@ pub fn master_data_routes() -> Router<AppState> {
         .route("/master/quality/duplicates", get(list_duplicates_handler))
         .route("/master/quality/stale", get(list_stale_handler))
         // V31.0 数据对账路由
-        .route("/master/reconciliation/run", post(run_reconciliation_handler))
+        .route(
+            "/master/reconciliation/run",
+            post(run_reconciliation_handler),
+        )
         .route(
             "/master/reconciliation/logs",
             get(list_reconciliation_logs_handler),

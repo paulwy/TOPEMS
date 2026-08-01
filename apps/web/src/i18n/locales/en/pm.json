@@ -1,0 +1,398 @@
+{
+  "template_page": {
+    "notifications": {
+      "create_error_title": "Failed to create project",
+      "create_error_message": "Please retry later or contact the system administrator"
+    },
+    "templates": {
+      "software_dev": {
+        "name": "R&D Project Template",
+        "description": "Suitable for software R&D, product development and other technical projects, including requirements analysis, design, development, testing, and launch phases",
+        "tags": {
+          "research": "R&D",
+          "technology": "Technology",
+          "agile": "Agile"
+        }
+      },
+      "construction": {
+        "name": "Construction Project Template",
+        "description": "Suitable for construction and infrastructure projects, including planning, design, construction, and acceptance phases",
+        "tags": {
+          "construction": "Construction",
+          "architecture": "Architecture",
+          "engineering": "Engineering"
+        }
+      },
+      "design": {
+        "name": "Design Project Template",
+        "description": "Suitable for product design, UI design, brand design and other creative projects, including research, concept design, and proposal confirmation phases",
+        "tags": {
+          "design": "Design",
+          "creative": "Creative",
+          "brand": "Brand"
+        }
+      },
+      "marketing": {
+        "name": "Marketing Template",
+        "description": "Suitable for marketing campaigns, promotional activities, brand publicity projects, including planning, execution, monitoring, and evaluation phases",
+        "tags": {
+          "market": "Market",
+          "marketing": "Marketing",
+          "promotion": "Promotion"
+        }
+      },
+      "production": {
+        "name": "Production Project Template",
+        "description": "Suitable for product production and mass manufacturing projects, including process design, procurement, production, and quality inspection phases",
+        "tags": {
+          "production": "Production",
+          "manufacturing": "Manufacturing",
+          "process": "Process"
+        }
+      },
+      "training": {
+        "name": "Training Project Template",
+        "description": "Suitable for employee training, skill improvement, knowledge popularization projects, including needs analysis, course design, and implementation evaluation phases",
+        "tags": {
+          "training": "Training",
+          "education": "Education",
+          "learning": "Learning"
+        }
+      }
+    },
+    "actions": {
+      "create_project": "Create Project"
+    },
+    "search": {
+      "placeholder": "Search template name, type or tags..."
+    },
+    "empty": {
+      "no_templates": "No matching templates found"
+    }
+  },
+  "project_detail": {
+    "title": "Project Detail",
+    "not_evaluated": "Not Evaluated",
+    "project_progress": "Project Progress",
+    "phase_completion": "Phase Completion",
+    "project_budget": "Project Budget",
+    "milestone": "Milestone",
+    "project_overview": "Project Overview",
+    "gantt": "Gantt Chart",
+    "phase_management": "Phase Management",
+    "finance": "Finance",
+    "breadcrumbs": {
+      "home": "Home",
+      "project_management": "Project Management",
+      "project_detail": "Project Detail"
+    },
+    "status": "Status",
+    "risk": {
+      "high": "High Risk",
+      "medium": "Medium Risk",
+      "low": "Low Risk"
+    },
+    "basic_info": "Basic Info",
+    "project_code": "Project Code",
+    "project_type": "Project Type",
+    "project_leader": "Project Leader",
+    "start_date": "Start Date",
+    "end_date": "End Date",
+    "risk_level": "Risk Level",
+    "key_indicators": "Key Indicators",
+    "overall_progress": "Overall Progress",
+    "phase_progress": "Phase Progress",
+    "milestone_completion": "Milestone Completion",
+    "phase_list": "Phase List",
+    "add_phase": "Add Phase",
+    "phase_name": "Phase Name",
+    "progress": "Progress",
+    "time": "Time",
+    "action": "Action",
+    "no_phase_data": "No phase data",
+    "completed": "Completed",
+    "in_progress": "In Progress",
+    "not_started": "Not Started",
+    "to": "to",
+    "edit": "Edit",
+    "milestone_list": "Milestone List",
+    "add_milestone": "Add Milestone",
+    "milestone_name": "Milestone Name",
+    "target_date": "Target Date",
+    "belongs_to_phase": "Belongs To Phase",
+    "no_milestone_data": "No milestone data"
+  },
+  "contract_create_page": {
+    "validation": {
+      "contract_code_required": "Contract code is required",
+      "contract_name_required": "Contract name is required",
+      "amount_positive": "Contract amount must be greater than 0",
+      "tax_rate_range": "Tax rate must be between 0-100"
+    },
+    "contract_types": {
+      "construction": "Construction Contract",
+      "service": "Service Contract",
+      "purchase": "Purchase Contract",
+      "sales": "Sales Contract"
+    },
+    "contract_categories": {
+      "main": "Main Contract",
+      "supplement": "Supplement Agreement",
+      "servicelevel": "Service Level Agreement"
+    },
+    "currencies": {
+      "cny": "CNY",
+      "usd": "USD",
+      "eur": "EUR"
+    },
+    "messages": {
+      "create_success": "Contract created successfully",
+      "create_failed": "Create failed",
+      "error": "Failed to create contract"
+    },
+    "sections": {
+      "basic": {
+        "title": "Basic Information",
+        "description": "Contract Basic Information"
+      },
+      "parties": {
+        "title": "Contract Parties",
+        "description": "Contract Party A and B Information"
+      },
+      "amount": {
+        "title": "Amount and Currency",
+        "description": "Contract Amount Information"
+      },
+      "dates": {
+        "title": "Date Information",
+        "description": "Contract Date Related Information"
+      },
+      "description": {
+        "title": "Contract Description",
+        "description": "Contract Detailed Description"
+      }
+    },
+    "fields": {
+      "related_project": "Related Project",
+      "select_project": "Please select project",
+      "contract_code": "Contract Code",
+      "contract_code_placeholder": "Please enter contract code",
+      "contract_name": "Contract Name",
+      "contract_name_placeholder": "Please enter contract name",
+      "contract_type": "Contract Type",
+      "contract_category": "Contract Category",
+      "party_a": "Party A",
+      "party_a_placeholder": "Please enter Party A name",
+      "party_b": "Party B",
+      "party_b_placeholder": "Please enter Party B name",
+      "amount": "Contract Amount",
+      "amount_placeholder": "Please enter contract amount",
+      "currency": "Currency",
+      "tax_rate": "Tax Rate (%)",
+      "tax_rate_placeholder": "Please enter tax rate",
+      "signing_date": "Signing Date",
+      "signing_date_placeholder": "Please select signing date",
+      "effective_date": "Effective Date",
+      "effective_date_placeholder": "Please select effective date",
+      "end_date": "End Date",
+      "end_date_placeholder": "Please select end date",
+      "description": "Description",
+      "description_placeholder": "Please enter contract description..."
+    },
+    "page": {
+      "title": "Create Contract",
+      "subtitle": "Fill in contract basic information"
+    },
+    "breadcrumbs": {
+      "home": "Home",
+      "project_management": "Project Management",
+      "contract_management": "Contract Management",
+      "create_contract": "Create Contract"
+    },
+    "actions": {
+      "create_contract": "Create Contract",
+      "cancel": "Cancel"
+    }
+  },
+  "project_create_page": {
+    "validation": {
+      "name_required": "Project name is required",
+      "code_required": "Project code is required",
+      "budget_non_negative": "Budget amount must be non-negative",
+      "start_date_required": "Start date is required",
+      "end_date_required": "End date is required"
+    },
+    "project_types": {
+      "research": {
+        "label": "Research Project",
+        "description": "Experiment-driven, innovative research, patent application"
+      },
+      "production": {
+        "label": "Production Project",
+        "description": "Standardized production, quality control, mass production"
+      },
+      "construction": {
+        "label": "Construction Project",
+        "description": "Resource-intensive, long cycle, engineering construction"
+      },
+      "design": {
+        "label": "Design Project",
+        "description": "Iterative design, version management, product design"
+      },
+      "service": {
+        "label": "Service Project",
+        "description": "Customer-oriented, flexible delivery, consulting services"
+      }
+    },
+    "messages": {
+      "create_success": "Project created successfully",
+      "create_failed": "Create failed",
+      "error": "Failed to create project"
+    },
+    "sections": {
+      "basic": {
+        "title": "Basic Information",
+        "description": "Project Basic Information"
+      },
+      "description": {
+        "title": "Project Description",
+        "description": "Project Detailed Description"
+      },
+      "budget": {
+        "title": "Budget and Leader",
+        "description": "Project Budget and Leader Information"
+      },
+      "dates": {
+        "title": "Time Schedule",
+        "description": "Project Start and End Time"
+      },
+      "tags": {
+        "title": "Tags",
+        "description": "Project Tags"
+      }
+    },
+    "fields": {
+      "project_name": "Project Name",
+      "project_name_placeholder": "Please enter project name",
+      "project_code": "Project Code",
+      "project_code_placeholder": "Please enter project code",
+      "project_type": "Project Type",
+      "description": "Description",
+      "description_placeholder": "Please enter project description...",
+      "budget": "Project Budget",
+      "budget_placeholder": "Please enter budget amount",
+      "leader": "Project Leader",
+      "leader_placeholder": "Please enter leader name",
+      "start_date": "Start Date",
+      "start_date_placeholder": "Please select start date",
+      "end_date": "End Date",
+      "end_date_placeholder": "Please select end date",
+      "tags": "Tags",
+      "tags_placeholder": "Separate multiple tags with commas"
+    },
+    "page": {
+      "title": "Create Project",
+      "subtitle": "Fill in project basic information"
+    },
+    "breadcrumbs": {
+      "home": "Home",
+      "project_management": "Project Management",
+      "project_list": "Project List",
+      "create_project": "Create Project"
+    },
+    "actions": {
+      "save_project": "Save Project",
+      "cancel": "Cancel"
+    }
+  },
+  "contract_list_page": {
+    "messages": {
+      "create_failed": "Failed to create contract",
+      "update_failed": "Failed to update contract",
+      "delete_failed": "Failed to delete contract"
+    },
+    "actions": {
+      "view_detail": "View Detail"
+    },
+    "stats": {
+      "total_contracts": "Total Contracts",
+      "active_contracts": "Active",
+      "pending_contracts": "Pending",
+      "total_amount": "Total Amount"
+    },
+    "breadcrumbs": {
+      "home": "Home",
+      "project_management": "Project Management",
+      "contract_management": "Contract Management"
+    }
+  },
+  "contract_detail_page": {
+    "status": {
+      "draft": "Draft",
+      "pending": "Pending Review",
+      "approved": "Approved",
+      "active": "Active",
+      "completed": "Completed",
+      "cancelled": "Cancelled"
+    },
+    "contract_types": {
+      "construction": "Construction Contract",
+      "service": "Service Contract",
+      "purchase": "Purchase Contract",
+      "sales": "Sales Contract"
+    },
+    "title": "Contract Detail",
+    "overview": {
+      "basic_info": "Basic Information",
+      "contract_no": "Contract No.",
+      "contract_type": "Contract Type",
+      "amount": "Contract Amount",
+      "sign_date": "Signing Date",
+      "end_date": "End Date",
+      "parties_info": "Parties Information",
+      "party_a": "Party A",
+      "party_b": "Party B",
+      "party_a_contact": "Party A Contact",
+      "party_b_contact": "Party B Contact",
+      "description": "Contract Description"
+    },
+    "milestones": {
+      "title": "Contract Milestones",
+      "empty": "No milestone data",
+      "status_completed": "Completed",
+      "status_pending": "Pending",
+      "target_date": "Target Date"
+    },
+    "payments": {
+      "title": "Payment Schedule",
+      "empty": "No payment schedule data",
+      "period": "Period",
+      "period_value": "Period {{index}}",
+      "due_date": "Due Date",
+      "amount": "Amount",
+      "percentage": "Percentage",
+      "status": "Status",
+      "remark": "Remark",
+      "status_paid": "Paid",
+      "status_pending": "Pending",
+      "status_overdue": "Overdue"
+    },
+    "tabs": {
+      "overview": "Overview",
+      "milestones": "Milestones",
+      "payments": "Payment Schedule"
+    },
+    "info_card": {
+      "amount": "Contract Amount",
+      "party_a": "Party A",
+      "party_b": "Party B",
+      "sign_date": "Signing Date"
+    },
+    "breadcrumbs": {
+      "home": "Home",
+      "project_management": "Project Management",
+      "contracts": "Contracts",
+      "contract_detail": "Contract Detail"
+    }
+  }
+}

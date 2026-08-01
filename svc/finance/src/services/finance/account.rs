@@ -31,7 +31,7 @@ impl FinanceService {
         .bind(req.code)
         .bind(req.name)
         .bind(req.parent_id)
-        .bind(req.account_type)
+        .bind(req.account_type.unwrap_or(AccountType::Asset))
         .bind(level)
         .bind(req.currency)
         .bind(req.description)

@@ -64,7 +64,7 @@ export const subscriptionSchema: EntitySchema = {
         options: FREQUENCY_OPTIONS.map((o) => ({ value: o.value, label: o.label })),
       },
       listWidth: 100,
-      renderCell: (row) => getFrequencyLabel(row.frequency as SubscriptionFrequency),
+      renderCell: (row: Record<string, unknown>) => getFrequencyLabel(row.frequency as SubscriptionFrequency),
     },
     {
       name: 'enabled',
@@ -81,7 +81,7 @@ export const subscriptionSchema: EntitySchema = {
       hideInForm: true,
       sortable: true,
       listWidth: 160,
-      renderCell: (row) =>
+      renderCell: (row: Record<string, unknown>) =>
         row.created_at ? new Date(row.created_at as string).toLocaleString('zh-CN') : '-',
     },
   ],

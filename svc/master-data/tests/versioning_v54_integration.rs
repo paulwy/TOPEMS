@@ -35,7 +35,11 @@ async fn test_create_snapshot() {
     });
 
     let (status, resp) = ctx
-        .request("POST", &format!("{}/version/snapshot", BASE_PATH), Some(body))
+        .request(
+            "POST",
+            &format!("{}/version/snapshot", BASE_PATH),
+            Some(body),
+        )
         .await
         .expect("请求失败");
 
@@ -56,7 +60,11 @@ async fn test_get_version() {
     let ctx = TestContext::new().await;
 
     let (status, resp) = ctx
-        .request("GET", &format!("{}/version/customer/C0001", BASE_PATH), None)
+        .request(
+            "GET",
+            &format!("{}/version/customer/C0001", BASE_PATH),
+            None,
+        )
         .await
         .expect("请求失败");
 
@@ -84,9 +92,13 @@ async fn test_diff_versions() {
         "comment": "v1版本"
     });
 
-    ctx.request("POST", &format!("{}/version/snapshot", BASE_PATH), Some(create_body))
-        .await
-        .expect("创建v1失败");
+    ctx.request(
+        "POST",
+        &format!("{}/version/snapshot", BASE_PATH),
+        Some(create_body),
+    )
+    .await
+    .expect("创建v1失败");
 
     let create_body2 = json!({
         "entity_type": "product",
@@ -99,9 +111,13 @@ async fn test_diff_versions() {
         "comment": "v2版本"
     });
 
-    ctx.request("POST", &format!("{}/version/snapshot", BASE_PATH), Some(create_body2))
-        .await
-        .expect("创建v2失败");
+    ctx.request(
+        "POST",
+        &format!("{}/version/snapshot", BASE_PATH),
+        Some(create_body2),
+    )
+    .await
+    .expect("创建v2失败");
 
     let (status, resp) = ctx
         .request(
@@ -135,7 +151,11 @@ async fn test_restore_version() {
     });
 
     let (status, resp) = ctx
-        .request("POST", &format!("{}/version/restore", BASE_PATH), Some(body))
+        .request(
+            "POST",
+            &format!("{}/version/restore", BASE_PATH),
+            Some(body),
+        )
         .await
         .expect("请求失败");
 
@@ -153,7 +173,11 @@ async fn test_query_audit_log() {
     let ctx = TestContext::new().await;
 
     let (status, resp) = ctx
-        .request("GET", &format!("{}/audit/log?page=1&page_size=10", BASE_PATH), None)
+        .request(
+            "GET",
+            &format!("{}/audit/log?page=1&page_size=10", BASE_PATH),
+            None,
+        )
         .await
         .expect("请求失败");
 
@@ -231,7 +255,11 @@ async fn test_grant_permission() {
     });
 
     let (status, resp) = ctx
-        .request("POST", &format!("{}/permissions/grant", BASE_PATH), Some(body))
+        .request(
+            "POST",
+            &format!("{}/permissions/grant", BASE_PATH),
+            Some(body),
+        )
         .await
         .expect("请求失败");
 

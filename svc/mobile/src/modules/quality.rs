@@ -1,8 +1,8 @@
 use axum::{extract::State, Json};
 use serde::{Deserialize, Serialize};
 
-use topems_shared::ApiResponse;
 use topems_shared::service_client::{api::qms_api::QmsApi, TypedServiceClient};
+use topems_shared::ApiResponse;
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct CreateDefectRequest {
@@ -24,9 +24,10 @@ pub async fn list_quality_tasks(
     State(client): State<TypedServiceClient<QmsApi>>,
 ) -> Json<ApiResponse<serde_json::Value>> {
     match client.list_quality_tasks(1, 100).await {
-        Ok(items) => {
-            Json(ApiResponse::success(serde_json::json!({ "items": items, "total": items.len() }), "获取质检任务列表成功"))
-        }
+        Ok(items) => Json(ApiResponse::success(
+            serde_json::json!({ "items": items, "total": items.len() }),
+            "获取质检任务列表成功",
+        )),
         Err(e) => {
             tracing::error!("调用QMS服务获取质检任务列表失败: {}", e);
             Json(ApiResponse::error(500, "获取质检任务列表失败"))
@@ -39,9 +40,7 @@ pub async fn get_quality_task(
     axum::extract::Path(id): axum::extract::Path<String>,
 ) -> Json<ApiResponse<serde_json::Value>> {
     match client.get_quality_task(&id).await {
-        Ok(data) => {
-            Json(ApiResponse::success(data, "获取质检任务详情成功"))
-        }
+        Ok(data) => Json(ApiResponse::success(data, "获取质检任务详情成功")),
         Err(e) => {
             tracing::error!("调用QMS服务获取质检任务详情失败: {}", e);
             Json(ApiResponse::error(500, "获取质检任务详情失败"))
@@ -53,9 +52,10 @@ pub async fn list_defect_records(
     State(client): State<TypedServiceClient<QmsApi>>,
 ) -> Json<ApiResponse<serde_json::Value>> {
     match client.list_defect_records(1, 100).await {
-        Ok(items) => {
-            Json(ApiResponse::success(serde_json::json!({ "items": items, "total": items.len() }), "获取缺陷记录列表成功"))
-        }
+        Ok(items) => Json(ApiResponse::success(
+            serde_json::json!({ "items": items, "total": items.len() }),
+            "获取缺陷记录列表成功",
+        )),
         Err(e) => {
             tracing::error!("调用QMS服务获取缺陷记录列表失败: {}", e);
             Json(ApiResponse::error(500, "获取缺陷记录列表失败"))
@@ -77,9 +77,7 @@ pub async fn report_defect(
     });
 
     match client.report_defect(&data).await {
-        Ok(data) => {
-            Json(ApiResponse::success(data, "上报缺陷成功"))
-        }
+        Ok(data) => Json(ApiResponse::success(data, "上报缺陷成功")),
         Err(e) => {
             tracing::error!("调用QMS服务上报缺陷失败: {}", e);
             Json(ApiResponse::error(500, "上报缺陷失败"))
@@ -98,9 +96,7 @@ pub async fn update_quality_task_status(
     });
 
     match client.update_quality_task_status(&id, &data).await {
-        Ok(data) => {
-            Json(ApiResponse::success(data, "更新质检任务状态成功"))
-        }
+        Ok(data) => Json(ApiResponse::success(data, "更新质检任务状态成功")),
         Err(e) => {
             tracing::error!("调用QMS服务更新质检任务状态失败: {}", e);
             Json(ApiResponse::error(500, "更新质检任务状态失败"))

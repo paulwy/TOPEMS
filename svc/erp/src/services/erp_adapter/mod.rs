@@ -6,4 +6,3 @@ pub mod models;
 pub mod sap_adapter;
 pub mod traits;
 pub mod yonyou_adapter;
-

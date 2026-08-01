@@ -1,10 +1,7 @@
 use crate::AppState;
 use axum::http::StatusCode;
 use axum::Extension;
-use axum::{
-    extract::State,
-    Json,
-};
+use axum::{extract::State, Json};
 use topems_shared::Claims;
 use uuid::Uuid;
 
@@ -311,7 +308,11 @@ pub async fn update_current_user(
                         username: u.username,
                         email: u.email,
                         full_name: u.full_name,
-                        role: if u.is_superuser { "admin".to_string() } else { "user".to_string() },
+                        role: if u.is_superuser {
+                            "admin".to_string()
+                        } else {
+                            "user".to_string()
+                        },
                         roles,
                         permissions,
                         is_active: u.status == "active",
@@ -443,16 +444,15 @@ pub async fn change_my_password(
         );
     }
 
-    let password_hash: Option<String> = sqlx::query_scalar(
-        "SELECT password_hash FROM core_users WHERE id = $1",
-    )
-    .bind(user_id)
-    .fetch_optional(&state.pool)
-    .await
-    .unwrap_or_else(|e| {
-        tracing::error!("Failed to fetch password hash: {}", e);
-        None
-    });
+    let password_hash: Option<String> =
+        sqlx::query_scalar("SELECT password_hash FROM core_users WHERE id = $1")
+            .bind(user_id)
+            .fetch_optional(&state.pool)
+            .await
+            .unwrap_or_else(|e| {
+                tracing::error!("Failed to fetch password hash: {}", e);
+                None
+            });
 
     let stored_hash = match password_hash {
         Some(h) => h,
@@ -571,10 +571,7 @@ pub async fn update_my_avatar(
     Extension(claims): Extension<Claims>,
     Json(payload): Json<serde_json::Value>,
 ) -> (StatusCode, Json<serde_json::Value>) {
-    tracing::info!(
-        "IAM user update_my_avatar called for user: {}",
-        claims.sub
-    );
+    tracing::info!("IAM user update_my_avatar called for user: {}", claims.sub);
 
     let operator_id = &claims.sub;
 
@@ -649,7 +646,11 @@ pub async fn update_my_avatar(
                         username: u.username,
                         email: u.email,
                         full_name: u.full_name,
-                        role: if u.is_superuser { "admin".to_string() } else { "user".to_string() },
+                        role: if u.is_superuser {
+                            "admin".to_string()
+                        } else {
+                            "user".to_string()
+                        },
                         roles,
                         permissions,
                         is_active: u.status == "active",

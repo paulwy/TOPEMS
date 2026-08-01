@@ -153,7 +153,8 @@ pub fn generate_balance_sheet(period: &str, base: Option<&BalanceSheet>) -> Bala
     let total_current_assets: Decimal = current_assets.iter().map(|i| i.amount).sum();
     let total_non_current_assets: Decimal = non_current_assets.iter().map(|i| i.amount).sum();
     let total_current_liabilities: Decimal = current_liabilities.iter().map(|i| i.amount).sum();
-    let total_non_current_liabilities: Decimal = non_current_liabilities.iter().map(|i| i.amount).sum();
+    let total_non_current_liabilities: Decimal =
+        non_current_liabilities.iter().map(|i| i.amount).sum();
     let total_liabilities = total_current_liabilities + total_non_current_liabilities;
     let total_equity: Decimal = equity.iter().map(|i| i.amount).sum();
     let total_assets = total_current_assets + total_non_current_assets;
@@ -274,7 +275,10 @@ fn is_item(code: &str, current: i64, prev_pct: i64, year_pct: i64) -> IncomeStat
 }
 
 /// 生成增强版利润表
-pub fn generate_income_statement(period: &str, base: Option<&IncomeStatement>) -> IncomeStatementEnhanced {
+pub fn generate_income_statement(
+    period: &str,
+    base: Option<&IncomeStatement>,
+) -> IncomeStatementEnhanced {
     let items = vec![
         {
             let mut it = is_item("6001", 5_680_000, 90, 115);
@@ -315,12 +319,11 @@ pub fn generate_income_statement(period: &str, base: Option<&IncomeStatement>) -
 
     let operating_revenue = items[0].current_amount;
     let operating_cost = items[1].current_amount;
-    let period_expenses = items[3].current_amount + items[4].current_amount + items[5].current_amount;
-    let total_profit = operating_revenue
-        - operating_cost
-        - items[2].current_amount
-        - period_expenses
-        + Decimal::from(20_000); // 营业外收支净额
+    let period_expenses =
+        items[3].current_amount + items[4].current_amount + items[5].current_amount;
+    let total_profit =
+        operating_revenue - operating_cost - items[2].current_amount - period_expenses
+            + Decimal::from(20_000); // 营业外收支净额
     let income_tax = items[6].current_amount;
     let net_profit = total_profit - income_tax;
 
@@ -476,7 +479,10 @@ pub fn generate_cash_flow_statement(period: &str) -> CashFlowStatementEnhanced {
     let ratios = CashFlowRatios {
         operating_cash_to_revenue: safe_percentage(net_operating, operating_revenue),
         operating_cash_to_net_profit: safe_divide(net_operating, net_profit),
-        cash_flow_adequacy: safe_divide(net_operating, net_investing.abs() + Decimal::from(200_000)),
+        cash_flow_adequacy: safe_divide(
+            net_operating,
+            net_investing.abs() + Decimal::from(200_000),
+        ),
         free_cash_flow: net_operating + net_investing,
     };
 
@@ -554,7 +560,10 @@ pub fn calculate_financial_ratios(
     income: &IncomeStatementEnhanced,
     cash_flow: &CashFlowStatementEnhanced,
 ) -> FinancialRatios {
-    let current_ratio = safe_divide(balance.total_current_assets, balance.total_current_liabilities);
+    let current_ratio = safe_divide(
+        balance.total_current_assets,
+        balance.total_current_liabilities,
+    );
     let inventory = balance
         .current_assets
         .iter()
@@ -573,9 +582,10 @@ pub fn calculate_financial_ratios(
         .find(|i| i.account_code == "1122")
         .map(|i| (i.amount + i.period_amount) / Decimal::from(2))
         .unwrap_or(Decimal::ONE);
-    let avg_inventory = (inventory + inventory * Decimal::from(88) / Decimal::from(100))
-        / Decimal::from(2);
-    let avg_total_assets = (balance.total_assets + balance.last_year_total_assets) / Decimal::from(2);
+    let avg_inventory =
+        (inventory + inventory * Decimal::from(88) / Decimal::from(100)) / Decimal::from(2);
+    let avg_total_assets =
+        (balance.total_assets + balance.last_year_total_assets) / Decimal::from(2);
 
     let accounts_receivable_turnover = safe_divide(income.operating_revenue, avg_receivable);
     let inventory_turnover = safe_divide(income.operating_cost, avg_inventory);
@@ -620,10 +630,7 @@ pub fn calculate_financial_ratios(
 }
 
 /// 生成财务分析报告（含趋势判断和预警）
-pub fn generate_analysis_report(
-    period: &str,
-    ratios: &FinancialRatios,
-) -> FinancialAnalysisReport {
+pub fn generate_analysis_report(period: &str, ratios: &FinancialRatios) -> FinancialAnalysisReport {
     let mut score: f64 = 0.0;
     let mut warnings: Vec<String> = Vec::new();
     let mut suggestions: Vec<String> = Vec::new();
@@ -779,7 +786,12 @@ pub struct ComparativeReport {
 }
 
 pub fn generate_comparative_report(period: &str) -> ComparativeReport {
-    let scale = [Decimal::from(80), Decimal::from(88), Decimal::from(94), Decimal::from(100)];
+    let scale = [
+        Decimal::from(80),
+        Decimal::from(88),
+        Decimal::from(94),
+        Decimal::from(100),
+    ];
     let periods: Vec<String> = (0..4)
         .map(|i| {
             if i == 3 {
@@ -804,8 +816,10 @@ pub fn generate_comparative_report(period: &str) -> ComparativeReport {
         net_operating_cash_flow: base_cash.net_operating * s / Decimal::from(100),
     };
 
-    let balance_sheet_summary: Vec<PeriodSummary> = (0..4).map(|i| make_summary(i, scale[i])).collect();
-    let income_statement_summary: Vec<PeriodSummary> = (0..4).map(|i| make_summary(i, scale[i])).collect();
+    let balance_sheet_summary: Vec<PeriodSummary> =
+        (0..4).map(|i| make_summary(i, scale[i])).collect();
+    let income_statement_summary: Vec<PeriodSummary> =
+        (0..4).map(|i| make_summary(i, scale[i])).collect();
     let cash_flow_summary: Vec<PeriodSummary> = (0..4).map(|i| make_summary(i, scale[i])).collect();
 
     ComparativeReport {

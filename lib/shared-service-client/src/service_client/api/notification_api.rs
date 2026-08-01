@@ -46,10 +46,7 @@ impl TypedServiceClient<NotificationApi> {
         page_size: i32,
         notification_type: Option<&str>,
     ) -> ServiceClientResult<serde_json::Value> {
-        let mut path = format!(
-            "/notifications?page={}&pagesize={}",
-            page, page_size
-        );
+        let mut path = format!("/notifications?page={}&pagesize={}", page, page_size);
         if let Some(nt) = notification_type {
             path.push_str(&format!("&notification_type={}", nt));
         }

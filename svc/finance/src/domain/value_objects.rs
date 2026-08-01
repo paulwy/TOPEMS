@@ -29,10 +29,10 @@ pub enum VoucherStatus {
 // 收付款状态
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
 pub enum SettlementStatus {
-    Unsettled,         // 未核销
-    PartiallySettled,  // 部分核销
-    Settled,           // 已核销
-    WrittenOff,        // 已核销关闭
+    Unsettled,        // 未核销
+    PartiallySettled, // 部分核销
+    Settled,          // 已核销
+    WrittenOff,       // 已核销关闭
 }
 
 // 业务日期范围

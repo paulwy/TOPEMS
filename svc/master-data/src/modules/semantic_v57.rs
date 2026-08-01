@@ -118,7 +118,8 @@ impl EnhancedKnowledgeGraph {
 
     async fn find_shortest_path(&self, from_id: &str, to_id: &str) -> Vec<String> {
         let edges = self.edges.lock().await;
-        let mut adjacency: std::collections::HashMap<String, Vec<String>> = std::collections::HashMap::new();
+        let mut adjacency: std::collections::HashMap<String, Vec<String>> =
+            std::collections::HashMap::new();
         for edge in edges.iter() {
             adjacency
                 .entry(edge.source_id.clone())
@@ -133,7 +134,8 @@ impl EnhancedKnowledgeGraph {
 
         let mut queue = std::collections::VecDeque::new();
         let mut visited = std::collections::HashSet::new();
-        let mut parent: std::collections::HashMap<String, String> = std::collections::HashMap::new();
+        let mut parent: std::collections::HashMap<String, String> =
+            std::collections::HashMap::new();
 
         queue.push_back(from_id.to_string());
         visited.insert(from_id.to_string());
@@ -195,8 +197,10 @@ impl EnhancedKnowledgeGraph {
         let mut nodes = self.nodes.lock().await;
         let edges = self.edges.lock().await;
 
-        let mut node_community: std::collections::HashMap<String, String> = std::collections::HashMap::new();
-        let mut communities_map: std::collections::HashMap<String, Vec<String>> = std::collections::HashMap::new();
+        let mut node_community: std::collections::HashMap<String, String> =
+            std::collections::HashMap::new();
+        let mut communities_map: std::collections::HashMap<String, Vec<String>> =
+            std::collections::HashMap::new();
 
         for node in nodes.iter() {
             let type_based = node.node_type.clone();
@@ -316,16 +320,16 @@ impl SemanticSearchEngine {
         let query_embeddings = generate_simulated_embedding(query, "search_query");
         let semantic_results = self.search_semantic(&query_embeddings, top_k).await;
 
-        let keywords: Vec<&str> = query
-            .split_whitespace()
-            .collect();
+        let keywords: Vec<&str> = query.split_whitespace().collect();
 
         let indexes = self.indexes.lock().await;
         let keyword_matches: Vec<SearchResult> = indexes
             .iter()
             .filter(|idx| {
                 let text_lower = idx.text.to_lowercase();
-                keywords.iter().any(|kw| text_lower.contains(&kw.to_lowercase()))
+                keywords
+                    .iter()
+                    .any(|kw| text_lower.contains(&kw.to_lowercase()))
             })
             .map(|idx| SearchResult {
                 entity_type: idx.entity_type.clone(),
@@ -343,7 +347,11 @@ impl SemanticSearchEngine {
             }
         }
 
-        merged.sort_by(|a, b| b.score.partial_cmp(&a.score).unwrap_or(std::cmp::Ordering::Equal));
+        merged.sort_by(|a, b| {
+            b.score
+                .partial_cmp(&a.score)
+                .unwrap_or(std::cmp::Ordering::Equal)
+        });
         merged.truncate(top_k);
         merged
     }
@@ -431,7 +439,12 @@ impl SmartTagger {
         tag
     }
 
-    async fn apply_tag(&self, entity_type: String, entity_id: String, tag_id: String) -> TaggedEntity {
+    async fn apply_tag(
+        &self,
+        entity_type: String,
+        entity_id: String,
+        tag_id: String,
+    ) -> TaggedEntity {
         let mut tagged = self.tagged_entities.lock().await;
         let now = chrono::Utc::now().to_rfc3339();
 
@@ -458,7 +471,12 @@ impl SmartTagger {
         }
     }
 
-    async fn auto_tag(&self, entity_type: &str, entity_id: &str, data: &serde_json::Value) -> Vec<String> {
+    async fn auto_tag(
+        &self,
+        entity_type: &str,
+        entity_id: &str,
+        data: &serde_json::Value,
+    ) -> Vec<String> {
         let auto_rules: Vec<TagRule> = {
             let rules = self.rules.lock().await;
             rules.iter().filter(|r| r.auto_apply).cloned().collect()
@@ -554,7 +572,8 @@ impl SmartTagger {
         let total_entities = tagged.len() as i64;
         let total_assignments: i64 = tagged.iter().map(|t| t.tag_ids.len() as i64).sum();
 
-        let mut category_counts: std::collections::HashMap<String, i64> = std::collections::HashMap::new();
+        let mut category_counts: std::collections::HashMap<String, i64> =
+            std::collections::HashMap::new();
         for tag in tags.iter() {
             *category_counts.entry(tag.category.clone()).or_insert(0) += 1;
         }
@@ -634,9 +653,8 @@ fn get_v57_store() -> &'static V57Store {
 
 fn generate_simulated_embedding(text: &str, context: &str) -> Vec<f64> {
     let dim = 64;
-    let mut rng = simple_rand::SimpleRand::new(
-        text.len() as u64 * 31 + context.len() as u64 * 17 + 42,
-    );
+    let mut rng =
+        simple_rand::SimpleRand::new(text.len() as u64 * 31 + context.len() as u64 * 17 + 42);
     (0..dim).map(|_| rng.next_f64()).collect()
 }
 
@@ -663,9 +681,9 @@ fn evaluate_rule(condition: &serde_json::Value, data: &serde_json::Value) -> boo
                 "equals" => actual == expected,
                 "contains" => {
                     if let (Some(a), Some(b)) = (actual, expected) {
-                        a.as_str().map(|s| {
-                            b.as_str().map(|sub| s.contains(sub)).unwrap_or(false)
-                        }).unwrap_or(false)
+                        a.as_str()
+                            .map(|s| b.as_str().map(|sub| s.contains(sub)).unwrap_or(false))
+                            .unwrap_or(false)
                     } else {
                         false
                     }
@@ -694,7 +712,10 @@ mod simple_rand {
         }
 
         pub fn next_f64(&mut self) -> f64 {
-            self.state = self.state.wrapping_mul(6364136223846793005).wrapping_add(1442695040888963407);
+            self.state = self
+                .state
+                .wrapping_mul(6364136223846793005)
+                .wrapping_add(1442695040888963407);
             (self.state >> 11) as f64 / (1u64 << 53) as f64
         }
     }
@@ -764,18 +785,61 @@ async fn ensure_initialized() {
 
     // --- 搜索索引种子数据 ---
     let search_data = vec![
-        ("customer", "cust_001", "北京科技有限公司", serde_json::json!({"industry": "technology", "region": "north"})),
-        ("customer", "cust_002", "上海贸易集团", serde_json::json!({"industry": "trade", "region": "east"})),
-        ("product", "prod_001", "企业管理软件标准版", serde_json::json!({"category": "software", "version": "2.0"})),
-        ("product", "prod_002", "数据分析平台高级版", serde_json::json!({"category": "software", "version": "3.0"})),
-        ("supplier", "supp_001", "云计算服务商", serde_json::json!({"service": "cloud", "tier": "gold"})),
-        ("supplier", "supp_002", "硬件设备供应商", serde_json::json!({"service": "hardware", "tier": "silver"})),
-        ("employee", "emp_001", "张三 - 数据分析师", serde_json::json!({"role": "analyst", "dept": "data"})),
-        ("employee", "emp_002", "李四 - 架构师", serde_json::json!({"role": "architect", "dept": "tech"})),
+        (
+            "customer",
+            "cust_001",
+            "北京科技有限公司",
+            serde_json::json!({"industry": "technology", "region": "north"}),
+        ),
+        (
+            "customer",
+            "cust_002",
+            "上海贸易集团",
+            serde_json::json!({"industry": "trade", "region": "east"}),
+        ),
+        (
+            "product",
+            "prod_001",
+            "企业管理软件标准版",
+            serde_json::json!({"category": "software", "version": "2.0"}),
+        ),
+        (
+            "product",
+            "prod_002",
+            "数据分析平台高级版",
+            serde_json::json!({"category": "software", "version": "3.0"}),
+        ),
+        (
+            "supplier",
+            "supp_001",
+            "云计算服务商",
+            serde_json::json!({"service": "cloud", "tier": "gold"}),
+        ),
+        (
+            "supplier",
+            "supp_002",
+            "硬件设备供应商",
+            serde_json::json!({"service": "hardware", "tier": "silver"}),
+        ),
+        (
+            "employee",
+            "emp_001",
+            "张三 - 数据分析师",
+            serde_json::json!({"role": "analyst", "dept": "data"}),
+        ),
+        (
+            "employee",
+            "emp_002",
+            "李四 - 架构师",
+            serde_json::json!({"role": "architect", "dept": "tech"}),
+        ),
     ];
 
     for (et, eid, text, meta) in search_data {
-        store.search.index_entity(et.to_string(), eid.to_string(), text.to_string(), meta).await;
+        store
+            .search
+            .index_entity(et.to_string(), eid.to_string(), text.to_string(), meta)
+            .await;
     }
 
     // --- 标签种子数据 ---
@@ -828,10 +892,30 @@ async fn ensure_initialized() {
 
     // 标签规则种子数据
     let rules_data = vec![
-        ("tag_vip", serde_json::json!({"field": "industry", "operator": "equals", "value": "technology"}), true, 3),
-        ("tag_key", serde_json::json!({"field": "category", "operator": "contains", "value": "software"}), true, 2),
-        ("tag_quality", serde_json::json!({"field": "tier", "operator": "equals", "value": "gold"}), true, 3),
-        ("tag_tech", serde_json::json!({"field": "role", "operator": "contains", "value": "architect"}), true, 2),
+        (
+            "tag_vip",
+            serde_json::json!({"field": "industry", "operator": "equals", "value": "technology"}),
+            true,
+            3,
+        ),
+        (
+            "tag_key",
+            serde_json::json!({"field": "category", "operator": "contains", "value": "software"}),
+            true,
+            2,
+        ),
+        (
+            "tag_quality",
+            serde_json::json!({"field": "tier", "operator": "equals", "value": "gold"}),
+            true,
+            3,
+        ),
+        (
+            "tag_tech",
+            serde_json::json!({"field": "role", "operator": "contains", "value": "architect"}),
+            true,
+            2,
+        ),
     ];
 
     for (tag_id, condition, auto_apply, priority) in rules_data {
@@ -1020,7 +1104,10 @@ pub async fn get_community(
     let store = get_v57_store();
 
     match store.graph.get_community(&id).await {
-        Some(community) => Json(ApiResponse::success(serde_json::json!(community), "社区信息")),
+        Some(community) => Json(ApiResponse::success(
+            serde_json::json!(community),
+            "社区信息",
+        )),
         None => Json(ApiResponse::error(404, "未找到社区信息")),
     }
 }
@@ -1032,7 +1119,10 @@ pub async fn find_shortest_path_handler(
     ensure_initialized().await;
     let store = get_v57_store();
 
-    let path = store.graph.find_shortest_path(&req.from_id, &req.to_id).await;
+    let path = store
+        .graph
+        .find_shortest_path(&req.from_id, &req.to_id)
+        .await;
 
     if path.is_empty() {
         return Json(ApiResponse::error(404, "未找到可达路径"));
@@ -1258,7 +1348,10 @@ pub async fn auto_tag(
     ensure_initialized().await;
     let store = get_v57_store();
 
-    let applied = store.tagger.auto_tag(&req.entity_type, &req.entity_id, &req.data).await;
+    let applied = store
+        .tagger
+        .auto_tag(&req.entity_type, &req.entity_id, &req.data)
+        .await;
 
     Json(ApiResponse::success(
         serde_json::json!({
@@ -1278,7 +1371,10 @@ pub async fn get_tags_for_entity(
     ensure_initialized().await;
     let store = get_v57_store();
 
-    let tags = store.tagger.get_tags_for_entity(&entity_type, &entity_id).await;
+    let tags = store
+        .tagger
+        .get_tags_for_entity(&entity_type, &entity_id)
+        .await;
     Json(ApiResponse::success(tags, "实体标签列表"))
 }
 
@@ -1331,9 +1427,7 @@ pub async fn list_tags(
     Json(ApiResponse::success(tags, "标签列表"))
 }
 
-pub async fn get_tag_stats(
-    State(_state): State<AppState>,
-) -> Json<ApiResponse<serde_json::Value>> {
+pub async fn get_tag_stats(State(_state): State<AppState>) -> Json<ApiResponse<serde_json::Value>> {
     ensure_initialized().await;
     let store = get_v57_store();
     let stats = store.tagger.get_tag_stats().await;

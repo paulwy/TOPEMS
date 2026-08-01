@@ -522,7 +522,11 @@ pub async fn create_api_product(
     let store = get_v55_store();
     let mut products = store.api_products.lock().await;
 
-    let tier = req.tier.as_deref().map(tier_from_str).unwrap_or(ProductTier::Free);
+    let tier = req
+        .tier
+        .as_deref()
+        .map(tier_from_str)
+        .unwrap_or(ProductTier::Free);
 
     let product = APIProduct {
         id: uuid::Uuid::new_v4().to_string(),
@@ -575,7 +579,11 @@ pub async fn subscribe_tenant(
         return Json(ApiResponse::error(404, "未找到 API 产品"));
     };
 
-    let tier = req.tier.as_deref().map(tier_from_str).unwrap_or_else(|| product.tier.clone());
+    let tier = req
+        .tier
+        .as_deref()
+        .map(tier_from_str)
+        .unwrap_or_else(|| product.tier.clone());
     drop(products);
 
     let now = chrono::Utc::now();
@@ -765,10 +773,12 @@ pub async fn generate_bill(
     ensure_initialized().await;
     let store = get_v55_store();
 
-    let period_start = req.period_start.unwrap_or_else(|| {
-        (chrono::Utc::now() - chrono::Duration::days(30)).to_rfc3339()
-    });
-    let period_end = req.period_end.unwrap_or_else(|| chrono::Utc::now().to_rfc3339());
+    let period_start = req
+        .period_start
+        .unwrap_or_else(|| (chrono::Utc::now() - chrono::Duration::days(30)).to_rfc3339());
+    let period_end = req
+        .period_end
+        .unwrap_or_else(|| chrono::Utc::now().to_rfc3339());
 
     let records = store.usage_records.lock().await;
     let filtered: Vec<UsageRecord> = records
@@ -803,17 +813,16 @@ pub async fn generate_bill(
     });
 
     let product = store.api_products.lock().await;
-    let matched_product = product.iter().find(|p| {
-        filtered
-            .iter()
-            .any(|r| r.api_product_id == p.id)
-    });
+    let matched_product = product
+        .iter()
+        .find(|p| filtered.iter().any(|r| r.api_product_id == p.id));
 
     let tier = matched_product
         .map(|p| p.tier.clone())
         .unwrap_or(ProductTier::Free);
 
-    let base_cost = total_requests as f64 * rate_card.cost_per_request + total_data_mb * rate_card.cost_per_mb;
+    let base_cost =
+        total_requests as f64 * rate_card.cost_per_request + total_data_mb * rate_card.cost_per_mb;
     let total_amount = if base_cost > 1000.0 {
         1000.0 + (base_cost - 1000.0) * rate_card.overage_multiplier
     } else {
@@ -909,9 +918,7 @@ pub async fn create_rate_card(
     Json(ApiResponse::success(card, "费率卡已创建"))
 }
 
-pub async fn get_rate_cards(
-    State(_state): State<AppState>,
-) -> Json<ApiResponse<Vec<RateCard>>> {
+pub async fn get_rate_cards(State(_state): State<AppState>) -> Json<ApiResponse<Vec<RateCard>>> {
     ensure_initialized().await;
     let store = get_v55_store();
     let cards = store.rate_cards.lock().await;
@@ -1238,9 +1245,7 @@ pub async fn generate_sla_report(
             .iter()
             .filter(|m| {
                 m.config_id == config.id
-                    && tenant_filter
-                        .map(|tid| &m.tenant_id == tid)
-                        .unwrap_or(true)
+                    && tenant_filter.map(|tid| &m.tenant_id == tid).unwrap_or(true)
                     && params
                         .period_start
                         .as_ref()
@@ -1266,14 +1271,15 @@ pub async fn generate_sla_report(
             .iter()
             .filter(|i| {
                 i.config_id == config.id
-                    && tenant_filter
-                        .map(|tid| &i.tenant_id == tid)
-                        .unwrap_or(true)
+                    && tenant_filter.map(|tid| &i.tenant_id == tid).unwrap_or(true)
             })
             .collect();
 
         total_breaches += config_incidents.len() as i64;
-        total_compensation += config_incidents.iter().map(|i| i.compensation_amount).sum::<f64>();
+        total_compensation += config_incidents
+            .iter()
+            .map(|i| i.compensation_amount)
+            .sum::<f64>();
 
         config_summaries.push(serde_json::json!({
             "config_id": config.id,

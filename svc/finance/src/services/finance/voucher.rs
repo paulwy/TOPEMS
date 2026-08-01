@@ -35,8 +35,8 @@ impl FinanceService {
             .await?;
 
         let voucher: Voucher = sqlx::query_as(
-            "INSERT INTO core_finance_vouchers (tenant_id, voucher_no, voucher_date, period, voucher_type, total_debit, total_credit, status, description, created_by)
-             VALUES ($1, $2, $3, $4, $5, $6, $7, 'draft', $8, $9)
+            "INSERT INTO core_finance_vouchers (tenant_id, voucher_no, voucher_date, period, voucher_type, total_debit, total_credit, status, description, created_by, template_id)
+             VALUES ($1, $2, $3, $4, $5, $6, $7, 'draft', $8, $9, $10)
              RETURNING *",
         )
         .bind(tenant_id)
@@ -48,6 +48,7 @@ impl FinanceService {
         .bind(total_credit)
         .bind(req.description)
         .bind(created_by)
+        .bind(req.template_id)
         .fetch_one(&self.db_pool)
         .await?;
 
@@ -540,13 +541,12 @@ impl FinanceService {
         req: UpdateVoucherRequest,
         _updated_by: &str,
     ) -> Result<VoucherResponse, TopemsError> {
-        let existing: Voucher = sqlx::query_as(
-            "SELECT * FROM core_finance_vouchers WHERE tenant_id = $1 AND id = $2",
-        )
-        .bind(tenant_id)
-        .bind(voucher_id)
-        .fetch_one(&self.db_pool)
-        .await?;
+        let existing: Voucher =
+            sqlx::query_as("SELECT * FROM core_finance_vouchers WHERE tenant_id = $1 AND id = $2")
+                .bind(tenant_id)
+                .bind(voucher_id)
+                .fetch_one(&self.db_pool)
+                .await?;
 
         if existing.status == VoucherStatus::Posted {
             return Err(TopemsError::ValidationFailed(
@@ -558,11 +558,7 @@ impl FinanceService {
         let voucher_type = req.voucher_type.unwrap_or(existing.voucher_type);
         let description = req.description.or(existing.description);
 
-        let period = format!(
-            "{:04}{:02}",
-            voucher_date.year(),
-            voucher_date.month()
-        );
+        let period = format!("{:04}{:02}", voucher_date.year(), voucher_date.month());
 
         if let Some(ref lines) = req.lines {
             let total_debit: Decimal = lines.iter().map(|l| l.debit).sum();
@@ -679,14 +675,13 @@ impl FinanceService {
         tenant_id: Uuid,
         voucher_id: Uuid,
     ) -> Result<(), TopemsError> {
-        let existing: Voucher = sqlx::query_as(
-            "SELECT * FROM core_finance_vouchers WHERE tenant_id = $1 AND id = $2",
-        )
-        .bind(tenant_id)
-        .bind(voucher_id)
-        .fetch_optional(&self.db_pool)
-        .await?
-        .ok_or_else(|| TopemsError::NotFound("凭证不存在".to_string()))?;
+        let existing: Voucher =
+            sqlx::query_as("SELECT * FROM core_finance_vouchers WHERE tenant_id = $1 AND id = $2")
+                .bind(tenant_id)
+                .bind(voucher_id)
+                .fetch_optional(&self.db_pool)
+                .await?
+                .ok_or_else(|| TopemsError::NotFound("凭证不存在".to_string()))?;
 
         if existing.status == VoucherStatus::Posted {
             return Err(TopemsError::ValidationFailed(
@@ -714,14 +709,13 @@ impl FinanceService {
         tenant_id: Uuid,
         voucher_id: Uuid,
     ) -> Result<Voucher, TopemsError> {
-        let existing: Voucher = sqlx::query_as(
-            "SELECT * FROM core_finance_vouchers WHERE tenant_id = $1 AND id = $2",
-        )
-        .bind(tenant_id)
-        .bind(voucher_id)
-        .fetch_optional(&self.db_pool)
-        .await?
-        .ok_or_else(|| TopemsError::NotFound("凭证不存在".to_string()))?;
+        let existing: Voucher =
+            sqlx::query_as("SELECT * FROM core_finance_vouchers WHERE tenant_id = $1 AND id = $2")
+                .bind(tenant_id)
+                .bind(voucher_id)
+                .fetch_optional(&self.db_pool)
+                .await?
+                .ok_or_else(|| TopemsError::NotFound("凭证不存在".to_string()))?;
 
         if existing.status != VoucherStatus::Posted {
             return Err(TopemsError::ValidationFailed(

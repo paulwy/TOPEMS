@@ -173,7 +173,10 @@ impl BreakingChangeDetector {
         }
     }
 
-    pub fn validate_compatibility(old_schema: &str, new_schema: &str) -> Result<bool, BreakingChangeReport> {
+    pub fn validate_compatibility(
+        old_schema: &str,
+        new_schema: &str,
+    ) -> Result<bool, BreakingChangeReport> {
         let changes = Self::detect(old_schema, new_schema);
         let report = Self::generate_report(changes);
         if report.breaking_count > 0 {
@@ -183,9 +186,13 @@ impl BreakingChangeDetector {
         }
     }
 
-    fn parse_types(schema: &str) -> std::collections::HashMap<String, std::collections::HashMap<String, String>> {
-        let mut types: std::collections::HashMap<String, std::collections::HashMap<String, String>> =
-            std::collections::HashMap::new();
+    fn parse_types(
+        schema: &str,
+    ) -> std::collections::HashMap<String, std::collections::HashMap<String, String>> {
+        let mut types: std::collections::HashMap<
+            String,
+            std::collections::HashMap<String, String>,
+        > = std::collections::HashMap::new();
 
         for block in Self::extract_blocks(schema, "type") {
             let lines: Vec<&str> = block.lines().collect();
@@ -289,7 +296,8 @@ impl BreakingChangeDetector {
     }
 
     fn parse_enums(schema: &str) -> std::collections::HashMap<String, Vec<String>> {
-        let mut enums: std::collections::HashMap<String, Vec<String>> = std::collections::HashMap::new();
+        let mut enums: std::collections::HashMap<String, Vec<String>> =
+            std::collections::HashMap::new();
 
         for block in Self::extract_blocks(schema, "enum") {
             let lines: Vec<&str> = block.lines().collect();
@@ -306,7 +314,10 @@ impl BreakingChangeDetector {
                     let mut values = Vec::new();
                     for line in lines.iter().skip(1) {
                         let trimmed = line.trim();
-                        if trimmed.is_empty() || trimmed.starts_with('}') || trimmed.starts_with('#') {
+                        if trimmed.is_empty()
+                            || trimmed.starts_with('}')
+                            || trimmed.starts_with('#')
+                        {
                             continue;
                         }
                         let value = trimmed.split_whitespace().next().unwrap_or("").to_string();
@@ -372,6 +383,9 @@ pub fn get_breaking_change_report(old_schema: &str, new_schema: &str) -> Breakin
     BreakingChangeDetector::generate_report(changes)
 }
 
-pub fn validate_schema_compatibility(old_schema: &str, new_schema: &str) -> Result<bool, BreakingChangeReport> {
+pub fn validate_schema_compatibility(
+    old_schema: &str,
+    new_schema: &str,
+) -> Result<bool, BreakingChangeReport> {
     BreakingChangeDetector::validate_compatibility(old_schema, new_schema)
 }

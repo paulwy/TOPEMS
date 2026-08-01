@@ -274,7 +274,9 @@ impl FinanceService {
         let description = req.description.or(existing.description);
         let voucher_type = req.voucher_type.unwrap_or(existing.voucher_type);
         let default_debit_account = req.default_debit_account.or(existing.default_debit_account);
-        let default_credit_account = req.default_credit_account.or(existing.default_credit_account);
+        let default_credit_account = req
+            .default_credit_account
+            .or(existing.default_credit_account);
         let is_default = req.is_default.unwrap_or(existing.is_default);
         let status = req.status.unwrap_or(existing.status);
         let now = Utc::now();
@@ -417,7 +419,9 @@ impl FinanceService {
         tenant_id: Uuid,
         req: ApplyTemplateRequest,
     ) -> Result<serde_json::Value, TopemsError> {
-        let template = self.get_voucher_template(tenant_id, req.template_id).await?;
+        let template = self
+            .get_voucher_template(tenant_id, req.template_id)
+            .await?;
 
         let voucher_date = req
             .voucher_date

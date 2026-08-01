@@ -1,8 +1,8 @@
 use super::base_client::BaseServiceClient;
 use super::error::{ServiceClientError, ServiceClientResult};
-use topems_shared_core::response::{ApiResponse, PaginatedResponse};
 use chrono::{DateTime, Utc};
 use serde::{de::DeserializeOwned, Deserialize, Serialize};
+use topems_shared_core::response::{ApiResponse, PaginatedResponse};
 use uuid::Uuid;
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -249,8 +249,11 @@ impl WorkflowServiceClient {
         comment: Option<String>,
     ) -> ServiceClientResult<WorkflowInstance> {
         let body = TaskActionRequest { comment };
-        self.post_and_unwrap(&format!("/api/flow/instances/{}/approve", instance_id), &body)
-            .await
+        self.post_and_unwrap(
+            &format!("/api/flow/instances/{}/approve", instance_id),
+            &body,
+        )
+        .await
     }
 
     pub async fn reject_instance(
@@ -259,7 +262,10 @@ impl WorkflowServiceClient {
         comment: Option<String>,
     ) -> ServiceClientResult<WorkflowInstance> {
         let body = TaskActionRequest { comment };
-        self.post_and_unwrap(&format!("/api/flow/instances/{}/reject", instance_id), &body)
-            .await
+        self.post_and_unwrap(
+            &format!("/api/flow/instances/{}/reject", instance_id),
+            &body,
+        )
+        .await
     }
 }

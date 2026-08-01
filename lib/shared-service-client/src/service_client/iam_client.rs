@@ -1,7 +1,7 @@
 use super::base_client::BaseServiceClient;
 use super::error::ServiceClientResult;
-use topems_shared_core::response::ApiResponse;
 use serde::{Deserialize, Serialize};
+use topems_shared_core::response::ApiResponse;
 use uuid::Uuid;
 
 #[derive(Debug, Clone, Serialize, Deserialize)]

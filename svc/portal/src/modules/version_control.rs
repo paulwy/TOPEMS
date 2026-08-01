@@ -467,9 +467,7 @@ impl APIVersionManager {
         versions.get(version).cloned()
     }
 
-    pub async fn list_versions(
-        status_filter: Option<APIVersionStatus>,
-    ) -> Vec<APIVersion> {
+    pub async fn list_versions(status_filter: Option<APIVersionStatus>) -> Vec<APIVersion> {
         let store = get_version_control_store();
         let versions = store.api_versions.lock().await;
 
@@ -648,10 +646,7 @@ impl CanaryManager {
         Ok(config)
     }
 
-    pub async fn update_canary(
-        id: &str,
-        updates: CanaryConfig,
-    ) -> Result<CanaryConfig, String> {
+    pub async fn update_canary(id: &str, updates: CanaryConfig) -> Result<CanaryConfig, String> {
         let store = get_version_control_store();
         let mut configs = store.canary_configs.lock().await;
 
@@ -729,9 +724,7 @@ impl CanaryManager {
             .collect()
     }
 
-    pub async fn list_canaries(
-        status_filter: Option<CanaryStatus>,
-    ) -> Vec<CanaryConfig> {
+    pub async fn list_canaries(status_filter: Option<CanaryStatus>) -> Vec<CanaryConfig> {
         let store = get_version_control_store();
         let configs = store.canary_configs.lock().await;
 
@@ -772,16 +765,8 @@ impl CanaryManager {
         let total_stats = store.canary_stats.lock().await;
 
         if let Some((total, canary, baseline, _)) = total_stats.get(id) {
-            let error_canary = if *canary > 0 {
-                0.05
-            } else {
-                0.0
-            };
-            let error_baseline = if *baseline > 0 {
-                0.03
-            } else {
-                0.0
-            };
+            let error_canary = if *canary > 0 { 0.05 } else { 0.0 };
+            let error_baseline = if *baseline > 0 { 0.03 } else { 0.0 };
 
             let winner = if error_canary < error_baseline {
                 CanaryWinner::Canary
@@ -821,10 +806,7 @@ impl CanaryManager {
         Ok(config.clone())
     }
 
-    pub async fn record_request(
-        config_id: &str,
-        is_canary: bool,
-    ) -> Result<(), String> {
+    pub async fn record_request(config_id: &str, is_canary: bool) -> Result<(), String> {
         let store = get_version_control_store();
         let mut stats = store.canary_stats.lock().await;
 
@@ -920,7 +902,8 @@ impl CompatibilityChecker {
         drop(reports);
 
         if let Some(r) = report {
-            Ok(r.migration_path.unwrap_or_else(|| vec!["直接升级".to_string()]))
+            Ok(r.migration_path
+                .unwrap_or_else(|| vec!["直接升级".to_string()]))
         } else {
             Ok(vec![
                 format!("从 {} 直接升级到 {}", from_version, to_version),
@@ -967,7 +950,8 @@ impl CompatibilityChecker {
         let store = get_version_control_store();
         let _policy = store.active_policy.lock().await;
 
-        let mapping = APIVersionManager::check_compatibility(client_version, server_version).await?;
+        let mapping =
+            APIVersionManager::check_compatibility(client_version, server_version).await?;
 
         let compatible = mapping.compatibility != CompatibilityLevel::None;
         let breaking_count = mapping.compatibility.breaking_changes_count();
@@ -990,10 +974,7 @@ impl CompatibilityChecker {
         Self::validate_client_version(client_version, server_version).await
     }
 
-    fn diff_breaking_changes(
-        from: &APIVersion,
-        to: &APIVersion,
-    ) -> Vec<BreakingChange> {
+    fn diff_breaking_changes(from: &APIVersion, to: &APIVersion) -> Vec<BreakingChange> {
         let mut changes = Vec::new();
 
         for to_bc in &to.breaking_changes {
@@ -1009,10 +990,7 @@ impl CompatibilityChecker {
         changes
     }
 
-    fn diff_deprecated_fields(
-        _from: &APIVersion,
-        to: &APIVersion,
-    ) -> Vec<String> {
+    fn diff_deprecated_fields(_from: &APIVersion, to: &APIVersion) -> Vec<String> {
         let mut deprecated = Vec::new();
         for bc in &to.breaking_changes {
             if bc.change_type == BreakingChangeType::FieldRemoved
@@ -1134,10 +1112,7 @@ pub async fn list_versions_handler(
     State(_state): State<AppState>,
     Query(params): Query<ListVersionsQuery>,
 ) -> Json<ApiResponse<Vec<APIVersion>>> {
-    let status = params
-        .status
-        .as_deref()
-        .map(APIVersionStatus::from_str);
+    let status = params.status.as_deref().map(APIVersionStatus::from_str);
     let versions = APIVersionManager::list_versions(status).await;
     Json(ApiResponse::success(versions, "API 版本列表"))
 }
@@ -1187,7 +1162,9 @@ pub async fn check_compatibility_handler(
     State(_state): State<AppState>,
     Query(params): Query<CheckCompatibilityQuery>,
 ) -> Json<ApiResponse<VersionMapping>> {
-    match APIVersionManager::check_compatibility(&params.client_version, &params.server_version).await {
+    match APIVersionManager::check_compatibility(&params.client_version, &params.server_version)
+        .await
+    {
         Ok(m) => Json(ApiResponse::success(m, "兼容性检查完成")),
         Err(e) => Json(ApiResponse::error(400, &e)),
     }
@@ -1365,8 +1342,11 @@ pub async fn get_compatibility_status_handler(
     State(_state): State<AppState>,
     Query(params): Query<CompatibilityStatusQuery>,
 ) -> Json<ApiResponse<CompatibilityStatus>> {
-    match CompatibilityChecker::get_compatibility_status(&params.client_version, &params.server_version)
-        .await
+    match CompatibilityChecker::get_compatibility_status(
+        &params.client_version,
+        &params.server_version,
+    )
+    .await
     {
         Ok(s) => Json(ApiResponse::success(s, "兼容性状态")),
         Err(e) => Json(ApiResponse::error(400, &e)),

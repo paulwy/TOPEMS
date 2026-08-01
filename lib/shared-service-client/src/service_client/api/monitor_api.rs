@@ -42,7 +42,10 @@ impl TypedServiceClient<MonitorApi> {
     }
 
     /// 获取指标数据
-    pub async fn get_metric_data(&self, metric_name: &str) -> ServiceClientResult<serde_json::Value> {
+    pub async fn get_metric_data(
+        &self,
+        metric_name: &str,
+    ) -> ServiceClientResult<serde_json::Value> {
         let path = format!("/metrics/{}/data", metric_name);
         self.get(&self.build_path(&path)).await
     }

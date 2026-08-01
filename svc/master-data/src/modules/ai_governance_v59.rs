@@ -69,7 +69,10 @@ impl GovernanceAIEngine {
             r#type: GovernanceSuggestionType::QualityIssue,
             entity_type: entity_type.to_string(),
             entity_id: entity_id.to_string(),
-            description: format!("{} 实体 {} 存在数据质量问题：关键字段完整性不足", entity_type, entity_id),
+            description: format!(
+                "{} 实体 {} 存在数据质量问题：关键字段完整性不足",
+                entity_type, entity_id
+            ),
             confidence: 0.92,
             action: "补全缺失字段".to_string(),
             created_at: now.clone(),
@@ -80,7 +83,10 @@ impl GovernanceAIEngine {
             r#type: GovernanceSuggestionType::Opportunity,
             entity_type: entity_type.to_string(),
             entity_id: entity_id.to_string(),
-            description: format!("{} 实体 {} 存在优化机会：建议标准化命名规范", entity_type, entity_id),
+            description: format!(
+                "{} 实体 {} 存在优化机会：建议标准化命名规范",
+                entity_type, entity_id
+            ),
             confidence: 0.78,
             action: "应用命名标准".to_string(),
             created_at: now.clone(),
@@ -91,16 +97,16 @@ impl GovernanceAIEngine {
             r#type: GovernanceSuggestionType::Recommendation,
             entity_type: entity_type.to_string(),
             entity_id: entity_id.to_string(),
-            description: format!("{} 实体 {} 建议：建立定期数据审查机制", entity_type, entity_id),
+            description: format!(
+                "{} 实体 {} 建议：建立定期数据审查机制",
+                entity_type, entity_id
+            ),
             confidence: 0.65,
             action: "创建审查任务".to_string(),
             created_at: now,
         });
 
-        self.suggestions
-            .lock()
-            .await
-            .extend(suggestions.clone());
+        self.suggestions.lock().await.extend(suggestions.clone());
         suggestions
     }
 
@@ -140,10 +146,7 @@ impl GovernanceAIEngine {
         models.clone()
     }
 
-    async fn train_model(
-        &self,
-        model_id: &str,
-    ) -> Option<GovernanceModel> {
+    async fn train_model(&self, model_id: &str) -> Option<GovernanceModel> {
         let mut models = self.models.lock().await;
         let model = models.iter_mut().find(|m| m.id == model_id)?;
         model.accuracy = (model.accuracy + 0.05).min(0.99);
@@ -308,9 +311,18 @@ impl IntelligentMatcher {
     async fn get_match_stats(&self) -> MatchStats {
         let rules = self.rules.lock().await;
         let results = self.results.lock().await;
-        let confirmed = results.iter().filter(|r| r.status == MatchStatus::Confirmed).count();
-        let rejected = results.iter().filter(|r| r.status == MatchStatus::Rejected).count();
-        let pending = results.iter().filter(|r| r.status == MatchStatus::Pending).count();
+        let confirmed = results
+            .iter()
+            .filter(|r| r.status == MatchStatus::Confirmed)
+            .count();
+        let rejected = results
+            .iter()
+            .filter(|r| r.status == MatchStatus::Rejected)
+            .count();
+        let pending = results
+            .iter()
+            .filter(|r| r.status == MatchStatus::Pending)
+            .count();
         let avg_score = if results.is_empty() {
             0.0
         } else {
@@ -409,11 +421,7 @@ impl AutoClassifier {
         models.clone()
     }
 
-    async fn classify_entity(
-        &self,
-        entity_type: &str,
-        entity_id: &str,
-    ) -> ClassificationResult {
+    async fn classify_entity(&self, entity_type: &str, entity_id: &str) -> ClassificationResult {
         let now = chrono::Utc::now().to_rfc3339();
         let models = self.models.lock().await;
         let model = models
@@ -457,18 +465,12 @@ impl AutoClassifier {
         result
     }
 
-    async fn get_classification(
-        &self,
-        entity_id: &str,
-    ) -> Option<ClassificationResult> {
+    async fn get_classification(&self, entity_id: &str) -> Option<ClassificationResult> {
         let results = self.results.lock().await;
         results.iter().find(|r| r.entity_id == entity_id).cloned()
     }
 
-    async fn get_entity_categories(
-        &self,
-        entity_type: &str,
-    ) -> Vec<String> {
+    async fn get_entity_categories(&self, entity_type: &str) -> Vec<String> {
         let models = self.models.lock().await;
         models
             .iter()
@@ -516,10 +518,7 @@ impl AutoClassifier {
         }
     }
 
-    async fn update_rules(
-        &self,
-        rules: Vec<serde_json::Value>,
-    ) -> Vec<serde_json::Value> {
+    async fn update_rules(&self, rules: Vec<serde_json::Value>) -> Vec<serde_json::Value> {
         let mut existing = self.rules.lock().await;
         *existing = rules;
         existing.clone()
@@ -847,10 +846,7 @@ pub async fn analyze(
         .ai
         .generate_suggestions(&req.entity_type, &req.entity_id)
         .await;
-    Json(ApiResponse::success(
-        suggestions,
-        "数据治理分析完成",
-    ))
+    Json(ApiResponse::success(suggestions, "数据治理分析完成"))
 }
 
 pub async fn get_suggestions(
@@ -875,10 +871,7 @@ pub async fn get_entity_suggestions(
 ) -> Json<ApiResponse<Vec<GovernanceSuggestionV59>>> {
     ensure_initialized().await;
     let store = get_v59_store();
-    let suggestions = store
-        .ai
-        .get_suggestion_by_entity("unknown", &id)
-        .await;
+    let suggestions = store.ai.get_suggestion_by_entity("unknown", &id).await;
     Json(ApiResponse::success(suggestions, "实体治理建议"))
 }
 
@@ -908,9 +901,7 @@ pub async fn dismiss_suggestion(
     }
 }
 
-pub async fn get_models(
-    State(_state): State<AppState>,
-) -> Json<ApiResponse<Vec<GovernanceModel>>> {
+pub async fn get_models(State(_state): State<AppState>) -> Json<ApiResponse<Vec<GovernanceModel>>> {
     ensure_initialized().await;
     let store = get_v59_store();
     let models = store.ai.get_models().await;
@@ -953,9 +944,7 @@ pub async fn create_match_rule(
     Json(ApiResponse::success(rule, "匹配规则已创建"))
 }
 
-pub async fn get_match_rules(
-    State(_state): State<AppState>,
-) -> Json<ApiResponse<Vec<MatchRule>>> {
+pub async fn get_match_rules(State(_state): State<AppState>) -> Json<ApiResponse<Vec<MatchRule>>> {
     ensure_initialized().await;
     let store = get_v59_store();
     let rules = store.matcher.get_match_rules().await;
@@ -1030,9 +1019,7 @@ pub async fn reject_match(
     }
 }
 
-pub async fn get_match_stats(
-    State(_state): State<AppState>,
-) -> Json<ApiResponse<MatchStats>> {
+pub async fn get_match_stats(State(_state): State<AppState>) -> Json<ApiResponse<MatchStats>> {
     ensure_initialized().await;
     let store = get_v59_store();
     let stats = store.matcher.get_match_stats().await;
@@ -1076,10 +1063,7 @@ pub async fn classify_entity(
 ) -> Json<ApiResponse<ClassificationResult>> {
     ensure_initialized().await;
     let store = get_v59_store();
-    let result = store
-        .classifier
-        .classify_entity(&entity_type, &id)
-        .await;
+    let result = store.classifier.classify_entity(&entity_type, &id).await;
     Json(ApiResponse::success(result, "分类完成"))
 }
 

@@ -5,11 +5,10 @@
 use utoipa::OpenApi;
 
 use crate::models::{
-    AddCommentRequest, CreateSlaPolicyRequest, CreateTicketRequest, SlaBreachTrendItem,
-    SlaEscalationEvent, SlaSeverityStat, SlaTypeStat, SeverityCount, SourceCount, Ticket,
-    TicketActivity, TicketComment, TicketListResponse, TicketQuery, TicketSlaInfo,
-    TicketSlaPolicy, TicketSlaStats, TicketStats, TypeCount, UpdateSlaPolicyRequest,
-    UpdateTicketRequest,
+    AddCommentRequest, CreateSlaPolicyRequest, CreateTicketRequest, SeverityCount,
+    SlaBreachTrendItem, SlaEscalationEvent, SlaSeverityStat, SlaTypeStat, SourceCount, Ticket,
+    TicketActivity, TicketComment, TicketListResponse, TicketQuery, TicketSlaInfo, TicketSlaPolicy,
+    TicketSlaStats, TicketStats, TypeCount, UpdateSlaPolicyRequest, UpdateTicketRequest,
 };
 
 #[derive(OpenApi)]

@@ -11,11 +11,7 @@ pub trait VoucherService: Send + Sync {
     ) -> Result<VoucherAggregate, String>;
     async fn get_voucher(&self, id: &str) -> Result<Option<VoucherAggregate>, String>;
     async fn post_voucher(&self, id: &str) -> Result<VoucherAggregate, String>;
-    async fn reverse_voucher(
-        &self,
-        id: &str,
-        reason: &str,
-    ) -> Result<VoucherAggregate, String>;
+    async fn reverse_voucher(&self, id: &str, reason: &str) -> Result<VoucherAggregate, String>;
     async fn list_vouchers(
         &self,
         page: i64,

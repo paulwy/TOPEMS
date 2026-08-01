@@ -256,13 +256,11 @@ impl CashFlowPredictor {
 
         let historical = Self::fetch_historical_data(pool, tenant_id, &req.entity_id).await?;
 
-        let (inflow, outflow) =
-            Self::apply_model(&historical, &model_type, horizon, &scenario);
+        let (inflow, outflow) = Self::apply_model(&historical, &model_type, horizon, &scenario);
 
         let predicted_net = inflow - outflow;
         let confidence = Self::calculate_confidence(&historical, &model_type);
-        let (ci_lower, ci_upper) =
-            Self::calculate_confidence_interval(predicted_net, confidence);
+        let (ci_lower, ci_upper) = Self::calculate_confidence_interval(predicted_net, confidence);
 
         let prediction_id = Uuid::new_v4();
         let model_version = format!("v53.0-{}", model_type.as_str());
@@ -418,8 +416,10 @@ impl CashFlowPredictor {
                     counts[month] += 1.0;
                 }
 
-                let avg_inflow: f64 = historical.iter().map(|h| h.0).sum::<f64>() / historical.len() as f64;
-                let avg_outflow: f64 = historical.iter().map(|h| h.1).sum::<f64>() / historical.len() as f64;
+                let avg_inflow: f64 =
+                    historical.iter().map(|h| h.0).sum::<f64>() / historical.len() as f64;
+                let avg_outflow: f64 =
+                    historical.iter().map(|h| h.1).sum::<f64>() / historical.len() as f64;
 
                 let mut factors_inflow = vec![1.0f64; 12];
                 let mut factors_outflow = vec![1.0f64; 12];
@@ -573,9 +573,8 @@ impl CashFlowPredictor {
             data_query.push_str(&format!(" AND period = ${}", idx));
         }
         if scenario.is_some() {
-            let base = if entity_id.is_some() { 1 } else { 0 }
-                + if period.is_some() { 1 } else { 0 }
-                + 1;
+            let base =
+                if entity_id.is_some() { 1 } else { 0 } + if period.is_some() { 1 } else { 0 } + 1;
             count_query.push_str(&format!(" AND scenario = ${}", base));
             data_query.push_str(&format!(" AND scenario = ${}", base));
         }
@@ -1058,9 +1057,8 @@ impl BudgetAnalyzer {
             query.push_str(&format!(" AND period = ${}", idx));
         }
         if classification.is_some() {
-            let base = if entity_id.is_some() { 1 } else { 0 }
-                + if period.is_some() { 1 } else { 0 }
-                + 1;
+            let base =
+                if entity_id.is_some() { 1 } else { 0 } + if period.is_some() { 1 } else { 0 } + 1;
             query.push_str(&format!(" AND classification = ${}", base));
         }
 
@@ -1301,7 +1299,10 @@ async fn get_accuracy_handler(
     let pool = state.pool.clone();
     let _tenant_id = get_tenant_id(&claims);
 
-    let model_type = params.get("model_type").and_then(|v| v.as_str()).map(String::from);
+    let model_type = params
+        .get("model_type")
+        .and_then(|v| v.as_str())
+        .map(String::from);
 
     match CashFlowPredictor::get_accuracy(&pool, model_type).await {
         Ok(accuracies) => Json(ApiResponse::success(accuracies, "查询成功")),
@@ -1368,7 +1369,10 @@ async fn detect_anomalies_handler(
     let pool = state.pool.clone();
     let _tenant_id = get_tenant_id(&claims);
 
-    let entity_id = req.get("entity_id").and_then(|v| v.as_str()).map(String::from);
+    let entity_id = req
+        .get("entity_id")
+        .and_then(|v| v.as_str())
+        .map(String::from);
     let period = req.get("period").and_then(|v| v.as_str()).map(String::from);
 
     match BudgetAnalyzer::detect_anomalies(&pool, entity_id, period).await {
@@ -1385,7 +1389,10 @@ async fn get_variance_trends_handler(
     let pool = state.pool.clone();
     let _tenant_id = get_tenant_id(&claims);
 
-    let entity_id = params.get("entity_id").and_then(|v| v.as_str()).map(String::from);
+    let entity_id = params
+        .get("entity_id")
+        .and_then(|v| v.as_str())
+        .map(String::from);
 
     match BudgetAnalyzer::get_trends(&pool, entity_id).await {
         Ok(trends) => Json(ApiResponse::success(trends, "查询成功")),

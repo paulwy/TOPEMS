@@ -66,6 +66,7 @@ impl FinanceService {
             voucher_type: VoucherType::Payment,
             lines: voucher_lines,
             description: req.remark.clone(),
+            template_id: None,
         };
 
         let voucher = self

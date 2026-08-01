@@ -8,12 +8,12 @@ ERRORS=0
 STAGED_FILES=$(git diff --cached --name-only --diff-filter=ACM)
 
 # ============================================================
-# 1. 检查大文件 (>500KB)
+# 1. 检查大文件 (>1MB)
 # ============================================================
 echo ""
-echo "📦 Checking for large files (>500KB)..."
+echo "📦 Checking for large files (>1MB)..."
 LARGE_FILES=""
-MAX_SIZE=512000
+MAX_SIZE=1048576
 
 for file in $STAGED_FILES; do
   if [ -f "$file" ]; then

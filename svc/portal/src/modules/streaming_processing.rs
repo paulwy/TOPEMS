@@ -143,7 +143,11 @@ impl StreamType {
     }
 
     pub fn all() -> Vec<Self> {
-        vec![Self::EventStream, Self::AggregatedStream, Self::WindowedStream]
+        vec![
+            Self::EventStream,
+            Self::AggregatedStream,
+            Self::WindowedStream,
+        ]
     }
 }
 
@@ -459,10 +463,7 @@ impl StreamManagerV2 {
                         .as_ref()
                         .map(|st| s.stream_type == *st)
                         .unwrap_or(true)
-                    && status
-                        .as_ref()
-                        .map(|st| s.status == *st)
-                        .unwrap_or(true)
+                    && status.as_ref().map(|st| s.status == *st).unwrap_or(true)
             })
             .cloned()
             .collect()
@@ -506,10 +507,7 @@ impl StreamManagerV2 {
         Ok(event)
     }
 
-    pub async fn subscribe_stream(
-        stream_id: &str,
-        subscriber_id: String,
-    ) -> Result<bool, String> {
+    pub async fn subscribe_stream(stream_id: &str, subscriber_id: String) -> Result<bool, String> {
         let store = get_streaming_store();
 
         {
@@ -520,9 +518,7 @@ impl StreamManagerV2 {
         }
 
         let mut subs = store.stream_subscribers.lock().await;
-        let subscribers = subs
-            .entry(stream_id.to_string())
-            .or_insert_with(Vec::new);
+        let subscribers = subs.entry(stream_id.to_string()).or_insert_with(Vec::new);
         if !subscribers.contains(&subscriber_id) {
             subscribers.push(subscriber_id);
         }
@@ -530,10 +526,7 @@ impl StreamManagerV2 {
         Ok(true)
     }
 
-    pub async fn unsubscribe_stream(
-        stream_id: &str,
-        subscriber_id: &str,
-    ) -> Result<bool, String> {
+    pub async fn unsubscribe_stream(stream_id: &str, subscriber_id: &str) -> Result<bool, String> {
         let store = get_streaming_store();
         let mut subs = store.stream_subscribers.lock().await;
 
@@ -837,11 +830,7 @@ impl DeduplicationEngine {
         let stats = store.dedup_stats.lock().await;
 
         if let Some(rid) = rule_id {
-            stats
-                .get(rid)
-                .cloned()
-                .map(|s| vec![s])
-                .unwrap_or_default()
+            stats.get(rid).cloned().map(|s| vec![s]).unwrap_or_default()
         } else {
             stats.values().cloned().collect()
         }
@@ -944,22 +933,22 @@ impl BackpressureController {
             .ok_or_else(|| format!("背压状态不存在: {}", stream_id))
     }
 
-    pub async fn apply_backpressure(
-        stream_id: &str,
-        event_id: String,
-    ) -> Result<bool, String> {
+    pub async fn apply_backpressure(stream_id: &str, event_id: String) -> Result<bool, String> {
         let store = get_streaming_store();
 
         let config = {
             let configs = store.bp_configs.lock().await;
-            configs.get(stream_id).cloned().unwrap_or_else(|| BackpressureConfig {
-                id: "default".to_string(),
-                stream_id: stream_id.to_string(),
-                max_queue_size: 10000,
-                high_watermark: 0.8,
-                low_watermark: 0.2,
-                overflow_strategy: OverflowStrategy::Drop,
-            })
+            configs
+                .get(stream_id)
+                .cloned()
+                .unwrap_or_else(|| BackpressureConfig {
+                    id: "default".to_string(),
+                    stream_id: stream_id.to_string(),
+                    max_queue_size: 10000,
+                    high_watermark: 0.8,
+                    low_watermark: 0.2,
+                    overflow_strategy: OverflowStrategy::Drop,
+                })
         };
 
         let mut states = store.bp_states.lock().await;
@@ -987,8 +976,8 @@ impl BackpressureController {
         let utilization = state.utilization;
         let queue_depth = state.queue_depth;
 
-        let should_drop = utilization > config.high_watermark
-            && queue_depth > config.max_queue_size;
+        let should_drop =
+            utilization > config.high_watermark && queue_depth > config.max_queue_size;
 
         if should_drop {
             state.dropped_count += 1;
@@ -1241,14 +1230,7 @@ pub async fn create_stream_handler(
         .map(StreamType::from_str)
         .unwrap_or(StreamType::EventStream);
 
-    match StreamManagerV2::create_stream(
-        req.topic,
-        stream_type,
-        req.filter,
-        req.batch_size,
-    )
-    .await
-    {
+    match StreamManagerV2::create_stream(req.topic, stream_type, req.filter, req.batch_size).await {
         Ok(stream) => Json(ApiResponse::success(stream, "流创建成功")),
         Err(e) => Json(ApiResponse::error(500, &e)),
     }
@@ -1271,12 +1253,7 @@ pub async fn list_streams_handler(
     let stream_type = params.stream_type.as_deref().map(StreamType::from_str);
     let status = params.status.as_deref().map(StreamStatus::from_str);
 
-    let list = StreamManagerV2::list_streams(
-        params.topic.as_deref(),
-        stream_type,
-        status,
-    )
-    .await;
+    let list = StreamManagerV2::list_streams(params.topic.as_deref(), stream_type, status).await;
     Json(ApiResponse::success(list, "流列表"))
 }
 
@@ -1320,8 +1297,7 @@ pub async fn get_stream_events_handler(
     Path(id): Path<String>,
     Query(params): Query<GetEventsQuery>,
 ) -> Json<ApiResponse<StreamEventList>> {
-    let list =
-        StreamManagerV2::get_stream_events(&id, params.limit, params.from_sequence).await;
+    let list = StreamManagerV2::get_stream_events(&id, params.limit, params.from_sequence).await;
     Json(ApiResponse::success(list, "流事件列表"))
 }
 
@@ -1361,11 +1337,9 @@ pub async fn get_dedup_rules_handler(
     State(_state): State<AppState>,
     Query(params): Query<GetDedupRulesQuery>,
 ) -> Json<ApiResponse<Vec<DedupRule>>> {
-    let list = DeduplicationEngine::get_dedup_rules(
-        params.stream_id.as_deref(),
-        params.enabled_only,
-    )
-    .await;
+    let list =
+        DeduplicationEngine::get_dedup_rules(params.stream_id.as_deref(), params.enabled_only)
+            .await;
     Json(ApiResponse::success(list, "去重规则列表"))
 }
 
@@ -1395,11 +1369,8 @@ pub async fn get_dedup_history_handler(
     State(_state): State<AppState>,
     Query(params): Query<GetDedupHistoryQuery>,
 ) -> Json<ApiResponse<Vec<DedupHistoryEntry>>> {
-    let history = DeduplicationEngine::get_dedup_history(
-        params.rule_id.as_deref(),
-        params.limit,
-    )
-    .await;
+    let history =
+        DeduplicationEngine::get_dedup_history(params.rule_id.as_deref(), params.limit).await;
     Json(ApiResponse::success(history, "去重历史"))
 }
 
@@ -1495,11 +1466,8 @@ pub async fn get_dropped_events_handler(
     State(_state): State<AppState>,
     Query(params): Query<GetDroppedEventsQuery>,
 ) -> Json<ApiResponse<Vec<DroppedEvent>>> {
-    let events = BackpressureController::get_dropped_events(
-        params.stream_id.as_deref(),
-        params.limit,
-    )
-    .await;
+    let events =
+        BackpressureController::get_dropped_events(params.stream_id.as_deref(), params.limit).await;
     Json(ApiResponse::success(events, "丢弃事件列表"))
 }
 
@@ -1507,8 +1475,7 @@ pub async fn get_backpressure_stats_handler(
     State(_state): State<AppState>,
     Query(params): Query<GetBackpressureStatsQuery>,
 ) -> Json<ApiResponse<Vec<BackpressureStats>>> {
-    let stats =
-        BackpressureController::get_backpressure_stats(params.stream_id.as_deref()).await;
+    let stats = BackpressureController::get_backpressure_stats(params.stream_id.as_deref()).await;
     Json(ApiResponse::success(stats, "背压统计"))
 }
 

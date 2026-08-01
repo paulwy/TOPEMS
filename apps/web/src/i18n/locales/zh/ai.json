@@ -1,0 +1,917 @@
+{
+  "ai": {
+    "assistant": {
+      "common": {
+        "error_unknown": "请求失败，请稍后重试"
+      },
+      "anomaly": {
+        "anomaly_count": "异常数量",
+        "button_predict": "预测异常",
+        "col_expected": "预期值",
+        "col_reason": "原因",
+        "col_severity": "严重程度",
+        "col_timestamp": "时间",
+        "col_value": "实际值",
+        "count": "异常数量",
+        "description": "输入关键业务指标，AI将基于历史数据预测潜在异常",
+        "desc": "输入关键业务指标，AI将基于历史数据预测潜在异常异常",
+        "error_empty_metric": "请输入监控指标",
+        "error_generation": "异常预测失败",
+        "field_metric": "监控指标",
+        "field_time_range": "时间范围（可选）",
+        "label": {
+          "metric": "监控指标",
+          "time_range": "时间范围（可选）"
+        },
+        "message": {
+          "fail": "异常预测失败",
+          "input_metric": "请输入监控指标"
+        },
+        "placeholder": {
+          "metric": "例如：production_defect_rate",
+          "time_range": "例如：last_7_days"
+        },
+        "placeholder_metric": "例如：production_defect_rate",
+        "placeholder_time_range": "例如：last_7_days",
+        "reason": "原因",
+        "result_title": "异常预测结果",
+        "section_title": "异常预测",
+        "severity": "严重程度",
+        "subtitle": "异常预测",
+        "time": "时间",
+        "title": "异常预测："
+      },
+      "flow": {
+        "button": {
+          "analyze": "分析流程"
+        },
+        "button_analyze": "分析流程",
+        "desc": "描述业务场景或流程问题，AI将给出标准化流程步骤和优化建议",
+        "description": "描述业务场景或流程问题，AI将给出标准化流程步骤和优化建议",
+        "error_empty_query": "请输入流程问题",
+        "error_generation": "流程分析失败",
+        "estimated_time": "预计耗时：{{time}}",
+        "field_module": "业务模块（可选）",
+        "field_query": "流程问题",
+        "label": {
+          "module": "业务模块（可选）",
+          "query": "流程问题"
+        },
+        "message": {
+          "fail": "流程分析失败",
+          "input_query": "请输入流程问题"
+        },
+        "optimization_suggestion": "优化建议",
+        "optimization_suggestions": "优化建议",
+        "placeholder": {
+          "module": "例如：hrm",
+          "query": "例如：请描述新员工入职审批流程"
+        },
+        "placeholder_module": "例如：hrm",
+        "placeholder_query": "例如：请描述新员工入职审批流程",
+        "responsible": "负责人：{{person}}",
+        "step_label": "步骤 {{step}}",
+        "title": "流程助手"
+      },
+      "knowledge": {
+        "ai_answer": "AI回答",
+        "button": {
+          "ask": "提问"
+        },
+        "button_ask": "提问",
+        "desc": "向企业知识库提问，AI将基于知识库内容给出答案和来源",
+        "description": "向企业知识库提问，AI将基于知识库内容给出答案和来源",
+        "error_empty_question": "请输入问题",
+        "error_generation": "知识库查询失败",
+        "field_base": "知识库（可选）",
+        "field_question": "问题",
+        "follow_up": "推荐追问",
+        "follow_up_questions": "推荐追问",
+        "label": {
+          "base": "知识库（可选）",
+          "question": "问题"
+        },
+        "message": {
+          "fail": "知识库查询失败",
+          "input_question": "请输入问题"
+        },
+        "placeholder": {
+          "base": "例如：company_policy",
+          "question": "例如：如何申请采购审批？"
+        },
+        "placeholder_base": "例如：company_policy",
+        "placeholder_question": "例如：如何申请采购审批？",
+        "reference_source": "参考来源",
+        "reference_sources": "参考来源",
+        "relevance": "相关度：{{pct}}%",
+        "title": "知识库问答"
+      },
+      "message": {
+        "request_fail": "请求失败"
+      },
+      "report": {
+        "button": {
+          "generate": "生成报表"
+        },
+        "button_generate": "生成报表",
+        "desc": "用自然语言描述您想要的报表，AI将自动生成图表和数据分析",
+        "description": "用自然语言描述您想要的报表，AI将自动生成图表和数据分析",
+        "error_empty_query": "请输入报表需求",
+        "error_generation": "生成报表失败",
+        "field": {
+          "data_source": "数据源",
+          "query": "报表需求",
+          "time_range": "时间范围"
+        },
+        "field_data_source": "数据源",
+        "field_query": "报表需求",
+        "field_time_range": "时间范围",
+        "message": {
+          "fail": "生成报表失败",
+          "input_query": "请输入报表需求"
+        },
+        "placeholder": {
+          "data_source": "例如：sales_order",
+          "query": "例如：展示最近一个月各产品线的销售额趋势",
+          "time_range": "例如：last_30_days"
+        },
+        "placeholder_data_source": "例如：sales_order",
+        "placeholder_query": "例如：展示最近一个月各产品线的销售额趋势",
+        "placeholder_time_range": "例如：last_30_days",
+        "title": "报表助手"
+      },
+      "severity": {
+        "high": "高",
+        "low": "低",
+        "medium": "中"
+      },
+      "subtitle": "报表分析、流程优化、知识问答一站式智能助手",
+      "tab": {
+        "flow": "流程助手",
+        "knowledge": "知识库",
+        "report": "报表助手"
+      },
+      "title": "AI智能助手"
+    },
+    "chat": {
+      "action": {
+        "cancel": "取消",
+        "copy_message": "复制消息",
+        "new_chat": "新建对话",
+        "start_summary": "开始摘要",
+        "upload_document": "上传文档"
+      },
+      "dialog": {
+        "click_to_select": "点击选择文件",
+        "file_selected": "文件已选择：{{name}}",
+        "supported_formats": "支持的格式：PDF、Word、TXT",
+        "upload_title": "上传文档"
+      },
+      "disclaimer": "免责声明：AI生成的内容仅供参考",
+      "empty": {
+        "subtitle": "开始您的第一次AI对话",
+        "title": "还没有消息"
+      },
+      "field": {
+        "code_language": "代码语言",
+        "model": "模型"
+      },
+      "message": {
+        "ai_replied": "AI已回复",
+        "analyzing_document": "正在分析文档...",
+        "copy_success_body": "内容已复制到剪贴板",
+        "copy_success_title": "复制成功",
+        "delete_session_title": "删除会话",
+        "file_selected": "文件已选择",
+        "file_upload_title": "文件上传",
+        "new_session_title": "新建会话",
+        "please": "请输入您的问题...",
+        "sent_title": "消息已发送",
+        "session_created": "会话已创建",
+        "session_deleted": "会话已删除",
+        "start_summary_title": "开始摘要",
+        "summary_prompt": "请帮我总结这份文档的主要内容和关键信息"
+      },
+      "mock": {
+        "message_1": "请帮我分析一下系统架构的优化方案",
+        "message_2": "针对您的系统架构，建议从以下几个方面进行优化：1. 微服务拆分 2. 缓存策略 3. 数据库优化 4. 负载均衡",
+        "message_3": "如何提高数据库查询性能？",
+        "message_4": "提高数据库查询性能可以从以下几个方面入手：1. 添加合适的索引 2. 优化SQL语句 3. 使用连接池 4. 读写分离",
+        "session_title_1": "系统架构优化建议",
+        "session_title_2": "项目文档摘要",
+        "session_title_3": "代码生成示例",
+        "session_title_4": "一般性问答"
+      },
+      "model": {
+        "ernie": "文心一言"
+      },
+      "placeholder": {
+        "code": "请描述您需要生成的代码...",
+        "general": "输入您的问题...",
+        "qa": "输入您的问题，AI将为您解答...",
+        "summary": "上传文档并输入摘要需求..."
+      },
+      "quick_prompt": {
+        "analyze": "深度分析",
+        "explain_code": "代码解释",
+        "generate_code": "生成代码",
+        "summarize": "文档摘要"
+      },
+      "response": {
+        "code": "这是根据您的需求生成的代码，请查看：",
+        "default": "我理解了您的需求，让我为您解答...",
+        "qa": "这是一个很好的问题。根据我的分析，可以从以下几个方面来考虑...",
+        "summary": "以下是文档的摘要内容：\n\n核心要点：\n1. 主要主题概述\n2. 关键信息提取\n3. 重要结论总结"
+      },
+      "role": {
+        "assistant": "AI助手",
+        "user": "用户"
+      },
+      "session": {
+        "new_title": "新对话"
+      },
+      "sidebar": {
+        "mode": "模式",
+        "quick_prompts": "快捷提示"
+      },
+      "status": {
+        "typing": "AI正在输入..."
+      },
+      "tab": {
+        "code": "代码",
+        "general": "通用",
+        "qa": "问答",
+        "summary": "摘要"
+      },
+      "time": {
+        "days_ago": "{{count}}天前",
+        "hours_ago": "{{count}}小时前",
+        "just_now": "刚刚",
+        "minutes_ago": "{{count}}分钟前"
+      },
+      "title": {
+        "default": "AI智能对话"
+      },
+      "type": {
+        "code": "代码",
+        "general": "通用",
+        "qa": "问答",
+        "summary": "摘要",
+        "text": "文本"
+      }
+    },
+    "code_assistant": {
+      "action": {
+        "copy": "复制",
+        "download": "下载",
+        "explain_code": "代码解释",
+        "fix_bug": "修复Bug",
+        "generate_code": "生成代码",
+        "optimize_code": "优化代码",
+        "start_review": "开始审查"
+      },
+      "empty": {
+        "result_placeholder": "AI处理结果将显示在这里"
+      },
+      "field": {
+        "framework": "框架",
+        "language": "语言"
+      },
+      "label": {
+        "describe_requirement": "描述您的需求",
+        "generate_result": "生成结果",
+        "input_explain": "输入需要解释的代码",
+        "input_fix": "输入需要修复的代码",
+        "input_optimize": "输入需要优化的代码",
+        "input_review": "输入需要审查的代码",
+        "quick_template": "快捷模板",
+        "review_result": "审查结果"
+      },
+      "message": {
+        "code_copied": "代码已复制到剪贴板",
+        "code_generated": "代码已生成",
+        "copied_title": "复制成功",
+        "generate_complete": "生成完成",
+        "input_bug_code": "请输入需要修复的代码",
+        "input_explain_code": "请输入需要解释的代码",
+        "input_optimize_code": "请输入需要优化的代码",
+        "input_prompt": "请输入提示词",
+        "input_review_code": "请输入需要审查的代码",
+        "notice_title": "提示"
+      },
+      "mock": {
+        "code_explanation": "这段代码的主要功能是处理用户请求并返回响应。首先接收输入参数，然后进行数据验证，最后调用业务逻辑处理并返回结果。",
+        "fixed_code": "修复后的代码：\n\nfunction processData(data) {\n  if (!data) throw new Error('Invalid data');\n  return data.map(item => ({...item, processed: true}));\n}",
+        "generated_code": "生成的代码：\n\nexport const UserCard: React.FC<{user: User}> = ({user}) => {\n  return (\n    <Card>\n      <Avatar src={user.avatar} />\n      <Typography>{user.name}</Typography>\n    </Card>\n  );\n};",
+        "optimized_code": "优化后的代码：\n\nconst memoizedValue = useMemo(() => computeExpensiveValue(a, b), [a, b]);\n\n// Use useCallback for event handlers\nconst handleClick = useCallback(() => {\n  console.log(memoizedValue);\n}, [memoizedValue]);"
+      },
+      "option": {
+        "no_framework": "无框架"
+      },
+      "placeholder": {
+        "describe_code": "描述您的代码需求..."
+      },
+      "review": {
+        "issue_1_desc": "函数复杂度过高，建议拆分为多个小函数",
+        "issue_1_suggestion": "将复杂函数拆分为职责单一的子函数",
+        "issue_2_desc": "存在未处理的异常情况",
+        "issue_2_suggestion": "添加try-catch块处理可能的异常",
+        "issue_3_desc": "变量命名不规范",
+        "issue_3_suggestion": "使用有意义的变量名，遵循命名规范",
+        "issues_found": "发现 {{count}} 个问题",
+        "line_issue": "第 {{line}} 行",
+        "quality_score": "质量评分",
+        "suggestion_label": "优化建议"
+      },
+      "status": {
+        "ai_processing": "AI正在处理中...",
+        "generating": "正在生成...",
+        "please_wait": "请稍候",
+        "processing": "处理中..."
+      },
+      "subtitle": "智能代码生成与优化助手",
+      "tab": {
+        "explain": "代码解释",
+        "fix": "Bug修复",
+        "generate": "生成代码",
+        "optimize": "代码优化",
+        "review": "代码审查"
+      },
+      "template": {
+        "api": "API接口",
+        "api_desc": "生成RESTful API接口代码",
+        "database_query": "数据库查询",
+        "database_query_desc": "生成数据库查询语句",
+        "react_component": "React组件",
+        "react_component_desc": "生成React函数组件",
+        "util_function": "工具函数",
+        "util_function_desc": "生成通用工具函数"
+      },
+      "title": "AI代码助手"
+    },
+    "dashboard": {
+      "button": {
+        "start_chat": "开始对话",
+        "view_more": "查看更多记录",
+        "view_prompts": "查看提示词库"
+      },
+      "day": {
+        "fri": "周五",
+        "mon": "周一",
+        "sat": "周六",
+        "sun": "周日",
+        "thu": "周四",
+        "tue": "周二",
+        "wed": "周三"
+      },
+      "feature": {
+        "code_action": "生成代码",
+        "code_desc": "根据需求描述自动生成高质量代码，支持多种编程语言，提高开发效率",
+        "code_quality_excellent": "优秀",
+        "code_title": "代码生成",
+        "qa_action": "开始问答",
+        "qa_desc": "基于AI的智能问答系统，支持自然语言交互，提供专业准确的问题解答",
+        "qa_title": "智能问答",
+        "stat_accuracy": "准确率",
+        "stat_code_quality": "代码质量",
+        "stat_process_speed": "处理速度",
+        "stat_response_time": "响应时间",
+        "stat_support_format": "支持格式",
+        "stat_support_language": "支持语言",
+        "summary_action": "上传文档",
+        "summary_desc": "自动分析文档内容，生成结构化摘要，提取关键信息，提高阅读效率",
+        "summary_title": "文档摘要"
+      },
+      "hero_desc": "智能助手，在这里您可以享受智能问答、文档分析、代码生成等全方位的AI服务",
+      "hero_title": "AI智能助手",
+      "hero_welcome": "欢迎使用TOPEMS AI",
+      "message": {
+        "refresh_success_body": "数据已更新",
+        "refresh_success_title": "刷新成功"
+      },
+      "quick_action": {
+        "chat": "智能对话",
+        "chat_desc": "与AI进行智能问答",
+        "code_assistant": "代码助手",
+        "code_assistant_desc": "生成和优化代码",
+        "doc_analysis": "文档分析",
+        "doc_analysis_desc": "上传文档进行摘要分析",
+        "knowledge_base": "知识库",
+        "knowledge_base_desc": "管理和查询知识库"
+      },
+      "recent": {
+        "item_1_desc": "10分钟前 · 智能问答",
+        "item_1_title": "系统架构优化建议",
+        "item_2_desc": "30分钟前 · 代码助手",
+        "item_2_title": "React表单组件生成",
+        "item_3_desc": "1小时前 · 文档分析",
+        "item_3_title": "API文档摘要分析",
+        "item_4_desc": "2小时前 · 智能问答",
+        "item_4_title": "销售报表数据解读",
+        "item_5_desc": "3小时前 · 代码助手",
+        "item_5_title": "代码审查建议"
+      },
+      "refresh": "刷新",
+      "refreshing": "刷新中...",
+      "section": {
+        "core_features": "核心功能",
+        "quick_entry": "快捷入口",
+        "recent_used": "最近使用",
+        "usage_stats": "使用统计",
+        "usage_trend": "使用趋势"
+      },
+      "stat": {
+        "avg_response": "平均响应",
+        "chat_count": "对话次数",
+        "code_gen": "代码生成",
+        "doc_analysis": "文档分析",
+        "improvement": "提升",
+        "satisfaction": "用户满意度",
+        "seconds_down": "秒下降",
+        "token_usage": "Token消耗",
+        "vs_last_month": "较上月"
+      },
+      "subtitle": "一站式AI辅助功能平台",
+      "title": "AI智能助手",
+      "trend": {
+        "7_days_chat_count": "近7天对话次数",
+        "good": "趋势良好"
+      }
+    },
+    "document_analysis": {
+      "button": {
+        "analyzing": "分析中",
+        "ask": "提问",
+        "copied": "已复制",
+        "copy": "复制",
+        "regenerate": "重新生成",
+        "start_analysis": "开始分析",
+        "start_translate": "开始翻译"
+      },
+      "extract": {
+        "amount": "金额",
+        "date": "日期",
+        "keyword": "关键词",
+        "location": "地点",
+        "organization": "组织机构",
+        "person": "人名",
+        "sample_1": "示例1",
+        "sample_2": "示例2",
+        "sample_3": "示例3"
+      },
+      "label": {
+        "click_upload": "点击上传文档",
+        "key_points": "关键要点",
+        "recent_documents": "最近文档",
+        "select_document": "选择文档",
+        "support_format": "支持PDF、Word、TXT",
+        "target_language": "目标语言"
+      },
+      "language": {
+        "english": "英语",
+        "french": "法语",
+        "german": "德语",
+        "japanese": "日语",
+        "korean": "韩语"
+      },
+      "message": {
+        "analysis_complete": "分析完成",
+        "analysis_complete_body": "文档分析已完成",
+        "copied": "已复制",
+        "copied_body": "内容已复制到剪贴板",
+        "empty_qa": "基于文档内容提问，获取精准答案",
+        "notice": "提示",
+        "processing": "请稍候，AI正在处理您的文档",
+        "select_document": "请先选择或上传文档",
+        "select_language": "选择目标语言，点击开始翻译",
+        "select_to_start": "选择文档开始智能分析",
+        "supported_features": "支持文档摘要、智能翻译、文档问答、信息提取、OCR识别等功能"
+      },
+      "mock": {
+        "doc_1": "员工手册2024版",
+        "doc_2": "产品规格书",
+        "doc_3": "年度报告",
+        "key_point_1": "双休制工作时间",
+        "key_point_2": "试用期3个月",
+        "key_point_3": "带薪年假5至15天",
+        "key_point_4": "五险一金、年度体检",
+        "key_point_5": "保密协议必备",
+        "key_point_6": "绩效考核季度/年度",
+        "qa_answer": "文档问答示例答案：{{question}}",
+        "summary": "员工手册摘要内容"
+      },
+      "ocr": {
+        "confidence": "置信度98.5%",
+        "recognition_complete": "识别完成",
+        "result_sample": "OCR识别结果示例",
+        "title": "OCR文字识别",
+        "total_pages": "共12页"
+      },
+      "placeholder": {
+        "qa_input": "基于文档内容提问，例如：公司年假有多少天？"
+      },
+      "step": {
+        "analyze": "智能分析",
+        "generate": "生成结果",
+        "parse": "文档解析",
+        "upload": "上传文档"
+      },
+      "subtitle": "文档摘要、翻译、问答、信息提取",
+      "tab": {
+        "extract": "信息提取",
+        "ocr": "OCR识别",
+        "qa": "文档问答",
+        "summary": "文档摘要",
+        "translate": "智能翻译"
+      },
+      "title": "文档智能分析"
+    },
+    "knowledge_base": {
+      "button": {
+        "ask": "提问",
+        "searching": "搜索中"
+      },
+      "example": {
+        "q_2": "员工入职流程是什么？",
+        "q_3": "生产工单如何管理？"
+      },
+      "label": {
+        "all": "全部",
+        "clear_selection": "清除选择",
+        "confidence": "置信度",
+        "document_library": "文档库",
+        "input_question": "输入您的问题",
+        "knowledge_base": "知识库",
+        "reference_source": "参考来源",
+        "related_questions": "相关问题",
+        "search_document": "搜索文档",
+        "selected_docs": "已选择{{count}}个文档",
+        "smart_qa": "智能问答",
+        "updated_at": "更新于"
+      },
+      "message": {
+        "copied": "已复制",
+        "copied_body": "内容已复制到剪贴板",
+        "input_question": "请输入您的问题",
+        "notice": "提示",
+        "welcome": "欢迎使用知识库问答助手",
+        "welcome_desc": "选择文档后输入问题，AI将基于文档内容为您解答"
+      },
+      "mock": {
+        "a_1": "创建财务凭证的步骤如下：\n\n1. 登录ERP系统，进入财务模块\n2. 点击凭证管理→新建凭证\n3. 选择凭证类型（记账凭证、收款凭证、付款凭证等）\n4. 填写凭证日期和凭证号\n5. 添加会计分录（包括科目、借方金额、贷方金额）\n6. 录入凭证摘要\n7. 保存并审核凭证\n8. 审核通过后进行记账操作\n\n注意：凭证借贷必须平衡，且需要有对应的原始单据",
+        "doc_1": "ERP系统操作手册",
+        "doc_2": "财务报表生成指南",
+        "doc_3": "HRM员工入职流程",
+        "doc_4": "MES生产工单管理",
+        "follow_up_1": "如何查询已记账的凭证",
+        "follow_up_2": "凭证审核流程是什么",
+        "follow_up_3": "如何修改已审核的凭证",
+        "q_1": "如何创建财务凭证",
+        "source_1": "ERP系统操作手册",
+        "source_2": "财务报表生成指南"
+      },
+      "subtitle": "基于企业文档的智能问答助手",
+      "title": "知识库问答",
+      "type": {
+        "document": "文档",
+        "guide": "指南",
+        "manual": "操作手册",
+        "process": "流程文档"
+      }
+    },
+    "model_settings": {
+      "action": {
+        "add_key": "添加密钥",
+        "edit_key": "编辑密钥",
+        "reset_default": "恢复默认",
+        "save_config": "保存配置"
+      },
+      "api": {
+        "action": {
+          "edit": "编辑"
+        },
+        "add_key": "添加密钥",
+        "key": {
+          "anthropic": "Anthropic密钥",
+          "backup": "备份环境密钥",
+          "development": "开发环境密钥",
+          "ernie": "文心一言密钥",
+          "key_management": "密钥管理",
+          "production": "生产环境密钥"
+        },
+        "key_anthropic": "Anthropic密钥",
+        "key_backup": "备份环境密钥",
+        "key_development": "开发环境密钥",
+        "key_ernie": "文心一言密钥",
+        "key_management": "密钥管理",
+        "key_production": "生产环境密钥",
+        "status": {
+          "enabled": "已启用"
+        },
+        "status_enabled": "已启用",
+        "table": {
+          "actions": "操作",
+          "created": "创建时间",
+          "key": "密钥",
+          "name": "名称",
+          "provider": "提供商",
+          "status": "状态"
+        },
+        "tip": {
+          "keep_safe": "请妥善保管密钥，避免泄露",
+          "multi_env": "支持多环境密钥配置",
+          "rotate_keys": "建议定期轮换密钥以提升安全性"
+        },
+        "tip_keep_safe": "请妥善保管密钥，避免泄露",
+        "tip_multi_env": "支持多环境密钥配置",
+        "tip_rotate_keys": "建议定期轮换密钥以提升安全性",
+        "tips": {
+          "tip_1": "请妥善保管密钥，避免泄露",
+          "tip_2": "支持多环境密钥配置",
+          "tip_3": "建议定期轮换密钥以提升安全性",
+          "title": "使用建议"
+        },
+        "title": "密钥管理",
+        "usage_tips": "使用建议"
+      },
+      "button": {
+        "reset_default": "恢复默认",
+        "save_config": "保存配置",
+        "saving": "保存中..."
+      },
+      "capability": {
+        "analysis": "分析能力",
+        "chat": "对话能力",
+        "code": "代码能力",
+        "creation": "创作能力",
+        "embedding": "向量化",
+        "long_text": "长文本",
+        "reasoning": "推理能力",
+        "semantic_search": "语义搜索",
+        "summary": "摘要能力",
+        "translation": "翻译能力",
+        "understanding": "理解能力",
+        "vectorize": "向量化",
+        "writing": "写作能力"
+      },
+      "config": {
+        "auto_retry": "自动重试",
+        "auto_retry_desc": "请求失败时自动重试",
+        "current_model": "当前模型",
+        "default_system_prompt": "默认系统提示词",
+        "max_tokens_desc": "控制生成的最大Token数量",
+        "max_tokens_label": "最大Token数",
+        "other_settings": "其他设置",
+        "streaming_output": "流式输出",
+        "streaming_output_desc": "实时流式返回生成内容",
+        "system_prompt_label": "系统提示词",
+        "temperature": "温度",
+        "temperature_desc": "控制生成的随机性，值越高越随机",
+        "top_p_desc": "核采样参数，控制生成多样性",
+        "use_history": "使用历史记录",
+        "use_history_desc": "在对话中使用历史消息上下文"
+      },
+      "field": {
+        "actions": "操作",
+        "cost_estimate": "预估费用",
+        "created_at": "创建时间",
+        "date": "日期",
+        "default": "默认",
+        "input_price": "输入价格",
+        "key": "密钥",
+        "max_tokens": "最大Token",
+        "name": "名称",
+        "provider": "提供商",
+        "request_count": "请求数",
+        "status": "状态",
+        "token_usage": "Token用量"
+      },
+      "label": {
+        "current_model": "当前模型：",
+        "default": "默认",
+        "input_price": "输入价格",
+        "max_token": "最大Token",
+        "max_tokens": "最大Token",
+        "other_settings": "其他设置"
+      },
+      "message": {
+        "save_body": "配置已成功保存",
+        "save_success_body": "配置已成功保存",
+        "save_success_title": "保存成功",
+        "save_title": "保存成功"
+      },
+      "mock": {
+        "model_1_desc": "适用于日常对话和一般任务",
+        "model_2_desc": "适用于代码生成和开发辅助",
+        "model_3_desc": "适用于复杂推理和分析任务",
+        "model_4_desc": "支持长文本处理和多模态输入",
+        "model_4_name": "GPT-4 Vision",
+        "model_5_desc": "阿里通义大模型，中文能力强",
+        "model_5_name": "通义千问",
+        "model_6_desc": "百度自研大模型，中文理解优秀"
+      },
+      "model": {
+        "claude_desc": "适用于复杂推理和分析任务，支持超长上下文",
+        "embedding_desc": "适用于文本向量化、语义搜索和RAG场景",
+        "ernie_desc": "百度自研大模型，中文理解能力优秀",
+        "ernie_name": "文心4.0",
+        "gpt35_desc": "适用于日常对话和一般任务，性价比高",
+        "gpt4_desc": "适用于复杂推理和分析任务，支持多种能力",
+        "qwen_desc": "阿里通义大模型，中文理解能力强，支持长文本",
+        "qwen_name": "通义千问Max"
+      },
+      "param": {
+        "max_tokens": "最大Token数",
+        "max_tokens_desc": "控制生成的最大Token数量",
+        "system_prompt": "系统提示词",
+        "temperature": "温度",
+        "temperature_desc": "控制生成的随机性，值越高越随机",
+        "top_p": "Top P",
+        "top_p_desc": "核采样参数，控制生成多样性"
+      },
+      "placeholder": {
+        "system_prompt": "请输入系统提示词..."
+      },
+      "provider": {
+        "alibaba": "阿里云",
+        "baidu": "百度"
+      },
+      "setting": {
+        "history": "使用历史记录",
+        "history_desc": "在对话中使用历史消息上下文",
+        "retry": "自动重试",
+        "retry_desc": "请求失败时自动重试",
+        "stream": "流式输出",
+        "stream_desc": "实时流式返回生成内容"
+      },
+      "status": {
+        "active": "运行中",
+        "inactive": "已停用",
+        "maintenance": "维护中",
+        "saving": "保存中..."
+      },
+      "subtitle": "AI模型配置与管理",
+      "tab": {
+        "api": "API密钥",
+        "config": "模型配置",
+        "models": "模型列表",
+        "usage": "用量统计"
+      },
+      "table": {
+        "cost": "费用",
+        "date": "日期",
+        "requests": "请求数",
+        "tokens": "Token数"
+      },
+      "title": "模型设置",
+      "usage": {
+        "daily_detail": "每日详情",
+        "model_ratio": "模型占比",
+        "total_cost": "总费用",
+        "total_requests": "总请求数",
+        "total_tokens": "总Token数",
+        "trend": "近7天趋势",
+        "trend_7days": "近7天趋势"
+      }
+    },
+    "prompt": {
+      "action": {
+        "cancel": "取消",
+        "copy": "复制",
+        "generate": "生成",
+        "new_template": "新建模板"
+      },
+      "category": {
+        "all": "全部",
+        "analysis": "分析",
+        "business": "商业",
+        "code": "代码",
+        "creative": "创意",
+        "writing": "写作"
+      },
+      "dialog": {
+        "fill_variables": "填写变量",
+        "result": "生成结果"
+      },
+      "empty": {
+        "fill_then_generate": "请填写变量后生成",
+        "no_match": "没有匹配的模板"
+      },
+      "message": {
+        "copied_title": "复制成功",
+        "favorite_updated": "收藏状态已更新",
+        "open_new_dialog": "已打开新对话框",
+        "prompt_copied": "提示词已复制",
+        "result_copied": "结果已复制",
+        "success_title": "操作成功",
+        "usage_count": "使用次数：{{count}}"
+      },
+      "mock": {
+        "author_1": "张三",
+        "author_2": "李四",
+        "author_3": "王五",
+        "author_4": "赵六",
+        "author_5": "钱七",
+        "author_6": "孙八",
+        "prompt_1_content": "请根据以下主题撰写一篇专业的商业分析报告：{{topic}}。要求包含市场概况、竞争分析、SWOT分析和战略建议。",
+        "prompt_1_desc": "生成专业的商业分析报告",
+        "prompt_1_name": "商业分析报告",
+        "prompt_2_content": "请将以下代码从{{source}}转换为{{target}}，保持功能和逻辑一致：\n\n{{code}}",
+        "prompt_2_desc": "代码语言转换工具",
+        "prompt_2_name": "代码转换",
+        "prompt_3_content": "请对以下文本进行摘要，提取{{count}}个关键要点：\n\n{{text}}",
+        "prompt_3_desc": "快速生成文本摘要",
+        "prompt_3_name": "文本摘要",
+        "prompt_4_content": "作为{{role}}专家，请回答以下问题：\n\n{{question}}",
+        "prompt_4_desc": "角色扮演问答",
+        "prompt_4_name": "角色问答",
+        "prompt_5_content": "请优化以下代码，提高性能和可读性：\n\n{{code}}",
+        "prompt_5_desc": "代码优化建议",
+        "prompt_5_name": "代码优化",
+        "prompt_6_content": "请根据以下需求编写{{framework}}组件：\n\n需求：{{requirement}}",
+        "prompt_6_desc": "生成React组件代码",
+        "prompt_6_name": "React组件生成"
+      },
+      "placeholder": {
+        "input": "请输入...",
+        "search": "搜索提示词..."
+      },
+      "sidebar": {
+        "category": "分类",
+        "favorites_only": "仅显示收藏"
+      },
+      "status": {
+        "generating": "正在生成...",
+        "generating_progress": "生成中... {{progress}}%"
+      },
+      "subtitle": "提示词模板管理与复用",
+      "tab": {
+        "all_templates": "全部模板",
+        "my_templates": "我的模板"
+      },
+      "title": "提示词库"
+    },
+    "prompt_library": {
+      "button": {
+        "cancel": "取消",
+        "copy": "复制",
+        "generate": "生成",
+        "generating": "生成中...",
+        "new_template": "新建模板"
+      },
+      "category": {
+        "all": "全部",
+        "analysis": "分析",
+        "business": "商业",
+        "code": "代码",
+        "creative": "创意",
+        "writing": "写作"
+      },
+      "dialog": {
+        "fill_variables": "填写变量",
+        "generated_result": "生成结果"
+      },
+      "label": {
+        "category": "分类",
+        "favorites_only": "仅显示收藏",
+        "usage_count": "使用次数：{{count}}"
+      },
+      "message": {
+        "coming_soon": "该功能即将上线",
+        "copied_title": "复制成功",
+        "favorite_title": "操作成功",
+        "favorite_updated": "收藏状态已更新",
+        "feature_title": "提示",
+        "fill_then_generate": "请填写变量后生成",
+        "generating": "正在生成结果...",
+        "no_results": "没有匹配的模板",
+        "prompt_copied": "提示词已复制",
+        "result_copied": "结果已复制"
+      },
+      "placeholder": {
+        "enter_var": "请输入{{var}}的值...",
+        "search": "搜索提示词..."
+      },
+      "prompt": {
+        "code_review": "代码审查",
+        "code_review_desc": "对代码进行全面审查，发现问题并给出优化建议",
+        "data_analysis": "数据分析",
+        "data_analysis_desc": "分析数据并提供趋势、指标和建议",
+        "email_writing": "邮件写作",
+        "email_writing_desc": "撰写专业的商务邮件",
+        "meeting_summary": "会议纪要",
+        "meeting_summary_desc": "将会议记录整理为结构化会议纪要",
+        "product_copy": "产品文案",
+        "product_copy_desc": "撰写吸引人的产品营销文案",
+        "sql_generator": "SQL生成器",
+        "sql_generator_desc": "根据需求和表结构生成优化的SQL"
+      },
+      "subtitle": "提示词模板管理与复用",
+      "title": "提示词库",
+      "view": {
+        "all_templates": "全部模板",
+        "my_templates": "我的模板"
+      }
+    }
+  }
+}

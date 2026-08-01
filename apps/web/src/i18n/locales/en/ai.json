@@ -1,0 +1,791 @@
+{
+  "ai": {
+    "assistant": {
+      "anomaly": {
+        "actual": "Actual Value",
+        "button": {
+          "predict": "Predict Anomalies"
+        },
+        "count": "Anomaly Count",
+        "desc": "Enter key business metrics, AI will predict potential anomalies based on historical data",
+        "expected": "Expected Value",
+        "label": {
+          "metric": "Metric",
+          "time_range": "Time Range (optional)"
+        },
+        "message": {
+          "fail": "Anomaly prediction failed",
+          "input_metric": "Please enter a metric"
+        },
+        "placeholder": {
+          "metric": "e.g., production_defect_rate",
+          "time_range": "e.g., last_7_days"
+        },
+        "reason": "Reason",
+        "result_title": "Anomaly Prediction Results",
+        "section_title": "Anomaly Prediction",
+        "severity": "Severity",
+        "time": "Time"
+      },
+      "flow": {
+        "button": {
+          "analyze": "Analyze Flow"
+        },
+        "desc": "Describe business scenarios or process issues, AI will provide standardized process steps and optimization suggestions",
+        "estimated_time": "Estimated Time",
+        "label": {
+          "module": "Business Module (optional)",
+          "query": "Process Issue"
+        },
+        "message": {
+          "fail": "Flow analysis failed",
+          "input_query": "Please enter a process issue"
+        },
+        "optimization_suggestion": "Optimization Suggestion",
+        "placeholder": {
+          "module": "e.g., hrm",
+          "query": "e.g., Please describe the new employee onboarding approval process"
+        },
+        "responsible": "Responsible",
+        "step_label": "Step",
+        "title": "Flow Assistant"
+      },
+      "knowledge": {
+        "ai_answer": "AI Answer",
+        "button": {
+          "ask": "Ask"
+        },
+        "desc": "Ask questions to the enterprise knowledge base, AI will provide answers and sources based on knowledge base content",
+        "follow_up": "Follow-up Questions",
+        "label": {
+          "base": "Knowledge Base (optional)",
+          "question": "Question"
+        },
+        "message": {
+          "fail": "Knowledge base query failed",
+          "input_question": "Please enter a question"
+        },
+        "placeholder": {
+          "base": "e.g., company_policy",
+          "question": "e.g., How to apply for procurement approval?"
+        },
+        "reference_source": "Reference Source",
+        "relevance": "Relevance",
+        "title": "Knowledge Base Q&A"
+      },
+      "message": {
+        "request_fail": "Request Failed"
+      },
+      "report": {
+        "button": {
+          "generate": "Generate Report"
+        },
+        "desc": "Describe the report you want in natural language, AI will automatically generate charts and data analysis",
+        "label": {
+          "data_source": "Data Source",
+          "query": "Report Requirements",
+          "time_range": "Time Range"
+        },
+        "message": {
+          "fail": "Report generation failed",
+          "input_query": "Please enter report requirements"
+        },
+        "placeholder": {
+          "data_source": "e.g., sales_order",
+          "query": "e.g., Show sales trends for each product line over the past month",
+          "time_range": "e.g., last_30_days"
+        },
+        "title": "Report Assistant"
+      },
+      "severity": {
+        "high": "High",
+        "low": "Low",
+        "medium": "Medium"
+      },
+      "subtitle": "All-in-one intelligent assistant for report analysis, process optimization, and knowledge Q&A",
+      "tab": {
+        "flow": "Flow Assistant",
+        "knowledge": "Knowledge Base",
+        "report": "Report Assistant"
+      },
+      "title": "AI Smart Assistant"
+    },
+    "chat": {
+      "action": {
+        "cancel": "Cancel",
+        "copy_message": "Copy Message",
+        "new_chat": "New Chat",
+        "start_summary": "Start Summary",
+        "upload_document": "Upload Document"
+      },
+      "dialog": {
+        "click_to_select": "Click to select file",
+        "file_selected": "File selected",
+        "supported_formats": "Supported formats: PDF, Word, TXT",
+        "upload_title": "Upload Document"
+      },
+      "disclaimer": "Disclaimer: AI-generated content is for reference only",
+      "empty": {
+        "subtitle": "Start your first AI conversation",
+        "title": "No messages yet"
+      },
+      "field": {
+        "code_language": "Code Language",
+        "model": "Model"
+      },
+      "message": {
+        "ai_replied": "AI has replied",
+        "analyzing_document": "Analyzing document...",
+        "copy_success_body": "Content copied to clipboard",
+        "copy_success_title": "Copy Success",
+        "delete_session_title": "Delete Session",
+        "file_selected": "File selected",
+        "file_upload_title": "File Upload",
+        "new_session_title": "New Session",
+        "please": "Please enter your question...",
+        "sent_title": "Message Sent",
+        "session_created": "Session created",
+        "session_deleted": "Session deleted",
+        "start_summary_title": "Start Summary",
+        "summary_prompt": "Please summarize the main content and key information of this document"
+      },
+      "mock": {
+        "message_1": "Please help me analyze the optimization plan for the system architecture",
+        "message_2": "Regarding your system architecture, I suggest optimizing from the following aspects: 1. Microservice splitting 2. Caching strategy 3. Database optimization 4. Load balancing",
+        "message_3": "How to improve database query performance?",
+        "message_4": "To improve database query performance: 1. Add appropriate indexes 2. Optimize SQL statements 3. Use connection pooling 4. Read-write separation",
+        "session_title_1": "System Architecture Optimization Suggestions",
+        "session_title_2": "Project Document Summary",
+        "session_title_3": "Code Generation Example",
+        "session_title_4": "General Q&A"
+      },
+      "model": {
+        "ernie": "ERNIE Bot"
+      },
+      "placeholder": {
+        "code": "Describe the code you need to generate...",
+        "general": "Enter your question...",
+        "qa": "Enter your question, AI will answer for you...",
+        "summary": "Upload document and enter summary requirements..."
+      },
+      "quick_prompt": {
+        "analyze": "Deep Analysis",
+        "explain_code": "Explain Code",
+        "generate_code": "Generate Code",
+        "summarize": "Summarize"
+      },
+      "response": {
+        "code": "Here is the code generated based on your requirements:",
+        "default": "I understand your needs, let me answer for you...",
+        "qa": "This is a good question. Based on my analysis, we can consider it from the following aspects...",
+        "summary": "Here is the summary of the document:\n\nKey points:\n1. Main theme overview\n2. Key information extraction\n3. Important conclusion summary"
+      },
+      "role": {
+        "assistant": "AI Assistant",
+        "user": "User"
+      },
+      "session": {
+        "new_title": "New Conversation"
+      },
+      "sidebar": {
+        "mode": "Mode",
+        "quick_prompts": "Quick Prompts"
+      },
+      "status": {
+        "typing": "AI is typing..."
+      },
+      "tab": {
+        "code": "Code",
+        "general": "General",
+        "qa": "Q&A",
+        "summary": "Summary"
+      },
+      "time": {
+        "days_ago": "{{count}} days ago",
+        "hours_ago": "{{count}} hours ago",
+        "just_now": "Just now",
+        "minutes_ago": "{{count}} minutes ago"
+      },
+      "title": {
+        "default": "AI Smart Chat"
+      },
+      "type": {
+        "code": "Code",
+        "general": "General",
+        "qa": "Q&A",
+        "summary": "Summary",
+        "text": "Text"
+      }
+    },
+    "code_assistant": {
+      "action": {
+        "copy": "Copy",
+        "download": "Download",
+        "explain_code": "Explain Code",
+        "fix_bug": "Fix Bug",
+        "generate_code": "Generate Code",
+        "optimize_code": "Optimize Code",
+        "start_review": "Start Review"
+      },
+      "empty": {
+        "result_placeholder": "AI processing results will be shown here"
+      },
+      "field": {
+        "framework": "Framework",
+        "language": "Language"
+      },
+      "label": {
+        "describe_requirement": "Describe Your Requirement",
+        "generate_result": "Generation Result",
+        "input_explain": "Input Code to Explain",
+        "input_fix": "Input Code to Fix",
+        "input_optimize": "Input Code to Optimize",
+        "input_review": "Input Code to Review",
+        "quick_template": "Quick Template",
+        "review_result": "Review Result"
+      },
+      "message": {
+        "code_copied": "Code copied to clipboard",
+        "code_generated": "Code generated",
+        "copied_title": "Copied Successfully",
+        "generate_complete": "Generation Complete",
+        "input_bug_code": "Please enter the code to fix",
+        "input_explain_code": "Please enter the code to explain",
+        "input_optimize_code": "Please enter the code to optimize",
+        "input_prompt": "Please enter a prompt",
+        "input_review_code": "Please enter the code to review",
+        "notice_title": "Notice"
+      },
+      "mock": {
+        "code_explanation": "This code mainly handles user requests and returns responses. First it receives input parameters, then performs data validation, and finally calls business logic to process and return results.",
+        "fixed_code": "Fixed code:\n\nfunction processData(data) {\n  if (!data) throw new Error('Invalid data');\n  return data.map(item => ({...item, processed: true}));\n}",
+        "generated_code": "Generated code:\n\nexport const UserCard: React.FC<{user: User}> = ({user}) => {\n  return (\n    <Card>\n      <Avatar src={user.avatar} />\n      <Typography>{user.name}</Typography>\n    </Card>\n  );\n};",
+        "optimized_code": "Optimized code:\n\nconst memoizedValue = useMemo(() => computeExpensiveValue(a, b), [a, b]);\n\n// Use useCallback for event handlers\nconst handleClick = useCallback(() => {\n  console.log(memoizedValue);\n}, [memoizedValue]);"
+      },
+      "option": {
+        "no_framework": "No Framework"
+      },
+      "placeholder": {
+        "describe_code": "Describe your code requirements..."
+      },
+      "review": {
+        "issue_1_desc": "Function complexity is too high, consider splitting into smaller functions",
+        "issue_1_suggestion": "Split complex functions into single-responsibility sub-functions",
+        "issue_2_desc": "Unhandled exception cases exist",
+        "issue_2_suggestion": "Add try-catch blocks to handle possible exceptions",
+        "issue_3_desc": "Variable naming is not standard",
+        "issue_3_suggestion": "Use meaningful variable names, follow naming conventions",
+        "issues_found": "{{count}} issues found",
+        "line_issue": "Line {{line}}",
+        "quality_score": "Quality Score",
+        "suggestion_label": "Suggestion"
+      },
+      "status": {
+        "ai_processing": "AI is processing...",
+        "generating": "Generating...",
+        "please_wait": "Please wait",
+        "processing": "Processing..."
+      },
+      "subtitle": "Intelligent code generation and optimization assistant",
+      "tab": {
+        "explain": "Explain",
+        "fix": "Fix Bug",
+        "generate": "Generate",
+        "optimize": "Optimize",
+        "review": "Review"
+      },
+      "template": {
+        "api": "API Endpoint",
+        "api_desc": "Generate RESTful API endpoint code",
+        "database_query": "Database Query",
+        "database_query_desc": "Generate database query statements",
+        "react_component": "React Component",
+        "react_component_desc": "Generate React function component",
+        "util_function": "Utility Function",
+        "util_function_desc": "Generate utility function"
+      },
+      "title": "AI Code Assistant"
+    },
+    "dashboard": {
+      "button": {
+        "start_chat": "Start Chat",
+        "view_more": "View More Records",
+        "view_prompts": "View Prompt Library"
+      },
+      "day": {
+        "fri": "Fri",
+        "mon": "Mon",
+        "sat": "Sat",
+        "sun": "Sun",
+        "thu": "Thu",
+        "tue": "Tue",
+        "wed": "Wed"
+      },
+      "feature": {
+        "code_action": "Generate Code",
+        "code_desc": "Automatically generate high-quality code based on requirements, supports multiple languages, improves development efficiency",
+        "code_quality_excellent": "Excellent",
+        "code_title": "Code Generation",
+        "qa_action": "Start Q&A",
+        "qa_desc": "AI-powered intelligent Q&A system with natural language interaction, providing professional and accurate answers",
+        "qa_title": "Smart Q&A",
+        "stat_accuracy": "Accuracy",
+        "stat_code_quality": "Code Quality",
+        "stat_process_speed": "Processing Speed",
+        "stat_response_time": "Response Time",
+        "stat_support_format": "Supported Formats",
+        "stat_support_language": "Supported Languages",
+        "summary_action": "Upload Document",
+        "summary_desc": "Automatically analyze document content, generate structured summaries, extract key information, improve reading efficiency",
+        "summary_title": "Document Summary"
+      },
+      "hero_desc": "Smart assistant, where you can enjoy comprehensive AI services including Q&A, document analysis, code generation",
+      "hero_title": "AI Smart Assistant",
+      "hero_welcome": "Welcome to TOPEMS AI",
+      "message": {
+        "refresh_success_body": "Data updated",
+        "refresh_success_title": "Refresh Success"
+      },
+      "quick_action": {
+        "chat": "Smart Chat",
+        "chat_desc": "Smart Q&A with AI",
+        "code_assistant": "Code Assistant",
+        "code_assistant_desc": "Generate and optimize code",
+        "doc_analysis": "Document Analysis",
+        "doc_analysis_desc": "Upload documents for summary analysis",
+        "knowledge_base": "Knowledge Base",
+        "knowledge_base_desc": "Manage and query knowledge base"
+      },
+      "recent": {
+        "item_1_desc": "10 minutes ago · Smart Q&A",
+        "item_1_title": "System Architecture Optimization Suggestions",
+        "item_2_desc": "30 minutes ago · Code Assistant",
+        "item_2_title": "React Form Component Generation",
+        "item_3_desc": "1 hour ago · Document Analysis",
+        "item_3_title": "API Document Summary Analysis",
+        "item_4_desc": "2 hours ago · Smart Q&A",
+        "item_4_title": "Sales Report Data Interpretation",
+        "item_5_desc": "3 hours ago · Code Assistant",
+        "item_5_title": "Code Review Suggestions"
+      },
+      "refresh": "Refresh",
+      "refreshing": "Refreshing...",
+      "section": {
+        "core_features": "Core Features",
+        "quick_entry": "Quick Entry",
+        "recent_used": "Recently Used",
+        "usage_stats": "Usage Statistics",
+        "usage_trend": "Usage Trend"
+      },
+      "stat": {
+        "avg_response": "Avg Response",
+        "chat_count": "Chat Count",
+        "code_gen": "Code Generation",
+        "doc_analysis": "Document Analysis",
+        "improvement": "Improvement",
+        "satisfaction": "User Satisfaction",
+        "seconds_down": "seconds down",
+        "token_usage": "Token Usage",
+        "vs_last_month": "vs last month"
+      },
+      "subtitle": "All-in-one AI assistance platform",
+      "title": "AI Smart Assistant",
+      "trend": {
+        "7_days_chat_count": "7-Day Chat Count",
+        "good": "Good Trend"
+      }
+    },
+    "document_analysis": {
+      "button": {
+        "analyzing": "Analyzing",
+        "ask": "Ask",
+        "copied": "Copied",
+        "copy": "Copy",
+        "regenerate": "Regenerate",
+        "start_analysis": "Start Analysis",
+        "start_translate": "Start Translation"
+      },
+      "extract": {
+        "amount": "Amount",
+        "date": "Date",
+        "keyword": "Keyword",
+        "location": "Location",
+        "organization": "Organization",
+        "person": "Person",
+        "sample_1": "Sample 1",
+        "sample_2": "Sample 2",
+        "sample_3": "Sample 3"
+      },
+      "label": {
+        "click_upload": "Click to upload document",
+        "key_points": "Key Points",
+        "recent_documents": "Recent Documents",
+        "select_document": "Select Document",
+        "support_format": "Supports PDF, Word, TXT",
+        "target_language": "Target Language"
+      },
+      "language": {
+        "english": "English",
+        "french": "French",
+        "german": "German",
+        "japanese": "Japanese",
+        "korean": "Korean"
+      },
+      "message": {
+        "analysis_complete": "Analysis Complete",
+        "analysis_complete_body": "Document analysis completed",
+        "copied": "Copied",
+        "copied_body": "Content copied to clipboard",
+        "empty_qa": "Ask questions based on document content for accurate answers",
+        "notice": "Notice",
+        "processing": "Please wait, AI is processing your document",
+        "select_document": "Please select or upload a document first",
+        "select_language": "Select target language and click start translation",
+        "select_to_start": "Select a document to start smart analysis",
+        "supported_features": "Supports summary, translation, Q&A, extraction, OCR and more"
+      },
+      "mock": {
+        "doc_1": "Employee Handbook 2024",
+        "doc_2": "Product Specification",
+        "doc_3": "Annual Report",
+        "key_point_1": "Weekend off work schedule",
+        "key_point_2": "3-month probation period",
+        "key_point_3": "5-15 days paid annual leave",
+        "key_point_4": "Social insurance and annual health check",
+        "key_point_5": "Confidentiality agreement required",
+        "key_point_6": "Quarterly/annual performance review",
+        "qa_answer": "Sample Q&A answer: {{question}}",
+        "summary": "Employee handbook summary content"
+      },
+      "ocr": {
+        "confidence": "Confidence 98.5%",
+        "recognition_complete": "Recognition Complete",
+        "result_sample": "OCR recognition result sample",
+        "title": "OCR Text Recognition",
+        "total_pages": "12 pages total"
+      },
+      "placeholder": {
+        "qa_input": "Ask about the document, e.g.: How many annual leave days?"
+      },
+      "step": {
+        "analyze": "Smart Analysis",
+        "generate": "Generate Results",
+        "parse": "Document Parsing",
+        "upload": "Upload Document"
+      },
+      "subtitle": "Summary, translation, Q&A, information extraction",
+      "tab": {
+        "extract": "Information Extraction",
+        "ocr": "OCR Recognition",
+        "qa": "Document Q&A",
+        "summary": "Document Summary",
+        "translate": "Smart Translation"
+      },
+      "title": "Smart Document Analysis"
+    },
+    "knowledge_base": {
+      "button": {
+        "ask": "Ask",
+        "searching": "Searching"
+      },
+      "example": {
+        "q_2": "What is the employee onboarding process?",
+        "q_3": "How to manage production orders?"
+      },
+      "label": {
+        "all": "All",
+        "clear_selection": "Clear Selection",
+        "confidence": "Confidence",
+        "document_library": "Document Library",
+        "input_question": "Enter your question",
+        "knowledge_base": "Knowledge Base",
+        "reference_source": "Reference Sources",
+        "related_questions": "Related Questions",
+        "search_document": "Search documents",
+        "selected_docs": "{{count}} documents selected",
+        "smart_qa": "Smart Q&A",
+        "updated_at": "Updated at"
+      },
+      "message": {
+        "copied": "Copied",
+        "copied_body": "Content copied to clipboard",
+        "input_question": "Please enter your question",
+        "notice": "Notice",
+        "welcome": "Welcome to Knowledge Base Q&A Assistant",
+        "welcome_desc": "Select documents and ask questions, AI answers based on document content"
+      },
+      "mock": {
+        "a_1": "Steps to create a financial voucher:\n\n1. Log in to ERP, enter the finance module\n2. Click Voucher Management → New Voucher\n3. Select voucher type (journal, receipt, payment, etc.)\n4. Fill in voucher date and number\n5. Add accounting entries (subject, debit, credit)\n6. Enter voucher summary\n7. Save and review the voucher\n8. After approval, perform posting\n\nNote: Debits and credits must balance, with supporting documents",
+        "doc_1": "ERP System Operation Manual",
+        "doc_2": "Financial Report Generation Guide",
+        "doc_3": "HRM Employee Onboarding Process",
+        "doc_4": "MES Production Order Management",
+        "follow_up_1": "How to query posted vouchers",
+        "follow_up_2": "What is the voucher approval process",
+        "follow_up_3": "How to modify approved vouchers",
+        "q_1": "How to create a financial voucher",
+        "source_1": "ERP System Operation Manual",
+        "source_2": "Financial Report Generation Guide"
+      },
+      "subtitle": "Smart Q&A assistant based on enterprise documents",
+      "title": "Knowledge Base Q&A",
+      "type": {
+        "document": "Document",
+        "guide": "Guide",
+        "manual": "Manual",
+        "process": "Process Document"
+      }
+    },
+    "model_settings": {
+      "action": {
+        "add_key": "Add Key",
+        "edit_key": "Edit Key",
+        "reset_default": "Reset to Default",
+        "save_config": "Save Config"
+      },
+      "api": {
+        "key_backup": "Backup Environment Key",
+        "key_ernie": "ERNIE Bot Key",
+        "key_management": "Key Management",
+        "key_production": "Production Environment Key",
+        "status_enabled": "Enabled",
+        "tip_keep_safe": "Keep keys safe and avoid leakage",
+        "tip_multi_env": "Supports multi-environment key configuration",
+        "tip_rotate_keys": "Recommend rotating keys regularly for security",
+        "usage_tips": "Usage Tips"
+      },
+      "capability": {
+        "analysis": "Analysis",
+        "chat": "Chat",
+        "code": "Code",
+        "creation": "Creation",
+        "embedding": "Embedding",
+        "long_text": "Long Text",
+        "reasoning": "Reasoning",
+        "semantic_search": "Semantic Search",
+        "summary": "Summary",
+        "translation": "Translation",
+        "understanding": "Understanding",
+        "writing": "Writing"
+      },
+      "config": {
+        "auto_retry": "Auto Retry",
+        "auto_retry_desc": "Automatically retry on request failure",
+        "current_model": "Current Model",
+        "default_system_prompt": "Default System Prompt",
+        "max_tokens_desc": "Control the maximum number of tokens generated",
+        "max_tokens_label": "Max Tokens",
+        "other_settings": "Other Settings",
+        "streaming_output": "Streaming Output",
+        "streaming_output_desc": "Stream generated content in real time",
+        "system_prompt_label": "System Prompt",
+        "temperature": "Temperature",
+        "temperature_desc": "Control generation randomness, higher is more random",
+        "top_p_desc": "Nucleus sampling parameter, controls generation diversity",
+        "use_history": "Use History",
+        "use_history_desc": "Use historical message context in conversation"
+      },
+      "field": {
+        "actions": "Actions",
+        "cost_estimate": "Cost Estimate",
+        "created_at": "Created At",
+        "date": "Date",
+        "default": "Default",
+        "input_price": "Input Price",
+        "key": "Key",
+        "max_tokens": "Max Tokens",
+        "name": "Name",
+        "provider": "Provider",
+        "request_count": "Request Count",
+        "status": "Status",
+        "token_usage": "Token Usage"
+      },
+      "message": {
+        "save_success_body": "Configuration saved successfully",
+        "save_success_title": "Save Success"
+      },
+      "mock": {
+        "model_1_desc": "Suitable for daily chat and general tasks",
+        "model_2_desc": "Suitable for code generation and development assistance",
+        "model_3_desc": "Suitable for complex reasoning and analysis tasks",
+        "model_4_desc": "Supports long text processing and multimodal input",
+        "model_4_name": "GPT-4 Vision",
+        "model_5_desc": "Alibaba Tongyi model, strong Chinese capability",
+        "model_5_name": "Qwen",
+        "model_6_desc": "Baidu's self-developed model, excellent Chinese understanding"
+      },
+      "model": {
+        "ernie": "ERNIE Bot",
+        "qwen": "Qwen"
+      },
+      "placeholder": {
+        "system_prompt": "Enter system prompt..."
+      },
+      "provider": {
+        "alibaba": "Alibaba Cloud",
+        "baidu": "Baidu"
+      },
+      "status": {
+        "active": "Active",
+        "inactive": "Inactive",
+        "maintenance": "Maintenance",
+        "saving": "Saving..."
+      },
+      "subtitle": "AI Model Configuration and Management",
+      "tab": {
+        "api": "API Keys",
+        "config": "Configuration",
+        "models": "Models",
+        "usage": "Usage"
+      },
+      "title": "Model Settings",
+      "usage": {
+        "daily_detail": "Daily Detail",
+        "model_ratio": "Model Ratio",
+        "total_cost": "Total Cost",
+        "total_requests": "Total Requests",
+        "total_tokens": "Total Tokens",
+        "trend_7days": "7-Day Trend"
+      }
+    },
+    "prompt": {
+      "action": {
+        "cancel": "Cancel",
+        "copy": "Copy",
+        "generate": "Generate",
+        "new_template": "New Template"
+      },
+      "category": {
+        "all": "All",
+        "analysis": "Analysis",
+        "business": "Business",
+        "code": "Code",
+        "creative": "Creative",
+        "writing": "Writing"
+      },
+      "dialog": {
+        "fill_variables": "Fill Variables",
+        "result": "Result"
+      },
+      "empty": {
+        "fill_then_generate": "Fill variables then generate",
+        "no_match": "No matching templates"
+      },
+      "message": {
+        "copied_title": "Copied Successfully",
+        "favorite_updated": "Favorite status updated",
+        "open_new_dialog": "New dialog opened",
+        "prompt_copied": "Prompt copied",
+        "result_copied": "Result copied",
+        "success_title": "Success",
+        "usage_count": "Usage count: {{count}}"
+      },
+      "mock": {
+        "author_1": "Zhang San",
+        "author_2": "Li Si",
+        "author_3": "Wang Wu",
+        "author_4": "Zhao Liu",
+        "author_5": "Qian Qi",
+        "author_6": "Sun Ba",
+        "prompt_1_content": "Please write a professional business analysis report based on the following topic: {{topic}}. Include market overview, competitive analysis, SWOT analysis, and strategic recommendations.",
+        "prompt_1_desc": "Generate professional business analysis reports",
+        "prompt_1_name": "Business Analysis Report",
+        "prompt_2_content": "Please convert the following code from {{source}} to {{target}}, keeping functionality and logic consistent:\n\n{{code}}",
+        "prompt_2_desc": "Code language conversion tool",
+        "prompt_2_name": "Code Conversion",
+        "prompt_3_content": "Please summarize the following text and extract {{count}} key points:\n\n{{text}}",
+        "prompt_3_desc": "Quickly generate text summaries",
+        "prompt_3_name": "Text Summary",
+        "prompt_4_content": "As a {{role}} expert, please answer the following question:\n\n{{question}}",
+        "prompt_4_desc": "Role-play Q&A",
+        "prompt_4_name": "Role Q&A",
+        "prompt_5_content": "Please optimize the following code to improve performance and readability:\n\n{{code}}",
+        "prompt_5_desc": "Code optimization suggestions",
+        "prompt_5_name": "Code Optimization",
+        "prompt_6_content": "Please write a {{framework}} component based on the following requirements:\n\nRequirement: {{requirement}}",
+        "prompt_6_desc": "Generate React component code",
+        "prompt_6_name": "React Component Generator"
+      },
+      "placeholder": {
+        "input": "Enter...",
+        "search": "Search prompts..."
+      },
+      "sidebar": {
+        "category": "Category",
+        "favorites_only": "Favorites Only"
+      },
+      "status": {
+        "generating": "Generating...",
+        "generating_progress": "Generating... {{progress}}%"
+      },
+      "subtitle": "Prompt template management and reuse",
+      "tab": {
+        "all_templates": "All Templates",
+        "my_templates": "My Templates"
+      },
+      "title": "Prompt Library"
+    },
+    "prompt_library": {
+      "button": {
+        "cancel": "Cancel",
+        "copy": "Copy",
+        "generate": "Generate",
+        "generating": "Generating...",
+        "new_template": "New Template"
+      },
+      "category": {
+        "all": "All",
+        "analysis": "Analysis",
+        "business": "Business",
+        "code": "Code",
+        "creative": "Creative",
+        "writing": "Writing"
+      },
+      "dialog": {
+        "fill_variables": "Fill Variables",
+        "generated_result": "Generated Result"
+      },
+      "label": {
+        "category": "Category",
+        "favorites_only": "Favorites Only",
+        "usage_count": "Usage: {{count}}"
+      },
+      "message": {
+        "coming_soon": "This feature is coming soon",
+        "copied_title": "Copied Successfully",
+        "favorite_title": "Success",
+        "favorite_updated": "Favorite status updated",
+        "feature_title": "Notice",
+        "fill_then_generate": "Please fill variables then generate",
+        "generating": "Generating result...",
+        "no_results": "No matching templates",
+        "prompt_copied": "Prompt copied",
+        "result_copied": "Result copied"
+      },
+      "placeholder": {
+        "enter_var": "Enter value for {{var}}...",
+        "search": "Search prompts..."
+      },
+      "prompt": {
+        "code_review": "Code Review",
+        "code_review_desc": "Comprehensive code review to find issues and provide optimization suggestions",
+        "data_analysis": "Data Analysis",
+        "data_analysis_desc": "Analyze data and provide trends, metrics, and recommendations",
+        "email_writing": "Email Writing",
+        "email_writing_desc": "Write professional business emails",
+        "meeting_summary": "Meeting Summary",
+        "meeting_summary_desc": "Organize meeting notes into structured meeting minutes",
+        "product_copy": "Product Copywriting",
+        "product_copy_desc": "Write engaging product marketing copy",
+        "sql_generator": "SQL Generator",
+        "sql_generator_desc": "Generate optimized SQL based on requirements and table structure"
+      },
+      "subtitle": "Prompt template management and reuse",
+      "title": "Prompt Library",
+      "view": {
+        "all_templates": "All Templates",
+        "my_templates": "My Templates"
+      }
+    }
+  }
+}

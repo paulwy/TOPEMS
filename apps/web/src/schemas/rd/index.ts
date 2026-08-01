@@ -9,3 +9,6 @@ export { reviewSchema } from './review';
 export { releaseSchema } from './release';
 export { materialSchema } from './material';
 export { settingSchema } from './setting';
+export { bugSchema } from './bug';
+export { codeSchema } from './code';
+export { docSchema } from './doc';

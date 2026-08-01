@@ -358,15 +358,9 @@ struct SubscriptionStore {
 fn get_subscription_store() -> &'static SubscriptionStore {
     static STORE: LazyLock<SubscriptionStore> = LazyLock::new(|| {
         let mut queues = HashMap::new();
-        queues.insert(
-            "default".to_string(),
-            Vec::new(),
-        );
+        queues.insert("default".to_string(), Vec::new());
         let mut queue_configs = HashMap::new();
-        queue_configs.insert(
-            "default".to_string(),
-            QueueConfig::default(),
-        );
+        queue_configs.insert("default".to_string(), QueueConfig::default());
         SubscriptionStore {
             subscribers: Mutex::new(Vec::new()),
             messages: Mutex::new(Vec::new()),
@@ -475,10 +469,7 @@ impl SubscriptionGateway {
                 .iter()
                 .filter(|s| s.channels.contains(&channel))
                 .count();
-            let msg_count = messages
-                .iter()
-                .filter(|m| m.channel == channel)
-                .count() as u64;
+            let msg_count = messages.iter().filter(|m| m.channel == channel).count() as u64;
             let last_msg = messages
                 .iter()
                 .filter(|m| m.channel == channel)
@@ -556,9 +547,7 @@ impl MessageQueueBridge {
         Ok(messages)
     }
 
-    pub async fn create_queue(
-        config: QueueConfig,
-    ) -> Result<QueueConfig, String> {
+    pub async fn create_queue(config: QueueConfig) -> Result<QueueConfig, String> {
         let store = get_subscription_store();
         let mut queues = store.queues.lock().await;
         let mut configs = store.queue_configs.lock().await;
@@ -594,10 +583,7 @@ impl MessageQueueBridge {
                 ..Default::default()
             });
             let queue_len = queues.get(&name).map(|q| q.len() as u64).unwrap_or(0);
-            let dlq_count = dlq
-                .iter()
-                .filter(|d| d.topic == name)
-                .count() as u64;
+            let dlq_count = dlq.iter().filter(|d| d.topic == name).count() as u64;
 
             stats.push(QueueStats {
                 name,

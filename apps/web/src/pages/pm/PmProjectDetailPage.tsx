@@ -508,10 +508,10 @@ const PmProjectDetailPage: React.FC = () => {
             variant='h6'
             sx={{ fontSize: '1.125rem' }}
           >
-            里程碑列表
+            {t('pm.project_detail.milestone_list')}
           </Typography>
           <ActionButton
-            label='添加里程碑'
+            label={t('pm.project_detail.add_milestone')}
             variant='secondary'
             size='small'
           />
@@ -521,11 +521,11 @@ const PmProjectDetailPage: React.FC = () => {
             <Table>
               <TableHead>
                 <TableRow>
-                  <TableCell sx={{ width: 200 }}>里程碑名称</TableCell>
-                  <TableCell sx={{ width: 150 }}>目标日期</TableCell>
-                  <TableCell>状态</TableCell>
-                  <TableCell>所属阶段</TableCell>
-                  <TableCell sx={{ width: 120 }}>操作</TableCell>
+                  <TableCell sx={{ width: 200 }}>{t('pm.project_detail.milestone_name')}</TableCell>
+                  <TableCell sx={{ width: 150 }}>{t('pm.project_detail.target_date')}</TableCell>
+                  <TableCell>{t('pm.project_detail.status_label')}</TableCell>
+                  <TableCell>{t('pm.project_detail.belongs_to_phase')}</TableCell>
+                  <TableCell sx={{ width: 120 }}>{t('pm.project_detail.action')}</TableCell>
                 </TableRow>
               </TableHead>
               <TableBody>
@@ -535,7 +535,7 @@ const PmProjectDetailPage: React.FC = () => {
                       colSpan={5}
                       sx={{ textAlign: 'center', py: 6, color: 'grey.500' }}
                     >
-                      暂无里程碑数据
+                      {t('pm.project_detail.no_milestone_data')}
                     </TableCell>
                   </TableRow>
                 ) : (
@@ -572,10 +572,10 @@ const PmProjectDetailPage: React.FC = () => {
                           status={milestone.status}
                           label={
                             milestone.status === 'completed'
-                              ? '已完成'
+                              ? t('pm.project_detail.completed')
                               : milestone.status === 'active'
-                                ? '进行中'
-                                : '未开始'
+                                ? t('pm.project_detail.in_progress')
+                                : t('pm.project_detail.not_started')
                           }
                           color={
                             milestone.status === 'completed'
@@ -594,7 +594,7 @@ const PmProjectDetailPage: React.FC = () => {
                       </TableCell>
                       <TableCell>
                         <ActionButton
-                          label='编辑'
+                          label={t('pm.project_detail.edit')}
                           icon={<Edit size={16} />}
                           variant='text'
                           size='small'
@@ -609,7 +609,7 @@ const PmProjectDetailPage: React.FC = () => {
         </CardContent>
       </Card>
     ),
-    [milestones, phases]
+    [milestones, phases, t]
   );
 
   const financeContent = useMemo(() => {
@@ -629,7 +629,7 @@ const PmProjectDetailPage: React.FC = () => {
               variant='h6'
               sx={{ fontSize: '1.125rem' }}
             >
-              预算执行概览
+              {t('pm.project_detail.budget_execution_overview')}
             </Typography>
           </CardHeader>
           <CardContent sx={{ display: 'flex', flexDirection: 'column', gap: 1 }}>
@@ -643,7 +643,7 @@ const PmProjectDetailPage: React.FC = () => {
                 borderColor: 'grey.100',
               }}
             >
-              <Typography sx={{ color: 'grey.500' }}>项目预算</Typography>
+              <Typography sx={{ color: 'grey.500' }}>{t('pm.project_detail.project_budget')}</Typography>
               <Typography sx={{ fontWeight: 500, color: 'grey.900' }}>
                 {formatCurrency(project.budget)}
               </Typography>
@@ -658,7 +658,7 @@ const PmProjectDetailPage: React.FC = () => {
                 borderColor: 'grey.100',
               }}
             >
-              <Typography sx={{ color: 'grey.500' }}>实际成本</Typography>
+              <Typography sx={{ color: 'grey.500' }}>{t('pm.project_detail.actual_cost')}</Typography>
               <Typography sx={{ fontWeight: 500, color: 'warning.dark' }}>
                 {formatCurrency(project.actual_cost)}
               </Typography>
@@ -673,7 +673,7 @@ const PmProjectDetailPage: React.FC = () => {
                 borderColor: 'grey.100',
               }}
             >
-              <Typography sx={{ color: 'grey.500' }}>已承诺成本</Typography>
+              <Typography sx={{ color: 'grey.500' }}>{t('pm.project_detail.committed_cost')}</Typography>
               <Typography sx={{ fontWeight: 500, color: 'primary.dark' }}>
                 {formatCurrency(project.committed_cost)}
               </Typography>
@@ -688,7 +688,7 @@ const PmProjectDetailPage: React.FC = () => {
                 borderColor: 'grey.100',
               }}
             >
-              <Typography sx={{ color: 'grey.500' }}>剩余预算</Typography>
+              <Typography sx={{ color: 'grey.500' }}>{t('pm.project_detail.remaining_budget')}</Typography>
               <Typography sx={{ fontWeight: 500, color: 'success.dark' }}>
                 {formatCurrency(project.remaining_budget)}
               </Typography>
@@ -703,7 +703,7 @@ const PmProjectDetailPage: React.FC = () => {
                 borderColor: 'grey.100',
               }}
             >
-              <Typography sx={{ color: 'grey.500' }}>成本差异</Typography>
+              <Typography sx={{ color: 'grey.500' }}>{t('pm.project_detail.cost_variance')}</Typography>
               <Typography
                 sx={{
                   fontWeight: 500,
@@ -721,7 +721,7 @@ const PmProjectDetailPage: React.FC = () => {
                 py: 1,
               }}
             >
-              <Typography sx={{ color: 'grey.500' }}>预算执行率</Typography>
+              <Typography sx={{ color: 'grey.500' }}>{t('pm.project_detail.budget_utilization_rate')}</Typography>
               <Typography sx={{ fontWeight: 500, color: 'grey.900' }}>
                 {project.budget_utilization_rate?.toFixed(1) || '0'}%
               </Typography>
@@ -735,7 +735,7 @@ const PmProjectDetailPage: React.FC = () => {
               variant='h6'
               sx={{ fontSize: '1.125rem' }}
             >
-              收入与利润
+              {t('pm.project_detail.revenue_and_profit')}
             </Typography>
           </CardHeader>
           <CardContent sx={{ display: 'flex', flexDirection: 'column', gap: 1 }}>
@@ -749,7 +749,7 @@ const PmProjectDetailPage: React.FC = () => {
                 borderColor: 'grey.100',
               }}
             >
-              <Typography sx={{ color: 'grey.500' }}>已确认收入</Typography>
+              <Typography sx={{ color: 'grey.500' }}>{t('pm.project_detail.recognized_revenue')}</Typography>
               <Typography sx={{ fontWeight: 500, color: 'grey.900' }}>
                 {formatCurrency(project.revenue_recognized)}
               </Typography>
@@ -764,7 +764,7 @@ const PmProjectDetailPage: React.FC = () => {
                 borderColor: 'grey.100',
               }}
             >
-              <Typography sx={{ color: 'grey.500' }}>应收账款</Typography>
+              <Typography sx={{ color: 'grey.500' }}>{t('pm.project_detail.accounts_receivable')}</Typography>
               <Typography sx={{ fontWeight: 500, color: 'warning.dark' }}>
                 {formatCurrency(project.accounts_receivable)}
               </Typography>
@@ -779,7 +779,7 @@ const PmProjectDetailPage: React.FC = () => {
                 borderColor: 'grey.100',
               }}
             >
-              <Typography sx={{ color: 'grey.500' }}>已开票金额</Typography>
+              <Typography sx={{ color: 'grey.500' }}>{t('pm.project_detail.invoiced_amount')}</Typography>
               <Typography sx={{ fontWeight: 500, color: 'primary.dark' }}>
                 {formatCurrency(
                   (project.revenue_recognized || 0) - (project.accounts_receivable || 0)
@@ -796,7 +796,7 @@ const PmProjectDetailPage: React.FC = () => {
                 borderColor: 'grey.100',
               }}
             >
-              <Typography sx={{ color: 'grey.500' }}>毛利润</Typography>
+              <Typography sx={{ color: 'grey.500' }}>{t('pm.project_detail.gross_profit')}</Typography>
               <Typography sx={{ fontWeight: 500, color: 'success.dark' }}>
                 {formatCurrency(project.gross_profit)}
               </Typography>
@@ -809,7 +809,7 @@ const PmProjectDetailPage: React.FC = () => {
                 py: 1,
               }}
             >
-              <Typography sx={{ color: 'grey.500' }}>毛利率</Typography>
+              <Typography sx={{ color: 'grey.500' }}>{t('pm.project_detail.gross_margin')}</Typography>
               <Typography sx={{ fontWeight: 500, color: 'grey.900' }}>
                 {project.gross_margin?.toFixed(1) || '0'}%
               </Typography>
@@ -831,10 +831,10 @@ const PmProjectDetailPage: React.FC = () => {
               variant='h6'
               sx={{ fontSize: '1.125rem' }}
             >
-              成本构成分析
+              {t('pm.project_detail.cost_composition_analysis')}
             </Typography>
             <ActionButton
-              label='查看详情'
+              label={t('pm.project_detail.view_details')}
               variant='secondary'
               size='small'
             />
@@ -852,7 +852,7 @@ const PmProjectDetailPage: React.FC = () => {
                   variant='body2'
                   sx={{ color: 'grey.500', mb: 0.5 }}
                 >
-                  人工成本
+                  {t('pm.project_detail.labor_cost')}
                 </Typography>
                 <Typography
                   variant='h6'
@@ -866,7 +866,7 @@ const PmProjectDetailPage: React.FC = () => {
                   variant='body2'
                   sx={{ color: 'grey.500', mb: 0.5 }}
                 >
-                  材料成本
+                  {t('pm.project_detail.material_cost')}
                 </Typography>
                 <Typography
                   variant='h6'
@@ -880,7 +880,7 @@ const PmProjectDetailPage: React.FC = () => {
                   variant='body2'
                   sx={{ color: 'grey.500', mb: 0.5 }}
                 >
-                  费用支出
+                  {t('pm.project_detail.expense_cost')}
                 </Typography>
                 <Typography
                   variant='h6'
@@ -894,7 +894,7 @@ const PmProjectDetailPage: React.FC = () => {
                   variant='body2'
                   sx={{ color: 'grey.500', mb: 0.5 }}
                 >
-                  分包成本
+                  {t('pm.project_detail.subcontract_cost')}
                 </Typography>
                 <Typography
                   variant='h6'
@@ -908,7 +908,7 @@ const PmProjectDetailPage: React.FC = () => {
                   variant='body2'
                   sx={{ color: 'grey.500', mb: 0.5 }}
                 >
-                  其他成本
+                  {t('pm.project_detail.other_cost')}
                 </Typography>
                 <Typography
                   variant='h6'
@@ -927,7 +927,7 @@ const PmProjectDetailPage: React.FC = () => {
               variant='h6'
               sx={{ fontSize: '1.125rem' }}
             >
-              成本中心信息
+              {t('pm.project_detail.cost_center_info')}
             </Typography>
           </CardHeader>
           <CardContent sx={{ display: 'flex', flexDirection: 'column', gap: 1 }}>
@@ -941,7 +941,7 @@ const PmProjectDetailPage: React.FC = () => {
                 borderColor: 'grey.100',
               }}
             >
-              <Typography sx={{ color: 'grey.500' }}>成本中心ID</Typography>
+              <Typography sx={{ color: 'grey.500' }}>{t('pm.project_detail.cost_center_id')}</Typography>
               <Typography sx={{ fontWeight: 500, color: 'grey.900' }}>
                 {project.cost_center_id || '-'}
               </Typography>
@@ -956,7 +956,7 @@ const PmProjectDetailPage: React.FC = () => {
                 borderColor: 'grey.100',
               }}
             >
-              <Typography sx={{ color: 'grey.500' }}>成本中心名称</Typography>
+              <Typography sx={{ color: 'grey.500' }}>{t('pm.project_detail.cost_center_name')}</Typography>
               <Typography sx={{ fontWeight: 500, color: 'grey.900' }}>
                 {project.cost_center_name || '-'}
               </Typography>
@@ -969,7 +969,7 @@ const PmProjectDetailPage: React.FC = () => {
                 py: 1,
               }}
             >
-              <Typography sx={{ color: 'grey.500' }}>执行状态</Typography>
+              <Typography sx={{ color: 'grey.500' }}>{t('pm.project_detail.execution_status')}</Typography>
               <StatusBadge
                 status={
                   project.budget_utilization_rate && project.budget_utilization_rate > 100
@@ -980,10 +980,10 @@ const PmProjectDetailPage: React.FC = () => {
                 }
                 label={
                   project.budget_utilization_rate && project.budget_utilization_rate > 100
-                    ? '超预算'
+                    ? t('pm.project_detail.over_budget')
                     : project.budget_utilization_rate && project.budget_utilization_rate > 80
-                      ? '预警'
-                      : '正常'
+                      ? t('pm.project_detail.warning_status')
+                      : t('pm.project_detail.normal')
                 }
                 color={
                   project.budget_utilization_rate && project.budget_utilization_rate > 100
@@ -1003,30 +1003,30 @@ const PmProjectDetailPage: React.FC = () => {
               variant='h6'
               sx={{ fontSize: '1.125rem' }}
             >
-              快速操作
+              {t('pm.project_detail.quick_actions')}
             </Typography>
           </CardHeader>
           <CardContent sx={{ display: 'flex', flexDirection: 'column', gap: 1 }}>
             <ActionButton
-              label='查看成本明细'
+              label={t('pm.project_detail.view_cost_details')}
               icon={<DollarSign size={16} />}
               variant='secondary'
               sx={{ justifyContent: 'flex-start' }}
             />
             <ActionButton
-              label='查看项目发票'
+              label={t('pm.project_detail.view_project_invoices')}
               icon={<FileText size={16} />}
               variant='secondary'
               sx={{ justifyContent: 'flex-start' }}
             />
             <ActionButton
-              label='预算执行分析'
+              label={t('pm.project_detail.budget_execution_analysis')}
               icon={<TrendingUp size={16} />}
               variant='secondary'
               sx={{ justifyContent: 'flex-start' }}
             />
             <ActionButton
-              label='生成项目凭证'
+              label={t('pm.project_detail.generate_voucher')}
               icon={<FileText size={16} />}
               variant='secondary'
               sx={{ justifyContent: 'flex-start' }}
@@ -1035,13 +1035,13 @@ const PmProjectDetailPage: React.FC = () => {
         </Card>
       </Box>
     );
-  }, [project]);
+  }, [project, t]);
 
   const tabs: TabConfig[] = useMemo(
     () => [
       {
         id: 'overview',
-        label: '项目概览',
+        label: t('pm.project_detail.tab_overview'),
         content: (
           <Box
             sx={{
@@ -1068,7 +1068,7 @@ const PmProjectDetailPage: React.FC = () => {
       },
       {
         id: 'gantt',
-        label: '甘特图',
+        label: t('pm.project_detail.tab_gantt'),
         content: (
           <Card>
             <CardHeader sx={{ pb: 2 }}>
@@ -1076,7 +1076,7 @@ const PmProjectDetailPage: React.FC = () => {
                 variant='h6'
                 sx={{ fontSize: '1.125rem' }}
               >
-                项目甘特图
+                {t('pm.project_detail.project_gantt_chart')}
               </Typography>
             </CardHeader>
             <CardContent>
@@ -1094,17 +1094,17 @@ const PmProjectDetailPage: React.FC = () => {
       },
       {
         id: 'phases',
-        label: '阶段管理',
+        label: t('pm.project_detail.tab_phases'),
         content: phasesContent,
       },
       {
         id: 'milestones',
-        label: '里程碑',
+        label: t('pm.project_detail.tab_milestones'),
         content: milestonesContent,
       },
       {
         id: 'finance',
-        label: '财务',
+        label: t('pm.project_detail.tab_finance'),
         content: financeContent,
       },
     ],
@@ -1116,6 +1116,7 @@ const PmProjectDetailPage: React.FC = () => {
       project,
       ganttPhases,
       ganttMilestones,
+      t,
     ]
   );
 
@@ -1127,15 +1128,15 @@ const PmProjectDetailPage: React.FC = () => {
     return {
       title: project.name,
       subtitle: project.code,
-      tags: [STATUS_LABELS[statusKey], RISK_LABELS[project.risklevel || ''] || '未评估'],
+      tags: [STATUS_LABELS[statusKey], RISK_LABELS[project.risklevel || ''] || t('pm.project_detail.not_evaluated')],
       stats: [
-        { label: '项目进度', value: `${project.progress}%` },
-        { label: '阶段完成', value: `${completedPhases}/${phases.length}` },
-        { label: '项目预算', value: formatCurrency(project.budget) },
-        { label: '里程碑', value: `${completedMilestones}/${milestones.length}` },
+        { label: t('pm.project_detail.project_progress'), value: `${project.progress}%` },
+        { label: t('pm.project_detail.phase_completion'), value: `${completedPhases}/${phases.length}` },
+        { label: t('pm.project_detail.project_budget'), value: formatCurrency(project.budget) },
+        { label: t('pm.project_detail.milestone'), value: `${completedMilestones}/${milestones.length}` },
       ],
     };
-  }, [project, phases, milestones, completedPhases, completedMilestones]);
+  }, [project, phases, milestones, completedPhases, completedMilestones, t, STATUS_LABELS, RISK_LABELS]);
 
   const handleRefresh = () => {
     queryClient.invalidateQueries({ queryKey: QUERY_KEYS.PM.PROJECT(id || '') });
@@ -1145,16 +1146,16 @@ const PmProjectDetailPage: React.FC = () => {
 
   return (
     <PageContainer
-      title={project?.name || '项目详情'}
+      title={project?.name || t('pm.project_detail.project_detail_title')}
       subtitle={project?.code}
     >
       <DetailPageTemplate
         title=''
         subtitle=''
         breadcrumbs={[
-          { label: '首页', href: '/dashboard' },
-          { label: '项目管理', href: PM_PATHS.projects },
-          { label: '项目详情' },
+          { label: t('pm.project_detail.home'), href: '/dashboard' },
+          { label: t('pm.project_detail.project_management'), href: PM_PATHS.projects },
+          { label: t('pm.project_detail.project_detail_title') },
         ]}
         loading={loading}
         error={error ? (error as Error).message : ''}

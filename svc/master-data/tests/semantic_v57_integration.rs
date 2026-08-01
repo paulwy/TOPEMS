@@ -84,7 +84,11 @@ async fn test_get_neighbors() {
     let ctx = TestContext::new().await;
 
     let (status, resp) = ctx
-        .request("GET", &format!("{}/graph/neighbors/customer_0_0", BASE_PATH), None)
+        .request(
+            "GET",
+            &format!("{}/graph/neighbors/customer_0_0", BASE_PATH),
+            None,
+        )
         .await
         .expect("请求失败");
 
@@ -111,7 +115,11 @@ async fn test_search_semantic() {
     });
 
     let (status, resp) = ctx
-        .request("POST", &format!("{}/search/semantic", BASE_PATH), Some(body))
+        .request(
+            "POST",
+            &format!("{}/search/semantic", BASE_PATH),
+            Some(body),
+        )
         .await
         .expect("请求失败");
 
@@ -225,7 +233,11 @@ async fn test_compute_embeddings() {
     });
 
     let (status, resp) = ctx
-        .request("POST", &format!("{}/graph/embeddings", BASE_PATH), Some(body))
+        .request(
+            "POST",
+            &format!("{}/graph/embeddings", BASE_PATH),
+            Some(body),
+        )
         .await
         .expect("请求失败");
 

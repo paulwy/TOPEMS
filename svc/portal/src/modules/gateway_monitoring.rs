@@ -302,7 +302,12 @@ pub struct Metric {
 }
 
 impl Metric {
-    pub fn new(name: String, metric_type: MetricType, value: f64, labels: serde_json::Value) -> Self {
+    pub fn new(
+        name: String,
+        metric_type: MetricType,
+        value: f64,
+        labels: serde_json::Value,
+    ) -> Self {
         Self {
             id: uuid::Uuid::new_v4().to_string(),
             name,
@@ -506,20 +511,18 @@ struct MonitoringStore {
 }
 
 fn get_monitoring_store() -> &'static MonitoringStore {
-    static STORE: LazyLock<MonitoringStore> = LazyLock::new(|| {
-        MonitoringStore {
-            metrics: Mutex::new(Vec::new()),
-            alert_thresholds: Mutex::new(Vec::new()),
-            traces: Mutex::new(Vec::new()),
-            resolver_timings: Mutex::new(Vec::new()),
-            anomalies: Mutex::new(Vec::new()),
-            detection_models: Mutex::new(Vec::new()),
-            latency_history: Mutex::new(Vec::new()),
-            error_rate_history: Mutex::new(Vec::new()),
-            throughput_history: Mutex::new(Vec::new()),
-            active_connections: Mutex::new(0),
-            slow_query_threshold_ms: Mutex::new(1000),
-        }
+    static STORE: LazyLock<MonitoringStore> = LazyLock::new(|| MonitoringStore {
+        metrics: Mutex::new(Vec::new()),
+        alert_thresholds: Mutex::new(Vec::new()),
+        traces: Mutex::new(Vec::new()),
+        resolver_timings: Mutex::new(Vec::new()),
+        anomalies: Mutex::new(Vec::new()),
+        detection_models: Mutex::new(Vec::new()),
+        latency_history: Mutex::new(Vec::new()),
+        error_rate_history: Mutex::new(Vec::new()),
+        throughput_history: Mutex::new(Vec::new()),
+        active_connections: Mutex::new(0),
+        slow_query_threshold_ms: Mutex::new(1000),
     });
     &STORE
 }
@@ -552,9 +555,7 @@ impl GatewayMonitor {
             .iter()
             .filter(|m| {
                 name.map_or(true, |n| m.name == n)
-                    && metric_type
-                        .as_ref()
-                        .map_or(true, |t| m.metric_type == *t)
+                    && metric_type.as_ref().map_or(true, |t| m.metric_type == *t)
             })
             .rev()
             .take(limit)
@@ -811,10 +812,7 @@ impl PerformanceTracer {
         traces.iter().find(|t| t.id == trace_id).cloned()
     }
 
-    pub async fn list_traces(
-        query_hash: Option<&str>,
-        limit: Option<u32>,
-    ) -> Vec<Trace> {
+    pub async fn list_traces(query_hash: Option<&str>, limit: Option<u32>) -> Vec<Trace> {
         let store = get_monitoring_store();
         let traces = store.traces.lock().await;
         let limit = limit.unwrap_or(50).min(500) as usize;
@@ -885,13 +883,13 @@ impl PerformanceTracer {
             *t
         };
 
-        let slow_count = traces.iter().filter(|t| t.duration_ms > slow_threshold).count();
+        let slow_count = traces
+            .iter()
+            .filter(|t| t.duration_ms > slow_threshold)
+            .count();
 
         let total_cache_hits: u32 = traces.iter().map(|t| t.cache_hits).sum();
-        let total_resolvers: u32 = traces
-            .iter()
-            .map(|t| t.resolver_timings.len() as u32)
-            .sum();
+        let total_resolvers: u32 = traces.iter().map(|t| t.resolver_timings.len() as u32).sum();
         let cache_hit_rate = if total_resolvers > 0 {
             total_cache_hits as f64 / total_resolvers as f64
         } else {
@@ -925,7 +923,10 @@ impl PerformanceTracer {
         }
     }
 
-    pub async fn export_traces(format: &str, query_hash: Option<&str>) -> Result<serde_json::Value, String> {
+    pub async fn export_traces(
+        format: &str,
+        query_hash: Option<&str>,
+    ) -> Result<serde_json::Value, String> {
         let store = get_monitoring_store();
         let traces = store.traces.lock().await;
 
@@ -936,8 +937,8 @@ impl PerformanceTracer {
 
         match format {
             "json" => {
-                let json = serde_json::to_value(&filtered)
-                    .map_err(|e| format!("序列化失败: {}", e))?;
+                let json =
+                    serde_json::to_value(&filtered).map_err(|e| format!("序列化失败: {}", e))?;
                 Ok(json)
             }
             "summary" => {
@@ -971,10 +972,7 @@ impl PerformanceTracer {
 pub struct AnomalyDetector;
 
 impl AnomalyDetector {
-    pub async fn detect_anomalies(
-        metric_name: &str,
-        model_id: Option<&str>,
-    ) -> Vec<Anomaly> {
+    pub async fn detect_anomalies(metric_name: &str, model_id: Option<&str>) -> Vec<Anomaly> {
         let store = get_monitoring_store();
         let metrics = store.metrics.lock().await;
 
@@ -1075,9 +1073,7 @@ impl AnomalyDetector {
         anomalies
             .iter()
             .filter(|a| {
-                anomaly_type
-                    .as_ref()
-                    .map_or(true, |t| a.anomaly_type == *t)
+                anomaly_type.as_ref().map_or(true, |t| a.anomaly_type == *t)
                     && severity.as_ref().map_or(true, |s| a.severity == *s)
                     && metric_name.map_or(true, |m| a.metric_name == m)
             })
@@ -1143,9 +1139,7 @@ impl AnomalyDetector {
             *by_severity
                 .entry(a.severity.as_str().to_string())
                 .or_insert(0) += 1;
-            *by_metric
-                .entry(a.metric_name.clone())
-                .or_insert(0) += 1;
+            *by_metric.entry(a.metric_name.clone()).or_insert(0) += 1;
 
             if a.severity == AnomalySeverity::Critical {
                 critical_count += 1;
@@ -1346,10 +1340,7 @@ pub async fn get_metrics_handler(
     State(_state): State<AppState>,
     Query(params): Query<MetricsQuery>,
 ) -> Json<ApiResponse<Vec<Metric>>> {
-    let mtype = params
-        .metric_type
-        .as_deref()
-        .and_then(MetricType::from_str);
+    let mtype = params.metric_type.as_deref().and_then(MetricType::from_str);
 
     let metrics = GatewayMonitor::get_metrics(params.name.as_deref(), mtype, params.limit).await;
     Json(ApiResponse::success(metrics, "指标列表"))
@@ -1362,9 +1353,7 @@ pub async fn get_health_handler(
     Json(ApiResponse::success(health, "网关健康状态"))
 }
 
-pub async fn get_dashboard_handler(
-    State(_state): State<AppState>,
-) -> Json<ApiResponse<Dashboard>> {
+pub async fn get_dashboard_handler(State(_state): State<AppState>) -> Json<ApiResponse<Dashboard>> {
     let dashboard = GatewayMonitor::get_dashboard().await;
     Json(ApiResponse::success(dashboard, "仪表盘数据"))
 }
@@ -1467,8 +1456,7 @@ pub async fn list_traces_handler(
     State(_state): State<AppState>,
     Query(params): Query<ListTracesQuery>,
 ) -> Json<ApiResponse<Vec<Trace>>> {
-    let traces =
-        PerformanceTracer::list_traces(params.query_hash.as_deref(), params.limit).await;
+    let traces = PerformanceTracer::list_traces(params.query_hash.as_deref(), params.limit).await;
     Json(ApiResponse::success(traces, "追踪列表"))
 }
 
@@ -1476,8 +1464,7 @@ pub async fn get_slow_queries_handler(
     State(_state): State<AppState>,
     Query(params): Query<SlowQueriesQuery>,
 ) -> Json<ApiResponse<Vec<Trace>>> {
-    let slow =
-        PerformanceTracer::get_slow_queries(params.threshold_ms, params.limit).await;
+    let slow = PerformanceTracer::get_slow_queries(params.threshold_ms, params.limit).await;
     Json(ApiResponse::success(slow, "慢查询列表"))
 }
 
@@ -1518,7 +1505,10 @@ pub async fn get_anomalies_handler(
         .anomaly_type
         .as_deref()
         .and_then(AnomalyType::from_str);
-    let severity = params.severity.as_deref().and_then(AnomalySeverity::from_str);
+    let severity = params
+        .severity
+        .as_deref()
+        .and_then(AnomalySeverity::from_str);
 
     let anomalies = AnomalyDetector::get_anomalies(
         atype,
@@ -1558,7 +1548,11 @@ pub async fn update_model_handler(
     Path(id): Path<String>,
     Json(req): Json<UpdateModelRequest>,
 ) -> Json<ApiResponse<DetectionModel>> {
-    let current = match AnomalyDetector::get_models(Some(&id)).await.first().cloned() {
+    let current = match AnomalyDetector::get_models(Some(&id))
+        .await
+        .first()
+        .cloned()
+    {
         Some(m) => m,
         None => return Json(ApiResponse::error(404, "检测模型不存在")),
     };

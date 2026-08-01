@@ -39,12 +39,13 @@ async fn test_create_audit_rule() {
         "is_active": true
     });
 
-    let (status, resp) = ctx
-        .request("POST", "/audit-v52/rules", Some(body))
-        .await;
+    let (status, resp) = ctx.request("POST", "/audit-v52/rules", Some(body)).await;
 
     assert_eq!(status, 200, "创建审计规则应该返回 200");
-    assert!(resp["success"].as_bool().unwrap_or(false), "响应 success 应为 true");
+    assert!(
+        resp["success"].as_bool().unwrap_or(false),
+        "响应 success 应为 true"
+    );
 }
 
 #[tokio::test]
@@ -55,12 +56,13 @@ async fn test_list_audit_rules() {
     }
     let ctx = TestContext::new().await;
 
-    let (status, resp) = ctx
-        .request("GET", "/audit-v52/rules", None)
-        .await;
+    let (status, resp) = ctx.request("GET", "/audit-v52/rules", None).await;
 
     assert_eq!(status, 200, "列出审计规则应该返回 200");
-    assert!(resp["success"].as_bool().unwrap_or(false), "响应 success 应为 true");
+    assert!(
+        resp["success"].as_bool().unwrap_or(false),
+        "响应 success 应为 true"
+    );
 }
 
 #[tokio::test]
@@ -105,7 +107,10 @@ async fn test_update_audit_rule() {
         .await;
 
     assert_eq!(update_status, 200, "更新审计规则应该返回 200");
-    assert!(update_resp["success"].as_bool().unwrap_or(false), "响应 success 应为 true");
+    assert!(
+        update_resp["success"].as_bool().unwrap_or(false),
+        "响应 success 应为 true"
+    );
 }
 
 #[tokio::test]
@@ -136,15 +141,14 @@ async fn test_delete_audit_rule() {
         .expect("创建的审计规则应该有 id");
 
     let (delete_status, delete_resp) = ctx
-        .request(
-            "DELETE",
-            &format!("/audit-v52/rules/{}", rule_id),
-            None,
-        )
+        .request("DELETE", &format!("/audit-v52/rules/{}", rule_id), None)
         .await;
 
     assert_eq!(delete_status, 200, "删除审计规则应该返回 200");
-    assert!(delete_resp["success"].as_bool().unwrap_or(false), "响应 success 应为 true");
+    assert!(
+        delete_resp["success"].as_bool().unwrap_or(false),
+        "响应 success 应为 true"
+    );
 }
 
 #[tokio::test]
@@ -155,12 +159,13 @@ async fn test_list_audit_findings() {
     }
     let ctx = TestContext::new().await;
 
-    let (status, resp) = ctx
-        .request("GET", "/audit-v52/findings", None)
-        .await;
+    let (status, resp) = ctx.request("GET", "/audit-v52/findings", None).await;
 
     assert_eq!(status, 200, "列出审计发现应该返回 200");
-    assert!(resp["success"].as_bool().unwrap_or(false), "响应 success 应为 true");
+    assert!(
+        resp["success"].as_bool().unwrap_or(false),
+        "响应 success 应为 true"
+    );
 }
 
 #[tokio::test]
@@ -175,12 +180,13 @@ async fn test_run_audit() {
         "rule_ids": []
     });
 
-    let (status, resp) = ctx
-        .request("POST", "/audit-v52/run", Some(body))
-        .await;
+    let (status, resp) = ctx.request("POST", "/audit-v52/run", Some(body)).await;
 
     assert_eq!(status, 200, "运行审计应该返回 200");
-    assert!(resp["success"].as_bool().unwrap_or(false), "响应 success 应为 true");
+    assert!(
+        resp["success"].as_bool().unwrap_or(false),
+        "响应 success 应为 true"
+    );
 }
 
 #[tokio::test]
@@ -201,7 +207,10 @@ async fn test_detect_anomalies() {
         .await;
 
     assert_eq!(status, 200, "异常检测应该返回 200");
-    assert!(resp["success"].as_bool().unwrap_or(false), "响应 success 应为 true");
+    assert!(
+        resp["success"].as_bool().unwrap_or(false),
+        "响应 success 应为 true"
+    );
 }
 
 #[tokio::test]
@@ -212,12 +221,13 @@ async fn test_get_anomaly_alerts() {
     }
     let ctx = TestContext::new().await;
 
-    let (status, resp) = ctx
-        .request("GET", "/audit-v52/anomaly/alerts", None)
-        .await;
+    let (status, resp) = ctx.request("GET", "/audit-v52/anomaly/alerts", None).await;
 
     assert_eq!(status, 200, "获取异常告警应该返回 200");
-    assert!(resp["success"].as_bool().unwrap_or(false), "响应 success 应为 true");
+    assert!(
+        resp["success"].as_bool().unwrap_or(false),
+        "响应 success 应为 true"
+    );
 }
 
 #[tokio::test]
@@ -244,7 +254,10 @@ async fn test_create_alert_config() {
         .await;
 
     assert_eq!(status, 200, "创建告警配置应该返回 200");
-    assert!(resp["success"].as_bool().unwrap_or(false), "响应 success 应为 true");
+    assert!(
+        resp["success"].as_bool().unwrap_or(false),
+        "响应 success 应为 true"
+    );
 }
 
 #[tokio::test]
@@ -255,10 +268,11 @@ async fn test_get_alerts() {
     }
     let ctx = TestContext::new().await;
 
-    let (status, resp) = ctx
-        .request("GET", "/audit-v52/alerts", None)
-        .await;
+    let (status, resp) = ctx.request("GET", "/audit-v52/alerts", None).await;
 
     assert_eq!(status, 200, "获取告警历史应该返回 200");
-    assert!(resp["success"].as_bool().unwrap_or(false), "响应 success 应为 true");
+    assert!(
+        resp["success"].as_bool().unwrap_or(false),
+        "响应 success 应为 true"
+    );
 }

@@ -39,7 +39,10 @@ async fn test_add_kg_node() {
         .expect("请求失败");
 
     assert_eq!(status, 200);
-    assert!(resp["success"].as_bool().unwrap_or(false), "响应 success 应为 true");
+    assert!(
+        resp["success"].as_bool().unwrap_or(false),
+        "响应 success 应为 true"
+    );
     assert!(resp["data"]["id"].is_string(), "应返回节点 ID");
     assert_eq!(resp["data"]["label"], "Test-Entity");
 }

@@ -229,10 +229,7 @@ impl ScmEventHandlers {
     /// MDM 供应商变更事件处理
     ///
     /// 订阅 CRM/ERP 供应商变更事件，同步更新 SCM 中的供应商相关记录
-    async fn handle_master_data_supplier_changed(
-        &self,
-        event: MasterDataEvent,
-    ) -> HandlerResult {
+    async fn handle_master_data_supplier_changed(&self, event: MasterDataEvent) -> HandlerResult {
         tracing::info!(
             "[scm-mdm] 供应商主数据变更事件 - domain={:?}, action={:?}, master_data_id={}, tenant_id={}",
             event.domain,
@@ -262,10 +259,7 @@ impl ScmEventHandlers {
     /// MDM 物料变更事件处理
     ///
     /// 订阅 PDM 物料变更事件，同步更新 SCM 中的物料相关记录
-    async fn handle_master_data_material_changed(
-        &self,
-        event: MasterDataEvent,
-    ) -> HandlerResult {
+    async fn handle_master_data_material_changed(&self, event: MasterDataEvent) -> HandlerResult {
         tracing::info!(
             "[scm-mdm] 物料主数据变更事件 - domain={:?}, action={:?}, master_data_id={}, tenant_id={}",
             event.domain,

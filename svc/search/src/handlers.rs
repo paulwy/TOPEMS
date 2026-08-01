@@ -8,7 +8,7 @@ use uuid::Uuid;
 
 use topems_shared::{api_error, api_success, ApiResponse};
 
-use crate::models::{SearchRequest, SearchResult, SearchResponse};
+use crate::models::{SearchRequest, SearchResponse, SearchResult};
 
 #[derive(Debug, Clone, FromRow)]
 struct UserSearchRow {
