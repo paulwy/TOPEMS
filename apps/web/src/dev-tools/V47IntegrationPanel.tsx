@@ -1,10 +1,12 @@
 import React from 'react';
 import { Box, Typography, IconButton } from '@mui/material';
 import { X as XIcon } from 'lucide-react';
+import { useTranslation } from 'react-i18next';
 import { edgeRenderer, faas, onDemandLoader } from '@/microfrontend';
 import PanelCard from './PanelCard';
 
 const V47IntegrationPanel: React.FC<{ onClose: () => void }> = ({ onClose }) => {
+  const { t } = useTranslation();
   const [serverlessStats, setServerlessStats] = React.useState<{
     pages: number;
     hits: number;
@@ -91,7 +93,7 @@ const V47IntegrationPanel: React.FC<{ onClose: () => void }> = ({ onClose }) => 
             variant='h6'
             sx={{ fontWeight: 600 }}
           >
-            V47-V50 集成面板 — 平台 + Serverless + AI 运维
+            {t('devtools.panels.v47Integration.title')}
           </Typography>
           <IconButton
             size='small'
@@ -104,51 +106,51 @@ const V47IntegrationPanel: React.FC<{ onClose: () => void }> = ({ onClose }) => 
         <Box sx={{ overflow: 'auto', maxHeight: 'calc(90vh - 56px)', p: 3 }}>
           <Box sx={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 2 }}>
             <PanelCard
-              title='V47.0 低代码引擎'
-              subtitle='LowCodeBuilder / lowCodeBuilder'
-              status='✅ 已加载 (模块市场 + 插件市场可用)'
+              title={t('devtools.panels.v47Integration.cards.lowCode.title')}
+              subtitle={t('devtools.panels.v47Integration.cards.lowCode.subtitle')}
+              status={t('devtools.panels.v47Integration.cards.lowCode.status')}
             />
             <PanelCard
-              title='V47.0 统一开发平台'
-              subtitle='UnifiedDevPlatform / unifiedDevPlatform'
-              status='✅ 已加载 (项目创建 + 开发服务器 + 构建部署)'
+              title={t('devtools.panels.v47Integration.cards.unifiedPlatform.title')}
+              subtitle={t('devtools.panels.v47Integration.cards.unifiedPlatform.subtitle')}
+              status={t('devtools.panels.v47Integration.cards.unifiedPlatform.status')}
             />
             <PanelCard
-              title='V48.0 无服务器架构'
-              subtitle='edgeRenderer / faas / onDemandLoader'
+              title={t('devtools.panels.v47Integration.cards.serverless.title')}
+              subtitle={t('devtools.panels.v47Integration.cards.serverless.subtitle')}
               status={
                 serverlessStats
-                  ? `✅ 已加载 (缓存页: ${serverlessStats.pages}, 命中: ${serverlessStats.hits})`
-                  : '✅ 已加载'
+                  ? t('devtools.panels.v47Integration.cards.serverless.statusWithCache', { pages: serverlessStats.pages, hits: serverlessStats.hits })
+                  : t('devtools.common.loaded')
               }
             />
             <PanelCard
-              title='V48.0 无服务器函数'
-              subtitle='FaaS 函数即模块'
+              title={t('devtools.panels.v47Integration.cards.faas.title')}
+              subtitle={t('devtools.panels.v47Integration.cards.faas.subtitle')}
               status={
                 faasStats
-                  ? `✅ ${faasStats.functions} 个函数, ${faasStats.invocations} 次调用`
-                  : '✅ 已加载'
+                  ? t('devtools.panels.v47Integration.cards.faas.statusWithInvocations', { functions: faasStats.functions, invocations: faasStats.invocations })
+                  : t('devtools.common.loaded')
               }
             />
             <PanelCard
-              title='V48.0 AI 驱动'
-              subtitle='smartRouter / autoOps / predictiveScaler'
-              status='✅ 已加载 (智能路由 + 自动运维 + 预测扩展)'
+              title={t('devtools.panels.v47Integration.cards.aiDriven.title')}
+              subtitle={t('devtools.panels.v47Integration.cards.aiDriven.subtitle')}
+              status={t('devtools.panels.v47Integration.cards.aiDriven.status')}
             />
             <PanelCard
-              title='V48.0 按需加载'
-              subtitle='onDemandLoader 引擎状态'
+              title={t('devtools.panels.v47Integration.cards.onDemand.title')}
+              subtitle={t('devtools.panels.v47Integration.cards.onDemand.subtitle')}
               status={
                 loaderStats
-                  ? `✅ 已加载 (已加载: ${loaderStats.loaded}, 等待: ${loaderStats.pending})`
-                  : '✅ 已加载'
+                  ? t('devtools.panels.v47Integration.cards.onDemand.statusWithLoader', { loaded: loaderStats.loaded, pending: loaderStats.pending })
+                  : t('devtools.common.loaded')
               }
             />
             <PanelCard
-              title='V50.0 AI 运维 V2'
-              subtitle='intelligentMonitor / rootCauseAnalyzer / autoRemediation'
-              status='✅ 已加载 (智能监控 + 根因分析 + 自动修复工作流)'
+              title={t('devtools.panels.v47Integration.cards.aiOpsV2.title')}
+              subtitle={t('devtools.panels.v47Integration.cards.aiOpsV2.subtitle')}
+              status={t('devtools.panels.v47Integration.cards.aiOpsV2.status')}
               span
             />
           </Box>
