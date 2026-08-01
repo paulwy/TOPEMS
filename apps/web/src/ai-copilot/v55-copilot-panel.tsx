@@ -1192,7 +1192,6 @@ const GeneratorTab: React.FC<{
         <Tabs
           value={activeSubTab}
           onChange={(_, v) => setActiveSubTab(v)}
-          size='small'
         >
           <Tab
             label='JSDoc/TSDoc'

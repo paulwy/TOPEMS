@@ -31,15 +31,25 @@ import type { CrudTab } from '@/components/templates/CrudPage';
 import { createCrudPageAdapter } from '@/schema/crudPageAdapter';
 import { assetSchema } from '@/schemas/erp/asset';
 import { assetApi } from '@/api/erp/finance/asset';
-import type { Asset, CreateAssetRequest } from '@/api/erp/finance/asset';
+import type { Asset } from '@/api/erp/types';
 import { PageContainer } from '@/components/common';
 import { designTokens } from '@/theme/tokens';
 import { useNotificationStore } from '@/store';
 import { QUERY_KEYS } from '@/lib/reactQuery';
 
+// 本地扩展类型：后端返回的部分字段名与 Asset 类型定义不一致，这里补充以便前端字段访问通过类型检查
+type AssetRow = Asset & {
+  asset_code?: string;
+  specification?: string;
+  department_name?: string;
+  responsible_person?: string;
+  purchase_price?: number | string;
+  description?: string;
+};
+
 const ct = designTokens.colors;
 
-const baseAdapter = createCrudPageAdapter<Asset, CreateAssetRequest>({
+const baseAdapter = createCrudPageAdapter<Asset>({
   list: assetApi.list,
   create: assetApi.create,
   update: assetApi.update,
@@ -64,16 +74,16 @@ const statusLabelMap: Record<string, string> = {
   disposed: '已处置',
 };
 
-function extractListData(response: unknown): Asset[] {
+function extractListData(response: unknown): AssetRow[] {
   if (!response || typeof response !== 'object') return [];
   const obj = response as Record<string, unknown>;
   const data = obj.data;
   if (!data) return [];
-  if (Array.isArray(data)) return data as Asset[];
+  if (Array.isArray(data)) return data as unknown as AssetRow[];
   if (typeof data === 'object') {
     const d = data as Record<string, unknown>;
-    if (Array.isArray(d.items)) return d.items as Asset[];
-    if (Array.isArray(d.data)) return d.data as Asset[];
+    if (Array.isArray(d.items)) return d.items as unknown as AssetRow[];
+    if (Array.isArray(d.data)) return d.data as unknown as AssetRow[];
   }
   return [];
 }
@@ -113,7 +123,7 @@ export const AssetListPage: React.FC = () => {
 
   const updateStatusMutation = useMutation({
     mutationFn: ({ id, status }: { id: string; status: string }) =>
-      assetApi.updateStatus(id, status),
+      assetApi.update(id, { status } as Partial<Asset>),
     onSuccess: () => {
       addNotification({ title: '成功', message: '资产状态已更新', type: 'success' });
       queryClient.invalidateQueries({ queryKey: QUERY_KEYS.ERP.ASSETS });
@@ -129,11 +139,11 @@ export const AssetListPage: React.FC = () => {
       icon: <CheckCircle size={16} />,
       color: 'success' as const,
       onClick: (row: Record<string, unknown>) => {
-        const asset = row as Asset;
+        const asset = row as unknown as AssetRow;
         updateStatusMutation.mutate({ id: asset.id, status: 'in_use' });
       },
       show: (row: Record<string, unknown>) => {
-        const asset = row as Asset;
+        const asset = row as unknown as AssetRow;
         return asset.status === 'idle';
       },
     },
@@ -142,11 +152,11 @@ export const AssetListPage: React.FC = () => {
       icon: <Wrench size={16} />,
       color: 'warning' as const,
       onClick: (row: Record<string, unknown>) => {
-        const asset = row as Asset;
+        const asset = row as unknown as AssetRow;
         updateStatusMutation.mutate({ id: asset.id, status: 'maintenance' });
       },
       show: (row: Record<string, unknown>) => {
-        const asset = row as Asset;
+        const asset = row as unknown as AssetRow;
         return asset.status === 'in_use' || asset.status === 'active';
       },
     },
@@ -155,11 +165,11 @@ export const AssetListPage: React.FC = () => {
       icon: <Archive size={16} />,
       color: 'error' as const,
       onClick: (row: Record<string, unknown>) => {
-        const asset = row as Asset;
+        const asset = row as unknown as AssetRow;
         updateStatusMutation.mutate({ id: asset.id, status: 'retired' });
       },
       show: (row: Record<string, unknown>) => {
-        const asset = row as Asset;
+        const asset = row as unknown as AssetRow;
         return asset.status !== 'retired' && asset.status !== 'disposed';
       },
       divider: true,
@@ -287,7 +297,7 @@ export const AssetListPage: React.FC = () => {
   );
 
   const detailContent = (row: Record<string, unknown>) => {
-    const asset = row as Asset;
+    const asset = row as unknown as AssetRow;
     const statusColors = statusColorMap[asset.status] || {
       bg: 'grey.100',
       color: 'text.secondary',
@@ -329,7 +339,7 @@ export const AssetListPage: React.FC = () => {
         <Divider sx={{ mb: 2 }} />
 
         <Grid container spacing={2}>
-          <Grid item xs={12} sm={6}>
+          <Grid size={{ xs: 12, sm: 6 }}>
             <Box sx={{ display: 'flex', alignItems: 'flex-start', gap: 1.5 }}>
               <Tag size={16} style={{ marginTop: 2, color: 'var(--mui-palette-text-secondary)' }} />
               <Box>
@@ -340,7 +350,7 @@ export const AssetListPage: React.FC = () => {
               </Box>
             </Box>
           </Grid>
-          <Grid item xs={12} sm={6}>
+          <Grid size={{ xs: 12, sm: 6 }}>
             <Box sx={{ display: 'flex', alignItems: 'flex-start', gap: 1.5 }}>
               <FileText size={16} style={{ marginTop: 2, color: 'var(--mui-palette-text-secondary)' }} />
               <Box>
@@ -351,7 +361,7 @@ export const AssetListPage: React.FC = () => {
               </Box>
             </Box>
           </Grid>
-          <Grid item xs={12} sm={6}>
+          <Grid size={{ xs: 12, sm: 6 }}>
             <Box sx={{ display: 'flex', alignItems: 'flex-start', gap: 1.5 }}>
               <MapPin size={16} style={{ marginTop: 2, color: 'var(--mui-palette-text-secondary)' }} />
               <Box>
@@ -362,7 +372,7 @@ export const AssetListPage: React.FC = () => {
               </Box>
             </Box>
           </Grid>
-          <Grid item xs={12} sm={6}>
+          <Grid size={{ xs: 12, sm: 6 }}>
             <Box sx={{ display: 'flex', alignItems: 'flex-start', gap: 1.5 }}>
               <Building size={16} style={{ marginTop: 2, color: 'var(--mui-palette-text-secondary)' }} />
               <Box>
@@ -373,7 +383,7 @@ export const AssetListPage: React.FC = () => {
               </Box>
             </Box>
           </Grid>
-          <Grid item xs={12} sm={6}>
+          <Grid size={{ xs: 12, sm: 6 }}>
             <Box sx={{ display: 'flex', alignItems: 'flex-start', gap: 1.5 }}>
               <User size={16} style={{ marginTop: 2, color: 'var(--mui-palette-text-secondary)' }} />
               <Box>
@@ -384,7 +394,7 @@ export const AssetListPage: React.FC = () => {
               </Box>
             </Box>
           </Grid>
-          <Grid item xs={12} sm={6}>
+          <Grid size={{ xs: 12, sm: 6 }}>
             <Box sx={{ display: 'flex', alignItems: 'flex-start', gap: 1.5 }}>
               <DollarSign size={16} style={{ marginTop: 2, color: 'var(--mui-palette-text-secondary)' }} />
               <Box>
@@ -395,7 +405,7 @@ export const AssetListPage: React.FC = () => {
               </Box>
             </Box>
           </Grid>
-          <Grid item xs={12} sm={6}>
+          <Grid size={{ xs: 12, sm: 6 }}>
             <Box sx={{ display: 'flex', alignItems: 'flex-start', gap: 1.5 }}>
               <Calendar size={16} style={{ marginTop: 2, color: 'var(--mui-palette-text-secondary)' }} />
               <Box>
@@ -410,7 +420,7 @@ export const AssetListPage: React.FC = () => {
               </Box>
             </Box>
           </Grid>
-          <Grid item xs={12} sm={6}>
+          <Grid size={{ xs: 12, sm: 6 }}>
             <Box sx={{ display: 'flex', alignItems: 'flex-start', gap: 1.5 }}>
               <Clock size={16} style={{ marginTop: 2, color: 'var(--mui-palette-text-secondary)' }} />
               <Box>
@@ -426,7 +436,7 @@ export const AssetListPage: React.FC = () => {
             </Box>
           </Grid>
           {asset.description && (
-            <Grid item xs={12}>
+            <Grid size={{ xs: 12 }}>
               <Box sx={{ display: 'flex', alignItems: 'flex-start', gap: 1.5 }}>
                 <FileText size={16} style={{ marginTop: 2, color: 'var(--mui-palette-text-secondary)' }} />
                 <Box>

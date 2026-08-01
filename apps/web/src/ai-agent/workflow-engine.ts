@@ -10,6 +10,7 @@ export interface WorkflowStep {
   status?: 'pending' | 'running' | 'completed' | 'failed' | 'skipped';
   result?: unknown;
   error?: string;
+  retry_count?: number;
 }
 
 export interface WorkflowTrigger {
@@ -121,7 +122,7 @@ export class WorkflowEngine {
       const executionOrder = this.resolveExecutionOrder(workflow);
 
       for (const stepGroup of executionOrder) {
-        if (workflow.status === 'paused') {
+        if ((workflow.status as WorkflowStatus) === 'paused') {
           this.emit({
             type: 'workflow_paused',
             workflowId,

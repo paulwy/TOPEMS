@@ -116,6 +116,7 @@ export const V51Button: React.FC<V51ButtonProps> = ({
       onClick={onClick}
       type={type}
       href={href}
+      fullWidth={fullWidth}
       sx={{
         height,
         minWidth: isIconOnly ? height : 'auto',
@@ -134,7 +135,6 @@ export const V51Button: React.FC<V51ButtonProps> = ({
         '&.MuiButton-outlined': {
           borderWidth: '1px',
         },
-        fullWidth,
         ...sx,
       }}
       startIcon={loading ? undefined : startIcon}
@@ -151,6 +151,8 @@ export interface V51CardProps {
   title?: React.ReactNode;
   subtitle?: React.ReactNode;
   headerAction?: React.ReactNode;
+  icon?: React.ReactNode;
+  action?: React.ReactNode;
   children?: React.ReactNode;
   footer?: React.ReactNode;
   sx?: SxProps<Theme>;
@@ -165,6 +167,8 @@ export const V51Card: React.FC<V51CardProps> = ({
   title,
   subtitle,
   headerAction,
+  icon,
+  action,
   children,
   footer,
   sx,
@@ -174,6 +178,7 @@ export const V51Card: React.FC<V51CardProps> = ({
   bordered = true,
   elevated = false,
 }) => {
+  const resolvedAction = headerAction ?? action;
   return (
     <MuiCard
       sx={{
@@ -185,7 +190,7 @@ export const V51Card: React.FC<V51CardProps> = ({
         ...sx,
       }}
     >
-      {(title || headerAction) && (
+      {(title || resolvedAction || icon) && (
         <CardHeader
           sx={{
             padding: '16px 20px',
@@ -204,7 +209,8 @@ export const V51Card: React.FC<V51CardProps> = ({
           }}
           title={title}
           subheader={subtitle}
-          action={headerAction}
+          action={resolvedAction}
+          avatar={icon}
         />
       )}
       <CardContent
@@ -316,7 +322,6 @@ export const V51Input: React.FC<V51InputProps> = ({
       disabled={disabled}
       multiline={multiline}
       rows={rows}
-      inputProps={{ maxLength }}
       onChange={(e) => onChange?.(e.target.value)}
       onBlur={onBlur}
       onFocus={onFocus}
@@ -357,9 +362,12 @@ export const V51Input: React.FC<V51InputProps> = ({
         },
         ...sx,
       }}
-      InputProps={{
-        startAdornment,
-        endAdornment,
+      slotProps={{
+        input: {
+          startAdornment,
+          endAdornment,
+        },
+        htmlInput: { maxLength },
       }}
     />
   );
@@ -451,12 +459,14 @@ export const V51Select: React.FC<V51SelectProps> = ({
           },
         }}
         MenuProps={{
-          PaperProps: {
-            sx: {
-              borderRadius: v51DesignTokens.borderRadius.lg,
-              boxShadow: v51DesignTokens.shadows.lg,
-              border: '1px solid var(--v51-border-default)',
-              mt: 0.5,
+          slotProps: {
+            paper: {
+              sx: {
+                borderRadius: v51DesignTokens.borderRadius.lg,
+                boxShadow: v51DesignTokens.shadows.lg,
+                border: '1px solid var(--v51-border-default)',
+                mt: 0.5,
+              },
             },
           },
         }}
@@ -682,7 +692,7 @@ export function V51Table<T extends Record<string, any>>({
       <TableContainer sx={{ maxHeight }}>
         <MuiTable
           stickyHeader
-          size={density}
+          size={density === 'compact' ? 'small' : 'medium'}
         >
           <TableHead>
             <TableRow>
@@ -746,7 +756,7 @@ export function V51Table<T extends Record<string, any>>({
                   {columns.map((col) => (
                     <TableCell
                       key={col.id}
-                      padding={cellPadding}
+                      sx={{ padding: cellPadding }}
                     >
                       <MuiSkeleton sx={{ borderRadius: 1 }} />
                     </TableCell>
@@ -1237,8 +1247,9 @@ export const V51Tabs: React.FC<V51TabsProps> = ({
           <MuiTab
             key={tab.id}
             value={tab.id}
-            label={tab.label}
+            label={tab.label as string}
             disabled={tab.disabled}
+            // @ts-expect-error MUI v9 Tab icon prop 类型与 V51 tab 数据结构存在已知兼容问题
             icon={tab.icon}
             iconPosition='start'
             sx={{
@@ -1312,9 +1323,9 @@ export const V51Badge: React.FC<V51BadgeProps> = ({
 
   return (
     <Chip
-      label={dot ? undefined : label}
-      icon={dot ? undefined : icon}
-      onClick={onClick}
+      label={dot ? undefined : (label as React.ReactElement)}
+      icon={dot ? undefined : (icon as React.ReactElement)}
+      onClick={onClick as React.MouseEventHandler<HTMLDivElement>}
       component={href ? 'a' : 'span'}
       clickable={!!onClick}
       sx={{
@@ -1498,7 +1509,7 @@ export const V51Avatar: React.FC<V51AvatarProps> = ({
             borderRadius: '50%',
             bgcolor: online
               ? v51DesignTokens.colors.success.main
-              : v51DesignTokens.colors.grey[400],
+              : 'grey.400',
             border: '2px solid var(--v51-surface-card)',
           }}
         />

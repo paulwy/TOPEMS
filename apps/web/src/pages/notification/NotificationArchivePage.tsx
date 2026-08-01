@@ -1,6 +1,6 @@
 import React, { useState, useMemo, useCallback } from 'react';
 import { useMutation, useQueryClient, useQuery } from '@tanstack/react-query';
-import { Archive, Settings, RotateCcw, RotateCcw, Eye } from 'lucide-react';
+import { Archive, Settings, RotateCcw, Eye } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import {
   Box,

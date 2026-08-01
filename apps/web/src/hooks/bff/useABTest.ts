@@ -18,6 +18,7 @@ import {
   type ExperimentResult,
   type Variant,
   type TargetingRule,
+  type ExperimentMetric,
   ExperimentStatus,
 } from '@/utils/bff/ab-testing';
 
@@ -311,16 +312,19 @@ export function useActiveExperiments(): UseActiveExperimentsResult {
 
 /** 实验创建输入 */
 export interface CreateExperimentInput {
+  id?: string;
   name: string;
   description: string;
   variants: Array<{
     name: string;
     weight: number;
     is_control: boolean;
-    config?: Record<string, unknown>;
+    config: Record<string, unknown>;
+    id?: string;
   }>;
   traffic_allocation?: number;
   targeting?: TargetingRule[];
+  metrics?: ExperimentMetric[];
 }
 
 /** useExperimentAdmin 返回值 */

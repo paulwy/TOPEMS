@@ -314,13 +314,13 @@ export const DocumentKnowledgeBasePage: React.FC = () => {
           created_at: doc.updatedAt,
         }));
 
-        if (params.search) {
+        if (params?.search) {
           const search = params.search.toLowerCase();
           filtered = filtered.filter((d) => d.name.toLowerCase().includes(search));
         }
 
-        const page = params.page || 1;
-        const pageSize = params.pageSize || 10;
+        const page = params?.page || 1;
+        const pageSize = params?.pageSize || 10;
         const start = (page - 1) * pageSize;
         const end = start + pageSize;
 

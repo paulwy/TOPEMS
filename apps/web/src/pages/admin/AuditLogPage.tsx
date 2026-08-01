@@ -262,7 +262,7 @@ const DetailContent: React.FC<{ row: Record<string, unknown> }> = ({ row }) => {
           </Grid>
         </Paper>
       </Grid>
-      {row.error_message && (
+      {row.error_message ? (
         <Grid size={{ xs: 12 }}>
           <Paper sx={{ p: 3, bgcolor: 'error.light' }}>
             <Typography
@@ -280,8 +280,8 @@ const DetailContent: React.FC<{ row: Record<string, unknown> }> = ({ row }) => {
             </Typography>
           </Paper>
         </Grid>
-      )}
-      {row.request_details && (
+      ) : null}
+      {row.request_details ? (
         <Grid size={{ xs: 12 }}>
           <Paper sx={{ p: 3 }}>
             <Typography
@@ -304,8 +304,8 @@ const DetailContent: React.FC<{ row: Record<string, unknown> }> = ({ row }) => {
             </pre>
           </Paper>
         </Grid>
-      )}
-      {row.response_details && (
+      ) : null}
+      {row.response_details ? (
         <Grid size={{ xs: 12 }}>
           <Paper sx={{ p: 3 }}>
             <Typography
@@ -328,7 +328,7 @@ const DetailContent: React.FC<{ row: Record<string, unknown> }> = ({ row }) => {
             </pre>
           </Paper>
         </Grid>
-      )}
+      ) : null}
     </Grid>
   );
 };

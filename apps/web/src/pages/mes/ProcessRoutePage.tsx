@@ -108,7 +108,7 @@ const ProcessRoutePage: React.FC = () => {
   };
 
   const detailContent = (row: Record<string, unknown>) => {
-    const route = row as ProcessRoute;
+    const route = row as unknown as ProcessRoute;
     loadRouteSteps(route.id);
 
     return (

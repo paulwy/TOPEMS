@@ -118,7 +118,7 @@ const BudgetManagementPage: React.FC = () => {
   const [activeTab, setActiveTab] = useState(0);
 
   const budgetHeaderContent = (rows: Record<string, unknown>[], total: number) => {
-    const budgets = rows as Budget[];
+    const budgets = rows as unknown as Budget[];
     const totalAmount = budgets.reduce((sum, item) => sum + (item.total_budget || 0), 0);
     const spentAmount = budgets.reduce((sum, item) => sum + (item.used_amount || 0), 0);
     const exceededCount = budgets.filter(
@@ -167,7 +167,7 @@ const BudgetManagementPage: React.FC = () => {
   };
 
   const expenseHeaderContent = (rows: Record<string, unknown>[], total: number) => {
-    const expenses = rows as Expense[];
+    const expenses = rows as unknown as Expense[];
     const totalAmount = expenses.reduce((sum, item) => sum + (item.amount || 0), 0);
     const pendingCount = expenses.filter((e) => e.status === 'pending').length;
     const completedCount = expenses.filter((e) => e.status === 'completed').length;

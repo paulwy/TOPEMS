@@ -17,7 +17,12 @@ import type { RowAction } from '@/components/templates';
 import { createCrudPageAdapter } from '@/schema/crudPageAdapter';
 import { hazardousMaterialSchema } from '@/schemas/ehs';
 import { hazardousMaterialApi } from '@/api/ehs';
-import type { HazardousMaterial, MSDS } from '@/api/ehs';
+import type {
+  HazardousMaterial,
+  MSDS,
+  CreateHazardousMaterialRequest,
+  UpdateHazardousMaterialRequest,
+} from '@/api/ehs';
 import { PageContainer } from '@/components/common/PageContainer';
 import { designTokens } from '@/theme/tokens';
 import { useNotificationStore } from '@/store';
@@ -44,7 +49,11 @@ const materialApi = {
   delete: hazardousMaterialApi.deleteHazardousMaterial,
 };
 
-const materialAdapter = createCrudPageAdapter<HazardousMaterial>(materialApi);
+const materialAdapter = createCrudPageAdapter<
+  HazardousMaterial,
+  CreateHazardousMaterialRequest,
+  UpdateHazardousMaterialRequest
+>(materialApi);
 
 const StatCard: React.FC<{
   label: string;

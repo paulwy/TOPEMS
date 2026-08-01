@@ -582,11 +582,7 @@ const DependencyGovernance: React.FC<DependencyGovernanceProps> = ({ onClose }) 
           spacing={2}
           sx={{ mb: 2 }}
         >
-          <Grid
-            item
-            xs={6}
-            sm={3}
-          >
+          <Grid size={{ xs: 6, sm: 3 }}>
             <StatCard
               label='模块总数'
               value={stats.total_modules}
@@ -594,11 +590,7 @@ const DependencyGovernance: React.FC<DependencyGovernanceProps> = ({ onClose }) 
               color='#1976d2'
             />
           </Grid>
-          <Grid
-            item
-            xs={6}
-            sm={3}
-          >
+          <Grid size={{ xs: 6, sm: 3 }}>
             <StatCard
               label='依赖关系'
               value={stats.total_dependencies}
@@ -606,11 +598,7 @@ const DependencyGovernance: React.FC<DependencyGovernanceProps> = ({ onClose }) 
               color='#388e3c'
             />
           </Grid>
-          <Grid
-            item
-            xs={6}
-            sm={3}
-          >
+          <Grid size={{ xs: 6, sm: 3 }}>
             <StatCard
               label='循环依赖'
               value={stats.cycles_count}
@@ -618,11 +606,7 @@ const DependencyGovernance: React.FC<DependencyGovernanceProps> = ({ onClose }) 
               color={stats.cycles_count > 0 ? '#f59e0b' : '#10b981'}
             />
           </Grid>
-          <Grid
-            item
-            xs={6}
-            sm={3}
-          >
+          <Grid size={{ xs: 6, sm: 3 }}>
             <StatCard
               label='许可证合规率'
               value={`${stats.license_compliance_rate}%`}
@@ -674,18 +658,10 @@ const DependencyGovernance: React.FC<DependencyGovernanceProps> = ({ onClose }) 
             container
             spacing={2}
           >
-            <Grid
-              item
-              xs={12}
-              md={8}
-            >
+            <Grid size={{ xs: 12, md: 8 }}>
               <DependencyGraphVisualization graph={graph} />
             </Grid>
-            <Grid
-              item
-              xs={12}
-              md={4}
-            >
+            <Grid size={{ xs: 12, md: 4 }}>
               <Paper sx={{ p: 2, height: '100%' }}>
                 <Typography
                   variant='subtitle2'

@@ -293,11 +293,11 @@ export class PerformanceAnalyzer {
   private trackMemoryUsage(): void {
     const takeSnapshot = () => {
       if (typeof performance !== 'undefined' && 'memory' in performance) {
-        const memory = (performance as Performance).memory as {
+        const memory = (performance as Performance & { memory: {
           usedJSHeapSize: number;
           totalJSHeapSize: number;
           jsHeapSizeLimit: number;
-        };
+        } }).memory;
         const snapshot: MemoryMetric = {
           usedJSHeapSize: memory.usedJSHeapSize,
           totalJSHeapSize: memory.totalJSHeapSize,

@@ -44,6 +44,8 @@ export interface ServicesConfig {
   notification: string;
   mail: string;
   master: string;
+  // 搜索独立服务
+  search: string;
 }
 
 export interface FeaturesConfig {

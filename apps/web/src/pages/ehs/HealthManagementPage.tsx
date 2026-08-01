@@ -5,14 +5,14 @@ import CrudPage from '@/components/templates/CrudPage';
 import { createCrudPageAdapter } from '@/schema/crudPageAdapter';
 import { healthManagementSchema } from '@/schemas/ehs';
 import { ehsApi } from '@/api/ehs';
-import type { HealthRecord } from '@/api/ehs';
+import type { HealthRecord, CreateHealthRecordRequest } from '@/api/ehs';
 import { PageContainer } from '@/components/common/PageContainer';
 import { designTokens } from '@/theme/tokens';
 import { useTranslation } from 'react-i18next';
 
 const ct = designTokens.colors;
 
-const apiAdapter = createCrudPageAdapter<HealthRecord>({
+const apiAdapter = createCrudPageAdapter<HealthRecord, CreateHealthRecordRequest>({
   list: ehsApi.listHealthRecords,
   create: ehsApi.createHealthRecord,
   update: ehsApi.updateHealthRecord,

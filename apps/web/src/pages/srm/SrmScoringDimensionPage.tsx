@@ -30,7 +30,7 @@ const scoringDimensionApiAdapter: CrudApiAdapter = {
     if (!response.success || !response.data) {
       return { data: [], total: 0 };
     }
-    const items = (response.data || []) as ScoringDimension[];
+    const items = (response.data || []) as unknown as ScoringDimension[];
     const search = params?.search?.toLowerCase() || '';
     const page = params?.page || 0;
     const pageSize = params?.pageSize || 10;
@@ -49,7 +49,7 @@ const scoringDimensionApiAdapter: CrudApiAdapter = {
   },
   create: async (data) => {
     const response = await srmApi.createScoringDimension(
-      data as Parameters<typeof srmApi.createScoringDimension>[0]
+      data as unknown as Parameters<typeof srmApi.createScoringDimension>[0]
     );
     if (!response.success || !response.data) throw new Error('创建评分维度失败');
     return response.data as unknown as Record<string, unknown>;
@@ -57,7 +57,7 @@ const scoringDimensionApiAdapter: CrudApiAdapter = {
   update: async (id, data) => {
     const response = await srmApi.updateScoringDimension(
       id,
-      data as Parameters<typeof srmApi.updateScoringDimension>[1]
+      data as unknown as Parameters<typeof srmApi.updateScoringDimension>[1]
     );
     if (!response.success || !response.data) throw new Error('更新评分维度失败');
     return response.data as unknown as Record<string, unknown>;
@@ -74,7 +74,7 @@ const ScoringDimensionStats: React.FC = () => {
     queryFn: async () => {
       const response = await srmApi.listScoringDimensions();
       if (response.success && response.data) {
-        return response.data as ScoringDimension[];
+        return response.data as unknown as ScoringDimension[];
       }
       return [];
     },

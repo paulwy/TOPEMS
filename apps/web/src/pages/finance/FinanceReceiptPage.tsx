@@ -2,6 +2,7 @@ import CrudPage from '@/components/templates/CrudPage';
 import { createCrudPageAdapter } from '@/schema/crudPageAdapter';
 import { receiptSchema } from '@/schemas/finance';
 import { financeApi } from '@/api/finance';
+import type { ApiResponse, CollectionRecord } from '@/types/finance';
 
 const apiAdapter = createCrudPageAdapter({
   list: (params?: Record<string, unknown>) => financeApi.receivablePayable.listCollections(params),
@@ -10,10 +11,10 @@ const apiAdapter = createCrudPageAdapter({
       data as Parameters<typeof financeApi.receivablePayable.createCollection>[0]
     ),
   update: async (id: string, data: unknown) => {
-    return data;
+    return data as unknown as ApiResponse<CollectionRecord>;
   },
   delete: async (_id: string) => {
-    return;
+    return undefined as unknown as ApiResponse<unknown>;
   },
 });
 

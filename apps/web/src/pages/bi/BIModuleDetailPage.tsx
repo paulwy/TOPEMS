@@ -586,34 +586,40 @@ const BIModuleDetailPage = () => {
         charts={chartCards}
         loading={loading}
         onRefresh={handleRefresh}
-        headerContent={
-          <Box sx={{ display: 'flex', alignItems: 'center', gap: 2, flexWrap: 'wrap' }}>
-            <Typography
-              variant='body2'
-              color='text.secondary'
-            >
-              <Clock size={14} /> 最后更新: {new Date().toLocaleString('zh-CN')}
-            </Typography>
-            <ExportButton
-              data={exportData}
-              columns={
-                moduleId === 'rs'
-                  ? ['id', 'project', 'status', 'progress', 'owner']
-                  : moduleId === 'lims'
-                    ? ['id', 'sample', 'type', 'status', 'result']
-                    : moduleId === 'qms'
-                      ? ['id', 'inspection', 'batch', 'status', 'quality']
-                      : moduleId === 'ehs'
-                        ? ['id', 'risk', 'level', 'status', 'date']
-                        : moduleId === 'srm'
-                          ? ['id', 'supplier', 'type', 'rating', 'status']
-                          : ['id', 'batch', 'product', 'status', 'output']
-              }
-              filename={`bi-${moduleId}-detail`}
-            />
-          </Box>
-        }
       >
+        <Box
+          sx={{
+            display: 'flex',
+            alignItems: 'center',
+            gap: 2,
+            flexWrap: 'wrap',
+            mb: 2,
+          }}
+        >
+          <Typography
+            variant='body2'
+            color='text.secondary'
+          >
+            <Clock size={14} /> 最后更新: {new Date().toLocaleString('zh-CN')}
+          </Typography>
+          <ExportButton
+            data={exportData}
+            columns={
+              moduleId === 'rs'
+                ? ['id', 'project', 'status', 'progress', 'owner']
+                : moduleId === 'lims'
+                  ? ['id', 'sample', 'type', 'status', 'result']
+                  : moduleId === 'qms'
+                    ? ['id', 'inspection', 'batch', 'status', 'quality']
+                    : moduleId === 'ehs'
+                      ? ['id', 'risk', 'level', 'status', 'date']
+                      : moduleId === 'srm'
+                        ? ['id', 'supplier', 'type', 'rating', 'status']
+                        : ['id', 'batch', 'product', 'status', 'output']
+            }
+            filename={`bi-${moduleId}-detail`}
+          />
+        </Box>
         {error && (
           <Alert
             severity='warning'

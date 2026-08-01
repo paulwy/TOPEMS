@@ -157,9 +157,7 @@ const PmProjectListPage: React.FC = () => {
         schema={projectSchema}
         apiAdapter={projectApiAdapter}
         customRowActions={customRowActions}
-        headerContent={
-          headerContent as (rows: Record<string, unknown>[], total: number) => React.ReactNode
-        }
+        headerContent={headerContent}
         breadcrumbs={[{ label: '首页', href: '/dashboard' }, { label: '项目' }]}
       />
     </PageContainer>

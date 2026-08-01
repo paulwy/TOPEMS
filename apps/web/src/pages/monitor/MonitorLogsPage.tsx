@@ -79,10 +79,13 @@ const MonitorLogsPage: React.FC = () => {
 
         const level = params?.level as string | undefined;
         if (level && level !== 'all') {
-          return { data: filtered.filter((l) => l.level === level), total: filtered.length };
+          return {
+            data: filtered.filter((l) => l.level === level) as unknown as Record<string, unknown>[],
+            total: filtered.length,
+          };
         }
 
-        return { data: filtered, total: filtered.length };
+        return { data: filtered as unknown as Record<string, unknown>[], total: filtered.length };
       },
       create: async () => {
         throw new Error('日志为只读数据，不可创建');
@@ -314,7 +317,7 @@ const MonitorLogsPage: React.FC = () => {
                       >
                         {React.cloneElement(stat.icon as React.ReactElement, {
                           style: { color: 'currentColor' },
-                        })}
+                        } as Record<string, unknown>)}
                       </Box>
                       <Box>
                         <Typography

@@ -179,7 +179,7 @@ const RoleManagementPage: React.FC<RoleManagementPageProps> = ({ onNavigate: _on
       {
         label: '管理权限',
         icon: <Key size={16} />,
-        onClick: (row: Record<string, unknown>) => openPermissionsModal(row as Role),
+        onClick: (row: Record<string, unknown>) => openPermissionsModal(row as unknown as Role),
       },
     ],
     [openPermissionsModal]

@@ -183,7 +183,7 @@ export const WorkflowMonitorPage: React.FC = () => {
       key: 'ignore',
       label: '忽略',
       icon: <EyeOff size={16} />,
-      color: 'default',
+      color: 'secondary',
       onClick: handleIgnore,
     },
   ];

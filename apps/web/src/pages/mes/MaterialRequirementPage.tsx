@@ -128,7 +128,7 @@ const MaterialRequirementPage: React.FC = () => {
   };
 
   const headerContent = (rows: Record<string, unknown>[]) => {
-    const requirements = rows as MaterialRequirement[];
+    const requirements = rows as unknown as MaterialRequirement[];
     const total = requirements.length;
     const draft = requirements.filter((r) => r.status === 'draft').length;
     const confirmed = requirements.filter((r) => r.status === 'confirmed').length;

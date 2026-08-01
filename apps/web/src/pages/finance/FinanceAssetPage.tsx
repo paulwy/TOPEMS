@@ -74,7 +74,7 @@ const FinanceAssetPage: React.FC = () => {
         };
       },
       create: async (data) => {
-        const payload = { ...(data as Partial<Account>), category: 'asset' };
+        const payload = { ...(data as Partial<Account>), category: 'asset' as const };
         const response = await accountApi.create(payload);
         if (!response.success) {
           throw new Error(response.message || '创建资产科目失败');
@@ -431,7 +431,9 @@ const FinanceAssetPage: React.FC = () => {
       <ConfirmDialog
         isOpen={!!disableTarget}
         onClose={() => setDisableTarget(null)}
-        onConfirm={() => disableTarget && handleDisable(disableTarget)}
+        onConfirm={() => {
+          if (disableTarget) handleDisable(disableTarget);
+        }}
         title={t('finance.finance_asset_page.inactive_2')}
         message={`确定要停用科目 "${disableTarget?.name}" 吗？`}
         type='warning'

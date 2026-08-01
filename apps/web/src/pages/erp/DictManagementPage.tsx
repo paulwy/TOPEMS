@@ -284,8 +284,7 @@ const DictManagementPage: React.FC = () => {
           >
             <Typography
               variant='subtitle1'
-              fontWeight={600}
-              sx={{ display: 'flex', alignItems: 'center', gap: 1 }}
+              sx={{ display: 'flex', alignItems: 'center', gap: 1, fontWeight: 600 }}
             >
               <Book size={18} />
               字典类型
@@ -333,7 +332,7 @@ const DictManagementPage: React.FC = () => {
                   <Box sx={{ flex: 1, minWidth: 0 }}>
                     <Typography
                       variant='body2'
-                      fontWeight={500}
+                      sx={{ fontWeight: 500 }}
                       noWrap
                     >
                       {type.name}

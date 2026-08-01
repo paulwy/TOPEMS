@@ -311,7 +311,7 @@ export const SearchResultList: React.FC<SearchResultListProps> = ({
               {group.results.map((result) => {
                 const currentIndex = indexMap.get(result.id) ?? -1;
                 const isSelected = selectedIndex === currentIndex;
-                const moduleColor = getModuleColor(result.module, theme);
+                const moduleColor = getModuleColor(result.module ?? '', theme);
                 return (
                   <ListItem
                     key={result.id}
@@ -341,7 +341,7 @@ export const SearchResultList: React.FC<SearchResultListProps> = ({
                     aria-selected={isSelected}
                   >
                     <ListItemIcon sx={{ minWidth: 36, color: moduleColor }}>
-                      {getModuleIcon(result.module)}
+                      {getModuleIcon(result.module ?? '')}
                     </ListItemIcon>
                     <ListItemText
                       primary={

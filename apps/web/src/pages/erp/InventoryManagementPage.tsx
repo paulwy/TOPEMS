@@ -97,7 +97,7 @@ const StatCard: React.FC<{
 
 const InventoryManagementPage: React.FC = () => {
   const headerContent = (rows: Record<string, unknown>[], total: number) => {
-    const items = rows as Inventory[];
+    const items = rows as unknown as Inventory[];
     const totalValue = items.reduce(
       (sum: number, item: Inventory) => sum + (item.total_cost || 0),
       0

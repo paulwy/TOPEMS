@@ -183,7 +183,7 @@ const ModuleInspectorTab: React.FC = () => {
                         selected={selectedModule === mod.id}
                       >
                         <TableCell>
-                          <Typography variant="caption" fontFamily="monospace">
+                          <Typography variant="caption" sx={{ fontFamily: 'monospace' }}>
                             {mod.id}
                           </Typography>
                         </TableCell>
@@ -345,7 +345,7 @@ const ComponentTreeTab: React.FC = () => {
                   Props:
                 </Typography>
                 <Paper sx={{ p: 1, mb: 1, maxHeight: 150, overflow: 'auto' }}>
-                  <Typography variant="caption" fontFamily="monospace">
+                  <Typography variant="caption" sx={{ fontFamily: 'monospace' }}>
                     {JSON.stringify(selected.props, null, 2)}
                   </Typography>
                 </Paper>
@@ -492,7 +492,7 @@ const PerformanceMonitorTab: React.FC = () => {
                         size="sm"
                       />
                     </Box>
-                    <Typography variant="body2" fontFamily="monospace">
+                    <Typography variant="body2" sx={{ fontFamily: 'monospace' }}>
                       {vital.value.toFixed(2)} {vital.name === 'CLS' ? '' : 'ms'}
                     </Typography>
                   </Paper>
@@ -691,20 +691,20 @@ const NetworkInspectorTab: React.FC = () => {
                 <Divider sx={{ my: 1 }} />
                 <Typography variant="caption" color="text.secondary">Headers:</Typography>
                 <Paper sx={{ p: 1, maxHeight: 200, overflow: 'auto' }}>
-                  <Typography variant="caption" fontFamily="monospace">
+                  <Typography variant="caption" sx={{ fontFamily: 'monospace' }}>
                     {JSON.stringify(selected.headers, null, 2) || '{}'}
                   </Typography>
                 </Paper>
-                {selected.body && (
+                {selected.body ? (
                   <>
                     <Typography variant="caption" color="text.secondary" sx={{ mt: 1, display: 'block' }}>Body:</Typography>
                     <Paper sx={{ p: 1, maxHeight: 100, overflow: 'auto' }}>
-                      <Typography variant="caption" fontFamily="monospace">
+                      <Typography variant="caption" sx={{ fontFamily: 'monospace' }}>
                         {typeof selected.body === 'string' ? selected.body : JSON.stringify(selected.body)}
                       </Typography>
                     </Paper>
                   </>
-                )}
+                ) : null}
               </Box>
             ) : (
               <Typography variant="body2" color="text.secondary">
@@ -818,7 +818,7 @@ const StateExplorerTab: React.FC = () => {
                   Selectors: {selected.selectors.length} | Actions: {selected.actions.length}
                 </Typography>
                 <Paper sx={{ p: 1.5, mt: 1, maxHeight: 400, overflow: 'auto', bgcolor: 'grey.50' }}>
-                  <Typography variant="caption" fontFamily="monospace">
+                  <Typography variant="caption" sx={{ fontFamily: 'monospace' }}>
                     {JSON.stringify(selected.state, null, 2)}
                   </Typography>
                 </Paper>
@@ -1045,16 +1045,16 @@ const DebugSessionsTab: React.FC = () => {
                         borderColor: 'divider',
                       }}
                     >
-                      <Typography variant="caption" fontFamily="monospace" sx={{ color: 'text.secondary' }}>
+                      <Typography variant="caption" sx={{ fontFamily: 'monospace', color: 'text.secondary' }}>
                         [{new Date(step.timestamp).toLocaleTimeString()}]
                       </Typography>
                       <Chip
                         label={step.type}
                         size="small"
-                        variant={step.type === 'error' ? 'error' : step.type === 'network' ? 'primary' : 'default'}
+                        color={step.type === 'error' ? 'error' : step.type === 'network' ? 'primary' : 'default'}
                         sx={{ ml: 1, fontSize: 10 }}
                       />
-                      <Typography variant="caption" fontFamily="monospace">
+                      <Typography variant="caption" sx={{ fontFamily: 'monospace' }}>
                         {JSON.stringify(step.data).substring(0, 80)}
                       </Typography>
                     </Box>

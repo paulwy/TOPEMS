@@ -258,7 +258,7 @@ const MigrationAdminPage: React.FC = () => {
             </Box>
             <Typography
               variant='h4'
-              fontWeight={700}
+              sx={{ fontWeight: 700 }}
               color='primary.main'
             >
               {totalServices}
@@ -284,7 +284,7 @@ const MigrationAdminPage: React.FC = () => {
             </Box>
             <Typography
               variant='h4'
-              fontWeight={700}
+              sx={{ fontWeight: 700 }}
               color='warning.main'
             >
               {totalPending}
@@ -310,7 +310,7 @@ const MigrationAdminPage: React.FC = () => {
             </Box>
             <Typography
               variant='h4'
-              fontWeight={700}
+              sx={{ fontWeight: 700 }}
               color='success.main'
             >
               {totalApplied}

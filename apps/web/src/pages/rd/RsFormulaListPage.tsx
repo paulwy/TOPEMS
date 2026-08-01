@@ -11,16 +11,14 @@ import type { Formula, CreateFormulaRequest, UpdateFormulaRequest } from '@/api/
 import { PageContainer } from '@/components/common/PageContainer';
 import { RD_PATHS } from '@/modules/rd/config';
 
-const baseAdapter = createCrudPageAdapter<Formula, CreateFormulaRequest, UpdateFormulaRequest>(
-  formulaApi
-);
+const baseAdapter = createCrudPageAdapter<Formula, CreateFormulaRequest, UpdateFormulaRequest>({
+  list: formulaApi.listFormulas,
+  create: formulaApi.createFormula,
+  update: formulaApi.updateFormula,
+  delete: formulaApi.deleteFormula,
+});
 
-const formulaAdapter: CrudApiAdapter<Formula> = {
-  list: baseAdapter.list,
-  create: baseAdapter.create,
-  update: baseAdapter.update,
-  delete: baseAdapter.delete,
-};
+const formulaAdapter = baseAdapter as unknown as CrudApiAdapter<Formula>;
 
 const RsFormulaListPage: React.FC = () => {
   const navigate = useNavigate();

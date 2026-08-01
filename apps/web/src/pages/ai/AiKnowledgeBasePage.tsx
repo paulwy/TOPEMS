@@ -14,9 +14,11 @@ import {
   AccordionDetails,
   List,
   ListItem,
+  ListItemButton,
   ListItemIcon,
   ListItemText,
   Avatar,
+  InputAdornment,
 } from '@mui/material';
 import {
   Search,
@@ -164,7 +166,7 @@ export const AiKnowledgeBasePage: React.FC = () => {
       maxWidth={false}
       headerProps={{
         pageIcon: <BookOpen style={{ width: 20, height: 20 }} />,
-        pageGradient: `linear-gradient(135deg, ${ct.blue[400]} 0%, ${ct.indigo[500]} 100%)`,
+        pageGradient: `linear-gradient(135deg, ${ct.blue[400]} 0%, ${ct.purple[500]} 100%)`,
       }}
     >
       <Box sx={{ p: 3 }}>
@@ -180,7 +182,15 @@ export const AiKnowledgeBasePage: React.FC = () => {
                   fullWidth
                   size='small'
                   placeholder='搜索文档...'
-                  prefix={<Search size={16} />}
+                  slotProps={{
+                    input: {
+                      startAdornment: (
+                        <InputAdornment position='start'>
+                          <Search size={16} />
+                        </InputAdornment>
+                      ),
+                    },
+                  }}
                   sx={{ mb: 2 }}
                 />
                 <Box sx={{ display: 'flex', gap: 1, flexWrap: 'wrap' }}>
@@ -201,9 +211,8 @@ export const AiKnowledgeBasePage: React.FC = () => {
 
               <List>
                 {documentList.map((doc) => (
-                  <ListItem
+                  <ListItemButton
                     key={doc.id}
-                    button
                     onClick={() => handleSelectDocument(doc.id)}
                     sx={{
                       borderRadius: 2,
@@ -217,7 +226,7 @@ export const AiKnowledgeBasePage: React.FC = () => {
                       primary={doc.title}
                       secondary={`${doc.size} · 更新于 ${doc.updatedAt}`}
                     />
-                  </ListItem>
+                  </ListItemButton>
                 ))}
               </List>
 
@@ -251,7 +260,7 @@ export const AiKnowledgeBasePage: React.FC = () => {
               >
                 <Typography variant='subtitle1' sx={{ fontWeight: 600 }}>
                   <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-                    <Sparkles size={18} style={{ color: ct.amber[500] }} />
+                    <Sparkles size={18} style={{ color: ct.yellow[500] }} />
                     智能问答
                   </Box>
                 </Typography>

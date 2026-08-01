@@ -185,34 +185,34 @@ const ObservabilityDashboard: React.FC<DashboardProps> = ({ onClose, refreshInte
   const renderOverview = () => (
     <Box sx={{ display: 'flex', flexDirection: 'column', gap: 3 }}>
       <Grid container spacing={2}>
-        <Grid item xs={12} sm={6} md={3}>
+        <Grid size={{ xs: 12, sm: 6, md: 3 }}>
           <StatCard label="模块总数" value={totalModules} icon={<LayersIcon size={24} />} color="#1976d2" />
         </Grid>
-        <Grid item xs={12} sm={6} md={3}>
+        <Grid size={{ xs: 12, sm: 6, md: 3 }}>
           <StatCard label="活跃模块" value={activeModules} icon={<CheckCircleIcon size={24} />} color="#2e7d32" />
         </Grid>
-        <Grid item xs={12} sm={6} md={3}>
+        <Grid size={{ xs: 12, sm: 6, md: 3 }}>
           <StatCard label="错误模块" value={errorModules} icon={<XCircleIcon size={24} />} color="#d32f2f" />
         </Grid>
-        <Grid item xs={12} sm={6} md={3}>
+        <Grid size={{ xs: 12, sm: 6, md: 3 }}>
           <StatCard label="平均加载时间" value={formatDuration(avgLoadTime)} icon={<ClockIcon size={24} />} color="#f57c00" />
         </Grid>
       </Grid>
 
       <Grid container spacing={2}>
-        <Grid item xs={12} sm={6} md={4}>
+        <Grid size={{ xs: 12, sm: 6, md: 4 }}>
           <StatCard label="加载成功率" value={`${successRate.toFixed(1)}%`} icon={<ZapIcon size={24} />} color="#7b1fa2" />
         </Grid>
-        <Grid item xs={12} sm={6} md={4}>
+        <Grid size={{ xs: 12, sm: 6, md: 4 }}>
           <StatCard label="今日错误数" value={totalErrors} icon={<AlertIcon size={24} />} color="#c62828" />
         </Grid>
-        <Grid item xs={12} sm={6} md={4}>
+        <Grid size={{ xs: 12, sm: 6, md: 4 }}>
           <StatCard label="今日访问量" value={totalVisits} icon={<EyeIcon size={24} />} color="#00838f" />
         </Grid>
       </Grid>
 
       <Grid container spacing={2}>
-        <Grid item xs={12} md={6}>
+        <Grid size={{ xs: 12, md: 6 }}>
           <Card>
             <CardContent>
               <Typography variant="h6" sx={{ fontWeight: 600, mb: 2 }}>
@@ -232,7 +232,7 @@ const ObservabilityDashboard: React.FC<DashboardProps> = ({ onClose, refreshInte
             </CardContent>
           </Card>
         </Grid>
-        <Grid item xs={12} md={6}>
+        <Grid size={{ xs: 12, md: 6 }}>
           <Card>
             <CardContent>
               <Typography variant="h6" sx={{ fontWeight: 600, mb: 2 }}>
@@ -359,7 +359,7 @@ const ObservabilityDashboard: React.FC<DashboardProps> = ({ onClose, refreshInte
           </Typography>
           <Grid container spacing={2}>
             {sortedPerformance.slice(0, 6).map((m) => (
-              <Grid item xs={12} sm={6} md={4} key={m.moduleId}>
+              <Grid size={{ xs: 12, sm: 6, md: 4 }} key={m.moduleId}>
                 <Paper variant="outlined" sx={{ p: 2 }}>
                   <Typography variant="subtitle2" sx={{ fontWeight: 600, mb: 1 }}>
                     {m.moduleId}
@@ -399,16 +399,16 @@ const ObservabilityDashboard: React.FC<DashboardProps> = ({ onClose, refreshInte
   const renderErrors = () => (
     <Box sx={{ display: 'flex', flexDirection: 'column', gap: 3 }}>
       <Grid container spacing={2}>
-        <Grid item xs={12} sm={6} md={3}>
+        <Grid size={{ xs: 12, sm: 6, md: 3 }}>
           <StatCard label="总错误数" value={totalErrors} icon={<AlertIcon size={24} />} color="#d32f2f" />
         </Grid>
-        <Grid item xs={12} sm={6} md={3}>
+        <Grid size={{ xs: 12, sm: 6, md: 3 }}>
           <StatCard label="错误类型" value={errorStats?.totalErrorTypes || 0} icon={<XCircleIcon size={24} />} color="#c62828" />
         </Grid>
-        <Grid item xs={12} sm={6} md={3}>
+        <Grid size={{ xs: 12, sm: 6, md: 3 }}>
           <StatCard label="影响模块" value={Object.keys(errorStats?.errorsByModule || {}).length} icon={<LayersIcon size={24} />} color="#ef6c00" />
         </Grid>
-        <Grid item xs={12} sm={6} md={3}>
+        <Grid size={{ xs: 12, sm: 6, md: 3 }}>
           <StatCard label="错误率" value={totalVisits > 0 ? `${((totalErrors / totalVisits) * 100).toFixed(2)}%` : '0%'} icon={<TrendingUpIcon size={24} />} color="#ad1457" />
         </Grid>
       </Grid>
@@ -483,13 +483,13 @@ const ObservabilityDashboard: React.FC<DashboardProps> = ({ onClose, refreshInte
   const renderBehavior = () => (
     <Box sx={{ display: 'flex', flexDirection: 'column', gap: 3 }}>
       <Grid container spacing={2}>
-        <Grid item xs={12} sm={6} md={4}>
+        <Grid size={{ xs: 12, sm: 6, md: 4 }}>
           <StatCard label="总访问量" value={totalVisits} icon={<EyeIcon size={24} />} color="#00838f" />
         </Grid>
-        <Grid item xs={12} sm={6} md={4}>
+        <Grid size={{ xs: 12, sm: 6, md: 4 }}>
           <StatCard label="访问模块数" value={behaviorStats.length} icon={<LayersIcon size={24} />} color="#1976d2" />
         </Grid>
-        <Grid item xs={12} sm={6} md={4}>
+        <Grid size={{ xs: 12, sm: 6, md: 4 }}>
           <StatCard label="平均停留时长" value={formatDuration(behaviorStats.length > 0 ? behaviorStats.reduce((s, m) => s + m.averageDuration, 0) / behaviorStats.length : 0)} icon={<ClockIcon size={24} />} color="#7b1fa2" />
         </Grid>
       </Grid>
@@ -609,7 +609,7 @@ const ObservabilityDashboard: React.FC<DashboardProps> = ({ onClose, refreshInte
 
               return (
                 <Grid container spacing={2}>
-                  <Grid item xs={12} md={6}>
+                  <Grid size={{ xs: 12, md: 6 }}>
                     <Typography variant="subtitle1" sx={{ fontWeight: 600, mb: 1 }}>
                       性能指标
                     </Typography>
@@ -644,7 +644,7 @@ const ObservabilityDashboard: React.FC<DashboardProps> = ({ onClose, refreshInte
                       </Paper>
                     </Box>
                   </Grid>
-                  <Grid item xs={12} md={6}>
+                  <Grid size={{ xs: 12, md: 6 }}>
                     <Typography variant="subtitle1" sx={{ fontWeight: 600, mb: 1 }}>
                       行为指标
                     </Typography>
@@ -677,7 +677,7 @@ const ObservabilityDashboard: React.FC<DashboardProps> = ({ onClose, refreshInte
                   </Grid>
 
                   {perf.resources && perf.resources.length > 0 && (
-                    <Grid item xs={12}>
+                    <Grid size={{ xs: 12 }}>
                       <Typography variant="subtitle1" sx={{ fontWeight: 600, mb: 1 }}>
                         资源列表 ({perf.resources.length})
                       </Typography>

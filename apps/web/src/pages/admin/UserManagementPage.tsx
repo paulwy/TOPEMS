@@ -50,7 +50,7 @@ const apiAdapter: CrudApiAdapter<User> = {
     const res = await authApi.createUser({
       username: data.username || '',
       email: data.email || '',
-      password: data.password || '',
+      password: (data as Partial<User> & { password?: string }).password || '',
       full_name: data.full_name,
     });
     if (!res.success) throw new Error(res.message || '创建用户失败');
@@ -182,7 +182,7 @@ const UserRoleDialog: React.FC<UserRoleDialogProps> = ({ open, user, onClose, on
                   <Stack
                     direction='row'
                     spacing={1}
-                    alignItems='center'
+                    sx={{ alignItems: 'center' }}
                   >
                     <Shield
                       size={16}
@@ -235,7 +235,7 @@ const UserRoleDialog: React.FC<UserRoleDialogProps> = ({ open, user, onClose, on
                   <Stack
                     direction='row'
                     spacing={1}
-                    alignItems='center'
+                    sx={{ alignItems: 'center' }}
                   >
                     <Shield
                       size={16}
@@ -302,7 +302,7 @@ const UserManagementPage: React.FC = () => {
         key: 'manage-roles',
         label: '管理角色',
         icon: <Shield size={16} />,
-        onClick: (row: Record<string, unknown>) => openRoleDialog(row as User),
+        onClick: (row: Record<string, unknown>) => openRoleDialog(row as unknown as User),
       },
     ],
     [rolesVersion]

@@ -7,22 +7,9 @@ import { useQuery } from '@tanstack/react-query';
 import { Box, Card, CardContent, Typography } from '@mui/material';
 import { FileText, Calculator, Wallet, TrendingUp, TrendingDown } from 'lucide-react';
 import { designTokens } from '@/theme/tokens';
+import type { Account } from '@/types/finance';
 
 const ct = designTokens.colors;
-
-interface Account {
-  id: string;
-  code: string;
-  name: string;
-  category: string;
-  level: number;
-  parent_code?: string;
-  is_cash_flow: boolean;
-  status: string;
-  description?: string;
-  created_at: string;
-  updated_at: string;
-}
 
 const ledgerApiAdapter: CrudApiAdapter = {
   list: async (params) => {

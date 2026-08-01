@@ -15,7 +15,7 @@ import {
   Folder,
   FolderOpen,
   ChevronRight,
-  ExpandMore,
+  ChevronDown,
   Plus,
   FolderPlus,
 } from 'lucide-react';
@@ -130,7 +130,7 @@ const TreeItem: React.FC<{
                 }}
                 sx={{ display: 'flex', alignItems: 'center', cursor: 'pointer' }}
               >
-                {isExpanded ? <ExpandMore size={16} /> : <ChevronRight size={16} />}
+                {isExpanded ? <ChevronDown size={16} /> : <ChevronRight size={16} />}
               </Box>
             </ListItemIcon>
           ) : (
@@ -158,7 +158,7 @@ const TreeItem: React.FC<{
               </Box>
             }
             secondary={node.code}
-            secondaryTypographyProps={{ variant: 'caption', sx: { fontSize: '0.75rem' } }}
+            slotProps={{ secondary: { variant: 'caption', sx: { fontSize: '0.75rem' } } }}
           />
         </ListItemButton>
       </ListItem>
@@ -287,7 +287,7 @@ export const CategoryManagementPage: React.FC = () => {
     <PageContainer
       headerProps={{
         pageIcon: <Folder style={{ width: 20, height: 20 }} />,
-        pageGradient: `linear-gradient(135deg, ${ct.tertiary?.main || ct.secondary.main} 0%, ${ct.tertiary?.dark || ct.secondary.dark} 100%)`,
+        pageGradient: `linear-gradient(135deg, ${ct.secondary.main} 0%, ${ct.secondary.dark} 100%)`,
       }}
       maxWidth='xl'
     >

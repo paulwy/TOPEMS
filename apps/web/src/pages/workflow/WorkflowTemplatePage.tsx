@@ -84,14 +84,14 @@ function toRecord(w: Workflow): FlowTemplateRecord {
 const apiAdapter: CrudApiAdapter<FlowTemplateRecord> = {
   list: async (params) => {
     const response = await workflowDefinitionApi.list({
-      page: params.page,
-      pagesize: params.pageSize,
-      ...(params.search ? { search: params.search } : {}),
+      page: params?.page,
+      pagesize: params?.pageSize,
+      ...(params?.search ? { search: params.search } : {}),
     });
     if (response.success && response.data?.items) {
       const items = response.data.items.map(toRecord);
       // 客户端按类型筛选（API 不支持 data.type 嵌套字段过滤）
-      const filtered = params.type ? items.filter((i) => i.type === params.type) : items;
+      const filtered = params?.type ? items.filter((i) => i.type === params.type) : items;
       return { data: filtered, total: filtered.length };
     }
     return { data: [], total: 0 };
@@ -109,7 +109,7 @@ const apiAdapter: CrudApiAdapter<FlowTemplateRecord> = {
     if (response.success === false) {
       throw new Error(response.message || '创建模板失败');
     }
-    return (response.data ?? {}) as FlowTemplateRecord;
+    return (response.data ?? {}) as unknown as FlowTemplateRecord;
   },
   update: async (id, data) => {
     const response = await workflowDefinitionApi.update(id, {
@@ -123,7 +123,7 @@ const apiAdapter: CrudApiAdapter<FlowTemplateRecord> = {
     if (response.success === false) {
       throw new Error(response.message || '更新模板失败');
     }
-    return (response.data ?? {}) as FlowTemplateRecord;
+    return (response.data ?? {}) as unknown as FlowTemplateRecord;
   },
   delete: async (id) => {
     const response = await workflowDefinitionApi.delete(id);

@@ -24,7 +24,7 @@ const drillApi = {
 const baseAdapter = createCrudPageAdapter<DrillRecord, CreateDrillRecordRequest>(drillApi);
 
 const drillAdapter: CrudApiAdapter<DrillRecord> = {
-  list: baseAdapter.list,
+  list: baseAdapter.list as unknown as CrudApiAdapter<DrillRecord>['list'],
   create: async (data) => {
     const transformed = { ...data };
     if (typeof transformed.participants === 'string') {
@@ -33,7 +33,7 @@ const drillAdapter: CrudApiAdapter<DrillRecord> = {
         .map((s) => s.trim())
         .filter((s) => s);
     }
-    return baseAdapter.create(transformed);
+    return baseAdapter.create(transformed) as unknown as DrillRecord;
   },
   update: async (id, data) => {
     const transformed = { ...data };
@@ -43,7 +43,7 @@ const drillAdapter: CrudApiAdapter<DrillRecord> = {
         .map((s) => s.trim())
         .filter((s) => s);
     }
-    return baseAdapter.update(id, transformed);
+    return baseAdapter.update(id, transformed) as unknown as DrillRecord;
   },
   delete: baseAdapter.delete,
 };

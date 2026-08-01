@@ -1102,7 +1102,7 @@ const WorkflowDetail: React.FC<{
               <Typography variant="caption" sx={{ fontWeight: 600, minWidth: 24 }}>{idx + 1}.</Typography>
               <Chip label={STEP_TYPE_LABELS[step.type]} size="small" sx={{ fontSize: 10, height: 18 }} />
               <Typography variant="body2" sx={{ flex: 1, fontSize: 13 }}>
-                {step.config.description ?? step.id}
+                {(step.config.description as string | undefined) ?? step.id}
               </Typography>
               {step.status && (
                 <Chip

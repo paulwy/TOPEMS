@@ -9,6 +9,7 @@ export enum SecurityIssueType {
   DataLeak = 'data_leak',
   MaliciousCode = 'malicious_code',
   OutdatedDependency = 'outdated_dependency',
+  Network = 'network',
 }
 
 export enum SecurityIssueSeverity {

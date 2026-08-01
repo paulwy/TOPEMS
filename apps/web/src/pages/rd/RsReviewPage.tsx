@@ -13,14 +13,18 @@ import { PageContainer } from '@/components/common/PageContainer';
 import { useNotificationStore } from '@/store';
 import { QUERY_KEYS } from '@/lib/reactQuery';
 
-const baseAdapter = createCrudPageAdapter<Build, CreateBuildRequest>(buildApi);
+const baseAdapter = createCrudPageAdapter<Build, CreateBuildRequest>({
+  list: buildApi.listBuilds,
+  create: buildApi.createBuild,
+  update: async () => {
+    throw new Error('Build update not supported');
+  },
+  delete: async () => {
+    throw new Error('Build delete not supported');
+  },
+});
 
-const reviewAdapter: CrudApiAdapter<Build> = {
-  list: baseAdapter.list,
-  create: baseAdapter.create,
-  update: baseAdapter.update,
-  delete: baseAdapter.delete,
-};
+const reviewAdapter = baseAdapter as unknown as CrudApiAdapter<Build>;
 
 const STATUS_COLOR_MAP: Record<string, 'default' | 'primary' | 'success' | 'error' | 'warning'> = {
   pending: 'warning',
@@ -134,7 +138,7 @@ const RsReviewPage: React.FC = () => {
           variant='h6'
           sx={{ fontWeight: 'bold' }}
         >
-          {row.build_no} - {row.project_name}
+          {String(row.build_no ?? '')} - {String(row.project_name ?? '')}
         </Typography>
         <Stack
           direction='row'
@@ -149,7 +153,7 @@ const RsReviewPage: React.FC = () => {
             variant='body2'
             color='text.secondary'
           >
-            作者: {row.project_name}
+            作者: {String(row.project_name ?? '')}
           </Typography>
           <Typography
             variant='body2'

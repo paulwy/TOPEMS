@@ -354,7 +354,4 @@ export const IntegrationMappingsPage: React.FC = () => {
   );
 };
 
-// Pause 图标保留引用以避免 tree-shaking 误删（用于状态切换 UI 语义）
-void Pause;
-
 export default IntegrationMappingsPage;

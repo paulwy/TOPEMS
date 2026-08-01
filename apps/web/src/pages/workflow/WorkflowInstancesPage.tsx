@@ -69,7 +69,7 @@ export const WorkflowInstancesPage: React.FC = () => {
 
   const handleViewDetail = useCallback(
     (row: Record<string, unknown>) => {
-      const instance = row as WorkflowInstance;
+      const instance = row as unknown as WorkflowInstance;
       navigate(WORKFLOW_PATHS.instanceDetail.replace(':id', instance.id));
     },
     [navigate]
@@ -77,7 +77,7 @@ export const WorkflowInstancesPage: React.FC = () => {
 
   const handleViewDiagram = useCallback(
     (row: Record<string, unknown>) => {
-      const instance = row as WorkflowInstance;
+      const instance = row as unknown as WorkflowInstance;
       navigate(WORKFLOW_PATHS.instanceDetail.replace(':id', instance.id));
     },
     [navigate]
@@ -85,7 +85,7 @@ export const WorkflowInstancesPage: React.FC = () => {
 
   const handleSuspend = useCallback(
     (row: Record<string, unknown>) => {
-      const instance = row as WorkflowInstance;
+      const instance = row as unknown as WorkflowInstance;
       openConfirm({
         title: '确认挂起',
         message: `确定要挂起流程"${instance.workflow_name || instance.name || ''}"吗？`,
@@ -113,7 +113,7 @@ export const WorkflowInstancesPage: React.FC = () => {
 
   const handleCancel = useCallback(
     (row: Record<string, unknown>) => {
-      const instance = row as WorkflowInstance;
+      const instance = row as unknown as WorkflowInstance;
       openConfirm({
         title: '确认取消',
         message: `确定要取消流程"${instance.workflow_name || instance.name || ''}"吗？此操作不可撤销。`,
@@ -145,14 +145,14 @@ export const WorkflowInstancesPage: React.FC = () => {
       key: 'viewDetail',
       label: '查看详情',
       icon: <GitBranch size={16} />,
-      color: 'default',
+      color: 'secondary',
       onClick: handleViewDetail,
     },
     {
       key: 'viewDiagram',
       label: '查看流程图',
       icon: <GitBranch size={16} />,
-      color: 'default',
+      color: 'secondary',
       onClick: handleViewDiagram,
     },
     {

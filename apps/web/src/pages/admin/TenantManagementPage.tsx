@@ -4,8 +4,8 @@ import { Building2, CheckCircle, XCircle, Clock, Users } from 'lucide-react';
 import { PageContainer } from '@/components/common/PageContainer';
 import CrudPage from '@/components/templates/CrudPage';
 import { tenantSchema } from '@/schemas/admin';
-import { tenantApi } from '@/api/admin';
-import type { Tenant } from '@/api/admin';
+import { tenantApi } from '@/api/tenant';
+import type { Tenant, CreateTenantRequest, UpdateTenantRequest } from '@/api/tenant/types';
 import { designTokens } from '@/theme/tokens';
 
 const ct = designTokens.colors;
@@ -17,9 +17,9 @@ const tenantAdapter = {
     search?: string;
     status?: string;
   }) => {
-    const response = await tenantApi.list({
+    const response = await tenantApi.listTenants({
       page: params?.page,
-      pagesize: params?.pageSize,
+      pageSize: params?.pageSize,
       search: params?.search,
       status: params?.status && params.status !== 'all' ? params.status : undefined,
     });
@@ -32,21 +32,21 @@ const tenantAdapter = {
     return { data: [], total: 0 };
   },
   create: async (data: Partial<Tenant>) => {
-    const response = await tenantApi.create(data);
+    const response = await tenantApi.createTenant(data as unknown as CreateTenantRequest);
     if (!response.success || !response.data) {
       throw new Error(response.message || '创建租户失败');
     }
     return response.data;
   },
   update: async (id: string, data: Partial<Tenant>) => {
-    const response = await tenantApi.update(id, data);
+    const response = await tenantApi.updateTenant(id, data as unknown as UpdateTenantRequest);
     if (!response.success || !response.data) {
       throw new Error(response.message || '更新租户失败');
     }
     return response.data;
   },
   delete: async (id: string) => {
-    const response = await tenantApi.delete(id);
+    const response = await tenantApi.deleteTenant(id);
     if (!response.success) {
       throw new Error(response.message || '删除租户失败');
     }
@@ -73,10 +73,10 @@ const StatCard: React.FC<{
 
 const TenantManagementPage: React.FC = () => {
   const headerContent = (rows: Record<string, unknown>[], total: number) => {
-    const tenants = rows as Tenant[];
+    const tenants = rows as unknown as Tenant[];
     const activeCount = tenants.filter((t) => t.status === 'active').length;
-    const inactiveCount = tenants.filter((t) => t.status === 'inactive').length;
-    const pendingCount = tenants.filter((t) => t.status === 'pending').length;
+    const inactiveCount = tenants.filter((t) => (t.status as string) === 'inactive').length;
+    const pendingCount = tenants.filter((t) => (t.status as string) === 'pending').length;
 
     return (
       <Box

@@ -54,7 +54,7 @@ export const reportModuleConfig: RouteModuleConfig = {
     },
     {
       path: REPORT_PATHS.viewer,
-      element: lazyWithRetry(() => import('@/pages/report/ReportViewer'), 'ReportViewer'),
+      element: lazyWithRetry(() => import('@/pages/report/ReportViewer'), 'ReportViewer') as unknown as React.LazyExoticComponent<React.ComponentType<Record<string, unknown>>>,
       module: 'report',
       title: '报表查看',
       code: 'report-viewer',

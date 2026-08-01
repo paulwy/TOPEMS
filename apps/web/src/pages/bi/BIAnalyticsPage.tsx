@@ -616,15 +616,6 @@ const BIAnalyticsPage = () => {
         charts={chartCards}
         loading={loading}
         onRefresh={handleRefresh}
-        headerContent={
-          <OrganizationFilter
-            value={organizationFilter}
-            onChange={setOrganizationFilter}
-            showCompany={true}
-            showDepartment={true}
-            showEmployee={false}
-          />
-        }
       >
         {error && (
           <Alert

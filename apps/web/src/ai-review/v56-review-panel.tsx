@@ -263,7 +263,7 @@ const V56ReviewPanel: React.FC<{ onClose: () => void }> = ({ onClose }) => {
               <Stack
                 direction='row'
                 spacing={2}
-                alignItems='center'
+                sx={{ alignItems: 'center' }}
               >
                 <Sparkles
                   size={20}

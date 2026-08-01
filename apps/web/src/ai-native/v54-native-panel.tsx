@@ -1193,7 +1193,7 @@ const SettingsTab: React.FC = () => {
       const result = await next();
       return {
         ...result,
-        data: { ...result.data, processed_by: 'mock-middleware', context_source: context.source },
+        data: { ...(result.data as Record<string, unknown>), processed_by: 'mock-middleware', context_source: context.source },
       };
     });
     setStatus(aiFirstPlatform.getPlatformStatus());

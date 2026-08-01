@@ -175,9 +175,9 @@ export function lintSpacing(components: Array<{ name: string; spacingValues: str
 // 排版规范检查
 // ============================================================
 
-const validFontSizes = new Set(Object.values(v51DesignTokens.typography.fontSize));
-const validFontWeights = new Set(Object.values(v51DesignTokens.typography.fontWeight));
-const validLineHeights = new Set(Object.values(v51DesignTokens.typography.lineHeight));
+const validFontSizes = new Set<string>(Object.values(v51DesignTokens.typography.fontSize));
+const validFontWeights = new Set<number>(Object.values(v51DesignTokens.typography.fontWeight));
+const validLineHeights = new Set<number>(Object.values(v51DesignTokens.typography.lineHeight));
 
 export function lintTypography(
   components: Array<{

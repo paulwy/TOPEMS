@@ -6,7 +6,7 @@ import { CrudPage, type CrudApiAdapter } from '@/components/templates/CrudPage';
 import type { RowAction } from '@/components/templates/list/types';
 import { resourceSchema } from '@/schemas/pm';
 import { pmApi } from '@/api/pm';
-import type { ProjectResource } from '@/api/pm';
+import type { ProjectResource, Project } from '@/api/pm';
 import { QUERY_KEYS } from '@/lib/reactQuery';
 import { designTokens } from '@/theme/tokens';
 
@@ -64,8 +64,8 @@ const PmResourcePage: React.FC = () => {
   const projects = useMemo(() => {
     const data = projectsQuery.data;
     if (!data?.success || !data.data) return [];
-    const items = (data.data as { items?: ProjectResource[] }).items;
-    return items || (data.data as unknown as ProjectResource[]) || [];
+    const items = (data.data as { items?: Project[] }).items;
+    return items || (data.data as unknown as Project[]) || [];
   }, [projectsQuery.data]);
 
   const apiAdapter: CrudApiAdapter<ProjectResource> = useMemo(
@@ -98,7 +98,7 @@ const PmResourcePage: React.FC = () => {
         const page = params?.page || 1;
         const pageSize = params?.pageSize || 10;
         const paged = items.slice((page - 1) * pageSize, page * pageSize);
-        return { data: paged as unknown as Record<string, unknown>[], total };
+        return { data: paged, total };
       },
       create: async (data) => {
         const response = await pmApi.resources.create(

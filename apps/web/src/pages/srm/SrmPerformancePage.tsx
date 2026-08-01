@@ -239,15 +239,15 @@ const PerformanceStats: React.FC = () => {
       value: summary.avg_overall_score?.toFixed(1) || '-',
       icon: <Award sx={{ width: 20, height: 20 }} />,
       color:
-        summary.avg_overall_score >= 80
+        (summary.avg_overall_score ?? 0) >= 80
           ? 'success.dark'
-          : summary.avg_overall_score >= 60
+          : (summary.avg_overall_score ?? 0) >= 60
             ? 'warning.dark'
             : 'error.dark',
       bgColor:
-        summary.avg_overall_score >= 80
+        (summary.avg_overall_score ?? 0) >= 80
           ? 'success.lighter'
-          : summary.avg_overall_score >= 60
+          : (summary.avg_overall_score ?? 0) >= 60
             ? 'warning.lighter'
             : 'error.lighter',
     },

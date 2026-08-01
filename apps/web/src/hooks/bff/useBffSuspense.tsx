@@ -47,6 +47,7 @@ import {
   type UseSuspenseQueryOptions,
   type UseSuspenseInfiniteQueryOptions,
   type InfiniteData,
+  type QueryKey,
 } from '@tanstack/react-query';
 import { Box, Typography, Button, CircularProgress, Stack } from '@mui/material';
 import { AlertCircle, RefreshCw } from 'lucide-react';
@@ -124,7 +125,7 @@ export function useBffSuspenseQuery<T = unknown>(
     staleTime,
     enabled,
     retry,
-    refetchInterval: refetchInterval > 0 ? refetchInterval : false,
+    refetchInterval: typeof refetchInterval === 'number' && refetchInterval > 0 ? refetchInterval : false,
     select,
   } as UseSuspenseQueryOptions<T, Error>);
 
@@ -213,7 +214,7 @@ export function useBffSuspenseInfinite<T = unknown>(
     select,
   } = options;
 
-  const infiniteQuery = useSuspenseInfiniteQuery<T, Error, InfiniteData<T, BffInfiniteCursor>, BffInfiniteCursor>({
+  const infiniteQuery = useSuspenseInfiniteQuery<T, Error, InfiniteData<T, BffInfiniteCursor>, QueryKey, BffInfiniteCursor>({
     queryKey,
     queryFn: ({ pageParam }) =>
       bffGraphQL<T>(query, {
@@ -234,7 +235,7 @@ export function useBffSuspenseInfinite<T = unknown>(
     staleTime,
     retry,
     select,
-  } as UseSuspenseInfiniteQueryOptions<T, Error, InfiniteData<T, BffInfiniteCursor>, BffInfiniteCursor>);
+  } as UseSuspenseInfiniteQueryOptions<T, Error, InfiniteData<T, BffInfiniteCursor>, QueryKey, BffInfiniteCursor>);
 
   const fetchNextPage = useCallback(() => {
     if (infiniteQuery.hasNextPage && !infiniteQuery.isFetchingNextPage) {
@@ -287,9 +288,7 @@ export const BffLoadingFallback: React.FC<BffLoadingFallbackProps> = ({
   const content = (
     <Stack
       spacing={2}
-      alignItems='center'
-      justifyContent='center'
-      sx={{ minHeight, width: '100%' }}
+      sx={{ alignItems: 'center', justifyContent: 'center', minHeight, width: '100%' }}
     >
       <CircularProgress
         size={32}
@@ -367,12 +366,12 @@ export const BffErrorFallback: React.FC<BffErrorFallbackProps> = ({
     >
       <Stack
         spacing={2}
-        alignItems='flex-start'
+        sx={{ alignItems: 'flex-start' }}
       >
         <Stack
           direction='row'
           spacing={1}
-          alignItems='center'
+          sx={{ alignItems: 'center' }}
         >
           <AlertCircle
             size={20}
@@ -381,7 +380,7 @@ export const BffErrorFallback: React.FC<BffErrorFallbackProps> = ({
           <Typography
             variant='subtitle2'
             color='error.main'
-            fontWeight={600}
+            sx={{ fontWeight: 600 }}
           >
             {title}
           </Typography>

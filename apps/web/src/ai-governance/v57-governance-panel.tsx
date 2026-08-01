@@ -62,6 +62,7 @@ import {
   ArrowUpRight,
   ArrowDownRight,
   Sparkles,
+  Zap,
 } from 'lucide-react';
 import { V51Card } from '../design-system/components';
 import {
@@ -314,7 +315,7 @@ export const V57GovernancePanel: React.FC<{ onClose: () => void }> = ({ onClose 
               <Stack
                 direction='row'
                 spacing={2}
-                alignItems='center'
+                sx={{ alignItems: 'center' }}
               >
                 <Sparkles
                   size={20}
@@ -912,7 +913,7 @@ const RiskTab: React.FC<{
                     <Stack
                       direction='row'
                       spacing={1}
-                      alignItems='center'
+                      sx={{ alignItems: 'center' }}
                     >
                       <Chip
                         label={CATEGORY_LABELS[ind.category]}
