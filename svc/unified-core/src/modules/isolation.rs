@@ -1,7 +1,7 @@
 use axum::{
     body::Body,
     extract::{Request, State},
-    http::{StatusCode, Uri},
+    http::StatusCode,
     middleware::Next,
     response::{IntoResponse, Json},
 };
@@ -12,7 +12,7 @@ use std::sync::Arc;
 use tokio::sync::RwLock;
 use tracing::warn;
 
-use topems_shared::{ApiResponse, HealthStatus};
+use topems_shared::ApiResponse;
 
 use crate::AppState;
 
