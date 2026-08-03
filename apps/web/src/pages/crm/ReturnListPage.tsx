@@ -1,3 +1,4 @@
+import { useTranslation } from 'react-i18next';
 import CrudPage from '@/components/templates/CrudPage';
 import { createCrudPageAdapter } from '@/schema/crudPageAdapter';
 import { returnSchema } from '@/schemas/crm';
@@ -11,11 +12,12 @@ const apiAdapter = createCrudPageAdapter({
 });
 
 export default function ReturnListPage() {
+  const { t } = useTranslation();
   return (
     <CrudPage
       schema={returnSchema}
       apiAdapter={apiAdapter}
-      breadcrumbs={[{ label: 'CRM' }, { label: '退货/售后管理' }]}
+      breadcrumbs={[{ label: t('crm.common.crm') }, { label: t('crm.returnList.title') }]}
     />
   );
 }

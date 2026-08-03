@@ -1,6 +1,7 @@
 import React, { useState, useMemo } from 'react';
 import { Box, Button } from '@mui/material';
 import { Plus, TrendingUp, Target, Calendar, Calculator, BarChart3 } from 'lucide-react';
+import { useTranslation } from 'react-i18next';
 import { crmApi } from '@/api/crm';
 import { useNotificationStore } from '@/store';
 import { apiLogger } from '@/utils/logger';
@@ -19,6 +20,7 @@ import { QUERY_KEYS } from '@/lib/reactQuery';
 const ct = designTokens.colors;
 
 const CRMSalesForecastPage: React.FC = () => {
+  const { t } = useTranslation();
   const [timeRange, setTimeRange] = useState('monthly');
 
   const { addNotification } = useNotificationStore();
@@ -53,17 +55,17 @@ const CRMSalesForecastPage: React.FC = () => {
     onSuccess: () => {
       addNotification({
         type: 'success',
-        title: '成功',
-        message: '销售预测生成成功',
+        title: t('crm.salesForecast.title_success'),
+        message: t('crm.salesForecast.msg_generate_success'),
       });
       queryClient.invalidateQueries({ queryKey: QUERY_KEYS.CRM.SALES_FORECAST });
     },
     onError: (error: unknown) => {
-      apiLogger.error('生成销售预测失败:', error);
+      apiLogger.error(t('crm.salesForecast.log_generate_fail'), error);
       addNotification({
         type: 'error',
-        title: '生成失败',
-        message: '销售预测生成失败',
+        title: t('crm.salesForecast.title_fail'),
+        message: t('crm.salesForecast.msg_generate_fail'),
       });
     },
   });
@@ -94,41 +96,41 @@ const CRMSalesForecastPage: React.FC = () => {
     () => [
       {
         id: 'total-predicted',
-        title: '预测总收入',
+        title: t('crm.salesForecast.stat_total_predicted'),
         value: `¥${summary.totalPredicted.toLocaleString()}`,
         icon: <Target sx={{ width: 24, height: 24 }} />,
         gradient: [ct.primary.dark, ct.primary[800]] as [string, string],
       },
       {
         id: 'total-actual',
-        title: '实际总收入',
+        title: t('crm.salesForecast.stat_total_actual'),
         value: `¥${summary.totalActual.toLocaleString()}`,
         icon: <Calculator sx={{ width: 24, height: 24 }} />,
         gradient: [ct.success.main, ct.success.dark] as [string, string],
       },
       {
         id: 'average-confidence',
-        title: '平均置信度',
+        title: t('crm.salesForecast.stat_avg_confidence'),
         value: `${summary.averageConfidence}%`,
         icon: <BarChart3 sx={{ width: 24, height: 24 }} />,
         gradient: [ct.secondary.main, ct.secondary.dark] as [string, string],
       },
       {
         id: 'completed-count',
-        title: '已完成预测',
+        title: t('crm.salesForecast.stat_completed'),
         value: `${summary.completedCount} / ${forecasts.length}`,
         icon: <Calendar sx={{ width: 24, height: 24 }} />,
         gradient: [ct.warning.main, ct.warning.dark] as [string, string],
       },
     ],
-    [summary, forecasts.length]
+    [summary, forecasts.length, t]
   );
 
   const charts = useMemo<ChartConfig[]>(
     () => [
       {
         id: 'forecast-comparison',
-        title: '预测对比',
+        title: t('crm.salesForecast.chart_comparison'),
         type: 'bar',
         dataKey: 'value',
         nameKey: 'name',
@@ -140,7 +142,7 @@ const CRMSalesForecastPage: React.FC = () => {
       },
       {
         id: 'confidence-trend',
-        title: '置信度趋势',
+        title: t('crm.salesForecast.chart_confidence_trend'),
         type: 'line',
         dataKey: 'value',
         nameKey: 'name',
@@ -151,23 +153,23 @@ const CRMSalesForecastPage: React.FC = () => {
         height: 288,
       },
     ],
-    [forecasts]
+    [forecasts, t]
   );
 
   const tableColumns: TableColumn[] = [
-    { id: 'period', label: '周期', field: 'period' },
-    { id: 'predicted', label: '预测金额', field: 'predicted', align: 'right' },
-    { id: 'actual', label: '实际金额', field: 'actual', align: 'right' },
-    { id: 'confidence', label: '置信度', field: 'confidence', align: 'center' },
-    { id: 'trend', label: '趋势', field: 'trend', align: 'center' },
-    { id: 'status', label: '状态', field: 'status', align: 'center' },
+    { id: 'period', label: t('crm.salesForecast.col_period'), field: 'period' },
+    { id: 'predicted', label: t('crm.salesForecast.col_predicted'), field: 'predicted', align: 'right' },
+    { id: 'actual', label: t('crm.salesForecast.col_actual'), field: 'actual', align: 'right' },
+    { id: 'confidence', label: t('crm.salesForecast.col_confidence'), field: 'confidence', align: 'center' },
+    { id: 'trend', label: t('crm.salesForecast.col_trend'), field: 'trend', align: 'center' },
+    { id: 'status', label: t('crm.salesForecast.col_status'), field: 'status', align: 'center' },
   ];
 
   const tables = useMemo<DataTable[]>(
     () => [
       {
         id: 'forecast-list',
-        title: '预测列表',
+        title: t('crm.salesForecast.table_title'),
         columns: tableColumns,
         data: forecasts.map((forecast) => ({
           period: forecast.period,
@@ -177,21 +179,21 @@ const CRMSalesForecastPage: React.FC = () => {
           trend: forecast.trend,
           status:
             forecast.status === 'completed'
-              ? '已完成'
+              ? t('crm.salesForecast.status_completed')
               : forecast.status === 'generated'
-                ? '已生成'
+                ? t('crm.salesForecast.status_generated')
                 : forecast.status,
         })),
         loading,
       },
     ],
-    [forecasts, loading]
+    [forecasts, loading, t]
   );
 
   const timeRangeOptions = [
-    { label: '月度', value: 'monthly' },
-    { label: '季度', value: 'quarterly' },
-    { label: '年度', value: 'yearly' },
+    { label: t('crm.salesForecast.range_monthly'), value: 'monthly' },
+    { label: t('crm.salesForecast.range_quarterly'), value: 'quarterly' },
+    { label: t('crm.salesForecast.range_yearly'), value: 'yearly' },
   ];
 
   const customToolbar = (
@@ -202,7 +204,7 @@ const CRMSalesForecastPage: React.FC = () => {
         onClick={handleGenerateForecast}
         disabled={loading}
       >
-        生成预测
+        {t('crm.salesForecast.btn_generate')}
       </Button>
     </Box>
   );
@@ -210,8 +212,8 @@ const CRMSalesForecastPage: React.FC = () => {
   return (
     <PageContainer
       maxWidth='xl'
-      title='销售预测'
-      subtitle='基于历史数据预测未来销售趋势'
+      title={t('crm.salesForecast.title')}
+      subtitle={t('crm.salesForecast.subtitle')}
       autoTitle
       autoBreadcrumbs
     >

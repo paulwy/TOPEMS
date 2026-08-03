@@ -1,7 +1,8 @@
-import React, { useCallback } from 'react';
+import React, { useCallback, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { z } from 'zod';
 import { Building2, Mail, Phone, MapPin, Globe } from 'lucide-react';
+import { useTranslation } from 'react-i18next';
 import FormPageTemplate from '@/components/templates/FormPageTemplate';
 import type { FormSection, FormField } from '@/components/templates/FormPageTemplate';
 import { PageContainer } from '@/components/common';
@@ -11,46 +12,47 @@ import { CRM_PATHS } from '@/modules/crm/config';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { QUERY_KEYS } from '@/lib/reactQuery';
 
-const customerSchema = z.object({
-  name: z.string().min(1, '客户名称不能为空'),
-  code: z.string().optional(),
-  type: z.enum(['enterprise', 'personal', 'government']),
-  industry: z.enum(['it', 'finance', 'manufacture', 'retail', 'other']).optional(),
-  source: z.enum(['website', 'referral', 'exhibition', 'cold_call', 'other']).optional(),
-  website: z.string().url('请输入有效的网址').optional(),
-  phone: z.string().optional(),
-  email: z.string().email('请输入有效的邮箱地址').optional(),
-  address: z.string().optional(),
-  description: z.string().optional(),
-});
-
-type CustomerFormData = z.infer<typeof customerSchema>;
-
-const CUSTOMER_TYPES = [
-  { value: 'enterprise', label: '企业客户' },
-  { value: 'personal', label: '个人客户' },
-  { value: 'government', label: '政府机构' },
-];
-
-const INDUSTRIES = [
-  { value: 'it', label: '信息技术' },
-  { value: 'finance', label: '金融' },
-  { value: 'manufacture', label: '制造业' },
-  { value: 'retail', label: '零售' },
-  { value: 'other', label: '其他' },
-];
-
-const SOURCES = [
-  { value: 'website', label: '官网' },
-  { value: 'referral', label: '客户推荐' },
-  { value: 'exhibition', label: '展会' },
-  { value: 'cold_call', label: '电话营销' },
-  { value: 'other', label: '其他' },
-];
-
 const CustomerCreatePage: React.FC = () => {
+  const { t } = useTranslation();
   const navigate = useNavigate();
   const queryClient = useQueryClient();
+
+  const customerSchema = useMemo(() => z.object({
+    name: z.string().min(1, t('crm.customerCreate.validation_name_required')),
+    code: z.string().optional(),
+    type: z.enum(['enterprise', 'personal', 'government']),
+    industry: z.enum(['it', 'finance', 'manufacture', 'retail', 'other']).optional(),
+    source: z.enum(['website', 'referral', 'exhibition', 'cold_call', 'other']).optional(),
+    website: z.string().url(t('crm.customerCreate.validation_website_invalid')).optional(),
+    phone: z.string().optional(),
+    email: z.string().email(t('crm.customerCreate.validation_email_invalid')).optional(),
+    address: z.string().optional(),
+    description: z.string().optional(),
+  }), [t]);
+
+  type CustomerFormData = z.infer<typeof customerSchema>;
+
+  const CUSTOMER_TYPES = [
+    { value: 'enterprise', label: t('crm.customerCreate.type_enterprise') },
+    { value: 'personal', label: t('crm.customerCreate.type_personal') },
+    { value: 'government', label: t('crm.customerCreate.type_government') },
+  ];
+
+  const INDUSTRIES = [
+    { value: 'it', label: t('crm.customerCreate.industry_it') },
+    { value: 'finance', label: t('crm.customerCreate.industry_finance') },
+    { value: 'manufacture', label: t('crm.customerCreate.industry_manufacture') },
+    { value: 'retail', label: t('crm.customerCreate.industry_retail') },
+    { value: 'other', label: t('crm.customerCreate.industry_other') },
+  ];
+
+  const SOURCES = [
+    { value: 'website', label: t('crm.customerCreate.source_website') },
+    { value: 'referral', label: t('crm.customerCreate.source_referral') },
+    { value: 'exhibition', label: t('crm.customerCreate.source_exhibition') },
+    { value: 'cold_call', label: t('crm.customerCreate.source_cold_call') },
+    { value: 'other', label: t('crm.customerCreate.source_other') },
+  ];
 
   const createMutation = useMutation({
     mutationFn: (data: CustomerFormData) =>
@@ -91,27 +93,27 @@ const CustomerCreatePage: React.FC = () => {
   const sections: FormSection[] = [
     {
       id: 'basic',
-      title: '基本信息',
-      description: '客户基本信息',
+      title: t('crm.customerCreate.section_basic_title'),
+      description: t('crm.customerCreate.section_basic_desc'),
       icon: <Building2 style={{ width: 18, height: 18 }} />,
       collapsible: false,
       fields: [
         {
           name: 'name',
-          label: '客户名称',
+          label: t('crm.customerCreate.field_name'),
           type: 'text',
           required: true,
-          placeholder: '请输入客户名称',
+          placeholder: t('crm.customerCreate.field_name_placeholder'),
         },
         {
           name: 'code',
-          label: '客户编码',
+          label: t('crm.customerCreate.field_code'),
           type: 'text',
-          placeholder: '请输入客户编码',
+          placeholder: t('crm.customerCreate.field_code_placeholder'),
         },
         {
           name: 'type',
-          label: '客户类型',
+          label: t('crm.customerCreate.field_type'),
           type: 'select',
           options: CUSTOMER_TYPES.map((type) => ({
             label: type.label,
@@ -121,72 +123,72 @@ const CustomerCreatePage: React.FC = () => {
         },
         {
           name: 'industry',
-          label: '行业',
+          label: t('crm.customerCreate.field_industry'),
           type: 'select',
           options: INDUSTRIES.map((industry) => ({
             label: industry.label,
             value: industry.value,
           })),
-          placeholder: '请选择行业',
+          placeholder: t('crm.customerCreate.field_industry_placeholder'),
         },
         {
           name: 'source',
-          label: '客户来源',
+          label: t('crm.customerCreate.field_source'),
           type: 'select',
           options: SOURCES.map((source) => ({
             label: source.label,
             value: source.value,
           })),
-          placeholder: '请选择客户来源',
+          placeholder: t('crm.customerCreate.field_source_placeholder'),
         },
         {
           name: 'website',
-          label: '网站',
+          label: t('crm.customerCreate.field_website'),
           type: 'text',
-          placeholder: '请输入网站地址',
+          placeholder: t('crm.customerCreate.field_website_placeholder'),
         },
       ],
     },
     {
       id: 'contact',
-      title: '联系方式',
-      description: '客户联系信息',
+      title: t('crm.customerCreate.section_contact_title'),
+      description: t('crm.customerCreate.section_contact_desc'),
       icon: <Mail style={{ width: 18, height: 18 }} />,
       collapsible: false,
       fields: [
         {
           name: 'phone',
-          label: '电话',
+          label: t('crm.customerCreate.field_phone'),
           type: 'text',
-          placeholder: '请输入电话号码',
+          placeholder: t('crm.customerCreate.field_phone_placeholder'),
         },
         {
           name: 'email',
-          label: '邮箱',
+          label: t('crm.customerCreate.field_email'),
           type: 'email',
-          placeholder: '请输入邮箱地址',
+          placeholder: t('crm.customerCreate.field_email_placeholder'),
         },
         {
           name: 'address',
-          label: '地址',
+          label: t('crm.customerCreate.field_address'),
           type: 'text',
-          placeholder: '请输入地址',
+          placeholder: t('crm.customerCreate.field_address_placeholder'),
           span: 2,
         },
       ],
     },
     {
       id: 'description',
-      title: '备注',
-      description: '客户备注信息',
+      title: t('crm.customerCreate.section_notes_title'),
+      description: t('crm.customerCreate.section_notes_desc'),
       collapsible: false,
       fields: [
         {
           name: 'description',
-          label: '描述',
+          label: t('crm.customerCreate.field_description'),
           type: 'textarea',
           rows: 3,
-          placeholder: '请输入描述...',
+          placeholder: t('crm.customerCreate.field_description_placeholder'),
         },
       ],
     },
@@ -194,8 +196,8 @@ const CustomerCreatePage: React.FC = () => {
 
   return (
     <PageContainer
-      title='新建客户'
-      subtitle='创建新的客户档案'
+      title={t('crm.customerCreate.title')}
+      subtitle={t('crm.customerCreate.subtitle')}
       autoTitle
       autoBreadcrumbs
     >
@@ -203,18 +205,18 @@ const CustomerCreatePage: React.FC = () => {
         title=''
         subtitle=''
         breadcrumbs={[
-          { label: '首页', href: '/dashboard' },
-          { label: '客户管理', href: CRM_PATHS.root },
-          { label: '客户列表', href: CRM_PATHS.customers },
-          { label: '新建客户' },
+          { label: t('crm.common.home'), href: '/dashboard' },
+          { label: t('crm.customerList.title'), href: CRM_PATHS.root },
+          { label: t('crm.customerCreate.breadcrumb_list'), href: CRM_PATHS.customers },
+          { label: t('crm.customerCreate.breadcrumb_new') },
         ]}
         sections={sections}
         schema={customerSchema}
         submitting={createMutation.isPending}
         onSubmit={handleSubmit}
         onCancel={handleCancel}
-        submitText='创建客户'
-        cancelText='取消'
+        submitText={t('crm.customerCreate.submit')}
+        cancelText={t('crm.common.cancel')}
         columns={3}
         stickyFooter={true}
       />

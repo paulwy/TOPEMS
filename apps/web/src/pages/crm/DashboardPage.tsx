@@ -11,6 +11,7 @@ import {
   TrendingDown,
   Activity,
 } from 'lucide-react';
+import { useTranslation } from 'react-i18next';
 import BarChartComponent from '../../components/charts/BarChart';
 import { useNotificationStore } from '@/store';
 import LineChartComponent from '../../components/charts/LineChart';
@@ -38,6 +39,7 @@ const iconMap: Record<string, React.ComponentType<{ size?: number; className?: s
 };
 
 export const DashboardPage: React.FC = () => {
+  const { t } = useTranslation();
   const theme = useTheme();
   const navigate = useNavigate();
 
@@ -53,11 +55,11 @@ export const DashboardPage: React.FC = () => {
       } catch (error: unknown) {
         const status = (error as { response?: { status?: number } }).response?.status;
         if (status === 401) {
-          logger.warn('CRM 服务需要认证，请先登录');
+          logger.warn(t('crm.overview.auth_required'));
         } else if (status === 503) {
-          logger.warn('CRM 服务暂不可用，显示示例数据');
+          logger.warn(t('crm.overview.service_unavailable'));
         } else {
-          logger.error('加载仪表盘数据失败:', error);
+          logger.error(t('crm.overview.load_dashboard_fail'), error);
         }
         return null;
       }
@@ -76,11 +78,11 @@ export const DashboardPage: React.FC = () => {
       } catch (error: unknown) {
         const status = (error as { response?: { status?: number } }).response?.status;
         if (status === 401) {
-          logger.warn('CRM 服务需要认证，请先登录');
+          logger.warn(t('crm.overview.auth_required'));
         } else if (status === 503) {
-          logger.warn('CRM 服务暂不可用，显示示例数据');
+          logger.warn(t('crm.overview.service_unavailable'));
         } else {
-          logger.error('加载仪表盘数据失败:', error);
+          logger.error(t('crm.overview.load_dashboard_fail'), error);
         }
         return [];
       }
@@ -93,9 +95,9 @@ export const DashboardPage: React.FC = () => {
 
   const getGreeting = (): string => {
     const hour = new Date().getHours();
-    if (hour < 12) return '上午好';
-    if (hour < 18) return '下午好';
-    return '晚上好';
+    if (hour < 12) return t('crm.overview.greeting_morning');
+    if (hour < 18) return t('crm.overview.greeting_afternoon');
+    return t('crm.overview.greeting_evening');
   };
 
   const funnelBarData = funnelData.map((item) => ({
@@ -114,37 +116,37 @@ export const DashboardPage: React.FC = () => {
   const statsCards: StatCard[] = [
     {
       id: 'customer-total',
-      title: '商机总数',
+      title: t('crm.overview.stat_opportunity_total'),
       value: (stats?.total_count || 89).toString(),
       change: 12,
-      changeLabel: 'vs 上周期',
+      changeLabel: t('crm.overview.vs_last_period'),
       icon: <Target size={24} />,
       color: 'primary',
     },
     {
       id: 'opportunity-count',
-      title: '总金额',
+      title: t('crm.overview.stat_total_amount'),
       value: `¥${(stats?.total_value || 5680000).toLocaleString()}`,
       change: 15,
-      changeLabel: 'vs 上周期',
+      changeLabel: t('crm.overview.vs_last_period'),
       icon: <TrendingUp size={24} />,
       color: 'info',
     },
     {
       id: 'monthly-deals',
-      title: '赢单数量',
+      title: t('crm.overview.stat_won_count'),
       value: (stats?.won_count || 15).toString(),
       change: 3,
-      changeLabel: 'vs 上周期',
+      changeLabel: t('crm.overview.vs_last_period'),
       icon: <CheckCircle size={24} />,
       color: 'success',
     },
     {
       id: 'sales-amount',
-      title: '赢单率',
+      title: t('crm.overview.stat_won_rate'),
       value: `${wonRate}%`,
       change: wonRate > 50 ? 5 : -3,
-      changeLabel: 'vs 上周期',
+      changeLabel: t('crm.overview.vs_last_period'),
       icon: <Activity size={24} />,
       color: wonRate > 50 ? 'success' : 'warning',
     },
@@ -153,7 +155,7 @@ export const DashboardPage: React.FC = () => {
   const charts: ChartCard[] = [
     {
       id: 'funnel-count',
-      title: '销售漏斗 - 商机数量',
+      title: t('crm.overview.chart_funnel_count'),
       height: 300,
       chart: (
         <BarChartComponent
@@ -165,7 +167,7 @@ export const DashboardPage: React.FC = () => {
     },
     {
       id: 'funnel-value',
-      title: '销售漏斗 - 金额分布',
+      title: t('crm.overview.chart_funnel_value'),
       height: 300,
       chart: (
         <BarChartComponent
@@ -177,7 +179,7 @@ export const DashboardPage: React.FC = () => {
     },
     {
       id: 'conversion-rate',
-      title: '商机阶段占比',
+      title: t('crm.overview.chart_stage_ratio'),
       height: 300,
       chart: (
         <PieChartComponent
@@ -193,28 +195,28 @@ export const DashboardPage: React.FC = () => {
   const quickActions: QuickAction[] = [
     {
       id: 'add-customer',
-      label: '新增客户',
+      label: t('crm.overview.action_add_customer'),
       icon: <ArrowRight size={20} />,
       href: CRM_PATHS.customerCreate,
       color: 'primary.main',
     },
     {
       id: 'create-opportunity',
-      label: '创建商机',
+      label: t('crm.overview.action_create_opportunity'),
       icon: <ArrowRight size={20} />,
       href: CRM_PATHS.opportunities,
       color: 'success.main',
     },
     {
       id: 'customer-scoring',
-      label: '客户评分',
+      label: t('crm.overview.action_customer_scoring'),
       icon: <ArrowRight size={20} />,
       href: CRM_PATHS.customerScoring,
       color: 'secondary.main',
     },
     {
       id: 'sales-report',
-      label: '销售预测',
+      label: t('crm.overview.action_sales_forecast'),
       icon: <ArrowRight size={20} />,
       href: CRM_PATHS.salesForecast,
       color: 'warning.main',
@@ -231,15 +233,15 @@ export const DashboardPage: React.FC = () => {
           justifyContent: 'center',
         }}
       >
-        <Typography sx={{ fontSize: '1.125rem', color: 'grey.600' }}>加载中...</Typography>
+        <Typography sx={{ fontSize: '1.125rem', color: 'grey.600' }}>{t('crm.common.loading')}</Typography>
       </Box>
     );
   }
 
   return (
     <PageContainer
-      title='客户关系仪表盘'
-      subtitle={`${getGreeting()}，客户管理与销售分析`}
+      title={t('crm.overview.title')}
+      subtitle={`${getGreeting()}${t('crm.overview.subtitle_suffix')}`}
       padding={false}
       maxWidth={false}
       autoTitle
@@ -257,13 +259,13 @@ export const DashboardPage: React.FC = () => {
             }}
           >
             <TrendingUp style={{ width: 20, height: 20 }} />
-            销售漏斗概览
+            {t('crm.overview.funnel_overview_title')}
           </Typography>
           <Typography
             variant='body2'
             sx={{ color: 'grey.500' }}
           >
-            各阶段商机转化情况
+            {t('crm.overview.funnel_overview_desc')}
           </Typography>
         </CardHeader>
         <CardContent>
@@ -348,11 +350,11 @@ export const DashboardPage: React.FC = () => {
       <DashboardTemplate
         title=''
         subtitle=''
-        breadcrumbs={[{ label: '首页', href: '/dashboard' }, { label: '客户关系' }]}
+        breadcrumbs={[{ label: t('crm.common.home'), href: '/dashboard' }, { label: t('crm.common.customer_relationship') }]}
         stats={statsCards}
         charts={charts}
         quickActions={quickActions}
-        quickActionsTitle='快捷操作'
+        quickActionsTitle={t('crm.overview.quick_actions_title')}
       />
     </PageContainer>
   );
