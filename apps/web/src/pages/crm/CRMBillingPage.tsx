@@ -10,6 +10,7 @@ import {
   CheckCircle,
   Send,
 } from 'lucide-react';
+import { useTranslation } from 'react-i18next';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { PageContainer } from '@/components/common';
 import CrudPage from '@/components/templates/CrudPage';
@@ -34,21 +35,22 @@ const BillingStatsCards: React.FC<{ stats?: BillingStats; loading: boolean }> = 
   stats,
   loading,
 }) => {
+  const { t } = useTranslation();
   if (loading) {
     return (
       <Typography
         variant='body2'
         color='text.secondary'
       >
-        加载中...
+        {t('crm.billing.loading')}
       </Typography>
     );
   }
   const cards = [
-    { label: '账单总数', value: stats?.total_count ?? 0, color: 'primary.main' },
-    { label: '已支付', value: stats?.paid_count ?? 0, color: 'success.main' },
-    { label: '待支付', value: stats?.pending_count ?? 0, color: 'warning.main' },
-    { label: '逾期', value: stats?.overdue_count ?? 0, color: 'error.main' },
+    { label: t('crm.billing.stat_total'), value: stats?.total_count ?? 0, color: 'primary.main' },
+    { label: t('crm.billing.stat_paid'), value: stats?.paid_count ?? 0, color: 'success.main' },
+    { label: t('crm.billing.stat_pending'), value: stats?.pending_count ?? 0, color: 'warning.main' },
+    { label: t('crm.billing.stat_overdue'), value: stats?.overdue_count ?? 0, color: 'error.main' },
   ];
   return (
     <Stack
@@ -79,17 +81,19 @@ const BillingStatsCards: React.FC<{ stats?: BillingStats; loading: boolean }> = 
 };
 
 const BillingAgingTable: React.FC = () => {
+  const { t } = useTranslation();
   return (
     <Typography
       variant='body2'
       color='text.secondary'
     >
-      账龄分析
+      {t('crm.billing.aging_text')}
     </Typography>
   );
 };
 
 const CRMBillingPage: React.FC = () => {
+  const { t } = useTranslation();
   const theme = useTheme();
   const queryClient = useQueryClient();
   const { addNotification } = useNotificationStore();
@@ -123,22 +127,22 @@ const CRMBillingPage: React.FC = () => {
   const markPaidMutation = useMutation({
     mutationFn: (id: string) => crmApi.billing.markPaid(id),
     onSuccess: () => {
-      addNotification({ type: 'success', message: '已标记为已支付' });
+      addNotification({ type: 'success', message: t('crm.billing.msg_marked_paid') });
       queryClient.invalidateQueries({ queryKey: ['crm', 'billing'] });
       queryClient.invalidateQueries({ queryKey: ['crm', 'billing', 'stats'] });
     },
     onError: () => {
-      addNotification({ type: 'error', message: '操作失败' });
+      addNotification({ type: 'error', message: t('crm.billing.msg_action_fail') });
     },
   });
 
   const sendNotificationMutation = useMutation({
     mutationFn: (id: string) => crmApi.billing.sendNotification(id),
     onSuccess: () => {
-      addNotification({ type: 'success', message: '通知已发送' });
+      addNotification({ type: 'success', message: t('crm.billing.msg_notification_sent') });
     },
     onError: () => {
-      addNotification({ type: 'error', message: '发送失败' });
+      addNotification({ type: 'error', message: t('crm.billing.msg_send_fail') });
     },
   });
 
@@ -161,7 +165,7 @@ const CRMBillingPage: React.FC = () => {
       list: async (params) => {
         const response = await crmApi.billing.list(params);
         if (!response.success) {
-          throw new Error(response.message || '获取账单列表失败');
+          throw new Error(response.message || t('crm.billing.error_load_list'));
         }
         const data = response.data as any;
         const items = data?.items || data || [];
@@ -171,43 +175,43 @@ const CRMBillingPage: React.FC = () => {
       create: async (data) => {
         const response = await crmApi.billing.create(data as any);
         if (!response.success) {
-          throw new Error(response.message || '创建账单失败');
+          throw new Error(response.message || t('crm.billing.error_create'));
         }
         return response.data!;
       },
       update: async (id, data) => {
         const response = await crmApi.billing.update(id, data as any);
         if (!response.success) {
-          throw new Error(response.message || '更新账单失败');
+          throw new Error(response.message || t('crm.billing.error_update'));
         }
         return response.data!;
       },
       delete: async (id) => {
         const response = await crmApi.billing.delete(id);
         if (!response.success) {
-          throw new Error(response.message || '删除账单失败');
+          throw new Error(response.message || t('crm.billing.error_delete'));
         }
       },
     }),
-    []
+    [t]
   );
 
   const customRowActions = useMemo<RowAction[]>(
     () => [
       {
-        label: '标记支付',
+        label: t('crm.billing.action_mark_paid'),
         icon: <CheckCircle size={16} />,
         color: 'success',
         onClick: (row: Record<string, unknown>) => handleMarkPaid(String(row.id)),
       },
       {
-        label: '发送通知',
+        label: t('crm.billing.action_send_notification'),
         icon: <Send size={16} />,
         color: 'primary',
         onClick: (row: Record<string, unknown>) => handleSendNotification(String(row.id)),
       },
     ],
-    [handleMarkPaid, handleSendNotification]
+    [handleMarkPaid, handleSendNotification, t]
   );
 
   const billingContent = (
@@ -215,14 +219,14 @@ const CRMBillingPage: React.FC = () => {
       schema={billingSchema}
       apiAdapter={apiAdapter}
       customRowActions={customRowActions}
-      breadcrumbs={[{ label: 'CRM' }, { label: '计费管理' }]}
+      breadcrumbs={[{ label: t('crm.common.crm') }, { label: t('crm.billing.breadcrumb') }]}
     />
   );
 
   return (
     <PageContainer
-      title='计费管理'
-      subtitle='管理客户账单、收款和账龄分析'
+      title={t('crm.billing.title')}
+      subtitle={t('crm.billing.subtitle')}
     >
       <Stack spacing={3}>
         <BillingStatsCards
@@ -258,21 +262,21 @@ const CRMBillingPage: React.FC = () => {
               }}
             >
               <Chip
-                label='账单总览'
+                label={t('crm.billing.tab_overview')}
                 onClick={() => setActiveTab('overview')}
                 color={activeTab === 'overview' ? 'primary' : 'default'}
                 variant={activeTab === 'overview' ? 'filled' : 'outlined'}
                 sx={{ cursor: 'pointer' }}
               />
               <Chip
-                label='账单管理'
+                label={t('crm.billing.tab_invoices')}
                 onClick={() => setActiveTab('invoices')}
                 color={activeTab === 'invoices' ? 'primary' : 'default'}
                 variant={activeTab === 'invoices' ? 'filled' : 'outlined'}
                 sx={{ cursor: 'pointer' }}
               />
               <Chip
-                label='账龄分析'
+                label={t('crm.billing.tab_aging')}
                 onClick={() => setActiveTab('aging')}
                 color={activeTab === 'aging' ? 'primary' : 'default'}
                 variant={activeTab === 'aging' ? 'filled' : 'outlined'}
@@ -287,7 +291,7 @@ const CRMBillingPage: React.FC = () => {
                 variant='body2'
                 color='text.secondary'
               >
-                账单总览 - 展示计费概览数据
+                {t('crm.billing.overview_text')}
               </Typography>
             )}
             {activeTab === 'invoices' && billingContent}

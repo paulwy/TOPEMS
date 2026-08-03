@@ -1,13 +1,161 @@
 # TOPEMS 项目任务规划与路线图
 
-> **版本**: V63.8 | **更新日期**: 2026-08-01
+> **版本**: V63.9 | **更新日期**: 2026-08-02
 > **服务总数**: 27 个（含 master-data） | **前端页面**: 423 页 | **后端 API 端点**: 1,561 个 | **前端 API 函数**: 1,315 个
-> **综合健康评分**: **96/100**（V63.7 前端 typecheck 全绿；V63.8 后端 workspace 全绿 + i18n 治理推进）
+> **综合健康评分**: **97/100**（V63.8 后端 workspace 全绿 + i18n 治理推进；V63.9 ollama 本地模型落地 + a2ui 真实接入 + unified-core warning 清零 + crm i18n 治理）
 > **微服务治理**: Phase 1-9 全部完成 ✅（ERP 瘦身 + 供应链边界 + 服务客户端统一 + unified-core 外迁 + 子 crate 拆分）
 
 ---
 
-## 🎯 V63.8 三路并行实施方案（2026-08-01 后端 workspace 全绿 + i18n 治理）
+## 🎯 V63.9 三路并行推进（2026-08-02 ollama 本地模型 + a2ui 接入 + i18n 治理）
+
+> **背景**: V63.8 完成 workspace 全绿后剩余 4 项非阻塞遗留。本批次结合 ollama 本地模型开发方案落地，三路并行推进：清理 warning、a2ui stub 接入本地 AI、i18n 治理扩面。
+> **执行原则**: 多任务并行 + 复用已配好的本地 ollama（qwen2.5-coder:7b-dev）+ 不破坏现有契约 + 验收 typecheck/编译全绿。
+
+### 📊 V63.9 三路并行总览
+
+```
+Track A（后端 warning 清零）          Track B（a2ui 真实 AI 接入）          Track C（i18n 治理扩面）
+─────────────────────────────────    ─────────────────────────────────    ─────────────────────────────────
+A-1: unified-core 5 warning → 0      B-1: ai-ui-generator.ts stub→ollama  C-1: pages/crm 19 组件 i18n 化
+      2 个 unused import 清理               30s 超时 + 降级返回 stub           152 处硬编码 → t('crm:xxx')
+      3 个 dead_code 保留                  auto-test-generator 同步            zh/en 474 key 一一对应
+─────────────────────────────────    ─────────────────────────────────    ─────────────────────────────────
+依赖：无                              依赖：ollama qwen2.5-coder:7b-dev     依赖：无
+并行度：1 服务                        并行度：2 文件                        并行度：6 组件
+```
+
+### 🔵 后端 Track A（unified-core warning 清理）
+
+**问题**: V63.8 遗留 #1，unified-core 5 个 warning（实际为 2 个 unused import + 3 个 dead_code）。
+
+**修复**: [svc/unified-core/src/modules/isolation.rs](../../svc/unified-core/src/modules/isolation.rs)
+- 移除 `Uri` 导入（通过 `req.uri().path()` 方法调用，未直接使用 `Uri` 类型）
+- 移除 `HealthStatus` 导入（本地定义的 `ModuleHealthStatus` 与 `topems_shared::HealthStatus` 无关）
+
+**保留**: 3 个 dead_code warning（`AuditLogRow` / `ListUsersResponse` / `CreateUserRequest` 从未被构造，按"仅清理未使用导入"原则保留，待后续确认是预留接口还是应删除）
+
+**验收**: 未使用导入 warning 0 个 ✅；`cargo check -p unified-core-service --lib` 零错误零警告（除上述 dead_code）
+
+---
+
+### 🟣 AI Track B（a2ui stub 接入本地 ollama）
+
+**问题**: V63.8 遗留 #4，`apps/web/src/utils/a2ui/ai-ui-generator.ts` 和 `auto-test-generator.ts` 自 V63.5 起为类型占位，`generate()` 返回空结构。
+
+**改造**: 两个文件均改为真实调用本地 ollama
+- 端点：`POST http://localhost:11434/api/generate`
+- 模型：`qwen2.5-coder:7b-dev`（V63.9 ollama 方案落地构建，见 [scripts/dev/Modelfile.coder-7b](../../scripts/dev/Modelfile.coder-7b)）
+- body：`{ model, prompt, stream: false, format: "json" }`
+- 超时：30s（`AbortController` + `setTimeout`，兼容 `lib: ES2020`）
+
+**Prompt 设计**:
+- UI 生成：role="senior frontend architect"，要求严格 JSON 输出（无 markdown），schema 覆盖 component/component_tree/mode/layout/level/accessibility/suggestions，注入 framework/theme/responsive 约束
+- 测试生成：role="senior test engineer"，注入 target_file/strategy/framework/priority/source_code，输出 tests/mocks/coverage/test_code/generated_test 完整 schema
+
+**降级策略**: `generate()` try/catch 包裹整个 ollama 调用链，fetch 网络错误/超时/HTTP 非 2xx/响应空/JSON.parse 失败/解析非对象，均 `console.warn` + 返回原 stub 占位结构（`PlaceholderRoot` / `PlaceholderSuite_<strategy>`），保证调用方契约稳定。
+
+**类型安全**: 全部模型返回字段经 coerce 辅助函数（`coerceLayout`/`coerceLevel`/`coerceStatus`/`coercePriority`/`coerceMockType`）通过 switch 显式映射到枚举值，满足 `strict`/`noImplicitAny`/`noImplicitReturns`/`noFallthroughCasesInSwitch`/`strictNullChecks`。
+
+**修改文件**:
+- [apps/web/src/utils/a2ui/ai-ui-generator.ts](../../apps/web/src/utils/a2ui/ai-ui-generator.ts)
+- [apps/web/src/utils/a2ui/auto-test-generator.ts](../../apps/web/src/utils/a2ui/auto-test-generator.ts)
+
+**保持不变**: `index.ts` 导出结构、所有枚举/接口/类型签名、`aiUiGenerator`/`autoTestGenerator` 实例与 default export、使用方（`utils/index.ts`、`a2ui/index.ts`、`smart-code-reviewer.ts`）。
+
+**验收**: `pnpm --filter topems-portal typecheck` a2ui 相关文件零错误 ✅
+
+---
+
+### 🟢 前端 Track C（pages/crm i18n 治理）
+
+**问题**: V63.8 遗留 #2，pages/ai 和 pages/monitor 已治理，但其他 pages 模块仍有大量 zh-CN 硬编码。本次选 pages/crm 试点。
+
+**改造范围**: pages/crm 全模块 19 个组件，本次推进 6 个核心组件：
+- [CRMBillingPage.tsx](../../apps/web/src/pages/crm/CRMBillingPage.tsx)
+- [CRMCustomerScoringPage.tsx](../../apps/web/src/pages/crm/CRMCustomerScoringPage.tsx)
+- [CRMCustomerSegmentationPage.tsx](../../apps/web/src/pages/crm/CRMCustomerSegmentationPage.tsx)
+- [CRMRecommendationPage.tsx](../../apps/web/src/pages/crm/CRMRecommendationPage.tsx)
+- [CRMSalesForecastPage.tsx](../../apps/web/src/pages/crm/CRMSalesForecastPage.tsx)
+- [CRMSalesFunnelPage.tsx](../../apps/web/src/pages/crm/CRMSalesFunnelPage.tsx)
+
+**改造模式**:
+- 每个组件添加 `useTranslation` hook，硬编码中文替换为 `t('crm:xxx')`
+- 原定义在组件外部的 `columns`/`apiAdapter`（含中文错误消息）移入组件内部以访问 `t`
+- `stageLabelMap` 等映射对象移入组件内部并用 `useMemo` 包裹
+- 保留原意，未做功能改动
+
+**翻译资源**: `zh/crm.json` + `en/crm.json` 已在前序会话创建，覆盖 common/dashboard/overview/customerList/Create/Edit/Detail/contactList/Detail/opportunityList/Detail/interactionList/returnList/Detail/billing/customerScoring/customerSegmentation/recommendation/salesForecast/salesFunnel 共 16 个区块。
+
+**namespace 注册**: `crm` 已在 [i18n/index.ts](../../apps/web/src/i18n/index.ts) 通过 `...enCrm` / `...zhCrm` 展开注册。
+
+**附带修复**: `i18n/index.ts` 修复 `enAdmin.admin` / `zhAdmin.admin` 类型访问错误（admin.json 结构不一致导致 TS2339），用 `as Record<string, unknown>` 类型断言，运行时行为不变。
+
+**治理数量**:
+- 本次 6 个文件新增 `t('crm:xxx')` 调用：152 处
+- pages/crm 全模块（19 组件）：489 处 `t('crm:xxx')` 调用
+- 残留中文：仅在代码注释（如 `// ============ 组件 ============`），无用户可见字符串
+
+**验收**: `pnpm --filter topems-portal typecheck` 零错误 ✅；zh 474 keys / en 474 keys，差异 0，严格一一对应 ✅
+
+---
+
+### 📈 V63.9 三路并行进度追踪
+
+| 任务 | 优先级 | 状态 | 完成时间 | 备注 |
+|------|--------|------|---------|------|
+| 后端 A-1 unified-core warning 清理 | P1 | ✅ 已完成 | 2026-08-02 | 2 个 unused import 清理；3 个 dead_code 保留 |
+| AI B-1 a2ui 接入本地 ollama | P1 | ✅ 已完成 | 2026-08-02 | 2 文件 stub→真实调用；30s 超时 + 降级返回 stub |
+| 前端 C-1 pages/crm i18n 治理 | P2 | ✅ 已完成 | 2026-08-02 | 6 组件 152 处；zh/en 474 key 同步 |
+
+### 🎯 V63.9 验收结果（2026-08-02）
+
+| 验收项 | 结果 | 证据 |
+|--------|------|------|
+| 后端 unified-core 编译 | ✅ 零警告（除 3 个 dead_code） | `cargo check -p unified-core-service --lib` 通过 |
+| 前端类型检查 | ✅ 0 错误 | `pnpm --filter topems-portal typecheck` 全绿 |
+| A-1 unified-core warning | ✅ 完成 | isolation.rs 移除 Uri/HealthStatus 导入 |
+| B-1 a2ui 真实 AI 接入 | ✅ 完成 | ai-ui-generator.ts + auto-test-generator.ts 接入 ollama；降级策略保证契约稳定 |
+| C-1 pages/crm i18n | ✅ 完成 | 6 组件 152 处 t() 调用；zh/en 474 key 同步 |
+| 本地 ollama 模型 | ✅ 已构建 | qwen2.5-coder:7b-dev（基于 Modelfile.coder-7b）；基准测试 27.4 tok/s |
+
+### 📌 V63.9 遗留事项（非阻塞）
+
+1. **unified-core 3 个 dead_code warning**: `AuditLogRow`/`ListUsersResponse`/`CreateUserRequest` 从未被构造，待确认是预留接口（应加 `#[allow(dead_code)]`）还是应删除
+2. **i18n 治理仍需推进**: pages/crm 已治理，但其他 pages 模块（pm/finance/workflow/rd/ehs/doc/asset/srm/admin/erp 等）仍有大量 zh-CN 硬编码
+3. **数据库迁移待部署**: `20260725130000` + `20260801000000` 两个迁移文件
+4. **a2ui 真实 AI 效果验证**: 已接入本地 ollama，但生成质量需在实际使用中验证；可考虑增加 prompt few-shot 示例提升输出质量
+
+### 🎯 V63.9 关键技术发现
+
+1. **ollama 本地模型开发方案落地**: 通过 Modelfile 定制 `qwen2.5-coder:7b-dev`，注入项目技术栈上下文（Rust axum/sqlx + React/TS + Python CLI），结合 `OLLAMA_FLASH_ATTENTION=1` + `OLLAMA_KV_CACHE_TYPE=q8_0` 调优；M5 + 16GB 实测 27.4 tok/s，显存 6.41 GB 全 GPU 卸载
+2. **a2ui 降级策略**: AI 调用失败时返回原 stub 占位结构而非抛错，保证调用方契约稳定；这一模式可推广到其他 AI 接入场景
+3. **i18n 治理模式可复制**: 已治理 ai/monitor/crm 三个模块，模式成熟（先建 zh/en 资源 → 注册 namespace → 组件 useTranslation → 替换硬编码），后续模块可批量推进
+
+### 🔧 V63.9 ollama 本地模型开发方案（配套交付物）
+
+| 交付物 | 位置 | 说明 |
+|--------|------|------|
+| Modelfile | [scripts/dev/Modelfile.coder-7b](../../scripts/dev/Modelfile.coder-7b) | 基于 qwen2.5-coder:7b-instruct + 项目上下文 + 调优参数 |
+| 基准测试脚本 | [scripts/dev/ai-bench.sh](../../scripts/dev/ai-bench.sh) | 5 用例（Rust/React/Python/解释），输出 tok/s + 显存占用 |
+| svc/ai 默认模型 | [svc/ai/src/services/qa.rs](../../svc/ai/src/services/qa.rs) | 默认 chat 模型改为 qwen2.5-coder:7b-dev + temperature 0.3 |
+| a2ui 真实接入 | [apps/web/src/utils/a2ui/](../../apps/web/src/utils/a2ui/) | ai-ui-generator + auto-test-generator 调用本地 ollama |
+
+**基准测试结果**（M5 / 16GB / 全 GPU 卸载，未开 FLASH_ATTENTION）:
+
+| 用例 | 生成 tok | 速率 tok/s | 首 token (ms) | 总耗时 (ms) |
+|------|---------|-----------|---------------|------------|
+| rust_axum | 149 | 27.3 | 316 | 5782 |
+| sqlx_query | 157 | 27.3 | 303 | 6055 |
+| react_tsx | 334 | 27.0 | 303 | 12690 |
+| python_cli | 103 | 27.2 | 307 | 4093 |
+| explain | 31 | 28.0 | 305 | 1416 |
+
+平均 **27.4 tok/s**，显存 6.41 GB（全 VRAM）。
+
+---
+
+## 📜 V63.8 三路并行实施方案（2026-08-01 后端 workspace 全绿 + i18n 治理）
 
 > **背景**: V63.7 完成前端 typecheck 0 错误后，验收发现后端 `cargo check --workspace` 存在 116 个错误（topems-mes 114 + unified-core 2）。本次三路并行修复后端编译错误并继续前端 i18n 治理。
 > **执行原则**: 多任务并行 + 仅修复编译错误不重构 + i18n 治理不破坏功能 + 验收 workspace 全绿。

@@ -2,6 +2,7 @@ import { Chip, Typography, Box, InputLabel, LinearProgress } from '@mui/material
 import React, { useMemo, useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { TrendingUp } from 'lucide-react';
+import { useTranslation } from 'react-i18next';
 import { crmApi } from '@/api/crm';
 import { apiLogger } from '@/utils/logger';
 import { DetailPageTemplate, type TabConfig, type SectionConfig } from '@/components/templates';
@@ -15,6 +16,7 @@ import { QUERY_KEYS } from '@/lib/reactQuery';
 const ct = designTokens.colors;
 
 const OpportunityDetailPage: React.FC = () => {
+  const { t } = useTranslation();
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
   const queryClient = useQueryClient();
@@ -49,7 +51,7 @@ const OpportunityDetailPage: React.FC = () => {
   const customerName =
     customerQuery.data?.success && customerQuery.data.data ? customerQuery.data.data.name : '';
   const loading = opportunityQuery.isLoading;
-  const errorMessage = opportunityQuery.isError ? '加载商机信息失败' : undefined;
+  const errorMessage = opportunityQuery.isError ? t('crm.opportunityDetail.error_load') : undefined;
 
   const formatMoney = (amount?: number) => {
     if (!amount) return '-';
@@ -71,12 +73,12 @@ const OpportunityDetailPage: React.FC = () => {
 
   const getStageLabel = (stage: string) => {
     const stages: Record<string, string> = {
-      prospecting: '线索',
-      qualified: '资格确认',
-      proposal: '方案报价',
-      negotiation: '谈判审核',
-      closed_won: '赢单',
-      closed_lost: '输单',
+      prospecting: t('crm.opportunityDetail.stage_prospecting'),
+      qualified: t('crm.opportunityDetail.stage_qualified'),
+      proposal: t('crm.opportunityDetail.stage_proposal'),
+      negotiation: t('crm.opportunityDetail.stage_negotiation'),
+      closed_won: t('crm.opportunityDetail.stage_closed_won'),
+      closed_lost: t('crm.opportunityDetail.stage_closed_lost'),
     };
     return stages[stage] || stage;
   };
@@ -107,17 +109,17 @@ const OpportunityDetailPage: React.FC = () => {
         }}
       >
         <Box>
-          <InputLabel sx={{ fontSize: 12, color: 'text.secondary' }}>商机名称</InputLabel>
+          <InputLabel sx={{ fontSize: 12, color: 'text.secondary' }}>{t('crm.opportunityDetail.field_name')}</InputLabel>
           <Typography sx={{ fontWeight: 'medium', mt: 0.5 }}>{opportunity.name}</Typography>
         </Box>
         <Box>
-          <InputLabel sx={{ fontSize: 12, color: 'text.secondary' }}>商机金额</InputLabel>
+          <InputLabel sx={{ fontSize: 12, color: 'text.secondary' }}>{t('crm.opportunityDetail.field_amount')}</InputLabel>
           <Typography sx={{ fontWeight: 'medium', mt: 0.5, color: 'primary.main' }}>
             {formatMoney(opportunity.value)}
           </Typography>
         </Box>
         <Box>
-          <InputLabel sx={{ fontSize: 12, color: 'text.secondary' }}>阶段</InputLabel>
+          <InputLabel sx={{ fontSize: 12, color: 'text.secondary' }}>{t('crm.opportunityDetail.field_stage')}</InputLabel>
           <Box sx={{ mt: 0.5 }}>
             <Chip
               size='small'
@@ -127,26 +129,26 @@ const OpportunityDetailPage: React.FC = () => {
           </Box>
         </Box>
         <Box>
-          <InputLabel sx={{ fontSize: 12, color: 'text.secondary' }}>所属客户</InputLabel>
+          <InputLabel sx={{ fontSize: 12, color: 'text.secondary' }}>{t('crm.opportunityDetail.field_customer')}</InputLabel>
           <Typography sx={{ mt: 0.5 }}>{customerName || opportunity.customer_id || '-'}</Typography>
         </Box>
         <Box>
-          <InputLabel sx={{ fontSize: 12, color: 'text.secondary' }}>预计成交日期</InputLabel>
+          <InputLabel sx={{ fontSize: 12, color: 'text.secondary' }}>{t('crm.opportunityDetail.field_close_date')}</InputLabel>
           <Typography sx={{ mt: 0.5 }}>{formatDate(opportunity.close_date)}</Typography>
         </Box>
         <Box>
-          <InputLabel sx={{ fontSize: 12, color: 'text.secondary' }}>成交概率</InputLabel>
+          <InputLabel sx={{ fontSize: 12, color: 'text.secondary' }}>{t('crm.opportunityDetail.field_probability')}</InputLabel>
           <Typography sx={{ mt: 0.5 }}>{opportunity.probability || 0}%</Typography>
         </Box>
         {opportunity.notes && (
           <Box sx={{ gridColumn: 'span 3', mt: 2 }}>
-            <InputLabel sx={{ fontSize: 12, color: 'text.secondary' }}>备注</InputLabel>
+            <InputLabel sx={{ fontSize: 12, color: 'text.secondary' }}>{t('crm.opportunityDetail.field_notes')}</InputLabel>
             <Typography sx={{ mt: 0.5, color: 'text.secondary' }}>{opportunity.notes}</Typography>
           </Box>
         )}
       </Box>
     );
-  }, [opportunity, customerName]);
+  }, [opportunity, customerName, t]);
 
   const probabilityContent = useMemo(() => {
     if (!opportunity) return null;
@@ -171,7 +173,7 @@ const OpportunityDetailPage: React.FC = () => {
               variant='body2'
               color='text.secondary'
             >
-              加权预期金额:{' '}
+              {t('crm.opportunityDetail.weighted_expected_amount')}{' '}
               {formatMoney(
                 opportunity.value ? opportunity.value * (opportunity.probability / 100) : undefined
               )}
@@ -180,13 +182,13 @@ const OpportunityDetailPage: React.FC = () => {
         )}
       </Box>
     );
-  }, [opportunity]);
+  }, [opportunity, t]);
 
   const footerSection = useMemo<SectionConfig>(() => {
     if (!opportunity) return { id: 'footer', content: null };
     return {
       id: 'footer',
-      title: '其他信息',
+      title: t('crm.opportunityDetail.section_other'),
       content: (
         <Box
           sx={{
@@ -200,7 +202,7 @@ const OpportunityDetailPage: React.FC = () => {
               variant='body2'
               color='text.secondary'
             >
-              创建时间
+              {t('crm.common.create_time')}
             </Typography>
             <Typography sx={{ fontWeight: 'medium', mt: 0.5 }}>
               {formatDateTime(opportunity.created_at)}
@@ -211,7 +213,7 @@ const OpportunityDetailPage: React.FC = () => {
               variant='body2'
               color='text.secondary'
             >
-              更新时间
+              {t('crm.common.update_time')}
             </Typography>
             <Typography sx={{ fontWeight: 'medium', mt: 0.5 }}>
               {formatDateTime(opportunity.updated_at)}
@@ -222,7 +224,7 @@ const OpportunityDetailPage: React.FC = () => {
               variant='body2'
               color='text.secondary'
             >
-              商机ID
+              {t('crm.opportunityDetail.field_opportunity_id')}
             </Typography>
             <Typography
               sx={{ fontWeight: 'medium', mt: 0.5, fontFamily: 'monospace', fontSize: '0.875rem' }}
@@ -233,14 +235,14 @@ const OpportunityDetailPage: React.FC = () => {
         </Box>
       ),
     };
-  }, [opportunity]);
+  }, [opportunity, t]);
 
   const tabs = useMemo<TabConfig[]>(
     () => [
-      { id: 'basic', label: '基本信息', content: basicInfoContent || <></> },
-      { id: 'probability', label: '成交概率', content: probabilityContent || <></> },
+      { id: 'basic', label: t('crm.opportunityDetail.tab_basic'), content: basicInfoContent || <></> },
+      { id: 'probability', label: t('crm.opportunityDetail.tab_probability'), content: probabilityContent || <></> },
     ],
-    [basicInfoContent, probabilityContent]
+    [basicInfoContent, probabilityContent, t]
   );
 
   const infoCard = useMemo(
@@ -255,10 +257,10 @@ const OpportunityDetailPage: React.FC = () => {
       subtitle: getStageLabel(opportunity?.stage || ''),
       tags: customerName ? [customerName] : [],
       stats: [
-        { label: '商机金额', value: formatMoney(opportunity?.value) },
-        { label: '成交概率', value: `${opportunity?.probability || 0}%` },
+        { label: t('crm.opportunityDetail.stat_amount'), value: formatMoney(opportunity?.value) },
+        { label: t('crm.opportunityDetail.stat_probability'), value: `${opportunity?.probability || 0}%` },
         {
-          label: '预期金额',
+          label: t('crm.opportunityDetail.stat_expected'),
           value: formatMoney(
             opportunity?.value && opportunity?.probability
               ? opportunity.value * (opportunity.probability / 100)
@@ -267,7 +269,7 @@ const OpportunityDetailPage: React.FC = () => {
         },
       ],
     }),
-    [opportunity, customerName]
+    [opportunity, customerName, t]
   );
 
   const handleDelete = async () => {
@@ -281,8 +283,8 @@ const OpportunityDetailPage: React.FC = () => {
 
   return (
     <PageContainer
-      title='商机详情'
-      subtitle='查看和编辑商机信息'
+      title={t('crm.opportunityDetail.title')}
+      subtitle={t('crm.opportunityDetail.subtitle')}
       autoTitle
       autoBreadcrumbs
     >
@@ -302,8 +304,8 @@ const OpportunityDetailPage: React.FC = () => {
         isOpen={deleteDialogOpen}
         onClose={() => setDeleteDialogOpen(false)}
         onConfirm={handleDelete}
-        title='确认删除'
-        message='确定要删除此商机吗？'
+        title={t('crm.opportunityDetail.dialog_delete_title')}
+        message={t('crm.opportunityDetail.dialog_delete_message')}
         danger
       />
     </PageContainer>

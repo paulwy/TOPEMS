@@ -1,3 +1,4 @@
+import { useTranslation } from 'react-i18next';
 import CrudPage from '@/components/templates/CrudPage';
 import { createCrudPageAdapter } from '@/schema/crudPageAdapter';
 import { interactionSchema } from '@/schemas/crm';
@@ -11,11 +12,12 @@ const apiAdapter = createCrudPageAdapter({
 });
 
 export default function InteractionManagementPage() {
+  const { t } = useTranslation();
   return (
     <CrudPage
       schema={interactionSchema}
       apiAdapter={apiAdapter}
-      breadcrumbs={[{ label: 'CRM' }, { label: '交互记录管理' }]}
+      breadcrumbs={[{ label: t('crm.common.crm') }, { label: t('crm.interactionList.title') }]}
     />
   );
 }

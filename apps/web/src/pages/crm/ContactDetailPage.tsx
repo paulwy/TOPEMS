@@ -2,6 +2,7 @@ import { Chip, Typography, Box, InputLabel } from '@mui/material';
 import React, { useMemo, useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { User, Phone, Mail, MapPin, Building2 } from 'lucide-react';
+import { useTranslation } from 'react-i18next';
 import { crmApi } from '@/api/crm';
 import type { Contact } from '@/api/crm';
 import { apiLogger } from '@/utils/logger';
@@ -16,6 +17,7 @@ import { QUERY_KEYS } from '@/lib/reactQuery';
 const ct = designTokens.colors;
 
 const ContactDetailPage: React.FC = () => {
+  const { t } = useTranslation();
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
   const queryClient = useQueryClient();
@@ -48,7 +50,7 @@ const ContactDetailPage: React.FC = () => {
   const customerName =
     customerQuery.data?.success && customerQuery.data.data ? customerQuery.data.data.name : '';
   const loading = contactQuery.isLoading;
-  const errorMessage = contactQuery.isError ? '加载联系人信息失败' : undefined;
+  const errorMessage = contactQuery.isError ? t('crm.contactDetail.error_load') : undefined;
 
   const formatDate = (dateStr?: string) => {
     if (!dateStr) return '-';
@@ -63,8 +65,8 @@ const ContactDetailPage: React.FC = () => {
         color: 'default' | 'primary' | 'secondary' | 'error' | 'info' | 'success' | 'warning';
       }
     > = {
-      active: { label: '活跃', color: 'success' },
-      inactive: { label: '非活跃', color: 'default' },
+      active: { label: t('crm.contactDetail.status_active'), color: 'success' },
+      inactive: { label: t('crm.contactDetail.status_inactive'), color: 'default' },
     };
     const s = statusMap[status] || { label: status, color: 'default' };
     return (
@@ -87,40 +89,40 @@ const ContactDetailPage: React.FC = () => {
         }}
       >
         <Box>
-          <InputLabel sx={{ fontSize: 12, color: 'text.secondary' }}>联系人姓名</InputLabel>
+          <InputLabel sx={{ fontSize: 12, color: 'text.secondary' }}>{t('crm.contactDetail.field_name')}</InputLabel>
           <Typography sx={{ fontWeight: 'medium', mt: 0.5 }}>
             {contact.last_name ? `${contact.last_name}${contact.first_name}` : contact.first_name}
           </Typography>
         </Box>
         <Box>
-          <InputLabel sx={{ fontSize: 12, color: 'text.secondary' }}>所属客户</InputLabel>
+          <InputLabel sx={{ fontSize: 12, color: 'text.secondary' }}>{t('crm.contactDetail.field_customer')}</InputLabel>
           <Typography sx={{ mt: 0.5 }}>{customerName || '-'}</Typography>
         </Box>
         <Box>
-          <InputLabel sx={{ fontSize: 12, color: 'text.secondary' }}>职位</InputLabel>
+          <InputLabel sx={{ fontSize: 12, color: 'text.secondary' }}>{t('crm.contactDetail.field_position')}</InputLabel>
           <Typography sx={{ mt: 0.5 }}>{contact.position || '-'}</Typography>
         </Box>
         <Box>
-          <InputLabel sx={{ fontSize: 12, color: 'text.secondary' }}>电话</InputLabel>
+          <InputLabel sx={{ fontSize: 12, color: 'text.secondary' }}>{t('crm.contactDetail.field_phone')}</InputLabel>
           <Typography sx={{ mt: 0.5 }}>{contact.phone || '-'}</Typography>
         </Box>
         <Box>
-          <InputLabel sx={{ fontSize: 12, color: 'text.secondary' }}>邮箱</InputLabel>
+          <InputLabel sx={{ fontSize: 12, color: 'text.secondary' }}>{t('crm.contactDetail.field_email')}</InputLabel>
           <Typography sx={{ mt: 0.5 }}>{contact.email || '-'}</Typography>
         </Box>
         <Box>
-          <InputLabel sx={{ fontSize: 12, color: 'text.secondary' }}>状态</InputLabel>
+          <InputLabel sx={{ fontSize: 12, color: 'text.secondary' }}>{t('crm.contactDetail.field_status')}</InputLabel>
           <Box sx={{ mt: 0.5 }}>{getStatusBadge(contact.status)}</Box>
         </Box>
         {contact.notes && (
           <Box sx={{ gridColumn: 'span 3', mt: 2 }}>
-            <InputLabel sx={{ fontSize: 12, color: 'text.secondary' }}>备注</InputLabel>
+            <InputLabel sx={{ fontSize: 12, color: 'text.secondary' }}>{t('crm.contactDetail.field_notes')}</InputLabel>
             <Typography sx={{ mt: 0.5, color: 'text.secondary' }}>{contact.notes}</Typography>
           </Box>
         )}
       </Box>
     );
-  }, [contact, customerName]);
+  }, [contact, customerName, t]);
 
   const contactInfoContent = useMemo(() => {
     if (!contact) return null;
@@ -141,7 +143,7 @@ const ContactDetailPage: React.FC = () => {
               size={16}
               style={{ marginRight: 8 }}
             />
-            联系方式
+            {t('crm.contactDetail.section_contact_method')}
           </Typography>
           <Box
             sx={{
@@ -152,11 +154,11 @@ const ContactDetailPage: React.FC = () => {
               borderColor: 'divider',
             }}
           >
-            <Typography color='text.secondary'>电话</Typography>
+            <Typography color='text.secondary'>{t('crm.contactDetail.field_phone')}</Typography>
             <Typography sx={{ fontWeight: 'medium' }}>{contact.phone || '-'}</Typography>
           </Box>
           <Box sx={{ display: 'flex', justifyContent: 'space-between', py: 1 }}>
-            <Typography color='text.secondary'>邮箱</Typography>
+            <Typography color='text.secondary'>{t('crm.contactDetail.field_email')}</Typography>
             <Typography sx={{ fontWeight: 'medium' }}>{contact.email || '-'}</Typography>
           </Box>
         </Box>
@@ -169,7 +171,7 @@ const ContactDetailPage: React.FC = () => {
               size={16}
               style={{ marginRight: 8 }}
             />
-            关联信息
+            {t('crm.contactDetail.section_related')}
           </Typography>
           <Box
             sx={{
@@ -180,23 +182,23 @@ const ContactDetailPage: React.FC = () => {
               borderColor: 'divider',
             }}
           >
-            <Typography color='text.secondary'>所属客户</Typography>
+            <Typography color='text.secondary'>{t('crm.contactDetail.field_customer')}</Typography>
             <Typography sx={{ fontWeight: 'medium' }}>{customerName || '-'}</Typography>
           </Box>
           <Box sx={{ display: 'flex', justifyContent: 'space-between', py: 1 }}>
-            <Typography color='text.secondary'>职位</Typography>
+            <Typography color='text.secondary'>{t('crm.contactDetail.field_position')}</Typography>
             <Typography sx={{ fontWeight: 'medium' }}>{contact.position || '-'}</Typography>
           </Box>
         </Box>
       </Box>
     );
-  }, [contact, customerName]);
+  }, [contact, customerName, t]);
 
   const footerSection = useMemo<SectionConfig>(() => {
     if (!contact) return { id: 'footer', content: null };
     return {
       id: 'footer',
-      title: '其他信息',
+      title: t('crm.contactDetail.section_other'),
       content: (
         <Box
           sx={{
@@ -210,7 +212,7 @@ const ContactDetailPage: React.FC = () => {
               variant='body2'
               color='text.secondary'
             >
-              创建时间
+              {t('crm.common.create_time')}
             </Typography>
             <Typography sx={{ fontWeight: 'medium', mt: 0.5 }}>
               {formatDate(contact.created_at)}
@@ -221,7 +223,7 @@ const ContactDetailPage: React.FC = () => {
               variant='body2'
               color='text.secondary'
             >
-              更新时间
+              {t('crm.common.update_time')}
             </Typography>
             <Typography sx={{ fontWeight: 'medium', mt: 0.5 }}>
               {formatDate(contact.updated_at)}
@@ -232,7 +234,7 @@ const ContactDetailPage: React.FC = () => {
               variant='body2'
               color='text.secondary'
             >
-              联系人ID
+              {t('crm.contactDetail.field_contact_id')}
             </Typography>
             <Typography
               sx={{ fontWeight: 'medium', mt: 0.5, fontFamily: 'monospace', fontSize: '0.875rem' }}
@@ -243,14 +245,14 @@ const ContactDetailPage: React.FC = () => {
         </Box>
       ),
     };
-  }, [contact]);
+  }, [contact, t]);
 
   const tabs = useMemo<TabConfig[]>(
     () => [
-      { id: 'basic', label: '基本信息', content: basicInfoContent || <></> },
-      { id: 'contact', label: '联系信息', content: contactInfoContent || <></> },
+      { id: 'basic', label: t('crm.contactDetail.tab_basic'), content: basicInfoContent || <></> },
+      { id: 'contact', label: t('crm.contactDetail.tab_contact'), content: contactInfoContent || <></> },
     ],
-    [basicInfoContent, contactInfoContent]
+    [basicInfoContent, contactInfoContent, t]
   );
 
   const infoCard = useMemo(
@@ -284,8 +286,8 @@ const ContactDetailPage: React.FC = () => {
 
   return (
     <PageContainer
-      title='联系人详情'
-      subtitle='查看和编辑联系人信息'
+      title={t('crm.contactDetail.title')}
+      subtitle={t('crm.contactDetail.subtitle')}
       autoTitle
       autoBreadcrumbs
     >
@@ -305,8 +307,8 @@ const ContactDetailPage: React.FC = () => {
         isOpen={deleteDialogOpen}
         onClose={() => setDeleteDialogOpen(false)}
         onConfirm={handleDelete}
-        title='确认删除'
-        message='确定要删除此联系人吗？'
+        title={t('crm.contactDetail.dialog_delete_title')}
+        message={t('crm.contactDetail.dialog_delete_message')}
         danger
       />
     </PageContainer>

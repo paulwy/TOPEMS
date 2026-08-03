@@ -1,6 +1,7 @@
 import React from 'react';
 import { Box, Chip, LinearProgress, Paper, Typography, Button } from '@mui/material';
 import { Star, TrendingUp, TrendingDown, Minus, Calculator } from 'lucide-react';
+import { useTranslation } from 'react-i18next';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 
 import CrudPage, { type CrudApiAdapter } from '@/components/templates/CrudPage';
@@ -11,30 +12,6 @@ import type { CustomerScore, ScoreFactor } from '@/api/crm';
 import { useNotificationStore } from '@/store';
 import { apiLogger } from '@/utils/logger';
 import { CRM_PATHS } from '@/modules/crm/config';
-
-// ============ API 适配器 ============
-
-const apiAdapter: CrudApiAdapter<CustomerScore> = {
-  list: async (params) => {
-    const res = await crmApi.customerScoring.list({
-      page: params?.page,
-      pageSize: params?.pageSize,
-    });
-    if (res.success && res.data) {
-      return { data: res.data.items || [], total: res.data.total || 0 };
-    }
-    return { data: [], total: 0 };
-  },
-  create: async () => {
-    throw new Error('评分不支持手动创建');
-  },
-  update: async () => {
-    throw new Error('评分不支持手动编辑');
-  },
-  delete: async () => {
-    throw new Error('评分不支持删除');
-  },
-};
 
 // ============ 辅助函数 ============
 
@@ -81,102 +58,6 @@ const getScoreTrendIcon = (trend: string) => {
       return <Minus sx={{ width: 16, height: 16, color: 'grey.500' }} />;
   }
 };
-
-// ============ 列定义 ============
-
-const columns: ColumnDef<CustomerScore>[] = [
-  {
-    id: 'customer_name',
-    label: '客户名称',
-    width: 200,
-    sortable: true,
-    render: (row) => (
-      <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
-        <Box
-          sx={{
-            width: 36,
-            height: 36,
-            bgcolor: 'grey.100',
-            borderRadius: '50%',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-          }}
-        >
-          <Typography
-            variant='body1'
-            sx={{ fontWeight: 'bold' }}
-          >
-            {row.customer_name.charAt(0)}
-          </Typography>
-        </Box>
-        <Typography sx={{ fontWeight: 500 }}>{row.customer_name}</Typography>
-      </Box>
-    ),
-  },
-  {
-    id: 'score',
-    label: '综合评分',
-    width: 120,
-    align: 'center',
-    sortable: true,
-    render: (row) => (
-      <Typography
-        variant='h6'
-        sx={{
-          fontWeight: 'bold',
-          color: getScoreColor(row.score),
-        }}
-      >
-        {row.score}
-      </Typography>
-    ),
-  },
-  {
-    id: 'scorelevel',
-    label: '客户等级',
-    width: 100,
-    align: 'center',
-    render: (row) => getGradeBadge(row.scorelevel),
-  },
-  {
-    id: 'trend',
-    label: '趋势',
-    width: 80,
-    align: 'center',
-    render: (row) => getScoreTrendIcon(row.trend),
-  },
-  {
-    id: 'scoring_date',
-    label: '评分日期',
-    width: 150,
-    sortable: true,
-    render: (row) => new Date(row.scoring_date).toLocaleDateString('zh-CN'),
-  },
-  {
-    id: 'last_score',
-    label: '上次评分',
-    width: 120,
-    align: 'center',
-    render: (row) => (
-      <Typography
-        variant='body2'
-        sx={{
-          color:
-            row.last_score !== undefined
-              ? row.score > row.last_score
-                ? 'success.main'
-                : row.score < row.last_score
-                  ? 'error.main'
-                  : 'text.secondary'
-              : 'text.secondary',
-        }}
-      >
-        {row.last_score !== undefined ? row.last_score : '-'}
-      </Typography>
-    ),
-  },
-];
 
 // ============ 统计卡片 ============
 
@@ -234,8 +115,129 @@ const StatCard: React.FC<StatCardProps> = ({ label, value, color, bgColor }) => 
 // ============ 组件 ============
 
 const CRMCustomerScoringPage: React.FC = () => {
+  const { t } = useTranslation();
   const { addNotification } = useNotificationStore();
   const queryClient = useQueryClient();
+
+  // ============ API 适配器 ============
+
+  const apiAdapter: CrudApiAdapter<CustomerScore> = {
+    list: async (params) => {
+      const res = await crmApi.customerScoring.list({
+        page: params?.page,
+        pageSize: params?.pageSize,
+      });
+      if (res.success && res.data) {
+        return { data: res.data.items || [], total: res.data.total || 0 };
+      }
+      return { data: [], total: 0 };
+    },
+    create: async () => {
+      throw new Error(t('crm.customerScoring.error_create_not_supported'));
+    },
+    update: async () => {
+      throw new Error(t('crm.customerScoring.error_edit_not_supported'));
+    },
+    delete: async () => {
+      throw new Error(t('crm.customerScoring.error_delete_not_supported'));
+    },
+  };
+
+  // ============ 列定义 ============
+
+  const columns: ColumnDef<CustomerScore>[] = [
+    {
+      id: 'customer_name',
+      label: t('crm.customerScoring.col_customer_name'),
+      width: 200,
+      sortable: true,
+      render: (row) => (
+        <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
+          <Box
+            sx={{
+              width: 36,
+              height: 36,
+              bgcolor: 'grey.100',
+              borderRadius: '50%',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+            }}
+          >
+            <Typography
+              variant='body1'
+              sx={{ fontWeight: 'bold' }}
+            >
+              {row.customer_name.charAt(0)}
+            </Typography>
+          </Box>
+          <Typography sx={{ fontWeight: 500 }}>{row.customer_name}</Typography>
+        </Box>
+      ),
+    },
+    {
+      id: 'score',
+      label: t('crm.customerScoring.col_score'),
+      width: 120,
+      align: 'center',
+      sortable: true,
+      render: (row) => (
+        <Typography
+          variant='h6'
+          sx={{
+            fontWeight: 'bold',
+            color: getScoreColor(row.score),
+          }}
+        >
+          {row.score}
+        </Typography>
+      ),
+    },
+    {
+      id: 'scorelevel',
+      label: t('crm.customerScoring.col_level'),
+      width: 100,
+      align: 'center',
+      render: (row) => getGradeBadge(row.scorelevel),
+    },
+    {
+      id: 'trend',
+      label: t('crm.customerScoring.col_trend'),
+      width: 80,
+      align: 'center',
+      render: (row) => getScoreTrendIcon(row.trend),
+    },
+    {
+      id: 'scoring_date',
+      label: t('crm.customerScoring.col_scoring_date'),
+      width: 150,
+      sortable: true,
+      render: (row) => new Date(row.scoring_date).toLocaleDateString('zh-CN'),
+    },
+    {
+      id: 'last_score',
+      label: t('crm.customerScoring.col_last_score'),
+      width: 120,
+      align: 'center',
+      render: (row) => (
+        <Typography
+          variant='body2'
+          sx={{
+            color:
+              row.last_score !== undefined
+                ? row.score > row.last_score
+                  ? 'success.main'
+                  : row.score < row.last_score
+                    ? 'error.main'
+                    : 'text.secondary'
+                : 'text.secondary',
+          }}
+        >
+          {row.last_score !== undefined ? row.last_score : '-'}
+        </Typography>
+      ),
+    },
+  ];
 
   const calculateBatchMutation = useMutation({
     mutationFn: async () => {
@@ -245,24 +247,24 @@ const CRMCustomerScoringPage: React.FC = () => {
       });
       const customerIds = customerResponse.data?.items?.map((c) => c.id) || [];
       if (customerIds.length === 0) {
-        throw new Error('请先添加客户');
+        throw new Error(t('crm.customerScoring.error_no_customer'));
       }
       return crmApi.customerScoring.calculateBatch(customerIds);
     },
     onSuccess: () => {
       addNotification({
         type: 'success',
-        title: '成功',
-        message: '已批量计算客户评分',
+        title: t('crm.common.success'),
+        message: t('crm.customerScoring.msg_batch_success'),
       });
       queryClient.invalidateQueries({ queryKey: [customerScoringSchema.entity] });
     },
     onError: (error: unknown) => {
-      apiLogger.error('批量计算评分失败:', error);
+      apiLogger.error(t('crm.customerScoring.log_batch_fail'), error);
       addNotification({
         type: 'error',
-        title: '计算失败',
-        message: error instanceof Error ? error.message : '批量计算客户评分失败',
+        title: t('crm.customerScoring.msg_calc_fail'),
+        message: error instanceof Error ? error.message : t('crm.customerScoring.msg_batch_fail'),
       });
     },
   });
@@ -290,25 +292,25 @@ const CRMCustomerScoringPage: React.FC = () => {
           }}
         >
           <StatCard
-            label='A级客户'
+            label={t('crm.customerScoring.grade_a')}
             value={gradeDistribution.A}
             color='success.main'
             bgColor='success.light'
           />
           <StatCard
-            label='B级客户'
+            label={t('crm.customerScoring.grade_b')}
             value={gradeDistribution.B}
             color='primary.main'
             bgColor='primary.light'
           />
           <StatCard
-            label='C级客户'
+            label={t('crm.customerScoring.grade_c')}
             value={gradeDistribution.C}
             color='warning.main'
             bgColor='warning.light'
           />
           <StatCard
-            label='D级客户'
+            label={t('crm.customerScoring.grade_d')}
             value={gradeDistribution.D}
             color='error.main'
             bgColor='error.light'
@@ -321,7 +323,9 @@ const CRMCustomerScoringPage: React.FC = () => {
             onClick={() => calculateBatchMutation.mutate()}
             disabled={calculateBatchMutation.isPending}
           >
-            {calculateBatchMutation.isPending ? '计算中...' : '批量计算评分'}
+            {calculateBatchMutation.isPending
+              ? t('crm.customerScoring.btn_calculating')
+              : t('crm.customerScoring.btn_batch_calculate')}
           </Button>
         </Box>
       </Box>
@@ -354,7 +358,7 @@ const CRMCustomerScoringPage: React.FC = () => {
               variant='body2'
               sx={{ color: 'text.secondary', mt: 0.5 }}
             >
-              综合评分
+              {t('crm.customerScoring.text_comprehensive_score')}
             </Typography>
             {score.last_score !== undefined && (
               <Typography
@@ -370,7 +374,7 @@ const CRMCustomerScoringPage: React.FC = () => {
                   display: 'block',
                 }}
               >
-                上次评分: {score.last_score}
+                {t('crm.customerScoring.text_last_score', { score: score.last_score })}
               </Typography>
             )}
           </Box>
@@ -380,7 +384,7 @@ const CRMCustomerScoringPage: React.FC = () => {
               variant='body2'
               sx={{ color: 'text.secondary', mt: 0.5 }}
             >
-              客户等级
+              {t('crm.customerScoring.text_customer_level')}
             </Typography>
           </Box>
         </Box>
@@ -408,7 +412,7 @@ const CRMCustomerScoringPage: React.FC = () => {
                   variant='body2'
                   sx={{ color: 'text.secondary' }}
                 >
-                  权重: {factor.weight}%
+                  {t('crm.customerScoring.text_weight', { weight: factor.weight })}
                 </Typography>
               </Box>
               <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
@@ -449,9 +453,9 @@ const CRMCustomerScoringPage: React.FC = () => {
       detailContent={detailContent}
       headerContent={headerContent}
       breadcrumbs={[
-        { label: '首页', href: '/dashboard' },
-        { label: '客户关系管理', href: CRM_PATHS.root },
-        { label: '客户评分' },
+        { label: t('crm.common.home'), href: '/dashboard' },
+        { label: t('crm.customerScoring.breadcrumb_manage'), href: CRM_PATHS.root },
+        { label: t('crm.customerScoring.title') },
       ]}
     />
   );

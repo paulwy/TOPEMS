@@ -1,6 +1,7 @@
-import React, { useEffect } from 'react';
+import React, { useEffect, useMemo } from 'react';
 import { Box, Typography, Card, CardContent, LinearProgress, Chip } from '@mui/material';
 import { TrendingUp, TrendingDown, Users, Target, DollarSign } from 'lucide-react';
+import { useTranslation } from 'react-i18next';
 import { useQuery } from '@tanstack/react-query';
 import { useNotificationStore } from '../../store';
 import { StatsPageTemplate, type StatsStatCard } from '@/components/templates';
@@ -30,17 +31,21 @@ interface ChartDataItem {
   color: string;
 }
 
-const stageLabelMap: Record<string, string> = {
-  lead: '潜在客户',
-  qualified: '意向确认',
-  proposal: '方案提交',
-  negotiation: '商务谈判',
-  closed_won: '赢单',
-  closed_lost: '输单',
-};
-
 const CRMSalesFunnelPage: React.FC = () => {
+  const { t } = useTranslation();
   const addNotification = useNotificationStore((state) => state.addNotification);
+
+  const stageLabelMap = useMemo<Record<string, string>>(
+    () => ({
+      lead: t('crm.salesFunnel.stage_lead'),
+      qualified: t('crm.salesFunnel.stage_qualified'),
+      proposal: t('crm.salesFunnel.stage_proposal'),
+      negotiation: t('crm.salesFunnel.stage_negotiation'),
+      closed_won: t('crm.salesFunnel.stage_closed_won'),
+      closed_lost: t('crm.salesFunnel.stage_closed_lost'),
+    }),
+    [t]
+  );
 
   const funnelQuery = useQuery<{ metrics: FunnelMetrics | null; stages: FunnelStage[] }>({
     queryKey: ['crm-sales-funnel'],
@@ -71,37 +76,37 @@ const CRMSalesFunnelPage: React.FC = () => {
     if (funnelQuery.isError) {
       addNotification({
         type: 'error',
-        title: '加载失败',
-        message: '无法加载销售漏斗数据',
+        title: t('crm.salesFunnel.title_load_fail'),
+        message: t('crm.salesFunnel.msg_load_fail'),
       });
     }
-  }, [funnelQuery.isError, addNotification]);
+  }, [funnelQuery.isError, addNotification, t]);
 
   const stats: StatsStatCard[] = [
     {
       id: 'total',
-      title: '商机总数',
+      title: t('crm.salesFunnel.stat_total'),
       value: metrics?.total_opportunities ?? 0,
       icon: <Users size={20} />,
       color: 'primary',
     },
     {
       id: 'value',
-      title: '总价值',
+      title: t('crm.salesFunnel.stat_total_value'),
       value: `¥${Math.round(Number(metrics?.total_value ?? 0)).toLocaleString()}`,
       icon: <DollarSign size={20} />,
       color: 'success',
     },
     {
       id: 'avg',
-      title: '平均价值',
+      title: t('crm.salesFunnel.stat_avg_value'),
       value: `¥${Math.round(Number(metrics?.avg_value ?? 0)).toLocaleString()}`,
       icon: <Target size={20} />,
       color: 'info',
     },
     {
       id: 'conversion',
-      title: '转化率',
+      title: t('crm.salesFunnel.stat_conversion'),
       value: `${(metrics?.conversion_rate ?? 0).toFixed(1)}%`,
       icon: <TrendingUp size={20} />,
       color: 'warning',
@@ -111,18 +116,18 @@ const CRMSalesFunnelPage: React.FC = () => {
   const charts: ChartConfig[] = [
     {
       id: 'stage-distribution',
-      title: '各阶段商机数',
+      title: t('crm.salesFunnel.chart_stage_distribution'),
       type: 'bar' as const,
       dataKey: 'value',
       nameKey: 'name',
       data: stages.flatMap((stage) => [
         {
-          name: `${stageLabelMap[stage.stage] || stage.stage}-商机数`,
+          name: `${stageLabelMap[stage.stage] || stage.stage}${t('crm.salesFunnel.chart_suffix_count')}`,
           value: stage.count,
           color: 'primary.main',
         },
         {
-          name: `${stageLabelMap[stage.stage] || stage.stage}-总价值(万)`,
+          name: `${stageLabelMap[stage.stage] || stage.stage}${t('crm.salesFunnel.chart_suffix_value')}`,
           value: Math.round(Number(stage.total_value) / 10000),
           color: 'success.main',
         },
@@ -132,23 +137,23 @@ const CRMSalesFunnelPage: React.FC = () => {
 
   return (
     <PageContainer
-      title='销售漏斗'
-      subtitle='可视化销售机会的阶段性转化'
+      title={t('crm.salesFunnel.title')}
+      subtitle={t('crm.salesFunnel.subtitle')}
       maxWidth='xl'
       autoTitle
       autoBreadcrumbs
     >
       <StatsPageTemplate
-        title='漏斗分析'
+        title={t('crm.salesFunnel.template_title')}
         statCards={stats}
         charts={charts}
         loading={loading}
         onRefresh={() => funnelQuery.refetch()}
         timeRangeOptions={[
-          { value: 'month', label: '本月' },
-          { value: 'quarter', label: '本季' },
-          { value: 'year', label: '本年' },
-          { value: 'all', label: '全部' },
+          { value: 'month', label: t('crm.salesFunnel.range_month') },
+          { value: 'quarter', label: t('crm.salesFunnel.range_quarter') },
+          { value: 'year', label: t('crm.salesFunnel.range_year') },
+          { value: 'all', label: t('crm.salesFunnel.range_all') },
         ]}
       />
 
@@ -158,7 +163,7 @@ const CRMSalesFunnelPage: React.FC = () => {
           variant='h6'
           sx={{ fontWeight: 600, mb: 2 }}
         >
-          各阶段详情
+          {t('crm.salesFunnel.section_detail')}
         </Typography>
         <Box
           sx={{
@@ -181,7 +186,7 @@ const CRMSalesFunnelPage: React.FC = () => {
                         variant='caption'
                         color='text.secondary'
                       >
-                        阶段 {idx + 1}
+                        {t('crm.salesFunnel.stage_index', { index: idx + 1 })}
                       </Typography>
                       <Typography
                         variant='h6'
@@ -210,21 +215,25 @@ const CRMSalesFunnelPage: React.FC = () => {
                       variant='body2'
                       color='text.secondary'
                     >
-                      个商机
+                      {t('crm.salesFunnel.text_opportunity_count')}
                     </Typography>
                   </Box>
                   <Typography
                     variant='body2'
                     color='text.secondary'
                   >
-                    总价值: ¥{Math.round(Number(stage.total_value)).toLocaleString()}
+                    {t('crm.salesFunnel.text_total_value', {
+                      value: Math.round(Number(stage.total_value)).toLocaleString(),
+                    })}
                   </Typography>
                   <Typography
                     variant='body2'
                     color='text.secondary'
                     sx={{ mb: 2 }}
                   >
-                    平均价值: ¥{Math.round(Number(stage.avg_value)).toLocaleString()}
+                    {t('crm.salesFunnel.text_avg_value', {
+                      value: Math.round(Number(stage.avg_value)).toLocaleString(),
+                    })}
                   </Typography>
                   <LinearProgress
                     variant='determinate'

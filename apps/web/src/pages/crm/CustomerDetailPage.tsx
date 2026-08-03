@@ -1,6 +1,7 @@
 import { Chip, Typography, Box, InputLabel, Button } from '@mui/material';
 import React, { useMemo } from 'react';
 import { useParams } from 'react-router-dom';
+import { useTranslation } from 'react-i18next';
 import { designTokens } from '@/theme/tokens';
 import { Building2, Receipt, Wallet } from 'lucide-react';
 import { crmApi } from '@/api/crm';
@@ -19,6 +20,7 @@ import { QUERY_KEYS } from '@/lib/reactQuery';
 const ct = designTokens.colors;
 
 const CustomerDetailPage: React.FC = () => {
+  const { t } = useTranslation();
   const { id } = useParams<{ id: string }>();
 
   const customerQuery = useQuery({
@@ -64,10 +66,10 @@ const CustomerDetailPage: React.FC = () => {
         color: 'default' | 'primary' | 'secondary' | 'error' | 'info' | 'success' | 'warning';
       }
     > = {
-      active: { label: '活跃', color: 'success' },
-      inactive: { label: '非活跃', color: 'default' },
-      prospect: { label: '潜在', color: 'info' },
-      blocked: { label: '已冻结', color: 'error' },
+      active: { label: t('crm.customerDetail.status_active'), color: 'success' },
+      inactive: { label: t('crm.customerDetail.status_inactive'), color: 'default' },
+      prospect: { label: t('crm.customerDetail.status_prospect'), color: 'info' },
+      blocked: { label: t('crm.customerDetail.status_blocked'), color: 'error' },
     };
     const s = statusMap[status] || { label: status, color: 'default' };
     return (
@@ -92,46 +94,46 @@ const CustomerDetailPage: React.FC = () => {
         }}
       >
         <Box>
-          <InputLabel sx={{ fontSize: 12, color: 'text.secondary' }}>客户名称</InputLabel>
+          <InputLabel sx={{ fontSize: 12, color: 'text.secondary' }}>{t('crm.customerDetail.field_name')}</InputLabel>
           <Typography sx={{ fontWeight: 'medium', mt: 0.5 }}>{customer.name}</Typography>
         </Box>
         <Box>
-          <InputLabel sx={{ fontSize: 12, color: 'text.secondary' }}>客户代码</InputLabel>
+          <InputLabel sx={{ fontSize: 12, color: 'text.secondary' }}>{t('crm.customerDetail.field_code')}</InputLabel>
           <Typography sx={{ mt: 0.5 }}>{customer.code || '-'}</Typography>
         </Box>
         <Box>
-          <InputLabel sx={{ fontSize: 12, color: 'text.secondary' }}>行业</InputLabel>
+          <InputLabel sx={{ fontSize: 12, color: 'text.secondary' }}>{t('crm.customerDetail.field_industry')}</InputLabel>
           <Typography sx={{ mt: 0.5 }}>{customer.industry || '-'}</Typography>
         </Box>
         <Box>
-          <InputLabel sx={{ fontSize: 12, color: 'text.secondary' }}>网站</InputLabel>
+          <InputLabel sx={{ fontSize: 12, color: 'text.secondary' }}>{t('crm.customerDetail.field_website')}</InputLabel>
           <Typography sx={{ mt: 0.5 }}>{customer.website || '-'}</Typography>
         </Box>
         <Box>
-          <InputLabel sx={{ fontSize: 12, color: 'text.secondary' }}>邮箱</InputLabel>
+          <InputLabel sx={{ fontSize: 12, color: 'text.secondary' }}>{t('crm.customerDetail.field_email')}</InputLabel>
           <Typography sx={{ mt: 0.5 }}>{customer.email || '-'}</Typography>
         </Box>
         <Box>
-          <InputLabel sx={{ fontSize: 12, color: 'text.secondary' }}>电话</InputLabel>
+          <InputLabel sx={{ fontSize: 12, color: 'text.secondary' }}>{t('crm.customerDetail.field_phone')}</InputLabel>
           <Typography sx={{ mt: 0.5 }}>{customer.phone || '-'}</Typography>
         </Box>
         <Box sx={{ gridColumn: 'span 2' }}>
-          <InputLabel sx={{ fontSize: 12, color: 'text.secondary' }}>地址</InputLabel>
+          <InputLabel sx={{ fontSize: 12, color: 'text.secondary' }}>{t('crm.customerDetail.field_address')}</InputLabel>
           <Typography sx={{ mt: 0.5 }}>{customer.address || '-'}</Typography>
         </Box>
         <Box>
-          <InputLabel sx={{ fontSize: 12, color: 'text.secondary' }}>状态</InputLabel>
+          <InputLabel sx={{ fontSize: 12, color: 'text.secondary' }}>{t('crm.customerDetail.field_status')}</InputLabel>
           <Box sx={{ mt: 0.5 }}>{getStatusBadge(customer.status)}</Box>
         </Box>
         {customer.notes && (
           <Box sx={{ gridColumn: 'span 3', mt: 2 }}>
-            <InputLabel sx={{ fontSize: 12, color: 'text.secondary' }}>备注</InputLabel>
+            <InputLabel sx={{ fontSize: 12, color: 'text.secondary' }}>{t('crm.customerDetail.field_notes')}</InputLabel>
             <Typography sx={{ mt: 0.5, color: 'text.secondary' }}>{customer.notes}</Typography>
           </Box>
         )}
       </Box>
     );
-  }, [customer]);
+  }, [customer, t]);
 
   const financeInfoContent = useMemo(() => {
     if (!finInfo) return null;
@@ -148,7 +150,7 @@ const CustomerDetailPage: React.FC = () => {
             variant='subtitle1'
             sx={{ fontWeight: 600, mb: 2 }}
           >
-            信用管理
+            {t('crm.customerDetail.section_credit')}
           </Typography>
           <Box
             sx={{
@@ -159,7 +161,7 @@ const CustomerDetailPage: React.FC = () => {
               borderColor: 'divider',
             }}
           >
-            <Typography color='text.secondary'>信用额度</Typography>
+            <Typography color='text.secondary'>{t('crm.customerDetail.field_credit_limit')}</Typography>
             <Typography sx={{ fontWeight: 'medium' }}>
               {formatCurrency(finInfo?.credit_limit)}
             </Typography>
@@ -173,7 +175,7 @@ const CustomerDetailPage: React.FC = () => {
               borderColor: 'divider',
             }}
           >
-            <Typography color='text.secondary'>信用期限（天）</Typography>
+            <Typography color='text.secondary'>{t('crm.customerDetail.field_credit_term_days')}</Typography>
             <Typography sx={{ fontWeight: 'medium' }}>{finInfo?.credit_term_days || 0}</Typography>
           </Box>
           <Box
@@ -185,15 +187,15 @@ const CustomerDetailPage: React.FC = () => {
               borderColor: 'divider',
             }}
           >
-            <Typography color='text.secondary'>付款条款</Typography>
+            <Typography color='text.secondary'>{t('crm.customerDetail.field_payment_terms')}</Typography>
             <Typography sx={{ fontWeight: 'medium' }}>{finInfo?.payment_terms || '-'}</Typography>
           </Box>
           <Box sx={{ display: 'flex', justifyContent: 'space-between', py: 1 }}>
-            <Typography color='text.secondary'>客户状态</Typography>
+            <Typography color='text.secondary'>{t('crm.customerDetail.field_customer_status')}</Typography>
             <Chip
               size='small'
               color={finInfo?.status === 'normal' ? 'success' : 'default'}
-              label={finInfo?.status === 'normal' ? '正常' : finInfo?.status || '-'}
+              label={finInfo?.status === 'normal' ? t('crm.customerDetail.status_normal') : finInfo?.status || '-'}
             />
           </Box>
         </Box>
@@ -203,7 +205,7 @@ const CustomerDetailPage: React.FC = () => {
             variant='subtitle1'
             sx={{ fontWeight: 600, mb: 2 }}
           >
-            应收款概览
+            {t('crm.customerDetail.section_receivable')}
           </Typography>
           <Box
             sx={{
@@ -214,7 +216,7 @@ const CustomerDetailPage: React.FC = () => {
               borderColor: 'divider',
             }}
           >
-            <Typography color='text.secondary'>应收账款</Typography>
+            <Typography color='text.secondary'>{t('crm.customerDetail.field_accounts_receivable')}</Typography>
             <Typography sx={{ fontWeight: 'medium', color: 'warning.main' }}>
               {formatCurrency(finInfo?.accounts_receivable)}
             </Typography>
@@ -228,7 +230,7 @@ const CustomerDetailPage: React.FC = () => {
               borderColor: 'divider',
             }}
           >
-            <Typography color='text.secondary'>逾期应收</Typography>
+            <Typography color='text.secondary'>{t('crm.customerDetail.field_overdue_receivable')}</Typography>
             <Typography sx={{ fontWeight: 'medium', color: 'error.main' }}>
               {formatCurrency(finInfo?.overdue_receivable)}
             </Typography>
@@ -242,13 +244,13 @@ const CustomerDetailPage: React.FC = () => {
               borderColor: 'divider',
             }}
           >
-            <Typography color='text.secondary'>平均回款天数</Typography>
+            <Typography color='text.secondary'>{t('crm.customerDetail.field_avg_collection_days')}</Typography>
             <Typography sx={{ fontWeight: 'medium' }}>
-              {finInfo?.avg_collection_days || 0} 天
+              {finInfo?.avg_collection_days || 0} {t('crm.customerDetail.field_avg_collection_days_unit')}
             </Typography>
           </Box>
           <Box sx={{ display: 'flex', justifyContent: 'space-between', py: 1 }}>
-            <Typography color='text.secondary'>最后交易日期</Typography>
+            <Typography color='text.secondary'>{t('crm.customerDetail.field_last_transaction_date')}</Typography>
             <Typography sx={{ fontWeight: 'medium' }}>
               {formatDate(finInfo?.last_transaction_date)}
             </Typography>
@@ -260,7 +262,7 @@ const CustomerDetailPage: React.FC = () => {
             variant='subtitle1'
             sx={{ fontWeight: 600, mb: 2 }}
           >
-            交易统计
+            {t('crm.customerDetail.section_transaction')}
           </Typography>
           <Box
             sx={{
@@ -271,7 +273,7 @@ const CustomerDetailPage: React.FC = () => {
               borderColor: 'divider',
             }}
           >
-            <Typography color='text.secondary'>累计销售额</Typography>
+            <Typography color='text.secondary'>{t('crm.customerDetail.field_total_sales')}</Typography>
             <Typography sx={{ fontWeight: 'medium', color: 'success.main' }}>
               {formatCurrency(finInfo?.total_sales)}
             </Typography>
@@ -285,13 +287,13 @@ const CustomerDetailPage: React.FC = () => {
               borderColor: 'divider',
             }}
           >
-            <Typography color='text.secondary'>累计收款</Typography>
+            <Typography color='text.secondary'>{t('crm.customerDetail.field_total_received')}</Typography>
             <Typography sx={{ fontWeight: 'medium', color: 'primary.main' }}>
               {formatCurrency(finInfo?.total_received)}
             </Typography>
           </Box>
           <Box sx={{ display: 'flex', justifyContent: 'space-between', py: 1 }}>
-            <Typography color='text.secondary'>应收余额</Typography>
+            <Typography color='text.secondary'>{t('crm.customerDetail.field_receivable_balance')}</Typography>
             <Typography sx={{ fontWeight: 'medium', color: 'warning.main' }}>
               {formatCurrency((finInfo?.accounts_receivable || 0) - (finInfo?.total_received || 0))}
             </Typography>
@@ -303,7 +305,7 @@ const CustomerDetailPage: React.FC = () => {
             variant='subtitle1'
             sx={{ fontWeight: 600, mb: 2 }}
           >
-            银行账户信息
+            {t('crm.customerDetail.section_bank')}
           </Typography>
           <Box
             sx={{
@@ -314,7 +316,7 @@ const CustomerDetailPage: React.FC = () => {
               borderColor: 'divider',
             }}
           >
-            <Typography color='text.secondary'>开户银行</Typography>
+            <Typography color='text.secondary'>{t('crm.customerDetail.field_bank_name')}</Typography>
             <Typography sx={{ fontWeight: 'medium' }}>{finInfo?.bank_name || '-'}</Typography>
           </Box>
           <Box
@@ -326,7 +328,7 @@ const CustomerDetailPage: React.FC = () => {
               borderColor: 'divider',
             }}
           >
-            <Typography color='text.secondary'>银行账号</Typography>
+            <Typography color='text.secondary'>{t('crm.customerDetail.field_bank_account')}</Typography>
             <Typography sx={{ fontWeight: 'medium' }}>{finInfo?.bank_account || '-'}</Typography>
           </Box>
           <Box
@@ -338,17 +340,17 @@ const CustomerDetailPage: React.FC = () => {
               borderColor: 'divider',
             }}
           >
-            <Typography color='text.secondary'>账户名称</Typography>
+            <Typography color='text.secondary'>{t('crm.customerDetail.field_account_name')}</Typography>
             <Typography sx={{ fontWeight: 'medium' }}>{finInfo?.account_name || '-'}</Typography>
           </Box>
           <Box sx={{ display: 'flex', justifyContent: 'space-between', py: 1 }}>
-            <Typography color='text.secondary'>税号</Typography>
+            <Typography color='text.secondary'>{t('crm.customerDetail.field_tax_number')}</Typography>
             <Typography sx={{ fontWeight: 'medium' }}>{finInfo?.tax_number || '-'}</Typography>
           </Box>
         </Box>
       </Box>
     );
-  }, [finInfo]);
+  }, [finInfo, t]);
 
   const invoicesContent = useMemo(() => {
     const invoiceList = invoicesData?.data?.items || [];
@@ -359,14 +361,14 @@ const CustomerDetailPage: React.FC = () => {
             variant='subtitle1'
             sx={{ fontWeight: 600 }}
           >
-            销售发票列表
+            {t('crm.customerDetail.invoices_title')}
           </Typography>
           <Button
             variant='outlined'
             size='small'
             startIcon={<Receipt size={16} />}
           >
-            新建发票
+            {t('crm.customerDetail.invoices_new')}
           </Button>
         </Box>
         {invoiceList.length === 0 ? (
@@ -374,7 +376,7 @@ const CustomerDetailPage: React.FC = () => {
             color='text.secondary'
             sx={{ py: 8, textAlign: 'center' }}
           >
-            暂无发票数据
+            {t('crm.customerDetail.invoices_empty')}
           </Typography>
         ) : (
           <Box sx={{ display: 'grid', gap: 1 }}>
@@ -411,15 +413,15 @@ const CustomerDetailPage: React.FC = () => {
                   }
                   label={
                     invoice.status === 'draft'
-                      ? '草稿'
+                      ? t('crm.customerDetail.invoice_draft')
                       : invoice.status === 'issued'
-                        ? '已开具'
+                        ? t('crm.customerDetail.invoice_issued')
                         : invoice.status === 'paid'
-                          ? '已付款'
+                          ? t('crm.customerDetail.invoice_paid')
                           : invoice.status === 'overdue'
-                            ? '已逾期'
+                            ? t('crm.customerDetail.invoice_overdue')
                             : invoice.status === 'cancelled'
-                              ? '已作废'
+                              ? t('crm.customerDetail.invoice_cancelled')
                               : invoice.status
                   }
                 />
@@ -429,7 +431,7 @@ const CustomerDetailPage: React.FC = () => {
         )}
       </Box>
     );
-  }, [invoicesData]);
+  }, [invoicesData, t]);
 
   const collectionsContent = useMemo(() => {
     const collectionList = collectionsData?.data?.items || [];
@@ -440,14 +442,14 @@ const CustomerDetailPage: React.FC = () => {
             variant='subtitle1'
             sx={{ fontWeight: 600 }}
           >
-            收款记录列表
+            {t('crm.customerDetail.collections_title')}
           </Typography>
           <Button
             variant='outlined'
             size='small'
             startIcon={<Wallet size={16} />}
           >
-            新建收款
+            {t('crm.customerDetail.collections_new')}
           </Button>
         </Box>
         {collectionList.length === 0 ? (
@@ -455,7 +457,7 @@ const CustomerDetailPage: React.FC = () => {
             color='text.secondary'
             sx={{ py: 8, textAlign: 'center' }}
           >
-            暂无收款记录数据
+            {t('crm.customerDetail.collections_empty')}
           </Typography>
         ) : (
           <Box sx={{ display: 'grid', gap: 1 }}>
@@ -477,12 +479,12 @@ const CustomerDetailPage: React.FC = () => {
                 <Typography align='right'>{formatCurrency(record.amount)}</Typography>
                 <Typography>
                   {record.payment_method === 'bank_transfer'
-                    ? '银行转账'
+                    ? t('crm.customerDetail.payment_bank_transfer')
                     : record.payment_method === 'cash'
-                      ? '现金'
+                      ? t('crm.customerDetail.payment_cash')
                       : record.payment_method === 'check'
-                        ? '支票'
-                        : '其他'}
+                        ? t('crm.customerDetail.payment_check')
+                        : t('crm.customerDetail.payment_other')}
                 </Typography>
                 <Typography>{formatDate(record.collection_date)}</Typography>
                 <Chip
@@ -496,10 +498,10 @@ const CustomerDetailPage: React.FC = () => {
                   }
                   label={
                     record.status === 'confirmed'
-                      ? '已确认'
+                      ? t('crm.customerDetail.collection_confirmed')
                       : record.status === 'pending'
-                        ? '待确认'
-                        : '已取消'
+                        ? t('crm.customerDetail.collection_pending')
+                        : t('crm.customerDetail.collection_cancelled')
                   }
                 />
               </Box>
@@ -508,13 +510,13 @@ const CustomerDetailPage: React.FC = () => {
         )}
       </Box>
     );
-  }, [collectionsData]);
+  }, [collectionsData, t]);
 
   const footerSection = useMemo<SectionConfig>(() => {
     if (!customer) return { id: 'footer', content: null };
     return {
       id: 'footer',
-      title: '其他信息',
+      title: t('crm.customerDetail.section_other'),
       content: (
         <Box
           sx={{
@@ -528,7 +530,7 @@ const CustomerDetailPage: React.FC = () => {
               variant='body2'
               color='text.secondary'
             >
-              创建时间
+              {t('crm.common.create_time')}
             </Typography>
             <Typography sx={{ fontWeight: 'medium', mt: 0.5 }}>
               {new Date(customer.created_at).toLocaleString()}
@@ -539,7 +541,7 @@ const CustomerDetailPage: React.FC = () => {
               variant='body2'
               color='text.secondary'
             >
-              更新时间
+              {t('crm.common.update_time')}
             </Typography>
             <Typography sx={{ fontWeight: 'medium', mt: 0.5 }}>
               {new Date(customer.updated_at).toLocaleString()}
@@ -550,7 +552,7 @@ const CustomerDetailPage: React.FC = () => {
               variant='body2'
               color='text.secondary'
             >
-              客户ID
+              {t('crm.customerDetail.field_customer_id')}
             </Typography>
             <Typography
               sx={{
@@ -568,27 +570,27 @@ const CustomerDetailPage: React.FC = () => {
               variant='body2'
               color='text.secondary'
             >
-              状态
+              {t('crm.customerDetail.field_status')}
             </Typography>
             <Box sx={{ mt: 0.5 }}>{getStatusBadge(customer.status)}</Box>
           </Box>
         </Box>
       ),
     };
-  }, [customer]);
+  }, [customer, t]);
 
   const tabs = useMemo<TabConfig[]>(
     () => [
-      { id: 'basic', label: '基本信息', content: basicInfoContent || <></> },
+      { id: 'basic', label: t('crm.customerDetail.tab_basic'), content: basicInfoContent || <></> },
       {
         id: 'finance',
-        label: '财务信息',
+        label: t('crm.customerDetail.tab_finance'),
         content: financeInfoContent || <></>,
       },
-      { id: 'invoices', label: '销售发票', content: invoicesContent },
-      { id: 'collections', label: '收款记录', content: collectionsContent },
+      { id: 'invoices', label: t('crm.customerDetail.tab_invoices'), content: invoicesContent },
+      { id: 'collections', label: t('crm.customerDetail.tab_collections'), content: collectionsContent },
     ],
-    [basicInfoContent, financeInfoContent, invoicesContent, collectionsContent]
+    [basicInfoContent, financeInfoContent, invoicesContent, collectionsContent, t]
   );
 
   const infoCard = useMemo(
@@ -603,27 +605,27 @@ const CustomerDetailPage: React.FC = () => {
       subtitle: customer?.code || undefined,
       tags: customer?.industry ? [customer.industry] : [],
       stats: [
-        { label: '信用额度', value: formatCurrency(finInfo?.credit_limit) },
+        { label: t('crm.customerDetail.field_credit_limit'), value: formatCurrency(finInfo?.credit_limit) },
         {
-          label: '应收账款',
+          label: t('crm.customerDetail.field_accounts_receivable'),
           value: formatCurrency(finInfo?.accounts_receivable),
         },
         {
-          label: '逾期应收',
+          label: t('crm.customerDetail.field_overdue_receivable'),
           value: formatCurrency(finInfo?.overdue_receivable),
         },
-        { label: '累计销售额', value: formatCurrency(finInfo?.total_sales) },
+        { label: t('crm.customerDetail.field_total_sales'), value: formatCurrency(finInfo?.total_sales) },
       ],
     }),
-    [customer, finInfo]
+    [customer, finInfo, t]
   );
 
   const sections = useMemo<SectionConfig[]>(() => [footerSection], [footerSection]);
 
   return (
     <PageContainer
-      title='客户详情'
-      subtitle='查看和编辑客户档案信息'
+      title={t('crm.customerDetail.title')}
+      subtitle={t('crm.customerDetail.subtitle')}
     >
       <DetailPageTemplate
         title=''
