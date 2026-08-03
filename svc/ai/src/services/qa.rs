@@ -127,11 +127,14 @@ impl QAService {
     }
 
     /// 创建默认配置的 QAService
+    /// 默认使用本地 Ollama 上的 qwen2.5-coder:7b-dev（见 scripts/dev/Modelfile.coder-7b）
     pub fn new_with_defaults(db: Database) -> Self {
         let chat_config = AIModelConfig {
             provider: AIProviderType::Ollama,
-            model_name: "qwen2.5:7b-instruct".to_string(),
+            model_name: "qwen2.5-coder:7b-dev".to_string(),
             base_url: "http://localhost:11434/v1".to_string(),
+            temperature: Some(0.3),
+            max_tokens: Some(2048),
             ..Default::default()
         };
 

@@ -1,0 +1,23 @@
+# TOPEMS 开发场景定制模型
+# 基于 qwen2.5-coder:7b-instruct，针对本项目（Rust axum/sqlx 微服务 + React/TS Web + Python CLI）调优
+# 构建：ollama create qwen2.5-coder:7b-dev -f scripts/dev/Modelfile.coder-7b
+
+FROM qwen2.5-coder:7b-instruct
+
+# 上下文窗口：32K，覆盖中等规模单文件 + RAG 检索片段
+PARAMETER num_ctx 32768
+# 全量卸载到 Metal GPU
+PARAMETER num_gpu 99
+# 代码生成低温，保证可复现与可运行性
+PARAMETER temperature 0.2
+PARAMETER top_p 0.9
+PARAMETER top_k 40
+# 抑制重复 token，避免循环生成
+PARAMETER repeat_penalty 1.1
+# Qwen2.5-Coder 的对话停止符
+PARAMETER stop "<|im_start|>"
+PARAMETER stop "<|im_end|>"
+# 单次响应上限，覆盖大多数单文件改动
+PARAMETER num_predict 4096
+
+SYSTEM """你是 TOPEMS 项目的资深开发助手。项目技术栈：Rust (axum/sqlx) 微服务 + React/TS Web + Python CLI。优先给出可运行、可直接落地的代码，避免冗余解释与铺垫。修改代码时保持原代码风格与缩进。"""
