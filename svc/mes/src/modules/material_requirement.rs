@@ -319,16 +319,16 @@ pub async fn get_material_requirement(
                 mrp_no: r.mrp_no,
                 order_id: r.order_id.map(|u| u.to_string()),
                 order_number: r.order_number,
-                product_code: r.product_code.unwrap_or_default(),
-                product_name: r.product_name.unwrap_or_default(),
+                product_code: r.product_code,
+                product_name: r.product_name,
                 material_code: r.material_code,
                 material_name: r.material_name,
                 specification: r.specification,
-                unit: Some(r.unit),
+                unit: r.unit,
                 required_quantity: big_decimal_to_f64_non_opt(r.required_quantity),
                 available_quantity: opt_big_decimal_to_f64(r.available_quantity),
                 shortfall_quantity: opt_big_decimal_to_f64(r.shortfall_quantity),
-                required_date: r.required_date.map(|d| d.to_string()).unwrap_or_default(),
+                required_date: r.required_date,
                 priority: r.priority,
                 status: r.status.unwrap_or_else(|| "pending".to_string()),
                 source_type: r.source_type,
@@ -379,7 +379,7 @@ pub async fn create_material_requirement(
                 .map(|d| d.and_hms_opt(0, 0, 0).unwrap())
         });
 
-    let result = sqlx::query!(
+    let result = sqlx::query_unchecked!(
         r#"
         INSERT INTO material_requirements (
             mrp_no, order_id, order_number, product_code, product_name,
@@ -414,16 +414,16 @@ pub async fn create_material_requirement(
                 mrp_no: r.mrp_no,
                 order_id: r.order_id.map(|u| u.to_string()),
                 order_number: r.order_number,
-                product_code: r.product_code.unwrap_or_default(),
-                product_name: r.product_name.unwrap_or_default(),
+                product_code: r.product_code,
+                product_name: r.product_name,
                 material_code: r.material_code,
                 material_name: r.material_name,
                 specification: r.specification,
-                unit: Some(r.unit),
+                unit: r.unit,
                 required_quantity: big_decimal_to_f64_non_opt(r.required_quantity),
                 available_quantity: opt_big_decimal_to_f64(r.available_quantity),
                 shortfall_quantity: opt_big_decimal_to_f64(r.shortfall_quantity),
-                required_date: r.required_date.map(|d| d.to_string()).unwrap_or_default(),
+                required_date: r.required_date,
                 priority: r.priority,
                 status: r.status.unwrap_or_else(|| "pending".to_string()),
                 source_type: r.source_type,
@@ -480,7 +480,7 @@ pub async fn update_material_requirement(
             })
     });
 
-    let result = sqlx::query!(
+    let result = sqlx::query_unchecked!(
         r#"
         UPDATE material_requirements
         SET 
@@ -513,16 +513,16 @@ pub async fn update_material_requirement(
                 mrp_no: r.mrp_no,
                 order_id: r.order_id.map(|u| u.to_string()),
                 order_number: r.order_number,
-                product_code: r.product_code.unwrap_or_default(),
-                product_name: r.product_name.unwrap_or_default(),
+                product_code: r.product_code,
+                product_name: r.product_name,
                 material_code: r.material_code,
                 material_name: r.material_name,
                 specification: r.specification,
-                unit: Some(r.unit),
+                unit: r.unit,
                 required_quantity: big_decimal_to_f64_non_opt(r.required_quantity),
                 available_quantity: opt_big_decimal_to_f64(r.available_quantity),
                 shortfall_quantity: opt_big_decimal_to_f64(r.shortfall_quantity),
-                required_date: r.required_date.map(|d| d.to_string()).unwrap_or_default(),
+                required_date: r.required_date,
                 priority: r.priority,
                 status: r.status.unwrap_or_else(|| "pending".to_string()),
                 source_type: r.source_type,
@@ -642,7 +642,7 @@ pub async fn calculate_requirements(
                 let mrp_no = format!("MRP{}", chrono::Local::now().format("%Y%m%d%H%M%S"));
                 let now_str = chrono::Local::now().format("%Y-%m-%d %H:%M:%S").to_string();
 
-                let insert_result = sqlx::query!(
+                let insert_result = sqlx::query_unchecked!(
                     r#"
                     INSERT INTO material_requirements (
                         mrp_no, order_id, order_number, product_code, product_name,
@@ -676,16 +676,16 @@ pub async fn calculate_requirements(
                         mrp_no: r.mrp_no,
                         order_id: r.order_id.map(|u| u.to_string()),
                         order_number: r.order_number,
-                        product_code: r.product_code.unwrap_or_default(),
-                        product_name: r.product_name.unwrap_or_default(),
+                        product_code: r.product_code,
+                        product_name: r.product_name,
                         material_code: r.material_code,
                         material_name: r.material_name,
                         specification: r.specification,
-                        unit: Some(r.unit),
+                        unit: r.unit,
                         required_quantity: big_decimal_to_f64_non_opt(r.required_quantity),
                         available_quantity: opt_big_decimal_to_f64(r.available_quantity),
                         shortfall_quantity: opt_big_decimal_to_f64(r.shortfall_quantity),
-                        required_date: r.required_date.map(|d| d.to_string()).unwrap_or_default(),
+                        required_date: r.required_date,
                         priority: r.priority,
                         status: r.status.unwrap_or_else(|| "pending".to_string()),
                         source_type: r.source_type,
@@ -741,16 +741,16 @@ pub async fn confirm_requirement(
                 mrp_no: r.mrp_no,
                 order_id: r.order_id.map(|u| u.to_string()),
                 order_number: r.order_number,
-                product_code: r.product_code.unwrap_or_default(),
-                product_name: r.product_name.unwrap_or_default(),
+                product_code: r.product_code,
+                product_name: r.product_name,
                 material_code: r.material_code,
                 material_name: r.material_name,
                 specification: r.specification,
-                unit: Some(r.unit),
+                unit: r.unit,
                 required_quantity: big_decimal_to_f64_non_opt(r.required_quantity),
                 available_quantity: opt_big_decimal_to_f64(r.available_quantity),
                 shortfall_quantity: opt_big_decimal_to_f64(r.shortfall_quantity),
-                required_date: r.required_date.map(|d| d.to_string()).unwrap_or_default(),
+                required_date: r.required_date,
                 priority: r.priority,
                 status: r.status.unwrap_or_else(|| "pending".to_string()),
                 source_type: r.source_type,
@@ -805,16 +805,16 @@ pub async fn release_requirement(
                 mrp_no: r.mrp_no,
                 order_id: r.order_id.map(|u| u.to_string()),
                 order_number: r.order_number,
-                product_code: r.product_code.unwrap_or_default(),
-                product_name: r.product_name.unwrap_or_default(),
+                product_code: r.product_code,
+                product_name: r.product_name,
                 material_code: r.material_code,
                 material_name: r.material_name,
                 specification: r.specification,
-                unit: Some(r.unit),
+                unit: r.unit,
                 required_quantity: big_decimal_to_f64_non_opt(r.required_quantity),
                 available_quantity: opt_big_decimal_to_f64(r.available_quantity),
                 shortfall_quantity: opt_big_decimal_to_f64(r.shortfall_quantity),
-                required_date: r.required_date.map(|d| d.to_string()).unwrap_or_default(),
+                required_date: r.required_date,
                 priority: r.priority,
                 status: r.status.unwrap_or_else(|| "pending".to_string()),
                 source_type: r.source_type,
