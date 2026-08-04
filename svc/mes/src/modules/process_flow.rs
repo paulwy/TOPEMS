@@ -613,10 +613,10 @@ pub async fn get_flow_steps(
                 .map(|s| ProcessFlowStepResponse {
                     id: s.id.to_string(),
                     flow_id: s.flow_id.to_string(),
-                    process_id: s.process_id.map(|v| v.to_string()).unwrap_or_default(),
+                    process_id: s.process_id.to_string(),
                     process_name: s.process_name,
                     process_code: s.process_code,
-                    sequence: s.sequence.unwrap_or_default(),
+                    sequence: s.sequence,
                     work_station_id: s.work_station_id.map(|u| u.to_string()),
                     work_station_name: Some(s.work_station_name),
                     equipment_ids: s
@@ -699,7 +699,7 @@ pub async fn add_flow_step(
             .collect()
     });
 
-    let result = sqlx::query!(
+    let result = sqlx::query_unchecked!(
         r#"
         INSERT INTO process_flow_steps (
             flow_id, process_id, sequence, work_station_id,
@@ -716,7 +716,9 @@ pub async fn add_flow_step(
         process_uuid,
         body.sequence,
         work_station_uuid,
-        equipment_ids.as_ref().map(|ids| serde_json::to_string(ids).unwrap_or_default()),
+        equipment_ids
+            .as_ref()
+            .map(|ids| serde_json::to_string(ids).unwrap_or_default()),
         standard_time,
         wait_time,
         transfer_time,
@@ -746,10 +748,10 @@ pub async fn add_flow_step(
                 ProcessFlowStepResponse {
                     id: s.id.to_string(),
                     flow_id: s.flow_id.to_string(),
-                    process_id: s.process_id.map(|v| v.to_string()).unwrap_or_default(),
+                    process_id: s.process_id.to_string(),
                     process_name,
                     process_code,
-                    sequence: s.sequence.unwrap_or_default(),
+                    sequence: s.sequence,
                     work_station_id: s.work_station_id.map(|u| u.to_string()),
                     work_station_name: None,
                     equipment_ids: s
@@ -821,7 +823,7 @@ pub async fn update_flow_step(
             .collect()
     });
 
-    let result = sqlx::query!(
+    let result = sqlx::query_unchecked!(
         r#"
         UPDATE process_flow_steps
         SET
@@ -841,7 +843,9 @@ pub async fn update_flow_step(
         "#,
         body.sequence,
         work_station_uuid,
-        equipment_ids.as_ref().map(|ids| serde_json::to_string(ids).unwrap_or_default()),
+        equipment_ids
+            .as_ref()
+            .map(|ids| serde_json::to_string(ids).unwrap_or_default()),
         standard_time,
         wait_time,
         transfer_time,
@@ -872,10 +876,10 @@ pub async fn update_flow_step(
                 ProcessFlowStepResponse {
                     id: s.id.to_string(),
                     flow_id: s.flow_id.to_string(),
-                    process_id: s.process_id.map(|v| v.to_string()).unwrap_or_default(),
+                    process_id: s.process_id.to_string(),
                     process_name,
                     process_code,
-                    sequence: s.sequence.unwrap_or_default(),
+                    sequence: s.sequence,
                     work_station_id: s.work_station_id.map(|u| u.to_string()),
                     work_station_name: None,
                     equipment_ids: s
@@ -1013,10 +1017,10 @@ pub async fn reorder_flow_steps(
                 .map(|s| ProcessFlowStepResponse {
                     id: s.id.to_string(),
                     flow_id: s.flow_id.to_string(),
-                    process_id: s.process_id.map(|v| v.to_string()).unwrap_or_default(),
+                    process_id: s.process_id.to_string(),
                     process_name: s.process_name,
                     process_code: s.process_code,
-                    sequence: s.sequence.unwrap_or_default(),
+                    sequence: s.sequence,
                     work_station_id: s.work_station_id.map(|u| u.to_string()),
                     work_station_name: Some(s.work_station_name),
                     equipment_ids: s
