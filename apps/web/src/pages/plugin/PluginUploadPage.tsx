@@ -78,9 +78,12 @@ const PluginUploadPage: React.FC = () => {
       if (!formData.code.trim()) newErrors.code = t('plugin.upload_page.validation.code_required');
       else if (!/^[a-z][a-z0-9-]*$/.test(formData.code))
         newErrors.code = t('plugin.upload_page.validation.code_format');
-      if (!formData.version.trim()) newErrors.version = t('plugin.upload_page.validation.version_required');
-      if (!formData.description.trim()) newErrors.description = t('plugin.upload_page.validation.description_required');
-      if (!formData.category) newErrors.category = t('plugin.upload_page.validation.category_required');
+      if (!formData.version.trim())
+        newErrors.version = t('plugin.upload_page.validation.version_required');
+      if (!formData.description.trim())
+        newErrors.description = t('plugin.upload_page.validation.description_required');
+      if (!formData.category)
+        newErrors.category = t('plugin.upload_page.validation.category_required');
     }
 
     if (step === 1 && !formData.author.trim()) {
@@ -109,7 +112,9 @@ const PluginUploadPage: React.FC = () => {
       await new Promise((resolve) => setTimeout(resolve, 2000));
       addNotification({
         title: t('plugin.upload_page.notification.submit_success_title'),
-        message: t('plugin.upload_page.notification.submit_success_message', { name: formData.name }),
+        message: t('plugin.upload_page.notification.submit_success_message', {
+          name: formData.name,
+        }),
         type: 'success',
       });
       setActiveStep(3);
@@ -441,7 +446,9 @@ const PluginUploadPage: React.FC = () => {
                       <Upload
                         sx={{ width: 48, height: 48, color: 'grey.400', mx: 'auto', mb: 2 }}
                       />
-                      <Typography sx={{ fontWeight: 'medium', mb: 1 }}>{t('plugin.upload_page.upload.package_title')}</Typography>
+                      <Typography sx={{ fontWeight: 'medium', mb: 1 }}>
+                        {t('plugin.upload_page.upload.package_title')}
+                      </Typography>
                       <Typography
                         variant='body2'
                         color='textSecondary'
@@ -478,7 +485,9 @@ const PluginUploadPage: React.FC = () => {
                   >
                     <CardContent sx={{ textAlign: 'center', py: 6 }}>
                       <Image sx={{ width: 48, height: 48, color: 'grey.400', mx: 'auto', mb: 2 }} />
-                      <Typography sx={{ fontWeight: 'medium', mb: 1 }}>{t('plugin.upload_page.upload.screenshot_title')}</Typography>
+                      <Typography sx={{ fontWeight: 'medium', mb: 1 }}>
+                        {t('plugin.upload_page.upload.screenshot_title')}
+                      </Typography>
                       <Typography
                         variant='body2'
                         color='textSecondary'
@@ -526,7 +535,7 @@ const PluginUploadPage: React.FC = () => {
                           justifyContent: 'center',
                         }}
                       >
-                        <Package sx={{ width: 28, height: 28, color: 'white' }} />
+                        <Package sx={{ width: 28, height: 28, color: 'common.white' }} />
                       </Box>
                       <Box>
                         <Typography
@@ -539,13 +548,15 @@ const PluginUploadPage: React.FC = () => {
                           variant='body2'
                           color='textSecondary'
                         >
-                          v{formData.version} · {formData.author || t('plugin.upload_page.preview.author_placeholder')}
+                          v{formData.version} ·{' '}
+                          {formData.author || t('plugin.upload_page.preview.author_placeholder')}
                         </Typography>
                       </Box>
                       <Box sx={{ flexGrow: 1 }} />
                       <Chip
                         label={
-                          categories.find((c) => c.value === formData.category)?.label || t('plugin.upload_page.preview.category_placeholder')
+                          categories.find((c) => c.value === formData.category)?.label ||
+                          t('plugin.upload_page.preview.category_placeholder')
                         }
                         size='small'
                       />
@@ -567,7 +578,8 @@ const PluginUploadPage: React.FC = () => {
                       variant='body2'
                       color='textSecondary'
                     >
-                      {formData.description || t('plugin.upload_page.preview.description_placeholder')}
+                      {formData.description ||
+                        t('plugin.upload_page.preview.description_placeholder')}
                     </Typography>
                   </CardContent>
                 </Card>

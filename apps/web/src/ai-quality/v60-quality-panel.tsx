@@ -101,9 +101,7 @@ export const V60QualityPanel: React.FC<{ onClose: () => void }> = ({ onClose }) 
   const [testRuns, setTestRuns] = useState<TestRun[]>([]);
   const [suggestions, setSuggestions] = useState<TestSuggestion[]>([]);
   const [trends, setTrends] = useState<TestTrendPoint[]>([]);
-  const [coverage, setCoverage] = useState<ReturnType<typeof smartTestV2.get_coverage> | null>(
-    null
-  );
+  const [coverage, setCoverage] = useState<ReturnType<typeof smartTestV2.getCoverage> | null>(null);
   const [isRunning, setIsRunning] = useState(false);
   const [runProgress, setRunProgress] = useState(0);
 
@@ -111,36 +109,36 @@ export const V60QualityPanel: React.FC<{ onClose: () => void }> = ({ onClose }) 
   const [regressions, setRegressions] = useState<PerfRegression[]>([]);
   const [perfAlerts, setPerfAlerts] = useState<PerfAlert[]>([]);
   const [currentMetrics, setCurrentMetrics] = useState<
-    ReturnType<typeof continuousPerformance.get_current_metrics>
+    ReturnType<typeof continuousPerformance.getCurrentMetrics>
   >([]);
 
   const [uxMetrics, setUxMetrics] = useState<UXMetric[]>([]);
   const [uxAlerts, setUxAlerts] = useState<UXAlert[]>([]);
   const [uxDashboard, setUxDashboard] = useState<ReturnType<
-    typeof uxMonitor.get_ux_dashboard
+    typeof uxMonitor.getUxDashboard
   > | null>(null);
   const [funnel, setFunnel] = useState<FunnelAnalysis | null>(null);
 
   const loadTestData = useCallback(() => {
-    setTestCases(smartTestV2.get_test_cases());
-    setTestRuns(smartTestV2.get_all_runs());
-    setSuggestions(smartTestV2.get_test_suggestions());
-    setTrends(smartTestV2.get_test_trends());
-    setCoverage(smartTestV2.get_coverage());
+    setTestCases(smartTestV2.getTestCases());
+    setTestRuns(smartTestV2.getAllRuns());
+    setSuggestions(smartTestV2.getTestSuggestions());
+    setTrends(smartTestV2.getTestTrends());
+    setCoverage(smartTestV2.getCoverage());
   }, []);
 
   const loadPerformanceData = useCallback(() => {
-    setBaselines(continuousPerformance.get_baselines());
-    setRegressions(continuousPerformance.get_regressions());
-    setPerfAlerts(continuousPerformance.get_alerts());
-    setCurrentMetrics(continuousPerformance.get_current_metrics());
+    setBaselines(continuousPerformance.getBaselines());
+    setRegressions(continuousPerformance.getRegressions());
+    setPerfAlerts(continuousPerformance.getAlerts());
+    setCurrentMetrics(continuousPerformance.getCurrentMetrics());
   }, []);
 
   const loadUXData = useCallback(() => {
-    setUxMetrics(uxMonitor.get_metrics({ limit: 20 }));
-    setUxAlerts(uxMonitor.get_alerts());
-    setUxDashboard(uxMonitor.get_ux_dashboard());
-    setFunnel(uxMonitor.get_funnel_analysis());
+    setUxMetrics(uxMonitor.getMetrics({ limit: 20 }));
+    setUxAlerts(uxMonitor.getAlerts());
+    setUxDashboard(uxMonitor.getUxDashboard());
+    setFunnel(uxMonitor.getFunnelAnalysis());
   }, []);
 
   const runAllTests = useCallback(async () => {
@@ -154,8 +152,8 @@ export const V60QualityPanel: React.FC<{ onClose: () => void }> = ({ onClose }) 
     });
 
     try {
-      const allIds = smartTestV2.get_test_cases().map((tc) => tc.id);
-      const run = await smartTestV2.run_tests(allIds);
+      const allIds = smartTestV2.getTestCases().map((tc) => tc.id);
+      const run = await smartTestV2.runTests(allIds);
       setRunProgress(100);
 
       setTimeout(() => {
@@ -176,7 +174,7 @@ export const V60QualityPanel: React.FC<{ onClose: () => void }> = ({ onClose }) 
       setIsRunning(true);
       setRunProgress(0);
       try {
-        await smartTestV2.run_tests(ids);
+        await smartTestV2.runTests(ids);
         loadTestData();
       } finally {
         setIsRunning(false);
@@ -187,21 +185,21 @@ export const V60QualityPanel: React.FC<{ onClose: () => void }> = ({ onClose }) 
   );
 
   const generateTests = useCallback(() => {
-    smartTestV2.generate_tests({ count: 3 });
+    smartTestV2.generateTests({ count: 3 });
     loadTestData();
   }, [loadTestData]);
 
   const regenerateFailed = useCallback(() => {
-    smartTestV2.regenerate_failed();
+    smartTestV2.regenerateFailed();
     loadTestData();
   }, [loadTestData]);
 
   const runPerformanceCheck = useCallback(() => {
-    continuousPerformance.measure_performance();
-    const regs = continuousPerformance.detect_regression();
+    continuousPerformance.measurePerformance();
+    const regs = continuousPerformance.detectRegression();
     if (regs.length > 0) {
       for (const r of regs) {
-        continuousPerformance.alert_on_regression(r.id);
+        continuousPerformance.alertOnRegression(r.id);
       }
     }
     loadPerformanceData();
@@ -209,11 +207,11 @@ export const V60QualityPanel: React.FC<{ onClose: () => void }> = ({ onClose }) 
 
   const setNewBaseline = useCallback(() => {
     const metrics: Record<string, number> = {};
-    const current = continuousPerformance.get_current_metrics();
+    const current = continuousPerformance.getCurrentMetrics();
     for (const m of current) {
       metrics[m.name] = m.value;
     }
-    continuousPerformance.set_baseline(metrics, `v${Date.now()}`, '新基线');
+    continuousPerformance.setBaseline(metrics, `v${Date.now()}`, '新基线');
     loadPerformanceData();
   }, [loadPerformanceData]);
 
@@ -230,7 +228,7 @@ export const V60QualityPanel: React.FC<{ onClose: () => void }> = ({ onClose }) 
               : type === 'INP'
                 ? 50 + Math.random() * 400
                 : 500 + Math.random() * 2500;
-        uxMonitor.record_metric(type, value, segment, '/dashboard');
+        uxMonitor.recordMetric(type, value, segment, '/dashboard');
       }
     }
     loadUXData();
@@ -262,7 +260,7 @@ export const V60QualityPanel: React.FC<{ onClose: () => void }> = ({ onClose }) 
         left: 0,
         right: 0,
         bottom: 0,
-        bgcolor: 'rgba(0,0,0,0.5)',
+        bgcolor: 'action.active',
         zIndex: 10000,
         display: 'flex',
         alignItems: 'center',
@@ -292,7 +290,7 @@ export const V60QualityPanel: React.FC<{ onClose: () => void }> = ({ onClose }) 
             justifyContent: 'space-between',
             background: QUALITY_COLORS.gradient,
             bgcolor: QUALITY_COLORS.gradient,
-            color: 'white',
+            color: 'common.white',
           }}
         >
           <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5 }}>
@@ -309,15 +307,15 @@ export const V60QualityPanel: React.FC<{ onClose: () => void }> = ({ onClose }) 
               size='small'
               label={`质量评分: ${qualityScore}`}
               sx={{
-                bgcolor: 'rgba(255,255,255,0.2)',
-                color: 'white',
+                bgcolor: 'action.disabledBackground',
+                color: 'common.white',
                 fontWeight: 600,
               }}
             />
             <IconButton
               size='small'
               onClick={onClose}
-              sx={{ color: 'white' }}
+              sx={{ color: 'common.white' }}
             >
               <XIcon size={20} />
             </IconButton>
@@ -413,9 +411,9 @@ export const V60QualityPanel: React.FC<{ onClose: () => void }> = ({ onClose }) 
 };
 
 const OverviewTab: React.FC<{
-  coverage: ReturnType<typeof smartTestV2.get_coverage> | null;
+  coverage: ReturnType<typeof smartTestV2.getCoverage> | null;
   regressions: PerfRegression[];
-  uxDashboard: ReturnType<typeof uxMonitor.get_ux_dashboard> | null;
+  uxDashboard: ReturnType<typeof uxMonitor.getUxDashboard> | null;
   trends: TestTrendPoint[];
   qualityScore: number;
   testCases: TestCase[];
@@ -541,29 +539,27 @@ const OverviewTab: React.FC<{
                 container
                 spacing={1}
               >
-                {(Object.entries(coverage.by_type) as Array<[string, number]>).map(
-                  ([type, val]) => (
-                    <Grid
-                      size={4}
-                      key={type}
-                    >
-                      <Box sx={{ textAlign: 'center' }}>
-                        <Typography
-                          variant='body2'
-                          sx={{ fontWeight: 600 }}
-                        >
-                          {(val * 100).toFixed(0)}%
-                        </Typography>
-                        <Typography
-                          variant='caption'
-                          sx={{ color: 'text.secondary' }}
-                        >
-                          {type}
-                        </Typography>
-                      </Box>
-                    </Grid>
-                  )
-                )}
+                {(Object.entries(coverage.byType) as Array<[string, number]>).map(([type, val]) => (
+                  <Grid
+                    size={4}
+                    key={type}
+                  >
+                    <Box sx={{ textAlign: 'center' }}>
+                      <Typography
+                        variant='body2'
+                        sx={{ fontWeight: 600 }}
+                      >
+                        {(val * 100).toFixed(0)}%
+                      </Typography>
+                      <Typography
+                        variant='caption'
+                        sx={{ color: 'text.secondary' }}
+                      >
+                        {type}
+                      </Typography>
+                    </Box>
+                  </Grid>
+                ))}
               </Grid>
             </>
           )}
@@ -669,7 +665,7 @@ const OverviewTab: React.FC<{
                 >
                   <Typography
                     variant='caption'
-                    sx={{ color: 'white', fontSize: 10 }}
+                    sx={{ color: 'common.white', fontSize: 10 }}
                   >
                     {t.passed}
                   </Typography>
@@ -794,7 +790,7 @@ const TestsTab: React.FC<{
   testRuns: TestRun[];
   suggestions: TestSuggestion[];
   trends: TestTrendPoint[];
-  coverage: ReturnType<typeof smartTestV2.get_coverage> | null;
+  coverage: ReturnType<typeof smartTestV2.getCoverage> | null;
   isRunning: boolean;
   runProgress: number;
   onRunAll: () => void;
@@ -1173,7 +1169,7 @@ const PerformanceTab: React.FC<{
   baselines: PerfBaseline[];
   regressions: PerfRegression[];
   alerts: PerfAlert[];
-  currentMetrics: ReturnType<typeof continuousPerformance.get_current_metrics>;
+  currentMetrics: ReturnType<typeof continuousPerformance.getCurrentMetrics>;
   onMeasure: () => void;
   onSetBaseline: () => void;
 }> = ({ baselines, regressions, alerts, currentMetrics, onMeasure, onSetBaseline }) => (
@@ -1466,7 +1462,7 @@ const PerformanceTab: React.FC<{
 const UXTab: React.FC<{
   metrics: UXMetric[];
   alerts: UXAlert[];
-  dashboard: ReturnType<typeof uxMonitor.get_ux_dashboard> | null;
+  dashboard: ReturnType<typeof uxMonitor.getUxDashboard> | null;
   funnel: FunnelAnalysis | null;
   onRecord: () => void;
 }> = ({ metrics, alerts, dashboard, funnel, onRecord }) => (

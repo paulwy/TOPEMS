@@ -36,10 +36,10 @@ vi.mock('@/config/env', async (importOriginal) => {
     getEnv,
     isDev: () => getEnv<boolean>('DEV', true),
     isProd: () => getEnv<boolean>('PROD', false),
-    VITE_DEPLOYMENT_MODE: () => getEnv('VITE_DEPLOYMENT_MODE', 'static') as string,
-    VITE_API_BASE_URL: () => getEnv('VITE_API_BASE_URL', '/api') as string,
-    VITE_ENABLE_DEBUG_MODE: () => getEnv<boolean>('VITE_ENABLE_DEBUG_MODE', false),
-    VITE_LOG_LEVEL: () => getEnv('VITE_LOG_LEVEL', 'info') as string,
+    VITEDeploymentMode: () => getEnv('VITEDeploymentMode', 'static') as string,
+    VITEApiBaseUrl: () => getEnv('VITEApiBaseUrl', '/api') as string,
+    VITEEnableDebugMode: () => getEnv<boolean>('VITEEnableDebugMode', false),
+    VITELogLevel: () => getEnv('VITELogLevel', 'info') as string,
   };
 });
 
@@ -47,10 +47,10 @@ import {
   getEnv,
   isDev,
   isProd,
-  VITE_DEPLOYMENT_MODE,
-  VITE_API_BASE_URL,
-  VITE_ENABLE_DEBUG_MODE,
-  VITE_LOG_LEVEL,
+  VITEDeploymentMode,
+  VITEApiBaseUrl,
+  VITEEnableDebugMode,
+  VITELogLevel,
 } from '@/config/env';
 
 beforeEach(() => {
@@ -63,19 +63,19 @@ afterEach(() => {
 
 describe('getEnv singleton', () => {
   it('should read a defined string env var as-is', () => {
-    envStore.VITE_API_BASE_URL = 'https://api.example.com';
-    expect(getEnv('VITE_API_BASE_URL', '/api')).toBe('https://api.example.com');
+    envStore.VITEApiBaseUrl = 'https://api.example.com';
+    expect(getEnv('VITEApiBaseUrl', '/api')).toBe('https://api.example.com');
   });
 
   it('should return the provided default when env key is missing', () => {
-    expect(getEnv('VITE_API_BASE_URL', '/api')).toBe('/api');
+    expect(getEnv('VITEApiBaseUrl', '/api')).toBe('/api');
   });
 
   it('should coerce "true"/"false" to boolean when defaultValue is boolean', () => {
-    envStore.VITE_ENABLE_DEBUG_MODE = 'true';
-    expect(getEnv<boolean>('VITE_ENABLE_DEBUG_MODE', false)).toBe(true);
-    envStore.VITE_ENABLE_DEBUG_MODE = 'false';
-    expect(getEnv<boolean>('VITE_ENABLE_DEBUG_MODE', true)).toBe(false);
+    envStore.VITEEnableDebugMode = 'true';
+    expect(getEnv<boolean>('VITEEnableDebugMode', false)).toBe(true);
+    envStore.VITEEnableDebugMode = 'false';
+    expect(getEnv<boolean>('VITEEnableDebugMode', true)).toBe(false);
   });
 
   it('should coerce numeric strings to number when defaultValue is number', () => {
@@ -107,35 +107,35 @@ describe('isDev / isProd', () => {
 });
 
 describe('Lazy getters (VITE_* helpers)', () => {
-  it('should VITE_DEPLOYMENT_MODE return configured value', () => {
-    envStore.VITE_DEPLOYMENT_MODE = 'module-federation';
-    expect(VITE_DEPLOYMENT_MODE()).toBe('module-federation');
+  it('should VITEDeploymentMode return configured value', () => {
+    envStore.VITEDeploymentMode = 'module-federation';
+    expect(VITEDeploymentMode()).toBe('module-federation');
   });
 
-  it('should VITE_DEPLOYMENT_MODE default to "static" when missing', () => {
-    expect(VITE_DEPLOYMENT_MODE()).toBe('static');
+  it('should VITEDeploymentMode default to "static" when missing', () => {
+    expect(VITEDeploymentMode()).toBe('static');
   });
 
-  it('should VITE_API_BASE_URL default to "/api" when missing', () => {
-    expect(VITE_API_BASE_URL()).toBe('/api');
+  it('should VITEApiBaseUrl default to "/api" when missing', () => {
+    expect(VITEApiBaseUrl()).toBe('/api');
   });
 
-  it('should VITE_API_BASE_URL return configured value when set', () => {
-    envStore.VITE_API_BASE_URL = 'http://api.example.com';
-    expect(VITE_API_BASE_URL()).toBe('http://api.example.com');
+  it('should VITEApiBaseUrl return configured value when set', () => {
+    envStore.VITEApiBaseUrl = 'http://api.example.com';
+    expect(VITEApiBaseUrl()).toBe('http://api.example.com');
   });
 
-  it('should VITE_ENABLE_DEBUG_MODE return boolean (true)', () => {
-    envStore.VITE_ENABLE_DEBUG_MODE = 'true';
-    expect(VITE_ENABLE_DEBUG_MODE()).toBe(true);
+  it('should VITEEnableDebugMode return boolean (true)', () => {
+    envStore.VITEEnableDebugMode = 'true';
+    expect(VITEEnableDebugMode()).toBe(true);
   });
 
-  it('should VITE_ENABLE_DEBUG_MODE return boolean (false)', () => {
-    envStore.VITE_ENABLE_DEBUG_MODE = 'false';
-    expect(VITE_ENABLE_DEBUG_MODE()).toBe(false);
+  it('should VITEEnableDebugMode return boolean (false)', () => {
+    envStore.VITEEnableDebugMode = 'false';
+    expect(VITEEnableDebugMode()).toBe(false);
   });
 
-  it('should VITE_LOG_LEVEL default to "info"', () => {
-    expect(VITE_LOG_LEVEL()).toBe('info');
+  it('should VITELogLevel default to "info"', () => {
+    expect(VITELogLevel()).toBe('info');
   });
 });

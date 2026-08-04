@@ -19,7 +19,7 @@ const NotificationToast: React.FC<NotificationToastProps> = ({ type, message }) 
         borderRadius: 3,
         boxShadow: 2,
         bgcolor: type === 'success' ? 'success.main' : 'error.main',
-        color: 'white',
+        color: 'common.white',
         display: 'flex',
         alignItems: 'center',
         gap: 1,

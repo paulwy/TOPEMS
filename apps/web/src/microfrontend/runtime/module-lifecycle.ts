@@ -18,33 +18,33 @@
 
 /** 生命周期状态 */
 export enum LifecycleState {
-  Registered = 'registered',
-  Preloading = 'preloading',
-  Loaded = 'loaded',
-  Mounting = 'mounting',
-  Mounted = 'mounted',
-  Updating = 'updating',
-  Error = 'error',
-  Unmounting = 'unmounting',
-  Unmounted = 'unmounted',
+  REGISTERED = 'registered',
+  PRELOADING = 'preloading',
+  LOADED = 'loaded',
+  MOUNTING = 'mounting',
+  MOUNTED = 'mounted',
+  UPDATING = 'updating',
+  ERROR = 'error',
+  UNMOUNTING = 'unmounting',
+  UNMOUNTED = 'unmounted',
 }
 
 /** 生命周期事件类型 */
 export enum LifecycleEventType {
-  Registered = 'registered',
-  PreloadStart = 'preload_start',
-  PreloadEnd = 'preload_end',
-  LoadStart = 'load_start',
-  LoadEnd = 'load_end',
-  MountStart = 'mount_start',
-  MountEnd = 'mount_end',
-  UpdateStart = 'update_start',
-  UpdateEnd = 'update_end',
-  UnmountStart = 'unmount_start',
-  UnmountEnd = 'unmount_end',
-  Error = 'error',
-  Destroyed = 'destroyed',
-  StateChange = 'state_change',
+  REGISTERED = 'registered',
+  PRELOADSTART = 'preload_start',
+  PRELOADEND = 'preload_end',
+  LOADSTART = 'load_start',
+  LOADEND = 'load_end',
+  MOUNTSTART = 'mount_start',
+  MOUNTEND = 'mount_end',
+  UPDATESTART = 'update_start',
+  UPDATEEND = 'update_end',
+  UNMOUNTSTART = 'unmount_start',
+  UNMOUNTEND = 'unmount_end',
+  ERROR = 'error',
+  DESTROYED = 'destroyed',
+  STATECHANGE = 'state_change',
 }
 
 /** 生命周期事件 */
@@ -101,15 +101,40 @@ export type LifecycleEventCallback = (event: LifecycleEvent) => void;
 
 /** 合法状态转换映射 */
 const STATE_TRANSITIONS: Record<LifecycleState, LifecycleState[]> = {
-  [LifecycleState.Registered]: [LifecycleState.Preloading, LifecycleState.Loaded, LifecycleState.Unmounted],
-  [LifecycleState.Preloading]: [LifecycleState.Loaded, LifecycleState.Error, LifecycleState.Registered],
-  [LifecycleState.Loaded]: [LifecycleState.Mounting, LifecycleState.Unmounting, LifecycleState.Error, LifecycleState.Preloading],
-  [LifecycleState.Mounting]: [LifecycleState.Mounted, LifecycleState.Error],
-  [LifecycleState.Mounted]: [LifecycleState.Updating, LifecycleState.Unmounting, LifecycleState.Error],
-  [LifecycleState.Updating]: [LifecycleState.Mounted, LifecycleState.Error],
-  [LifecycleState.Error]: [LifecycleState.Preloading, LifecycleState.Unmounting, LifecycleState.Mounting],
-  [LifecycleState.Unmounting]: [LifecycleState.Unmounted, LifecycleState.Error],
-  [LifecycleState.Unmounted]: [LifecycleState.Preloading, LifecycleState.Loaded, LifecycleState.Mounting],
+  [LifecycleState.REGISTERED]: [
+    LifecycleState.PRELOADING,
+    LifecycleState.LOADED,
+    LifecycleState.UNMOUNTED,
+  ],
+  [LifecycleState.PRELOADING]: [
+    LifecycleState.LOADED,
+    LifecycleState.ERROR,
+    LifecycleState.REGISTERED,
+  ],
+  [LifecycleState.LOADED]: [
+    LifecycleState.MOUNTING,
+    LifecycleState.UNMOUNTING,
+    LifecycleState.ERROR,
+    LifecycleState.PRELOADING,
+  ],
+  [LifecycleState.MOUNTING]: [LifecycleState.MOUNTED, LifecycleState.ERROR],
+  [LifecycleState.MOUNTED]: [
+    LifecycleState.UPDATING,
+    LifecycleState.UNMOUNTING,
+    LifecycleState.ERROR,
+  ],
+  [LifecycleState.UPDATING]: [LifecycleState.MOUNTED, LifecycleState.ERROR],
+  [LifecycleState.ERROR]: [
+    LifecycleState.PRELOADING,
+    LifecycleState.UNMOUNTING,
+    LifecycleState.MOUNTING,
+  ],
+  [LifecycleState.UNMOUNTING]: [LifecycleState.UNMOUNTED, LifecycleState.ERROR],
+  [LifecycleState.UNMOUNTED]: [
+    LifecycleState.PRELOADING,
+    LifecycleState.LOADED,
+    LifecycleState.MOUNTING,
+  ],
 };
 
 // ==================== ModuleLifecycle ====================
@@ -135,7 +160,10 @@ export class ModuleLifecycle {
   /**
    * 注册模块
    */
-  register(id: string, options: { name?: string; hooks?: LifecycleHooks } = {}): ModuleLifecycleRecord {
+  register(
+    id: string,
+    options: { name?: string; hooks?: LifecycleHooks } = {}
+  ): ModuleLifecycleRecord {
     if (this.records.has(id)) {
       console.warn(`[Lifecycle] 模块 ${id} 已注册，将覆盖旧记录`);
     }
@@ -143,14 +171,14 @@ export class ModuleLifecycle {
     const record: ModuleLifecycleRecord = {
       id,
       name: options.name || id,
-      state: LifecycleState.Registered,
+      state: LifecycleState.REGISTERED,
       registeredAt: now,
       updatedAt: now,
       hooks: options.hooks,
-      stateHistory: [{ state: LifecycleState.Registered, timestamp: now }],
+      stateHistory: [{ state: LifecycleState.REGISTERED, timestamp: now }],
     };
     this.records.set(id, record);
-    this.emitEvent(id, LifecycleEventType.Registered, { name: record.name });
+    this.emitEvent(id, LifecycleEventType.REGISTERED, { name: record.name });
     return record;
   }
 
@@ -160,12 +188,12 @@ export class ModuleLifecycle {
    * 预加载
    */
   preload(id: string): boolean {
-    if (!this.validateTransition(id, LifecycleState.Preloading)) return false;
-    this.emitEvent(id, LifecycleEventType.PreloadStart);
-    this.updateState(id, LifecycleState.Preloading);
+    if (!this.validateTransition(id, LifecycleState.PRELOADING)) return false;
+    this.emitEvent(id, LifecycleEventType.PRELOADSTART);
+    this.updateState(id, LifecycleState.PRELOADING);
     // 模拟预加载完成
-    this.emitEvent(id, LifecycleEventType.PreloadEnd);
-    this.updateState(id, LifecycleState.Loaded);
+    this.emitEvent(id, LifecycleEventType.PRELOADEND);
+    this.updateState(id, LifecycleState.LOADED);
     return true;
   }
 
@@ -180,7 +208,7 @@ export class ModuleLifecycle {
     }
 
     // 允许从 Loaded / Unmounted / Error 状态挂载
-    const allowedStates = [LifecycleState.Loaded, LifecycleState.Unmounted, LifecycleState.Error];
+    const allowedStates = [LifecycleState.LOADED, LifecycleState.UNMOUNTED, LifecycleState.ERROR];
     if (!allowedStates.includes(record.state)) {
       console.error(`[Lifecycle] 模块 ${id} 当前状态 ${record.state} 不允许挂载`);
       return false;
@@ -194,14 +222,17 @@ export class ModuleLifecycle {
       return false;
     }
 
-    this.emitEvent(id, LifecycleEventType.MountStart, { container: !!container, propsCount: Object.keys(props).length });
-    this.updateState(id, LifecycleState.Mounting);
+    this.emitEvent(id, LifecycleEventType.MOUNTSTART, {
+      container: !!container,
+      propsCount: Object.keys(props).length,
+    });
+    this.updateState(id, LifecycleState.MOUNTING);
     record.container = container;
     record.props = props;
 
     // 模拟挂载完成
-    this.emitEvent(id, LifecycleEventType.MountEnd);
-    this.updateState(id, LifecycleState.Mounted);
+    this.emitEvent(id, LifecycleEventType.MOUNTEND);
+    this.updateState(id, LifecycleState.MOUNTED);
 
     // mounted 钩子
     try {
@@ -219,7 +250,7 @@ export class ModuleLifecycle {
     const record = this.records.get(id);
     if (!record) return false;
 
-    if (record.state !== LifecycleState.Mounted) {
+    if (record.state !== LifecycleState.MOUNTED) {
       console.error(`[Lifecycle] 模块 ${id} 当前状态 ${record.state} 不允许更新（需 Mounted）`);
       return false;
     }
@@ -232,12 +263,12 @@ export class ModuleLifecycle {
       return false;
     }
 
-    this.emitEvent(id, LifecycleEventType.UpdateStart, { propsCount: Object.keys(props).length });
-    this.updateState(id, LifecycleState.Updating);
+    this.emitEvent(id, LifecycleEventType.UPDATESTART, { propsCount: Object.keys(props).length });
+    this.updateState(id, LifecycleState.UPDATING);
     record.props = { ...record.props, ...props };
 
-    this.emitEvent(id, LifecycleEventType.UpdateEnd);
-    this.updateState(id, LifecycleState.Mounted);
+    this.emitEvent(id, LifecycleEventType.UPDATEEND);
+    this.updateState(id, LifecycleState.MOUNTED);
 
     // updated 钩子
     try {
@@ -255,7 +286,7 @@ export class ModuleLifecycle {
     const record = this.records.get(id);
     if (!record) return false;
 
-    if (record.state !== LifecycleState.Mounted && record.state !== LifecycleState.Error) {
+    if (record.state !== LifecycleState.MOUNTED && record.state !== LifecycleState.ERROR) {
       console.error(`[Lifecycle] 模块 ${id} 当前状态 ${record.state} 不允许卸载`);
       return false;
     }
@@ -267,12 +298,12 @@ export class ModuleLifecycle {
       console.error(`[Lifecycle] beforeUnmount 钩子错误:`, err);
     }
 
-    this.emitEvent(id, LifecycleEventType.UnmountStart);
-    this.updateState(id, LifecycleState.Unmounting);
+    this.emitEvent(id, LifecycleEventType.UNMOUNTSTART);
+    this.updateState(id, LifecycleState.UNMOUNTING);
 
     // 模拟卸载完成
-    this.emitEvent(id, LifecycleEventType.UnmountEnd);
-    this.updateState(id, LifecycleState.Unmounted);
+    this.emitEvent(id, LifecycleEventType.UNMOUNTEND);
+    this.updateState(id, LifecycleState.UNMOUNTED);
 
     // unmounted 钩子
     try {
@@ -292,11 +323,11 @@ export class ModuleLifecycle {
     const record = this.records.get(id);
     if (!record) return false;
 
-    if (record.state === LifecycleState.Mounted) {
+    if (record.state === LifecycleState.MOUNTED) {
       this.unmount(id);
     }
 
-    this.emitEvent(id, LifecycleEventType.Destroyed);
+    this.emitEvent(id, LifecycleEventType.DESTROYED);
     this.records.delete(id);
     return true;
   }
@@ -362,9 +393,7 @@ export class ModuleLifecycle {
     }
     const allowed = STATE_TRANSITIONS[record.state];
     if (!allowed || !allowed.includes(targetState)) {
-      console.error(
-        `[Lifecycle] 模块 ${id} 非法状态转换: ${record.state} → ${targetState}`
-      );
+      console.error(`[Lifecycle] 模块 ${id} 非法状态转换: ${record.state} → ${targetState}`);
       return false;
     }
     return true;
@@ -384,7 +413,7 @@ export class ModuleLifecycle {
     record.updatedAt = Date.now();
     record.stateHistory.push({ state: newState, timestamp: record.updatedAt });
 
-    this.emitEvent(id, LifecycleEventType.StateChange, {
+    this.emitEvent(id, LifecycleEventType.STATECHANGE, {
       from: oldState,
       to: newState,
     });
@@ -397,11 +426,11 @@ export class ModuleLifecycle {
     if (!record) return;
 
     record.lastError = error;
-    record.state = LifecycleState.Error;
+    record.state = LifecycleState.ERROR;
     record.updatedAt = Date.now();
-    record.stateHistory.push({ state: LifecycleState.Error, timestamp: record.updatedAt });
+    record.stateHistory.push({ state: LifecycleState.ERROR, timestamp: record.updatedAt });
 
-    this.emitEvent(id, LifecycleEventType.Error, {
+    this.emitEvent(id, LifecycleEventType.ERROR, {
       message: error.message,
       stack: error.stack,
     });

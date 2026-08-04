@@ -38,7 +38,7 @@ export const useMobileProduction = () => {
       const mockOrders: ProductionOrder[] = [
         {
           id: '1',
-          order_no: 'PO-2024-06-001',
+          orderNo: 'PO-2024-06-001',
           product_name: t('mobile.production.product.smart_sensor_module'),
           quantity: 500,
           completed_quantity: 320,
@@ -50,7 +50,7 @@ export const useMobileProduction = () => {
         },
         {
           id: '2',
-          order_no: 'PO-2024-06-002',
+          orderNo: 'PO-2024-06-002',
           product_name: t('mobile.production.product.data_collector'),
           quantity: 200,
           completed_quantity: 0,
@@ -61,7 +61,7 @@ export const useMobileProduction = () => {
         },
         {
           id: '3',
-          order_no: 'PO-2024-05-098',
+          orderNo: 'PO-2024-05-098',
           product_name: t('mobile.production.product.pcb_assembly'),
           quantity: 1000,
           completed_quantity: 1000,
@@ -74,7 +74,7 @@ export const useMobileProduction = () => {
         },
         {
           id: '4',
-          order_no: 'PO-2024-06-003',
+          orderNo: 'PO-2024-06-003',
           product_name: t('mobile.production.product.power_module'),
           quantity: 300,
           completed_quantity: 150,
@@ -86,7 +86,7 @@ export const useMobileProduction = () => {
         },
         {
           id: '5',
-          order_no: 'PO-2024-06-004',
+          orderNo: 'PO-2024-06-004',
           product_name: t('mobile.production.product.communication_module'),
           quantity: 400,
           completed_quantity: 0,
@@ -108,7 +108,7 @@ export const useMobileProduction = () => {
         {
           id: '1',
           order_id: '1',
-          order_no: 'PO-2024-06-001',
+          orderNo: 'PO-2024-06-001',
           workstation: t('mobile.production.workstation.a_line_station_1'),
           operator: user?.fullName || '',
           quantity: 100,
@@ -122,7 +122,7 @@ export const useMobileProduction = () => {
         {
           id: '2',
           order_id: '1',
-          order_no: 'PO-2024-06-001',
+          orderNo: 'PO-2024-06-001',
           workstation: t('mobile.production.workstation.a_line_station_1'),
           operator: user?.fullName || '',
           quantity: 120,
@@ -136,7 +136,7 @@ export const useMobileProduction = () => {
         {
           id: '3',
           order_id: '3',
-          order_no: 'PO-2024-05-098',
+          orderNo: 'PO-2024-05-098',
           workstation: t('mobile.production.workstation.a_line_station_2'),
           operator: t('mobile.production.operator.li_hua'),
           quantity: 500,
@@ -247,7 +247,7 @@ export const useMobileProduction = () => {
       const newReport: WorkReport = {
         id: Date.now().toString(),
         order_id: selectedOrder?.id || '',
-        order_no: selectedOrder?.order_no || '',
+        orderNo: selectedOrder?.orderNo || '',
         workstation: selectedOrder?.workstation || '',
         operator: user?.fullName || '',
         quantity: reportForm.quantity,

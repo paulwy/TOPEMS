@@ -1,13 +1,6 @@
-import {
-  Box,
-  Typography,
-  Switch,
-  TextField,
-  Stack,
-  Divider,
-} from '@mui/material';
+import { Box, Typography, Switch, TextField, Stack, Divider } from '@mui/material';
 import React from 'react';
-import { FormSettings as FormSettingsType } from '../types';
+import type { FormSettings as FormSettingsType } from '../types';
 
 interface FormSettingsProps {
   settings: FormSettingsType;
@@ -15,11 +8,7 @@ interface FormSettingsProps {
   markUnsaved: () => void;
 }
 
-export const FormSettings: React.FC<FormSettingsProps> = ({
-  settings,
-  onChange,
-  markUnsaved,
-}) => {
+export const FormSettings: React.FC<FormSettingsProps> = ({ settings, onChange, markUnsaved }) => {
   return (
     <Stack spacing={3}>
       <Box>

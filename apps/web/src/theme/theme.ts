@@ -1,3 +1,4 @@
+/* eslint-disable topems-design/no-hardcoded-colors -- theme.ts defines the color tokens */
 import type { Theme, ThemeOptions } from '@mui/material/styles';
 import { createTheme } from '@mui/material/styles';
 import { designTokens, semanticTokens } from './tokens';
@@ -15,13 +16,38 @@ declare module '@mui/material/styles' {
   }
 }
 
-// 扩展 Palette 颜色，增加 cyberpunk 专属字段
+// 扩展 Palette 颜色，增加 cyberpunk 专属字段及设计令牌扩展色组
 declare module '@mui/material/styles' {
   interface Palette {
     accent?: { main: string; light: string; dark: string };
+    teal?: typeof designTokens.colors.teal;
+    orange?: typeof designTokens.colors.orange;
+    yellow?: typeof designTokens.colors.yellow;
+    blue?: typeof designTokens.colors.blue;
+    cyan?: typeof designTokens.colors.cyan;
+    purple?: typeof designTokens.colors.purple;
+    pink?: typeof designTokens.colors.pink;
+    surface?: typeof designTokens.colors.surface;
   }
   interface PaletteOptions {
     accent?: { main?: string; light?: string; dark?: string };
+    teal?: typeof designTokens.colors.teal;
+    orange?: typeof designTokens.colors.orange;
+    yellow?: typeof designTokens.colors.yellow;
+    blue?: typeof designTokens.colors.blue;
+    cyan?: typeof designTokens.colors.cyan;
+    purple?: typeof designTokens.colors.purple;
+    pink?: typeof designTokens.colors.pink;
+    surface?: typeof designTokens.colors.surface;
+  }
+  interface TypeText {
+    muted?: string;
+  }
+  interface PaletteText {
+    muted?: string;
+  }
+  interface PaletteTextOptions {
+    muted?: string;
   }
 }
 
@@ -83,8 +109,18 @@ export const createCustomTheme = (): Theme => {
       text: {
         primary: designTokens.colors.text.primary,
         secondary: designTokens.colors.text.secondary,
+        muted: designTokens.colors.text.muted,
       },
       divider: designTokens.colors.border.default,
+      // 设计令牌扩展色组 — 供 sx prop 通过 token path 引用
+      teal: designTokens.colors.teal,
+      orange: designTokens.colors.orange,
+      yellow: designTokens.colors.yellow,
+      blue: designTokens.colors.blue,
+      cyan: designTokens.colors.cyan,
+      purple: designTokens.colors.purple,
+      pink: designTokens.colors.pink,
+      surface: designTokens.colors.surface,
     },
     typography: {
       fontFamily: designTokens.typography.fontFamily,

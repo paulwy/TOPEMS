@@ -388,7 +388,7 @@ export const RoleBadge: React.FC<RoleBadgeProps> = ({ role, size = 'md', showIco
     <Chip
       size='small'
       variant={config.variant === 'outline' ? 'outlined' : 'filled'}
-      sx={{ gap: '4px' }}
+      sx={{ gap: 0.5 }}
       label={config.label}
     />
   );

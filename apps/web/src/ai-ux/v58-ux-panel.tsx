@@ -128,34 +128,34 @@ export const V58UXPanel: React.FC<{ onClose: () => void }> = ({ onClose }) => {
   const [isSimulating, setIsSimulating] = useState(false);
 
   const loadRecommendations = useCallback(() => {
-    const recs = smartRecommender.get_recommendations(userId, { source: 'v58-panel' }, 6);
-    const trend = smartRecommender.get_trending(5);
-    const stats = smartRecommender.get_recommendation_stats();
+    const recs = smartRecommender.getRecommendations(userId, { source: 'v58-panel' }, 6);
+    const trend = smartRecommender.getTrending(5);
+    const stats = smartRecommender.getRecommendationStats();
     setRecommendations(recs);
     setTrending(trend);
     setRecStats(stats);
   }, [userId]);
 
   const loadAdaptation = useCallback(() => {
-    const p = adaptiveInteraction.get_interaction_profile(userId);
-    const adapted = adaptiveInteraction.adapt_interface(userId, { source: 'v58-panel' });
+    const p = adaptiveInteraction.getInteractionProfile(userId);
+    const adapted = adaptiveInteraction.adaptInterface(userId, { source: 'v58-panel' });
     setProfile(p);
     setAdaptation(adapted);
   }, [userId]);
 
   const loadEmotion = useCallback(() => {
-    const state = emotionalDesignEngine.get_emotional_state(userId);
+    const state = emotionalDesignEngine.getEmotionalState(userId);
     if (state) {
       setEmotionState(state);
-      const response = emotionalDesignEngine.get_design_response(state);
+      const response = emotionalDesignEngine.getDesignResponse(state);
       setDesignResponse(response);
     } else {
-      const initialState = emotionalDesignEngine.detect_emotion({
+      const initialState = emotionalDesignEngine.detectEmotion({
         success: 0.6,
         achievement: 0.4,
         focus_flow: 0.3,
       });
-      const response = emotionalDesignEngine.respond_to_emotion(initialState, userId);
+      const response = emotionalDesignEngine.respondToEmotion(initialState, userId);
       setEmotionState(initialState);
       setDesignResponse(response);
     }
@@ -184,7 +184,7 @@ export const V58UXPanel: React.FC<{ onClose: () => void }> = ({ onClose }) => {
           timestamp: Date.now() + idx * 1000,
           sessionId: `v58-sim-${Date.now()}`,
         };
-        smartRecommender.record_behavior(behavior);
+        smartRecommender.recordBehavior(behavior);
 
         if (idx === actions.length - 1) {
           loadRecommendations();
@@ -199,8 +199,8 @@ export const V58UXPanel: React.FC<{ onClose: () => void }> = ({ onClose }) => {
   const simulateEmotion = useCallback(
     (signalKey: string, signalValue: number) => {
       const signals: Record<string, number> = { [signalKey]: signalValue };
-      const state = emotionalDesignEngine.detect_emotion(signals, { trigger: 'manual' });
-      const response = emotionalDesignEngine.respond_to_emotion(state, userId);
+      const state = emotionalDesignEngine.detectEmotion(signals, { trigger: 'manual' });
+      const response = emotionalDesignEngine.respondToEmotion(state, userId);
       setEmotionState(state);
       setDesignResponse(response);
     },
@@ -221,7 +221,7 @@ export const V58UXPanel: React.FC<{ onClose: () => void }> = ({ onClose }) => {
         left: 0,
         right: 0,
         bottom: 0,
-        bgcolor: 'rgba(0,0,0,0.5)',
+        bgcolor: 'action.active',
         zIndex: 10000,
         display: 'flex',
         alignItems: 'center',
@@ -251,7 +251,7 @@ export const V58UXPanel: React.FC<{ onClose: () => void }> = ({ onClose }) => {
             justifyContent: 'space-between',
             background: 'linear-gradient(135deg, #06b6d4, #0891b2, #0e7490)',
             bgcolor: 'linear-gradient(135deg, #06b6d4, #0891b2, #0e7490)',
-            color: 'white',
+            color: 'common.white',
           }}
         >
           <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5 }}>
@@ -267,7 +267,7 @@ export const V58UXPanel: React.FC<{ onClose: () => void }> = ({ onClose }) => {
             <Button
               size='small'
               variant='outlined'
-              sx={{ borderColor: 'rgba(255,255,255,0.5)', color: 'white' }}
+              sx={{ borderColor: 'common.white', color: 'common.white' }}
               onClick={simulateBehavior}
               disabled={isSimulating}
             >
@@ -280,7 +280,7 @@ export const V58UXPanel: React.FC<{ onClose: () => void }> = ({ onClose }) => {
             <IconButton
               size='small'
               onClick={onClose}
-              sx={{ color: 'white' }}
+              sx={{ color: 'common.white' }}
             >
               <XIcon size={20} />
             </IconButton>
@@ -328,11 +328,11 @@ export const V58UXPanel: React.FC<{ onClose: () => void }> = ({ onClose }) => {
               trending={trending}
               stats={recStats}
               onAccept={(id) => {
-                smartRecommender.mark_accepted(id);
+                smartRecommender.markAccepted(id);
                 loadRecommendations();
               }}
               onReject={(id) => {
-                smartRecommender.mark_rejected(id);
+                smartRecommender.markRejected(id);
                 loadRecommendations();
               }}
             />
@@ -343,7 +343,7 @@ export const V58UXPanel: React.FC<{ onClose: () => void }> = ({ onClose }) => {
               profile={profile}
               adaptation={adaptation}
               onUpdate={(p) => {
-                adaptiveInteraction.update_profile(userId, p);
+                adaptiveInteraction.updateProfile(userId, p);
                 loadAdaptation();
               }}
             />
@@ -361,11 +361,11 @@ export const V58UXPanel: React.FC<{ onClose: () => void }> = ({ onClose }) => {
             <SettingsTab
               profile={profile}
               onUpdate={(p) => {
-                adaptiveInteraction.update_profile(userId, p);
+                adaptiveInteraction.updateProfile(userId, p);
                 loadAdaptation();
               }}
               onReset={() => {
-                adaptiveInteraction.reset_profile(userId);
+                adaptiveInteraction.resetProfile(userId);
                 loadAdaptation();
               }}
             />
@@ -1185,7 +1185,7 @@ const EmotionTab: React.FC<{
               variant='h4'
               sx={{ fontWeight: 700, mb: 0.5 }}
             >
-              {EMOTION_LABELS[state.primary_emotion]}
+              {EMOTION_LABELS[state.primaryEmotion]}
             </Typography>
             <Stack
               direction='row'
@@ -1218,14 +1218,14 @@ const EmotionTab: React.FC<{
             <Box sx={{ px: 3 }}>
               <LinearProgress
                 variant='determinate'
-                value={state.emotion_intensity * 100}
+                value={state.emotionIntensity * 100}
                 sx={{ height: 8, borderRadius: 4 }}
               />
               <Typography
                 variant='caption'
                 sx={{ color: 'text.secondary' }}
               >
-                情绪强度: {(state.emotion_intensity * 100).toFixed(0)}%
+                情绪强度: {(state.emotionIntensity * 100).toFixed(0)}%
               </Typography>
             </Box>
           </Box>
@@ -1376,27 +1376,27 @@ const EmotionTab: React.FC<{
             <Grid size={6}>
               <InfoBlock
                 title='动画类型'
-                value={ANIMATION_LABELS[response.animation_type]}
+                value={ANIMATION_LABELS[response.animationType]}
               />
             </Grid>
             <Grid size={6}>
               <InfoBlock
                 title='反馈样式'
-                value={response.feedback_style}
+                value={response.feedbackStyle}
               />
             </Grid>
             <Grid size={6}>
               <InfoBlock
                 title='视觉色调'
-                value={response.visual_tone}
+                value={response.visualTone}
               />
             </Grid>
             <Grid size={6}>
               <InfoBlock
                 title='声音'
                 value={
-                  response.sound_design.enable_sound
-                    ? `${response.sound_design.sound_type} (${Math.round(response.sound_design.volume * 100)}%)`
+                  response.soundDesign.enable_sound
+                    ? `${response.soundDesign.soundType} (${Math.round(response.soundDesign.volume * 100)}%)`
                     : '静音'
                 }
               />
@@ -1418,25 +1418,25 @@ const EmotionTab: React.FC<{
             <Grid size={3}>
               <ColorBar
                 label='饱和度'
-                value={response.color_adjustments.saturation}
+                value={response.colorAdjustments.saturation}
               />
             </Grid>
             <Grid size={3}>
               <ColorBar
                 label='亮度'
-                value={response.color_adjustments.brightness}
+                value={response.colorAdjustments.brightness}
               />
             </Grid>
             <Grid size={3}>
               <ColorBar
                 label='对比度'
-                value={response.color_adjustments.contrast}
+                value={response.colorAdjustments.contrast}
               />
             </Grid>
             <Grid size={3}>
               <ColorBar
                 label='色温'
-                value={0.5 + response.color_adjustments.warmth}
+                value={0.5 + response.colorAdjustments.warmth}
               />
             </Grid>
           </Grid>

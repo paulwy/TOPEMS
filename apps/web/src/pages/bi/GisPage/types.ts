@@ -1,3 +1,12 @@
+import type {
+  DevicePoint,
+  StorageLocation,
+  Pipeline,
+  EvidenceRecord,
+  FactoryMap,
+  BusinessLocation,
+} from '@/api/gis';
+
 export type TabType =
   | 'map'
   | 'devicePoints'
@@ -14,9 +23,4 @@ export interface FormErrors {
 }
 
 export type GisEntity =
-  | import('@/api/gis').DevicePoint
-  | import('@/api/gis').StorageLocation
-  | import('@/api/gis').Pipeline
-  | import('@/api/gis').EvidenceRecord
-  | import('@/api/gis').FactoryMap
-  | import('@/api/gis').BusinessLocation;
+  DevicePoint | StorageLocation | Pipeline | EvidenceRecord | FactoryMap | BusinessLocation;

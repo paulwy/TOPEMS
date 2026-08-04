@@ -70,7 +70,7 @@ export function ComponentTree({ nodes, selectedNodeId, onSelectNode }: Component
       children: node.children?.map(renderTreeItem) ?? null,
     };
 
-    return <TreeItem {...treeItemProps as any} />;
+    return <TreeItem {...(treeItemProps as any)} />;
   };
 
   return (
@@ -93,9 +93,7 @@ export function ComponentTree({ nodes, selectedNodeId, onSelectNode }: Component
 
       <SimpleTreeView
         selectedItems={selectedNodeId ?? null}
-        onItemSelectionToggle={(_, nodeId, isSelected) =>
-          onSelectNode(isSelected ? nodeId : null)
-        }
+        onItemSelectionToggle={(_, nodeId, isSelected) => onSelectNode(isSelected ? nodeId : null)}
         slots={{ expandIcon: LucideIcons.ChevronRight, collapseIcon: LucideIcons.ChevronDown }}
       >
         {nodes.map(renderTreeItem)}

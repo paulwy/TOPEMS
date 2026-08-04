@@ -182,7 +182,7 @@ export const BundleSizeMonitor: React.FC<BundleSizeMonitorProps> = ({
             right: '16px',
             zIndex: 50,
             width: '384px',
-            backgroundColor: 'white',
+            backgroundColor: 'common.white',
             borderRadius: '12px',
             boxShadow: '0 25px 50px -12px rgba(0, 0, 0, 0.25)',
             border: '1px solid grey.200',
@@ -202,7 +202,7 @@ export const BundleSizeMonitor: React.FC<BundleSizeMonitorProps> = ({
             <div className='flex items-center gap-2'>
               <Package
                 className='w-5 h-5'
-                style={{ color: '#6366f1' }}
+                style={{ color: 'secondary.500' }}
               />
               <h3 className='font-semibold text-gray-900'>包体积监控</h3>
             </div>
@@ -338,7 +338,7 @@ export const BundleSizeMonitor: React.FC<BundleSizeMonitorProps> = ({
                       alignItems: 'center',
                       justifyContent: 'space-between',
                       padding: '8px',
-                      backgroundColor: '#f9fafb',
+                      backgroundColor: 'grey.50',
                       borderRadius: '8px',
                     }}
                   >
@@ -463,7 +463,7 @@ export const BundleSizeMonitor: React.FC<BundleSizeMonitorProps> = ({
           justifyContent: 'center',
           transition: 'all 0.2s',
           backgroundColor: hasWarning ? 'error.700' : '#4f46e5',
-          color: 'white',
+          color: 'common.white',
           border: 'none',
           cursor: 'pointer',
         }}

@@ -112,16 +112,16 @@ vi.mock('@/store', () => ({
 }));
 
 describe('IamCompanyStructurePage', () => {
-it('should render without crashing', () => {
+  it('should render without crashing', () => {
     const { container } = render(
       <BrowserRouter>
         <CompanyStructurePage />
       </BrowserRouter>
     );
     expect(container).toBeDefined();
-});
+  });
 
-it('should have consolidation hooks defined', async () => {
+  it('should have consolidation hooks defined', async () => {
     render(
       <BrowserRouter>
         <CompanyStructurePage />
@@ -132,15 +132,14 @@ it('should have consolidation hooks defined', async () => {
     expect(useCreateCompanyRelation).toBeDefined();
     expect(useUpdateCompanyRelation).toBeDefined();
     expect(useDeleteCompanyRelation).toBeDefined();
-});
+  });
 
-it('should call useCompanyTree on mount', async () => {
+  it('should call useCompanyTree on mount', async () => {
     render(
       <BrowserRouter>
         <CompanyStructurePage />
       </BrowserRouter>
     );
     expect(useCompanyTree).toHaveBeenCalled();
-});
-;
+  });
 });

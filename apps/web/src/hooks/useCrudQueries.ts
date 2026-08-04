@@ -79,7 +79,9 @@ export interface UseCrudQueriesResult<T, TCreate = Partial<T>, TUpdate = Partial
   // 原始 Mutation 对象（用于访问 isPending/isError/onMutate 等高级用法）
   mutations: {
     createMutation: ReturnType<typeof useMutation<T | null, Error, TCreate, unknown>>;
-    updateMutation: ReturnType<typeof useMutation<T | null, Error, { id: string; item: TUpdate }, unknown>>;
+    updateMutation: ReturnType<
+      typeof useMutation<T | null, Error, { id: string; item: TUpdate }, unknown>
+    >;
     deleteMutation: ReturnType<typeof useMutation<void, Error, string, unknown>>;
     bulkDeleteMutation: ReturnType<typeof useMutation<void, Error, string[], unknown>>;
   };

@@ -145,9 +145,7 @@ function CanvasNodeItem({
 }: CanvasNodeItemProps) {
   const comp = getComponentByType(node.type);
   const IconComp = comp?.icon
-    ? (LucideIcons as unknown as Record<string, React.ComponentType<{ size?: number }>>)[
-        comp.icon
-      ]
+    ? (LucideIcons as unknown as Record<string, React.ComponentType<{ size?: number }>>)[comp.icon]
     : null;
 
   return (

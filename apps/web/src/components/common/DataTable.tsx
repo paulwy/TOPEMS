@@ -64,6 +64,7 @@ import {
   type VisibilityState,
 } from '@tanstack/react-table';
 import { List, type RowComponentProps } from 'react-window';
+import type { SxProps, Theme } from '@mui/material/styles';
 import { useNotificationStore } from '@/store';
 import { useExportData } from '@/hooks/useDataTable';
 import { useResponsive } from '@/hooks/useResponsive';
@@ -462,7 +463,7 @@ export interface DataTableProps<TData, TValue> {
   extraActions?: React.ReactNode;
 
   /** 自定义样式 */
-  sx?: import('@mui/material/styles').SxProps<import('@mui/material/styles').Theme>;
+  sx?: SxProps<Theme>;
 
   /** 是否启用列配置持久化（存储到localStorage） */
   persistColumnConfig?: boolean;
@@ -1395,7 +1396,7 @@ export function DataTable<TData, TValue>({
                                     whiteSpace: 'nowrap',
                                     fontSize: 14,
                                     ...(compact && { py: 1 }),
-                                    ...(isEditing && { backgroundColor: '#fffbe6' }),
+                                    ...(isEditing && { backgroundColor: 'yellow.50' }),
                                   }}
                                 >
                                   {isEditable && isEditing ? (
@@ -1413,9 +1414,18 @@ export function DataTable<TData, TValue>({
                                     />
                                   ) : isEditable && !isEditing ? (
                                     <div
+                                      role='button'
+                                      tabIndex={0}
                                       onClick={(e) => {
                                         e.stopPropagation();
                                         handleStartEdit(rowKey, cell.id, currentValue);
+                                      }}
+                                      onKeyDown={(e) => {
+                                        if (e.key === 'Enter' || e.key === ' ') {
+                                          e.preventDefault();
+                                          e.stopPropagation();
+                                          handleStartEdit(rowKey, cell.id, currentValue);
+                                        }
                                       }}
                                       style={{
                                         cursor: 'pointer',

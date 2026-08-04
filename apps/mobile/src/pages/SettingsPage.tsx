@@ -76,7 +76,7 @@ const SettingsPage: React.FC = () => {
       } else {
         Alert.alert('同步结果', result.message || '同步完成');
       }
-    } catch (error) {
+    } catch {
       Alert.alert('同步失败', '同步过程中出现错误');
     } finally {
       setIsSyncing(false);
@@ -103,7 +103,7 @@ const SettingsPage: React.FC = () => {
       await userApi.updateProfile({ name: editName, phone: editPhone });
       Alert.alert('成功', '个人信息已更新');
       setIsEditing(false);
-    } catch (error) {
+    } catch {
       Alert.alert('错误', '更新失败，请重试');
     } finally {
       setIsSaving(false);
@@ -119,7 +119,7 @@ const SettingsPage: React.FC = () => {
           await userApi.changePassword({ oldPassword, newPassword });
           Alert.alert('成功', '密码修改成功，请重新登录');
           logout();
-        } catch (error) {
+        } catch {
           Alert.alert('错误', '密码修改失败');
         }
       });
@@ -142,11 +142,7 @@ const SettingsPage: React.FC = () => {
             <Text style={styles.infoLabel}>姓名</Text>
             <View style={styles.infoValueContainer}>
               {isEditing ? (
-                <TextInput
-                  style={styles.infoValue}
-                  onChangeText={setEditName}
-                  value={editName}
-                />
+                <TextInput style={styles.infoValue} onChangeText={setEditName} value={editName} />
               ) : (
                 <Text style={styles.infoValue}>{user?.name || '-'}</Text>
               )}

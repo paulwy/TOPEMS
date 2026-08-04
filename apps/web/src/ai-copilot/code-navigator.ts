@@ -140,7 +140,7 @@ export class CodeNavigator {
     return this.lastStats;
   }
 
-  search_code(query: string, limit: number = 20): SearchResult[] {
+  searchCode(query: string, limit: number = 20): SearchResult[] {
     const results: SearchResult[] = [];
     const lowerQuery = query.toLowerCase();
 
@@ -169,7 +169,7 @@ export class CodeNavigator {
           imp.name.toLowerCase().includes(lowerQuery) ||
           imp.source.toLowerCase().includes(lowerQuery)
         ) {
-          const existing = results.find((r) => r.file === path && r.match === `import:${imp.name}`);
+          const existing = results.some((r) => r.file === path && r.match === `import:${imp.name}`);
           if (!existing) {
             results.push({
               file: path,
@@ -187,7 +187,7 @@ export class CodeNavigator {
     return results.sort((a, b) => b.score - a.score).slice(0, limit);
   }
 
-  find_symbol(name: string, kind?: SymbolInfo['kind']): SymbolInfo | null {
+  findSymbol(name: string, kind?: SymbolInfo['kind']): SymbolInfo | null {
     const symbols = this.symbolIndex.get(name);
     if (!symbols || symbols.length === 0) return null;
 
@@ -198,33 +198,33 @@ export class CodeNavigator {
     return symbols[0];
   }
 
-  get_references(name: string): { file: string; line: number }[] {
+  getReferences(name: string): { file: string; line: number }[] {
     return this.referenceMap.get(name) || [];
   }
 
-  get_definition(name: string): { file: string; line: number } | null {
-    const symbol = this.find_symbol(name);
+  getDefinition(name: string): { file: string; line: number } | null {
+    const symbol = this.findSymbol(name);
     if (!symbol) return null;
     return { file: symbol.file, line: symbol.line };
   }
 
-  get_imports(filePath: string): ImportInfo[] {
+  getImports(filePath: string): ImportInfo[] {
     const structure = this.files.get(filePath);
     return structure ? structure.imports : [];
   }
 
-  get_file_structure(filePath: string): FileStructure | null {
+  getFileStructure(filePath: string): FileStructure | null {
     return this.files.get(filePath) || null;
   }
 
-  get_import_graph(filePath: string): { dependencies: string[]; dependents: string[] } {
+  getImportGraph(filePath: string): { dependencies: string[]; dependents: string[] } {
     return {
       dependencies: this.importGraph.get(filePath) || [],
       dependents: this.getDependents(filePath),
     };
   }
 
-  get_stats(): IndexStats {
+  getStats(): IndexStats {
     return { ...this.lastStats };
   }
 

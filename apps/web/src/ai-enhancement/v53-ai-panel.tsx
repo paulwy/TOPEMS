@@ -146,7 +146,7 @@ const V53AIPanel: React.FC<{ onClose: () => void }> = ({ onClose }) => {
         left: 0,
         right: 0,
         bottom: 0,
-        bgcolor: 'rgba(0,0,0,0.6)',
+        bgcolor: 'action.active',
         zIndex: 10000,
         display: 'flex',
         alignItems: 'center',
@@ -203,7 +203,7 @@ const V53PanelHeader: React.FC<{ onClose: () => void }> = ({ onClose }) => (
       alignItems: 'center',
       justifyContent: 'space-between',
       bgcolor: 'linear-gradient(135deg, #8b5cf6 0%, #6366f1 50%, #3b82f6 100%)',
-      color: 'white',
+      color: 'common.white',
     }}
   >
     <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5 }}>
@@ -212,7 +212,7 @@ const V53PanelHeader: React.FC<{ onClose: () => void }> = ({ onClose }) => (
           width: 40,
           height: 40,
           borderRadius: 2,
-          bgcolor: 'rgba(255,255,255,0.2)',
+          bgcolor: 'action.disabledBackground',
           display: 'flex',
           alignItems: 'center',
           justifyContent: 'center',
@@ -241,8 +241,8 @@ const V53PanelHeader: React.FC<{ onClose: () => void }> = ({ onClose }) => (
         color='secondary'
         sx={{
           '& .MuiBadge-badge': {
-            bgcolor: '#fbbf24',
-            color: '#1e293b',
+            bgcolor: 'warning.400',
+            color: 'text.primary',
             fontWeight: 700,
             fontSize: 10,
           },
@@ -253,7 +253,7 @@ const V53PanelHeader: React.FC<{ onClose: () => void }> = ({ onClose }) => (
       <IconButton
         size='small'
         onClick={onClose}
-        sx={{ color: 'white' }}
+        sx={{ color: 'common.white' }}
       >
         <XIcon size={20} />
       </IconButton>
@@ -366,7 +366,7 @@ const CodeCompletionTab: React.FC = () => {
           startIcon={<Wand2 size={16} />}
           onClick={handleAnalyze}
           disabled={loading}
-          sx={{ bgcolor: '#8b5cf6', '&:hover': { bgcolor: '#7c3aed' } }}
+          sx={{ bgcolor: 'secondary.500', '&:hover': { bgcolor: 'secondary.600' } }}
         >
           {loading ? '分析中...' : '获取智能补全'}
         </Button>
@@ -374,7 +374,7 @@ const CodeCompletionTab: React.FC = () => {
           variant='outlined'
           startIcon={<FileCode size={16} />}
           onClick={registerSampleData}
-          sx={{ borderColor: '#8b5cf6', color: '#8b5cf6' }}
+          sx={{ borderColor: 'secondary.500', color: 'secondary.500' }}
         >
           注册示例数据
         </Button>
@@ -382,17 +382,17 @@ const CodeCompletionTab: React.FC = () => {
         <Chip
           label={`代码片段: ${stats.totalSnippets}`}
           size='small'
-          sx={{ bgcolor: '#ede9fe', color: '#6b21a8', fontWeight: 600 }}
+          sx={{ bgcolor: 'secondary.100', color: 'purple.800', fontWeight: 600 }}
         />
         <Chip
           label={`组件: ${stats.registeredComponents}`}
           size='small'
-          sx={{ bgcolor: '#dbeafe', color: '#1e40af', fontWeight: 600 }}
+          sx={{ bgcolor: 'primary.100', color: 'primary.800', fontWeight: 600 }}
         />
         <Chip
           label={`API: ${stats.registeredAPIs}`}
           size='small'
-          sx={{ bgcolor: '#d1fae5', color: '#065f46', fontWeight: 600 }}
+          sx={{ bgcolor: 'success.100', color: 'teal.900', fontWeight: 600 }}
         />
       </Stack>
 
@@ -449,8 +449,8 @@ const CodeCompletionTab: React.FC = () => {
               '& .MuiInputBase-input': {
                 fontFamily: 'monospace',
                 fontSize: 12,
-                bgcolor: '#1e293b',
-                color: '#e2e8f0',
+                bgcolor: 'text.primary',
+                color: 'divider',
               },
             }}
           />
@@ -478,7 +478,14 @@ const CodeCompletionTab: React.FC = () => {
             </Alert>
           )}
           {!loading && completions.length > 0 && (
-            <List sx={{ maxHeight: 400, overflow: 'auto', bgcolor: '#f8fafc', borderRadius: 1 }}>
+            <List
+              sx={{
+                maxHeight: 400,
+                overflow: 'auto',
+                bgcolor: 'background.default',
+                borderRadius: 1,
+              }}
+            >
               {completions.slice(0, 30).map((item, index) => (
                 <Paper
                   key={`${item.label}-${index}`}
@@ -489,7 +496,7 @@ const CodeCompletionTab: React.FC = () => {
                     border: '1px solid',
                     borderColor: 'divider',
                     borderRadius: 1,
-                    '&:hover': { bgcolor: '#ede9fe' },
+                    '&:hover': { bgcolor: 'secondary.100' },
                     cursor: 'pointer',
                     transition: 'background 0.2s',
                   }}
@@ -503,7 +510,7 @@ const CodeCompletionTab: React.FC = () => {
                         fontSize: 10,
                         height: 20,
                         bgcolor: getKindColor(item.kind),
-                        color: 'white',
+                        color: 'common.white',
                         fontWeight: 600,
                       }}
                     />
@@ -540,8 +547,8 @@ const CodeCompletionTab: React.FC = () => {
                       mt: 0.5,
                       fontFamily: 'monospace',
                       fontSize: 10,
-                      color: '#6366f1',
-                      bgcolor: '#ede9fe',
+                      color: 'secondary.500',
+                      bgcolor: 'secondary.100',
                       px: 1,
                       py: 0.5,
                       borderRadius: 0.5,
@@ -641,12 +648,12 @@ const TestGeneratorTab: React.FC = () => {
           startIcon={<TestTube2 size={16} />}
           onClick={handleAnalyze}
           disabled={loading}
-          sx={{ bgcolor: '#10b981', '&:hover': { bgcolor: '#059669' } }}
+          sx={{ bgcolor: 'teal.500', '&:hover': { bgcolor: 'teal.600' } }}
         >
           {loading ? (
             <CircularProgress
               size={16}
-              sx={{ color: 'white' }}
+              sx={{ color: 'common.white' }}
             />
           ) : (
             '分析并生成测试'
@@ -656,7 +663,7 @@ const TestGeneratorTab: React.FC = () => {
         {testSuite && (
           <Chip
             label={`${testSuite.tests.length} 个测试用例`}
-            sx={{ bgcolor: '#d1fae5', color: '#065f46', fontWeight: 600 }}
+            sx={{ bgcolor: 'success.100', color: 'teal.900', fontWeight: 600 }}
           />
         )}
       </Stack>
@@ -684,8 +691,8 @@ const TestGeneratorTab: React.FC = () => {
               '& .MuiInputBase-input': {
                 fontFamily: 'monospace',
                 fontSize: 12,
-                bgcolor: '#1e293b',
-                color: '#e2e8f0',
+                bgcolor: 'text.primary',
+                color: 'divider',
               },
             }}
           />
@@ -725,17 +732,17 @@ const TestGeneratorTab: React.FC = () => {
                 <Chip
                   label={`useState: ${analysis.stateHooks.length}`}
                   size='small'
-                  sx={{ bgcolor: '#fef3c7', color: '#92400e' }}
+                  sx={{ bgcolor: 'warning.100', color: 'warning.800' }}
                 />
                 <Chip
                   label={`useEffect: ${analysis.effects.length}`}
                   size='small'
-                  sx={{ bgcolor: '#dbeafe', color: '#1e40af' }}
+                  sx={{ bgcolor: 'primary.100', color: 'primary.800' }}
                 />
                 <Chip
                   label={`事件: ${analysis.eventHandlers.length}`}
                   size='small'
-                  sx={{ bgcolor: '#d1fae5', color: '#065f46' }}
+                  sx={{ bgcolor: 'success.100', color: 'teal.900' }}
                 />
               </Stack>
               <Box sx={{ mt: 1.5 }}>
@@ -784,12 +791,12 @@ const TestGeneratorTab: React.FC = () => {
           {generatedCode && (
             <Box
               sx={{
-                bgcolor: '#0f172a',
+                bgcolor: 'grey.900',
                 borderRadius: 1,
                 p: 2,
                 fontFamily: 'monospace',
                 fontSize: 11,
-                color: '#e2e8f0',
+                color: 'divider',
                 maxHeight: 250,
                 overflow: 'auto',
                 whiteSpace: 'pre',
@@ -834,7 +841,7 @@ const TestSuiteItem: React.FC<{ test: TestMethod }> = ({ test }) => {
         border: '1px solid',
         borderColor: 'divider',
         borderRadius: 1,
-        bgcolor: '#f8fafc',
+        bgcolor: 'background.default',
       }}
     >
       <ListItem
@@ -843,7 +850,7 @@ const TestSuiteItem: React.FC<{ test: TestMethod }> = ({ test }) => {
       >
         <CheckCircle2
           size={16}
-          style={{ color: '#10b981', marginRight: 8 }}
+          style={{ color: 'teal.500', marginRight: 8 }}
         />
         <ListItemText
           primary={
@@ -966,7 +973,7 @@ const UIRecommenderTab: React.FC = () => {
           startIcon={<Wand2 size={16} />}
           onClick={handleRecommend}
           disabled={loading}
-          sx={{ bgcolor: '#f59e0b', '&:hover': { bgcolor: '#d97706' } }}
+          sx={{ bgcolor: 'warning.500', '&:hover': { bgcolor: 'warning.600' } }}
         >
           {loading ? '分析中...' : '智能推荐'}
         </Button>
@@ -1012,8 +1019,8 @@ const UIRecommenderTab: React.FC = () => {
                       position: 'absolute',
                       top: -8,
                       right: 8,
-                      bgcolor: '#8b5cf6',
-                      color: 'white',
+                      bgcolor: 'secondary.500',
+                      color: 'common.white',
                       fontWeight: 700,
                     }}
                   />
@@ -1081,7 +1088,7 @@ const UIRecommenderTab: React.FC = () => {
                       <Paper
                         key={aIdx}
                         elevation={0}
-                        sx={{ p: 1, bgcolor: '#f8fafc', mb: 0.5, borderRadius: 1 }}
+                        sx={{ p: 1, bgcolor: 'background.default', mb: 0.5, borderRadius: 1 }}
                       >
                         <Typography
                           variant='body2'
@@ -1123,7 +1130,7 @@ const UIRecommenderTab: React.FC = () => {
                     border: '1px solid',
                     borderColor: 'divider',
                     borderRadius: 1,
-                    '&:hover': { bgcolor: '#f8fafc' },
+                    '&:hover': { bgcolor: 'background.default' },
                     cursor: 'pointer',
                   }}
                 >
@@ -1320,7 +1327,7 @@ const AIChatTab: React.FC = () => {
           <Box sx={{ display: 'flex', justifyContent: 'flex-start' }}>
             <Paper
               elevation={1}
-              sx={{ p: 2, borderRadius: 2, bgcolor: '#fff', border: '1px solid #e2e8f0' }}
+              sx={{ p: 2, borderRadius: 2, bgcolor: 'common.white', border: '1px solid #e2e8f0' }}
             >
               <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
                 <Loader2
@@ -1340,7 +1347,7 @@ const AIChatTab: React.FC = () => {
         <div ref={messagesEndRef} />
       </Box>
 
-      <Box sx={{ borderTop: 1, borderColor: 'divider', p: 2, bgcolor: 'white' }}>
+      <Box sx={{ borderTop: 1, borderColor: 'divider', p: 2, bgcolor: 'common.white' }}>
         <Box sx={{ mb: 1, display: 'flex', gap: 1, flexWrap: 'wrap' }}>
           {quickPrompts.map((prompt) => (
             <Chip
@@ -1350,10 +1357,10 @@ const AIChatTab: React.FC = () => {
               onClick={() => setInput(prompt)}
               sx={{
                 cursor: 'pointer',
-                bgcolor: '#ede9fe',
-                color: '#6b21a8',
+                bgcolor: 'secondary.100',
+                color: 'purple.800',
                 fontSize: 11,
-                '&:hover': { bgcolor: '#ddd6fe' },
+                '&:hover': { bgcolor: 'secondary.200' },
               }}
             />
           ))}
@@ -1376,7 +1383,7 @@ const AIChatTab: React.FC = () => {
               '& .MuiOutlinedInput-root': {
                 borderRadius: 2,
                 '&:focus-within': {
-                  borderColor: '#8b5cf6',
+                  borderColor: 'secondary.500',
                 },
               },
             }}
@@ -1386,11 +1393,11 @@ const AIChatTab: React.FC = () => {
             onClick={handleSend}
             disabled={!input.trim() || isTyping}
             sx={{
-              bgcolor: '#8b5cf6',
+              bgcolor: 'secondary.500',
               minWidth: 50,
               height: 40,
-              '&:hover': { bgcolor: '#7c3aed' },
-              '&.Mui-disabled': { bgcolor: '#e2e8f0', color: '#94a3b8' },
+              '&:hover': { bgcolor: 'secondary.600' },
+              '&.Mui-disabled': { bgcolor: 'divider', color: 'text.muted' },
             }}
           >
             <Send size={18} />

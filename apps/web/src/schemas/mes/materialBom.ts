@@ -77,7 +77,8 @@ export const materialBomSchema: EntitySchema = {
       type: 'number',
       readonly: true,
       listWidth: 80,
-      renderCell: (row: Record<string, unknown>) => (row.items as unknown[] | undefined)?.length || 0,
+      renderCell: (row: Record<string, unknown>) =>
+        (row.items as unknown[] | undefined)?.length || 0,
     },
     {
       name: 'description',

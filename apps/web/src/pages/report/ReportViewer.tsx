@@ -112,7 +112,7 @@ const ReportViewer: React.FC<ReportViewerProps> = ({ report, onClose }) => {
       sx={{
         position: 'fixed',
         inset: 0,
-        bgcolor: 'rgba(0, 0, 0, 0.5)',
+        bgcolor: 'action.active',
         display: 'flex',
         alignItems: 'center',
         justifyContent: 'center',
@@ -136,7 +136,7 @@ const ReportViewer: React.FC<ReportViewerProps> = ({ report, onClose }) => {
         <Box
           sx={{
             background: 'linear-gradient(135deg, primary.main 0%, primary.light 100%)',
-            color: 'white',
+            color: 'common.white',
             p: 3,
           }}
         >
@@ -167,8 +167,8 @@ const ReportViewer: React.FC<ReportViewerProps> = ({ report, onClose }) => {
               onClick={onClose}
               sx={{
                 p: 1,
-                color: 'white',
-                '&:hover': { bgcolor: 'rgba(255,255,255,0.2)' },
+                color: 'common.white',
+                '&:hover': { bgcolor: 'action.disabledBackground' },
                 borderRadius: 3,
                 minWidth: 'auto',
               }}

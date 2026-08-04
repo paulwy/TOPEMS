@@ -54,12 +54,13 @@ export interface UseColumnConfigResult {
   columnVisibility: Record<string, boolean>;
 }
 
-function getDefaultIds(defaultColumnIds: string[], defaultColumns: ColumnConfig[] | undefined): string[] {
+function getDefaultIds(
+  defaultColumnIds: string[],
+  defaultColumns: ColumnConfig[] | undefined
+): string[] {
   if (defaultColumnIds.length > 0) return defaultColumnIds;
   if (defaultColumns) {
-    return defaultColumns
-      .filter((c) => c.visible !== false)
-      .map((c) => c.id);
+    return defaultColumns.filter((c) => c.visible !== false).map((c) => c.id);
   }
   return [];
 }
@@ -223,7 +224,7 @@ export function useColumnConfig(options: UseColumnConfigOptions = {}): UseColumn
       const target = fromStorage && fromStorage.length > 0 ? fromStorage : defaults;
       setVisibleColumnIds(target);
     }
-  }, [searchParams.toString()]); // eslint-disable-line react-hooks/exhaustive-deps
+  }, [searchParams.toString()]);
 
   return {
     visibleColumnIds,

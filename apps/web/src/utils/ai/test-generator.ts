@@ -14,32 +14,32 @@
 // ============ 枚举与类型定义 ============
 
 export enum TestFramework {
-  Jest = 'jest',
-  Vitest = 'vitest',
-  Playwright = 'playwright',
-  ReactTestingLibrary = 'react-testing-library',
+  JEST = 'jest',
+  VITEST = 'vitest',
+  PLAYWRIGHT = 'playwright',
+  REACTTESTINGLIBRARY = 'react-testing-library',
 }
 
 export enum TestType {
-  Unit = 'unit',
-  Integration = 'integration',
-  Snapshot = 'snapshot',
+  UNIT = 'unit',
+  INTEGRATION = 'integration',
+  SNAPSHOT = 'snapshot',
   E2E = 'e2e',
 }
 
 export enum MockStrategy {
-  Auto = 'auto',
-  Manual = 'manual',
-  Partial = 'partial',
-  None = 'none',
+  AUTO = 'auto',
+  MANUAL = 'manual',
+  PARTIAL = 'partial',
+  NONE = 'none',
 }
 
 export enum TestCaseDesignMethod {
-  BoundaryValueAnalysis = 'boundary_value',
-  EquivalencePartitioning = 'equivalence',
-  DecisionTable = 'decision_table',
-  StateTransition = 'state_transition',
-  ErrorGuessing = 'error_guessing',
+  BOUNDARYVALUEANALYSIS = 'boundary_value',
+  EQUIVALENCEPARTITIONING = 'equivalence',
+  DECISIONTABLE = 'decision_table',
+  STATETRANSITION = 'state_transition',
+  ERRORGUESSING = 'error_guessing',
 }
 
 // ============ 接口定义 ============
@@ -125,25 +125,23 @@ export interface EdgeCase {
 // ============ 测试模板生成 ============
 
 const FRAMEWORK_IMPORTS: Record<TestFramework, string[]> = {
-  [TestFramework.Jest]: [
+  [TestFramework.JEST]: [
     "import { describe, it, expect, beforeEach, afterEach, vi } from '@jest/globals';",
   ],
-  [TestFramework.Vitest]: [
+  [TestFramework.VITEST]: [
     "import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';",
   ],
-  [TestFramework.Playwright]: [
-    "import { test, expect } from '@playwright/test';",
-  ],
-  [TestFramework.ReactTestingLibrary]: [
+  [TestFramework.PLAYWRIGHT]: ["import { test, expect } from '@playwright/test';"],
+  [TestFramework.REACTTESTINGLIBRARY]: [
     "import { render, screen, fireEvent, waitFor } from '@testing-library/react';",
     "import { describe, it, expect, vi } from 'vitest';",
   ],
 };
 
 const TEST_FILE_SUFFIX: Record<TestType, string> = {
-  [TestType.Unit]: '.test',
-  [TestType.Integration]: '.integration.test',
-  [TestType.Snapshot]: '.snapshot.test',
+  [TestType.UNIT]: '.test',
+  [TestType.INTEGRATION]: '.integration.test',
+  [TestType.SNAPSHOT]: '.snapshot.test',
   [TestType.E2E]: '.e2e.spec',
 };
 
@@ -159,8 +157,8 @@ export class TestGenerator {
     const framework = request.framework;
     const testType = request.test_type;
     const designMethods = request.design_methods ?? [
-      TestCaseDesignMethod.BoundaryValueAnalysis,
-      TestCaseDesignMethod.EquivalencePartitioning,
+      TestCaseDesignMethod.BOUNDARYVALUEANALYSIS,
+      TestCaseDesignMethod.EQUIVALENCEPARTITIONING,
     ];
 
     const testCases = this.generateTestCases(request, designMethods);
@@ -184,18 +182,12 @@ export class TestGenerator {
   /**
    * 分析覆盖率
    */
-  analyzeCoverage(
-    source_code: string,
-    test_cases: TestCase[]
-  ): CoverageAnalysis {
+  analyzeCoverage(source_code: string, test_cases: TestCase[]): CoverageAnalysis {
     const lines = source_code.split('\n');
     const totalLines = lines.filter((line) => line.trim() && !line.trim().startsWith('//')).length;
 
     // 估算覆盖行数
-    const coveredLines = Math.min(
-      totalLines,
-      Math.floor(totalLines * (test_cases.length * 0.15))
-    );
+    const coveredLines = Math.min(totalLines, Math.floor(totalLines * (test_cases.length * 0.15)));
 
     const uncoveredLines: number[] = [];
     for (let i = coveredLines + 1; i <= totalLines; i++) {
@@ -203,7 +195,8 @@ export class TestGenerator {
     }
 
     // 检测函数数量
-    const functionPattern = /(?:export\s+)?(?:async\s+)?function\s+(\w+)|(?:export\s+)?const\s+(\w+)\s*=\s*(?:async\s*)?\(/g;
+    const functionPattern =
+      /(?:export\s+)?(?:async\s+)?function\s+(\w+)|(?:export\s+)?const\s+(\w+)\s*=\s*(?:async\s*)?\(/g;
     const functions: string[] = [];
     let match: RegExpExecArray | null;
     while ((match = functionPattern.exec(source_code)) !== null) {
@@ -214,9 +207,7 @@ export class TestGenerator {
     const branchesTotal = functions.length * 2;
     const branchesCovered = Math.min(branchesTotal, test_cases.length * 2);
 
-    const coveragePercentage = totalLines > 0
-      ? Math.round((coveredLines / totalLines) * 100)
-      : 0;
+    const coveragePercentage = totalLines > 0 ? Math.round((coveredLines / totalLines) * 100) : 0;
 
     const uncoveredFunctions = functions.slice(functionsCovered);
 
@@ -248,10 +239,7 @@ export class TestGenerator {
   /**
    * 建议边界情况
    */
-  suggestEdgeCases(
-    source_code: string,
-    function_signatures?: FunctionSignature[]
-  ): EdgeCase[] {
+  suggestEdgeCases(source_code: string, function_signatures?: FunctionSignature[]): EdgeCase[] {
     const edgeCases: EdgeCase[] = [];
 
     if (function_signatures && function_signatures.length > 0) {
@@ -285,7 +273,7 @@ export class TestGenerator {
         input: { value: undefined },
         reason: '验证函数对 undefined 的处理',
         expected_behavior: '应优雅处理 undefined 值',
-      },
+      }
     );
 
     return edgeCases;
@@ -343,8 +331,8 @@ export class TestGenerator {
           description: `为未覆盖函数 ${fnName} 添加测试`,
           input: {},
           expected_output: undefined,
-          test_type: TestType.Unit,
-          design_method: TestCaseDesignMethod.ErrorGuessing,
+          test_type: TestType.UNIT,
+          design_method: TestCaseDesignMethod.ERRORGUESSING,
         });
         recommendations.push(`添加缺失函数测试: ${fnName}`);
       }
@@ -387,7 +375,7 @@ export class TestGenerator {
     }
 
     // 如果是 API 集成测试，添加 API 专用测试
-    if (request.test_type === TestType.Integration) {
+    if (request.test_type === TestType.INTEGRATION) {
       cases.push(...this.generateApiTestCases(request));
     }
 
@@ -409,7 +397,7 @@ export class TestGenerator {
     const fnName = fn.name;
 
     switch (method) {
-      case TestCaseDesignMethod.BoundaryValueAnalysis:
+      case TestCaseDesignMethod.BOUNDARYVALUEANALYSIS:
         cases.push(
           {
             name: `${fnName} should handle minimum boundary`,
@@ -438,7 +426,7 @@ export class TestGenerator {
         );
         break;
 
-      case TestCaseDesignMethod.EquivalencePartitioning:
+      case TestCaseDesignMethod.EQUIVALENCEPARTITIONING:
         cases.push(
           {
             name: `${fnName} should handle valid input (positive case)`,
@@ -459,7 +447,7 @@ export class TestGenerator {
         );
         break;
 
-      case TestCaseDesignMethod.ErrorGuessing:
+      case TestCaseDesignMethod.ERRORGUESSING:
         cases.push(
           {
             name: `${fnName} should throw error for null input`,
@@ -480,7 +468,7 @@ export class TestGenerator {
         );
         break;
 
-      case TestCaseDesignMethod.DecisionTable:
+      case TestCaseDesignMethod.DECISIONTABLE:
         cases.push({
           name: `${fnName} should handle decision table case 1`,
           description: `基于决策表的测试用例`,
@@ -491,7 +479,7 @@ export class TestGenerator {
         });
         break;
 
-      case TestCaseDesignMethod.StateTransition:
+      case TestCaseDesignMethod.STATETRANSITION:
         cases.push({
           name: `${fnName} should handle state transition`,
           description: `基于状态转换的测试用例`,
@@ -561,28 +549,28 @@ export class TestGenerator {
         description: '验证 API 成功请求返回数据',
         input: { method: 'GET', endpoint: '/api/test', params: {} },
         expected_output: { status: 200, data: [] },
-        test_type: TestType.Integration,
+        test_type: TestType.INTEGRATION,
       },
       {
         name: 'API should handle 404 error',
         description: '验证 API 404 错误处理',
         input: { method: 'GET', endpoint: '/api/nonexistent' },
         expected_output: { status: 404 },
-        test_type: TestType.Integration,
+        test_type: TestType.INTEGRATION,
       },
       {
         name: 'API should handle 500 error',
         description: '验证 API 服务器错误处理',
         input: { method: 'GET', endpoint: '/api/error' },
         expected_output: { status: 500 },
-        test_type: TestType.Integration,
+        test_type: TestType.INTEGRATION,
       },
       {
         name: 'API should handle network timeout',
         description: '验证 API 超时处理',
         input: { method: 'GET', endpoint: '/api/timeout', timeout: 1000 },
         expected_output: 'timeout error',
-        test_type: TestType.Integration,
+        test_type: TestType.INTEGRATION,
       },
     ];
   }
@@ -635,7 +623,7 @@ export class TestGenerator {
     }
 
     // 通用 API Mock 数据
-    if (request.test_type === TestType.Integration) {
+    if (request.test_type === TestType.INTEGRATION) {
       mockData.apiResponse = {
         status: 200,
         data: { id: 1, name: 'Mock Data' },
@@ -652,9 +640,9 @@ export class TestGenerator {
 
   private generateMockFunctions(request: TestGenerationRequest): MockFunctionDef[] {
     const mocks: MockFunctionDef[] = [];
-    const strategy = request.mock_strategy ?? MockStrategy.Auto;
+    const strategy = request.mock_strategy ?? MockStrategy.AUTO;
 
-    if (strategy === MockStrategy.None) return mocks;
+    if (strategy === MockStrategy.NONE) return mocks;
 
     const functions = request.function_signatures ?? this.extractFunctions(request.source_code);
 
@@ -671,7 +659,7 @@ export class TestGenerator {
     }
 
     // API Mock
-    if (request.test_type === TestType.Integration) {
+    if (request.test_type === TestType.INTEGRATION) {
       mocks.push({
         name: 'apiClient',
         module: '../client',
@@ -711,16 +699,17 @@ export class TestGenerator {
     const framework = request.framework;
 
     // 导入部分
-    lines.push("/**");
+    lines.push('/**');
     lines.push(` * 自动生成的测试文件`);
     lines.push(` * 测试类型: ${this.getTestTypeName(request.test_type)}`);
     lines.push(` * 测试框架: ${this.getFrameworkName(framework)}`);
     lines.push(` * 生成时间: ${new Date().toISOString()}`);
-    lines.push(" */");
+    lines.push(' */');
     lines.push('');
 
     // 框架导入
-    const frameworkImports = FRAMEWORK_IMPORTS[framework] ?? FRAMEWORK_IMPORTS[TestFramework.Vitest];
+    const frameworkImports =
+      FRAMEWORK_IMPORTS[framework] ?? FRAMEWORK_IMPORTS[TestFramework.VITEST];
     lines.push(...frameworkImports);
 
     // 自定义导入
@@ -756,7 +745,7 @@ export class TestGenerator {
       ? `${request.component_name} Component`
       : this.getBaseName(request.source_file);
 
-    if (framework === TestFramework.Playwright) {
+    if (framework === TestFramework.PLAYWRIGHT) {
       lines.push(`test.describe('${suiteName}', () => {`);
     } else {
       lines.push(`describe('${suiteName}', () => {`);
@@ -776,12 +765,12 @@ export class TestGenerator {
       lines.push(`    // 输入: ${JSON.stringify(tc.input)}`);
       lines.push(`    // 期望: ${JSON.stringify(tc.expected_output)}`);
 
-      if (request.test_type === TestType.Snapshot) {
+      if (request.test_type === TestType.SNAPSHOT) {
         lines.push('    // const { container } = render(<Component />);');
         lines.push('    // expect(container).toMatchSnapshot();');
         lines.push('    expect(true).toBe(true);');
       } else if (request.test_type === TestType.E2E) {
-        lines.push('    // await page.goto(\'/\');');
+        lines.push("    // await page.goto('/');");
         lines.push('    // await expect(page).toHaveTitle(/.*/);');
         lines.push('    expect(true).toBe(true);');
       } else {
@@ -805,7 +794,8 @@ export class TestGenerator {
     const functions: FunctionSignature[] = [];
 
     // 匹配 function 声明
-    const funcPattern = /(?:export\s+)?(?:async\s+)?function\s+(\w+)\s*\(([^)]*)\)(?:\s*:\s*([^{]+))?\s*{/g;
+    const funcPattern =
+      /(?:export\s+)?(?:async\s+)?function\s+(\w+)\s*\(([^)]*)\)(?:\s*:\s*([^{]+))?\s*{/g;
     let match: RegExpExecArray | null;
     while ((match = funcPattern.exec(sourceCode)) !== null) {
       const name = match[1];
@@ -821,7 +811,8 @@ export class TestGenerator {
     }
 
     // 匹配箭头函数
-    const arrowPattern = /(?:export\s+)?const\s+(\w+)\s*=\s*(?:async\s*)?\(([^)]*)\)(?:\s*:\s*([^=]+?))?\s*=>/g;
+    const arrowPattern =
+      /(?:export\s+)?const\s+(\w+)\s*=\s*(?:async\s*)?\(([^)]*)\)(?:\s*:\s*([^=]+?))?\s*=>/g;
     while ((match = arrowPattern.exec(sourceCode)) !== null) {
       const name = match[1];
       const params = this.parseParameters(match[2]);
@@ -842,7 +833,10 @@ export class TestGenerator {
     if (!paramString.trim()) return [];
 
     const params: FunctionParameter[] = [];
-    const parts = paramString.split(',').map((p) => p.trim()).filter(Boolean);
+    const parts = paramString
+      .split(',')
+      .map((p) => p.trim())
+      .filter(Boolean);
 
     for (const part of parts) {
       const colonIdx = part.indexOf(':');
@@ -857,12 +851,8 @@ export class TestGenerator {
       const isOptional = questionIdx !== -1;
 
       const eqIdx = typeAndDefault.indexOf('=');
-      const type = eqIdx !== -1
-        ? typeAndDefault.slice(0, eqIdx).trim()
-        : typeAndDefault;
-      const defaultValue = eqIdx !== -1
-        ? typeAndDefault.slice(eqIdx + 1).trim()
-        : undefined;
+      const type = eqIdx !== -1 ? typeAndDefault.slice(0, eqIdx).trim() : typeAndDefault;
+      const defaultValue = eqIdx !== -1 ? typeAndDefault.slice(eqIdx + 1).trim() : undefined;
 
       params.push({
         name: isOptional ? name.slice(0, questionIdx) : name,
@@ -875,16 +865,22 @@ export class TestGenerator {
     return params;
   }
 
-  private getBoundaryValues(fn: FunctionSignature, boundary: 'min' | 'max' | 'zero'): Record<string, unknown> {
+  private getBoundaryValues(
+    fn: FunctionSignature,
+    boundary: 'min' | 'max' | 'zero'
+  ): Record<string, unknown> {
     const input: Record<string, unknown> = {};
     for (const param of fn.parameters) {
       const lowerType = param.type.toLowerCase();
       let value: unknown;
 
       if (lowerType.includes('number')) {
-        value = boundary === 'min' ? Number.MIN_SAFE_INTEGER
-          : boundary === 'max' ? Number.MAX_SAFE_INTEGER
-          : 0;
+        value =
+          boundary === 'min'
+            ? Number.MIN_SAFE_INTEGER
+            : boundary === 'max'
+              ? Number.MAX_SAFE_INTEGER
+              : 0;
       } else if (lowerType.includes('string')) {
         value = boundary === 'zero' ? '' : boundary === 'min' ? 'a' : 'z'.repeat(1000);
       } else if (lowerType.includes('array') || lowerType.includes('[]')) {
@@ -908,8 +904,10 @@ export class TestGenerator {
       if (lowerType.includes('number')) input[param.name] = 42;
       else if (lowerType.includes('string')) input[param.name] = 'valid-input';
       else if (lowerType.includes('boolean')) input[param.name] = true;
-      else if (lowerType.includes('array') || lowerType.includes('[]')) input[param.name] = [1, 2, 3];
-      else if (lowerType.includes('object') || lowerType.includes('{}')) input[param.name] = { id: 1 };
+      else if (lowerType.includes('array') || lowerType.includes('[]'))
+        input[param.name] = [1, 2, 3];
+      else if (lowerType.includes('object') || lowerType.includes('{}'))
+        input[param.name] = { id: 1 };
       else input[param.name] = null;
     }
     return input;
@@ -923,7 +921,8 @@ export class TestGenerator {
       if (lowerType.includes('number')) input[param.name] = 'not-a-number';
       else if (lowerType.includes('string')) input[param.name] = 12345;
       else if (lowerType.includes('boolean')) input[param.name] = 'true';
-      else if (lowerType.includes('array') || lowerType.includes('[]')) input[param.name] = 'not-an-array';
+      else if (lowerType.includes('array') || lowerType.includes('[]'))
+        input[param.name] = 'not-an-array';
       else input[param.name] = undefined;
     }
     return input;
@@ -1030,8 +1029,10 @@ export class TestGenerator {
     const sourceBaseName = this.getBaseName(request.source_file);
 
     // 导入源文件
-    if (request.test_type === TestType.Unit || request.test_type === TestType.Snapshot) {
-      imports.push(`import { ${request.component_name ?? sourceBaseName} } from './${sourceBaseName}';`);
+    if (request.test_type === TestType.UNIT || request.test_type === TestType.SNAPSHOT) {
+      imports.push(
+        `import { ${request.component_name ?? sourceBaseName} } from './${sourceBaseName}';`
+      );
     }
 
     // 导入 Mock 依赖
@@ -1043,7 +1044,7 @@ export class TestGenerator {
     }
 
     // 快照测试需要额外导入
-    if (request.test_type === TestType.Snapshot) {
+    if (request.test_type === TestType.SNAPSHOT) {
       imports.push("import renderer from 'react-test-renderer';");
     }
 
@@ -1069,7 +1070,7 @@ export class TestGenerator {
   private getTestFilePath(request: TestGenerationRequest): string {
     const baseName = this.getBaseName(request.source_file);
     const suffix = TEST_FILE_SUFFIX[request.test_type];
-    const ext = request.framework === TestFramework.Playwright ? 'ts' : 'ts';
+    const ext = request.framework === TestFramework.PLAYWRIGHT ? 'ts' : 'ts';
     return `${baseName}${suffix}.${ext}`;
   }
 
@@ -1097,9 +1098,9 @@ export class TestGenerator {
 
   private getTestTypeName(type: TestType): string {
     const names: Record<TestType, string> = {
-      [TestType.Unit]: '单元测试',
-      [TestType.Integration]: '集成测试',
-      [TestType.Snapshot]: '快照测试',
+      [TestType.UNIT]: '单元测试',
+      [TestType.INTEGRATION]: '集成测试',
+      [TestType.SNAPSHOT]: '快照测试',
       [TestType.E2E]: '端到端测试',
     };
     return names[type] ?? '单元测试';
@@ -1107,10 +1108,10 @@ export class TestGenerator {
 
   private getFrameworkName(framework: TestFramework): string {
     const names: Record<TestFramework, string> = {
-      [TestFramework.Jest]: 'Jest',
-      [TestFramework.Vitest]: 'Vitest',
-      [TestFramework.Playwright]: 'Playwright',
-      [TestFramework.ReactTestingLibrary]: 'React Testing Library',
+      [TestFramework.JEST]: 'Jest',
+      [TestFramework.VITEST]: 'Vitest',
+      [TestFramework.PLAYWRIGHT]: 'Playwright',
+      [TestFramework.REACTTESTINGLIBRARY]: 'React Testing Library',
     };
     return names[framework] ?? 'Vitest';
   }

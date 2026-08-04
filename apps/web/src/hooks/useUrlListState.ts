@@ -28,7 +28,9 @@
 import { useState, useEffect, useCallback, useRef } from 'react';
 import { useSearchParams } from 'react-router-dom';
 
-export interface UseUrlListStateOptions<TFilters extends Record<string, unknown> = Record<string, unknown>> {
+export interface UseUrlListStateOptions<
+  TFilters extends Record<string, unknown> = Record<string, unknown>,
+> {
   /** URL 参数名前缀，避免多列表页面参数冲突，默认空 */
   prefix?: string;
   /** 初始搜索关键词，默认 '' */
@@ -67,7 +69,9 @@ export interface UseUrlListStateOptions<TFilters extends Record<string, unknown>
   resetPageOnSortChange?: boolean;
 }
 
-export interface UseUrlListStateResult<TFilters extends Record<string, unknown> = Record<string, unknown>> {
+export interface UseUrlListStateResult<
+  TFilters extends Record<string, unknown> = Record<string, unknown>,
+> {
   // 搜索
   searchQuery: string;
   setSearchQuery: (value: string) => void;
@@ -127,7 +131,8 @@ function parseFilterValue(raw: string, defaultValue: unknown): unknown {
 function serializeFilterValue(value: unknown): string {
   if (typeof value === 'string') return value;
   if (typeof value === 'number' || typeof value === 'boolean') return String(value);
-  if (Array.isArray(value) || (typeof value === 'object' && value !== null)) return JSON.stringify(value);
+  if (Array.isArray(value) || (typeof value === 'object' && value !== null))
+    return JSON.stringify(value);
   return String(value);
 }
 
@@ -189,7 +194,10 @@ export function useUrlListState<TFilters extends Record<string, unknown> = Recor
       if (key.startsWith(fPrefix)) {
         const filterKey = key.slice(fPrefix.length) as keyof TFilters;
         const defaultValue = defaultFilters[filterKey];
-        (result as Record<string, unknown>)[filterKey as string] = parseFilterValue(value, defaultValue);
+        (result as Record<string, unknown>)[filterKey as string] = parseFilterValue(
+          value,
+          defaultValue
+        );
       }
     });
     return result;
@@ -209,7 +217,10 @@ export function useUrlListState<TFilters extends Record<string, unknown> = Recor
 
   // ---- 写入 URL ----
   // 值为 null / '' / 等于默认值 时从 URL 移除
-  const shouldRemoveFromUrl = (value: string | number | null, defaultValue: string | number): boolean => {
+  const shouldRemoveFromUrl = (
+    value: string | number | null,
+    defaultValue: string | number
+  ): boolean => {
     if (value === null || value === '') return true;
     return value === defaultValue;
   };
@@ -255,7 +266,17 @@ export function useUrlListState<TFilters extends Record<string, unknown> = Recor
     }, debounceMs);
 
     return () => clearTimeout(timer);
-  }, [searchQuery, debounceMs, firstPage, initialPage, p, q, defaultSearch, updateUrl, shouldRemoveFromUrl]);
+  }, [
+    searchQuery,
+    debounceMs,
+    firstPage,
+    initialPage,
+    p,
+    q,
+    defaultSearch,
+    updateUrl,
+    shouldRemoveFromUrl,
+  ]);
 
   // ---- 分页 ----
   const setCurrentPage = useCallback(
@@ -311,7 +332,9 @@ export function useUrlListState<TFilters extends Record<string, unknown> = Recor
       const isDefault = !isEmpty && isFilterDefault(key, value);
       const urlValue = isEmpty || isDefault ? null : serializeFilterValue(value as unknown);
       const pageUrlValue = resetPageOnFilterChange
-        ? (shouldRemoveFromUrl(firstPage, initialPage) ? null : firstPage)
+        ? shouldRemoveFromUrl(firstPage, initialPage)
+          ? null
+          : firstPage
         : undefined;
       const updates: Record<string, string | number | null> = { [urlKey]: urlValue };
       if (pageUrlValue !== undefined) {
@@ -319,7 +342,16 @@ export function useUrlListState<TFilters extends Record<string, unknown> = Recor
       }
       updateUrl(updates);
     },
-    [fPrefix, firstPage, initialPage, p, resetPageOnFilterChange, isFilterDefault, shouldRemoveFromUrl, updateUrl]
+    [
+      fPrefix,
+      firstPage,
+      initialPage,
+      p,
+      resetPageOnFilterChange,
+      isFilterDefault,
+      shouldRemoveFromUrl,
+      updateUrl,
+    ]
   );
 
   const setFilters = useCallback(
@@ -340,7 +372,16 @@ export function useUrlListState<TFilters extends Record<string, unknown> = Recor
       }
       updateUrl(urlUpdates);
     },
-    [fPrefix, firstPage, initialPage, p, resetPageOnFilterChange, isFilterDefault, shouldRemoveFromUrl, updateUrl]
+    [
+      fPrefix,
+      firstPage,
+      initialPage,
+      p,
+      resetPageOnFilterChange,
+      isFilterDefault,
+      shouldRemoveFromUrl,
+      updateUrl,
+    ]
   );
 
   const resetFilters = useCallback(() => {
@@ -360,7 +401,17 @@ export function useUrlListState<TFilters extends Record<string, unknown> = Recor
       urlUpdates[p] = shouldRemoveFromUrl(firstPage, initialPage) ? null : firstPage;
     }
     updateUrl(urlUpdates);
-  }, [defaultFilters, fPrefix, firstPage, initialPage, p, resetPageOnFilterChange, searchParams, shouldRemoveFromUrl, updateUrl]);
+  }, [
+    defaultFilters,
+    fPrefix,
+    firstPage,
+    initialPage,
+    p,
+    resetPageOnFilterChange,
+    searchParams,
+    shouldRemoveFromUrl,
+    updateUrl,
+  ]);
 
   // ---- 排序 ----
   const setSort = useCallback(
@@ -371,9 +422,12 @@ export function useUrlListState<TFilters extends Record<string, unknown> = Recor
         setCurrentPageState(firstPage);
       }
       const sortByUrlValue = newSortBy === defaultSortBy ? null : newSortBy || null;
-      const sortOrderUrlValue = !newSortBy || newSortOrder === defaultSortOrder ? null : newSortOrder;
+      const sortOrderUrlValue =
+        !newSortBy || newSortOrder === defaultSortOrder ? null : newSortOrder;
       const pageUrlValue = resetPageOnSortChange
-        ? (shouldRemoveFromUrl(firstPage, initialPage) ? null : firstPage)
+        ? shouldRemoveFromUrl(firstPage, initialPage)
+          ? null
+          : firstPage
         : undefined;
       const updates: Record<string, string | number | null> = {
         [sb]: sortByUrlValue,
@@ -384,7 +438,18 @@ export function useUrlListState<TFilters extends Record<string, unknown> = Recor
       }
       updateUrl(updates);
     },
-    [firstPage, initialPage, p, resetPageOnSortChange, sb, so, defaultSortBy, defaultSortOrder, shouldRemoveFromUrl, updateUrl]
+    [
+      firstPage,
+      initialPage,
+      p,
+      resetPageOnSortChange,
+      sb,
+      so,
+      defaultSortBy,
+      defaultSortOrder,
+      shouldRemoveFromUrl,
+      updateUrl,
+    ]
   );
 
   const toggleSort = useCallback(
@@ -425,7 +490,21 @@ export function useUrlListState<TFilters extends Record<string, unknown> = Recor
       }
     });
     updateUrl(urlUpdates);
-  }, [defaultFilters, defaultSortBy, defaultSortOrder, firstPage, initialPage, fPrefix, p, q, sb, so, searchParams, shouldRemoveFromUrl, updateUrl]);
+  }, [
+    defaultFilters,
+    defaultSortBy,
+    defaultSortOrder,
+    firstPage,
+    initialPage,
+    fPrefix,
+    p,
+    q,
+    sb,
+    so,
+    searchParams,
+    shouldRemoveFromUrl,
+    updateUrl,
+  ]);
 
   // ---- 监听 URL 变化（前进/后退），同步回内部状态 ----
   useEffect(() => {
@@ -454,13 +533,13 @@ export function useUrlListState<TFilters extends Record<string, unknown> = Recor
       setSortOrderState(urlSortOrder);
     }
     // 筛选：浅比较
-    const filterKeys = new Set([
-      ...Object.keys(filters),
-      ...Object.keys(urlFilters),
-    ]);
+    const filterKeys = new Set([...Object.keys(filters), ...Object.keys(urlFilters)]);
     let filtersChanged = false;
     for (const key of filterKeys) {
-      if (JSON.stringify((filters as Record<string, unknown>)[key]) !== JSON.stringify((urlFilters as Record<string, unknown>)[key])) {
+      if (
+        JSON.stringify((filters as Record<string, unknown>)[key]) !==
+        JSON.stringify((urlFilters as Record<string, unknown>)[key])
+      ) {
         filtersChanged = true;
         break;
       }
@@ -468,7 +547,7 @@ export function useUrlListState<TFilters extends Record<string, unknown> = Recor
     if (filtersChanged) {
       setFiltersState(urlFilters);
     }
-  }, [searchParams.toString()]); // eslint-disable-line react-hooks/exhaustive-deps
+  }, [searchParams.toString()]);
 
   return {
     searchQuery,

@@ -1,7 +1,15 @@
 import React from 'react';
-import { Paper, Box, Stack, TextField, Button, CircularProgress, Typography } from '@mui/material';
+import {
+  Paper,
+  Box,
+  Stack,
+  TextField,
+  Button,
+  CircularProgress,
+  Typography,
+  InputAdornment,
+} from '@mui/material';
 import { Search as SearchIcon, Download } from 'lucide-react';
-import { InputAdornment } from '@mui/material';
 import { DataTable } from '@/components/common/DataTable';
 import type { ColumnDef } from '@tanstack/react-table';
 import type { TabType, GisEntity } from '../types';
@@ -123,7 +131,11 @@ export const DataTableSection: React.FC<DataTableSectionProps> = ({
           bgcolor: 'grey.50',
         }}
       >
-        <Stack direction='row' spacing={2} sx={{ justifyContent: 'space-between', alignItems: 'center' }}>
+        <Stack
+          direction='row'
+          spacing={2}
+          sx={{ justifyContent: 'space-between', alignItems: 'center' }}
+        >
           <TextField
             size='small'
             placeholder={i18n.t('bi.gis_page_components__data_table_section.search_4')}
@@ -177,7 +189,10 @@ export const DataTableSection: React.FC<DataTableSectionProps> = ({
                 justifyContent: 'center',
               }}
             >
-              <SearchIcon size={32} color='text.disabled' />
+              <SearchIcon
+                size={32}
+                color='text.disabled'
+              />
             </Box>
             <Typography color='text.secondary'>暂无数据</Typography>
           </Box>

@@ -188,13 +188,7 @@ export const evaluationSchema: EntitySchema = {
     },
     {
       title: '评分详情',
-      fields: [
-        'quality_score',
-        'delivery_score',
-        'service_score',
-        'price_score',
-        'overall_score',
-      ],
+      fields: ['quality_score', 'delivery_score', 'service_score', 'price_score', 'overall_score'],
     },
     {
       title: '评语',

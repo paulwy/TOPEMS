@@ -3,7 +3,7 @@ import React from 'react';
 
 const colorMap: Record<string, { bg: string; color: string }> = {
   'bg-red-100': { bg: 'error.lighter', color: 'error.dark' },
-  'bg-yellow-100': { bg: 'warning.100', color: '#ca8a04' },
+  'bg-yellow-100': { bg: 'warning.100', color: 'yellow.600' },
   'bg-green-100': { bg: 'success.lighter', color: 'success.dark' },
   'bg-gray-100': { bg: 'grey.100', color: 'text.secondary' },
   'bg-blue-100': { bg: 'primary.100', color: 'primary.dark' },

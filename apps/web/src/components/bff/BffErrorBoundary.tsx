@@ -12,7 +12,7 @@
  * @example
  * ```tsx
  * <BffErrorBoundary
- *   recoveryStrategy={ErrorRecoveryStrategy.Retry}
+ *   recoveryStrategy={ErrorRecoveryStrategy.RETRY}
  *   maxRetries={3}
  *   onError={(classified) => reportToMonitor(classified)}
  * >
@@ -55,25 +55,25 @@ const boundaryLogger = logger.child({ prefix: 'BFF-ErrorBoundary' });
 
 /** BFF 错误类型 */
 export enum BffErrorType {
-  NetworkError = 'NetworkError',
-  GraphqlError = 'GraphqlError',
-  TimeoutError = 'TimeoutError',
-  AuthError = 'AuthError',
-  ServerError = 'ServerError',
-  ValidationError = 'ValidationError',
-  UnknownError = 'UnknownError',
+  NETWORKERROR = 'NetworkError',
+  GRAPHQLERROR = 'GraphqlError',
+  TIMEOUTERROR = 'TimeoutError',
+  AUTHERROR = 'AuthError',
+  SERVERERROR = 'ServerError',
+  VALIDATIONERROR = 'ValidationError',
+  UNKNOWNERROR = 'UnknownError',
 }
 
 /** 错误恢复策略 */
 export enum ErrorRecoveryStrategy {
   /** 自动重试 */
-  Retry = 'retry',
+  RETRY = 'retry',
   /** 降级到备选方案 */
-  Fallback = 'fallback',
+  FALLBACK = 'fallback',
   /** 重定向到其他页面 */
-  Redirect = 'redirect',
+  REDIRECT = 'redirect',
   /** 仅展示错误 */
-  ShowError = 'show_error',
+  SHOWERROR = 'show_error',
 }
 
 /** 分类后的错误信息 */
@@ -129,20 +129,20 @@ export function classifyError(error: Error, componentStack?: string): Classified
     lowerMsg.includes('err_network') ||
     lowerMsg.includes('connection refused')
   ) {
-    type = BffErrorType.NetworkError;
-    recommendedStrategy = ErrorRecoveryStrategy.Retry;
+    type = BffErrorType.NETWORKERROR;
+    recommendedStrategy = ErrorRecoveryStrategy.RETRY;
     retryable = true;
   } else if (lowerMsg.includes('graphql') || lowerMsg.includes('persistedquerynotfound')) {
-    type = BffErrorType.GraphqlError;
-    recommendedStrategy = ErrorRecoveryStrategy.Fallback;
+    type = BffErrorType.GRAPHQLERROR;
+    recommendedStrategy = ErrorRecoveryStrategy.FALLBACK;
     retryable = true;
   } else if (
     lowerMsg.includes('timeout') ||
     lowerMsg.includes('timed out') ||
     lowerMsg.includes('deadline exceeded')
   ) {
-    type = BffErrorType.TimeoutError;
-    recommendedStrategy = ErrorRecoveryStrategy.Retry;
+    type = BffErrorType.TIMEOUTERROR;
+    recommendedStrategy = ErrorRecoveryStrategy.RETRY;
     retryable = true;
   } else if (
     lowerMsg.includes('unauthorized') ||
@@ -151,8 +151,8 @@ export function classifyError(error: Error, componentStack?: string): Classified
     lowerMsg.includes('403') ||
     lowerMsg.includes('authentication')
   ) {
-    type = BffErrorType.AuthError;
-    recommendedStrategy = ErrorRecoveryStrategy.Redirect;
+    type = BffErrorType.AUTHERROR;
+    recommendedStrategy = ErrorRecoveryStrategy.REDIRECT;
     retryable = false;
   } else if (
     lowerMsg.includes('500') ||
@@ -163,8 +163,8 @@ export function classifyError(error: Error, componentStack?: string): Classified
     lowerMsg.includes('bad gateway') ||
     lowerMsg.includes('service unavailable')
   ) {
-    type = BffErrorType.ServerError;
-    recommendedStrategy = ErrorRecoveryStrategy.Fallback;
+    type = BffErrorType.SERVERERROR;
+    recommendedStrategy = ErrorRecoveryStrategy.FALLBACK;
     retryable = true;
   } else if (
     lowerMsg.includes('validation') ||
@@ -172,12 +172,12 @@ export function classifyError(error: Error, componentStack?: string): Classified
     lowerMsg.includes('400') ||
     lowerMsg.includes('bad request')
   ) {
-    type = BffErrorType.ValidationError;
-    recommendedStrategy = ErrorRecoveryStrategy.ShowError;
+    type = BffErrorType.VALIDATIONERROR;
+    recommendedStrategy = ErrorRecoveryStrategy.SHOWERROR;
     retryable = false;
   } else {
-    type = BffErrorType.UnknownError;
-    recommendedStrategy = ErrorRecoveryStrategy.ShowError;
+    type = BffErrorType.UNKNOWNERROR;
+    recommendedStrategy = ErrorRecoveryStrategy.SHOWERROR;
     retryable = false;
   }
 
@@ -267,33 +267,33 @@ export function onErrorReport(callback: (record: ErrorReportRecord) => void): ()
 // ==================== 错误图标映射 ====================
 
 const ERROR_ICONS: Record<BffErrorType, React.ElementType> = {
-  [BffErrorType.NetworkError]: WifiOff,
-  [BffErrorType.GraphqlError]: AlertCircle,
-  [BffErrorType.TimeoutError]: Clock,
-  [BffErrorType.AuthError]: Lock,
-  [BffErrorType.ServerError]: Server,
-  [BffErrorType.ValidationError]: AlertTriangle,
-  [BffErrorType.UnknownError]: AlertCircle,
+  [BffErrorType.NETWORKERROR]: WifiOff,
+  [BffErrorType.GRAPHQLERROR]: AlertCircle,
+  [BffErrorType.TIMEOUTERROR]: Clock,
+  [BffErrorType.AUTHERROR]: Lock,
+  [BffErrorType.SERVERERROR]: Server,
+  [BffErrorType.VALIDATIONERROR]: AlertTriangle,
+  [BffErrorType.UNKNOWNERROR]: AlertCircle,
 };
 
 const ERROR_LABELS: Record<BffErrorType, string> = {
-  [BffErrorType.NetworkError]: '网络错误',
-  [BffErrorType.GraphqlError]: 'GraphQL 错误',
-  [BffErrorType.TimeoutError]: '请求超时',
-  [BffErrorType.AuthError]: '认证失败',
-  [BffErrorType.ServerError]: '服务器错误',
-  [BffErrorType.ValidationError]: '数据校验错误',
-  [BffErrorType.UnknownError]: '未知错误',
+  [BffErrorType.NETWORKERROR]: '网络错误',
+  [BffErrorType.GRAPHQLERROR]: 'GraphQL 错误',
+  [BffErrorType.TIMEOUTERROR]: '请求超时',
+  [BffErrorType.AUTHERROR]: '认证失败',
+  [BffErrorType.SERVERERROR]: '服务器错误',
+  [BffErrorType.VALIDATIONERROR]: '数据校验错误',
+  [BffErrorType.UNKNOWNERROR]: '未知错误',
 };
 
 const ERROR_COLORS: Record<BffErrorType, 'error' | 'warning' | 'info'> = {
-  [BffErrorType.NetworkError]: 'warning',
-  [BffErrorType.GraphqlError]: 'error',
-  [BffErrorType.TimeoutError]: 'warning',
-  [BffErrorType.AuthError]: 'error',
-  [BffErrorType.ServerError]: 'error',
-  [BffErrorType.ValidationError]: 'warning',
-  [BffErrorType.UnknownError]: 'error',
+  [BffErrorType.NETWORKERROR]: 'warning',
+  [BffErrorType.GRAPHQLERROR]: 'error',
+  [BffErrorType.TIMEOUTERROR]: 'warning',
+  [BffErrorType.AUTHERROR]: 'error',
+  [BffErrorType.SERVERERROR]: 'error',
+  [BffErrorType.VALIDATIONERROR]: 'warning',
+  [BffErrorType.UNKNOWNERROR]: 'error',
 };
 
 // ==================== 默认错误 UI ====================
@@ -389,7 +389,7 @@ export const DefaultBffErrorFallback: React.FC<BffErrorBoundaryFallbackProps> = 
         )}
 
         {/* 降级提示 */}
-        {classified.recommendedStrategy === ErrorRecoveryStrategy.Fallback && (
+        {classified.recommendedStrategy === ErrorRecoveryStrategy.FALLBACK && (
           <Alert
             severity='warning'
             icon={false}
@@ -569,7 +569,7 @@ export class BffErrorBoundary extends Component<BffErrorBoundaryProps, BffErrorB
     const strategy = recoveryStrategy ?? classified.recommendedStrategy;
 
     // Redirect 策略：渲染重定向提示并触发跳转
-    if (strategy === ErrorRecoveryStrategy.Redirect) {
+    if (strategy === ErrorRecoveryStrategy.REDIRECT) {
       if (typeof window !== 'undefined') {
         // 异步触发跳转，避免渲染期间副作用
         setTimeout(() => {
@@ -608,7 +608,7 @@ export class BffErrorBoundary extends Component<BffErrorBoundaryProps, BffErrorB
     // Retry 策略：自动重试（未超过最大次数时）
     // 自动触发重试（仅一次，避免循环）
     if (
-      strategy === ErrorRecoveryStrategy.Retry &&
+      strategy === ErrorRecoveryStrategy.RETRY &&
       classified.retryable &&
       retryCount < maxRetries &&
       this.retryTimer === null

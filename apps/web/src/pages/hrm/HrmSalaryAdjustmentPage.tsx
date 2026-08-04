@@ -1,8 +1,7 @@
 import React, { useCallback } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useNotificationStore } from '@/store';
-import { CheckCircle } from 'lucide-react';
-import { TrendingUp } from 'lucide-react';
+import { CheckCircle, TrendingUp } from 'lucide-react';
 import { PageContainer } from '@/components/common';
 import CrudPage from '@/components/templates/CrudPage';
 import type { RowAction } from '@/components/templates/list/types';

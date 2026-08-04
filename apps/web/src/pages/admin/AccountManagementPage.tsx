@@ -339,7 +339,7 @@ const AccountManagementPage: React.FC = () => {
           {statCards.map((stat) => (
             <Box
               key={stat.label}
-              sx={{ bgcolor: 'white', borderRadius: 2, p: 3 }}
+              sx={{ bgcolor: 'common.white', borderRadius: 2, p: 3 }}
             >
               <Typography
                 variant='h4'

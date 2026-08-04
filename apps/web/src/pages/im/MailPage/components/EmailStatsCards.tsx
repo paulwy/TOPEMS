@@ -57,7 +57,7 @@ const EmailStatsCards: React.FC<EmailStatsCardsProps> = ({ stats, statsLoading }
               sx={{
                 width: 48,
                 height: 48,
-                bgcolor: 'rgba(255,255,255,0.2)',
+                bgcolor: 'action.disabledBackground',
                 borderRadius: '50%',
                 display: 'flex',
                 alignItems: 'center',
@@ -87,9 +87,7 @@ const EmailStatsCards: React.FC<EmailStatsCardsProps> = ({ stats, statsLoading }
             }}
           >
             <Box>
-              <Typography sx={{ color: 'success.light', fontSize: '0.875rem' }}>
-                已发送
-              </Typography>
+              <Typography sx={{ color: 'success.light', fontSize: '0.875rem' }}>已发送</Typography>
               <Typography
                 sx={{
                   fontSize: '1.875rem',
@@ -105,7 +103,7 @@ const EmailStatsCards: React.FC<EmailStatsCardsProps> = ({ stats, statsLoading }
               sx={{
                 width: 48,
                 height: 48,
-                bgcolor: 'rgba(255,255,255,0.2)',
+                bgcolor: 'action.disabledBackground',
                 borderRadius: '50%',
                 display: 'flex',
                 alignItems: 'center',
@@ -135,9 +133,7 @@ const EmailStatsCards: React.FC<EmailStatsCardsProps> = ({ stats, statsLoading }
             }}
           >
             <Box>
-              <Typography sx={{ color: 'warning.100', fontSize: '0.875rem' }}>
-                待发送
-              </Typography>
+              <Typography sx={{ color: 'warning.100', fontSize: '0.875rem' }}>待发送</Typography>
               <Typography
                 sx={{
                   fontSize: '1.875rem',
@@ -153,7 +149,7 @@ const EmailStatsCards: React.FC<EmailStatsCardsProps> = ({ stats, statsLoading }
               sx={{
                 width: 48,
                 height: 48,
-                bgcolor: 'rgba(255,255,255,0.2)',
+                bgcolor: 'action.disabledBackground',
                 borderRadius: '50%',
                 display: 'flex',
                 alignItems: 'center',
@@ -183,9 +179,7 @@ const EmailStatsCards: React.FC<EmailStatsCardsProps> = ({ stats, statsLoading }
             }}
           >
             <Box>
-              <Typography sx={{ color: 'error.light', fontSize: '0.875rem' }}>
-                发送失败
-              </Typography>
+              <Typography sx={{ color: 'error.light', fontSize: '0.875rem' }}>发送失败</Typography>
               <Typography
                 sx={{
                   fontSize: '1.875rem',
@@ -201,7 +195,7 @@ const EmailStatsCards: React.FC<EmailStatsCardsProps> = ({ stats, statsLoading }
               sx={{
                 width: 48,
                 height: 48,
-                bgcolor: 'rgba(255,255,255,0.2)',
+                bgcolor: 'action.disabledBackground',
                 borderRadius: '50%',
                 display: 'flex',
                 alignItems: 'center',

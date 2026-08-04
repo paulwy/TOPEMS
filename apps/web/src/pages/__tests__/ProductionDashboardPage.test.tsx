@@ -172,14 +172,15 @@ describe('ProductionDashboardPage', () => {
       data: { equipments: [], total: 0, page: 1, pagesize: 200 },
     });
   });
-
-describe('ProductionDashboardPage', () => {
-it('should render without crashing', () => {
-    const { container } = renderWithProviders(<ProductionDashboardPage />);
-    expect(container).toBeDefined();
 });
 
-it('should render page after loading', async () => {
+describe('ProductionDashboardPage', () => {
+  it('should render without crashing', () => {
+    const { container } = renderWithProviders(<ProductionDashboardPage />);
+    expect(container).toBeDefined();
+  });
+
+  it('should render page after loading', async () => {
     renderWithProviders(<ProductionDashboardPage />);
     await waitFor(
       () => {
@@ -188,9 +189,9 @@ it('should render page after loading', async () => {
       },
       { timeout: 10000 }
     );
-});
+  });
 
-it('should handle API error gracefully', async () => {
+  it('should handle API error gracefully', async () => {
     (productionOrderApi.list as vi.Mock).mockRejectedValue(new Error('Network error'));
     renderWithProviders(<ProductionDashboardPage />);
     await waitFor(
@@ -200,22 +201,21 @@ it('should handle API error gracefully', async () => {
       },
       { timeout: 10000 }
     );
-});
+  });
 
-it('should have production order API methods defined', () => {
+  it('should have production order API methods defined', () => {
     expect(productionOrderApi.list).toBeDefined();
-});
+  });
 
-it('should have production record API methods defined', () => {
+  it('should have production record API methods defined', () => {
     expect(productionRecordApi.list).toBeDefined();
-});
+  });
 
-it('should have work station API methods defined', () => {
+  it('should have work station API methods defined', () => {
     expect(workStationApi.list).toBeDefined();
-});
+  });
 
-it('should have equipment API methods defined', () => {
+  it('should have equipment API methods defined', () => {
     expect(equipmentApi.list).toBeDefined();
-});
-;
+  });
 });

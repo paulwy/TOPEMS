@@ -30,7 +30,7 @@ export interface BatchOperationResult<T = any> {
   retriedItems: T[];
 }
 
-const DEFAULT_RETRYABLE_ERRORS = (error: unknown): boolean => {
+const DEFAULTRetryableErrors = (error: unknown): boolean => {
   const axiosError = error as {
     response?: { status: number };
     code?: string;
@@ -128,7 +128,7 @@ export async function batchOperation<T = any>(
     operationName = 'batch-operation',
     maxRetries = 0,
     retryDelay = 1000,
-    retryableErrors = DEFAULT_RETRYABLE_ERRORS,
+    retryableErrors = DEFAULTRetryableErrors,
     onBeforeOperation,
     onAfterOperation,
     consistencyCheck,

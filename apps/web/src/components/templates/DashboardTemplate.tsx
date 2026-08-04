@@ -511,8 +511,8 @@ const PlaceholderChart: React.FC<{ config: ChartConfig; isMain?: boolean }> = ({
                 position: 'absolute',
                 top: 8,
                 right: 8,
-                bgcolor: 'rgba(0,0,0,0.75)',
-                color: 'white',
+                bgcolor: 'action.active',
+                color: 'common.white',
                 px: 1,
                 py: 0.5,
                 borderRadius: 1,
@@ -667,7 +667,7 @@ export interface DashboardTemplateProps {
   actions?: Array<{ label: string; onClick: () => void; variant?: string }>;
 }
 
-const LEGACY_TO_CONFIG = (s: StatCard): StatCardConfig => ({
+const legacyToConfig = (s: StatCard): StatCardConfig => ({
   title: s.title,
   value: s.value,
   icon: s.icon,
@@ -680,7 +680,7 @@ const LEGACY_TO_CONFIG = (s: StatCard): StatCardConfig => ({
         : undefined,
 });
 
-const LEGACY_CHART_TO_CONFIG = (c: ChartCard): ChartConfig => ({
+const legacyChartToConfig = (c: ChartCard): ChartConfig => ({
   title: c.title,
   type: (c.type as ChartConfig['type']) || 'bar',
   data: (c.data as Array<Record<string, unknown>>) || [],
@@ -711,7 +711,7 @@ export const DashboardTemplate: React.FC<DashboardTemplateProps> = ({
 }) => {
   const resolvedStatCards = useMemo<StatCardConfig[] | undefined>(() => {
     if (statCardsProp && statCardsProp.length > 0) return statCardsProp;
-    if (stats && stats.length > 0) return stats.map(LEGACY_TO_CONFIG);
+    if (stats && stats.length > 0) return stats.map(legacyToConfig);
     return;
   }, [statCardsProp, stats]);
 
@@ -722,7 +722,7 @@ export const DashboardTemplate: React.FC<DashboardTemplateProps> = ({
       if (first && typeof first === 'object' && 'xField' in first) {
         return chartsProp as unknown as ChartConfig[];
       }
-      return (chartsProp as ChartCard[]).map(LEGACY_CHART_TO_CONFIG);
+      return (chartsProp as ChartCard[]).map(legacyChartToConfig);
     }
     return;
   }, [chartsProp]);
@@ -1007,7 +1007,7 @@ export const DashboardPage: React.FC<DashboardPageProps> = ({ schema, queryKey }
   });
 
   const resolvedStatCards = useMemo<StatCardConfig[] | undefined>(() => {
-    if (!schema.statCards) return undefined;
+    if (!schema.statCards) return;
     return schema.statCards.map((sc: StatCardSchema) => ({
       title: sc.title,
       value: typeof sc.value === 'function' ? sc.value() : sc.value,
@@ -1019,7 +1019,7 @@ export const DashboardPage: React.FC<DashboardPageProps> = ({ schema, queryKey }
   }, [schema.statCards, isLoading]);
 
   const resolvedCharts = useMemo<ChartCard[] | undefined>(() => {
-    if (!schema.charts) return undefined;
+    if (!schema.charts) return;
     return schema.charts.map((ch: ChartSchema) => {
       const rawData =
         typeof ch.data === 'function' ? [] : (ch.data as Array<Record<string, unknown>>);
@@ -1035,7 +1035,7 @@ export const DashboardPage: React.FC<DashboardPageProps> = ({ schema, queryKey }
   }, [schema.charts, isLoading]);
 
   const resolvedTable = useMemo<DataTableConfig | undefined>(() => {
-    if (!schema.table) return undefined;
+    if (!schema.table) return;
     const rawData =
       typeof schema.table.data === 'function'
         ? []

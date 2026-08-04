@@ -27,7 +27,7 @@ export const contractSchema: EntitySchema = {
 
   fields: [
     {
-      name: 'contract_no',
+      name: 'contractNo',
       label: '合同编号',
       type: 'text',
       readonlyOnEdit: true,
@@ -166,7 +166,7 @@ export const contractSchema: EntitySchema = {
 
   list: {
     columns: [
-      'contract_no',
+      'contractNo',
       'employee_id',
       'contract_type',
       'salary',
@@ -174,7 +174,7 @@ export const contractSchema: EntitySchema = {
       'end_date',
       'status',
     ],
-    searchFields: ['contract_no'],
+    searchFields: ['contractNo'],
     pageSize: 20,
     statusBadge: {
       field: 'status',
@@ -220,7 +220,7 @@ export const contractSchema: EntitySchema = {
   formSections: [
     {
       title: '基本信息',
-      fields: ['contract_no', 'employee_id', 'contract_type', 'status'],
+      fields: ['contractNo', 'employee_id', 'contract_type', 'status'],
     },
     {
       title: '甲方信息',

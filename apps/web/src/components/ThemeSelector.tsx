@@ -6,7 +6,17 @@
  */
 
 import React, { useState } from 'react';
-import { IconButton, Tooltip, Menu, Box, Typography, ListItemButton, ListItemIcon, ListItemText, Divider } from '@mui/material';
+import {
+  IconButton,
+  Tooltip,
+  Menu,
+  Box,
+  Typography,
+  ListItemButton,
+  ListItemIcon,
+  ListItemText,
+  Divider,
+} from '@mui/material';
 import { Sun, Moon, Sparkles, Monitor, Check } from 'lucide-react';
 import { useThemeStore, themeList, type Theme } from '@/store';
 
@@ -91,7 +101,11 @@ export const ThemeSelector: React.FC<ThemeSelectorProps> = ({ showMenu = true })
           }}
         >
           <Box sx={{ px: 2, py: 1.5 }}>
-            <Typography variant='caption' color='text.secondary' sx={{ fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.5px' }}>
+            <Typography
+              variant='caption'
+              color='text.secondary'
+              sx={{ fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.5px' }}
+            >
               主题模式
             </Typography>
           </Box>
@@ -109,17 +123,30 @@ export const ThemeSelector: React.FC<ThemeSelectorProps> = ({ showMenu = true })
               }}
               selected={theme === item.value}
             >
-              <ListItemIcon sx={{ minWidth: 36, color: theme === item.value ? 'primary.main' : 'text.secondary' }}>
+              <ListItemIcon
+                sx={{
+                  minWidth: 36,
+                  color: theme === item.value ? 'primary.main' : 'text.secondary',
+                }}
+              >
                 {themeIcons[item.value]}
               </ListItemIcon>
               <ListItemText
                 primary={
-                  <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                  <Box
+                    sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}
+                  >
                     <Box>
-                      <Typography variant='body2' sx={{ fontWeight: theme === item.value ? 600 : 400 }}>
+                      <Typography
+                        variant='body2'
+                        sx={{ fontWeight: theme === item.value ? 600 : 400 }}
+                      >
                         {item.label}
                       </Typography>
-                      <Typography variant='caption' color='text.secondary'>
+                      <Typography
+                        variant='caption'
+                        color='text.secondary'
+                      >
                         {item.description}
                       </Typography>
                     </Box>

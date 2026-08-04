@@ -18,14 +18,14 @@ export const AddressbookFilters: React.FC<AddressbookFiltersProps> = ({
   return (
     <div
       style={{
-        backgroundColor: 'white',
+        backgroundColor: 'common.white',
         borderBottom: '1px solid border.default',
         padding: '12px 16px',
       }}
     >
       <div style={{ display: 'flex', alignItems: 'center', gap: 16 }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-          <span style={{ fontSize: 14, color: '#475569' }}>状态:</span>
+          <span style={{ fontSize: 14, color: 'grey.600' }}>状态:</span>
           <select
             value={statusFilter}
             onChange={(e) => onStatusChange(e.target.value)}

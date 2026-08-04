@@ -128,8 +128,10 @@ export class PluginLoader {
   }
 
   async initSystemJS(): Promise<void> {
+    // eslint-disable-next-line @typescript-eslint/naming-convention
     if (typeof window !== 'undefined' && (window as unknown as { System?: unknown }).System) {
-      this.systemJS = (window as unknown as { System: { import: (modulePath: string) => Promise<any> } }).System;
+      this.systemJS = // eslint-disable-next-line @typescript-eslint/naming-convention
+        (window as unknown as { System: { import: (modulePath: string) => Promise<any> } }).System;
     } else {
       await this.loadSystemJS();
     }
@@ -140,7 +142,9 @@ export class PluginLoader {
       const script = document.createElement('script');
       script.src = 'https://cdn.jsdelivr.net/npm/systemjs@6.14.0/dist/system.min.js';
       script.onload = () => {
-        this.systemJS = (window as unknown as { System: { import: (modulePath: string) => Promise<any> } }).System;
+        this.systemJS = (
+          window as unknown as Record<string, { import: (modulePath: string) => Promise<any> }>
+        ).System;
         resolve();
       };
       script.onerror = reject;

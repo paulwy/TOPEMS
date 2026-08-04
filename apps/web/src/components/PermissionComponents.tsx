@@ -181,7 +181,7 @@ export const PermissionGuard: React.FC<PermissionGuardProps> = ({
               marginBottom: '16px',
             }}
           ></div>
-          <p style={{ color: '#6b7280' }}>加载中...</p>
+          <p style={{ color: 'grey.500' }}>加载中...</p>
         </div>
       </div>
     );
@@ -234,16 +234,16 @@ export const PermissionGuard: React.FC<PermissionGuardProps> = ({
         style={{
           textAlign: 'center',
           padding: '24px',
-          backgroundColor: 'white',
+          backgroundColor: 'common.white',
           borderRadius: '12px',
           boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.1)',
         }}
       >
         <div style={{ fontSize: '64px', marginBottom: '16px' }}>🔒</div>
-        <h2 style={{ fontSize: '24px', fontWeight: 700, color: '#1f2937', marginBottom: '8px' }}>
+        <h2 style={{ fontSize: '24px', fontWeight: 700, color: 'grey.800', marginBottom: '8px' }}>
           权限不足
         </h2>
-        <p style={{ color: '#6b7280', marginBottom: '16px' }}>
+        <p style={{ color: 'grey.500', marginBottom: '16px' }}>
           您没有访问此页面的权限。请联系管理员获取相应权限。
         </p>
         <button
@@ -251,7 +251,7 @@ export const PermissionGuard: React.FC<PermissionGuardProps> = ({
           style={{
             padding: '10px 24px',
             backgroundColor: 'primary.main',
-            color: 'white',
+            color: 'common.white',
             borderRadius: '8px',
             border: 'none',
             cursor: 'pointer',
@@ -315,7 +315,7 @@ export const ModulePermissionGuard: React.FC<ModulePermissionGuardProps> = ({
           <div style={{ display: 'flex', alignItems: 'flex-start' }}>
             <div style={{ flexShrink: 0, marginRight: '12px' }}>
               <svg
-                style={{ height: 20, width: 20, color: '#d97706' }}
+                style={{ height: 20, width: 20, color: 'warning.600' }}
                 viewBox='0 0 20 20'
                 fill='currentColor'
               >
@@ -327,8 +327,8 @@ export const ModulePermissionGuard: React.FC<ModulePermissionGuardProps> = ({
               </svg>
             </div>
             <div>
-              <h3 style={{ fontSize: '14px', fontWeight: 500, color: '#92400e' }}>权限提示</h3>
-              <div style={{ marginTop: '8px', fontSize: '14px', color: '#92400e' }}>
+              <h3 style={{ fontSize: '14px', fontWeight: 500, color: 'warning.800' }}>权限提示</h3>
+              <div style={{ marginTop: '8px', fontSize: '14px', color: 'warning.800' }}>
                 <p>
                   您没有访问 {module} 模块的 {action} 权限。
                 </p>

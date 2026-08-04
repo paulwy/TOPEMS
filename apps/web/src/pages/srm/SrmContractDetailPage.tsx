@@ -65,7 +65,7 @@ const SrmContractDetailPage: React.FC = () => {
         />
       ),
       title: contract?.title || undefined,
-      subtitle: contract?.contract_no || undefined,
+      subtitle: contract?.contractNo || undefined,
       tags: [statusLabels[contract?.status || ''] || contract?.status || undefined].filter(
         (t): t is string => t !== undefined
       ),

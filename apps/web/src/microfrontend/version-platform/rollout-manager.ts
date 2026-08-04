@@ -111,11 +111,7 @@ export class RolloutManager {
     });
   }
 
-  createRollout(
-    moduleId: string,
-    version: string,
-    strategy: RolloutStrategy
-  ): Rollout {
+  createRollout(moduleId: string, version: string, strategy: RolloutStrategy): Rollout {
     const existingActive = this.getActiveRollout(moduleId);
     if (existingActive) {
       throw new Error(`模块 ${moduleId} 已有进行中的发布: ${existingActive.id}`);
@@ -224,8 +220,12 @@ export class RolloutManager {
 
   getActiveRollout(moduleId: string): Rollout | null {
     for (const rollout of this.rollouts.values()) {
-      if (rollout.moduleId === moduleId &&
-          (rollout.status === 'running' || rollout.status === 'paused' || rollout.status === 'pending')) {
+      if (
+        rollout.moduleId === moduleId &&
+        (rollout.status === 'running' ||
+          rollout.status === 'paused' ||
+          rollout.status === 'pending')
+      ) {
         return rollout;
       }
     }
@@ -265,10 +265,8 @@ export class RolloutManager {
       if (hasMatchingRole) return true;
     }
 
-    if (strategy.allowedRegions?.length && region) {
-      if (strategy.allowedRegions.includes(region)) {
-        return true;
-      }
+    if (strategy.allowedRegions?.length && region && strategy.allowedRegions.includes(region)) {
+      return true;
     }
 
     const percentage = rollout.percentage || 0;

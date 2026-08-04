@@ -54,7 +54,10 @@ export function FormFileUpload<T extends FieldValues>({
         },
       }}
       render={({ field: { value, onChange }, fieldState: { error } }) => (
-        <FormControl fullWidth={fullWidth} error={!!error}>
+        <FormControl
+          fullWidth={fullWidth}
+          error={!!error}
+        >
           <FileUpload
             files={value || []}
             onChange={onChange}

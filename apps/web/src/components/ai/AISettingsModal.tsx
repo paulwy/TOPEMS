@@ -126,7 +126,7 @@ const AISettingsModal: React.FC<AISettingsModalProps> = ({ isOpen, onClose }) =>
       style={{
         position: 'fixed',
         inset: 0,
-        backgroundColor: 'rgba(0, 0, 0, 0.5)',
+        backgroundColor: 'action.active',
         display: 'flex',
         alignItems: 'center',
         justifyContent: 'center',
@@ -135,7 +135,7 @@ const AISettingsModal: React.FC<AISettingsModalProps> = ({ isOpen, onClose }) =>
     >
       <div
         style={{
-          backgroundColor: 'white',
+          backgroundColor: 'common.white',
           borderRadius: '12px',
           width: '100%',
           maxWidth: '1024px',
@@ -149,7 +149,7 @@ const AISettingsModal: React.FC<AISettingsModalProps> = ({ isOpen, onClose }) =>
         <div
           style={{
             background: 'linear-gradient(to right, secondary.dark, primary.dark)',
-            color: 'white',
+            color: 'common.white',
             padding: '24px',
           }}
         >
@@ -170,7 +170,7 @@ const AISettingsModal: React.FC<AISettingsModalProps> = ({ isOpen, onClose }) =>
                 padding: '8px',
                 borderRadius: '8px',
                 border: 'none',
-                background: 'rgba(255,255,255,0.2)',
+                background: 'action.disabledBackground',
                 cursor: 'pointer',
                 transition: 'background-color 0.2s',
               }}
@@ -178,7 +178,7 @@ const AISettingsModal: React.FC<AISettingsModalProps> = ({ isOpen, onClose }) =>
               <X sx={{ width: 24, height: 24 }} />
             </button>
           </div>
-          <p style={{ color: '#ddd6fe', fontSize: '14px', marginTop: '8px' }}>
+          <p style={{ color: 'secondary.200', fontSize: '14px', marginTop: '8px' }}>
             配置 AI 助手的行为和参数
           </p>
         </div>
@@ -209,7 +209,7 @@ const AISettingsModal: React.FC<AISettingsModalProps> = ({ isOpen, onClose }) =>
                 sx={{
                   width: 20,
                   height: 20,
-                  marginRight: '8px',
+                  marginRight: 1,
                   color: 'secondary.dark',
                 }}
               />
@@ -225,6 +225,7 @@ const AISettingsModal: React.FC<AISettingsModalProps> = ({ isOpen, onClose }) =>
             >
               <div>
                 <label
+                  htmlFor='ai-model'
                   style={{
                     display: 'block',
                     fontSize: '14px',
@@ -236,6 +237,7 @@ const AISettingsModal: React.FC<AISettingsModalProps> = ({ isOpen, onClose }) =>
                   AI 模型
                 </label>
                 <select
+                  id='ai-model'
                   value={config.model}
                   onChange={(e) => setConfig((prev) => ({ ...prev, model: e.target.value }))}
                   style={{
@@ -266,6 +268,7 @@ const AISettingsModal: React.FC<AISettingsModalProps> = ({ isOpen, onClose }) =>
 
               <div>
                 <label
+                  htmlFor='ai-response-length'
                   style={{
                     display: 'block',
                     fontSize: '14px',
@@ -277,6 +280,7 @@ const AISettingsModal: React.FC<AISettingsModalProps> = ({ isOpen, onClose }) =>
                   响应长度
                 </label>
                 <select
+                  id='ai-response-length'
                   value={config.responseLength}
                   onChange={(e) =>
                     setConfig((prev) => ({
@@ -325,7 +329,7 @@ const AISettingsModal: React.FC<AISettingsModalProps> = ({ isOpen, onClose }) =>
                 sx={{
                   width: 20,
                   height: 20,
-                  marginRight: '8px',
+                  marginRight: 1,
                   color: 'primary.dark',
                 }}
               />
@@ -341,6 +345,7 @@ const AISettingsModal: React.FC<AISettingsModalProps> = ({ isOpen, onClose }) =>
             >
               <div>
                 <label
+                  htmlFor='ai-temperature'
                   style={{
                     display: 'block',
                     fontSize: '14px',
@@ -359,6 +364,7 @@ const AISettingsModal: React.FC<AISettingsModalProps> = ({ isOpen, onClose }) =>
                   }}
                 >
                   <input
+                    id='ai-temperature'
                     type='range'
                     min='0'
                     max='2'
@@ -397,7 +403,7 @@ const AISettingsModal: React.FC<AISettingsModalProps> = ({ isOpen, onClose }) =>
                       alignItems: 'center',
                     }}
                   >
-                    <AlertCircle sx={{ width: 12, height: 12, marginRight: '4px' }} />
+                    <AlertCircle sx={{ width: 12, height: 12, marginRight: 0.5 }} />
                     {errors.temperature}
                   </p>
                 )}
@@ -405,6 +411,7 @@ const AISettingsModal: React.FC<AISettingsModalProps> = ({ isOpen, onClose }) =>
 
               <div>
                 <label
+                  htmlFor='ai-max-tokens'
                   style={{
                     display: 'block',
                     fontSize: '14px',
@@ -416,6 +423,7 @@ const AISettingsModal: React.FC<AISettingsModalProps> = ({ isOpen, onClose }) =>
                   Max Tokens (最大令牌数) <span style={{ color: theme.palette.error.dark }}>*</span>
                 </label>
                 <input
+                  id='ai-max-tokens'
                   type='number'
                   min='100'
                   max='8000'
@@ -446,7 +454,7 @@ const AISettingsModal: React.FC<AISettingsModalProps> = ({ isOpen, onClose }) =>
                       alignItems: 'center',
                     }}
                   >
-                    <AlertCircle sx={{ width: 12, height: 12, marginRight: '4px' }} />
+                    <AlertCircle sx={{ width: 12, height: 12, marginRight: 0.5 }} />
                     {errors.maxTokens}
                   </p>
                 )}
@@ -478,7 +486,7 @@ const AISettingsModal: React.FC<AISettingsModalProps> = ({ isOpen, onClose }) =>
                 sx={{
                   width: 20,
                   height: 20,
-                  marginRight: '8px',
+                  marginRight: 1,
                   color: 'success.dark',
                 }}
               />
@@ -517,7 +525,7 @@ const AISettingsModal: React.FC<AISettingsModalProps> = ({ isOpen, onClose }) =>
                     alignItems: 'center',
                   }}
                 >
-                  <AlertCircle sx={{ width: 12, height: 12, marginRight: '4px' }} />
+                  <AlertCircle sx={{ width: 12, height: 12, marginRight: 0.5 }} />
                   {errors.systemPrompt}
                 </p>
               )}
@@ -544,7 +552,7 @@ const AISettingsModal: React.FC<AISettingsModalProps> = ({ isOpen, onClose }) =>
                 sx={{
                   width: 20,
                   height: 20,
-                  marginRight: '8px',
+                  marginRight: 1,
                   color: 'warning.600',
                 }}
               />
@@ -580,6 +588,7 @@ const AISettingsModal: React.FC<AISettingsModalProps> = ({ isOpen, onClose }) =>
                 >
                   <input
                     type='checkbox'
+                    aria-label='启用知识库'
                     checked={config.enableKnowledgeBase}
                     onChange={(e) =>
                       setConfig((prev) => ({
@@ -607,7 +616,7 @@ const AISettingsModal: React.FC<AISettingsModalProps> = ({ isOpen, onClose }) =>
                         left: config.enableKnowledgeBase ? '22px' : '2px',
                         width: '20px',
                         height: '20px',
-                        backgroundColor: 'white',
+                        backgroundColor: 'common.white',
                         borderRadius: '9999px',
                         transition: 'left 0.2s',
                         boxShadow: '0 1px 2px rgba(0,0,0,0.2)',
@@ -627,6 +636,7 @@ const AISettingsModal: React.FC<AISettingsModalProps> = ({ isOpen, onClose }) =>
                 >
                   <div>
                     <label
+                      htmlFor='ai-similarity-threshold'
                       style={{
                         display: 'block',
                         fontSize: '14px',
@@ -645,6 +655,7 @@ const AISettingsModal: React.FC<AISettingsModalProps> = ({ isOpen, onClose }) =>
                       }}
                     >
                       <input
+                        id='ai-similarity-threshold'
                         type='range'
                         min='0'
                         max='1'
@@ -667,7 +678,7 @@ const AISettingsModal: React.FC<AISettingsModalProps> = ({ isOpen, onClose }) =>
                         }}
                       >
                         <span>0 (宽松)</span>
-                        <span style={{ fontWeight: 500, color: '#ea580c' }}>
+                        <span style={{ fontWeight: 500, color: 'orange.600' }}>
                           {config.similarityThreshold.toFixed(2)}
                         </span>
                         <span>1 (严格)</span>
@@ -683,7 +694,7 @@ const AISettingsModal: React.FC<AISettingsModalProps> = ({ isOpen, onClose }) =>
                           alignItems: 'center',
                         }}
                       >
-                        <AlertCircle sx={{ width: 12, height: 12, marginRight: '4px' }} />
+                        <AlertCircle sx={{ width: 12, height: 12, marginRight: 0.5 }} />
                         {errors.similarityThreshold}
                       </p>
                     )}
@@ -700,6 +711,7 @@ const AISettingsModal: React.FC<AISettingsModalProps> = ({ isOpen, onClose }) =>
 
                   <div>
                     <label
+                      htmlFor='ai-max-context'
                       style={{
                         display: 'block',
                         fontSize: '14px',
@@ -711,6 +723,7 @@ const AISettingsModal: React.FC<AISettingsModalProps> = ({ isOpen, onClose }) =>
                       最大上下文消息数
                     </label>
                     <input
+                      id='ai-max-context'
                       type='number'
                       min='1'
                       max='50'
@@ -768,7 +781,7 @@ const AISettingsModal: React.FC<AISettingsModalProps> = ({ isOpen, onClose }) =>
                 fontSize: '14px',
               }}
             >
-              <CheckCircle sx={{ width: 16, height: 16, marginRight: '8px' }} />
+              <CheckCircle sx={{ width: 16, height: 16, marginRight: 1 }} />
               设置已成功保存
             </div>
           )}
@@ -786,7 +799,7 @@ const AISettingsModal: React.FC<AISettingsModalProps> = ({ isOpen, onClose }) =>
                 fontSize: '14px',
               }}
             >
-              <AlertCircle sx={{ width: 16, height: 16, marginRight: '8px' }} />
+              <AlertCircle sx={{ width: 16, height: 16, marginRight: 1 }} />
               {errors.save}
             </div>
           )}
@@ -810,7 +823,7 @@ const AISettingsModal: React.FC<AISettingsModalProps> = ({ isOpen, onClose }) =>
                 transition: 'color 0.2s',
               }}
             >
-              <RotateCcw sx={{ width: 16, height: 16, marginRight: '8px' }} />
+              <RotateCcw sx={{ width: 16, height: 16, marginRight: 1 }} />
               恢复默认
             </button>
             <div style={{ display: 'flex', gap: '12px' }}>
@@ -822,7 +835,7 @@ const AISettingsModal: React.FC<AISettingsModalProps> = ({ isOpen, onClose }) =>
                   color: theme.palette.grey[700],
                   borderRadius: '8px',
                   cursor: 'pointer',
-                  background: 'white',
+                  background: 'common.white',
                   transition: 'background-color 0.2s',
                 }}
               >
@@ -835,14 +848,14 @@ const AISettingsModal: React.FC<AISettingsModalProps> = ({ isOpen, onClose }) =>
                   alignItems: 'center',
                   padding: '8px 24px',
                   backgroundColor: theme.palette.secondary.dark,
-                  color: 'white',
+                  color: 'common.white',
                   borderRadius: '8px',
                   border: 'none',
                   cursor: 'pointer',
                   transition: 'background-color 0.2s',
                 }}
               >
-                <Save sx={{ width: 16, height: 16, marginRight: '8px' }} />
+                <Save sx={{ width: 16, height: 16, marginRight: 1 }} />
                 保存设置
               </button>
             </div>

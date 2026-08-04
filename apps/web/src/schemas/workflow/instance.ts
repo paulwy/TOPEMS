@@ -127,7 +127,11 @@ export const workflowInstanceSchema: EntitySchema = {
             },
             children: (row.start_user_name || 'U').toString().charAt(0),
           }),
-          React.createElement(Typography, { variant: 'body2' }, (row.start_user_name || '-') as string)
+          React.createElement(
+            Typography,
+            { variant: 'body2' },
+            (row.start_user_name || '-') as string
+          )
         ),
     },
     {

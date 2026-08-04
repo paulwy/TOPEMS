@@ -26,22 +26,22 @@ import { NodeType, type WorkflowNode, type NodePosition } from './workflow-edito
 // ==================== 枚举 ====================
 
 export enum DragState {
-  Idle = 'idle',
-  Dragging = 'dragging',
-  Hovering = 'hovering',
-  Dropping = 'dropping',
-  Cancelled = 'cancelled',
+  IDLE = 'idle',
+  DRAGGING = 'dragging',
+  HOVERING = 'hovering',
+  DROPPING = 'dropping',
+  CANCELLED = 'cancelled',
 }
 
 export enum AlignType {
-  Left = 'left',
-  Right = 'right',
-  Top = 'top',
-  Bottom = 'bottom',
-  CenterH = 'center-h',
-  CenterV = 'center-v',
-  DistributeH = 'distribute-h',
-  DistributeV = 'distribute-v',
+  LEFT = 'left',
+  RIGHT = 'right',
+  TOP = 'top',
+  BOTTOM = 'bottom',
+  CENTERH = 'center-h',
+  CENTERV = 'center-v',
+  DISTRIBUTEH = 'distribute-h',
+  DISTRIBUTEV = 'distribute-v',
 }
 
 // ==================== 接口 ====================
@@ -86,40 +86,40 @@ export interface HistoryEntry {
 
 const DEFAULT_GRID_SIZE = 8;
 const NODE_TYPE_COMPATIBILITY: Record<string, string[]> = {
-  [NodeType.Start]: [NodeType.Task, NodeType.Decision, NodeType.Parallel, NodeType.Delay],
-  [NodeType.Task]: [
-    NodeType.Task,
-    NodeType.Decision,
-    NodeType.Parallel,
-    NodeType.Transform,
-    NodeType.Notify,
-    NodeType.End,
+  [NodeType.START]: [NodeType.TASK, NodeType.DECISION, NodeType.PARALLEL, NodeType.DELAY],
+  [NodeType.TASK]: [
+    NodeType.TASK,
+    NodeType.DECISION,
+    NodeType.PARALLEL,
+    NodeType.TRANSFORM,
+    NodeType.NOTIFY,
+    NodeType.END,
   ],
-  [NodeType.Decision]: [NodeType.Task, NodeType.Parallel, NodeType.End],
-  [NodeType.Parallel]: [NodeType.Task, NodeType.Transform, NodeType.Aggregate],
-  [NodeType.HTTPRequest]: [NodeType.Transform, NodeType.Filter, NodeType.End],
-  [NodeType.GraphQLQuery]: [NodeType.Transform, NodeType.Filter, NodeType.End],
-  [NodeType.DatabaseQuery]: [NodeType.Transform, NodeType.Filter, NodeType.Aggregate, NodeType.End],
-  [NodeType.Transform]: [
-    NodeType.Task,
-    NodeType.Filter,
-    NodeType.Aggregate,
-    NodeType.Notify,
-    NodeType.End,
+  [NodeType.DECISION]: [NodeType.TASK, NodeType.PARALLEL, NodeType.END],
+  [NodeType.PARALLEL]: [NodeType.TASK, NodeType.TRANSFORM, NodeType.AGGREGATE],
+  [NodeType.HTTPREQUEST]: [NodeType.TRANSFORM, NodeType.FILTER, NodeType.END],
+  [NodeType.GRAPHQLQUERY]: [NodeType.TRANSFORM, NodeType.FILTER, NodeType.END],
+  [NodeType.DATABASEQUERY]: [NodeType.TRANSFORM, NodeType.FILTER, NodeType.AGGREGATE, NodeType.END],
+  [NodeType.TRANSFORM]: [
+    NodeType.TASK,
+    NodeType.FILTER,
+    NodeType.AGGREGATE,
+    NodeType.NOTIFY,
+    NodeType.END,
   ],
-  [NodeType.Filter]: [NodeType.Task, NodeType.Transform, NodeType.End],
-  [NodeType.Aggregate]: [NodeType.Transform, NodeType.Notify, NodeType.End],
-  [NodeType.Loop]: [NodeType.Task, NodeType.Transform],
-  [NodeType.Delay]: [NodeType.Task, NodeType.Decision, NodeType.End],
-  [NodeType.SubWorkflow]: [NodeType.Task, NodeType.Notify, NodeType.End],
-  [NodeType.Notify]: [NodeType.End],
-  [NodeType.AI]: [NodeType.Transform, NodeType.Filter, NodeType.Notify, NodeType.End],
+  [NodeType.FILTER]: [NodeType.TASK, NodeType.TRANSFORM, NodeType.END],
+  [NodeType.AGGREGATE]: [NodeType.TRANSFORM, NodeType.NOTIFY, NodeType.END],
+  [NodeType.LOOP]: [NodeType.TASK, NodeType.TRANSFORM],
+  [NodeType.DELAY]: [NodeType.TASK, NodeType.DECISION, NodeType.END],
+  [NodeType.SUBWORKFLOW]: [NodeType.TASK, NodeType.NOTIFY, NodeType.END],
+  [NodeType.NOTIFY]: [NodeType.END],
+  [NodeType.AI]: [NodeType.TRANSFORM, NodeType.FILTER, NodeType.NOTIFY, NodeType.END],
 };
 
 // ==================== 拖拽编排器 ====================
 
 export class DragOrchestrator {
-  private state: DragState = DragState.Idle;
+  private state: DragState = DragState.IDLE;
   private context: DragContext | null = null;
   private dropTargets: Map<string, DropTarget> = new Map();
   private clipboard: WorkflowNode[] = [];
@@ -132,18 +132,18 @@ export class DragOrchestrator {
   // ==================== 拖拽生命周期 ====================
 
   startDrag(context: Omit<DragContext, 'drop_targets'>): boolean {
-    if (this.state !== DragState.Idle) return false;
+    if (this.state !== DragState.IDLE) return false;
     this.context = {
       ...context,
       drop_targets: Array.from(this.dropTargets.keys()),
     };
-    this.state = DragState.Dragging;
+    this.state = DragState.DRAGGING;
     this.recordHistory('startDrag', { context: this.context });
     return true;
   }
 
   updateDrag(position: NodePosition): DragState {
-    if (!this.context || this.state === DragState.Idle) return this.state;
+    if (!this.context || this.state === DragState.IDLE) return this.state;
     this.context.current_position = position;
     const target = this.getDropTargetAt(position);
     // 取消所有高亮
@@ -152,9 +152,9 @@ export class DragOrchestrator {
     }
     if (target) {
       target.highlight = true;
-      this.state = DragState.Hovering;
+      this.state = DragState.HOVERING;
     } else {
-      this.state = DragState.Dragging;
+      this.state = DragState.DRAGGING;
     }
     return this.state;
   }
@@ -163,13 +163,13 @@ export class DragOrchestrator {
     if (!this.context) return null;
     const target = this.getDropTargetAt(position);
     if (target) {
-      this.state = DragState.Dropping;
+      this.state = DragState.DROPPING;
       this.recordHistory('endDrag', {
         context: this.context,
         target_id: target.target_id,
       });
     } else {
-      this.state = DragState.Idle;
+      this.state = DragState.IDLE;
     }
     this.context = null;
     // 清理高亮
@@ -178,12 +178,12 @@ export class DragOrchestrator {
   }
 
   cancelDrag(): void {
-    if (this.state === DragState.Idle) return;
-    this.state = DragState.Cancelled;
+    if (this.state === DragState.IDLE) return;
+    this.state = DragState.CANCELLED;
     this.context = null;
     for (const target of this.dropTargets.values()) target.highlight = false;
     this.recordHistory('cancelDrag', {});
-    this.state = DragState.Idle;
+    this.state = DragState.IDLE;
   }
 
   getState(): DragState {
@@ -256,7 +256,7 @@ export class DragOrchestrator {
   private computeConnectionConfidence(source: WorkflowNode, target: WorkflowNode): number {
     let confidence = 0.5;
     // Start 节点优先连接
-    if (source.type === NodeType.Start) confidence += 0.3;
+    if (source.type === NodeType.START) confidence += 0.3;
     // 数据流匹配：源有输出、目标有输入
     if (source.outputs.length > 0 && target.inputs.length > 0) {
       const hasMatch = source.outputs.some((out) =>
@@ -273,12 +273,12 @@ export class DragOrchestrator {
   }
 
   private explainSuggestion(sourceType: string, targetType: string): string {
-    if (sourceType === NodeType.Start) return '开始节点通常连接第一个执行节点';
-    if (targetType === NodeType.End) return '流程末端建议连接结束节点';
-    if (sourceType === NodeType.Decision) return '决策节点连接后续分支';
-    if (sourceType === NodeType.HTTPRequest && targetType === NodeType.Transform)
+    if (sourceType === NodeType.START) return '开始节点通常连接第一个执行节点';
+    if (targetType === NodeType.END) return '流程末端建议连接结束节点';
+    if (sourceType === NodeType.DECISION) return '决策节点连接后续分支';
+    if (sourceType === NodeType.HTTPREQUEST && targetType === NodeType.TRANSFORM)
       return 'HTTP 请求结果通常需要转换处理';
-    if (sourceType === NodeType.DatabaseQuery && targetType === NodeType.Aggregate)
+    if (sourceType === NodeType.DATABASEQUERY && targetType === NodeType.AGGREGATE)
       return '数据库查询结果适合聚合统计';
     return '节点类型兼容，建议连接';
   }
@@ -288,22 +288,22 @@ export class DragOrchestrator {
     const arranged = nodes.map((n) => ({ ...n, position: { ...n.position } }));
     // 按类型排序：Start -> 任务 -> 转换 -> End
     const order: Record<string, number> = {
-      [NodeType.Start]: 0,
-      [NodeType.HTTPRequest]: 1,
-      [NodeType.GraphQLQuery]: 1,
-      [NodeType.DatabaseQuery]: 1,
+      [NodeType.START]: 0,
+      [NodeType.HTTPREQUEST]: 1,
+      [NodeType.GRAPHQLQUERY]: 1,
+      [NodeType.DATABASEQUERY]: 1,
       [NodeType.AI]: 1,
-      [NodeType.Task]: 2,
-      [NodeType.Transform]: 3,
-      [NodeType.Filter]: 3,
-      [NodeType.Aggregate]: 3,
-      [NodeType.Decision]: 4,
-      [NodeType.Parallel]: 4,
-      [NodeType.Loop]: 4,
-      [NodeType.Delay]: 5,
-      [NodeType.Notify]: 6,
-      [NodeType.SubWorkflow]: 2,
-      [NodeType.End]: 7,
+      [NodeType.TASK]: 2,
+      [NodeType.TRANSFORM]: 3,
+      [NodeType.FILTER]: 3,
+      [NodeType.AGGREGATE]: 3,
+      [NodeType.DECISION]: 4,
+      [NodeType.PARALLEL]: 4,
+      [NodeType.LOOP]: 4,
+      [NodeType.DELAY]: 5,
+      [NodeType.NOTIFY]: 6,
+      [NodeType.SUBWORKFLOW]: 2,
+      [NodeType.END]: 7,
     };
     arranged.sort((a, b) => (order[a.type] ?? 99) - (order[b.type] ?? 99));
     arranged.forEach((node, idx) => {
@@ -328,37 +328,37 @@ export class DragOrchestrator {
     if (nodes.length < 2) return nodes;
     const aligned = nodes.map((n) => ({ ...n, position: { ...n.position } }));
     switch (type) {
-      case AlignType.Left: {
+      case AlignType.LEFT: {
         const minX = Math.min(...aligned.map((n) => n.position.x));
         aligned.forEach((n) => (n.position.x = minX));
         break;
       }
-      case AlignType.Right: {
+      case AlignType.RIGHT: {
         const maxX = Math.max(...aligned.map((n) => n.position.x));
         aligned.forEach((n) => (n.position.x = maxX));
         break;
       }
-      case AlignType.Top: {
+      case AlignType.TOP: {
         const minY = Math.min(...aligned.map((n) => n.position.y));
         aligned.forEach((n) => (n.position.y = minY));
         break;
       }
-      case AlignType.Bottom: {
+      case AlignType.BOTTOM: {
         const maxY = Math.max(...aligned.map((n) => n.position.y));
         aligned.forEach((n) => (n.position.y = maxY));
         break;
       }
-      case AlignType.CenterH: {
+      case AlignType.CENTERH: {
         const avgX = aligned.reduce((sum, n) => sum + n.position.x, 0) / aligned.length;
         aligned.forEach((n) => (n.position.x = Math.round(avgX)));
         break;
       }
-      case AlignType.CenterV: {
+      case AlignType.CENTERV: {
         const avgY = aligned.reduce((sum, n) => sum + n.position.y, 0) / aligned.length;
         aligned.forEach((n) => (n.position.y = Math.round(avgY)));
         break;
       }
-      case AlignType.DistributeH: {
+      case AlignType.DISTRIBUTEH: {
         const sorted = [...aligned].sort((a, b) => a.position.x - b.position.x);
         const first = sorted[0].position.x;
         const last = sorted[sorted.length - 1].position.x;
@@ -366,7 +366,7 @@ export class DragOrchestrator {
         sorted.forEach((n, idx) => (n.position.x = first + step * idx));
         break;
       }
-      case AlignType.DistributeV: {
+      case AlignType.DISTRIBUTEV: {
         const sorted = [...aligned].sort((a, b) => a.position.y - b.position.y);
         const first = sorted[0].position.y;
         const last = sorted[sorted.length - 1].position.y;

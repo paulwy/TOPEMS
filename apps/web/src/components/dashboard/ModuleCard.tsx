@@ -98,7 +98,7 @@ export const ModuleCard: React.FC<ModuleCardProps> = ({ item, onClick, size = 'm
       onMouseLeave={() => setIsHovered(false)}
       className='dashboard-module-card'
       style={{
-        background: 'white',
+        background: 'common.white',
         borderRadius: '16px',
         padding: currentSize.padding,
         cursor: 'pointer',
@@ -150,7 +150,7 @@ export const ModuleCard: React.FC<ModuleCardProps> = ({ item, onClick, size = 'm
             style={{
               width: currentSize.iconSize * 0.55,
               height: currentSize.iconSize * 0.55,
-              color: 'white',
+              color: 'common.white',
               transition: 'transform 0.3s ease',
               transform: isHovered ? 'scale(1.05)' : 'scale(1)',
             }}

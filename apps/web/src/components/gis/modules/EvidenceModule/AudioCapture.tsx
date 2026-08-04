@@ -165,7 +165,7 @@ const AudioCapture: React.FC<AudioCaptureProps> = ({
           borderColor: 'grey.700',
         }}
       >
-        <Typography sx={{ color: 'white', fontWeight: 500 }}>录音取证</Typography>
+        <Typography sx={{ color: 'common.white', fontWeight: 500 }}>录音取证</Typography>
         <IconButton
           onClick={onCancel}
           sx={{ borderRadius: 4, '&:hover': { bgcolor: 'grey.800' } }}
@@ -193,7 +193,7 @@ const AudioCapture: React.FC<AudioCaptureProps> = ({
             sx={{
               mb: 16,
               p: 12,
-              bgcolor: 'rgba(239,68,68,0.2)',
+              bgcolor: 'common.white',
               border: 1,
               borderColor: 'error.main',
               borderRadius: 8,
@@ -208,7 +208,7 @@ const AudioCapture: React.FC<AudioCaptureProps> = ({
           sx={{
             fontSize: '3.75rem',
             fontFamily: 'monospace',
-            color: 'white',
+            color: 'common.white',
             mb: 32,
           }}
         >
@@ -229,7 +229,7 @@ const AudioCapture: React.FC<AudioCaptureProps> = ({
                 p: 16,
                 bgcolor: 'error.main',
                 borderRadius: '9999px',
-                color: 'white',
+                color: 'common.white',
                 '&:hover': { bgcolor: 'error.dark' },
               }}
             >
@@ -245,7 +245,7 @@ const AudioCapture: React.FC<AudioCaptureProps> = ({
                   p: 12,
                   bgcolor: 'grey.700',
                   borderRadius: '9999px',
-                  color: 'white',
+                  color: 'common.white',
                   '&:hover': { bgcolor: 'text.secondary' },
                 }}
               >
@@ -257,7 +257,7 @@ const AudioCapture: React.FC<AudioCaptureProps> = ({
                   p: 16,
                   bgcolor: 'error.main',
                   borderRadius: '9999px',
-                  color: 'white',
+                  color: 'common.white',
                   '&:hover': { bgcolor: 'error.dark' },
                 }}
               >
@@ -294,7 +294,7 @@ const AudioCapture: React.FC<AudioCaptureProps> = ({
                   py: 8,
                   bgcolor: 'grey.700',
                   borderRadius: 8,
-                  color: 'white',
+                  color: 'common.white',
                   '&:hover': { bgcolor: 'text.secondary' },
                 }}
               >
@@ -308,7 +308,7 @@ const AudioCapture: React.FC<AudioCaptureProps> = ({
                   py: 8,
                   bgcolor: 'success.dark',
                   borderRadius: 8,
-                  color: 'white',
+                  color: 'common.white',
                   '&:hover': { bgcolor: 'success.dark' },
                 }}
               >

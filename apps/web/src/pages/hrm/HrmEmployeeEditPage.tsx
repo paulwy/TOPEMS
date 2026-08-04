@@ -20,6 +20,7 @@ import { HRM_PATHS } from '@/modules/hrm/config';
 import { logger } from '@/utils/logger';
 
 import { useTranslation } from 'react-i18next';
+
 const employeeSchema = z.object({
   name: z.string().min(1, '姓名不能为空'),
   employee_no: z.string().min(1, '工号不能为空'),

@@ -69,7 +69,7 @@ const DEFAULT_FORM: Partial<RowLevelPermission> = {
   condition: '',
   roles: [],
   users: [],
-  is_enabled: true,
+  isEnabled: true,
   priority: 1,
 };
 
@@ -155,7 +155,7 @@ export const useBiPermission = (): UseBiPermissionResult => {
 
   const toggleMutation = useMutation({
     mutationFn: (item: RowLevelPermission) =>
-      updateRowLevelPermission(item.id, { is_enabled: !item.is_enabled }),
+      updateRowLevelPermission(item.id, { isEnabled: !item.isEnabled }),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['bi-row-permissions'] });
     },

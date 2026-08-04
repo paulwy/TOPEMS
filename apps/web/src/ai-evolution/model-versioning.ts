@@ -44,7 +44,7 @@ class ModelVersionManagerImpl {
     return () => this.listeners.delete(listener);
   }
 
-  register_model(name: string, type: string, description: string, owner: string): Model {
+  registerModel(name: string, type: string, description: string, owner: string): Model {
     const id = generateId();
     const model: Model = {
       id,
@@ -59,11 +59,11 @@ class ModelVersionManagerImpl {
     return model;
   }
 
-  publish_version(modelId: string, version: string, metrics: Record<string, number>): ModelVersion {
+  publishVersion(modelId: string, version: string, metrics: Record<string, number>): ModelVersion {
     const model = this.models.get(modelId);
     if (!model) throw new Error(`Model not found: ${modelId}`);
 
-    const existing = model.versions.find((v) => v.version === version);
+    const existing = model.versions.some((v) => v.version === version);
     if (existing) throw new Error(`Version ${version} already exists for model ${modelId}`);
 
     const mv: ModelVersion = {
@@ -80,7 +80,7 @@ class ModelVersionManagerImpl {
     return mv;
   }
 
-  activate_version(modelId: string, versionId: string): void {
+  activateVersion(modelId: string, versionId: string): void {
     const model = this.models.get(modelId);
     if (!model) throw new Error(`Model not found: ${modelId}`);
 
@@ -94,7 +94,7 @@ class ModelVersionManagerImpl {
     this.notify();
   }
 
-  deprecate_version(modelId: string, versionId: string): void {
+  deprecateVersion(modelId: string, versionId: string): void {
     const model = this.models.get(modelId);
     if (!model) throw new Error(`Model not found: ${modelId}`);
 
@@ -105,7 +105,7 @@ class ModelVersionManagerImpl {
     this.notify();
   }
 
-  archive_version(modelId: string, versionId: string): void {
+  archiveVersion(modelId: string, versionId: string): void {
     const model = this.models.get(modelId);
     if (!model) throw new Error(`Model not found: ${modelId}`);
 
@@ -116,26 +116,26 @@ class ModelVersionManagerImpl {
     this.notify();
   }
 
-  get_model_versions(modelId: string): ModelVersion[] {
+  getModelVersions(modelId: string): ModelVersion[] {
     const model = this.models.get(modelId);
     return model ? [...model.versions].sort((a, b) => b.createdAt - a.createdAt) : [];
   }
 
-  get_active_model(modelId: string): ModelVersion | null {
+  getActiveModel(modelId: string): ModelVersion | null {
     const model = this.models.get(modelId);
     if (!model) return null;
     return model.versions.find((v) => v.status === 'Active') ?? null;
   }
 
-  get_model(modelId: string): Model | null {
+  getModel(modelId: string): Model | null {
     return this.models.get(modelId) ?? null;
   }
 
-  list_models(): Model[] {
+  listModels(): Model[] {
     return Array.from(this.models.values());
   }
 
-  compare_versions(modelId: string, versionAId: string, versionBId: string): VersionCompareResult {
+  compareVersions(modelId: string, versionAId: string, versionBId: string): VersionCompareResult {
     const model = this.models.get(modelId);
     if (!model) throw new Error(`Model not found: ${modelId}`);
 
@@ -168,25 +168,25 @@ class ModelVersionManagerImpl {
   seed(): void {
     if (this.models.size > 0) return;
 
-    const m1 = this.register_model('TOPEMS-NLU', 'nlu', 'TOPEMS 自然语言理解模型', 'ai-team');
-    this.publish_version(m1.id, 'v1.0.0', { accuracy: 0.82, latency: 120, f1: 0.78 });
-    this.publish_version(m1.id, 'v1.1.0', { accuracy: 0.85, latency: 110, f1: 0.81 });
-    this.publish_version(m1.id, 'v2.0.0', { accuracy: 0.9, latency: 95, f1: 0.87 });
-    const activeV = this.get_active_model(m1.id);
-    if (activeV) this.activate_version(m1.id, activeV.id);
+    const m1 = this.registerModel('TOPEMS-NLU', 'nlu', 'TOPEMS 自然语言理解模型', 'ai-team');
+    this.publishVersion(m1.id, 'v1.0.0', { accuracy: 0.82, latency: 120, f1: 0.78 });
+    this.publishVersion(m1.id, 'v1.1.0', { accuracy: 0.85, latency: 110, f1: 0.81 });
+    this.publishVersion(m1.id, 'v2.0.0', { accuracy: 0.9, latency: 95, f1: 0.87 });
+    const activeV = this.getActiveModel(m1.id);
+    if (activeV) this.activateVersion(m1.id, activeV.id);
 
-    const m2 = this.register_model(
+    const m2 = this.registerModel(
       'TOPEMS-Copilot',
       'copilot',
       'TOPEMS Copilot 助手模型',
       'ai-team'
     );
-    this.publish_version(m2.id, 'v1.0.0', { accuracy: 0.88, latency: 80, satisfaction: 0.82 });
-    this.publish_version(m2.id, 'v1.1.0', { accuracy: 0.91, latency: 72, satisfaction: 0.86 });
+    this.publishVersion(m2.id, 'v1.0.0', { accuracy: 0.88, latency: 80, satisfaction: 0.82 });
+    this.publishVersion(m2.id, 'v1.1.0', { accuracy: 0.91, latency: 72, satisfaction: 0.86 });
 
-    const m3 = this.register_model('TOPEMS-Ops', 'ops', 'TOPEMS 智能运维模型', 'ops-team');
-    this.publish_version(m3.id, 'v1.0.0', { anomalyRate: 0.05, mttr: 12, precision: 0.88 });
-    this.publish_version(m3.id, 'v1.0.1', { anomalyRate: 0.03, mttr: 10, precision: 0.91 });
+    const m3 = this.registerModel('TOPEMS-Ops', 'ops', 'TOPEMS 智能运维模型', 'ops-team');
+    this.publishVersion(m3.id, 'v1.0.0', { anomalyRate: 0.05, mttr: 12, precision: 0.88 });
+    this.publishVersion(m3.id, 'v1.0.1', { anomalyRate: 0.03, mttr: 10, precision: 0.91 });
   }
 }
 

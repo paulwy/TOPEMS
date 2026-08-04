@@ -19,7 +19,15 @@ import { LoadingSpinner } from '@topems/shared-components';
 import { useNotificationStore } from '@/store';
 import { apiLogger } from '@/utils/logger';
 import { designTokens } from '@/theme/tokens';
-import { BarChart3, TrendingUp, PieChart, FileText, Calendar, Download, RefreshCw } from 'lucide-react';
+import {
+  BarChart3,
+  TrendingUp,
+  PieChart,
+  FileText,
+  Calendar,
+  Download,
+  RefreshCw,
+} from 'lucide-react';
 
 const ct = designTokens.colors;
 
@@ -51,31 +59,52 @@ const FinancialAnalysisPage: React.FC = () => {
     if (balanceSheetData) {
       setChartData([
         { category: '总资产', value: balanceSheetData.total_assets || 0, color: ct.success.main },
-        { category: '总负债', value: balanceSheetData.total_liabilities || 0, color: ct.error.main },
+        {
+          category: '总负债',
+          value: balanceSheetData.total_liabilities || 0,
+          color: ct.error.main,
+        },
         { category: '净资产', value: balanceSheetData.total_equity || 0, color: ct.primary.main },
       ]);
     }
   }, [balanceSheetData]);
 
-  const { data: incomeStatementData, isLoading: incomeStatementLoading } = useQuery<IncomeStatement | null>({
-    queryKey: QUERY_KEYS.ERP.FINANCIAL_REPORTS.INCOME_STATEMENT(period),
-    queryFn: async () => {
-      const response = await financeReportApi.incomeStatement({ period });
-      if (response.success && response.data) {
-        return response.data;
-      }
-      return null;
-    },
-    enabled: activeTab === 1,
-  });
+  const { data: incomeStatementData, isLoading: incomeStatementLoading } =
+    useQuery<IncomeStatement | null>({
+      queryKey: QUERY_KEYS.ERP.FINANCIAL_REPORTS.INCOME_STATEMENT(period),
+      queryFn: async () => {
+        const response = await financeReportApi.incomeStatement({ period });
+        if (response.success && response.data) {
+          return response.data;
+        }
+        return null;
+      },
+      enabled: activeTab === 1,
+    });
 
   useEffect(() => {
     if (incomeStatementData) {
       setChartData([
-        { category: '营业收入', value: (incomeStatementData as any).total_revenue || 0, color: ct.success.main },
-        { category: '营业成本', value: (incomeStatementData as any).total_cost || 0, color: ct.error.main },
-        { category: '营业利润', value: incomeStatementData.operating_profit || 0, color: ct.primary.main },
-        { category: '净利润', value: incomeStatementData.net_profit || 0, color: ct.secondary.main },
+        {
+          category: '营业收入',
+          value: (incomeStatementData as any).total_revenue || 0,
+          color: ct.success.main,
+        },
+        {
+          category: '营业成本',
+          value: (incomeStatementData as any).total_cost || 0,
+          color: ct.error.main,
+        },
+        {
+          category: '营业利润',
+          value: incomeStatementData.operating_profit || 0,
+          color: ct.primary.main,
+        },
+        {
+          category: '净利润',
+          value: incomeStatementData.net_profit || 0,
+          color: ct.secondary.main,
+        },
       ]);
     }
   }, [incomeStatementData]);
@@ -95,15 +124,30 @@ const FinancialAnalysisPage: React.FC = () => {
   useEffect(() => {
     if (cashFlowData) {
       setChartData([
-        { category: '经营活动', value: (cashFlowData as any).operating_cash_flow || 0, color: ct.success.main },
-        { category: '投资活动', value: (cashFlowData as any).investing_cash_flow || 0, color: ct.warning.main },
-        { category: '筹资活动', value: (cashFlowData as any).financing_cash_flow || 0, color: ct.info.main },
+        {
+          category: '经营活动',
+          value: (cashFlowData as any).operating_cash_flow || 0,
+          color: ct.success.main,
+        },
+        {
+          category: '投资活动',
+          value: (cashFlowData as any).investing_cash_flow || 0,
+          color: ct.warning.main,
+        },
+        {
+          category: '筹资活动',
+          value: (cashFlowData as any).financing_cash_flow || 0,
+          color: ct.info.main,
+        },
         { category: '净现金流', value: cashFlowData.net_cash_flow || 0, color: ct.primary.main },
       ]);
     }
   }, [cashFlowData]);
 
-  const { data: agingAnalysisData, isLoading: agingAnalysisLoading } = useQuery<Record<string, number> | null>({
+  const { data: agingAnalysisData, isLoading: agingAnalysisLoading } = useQuery<Record<
+    string,
+    number
+  > | null>({
     queryKey: [...QUERY_KEYS.ERP.FINANCIAL_REPORTS.AGING_ANALYSIS, period],
     queryFn: async () => {
       const response = await financeReportApi.agingAnalysis();
@@ -129,7 +173,10 @@ const FinancialAnalysisPage: React.FC = () => {
     }
   }, [agingAnalysisData]);
 
-  const { data: budgetAnalysisData, isLoading: budgetAnalysisLoading } = useQuery<{ budget_amount?: number; actual_amount?: number } | null>({
+  const { data: budgetAnalysisData, isLoading: budgetAnalysisLoading } = useQuery<{
+    budget_amount?: number;
+    actual_amount?: number;
+  } | null>({
     queryKey: [...QUERY_KEYS.ERP.FINANCIAL_REPORTS.EXPENSE_ANALYSIS, 'budget', period],
     queryFn: async () => {
       const response = await (financeReportApi as any).budgetAnalysis({ period });
@@ -144,17 +191,41 @@ const FinancialAnalysisPage: React.FC = () => {
   useEffect(() => {
     if (budgetAnalysisData) {
       setChartData([
-        { category: '预算金额', value: budgetAnalysisData.budget_amount || 0, color: ct.primary.main },
-        { category: '实际支出', value: budgetAnalysisData.actual_amount || 0, color: ct.success.main },
-        { category: '差异', value: (budgetAnalysisData.budget_amount || 0) - (budgetAnalysisData.actual_amount || 0), color: ct.warning.main },
+        {
+          category: '预算金额',
+          value: budgetAnalysisData.budget_amount || 0,
+          color: ct.primary.main,
+        },
+        {
+          category: '实际支出',
+          value: budgetAnalysisData.actual_amount || 0,
+          color: ct.success.main,
+        },
+        {
+          category: '差异',
+          value: (budgetAnalysisData.budget_amount || 0) - (budgetAnalysisData.actual_amount || 0),
+          color: ct.warning.main,
+        },
       ]);
     }
   }, [budgetAnalysisData]);
 
-  const loading = [balanceSheetLoading, incomeStatementLoading, cashFlowLoading, agingAnalysisLoading, budgetAnalysisLoading][activeTab];
+  const loading = [
+    balanceSheetLoading,
+    incomeStatementLoading,
+    cashFlowLoading,
+    agingAnalysisLoading,
+    budgetAnalysisLoading,
+  ][activeTab];
 
   const getCurrentData = () => {
-    const dataMap = [balanceSheetData, incomeStatementData, cashFlowData, agingAnalysisData, budgetAnalysisData];
+    const dataMap = [
+      balanceSheetData,
+      incomeStatementData,
+      cashFlowData,
+      agingAnalysisData,
+      budgetAnalysisData,
+    ];
     return dataMap[activeTab];
   };
 
@@ -163,10 +234,26 @@ const FinancialAnalysisPage: React.FC = () => {
   const maxValue = Math.max(...chartData.map((d) => Math.abs(d.value)), 1);
 
   const renderBarChart = () => (
-    <Box sx={{ display: 'flex', alignItems: 'flex-end', justifyContent: 'space-around', height: 200, gap: 2 }}>
+    <Box
+      sx={{
+        display: 'flex',
+        alignItems: 'flex-end',
+        justifyContent: 'space-around',
+        height: 200,
+        gap: 2,
+      }}
+    >
       {chartData.map((item, index) => (
-        <Box key={index} sx={{ display: 'flex', flexDirection: 'column', alignItems: 'center', flex: 1 }}>
-          <Box component='span' sx={{ fontSize: 12, mb: 1, textAlign: 'center' }}>{item.category}</Box>
+        <Box
+          key={index}
+          sx={{ display: 'flex', flexDirection: 'column', alignItems: 'center', flex: 1 }}
+        >
+          <Box
+            component='span'
+            sx={{ fontSize: 12, mb: 1, textAlign: 'center' }}
+          >
+            {item.category}
+          </Box>
           <Box
             sx={{
               width: '100%',
@@ -182,7 +269,10 @@ const FinancialAnalysisPage: React.FC = () => {
               py: 1,
             }}
           >
-            <Box component='span' sx={{ fontSize: 10, color: '#fff', fontWeight: 500 }}>
+            <Box
+              component='span'
+              sx={{ fontSize: 10, color: 'common.white', fontWeight: 500 }}
+            >
               ¥{(item.value / 10000).toFixed(1)}万
             </Box>
           </Box>
@@ -197,7 +287,10 @@ const FinancialAnalysisPage: React.FC = () => {
 
     return (
       <Box sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: 200 }}>
-        <svg width='200' height='200'>
+        <svg
+          width='200'
+          height='200'
+        >
           {chartData.map((item, index) => {
             const angle = (item.value / total) * 360;
             const startAngle = cumulativeAngle;
@@ -223,11 +316,29 @@ const FinancialAnalysisPage: React.FC = () => {
               />
             );
           })}
-          <circle cx='100' cy='100' r='50' fill='#fff' />
-          <text x='100' y='95' textAnchor='middle' fontSize='14' fontWeight='bold' fill={ct.text.primary}>
+          <circle
+            cx='100'
+            cy='100'
+            r='50'
+            fill='#fff'
+          />
+          <text
+            x='100'
+            y='95'
+            textAnchor='middle'
+            fontSize='14'
+            fontWeight='bold'
+            fill={ct.text.primary}
+          >
             ¥{(total / 10000).toFixed(1)}万
           </text>
-          <text x='100' y='115' textAnchor='middle' fontSize='10' fill={ct.text.secondary}>
+          <text
+            x='100'
+            y='115'
+            textAnchor='middle'
+            fontSize='10'
+            fill={ct.text.secondary}
+          >
             总计
           </text>
         </svg>
@@ -246,17 +357,44 @@ const FinancialAnalysisPage: React.FC = () => {
         <table style={{ width: '100%', borderCollapse: 'collapse' }}>
           <thead>
             <tr>
-              <th style={{ borderBottom: `2px solid ${ct.grey[200]}`, padding: '8px', textAlign: 'left', fontWeight: 600 }}>指标</th>
-              <th style={{ borderBottom: `2px solid ${ct.grey[200]}`, padding: '8px', textAlign: 'right', fontWeight: 600 }}>金额(元)</th>
+              <th
+                style={{
+                  borderBottom: `2px solid ${ct.grey[200]}`,
+                  padding: '8px',
+                  textAlign: 'left',
+                  fontWeight: 600,
+                }}
+              >
+                指标
+              </th>
+              <th
+                style={{
+                  borderBottom: `2px solid ${ct.grey[200]}`,
+                  padding: '8px',
+                  textAlign: 'right',
+                  fontWeight: 600,
+                }}
+              >
+                金额(元)
+              </th>
             </tr>
           </thead>
           <tbody>
             {dataKeys.map((key, index) => (
-              <tr key={key} style={{ backgroundColor: index % 2 === 0 ? '#fff' : ct.grey[50] }}>
+              <tr
+                key={key}
+                style={{ backgroundColor: index % 2 === 0 ? '#fff' : ct.grey[50] }}
+              >
                 <td style={{ borderBottom: `1px solid ${ct.grey[100]}`, padding: '8px' }}>
                   {key.replace(/_/g, ' ')}
                 </td>
-                <td style={{ borderBottom: `1px solid ${ct.grey[100]}`, padding: '8px', textAlign: 'right' }}>
+                <td
+                  style={{
+                    borderBottom: `1px solid ${ct.grey[100]}`,
+                    padding: '8px',
+                    textAlign: 'right',
+                  }}
+                >
                   ¥{Number(data[key]).toLocaleString()}
                 </td>
               </tr>
@@ -282,12 +420,15 @@ const FinancialAnalysisPage: React.FC = () => {
 
       const csvContent = [
         ['指标', '金额(元)'],
-        ...Object.entries(exportData).map(([key, value]) => [key.replace(/_/g, ' '), typeof value === 'number' ? `¥${Number(value).toLocaleString()}` : value]),
+        ...Object.entries(exportData).map(([key, value]) => [
+          key.replace(/_/g, ' '),
+          typeof value === 'number' ? `¥${Number(value).toLocaleString()}` : value,
+        ]),
       ]
         .map((row) => row.join(','))
         .join('\n');
 
-      const blob = new Blob(['\uFEFF' + csvContent], { type: 'text/csv;charset=utf-8;' });
+      const blob = new Blob([`\uFEFF${csvContent}`], { type: 'text/csv;charset=utf-8;' });
       const link = document.createElement('a');
       const url = URL.createObjectURL(blob);
       link.setAttribute('href', url);
@@ -315,8 +456,14 @@ const FinancialAnalysisPage: React.FC = () => {
     >
       <Box sx={{ p: 2, bgcolor: ct.secondary[100], borderRadius: 3 }}>
         <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 1 }}>
-          <BarChart3 size={18} sx={{ color: 'secondary.700' }} />
-          <Box component='span' sx={{ color: 'text.secondary', fontSize: 14 }}>
+          <BarChart3
+            size={18}
+            sx={{ color: 'secondary.700' }}
+          />
+          <Box
+            component='span'
+            sx={{ color: 'text.secondary', fontSize: 14 }}
+          >
             当前期间
           </Box>
         </Box>
@@ -405,7 +552,11 @@ const FinancialAnalysisPage: React.FC = () => {
           <Box sx={{ p: 2, bgcolor: 'error.lighter', borderRadius: 3 }}>
             <Box sx={{ color: 'text.secondary', fontSize: 14, mb: 1 }}>逾期总额</Box>
             <Box sx={{ fontWeight: 700, fontSize: 24, color: 'error.dark' }}>
-              ¥{(((agingAnalysisData as any)['61-90'] || 0) + ((agingAnalysisData as any)['90+'] || 0)) / 10000}万
+              ¥
+              {(((agingAnalysisData as any)['61-90'] || 0) +
+                ((agingAnalysisData as any)['90+'] || 0)) /
+                10000}
+              万
             </Box>
           </Box>
         </>
@@ -427,7 +578,12 @@ const FinancialAnalysisPage: React.FC = () => {
           <Box sx={{ p: 2, bgcolor: 'warning.light', borderRadius: 3 }}>
             <Box sx={{ color: 'text.secondary', fontSize: 14, mb: 1 }}>预算执行率</Box>
             <Box sx={{ fontWeight: 700, fontSize: 24, color: 'warning.700' }}>
-              {(((budgetAnalysisData as any).actual_amount / (budgetAnalysisData as any).budget_amount) * 100).toFixed(1)}%
+              {(
+                ((budgetAnalysisData as any).actual_amount /
+                  (budgetAnalysisData as any).budget_amount) *
+                100
+              ).toFixed(1)}
+              %
             </Box>
           </Box>
         </>
@@ -469,7 +625,10 @@ const FinancialAnalysisPage: React.FC = () => {
               date.setMonth(date.getMonth() - i);
               return date.toISOString().slice(0, 7);
             }).map((p) => (
-              <MenuItem key={p} value={p}>
+              <MenuItem
+                key={p}
+                value={p}
+              >
                 {p}
               </MenuItem>
             ))}
@@ -497,26 +656,36 @@ const FinancialAnalysisPage: React.FC = () => {
         sx={{ mb: 3 }}
       >
         {tabLabels.map((label, index) => (
-          <Tab key={index} label={label} icon={tabIcons[index]} />
+          <Tab
+            key={index}
+            label={label}
+            icon={tabIcons[index]}
+          />
         ))}
       </Tabs>
 
       <Box sx={{ mb: 3 }}>{statsContent}</Box>
 
-      <Box sx={{ bgcolor: '#fff', borderRadius: 3, p: 4, mb: 3 }}>
+      <Box sx={{ bgcolor: 'common.white', borderRadius: 3, p: 4, mb: 3 }}>
         <Box sx={{ display: 'flex', alignItems: 'center', gap: 2, mb: 3 }}>
           {activeTab === 0 ? <TrendingUp size={20} /> : <BarChart3 size={20} />}
-          <Box component='h3' sx={{ fontWeight: 600 }}>
+          <Box
+            component='h3'
+            sx={{ fontWeight: 600 }}
+          >
             {tabLabels[activeTab]} - 可视化图表
           </Box>
         </Box>
         {activeTab === 0 ? renderPieChart() : renderBarChart()}
         <Box sx={{ display: 'flex', justifyContent: 'center', gap: 4, mt: 3 }}>
           {chartData.map((item, index) => (
-            <Box key={index} sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+            <Box
+              key={index}
+              sx={{ display: 'flex', alignItems: 'center', gap: 1 }}
+            >
               <Chip
                 size='small'
-                sx={{ backgroundColor: item.color, color: '#fff', fontWeight: 500 }}
+                sx={{ backgroundColor: item.color, color: 'common.white', fontWeight: 500 }}
                 label={item.category}
               />
             </Box>
@@ -524,10 +693,13 @@ const FinancialAnalysisPage: React.FC = () => {
         </Box>
       </Box>
 
-      <Box sx={{ bgcolor: '#fff', borderRadius: 3, p: 4 }}>
+      <Box sx={{ bgcolor: 'common.white', borderRadius: 3, p: 4 }}>
         <Box sx={{ display: 'flex', alignItems: 'center', gap: 2, mb: 3 }}>
           <FileText size={20} />
-          <Box component='h3' sx={{ fontWeight: 600 }}>
+          <Box
+            component='h3'
+            sx={{ fontWeight: 600 }}
+          >
             {tabLabels[activeTab]} - 明细数据
           </Box>
         </Box>

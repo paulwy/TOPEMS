@@ -206,8 +206,7 @@ export const monitorApi = {
     if (params?.service_name) queryParams.append('service_name', params.service_name);
 
     return withRetry(
-      () =>
-        apiClient.monitor.get<PaginatedResponse<Alert>>(`/alerts?${queryParams.toString()}`),
+      () => apiClient.monitor.get<PaginatedResponse<Alert>>(`/alerts?${queryParams.toString()}`),
       DEFAULT_RETRY_CONFIG,
       'listAlerts'
     );
@@ -247,9 +246,7 @@ export const monitorApi = {
 
     return withRetry(
       () =>
-        apiClient.monitor.get<PerformanceReport>(
-          `/reports/performance?${queryParams.toString()}`
-        ),
+        apiClient.monitor.get<PerformanceReport>(`/reports/performance?${queryParams.toString()}`),
       DEFAULT_RETRY_CONFIG,
       'getPerformanceReport'
     );

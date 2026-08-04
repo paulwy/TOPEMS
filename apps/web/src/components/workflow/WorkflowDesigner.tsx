@@ -182,7 +182,7 @@ export const WorkflowDesigner: React.FC<WorkflowDesignerProps> = ({
           alignItems: 'center',
           gap: 1,
           padding: 2,
-          backgroundColor: 'white',
+          backgroundColor: 'common.white',
           borderBottom: '1px solid grey.200',
           boxShadow: '0 1px 3px rgba(0, 0, 0, 0.1)',
           zIndex: 10,
@@ -450,7 +450,7 @@ export const WorkflowDesigner: React.FC<WorkflowDesignerProps> = ({
         <Box
           sx={{
             width: 320,
-            backgroundColor: 'white',
+            backgroundColor: 'common.white',
             borderLeft: '1px solid grey.200',
             display: 'flex',
             flexDirection: 'column',

@@ -174,12 +174,12 @@ const BiPermissionRowLevelTable: React.FC<BiPermissionRowLevelTableProps> = ({
                   control={
                     <Switch
                       size='small'
-                      checked={perm.is_enabled}
+                      checked={perm.isEnabled}
                       onChange={() => onToggle(perm)}
                     />
                   }
                   label={
-                    perm.is_enabled
+                    perm.isEnabled
                       ? ` + ${t('bi.bi_permission_page.active')} + `
                       : t('bi.bi_permission_page.inactive')
                   }

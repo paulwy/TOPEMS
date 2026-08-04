@@ -84,7 +84,7 @@ export const PluginCard: React.FC<PluginCardProps> = ({
                 justifyContent: 'center',
               }}
             >
-              <Package sx={{ width: 28, height: 28, color: 'white' }} />
+              <Package sx={{ width: 28, height: 28, color: 'common.white' }} />
             </Box>
 
             <Box sx={{ flexGrow: 1, minWidth: 0 }}>
@@ -225,7 +225,7 @@ export const PluginCard: React.FC<PluginCardProps> = ({
                 justifyContent: 'center',
               }}
             >
-              <Package sx={{ width: 24, height: 24, color: 'white' }} />
+              <Package sx={{ width: 24, height: 24, color: 'common.white' }} />
             </Box>
             <Box>
               <Typography

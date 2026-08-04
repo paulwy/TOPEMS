@@ -75,7 +75,8 @@ export const voucherSchema: EntitySchema = {
       hideInForm: true,
       sortable: true,
       listWidth: 130,
-      renderCell: (row: Record<string, unknown>) => formatCurrency(row.total_debit as number, '#d32f2f'),
+      renderCell: (row: Record<string, unknown>) =>
+        formatCurrency(row.total_debit as number, '#d32f2f'),
     },
     {
       name: 'total_credit',
@@ -85,7 +86,8 @@ export const voucherSchema: EntitySchema = {
       hideInForm: true,
       sortable: true,
       listWidth: 130,
-      renderCell: (row: Record<string, unknown>) => formatCurrency(row.total_credit as number, '#2e7d32'),
+      renderCell: (row: Record<string, unknown>) =>
+        formatCurrency(row.total_credit as number, '#2e7d32'),
     },
     {
       name: 'status',

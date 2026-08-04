@@ -174,7 +174,7 @@ describe('SRM Module API Tests', () => {
     it('createContract should call POST /supplier-contracts with data', async () => {
       const { srmApi } = await import('..');
       const data = {
-        contract_no: 'CT-001',
+        contractNo: 'CT-001',
         supplier_id: 'supplier-001',
         title: 'Supply Contract',
         contract_type: 'supply',
@@ -266,7 +266,10 @@ describe('SRM Module API Tests', () => {
     it('updateScoringDimension should call PUT /scoring-dimensions/:id with data', async () => {
       const { srmApi } = await import('..');
       const data = { name: 'Updated Quality', weight: 35 };
-      await srmApi.updateScoringDimension('dim-001', data as Partial<CreateScoringDimensionRequest>);
+      await srmApi.updateScoringDimension(
+        'dim-001',
+        data as Partial<CreateScoringDimensionRequest>
+      );
       const { apiClient } = await import('../../client');
       expect(apiClient.srm.put).toHaveBeenCalledWith('/scoring-dimensions/dim-001', data);
     });

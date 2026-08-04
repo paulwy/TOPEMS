@@ -43,6 +43,7 @@ import { useQuery } from '@tanstack/react-query';
 import { useNotificationStore } from '@/store';
 
 import { useTranslation } from 'react-i18next';
+
 const ct = designTokens.colors;
 
 interface TabPanelProps {
@@ -96,7 +97,9 @@ const InventoryReportPage: React.FC = () => {
     queryFn: async () => {
       const params: Record<string, unknown> = {};
       if (warehouseFilter) params.warehouse_id = warehouseFilter;
-      const response = await wmsApi.inventoryStats.getStatistics(params as unknown as Record<string, unknown>);
+      const response = await wmsApi.inventoryStats.getStatistics(
+        params as unknown as Record<string, unknown>
+      );
       if (response.success && response.data) {
         return response.data;
       }
@@ -123,7 +126,9 @@ const InventoryReportPage: React.FC = () => {
     queryFn: async () => {
       const params: Record<string, unknown> = {};
       if (warehouseFilter) params.warehouse_id = warehouseFilter;
-      const response = await wmsApi.inventoryStats.getABCAnalysis(params as unknown as Record<string, unknown>);
+      const response = await wmsApi.inventoryStats.getABCAnalysis(
+        params as unknown as Record<string, unknown>
+      );
       if (response.success && response.data) {
         return {
           items: response.data.items || [],
@@ -160,7 +165,9 @@ const InventoryReportPage: React.FC = () => {
         periods: 12,
       };
       if (warehouseFilter) params.warehouse_id = warehouseFilter;
-      const response = await wmsApi.inventoryStats.getTurnover(params as unknown as Record<string, unknown>);
+      const response = await wmsApi.inventoryStats.getTurnover(
+        params as unknown as Record<string, unknown>
+      );
       if (response.success && response.data) {
         return response.data.items || [];
       }
@@ -188,7 +195,9 @@ const InventoryReportPage: React.FC = () => {
     queryFn: async () => {
       const params: Record<string, unknown> = {};
       if (warehouseFilter) params.category_id = warehouseFilter;
-      const response = await wmsApi.inventoryStats.getValueByWarehouse(params as unknown as Record<string, unknown>);
+      const response = await wmsApi.inventoryStats.getValueByWarehouse(
+        params as unknown as Record<string, unknown>
+      );
       if (response.success && response.data) {
         return {
           items: response.data.items || [],

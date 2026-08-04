@@ -150,7 +150,12 @@ const zustandStores = smartDebugger.inspectZustandStores();`,
   },
 ];
 
-const MICRO_FRONTEND_APIS: Array<{ name: string; path: string; description: string; props: Array<{ name: string; type: string; required: boolean; description: string }> }> = [
+const MICRO_FRONTEND_APIS: Array<{
+  name: string;
+  path: string;
+  description: string;
+  props: Array<{ name: string; type: string; required: boolean; description: string }>;
+}> = [
   {
     name: 'RemoteLoader',
     path: '@/microfrontend',
@@ -169,7 +174,12 @@ const MICRO_FRONTEND_APIS: Array<{ name: string; path: string; description: stri
     props: [
       { name: 'moduleId', type: 'string', required: true, description: '远程模块 ID' },
       { name: 'entryUrl', type: 'string', required: true, description: '远程入口 URL' },
-      { name: 'isolation', type: 'SandboxedRemoteLoaderIsolation', required: true, description: '隔离配置' },
+      {
+        name: 'isolation',
+        type: 'SandboxedRemoteLoaderIsolation',
+        required: true,
+        description: '隔离配置',
+      },
       { name: 'fallback', type: 'ReactNode', required: false, description: '加载中占位组件' },
     ],
   },
@@ -177,41 +187,31 @@ const MICRO_FRONTEND_APIS: Array<{ name: string; path: string; description: stri
     name: 'ModuleMarketplace',
     path: '@/microfrontend',
     description: '模块市场浏览与管理面板',
-    props: [
-      { name: 'onClose', type: '() => void', required: true, description: '关闭回调' },
-    ],
+    props: [{ name: 'onClose', type: '() => void', required: true, description: '关闭回调' }],
   },
   {
     name: 'DependencyGovernance',
     path: '@/microfrontend',
     description: '依赖治理面板，展示依赖图与冲突检测',
-    props: [
-      { name: 'onClose', type: '() => void', required: true, description: '关闭回调' },
-    ],
+    props: [{ name: 'onClose', type: '() => void', required: true, description: '关闭回调' }],
   },
   {
     name: 'SecurityCenter',
     path: '@/microfrontend',
     description: '安全中心面板，扫描漏洞与权限审计',
-    props: [
-      { name: 'onClose', type: '() => void', required: true, description: '关闭回调' },
-    ],
+    props: [{ name: 'onClose', type: '() => void', required: true, description: '关闭回调' }],
   },
   {
     name: 'RuntimeDashboard',
     path: '@/microfrontend',
     description: '运行时控制台，展示模块生命周期状态',
-    props: [
-      { name: 'onClose', type: '() => void', required: true, description: '关闭回调' },
-    ],
+    props: [{ name: 'onClose', type: '() => void', required: true, description: '关闭回调' }],
   },
   {
     name: 'AIOpsPanel',
     path: '@/microfrontend',
     description: 'AI 运维面板，智能告警与异常检测',
-    props: [
-      { name: 'onClose', type: '() => void', required: true, description: '关闭回调' },
-    ],
+    props: [{ name: 'onClose', type: '() => void', required: true, description: '关闭回调' }],
   },
 ];
 
@@ -244,8 +244,10 @@ export class CodeCompletion {
     const suggestions: CompletionItem[] = [];
 
     for (const api of MICRO_FRONTEND_APIS) {
-      if (api.name.toLowerCase().includes(mod.name.toLowerCase()) ||
-          mod.name.toLowerCase().includes(api.name.toLowerCase())) {
+      if (
+        api.name.toLowerCase().includes(mod.name.toLowerCase()) ||
+        mod.name.toLowerCase().includes(api.name.toLowerCase())
+      ) {
         suggestions.push({
           id: `api_${api.name}`,
           kind: 'module-api',

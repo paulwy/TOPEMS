@@ -60,7 +60,7 @@ export const contractSchema: EntitySchema = {
       listWidth: 200,
     },
     {
-      name: 'contract_no',
+      name: 'contractNo',
       label: '合同编号',
       type: 'text',
       required: true,
@@ -158,7 +158,7 @@ export const contractSchema: EntitySchema = {
   list: {
     columns: [
       'contract_name',
-      'contract_no',
+      'contractNo',
       'contract_type',
       'party_b',
       'amount',
@@ -166,7 +166,7 @@ export const contractSchema: EntitySchema = {
       'sign_date',
       'end_date',
     ],
-    searchFields: ['contract_name', 'contract_no'],
+    searchFields: ['contract_name', 'contractNo'],
     pageSize: 10,
     statusBadge: {
       field: 'status',
@@ -194,7 +194,7 @@ export const contractSchema: EntitySchema = {
   formSections: [
     {
       title: '基本信息',
-      fields: ['contract_name', 'contract_no', 'contract_type', 'status'],
+      fields: ['contract_name', 'contractNo', 'contract_type', 'status'],
     },
     {
       title: '合同方',

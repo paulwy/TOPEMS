@@ -129,7 +129,7 @@ export const AttendanceLeaveTab: React.FC<AttendanceLeaveTabProps> = ({
                       size='small'
                       color={
                         getLeaveStatusColor(leave.status) as React.ComponentProps<
-                          typeof import('@mui/material/Chip').default
+                          typeof Chip
                         >['color']
                       }
                       sx={{ height: 22, fontSize: '0.75rem' }}

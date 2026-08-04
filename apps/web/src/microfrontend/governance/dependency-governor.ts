@@ -25,7 +25,7 @@ export interface DependencyGraphEdge {
 export interface DependencyGraph {
   nodes: DependencyGraphNode[];
   edges: DependencyGraphEdge[];
-  adjacency_map: Record<string, string[]>;
+  adjacencyMap: Record<string, string[]>;
 }
 
 export type ConflictSeverity = 'low' | 'medium' | 'high' | 'critical';
@@ -271,7 +271,7 @@ export class DependencyGovernor {
 
     const nodes: DependencyGraphNode[] = [];
     const edges: DependencyGraphEdge[] = [];
-    const adjacency_map: Record<string, string[]> = {};
+    const adjacencyMap: Record<string, string[]> = {};
     const visited = new Set<string>();
     const nodeLevels = new Map<string, number>();
 
@@ -301,13 +301,13 @@ export class DependencyGovernor {
         level,
       });
 
-      if (!adjacency_map[moduleId]) {
-        adjacency_map[moduleId] = [];
+      if (!adjacencyMap[moduleId]) {
+        adjacencyMap[moduleId] = [];
       }
 
       mod.dependencies.forEach((dep) => {
         if (!dep.is_optional) {
-          adjacency_map[moduleId].push(dep.module_id);
+          adjacencyMap[moduleId].push(dep.module_id);
           edges.push({
             from: moduleId,
             to: dep.module_id,
@@ -323,7 +323,7 @@ export class DependencyGovernor {
       traverse(m.id, 0);
     });
 
-    this.graph = { nodes, edges, adjacency_map };
+    this.graph = { nodes, edges, adjacencyMap };
     return this.graph;
   }
 
@@ -331,7 +331,7 @@ export class DependencyGovernor {
     if (this.cycles.length > 0) return this.cycles;
 
     const graph = this.buildGraph();
-    const adjList = graph.adjacency_map;
+    const adjList = graph.adjacencyMap;
     const cycles: string[][] = [];
     const visited = new Set<string>();
     const recStack = new Set<string>();
@@ -400,7 +400,7 @@ export class DependencyGovernor {
 
   topologicalSort(): string[] | null {
     const graph = this.buildGraph();
-    const adjList = graph.adjacency_map;
+    const adjList = graph.adjacencyMap;
     const inDegree: Record<string, number> = {};
 
     graph.nodes.forEach((node) => {
@@ -533,7 +533,7 @@ export class DependencyGovernor {
 
   getDependencyTree(moduleId: string): { node: DependencyGraphNode; children: any[] } | null {
     const graph = this.buildGraph();
-    const node = graph.nodes.find((n) => n.id === moduleId);
+    const node = graph.nodes.some((n) => n.id === moduleId);
     if (!node) return null;
 
     const buildTree = (id: string, visited: Set<string>): any => {
@@ -541,7 +541,7 @@ export class DependencyGovernor {
       visited.add(id);
 
       const currentNode = graph.nodes.find((n) => n.id === id);
-      const children = (graph.adjacency_map[id] || []).map((childId) =>
+      const children = (graph.adjacencyMap[id] || []).map((childId) =>
         buildTree(childId, new Set(visited))
       );
 
@@ -555,9 +555,7 @@ export class DependencyGovernor {
     const installed = Array.from(this.modules.values()).filter((m) => m.installed);
 
     return UPGRADE_SUGGESTIONS.filter((suggestion) => {
-      const mod = installed.find(
-        (m) => m.name.includes(suggestion.module_name)
-      );
+      const mod = installed.find((m) => m.name.includes(suggestion.module_name));
       return mod !== undefined;
     });
   }
@@ -613,13 +611,13 @@ export class DependencyGovernor {
 
     let totalDeps = 0;
     let directDeps = 0;
-    Object.values(graph.adjacency_map).forEach((deps) => {
+    Object.values(graph.adjacencyMap).forEach((deps) => {
       totalDeps += deps.length;
     });
 
     const rootNodes = graph.nodes.filter((n) => n.level === 0);
     rootNodes.forEach((node) => {
-      directDeps += (graph.adjacency_map[node.id] || []).length;
+      directDeps += (graph.adjacencyMap[node.id] || []).length;
     });
 
     const totalDepth = graph.nodes.reduce((sum, n) => sum + n.level, 0);
@@ -650,7 +648,7 @@ export class DependencyGovernor {
     const visited = new Set<string>();
 
     const traverse = (id: string): void => {
-      const deps = graph.adjacency_map[id] || [];
+      const deps = graph.adjacencyMap[id] || [];
       for (const dep of deps) {
         if (!visited.has(dep)) {
           visited.add(dep);

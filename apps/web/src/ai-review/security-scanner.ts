@@ -201,14 +201,14 @@ export class SecurityScanner {
     this.rules = [...OWASP_RULES];
   }
 
-  scan_code(code: string, file: string = 'inline'): SecurityFinding[] {
+  scanCode(code: string, file: string = 'inline'): SecurityFinding[] {
     const findings: SecurityFinding[] = [];
 
     for (const rule of this.rules) {
       const matches = code.match(new RegExp(rule.pattern.source, rule.pattern.flags));
       if (matches) {
         for (let i = 0; i < matches.length; i++) {
-          const lineNo = this.find_line_number(code, matches[i]);
+          const lineNo = this.findLineNumber(code, matches[i]);
           findings.push({
             id: `${rule.id}-${Date.now()}-${Math.random().toString(36).slice(2, 7)}`,
             category: rule.category,
@@ -228,7 +228,7 @@ export class SecurityScanner {
     });
   }
 
-  scan_dependencies(dependencies: Record<string, string>): SecurityFinding[] {
+  scanDependencies(dependencies: Record<string, string>): SecurityFinding[] {
     const findings: SecurityFinding[] = [];
     const knownVulnerabilities: Record<
       string,
@@ -274,7 +274,7 @@ export class SecurityScanner {
     return findings;
   }
 
-  scan_config(config: Record<string, unknown>): SecurityFinding[] {
+  scanConfig(config: Record<string, unknown>): SecurityFinding[] {
     const findings: SecurityFinding[] = [];
     const configStr = JSON.stringify(config);
 
@@ -305,12 +305,12 @@ export class SecurityScanner {
     return findings;
   }
 
-  generate_report(findings: SecurityFinding[]): ScanResult {
+  generateReport(findings: SecurityFinding[]): ScanResult {
     const highRiskCount = findings.filter(
       (f) => f.severity === 'critical' || f.severity === 'high'
     ).length;
 
-    const riskScore = this.calculate_risk_score(findings);
+    const riskScore = this.calculateRiskScore(findings);
     const passed = highRiskCount === 0;
 
     return {
@@ -322,19 +322,19 @@ export class SecurityScanner {
     };
   }
 
-  get_finding_by_id(id: string): SecurityFinding | undefined {
+  getFindingById(id: string): SecurityFinding | undefined {
     return this.rules.find((r) => r.id === id) as unknown as SecurityFinding;
   }
 
-  list_findings(): ScanRule[] {
+  listFindings(): ScanRule[] {
     return [...this.rules];
   }
 
-  get_risk_score(findings: SecurityFinding[]): number {
-    return this.calculate_risk_score(findings);
+  getRiskScore(findings: SecurityFinding[]): number {
+    return this.calculateRiskScore(findings);
   }
 
-  private calculate_risk_score(findings: SecurityFinding[]): number {
+  private calculateRiskScore(findings: SecurityFinding[]): number {
     let score = 100;
     for (const finding of findings) {
       switch (finding.severity) {
@@ -355,7 +355,7 @@ export class SecurityScanner {
     return Math.max(0, Math.min(100, score));
   }
 
-  private find_line_number(code: string, match: string): number {
+  private findLineNumber(code: string, match: string): number {
     const idx = code.indexOf(match);
     if (idx === -1) return 1;
     return code.slice(0, idx).split('\n').length;

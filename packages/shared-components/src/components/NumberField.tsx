@@ -37,7 +37,7 @@ const formatNumber = (value: number, precision?: number): string => {
 };
 
 const parseNumber = (raw: string, precision?: number): number => {
-  const cleaned = raw.replace(/[^\d.\-]/g, '');
+  const cleaned = raw.replace(/[^\d.-]/g, '');
   const num = parseFloat(cleaned);
   if (isNaN(num)) return 0;
   if (precision !== undefined) {
@@ -108,6 +108,7 @@ export const NumberField: React.FC<NumberFieldProps> = ({
   React.useEffect(() => {
     if (!isComposingRef.current) {
       if (typeof value === 'number') {
+        // eslint-disable-next-line react-hooks/set-state-in-effect
         setDisplayValue(formatNumber(value, precision));
       } else {
         setDisplayValue(value || '');

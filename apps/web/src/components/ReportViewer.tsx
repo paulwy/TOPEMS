@@ -59,7 +59,7 @@ const ReportViewer: React.FC<ReportViewerProps> = ({ report, onClose }) => {
       style={{
         position: 'fixed',
         inset: 0,
-        backgroundColor: 'rgba(0, 0, 0, 0.5)',
+        backgroundColor: 'action.active',
         display: 'flex',
         alignItems: 'center',
         justifyContent: 'center',
@@ -69,7 +69,7 @@ const ReportViewer: React.FC<ReportViewerProps> = ({ report, onClose }) => {
     >
       <div
         style={{
-          backgroundColor: 'white',
+          backgroundColor: 'common.white',
           borderRadius: '12px',
           boxShadow: '0 20px 25px -5px rgba(0, 0, 0, 0.1)',
           width: '100%',
@@ -127,11 +127,11 @@ const ReportViewer: React.FC<ReportViewerProps> = ({ report, onClose }) => {
                 }}
               >
                 <span style={{ display: 'flex', alignItems: 'center' }}>
-                  <Rows3 sx={{ width: 16, height: 16, marginRight: '4px' }} />共 {report.row_count}{' '}
+                  <Rows3 sx={{ width: 16, height: 16, marginRight: 0.5 }} />共 {report.row_count}{' '}
                   条记录
                 </span>
                 <span style={{ display: 'flex', alignItems: 'center' }}>
-                  <Columns sx={{ width: 16, height: 16, marginRight: '4px' }} />
+                  <Columns sx={{ width: 16, height: 16, marginRight: 0.5 }} />
                   {report.config.columns.length} 列
                 </span>
               </div>
@@ -212,7 +212,7 @@ const ReportViewer: React.FC<ReportViewerProps> = ({ report, onClose }) => {
                   ))}
                 </tr>
               </thead>
-              <tbody style={{ backgroundColor: 'white' }}>
+              <tbody style={{ backgroundColor: 'common.white' }}>
                 {currentData.length === 0 ? (
                   <tr>
                     <td
@@ -225,10 +225,10 @@ const ReportViewer: React.FC<ReportViewerProps> = ({ report, onClose }) => {
                           height: 48,
                           color: 'grey.400',
                           margin: 'auto',
-                          marginBottom: '12px',
+                          marginBottom: 1.5,
                         }}
                       />
-                      <p style={{ color: '#94a3b8' }}>暂无数据</p>
+                      <p style={{ color: 'text.muted' }}>暂无数据</p>
                     </td>
                   </tr>
                 ) : (
@@ -282,7 +282,7 @@ const ReportViewer: React.FC<ReportViewerProps> = ({ report, onClose }) => {
             }}
           >
             <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-              <span style={{ fontSize: '14px', color: '#475569' }}>每页显示</span>
+              <span style={{ fontSize: '14px', color: 'grey.600' }}>每页显示</span>
               <select
                 value={pageSize}
                 onChange={(e) => {
@@ -301,11 +301,11 @@ const ReportViewer: React.FC<ReportViewerProps> = ({ report, onClose }) => {
                 <option value={50}>50</option>
                 <option value={100}>100</option>
               </select>
-              <span style={{ fontSize: '14px', color: '#475569' }}>条</span>
+              <span style={{ fontSize: '14px', color: 'grey.600' }}>条</span>
             </div>
 
             <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-              <span style={{ fontSize: '14px', color: '#475569' }}>
+              <span style={{ fontSize: '14px', color: 'grey.600' }}>
                 显示 {startIndex + 1}-{Math.min(endIndex, report.row_count)} 共 {report.row_count}
               </span>
               <button
@@ -323,7 +323,7 @@ const ReportViewer: React.FC<ReportViewerProps> = ({ report, onClose }) => {
               >
                 <ChevronLeft sx={{ width: 16, height: 16 }} />
               </button>
-              <span style={{ fontSize: '14px', color: '#475569' }}>
+              <span style={{ fontSize: '14px', color: 'grey.600' }}>
                 第 {currentPage}/{totalPages} 页
               </span>
               <button

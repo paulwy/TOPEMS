@@ -10,7 +10,7 @@ import {
   InputLabel,
 } from '@mui/material';
 import React from 'react';
-import { NotificationSettings as NotificationSettingsType } from '../types';
+import type { NotificationSettings as NotificationSettingsType } from '../types';
 
 interface NotificationSettingsProps {
   settings: NotificationSettingsType;

@@ -233,8 +233,7 @@ export class PerformanceAnalyzer {
     recommendation?: string;
   }> {
     return Array.from(this.moduleLoads.values()).map((m) => {
-      const status =
-        m.duration < 500 ? 'fast' : m.duration < 1500 ? 'normal' : 'slow';
+      const status = m.duration < 500 ? 'fast' : m.duration < 1500 ? 'normal' : 'slow';
       let recommendation: string | undefined;
       if (status === 'slow') {
         if (m.isLazy) {
@@ -249,7 +248,12 @@ export class PerformanceAnalyzer {
 
   // ==================== Render Performance Tracking ====================
 
-  recordRender(componentName: string, renderTime: number, propsChanged: string[] = [], stateChanged: string[] = []): void {
+  recordRender(
+    componentName: string,
+    renderTime: number,
+    propsChanged: string[] = [],
+    stateChanged: string[] = []
+  ): void {
     const existing = this.renderMetrics.get(componentName);
     if (existing) {
       existing.renderCount++;
@@ -293,11 +297,15 @@ export class PerformanceAnalyzer {
   private trackMemoryUsage(): void {
     const takeSnapshot = () => {
       if (typeof performance !== 'undefined' && 'memory' in performance) {
-        const memory = (performance as Performance & { memory: {
-          usedJSHeapSize: number;
-          totalJSHeapSize: number;
-          jsHeapSizeLimit: number;
-        } }).memory;
+        const memory = (
+          performance as Performance & {
+            memory: {
+              usedJSHeapSize: number;
+              totalJSHeapSize: number;
+              jsHeapSizeLimit: number;
+            };
+          }
+        ).memory;
         const snapshot: MemoryMetric = {
           usedJSHeapSize: memory.usedJSHeapSize,
           totalJSHeapSize: memory.totalJSHeapSize,
@@ -412,7 +420,12 @@ export class PerformanceAnalyzer {
       } else if (e.effectivenessScore < 50) {
         recommendation = '懒加载效果不佳，评估是否需要合并模块';
       }
-      return { moduleId: e.moduleId, wasLazy: e.wasLazy, score: e.effectivenessScore, recommendation };
+      return {
+        moduleId: e.moduleId,
+        wasLazy: e.wasLazy,
+        score: e.effectivenessScore,
+        recommendation,
+      };
     });
   }
 
@@ -437,12 +450,24 @@ export class PerformanceAnalyzer {
               const entries = list.getEntries();
               for (const entry of entries) {
                 let value = 0;
-                if (name === 'LCP') value = (entry as PerformanceEntry & { renderTime?: number; loadTime?: number; startTime: number }).startTime;
-                else if (name === 'FID') value = ((entry as PerformanceEventTiming).processingStart) - entry.startTime;
-                else if (name === 'CLS') value = (entry as PerformanceEntry & { value?: number }).value || 0;
+                if (name === 'LCP')
+                  value = (
+                    entry as PerformanceEntry & {
+                      renderTime?: number;
+                      loadTime?: number;
+                      startTime: number;
+                    }
+                  ).startTime;
+                else if (name === 'FID')
+                  value = (entry as PerformanceEventTiming).processingStart - entry.startTime;
+                else if (name === 'CLS')
+                  value = (entry as PerformanceEntry & { value?: number }).value || 0;
                 else if (name === 'INP') value = (entry as PerformanceEventTiming).duration;
                 else if (name === 'FCP') value = entry.startTime;
-                else if (name === 'TTFB') value = (entry as PerformanceNavigationTiming).responseStart - (entry as PerformanceNavigationTiming).requestStart;
+                else if (name === 'TTFB')
+                  value =
+                    (entry as PerformanceNavigationTiming).responseStart -
+                    (entry as PerformanceNavigationTiming).requestStart;
 
                 const vital: CoreWebVital = {
                   name,
@@ -518,22 +543,48 @@ export class PerformanceAnalyzer {
     }
 
     for (const [, metric] of this.moduleLoads) {
-      results.push(this.checkMetric(`load_${metric.moduleId}`, metric.duration, this.budget.maxModuleLoadTime, `模块 ${metric.moduleId} 加载时间`));
+      results.push(
+        this.checkMetric(
+          `load_${metric.moduleId}`,
+          metric.duration,
+          this.budget.maxModuleLoadTime,
+          `模块 ${metric.moduleId} 加载时间`
+        )
+      );
     }
 
     const currentMemory = this.getCurrentMemory();
     if (currentMemory) {
-      results.push(this.checkMetric('memory', currentMemory.usedJSHeapSize, this.budget.maxMemoryUsage, '内存使用'));
+      results.push(
+        this.checkMetric(
+          'memory',
+          currentMemory.usedJSHeapSize,
+          this.budget.maxMemoryUsage,
+          '内存使用'
+        )
+      );
     }
 
     for (const [, bundle] of this.bundleAnalyses) {
-      results.push(this.checkMetric(`bundle_${bundle.moduleId}`, bundle.totalSize, this.budget.maxBundleSize, `模块 ${bundle.moduleId} Bundle 大小`));
+      results.push(
+        this.checkMetric(
+          `bundle_${bundle.moduleId}`,
+          bundle.totalSize,
+          this.budget.maxBundleSize,
+          `模块 ${bundle.moduleId} Bundle 大小`
+        )
+      );
     }
 
     return results;
   }
 
-  private checkMetric(name: string, value: number, threshold: number, label: string): BudgetCheckResult {
+  private checkMetric(
+    name: string,
+    value: number,
+    threshold: number,
+    label: string
+  ): BudgetCheckResult {
     let status: BudgetCheckStatus;
     let message: string;
     const ratio = threshold > 0 ? value / threshold : 1;
@@ -612,22 +663,30 @@ export class PerformanceAnalyzer {
 
     const slowModules = this.analyzeModuleLoads().filter((m) => m.status === 'slow');
     if (slowModules.length > 0) {
-      recommendations.push(`发现 ${slowModules.length} 个慢速加载模块，考虑优化或懒加载: ${slowModules.map((m) => m.moduleId).join(', ')}`);
+      recommendations.push(
+        `发现 ${slowModules.length} 个慢速加载模块，考虑优化或懒加载: ${slowModules.map((m) => m.moduleId).join(', ')}`
+      );
     }
 
     const slowComponents = this.getSlowComponents();
     if (slowComponents.length > 0) {
-      recommendations.push(`发现 ${slowComponents.length} 个渲染性能不佳的组件，考虑 React.memo 或 useMemo 优化`);
+      recommendations.push(
+        `发现 ${slowComponents.length} 个渲染性能不佳的组件，考虑 React.memo 或 useMemo 优化`
+      );
     }
 
     const lazyIssues = this.analyzeLazyEffectiveness().filter((e) => e.recommendation);
     if (lazyIssues.length > 0) {
-      recommendations.push(`懒加载优化建议: ${lazyIssues.map((i) => `${i.moduleId}: ${i.recommendation}`).join('; ')}`);
+      recommendations.push(
+        `懒加载优化建议: ${lazyIssues.map((i) => `${i.moduleId}: ${i.recommendation}`).join('; ')}`
+      );
     }
 
     const criticalBundles = this.analyzeBundleSizes().filter((b) => b.status === 'critical');
     if (criticalBundles.length > 0) {
-      recommendations.push(`发现 ${criticalBundles.length} 个超大 Bundle，考虑进一步拆分: ${criticalBundles.map((b) => b.moduleId).join(', ')}`);
+      recommendations.push(
+        `发现 ${criticalBundles.length} 个超大 Bundle，考虑进一步拆分: ${criticalBundles.map((b) => b.moduleId).join(', ')}`
+      );
     }
 
     if (failedChecks.length > 0) {

@@ -228,7 +228,7 @@ export function AIDataCompleter({
                           sx={{
                             fontFamily: 'monospace',
                             color: 'grey.700',
-                            bgcolor: 'white',
+                            bgcolor: 'common.white',
                             px: 1,
                             py: 0.5,
                             borderRadius: 1,

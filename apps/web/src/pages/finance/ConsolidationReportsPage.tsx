@@ -51,6 +51,7 @@ import type { ConsolidationReport, ConsolidationReportType } from '@/types/conso
 import { PageContainer } from '@/components/common';
 
 import { useTranslation } from 'react-i18next';
+
 const ct = designTokens.colors;
 
 const REPORT_TYPE_CONFIG: Record<
@@ -69,7 +70,7 @@ const REPORT_TYPE_CONFIG: Record<
 };
 
 const STATUS_CONFIG: Record<string, { label: string; color: string }> = {
-  draft: { label: '草稿', color: 'grey' },
+  draft: { label: '草稿', color: 'grey.500' },
   calculating: { label: '计算中', color: 'primary' },
   completed: { label: '已完成', color: 'success' },
   published: { label: '已发布', color: 'secondary' },
@@ -212,10 +213,26 @@ export default function ConsolidationReportsPage() {
         dataKey: 'value',
         nameKey: 'name',
         data: [
-          { name: t('finance.consolidation_reports_page.text_22b433'), value: statusDistribution.draft, color: 'grey' },
-          { name: t('finance.consolidation_reports_page.text_5930ea'), value: statusDistribution.calculating, color: ct.primary.dark },
-          { name: t('finance.consolidation_reports_page.completed'), value: statusDistribution.completed, color: ct.success.main },
-          { name: t('finance.consolidation_reports_page.text_dca0c1'), value: statusDistribution.published, color: 'secondary.main' },
+          {
+            name: t('finance.consolidation_reports_page.text_22b433'),
+            value: statusDistribution.draft,
+            color: 'grey.500',
+          },
+          {
+            name: t('finance.consolidation_reports_page.text_5930ea'),
+            value: statusDistribution.calculating,
+            color: ct.primary.dark,
+          },
+          {
+            name: t('finance.consolidation_reports_page.completed'),
+            value: statusDistribution.completed,
+            color: ct.success.main,
+          },
+          {
+            name: t('finance.consolidation_reports_page.text_dca0c1'),
+            value: statusDistribution.published,
+            color: 'secondary.main',
+          },
         ].filter((d) => d.value > 0),
         height: 250,
       },
@@ -223,16 +240,57 @@ export default function ConsolidationReportsPage() {
   }, [reports]);
 
   const tableColumns: TableColumn[] = [
-    { id: 'report_no', label: t('finance.consolidation_reports_page.text_634a94'), field: 'report_no' },
-    { id: 'report_type', label: t('finance.consolidation_reports_page.type'), field: 'report_type' },
-    { id: 'scope_name', label: t('finance.consolidation_reports_page.text_2ae758'), field: 'scope_name' },
+    {
+      id: 'report_no',
+      label: t('finance.consolidation_reports_page.text_634a94'),
+      field: 'report_no',
+    },
+    {
+      id: 'report_type',
+      label: t('finance.consolidation_reports_page.type'),
+      field: 'report_type',
+    },
+    {
+      id: 'scope_name',
+      label: t('finance.consolidation_reports_page.text_2ae758'),
+      field: 'scope_name',
+    },
     { id: 'period', label: t('finance.consolidation_reports_page.text_2f4339'), field: 'period' },
-    { id: 'company_count', label: t('finance.consolidation_reports_page.text_ccb91d'), field: 'company_count' },
-    { id: 'total_assets', label: t('finance.consolidation_reports_page.text_f9dddf'), field: 'total_assets', align: 'right' },
-    { id: 'net_profit', label: t('finance.consolidation_reports_page.text_80170f'), field: 'net_profit', align: 'right' },
-    { id: 'status', label: t('finance.consolidation_reports_page.status_1'), field: 'status', align: 'center' },
-    { id: 'approval_status', label: t('finance.consolidation_reports_page.text_0273ba'), field: 'approval_status', align: 'center' },
-    { id: 'actions', label: t('finance.consolidation_reports_page.action'), field: 'actions', align: 'center' },
+    {
+      id: 'company_count',
+      label: t('finance.consolidation_reports_page.text_ccb91d'),
+      field: 'company_count',
+    },
+    {
+      id: 'total_assets',
+      label: t('finance.consolidation_reports_page.text_f9dddf'),
+      field: 'total_assets',
+      align: 'right',
+    },
+    {
+      id: 'net_profit',
+      label: t('finance.consolidation_reports_page.text_80170f'),
+      field: 'net_profit',
+      align: 'right',
+    },
+    {
+      id: 'status',
+      label: t('finance.consolidation_reports_page.status_1'),
+      field: 'status',
+      align: 'center',
+    },
+    {
+      id: 'approval_status',
+      label: t('finance.consolidation_reports_page.text_0273ba'),
+      field: 'approval_status',
+      align: 'center',
+    },
+    {
+      id: 'actions',
+      label: t('finance.consolidation_reports_page.action'),
+      field: 'actions',
+      align: 'center',
+    },
   ];
 
   const tables = useMemo<DataTable[]>(
@@ -252,7 +310,7 @@ export default function ConsolidationReportsPage() {
             : '-',
           net_profit:
             report.归属于母公司净利润 || report.net_profit
-              ? `¥${Math.abs((report.归属于母公司净利润 || report.net_profit) || 0).toLocaleString('zh-CN')}`
+              ? `¥${Math.abs(report.归属于母公司净利润 || report.net_profit || 0).toLocaleString('zh-CN')}`
               : '-',
           status: STATUS_CONFIG[report.status]?.label || report.status,
           approval_status:
@@ -686,7 +744,9 @@ export default function ConsolidationReportsPage() {
             onClick={handleGenerateReport}
             disabled={generateReport.isPending}
           >
-            {generateReport.isPending ? t('finance.consolidation_reports_page.text_4d020b') : t('finance.consolidation_reports_page.text_0b5bc4')}
+            {generateReport.isPending
+              ? t('finance.consolidation_reports_page.text_4d020b')
+              : t('finance.consolidation_reports_page.text_0b5bc4')}
           </Button>
         </DialogActions>
       </Dialog>

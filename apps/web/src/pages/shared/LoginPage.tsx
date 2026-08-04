@@ -152,7 +152,7 @@ const LoginPage: React.FC<LoginPageProps> = ({ onLogin }) => {
           right: -100,
           width: 300,
           height: 300,
-          background: 'rgba(255, 255, 255, 0.1)',
+          background: 'action.disabledBackground',
           borderRadius: '50%',
           filter: 'blur(60px)',
         }}
@@ -164,7 +164,7 @@ const LoginPage: React.FC<LoginPageProps> = ({ onLogin }) => {
           left: -100,
           width: 300,
           height: 300,
-          background: 'rgba(255, 255, 255, 0.15)',
+          background: 'action.disabledBackground',
           borderRadius: '50%',
           filter: 'blur(60px)',
         }}
@@ -187,7 +187,7 @@ const LoginPage: React.FC<LoginPageProps> = ({ onLogin }) => {
             sx={{
               width: 40,
               height: 40,
-              background: 'rgba(255, 255, 255, 0.2)',
+              background: 'action.disabledBackground',
               borderRadius: '12px',
               display: 'flex',
               alignItems: 'center',
@@ -195,11 +195,11 @@ const LoginPage: React.FC<LoginPageProps> = ({ onLogin }) => {
               backdropFilter: 'blur(10px)',
             }}
           >
-            <Shield sx={{ width: 20, height: 20, color: 'white' }} />
+            <Shield sx={{ width: 20, height: 20, color: 'common.white' }} />
           </Box>
           <Typography
             variant='h6'
-            sx={{ color: 'white', fontWeight: 600 }}
+            sx={{ color: 'common.white', fontWeight: 600 }}
           >
             TOPEMS
           </Typography>
@@ -212,7 +212,7 @@ const LoginPage: React.FC<LoginPageProps> = ({ onLogin }) => {
           width: '100%',
           maxWidth: 400,
           mx: 2,
-          background: 'rgba(255, 255, 255, 0.95)',
+          background: 'common.white',
           backdropFilter: 'blur(20px)',
           borderRadius: 3,
           boxShadow: '0 25px 50px -12px rgba(0, 0, 0, 0.25)',
@@ -231,7 +231,7 @@ const LoginPage: React.FC<LoginPageProps> = ({ onLogin }) => {
             sx={{
               width: 72,
               height: 72,
-              background: 'rgba(255, 255, 255, 0.2)',
+              background: 'action.disabledBackground',
               borderRadius: '20px',
               display: 'flex',
               alignItems: 'center',
@@ -239,17 +239,17 @@ const LoginPage: React.FC<LoginPageProps> = ({ onLogin }) => {
               margin: '0 auto 16px',
             }}
           >
-            <Fingerprint sx={{ width: 36, height: 36, color: 'white' }} />
+            <Fingerprint sx={{ width: 36, height: 36, color: 'common.white' }} />
           </Box>
           <Typography
             variant='h4'
-            sx={{ fontWeight: 700, color: 'white' }}
+            sx={{ fontWeight: 700, color: 'common.white' }}
           >
             {isRegister ? '用户注册' : '欢迎回来'}
           </Typography>
           <Typography
             variant='body2'
-            sx={{ color: 'rgba(255, 255, 255, 0.8)', mt: 1 }}
+            sx={{ color: 'common.white', mt: 1 }}
           >
             {isRegister ? '创建您的账号' : '请登录您的账号'}
           </Typography>

@@ -16,6 +16,7 @@ import { useTranslation } from 'react-i18next';
 import { Grid } from '@/components/common';
 import LineChartComponent from '@/components/charts/LineChart';
 import PieChartComponent from '@/components/charts/PieChart';
+import type { ChartData } from '@/components/charts/AreaChart';
 import { usageData, modelUsageData } from '../hooks/useAiModelSettings';
 
 interface TotalUsage {
@@ -143,7 +144,7 @@ export const AiModelUsageStats: React.FC<AiModelUsageStatsProps> = ({ totalUsage
             </Typography>
             <Box sx={{ height: 300 }}>
               <LineChartComponent
-                data={usageData as unknown as import('@/components/charts/AreaChart').ChartData[]}
+                data={usageData as unknown as ChartData[]}
                 xKey='date'
                 yKey='tokens'
               />

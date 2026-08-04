@@ -77,11 +77,7 @@ export const MobileQualityTaskList: React.FC<MobileQualityTaskListProps> = ({
                 <Chip
                   label={getStatusLabel(task.status)}
                   size='small'
-                  color={
-                    getStatusColor(task.status) as React.ComponentProps<
-                      typeof import('@mui/material/Chip').default
-                    >['color']
-                  }
+                  color={getStatusColor(task.status) as React.ComponentProps<typeof Chip>['color']}
                   sx={{ height: 20, fontSize: '0.7rem' }}
                 />
               </Box>

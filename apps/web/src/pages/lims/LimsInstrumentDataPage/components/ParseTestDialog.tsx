@@ -215,9 +215,7 @@ const ParseTestDialog: React.FC<ParseTestDialogProps> = ({
                               {parseTestResult.testitems.map((item, idx) => (
                                 <TableRow key={idx}>
                                   <TableCell>{item.testitem_name || item.testitem}</TableCell>
-                                  <TableCell>
-                                    {item.result || item.numeric_result || '-'}
-                                  </TableCell>
+                                  <TableCell>{item.result || item.numeric_result || '-'}</TableCell>
                                   <TableCell>{item.unit || '-'}</TableCell>
                                   <TableCell>
                                     <Chip

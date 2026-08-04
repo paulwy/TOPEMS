@@ -31,7 +31,7 @@ export const createPermissionInterceptor = () => {
         if (error.response?.status === 401) {
           const currentPath = window.location.pathname;
           const hasToken = !!localStorage.getItem('token');
-          
+
           apiLogger.warn(`[日志3-权限拦截器检测401] ${error.config?.url || ''}`, {
             currentPath,
             hasToken,

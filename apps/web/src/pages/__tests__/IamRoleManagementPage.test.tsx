@@ -112,16 +112,16 @@ vi.mock('@/store', () => ({
 }));
 
 describe('IamRoleManagementPage', () => {
-it('should render without crashing', () => {
+  it('should render without crashing', () => {
     const { container } = render(
       <BrowserRouter>
         <RoleManagementPage />
       </BrowserRouter>
     );
     expect(container).toBeDefined();
-});
+  });
 
-it('should have role management API methods', async () => {
+  it('should have role management API methods', async () => {
     render(
       <BrowserRouter>
         <RoleManagementPage />
@@ -134,15 +134,14 @@ it('should have role management API methods', async () => {
     expect(authApi.deleteRole).toBeDefined();
     expect(authApi.addRolePermission).toBeDefined();
     expect(authApi.removeRolePermission).toBeDefined();
-});
+  });
 
-it('should call listRoles API on mount', async () => {
+  it('should call listRoles API on mount', async () => {
     render(
       <BrowserRouter>
         <RoleManagementPage />
       </BrowserRouter>
     );
     expect(authApi.listRoles).toHaveBeenCalled();
-});
-;
+  });
 });

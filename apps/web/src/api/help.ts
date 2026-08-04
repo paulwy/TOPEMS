@@ -8,7 +8,7 @@ export interface Faq {
   answer: string;
   category: string;
   views: number;
-  is_active: boolean;
+  isActive: boolean;
   sort_order: number;
   created_at: string;
   updated_at: string;
@@ -39,7 +39,7 @@ export interface UpdateFaqRequest {
   question?: string;
   answer?: string;
   category?: string;
-  is_active?: boolean;
+  isActive?: boolean;
   sort_order?: number;
 }
 
@@ -50,7 +50,7 @@ export interface Guide {
   category: string;
   duration: string;
   lessons_count: number;
-  is_active: boolean;
+  isActive: boolean;
   sort_order: number;
   created_at: string;
   updated_at: string;
@@ -63,7 +63,7 @@ export interface GuideLesson {
   content: string;
   duration: string;
   sort_order: number;
-  is_active: boolean;
+  isActive: boolean;
   created_at: string;
 }
 

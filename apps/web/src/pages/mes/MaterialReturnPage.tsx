@@ -22,9 +22,12 @@ import { PageContainer } from '@/components/common/PageContainer';
 
 const ct = designTokens.colors;
 
-const apiAdapter = createCrudPageAdapter(mesApi.materialReturns as unknown as CrudApi<MaterialReturn>, {
-  itemsField: 'returns',
-});
+const apiAdapter = createCrudPageAdapter(
+  mesApi.materialReturns as unknown as CrudApi<MaterialReturn>,
+  {
+    itemsField: 'returns',
+  }
+);
 
 const MaterialReturnPage: React.FC = () => {
   const renderDetailContent = (row: Record<string, unknown>) => {

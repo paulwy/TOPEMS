@@ -1,16 +1,16 @@
 export enum ProtectionType {
-  PrototypePollution = 'prototype_pollution',
-  GlobalTampering = 'global_tampering',
-  DangerousApi = 'dangerous_api',
-  MemoryLeak = 'memory_leak',
-  Anomaly = 'anomaly',
+  PROTOTYPEPOLLUTION = 'prototype_pollution',
+  GLOBALTAMPERING = 'global_tampering',
+  DANGEROUSAPI = 'dangerous_api',
+  MEMORYLEAK = 'memory_leak',
+  ANOMALY = 'anomaly',
 }
 
 export enum ProtectionSeverity {
-  Critical = 'critical',
-  High = 'high',
-  Medium = 'medium',
-  Low = 'low',
+  CRITICAL = 'critical',
+  HIGH = 'high',
+  MEDIUM = 'medium',
+  LOW = 'low',
 }
 
 export interface ProtectionConfig {
@@ -61,17 +61,17 @@ export class RuntimeProtector {
     totalEvents: 0,
     blockedCount: 0,
     typeCounts: {
-      [ProtectionType.PrototypePollution]: 0,
-      [ProtectionType.GlobalTampering]: 0,
-      [ProtectionType.DangerousApi]: 0,
-      [ProtectionType.MemoryLeak]: 0,
-      [ProtectionType.Anomaly]: 0,
+      [ProtectionType.PROTOTYPEPOLLUTION]: 0,
+      [ProtectionType.GLOBALTAMPERING]: 0,
+      [ProtectionType.DANGEROUSAPI]: 0,
+      [ProtectionType.MEMORYLEAK]: 0,
+      [ProtectionType.ANOMALY]: 0,
     },
     severityCounts: {
-      [ProtectionSeverity.Critical]: 0,
-      [ProtectionSeverity.High]: 0,
-      [ProtectionSeverity.Medium]: 0,
-      [ProtectionSeverity.Low]: 0,
+      [ProtectionSeverity.CRITICAL]: 0,
+      [ProtectionSeverity.HIGH]: 0,
+      [ProtectionSeverity.MEDIUM]: 0,
+      [ProtectionSeverity.LOW]: 0,
     },
   };
   private globalSnapshot: Record<string, unknown> = {};
@@ -120,10 +120,7 @@ export class RuntimeProtector {
     }
   }
 
-  getEvents(filters?: {
-    type?: ProtectionType;
-    severity?: ProtectionSeverity;
-  }): ProtectionEvent[] {
+  getEvents(filters?: { type?: ProtectionType; severity?: ProtectionSeverity }): ProtectionEvent[] {
     let filtered = [...this.events];
 
     if (filters?.type) {
@@ -163,8 +160,8 @@ export class RuntimeProtector {
         Object.defineProperty(proto, prop, {
           set: (value) => {
             this.addEvent({
-              type: ProtectionType.PrototypePollution,
-              severity: ProtectionSeverity.Critical,
+              type: ProtectionType.PROTOTYPEPOLLUTION,
+              severity: ProtectionSeverity.CRITICAL,
               target: `Object.prototype.${prop}`,
               details: `检测到原型污染尝试，尝试设置 ${prop} 属性为 ${typeof value}`,
             });
@@ -175,7 +172,7 @@ export class RuntimeProtector {
             if (prop === '__proto__') {
               return Object.getPrototypeOf(this);
             }
-            return undefined;
+            return;
           },
           configurable: false,
         });
@@ -198,15 +195,15 @@ export class RuntimeProtector {
         const propStr = String(prop);
         if (!(prop in this.globalSnapshot)) {
           this.addEvent({
-            type: ProtectionType.GlobalTampering,
-            severity: ProtectionSeverity.Medium,
+            type: ProtectionType.GLOBALTAMPERING,
+            severity: ProtectionSeverity.MEDIUM,
             target: `window.${propStr}`,
             details: `检测到全局变量新增：${propStr}`,
           });
         } else if (this.globalSnapshot[propStr] !== value) {
           this.addEvent({
-            type: ProtectionType.GlobalTampering,
-            severity: ProtectionSeverity.High,
+            type: ProtectionType.GLOBALTAMPERING,
+            severity: ProtectionSeverity.HIGH,
             target: `window.${propStr}`,
             details: `检测到全局变量修改：${propStr}`,
           });
@@ -216,8 +213,8 @@ export class RuntimeProtector {
       deleteProperty: (target, prop) => {
         const propStr = String(prop);
         this.addEvent({
-          type: ProtectionType.GlobalTampering,
-          severity: ProtectionSeverity.High,
+          type: ProtectionType.GLOBALTAMPERING,
+          severity: ProtectionSeverity.HIGH,
           target: `window.${propStr}`,
           details: `检测到全局变量删除：${propStr}`,
         });
@@ -240,10 +237,10 @@ export class RuntimeProtector {
       severity: ProtectionSeverity;
       target: string;
     }> = [
-      { name: 'eval', severity: ProtectionSeverity.Critical, target: 'eval' },
-      { name: 'Function', severity: ProtectionSeverity.Critical, target: 'Function' },
-      { name: 'setTimeout', severity: ProtectionSeverity.Low, target: 'setTimeout' },
-      { name: 'setInterval', severity: ProtectionSeverity.Low, target: 'setInterval' },
+      { name: 'eval', severity: ProtectionSeverity.CRITICAL, target: 'eval' },
+      { name: 'Function', severity: ProtectionSeverity.CRITICAL, target: 'Function' },
+      { name: 'setTimeout', severity: ProtectionSeverity.LOW, target: 'setTimeout' },
+      { name: 'setInterval', severity: ProtectionSeverity.LOW, target: 'setInterval' },
     ];
 
     dangerousApis.forEach(({ name, severity, target }) => {
@@ -254,7 +251,7 @@ export class RuntimeProtector {
         const protector = this;
         const intercepted = function (this: unknown, ...args: unknown[]) {
           protector.addEvent({
-            type: ProtectionType.DangerousApi,
+            type: ProtectionType.DANGEROUSAPI,
             severity,
             target,
             details: `调用了危险 API: ${name}`,
@@ -286,10 +283,10 @@ export class RuntimeProtector {
         const protector = this;
 
         Object.defineProperty(Element.prototype, 'innerHTML', {
-          set: function (this: Element, value: string) {
+          set(this: Element, value: string) {
             protector.addEvent({
-              type: ProtectionType.DangerousApi,
-              severity: ProtectionSeverity.High,
+              type: ProtectionType.DANGEROUSAPI,
+              severity: ProtectionSeverity.HIGH,
               target: 'Element.innerHTML',
               details: '使用 innerHTML 设置 HTML 内容',
             });
@@ -353,7 +350,7 @@ export class RuntimeProtector {
       const sandboxConsole = {
         log: (...args: unknown[]) => {
           if (sandbox.allowedApis.includes('console.log')) {
-            console.log('[Sandbox]', ...args);
+            console.info('[Sandbox]', ...args);
           }
         },
         warn: (...args: unknown[]) => {
@@ -373,14 +370,17 @@ export class RuntimeProtector {
         console: sandboxConsole,
       };
 
-      const fn = new Function(...Object.keys(sandboxGlobals), `
+      const fn = new Function(
+        ...Object.keys(sandboxGlobals),
+        `
         "use strict";
         return eval(arguments[0]);
-      `);
+      `
+      );
 
       this.addEvent({
-        type: ProtectionType.Anomaly,
-        severity: ProtectionSeverity.Medium,
+        type: ProtectionType.ANOMALY,
+        severity: ProtectionSeverity.MEDIUM,
         target: 'Sandbox.execution',
         details: '在沙箱中执行代码',
       });
@@ -388,8 +388,8 @@ export class RuntimeProtector {
       return fn(...Object.values(sandboxGlobals), code);
     } catch (error) {
       this.addEvent({
-        type: ProtectionType.DangerousApi,
-        severity: ProtectionSeverity.High,
+        type: ProtectionType.DANGEROUSAPI,
+        severity: ProtectionSeverity.HIGH,
         target: 'Sandbox.execution',
         details: `沙箱执行出错: ${error instanceof Error ? error.message : String(error)}`,
       });
@@ -405,11 +405,15 @@ export class RuntimeProtector {
     let detected = false;
 
     if (typeof performance !== 'undefined' && 'memory' in performance) {
-      const mem = (performance as Performance & { memory?: {
-        usedJSHeapSize: number;
-        totalJSHeapSize: number;
-        jsHeapSizeLimit: number;
-      } }).memory;
+      const mem = (
+        performance as Performance & {
+          memory?: {
+            usedJSHeapSize: number;
+            totalJSHeapSize: number;
+            jsHeapSizeLimit: number;
+          };
+        }
+      ).memory;
 
       if (mem) {
         const usagePercent = (mem.usedJSHeapSize / mem.jsHeapSizeLimit) * 100;
@@ -418,8 +422,8 @@ export class RuntimeProtector {
           details.push(`内存使用率过高: ${usagePercent.toFixed(1)}%`);
 
           this.addEvent({
-            type: ProtectionType.MemoryLeak,
-            severity: usagePercent > 90 ? ProtectionSeverity.Critical : ProtectionSeverity.High,
+            type: ProtectionType.MEMORYLEAK,
+            severity: usagePercent > 90 ? ProtectionSeverity.CRITICAL : ProtectionSeverity.HIGH,
             target: 'memory.heap',
             details: `内存使用率达 ${usagePercent.toFixed(1)}%，可能存在内存泄漏`,
           });
@@ -427,11 +431,13 @@ export class RuntimeProtector {
       }
     }
 
-    if (typeof window !== 'undefined') {
-      if (window.eventListeners && window.eventListeners.length > 1000) {
-        detected = true;
-        details.push(`事件监听器数量过多: ${window.eventListeners.length}`);
-      }
+    if (
+      typeof window !== 'undefined' &&
+      window.eventListeners &&
+      window.eventListeners.length > 1000
+    ) {
+      detected = true;
+      details.push(`事件监听器数量过多: ${window.eventListeners.length}`);
     }
 
     return { detected, details };
@@ -451,17 +457,17 @@ export class RuntimeProtector {
       totalEvents: 0,
       blockedCount: 0,
       typeCounts: {
-        [ProtectionType.PrototypePollution]: 0,
-        [ProtectionType.GlobalTampering]: 0,
-        [ProtectionType.DangerousApi]: 0,
-        [ProtectionType.MemoryLeak]: 0,
-        [ProtectionType.Anomaly]: 0,
+        [ProtectionType.PROTOTYPEPOLLUTION]: 0,
+        [ProtectionType.GLOBALTAMPERING]: 0,
+        [ProtectionType.DANGEROUSAPI]: 0,
+        [ProtectionType.MEMORYLEAK]: 0,
+        [ProtectionType.ANOMALY]: 0,
       },
       severityCounts: {
-        [ProtectionSeverity.Critical]: 0,
-        [ProtectionSeverity.High]: 0,
-        [ProtectionSeverity.Medium]: 0,
-        [ProtectionSeverity.Low]: 0,
+        [ProtectionSeverity.CRITICAL]: 0,
+        [ProtectionSeverity.HIGH]: 0,
+        [ProtectionSeverity.MEDIUM]: 0,
+        [ProtectionSeverity.LOW]: 0,
       },
     };
   }

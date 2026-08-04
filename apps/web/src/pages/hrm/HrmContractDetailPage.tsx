@@ -31,6 +31,7 @@ import { PageContainer } from '@/components/common';
 import { designTokens } from '@/theme/tokens';
 
 import { useTranslation } from 'react-i18next';
+
 const ct = designTokens.colors;
 
 const HrmContractDetailPage: React.FC = () => {
@@ -92,12 +93,36 @@ const HrmContractDetailPage: React.FC = () => {
         icon: React.ReactElement;
       }
     > = {
-      draft: { color: 'default', label: t('hrm.hrm_contract_detail_page.text_22b433'), icon: <FileText size={14} /> },
-      pending: { color: 'warning', label: t('hrm.hrm_contract_detail_page.text_b0bf01'), icon: <Clock size={14} /> },
-      approved: { color: 'success', label: t('hrm.hrm_contract_detail_page.text_618acb'), icon: <CheckCircle2 size={14} /> },
-      active: { color: 'success', label: t('hrm.hrm_contract_detail_page.text_c062e3'), icon: <CheckCircle2 size={14} /> },
-      expired: { color: 'error', label: t('hrm.hrm_contract_detail_page.text_e5b59f'), icon: <AlertCircle size={14} /> },
-      terminated: { color: 'error', label: t('hrm.hrm_contract_detail_page.text_255412'), icon: <AlertCircle size={14} /> },
+      draft: {
+        color: 'default',
+        label: t('hrm.hrm_contract_detail_page.text_22b433'),
+        icon: <FileText size={14} />,
+      },
+      pending: {
+        color: 'warning',
+        label: t('hrm.hrm_contract_detail_page.text_b0bf01'),
+        icon: <Clock size={14} />,
+      },
+      approved: {
+        color: 'success',
+        label: t('hrm.hrm_contract_detail_page.text_618acb'),
+        icon: <CheckCircle2 size={14} />,
+      },
+      active: {
+        color: 'success',
+        label: t('hrm.hrm_contract_detail_page.text_c062e3'),
+        icon: <CheckCircle2 size={14} />,
+      },
+      expired: {
+        color: 'error',
+        label: t('hrm.hrm_contract_detail_page.text_e5b59f'),
+        icon: <AlertCircle size={14} />,
+      },
+      terminated: {
+        color: 'error',
+        label: t('hrm.hrm_contract_detail_page.text_255412'),
+        icon: <AlertCircle size={14} />,
+      },
     };
     return config[status] || config.draft;
   };
@@ -235,7 +260,7 @@ const HrmContractDetailPage: React.FC = () => {
           <Box>
             <InputLabel sx={{ fontSize: 12, color: 'text.secondary' }}>合同编号</InputLabel>
             <Typography sx={{ mt: 0.5, fontFamily: 'monospace' }}>
-              {contract.contract_no || '-'}
+              {contract.contractNo || '-'}
             </Typography>
           </Box>
           <Box>
@@ -324,9 +349,21 @@ const HrmContractDetailPage: React.FC = () => {
 
   const tabs = useMemo<TabConfig[]>(
     () => [
-      { id: 'basic', label: t('hrm.hrm_contract_detail_page.info'), content: basicInfoContent || <></> },
-      { id: 'duration', label: t('hrm.hrm_contract_detail_page.info_1'), content: durationContent || <></> },
-      { id: 'salary', label: t('hrm.hrm_contract_detail_page.info_2'), content: salaryContent || <></> },
+      {
+        id: 'basic',
+        label: t('hrm.hrm_contract_detail_page.info'),
+        content: basicInfoContent || <></>,
+      },
+      {
+        id: 'duration',
+        label: t('hrm.hrm_contract_detail_page.info_1'),
+        content: durationContent || <></>,
+      },
+      {
+        id: 'salary',
+        label: t('hrm.hrm_contract_detail_page.info_2'),
+        content: salaryContent || <></>,
+      },
     ],
     [basicInfoContent, durationContent, salaryContent]
   );
@@ -340,11 +377,17 @@ const HrmContractDetailPage: React.FC = () => {
         />
       ),
       title: contract?.contract_name,
-      subtitle: contract?.contract_no || undefined,
+      subtitle: contract?.contractNo || undefined,
       tags: [getContractTypeLabel(contract?.contract_type || '')],
       stats: [
-        { label: t('hrm.hrm_contract_detail_page.text_2ed392'), value: contract?.employee_name || '-' },
-        { label: t('hrm.hrm_contract_detail_page.status'), value: getStatusConfig(contract?.status || '').label },
+        {
+          label: t('hrm.hrm_contract_detail_page.text_2ed392'),
+          value: contract?.employee_name || '-',
+        },
+        {
+          label: t('hrm.hrm_contract_detail_page.status'),
+          value: getStatusConfig(contract?.status || '').label,
+        },
       ],
     }),
     [contract]
@@ -389,7 +432,7 @@ const HrmContractDetailPage: React.FC = () => {
               variant='body2'
               color='text.secondary'
             >
-              当前合同：{contract?.contract_no}
+              当前合同：{contract?.contractNo}
             </Typography>
             <Typography
               variant='body2'

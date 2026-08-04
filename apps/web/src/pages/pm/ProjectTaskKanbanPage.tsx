@@ -11,7 +11,7 @@ const initialColumns: KanbanColumn[] = [
     id: 'backlog',
     title: '待办',
     status: 'backlog',
-    color: '#94A3B8',
+    color: 'text.muted',
     cards: [
       {
         id: 'card-1',
@@ -20,7 +20,7 @@ const initialColumns: KanbanColumn[] = [
         priority: 'high',
         assignee: { id: '1', name: '张三' },
         dueDate: '2026-03-20',
-        tags: [{ label: '文档', color: 'blue' }],
+        tags: [{ label: '文档', color: 'primary.main' }],
         subtasks: { total: 5, completed: 3 },
         comments: 2,
       },
@@ -31,7 +31,7 @@ const initialColumns: KanbanColumn[] = [
         priority: 'medium',
         assignee: { id: '2', name: '李四' },
         dueDate: '2026-03-22',
-        tags: [{ label: '设计', color: 'purple' }],
+        tags: [{ label: '设计', color: 'secondary.main' }],
       },
     ],
   },
@@ -39,7 +39,7 @@ const initialColumns: KanbanColumn[] = [
     id: 'in-progress',
     title: '进行中',
     status: 'in-progress',
-    color: '#3B82F6',
+    color: 'primary.500',
     cards: [
       {
         id: 'card-3',
@@ -48,7 +48,7 @@ const initialColumns: KanbanColumn[] = [
         priority: 'high',
         assignee: { id: '3', name: '王五' },
         dueDate: '2026-03-18',
-        tags: [{ label: '开发', color: 'green' }],
+        tags: [{ label: '开发', color: 'success.main' }],
         subtasks: { total: 8, completed: 5 },
         comments: 5,
         attachments: 3,
@@ -59,7 +59,7 @@ const initialColumns: KanbanColumn[] = [
     id: 'review',
     title: '待评审',
     status: 'review',
-    color: '#F59E0B',
+    color: 'warning.500',
     cards: [
       {
         id: 'card-4',
@@ -68,7 +68,7 @@ const initialColumns: KanbanColumn[] = [
         priority: 'medium',
         assignee: { id: '4', name: '赵六' },
         dueDate: '2026-03-19',
-        tags: [{ label: '文档', color: 'blue' }],
+        tags: [{ label: '文档', color: 'primary.main' }],
       },
     ],
   },
@@ -76,7 +76,7 @@ const initialColumns: KanbanColumn[] = [
     id: 'completed',
     title: '已完成',
     status: 'completed',
-    color: '#22C55E',
+    color: 'success.500',
     collapsible: true,
     cards: [
       {

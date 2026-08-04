@@ -105,7 +105,10 @@ export class ModuleRegistry {
 
     if (!moduleConfig.entryUrl) {
       errors.push('模块入口 URL 不能为空');
-    } else if (!/^https?:\/\//.test(moduleConfig.entryUrl) && !moduleConfig.entryUrl.startsWith('/')) {
+    } else if (
+      !/^https?:\/\//.test(moduleConfig.entryUrl) &&
+      !moduleConfig.entryUrl.startsWith('/')
+    ) {
       errors.push('模块入口 URL 格式不合法');
     }
 
@@ -127,7 +130,13 @@ export class ModuleRegistry {
     };
   }
 
-  registerModule(moduleConfig: Omit<ModuleRegistration, 'createdAt' | 'updatedAt' | 'metadata' | 'dependencies' | 'exposes' | 'remotes'> & Partial<ModuleRegistration>): ModuleRegistration {
+  registerModule(
+    moduleConfig: Omit<
+      ModuleRegistration,
+      'createdAt' | 'updatedAt' | 'metadata' | 'dependencies' | 'exposes' | 'remotes'
+    > &
+      Partial<ModuleRegistration>
+  ): ModuleRegistration {
     const existing = this.modules.get(moduleConfig.id);
     if (existing) {
       throw new Error(`模块 ${moduleConfig.id} 已存在，请使用 updateModuleMetadata 更新`);
@@ -200,7 +209,10 @@ export class ModuleRegistry {
     return result.sort((a, b) => b.updatedAt - a.updatedAt);
   }
 
-  updateModuleMetadata(moduleId: string, metadata: Partial<ModuleRegistration>): ModuleRegistration | undefined {
+  updateModuleMetadata(
+    moduleId: string,
+    metadata: Partial<ModuleRegistration>
+  ): ModuleRegistration | undefined {
     const module = this.modules.get(moduleId);
     if (!module) return undefined;
 
@@ -229,9 +241,7 @@ export class ModuleRegistry {
   }
 
   getModuleDependents(moduleId: string): ModuleRegistration[] {
-    return Array.from(this.modules.values()).filter((m) =>
-      m.dependencies.includes(moduleId)
-    );
+    return Array.from(this.modules.values()).filter((m) => m.dependencies.includes(moduleId));
   }
 
   checkCircularDependencies(): { hasCircular: boolean; cycles: string[][] } {

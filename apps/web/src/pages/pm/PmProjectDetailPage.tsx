@@ -645,7 +645,9 @@ const PmProjectDetailPage: React.FC = () => {
                 borderColor: 'grey.100',
               }}
             >
-              <Typography sx={{ color: 'grey.500' }}>{t('pm.project_detail.project_budget')}</Typography>
+              <Typography sx={{ color: 'grey.500' }}>
+                {t('pm.project_detail.project_budget')}
+              </Typography>
               <Typography sx={{ fontWeight: 500, color: 'grey.900' }}>
                 {formatCurrency(project.budget)}
               </Typography>
@@ -660,7 +662,9 @@ const PmProjectDetailPage: React.FC = () => {
                 borderColor: 'grey.100',
               }}
             >
-              <Typography sx={{ color: 'grey.500' }}>{t('pm.project_detail.actual_cost')}</Typography>
+              <Typography sx={{ color: 'grey.500' }}>
+                {t('pm.project_detail.actual_cost')}
+              </Typography>
               <Typography sx={{ fontWeight: 500, color: 'warning.dark' }}>
                 {formatCurrency(project.actual_cost)}
               </Typography>
@@ -675,7 +679,9 @@ const PmProjectDetailPage: React.FC = () => {
                 borderColor: 'grey.100',
               }}
             >
-              <Typography sx={{ color: 'grey.500' }}>{t('pm.project_detail.committed_cost')}</Typography>
+              <Typography sx={{ color: 'grey.500' }}>
+                {t('pm.project_detail.committed_cost')}
+              </Typography>
               <Typography sx={{ fontWeight: 500, color: 'primary.dark' }}>
                 {formatCurrency(project.committed_cost)}
               </Typography>
@@ -690,7 +696,9 @@ const PmProjectDetailPage: React.FC = () => {
                 borderColor: 'grey.100',
               }}
             >
-              <Typography sx={{ color: 'grey.500' }}>{t('pm.project_detail.remaining_budget')}</Typography>
+              <Typography sx={{ color: 'grey.500' }}>
+                {t('pm.project_detail.remaining_budget')}
+              </Typography>
               <Typography sx={{ fontWeight: 500, color: 'success.dark' }}>
                 {formatCurrency(project.remaining_budget)}
               </Typography>
@@ -705,7 +713,9 @@ const PmProjectDetailPage: React.FC = () => {
                 borderColor: 'grey.100',
               }}
             >
-              <Typography sx={{ color: 'grey.500' }}>{t('pm.project_detail.cost_variance')}</Typography>
+              <Typography sx={{ color: 'grey.500' }}>
+                {t('pm.project_detail.cost_variance')}
+              </Typography>
               <Typography
                 sx={{
                   fontWeight: 500,
@@ -723,7 +733,9 @@ const PmProjectDetailPage: React.FC = () => {
                 py: 1,
               }}
             >
-              <Typography sx={{ color: 'grey.500' }}>{t('pm.project_detail.budget_utilization_rate')}</Typography>
+              <Typography sx={{ color: 'grey.500' }}>
+                {t('pm.project_detail.budget_utilization_rate')}
+              </Typography>
               <Typography sx={{ fontWeight: 500, color: 'grey.900' }}>
                 {project.budget_utilization_rate?.toFixed(1) || '0'}%
               </Typography>
@@ -751,7 +763,9 @@ const PmProjectDetailPage: React.FC = () => {
                 borderColor: 'grey.100',
               }}
             >
-              <Typography sx={{ color: 'grey.500' }}>{t('pm.project_detail.recognized_revenue')}</Typography>
+              <Typography sx={{ color: 'grey.500' }}>
+                {t('pm.project_detail.recognized_revenue')}
+              </Typography>
               <Typography sx={{ fontWeight: 500, color: 'grey.900' }}>
                 {formatCurrency(project.revenue_recognized)}
               </Typography>
@@ -766,7 +780,9 @@ const PmProjectDetailPage: React.FC = () => {
                 borderColor: 'grey.100',
               }}
             >
-              <Typography sx={{ color: 'grey.500' }}>{t('pm.project_detail.accounts_receivable')}</Typography>
+              <Typography sx={{ color: 'grey.500' }}>
+                {t('pm.project_detail.accounts_receivable')}
+              </Typography>
               <Typography sx={{ fontWeight: 500, color: 'warning.dark' }}>
                 {formatCurrency(project.accounts_receivable)}
               </Typography>
@@ -781,7 +797,9 @@ const PmProjectDetailPage: React.FC = () => {
                 borderColor: 'grey.100',
               }}
             >
-              <Typography sx={{ color: 'grey.500' }}>{t('pm.project_detail.invoiced_amount')}</Typography>
+              <Typography sx={{ color: 'grey.500' }}>
+                {t('pm.project_detail.invoiced_amount')}
+              </Typography>
               <Typography sx={{ fontWeight: 500, color: 'primary.dark' }}>
                 {formatCurrency(
                   (project.revenue_recognized || 0) - (project.accounts_receivable || 0)
@@ -798,7 +816,9 @@ const PmProjectDetailPage: React.FC = () => {
                 borderColor: 'grey.100',
               }}
             >
-              <Typography sx={{ color: 'grey.500' }}>{t('pm.project_detail.gross_profit')}</Typography>
+              <Typography sx={{ color: 'grey.500' }}>
+                {t('pm.project_detail.gross_profit')}
+              </Typography>
               <Typography sx={{ fontWeight: 500, color: 'success.dark' }}>
                 {formatCurrency(project.gross_profit)}
               </Typography>
@@ -811,7 +831,9 @@ const PmProjectDetailPage: React.FC = () => {
                 py: 1,
               }}
             >
-              <Typography sx={{ color: 'grey.500' }}>{t('pm.project_detail.gross_margin')}</Typography>
+              <Typography sx={{ color: 'grey.500' }}>
+                {t('pm.project_detail.gross_margin')}
+              </Typography>
               <Typography sx={{ fontWeight: 500, color: 'grey.900' }}>
                 {project.gross_margin?.toFixed(1) || '0'}%
               </Typography>
@@ -943,7 +965,9 @@ const PmProjectDetailPage: React.FC = () => {
                 borderColor: 'grey.100',
               }}
             >
-              <Typography sx={{ color: 'grey.500' }}>{t('pm.project_detail.cost_center_id')}</Typography>
+              <Typography sx={{ color: 'grey.500' }}>
+                {t('pm.project_detail.cost_center_id')}
+              </Typography>
               <Typography sx={{ fontWeight: 500, color: 'grey.900' }}>
                 {project.cost_center_id || '-'}
               </Typography>
@@ -958,7 +982,9 @@ const PmProjectDetailPage: React.FC = () => {
                 borderColor: 'grey.100',
               }}
             >
-              <Typography sx={{ color: 'grey.500' }}>{t('pm.project_detail.cost_center_name')}</Typography>
+              <Typography sx={{ color: 'grey.500' }}>
+                {t('pm.project_detail.cost_center_name')}
+              </Typography>
               <Typography sx={{ fontWeight: 500, color: 'grey.900' }}>
                 {project.cost_center_name || '-'}
               </Typography>
@@ -971,7 +997,9 @@ const PmProjectDetailPage: React.FC = () => {
                 py: 1,
               }}
             >
-              <Typography sx={{ color: 'grey.500' }}>{t('pm.project_detail.execution_status')}</Typography>
+              <Typography sx={{ color: 'grey.500' }}>
+                {t('pm.project_detail.execution_status')}
+              </Typography>
               <StatusBadge
                 status={
                   project.budget_utilization_rate && project.budget_utilization_rate > 100
@@ -1130,15 +1158,33 @@ const PmProjectDetailPage: React.FC = () => {
     return {
       title: project.name,
       subtitle: project.code,
-      tags: [STATUS_LABELS[statusKey], RISK_LABELS[project.risklevel || ''] || t('pm.project_detail.not_evaluated')],
+      tags: [
+        STATUS_LABELS[statusKey],
+        RISK_LABELS[project.risklevel || ''] || t('pm.project_detail.not_evaluated'),
+      ],
       stats: [
         { label: t('pm.project_detail.project_progress'), value: `${project.progress}%` },
-        { label: t('pm.project_detail.phase_completion'), value: `${completedPhases}/${phases.length}` },
+        {
+          label: t('pm.project_detail.phase_completion'),
+          value: `${completedPhases}/${phases.length}`,
+        },
         { label: t('pm.project_detail.project_budget'), value: formatCurrency(project.budget) },
-        { label: t('pm.project_detail.milestone'), value: `${completedMilestones}/${milestones.length}` },
+        {
+          label: t('pm.project_detail.milestone'),
+          value: `${completedMilestones}/${milestones.length}`,
+        },
       ],
     };
-  }, [project, phases, milestones, completedPhases, completedMilestones, t, STATUS_LABELS, RISK_LABELS]);
+  }, [
+    project,
+    phases,
+    milestones,
+    completedPhases,
+    completedMilestones,
+    t,
+    STATUS_LABELS,
+    RISK_LABELS,
+  ]);
 
   const handleRefresh = () => {
     queryClient.invalidateQueries({ queryKey: QUERY_KEYS.PM.PROJECT(id || '') });

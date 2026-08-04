@@ -100,14 +100,14 @@ export const V59SecurityPanel: React.FC<{ onClose: () => void }> = ({ onClose })
   const [activeTab, setActiveTab] = useState<PanelTab>('audit');
 
   const [audits, setAudits] = useState<AuditResult[]>([]);
-  const [auditSummary, setAuditSummary] = useState(() => aiSecurityAuditor.get_audit_summary());
+  const [auditSummary, setAuditSummary] = useState(() => aiSecurityAuditor.getAuditSummary());
   const [selectedAudit, setSelectedAudit] = useState<AuditResult | null>(null);
   const [auditSeverity, setAuditSeverity] = useState<AuditSeverity>('low');
 
   const [tests, setTests] = useState<RobustnessTest[]>([]);
   const [attackVectors, setAttackVectors] = useState<AttackVector[]>([]);
   const [defenseStatus, setDefenseStatus] = useState(() =>
-    adversarialRobustness.get_defense_status()
+    adversarialRobustness.getDefenseStatus()
   );
   const [selectedVector, setSelectedVector] = useState<AttackVector | null>(null);
 
@@ -115,33 +115,33 @@ export const V59SecurityPanel: React.FC<{ onClose: () => void }> = ({ onClose })
   const [privacyReport, setPrivacyReport] = useState<PrivacyReport | null>(null);
   const [selectedConfig, setSelectedConfig] = useState<PrivacyConfig | null>(null);
   const [leakageRisk, setLeakageRisk] = useState(() =>
-    privacyEnhancer.get_data_leakage_risk('config-default')
+    privacyEnhancer.getDataLeakageRisk('config-default')
   );
 
   const [isRunning, setIsRunning] = useState(false);
 
   const loadAudits = useCallback(() => {
-    setAudits(aiSecurityAuditor.list_audits(10));
-    setAuditSummary(aiSecurityAuditor.get_audit_summary());
+    setAudits(aiSecurityAuditor.listAudits(10));
+    setAuditSummary(aiSecurityAuditor.getAuditSummary());
   }, []);
 
   const loadRobustness = useCallback(() => {
-    setTests(adversarialRobustness.list_tests(SAMPLE_MODEL_ID, 10));
-    setAttackVectors(adversarialRobustness.get_attack_vectors());
-    setDefenseStatus(adversarialRobustness.get_defense_status());
+    setTests(adversarialRobustness.listTests(SAMPLE_MODEL_ID, 10));
+    setAttackVectors(adversarialRobustness.getAttackVectors());
+    setDefenseStatus(adversarialRobustness.getDefenseStatus());
   }, []);
 
   const loadPrivacy = useCallback(() => {
-    setPrivacyConfigs(privacyEnhancer.list_configs());
-    const report = privacyEnhancer.get_privacy_report('config-default');
-    setPrivacyReport(report ?? privacyEnhancer.assess_privacy(SAMPLE_MODEL_ID, 'config-default'));
-    setLeakageRisk(privacyEnhancer.get_data_leakage_risk('config-default'));
+    setPrivacyConfigs(privacyEnhancer.listConfigs());
+    const report = privacyEnhancer.getPrivacyReport('config-default');
+    setPrivacyReport(report ?? privacyEnhancer.assessPrivacy(SAMPLE_MODEL_ID, 'config-default'));
+    setLeakageRisk(privacyEnhancer.getDataLeakageRisk('config-default'));
   }, []);
 
   const runSecurityAudit = useCallback(() => {
     setIsRunning(true);
     setTimeout(() => {
-      const result = aiSecurityAuditor.run_audit(SAMPLE_MODEL_ID, { severity: auditSeverity });
+      const result = aiSecurityAuditor.runAudit(SAMPLE_MODEL_ID, { severity: auditSeverity });
       setSelectedAudit(result);
       loadAudits();
       setIsRunning(false);
@@ -151,9 +151,9 @@ export const V59SecurityPanel: React.FC<{ onClose: () => void }> = ({ onClose })
   const runRobustnessTest = useCallback((vector: AttackVector) => {
     setIsRunning(true);
     setTimeout(() => {
-      const test = adversarialRobustness.run_test(SAMPLE_MODEL_ID, vector.id);
+      const test = adversarialRobustness.runTest(SAMPLE_MODEL_ID, vector.id);
       setTests((prev) => [test, ...prev]);
-      setDefenseStatus(adversarialRobustness.get_defense_status());
+      setDefenseStatus(adversarialRobustness.getDefenseStatus());
       setIsRunning(false);
     }, 300);
   }, []);
@@ -161,9 +161,9 @@ export const V59SecurityPanel: React.FC<{ onClose: () => void }> = ({ onClose })
   const runPrivacyTest = useCallback(() => {
     setIsRunning(true);
     setTimeout(() => {
-      const report = privacyEnhancer.assess_privacy(SAMPLE_MODEL_ID, 'config-default');
+      const report = privacyEnhancer.assessPrivacy(SAMPLE_MODEL_ID, 'config-default');
       setPrivacyReport(report);
-      setLeakageRisk(privacyEnhancer.get_data_leakage_risk('config-default'));
+      setLeakageRisk(privacyEnhancer.getDataLeakageRisk('config-default'));
       loadPrivacy();
       setIsRunning(false);
     }, 300);
@@ -183,7 +183,7 @@ export const V59SecurityPanel: React.FC<{ onClose: () => void }> = ({ onClose })
         left: 0,
         right: 0,
         bottom: 0,
-        bgcolor: 'rgba(0,0,0,0.5)',
+        bgcolor: 'action.active',
         zIndex: 10000,
         display: 'flex',
         alignItems: 'center',
@@ -213,7 +213,7 @@ export const V59SecurityPanel: React.FC<{ onClose: () => void }> = ({ onClose })
             justifyContent: 'space-between',
             background: 'linear-gradient(135deg, #dc2626, #ea580c, #d97706)',
             bgcolor: 'linear-gradient(135deg, #dc2626, #ea580c, #d97706)',
-            color: 'white',
+            color: 'common.white',
           }}
         >
           <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5 }}>
@@ -229,7 +229,7 @@ export const V59SecurityPanel: React.FC<{ onClose: () => void }> = ({ onClose })
             <Button
               size='small'
               variant='outlined'
-              sx={{ borderColor: 'rgba(255,255,255,0.5)', color: 'white' }}
+              sx={{ borderColor: 'common.white', color: 'common.white' }}
               onClick={() => {
                 loadAudits();
                 loadRobustness();
@@ -245,7 +245,7 @@ export const V59SecurityPanel: React.FC<{ onClose: () => void }> = ({ onClose })
             <IconButton
               size='small'
               onClick={onClose}
-              sx={{ color: 'white' }}
+              sx={{ color: 'common.white' }}
             >
               <XIcon size={20} />
             </IconButton>
@@ -339,7 +339,7 @@ export const V59SecurityPanel: React.FC<{ onClose: () => void }> = ({ onClose })
 
 const AuditTab: React.FC<{
   audits: AuditResult[];
-  summary: ReturnType<typeof aiSecurityAuditor.get_audit_summary>;
+  summary: ReturnType<typeof aiSecurityAuditor.getAuditSummary>;
   selectedAudit: AuditResult | null;
   onSelect: (audit: AuditResult) => void;
   severity: AuditSeverity;
@@ -414,7 +414,7 @@ const AuditTab: React.FC<{
               size='small'
               onClick={onRun}
               disabled={isRunning}
-              sx={{ bgcolor: '#dc2626', '&:hover': { bgcolor: '#b91c1c' } }}
+              sx={{ bgcolor: 'error.600', '&:hover': { bgcolor: 'error.700' } }}
             >
               <Play
                 size={14}
@@ -561,7 +561,7 @@ const AuditTab: React.FC<{
                           sx={{
                             height: 20,
                             bgcolor: SEVERITY_COLORS[finding.severity],
-                            color: 'white',
+                            color: 'common.white',
                           }}
                         />
                         <Chip
@@ -665,7 +665,7 @@ const AuditTab: React.FC<{
                 按类型分布
               </Typography>
             </Stack>
-            {Object.entries(summary.by_type).map(([type, count]) => (
+            {Object.entries(summary.byType).map(([type, count]) => (
               <Box
                 key={type}
                 sx={{ mb: 1 }}
@@ -754,7 +754,7 @@ const AuditTab: React.FC<{
 const RobustnessTab: React.FC<{
   vectors: AttackVector[];
   tests: RobustnessTest[];
-  defenseStatus: ReturnType<typeof adversarialRobustness.get_defense_status>;
+  defenseStatus: ReturnType<typeof adversarialRobustness.getDefenseStatus>;
   selectedVector: AttackVector | null;
   onSelectVector: (v: AttackVector | null) => void;
   onTest: (v: AttackVector) => void;
@@ -810,7 +810,11 @@ const RobustnessTab: React.FC<{
                     <Chip
                       size='small'
                       label={ATTACK_TYPE_LABELS[v.type]}
-                      sx={{ height: 20, bgcolor: SEVERITY_COLORS[v.severity], color: 'white' }}
+                      sx={{
+                        height: 20,
+                        bgcolor: SEVERITY_COLORS[v.severity],
+                        color: 'common.white',
+                      }}
                     />
                     <Chip
                       size='small'
@@ -904,7 +908,7 @@ const RobustnessTab: React.FC<{
             >
               按攻击类型
             </Typography>
-            {Object.entries(defenseStatus.by_type).map(([type, data]) => (
+            {Object.entries(defenseStatus.byType).map(([type, data]) => (
               <Box
                 key={type}
                 sx={{ mb: 1 }}
@@ -991,7 +995,7 @@ const RobustnessTab: React.FC<{
                             height: 18,
                             fontSize: 10,
                             bgcolor: SEVERITY_COLORS[test.attackVector.severity],
-                            color: 'white',
+                            color: 'common.white',
                           }}
                         />
                         <Typography
@@ -1067,7 +1071,7 @@ const RobustnessTab: React.FC<{
 const PrivacyTab: React.FC<{
   configs: PrivacyConfig[];
   report: PrivacyReport | null;
-  leakageRisk: ReturnType<typeof privacyEnhancer.get_data_leakage_risk>;
+  leakageRisk: ReturnType<typeof privacyEnhancer.getDataLeakageRisk>;
   selectedConfig: PrivacyConfig | null;
   onSelectConfig: (c: PrivacyConfig | null) => void;
   onTest: () => void;
@@ -1205,7 +1209,7 @@ const PrivacyTab: React.FC<{
                     label='Epsilon'
                     value={selectedConfig.epsilon}
                     onChange={(e) =>
-                      privacyEnhancer.update_config(selectedConfig.id, {
+                      privacyEnhancer.updateConfig(selectedConfig.id, {
                         epsilon: Number(e.target.value),
                       })
                     }
@@ -1222,7 +1226,7 @@ const PrivacyTab: React.FC<{
                       value={selectedConfig.noise_strategy}
                       label='噪声策略'
                       onChange={(e) =>
-                        privacyEnhancer.update_config(selectedConfig.id, {
+                        privacyEnhancer.updateConfig(selectedConfig.id, {
                           noise_strategy: e.target.value as NoiseStrategy,
                         })
                       }
@@ -1267,7 +1271,7 @@ const PrivacyTab: React.FC<{
                 <Box sx={{ textAlign: 'center', py: 1 }}>
                   <Typography
                     variant='h4'
-                    sx={{ fontWeight: 700, color: '#0891b2' }}
+                    sx={{ fontWeight: 700, color: 'cyan.600' }}
                   >
                     {(report.privacy_score * 100).toFixed(0)}
                   </Typography>
@@ -1498,8 +1502,8 @@ const BREAKDOWN_LABELS: Record<string, string> = {
 };
 
 const ThreatSummaryTab: React.FC<{
-  auditSummary: ReturnType<typeof aiSecurityAuditor.get_audit_summary>;
-  defenseStatus: ReturnType<typeof adversarialRobustness.get_defense_status>;
+  auditSummary: ReturnType<typeof aiSecurityAuditor.getAuditSummary>;
+  defenseStatus: ReturnType<typeof adversarialRobustness.getDefenseStatus>;
   privacyReport: PrivacyReport | null;
 }> = ({ auditSummary, defenseStatus, privacyReport }) => {
   const overallScore =
@@ -1508,8 +1512,8 @@ const ThreatSummaryTab: React.FC<{
       defenseStatus.enabled_defenses / Math.max(defenseStatus.total_defenses, 1)) /
     3;
 
-  const criticalFindings = auditSummary.by_severity.critical;
-  const highFindings = auditSummary.by_severity.high;
+  const criticalFindings = auditSummary.bySeverity.critical;
+  const highFindings = auditSummary.bySeverity.high;
 
   return (
     <Grid
@@ -1579,7 +1583,7 @@ const ThreatSummaryTab: React.FC<{
             <Box sx={{ textAlign: 'center', py: 1 }}>
               <Typography
                 variant='h3'
-                sx={{ fontWeight: 700, color: '#dc2626' }}
+                sx={{ fontWeight: 700, color: 'error.600' }}
               >
                 {criticalFindings}
               </Typography>
@@ -1594,7 +1598,7 @@ const ThreatSummaryTab: React.FC<{
             <Box sx={{ textAlign: 'center' }}>
               <Typography
                 variant='h5'
-                sx={{ fontWeight: 600, color: '#ea580c' }}
+                sx={{ fontWeight: 600, color: 'orange.600' }}
               >
                 {highFindings}
               </Typography>
@@ -1698,7 +1702,7 @@ const ThreatSummaryTab: React.FC<{
             <Box sx={{ textAlign: 'center', py: 1 }}>
               <Typography
                 variant='h4'
-                sx={{ fontWeight: 700, color: '#10b981' }}
+                sx={{ fontWeight: 700, color: 'teal.500' }}
               >
                 {defenseStatus.enabled_defenses}/{defenseStatus.total_defenses}
               </Typography>
@@ -1743,7 +1747,7 @@ const ThreatSummaryTab: React.FC<{
               container
               spacing={2}
             >
-              {auditSummary.top_findings.map((finding, i) => (
+              {auditSummary.topFindings.map((finding, i) => (
                 <Grid
                   size={{ xs: 12, md: 4 }}
                   key={i}
@@ -1760,7 +1764,7 @@ const ThreatSummaryTab: React.FC<{
                       <Chip
                         size='small'
                         label={AUDIT_TYPE_LABELS[finding.type]}
-                        sx={{ height: 20, bgcolor: '#dc2626', color: 'white' }}
+                        sx={{ height: 20, bgcolor: 'error.600', color: 'common.white' }}
                       />
                       <Typography
                         variant='caption'

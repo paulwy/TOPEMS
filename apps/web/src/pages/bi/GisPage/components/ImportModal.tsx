@@ -22,6 +22,7 @@ import {
 import { X, Upload, FileText } from 'lucide-react';
 
 import { useTranslation } from 'react-i18next';
+
 interface ImportModalProps {
   open: boolean;
   importFile: File | null;
@@ -53,19 +54,34 @@ export const ImportModal: React.FC<ImportModalProps> = ({
       slotProps={{ paper: { sx: { borderRadius: 2 } } }}
     >
       <DialogTitle>
-        <Stack direction='row' sx={{ justifyContent: 'space-between', alignItems: 'center' }}>
-          <Typography variant='h6' sx={{ fontWeight: 600 }}>
+        <Stack
+          direction='row'
+          sx={{ justifyContent: 'space-between', alignItems: 'center' }}
+        >
+          <Typography
+            variant='h6'
+            sx={{ fontWeight: 600 }}
+          >
             导入数据
           </Typography>
-          <IconButton onClick={onClose} size='small'>
+          <IconButton
+            onClick={onClose}
+            size='small'
+          >
             <X size={20} />
           </IconButton>
         </Stack>
       </DialogTitle>
       <DialogContent dividers>
-        <Stack spacing={3} sx={{ pt: 1 }}>
+        <Stack
+          spacing={3}
+          sx={{ pt: 1 }}
+        >
           <Box>
-            <Typography variant='body2' sx={{ fontWeight: 500, mb: 1 }}>
+            <Typography
+              variant='body2'
+              sx={{ fontWeight: 500, mb: 1 }}
+            >
               选择CSV文件
             </Typography>
             <Box
@@ -89,28 +105,55 @@ export const ImportModal: React.FC<ImportModalProps> = ({
                 style={{ display: 'none' }}
                 id='csv-upload'
               />
-              <Upload size={48} color='text.disabled' style={{ marginBottom: 8 }} />
+              <Upload
+                size={48}
+                color='text.disabled'
+                style={{ marginBottom: 8 }}
+              />
               <Typography color='text.secondary'>点击或拖拽文件到此处</Typography>
-              <Typography variant='caption' color='text.disabled' sx={{ mt: 1 }}>
+              <Typography
+                variant='caption'
+                color='text.disabled'
+                sx={{ mt: 1 }}
+              >
                 支持CSV格式文件
               </Typography>
             </Box>
           </Box>
           {importFile && (
             <Paper sx={{ p: 1.5, bgcolor: 'grey.50', borderRadius: 1.5 }}>
-              <Stack direction='row' sx={{ justifyContent: 'space-between', alignItems: 'center' }}>
-                <Stack direction='row' spacing={1.5} sx={{ alignItems: 'center' }}>
-                  <FileText size={32} color='text.secondary' />
+              <Stack
+                direction='row'
+                sx={{ justifyContent: 'space-between', alignItems: 'center' }}
+              >
+                <Stack
+                  direction='row'
+                  spacing={1.5}
+                  sx={{ alignItems: 'center' }}
+                >
+                  <FileText
+                    size={32}
+                    color='text.secondary'
+                  />
                   <Box>
-                    <Typography variant='body2' sx={{ fontWeight: 500 }}>
+                    <Typography
+                      variant='body2'
+                      sx={{ fontWeight: 500 }}
+                    >
                       {importFile.name}
                     </Typography>
-                    <Typography variant='caption' color='text.secondary'>
+                    <Typography
+                      variant='caption'
+                      color='text.secondary'
+                    >
                       {(importFile.size / 1024).toFixed(1)} KB
                     </Typography>
                   </Box>
                 </Stack>
-                <IconButton size='small' onClick={onClose}>
+                <IconButton
+                  size='small'
+                  onClick={onClose}
+                >
                   <X size={20} />
                 </IconButton>
               </Stack>
@@ -118,7 +161,10 @@ export const ImportModal: React.FC<ImportModalProps> = ({
           )}
           {importPreview && (
             <Box>
-              <Typography variant='body2' sx={{ fontWeight: 500, mb: 1 }}>
+              <Typography
+                variant='body2'
+                sx={{ fontWeight: 500, mb: 1 }}
+              >
                 文件预览（前10行）
               </Typography>
               <TableContainer
@@ -126,11 +172,17 @@ export const ImportModal: React.FC<ImportModalProps> = ({
                 variant='outlined'
                 sx={{ maxHeight: 192, borderRadius: 1.5 }}
               >
-                <Table size='small' stickyHeader>
+                <Table
+                  size='small'
+                  stickyHeader
+                >
                   <TableHead>
                     <TableRow>
                       {importPreview[0]?.map((header, index) => (
-                        <TableCell key={index} sx={{ fontWeight: 500, bgcolor: 'grey.50' }}>
+                        <TableCell
+                          key={index}
+                          sx={{ fontWeight: 500, bgcolor: 'grey.50' }}
+                        >
                           {header}
                         </TableCell>
                       ))}
@@ -138,7 +190,10 @@ export const ImportModal: React.FC<ImportModalProps> = ({
                   </TableHead>
                   <TableBody>
                     {importPreview.slice(1).map((row, rowIndex) => (
-                      <TableRow key={rowIndex} hover>
+                      <TableRow
+                        key={rowIndex}
+                        hover
+                      >
                         {row.map((cell, cellIndex) => (
                           <TableCell key={cellIndex}>{cell}</TableCell>
                         ))}
@@ -150,7 +205,10 @@ export const ImportModal: React.FC<ImportModalProps> = ({
               <FormControlLabel
                 sx={{ mt: 1.5 }}
                 control={
-                  <Checkbox checked={importConfirm} onChange={(e) => onConfirmChange(e.target.checked)} />
+                  <Checkbox
+                    checked={importConfirm}
+                    onChange={(e) => onConfirmChange(e.target.checked)}
+                  />
                 }
                 label={t('bi.gis_page_components__import_modal.import')}
               />
@@ -159,7 +217,10 @@ export const ImportModal: React.FC<ImportModalProps> = ({
         </Stack>
       </DialogContent>
       <DialogActions sx={{ px: 3, py: 2 }}>
-        <Button onClick={onClose} variant='outlined'>
+        <Button
+          onClick={onClose}
+          variant='outlined'
+        >
           取消
         </Button>
         <Button

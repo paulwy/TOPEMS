@@ -41,7 +41,7 @@ export interface ComplianceReport {
     passed_checks: number;
     failed_checks: number;
     pass_rate: number;
-    regulations_coverage: Regulation[];
+    regulationsCoverage: Regulation[];
   };
   checks: ComplianceCheck[];
   recommendations: string[];
@@ -179,22 +179,22 @@ export class ComplianceAutomator {
     this.audit_trail = [];
   }
 
-  run_compliance_checks(
+  runComplianceChecks(
     entities: string[] = ['user_data', 'financial_records', 'health_records', 'payment_data']
   ): ComplianceCheck[] {
-    const enabled_rules = this.rules.filter((r) => r.enabled);
+    const enabledRules = this.rules.filter((r) => r.enabled);
     const checks: ComplianceCheck[] = [];
 
     for (const entity of entities) {
-      for (const rule of enabled_rules) {
-        const passed = this.evaluate_rule(rule, entity);
+      for (const rule of enabledRules) {
+        const passed = this.evaluateRule(rule, entity);
         const check: ComplianceCheck = {
           id: `check-${rule.id}-${Date.now()}-${Math.random().toString(36).slice(2, 7)}`,
           rule_id: rule.id,
           rule_name: rule.name,
           regulation: rule.regulation,
           passed,
-          evidence: this.generate_evidence(rule, entity, passed),
+          evidence: this.generateEvidence(rule, entity, passed),
           timestamp: Date.now(),
           entity,
           severity: rule.severity,
@@ -207,7 +207,7 @@ export class ComplianceAutomator {
     return checks;
   }
 
-  get_compliance_status(): {
+  getComplianceStatus(): {
     regulations: Record<
       Regulation,
       { total: number; passed: number; failed: number; pass_rate: number }
@@ -250,23 +250,23 @@ export class ComplianceAutomator {
     };
   }
 
-  create_rule(rule: Omit<ComplianceRule, 'id'>): ComplianceRule {
-    const new_rule: ComplianceRule = {
+  createRule(rule: Omit<ComplianceRule, 'id'>): ComplianceRule {
+    const newRule: ComplianceRule = {
       ...rule,
       id: `custom-${Date.now()}-${Math.random().toString(36).slice(2, 7)}`,
     };
-    this.rules.push(new_rule);
-    return new_rule;
+    this.rules.push(newRule);
+    return newRule;
   }
 
-  list_rules(regulation?: Regulation): ComplianceRule[] {
+  listRules(regulation?: Regulation): ComplianceRule[] {
     if (regulation) {
       return this.rules.filter((r) => r.regulation === regulation);
     }
     return [...this.rules];
   }
 
-  get_audit_trail(filter?: {
+  getAuditTrail(filter?: {
     regulation?: Regulation;
     entity?: string;
     passed?: boolean;
@@ -291,15 +291,15 @@ export class ComplianceAutomator {
     return result.sort((a, b) => b.timestamp - a.timestamp);
   }
 
-  generate_report(): ComplianceReport {
+  generateReport(): ComplianceReport {
     const checks = this.audit_trail;
     const passed = checks.filter((c) => c.passed).length;
     const failed = checks.filter((c) => !c.passed).length;
-    const regulations_coverage = Array.from(
+    const regulationsCoverage = Array.from(
       new Set(checks.map((c) => c.regulation))
     ) as Regulation[];
 
-    const recommendations = this.generate_recommendations(checks);
+    const recommendations = this.generateRecommendations(checks);
 
     return {
       generated_at: Date.now(),
@@ -308,15 +308,15 @@ export class ComplianceAutomator {
         passed_checks: passed,
         failed_checks: failed,
         pass_rate: checks.length > 0 ? Math.round((passed / checks.length) * 100) : 0,
-        regulations_coverage,
+        regulationsCoverage,
       },
       checks,
       recommendations,
     };
   }
 
-  private evaluate_rule(rule: ComplianceRule, entity: string): boolean {
-    const entity_conditions: Record<string, Record<string, boolean>> = {
+  private evaluateRule(rule: ComplianceRule, entity: string): boolean {
+    const entityConditions: Record<string, Record<string, boolean>> = {
       user_data: {
         GDPR_data_access: true,
         GDPR_encryption: true,
@@ -342,63 +342,63 @@ export class ComplianceAutomator {
       },
     };
 
-    const entity_map = entity_conditions[entity] || {};
+    const entityMap = entityConditions[entity] || {};
 
-    if (entity_map[rule.id] !== undefined) {
-      return entity_map[rule.id];
+    if (entityMap[rule.id] !== undefined) {
+      return entityMap[rule.id];
     }
 
-    const default_fail_conditions: Array<{ rule: string; passed: boolean }> = [
+    const defaultFailConditions: Array<{ rule: string; passed: boolean }> = [
       { rule: 'gdpr-retention', passed: false },
       { rule: 'hipaa-baa', passed: false },
       { rule: 'pci-network', passed: false },
     ];
 
-    const special_case = default_fail_conditions.find((c) => c.rule === rule.id);
-    if (special_case) {
-      return special_case.passed;
+    const specialCase = defaultFailConditions.find((c) => c.rule === rule.id);
+    if (specialCase) {
+      return specialCase.passed;
     }
 
     return Math.random() > 0.15;
   }
 
-  private generate_evidence(rule: ComplianceRule, entity: string, passed: boolean): string {
+  private generateEvidence(rule: ComplianceRule, entity: string, passed: boolean): string {
     if (passed) {
       return `实体 ${entity} 通过规则 ${rule.name} 检查。${rule.action} 已正确实施。`;
     }
     return `实体 ${entity} 未通过规则 ${rule.name} 检查。需要: ${rule.action}。`;
   }
 
-  private generate_recommendations(checks: ComplianceCheck[]): string[] {
+  private generateRecommendations(checks: ComplianceCheck[]): string[] {
     const recommendations: string[] = [];
     const failed = checks.filter((c) => !c.passed);
 
-    const by_severity: Record<string, ComplianceCheck[]> = {};
+    const bySeverity: Record<string, ComplianceCheck[]> = {};
     for (const check of failed) {
-      if (!by_severity[check.severity]) {
-        by_severity[check.severity] = [];
+      if (!bySeverity[check.severity]) {
+        bySeverity[check.severity] = [];
       }
-      by_severity[check.severity].push(check);
+      bySeverity[check.severity].push(check);
     }
 
-    if (by_severity['critical']?.length) {
+    if (bySeverity['critical']?.length) {
       recommendations.push(
-        `紧急：${by_severity['critical'].length} 个严重合规检查未通过，需立即处理`
+        `紧急：${bySeverity['critical'].length} 个严重合规检查未通过，需立即处理`
       );
     }
-    if (by_severity['high']?.length) {
+    if (bySeverity['high']?.length) {
       recommendations.push(
-        `重要：${by_severity['high'].length} 个高危合规检查未通过，需在 7 天内修复`
+        `重要：${bySeverity['high'].length} 个高危合规检查未通过，需在 7 天内修复`
       );
     }
-    if (by_severity['medium']?.length) {
+    if (bySeverity['medium']?.length) {
       recommendations.push(
-        `建议：${by_severity['medium'].length} 个中等合规检查未通过，建议在下一迭代中处理`
+        `建议：${bySeverity['medium'].length} 个中等合规检查未通过，建议在下一迭代中处理`
       );
     }
 
-    const regulations_with_failures = new Set(failed.map((c) => c.regulation));
-    for (const reg of regulations_with_failures) {
+    const regulationsWithFailures = new Set(failed.map((c) => c.regulation));
+    for (const reg of regulationsWithFailures) {
       recommendations.push(`法规 ${reg} 存在合规差距，建议进行专项评估`);
     }
 

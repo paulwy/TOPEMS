@@ -478,7 +478,10 @@ export const MetricsDashboardPage: React.FC = () => {
       >
         {summary?.categories && summary.categories.length > 0 && (
           <Paper sx={{ mb: 3, p: 2, borderRadius: 2 }}>
-            <Typography variant='subtitle2' sx={{ mb: 1.5, fontWeight: 600 }}>
+            <Typography
+              variant='subtitle2'
+              sx={{ mb: 1.5, fontWeight: 600 }}
+            >
               分类概览
             </Typography>
             <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 1.5 }}>
@@ -489,11 +492,7 @@ export const MetricsDashboardPage: React.FC = () => {
                   size='small'
                   variant={category === cat.code ? 'filled' : 'outlined'}
                   color={
-                    cat.critical_count > 0
-                      ? 'error'
-                      : cat.warning_count > 0
-                        ? 'warning'
-                        : 'success'
+                    cat.critical_count > 0 ? 'error' : cat.warning_count > 0 ? 'warning' : 'success'
                   }
                   onClick={() => setCategory(cat.code)}
                   sx={{ cursor: 'pointer' }}

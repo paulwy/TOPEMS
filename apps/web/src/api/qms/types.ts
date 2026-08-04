@@ -474,7 +474,7 @@ export interface ApqpProject {
   team?: string;
   start_date?: string;
   target_date?: string;
-  actual_end_date?: string;
+  actualEndDate?: string;
   progress?: number;
   risklevel?: string;
   created_by?: string;
@@ -507,7 +507,7 @@ export interface UpdateApqpProjectRequest {
   team?: string;
   start_date?: string;
   target_date?: string;
-  actual_end_date?: string;
+  actualEndDate?: string;
   progress?: number;
   risklevel?: string;
 }
@@ -521,8 +521,8 @@ export interface ApqpPhase {
   status?: string;
   start_date?: string;
   end_date?: string;
-  actual_start_date?: string;
-  actual_end_date?: string;
+  actualStartDate?: string;
+  actualEndDate?: string;
   progress?: number;
   sort_order?: number;
   created_at?: string;
@@ -1204,7 +1204,7 @@ export interface FmeaStatisticsBackend {
   low_risk_count: number;
   average_rpn: number;
   max_rpn: number;
-  by_severity: Record<number, number>;
+  bySeverity: Record<number, number>;
   by_occurrence: Record<number, number>;
   by_detection: Record<number, number>;
 }

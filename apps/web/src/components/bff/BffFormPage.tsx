@@ -260,7 +260,7 @@ function FormFieldRenderer({
                 label={
                   <>
                     {field.label}
-                    {field.required && <span style={{ color: 'red' }}> *</span>}
+                    {field.required && <span style={{ color: 'error.main' }}> *</span>}
                   </>
                 }
               />
@@ -279,7 +279,7 @@ function FormFieldRenderer({
                 label={
                   <>
                     {field.label}
-                    {field.required && <span style={{ color: 'red' }}> *</span>}
+                    {field.required && <span style={{ color: 'error.main' }}> *</span>}
                   </>
                 }
               />

@@ -112,16 +112,16 @@ vi.mock('@/store', () => ({
 }));
 
 describe('ProductionProcessPage', () => {
-it('should render without crashing', () => {
+  it('should render without crashing', () => {
     const { container } = render(
       <BrowserRouter>
         <ProductionProcessPage />
       </BrowserRouter>
     );
     expect(container).toBeDefined();
-});
+  });
 
-it('should have process API methods defined', () => {
+  it('should have process API methods defined', () => {
     render(
       <BrowserRouter>
         <ProductionProcessPage />
@@ -130,15 +130,14 @@ it('should have process API methods defined', () => {
     expect(mesApi.processes.list).toBeDefined();
     expect(mesApi.processes.create).toBeDefined();
     expect(mesApi.processes.update).toBeDefined();
-});
+  });
 
-it('should call processes list API on mount', () => {
+  it('should call processes list API on mount', () => {
     render(
       <BrowserRouter>
         <ProductionProcessPage />
       </BrowserRouter>
     );
     expect(mesApi.processes.list).toHaveBeenCalled();
-});
-;
+  });
 });

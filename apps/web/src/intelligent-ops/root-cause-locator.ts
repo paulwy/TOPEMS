@@ -54,11 +54,11 @@ class RootCauseLocatorImpl {
   private eventLog: CorrelatedEvent[] = [];
 
   constructor() {
-    this.dependencyGraph = this.build_default_graph();
-    this.seed_event_log();
+    this.dependencyGraph = this.buildDefaultGraph();
+    this.seedEventLog();
   }
 
-  private build_default_graph(): DependencyGraph {
+  private buildDefaultGraph(): DependencyGraph {
     return {
       nodes: [
         'api-gateway',
@@ -99,7 +99,7 @@ class RootCauseLocatorImpl {
     };
   }
 
-  private seed_event_log(): void {
+  private seedEventLog(): void {
     const now = Date.now();
     const seeds: CorrelatedEvent[] = [
       {
@@ -148,7 +148,7 @@ class RootCauseLocatorImpl {
     this.eventLog = seeds;
   }
 
-  build_dependency_graph(customEdges?: DependencyEdge[]): DependencyGraph {
+  buildDependencyGraph(customEdges?: DependencyEdge[]): DependencyGraph {
     if (!customEdges) return { ...this.dependencyGraph };
     const newEdges = [...this.dependencyGraph.edges, ...customEdges];
     const newNodes = new Set<string>();
@@ -159,21 +159,21 @@ class RootCauseLocatorImpl {
     return { nodes: Array.from(newNodes), edges: newEdges };
   }
 
-  locate_root_cause(incidentId: string): RootCause[] {
+  locateRootCause(incidentId: string): RootCause[] {
     const incident = this.incidents.get(incidentId);
     if (!incident) return [];
 
-    const causes = this.analyze_incident(incident);
+    const causes = this.analyzeIncident(incident);
     this.rootCauses.set(incidentId, causes);
     return causes;
   }
 
-  analyze_incident(incident: Incident): RootCause[] {
+  analyzeIncident(incident: Incident): RootCause[] {
     const causes: RootCause[] = [];
     const components = incident.affected_components;
 
     for (const component of components) {
-      const upstream = this.find_upstream(component);
+      const upstream = this.findUpstream(component);
       const depth = upstream.length;
 
       const relatedEvents = this.eventLog.filter(
@@ -231,7 +231,7 @@ class RootCauseLocatorImpl {
     return causes.sort((a, b) => b.confidence - a.confidence);
   }
 
-  private find_upstream(component: string): string[] {
+  private findUpstream(component: string): string[] {
     const visited = new Set<string>();
     const result: string[] = [];
     const queue = [component];
@@ -252,20 +252,20 @@ class RootCauseLocatorImpl {
     return result;
   }
 
-  get_incident_history(): Incident[] {
+  getIncidentHistory(): Incident[] {
     return Array.from(this.incidents.values()).sort((a, b) => b.detected_at - a.detected_at);
   }
 
-  correlate_events(timeWindowMs: number = 300000): CorrelatedEvent[] {
+  correlateEvents(timeWindowMs: number = 300000): CorrelatedEvent[] {
     const now = Date.now();
     return this.eventLog
       .filter((e) => now - e.timestamp < timeWindowMs)
       .sort((a, b) => a.timestamp - b.timestamp);
   }
 
-  generate_cause_report(incidentId: string): string {
+  generateCauseReport(incidentId: string): string {
     const incident = this.incidents.get(incidentId);
-    const causes = this.rootCauses.get(incidentId) || this.locate_root_cause(incidentId);
+    const causes = this.rootCauses.get(incidentId) || this.locateRootCause(incidentId);
 
     if (!incident) return `Incident ${incidentId} not found.`;
 
@@ -295,7 +295,7 @@ class RootCauseLocatorImpl {
     return lines.join('\n');
   }
 
-  create_incident(
+  createIncident(
     severity: IncidentSeverity,
     symptoms: string[],
     affectedComponents: string[]
@@ -312,7 +312,7 @@ class RootCauseLocatorImpl {
     return incident;
   }
 
-  update_incident_status(incidentId: string, status: IncidentStatus): Incident | null {
+  updateIncidentStatus(incidentId: string, status: IncidentStatus): Incident | null {
     const incident = this.incidents.get(incidentId);
     if (!incident) return null;
     const updated = { ...incident, status };

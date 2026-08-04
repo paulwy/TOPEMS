@@ -99,8 +99,8 @@ export function ChartAnnotations({
           top: 8,
           right: 8,
           zIndex: 10,
-          backgroundColor: 'rgba(255,255,255,0.8)',
-          '&:hover': { backgroundColor: 'white' },
+          backgroundColor: 'common.white',
+          '&:hover': { backgroundColor: 'common.white' },
           borderRadius: 1,
           boxShadow: '0 2px 8px rgba(0,0,0,0.1)',
         }}
@@ -239,7 +239,7 @@ export function ChartAnnotations({
               key={annotation.id}
               style={{
                 position: 'absolute',
-                backgroundColor: 'white',
+                backgroundColor: 'common.white',
                 borderRadius: 8,
                 boxShadow: '0 2px 8px rgba(0,0,0,0.15)',
                 padding: 8,
@@ -282,7 +282,7 @@ export function ChartAnnotations({
             key={annotation.id}
             style={{
               position: 'absolute',
-              backgroundColor: 'rgba(255,255,255,0.95)',
+              backgroundColor: 'common.white',
               backdropFilter: 'blur(8px)',
               borderRadius: 8,
               boxShadow: '0 2px 8px rgba(0,0,0,0.15)',
@@ -342,7 +342,7 @@ export function ChartAnnotations({
             bottom: 8,
             left: 8,
             zIndex: 10,
-            backgroundColor: 'rgba(255,255,255,0.8)',
+            backgroundColor: 'common.white',
             backdropFilter: 'blur(8px)',
             borderRadius: 8,
             padding: '4px 8px',

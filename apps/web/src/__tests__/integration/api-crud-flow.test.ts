@@ -260,7 +260,7 @@ describe('API CRUD Flow Integration', () => {
       const mockOrders = [
         {
           id: 'SO-001',
-          order_no: 'SO-001',
+          orderNo: 'SO-001',
           customer_name: '客户A',
           status: 'pending',
           total_amount: 1000,

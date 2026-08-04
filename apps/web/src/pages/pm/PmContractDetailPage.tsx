@@ -164,7 +164,7 @@ const PmContractDetailPage: React.FC = () => {
             >
               <Typography sx={{ color: 'grey.500' }}>合同编号</Typography>
               <Typography sx={{ fontWeight: 500, color: 'grey.900' }}>
-                {contract.contract_no}
+                {contract.contractNo}
               </Typography>
             </Box>
             <Box
@@ -493,7 +493,7 @@ const PmContractDetailPage: React.FC = () => {
 
     return {
       title: contract.contract_name,
-      subtitle: contract.contract_no,
+      subtitle: contract.contractNo,
       tags: [
         STATUS_LABELS[statusKey],
         CONTRACT_TYPE_LABELS[contract.contract_type] || contract.contract_type,
@@ -518,7 +518,7 @@ const PmContractDetailPage: React.FC = () => {
   return (
     <PageContainer
       title={contract?.contract_name || '合同详情'}
-      subtitle={contract?.contract_no}
+      subtitle={contract?.contractNo}
     >
       <DetailPageTemplate
         title=''

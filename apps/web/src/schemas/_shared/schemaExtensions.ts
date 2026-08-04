@@ -54,7 +54,7 @@ export interface NestedTableConfig {
 export interface TreeConfig {
   /** Unique node identifier field name, default 'id' */
   keyField?: string;
-  /** Parent node field name, default 'parent_id' */
+  /** Parent node field name, default 'parentId' */
   parentField?: string;
   /** Child node array field name, default 'children' */
   childrenField?: string;

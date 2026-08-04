@@ -5,12 +5,15 @@ import { workstationSchema } from '@/schemas/mes';
 import { mesApi } from '@/api/mes';
 import type { WorkStation } from '@/api/mes/types';
 
-const apiAdapter = createCrudPageAdapter<WorkStation>({
-  list: mesApi.workstations.list as any,
-  create: mesApi.workstations.create as any,
-  update: mesApi.workstations.update as any,
-  delete: mesApi.workstations.delete as any,
-}, { itemsField: 'workstations' });
+const apiAdapter = createCrudPageAdapter<WorkStation>(
+  {
+    list: mesApi.workstations.list as any,
+    create: mesApi.workstations.create as any,
+    update: mesApi.workstations.update as any,
+    delete: mesApi.workstations.delete as any,
+  },
+  { itemsField: 'workstations' }
+);
 
 export default function WorkStationPage() {
   const renderStats = (rows: WorkStation[]) => {
@@ -29,20 +32,60 @@ export default function WorkStationPage() {
         }}
       >
         <Box sx={{ p: 2, bgcolor: 'grey.100', borderRadius: 3 }}>
-          <Typography variant='body2' sx={{ color: 'text.secondary' }}>工作站总数</Typography>
-          <Typography variant='h5' sx={{ fontWeight: 700 }}>{total}</Typography>
+          <Typography
+            variant='body2'
+            sx={{ color: 'text.secondary' }}
+          >
+            工作站总数
+          </Typography>
+          <Typography
+            variant='h5'
+            sx={{ fontWeight: 700 }}
+          >
+            {total}
+          </Typography>
         </Box>
         <Box sx={{ p: 2, bgcolor: 'success.lighter', borderRadius: 3 }}>
-          <Typography variant='body2' sx={{ color: 'text.secondary' }}>运行中</Typography>
-          <Typography variant='h5' sx={{ fontWeight: 700 }}>{active}</Typography>
+          <Typography
+            variant='body2'
+            sx={{ color: 'text.secondary' }}
+          >
+            运行中
+          </Typography>
+          <Typography
+            variant='h5'
+            sx={{ fontWeight: 700 }}
+          >
+            {active}
+          </Typography>
         </Box>
         <Box sx={{ p: 2, bgcolor: 'warning.light', borderRadius: 3 }}>
-          <Typography variant='body2' sx={{ color: 'text.secondary' }}>空闲</Typography>
-          <Typography variant='h5' sx={{ fontWeight: 700 }}>{idle}</Typography>
+          <Typography
+            variant='body2'
+            sx={{ color: 'text.secondary' }}
+          >
+            空闲
+          </Typography>
+          <Typography
+            variant='h5'
+            sx={{ fontWeight: 700 }}
+          >
+            {idle}
+          </Typography>
         </Box>
         <Box sx={{ p: 2, bgcolor: 'primary.100', borderRadius: 3 }}>
-          <Typography variant='body2' sx={{ color: 'text.secondary' }}>维护中</Typography>
-          <Typography variant='h5' sx={{ fontWeight: 700 }}>{maintenance}</Typography>
+          <Typography
+            variant='body2'
+            sx={{ color: 'text.secondary' }}
+          >
+            维护中
+          </Typography>
+          <Typography
+            variant='h5'
+            sx={{ fontWeight: 700 }}
+          >
+            {maintenance}
+          </Typography>
         </Box>
       </Box>
     );

@@ -19,23 +19,15 @@ const abLogger = logger.child({ prefix: 'BFF-ABTest' });
 
 /** 实验状态 */
 export enum ExperimentStatus {
-  Draft = 'draft',
-  Running = 'running',
-  Paused = 'paused',
-  Completed = 'completed',
+  DRAFT = 'draft',
+  RUNNING = 'running',
+  PAUSED = 'paused',
+  COMPLETED = 'completed',
 }
 
 /** 目标定向操作符 */
 export type TargetingOperator =
-  | 'eq'
-  | 'ne'
-  | 'gt'
-  | 'lt'
-  | 'gte'
-  | 'lte'
-  | 'in'
-  | 'not_in'
-  | 'contains';
+  'eq' | 'ne' | 'gt' | 'lt' | 'gte' | 'lte' | 'in' | 'not_in' | 'contains';
 
 /** 目标定向规则 */
 export interface TargetingRule {
@@ -185,10 +177,7 @@ function normalCdf(z: number): number {
   const t = 1 / (1 + 0.2316419 * Math.abs(z));
   const d = 0.3989422804014327 * Math.exp((-z * z) / 2);
   const prob =
-    d *
-    t *
-    (0.3193815 +
-      t * (-0.3565638 + t * (1.781478 + t * (-1.821256 + t * 1.330274))));
+    d * t * (0.3193815 + t * (-0.3565638 + t * (1.781478 + t * (-1.821256 + t * 1.330274))));
   return z > 0 ? 1 - prob : prob;
 }
 
@@ -297,7 +286,7 @@ export class ABTestEngine {
       id,
       name: input.name,
       description: input.description,
-      status: ExperimentStatus.Draft,
+      status: ExperimentStatus.DRAFT,
       variants,
       traffic_allocation: Math.min(1, Math.max(0, input.traffic_allocation ?? 1)),
       targeting: input.targeting ?? [],
@@ -319,10 +308,10 @@ export class ABTestEngine {
   startExperiment(experimentId: string): Experiment {
     const exp = this.experiments.get(experimentId);
     if (!exp) throw new Error(`实验不存在: ${experimentId}`);
-    if (exp.status === ExperimentStatus.Running) {
+    if (exp.status === ExperimentStatus.RUNNING) {
       throw new Error('实验已在运行中');
     }
-    exp.status = ExperimentStatus.Running;
+    exp.status = ExperimentStatus.RUNNING;
     exp.start_date = exp.start_date ?? new Date().toISOString();
     exp.updated_at = new Date().toISOString();
     this.experiments.set(experimentId, exp);
@@ -336,10 +325,10 @@ export class ABTestEngine {
   pauseExperiment(experimentId: string): Experiment {
     const exp = this.experiments.get(experimentId);
     if (!exp) throw new Error(`实验不存在: ${experimentId}`);
-    if (exp.status !== ExperimentStatus.Running) {
+    if (exp.status !== ExperimentStatus.RUNNING) {
       throw new Error('只能暂停运行中的实验');
     }
-    exp.status = ExperimentStatus.Paused;
+    exp.status = ExperimentStatus.PAUSED;
     exp.updated_at = new Date().toISOString();
     this.experiments.set(experimentId, exp);
     this.persist();
@@ -352,7 +341,7 @@ export class ABTestEngine {
   completeExperiment(experimentId: string): Experiment {
     const exp = this.experiments.get(experimentId);
     if (!exp) throw new Error(`实验不存在: ${experimentId}`);
-    exp.status = ExperimentStatus.Completed;
+    exp.status = ExperimentStatus.COMPLETED;
     exp.end_date = new Date().toISOString();
     exp.updated_at = new Date().toISOString();
     this.experiments.set(experimentId, exp);
@@ -413,7 +402,7 @@ export class ABTestEngine {
   ): Variant | null {
     const exp = this.experiments.get(experimentId);
     if (!exp) return null;
-    if (exp.status !== ExperimentStatus.Running) return null;
+    if (exp.status !== ExperimentStatus.RUNNING) return null;
 
     // 目标定向
     if (!this.matchesTargeting(exp.targeting, userAttributes)) {
@@ -648,10 +637,7 @@ export class ABTestEngine {
    * 所有规则为 AND 关系，全部满足才返回 true。
    * 无规则时返回 true。
    */
-  matchesTargeting(
-    rules: TargetingRule[],
-    attributes?: Record<string, unknown>
-  ): boolean {
+  matchesTargeting(rules: TargetingRule[], attributes?: Record<string, unknown>): boolean {
     if (!rules || rules.length === 0) return true;
     if (!attributes) return false;
     return rules.every((rule) => {
@@ -679,7 +665,9 @@ export class ABTestEngine {
       case 'not_in':
         return Array.isArray(expected) && !expected.includes(actual);
       case 'contains':
-        return typeof actual === 'string' && typeof expected === 'string' && actual.includes(expected);
+        return (
+          typeof actual === 'string' && typeof expected === 'string' && actual.includes(expected)
+        );
       default:
         return false;
     }

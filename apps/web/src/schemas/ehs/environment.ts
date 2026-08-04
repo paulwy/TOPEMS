@@ -186,7 +186,13 @@ export const environmentMonitorSchema: EntitySchema = {
     },
     {
       title: '监测参数',
-      fields: ['monitor_frequency', 'standard_value', 'unit', 'warning_threshold', 'alarm_threshold'],
+      fields: [
+        'monitor_frequency',
+        'standard_value',
+        'unit',
+        'warning_threshold',
+        'alarm_threshold',
+      ],
     },
     {
       title: '其他信息',

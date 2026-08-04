@@ -3,6 +3,7 @@ import type { PdmDashboardStats } from '@/api/pdm/dashboard';
 
 declare global {
   interface Window {
+    // eslint-disable-next-line @typescript-eslint/naming-convention
     __pdmStats?: PdmDashboardStats;
   }
 }

@@ -75,7 +75,10 @@ const TemplateFormDialog: React.FC<TemplateFormDialogProps> = ({
                 value={templateFormData.report_type}
                 label='报表类型 *'
                 onChange={(e) =>
-                  onFormDataChange({ ...templateFormData, report_type: e.target.value as ReportType })
+                  onFormDataChange({
+                    ...templateFormData,
+                    report_type: e.target.value as ReportType,
+                  })
                 }
                 fullWidth
               >
@@ -92,9 +95,7 @@ const TemplateFormDialog: React.FC<TemplateFormDialogProps> = ({
             <TextField
               label='分类'
               value={templateFormData.category}
-              onChange={(e) =>
-                onFormDataChange({ ...templateFormData, category: e.target.value })
-              }
+              onChange={(e) => onFormDataChange({ ...templateFormData, category: e.target.value })}
               fullWidth
             />
           </Box>
@@ -102,9 +103,7 @@ const TemplateFormDialog: React.FC<TemplateFormDialogProps> = ({
           <TextField
             label='描述'
             value={templateFormData.description || ''}
-            onChange={(e) =>
-              onFormDataChange({ ...templateFormData, description: e.target.value })
-            }
+            onChange={(e) => onFormDataChange({ ...templateFormData, description: e.target.value })}
             multiline
             rows={2}
             fullWidth

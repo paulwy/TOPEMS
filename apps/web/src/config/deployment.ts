@@ -38,7 +38,7 @@ export interface DeploymentConfig {
  * 从环境变量获取部署配置
  */
 export const deploymentConfig: DeploymentConfig = {
-  mode: (getEnv('VITE_DEPLOYMENT_MODE') as DeploymentMode) || 'on-premise',
+  mode: (getEnv('VITEDeploymentMode') as DeploymentMode) || 'on-premise',
   multiTenantEnabled: getEnv('VITE_MULTI_TENANT_ENABLED') === 'true',
   defaultTenantId: getEnv('VITE_DEFAULT_TENANT_ID') || '00000000-0000-0000-0000-000000000001',
   features: {

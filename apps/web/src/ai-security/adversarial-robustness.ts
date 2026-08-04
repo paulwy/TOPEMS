@@ -154,7 +154,7 @@ export class AdversarialRobustness {
     return AdversarialRobustness.instance;
   }
 
-  run_test(modelId: string, attackVectorId: string): RobustnessTest {
+  runTest(modelId: string, attackVectorId: string): RobustnessTest {
     const vector = this.attackVectors.get(attackVectorId);
     if (!vector) {
       throw new Error(`Attack vector not found: ${attackVectorId}`);
@@ -205,7 +205,7 @@ export class AdversarialRobustness {
     return test;
   }
 
-  get_test_result(testId: string): RobustnessTest | null {
+  getTestResult(testId: string): RobustnessTest | null {
     for (const tests of this.tests.values()) {
       const found = tests.find((t) => t.id === testId);
       if (found) return found;
@@ -213,7 +213,7 @@ export class AdversarialRobustness {
     return null;
   }
 
-  list_tests(modelId?: string, limit?: number): RobustnessTest[] {
+  listTests(modelId?: string, limit?: number): RobustnessTest[] {
     let results: RobustnessTest[];
     if (modelId) {
       results = this.tests.get(modelId) ?? [];
@@ -224,12 +224,12 @@ export class AdversarialRobustness {
     return limit ? results.slice(0, limit) : results;
   }
 
-  get_attack_vectors(type?: AttackType): AttackVector[] {
+  getAttackVectors(type?: AttackType): AttackVector[] {
     const vectors = Array.from(this.attackVectors.values());
     return type ? vectors.filter((v) => v.type === type) : vectors;
   }
 
-  add_defense(defense: Omit<Defense, 'id'>): Defense {
+  addDefense(defense: Omit<Defense, 'id'>): Defense {
     const newDefense: Defense = {
       ...defense,
       id: `def-${Date.now()}-${Math.random().toString(36).slice(2, 7)}`,
@@ -238,16 +238,16 @@ export class AdversarialRobustness {
     return newDefense;
   }
 
-  get_defense_status(): {
+  getDefenseStatus(): {
     total_defenses: number;
     enabled_defenses: number;
-    by_type: Record<AttackType, { total: number; enabled: number; avg_effectiveness: number }>;
+    byType: Record<AttackType, { total: number; enabled: number; avg_effectiveness: number }>;
     defenses: Defense[];
   } {
     const defenses = Array.from(this.defenses.values());
     const enabled = defenses.filter((d) => d.enabled);
 
-    const by_type: Record<
+    const byType: Record<
       AttackType,
       { total: number; enabled: number; avg_effectiveness: number }
     > = {
@@ -258,17 +258,17 @@ export class AdversarialRobustness {
     };
 
     for (const defense of defenses) {
-      const entry = by_type[defense.type];
+      const entry = byType[defense.type];
       entry.total++;
       if (defense.enabled) {
         entry.enabled++;
       }
     }
 
-    for (const type of Object.keys(by_type) as AttackType[]) {
+    for (const type of Object.keys(byType) as AttackType[]) {
       const typeDefenses = defenses.filter((d) => d.type === type);
       if (typeDefenses.length > 0) {
-        by_type[type].avg_effectiveness =
+        byType[type].avg_effectiveness =
           Math.round(
             (typeDefenses.reduce((sum, d) => sum + d.effectiveness, 0) / typeDefenses.length) * 100
           ) / 100;
@@ -278,20 +278,20 @@ export class AdversarialRobustness {
     return {
       total_defenses: defenses.length,
       enabled_defenses: enabled.length,
-      by_type,
+      byType,
       defenses,
     };
   }
 
-  compare_robustness(modelIds: string[]): Array<{
+  compareRobustness(modelIds: string[]): Array<{
     modelId: string;
     overall_score: number;
-    by_attack_type: Record<AttackType, { success_rate: number; defense_rate: number }>;
+    byAttackType: Record<AttackType, { success_rate: number; defense_rate: number }>;
     recommendation: string;
   }> {
     return modelIds.map((modelId) => {
       const modelTestList = this.tests.get(modelId) ?? [];
-      const by_attack_type: Record<AttackType, { success_rate: number; defense_rate: number }> = {
+      const byAttackType: Record<AttackType, { success_rate: number; defense_rate: number }> = {
         PromptInjection: { success_rate: 0, defense_rate: 0 },
         ModelPoisoning: { success_rate: 0, defense_rate: 0 },
         DataExfiltration: { success_rate: 0, defense_rate: 0 },
@@ -307,7 +307,7 @@ export class AdversarialRobustness {
 
       for (const test of modelTestList) {
         const attackType = test.attackVector.type;
-        const entry = by_attack_type[attackType];
+        const entry = byAttackType[attackType];
         const count = typeCounts[attackType];
         entry.success_rate = (entry.success_rate * count + test.success_rate) / (count + 1);
         entry.defense_rate = (entry.defense_rate * count + test.defense_rate) / (count + 1);
@@ -316,21 +316,21 @@ export class AdversarialRobustness {
 
       const overallScore =
         1 -
-        Object.values(by_attack_type).reduce((sum, v) => sum + v.success_rate, 0) /
+        Object.values(byAttackType).reduce((sum, v) => sum + v.success_rate, 0) /
           Math.max(modelTestList.length, 1);
 
-      const maxRiskType = (Object.keys(by_attack_type) as AttackType[]).reduce(
-        (max, t) => (by_attack_type[t].success_rate > by_attack_type[max].success_rate ? t : max),
+      const maxRiskType = (Object.keys(byAttackType) as AttackType[]).reduce(
+        (max, t) => (byAttackType[t].success_rate > byAttackType[max].success_rate ? t : max),
         'PromptInjection' as AttackType
       );
 
       return {
         modelId,
         overall_score: Math.round(Math.max(0, overallScore) * 100) / 100,
-        by_attack_type,
+        byAttackType,
         recommendation:
-          by_attack_type[maxRiskType].success_rate > 0.3
-            ? `需要加强 ${maxRiskType} 防御，当前成功率 ${(by_attack_type[maxRiskType].success_rate * 100).toFixed(1)}%`
+          byAttackType[maxRiskType].success_rate > 0.3
+            ? `需要加强 ${maxRiskType} 防御，当前成功率 ${(byAttackType[maxRiskType].success_rate * 100).toFixed(1)}%`
             : `鲁棒性良好，继续保持当前防御策略`,
       };
     });

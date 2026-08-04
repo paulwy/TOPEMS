@@ -223,7 +223,7 @@ export interface ConversionRule {
   transform_script?: string;
   status: RuleStatus;
   priority: number;
-  is_enabled: boolean;
+  isEnabled: boolean;
   max_retries: number;
   retry_interval_secs: number;
   stop_on_failure: boolean;
@@ -258,7 +258,7 @@ export interface UpdateConversionRuleRequest {
   transform_script?: string;
   status?: RuleStatus;
   priority?: number;
-  is_enabled?: boolean;
+  isEnabled?: boolean;
   max_retries?: number;
   retry_interval_secs?: number;
   stop_on_failure?: boolean;

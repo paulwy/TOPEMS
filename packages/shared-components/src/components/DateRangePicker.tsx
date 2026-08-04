@@ -6,10 +6,9 @@ import {
   Button,
   IconButton,
   Typography,
-  Paper,
   Chip,
 } from '@mui/material';
-import { Calendar, X, ChevronLeft, ChevronRight } from 'lucide-react';
+import { X, ChevronLeft, ChevronRight } from 'lucide-react';
 
 export interface DateRange {
   startDate: Date | null;
@@ -61,8 +60,6 @@ const DateRangePicker: React.FC<DateRangePickerProps> = ({
     { label: '本季度', days: 90 },
     { label: '本年', days: 365 },
   ];
-  const startLabel = locale?.startDate ?? '开始日期';
-  const endLabel = locale?.endDate ?? '结束日期';
   const [anchorEl, setAnchorEl] = useState<HTMLElement | null>(null);
   const [currentMonth, setCurrentMonth] = useState(new Date());
   const [tempStartDate, setTempStartDate] = useState(value.startDate);

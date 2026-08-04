@@ -154,7 +154,7 @@ class PerformanceMonitor {
 
   recordComponentRender(componentName: string, renderTime: number, isMount: boolean) {
     const existing = this.componentRenderMetrics.get(componentName);
-    
+
     if (isMount) {
       this.componentRenderMetrics.set(componentName, {
         componentName,
@@ -226,7 +226,9 @@ class PerformanceMonitor {
   }
 
   getSlowComponents(thresholdMs: number = 50): ComponentRenderMetrics[] {
-    return Array.from(this.componentRenderMetrics.values()).filter((m) => m.renderTime > thresholdMs);
+    return Array.from(this.componentRenderMetrics.values()).filter(
+      (m) => m.renderTime > thresholdMs
+    );
   }
 
   getMemoryUsagePercent(): number {
@@ -266,15 +268,18 @@ class PerformanceMonitor {
   logPerformanceReport() {
     const report = JSON.parse(this.exportReport());
     logger.info('Performance Report:', report.summary);
-    
+
     if (report.summary.slowComponents > 0) {
-      logger.warn('Slow components detected:', report.componentRenderMetrics.filter((m: ComponentRenderMetrics) => m.renderTime > 50));
+      logger.warn(
+        'Slow components detected:',
+        report.componentRenderMetrics.filter((m: ComponentRenderMetrics) => m.renderTime > 50)
+      );
     }
-    
+
     if (report.summary.slowApiCalls > 0) {
       logger.warn('Slow API calls detected:', report.summary.slowApiCalls);
     }
-    
+
     if (report.summary.memoryUsagePercent > 80) {
       logger.warn(`High memory usage: ${report.summary.memoryUsagePercent.toFixed(1)}%`);
     }
@@ -304,7 +309,8 @@ export function usePerformanceMonitor() {
     componentMetrics,
     recordApiCall: performanceMonitor.recordApiCall.bind(performanceMonitor),
     getApiCallHistory: performanceMonitor.getApiCallHistory.bind(performanceMonitor),
-    getAverageApiResponseTime: performanceMonitor.getAverageApiResponseTime.bind(performanceMonitor),
+    getAverageApiResponseTime:
+      performanceMonitor.getAverageApiResponseTime.bind(performanceMonitor),
     getApiSuccessRate: performanceMonitor.getApiSuccessRate.bind(performanceMonitor),
     getSlowApiCalls: performanceMonitor.getSlowApiCalls.bind(performanceMonitor),
     getSlowComponents: performanceMonitor.getSlowComponents.bind(performanceMonitor),
@@ -349,7 +355,9 @@ export function useApiCall<T, A extends any[] = any[]>(
     setError(null);
 
     try {
-      const result = await measureApiCall(callApi.current.name || 'api-call', () => callApi.current(...args));
+      const result = await measureApiCall(callApi.current.name || 'api-call', () =>
+        callApi.current(...args)
+      );
       setData(result);
       return result;
     } catch (err: unknown) {
@@ -385,7 +393,7 @@ export function useComponentLoadTime(componentName: string) {
 
   useEffect(() => {
     const startTime = performance.now();
-    
+
     const observer = new MutationObserver(() => {
       const element = document.querySelector(`[data-component="${componentName}"]`);
       if (element) {
@@ -438,14 +446,20 @@ export function withPerformanceTracking<P extends object>(
 }
 
 export function PerformanceWarnings() {
-  const { getSlowApiCalls, getApiSuccessRate, getSlowComponents, getMemoryUsagePercent } = usePerformanceMonitor();
+  const { getSlowApiCalls, getApiSuccessRate, getSlowComponents, getMemoryUsagePercent } =
+    usePerformanceMonitor();
 
   const slowCalls = getSlowApiCalls();
   const successRate = getApiSuccessRate();
   const slowComponents = getSlowComponents();
   const memoryPercent = getMemoryUsagePercent();
 
-  if (slowCalls.length === 0 && successRate >= 95 && slowComponents.length === 0 && memoryPercent < 80) {
+  if (
+    slowCalls.length === 0 &&
+    successRate >= 95 &&
+    slowComponents.length === 0 &&
+    memoryPercent < 80
+  ) {
     return null;
   }
 
@@ -464,14 +478,14 @@ export function PerformanceWarnings() {
         zIndex: 1000,
       }}
     >
-      <Typography sx={{ fontWeight: 600, color: '#92400e', mb: 3 }}>⚠️ 性能警告</Typography>
+      <Typography sx={{ fontWeight: 600, color: 'warning.800', mb: 3 }}>⚠️ 性能警告</Typography>
 
       {successRate < 95 && (
         <Box sx={{ mb: 2 }}>
           <Chip
             label={`API 成功率: ${successRate.toFixed(1)}%`}
-            color="error"
-            size="small"
+            color='error'
+            size='small'
             sx={{ mr: 2 }}
           />
         </Box>
@@ -482,7 +496,7 @@ export function PerformanceWarnings() {
           <Chip
             label={`内存使用率: ${memoryPercent.toFixed(1)}%`}
             color={memoryPercent >= 90 ? 'error' : 'warning'}
-            size="small"
+            size='small'
             sx={{ mr: 2 }}
           />
         </Box>
@@ -495,7 +509,10 @@ export function PerformanceWarnings() {
           </Typography>
           <Box sx={{ pl: 2 }}>
             {slowCalls.slice(0, 3).map((call, idx) => (
-              <Typography key={idx} sx={{ fontSize: '0.75rem', color: 'warning.600' }}>
+              <Typography
+                key={idx}
+                sx={{ fontSize: '0.75rem', color: 'warning.600' }}
+              >
                 {call.endpoint}: {(call.duration / 1000).toFixed(2)}s
               </Typography>
             ))}
@@ -510,7 +527,10 @@ export function PerformanceWarnings() {
           </Typography>
           <Box sx={{ pl: 2 }}>
             {slowComponents.slice(0, 3).map((comp, idx) => (
-              <Typography key={idx} sx={{ fontSize: '0.75rem', color: 'warning.600' }}>
+              <Typography
+                key={idx}
+                sx={{ fontSize: '0.75rem', color: 'warning.600' }}
+              >
                 {comp.componentName}: {comp.renderTime.toFixed(2)}ms (更新: {comp.updateCount}次)
               </Typography>
             ))}

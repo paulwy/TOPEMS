@@ -1,5 +1,4 @@
-import React from 'react';
-import { useMemo } from 'react';
+import React, { useMemo } from 'react';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 
 /**
@@ -40,8 +39,8 @@ export interface FeatureFlagResult {
 }
 
 // 全局特性开关缓存（从 API 懒加载）
-let featureFlagsCache: Map<string, boolean> = new Map();
-let cacheLoaded = false;
+const featureFlagsCache: Map<string, boolean> = new Map();
+const cacheLoaded = false;
 
 /**
  * 检查特性是否开启
@@ -50,10 +49,7 @@ let cacheLoaded = false;
  * @param context - 上下文（可选，默认从 auth state 获取）
  * @returns FeatureFlagResult
  */
-export function useFeatureFlag(
-  key: string,
-  context?: FeatureFlagContext
-): FeatureFlagResult {
+export function useFeatureFlag(key: string, context?: FeatureFlagContext): FeatureFlagResult {
   const { data, isLoading, error } = useQuery({
     queryKey: ['feature-flags', key],
     queryFn: () => checkFeatureFlag(key, context),
@@ -64,7 +60,7 @@ export function useFeatureFlag(
   return {
     enabled: data ?? false,
     loading: isLoading,
-    error: error,
+    error,
   };
 }
 
@@ -107,14 +103,13 @@ export function FeatureGate({
     return null;
   }
 
-  return enabled ? React.createElement(React.Fragment, null, children) : React.createElement(React.Fragment, null, fallback);
+  return enabled
+    ? React.createElement(React.Fragment, null, children)
+    : React.createElement(React.Fragment, null, fallback);
 }
 
 // 内部 API 调用函数
-async function checkFeatureFlag(
-  key: string,
-  context?: FeatureFlagContext
-): Promise<boolean> {
+async function checkFeatureFlag(key: string, context?: FeatureFlagContext): Promise<boolean> {
   try {
     const response = await fetch('/api/core/feature-flags/check', {
       method: 'POST',

@@ -3,6 +3,7 @@ import type { LimsDashboardStats } from '@/api/lims/dashboard';
 
 declare global {
   interface Window {
+    // eslint-disable-next-line @typescript-eslint/naming-convention
     __limsStats?: LimsDashboardStats;
   }
 }

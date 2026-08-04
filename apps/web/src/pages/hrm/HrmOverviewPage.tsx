@@ -24,6 +24,7 @@ import LineChartComponent from '../../components/charts/LineChart';
 import PieChartComponent from '../../components/charts/PieChart';
 
 import { useTranslation } from 'react-i18next';
+
 const ct = designTokens.colors;
 
 const HrmOverviewPage: React.FC = () => {
@@ -269,7 +270,10 @@ const HrmOverviewPage: React.FC = () => {
       <DashboardTemplate
         title=''
         subtitle=''
-        breadcrumbs={[{ label: t('hrm.hrm_overview_page.home'), href: '/dashboard' }, { label: t('hrm.hrm_overview_page.text_40fb54') }]}
+        breadcrumbs={[
+          { label: t('hrm.hrm_overview_page.home'), href: '/dashboard' },
+          { label: t('hrm.hrm_overview_page.text_40fb54') },
+        ]}
         stats={stats}
         charts={charts}
         recentItems={recentItems}

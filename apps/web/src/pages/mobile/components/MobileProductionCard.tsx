@@ -119,9 +119,7 @@ export const MobileProductionCard: React.FC<MobileProductionCardProps> = ({
                         label={getStatusLabel(order.status)}
                         size='small'
                         color={
-                          getStatusColor(order.status) as React.ComponentProps<
-                            typeof import('@mui/material/Chip').default
-                          >['color']
+                          getStatusColor(order.status) as React.ComponentProps<typeof Chip>['color']
                         }
                         sx={{ height: 20, fontSize: '0.7rem' }}
                       />
@@ -129,7 +127,7 @@ export const MobileProductionCard: React.FC<MobileProductionCardProps> = ({
                         variant='caption'
                         color='text.secondary'
                       >
-                        {order.order_no}
+                        {order.orderNo}
                       </Typography>
                     </Box>
                   </Box>
@@ -146,7 +144,7 @@ export const MobileProductionCard: React.FC<MobileProductionCardProps> = ({
                         color='text.secondary'
                         sx={{ display: 'block', mb: 0.5 }}
                       >
-                        {t('mobile.production.label.planned_quantity')}
+                        {t('mobile.production.label.plannedQuantity')}
                       </Typography>
                       <Typography variant='body2'>{order.quantity}</Typography>
                     </Box>
@@ -237,7 +235,7 @@ export const MobileProductionCard: React.FC<MobileProductionCardProps> = ({
                     <ClipboardList style={{ width: 20, height: 20 }} />
                   </Avatar>
                 }
-                title={report.order_no}
+                title={report.orderNo}
                 subtitle={
                   <Box sx={{ mt: 0.5 }}>
                     <Typography
@@ -333,7 +331,7 @@ export const MobileProductionCard: React.FC<MobileProductionCardProps> = ({
                       size='small'
                       color={
                         getStatusColor(equipment.status) as React.ComponentProps<
-                          typeof import('@mui/material/Chip').default
+                          typeof Chip
                         >['color']
                       }
                       sx={{ height: 18, fontSize: '0.65rem' }}

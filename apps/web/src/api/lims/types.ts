@@ -504,7 +504,7 @@ export interface MethodCategory {
   id: string;
   category_code: string;
   category_name: string;
-  parent_id?: string;
+  parentId?: string;
   sort_order: number;
   description?: string;
   status: string;
@@ -515,14 +515,14 @@ export interface MethodCategory {
 export interface CreateMethodCategoryRequest {
   category_code: string;
   category_name: string;
-  parent_id?: string;
+  parentId?: string;
   sort_order?: number;
   description?: string;
 }
 
 export interface UpdateMethodCategoryRequest {
   category_name?: string;
-  parent_id?: string;
+  parentId?: string;
   sort_order?: number;
   description?: string;
   status?: string;

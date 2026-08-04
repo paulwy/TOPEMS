@@ -85,19 +85,19 @@ export class PerformanceAnalyzerV59 {
     return PerformanceAnalyzerV59.instance;
   }
 
-  start_profiling(intervalMs = 1000): void {
+  startProfiling(intervalMs = 1000): void {
     if (this.isProfiling) return;
     this.isProfiling = true;
 
     this.profilingInterval = setInterval(() => {
-      this.take_snapshot();
+      this.takeSnapshot();
     }, intervalMs);
 
     this.measureFps();
     this.emit('profiling:started', null);
   }
 
-  stop_profiling(): void {
+  stopProfiling(): void {
     this.isProfiling = false;
 
     if (this.profilingInterval) {
@@ -113,7 +113,7 @@ export class PerformanceAnalyzerV59 {
     this.emit('profiling:stopped', null);
   }
 
-  is_active(): boolean {
+  isActive(): boolean {
     return this.isProfiling;
   }
 
@@ -139,7 +139,7 @@ export class PerformanceAnalyzerV59 {
     this.rafId = requestAnimationFrame(tick);
   }
 
-  take_snapshot(): PerfSnapshot {
+  takeSnapshot(): PerfSnapshot {
     const memory = this.getMemoryUsage();
     const cpu = this.getCpuUsage();
     const fps = this.getCurrentFps();
@@ -162,7 +162,7 @@ export class PerformanceAnalyzerV59 {
     this.lastSnapshot = snapshot;
     this.emit('snapshot:taken', snapshot);
 
-    this.detect_issues(snapshot);
+    this.detectIssues(snapshot);
 
     return snapshot;
   }
@@ -219,11 +219,11 @@ export class PerformanceAnalyzerV59 {
     return performance.now() - start;
   }
 
-  private detect_issues(snapshot: PerfSnapshot): void {
+  private detectIssues(snapshot: PerfSnapshot): void {
     if (this.lastSnapshot) {
       const memoryGrowth = snapshot.memory - this.lastSnapshot.memory;
       if (memoryGrowth > 10 * 1024 * 1024) {
-        this.add_issue({
+        this.addIssue({
           type: 'MemoryLeak',
           severity: memoryGrowth > 50 * 1024 * 1024 ? 'critical' : 'high',
           location: 'heap',
@@ -234,7 +234,7 @@ export class PerformanceAnalyzerV59 {
 
       const fpsDrop = this.lastSnapshot.fps - snapshot.fps;
       if (fpsDrop > this.budget.maxFpsDrop) {
-        this.add_issue({
+        this.addIssue({
           type: 'LongTask',
           severity: 'medium',
           location: 'main-thread',
@@ -245,7 +245,7 @@ export class PerformanceAnalyzerV59 {
     }
 
     if (snapshot.cpu > this.budget.maxCpuUsage) {
-      this.add_issue({
+      this.addIssue({
         type: 'ExcessiveRenders',
         severity: snapshot.cpu > 95 ? 'critical' : 'high',
         location: 'cpu',
@@ -255,7 +255,7 @@ export class PerformanceAnalyzerV59 {
     }
 
     if (snapshot.renderTime > this.budget.maxRenderTime) {
-      this.add_issue({
+      this.addIssue({
         type: 'LayoutThrash',
         severity: 'medium',
         location: 'render',
@@ -265,7 +265,7 @@ export class PerformanceAnalyzerV59 {
     }
 
     if (snapshot.scriptTime > this.budget.maxScriptTime) {
-      this.add_issue({
+      this.addIssue({
         type: 'LongTask',
         severity: 'medium',
         location: 'script',
@@ -275,7 +275,7 @@ export class PerformanceAnalyzerV59 {
     }
   }
 
-  private add_issue(issue: Omit<PerfIssue, 'id' | 'timestamp'>): void {
+  private addIssue(issue: Omit<PerfIssue, 'id' | 'timestamp'>): void {
     const fullIssue: PerfIssue = {
       ...issue,
       id: generateId(),
@@ -290,7 +290,7 @@ export class PerformanceAnalyzerV59 {
     this.emit('issue:detected', fullIssue);
   }
 
-  analyze_performance(): {
+  analyzePerformance(): {
     score: number;
     fps: { current: number; avg: number; min: number; max: number };
     memory: { current: number; trend: 'stable' | 'increasing' | 'decreasing' };
@@ -343,7 +343,7 @@ export class PerformanceAnalyzerV59 {
     };
   }
 
-  get_issues(type?: PerfIssueType, severity?: PerfIssue['severity']): PerfIssue[] {
+  getIssues(type?: PerfIssueType, severity?: PerfIssue['severity']): PerfIssue[] {
     let result = [...this.issues];
     if (type) result = result.filter((i) => i.type === type);
     if (severity) result = result.filter((i) => i.severity === severity);
@@ -351,12 +351,12 @@ export class PerformanceAnalyzerV59 {
     return result;
   }
 
-  clear_issues(): void {
+  clearIssues(): void {
     this.issues = [];
     this.emit('issues:cleared', null);
   }
 
-  get_budget_usage(): BudgetUsage[] {
+  getBudgetUsage(): BudgetUsage[] {
     const results: BudgetUsage[] = [];
     const snapshot = this.lastSnapshot;
 
@@ -427,7 +427,7 @@ export class PerformanceAnalyzerV59 {
     return 'fail';
   }
 
-  get_trend(durationMs = 30000): TrendPoint[] {
+  getTrend(durationMs = 30000): TrendPoint[] {
     const cutoff = Date.now() - durationMs;
     return this.snapshots
       .filter((s) => s.timestamp >= cutoff)
@@ -439,7 +439,7 @@ export class PerformanceAnalyzerV59 {
       }));
   }
 
-  optimize_suggestions(): Array<{
+  optimizeSuggestions(): Array<{
     category: BudgetCategory;
     suggestion: string;
     priority: 'low' | 'medium' | 'high';
@@ -449,7 +449,7 @@ export class PerformanceAnalyzerV59 {
       suggestion: string;
       priority: 'low' | 'medium' | 'high';
     }> = [];
-    const budgetUsage = this.get_budget_usage();
+    const budgetUsage = this.getBudgetUsage();
 
     for (const usage of budgetUsage) {
       if (usage.status === 'fail') {
@@ -467,7 +467,7 @@ export class PerformanceAnalyzerV59 {
       }
     }
 
-    const criticalIssues = this.get_issues(undefined, 'critical');
+    const criticalIssues = this.getIssues(undefined, 'critical');
     for (const issue of criticalIssues) {
       if (!suggestions.some((s) => s.suggestion === issue.suggestion)) {
         suggestions.push({
@@ -511,24 +511,24 @@ export class PerformanceAnalyzerV59 {
     return map[type];
   }
 
-  set_budget(budget: Partial<PerformanceBudget>): void {
+  setBudget(budget: Partial<PerformanceBudget>): void {
     this.budget = { ...this.budget, ...budget };
     this.emit('budget:updated', this.budget);
   }
 
-  get_budget(): PerformanceBudget {
+  getBudget(): PerformanceBudget {
     return { ...this.budget };
   }
 
-  get_snapshots(): PerfSnapshot[] {
+  getSnapshots(): PerfSnapshot[] {
     return [...this.snapshots];
   }
 
-  get_latest_snapshot(): PerfSnapshot | null {
+  getLatestSnapshot(): PerfSnapshot | null {
     return this.lastSnapshot;
   }
 
-  clear_snapshots(): void {
+  clearSnapshots(): void {
     this.snapshots = [];
     this.lastSnapshot = null;
     this.fpsFrames = [];
@@ -564,7 +564,7 @@ export class PerformanceAnalyzerV59 {
   }
 
   destroy(): void {
-    this.stop_profiling();
+    this.stopProfiling();
     this.snapshots = [];
     this.issues = [];
     this.lastSnapshot = null;

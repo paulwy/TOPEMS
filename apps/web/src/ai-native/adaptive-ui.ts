@@ -101,7 +101,7 @@ const DEFAULT_PREFERENCES: UserPreferences = {
   show_favorites: true,
   sidebar_collapsed: false,
   fontSize: 14,
-  accentColor: '#8b5cf6',
+  accentColor: 'secondary.500',
   layout: 'grid',
 };
 
@@ -224,7 +224,10 @@ class AdaptiveUIEngineImpl {
     this.layoutChangeCount++;
     this.totalAdaptationLatency += performance.now() - startTime;
 
-    this.deviceDistribution.set(profile.device, (this.deviceDistribution.get(profile.device) ?? 0) + 1);
+    this.deviceDistribution.set(
+      profile.device,
+      (this.deviceDistribution.get(profile.device) ?? 0) + 1
+    );
 
     for (const segment of profile.segments) {
       this.segmentDistribution.set(segment, (this.segmentDistribution.get(segment) ?? 0) + 1);
@@ -250,13 +253,14 @@ class AdaptiveUIEngineImpl {
     const patterns = profile.behavior_patterns;
     if (patterns.length === 0) return 0.3;
 
-    const highFreqActions = patterns.filter((p) => p.frequency >= BEHAVIOR_THRESHOLDS.high_frequency);
-    const mediumFreqActions = patterns.filter((p) => p.frequency >= BEHAVIOR_THRESHOLDS.medium_frequency);
-
-    return Math.min(
-      1,
-      0.3 + (highFreqActions.length * 0.15 + mediumFreqActions.length * 0.05)
+    const highFreqActions = patterns.filter(
+      (p) => p.frequency >= BEHAVIOR_THRESHOLDS.high_frequency
     );
+    const mediumFreqActions = patterns.filter(
+      (p) => p.frequency >= BEHAVIOR_THRESHOLDS.medium_frequency
+    );
+
+    return Math.min(1, 0.3 + (highFreqActions.length * 0.15 + mediumFreqActions.length * 0.05));
   }
 
   private computeDeviceScore(profile: UserProfile): number {
@@ -301,7 +305,12 @@ class AdaptiveUIEngineImpl {
       density,
       theme: prefs.theme,
       font_scale: prefs.fontSize / 14,
-      sidebar_state: profile.device === 'mobile' ? 'collapsed' : prefs.sidebar_collapsed ? 'collapsed' : 'expanded',
+      sidebar_state:
+        profile.device === 'mobile'
+          ? 'collapsed'
+          : prefs.sidebar_collapsed
+            ? 'collapsed'
+            : 'expanded',
       recommended_modules: recommendedModules,
       hidden_elements: hiddenElements,
       layout_confidence: confidence,
@@ -312,14 +321,29 @@ class AdaptiveUIEngineImpl {
     const modules: AdaptedLayout['recommended_modules'] = [];
     const behavior = profile.behavior_patterns;
 
-    const moduleMap: Record<string, { keywords: string[]; name: string; priority: ContentPriority }> = {
+    const moduleMap: Record<
+      string,
+      { keywords: string[]; name: string; priority: ContentPriority }
+    > = {
       dashboard: { keywords: ['dashboard', 'overview', 'home'], name: '仪表盘', priority: 'high' },
-      analytics: { keywords: ['analytics', 'report', 'bi', 'chart'], name: '数据分析', priority: 'high' },
+      analytics: {
+        keywords: ['analytics', 'report', 'bi', 'chart'],
+        name: '数据分析',
+        priority: 'high',
+      },
       customer: { keywords: ['customer', 'crm', 'contact'], name: '客户管理', priority: 'medium' },
       order: { keywords: ['order', 'purchase', 'scm'], name: '采购订单', priority: 'medium' },
       product: { keywords: ['product', 'bom', 'pdm'], name: '产品数据', priority: 'medium' },
-      employee: { keywords: ['employee', 'hrm', 'attendance'], name: '人力资源', priority: 'medium' },
-      finance: { keywords: ['finance', 'accounting', 'voucher'], name: '财务管理', priority: 'high' },
+      employee: {
+        keywords: ['employee', 'hrm', 'attendance'],
+        name: '人力资源',
+        priority: 'medium',
+      },
+      finance: {
+        keywords: ['finance', 'accounting', 'voucher'],
+        name: '财务管理',
+        priority: 'high',
+      },
       inventory: { keywords: ['inventory', 'stock', 'wms'], name: '库存管理', priority: 'medium' },
       quality: { keywords: ['quality', 'qms', 'audit'], name: '质量管理', priority: 'medium' },
       workflow: { keywords: ['workflow', 'approval', 'task'], name: '工作流', priority: 'medium' },
@@ -341,7 +365,8 @@ class AdaptiveUIEngineImpl {
       );
       if (relatedBehavior.length > 0) {
         const freqScore = relatedBehavior.reduce((sum, b) => sum + b.frequency, 0) / totalFreq;
-        const priority: ContentPriority = freqScore > 0.3 ? 'high' : freqScore > 0.1 ? 'medium' : 'low';
+        const priority: ContentPriority =
+          freqScore > 0.3 ? 'high' : freqScore > 0.1 ? 'medium' : 'low';
         modules.push({
           module: config.name,
           priority,
@@ -367,7 +392,10 @@ class AdaptiveUIEngineImpl {
     return hidden.slice(0, 10);
   }
 
-  personalizeContent(userId: string, items: Array<{ id: string; type: string; tags: string[] }>): ContentRecommendation[] {
+  personalizeContent(
+    userId: string,
+    items: Array<{ id: string; type: string; tags: string[] }>
+  ): ContentRecommendation[] {
     const profile = this.profiles.get(userId);
     if (!profile || items.length === 0) {
       return items.map((item) => ({
@@ -387,9 +415,12 @@ class AdaptiveUIEngineImpl {
     }
 
     const recommendations: ContentRecommendation[] = items.map((item) => {
-      const matchingTags = item.tags.filter((t) => behaviorTags.has(t) || behaviorTags.has(t.toLowerCase()));
+      const matchingTags = item.tags.filter(
+        (t) => behaviorTags.has(t) || behaviorTags.has(t.toLowerCase())
+      );
       const confidence = Math.min(0.99, 0.3 + matchingTags.length * 0.15);
-      const priority: ContentPriority = confidence > 0.7 ? 'high' : confidence > 0.5 ? 'medium' : 'low';
+      const priority: ContentPriority =
+        confidence > 0.7 ? 'high' : confidence > 0.5 ? 'medium' : 'low';
 
       return {
         id: item.id,
@@ -431,10 +462,14 @@ class AdaptiveUIEngineImpl {
       total_adaptations: this.adaptationCount,
       layout_changes: this.layoutChangeCount,
       content_recommendations: this.contentRecommendationCount,
-      avg_layout_confidence: this.adaptationCount > 0 ? this.confidenceSum / this.adaptationCount : 0,
+      avg_layout_confidence:
+        this.adaptationCount > 0 ? this.confidenceSum / this.adaptationCount : 0,
       user_satisfaction_score: this.satisfactionScore,
       segment_distribution: segmentDist,
-      adaptation_latency_ms: this.adaptationCount > 0 ? Math.round(this.totalAdaptationLatency / this.adaptationCount) : 0,
+      adaptation_latency_ms:
+        this.adaptationCount > 0
+          ? Math.round(this.totalAdaptationLatency / this.adaptationCount)
+          : 0,
       by_device: byDevice,
       by_segment: segmentDist,
     };
@@ -466,7 +501,10 @@ class AdaptiveUIEngineImpl {
       score += 0.1;
     }
 
-    if (profile.preferences.density === 'normal' && profile.behavior_patterns.some((b) => b.frequency > 20)) {
+    if (
+      profile.preferences.density === 'normal' &&
+      profile.behavior_patterns.some((b) => b.frequency > 20)
+    ) {
       improvements.push('高频用户可切换到紧凑密度以提升效率');
       score += 0.05;
     }

@@ -14,12 +14,29 @@ const GROUP1_SERVICES: Record<string, string> = {
 };
 
 const GROUP2_SERVICES = [
-  'mail', 'im', 'notification',
-  'erp', 'finance', 'ai', 'hrm', 'pm', 'crm', 'mes',
-  'pdm', 'scm', 'wms', 'srm', 'qms',
-  'lims', 'ehs', 'rd', 'bi',
-  'portal', 'mobile',
-  'gis', 'integration',
+  'mail',
+  'im',
+  'notification',
+  'erp',
+  'finance',
+  'ai',
+  'hrm',
+  'pm',
+  'crm',
+  'mes',
+  'pdm',
+  'scm',
+  'wms',
+  'srm',
+  'qms',
+  'lims',
+  'ehs',
+  'rd',
+  'bi',
+  'portal',
+  'mobile',
+  'gis',
+  'integration',
 ];
 
 const EXTERNAL_SERVICES = ['jaeger'];
@@ -62,9 +79,7 @@ describe('runtime.ts services 路由契约', () => {
   it('services 总数与预期一致（防止有人新增遗漏分类）', () => {
     const defined = Object.keys(runtime.services).length;
     const expected =
-      Object.keys(GROUP1_SERVICES).length +
-      GROUP2_SERVICES.length +
-      EXTERNAL_SERVICES.length;
+      Object.keys(GROUP1_SERVICES).length + GROUP2_SERVICES.length + EXTERNAL_SERVICES.length;
     expect(defined).toBe(expected);
   });
 });

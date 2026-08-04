@@ -37,10 +37,6 @@ const Reports = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
-  useEffect(() => {
-    fetchReports();
-  }, []);
-
   const fetchReports = async () => {
     setLoading(true);
     setError(null);
@@ -54,6 +50,12 @@ const Reports = () => {
       setLoading(false);
     }
   };
+
+  useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect
+    fetchReports();
+   
+  }, []);
 
   const handleRefresh = async () => {
     await fetchReports();

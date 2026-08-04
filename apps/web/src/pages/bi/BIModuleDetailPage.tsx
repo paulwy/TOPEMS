@@ -75,6 +75,7 @@ import { designTokens } from '@/theme/tokens';
 import { BI_PATHS } from '@/modules/bi/config';
 
 import { useTranslation } from 'react-i18next';
+
 const ct = designTokens.colors;
 
 const moduleConfig: Record<string, { name: string; icon: string; color: string }> = {
@@ -396,7 +397,12 @@ const BIModuleDetailPage = () => {
         }));
       } else if (modId === 'ehs' && summaryData?.risk_distribution) {
         distributionData = Object.entries(summaryData.risk_distribution).map(([key, value]) => ({
-          name: key === 'high' ? t('bi.bi_module_detail_page.text_4433e7') : key === 'medium' ? t('bi.bi_module_detail_page.text_8a8992') : t('bi.bi_module_detail_page.text_b56976'),
+          name:
+            key === 'high'
+              ? t('bi.bi_module_detail_page.text_4433e7')
+              : key === 'medium'
+                ? t('bi.bi_module_detail_page.text_8a8992')
+                : t('bi.bi_module_detail_page.text_b56976'),
           value: value as number,
         }));
       } else if (modId === 'pdm' && summaryData?.product_line_usage) {

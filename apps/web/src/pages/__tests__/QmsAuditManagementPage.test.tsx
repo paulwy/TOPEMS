@@ -103,59 +103,58 @@ vi.mock('@/store', () => ({
   useToggleSidebarCollapsed: vi.fn(),
   useSetSidebarCollapsed: vi.fn(),
 }));
-    (useNotificationStore.getState as vi.Mock).mockReturnValue({
-      addNotification: mockAddNotification,
-      notifications: [],
-      removeNotification: vi.fn(),
-      clearNotifications: vi.fn(),
-    });
-    (qmsApi.listAuditPlans as vi.Mock).mockResolvedValue({
-      success: true,
-      data: mockAuditPlans,
-    });
-  });
-
-describe('QmsAuditManagementPage', () => {
-it('should render loading state initially', async () => {
-    renderWithProviders(<QmsAuditManagementPage />);
-    expect(screen.getAllByRole('heading').length).toBeGreaterThan(0);
+(useNotificationStore.getState as vi.Mock).mockReturnValue({
+  addNotification: mockAddNotification,
+  notifications: [],
+  removeNotification: vi.fn(),
+  clearNotifications: vi.fn(),
+});
+(qmsApi.listAuditPlans as vi.Mock).mockResolvedValue({
+  success: true,
+  data: mockAuditPlans,
 });
 
-it('should render page title', async () => {
+describe('QmsAuditManagementPage', () => {
+  it('should render loading state initially', async () => {
+    renderWithProviders(<QmsAuditManagementPage />);
+    expect(screen.getAllByRole('heading').length).toBeGreaterThan(0);
+  });
+
+  it('should render page title', async () => {
     renderWithProviders(<QmsAuditManagementPage />);
     await waitFor(() => {
       expect(screen.getByRole('heading', { name: '审核管理' })).toBeInTheDocument();
+    });
   });
-});
 
-it('should render audit table', async () => {
+  it('should render audit table', async () => {
     renderWithProviders(<QmsAuditManagementPage />);
     await waitFor(() => {
       expect(screen.getByText('AU-2024-001')).toBeInTheDocument();
       expect(screen.getByText('2024年内部审核')).toBeInTheDocument();
+    });
   });
-});
 
-it('should handle search', async () => {
+  it('should handle search', async () => {
     renderWithProviders(<QmsAuditManagementPage />);
     await waitFor(() => {
       const searchInput = screen.getByPlaceholderText(/搜索/);
       fireEvent.change(searchInput, { target: { value: '2024' } });
+    });
   });
-});
 
-it('should render audit statistics', async () => {
+  it('should render audit statistics', async () => {
     renderWithProviders(<QmsAuditManagementPage />);
     await waitFor(() => {
       expect(screen.getByText('审核总数')).toBeInTheDocument();
+    });
   });
-});
 
-it('should handle API error', async () => {
+  it('should handle API error', async () => {
     (qmsApi.listAuditPlans as vi.Mock).mockRejectedValue(new Error('Network error'));
     renderWithProviders(<QmsAuditManagementPage />);
     await waitFor(() => {
       expect(mockAddNotification).toHaveBeenCalledWith(expect.objectContaining({ type: 'error' }));
-});
-;
+    });
+  });
 });

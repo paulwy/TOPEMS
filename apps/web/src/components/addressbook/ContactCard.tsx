@@ -27,7 +27,7 @@ export const ContactCard: React.FC<ContactCardProps> = ({ contact, onClick }) =>
       case 'DEPARTMENT':
         return { bg: 'success.lighter', color: 'success.dark' };
       case 'COMPANY':
-        return { bg: 'secondary.100', color: '#9333ea' };
+        return { bg: 'secondary.100', color: 'purple.600' };
       default:
         return { bg: 'grey.100', color: 'text.secondary' };
     }
@@ -47,7 +47,7 @@ export const ContactCard: React.FC<ContactCardProps> = ({ contact, onClick }) =>
         }
       }}
       style={{
-        backgroundColor: 'white',
+        backgroundColor: 'common.white',
         borderRadius: 8,
         border: '1px solid border.default',
         padding: 16,

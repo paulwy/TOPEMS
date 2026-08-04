@@ -147,7 +147,7 @@ export function AISummarizer({
           <Card>
             <CardContent sx={{ p: 2 }}>
               <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 1.5 }}>
-                <Quote style={{ width: 20, height: 20, color: '#9333ea' }} />
+                <Quote style={{ width: 20, height: 20, color: 'purple.600' }} />
                 <FormLabel sx={{ color: 'secondary.dark', fontWeight: 500 }}>生成的摘要</FormLabel>
               </Box>
               <Box

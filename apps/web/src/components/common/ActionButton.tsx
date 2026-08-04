@@ -1,7 +1,7 @@
-import React from "react";
+import React from 'react';
 
 const ActionButton: React.FC = () => {
-  return React.createElement("div", null, "ActionButton");
+  return React.createElement('div', null, 'ActionButton');
 };
 
 export default ActionButton;

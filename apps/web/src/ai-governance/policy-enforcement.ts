@@ -179,7 +179,7 @@ export class PolicyEnforcer {
     this.audit_log = [];
   }
 
-  evaluate_policy(
+  evaluatePolicy(
     context: {
       user?: { role: string; clearance: number; has_consent: boolean; id: string };
       data?: { classification: string; type: string };
@@ -190,15 +190,15 @@ export class PolicyEnforcer {
     },
     policy_id?: string
   ): PolicyDecision[] {
-    const policies_to_check = policy_id
+    const policiesToCheck = policy_id
       ? this.policies.filter((p) => p.id === policy_id && p.status === 'active')
       : this.policies.filter((p) => p.status === 'active');
 
     const decisions: PolicyDecision[] = [];
 
-    for (const policy of policies_to_check) {
+    for (const policy of policiesToCheck) {
       for (const rule of policy.rules.sort((a, b) => a.priority - b.priority)) {
-        const matched = this.evaluate_condition(rule.condition, context);
+        const matched = this.evaluateCondition(rule.condition, context);
 
         if (matched) {
           const decision: PolicyDecision = {
@@ -209,8 +209,8 @@ export class PolicyEnforcer {
             rule_name: rule.name,
             action: rule.action,
             allowed: rule.action === 'allow' || rule.action === 'warn',
-            reason: this.generate_reason(rule, context),
-            evidence: this.generate_evidence(rule, context),
+            reason: this.generateReason(rule, context),
+            evidence: this.generateEvidence(rule, context),
             context: JSON.parse(JSON.stringify(context)),
             decided_at: Date.now(),
             user_id: context.user?.id,
@@ -223,7 +223,7 @@ export class PolicyEnforcer {
     }
 
     if (decisions.length === 0) {
-      const default_decision: PolicyDecision = {
+      const defaultDecision: PolicyDecision = {
         id: `decision-${Date.now()}-${Math.random().toString(36).slice(2, 7)}`,
         policy_id: 'default',
         policy_name: '默认策略',
@@ -238,14 +238,14 @@ export class PolicyEnforcer {
         user_id: context.user?.id,
         simulation: false,
       };
-      decisions.push(default_decision);
-      this.audit_log.push(default_decision);
+      decisions.push(defaultDecision);
+      this.audit_log.push(defaultDecision);
     }
 
     return decisions;
   }
 
-  enforce_policy(context: {
+  enforcePolicy(context: {
     user?: { role: string; clearance: number; has_consent: boolean; id: string };
     data?: { classification: string; type: string };
     action?: { type: string };
@@ -257,7 +257,7 @@ export class PolicyEnforcer {
     decisions: PolicyDecision[];
     blocking_decision?: PolicyDecision;
   } {
-    const decisions = this.evaluate_policy(context);
+    const decisions = this.evaluatePolicy(context);
 
     const blocking = decisions.find((d) => d.action === 'deny');
     if (blocking) {
@@ -267,7 +267,7 @@ export class PolicyEnforcer {
     return { allowed: true, decisions };
   }
 
-  get_policies(filter?: { status?: PolicyStatus; scope?: Policy['scope'] }): Policy[] {
+  getPolicies(filter?: { status?: PolicyStatus; scope?: Policy['scope'] }): Policy[] {
     let result = [...this.policies];
     if (filter?.status) {
       result = result.filter((p) => p.status === filter.status);
@@ -278,20 +278,20 @@ export class PolicyEnforcer {
     return result.sort((a, b) => b.updated_at - a.updated_at);
   }
 
-  create_policy(policy: Omit<Policy, 'id' | 'created_at' | 'updated_at' | 'version'>): Policy {
+  createPolicy(policy: Omit<Policy, 'id' | 'created_at' | 'updated_at' | 'version'>): Policy {
     const now = Date.now();
-    const new_policy: Policy = {
+    const newPolicy: Policy = {
       ...policy,
       id: `pol-${Date.now()}-${Math.random().toString(36).slice(2, 7)}`,
       created_at: now,
       updated_at: now,
       version: 1,
     };
-    this.policies.push(new_policy);
-    return new_policy;
+    this.policies.push(newPolicy);
+    return newPolicy;
   }
 
-  update_policy(policy_id: string, updates: Partial<Policy>): Policy | null {
+  updatePolicy(policy_id: string, updates: Partial<Policy>): Policy | null {
     const idx = this.policies.findIndex((p) => p.id === policy_id);
     if (idx === -1) return null;
 
@@ -304,7 +304,7 @@ export class PolicyEnforcer {
     return this.policies[idx];
   }
 
-  get_audit_log(filter?: {
+  getAuditLog(filter?: {
     policy_id?: string;
     action?: PolicyDecision['action'];
     allowed?: boolean;
@@ -331,24 +331,24 @@ export class PolicyEnforcer {
     return result;
   }
 
-  simulate_policy(
+  simulatePolicy(
     context: Record<string, unknown>,
     policy_id: string
   ): {
     decisions: PolicyDecision[];
     impact_summary: string;
-    affected_rules: string[];
+    affectedRules: string[];
   } {
     const policy = this.policies.find((p) => p.id === policy_id);
     if (!policy) {
       return {
         decisions: [],
         impact_summary: '策略不存在',
-        affected_rules: [],
+        affectedRules: [],
       };
     }
 
-    const mock_context = {
+    const mockContext = {
       user: (context.user as any) || {
         role: 'user',
         clearance: 1,
@@ -366,7 +366,7 @@ export class PolicyEnforcer {
       output: (context.output as any) || { harm_score: 0.1, bias_score: 0.1, contains_pii: false },
     };
 
-    const decisions = this.evaluate_policy(mock_context, policy_id);
+    const decisions = this.evaluatePolicy(mockContext, policy_id);
 
     for (const d of decisions) {
       d.simulation = true;
@@ -375,22 +375,22 @@ export class PolicyEnforcer {
     }
 
     const allowed = decisions.every((d) => d.allowed);
-    const affected_rules = decisions.map((d) => d.rule_name);
+    const affectedRules = decisions.map((d) => d.rule_name);
 
     return {
       decisions,
       impact_summary: allowed
         ? `策略模拟通过：${policy.name} 允许该操作`
         : `策略模拟拒绝：${policy.name} 将阻止该操作`,
-      affected_rules,
+      affectedRules,
     };
   }
 
-  private evaluate_condition(condition: string, context: Record<string, any>): boolean {
+  private evaluateCondition(condition: string, context: Record<string, any>): boolean {
     const parts = condition.split('&&').map((s) => s.trim());
 
     for (const part of parts) {
-      if (!this.evaluate_single_condition(part, context)) {
+      if (!this.evaluateSingleCondition(part, context)) {
         return false;
       }
     }
@@ -398,34 +398,34 @@ export class PolicyEnforcer {
     return true;
   }
 
-  private evaluate_single_condition(condition: string, context: Record<string, any>): boolean {
+  private evaluateSingleCondition(condition: string, context: Record<string, any>): boolean {
     const match = condition.match(/(\w+(?:\.\w+)*)\s*(==|!=|>=|<=|>|<)\s*["']?([^"']*)["']?/);
 
     if (!match) return false;
 
-    const [, path, operator, raw_value] = match;
-    const actual_value = this.resolve_path(context, path);
-    const expected_value = this.parse_value(raw_value.trim());
+    const [, path, operator, rawValue] = match;
+    const actualValue = this.resolvePath(context, path);
+    const expectedValue = this.parseValue(rawValue.trim());
 
     switch (operator) {
       case '==':
-        return actual_value == expected_value;
+        return actualValue === expectedValue;
       case '!=':
-        return actual_value != expected_value;
+        return actualValue !== expectedValue;
       case '>':
-        return actual_value > expected_value;
+        return actualValue > expectedValue;
       case '<':
-        return actual_value < expected_value;
+        return actualValue < expectedValue;
       case '>=':
-        return actual_value >= expected_value;
+        return actualValue >= expectedValue;
       case '<=':
-        return actual_value <= expected_value;
+        return actualValue <= expectedValue;
       default:
         return false;
     }
   }
 
-  private resolve_path(obj: any, path: string): any {
+  private resolvePath(obj: any, path: string): any {
     const keys = path.split('.');
     let current = obj;
     for (const key of keys) {
@@ -435,7 +435,7 @@ export class PolicyEnforcer {
     return current;
   }
 
-  private parse_value(raw: string): any {
+  private parseValue(raw: string): any {
     if (raw === 'true') return true;
     if (raw === 'false') return false;
     if (raw === 'null') return null;
@@ -443,26 +443,26 @@ export class PolicyEnforcer {
     return raw;
   }
 
-  private generate_reason(rule: PolicyRule, context: Record<string, any>): string {
-    const action_labels: Record<PolicyRule['action'], string> = {
+  private generateReason(rule: PolicyRule, context: Record<string, any>): string {
+    const actionLabels: Record<PolicyRule['action'], string> = {
       allow: '允许',
       deny: '拒绝',
       warn: '警告',
       require_approval: '需要审批',
     };
-    return `规则 "${rule.name}" 匹配条件：${rule.condition}。执行操作：${action_labels[rule.action]}。`;
+    return `规则 "${rule.name}" 匹配条件：${rule.condition}。执行操作：${actionLabels[rule.action]}。`;
   }
 
-  private generate_evidence(rule: PolicyRule, context: Record<string, any>): string {
-    const relevant_context: Record<string, unknown> = {};
-    if (context.user) relevant_context.user = context.user;
-    if (context.data) relevant_context.data = context.data;
-    if (context.action) relevant_context.action = context.action;
-    if (context.transaction) relevant_context.transaction = context.transaction;
-    if (context.project) relevant_context.project = context.project;
-    if (context.output) relevant_context.output = context.output;
+  private generateEvidence(rule: PolicyRule, context: Record<string, any>): string {
+    const relevantContext: Record<string, unknown> = {};
+    if (context.user) relevantContext.user = context.user;
+    if (context.data) relevantContext.data = context.data;
+    if (context.action) relevantContext.action = context.action;
+    if (context.transaction) relevantContext.transaction = context.transaction;
+    if (context.project) relevantContext.project = context.project;
+    if (context.output) relevantContext.output = context.output;
 
-    return `规则 ID: ${rule.id}，优先级: ${rule.priority}，匹配上下文: ${JSON.stringify(relevant_context)}`;
+    return `规则 ID: ${rule.id}，优先级: ${rule.priority}，匹配上下文: ${JSON.stringify(relevantContext)}`;
   }
 }
 

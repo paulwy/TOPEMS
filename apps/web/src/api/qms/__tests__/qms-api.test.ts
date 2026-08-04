@@ -65,7 +65,10 @@ describe('QMS Module API Tests', () => {
       const { apiClient } = await import('../../client');
       (apiClient.qms.put as vi.Mock).mockResolvedValue({ data: {} });
       const data = { name: 'Updated Standard', description: 'Updated description' };
-      await standardApi.updateStandard('std-001', data as Partial<UpdateQualityStandardRequestBackend>);
+      await standardApi.updateStandard(
+        'std-001',
+        data as Partial<UpdateQualityStandardRequestBackend>
+      );
       expect(apiClient.qms.put).toHaveBeenCalledWith('/standards/std-001', expect.any(Object));
     });
 
@@ -116,7 +119,10 @@ describe('QMS Module API Tests', () => {
       const { apiClient } = await import('../../client');
       (apiClient.qms.put as vi.Mock).mockResolvedValue({ data: {} });
       const data = { quantity: 100 };
-      await inspectionApi.updateCheck('check-001', data as Partial<UpdateQualityInspectionRequestBackend>);
+      await inspectionApi.updateCheck(
+        'check-001',
+        data as Partial<UpdateQualityInspectionRequestBackend>
+      );
       expect(apiClient.qms.put).toHaveBeenCalledWith('/checks/check-001', expect.any(Object));
     });
 
@@ -132,7 +138,10 @@ describe('QMS Module API Tests', () => {
       const { apiClient } = await import('../../client');
       (apiClient.qms.post as vi.Mock).mockResolvedValue({ data: {} });
       const data = { inspector: 'John', assign_time: '2024-01-15' };
-      await inspectionApi.assignCheck('check-001', data as unknown as AssignInspectionRequestBackend);
+      await inspectionApi.assignCheck(
+        'check-001',
+        data as unknown as AssignInspectionRequestBackend
+      );
       expect(apiClient.qms.post).toHaveBeenCalledWith('/checks/check-001/assign', data);
     });
 
@@ -141,7 +150,10 @@ describe('QMS Module API Tests', () => {
       const { apiClient } = await import('../../client');
       (apiClient.qms.post as vi.Mock).mockResolvedValue({ data: {} });
       const data = { result: 'pass', qualified_quantity: 95 };
-      await inspectionApi.submitCheckResult('check-001', data as unknown as SubmitInspectionResultRequestBackend);
+      await inspectionApi.submitCheckResult(
+        'check-001',
+        data as unknown as SubmitInspectionResultRequestBackend
+      );
       expect(apiClient.qms.post).toHaveBeenCalledWith('/checks/check-001/submit', data);
     });
 
@@ -293,7 +305,10 @@ describe('QMS Module API Tests', () => {
       const { apiClient } = await import('../../client');
       (apiClient.qms.put as vi.Mock).mockResolvedValue({ data: {} });
       const data = { amount: 1500, description: 'Updated cost' };
-      await qualityCostApi.updateQualityCost('cost-001', data as Partial<UpdateQualityCostRequestBackend>);
+      await qualityCostApi.updateQualityCost(
+        'cost-001',
+        data as Partial<UpdateQualityCostRequestBackend>
+      );
       expect(apiClient.qms.put).toHaveBeenCalledWith('/quality-costs/cost-001', expect.any(Object));
     });
 
@@ -366,7 +381,10 @@ describe('QMS Module API Tests', () => {
         data: { id: 'imp-001', title: 'Updated Improvement' },
       });
       const data = { title: 'Updated Improvement', status: 'in_progress' };
-      await improvementApi.updateImprovement('imp-001', data as Partial<UpdateQualityImprovementRequest>);
+      await improvementApi.updateImprovement(
+        'imp-001',
+        data as Partial<UpdateQualityImprovementRequest>
+      );
       expect(apiClient.qms.put).toHaveBeenCalledWith('/actions/imp-001', expect.any(Object));
     });
 

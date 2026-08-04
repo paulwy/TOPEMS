@@ -44,6 +44,7 @@ import { useNotificationStore } from '@/store';
 import { apiLogger } from '@/utils/logger';
 
 import { useTranslation } from 'react-i18next';
+
 const ct = designTokens.colors;
 
 interface TabConfig {
@@ -96,7 +97,11 @@ const VoucherDetailPage: React.FC = () => {
   useEffect(() => {
     if (voucherQuery.isError) {
       apiLogger.error(t('finance.voucher_detail_page.detail'), voucherQuery.error);
-      addNotification({ title: t('finance.voucher_detail_page.error'), message: t('finance.voucher_detail_page.detail_1'), type: 'error' });
+      addNotification({
+        title: t('finance.voucher_detail_page.error'),
+        message: t('finance.voucher_detail_page.detail_1'),
+        type: 'error',
+      });
     }
   }, [voucherQuery.isError, voucherQuery.error, addNotification]);
 
@@ -107,13 +112,21 @@ const VoucherDetailPage: React.FC = () => {
   const deleteMutation = useMutation({
     mutationFn: (voucherId: string) => voucherApi.delete(voucherId),
     onSuccess: () => {
-      addNotification({ title: t('finance.voucher_detail_page.success'), message: t('finance.voucher_detail_page.delete_success'), type: 'success' });
+      addNotification({
+        title: t('finance.voucher_detail_page.success'),
+        message: t('finance.voucher_detail_page.delete_success'),
+        type: 'success',
+      });
       queryClient.invalidateQueries({ queryKey: ['finance-vouchers'] });
       navigate(FINANCE_PATHS.vouchers);
     },
     onError: (err: unknown) => {
       apiLogger.error(t('finance.voucher_detail_page.delete'), err);
-      addNotification({ title: t('finance.voucher_detail_page.error'), message: t('finance.voucher_detail_page.delete_1'), type: 'error' });
+      addNotification({
+        title: t('finance.voucher_detail_page.error'),
+        message: t('finance.voucher_detail_page.delete_1'),
+        type: 'error',
+      });
     },
   });
 
@@ -125,12 +138,20 @@ const VoucherDetailPage: React.FC = () => {
   const auditMutation = useMutation({
     mutationFn: (voucherId: string) => voucherApi.approve(voucherId),
     onSuccess: () => {
-      addNotification({ title: t('finance.voucher_detail_page.success'), message: t('finance.voucher_detail_page.success_1'), type: 'success' });
+      addNotification({
+        title: t('finance.voucher_detail_page.success'),
+        message: t('finance.voucher_detail_page.success_1'),
+        type: 'success',
+      });
       queryClient.invalidateQueries({ queryKey: ['finance-voucher', id] });
     },
     onError: (err: unknown) => {
       apiLogger.error(t('finance.voucher_detail_page.fail'), err);
-      addNotification({ title: t('finance.voucher_detail_page.fail_1'), message: t('finance.voucher_detail_page.fail_2'), type: 'error' });
+      addNotification({
+        title: t('finance.voucher_detail_page.fail_1'),
+        message: t('finance.voucher_detail_page.fail_2'),
+        type: 'error',
+      });
     },
   });
 
@@ -142,12 +163,20 @@ const VoucherDetailPage: React.FC = () => {
   const postMutation = useMutation({
     mutationFn: (voucherId: string) => voucherApi.post(voucherId),
     onSuccess: () => {
-      addNotification({ title: t('finance.voucher_detail_page.success'), message: t('finance.voucher_detail_page.success_2'), type: 'success' });
+      addNotification({
+        title: t('finance.voucher_detail_page.success'),
+        message: t('finance.voucher_detail_page.success_2'),
+        type: 'success',
+      });
       queryClient.invalidateQueries({ queryKey: ['finance-voucher', id] });
     },
     onError: (err: unknown) => {
       apiLogger.error(t('finance.voucher_detail_page.fail_3'), err);
-      addNotification({ title: t('finance.voucher_detail_page.fail_1'), message: t('finance.voucher_detail_page.fail_4'), type: 'error' });
+      addNotification({
+        title: t('finance.voucher_detail_page.fail_1'),
+        message: t('finance.voucher_detail_page.fail_4'),
+        type: 'error',
+      });
     },
   });
 
@@ -248,8 +277,14 @@ const VoucherDetailPage: React.FC = () => {
     subtitle: `期间: ${voucher.period}`,
     tags: [getStatusBadge(voucher.status)] as unknown as string[],
     stats: [
-      { label: t('finance.voucher_detail_page.text_10afa4'), value: formatCurrency(voucher.total_debit) },
-      { label: t('finance.voucher_detail_page.text_17daaa'), value: formatCurrency(voucher.total_credit) },
+      {
+        label: t('finance.voucher_detail_page.text_10afa4'),
+        value: formatCurrency(voucher.total_debit),
+      },
+      {
+        label: t('finance.voucher_detail_page.text_17daaa'),
+        value: formatCurrency(voucher.total_credit),
+      },
     ],
   };
 
@@ -629,7 +664,8 @@ const VoucherDetailPage: React.FC = () => {
                 variant='caption'
                 color='text.secondary'
               >
-                {voucher.maker_name || t('finance.voucher_detail_page.text_8a8b89')} - {formatDate(voucher.created_at)}
+                {voucher.maker_name || t('finance.voucher_detail_page.text_8a8b89')} -{' '}
+                {formatDate(voucher.created_at)}
               </Typography>
             </Box>
           </Box>

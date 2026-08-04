@@ -42,9 +42,9 @@ const CreateFolderModal: React.FC<{
     setError(null);
 
     try {
-      const request = { name: folderName.trim() } as { name: string; parent_id?: string };
+      const request = { name: folderName.trim() } as { name: string; parentId?: string };
       if (parentId) {
-        request.parent_id = parentId;
+        request.parentId = parentId;
       }
       const response = await createFolderMutation.mutateAsync(request);
       if (response.success) {

@@ -110,7 +110,7 @@ export interface RuntimeConfig {
 
 declare global {
   interface ImportMetaEnv {
-    readonly VITE_API_BASE_URL: string;
+    readonly VITEApiBaseUrl: string;
     readonly VITE_API_TIMEOUT: string;
     readonly VITE_WS_URL: string;
     readonly VITE_WS_RECONNECT_INTERVAL: string;
@@ -128,7 +128,7 @@ declare global {
     readonly VITE_ERP_SERVICE_URL: string;
     readonly VITE_NOTIFICATION_SERVICE_URL: string;
     readonly VITE_PM_SERVICE_URL: string;
-    readonly VITE_ENABLE_DEBUG_MODE: string;
+    readonly VITEEnableDebugMode: string;
     readonly VITE_ENABLE_HOT_RELOAD: string;
     readonly VITE_ENABLE_API_DOCS: string;
     readonly VITE_OAUTH_GITHUB_ENABLED: string;
@@ -136,7 +136,7 @@ declare global {
     readonly VITE_ENABLE_DARK_MODE: string;
     readonly VITE_MAX_UPLOAD_SIZE: string;
     readonly VITE_ALLOWED_FILE_TYPES: string;
-    readonly VITE_LOG_LEVEL: string;
+    readonly VITELogLevel: string;
     readonly VITE_ENABLE_ERROR_TRACKING: string;
     readonly VITE_DEFAULT_THEME: string;
     readonly VITE_DEFAULT_LOCALE: string;

@@ -11,12 +11,7 @@ import { designTokens } from '@/theme/tokens';
 const ct = designTokens.colors;
 
 const tenantAdapter = {
-  list: async (params?: {
-    page?: number;
-    pageSize?: number;
-    search?: string;
-    status?: string;
-  }) => {
+  list: async (params?: { page?: number; pageSize?: number; search?: string; status?: string }) => {
     const response = await tenantApi.listTenants({
       page: params?.page,
       pageSize: params?.pageSize,
@@ -63,7 +58,10 @@ const StatCard: React.FC<{
   <Box sx={{ p: 2, bgcolor: bgColor, borderRadius: 3 }}>
     <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 1 }}>
       <Box sx={{ display: 'flex', color: iconColor }}>{icon}</Box>
-      <Box component='span' sx={{ color: 'text.secondary', fontSize: 14 }}>
+      <Box
+        component='span'
+        sx={{ color: 'text.secondary', fontSize: 14 }}
+      >
         {label}
       </Box>
     </Box>

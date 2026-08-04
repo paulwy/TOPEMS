@@ -100,7 +100,7 @@ export default function ServiceMonitor({
               size='small'
               label={`在线 ${onlineCount}`}
               sx={{
-                bgcolor: '#22c55e20',
+                bgcolor: 'success.500',
                 color: 'success.dark',
                 fontWeight: 500,
               }}

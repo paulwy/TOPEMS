@@ -433,7 +433,7 @@ const MobileAttendancePage: React.FC = () => {
                       mb: 3,
                       textAlign: 'center',
                       background: `linear-gradient(135deg, ${theme.palette.primary.main} 0%, ${theme.palette.primary.dark} 100%)`,
-                      color: 'white',
+                      color: 'common.white',
                     }}
                   >
                     <Typography
@@ -467,7 +467,7 @@ const MobileAttendancePage: React.FC = () => {
                         display: 'flex',
                         alignItems: 'center',
                         justifyContent: 'center',
-                        bgcolor: 'rgba(255,255,255,0.2)',
+                        bgcolor: 'action.disabledBackground',
                         cursor: checkingIn ? 'not-allowed' : 'pointer',
                         transition: 'transform 0.2s',
                         '&:active': {
@@ -671,7 +671,11 @@ const MobileAttendancePage: React.FC = () => {
                             <Chip
                               label={getStatusLabel(record.status)}
                               size='small'
-                              color={getStatusColor(record.status) as React.ComponentProps<typeof import('@mui/material/Chip').default>['color']}
+                              color={
+                                getStatusColor(record.status) as React.ComponentProps<
+                                  typeof Chip
+                                >['color']
+                              }
                               sx={{ height: 20, fontSize: '0.7rem' }}
                             />
                             <Typography
@@ -775,7 +779,11 @@ const MobileAttendancePage: React.FC = () => {
                                 <Chip
                                   label={getLeaveStatusLabel(leave.status)}
                                   size='small'
-                                  color={getLeaveStatusColor(leave.status) as React.ComponentProps<typeof import('@mui/material/Chip').default>['color']}
+                                  color={
+                                    getLeaveStatusColor(leave.status) as React.ComponentProps<
+                                      typeof Chip
+                                    >['color']
+                                  }
                                   sx={{ height: 22, fontSize: '0.75rem' }}
                                 />
                               </Box>

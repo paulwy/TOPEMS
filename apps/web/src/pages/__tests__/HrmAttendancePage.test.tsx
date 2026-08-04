@@ -113,25 +113,24 @@ vi.mock('@/store', () => ({
 }));
 
 describe('HrmAttendancePage', () => {
-it('should render without crashing', () => {
+  it('should render without crashing', () => {
     const { container } = render(
       <BrowserRouter>
         <HrmAttendancePage />
       </BrowserRouter>
     );
     expect(container).toBeDefined();
-});
+  });
 
-it('should have valid attendance API methods', () => {
+  it('should have valid attendance API methods', () => {
     expect(hrmApi.attendance.list).toBeDefined();
     expect(hrmApi.attendance.get).toBeDefined();
     expect(hrmApi.attendance.create).toBeDefined();
     expect(hrmApi.attendance.update).toBeDefined();
     expect(hrmApi.attendance.delete).toBeDefined();
-});
+  });
 
-it('should have valid leave API methods', () => {
+  it('should have valid leave API methods', () => {
     expect(hrmApi.leave.list).toBeDefined();
-});
-;
+  });
 });

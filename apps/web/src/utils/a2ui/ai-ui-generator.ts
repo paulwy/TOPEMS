@@ -10,23 +10,23 @@
 // ============ 枚举与类型定义 ============
 
 export enum UIGenerationMode {
-  TextToUI = 'text_to_ui',
-  DesignToUI = 'design_to_ui',
-  SketchToUI = 'sketch_to_ui',
+  TEXTTOUI = 'text_to_ui',
+  DESIGNTOUI = 'design_to_ui',
+  SKETCHTOUI = 'sketch_to_ui',
 }
 
 export enum LayoutStrategy {
-  Flexbox = 'flexbox',
-  Grid = 'grid',
-  Absolute = 'absolute',
+  FLEXBOX = 'flexbox',
+  GRID = 'grid',
+  ABSOLUTE = 'absolute',
 }
 
 export enum ComponentLevel {
-  Atom = 'atom',
-  Molecule = 'molecule',
-  Organism = 'organism',
-  Template = 'template',
-  Page = 'page',
+  ATOM = 'atom',
+  MOLECULE = 'molecule',
+  ORGANISM = 'organism',
+  TEMPLATE = 'template',
+  PAGE = 'page',
 }
 
 export interface ThemeConfig {
@@ -149,7 +149,7 @@ export type AIUIGenerationRequest = GenerateOptions;
  */
 export class AIUIGenerator {
   async generate(request: GenerateOptions): Promise<UIGenerationResult> {
-    const mode = request.mode ?? UIGenerationMode.TextToUI;
+    const mode = request.mode ?? UIGenerationMode.TEXTTOUI;
     const fallback = this.buildFallback(request, mode);
     try {
       const prompt = this.buildPrompt(request, mode);
@@ -175,8 +175,8 @@ export class AIUIGenerator {
         children: [],
       },
       mode,
-      layout: LayoutStrategy.Flexbox,
-      level: ComponentLevel.Molecule,
+      layout: LayoutStrategy.FLEXBOX,
+      level: ComponentLevel.MOLECULE,
       accessibility: { score: 100, issues: [] },
       suggestions: ['占位生成结果，待接入真实 AI 生成 API'],
     };
@@ -204,7 +204,7 @@ export class AIUIGenerator {
       '    "props": { },',
       '    "children": [ { "name": "...", "type": "...", "props": {}, "children": [] } ]',
       '  },',
-      '  "mode": "' + mode + '",',
+      `  "mode": "${mode}",`,
       '  "layout": "<flexbox|grid|absolute>",',
       '  "level": "<atom|molecule|organism|template|page>",',
       '  "accessibility": { "score": <0-100>, "issues": ["..."] },',
@@ -247,9 +247,7 @@ export class AIUIGenerator {
       name: typeof raw.name === 'string' ? raw.name : 'Node',
       type: typeof raw.type === 'string' ? raw.type : 'Container',
       props:
-        raw.props && typeof raw.props === 'object'
-          ? (raw.props as Record<string, unknown>)
-          : {},
+        raw.props && typeof raw.props === 'object' ? (raw.props as Record<string, unknown>) : {},
       children,
     };
   }
@@ -257,28 +255,28 @@ export class AIUIGenerator {
   private coerceLayout(v: unknown): LayoutStrategy {
     switch (v) {
       case 'grid':
-        return LayoutStrategy.Grid;
+        return LayoutStrategy.GRID;
       case 'absolute':
-        return LayoutStrategy.Absolute;
+        return LayoutStrategy.ABSOLUTE;
       case 'flexbox':
       default:
-        return LayoutStrategy.Flexbox;
+        return LayoutStrategy.FLEXBOX;
     }
   }
 
   private coerceLevel(v: unknown): ComponentLevel {
     switch (v) {
       case 'atom':
-        return ComponentLevel.Atom;
+        return ComponentLevel.ATOM;
       case 'organism':
-        return ComponentLevel.Organism;
+        return ComponentLevel.ORGANISM;
       case 'template':
-        return ComponentLevel.Template;
+        return ComponentLevel.TEMPLATE;
       case 'page':
-        return ComponentLevel.Page;
+        return ComponentLevel.PAGE;
       case 'molecule':
       default:
-        return ComponentLevel.Molecule;
+        return ComponentLevel.MOLECULE;
     }
   }
 

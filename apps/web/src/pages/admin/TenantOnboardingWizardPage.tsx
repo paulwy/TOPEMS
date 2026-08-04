@@ -298,7 +298,9 @@ export const TenantOnboardingWizardPage: React.FC = () => {
     setSubmitting(true);
     setErrorMsg(null);
     try {
-      const response = await (tenantApi as unknown as { onboardTenant: OnboardTenantApi }).onboardTenant({
+      const response = await (
+        tenantApi as unknown as { onboardTenant: OnboardTenantApi }
+      ).onboardTenant({
         name: formData.name,
         code: formData.code,
         tenant_type: formData.tenant_type,

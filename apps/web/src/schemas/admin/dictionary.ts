@@ -245,7 +245,7 @@ export const dictItemFields: SchemaField[] = [
     sortable: true,
     renderCell: (row: Record<string, unknown>) => {
       const name = String(row.name || '');
-      const hasParent = !!row.parent_id;
+      const hasParent = !!row.parentId;
       return React.createElement(
         'span',
         { style: { display: 'flex', alignItems: 'center' } },
@@ -311,7 +311,7 @@ export const dictItemFields: SchemaField[] = [
     },
   },
   {
-    name: 'parent_id',
+    name: 'parentId',
     label: '上级字典项',
     type: 'select',
     listWidth: 120,
@@ -381,7 +381,7 @@ export const dictItemSchema: EntitySchema = {
   formSections: [
     {
       title: '基本信息',
-      fields: ['code', 'name', 'value', 'sort_order', 'parent_id'],
+      fields: ['code', 'name', 'value', 'sort_order', 'parentId'],
     },
   ],
   formColCount: 2,

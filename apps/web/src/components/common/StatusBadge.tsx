@@ -1,7 +1,7 @@
-import React from "react";
+import React from 'react';
 
 const StatusBadge: React.FC = () => {
-  return React.createElement("div", null, "StatusBadge");
+  return React.createElement('div', null, 'StatusBadge');
 };
 
 export default StatusBadge;

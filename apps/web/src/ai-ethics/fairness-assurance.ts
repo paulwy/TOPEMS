@@ -94,10 +94,10 @@ export class FairnessAssurance {
     return FairnessAssurance.instance;
   }
 
-  compute_fairness(modelId: string, options?: { fairnessType?: FairnessType }): FairnessResult {
+  computeFairness(modelId: string, options?: { fairnessType?: FairnessType }): FairnessResult {
     const startTime = Date.now();
     const type = options?.fairnessType;
-    const configs = this.get_configs_for_model(modelId, type);
+    const configs = this.getConfigsForModel(modelId, type);
 
     let totalScore = 0;
     let totalParity = 0;
@@ -107,7 +107,7 @@ export class FairnessAssurance {
     for (const config of configs) {
       if (!config.enabled) continue;
 
-      const { fairnessScore, parityDifference, calibrationScore } = this.compute_metrics(config);
+      const { fairnessScore, parityDifference, calibrationScore } = this.computeMetrics(config);
 
       totalScore += fairnessScore;
       totalParity += parityDifference;
@@ -158,11 +158,11 @@ export class FairnessAssurance {
     return result;
   }
 
-  get_fairness_config(configId: string): FairnessConfig | null {
+  getFairnessConfig(configId: string): FairnessConfig | null {
     return this.configs.get(configId) ?? null;
   }
 
-  update_config(
+  updateConfig(
     configId: string,
     updates: Partial<Omit<FairnessConfig, 'id' | 'updatedAt'>>
   ): FairnessConfig | null {
@@ -177,15 +177,15 @@ export class FairnessAssurance {
     return updated;
   }
 
-  get_fairness_result(resultId: string): FairnessResult | null {
+  getFairnessResult(resultId: string): FairnessResult | null {
     return this.results.get(resultId) ?? null;
   }
 
-  get_fairness_trends(modelId: string): FairnessTrend[] {
+  getFairnessTrends(modelId: string): FairnessTrend[] {
     return this.trends.get(modelId) ?? [];
   }
 
-  run_fairness_audit(modelId: string): {
+  runFairnessAudit(modelId: string): {
     status: AuditStatus;
     results: FairnessResult[];
     summary: {
@@ -195,11 +195,11 @@ export class FairnessAssurance {
       avg_score: number;
     };
   } {
-    const configs = this.get_configs_for_model(modelId);
+    const configs = this.getConfigsForModel(modelId);
     const results: FairnessResult[] = [];
 
     for (const config of configs) {
-      const result = this.compute_fairness(modelId, { fairnessType: config.fairnessType });
+      const result = this.computeFairness(modelId, { fairnessType: config.fairnessType });
       results.push(result);
     }
 
@@ -226,7 +226,7 @@ export class FairnessAssurance {
     };
   }
 
-  get_fairness_benchmark(modelId: string): FairnessBenchmark {
+  getFairnessBenchmark(modelId: string): FairnessBenchmark {
     const trend = this.trends.get(modelId) ?? [];
     const yourScore = trend.length > 0 ? trend[trend.length - 1].score : 0.75;
 
@@ -248,14 +248,14 @@ export class FairnessAssurance {
     };
   }
 
-  list_results(modelId?: string, limit?: number): FairnessResult[] {
+  listResults(modelId?: string, limit?: number): FairnessResult[] {
     const all = Array.from(this.results.values());
     const filtered = modelId ? all.filter((r) => r.modelId === modelId) : all;
     const sorted = filtered.sort((a, b) => b.timestamp - a.timestamp);
     return limit ? sorted.slice(0, limit) : sorted;
   }
 
-  private get_configs_for_model(modelId: string, type?: FairnessType): FairnessConfig[] {
+  private getConfigsForModel(modelId: string, type?: FairnessType): FairnessConfig[] {
     const configIds = this.modelConfigs.get(modelId) ?? [];
     let configs = configIds
       .map((id) => this.configs.get(id))
@@ -264,7 +264,7 @@ export class FairnessAssurance {
     return configs;
   }
 
-  private compute_metrics(config: FairnessConfig): {
+  private computeMetrics(config: FairnessConfig): {
     fairnessScore: number;
     parityDifference: number;
     calibrationScore: number;

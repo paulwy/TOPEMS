@@ -26,7 +26,7 @@ export interface HazardousMaterialCategory {
   id: string;
   category_code: string;
   name: string;
-  parent_id: string | null;
+  parentId: string | null;
   description: string | null;
   hazardlevel: string | null;
   sort_order: number;
@@ -140,7 +140,7 @@ export interface UpdateHazardousMaterialRequest {
 export interface CreateHazardousMaterialCategoryRequest {
   category_code: string;
   name: string;
-  parent_id?: string | null;
+  parentId?: string | null;
   description?: string | null;
   hazardlevel?: string | null;
   sort_order?: number;
@@ -149,7 +149,7 @@ export interface CreateHazardousMaterialCategoryRequest {
 export interface UpdateHazardousMaterialCategoryRequest {
   category_code?: string;
   name?: string;
-  parent_id?: string | null;
+  parentId?: string | null;
   description?: string | null;
   hazardlevel?: string | null;
   sort_order?: number;

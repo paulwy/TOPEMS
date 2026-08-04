@@ -36,14 +36,19 @@ const inventoryAdapter = {
     return { data: [], total: 0 };
   },
   create: async (data: Partial<Inventory>) => {
-    const response = await erpApi.inventory.create(data as Parameters<typeof erpApi.inventory.create>[0]);
+    const response = await erpApi.inventory.create(
+      data as Parameters<typeof erpApi.inventory.create>[0]
+    );
     if (!response.success || !response.data) {
       throw new Error(response.message || '创建库存失败');
     }
     return response.data;
   },
   update: async (id: string, data: Partial<Inventory>) => {
-    const response = await erpApi.inventory.update(id, data as Parameters<typeof erpApi.inventory.update>[1]);
+    const response = await erpApi.inventory.update(
+      id,
+      data as Parameters<typeof erpApi.inventory.update>[1]
+    );
     if (!response.success || !response.data) {
       throw new Error(response.message || '更新库存失败');
     }
@@ -85,11 +90,17 @@ const StatCard: React.FC<{
           {icon}
         </Box>
       </Box>
-      <Box component='span' sx={{ color: 'text.secondary', fontSize: 14 }}>
+      <Box
+        component='span'
+        sx={{ color: 'text.secondary', fontSize: 14 }}
+      >
         {label}
       </Box>
     </Box>
-    <Typography variant='h5' sx={{ fontWeight: 700 }}>
+    <Typography
+      variant='h5'
+      sx={{ fontWeight: 700 }}
+    >
       {value}
     </Typography>
   </Box>

@@ -529,7 +529,11 @@ const MobileQualityPage: React.FC = () => {
                             <Chip
                               label={getStatusLabel(task.status)}
                               size='small'
-                              color={getStatusColor(task.status) as React.ComponentProps<typeof import('@mui/material/Chip').default>['color']}
+                              color={
+                                getStatusColor(task.status) as React.ComponentProps<
+                                  typeof Chip
+                                >['color']
+                              }
                               sx={{ height: 20, fontSize: '0.7rem' }}
                             />
                           </Box>
@@ -696,7 +700,11 @@ const MobileQualityPage: React.FC = () => {
                           <Chip
                             label={getSeverityLabel(defect.severity)}
                             size='small'
-                            color={getSeverityColor(defect.severity) as React.ComponentProps<typeof import('@mui/material/Chip').default>['color']}
+                            color={
+                              getSeverityColor(defect.severity) as React.ComponentProps<
+                                typeof Chip
+                              >['color']
+                            }
                             sx={{ height: 20, fontSize: '0.7rem' }}
                           />
                         </Box>
@@ -747,7 +755,11 @@ const MobileQualityPage: React.FC = () => {
                           <Chip
                             label={getStatusLabel(defect.status)}
                             size='small'
-                            color={getStatusColor(defect.status) as React.ComponentProps<typeof import('@mui/material/Chip').default>['color']}
+                            color={
+                              getStatusColor(defect.status) as React.ComponentProps<
+                                typeof Chip
+                              >['color']
+                            }
                             sx={{ height: 20, fontSize: '0.7rem' }}
                           />
                         </Box>

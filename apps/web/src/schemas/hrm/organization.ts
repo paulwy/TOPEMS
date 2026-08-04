@@ -51,7 +51,7 @@ export const organizationSchema: EntitySchema & SchemaExtensions = {
       listWidth: 120,
     },
     {
-      name: 'parent_id',
+      name: 'parentId',
       label: '上级组织',
       type: 'text',
       showInList: false,
@@ -86,7 +86,7 @@ export const organizationSchema: EntitySchema & SchemaExtensions = {
 
   tree: {
     keyField: 'id',
-    parentField: 'parent_id',
+    parentField: 'parentId',
     labelField: 'name',
   },
 
@@ -99,7 +99,7 @@ export const organizationSchema: EntitySchema & SchemaExtensions = {
     },
     {
       title: '组织关系',
-      fields: ['manager', 'parent_id'],
+      fields: ['manager', 'parentId'],
     },
     {
       title: '其他',

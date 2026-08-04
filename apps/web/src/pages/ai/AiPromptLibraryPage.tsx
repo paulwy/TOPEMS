@@ -517,10 +517,10 @@ export const AiPromptLibraryPage: React.FC = () => {
                             height: '100%',
                             cursor: 'pointer',
                             '&:hover': {
-                              backgroundColor: 'rgba(0, 0, 0, 0.04)',
+                              backgroundColor: 'action.hover',
                             },
                             '&:active': {
-                              backgroundColor: 'rgba(0, 0, 0, 0.08)',
+                              backgroundColor: 'action.hover',
                             },
                           }}
                         >
@@ -609,7 +609,9 @@ export const AiPromptLibraryPage: React.FC = () => {
                                 sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}
                               >
                                 <ThumbsUp size={12} />
-                                {t('ai.prompt_library.label.usage_count', { count: prompt.usage_count })}
+                                {t('ai.prompt_library.label.usage_count', {
+                                  count: prompt.usage_count,
+                                })}
                               </Typography>
                               <Box sx={{ display: 'flex', gap: 0.5 }}>
                                 <IconButton
@@ -792,14 +794,18 @@ export const AiPromptLibraryPage: React.FC = () => {
           </Box>
         </DialogContent>
         <DialogActions>
-          <Button onClick={() => setUseDialogOpen(false)}>{t('ai.prompt_library.button.cancel')}</Button>
+          <Button onClick={() => setUseDialogOpen(false)}>
+            {t('ai.prompt_library.button.cancel')}
+          </Button>
           <Button
             variant='contained'
             startIcon={<Sparkles size={16} />}
             onClick={handleGenerate}
             disabled={generating}
           >
-            {generating ? t('ai.prompt_library.button.generating') : t('ai.prompt_library.button.generate')}
+            {generating
+              ? t('ai.prompt_library.button.generating')
+              : t('ai.prompt_library.button.generate')}
           </Button>
         </DialogActions>
       </Dialog>

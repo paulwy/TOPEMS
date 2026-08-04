@@ -28,7 +28,7 @@ export const ModuleStatsCard: React.FC<ModuleStatsCardProps> = ({
       onMouseLeave={() => setIsHovered(false)}
       sx={{
         position: 'relative',
-        backgroundColor: '#1e293b',
+        backgroundColor: 'text.primary',
         borderRadius: 3,
         p: 5,
         transition: 'all 0.4s ease-out',
@@ -103,7 +103,7 @@ export const ModuleStatsCard: React.FC<ModuleStatsCardProps> = ({
               sx={{
                 fontSize: '1.875rem',
                 fontWeight: 700,
-                color: 'white',
+                color: 'common.white',
               }}
             >
               {total}
@@ -117,7 +117,7 @@ export const ModuleStatsCard: React.FC<ModuleStatsCardProps> = ({
             gap: 1.5,
             px: 3,
             py: 1.5,
-            backgroundColor: 'rgba(34, 197, 94, 0.1)',
+            backgroundColor: 'common.white',
             borderRadius: 30,
             transition: 'all 0.3s',
             transform: isHovered ? 'scale(1.05)' : 'scale(1)',
@@ -143,7 +143,7 @@ export const ModuleStatsCard: React.FC<ModuleStatsCardProps> = ({
         <Box
           sx={{
             height: 6,
-            backgroundColor: 'rgba(255, 255, 255, 0.05)',
+            backgroundColor: 'action.disabledBackground',
             borderRadius: 30,
             overflow: 'hidden',
           }}

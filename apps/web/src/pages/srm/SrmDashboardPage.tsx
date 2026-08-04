@@ -47,7 +47,9 @@ const SrmDashboardPage: React.FC = () => {
         title: t('srm.total_suppliers'),
         value: statistics.basic.total_suppliers ?? 0,
         icon: <Users size={24} />,
-        subtitle: t('srm.active_suppliers_count', { count: statistics.basic.active_suppliers ?? 0 }),
+        subtitle: t('srm.active_suppliers_count', {
+          count: statistics.basic.active_suppliers ?? 0,
+        }),
         color: 'primary',
       },
       {
@@ -55,7 +57,9 @@ const SrmDashboardPage: React.FC = () => {
         title: t('srm.average_rating'),
         value: (statistics.basic.avg_score ?? 0).toFixed(1),
         icon: <Award size={24} />,
-        subtitle: t('srm.total_evaluations_count', { count: statistics.basic.total_evaluations ?? 0 }),
+        subtitle: t('srm.total_evaluations_count', {
+          count: statistics.basic.total_evaluations ?? 0,
+        }),
         color: 'warning',
       },
       {
@@ -71,7 +75,9 @@ const SrmDashboardPage: React.FC = () => {
         title: t('srm.total_order_amount'),
         value: `¥${(statistics.basic.total_order_amount ?? 0).toLocaleString()}`,
         icon: <DollarSign size={24} />,
-        subtitle: t('srm.completed_orders_count', { count: statistics.basic.completed_orders ?? 0 }),
+        subtitle: t('srm.completed_orders_count', {
+          count: statistics.basic.completed_orders ?? 0,
+        }),
         color: 'info',
       },
       {
@@ -79,7 +85,9 @@ const SrmDashboardPage: React.FC = () => {
         title: t('srm.total_contracts'),
         value: statistics.basic.total_contracts ?? 0,
         icon: <ScrollText size={24} />,
-        subtitle: t('srm.active_contracts_count', { count: statistics.basic.active_contracts ?? 0 }),
+        subtitle: t('srm.active_contracts_count', {
+          count: statistics.basic.active_contracts ?? 0,
+        }),
         color: 'secondary',
       },
       {

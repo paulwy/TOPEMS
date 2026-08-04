@@ -203,6 +203,7 @@ export interface StatusBadgeProps {
  * 默认状态映射配置
  * 提供常用的状态预设
  */
+// eslint-disable-next-line react-refresh/only-export-components
 export const DEFAULT_STATUS_MAP: StatusMapConfig = {
   // 通用状态
   active: {

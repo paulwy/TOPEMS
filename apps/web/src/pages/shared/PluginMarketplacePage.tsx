@@ -134,7 +134,8 @@ const PluginMarketplacePage: React.FC = () => {
   const categories = categoriesQuery.data || [];
   const plugins = pluginsQuery.data?.plugins || [];
   const loading = summaryQuery.isLoading || categoriesQuery.isLoading;
-  const isRefreshing = summaryQuery.isFetching || categoriesQuery.isFetching || pluginsQuery.isFetching;
+  const isRefreshing =
+    summaryQuery.isFetching || categoriesQuery.isFetching || pluginsQuery.isFetching;
 
   const handleRefresh = async () => {
     await Promise.all([
@@ -183,7 +184,7 @@ const PluginMarketplacePage: React.FC = () => {
       <Box
         sx={{
           background: 'linear-gradient(135deg, primary.main 0%, primary.dark 100%)',
-          color: 'white',
+          color: 'common.white',
           py: 10,
           px: 6,
         }}
@@ -214,20 +215,20 @@ const PluginMarketplacePage: React.FC = () => {
               size='medium'
               sx={{
                 '& .MuiOutlinedInput-root': {
-                  bgcolor: 'rgba(255,255,255,0.15)',
-                  color: 'white',
-                  '& fieldset': { borderColor: 'rgba(255,255,255,0.3)' },
-                  '&:hover fieldset': { borderColor: 'rgba(255,255,255,0.5)' },
-                  '&.Mui-focused fieldset': { borderColor: 'white' },
+                  bgcolor: 'action.disabledBackground',
+                  color: 'common.white',
+                  '& fieldset': { borderColor: 'action.disabledBackground' },
+                  '&:hover fieldset': { borderColor: 'common.white' },
+                  '&.Mui-focused fieldset': { borderColor: 'common.white' },
                 },
                 '& .MuiInputBase-input::placeholder': {
-                  color: 'rgba(255,255,255,0.6)',
+                  color: 'common.white',
                 },
               }}
               slotProps={{
                 input: {
                   startAdornment: (
-                    <Search sx={{ color: 'rgba(255,255,255,0.6)', mr: 1, width: 24, height: 24 }} />
+                    <Search sx={{ color: 'common.white', mr: 1, width: 24, height: 24 }} />
                   ),
                 },
               }}
@@ -460,7 +461,7 @@ const PluginMarketplacePage: React.FC = () => {
                           justifyContent: 'center',
                         }}
                       >
-                        <Package sx={{ width: 20, height: 20, color: 'white' }} />
+                        <Package sx={{ width: 20, height: 20, color: 'common.white' }} />
                       </Box>
                       <Box>
                         <Typography sx={{ fontWeight: 'medium' }}>{plugin.name}</Typography>
@@ -569,7 +570,7 @@ const PluginMarketplacePage: React.FC = () => {
                           justifyContent: 'center',
                         }}
                       >
-                        <Package sx={{ width: 20, height: 20, color: 'white' }} />
+                        <Package sx={{ width: 20, height: 20, color: 'common.white' }} />
                       </Box>
                       <Box sx={{ flexGrow: 1, minWidth: 0 }}>
                         <Typography

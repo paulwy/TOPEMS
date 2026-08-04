@@ -49,7 +49,11 @@ const BillingStatsCards: React.FC<{ stats?: BillingStats; loading: boolean }> = 
   const cards = [
     { label: t('crm.billing.stat_total'), value: stats?.total_count ?? 0, color: 'primary.main' },
     { label: t('crm.billing.stat_paid'), value: stats?.paid_count ?? 0, color: 'success.main' },
-    { label: t('crm.billing.stat_pending'), value: stats?.pending_count ?? 0, color: 'warning.main' },
+    {
+      label: t('crm.billing.stat_pending'),
+      value: stats?.pending_count ?? 0,
+      color: 'warning.main',
+    },
     { label: t('crm.billing.stat_overdue'), value: stats?.overdue_count ?? 0, color: 'error.main' },
   ];
   return (

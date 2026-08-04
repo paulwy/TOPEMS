@@ -70,8 +70,8 @@ function DeviceMarker({
           position={[position[0], position[1] + 0.08, position[2]]}
           center
           style={{
-            background: 'rgba(0, 0, 0, 0.8)',
-            color: 'white',
+            background: 'action.active',
+            color: 'common.white',
             padding: '8px 12px',
             borderRadius: '4px',
             fontSize: '12px',
@@ -122,8 +122,8 @@ function StorageMarker({
           position={[position[0], position[1] + 0.05, position[2]]}
           center
           style={{
-            background: 'rgba(0, 0, 0, 0.8)',
-            color: 'white',
+            background: 'action.active',
+            color: 'common.white',
             padding: '8px 12px',
             borderRadius: '4px',
             fontSize: '12px',
@@ -317,7 +317,7 @@ const Map3DView: React.FC<Map3DViewProps> = ({
           px: 4,
           py: 3,
           background: 'linear-gradient(to right, primary.light, #9333ea)',
-          color: 'white',
+          color: 'common.white',
         }}
       >
         <Typography
@@ -337,8 +337,8 @@ const Map3DView: React.FC<Map3DViewProps> = ({
             onClick={() => setRotation([0, 0, 0])}
             sx={{
               p: 1,
-              color: 'white',
-              '&:hover': { bgcolor: 'rgba(255,255,255,0.2)' },
+              color: 'common.white',
+              '&:hover': { bgcolor: 'action.disabledBackground' },
             }}
             title='重置视角'
           >
@@ -348,8 +348,8 @@ const Map3DView: React.FC<Map3DViewProps> = ({
             onClick={onClose}
             sx={{
               p: 1,
-              color: 'white',
-              '&:hover': { bgcolor: 'rgba(255,255,255,0.2)' },
+              color: 'common.white',
+              '&:hover': { bgcolor: 'action.disabledBackground' },
             }}
           >
             <X size={20} />
@@ -380,11 +380,11 @@ const Map3DView: React.FC<Map3DViewProps> = ({
             position: 'absolute',
             bottom: 16,
             left: 16,
-            bgcolor: 'rgba(0,0,0,0.5)',
+            bgcolor: 'action.active',
             backdropFilter: 'blur(8px)',
             borderRadius: 3,
             p: 4,
-            color: 'white',
+            color: 'common.white',
           }}
         >
           <MuiBox sx={{ fontSize: '0.75rem' }}>
@@ -418,7 +418,7 @@ const Map3DView: React.FC<Map3DViewProps> = ({
             <MuiBox
               sx={{
                 borderTop: 1,
-                borderColor: 'rgba(255,255,255,0.2)',
+                borderColor: 'action.disabledBackground',
                 pt: 2,
                 mt: 2,
                 color: 'grey.300',
@@ -436,11 +436,11 @@ const Map3DView: React.FC<Map3DViewProps> = ({
             position: 'absolute',
             bottom: 16,
             right: 16,
-            bgcolor: 'rgba(0,0,0,0.5)',
+            bgcolor: 'action.active',
             backdropFilter: 'blur(8px)',
             borderRadius: 3,
             p: 3,
-            color: 'white',
+            color: 'common.white',
           }}
         >
           <MuiBox sx={{ fontSize: '0.75rem' }}>

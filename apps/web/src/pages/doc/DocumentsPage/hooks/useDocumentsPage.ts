@@ -114,7 +114,7 @@ export const useDocumentsPage = () => {
   });
 
   const createFolderMutation = useMutation({
-    mutationFn: (data: { name: string; parent_id?: string }) => docApi.createFolder(data),
+    mutationFn: (data: { name: string; parentId?: string }) => docApi.createFolder(data),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['doc-folders'] });
     },

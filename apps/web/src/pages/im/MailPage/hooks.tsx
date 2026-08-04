@@ -290,10 +290,16 @@ export function useMailPage() {
       .map((s) => s.trim())
       .filter(Boolean);
     const ccAddresses = sendForm.cc_addresses
-      ? sendForm.cc_addresses.split(',').map((s) => s.trim()).filter(Boolean)
+      ? sendForm.cc_addresses
+          .split(',')
+          .map((s) => s.trim())
+          .filter(Boolean)
       : undefined;
     const bccAddresses = sendForm.bcc_addresses
-      ? sendForm.bcc_addresses.split(',').map((s) => s.trim()).filter(Boolean)
+      ? sendForm.bcc_addresses
+          .split(',')
+          .map((s) => s.trim())
+          .filter(Boolean)
       : undefined;
 
     sendEmailMutation.mutate({
@@ -374,7 +380,11 @@ export function useMailPage() {
         addNotification({ title: '成功', message: '邮件重新发送成功', type: 'success' });
         queryClient.invalidateQueries({ queryKey: QUERY_KEYS.MAIL.EMAILS });
       } else {
-        addNotification({ title: '失败', message: sendRes.message || '重发邮件失败', type: 'error' });
+        addNotification({
+          title: '失败',
+          message: sendRes.message || '重发邮件失败',
+          type: 'error',
+        });
       }
     },
     onError: (err: unknown) => {
@@ -517,7 +527,11 @@ export function useMailPage() {
     setTimeout(() => setCopiedId(null), 2000);
   };
 
-  const { createMutation: createTemplateMutation, updateMutation: updateTemplateMutation, deleteMutation: deleteTemplateMutation } = useCrudMutations<
+  const {
+    createMutation: createTemplateMutation,
+    updateMutation: updateTemplateMutation,
+    deleteMutation: deleteTemplateMutation,
+  } = useCrudMutations<
     Parameters<typeof templateApi.create>[0],
     Parameters<typeof templateApi.update>[1],
     string
@@ -559,7 +573,10 @@ export function useMailPage() {
   const handleCreateTemplate = (e: React.FormEvent) => {
     e.preventDefault();
     const tags = templateForm.tags
-      ? templateForm.tags.split(',').map((s) => s.trim()).filter(Boolean)
+      ? templateForm.tags
+          .split(',')
+          .map((s) => s.trim())
+          .filter(Boolean)
       : undefined;
 
     createTemplateMutation.mutate({
@@ -578,7 +595,10 @@ export function useMailPage() {
     e.preventDefault();
     if (!selectedTemplate) return;
     const tags = templateForm.tags
-      ? templateForm.tags.split(',').map((s) => s.trim()).filter(Boolean)
+      ? templateForm.tags
+          .split(',')
+          .map((s) => s.trim())
+          .filter(Boolean)
       : undefined;
 
     updateTemplateMutation.mutate({

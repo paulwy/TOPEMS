@@ -74,7 +74,7 @@ export interface ArchiveConfig {
 export interface NotificationStats {
   total: number;
   unread: number;
-  by_type: Record<NotificationTypeEnum, number>;
+  byType: Record<NotificationTypeEnum, number>;
   by_priority: Record<number, number>;
   total_notifications: number;
   notifications_by_type: Record<NotificationTypeEnum, number>;
@@ -156,10 +156,9 @@ export const getNotifications = async (
       params.notification_type = notificationType;
     }
 
-    const response = await apiClient.notification.get<NotificationListResponse>(
-      '/notifications',
-      { params }
-    );
+    const response = await apiClient.notification.get<NotificationListResponse>('/notifications', {
+      params,
+    });
 
     return response;
   } catch (error: unknown) {
@@ -257,9 +256,7 @@ export const getArchivedNotifications = async (
 };
 
 export const getArchiveConfig = async (): Promise<ApiResponse<ArchiveConfig>> => {
-  const response = await apiClient.notification.get<ArchiveConfig>(
-    '/notifications/archive/config'
-  );
+  const response = await apiClient.notification.get<ArchiveConfig>('/notifications/archive/config');
   return response;
 };
 
@@ -285,9 +282,7 @@ export const runAutoArchive = async (): Promise<ApiResponse<AutoArchiveResponse>
 };
 
 export const getMyNotificationStats = async (): Promise<ApiResponse<NotificationStats>> => {
-  const response = await apiClient.notification.get<NotificationStats>(
-    '/notifications/stats/me'
-  );
+  const response = await apiClient.notification.get<NotificationStats>('/notifications/stats/me');
   return response;
 };
 

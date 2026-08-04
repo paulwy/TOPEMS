@@ -251,7 +251,7 @@ export const FloatingAIHelper: React.FC = () => {
           }}
           onClick={handleFabClick}
         >
-          <Sparkles style={{ width: 24, height: 24, color: 'white' }} />
+          <Sparkles style={{ width: 24, height: 24, color: 'common.white' }} />
         </Fab>
       </Zoom>
 
@@ -288,15 +288,15 @@ export const FloatingAIHelper: React.FC = () => {
           <Box sx={{ height: '100%', display: 'flex', flexDirection: 'column' }}>
             {/* 头部 */}
             <Box
-          sx={{
-            p: 2,
-            background: `linear-gradient(135deg, ${theme.palette.primary.main} 0%, ${theme.palette.secondary.main} 100%)`,
-            color: 'white',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'space-between',
-          }}
-        >
+              sx={{
+                p: 2,
+                background: `linear-gradient(135deg, ${theme.palette.primary.main} 0%, ${theme.palette.secondary.main} 100%)`,
+                color: 'common.white',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'space-between',
+              }}
+            >
               <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5 }}>
                 <Sparkles style={{ width: 20, height: 20 }} />
                 <Typography
@@ -310,14 +310,14 @@ export const FloatingAIHelper: React.FC = () => {
                 <IconButton
                   size='small'
                   onClick={handleMinimize}
-                  sx={{ color: 'white' }}
+                  sx={{ color: 'common.white' }}
                 >
                   <Minus style={{ width: 16, height: 16 }} />
                 </IconButton>
                 <IconButton
                   size='small'
                   onClick={handleClose}
-                  sx={{ color: 'white' }}
+                  sx={{ color: 'common.white' }}
                 >
                   <X style={{ width: 16, height: 16 }} />
                 </IconButton>

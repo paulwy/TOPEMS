@@ -7,13 +7,7 @@
 
 import React from 'react';
 import { Box, Chip, Typography, Stack, Avatar } from '@mui/material';
-import {
-  AlertCircle,
-  AlertTriangle,
-  Info,
-  Clock,
-  Server,
-} from 'lucide-react';
+import { AlertCircle, AlertTriangle, Info, Clock, Server } from 'lucide-react';
 import type { EntitySchema, SchemaField } from '@/schema';
 import { designTokens } from '@/theme/tokens';
 
@@ -311,10 +305,4 @@ export const alertSchema: EntitySchema = {
   detailMaxWidth: 'md',
 };
 
-export {
-  SEVERITY_LABELS,
-  SEVERITY_COLORS,
-  STATUS_LABELS,
-  STATUS_COLORS,
-  getSeverityIcon,
-};
+export { SEVERITY_LABELS, SEVERITY_COLORS, STATUS_LABELS, STATUS_COLORS, getSeverityIcon };

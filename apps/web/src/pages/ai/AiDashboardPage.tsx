@@ -271,7 +271,12 @@ const RecentItem: React.FC<RecentItemProps> = ({ title, description, status, typ
       <Box sx={{ flex: 1, minWidth: 0 }}>
         <Typography
           variant='body2'
-          sx={{ fontWeight: 500, textOverflow: 'ellipsis', overflow: 'hidden', whiteSpace: 'nowrap' }}
+          sx={{
+            fontWeight: 500,
+            textOverflow: 'ellipsis',
+            overflow: 'hidden',
+            whiteSpace: 'nowrap',
+          }}
         >
           {title}
         </Typography>
@@ -282,9 +287,7 @@ const RecentItem: React.FC<RecentItemProps> = ({ title, description, status, typ
           {description}
         </Typography>
       </Box>
-      <CircleDot
-        style={{ width: 12, height: 12, color: statusColors[status] }}
-      />
+      <CircleDot style={{ width: 12, height: 12, color: statusColors[status] }} />
     </Box>
   );
 };
@@ -320,10 +323,13 @@ const FeatureCard: React.FC<FeatureCardProps> = ({
             flexShrink: 0,
           }}
         >
-          {React.cloneElement(icon as React.ReactElement<{ size?: number; style?: React.CSSProperties }>, {
-            size: 28,
-            style: { color },
-          })}
+          {React.cloneElement(
+            icon as React.ReactElement<{ size?: number; style?: React.CSSProperties }>,
+            {
+              size: 28,
+              style: { color },
+            }
+          )}
         </Box>
         <Box sx={{ flex: 1 }}>
           <Typography
@@ -602,7 +608,10 @@ export const AiDashboardPage: React.FC = () => {
           { label: t('ai.dashboard.feature.stat_accuracy'), value: '92%' },
           { label: t('ai.dashboard.feature.stat_response_time'), value: '<2s' },
         ],
-        action: { label: t('ai.dashboard.feature.qa_action'), onClick: () => navigate(AI_PATHS.chat) },
+        action: {
+          label: t('ai.dashboard.feature.qa_action'),
+          onClick: () => navigate(AI_PATHS.chat),
+        },
       },
       {
         id: 'summary-feature',
@@ -614,7 +623,10 @@ export const AiDashboardPage: React.FC = () => {
           { label: t('ai.dashboard.feature.stat_support_format'), value: '10+' },
           { label: t('ai.dashboard.feature.stat_process_speed'), value: '<30s' },
         ],
-        action: { label: t('ai.dashboard.feature.summary_action'), onClick: () => navigate(AI_PATHS.document) },
+        action: {
+          label: t('ai.dashboard.feature.summary_action'),
+          onClick: () => navigate(AI_PATHS.document),
+        },
       },
       {
         id: 'code-feature',
@@ -624,9 +636,15 @@ export const AiDashboardPage: React.FC = () => {
         color: theme.palette.success.main,
         stats: [
           { label: t('ai.dashboard.feature.stat_support_language'), value: '20+' },
-          { label: t('ai.dashboard.feature.stat_code_quality'), value: t('ai.dashboard.feature.code_quality_excellent') },
+          {
+            label: t('ai.dashboard.feature.stat_code_quality'),
+            value: t('ai.dashboard.feature.code_quality_excellent'),
+          },
         ],
-        action: { label: t('ai.dashboard.feature.code_action'), onClick: () => navigate(AI_PATHS.code) },
+        action: {
+          label: t('ai.dashboard.feature.code_action'),
+          onClick: () => navigate(AI_PATHS.code),
+        },
       },
     ],
     [navigate, theme.palette, t]
@@ -636,7 +654,11 @@ export const AiDashboardPage: React.FC = () => {
     setLoading(true);
     setTimeout(() => {
       setLoading(false);
-      addNotification({ title: t('ai.dashboard.message.refresh_success_title'), message: t('ai.dashboard.message.refresh_success_body'), type: 'success' });
+      addNotification({
+        title: t('ai.dashboard.message.refresh_success_title'),
+        message: t('ai.dashboard.message.refresh_success_body'),
+        type: 'success',
+      });
     }, 500);
   }, [addNotification, t]);
 
@@ -667,7 +689,7 @@ export const AiDashboardPage: React.FC = () => {
             mb: 4,
             borderRadius: 3,
             background: 'linear-gradient(135deg, primary.main 0%, secondary.main 100%)',
-            color: 'white',
+            color: 'common.white',
           }}
         >
           <Box sx={{ display: 'flex', alignItems: 'center', gap: 2, mb: 2 }}>
@@ -686,7 +708,11 @@ export const AiDashboardPage: React.FC = () => {
             <Button
               size='small'
               variant='contained'
-              sx={{ bgcolor: 'white', color: 'primary.main', '&:hover': { bgcolor: 'grey.100' } }}
+              sx={{
+                bgcolor: 'common.white',
+                color: 'primary.main',
+                '&:hover': { bgcolor: 'grey.100' },
+              }}
               onClick={() => navigate(AI_PATHS.chat)}
             >
               {t('ai.dashboard.button.start_chat')}
@@ -695,9 +721,9 @@ export const AiDashboardPage: React.FC = () => {
               size='small'
               variant='outlined'
               sx={{
-                borderColor: 'white',
-                color: 'white',
-                '&:hover': { bgcolor: 'rgba(255,255,255,0.1)' },
+                borderColor: 'common.white',
+                color: 'common.white',
+                '&:hover': { bgcolor: 'action.disabledBackground' },
               }}
               onClick={() => navigate(AI_PATHS.prompts)}
             >

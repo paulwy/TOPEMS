@@ -114,39 +114,38 @@ vi.mock('@/store', () => ({
 }));
 
 describe('HrmEmployeePage.form', () => {
-it('should render without crashing', async () => {
+  it('should render without crashing', async () => {
     const { container } = renderWithProviders(<HrmEmployeePage />);
     expect(container).toBeDefined();
-});
+  });
 
-it('should call employee list API on mount', async () => {
+  it('should call employee list API on mount', async () => {
     renderWithProviders(<HrmEmployeePage />);
     expect(employeeApi.list).toHaveBeenCalled();
-});
+  });
 
-it('should have API methods defined', async () => {
+  it('should have API methods defined', async () => {
     renderWithProviders(<HrmEmployeePage />);
     expect(employeeApi.create).toBeDefined();
     expect(employeeApi.update).toBeDefined();
     expect(employeeApi.delete).toBeDefined();
-});
+  });
 
-it('should handle API error gracefully', async () => {
+  it('should handle API error gracefully', async () => {
     employeeApi.list.mockRejectedValue(new Error('Network error'));
 
     renderWithProviders(<HrmEmployeePage />);
 
     await waitFor(() => {
       expect(employeeApi.list).toHaveBeenCalled();
+    });
   });
-});
 
-it('should support create, update and delete operations', async () => {
+  it('should support create, update and delete operations', async () => {
     renderWithProviders(<HrmEmployeePage />);
 
     expect(typeof employeeApi.create).toBe('function');
     expect(typeof employeeApi.update).toBe('function');
     expect(typeof employeeApi.delete).toBe('function');
-});
-;
+  });
 });

@@ -11,7 +11,7 @@ import {
   InputLabel,
 } from '@mui/material';
 import React from 'react';
-import { GeneralSettings as GeneralSettingsType } from '../types';
+import type { GeneralSettings as GeneralSettingsType } from '../types';
 
 interface GeneralSettingsProps {
   settings: GeneralSettingsType;

@@ -223,7 +223,7 @@ export const GlobalLayout: React.FC<GlobalLayoutProps> = ({ children }) => {
           zIndex: 10000,
           p: 2,
           bgcolor: 'primary.main',
-          color: 'white',
+          color: 'common.white',
           textDecoration: 'none',
           borderRadius: '0 0 8px 0',
           fontWeight: 600,

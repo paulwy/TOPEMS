@@ -203,7 +203,9 @@ const CRMRecommendationPage: React.FC = () => {
                 </Typography>
                 <Box sx={{ display: 'flex', gap: 2, mt: 1 }}>
                   <Typography variant='body2'>
-                    {t('crm.recommendation.text_customer_label', { name: recommendation.customer_name })}
+                    {t('crm.recommendation.text_customer_label', {
+                      name: recommendation.customer_name,
+                    })}
                   </Typography>
                   <Typography variant='body2'>
                     {t('crm.recommendation.text_type_label', {
@@ -257,7 +259,9 @@ const CRMRecommendationPage: React.FC = () => {
                           </Typography>
                           <Box sx={{ display: 'flex', gap: 1, mt: 1 }}>
                             <Chip
-                              label={t('crm.recommendation.text_item_type', { type: item.item_type })}
+                              label={t('crm.recommendation.text_item_type', {
+                                type: item.item_type,
+                              })}
                               size='small'
                               variant='outlined'
                             />

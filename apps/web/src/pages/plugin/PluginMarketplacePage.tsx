@@ -135,7 +135,7 @@ const PluginCard: React.FC<PluginCardProps> = ({ plugin, healthStatus, onViewDet
                 justifyContent: 'center',
               }}
             >
-              <Package sx={{ width: 24, height: 24, color: 'white' }} />
+              <Package sx={{ width: 24, height: 24, color: 'common.white' }} />
             </Box>
             <Box>
               <Typography
@@ -246,7 +246,11 @@ const PluginCard: React.FC<PluginCardProps> = ({ plugin, healthStatus, onViewDet
                 )
               }
             >
-              {isInstalling ? t('plugin.common.installing') : plugin.is_free ? t('plugin.common.free_install') : t('plugin.common.purchase')}
+              {isInstalling
+                ? t('plugin.common.installing')
+                : plugin.is_free
+                  ? t('plugin.common.free_install')
+                  : t('plugin.common.purchase')}
             </Button>
           )}
         </Box>
@@ -391,7 +395,7 @@ const PluginDetailModal: React.FC<{
               justifyContent: 'center',
             }}
           >
-            <Package sx={{ width: 24, height: 24, color: 'white' }} />
+            <Package sx={{ width: 24, height: 24, color: 'common.white' }} />
           </Box>
           <Box>
             <Typography
@@ -705,7 +709,9 @@ const PluginDetailModal: React.FC<{
                     onClick={handleSubmitReview}
                     disabled={rating === 0 || submitReviewMutation.isPending}
                   >
-                    {submitReviewMutation.isPending ? t('plugin.common.submitting') : t('plugin.common.submit_review')}
+                    {submitReviewMutation.isPending
+                      ? t('plugin.common.submitting')
+                      : t('plugin.common.submit_review')}
                   </Button>
                 </Box>
               </CardContent>
@@ -832,7 +838,7 @@ const PluginMarketplacePage: React.FC = () => {
         <Box
           sx={{
             background: 'linear-gradient(90deg, primary.main 0%, primary.main 100%)',
-            color: 'white',
+            color: 'common.white',
             py: 8,
             px: 6,
           }}
@@ -1006,7 +1012,9 @@ const PluginMarketplacePage: React.FC = () => {
                     </Typography>
                     <Box sx={{ display: 'flex', alignItems: 'center', gap: 2, mt: 1 }}>
                       <Chip
-                        label={t('plugin.marketplace_page.suite_plugin_count', { count: suite.plugins.length })}
+                        label={t('plugin.marketplace_page.suite_plugin_count', {
+                          count: suite.plugins.length,
+                        })}
                         size='small'
                         variant='outlined'
                       />

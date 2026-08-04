@@ -6,6 +6,7 @@ import { DASHBOARD_PATHS } from '@/routes/dashboard';
 import type { TabType } from '../types';
 
 import { useTranslation } from 'react-i18next';
+
 interface PageHeaderProps {
   activeTab: TabType;
   loading: boolean;
@@ -35,12 +36,22 @@ export const PageHeader: React.FC<PageHeaderProps> = ({
         mb: 4,
       }}
     >
-      <Stack direction='row' spacing={1.5} sx={{ alignItems: 'center' }}>
-        <IconButton onClick={() => navigate(DASHBOARD_PATHS.dashboard)} aria-label={t('bi.gis_page_components__page_header.back')}>
+      <Stack
+        direction='row'
+        spacing={1.5}
+        sx={{ alignItems: 'center' }}
+      >
+        <IconButton
+          onClick={() => navigate(DASHBOARD_PATHS.dashboard)}
+          aria-label={t('bi.gis_page_components__page_header.back')}
+        >
           <ChevronRight style={{ transform: 'rotate(180deg)' }} />
         </IconButton>
         <Box>
-          <Typography variant='h4' sx={{ fontWeight: 700 }}>
+          <Typography
+            variant='h4'
+            sx={{ fontWeight: 700 }}
+          >
             厂区空间数字化
           </Typography>
           <Typography color='text.secondary'>
@@ -48,8 +59,17 @@ export const PageHeader: React.FC<PageHeaderProps> = ({
           </Typography>
         </Box>
       </Stack>
-      <Stack direction='row' spacing={1.5} sx={{ alignItems: 'center' }}>
-        <Button variant='contained' color='success' startIcon={<Upload size={16} />} onClick={onImport}>
+      <Stack
+        direction='row'
+        spacing={1.5}
+        sx={{ alignItems: 'center' }}
+      >
+        <Button
+          variant='contained'
+          color='success'
+          startIcon={<Upload size={16} />}
+          onClick={onImport}
+        >
           导入
         </Button>
         {activeTab !== 'map' && (
@@ -65,7 +85,10 @@ export const PageHeader: React.FC<PageHeaderProps> = ({
             新建
           </Button>
         )}
-        <IconButton onClick={onRefresh} sx={{ border: 1, borderColor: 'divider' }}>
+        <IconButton
+          onClick={onRefresh}
+          sx={{ border: 1, borderColor: 'divider' }}
+        >
           <RefreshCw
             size={20}
             className={loading ? 'animate-spin' : ''}

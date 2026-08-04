@@ -29,7 +29,7 @@ const Login = () => {
       await login(username, password);
       const redirectTo = (location.state as { from?: string })?.from || '/dashboard';
       navigate(redirectTo);
-    } catch (err) {
+    } catch {
       setError('登录失败，请检查用户名和密码');
     }
   };

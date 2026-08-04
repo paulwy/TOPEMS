@@ -88,9 +88,15 @@ const V54_NATIVE_BADGE = 'V54';
 
 const V54NativePanel: React.FC<{ onClose: () => void }> = ({ onClose }) => {
   const [activeTab, setActiveTab] = React.useState<TabId>('dashboard');
-  const [platformStatus, setPlatformStatus] = React.useState<AIPlatformStatus>(aiFirstPlatform.getPlatformStatus());
-  const [routerStats, setRouterStats] = React.useState<RouterStats>(intelligentRouter.getRouteStats());
-  const [adaptationStats, setAdaptationStats] = React.useState<AdaptationStats>(adaptiveUIEngine.getAdaptationStats());
+  const [platformStatus, setPlatformStatus] = React.useState<AIPlatformStatus>(
+    aiFirstPlatform.getPlatformStatus()
+  );
+  const [routerStats, setRouterStats] = React.useState<RouterStats>(
+    intelligentRouter.getRouteStats()
+  );
+  const [adaptationStats, setAdaptationStats] = React.useState<AdaptationStats>(
+    adaptiveUIEngine.getAdaptationStats()
+  );
   const [userProfile, setUserProfile] = React.useState<UserProfile | null>(null);
 
   React.useEffect(() => {
@@ -110,7 +116,7 @@ const V54NativePanel: React.FC<{ onClose: () => void }> = ({ onClose }) => {
         left: 0,
         right: 0,
         bottom: 0,
-        bgcolor: 'rgba(0,0,0,0.6)',
+        bgcolor: 'action.active',
         zIndex: 10000,
         display: 'flex',
         alignItems: 'center',
@@ -134,9 +140,15 @@ const V54NativePanel: React.FC<{ onClose: () => void }> = ({ onClose }) => {
         }}
         onClick={(e) => e.stopPropagation()}
       >
-        <V54PanelHeader status={platformStatus} onClose={onClose} />
+        <V54PanelHeader
+          status={platformStatus}
+          onClose={onClose}
+        />
         <Box sx={{ px: 2, py: 1.5, borderBottom: 1, borderColor: 'divider' }}>
-          <TabBar activeTab={activeTab} onChange={setActiveTab} />
+          <TabBar
+            activeTab={activeTab}
+            onChange={setActiveTab}
+          />
         </Box>
         <Box sx={{ flex: 1, overflow: 'auto', bgcolor: 'grey.50' }}>
           {activeTab === 'dashboard' && (
@@ -161,7 +173,10 @@ const V54NativePanel: React.FC<{ onClose: () => void }> = ({ onClose }) => {
   );
 };
 
-const V54PanelHeader: React.FC<{ status: AIPlatformStatus; onClose: () => void }> = ({ status, onClose }) => (
+const V54PanelHeader: React.FC<{ status: AIPlatformStatus; onClose: () => void }> = ({
+  status,
+  onClose,
+}) => (
   <Box
     sx={{
       p: 2,
@@ -169,7 +184,7 @@ const V54PanelHeader: React.FC<{ status: AIPlatformStatus; onClose: () => void }
       alignItems: 'center',
       justifyContent: 'space-between',
       background: 'linear-gradient(135deg, #3b82f6 0%, #6366f1 50%, #8b5cf6 100%)',
-      color: 'white',
+      color: 'common.white',
     }}
   >
     <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5 }}>
@@ -178,7 +193,7 @@ const V54PanelHeader: React.FC<{ status: AIPlatformStatus; onClose: () => void }
           width: 40,
           height: 40,
           borderRadius: 2,
-          bgcolor: 'rgba(255,255,255,0.2)',
+          bgcolor: 'action.disabledBackground',
           display: 'flex',
           alignItems: 'center',
           justifyContent: 'center',
@@ -187,10 +202,16 @@ const V54PanelHeader: React.FC<{ status: AIPlatformStatus; onClose: () => void }
         <Brain size={22} />
       </Box>
       <Box>
-        <Typography variant='h6' sx={{ fontWeight: 700, fontSize: 18 }}>
+        <Typography
+          variant='h6'
+          sx={{ fontWeight: 700, fontSize: 18 }}
+        >
           V54.0 AI 原生平台
         </Typography>
-        <Typography variant='caption' sx={{ opacity: 0.85, fontSize: 12 }}>
+        <Typography
+          variant='caption'
+          sx={{ opacity: 0.85, fontSize: 12 }}
+        >
           AI 优先架构 · 智能路由 · 自适应 UI · 原生集成
         </Typography>
       </Box>
@@ -199,20 +220,20 @@ const V54PanelHeader: React.FC<{ status: AIPlatformStatus; onClose: () => void }
       <Chip
         label={`${status.capabilities.active}/${status.capabilities.total} 能力`}
         size='small'
-        sx={{ bgcolor: 'rgba(255,255,255,0.2)', color: 'white', fontWeight: 600 }}
+        sx={{ bgcolor: 'action.disabledBackground', color: 'common.white', fontWeight: 600 }}
       />
       <Chip
         label={`运行 ${status.uptime}s`}
         size='small'
-        sx={{ bgcolor: 'rgba(255,255,255,0.2)', color: 'white', fontWeight: 600 }}
+        sx={{ bgcolor: 'action.disabledBackground', color: 'common.white', fontWeight: 600 }}
       />
       <Badge
         badgeContent={V54_NATIVE_BADGE}
         color='secondary'
         sx={{
           '& .MuiBadge-badge': {
-            bgcolor: '#fbbf24',
-            color: '#1e293b',
+            bgcolor: 'warning.400',
+            color: 'text.primary',
             fontWeight: 700,
             fontSize: 10,
           },
@@ -220,7 +241,11 @@ const V54PanelHeader: React.FC<{ status: AIPlatformStatus; onClose: () => void }
       >
         <Zap size={18} />
       </Badge>
-      <IconButton size='small' onClick={onClose} sx={{ color: 'white' }}>
+      <IconButton
+        size='small'
+        onClick={onClose}
+        sx={{ color: 'common.white' }}
+      >
         <XIcon size={20} />
       </IconButton>
     </Box>
@@ -235,8 +260,15 @@ const TAB_CONFIG: Array<{ id: TabId; label: string; icon: React.ReactNode }> = [
   { id: 'settings', label: '平台配置', icon: <Settings size={16} /> },
 ];
 
-const TabBar: React.FC<{ activeTab: TabId; onChange: (tab: TabId) => void }> = ({ activeTab, onChange }) => (
-  <Stack direction='row' spacing={0.5} sx={{ overflowX: 'auto' }}>
+const TabBar: React.FC<{ activeTab: TabId; onChange: (tab: TabId) => void }> = ({
+  activeTab,
+  onChange,
+}) => (
+  <Stack
+    direction='row'
+    spacing={0.5}
+    sx={{ overflowX: 'auto' }}
+  >
     {TAB_CONFIG.map((tab) => (
       <Button
         key={tab.id}
@@ -272,13 +304,21 @@ const DashboardTab: React.FC<{
 
   return (
     <Box sx={{ p: 3 }}>
-      <Grid container spacing={3}>
+      <Grid
+        container
+        spacing={3}
+      >
         <Grid size={{ xs: 12, md: 6, lg: 3 }}>
           <MetricCard
             title='AI 能力'
             value={`${activeCaps}/${caps.length}`}
             subtitle='已激活'
-            icon={<Cpu size={24} color='#3b82f6' />}
+            icon={
+              <Cpu
+                size={24}
+                color='#3b82f6'
+              />
+            }
             color='#3b82f6'
             progress={caps.length > 0 ? (activeCaps / caps.length) * 100 : 0}
           />
@@ -288,7 +328,12 @@ const DashboardTab: React.FC<{
             title='路由推荐'
             value={routerStats.total_recommendations.toString()}
             subtitle={`接受率 ${(routerStats.acceptance_rate * 100).toFixed(1)}%`}
-            icon={<Route size={24} color='#10b981' />}
+            icon={
+              <Route
+                size={24}
+                color='#10b981'
+              />
+            }
             color='#10b981'
             progress={routerStats.acceptance_rate * 100}
           />
@@ -298,7 +343,12 @@ const DashboardTab: React.FC<{
             title='布局自适应'
             value={adaptationStats.total_adaptations.toString()}
             subtitle={`置信度 ${(adaptationStats.avg_layout_confidence * 100).toFixed(1)}%`}
-            icon={<LayoutDashboard size={24} color='#f59e0b' />}
+            icon={
+              <LayoutDashboard
+                size={24}
+                color='#f59e0b'
+              />
+            }
             color='#f59e0b'
             progress={adaptationStats.avg_layout_confidence * 100}
           />
@@ -308,17 +358,29 @@ const DashboardTab: React.FC<{
             title='平台状态'
             value={status.initialized ? '运行中' : '未初始化'}
             subtitle={`中间件 ${status.middleware.total} 个`}
-            icon={<Activity size={24} color='#8b5cf6' />}
+            icon={
+              <Activity
+                size={24}
+                color='#8b5cf6'
+              />
+            }
             color='#8b5cf6'
             progress={status.initialized ? 100 : 0}
           />
         </Grid>
       </Grid>
 
-      <Grid container spacing={3} sx={{ mt: 1 }}>
+      <Grid
+        container
+        spacing={3}
+        sx={{ mt: 1 }}
+      >
         <Grid size={{ xs: 12, md: 6 }}>
           <V51Card>
-            <Typography variant='subtitle2' sx={{ fontWeight: 600, mb: 2, display: 'flex', alignItems: 'center', gap: 1 }}>
+            <Typography
+              variant='subtitle2'
+              sx={{ fontWeight: 600, mb: 2, display: 'flex', alignItems: 'center', gap: 1 }}
+            >
               <BarChart3 size={16} />
               智能路由 Top 路径
             </Typography>
@@ -337,7 +399,9 @@ const DashboardTab: React.FC<{
                   <TableBody>
                     {routerStats.top_routes.map((route, idx) => (
                       <TableRow key={idx}>
-                        <TableCell sx={{ fontFamily: 'monospace', fontSize: 12 }}>{route.path}</TableCell>
+                        <TableCell sx={{ fontFamily: 'monospace', fontSize: 12 }}>
+                          {route.path}
+                        </TableCell>
                         <TableCell align='right'>{route.count}</TableCell>
                         <TableCell align='right'>
                           <Chip
@@ -361,15 +425,26 @@ const DashboardTab: React.FC<{
 
         <Grid size={{ xs: 12, md: 6 }}>
           <V51Card>
-            <Typography variant='subtitle2' sx={{ fontWeight: 600, mb: 2, display: 'flex', alignItems: 'center', gap: 1 }}>
+            <Typography
+              variant='subtitle2'
+              sx={{ fontWeight: 600, mb: 2, display: 'flex', alignItems: 'center', gap: 1 }}
+            >
               <Sliders size={16} />
               AI 能力分布
             </Typography>
-            <Stack direction='column' spacing={1.5}>
+            <Stack
+              direction='column'
+              spacing={1.5}
+            >
               {caps.map((cap) => (
                 <Box key={cap.id}>
                   <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: 0.5 }}>
-                    <Typography variant='body2' sx={{ fontWeight: 500 }}>{cap.name}</Typography>
+                    <Typography
+                      variant='body2'
+                      sx={{ fontWeight: 500 }}
+                    >
+                      {cap.name}
+                    </Typography>
                     <Chip
                       label={cap.enabled ? '激活' : '停用'}
                       size='small'
@@ -420,8 +495,18 @@ const MetricCard: React.FC<{
         {icon}
       </Box>
       <Box sx={{ flex: 1 }}>
-        <Typography variant='body2' color='text.secondary'>{title}</Typography>
-        <Typography variant='h5' sx={{ fontWeight: 700, color }}>{value}</Typography>
+        <Typography
+          variant='body2'
+          color='text.secondary'
+        >
+          {title}
+        </Typography>
+        <Typography
+          variant='h5'
+          sx={{ fontWeight: 700, color }}
+        >
+          {value}
+        </Typography>
       </Box>
     </Box>
     <LinearProgress
@@ -429,7 +514,13 @@ const MetricCard: React.FC<{
       value={Math.min(100, progress)}
       sx={{ height: 6, borderRadius: 3, bgcolor: `${color}20` }}
     />
-    <Typography variant='caption' color='text.secondary' sx={{ mt: 0.5, display: 'block' }}>{subtitle}</Typography>
+    <Typography
+      variant='caption'
+      color='text.secondary'
+      sx={{ mt: 0.5, display: 'block' }}
+    >
+      {subtitle}
+    </Typography>
   </V51Card>
 );
 
@@ -465,8 +556,15 @@ const CapabilitiesTab: React.FC = () => {
 
   return (
     <Box sx={{ p: 3 }}>
-      <Stack direction='row' spacing={2} sx={{ mb: 3 }}>
-        <FormControl size='small' sx={{ minWidth: 120 }}>
+      <Stack
+        direction='row'
+        spacing={2}
+        sx={{ mb: 3 }}
+      >
+        <FormControl
+          size='small'
+          sx={{ minWidth: 120 }}
+        >
           <InputLabel>筛选</InputLabel>
           <Select
             value={filter}
@@ -483,7 +581,7 @@ const CapabilitiesTab: React.FC = () => {
           size='small'
           startIcon={<RefreshCw size={16} />}
           onClick={() => setCaps(aiFirstPlatform.getCapabilities())}
-          sx={{ bgcolor: '#3b82f6', '&:hover': { bgcolor: '#2563eb' } }}
+          sx={{ bgcolor: 'primary.500', '&:hover': { bgcolor: 'primary.600' } }}
         >
           刷新
         </Button>
@@ -492,7 +590,7 @@ const CapabilitiesTab: React.FC = () => {
           size='small'
           startIcon={<Target size={16} />}
           onClick={handleDiscover}
-          sx={{ borderColor: '#8b5cf6', color: '#8b5cf6' }}
+          sx={{ borderColor: 'secondary.500', color: 'secondary.500' }}
         >
           发现能力
         </Button>
@@ -508,9 +606,15 @@ const CapabilitiesTab: React.FC = () => {
         </Button>
       </Stack>
 
-      <Grid container spacing={2}>
+      <Grid
+        container
+        spacing={2}
+      >
         {filteredCaps.map((cap) => (
-          <Grid size={{ xs: 12, md: 6, lg: 4 }} key={cap.id}>
+          <Grid
+            size={{ xs: 12, md: 6, lg: 4 }}
+            key={cap.id}
+          >
             <V51Card>
               <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 1 }}>
                 <Box
@@ -524,11 +628,22 @@ const CapabilitiesTab: React.FC = () => {
                     justifyContent: 'center',
                   }}
                 >
-                  <Cpu size={18} color={cap.enabled ? '#059669' : '#dc2626'} />
+                  <Cpu
+                    size={18}
+                    color={cap.enabled ? '#059669' : '#dc2626'}
+                  />
                 </Box>
                 <Box sx={{ flex: 1 }}>
-                  <Typography variant='subtitle2' sx={{ fontWeight: 600 }}>{cap.name}</Typography>
-                  <Typography variant='caption' color='text.secondary'>
+                  <Typography
+                    variant='subtitle2'
+                    sx={{ fontWeight: 600 }}
+                  >
+                    {cap.name}
+                  </Typography>
+                  <Typography
+                    variant='caption'
+                    color='text.secondary'
+                  >
                     {cap.type} · v{cap.version}
                   </Typography>
                 </Box>
@@ -536,10 +651,14 @@ const CapabilitiesTab: React.FC = () => {
                   checked={cap.enabled}
                   onChange={() => handleToggle(cap.id)}
                   size='small'
-                  sx={{ '& .MuiSwitch-switchBase.Mui-checked': { color: '#3b82f6' } }}
+                  sx={{ '& .MuiSwitch-switchBase.Mui-checked': { color: 'primary.500' } }}
                 />
               </Box>
-              <Typography variant='body2' color='text.secondary' sx={{ mb: 1.5 }}>
+              <Typography
+                variant='body2'
+                color='text.secondary'
+                sx={{ mb: 1.5 }}
+              >
                 {cap.description}
               </Typography>
               <Box sx={{ display: 'flex', gap: 0.5, flexWrap: 'wrap' }}>
@@ -563,7 +682,10 @@ const CapabilitiesTab: React.FC = () => {
                     color: cap.status === 'active' ? '#065f46' : '#92400e',
                   }}
                 />
-                <Typography variant='caption' color='text.secondary'>
+                <Typography
+                  variant='caption'
+                  color='text.secondary'
+                >
                   更新: {new Date(cap.updatedAt).toLocaleTimeString()}
                 </Typography>
               </Box>
@@ -606,8 +728,15 @@ const RouterTab: React.FC = () => {
 
   return (
     <Box sx={{ p: 3 }}>
-      <Stack direction='row' spacing={2} sx={{ mb: 3 }}>
-        <FormControl size='small' sx={{ minWidth: 140 }}>
+      <Stack
+        direction='row'
+        spacing={2}
+        sx={{ mb: 3 }}
+      >
+        <FormControl
+          size='small'
+          sx={{ minWidth: 140 }}
+        >
           <InputLabel>路由策略</InputLabel>
           <Select
             value={strategy}
@@ -622,10 +751,17 @@ const RouterTab: React.FC = () => {
         </FormControl>
         <Box sx={{ flex: 1, display: 'flex', gap: 1 }}>
           <Box sx={{ flex: 1 }}>
-            <Typography variant='caption' color='text.secondary' sx={{ mb: 0.5, display: 'block' }}>
+            <Typography
+              variant='caption'
+              color='text.secondary'
+              sx={{ mb: 0.5, display: 'block' }}
+            >
               描述你的意图
             </Typography>
-            <FormControl fullWidth size='small'>
+            <FormControl
+              fullWidth
+              size='small'
+            >
               <Select
                 value={intent}
                 onChange={(e) => setIntent(e.target.value)}
@@ -644,7 +780,7 @@ const RouterTab: React.FC = () => {
           variant='contained'
           startIcon={<Play size={16} />}
           onClick={handleRecommend}
-          sx={{ bgcolor: '#10b981', height: 36, '&:hover': { bgcolor: '#059669' } }}
+          sx={{ bgcolor: 'teal.500', height: 36, '&:hover': { bgcolor: 'teal.600' } }}
         >
           推荐路由
         </Button>
@@ -658,10 +794,16 @@ const RouterTab: React.FC = () => {
         </Button>
       </Stack>
 
-      <Grid container spacing={3}>
+      <Grid
+        container
+        spacing={3}
+      >
         <Grid size={{ xs: 12, md: 6 }}>
           <V51Card>
-            <Typography variant='subtitle2' sx={{ fontWeight: 600, mb: 2, display: 'flex', alignItems: 'center', gap: 1 }}>
+            <Typography
+              variant='subtitle2'
+              sx={{ fontWeight: 600, mb: 2, display: 'flex', alignItems: 'center', gap: 1 }}
+            >
               <Route size={16} />
               推荐结果
             </Typography>
@@ -678,19 +820,30 @@ const RouterTab: React.FC = () => {
                   }}
                 >
                   <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 1 }}>
-                    <Typography variant='h6' sx={{ fontWeight: 700 }}>
+                    <Typography
+                      variant='h6'
+                      sx={{ fontWeight: 700 }}
+                    >
                       {recommendation.path}
                     </Typography>
                     <Chip
                       label={`置信度 ${(recommendation.confidence * 100).toFixed(0)}%`}
                       size='small'
-                      sx={{ bgcolor: '#10b981', color: 'white', fontWeight: 700 }}
+                      sx={{ bgcolor: 'teal.500', color: 'common.white', fontWeight: 700 }}
                     />
                   </Box>
-                  <Typography variant='body2' color='text.secondary' sx={{ mb: 1 }}>
+                  <Typography
+                    variant='body2'
+                    color='text.secondary'
+                    sx={{ mb: 1 }}
+                  >
                     {recommendation.reason}
                   </Typography>
-                  <Stack direction='row' spacing={1} sx={{ flexWrap: 'wrap', gap: 0.5 }}>
+                  <Stack
+                    direction='row'
+                    spacing={1}
+                    sx={{ flexWrap: 'wrap', gap: 0.5 }}
+                  >
                     <Chip
                       label={`预测延迟: ${recommendation.predicted_latency_ms}ms`}
                       size='small'
@@ -700,13 +853,16 @@ const RouterTab: React.FC = () => {
                       <Chip
                         label={`A/B: ${recommendation.ab_test_variant}`}
                         size='small'
-                        sx={{ fontSize: 11, bgcolor: '#fef3c7', color: '#92400e' }}
+                        sx={{ fontSize: 11, bgcolor: 'warning.100', color: 'warning.800' }}
                       />
                     )}
                   </Stack>
                 </Paper>
 
-                <Typography variant='subtitle2' sx={{ fontWeight: 600, mb: 1 }}>
+                <Typography
+                  variant='subtitle2'
+                  sx={{ fontWeight: 600, mb: 1 }}
+                >
                   替代方案
                 </Typography>
                 {recommendation.alternatives.map((alt, idx) => (
@@ -719,11 +875,14 @@ const RouterTab: React.FC = () => {
                       border: '1px solid',
                       borderColor: 'divider',
                       borderRadius: 1,
-                      bgcolor: '#f8fafc',
+                      bgcolor: 'background.default',
                     }}
                   >
                     <Box sx={{ display: 'flex', justifyContent: 'space-between' }}>
-                      <Typography variant='body2' sx={{ fontWeight: 600, fontFamily: 'monospace' }}>
+                      <Typography
+                        variant='body2'
+                        sx={{ fontWeight: 600, fontFamily: 'monospace' }}
+                      >
                         {alt.path}
                       </Typography>
                       <Chip
@@ -732,7 +891,10 @@ const RouterTab: React.FC = () => {
                         sx={{ fontSize: 10, height: 18 }}
                       />
                     </Box>
-                    <Typography variant='caption' color='text.secondary'>
+                    <Typography
+                      variant='caption'
+                      color='text.secondary'
+                    >
                       {alt.tradeoff}
                     </Typography>
                   </Paper>
@@ -744,27 +906,53 @@ const RouterTab: React.FC = () => {
 
         <Grid size={{ xs: 12, md: 6 }}>
           <V51Card>
-            <Typography variant='subtitle2' sx={{ fontWeight: 600, mb: 2, display: 'flex', alignItems: 'center', gap: 1 }}>
+            <Typography
+              variant='subtitle2'
+              sx={{ fontWeight: 600, mb: 2, display: 'flex', alignItems: 'center', gap: 1 }}
+            >
               <BarChart3 size={16} />
               路由统计
             </Typography>
-            <Grid container spacing={2} sx={{ mb: 2 }}>
+            <Grid
+              container
+              spacing={2}
+              sx={{ mb: 2 }}
+            >
               <Grid size={6}>
-                <StatBox label='总推荐' value={stats.total_recommendations} color='#3b82f6' />
+                <StatBox
+                  label='总推荐'
+                  value={stats.total_recommendations}
+                  color='#3b82f6'
+                />
               </Grid>
               <Grid size={6}>
-                <StatBox label='接受率' value={`${(stats.acceptance_rate * 100).toFixed(1)}%`} color='#10b981' />
+                <StatBox
+                  label='接受率'
+                  value={`${(stats.acceptance_rate * 100).toFixed(1)}%`}
+                  color='#10b981'
+                />
               </Grid>
               <Grid size={6}>
-                <StatBox label='平均置信度' value={`${(stats.avg_confidence * 100).toFixed(1)}%`} color='#f59e0b' />
+                <StatBox
+                  label='平均置信度'
+                  value={`${(stats.avg_confidence * 100).toFixed(1)}%`}
+                  color='#f59e0b'
+                />
               </Grid>
               <Grid size={6}>
-                <StatBox label='策略数' value={Object.keys(stats.by_strategy).length} color='#8b5cf6' />
+                <StatBox
+                  label='策略数'
+                  value={Object.keys(stats.by_strategy).length}
+                  color='#8b5cf6'
+                />
               </Grid>
             </Grid>
 
             <Divider sx={{ mb: 1.5 }} />
-            <Typography variant='subtitle2' sx={{ fontWeight: 600, mb: 1 }}>
+            <Typography
+              variant='subtitle2'
+              sx={{ fontWeight: 600, mb: 1 }}
+            >
               性能数据
             </Typography>
             <TableContainer>
@@ -780,7 +968,9 @@ const RouterTab: React.FC = () => {
                 <TableBody>
                   {stats.performance.slice(0, 6).map((perf, idx) => (
                     <TableRow key={idx}>
-                      <TableCell sx={{ fontFamily: 'monospace', fontSize: 11 }}>{perf.path}</TableCell>
+                      <TableCell sx={{ fontFamily: 'monospace', fontSize: 11 }}>
+                        {perf.path}
+                      </TableCell>
                       <TableCell align='right'>
                         <Chip
                           label={`${perf.avg_latency_ms}ms`}
@@ -807,10 +997,24 @@ const RouterTab: React.FC = () => {
   );
 };
 
-const StatBox: React.FC<{ label: string; value: string | number; color: string }> = ({ label, value, color }) => (
+const StatBox: React.FC<{ label: string; value: string | number; color: string }> = ({
+  label,
+  value,
+  color,
+}) => (
   <Box sx={{ textAlign: 'center', p: 1, bgcolor: `${color}10`, borderRadius: 1 }}>
-    <Typography variant='h6' sx={{ fontWeight: 700, color, fontSize: 18 }}>{value}</Typography>
-    <Typography variant='caption' color='text.secondary'>{label}</Typography>
+    <Typography
+      variant='h6'
+      sx={{ fontWeight: 700, color, fontSize: 18 }}
+    >
+      {value}
+    </Typography>
+    <Typography
+      variant='caption'
+      color='text.secondary'
+    >
+      {label}
+    </Typography>
   </Box>
 );
 
@@ -822,7 +1026,10 @@ const AdaptiveUITab: React.FC<{
   const [layout, setLayout] = React.useState<'grid' | 'list' | 'mixed'>('grid');
   const [adaptedLayout, setAdaptedLayout] = React.useState<AdaptedLayout | null>(null);
   const [stats, setStats] = React.useState<AdaptationStats>(adaptiveUIEngine.getAdaptationStats());
-  const [optimization, setOptimization] = React.useState<{ improvements: string[]; score: number } | null>(null);
+  const [optimization, setOptimization] = React.useState<{
+    improvements: string[];
+    score: number;
+  } | null>(null);
 
   const createDemoProfile = () => {
     const profile = adaptiveUIEngine.createProfile({
@@ -841,19 +1048,52 @@ const AdaptiveUITab: React.FC<{
         show_favorites: true,
         sidebar_collapsed: false,
         fontSize: 14,
-        accentColor: '#8b5cf6',
+        accentColor: 'secondary.500',
         layout,
       },
       behavior_patterns: [
-        { action: 'dashboard_view', frequency: 25, avg_duration_ms: 5000, peak_hours: [9, 14, 18], common_paths: ['/dashboard'], last_seen: Date.now() },
-        { action: 'analytics_view', frequency: 15, avg_duration_ms: 8000, peak_hours: [10, 15], common_paths: ['/bi/analytics'], last_seen: Date.now() },
-        { action: 'customer_manage', frequency: 8, avg_duration_ms: 12000, peak_hours: [11, 16], common_paths: ['/crm/customers'], last_seen: Date.now() },
-        { action: 'workflow_approval', frequency: 20, avg_duration_ms: 3000, peak_hours: [9, 10], common_paths: ['/workflow/tasks'], last_seen: Date.now() },
+        {
+          action: 'dashboard_view',
+          frequency: 25,
+          avg_duration_ms: 5000,
+          peak_hours: [9, 14, 18],
+          common_paths: ['/dashboard'],
+          last_seen: Date.now(),
+        },
+        {
+          action: 'analytics_view',
+          frequency: 15,
+          avg_duration_ms: 8000,
+          peak_hours: [10, 15],
+          common_paths: ['/bi/analytics'],
+          last_seen: Date.now(),
+        },
+        {
+          action: 'customer_manage',
+          frequency: 8,
+          avg_duration_ms: 12000,
+          peak_hours: [11, 16],
+          common_paths: ['/crm/customers'],
+          last_seen: Date.now(),
+        },
+        {
+          action: 'workflow_approval',
+          frequency: 20,
+          avg_duration_ms: 3000,
+          peak_hours: [9, 10],
+          common_paths: ['/workflow/tasks'],
+          last_seen: Date.now(),
+        },
       ],
       device,
       context: {
         device,
-        screen_size: device === 'mobile' ? { width: 375, height: 812 } : device === 'tablet' ? { width: 768, height: 1024 } : { width: 1920, height: 1080 },
+        screen_size:
+          device === 'mobile'
+            ? { width: 375, height: 812 }
+            : device === 'tablet'
+              ? { width: 768, height: 1024 }
+              : { width: 1920, height: 1080 },
         network_type: 'wifi',
         connection_quality: 0.9,
         locale: 'zh-CN',
@@ -899,8 +1139,9 @@ const AdaptiveUITab: React.FC<{
       ];
       const recs = adaptiveUIEngine.personalizeContent(profile.id, items);
       alert(
-        '内容推荐结果:\n\n' +
-          recs.map((r) => `${r.title} - ${r.reason} (置信度: ${(r.confidence * 100).toFixed(0)}%)`).join('\n')
+        `内容推荐结果:\n\n${recs
+          .map((r) => `${r.title} - ${r.reason} (置信度: ${(r.confidence * 100).toFixed(0)}%)`)
+          .join('\n')}`
       );
     }
   };
@@ -912,17 +1153,34 @@ const AdaptiveUITab: React.FC<{
 
   return (
     <Box sx={{ p: 3 }}>
-      <Grid container spacing={3}>
+      <Grid
+        container
+        spacing={3}
+      >
         <Grid size={{ xs: 12, md: 4 }}>
           <V51Card>
-            <Typography variant='subtitle2' sx={{ fontWeight: 600, mb: 2, display: 'flex', alignItems: 'center', gap: 1 }}>
+            <Typography
+              variant='subtitle2'
+              sx={{ fontWeight: 600, mb: 2, display: 'flex', alignItems: 'center', gap: 1 }}
+            >
               <Eye size={16} />
               用户画像
             </Typography>
-            <Stack direction='row' spacing={1} sx={{ mb: 2 }}>
-              <FormControl size='small' sx={{ minWidth: 100 }}>
+            <Stack
+              direction='row'
+              spacing={1}
+              sx={{ mb: 2 }}
+            >
+              <FormControl
+                size='small'
+                sx={{ minWidth: 100 }}
+              >
                 <InputLabel>设备</InputLabel>
-                <Select value={device} label='设备' onChange={(e) => setDevice(e.target.value as DeviceType)}>
+                <Select
+                  value={device}
+                  label='设备'
+                  onChange={(e) => setDevice(e.target.value as DeviceType)}
+                >
                   <MenuItem value='desktop'>
                     <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
                       <MonitorIcon size={14} /> 桌面
@@ -940,9 +1198,16 @@ const AdaptiveUITab: React.FC<{
                   </MenuItem>
                 </Select>
               </FormControl>
-              <FormControl size='small' sx={{ minWidth: 100 }}>
+              <FormControl
+                size='small'
+                sx={{ minWidth: 100 }}
+              >
                 <InputLabel>布局</InputLabel>
-                <Select value={layout} label='布局' onChange={(e) => setLayout(e.target.value as 'grid' | 'list' | 'mixed')}>
+                <Select
+                  value={layout}
+                  label='布局'
+                  onChange={(e) => setLayout(e.target.value as 'grid' | 'list' | 'mixed')}
+                >
                   <MenuItem value='grid'>网格</MenuItem>
                   <MenuItem value='list'>列表</MenuItem>
                   <MenuItem value='mixed'>混合</MenuItem>
@@ -953,47 +1218,88 @@ const AdaptiveUITab: React.FC<{
             {userProfile && (
               <>
                 <Box sx={{ mb: 2 }}>
-                  <Typography variant='body2' sx={{ fontWeight: 600 }}>{userProfile.name}</Typography>
-                  <Typography variant='caption' color='text.secondary'>
+                  <Typography
+                    variant='body2'
+                    sx={{ fontWeight: 600 }}
+                  >
+                    {userProfile.name}
+                  </Typography>
+                  <Typography
+                    variant='caption'
+                    color='text.secondary'
+                  >
                     {userProfile.role} · {userProfile.department}
                   </Typography>
                 </Box>
-                <Typography variant='caption' color='text.secondary' sx={{ mb: 1, display: 'block' }}>
+                <Typography
+                  variant='caption'
+                  color='text.secondary'
+                  sx={{ mb: 1, display: 'block' }}
+                >
                   行为模式 ({userProfile.behavior_patterns.length})
                 </Typography>
-                <List dense sx={{ maxHeight: 150, overflow: 'auto' }}>
+                <List
+                  dense
+                  sx={{ maxHeight: 150, overflow: 'auto' }}
+                >
                   {userProfile.behavior_patterns.map((b, idx) => (
-                    <ListItem key={idx} sx={{ py: 0.5 }}>
+                    <ListItem
+                      key={idx}
+                      sx={{ py: 0.5 }}
+                    >
                       <ListItemIcon sx={{ minWidth: 32 }}>
                         <MousePointerClick size={14} />
                       </ListItemIcon>
                       <ListItemText
-                        primary={<Typography variant='body2' sx={{ fontSize: 12 }}>{b.action}</Typography>}
+                        primary={
+                          <Typography
+                            variant='body2'
+                            sx={{ fontSize: 12 }}
+                          >
+                            {b.action}
+                          </Typography>
+                        }
                         secondary={`频率: ${b.frequency} · 平均: ${(b.avg_duration_ms / 1000).toFixed(1)}s`}
                       />
                     </ListItem>
                   ))}
                 </List>
                 <Box sx={{ mt: 2 }}>
-                  <Typography variant='caption' sx={{ fontWeight: 600, display: 'block', mb: 0.5 }}>
+                  <Typography
+                    variant='caption'
+                    sx={{ fontWeight: 600, display: 'block', mb: 0.5 }}
+                  >
                     分群标签
                   </Typography>
-                  <Stack direction='row' spacing={0.5} sx={{ flexWrap: 'wrap', gap: 0.5 }}>
+                  <Stack
+                    direction='row'
+                    spacing={0.5}
+                    sx={{ flexWrap: 'wrap', gap: 0.5 }}
+                  >
                     {userProfile.segments.map((s, idx) => (
-                      <Chip key={idx} label={s} size='small' sx={{ fontSize: 10, height: 18 }} />
+                      <Chip
+                        key={idx}
+                        label={s}
+                        size='small'
+                        sx={{ fontSize: 10, height: 18 }}
+                      />
                     ))}
                   </Stack>
                 </Box>
               </>
             )}
 
-            <Stack direction='row' spacing={1} sx={{ mt: 2 }}>
+            <Stack
+              direction='row'
+              spacing={1}
+              sx={{ mt: 2 }}
+            >
               <Button
                 variant='contained'
                 size='small'
                 startIcon={<Play size={14} />}
                 onClick={handleAdapt}
-                sx={{ bgcolor: '#f59e0b', '&:hover': { bgcolor: '#d97706' } }}
+                sx={{ bgcolor: 'warning.500', '&:hover': { bgcolor: 'warning.600' } }}
               >
                 适配布局
               </Button>
@@ -1019,7 +1325,10 @@ const AdaptiveUITab: React.FC<{
 
         <Grid size={{ xs: 12, md: 4 }}>
           <V51Card>
-            <Typography variant='subtitle2' sx={{ fontWeight: 600, mb: 2, display: 'flex', alignItems: 'center', gap: 1 }}>
+            <Typography
+              variant='subtitle2'
+              sx={{ fontWeight: 600, mb: 2, display: 'flex', alignItems: 'center', gap: 1 }}
+            >
               <LayoutDashboard size={16} />
               自适应预览
             </Typography>
@@ -1038,41 +1347,67 @@ const AdaptiveUITab: React.FC<{
                     <Chip
                       label={`布局: ${adaptedLayout.layout}`}
                       size='small'
-                      sx={{ bgcolor: 'white', fontWeight: 600 }}
+                      sx={{ bgcolor: 'common.white', fontWeight: 600 }}
                     />
                     <Chip
                       label={`密度: ${adaptedLayout.density}`}
                       size='small'
-                      sx={{ bgcolor: 'white', fontWeight: 600 }}
+                      sx={{ bgcolor: 'common.white', fontWeight: 600 }}
                     />
                     <Chip
                       label={`置信度: ${(adaptedLayout.layout_confidence * 100).toFixed(0)}%`}
                       size='small'
-                      sx={{ bgcolor: 'white', fontWeight: 600 }}
+                      sx={{ bgcolor: 'common.white', fontWeight: 600 }}
                     />
                   </Box>
                   <Box sx={{ display: 'flex', gap: 1, flexWrap: 'wrap', mb: 1 }}>
-                    <Chip label={`主题: ${adaptedLayout.theme}`} size='small' sx={{ fontSize: 10 }} />
-                    <Chip label={`字体缩放: ${adaptedLayout.font_scale.toFixed(2)}x`} size='small' sx={{ fontSize: 10 }} />
-                    <Chip label={`侧边栏: ${adaptedLayout.sidebar_state}`} size='small' sx={{ fontSize: 10 }} />
+                    <Chip
+                      label={`主题: ${adaptedLayout.theme}`}
+                      size='small'
+                      sx={{ fontSize: 10 }}
+                    />
+                    <Chip
+                      label={`字体缩放: ${adaptedLayout.font_scale.toFixed(2)}x`}
+                      size='small'
+                      sx={{ fontSize: 10 }}
+                    />
+                    <Chip
+                      label={`侧边栏: ${adaptedLayout.sidebar_state}`}
+                      size='small'
+                      sx={{ fontSize: 10 }}
+                    />
                   </Box>
                 </Paper>
 
-                <Typography variant='subtitle2' sx={{ fontWeight: 600, mb: 1 }}>
+                <Typography
+                  variant='subtitle2'
+                  sx={{ fontWeight: 600, mb: 1 }}
+                >
                   推荐模块
                 </Typography>
                 <List dense>
                   {adaptedLayout.recommended_modules.length === 0 && (
-                    <Typography variant='caption' color='text.secondary'>暂无推荐</Typography>
+                    <Typography
+                      variant='caption'
+                      color='text.secondary'
+                    >
+                      暂无推荐
+                    </Typography>
                   )}
                   {adaptedLayout.recommended_modules.map((mod, idx) => (
-                    <ListItem key={idx} sx={{ py: 0.5 }}>
+                    <ListItem
+                      key={idx}
+                      sx={{ py: 0.5 }}
+                    >
                       <ListItemIcon sx={{ minWidth: 32 }}>
                         <Layers size={14} />
                       </ListItemIcon>
                       <ListItemText
                         primary={
-                          <Typography variant='body2' sx={{ fontSize: 12, fontWeight: 500 }}>
+                          <Typography
+                            variant='body2'
+                            sx={{ fontSize: 12, fontWeight: 500 }}
+                          >
                             {mod.module}
                           </Typography>
                         }
@@ -1095,12 +1430,22 @@ const AdaptiveUITab: React.FC<{
                 {optimization && (
                   <>
                     <Divider sx={{ my: 1.5 }} />
-                    <Typography variant='subtitle2' sx={{ fontWeight: 600, mb: 1 }}>
-                      <TrendingUp size={14} style={{ marginRight: 4 }} />
+                    <Typography
+                      variant='subtitle2'
+                      sx={{ fontWeight: 600, mb: 1 }}
+                    >
+                      <TrendingUp
+                        size={14}
+                        style={{ marginRight: 4 }}
+                      />
                       优化建议 (得分: {(optimization.score * 100).toFixed(0)}%)
                     </Typography>
                     {optimization.improvements.map((imp, idx) => (
-                      <Paper key={idx} elevation={0} sx={{ p: 1, mb: 0.5, bgcolor: '#f8fafc', borderRadius: 1 }}>
+                      <Paper
+                        key={idx}
+                        elevation={0}
+                        sx={{ p: 1, mb: 0.5, bgcolor: 'background.default', borderRadius: 1 }}
+                      >
                         <Typography variant='caption'>{imp}</Typography>
                       </Paper>
                     ))}
@@ -1115,44 +1460,82 @@ const AdaptiveUITab: React.FC<{
 
         <Grid size={{ xs: 12, md: 4 }}>
           <V51Card>
-            <Typography variant='subtitle2' sx={{ fontWeight: 600, mb: 2, display: 'flex', alignItems: 'center', gap: 1 }}>
+            <Typography
+              variant='subtitle2'
+              sx={{ fontWeight: 600, mb: 2, display: 'flex', alignItems: 'center', gap: 1 }}
+            >
               <BarChart3 size={16} />
               适配统计
             </Typography>
-            <Grid container spacing={2}>
+            <Grid
+              container
+              spacing={2}
+            >
               <Grid size={6}>
-                <StatBox label='总适配' value={stats.total_adaptations} color='#3b82f6' />
+                <StatBox
+                  label='总适配'
+                  value={stats.total_adaptations}
+                  color='#3b82f6'
+                />
               </Grid>
               <Grid size={6}>
-                <StatBox label='布局变更' value={stats.layout_changes} color='#10b981' />
+                <StatBox
+                  label='布局变更'
+                  value={stats.layout_changes}
+                  color='#10b981'
+                />
               </Grid>
               <Grid size={6}>
-                <StatBox label='内容推荐' value={stats.content_recommendations} color='#f59e0b' />
+                <StatBox
+                  label='内容推荐'
+                  value={stats.content_recommendations}
+                  color='#f59e0b'
+                />
               </Grid>
               <Grid size={6}>
-                <StatBox label='满意度' value={`${(stats.user_satisfaction_score * 100).toFixed(0)}%`} color='#8b5cf6' />
+                <StatBox
+                  label='满意度'
+                  value={`${(stats.user_satisfaction_score * 100).toFixed(0)}%`}
+                  color='#8b5cf6'
+                />
               </Grid>
             </Grid>
 
             <Divider sx={{ my: 1.5 }} />
 
-            <Typography variant='subtitle2' sx={{ fontWeight: 600, mb: 1 }}>
+            <Typography
+              variant='subtitle2'
+              sx={{ fontWeight: 600, mb: 1 }}
+            >
               设备分布
             </Typography>
-            <Stack direction='column' spacing={1}>
+            <Stack
+              direction='column'
+              spacing={1}
+            >
               {(['desktop', 'tablet', 'mobile'] as DeviceType[]).map((dev) => (
                 <Box key={dev}>
                   <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: 0.5 }}>
-                    <Typography variant='body2' sx={{ fontSize: 12 }}>
+                    <Typography
+                      variant='body2'
+                      sx={{ fontSize: 12 }}
+                    >
                       {dev === 'desktop' ? '桌面' : dev === 'tablet' ? '平板' : '移动端'}
                     </Typography>
-                    <Typography variant='body2' sx={{ fontSize: 12, fontWeight: 600 }}>
+                    <Typography
+                      variant='body2'
+                      sx={{ fontSize: 12, fontWeight: 600 }}
+                    >
                       {stats.by_device[dev] ?? 0}
                     </Typography>
                   </Box>
                   <LinearProgress
                     variant='determinate'
-                    value={stats.total_adaptations > 0 ? ((stats.by_device[dev] ?? 0) / stats.total_adaptations) * 100 : 0}
+                    value={
+                      stats.total_adaptations > 0
+                        ? ((stats.by_device[dev] ?? 0) / stats.total_adaptations) * 100
+                        : 0
+                    }
                     sx={{ height: 4, borderRadius: 2 }}
                   />
                 </Box>
@@ -1161,14 +1544,25 @@ const AdaptiveUITab: React.FC<{
 
             <Divider sx={{ my: 1.5 }} />
 
-            <Typography variant='subtitle2' sx={{ fontWeight: 600, mb: 1 }}>
+            <Typography
+              variant='subtitle2'
+              sx={{ fontWeight: 600, mb: 1 }}
+            >
               平均延迟
             </Typography>
             <Box sx={{ textAlign: 'center' }}>
-              <Typography variant='h5' sx={{ fontWeight: 700, color: '#3b82f6' }}>
+              <Typography
+                variant='h5'
+                sx={{ fontWeight: 700, color: 'primary.500' }}
+              >
                 {stats.adaptation_latency_ms}ms
               </Typography>
-              <Typography variant='caption' color='text.secondary'>每次适配平均耗时</Typography>
+              <Typography
+                variant='caption'
+                color='text.secondary'
+              >
+                每次适配平均耗时
+              </Typography>
             </Box>
           </V51Card>
         </Grid>
@@ -1193,7 +1587,11 @@ const SettingsTab: React.FC = () => {
       const result = await next();
       return {
         ...result,
-        data: { ...(result.data as Record<string, unknown>), processed_by: 'mock-middleware', context_source: context.source },
+        data: {
+          ...(result.data as Record<string, unknown>),
+          processed_by: 'mock-middleware',
+          context_source: context.source,
+        },
       };
     });
     setStatus(aiFirstPlatform.getPlatformStatus());
@@ -1216,15 +1614,24 @@ const SettingsTab: React.FC = () => {
 
   return (
     <Box sx={{ p: 3 }}>
-      <Grid container spacing={3}>
+      <Grid
+        container
+        spacing={3}
+      >
         <Grid size={{ xs: 12, md: 6 }}>
           <V51Card>
-            <Typography variant='subtitle2' sx={{ fontWeight: 600, mb: 2, display: 'flex', alignItems: 'center', gap: 1 }}>
+            <Typography
+              variant='subtitle2'
+              sx={{ fontWeight: 600, mb: 2, display: 'flex', alignItems: 'center', gap: 1 }}
+            >
               <Settings size={16} />
               AI 平台配置
             </Typography>
 
-            <Stack direction='column' spacing={2}>
+            <Stack
+              direction='column'
+              spacing={2}
+            >
               <FormControlLabel
                 control={
                   <Switch
@@ -1283,12 +1690,18 @@ const SettingsTab: React.FC = () => {
 
             <Divider sx={{ my: 2 }} />
 
-            <Typography variant='subtitle2' sx={{ fontWeight: 600, mb: 2 }}>
+            <Typography
+              variant='subtitle2'
+              sx={{ fontWeight: 600, mb: 2 }}
+            >
               参数配置
             </Typography>
 
             <Box sx={{ mb: 2 }}>
-              <Typography variant='body2' gutterBottom>
+              <Typography
+                variant='body2'
+                gutterBottom
+              >
                 学习率: {config.learning_rate}
               </Typography>
               <Slider
@@ -1302,7 +1715,10 @@ const SettingsTab: React.FC = () => {
             </Box>
 
             <Box sx={{ mb: 2 }}>
-              <Typography variant='body2' gutterBottom>
+              <Typography
+                variant='body2'
+                gutterBottom
+              >
                 最大并发能力: {config.max_concurrent_capabilities}
               </Typography>
               <Slider
@@ -1315,8 +1731,13 @@ const SettingsTab: React.FC = () => {
               />
             </Box>
 
-            <Box sx={{ mt: 2, display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-              <Typography variant='caption' color='text.secondary'>
+            <Box
+              sx={{ mt: 2, display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}
+            >
+              <Typography
+                variant='caption'
+                color='text.secondary'
+              >
                 配置版本: {config.config_version}
               </Typography>
               <Chip
@@ -1334,31 +1755,52 @@ const SettingsTab: React.FC = () => {
 
         <Grid size={{ xs: 12, md: 6 }}>
           <V51Card>
-            <Typography variant='subtitle2' sx={{ fontWeight: 600, mb: 2, display: 'flex', alignItems: 'center', gap: 1 }}>
+            <Typography
+              variant='subtitle2'
+              sx={{ fontWeight: 600, mb: 2, display: 'flex', alignItems: 'center', gap: 1 }}
+            >
               <Activity size={16} />
               中间件链
             </Typography>
 
-            <Alert severity='info' sx={{ mb: 2 }}>
+            <Alert
+              severity='info'
+              sx={{ mb: 2 }}
+            >
               AI 中间件链用于处理所有 AI 请求的前置/后置处理。可添加日志、缓存、限流等中间件。
             </Alert>
 
-            <Grid container spacing={2}>
+            <Grid
+              container
+              spacing={2}
+            >
               <Grid size={6}>
-                <StatBox label='中间件数' value={status.middleware.total} color='#3b82f6' />
+                <StatBox
+                  label='中间件数'
+                  value={status.middleware.total}
+                  color='#3b82f6'
+                />
               </Grid>
               <Grid size={6}>
-                <StatBox label='健康数' value={status.middleware.healthy} color='#10b981' />
+                <StatBox
+                  label='健康数'
+                  value={status.middleware.healthy}
+                  color='#10b981'
+                />
               </Grid>
             </Grid>
 
-            <Stack direction='row' spacing={1} sx={{ mt: 2 }}>
+            <Stack
+              direction='row'
+              spacing={1}
+              sx={{ mt: 2 }}
+            >
               <Button
                 variant='contained'
                 size='small'
                 startIcon={<GitBranch size={14} />}
                 onClick={handleAddMockMiddleware}
-                sx={{ bgcolor: '#6366f1', '&:hover': { bgcolor: '#4f46e5' } }}
+                sx={{ bgcolor: 'secondary.500', '&:hover': { bgcolor: 'secondary.700' } }}
               >
                 添加示例中间件
               </Button>
@@ -1367,7 +1809,7 @@ const SettingsTab: React.FC = () => {
                 size='small'
                 startIcon={<Play size={14} />}
                 onClick={handleExecuteMiddleware}
-                sx={{ bgcolor: '#10b981', '&:hover': { bgcolor: '#059669' } }}
+                sx={{ bgcolor: 'teal.500', '&:hover': { bgcolor: 'teal.600' } }}
               >
                 执行中间件链
               </Button>
@@ -1375,30 +1817,58 @@ const SettingsTab: React.FC = () => {
 
             <Divider sx={{ my: 2 }} />
 
-            <Typography variant='subtitle2' sx={{ fontWeight: 600, mb: 2 }}>
+            <Typography
+              variant='subtitle2'
+              sx={{ fontWeight: 600, mb: 2 }}
+            >
               平台状态
             </Typography>
-            <Grid container spacing={2}>
+            <Grid
+              container
+              spacing={2}
+            >
               <Grid size={6}>
-                <StatBox label='运行时间' value={`${status.uptime}s`} color='#8b5cf6' />
+                <StatBox
+                  label='运行时间'
+                  value={`${status.uptime}s`}
+                  color='#8b5cf6'
+                />
               </Grid>
               <Grid size={6}>
-                <StatBox label='总能力' value={status.capabilities.total} color='#3b82f6' />
+                <StatBox
+                  label='总能力'
+                  value={status.capabilities.total}
+                  color='#3b82f6'
+                />
               </Grid>
               <Grid size={6}>
-                <StatBox label='已激活' value={status.capabilities.active} color='#10b981' />
+                <StatBox
+                  label='已激活'
+                  value={status.capabilities.active}
+                  color='#10b981'
+                />
               </Grid>
               <Grid size={6}>
-                <StatBox label='已降级' value={status.capabilities.degraded} color='#f59e0b' />
+                <StatBox
+                  label='已降级'
+                  value={status.capabilities.degraded}
+                  color='#f59e0b'
+                />
               </Grid>
             </Grid>
 
             <Divider sx={{ my: 2 }} />
 
-            <Typography variant='subtitle2' sx={{ fontWeight: 600, mb: 1 }}>
+            <Typography
+              variant='subtitle2'
+              sx={{ fontWeight: 600, mb: 1 }}
+            >
               AI 优先设计原则
             </Typography>
-            <Stack direction='column' spacing={1}>
+            <Stack
+              direction='column'
+              spacing={1}
+            >
               {[
                 { icon: <Brain size={14} />, text: 'AI 优先决策：所有模块集成 AI 能力' },
                 { icon: <Zap size={14} />, text: '智能路由：基于意图的动态路径选择' },
@@ -1406,8 +1876,11 @@ const SettingsTab: React.FC = () => {
                 { icon: <Shield size={14} />, text: '安全回退：AI 失败时自动降级' },
                 { icon: <Monitor size={14} />, text: '可观测性：全链路 AI 监控与追踪' },
               ].map((item, idx) => (
-                <Box key={idx} sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-                  <Box sx={{ color: '#6366f1' }}>{item.icon}</Box>
+                <Box
+                  key={idx}
+                  sx={{ display: 'flex', alignItems: 'center', gap: 1 }}
+                >
+                  <Box sx={{ color: 'secondary.500' }}>{item.icon}</Box>
                   <Typography variant='body2'>{item.text}</Typography>
                 </Box>
               ))}

@@ -24,6 +24,7 @@ const WindowList = ({ anchorEl, onClose }: WindowListProps) => {
 
   useEffect(() => {
     if (anchorEl) {
+      // eslint-disable-next-line react-hooks/set-state-in-effect
       loadWindows();
     }
   }, [anchorEl]);

@@ -192,7 +192,7 @@ export class RootCauseAnalyzer {
     const df1 = lag;
     const df2 = n - 2 * lag - 1;
 
-    const fStatistic = ((ssr1 - ssr2) / df1) / (ssr2 / df2);
+    const fStatistic = (ssr1 - ssr2) / df1 / (ssr2 / df2);
     const pValue = this.fisherPValue(fStatistic, df1, df2);
     const isGrangerCausal = pValue < 0.05;
 
@@ -429,10 +429,7 @@ export class RootCauseAnalyzer {
     return timeline.sort((a, b) => a.timestamp - b.timestamp);
   }
 
-  private generateRecommendations(
-    primary: CausalFactor,
-    secondary: CausalFactor[]
-  ): string[] {
+  private generateRecommendations(primary: CausalFactor, secondary: CausalFactor[]): string[] {
     const recommendations: string[] = [];
 
     // 基于主要原因生成建议
@@ -466,10 +463,7 @@ export class RootCauseAnalyzer {
     return recommendations.slice(0, this.config.maxRecommendations);
   }
 
-  private calculateOverallConfidence(
-    primary: CausalFactor,
-    secondary: CausalFactor[]
-  ): number {
+  private calculateOverallConfidence(primary: CausalFactor, secondary: CausalFactor[]): number {
     // 加权平均计算总体置信度
     const primaryWeight = 0.6;
     const secondaryWeight = 0.4 / Math.max(1, secondary.length);
@@ -578,7 +572,11 @@ export class RootCauseAnalyzer {
     return ranks;
   }
 
-  private calculateAutoRegressionSSR(series: number[], lag: number, otherSeries?: number[]): number {
+  private calculateAutoRegressionSSR(
+    series: number[],
+    lag: number,
+    otherSeries?: number[]
+  ): number {
     // 简化的自回归残差平方和计算
     let ssr = 0;
     for (let i = lag; i < series.length; i++) {

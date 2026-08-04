@@ -86,7 +86,7 @@ export interface PatrolInspectionItem {
   patrol_id: string;
   item_name: string;
   standard?: string;
-  actual_value?: string;
+  actualValue?: string;
   status: string;
   remark?: string;
 }
@@ -94,7 +94,7 @@ export interface PatrolInspectionItem {
 export interface AddPatrolInspectionItemRequest {
   item_name: string;
   standard?: string;
-  actual_value?: string;
+  actualValue?: string;
   status?: string;
   remark?: string;
 }

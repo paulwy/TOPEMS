@@ -432,7 +432,8 @@ export function useWebSocket(options: UseWebSocketOptions = {}) {
   const reconnectTimeoutRef = useRef<number | null>(null);
   const connectTimeoutRef = useRef<number | null>(null);
   const heartbeatMonitorRef = useRef<HeartbeatMonitor | null>(null);
-  const token = autoAuthToken ? useAuthToken() : null;
+  const authToken = useAuthToken();
+  const token = autoAuthToken ? authToken : null;
 
   useEffect(() => {
     if (!enabled) return;

@@ -129,19 +129,19 @@ const V58EvolutionPanel: React.FC<{ onClose: () => void }> = ({ onClose }) => {
   const refreshAll = React.useCallback(() => {
     modelVersionManager.seed();
     abTestManager.seed();
-    setModels(modelVersionManager.list_models());
-    setExperiments(abTestManager.list_experiments());
-    setSecurityReport(securityHardener.get_security_report());
-    setThreats(securityHardener.list_threats());
+    setModels(modelVersionManager.listModels());
+    setExperiments(abTestManager.listExperiments());
+    setSecurityReport(securityHardener.getSecurityReport());
+    setThreats(securityHardener.listThreats());
   }, []);
 
   React.useEffect(() => {
     refreshAll();
-    const unsubModels = modelVersionManager.on(() => setModels(modelVersionManager.list_models()));
-    const unsubExp = abTestManager.on(() => setExperiments(abTestManager.list_experiments()));
+    const unsubModels = modelVersionManager.on(() => setModels(modelVersionManager.listModels()));
+    const unsubExp = abTestManager.on(() => setExperiments(abTestManager.listExperiments()));
     const unsubSec = securityHardener.on(() => {
-      setThreats(securityHardener.list_threats());
-      setSecurityReport(securityHardener.get_security_report());
+      setThreats(securityHardener.listThreats());
+      setSecurityReport(securityHardener.getSecurityReport());
     });
     return () => {
       unsubModels();
@@ -158,7 +158,7 @@ const V58EvolutionPanel: React.FC<{ onClose: () => void }> = ({ onClose }) => {
         left: 0,
         right: 0,
         bottom: 0,
-        bgcolor: 'rgba(0,0,0,0.6)',
+        bgcolor: 'action.active',
         zIndex: 10000,
         display: 'flex',
         alignItems: 'center',
@@ -224,16 +224,16 @@ const V58EvolutionPanel: React.FC<{ onClose: () => void }> = ({ onClose }) => {
               onSelect={setSelectedModelId}
               onCreate={() => setShowCreateModel(true)}
               onPublish={(modelId, version, metrics) => {
-                modelVersionManager.publish_version(modelId, version, metrics);
+                modelVersionManager.publishVersion(modelId, version, metrics);
               }}
               onActivate={(modelId, versionId) => {
-                modelVersionManager.activate_version(modelId, versionId);
+                modelVersionManager.activateVersion(modelId, versionId);
               }}
               onDeprecate={(modelId, versionId) => {
-                modelVersionManager.deprecate_version(modelId, versionId);
+                modelVersionManager.deprecateVersion(modelId, versionId);
               }}
               onArchive={(modelId, versionId) => {
-                modelVersionManager.archive_version(modelId, versionId);
+                modelVersionManager.archiveVersion(modelId, versionId);
               }}
             />
           )}
@@ -243,15 +243,15 @@ const V58EvolutionPanel: React.FC<{ onClose: () => void }> = ({ onClose }) => {
               selectedExpId={selectedExpId}
               onSelect={setSelectedExpId}
               onCreate={() => setShowCreateExp(true)}
-              onStart={(id) => abTestManager.start_experiment(id)}
-              onStop={(id) => abTestManager.stop_experiment(id)}
+              onStart={(id) => abTestManager.startExperiment(id)}
+              onStop={(id) => abTestManager.stopExperiment(id)}
             />
           )}
           {activeTab === 'security' && securityReport && (
             <SecurityTab
               report={securityReport}
-              onRunScan={() => setSecurityReport(securityHardener.run_security_scan())}
-              onApplyHardening={() => securityHardener.apply_hardening()}
+              onRunScan={() => setSecurityReport(securityHardener.runSecurityScan())}
+              onApplyHardening={() => securityHardener.applyHardening()}
             />
           )}
           {activeTab === 'threats' && (
@@ -259,7 +259,7 @@ const V58EvolutionPanel: React.FC<{ onClose: () => void }> = ({ onClose }) => {
               threats={threats}
               expandedThreat={expandedThreat}
               onToggle={(id) => setExpandedThreat(expandedThreat === id ? null : id)}
-              onUpdate={(id, updates) => securityHardener.update_threat_model(id, updates)}
+              onUpdate={(id, updates) => securityHardener.updateThreatModel(id, updates)}
             />
           )}
         </Box>
@@ -312,7 +312,7 @@ const V58EvolutionPanel: React.FC<{ onClose: () => void }> = ({ onClose }) => {
               <Button
                 onClick={() => {
                   if (!newModel.name.trim()) return;
-                  modelVersionManager.register_model(
+                  modelVersionManager.registerModel(
                     newModel.name,
                     newModel.type || 'custom',
                     newModel.description,
@@ -322,7 +322,7 @@ const V58EvolutionPanel: React.FC<{ onClose: () => void }> = ({ onClose }) => {
                   setShowCreateModel(false);
                 }}
                 variant='contained'
-                sx={{ bgcolor: '#8b5cf6' }}
+                sx={{ bgcolor: 'secondary.500' }}
                 disabled={!newModel.name.trim()}
               >
                 注册模型
@@ -379,7 +379,7 @@ const V58EvolutionPanel: React.FC<{ onClose: () => void }> = ({ onClose }) => {
               <Button
                 onClick={() => {
                   if (!newExp.name.trim()) return;
-                  abTestManager.create_experiment(
+                  abTestManager.createExperiment(
                     newExp.name,
                     newExp.description,
                     [
@@ -392,7 +392,7 @@ const V58EvolutionPanel: React.FC<{ onClose: () => void }> = ({ onClose }) => {
                   setShowCreateExp(false);
                 }}
                 variant='contained'
-                sx={{ bgcolor: '#10b981' }}
+                sx={{ bgcolor: 'teal.500' }}
                 disabled={!newExp.name.trim()}
               >
                 创建实验
@@ -413,7 +413,7 @@ const V58PanelHeader: React.FC<{ onClose: () => void }> = ({ onClose }) => (
       alignItems: 'center',
       justifyContent: 'space-between',
       background: 'linear-gradient(135deg, #8b5cf6 0%, #6366f1 50%, #3b82f6 100%)',
-      color: 'white',
+      color: 'common.white',
     }}
   >
     <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5 }}>
@@ -422,7 +422,7 @@ const V58PanelHeader: React.FC<{ onClose: () => void }> = ({ onClose }) => (
           width: 40,
           height: 40,
           borderRadius: 2,
-          bgcolor: 'rgba(255,255,255,0.2)',
+          bgcolor: 'action.disabledBackground',
           display: 'flex',
           alignItems: 'center',
           justifyContent: 'center',
@@ -451,8 +451,8 @@ const V58PanelHeader: React.FC<{ onClose: () => void }> = ({ onClose }) => (
         color='secondary'
         sx={{
           '& .MuiBadge-badge': {
-            bgcolor: '#fbbf24',
-            color: '#1e293b',
+            bgcolor: 'warning.400',
+            color: 'text.primary',
             fontWeight: 700,
             fontSize: 10,
           },
@@ -463,7 +463,7 @@ const V58PanelHeader: React.FC<{ onClose: () => void }> = ({ onClose }) => (
       <IconButton
         size='small'
         onClick={onClose}
-        sx={{ color: 'white' }}
+        sx={{ color: 'common.white' }}
       >
         <XIcon size={20} />
       </IconButton>
@@ -497,9 +497,7 @@ const ModelsTab: React.FC<{
   const [compareIds, setCompareIds] = React.useState<string[]>([]);
 
   const selectedModel = models.find((m) => m.id === selectedModelId) ?? null;
-  const activeVersion = selectedModel
-    ? modelVersionManager.get_active_model(selectedModel.id)
-    : null;
+  const activeVersion = selectedModel ? modelVersionManager.getActiveModel(selectedModel.id) : null;
 
   const handleAddMetric = () => {
     if (!newMetricKey.trim() || !newMetricVal.trim()) return;
@@ -556,7 +554,7 @@ const ModelsTab: React.FC<{
           startIcon={<Plus size={14} />}
           onClick={onCreate}
           size='small'
-          sx={{ bgcolor: '#8b5cf6' }}
+          sx={{ bgcolor: 'secondary.500' }}
         >
           注册模型
         </Button>
@@ -574,7 +572,7 @@ const ModelsTab: React.FC<{
           {models.length > 0 && (
             <List sx={{ maxHeight: 500, overflow: 'auto' }}>
               {models.map((model) => {
-                const active = modelVersionManager.get_active_model(model.id);
+                const active = modelVersionManager.getActiveModel(model.id);
                 return (
                   <Paper
                     key={model.id}
@@ -639,7 +637,7 @@ const ModelsTab: React.FC<{
                     <Chip
                       label={`当前: ${activeVersion.version}`}
                       size='small'
-                      sx={{ bgcolor: '#d1fae5', color: '#065f46', fontWeight: 600 }}
+                      sx={{ bgcolor: 'success.100', color: 'teal.900', fontWeight: 600 }}
                     />
                   )}
                 </Stack>
@@ -774,7 +772,7 @@ const ModelsTab: React.FC<{
 
                 {compareIds.length === 2 &&
                   (() => {
-                    const result = modelVersionManager.compare_versions(
+                    const result = modelVersionManager.compareVersions(
                       selectedModel.id,
                       compareIds[0],
                       compareIds[1]
@@ -782,7 +780,7 @@ const ModelsTab: React.FC<{
                     return (
                       <Paper
                         elevation={0}
-                        sx={{ mt: 2, p: 2, bgcolor: '#f0fdf4', borderRadius: 1 }}
+                        sx={{ mt: 2, p: 2, bgcolor: 'success.50', borderRadius: 1 }}
                       >
                         <Typography
                           variant='subtitle2'
@@ -814,7 +812,7 @@ const ModelsTab: React.FC<{
                                     key={k}
                                     label={k}
                                     size='small'
-                                    sx={{ bgcolor: '#d1fae5', color: '#065f46', fontSize: 10 }}
+                                    sx={{ bgcolor: 'success.100', color: 'teal.900', fontSize: 10 }}
                                   />
                                 ))
                               ) : (
@@ -841,7 +839,7 @@ const ModelsTab: React.FC<{
                                     key={k}
                                     label={k}
                                     size='small'
-                                    sx={{ bgcolor: '#fef2f2', color: '#991b1b', fontSize: 10 }}
+                                    sx={{ bgcolor: 'error.50', color: 'error.800', fontSize: 10 }}
                                   />
                                 ))
                               ) : (
@@ -962,7 +960,7 @@ const ModelsTab: React.FC<{
                   variant='contained'
                   onClick={handlePublish}
                   disabled={!newVersion.trim()}
-                  sx={{ bgcolor: '#8b5cf6' }}
+                  sx={{ bgcolor: 'secondary.500' }}
                   size='small'
                 >
                   发布版本
@@ -989,8 +987,8 @@ const ExperimentsTab: React.FC<{
   onStop: (id: string) => void;
 }> = ({ experiments, selectedExpId, onSelect, onCreate, onStart, onStop }) => {
   const selectedExp = experiments.find((e) => e.id === selectedExpId) ?? null;
-  const results = selectedExp ? abTestManager.get_results(selectedExp.id) : [];
-  const significance = selectedExp ? abTestManager.check_significance(selectedExp.id) : null;
+  const results = selectedExp ? abTestManager.getResults(selectedExp.id) : [];
+  const significance = selectedExp ? abTestManager.checkSignificance(selectedExp.id) : null;
 
   const getStatusChip = (status: string) => (
     <Chip
@@ -1025,7 +1023,7 @@ const ExperimentsTab: React.FC<{
           startIcon={<Plus size={14} />}
           onClick={onCreate}
           size='small'
-          sx={{ bgcolor: '#10b981' }}
+          sx={{ bgcolor: 'teal.500' }}
         >
           创建实验
         </Button>
@@ -1104,7 +1102,7 @@ const ExperimentsTab: React.FC<{
                       size='small'
                       startIcon={<Play size={12} />}
                       onClick={() => onStart(selectedExp.id)}
-                      sx={{ bgcolor: '#10b981' }}
+                      sx={{ bgcolor: 'teal.500' }}
                     >
                       启动实验
                     </Button>
@@ -1115,7 +1113,7 @@ const ExperimentsTab: React.FC<{
                       size='small'
                       startIcon={<Square size={12} />}
                       onClick={() => onStop(selectedExp.id)}
-                      sx={{ bgcolor: '#ef4444' }}
+                      sx={{ bgcolor: 'error.500' }}
                     >
                       停止实验
                     </Button>
@@ -1178,7 +1176,7 @@ const ExperimentsTab: React.FC<{
                                   {isWinner && (
                                     <TrendingUp
                                       size={14}
-                                      style={{ color: '#10b981' }}
+                                      style={{ color: 'teal.500' }}
                                     />
                                   )}
                                   <Typography
@@ -1248,12 +1246,12 @@ const ExperimentsTab: React.FC<{
                         {significance.isSignificant ? (
                           <CheckCircle2
                             size={28}
-                            style={{ color: '#10b981' }}
+                            style={{ color: 'teal.500' }}
                           />
                         ) : (
                           <XCircle
                             size={28}
-                            style={{ color: '#9ca3af' }}
+                            style={{ color: 'grey.400' }}
                           />
                         )}
                       </Box>
@@ -1267,7 +1265,7 @@ const ExperimentsTab: React.FC<{
                       </Typography>
                       <Typography
                         variant='h6'
-                        sx={{ fontWeight: 700, color: '#3b82f6' }}
+                        sx={{ fontWeight: 700, color: 'primary.500' }}
                       >
                         {(significance.confidenceLevel * 100).toFixed(1)}%
                       </Typography>
@@ -1308,7 +1306,7 @@ const ExperimentsTab: React.FC<{
                   {significance.winner && (
                     <Paper
                       elevation={0}
-                      sx={{ mt: 2, p: 2, bgcolor: '#f0fdf4', borderRadius: 1 }}
+                      sx={{ mt: 2, p: 2, bgcolor: 'success.50', borderRadius: 1 }}
                     >
                       <Typography
                         variant='body2'
@@ -1381,7 +1379,7 @@ const SecurityTab: React.FC<{
             startIcon={<Shield size={14} />}
             onClick={onApplyHardening}
             size='small'
-            sx={{ bgcolor: '#ef4444' }}
+            sx={{ bgcolor: 'error.500' }}
           >
             应用加固
           </Button>
@@ -1415,11 +1413,11 @@ const SecurityTab: React.FC<{
           <Box sx={{ textAlign: 'center' }}>
             <CheckCircle2
               size={32}
-              style={{ color: '#10b981' }}
+              style={{ color: 'teal.500' }}
             />
             <Typography
               variant='h4'
-              sx={{ fontWeight: 700, mt: 1, color: '#10b981' }}
+              sx={{ fontWeight: 700, mt: 1, color: 'teal.500' }}
             >
               {report.passed}
             </Typography>
@@ -1435,11 +1433,11 @@ const SecurityTab: React.FC<{
           <Box sx={{ textAlign: 'center' }}>
             <AlertTriangle
               size={32}
-              style={{ color: '#f59e0b' }}
+              style={{ color: 'warning.500' }}
             />
             <Typography
               variant='h4'
-              sx={{ fontWeight: 700, mt: 1, color: '#f59e0b' }}
+              sx={{ fontWeight: 700, mt: 1, color: 'warning.500' }}
             >
               {report.warnings}
             </Typography>
@@ -1455,11 +1453,11 @@ const SecurityTab: React.FC<{
           <Box sx={{ textAlign: 'center' }}>
             <XCircle
               size={32}
-              style={{ color: '#ef4444' }}
+              style={{ color: 'error.500' }}
             />
             <Typography
               variant='h4'
-              sx={{ fontWeight: 700, mt: 1, color: '#ef4444' }}
+              sx={{ fontWeight: 700, mt: 1, color: 'error.500' }}
             >
               {report.failed}
             </Typography>
@@ -1522,21 +1520,21 @@ const SecurityTab: React.FC<{
                       <Chip
                         label='通过'
                         size='small'
-                        sx={{ bgcolor: '#d1fae5', color: '#065f46', fontSize: 10 }}
+                        sx={{ bgcolor: 'success.100', color: 'teal.900', fontSize: 10 }}
                       />
                     )}
                     {check.status === 'Failed' && (
                       <Chip
                         label='失败'
                         size='small'
-                        sx={{ bgcolor: '#fef2f2', color: '#991b1b', fontSize: 10 }}
+                        sx={{ bgcolor: 'error.50', color: 'error.800', fontSize: 10 }}
                       />
                     )}
                     {check.status === 'Warning' && (
                       <Chip
                         label='警告'
                         size='small'
-                        sx={{ bgcolor: '#fef3c7', color: '#92400e', fontSize: 10 }}
+                        sx={{ bgcolor: 'warning.100', color: 'warning.800', fontSize: 10 }}
                       />
                     )}
                   </TableCell>
@@ -1635,7 +1633,7 @@ const ThreatsTab: React.FC<{
           <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
             <Lock
               size={24}
-              style={{ color: '#ef4444' }}
+              style={{ color: 'error.500' }}
             />
             <Box>
               <Typography
@@ -1657,7 +1655,7 @@ const ThreatsTab: React.FC<{
           <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
             <AlertTriangle
               size={24}
-              style={{ color: '#f97316' }}
+              style={{ color: 'orange.500' }}
             />
             <Box>
               <Typography
@@ -1679,7 +1677,7 @@ const ThreatsTab: React.FC<{
           <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
             <Gauge
               size={24}
-              style={{ color: '#f59e0b' }}
+              style={{ color: 'warning.500' }}
             />
             <Box>
               <Typography
@@ -1701,7 +1699,7 @@ const ThreatsTab: React.FC<{
           <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
             <CheckCircle2
               size={24}
-              style={{ color: '#10b981' }}
+              style={{ color: 'teal.500' }}
             />
             <Box>
               <Typography
@@ -1881,7 +1879,7 @@ const ThreatsTab: React.FC<{
                               onUpdate(threat.id, { status: editStatus });
                               setEditingId(null);
                             }}
-                            sx={{ bgcolor: '#10b981' }}
+                            sx={{ bgcolor: 'teal.500' }}
                           >
                             保存
                           </Button>

@@ -29,7 +29,7 @@ export const PREVIEW_SAMPLE_DATA: Record<string, string> = {
   alert_time: '2024-01-15 10:30',
   alert_message: '磁盘空间不足',
   contract_name: '服务合同',
-  contract_no: 'CT-2024-001',
+  contractNo: 'CT-2024-001',
   contract_action: '已签署',
   action_time: '2024-01-15 10:30',
   register_time: '2024-01-15 10:30',

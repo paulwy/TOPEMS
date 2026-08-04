@@ -159,7 +159,7 @@ const ALL_PATTERNS = [
 ];
 
 export class PerformanceAuditor {
-  audit_component(code: string, componentName: string = 'component'): PerfFinding[] {
+  auditComponent(code: string, componentName: string = 'component'): PerfFinding[] {
     const findings: PerfFinding[] = [];
 
     for (const { pattern, category, impact, description, recommendation } of ALL_PATTERNS) {
@@ -181,24 +181,24 @@ export class PerformanceAuditor {
     return findings;
   }
 
-  audit_page(
+  auditPage(
     pageCode: string,
     componentCodes: Array<{ name: string; code: string }> = []
   ): AuditResult {
     const findings: PerfFinding[] = [];
 
-    const pageFindings = this.audit_component(pageCode, 'page');
+    const pageFindings = this.auditComponent(pageCode, 'page');
     findings.push(...pageFindings);
 
     for (const comp of componentCodes) {
-      const compFindings = this.audit_component(comp.code, comp.name);
+      const compFindings = this.auditComponent(comp.code, comp.name);
       findings.push(...compFindings);
     }
 
-    return this.build_result(findings);
+    return this.buildResult(findings);
   }
 
-  audit_bundle(bundleInfo: BundleInfo[]): AuditResult {
+  auditBundle(bundleInfo: BundleInfo[]): AuditResult {
     const findings: PerfFinding[] = [];
     const totalSize = bundleInfo.reduce((sum, b) => sum + b.size, 0);
     const totalGzip = bundleInfo.reduce((sum, b) => sum + b.gzipped_size, 0);
@@ -249,8 +249,8 @@ export class PerformanceAuditor {
       });
     }
 
-    const lighthouseScores = this.estimate_lighthouse_scores(bundleInfo);
-    const metrics = this.estimate_metrics(bundleInfo);
+    const lighthouseScores = this.estimateLighthouseScores(bundleInfo);
+    const metrics = this.estimateMetrics(bundleInfo);
 
     return {
       findings,
@@ -261,7 +261,7 @@ export class PerformanceAuditor {
     };
   }
 
-  get_lighthouse_scores(): LighthouseScores {
+  getLighthouseScores(): LighthouseScores {
     return {
       performance: 85,
       accessibility: 95,
@@ -270,7 +270,7 @@ export class PerformanceAuditor {
     };
   }
 
-  get_bundle_analysis(bundles: BundleInfo[]): Array<{
+  getBundleAnalysis(bundles: BundleInfo[]): Array<{
     name: string;
     size_kb: number;
     gzipped_kb: number;
@@ -285,7 +285,7 @@ export class PerformanceAuditor {
     }));
   }
 
-  get_performance_suggestions(findings: PerfFinding[]): string[] {
+  getPerformanceSuggestions(findings: PerfFinding[]): string[] {
     const suggestions: string[] = [];
 
     const byCategory = findings.reduce<Record<string, PerfFinding[]>>((acc, f) => {
@@ -317,17 +317,17 @@ export class PerformanceAuditor {
     return suggestions;
   }
 
-  private build_result(findings: PerfFinding[]): AuditResult {
+  private buildResult(findings: PerfFinding[]): AuditResult {
     return {
       findings,
-      lighthouse_scores: this.estimate_lighthouse_scores_from_findings(findings),
-      metrics: this.estimate_metrics_from_findings(findings),
+      lighthouse_scores: this.estimateLighthouseScoresFromFindings(findings),
+      metrics: this.estimateMetricsFromFindings(findings),
       optimized: findings.filter((f) => f.impact === 'high').length === 0,
       audited_at: Date.now(),
     };
   }
 
-  private estimate_lighthouse_scores(bundles: BundleInfo[]): LighthouseScores {
+  private estimateLighthouseScores(bundles: BundleInfo[]): LighthouseScores {
     const totalSize = bundles.reduce((sum, b) => sum + b.size, 0);
     let performance = 95;
 
@@ -347,7 +347,7 @@ export class PerformanceAuditor {
     };
   }
 
-  private estimate_lighthouse_scores_from_findings(findings: PerfFinding[]): LighthouseScores {
+  private estimateLighthouseScoresFromFindings(findings: PerfFinding[]): LighthouseScores {
     const highCount = findings.filter((f) => f.impact === 'high').length;
     const mediumCount = findings.filter((f) => f.impact === 'medium').length;
 
@@ -360,7 +360,7 @@ export class PerformanceAuditor {
     };
   }
 
-  private estimate_metrics(bundles: BundleInfo[]): AuditMetrics {
+  private estimateMetrics(bundles: BundleInfo[]): AuditMetrics {
     const totalSize = bundles.reduce((sum, b) => sum + b.gzipped_size, 0);
     const baseSize = totalSize / 1024;
 
@@ -372,7 +372,7 @@ export class PerformanceAuditor {
     };
   }
 
-  private estimate_metrics_from_findings(findings: PerfFinding[]): AuditMetrics {
+  private estimateMetricsFromFindings(findings: PerfFinding[]): AuditMetrics {
     const highCount = findings.filter((f) => f.impact === 'high').length;
     const mediumCount = findings.filter((f) => f.impact === 'medium').length;
 

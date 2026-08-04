@@ -75,7 +75,7 @@ export const MobileProductionReportDialog: React.FC<MobileProductionReportDialog
                 variant='caption'
                 color='text.secondary'
               >
-                {selectedOrder.order_no} · {selectedOrder.workstation}
+                {selectedOrder.orderNo} · {selectedOrder.workstation}
               </Typography>
             </Paper>
           )}

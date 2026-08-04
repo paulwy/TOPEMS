@@ -29,7 +29,7 @@ export const ContactDetailModal: React.FC<ContactDetailModalProps> = ({ contact,
       case 'DEPARTMENT':
         return { bg: 'success.lighter', color: 'success.dark' };
       case 'COMPANY':
-        return { bg: 'secondary.100', color: '#9333ea' };
+        return { bg: 'secondary.100', color: 'purple.600' };
       default:
         return { bg: 'grey.100', color: 'text.secondary' };
     }
@@ -55,7 +55,7 @@ export const ContactDetailModal: React.FC<ContactDetailModalProps> = ({ contact,
       style={{
         position: 'fixed',
         inset: 0,
-        backgroundColor: 'rgba(0, 0, 0, 0.5)',
+        backgroundColor: 'action.active',
         display: 'flex',
         alignItems: 'center',
         justifyContent: 'center',
@@ -65,7 +65,7 @@ export const ContactDetailModal: React.FC<ContactDetailModalProps> = ({ contact,
     >
       <div
         style={{
-          backgroundColor: 'white',
+          backgroundColor: 'common.white',
           borderRadius: 8,
           width: '100%',
           maxWidth: 576,

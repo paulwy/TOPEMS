@@ -51,7 +51,7 @@ export const FullscreenChart = ({ children, title, onClose }: FullscreenChartPro
             top: 8,
             right: 8,
             padding: 8,
-            backgroundColor: 'rgba(255,255,255,0.8)',
+            backgroundColor: 'common.white',
             borderRadius: 8,
             border: 'none',
             boxShadow: '0 2px 8px rgba(0,0,0,0.1)',
@@ -75,7 +75,7 @@ export const FullscreenChart = ({ children, title, onClose }: FullscreenChartPro
         position: 'fixed',
         inset: 0,
         zIndex: 50,
-        backgroundColor: 'white',
+        backgroundColor: 'common.white',
       }}
     >
       <Box

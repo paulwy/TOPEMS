@@ -1,7 +1,7 @@
 import type { ModuleConfig } from './index';
 
 const DEPLOYMENT_MODE =
-  (typeof import.meta !== 'undefined' && import.meta.env?.VITE_DEPLOYMENT_MODE) || 'static';
+  (typeof import.meta !== 'undefined' && import.meta.env?.VITEDeploymentMode) || 'static';
 const isMFMode = DEPLOYMENT_MODE !== 'static';
 
 const getRemoteEntryUrl = (name: string, port: number): string | undefined => {

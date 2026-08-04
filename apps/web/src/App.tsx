@@ -37,7 +37,11 @@ import { recordNavigation, prefetchIntelligent, prefetchRemoteEntries } from './
 import { versionManager } from './microfrontend/version-manager';
 import { canaryRelease } from './microfrontend/canary-release';
 // V40.0 Track F: 微前端可观测性
-import { errorTracker, userBehaviorAnalytics, ObservabilityPanel } from './microfrontend/observability';
+import {
+  errorTracker,
+  userBehaviorAnalytics,
+  ObservabilityPanel,
+} from './microfrontend/observability';
 
 const TemplateDemoPage = createSafeLazy(() =>
   import('./components/templates/index').then((m) => ({ default: m.TemplateDemoPage }))
@@ -51,7 +55,7 @@ const { lazy: PerformanceTestPage, preload: preloadPerformanceTest } = lazyWithP
 const MicroFrontendDevTools = lazy(() => import('./dev-tools'));
 
 const IS_STATIC_MODE =
-  (typeof import.meta !== 'undefined' && import.meta.env?.VITE_DEPLOYMENT_MODE) !==
+  (typeof import.meta !== 'undefined' && import.meta.env?.VITEDeploymentMode) !==
   'module-federation';
 
 const IS_DEV = typeof import.meta !== 'undefined' && import.meta.env?.DEV === true;
@@ -351,7 +355,7 @@ const AppContent: React.FC = () => {
                   <div style={{ padding: '20px' }}>
                     <h2>核心模块</h2>
                     <p>
-                      核心模块在静态模式下不可用。请设置 VITE_DEPLOYMENT_MODE=module-federation 启用
+                      核心模块在静态模式下不可用。请设置 VITEDeploymentMode=module-federation 启用
                       Module Federation。
                     </p>
                     <p>或者访问其他模块：</p>

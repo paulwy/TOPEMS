@@ -161,7 +161,7 @@ class UXMonitorImpl {
     }
   }
 
-  record_metric(
+  recordMetric(
     type: UXMetricType,
     value: number,
     userSegment?: UserSegment,
@@ -188,12 +188,12 @@ class UXMonitorImpl {
 
     this.emit({ type: 'metric_recorded', metricId: metric.id });
 
-    this.check_threshold(metric);
+    this.checkThreshold(metric);
 
     return metric;
   }
 
-  private check_threshold(metric: UXMetric): void {
+  private checkThreshold(metric: UXMetric): void {
     const threshold = this.thresholds[metric.type];
     if (metric.value > threshold) {
       const userImpact = this.calculateUserImpact(metric);
@@ -221,11 +221,7 @@ class UXMonitorImpl {
     return 'low';
   }
 
-  get_metrics(filters?: {
-    type?: UXMetricType;
-    segment?: UserSegment;
-    limit?: number;
-  }): UXMetric[] {
+  getMetrics(filters?: { type?: UXMetricType; segment?: UserSegment; limit?: number }): UXMetric[] {
     let result = Array.from(this.metrics.values());
     if (filters?.type) result = result.filter((m) => m.type === filters.type);
     if (filters?.segment && filters.segment !== 'all') {
@@ -238,16 +234,16 @@ class UXMonitorImpl {
     return result;
   }
 
-  get_user_segments(): UserSegment[] {
+  getUserSegments(): UserSegment[] {
     return [...DEFAULT_USER_SEGMENTS];
   }
 
-  create_alert(
+  createAlert(
     metric: UXMetricType,
     threshold: number,
     userImpact?: 'low' | 'medium' | 'high' | 'critical'
   ): UXAlert {
-    const recentMetrics = this.get_metrics({ type: metric, limit: 1 });
+    const recentMetrics = this.getMetrics({ type: metric, limit: 1 });
     const currentValue = recentMetrics.length > 0 ? recentMetrics[0].value : 0;
 
     const alert: UXAlert = {
@@ -274,13 +270,13 @@ class UXMonitorImpl {
     return alert;
   }
 
-  get_alerts(status?: AlertStatus): UXAlert[] {
+  getAlerts(status?: AlertStatus): UXAlert[] {
     let result = Array.from(this.alerts.values());
     if (status) result = result.filter((a) => a.status === status);
     return result.sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
   }
 
-  acknowledge_alert(alertId: string): void {
+  acknowledgeAlert(alertId: string): void {
     const alert = this.alerts.get(alertId);
     if (alert) {
       alert.status = 'acknowledged';
@@ -288,7 +284,7 @@ class UXMonitorImpl {
     }
   }
 
-  resolve_alert(alertId: string): void {
+  resolveAlert(alertId: string): void {
     const alert = this.alerts.get(alertId);
     if (alert) {
       alert.status = 'resolved';
@@ -296,7 +292,7 @@ class UXMonitorImpl {
     }
   }
 
-  get_ux_dashboard(): {
+  getUxDashboard(): {
     scores: Record<UXMetricType, { value: number; rating: string; threshold: number }>;
     alerts: UXAlert[];
     totalMetrics: number;
@@ -311,7 +307,7 @@ class UXMonitorImpl {
     };
 
     for (const type of Object.keys(scores) as UXMetricType[]) {
-      const recent = this.get_metrics({ type, limit: 10 });
+      const recent = this.getMetrics({ type, limit: 10 });
       if (recent.length > 0) {
         const avg = recent.reduce((sum, m) => sum + m.value, 0) / recent.length;
         const thresholds = UX_THRESHOLDS[type];
@@ -342,14 +338,14 @@ class UXMonitorImpl {
 
     return {
       scores,
-      alerts: this.get_alerts('active'),
+      alerts: this.getAlerts('active'),
       totalMetrics: this.metrics.size,
       segmentCoverage,
-      recentMetrics: this.get_metrics({ limit: 20 }),
+      recentMetrics: this.getMetrics({ limit: 20 }),
     };
   }
 
-  get_funnel_analysis(steps?: string[]): FunnelAnalysis {
+  getFunnelAnalysis(steps?: string[]): FunnelAnalysis {
     const defaultSteps = steps || ['首页访问', '产品浏览', '加入购物车', '结算开始', '支付完成'];
     const values = defaultSteps.map((_, i) => {
       if (i === 0) return 10000 + Math.floor(Math.random() * 2000);
@@ -362,7 +358,7 @@ class UXMonitorImpl {
       name,
       value: values[i],
       percentage: Math.round((values[i] / maxValue) * 10000) / 100,
-      previousValue: i > 0 ? values[i - 1] : undefined,
+      ...(i > 0 && { previousValue: values[i - 1] }),
     }));
 
     const dropOff: Array<{ from: string; to: string; rate: number }> = [];
@@ -388,11 +384,11 @@ class UXMonitorImpl {
     return analysis;
   }
 
-  set_threshold(metric: UXMetricType, threshold: number): void {
+  setThreshold(metric: UXMetricType, threshold: number): void {
     this.thresholds[metric] = threshold;
   }
 
-  get_thresholds(): Record<UXMetricType, number> {
+  getThresholds(): Record<UXMetricType, number> {
     return { ...this.thresholds };
   }
 }

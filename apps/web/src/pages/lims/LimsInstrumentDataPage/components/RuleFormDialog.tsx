@@ -94,9 +94,7 @@ const RuleFormDialog: React.FC<RuleFormDialogProps> = ({
                 label='仪器类型'
                 fullWidth
                 value={formData.instrument_type}
-                onChange={(e) =>
-                  onFormDataChange({ ...formData, instrument_type: e.target.value })
-                }
+                onChange={(e) => onFormDataChange({ ...formData, instrument_type: e.target.value })}
               />
             </Grid>
             <Grid
@@ -109,9 +107,7 @@ const RuleFormDialog: React.FC<RuleFormDialogProps> = ({
                 multiline
                 rows={2}
                 value={formData.description}
-                onChange={(e) =>
-                  onFormDataChange({ ...formData, description: e.target.value })
-                }
+                onChange={(e) => onFormDataChange({ ...formData, description: e.target.value })}
               />
             </Grid>
           </Grid>

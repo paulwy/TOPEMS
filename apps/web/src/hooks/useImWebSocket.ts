@@ -16,11 +16,7 @@ export interface ImWsMessage {
 }
 
 export type ImConnectionStatus =
-  | 'disconnected'
-  | 'connecting'
-  | 'connected'
-  | 'reconnecting'
-  | 'error';
+  'disconnected' | 'connecting' | 'connected' | 'reconnecting' | 'error';
 
 export interface UseImWebSocketOptions {
   onMessage?: (message: string | ImWsMessage) => void;
@@ -59,8 +55,7 @@ export function useImWebSocket(options: UseImWebSocketOptions = {}) {
   const user = useAuthStore((state) => state.user);
 
   const [isConnected, setIsConnected] = useState(false);
-  const [connectionStatus, setConnectionStatus] =
-    useState<ImConnectionStatus>('disconnected');
+  const [connectionStatus, setConnectionStatus] = useState<ImConnectionStatus>('disconnected');
   const [reconnectCount, setReconnectCount] = useState(0);
   const [error, setError] = useState<Event | null>(null);
 
@@ -253,9 +248,7 @@ export function useImWebSocket(options: UseImWebSocketOptions = {}) {
           setConnectionStatus('disconnected');
         }
 
-        logger.info(
-          `[useImWebSocket] disconnected code=${event.code} reason="${event.reason}"`
-        );
+        logger.info(`[useImWebSocket] disconnected code=${event.code} reason="${event.reason}"`);
 
         if (callbacksRef.current.onClose) {
           try {
@@ -326,24 +319,21 @@ export function useImWebSocket(options: UseImWebSocketOptions = {}) {
     setReconnectCount(0);
   }, [resetConnectTimeout]);
 
-  const send = useCallback(
-    (data: string | object) => {
-      const ws = wsRef.current;
-      if (!ws || ws.readyState !== WebSocket.OPEN) {
-        logger.warn('[useImWebSocket] send failed: not connected');
-        return false;
-      }
-      try {
-        const payload = typeof data === 'string' ? data : JSON.stringify(data);
-        ws.send(payload);
-        return true;
-      } catch (err) {
-        logger.warn('[useImWebSocket] send error:', err);
-        return false;
-      }
-    },
-    []
-  );
+  const send = useCallback((data: string | object) => {
+    const ws = wsRef.current;
+    if (!ws || ws.readyState !== WebSocket.OPEN) {
+      logger.warn('[useImWebSocket] send failed: not connected');
+      return false;
+    }
+    try {
+      const payload = typeof data === 'string' ? data : JSON.stringify(data);
+      ws.send(payload);
+      return true;
+    } catch (err) {
+      logger.warn('[useImWebSocket] send error:', err);
+      return false;
+    }
+  }, []);
 
   useEffect(() => {
     if (enabled) {

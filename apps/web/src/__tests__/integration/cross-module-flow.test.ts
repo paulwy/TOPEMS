@@ -35,11 +35,11 @@ describe('Cross-Module Business Flow Integration', () => {
       const { apiClient } = await import('@/api/client');
 
       const orderData = {
-        order_no: 'PO-2026-001',
+        orderNo: 'PO-2026-001',
         product_code: 'PROD-001',
         quantity: 100,
-        planned_start_date: '2026-07-10',
-        planned_end_date: '2026-07-15',
+        plannedStartDate: '2026-07-10',
+        plannedEndDate: '2026-07-15',
       };
       apiClient.mes.post.mockResolvedValue({
         success: true,

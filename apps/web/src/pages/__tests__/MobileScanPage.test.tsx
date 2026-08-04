@@ -106,12 +106,11 @@ vi.mock('@/store', () => ({
 }));
 
 describe('MobileScanPage', () => {
-it('should render page title', async () => {
+  it('should render page title', async () => {
     renderWithProviders(<MobileScanPage />);
     await waitFor(() => {
       const titles = screen.getAllByText('扫码');
       expect(titles.length).toBeGreaterThan(0);
+    });
   });
-});
-;
 });

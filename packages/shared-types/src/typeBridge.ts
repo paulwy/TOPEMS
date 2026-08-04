@@ -102,10 +102,10 @@ export interface TypedCrudApiClient<T, C = Partial<T>, U = Partial<T>> {
  * Axios-like 客户端接口（最小化定义，兼容现有 apiClient）
  */
 interface AxiosLike {
-  get: <T = unknown>(url: string, config?: { params?: Record<string, unknown> }) => Promise<unknown>;
-  post: <T = unknown>(url: string, data?: unknown) => Promise<unknown>;
-  put: <T = unknown>(url: string, data?: unknown) => Promise<unknown>;
-  delete: <T = unknown>(url: string) => Promise<unknown>;
+  get: (url: string, config?: { params?: Record<string, unknown> }) => Promise<unknown>;
+  post: (url: string, data?: unknown) => Promise<unknown>;
+  put: (url: string, data?: unknown) => Promise<unknown>;
+  delete: (url: string) => Promise<unknown>;
 }
 
 /**

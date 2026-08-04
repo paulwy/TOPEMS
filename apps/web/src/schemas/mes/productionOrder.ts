@@ -66,14 +66,14 @@ export const productionOrderSchema: EntitySchema = {
         value ? new Date(value as string).toLocaleDateString('zh-CN') : '-',
     },
     {
-      name: 'actual_start_date',
+      name: 'actualStartDate',
       label: '实际开始',
       type: 'datetime',
       listWidth: 130,
       showInList: false,
     },
     {
-      name: 'actual_end_date',
+      name: 'actualEndDate',
       label: '实际结束',
       type: 'datetime',
       listWidth: 130,

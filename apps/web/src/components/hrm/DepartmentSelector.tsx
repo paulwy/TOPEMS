@@ -35,8 +35,8 @@ export const DepartmentSelector: React.FC<DepartmentSelectorProps> = ({
 
     departments.forEach((dept) => {
       const node = deptMap.get(dept.id)!;
-      if (dept.parent_id && deptMap.has(dept.parent_id)) {
-        deptMap.get(dept.parent_id)!.children!.push(node);
+      if (dept.parentId && deptMap.has(dept.parentId)) {
+        deptMap.get(dept.parentId)!.children!.push(node);
       } else {
         rootNodes.push(node);
       }

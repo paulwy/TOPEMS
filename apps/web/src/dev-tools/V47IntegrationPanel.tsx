@@ -59,7 +59,7 @@ const V47IntegrationPanel: React.FC<{ onClose: () => void }> = ({ onClose }) => 
         left: 0,
         right: 0,
         bottom: 0,
-        bgcolor: 'rgba(0,0,0,0.5)',
+        bgcolor: 'action.active',
         zIndex: 10000,
         display: 'flex',
         alignItems: 'center',
@@ -85,8 +85,8 @@ const V47IntegrationPanel: React.FC<{ onClose: () => void }> = ({ onClose }) => 
             display: 'flex',
             alignItems: 'center',
             justifyContent: 'space-between',
-            bgcolor: '#6366f1',
-            color: 'white',
+            bgcolor: 'secondary.500',
+            color: 'common.white',
           }}
         >
           <Typography
@@ -98,7 +98,7 @@ const V47IntegrationPanel: React.FC<{ onClose: () => void }> = ({ onClose }) => 
           <IconButton
             size='small'
             onClick={onClose}
-            sx={{ color: 'white' }}
+            sx={{ color: 'common.white' }}
           >
             <XIcon size={20} />
           </IconButton>
@@ -120,7 +120,10 @@ const V47IntegrationPanel: React.FC<{ onClose: () => void }> = ({ onClose }) => 
               subtitle={t('devtools.panels.v47Integration.cards.serverless.subtitle')}
               status={
                 serverlessStats
-                  ? t('devtools.panels.v47Integration.cards.serverless.statusWithCache', { pages: serverlessStats.pages, hits: serverlessStats.hits })
+                  ? t('devtools.panels.v47Integration.cards.serverless.statusWithCache', {
+                      pages: serverlessStats.pages,
+                      hits: serverlessStats.hits,
+                    })
                   : t('devtools.common.loaded')
               }
             />
@@ -129,7 +132,10 @@ const V47IntegrationPanel: React.FC<{ onClose: () => void }> = ({ onClose }) => 
               subtitle={t('devtools.panels.v47Integration.cards.faas.subtitle')}
               status={
                 faasStats
-                  ? t('devtools.panels.v47Integration.cards.faas.statusWithInvocations', { functions: faasStats.functions, invocations: faasStats.invocations })
+                  ? t('devtools.panels.v47Integration.cards.faas.statusWithInvocations', {
+                      functions: faasStats.functions,
+                      invocations: faasStats.invocations,
+                    })
                   : t('devtools.common.loaded')
               }
             />
@@ -143,7 +149,10 @@ const V47IntegrationPanel: React.FC<{ onClose: () => void }> = ({ onClose }) => 
               subtitle={t('devtools.panels.v47Integration.cards.onDemand.subtitle')}
               status={
                 loaderStats
-                  ? t('devtools.panels.v47Integration.cards.onDemand.statusWithLoader', { loaded: loaderStats.loaded, pending: loaderStats.pending })
+                  ? t('devtools.panels.v47Integration.cards.onDemand.statusWithLoader', {
+                      loaded: loaderStats.loaded,
+                      pending: loaderStats.pending,
+                    })
                   : t('devtools.common.loaded')
               }
             />

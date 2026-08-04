@@ -45,9 +45,4 @@ export {
   useLoading,
   useToast,
 } from '../../useUiState';
-export type {
-  ModalState,
-  SortOrder,
-  SortState,
-  ToastMessage,
-} from '../../useUiState';
+export type { ModalState, SortOrder, SortState, ToastMessage } from '../../useUiState';

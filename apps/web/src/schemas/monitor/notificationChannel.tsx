@@ -7,15 +7,7 @@
 
 import React from 'react';
 import { Box, Chip, Typography, Switch } from '@mui/material';
-import {
-  Mail,
-  MessageSquare,
-  Smartphone,
-  Webhook,
-  Bell,
-  CheckCircle,
-  XCircle,
-} from 'lucide-react';
+import { Mail, MessageSquare, Smartphone, Webhook, Bell, CheckCircle, XCircle } from 'lucide-react';
 import type { EntitySchema, SchemaField } from '@/schema';
 import { designTokens } from '@/theme/tokens';
 

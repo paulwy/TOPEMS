@@ -54,28 +54,28 @@ const groupColors: Record<
   研发管理: {
     bg: 'secondary.light',
     border: 'secondary.100',
-    titleColor: '#6d28d9',
+    titleColor: 'secondary.700',
     iconBg: 'secondary.light',
     iconColor: 'secondary.main',
   },
   生产管理: {
     bg: 'white7ed',
     border: '#fed7aa',
-    titleColor: '#c2410c',
+    titleColor: 'orange.700',
     iconBg: '#ffedd5',
-    iconColor: '#f97316',
+    iconColor: 'orange.500',
   },
   质量管理: {
     bg: 'white1f2',
     border: '#fecdd3',
-    titleColor: '#be123c',
+    titleColor: 'pink.700',
     iconBg: '#ffe4e6',
-    iconColor: '#e11d48',
+    iconColor: 'error.600',
   },
   供应链: {
     bg: 'success.light',
     border: '#a7f3d0',
-    titleColor: '#065f46',
+    titleColor: 'teal.900',
     iconBg: 'success.lighter',
     iconColor: 'success.main',
   },
@@ -89,9 +89,9 @@ const groupColors: Record<
   '数据/门户': {
     bg: '#fdf4ff',
     border: '#f5d0fe',
-    titleColor: '#a21caf',
+    titleColor: 'purple.700',
     iconBg: '#fae8ff',
-    iconColor: '#c026d3',
+    iconColor: 'purple.600',
   },
 };
 
@@ -334,7 +334,7 @@ export const ServiceStatusMonitor: React.FC<ServiceStatusMonitorProps> = ({
   return (
     <Box
       sx={{
-        backgroundColor: 'white',
+        backgroundColor: 'common.white',
         borderRadius: 3,
         padding: 3,
         boxShadow: '0 1px 3px rgba(0,0,0,0.1)',
@@ -364,7 +364,7 @@ export const ServiceStatusMonitor: React.FC<ServiceStatusMonitorProps> = ({
             <Activity sx={{ width: 20, height: 20, color: 'success.dark' }} />
           </Box>
           <Box>
-            <Typography sx={{ fontSize: 18, fontWeight: 600, color: '#1e293b' }}>
+            <Typography sx={{ fontSize: 18, fontWeight: 600, color: 'text.primary' }}>
               服务状态监测
             </Typography>
             <Typography sx={{ fontSize: 12, color: 'grey.600' }}>实时监控各服务运行状态</Typography>
@@ -379,7 +379,7 @@ export const ServiceStatusMonitor: React.FC<ServiceStatusMonitorProps> = ({
               label={`在线 ${onlineCount}`}
               sx={{
                 backgroundColor: 'success.lighter',
-                color: '#166534',
+                color: 'success.800',
                 fontWeight: 500,
                 fontSize: 11,
                 height: 24,
@@ -390,7 +390,7 @@ export const ServiceStatusMonitor: React.FC<ServiceStatusMonitorProps> = ({
                 label={`离线 ${offlineCount}`}
                 sx={{
                   backgroundColor: 'error.lighter',
-                  color: '#991b1b',
+                  color: 'error.800',
                   fontWeight: 500,
                   fontSize: 11,
                   height: 24,

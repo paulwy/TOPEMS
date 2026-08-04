@@ -46,7 +46,15 @@ export interface TaskPlan {
 }
 
 export interface AgentEvent {
-  type: 'task_started' | 'step_started' | 'step_completed' | 'step_failed' | 'task_completed' | 'task_failed' | 'task_cancelled' | 'progress_update';
+  type:
+    | 'task_started'
+    | 'step_started'
+    | 'step_completed'
+    | 'step_failed'
+    | 'task_completed'
+    | 'task_failed'
+    | 'task_cancelled'
+    | 'progress_update';
   taskId: string;
   stepId?: string;
   message: string;
@@ -134,7 +142,11 @@ export class AutonomousAgent {
       name: 'api_call',
       description: '发起 API 请求',
       execute: async (input, context) => {
-        const { endpoint, method = 'GET', data } = input as {
+        const {
+          endpoint,
+          method = 'GET',
+          data,
+        } = input as {
           endpoint: string;
           method?: string;
           data?: unknown;
@@ -212,10 +224,7 @@ export class AutonomousAgent {
     });
   }
 
-  async plan_task(
-    description: string,
-    context: ExecutionContext
-  ): Promise<TaskPlan> {
+  async planTask(description: string, context: ExecutionContext): Promise<TaskPlan> {
     const taskId = this.generateTaskId();
     const steps = this.decomposeTask(description, context);
     return { taskId, steps };
@@ -263,7 +272,7 @@ export class AutonomousAgent {
     return steps;
   }
 
-  async execute_task(
+  async executeTask(
     description: string,
     context: ExecutionContext,
     options?: { maxRetries?: number }
@@ -284,7 +293,7 @@ export class AutonomousAgent {
 
     this.tasks.set(taskId, task);
 
-    const plan = await this.plan_task(description, context);
+    const plan = await this.planTask(description, context);
     task.steps = plan.steps.map((s, idx) => ({
       id: `${taskId}-step-${idx}`,
       description: s.description,
@@ -327,7 +336,7 @@ export class AutonomousAgent {
         await this.delay(DEFAULT_STEP_DELAY);
 
         const stepPlan = plan.steps[i];
-        const result = await this.execute_step(step, stepPlan?.tool, context, task);
+        const result = await this.executeStep(step, stepPlan?.tool, context, task);
 
         if (result.success) {
           step.status = 'completed';
@@ -370,7 +379,7 @@ export class AutonomousAgent {
           type: 'progress_update',
           taskId,
           stepId: step.id,
-          message: `进度: ${(i + 1)}/${task.steps.length}`,
+          message: `进度: ${i + 1}/${task.steps.length}`,
           timestamp: Date.now(),
           progress: ((i + 1) / task.steps.length) * 100,
         });
@@ -403,7 +412,7 @@ export class AutonomousAgent {
     return task;
   }
 
-  async execute_step(
+  async executeStep(
     step: TaskStep,
     toolName: string | undefined,
     context: ExecutionContext,
@@ -413,7 +422,10 @@ export class AutonomousAgent {
       const tool = this.toolRegistry.get(toolName);
       if (tool) {
         try {
-          const result = await tool.execute({ stepId: step.id, description: step.description }, context);
+          const result = await tool.execute(
+            { stepId: step.id, description: step.description },
+            context
+          );
           return { success: true, result };
         } catch (error) {
           return { success: false, error: (error as Error).message };
@@ -427,15 +439,15 @@ export class AutonomousAgent {
     };
   }
 
-  get_status(taskId: string): Task | undefined {
+  getStatus(taskId: string): Task | undefined {
     return this.tasks.get(taskId);
   }
 
-  list_tasks(): Task[] {
+  listTasks(): Task[] {
     return Array.from(this.tasks.values());
   }
 
-  cancel_task(taskId: string): boolean {
+  cancelTask(taskId: string): boolean {
     const task = this.tasks.get(taskId);
     if (!task) return false;
 
@@ -453,7 +465,7 @@ export class AutonomousAgent {
     return false;
   }
 
-  clear_tasks(): void {
+  clearTasks(): void {
     this.tasks.clear();
   }
 

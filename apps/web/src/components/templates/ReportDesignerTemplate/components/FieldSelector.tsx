@@ -1,12 +1,5 @@
 import React from 'react';
-import {
-  Box,
-  Typography,
-  Paper,
-  IconButton,
-  Checkbox,
-  TextField,
-} from '@mui/material';
+import { Box, Typography, Paper, IconButton, Checkbox, TextField } from '@mui/material';
 import { Plus, MoveVertical, Trash2 } from 'lucide-react';
 import type { DataSourceField, SelectedField } from '../types';
 
@@ -85,9 +78,7 @@ export const FieldSelector: React.FC<FieldSelectorProps> = ({
       </Box>
 
       <Box sx={{ flex: 1, minWidth: 250 }}>
-        <Box
-          sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', mb: 1 }}
-        >
+        <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', mb: 1 }}>
           <Typography
             variant='subtitle2'
             sx={{ fontWeight: 600, color: 'grey.600' }}
@@ -145,9 +136,7 @@ export const FieldSelector: React.FC<FieldSelectorProps> = ({
                 </IconButton>
                 <Checkbox
                   checked={field.visible}
-                  onChange={(e) =>
-                    handleFieldUpdate(field.fieldId, { visible: e.target.checked })
-                  }
+                  onChange={(e) => handleFieldUpdate(field.fieldId, { visible: e.target.checked })}
                   size='small'
                 />
                 <Box sx={{ flex: 1, minWidth: 0 }}>

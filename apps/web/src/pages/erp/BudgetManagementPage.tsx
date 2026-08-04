@@ -11,12 +11,7 @@ import { designTokens } from '@/theme/tokens';
 const ct = designTokens.colors;
 
 const budgetAdapter = {
-  list: async (params?: {
-    page?: number;
-    pageSize?: number;
-    search?: string;
-    status?: string;
-  }) => {
+  list: async (params?: { page?: number; pageSize?: number; search?: string; status?: string }) => {
     const response = await budgetApi.list({
       page: params?.page,
       pagesize: params?.pageSize,
@@ -54,12 +49,7 @@ const budgetAdapter = {
 };
 
 const expenseAdapter = {
-  list: async (params?: {
-    page?: number;
-    pageSize?: number;
-    search?: string;
-    status?: string;
-  }) => {
+  list: async (params?: { page?: number; pageSize?: number; search?: string; status?: string }) => {
     const response = await expenseApi.list({
       page: params?.page,
       pagesize: params?.pageSize,
@@ -106,7 +96,10 @@ const StatCard: React.FC<{
   <Box sx={{ p: 2, bgcolor: bgColor || 'secondary.100', borderRadius: 3 }}>
     <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 1 }}>
       <Box sx={{ display: 'flex', color: iconColor || 'secondary.700' }}>{icon}</Box>
-      <Box component='span' sx={{ color: 'text.secondary', fontSize: 14 }}>
+      <Box
+        component='span'
+        sx={{ color: 'text.secondary', fontSize: 14 }}
+      >
         {label}
       </Box>
     </Box>
@@ -232,8 +225,14 @@ const BudgetManagementPage: React.FC = () => {
         onChange={(_, v) => setActiveTab(v)}
         sx={{ mb: 3 }}
       >
-        <Tab label='预算管理' icon={<Wallet size={16} />} />
-        <Tab label='费用报销' icon={<Receipt size={16} />} />
+        <Tab
+          label='预算管理'
+          icon={<Wallet size={16} />}
+        />
+        <Tab
+          label='费用报销'
+          icon={<Receipt size={16} />}
+        />
       </Tabs>
 
       {activeTab === 0 && (

@@ -5,7 +5,12 @@
  */
 
 // NetworkStatus
-export { useNetworkStatus, useOnline, useOffline, useNetworkCondition } from '../../useNetworkStatus';
+export {
+  useNetworkStatus,
+  useOnline,
+  useOffline,
+  useNetworkCondition,
+} from '../../useNetworkStatus';
 export type { NetworkStatus, NetworkInfo } from '../../useNetworkStatus';
 
 // OfflineQuery / OfflineMutation

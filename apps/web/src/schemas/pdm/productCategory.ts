@@ -44,7 +44,7 @@ export const productCategorySchema: EntitySchema & SchemaExtensions = {
       listWidth: 100,
     },
     {
-      name: 'parent_id',
+      name: 'parentId',
       label: '上级分类',
       type: 'text',
       showInList: false,
@@ -91,7 +91,7 @@ export const productCategorySchema: EntitySchema & SchemaExtensions = {
 
   tree: {
     keyField: 'id',
-    parentField: 'parent_id',
+    parentField: 'parentId',
     labelField: 'name',
   },
 
@@ -104,7 +104,7 @@ export const productCategorySchema: EntitySchema & SchemaExtensions = {
     },
     {
       title: '层级关系',
-      fields: ['parent_id'],
+      fields: ['parentId'],
     },
     {
       title: '其他',

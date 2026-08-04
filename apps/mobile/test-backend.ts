@@ -34,8 +34,9 @@ async function testBackendConnection() {
     console.log('2. 测试登录...');
     accessToken = await login();
     console.log('   ✅ 登录成功! Token: ' + accessToken.substring(0, 20) + '...');
-  } catch (error: any) {
-    console.log('   ❌ 登录失败:', error.response?.data?.message || error.message);
+  } catch (error: unknown) {
+    const err = error as { response?: { data?: { message?: string } }; message?: string };
+    console.log('   ❌ 登录失败:', err.response?.data?.message || err.message);
     return;
   }
 
@@ -49,8 +50,9 @@ async function testBackendConnection() {
     });
     console.log('   ✅ 审批 API 响应:', approvalResponse.data.success);
     console.log('   数据:', JSON.stringify(approvalResponse.data.data));
-  } catch (error: any) {
-    console.log('   ⚠️ 审批 API:', error.response?.data?.message || error.message);
+  } catch (error: unknown) {
+    const err = error as { response?: { data?: { message?: string } }; message?: string };
+    console.log('   ⚠️ 审批 API:', err.response?.data?.message || err.message);
   }
 
   try {
@@ -61,8 +63,9 @@ async function testBackendConnection() {
     });
     console.log('   ✅ 考勤 API 响应:', attendanceResponse.data.success);
     console.log('   数据:', JSON.stringify(attendanceResponse.data.data));
-  } catch (error: any) {
-    console.log('   ⚠️ 考勤 API:', error.response?.data?.message || error.message);
+  } catch (error: unknown) {
+    const err = error as { response?: { data?: { message?: string } }; message?: string };
+    console.log('   ⚠️ 考勤 API:', err.response?.data?.message || err.message);
   }
 
   try {
@@ -71,8 +74,9 @@ async function testBackendConnection() {
     const taskResponse = await axios.get(`${BASE_URL}/task/list`, { headers: authHeaders });
     console.log('   ✅ 任务 API 响应:', taskResponse.data.success);
     console.log('   数据:', JSON.stringify(taskResponse.data.data));
-  } catch (error: any) {
-    console.log('   ⚠️ 任务 API:', error.response?.data?.message || error.message);
+  } catch (error: unknown) {
+    const err = error as { response?: { data?: { message?: string } }; message?: string };
+    console.log('   ⚠️ 任务 API:', err.response?.data?.message || err.message);
   }
 
   try {
@@ -83,8 +87,9 @@ async function testBackendConnection() {
     });
     console.log('   ✅ 仪表盘 API 响应:', dashboardResponse.data.success);
     console.log('   数据:', JSON.stringify(dashboardResponse.data.data));
-  } catch (error: any) {
-    console.log('   ⚠️ 仪表盘 API:', error.response?.data?.message || error.message);
+  } catch (error: unknown) {
+    const err = error as { response?: { data?: { message?: string } }; message?: string };
+    console.log('   ⚠️ 仪表盘 API:', err.response?.data?.message || err.message);
   }
 
   try {
@@ -93,8 +98,9 @@ async function testBackendConnection() {
     const scanResponse = await axios.get(`${BASE_URL}/scan/items`, { headers: authHeaders });
     console.log('   ✅ 扫描 API 响应:', scanResponse.data.success);
     console.log('   数据:', JSON.stringify(scanResponse.data.data));
-  } catch (error: any) {
-    console.log('   ⚠️ 扫描 API:', error.response?.data?.message || error.message);
+  } catch (error: unknown) {
+    const err = error as { response?: { data?: { message?: string } }; message?: string };
+    console.log('   ⚠️ 扫描 API:', err.response?.data?.message || err.message);
   }
 
   console.log('');

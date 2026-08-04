@@ -69,17 +69,17 @@ import { useNotificationStore } from '@/store';
 // ==================== 状态映射 ====================
 
 const STATUS_LABELS: Record<ExperimentStatus, string> = {
-  [ExperimentStatus.Draft]: '草稿',
-  [ExperimentStatus.Running]: '运行中',
-  [ExperimentStatus.Paused]: '已暂停',
-  [ExperimentStatus.Completed]: '已完成',
+  [ExperimentStatus.DRAFT]: '草稿',
+  [ExperimentStatus.RUNNING]: '运行中',
+  [ExperimentStatus.PAUSED]: '已暂停',
+  [ExperimentStatus.COMPLETED]: '已完成',
 };
 
 const STATUS_COLORS: Record<ExperimentStatus, 'default' | 'primary' | 'warning' | 'success'> = {
-  [ExperimentStatus.Draft]: 'default',
-  [ExperimentStatus.Running]: 'primary',
-  [ExperimentStatus.Paused]: 'warning',
-  [ExperimentStatus.Completed]: 'success',
+  [ExperimentStatus.DRAFT]: 'default',
+  [ExperimentStatus.RUNNING]: 'primary',
+  [ExperimentStatus.PAUSED]: 'warning',
+  [ExperimentStatus.COMPLETED]: 'success',
 };
 
 // ==================== 转化率可视化 ====================
@@ -303,7 +303,7 @@ const ExperimentRow: React.FC<{
             spacing={0.5}
             sx={{ justifyContent: 'flex-end' }}
           >
-            {experiment.status === ExperimentStatus.Draft && (
+            {experiment.status === ExperimentStatus.DRAFT && (
               <Tooltip title='启动'>
                 <IconButton
                   size='small'
@@ -314,7 +314,7 @@ const ExperimentRow: React.FC<{
                 </IconButton>
               </Tooltip>
             )}
-            {experiment.status === ExperimentStatus.Running && (
+            {experiment.status === ExperimentStatus.RUNNING && (
               <Tooltip title='暂停'>
                 <IconButton
                   size='small'
@@ -325,8 +325,8 @@ const ExperimentRow: React.FC<{
                 </IconButton>
               </Tooltip>
             )}
-            {(experiment.status === ExperimentStatus.Running ||
-              experiment.status === ExperimentStatus.Paused) && (
+            {(experiment.status === ExperimentStatus.RUNNING ||
+              experiment.status === ExperimentStatus.PAUSED) && (
               <Tooltip title='完成'>
                 <IconButton
                   size='small'
@@ -699,7 +699,7 @@ export const ABTestPanel: React.FC<ABTestPanelProps> = ({
   };
 
   const runningCount = useMemo(
-    () => allExperiments.filter((e) => e.status === ExperimentStatus.Running).length,
+    () => allExperiments.filter((e) => e.status === ExperimentStatus.RUNNING).length,
     [allExperiments]
   );
 

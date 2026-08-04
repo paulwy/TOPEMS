@@ -112,11 +112,11 @@ const MicroFrontendDevTools: React.FC = () => {
             size='small'
             onClick={() => setShowRegistry(true)}
             sx={{
-              bgcolor: '#7c3aed',
+              bgcolor: 'secondary.600',
               borderRadius: 2,
               textTransform: 'none',
               boxShadow: '0 4px 12px rgba(124, 58, 237, 0.4)',
-              '&:hover': { bgcolor: '#6d28d9' },
+              '&:hover': { bgcolor: 'secondary.700' },
               minWidth: 'auto',
               px: 2,
             }}
@@ -143,11 +143,11 @@ const MicroFrontendDevTools: React.FC = () => {
             size='small'
             onClick={() => setShowVersion(true)}
             sx={{
-              bgcolor: '#059669',
+              bgcolor: 'teal.600',
               borderRadius: 2,
               textTransform: 'none',
               boxShadow: '0 4px 12px rgba(5, 150, 105, 0.4)',
-              '&:hover': { bgcolor: '#047857' },
+              '&:hover': { bgcolor: 'teal.700' },
               minWidth: 'auto',
               px: 2,
             }}
@@ -174,11 +174,11 @@ const MicroFrontendDevTools: React.FC = () => {
             size='small'
             onClick={() => setShowDashboard(true)}
             sx={{
-              bgcolor: '#dc2626',
+              bgcolor: 'error.600',
               borderRadius: 2,
               textTransform: 'none',
               boxShadow: '0 4px 12px rgba(220, 38, 38, 0.4)',
-              '&:hover': { bgcolor: '#b91c1c' },
+              '&:hover': { bgcolor: 'error.700' },
               minWidth: 'auto',
               px: 2,
             }}
@@ -205,11 +205,11 @@ const MicroFrontendDevTools: React.FC = () => {
             size='small'
             onClick={() => setShowAIOps(true)}
             sx={{
-              bgcolor: '#7c3aed',
+              bgcolor: 'secondary.600',
               borderRadius: 2,
               textTransform: 'none',
               boxShadow: '0 4px 12px rgba(124, 58, 237, 0.4)',
-              '&:hover': { bgcolor: '#6d28d9' },
+              '&:hover': { bgcolor: 'secondary.700' },
               minWidth: 'auto',
               px: 2,
             }}
@@ -236,11 +236,11 @@ const MicroFrontendDevTools: React.FC = () => {
             size='small'
             onClick={() => setShowMarketplace(true)}
             sx={{
-              bgcolor: '#0ea5e9',
+              bgcolor: 'info.500',
               borderRadius: 2,
               textTransform: 'none',
               boxShadow: '0 4px 12px rgba(14, 165, 233, 0.4)',
-              '&:hover': { bgcolor: '#0284c7' },
+              '&:hover': { bgcolor: 'info.600' },
               minWidth: 'auto',
               px: 2,
             }}
@@ -267,11 +267,11 @@ const MicroFrontendDevTools: React.FC = () => {
             size='small'
             onClick={() => setShowGovernance(true)}
             sx={{
-              bgcolor: '#f59e0b',
+              bgcolor: 'warning.500',
               borderRadius: 2,
               textTransform: 'none',
               boxShadow: '0 4px 12px rgba(245, 158, 11, 0.4)',
-              '&:hover': { bgcolor: '#d97706' },
+              '&:hover': { bgcolor: 'warning.600' },
               minWidth: 'auto',
               px: 2,
             }}
@@ -298,11 +298,11 @@ const MicroFrontendDevTools: React.FC = () => {
             size='small'
             onClick={() => setShowSecurity(true)}
             sx={{
-              bgcolor: '#ef4444',
+              bgcolor: 'error.500',
               borderRadius: 2,
               textTransform: 'none',
               boxShadow: '0 4px 12px rgba(239, 68, 68, 0.4)',
-              '&:hover': { bgcolor: '#dc2626' },
+              '&:hover': { bgcolor: 'error.600' },
               minWidth: 'auto',
               px: 2,
             }}
@@ -329,11 +329,11 @@ const MicroFrontendDevTools: React.FC = () => {
             size='small'
             onClick={() => setShowRuntime(true)}
             sx={{
-              bgcolor: '#0f766e',
+              bgcolor: 'teal.700',
               borderRadius: 2,
               textTransform: 'none',
               boxShadow: '0 4px 12px rgba(15, 118, 110, 0.4)',
-              '&:hover': { bgcolor: '#115e59' },
+              '&:hover': { bgcolor: 'teal.800' },
               minWidth: 'auto',
               px: 2,
             }}
@@ -360,11 +360,11 @@ const MicroFrontendDevTools: React.FC = () => {
             size='small'
             onClick={() => setShowV47Panel(true)}
             sx={{
-              bgcolor: '#6366f1',
+              bgcolor: 'secondary.500',
               borderRadius: 2,
               textTransform: 'none',
               boxShadow: '0 4px 12px rgba(99, 102, 241, 0.4)',
-              '&:hover': { bgcolor: '#4f46e5' },
+              '&:hover': { bgcolor: 'secondary.700' },
               minWidth: 'auto',
               px: 2,
             }}
@@ -391,11 +391,11 @@ const MicroFrontendDevTools: React.FC = () => {
             size='small'
             onClick={() => setShowDesignSystem(true)}
             sx={{
-              bgcolor: '#0d9488',
+              bgcolor: 'teal.600',
               borderRadius: 2,
               textTransform: 'none',
               boxShadow: '0 4px 12px rgba(13, 148, 136, 0.4)',
-              '&:hover': { bgcolor: '#0f766e' },
+              '&:hover': { bgcolor: 'teal.700' },
               minWidth: 'auto',
               px: 2,
             }}
@@ -422,11 +422,11 @@ const MicroFrontendDevTools: React.FC = () => {
             size='small'
             onClick={() => setShowDevEx(true)}
             sx={{
-              bgcolor: '#0891b2',
+              bgcolor: 'cyan.600',
               borderRadius: 2,
               textTransform: 'none',
               boxShadow: '0 4px 12px rgba(8, 145, 178, 0.4)',
-              '&:hover': { bgcolor: '#0e7490' },
+              '&:hover': { bgcolor: 'cyan.700' },
               minWidth: 'auto',
               px: 2,
             }}
@@ -453,11 +453,11 @@ const MicroFrontendDevTools: React.FC = () => {
             size='small'
             onClick={() => setShowV53AI(true)}
             sx={{
-              bgcolor: '#8b5cf6',
+              bgcolor: 'secondary.500',
               borderRadius: 2,
               textTransform: 'none',
               boxShadow: '0 4px 12px rgba(139, 92, 246, 0.4)',
-              '&:hover': { bgcolor: '#7c3aed' },
+              '&:hover': { bgcolor: 'secondary.600' },
               minWidth: 'auto',
               px: 2,
             }}
@@ -968,7 +968,7 @@ const MicroFrontendDevTools: React.FC = () => {
             left: 0,
             right: 0,
             bottom: 0,
-            bgcolor: 'rgba(0,0,0,0.5)',
+            bgcolor: 'action.active',
             zIndex: 10000,
             display: 'flex',
             alignItems: 'center',
@@ -994,8 +994,8 @@ const MicroFrontendDevTools: React.FC = () => {
                 display: 'flex',
                 alignItems: 'center',
                 justifyContent: 'space-between',
-                bgcolor: '#7c3aed',
-                color: 'white',
+                bgcolor: 'secondary.600',
+                color: 'common.white',
               }}
             >
               <Typography
@@ -1007,7 +1007,7 @@ const MicroFrontendDevTools: React.FC = () => {
               <IconButton
                 size='small'
                 onClick={() => setShowRegistry(false)}
-                sx={{ color: 'white' }}
+                sx={{ color: 'common.white' }}
               >
                 <XIcon size={20} />
               </IconButton>
@@ -1027,7 +1027,7 @@ const MicroFrontendDevTools: React.FC = () => {
             left: 0,
             right: 0,
             bottom: 0,
-            bgcolor: 'rgba(0,0,0,0.5)',
+            bgcolor: 'action.active',
             zIndex: 10000,
             display: 'flex',
             alignItems: 'center',
@@ -1053,8 +1053,8 @@ const MicroFrontendDevTools: React.FC = () => {
                 display: 'flex',
                 alignItems: 'center',
                 justifyContent: 'space-between',
-                bgcolor: '#059669',
-                color: 'white',
+                bgcolor: 'teal.600',
+                color: 'common.white',
               }}
             >
               <Typography
@@ -1066,7 +1066,7 @@ const MicroFrontendDevTools: React.FC = () => {
               <IconButton
                 size='small'
                 onClick={() => setShowVersion(false)}
-                sx={{ color: 'white' }}
+                sx={{ color: 'common.white' }}
               >
                 <XIcon size={20} />
               </IconButton>
@@ -1086,7 +1086,7 @@ const MicroFrontendDevTools: React.FC = () => {
             left: 0,
             right: 0,
             bottom: 0,
-            bgcolor: 'rgba(0,0,0,0.5)',
+            bgcolor: 'action.active',
             zIndex: 10000,
             display: 'flex',
             alignItems: 'center',
@@ -1112,8 +1112,8 @@ const MicroFrontendDevTools: React.FC = () => {
                 display: 'flex',
                 alignItems: 'center',
                 justifyContent: 'space-between',
-                bgcolor: '#dc2626',
-                color: 'white',
+                bgcolor: 'error.600',
+                color: 'common.white',
               }}
             >
               <Typography
@@ -1125,7 +1125,7 @@ const MicroFrontendDevTools: React.FC = () => {
               <IconButton
                 size='small'
                 onClick={() => setShowDashboard(false)}
-                sx={{ color: 'white' }}
+                sx={{ color: 'common.white' }}
               >
                 <XIcon size={20} />
               </IconButton>
@@ -1145,7 +1145,7 @@ const MicroFrontendDevTools: React.FC = () => {
             left: 0,
             right: 0,
             bottom: 0,
-            bgcolor: 'rgba(0,0,0,0.5)',
+            bgcolor: 'action.active',
             zIndex: 10000,
             display: 'flex',
             alignItems: 'center',
@@ -1178,7 +1178,7 @@ const MicroFrontendDevTools: React.FC = () => {
             left: 0,
             right: 0,
             bottom: 0,
-            bgcolor: 'rgba(0,0,0,0.5)',
+            bgcolor: 'action.active',
             zIndex: 10000,
             display: 'flex',
             alignItems: 'center',
@@ -1211,7 +1211,7 @@ const MicroFrontendDevTools: React.FC = () => {
             left: 0,
             right: 0,
             bottom: 0,
-            bgcolor: 'rgba(0,0,0,0.5)',
+            bgcolor: 'action.active',
             zIndex: 10000,
             display: 'flex',
             alignItems: 'center',
@@ -1244,7 +1244,7 @@ const MicroFrontendDevTools: React.FC = () => {
             left: 0,
             right: 0,
             bottom: 0,
-            bgcolor: 'rgba(0,0,0,0.5)',
+            bgcolor: 'action.active',
             zIndex: 10000,
             display: 'flex',
             alignItems: 'center',
@@ -1277,7 +1277,7 @@ const MicroFrontendDevTools: React.FC = () => {
             left: 0,
             right: 0,
             bottom: 0,
-            bgcolor: 'rgba(0,0,0,0.5)',
+            bgcolor: 'action.active',
             zIndex: 10000,
             display: 'flex',
             alignItems: 'center',

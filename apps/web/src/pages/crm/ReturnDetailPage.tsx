@@ -22,7 +22,9 @@ const ReturnDetailPage: React.FC = () => {
   const navigate = useNavigate();
   const queryClient = useQueryClient();
   const { addNotification } = useNotificationStore();
-  const [confirmAction, setConfirmAction] = useState<{ label: string; fn: () => void } | null>(null);
+  const [confirmAction, setConfirmAction] = useState<{ label: string; fn: () => void } | null>(
+    null
+  );
 
   const statusLabelMap: Record<ReturnStatus, string> = {
     pending: t('crm.returnDetail.status_pending'),
@@ -33,7 +35,10 @@ const ReturnDetailPage: React.FC = () => {
     cancelled: t('crm.returnDetail.status_cancelled'),
   };
 
-  const statusColorMap: Record<ReturnStatus, 'primary' | 'secondary' | 'error' | 'info' | 'success' | 'warning'> = {
+  const statusColorMap: Record<
+    ReturnStatus,
+    'primary' | 'secondary' | 'error' | 'info' | 'success' | 'warning'
+  > = {
     pending: 'warning',
     approved: 'success',
     rejected: 'error',
@@ -81,8 +86,10 @@ const ReturnDetailPage: React.FC = () => {
     returnQuery.data?.success && returnQuery.data.data ? returnQuery.data.data : null;
   const items: ReturnItem[] =
     itemsQuery.data?.success && itemsQuery.data.data ? itemsQuery.data.data : [];
-  const financeStatus = financeQuery.data?.success && financeQuery.data.data ? financeQuery.data.data : null;
-  const inventoryStatus = inventoryQuery.data?.success && inventoryQuery.data.data ? inventoryQuery.data.data : null;
+  const financeStatus =
+    financeQuery.data?.success && financeQuery.data.data ? financeQuery.data.data : null;
+  const inventoryStatus =
+    inventoryQuery.data?.success && inventoryQuery.data.data ? inventoryQuery.data.data : null;
   const loading = returnQuery.isLoading;
 
   const invalidate = () => {
@@ -96,27 +103,45 @@ const ReturnDetailPage: React.FC = () => {
   };
 
   const actionMutation = useMutation({
-    mutationFn: async (fn: () => Promise<unknown>) => { await fn(); },
+    mutationFn: async (fn: () => Promise<unknown>) => {
+      await fn();
+    },
     onSuccess: () => {
-      addNotification({ type: 'success', title: t('crm.common.operation_success'), message: t('crm.returnDetail.msg_status_updated') });
+      addNotification({
+        type: 'success',
+        title: t('crm.common.operation_success'),
+        message: t('crm.returnDetail.msg_status_updated'),
+      });
       invalidate();
     },
     onError: () => {
-      addNotification({ type: 'error', title: t('crm.common.operation_fail'), message: t('crm.returnDetail.msg_action_fail') });
+      addNotification({
+        type: 'error',
+        title: t('crm.common.operation_fail'),
+        message: t('crm.returnDetail.msg_action_fail'),
+      });
     },
   });
 
   const deleteMutation = useMutation({
     mutationFn: (returnId: string) => crmApi.returns.delete(returnId),
     onSuccess: () => {
-      addNotification({ type: 'success', title: t('crm.common.delete_success'), message: t('crm.returnDetail.msg_deleted') });
+      addNotification({
+        type: 'success',
+        title: t('crm.common.delete_success'),
+        message: t('crm.returnDetail.msg_deleted'),
+      });
       navigate(CRM_PATHS.returns);
     },
   });
 
   const formatCurrency = (amount?: number) => {
     if (amount == null) return '-';
-    return new Intl.NumberFormat('zh-CN', { style: 'currency', currency: 'CNY', minimumFractionDigits: 0 }).format(amount);
+    return new Intl.NumberFormat('zh-CN', {
+      style: 'currency',
+      currency: 'CNY',
+      minimumFractionDigits: 0,
+    }).format(amount);
   };
 
   const formatDateTime = (date?: string) => {
@@ -125,55 +150,97 @@ const ReturnDetailPage: React.FC = () => {
   };
 
   const getStatusChip = (status: ReturnStatus) => (
-    <Chip size='small' color={statusColorMap[status] || 'primary'} label={statusLabelMap[status] || status} />
+    <Chip
+      size='small'
+      color={statusColorMap[status] || 'primary'}
+      label={statusLabelMap[status] || status}
+    />
   );
 
   const basicInfoSection = useMemo(() => {
     if (!record) return null;
     return (
-      <Box sx={{ display: 'grid', gridTemplateColumns: { xs: '1fr', md: 'repeat(3, 1fr)' }, gap: 2 }}>
+      <Box
+        sx={{ display: 'grid', gridTemplateColumns: { xs: '1fr', md: 'repeat(3, 1fr)' }, gap: 2 }}
+      >
         <Box>
-          <InputLabel sx={{ fontSize: 12, color: 'text.secondary' }}>{t('crm.returnDetail.field_return_no')}</InputLabel>
-          <Typography sx={{ fontWeight: 600, fontFamily: 'monospace', mt: 0.5 }}>{record.return_no}</Typography>
+          <InputLabel sx={{ fontSize: 12, color: 'text.secondary' }}>
+            {t('crm.returnDetail.field_return_no')}
+          </InputLabel>
+          <Typography sx={{ fontWeight: 600, fontFamily: 'monospace', mt: 0.5 }}>
+            {record.return_no}
+          </Typography>
         </Box>
         <Box>
-          <InputLabel sx={{ fontSize: 12, color: 'text.secondary' }}>{t('crm.returnDetail.field_customer_id')}</InputLabel>
+          <InputLabel sx={{ fontSize: 12, color: 'text.secondary' }}>
+            {t('crm.returnDetail.field_customer_id')}
+          </InputLabel>
           <Typography sx={{ fontFamily: 'monospace', mt: 0.5 }}>{record.customer_id}</Typography>
         </Box>
         <Box>
-          <InputLabel sx={{ fontSize: 12, color: 'text.secondary' }}>{t('crm.returnDetail.field_order_id')}</InputLabel>
-          <Typography sx={{ fontFamily: 'monospace', mt: 0.5 }}>{record.order_id || '-'}</Typography>
+          <InputLabel sx={{ fontSize: 12, color: 'text.secondary' }}>
+            {t('crm.returnDetail.field_order_id')}
+          </InputLabel>
+          <Typography sx={{ fontFamily: 'monospace', mt: 0.5 }}>
+            {record.order_id || '-'}
+          </Typography>
         </Box>
         <Box>
-          <InputLabel sx={{ fontSize: 12, color: 'text.secondary' }}>{t('crm.returnDetail.field_type')}</InputLabel>
+          <InputLabel sx={{ fontSize: 12, color: 'text.secondary' }}>
+            {t('crm.returnDetail.field_type')}
+          </InputLabel>
           <Typography sx={{ mt: 0.5 }}>{returnTypeLabelMap[record.return_type]}</Typography>
         </Box>
         <Box>
-          <InputLabel sx={{ fontSize: 12, color: 'text.secondary' }}>{t('crm.returnDetail.field_reason')}</InputLabel>
+          <InputLabel sx={{ fontSize: 12, color: 'text.secondary' }}>
+            {t('crm.returnDetail.field_reason')}
+          </InputLabel>
           <Typography sx={{ mt: 0.5 }}>{record.reason}</Typography>
         </Box>
         <Box>
-          <InputLabel sx={{ fontSize: 12, color: 'text.secondary' }}>{t('crm.returnDetail.field_status')}</InputLabel>
+          <InputLabel sx={{ fontSize: 12, color: 'text.secondary' }}>
+            {t('crm.returnDetail.field_status')}
+          </InputLabel>
           <Box sx={{ mt: 0.5 }}>{getStatusChip(record.status)}</Box>
         </Box>
         <Box>
-          <InputLabel sx={{ fontSize: 12, color: 'text.secondary' }}>{t('crm.returnDetail.field_refund_amount')}</InputLabel>
-          <Typography sx={{ fontFamily: 'monospace', color: record.refund_amount ? ct.primary.main : 'inherit', mt: 0.5 }}>
+          <InputLabel sx={{ fontSize: 12, color: 'text.secondary' }}>
+            {t('crm.returnDetail.field_refund_amount')}
+          </InputLabel>
+          <Typography
+            sx={{
+              fontFamily: 'monospace',
+              color: record.refund_amount ? ct.primary.main : 'inherit',
+              mt: 0.5,
+            }}
+          >
             {formatCurrency(record.refund_amount)}
           </Typography>
         </Box>
         <Box>
-          <InputLabel sx={{ fontSize: 12, color: 'text.secondary' }}>{t('crm.returnDetail.field_warehouse_id')}</InputLabel>
-          <Typography sx={{ fontFamily: 'monospace', mt: 0.5 }}>{record.warehouse_id || '-'}</Typography>
+          <InputLabel sx={{ fontSize: 12, color: 'text.secondary' }}>
+            {t('crm.returnDetail.field_warehouse_id')}
+          </InputLabel>
+          <Typography sx={{ fontFamily: 'monospace', mt: 0.5 }}>
+            {record.warehouse_id || '-'}
+          </Typography>
         </Box>
         <Box>
-          <InputLabel sx={{ fontSize: 12, color: 'text.secondary' }}>{t('crm.returnDetail.field_ticket_id')}</InputLabel>
-          <Typography sx={{ fontFamily: 'monospace', mt: 0.5 }}>{record.ticket_id || '-'}</Typography>
+          <InputLabel sx={{ fontSize: 12, color: 'text.secondary' }}>
+            {t('crm.returnDetail.field_ticket_id')}
+          </InputLabel>
+          <Typography sx={{ fontFamily: 'monospace', mt: 0.5 }}>
+            {record.ticket_id || '-'}
+          </Typography>
         </Box>
         {record.reason_detail && (
           <Box sx={{ gridColumn: 'span 3' }}>
-            <InputLabel sx={{ fontSize: 12, color: 'text.secondary' }}>{t('crm.returnDetail.field_reason_detail')}</InputLabel>
-            <Typography sx={{ mt: 0.5, color: 'text.secondary' }}>{record.reason_detail}</Typography>
+            <InputLabel sx={{ fontSize: 12, color: 'text.secondary' }}>
+              {t('crm.returnDetail.field_reason_detail')}
+            </InputLabel>
+            <Typography sx={{ mt: 0.5, color: 'text.secondary' }}>
+              {record.reason_detail}
+            </Typography>
           </Box>
         )}
       </Box>
@@ -204,7 +271,11 @@ const ReturnDetailPage: React.FC = () => {
                   variant='body2'
                   sx={{
                     fontWeight: isCurrent ? 600 : 400,
-                    color: isCompleted ? ct.success.main : isCurrent ? ct.primary.main : 'text.secondary',
+                    color: isCompleted
+                      ? ct.success.main
+                      : isCurrent
+                        ? ct.primary.main
+                        : 'text.secondary',
                   }}
                 >
                   {statusLabelMap[step]}
@@ -223,8 +294,22 @@ const ReturnDetailPage: React.FC = () => {
             </React.Fragment>
           );
         })}
-        {isRejected && <Chip size='small' color='error' label={t('crm.returnDetail.status_rejected')} sx={{ ml: 1 }} />}
-        {isCancelled && <Chip size='small' color='primary' label={t('crm.returnDetail.status_cancelled')} sx={{ ml: 1 }} />}
+        {isRejected && (
+          <Chip
+            size='small'
+            color='error'
+            label={t('crm.returnDetail.status_rejected')}
+            sx={{ ml: 1 }}
+          />
+        )}
+        {isCancelled && (
+          <Chip
+            size='small'
+            color='primary'
+            label={t('crm.returnDetail.status_cancelled')}
+            sx={{ ml: 1 }}
+          />
+        )}
       </Box>
     );
   }, [record, t]);
@@ -238,19 +323,71 @@ const ReturnDetailPage: React.FC = () => {
         <table style={{ width: '100%', borderCollapse: 'collapse' }}>
           <thead>
             <tr style={{ borderBottom: '1px solid #eee' }}>
-              <th style={{ textAlign: 'left', padding: '8px 12px', fontSize: 12, color: '#999' }}>{t('crm.returnDetail.col_product_id')}</th>
-              <th style={{ textAlign: 'right', padding: '8px 12px', fontSize: 12, color: '#999' }}>{t('crm.returnDetail.col_quantity')}</th>
-              <th style={{ textAlign: 'right', padding: '8px 12px', fontSize: 12, color: '#999' }}>{t('crm.returnDetail.col_unit_price')}</th>
-              <th style={{ textAlign: 'right', padding: '8px 12px', fontSize: 12, color: '#999' }}>{t('crm.returnDetail.col_total')}</th>
+              <th
+                style={{
+                  textAlign: 'left',
+                  padding: '8px 12px',
+                  fontSize: 12,
+                  color: 'surface.400',
+                }}
+              >
+                {t('crm.returnDetail.col_product_id')}
+              </th>
+              <th
+                style={{
+                  textAlign: 'right',
+                  padding: '8px 12px',
+                  fontSize: 12,
+                  color: 'surface.400',
+                }}
+              >
+                {t('crm.returnDetail.col_quantity')}
+              </th>
+              <th
+                style={{
+                  textAlign: 'right',
+                  padding: '8px 12px',
+                  fontSize: 12,
+                  color: 'surface.400',
+                }}
+              >
+                {t('crm.returnDetail.col_unit_price')}
+              </th>
+              <th
+                style={{
+                  textAlign: 'right',
+                  padding: '8px 12px',
+                  fontSize: 12,
+                  color: 'surface.400',
+                }}
+              >
+                {t('crm.returnDetail.col_total')}
+              </th>
             </tr>
           </thead>
           <tbody>
             {items.map((item) => (
-              <tr key={item.id} style={{ borderBottom: '1px solid #eee' }}>
-                <td style={{ padding: '8px 12px', fontFamily: 'monospace', fontSize: '0.85rem' }}>{item.product_id}</td>
-                <td style={{ padding: '8px 12px', textAlign: 'right', fontFamily: 'monospace' }}>{item.quantity}</td>
-                <td style={{ padding: '8px 12px', textAlign: 'right', fontFamily: 'monospace' }}>{formatCurrency(item.unit_price)}</td>
-                <td style={{ padding: '8px 12px', textAlign: 'right', fontFamily: 'monospace', color: ct.primary.main }}>
+              <tr
+                key={item.id}
+                style={{ borderBottom: '1px solid #eee' }}
+              >
+                <td style={{ padding: '8px 12px', fontFamily: 'monospace', fontSize: '0.85rem' }}>
+                  {item.product_id}
+                </td>
+                <td style={{ padding: '8px 12px', textAlign: 'right', fontFamily: 'monospace' }}>
+                  {item.quantity}
+                </td>
+                <td style={{ padding: '8px 12px', textAlign: 'right', fontFamily: 'monospace' }}>
+                  {formatCurrency(item.unit_price)}
+                </td>
+                <td
+                  style={{
+                    padding: '8px 12px',
+                    textAlign: 'right',
+                    fontFamily: 'monospace',
+                    color: ct.primary.main,
+                  }}
+                >
                   {formatCurrency(item.total_amount)}
                 </td>
               </tr>
@@ -262,21 +399,35 @@ const ReturnDetailPage: React.FC = () => {
   }, [items, t]);
 
   const financeSection = useMemo(() => {
-    if (!financeStatus) return <Typography color='text.secondary'>{t('crm.returnDetail.finance_empty')}</Typography>;
+    if (!financeStatus)
+      return <Typography color='text.secondary'>{t('crm.returnDetail.finance_empty')}</Typography>;
     return (
-      <Box sx={{ display: 'grid', gridTemplateColumns: { xs: '1fr', md: 'repeat(3, 1fr)' }, gap: 2 }}>
+      <Box
+        sx={{ display: 'grid', gridTemplateColumns: { xs: '1fr', md: 'repeat(3, 1fr)' }, gap: 2 }}
+      >
         <Box>
-          <InputLabel sx={{ fontSize: 12, color: 'text.secondary' }}>{t('crm.returnDetail.field_refund_amount')}</InputLabel>
+          <InputLabel sx={{ fontSize: 12, color: 'text.secondary' }}>
+            {t('crm.returnDetail.field_refund_amount')}
+          </InputLabel>
           <Typography sx={{ fontFamily: 'monospace', color: ct.primary.main, mt: 0.5 }}>
             {formatCurrency(financeStatus.refund_amount)}
           </Typography>
         </Box>
         <Box>
-          <InputLabel sx={{ fontSize: 12, color: 'text.secondary' }}>{t('crm.returnDetail.field_refund_status')}</InputLabel>
-          <Chip size='small' color={financeStatus.refund_status === 'completed' ? 'success' : 'warning'} label={financeStatus.refund_status} sx={{ mt: 0.5 }} />
+          <InputLabel sx={{ fontSize: 12, color: 'text.secondary' }}>
+            {t('crm.returnDetail.field_refund_status')}
+          </InputLabel>
+          <Chip
+            size='small'
+            color={financeStatus.refund_status === 'completed' ? 'success' : 'warning'}
+            label={financeStatus.refund_status}
+            sx={{ mt: 0.5 }}
+          />
         </Box>
         <Box>
-          <InputLabel sx={{ fontSize: 12, color: 'text.secondary' }}>{t('crm.returnDetail.field_refund_time')}</InputLabel>
+          <InputLabel sx={{ fontSize: 12, color: 'text.secondary' }}>
+            {t('crm.returnDetail.field_refund_time')}
+          </InputLabel>
           <Typography sx={{ mt: 0.5 }}>{formatDateTime(financeStatus.refunded_at)}</Typography>
         </Box>
       </Box>
@@ -284,23 +435,47 @@ const ReturnDetailPage: React.FC = () => {
   }, [financeStatus, t]);
 
   const inventorySection = useMemo(() => {
-    if (!inventoryStatus) return <Typography color='text.secondary'>{t('crm.returnDetail.inventory_empty')}</Typography>;
+    if (!inventoryStatus)
+      return (
+        <Typography color='text.secondary'>{t('crm.returnDetail.inventory_empty')}</Typography>
+      );
     return (
-      <Box sx={{ display: 'grid', gridTemplateColumns: { xs: '1fr', md: 'repeat(2, 1fr)' }, gap: 2 }}>
+      <Box
+        sx={{ display: 'grid', gridTemplateColumns: { xs: '1fr', md: 'repeat(2, 1fr)' }, gap: 2 }}
+      >
         <Box>
-          <InputLabel sx={{ fontSize: 12, color: 'text.secondary' }}>{t('crm.returnDetail.field_received')}</InputLabel>
-          <Chip size='small' color={inventoryStatus.received ? 'success' : 'primary'} label={inventoryStatus.received ? t('crm.returnDetail.status_received') : t('crm.returnDetail.status_not_received')} sx={{ mt: 0.5 }} />
+          <InputLabel sx={{ fontSize: 12, color: 'text.secondary' }}>
+            {t('crm.returnDetail.field_received')}
+          </InputLabel>
+          <Chip
+            size='small'
+            color={inventoryStatus.received ? 'success' : 'primary'}
+            label={
+              inventoryStatus.received
+                ? t('crm.returnDetail.status_received')
+                : t('crm.returnDetail.status_not_received')
+            }
+            sx={{ mt: 0.5 }}
+          />
         </Box>
         <Box>
-          <InputLabel sx={{ fontSize: 12, color: 'text.secondary' }}>{t('crm.returnDetail.field_received_time')}</InputLabel>
+          <InputLabel sx={{ fontSize: 12, color: 'text.secondary' }}>
+            {t('crm.returnDetail.field_received_time')}
+          </InputLabel>
           <Typography sx={{ mt: 0.5 }}>{formatDateTime(inventoryStatus.received_at)}</Typography>
         </Box>
         <Box>
-          <InputLabel sx={{ fontSize: 12, color: 'text.secondary' }}>{t('crm.returnDetail.field_warehouse_id')}</InputLabel>
-          <Typography sx={{ fontFamily: 'monospace', mt: 0.5 }}>{inventoryStatus.warehouse_id || '-'}</Typography>
+          <InputLabel sx={{ fontSize: 12, color: 'text.secondary' }}>
+            {t('crm.returnDetail.field_warehouse_id')}
+          </InputLabel>
+          <Typography sx={{ fontFamily: 'monospace', mt: 0.5 }}>
+            {inventoryStatus.warehouse_id || '-'}
+          </Typography>
         </Box>
         <Box>
-          <InputLabel sx={{ fontSize: 12, color: 'text.secondary' }}>{t('crm.returnDetail.field_items_count')}</InputLabel>
+          <InputLabel sx={{ fontSize: 12, color: 'text.secondary' }}>
+            {t('crm.returnDetail.field_items_count')}
+          </InputLabel>
           <Typography sx={{ mt: 0.5 }}>{inventoryStatus.items_count}</Typography>
         </Box>
       </Box>
@@ -313,13 +488,22 @@ const ReturnDetailPage: React.FC = () => {
       { id: 'timeline', title: t('crm.returnDetail.section_timeline'), content: timelineSection },
       { id: 'items', title: t('crm.returnDetail.section_items'), content: itemsSection },
       { id: 'finance', title: t('crm.returnDetail.section_finance'), content: financeSection },
-      { id: 'inventory', title: t('crm.returnDetail.section_inventory'), content: inventorySection },
+      {
+        id: 'inventory',
+        title: t('crm.returnDetail.section_inventory'),
+        content: inventorySection,
+      },
     ],
     [basicInfoSection, timelineSection, itemsSection, financeSection, inventorySection, t]
   );
 
   const handleAction = useCallback((label: string, fn: () => Promise<unknown>) => {
-    setConfirmAction({ label, fn: () => { fn(); } });
+    setConfirmAction({
+      label,
+      fn: () => {
+        fn();
+      },
+    });
   }, []);
 
   const actionButtons = useMemo(() => {
@@ -329,54 +513,116 @@ const ReturnDetailPage: React.FC = () => {
 
     if (record.status === 'pending') {
       buttons.push(
-        <Button key='approve' variant='contained' color='success' size='small' startIcon={<CheckCircle size={16} />} sx={btnSx}
-          onClick={() => handleAction(t('crm.returnDetail.action_approve'), () => crmApi.returns.approve(id!))}>
+        <Button
+          key='approve'
+          variant='contained'
+          color='success'
+          size='small'
+          startIcon={<CheckCircle size={16} />}
+          sx={btnSx}
+          onClick={() =>
+            handleAction(t('crm.returnDetail.action_approve'), () => crmApi.returns.approve(id!))
+          }
+        >
           {t('crm.returnDetail.action_approve')}
         </Button>,
-        <Button key='reject' variant='outlined' color='error' size='small' startIcon={<XCircle size={16} />} sx={btnSx}
-          onClick={() => handleAction(t('crm.returnDetail.action_reject'), () => crmApi.returns.reject(id!))}>
+        <Button
+          key='reject'
+          variant='outlined'
+          color='error'
+          size='small'
+          startIcon={<XCircle size={16} />}
+          sx={btnSx}
+          onClick={() =>
+            handleAction(t('crm.returnDetail.action_reject'), () => crmApi.returns.reject(id!))
+          }
+        >
           {t('crm.returnDetail.action_reject')}
-        </Button>,
+        </Button>
       );
     }
     if (record.status === 'approved') {
       buttons.push(
-        <Button key='receive' variant='contained' color='info' size='small' startIcon={<Package size={16} />} sx={btnSx}
-          onClick={() => handleAction(t('crm.returnDetail.action_receive'), () => crmApi.returns.receive(id!))}>
+        <Button
+          key='receive'
+          variant='contained'
+          color='info'
+          size='small'
+          startIcon={<Package size={16} />}
+          sx={btnSx}
+          onClick={() =>
+            handleAction(t('crm.returnDetail.action_receive'), () => crmApi.returns.receive(id!))
+          }
+        >
           {t('crm.returnDetail.action_receive')}
-        </Button>,
+        </Button>
       );
     }
     if (record.status === 'received') {
       buttons.push(
-        <Button key='complete' variant='contained' color='success' size='small' startIcon={<CheckCircle size={16} />} sx={btnSx}
-          onClick={() => handleAction(t('crm.returnDetail.action_complete'), () => crmApi.returns.complete(id!))}>
+        <Button
+          key='complete'
+          variant='contained'
+          color='success'
+          size='small'
+          startIcon={<CheckCircle size={16} />}
+          sx={btnSx}
+          onClick={() =>
+            handleAction(t('crm.returnDetail.action_complete'), () => crmApi.returns.complete(id!))
+          }
+        >
           {t('crm.returnDetail.action_complete')}
-        </Button>,
+        </Button>
       );
     }
     if (['pending', 'approved'].includes(record.status)) {
       buttons.push(
-        <Button key='cancel' variant='outlined' color='primary' size='small' startIcon={<Ban size={16} />} sx={btnSx}
-          onClick={() => handleAction(t('crm.returnDetail.action_cancel'), () => crmApi.returns.cancel(id!))}>
+        <Button
+          key='cancel'
+          variant='outlined'
+          color='primary'
+          size='small'
+          startIcon={<Ban size={16} />}
+          sx={btnSx}
+          onClick={() =>
+            handleAction(t('crm.returnDetail.action_cancel'), () => crmApi.returns.cancel(id!))
+          }
+        >
           {t('crm.returnDetail.action_cancel')}
-        </Button>,
+        </Button>
       );
     }
     if (['pending', 'cancelled'].includes(record.status)) {
       buttons.push(
-        <Button key='delete' variant='outlined' color='error' size='small' sx={btnSx}
-          onClick={() => setConfirmAction({ label: t('crm.returnDetail.action_delete'), fn: () => deleteMutation.mutate(id!) })}>
+        <Button
+          key='delete'
+          variant='outlined'
+          color='error'
+          size='small'
+          sx={btnSx}
+          onClick={() =>
+            setConfirmAction({
+              label: t('crm.returnDetail.action_delete'),
+              fn: () => deleteMutation.mutate(id!),
+            })
+          }
+        >
           {t('crm.returnDetail.action_delete')}
-        </Button>,
+        </Button>
       );
     }
-    return buttons.length > 0 ? <Box sx={{ display: 'flex', flexWrap: 'wrap', mb: 2 }}>{buttons}</Box> : null;
+    return buttons.length > 0 ? (
+      <Box sx={{ display: 'flex', flexWrap: 'wrap', mb: 2 }}>{buttons}</Box>
+    ) : null;
   }, [record, id, actionMutation, deleteMutation, handleAction, t]);
 
   return (
     <PageContainer
-      title={record ? t('crm.returnDetail.title_with_no', { no: record.return_no }) : t('crm.returnDetail.title_default')}
+      title={
+        record
+          ? t('crm.returnDetail.title_with_no', { no: record.return_no })
+          : t('crm.returnDetail.title_default')
+      }
       subtitle={record ? statusLabelMap[record.status] : ''}
       autoTitle
       autoBreadcrumbs
@@ -396,7 +642,10 @@ const ReturnDetailPage: React.FC = () => {
           headerContent={
             record ? (
               <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
-                <Typography variant='h6' sx={{ fontFamily: 'monospace', fontWeight: 700 }}>
+                <Typography
+                  variant='h6'
+                  sx={{ fontFamily: 'monospace', fontWeight: 700 }}
+                >
                   {record.return_no}
                 </Typography>
                 {getStatusChip(record.status)}
@@ -412,8 +661,13 @@ const ReturnDetailPage: React.FC = () => {
             confirmAction?.fn();
             setConfirmAction(null);
           }}
-          title={t('crm.returnDetail.dialog_confirm_title', { label: confirmAction?.label || t('crm.returnDetail.dialog_confirm_default_label') })}
-          message={t('crm.returnDetail.dialog_confirm_message', { label: confirmAction?.label || t('crm.returnDetail.dialog_confirm_default_message_label') })}
+          title={t('crm.returnDetail.dialog_confirm_title', {
+            label: confirmAction?.label || t('crm.returnDetail.dialog_confirm_default_label'),
+          })}
+          message={t('crm.returnDetail.dialog_confirm_message', {
+            label:
+              confirmAction?.label || t('crm.returnDetail.dialog_confirm_default_message_label'),
+          })}
         />
       </>
     </PageContainer>

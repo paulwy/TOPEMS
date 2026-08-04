@@ -50,8 +50,7 @@ const MrpPlanPage: React.FC = () => {
   const [calculationResult, setCalculationResult] = useState<MrpCalculationResult | null>(null);
   const [showResultDialog, setShowResultDialog] = useState(false);
 
-  const invalidatePlans = () =>
-    queryClient.invalidateQueries({ queryKey: [mrpPlanSchema.entity] });
+  const invalidatePlans = () => queryClient.invalidateQueries({ queryKey: [mrpPlanSchema.entity] });
 
   const calculateMutation = useMutation({
     mutationFn: (id: string) => scmApi.mrpPlans.calculate(id),

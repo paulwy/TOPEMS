@@ -395,7 +395,7 @@ const LimsSampleDetailPage: React.FC = () => {
                 <Tooltip
                   formatter={(value: unknown) => [`${value} 条`, '数量']}
                   contentStyle={{
-                    backgroundColor: 'white',
+                    backgroundColor: 'common.white',
                     border: '1px solid border.default',
                     borderRadius: '8px',
                   }}

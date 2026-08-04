@@ -466,11 +466,7 @@ export const KanbanPageTemplate: React.FC<KanbanPageTemplateProps> = ({
             <Chip
               label={getPriorityLabel(card.priority)}
               size='small'
-              color={
-                getPriorityColor(card.priority) as React.ComponentProps<
-                  typeof import('@mui/material/Chip').default
-                >['color']
-              }
+              color={getPriorityColor(card.priority) as React.ComponentProps<typeof Chip>['color']}
               sx={{ height: 20, fontSize: '0.6rem' }}
             />
           )}

@@ -59,8 +59,8 @@ export interface TicketStats {
   resolved: number;
   closed: number;
   sla_breached: number;
-  by_severity: Array<{ severity: string; count: number }>;
-  by_type: Array<{ ticket_type: string; count: number }>;
+  bySeverity: Array<{ severity: string; count: number }>;
+  byType: Array<{ ticket_type: string; count: number }>;
   by_source: Array<{ source_service: string; count: number }>;
 }
 
@@ -142,7 +142,7 @@ export interface TicketSlaPolicy {
   business_hours_end?: string;
   weekend_excluded: boolean;
   is_default: boolean;
-  is_active: boolean;
+  isActive: boolean;
   created_at: string;
   updated_at: string;
 }
@@ -154,8 +154,8 @@ export interface TicketSlaStats {
   breach_rate: number;
   avg_resolution_minutes?: number;
   avg_response_minutes?: number;
-  by_severity: Array<{ severity: string; total: number; breached: number; breach_rate: number }>;
-  by_type: Array<{ ticket_type: string; total: number; breached: number; breach_rate: number }>;
+  bySeverity: Array<{ severity: string; total: number; breached: number; breach_rate: number }>;
+  byType: Array<{ ticket_type: string; total: number; breached: number; breach_rate: number }>;
   breach_trend: Array<{ date: string; total: number; breached: number }>;
 }
 
@@ -189,7 +189,7 @@ export interface UpdateSlaPolicyRequest {
   working_hours_only?: boolean;
   weekend_excluded?: boolean;
   is_default?: boolean;
-  is_active?: boolean;
+  isActive?: boolean;
 }
 
 // 使用 Portal BFF 代理（推荐）
@@ -199,17 +199,14 @@ export const ticketApi = {
   listTickets: (query?: TicketQuery) =>
     portal.get<{ data: TicketListResponse }>('/tickets', { params: query }),
 
-  getTicket: (id: string) =>
-    portal.get<{ data: Ticket }>(`/tickets/${id}`),
+  getTicket: (id: string) => portal.get<{ data: Ticket }>(`/tickets/${id}`),
 
-  createTicket: (data: CreateTicketRequest) =>
-    portal.post<{ data: Ticket }>('/tickets', data),
+  createTicket: (data: CreateTicketRequest) => portal.post<{ data: Ticket }>('/tickets', data),
 
   updateTicket: (id: string, data: UpdateTicketRequest) =>
     portal.put<{ data: Ticket }>(`/tickets/${id}`, data),
 
-  getComments: (id: string) =>
-    portal.get<{ data: TicketComment[] }>(`/tickets/${id}/comments`),
+  getComments: (id: string) => portal.get<{ data: TicketComment[] }>(`/tickets/${id}/comments`),
 
   addComment: (id: string, content: string, isInternal?: boolean) =>
     portal.post<{ data: TicketComment }>(`/tickets/${id}/comments`, {
@@ -217,26 +214,21 @@ export const ticketApi = {
       is_internal: isInternal ?? false,
     }),
 
-  getStats: () =>
-    portal.get<{ data: TicketStats }>('/tickets/stats'),
+  getStats: () => portal.get<{ data: TicketStats }>('/tickets/stats'),
 
   getActivities: (id: string) =>
     portal.get<{ data: TicketActivity[] }>(`/tickets/${id}/activities`),
 
-  getTicketSla: (id: string) =>
-    portal.get<{ data: TicketSlaInfo }>(`/tickets/${id}/sla`),
+  getTicketSla: (id: string) => portal.get<{ data: TicketSlaInfo }>(`/tickets/${id}/sla`),
 
   triggerSlaEscalation: (id: string) =>
     portal.post<{ data: SlaEscalationEvent[] }>(`/tickets/${id}/sla`, {}),
 
-  getSlaStats: () =>
-    portal.get<{ data: TicketSlaStats }>('/tickets/sla-stats'),
+  getSlaStats: () => portal.get<{ data: TicketSlaStats }>('/tickets/sla-stats'),
 
-  listSlaPolicies: () =>
-    portal.get<{ data: TicketSlaPolicy[] }>('/sla-policies'),
+  listSlaPolicies: () => portal.get<{ data: TicketSlaPolicy[] }>('/sla-policies'),
 
-  getSlaPolicy: (id: string) =>
-    portal.get<{ data: TicketSlaPolicy }>(`/sla-policies/${id}`),
+  getSlaPolicy: (id: string) => portal.get<{ data: TicketSlaPolicy }>(`/sla-policies/${id}`),
 
   createSlaPolicy: (data: CreateSlaPolicyRequest) =>
     portal.post<{ data: TicketSlaPolicy }>('/sla-policies', data),

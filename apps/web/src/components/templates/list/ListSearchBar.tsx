@@ -33,7 +33,11 @@ interface ListSearchBarProps {
     filters: Record<string, any>;
     searchValue?: string;
   }>;
-  onQuickFilter?: (quickFilter: { key?: string; filters: Record<string, any>; searchValue?: string }) => void;
+  onQuickFilter?: (quickFilter: {
+    key?: string;
+    filters: Record<string, any>;
+    searchValue?: string;
+  }) => void;
   /** 当前激活的 quickFilter key（用于高亮显示） */
   activeQuickFilterKey?: string | null;
 }
@@ -147,7 +151,12 @@ export const ListSearchBar: React.FC<ListSearchBarProps> = ({
 
       default: {
         const menuItems = [
-          <MenuItem key='' value=''>全部</MenuItem>,
+          <MenuItem
+            key=''
+            value=''
+          >
+            全部
+          </MenuItem>,
           ...(filter.options?.map((option) => (
             <MenuItem
               key={option.value}
@@ -210,7 +219,13 @@ export const ListSearchBar: React.FC<ListSearchBarProps> = ({
         return (
           <button
             key={key}
-            onClick={() => onQuickFilter?.({ key, filters: quickFilter.filters, searchValue: quickFilter.searchValue })}
+            onClick={() =>
+              onQuickFilter?.({
+                key,
+                filters: quickFilter.filters,
+                searchValue: quickFilter.searchValue,
+              })
+            }
             style={{
               padding: '6px 12px',
               borderRadius: '4px',

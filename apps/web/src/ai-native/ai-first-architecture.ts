@@ -83,72 +83,73 @@ const DEFAULT_CONFIG: PlatformConfig = {
   config_version: '54.0.0',
 };
 
-const BUILTIN_CAPABILITIES: Omit<AICapability, 'createdAt' | 'updatedAt' | 'status' | 'enabled'>[] = [
-  {
-    id: 'cap-reasoning',
-    name: 'AI 推理引擎',
-    type: 'reasoning',
-    config: { model: 'default', max_tokens: 2048, temperature: 0.7 },
-    description: '基于上下文的智能推理与决策',
-    version: '54.0',
-  },
-  {
-    id: 'cap-generation',
-    name: '内容生成器',
-    type: 'generation',
-    config: { format: 'text', max_length: 500 },
-    description: '智能内容生成与摘要',
-    version: '54.0',
-  },
-  {
-    id: 'cap-classification',
-    name: '意图分类器',
-    type: 'classification',
-    config: { categories: 20, confidence_threshold: 0.8 },
-    description: '用户意图精准识别',
-    version: '54.0',
-  },
-  {
-    id: 'cap-routing',
-    name: '智能路由',
-    type: 'routing',
-    config: { strategy: 'hybrid', learning_enabled: true },
-    description: '基于意图的动态路由推荐',
-    version: '54.0',
-  },
-  {
-    id: 'cap-adaptation',
-    name: '自适应 UI',
-    type: 'adaptation',
-    config: { personalization_depth: 3, context_window: 50 },
-    description: '用户界面个性化与动态调整',
-    version: '54.0',
-  },
-  {
-    id: 'cap-prediction',
-    name: '行为预测',
-    type: 'prediction',
-    config: { horizon: 'short', features: ['recency', 'frequency', 'duration'] },
-    description: '用户行为预测与预判',
-    version: '54.0',
-  },
-  {
-    id: 'cap-optimization',
-    name: '性能优化',
-    type: 'optimization',
-    config: { target: 'latency', auto_tune: true },
-    description: '自动性能调优与资源优化',
-    version: '54.0',
-  },
-  {
-    id: 'cap-monitoring',
-    name: 'AI 监控',
-    type: 'monitoring',
-    config: { interval_ms: 5000, alert_threshold: 0.9 },
-    description: '实时 AI 能力健康监控',
-    version: '54.0',
-  },
-];
+const BUILTIN_CAPABILITIES: Omit<AICapability, 'createdAt' | 'updatedAt' | 'status' | 'enabled'>[] =
+  [
+    {
+      id: 'cap-reasoning',
+      name: 'AI 推理引擎',
+      type: 'reasoning',
+      config: { model: 'default', max_tokens: 2048, temperature: 0.7 },
+      description: '基于上下文的智能推理与决策',
+      version: '54.0',
+    },
+    {
+      id: 'cap-generation',
+      name: '内容生成器',
+      type: 'generation',
+      config: { format: 'text', max_length: 500 },
+      description: '智能内容生成与摘要',
+      version: '54.0',
+    },
+    {
+      id: 'cap-classification',
+      name: '意图分类器',
+      type: 'classification',
+      config: { categories: 20, confidence_threshold: 0.8 },
+      description: '用户意图精准识别',
+      version: '54.0',
+    },
+    {
+      id: 'cap-routing',
+      name: '智能路由',
+      type: 'routing',
+      config: { strategy: 'hybrid', learning_enabled: true },
+      description: '基于意图的动态路由推荐',
+      version: '54.0',
+    },
+    {
+      id: 'cap-adaptation',
+      name: '自适应 UI',
+      type: 'adaptation',
+      config: { personalization_depth: 3, context_window: 50 },
+      description: '用户界面个性化与动态调整',
+      version: '54.0',
+    },
+    {
+      id: 'cap-prediction',
+      name: '行为预测',
+      type: 'prediction',
+      config: { horizon: 'short', features: ['recency', 'frequency', 'duration'] },
+      description: '用户行为预测与预判',
+      version: '54.0',
+    },
+    {
+      id: 'cap-optimization',
+      name: '性能优化',
+      type: 'optimization',
+      config: { target: 'latency', auto_tune: true },
+      description: '自动性能调优与资源优化',
+      version: '54.0',
+    },
+    {
+      id: 'cap-monitoring',
+      name: 'AI 监控',
+      type: 'monitoring',
+      config: { interval_ms: 5000, alert_threshold: 0.9 },
+      description: '实时 AI 能力健康监控',
+      version: '54.0',
+    },
+  ];
 
 class AIFirstPlatformImpl {
   private static instance: AIFirstPlatformImpl | null = null;
@@ -214,7 +215,11 @@ class AIFirstPlatformImpl {
     return true;
   }
 
-  getCapabilities(filter?: { type?: AICapabilityType; status?: CapabilityStatus; enabled?: boolean }): AICapability[] {
+  getCapabilities(filter?: {
+    type?: AICapabilityType;
+    status?: CapabilityStatus;
+    enabled?: boolean;
+  }): AICapability[] {
     let result = Array.from(this.capabilities.values());
     if (filter?.type) result = result.filter((c) => c.type === filter.type);
     if (filter?.status) result = result.filter((c) => c.status === filter.status);

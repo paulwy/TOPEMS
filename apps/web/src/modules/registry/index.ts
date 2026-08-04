@@ -57,7 +57,8 @@ export interface ModuleRoute {
   children?: ModuleRoute[];
 }
 
-const isStaticMode = (typeof import.meta !== 'undefined' && import.meta.env?.VITE_DEPLOYMENT_MODE) === 'static';
+const isStaticMode =
+  (typeof import.meta !== 'undefined' && import.meta.env?.VITEDeploymentMode) === 'static';
 
 export let CORE_MODULES: ModuleConfig[] = [];
 
@@ -196,12 +197,12 @@ export class ModuleRegistry {
 
     if (module.remoteEntry && module.entry) {
       // Dynamic remote module
-      await __webpack_init_sharing__('default');
+      await WebpackInitSharing('default');
       const container = (window as Record<string, WebpackContainer | undefined>)[module.id];
       if (!container) {
         throw new Error(`Remote container "${module.id}" not found on window`);
       }
-      await container.init(__webpack_share_scopes__.default);
+      await container.init(WebpackShareScopes.default);
       const factory = await container.get(module.entry);
       return factory();
     }

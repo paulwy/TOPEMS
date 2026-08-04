@@ -43,9 +43,7 @@ import { useNotificationStore } from '@/store/notificationStore';
 import { useTranslation } from 'react-i18next';
 
 import { ListPageTemplate } from './ListPageTemplate';
-import type { ColumnDef } from './list/types';
-import type { RowAction } from './list/types';
-export type { RowAction };
+import type { ColumnDef, RowAction } from './list/types';
 
 import type { EntitySchema, BatchActionConfig, SchemaField } from '@/schema';
 import type {
@@ -59,6 +57,8 @@ import { useDynamicOptions, mergeDynamicOptions } from '@/hooks/useDynamicOption
 import { SubTableBuilder } from './SubTableBuilder';
 import { WizardBuilder } from './WizardBuilder';
 import { TreeBuilder, type TreeNode } from './TreeBuilder';
+
+export type { RowAction };
 
 // ============ API 适配器 ============
 
@@ -508,7 +508,7 @@ function CrudPage<T extends Record<string, unknown> = Record<string, unknown>>({
     const keyField =
       effectiveTreeAdapter?.transformOptions?.keyField || treeConfig.keyField || 'id';
     const parentField =
-      effectiveTreeAdapter?.transformOptions?.parentField || treeConfig.parentField || 'parent_id';
+      effectiveTreeAdapter?.transformOptions?.parentField || treeConfig.parentField || 'parentId';
     const labelField = treeConfig.labelField || 'label';
 
     const map = new Map<string | number, TreeNode>();

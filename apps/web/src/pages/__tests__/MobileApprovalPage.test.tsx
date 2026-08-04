@@ -99,10 +99,10 @@ vi.mock('@/store', () => ({
 }));
 
 describe('MobileApprovalPage', () => {
-it('should render page title', async () => {
+  it('should render page title', async () => {
     renderWithProviders(<MobileApprovalPage />);
     await waitFor(() => {
       expect(screen.getByText('审批')).toBeInTheDocument();
+    });
   });
-});
 });

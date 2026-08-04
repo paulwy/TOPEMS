@@ -56,8 +56,7 @@ export const offlineCache = {
       cacheStats.used += data.length;
       
       this.enforceCacheLimit();
-    } catch {
-    }
+    } catch { /* ignore */ }
   },
 
   async delete(key: string): Promise<void> {
@@ -65,8 +64,7 @@ export const offlineCache = {
       const storageKey = STORAGE_KEY_PREFIX + this.sanitizeKey(key);
       localStorage.removeItem(storageKey);
       cacheStats.count--;
-    } catch {
-    }
+    } catch { /* ignore */ }
   },
 
   cleanupExpired(): void {
@@ -87,8 +85,7 @@ export const offlineCache = {
           localStorage.removeItem(key);
         }
       }
-    } catch {
-    }
+    } catch { /* ignore */ }
   },
 
   enforceCacheLimit(): void {
@@ -105,8 +102,7 @@ export const offlineCache = {
           
           const entry: CacheEntry = JSON.parse(item);
           keyStats.push({ key, timestamp: entry.timestamp });
-        } catch {
-        }
+        } catch { /* ignore */ }
       }
       
       keyStats.sort((a, b) => a.timestamp - b.timestamp);
@@ -119,8 +115,7 @@ export const offlineCache = {
         cacheStats.count--;
         freedSize += 1024;
       }
-    } catch {
-    }
+    } catch { /* ignore */ }
   },
 
   async clear(): Promise<void> {
@@ -130,8 +125,7 @@ export const offlineCache = {
         localStorage.removeItem(key);
       }
       cacheStats = { used: 0, count: 0 };
-    } catch {
-    }
+    } catch { /* ignore */ }
   },
 
   getStats(): CacheStats {

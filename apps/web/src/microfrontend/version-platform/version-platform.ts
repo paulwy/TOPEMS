@@ -42,7 +42,10 @@ function writeStorage<T>(key: string, value: T): void {
   }
 }
 
-function compareSemver(v1: string, v2: string): { result: number; level: 'major' | 'minor' | 'patch' | 'unknown' } {
+function compareSemver(
+  v1: string,
+  v2: string
+): { result: number; level: 'major' | 'minor' | 'patch' | 'unknown' } {
   const parseSemver = (v: string): { major: number; minor: number; patch: number } | null => {
     const match = v.match(/^(\d+)\.(\d+)\.(\d+)/);
     if (!match) return null;
@@ -148,7 +151,10 @@ export class VersionPlatform {
     });
   }
 
-  registerVersion(moduleId: string, versionInfo: Omit<ModuleVersion, 'releaseDate'> & { releaseDate?: number }): ModuleVersion {
+  registerVersion(
+    moduleId: string,
+    versionInfo: Omit<ModuleVersion, 'releaseDate'> & { releaseDate?: number }
+  ): ModuleVersion {
     const versions = this.moduleVersions.get(moduleId) || [];
 
     if (versions.some((v) => v.version === versionInfo.version)) {
@@ -209,7 +215,7 @@ export class VersionPlatform {
 
   setActiveVersion(moduleId: string, version: string): boolean {
     const versions = this.getVersions(moduleId);
-    const targetVersion = versions.find((v) => v.version === version);
+    const targetVersion = versions.some((v) => v.version === version);
 
     if (!targetVersion) {
       return false;

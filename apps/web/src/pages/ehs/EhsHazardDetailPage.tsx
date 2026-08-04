@@ -43,6 +43,7 @@ import { designTokens } from '@/theme/tokens';
 import { EHS_PATHS } from '@/modules/ehs/config';
 
 import { useTranslation } from 'react-i18next';
+
 const ct = designTokens.colors;
 
 interface ControlFormData {
@@ -205,7 +206,12 @@ const EhsHazardDetailPage: React.FC = () => {
         description: formData.description,
         category: formData.category,
         location: formData.location,
-        level: formData.severity === 'high' ? t('ehs.ehs_hazard_detail_page.text_4296d7') : formData.severity === 'medium' ? t('ehs.ehs_hazard_detail_page.text_aed1df') : t('ehs.ehs_hazard_detail_page.text_19ac67'),
+        level:
+          formData.severity === 'high'
+            ? t('ehs.ehs_hazard_detail_page.text_4296d7')
+            : formData.severity === 'medium'
+              ? t('ehs.ehs_hazard_detail_page.text_aed1df')
+              : t('ehs.ehs_hazard_detail_page.text_19ac67'),
         status: formData.status,
       },
     });
@@ -458,19 +464,31 @@ const EhsHazardDetailPage: React.FC = () => {
           <Box sx={{ textAlign: 'center', p: 2, bgcolor: 'error.light', borderRadius: 1 }}>
             <Typography sx={{ color: 'error.dark', fontSize: 12 }}>严重程度</Typography>
             <Typography sx={{ fontWeight: 500, color: 'error.darker', mt: 0.5 }}>
-              {hazard.severity === 'high' ? t('ehs.ehs_hazard_detail_page.text_4296d7') : hazard.severity === 'medium' ? t('ehs.ehs_hazard_detail_page.text_aed1df') : t('ehs.ehs_hazard_detail_page.text_19ac67')}
+              {hazard.severity === 'high'
+                ? t('ehs.ehs_hazard_detail_page.text_4296d7')
+                : hazard.severity === 'medium'
+                  ? t('ehs.ehs_hazard_detail_page.text_aed1df')
+                  : t('ehs.ehs_hazard_detail_page.text_19ac67')}
             </Typography>
           </Box>
           <Box sx={{ textAlign: 'center', p: 2, bgcolor: 'warning.lighter', borderRadius: 1 }}>
             <Typography sx={{ color: ct.yellow[600], fontSize: 12 }}>暴露频率</Typography>
             <Typography sx={{ fontWeight: 500, color: ct.yellow[700], mt: 0.5 }}>
-              {hazard.exposure === 'high' ? t('ehs.ehs_hazard_detail_page.text_4296d7') : hazard.exposure === 'medium' ? t('ehs.ehs_hazard_detail_page.text_aed1df') : t('ehs.ehs_hazard_detail_page.text_19ac67')}
+              {hazard.exposure === 'high'
+                ? t('ehs.ehs_hazard_detail_page.text_4296d7')
+                : hazard.exposure === 'medium'
+                  ? t('ehs.ehs_hazard_detail_page.text_aed1df')
+                  : t('ehs.ehs_hazard_detail_page.text_19ac67')}
             </Typography>
           </Box>
           <Box sx={{ textAlign: 'center', p: 2, bgcolor: 'primary.light', borderRadius: 1 }}>
             <Typography sx={{ color: 'primary.dark', fontSize: 12 }}>发生概率</Typography>
             <Typography sx={{ fontWeight: 500, color: 'primary.dark', mt: 0.5 }}>
-              {hazard.likelihood === 'high' ? t('ehs.ehs_hazard_detail_page.text_4296d7') : hazard.likelihood === 'medium' ? t('ehs.ehs_hazard_detail_page.text_aed1df') : t('ehs.ehs_hazard_detail_page.text_19ac67')}
+              {hazard.likelihood === 'high'
+                ? t('ehs.ehs_hazard_detail_page.text_4296d7')
+                : hazard.likelihood === 'medium'
+                  ? t('ehs.ehs_hazard_detail_page.text_aed1df')
+                  : t('ehs.ehs_hazard_detail_page.text_19ac67')}
             </Typography>
           </Box>
         </Box>
@@ -573,9 +591,21 @@ const EhsHazardDetailPage: React.FC = () => {
 
   const tabs = useMemo<TabConfig[]>(
     () => [
-      { id: 'basic', label: t('ehs.ehs_hazard_detail_page.info'), content: basicInfoContent || <></> },
-      { id: 'assessments', label: t('ehs.ehs_hazard_detail_page.text_d0a11d'), content: assessmentsContent },
-      { id: 'controls', label: t('ehs.ehs_hazard_detail_page.text_e61c61'), content: controlsContent },
+      {
+        id: 'basic',
+        label: t('ehs.ehs_hazard_detail_page.info'),
+        content: basicInfoContent || <></>,
+      },
+      {
+        id: 'assessments',
+        label: t('ehs.ehs_hazard_detail_page.text_d0a11d'),
+        content: assessmentsContent,
+      },
+      {
+        id: 'controls',
+        label: t('ehs.ehs_hazard_detail_page.text_e61c61'),
+        content: controlsContent,
+      },
     ],
     [basicInfoContent, assessmentsContent, controlsContent]
   );
@@ -596,7 +626,12 @@ const EhsHazardDetailPage: React.FC = () => {
       stats: [
         {
           label: t('ehs.ehs_hazard_detail_page.text_08fe50'),
-          value: hazard.severity === 'high' ? t('ehs.ehs_hazard_detail_page.text_4296d7') : hazard.severity === 'medium' ? t('ehs.ehs_hazard_detail_page.text_aed1df') : t('ehs.ehs_hazard_detail_page.text_19ac67'),
+          value:
+            hazard.severity === 'high'
+              ? t('ehs.ehs_hazard_detail_page.text_4296d7')
+              : hazard.severity === 'medium'
+                ? t('ehs.ehs_hazard_detail_page.text_aed1df')
+                : t('ehs.ehs_hazard_detail_page.text_19ac67'),
         },
         { label: t('ehs.ehs_hazard_detail_page.text_25eb6b'), value: `${riskInfo.level}风险` },
       ],

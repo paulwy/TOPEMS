@@ -85,19 +85,20 @@ const NotificationCenter: React.FC = () => {
     mutationFn: (id: string) => markAsRead(id),
     onSuccess: (response) => {
       if (response.success && response.data) {
-        queryClient.setQueryData<{ notifications: Notification[]; total: number; unread_count: number }>(
-          ['notifications', activeFilter, page],
-          (prev) => {
-            if (!prev) return prev;
-            return {
-              ...prev,
-              notifications: prev.notifications.map((n) =>
-                n.id === response.data!.id ? response.data! : n
-              ),
-              unread_count: Math.max(0, prev.unread_count - 1),
-            };
-          }
-        );
+        queryClient.setQueryData<{
+          notifications: Notification[];
+          total: number;
+          unread_count: number;
+        }>(['notifications', activeFilter, page], (prev) => {
+          if (!prev) return prev;
+          return {
+            ...prev,
+            notifications: prev.notifications.map((n) =>
+              n.id === response.data!.id ? response.data! : n
+            ),
+            unread_count: Math.max(0, prev.unread_count - 1),
+          };
+        });
       }
     },
     onError: (error) => {
@@ -128,19 +129,23 @@ const NotificationCenter: React.FC = () => {
   const deleteMutation = useMutation({
     mutationFn: (id: string) => deleteNotification(id),
     onSuccess: (_, id) => {
-      queryClient.setQueryData<{ notifications: Notification[]; total: number; unread_count: number }>(
-        ['notifications', activeFilter, page],
-        (prev) => {
-          if (!prev) return prev;
-          const notification = prev.notifications.find((n) => n.id === id);
-          return {
-            ...prev,
-            notifications: prev.notifications.filter((n) => n.id !== id),
-            total: prev.total - 1,
-            unread_count: notification && !notification.is_read ? Math.max(0, prev.unread_count - 1) : prev.unread_count,
-          };
-        }
-      );
+      queryClient.setQueryData<{
+        notifications: Notification[];
+        total: number;
+        unread_count: number;
+      }>(['notifications', activeFilter, page], (prev) => {
+        if (!prev) return prev;
+        const notification = prev.notifications.find((n) => n.id === id);
+        return {
+          ...prev,
+          notifications: prev.notifications.filter((n) => n.id !== id),
+          total: prev.total - 1,
+          unread_count:
+            notification && !notification.is_read
+              ? Math.max(0, prev.unread_count - 1)
+              : prev.unread_count,
+        };
+      });
       setSelectedNotifications((prev) => {
         const newSet = new Set(prev);
         newSet.delete(id);
@@ -270,16 +275,29 @@ const NotificationCenter: React.FC = () => {
       title='通知中心'
       subtitle={`共 ${total} 条通知，${unreadCount} 条未读`}
       headerProps={{
-        pageIcon: (
-          <Bell size={20} />
-        ),
+        pageIcon: <Bell size={20} />,
         pageGradient: `linear-gradient(135deg, ${ct.primary.main}, ${ct.primary.dark})`,
       }}
     >
-      <Box sx={{ display: 'flex', flexDirection: 'column', height: '100%', bgcolor: 'background.default' }}>
+      <Box
+        sx={{
+          display: 'flex',
+          flexDirection: 'column',
+          height: '100%',
+          bgcolor: 'background.default',
+        }}
+      >
         <Box sx={{ p: 3, borderBottom: 1, borderColor: 'divider', bgcolor: 'background.paper' }}>
           <Box sx={{ maxWidth: 600, mx: 'auto', position: 'relative' }}>
-            <Search sx={{ position: 'absolute', left: 16, top: '50%', transform: 'translateY(-50%)', color: 'text.disabled' }} />
+            <Search
+              sx={{
+                position: 'absolute',
+                left: 16,
+                top: '50%',
+                transform: 'translateY(-50%)',
+                color: 'text.disabled',
+              }}
+            />
             <input
               type='text'
               placeholder='搜索通知...'
@@ -290,7 +308,7 @@ const NotificationCenter: React.FC = () => {
                 padding: '12px 16px 12px 48px',
                 borderRadius: '12px',
                 border: '1px solid',
-                borderColor: 'rgba(0,0,0,0.12)',
+                borderColor: 'action.hover',
                 fontSize: '14px',
                 outline: 'none',
               }}
@@ -298,8 +316,26 @@ const NotificationCenter: React.FC = () => {
           </Box>
         </Box>
 
-        <Box sx={{ display: 'flex', gap: 2, p: 3, borderBottom: 1, borderColor: 'divider', overflowX: 'auto' }}>
-          {(['all', 'system', 'workflow', 'reminder', 'alert', 'message'] as NotificationFilterType[]).map((filter) => (
+        <Box
+          sx={{
+            display: 'flex',
+            gap: 2,
+            p: 3,
+            borderBottom: 1,
+            borderColor: 'divider',
+            overflowX: 'auto',
+          }}
+        >
+          {(
+            [
+              'all',
+              'system',
+              'workflow',
+              'reminder',
+              'alert',
+              'message',
+            ] as NotificationFilterType[]
+          ).map((filter) => (
             <button
               key={filter}
               onClick={() => {
@@ -324,22 +360,63 @@ const NotificationCenter: React.FC = () => {
 
         <Box sx={{ flex: 1, overflowY: 'auto' }}>
           {loading ? (
-            <Box sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '200px' }}>
+            <Box
+              sx={{
+                display: 'flex',
+                justifyContent: 'center',
+                alignItems: 'center',
+                height: '200px',
+              }}
+            >
               <div className='animate-spin rounded-full h-8 w-8 border-b-2 border-primary'></div>
             </Box>
           ) : filteredNotifications.length === 0 ? (
-            <Box sx={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', py: 12, color: 'text.disabled' }}>
-              <Bell size={48} strokeWidth={1} />
-              <Typography variant='h6' sx={{ mt: 2 }}>暂无通知</Typography>
+            <Box
+              sx={{
+                display: 'flex',
+                flexDirection: 'column',
+                alignItems: 'center',
+                justifyContent: 'center',
+                py: 12,
+                color: 'text.disabled',
+              }}
+            >
+              <Bell
+                size={48}
+                strokeWidth={1}
+              />
+              <Typography
+                variant='h6'
+                sx={{ mt: 2 }}
+              >
+                暂无通知
+              </Typography>
               <Typography variant='body2'>您还没有任何通知消息</Typography>
             </Box>
           ) : (
             <div>
               {selectedNotifications.size > 0 && (
-                <Box sx={{ p: 2, borderBottom: 1, borderColor: 'divider', bgcolor: 'background.paper', display: 'flex', gap: 2 }}>
+                <Box
+                  sx={{
+                    p: 2,
+                    borderBottom: 1,
+                    borderColor: 'divider',
+                    bgcolor: 'background.paper',
+                    display: 'flex',
+                    gap: 2,
+                  }}
+                >
                   <button
                     onClick={toggleSelectAll}
-                    style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '8px 16px', border: 'none', backgroundColor: 'transparent', cursor: 'pointer' }}
+                    style={{
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: 8,
+                      padding: '8px 16px',
+                      border: 'none',
+                      backgroundColor: 'transparent',
+                      cursor: 'pointer',
+                    }}
                   >
                     <input
                       type='checkbox'
@@ -352,14 +429,28 @@ const NotificationCenter: React.FC = () => {
                   <button
                     onClick={handleBulkMarkAsRead}
                     disabled={bulkMarkAsReadMutation.isPending}
-                    style={{ padding: '8px 16px', borderRadius: '8px', border: '1px solid', borderColor: ct.primary.main, color: ct.primary.main, cursor: 'pointer' }}
+                    style={{
+                      padding: '8px 16px',
+                      borderRadius: '8px',
+                      border: '1px solid',
+                      borderColor: ct.primary.main,
+                      color: ct.primary.main,
+                      cursor: 'pointer',
+                    }}
                   >
                     标记已读
                   </button>
                   <button
                     onClick={handleBulkDelete}
                     disabled={bulkDeleteMutation.isPending}
-                    style={{ padding: '8px 16px', borderRadius: '8px', backgroundColor: ct.error.main, color: '#fff', border: 'none', cursor: 'pointer' }}
+                    style={{
+                      padding: '8px 16px',
+                      borderRadius: '8px',
+                      backgroundColor: ct.error.main,
+                      color: 'common.white',
+                      border: 'none',
+                      cursor: 'pointer',
+                    }}
                   >
                     删除
                   </button>
@@ -369,7 +460,15 @@ const NotificationCenter: React.FC = () => {
               {filteredNotifications.map((notification) => (
                 <div
                   key={notification.id}
+                  role='button'
+                  tabIndex={0}
                   onClick={() => toggleSelect(notification.id)}
+                  onKeyDown={(e) => {
+                    if (e.key === 'Enter' || e.key === ' ') {
+                      e.preventDefault();
+                      toggleSelect(notification.id);
+                    }
+                  }}
                   style={{ cursor: 'pointer', borderBottom: 1, borderColor: 'divider' }}
                 >
                   <NotificationItem
@@ -383,22 +482,47 @@ const NotificationCenter: React.FC = () => {
           )}
         </Box>
 
-        <Box sx={{ p: 3, borderTop: 1, borderColor: 'divider', bgcolor: 'background.paper', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-          <Typography variant='body2' color='text.disabled'>
+        <Box
+          sx={{
+            p: 3,
+            borderTop: 1,
+            borderColor: 'divider',
+            bgcolor: 'background.paper',
+            display: 'flex',
+            justifyContent: 'space-between',
+            alignItems: 'center',
+          }}
+        >
+          <Typography
+            variant='body2'
+            color='text.disabled'
+          >
             第 {page} / {totalPages} 页
           </Typography>
           <Box sx={{ display: 'flex', gap: 1 }}>
             <button
               onClick={() => setPage((prev) => Math.max(1, prev - 1))}
               disabled={page === 1}
-              style={{ padding: '8px 12px', borderRadius: '8px', border: '1px solid', borderColor: 'divider', cursor: page === 1 ? 'not-allowed' : 'pointer' }}
+              style={{
+                padding: '8px 12px',
+                borderRadius: '8px',
+                border: '1px solid',
+                borderColor: 'divider',
+                cursor: page === 1 ? 'not-allowed' : 'pointer',
+              }}
             >
               <ChevronLeft size={16} />
             </button>
             <button
               onClick={() => setPage((prev) => Math.min(totalPages, prev + 1))}
               disabled={page === totalPages}
-              style={{ padding: '8px 12px', borderRadius: '8px', border: '1px solid', borderColor: 'divider', cursor: page === totalPages ? 'not-allowed' : 'pointer' }}
+              style={{
+                padding: '8px 12px',
+                borderRadius: '8px',
+                border: '1px solid',
+                borderColor: 'divider',
+                cursor: page === totalPages ? 'not-allowed' : 'pointer',
+              }}
             >
               <ChevronRight size={16} />
             </button>
@@ -406,17 +530,42 @@ const NotificationCenter: React.FC = () => {
         </Box>
       </Box>
 
-      <Box sx={{ position: 'fixed', bottom: 24, right: 24, display: 'flex', flexDirection: 'column', gap: 2 }}>
+      <Box
+        sx={{
+          position: 'fixed',
+          bottom: 24,
+          right: 24,
+          display: 'flex',
+          flexDirection: 'column',
+          gap: 2,
+        }}
+      >
         <button
           onClick={handleMarkAllAsRead}
           disabled={markAllAsReadMutation.isPending}
-          style={{ padding: '12px', borderRadius: '50%', backgroundColor: ct.primary.main, color: '#fff', border: 'none', cursor: 'pointer', boxShadow: '0 4px 12px rgba(0,0,0,0.15)' }}
+          style={{
+            padding: '12px',
+            borderRadius: '50%',
+            backgroundColor: ct.primary.main,
+            color: 'common.white',
+            border: 'none',
+            cursor: 'pointer',
+            boxShadow: '0 4px 12px rgba(0,0,0,0.15)',
+          }}
         >
           <Check size={20} />
         </button>
         <button
           onClick={() => setShowSettings(true)}
-          style={{ padding: '12px', borderRadius: '50%', backgroundColor: 'background.paper', color: 'inherit', border: 'none', cursor: 'pointer', boxShadow: '0 4px 12px rgba(0,0,0,0.15)' }}
+          style={{
+            padding: '12px',
+            borderRadius: '50%',
+            backgroundColor: 'background.paper',
+            color: 'inherit',
+            border: 'none',
+            cursor: 'pointer',
+            boxShadow: '0 4px 12px rgba(0,0,0,0.15)',
+          }}
         >
           <Settings size={20} />
         </button>

@@ -158,9 +158,19 @@ const CRMSalesForecastPage: React.FC = () => {
 
   const tableColumns: TableColumn[] = [
     { id: 'period', label: t('crm.salesForecast.col_period'), field: 'period' },
-    { id: 'predicted', label: t('crm.salesForecast.col_predicted'), field: 'predicted', align: 'right' },
+    {
+      id: 'predicted',
+      label: t('crm.salesForecast.col_predicted'),
+      field: 'predicted',
+      align: 'right',
+    },
     { id: 'actual', label: t('crm.salesForecast.col_actual'), field: 'actual', align: 'right' },
-    { id: 'confidence', label: t('crm.salesForecast.col_confidence'), field: 'confidence', align: 'center' },
+    {
+      id: 'confidence',
+      label: t('crm.salesForecast.col_confidence'),
+      field: 'confidence',
+      align: 'center',
+    },
     { id: 'trend', label: t('crm.salesForecast.col_trend'), field: 'trend', align: 'center' },
     { id: 'status', label: t('crm.salesForecast.col_status'), field: 'status', align: 'center' },
   ];

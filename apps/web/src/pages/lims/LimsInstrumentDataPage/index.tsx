@@ -2,14 +2,7 @@ import React, { useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { QUERY_KEYS } from '@/lib/reactQuery';
 import { Database, Play, Settings } from 'lucide-react';
-import {
-  Container,
-  Paper,
-  Tabs,
-  Tab,
-  Snackbar,
-  Alert,
-} from '@mui/material';
+import { Container, Paper, Tabs, Tab, Snackbar, Alert } from '@mui/material';
 import { PageContainer } from '@/components/common';
 import { ConfirmDialog } from '@topems/shared-components';
 import { useConfirmDialog } from '@/hooks';

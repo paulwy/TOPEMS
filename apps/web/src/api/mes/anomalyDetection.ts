@@ -38,7 +38,7 @@ export interface AnomalySummary {
   critical_count: number;
   warning_count: number;
   info_count: number;
-  by_type: Record<string, number>;
+  byType: Record<string, number>;
   by_equipment: EquipmentAnomalyCount[];
   recent_trend: DailyAnomalyCount[];
 }
@@ -117,7 +117,10 @@ export const anomalyDetectionApi = {
   },
 
   /** 获取异常趋势 */
-  getTrend: async (params?: { start_date?: string; end_date?: string }): Promise<ApiResponse<DailyAnomalyCount[]>> => {
+  getTrend: async (params?: {
+    start_date?: string;
+    end_date?: string;
+  }): Promise<ApiResponse<DailyAnomalyCount[]>> => {
     return apiClient.mes.get('/anomaly/trend', { params });
   },
 };

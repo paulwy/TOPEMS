@@ -13,18 +13,18 @@ const statusColors = {
   online: {
     bg: 'success.light',
     iconBg: 'success.dark',
-    iconColor: 'white',
+    iconColor: 'common.white',
     dot: 'success.dark',
     border: 'success.light',
-    textColor: '#166534',
+    textColor: 'success.800',
   },
   offline: {
     bg: 'error.light',
     iconBg: 'error.main',
-    iconColor: 'white',
+    iconColor: 'common.white',
     dot: 'error.main',
     border: 'error.light',
-    textColor: '#991b1b',
+    textColor: 'error.800',
   },
 };
 

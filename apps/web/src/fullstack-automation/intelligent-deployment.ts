@@ -83,20 +83,20 @@ export class IntelligentDeployer {
     return IntelligentDeployer.instance;
   }
 
-  set_strategy(strategy: DeploymentStrategy): void {
+  setStrategy(strategy: DeploymentStrategy): void {
     STRATEGY_STORE.set(strategy.type, strategy);
     logger.info('[IntelligentDeployer] Strategy set:', strategy.type);
   }
 
-  get_strategy(type: DeploymentStrategyType): DeploymentStrategy | undefined {
+  getStrategy(type: DeploymentStrategyType): DeploymentStrategy | undefined {
     return STRATEGY_STORE.get(type);
   }
 
-  list_strategies(): DeploymentStrategy[] {
+  listStrategies(): DeploymentStrategy[] {
     return Array.from(STRATEGY_STORE.values());
   }
 
-  select_strategy(
+  selectStrategy(
     environment: Environment,
     changeRisk: 'low' | 'medium' | 'high'
   ): DeploymentStrategyType {
@@ -116,7 +116,7 @@ export class IntelligentDeployer {
     strategy?: DeploymentStrategyType;
     replicas?: number;
   }): Promise<DeploymentRecord> {
-    const strategyType = params.strategy || this.select_strategy(params.environment, 'medium');
+    const strategyType = params.strategy || this.selectStrategy(params.environment, 'medium');
     const strategy = STRATEGY_STORE.get(strategyType) || this.createDefaultStrategy(strategyType);
 
     const now = new Date().toISOString();
@@ -168,8 +168,8 @@ export class IntelligentDeployer {
     switch (type) {
       case 'blue-green':
         base.config = {
-          active_color: 'blue',
-          standby_color: 'green',
+          active_color: 'primary.main',
+          standby_color: 'success.main',
           switch_delay_ms: 10000,
         };
         break;
@@ -393,7 +393,7 @@ export class IntelligentDeployer {
     record.logs.push(`[${new Date().toISOString()}] Rolling: all units updated`);
   }
 
-  async promote_candidate(deploymentId: string): Promise<DeploymentRecord | undefined> {
+  async promoteCandidate(deploymentId: string): Promise<DeploymentRecord | undefined> {
     const record = DEPLOYMENT_STORE.get(deploymentId);
     if (!record || record.status !== 'verifying') {
       return record;
@@ -441,11 +441,11 @@ export class IntelligentDeployer {
     return record;
   }
 
-  get_deployment_status(deploymentId: string): DeploymentRecord | undefined {
+  getDeploymentStatus(deploymentId: string): DeploymentRecord | undefined {
     return DEPLOYMENT_STORE.get(deploymentId);
   }
 
-  get_deployment_history(name?: string, limit: number = 20): DeploymentRecord[] {
+  getDeploymentHistory(name?: string, limit: number = 20): DeploymentRecord[] {
     if (name) {
       const history = HISTORY_STORE.get(name) || [];
       return history.slice(0, limit);
@@ -454,7 +454,7 @@ export class IntelligentDeployer {
     return all.sort((a, b) => b.started_at.localeCompare(a.started_at)).slice(0, limit);
   }
 
-  cancel_deployment(deploymentId: string): boolean {
+  cancelDeployment(deploymentId: string): boolean {
     const record = DEPLOYMENT_STORE.get(deploymentId);
     if (!record || record.status !== 'deploying') return false;
 
@@ -464,7 +464,7 @@ export class IntelligentDeployer {
     return true;
   }
 
-  clear_all(): void {
+  clearAll(): void {
     DEPLOYMENT_STORE.clear();
     STRATEGY_STORE.clear();
     HISTORY_STORE.clear();

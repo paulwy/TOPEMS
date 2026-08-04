@@ -51,7 +51,9 @@ const HrmCompanyPage: React.FC = () => {
   const apiAdapter: CrudApiAdapter<Company> = useMemo(
     () => ({
       list: async (params) => {
-        const res = await companyApi.list(params as unknown as Parameters<typeof companyApi.list>[0]);
+        const res = await companyApi.list(
+          params as unknown as Parameters<typeof companyApi.list>[0]
+        );
         if (res.success && res.data) {
           return { data: res.data.items as Company[], total: res.data.total as number };
         }
@@ -215,7 +217,11 @@ const HrmCompanyPage: React.FC = () => {
                 size='small'
                 color={company.status === 'active' ? 'success' : 'default'}
                 label={
-                  company.status === 'active' ? '启用' : company.status === 'inactive' ? '禁用' : '归档'
+                  company.status === 'active'
+                    ? '启用'
+                    : company.status === 'inactive'
+                      ? '禁用'
+                      : '归档'
                 }
                 variant='outlined'
               />

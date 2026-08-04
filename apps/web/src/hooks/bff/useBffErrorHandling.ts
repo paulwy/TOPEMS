@@ -86,10 +86,7 @@ export function useBffError(onRetry?: () => void): UseBffErrorResult {
     onRetry?.();
   }, [onRetry]);
 
-  const fallback = useCallback(
-    (context: FallbackContext) => fallbackManager.execute(context),
-    []
-  );
+  const fallback = useCallback((context: FallbackContext) => fallbackManager.execute(context), []);
 
   const report = useCallback(() => {
     if (classified) {
@@ -180,7 +177,14 @@ export function useBffRetry(
   const retryTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
   // 用 ref 保存最新的回调和计数，避免闭包陈旧
   const retryCountRef = useRef(0);
-  const optionsRef = useRef({ onRetry, onSuccess, onMaxRetriesReached, maxRetries, baseDelay, maxDelay });
+  const optionsRef = useRef({
+    onRetry,
+    onSuccess,
+    onMaxRetriesReached,
+    maxRetries,
+    baseDelay,
+    maxDelay,
+  });
   optionsRef.current = { onRetry, onSuccess, onMaxRetriesReached, maxRetries, baseDelay, maxDelay };
 
   const clearTimer = useCallback(() => {
@@ -262,15 +266,15 @@ export function useBffRetry(
         Array.isArray(key) &&
         Array.isArray(queryKey) &&
         key.length >= queryKey.length &&
-        queryKey.every((k, i) => key[i] === k)
+        queryKey.every((k, i) => key[i] === k) &&
+        query.state.status === 'success' &&
+        retryCountRef.current > 0
       ) {
-        if (query.state.status === 'success' && retryCountRef.current > 0) {
-          optionsRef.current.onSuccess?.();
-          retryCountRef.current = 0;
-          setRetryCount(0);
-          setIsRetrying(false);
-          setLastError(null);
-        }
+        optionsRef.current.onSuccess?.();
+        retryCountRef.current = 0;
+        setRetryCount(0);
+        setIsRetrying(false);
+        setLastError(null);
       }
     });
     return () => {
@@ -356,8 +360,7 @@ export function useBffFallback<T>(
       return;
     } catch (primaryErr) {
       errHookLogger.warn('主函数失败，尝试降级:', primaryErr);
-      const error =
-        primaryErr instanceof Error ? primaryErr : new Error(String(primaryErr));
+      const error = primaryErr instanceof Error ? primaryErr : new Error(String(primaryErr));
 
       // 构造降级上下文
       const context: FallbackContext = {
@@ -402,7 +405,6 @@ export function useBffFallback<T>(
   // deps 变化时重新执行
   useEffect(() => {
     void execute();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, deps);
 
   return {
@@ -475,12 +477,9 @@ export function useErrorReport(): UseErrorReportResult {
     reportError(classified, retryCount);
   }, []);
 
-  const reportClassified = useCallback(
-    (classified: ClassifiedError, retryCount = 0) => {
-      reportError(classified, retryCount);
-    },
-    []
-  );
+  const reportClassified = useCallback((classified: ClassifiedError, retryCount = 0) => {
+    reportError(classified, retryCount);
+  }, []);
 
   const clear = useCallback(() => {
     if (typeof localStorage !== 'undefined') {

@@ -68,7 +68,7 @@ test.describe('TreeBuilder - API', () => {
         name: `E2E-Org-${Date.now()}`,
         code: 'E2E-ORG',
         type: 'department',
-        parent_id: null,
+        parentId: null,
       });
       expect(res).toBeTruthy();
     } catch {

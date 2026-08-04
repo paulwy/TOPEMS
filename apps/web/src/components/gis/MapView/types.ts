@@ -8,12 +8,7 @@ export interface MapViewProps {
 }
 
 export type ToolMode =
-  | 'select'
-  | 'measure-distance'
-  | 'measure-area'
-  | 'draw-point'
-  | 'draw-line'
-  | 'draw-polygon';
+  'select' | 'measure-distance' | 'measure-area' | 'draw-point' | 'draw-line' | 'draw-polygon';
 
 export interface DrawPoint {
   lat: number;

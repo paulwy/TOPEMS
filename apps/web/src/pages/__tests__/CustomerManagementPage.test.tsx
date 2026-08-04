@@ -126,7 +126,7 @@ vi.mock('@/store', () => ({
 }));
 
 describe('CustomerManagementPage', () => {
-it('should render without crashing', () => {
+  it('should render without crashing', () => {
     const { container } = render(
       <QueryClientProvider client={queryClient}>
         <BrowserRouter>
@@ -135,26 +135,25 @@ it('should render without crashing', () => {
       </QueryClientProvider>
     );
     expect(container).toBeDefined();
-});
+  });
 
-it('should have valid customer API methods', () => {
+  it('should have valid customer API methods', () => {
     expect(crmApi.customers.list).toBeDefined();
     expect(crmApi.customers.get).toBeDefined();
     expect(crmApi.customers.create).toBeDefined();
     expect(crmApi.customers.update).toBeDefined();
     expect(crmApi.customers.delete).toBeDefined();
     expect(crmApi.customers.batchDelete).toBeDefined();
-});
+  });
 
-it('should have valid tag API methods', () => {
+  it('should have valid tag API methods', () => {
     expect(crmApi.tags.list).toBeDefined();
     expect(crmApi.tags.create).toBeDefined();
     expect(crmApi.tags.update).toBeDefined();
     expect(crmApi.tags.delete).toBeDefined();
-});
+  });
 
-it('should have valid contact API methods', () => {
+  it('should have valid contact API methods', () => {
     expect(crmApi.contacts.list).toBeDefined();
-});
-;
+  });
 });

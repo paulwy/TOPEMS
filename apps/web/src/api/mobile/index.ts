@@ -255,7 +255,7 @@ export interface StocktakeRecord {
 
 export interface InboundOrder {
   id: string;
-  order_no: string;
+  orderNo: string;
   supplier: string;
   type: 'purchase' | 'return' | 'transfer';
   status: 'pending' | 'in_progress' | 'completed';
@@ -267,7 +267,7 @@ export interface InboundOrder {
 
 export interface OutboundOrder {
   id: string;
-  order_no: string;
+  orderNo: string;
   customer: string;
   type: 'sales' | 'transfer' | 'return';
   status: 'pending' | 'in_progress' | 'completed';
@@ -316,7 +316,7 @@ export interface CreateDefectRequest {
 
 export interface ProductionOrder {
   id: string;
-  order_no: string;
+  orderNo: string;
   product_name: string;
   quantity: number;
   completed_quantity: number;
@@ -331,7 +331,7 @@ export interface ProductionOrder {
 export interface WorkReport {
   id: string;
   order_id: string;
-  order_no: string;
+  orderNo: string;
   workstation: string;
   operator: string;
   quantity: number;

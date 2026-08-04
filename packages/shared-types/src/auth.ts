@@ -34,8 +34,8 @@ export interface User {
   roles?: string[];
   /** 超级用户标识 */
   is_superuser?: boolean;
-  /** is_active - status 的别名（用于旧 API） */
-  is_active?: boolean;
+  /** isActive - status 的别名（用于旧 API） */
+  isActive?: boolean;
   /** createdAt 的别名（用于旧 API） */
   created_at?: string;
   /** updatedAt 的别名（用于旧 API） */
@@ -53,7 +53,7 @@ export const mapApiUserToUser = (apiResponse: Record<string, any>): User => {
     email: apiResponse.email,
     name: apiResponse.name || apiResponse.real_name || apiResponse.full_name || apiResponse.username,
     realName: apiResponse.real_name || apiResponse.full_name || apiResponse.username,
-    status: apiResponse.is_active === false ? 'inactive' : (apiResponse.status || 'active'),
+    status: apiResponse.isActive === false ? 'inactive' : (apiResponse.status || 'active'),
     permissions: apiResponse.permissions || [],
     createdAt: apiResponse.created_at || apiResponse.createdAt || new Date().toISOString(),
     updatedAt: apiResponse.updated_at || apiResponse.updatedAt || new Date().toISOString(),
@@ -69,7 +69,7 @@ export const mapApiUserToUser = (apiResponse: Record<string, any>): User => {
     role: apiResponse.role,
     roles: apiResponse.roles,
     is_superuser: apiResponse.is_superuser,
-    is_active: apiResponse.is_active,
+    isActive: apiResponse.isActive,
     created_at: apiResponse.created_at,
     updated_at: apiResponse.updated_at,
   };

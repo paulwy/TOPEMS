@@ -10,6 +10,7 @@ import { NetworkService } from '@/services/networkService';
 import { OfflineService } from '@/services/offlineService';
 
 declare global {
+  // eslint-disable-next-line @typescript-eslint/no-namespace
   namespace NodeJS {
     interface ProcessEnv {
       EXPO_PUBLIC_API_URL?: string;
@@ -153,7 +154,7 @@ const createApiClient = (): AxiosInstance => {
             };
           }
         } else {
-          const module = (config as any)?.offlineModule || 'api';
+          const module = (config as unknown as { offlineModule?: string })?.offlineModule || 'api';
           const action = method.toLowerCase();
           const data = (config.data as Record<string, unknown>) || {};
           const url = config.url || '';
@@ -183,7 +184,8 @@ const createApiClient = (): AxiosInstance => {
         }
       }
 
-      const cacheEnabled = method === 'GET' && !(config as any)?.noCache;
+      const cacheEnabled =
+        method === 'GET' && !(config as unknown as { noCache?: boolean })?.noCache;
       if (cacheEnabled) {
         const cachedData = getFromCache(config);
         if (cachedData !== null) {
@@ -219,8 +221,9 @@ const createApiClient = (): AxiosInstance => {
     (response) => {
       const config = response.config as AxiosRequestConfig;
       const method = config.method?.toUpperCase() || 'GET';
-      const cacheEnabled = method === 'GET' && !(config as any)?.noCache;
-      const cacheTtl = (config as any)?.cacheTtl || DEFAULT_TTL;
+      const cacheEnabled =
+        method === 'GET' && !(config as unknown as { noCache?: boolean })?.noCache;
+      const cacheTtl = (config as unknown as { cacheTtl?: number })?.cacheTtl || DEFAULT_TTL;
 
       if (cacheEnabled && response.status === 200) {
         saveToCache(config, response.data, cacheTtl);
@@ -255,7 +258,7 @@ const createApiClient = (): AxiosInstance => {
       const method = config.method?.toUpperCase() || 'GET';
 
       if (isNetworkError && method !== 'GET') {
-        const module = (config as any)?.offlineModule || 'api';
+        const module = (config as unknown as { offlineModule?: string })?.offlineModule || 'api';
         const action = method.toLowerCase();
         const data = (config.data as Record<string, unknown>) || {};
         const url = config.url || '';
@@ -284,9 +287,9 @@ const createApiClient = (): AxiosInstance => {
         }
       }
 
-      const retryCount = (config as any)?.retryCount || 0;
-      const maxRetries = (config as any)?.maxRetries || 3;
-      const retryDelay = (config as any)?.retryDelay || 1000;
+      const retryCount = (config as unknown as { retryCount?: number })?.retryCount || 0;
+      const maxRetries = (config as unknown as { maxRetries?: number })?.maxRetries || 3;
+      const retryDelay = (config as unknown as { retryDelay?: number })?.retryDelay || 1000;
 
       const shouldRetry =
         maxRetries > retryCount &&
@@ -294,7 +297,7 @@ const createApiClient = (): AxiosInstance => {
         [429, 500, 502, 503, 504].includes(error.response.status);
 
       if (shouldRetry) {
-        (config as any).retryCount = retryCount + 1;
+        (config as unknown as { retryCount: number }).retryCount = retryCount + 1;
         await new Promise((resolve) => setTimeout(resolve, retryDelay * (retryCount + 1)));
         return client(config);
       }

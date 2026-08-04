@@ -179,7 +179,7 @@ const ExportModal: React.FC<ExportModalProps> = ({ report, onClose }) => {
       sx={{
         position: 'fixed',
         inset: 0,
-        backgroundColor: 'rgba(0, 0, 0, 0.5)',
+        backgroundColor: 'action.active',
         display: 'flex',
         alignItems: 'center',
         justifyContent: 'center',
@@ -189,7 +189,7 @@ const ExportModal: React.FC<ExportModalProps> = ({ report, onClose }) => {
     >
       <Box
         sx={{
-          backgroundColor: 'white',
+          backgroundColor: 'common.white',
           borderRadius: '0.75rem',
           boxShadow: '0 25px 50px -12px rgba(0, 0, 0, 0.25)',
           width: '100%',
@@ -521,7 +521,7 @@ const ExportModal: React.FC<ExportModalProps> = ({ report, onClose }) => {
                   paddingX: 2,
                   paddingY: 1,
                   backgroundColor: 'error.dark',
-                  color: 'white',
+                  color: 'common.white',
                   borderRadius: '0.5rem',
                   '&:hover': { backgroundColor: 'error.darker' },
                 }}
@@ -563,7 +563,7 @@ const ExportModal: React.FC<ExportModalProps> = ({ report, onClose }) => {
                 paddingX: 3,
                 paddingY: 1,
                 backgroundColor: 'success.dark',
-                color: 'white',
+                color: 'common.white',
                 borderRadius: '0.5rem',
                 '&:hover': { backgroundColor: 'success.700' },
               }}

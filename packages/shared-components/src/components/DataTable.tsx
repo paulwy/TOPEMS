@@ -4,7 +4,7 @@
  * Uses TanStack React Table - supports search, sort, filter, pagination, selection, export.
  * Enhanced features: column config persistence, row expansion, advanced filters, virtual scrolling, mobile card view.
  */
-import React, { useState, useCallback, useEffect, useRef } from 'react';
+import React, { useState, useCallback, useEffect, useRef, useMemo } from 'react';
 import {
   Box,
   Typography,
@@ -579,6 +579,7 @@ export function DataTable<TData, TValue>({
     }
   }, [data, enableVirtualization]);
 
+  // eslint-disable-next-line react-hooks/incompatible-library -- TanStack Table returns functions that cannot be memoized safely
   const table = useReactTable({
     data,
     columns,
@@ -625,7 +626,10 @@ export function DataTable<TData, TValue>({
     [searchKey, table]
   );
 
-  const effectiveSelectedIds = selectedRows ?? selectedIds ?? [];
+  const effectiveSelectedIds = useMemo(
+    () => selectedRows ?? selectedIds ?? [],
+    [selectedRows, selectedIds]
+  );
 
   const handleSelectionChange = useCallback(
     (keys: Set<string> | string[]) => {

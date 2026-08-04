@@ -390,7 +390,7 @@ const LayerReadyTracker: React.FC<{
       });
       return () => cancelAnimationFrame(timer);
     }
-    return undefined;
+    return;
   }, [layerName, onReady]);
 
   return <>{children}</>;

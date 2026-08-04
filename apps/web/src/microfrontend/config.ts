@@ -54,7 +54,7 @@ function getRemoteEntry(name: string, port: number): string {
 
   // 开发模式：使用 Vite 代理路径避免 CORS
   // 主应用 (localhost:3000) 代理到远程模块 (localhost:{port})
-  const deploymentMode = import.meta.env.VITE_DEPLOYMENT_MODE || 'static';
+  const deploymentMode = import.meta.env.VITEDeploymentMode || 'static';
   if (deploymentMode === 'module-federation') {
     return `/remote/${name}/remoteEntry.js`;
   }

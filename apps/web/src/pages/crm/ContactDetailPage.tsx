@@ -89,34 +89,48 @@ const ContactDetailPage: React.FC = () => {
         }}
       >
         <Box>
-          <InputLabel sx={{ fontSize: 12, color: 'text.secondary' }}>{t('crm.contactDetail.field_name')}</InputLabel>
+          <InputLabel sx={{ fontSize: 12, color: 'text.secondary' }}>
+            {t('crm.contactDetail.field_name')}
+          </InputLabel>
           <Typography sx={{ fontWeight: 'medium', mt: 0.5 }}>
             {contact.last_name ? `${contact.last_name}${contact.first_name}` : contact.first_name}
           </Typography>
         </Box>
         <Box>
-          <InputLabel sx={{ fontSize: 12, color: 'text.secondary' }}>{t('crm.contactDetail.field_customer')}</InputLabel>
+          <InputLabel sx={{ fontSize: 12, color: 'text.secondary' }}>
+            {t('crm.contactDetail.field_customer')}
+          </InputLabel>
           <Typography sx={{ mt: 0.5 }}>{customerName || '-'}</Typography>
         </Box>
         <Box>
-          <InputLabel sx={{ fontSize: 12, color: 'text.secondary' }}>{t('crm.contactDetail.field_position')}</InputLabel>
+          <InputLabel sx={{ fontSize: 12, color: 'text.secondary' }}>
+            {t('crm.contactDetail.field_position')}
+          </InputLabel>
           <Typography sx={{ mt: 0.5 }}>{contact.position || '-'}</Typography>
         </Box>
         <Box>
-          <InputLabel sx={{ fontSize: 12, color: 'text.secondary' }}>{t('crm.contactDetail.field_phone')}</InputLabel>
+          <InputLabel sx={{ fontSize: 12, color: 'text.secondary' }}>
+            {t('crm.contactDetail.field_phone')}
+          </InputLabel>
           <Typography sx={{ mt: 0.5 }}>{contact.phone || '-'}</Typography>
         </Box>
         <Box>
-          <InputLabel sx={{ fontSize: 12, color: 'text.secondary' }}>{t('crm.contactDetail.field_email')}</InputLabel>
+          <InputLabel sx={{ fontSize: 12, color: 'text.secondary' }}>
+            {t('crm.contactDetail.field_email')}
+          </InputLabel>
           <Typography sx={{ mt: 0.5 }}>{contact.email || '-'}</Typography>
         </Box>
         <Box>
-          <InputLabel sx={{ fontSize: 12, color: 'text.secondary' }}>{t('crm.contactDetail.field_status')}</InputLabel>
+          <InputLabel sx={{ fontSize: 12, color: 'text.secondary' }}>
+            {t('crm.contactDetail.field_status')}
+          </InputLabel>
           <Box sx={{ mt: 0.5 }}>{getStatusBadge(contact.status)}</Box>
         </Box>
         {contact.notes && (
           <Box sx={{ gridColumn: 'span 3', mt: 2 }}>
-            <InputLabel sx={{ fontSize: 12, color: 'text.secondary' }}>{t('crm.contactDetail.field_notes')}</InputLabel>
+            <InputLabel sx={{ fontSize: 12, color: 'text.secondary' }}>
+              {t('crm.contactDetail.field_notes')}
+            </InputLabel>
             <Typography sx={{ mt: 0.5, color: 'text.secondary' }}>{contact.notes}</Typography>
           </Box>
         )}
@@ -250,7 +264,11 @@ const ContactDetailPage: React.FC = () => {
   const tabs = useMemo<TabConfig[]>(
     () => [
       { id: 'basic', label: t('crm.contactDetail.tab_basic'), content: basicInfoContent || <></> },
-      { id: 'contact', label: t('crm.contactDetail.tab_contact'), content: contactInfoContent || <></> },
+      {
+        id: 'contact',
+        label: t('crm.contactDetail.tab_contact'),
+        content: contactInfoContent || <></>,
+      },
     ],
     [basicInfoContent, contactInfoContent, t]
   );

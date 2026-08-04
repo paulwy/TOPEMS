@@ -238,7 +238,7 @@ const TemplateAIHelper: React.FC<TemplateAIHelperProps> = ({
             display: 'flex',
             alignItems: 'center',
             gap: 1,
-            color: '#92400e',
+            color: 'warning.800',
           }}
         >
           <Sparkles style={{ width: 20, height: 20 }} />
@@ -272,7 +272,7 @@ const TemplateAIHelper: React.FC<TemplateAIHelperProps> = ({
               width: '100%',
               mt: 1,
               backgroundColor: 'warning.main',
-              color: 'white',
+              color: 'common.white',
               '&:hover': { backgroundColor: 'warning.dark' },
             }}
             startIcon={
@@ -296,9 +296,9 @@ const TemplateAIHelper: React.FC<TemplateAIHelperProps> = ({
             onClick={handleSuggestVariables}
             disabled={isAnalyzing || !content.trim()}
             sx={{
-              borderColor: '#fcd34d',
+              borderColor: 'warning.300',
               color: 'warning.700',
-              '&:hover': { backgroundColor: 'warning.light', borderColor: '#fcd34d' },
+              '&:hover': { backgroundColor: 'warning.light', borderColor: 'warning.300' },
             }}
             startIcon={<Lightbulb style={{ width: 16, height: 16 }} />}
           >
@@ -309,9 +309,9 @@ const TemplateAIHelper: React.FC<TemplateAIHelperProps> = ({
             onClick={handleOptimize}
             disabled={isGenerating || !content.trim()}
             sx={{
-              borderColor: '#fcd34d',
+              borderColor: 'warning.300',
               color: 'warning.700',
-              '&:hover': { backgroundColor: 'warning.light', borderColor: '#fcd34d' },
+              '&:hover': { backgroundColor: 'warning.light', borderColor: 'warning.300' },
             }}
             startIcon={<TrendingUp style={{ width: 16, height: 16 }} />}
           >
@@ -325,9 +325,9 @@ const TemplateAIHelper: React.FC<TemplateAIHelperProps> = ({
           disabled={isAnalyzing}
           sx={{
             width: '100%',
-            borderColor: '#fcd34d',
+            borderColor: 'warning.300',
             color: 'warning.700',
-            '&:hover': { backgroundColor: 'warning.light', borderColor: '#fcd34d' },
+            '&:hover': { backgroundColor: 'warning.light', borderColor: 'warning.300' },
           }}
           startIcon={
             isAnalyzing ? (
@@ -354,7 +354,7 @@ const TemplateAIHelper: React.FC<TemplateAIHelperProps> = ({
                   key={index}
                   style={{
                     fontSize: 14,
-                    color: '#92400e',
+                    color: 'warning.800',
                     backgroundColor: theme.palette.warning.light,
                     borderRadius: 8,
                     padding: '8px 12px',

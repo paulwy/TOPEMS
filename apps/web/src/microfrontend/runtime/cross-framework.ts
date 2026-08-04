@@ -13,7 +13,7 @@
  * 注意：Vue / Angular / Svelte 适配器为模拟实现，不依赖实际框架包。
  *
  * @example
- * const adapter = crossFrameworkBridge.createAdapter(FrameworkType.React, MyComponent);
+ * const adapter = crossFrameworkBridge.createAdapter(FrameworkType.REACT, MyComponent);
  * crossFrameworkBridge.mountComponent('widget-1', adapter, container, { title: 'Hello' });
  */
 
@@ -24,11 +24,11 @@ import ReactDOM from 'react-dom/client';
 
 /** 支持的框架类型 */
 export enum FrameworkType {
-  React = 'react',
-  Vue = 'vue',
-  Angular = 'angular',
-  Svelte = 'svelte',
-  Vanilla = 'vanilla',
+  REACT = 'react',
+  VUE = 'vue',
+  ANGULAR = 'angular',
+  SVELTE = 'svelte',
+  VANILLA = 'vanilla',
 }
 
 /** 统一属性格式 */
@@ -111,7 +111,7 @@ export interface MountedComponent {
  * 使用 ReactDOM.createRoot 将 React 组件挂载到 DOM 容器。
  */
 export class ReactAdapter implements FrameworkAdapter {
-  readonly framework = FrameworkType.React;
+  readonly framework = FrameworkType.REACT;
   private component: React.ComponentType<any>;
   private root: ReactDOM.Root | null = null;
   private currentProps: UnifiedProps = {};
@@ -175,7 +175,7 @@ export class ReactAdapter implements FrameworkAdapter {
  * 模拟 Vue 3 的 createApp + mount 流程，不依赖实际 Vue 运行时。
  */
 export class VueAdapter implements FrameworkAdapter {
-  readonly framework = FrameworkType.Vue;
+  readonly framework = FrameworkType.VUE;
   private componentDef: any;
   private app: any = null;
   private currentProps: UnifiedProps = {};
@@ -252,7 +252,7 @@ export class VueAdapter implements FrameworkAdapter {
  * 模拟 Angular 的 platformBrowserDynamic + bootstrapComponent 流程。
  */
 export class AngularAdapter implements FrameworkAdapter {
-  readonly framework = FrameworkType.Angular;
+  readonly framework = FrameworkType.ANGULAR;
   private componentClass: any;
   private platformRef: any = null;
   private currentProps: UnifiedProps = {};
@@ -330,7 +330,7 @@ export class AngularAdapter implements FrameworkAdapter {
  * 模拟 Svelte 的 new Component({ target }) 流程。
  */
 export class SvelteAdapter implements FrameworkAdapter {
-  readonly framework = FrameworkType.Svelte;
+  readonly framework = FrameworkType.SVELTE;
   private componentDef: any;
   private instance: any = null;
   private currentProps: UnifiedProps = {};
@@ -426,10 +426,10 @@ export class CrossFrameworkBridge {
 
   /** 注册内置适配器工厂 */
   private registerBuiltInAdapters(): void {
-    this.adapterFactories.set(FrameworkType.React, (c) => new ReactAdapter(c));
-    this.adapterFactories.set(FrameworkType.Vue, (c) => new VueAdapter(c));
-    this.adapterFactories.set(FrameworkType.Angular, (c) => new AngularAdapter(c));
-    this.adapterFactories.set(FrameworkType.Svelte, (c) => new SvelteAdapter(c));
+    this.adapterFactories.set(FrameworkType.REACT, (c) => new ReactAdapter(c));
+    this.adapterFactories.set(FrameworkType.VUE, (c) => new VueAdapter(c));
+    this.adapterFactories.set(FrameworkType.ANGULAR, (c) => new AngularAdapter(c));
+    this.adapterFactories.set(FrameworkType.SVELTE, (c) => new SvelteAdapter(c));
   }
 
   /**
@@ -519,16 +519,16 @@ export class CrossFrameworkBridge {
   ): UnifiedProps {
     const eventProps = this.transferEvents(framework, events);
     switch (framework) {
-      case FrameworkType.React:
+      case FrameworkType.REACT:
         // React: 事件作为 onXxx 回调属性
         return { ...props, ...eventProps };
-      case FrameworkType.Vue:
+      case FrameworkType.VUE:
         // Vue: 事件通过 $emit 触发，这里将回调注入 $listeners 模拟
         return { ...props, $listeners: eventProps, $attrs: { ...props } };
-      case FrameworkType.Angular:
+      case FrameworkType.ANGULAR:
         // Angular: 事件通过 @Output EventEmitter
         return { ...props, $outputs: eventProps };
-      case FrameworkType.Svelte:
+      case FrameworkType.SVELTE:
         // Svelte: 事件通过 createEventDispatcher
         return { ...props, $callbacks: eventProps };
       default:
@@ -548,7 +548,7 @@ export class CrossFrameworkBridge {
   transferEvents(framework: FrameworkType, events: UnifiedEvents): UnifiedProps {
     const result: UnifiedProps = {};
     switch (framework) {
-      case FrameworkType.React:
+      case FrameworkType.REACT:
         // React: onXxx 格式直接透传
         Object.entries(events).forEach(([name, handler]) => {
           const reactName = name.startsWith('on')
@@ -557,7 +557,7 @@ export class CrossFrameworkBridge {
           result[reactName] = handler;
         });
         break;
-      case FrameworkType.Vue:
+      case FrameworkType.VUE:
         // Vue: 转为 onXxx 格式（Vue 3 composition API）
         Object.entries(events).forEach(([name, handler]) => {
           const vueName = name.startsWith('on')
@@ -566,7 +566,7 @@ export class CrossFrameworkBridge {
           result[vueName] = handler;
         });
         break;
-      case FrameworkType.Angular:
+      case FrameworkType.ANGULAR:
         // Angular: 转为 onXxx 格式
         Object.entries(events).forEach(([name, handler]) => {
           const ngName = name.startsWith('on')
@@ -575,7 +575,7 @@ export class CrossFrameworkBridge {
           result[ngName] = handler;
         });
         break;
-      case FrameworkType.Svelte:
+      case FrameworkType.SVELTE:
         // Svelte: 转为 onXxx 回调
         Object.entries(events).forEach(([name, handler]) => {
           const svelteName = name.startsWith('on')

@@ -125,7 +125,8 @@ export function useBffSuspenseQuery<T = unknown>(
     staleTime,
     enabled,
     retry,
-    refetchInterval: typeof refetchInterval === 'number' && refetchInterval > 0 ? refetchInterval : false,
+    refetchInterval:
+      typeof refetchInterval === 'number' && refetchInterval > 0 ? refetchInterval : false,
     select,
   } as UseSuspenseQueryOptions<T, Error>);
 
@@ -214,7 +215,13 @@ export function useBffSuspenseInfinite<T = unknown>(
     select,
   } = options;
 
-  const infiniteQuery = useSuspenseInfiniteQuery<T, Error, InfiniteData<T, BffInfiniteCursor>, QueryKey, BffInfiniteCursor>({
+  const infiniteQuery = useSuspenseInfiniteQuery<
+    T,
+    Error,
+    InfiniteData<T, BffInfiniteCursor>,
+    QueryKey,
+    BffInfiniteCursor
+  >({
     queryKey,
     queryFn: ({ pageParam }) =>
       bffGraphQL<T>(query, {
@@ -226,7 +233,7 @@ export function useBffSuspenseInfinite<T = unknown>(
     getNextPageParam: (lastPage, allPages, lastPageParam) => {
       if (getNextPageParam) return getNextPageParam(lastPage, allPages);
       // 默认行为：若返回数组长度等于 pageSize，则认为还有下一页
-      if (Array.isArray(lastPage) && lastPage.length < pageSize) return undefined;
+      if (Array.isArray(lastPage) && lastPage.length < pageSize) return;
       return {
         page: (lastPageParam?.page ?? 1) + 1,
         pageSize,
@@ -235,7 +242,13 @@ export function useBffSuspenseInfinite<T = unknown>(
     staleTime,
     retry,
     select,
-  } as UseSuspenseInfiniteQueryOptions<T, Error, InfiniteData<T, BffInfiniteCursor>, QueryKey, BffInfiniteCursor>);
+  } as UseSuspenseInfiniteQueryOptions<
+    T,
+    Error,
+    InfiniteData<T, BffInfiniteCursor>,
+    QueryKey,
+    BffInfiniteCursor
+  >);
 
   const fetchNextPage = useCallback(() => {
     if (infiniteQuery.hasNextPage && !infiniteQuery.isFetchingNextPage) {
@@ -473,7 +486,9 @@ class BffErrorBoundaryInner extends Component<
     onError?.(error, info);
   }
 
-  override componentDidUpdate(prevProps: Readonly<BffSuspenseBoundaryProps & { boundaryKey: number }>): void {
+  override componentDidUpdate(
+    prevProps: Readonly<BffSuspenseBoundaryProps & { boundaryKey: number }>
+  ): void {
     // 当 boundaryKey 变化（外部触发重置）时清除错误状态
     if (prevProps.boundaryKey !== this.props.boundaryKey && this.state.hasError) {
       this.setState({ hasError: false, error: null });

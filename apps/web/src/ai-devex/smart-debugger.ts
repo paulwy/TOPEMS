@@ -64,11 +64,7 @@ export class SmartDebugger {
     return SmartDebugger.instance;
   }
 
-  create_session(
-    file: string,
-    line: number,
-    variables: Record<string, unknown> = {}
-  ): DebugSession {
+  createSession(file: string, line: number, variables: Record<string, unknown> = {}): DebugSession {
     const sessionId = generateId();
     const session: DebugSession = {
       id: sessionId,
@@ -87,7 +83,7 @@ export class SmartDebugger {
     return session;
   }
 
-  set_breakpoint(file: string, line: number, condition?: string): Breakpoint {
+  setBreakpoint(file: string, line: number, condition?: string): Breakpoint {
     const bpId = generateId();
     const breakpoint: Breakpoint = {
       id: bpId,
@@ -103,19 +99,19 @@ export class SmartDebugger {
     return breakpoint;
   }
 
-  get_session(sessionId: string): DebugSession | undefined {
+  getSession(sessionId: string): DebugSession | undefined {
     return this.sessions.get(sessionId);
   }
 
-  get_current_session(): DebugSession | undefined {
+  getCurrentSession(): DebugSession | undefined {
     return this.currentSessionId ? this.sessions.get(this.currentSessionId) : undefined;
   }
 
-  list_sessions(): DebugSession[] {
+  listSessions(): DebugSession[] {
     return Array.from(this.sessions.values());
   }
 
-  remove_session(sessionId: string): boolean {
+  removeSession(sessionId: string): boolean {
     const existed = this.sessions.delete(sessionId);
     if (existed && this.currentSessionId === sessionId) {
       this.currentSessionId = null;
@@ -126,11 +122,11 @@ export class SmartDebugger {
     return existed;
   }
 
-  list_breakpoints(): Breakpoint[] {
+  listBreakpoints(): Breakpoint[] {
     return Array.from(this.breakpoints.values());
   }
 
-  update_breakpoint(
+  updateBreakpoint(
     breakpointId: string,
     updates: Partial<Omit<Breakpoint, 'id'> | { enabled: boolean }>
   ): Breakpoint | null {
@@ -142,7 +138,7 @@ export class SmartDebugger {
     return bp;
   }
 
-  remove_breakpoint(breakpointId: string): boolean {
+  removeBreakpoint(breakpointId: string): boolean {
     const existed = this.breakpoints.delete(breakpointId);
     if (existed) {
       this.emit('breakpoint:removed', breakpointId);
@@ -150,7 +146,7 @@ export class SmartDebugger {
     return existed;
   }
 
-  analyze_state(componentName: string, state: Record<string, unknown>): StateAnalysis {
+  analyzeState(componentName: string, state: Record<string, unknown>): StateAnalysis {
     const issues: string[] = [];
     const stateSize = JSON.stringify(state).length;
 
@@ -185,7 +181,7 @@ export class SmartDebugger {
     };
   }
 
-  suggest_fix(sessionId: string): DebugSuggestion[] {
+  suggestFix(sessionId: string): DebugSuggestion[] {
     const session = this.sessions.get(sessionId);
     if (!session) return [];
 
@@ -242,12 +238,12 @@ export class SmartDebugger {
     return suggestions;
   }
 
-  get_call_stack(sessionId: string): CallStackFrame[] {
+  getCallStack(sessionId: string): CallStackFrame[] {
     const session = this.sessions.get(sessionId);
     return session?.callStack || [];
   }
 
-  evaluate_expression(
+  evaluateExpression(
     sessionId: string,
     expression: string
   ): { success: boolean; value: unknown; error?: string } {
@@ -265,7 +261,7 @@ export class SmartDebugger {
     }
   }
 
-  get_debug_suggestions(
+  getDebugSuggestions(
     file: string,
     line: number,
     context?: Record<string, unknown>
@@ -288,7 +284,7 @@ export class SmartDebugger {
 
     const session = this.currentSessionId ? this.sessions.get(this.currentSessionId) : null;
     if (session && session.file === file) {
-      const fixSuggestions = this.suggest_fix(session.id);
+      const fixSuggestions = this.suggestFix(session.id);
       suggestions.push(...fixSuggestions);
     }
 

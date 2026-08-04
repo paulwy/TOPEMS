@@ -151,11 +151,11 @@ export const buildSchema: EntitySchema = {
         const color = STATUS_COLOR_MAP[val] || 'default';
         const icon =
           val === 'success'
-            ? React.createElement(CheckCircle, { size: 14, color: 'green' })
+            ? React.createElement(CheckCircle, { size: 14, color: 'success.main' })
             : val === 'failed'
-              ? React.createElement(XCircle, { size: 14, color: 'red' })
+              ? React.createElement(XCircle, { size: 14, color: 'error.main' })
               : val === 'running'
-                ? React.createElement(Clock, { size: 14, color: 'orange' })
+                ? React.createElement(Clock, { size: 14, color: 'warning.main' })
                 : null;
         return React.createElement(
           Box,

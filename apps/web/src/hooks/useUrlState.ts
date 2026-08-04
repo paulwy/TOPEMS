@@ -81,7 +81,7 @@ export function useUrlState<T>(
 
   const setStateAndUrl = useCallback<UrlStateSetter<T>>(
     (valueOrUpdater, opts) => {
-      const replaceMode = opts?.replace ?? (mode === 'replace');
+      const replaceMode = opts?.replace ?? mode === 'replace';
       setState((prev) => {
         const nextValue =
           typeof valueOrUpdater === 'function'
@@ -120,7 +120,7 @@ export function useUrlState<T>(
       if (JSON.stringify(prev) === JSON.stringify(parsed)) return prev;
       return parsed;
     });
-  }, [searchParams.toString()]); // eslint-disable-line react-hooks/exhaustive-deps
+  }, [searchParams.toString()]);
 
   return [state, setStateAndUrl];
 }

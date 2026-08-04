@@ -108,7 +108,10 @@ describe('LIMS Module API Tests', () => {
       const { apiClient } = await import('../../client');
       (apiClient.lims.post as vi.Mock).mockResolvedValue({ data: {} });
       const data = { stage: 'testing', operator: 'John' };
-      await sampleApi.transitionSampleStage('sample-001', data as unknown as TransitionStageRequest);
+      await sampleApi.transitionSampleStage(
+        'sample-001',
+        data as unknown as TransitionStageRequest
+      );
       expect(apiClient.lims.post).toHaveBeenCalledWith(
         '/samples/sample-001/transition-stage',
         data
@@ -380,7 +383,10 @@ describe('LIMS Module API Tests', () => {
       const { apiClient } = await import('../../client');
       (apiClient.lims.post as vi.Mock).mockResolvedValue({ data: {} });
       const data = { version: '2.0', change_log: 'Updated method' };
-      await testMethodApi.createNewVersion('method-001', data as unknown as CreateMethodVersionRequest);
+      await testMethodApi.createNewVersion(
+        'method-001',
+        data as unknown as CreateMethodVersionRequest
+      );
       expect(apiClient.lims.post).toHaveBeenCalledWith(
         '/test-methods/method-001/new-version',
         data

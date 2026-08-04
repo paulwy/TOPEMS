@@ -65,7 +65,7 @@ const getNotificationIcon = (type: string, theme: { palette: unknown }) => {
           }}
         >
           <svg
-            style={{ width: 20, height: 20, color: '#9333ea' }}
+            style={{ width: 20, height: 20, color: 'purple.600' }}
             fill='none'
             stroke='currentColor'
             viewBox='0 0 24 24'
@@ -125,7 +125,7 @@ const getNotificationIcon = (type: string, theme: { palette: unknown }) => {
           }}
         >
           <svg
-            style={{ width: 20, height: 20, color: '#ca8a04' }}
+            style={{ width: 20, height: 20, color: 'yellow.600' }}
             fill='none'
             stroke='currentColor'
             viewBox='0 0 24 24'
@@ -178,14 +178,14 @@ const getNotificationIcon = (type: string, theme: { palette: unknown }) => {
             width: 40,
             height: 40,
             borderRadius: '9999px',
-            backgroundColor: '#f5f5f5',
+            backgroundColor: 'surface.100',
             display: 'flex',
             alignItems: 'center',
             justifyContent: 'center',
           }}
         >
           <svg
-            style={{ width: 20, height: 20, color: '#6b7280' }}
+            style={{ width: 20, height: 20, color: 'grey.500' }}
             fill='none'
             stroke='currentColor'
             viewBox='0 0 24 24'
@@ -205,7 +205,7 @@ const getNotificationIcon = (type: string, theme: { palette: unknown }) => {
 const getPriorityColor = (priority: number) => {
   if (priority >= 4) return { color: 'error.dark' };
   if (priority >= 3) return { color: 'warning.600' };
-  if (priority >= 2) return { color: '#ca8a04' };
+  if (priority >= 2) return { color: 'yellow.600' };
   return { color: 'text.secondary' };
 };
 
@@ -289,9 +289,17 @@ const NotificationItem: React.FC<NotificationItemProps> = ({
         cursor: 'pointer',
         transition: 'background-color 0.15s',
       }}
+      role='button'
+      tabIndex={0}
       onMouseEnter={() => setIsHovered(true)}
       onMouseLeave={() => setIsHovered(false)}
       onClick={handleClick}
+      onKeyDown={(e) => {
+        if (e.key === 'Enter' || e.key === ' ') {
+          e.preventDefault();
+          handleClick();
+        }
+      }}
     >
       <div style={{ display: 'flex', gap: 12 }}>
         {getNotificationIcon(notification.notification_type, theme)}

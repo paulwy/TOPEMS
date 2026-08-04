@@ -75,7 +75,9 @@ class CacheStatsCollector {
 const cacheStats = new CacheStatsCollector();
 
 declare const self: ServiceWorkerGlobalScope & {
+  // eslint-disable-next-line @typescript-eslint/naming-convention
   __WB_MANIFEST: PrecacheEntry[];
+  // eslint-disable-next-line @typescript-eslint/naming-convention
   __STATS?: CacheStatsCollector;
 };
 
@@ -466,7 +468,7 @@ self.addEventListener('message', (event) => {
  * 保留最近 50 条导航记录，基于马尔可夫链模型预测下一个路由
  */
 const NAVIGATION_HISTORY_MAX = 50;
-let navigationHistory: string[] = [];
+const navigationHistory: string[] = [];
 
 /**
  * 记录用户导航

@@ -204,7 +204,10 @@ const VoucherManagementPage: React.FC = () => {
   const getStatusBadge = (status: string) => {
     const badges: Record<
       string,
-      { color: 'success' | 'warning' | 'default' | 'secondary' | 'error' | 'info' | 'primary'; label: string }
+      {
+        color: 'success' | 'warning' | 'default' | 'secondary' | 'error' | 'info' | 'primary';
+        label: string;
+      }
     > = {
       draft: { color: 'default', label: '草稿' },
       pending: { color: 'warning', label: '待审核' },
@@ -235,7 +238,7 @@ const VoucherManagementPage: React.FC = () => {
       <Chip
         label={config.label}
         size='small'
-        color={config.color as React.ComponentProps<typeof import('@mui/material/Chip').default>['color']}
+        color={config.color as React.ComponentProps<typeof Chip>['color']}
         variant='outlined'
       />
     );

@@ -1,5 +1,12 @@
 import { useCallback } from 'react';
-import { useQuery, useMutation, type UseQueryOptions, type UseMutationOptions, type QueryFunctionContext, type QueryFunction } from '@tanstack/react-query';
+import {
+  useQuery,
+  useMutation,
+  type UseQueryOptions,
+  type UseMutationOptions,
+  type QueryFunctionContext,
+  type QueryFunction,
+} from '@tanstack/react-query';
 import { useNetworkStatus } from './useNetworkStatus';
 import { saveCacheEntry, getCacheEntry } from '@/services/offlineStorage';
 import type { ServiceName } from '@/lib/apiClient';
@@ -35,15 +42,15 @@ export function useOfflineQuery<TQueryFnData = unknown, TError = unknown, TData 
 
         return result;
       } catch (error) {
-        if (offlineConfig?.fallbackToCache && networkStatus === 'offline') {
-          if (offlineConfig.service && offlineConfig.endpoint) {
-            const cachedEntry = await getCacheEntry(
-              offlineConfig.service,
-              offlineConfig.endpoint
-            );
-            if (cachedEntry) {
-              return cachedEntry.data as TQueryFnData;
-            }
+        if (
+          offlineConfig?.fallbackToCache &&
+          networkStatus === 'offline' &&
+          offlineConfig.service &&
+          offlineConfig.endpoint
+        ) {
+          const cachedEntry = await getCacheEntry(offlineConfig.service, offlineConfig.endpoint);
+          if (cachedEntry) {
+            return cachedEntry.data as TQueryFnData;
           }
         }
         throw error;

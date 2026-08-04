@@ -27,6 +27,7 @@ import {
 import { HRM_PATHS } from '@/modules/hrm/config';
 
 import { useTranslation } from 'react-i18next';
+
 export const DashboardPage: React.FC = () => {
   const { t } = useTranslation();
   const navigate = useNavigate();
@@ -158,7 +159,14 @@ export const DashboardPage: React.FC = () => {
       value,
     }));
 
-    const months = [t('hrm.dashboard_page.text_fccc2b'), t('hrm.dashboard_page.text_c1d13f'), t('hrm.dashboard_page.text_c4767b'), t('hrm.dashboard_page.text_3eaf4b'), t('hrm.dashboard_page.text_0545f1'), t('hrm.dashboard_page.text_f2422a')];
+    const months = [
+      t('hrm.dashboard_page.text_fccc2b'),
+      t('hrm.dashboard_page.text_c1d13f'),
+      t('hrm.dashboard_page.text_c4767b'),
+      t('hrm.dashboard_page.text_3eaf4b'),
+      t('hrm.dashboard_page.text_0545f1'),
+      t('hrm.dashboard_page.text_f2422a'),
+    ];
     const monthlyTrend = months.map((name, i) => ({
       name,
       value: Math.floor(Math.random() * 10) + 2 + i,

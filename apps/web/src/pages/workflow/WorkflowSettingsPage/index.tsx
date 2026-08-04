@@ -16,12 +16,7 @@
  * @path /workflow/settings
  */
 
-import {
-  Box,
-  Typography,
-  Button,
-  Paper,
-} from '@mui/material';
+import { Box, Typography, Button, Paper } from '@mui/material';
 import React, { useState, useCallback, useMemo } from 'react';
 import { Settings, Save, RotateCcw } from 'lucide-react';
 
@@ -32,7 +27,7 @@ import { useConfirmDialog } from '@/hooks';
 import { WORKFLOW_PATHS } from '@/modules/workflow/config';
 
 import { SETTING_GROUPS } from './constants';
-import {
+import type {
   GeneralSettings as GeneralSettingsType,
   ApprovalSettings as ApprovalSettingsType,
   NotificationSettings as NotificationSettingsType,

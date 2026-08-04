@@ -12,38 +12,38 @@
 // ============ 枚举与类型定义 ============
 
 export enum ReviewSeverity {
-  Critical = 'critical',
-  Error = 'error',
-  Warning = 'warning',
-  Info = 'info',
-  Hint = 'hint',
+  CRITICAL = 'critical',
+  ERROR = 'error',
+  WARNING = 'warning',
+  INFO = 'info',
+  HINT = 'hint',
 }
 
 export enum ReviewCategory {
-  BugRisk = 'bug_risk',
-  Performance = 'performance',
-  Security = 'security',
-  Maintainability = 'maintainability',
-  BestPractice = 'best_practice',
-  Accessibility = 'accessibility',
-  TypeSafety = 'type_safety',
-  Architecture = 'architecture',
-  Style = 'style',
-  Complexity = 'complexity',
+  BUGRISK = 'bug_risk',
+  PERFORMANCE = 'performance',
+  SECURITY = 'security',
+  MAINTAINABILITY = 'maintainability',
+  BESTPRACTICE = 'best_practice',
+  ACCESSIBILITY = 'accessibility',
+  TYPESAFETY = 'type_safety',
+  ARCHITECTURE = 'architecture',
+  STYLE = 'style',
+  COMPLEXITY = 'complexity',
 }
 
 export enum FixDifficulty {
-  Easy = 'easy',
-  Medium = 'medium',
-  Hard = 'hard',
-  Manual = 'manual',
+  EASY = 'easy',
+  MEDIUM = 'medium',
+  HARD = 'hard',
+  MANUAL = 'manual',
 }
 
 export enum ReviewStatus {
-  Pending = 'pending',
-  InProgress = 'in_progress',
-  Completed = 'completed',
-  Failed = 'failed',
+  PENDING = 'pending',
+  INPROGRESS = 'in_progress',
+  COMPLETED = 'completed',
+  FAILED = 'failed',
 }
 
 // ============ 接口定义 ============
@@ -171,8 +171,8 @@ const REVIEW_RULES: ReviewRuleDef[] = [
   // Bug 风险
   {
     id: 'no-unused-vars',
-    category: ReviewCategory.BugRisk,
-    severity: ReviewSeverity.Warning,
+    category: ReviewCategory.BUGRISK,
+    severity: ReviewSeverity.WARNING,
     message: '存在未使用的变量',
     pattern: /(?:const|let|var)\s+(\w+)\s*=[^;]+;(?!.*\1\b)/g,
     check: (code: string) => {
@@ -189,14 +189,14 @@ const REVIEW_RULES: ReviewRuleDef[] = [
               rule_id: 'no-unused-vars',
               message: `变量 '${varName}' 已声明但从未使用`,
               description: '未使用的变量可能是遗留代码或错误',
-              severity: ReviewSeverity.Warning,
-              category: ReviewCategory.BugRisk,
+              severity: ReviewSeverity.WARNING,
+              category: ReviewCategory.BUGRISK,
               line: idx + 1,
               column: line.indexOf(varName) + 1,
               code_snippet: line.trim(),
               fix_suggestion: {
                 description: '移除未使用的变量',
-                difficulty: FixDifficulty.Easy,
+                difficulty: FixDifficulty.EASY,
                 auto_fixable: true,
               },
             });
@@ -208,15 +208,15 @@ const REVIEW_RULES: ReviewRuleDef[] = [
   },
   {
     id: 'no-empty-function',
-    category: ReviewCategory.BugRisk,
-    severity: ReviewSeverity.Warning,
+    category: ReviewCategory.BUGRISK,
+    severity: ReviewSeverity.WARNING,
     message: '空函数体',
     pattern: /function\s+\w+\s*\([^)]*\)\s*{\s*}/g,
   },
   {
     id: 'no-compare-literal',
-    category: ReviewCategory.BugRisk,
-    severity: ReviewSeverity.Warning,
+    category: ReviewCategory.BUGRISK,
+    severity: ReviewSeverity.WARNING,
     message: '可能的条件判断错误',
     pattern: /if\s*\([^)]*(?:==|!=)\s*['"][^'"]*['"]\)/g,
   },
@@ -224,43 +224,45 @@ const REVIEW_RULES: ReviewRuleDef[] = [
   // 性能问题
   {
     id: 'no-large-bundle',
-    category: ReviewCategory.Performance,
-    severity: ReviewSeverity.Info,
+    category: ReviewCategory.PERFORMANCE,
+    severity: ReviewSeverity.INFO,
     message: '大文件可能影响加载性能',
     check: (code: string) => {
       const lines = code.split('\n').length;
       if (lines > 500) {
-        return [{
-          id: 'large-file',
-          rule_id: 'no-large-bundle',
-          message: `文件超过 ${lines} 行，建议拆分`,
-          description: '大文件会增加初始加载时间和维护难度',
-          severity: ReviewSeverity.Info,
-          category: ReviewCategory.Performance,
-          line: 1,
-          column: 1,
-          code_snippet: `文件共 ${lines} 行`,
-          fix_suggestion: {
-            description: '将文件拆分为更小的模块',
-            difficulty: FixDifficulty.Medium,
-            auto_fixable: false,
+        return [
+          {
+            id: 'large-file',
+            rule_id: 'no-large-bundle',
+            message: `文件超过 ${lines} 行，建议拆分`,
+            description: '大文件会增加初始加载时间和维护难度',
+            severity: ReviewSeverity.INFO,
+            category: ReviewCategory.PERFORMANCE,
+            line: 1,
+            column: 1,
+            code_snippet: `文件共 ${lines} 行`,
+            fix_suggestion: {
+              description: '将文件拆分为更小的模块',
+              difficulty: FixDifficulty.MEDIUM,
+              auto_fixable: false,
+            },
           },
-        }];
+        ];
       }
       return [];
     },
   },
   {
     id: 'no-inline-function',
-    category: ReviewCategory.Performance,
-    severity: ReviewSeverity.Info,
+    category: ReviewCategory.PERFORMANCE,
+    severity: ReviewSeverity.INFO,
     message: '内联函数可能导致不必要的重渲染',
     pattern: /(?:onClick|onChange|on[A-Z]\w*)=\{?\s*(?:\(\)=>|function\s*\()/g,
   },
   {
     id: 'no-memo-oomission',
-    category: ReviewCategory.Performance,
-    severity: ReviewSeverity.Hint,
+    category: ReviewCategory.PERFORMANCE,
+    severity: ReviewSeverity.HINT,
     message: '复杂计算可能需要 useMemo',
     pattern: /(?:const|let)\s+\w+\s*=\s*(?:\w+\.\w+\(\)|\[[^\]]+\]\.map|JSON\.parse)/g,
   },
@@ -268,29 +270,29 @@ const REVIEW_RULES: ReviewRuleDef[] = [
   // 安全问题
   {
     id: 'no-eval',
-    category: ReviewCategory.Security,
-    severity: ReviewSeverity.Critical,
+    category: ReviewCategory.SECURITY,
+    severity: ReviewSeverity.CRITICAL,
     message: '禁止使用 eval',
     pattern: /eval\s*\(/g,
   },
   {
     id: 'no-inner-html',
-    category: ReviewCategory.Security,
-    severity: ReviewSeverity.Critical,
+    category: ReviewCategory.SECURITY,
+    severity: ReviewSeverity.CRITICAL,
     message: 'innerHTML 存在 XSS 风险',
     pattern: /\.innerHTML\s*=/g,
   },
   {
     id: 'no-document-write',
-    category: ReviewCategory.Security,
-    severity: ReviewSeverity.Error,
+    category: ReviewCategory.SECURITY,
+    severity: ReviewSeverity.ERROR,
     message: 'document.write 已废弃',
     pattern: /document\.write\s*\(/g,
   },
   {
     id: 'no-hardcoded-secret',
-    category: ReviewCategory.Security,
-    severity: ReviewSeverity.Critical,
+    category: ReviewCategory.SECURITY,
+    severity: ReviewSeverity.CRITICAL,
     message: '硬编码的敏感信息',
     pattern: /(?:password|secret|api[_-]?key|token|auth)\s*[=:]\s*['"][^'"]+['"]/gi,
   },
@@ -298,15 +300,15 @@ const REVIEW_RULES: ReviewRuleDef[] = [
   // 可维护性
   {
     id: 'no-magic-number',
-    category: ReviewCategory.Maintainability,
-    severity: ReviewSeverity.Info,
+    category: ReviewCategory.MAINTAINABILITY,
+    severity: ReviewSeverity.INFO,
     message: '魔法数字应提取为常量',
     pattern: /(?:==|!=|>=|<=|>|<)\s*(?![01])(\d{2,})\b/g,
   },
   {
     id: 'no-long-function',
-    category: ReviewCategory.Maintainability,
-    severity: ReviewSeverity.Warning,
+    category: ReviewCategory.MAINTAINABILITY,
+    severity: ReviewSeverity.WARNING,
     message: '函数过长，建议拆分',
     check: (code: string) => {
       const issues: ReviewIssue[] = [];
@@ -328,14 +330,14 @@ const REVIEW_RULES: ReviewRuleDef[] = [
                 rule_id: 'no-long-function',
                 message: `函数超过 ${functionLines} 行`,
                 description: '长函数难以理解和维护，建议拆分为更小的函数',
-                severity: ReviewSeverity.Warning,
-                category: ReviewCategory.Maintainability,
+                severity: ReviewSeverity.WARNING,
+                category: ReviewCategory.MAINTAINABILITY,
                 line: functionStart + 1,
                 column: 1,
                 code_snippet: lines[functionStart].trim(),
                 fix_suggestion: {
                   description: '拆分函数为多个职责单一的小函数',
-                  difficulty: FixDifficulty.Medium,
+                  difficulty: FixDifficulty.MEDIUM,
                   auto_fixable: false,
                 },
               });
@@ -349,8 +351,8 @@ const REVIEW_RULES: ReviewRuleDef[] = [
   },
   {
     id: 'no-deep-nesting',
-    category: ReviewCategory.Maintainability,
-    severity: ReviewSeverity.Warning,
+    category: ReviewCategory.MAINTAINABILITY,
+    severity: ReviewSeverity.WARNING,
     message: '嵌套层级过深',
     check: (code: string) => {
       const issues: ReviewIssue[] = [];
@@ -375,8 +377,8 @@ const REVIEW_RULES: ReviewRuleDef[] = [
           rule_id: 'no-deep-nesting',
           message: `嵌套层级达到 ${Math.floor(maxNesting)} 层`,
           description: '深层嵌套降低代码可读性，建议使用早返回或提取函数',
-          severity: ReviewSeverity.Warning,
-          category: ReviewCategory.Maintainability,
+          severity: ReviewSeverity.WARNING,
+          category: ReviewCategory.MAINTAINABILITY,
           line: maxNestingLine + 1,
           column: 1,
           code_snippet: lines[maxNestingLine].trim(),
@@ -390,22 +392,22 @@ const REVIEW_RULES: ReviewRuleDef[] = [
   // 最佳实践
   {
     id: 'prefer-const',
-    category: ReviewCategory.BestPractice,
-    severity: ReviewSeverity.Hint,
+    category: ReviewCategory.BESTPRACTICE,
+    severity: ReviewSeverity.HINT,
     message: '不会被重新赋值的变量应使用 const',
     pattern: /let\s+(\w+)\s*=[^;]+;(?!.*\1\s*=)/g,
   },
   {
     id: 'prefer-arrow-callback',
-    category: ReviewCategory.BestPractice,
-    severity: ReviewSeverity.Hint,
+    category: ReviewCategory.BESTPRACTICE,
+    severity: ReviewSeverity.HINT,
     message: '优先使用箭头函数',
     pattern: /function\s*\([^)]*\)\s*{\s*return\s+/g,
   },
   {
     id: 'no-var',
-    category: ReviewCategory.BestPractice,
-    severity: ReviewSeverity.Warning,
+    category: ReviewCategory.BESTPRACTICE,
+    severity: ReviewSeverity.WARNING,
     message: '避免使用 var，使用 const/let',
     pattern: /\bvar\s+/g,
   },
@@ -413,15 +415,15 @@ const REVIEW_RULES: ReviewRuleDef[] = [
   // 类型安全
   {
     id: 'no-any-type',
-    category: ReviewCategory.TypeSafety,
-    severity: ReviewSeverity.Warning,
+    category: ReviewCategory.TYPESAFETY,
+    severity: ReviewSeverity.WARNING,
     message: '避免使用 any 类型',
     pattern: /:\s*any\b/g,
   },
   {
     id: 'no-explicit-any',
-    category: ReviewCategory.TypeSafety,
-    severity: ReviewSeverity.Warning,
+    category: ReviewCategory.TYPESAFETY,
+    severity: ReviewSeverity.WARNING,
     message: '禁止显式 any',
     pattern: /<any>|as\s+any\b/g,
   },
@@ -429,22 +431,22 @@ const REVIEW_RULES: ReviewRuleDef[] = [
   // 无障碍
   {
     id: 'no-alt-missing',
-    category: ReviewCategory.Accessibility,
-    severity: ReviewSeverity.Error,
+    category: ReviewCategory.ACCESSIBILITY,
+    severity: ReviewSeverity.ERROR,
     message: '图片必须包含 alt 属性',
     pattern: /<img[^>]*(?<!alt=["'][^"']*["'])[^>]*>/g,
   },
   {
     id: 'no-empty-alt',
-    category: ReviewCategory.Accessibility,
-    severity: ReviewSeverity.Warning,
+    category: ReviewCategory.ACCESSIBILITY,
+    severity: ReviewSeverity.WARNING,
     message: 'alt 属性不应为空（装饰性图片除外）',
     pattern: /<img[^>]*alt=["']["'][^>]*>/g,
   },
   {
     id: 'no-click-without-key',
-    category: ReviewCategory.Accessibility,
-    severity: ReviewSeverity.Warning,
+    category: ReviewCategory.ACCESSIBILITY,
+    severity: ReviewSeverity.WARNING,
     message: '可点击元素需要键盘支持',
     pattern: /<(?:div|span)[^>]*onClick[^>]*(?!onKeyDown)[^>]*>/g,
   },
@@ -452,15 +454,15 @@ const REVIEW_RULES: ReviewRuleDef[] = [
   // 架构
   {
     id: 'no-direct-dom',
-    category: ReviewCategory.Architecture,
-    severity: ReviewSeverity.Info,
+    category: ReviewCategory.ARCHITECTURE,
+    severity: ReviewSeverity.INFO,
     message: '直接 DOM 操作应谨慎使用',
     pattern: /document\.(?:getElementById|querySelector|getElementsBy)/g,
   },
   {
     id: 'no-global-state',
-    category: ReviewCategory.Architecture,
-    severity: ReviewSeverity.Warning,
+    category: ReviewCategory.ARCHITECTURE,
+    severity: ReviewSeverity.WARNING,
     message: '全局状态可能导致难以追踪的问题',
     pattern: /(?:window\.|global\.|globalThis\.)\w+\s*=/g,
   },
@@ -531,9 +533,7 @@ export class SmartCodeReviewer {
     const newIssueIds = new Set(newIssues.map((i) => i.rule_id));
 
     const addedIssues = newIssues.filter((i) => !oldIssueIds.has(i.rule_id));
-    const fixedIssues = oldIssues
-      .filter((i) => !newIssueIds.has(i.rule_id))
-      .map((i) => i.message);
+    const fixedIssues = oldIssues.filter((i) => !newIssueIds.has(i.rule_id)).map((i) => i.message);
 
     const unchangedIssues = newIssues.filter((i) => oldIssueIds.has(i.rule_id));
 
@@ -565,7 +565,7 @@ export class SmartCodeReviewer {
     const criticalIssues = await this.detectIssues({
       source_file: 'quick-check',
       source_code: code,
-      severity_filter: [ReviewSeverity.Critical, ReviewSeverity.Error],
+      severity_filter: [ReviewSeverity.CRITICAL, ReviewSeverity.ERROR],
     });
 
     const quickFixes: string[] = [];
@@ -774,9 +774,8 @@ export class SmartCodeReviewer {
     // 应用自定义规则
     if (request.custom_rules) {
       for (const custom of request.custom_rules) {
-        const pattern = typeof custom.pattern === 'string'
-          ? new RegExp(custom.pattern, 'g')
-          : custom.pattern;
+        const pattern =
+          typeof custom.pattern === 'string' ? new RegExp(custom.pattern, 'g') : custom.pattern;
 
         const matches = code.matchAll(pattern);
         for (const match of matches) {
@@ -793,11 +792,13 @@ export class SmartCodeReviewer {
             line: lineNum,
             column: match.index - code.lastIndexOf('\n', match.index - 1),
             code_snippet: line.trim(),
-            fix_suggestion: custom.fix ? {
-              description: custom.fix,
-              difficulty: FixDifficulty.Medium,
-              auto_fixable: false,
-            } : undefined,
+            fix_suggestion: custom.fix
+              ? {
+                  description: custom.fix,
+                  difficulty: FixDifficulty.MEDIUM,
+                  auto_fixable: false,
+                }
+              : undefined,
           });
         }
       }
@@ -805,11 +806,11 @@ export class SmartCodeReviewer {
 
     // 按严重程度排序
     const severityOrder: Record<ReviewSeverity, number> = {
-      [ReviewSeverity.Critical]: 0,
-      [ReviewSeverity.Error]: 1,
-      [ReviewSeverity.Warning]: 2,
-      [ReviewSeverity.Info]: 3,
-      [ReviewSeverity.Hint]: 4,
+      [ReviewSeverity.CRITICAL]: 0,
+      [ReviewSeverity.ERROR]: 1,
+      [ReviewSeverity.WARNING]: 2,
+      [ReviewSeverity.INFO]: 3,
+      [ReviewSeverity.HINT]: 4,
     };
 
     return issues.sort((a, b) => severityOrder[a.severity] - severityOrder[b.severity]);
@@ -819,7 +820,9 @@ export class SmartCodeReviewer {
     const lines = code.split('\n');
 
     const linesOfCode = lines.filter((l) => l.trim() && !l.trim().startsWith('//')).length;
-    const linesOfComments = lines.filter((l) => l.trim().startsWith('//') || l.trim().startsWith('*')).length;
+    const linesOfComments = lines.filter(
+      (l) => l.trim().startsWith('//') || l.trim().startsWith('*')
+    ).length;
 
     // 圈复杂度估算
     const branches = (code.match(/\b(?:if|else|for|while|case|catch|\|\||&&)\b/g) || []).length;
@@ -831,7 +834,7 @@ export class SmartCodeReviewer {
     const cognitiveComplexity = cyclomaticComplexity + nesting * 2;
 
     // 可维护性指数（简化版）
-    const maintainabilityIndex = Math.max(0, 100 - cognitiveComplexity * 2 - (linesOfCode / 10));
+    const maintainabilityIndex = Math.max(0, 100 - cognitiveComplexity * 2 - linesOfCode / 10);
 
     // Halstead 体积估算
     const operators = (code.match(/[+\-*/%=<>!&|^~?:.]/g) || []).length;
@@ -847,9 +850,10 @@ export class SmartCodeReviewer {
     const cohesionScore = Math.max(0, 100 - couplingDegree * 5);
 
     // 测试覆盖率估算
-    const testCoverageEstimate = code.includes('.test.') || code.includes('.spec.')
-      ? 100
-      : Math.max(0, 100 - cyclomaticComplexity * 5);
+    const testCoverageEstimate =
+      code.includes('.test.') || code.includes('.spec.')
+        ? 100
+        : Math.max(0, 100 - cyclomaticComplexity * 5);
 
     // 重复代码行估算
     const uniqueLines = new Set(lines.map((l) => l.trim()).filter(Boolean));
@@ -901,16 +905,16 @@ export class SmartCodeReviewer {
       const deduction = this.getScoreDeduction(issue.severity);
 
       switch (issue.category) {
-        case ReviewCategory.Security:
+        case ReviewCategory.SECURITY:
           securityScore -= deduction * 2;
           break;
-        case ReviewCategory.Performance:
+        case ReviewCategory.PERFORMANCE:
           performanceScore -= deduction;
           break;
-        case ReviewCategory.Accessibility:
+        case ReviewCategory.ACCESSIBILITY:
           accessibilityScore -= deduction;
           break;
-        case ReviewCategory.Maintainability:
+        case ReviewCategory.MAINTAINABILITY:
           maintainabilityScore -= deduction * 0.5;
           break;
         default:
@@ -925,11 +929,11 @@ export class SmartCodeReviewer {
     accessibilityScore = Math.max(0, accessibilityScore);
 
     const overall = Math.round(
-      (qualityScore * 0.3 +
+      qualityScore * 0.3 +
         securityScore * 0.25 +
         performanceScore * 0.15 +
         maintainabilityScore * 0.2 +
-        accessibilityScore * 0.1)
+        accessibilityScore * 0.1
     );
 
     let grade: 'A' | 'B' | 'C' | 'D' | 'F' = 'F';
@@ -951,11 +955,11 @@ export class SmartCodeReviewer {
 
   private getScoreDeduction(severity: ReviewSeverity): number {
     const deductions: Record<ReviewSeverity, number> = {
-      [ReviewSeverity.Critical]: 20,
-      [ReviewSeverity.Error]: 10,
-      [ReviewSeverity.Warning]: 5,
-      [ReviewSeverity.Info]: 2,
-      [ReviewSeverity.Hint]: 1,
+      [ReviewSeverity.CRITICAL]: 20,
+      [ReviewSeverity.ERROR]: 10,
+      [ReviewSeverity.WARNING]: 5,
+      [ReviewSeverity.INFO]: 2,
+      [ReviewSeverity.HINT]: 1,
     };
     return deductions[severity] ?? 0;
   }
@@ -968,20 +972,18 @@ export class SmartCodeReviewer {
     }
 
     const topIssues = issues
-      .filter((i) => i.severity === ReviewSeverity.Critical || i.severity === ReviewSeverity.Error)
+      .filter((i) => i.severity === ReviewSeverity.CRITICAL || i.severity === ReviewSeverity.ERROR)
       .slice(0, 5)
       .map((i) => `${i.rule_id}: ${i.message}`);
 
-    const improvementPotential = issues
-      .filter((i) => i.fix_suggestion?.auto_fixable)
-      .length;
+    const improvementPotential = issues.filter((i) => i.fix_suggestion?.auto_fixable).length;
 
     return {
       total_issues: issues.length,
-      critical_count: issues.filter((i) => i.severity === ReviewSeverity.Critical).length,
-      error_count: issues.filter((i) => i.severity === ReviewSeverity.Error).length,
-      warning_count: issues.filter((i) => i.severity === ReviewSeverity.Warning).length,
-      info_count: issues.filter((i) => i.severity === ReviewSeverity.Info).length,
+      critical_count: issues.filter((i) => i.severity === ReviewSeverity.CRITICAL).length,
+      error_count: issues.filter((i) => i.severity === ReviewSeverity.ERROR).length,
+      warning_count: issues.filter((i) => i.severity === ReviewSeverity.WARNING).length,
+      info_count: issues.filter((i) => i.severity === ReviewSeverity.INFO).length,
       by_category: byCategory,
       top_issues: topIssues,
       improvement_potential: improvementPotential,
@@ -992,7 +994,7 @@ export class SmartCodeReviewer {
     const suggestions: ReviewSuggestion[] = [];
 
     // 基于问题类型
-    if (issues.some((i) => i.category === ReviewCategory.Security)) {
+    if (issues.some((i) => i.category === ReviewCategory.SECURITY)) {
       suggestions.push({
         type: 'secure',
         description: '优先修复安全问题，特别是 XSS 和敏感信息泄露风险',
@@ -1002,7 +1004,7 @@ export class SmartCodeReviewer {
       });
     }
 
-    if (issues.some((i) => i.category === ReviewCategory.Performance)) {
+    if (issues.some((i) => i.category === ReviewCategory.PERFORMANCE)) {
       suggestions.push({
         type: 'optimize',
         description: '优化性能瓶颈，特别是大文件和内联函数',
@@ -1083,7 +1085,10 @@ export class SmartCodeReviewer {
   private findPatternLocations(code: string, pattern: RegExp): number[] {
     const locations: number[] = [];
     let match: RegExpExecArray | null;
-    const globalPattern = new RegExp(pattern.source, pattern.flags.includes('g') ? pattern.flags : pattern.flags + 'g');
+    const globalPattern = new RegExp(
+      pattern.source,
+      pattern.flags.includes('g') ? pattern.flags : `${pattern.flags}g`
+    );
 
     while ((match = globalPattern.exec(code)) !== null) {
       const lineNum = code.substring(0, match.index).split('\n').length;

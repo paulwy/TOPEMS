@@ -87,10 +87,7 @@ export interface HotReloadState {
   error?: string;
 }
 
-type FetchInterceptor = (
-  input: RequestInfo | URL,
-  init?: RequestInit
-) => Promise<Response>;
+type FetchInterceptor = (input: RequestInfo | URL, init?: RequestInit) => Promise<Response>;
 
 type XHRInterceptor = () => void;
 
@@ -154,8 +151,8 @@ export class SmartDebugger {
     if (depth > 20) return [];
 
     const nodes: ComponentTreeNode[] = [];
-    const reactKey = Object.keys(element).find((k) =>
-      k.startsWith('__reactFiber$') || k.startsWith('__reactInternalInstance$')
+    const reactKey = Object.keys(element).find(
+      (k) => k.startsWith('__reactFiber$') || k.startsWith('__reactInternalInstance$')
     );
 
     if (reactKey) {
@@ -178,7 +175,9 @@ export class SmartDebugger {
         const props = (fiber?.memoizedProps as Record<string, unknown>) || {};
         const hooks: string[] = [];
         if (fiber?.memoizedState) {
-          let current: { queue?: unknown } | null = fiber.memoizedState as { queue?: unknown } | null;
+          let current: { queue?: unknown } | null = fiber.memoizedState as {
+            queue?: unknown;
+          } | null;
           let idx = 0;
           while (current) {
             hooks.push(`hook_${idx}`);
@@ -196,7 +195,7 @@ export class SmartDebugger {
           state: {},
           hooks,
           children: [],
-          renderCount: (fiber?.memoizedProps ? 1 : 0),
+          renderCount: fiber?.memoizedProps ? 1 : 0,
           lastRenderTime: performance.now(),
         });
       } catch {
@@ -220,7 +219,8 @@ export class SmartDebugger {
     const type = fiber.type || fiber.elementType;
     if (!type) return 'function';
     if (typeof type === 'function') {
-      const prototype = (type as unknown as { prototype?: { isReactComponent?: boolean } }).prototype;
+      const prototype = (type as unknown as { prototype?: { isReactComponent?: boolean } })
+        .prototype;
       if (prototype && prototype.isReactComponent) return 'class';
       return 'function';
     }
@@ -234,9 +234,7 @@ export class SmartDebugger {
   }
 
   findComponentByName(name: string): ComponentTreeNode | undefined {
-    return this.componentTree.find(
-      (n) => n.name.toLowerCase().includes(name.toLowerCase())
-    );
+    return this.componentTree.find((n) => n.name.toLowerCase().includes(name.toLowerCase()));
   }
 
   // ==================== State Inspection ====================
@@ -261,7 +259,9 @@ export class SmartDebugger {
 
   inspectReduxState(): StateStoreInfo | null {
     const w = window as unknown as {
+      // eslint-disable-next-line @typescript-eslint/naming-convention
       __REDUX_STORE__?: { getState: () => unknown; subscribe: (fn: () => void) => () => void };
+      // eslint-disable-next-line @typescript-eslint/naming-convention
       __REACT_DEVTOOLS_GLOBAL_HOOK__?: unknown;
     };
     if (w.__REDUX_STORE__) {
@@ -290,7 +290,10 @@ export class SmartDebugger {
           (val as { getState?: () => unknown }).getState &&
           (val as { subscribe?: (fn: () => void) => () => void }).subscribe
         ) {
-          const store = val as unknown as { getState: () => Record<string, unknown>; subscribe: (fn: () => void) => () => void };
+          const store = val as unknown as {
+            getState: () => Record<string, unknown>;
+            subscribe: (fn: () => void) => () => void;
+          };
           const state = store.getState();
           results.push({
             type: 'zustand',
@@ -334,7 +337,8 @@ export class SmartDebugger {
 
     this.originalFetch = window.fetch;
     this.fetchInterceptor = async (input: RequestInfo | URL, init?: RequestInit) => {
-      const url = typeof input === 'string' ? input : input instanceof URL ? input.toString() : input.url;
+      const url =
+        typeof input === 'string' ? input : input instanceof URL ? input.toString() : input.url;
       const method = init?.method || 'GET';
       const requestId = generateId();
       const startTime = performance.now();
@@ -403,7 +407,7 @@ export class SmartDebugger {
         if (record) {
           record.duration = duration;
           record.status = xhr.status;
-          record.responseSize = (xhr.responseText?.length || 0);
+          record.responseSize = xhr.responseText?.length || 0;
           this.emit('network:complete', record);
         }
       });
@@ -511,7 +515,11 @@ export class SmartDebugger {
 
     setTimeout(() => {
       try {
-        if (typeof window !== 'undefined' && (window as unknown as { location: Location }).location) {
+        if (
+          typeof window !== 'undefined' &&
+          (window as unknown as { location: Location }).location
+        ) {
+          // eslint-disable-next-line @typescript-eslint/naming-convention
           const w = window as unknown as { __webpack_hot_middleware?: unknown };
           if (w.__webpack_hot_middleware || moduleId) {
             this.hotReloadState = { status: 'reloading', moduleId, timestamp: Date.now() };
@@ -522,7 +530,12 @@ export class SmartDebugger {
               this.emit('hot-reload:success', this.hotReloadState);
             }, 500);
           } else {
-            this.hotReloadState = { status: 'failed', moduleId, timestamp: Date.now(), error: 'No HMR available' };
+            this.hotReloadState = {
+              status: 'failed',
+              moduleId,
+              timestamp: Date.now(),
+              error: 'No HMR available',
+            };
             this.emit('hot-reload:failed', this.hotReloadState);
           }
         }

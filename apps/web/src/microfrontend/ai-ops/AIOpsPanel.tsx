@@ -568,7 +568,7 @@ const AIOpsPanel: React.FC<AIOpsPanelProps> = ({ onClose, refreshInterval = 3000
                           <Chip
                             label={a.severity}
                             size='small'
-                            sx={{ bgcolor: getSeverityColor(a.severity), color: 'white' }}
+                            sx={{ bgcolor: getSeverityColor(a.severity), color: 'common.white' }}
                           />
                           <Typography
                             variant='body2'
@@ -775,7 +775,7 @@ const AIOpsPanel: React.FC<AIOpsPanelProps> = ({ onClose, refreshInterval = 3000
                           <Chip
                             label={a.severity}
                             size='small'
-                            sx={{ bgcolor: getSeverityColor(a.severity), color: 'white' }}
+                            sx={{ bgcolor: getSeverityColor(a.severity), color: 'common.white' }}
                           />
                         </TableCell>
                         <TableCell sx={{ fontFamily: 'monospace', fontSize: 12 }}>
@@ -1058,14 +1058,14 @@ const AIOpsPanel: React.FC<AIOpsPanelProps> = ({ onClose, refreshInterval = 3000
                         <Chip
                           label={alert.severity}
                           size='small'
-                          sx={{ bgcolor: getSeverityColor(alert.severity), color: 'white' }}
+                          sx={{ bgcolor: getSeverityColor(alert.severity), color: 'common.white' }}
                         />
                       </TableCell>
                       <TableCell>
                         <Chip
                           label={alert.status}
                           size='small'
-                          sx={{ bgcolor: getAlertStatusColor(alert.status), color: 'white' }}
+                          sx={{ bgcolor: getAlertStatusColor(alert.status), color: 'common.white' }}
                         />
                       </TableCell>
                       <TableCell sx={{ fontFamily: 'monospace', fontSize: 12 }}>
@@ -1190,7 +1190,7 @@ const AIOpsPanel: React.FC<AIOpsPanelProps> = ({ onClose, refreshInterval = 3000
                             size='small'
                             sx={{
                               bgcolor: getSeverityColor(rule.severity),
-                              color: 'white',
+                              color: 'common.white',
                               fontSize: 10,
                               height: 20,
                             }}
@@ -1585,11 +1585,13 @@ const AIOpsPanel: React.FC<AIOpsPanelProps> = ({ onClose, refreshInterval = 3000
 
               <Box sx={{ position: 'absolute', bottom: 8, left: 16, display: 'flex', gap: 2 }}>
                 <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
-                  <Box sx={{ width: 16, height: 2, bgcolor: '#1976d2' }} />
+                  <Box sx={{ width: 16, height: 2, bgcolor: 'info.600' }} />
                   <Typography variant='caption'>历史数据</Typography>
                 </Box>
                 <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
-                  <Box sx={{ width: 16, height: 2, bgcolor: '#7b1fa2', borderStyle: 'dashed' }} />
+                  <Box
+                    sx={{ width: 16, height: 2, bgcolor: 'purple.800', borderStyle: 'dashed' }}
+                  />
                   <Typography variant='caption'>预测值</Typography>
                 </Box>
               </Box>
@@ -1644,7 +1646,7 @@ const AIOpsPanel: React.FC<AIOpsPanelProps> = ({ onClose, refreshInterval = 3000
                             size='small'
                             sx={{
                               bgcolor: getSeverityColor(a.severity),
-                              color: 'white',
+                              color: 'common.white',
                               fontSize: 10,
                               height: 20,
                             }}
@@ -2226,7 +2228,7 @@ const AIOpsPanel: React.FC<AIOpsPanelProps> = ({ onClose, refreshInterval = 3000
           alignItems: 'center',
           justifyContent: 'space-between',
           bgcolor: 'linear-gradient(135deg, #7b1fa2 0%, #1976d2 100%)',
-          color: 'white',
+          color: 'common.white',
           flexWrap: 'wrap',
           gap: 1,
         }}
@@ -2242,7 +2244,7 @@ const AIOpsPanel: React.FC<AIOpsPanelProps> = ({ onClose, refreshInterval = 3000
           <Chip
             label='V43.0'
             size='small'
-            sx={{ bgcolor: 'rgba(255,255,255,0.2)', color: 'white' }}
+            sx={{ bgcolor: 'action.disabledBackground', color: 'common.white' }}
           />
         </Box>
         <Box sx={{ display: 'flex', gap: 1, alignItems: 'center', flexWrap: 'wrap' }}>
@@ -2251,7 +2253,7 @@ const AIOpsPanel: React.FC<AIOpsPanelProps> = ({ onClose, refreshInterval = 3000
               size='small'
               onClick={() => setAutoRefresh(!autoRefresh)}
               startIcon={autoRefresh ? <PlayIcon size={16} /> : <PauseIcon size={16} />}
-              sx={{ color: 'white', borderColor: 'rgba(255,255,255,0.3)' }}
+              sx={{ color: 'common.white', borderColor: 'action.disabledBackground' }}
               variant={autoRefresh ? 'contained' : 'outlined'}
             >
               {autoRefresh ? '自动刷新' : '已暂停'}
@@ -2261,7 +2263,7 @@ const AIOpsPanel: React.FC<AIOpsPanelProps> = ({ onClose, refreshInterval = 3000
             size='small'
             onClick={refreshData}
             startIcon={<RefreshIcon size={16} />}
-            sx={{ color: 'white', borderColor: 'rgba(255,255,255,0.3)' }}
+            sx={{ color: 'common.white', borderColor: 'action.disabledBackground' }}
             variant='outlined'
           >
             刷新
@@ -2270,7 +2272,7 @@ const AIOpsPanel: React.FC<AIOpsPanelProps> = ({ onClose, refreshInterval = 3000
             size='small'
             onClick={handleExport}
             startIcon={<DownloadIcon size={16} />}
-            sx={{ color: 'white', borderColor: 'rgba(255,255,255,0.3)' }}
+            sx={{ color: 'common.white', borderColor: 'action.disabledBackground' }}
             variant='outlined'
           >
             导出
@@ -2278,7 +2280,7 @@ const AIOpsPanel: React.FC<AIOpsPanelProps> = ({ onClose, refreshInterval = 3000
           {onClose && (
             <IconButton
               onClick={onClose}
-              sx={{ color: 'white' }}
+              sx={{ color: 'common.white' }}
             >
               <XIcon size={20} />
             </IconButton>

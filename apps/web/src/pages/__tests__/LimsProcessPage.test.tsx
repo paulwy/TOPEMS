@@ -116,22 +116,22 @@ describe('LimsProcessPage', () => {
   beforeEach(() => {
     global.fetch = vi.fn().mockResolvedValue({ ok: true } as unknown as Record<string, unknown>);
   });
+});
 
 describe('LimsProcessPage', () => {
-it('should render without crashing', () => {
+  it('should render without crashing', () => {
     const { container } = render(
       <BrowserRouter>
         <LimsProcessPage />
       </BrowserRouter>
     );
     expect(container).toBeDefined();
-});
+  });
 
-it('should have process API methods defined', () => {
+  it('should have process API methods defined', () => {
     expect(limsApi.processes.list).toBeDefined();
     expect(limsApi.createProcess).toBeDefined();
     expect(limsApi.getProcess).toBeDefined();
     expect(limsApi.updateProcess).toBeDefined();
-});
-;
+  });
 });

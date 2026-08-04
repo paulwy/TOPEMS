@@ -36,8 +36,8 @@ interface OperationAuditLogFilterProps {
   endDate: string;
   setEndDate: (v: string) => void;
   setPage: (v: number) => void;
-  MODULE_OPTIONS: OptionItem[];
-  OPERATION_OPTIONS: OptionItem[];
+  moduleOptions: OptionItem[];
+  operationOptions: OptionItem[];
   clearFilters: () => void;
 }
 
@@ -59,8 +59,8 @@ const OperationAuditLogFilter: React.FC<OperationAuditLogFilterProps> = ({
   endDate,
   setEndDate,
   setPage,
-  MODULE_OPTIONS,
-  OPERATION_OPTIONS,
+  moduleOptions,
+  operationOptions,
   clearFilters,
 }) => {
   const { t } = useTranslation();
@@ -122,7 +122,7 @@ const OperationAuditLogFilter: React.FC<OperationAuditLogFilterProps> = ({
           }}
         >
           <MenuItem value=''>{t('admin.operation_audit_log.all_modules')}</MenuItem>
-          {MODULE_OPTIONS.map((m) => (
+          {moduleOptions.map((m) => (
             <MenuItem
               key={m.value}
               value={m.value}
@@ -147,7 +147,7 @@ const OperationAuditLogFilter: React.FC<OperationAuditLogFilterProps> = ({
           }}
         >
           <MenuItem value=''>{t('admin.operation_audit_log.all_actions')}</MenuItem>
-          {OPERATION_OPTIONS.map((m) => (
+          {operationOptions.map((m) => (
             <MenuItem
               key={m.value}
               value={m.value}

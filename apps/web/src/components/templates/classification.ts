@@ -193,13 +193,7 @@ export const TEMPLATE_CLASSIFICATIONS: TemplateClassification[] = [
  * - dashboard: 仪表盘（含统计分析扩展）
  * - kanban  : 看板页（任务/状态流转）
  */
-export const CORE_TEMPLATES: PageTemplateType[] = [
-  'list',
-  'form',
-  'detail',
-  'dashboard',
-  'kanban',
-];
+export const CORE_TEMPLATES: PageTemplateType[] = ['list', 'form', 'detail', 'dashboard', 'kanban'];
 
 /**
  * 扩展模板（10 个，按需引入）

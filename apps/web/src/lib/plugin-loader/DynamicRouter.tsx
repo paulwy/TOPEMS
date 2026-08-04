@@ -52,7 +52,7 @@ async function loadRemoteModule(
   }
 
   try {
-    await __webpack_init_sharing__('default');
+    await WebpackInitSharing('default');
 
     const container = (window as Record<string, WebpackContainer | undefined>)[remoteName];
 
@@ -60,7 +60,7 @@ async function loadRemoteModule(
       throw new Error(`Remote module "${remoteName}" not found. Make sure the remote is loaded.`);
     }
 
-    await container.init(__webpack_share_scopes__.default);
+    await container.init(WebpackShareScopes.default);
     const factory = await container.get(modulePath);
     const module = await factory();
 
@@ -318,7 +318,7 @@ export const DynamicRouter: React.FC = () => {
         {Object.entries(errors).map(([path, message]) => (
           <div
             key={path}
-            style={{ color: 'red', marginBottom: '10px' }}
+            style={{ color: 'error.main', marginBottom: '10px' }}
           >
             {path}: {message}
           </div>

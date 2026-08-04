@@ -88,14 +88,29 @@ export const DashboardPage: React.FC = () => {
   const charts: ChartCard[] = useMemo(() => {
     const barData = [
       { name: t('rd.dashboard_page.status_label.pending'), value: stats?.pending_projects || 0 },
-      { name: t('rd.dashboard_page.status_label.in_progress'), value: stats?.in_progress_projects || 0 },
-      { name: t('rd.dashboard_page.status_label.completed'), value: stats?.completed_projects || 0 },
-      { name: t('rd.dashboard_page.status_label.cancelled'), value: stats?.cancelled_projects || 0 },
+      {
+        name: t('rd.dashboard_page.status_label.in_progress'),
+        value: stats?.in_progress_projects || 0,
+      },
+      {
+        name: t('rd.dashboard_page.status_label.completed'),
+        value: stats?.completed_projects || 0,
+      },
+      {
+        name: t('rd.dashboard_page.status_label.cancelled'),
+        value: stats?.cancelled_projects || 0,
+      },
     ];
     const lineData = [
       { name: t('rd.dashboard_page.status_label.pending'), value: stats?.pending_experiments || 0 },
-      { name: t('rd.dashboard_page.status_label.in_progress'), value: stats?.in_progress_experiments || 0 },
-      { name: t('rd.dashboard_page.status_label.completed'), value: stats?.completed_experiments || 0 },
+      {
+        name: t('rd.dashboard_page.status_label.in_progress'),
+        value: stats?.in_progress_experiments || 0,
+      },
+      {
+        name: t('rd.dashboard_page.status_label.completed'),
+        value: stats?.completed_experiments || 0,
+      },
     ];
     return [
       {

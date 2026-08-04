@@ -49,7 +49,8 @@ export const materialReturnSchema: EntitySchema = {
       type: 'number',
       listWidth: 80,
       readonly: true,
-      renderCell: (row: Record<string, unknown>) => (row.items as unknown[] | undefined)?.length || 0,
+      renderCell: (row: Record<string, unknown>) =>
+        (row.items as unknown[] | undefined)?.length || 0,
     },
     {
       name: 'reason',

@@ -33,7 +33,13 @@ export const useThemeStore = create<ThemeState>()(
         // 循环切换：light → dark → cyberpunk → light
         const { theme } = get();
         const next: Theme =
-          theme === 'light' ? 'dark' : theme === 'dark' ? 'cyberpunk' : theme === 'cyberpunk' ? 'light' : 'dark';
+          theme === 'light'
+            ? 'dark'
+            : theme === 'dark'
+              ? 'cyberpunk'
+              : theme === 'cyberpunk'
+                ? 'light'
+                : 'dark';
         set({ theme: next });
       },
     }),

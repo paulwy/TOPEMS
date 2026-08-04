@@ -45,7 +45,7 @@ const financeAdapter: CrudApiAdapter<FinanceRecord> = {
       invoiceRecords.push(
         ...items.map((item: SupplierContract) => ({
           ...item,
-          record_no: item.contract_no || '',
+          record_no: item.contractNo || '',
           supplier_name: item.supplier_name || '',
           type: 'contract',
           amount: item.total_amount || 0,
@@ -114,7 +114,7 @@ const financeAdapter: CrudApiAdapter<FinanceRecord> = {
       } as unknown as FinanceRecord;
     } else {
       const res = await srmApi.createContract({
-        contract_no: record.record_no,
+        contractNo: record.record_no,
         supplier_id: (record as unknown as { supplier_id: string }).supplier_id || '',
         supplier_name: record.supplier_name,
         title: record.record_no,
@@ -127,7 +127,7 @@ const financeAdapter: CrudApiAdapter<FinanceRecord> = {
       return {
         ...res.data,
         type: 'contract',
-        record_no: (res.data as SupplierContract)?.contract_no || '',
+        record_no: (res.data as SupplierContract)?.contractNo || '',
       } as unknown as FinanceRecord;
     }
   },

@@ -455,13 +455,13 @@ export const PageHeader: React.FC<PageHeaderProps> = ({
               alignItems: 'center',
               justifyContent: 'space-between',
               px: 3,
-              color: '#fff',
+              color: 'common.white',
             }}
           >
             <Box sx={{ display: 'flex', alignItems: 'center' }}>
               <Typography
                 variant='h5'
-                sx={{ fontWeight: 700, color: '#fff' }}
+                sx={{ fontWeight: 700, color: 'common.white' }}
               >
                 {title}
               </Typography>
@@ -469,13 +469,18 @@ export const PageHeader: React.FC<PageHeaderProps> = ({
                 <Chip
                   label={banner.chip}
                   size='small'
-                  sx={{ bgcolor: 'rgba(255,255,255,0.2)', color: '#fff', fontWeight: 600, ml: 2 }}
+                  sx={{
+                    bgcolor: 'action.disabledBackground',
+                    color: 'common.white',
+                    fontWeight: 600,
+                    ml: 2,
+                  }}
                 />
               )}
               {banner.summary && (
                 <Typography
                   variant='body2'
-                  sx={{ opacity: 0.9, ml: 2, color: '#fff' }}
+                  sx={{ opacity: 0.9, ml: 2, color: 'common.white' }}
                 >
                   {banner.summary}
                 </Typography>
@@ -494,11 +499,11 @@ export const PageHeader: React.FC<PageHeaderProps> = ({
                     size={action.size || (isMobile ? 'small' : 'medium')}
                     startIcon={action.icon}
                     sx={{
-                      color: '#fff',
-                      borderColor: 'rgba(255,255,255,0.5)',
+                      color: 'common.white',
+                      borderColor: 'common.white',
                       '&:hover': {
-                        borderColor: '#fff',
-                        bgcolor: 'rgba(255,255,255,0.1)',
+                        borderColor: 'common.white',
+                        bgcolor: 'action.disabledBackground',
                       },
                     }}
                   >
@@ -542,7 +547,7 @@ export const PageHeader: React.FC<PageHeaderProps> = ({
                     justifyContent: 'center',
                     bgcolor: pageColor || 'primary.main',
                     ...(pageGradient && { bgcolor: undefined, background: pageGradient }),
-                    color: 'white',
+                    color: 'common.white',
                   }}
                 >
                   {pageIcon}

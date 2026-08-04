@@ -3,7 +3,8 @@ import { IconButton, Card, CardActionArea, ListItem, Chip, Switch } from '@mui/m
 import { useTouchFeedback, type TouchFeedbackOptions } from '@/hooks/useTouchFeedback';
 import { useSwipeGesture } from '@/hooks/useTouchFeedback';
 
-interface TouchIconButtonProps extends React.ComponentProps<typeof IconButton>, TouchFeedbackOptions {
+interface TouchIconButtonProps
+  extends React.ComponentProps<typeof IconButton>, TouchFeedbackOptions {
   children: React.ReactNode;
   onClick?: () => void;
 }
@@ -288,12 +289,7 @@ export const TouchChip: React.FC<TouchChipProps> = ({
   longPressDelay = 500,
   ...props
 }) => {
-  const {
-    isPressed,
-    handleTouchStart,
-    handleTouchEnd,
-    handleTouchCancel,
-  } = useTouchFeedback({
+  const { isPressed, handleTouchStart, handleTouchEnd, handleTouchCancel } = useTouchFeedback({
     minTouchTarget: 44,
     enableLongPress: !!onLongPress,
     longPressDelay,
@@ -328,15 +324,8 @@ interface TouchSwitchProps extends React.ComponentProps<typeof Switch> {
   onChange?: (event: React.ChangeEvent<{}>, checked: boolean) => void;
 }
 
-export const TouchSwitch: React.FC<TouchSwitchProps> = ({
-  onChange,
-  ...props
-}) => {
-  const {
-    handleTouchStart,
-    handleTouchEnd,
-    handleTouchCancel,
-  } = useTouchFeedback({
+export const TouchSwitch: React.FC<TouchSwitchProps> = ({ onChange, ...props }) => {
+  const { handleTouchStart, handleTouchEnd, handleTouchCancel } = useTouchFeedback({
     minTouchTarget: 48,
     enableHapticFeedback: true,
     scaleOnPress: false,

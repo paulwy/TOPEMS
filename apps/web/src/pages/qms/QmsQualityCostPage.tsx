@@ -46,7 +46,7 @@ function QualityCostStatsCards({ rows }: { rows: QualityCost[] }) {
       <Card
         sx={{
           background: 'linear-gradient(135deg, primary.main 0%, primary.dark 100%)',
-          color: 'white',
+          color: 'common.white',
         }}
       >
         <CardContent sx={{ p: 3 }}>
@@ -68,7 +68,7 @@ function QualityCostStatsCards({ rows }: { rows: QualityCost[] }) {
       <Card
         sx={{
           background: `linear-gradient(135deg, ${ct.success.main} 0%, ${ct.success.dark} 100%)`,
-          color: 'white',
+          color: 'common.white',
         }}
       >
         <CardContent sx={{ p: 3 }}>
@@ -92,7 +92,7 @@ function QualityCostStatsCards({ rows }: { rows: QualityCost[] }) {
       <Card
         sx={{
           background: `linear-gradient(135deg, ${ct.primary.main} 0%, ${ct.primary.dark} 100%)`,
-          color: 'white',
+          color: 'common.white',
         }}
       >
         <CardContent sx={{ p: 3 }}>
@@ -116,7 +116,7 @@ function QualityCostStatsCards({ rows }: { rows: QualityCost[] }) {
       <Card
         sx={{
           background: `linear-gradient(135deg, ${ct.warning.main} 0%, ${ct.warning.dark} 100%)`,
-          color: 'white',
+          color: 'common.white',
         }}
       >
         <CardContent sx={{ p: 3 }}>
@@ -140,7 +140,7 @@ function QualityCostStatsCards({ rows }: { rows: QualityCost[] }) {
       <Card
         sx={{
           background: `linear-gradient(135deg, ${ct.error.main} 0%, ${ct.error[600]} 100%)`,
-          color: 'white',
+          color: 'common.white',
         }}
       >
         <CardContent sx={{ p: 3 }}>

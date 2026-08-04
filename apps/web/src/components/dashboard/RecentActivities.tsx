@@ -201,7 +201,7 @@ export const RecentActivities: React.FC<RecentActivitiesProps> = ({
                 sx={{
                   fontSize: 14,
                   fontWeight: 500,
-                  color: '#1e293b',
+                  color: 'text.primary',
                   marginBottom: 0.5,
                 }}
               >

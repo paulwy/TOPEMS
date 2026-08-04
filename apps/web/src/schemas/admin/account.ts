@@ -253,7 +253,7 @@ export const accountSchema: EntitySchema = {
       },
     },
     {
-      name: 'parent_id',
+      name: 'parentId',
       label: '上级科目',
       type: 'select',
       showInList: false,
@@ -313,7 +313,7 @@ export const accountSchema: EntitySchema = {
     },
     {
       title: '科目属性',
-      fields: ['parent_id', 'is_detail', 'isactive', 'description'],
+      fields: ['parentId', 'is_detail', 'isactive', 'description'],
     },
   ],
 
@@ -324,7 +324,7 @@ export const accountSchema: EntitySchema = {
 
   dynamicOptions: [
     {
-      field: 'parent_id',
+      field: 'parentId',
       loader: loadParentAccounts,
       queryKey: ['admin-accounts', 'parents'],
     },

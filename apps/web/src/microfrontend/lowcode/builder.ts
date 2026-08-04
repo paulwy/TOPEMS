@@ -21,24 +21,24 @@
  */
 
 export enum ComponentCategory {
-  Layout = 'layout',
-  Form = 'form',
-  Display = 'display',
-  Navigation = 'navigation',
-  Feedback = 'feedback',
-  Chart = 'chart',
-  Media = 'media',
-  Utility = 'utility',
+  LAYOUT = 'layout',
+  FORM = 'form',
+  DISPLAY = 'display',
+  NAVIGATION = 'navigation',
+  FEEDBACK = 'feedback',
+  CHART = 'chart',
+  MEDIA = 'media',
+  UTILITY = 'utility',
 }
 
 export enum ActionType {
-  Navigate = 'navigate',
-  CallAPI = 'call-api',
-  ShowMessage = 'show-message',
-  UpdateState = 'update-state',
-  OpenDialog = 'open-dialog',
-  CloseDialog = 'close-dialog',
-  Custom = 'custom',
+  NAVIGATE = 'navigate',
+  CALLAPI = 'call-api',
+  SHOWMESSAGE = 'show-message',
+  UPDATESTATE = 'update-state',
+  OPENDIALOG = 'open-dialog',
+  CLOSEDIALOG = 'close-dialog',
+  CUSTOM = 'custom',
 }
 
 export type DataSourceType = 'rest-api' | 'graphql' | 'static' | 'websocket' | 'database';
@@ -173,7 +173,7 @@ const PRESET_COMPONENTS: ComponentDefinition[] = [
   {
     type: 'Container',
     name: '容器',
-    category: ComponentCategory.Layout,
+    category: ComponentCategory.LAYOUT,
     icon: 'square',
     default_props: {},
     default_style: { display: 'flex', flexDirection: 'column', padding: '16px', gap: '12px' },
@@ -198,7 +198,7 @@ const PRESET_COMPONENTS: ComponentDefinition[] = [
   {
     type: 'Row',
     name: '行布局',
-    category: ComponentCategory.Layout,
+    category: ComponentCategory.LAYOUT,
     icon: 'rows-three',
     default_props: { gutter: 16 },
     default_style: { display: 'flex', flexDirection: 'row' },
@@ -222,7 +222,7 @@ const PRESET_COMPONENTS: ComponentDefinition[] = [
   {
     type: 'Column',
     name: '列布局',
-    category: ComponentCategory.Layout,
+    category: ComponentCategory.LAYOUT,
     icon: 'columns-three',
     default_props: { span: 12 },
     default_style: { flex: '1' },
@@ -236,7 +236,7 @@ const PRESET_COMPONENTS: ComponentDefinition[] = [
   {
     type: 'Grid',
     name: '栅格布局',
-    category: ComponentCategory.Layout,
+    category: ComponentCategory.LAYOUT,
     icon: 'layout-grid',
     default_props: { columns: 3, gap: 16 },
     default_style: { display: 'grid' },
@@ -250,11 +250,11 @@ const PRESET_COMPONENTS: ComponentDefinition[] = [
   {
     type: 'Card',
     name: '卡片',
-    category: ComponentCategory.Display,
+    category: ComponentCategory.DISPLAY,
     icon: 'rectangle-horizontal',
     default_props: { title: '卡片标题', bordered: true },
     default_style: {
-      background: '#fff',
+      background: 'common.white',
       borderRadius: '8px',
       padding: '16px',
       boxShadow: '0 1px 3px rgba(0,0,0,0.1)',
@@ -281,7 +281,7 @@ const PRESET_COMPONENTS: ComponentDefinition[] = [
   {
     type: 'Button',
     name: '按钮',
-    category: ComponentCategory.Form,
+    category: ComponentCategory.FORM,
     icon: 'mouse-pointer-click',
     default_props: { text: '按钮', type: 'primary', size: 'medium' },
     default_style: {},
@@ -321,7 +321,7 @@ const PRESET_COMPONENTS: ComponentDefinition[] = [
   {
     type: 'Input',
     name: '输入框',
-    category: ComponentCategory.Form,
+    category: ComponentCategory.FORM,
     icon: 'text-cursor-input',
     default_props: { placeholder: '请输入', value: '' },
     default_style: { width: '100%' },
@@ -350,7 +350,7 @@ const PRESET_COMPONENTS: ComponentDefinition[] = [
   {
     type: 'Textarea',
     name: '文本域',
-    category: ComponentCategory.Form,
+    category: ComponentCategory.FORM,
     icon: 'text',
     default_props: { placeholder: '请输入内容', rows: 4 },
     default_style: { width: '100%' },
@@ -371,7 +371,7 @@ const PRESET_COMPONENTS: ComponentDefinition[] = [
   {
     type: 'Select',
     name: '下拉选择',
-    category: ComponentCategory.Form,
+    category: ComponentCategory.FORM,
     icon: 'chevron-down-square',
     default_props: { placeholder: '请选择', options: [] },
     default_style: { width: '100%' },
@@ -386,7 +386,7 @@ const PRESET_COMPONENTS: ComponentDefinition[] = [
   {
     type: 'Checkbox',
     name: '复选框',
-    category: ComponentCategory.Form,
+    category: ComponentCategory.FORM,
     icon: 'check-square',
     default_props: { label: '选项', checked: false },
     default_style: {},
@@ -401,7 +401,7 @@ const PRESET_COMPONENTS: ComponentDefinition[] = [
   {
     type: 'Radio',
     name: '单选框',
-    category: ComponentCategory.Form,
+    category: ComponentCategory.FORM,
     icon: 'circle',
     default_props: { label: '选项', options: [] },
     default_style: {},
@@ -415,7 +415,7 @@ const PRESET_COMPONENTS: ComponentDefinition[] = [
   {
     type: 'DatePicker',
     name: '日期选择',
-    category: ComponentCategory.Form,
+    category: ComponentCategory.FORM,
     icon: 'calendar',
     default_props: { placeholder: '请选择日期' },
     default_style: { width: '100%' },
@@ -436,7 +436,7 @@ const PRESET_COMPONENTS: ComponentDefinition[] = [
   {
     type: 'Form',
     name: '表单容器',
-    category: ComponentCategory.Form,
+    category: ComponentCategory.FORM,
     icon: 'form-input',
     default_props: { labelWidth: 100, layout: 'horizontal' },
     default_style: {},
@@ -461,7 +461,7 @@ const PRESET_COMPONENTS: ComponentDefinition[] = [
   {
     type: 'Table',
     name: '表格',
-    category: ComponentCategory.Display,
+    category: ComponentCategory.DISPLAY,
     icon: 'table',
     default_props: { columns: [], dataSource: [], pagination: true },
     default_style: { width: '100%' },
@@ -478,7 +478,7 @@ const PRESET_COMPONENTS: ComponentDefinition[] = [
   {
     type: 'Tabs',
     name: '标签页',
-    category: ComponentCategory.Navigation,
+    category: ComponentCategory.NAVIGATION,
     icon: 'tabs',
     default_props: { tabs: [], activeKey: '' },
     default_style: {},
@@ -503,7 +503,7 @@ const PRESET_COMPONENTS: ComponentDefinition[] = [
   {
     type: 'Menu',
     name: '导航菜单',
-    category: ComponentCategory.Navigation,
+    category: ComponentCategory.NAVIGATION,
     icon: 'menu',
     default_props: { items: [], mode: 'horizontal' },
     default_style: {},
@@ -528,7 +528,7 @@ const PRESET_COMPONENTS: ComponentDefinition[] = [
   {
     type: 'Breadcrumb',
     name: '面包屑',
-    category: ComponentCategory.Navigation,
+    category: ComponentCategory.NAVIGATION,
     icon: 'route',
     default_props: { items: [] },
     default_style: {},
@@ -542,7 +542,7 @@ const PRESET_COMPONENTS: ComponentDefinition[] = [
   {
     type: 'Dialog',
     name: '对话框',
-    category: ComponentCategory.Feedback,
+    category: ComponentCategory.FEEDBACK,
     icon: 'panel-top',
     default_props: { title: '对话框', visible: false, width: 520 },
     default_style: {},
@@ -558,7 +558,7 @@ const PRESET_COMPONENTS: ComponentDefinition[] = [
   {
     type: 'Message',
     name: '消息提示',
-    category: ComponentCategory.Feedback,
+    category: ComponentCategory.FEEDBACK,
     icon: 'message-square',
     default_props: { type: 'info', content: '提示内容' },
     default_style: {},
@@ -585,7 +585,7 @@ const PRESET_COMPONENTS: ComponentDefinition[] = [
   {
     type: 'Alert',
     name: '警告提示',
-    category: ComponentCategory.Feedback,
+    category: ComponentCategory.FEEDBACK,
     icon: 'triangle-alert',
     default_props: { type: 'warning', message: '警告信息', showIcon: true },
     default_style: {},
@@ -613,7 +613,7 @@ const PRESET_COMPONENTS: ComponentDefinition[] = [
   {
     type: 'Chart',
     name: '图表',
-    category: ComponentCategory.Chart,
+    category: ComponentCategory.CHART,
     icon: 'bar-chart-3',
     default_props: { chartType: 'line', dataSource: [], width: 600, height: 400 },
     default_style: {},
@@ -643,7 +643,7 @@ const PRESET_COMPONENTS: ComponentDefinition[] = [
   {
     type: 'Image',
     name: '图片',
-    category: ComponentCategory.Media,
+    category: ComponentCategory.MEDIA,
     icon: 'image',
     default_props: { src: '', alt: '图片', fit: 'cover' },
     default_style: { width: '100%' },
@@ -671,7 +671,7 @@ const PRESET_COMPONENTS: ComponentDefinition[] = [
   {
     type: 'Video',
     name: '视频',
-    category: ComponentCategory.Media,
+    category: ComponentCategory.MEDIA,
     icon: 'video',
     default_props: { src: '', controls: true, autoplay: false },
     default_style: { width: '100%' },
@@ -688,7 +688,7 @@ const PRESET_COMPONENTS: ComponentDefinition[] = [
   {
     type: 'Text',
     name: '文本',
-    category: ComponentCategory.Utility,
+    category: ComponentCategory.UTILITY,
     icon: 'type',
     default_props: { content: '文本内容', level: 'body' },
     default_style: {},
@@ -726,9 +726,9 @@ const PRESET_COMPONENTS: ComponentDefinition[] = [
   {
     type: 'Icon',
     name: '图标',
-    category: ComponentCategory.Utility,
+    category: ComponentCategory.UTILITY,
     icon: 'star',
-    default_props: { name: 'star', size: 24, color: '#333' },
+    default_props: { name: 'star', size: 24, color: 'grey.800' },
     default_style: {},
     prop_schema: [
       { key: 'name', label: '图标名', type: 'string', default: 'star', group: '内容' },

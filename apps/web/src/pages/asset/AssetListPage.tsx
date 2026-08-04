@@ -1,14 +1,5 @@
 import React, { useState, useMemo } from 'react';
-import {
-  Box,
-  Card,
-  CardContent,
-  Typography,
-  Chip,
-  Grid,
-  Divider,
-  Avatar,
-} from '@mui/material';
+import { Box, Card, CardContent, Typography, Chip, Grid, Divider, Avatar } from '@mui/material';
 import {
   Package,
   CheckCircle,
@@ -115,7 +106,10 @@ export const AssetListPage: React.FC = () => {
       maintenance: assets.filter((a) => a.status === 'maintenance').length,
       idle: assets.filter((a) => a.status === 'idle').length,
       totalValue: assets.reduce((sum, a) => {
-        const val = typeof a.purchase_price === 'string' ? parseFloat(a.purchase_price) : (a.purchase_price || 0);
+        const val =
+          typeof a.purchase_price === 'string'
+            ? parseFloat(a.purchase_price)
+            : a.purchase_price || 0;
         return sum + (val || 0);
       }, 0),
     };
@@ -202,10 +196,16 @@ export const AssetListPage: React.FC = () => {
               <Package sx={{ width: 20, height: 20, color: 'primary.dark' }} />
             </Box>
             <Box>
-              <Typography variant='body2' sx={{ color: 'text.secondary', fontSize: '0.875rem' }}>
+              <Typography
+                variant='body2'
+                sx={{ color: 'text.secondary', fontSize: '0.875rem' }}
+              >
                 资产总数
               </Typography>
-              <Typography variant='h5' sx={{ fontWeight: 700 }}>
+              <Typography
+                variant='h5'
+                sx={{ fontWeight: 700 }}
+              >
                 {stats.total}
               </Typography>
             </Box>
@@ -229,10 +229,16 @@ export const AssetListPage: React.FC = () => {
               <CheckCircle sx={{ width: 20, height: 20, color: 'success.dark' }} />
             </Box>
             <Box>
-              <Typography variant='body2' sx={{ color: 'text.secondary', fontSize: '0.875rem' }}>
+              <Typography
+                variant='body2'
+                sx={{ color: 'text.secondary', fontSize: '0.875rem' }}
+              >
                 在用
               </Typography>
-              <Typography variant='h5' sx={{ fontWeight: 700, color: 'success.main' }}>
+              <Typography
+                variant='h5'
+                sx={{ fontWeight: 700, color: 'success.main' }}
+              >
                 {stats.active}
               </Typography>
             </Box>
@@ -256,10 +262,16 @@ export const AssetListPage: React.FC = () => {
               <Wrench sx={{ width: 20, height: 20, color: 'warning.dark' }} />
             </Box>
             <Box>
-              <Typography variant='body2' sx={{ color: 'text.secondary', fontSize: '0.875rem' }}>
+              <Typography
+                variant='body2'
+                sx={{ color: 'text.secondary', fontSize: '0.875rem' }}
+              >
                 维修中
               </Typography>
-              <Typography variant='h5' sx={{ fontWeight: 700, color: 'warning.main' }}>
+              <Typography
+                variant='h5'
+                sx={{ fontWeight: 700, color: 'warning.main' }}
+              >
                 {stats.maintenance}
               </Typography>
             </Box>
@@ -283,10 +295,16 @@ export const AssetListPage: React.FC = () => {
               <DollarSign sx={{ width: 20, height: 20, color: 'secondary.dark' }} />
             </Box>
             <Box>
-              <Typography variant='body2' sx={{ color: 'text.secondary', fontSize: '0.875rem' }}>
+              <Typography
+                variant='body2'
+                sx={{ color: 'text.secondary', fontSize: '0.875rem' }}
+              >
                 资产总值
               </Typography>
-              <Typography variant='h6' sx={{ fontWeight: 700, color: 'secondary.main' }}>
+              <Typography
+                variant='h6'
+                sx={{ fontWeight: 700, color: 'secondary.main' }}
+              >
                 {formatCurrency(stats.totalValue)}
               </Typography>
             </Box>
@@ -318,10 +336,16 @@ export const AssetListPage: React.FC = () => {
             <Package size={32} />
           </Avatar>
           <Box sx={{ flex: 1 }}>
-            <Typography variant='h6' sx={{ fontWeight: 600, mb: 0.5 }}>
+            <Typography
+              variant='h6'
+              sx={{ fontWeight: 600, mb: 0.5 }}
+            >
               {asset.name}
             </Typography>
-            <Typography variant='body2' sx={{ color: 'text.secondary', mb: 1 }}>
+            <Typography
+              variant='body2'
+              sx={{ color: 'text.secondary', mb: 1 }}
+            >
               {asset.asset_code}
             </Typography>
             <Chip
@@ -338,12 +362,21 @@ export const AssetListPage: React.FC = () => {
 
         <Divider sx={{ mb: 2 }} />
 
-        <Grid container spacing={2}>
+        <Grid
+          container
+          spacing={2}
+        >
           <Grid size={{ xs: 12, sm: 6 }}>
             <Box sx={{ display: 'flex', alignItems: 'flex-start', gap: 1.5 }}>
-              <Tag size={16} style={{ marginTop: 2, color: 'var(--mui-palette-text-secondary)' }} />
+              <Tag
+                size={16}
+                style={{ marginTop: 2, color: 'var(--mui-palette-text-secondary)' }}
+              />
               <Box>
-                <Typography variant='caption' sx={{ color: 'text.secondary', display: 'block' }}>
+                <Typography
+                  variant='caption'
+                  sx={{ color: 'text.secondary', display: 'block' }}
+                >
                   资产编号
                 </Typography>
                 <Typography variant='body2'>{asset.asset_code || '-'}</Typography>
@@ -352,9 +385,15 @@ export const AssetListPage: React.FC = () => {
           </Grid>
           <Grid size={{ xs: 12, sm: 6 }}>
             <Box sx={{ display: 'flex', alignItems: 'flex-start', gap: 1.5 }}>
-              <FileText size={16} style={{ marginTop: 2, color: 'var(--mui-palette-text-secondary)' }} />
+              <FileText
+                size={16}
+                style={{ marginTop: 2, color: 'var(--mui-palette-text-secondary)' }}
+              />
               <Box>
-                <Typography variant='caption' sx={{ color: 'text.secondary', display: 'block' }}>
+                <Typography
+                  variant='caption'
+                  sx={{ color: 'text.secondary', display: 'block' }}
+                >
                   规格型号
                 </Typography>
                 <Typography variant='body2'>{asset.specification || '-'}</Typography>
@@ -363,9 +402,15 @@ export const AssetListPage: React.FC = () => {
           </Grid>
           <Grid size={{ xs: 12, sm: 6 }}>
             <Box sx={{ display: 'flex', alignItems: 'flex-start', gap: 1.5 }}>
-              <MapPin size={16} style={{ marginTop: 2, color: 'var(--mui-palette-text-secondary)' }} />
+              <MapPin
+                size={16}
+                style={{ marginTop: 2, color: 'var(--mui-palette-text-secondary)' }}
+              />
               <Box>
-                <Typography variant='caption' sx={{ color: 'text.secondary', display: 'block' }}>
+                <Typography
+                  variant='caption'
+                  sx={{ color: 'text.secondary', display: 'block' }}
+                >
                   存放位置
                 </Typography>
                 <Typography variant='body2'>{asset.location || '-'}</Typography>
@@ -374,9 +419,15 @@ export const AssetListPage: React.FC = () => {
           </Grid>
           <Grid size={{ xs: 12, sm: 6 }}>
             <Box sx={{ display: 'flex', alignItems: 'flex-start', gap: 1.5 }}>
-              <Building size={16} style={{ marginTop: 2, color: 'var(--mui-palette-text-secondary)' }} />
+              <Building
+                size={16}
+                style={{ marginTop: 2, color: 'var(--mui-palette-text-secondary)' }}
+              />
               <Box>
-                <Typography variant='caption' sx={{ color: 'text.secondary', display: 'block' }}>
+                <Typography
+                  variant='caption'
+                  sx={{ color: 'text.secondary', display: 'block' }}
+                >
                   所属部门
                 </Typography>
                 <Typography variant='body2'>{asset.department_name || '-'}</Typography>
@@ -385,9 +436,15 @@ export const AssetListPage: React.FC = () => {
           </Grid>
           <Grid size={{ xs: 12, sm: 6 }}>
             <Box sx={{ display: 'flex', alignItems: 'flex-start', gap: 1.5 }}>
-              <User size={16} style={{ marginTop: 2, color: 'var(--mui-palette-text-secondary)' }} />
+              <User
+                size={16}
+                style={{ marginTop: 2, color: 'var(--mui-palette-text-secondary)' }}
+              />
               <Box>
-                <Typography variant='caption' sx={{ color: 'text.secondary', display: 'block' }}>
+                <Typography
+                  variant='caption'
+                  sx={{ color: 'text.secondary', display: 'block' }}
+                >
                   负责人
                 </Typography>
                 <Typography variant='body2'>{asset.responsible_person || '-'}</Typography>
@@ -396,9 +453,15 @@ export const AssetListPage: React.FC = () => {
           </Grid>
           <Grid size={{ xs: 12, sm: 6 }}>
             <Box sx={{ display: 'flex', alignItems: 'flex-start', gap: 1.5 }}>
-              <DollarSign size={16} style={{ marginTop: 2, color: 'var(--mui-palette-text-secondary)' }} />
+              <DollarSign
+                size={16}
+                style={{ marginTop: 2, color: 'var(--mui-palette-text-secondary)' }}
+              />
               <Box>
-                <Typography variant='caption' sx={{ color: 'text.secondary', display: 'block' }}>
+                <Typography
+                  variant='caption'
+                  sx={{ color: 'text.secondary', display: 'block' }}
+                >
                   购置价格
                 </Typography>
                 <Typography variant='body2'>{formatCurrency(asset.purchase_price)}</Typography>
@@ -407,9 +470,15 @@ export const AssetListPage: React.FC = () => {
           </Grid>
           <Grid size={{ xs: 12, sm: 6 }}>
             <Box sx={{ display: 'flex', alignItems: 'flex-start', gap: 1.5 }}>
-              <Calendar size={16} style={{ marginTop: 2, color: 'var(--mui-palette-text-secondary)' }} />
+              <Calendar
+                size={16}
+                style={{ marginTop: 2, color: 'var(--mui-palette-text-secondary)' }}
+              />
               <Box>
-                <Typography variant='caption' sx={{ color: 'text.secondary', display: 'block' }}>
+                <Typography
+                  variant='caption'
+                  sx={{ color: 'text.secondary', display: 'block' }}
+                >
                   购置日期
                 </Typography>
                 <Typography variant='body2'>
@@ -422,15 +491,19 @@ export const AssetListPage: React.FC = () => {
           </Grid>
           <Grid size={{ xs: 12, sm: 6 }}>
             <Box sx={{ display: 'flex', alignItems: 'flex-start', gap: 1.5 }}>
-              <Clock size={16} style={{ marginTop: 2, color: 'var(--mui-palette-text-secondary)' }} />
+              <Clock
+                size={16}
+                style={{ marginTop: 2, color: 'var(--mui-palette-text-secondary)' }}
+              />
               <Box>
-                <Typography variant='caption' sx={{ color: 'text.secondary', display: 'block' }}>
+                <Typography
+                  variant='caption'
+                  sx={{ color: 'text.secondary', display: 'block' }}
+                >
                   创建时间
                 </Typography>
                 <Typography variant='body2'>
-                  {asset.created_at
-                    ? new Date(asset.created_at).toLocaleDateString('zh-CN')
-                    : '-'}
+                  {asset.created_at ? new Date(asset.created_at).toLocaleDateString('zh-CN') : '-'}
                 </Typography>
               </Box>
             </Box>
@@ -438,9 +511,15 @@ export const AssetListPage: React.FC = () => {
           {asset.description && (
             <Grid size={{ xs: 12 }}>
               <Box sx={{ display: 'flex', alignItems: 'flex-start', gap: 1.5 }}>
-                <FileText size={16} style={{ marginTop: 2, color: 'var(--mui-palette-text-secondary)' }} />
+                <FileText
+                  size={16}
+                  style={{ marginTop: 2, color: 'var(--mui-palette-text-secondary)' }}
+                />
                 <Box>
-                  <Typography variant='caption' sx={{ color: 'text.secondary', display: 'block' }}>
+                  <Typography
+                    variant='caption'
+                    sx={{ color: 'text.secondary', display: 'block' }}
+                  >
                     描述
                   </Typography>
                   <Typography variant='body2'>{asset.description}</Typography>

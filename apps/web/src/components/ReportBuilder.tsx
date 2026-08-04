@@ -143,7 +143,7 @@ const ReportBuilder: React.FC<ReportBuilderProps> = ({ onClose, reportTypes, onS
       style={{
         position: 'fixed',
         inset: 0,
-        backgroundColor: 'rgba(0, 0, 0, 0.5)',
+        backgroundColor: 'action.active',
         display: 'flex',
         alignItems: 'center',
         justifyContent: 'center',
@@ -153,7 +153,7 @@ const ReportBuilder: React.FC<ReportBuilderProps> = ({ onClose, reportTypes, onS
     >
       <div
         style={{
-          backgroundColor: 'white',
+          backgroundColor: 'common.white',
           borderRadius: 12,
           boxShadow: '0 25px 50px -12px rgba(0, 0, 0, 0.25)',
           width: '100%',
@@ -176,7 +176,7 @@ const ReportBuilder: React.FC<ReportBuilderProps> = ({ onClose, reportTypes, onS
             <h3 style={{ fontSize: 20, fontWeight: 600, color: 'var(--mui-palette-text-primary)' }}>
               报表生成器
             </h3>
-            <p style={{ fontSize: 14, color: '#475569', marginTop: 4 }}>创建自定义报表</p>
+            <p style={{ fontSize: 14, color: 'grey.600', marginTop: 4 }}>创建自定义报表</p>
           </div>
           <button
             onClick={onClose}
@@ -218,7 +218,7 @@ const ReportBuilder: React.FC<ReportBuilderProps> = ({ onClose, reportTypes, onS
                   alignItems: 'center',
                   justifyContent: 'center',
                   backgroundColor: step >= 1 ? theme.palette.primary.dark : theme.palette.grey[400],
-                  color: 'white',
+                  color: 'common.white',
                   fontSize: 14,
                   fontWeight: 500,
                 }}
@@ -254,7 +254,7 @@ const ReportBuilder: React.FC<ReportBuilderProps> = ({ onClose, reportTypes, onS
                   alignItems: 'center',
                   justifyContent: 'center',
                   backgroundColor: step >= 2 ? theme.palette.primary.dark : theme.palette.grey[400],
-                  color: 'white',
+                  color: 'common.white',
                   fontSize: 14,
                   fontWeight: 500,
                 }}
@@ -290,7 +290,7 @@ const ReportBuilder: React.FC<ReportBuilderProps> = ({ onClose, reportTypes, onS
                   alignItems: 'center',
                   justifyContent: 'center',
                   backgroundColor: step >= 3 ? theme.palette.primary.dark : theme.palette.grey[400],
-                  color: 'white',
+                  color: 'common.white',
                   fontSize: 14,
                   fontWeight: 500,
                 }}
@@ -381,7 +381,7 @@ const ReportBuilder: React.FC<ReportBuilderProps> = ({ onClose, reportTypes, onS
                                   style={{
                                     width: 20,
                                     height: 20,
-                                    color: 'white',
+                                    color: 'common.white',
                                   }}
                                 />
                               </div>
@@ -637,7 +637,7 @@ const ReportBuilder: React.FC<ReportBuilderProps> = ({ onClose, reportTypes, onS
                                 borderRadius: 4,
                               }}
                             />
-                            <span style={{ fontSize: 14, color: '#334155' }}>{column}</span>
+                            <span style={{ fontSize: 14, color: 'grey.700' }}>{column}</span>
                           </label>
                         ))}
                     </div>
@@ -761,7 +761,7 @@ const ReportBuilder: React.FC<ReportBuilderProps> = ({ onClose, reportTypes, onS
             style={{
               padding: '8px 24px',
               backgroundColor: theme.palette.primary.dark,
-              color: 'white',
+              color: 'common.white',
               borderRadius: 8,
               border: 'none',
               cursor: 'pointer',

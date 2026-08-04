@@ -693,7 +693,7 @@ export interface paths {
                         /** @example 新用户 */
                         full_name?: string;
                         /** @example true */
-                        is_active?: boolean;
+                        isActive?: boolean;
                     };
                 };
             };
@@ -777,7 +777,7 @@ export interface paths {
                     "application/json": {
                         email?: string;
                         full_name?: string;
-                        is_active?: boolean;
+                        isActive?: boolean;
                     };
                 };
             };
@@ -1476,7 +1476,7 @@ export interface paths {
                         /** @example TECH */
                         code: string;
                         /** Format: uuid */
-                        parent_id?: string;
+                        parentId?: string;
                         /** Format: uuid */
                         manager_id?: string;
                         /** @example 负责系统开发 */
@@ -2397,11 +2397,11 @@ export interface components {
             currency: string;
             description?: string | null;
             id: components["schemas"]["Uuid"];
-            is_enabled: boolean;
+            isEnabled: boolean;
             /** Format: int32 */
             level: number;
             name: string;
-            parent_id?: components["schemas"]["Uuid"] | null;
+            parentId?: components["schemas"]["Uuid"] | null;
             tenant_id: components["schemas"]["Uuid"];
             updated_at: components["schemas"]["DateTime"];
         };
@@ -2415,11 +2415,11 @@ export interface components {
             created_at: components["schemas"]["DateTime"];
             description?: string | null;
             id: components["schemas"]["Uuid"];
-            is_enabled: boolean;
+            isEnabled: boolean;
             /** Format: int32 */
             level: number;
             name: string;
-            parent_id?: components["schemas"]["Uuid"] | null;
+            parentId?: components["schemas"]["Uuid"] | null;
             tenant_id: components["schemas"]["Uuid"];
             updated_at: components["schemas"]["DateTime"];
         };
@@ -2459,7 +2459,7 @@ export interface components {
             currency: string;
             description?: string | null;
             name: string;
-            parent_id?: components["schemas"]["Uuid"] | null;
+            parentId?: components["schemas"]["Uuid"] | null;
         };
         CreatePaymentRequest: {
             bank_account_id?: components["schemas"]["Uuid"] | null;
@@ -2668,13 +2668,13 @@ export interface components {
             erp_order: components["schemas"]["ErpSalesOrderInfo"];
             notes?: string | null;
             planned_completion_date?: components["schemas"]["DateTime"] | null;
-            planned_start_date?: components["schemas"]["DateTime"] | null;
+            plannedStartDate?: components["schemas"]["DateTime"] | null;
             workshop_id?: components["schemas"]["Uuid"] | null;
         };
         CreateProductionOrderRequest: {
             notes?: string | null;
-            planned_end_date?: components["schemas"]["DateTime"] | null;
-            planned_start_date?: components["schemas"]["DateTime"] | null;
+            plannedEndDate?: components["schemas"]["DateTime"] | null;
+            plannedStartDate?: components["schemas"]["DateTime"] | null;
             product_code: string;
             product_id?: components["schemas"]["Uuid"] | null;
             product_name: string;
@@ -2685,11 +2685,11 @@ export interface components {
         CreateWorkOrderRequest: {
             operator?: string | null;
             order_id?: string | null;
-            order_no?: string | null;
-            plan_end_date?: string | null;
-            plan_start_date?: string | null;
+            orderNo?: string | null;
+            planEndDate?: string | null;
+            planStartDate?: string | null;
             /** Format: double */
-            planned_quantity: number;
+            plannedQuantity: number;
             priority?: string | null;
             process_id?: string | null;
             product_code: string;
@@ -2705,7 +2705,7 @@ export interface components {
             /** Format: double */
             labor_hours?: number | null;
             order_id?: string | null;
-            order_no?: string | null;
+            orderNo?: string | null;
             /** Format: double */
             output_quantity?: number | null;
             remark?: string | null;
@@ -2740,16 +2740,16 @@ export interface components {
             total: number;
         };
         ProductionOrderResponse: {
-            actual_end_date?: components["schemas"]["DateTime"] | null;
-            actual_start_date?: components["schemas"]["DateTime"] | null;
+            actualEndDate?: components["schemas"]["DateTime"] | null;
+            actualStartDate?: components["schemas"]["DateTime"] | null;
             /** Format: double */
             completed_quantity: number;
             created_at: components["schemas"]["DateTime"];
             id: components["schemas"]["Uuid"];
             notes?: string | null;
-            order_no: string;
-            planned_end_date?: components["schemas"]["DateTime"] | null;
-            planned_start_date?: components["schemas"]["DateTime"] | null;
+            orderNo: string;
+            plannedEndDate?: components["schemas"]["DateTime"] | null;
+            plannedStartDate?: components["schemas"]["DateTime"] | null;
             product_code: string;
             product_id?: components["schemas"]["Uuid"] | null;
             product_name: string;
@@ -2769,8 +2769,8 @@ export interface components {
         };
         UpdateProductionOrderRequest: {
             notes?: string | null;
-            planned_end_date?: components["schemas"]["DateTime"] | null;
-            planned_start_date?: components["schemas"]["DateTime"] | null;
+            plannedEndDate?: components["schemas"]["DateTime"] | null;
+            plannedStartDate?: components["schemas"]["DateTime"] | null;
             product_code?: string | null;
             product_name?: string | null;
             /** Format: double */
@@ -2782,11 +2782,11 @@ export interface components {
             completed_quantity?: number | null;
             operator?: string | null;
             order_id?: string | null;
-            order_no?: string | null;
-            plan_end_date?: string | null;
-            plan_start_date?: string | null;
+            orderNo?: string | null;
+            planEndDate?: string | null;
+            planStartDate?: string | null;
             /** Format: double */
-            planned_quantity?: number | null;
+            plannedQuantity?: number | null;
             priority?: string | null;
             process_id?: string | null;
             product_code?: string | null;
@@ -2802,7 +2802,7 @@ export interface components {
             /** Format: double */
             labor_hours?: number | null;
             order_id?: string | null;
-            order_no?: string | null;
+            orderNo?: string | null;
             /** Format: double */
             output_quantity?: number | null;
             remark?: string | null;
@@ -2816,19 +2816,19 @@ export interface components {
             work_station_name?: string | null;
         };
         WorkOrderResponse: {
-            actual_end_date?: string | null;
-            actual_start_date?: string | null;
+            actualEndDate?: string | null;
+            actualStartDate?: string | null;
             /** Format: double */
             completed_quantity: number;
             created_at: string;
             id: string;
             operator?: string | null;
             order_id?: string | null;
-            order_no?: string | null;
-            plan_end_date?: string | null;
-            plan_start_date?: string | null;
+            orderNo?: string | null;
+            planEndDate?: string | null;
+            planStartDate?: string | null;
             /** Format: double */
-            planned_quantity: number;
+            plannedQuantity: number;
             priority?: string | null;
             process_id?: string | null;
             product_code: string;
@@ -2851,7 +2851,7 @@ export interface components {
             /** Format: double */
             labor_hours: number;
             order_id?: string | null;
-            order_no?: string | null;
+            orderNo?: string | null;
             /** Format: double */
             output_quantity: number;
             remark?: string | null;
@@ -2964,7 +2964,7 @@ export interface components {
             by_entity_type: {
                 [key: string]: number;
             };
-            by_severity: {
+            bySeverity: {
                 [key: string]: number;
             };
             /** Format: int64 */
@@ -3225,7 +3225,7 @@ export interface components {
             /** @example 管理员 */
             full_name?: string;
             /** @example true */
-            is_active?: boolean;
+            isActive?: boolean;
             /** @example false */
             is_superuser?: boolean;
             /**
@@ -3319,7 +3319,7 @@ export interface components {
             /** @example TECH */
             code?: string;
             /** Format: uuid */
-            parent_id?: string | null;
+            parentId?: string | null;
             /** Format: uuid */
             manager_id?: string | null;
             /** @example 负责系统开发 */
@@ -3910,7 +3910,7 @@ export interface operations {
             query?: never;
             header?: never;
             path: {
-                parent_id: components["schemas"]["Uuid"] | null;
+                parentId: components["schemas"]["Uuid"] | null;
             };
             cookie?: never;
         };

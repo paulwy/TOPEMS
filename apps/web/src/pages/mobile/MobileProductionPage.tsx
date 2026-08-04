@@ -79,7 +79,7 @@ const MobileProductionPage: React.FC = () => {
       const mockOrders: ProductionOrder[] = [
         {
           id: '1',
-          order_no: 'PO-2024-06-001',
+          orderNo: 'PO-2024-06-001',
           product_name: '智能传感器模块',
           quantity: 500,
           completed_quantity: 320,
@@ -91,7 +91,7 @@ const MobileProductionPage: React.FC = () => {
         },
         {
           id: '2',
-          order_no: 'PO-2024-06-002',
+          orderNo: 'PO-2024-06-002',
           product_name: '数据采集器',
           quantity: 200,
           completed_quantity: 0,
@@ -102,7 +102,7 @@ const MobileProductionPage: React.FC = () => {
         },
         {
           id: '3',
-          order_no: 'PO-2024-05-098',
+          orderNo: 'PO-2024-05-098',
           product_name: 'PCB电路板组件',
           quantity: 1000,
           completed_quantity: 1000,
@@ -115,7 +115,7 @@ const MobileProductionPage: React.FC = () => {
         },
         {
           id: '4',
-          order_no: 'PO-2024-06-003',
+          orderNo: 'PO-2024-06-003',
           product_name: '电源模块',
           quantity: 300,
           completed_quantity: 150,
@@ -127,7 +127,7 @@ const MobileProductionPage: React.FC = () => {
         },
         {
           id: '5',
-          order_no: 'PO-2024-06-004',
+          orderNo: 'PO-2024-06-004',
           product_name: '通信模块',
           quantity: 400,
           completed_quantity: 0,
@@ -150,7 +150,7 @@ const MobileProductionPage: React.FC = () => {
         {
           id: '1',
           order_id: '1',
-          order_no: 'PO-2024-06-001',
+          orderNo: 'PO-2024-06-001',
           workstation: 'A生产线-工位1',
           operator: user?.fullName || '',
           quantity: 100,
@@ -164,7 +164,7 @@ const MobileProductionPage: React.FC = () => {
         {
           id: '2',
           order_id: '1',
-          order_no: 'PO-2024-06-001',
+          orderNo: 'PO-2024-06-001',
           workstation: 'A生产线-工位1',
           operator: user?.fullName || '',
           quantity: 120,
@@ -178,7 +178,7 @@ const MobileProductionPage: React.FC = () => {
         {
           id: '3',
           order_id: '3',
-          order_no: 'PO-2024-05-098',
+          orderNo: 'PO-2024-05-098',
           workstation: 'A生产线-工位2',
           operator: '李华',
           quantity: 500,
@@ -341,7 +341,7 @@ const MobileProductionPage: React.FC = () => {
     (order) =>
       !searchQuery ||
       order.product_name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      order.order_no.toLowerCase().includes(searchQuery.toLowerCase())
+      order.orderNo.toLowerCase().includes(searchQuery.toLowerCase())
   );
 
   const handleStartReport = (order: ProductionOrder) => {
@@ -361,7 +361,7 @@ const MobileProductionPage: React.FC = () => {
       const newReport: WorkReport = {
         id: Date.now().toString(),
         order_id: selectedOrder?.id || '',
-        order_no: selectedOrder?.order_no || '',
+        orderNo: selectedOrder?.orderNo || '',
         workstation: selectedOrder?.workstation || '',
         operator: user?.fullName || '',
         quantity: reportForm.quantity,
@@ -613,14 +613,18 @@ const MobileProductionPage: React.FC = () => {
                               <Chip
                                 label={getStatusLabel(order.status)}
                                 size='small'
-                                color={getStatusColor(order.status) as React.ComponentProps<typeof import('@mui/material/Chip').default>['color']}
+                                color={
+                                  getStatusColor(order.status) as React.ComponentProps<
+                                    typeof Chip
+                                  >['color']
+                                }
                                 sx={{ height: 20, fontSize: '0.7rem' }}
                               />
                               <Typography
                                 variant='caption'
                                 color='text.secondary'
                               >
-                                {order.order_no}
+                                {order.orderNo}
                               </Typography>
                             </Box>
                           </Box>
@@ -798,7 +802,7 @@ const MobileProductionPage: React.FC = () => {
                             <ClipboardList style={{ width: 20, height: 20 }} />
                           </Avatar>
                         }
-                        title={report.order_no}
+                        title={report.orderNo}
                         subtitle={
                           <Box sx={{ mt: 0.5 }}>
                             <Typography
@@ -857,7 +861,7 @@ const MobileProductionPage: React.FC = () => {
                         onClick={() =>
                           addNotification({
                             title: '报工详情',
-                            message: `查看 ${report.order_no} 报工详情`,
+                            message: `查看 ${report.orderNo} 报工详情`,
                             type: 'info',
                           })
                         }
@@ -897,7 +901,11 @@ const MobileProductionPage: React.FC = () => {
                             <Chip
                               label={getStatusLabel(equipment.status)}
                               size='small'
-                              color={getStatusColor(equipment.status) as React.ComponentProps<typeof import('@mui/material/Chip').default>['color']}
+                              color={
+                                getStatusColor(equipment.status) as React.ComponentProps<
+                                  typeof Chip
+                                >['color']
+                              }
                               sx={{ height: 18, fontSize: '0.65rem' }}
                             />
                           </Box>
@@ -969,7 +977,7 @@ const MobileProductionPage: React.FC = () => {
                     variant='caption'
                     color='text.secondary'
                   >
-                    {selectedOrder.order_no} · {selectedOrder.workstation}
+                    {selectedOrder.orderNo} · {selectedOrder.workstation}
                   </Typography>
                 </Paper>
               )}

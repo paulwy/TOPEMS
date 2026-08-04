@@ -106,12 +106,12 @@ const ObservabilityPanel: React.FC = () => {
             startIcon={<ActivityIcon size={18} />}
             onClick={() => setIsExpanded(true)}
             sx={{
-              bgcolor: '#1976d2',
+              bgcolor: 'info.600',
               borderRadius: 2,
               textTransform: 'none',
               boxShadow: '0 4px 12px rgba(25, 118, 210, 0.4)',
               '&:hover': {
-                bgcolor: '#1565c0',
+                bgcolor: 'primary.700',
               },
             }}
           >
@@ -180,7 +180,7 @@ const ObservabilityPanel: React.FC = () => {
                 <IconButton
                   size='small'
                   onClick={handleExport}
-                  sx={{ color: 'white' }}
+                  sx={{ color: 'common.white' }}
                 >
                   <DownloadIcon size={18} />
                 </IconButton>
@@ -189,7 +189,7 @@ const ObservabilityPanel: React.FC = () => {
                 <IconButton
                   size='small'
                   onClick={() => setIsExpanded(false)}
-                  sx={{ color: 'white' }}
+                  sx={{ color: 'common.white' }}
                 >
                   <XIcon size={18} />
                 </IconButton>
@@ -448,7 +448,12 @@ const ObservabilityPanel: React.FC = () => {
                   <Chip
                     label={totalVisits}
                     size='small'
-                    sx={{ height: 18, fontSize: 10, bgcolor: '#ede9fe', color: '#7c3aed' }}
+                    sx={{
+                      height: 18,
+                      fontSize: 10,
+                      bgcolor: 'secondary.100',
+                      color: 'secondary.600',
+                    }}
                   />
                 </Box>
               </AccordionSummary>

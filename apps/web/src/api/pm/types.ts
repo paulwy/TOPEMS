@@ -15,7 +15,7 @@ export interface Project {
   risklevel?: string;
   priority?: number;
   tags?: string[];
-  parent_id?: string;
+  parentId?: string;
   workspace_id?: string;
   created_by?: string;
   created_at: string;
@@ -48,7 +48,7 @@ export interface CreateProjectRequest {
   risklevel?: string;
   priority?: number;
   tags?: string[];
-  parent_id?: string;
+  parentId?: string;
   workspace_id?: string;
   cost_center_id?: string;
 }
@@ -66,7 +66,7 @@ export interface UpdateProjectRequest {
   risklevel?: string;
   priority?: number;
   tags?: string[];
-  parent_id?: string;
+  parentId?: string;
   workspace_id?: string;
 }
 
@@ -288,7 +288,7 @@ export interface ApprovalRequest {
 export interface Contract {
   id: string;
   project_id: string;
-  contract_no: string;
+  contractNo: string;
   contract_name: string;
   contract_type: string;
   party_a: string;
@@ -592,7 +592,7 @@ export interface DocumentVersion {
 export interface DocumentFolder {
   id: string;
   project_id: string;
-  parent_id?: string;
+  parentId?: string;
   folder_name: string;
   description?: string;
   created_by?: string;

@@ -111,16 +111,16 @@ vi.mock('@/store', () => ({
 }));
 
 describe('AdminTenantManagementPage', () => {
-it('should render without crashing', () => {
+  it('should render without crashing', () => {
     const { container } = render(
       <BrowserRouter>
         <TenantManagementPage />
       </BrowserRouter>
     );
     expect(container).toBeDefined();
-});
+  });
 
-it('should have tenant management API methods', async () => {
+  it('should have tenant management API methods', async () => {
     render(
       <BrowserRouter>
         <TenantManagementPage />
@@ -132,9 +132,9 @@ it('should have tenant management API methods', async () => {
     expect(tenantApi.deleteTenant).toBeDefined();
     expect(tenantApi.suspendTenant).toBeDefined();
     expect(tenantApi.activateTenant).toBeDefined();
-});
+  });
 
-it('should call tenant list API on mount', async () => {
+  it('should call tenant list API on mount', async () => {
     render(
       <BrowserRouter>
         <TenantManagementPage />
@@ -142,7 +142,6 @@ it('should call tenant list API on mount', async () => {
     );
     await waitFor(() => {
       expect(tenantApi.listTenants).toHaveBeenCalled();
+    });
   });
-});
-;
 });

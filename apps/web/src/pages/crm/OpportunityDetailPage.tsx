@@ -109,17 +109,23 @@ const OpportunityDetailPage: React.FC = () => {
         }}
       >
         <Box>
-          <InputLabel sx={{ fontSize: 12, color: 'text.secondary' }}>{t('crm.opportunityDetail.field_name')}</InputLabel>
+          <InputLabel sx={{ fontSize: 12, color: 'text.secondary' }}>
+            {t('crm.opportunityDetail.field_name')}
+          </InputLabel>
           <Typography sx={{ fontWeight: 'medium', mt: 0.5 }}>{opportunity.name}</Typography>
         </Box>
         <Box>
-          <InputLabel sx={{ fontSize: 12, color: 'text.secondary' }}>{t('crm.opportunityDetail.field_amount')}</InputLabel>
+          <InputLabel sx={{ fontSize: 12, color: 'text.secondary' }}>
+            {t('crm.opportunityDetail.field_amount')}
+          </InputLabel>
           <Typography sx={{ fontWeight: 'medium', mt: 0.5, color: 'primary.main' }}>
             {formatMoney(opportunity.value)}
           </Typography>
         </Box>
         <Box>
-          <InputLabel sx={{ fontSize: 12, color: 'text.secondary' }}>{t('crm.opportunityDetail.field_stage')}</InputLabel>
+          <InputLabel sx={{ fontSize: 12, color: 'text.secondary' }}>
+            {t('crm.opportunityDetail.field_stage')}
+          </InputLabel>
           <Box sx={{ mt: 0.5 }}>
             <Chip
               size='small'
@@ -129,20 +135,28 @@ const OpportunityDetailPage: React.FC = () => {
           </Box>
         </Box>
         <Box>
-          <InputLabel sx={{ fontSize: 12, color: 'text.secondary' }}>{t('crm.opportunityDetail.field_customer')}</InputLabel>
+          <InputLabel sx={{ fontSize: 12, color: 'text.secondary' }}>
+            {t('crm.opportunityDetail.field_customer')}
+          </InputLabel>
           <Typography sx={{ mt: 0.5 }}>{customerName || opportunity.customer_id || '-'}</Typography>
         </Box>
         <Box>
-          <InputLabel sx={{ fontSize: 12, color: 'text.secondary' }}>{t('crm.opportunityDetail.field_close_date')}</InputLabel>
+          <InputLabel sx={{ fontSize: 12, color: 'text.secondary' }}>
+            {t('crm.opportunityDetail.field_close_date')}
+          </InputLabel>
           <Typography sx={{ mt: 0.5 }}>{formatDate(opportunity.close_date)}</Typography>
         </Box>
         <Box>
-          <InputLabel sx={{ fontSize: 12, color: 'text.secondary' }}>{t('crm.opportunityDetail.field_probability')}</InputLabel>
+          <InputLabel sx={{ fontSize: 12, color: 'text.secondary' }}>
+            {t('crm.opportunityDetail.field_probability')}
+          </InputLabel>
           <Typography sx={{ mt: 0.5 }}>{opportunity.probability || 0}%</Typography>
         </Box>
         {opportunity.notes && (
           <Box sx={{ gridColumn: 'span 3', mt: 2 }}>
-            <InputLabel sx={{ fontSize: 12, color: 'text.secondary' }}>{t('crm.opportunityDetail.field_notes')}</InputLabel>
+            <InputLabel sx={{ fontSize: 12, color: 'text.secondary' }}>
+              {t('crm.opportunityDetail.field_notes')}
+            </InputLabel>
             <Typography sx={{ mt: 0.5, color: 'text.secondary' }}>{opportunity.notes}</Typography>
           </Box>
         )}
@@ -239,8 +253,16 @@ const OpportunityDetailPage: React.FC = () => {
 
   const tabs = useMemo<TabConfig[]>(
     () => [
-      { id: 'basic', label: t('crm.opportunityDetail.tab_basic'), content: basicInfoContent || <></> },
-      { id: 'probability', label: t('crm.opportunityDetail.tab_probability'), content: probabilityContent || <></> },
+      {
+        id: 'basic',
+        label: t('crm.opportunityDetail.tab_basic'),
+        content: basicInfoContent || <></>,
+      },
+      {
+        id: 'probability',
+        label: t('crm.opportunityDetail.tab_probability'),
+        content: probabilityContent || <></>,
+      },
     ],
     [basicInfoContent, probabilityContent, t]
   );
@@ -258,7 +280,10 @@ const OpportunityDetailPage: React.FC = () => {
       tags: customerName ? [customerName] : [],
       stats: [
         { label: t('crm.opportunityDetail.stat_amount'), value: formatMoney(opportunity?.value) },
-        { label: t('crm.opportunityDetail.stat_probability'), value: `${opportunity?.probability || 0}%` },
+        {
+          label: t('crm.opportunityDetail.stat_probability'),
+          value: `${opportunity?.probability || 0}%`,
+        },
         {
           label: t('crm.opportunityDetail.stat_expected'),
           value: formatMoney(

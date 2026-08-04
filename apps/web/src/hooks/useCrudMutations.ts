@@ -50,7 +50,9 @@ export interface UseCrudMutationsOptions<TCreate, TUpdate, TDelete> {
 
 export interface UseCrudMutationsResult<TCreate, TUpdate> {
   createMutation: ReturnType<typeof useMutation<unknown, Error, TCreate, unknown>>;
-  updateMutation: ReturnType<typeof useMutation<unknown, Error, { id: string | number; data: TUpdate }, unknown>>;
+  updateMutation: ReturnType<
+    typeof useMutation<unknown, Error, { id: string | number; data: TUpdate }, unknown>
+  >;
   deleteMutation: ReturnType<typeof useMutation<unknown, Error, string | number, unknown>>;
 }
 

@@ -111,75 +111,75 @@ vi.mock('@/store', () => ({
   useToggleSidebarCollapsed: vi.fn(),
   useSetSidebarCollapsed: vi.fn(),
 }));
-    useNotificationStore.getState.mockReturnValue({
-      addNotification: mockAddNotification,
-      notifications: [],
-      removeNotification: vi.fn(),
-      clearNotifications: vi.fn(),
-    });
-    (qmsApi.listChecks as vi.Mock).mockResolvedValue({
-      success: true,
-      data: mockInspections,
-    });
-  });
-
-describe('QmsInspectionPage', () => {
-it('should render loading state initially', async () => {
-    renderWithProviders(<QmsInspectionPage />);
-    expect(screen.getByText('加载中...')).toBeInTheDocument();
+useNotificationStore.getState.mockReturnValue({
+  addNotification: mockAddNotification,
+  notifications: [],
+  removeNotification: vi.fn(),
+  clearNotifications: vi.fn(),
+});
+(qmsApi.listChecks as vi.Mock).mockResolvedValue({
+  success: true,
+  data: mockInspections,
 });
 
-it('should render inspection statistics after loading', async () => {
+describe('QmsInspectionPage', () => {
+  it('should render loading state initially', async () => {
+    renderWithProviders(<QmsInspectionPage />);
+    expect(screen.getByText('加载中...')).toBeInTheDocument();
+  });
+
+  it('should render inspection statistics after loading', async () => {
     renderWithProviders(<QmsInspectionPage />);
     await waitFor(() => {
       expect(screen.getByText('检验总数')).toBeInTheDocument();
+    });
   });
-});
 
-it('should render inspection table', async () => {
+  it('should render inspection table', async () => {
     renderWithProviders(<QmsInspectionPage />);
     await waitFor(() => {
       expect(screen.getByText('QC-2024-001')).toBeInTheDocument();
       expect(screen.getByText('零部件A')).toBeInTheDocument();
+    });
   });
-});
 
-it('should handle search', async () => {
+  it('should handle search', async () => {
     renderWithProviders(<QmsInspectionPage />);
     await waitFor(() => {
       const searchInput = screen.getByPlaceholderText(/搜索/);
       fireEvent.change(searchInput, { target: { value: '零部件A' } });
-  });
+    });
     await waitFor(() => {
       expect(screen.getByText('QC-2024-001')).toBeInTheDocument();
+    });
   });
-});
 
-it('should handle create inspection', async () => {
+  it('should handle create inspection', async () => {
     (qmsApi.createCheck as vi.Mock).mockResolvedValue({
       success: true,
       data: {},
-  });
+    });
 
     renderWithProviders(<QmsInspectionPage />);
     await waitFor(() => {
       const addButton = screen.getByRole('button', { name: /新建/ });
       fireEvent.click(addButton);
-  });
+    });
 
     const saveButton = screen.getByRole('button', { name: '保存' });
     fireEvent.click(saveButton);
 
     await waitFor(() => {
       expect(qmsApi.createCheck).toHaveBeenCalled();
-  });
+    });
     expect(mockAddNotification).toHaveBeenCalledWith(expect.objectContaining({ type: 'success' }));
+  });
 
-it('should handle API error', async () => {
+  it('should handle API error', async () => {
     (qmsApi.listChecks as vi.Mock).mockRejectedValue(new Error('Network error'));
     renderWithProviders(<QmsInspectionPage />);
     await waitFor(() => {
       expect(mockAddNotification).toHaveBeenCalledWith(expect.objectContaining({ type: 'error' }));
-});
-;
+    });
+  });
 });

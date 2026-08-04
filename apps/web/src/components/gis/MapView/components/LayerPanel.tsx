@@ -30,7 +30,7 @@ const LayerPanel: React.FC<LayerPanelProps> = ({
         position: 'absolute',
         top: 16,
         right: 16,
-        backgroundColor: 'white',
+        backgroundColor: 'common.white',
         borderRadius: 2,
         boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.1)',
         overflow: 'hidden',
@@ -76,7 +76,7 @@ const LayerPanel: React.FC<LayerPanelProps> = ({
       {showLayerPanel && (
         <MuiBox
           sx={{
-            padding: '12px',
+            padding: 1.5,
             display: 'flex',
             flexDirection: 'column',
             gap: 1,

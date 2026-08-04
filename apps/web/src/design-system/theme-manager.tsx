@@ -1,5 +1,9 @@
 import React from 'react';
-import { v51DesignTokens, generateV51CSSVariables, injectV51CSSVariables } from './tokens/v51-tokens';
+import {
+  v51DesignTokens,
+  generateV51CSSVariables,
+  injectV51CSSVariables,
+} from './tokens/v51-tokens';
 
 // ============================================================
 // V51.0 Theme Manager
@@ -51,8 +55,7 @@ class ThemeManagerSingleton {
       if (stored) {
         return { ...defaultConfig, ...JSON.parse(stored) };
       }
-    } catch {
-    }
+    } catch {}
     return { ...defaultConfig };
   }
 
@@ -60,8 +63,7 @@ class ThemeManagerSingleton {
     if (typeof window === 'undefined') return;
     try {
       localStorage.setItem(STORAGE_KEY, JSON.stringify(this.config));
-    } catch {
-    }
+    } catch {}
   }
 
   private setupSystemPreferenceListener(): void {
@@ -73,8 +75,7 @@ class ThemeManagerSingleton {
           this.applyTheme(e.matches ? 'dark' : 'light');
         }
       });
-    } catch {
-    }
+    } catch {}
   }
 
   private getResolvedMode(): 'light' | 'dark' {
@@ -119,8 +120,7 @@ class ThemeManagerSingleton {
     for (const listener of this.listeners) {
       try {
         listener({ ...this.config });
-      } catch {
-      }
+      } catch {}
     }
   }
 
@@ -231,25 +231,24 @@ export const V51ThemeProvider: React.FC<{ children: React.ReactNode; initOnMount
     return unsubscribe;
   }, [initOnMount]);
 
-  const value = React.useMemo<V51ThemeContextValue>(() => ({
-    theme,
-    setTheme: (config) => themeManager.setTheme(config),
-    setMode: (mode) => themeManager.setMode(mode),
-    toggleDarkMode: () => themeManager.toggleDarkMode(),
-    setPrimaryColor: (color) => themeManager.setPrimaryColor(color),
-    setSecondaryColor: (color) => themeManager.setSecondaryColor(color),
-    setFontSize: (size) => themeManager.setFontSize(size),
-    setBorderRadius: (radius) => themeManager.setBorderRadius(radius),
-    setDensity: (density) => themeManager.setDensity(density),
-    setAnimations: (enabled) => themeManager.setAnimations(enabled),
-    reset: () => themeManager.reset(),
-  }), [theme]);
-
-  return (
-    <V51ThemeContext.Provider value={value}>
-      {children}
-    </V51ThemeContext.Provider>
+  const value = React.useMemo<V51ThemeContextValue>(
+    () => ({
+      theme,
+      setTheme: (config) => themeManager.setTheme(config),
+      setMode: (mode) => themeManager.setMode(mode),
+      toggleDarkMode: () => themeManager.toggleDarkMode(),
+      setPrimaryColor: (color) => themeManager.setPrimaryColor(color),
+      setSecondaryColor: (color) => themeManager.setSecondaryColor(color),
+      setFontSize: (size) => themeManager.setFontSize(size),
+      setBorderRadius: (radius) => themeManager.setBorderRadius(radius),
+      setDensity: (density) => themeManager.setDensity(density),
+      setAnimations: (enabled) => themeManager.setAnimations(enabled),
+      reset: () => themeManager.reset(),
+    }),
+    [theme]
   );
+
+  return <V51ThemeContext.Provider value={value}>{children}</V51ThemeContext.Provider>;
 };
 
 export const useV51Theme = (): V51ThemeContextValue => {

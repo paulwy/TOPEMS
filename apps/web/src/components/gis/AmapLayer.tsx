@@ -31,7 +31,7 @@ const AmapLayer = forwardRef<AmapLayerRef, AmapLayerProps>(
       AMapLoader.load({
         key: config.thirdParty.amapKey || '您的高德地图API Key',
         version: '2.0',
-        plugins: ['AMap.Scale', 'AMap.ToolBar', 'AMap.MarkerClusterer'],
+        plugins: ['AMap.SCALE', 'AMap.ToolBar', 'AMap.MarkerClusterer'],
       })
         .then((AMap) => {
           const map = new AMap.Map(mapContainer.current, {
@@ -41,7 +41,7 @@ const AmapLayer = forwardRef<AmapLayerRef, AmapLayerProps>(
             pitch: 30,
           });
 
-          map.addControl(new AMap.Scale());
+          map.addControl(new AMap.SCALE());
           map.addControl(new AMap.ToolBar());
 
           mapRef.current = map;
@@ -65,7 +65,10 @@ const AmapLayer = forwardRef<AmapLayerRef, AmapLayerProps>(
       if (!mapRef.current) return;
 
       mapRef.current.plugin(['AMap.Marker'], () => {
-        updateMarkers((window as unknown as Record<string, unknown>).AMap as AMapType, mapRef.current);
+        updateMarkers(
+          (window as unknown as Record<string, unknown>).AMap as AMapType,
+          mapRef.current
+        );
       });
     }, [devicePoints, storageLocations]);
 
@@ -88,9 +91,13 @@ const AmapLayer = forwardRef<AmapLayerRef, AmapLayerProps>(
     }
 
     interface AMapType {
+      // eslint-disable-next-line @typescript-eslint/naming-convention
       Marker: new (options: AMapMarkerOptions) => AMapMarker;
+      // eslint-disable-next-line @typescript-eslint/naming-convention
       Icon: new (options: unknown) => unknown;
+      // eslint-disable-next-line @typescript-eslint/naming-convention
       Size: new (width: number, height: number) => unknown;
+      // eslint-disable-next-line @typescript-eslint/naming-convention
       InfoWindow: AMapInfoWindow;
     }
 

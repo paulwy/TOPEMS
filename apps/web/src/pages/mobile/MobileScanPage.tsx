@@ -436,7 +436,7 @@ const MobileScanPage: React.FC = () => {
                   sx={{
                     position: 'absolute',
                     inset: 0,
-                    bgcolor: 'rgba(0, 0, 0, 0.85)',
+                    bgcolor: 'action.active',
                     display: 'flex',
                     flexDirection: 'column',
                     alignItems: 'center',
@@ -456,18 +456,18 @@ const MobileScanPage: React.FC = () => {
                       mb: 2,
                     }}
                   >
-                    <CheckSquare style={{ width: 32, height: 32, color: 'white' }} />
+                    <CheckSquare style={{ width: 32, height: 32, color: 'common.white' }} />
                   </Box>
                   <Typography
                     variant='h6'
-                    sx={{ color: 'white', mb: 1, fontWeight: 600 }}
+                    sx={{ color: 'common.white', mb: 1, fontWeight: 600 }}
                   >
                     扫描成功
                   </Typography>
                   <Typography
                     variant='body2'
                     sx={{
-                      color: 'rgba(255,255,255,0.9)',
+                      color: 'common.white',
                       mb: 2,
                       textAlign: 'center',
                       wordBreak: 'break-all',
@@ -481,7 +481,7 @@ const MobileScanPage: React.FC = () => {
                       variant='outlined'
                       size='small'
                       onClick={handleRescan}
-                      sx={{ color: 'white', borderColor: 'rgba(255,255,255,0.5)' }}
+                      sx={{ color: 'common.white', borderColor: 'common.white' }}
                     >
                       重新扫描
                     </MobileButton>

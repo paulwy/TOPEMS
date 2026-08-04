@@ -50,6 +50,7 @@ import { designTokens } from '@/theme/tokens';
 import { BI_PATHS } from '@/modules/bi/config';
 
 import { useTranslation } from 'react-i18next';
+
 const ct = designTokens.colors;
 
 const quickActions = [
@@ -179,7 +180,7 @@ const BiIndexPage = () => {
       unit: t('bi.bi_index_page.text_930882'),
       change: 2,
       trend: 'up' as const,
-      color: 'purple',
+      color: 'secondary.main',
       icon: <LayoutDashboard />,
       sparklineData: [2, 4, 5, 6, 8, 10, 12],
     },
@@ -189,7 +190,7 @@ const BiIndexPage = () => {
       unit: t('bi.bi_index_page.text_2a5da6'),
       change: 5,
       trend: 'up' as const,
-      color: 'orange',
+      color: 'warning.main',
       icon: <FileText />,
       sparklineData: [10, 12, 15, 18, 22, 25, 28],
     },
@@ -199,7 +200,7 @@ const BiIndexPage = () => {
       unit: t('bi.bi_index_page.text_930882'),
       change: 3,
       trend: 'up' as const,
-      color: 'green',
+      color: 'success.main',
       icon: <Database />,
       sparklineData: [5, 7, 8, 10, 12, 14, 16],
     },
@@ -209,7 +210,7 @@ const BiIndexPage = () => {
       unit: t('bi.bi_index_page.text_cc1bac'),
       change: 1,
       trend: 'up' as const,
-      color: 'blue',
+      color: 'primary.main',
       icon: <Shield />,
       sparklineData: [4, 5, 5, 6, 7, 7, 8],
     },
@@ -408,7 +409,11 @@ const BiIndexPage = () => {
                     type='area'
                     data={trendData}
                     xKey='name'
-                    yKeys={[t('bi.bi_index_page.text_4461a6'), t('bi.bi_index_page.text_67211e'), t('bi.bi_index_page.text_3d5d87')]}
+                    yKeys={[
+                      t('bi.bi_index_page.text_4461a6'),
+                      t('bi.bi_index_page.text_67211e'),
+                      t('bi.bi_index_page.text_3d5d87'),
+                    ]}
                     chartHeight={280}
                     chartWidth={700}
                     smooth
@@ -453,10 +458,26 @@ const BiIndexPage = () => {
                         disablePadding
                       >
                         {[
-                          { name: t('bi.bi_index_page.text_5c4640'), desc: t('bi.bi_index_page.text_e8ccfa'), type: 'bar' },
-                          { name: t('bi.bi_index_page.production'), desc: t('bi.bi_index_page.text_1a3263'), type: 'line' },
-                          { name: t('bi.bi_index_page.text_e556ab'), desc: t('bi.bi_index_page.warehouse'), type: 'pie' },
-                          { name: t('bi.bi_index_page.text_96f1d5'), desc: t('bi.bi_index_page.text_f9b6a5'), type: 'table' },
+                          {
+                            name: t('bi.bi_index_page.text_5c4640'),
+                            desc: t('bi.bi_index_page.text_e8ccfa'),
+                            type: 'bar',
+                          },
+                          {
+                            name: t('bi.bi_index_page.production'),
+                            desc: t('bi.bi_index_page.text_1a3263'),
+                            type: 'line',
+                          },
+                          {
+                            name: t('bi.bi_index_page.text_e556ab'),
+                            desc: t('bi.bi_index_page.warehouse'),
+                            type: 'pie',
+                          },
+                          {
+                            name: t('bi.bi_index_page.text_96f1d5'),
+                            desc: t('bi.bi_index_page.text_f9b6a5'),
+                            type: 'table',
+                          },
                         ].map((item, idx) => (
                           <ListItem
                             key={idx}
@@ -525,9 +546,21 @@ const BiIndexPage = () => {
                         disablePadding
                       >
                         {[
-                          { name: t('bi.bi_index_page.text_a71de2'), type: t('bi.bi_index_page.text_7f0dc5'), format: 'Excel' },
-                          { name: t('bi.bi_index_page.text_da4ee0'), type: t('bi.bi_index_page.text_3a7170'), format: 'PDF' },
-                          { name: t('bi.bi_index_page.text_51c296'), type: t('bi.bi_index_page.text_0eac88'), format: 'Excel' },
+                          {
+                            name: t('bi.bi_index_page.text_a71de2'),
+                            type: t('bi.bi_index_page.text_7f0dc5'),
+                            format: 'Excel',
+                          },
+                          {
+                            name: t('bi.bi_index_page.text_da4ee0'),
+                            type: t('bi.bi_index_page.text_3a7170'),
+                            format: 'PDF',
+                          },
+                          {
+                            name: t('bi.bi_index_page.text_51c296'),
+                            type: t('bi.bi_index_page.text_0eac88'),
+                            format: 'Excel',
+                          },
                           { name: t('bi.bi_index_page.text_c272ae'), type: 'HR', format: 'PDF' },
                         ].map((item, idx) => (
                           <ListItem
@@ -648,9 +681,21 @@ const BiIndexPage = () => {
                     disablePadding
                   >
                     {[
-                      { name: t('bi.bi_index_page.text_f94f6c'), rows: t('bi.bi_index_page.text_bbaf48'), status: t('bi.bi_index_page.normal') },
-                      { name: t('bi.bi_index_page.production_1'), rows: t('bi.bi_index_page.text_1d93f6'), status: t('bi.bi_index_page.normal') },
-                      { name: t('bi.bi_index_page.text_7252f8'), rows: t('bi.bi_index_page.text_2ded3c'), status: t('bi.bi_index_page.text_22b433') },
+                      {
+                        name: t('bi.bi_index_page.text_f94f6c'),
+                        rows: t('bi.bi_index_page.text_bbaf48'),
+                        status: t('bi.bi_index_page.normal'),
+                      },
+                      {
+                        name: t('bi.bi_index_page.production_1'),
+                        rows: t('bi.bi_index_page.text_1d93f6'),
+                        status: t('bi.bi_index_page.normal'),
+                      },
+                      {
+                        name: t('bi.bi_index_page.text_7252f8'),
+                        rows: t('bi.bi_index_page.text_2ded3c'),
+                        status: t('bi.bi_index_page.text_22b433'),
+                      },
                     ].map((item, idx) => (
                       <ListItem
                         key={idx}
@@ -684,7 +729,9 @@ const BiIndexPage = () => {
                         <Chip
                           label={item.status}
                           size='small'
-                          color={item.status === t('bi.bi_index_page.normal') ? 'success' : 'warning'}
+                          color={
+                            item.status === t('bi.bi_index_page.normal') ? 'success' : 'warning'
+                          }
                           variant='outlined'
                         />
                       </ListItem>

@@ -56,7 +56,7 @@ class ABTestManagerImpl {
     return () => this.listeners.delete(listener);
   }
 
-  create_experiment(
+  createExperiment(
     name: string,
     description: string,
     variants: Omit<Variant, 'id'>[],
@@ -83,7 +83,7 @@ class ABTestManagerImpl {
     return experiment;
   }
 
-  start_experiment(experimentId: string): void {
+  startExperiment(experimentId: string): void {
     const exp = this.experiments.get(experimentId);
     if (!exp) throw new Error(`Experiment not found: ${experimentId}`);
     if (exp.status !== 'Draft' && exp.status !== 'Paused') {
@@ -92,11 +92,11 @@ class ABTestManagerImpl {
 
     exp.status = 'Running';
     exp.startDate = Date.now();
-    this.generate_mock_results(exp);
+    this.generateMockResults(exp);
     this.notify();
   }
 
-  stop_experiment(experimentId: string): void {
+  stopExperiment(experimentId: string): void {
     const exp = this.experiments.get(experimentId);
     if (!exp) throw new Error(`Experiment not found: ${experimentId}`);
     exp.status = 'Completed';
@@ -104,7 +104,7 @@ class ABTestManagerImpl {
     this.notify();
   }
 
-  get_results(experimentId: string): ExperimentResult[] {
+  getResults(experimentId: string): ExperimentResult[] {
     const exp = this.experiments.get(experimentId);
     if (!exp) throw new Error(`Experiment not found: ${experimentId}`);
 
@@ -130,21 +130,21 @@ class ABTestManagerImpl {
     });
   }
 
-  list_experiments(): Experiment[] {
+  listExperiments(): Experiment[] {
     return Array.from(this.experiments.values()).sort((a, b) => b.startDate - a.startDate);
   }
 
-  get_experiment(experimentId: string): Experiment | null {
+  getExperiment(experimentId: string): Experiment | null {
     return this.experiments.get(experimentId) ?? null;
   }
 
-  get_variant_stats(experimentId: string, variantId: string): ExperimentResult | null {
-    const results = this.get_results(experimentId);
+  getVariantStats(experimentId: string, variantId: string): ExperimentResult | null {
+    const results = this.getResults(experimentId);
     return results.find((r) => r.variant.id === variantId) ?? null;
   }
 
-  check_significance(experimentId: string): SignificanceResult {
-    const results = this.get_results(experimentId);
+  checkSignificance(experimentId: string): SignificanceResult {
+    const results = this.getResults(experimentId);
     if (results.length < 2) {
       return { isSignificant: false, confidenceLevel: 0, pValue: 1, winner: null, relativeLift: 0 };
     }
@@ -158,7 +158,7 @@ class ABTestManagerImpl {
     const pPool = (control.conversions + treatment.conversions) / (n1 + n2);
     const se = Math.sqrt(pPool * (1 - pPool) * (1 / n1 + 1 / n2));
     const z = se > 0 ? (p2 - p1) / se : 0;
-    const pValue = 2 * (1 - this.normal_cdf(Math.abs(z)));
+    const pValue = 2 * (1 - this.normalCdf(Math.abs(z)));
     const confidence = 1 - pValue;
     const relativeLift = p1 > 0 ? (p2 - p1) / p1 : 0;
 
@@ -179,7 +179,7 @@ class ABTestManagerImpl {
     };
   }
 
-  private normal_cdf(x: number): number {
+  private normalCdf(x: number): number {
     const t = 1 / (1 + 0.2316419 * Math.abs(x));
     const d = 0.3989422804014327 * Math.exp((-x * x) / 2);
     let p =
@@ -188,7 +188,7 @@ class ABTestManagerImpl {
     return p;
   }
 
-  private generate_mock_results(exp: Experiment): void {
+  private generateMockResults(exp: Experiment): void {
     const resultsMap = new Map<string, ExperimentResult>();
     const baseRate = 0.05;
 
@@ -214,7 +214,7 @@ class ABTestManagerImpl {
   seed(): void {
     if (this.experiments.size > 0) return;
 
-    const exp1 = this.create_experiment(
+    const exp1 = this.createExperiment(
       'V58 NLU 模型 A/B 测试',
       '对比 V2.0.0 与 V1.1.0 在意图识别准确率上的表现',
       [
@@ -233,9 +233,9 @@ class ABTestManagerImpl {
       ],
       100
     );
-    this.start_experiment(exp1.id);
+    this.startExperiment(exp1.id);
 
-    const exp2 = this.create_experiment(
+    const exp2 = this.createExperiment(
       'Copilot 响应延迟测试',
       '测试新模型版本对用户响应延迟的影响',
       [
@@ -256,7 +256,7 @@ class ABTestManagerImpl {
       100
     );
 
-    const exp3 = this.create_experiment(
+    const exp3 = this.createExperiment(
       '运维异常检测准确率',
       '验证新模型在生产环境中的异常检测能力',
       [
@@ -265,7 +265,7 @@ class ABTestManagerImpl {
       ],
       50
     );
-    this.start_experiment(exp3.id);
+    this.startExperiment(exp3.id);
   }
 }
 

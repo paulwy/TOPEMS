@@ -7,13 +7,13 @@ import { useThemeStore } from '@/store';
 // ── Chart type enum for future MUI X Charts migration ──────────────────────
 
 export enum ChartType {
-  Bar = 'bar',
-  Line = 'line',
-  Pie = 'pie',
-  Area = 'area',
-  Radar = 'radar',
-  Scatter = 'scatter',
-  Composed = 'composed',
+  BAR = 'bar',
+  LINE = 'line',
+  PIE = 'pie',
+  AREA = 'area',
+  RADAR = 'radar',
+  SCATTER = 'scatter',
+  COMPOSED = 'composed',
 }
 
 // ── Concrete hex color palette (safe for recharts / canvas) ───────────────
@@ -42,7 +42,7 @@ export const BIChartColors = {
     ],
     grid: '#334155',
     text: '#94A3B8',
-    background: 'rgba(30, 41, 59, 0.95)',
+    background: 'common.white',
     border: '#475569',
   },
   // 赛博朋克霓虹色板 — 高饱和度发光色，适配深空背景
@@ -59,7 +59,7 @@ export const BIChartColors = {
     ],
     grid: 'rgba(0, 255, 255, 0.10)',
     text: '#8892B0',
-    background: 'rgba(26, 26, 46, 0.95)',
+    background: 'common.white',
     border: 'rgba(0, 255, 255, 0.30)',
   },
   neutral: {
@@ -67,8 +67,8 @@ export const BIChartColors = {
     gridDark: '#334155',
     text: '#64748B',
     textDark: '#94A3B8',
-    background: 'rgba(255, 255, 255, 0.95)',
-    backgroundDark: 'rgba(30, 41, 59, 0.95)',
+    background: 'common.white',
+    backgroundDark: 'common.white',
   },
   // Primary palette (kept for backward-compatible reference)
   primary: {

@@ -41,7 +41,9 @@ const TraceabilityDetailPage: React.FC = () => {
       if (res.success && res.data) {
         return res.data;
       }
-      throw new Error(res.message || t('mes.traceability_detail_page.notifications.load_error.message'));
+      throw new Error(
+        res.message || t('mes.traceability_detail_page.notifications.load_error.message')
+      );
     },
     enabled: !!batchNo,
   });
@@ -64,7 +66,8 @@ const TraceabilityDetailPage: React.FC = () => {
   const qualityRecords = qualityRecordsData || [];
   const loading = chainLoading;
   const errorMessage = chainError
-    ? (chainError as Error).message || t('mes.traceability_detail_page.notifications.load_error.message')
+    ? (chainError as Error).message ||
+      t('mes.traceability_detail_page.notifications.load_error.message')
     : undefined;
 
   const getNodeIcon = (type: string) => {
@@ -152,7 +155,11 @@ const TraceabilityDetailPage: React.FC = () => {
   // 追溯链条内容
   const traceChainContent = useMemo(() => {
     if (!traceChain || traceChain.nodes.length === 0) {
-      return <Box sx={{ textAlign: 'center', py: 4, color: 'text.secondary' }}>{t('mes.traceability_detail_page.no_trace_data')}</Box>;
+      return (
+        <Box sx={{ textAlign: 'center', py: 4, color: 'text.secondary' }}>
+          {t('mes.traceability_detail_page.no_trace_data')}
+        </Box>
+      );
     }
 
     const sortedNodes = [...traceChain.nodes].sort((a, b) => {
@@ -258,7 +265,9 @@ const TraceabilityDetailPage: React.FC = () => {
               >
                 {node.batch_no && (
                   <Box>
-                    <InputLabel sx={{ fontSize: 11, color: 'text.secondary' }}>{t('mes.traceability_detail_page.field_batch_no')}</InputLabel>
+                    <InputLabel sx={{ fontSize: 11, color: 'text.secondary' }}>
+                      {t('mes.traceability_detail_page.field_batch_no')}
+                    </InputLabel>
                     <Typography
                       variant='body2'
                       sx={{ fontFamily: 'monospace' }}
@@ -269,13 +278,17 @@ const TraceabilityDetailPage: React.FC = () => {
                 )}
                 {node.quantity !== undefined && (
                   <Box>
-                    <InputLabel sx={{ fontSize: 11, color: 'text.secondary' }}>{t('mes.traceability_detail_page.field_quantity')}</InputLabel>
+                    <InputLabel sx={{ fontSize: 11, color: 'text.secondary' }}>
+                      {t('mes.traceability_detail_page.field_quantity')}
+                    </InputLabel>
                     <Typography variant='body2'>{node.quantity}</Typography>
                   </Box>
                 )}
                 {node.timestamp && (
                   <Box>
-                    <InputLabel sx={{ fontSize: 11, color: 'text.secondary' }}>{t('mes.traceability_detail_page.field_time')}</InputLabel>
+                    <InputLabel sx={{ fontSize: 11, color: 'text.secondary' }}>
+                      {t('mes.traceability_detail_page.field_time')}
+                    </InputLabel>
                     <Typography variant='body2'>{formatDate(node.timestamp)}</Typography>
                   </Box>
                 )}
@@ -303,31 +316,45 @@ const TraceabilityDetailPage: React.FC = () => {
         }}
       >
         <Box>
-          <InputLabel sx={{ fontSize: 12, color: 'text.secondary' }}>{t('mes.traceability_detail_page.field_batch_no')}</InputLabel>
+          <InputLabel sx={{ fontSize: 12, color: 'text.secondary' }}>
+            {t('mes.traceability_detail_page.field_batch_no')}
+          </InputLabel>
           <Typography sx={{ fontWeight: 'medium', mt: 0.5, fontFamily: 'monospace' }}>
             {rootNode.batch_no || '-'}
           </Typography>
         </Box>
         <Box>
-          <InputLabel sx={{ fontSize: 12, color: 'text.secondary' }}>{t('mes.traceability_detail_page.field_product_name')}</InputLabel>
+          <InputLabel sx={{ fontSize: 12, color: 'text.secondary' }}>
+            {t('mes.traceability_detail_page.field_product_name')}
+          </InputLabel>
           <Typography sx={{ mt: 0.5 }}>{rootNode.name || '-'}</Typography>
         </Box>
         <Box>
-          <InputLabel sx={{ fontSize: 12, color: 'text.secondary' }}>{t('mes.traceability_detail_page.field_product_code')}</InputLabel>
+          <InputLabel sx={{ fontSize: 12, color: 'text.secondary' }}>
+            {t('mes.traceability_detail_page.field_product_code')}
+          </InputLabel>
           <Typography sx={{ mt: 0.5 }}>{rootNode.code || '-'}</Typography>
         </Box>
         <Box>
-          <InputLabel sx={{ fontSize: 12, color: 'text.secondary' }}>{t('mes.traceability_detail_page.field_quantity')}</InputLabel>
+          <InputLabel sx={{ fontSize: 12, color: 'text.secondary' }}>
+            {t('mes.traceability_detail_page.field_quantity')}
+          </InputLabel>
           <Typography sx={{ mt: 0.5 }}>{rootNode.quantity || '-'}</Typography>
         </Box>
         <Box>
-          <InputLabel sx={{ fontSize: 12, color: 'text.secondary' }}>{t('mes.traceability_detail_page.field_trace_direction')}</InputLabel>
+          <InputLabel sx={{ fontSize: 12, color: 'text.secondary' }}>
+            {t('mes.traceability_detail_page.field_trace_direction')}
+          </InputLabel>
           <Typography sx={{ mt: 0.5 }}>
-            {traceChain.direction === 'forward' ? t('mes.traceability_detail_page.direction_forward') : t('mes.traceability_detail_page.direction_backward')}
+            {traceChain.direction === 'forward'
+              ? t('mes.traceability_detail_page.direction_forward')
+              : t('mes.traceability_detail_page.direction_backward')}
           </Typography>
         </Box>
         <Box>
-          <InputLabel sx={{ fontSize: 12, color: 'text.secondary' }}>{t('mes.traceability_detail_page.field_node_count')}</InputLabel>
+          <InputLabel sx={{ fontSize: 12, color: 'text.secondary' }}>
+            {t('mes.traceability_detail_page.field_node_count')}
+          </InputLabel>
           <Typography sx={{ mt: 0.5 }}>{traceChain.nodes.length}</Typography>
         </Box>
       </Box>
@@ -338,7 +365,9 @@ const TraceabilityDetailPage: React.FC = () => {
   const qualityContent = useMemo(() => {
     if (qualityRecords.length === 0) {
       return (
-        <Box sx={{ textAlign: 'center', py: 4, color: 'text.secondary' }}>{t('mes.traceability_detail_page.no_quality_records')}</Box>
+        <Box sx={{ textAlign: 'center', py: 4, color: 'text.secondary' }}>
+          {t('mes.traceability_detail_page.no_quality_records')}
+        </Box>
       );
     }
 
@@ -374,7 +403,11 @@ const TraceabilityDetailPage: React.FC = () => {
                   </Typography>
                 </Box>
                 <Chip
-                  label={record.status === 'qualified' ? t('mes.traceability_detail_page.result_qualified') : t('mes.traceability_detail_page.result_unqualified')}
+                  label={
+                    record.status === 'qualified'
+                      ? t('mes.traceability_detail_page.result_qualified')
+                      : t('mes.traceability_detail_page.result_unqualified')
+                  }
                   color={record.status === 'qualified' ? 'success' : 'error'}
                   size='small'
                 />
@@ -387,7 +420,9 @@ const TraceabilityDetailPage: React.FC = () => {
                 }}
               >
                 <Box>
-                  <InputLabel sx={{ fontSize: 11, color: 'text.secondary' }}>{t('mes.traceability_detail_page.field_inspection_quantity')}</InputLabel>
+                  <InputLabel sx={{ fontSize: 11, color: 'text.secondary' }}>
+                    {t('mes.traceability_detail_page.field_inspection_quantity')}
+                  </InputLabel>
                   <Typography
                     variant='body2'
                     sx={{ fontWeight: 500 }}
@@ -396,7 +431,9 @@ const TraceabilityDetailPage: React.FC = () => {
                   </Typography>
                 </Box>
                 <Box>
-                  <InputLabel sx={{ fontSize: 11, color: 'text.secondary' }}>{t('mes.traceability_detail_page.field_qualified_quantity')}</InputLabel>
+                  <InputLabel sx={{ fontSize: 11, color: 'text.secondary' }}>
+                    {t('mes.traceability_detail_page.field_qualified_quantity')}
+                  </InputLabel>
                   <Typography
                     variant='body2'
                     sx={{ fontWeight: 500, color: 'success.main' }}
@@ -405,7 +442,9 @@ const TraceabilityDetailPage: React.FC = () => {
                   </Typography>
                 </Box>
                 <Box>
-                  <InputLabel sx={{ fontSize: 11, color: 'text.secondary' }}>{t('mes.traceability_detail_page.field_unqualified_quantity')}</InputLabel>
+                  <InputLabel sx={{ fontSize: 11, color: 'text.secondary' }}>
+                    {t('mes.traceability_detail_page.field_unqualified_quantity')}
+                  </InputLabel>
                   <Typography
                     variant='body2'
                     sx={{ fontWeight: 500, color: 'error.main' }}
@@ -414,7 +453,9 @@ const TraceabilityDetailPage: React.FC = () => {
                   </Typography>
                 </Box>
                 <Box>
-                  <InputLabel sx={{ fontSize: 11, color: 'text.secondary' }}>{t('mes.traceability_detail_page.field_pass_rate')}</InputLabel>
+                  <InputLabel sx={{ fontSize: 11, color: 'text.secondary' }}>
+                    {t('mes.traceability_detail_page.field_pass_rate')}
+                  </InputLabel>
                   <Typography
                     variant='body2'
                     sx={{ fontWeight: 500 }}
@@ -425,13 +466,17 @@ const TraceabilityDetailPage: React.FC = () => {
               </Box>
               {record.inspector && (
                 <Box sx={{ mt: 2, pt: 2, borderTop: '1px solid', borderColor: 'divider' }}>
-                  <InputLabel sx={{ fontSize: 11, color: 'text.secondary' }}>{t('mes.traceability_detail_page.field_inspector')}</InputLabel>
+                  <InputLabel sx={{ fontSize: 11, color: 'text.secondary' }}>
+                    {t('mes.traceability_detail_page.field_inspector')}
+                  </InputLabel>
                   <Typography variant='body2'>{record.inspector}</Typography>
                 </Box>
               )}
               {record.result && (
                 <Box sx={{ mt: 2 }}>
-                  <InputLabel sx={{ fontSize: 11, color: 'text.secondary' }}>{t('mes.traceability_detail_page.field_test_result')}</InputLabel>
+                  <InputLabel sx={{ fontSize: 11, color: 'text.secondary' }}>
+                    {t('mes.traceability_detail_page.field_test_result')}
+                  </InputLabel>
                   <Typography variant='body2'>{record.result}</Typography>
                 </Box>
               )}
@@ -444,9 +489,21 @@ const TraceabilityDetailPage: React.FC = () => {
 
   const tabs = useMemo<TabConfig[]>(
     () => [
-      { id: 'chain', label: t('mes.traceability_detail_page.tab_chain'), content: traceChainContent || <></> },
-      { id: 'batch', label: t('mes.traceability_detail_page.tab_batch_info'), content: batchInfoContent || <></> },
-      { id: 'quality', label: t('mes.traceability_detail_page.tab_quality_records'), content: qualityContent || <></> },
+      {
+        id: 'chain',
+        label: t('mes.traceability_detail_page.tab_chain'),
+        content: traceChainContent || <></>,
+      },
+      {
+        id: 'batch',
+        label: t('mes.traceability_detail_page.tab_batch_info'),
+        content: batchInfoContent || <></>,
+      },
+      {
+        id: 'quality',
+        label: t('mes.traceability_detail_page.tab_quality_records'),
+        content: qualityContent || <></>,
+      },
     ],
     [t, traceChainContent, batchInfoContent, qualityContent]
   );
@@ -462,10 +519,22 @@ const TraceabilityDetailPage: React.FC = () => {
       ),
       title: rootNode?.name,
       subtitle: rootNode?.batch_no || undefined,
-      tags: [traceChain?.direction === 'forward' ? t('mes.traceability_detail_page.direction_forward') : t('mes.traceability_detail_page.direction_backward')],
+      tags: [
+        traceChain?.direction === 'forward'
+          ? t('mes.traceability_detail_page.direction_forward')
+          : t('mes.traceability_detail_page.direction_backward'),
+      ],
       stats: [
-        { label: t('mes.traceability_detail_page.field_product_code'), value: rootNode?.code || '-' },
-        { label: t('mes.traceability_detail_page.stat_node_count_label'), value: t('mes.traceability_detail_page.stat_node_count', { count: traceChain?.nodes.length || 0 }) },
+        {
+          label: t('mes.traceability_detail_page.field_product_code'),
+          value: rootNode?.code || '-',
+        },
+        {
+          label: t('mes.traceability_detail_page.stat_node_count_label'),
+          value: t('mes.traceability_detail_page.stat_node_count', {
+            count: traceChain?.nodes.length || 0,
+          }),
+        },
       ],
     };
   }, [traceChain, t]);

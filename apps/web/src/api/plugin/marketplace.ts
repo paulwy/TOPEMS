@@ -88,7 +88,9 @@ export const marketplaceApi = {
       is_verified?: boolean;
     }
   ): Promise<ApiResponse<PluginReviewListResponse>> => {
-    const response = await pluginAxios.get(`/api/v1/core/plugin/plugins/${code}/reviews`, { params });
+    const response = await pluginAxios.get(`/api/v1/core/plugin/plugins/${code}/reviews`, {
+      params,
+    });
     return response.data;
   },
 

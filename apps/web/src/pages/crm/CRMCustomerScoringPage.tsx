@@ -31,7 +31,7 @@ const getGradeBadge = (scoreLevel: string) => {
       size='small'
       sx={{
         bgcolor: config.color,
-        color: 'white',
+        color: 'common.white',
         fontWeight: 'bold',
         fontSize: '1.125rem',
         px: 1.5,
@@ -106,7 +106,7 @@ const StatCard: React.FC<StatCardProps> = ({ label, value, color, bgColor }) => 
           justifyContent: 'center',
         }}
       >
-        <Star sx={{ width: 24, height: 24, color: 'white' }} />
+        <Star sx={{ width: 24, height: 24, color: 'common.white' }} />
       </Box>
     </Box>
   </Box>

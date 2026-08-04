@@ -204,17 +204,17 @@ export default {
 // ============ 筛选操作符规范 ============
 
 export type FilterOperator =
-  | 'eq'       // 等于
-  | 'ne'       // 不等于
-  | 'gt'       // 大于
-  | 'gte'      // 大于等于
-  | 'lt'       // 小于
-  | 'lte'      // 小于等于
-  | 'like'     // 模糊匹配
-  | 'in'       // 包含在数组中
-  | 'nin'      // 不在数组中
-  | 'between'  // 在区间内
-  | 'null'     // 为空
+  | 'eq' // 等于
+  | 'ne' // 不等于
+  | 'gt' // 大于
+  | 'gte' // 大于等于
+  | 'lt' // 小于
+  | 'lte' // 小于等于
+  | 'like' // 模糊匹配
+  | 'in' // 包含在数组中
+  | 'nin' // 不在数组中
+  | 'between' // 在区间内
+  | 'null' // 为空
   | 'notnull'; // 不为空
 
 export interface FilterCondition {
@@ -262,9 +262,9 @@ export function buildStandardFilterParams(
     return result;
   }
 
-  const conditions = (
-    Array.isArray(filters) ? filters : (filters as FilterGroup).conditions
-  ) as (FilterCondition | FilterGroup)[];
+  const conditions = (Array.isArray(filters) ? filters : (filters as FilterGroup).conditions) as (
+    FilterCondition | FilterGroup
+  )[];
 
   conditions.forEach((cond) => {
     if ('conditions' in cond) {

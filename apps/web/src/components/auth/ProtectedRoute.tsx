@@ -49,7 +49,7 @@ export const ProtectedRoute: React.FC<ProtectedRouteProps> = ({
               borderRadius: '9999px',
               animation: 'spin 1s linear infinite',
               margin: 'auto',
-              marginBottom: '16px',
+              marginBottom: 2,
             }}
           ></Box>
           <Typography sx={{ color: 'text.secondary' }}>加载中...</Typography>
@@ -211,14 +211,14 @@ export const PermissionRoute: React.FC<PermissionRouteProps> = ({
       return <>{fallbackComponent}</>;
     }
     return (
-      <Box sx={{ padding: '24px' }}>
+      <Box sx={{ padding: 3 }}>
         <Box
           sx={{
             backgroundColor: 'warning.lighter',
             border: '1px solid',
             borderColor: 'warning.light',
             borderRadius: '8px',
-            padding: '16px',
+            padding: 2,
           }}
         >
           <Box sx={{ display: 'flex', alignItems: 'flex-start' }}>
@@ -236,11 +236,11 @@ export const PermissionRoute: React.FC<PermissionRouteProps> = ({
                 />
               </Box>
             </Box>
-            <Box sx={{ marginLeft: '12px' }}>
+            <Box sx={{ marginLeft: 1.5 }}>
               <Typography sx={{ fontSize: '14px', fontWeight: 500, color: 'warning.700' }}>
                 权限提示
               </Typography>
-              <Box sx={{ marginTop: '8px', fontSize: '14px', color: 'warning.700' }}>
+              <Box sx={{ marginTop: 1, fontSize: '14px', color: 'warning.700' }}>
                 <p>
                   您没有访问 {module} 模块的 {action} 权限。
                 </p>

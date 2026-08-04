@@ -30,35 +30,35 @@ export enum HttpMethod {
 }
 
 export enum EndpointStatus {
-  Draft = 'draft',
-  Active = 'active',
-  Deprecated = 'deprecated',
-  Archived = 'archived',
+  DRAFT = 'draft',
+  ACTIVE = 'active',
+  DEPRECATED = 'deprecated',
+  ARCHIVED = 'archived',
 }
 
 export enum FieldType {
-  String = 'string',
-  Number = 'number',
-  Boolean = 'boolean',
-  Date = 'date',
-  DateTime = 'datetime',
-  Object = 'object',
-  Array = 'array',
-  Enum = 'enum',
-  Reference = 'reference',
+  STRING = 'string',
+  NUMBER = 'number',
+  BOOLEAN = 'boolean',
+  DATE = 'date',
+  DATETIME = 'datetime',
+  OBJECT = 'object',
+  ARRAY = 'array',
+  ENUM = 'enum',
+  REFERENCE = 'reference',
 }
 
 export enum MappingDirection {
-  Request = 'request',
-  Response = 'response',
-  Both = 'both',
+  REQUEST = 'request',
+  RESPONSE = 'response',
+  BOTH = 'both',
 }
 
 export enum ConnectionStatus {
-  Unknown = 'unknown',
-  Connected = 'connected',
-  Disconnected = 'disconnected',
-  Degraded = 'degraded',
+  UNKNOWN = 'unknown',
+  CONNECTED = 'connected',
+  DISCONNECTED = 'disconnected',
+  DEGRADED = 'degraded',
 }
 
 // ==================== 接口 ====================
@@ -170,7 +170,7 @@ export class ApiVisualIntegration {
       name: config.name,
       method: config.method,
       path: config.path,
-      status: EndpointStatus.Draft,
+      status: EndpointStatus.DRAFT,
       requestSchema: config.requestSchema,
       responseSchema: config.responseSchema,
       mappings: [],
@@ -381,7 +381,7 @@ export class ApiVisualIntegration {
       const health: ConnectionHealth = {
         id,
         endpointId,
-        status: ConnectionStatus.Disconnected,
+        status: ConnectionStatus.DISCONNECTED,
         latency: 0,
         lastCheckedAt: Date.now(),
         message: 'Endpoint not found',
@@ -408,10 +408,10 @@ export class ApiVisualIntegration {
       const end = performance.now();
       const latency = Math.round(end - start);
       const status = resp.ok
-        ? ConnectionStatus.Connected
+        ? ConnectionStatus.CONNECTED
         : resp.status >= 500
-          ? ConnectionStatus.Degraded
-          : ConnectionStatus.Disconnected;
+          ? ConnectionStatus.DEGRADED
+          : ConnectionStatus.DISCONNECTED;
       const health: ConnectionHealth = {
         id,
         endpointId,
@@ -427,7 +427,7 @@ export class ApiVisualIntegration {
       const health: ConnectionHealth = {
         id,
         endpointId,
-        status: ConnectionStatus.Disconnected,
+        status: ConnectionStatus.DISCONNECTED,
         latency: Math.round(end - start),
         lastCheckedAt: Date.now(),
         message: 'Connection failed',

@@ -1,7 +1,11 @@
 import React from 'react';
 import { Controller, type Control, type FieldValues, type Path } from 'react-hook-form';
 import { FormControl, FormHelperText } from '@mui/material';
-import { DateRangePicker, type DateRange, type DateRangePickerLocale } from '@topems/shared-components';
+import {
+  DateRangePicker,
+  type DateRange,
+  type DateRangePickerLocale,
+} from '@topems/shared-components';
 
 interface FormDateRangePickerProps<T extends FieldValues> {
   name: Path<T>;
@@ -47,7 +51,10 @@ export function FormDateRangePicker<T extends FieldValues>({
         },
       }}
       render={({ field: { value, onChange }, fieldState: { error } }) => (
-        <FormControl fullWidth={fullWidth} error={!!error}>
+        <FormControl
+          fullWidth={fullWidth}
+          error={!!error}
+        >
           <DateRangePicker
             value={value || { startDate: null, endDate: null }}
             onChange={onChange}

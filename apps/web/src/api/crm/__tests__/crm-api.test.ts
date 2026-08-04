@@ -93,7 +93,7 @@ describe('CRM Module API Tests', () => {
     });
 
     it('create should call POST /tags with data', async () => {
-      const data = { name: 'VIP', color: '#FFD700' };
+      const data = { name: 'VIP', color: 'yellow.400' };
       await tagApi.create(data);
       expect(apiClient.crm.post).toHaveBeenCalledWith('/tags', data);
     });

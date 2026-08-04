@@ -36,12 +36,16 @@ const EquipmentDetailPage: React.FC = () => {
       if (res.code === 200 && res.data) {
         return res.data;
       }
-      throw new Error(res.message || t('mes.equipment_detail_page.notifications.load_error.message'));
+      throw new Error(
+        res.message || t('mes.equipment_detail_page.notifications.load_error.message')
+      );
     },
     enabled: !!id,
   });
 
-  const errorMessage = queryError ? t('mes.equipment_detail_page.notifications.load_error.message') : undefined;
+  const errorMessage = queryError
+    ? t('mes.equipment_detail_page.notifications.load_error.message')
+    : undefined;
 
   const deleteMutation = useMutation({
     mutationFn: (equipmentId: string) => assetApi.delete(equipmentId),
@@ -121,29 +125,41 @@ const EquipmentDetailPage: React.FC = () => {
         }}
       >
         <Box>
-          <InputLabel sx={{ fontSize: 12, color: 'text.secondary' }}>{t('mes.equipment_detail_page.field_equipment_number')}</InputLabel>
+          <InputLabel sx={{ fontSize: 12, color: 'text.secondary' }}>
+            {t('mes.equipment_detail_page.field_equipment_number')}
+          </InputLabel>
           <Typography sx={{ fontWeight: 'medium', mt: 0.5 }}>
             {equipment.asset_number || '-'}
           </Typography>
         </Box>
         <Box>
-          <InputLabel sx={{ fontSize: 12, color: 'text.secondary' }}>{t('mes.equipment_detail_page.field_equipment_name')}</InputLabel>
+          <InputLabel sx={{ fontSize: 12, color: 'text.secondary' }}>
+            {t('mes.equipment_detail_page.field_equipment_name')}
+          </InputLabel>
           <Typography sx={{ fontWeight: 'medium', mt: 0.5 }}>{equipment.name || '-'}</Typography>
         </Box>
         <Box>
-          <InputLabel sx={{ fontSize: 12, color: 'text.secondary' }}>{t('mes.equipment_detail_page.field_equipment_category')}</InputLabel>
+          <InputLabel sx={{ fontSize: 12, color: 'text.secondary' }}>
+            {t('mes.equipment_detail_page.field_equipment_category')}
+          </InputLabel>
           <Typography sx={{ mt: 0.5 }}>{equipment.category || '-'}</Typography>
         </Box>
         <Box>
-          <InputLabel sx={{ fontSize: 12, color: 'text.secondary' }}>{t('mes.equipment_detail_page.field_brand')}</InputLabel>
+          <InputLabel sx={{ fontSize: 12, color: 'text.secondary' }}>
+            {t('mes.equipment_detail_page.field_brand')}
+          </InputLabel>
           <Typography sx={{ mt: 0.5 }}>{equipment.brand || '-'}</Typography>
         </Box>
         <Box>
-          <InputLabel sx={{ fontSize: 12, color: 'text.secondary' }}>{t('mes.equipment_detail_page.field_model')}</InputLabel>
+          <InputLabel sx={{ fontSize: 12, color: 'text.secondary' }}>
+            {t('mes.equipment_detail_page.field_model')}
+          </InputLabel>
           <Typography sx={{ mt: 0.5 }}>{equipment.model || '-'}</Typography>
         </Box>
         <Box>
-          <InputLabel sx={{ fontSize: 12, color: 'text.secondary' }}>{t('mes.equipment_detail_page.field_status')}</InputLabel>
+          <InputLabel sx={{ fontSize: 12, color: 'text.secondary' }}>
+            {t('mes.equipment_detail_page.field_status')}
+          </InputLabel>
           <Box sx={{ mt: 0.5 }}>
             <Chip
               label={getStatusLabel(equipment.status)}
@@ -167,31 +183,43 @@ const EquipmentDetailPage: React.FC = () => {
         }}
       >
         <Box>
-          <InputLabel sx={{ fontSize: 12, color: 'text.secondary' }}>{t('mes.equipment_detail_page.field_serial_no')}</InputLabel>
+          <InputLabel sx={{ fontSize: 12, color: 'text.secondary' }}>
+            {t('mes.equipment_detail_page.field_serial_no')}
+          </InputLabel>
           <Typography sx={{ mt: 0.5 }}>{equipment.serial_number || '-'}</Typography>
         </Box>
         <Box>
-          <InputLabel sx={{ fontSize: 12, color: 'text.secondary' }}>{t('mes.equipment_detail_page.field_manufacturer')}</InputLabel>
+          <InputLabel sx={{ fontSize: 12, color: 'text.secondary' }}>
+            {t('mes.equipment_detail_page.field_manufacturer')}
+          </InputLabel>
           <Typography sx={{ mt: 0.5 }}>{equipment.manufacturer || '-'}</Typography>
         </Box>
         <Box>
-          <InputLabel sx={{ fontSize: 12, color: 'text.secondary' }}>{t('mes.equipment_detail_page.field_rated_power')}</InputLabel>
+          <InputLabel sx={{ fontSize: 12, color: 'text.secondary' }}>
+            {t('mes.equipment_detail_page.field_rated_power')}
+          </InputLabel>
           <Typography sx={{ mt: 0.5 }}>
             {equipment.rated_power ? `${equipment.rated_power} kW` : '-'}
           </Typography>
         </Box>
         <Box>
-          <InputLabel sx={{ fontSize: 12, color: 'text.secondary' }}>{t('mes.equipment_detail_page.field_rated_voltage')}</InputLabel>
+          <InputLabel sx={{ fontSize: 12, color: 'text.secondary' }}>
+            {t('mes.equipment_detail_page.field_rated_voltage')}
+          </InputLabel>
           <Typography sx={{ mt: 0.5 }}>
             {equipment.rated_voltage ? `${equipment.rated_voltage} V` : '-'}
           </Typography>
         </Box>
         <Box>
-          <InputLabel sx={{ fontSize: 12, color: 'text.secondary' }}>{t('mes.equipment_detail_page.field_purchase_amount')}</InputLabel>
+          <InputLabel sx={{ fontSize: 12, color: 'text.secondary' }}>
+            {t('mes.equipment_detail_page.field_purchase_amount')}
+          </InputLabel>
           <Typography sx={{ mt: 0.5 }}>{formatCurrency(equipment.purchase_amount)}</Typography>
         </Box>
         <Box>
-          <InputLabel sx={{ fontSize: 12, color: 'text.secondary' }}>{t('mes.equipment_detail_page.field_location')}</InputLabel>
+          <InputLabel sx={{ fontSize: 12, color: 'text.secondary' }}>
+            {t('mes.equipment_detail_page.field_location')}
+          </InputLabel>
           <Typography sx={{ mt: 0.5 }}>{equipment.location || '-'}</Typography>
         </Box>
       </Box>
@@ -209,15 +237,21 @@ const EquipmentDetailPage: React.FC = () => {
         }}
       >
         <Box>
-          <InputLabel sx={{ fontSize: 12, color: 'text.secondary' }}>{t('mes.equipment_detail_page.field_purchase_date')}</InputLabel>
+          <InputLabel sx={{ fontSize: 12, color: 'text.secondary' }}>
+            {t('mes.equipment_detail_page.field_purchase_date')}
+          </InputLabel>
           <Typography sx={{ mt: 0.5 }}>{formatDate(equipment.purchase_date)}</Typography>
         </Box>
         <Box>
-          <InputLabel sx={{ fontSize: 12, color: 'text.secondary' }}>{t('mes.equipment_detail_page.field_purchase_amount')}</InputLabel>
+          <InputLabel sx={{ fontSize: 12, color: 'text.secondary' }}>
+            {t('mes.equipment_detail_page.field_purchase_amount')}
+          </InputLabel>
           <Typography sx={{ mt: 0.5 }}>{formatCurrency(equipment.purchase_amount)}</Typography>
         </Box>
         <Box>
-          <InputLabel sx={{ fontSize: 12, color: 'text.secondary' }}>{t('mes.equipment_detail_page.field_responsible_person')}</InputLabel>
+          <InputLabel sx={{ fontSize: 12, color: 'text.secondary' }}>
+            {t('mes.equipment_detail_page.field_responsible_person')}
+          </InputLabel>
           <Typography sx={{ mt: 0.5 }}>{equipment.responsible_id || '-'}</Typography>
         </Box>
       </Box>
@@ -279,9 +313,21 @@ const EquipmentDetailPage: React.FC = () => {
 
   const tabs = useMemo<TabConfig[]>(
     () => [
-      { id: 'basic', label: t('mes.equipment_detail_page.tab_basic'), content: basicInfoContent || <></> },
-      { id: 'specs', label: t('mes.equipment_detail_page.tab_specs'), content: specsContent || <></> },
-      { id: 'purchase', label: t('mes.equipment_detail_page.tab_purchase'), content: purchaseInfoContent || <></> },
+      {
+        id: 'basic',
+        label: t('mes.equipment_detail_page.tab_basic'),
+        content: basicInfoContent || <></>,
+      },
+      {
+        id: 'specs',
+        label: t('mes.equipment_detail_page.tab_specs'),
+        content: specsContent || <></>,
+      },
+      {
+        id: 'purchase',
+        label: t('mes.equipment_detail_page.tab_purchase'),
+        content: purchaseInfoContent || <></>,
+      },
     ],
     [t, basicInfoContent, specsContent, purchaseInfoContent]
   );
@@ -298,8 +344,14 @@ const EquipmentDetailPage: React.FC = () => {
       subtitle: equipment?.asset_number || undefined,
       tags: [equipment?.category || ''],
       stats: [
-        { label: t('mes.equipment_detail_page.field_equipment_category'), value: equipment?.category || '-' },
-        { label: t('mes.equipment_detail_page.field_status'), value: getStatusLabel(equipment?.status || '') },
+        {
+          label: t('mes.equipment_detail_page.field_equipment_category'),
+          value: equipment?.category || '-',
+        },
+        {
+          label: t('mes.equipment_detail_page.field_status'),
+          value: getStatusLabel(equipment?.status || ''),
+        },
       ],
     }),
     [equipment, t]

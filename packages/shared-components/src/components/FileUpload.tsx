@@ -1,7 +1,6 @@
 import React, { useState, useCallback, useRef } from 'react';
 import {
   Box,
-  Button,
   IconButton,
   Typography,
   Chip,
@@ -79,10 +78,8 @@ const FileUpload: React.FC<FileUploadProps> = ({
 }) => {
   const dragText = locale?.dragText ?? '拖拽文件到此处，或点击选择文件';
   const clickText = locale?.clickText ?? '点击选择文件';
-  const processingText = locale?.processing ?? '处理中...';
   const completedText = locale?.completed ?? '上传完成';
   const failedText = locale?.failed ?? '上传失败';
-  const retryText = locale?.retry ?? '重试';
   const removeText = locale?.remove ?? '移除';
   const sizeExceededText = locale?.sizeExceeded ?? '文件大小超过限制';
   const uploadFailedText = locale?.uploadFailed ?? '上传失败';
@@ -93,31 +90,6 @@ const FileUpload: React.FC<FileUploadProps> = ({
     if (disabled) return;
     fileInputRef.current?.click();
   }, [disabled]);
-
-  const handleDrop = useCallback((event: React.DragEvent<HTMLElement>) => {
-    event.preventDefault();
-    setIsDragging(false);
-    
-    if (disabled) return;
-    
-    const droppedFiles = Array.from(event.dataTransfer.files);
-    handleFiles(droppedFiles);
-  }, [disabled]);
-
-  const handleDragOver = useCallback((event: React.DragEvent<HTMLElement>) => {
-    event.preventDefault();
-    setIsDragging(true);
-  }, []);
-
-  const handleDragLeave = useCallback(() => {
-    setIsDragging(false);
-  }, []);
-
-  const handleFileChange = useCallback((event: React.ChangeEvent<HTMLInputElement>) => {
-    const selectedFiles = Array.from(event.target.files || []);
-    handleFiles(selectedFiles);
-    event.target.value = '';
-  }, []);
 
   const handleFiles = useCallback(async (newFiles: File[]) => {
     const validFiles: UploadFile[] = [];
@@ -179,7 +151,32 @@ const FileUpload: React.FC<FileUploadProps> = ({
         onChange?.(errorFiles);
       }
     }
-  }, [files, maxFiles, maxSize, onChange, onUpload]);
+  }, [files, maxFiles, maxSize, onChange, onUpload, sizeExceededText, uploadFailedText]);
+
+  const handleDrop = useCallback((event: React.DragEvent<HTMLElement>) => {
+    event.preventDefault();
+    setIsDragging(false);
+
+    if (disabled) return;
+
+    const droppedFiles = Array.from(event.dataTransfer.files);
+    handleFiles(droppedFiles);
+  }, [disabled, handleFiles]);
+
+  const handleDragOver = useCallback((event: React.DragEvent<HTMLElement>) => {
+    event.preventDefault();
+    setIsDragging(true);
+  }, []);
+
+  const handleDragLeave = useCallback(() => {
+    setIsDragging(false);
+  }, []);
+
+  const handleFileChange = useCallback((event: React.ChangeEvent<HTMLInputElement>) => {
+    const selectedFiles = Array.from(event.target.files || []);
+    handleFiles(selectedFiles);
+    event.target.value = '';
+  }, [handleFiles]);
 
   const handleRemove = useCallback((fileId: string) => {
     const updatedFiles = files.filter((file) => file.id !== fileId);

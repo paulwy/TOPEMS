@@ -116,7 +116,8 @@ describe('toColumnDef - renderCell 签名一致性', () => {
   it('renderCell 返回 React 元素时正常工作', () => {
     const field: SchemaField = {
       ...baseField,
-      renderCell: (value) => React.createElement('span', { 'data-testid': 'status' }, String(value)),
+      renderCell: (value) =>
+        React.createElement('span', { 'data-testid': 'status' }, String(value)),
     };
 
     const col = toColumnDef(field);

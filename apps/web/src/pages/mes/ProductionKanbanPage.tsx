@@ -111,7 +111,9 @@ const ProductionKanbanPage: React.FC = () => {
               <CardContent>
                 <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 1 }}>
                   <Factory size={24} />
-                  <Typography variant='body2'>{t('mes.production_kanban_page.stat_total_orders')}</Typography>
+                  <Typography variant='body2'>
+                    {t('mes.production_kanban_page.stat_total_orders')}
+                  </Typography>
                 </Box>
                 <Typography
                   variant='h4'
@@ -127,7 +129,9 @@ const ProductionKanbanPage: React.FC = () => {
               <CardContent>
                 <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 1 }}>
                   <Activity size={24} />
-                  <Typography variant='body2'>{t('mes.production_kanban_page.stat_in_progress')}</Typography>
+                  <Typography variant='body2'>
+                    {t('mes.production_kanban_page.stat_in_progress')}
+                  </Typography>
                 </Box>
                 <Typography
                   variant='h4'
@@ -143,7 +147,9 @@ const ProductionKanbanPage: React.FC = () => {
               <CardContent>
                 <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 1 }}>
                   <CheckCircle size={24} />
-                  <Typography variant='body2'>{t('mes.production_kanban_page.stat_completed')}</Typography>
+                  <Typography variant='body2'>
+                    {t('mes.production_kanban_page.stat_completed')}
+                  </Typography>
                 </Box>
                 <Typography
                   variant='h4'
@@ -159,7 +165,9 @@ const ProductionKanbanPage: React.FC = () => {
               <CardContent>
                 <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 1 }}>
                   <Package size={24} />
-                  <Typography variant='body2'>{t('mes.production_kanban_page.stat_today_output')}</Typography>
+                  <Typography variant='body2'>
+                    {t('mes.production_kanban_page.stat_today_output')}
+                  </Typography>
                 </Box>
                 <Typography
                   variant='h4'
@@ -175,7 +183,9 @@ const ProductionKanbanPage: React.FC = () => {
               <CardContent>
                 <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 1 }}>
                   <TrendingUp size={24} />
-                  <Typography variant='body2'>{t('mes.production_kanban_page.stat_pass_rate')}</Typography>
+                  <Typography variant='body2'>
+                    {t('mes.production_kanban_page.stat_pass_rate')}
+                  </Typography>
                 </Box>
                 <Typography
                   variant='h4'
@@ -191,7 +201,9 @@ const ProductionKanbanPage: React.FC = () => {
               <CardContent>
                 <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 1 }}>
                   <Gauge size={24} />
-                  <Typography variant='body2'>{t('mes.production_kanban_page.stat_oee')}</Typography>
+                  <Typography variant='body2'>
+                    {t('mes.production_kanban_page.stat_oee')}
+                  </Typography>
                 </Box>
                 <Typography
                   variant='h4'
@@ -263,7 +275,10 @@ const ProductionKanbanPage: React.FC = () => {
                               variant='body2'
                               sx={{ color: 'text.secondary' }}
                             >
-                              {t('mes.production_kanban_page.label_planned')}: {order.planned_quantity} / {t('mes.production_kanban_page.label_completed')}: {order.completed_quantity}
+                              {t('mes.production_kanban_page.label_planned')}:{' '}
+                              {order.plannedQuantity} /{' '}
+                              {t('mes.production_kanban_page.label_completed')}:{' '}
+                              {order.completed_quantity}
                             </Typography>
                           </Box>
                           <Chip
@@ -417,9 +432,15 @@ const ProductionKanbanPage: React.FC = () => {
                   <TableHead>
                     <TableRow sx={{ bgcolor: 'grey.50' }}>
                       <TableCell>{t('mes.production_kanban_page.col_date')}</TableCell>
-                      <TableCell align='right'>{t('mes.production_kanban_page.col_total_output')}</TableCell>
-                      <TableCell align='right'>{t('mes.production_kanban_page.col_qualified')}</TableCell>
-                      <TableCell align='right'>{t('mes.production_kanban_page.col_pass_rate')}</TableCell>
+                      <TableCell align='right'>
+                        {t('mes.production_kanban_page.col_total_output')}
+                      </TableCell>
+                      <TableCell align='right'>
+                        {t('mes.production_kanban_page.col_qualified')}
+                      </TableCell>
+                      <TableCell align='right'>
+                        {t('mes.production_kanban_page.col_pass_rate')}
+                      </TableCell>
                     </TableRow>
                   </TableHead>
                   <TableBody>
@@ -500,7 +521,9 @@ const ProductionKanbanPage: React.FC = () => {
                     <TableRow sx={{ bgcolor: 'grey.50' }}>
                       <TableCell>{t('mes.production_kanban_page.col_equipment_code')}</TableCell>
                       <TableCell>{t('mes.production_kanban_page.col_equipment_name')}</TableCell>
-                      <TableCell align='center'>{t('mes.production_kanban_page.col_status')}</TableCell>
+                      <TableCell align='center'>
+                        {t('mes.production_kanban_page.col_status')}
+                      </TableCell>
                       <TableCell align='right'>{t('mes.production_kanban_page.col_oee')}</TableCell>
                     </TableRow>
                   </TableHead>

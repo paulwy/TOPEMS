@@ -116,7 +116,7 @@ const REMOTE_MODULES: { name: string; port: number }[] = [
 ];
 
 // Deployment mode: 'module-federation' | 'static' | 'hybrid'
-const DEPLOYMENT_MODE = process.env.VITE_DEPLOYMENT_MODE || 'static';
+const DEPLOYMENT_MODE = process.env.VITEDeploymentMode || 'static';
 
 /**
  * 从环境变量读取单个 remote 的 entry URL

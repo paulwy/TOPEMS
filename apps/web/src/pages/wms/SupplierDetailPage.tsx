@@ -412,7 +412,9 @@ const SupplierDetailPage: React.FC = () => {
           <TableHead>
             <TableRow>
               <TableCell>{t('wms.supplier_detail_page.col_payment_number')}</TableCell>
-              <TableCell align='right'>{t('wms.supplier_detail_page.col_payment_amount')}</TableCell>
+              <TableCell align='right'>
+                {t('wms.supplier_detail_page.col_payment_amount')}
+              </TableCell>
               <TableCell>{t('wms.supplier_detail_page.col_payment_method')}</TableCell>
               <TableCell>{t('wms.supplier_detail_page.col_payment_date')}</TableCell>
               <TableCell>{t('wms.supplier_detail_page.col_status')}</TableCell>
@@ -452,7 +454,9 @@ const SupplierDetailPage: React.FC = () => {
         }}
       >
         <Box sx={{ textAlign: 'center' }}>
-          <Typography sx={{ color: 'grey.500' }}>{t('wms.supplier_detail_page.supplier_not_exist')}</Typography>
+          <Typography sx={{ color: 'grey.500' }}>
+            {t('wms.supplier_detail_page.supplier_not_exist')}
+          </Typography>
           <Button
             onClick={() => navigate(SCM_PATHS.suppliers)}
             sx={{ mt: 2 }}

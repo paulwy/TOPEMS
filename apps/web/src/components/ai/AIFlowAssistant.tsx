@@ -90,18 +90,23 @@ export const AIFlowAssistant: React.FC<AIFlowAssistantProps> = ({ initialQuery, 
   return (
     <Card>
       <CardHeader
-        title="AI 流程助手"
-        subheader="用自然语言描述您想要了解的流程，AI 将为您提供详细指导"
+        title='AI 流程助手'
+        subheader='用自然语言描述您想要了解的流程，AI 将为您提供详细指导'
       />
       <CardContent>
         <Box sx={{ mb: 3 }}>
-          <Typography variant="subtitle2" sx={{ mb: 2, color: 'text.secondary' }}>快速示例:</Typography>
+          <Typography
+            variant='subtitle2'
+            sx={{ mb: 2, color: 'text.secondary' }}
+          >
+            快速示例:
+          </Typography>
           <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 1.5 }}>
             {examples.map((example, idx) => (
               <Chip
                 key={idx}
                 label={example}
-                size="small"
+                size='small'
                 onClick={() => setQuery(example)}
                 sx={{ cursor: 'pointer', bgcolor: 'grey.100', '&:hover': { bgcolor: 'grey.200' } }}
               />
@@ -111,22 +116,27 @@ export const AIFlowAssistant: React.FC<AIFlowAssistantProps> = ({ initialQuery, 
 
         <TextField
           fullWidth
-          label="输入流程需求"
-          placeholder="例如：如何创建销售订单"
+          label='输入流程需求'
+          placeholder='例如：如何创建销售订单'
           value={query}
           onChange={(e) => setQuery(e.target.value)}
-          size="small"
+          size='small'
           sx={{ mb: 3 }}
         />
 
         <Box sx={{ mb: 3 }}>
-          <Typography variant="subtitle2" sx={{ mb: 1.5, color: 'text.secondary' }}>选择模块（可选）:</Typography>
+          <Typography
+            variant='subtitle2'
+            sx={{ mb: 1.5, color: 'text.secondary' }}
+          >
+            选择模块（可选）:
+          </Typography>
           <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 1.5 }}>
             {moduleOptions.map((option) => (
               <Chip
                 key={option.value}
                 label={option.label}
-                size="small"
+                size='small'
                 onClick={() => setQuery(`${option.label}: ${query}`)}
                 sx={{ cursor: 'pointer', bgcolor: 'grey.100', '&:hover': { bgcolor: 'grey.200' } }}
               />
@@ -135,17 +145,29 @@ export const AIFlowAssistant: React.FC<AIFlowAssistantProps> = ({ initialQuery, 
         </Box>
 
         <Button
-          variant="contained"
+          variant='contained'
           onClick={handleAnalyzeFlow}
           disabled={isLoading || !query.trim()}
-          startIcon={isLoading ? <RefreshCw size={18} sx={{ animation: 'spin 1s linear infinite' }} /> : <Workflow size={18} />}
+          startIcon={
+            isLoading ? (
+              <RefreshCw
+                size={18}
+                sx={{ animation: 'spin 1s linear infinite' }}
+              />
+            ) : (
+              <Workflow size={18} />
+            )
+          }
           fullWidth
         >
           {isLoading ? '分析中...' : '分析流程'}
         </Button>
 
         {error && (
-          <Alert severity="error" sx={{ mt: 3 }}>
+          <Alert
+            severity='error'
+            sx={{ mt: 3 }}
+          >
             {error}
           </Alert>
         )}
@@ -153,26 +175,46 @@ export const AIFlowAssistant: React.FC<AIFlowAssistantProps> = ({ initialQuery, 
         {result && (
           <Box sx={{ mt: 4 }}>
             <Card>
-              <CardHeader title={result.title} subheader={result.description} />
+              <CardHeader
+                title={result.title}
+                subheader={result.description}
+              />
               <CardContent>
-                <Stepper activeStep={result.steps.length - 1} orientation="vertical" sx={{ mb: 4 }}>
+                <Stepper
+                  activeStep={result.steps.length - 1}
+                  orientation='vertical'
+                  sx={{ mb: 4 }}
+                >
                   {result.steps.map((step: any, idx: number) => (
                     <Step key={idx}>
                       <StepLabel
-                        icon={<CheckCircle size={20} sx={{ color: '#22c55e' }} />}
+                        icon={
+                          <CheckCircle
+                            size={20}
+                            sx={{ color: 'success.500' }}
+                          />
+                        }
                       >
                         <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
-                          <Typography variant="subtitle1" sx={{ fontWeight: 600 }}>
+                          <Typography
+                            variant='subtitle1'
+                            sx={{ fontWeight: 600 }}
+                          >
                             步骤 {idx + 1}: {step.name}
                           </Typography>
                         </Box>
                       </StepLabel>
                       <StepContent>
-                        <Typography variant="body2" sx={{ mb: 2 }}>{step.description}</Typography>
+                        <Typography
+                          variant='body2'
+                          sx={{ mb: 2 }}
+                        >
+                          {step.description}
+                        </Typography>
                         <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 2 }}>
                           {step.responsible && (
                             <Chip
-                              size="small"
+                              size='small'
                               label={step.responsible}
                               icon={<User size={14} />}
                               sx={{ bgcolor: 'primary.100', color: 'primary.dark' }}
@@ -180,7 +222,7 @@ export const AIFlowAssistant: React.FC<AIFlowAssistantProps> = ({ initialQuery, 
                           )}
                           {step.estimated_time && (
                             <Chip
-                              size="small"
+                              size='small'
                               label={step.estimated_time}
                               icon={<Clock size={14} />}
                               sx={{ bgcolor: 'grey.100' }}
@@ -196,14 +238,28 @@ export const AIFlowAssistant: React.FC<AIFlowAssistantProps> = ({ initialQuery, 
                   <Card sx={{ mt: 4 }}>
                     <CardContent>
                       <Box sx={{ display: 'flex', alignItems: 'center', gap: 2, mb: 2 }}>
-                        <Lightbulb size={20} sx={{ color: '#f59e0b' }} />
-                        <Typography variant="subtitle1" sx={{ fontWeight: 600 }}>优化建议</Typography>
+                        <Lightbulb
+                          size={20}
+                          sx={{ color: 'warning.500' }}
+                        />
+                        <Typography
+                          variant='subtitle1'
+                          sx={{ fontWeight: 600 }}
+                        >
+                          优化建议
+                        </Typography>
                       </Box>
                       <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1.5 }}>
                         {result.suggestions.map((suggestion: string, idx: number) => (
-                          <Box key={idx} sx={{ display: 'flex', alignItems: 'flex-start', gap: 2 }}>
-                            <ArrowRight size={16} sx={{ color: '#f59e0b', mt: 0.5, flexShrink: 0 }} />
-                            <Typography variant="body2">{suggestion}</Typography>
+                          <Box
+                            key={idx}
+                            sx={{ display: 'flex', alignItems: 'flex-start', gap: 2 }}
+                          >
+                            <ArrowRight
+                              size={16}
+                              sx={{ color: 'warning.500', mt: 0.5, flexShrink: 0 }}
+                            />
+                            <Typography variant='body2'>{suggestion}</Typography>
                           </Box>
                         ))}
                       </Box>

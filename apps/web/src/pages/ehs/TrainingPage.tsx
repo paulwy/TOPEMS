@@ -29,10 +29,9 @@ const planApi = {
   delete: trainingApi.deleteTrainingPlan,
 };
 
-const planAdapter = createCrudPageAdapter<
-  TrainingPlan,
-  CreateTrainingPlanRequest
->(planApi) as unknown as CrudApiAdapter<TrainingPlan>;
+const planAdapter = createCrudPageAdapter<TrainingPlan, CreateTrainingPlanRequest>(
+  planApi
+) as unknown as CrudApiAdapter<TrainingPlan>;
 
 const recordApi = {
   list: trainingApi.listTrainingRecords,
@@ -41,10 +40,9 @@ const recordApi = {
   delete: trainingApi.deleteTrainingRecord,
 };
 
-const recordAdapter = createCrudPageAdapter<
-  TrainingRecord,
-  CreateTrainingRecordRequest
->(recordApi) as unknown as CrudApiAdapter<TrainingRecord>;
+const recordAdapter = createCrudPageAdapter<TrainingRecord, CreateTrainingRecordRequest>(
+  recordApi
+) as unknown as CrudApiAdapter<TrainingRecord>;
 
 const certificateApi = {
   list: trainingApi.listTrainingCertificates,

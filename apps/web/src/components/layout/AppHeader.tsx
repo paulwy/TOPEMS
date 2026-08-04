@@ -233,7 +233,9 @@ export const AppHeader: React.FC<AppHeaderProps> = ({
                 justifyContent: 'center',
               }}
             >
-              <Typography sx={{ color: 'white', fontWeight: 700, fontSize: 16 }}>T</Typography>
+              <Typography sx={{ color: 'common.white', fontWeight: 700, fontSize: 16 }}>
+                T
+              </Typography>
             </Box>
             <Typography
               variant='h6'

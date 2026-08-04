@@ -41,7 +41,7 @@ const AttendancePage: React.FC = () => {
   const [todayRecord, setTodayRecord] = useState<AttendanceRecord | null>(null);
   const [checkInLoading, setCheckInLoading] = useState(false);
   const [checkOutLoading, setCheckOutLoading] = useState(false);
-  const [location, _setLocation] = useState<{ lat: number; lng: number } | null>(null);
+  const [location] = useState<{ lat: number; lng: number } | null>(null);
   const [scanModalVisible, setScanModalVisible] = useState(false);
   const [scanLoading, setScanLoading] = useState(false);
 

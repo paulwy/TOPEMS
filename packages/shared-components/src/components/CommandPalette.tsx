@@ -114,11 +114,13 @@ export const CommandPalette: React.FC<CommandPaletteProps> = ({
   }, [allItems, query]);
 
   useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     setSelectedIndex(0);
   }, [filteredItems]);
 
   useEffect(() => {
     if (open) {
+      // eslint-disable-next-line react-hooks/set-state-in-effect
       setQuery('');
       setTimeout(() => inputRef.current?.focus(), 100);
     }

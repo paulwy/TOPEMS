@@ -13,7 +13,7 @@ export const productionKanbanApi = {
         order_id: string;
         order_number: string;
         product_name: string;
-        planned_quantity: number;
+        plannedQuantity: number;
         completed_quantity: number;
         progress: number;
         status: string;

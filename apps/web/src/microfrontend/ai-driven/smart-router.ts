@@ -12,10 +12,10 @@
 // ==================== 枚举 ====================
 
 export enum RecommendationStrategy {
-  BehaviorBased = 'behavior-based',
-  PerformanceBased = 'performance-based',
-  ContextBased = 'context-based',
-  Hybrid = 'hybrid',
+  BEHAVIORBASED = 'behavior-based',
+  PERFORMANCEBASED = 'performance-based',
+  CONTEXTBASED = 'context-based',
+  HYBRID = 'hybrid',
 }
 
 // ==================== 接口 ====================
@@ -94,7 +94,7 @@ const DEFAULT_CONFIG: SmartRouterConfig = {
     errorRate: 0.4,
     usage: 0.2,
   },
-  strategy: RecommendationStrategy.Hybrid,
+  strategy: RecommendationStrategy.HYBRID,
 };
 
 // ==================== 导航记录内部结构 ====================
@@ -227,8 +227,8 @@ export class SmartRouter {
       let reason = `基于导航模式: ${pattern.frequency} 次转移`;
 
       if (
-        activeStrategy === RecommendationStrategy.Hybrid ||
-        activeStrategy === RecommendationStrategy.PerformanceBased
+        activeStrategy === RecommendationStrategy.HYBRID ||
+        activeStrategy === RecommendationStrategy.PERFORMANCEBASED
       ) {
         const metrics = this.routeMetrics.get(pattern.to_route);
         if (metrics) {
@@ -239,13 +239,13 @@ export class SmartRouter {
       }
 
       if (
-        activeStrategy === RecommendationStrategy.Hybrid ||
-        activeStrategy === RecommendationStrategy.ContextBased
+        (activeStrategy === RecommendationStrategy.HYBRID ||
+          activeStrategy === RecommendationStrategy.CONTEXTBASED) &&
+        profile &&
+        this.matchesTimeOfDay(profile)
       ) {
-        if (profile && this.matchesTimeOfDay(profile)) {
-          confidence += 0.1;
-          reason += '，符合当前时段习惯';
-        }
+        confidence += 0.1;
+        reason += '，符合当前时段习惯';
       }
 
       const metrics = this.routeMetrics.get(pattern.to_route);
@@ -363,11 +363,10 @@ export class SmartRouter {
 
   getStats(): SmartRouterStats {
     const allRoutes = Array.from(this.routeMetrics.keys());
-    const topRecommended = this.navigationHistory
-      .reduce<Record<string, number>>((acc, r) => {
-        acc[r.to_route] = (acc[r.to_route] || 0) + 1;
-        return acc;
-      }, {});
+    const topRecommended = this.navigationHistory.reduce<Record<string, number>>((acc, r) => {
+      acc[r.to_route] = (acc[r.to_route] || 0) + 1;
+      return acc;
+    }, {});
     const topRoutes = Object.entries(topRecommended)
       .sort((a, b) => b[1] - a[1])
       .slice(0, 5)
@@ -385,9 +384,10 @@ export class SmartRouter {
       avg_prediction_accuracy: accuracy,
       top_recommended_routes: topRoutes,
       active_strategy: this.config.strategy,
-      cache_hit_rate: this.preloadedRoutes.size > 0
-        ? Math.min(this.preloadedRoutes.size / Math.max(allRoutes.length, 1), 1)
-        : 0,
+      cache_hit_rate:
+        this.preloadedRoutes.size > 0
+          ? Math.min(this.preloadedRoutes.size / Math.max(allRoutes.length, 1), 1)
+          : 0,
     };
   }
 
@@ -490,12 +490,13 @@ export class SmartRouter {
 
   private calcPerformanceScore(metrics: RouteMetrics): number {
     const weights = this.config.performanceScoreWeights;
-    const loadScore = metrics.avg_load_time > 0
-      ? Math.max(0, 1 - metrics.avg_load_time / 5000)
-      : 0.5;
+    const loadScore =
+      metrics.avg_load_time > 0 ? Math.max(0, 1 - metrics.avg_load_time / 5000) : 0.5;
     const errorScore = 1 - metrics.error_rate;
     const usageScore = Math.min(metrics.usage_count / 100, 1);
-    return loadScore * weights.loadTime + errorScore * weights.errorRate + usageScore * weights.usage;
+    return (
+      loadScore * weights.loadTime + errorScore * weights.errorRate + usageScore * weights.usage
+    );
   }
 
   private recommendByContext(currentRoute: string, userId?: string): RouteRecommendation[] {

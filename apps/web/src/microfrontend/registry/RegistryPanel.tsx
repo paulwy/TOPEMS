@@ -51,8 +51,15 @@ const RegistryPanel: React.FC<RegistryPanelProps> = ({ onClose }) => {
   const [filterStatus, setFilterStatus] = useState<string>('');
   const [searchKeyword, setSearchKeyword] = useState('');
   const [showRegisterDialog, setShowRegisterDialog] = useState(false);
-  const [circularResult, setCircularResult] = useState<{ hasCircular: boolean; cycles: string[][] }>({ hasCircular: false, cycles: [] });
-  const [snackbar, setSnackbar] = useState<{ open: boolean; message: string; type: 'success' | 'error' }>({ open: false, message: '', type: 'success' });
+  const [circularResult, setCircularResult] = useState<{
+    hasCircular: boolean;
+    cycles: string[][];
+  }>({ hasCircular: false, cycles: [] });
+  const [snackbar, setSnackbar] = useState<{
+    open: boolean;
+    message: string;
+    type: 'success' | 'error';
+  }>({ open: false, message: '', type: 'success' });
 
   const [newModule, setNewModule] = useState<Partial<ModuleRegistration>>({
     id: '',
@@ -96,7 +103,11 @@ const RegistryPanel: React.FC<RegistryPanelProps> = ({ onClose }) => {
         dependencies: [],
       });
     } catch (err) {
-      setSnackbar({ open: true, message: err instanceof Error ? err.message : '注册失败', type: 'error' });
+      setSnackbar({
+        open: true,
+        message: err instanceof Error ? err.message : '注册失败',
+        type: 'error',
+      });
     }
   };
 
@@ -117,11 +128,16 @@ const RegistryPanel: React.FC<RegistryPanelProps> = ({ onClose }) => {
 
   const getStatusColor = (status: ModuleStatus) => {
     switch (status) {
-      case 'active': return 'success';
-      case 'disabled': return 'default';
-      case 'deprecated': return 'warning';
-      case 'error': return 'error';
-      default: return 'default';
+      case 'active':
+        return 'success';
+      case 'disabled':
+        return 'default';
+      case 'deprecated':
+        return 'warning';
+      case 'error':
+        return 'error';
+      default:
+        return 'default';
     }
   };
 
@@ -156,65 +172,124 @@ const RegistryPanel: React.FC<RegistryPanelProps> = ({ onClose }) => {
       >
         <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5 }}>
           <LayersIcon size={24} />
-          <Typography variant="h6" sx={{ fontWeight: 700 }}>
+          <Typography
+            variant='h6'
+            sx={{ fontWeight: 700 }}
+          >
             模块注册中心
           </Typography>
-          <Chip label={modules.length} size="small" sx={{ bgcolor: 'rgba(255,255,255,0.2)', color: 'white' }} />
+          <Chip
+            label={modules.length}
+            size='small'
+            sx={{ bgcolor: 'action.disabledBackground', color: 'common.white' }}
+          />
         </Box>
         <Box sx={{ display: 'flex', gap: 1 }}>
-          <Button size="small" onClick={handleCheckCircular} startIcon={<AlertIcon size={16} />} sx={{ color: 'white', borderColor: 'rgba(255,255,255,0.3)' }} variant="outlined">
+          <Button
+            size='small'
+            onClick={handleCheckCircular}
+            startIcon={<AlertIcon size={16} />}
+            sx={{ color: 'common.white', borderColor: 'action.disabledBackground' }}
+            variant='outlined'
+          >
             检测循环依赖
           </Button>
-          <Button size="small" onClick={() => setShowRegisterDialog(true)} startIcon={<PlusIcon size={16} />} sx={{ color: 'white', borderColor: 'rgba(255,255,255,0.3)' }} variant="outlined">
+          <Button
+            size='small'
+            onClick={() => setShowRegisterDialog(true)}
+            startIcon={<PlusIcon size={16} />}
+            sx={{ color: 'common.white', borderColor: 'action.disabledBackground' }}
+            variant='outlined'
+          >
             注册模块
           </Button>
-          <Button size="small" onClick={refreshModules} startIcon={<RefreshIcon size={16} />} sx={{ color: 'white', borderColor: 'rgba(255,255,255,0.3)' }} variant="outlined">
+          <Button
+            size='small'
+            onClick={refreshModules}
+            startIcon={<RefreshIcon size={16} />}
+            sx={{ color: 'common.white', borderColor: 'action.disabledBackground' }}
+            variant='outlined'
+          >
             刷新
           </Button>
           {onClose && (
-            <IconButton onClick={onClose} sx={{ color: 'white' }}>
+            <IconButton
+              onClick={onClose}
+              sx={{ color: 'common.white' }}
+            >
               <XIcon size={20} />
             </IconButton>
           )}
         </Box>
       </Box>
 
-      <Box sx={{ p: 2, display: 'flex', gap: 2, alignItems: 'center', bgcolor: 'background.paper', borderBottom: 1, borderColor: 'divider' }}>
+      <Box
+        sx={{
+          p: 2,
+          display: 'flex',
+          gap: 2,
+          alignItems: 'center',
+          bgcolor: 'background.paper',
+          borderBottom: 1,
+          borderColor: 'divider',
+        }}
+      >
         <TextField
-          size="small"
-          placeholder="搜索模块..."
+          size='small'
+          placeholder='搜索模块...'
           value={searchKeyword}
           onChange={(e) => setSearchKeyword(e.target.value)}
           sx={{ minWidth: 200 }}
         />
-        <FormControl size="small" sx={{ minWidth: 120 }}>
+        <FormControl
+          size='small'
+          sx={{ minWidth: 120 }}
+        >
           <InputLabel>类型</InputLabel>
-          <Select value={filterType} onChange={(e) => setFilterType(e.target.value)} label="类型">
-            <MenuItem value="">全部</MenuItem>
-            <MenuItem value="app">应用</MenuItem>
-            <MenuItem value="component">组件</MenuItem>
-            <MenuItem value="library">库</MenuItem>
-            <MenuItem value="utility">工具</MenuItem>
+          <Select
+            value={filterType}
+            onChange={(e) => setFilterType(e.target.value)}
+            label='类型'
+          >
+            <MenuItem value=''>全部</MenuItem>
+            <MenuItem value='app'>应用</MenuItem>
+            <MenuItem value='component'>组件</MenuItem>
+            <MenuItem value='library'>库</MenuItem>
+            <MenuItem value='utility'>工具</MenuItem>
           </Select>
         </FormControl>
-        <FormControl size="small" sx={{ minWidth: 120 }}>
+        <FormControl
+          size='small'
+          sx={{ minWidth: 120 }}
+        >
           <InputLabel>状态</InputLabel>
-          <Select value={filterStatus} onChange={(e) => setFilterStatus(e.target.value)} label="状态">
-            <MenuItem value="">全部</MenuItem>
-            <MenuItem value="active">活跃</MenuItem>
-            <MenuItem value="disabled">禁用</MenuItem>
-            <MenuItem value="deprecated">废弃</MenuItem>
-            <MenuItem value="error">错误</MenuItem>
+          <Select
+            value={filterStatus}
+            onChange={(e) => setFilterStatus(e.target.value)}
+            label='状态'
+          >
+            <MenuItem value=''>全部</MenuItem>
+            <MenuItem value='active'>活跃</MenuItem>
+            <MenuItem value='disabled'>禁用</MenuItem>
+            <MenuItem value='deprecated'>废弃</MenuItem>
+            <MenuItem value='error'>错误</MenuItem>
           </Select>
         </FormControl>
       </Box>
 
       {circularResult.hasCircular && (
-        <Alert severity="warning" sx={{ mx: 2, mt: 2 }}>
+        <Alert
+          severity='warning'
+          sx={{ mx: 2, mt: 2 }}
+        >
           检测到 {circularResult.cycles.length} 个循环依赖:
           <Box sx={{ mt: 1 }}>
             {circularResult.cycles.map((cycle, idx) => (
-              <Typography key={idx} variant="body2" sx={{ fontFamily: 'monospace' }}>
+              <Typography
+                key={idx}
+                variant='body2'
+                sx={{ fontFamily: 'monospace' }}
+              >
                 {cycle.join(' → ')}
               </Typography>
             ))}
@@ -223,8 +298,11 @@ const RegistryPanel: React.FC<RegistryPanelProps> = ({ onClose }) => {
       )}
 
       <Box sx={{ flex: 1, overflow: 'auto', p: 2 }}>
-        <TableContainer component={Paper} variant="outlined">
-          <Table size="small">
+        <TableContainer
+          component={Paper}
+          variant='outlined'
+        >
+          <Table size='small'>
             <TableHead>
               <TableRow sx={{ bgcolor: 'action.hover' }}>
                 <TableCell sx={{ fontWeight: 600 }}>模块ID</TableCell>
@@ -240,23 +318,55 @@ const RegistryPanel: React.FC<RegistryPanelProps> = ({ onClose }) => {
             </TableHead>
             <TableBody>
               {modules.map((m) => (
-                <TableRow key={m.id} hover onClick={() => setSelectedModule(m)} sx={{ cursor: 'pointer' }}>
-                  <TableCell sx={{ fontFamily: 'monospace', fontSize: 12, fontWeight: 600 }}>{m.id}</TableCell>
+                <TableRow
+                  key={m.id}
+                  hover
+                  onClick={() => setSelectedModule(m)}
+                  sx={{ cursor: 'pointer' }}
+                >
+                  <TableCell sx={{ fontFamily: 'monospace', fontSize: 12, fontWeight: 600 }}>
+                    {m.id}
+                  </TableCell>
                   <TableCell>{m.name}</TableCell>
                   <TableCell sx={{ fontFamily: 'monospace' }}>{m.version}</TableCell>
                   <TableCell>
-                    <Chip label={m.type} size="small" variant="outlined" />
+                    <Chip
+                      label={m.type}
+                      size='small'
+                      variant='outlined'
+                    />
                   </TableCell>
                   <TableCell>
-                    <Chip label={m.status} size="small" color={getStatusColor(m.status)} variant="outlined" />
+                    <Chip
+                      label={m.status}
+                      size='small'
+                      color={getStatusColor(m.status)}
+                      variant='outlined'
+                    />
                   </TableCell>
-                  <TableCell sx={{ fontFamily: 'monospace', fontSize: 11, maxWidth: 200, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                  <TableCell
+                    sx={{
+                      fontFamily: 'monospace',
+                      fontSize: 11,
+                      maxWidth: 200,
+                      overflow: 'hidden',
+                      textOverflow: 'ellipsis',
+                      whiteSpace: 'nowrap',
+                    }}
+                  >
                     {m.entryUrl}
                   </TableCell>
-                  <TableCell align="center">{m.dependencies.length}</TableCell>
+                  <TableCell align='center'>{m.dependencies.length}</TableCell>
                   <TableCell>{formatDate(m.updatedAt)}</TableCell>
                   <TableCell>
-                    <IconButton size="small" color="error" onClick={(e) => { e.stopPropagation(); handleUnregister(m.id); }}>
+                    <IconButton
+                      size='small'
+                      color='error'
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        handleUnregister(m.id);
+                      }}
+                    >
                       <TrashIcon size={16} />
                     </IconButton>
                   </TableCell>
@@ -264,8 +374,16 @@ const RegistryPanel: React.FC<RegistryPanelProps> = ({ onClose }) => {
               ))}
               {modules.length === 0 && (
                 <TableRow>
-                  <TableCell colSpan={9} align="center">
-                    <Typography color="text.secondary" sx={{ py: 4 }}>暂无注册模块</Typography>
+                  <TableCell
+                    colSpan={9}
+                    align='center'
+                  >
+                    <Typography
+                      color='text.secondary'
+                      sx={{ py: 4 }}
+                    >
+                      暂无注册模块
+                    </Typography>
                   </TableCell>
                 </TableRow>
               )}
@@ -274,10 +392,21 @@ const RegistryPanel: React.FC<RegistryPanelProps> = ({ onClose }) => {
         </TableContainer>
       </Box>
 
-      <Drawer anchor="right" open={!!selectedModule} onClose={() => setSelectedModule(null)}>
+      <Drawer
+        anchor='right'
+        open={!!selectedModule}
+        onClose={() => setSelectedModule(null)}
+      >
         <Box sx={{ width: 400, p: 3 }}>
-          <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 2 }}>
-            <Typography variant="h6" sx={{ fontWeight: 600 }}>模块详情</Typography>
+          <Box
+            sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 2 }}
+          >
+            <Typography
+              variant='h6'
+              sx={{ fontWeight: 600 }}
+            >
+              模块详情
+            </Typography>
             <IconButton onClick={() => setSelectedModule(null)}>
               <XIcon size={20} />
             </IconButton>
@@ -286,81 +415,181 @@ const RegistryPanel: React.FC<RegistryPanelProps> = ({ onClose }) => {
           {selectedModule && (
             <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
               <Box>
-                <Typography variant="caption" color="text.secondary">模块ID</Typography>
-                <Typography variant="body1" sx={{ fontFamily: 'monospace', fontWeight: 600 }}>{selectedModule.id}</Typography>
+                <Typography
+                  variant='caption'
+                  color='text.secondary'
+                >
+                  模块ID
+                </Typography>
+                <Typography
+                  variant='body1'
+                  sx={{ fontFamily: 'monospace', fontWeight: 600 }}
+                >
+                  {selectedModule.id}
+                </Typography>
               </Box>
               <Box>
-                <Typography variant="caption" color="text.secondary">名称</Typography>
-                <Typography variant="body1">{selectedModule.name}</Typography>
+                <Typography
+                  variant='caption'
+                  color='text.secondary'
+                >
+                  名称
+                </Typography>
+                <Typography variant='body1'>{selectedModule.name}</Typography>
               </Box>
               {selectedModule.description && (
                 <Box>
-                  <Typography variant="caption" color="text.secondary">描述</Typography>
-                  <Typography variant="body1">{selectedModule.description}</Typography>
+                  <Typography
+                    variant='caption'
+                    color='text.secondary'
+                  >
+                    描述
+                  </Typography>
+                  <Typography variant='body1'>{selectedModule.description}</Typography>
                 </Box>
               )}
               <Box>
-                <Typography variant="caption" color="text.secondary">版本</Typography>
-                <Typography variant="body1" sx={{ fontFamily: 'monospace' }}>{selectedModule.version}</Typography>
+                <Typography
+                  variant='caption'
+                  color='text.secondary'
+                >
+                  版本
+                </Typography>
+                <Typography
+                  variant='body1'
+                  sx={{ fontFamily: 'monospace' }}
+                >
+                  {selectedModule.version}
+                </Typography>
               </Box>
               <Box>
-                <Typography variant="caption" color="text.secondary">类型</Typography>
-                <Chip label={selectedModule.type} size="small" />
+                <Typography
+                  variant='caption'
+                  color='text.secondary'
+                >
+                  类型
+                </Typography>
+                <Chip
+                  label={selectedModule.type}
+                  size='small'
+                />
               </Box>
               <Box>
-                <Typography variant="caption" color="text.secondary">状态</Typography>
-                <Chip label={selectedModule.status} size="small" color={getStatusColor(selectedModule.status)} />
+                <Typography
+                  variant='caption'
+                  color='text.secondary'
+                >
+                  状态
+                </Typography>
+                <Chip
+                  label={selectedModule.status}
+                  size='small'
+                  color={getStatusColor(selectedModule.status)}
+                />
               </Box>
               <Box>
-                <Typography variant="caption" color="text.secondary">入口URL</Typography>
-                <Typography variant="body2" sx={{ fontFamily: 'monospace', wordBreak: 'break-all' }}>{selectedModule.entryUrl}</Typography>
+                <Typography
+                  variant='caption'
+                  color='text.secondary'
+                >
+                  入口URL
+                </Typography>
+                <Typography
+                  variant='body2'
+                  sx={{ fontFamily: 'monospace', wordBreak: 'break-all' }}
+                >
+                  {selectedModule.entryUrl}
+                </Typography>
               </Box>
 
               <Divider />
 
               <Box>
-                <Typography variant="subtitle2" sx={{ fontWeight: 600, mb: 1 }}>
+                <Typography
+                  variant='subtitle2'
+                  sx={{ fontWeight: 600, mb: 1 }}
+                >
                   依赖模块 ({selectedModule.dependencies.length})
                 </Typography>
                 {selectedModule.dependencies.length === 0 ? (
-                  <Typography variant="body2" color="text.secondary">无依赖</Typography>
+                  <Typography
+                    variant='body2'
+                    color='text.secondary'
+                  >
+                    无依赖
+                  </Typography>
                 ) : (
                   <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 0.5 }}>
                     {selectedModule.dependencies.map((dep) => (
-                      <Chip key={dep} label={dep} size="small" variant="outlined" />
+                      <Chip
+                        key={dep}
+                        label={dep}
+                        size='small'
+                        variant='outlined'
+                      />
                     ))}
                   </Box>
                 )}
               </Box>
 
               <Box>
-                <Typography variant="subtitle2" sx={{ fontWeight: 600, mb: 1 }}>
+                <Typography
+                  variant='subtitle2'
+                  sx={{ fontWeight: 600, mb: 1 }}
+                >
                   暴露模块 ({selectedModule.exposes.length})
                 </Typography>
                 {selectedModule.exposes.length === 0 ? (
-                  <Typography variant="body2" color="text.secondary">无暴露</Typography>
+                  <Typography
+                    variant='body2'
+                    color='text.secondary'
+                  >
+                    无暴露
+                  </Typography>
                 ) : (
                   <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 0.5 }}>
                     {selectedModule.exposes.map((exp) => (
-                      <Chip key={exp} label={exp} size="small" color="primary" variant="outlined" />
+                      <Chip
+                        key={exp}
+                        label={exp}
+                        size='small'
+                        color='primary'
+                        variant='outlined'
+                      />
                     ))}
                   </Box>
                 )}
               </Box>
 
               <Box>
-                <Typography variant="subtitle2" sx={{ fontWeight: 600, mb: 1 }}>
+                <Typography
+                  variant='subtitle2'
+                  sx={{ fontWeight: 600, mb: 1 }}
+                >
                   被依赖模块
                 </Typography>
                 {(() => {
                   const dependents = moduleRegistry.getModuleDependents(selectedModule.id);
                   if (dependents.length === 0) {
-                    return <Typography variant="body2" color="text.secondary">无被依赖</Typography>;
+                    return (
+                      <Typography
+                        variant='body2'
+                        color='text.secondary'
+                      >
+                        无被依赖
+                      </Typography>
+                    );
                   }
                   return (
                     <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 0.5 }}>
                       {dependents.map((d) => (
-                        <Chip key={d.id} label={d.id} size="small" color="secondary" variant="outlined" />
+                        <Chip
+                          key={d.id}
+                          label={d.id}
+                          size='small'
+                          color='secondary'
+                          variant='outlined'
+                        />
                       ))}
                     </Box>
                   );
@@ -370,22 +599,43 @@ const RegistryPanel: React.FC<RegistryPanelProps> = ({ onClose }) => {
               <Divider />
 
               <Box>
-                <Typography variant="caption" color="text.secondary">创建时间</Typography>
-                <Typography variant="body2">{formatDate(selectedModule.createdAt)}</Typography>
+                <Typography
+                  variant='caption'
+                  color='text.secondary'
+                >
+                  创建时间
+                </Typography>
+                <Typography variant='body2'>{formatDate(selectedModule.createdAt)}</Typography>
               </Box>
               <Box>
-                <Typography variant="caption" color="text.secondary">更新时间</Typography>
-                <Typography variant="body2">{formatDate(selectedModule.updatedAt)}</Typography>
+                <Typography
+                  variant='caption'
+                  color='text.secondary'
+                >
+                  更新时间
+                </Typography>
+                <Typography variant='body2'>{formatDate(selectedModule.updatedAt)}</Typography>
               </Box>
             </Box>
           )}
         </Box>
       </Drawer>
 
-      <Drawer anchor="right" open={showRegisterDialog} onClose={() => setShowRegisterDialog(false)}>
+      <Drawer
+        anchor='right'
+        open={showRegisterDialog}
+        onClose={() => setShowRegisterDialog(false)}
+      >
         <Box sx={{ width: 400, p: 3 }}>
-          <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 2 }}>
-            <Typography variant="h6" sx={{ fontWeight: 600 }}>注册新模块</Typography>
+          <Box
+            sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 2 }}
+          >
+            <Typography
+              variant='h6'
+              sx={{ fontWeight: 600 }}
+            >
+              注册新模块
+            </Typography>
             <IconButton onClick={() => setShowRegisterDialog(false)}>
               <XIcon size={20} />
             </IconButton>
@@ -393,73 +643,87 @@ const RegistryPanel: React.FC<RegistryPanelProps> = ({ onClose }) => {
           <Divider sx={{ mb: 2 }} />
           <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
             <TextField
-              label="模块ID"
+              label='模块ID'
               value={newModule.id}
               onChange={(e) => setNewModule({ ...newModule, id: e.target.value })}
-              size="small"
-              helperText="字母开头，字母数字下划线连字符"
+              size='small'
+              helperText='字母开头，字母数字下划线连字符'
             />
             <TextField
-              label="模块名称"
+              label='模块名称'
               value={newModule.name}
               onChange={(e) => setNewModule({ ...newModule, name: e.target.value })}
-              size="small"
+              size='small'
             />
             <TextField
-              label="版本号"
+              label='版本号'
               value={newModule.version}
               onChange={(e) => setNewModule({ ...newModule, version: e.target.value })}
-              size="small"
+              size='small'
             />
             <TextField
-              label="入口URL"
+              label='入口URL'
               value={newModule.entryUrl}
               onChange={(e) => setNewModule({ ...newModule, entryUrl: e.target.value })}
-              size="small"
-              helperText="远程模块入口地址"
+              size='small'
+              helperText='远程模块入口地址'
             />
-            <FormControl size="small">
+            <FormControl size='small'>
               <InputLabel>类型</InputLabel>
               <Select
                 value={newModule.type}
                 onChange={(e) => setNewModule({ ...newModule, type: e.target.value as ModuleType })}
-                label="类型"
+                label='类型'
               >
-                <MenuItem value="app">应用</MenuItem>
-                <MenuItem value="component">组件</MenuItem>
-                <MenuItem value="library">库</MenuItem>
-                <MenuItem value="utility">工具</MenuItem>
+                <MenuItem value='app'>应用</MenuItem>
+                <MenuItem value='component'>组件</MenuItem>
+                <MenuItem value='library'>库</MenuItem>
+                <MenuItem value='utility'>工具</MenuItem>
               </Select>
             </FormControl>
-            <FormControl size="small">
+            <FormControl size='small'>
               <InputLabel>状态</InputLabel>
               <Select
                 value={newModule.status}
-                onChange={(e) => setNewModule({ ...newModule, status: e.target.value as ModuleStatus })}
-                label="状态"
+                onChange={(e) =>
+                  setNewModule({ ...newModule, status: e.target.value as ModuleStatus })
+                }
+                label='状态'
               >
-                <MenuItem value="active">活跃</MenuItem>
-                <MenuItem value="disabled">禁用</MenuItem>
-                <MenuItem value="deprecated">废弃</MenuItem>
-                <MenuItem value="error">错误</MenuItem>
+                <MenuItem value='active'>活跃</MenuItem>
+                <MenuItem value='disabled'>禁用</MenuItem>
+                <MenuItem value='deprecated'>废弃</MenuItem>
+                <MenuItem value='error'>错误</MenuItem>
               </Select>
             </FormControl>
             <TextField
-              label="描述"
+              label='描述'
               value={newModule.description}
               onChange={(e) => setNewModule({ ...newModule, description: e.target.value })}
-              size="small"
+              size='small'
               multiline
               rows={2}
             />
             <TextField
-              label="依赖模块 (逗号分隔)"
+              label='依赖模块 (逗号分隔)'
               value={(newModule.dependencies || []).join(', ')}
-              onChange={(e) => setNewModule({ ...newModule, dependencies: e.target.value.split(',').map(s => s.trim()).filter(Boolean) })}
-              size="small"
-              helperText="模块ID列表，用逗号分隔"
+              onChange={(e) =>
+                setNewModule({
+                  ...newModule,
+                  dependencies: e.target.value
+                    .split(',')
+                    .map((s) => s.trim())
+                    .filter(Boolean),
+                })
+              }
+              size='small'
+              helperText='模块ID列表，用逗号分隔'
             />
-            <Button variant="contained" onClick={handleRegister} startIcon={<PlusIcon size={18} />}>
+            <Button
+              variant='contained'
+              onClick={handleRegister}
+              startIcon={<PlusIcon size={18} />}
+            >
               注册模块
             </Button>
           </Box>
@@ -472,7 +736,10 @@ const RegistryPanel: React.FC<RegistryPanelProps> = ({ onClose }) => {
         onClose={() => setSnackbar({ ...snackbar, open: false })}
         anchorOrigin={{ vertical: 'bottom', horizontal: 'center' }}
       >
-        <Alert severity={snackbar.type} onClose={() => setSnackbar({ ...snackbar, open: false })}>
+        <Alert
+          severity={snackbar.type}
+          onClose={() => setSnackbar({ ...snackbar, open: false })}
+        >
           {snackbar.message}
         </Alert>
       </Snackbar>

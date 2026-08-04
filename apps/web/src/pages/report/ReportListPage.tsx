@@ -184,7 +184,10 @@ const ReportListPage: React.FC = () => {
         apiAdapter={reportApiAdapter}
         customRowActions={customRowActions}
         headerContent={
-          headerContent as unknown as (rows: Record<string, unknown>[], total: number) => React.ReactNode
+          headerContent as unknown as (
+            rows: Record<string, unknown>[],
+            total: number
+          ) => React.ReactNode
         }
         breadcrumbs={[{ label: '首页', href: '/dashboard' }, { label: '报表中心' }]}
       />

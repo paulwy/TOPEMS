@@ -98,7 +98,7 @@ describe('SCM purchaseOrderApi', () => {
   });
 
   it('should call POST /purchase-orders for create', async () => {
-    const data = { order_no: 'PO001', supplier_id: 'sup1' };
+    const data = { orderNo: 'PO001', supplier_id: 'sup1' };
     mockApiClient.post.mockResolvedValue({ success: true, data });
     await purchaseOrderApi.create(data);
     expect(mockApiClient.post).toHaveBeenCalledWith('/purchase-orders', data);
@@ -783,7 +783,7 @@ describe('SCM purchaseContractApi', () => {
   });
 
   it('should call POST /purchase-contracts for create', async () => {
-    const data = { contract_no: 'PC001', supplier_id: 'sup1' };
+    const data = { contractNo: 'PC001', supplier_id: 'sup1' };
     mockApiClient.post.mockResolvedValue({ success: true, data });
     await purchaseContractApi.create(data);
     expect(mockApiClient.post).toHaveBeenCalledWith('/purchase-contracts', data);

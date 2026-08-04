@@ -11,7 +11,7 @@ const NotificationSettings: React.FC = () => {
     <div
       style={{
         padding: 16,
-        backgroundColor: 'white',
+        backgroundColor: 'common.white',
         borderBottom: '1px solid grey.200',
       }}
     >
@@ -61,7 +61,7 @@ const NotificationSettings: React.FC = () => {
                 height: 16,
                 width: 16,
                 borderRadius: '9999px',
-                backgroundColor: 'white',
+                backgroundColor: 'common.white',
                 transition: 'transform 0.15s',
                 transform: settings.enableDesktop ? 'translateX(20px)' : 'translateX(4px)',
               }}
@@ -107,7 +107,7 @@ const NotificationSettings: React.FC = () => {
                 height: 16,
                 width: 16,
                 borderRadius: '9999px',
-                backgroundColor: 'white',
+                backgroundColor: 'common.white',
                 transition: 'transform 0.15s',
                 transform: settings.enableSound ? 'translateX(20px)' : 'translateX(4px)',
               }}
@@ -149,7 +149,7 @@ const NotificationSettings: React.FC = () => {
                 height: 16,
                 width: 16,
                 borderRadius: '9999px',
-                backgroundColor: 'white',
+                backgroundColor: 'common.white',
                 transition: 'transform 0.15s',
                 transform: settings.enableMobilePush ? 'translateX(20px)' : 'translateX(4px)',
               }}
@@ -208,7 +208,7 @@ const NotificationSettings: React.FC = () => {
                       height: 12,
                       width: 12,
                       borderRadius: '9999px',
-                      backgroundColor: 'white',
+                      backgroundColor: 'common.white',
                       transition: 'transform 0.15s',
                       transform: enabled ? 'translateX(16px)' : 'translateX(4px)',
                     }}
@@ -254,7 +254,7 @@ const NotificationSettings: React.FC = () => {
                   height: 12,
                   width: 12,
                   borderRadius: '9999px',
-                  backgroundColor: 'white',
+                  backgroundColor: 'common.white',
                   transition: 'transform 0.15s',
                   transform: settings.quietHours.enabled ? 'translateX(16px)' : 'translateX(4px)',
                 }}

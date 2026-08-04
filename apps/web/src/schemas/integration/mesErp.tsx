@@ -51,7 +51,10 @@ const mesErpFields: SchemaField[] = [
     listWidth: 140,
     placeholder: '输入产品名称（可选）',
     renderCell: (row: Record<string, unknown>) => (
-      <Typography variant='body2' color='text.secondary'>
+      <Typography
+        variant='body2'
+        color='text.secondary'
+      >
         {String(row.product_name ?? '-')}
       </Typography>
     ),
@@ -98,7 +101,10 @@ const mesErpFields: SchemaField[] = [
     sortable: true,
     listWidth: 160,
     renderCell: (row: Record<string, unknown>) => (
-      <Typography variant='body2' color='text.secondary'>
+      <Typography
+        variant='body2'
+        color='text.secondary'
+      >
         {row.last_synced_at
           ? new Date(String(row.last_synced_at)).toLocaleString('zh-CN')
           : '从未同步'}
@@ -113,7 +119,10 @@ const mesErpFields: SchemaField[] = [
     listWidth: 160,
     hideInForm: true,
     renderCell: (row: Record<string, unknown>) => (
-      <Typography variant='body2' color='text.secondary'>
+      <Typography
+        variant='body2'
+        color='text.secondary'
+      >
         {new Date(String(row.created_at)).toLocaleString('zh-CN')}
       </Typography>
     ),

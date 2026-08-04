@@ -2,10 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import {
-  FormPageTemplate,
-  type FormSection,
-} from '@/components/templates/FormPageTemplate';
+import { FormPageTemplate, type FormSection } from '@/components/templates/FormPageTemplate';
 import { PageContainer } from '@/components/common';
 import { rdApi } from '@/api/rd';
 import { useNotificationStore } from '@/store';
@@ -130,7 +127,9 @@ const RsProjectCreatePage: React.FC = () => {
 
   const loading = projectQuery.isLoading;
   const submitting = submitMutation.isPending;
-  const error = projectQuery.error ? t('rd.project_create_page.error.load_project_failed') : undefined;
+  const error = projectQuery.error
+    ? t('rd.project_create_page.error.load_project_failed')
+    : undefined;
 
   const defaultValues = {
     name: '',
@@ -270,9 +269,7 @@ const RsProjectCreatePage: React.FC = () => {
   return (
     <PageContainer
       title={
-        isEdit
-          ? t('rd.project_create_page.title_edit')
-          : t('rd.project_create_page.title_create')
+        isEdit ? t('rd.project_create_page.title_edit') : t('rd.project_create_page.title_create')
       }
       subtitle={
         isEdit

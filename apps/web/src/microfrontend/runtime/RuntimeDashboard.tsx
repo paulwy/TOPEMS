@@ -70,11 +70,7 @@ import {
   Cpu as CpuIcon,
   Boxes as BoxesIcon,
 } from 'lucide-react';
-import {
-  dynamicLoader,
-  ModuleLoadStatus,
-  type RuntimeModule,
-} from './dynamic-loader';
+import { dynamicLoader, ModuleLoadStatus, type RuntimeModule } from './dynamic-loader';
 import {
   crossFrameworkBridge,
   FrameworkType,
@@ -106,85 +102,85 @@ interface RuntimeDashboardProps {
 type TabType = 'loader' | 'framework' | 'design' | 'lifecycle';
 
 const statusColors: Record<ModuleLoadStatus, string> = {
-  [ModuleLoadStatus.Unloaded]: '#64748b',
-  [ModuleLoadStatus.Loading]: '#f59e0b',
-  [ModuleLoadStatus.Loaded]: '#10b981',
-  [ModuleLoadStatus.Failed]: '#ef4444',
+  [ModuleLoadStatus.UNLOADED]: '#64748b',
+  [ModuleLoadStatus.LOADING]: '#f59e0b',
+  [ModuleLoadStatus.LOADED]: '#10b981',
+  [ModuleLoadStatus.FAILED]: '#ef4444',
 };
 
 const statusLabels: Record<ModuleLoadStatus, string> = {
-  [ModuleLoadStatus.Unloaded]: '未加载',
-  [ModuleLoadStatus.Loading]: '加载中',
-  [ModuleLoadStatus.Loaded]: '已加载',
-  [ModuleLoadStatus.Failed]: '失败',
+  [ModuleLoadStatus.UNLOADED]: '未加载',
+  [ModuleLoadStatus.LOADING]: '加载中',
+  [ModuleLoadStatus.LOADED]: '已加载',
+  [ModuleLoadStatus.FAILED]: '失败',
 };
 
 const lifecycleStateColors: Record<LifecycleState, string> = {
-  [LifecycleState.Registered]: '#64748b',
-  [LifecycleState.Preloading]: '#f59e0b',
-  [LifecycleState.Loaded]: '#3b82f6',
-  [LifecycleState.Mounting]: '#8b5cf6',
-  [LifecycleState.Mounted]: '#10b981',
-  [LifecycleState.Updating]: '#06b6d4',
-  [LifecycleState.Error]: '#ef4444',
-  [LifecycleState.Unmounting]: '#f97316',
-  [LifecycleState.Unmounted]: '#94a3b8',
+  [LifecycleState.REGISTERED]: '#64748b',
+  [LifecycleState.PRELOADING]: '#f59e0b',
+  [LifecycleState.LOADED]: '#3b82f6',
+  [LifecycleState.MOUNTING]: '#8b5cf6',
+  [LifecycleState.MOUNTED]: '#10b981',
+  [LifecycleState.UPDATING]: '#06b6d4',
+  [LifecycleState.ERROR]: '#ef4444',
+  [LifecycleState.UNMOUNTING]: '#f97316',
+  [LifecycleState.UNMOUNTED]: '#94a3b8',
 };
 
 const lifecycleStateLabels: Record<LifecycleState, string> = {
-  [LifecycleState.Registered]: '已注册',
-  [LifecycleState.Preloading]: '预加载中',
-  [LifecycleState.Loaded]: '已加载',
-  [LifecycleState.Mounting]: '挂载中',
-  [LifecycleState.Mounted]: '已挂载',
-  [LifecycleState.Updating]: '更新中',
-  [LifecycleState.Error]: '错误',
-  [LifecycleState.Unmounting]: '卸载中',
-  [LifecycleState.Unmounted]: '已卸载',
+  [LifecycleState.REGISTERED]: '已注册',
+  [LifecycleState.PRELOADING]: '预加载中',
+  [LifecycleState.LOADED]: '已加载',
+  [LifecycleState.MOUNTING]: '挂载中',
+  [LifecycleState.MOUNTED]: '已挂载',
+  [LifecycleState.UPDATING]: '更新中',
+  [LifecycleState.ERROR]: '错误',
+  [LifecycleState.UNMOUNTING]: '卸载中',
+  [LifecycleState.UNMOUNTED]: '已卸载',
 };
 
 const frameworkColors: Record<FrameworkType, string> = {
-  [FrameworkType.React]: '#61dafb',
-  [FrameworkType.Vue]: '#42b883',
-  [FrameworkType.Angular]: '#dd0031',
-  [FrameworkType.Svelte]: '#ff3e00',
-  [FrameworkType.Vanilla]: '#64748b',
+  [FrameworkType.REACT]: '#61dafb',
+  [FrameworkType.VUE]: '#42b883',
+  [FrameworkType.ANGULAR]: '#dd0031',
+  [FrameworkType.SVELTE]: '#ff3e00',
+  [FrameworkType.VANILLA]: '#64748b',
 };
 
 const frameworkLabels: Record<FrameworkType, string> = {
-  [FrameworkType.React]: 'React',
-  [FrameworkType.Vue]: 'Vue',
-  [FrameworkType.Angular]: 'Angular',
-  [FrameworkType.Svelte]: 'Svelte',
-  [FrameworkType.Vanilla]: 'Vanilla',
+  [FrameworkType.REACT]: 'React',
+  [FrameworkType.VUE]: 'Vue',
+  [FrameworkType.ANGULAR]: 'Angular',
+  [FrameworkType.SVELTE]: 'Svelte',
+  [FrameworkType.VANILLA]: 'Vanilla',
 };
 
 const tokenTypeLabels: Record<TokenType, string> = {
-  [TokenType.Color]: '颜色',
-  [TokenType.Typography]: '排版',
-  [TokenType.Spacing]: '间距',
-  [TokenType.Border]: '边框',
-  [TokenType.Shadow]: '阴影',
-  [TokenType.Animation]: '动画',
-  [TokenType.ZIndex]: '层级',
-  [TokenType.Breakpoint]: '断点',
+  [TokenType.COLOR]: '颜色',
+  [TokenType.TYPOGRAPHY]: '排版',
+  [TokenType.SPACING]: '间距',
+  [TokenType.BORDER]: '边框',
+  [TokenType.SHADOW]: '阴影',
+  [TokenType.ANIMATION]: '动画',
+  [TokenType.ZINDEX]: '层级',
+  [TokenType.BREAKPOINT]: '断点',
 };
 
 const eventTypeLabels: Record<LifecycleEventType, string> = {
-  [LifecycleEventType.Registered]: '注册',
-  [LifecycleEventType.PreloadStart]: '预加载开始',
-  [LifecycleEventType.PreloadEnd]: '预加载完成',
-  [LifecycleEventType.LoadStart]: '加载开始',
-  [LifecycleEventType.LoadEnd]: '加载完成',
-  [LifecycleEventType.MountStart]: '挂载开始',
-  [LifecycleEventType.MountEnd]: '挂载完成',
-  [LifecycleEventType.UpdateStart]: '更新开始',
-  [LifecycleEventType.UpdateEnd]: '更新完成',
-  [LifecycleEventType.UnmountStart]: '卸载开始',
-  [LifecycleEventType.UnmountEnd]: '卸载完成',
-  [LifecycleEventType.Error]: '错误',
-  [LifecycleEventType.Destroyed]: '销毁',
-  [LifecycleEventType.StateChange]: '状态变更',
+  [LifecycleEventType.REGISTERED]: '注册',
+  [LifecycleEventType.PRELOADSTART]: '预加载开始',
+  [LifecycleEventType.PRELOADEND]: '预加载完成',
+  [LifecycleEventType.LOADSTART]: '加载开始',
+  [LifecycleEventType.LOADEND]: '加载完成',
+  [LifecycleEventType.MOUNTSTART]: '挂载开始',
+  [LifecycleEventType.MOUNTEND]: '挂载完成',
+  [LifecycleEventType.UPDATESTART]: '更新开始',
+  [LifecycleEventType.UPDATEEND]: '更新完成',
+  [LifecycleEventType.UNMOUNTSTART]: '卸载开始',
+  [LifecycleEventType.UNMOUNTEND]: '卸载完成',
+  [LifecycleEventType.ERROR]: '错误',
+  [LifecycleEventType.DESTROYED]: '销毁',
+  [LifecycleEventType.STATECHANGE]: '状态变更',
 };
 
 // ==================== 主组件 ====================
@@ -201,19 +197,26 @@ const RuntimeDashboard: React.FC<RuntimeDashboardProps> = ({ onClose }) => {
           display: 'flex',
           alignItems: 'center',
           justifyContent: 'space-between',
-          bgcolor: '#1e293b',
-          color: 'white',
+          bgcolor: 'text.primary',
+          color: 'common.white',
           flexShrink: 0,
         }}
       >
         <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
           <BoxesIcon size={22} />
-          <Typography variant='h6' sx={{ fontWeight: 600 }}>
+          <Typography
+            variant='h6'
+            sx={{ fontWeight: 600 }}
+          >
             V45.0 运行时控制台 — 微前端终极形态
           </Typography>
         </Box>
         {onClose && (
-          <IconButton size='small' onClick={onClose} sx={{ color: 'white' }}>
+          <IconButton
+            size='small'
+            onClick={onClose}
+            sx={{ color: 'common.white' }}
+          >
             <XIcon size={20} />
           </IconButton>
         )}
@@ -351,31 +354,58 @@ const DynamicLoaderTab: React.FC = () => {
     }
   };
 
-  const loadedCount = modules.filter((m) => m.status === ModuleLoadStatus.Loaded).length;
-  const failedCount = modules.filter((m) => m.status === ModuleLoadStatus.Failed).length;
+  const loadedCount = modules.filter((m) => m.status === ModuleLoadStatus.LOADED).length;
+  const failedCount = modules.filter((m) => m.status === ModuleLoadStatus.FAILED).length;
 
   return (
     <Box>
       {/* 统计卡片 */}
-      <Grid container spacing={2} sx={{ mb: 2 }}>
+      <Grid
+        container
+        spacing={2}
+        sx={{ mb: 2 }}
+      >
         <Grid size={{ xs: 12, sm: 6, md: 3 }}>
-          <StatCard label='已注册模块' value={modules.length} icon={<PackageIcon size={20} />} color='#3b82f6' />
+          <StatCard
+            label='已注册模块'
+            value={modules.length}
+            icon={<PackageIcon size={20} />}
+            color='#3b82f6'
+          />
         </Grid>
         <Grid size={{ xs: 12, sm: 6, md: 3 }}>
-          <StatCard label='已加载' value={loadedCount} icon={<CheckCircleIcon size={20} />} color='#10b981' />
+          <StatCard
+            label='已加载'
+            value={loadedCount}
+            icon={<CheckCircleIcon size={20} />}
+            color='#10b981'
+          />
         </Grid>
         <Grid size={{ xs: 12, sm: 6, md: 3 }}>
-          <StatCard label='加载失败' value={failedCount} icon={<XCircleIcon size={20} />} color='#ef4444' />
+          <StatCard
+            label='加载失败'
+            value={failedCount}
+            icon={<XCircleIcon size={20} />}
+            color='#ef4444'
+          />
         </Grid>
         <Grid size={{ xs: 12, sm: 6, md: 3 }}>
-          <StatCard label='并发/等待' value={`${currentLoads}/${pendingCount}`} icon={<CpuIcon size={20} />} color='#f59e0b' />
+          <StatCard
+            label='并发/等待'
+            value={`${currentLoads}/${pendingCount}`}
+            icon={<CpuIcon size={20} />}
+            color='#f59e0b'
+          />
         </Grid>
       </Grid>
 
       {/* 注册新模块 */}
       <Card sx={{ mb: 2 }}>
         <CardContent>
-          <Typography variant='subtitle2' sx={{ mb: 1, fontWeight: 600 }}>
+          <Typography
+            variant='subtitle2'
+            sx={{ mb: 1, fontWeight: 600 }}
+          >
             注册新模块
           </Typography>
           <Box sx={{ display: 'flex', gap: 1, flexWrap: 'wrap' }}>
@@ -393,10 +423,20 @@ const DynamicLoaderTab: React.FC = () => {
               onChange={(e) => setNewModuleUrl(e.target.value)}
               sx={{ minWidth: 250 }}
             />
-            <Button variant='contained' size='small' startIcon={<DownloadIcon size={16} />} onClick={handleRegister}>
+            <Button
+              variant='contained'
+              size='small'
+              startIcon={<DownloadIcon size={16} />}
+              onClick={handleRegister}
+            >
               注册
             </Button>
-            <Button variant='outlined' size='small' startIcon={<RefreshIcon size={16} />} onClick={() => dynamicLoader.clearCache()}>
+            <Button
+              variant='outlined'
+              size='small'
+              startIcon={<RefreshIcon size={16} />}
+              onClick={() => dynamicLoader.clearCache()}
+            >
               清空缓存
             </Button>
           </Box>
@@ -406,20 +446,35 @@ const DynamicLoaderTab: React.FC = () => {
       {/* 模块列表 */}
       <Card>
         <CardContent>
-          <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 1 }}>
-            <Typography variant='subtitle2' sx={{ fontWeight: 600 }}>
+          <Box
+            sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 1 }}
+          >
+            <Typography
+              variant='subtitle2'
+              sx={{ fontWeight: 600 }}
+            >
               模块列表
             </Typography>
-            <Button size='small' startIcon={<RefreshIcon size={14} />} onClick={refresh}>
+            <Button
+              size='small'
+              startIcon={<RefreshIcon size={14} />}
+              onClick={refresh}
+            >
               刷新
             </Button>
           </Box>
           {modules.length === 0 ? (
-            <Typography color='text.secondary' sx={{ py: 3, textAlign: 'center' }}>
+            <Typography
+              color='text.secondary'
+              sx={{ py: 3, textAlign: 'center' }}
+            >
               暂无已注册模块
             </Typography>
           ) : (
-            <TableContainer component={Paper} variant='outlined'>
+            <TableContainer
+              component={Paper}
+              variant='outlined'
+            >
               <Table size='small'>
                 <TableHead>
                   <TableRow>
@@ -434,7 +489,10 @@ const DynamicLoaderTab: React.FC = () => {
                 </TableHead>
                 <TableBody>
                   {modules.map((mod) => (
-                    <TableRow key={mod.id} hover>
+                    <TableRow
+                      key={mod.id}
+                      hover
+                    >
                       <TableCell sx={{ fontFamily: 'monospace', fontSize: 13 }}>{mod.id}</TableCell>
                       <TableCell>{mod.name}</TableCell>
                       <TableCell>
@@ -443,7 +501,7 @@ const DynamicLoaderTab: React.FC = () => {
                           label={statusLabels[mod.status]}
                           sx={{
                             bgcolor: statusColors[mod.status],
-                            color: 'white',
+                            color: 'common.white',
                             fontSize: 11,
                           }}
                         />
@@ -452,10 +510,20 @@ const DynamicLoaderTab: React.FC = () => {
                         {mod.load_duration != null ? `${mod.load_duration}ms` : '-'}
                       </TableCell>
                       <TableCell>{mod.retry_count > 0 ? mod.retry_count : '-'}</TableCell>
-                      <TableCell sx={{ maxWidth: 200, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                      <TableCell
+                        sx={{
+                          maxWidth: 200,
+                          overflow: 'hidden',
+                          textOverflow: 'ellipsis',
+                          whiteSpace: 'nowrap',
+                        }}
+                      >
                         {mod.error ? (
                           <Tooltip title={mod.error.message}>
-                            <AlertCircleIcon size={16} color='#ef4444' />
+                            <AlertCircleIcon
+                              size={16}
+                              color='#ef4444'
+                            />
                           </Tooltip>
                         ) : (
                           '-'
@@ -463,29 +531,41 @@ const DynamicLoaderTab: React.FC = () => {
                       </TableCell>
                       <TableCell align='right'>
                         <Box sx={{ display: 'flex', gap: 0.5, justifyContent: 'flex-end' }}>
-                          {mod.status !== ModuleLoadStatus.Loaded && (
+                          {mod.status !== ModuleLoadStatus.LOADED && (
                             <Tooltip title='加载'>
-                              <IconButton size='small' onClick={() => handleLoad(mod.id)}>
+                              <IconButton
+                                size='small'
+                                onClick={() => handleLoad(mod.id)}
+                              >
                                 <DownloadIcon size={16} />
                               </IconButton>
                             </Tooltip>
                           )}
-                          {mod.status === ModuleLoadStatus.Loaded && (
+                          {mod.status === ModuleLoadStatus.LOADED && (
                             <Tooltip title='预加载'>
-                              <IconButton size='small' onClick={() => handlePreload(mod.id)}>
+                              <IconButton
+                                size='small'
+                                onClick={() => handlePreload(mod.id)}
+                              >
                                 <UploadIcon size={16} />
                               </IconButton>
                             </Tooltip>
                           )}
-                          {mod.status === ModuleLoadStatus.Loaded && (
+                          {mod.status === ModuleLoadStatus.LOADED && (
                             <Tooltip title='卸载'>
-                              <IconButton size='small' onClick={() => handleUnload(mod.id)}>
+                              <IconButton
+                                size='small'
+                                onClick={() => handleUnload(mod.id)}
+                              >
                                 <TrashIcon size={16} />
                               </IconButton>
                             </Tooltip>
                           )}
                           <Tooltip title='重载'>
-                            <IconButton size='small' onClick={() => handleReload(mod.id)}>
+                            <IconButton
+                              size='small'
+                              onClick={() => handleReload(mod.id)}
+                            >
                               <RefreshIcon size={16} />
                             </IconButton>
                           </Tooltip>
@@ -506,7 +586,10 @@ const DynamicLoaderTab: React.FC = () => {
         onClose={() => setSnack({ ...snack, open: false })}
         anchorOrigin={{ vertical: 'bottom', horizontal: 'right' }}
       >
-        <Alert severity={snack.type} onClose={() => setSnack({ ...snack, open: false })}>
+        <Alert
+          severity={snack.type}
+          onClose={() => setSnack({ ...snack, open: false })}
+        >
           {snack.msg}
         </Alert>
       </Snackbar>
@@ -518,7 +601,7 @@ const DynamicLoaderTab: React.FC = () => {
 
 const CrossFrameworkTab: React.FC = () => {
   const [mountedComponents, setMountedComponents] = useState<MountedComponent[]>([]);
-  const [selectedFramework, setSelectedFramework] = useState<FrameworkType>(FrameworkType.React);
+  const [selectedFramework, setSelectedFramework] = useState<FrameworkType>(FrameworkType.REACT);
   const [propsInput, setPropsInput] = useState('{\n  "title": "测试组件",\n  "count": 42\n}');
   const [snack, setSnack] = useState<{ open: boolean; msg: string; type: 'success' | 'error' }>({
     open: false,
@@ -553,22 +636,23 @@ const CrossFrameworkTab: React.FC = () => {
     const id = `test-${selectedFramework}-${componentCounter.current}`;
 
     // 创建一个模拟组件
-    const mockComponent = selectedFramework === FrameworkType.React
-      ? (() => null)
-      : {};
+    const mockComponent = selectedFramework === FrameworkType.REACT ? () => null : {};
 
     try {
       const adapter = crossFrameworkBridge.createAdapter(selectedFramework, mockComponent);
-      crossFrameworkBridge.mountComponent(
-        id,
-        adapter,
-        testMountRef.current,
-        props,
-        {
-          onClick: () => setSnack({ open: true, msg: `${frameworkLabels[selectedFramework]} 事件触发`, type: 'success' }),
-        }
-      );
-      setSnack({ open: true, msg: `${frameworkLabels[selectedFramework]} 组件已挂载`, type: 'success' });
+      crossFrameworkBridge.mountComponent(id, adapter, testMountRef.current, props, {
+        onClick: () =>
+          setSnack({
+            open: true,
+            msg: `${frameworkLabels[selectedFramework]} 事件触发`,
+            type: 'success',
+          }),
+      });
+      setSnack({
+        open: true,
+        msg: `${frameworkLabels[selectedFramework]} 组件已挂载`,
+        type: 'success',
+      });
       refresh();
     } catch (err) {
       setSnack({ open: true, msg: `挂载失败: ${(err as Error).message}`, type: 'error' });
@@ -590,29 +674,63 @@ const CrossFrameworkTab: React.FC = () => {
   return (
     <Box>
       {/* 统计 */}
-      <Grid container spacing={2} sx={{ mb: 2 }}>
+      <Grid
+        container
+        spacing={2}
+        sx={{ mb: 2 }}
+      >
         <Grid size={{ xs: 12, sm: 6, md: 3 }}>
-          <StatCard label='已挂载组件' value={mountedComponents.length} icon={<LayersIcon size={20} />} color='#8b5cf6' />
+          <StatCard
+            label='已挂载组件'
+            value={mountedComponents.length}
+            icon={<LayersIcon size={20} />}
+            color='#8b5cf6'
+          />
         </Grid>
         <Grid size={{ xs: 12, sm: 6, md: 3 }}>
-          <StatCard label='React' value={mountedComponents.filter((c) => c.framework === FrameworkType.React).length} icon={<CodeIcon size={20} />} color='#61dafb' />
+          <StatCard
+            label='React'
+            value={mountedComponents.filter((c) => c.framework === FrameworkType.REACT).length}
+            icon={<CodeIcon size={20} />}
+            color='#61dafb'
+          />
         </Grid>
         <Grid size={{ xs: 12, sm: 6, md: 3 }}>
-          <StatCard label='Vue' value={mountedComponents.filter((c) => c.framework === FrameworkType.Vue).length} icon={<CodeIcon size={20} />} color='#42b883' />
+          <StatCard
+            label='Vue'
+            value={mountedComponents.filter((c) => c.framework === FrameworkType.VUE).length}
+            icon={<CodeIcon size={20} />}
+            color='#42b883'
+          />
         </Grid>
         <Grid size={{ xs: 12, sm: 6, md: 3 }}>
-          <StatCard label='Angular+Svelte' value={mountedComponents.filter((c) => c.framework === FrameworkType.Angular || c.framework === FrameworkType.Svelte).length} icon={<CodeIcon size={20} />} color='#dd0031' />
+          <StatCard
+            label='Angular+Svelte'
+            value={
+              mountedComponents.filter(
+                (c) => c.framework === FrameworkType.ANGULAR || c.framework === FrameworkType.SVELTE
+              ).length
+            }
+            icon={<CodeIcon size={20} />}
+            color='#dd0031'
+          />
         </Grid>
       </Grid>
 
       {/* 组件挂载测试区 */}
       <Card sx={{ mb: 2 }}>
         <CardContent>
-          <Typography variant='subtitle2' sx={{ mb: 1, fontWeight: 600 }}>
+          <Typography
+            variant='subtitle2'
+            sx={{ mb: 1, fontWeight: 600 }}
+          >
             跨框架组件挂载测试
           </Typography>
           <Box sx={{ display: 'flex', gap: 1, flexWrap: 'wrap', mb: 2 }}>
-            <FormControl size='small' sx={{ minWidth: 150 }}>
+            <FormControl
+              size='small'
+              sx={{ minWidth: 150 }}
+            >
               <InputLabel>框架类型</InputLabel>
               <Select
                 value={selectedFramework}
@@ -620,16 +738,29 @@ const CrossFrameworkTab: React.FC = () => {
                 onChange={(e) => setSelectedFramework(e.target.value as FrameworkType)}
               >
                 {Object.values(FrameworkType).map((ft) => (
-                  <MenuItem key={ft} value={ft}>
+                  <MenuItem
+                    key={ft}
+                    value={ft}
+                  >
                     {frameworkLabels[ft]}
                   </MenuItem>
                 ))}
               </Select>
             </FormControl>
-            <Button variant='contained' size='small' startIcon={<PlayIcon size={16} />} onClick={handleTestMount}>
+            <Button
+              variant='contained'
+              size='small'
+              startIcon={<PlayIcon size={16} />}
+              onClick={handleTestMount}
+            >
               挂载组件
             </Button>
-            <Button variant='outlined' size='small' startIcon={<TrashIcon size={16} />} onClick={handleUnmountAll}>
+            <Button
+              variant='outlined'
+              size='small'
+              startIcon={<TrashIcon size={16} />}
+              onClick={handleUnmountAll}
+            >
               全部卸载
             </Button>
           </Box>
@@ -654,7 +785,10 @@ const CrossFrameworkTab: React.FC = () => {
               bgcolor: 'grey.50',
             }}
           >
-            <Typography variant='caption' color='text.secondary'>
+            <Typography
+              variant='caption'
+              color='text.secondary'
+            >
               ↓ 组件将挂载到此处 ↓
             </Typography>
           </Box>
@@ -664,15 +798,24 @@ const CrossFrameworkTab: React.FC = () => {
       {/* 已挂载组件列表 */}
       <Card>
         <CardContent>
-          <Typography variant='subtitle2' sx={{ mb: 1, fontWeight: 600 }}>
+          <Typography
+            variant='subtitle2'
+            sx={{ mb: 1, fontWeight: 600 }}
+          >
             已挂载组件列表
           </Typography>
           {mountedComponents.length === 0 ? (
-            <Typography color='text.secondary' sx={{ py: 3, textAlign: 'center' }}>
+            <Typography
+              color='text.secondary'
+              sx={{ py: 3, textAlign: 'center' }}
+            >
               暂无已挂载组件
             </Typography>
           ) : (
-            <TableContainer component={Paper} variant='outlined'>
+            <TableContainer
+              component={Paper}
+              variant='outlined'
+            >
               <Table size='small'>
                 <TableHead>
                   <TableRow>
@@ -685,22 +828,32 @@ const CrossFrameworkTab: React.FC = () => {
                 </TableHead>
                 <TableBody>
                   {mountedComponents.map((comp) => (
-                    <TableRow key={comp.id} hover>
-                      <TableCell sx={{ fontFamily: 'monospace', fontSize: 13 }}>{comp.id}</TableCell>
+                    <TableRow
+                      key={comp.id}
+                      hover
+                    >
+                      <TableCell sx={{ fontFamily: 'monospace', fontSize: 13 }}>
+                        {comp.id}
+                      </TableCell>
                       <TableCell>
                         <Chip
                           size='small'
                           label={frameworkLabels[comp.framework]}
-                          sx={{ bgcolor: frameworkColors[comp.framework], color: 'white', fontSize: 11 }}
+                          sx={{
+                            bgcolor: frameworkColors[comp.framework],
+                            color: 'common.white',
+                            fontSize: 11,
+                          }}
                         />
                       </TableCell>
                       <TableCell>{Object.keys(comp.props).length}</TableCell>
-                      <TableCell>
-                        {new Date(comp.mountedAt).toLocaleTimeString('zh-CN')}
-                      </TableCell>
+                      <TableCell>{new Date(comp.mountedAt).toLocaleTimeString('zh-CN')}</TableCell>
                       <TableCell align='right'>
                         <Tooltip title='卸载'>
-                          <IconButton size='small' onClick={() => handleUnmount(comp.id)}>
+                          <IconButton
+                            size='small'
+                            onClick={() => handleUnmount(comp.id)}
+                          >
                             <TrashIcon size={16} />
                           </IconButton>
                         </Tooltip>
@@ -720,7 +873,10 @@ const CrossFrameworkTab: React.FC = () => {
         onClose={() => setSnack({ ...snack, open: false })}
         anchorOrigin={{ vertical: 'bottom', horizontal: 'right' }}
       >
-        <Alert severity={snack.type} onClose={() => setSnack({ ...snack, open: false })}>
+        <Alert
+          severity={snack.type}
+          onClose={() => setSnack({ ...snack, open: false })}
+        >
           {snack.msg}
         </Alert>
       </Snackbar>
@@ -753,7 +909,11 @@ const DesignSystemTab: React.FC = () => {
 
   const handleThemeToggle = () => {
     designSystemManager.toggleTheme();
-    setSnack({ open: true, msg: `已切换到${theme.mode === 'dark' ? '亮色' : '暗色'}主题`, type: 'success' });
+    setSnack({
+      open: true,
+      msg: `已切换到${theme.mode === 'dark' ? '亮色' : '暗色'}主题`,
+      type: 'success',
+    });
     refresh();
   };
 
@@ -763,32 +923,62 @@ const DesignSystemTab: React.FC = () => {
   };
 
   const categories = ['all', ...Array.from(new Set(tokens.map((t) => t.category)))];
-  const filteredTokens = categoryFilter === 'all' ? tokens : tokens.filter((t) => t.category === categoryFilter);
+  const filteredTokens =
+    categoryFilter === 'all' ? tokens : tokens.filter((t) => t.category === categoryFilter);
   const cssVars = designSystemManager.getCssVariables();
 
   return (
     <Box>
       {/* 统计 */}
-      <Grid container spacing={2} sx={{ mb: 2 }}>
+      <Grid
+        container
+        spacing={2}
+        sx={{ mb: 2 }}
+      >
         <Grid size={{ xs: 12, sm: 6, md: 3 }}>
-          <StatCard label='设计令牌总数' value={tokens.length} icon={<PaletteIcon size={20} />} color='#7c3aed' />
+          <StatCard
+            label='设计令牌总数'
+            value={tokens.length}
+            icon={<PaletteIcon size={20} />}
+            color='#7c3aed'
+          />
         </Grid>
         <Grid size={{ xs: 12, sm: 6, md: 3 }}>
-          <StatCard label='CSS 变量数' value={cssVars.length} icon={<CodeIcon size={20} />} color='#3b82f6' />
+          <StatCard
+            label='CSS 变量数'
+            value={cssVars.length}
+            icon={<CodeIcon size={20} />}
+            color='#3b82f6'
+          />
         </Grid>
         <Grid size={{ xs: 12, sm: 6, md: 3 }}>
-          <StatCard label='当前主题' value={theme.mode === 'dark' ? '暗色' : '亮色'} icon={theme.mode === 'dark' ? <MoonIcon size={20} /> : <SunIcon size={20} />} color={theme.mode === 'dark' ? '#1e293b' : '#f59e0b'} />
+          <StatCard
+            label='当前主题'
+            value={theme.mode === 'dark' ? '暗色' : '亮色'}
+            icon={theme.mode === 'dark' ? <MoonIcon size={20} /> : <SunIcon size={20} />}
+            color={theme.mode === 'dark' ? '#1e293b' : '#f59e0b'}
+          />
         </Grid>
         <Grid size={{ xs: 12, sm: 6, md: 3 }}>
-          <StatCard label='组件覆盖' value={Object.keys(theme.component_overrides).length} icon={<BoxesIcon size={20} />} color='#10b981' />
+          <StatCard
+            label='组件覆盖'
+            value={Object.keys(theme.component_overrides).length}
+            icon={<BoxesIcon size={20} />}
+            color='#10b981'
+          />
         </Grid>
       </Grid>
 
       {/* 主题控制 */}
       <Card sx={{ mb: 2 }}>
         <CardContent>
-          <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 2 }}>
-            <Typography variant='subtitle2' sx={{ fontWeight: 600 }}>
+          <Box
+            sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 2 }}
+          >
+            <Typography
+              variant='subtitle2'
+              sx={{ fontWeight: 600 }}
+            >
               主题控制
             </Typography>
             <Box sx={{ display: 'flex', gap: 1 }}>
@@ -800,15 +990,33 @@ const DesignSystemTab: React.FC = () => {
               >
                 {theme.mode === 'dark' ? '切换亮色' : '切换暗色'}
               </Button>
-              <Button variant='contained' size='small' startIcon={<ZapIcon size={16} />} onClick={handleSync}>
+              <Button
+                variant='contained'
+                size='small'
+                startIcon={<ZapIcon size={16} />}
+                onClick={handleSync}
+              >
                 同步到所有框架
               </Button>
             </Box>
           </Box>
-          <Grid container spacing={2}>
+          <Grid
+            container
+            spacing={2}
+          >
             <Grid size={{ xs: 12, md: 6 }}>
-              <Box sx={{ p: 1.5, bgcolor: theme.background, borderRadius: 1, border: 1, borderColor: 'divider' }}>
-                <Typography sx={{ color: theme.text_colors.primary, fontSize: 14, fontWeight: 600 }}>
+              <Box
+                sx={{
+                  p: 1.5,
+                  bgcolor: theme.background,
+                  borderRadius: 1,
+                  border: 1,
+                  borderColor: 'divider',
+                }}
+              >
+                <Typography
+                  sx={{ color: theme.text_colors.primary, fontSize: 14, fontWeight: 600 }}
+                >
                   主文字 (Primary Text)
                 </Typography>
                 <Typography sx={{ color: theme.text_colors.secondary, fontSize: 13 }}>
@@ -818,13 +1026,24 @@ const DesignSystemTab: React.FC = () => {
                   禁用文字 (Disabled Text)
                 </Typography>
                 <Box sx={{ mt: 1, display: 'flex', gap: 1 }}>
-                  <Chip size='small' label='主色' sx={{ bgcolor: theme.primary_color, color: 'white' }} />
-                  <Chip size='small' label='辅色' sx={{ bgcolor: theme.secondary_color, color: 'white' }} />
+                  <Chip
+                    size='small'
+                    label='主色'
+                    sx={{ bgcolor: theme.primary_color, color: 'common.white' }}
+                  />
+                  <Chip
+                    size='small'
+                    label='辅色'
+                    sx={{ bgcolor: theme.secondary_color, color: 'common.white' }}
+                  />
                 </Box>
               </Box>
             </Grid>
             <Grid size={{ xs: 12, md: 6 }}>
-              <Typography variant='caption' color='text.secondary'>
+              <Typography
+                variant='caption'
+                color='text.secondary'
+              >
                 CSS 变量同步状态
               </Typography>
               <Box sx={{ mt: 0.5 }}>
@@ -853,7 +1072,11 @@ const DesignSystemTab: React.FC = () => {
                   sx={{ m: 0.25, fontFamily: 'monospace', fontSize: 10 }}
                 />
               </Box>
-              <Typography variant='caption' color='text.secondary' sx={{ display: 'block', mt: 1 }}>
+              <Typography
+                variant='caption'
+                color='text.secondary'
+                sx={{ display: 'block', mt: 1 }}
+              >
                 跨框架同步: CustomEvent + CSS Variables + SharedState
               </Typography>
             </Grid>
@@ -864,22 +1087,43 @@ const DesignSystemTab: React.FC = () => {
       {/* 设计令牌浏览 */}
       <Card sx={{ mb: 2 }}>
         <CardContent>
-          <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 1 }}>
-            <Typography variant='subtitle2' sx={{ fontWeight: 600 }}>
+          <Box
+            sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 1 }}
+          >
+            <Typography
+              variant='subtitle2'
+              sx={{ fontWeight: 600 }}
+            >
               设计令牌 ({filteredTokens.length})
             </Typography>
-            <FormControl size='small' sx={{ minWidth: 150 }}>
-              <Select value={categoryFilter} onChange={(e) => setCategoryFilter(e.target.value)}>
+            <FormControl
+              size='small'
+              sx={{ minWidth: 150 }}
+            >
+              <Select
+                value={categoryFilter}
+                onChange={(e) => setCategoryFilter(e.target.value)}
+              >
                 {categories.map((cat) => (
-                  <MenuItem key={cat} value={cat}>
+                  <MenuItem
+                    key={cat}
+                    value={cat}
+                  >
                     {cat === 'all' ? '全部分类' : cat}
                   </MenuItem>
                 ))}
               </Select>
             </FormControl>
           </Box>
-          <TableContainer component={Paper} variant='outlined' sx={{ maxHeight: 400 }}>
-            <Table size='small' stickyHeader>
+          <TableContainer
+            component={Paper}
+            variant='outlined'
+            sx={{ maxHeight: 400 }}
+          >
+            <Table
+              size='small'
+              stickyHeader
+            >
               <TableHead>
                 <TableRow>
                   <TableCell>名称</TableCell>
@@ -892,15 +1136,26 @@ const DesignSystemTab: React.FC = () => {
               </TableHead>
               <TableBody>
                 {filteredTokens.map((token) => (
-                  <TableRow key={token.name} hover>
-                    <TableCell sx={{ fontFamily: 'monospace', fontSize: 12 }}>{token.name}</TableCell>
+                  <TableRow
+                    key={token.name}
+                    hover
+                  >
+                    <TableCell sx={{ fontFamily: 'monospace', fontSize: 12 }}>
+                      {token.name}
+                    </TableCell>
                     <TableCell>
-                      <Chip size='small' label={token.category} sx={{ fontSize: 10 }} />
+                      <Chip
+                        size='small'
+                        label={token.category}
+                        sx={{ fontSize: 10 }}
+                      />
                     </TableCell>
                     <TableCell sx={{ fontSize: 12 }}>{tokenTypeLabels[token.type]}</TableCell>
-                    <TableCell sx={{ fontFamily: 'monospace', fontSize: 12 }}>{String(token.value)}</TableCell>
+                    <TableCell sx={{ fontFamily: 'monospace', fontSize: 12 }}>
+                      {String(token.value)}
+                    </TableCell>
                     <TableCell>
-                      {token.type === TokenType.Color ? (
+                      {token.type === TokenType.COLOR ? (
                         <Box
                           sx={{
                             width: 24,
@@ -911,13 +1166,22 @@ const DesignSystemTab: React.FC = () => {
                             borderColor: 'divider',
                           }}
                         />
-                      ) : token.type === TokenType.Spacing ? (
-                        <Box sx={{ width: String(token.value), height: 16, bgcolor: '#7c3aed', borderRadius: 0.5 }} />
+                      ) : token.type === TokenType.SPACING ? (
+                        <Box
+                          sx={{
+                            width: String(token.value),
+                            height: 16,
+                            bgcolor: 'secondary.600',
+                            borderRadius: 0.5,
+                          }}
+                        />
                       ) : (
                         '-'
                       )}
                     </TableCell>
-                    <TableCell sx={{ fontFamily: 'monospace', fontSize: 11, color: 'text.secondary' }}>
+                    <TableCell
+                      sx={{ fontFamily: 'monospace', fontSize: 11, color: 'text.secondary' }}
+                    >
                       {designSystemManager.toCssVarName(token)}
                     </TableCell>
                   </TableRow>
@@ -931,13 +1195,16 @@ const DesignSystemTab: React.FC = () => {
       {/* CSS 变量预览 */}
       <Card>
         <CardContent>
-          <Typography variant='subtitle2' sx={{ mb: 1, fontWeight: 600 }}>
+          <Typography
+            variant='subtitle2'
+            sx={{ mb: 1, fontWeight: 600 }}
+          >
             CSS 变量预览 ({cssVars.length})
           </Typography>
           <Box
             sx={{
-              bgcolor: '#1e293b',
-              color: '#a5b4fc',
+              bgcolor: 'text.primary',
+              color: 'primary.300',
               p: 2,
               borderRadius: 1,
               fontFamily: 'monospace',
@@ -947,11 +1214,14 @@ const DesignSystemTab: React.FC = () => {
             }}
           >
             {cssVars.map((v) => (
-              <Box key={v.name} sx={{ mb: 0.5 }}>
-                <span style={{ color: '#93c5fd' }}>{v.name}</span>
-                <span style={{ color: '#64748b' }}>: </span>
-                <span style={{ color: '#fbbf24' }}>{v.value}</span>
-                <span style={{ color: '#64748b' }}>;</span>
+              <Box
+                key={v.name}
+                sx={{ mb: 0.5 }}
+              >
+                <span style={{ color: 'primary.300' }}>{v.name}</span>
+                <span style={{ color: 'text.secondary' }}>: </span>
+                <span style={{ color: 'warning.400' }}>{v.value}</span>
+                <span style={{ color: 'text.secondary' }}>;</span>
               </Box>
             ))}
           </Box>
@@ -964,7 +1234,10 @@ const DesignSystemTab: React.FC = () => {
         onClose={() => setSnack({ ...snack, open: false })}
         anchorOrigin={{ vertical: 'bottom', horizontal: 'right' }}
       >
-        <Alert severity={snack.type} onClose={() => setSnack({ ...snack, open: false })}>
+        <Alert
+          severity={snack.type}
+          onClose={() => setSnack({ ...snack, open: false })}
+        >
           {snack.msg}
         </Alert>
       </Snackbar>
@@ -1051,14 +1324,14 @@ const LifecycleTab: React.FC = () => {
 
   // 状态转换图数据
   const stateFlow: Array<{ from: LifecycleState; to: LifecycleState; label: string }> = [
-    { from: LifecycleState.Registered, to: LifecycleState.Preloading, label: 'preload()' },
-    { from: LifecycleState.Preloading, to: LifecycleState.Loaded, label: 'loaded' },
-    { from: LifecycleState.Loaded, to: LifecycleState.Mounting, label: 'mount()' },
-    { from: LifecycleState.Mounting, to: LifecycleState.Mounted, label: 'mounted' },
-    { from: LifecycleState.Mounted, to: LifecycleState.Updating, label: 'update()' },
-    { from: LifecycleState.Updating, to: LifecycleState.Mounted, label: 'updated' },
-    { from: LifecycleState.Mounted, to: LifecycleState.Unmounting, label: 'unmount()' },
-    { from: LifecycleState.Unmounting, to: LifecycleState.Unmounted, label: 'unmounted' },
+    { from: LifecycleState.REGISTERED, to: LifecycleState.PRELOADING, label: 'preload()' },
+    { from: LifecycleState.PRELOADING, to: LifecycleState.LOADED, label: 'loaded' },
+    { from: LifecycleState.LOADED, to: LifecycleState.MOUNTING, label: 'mount()' },
+    { from: LifecycleState.MOUNTING, to: LifecycleState.MOUNTED, label: 'mounted' },
+    { from: LifecycleState.MOUNTED, to: LifecycleState.UPDATING, label: 'update()' },
+    { from: LifecycleState.UPDATING, to: LifecycleState.MOUNTED, label: 'updated' },
+    { from: LifecycleState.MOUNTED, to: LifecycleState.UNMOUNTING, label: 'unmount()' },
+    { from: LifecycleState.UNMOUNTING, to: LifecycleState.UNMOUNTED, label: 'unmounted' },
   ];
 
   const selectedRecord = selectedModule ? lifecycleManager.getRecord(selectedModule) : undefined;
@@ -1067,25 +1340,52 @@ const LifecycleTab: React.FC = () => {
   return (
     <Box>
       {/* 统计 */}
-      <Grid container spacing={2} sx={{ mb: 2 }}>
+      <Grid
+        container
+        spacing={2}
+        sx={{ mb: 2 }}
+      >
         <Grid size={{ xs: 12, sm: 6, md: 3 }}>
-          <StatCard label='模块总数' value={records.length} icon={<ActivityIcon size={20} />} color='#8b5cf6' />
+          <StatCard
+            label='模块总数'
+            value={records.length}
+            icon={<ActivityIcon size={20} />}
+            color='#8b5cf6'
+          />
         </Grid>
         <Grid size={{ xs: 12, sm: 6, md: 3 }}>
-          <StatCard label='已挂载' value={records.filter((r) => r.state === LifecycleState.Mounted).length} icon={<CheckCircleIcon size={20} />} color='#10b981' />
+          <StatCard
+            label='已挂载'
+            value={records.filter((r) => r.state === LifecycleState.MOUNTED).length}
+            icon={<CheckCircleIcon size={20} />}
+            color='#10b981'
+          />
         </Grid>
         <Grid size={{ xs: 12, sm: 6, md: 3 }}>
-          <StatCard label='事件总数' value={lifecycleManager.eventCount} icon={<ClockIcon size={20} />} color='#3b82f6' />
+          <StatCard
+            label='事件总数'
+            value={lifecycleManager.eventCount}
+            icon={<ClockIcon size={20} />}
+            color='#3b82f6'
+          />
         </Grid>
         <Grid size={{ xs: 12, sm: 6, md: 3 }}>
-          <StatCard label='错误状态' value={records.filter((r) => r.state === LifecycleState.Error).length} icon={<AlertCircleIcon size={20} />} color='#ef4444' />
+          <StatCard
+            label='错误状态'
+            value={records.filter((r) => r.state === LifecycleState.ERROR).length}
+            icon={<AlertCircleIcon size={20} />}
+            color='#ef4444'
+          />
         </Grid>
       </Grid>
 
       {/* 注册新模块 */}
       <Card sx={{ mb: 2 }}>
         <CardContent>
-          <Typography variant='subtitle2' sx={{ mb: 1, fontWeight: 600 }}>
+          <Typography
+            variant='subtitle2'
+            sx={{ mb: 1, fontWeight: 600 }}
+          >
             注册模块到生命周期管理器
           </Typography>
           <Box sx={{ display: 'flex', gap: 1, flexWrap: 'wrap' }}>
@@ -1103,7 +1403,12 @@ const LifecycleTab: React.FC = () => {
               onChange={(e) => setNewModuleName(e.target.value)}
               sx={{ minWidth: 200 }}
             />
-            <Button variant='contained' size='small' startIcon={<PlayIcon size={16} />} onClick={handleRegister}>
+            <Button
+              variant='contained'
+              size='small'
+              startIcon={<PlayIcon size={16} />}
+              onClick={handleRegister}
+            >
               注册
             </Button>
           </Box>
@@ -1113,7 +1418,10 @@ const LifecycleTab: React.FC = () => {
       {/* 状态转换图 */}
       <Card sx={{ mb: 2 }}>
         <CardContent>
-          <Typography variant='subtitle2' sx={{ mb: 1, fontWeight: 600 }}>
+          <Typography
+            variant='subtitle2'
+            sx={{ mb: 1, fontWeight: 600 }}
+          >
             生命周期状态转换图
           </Typography>
           <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 1, alignItems: 'center' }}>
@@ -1124,49 +1432,76 @@ const LifecycleTab: React.FC = () => {
                   label={lifecycleStateLabels[flow.from]}
                   sx={{
                     bgcolor: lifecycleStateColors[flow.from],
-                    color: 'white',
+                    color: 'common.white',
                     fontSize: 11,
                   }}
                 />
                 <Box sx={{ display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
-                  <Typography sx={{ fontSize: 9, color: 'text.secondary' }}>{flow.label}</Typography>
-                  <span style={{ color: '#64748b' }}>→</span>
+                  <Typography sx={{ fontSize: 9, color: 'text.secondary' }}>
+                    {flow.label}
+                  </Typography>
+                  <span style={{ color: 'text.secondary' }}>→</span>
                 </Box>
                 <Chip
                   size='small'
                   label={lifecycleStateLabels[flow.to]}
                   sx={{
                     bgcolor: lifecycleStateColors[flow.to],
-                    color: 'white',
+                    color: 'common.white',
                     fontSize: 11,
                   }}
                 />
-                {idx < stateFlow.length - 1 && <span style={{ color: '#cbd5e1', margin: '0 4px' }}>|</span>}
+                {idx < stateFlow.length - 1 && (
+                  <span style={{ color: 'text.disabled', margin: '0 4px' }}>|</span>
+                )}
               </React.Fragment>
             ))}
           </Box>
         </CardContent>
       </Card>
 
-      <Grid container spacing={2}>
+      <Grid
+        container
+        spacing={2}
+      >
         {/* 模块状态列表 */}
         <Grid size={{ xs: 12, md: 7 }}>
           <Card>
             <CardContent>
-              <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 1 }}>
-                <Typography variant='subtitle2' sx={{ fontWeight: 600 }}>
+              <Box
+                sx={{
+                  display: 'flex',
+                  justifyContent: 'space-between',
+                  alignItems: 'center',
+                  mb: 1,
+                }}
+              >
+                <Typography
+                  variant='subtitle2'
+                  sx={{ fontWeight: 600 }}
+                >
                   模块状态列表
                 </Typography>
-                <Button size='small' startIcon={<RefreshIcon size={14} />} onClick={refresh}>
+                <Button
+                  size='small'
+                  startIcon={<RefreshIcon size={14} />}
+                  onClick={refresh}
+                >
                   刷新
                 </Button>
               </Box>
               {records.length === 0 ? (
-                <Typography color='text.secondary' sx={{ py: 3, textAlign: 'center' }}>
+                <Typography
+                  color='text.secondary'
+                  sx={{ py: 3, textAlign: 'center' }}
+                >
                   暂无模块
                 </Typography>
               ) : (
-                <TableContainer component={Paper} variant='outlined'>
+                <TableContainer
+                  component={Paper}
+                  variant='outlined'
+                >
                   <Table size='small'>
                     <TableHead>
                       <TableRow>
@@ -1185,7 +1520,9 @@ const LifecycleTab: React.FC = () => {
                           onClick={() => setSelectedModule(rec.id)}
                           sx={{ cursor: 'pointer' }}
                         >
-                          <TableCell sx={{ fontFamily: 'monospace', fontSize: 13 }}>{rec.id}</TableCell>
+                          <TableCell sx={{ fontFamily: 'monospace', fontSize: 13 }}>
+                            {rec.id}
+                          </TableCell>
                           <TableCell>{rec.name}</TableCell>
                           <TableCell>
                             <Chip
@@ -1193,7 +1530,7 @@ const LifecycleTab: React.FC = () => {
                               label={lifecycleStateLabels[rec.state]}
                               sx={{
                                 bgcolor: lifecycleStateColors[rec.state],
-                                color: 'white',
+                                color: 'common.white',
                                 fontSize: 11,
                               }}
                             />
@@ -1204,8 +1541,17 @@ const LifecycleTab: React.FC = () => {
                                 <span>
                                   <IconButton
                                     size='small'
-                                    disabled={![LifecycleState.Registered, LifecycleState.Unmounted, LifecycleState.Error].includes(rec.state)}
-                                    onClick={(e) => { e.stopPropagation(); handlePreload(rec.id); }}
+                                    disabled={
+                                      ![
+                                        LifecycleState.REGISTERED,
+                                        LifecycleState.UNMOUNTED,
+                                        LifecycleState.ERROR,
+                                      ].includes(rec.state)
+                                    }
+                                    onClick={(e) => {
+                                      e.stopPropagation();
+                                      handlePreload(rec.id);
+                                    }}
                                   >
                                     <DownloadIcon size={15} />
                                   </IconButton>
@@ -1215,8 +1561,17 @@ const LifecycleTab: React.FC = () => {
                                 <span>
                                   <IconButton
                                     size='small'
-                                    disabled={![LifecycleState.Loaded, LifecycleState.Unmounted, LifecycleState.Error].includes(rec.state)}
-                                    onClick={(e) => { e.stopPropagation(); handleMount(rec.id); }}
+                                    disabled={
+                                      ![
+                                        LifecycleState.LOADED,
+                                        LifecycleState.UNMOUNTED,
+                                        LifecycleState.ERROR,
+                                      ].includes(rec.state)
+                                    }
+                                    onClick={(e) => {
+                                      e.stopPropagation();
+                                      handleMount(rec.id);
+                                    }}
                                   >
                                     <PlayIcon size={15} />
                                   </IconButton>
@@ -1226,8 +1581,15 @@ const LifecycleTab: React.FC = () => {
                                 <span>
                                   <IconButton
                                     size='small'
-                                    disabled={![LifecycleState.Mounted, LifecycleState.Error].includes(rec.state)}
-                                    onClick={(e) => { e.stopPropagation(); handleUnmount(rec.id); }}
+                                    disabled={
+                                      ![LifecycleState.MOUNTED, LifecycleState.ERROR].includes(
+                                        rec.state
+                                      )
+                                    }
+                                    onClick={(e) => {
+                                      e.stopPropagation();
+                                      handleUnmount(rec.id);
+                                    }}
                                   >
                                     <TrashIcon size={15} />
                                   </IconButton>
@@ -1236,7 +1598,10 @@ const LifecycleTab: React.FC = () => {
                               <Tooltip title='销毁'>
                                 <IconButton
                                   size='small'
-                                  onClick={(e) => { e.stopPropagation(); handleDestroy(rec.id); }}
+                                  onClick={(e) => {
+                                    e.stopPropagation();
+                                    handleDestroy(rec.id);
+                                  }}
                                 >
                                   <XIcon size={15} />
                                 </IconButton>
@@ -1257,7 +1622,10 @@ const LifecycleTab: React.FC = () => {
         <Grid size={{ xs: 12, md: 5 }}>
           <Card sx={{ mb: 2 }}>
             <CardContent>
-              <Typography variant='subtitle2' sx={{ mb: 1, fontWeight: 600 }}>
+              <Typography
+                variant='subtitle2'
+                sx={{ mb: 1, fontWeight: 600 }}
+              >
                 {selectedRecord ? `模块 ${selectedRecord.id} 状态历史` : '选择模块查看历史'}
               </Typography>
               {selectedRecord && (
@@ -1268,13 +1636,16 @@ const LifecycleTab: React.FC = () => {
                       label={lifecycleStateLabels[selectedRecord.state]}
                       sx={{
                         bgcolor: lifecycleStateColors[selectedRecord.state],
-                        color: 'white',
+                        color: 'common.white',
                       }}
                     />
                   </Box>
                   <List dense>
                     {selectedRecord.stateHistory.map((h, idx) => (
-                      <ListItem key={idx} sx={{ py: 0.25 }}>
+                      <ListItem
+                        key={idx}
+                        sx={{ py: 0.25 }}
+                      >
                         <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, width: '100%' }}>
                           <Box
                             sx={{
@@ -1284,10 +1655,16 @@ const LifecycleTab: React.FC = () => {
                               bgcolor: lifecycleStateColors[h.state],
                             }}
                           />
-                          <Typography variant='body2' sx={{ flex: 1 }}>
+                          <Typography
+                            variant='body2'
+                            sx={{ flex: 1 }}
+                          >
                             {lifecycleStateLabels[h.state]}
                           </Typography>
-                          <Typography variant='caption' color='text.secondary'>
+                          <Typography
+                            variant='caption'
+                            color='text.secondary'
+                          >
                             {new Date(h.timestamp).toLocaleTimeString('zh-CN')}
                           </Typography>
                         </Box>
@@ -1304,11 +1681,21 @@ const LifecycleTab: React.FC = () => {
       {/* 事件时间线 */}
       <Card>
         <CardContent>
-          <Typography variant='subtitle2' sx={{ mb: 1, fontWeight: 600 }}>
+          <Typography
+            variant='subtitle2'
+            sx={{ mb: 1, fontWeight: 600 }}
+          >
             生命周期事件时间线（最近 {events.length} 条）
           </Typography>
-          <TableContainer component={Paper} variant='outlined' sx={{ maxHeight: 300 }}>
-            <Table size='small' stickyHeader>
+          <TableContainer
+            component={Paper}
+            variant='outlined'
+            sx={{ maxHeight: 300 }}
+          >
+            <Table
+              size='small'
+              stickyHeader
+            >
               <TableHead>
                 <TableRow>
                   <TableCell>时间</TableCell>
@@ -1320,17 +1707,26 @@ const LifecycleTab: React.FC = () => {
               <TableBody>
                 {events.length === 0 ? (
                   <TableRow>
-                    <TableCell colSpan={4} align='center' sx={{ py: 3, color: 'text.secondary' }}>
+                    <TableCell
+                      colSpan={4}
+                      align='center'
+                      sx={{ py: 3, color: 'text.secondary' }}
+                    >
                       暂无事件
                     </TableCell>
                   </TableRow>
                 ) : (
                   events.map((evt, idx) => (
-                    <TableRow key={idx} hover>
+                    <TableRow
+                      key={idx}
+                      hover
+                    >
                       <TableCell sx={{ fontSize: 11, color: 'text.secondary' }}>
                         {new Date(evt.timestamp).toLocaleTimeString('zh-CN')}
                       </TableCell>
-                      <TableCell sx={{ fontFamily: 'monospace', fontSize: 12 }}>{evt.module_id}</TableCell>
+                      <TableCell sx={{ fontFamily: 'monospace', fontSize: 12 }}>
+                        {evt.module_id}
+                      </TableCell>
                       <TableCell>
                         <Chip
                           size='small'
@@ -1338,7 +1734,16 @@ const LifecycleTab: React.FC = () => {
                           sx={{ fontSize: 10 }}
                         />
                       </TableCell>
-                      <TableCell sx={{ fontSize: 11, color: 'text.secondary', maxWidth: 300, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                      <TableCell
+                        sx={{
+                          fontSize: 11,
+                          color: 'text.secondary',
+                          maxWidth: 300,
+                          overflow: 'hidden',
+                          textOverflow: 'ellipsis',
+                          whiteSpace: 'nowrap',
+                        }}
+                      >
                         {evt.data ? JSON.stringify(evt.data) : '-'}
                       </TableCell>
                     </TableRow>
@@ -1356,7 +1761,10 @@ const LifecycleTab: React.FC = () => {
         onClose={() => setSnack({ ...snack, open: false })}
         anchorOrigin={{ vertical: 'bottom', horizontal: 'right' }}
       >
-        <Alert severity={snack.type} onClose={() => setSnack({ ...snack, open: false })}>
+        <Alert
+          severity={snack.type}
+          onClose={() => setSnack({ ...snack, open: false })}
+        >
           {snack.msg}
         </Alert>
       </Snackbar>
@@ -1376,10 +1784,17 @@ const StatCard: React.FC<{
     <CardContent sx={{ p: 1.5, '&:last-child': { pb: 1.5 } }}>
       <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
         <Box sx={{ minWidth: 0 }}>
-          <Typography variant='body2' color='text.secondary' sx={{ fontSize: 11, mb: 0.5 }}>
+          <Typography
+            variant='body2'
+            color='text.secondary'
+            sx={{ fontSize: 11, mb: 0.5 }}
+          >
             {label}
           </Typography>
-          <Typography variant='h6' sx={{ fontWeight: 600, fontSize: 22 }}>
+          <Typography
+            variant='h6'
+            sx={{ fontWeight: 600, fontSize: 22 }}
+          >
             {value}
           </Typography>
         </Box>

@@ -47,13 +47,15 @@ export const CardView = React.memo(function CardView<T = any>({
 
   const renderTitle = (row: T): React.ReactNode => {
     if (typeof title === 'function') return title(row);
-    if (typeof title === 'string') return (row as unknown as Record<string, unknown>)[title] as React.ReactNode;
+    if (typeof title === 'string')
+      return (row as unknown as Record<string, unknown>)[title] as React.ReactNode;
     return null;
   };
 
   const renderSubtitle = (row: T): React.ReactNode => {
     if (typeof subtitle === 'function') return subtitle(row);
-    if (typeof subtitle === 'string') return (row as unknown as Record<string, unknown>)[subtitle] as React.ReactNode;
+    if (typeof subtitle === 'string')
+      return (row as unknown as Record<string, unknown>)[subtitle] as React.ReactNode;
     return null;
   };
 
@@ -61,26 +63,44 @@ export const CardView = React.memo(function CardView<T = any>({
     if (!statusField) return null;
     const value = (row as unknown as Record<string, unknown>)[statusField] as string;
     if (!value) return null;
-    const color = (statusColorMap[value] ?? 'default') as 'default' | 'primary' | 'success' | 'warning' | 'error' | 'info';
+    const color = (statusColorMap[value] ?? 'default') as
+      'default' | 'primary' | 'success' | 'warning' | 'error' | 'info';
     const label = statusLabelMap[value] ?? value;
     return (
-      <Chip label={label} size="small" color={color} variant="outlined" sx={{ height: 24, fontSize: 12 }} />
+      <Chip
+        label={label}
+        size='small'
+        color={color}
+        variant='outlined'
+        sx={{ height: 24, fontSize: 12 }}
+      />
     );
   };
 
-  const renderField = (row: T, field: typeof fields[0], idx: number): React.ReactNode => {
+  const renderField = (row: T, field: (typeof fields)[0], idx: number): React.ReactNode => {
     const value = (row as unknown as Record<string, unknown>)[field.key];
     const content = field.render
       ? field.render(value, row as unknown as Record<string, unknown>)
       : String(value ?? '-');
     return (
-      <Box key={field.key ?? idx} sx={{ flex: field.flex ?? 1, minWidth: 0 }}>
+      <Box
+        key={field.key ?? idx}
+        sx={{ flex: field.flex ?? 1, minWidth: 0 }}
+      >
         {field.showLabel !== false && field.label && (
-          <Typography variant="caption" color="text.secondary" sx={{ display: 'block', mb: 0.5 }}>
+          <Typography
+            variant='caption'
+            color='text.secondary'
+            sx={{ display: 'block', mb: 0.5 }}
+          >
             {field.label}
           </Typography>
         )}
-        <Typography variant="body2" noWrap title={String(value ?? '')}>
+        <Typography
+          variant='body2'
+          noWrap
+          title={String(value ?? '')}
+        >
           {content}
         </Typography>
       </Box>
@@ -139,20 +159,47 @@ export const CardView = React.memo(function CardView<T = any>({
   };
 
   const renderSkeleton = (idx: number) => (
-    <Card key={`skeleton-${idx}`} sx={{ borderRadius: 3 }}>
+    <Card
+      key={`skeleton-${idx}`}
+      sx={{ borderRadius: 3 }}
+    >
       <CardContent sx={{ p: 2 }}>
-        <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', mb: 2 }}>
+        <Box
+          sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', mb: 2 }}
+        >
           <Box sx={{ flex: 1 }}>
-            <Skeleton variant="text" width="60%" height={24} />
-            <Skeleton variant="text" width="40%" height={18} />
+            <Skeleton
+              variant='text'
+              width='60%'
+              height={24}
+            />
+            <Skeleton
+              variant='text'
+              width='40%'
+              height={18}
+            />
           </Box>
-          <Skeleton variant="rounded" width={48} height={24} />
+          <Skeleton
+            variant='rounded'
+            width={48}
+            height={24}
+          />
         </Box>
-        <Box sx={{ display: 'grid', gridTemplateColumns: `repeat(${fieldsPerRow}, 1fr)`, gap: 1.5 }}>
+        <Box
+          sx={{ display: 'grid', gridTemplateColumns: `repeat(${fieldsPerRow}, 1fr)`, gap: 1.5 }}
+        >
           {Array.from({ length: fieldsPerRow * 2 }).map((_, i) => (
             <Box key={i}>
-              <Skeleton variant="text" width="50%" height={14} />
-              <Skeleton variant="text" width="80%" height={18} />
+              <Skeleton
+                variant='text'
+                width='50%'
+                height={14}
+              />
+              <Skeleton
+                variant='text'
+                width='80%'
+                height={18}
+              />
             </Box>
           ))}
         </Box>
@@ -177,10 +224,22 @@ export const CardView = React.memo(function CardView<T = any>({
             >
               <CardContent sx={{ p: 2 }}>
                 {(title || statusField) && (
-                  <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', mb: subtitle ? 0.5 : 2 }}>
+                  <Box
+                    sx={{
+                      display: 'flex',
+                      justifyContent: 'space-between',
+                      alignItems: 'flex-start',
+                      mb: subtitle ? 0.5 : 2,
+                    }}
+                  >
                     <Box sx={{ flex: 1, minWidth: 0, mr: 2 }}>
                       {title && (
-                        <Typography variant="subtitle1" noWrap title={String(renderTitle(row) ?? '')} sx={{ fontWeight: 600 }}>
+                        <Typography
+                          variant='subtitle1'
+                          noWrap
+                          title={String(renderTitle(row) ?? '')}
+                          sx={{ fontWeight: 600 }}
+                        >
                           {renderTitle(row)}
                         </Typography>
                       )}
@@ -190,13 +249,24 @@ export const CardView = React.memo(function CardView<T = any>({
                 )}
 
                 {subtitle && (
-                  <Typography variant="body2" color="text.secondary" noWrap sx={{ mb: 2 }}>
+                  <Typography
+                    variant='body2'
+                    color='text.secondary'
+                    noWrap
+                    sx={{ mb: 2 }}
+                  >
                     {renderSubtitle(row)}
                   </Typography>
                 )}
 
                 {fields.length > 0 && (
-                  <Box sx={{ display: 'grid', gridTemplateColumns: `repeat(${fieldsPerRow}, 1fr)`, gap: 1.5 }}>
+                  <Box
+                    sx={{
+                      display: 'grid',
+                      gridTemplateColumns: `repeat(${fieldsPerRow}, 1fr)`,
+                      gap: 1.5,
+                    }}
+                  >
                     {fields.map((field, i) => renderField(row, field, i))}
                   </Box>
                 )}

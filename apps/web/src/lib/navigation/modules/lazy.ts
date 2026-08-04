@@ -16,13 +16,15 @@ const lazyLoaders: Record<string, ModuleConfigLoader> = {
   hrm: () => import('@/modules/hrm/config').then((m) => ({ default: m.hrmNavConfig })),
   iam: () => import('@/modules/iam/config').then((m) => ({ default: m.iamNavConfig })),
   im: () => import('@/modules/im/config').then((m) => ({ default: m.imNavConfig })),
-  integration: () => import('@/modules/integration/config').then((m) => ({ default: m.integrationNavConfig })),
+  integration: () =>
+    import('@/modules/integration/config').then((m) => ({ default: m.integrationNavConfig })),
   lims: () => import('@/modules/lims/config').then((m) => ({ default: m.limsNavConfig })),
   lowcode: () => import('@/modules/lowcode/config').then((m) => ({ default: m.lowcodeNavConfig })),
   mes: () => import('@/modules/mes/config').then((m) => ({ default: m.mesNavConfig })),
   mobile: () => import('@/modules/mobile/config').then((m) => ({ default: m.mobileNavConfig })),
   monitor: () => import('@/modules/monitor/config').then((m) => ({ default: m.monitorNavConfig })),
-  notification: () => import('@/modules/notification/config').then((m) => ({ default: m.notificationNavConfig })),
+  notification: () =>
+    import('@/modules/notification/config').then((m) => ({ default: m.notificationNavConfig })),
   oa: () => import('@/modules/oa/config').then((m) => ({ default: m.oaNavConfig })),
   pdm: () => import('@/modules/pdm/config').then((m) => ({ default: m.pdmNavConfig })),
   pm: () => import('@/modules/pm/config').then((m) => ({ default: m.pmNavConfig })),
@@ -33,7 +35,8 @@ const lazyLoaders: Record<string, ModuleConfigLoader> = {
   scm: () => import('@/modules/scm/config').then((m) => ({ default: m.scmNavConfig })),
   srm: () => import('@/modules/srm/config').then((m) => ({ default: m.srmNavConfig })),
   wms: () => import('@/modules/wms/config').then((m) => ({ default: m.wmsNavConfig })),
-  workflow: () => import('@/modules/workflow/config').then((m) => ({ default: m.workflowNavConfig })),
+  workflow: () =>
+    import('@/modules/workflow/config').then((m) => ({ default: m.workflowNavConfig })),
 };
 
 export const lazyLoadModuleConfig = async (moduleCode: string): Promise<ModuleNavConfig | null> => {

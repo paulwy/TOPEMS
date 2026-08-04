@@ -247,7 +247,7 @@ const DEFAULT_THEME: ThemeConfig = {
     primary: '#1976d2',
     secondary: '#9c27b0',
     accent: '#ff9800',
-    background: '#ffffff',
+    background: 'primary.contrastText',
     surface: '#f5f5f5',
     text: '#212121',
     textSecondary: '#757575',
@@ -284,7 +284,7 @@ const DARK_THEME: ThemeConfig = {
   name: '默认深色主题',
   colors: {
     ...DEFAULT_THEME.colors,
-    background: '#121212',
+    background: 'grey.950',
     surface: '#1e1e1e',
     text: '#e0e0e0',
     textSecondary: '#9e9e9e',

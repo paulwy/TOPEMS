@@ -265,7 +265,15 @@ export const ContactList: React.FC<ContactListProps> = ({ onSelectContact }) => 
               >
                 <div
                   style={{ display: 'flex', alignItems: 'center', gap: 12 }}
+                  role='button'
+                  tabIndex={0}
                   onClick={() => onSelectContact?.(friend)}
+                  onKeyDown={(e) => {
+                    if (e.key === 'Enter' || e.key === ' ') {
+                      e.preventDefault();
+                      onSelectContact?.(friend);
+                    }
+                  }}
                 >
                   <div
                     style={{
@@ -353,7 +361,15 @@ export const ContactList: React.FC<ContactListProps> = ({ onSelectContact }) => 
                 >
                   <div
                     style={{ display: 'flex', alignItems: 'center', gap: 12 }}
+                    role='button'
+                    tabIndex={0}
                     onClick={() => onSelectContact?.(friend)}
+                    onKeyDown={(e) => {
+                      if (e.key === 'Enter' || e.key === ' ') {
+                        e.preventDefault();
+                        onSelectContact?.(friend);
+                      }
+                    }}
                   >
                     <div style={{ position: 'relative' }}>
                       <div
@@ -430,7 +446,7 @@ export const ContactList: React.FC<ContactListProps> = ({ onSelectContact }) => 
                         right: 0,
                         top: '100%',
                         marginTop: 4,
-                        backgroundColor: 'white',
+                        backgroundColor: 'common.white',
                         borderRadius: 8,
                         boxShadow: '0 10px 15px -3px rgba(0, 0, 0, 0.1)',
                         border: '1px solid grey.200',
@@ -582,7 +598,7 @@ export const ContactList: React.FC<ContactListProps> = ({ onSelectContact }) => 
               paddingTop: 8,
               paddingBottom: 8,
               backgroundColor: theme.palette.primary.main,
-              color: 'white',
+              color: 'common.white',
               borderRadius: 8,
               border: 'none',
               cursor: 'pointer',
@@ -599,7 +615,7 @@ export const ContactList: React.FC<ContactListProps> = ({ onSelectContact }) => 
           style={{
             position: 'fixed',
             inset: 0,
-            backgroundColor: 'rgba(0, 0, 0, 0.5)',
+            backgroundColor: 'action.active',
             display: 'flex',
             alignItems: 'center',
             justifyContent: 'center',
@@ -608,7 +624,7 @@ export const ContactList: React.FC<ContactListProps> = ({ onSelectContact }) => 
         >
           <div
             style={{
-              backgroundColor: 'white',
+              backgroundColor: 'common.white',
               borderRadius: 8,
               padding: 16,
               width: '100%',
@@ -656,7 +672,7 @@ export const ContactList: React.FC<ContactListProps> = ({ onSelectContact }) => 
                   paddingTop: 8,
                   paddingBottom: 8,
                   backgroundColor: theme.palette.primary.main,
-                  color: 'white',
+                  color: 'common.white',
                   borderRadius: 4,
                   fontSize: 14,
                   border: 'none',

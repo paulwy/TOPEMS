@@ -148,22 +148,22 @@ const V56OpsPanel: React.FC<{ onClose: () => void }> = ({ onClose }) => {
   }, []);
 
   const refreshData = () => {
-    setPolicies(autoScaler.list_policies());
-    setScalingHistory(autoScaler.get_scaling_history());
-    setIncidents(rootCauseLocator.get_incident_history());
-    setPlaybooks(intelligentRepair.get_playbooks());
-    setRepairHistory(intelligentRepair.get_action_history());
+    setPolicies(autoScaler.listPolicies());
+    setScalingHistory(autoScaler.getScalingHistory());
+    setIncidents(rootCauseLocator.getIncidentHistory());
+    setPlaybooks(intelligentRepair.getPlaybooks());
+    setRepairHistory(intelligentRepair.getActionHistory());
   };
 
   const handleScale = (policyId: string) => {
     const action = autoScaler.scale(policyId);
     if (action) {
-      setScalingHistory(autoScaler.get_scaling_history());
+      setScalingHistory(autoScaler.getScalingHistory());
     }
   };
 
   const handleLocateRootCause = (incidentId: string) => {
-    const causes = rootCauseLocator.locate_root_cause(incidentId);
+    const causes = rootCauseLocator.locateRootCause(incidentId);
     setRootCauses((prev) => {
       const next = new Map(prev);
       next.set(incidentId, causes);
@@ -173,12 +173,12 @@ const V56OpsPanel: React.FC<{ onClose: () => void }> = ({ onClose }) => {
 
   const handleCreateIncident = () => {
     if (!newIncident.symptoms.trim() || !newIncident.components.trim()) return;
-    const incident = rootCauseLocator.create_incident(
+    const incident = rootCauseLocator.createIncident(
       newIncident.severity,
       newIncident.symptoms.split(',').map((s) => s.trim()),
       newIncident.components.split(',').map((c) => c.trim())
     );
-    setIncidents(rootCauseLocator.get_incident_history());
+    setIncidents(rootCauseLocator.getIncidentHistory());
     setSelectedIncident(incident.id);
     setShowCreateIncident(false);
     setNewIncident({ severity: 'High', symptoms: '', components: '' });
@@ -186,30 +186,30 @@ const V56OpsPanel: React.FC<{ onClose: () => void }> = ({ onClose }) => {
 
   const handleCreatePlaybook = () => {
     if (!newPlaybook.name.trim() || !newPlaybook.trigger.trim()) return;
-    intelligentRepair.create_playbook(
+    intelligentRepair.createPlaybook(
       newPlaybook.name,
       newPlaybook.trigger,
       [{ type: newPlaybook.type, target: newPlaybook.target || 'unknown' }],
       false,
       true
     );
-    setPlaybooks(intelligentRepair.get_playbooks());
+    setPlaybooks(intelligentRepair.getPlaybooks());
     setShowCreatePlaybook(false);
     setNewPlaybook({ name: '', trigger: '', target: '', type: 'Restart' });
   };
 
   const handleRunPlaybook = (id: string) => {
-    intelligentRepair.run_playbook(id);
+    intelligentRepair.runPlaybook(id);
     setTimeout(() => {
-      setRepairHistory(intelligentRepair.get_action_history());
-      setPlaybooks(intelligentRepair.get_playbooks());
+      setRepairHistory(intelligentRepair.getActionHistory());
+      setPlaybooks(intelligentRepair.getPlaybooks());
     }, 2500);
   };
 
   const handleExecuteRepair = (type: RepairType, target: string) => {
-    intelligentRepair.execute_repair(type, target);
+    intelligentRepair.executeRepair(type, target);
     setTimeout(() => {
-      setRepairHistory(intelligentRepair.get_action_history());
+      setRepairHistory(intelligentRepair.getActionHistory());
     }, 2500);
   };
 
@@ -221,7 +221,7 @@ const V56OpsPanel: React.FC<{ onClose: () => void }> = ({ onClose }) => {
         left: 0,
         right: 0,
         bottom: 0,
-        bgcolor: 'rgba(0,0,0,0.6)',
+        bgcolor: 'action.active',
         zIndex: 10000,
         display: 'flex',
         alignItems: 'center',
@@ -297,8 +297,8 @@ const V56OpsPanel: React.FC<{ onClose: () => void }> = ({ onClose }) => {
               onLocateRootCause={handleLocateRootCause}
               onCreateIncident={() => setShowCreateIncident(true)}
               onUpdateStatus={(id, status) => {
-                rootCauseLocator.update_incident_status(id, status);
-                setIncidents(rootCauseLocator.get_incident_history());
+                rootCauseLocator.updateIncidentStatus(id, status);
+                setIncidents(rootCauseLocator.getIncidentHistory());
               }}
             />
           )}
@@ -309,8 +309,8 @@ const V56OpsPanel: React.FC<{ onClose: () => void }> = ({ onClose }) => {
               onRunPlaybook={handleRunPlaybook}
               onExecuteRepair={handleExecuteRepair}
               onToggleStatus={(id) => {
-                intelligentRepair.toggle_playbook_status(id);
-                setPlaybooks(intelligentRepair.get_playbooks());
+                intelligentRepair.togglePlaybookStatus(id);
+                setPlaybooks(intelligentRepair.getPlaybooks());
               }}
               onCreatePlaybook={() => setShowCreatePlaybook(true)}
             />
@@ -379,7 +379,7 @@ const V56OpsPanel: React.FC<{ onClose: () => void }> = ({ onClose }) => {
             <Button
               onClick={handleCreateIncident}
               variant='contained'
-              sx={{ bgcolor: '#f97316' }}
+              sx={{ bgcolor: 'orange.500' }}
             >
               创建并分析
             </Button>
@@ -442,7 +442,7 @@ const V56OpsPanel: React.FC<{ onClose: () => void }> = ({ onClose }) => {
             <Button
               onClick={handleCreatePlaybook}
               variant='contained'
-              sx={{ bgcolor: '#f97316' }}
+              sx={{ bgcolor: 'orange.500' }}
             >
               创建剧本
             </Button>
@@ -461,7 +461,7 @@ const V56PanelHeader: React.FC<{ onClose: () => void }> = ({ onClose }) => (
       alignItems: 'center',
       justifyContent: 'space-between',
       background: 'linear-gradient(135deg, #f97316 0%, #ea580c 50%, #dc2626 100%)',
-      color: 'white',
+      color: 'common.white',
     }}
   >
     <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5 }}>
@@ -470,7 +470,7 @@ const V56PanelHeader: React.FC<{ onClose: () => void }> = ({ onClose }) => (
           width: 40,
           height: 40,
           borderRadius: 2,
-          bgcolor: 'rgba(255,255,255,0.2)',
+          bgcolor: 'action.disabledBackground',
           display: 'flex',
           alignItems: 'center',
           justifyContent: 'center',
@@ -499,8 +499,8 @@ const V56PanelHeader: React.FC<{ onClose: () => void }> = ({ onClose }) => (
         color='secondary'
         sx={{
           '& .MuiBadge-badge': {
-            bgcolor: '#fbbf24',
-            color: '#1e293b',
+            bgcolor: 'warning.400',
+            color: 'text.primary',
             fontWeight: 700,
             fontSize: 10,
           },
@@ -511,7 +511,7 @@ const V56PanelHeader: React.FC<{ onClose: () => void }> = ({ onClose }) => (
       <IconButton
         size='small'
         onClick={onClose}
-        sx={{ color: 'white' }}
+        sx={{ color: 'common.white' }}
       >
         <XIcon size={20} />
       </IconButton>
@@ -525,11 +525,11 @@ const ScalingTab: React.FC<{
   onScale: (policyId: string) => void;
   onRefresh: () => void;
 }> = ({ policies, scalingHistory, onScale, onRefresh }) => {
-  const [predictions] = React.useState(() => autoScaler.predict_demand(24));
+  const [predictions] = React.useState(() => autoScaler.predictDemand(24));
   const totalInstances = React.useMemo(() => {
     let total = 0;
     policies.forEach((p) => {
-      const capacity = autoScaler.get_current_capacity(p.id);
+      const capacity = autoScaler.getCurrentCapacity(p.id);
       capacity.forEach((v) => {
         total += v;
       });
@@ -558,17 +558,17 @@ const ScalingTab: React.FC<{
           <Chip
             label={`${policies.length} 策略`}
             size='small'
-            sx={{ bgcolor: '#fff7ed', color: '#9a3412', fontWeight: 600 }}
+            sx={{ bgcolor: 'orange.50', color: 'orange.800', fontWeight: 600 }}
           />
           <Chip
             label={`当前容量: ${totalInstances} 实例`}
             size='small'
-            sx={{ bgcolor: '#fef3c7', color: '#92400e', fontWeight: 600 }}
+            sx={{ bgcolor: 'warning.100', color: 'warning.800', fontWeight: 600 }}
           />
           <Chip
             label={`${scalingHistory.length} 历史操作`}
             size='small'
-            sx={{ bgcolor: '#ecfdf5', color: '#065f46', fontWeight: 600 }}
+            sx={{ bgcolor: 'success.50', color: 'teal.900', fontWeight: 600 }}
           />
         </Stack>
         <Button
@@ -592,8 +592,8 @@ const ScalingTab: React.FC<{
           </Typography>
           {policies.length === 0 && <Alert severity='info'>暂无策略</Alert>}
           {policies.map((policy) => {
-            const currentValue = autoScaler.get_metric_value(policy.metric);
-            const capacity = autoScaler.get_current_capacity(policy.id);
+            const currentValue = autoScaler.getMetricValue(policy.metric);
+            const capacity = autoScaler.getCurrentCapacity(policy.id);
             const currentInstances = Array.from(capacity.values())[0] ?? policy.min_instances;
             const percent = Math.min(100, (currentValue / policy.target) * 100);
 
@@ -607,7 +607,7 @@ const ScalingTab: React.FC<{
                   borderColor: 'divider',
                   borderRadius: 1,
                   p: 2,
-                  bgcolor: 'white',
+                  bgcolor: 'common.white',
                 }}
               >
                 <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 1 }}>
@@ -665,7 +665,7 @@ const ScalingTab: React.FC<{
                   size='small'
                   startIcon={<Zap size={12} />}
                   onClick={() => onScale(policy.id)}
-                  sx={{ bgcolor: '#f97316', '&:hover': { bgcolor: '#ea580c' } }}
+                  sx={{ bgcolor: 'orange.500', '&:hover': { bgcolor: 'orange.600' } }}
                 >
                   执行扩缩容评估
                 </Button>
@@ -770,7 +770,7 @@ const ScalingTab: React.FC<{
               </Typography>
               <Typography
                 variant='caption'
-                sx={{ fontSize: 10, color: '#6b7280' }}
+                sx={{ fontSize: 10, color: 'grey.500' }}
               >
                 {(p.confidence * 100).toFixed(0)}%
               </Typography>
@@ -838,7 +838,7 @@ const RCATab: React.FC<{
   };
 
   const causes = selectedIncident ? rootCauses.get(selectedIncident) : undefined;
-  const report = selectedIncident ? rootCauseLocator.generate_cause_report(selectedIncident) : '';
+  const report = selectedIncident ? rootCauseLocator.generateCauseReport(selectedIncident) : '';
 
   return (
     <Box sx={{ p: 3 }}>
@@ -861,7 +861,7 @@ const RCATab: React.FC<{
           <Chip
             label={`${incidents.length} 事件`}
             size='small'
-            sx={{ bgcolor: '#fff7ed', color: '#9a3412', fontWeight: 600 }}
+            sx={{ bgcolor: 'orange.50', color: 'orange.800', fontWeight: 600 }}
           />
         </Stack>
         <Button
@@ -869,7 +869,7 @@ const RCATab: React.FC<{
           startIcon={<Plus size={14} />}
           onClick={onCreateIncident}
           size='small'
-          sx={{ bgcolor: '#f97316', '&:hover': { bgcolor: '#ea580c' } }}
+          sx={{ bgcolor: 'orange.500', '&:hover': { bgcolor: 'orange.600' } }}
         >
           创建事件
         </Button>
@@ -958,7 +958,7 @@ const RCATab: React.FC<{
                 variant='contained'
                 startIcon={<Search size={14} />}
                 onClick={() => onLocateRootCause(selectedIncident)}
-                sx={{ bgcolor: '#f97316', '&:hover': { bgcolor: '#ea580c' } }}
+                sx={{ bgcolor: 'orange.500', '&:hover': { bgcolor: 'orange.600' } }}
                 size='small'
               >
                 执行根因定位
@@ -998,7 +998,7 @@ const RCATab: React.FC<{
                     border: '1px solid',
                     borderColor: 'divider',
                     borderRadius: 1,
-                    bgcolor: 'white',
+                    bgcolor: 'common.white',
                   }}
                 >
                   <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 1 }}>
@@ -1008,8 +1008,8 @@ const RCATab: React.FC<{
                       sx={{
                         fontSize: 10,
                         height: 20,
-                        bgcolor: '#fef3c7',
-                        color: '#92400e',
+                        bgcolor: 'warning.100',
+                        color: 'warning.800',
                         fontWeight: 600,
                       }}
                     />
@@ -1073,7 +1073,7 @@ const RCATab: React.FC<{
                 elevation={0}
                 sx={{
                   p: 1.5,
-                  bgcolor: '#f8fafc',
+                  bgcolor: 'background.default',
                   borderRadius: 1,
                   maxHeight: 200,
                   overflow: 'auto',
@@ -1130,12 +1130,12 @@ const RepairTab: React.FC<{
           <Chip
             label={`${playbooks.length} 剧本`}
             size='small'
-            sx={{ bgcolor: '#faf5ff', color: '#6b21a8', fontWeight: 600 }}
+            sx={{ bgcolor: 'purple.50', color: 'purple.800', fontWeight: 600 }}
           />
           <Chip
             label={`${repairHistory.length} 操作记录`}
             size='small'
-            sx={{ bgcolor: '#ecfdf5', color: '#065f46', fontWeight: 600 }}
+            sx={{ bgcolor: 'success.50', color: 'teal.900', fontWeight: 600 }}
           />
         </Stack>
         <Button
@@ -1143,7 +1143,7 @@ const RepairTab: React.FC<{
           startIcon={<Plus size={14} />}
           onClick={onCreatePlaybook}
           size='small'
-          sx={{ bgcolor: '#f97316', '&:hover': { bgcolor: '#ea580c' } }}
+          sx={{ bgcolor: 'orange.500', '&:hover': { bgcolor: 'orange.600' } }}
         >
           创建剧本
         </Button>
@@ -1222,7 +1222,7 @@ const RepairTab: React.FC<{
                   size='small'
                   startIcon={<Play size={12} />}
                   onClick={() => onRunPlaybook(playbook.id)}
-                  sx={{ bgcolor: '#10b981', minWidth: 'auto', px: 1.5 }}
+                  sx={{ bgcolor: 'teal.500', minWidth: 'auto', px: 1.5 }}
                 >
                   执行
                 </Button>
@@ -1413,7 +1413,7 @@ const TimelineTab: React.FC<{
         <Chip
           label={`${events.length} 事件`}
           size='small'
-          sx={{ bgcolor: '#fff7ed', color: '#9a3412', fontWeight: 600 }}
+          sx={{ bgcolor: 'orange.50', color: 'orange.800', fontWeight: 600 }}
         />
       </Stack>
 
@@ -1464,7 +1464,7 @@ const TimelineTab: React.FC<{
                     border: '1px solid',
                     borderColor: 'divider',
                     borderRadius: 1,
-                    bgcolor: 'white',
+                    bgcolor: 'common.white',
                   }}
                 >
                   <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 0.5 }}>

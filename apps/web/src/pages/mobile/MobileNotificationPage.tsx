@@ -192,9 +192,7 @@ export const MobileNotificationPage: React.FC = () => {
   const handleMarkAsRead = useCallback(
     (id: string) => {
       const notification = notifications.find((n) => n.id === id);
-      setNotifications((prev) =>
-        prev.map((n) => (n.id === id ? { ...n, read: true } : n))
-      );
+      setNotifications((prev) => prev.map((n) => (n.id === id ? { ...n, read: true } : n)));
       if (notification) {
         addNotification({
           title: '标记已读',
@@ -274,9 +272,7 @@ export const MobileNotificationPage: React.FC = () => {
         return newNotif;
       },
       update: async (id, data) => {
-        setNotifications((prev) =>
-          prev.map((n) => (n.id === id ? { ...n, ...data } : n))
-        );
+        setNotifications((prev) => prev.map((n) => (n.id === id ? { ...n, ...data } : n)));
         return { id, ...data } as Notification;
       },
       delete: async (id) => {

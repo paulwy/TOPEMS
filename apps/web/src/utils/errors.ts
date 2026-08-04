@@ -30,7 +30,7 @@ export class AppExceptionError extends Error {
     message: string,
     options: { code: ErrorCode; details?: unknown; originalError?: unknown; cause?: unknown }
   ) {
-    super(message);
+    super(message, options);
     this.cause = options.cause;
     this.name = 'AppExceptionError';
     this.code = options.code;

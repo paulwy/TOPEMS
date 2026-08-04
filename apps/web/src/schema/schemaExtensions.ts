@@ -54,7 +54,7 @@ export interface NestedTableConfig {
 export interface TreeConfig {
   /** 节点唯一标识字段名，默认 'id' */
   keyField?: string;
-  /** 父节点字段名，默认 'parent_id' */
+  /** 父节点字段名，默认 'parentId' */
   parentField?: string;
   /** 子节点数组字段名，默认 'children' */
   childrenField?: string;

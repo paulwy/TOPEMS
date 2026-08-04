@@ -2,6 +2,7 @@ import React from 'react';
 import { ConfirmDialog } from '@/components/common';
 
 import { useTranslation } from 'react-i18next';
+
 interface ConfirmDialogsProps {
   deleteDialogOpen: boolean;
   onCloseDelete: () => void;

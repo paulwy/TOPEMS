@@ -256,9 +256,9 @@ const RsSettingsPage: React.FC = () => {
                     mb: 0.5,
                     '&.Mui-selected': {
                       bgcolor: 'primary.main',
-                      color: 'white',
+                      color: 'common.white',
                       '& .MuiListItemIcon-root': {
-                        color: 'white',
+                        color: 'common.white',
                       },
                     },
                   }}

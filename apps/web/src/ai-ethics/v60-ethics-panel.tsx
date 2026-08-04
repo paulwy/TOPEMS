@@ -96,7 +96,7 @@ export const V60EthicsPanel: React.FC<{ onClose: () => void }> = ({ onClose }) =
 
   const [biasReports, setBiasReports] = useState<BiasReport[]>([]);
   const [biasSummary, setBiasSummary] = useState<ReturnType<
-    typeof biasDetector.get_bias_summary
+    typeof biasDetector.getBiasSummary
   > | null>(null);
   const [selectedBiasTypes, setSelectedBiasTypes] = useState<BiasType[]>([
     'Gender',
@@ -107,16 +107,16 @@ export const V60EthicsPanel: React.FC<{ onClose: () => void }> = ({ onClose }) =
 
   const [fairnessResults, setFairnessResults] = useState<FairnessResult[]>([]);
   const [fairnessAudit, setFairnessAudit] = useState<ReturnType<
-    typeof fairnessAssurance.run_fairness_audit
+    typeof fairnessAssurance.runFairnessAudit
   > | null>(null);
   const [benchmark, setBenchmark] = useState<ReturnType<
-    typeof fairnessAssurance.get_fairness_benchmark
+    typeof fairnessAssurance.getFairnessBenchmark
   > | null>(null);
 
   const [explanations, setExplanations] = useState<Explanation[]>([]);
   const [explanationReport, setExplanationReport] = useState<ExplainabilityReport | null>(null);
   const [coverage, setCoverage] = useState<ReturnType<
-    typeof explainabilityEngine.get_explainability_coverage
+    typeof explainabilityEngine.getExplainabilityCoverage
   > | null>(null);
   const [selectedMethod, setSelectedMethod] = useState<ExplainabilityMethod>('SHAP');
 
@@ -133,25 +133,25 @@ export const V60EthicsPanel: React.FC<{ onClose: () => void }> = ({ onClose }) =
   const [isAnalyzing, setIsAnalyzing] = useState(false);
 
   const loadBiasData = useCallback(() => {
-    const reports = biasDetector.analyze_bias(modelId, { biasTypes: selectedBiasTypes });
+    const reports = biasDetector.analyzeBias(modelId, { biasTypes: selectedBiasTypes });
     setBiasReports(reports);
-    setBiasSummary(biasDetector.get_bias_summary());
+    setBiasSummary(biasDetector.getBiasSummary());
   }, [modelId, selectedBiasTypes]);
 
   const loadFairnessData = useCallback(() => {
-    const results = fairnessAssurance.compute_fairness(modelId);
+    const results = fairnessAssurance.computeFairness(modelId);
     setFairnessResults([results]);
-    setFairnessAudit(fairnessAssurance.run_fairness_audit(modelId));
-    setBenchmark(fairnessAssurance.get_fairness_benchmark(modelId));
+    setFairnessAudit(fairnessAssurance.runFairnessAudit(modelId));
+    setBenchmark(fairnessAssurance.getFairnessBenchmark(modelId));
   }, [modelId]);
 
   const loadExplainabilityData = useCallback(() => {
-    const explanation = explainabilityEngine.get_explanation(`pred-${Date.now()}`, modelId, {
+    const explanation = explainabilityEngine.getExplanation(`pred-${Date.now()}`, modelId, {
       method: selectedMethod,
     });
     setExplanations([explanation]);
-    setExplanationReport(explainabilityEngine.get_explainability_report(modelId));
-    setCoverage(explainabilityEngine.get_explainability_coverage(modelId));
+    setExplanationReport(explainabilityEngine.getExplainabilityReport(modelId));
+    setCoverage(explainabilityEngine.getExplainabilityCoverage(modelId));
   }, [modelId, selectedMethod]);
 
   const runFullAnalysis = useCallback(() => {
@@ -208,7 +208,7 @@ export const V60EthicsPanel: React.FC<{ onClose: () => void }> = ({ onClose }) =
         left: 0,
         right: 0,
         bottom: 0,
-        bgcolor: 'rgba(0,0,0,0.5)',
+        bgcolor: 'action.active',
         zIndex: 10000,
         display: 'flex',
         alignItems: 'center',
@@ -238,7 +238,7 @@ export const V60EthicsPanel: React.FC<{ onClose: () => void }> = ({ onClose }) =
             justifyContent: 'space-between',
             background: 'linear-gradient(135deg, #059669, #0d9488, #0891b2)',
             bgcolor: 'linear-gradient(135deg, #059669, #0d9488, #0891b2)',
-            color: 'white',
+            color: 'common.white',
           }}
         >
           <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5 }}>
@@ -254,7 +254,7 @@ export const V60EthicsPanel: React.FC<{ onClose: () => void }> = ({ onClose }) =
             <Button
               size='small'
               variant='outlined'
-              sx={{ borderColor: 'rgba(255,255,255,0.5)', color: 'white' }}
+              sx={{ borderColor: 'common.white', color: 'common.white' }}
               onClick={runFullAnalysis}
               disabled={isAnalyzing}
             >
@@ -267,7 +267,7 @@ export const V60EthicsPanel: React.FC<{ onClose: () => void }> = ({ onClose }) =
             <IconButton
               size='small'
               onClick={onClose}
-              sx={{ color: 'white' }}
+              sx={{ color: 'common.white' }}
             >
               <XIcon size={20} />
             </IconButton>
@@ -316,9 +316,9 @@ export const V60EthicsPanel: React.FC<{ onClose: () => void }> = ({ onClose }) =
               selectedTypes={selectedBiasTypes}
               onToggleType={toggleBiasType}
               onAnalyze={loadBiasData}
-              rules={biasDetector.list_rules()}
+              rules={biasDetector.listRules()}
               onUpdateThreshold={(ruleId, threshold) => {
-                biasDetector.update_bias_threshold(ruleId, threshold);
+                biasDetector.updateBiasThreshold(ruleId, threshold);
                 loadBiasData();
               }}
             />
@@ -329,7 +329,7 @@ export const V60EthicsPanel: React.FC<{ onClose: () => void }> = ({ onClose }) =
               results={fairnessResults}
               audit={fairnessAudit}
               benchmark={benchmark}
-              trends={fairnessAssurance.get_fairness_trends(modelId)}
+              trends={fairnessAssurance.getFairnessTrends(modelId)}
               onRunAudit={loadFairnessData}
             />
           )}
@@ -346,7 +346,7 @@ export const V60EthicsPanel: React.FC<{ onClose: () => void }> = ({ onClose }) =
               }}
               onRefresh={loadExplainabilityData}
               onGenerate={(predictionId) => {
-                const exp = explainabilityEngine.get_explanation(predictionId, modelId, {
+                const exp = explainabilityEngine.getExplanation(predictionId, modelId, {
                   method: selectedMethod,
                 });
                 setExplanations([exp, ...explanations]);
@@ -368,11 +368,11 @@ export const V60EthicsPanel: React.FC<{ onClose: () => void }> = ({ onClose }) =
 
 const BiasTab: React.FC<{
   reports: BiasReport[];
-  summary: ReturnType<typeof biasDetector.get_bias_summary> | null;
+  summary: ReturnType<typeof biasDetector.getBiasSummary> | null;
   selectedTypes: BiasType[];
   onToggleType: (type: BiasType) => void;
   onAnalyze: () => void;
-  rules: ReturnType<typeof biasDetector.list_rules>;
+  rules: ReturnType<typeof biasDetector.listRules>;
   onUpdateThreshold: (ruleId: string, threshold: number) => void;
 }> = ({ reports, summary, selectedTypes, onToggleType, onAnalyze, rules, onUpdateThreshold }) => (
   <Grid
@@ -474,7 +474,7 @@ const BiasTab: React.FC<{
                         label={report.severity}
                         sx={{
                           bgcolor: SEVERITY_COLORS[report.severity],
-                          color: 'white',
+                          color: 'common.white',
                           height: 20,
                         }}
                       />
@@ -570,11 +570,11 @@ const BiasTab: React.FC<{
                 spacing={0.5}
                 sx={{ flexWrap: 'wrap', mb: 1 }}
               >
-                {(Object.keys(summary.by_severity) as BiasSeverity[]).map((sev) => (
+                {(Object.keys(summary.bySeverity) as BiasSeverity[]).map((sev) => (
                   <Chip
                     key={sev}
                     size='small'
-                    label={`${sev}: ${summary.by_severity[sev]}`}
+                    label={`${sev}: ${summary.bySeverity[sev]}`}
                     variant='outlined'
                     sx={{ fontSize: 11 }}
                   />
@@ -591,11 +591,11 @@ const BiasTab: React.FC<{
                 spacing={0.5}
                 sx={{ flexWrap: 'wrap' }}
               >
-                {(Object.keys(summary.by_bias_type) as BiasType[]).map((type) => (
+                {(Object.keys(summary.byBiasType) as BiasType[]).map((type) => (
                   <Chip
                     key={type}
                     size='small'
-                    label={`${BIAS_TYPE_LABELS[type]}: ${summary.by_bias_type[type]}`}
+                    label={`${BIAS_TYPE_LABELS[type]}: ${summary.byBiasType[type]}`}
                     variant='outlined'
                     sx={{ fontSize: 11 }}
                   />
@@ -691,9 +691,9 @@ const BiasTab: React.FC<{
 
 const FairnessTab: React.FC<{
   results: FairnessResult[];
-  audit: ReturnType<typeof fairnessAssurance.run_fairness_audit>;
-  benchmark: ReturnType<typeof fairnessAssurance.get_fairness_benchmark>;
-  trends: ReturnType<typeof fairnessAssurance.get_fairness_trends>;
+  audit: ReturnType<typeof fairnessAssurance.runFairnessAudit>;
+  benchmark: ReturnType<typeof fairnessAssurance.getFairnessBenchmark>;
+  trends: ReturnType<typeof fairnessAssurance.getFairnessTrends>;
   onRunAudit: () => void;
 }> = ({ results, audit, benchmark, trends, onRunAudit }) => (
   <Grid
@@ -944,7 +944,7 @@ const FairnessTab: React.FC<{
             <Box sx={{ textAlign: 'center', py: 1 }}>
               <Typography
                 variant='h4'
-                sx={{ fontWeight: 700, color: '#059669' }}
+                sx={{ fontWeight: 700, color: 'teal.600' }}
               >
                 {benchmark.yourScore.toFixed(2)}
               </Typography>
@@ -1070,7 +1070,7 @@ const FairnessTab: React.FC<{
 const ExplainabilityTab: React.FC<{
   explanations: Explanation[];
   report: ExplainabilityReport;
-  coverage: ReturnType<typeof explainabilityEngine.get_explainability_coverage>;
+  coverage: ReturnType<typeof explainabilityEngine.getExplainabilityCoverage>;
   selectedMethod: ExplainabilityMethod;
   onMethodChange: (method: ExplainabilityMethod) => void;
   onRefresh: () => void;
@@ -1437,7 +1437,7 @@ const ExplainabilityTab: React.FC<{
               <Box sx={{ textAlign: 'center', py: 1 }}>
                 <Typography
                   variant='h4'
-                  sx={{ fontWeight: 700, color: '#0891b2' }}
+                  sx={{ fontWeight: 700, color: 'cyan.600' }}
                 >
                   {(coverage.coverage_rate * 100).toFixed(1)}%
                 </Typography>
@@ -1476,7 +1476,7 @@ const ExplainabilityTab: React.FC<{
                 container
                 spacing={1}
               >
-                {Object.entries(coverage.by_method).map(([method, count]) => (
+                {Object.entries(coverage.byMethod).map(([method, count]) => (
                   <Grid
                     size={4}
                     key={method}

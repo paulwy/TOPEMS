@@ -284,7 +284,7 @@ const ArchiveConfigModal: React.FC<ArchiveConfigModalProps> = ({ config, onClose
                   width: 16,
                   height: 16,
                   borderRadius: '50%',
-                  bgcolor: 'white',
+                  bgcolor: 'common.white',
                   transition: 'transform 0.2s',
                   transform: formData.enabled ? 'translateX(20px)' : 'translateX(4px)',
                 }}

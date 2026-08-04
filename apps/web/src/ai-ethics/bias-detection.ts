@@ -88,7 +88,7 @@ export class BiasDetector {
     return BiasDetector.instance;
   }
 
-  analyze_bias(
+  analyzeBias(
     modelId: string,
     options?: {
       biasTypes?: BiasType[];
@@ -147,16 +147,16 @@ export class BiasDetector {
     return results;
   }
 
-  get_bias_report(reportId: string): BiasReport | null {
+  getBiasReport(reportId: string): BiasReport | null {
     return this.reports.get(reportId) ?? null;
   }
 
-  list_reports(limit?: number): BiasReport[] {
+  listReports(limit?: number): BiasReport[] {
     const results = Array.from(this.reports.values()).sort((a, b) => b.timestamp - a.timestamp);
     return limit ? results.slice(0, limit) : results;
   }
 
-  get_model_bias(modelId: string): BiasReport[] {
+  getModelBias(modelId: string): BiasReport[] {
     const reportIds = this.modelReports.get(modelId) ?? [];
     return reportIds
       .map((id) => this.reports.get(id))
@@ -164,7 +164,7 @@ export class BiasDetector {
       .sort((a, b) => b.timestamp - a.timestamp);
   }
 
-  create_bias_rule(rule: Omit<BiasRule, 'id'>): BiasRule {
+  createBiasRule(rule: Omit<BiasRule, 'id'>): BiasRule {
     const newRule: BiasRule = {
       ...rule,
       id: `rule-${Date.now()}-${Math.random().toString(36).slice(2, 7)}`,
@@ -173,7 +173,7 @@ export class BiasDetector {
     return newRule;
   }
 
-  update_bias_threshold(ruleId: string, threshold: number): BiasRule | null {
+  updateBiasThreshold(ruleId: string, threshold: number): BiasRule | null {
     const rule = this.rules.get(ruleId);
     if (!rule) return null;
     rule.threshold = threshold;
@@ -181,24 +181,24 @@ export class BiasDetector {
     return rule;
   }
 
-  get_bias_summary(): {
+  getBiasSummary(): {
     total_reports: number;
-    by_severity: Record<BiasSeverity, number>;
-    by_bias_type: Record<BiasType, number>;
+    bySeverity: Record<BiasSeverity, number>;
+    byBiasType: Record<BiasType, number>;
     affected_models: number;
     recent_findings: string[];
   } {
     const reports = Array.from(this.reports.values());
     const total = reports.length;
 
-    const by_severity: Record<BiasSeverity, number> = {
+    const bySeverity: Record<BiasSeverity, number> = {
       critical: 0,
       high: 0,
       medium: 0,
       low: 0,
       info: 0,
     };
-    const by_bias_type: Record<BiasType, number> = {
+    const byBiasType: Record<BiasType, number> = {
       Gender: 0,
       Race: 0,
       Age: 0,
@@ -206,8 +206,8 @@ export class BiasDetector {
     };
 
     for (const report of reports) {
-      by_severity[report.severity]++;
-      by_bias_type[report.biasType]++;
+      bySeverity[report.severity]++;
+      byBiasType[report.biasType]++;
     }
 
     const affectedModels = new Set(reports.map((r) => r.modelId)).size;
@@ -219,14 +219,14 @@ export class BiasDetector {
 
     return {
       total_reports: total,
-      by_severity,
-      by_bias_type,
+      bySeverity,
+      byBiasType,
       affected_models: affectedModels,
       recent_findings: recentFindings,
     };
   }
 
-  list_rules(): BiasRule[] {
+  listRules(): BiasRule[] {
     return Array.from(this.rules.values());
   }
 

@@ -84,7 +84,7 @@ const CustomTooltip = ({ active, payload }: { active?: boolean; payload?: Toolti
     return (
       <div
         style={{
-          backgroundColor: 'white',
+          backgroundColor: 'common.white',
           padding: '12px 16px',
           borderRadius: '8px',
           boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -2px rgba(0, 0, 0, 0.1)',
@@ -280,7 +280,7 @@ export const ChartComponent: React.FC<ChartConfig> = ({
     return (
       <div
         style={{
-          backgroundColor: 'white',
+          backgroundColor: 'common.white',
           borderRadius: '12px',
           boxShadow: '0 1px 3px 0 rgba(0, 0, 0, 0.1)',
           padding: '24px',
@@ -303,7 +303,7 @@ export const ChartComponent: React.FC<ChartConfig> = ({
             {title}
           </h3>
         )}
-        <div style={{ color: '#94a3b8', textAlign: 'center' }}>
+        <div style={{ color: 'text.muted', textAlign: 'center' }}>
           <svg
             width='48'
             height='48'
@@ -688,7 +688,7 @@ export const ChartComponent: React.FC<ChartConfig> = ({
   return (
     <div
       style={{
-        backgroundColor: 'white',
+        backgroundColor: 'common.white',
         borderRadius: '12px',
         boxShadow: '0 1px 3px 0 rgba(0, 0, 0, 0.1)',
         padding: '24px',

@@ -166,7 +166,7 @@ export const ChartCard: React.FC<ChartCardProps> = ({
                 style={{
                   display: 'flex',
                   alignItems: 'center',
-                  backgroundColor: '#F1F5F9',
+                  backgroundColor: 'grey.100',
                   borderRadius: 8,
                   padding: 2,
                 }}
@@ -288,7 +288,7 @@ export const ChartCard: React.FC<ChartCardProps> = ({
               style={{
                 width: 48,
                 height: 48,
-                backgroundColor: '#FEF2F2',
+                backgroundColor: 'error.50',
                 borderRadius: '50%',
                 display: 'flex',
                 alignItems: 'center',

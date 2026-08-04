@@ -29,7 +29,7 @@ export const assetCategorySchema: EntitySchema = {
       listWidth: 150,
     },
     {
-      name: 'parent_id',
+      name: 'parentId',
       label: '上级分类',
       type: 'text',
       listWidth: 150,
@@ -63,7 +63,7 @@ export const assetCategorySchema: EntitySchema = {
   ],
 
   list: {
-    columns: ['code', 'name', 'parent_id', 'status', 'created_at'],
+    columns: ['code', 'name', 'parentId', 'status', 'created_at'],
     searchFields: ['code', 'name'],
     pageSize: 10,
     statusBadge: {
@@ -96,7 +96,7 @@ export const assetCategorySchema: EntitySchema = {
   formSections: [
     {
       title: '基本信息',
-      fields: ['code', 'name', 'parent_id'],
+      fields: ['code', 'name', 'parentId'],
     },
     {
       title: '状态与描述',

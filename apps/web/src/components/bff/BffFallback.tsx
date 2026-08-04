@@ -203,7 +203,7 @@ export const BffErrorFallback: React.FC<BffErrorFallbackProps> = ({
           </Typography>
           <Chip
             size='small'
-            label={FallbackLevel.Secondary}
+            label={FallbackLevel.SECONDARY}
             variant='outlined'
             color='error'
           />
@@ -336,7 +336,7 @@ export const BffOfflineFallback: React.FC<BffOfflineFallbackProps> = ({
           </Typography>
           <Chip
             size='small'
-            label={FallbackLevel.Offline}
+            label={FallbackLevel.OFFLINE}
             variant='outlined'
             color='warning'
           />
@@ -475,7 +475,7 @@ export const BffCacheFallback: React.FC<BffCacheFallbackProps> = ({
           <span>降级到缓存数据</span>
           <Chip
             size='small'
-            label={FallbackLevel.Tertiary}
+            label={FallbackLevel.TERTIARY}
             variant='outlined'
             color='info'
             sx={{ ml: 1 }}
@@ -543,7 +543,7 @@ export const BffFallbackContainer: React.FC<BffFallbackContainerProps> = ({
   minHeight = 200,
 }) => {
   switch (level) {
-    case FallbackLevel.Offline:
+    case FallbackLevel.OFFLINE:
       return (
         <BffOfflineFallback
           minHeight={minHeight}
@@ -551,7 +551,7 @@ export const BffFallbackContainer: React.FC<BffFallbackContainerProps> = ({
           onShowLocalData={onShowLocalData}
         />
       );
-    case FallbackLevel.Tertiary:
+    case FallbackLevel.TERTIARY:
       return (
         <BffCacheFallback
           cachedAt={cachedAt}
@@ -559,7 +559,7 @@ export const BffFallbackContainer: React.FC<BffFallbackContainerProps> = ({
           minHeight={minHeight}
         />
       );
-    case FallbackLevel.Secondary:
+    case FallbackLevel.SECONDARY:
       return (
         <BffErrorFallback
           error={error}
@@ -567,7 +567,7 @@ export const BffFallbackContainer: React.FC<BffFallbackContainerProps> = ({
           onRetry={onRetry ?? onRefresh}
         />
       );
-    case FallbackLevel.Primary:
+    case FallbackLevel.PRIMARY:
     default:
       return (
         <BffLoadingFallback

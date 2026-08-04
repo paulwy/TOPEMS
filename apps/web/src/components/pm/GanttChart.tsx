@@ -101,7 +101,7 @@ const GanttChart: React.FC<GanttChartProps> = ({
   return (
     <Paper
       sx={{
-        backgroundColor: 'white',
+        backgroundColor: 'common.white',
         borderRadius: 3,
         border: '1px solid grey.200',
         overflow: 'hidden',
@@ -309,7 +309,7 @@ const GanttChart: React.FC<GanttChartProps> = ({
                     <Typography
                       sx={{
                         fontSize: '0.75rem',
-                        color: 'white',
+                        color: 'common.white',
                         fontWeight: 500,
                         overflow: 'hidden',
                         textOverflow: 'ellipsis',
@@ -324,7 +324,7 @@ const GanttChart: React.FC<GanttChartProps> = ({
                         bottom: 0,
                         left: 0,
                         height: 4,
-                        backgroundColor: 'rgba(255, 255, 255, 0.3)',
+                        backgroundColor: 'action.disabledBackground',
                         borderRadius: '0 0 4px 4px',
                         width: `${phase.progress}%`,
                       }}

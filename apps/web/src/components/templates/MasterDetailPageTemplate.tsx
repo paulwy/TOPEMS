@@ -446,7 +446,9 @@ export function MasterDetailPageTemplate<T>({
         {!isMobile ? (
           <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
             {columns.map((col) => {
-              const value = col.field ? (item as unknown as Record<string, unknown>)[col.field] : undefined;
+              const value = col.field
+                ? (item as unknown as Record<string, unknown>)[col.field]
+                : undefined;
               return (
                 <Box
                   key={col.id}
@@ -523,7 +525,9 @@ export function MasterDetailPageTemplate<T>({
               >
                 {primaryColumn.render
                   ? primaryColumn.render(
-                      primaryColumn.field ? (item as unknown as Record<string, unknown>)[primaryColumn.field!] : undefined,
+                      primaryColumn.field
+                        ? (item as unknown as Record<string, unknown>)[primaryColumn.field!]
+                        : undefined,
                       item,
                       index
                     )
@@ -539,7 +543,9 @@ export function MasterDetailPageTemplate<T>({
               >
                 {secondaryColumn.render
                   ? secondaryColumn.render(
-                      secondaryColumn.field ? (item as unknown as Record<string, unknown>)[secondaryColumn.field!] : undefined,
+                      secondaryColumn.field
+                        ? (item as unknown as Record<string, unknown>)[secondaryColumn.field!]
+                        : undefined,
                       item,
                       index
                     )

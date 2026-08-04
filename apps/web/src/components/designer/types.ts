@@ -47,14 +47,7 @@ export interface DesignerComponent {
 
 /** 属性面板配置类型 */
 export type PropertyType =
-  | 'text'
-  | 'number'
-  | 'boolean'
-  | 'select'
-  | 'color'
-  | 'icon'
-  | 'textarea'
-  | 'code';
+  'text' | 'number' | 'boolean' | 'select' | 'color' | 'icon' | 'textarea' | 'code';
 
 /** 属性面板配置 */
 export interface PropertyPanelConfig {
@@ -194,7 +187,13 @@ export const FORM_COMPONENTS: DesignerComponent[] = [
       { key: 'label', label: '标签', type: 'text', required: true },
       { key: 'placeholder', label: '占位符', type: 'text' },
       { key: 'required', label: '必填', type: 'boolean', defaultValue: false },
-      { key: 'colSpan', label: '跨列数', type: 'number', defaultValue: 1, validation: { min: 1, max: 4 } },
+      {
+        key: 'colSpan',
+        label: '跨列数',
+        type: 'number',
+        defaultValue: 1,
+        validation: { min: 1, max: 4 },
+      },
       { key: 'defaultValue', label: '默认值', type: 'text', advanced: true },
     ],
   },
@@ -209,7 +208,13 @@ export const FORM_COMPONENTS: DesignerComponent[] = [
       { key: 'name', label: '字段名', type: 'text', required: true },
       { key: 'label', label: '标签', type: 'text', required: true },
       { key: 'required', label: '必填', type: 'boolean', defaultValue: false },
-      { key: 'colSpan', label: '跨列数', type: 'number', defaultValue: 1, validation: { min: 1, max: 4 } },
+      {
+        key: 'colSpan',
+        label: '跨列数',
+        type: 'number',
+        defaultValue: 1,
+        validation: { min: 1, max: 4 },
+      },
       { key: 'min', label: '最小值', type: 'number', advanced: true },
       { key: 'max', label: '最大值', type: 'number', advanced: true },
     ],
@@ -225,7 +230,13 @@ export const FORM_COMPONENTS: DesignerComponent[] = [
       { key: 'name', label: '字段名', type: 'text', required: true },
       { key: 'label', label: '标签', type: 'text', required: true },
       { key: 'required', label: '必填', type: 'boolean', defaultValue: false },
-      { key: 'colSpan', label: '跨列数', type: 'number', defaultValue: 1, validation: { min: 1, max: 4 } },
+      {
+        key: 'colSpan',
+        label: '跨列数',
+        type: 'number',
+        defaultValue: 1,
+        validation: { min: 1, max: 4 },
+      },
       {
         key: 'optionsSource',
         label: '选项来源',
@@ -250,7 +261,13 @@ export const FORM_COMPONENTS: DesignerComponent[] = [
       { key: 'name', label: '字段名', type: 'text', required: true },
       { key: 'label', label: '标签', type: 'text', required: true },
       { key: 'required', label: '必填', type: 'boolean', defaultValue: false },
-      { key: 'colSpan', label: '跨列数', type: 'number', defaultValue: 1, validation: { min: 1, max: 4 } },
+      {
+        key: 'colSpan',
+        label: '跨列数',
+        type: 'number',
+        defaultValue: 1,
+        validation: { min: 1, max: 4 },
+      },
     ],
   },
   {
@@ -264,7 +281,13 @@ export const FORM_COMPONENTS: DesignerComponent[] = [
       { key: 'name', label: '字段名', type: 'text', required: true },
       { key: 'label', label: '标签', type: 'text', required: true },
       { key: 'required', label: '必填', type: 'boolean', defaultValue: false },
-      { key: 'colSpan', label: '跨列数', type: 'number', defaultValue: 2, validation: { min: 1, max: 4 } },
+      {
+        key: 'colSpan',
+        label: '跨列数',
+        type: 'number',
+        defaultValue: 2,
+        validation: { min: 1, max: 4 },
+      },
       { key: 'rows', label: '行数', type: 'number', defaultValue: 3, advanced: true },
     ],
   },
@@ -279,7 +302,13 @@ export const FORM_COMPONENTS: DesignerComponent[] = [
       { key: 'name', label: '字段名', type: 'text', required: true },
       { key: 'label', label: '标签', type: 'text', required: true },
       { key: 'defaultValue', label: '默认值', type: 'boolean', defaultValue: false },
-      { key: 'colSpan', label: '跨列数', type: 'number', defaultValue: 1, validation: { min: 1, max: 4 } },
+      {
+        key: 'colSpan',
+        label: '跨列数',
+        type: 'number',
+        defaultValue: 1,
+        validation: { min: 1, max: 4 },
+      },
     ],
   },
 ];
@@ -302,10 +331,7 @@ export const LAYOUT_COMPONENTS: DesignerComponent[] = [
 ];
 
 /** 所有内置组件 */
-export const BUILTIN_COMPONENTS: DesignerComponent[] = [
-  ...FORM_COMPONENTS,
-  ...LAYOUT_COMPONENTS,
-];
+export const BUILTIN_COMPONENTS: DesignerComponent[] = [...FORM_COMPONENTS, ...LAYOUT_COMPONENTS];
 
 /**
  * 根据类型获取组件定义

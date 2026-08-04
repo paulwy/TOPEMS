@@ -156,7 +156,7 @@ const HrmAttendancePage: React.FC = () => {
                 size='small'
                 value={selectedDate}
                 onChange={(e) => setSelectedDate(e.target.value)}
-                sx={{ bgcolor: 'white', borderRadius: 1 }}
+                sx={{ bgcolor: 'common.white', borderRadius: 1 }}
               />
               <Button
                 variant='outlined'

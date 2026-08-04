@@ -20,13 +20,17 @@ export const storage = {
   setToken: async (token: string): Promise<void> => {
     try {
       await AsyncStorage.setItem(STORAGE_KEYS.TOKEN, token);
-    } catch {}
+    } catch {
+      /* ignore */
+    }
   },
 
   removeToken: async (): Promise<void> => {
     try {
       await AsyncStorage.removeItem(STORAGE_KEYS.TOKEN);
-    } catch {}
+    } catch {
+      /* ignore */
+    }
   },
 
   getUser: async <T>(): Promise<T | null> => {
@@ -41,13 +45,17 @@ export const storage = {
   setUser: async <T>(user: T): Promise<void> => {
     try {
       await AsyncStorage.setItem(STORAGE_KEYS.USER, JSON.stringify(user));
-    } catch {}
+    } catch {
+      /* ignore */
+    }
   },
 
   removeUser: async (): Promise<void> => {
     try {
       await AsyncStorage.removeItem(STORAGE_KEYS.USER);
-    } catch {}
+    } catch {
+      /* ignore */
+    }
   },
 
   clearAll: async (): Promise<void> => {
@@ -59,7 +67,9 @@ export const storage = {
         STORAGE_KEYS.LANGUAGE,
         STORAGE_KEYS.SCAN_HISTORY,
       ]);
-    } catch {}
+    } catch {
+      /* ignore */
+    }
   },
 
   getScanHistory: async <T>(): Promise<T | null> => {
@@ -74,13 +84,17 @@ export const storage = {
   setScanHistory: async <T>(history: T): Promise<void> => {
     try {
       await AsyncStorage.setItem(STORAGE_KEYS.SCAN_HISTORY, JSON.stringify(history));
-    } catch {}
+    } catch {
+      /* ignore */
+    }
   },
 
   removeScanHistory: async (): Promise<void> => {
     try {
       await AsyncStorage.removeItem(STORAGE_KEYS.SCAN_HISTORY);
-    } catch {}
+    } catch {
+      /* ignore */
+    }
   },
 };
 

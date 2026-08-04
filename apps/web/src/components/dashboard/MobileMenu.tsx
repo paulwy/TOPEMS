@@ -78,7 +78,7 @@ export const MobileMenu: React.FC<MobileMenuProps> = ({
       sx={{
         position: 'fixed',
         inset: 0,
-        backgroundColor: 'rgba(0, 0, 0, 0.5)',
+        backgroundColor: 'action.active',
         zIndex: 40,
       }}
       onClick={onClose}
@@ -89,7 +89,7 @@ export const MobileMenu: React.FC<MobileMenuProps> = ({
           top: 56,
           left: 0,
           right: 0,
-          backgroundColor: 'white',
+          backgroundColor: 'common.white',
           maxHeight: '70vh',
           overflowY: 'auto',
         }}

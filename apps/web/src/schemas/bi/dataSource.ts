@@ -187,7 +187,7 @@ const dataSourceFields: SchemaField[] = [
     showInList: false,
   },
   {
-    name: 'is_enabled',
+    name: 'isEnabled',
     label: '是否启用',
     type: 'switch',
     showInList: false,
@@ -256,7 +256,7 @@ export const dataSourceSchema: EntitySchema = {
   formSections: [
     {
       title: '基本信息',
-      fields: ['name', 'type', 'description', 'is_enabled'],
+      fields: ['name', 'type', 'description', 'isEnabled'],
     },
     {
       title: '连接配置',

@@ -116,7 +116,7 @@ const PersonalInfoCard: React.FC = () => {
             width: 48,
             height: 48,
             background: 'linear-gradient(135deg, #3b82f6, #8b5cf6)',
-            color: 'white',
+            color: 'common.white',
             fontWeight: 600,
             fontSize: '1.1rem',
             flexShrink: 0,
@@ -179,7 +179,7 @@ const CompactHero: React.FC = () => {
         background: 'linear-gradient(135deg, #3b82f6 0%, #6366f1 50%, #8b5cf6 100%)',
         borderRadius: 3,
         p: 2.5,
-        color: 'white',
+        color: 'common.white',
         overflow: 'hidden',
       }}
     >
@@ -192,7 +192,7 @@ const CompactHero: React.FC = () => {
           width: 100,
           height: 100,
           borderRadius: '50%',
-          bgcolor: 'white',
+          bgcolor: 'common.white',
           opacity: 0.08,
         }}
       />
@@ -214,7 +214,7 @@ const CompactHero: React.FC = () => {
         <Button
           size='small'
           sx={{
-            bgcolor: 'white',
+            bgcolor: 'common.white',
             color: 'primary.main',
             fontWeight: 600,
             textTransform: 'none',
@@ -309,7 +309,10 @@ const RecentActivities: React.FC = () => {
   const navigate = useNavigate();
 
   return (
-    <Paper className='recent-activities' sx={{ borderRadius: 3, p: 2 }}>
+    <Paper
+      className='recent-activities'
+      sx={{ borderRadius: 3, p: 2 }}
+    >
       <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', mb: 1 }}>
         <Typography
           variant='subtitle2'
@@ -341,7 +344,7 @@ const RecentActivities: React.FC = () => {
               width: 32,
               height: 32,
               background: gradientMap[item.gradient] || gradientMap.primary,
-              color: 'white',
+              color: 'common.white',
               fontWeight: 600,
               fontSize: '0.8rem',
               flexShrink: 0,

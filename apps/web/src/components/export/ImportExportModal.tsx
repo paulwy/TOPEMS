@@ -116,7 +116,7 @@ export const ImportExportModal = <T extends Record<string, any>>({
                     mb: 2,
                   }}
                 >
-                  <CheckCircle style={{ width: 32, height: 32, color: 'green' }} />
+                  <CheckCircle style={{ width: 32, height: 32, color: 'success.main' }} />
                 </Box>
                 <Typography
                   variant='h6'
@@ -147,7 +147,7 @@ export const ImportExportModal = <T extends Record<string, any>>({
                     style={{
                       width: 20,
                       height: 20,
-                      color: 'red',
+                      color: 'error.main',
                       flexShrink: 0,
                     }}
                   />

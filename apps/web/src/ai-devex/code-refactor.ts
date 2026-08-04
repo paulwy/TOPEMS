@@ -70,7 +70,7 @@ export class CodeRefactorer {
     return CodeRefactorer.instance;
   }
 
-  scan_code(filePath: string, code?: string): CodeIssue[] {
+  scanCode(filePath: string, code?: string): CodeIssue[] {
     const issues: CodeIssue[] = [];
 
     if (!code) {
@@ -226,7 +226,7 @@ export class CodeRefactorer {
     return issues;
   }
 
-  get_issues(file?: string, type?: CodeIssueType, severity?: CodeIssue['severity']): CodeIssue[] {
+  getIssues(file?: string, type?: CodeIssueType, severity?: CodeIssue['severity']): CodeIssue[] {
     let result = Array.from(this.issues.values());
     if (file) result = result.filter((i) => i.file === file);
     if (type) result = result.filter((i) => i.type === type);
@@ -234,7 +234,7 @@ export class CodeRefactorer {
     return result.sort((a, b) => a.severity.localeCompare(b.severity));
   }
 
-  clear_issues(file?: string): void {
+  clearIssues(file?: string): void {
     if (file) {
       for (const [id, issue] of this.issues) {
         if (issue.file === file) {
@@ -247,14 +247,14 @@ export class CodeRefactorer {
     this.emit('issues:cleared', file || null);
   }
 
-  create_plan(
+  createPlan(
     file: string,
     type: RefactoringType,
     oldCode: string,
     newCode: string,
     reason: string
   ): RefactoringPlan {
-    const risk = this.assess_risk(type, oldCode, newCode);
+    const risk = this.assessRisk(type, oldCode, newCode);
     const plan: RefactoringPlan = {
       id: generateId(),
       file,
@@ -272,7 +272,7 @@ export class CodeRefactorer {
     return plan;
   }
 
-  private assess_risk(
+  private assessRisk(
     type: RefactoringType,
     oldCode: string,
     newCode: string
@@ -288,7 +288,7 @@ export class CodeRefactorer {
     return 'low';
   }
 
-  apply_refactoring(planId: string): RefactoringPlan | null {
+  applyRefactoring(planId: string): RefactoringPlan | null {
     const plan = this.plans.get(planId);
     if (!plan || plan.status !== 'pending') return null;
 
@@ -308,7 +308,7 @@ export class CodeRefactorer {
     return plan;
   }
 
-  preview_changes(planId: string): { additions: string[]; removals: string[] } | null {
+  previewChanges(planId: string): { additions: string[]; removals: string[] } | null {
     const plan = this.plans.get(planId);
     if (!plan) return null;
 
@@ -321,7 +321,7 @@ export class CodeRefactorer {
     return { additions, removals };
   }
 
-  reject_plan(planId: string): RefactoringPlan | null {
+  rejectPlan(planId: string): RefactoringPlan | null {
     const plan = this.plans.get(planId);
     if (!plan) return null;
 
@@ -331,19 +331,19 @@ export class CodeRefactorer {
     return plan;
   }
 
-  get_pending_plans(): RefactoringPlan[] {
+  getPendingPlans(): RefactoringPlan[] {
     return Array.from(this.plans.values()).filter((p) => p.status === 'pending');
   }
 
-  get_plan(planId: string): RefactoringPlan | undefined {
+  getPlan(planId: string): RefactoringPlan | undefined {
     return this.plans.get(planId);
   }
 
-  get_refactoring_history(): RefactoringHistory[] {
+  getRefactoringHistory(): RefactoringHistory[] {
     return [...this.history].sort((a, b) => b.appliedAt - a.appliedAt);
   }
 
-  estimate_impact(planId: string): ImpactEstimate | null {
+  estimateImpact(planId: string): ImpactEstimate | null {
     const plan = this.plans.get(planId);
     if (!plan) return null;
 
@@ -353,9 +353,9 @@ export class CodeRefactorer {
     const linesAdded = newLines.filter((l) => !oldLines.includes(l)).length;
     const linesRemoved = oldLines.filter((l) => !newLines.includes(l)).length;
 
-    const dependencies = this.extract_dependencies(plan.oldCode, plan.newCode);
+    const dependencies = this.extractDependencies(plan.oldCode, plan.newCode);
 
-    const risk = this.assess_risk(plan.type, plan.oldCode, plan.newCode);
+    const risk = this.assessRisk(plan.type, plan.oldCode, plan.newCode);
 
     const descriptions: Record<RefactoringType, string> = {
       ExtractFunction: '提取函数：将代码块提取为独立函数，提高复用性',
@@ -376,7 +376,7 @@ export class CodeRefactorer {
     };
   }
 
-  private extract_dependencies(oldCode: string, newCode: string): string[] {
+  private extractDependencies(oldCode: string, newCode: string): string[] {
     const oldImports = (oldCode.match(/import\s+.*from\s+['"].+['"]/g) || []).map((s) => {
       const match = s.match(/from\s+['"](.+)['"]/);
       return match ? match[1] : '';
@@ -391,7 +391,7 @@ export class CodeRefactorer {
     return all.filter((d) => d);
   }
 
-  get_scanned_files(): string[] {
+  getScannedFiles(): string[] {
     return Array.from(this.scannedFiles);
   }
 

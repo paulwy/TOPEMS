@@ -99,11 +99,10 @@ vi.mock('@/store', () => ({
 }));
 
 describe('MobileTaskListPage', () => {
-it('should render page title', async () => {
+  it('should render page title', async () => {
     renderWithProviders(<MobileTaskListPage />);
     await waitFor(() => {
       expect(screen.getByText('我的任务')).toBeInTheDocument();
+    });
   });
-});
-;
 });

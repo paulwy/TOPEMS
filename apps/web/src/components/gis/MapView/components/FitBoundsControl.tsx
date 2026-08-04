@@ -20,7 +20,7 @@ const FitBoundsControl: React.FC<{
       title='缩放到所有标记'
       sx={{
         padding: 1,
-        backgroundColor: 'white',
+        backgroundColor: 'common.white',
         borderRadius: 2,
         boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.1)',
         '&:hover': {

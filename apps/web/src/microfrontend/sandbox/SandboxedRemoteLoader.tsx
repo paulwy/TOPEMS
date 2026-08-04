@@ -210,7 +210,7 @@ export const SandboxedRemoteLoader: React.FC<SandboxedRemoteLoaderProps> = ({
           ? undefined
           : {
               mode: isoConfig.style as StyleIsolationMode,
-              scopePrefix: `mf-${moduleName}__`,
+              scopePrefix: `mf-${moduleName}`,
               adoptedStyleSheets: false,
             },
       events: isoConfig.events,

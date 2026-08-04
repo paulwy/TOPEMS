@@ -52,7 +52,7 @@ export const validatePassword = (password: string): { isValid: boolean; errors: 
   if (!/[0-9]/.test(password)) {
     errors.push(t('password.missing.digit'));
   }
-  if (!/[!@#$%^&*()_+\-=\[\]{}|;:,.<>?]/.test(password)) {
+  if (!/[!@#$%^&*()_+\-=[\]{}|;:,.<>?]/.test(password)) {
     errors.push(t('password.missing.special'));
   }
 

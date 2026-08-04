@@ -74,12 +74,12 @@ export const useAuditLog = () => {
         start_date: filters.startDate || undefined,
         end_date: filters.endDate || undefined,
       };
-      apiLogger.debug(t('system.audit_page.load_params'), params);
+      apiLogger.debug(t('system.auditPage.load_params'), params);
       const response = await systemAuditApi.list(params);
       if (response.success && response.data) {
         return response.data;
       }
-      throw new Error(response.message || t('system.audit_page.load_failed'));
+      throw new Error(response.message || t('system.auditPage.load_failed'));
     },
     staleTime: 5 * 60 * 1000,
   });
@@ -89,10 +89,10 @@ export const useAuditLog = () => {
 
   // Error handling
   if (error) {
-    apiLogger.error(t('system.audit_page.load_failed'), error);
+    apiLogger.error(t('system.auditPage.load_failed'), error);
     addNotification({
       title: t('system.status.error'),
-      message: extractErrorMessage(error, t('system.audit_page.load_failed')),
+      message: extractErrorMessage(error, t('system.auditPage.load_failed')),
       type: 'error',
     });
   }
@@ -182,15 +182,15 @@ export const useAuditLog = () => {
       document.body.removeChild(a);
       window.URL.revokeObjectURL(url);
       addNotification({
-        title: t('system.audit_page.export_success'),
-        message: t('system.audit_page.audit_logs_exported'),
+        title: t('system.auditPage.export_success'),
+        message: t('system.auditPage.audit_logs_exported'),
         type: 'success',
       });
     } catch (err: unknown) {
-      apiLogger.error(t('system.audit_page.export_audit_logs_failed'), err);
+      apiLogger.error(t('system.auditPage.export_audit_logs_failed'), err);
       addNotification({
-        title: t('system.audit_page.export_failed'),
-        message: extractErrorMessage(err, t('system.audit_page.export_audit_logs_failed')),
+        title: t('system.auditPage.export_failed'),
+        message: extractErrorMessage(err, t('system.auditPage.export_audit_logs_failed')),
         type: 'error',
       });
     }
