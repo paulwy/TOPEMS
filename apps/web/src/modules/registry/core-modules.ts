@@ -1,13 +1,26 @@
 import type { ModuleConfig } from './index';
 
-const DEPLOYMENT_MODE = (typeof import.meta !== 'undefined' && import.meta.env?.VITE_DEPLOYMENT_MODE) || 'static';
+const DEPLOYMENT_MODE =
+  (typeof import.meta !== 'undefined' && import.meta.env?.VITE_DEPLOYMENT_MODE) || 'static';
 const isMFMode = DEPLOYMENT_MODE !== 'static';
 
 const getRemoteEntryUrl = (name: string, port: number): string | undefined => {
   if (!isMFMode) return undefined;
   const envKey = `VITE_${name.toUpperCase()}_REMOTE_ENTRY`;
   const envUrl = typeof import.meta !== 'undefined' ? import.meta.env?.[envKey] : undefined;
-  return envUrl || `http://localhost:${port}/remoteEntry.js`;
+
+  // 如果环境变量设置了完整 URL，直接使用（生产环境）
+  if (envUrl) {
+    return envUrl;
+  }
+
+  // 开发模式：使用 Vite 代理路径避免 CORS
+  if (DEPLOYMENT_MODE === 'module-federation') {
+    return `/remote/${name}/remoteEntry.js`;
+  }
+
+  // 默认：直接访问
+  return `http://localhost:${port}/remoteEntry.js`;
 };
 
 export const CORE_MODULES_CONFIG: ModuleConfig[] = [

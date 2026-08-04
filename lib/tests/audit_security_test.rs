@@ -124,12 +124,12 @@ fn test_audit_soft_delete_merger_or_semantics() {
     let mut entity = make_entity("e1", Utc::now());
     entity.mark_deleted(Utc::now(), Some("user-1".to_string()));
 
-    let merger = SoftDeleteMerger::new().add(SoftDeleteFilter::only_live());
+    let merger = SoftDeleteMerger::new().with_filter(SoftDeleteFilter::only_live());
     assert!(!merger.should_include(&entity));
 
     let merger = SoftDeleteMerger::new()
-        .add(SoftDeleteFilter::only_live())
-        .add(SoftDeleteFilter::include_deleted());
+        .with_filter(SoftDeleteFilter::only_live())
+        .with_filter(SoftDeleteFilter::include_deleted());
     assert!(merger.should_include(&entity));
 }
 

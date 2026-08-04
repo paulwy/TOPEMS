@@ -15,9 +15,9 @@ if [[ -f "$VENV_DIR/bin/activate" ]]; then
 fi
 
 # 检查依赖
-python3 -c "import yaml, click, rich" 2>/dev/null || {
+python3 -c "import yaml, click, rich, httpx" 2>/dev/null || {
     echo "缺少依赖，正在安装..."
-    pip install pyyaml click rich --quiet
+    pip3 install pyyaml click rich httpx --quiet
 }
 
 # 运行 CLI

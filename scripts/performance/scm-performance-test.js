@@ -1,18 +1,44 @@
+/**
+ * SCM 服务性能测试脚本
+ *
+ * 模式配置对比：
+ * ┌────────────┬──────────────────────┬──────────────────────────┐
+ * │            │  冒烟测试 (SMOKE)    │  完整性能测试            │
+ * ├────────────┼──────────────────────┼──────────────────────────┤
+ * │ VUs        │ 1                    │ 50                       │
+ * │ Duration   │ 5s                   │ 60s                      │
+ * │ 阈值       │ errors < 50%         │ p95<500ms, p99<1000ms    │
+ * │            │                     │ errors < 1%              │
+ * │            │                     │ list_suppliers p95<300ms │
+ * │            │                     │ get_supplier p95<200ms   │
+ * │ 执行器     │ 默认 (shared-iter)   │ constant-vus             │
+ * │ 需后端     │ 否                   │ 是 (http://localhost:8040)│
+ * └────────────┴──────────────────────┴──────────────────────────┘
+ *
+ * 使用方法：
+ *   SMOKE=true k6 run -e BASE_URL=http://host:port scm-performance-test.js
+ *   k6 run -e BASE_URL=http://host:port scm-performance-test.js
+ *
+ * 注意：完整测试使用 scenarios 时不能同时指定 duration/vus 顶层属性
+ */
 import http from 'k6/http';
 import { check, sleep, group } from 'k6';
 import { Counter, Gauge, Rate, Trend } from 'k6/metrics';
 
-const BASE_URL = 'http://localhost:8040';
+const BASE_URL = __ENV.BASE_URL || 'http://localhost:8040';
+const SMOKE = __ENV.SMOKE === 'true';
 
-const requests = new Counter('http_reqs');
-const latency = new Trend('http_req_duration');
 const errors = new Rate('errors');
 const cacheHits = new Counter('cache_hits');
 const cacheMisses = new Counter('cache_misses');
 
-export const options = {
-  vus: 50,
-  duration: '60s',
+export const options = SMOKE ? {
+  vus: 1,
+  duration: '5s',
+  thresholds: {
+    'errors': ['rate<0.50'],
+  },
+} : {
   thresholds: {
     'http_req_duration': ['p(95)<500', 'p(99)<1000'],
     'errors': ['rate<0.01'],
@@ -146,15 +172,15 @@ export default function () {
 
 export function handleSummary(data) {
   const metrics = {
-    'http_reqs': data.metrics.http_reqs.value,
-    'http_req_duration_avg': data.metrics.http_req_duration.values.avg,
-    'http_req_duration_p95': data.metrics.http_req_duration.values.p95,
-    'http_req_duration_p99': data.metrics.http_req_duration.values.p99,
-    'errors_rate': data.metrics.errors.values.rate,
-    'cache_hits': data.metrics.cache_hits.value,
-    'cache_misses': data.metrics.cache_misses.value,
-    'iterations': data.metrics.iterations.value,
-    'vus_max': data.metrics.vus.values.max,
+    'http_reqs': data.metrics['http_reqs']?.values.count ?? 0,
+    'http_req_duration_avg': data.metrics['http_req_duration']?.values.avg ?? 0,
+    'http_req_duration_p95': data.metrics['http_req_duration']?.values.p95 ?? 0,
+    'http_req_duration_p99': data.metrics['http_req_duration']?.values.p99 ?? 0,
+    'errors_rate': data.metrics['errors']?.values.rate ?? 0,
+    'cache_hits': data.metrics['cache_hits']?.values.count ?? 0,
+    'cache_misses': data.metrics['cache_misses']?.values.count ?? 0,
+    'iterations': data.metrics['iterations']?.values.count ?? 0,
+    'vus_max': data.metrics['vus']?.values.max ?? 0,
   };
 
   console.log('===== 性能测试报告 =====');

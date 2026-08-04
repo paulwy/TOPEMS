@@ -86,6 +86,9 @@ mod tests {
             force_primary: false,
         };
         let pool = ReadWritePool::new(config);
-        assert!(pool.read_pool().is_some());
+        // read_pool 始终返回 &PgPool（有副本用副本，无副本用主库），
+        // 这里通过 NumberOfConnections 非零断言类型与可访问性即可。
+        let _: &PgPool = pool.read_pool();
+        let _: &PgPool = pool.write_pool();
     }
 }

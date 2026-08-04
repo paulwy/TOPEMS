@@ -43,7 +43,7 @@
 - 🎨 **现代化** - 优雅的 UI 设计
 - 🔒 **安全** - 企业级安全保障
 - 🌐 **PWA 支持** - 离线访问，快速启动
-- 🎯 **微服务架构** - 20+个独立服务，灵活扩展
+- 🎯 **微服务架构** - 30+个独立服务，灵活扩展
 - 🔄 **统一架构** - 统一的认证保护和架构规范化
 - 🏗️ **Cargo Workspace** - 增量编译，共享依赖缓存
 - 🤖 **AI 增强** - Ollama 本地 LLM + 向量搜索（pgvector）
@@ -89,11 +89,12 @@
 topems/
 ├── docs/                          # 文档
 │   ├── api/                      # API 文档
-│   ├── ARCHITECTURE/             # 架构设计
+│   ├── architecture/             # 架构设计
 │   ├── deployment/               # 部署指南
-│   ├── guides/                   # 用户指南
-│   ├── services/                 # 服务文档
-│   └── user/                     # 用户手册
+│   ├── development/              # 开发指南
+│   ├── modules/                  # 业务模块文档
+│   ├── getting-started/          # 快速入门
+│   └── user-guide/               # 用户手册
 ├── apps/                          # 前端应用目录
 │   ├── web/                      # Web 主应用 (端口 3000)
 │   │   ├── src/components/       # 可复用组件
@@ -103,44 +104,70 @@ topems/
 │   │   └── src/store/            # 状态管理
 │   ├── desktop/                  # Tauri 桌面应用
 │   │   ├── src/                  # 桌面端前端代码
-│   │   ├── src-tauri/            # Tauri Rust 后端
-│   │   ├── app/                  # 应用资源
-│   │   └── icons/                # 图标资源
-│   └── mobile/                   # 移动端应用 (Expo)
-│       └── src/                  # 移动端代码
+│   │   └── src-tauri/            # Tauri Rust 后端
+│   ├── mobile/                   # 移动端应用 (Expo)
+│   │   └── src/                  # 移动端代码
+│   └── server/                   # BFF 服务端
 ├── svc/                          # 后端服务 (Rust)
-│   ├── unified-core/            # 统一核心服务 (8000)
+│   ├── unified-core/            # 统一核心服务 (8000) - IAM/Doc/Flow/File/Monitor
+│   ├── erp/                     # 企业资源计划 (8010)
+│   ├── finance/                 # 财务管理 (8011)
+│   ├── ai/                      # AI 智能服务 (8013)
+│   ├── hrm/                     # 人力资源管理 (8020)
+│   ├── pm/                      # 项目管理 (8023)
+│   ├── crm/                     # 客户关系管理 (8029)
 │   ├── mes/                     # 制造执行系统 (8030)
 │   ├── pdm/                     # 产品数据管理 (8031)
+│   ├── scm/                     # 供应链管理 (8040)
+│   ├── wms/                     # 仓库管理 (8041)
+│   ├── srm/                     # 供应商管理 (8042)
 │   ├── qms/                     # 质量管理系统 (8050)
 │   ├── lims/                    # 实验室管理系统 (8051)
 │   ├── ehs/                     # 环境健康安全 (8052)
-│   ├── bi/                      # 商业智能 (8060)
-│   ├── report/                  # 报表服务 (8061)
-│   ├── hrm/                     # 人力资源管理 (8020)
-│   ├── crm/                     # 客户关系管理 (8029)
-│   ├── pm/                      # 项目管理 (8023)
-│   ├── erp/                     # 企业资源计划 (8010)
-│   ├── gis/                     # 地理信息系统 (8071)
-│   ├── rs/                      # 研发管理 (8053)
-│   ├── scm/                     # 供应链管理 (8040)
-│   ├── wms/                     # 仓库管理 (8041)
+│   ├── rd/                      # 研发管理 (8053)
+│   ├── analytics/               # 商业智能/报表 (8060)
+│   ├── portal/                  # 企业门户 (8063)
 │   ├── mobile/                  # 移动端服务 (8070)
-│   ├── monitor/                 # 监控服务 (8062)
-│   └── portal/                  # 企业门户 (8063)
+│   ├── gis/                     # 地理信息系统 (8071)
+│   ├── integration/             # 系统集成服务 (8072)
+│   ├── master-data/             # 主数据管理 (8090)
+│   ├── communication/           # 通讯服务 (8084)
+│   ├── billing/                 # 计费服务 (8085)
+│   ├── ticket/                  # 工单服务 (8086)
+│   ├── feedback/                # 反馈服务 (8087)
+│   └── search/                  # 搜索服务 (8082)
 ├── lib/                          # Rust 共享库
+│   ├── shared-core/             # 核心 API/配置/中间件
+│   ├── shared-db/               # 数据库/审计/迁移
+│   ├── shared-auth/             # 认证/权限/租户
+│   ├── shared-service-client/   # 服务间调用客户端
+│   ├── shared-event/            # 事件总线/Saga
+│   ├── shared-observability/    # 可观测性/遥测
+│   ├── shared-ai/               # AI 客户端/向量存储
+│   └── shared-bootstrap/        # 服务启动引导
 ├── packages/                     # TypeScript 共享包
 │   ├── shared-types/            # 类型定义
 │   ├── shared-utils/            # 工具函数
-│   ├── shared-constants/        # 共享常量（颜色、数字等，由 tokens.ts 同步生成）
-│   └── shared-components/       # 共享业务组件（@topems/shared-components）
+│   ├── shared-constants/        # 共享常量（由 tokens.ts 同步生成）
+│   ├── shared-components/       # 共享业务组件（@topems/shared-components）
+│   ├── shared-hooks/            # 共享 Hooks
+│   └── tokens/                  # Design Tokens
+├── tools/                        # 工具
+│   └── migration-sdk/           # 迁移 SDK
+├── examples/                     # 示例
+│   └── minimal-service/         # 最小服务示例
 ├── deploy/                       # 部署配置
 │   ├── systemd/                 # systemd 服务配置
-│   ├── monitoring/              # 监控配置 (Prometheus/Grafana)
+│   ├── docker/                  # Docker Compose 配置
+│   ├── k8s/                     # Kubernetes 部署
 │   ├── nginx/                   # Nginx 配置
-│   ├── env/                     # 环境变量模板
 │   └── scripts/                 # 部署脚本
 ├── scripts/                      # 管理脚本
+│   ├── topems.sh                # 统一服务管理脚本
+│   ├── services.conf            # 服务配置
+│   ├── dev/                     # 开发工具脚本
+│   ├── deploy/                  # 部署脚本
+│   └── ...
 ├── cli/                          # Python CLI 工具
 ├── Cargo.toml                   # Cargo Workspace 配置
 └── .env.example                 # 环境变量配置
@@ -175,7 +202,7 @@ brew services start redis
 createdb topems
 
 # 4. 一键启动所有服务（前端 + 后端 + 数据库）
-./scripts/start-local.sh
+./scripts/dev/start-local.sh
 ```
 
 启动后访问：
@@ -258,7 +285,7 @@ cargo run
 ./scripts/topems.sh start-all
 
 # 或使用一键启动脚本（含数据库和前端）
-./scripts/start-local.sh
+./scripts/dev/start-local.sh
 ```
 
 ### 服务自动注册机制
@@ -305,25 +332,33 @@ curl -s http://localhost:8000/api/plugins/info | python3 -m json.tool
 
 | 服务名 | 端口 | 服务路径 | 说明 |
 |-------|------|---------|------|
-| unified-core | 8000 | svc/unified-core | 统一核心服务（IAM, Doc, Flow, File, Monitor, Communication, Tenant, Billing, Plugin） |
+| unified-core | 8000 | svc/unified-core | 统一核心服务（IAM, Doc, Flow, File, Monitor, Plugin） |
+| erp | 8010 | svc/erp | 企业资源计划 |
+| finance | 8011 | svc/finance | 财务管理服务 |
+| ai | 8013 | svc/ai | AI 智能服务 |
+| hrm | 8020 | svc/hrm | 人力资源管理 |
+| pm | 8023 | svc/pm | 项目管理 |
+| crm | 8029 | svc/crm | 客户关系管理 |
 | mes | 8030 | svc/mes | 制造执行系统 |
 | pdm | 8031 | svc/pdm | 产品数据管理 |
+| scm | 8040 | svc/scm | 供应链管理 |
+| wms | 8041 | svc/wms | 仓库管理 |
+| srm | 8042 | svc/srm | 供应商管理 |
 | qms | 8050 | svc/qms | 质量管理系统 |
 | lims | 8051 | svc/lims | 实验室信息管理系统 |
 | ehs | 8052 | svc/ehs | 环境健康安全管理 |
-| bi | 8060 | svc/bi | 商业智能 |
-| report | 8061 | svc/report | 报表服务 |
-| erp | 8010 | svc/erp | 企业资源计划 |
-| hrm | 8020 | svc/hrm | 人力资源管理 |
-| crm | 8029 | svc/crm | 客户关系管理 |
-| scm | 8040 | svc/scm | 供应链管理 |
-| wms | 8041 | svc/wms | 仓库管理 |
-| pm | 8023 | svc/pm | 项目管理 |
-| gis | 8071 | svc/gis | 地理信息系统 |
-| mobile | 8070 | svc/mobile | 移动端服务 |
 | rd | 8053 | svc/rd | 研发管理 |
+| analytics | 8060 | svc/analytics | 商业智能（含原 report 报表功能） |
 | portal | 8063 | svc/portal | 企业门户 |
+| mobile | 8070 | svc/mobile | 移动端服务 |
+| gis | 8071 | svc/gis | 地理信息系统 |
 | integration | 8072 | svc/integration | 系统集成服务 |
+| search | 8082 | svc/search | 搜索服务 |
+| communication | 8084 | svc/communication | 通讯服务（邮件/通知/IM） |
+| billing | 8085 | svc/billing | 计费服务 |
+| ticket | 8086 | svc/ticket | 工单服务 |
+| feedback | 8087 | svc/feedback | 反馈服务 |
+| master-data | 8090 | svc/master-data | 主数据管理 |
 
 ### 前端端口
 
@@ -456,8 +491,8 @@ TOPEMS 使用基于角色的访问控制（RBAC）系统来管理用户权限。
 
 ```bash
 # 运行数据库初始化脚本
-python -m topems_cli db init
-python -m topems_cli db migrate
+python3 -m topems_cli db init
+python3 -m topems_cli db migrate
 ```
 
 该脚本会：
@@ -537,12 +572,14 @@ python -m topems_cli db migrate
 
 | 脚本 | 说明 | 使用方法 |
 |------|------|---------|
-| `scripts/topems.sh` | **统一服务管理脚本**（推荐） | `./scripts/topems.sh --help` |
-| `scripts/scan_todos.py` | TODO/FIXME 代码扫描 | `python3 scripts/scan_todos.py --help` |
-| `scripts/install-deps.sh` | 安装依赖 | `./scripts/install-deps.sh` |
-| `scripts/ai-models.sh` | AI 模型管理 | `./scripts/ai-models.sh --help` |
-| `scripts/update_admin_password.sh` | 重置管理员密码 | `./scripts/update_admin_password.sh [用户名] [密码]` |
-| `scripts/deploy.sh` | 离线部署脚本 | `./scripts/deploy.sh deploy` |
+| `scripts/topems.sh` | **统一服务管理脚本**（推荐） | `./scripts/topems.sh help` |
+| `scripts/dev/install-deps.sh` | 安装依赖 | `./scripts/dev/install-deps.sh` |
+| `scripts/dev/start-local.sh` | 一键本地启动 | `./scripts/dev/start-local.sh` |
+| `scripts/dev/ai-models.sh` | AI 模型管理 | `./scripts/dev/ai-models.sh --help` |
+| `scripts/dev/update-admin-password.sh` | 重置管理员密码 | `./scripts/dev/update-admin-password.sh [用户名] [密码]` |
+| `scripts/dev/health-check.sh` | 健康检查 | `./scripts/dev/health-check.sh` |
+| `scripts/dev/verify-route-matrix.sh` | 路由验证 | `./scripts/dev/verify-route-matrix.sh` |
+| `scripts/deploy/deploy.sh` | 部署脚本 | `./scripts/deploy/deploy.sh deploy` |
 | `deploy/scripts/install.sh` | Linux 服务器安装 | `./deploy/scripts/install.sh` |
 | `deploy/scripts/setup-db.sh` | 数据库设置 | `./deploy/scripts/setup-db.sh` |
 
@@ -649,14 +686,14 @@ docs/
 #### 模块文档
 | 文档 | 路径 | 说明 |
 |------|------|------|
-| HRM模块 | [docs/HRM_MODULE.md](docs/HRM_MODULE.md) | 人力资源模块 |
-| QMS模块 | [docs/QMS_MODULE.md](docs/QMS_MODULE.md) | 质量管理模块 |
-| CRM模块 | [docs/CRM_MODULE.md](docs/CRM_MODULE.md) | 客户关系模块 |
-| MES模块 | [docs/MES_MODULE.md](docs/MES_MODULE.md) | 制造执行模块 |
-| PDM模块 | [docs/PDM_MODULE.md](docs/PDM_MODULE.md) | 产品数据模块 |
-| WMS模块 | [docs/WMS_MODULE.md](docs/WMS_MODULE.md) | 仓库管理模块 |
-| EHS模块 | [docs/EHS_MODULE.md](docs/EHS_MODULE.md) | 环境健康安全模块 |
-| RS模块 | [docs/RS_MODULE.md](docs/RS_MODULE.md) | 研发管理模块 |
+| HRM模块 | [docs/modules/business/hrm-module.md](docs/modules/business/hrm-module.md) | 人力资源模块 |
+| QMS模块 | [docs/modules/business/qms-module.md](docs/modules/business/qms-module.md) | 质量管理模块 |
+| CRM模块 | [docs/modules/business/crm-module.md](docs/modules/business/crm-module.md) | 客户关系模块 |
+| MES模块 | [docs/modules/business/mes-module.md](docs/modules/business/mes-module.md) | 制造执行模块 |
+| PDM模块 | [docs/modules/business/pdm-module.md](docs/modules/business/pdm-module.md) | 产品数据模块 |
+| WMS模块 | [docs/modules/business/wms-module.md](docs/modules/business/wms-module.md) | 仓库管理模块 |
+| EHS模块 | [docs/modules/business/ehs-module.md](docs/modules/business/ehs-module.md) | 环境健康安全模块 |
+| RD模块 | [docs/modules/business/rs-module.md](docs/modules/business/rs-module.md) | 研发管理模块 |
 
 ### 快速参考
 
@@ -773,6 +810,6 @@ MIT License
 
 ---
 
-**最后更新**: 2026-07-13
+**最后更新**: 2026-08-03
 **版本**: v5.14.0 (正式版)
-**文档版本**: v5.1
+**文档版本**: v5.2

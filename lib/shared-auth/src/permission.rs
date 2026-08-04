@@ -750,3 +750,553 @@ impl std::fmt::Display for PermissionChangeType {
         write!(f, "{}", self.as_str())
     }
 }
+
+// ============================================================================
+// IAM 权限检查纯函数（可独立单元测试，不依赖数据库）
+// ============================================================================
+
+/// 权限检查结果
+#[derive(Debug, Clone, PartialEq)]
+pub struct PermissionCheckResult {
+    pub allowed: bool,
+    pub reason: Option<String>,
+}
+
+impl PermissionCheckResult {
+    pub fn allow() -> Self {
+        PermissionCheckResult {
+            allowed: true,
+            reason: None,
+        }
+    }
+
+    pub fn deny(reason: impl Into<String>) -> Self {
+        PermissionCheckResult {
+            allowed: false,
+            reason: Some(reason.into()),
+        }
+    }
+}
+
+/// IAM 操作类型
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub enum IamAction {
+    ListUsers,
+    CreateUser,
+    DeleteUser,
+    AssignRole,
+    ChangeOwnPassword,
+    ChangeOthersPassword,
+    CrossTenantAccess,
+}
+
+/// IAM 权限检查纯函数
+///
+/// # 参数
+/// - `is_superuser`: 是否为超级管理员
+/// - `user_roles`: 用户拥有的角色列表
+/// - `user_permissions`: 用户拥有的权限码列表
+/// - `action`: 要执行的 IAM 操作
+///
+/// # 返回
+/// - `PermissionCheckResult`: 包含是否允许和原因
+pub fn check_iam_permission(
+    is_superuser: bool,
+    user_roles: &[String],
+    user_permissions: &[String],
+    action: IamAction,
+) -> PermissionCheckResult {
+    // 超级管理员拥有所有权限（IAM-001, IAM-006, IAM-007）
+    if is_superuser {
+        return PermissionCheckResult::allow();
+    }
+
+    let has_permission = |code: &str| -> bool { user_permissions.contains(&code.to_string()) };
+
+    match action {
+        // IAM-002: 普通用户查看用户列表 - 需要 iam:users_read
+        IamAction::ListUsers => {
+            if has_permission("iam:users_read") || has_permission("iam:read") {
+                PermissionCheckResult::allow()
+            } else {
+                PermissionCheckResult::deny("需要 iam:users_read 权限")
+            }
+        }
+        // IAM-003: 管理员创建用户 - 需要 iam:users_write 或 iam:admin
+        IamAction::CreateUser => {
+            if has_permission("iam:users_write") || has_permission("iam:admin") {
+                PermissionCheckResult::allow()
+            } else {
+                PermissionCheckResult::deny("需要 iam:users_write 权限")
+            }
+        }
+        // IAM-004: 无权限用户创建用户 - 任何非 admin 权限都不允许
+        // IAM-005: 删除用户 - 需要 iam:users_delete 或 iam:admin
+        IamAction::DeleteUser => {
+            if has_permission("iam:users_delete") || has_permission("iam:admin") {
+                PermissionCheckResult::allow()
+            } else {
+                PermissionCheckResult::deny("需要 iam:users_delete 权限")
+            }
+        }
+        // IAM-006: 分配角色 - 需要 iam:roles_write 或 iam:admin
+        IamAction::AssignRole => {
+            if has_permission("iam:roles_write") || has_permission("iam:admin") {
+                PermissionCheckResult::allow()
+            } else {
+                PermissionCheckResult::deny("需要 iam:roles_write 权限")
+            }
+        }
+        // IAM-008: 修改自己密码 - 任何已认证用户均可
+        IamAction::ChangeOwnPassword => PermissionCheckResult::allow(),
+        // IAM-009: 修改他人密码 - 需要 iam:users_write 或 iam:admin
+        IamAction::ChangeOthersPassword => {
+            if has_permission("iam:users_write") || has_permission("iam:admin") {
+                PermissionCheckResult::allow()
+            } else {
+                PermissionCheckResult::deny("需要 iam:users_write 权限")
+            }
+        }
+        // IAM-007: 跨租户访问 - 仅超级管理员或拥有 iam:cross_tenant 权限
+        IamAction::CrossTenantAccess => {
+            if has_permission("iam:cross_tenant") || user_roles.iter().any(|r| r == "tenant_admin") {
+                PermissionCheckResult::allow()
+            } else {
+                PermissionCheckResult::deny("需要 iam:cross_tenant 权限或 tenant_admin 角色")
+            }
+        }
+    }
+}
+
+/// 验证权限码格式是否合法
+///
+/// 合法格式：`module:action` 或 `module:resource:action` 或 `module:resource:action:scope`
+pub fn validate_permission_code(code: &str) -> Result<(), String> {
+    let parts: Vec<&str> = code.split(':').collect();
+
+    if parts.len() < 2 || parts.len() > 4 {
+        return Err(format!("权限码格式错误：需要 2-4 段（实际 {} 段）", parts.len()));
+    }
+
+    let module = ModuleCode::from_str(parts[0]);
+    if module.is_none() {
+        return Err(format!("无效的模块码: {}", parts[0]));
+    }
+
+    let action_idx = if parts.len() == 2 { 1 } else { 2 };
+    let action = PermissionAction::from_str(parts[action_idx]);
+    if action.is_none() {
+        return Err(format!("无效的权限动作: {}", parts[action_idx]));
+    }
+
+    if parts.len() == 4 {
+        let scope = PermissionScope::from_str(parts[3]);
+        if scope.is_none() {
+            return Err(format!("无效的数据范围: {}", parts[3]));
+        }
+    }
+
+    Ok(())
+}
+
+/// 计算用户拥有的所有有效权限码（包括角色蕴含）
+pub fn compute_effective_permissions(
+    is_superuser: bool,
+    direct_permissions: &[String],
+    role_permissions: &[String],
+) -> Vec<String> {
+    if is_superuser {
+        return get_all_permission_codes();
+    }
+
+    let mut effective = Vec::new();
+    effective.extend_from_slice(direct_permissions);
+    effective.extend_from_slice(role_permissions);
+
+    // 去重
+    effective.sort();
+    effective.dedup();
+    effective
+}
+
+/// 获取所有权限码（超级管理员拥有全部）
+fn get_all_permission_codes() -> Vec<String> {
+    let all_perms = get_all_module_permissions();
+    let mut codes: Vec<String> = all_perms.iter().map(|p| p.to_string()).collect();
+    codes.push("iam:cross_tenant".to_string());
+    codes.sort();
+    codes.dedup();
+    codes
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    // ===== IAM-001: 超级管理员查看用户列表 =====
+    #[test]
+    fn test_iam_001_superuser_list_users() {
+        let result = check_iam_permission(true, &[], &[], IamAction::ListUsers);
+        assert!(result.allowed, "超级管理员应允许查看用户列表");
+        assert!(result.reason.is_none());
+    }
+
+    // ===== IAM-002: 普通用户查看用户列表 =====
+    #[test]
+    fn test_iam_002_employee_list_users() {
+        // 有权限的普通用户
+        let result = check_iam_permission(
+            false,
+            &["user".to_string()],
+            &["iam:users_read".to_string()],
+            IamAction::ListUsers,
+        );
+        assert!(result.allowed, "拥有 iam:users_read 的普通用户应允许查看用户列表");
+
+        // 无权限的普通用户
+        let result = check_iam_permission(
+            false,
+            &["user".to_string()],
+            &[],
+            IamAction::ListUsers,
+        );
+        assert!(!result.allowed, "无权限的普通用户不应允许查看用户列表");
+        assert!(result.reason.unwrap().contains("iam:users_read"));
+    }
+
+    // ===== IAM-003: 管理员创建用户 =====
+    #[test]
+    fn test_iam_003_admin_create_user() {
+        // 拥有 iam:users_write 权限
+        let result = check_iam_permission(
+            false,
+            &["admin".to_string()],
+            &["iam:users_write".to_string()],
+            IamAction::CreateUser,
+        );
+        assert!(result.allowed);
+
+        // 拥有 iam:admin 权限
+        let result = check_iam_permission(
+            false,
+            &["admin".to_string()],
+            &["iam:admin".to_string()],
+            IamAction::CreateUser,
+        );
+        assert!(result.allowed);
+    }
+
+    // ===== IAM-004: 无权限用户创建用户 =====
+    #[test]
+    fn test_iam_004_unauthorized_create_user() {
+        let result = check_iam_permission(
+            false,
+            &["user".to_string()],
+            &["iam:users_read".to_string()],
+            IamAction::CreateUser,
+        );
+        assert!(!result.allowed);
+        assert!(result.reason.unwrap().contains("iam:users_write"));
+    }
+
+    // ===== IAM-005: 管理员删除用户 =====
+    #[test]
+    fn test_iam_005_admin_delete_user() {
+        // 拥有 iam:users_delete 权限
+        let result = check_iam_permission(
+            false,
+            &["admin".to_string()],
+            &["iam:users_delete".to_string()],
+            IamAction::DeleteUser,
+        );
+        assert!(result.allowed);
+
+        // 无权限
+        let result = check_iam_permission(
+            false,
+            &["user".to_string()],
+            &["iam:users_read".to_string()],
+            IamAction::DeleteUser,
+        );
+        assert!(!result.allowed);
+    }
+
+    // ===== IAM-006: 超级管理员分配角色 =====
+    #[test]
+    fn test_iam_006_superuser_assign_role() {
+        // 超级管理员直接通过
+        let result = check_iam_permission(true, &[], &[], IamAction::AssignRole);
+        assert!(result.allowed);
+
+        // 拥有 iam:roles_write 权限
+        let result = check_iam_permission(
+            false,
+            &["admin".to_string()],
+            &["iam:roles_write".to_string()],
+            IamAction::AssignRole,
+        );
+        assert!(result.allowed);
+
+        // 无权限
+        let result = check_iam_permission(
+            false,
+            &["user".to_string()],
+            &["iam:users_read".to_string()],
+            IamAction::AssignRole,
+        );
+        assert!(!result.allowed);
+    }
+
+    // ===== IAM-007: 跨租户访问 =====
+    #[test]
+    fn test_iam_007_cross_tenant_access() {
+        // 超级管理员
+        let result = check_iam_permission(true, &[], &[], IamAction::CrossTenantAccess);
+        assert!(result.allowed);
+
+        // 拥有 iam:cross_tenant 权限
+        let result = check_iam_permission(
+            false,
+            &["admin".to_string()],
+            &["iam:cross_tenant".to_string()],
+            IamAction::CrossTenantAccess,
+        );
+        assert!(result.allowed);
+
+        // 拥有 tenant_admin 角色
+        let result = check_iam_permission(
+            false,
+            &["tenant_admin".to_string()],
+            &[],
+            IamAction::CrossTenantAccess,
+        );
+        assert!(result.allowed);
+
+        // 无权限
+        let result = check_iam_permission(
+            false,
+            &["user".to_string()],
+            &[],
+            IamAction::CrossTenantAccess,
+        );
+        assert!(!result.allowed);
+    }
+
+    // ===== IAM-008: 用户修改自己密码 =====
+    #[test]
+    fn test_iam_008_user_change_own_password() {
+        // 任何已认证用户均可修改自己密码
+        let result = check_iam_permission(
+            false,
+            &["user".to_string()],
+            &[],
+            IamAction::ChangeOwnPassword,
+        );
+        assert!(result.allowed);
+
+        let result = check_iam_permission(
+            false,
+            &["hr".to_string()],
+            &["hr:read".to_string()],
+            IamAction::ChangeOwnPassword,
+        );
+        assert!(result.allowed);
+    }
+
+    // ===== IAM-009: 用户修改他人密码 =====
+    #[test]
+    fn test_iam_009_user_change_others_password() {
+        // 拥有 iam:users_write 权限
+        let result = check_iam_permission(
+            false,
+            &["admin".to_string()],
+            &["iam:users_write".to_string()],
+            IamAction::ChangeOthersPassword,
+        );
+        assert!(result.allowed);
+
+        // 无权限
+        let result = check_iam_permission(
+            false,
+            &["user".to_string()],
+            &[],
+            IamAction::ChangeOthersPassword,
+        );
+        assert!(!result.allowed);
+    }
+
+    // ===== 权限码格式验证 =====
+    #[test]
+    fn test_validate_permission_code() {
+        // 合法格式
+        assert!(validate_permission_code("iam:read").is_ok());
+        assert!(validate_permission_code("iam:users:read").is_ok());
+        assert!(validate_permission_code("iam:users:read:all").is_ok());
+        assert!(validate_permission_code("hrm:employee:write:self").is_ok());
+
+        // 非法格式
+        assert!(validate_permission_code("").is_err(), "空字符串");
+        assert!(validate_permission_code("iam").is_err(), "缺少 action");
+        assert!(validate_permission_code("iam:users:read:all:extra").is_err(), "超过 4 段");
+        assert!(validate_permission_code("invalid_module:read").is_err(), "无效模块");
+        assert!(validate_permission_code("iam:invalid_action").is_err(), "无效动作");
+    }
+
+    // ===== ModuleCode 解析 =====
+    #[test]
+    fn test_module_code_from_str() {
+        assert_eq!(ModuleCode::from_str("iam"), Some(ModuleCode::Iam));
+        assert_eq!(ModuleCode::from_str("hrm"), Some(ModuleCode::Hrm));
+        assert_eq!(ModuleCode::from_str("pm"), Some(ModuleCode::Pm));
+        assert_eq!(ModuleCode::from_str("nonexistent"), None);
+    }
+
+    // ===== PermissionAction 解析 =====
+    #[test]
+    fn test_permission_action_from_str() {
+        assert_eq!(PermissionAction::from_str("read"), Some(PermissionAction::Read));
+        assert_eq!(PermissionAction::from_str("write"), Some(PermissionAction::Write));
+        assert_eq!(PermissionAction::from_str("delete"), Some(PermissionAction::Delete));
+        assert_eq!(PermissionAction::from_str("admin"), Some(PermissionAction::Admin));
+        assert_eq!(PermissionAction::from_str("invalid"), None);
+    }
+
+    // ===== PermissionAction 层级 =====
+    #[test]
+    fn test_permission_action_level() {
+        assert_eq!(PermissionAction::Read.level(), 1);
+        assert_eq!(PermissionAction::Write.level(), 2);
+        assert_eq!(PermissionAction::Delete.level(), 3);
+        assert_eq!(PermissionAction::Approve.level(), 3);
+        assert_eq!(PermissionAction::Admin.level(), 4);
+    }
+
+    // ===== PermissionScope 解析与蕴含 =====
+    #[test]
+    fn test_permission_scope() {
+        // 解析
+        assert_eq!(PermissionScope::from_str("all"), Some(PermissionScope::All));
+        assert_eq!(PermissionScope::from_str("dept"), Some(PermissionScope::Department));
+        assert_eq!(PermissionScope::from_str("self"), Some(PermissionScope::Self_));
+
+        // 蕴含关系
+        assert!(PermissionScope::All.implies(&PermissionScope::Department));
+        assert!(PermissionScope::All.implies(&PermissionScope::Self_));
+        assert!(PermissionScope::Department.implies(&PermissionScope::Team));
+        assert!(PermissionScope::Team.implies(&PermissionScope::Self_));
+        assert!(!PermissionScope::Self_.implies(&PermissionScope::All));
+    }
+
+    // ===== ModulePermission 解析与蕴含 =====
+    #[test]
+    fn test_module_permission() {
+        // 解析
+        let perm = ModulePermission::parse("iam:read");
+        assert!(perm.is_some());
+        let perm = perm.unwrap();
+        assert_eq!(perm.module, ModuleCode::Iam);
+        assert_eq!(perm.action, PermissionAction::Read);
+
+        // 蕴含关系：admin 蕴含 read
+        let admin = ModulePermission::new(ModuleCode::Iam, PermissionAction::Admin);
+        let read = ModulePermission::new(ModuleCode::Iam, PermissionAction::Read);
+        assert!(admin.implies(&read));
+
+        // 跨模块不蕴含
+        let hrm_read = ModulePermission::new(ModuleCode::Hrm, PermissionAction::Read);
+        assert!(!admin.implies(&hrm_read));
+    }
+
+    // ===== ResourcePermission 解析与蕴含 =====
+    #[test]
+    fn test_resource_permission() {
+        // 解析 3 段
+        let perm = ResourcePermission::parse("iam:users:read");
+        assert!(perm.is_some());
+        assert_eq!(perm.as_ref().unwrap().module, ModuleCode::Iam);
+        assert_eq!(perm.as_ref().unwrap().action, PermissionAction::Read);
+
+        // 解析 4 段（带 scope）
+        let perm = ResourcePermission::parse("iam:users:read:dept");
+        assert!(perm.is_some());
+        assert_eq!(perm.as_ref().unwrap().scope, PermissionScope::Department);
+
+        // 蕴含关系：admin + All 蕴含 read + Self
+        let admin_all = ResourcePermission::with_scope(
+            ModuleCode::Iam,
+            "users".to_string(),
+            PermissionAction::Admin,
+            PermissionScope::All,
+        );
+        let read_self = ResourcePermission::with_scope(
+            ModuleCode::Iam,
+            "users".to_string(),
+            PermissionAction::Read,
+            PermissionScope::Self_,
+        );
+        assert!(admin_all.implies(&read_self));
+
+        // 不同资源不蕴含
+        let admin_roles = ResourcePermission::new(
+            ModuleCode::Iam,
+            "roles".to_string(),
+            PermissionAction::Admin,
+        );
+        assert!(!admin_all.implies(&admin_roles));
+    }
+
+    // ===== Position 权限检查 =====
+    #[test]
+    fn test_position_permission() {
+        let mut pos = Position::new(
+            uuid::Uuid::new_v4(),
+            "ADMIN001".to_string(),
+            "系统管理员".to_string(),
+        );
+        pos.add_permission(ModulePermission::new(
+            ModuleCode::Iam,
+            PermissionAction::Admin,
+        ));
+
+        // admin 蕴含 read
+        let read = ModulePermission::new(ModuleCode::Iam, PermissionAction::Read);
+        assert!(pos.has_permission(&read));
+
+        // admin 蕴含 write
+        let write = ModulePermission::new(ModuleCode::Iam, PermissionAction::Write);
+        assert!(pos.has_permission(&write));
+
+        // 不具备其他模块权限
+        let hrm_read = ModulePermission::new(ModuleCode::Hrm, PermissionAction::Read);
+        assert!(!pos.has_permission(&hrm_read));
+    }
+
+    // ===== 有效权限计算 =====
+    #[test]
+    fn test_compute_effective_permissions() {
+        // 超级管理员 - 全部权限
+        let perms = compute_effective_permissions(true, &[], &[]);
+        assert!(!perms.is_empty(), "超级管理员应有全部权限");
+        assert!(perms.iter().any(|p| p == "iam:read"));
+        assert!(perms.iter().any(|p| p == "iam:admin"));
+        assert!(perms.iter().any(|p| p == "iam:cross_tenant"));
+
+        // 普通用户 - 直接权限 + 角色权限
+        let perms = compute_effective_permissions(
+            false,
+            &["custom:perm".to_string()],
+            &["role:perm".to_string()],
+        );
+        assert!(perms.contains(&"custom:perm".to_string()));
+        assert!(perms.contains(&"role:perm".to_string()));
+        assert!(!perms.iter().any(|p| p == "iam:read"), "普通用户不应有默认权限");
+
+        // 去重
+        let perms = compute_effective_permissions(
+            false,
+            &["dup".to_string(), "dup".to_string()],
+            &[],
+        );
+        assert_eq!(perms.iter().filter(|p| p.as_str() == "dup").count(), 1, "应去重");
+    }
+}

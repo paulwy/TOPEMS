@@ -3235,24 +3235,7 @@ pub fn create_routes() -> Router<AppState> {
             "/u8-import/{import_id}/rollback",
             axum::routing::post(rollback_import_handler),
         )
-        // V41.0 Phase 9: 应收账款
-        .route("/receivables", axum::routing::get(list_receivables_handler))
-        .route(
-            "/receivables",
-            axum::routing::post(create_receivable_handler),
-        )
-        .route(
-            "/receivables/{receivable_id}",
-            axum::routing::get(get_receivable_handler),
-        )
-        .route(
-            "/receivables/{receivable_id}",
-            axum::routing::put(update_receivable_handler),
-        )
-        .route(
-            "/receivables/{receivable_id}",
-            axum::routing::delete(delete_receivable_handler),
-        )
+        // V41.0 Phase 9: 应收账款额外接口（基础CRUD已由operational模块提供）
         .route(
             "/receivables/aging",
             axum::routing::get(get_receivable_aging_handler),
@@ -3261,21 +3244,7 @@ pub fn create_routes() -> Router<AppState> {
             "/receivables/batch",
             axum::routing::post(batch_create_receivables_handler),
         )
-        // V41.0 Phase 9: 应付账款
-        .route("/payables", axum::routing::get(list_payables_handler))
-        .route("/payables", axum::routing::post(create_payable_handler))
-        .route(
-            "/payables/{payable_id}",
-            axum::routing::get(get_payable_handler),
-        )
-        .route(
-            "/payables/{payable_id}",
-            axum::routing::put(update_payable_handler),
-        )
-        .route(
-            "/payables/{payable_id}",
-            axum::routing::delete(delete_payable_handler),
-        )
+        // V41.0 Phase 9: 应付账款额外接口（基础CRUD已由operational模块提供）
         .route(
             "/payables/aging",
             axum::routing::get(get_payable_aging_handler),

@@ -142,7 +142,7 @@ impl RouteCompatConfig {
 /// - /api/{svc}/** → 新路径，无需重写
 /// - /api/core/{svc}/** → 旧路径 (legacy)，重写为 /api/{svc}/**
 /// - /api/{svc}/v1/** → 旧路径 (legacy)，重写为 /api/{svc}/**
-fn analyze_group2_path<'a>(path: &'a str, cfg: &RouteCompatConfig) -> (bool, Option<String>) {
+fn analyze_group2_path(path: &str, cfg: &RouteCompatConfig) -> (bool, Option<String>) {
     let svc = cfg.svc;
     let new_prefix = format!("/api/{}/", svc);
     let new_v1_prefix = format!("/api/{}/v1/", svc);
@@ -266,7 +266,7 @@ pub struct Group1CompatConfig {
     pub shortcuts: &'static [(&'static str, &'static str, &'static str)],
 }
 
-fn analyze_group1_path<'a>(path: &'a str, cfg: &Group1CompatConfig) -> (bool, Option<String>) {
+fn analyze_group1_path(path: &str, cfg: &Group1CompatConfig) -> (bool, Option<String>) {
     for &mod_name in cfg.modules {
         let new_mod_prefix = format!("/api/core/{}/", mod_name); // e.g. /api/core/iam/
         let legacy_mod_prefix = format!("/api/core/{}/v1/", mod_name); // e.g. /api/core/iam/v1/

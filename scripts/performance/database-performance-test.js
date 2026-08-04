@@ -1,13 +1,38 @@
+/**
+ * 数据库性能测试脚本
+ *
+ * 模式配置对比：
+ * ┌────────────┬──────────────────────┬──────────────────────────┐
+ * │            │  冒烟测试 (SMOKE)    │  完整性能测试            │
+ * ├────────────┼──────────────────────┼──────────────────────────┤
+ * │ VUs        │ 1                    │ 100                      │
+ * │ Duration   │ 5s                   │ 120s                     │
+ * │ 阈值       │ 无 (空对象)          │ p95<800ms, p99<1500ms    │
+ * │ 需后端     │ 否                   │ 是 (http://localhost:8040)│
+ * └────────────┴──────────────────────┴──────────────────────────┘
+ *
+ * 使用方法：
+ *   SMOKE=true k6 run -e BASE_URL=http://host:port database-performance-test.js
+ *   k6 run -e BASE_URL=http://host:port database-performance-test.js
+ *
+ * 注意：此脚本使用 vus + duration 顶层属性（非 scenarios），
+ *       与 SCM 脚本不同，请保持一致。
+ */
 import http from 'k6/http';
 import { check, sleep, group } from 'k6';
 import { Counter, Trend } from 'k6/metrics';
 
-const BASE_URL = 'http://localhost:8040';
+const BASE_URL = __ENV.BASE_URL || 'http://localhost:8040';
+const SMOKE = __ENV.SMOKE === 'true';
 
 const dbQueries = new Counter('db_queries');
 const dbQueryDuration = new Trend('db_query_duration');
 
-export const options = {
+export const options = SMOKE ? {
+  vus: 1,
+  duration: '5s',
+  thresholds: {},
+} : {
   vus: 100,
   duration: '120s',
   thresholds: {
@@ -119,14 +144,14 @@ export default function () {
 
 export function handleSummary(data) {
   const metrics = {
-    'total_db_queries': data.metrics.db_queries.value,
-    'avg_query_duration_ms': data.metrics.db_query_duration.values.avg,
-    'p95_query_duration_ms': data.metrics.db_query_duration.values.p95,
-    'p99_query_duration_ms': data.metrics.db_query_duration.values.p99,
-    'total_requests': data.metrics.http_reqs.value,
-    'avg_response_time_ms': data.metrics.http_req_duration.values.avg,
-    'p95_response_time_ms': data.metrics.http_req_duration.values.p95,
-    'p99_response_time_ms': data.metrics.http_req_duration.values.p99,
+    'total_db_queries': data.metrics['db_queries']?.values.count ?? 0,
+    'avg_query_duration_ms': data.metrics['db_query_duration']?.values.avg ?? 0,
+    'p95_query_duration_ms': data.metrics['db_query_duration']?.values.p95 ?? 0,
+    'p99_query_duration_ms': data.metrics['db_query_duration']?.values.p99 ?? 0,
+    'total_requests': data.metrics['http_reqs']?.values.count ?? 0,
+    'avg_response_time_ms': data.metrics['http_req_duration']?.values.avg ?? 0,
+    'p95_response_time_ms': data.metrics['http_req_duration']?.values.p95 ?? 0,
+    'p99_response_time_ms': data.metrics['http_req_duration']?.values.p99 ?? 0,
   };
 
   console.log('===== 数据库性能测试报告 =====');

@@ -1,3 +1,5 @@
+import { isDevelopment } from './runtime';
+
 export interface SecurityConfig {
   csp: CspConfig;
   xFrameOptions: string;
@@ -17,9 +19,8 @@ export interface CspConfig {
   formAction: string[];
   baseUri: string[];
   workerSrc: string[];
+  prefetchSrc: string[];
 }
-
-import { isDevelopment } from './runtime';
 
 const isDev = isDevelopment();
 
@@ -28,7 +29,7 @@ export const securityConfig: SecurityConfig = {
   xXssProtection: '1; mode=block',
 
   csp: {
-    defaultSrc: ["'self'"],
+    defaultSrc: isDev ? ["'self'", 'http://localhost:*'] : ["'self'"],
     scriptSrc: isDev
       ? [
           "'self'",
@@ -65,11 +66,12 @@ export const securityConfig: SecurityConfig = {
     formAction: ["'self'"],
     baseUri: ["'self'"],
     workerSrc: ["'self'", 'blob:'],
+    prefetchSrc: isDev ? ["'self'", 'http://localhost:*'] : ["'self'"],
   },
 
   contentSecurityPolicy: isDev
     ? [
-        "default-src 'self'",
+        "default-src 'self' http://localhost:*",
         "script-src 'self' 'unsafe-inline' 'unsafe-eval' http://localhost:* ws://localhost:* wss://localhost:*",
         "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com",
         "img-src 'self' data: blob: https://*.amap.com https://*.gravatar.com https://*.openstreetmap.org",
@@ -80,6 +82,7 @@ export const securityConfig: SecurityConfig = {
         "form-action 'self'",
         "base-uri 'self'",
         "worker-src 'self' blob:",
+        "prefetch-src 'self' http://localhost:*",
       ].join('; ')
     : [
         "default-src 'self'",
@@ -93,6 +96,7 @@ export const securityConfig: SecurityConfig = {
         "form-action 'self'",
         "base-uri 'self'",
         "worker-src 'self' blob:",
+        "prefetch-src 'self'",
       ].join('; '),
 };
 

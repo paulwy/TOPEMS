@@ -448,7 +448,7 @@ async fn ensure_initialized() {
         last_restored_at: None,
         status: "archived".to_string(),
         record_size_bytes: 2048,
-        checksum: "sha256:init".to_string(),
+        checksum: "sha256{init}".to_string(),
     }];
 
     let retirement_plans = vec![RetirementPlan {
@@ -1968,15 +1968,15 @@ pub fn create_routes() -> axum::Router<ApiState> {
             get(list_lifecycle_entities).post(create_lifecycle_entity),
         )
         .route(
-            "/api/erp/mdm-v49/lifecycle/entities/:master_data_id",
+            "/api/erp/mdm-v49/lifecycle/entities/{master_data_id}",
             get(get_lifecycle_entity).post(transition_lifecycle_stage),
         )
         .route(
-            "/api/erp/mdm-v49/lifecycle/entities/:master_data_id/tasks/:task_id",
+            "/api/erp/mdm-v49/lifecycle/entities/{master_data_id}/tasks/{task_id}",
             post(update_lifecycle_task),
         )
         .route(
-            "/api/erp/mdm-v49/lifecycle/entities/:master_data_id/events",
+            "/api/erp/mdm-v49/lifecycle/entities/{master_data_id}/events",
             get(get_lifecycle_events),
         )
         // V49 AC-22: 退役管理
@@ -1985,31 +1985,31 @@ pub fn create_routes() -> axum::Router<ApiState> {
             get(list_retirement_plans).post(create_retirement_plan),
         )
         .route(
-            "/api/erp/mdm-v49/retirement/plans/:plan_id",
+            "/api/erp/mdm-v49/retirement/plans/{plan_id}",
             get(get_retirement_plan),
         )
         .route(
-            "/api/erp/mdm-v49/retirement/plans/:plan_id/assess",
+            "/api/erp/mdm-v49/retirement/plans/{plan_id}/assess",
             post(assess_impact),
         )
         .route(
-            "/api/erp/mdm-v49/retirement/plans/:plan_id/notify",
+            "/api/erp/mdm-v49/retirement/plans/{plan_id}/notify",
             post(notify_stakeholders),
         )
         .route(
-            "/api/erp/mdm-v49/retirement/plans/:plan_id/confirm",
+            "/api/erp/mdm-v49/retirement/plans/{plan_id}/confirm",
             post(confirm_retirement_plan),
         )
         .route(
-            "/api/erp/mdm-v49/retirement/plans/:plan_id/execute",
+            "/api/erp/mdm-v49/retirement/plans/{plan_id}/execute",
             post(execute_retirement_plan),
         )
         .route(
-            "/api/erp/mdm-v49/retirement/plans/:plan_id/rollback",
+            "/api/erp/mdm-v49/retirement/plans/{plan_id}/rollback",
             post(rollback_retirement_plan),
         )
         .route(
-            "/api/erp/mdm-v49/retirement/plans/:plan_id/cancel",
+            "/api/erp/mdm-v49/retirement/plans/{plan_id}/cancel",
             post(cancel_retirement_plan),
         )
         // V49 AC-23: 归档策略
@@ -2018,7 +2018,7 @@ pub fn create_routes() -> axum::Router<ApiState> {
             get(list_archive_policies).post(create_archive_policy),
         )
         .route(
-            "/api/erp/mdm-v49/archive/policies/:policy_id",
+            "/api/erp/mdm-v49/archive/policies/{policy_id}",
             get(get_archive_policy)
                 .put(update_archive_policy)
                 .delete(delete_archive_policy),
@@ -2028,11 +2028,11 @@ pub fn create_routes() -> axum::Router<ApiState> {
             get(list_archive_records),
         )
         .route(
-            "/api/erp/mdm-v49/archive/records/:record_id",
+            "/api/erp/mdm-v49/archive/records/{record_id}",
             get(get_archive_record),
         )
         .route(
-            "/api/erp/mdm-v49/archive/records/:record_id/restore",
+            "/api/erp/mdm-v49/archive/records/{record_id}/restore",
             post(restore_archive_record),
         )
         .route("/api/erp/mdm-v49/archive/run", post(run_archive))

@@ -39,18 +39,34 @@ export interface RemoteModuleConfig {
 /**
  * 从环境变量或默认值获取 remote entry URL
  *
- * 生产环境通过 ENV 注入：
+ * 开发模式（module-federation）下，使用 Vite 代理路径避免 CORS 问题
+ * 生产环境通过 ENV 注入完整 URL：
  * VITE_REMOTE_TOPEMS_ERP=https://erp.topems.com/remoteEntry.js
  */
-function getRemoteEntry(name: string, defaultValue: string): string {
+function getRemoteEntry(name: string, port: number): string {
   const envKey = `VITE_REMOTE_${name.toUpperCase()}`;
-  return import.meta.env[envKey] || defaultValue;
+  const envUrl = import.meta.env[envKey];
+
+  // 如果环境变量设置了完整 URL，直接使用（生产环境）
+  if (envUrl) {
+    return envUrl;
+  }
+
+  // 开发模式：使用 Vite 代理路径避免 CORS
+  // 主应用 (localhost:3000) 代理到远程模块 (localhost:{port})
+  const deploymentMode = import.meta.env.VITE_DEPLOYMENT_MODE || 'static';
+  if (deploymentMode === 'module-federation') {
+    return `/remote/${name}/remoteEntry.js`;
+  }
+
+  // 默认：直接访问（可能会有 CORS 问题）
+  return `http://localhost:${port}/remoteEntry.js`;
 }
 
 export const REMOTE_MODULES: RemoteModuleConfig[] = [
   {
     name: 'topems_core',
-    entry: getRemoteEntry('topems_core', 'http://localhost:3001/remoteEntry.js'),
+    entry: getRemoteEntry('topems_core', 3001),
     displayName: '核心平台',
     icon: 'Apps',
     routePrefix: '/core',
@@ -61,7 +77,7 @@ export const REMOTE_MODULES: RemoteModuleConfig[] = [
   },
   {
     name: 'topems_erp',
-    entry: getRemoteEntry('topems_erp', 'http://localhost:3002/remoteEntry.js'),
+    entry: getRemoteEntry('topems_erp', 3002),
     displayName: 'ERP',
     icon: 'AccountBalance',
     routePrefix: '/erp',
@@ -72,7 +88,7 @@ export const REMOTE_MODULES: RemoteModuleConfig[] = [
   },
   {
     name: 'topems_hrm',
-    entry: getRemoteEntry('topems_hrm', 'http://localhost:3003/remoteEntry.js'),
+    entry: getRemoteEntry('topems_hrm', 3003),
     displayName: 'HRM',
     icon: 'People',
     routePrefix: '/hrm',
@@ -82,7 +98,7 @@ export const REMOTE_MODULES: RemoteModuleConfig[] = [
   },
   {
     name: 'topems_crm',
-    entry: getRemoteEntry('topems_crm', 'http://localhost:3004/remoteEntry.js'),
+    entry: getRemoteEntry('topems_crm', 3004),
     displayName: 'CRM',
     icon: 'ContactPhone',
     routePrefix: '/crm',
@@ -92,7 +108,7 @@ export const REMOTE_MODULES: RemoteModuleConfig[] = [
   },
   {
     name: 'topems_mes',
-    entry: getRemoteEntry('topems_mes', 'http://localhost:3007/remoteEntry.js'),
+    entry: getRemoteEntry('topems_mes', 3007),
     displayName: 'MES',
     icon: 'PrecisionManufacturing',
     routePrefix: '/mes',
@@ -102,7 +118,7 @@ export const REMOTE_MODULES: RemoteModuleConfig[] = [
   },
   {
     name: 'topems_scm',
-    entry: getRemoteEntry('topems_scm', 'http://localhost:3005/remoteEntry.js'),
+    entry: getRemoteEntry('topems_scm', 3005),
     displayName: 'SCM',
     icon: 'LocalShipping',
     routePrefix: '/scm',
@@ -112,7 +128,7 @@ export const REMOTE_MODULES: RemoteModuleConfig[] = [
   },
   {
     name: 'topems_wms',
-    entry: getRemoteEntry('topems_wms', 'http://localhost:3006/remoteEntry.js'),
+    entry: getRemoteEntry('topems_wms', 3006),
     displayName: 'WMS',
     icon: 'Warehouse',
     routePrefix: '/wms',
@@ -122,7 +138,7 @@ export const REMOTE_MODULES: RemoteModuleConfig[] = [
   },
   {
     name: 'topems_srm',
-    entry: getRemoteEntry('topems_srm', 'http://localhost:3010/remoteEntry.js'),
+    entry: getRemoteEntry('topems_srm', 3010),
     displayName: 'SRM',
     icon: 'Handshake',
     routePrefix: '/srm',
@@ -132,7 +148,7 @@ export const REMOTE_MODULES: RemoteModuleConfig[] = [
   },
   {
     name: 'topems_pm',
-    entry: getRemoteEntry('topems_pm', 'http://localhost:3008/remoteEntry.js'),
+    entry: getRemoteEntry('topems_pm', 3008),
     displayName: 'PM',
     icon: 'Assignment',
     routePrefix: '/pm',
@@ -142,7 +158,7 @@ export const REMOTE_MODULES: RemoteModuleConfig[] = [
   },
   {
     name: 'topems_finance',
-    entry: getRemoteEntry('topems_finance', 'http://localhost:3009/remoteEntry.js'),
+    entry: getRemoteEntry('topems_finance', 3009),
     displayName: 'Finance',
     icon: 'Paid',
     routePrefix: '/finance',
@@ -152,7 +168,7 @@ export const REMOTE_MODULES: RemoteModuleConfig[] = [
   },
   {
     name: 'topems_pdm',
-    entry: getRemoteEntry('topems_pdm', 'http://localhost:3011/remoteEntry.js'),
+    entry: getRemoteEntry('topems_pdm', 3011),
     displayName: 'PDM',
     icon: 'FolderOpen',
     routePrefix: '/pdm',
@@ -162,7 +178,7 @@ export const REMOTE_MODULES: RemoteModuleConfig[] = [
   },
   {
     name: 'topems_qms',
-    entry: getRemoteEntry('topems_qms', 'http://localhost:3012/remoteEntry.js'),
+    entry: getRemoteEntry('topems_qms', 3012),
     displayName: 'QMS',
     icon: 'CheckCircle',
     routePrefix: '/qms',
@@ -172,7 +188,7 @@ export const REMOTE_MODULES: RemoteModuleConfig[] = [
   },
   {
     name: 'topems_lims',
-    entry: getRemoteEntry('topems_lims', 'http://localhost:3013/remoteEntry.js'),
+    entry: getRemoteEntry('topems_lims', 3013),
     displayName: 'LIMS',
     icon: 'FlaskConical',
     routePrefix: '/lims',
@@ -182,7 +198,7 @@ export const REMOTE_MODULES: RemoteModuleConfig[] = [
   },
   {
     name: 'topems_ehs',
-    entry: getRemoteEntry('topems_ehs', 'http://localhost:3014/remoteEntry.js'),
+    entry: getRemoteEntry('topems_ehs', 3014),
     displayName: 'EHS',
     icon: 'ShieldCheck',
     routePrefix: '/ehs',
@@ -192,7 +208,7 @@ export const REMOTE_MODULES: RemoteModuleConfig[] = [
   },
   {
     name: 'topems_bi',
-    entry: getRemoteEntry('topems_bi', 'http://localhost:3015/remoteEntry.js'),
+    entry: getRemoteEntry('topems_bi', 3015),
     displayName: 'BI',
     icon: 'BarChart3',
     routePrefix: '/bi',
@@ -202,7 +218,7 @@ export const REMOTE_MODULES: RemoteModuleConfig[] = [
   },
   {
     name: 'topems_monitor',
-    entry: getRemoteEntry('topems_monitor', 'http://localhost:3016/remoteEntry.js'),
+    entry: getRemoteEntry('topems_monitor', 3016),
     displayName: 'Monitor',
     icon: 'Activity',
     routePrefix: '/monitor',
@@ -212,7 +228,7 @@ export const REMOTE_MODULES: RemoteModuleConfig[] = [
   },
   {
     name: 'topems_ai',
-    entry: getRemoteEntry('topems_ai', 'http://localhost:3017/remoteEntry.js'),
+    entry: getRemoteEntry('topems_ai', 3017),
     displayName: 'AI',
     icon: 'Sparkles',
     routePrefix: '/ai',
@@ -222,7 +238,7 @@ export const REMOTE_MODULES: RemoteModuleConfig[] = [
   },
   {
     name: 'topems_gis',
-    entry: getRemoteEntry('topems_gis', 'http://localhost:3018/remoteEntry.js'),
+    entry: getRemoteEntry('topems_gis', 3018),
     displayName: 'GIS',
     icon: 'Map',
     routePrefix: '/gis',
@@ -232,7 +248,7 @@ export const REMOTE_MODULES: RemoteModuleConfig[] = [
   },
   {
     name: 'topems_doc',
-    entry: getRemoteEntry('topems_doc', 'http://localhost:3019/remoteEntry.js'),
+    entry: getRemoteEntry('topems_doc', 3019),
     displayName: '文档管理',
     icon: 'FileText',
     routePrefix: '/doc',

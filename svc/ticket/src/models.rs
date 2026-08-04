@@ -51,6 +51,7 @@ impl std::str::FromStr for TicketStatus {
 
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq, ToSchema)]
 #[serde(rename_all = "snake_case")]
+#[allow(dead_code)]
 pub enum TicketSeverity {
     Low,
     Medium,

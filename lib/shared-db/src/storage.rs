@@ -267,11 +267,11 @@ impl StorageService for LocalStorage {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use tempdir::TempDir;
+    use tempfile::TempDir;
 
     #[tokio::test]
     async fn test_local_storage_upload_download() -> Result<()> {
-        let temp_dir = TempDir::new("storage_test")?;
+        let temp_dir = TempDir::new()?;
         let storage = LocalStorage::new_with_path(
             temp_dir
                 .path()
@@ -294,7 +294,7 @@ mod tests {
 
     #[tokio::test]
     async fn test_local_storage_exists() -> Result<()> {
-        let temp_dir = TempDir::new("storage_test")?;
+        let temp_dir = TempDir::new()?;
         let storage = LocalStorage::new_with_path(
             temp_dir
                 .path()
@@ -313,7 +313,7 @@ mod tests {
 
     #[tokio::test]
     async fn test_local_storage_delete() -> Result<()> {
-        let temp_dir = TempDir::new("storage_test")?;
+        let temp_dir = TempDir::new()?;
         let storage = LocalStorage::new_with_path(
             temp_dir
                 .path()
@@ -333,7 +333,7 @@ mod tests {
 
     #[tokio::test]
     async fn test_local_storage_list() -> Result<()> {
-        let temp_dir = TempDir::new("storage_test")?;
+        let temp_dir = TempDir::new()?;
         let storage = LocalStorage::new_with_path(
             temp_dir
                 .path()

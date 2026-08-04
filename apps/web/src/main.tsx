@@ -37,8 +37,6 @@ const performDeferredInit = () => {
   loadPriority2
     .then(() => {
       import('./pages/shared/DashboardPage').catch(() => {});
-      import('./components/ai/FloatingAIHelper').catch(() => {});
-      import('./components/ui/CommandPalette').catch(() => {});
     })
     .catch(() => {});
 
@@ -68,7 +66,11 @@ const performDeferredInit = () => {
 };
 
 if ('requestIdleCallback' in window) {
-  (window as unknown as { requestIdleCallback: (cb: () => void, opts?: { timeout: number }) => void }).requestIdleCallback(performDeferredInit, { timeout: 3000 });
+  (
+    window as unknown as {
+      requestIdleCallback: (cb: () => void, opts?: { timeout: number }) => void;
+    }
+  ).requestIdleCallback(performDeferredInit, { timeout: 3000 });
 } else {
   setTimeout(performDeferredInit, 800);
 }

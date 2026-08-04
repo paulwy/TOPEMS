@@ -2,7 +2,7 @@ use axum::{routing::get, Router};
 use sqlx::postgres::PgPoolOptions;
 use std::net::SocketAddr;
 use topems_shared::{
-    auth_middleware, create_cors_layer, init_service_telemetry, register_routes_with_legacy_alias,
+    auth_middleware, create_cors_layer, init_telemetry, register_routes_with_legacy_alias,
     AuthState,
 };
 
@@ -11,7 +11,7 @@ mod models;
 
 #[tokio::main]
 async fn main() {
-    let _telemetry_guard = init_service_telemetry!("topems-search");
+    let _telemetry_guard = init_telemetry("topems-search");
 
     tracing::info!("🚀 TOPEMS Search Service starting...");
 
@@ -60,6 +60,8 @@ async fn main() {
         .with_state(pool);
 
     let port = std::env::var("SEARCH_PORT")
+        .or_else(|_| std::env::var("SERVER_PORT"))
+        .or_else(|_| std::env::var("PORT"))
         .unwrap_or_else(|_| "8083".to_string())
         .parse()
         .unwrap_or(8083);

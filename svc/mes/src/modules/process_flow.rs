@@ -613,10 +613,10 @@ pub async fn get_flow_steps(
                 .map(|s| ProcessFlowStepResponse {
                     id: s.id.to_string(),
                     flow_id: s.flow_id.to_string(),
-                    process_id: s.process_id.to_string(),
+                    process_id: s.process_id.map(|v| v.to_string()).unwrap_or_default(),
                     process_name: s.process_name,
                     process_code: s.process_code,
-                    sequence: s.sequence,
+                    sequence: s.sequence.unwrap_or_default(),
                     work_station_id: s.work_station_id.map(|u| u.to_string()),
                     work_station_name: Some(s.work_station_name),
                     equipment_ids: s
@@ -679,10 +679,20 @@ pub async fn add_flow_step(
     let wait_time = body
         .wait_time
         .and_then(|v| BigDecimal::from_str(&v.to_string()).ok());
-    let transfer_time = body
-        .transfer_time
-        .as_deref()
-        .and_then(|v| BigDecimal::from_str(v).ok());
+    let transfer_time = body.transfer_time.as_ref().and_then(|s| {
+        NaiveDateTime::parse_from_str(s, "%Y-%m-%d %H:%M:%S")
+            .ok()
+            .or_else(|| {
+                DateTime::parse_from_rfc3339(s)
+                    .ok()
+                    .map(|dt| dt.with_timezone(&Utc).naive_utc())
+            })
+            .or_else(|| {
+                chrono::NaiveDate::parse_from_str(s, "%Y-%m-%d")
+                    .ok()
+                    .map(|d| d.and_hms_opt(0, 0, 0).unwrap())
+            })
+    });
     let equipment_ids: Option<Vec<Uuid>> = body.equipment_ids.map(|ids| {
         ids.into_iter()
             .filter_map(|id| Uuid::parse_str(&id).ok())
@@ -706,7 +716,7 @@ pub async fn add_flow_step(
         process_uuid,
         body.sequence,
         work_station_uuid,
-        equipment_ids.as_deref(),
+        equipment_ids.as_ref().map(|ids| serde_json::to_string(ids).unwrap_or_default()),
         standard_time,
         wait_time,
         transfer_time,
@@ -736,10 +746,10 @@ pub async fn add_flow_step(
                 ProcessFlowStepResponse {
                     id: s.id.to_string(),
                     flow_id: s.flow_id.to_string(),
-                    process_id: s.process_id.to_string(),
+                    process_id: s.process_id.map(|v| v.to_string()).unwrap_or_default(),
                     process_name,
                     process_code,
-                    sequence: s.sequence,
+                    sequence: s.sequence.unwrap_or_default(),
                     work_station_id: s.work_station_id.map(|u| u.to_string()),
                     work_station_name: None,
                     equipment_ids: s
@@ -791,10 +801,20 @@ pub async fn update_flow_step(
     let wait_time = body
         .wait_time
         .and_then(|v| BigDecimal::from_str(&v.to_string()).ok());
-    let transfer_time = body
-        .transfer_time
-        .as_deref()
-        .and_then(|v| BigDecimal::from_str(v).ok());
+    let transfer_time = body.transfer_time.as_ref().and_then(|s| {
+        NaiveDateTime::parse_from_str(s, "%Y-%m-%d %H:%M:%S")
+            .ok()
+            .or_else(|| {
+                DateTime::parse_from_rfc3339(s)
+                    .ok()
+                    .map(|dt| dt.with_timezone(&Utc).naive_utc())
+            })
+            .or_else(|| {
+                chrono::NaiveDate::parse_from_str(s, "%Y-%m-%d")
+                    .ok()
+                    .map(|d| d.and_hms_opt(0, 0, 0).unwrap())
+            })
+    });
     let equipment_ids: Option<Vec<Uuid>> = body.equipment_ids.map(|ids| {
         ids.into_iter()
             .filter_map(|id| Uuid::parse_str(&id).ok())
@@ -821,7 +841,7 @@ pub async fn update_flow_step(
         "#,
         body.sequence,
         work_station_uuid,
-        equipment_ids.as_deref(),
+        equipment_ids.as_ref().map(|ids| serde_json::to_string(ids).unwrap_or_default()),
         standard_time,
         wait_time,
         transfer_time,
@@ -852,10 +872,10 @@ pub async fn update_flow_step(
                 ProcessFlowStepResponse {
                     id: s.id.to_string(),
                     flow_id: s.flow_id.to_string(),
-                    process_id: s.process_id.to_string(),
+                    process_id: s.process_id.map(|v| v.to_string()).unwrap_or_default(),
                     process_name,
                     process_code,
-                    sequence: s.sequence,
+                    sequence: s.sequence.unwrap_or_default(),
                     work_station_id: s.work_station_id.map(|u| u.to_string()),
                     work_station_name: None,
                     equipment_ids: s
@@ -993,10 +1013,10 @@ pub async fn reorder_flow_steps(
                 .map(|s| ProcessFlowStepResponse {
                     id: s.id.to_string(),
                     flow_id: s.flow_id.to_string(),
-                    process_id: s.process_id.to_string(),
+                    process_id: s.process_id.map(|v| v.to_string()).unwrap_or_default(),
                     process_name: s.process_name,
                     process_code: s.process_code,
-                    sequence: s.sequence,
+                    sequence: s.sequence.unwrap_or_default(),
                     work_station_id: s.work_station_id.map(|u| u.to_string()),
                     work_station_name: Some(s.work_station_name),
                     equipment_ids: s

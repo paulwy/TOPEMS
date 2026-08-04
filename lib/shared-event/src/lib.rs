@@ -15,6 +15,19 @@ pub mod redis;
 pub mod saga;
 pub mod service_discovery;
 
+/// 通用测试辅助工具（Redis Pub/Sub 两阶段订阅 API、事件模拟等）。
+///
+/// **注意**：此模块公开导出，目的是让 **依赖 `topems-shared-event` 的其他服务 crate**
+/// （如 `topems-master-data`、`topems-portal` 等）也能在自己的集成测试中复用同一套
+/// `prepare_subscription` + `wait_for_match` 模式，避免在整个仓库中重复造轮子
+/// 并防止"Future 惰性执行 → 发布先于订阅登记 → 消息丢失"的并发竞态反复出现。
+///
+/// # 为什么不用 `#[cfg(test)]`
+/// Rust 中当 `topems-master-data` 以依赖身份引入 `topems-shared-event` 并运行
+/// `cargo test -p topems-master-data` 时，`topems-shared-event` 是作为**非 test profile**
+/// 编译的。如果此模块加了 `#[cfg(test)]`，外部服务的集成测试将无法 `use topems_shared_event::test_helpers`。
+pub mod test_helpers;
+
 // 细粒度 re-export
 pub use cache::{
     CacheKeyGenerator, CacheManager, CacheStatistics, CacheWarmer, DistributedCacheManager,

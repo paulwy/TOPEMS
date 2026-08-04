@@ -1,6 +1,6 @@
 use axum::{
     extract::{Extension, Path, Query, State},
-    routing::{delete, get, post, put},
+    routing::{get, post},
     Json, Router,
 };
 use serde::{Deserialize, Serialize};
@@ -53,6 +53,7 @@ pub struct ListFeedbackParams {
     #[serde(rename = "type")]
     pub type_: Option<String>,
     pub status: Option<String>,
+    #[allow(dead_code)]
     pub user_id: Option<String>,
 }
 

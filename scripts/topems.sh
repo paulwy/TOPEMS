@@ -59,6 +59,12 @@ portal      svc/portal             topems-portal               8063
 mobile      svc/mobile             topems-mobile               8070
 gis         svc/gis                topems-gis                  8071
 integration svc/integration        topems-integration           8072
+search      svc/search             topems-search               8082
+communication svc/communication    topems-communication         8084
+billing     svc/billing            topems-billing              8085
+ticket      svc/ticket             topems-ticket               8086
+feedback    svc/feedback           topems-feedback             8087
+master-data svc/master-data        topems-master-data          8090
 "
         CORE_SERVICES="iam"
     fi
@@ -299,17 +305,52 @@ test_all() {
     fi
 }
 
+# 获取服务对应的端口环境变量名
+get_port_env_var() {
+    case "$1" in
+        iam) echo "CORE_PORT" ;;
+        pm) echo "PM_PORT" ;;
+        erp) echo "ERP_PORT" ;;
+        finance) echo "FINANCE_PORT" ;;
+        ai) echo "AI_PORT" ;;
+        hrm) echo "HRM_PORT" ;;
+        crm) echo "CRM_PORT" ;;
+        mes) echo "MES_PORT" ;;
+        pdm) echo "PDM_PORT" ;;
+        scm) echo "SCM_PORT" ;;
+        wms) echo "WMS_PORT" ;;
+        srm) echo "SRM_PORT" ;;
+        qms) echo "QMS_PORT" ;;
+        lims) echo "LIMS_PORT" ;;
+        ehs) echo "EHS_PORT" ;;
+        rd) echo "RD_PORT" ;;
+        bi|analytics) echo "ANALYTICS_PORT" ;;
+        portal) echo "PORTAL_PORT" ;;
+        mobile) echo "MOBILE_PORT" ;;
+        gis) echo "GIS_PORT" ;;
+        integration) echo "INTEGRATION_PORT" ;;
+        search) echo "SEARCH_PORT" ;;
+        communication) echo "COMMUNICATION_PORT" ;;
+        billing) echo "BILLING_PORT" ;;
+        ticket) echo "TICKET_PORT" ;;
+        feedback) echo "FEEDBACK_PORT" ;;
+        master-data) echo "MASTER_DATA_PORT" ;;
+        *) echo "SERVER_PORT" ;;
+    esac
+}
+
 _start_service_internal() {
     local service_name=$1
     local port=$2
     local executable_path=$3
+    local port_env_var=$(get_port_env_var "$service_name")
 
     cd "$PROJECT_ROOT"
     
     if [ "$service_name" = "iam" ]; then
-        CORE_PORT=$port nohup "$executable_path" > "/tmp/topems-${service_name}.log" 2>&1 &
+        env CORE_PORT=$port $port_env_var=$port nohup "$executable_path" > "/tmp/topems-${service_name}.log" 2>&1 &
     else
-        SERVER_PORT=$port nohup "$executable_path" > "/tmp/topems-${service_name}.log" 2>&1 &
+        env SERVER_PORT=$port $port_env_var=$port nohup "$executable_path" > "/tmp/topems-${service_name}.log" 2>&1 &
     fi
     
     echo "$!"
@@ -438,7 +479,7 @@ stop_service() {
 status_service() {
     local service_name=$1
     local port=$(get_service_port "$service_name")
-    [ -z "$port" ] && { echo -e "${RED}❌ $service_name: 无法获取端口${NC}"; return; }
+    [ -z "$port" ] && { echo -e "${RED}❌ $service_name: 无法获取端口${NC}"; return 1; }
 
     if check_port $port; then
         local pid=$(get_service_pid "$service_name" "$port")
@@ -531,7 +572,7 @@ get_service_display_name() {
         mobile) echo "移动服务" ;;
         gis) echo "地理信息" ;;
         integration) echo "集成服务" ;;
-        *) echo "${1^}服务" ;;
+        *) echo "$(echo "$1" | sed 's/./\U&/')服务" ;;
     esac
 }
 
@@ -559,7 +600,7 @@ get_service_description() {
         mobile) echo "移动应用服务" ;;
         gis) echo "地理信息服务" ;;
         integration) echo "系统集成服务" ;;
-        *) echo "${1^}服务" ;;
+        *) echo "$(echo "$1" | sed 's/./\U&/')服务" ;;
     esac
 }
 
@@ -877,6 +918,20 @@ ws_check() {
 # 数据库管理
 # =============================================
 
+# 解析 DATABASE_URL 获取数据库连接信息
+parse_database_url() {
+    local db_url=${DATABASE_URL:-"postgres://topems:topems_secret@localhost:5432/topems"}
+    # 格式: postgres://user:password@host:port/database
+    DB_USER=$(echo "$db_url" | sed -n 's|postgres://\([^:]*\):.*|\1|p')
+    DB_HOST=$(echo "$db_url" | sed -n 's|.*@\([^:]*\):.*|\1|p')
+    DB_PORT=$(echo "$db_url" | sed -n 's|.*@.*:\([0-9]*\)/.*|\1|p')
+    DB_NAME=$(echo "$db_url" | sed -n 's|.*/\([^/]*\)$|\1|p')
+    DB_USER=${DB_USER:-topems}
+    DB_HOST=${DB_HOST:-localhost}
+    DB_PORT=${DB_PORT:-5432}
+    DB_NAME=${DB_NAME:-topems}
+}
+
 # 启动 PostgreSQL
 db_start() {
     info "启动 PostgreSQL..."
@@ -892,7 +947,8 @@ db_start() {
         sudo systemctl start postgresql 2>/dev/null || true
     fi
 
-    if psql -h localhost -U "$USER" -d "postgres" -c "SELECT 1;" &> /dev/null; then
+    parse_database_url
+    if psql -h "$DB_HOST" -p "$DB_PORT" -U "$DB_USER" -d "$DB_NAME" -c "SELECT 1;" &> /dev/null; then
         success "PostgreSQL 已启动"
         return 0
     else
@@ -919,10 +975,11 @@ db_stop() {
 
 # 数据库状态
 db_status() {
+    parse_database_url
     info "=== PostgreSQL 状态 ==="
-    if psql -h localhost -U "$USER" -d "postgres" -c "SELECT 1;" &> /dev/null; then
+    if psql -h "$DB_HOST" -p "$DB_PORT" -U "$DB_USER" -d "$DB_NAME" -c "SELECT 1;" &> /dev/null; then
         success "PostgreSQL 运行中"
-        psql -h localhost -U "$USER" -d "postgres" -c "SELECT version();" 2>/dev/null | head -3
+        psql -h "$DB_HOST" -p "$DB_PORT" -U "$DB_USER" -d "$DB_NAME" -c "SELECT version();" 2>/dev/null | head -3
     else
         error "PostgreSQL 未运行"
     fi
@@ -972,8 +1029,7 @@ db_migrate() {
     info "运行数据库迁移..."
 
     load_env
-    local db_name=${DATABASE_NAME:-topems}
-    local db_user=${DATABASE_USER:-postgres}
+    parse_database_url
 
     info "使用 psql 模式执行迁移文件..."
     
@@ -991,14 +1047,14 @@ db_migrate() {
                 continue
             fi
             
-            if psql -h localhost -U "$db_user" -d "$db_name" -c "SELECT version FROM _sqlx_migrations WHERE version = '$version';" 2>/dev/null | grep -q "$version"; then
+            if psql -h "$DB_HOST" -p "$DB_PORT" -U "$DB_USER" -d "$DB_NAME" -c "SELECT version FROM _sqlx_migrations WHERE version = '$version';" 2>/dev/null | grep -q "$version"; then
                 detail "迁移 $base 已应用，跳过"
                 continue
             fi
             
             info "执行迁移: $file..."
-            if psql -h localhost -U "$db_user" -d "$db_name" -f "$file" 2>&1; then
-                psql -h localhost -U "$db_user" -d "$db_name" -c "INSERT INTO _sqlx_migrations (version, description, installed_on, success, checksum, execution_time) VALUES ('$version', '$base', NOW(), true, 'manual', 0);" 2>/dev/null || true
+            if psql -h "$DB_HOST" -p "$DB_PORT" -U "$DB_USER" -d "$DB_NAME" -f "$file" 2>&1; then
+                psql -h "$DB_HOST" -p "$DB_PORT" -U "$DB_USER" -d "$DB_NAME" -c "INSERT INTO _sqlx_migrations (version, description, installed_on, success, checksum, execution_time) VALUES ('$version', '$base', NOW(), true, 'manual', 0);" 2>/dev/null || true
             else
                 warning "迁移 $file 失败"
             fi
@@ -1017,35 +1073,29 @@ db_backup() {
     mkdir -p "$backup_dir"
 
     info "备份数据库到 $backup_file..."
-    if [ -f "$PROJECT_ROOT/.env" ]; then
-        load_env
-        local db_name=${DATABASE_NAME:-topems}
-        local db_user=${DATABASE_USER:-postgres}
+    load_env
+    parse_database_url
 
-        local backup_success=false
-        
-        if command -v docker &> /dev/null && docker ps | grep -q postgres; then
-            info "使用 Docker 执行备份..."
-            if docker exec -t topems-postgres pg_dump -U "$db_user" "$db_name" > "$backup_file" 2>&1; then
-                backup_success=true
-            fi
-        else
-            info "使用本地 psql 执行备份..."
-            if pg_dump -h localhost -U "$db_user" "$db_name" > "$backup_file" 2>&1; then
-                backup_success=true
-            fi
-        fi
-
-        if [ "$backup_success" = true ] && [ -s "$backup_file" ]; then
-            success "数据库备份成功: $backup_file ($(du -h "$backup_file" | cut -f1))"
-            return 0
-        else
-            [ -f "$backup_file" ] && rm -f "$backup_file"
-            error "数据库备份失败"
-            return 1
+    local backup_success=false
+    
+    if command -v docker &> /dev/null && docker ps | grep -q postgres; then
+        info "使用 Docker 执行备份..."
+        if docker exec -t topems-postgres pg_dump -U "$DB_USER" "$DB_NAME" > "$backup_file" 2>&1; then
+            backup_success=true
         fi
     else
-        error ".env 文件不存在，无法读取数据库配置"
+        info "使用本地 psql 执行备份..."
+        if pg_dump -h "$DB_HOST" -p "$DB_PORT" -U "$DB_USER" "$DB_NAME" > "$backup_file" 2>&1; then
+            backup_success=true
+        fi
+    fi
+
+    if [ "$backup_success" = true ] && [ -s "$backup_file" ]; then
+        success "数据库备份成功: $backup_file ($(du -h "$backup_file" | cut -f1))"
+        return 0
+    else
+        [ -f "$backup_file" ] && rm -f "$backup_file"
+        error "数据库备份失败"
         return 1
     fi
 }
@@ -1058,16 +1108,15 @@ db_restore() {
 
     info "恢复数据库从 $backup_file..."
     load_env
-    local db_name=${DATABASE_NAME:-topems}
-    local db_user=${DATABASE_USER:-postgres}
+    parse_database_url
 
-    read -p "确认恢复数据库 $db_name ? [y/N] " confirm
+    read -p "确认恢复数据库 $DB_NAME ? [y/N] " confirm
     [[ ! "$confirm" =~ ^[Yy]$ ]] && { info "取消恢复"; return 0; }
 
     if command -v docker &> /dev/null && docker ps | grep -q postgres; then
-        cat "$backup_file" | docker exec -i topems-postgres psql -U "$db_user" "$db_name"
+        cat "$backup_file" | docker exec -i topems-postgres psql -U "$DB_USER" "$DB_NAME"
     else
-        psql -h localhost -U "$db_user" "$db_name" < "$backup_file"
+        psql -h "$DB_HOST" -p "$DB_PORT" -U "$DB_USER" "$DB_NAME" < "$backup_file"
     fi
 
     success "数据库恢复完成"
@@ -1076,15 +1125,14 @@ db_restore() {
 # 重置数据库
 db_reset() {
     load_env
-    local db_name=${DATABASE_NAME:-topems}
-    local db_user=${DATABASE_USER:-postgres}
+    parse_database_url
 
-    read -p "确认重置数据库 $db_name ? 将会删除所有数据! [y/N] " confirm
+    read -p "确认重置数据库 $DB_NAME ? 将会删除所有数据! [y/N] " confirm
     [[ ! "$confirm" =~ ^[Yy]$ ]] && { info "取消重置"; return 0; }
 
     info "重置数据库..."
-    psql -h localhost -U "$db_user" -c "DROP DATABASE IF EXISTS $db_name;" 2>/dev/null
-    psql -h localhost -U "$db_user" -c "CREATE DATABASE $db_name;" 2>/dev/null
+    psql -h "$DB_HOST" -p "$DB_PORT" -U "$DB_USER" -c "DROP DATABASE IF EXISTS $DB_NAME;" 2>/dev/null
+    psql -h "$DB_HOST" -p "$DB_PORT" -U "$DB_USER" -c "CREATE DATABASE $DB_NAME;" 2>/dev/null
     success "数据库重置完成"
 }
 
@@ -1138,14 +1186,24 @@ restart_all() {
 # 调用Python CLI
 run_cli() {
     if [ -d "$CLI_DIR" ]; then
+        local cli_entry="$CLI_DIR/bin/topems"
+        if [ -f "$cli_entry" ]; then
+            "$cli_entry" "$@"
+            return $?
+        fi
         cd "$CLI_DIR"
         [ -f ".venv/bin/activate" ] && source .venv/bin/activate
         export PYTHONPATH="$CLI_DIR/src"
-        python -m topems_cli "$@"
+        # 检查依赖
+        python3 -c "import yaml, click, rich" 2>/dev/null || {
+            info "缺少 Python CLI 依赖，正在安装..."
+            pip3 install pyyaml click rich httpx --quiet
+        }
+        python3 -m topems_cli "$@"
     else
         error "Python CLI 未安装"
         echo "请运行以下命令安装:"
-        echo "  cd $CLI_DIR && python -m venv .venv && source .venv/bin/activate && pip install pyyaml click rich httpx"
+        echo "  cd $CLI_DIR && python3 -m venv .venv && source .venv/bin/activate && pip3 install pyyaml click rich httpx"
         exit 1
     fi
 }
@@ -1237,7 +1295,7 @@ WebSocket:
   topems reset-password admin newpass123  重置 admin 密码为 newpass123
 
 完整功能请使用 Python CLI:
-  cd cli && python -m topems_cli --help
+  cd cli && python3 -m topems_cli --help
 EOF
 }
 

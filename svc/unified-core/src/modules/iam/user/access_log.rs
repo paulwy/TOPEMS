@@ -35,6 +35,7 @@ struct LoginLogRow {
 }
 
 #[derive(Debug, sqlx::FromRow)]
+#[allow(dead_code)]
 struct AuditLogRow {
     id: Uuid,
     user_id: Option<Uuid>,

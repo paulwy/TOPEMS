@@ -13,6 +13,7 @@ use uuid::Uuid;
 use super::models::{is_valid_email, record_audit_log, ListUsersParams, UserResponse, UserRow};
 
 #[derive(Debug, Serialize, ToSchema)]
+#[allow(dead_code)]
 #[schema(as = ListUsersResponse)]
 struct ListUsersResponse {
     users: Vec<UserResponse>,
@@ -135,6 +136,7 @@ pub async fn list_users(
 }
 
 #[derive(Debug, Deserialize, ToSchema)]
+#[allow(dead_code)]
 #[schema(as = CreateUserRequest)]
 struct CreateUserRequest {
     username: String,

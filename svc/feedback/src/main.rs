@@ -1,5 +1,5 @@
 use axum::{routing::get, Router};
-use sqlx::{postgres::PgPoolOptions, PgPool};
+use sqlx::postgres::PgPoolOptions;
 use std::net::SocketAddr;
 use topems_shared::{create_cors_layer, init_telemetry};
 

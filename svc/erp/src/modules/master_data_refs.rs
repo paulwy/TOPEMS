@@ -449,17 +449,17 @@ pub fn create_routes() -> axum::Router<ApiState> {
             "/api/erp/master-data/sync/jobs",
             post(create_sync_job).get(list_sync_jobs),
         )
-        .route("/api/erp/master-data/sync/jobs/:id", get(get_sync_job))
+        .route("/api/erp/master-data/sync/jobs/{id}", get(get_sync_job))
         .route(
-            "/api/erp/master-data/sync/jobs/:id/retry",
+            "/api/erp/master-data/sync/jobs/{id}/retry",
             post(retry_sync_job),
         )
         .route(
-            "/api/erp/master-data/sync/jobs/:id/cancel",
+            "/api/erp/master-data/sync/jobs/{id}/cancel",
             post(cancel_sync_job),
         )
         .route(
-            "/api/erp/master-data/sync/jobs/:id/compensate",
+            "/api/erp/master-data/sync/jobs/{id}/compensate",
             post(trigger_compensation),
         )
         .route("/api/erp/master-data/sync/stats", get(get_sync_stats))
@@ -468,7 +468,7 @@ pub fn create_routes() -> axum::Router<ApiState> {
             get(list_dead_letters),
         )
         .route(
-            "/api/erp/master-data/sync/dead-letters/:id/replay",
+            "/api/erp/master-data/sync/dead-letters/{id}/replay",
             post(replay_dead_letter),
         )
         .route(
@@ -476,7 +476,7 @@ pub fn create_routes() -> axum::Router<ApiState> {
             post(batch_replay_dead_letters),
         )
         .route(
-            "/api/erp/master-data/sync/dead-letters/:id",
+            "/api/erp/master-data/sync/dead-letters/{id}",
             delete(delete_dead_letter),
         )
         // V42.0 AC-14: 质量闭环管理 — 质量工单
@@ -485,39 +485,39 @@ pub fn create_routes() -> axum::Router<ApiState> {
             post(create_quality_ticket).get(list_quality_tickets),
         )
         .route(
-            "/api/erp/master-data/quality/tickets/:id",
+            "/api/erp/master-data/quality/tickets/{id}",
             get(get_quality_ticket),
         )
         .route(
-            "/api/erp/master-data/quality/tickets/:id/assign",
+            "/api/erp/master-data/quality/tickets/{id}/assign",
             post(assign_quality_ticket),
         )
         .route(
-            "/api/erp/master-data/quality/tickets/:id/start",
+            "/api/erp/master-data/quality/tickets/{id}/start",
             post(start_quality_ticket),
         )
         .route(
-            "/api/erp/master-data/quality/tickets/:id/submit",
+            "/api/erp/master-data/quality/tickets/{id}/submit",
             post(submit_quality_ticket),
         )
         .route(
-            "/api/erp/master-data/quality/tickets/:id/verify",
+            "/api/erp/master-data/quality/tickets/{id}/verify",
             post(verify_quality_ticket),
         )
         .route(
-            "/api/erp/master-data/quality/tickets/:id/close",
+            "/api/erp/master-data/quality/tickets/{id}/close",
             post(close_quality_ticket),
         )
         .route(
-            "/api/erp/master-data/quality/tickets/:id/reject",
+            "/api/erp/master-data/quality/tickets/{id}/reject",
             post(reject_quality_ticket),
         )
         .route(
-            "/api/erp/master-data/quality/tickets/:id/history",
+            "/api/erp/master-data/quality/tickets/{id}/history",
             get(get_quality_ticket_history),
         )
         .route(
-            "/api/erp/master-data/quality/tickets/:id/escalate",
+            "/api/erp/master-data/quality/tickets/{id}/escalate",
             post(escalate_ticket),
         )
         .route(
@@ -530,23 +530,23 @@ pub fn create_routes() -> axum::Router<ApiState> {
             post(create_repair_workflow).get(list_repair_workflows),
         )
         .route(
-            "/api/erp/master-data/quality/repair-workflows/:id",
+            "/api/erp/master-data/quality/repair-workflows/{id}",
             get(get_repair_workflow),
         )
         .route(
-            "/api/erp/master-data/quality/repair-workflows/:id/execute",
+            "/api/erp/master-data/quality/repair-workflows/{id}/execute",
             post(execute_repair_workflow),
         )
         .route(
-            "/api/erp/master-data/quality/repair-workflows/:id/approve",
+            "/api/erp/master-data/quality/repair-workflows/{id}/approve",
             post(approve_repair_workflow),
         )
         .route(
-            "/api/erp/master-data/quality/repair-workflows/:id/verify",
+            "/api/erp/master-data/quality/repair-workflows/{id}/verify",
             post(verify_repair),
         )
         .route(
-            "/api/erp/master-data/quality/repair-workflows/:id/steps/:step_index/execute",
+            "/api/erp/master-data/quality/repair-workflows/{id}/steps/{step_index}/execute",
             post(execute_repair_step),
         )
         // V42.0 AC-14: 数据所有权管理
@@ -555,25 +555,25 @@ pub fn create_routes() -> axum::Router<ApiState> {
             post(create_data_domain).get(list_data_domains),
         )
         .route(
-            "/api/erp/master-data/domains/:id",
+            "/api/erp/master-data/domains/{id}",
             get(get_data_domain).put(update_data_domain),
         )
         .route(
-            "/api/erp/master-data/ownership-matrix/:entity_type",
+            "/api/erp/master-data/ownership-matrix/{entity_type}",
             get(get_ownership_matrix).put(set_ownership_matrix),
         )
         .route(
-            "/api/erp/master-data/entities/:entity_type/owner",
+            "/api/erp/master-data/entities/{entity_type}/owner",
             get(get_entity_owner),
         )
         // V43.0 AC-15: 主数据图谱
         .route("/api/erp/master-data/graph", get(get_master_data_graph))
         .route(
-            "/api/erp/master-data/graph/nodes/:node_id",
+            "/api/erp/master-data/graph/nodes/{node_id}",
             get(get_graph_node),
         )
         .route(
-            "/api/erp/master-data/graph/nodes/:node_id/neighbors",
+            "/api/erp/master-data/graph/nodes/{node_id}/neighbors",
             get(get_node_neighbors),
         )
         .route(
@@ -581,7 +581,7 @@ pub fn create_routes() -> axum::Router<ApiState> {
             get(get_shortest_path),
         )
         .route(
-            "/api/erp/master-data/graph/nodes/:node_id/multi-hop",
+            "/api/erp/master-data/graph/nodes/{node_id}/multi-hop",
             get(multi_hop_traversal),
         )
         .route("/api/erp/master-data/graph/stats", get(get_graph_stats))
@@ -591,7 +591,7 @@ pub fn create_routes() -> axum::Router<ApiState> {
             get(list_concepts),
         )
         .route(
-            "/api/erp/master-data/knowledge/concepts/:concept_id",
+            "/api/erp/master-data/knowledge/concepts/{concept_id}",
             get(get_concept),
         )
         .route("/api/erp/master-data/knowledge/triples", get(list_triples))
@@ -624,11 +624,11 @@ pub fn create_routes() -> axum::Router<ApiState> {
             post(create_sync_job_v2).get(list_sync_jobs_v2),
         )
         .route(
-            "/api/erp/master-data/sync/v2/jobs/:id",
+            "/api/erp/master-data/sync/v2/jobs/{id}",
             get(get_sync_job_v2),
         )
         .route(
-            "/api/erp/master-data/sync/v2/dead-letters/:id/retry",
+            "/api/erp/master-data/sync/v2/dead-letters/{id}/retry",
             post(retry_dead_letter_v2),
         )
         .route(
@@ -645,16 +645,16 @@ pub fn create_routes() -> axum::Router<ApiState> {
             post(mdm_service_register),
         )
         .route(
-            "/api/erp/master-data/services/:service_id/deregister",
+            "/api/erp/master-data/services/{service_id}/deregister",
             post(mdm_service_deregister),
         )
         .route(
-            "/api/erp/master-data/services/:service_id/heartbeat",
+            "/api/erp/master-data/services/{service_id}/heartbeat",
             post(mdm_service_heartbeat),
         )
         .route("/api/erp/master-data/services", get(mdm_service_list))
         .route(
-            "/api/erp/master-data/services/:service_id/health",
+            "/api/erp/master-data/services/{service_id}/health",
             get(mdm_service_health),
         )
         // V44.0 AC-16: MDM API 网关层
@@ -673,7 +673,7 @@ pub fn create_routes() -> axum::Router<ApiState> {
         .route("/api/erp/master-data/gateway/stats", get(mdm_gateway_stats))
         // V45.0 AC-17: 主数据质量 AI
         .route(
-            "/api/erp/master-data/quality-ai/score/:id",
+            "/api/erp/master-data/quality-ai/score/{id}",
             post(quality_ai_score_entity),
         )
         .route(
@@ -685,7 +685,7 @@ pub fn create_routes() -> axum::Router<ApiState> {
             get(quality_ai_get_anomalies),
         )
         .route(
-            "/api/erp/master-data/quality-ai/predict/:id",
+            "/api/erp/master-data/quality-ai/predict/{id}",
             post(quality_ai_predict_quality),
         )
         .route(
@@ -694,7 +694,7 @@ pub fn create_routes() -> axum::Router<ApiState> {
         )
         // V45.0 AC-17: 智能匹配
         .route(
-            "/api/erp/master-data/matching/find-matches/:id",
+            "/api/erp/master-data/matching/find-matches/{id}",
             post(matching_find_matches),
         )
         .route(
@@ -711,7 +711,7 @@ pub fn create_routes() -> axum::Router<ApiState> {
         )
         // V45.0 AC-17: 自动分类
         .route(
-            "/api/erp/master-data/classification/classify/:id",
+            "/api/erp/master-data/classification/classify/{id}",
             post(classification_classify_entity),
         )
         .route(
@@ -719,7 +719,7 @@ pub fn create_routes() -> axum::Router<ApiState> {
             post(classification_batch_classify),
         )
         .route(
-            "/api/erp/master-data/classification/suggest-tags/:id",
+            "/api/erp/master-data/classification/suggest-tags/{id}",
             get(classification_suggest_tags),
         )
         .route(
@@ -4616,7 +4616,7 @@ async fn build_lineage_for_master_data(
             direction: "downstream".to_string(),
         });
 
-        let erp_service_id = "service:erp".to_string();
+        let erp_service_id = "service{erp}".to_string();
         add_node(
             nodes,
             node_ids,
@@ -4692,7 +4692,7 @@ async fn build_lineage_for_domain(
         }
     }
 
-    let erp_service_id = "service:erp".to_string();
+    let erp_service_id = "service{erp}".to_string();
     add_node(
         nodes,
         node_ids,
@@ -4732,7 +4732,7 @@ async fn build_full_lineage_graph(
 
     if let Ok(rows) = rows {
         use sqlx::Row;
-        let erp_service_id = "service:erp".to_string();
+        let erp_service_id = "service{erp}".to_string();
         add_node(
             nodes,
             node_ids,
@@ -4891,7 +4891,7 @@ pub async fn get_lineage_downstream(
             },
         );
 
-        let erp_service_id = "service:erp".to_string();
+        let erp_service_id = "service{erp}".to_string();
         add_node(
             &mut nodes,
             &mut node_ids,
@@ -4925,7 +4925,7 @@ pub async fn get_lineage_downstream(
                 },
             );
             edges.push(LineageEdge {
-                source: "service:erp".to_string(),
+                source: "service{erp}".to_string(),
                 target: entity_node_id,
                 edge_type: "dependency".to_string(),
                 direction: "downstream".to_string(),
@@ -11639,7 +11639,7 @@ fn predict_quality_internal(
 
 // ==================== 质量 AI handlers ====================
 
-/// POST /quality-ai/score/:id — 单实体质量评分
+/// POST /quality-ai/score/{id} — 单实体质量评分
 pub async fn quality_ai_score_entity(
     State(state): State<ApiState>,
     Path(entity_id): Path<String>,
@@ -11777,7 +11777,7 @@ pub async fn quality_ai_get_anomalies(
     ))
 }
 
-/// POST /quality-ai/predict/:id — 质量预测
+/// POST /quality-ai/predict/{id} — 质量预测
 pub async fn quality_ai_predict_quality(
     State(state): State<ApiState>,
     Path(entity_id): Path<String>,
@@ -12270,7 +12270,7 @@ async fn ensure_smart_matcher_initialized() {
 
 // ==================== 智能匹配 handlers ====================
 
-/// POST /matching/find-matches/:id — 为指定实体查找匹配
+/// POST /matching/find-matches/{id} — 为指定实体查找匹配
 pub async fn matching_find_matches(
     State(state): State<ApiState>,
     Path(source_id): Path<String>,
@@ -13039,16 +13039,16 @@ fn suggest_tags_internal(profile: &EntityProfile, categories: &[Category]) -> Ve
     // 同类实体共享标签（简化：按域预置）
     match profile.domain.as_str() {
         "customer" => {
-            tags.push("type:business".to_string());
+            tags.push("type{business}".to_string());
             if profile.last_synced_days_ago > 30 {
-                tags.push("alert:stale".to_string());
+                tags.push("alert{stale}".to_string());
             }
         }
         "supplier" => {
             if let Some(Some(grade)) = profile.fields.get("grade") {
                 tags.push(format!("grade:{}", grade));
             }
-            tags.push("type:vendor".to_string());
+            tags.push("type{vendor}".to_string());
         }
         "material" => {
             if let Some(Some(cat)) = profile.fields.get("category") {
@@ -13092,7 +13092,7 @@ async fn ensure_auto_classifier_initialized() {
 
 // ==================== 自动分类 handlers ====================
 
-/// POST /classification/classify/:id — 分类单个实体
+/// POST /classification/classify/{id} — 分类单个实体
 pub async fn classification_classify_entity(
     State(state): State<ApiState>,
     Path(entity_id): Path<String>,
@@ -13149,7 +13149,7 @@ pub async fn classification_batch_classify(
     ))
 }
 
-/// GET /classification/suggest-tags/:id — 标签推荐
+/// GET /classification/suggest-tags/{id} — 标签推荐
 pub async fn classification_suggest_tags(
     State(state): State<ApiState>,
     Path(entity_id): Path<String>,

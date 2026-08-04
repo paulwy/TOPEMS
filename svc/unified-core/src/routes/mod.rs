@@ -5,6 +5,8 @@
 //! with all permission middleware layers applied) and returns a `Router<AppState>`
 //! that the caller finalises with telemetry, CORS, prometheus and state.
 
+#![allow(deprecated)]
+
 mod communication;
 mod doc;
 mod file;

@@ -373,3 +373,178 @@ impl EventPublisher {
             .await
     }
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use crate::event::event_types::Event;
+    use crate::test_helpers::redis_pubsub::{self, ActiveSubscription};
+    use serde_json::json;
+    use uuid::Uuid;
+
+    // =====================================================================
+    // 说明：以下所有 Redis 集成测试统一使用 crate::test_helpers::redis_pubsub
+    //       提供的 prepare_subscription + wait_for_match 两阶段 API，
+    //       解决 Rust Future 惰性执行导致的"发布先于订阅登记"竞态问题。
+    //       任何将来新增 EventPublisher / EventSubscriber 相关集成测试，
+    //       都必须遵循此模式，禁止直接"spawn 订阅再立刻发布"。
+    // =====================================================================
+
+    #[tokio::test]
+    async fn test_event_publisher_roundtrip() {
+        let Some(client) = redis_pubsub::skip_without_redis().await else { return };
+
+        let publisher = EventPublisher::new("test-publisher-service")
+            .expect("EventPublisher 构造失败（Redis Client::open 惰性初始化通常不会失败）");
+
+        let test_project_id = Uuid::new_v4();
+        let test_owner_id = Uuid::new_v4();
+        let expected_project_name = "集成测试项目".to_string();
+        let channel_name = format!("topems:events:{}", EventType::PmProjectCreated);
+
+        // 提前克隆需要被多次 move 的变量，避免单次 move 导致后续使用冲突
+        let matcher_project_id = test_project_id;
+        let matcher_name = expected_project_name.clone();
+        let publish_name = expected_project_name.clone();
+        let assert_name = expected_project_name;
+
+        // ——— 阶段一：使用通用两阶段工具，确认订阅在服务端完全生效 ———
+        let subscription: ActiveSubscription<Event> =
+            redis_pubsub::prepare_subscription(&client, &channel_name, move |e: &Event| {
+                // 严格按 event_type + 解析后的 payload 字段双重匹配，
+                // 避免并发测试收到其他频道/事件的消息（串扰）
+                e.event_type == EventType::PmProjectCreated
+                    && e.parse_payload::<PmProjectCreatedPayload>()
+                        .map(|p| p.project_id == matcher_project_id
+                            && p.project_name == matcher_name)
+                        .unwrap_or(false)
+            })
+            .await;
+
+        // ——— 阶段二：订阅就绪后发布 ———
+        let publish_task = tokio::spawn(async move {
+            publisher
+                .publish_pm_project_created(test_project_id, &publish_name, test_owner_id)
+                .await
+        });
+
+        // ——— 阶段三：等待匹配事件并断言 ———
+        let (received_event, publish_result) = tokio::join!(
+            subscription.wait_for_match(),
+            publish_task,
+        );
+        assert!(publish_result.is_ok(), "publish task 异常终止: {publish_result:?}");
+        let inner = publish_result.unwrap();
+        assert!(inner.is_ok(), "EventPublisher::publish 失败: {inner:?}");
+
+        assert_eq!(received_event.event_type, EventType::PmProjectCreated);
+        assert_eq!(received_event.source, "test-publisher-service");
+        let payload = received_event
+            .parse_payload::<PmProjectCreatedPayload>()
+            .expect("payload 解析失败");
+        assert_eq!(payload.project_id, test_project_id);
+        assert_eq!(payload.project_name, assert_name);
+        assert_eq!(payload.owner_id, test_owner_id);
+    }
+
+    #[tokio::test]
+    async fn test_event_publisher_concurrent_no_crosstalk() {
+        let Some(client) = redis_pubsub::skip_without_redis().await else { return };
+
+        // 并发 6 对订阅-发布，使用同一个 PM 事件频道，验证不会串扰
+        const N: usize = 6;
+        let mut handles = Vec::with_capacity(N);
+
+        for i in 0..N {
+            let client = client.clone();
+            handles.push(tokio::spawn(async move {
+                let publisher = EventPublisher::new(&format!("concurrent-pub-{i}")).unwrap();
+                let project_id = Uuid::new_v4();
+                let owner_id = Uuid::new_v4();
+                let project_name = format!("并发项目{i}");
+                let channel_name = format!("topems:events:{}", EventType::PmProjectCreated);
+
+                // —— 阶段一：订阅完全就绪 ——
+                let expected_project_id = project_id;
+                let expected_name = project_name.clone();
+                let subscription = redis_pubsub::prepare_subscription(
+                    &client,
+                    &channel_name,
+                    move |e: &Event| {
+                        e.event_type == EventType::PmProjectCreated
+                            && e.parse_payload::<PmProjectCreatedPayload>()
+                                .map(|p| p.project_id == expected_project_id
+                                    && p.project_name == expected_name)
+                                .unwrap_or(false)
+                    },
+                )
+                .await;
+
+                // —— 阶段二：随机打乱发布顺序 ——
+                let delay_ms = (i * 13) % 17;
+                tokio::time::sleep(tokio::time::Duration::from_millis(delay_ms as u64)).await;
+
+                // —— 阶段三：发布并等待匹配 ——
+                let publish_fut = publisher.publish_pm_project_created(
+                    project_id,
+                    &project_name,
+                    owner_id,
+                );
+                let (received, publish_res) = tokio::join!(
+                    subscription.wait_for_match(),
+                    publish_fut,
+                );
+                assert!(publish_res.is_ok(), "第{i}个 publish 失败: {publish_res:?}");
+
+                let payload = received.parse_payload::<PmProjectCreatedPayload>().unwrap();
+                assert_eq!(payload.project_id, project_id, "第{i}对发生并发串扰！");
+                assert_eq!(payload.project_name, project_name);
+                (i, project_id)
+            }));
+        }
+
+        let mut results = Vec::with_capacity(N);
+        for h in handles {
+            results.push(h.await.expect("并发子任务 panic"));
+        }
+        assert_eq!(results.len(), N);
+        // 确保每个事件 ID 不重复（测试数据构造正确）
+        let mut ids: Vec<Uuid> = results.iter().map(|(_, id)| *id).collect();
+        ids.sort();
+        ids.dedup();
+        assert_eq!(ids.len(), N);
+    }
+
+    // 烟雾测试：无 Redis 时验证 EventPublisher::new 不会 panic（惰性连接特性）
+    #[test]
+    fn test_event_publisher_new_is_lazy() {
+        // EventPublisher::new 仅做 Client::open，不建立实际连接。
+        // 此测试保证：即使本地完全没有 Redis，此构造函数也不会 panic。
+        let publisher = EventPublisher::new("lazy-connect-test");
+        assert!(publisher.is_ok(), "EventPublisher::new 惰性构造应始终成功");
+    }
+
+    #[test]
+    fn test_event_payload_structs_serialize() {
+        // 确保所有 Payload 类型都能正确序列化（不依赖 Redis 环境）
+        let payload = PmProjectCreatedPayload {
+            project_id: Uuid::nil(),
+            project_name: "x".into(),
+            owner_id: Uuid::nil(),
+        };
+        let json = serde_json::to_string(&payload).unwrap();
+        assert!(json.contains("\"project_id\""));
+        assert!(json.contains("\"x\""));
+
+        let hrm = HrmEmployeeCreatedPayload {
+            employee_id: Uuid::nil(),
+            name: "张三".into(),
+            email: "a@b.c".into(),
+            department_id: None,
+        };
+        let json = serde_json::to_value(&hrm).unwrap();
+        assert_eq!(json["name"], "张三");
+        assert_eq!(json["email"], "a@b.c");
+        assert_eq!(json["department_id"], json!(null));
+    }
+}

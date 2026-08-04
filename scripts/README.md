@@ -27,12 +27,13 @@ scripts/
 │       └── topems-docker.sh   # Docker Compose 部署
 │
 ├── performance/               # 【性能测试】
-│   ├── run-all-tests.sh
-│   ├── run_benchmark.sh
-│   ├── benchmark.sh
-│   ├── baseline.md
-│   ├── scm-performance-test.js
-│   └── database-performance-test.js
+│   ├── run-e2e-performance.sh # 一键 E2E：启动后端 → 执行测试 → 清理
+│   ├── run-all-tests.sh       # k6 性能测试套件（支持冒烟/完整双模式）
+│   ├── run_benchmark.sh       # curl 基准测试一键运行器
+│   ├── benchmark.sh           # curl 顺序延迟采样（单客户端）
+│   ├── scm-performance-test.js    # k6 SCM 服务并发性能测试
+│   ├── database-performance-test.js  # k6 数据库并发性能测试
+│   └── baseline.md            # 性能基线与方法论文档
 │
 ├── security/                  # 【安全扫描】
 │   ├── scan.sh
@@ -118,7 +119,44 @@ pm          svc/pm                 topems-pm             8023
 |------|------|
 | `./scripts/test/run-core-tests.sh` | 核心模块权限测试 |
 | `./scripts/test/run-iam-tests.sh` | IAM 模块测试 |
-| `./scripts/performance/run-all-tests.sh` | 性能测试套件 |
+| `./scripts/performance/run-all-tests.sh` | 性能测试套件（支持冒烟/完整双模式） |
+| `./scripts/performance/run-e2e-performance.sh` | **一键 E2E 性能测试**（自动启动后端 → 执行测试 → 清理） |
+
+#### 性能测试套件
+
+性能测试套件支持两种运行模式：
+
+| 模式 | 命令 | VUs | Duration | 需后端 | 用途 |
+|------|------|-----|----------|--------|------|
+| 冒烟测试 | `SMOKE=true ./scripts/performance/run-all-tests.sh` | 1 | 5s | 否 | CI 验证脚本无语法错误 |
+| 完整性能测试 | `./scripts/performance/run-all-tests.sh` | 50-100 | 60-120s | 是 | 真实性能评估 |
+
+环境变量：
+- `SMOKE=true|false` — 切换测试模式（默认 `false`）
+- `BASE_URL=url` — 后端服务地址（默认 `http://localhost:8040`）
+
+详细配置见 `scripts/performance/` 目录下各脚本顶部的 JSDoc 注释。
+
+#### 一键 E2E 性能测试
+
+`run-e2e-performance.sh` 自动完成「启动基础设施 → 编译后端 → 执行测试 → 输出报告 → 清理」全流程：
+
+```bash
+# 一键完整性能测试（自动启动 PostgreSQL + Redis + SCM 服务）
+./scripts/performance/run-e2e-performance.sh
+
+# 冒烟测试（快速验证，无需后端）
+./scripts/performance/run-e2e-performance.sh --smoke
+
+# 测试后保留服务运行
+./scripts/performance/run-e2e-performance.sh --keep
+
+# 跳过启动（已有后端在运行）
+./scripts/performance/run-e2e-performance.sh --skip-start
+
+# 指定后端地址
+./scripts/performance/run-e2e-performance.sh --base-url http://192.168.1.100:8040
+```
 
 ### 部署
 
@@ -174,6 +212,13 @@ pm          svc/pm                 topems-pm             8023
 | mobile | 移动端后端 | 8070 | |
 | gis | 地理信息 | 8071 | |
 | integration | 系统集成 | 8072 | |
+| **扩展服务** | | | **8082-8090** |
+| search | 搜索服务 | 8082 | |
+| communication | 通讯服务 | 8084 | |
+| billing | 计费服务 | 8085 | |
+| ticket | 工单服务 | 8086 | |
+| feedback | 反馈服务 | 8087 | |
+| master-data | 主数据管理 | 8090 | |
 | **前端** | | | |
 | web | 前端应用 | 3000 | |
 
