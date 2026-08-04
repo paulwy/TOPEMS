@@ -343,7 +343,10 @@ mod tests {
 
         let sub = EventSubscriber::new("builder-test")
             .unwrap()
-            .subscribe(vec![EventType::PmProjectCreated, EventType::PmTaskCreated], noop)
+            .subscribe(
+                vec![EventType::PmProjectCreated, EventType::PmTaskCreated],
+                noop,
+            )
             .subscribe_hrm_employee_events(|_e| Box::pin(async {}))
             .subscribe_master_data(
                 vec![MasterDataDomain::Customer, MasterDataDomain::Supplier],
@@ -369,7 +372,9 @@ mod tests {
     ///   3) Subscriber handler 内部通过 oneshot 把收到的事件回传给测试断言。
     #[tokio::test]
     async fn test_event_subscriber_receives_publisher_events() {
-        let Some(redis_client) = redis_pubsub::skip_without_redis().await else { return };
+        let Some(redis_client) = redis_pubsub::skip_without_redis().await else {
+            return;
+        };
 
         // —— 准备：生成唯一的事件标识，防止并发测试串扰 ——
         let test_project_id = Uuid::new_v4();
@@ -456,7 +461,10 @@ mod tests {
         let publish_res = publisher
             .publish_pm_project_created(test_project_id, &project_name, test_owner_id)
             .await;
-        assert!(publish_res.is_ok(), "EventPublisher 发布失败: {publish_res:?}");
+        assert!(
+            publish_res.is_ok(),
+            "EventPublisher 发布失败: {publish_res:?}"
+        );
 
         // —— 步骤六：等待 Subscriber handler 中 oneshot 回传的事件 ——
         let received = tokio::time::timeout(tokio::time::Duration::from_secs(10), rx)
@@ -466,9 +474,7 @@ mod tests {
 
         assert_eq!(received.event_type, EventType::PmProjectCreated);
         assert_eq!(received.source, "publisher-e2e-test");
-        let payload = received
-            .parse_payload::<PmProjectCreatedPayload>()
-            .unwrap();
+        let payload = received.parse_payload::<PmProjectCreatedPayload>().unwrap();
         assert_eq!(payload.project_id, test_project_id);
         assert_eq!(payload.project_name, project_name);
         assert_eq!(payload.owner_id, test_owner_id);
@@ -484,7 +490,9 @@ mod tests {
 
     #[tokio::test]
     async fn test_event_subscriber_receives_mdm_event() {
-        let Some(redis_client) = redis_pubsub::skip_without_redis().await else { return };
+        let Some(redis_client) = redis_pubsub::skip_without_redis().await else {
+            return;
+        };
 
         let tenant_id = Uuid::new_v4();
         let master_data_id = "sub-mdm-test-cust-001".to_string();
@@ -506,27 +514,31 @@ mod tests {
         let channel = mdm_event.channel();
 
         // 步骤一：通用工具确保订阅就绪（1/2）
-        let _guard: ActiveSubscription<MasterDataEvent> =
-            redis_pubsub::prepare_subscription(&redis_client, &channel, move |e: &MasterDataEvent| {
-                e.event_id == expected_event_id
-            })
-            .await;
+        let _guard: ActiveSubscription<MasterDataEvent> = redis_pubsub::prepare_subscription(
+            &redis_client,
+            &channel,
+            move |e: &MasterDataEvent| e.event_id == expected_event_id,
+        )
+        .await;
 
         // 步骤二：启动 EventSubscriber，监听 Customer 域 MDM 事件
         let (tx, rx) = oneshot::channel::<MasterDataEvent>();
         let tx = Arc::new(Mutex::new(Some(tx)));
         let subscriber = EventSubscriber::new("subscriber-mdm-test")
             .unwrap()
-            .subscribe_master_data(vec![MasterDataDomain::Customer], move |event: MasterDataEvent| {
-                let tx = Arc::clone(&tx);
-                Box::pin(async move {
-                    if event.event_id == expected_event_id {
-                        if let Some(oneshot_tx) = tx.lock().await.take() {
-                            let _ = oneshot_tx.send(event);
+            .subscribe_master_data(
+                vec![MasterDataDomain::Customer],
+                move |event: MasterDataEvent| {
+                    let tx = Arc::clone(&tx);
+                    Box::pin(async move {
+                        if event.event_id == expected_event_id {
+                            if let Some(oneshot_tx) = tx.lock().await.take() {
+                                let _ = oneshot_tx.send(event);
+                            }
                         }
-                    }
-                })
-            });
+                    })
+                },
+            );
 
         let handle = tokio::spawn(async move {
             let _ = subscriber.start_listening().await;
@@ -534,7 +546,10 @@ mod tests {
 
         // 步骤三：确认 Subscriber 的订阅也登记到 Redis（≥ 2 个订阅者）
         {
-            let mut probe = redis_client.get_multiplexed_async_connection().await.unwrap();
+            let mut probe = redis_client
+                .get_multiplexed_async_connection()
+                .await
+                .unwrap();
             let deadline = tokio::time::Instant::now() + tokio::time::Duration::from_secs(3);
             loop {
                 let result: Result<Vec<(String, u64)>, _> = redis::cmd("PUBSUB")

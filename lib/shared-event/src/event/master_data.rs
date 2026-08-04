@@ -433,23 +433,53 @@ mod tests {
             ("customer", MasterDataDomain::Customer, "cust", "customers"),
             ("supplier", MasterDataDomain::Supplier, "supp", "suppliers"),
             ("material", MasterDataDomain::Material, "mat", "materials"),
-            ("organization", MasterDataDomain::Organization, "org", "organizations"),
+            (
+                "organization",
+                MasterDataDomain::Organization,
+                "org",
+                "organizations",
+            ),
             ("employee", MasterDataDomain::Employee, "emp", "employees"),
-            ("account_subject", MasterDataDomain::AccountSubject, "acct", "account_subjects"),
+            (
+                "account_subject",
+                MasterDataDomain::AccountSubject,
+                "acct",
+                "account_subjects",
+            ),
             // 短前缀（parse_master_data_id 会传入首段 prefix）
             ("cust", MasterDataDomain::Customer, "cust", "customers"),
             ("supp", MasterDataDomain::Supplier, "supp", "suppliers"),
             ("mat", MasterDataDomain::Material, "mat", "materials"),
-            ("org", MasterDataDomain::Organization, "org", "organizations"),
+            (
+                "org",
+                MasterDataDomain::Organization,
+                "org",
+                "organizations",
+            ),
             ("emp", MasterDataDomain::Employee, "emp", "employees"),
-            ("acct", MasterDataDomain::AccountSubject, "acct", "account_subjects"),
+            (
+                "acct",
+                MasterDataDomain::AccountSubject,
+                "acct",
+                "account_subjects",
+            ),
             // 表名（调试 / 直接写 SQL 结果映射）
             ("customers", MasterDataDomain::Customer, "cust", "customers"),
             ("suppliers", MasterDataDomain::Supplier, "supp", "suppliers"),
             ("materials", MasterDataDomain::Material, "mat", "materials"),
-            ("organizations", MasterDataDomain::Organization, "org", "organizations"),
+            (
+                "organizations",
+                MasterDataDomain::Organization,
+                "org",
+                "organizations",
+            ),
             ("employees", MasterDataDomain::Employee, "emp", "employees"),
-            ("account_subjects", MasterDataDomain::AccountSubject, "acct", "account_subjects"),
+            (
+                "account_subjects",
+                MasterDataDomain::AccountSubject,
+                "acct",
+                "account_subjects",
+            ),
         ];
 
         for &(code, expected_domain, expected_prefix, expected_table) in cases {
@@ -467,17 +497,17 @@ mod tests {
         // ===== 非法输入：大小写敏感、拼写错误、分隔符/空白不匹配 =====
         let invalid_inputs: &[&str] = &[
             "",
-            "Customer",              // 大写首字母，严格小写匹配
+            "Customer", // 大写首字母，严格小写匹配
             "CUSTOMER",
-            "customer ",             // 尾随空格
+            "customer ", // 尾随空格
             "Supplier",
-            "supplier_",             // 尾随下划线（非 plural 也非 code）
-            "account-subject",       // 短横线（code 是下划线，prefix 是 acct）
-            "user",                  // 完全不属于 6 个域
+            "supplier_",       // 尾随下划线（非 plural 也非 code）
+            "account-subject", // 短横线（code 是下划线，prefix 是 acct）
+            "user",            // 完全不属于 6 个域
             "MATERIAL",
-            "ACCT",                  // 大写的 prefix
-            "  cust",                // 前导空格
-            "customer\nsupplier",    // 含换行
+            "ACCT",               // 大写的 prefix
+            "  cust",             // 前导空格
+            "customer\nsupplier", // 含换行
         ];
         for bad in invalid_inputs {
             let err = MasterDataDomain::from_str(bad)
@@ -504,16 +534,21 @@ mod tests {
             ("cust-20260804-aaaaaaaa".into(), MasterDataDomain::Customer),
             ("supp-20260804-bbbbbbbb".into(), MasterDataDomain::Supplier),
             ("mat-20260804-cccccccc".into(), MasterDataDomain::Material),
-            ("org-20260804-dddddddd".into(), MasterDataDomain::Organization),
+            (
+                "org-20260804-dddddddd".into(),
+                MasterDataDomain::Organization,
+            ),
             ("emp-20260804-eeeeeeee".into(), MasterDataDomain::Employee),
-            ("acct-20260804-ffffffff".into(), MasterDataDomain::AccountSubject),
+            (
+                "acct-20260804-ffffffff".into(),
+                MasterDataDomain::AccountSubject,
+            ),
             // 额外边界：时间戳、随机段为空字符串，只要 prefix 合法仍能解析
             ("cust--".into(), MasterDataDomain::Customer),
         ];
         for (id, expected_domain) in &valid_ids {
             assert!(validate_master_data_id(id), "id {id} 应校验通过");
-            let (domain, original) =
-                parse_master_data_id(id).expect(&format!("id {id} 应被解析"));
+            let (domain, original) = parse_master_data_id(id).expect(&format!("id {id} 应被解析"));
             assert_eq!(&domain, expected_domain);
             assert_eq!(original, *id);
             // 反向一致性：用解析出的 domain 生成的新 id 前缀必须一致
@@ -559,7 +594,9 @@ mod tests {
 
     #[tokio::test]
     async fn test_event_publish_and_subscribe() {
-        let Some(client) = redis_pubsub::skip_without_redis().await else { return };
+        let Some(client) = redis_pubsub::skip_without_redis().await else {
+            return;
+        };
 
         let tenant_id = Uuid::new_v4();
         let event = MasterDataEvent::new(
@@ -577,20 +614,19 @@ mod tests {
         // ——— 阶段一：先 await 订阅完全就绪（SUBSCRIBE + PUBSUB NUMSUB 确认）———
         // 此 await 返回前，Redis 服务端已经把订阅者登记到订阅列表，
         // 之后立即 PUBLISH 也不会丢失消息。
-        let subscription: ActiveSubscription<MasterDataEvent> =
-            redis_pubsub::prepare_subscription(&client, &channel_name, move |e: &MasterDataEvent| {
-                e.event_id == expected_event_id
-            })
-            .await;
+        let subscription: ActiveSubscription<MasterDataEvent> = redis_pubsub::prepare_subscription(
+            &client,
+            &channel_name,
+            move |e: &MasterDataEvent| e.event_id == expected_event_id,
+        )
+        .await;
 
         // ——— 阶段二：订阅就绪后，再 spawn 发布任务 ———
         let publish_task = tokio::spawn(async move { event.publish().await });
 
         // ——— 阶段三：并发等待 publish 完成 + 匹配事件到达 ———
-        let (received_event, publish_result) = tokio::join!(
-            subscription.wait_for_match(),
-            publish_task,
-        );
+        let (received_event, publish_result) =
+            tokio::join!(subscription.wait_for_match(), publish_task,);
         assert!(publish_result.is_ok(), "publish 失败: {publish_result:?}");
         let publish_inner = publish_result.unwrap();
         assert!(publish_inner.is_ok(), "publish 内部错误: {publish_inner:?}");
@@ -705,15 +741,17 @@ mod tests {
         // 真实 publish 不作为断言失败的依据（网络环境可能缺 Redis）
         match event.publish().await {
             Ok(()) => {}
-            Err(_) => eprintln!(
-                "[skip] test_event_with_changed_fields: Redis 不可达，跳过 publish"
-            ),
+            Err(_) => {
+                eprintln!("[skip] test_event_with_changed_fields: Redis 不可达，跳过 publish")
+            }
         }
     }
 
     #[tokio::test]
     async fn test_event_deserialize_from_channel() {
-        let Some(client) = redis_pubsub::skip_without_redis().await else { return };
+        let Some(client) = redis_pubsub::skip_without_redis().await else {
+            return;
+        };
 
         let tenant_id = Uuid::new_v4();
         let original_event = MasterDataEvent::new(
@@ -731,20 +769,18 @@ mod tests {
         let channel_name = original_event.channel();
 
         // ——— 阶段一：await 订阅在 Redis 服务端完全登记 ———
-        let subscription: ActiveSubscription<MasterDataEvent> =
-            redis_pubsub::prepare_subscription(&client, &channel_name, move |e: &MasterDataEvent| {
-                e.event_id == expected_event_id
-            })
-            .await;
+        let subscription: ActiveSubscription<MasterDataEvent> = redis_pubsub::prepare_subscription(
+            &client,
+            &channel_name,
+            move |e: &MasterDataEvent| e.event_id == expected_event_id,
+        )
+        .await;
 
         // ——— 阶段二：确定订阅就绪后再发布 ———
         let publish_task = tokio::spawn(async move { original_event.publish().await });
 
         // ——— 阶段三：等待结果 ———
-        let (received_event, _) = tokio::join!(
-            subscription.wait_for_match(),
-            publish_task,
-        );
+        let (received_event, _) = tokio::join!(subscription.wait_for_match(), publish_task,);
 
         assert_eq!(received_event.event_id, expected_event_id);
         assert_eq!(received_event.domain, MasterDataDomain::Supplier);
@@ -765,7 +801,9 @@ mod tests {
     ///   - 如果未按 event_id 过滤，会收到并发测试的其他对消息，断言错误。
     #[tokio::test(flavor = "multi_thread", worker_threads = 4)]
     async fn test_concurrent_same_channel_no_crosstalk() {
-        let Some(client) = redis_pubsub::skip_without_redis().await else { return };
+        let Some(client) = redis_pubsub::skip_without_redis().await else {
+            return;
+        };
 
         // N 足够大（8）+ 多线程 runtime，能稳定触发"发布与订阅"的竞态窗口
         const N: usize = 8;
@@ -791,11 +829,12 @@ mod tests {
                 let channel_name = event.channel(); // 所有对都用 topems:master_data:cust
 
                 // —— 阶段一：先完成订阅登记 ——
-                let subscription =
-                    redis_pubsub::prepare_subscription(&client, &channel_name, move |e: &MasterDataEvent| {
-                        e.event_id == expected_event_id
-                    })
-                    .await;
+                let subscription = redis_pubsub::prepare_subscription(
+                    &client,
+                    &channel_name,
+                    move |e: &MasterDataEvent| e.event_id == expected_event_id,
+                )
+                .await;
 
                 // —— 阶段二：随机 sleep 0~10ms，刻意打乱发布顺序，验证不会互相影响 ——
                 let delay_ms = (i * 7) % 11;

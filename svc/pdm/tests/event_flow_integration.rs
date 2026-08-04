@@ -7,9 +7,7 @@
 //! 运行命令:
 //! cargo test -p topems-pdm --test event_flow_integration -- --test-threads=1
 
-use topems_shared::event::{
-    MasterDataAction, MasterDataDomain, MasterDataEvent,
-};
+use topems_shared::event::{MasterDataAction, MasterDataDomain, MasterDataEvent};
 use topems_shared::test_helpers::redis_pubsub::{self, ActiveSubscription};
 use uuid::Uuid;
 
@@ -25,7 +23,9 @@ use uuid::Uuid;
 /// 会尝试 publish_to_rabbitmq，但 RabbitMQ 不可用时不影响 Redis publish 路径）。
 #[tokio::test]
 async fn test_pdm_material_event_publish_and_subscribe() {
-    let Some(client) = redis_pubsub::skip_without_redis().await else { return };
+    let Some(client) = redis_pubsub::skip_without_redis().await else {
+        return;
+    };
 
     let tenant_id = Uuid::new_v4();
     let material_id = Uuid::new_v4();
@@ -67,11 +67,11 @@ async fn test_pdm_material_event_publish_and_subscribe() {
     let publish_task = tokio::spawn(async move { event.publish().await });
 
     // ——— 阶段三：等待匹配事件并断言 ———
-    let (received, publish_result) = tokio::join!(
-        subscription.wait_for_match(),
-        publish_task,
+    let (received, publish_result) = tokio::join!(subscription.wait_for_match(), publish_task,);
+    assert!(
+        publish_result.is_ok(),
+        "publish task 异常: {publish_result:?}"
     );
-    assert!(publish_result.is_ok(), "publish task 异常: {publish_result:?}");
     let inner = publish_result.unwrap();
     assert!(inner.is_ok(), "MasterDataEvent::publish 失败: {inner:?}");
 
@@ -85,7 +85,9 @@ async fn test_pdm_material_event_publish_and_subscribe() {
 /// 并发测试：多组 Material 事件同时发布，验证 event_id 过滤不串扰。
 #[tokio::test(flavor = "multi_thread", worker_threads = 4)]
 async fn test_pdm_material_event_concurrent_no_crosstalk() {
-    let Some(client) = redis_pubsub::skip_without_redis().await else { return };
+    let Some(client) = redis_pubsub::skip_without_redis().await else {
+        return;
+    };
 
     const N: usize = 5;
     let tenant_id = Uuid::new_v4();

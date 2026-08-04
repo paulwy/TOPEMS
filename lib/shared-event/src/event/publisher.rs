@@ -392,7 +392,9 @@ mod tests {
 
     #[tokio::test]
     async fn test_event_publisher_roundtrip() {
-        let Some(client) = redis_pubsub::skip_without_redis().await else { return };
+        let Some(client) = redis_pubsub::skip_without_redis().await else {
+            return;
+        };
 
         let publisher = EventPublisher::new("test-publisher-service")
             .expect("EventPublisher 构造失败（Redis Client::open 惰性初始化通常不会失败）");
@@ -415,8 +417,9 @@ mod tests {
                 // 避免并发测试收到其他频道/事件的消息（串扰）
                 e.event_type == EventType::PmProjectCreated
                     && e.parse_payload::<PmProjectCreatedPayload>()
-                        .map(|p| p.project_id == matcher_project_id
-                            && p.project_name == matcher_name)
+                        .map(|p| {
+                            p.project_id == matcher_project_id && p.project_name == matcher_name
+                        })
                         .unwrap_or(false)
             })
             .await;
@@ -429,11 +432,12 @@ mod tests {
         });
 
         // ——— 阶段三：等待匹配事件并断言 ———
-        let (received_event, publish_result) = tokio::join!(
-            subscription.wait_for_match(),
-            publish_task,
+        let (received_event, publish_result) =
+            tokio::join!(subscription.wait_for_match(), publish_task,);
+        assert!(
+            publish_result.is_ok(),
+            "publish task 异常终止: {publish_result:?}"
         );
-        assert!(publish_result.is_ok(), "publish task 异常终止: {publish_result:?}");
         let inner = publish_result.unwrap();
         assert!(inner.is_ok(), "EventPublisher::publish 失败: {inner:?}");
 
@@ -449,7 +453,9 @@ mod tests {
 
     #[tokio::test]
     async fn test_event_publisher_concurrent_no_crosstalk() {
-        let Some(client) = redis_pubsub::skip_without_redis().await else { return };
+        let Some(client) = redis_pubsub::skip_without_redis().await else {
+            return;
+        };
 
         // 并发 6 对订阅-发布，使用同一个 PM 事件频道，验证不会串扰
         const N: usize = 6;
@@ -467,33 +473,27 @@ mod tests {
                 // —— 阶段一：订阅完全就绪 ——
                 let expected_project_id = project_id;
                 let expected_name = project_name.clone();
-                let subscription = redis_pubsub::prepare_subscription(
-                    &client,
-                    &channel_name,
-                    move |e: &Event| {
+                let subscription =
+                    redis_pubsub::prepare_subscription(&client, &channel_name, move |e: &Event| {
                         e.event_type == EventType::PmProjectCreated
                             && e.parse_payload::<PmProjectCreatedPayload>()
-                                .map(|p| p.project_id == expected_project_id
-                                    && p.project_name == expected_name)
+                                .map(|p| {
+                                    p.project_id == expected_project_id
+                                        && p.project_name == expected_name
+                                })
                                 .unwrap_or(false)
-                    },
-                )
-                .await;
+                    })
+                    .await;
 
                 // —— 阶段二：随机打乱发布顺序 ——
                 let delay_ms = (i * 13) % 17;
                 tokio::time::sleep(tokio::time::Duration::from_millis(delay_ms as u64)).await;
 
                 // —— 阶段三：发布并等待匹配 ——
-                let publish_fut = publisher.publish_pm_project_created(
-                    project_id,
-                    &project_name,
-                    owner_id,
-                );
-                let (received, publish_res) = tokio::join!(
-                    subscription.wait_for_match(),
-                    publish_fut,
-                );
+                let publish_fut =
+                    publisher.publish_pm_project_created(project_id, &project_name, owner_id);
+                let (received, publish_res) =
+                    tokio::join!(subscription.wait_for_match(), publish_fut,);
                 assert!(publish_res.is_ok(), "第{i}个 publish 失败: {publish_res:?}");
 
                 let payload = received.parse_payload::<PmProjectCreatedPayload>().unwrap();

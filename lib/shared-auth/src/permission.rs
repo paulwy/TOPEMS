@@ -859,7 +859,8 @@ pub fn check_iam_permission(
         }
         // IAM-007: 跨租户访问 - 仅超级管理员或拥有 iam:cross_tenant 权限
         IamAction::CrossTenantAccess => {
-            if has_permission("iam:cross_tenant") || user_roles.iter().any(|r| r == "tenant_admin") {
+            if has_permission("iam:cross_tenant") || user_roles.iter().any(|r| r == "tenant_admin")
+            {
                 PermissionCheckResult::allow()
             } else {
                 PermissionCheckResult::deny("需要 iam:cross_tenant 权限或 tenant_admin 角色")
@@ -875,7 +876,10 @@ pub fn validate_permission_code(code: &str) -> Result<(), String> {
     let parts: Vec<&str> = code.split(':').collect();
 
     if parts.len() < 2 || parts.len() > 4 {
-        return Err(format!("权限码格式错误：需要 2-4 段（实际 {} 段）", parts.len()));
+        return Err(format!(
+            "权限码格式错误：需要 2-4 段（实际 {} 段）",
+            parts.len()
+        ));
     }
 
     let module = ModuleCode::from_str(parts[0]);
@@ -951,15 +955,13 @@ mod tests {
             &["iam:users_read".to_string()],
             IamAction::ListUsers,
         );
-        assert!(result.allowed, "拥有 iam:users_read 的普通用户应允许查看用户列表");
+        assert!(
+            result.allowed,
+            "拥有 iam:users_read 的普通用户应允许查看用户列表"
+        );
 
         // 无权限的普通用户
-        let result = check_iam_permission(
-            false,
-            &["user".to_string()],
-            &[],
-            IamAction::ListUsers,
-        );
+        let result = check_iam_permission(false, &["user".to_string()], &[], IamAction::ListUsers);
         assert!(!result.allowed, "无权限的普通用户不应允许查看用户列表");
         assert!(result.reason.unwrap().contains("iam:users_read"));
     }
@@ -1137,9 +1139,18 @@ mod tests {
         // 非法格式
         assert!(validate_permission_code("").is_err(), "空字符串");
         assert!(validate_permission_code("iam").is_err(), "缺少 action");
-        assert!(validate_permission_code("iam:users:read:all:extra").is_err(), "超过 4 段");
-        assert!(validate_permission_code("invalid_module:read").is_err(), "无效模块");
-        assert!(validate_permission_code("iam:invalid_action").is_err(), "无效动作");
+        assert!(
+            validate_permission_code("iam:users:read:all:extra").is_err(),
+            "超过 4 段"
+        );
+        assert!(
+            validate_permission_code("invalid_module:read").is_err(),
+            "无效模块"
+        );
+        assert!(
+            validate_permission_code("iam:invalid_action").is_err(),
+            "无效动作"
+        );
     }
 
     // ===== ModuleCode 解析 =====
@@ -1154,10 +1165,22 @@ mod tests {
     // ===== PermissionAction 解析 =====
     #[test]
     fn test_permission_action_from_str() {
-        assert_eq!(PermissionAction::from_str("read"), Some(PermissionAction::Read));
-        assert_eq!(PermissionAction::from_str("write"), Some(PermissionAction::Write));
-        assert_eq!(PermissionAction::from_str("delete"), Some(PermissionAction::Delete));
-        assert_eq!(PermissionAction::from_str("admin"), Some(PermissionAction::Admin));
+        assert_eq!(
+            PermissionAction::from_str("read"),
+            Some(PermissionAction::Read)
+        );
+        assert_eq!(
+            PermissionAction::from_str("write"),
+            Some(PermissionAction::Write)
+        );
+        assert_eq!(
+            PermissionAction::from_str("delete"),
+            Some(PermissionAction::Delete)
+        );
+        assert_eq!(
+            PermissionAction::from_str("admin"),
+            Some(PermissionAction::Admin)
+        );
         assert_eq!(PermissionAction::from_str("invalid"), None);
     }
 
@@ -1176,8 +1199,14 @@ mod tests {
     fn test_permission_scope() {
         // 解析
         assert_eq!(PermissionScope::from_str("all"), Some(PermissionScope::All));
-        assert_eq!(PermissionScope::from_str("dept"), Some(PermissionScope::Department));
-        assert_eq!(PermissionScope::from_str("self"), Some(PermissionScope::Self_));
+        assert_eq!(
+            PermissionScope::from_str("dept"),
+            Some(PermissionScope::Department)
+        );
+        assert_eq!(
+            PermissionScope::from_str("self"),
+            Some(PermissionScope::Self_)
+        );
 
         // 蕴含关系
         assert!(PermissionScope::All.implies(&PermissionScope::Department));
@@ -1289,14 +1318,18 @@ mod tests {
         );
         assert!(perms.contains(&"custom:perm".to_string()));
         assert!(perms.contains(&"role:perm".to_string()));
-        assert!(!perms.iter().any(|p| p == "iam:read"), "普通用户不应有默认权限");
+        assert!(
+            !perms.iter().any(|p| p == "iam:read"),
+            "普通用户不应有默认权限"
+        );
 
         // 去重
-        let perms = compute_effective_permissions(
-            false,
-            &["dup".to_string(), "dup".to_string()],
-            &[],
+        let perms =
+            compute_effective_permissions(false, &["dup".to_string(), "dup".to_string()], &[]);
+        assert_eq!(
+            perms.iter().filter(|p| p.as_str() == "dup").count(),
+            1,
+            "应去重"
         );
-        assert_eq!(perms.iter().filter(|p| p.as_str() == "dup").count(), 1, "应去重");
     }
 }
