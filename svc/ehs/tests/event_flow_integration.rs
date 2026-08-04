@@ -26,7 +26,9 @@ use uuid::Uuid;
 /// 此测试验证该事件类型的 Redis Pub/Sub 通道端到端可用。
 #[tokio::test]
 async fn test_ehs_hrm_employee_event_roundtrip() {
-    let Some(client) = redis_pubsub::skip_without_redis().await else { return };
+    let Some(client) = redis_pubsub::skip_without_redis().await else {
+        return;
+    };
 
     let publisher = EventPublisher::new("ehs-test-publisher").unwrap();
     let employee_id = Uuid::new_v4();
@@ -50,7 +52,12 @@ async fn test_ehs_hrm_employee_event_roundtrip() {
     let publish_name = employee_name.clone();
     let publish_task = tokio::spawn(async move {
         publisher
-            .publish_hrm_employee_created(employee_id, &publish_name, "ehs-test@topems.local", Some(department_id))
+            .publish_hrm_employee_created(
+                employee_id,
+                &publish_name,
+                "ehs-test@topems.local",
+                Some(department_id),
+            )
             .await
     });
 
@@ -62,7 +69,9 @@ async fn test_ehs_hrm_employee_event_roundtrip() {
 
     assert_eq!(received.event_type, EventType::HrmEmployeeCreated);
     assert_eq!(received.source, "ehs-test-publisher");
-    let payload = received.parse_payload::<HrmEmployeeCreatedPayload>().unwrap();
+    let payload = received
+        .parse_payload::<HrmEmployeeCreatedPayload>()
+        .unwrap();
     assert_eq!(payload.employee_id, employee_id);
     assert_eq!(payload.name, employee_name);
     assert_eq!(payload.email, "ehs-test@topems.local");
@@ -72,12 +81,17 @@ async fn test_ehs_hrm_employee_event_roundtrip() {
 /// 验证 LIMS 异常检测事件端到端可达。
 #[tokio::test]
 async fn test_ehs_lims_abnormal_event_roundtrip() {
-    let Some(client) = redis_pubsub::skip_without_redis().await else { return };
+    let Some(client) = redis_pubsub::skip_without_redis().await else {
+        return;
+    };
 
     let publisher = EventPublisher::new("ehs-lims-test").unwrap();
     let task_id = Uuid::new_v4();
     let sample_id = Uuid::new_v4();
-    let channel = format!("topems:events:{}", EventType::LimsInspectionAbnormalDetected);
+    let channel = format!(
+        "topems:events:{}",
+        EventType::LimsInspectionAbnormalDetected
+    );
 
     let match_sample = sample_id;
     let subscription: ActiveSubscription<Event> =
@@ -111,7 +125,10 @@ async fn test_ehs_lims_abnormal_event_roundtrip() {
     let inner = pub_result.unwrap();
     assert!(inner.is_ok(), "publish 失败: {inner:?}");
 
-    assert_eq!(received.event_type, EventType::LimsInspectionAbnormalDetected);
+    assert_eq!(
+        received.event_type,
+        EventType::LimsInspectionAbnormalDetected
+    );
     assert_eq!(received.source, "ehs-lims-test");
     let payload = received
         .parse_payload::<LimsInspectionAbnormalDetectedPayload>()
@@ -124,7 +141,9 @@ async fn test_ehs_lims_abnormal_event_roundtrip() {
 /// 验证 QMS 纠正措施事件端到端可达。
 #[tokio::test]
 async fn test_ehs_qms_corrective_action_event_roundtrip() {
-    let Some(client) = redis_pubsub::skip_without_redis().await else { return };
+    let Some(client) = redis_pubsub::skip_without_redis().await else {
+        return;
+    };
 
     let publisher = EventPublisher::new("ehs-qms-test").unwrap();
     let action_id = Uuid::new_v4();
@@ -173,7 +192,9 @@ async fn test_ehs_qms_corrective_action_event_roundtrip() {
 /// 并发测试：多组 EHS 事件同时发布到同一 channel，验证 event_id 过滤不串扰。
 #[tokio::test(flavor = "multi_thread", worker_threads = 4)]
 async fn test_ehs_concurrent_events_no_crosstalk() {
-    let Some(client) = redis_pubsub::skip_without_redis().await else { return };
+    let Some(client) = redis_pubsub::skip_without_redis().await else {
+        return;
+    };
 
     const N: usize = 5;
     let channel = format!("topems:events:{}", EventType::HrmEmployeeCreated);
@@ -206,12 +227,22 @@ async fn test_ehs_concurrent_events_no_crosstalk() {
             let pub_email = format!("emp{i}@test.local");
             let (received, pub_res) = tokio::join!(
                 sub.wait_for_match(),
-                publisher.publish_hrm_employee_created(emp_id, &pub_name, &pub_email, Some(dept_id)),
+                publisher.publish_hrm_employee_created(
+                    emp_id,
+                    &pub_name,
+                    &pub_email,
+                    Some(dept_id)
+                ),
             );
             assert!(pub_res.is_ok(), "第{i}个 publish 失败: {pub_res:?}");
 
-            let payload = received.parse_payload::<HrmEmployeeCreatedPayload>().unwrap();
-            assert_eq!(payload.employee_id, emp_id, "EHS 并发串扰！第{i}对收到非本对消息");
+            let payload = received
+                .parse_payload::<HrmEmployeeCreatedPayload>()
+                .unwrap();
+            assert_eq!(
+                payload.employee_id, emp_id,
+                "EHS 并发串扰！第{i}对收到非本对消息"
+            );
             assert_eq!(payload.name, name);
             (i, emp_id)
         }));

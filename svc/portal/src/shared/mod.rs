@@ -9,9 +9,8 @@ use topems_shared::{
     service_client::{
         api::crm_api::CrmApi, api::finance_api::FinanceApi, api::hrm_api::HrmApi,
         api::iam_api::IamApi, api::mes_api::MesApi, api::notification_api::NotificationApi,
-        create_erp_client, create_monitor_client, create_workflow_client,
-        ErpServiceClient, MonitorServiceClient, TypedServiceClient,
-        WorkflowServiceClient,
+        create_erp_client, create_monitor_client, create_workflow_client, ErpServiceClient,
+        MonitorServiceClient, TypedServiceClient, WorkflowServiceClient,
     },
     AuthState, LocalServiceRegistry, PortalServiceAggregator,
 };

@@ -299,5 +299,8 @@ pub fn cqrs_routes() -> Router<AppState> {
             axum::routing::get(get_projection_progress),
         )
         .route("/events", axum::routing::get(list_events_paginated))
-        .route("/views/replay/{view_name}", axum::routing::post(replay_view))
+        .route(
+            "/views/replay/{view_name}",
+            axum::routing::post(replay_view),
+        )
 }

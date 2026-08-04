@@ -32,8 +32,8 @@ use std::time::Duration;
 
 /// 异步尝试连接 Redis。成功返回 `Some(client)`（已通过 PING 校验），失败返回 `None`。
 pub async fn maybe_connect_redis() -> Option<Client> {
-    let redis_url = std::env::var("REDIS_URL")
-        .unwrap_or_else(|_| "redis://localhost:6379".to_string());
+    let redis_url =
+        std::env::var("REDIS_URL").unwrap_or_else(|_| "redis://localhost:6379".to_string());
     let client = Client::open(redis_url).ok()?;
     let mut con = client.get_multiplexed_async_connection().await.ok()?;
     let pong: Result<String, _> = redis::cmd("PING").query_async(&mut con).await;
@@ -54,9 +54,7 @@ pub async fn skip_without_redis() -> Option<Client> {
         None => {
             eprintln!(
                 "[skip] {}: Redis 不可达（未启动/未设置 REDIS_URL/连接超时）",
-                std::thread::current()
-                    .name()
-                    .unwrap_or("<unknown-test>")
+                std::thread::current().name().unwrap_or("<unknown-test>")
             );
             None
         }
@@ -154,9 +152,7 @@ where
                 break;
             }
             if tokio::time::Instant::now() >= wait_deadline {
-                panic!(
-                    "2 秒内订阅未在 Redis 服务端生效（PUBSUB NUMSUB {channel_name} 仍为 0）"
-                );
+                panic!("2 秒内订阅未在 Redis 服务端生效（PUBSUB NUMSUB {channel_name} 仍为 0）");
             }
             tokio::time::sleep(Duration::from_millis(20)).await;
         }
@@ -167,11 +163,7 @@ where
 
 /// 便捷版：prepare_subscription + wait_for_match 一步到位（仅适合串行测试，并发测试请用两阶段 API）。
 #[allow(dead_code)]
-pub async fn subscribe_until_match<T, F>(
-    client: Client,
-    channel: &str,
-    matcher: F,
-) -> T
+pub async fn subscribe_until_match<T, F>(client: Client, channel: &str, matcher: F) -> T
 where
     T: DeserializeOwned + Send + 'static,
     F: Fn(&T) -> bool + Send + 'static,
