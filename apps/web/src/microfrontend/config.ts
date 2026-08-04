@@ -5,6 +5,8 @@
  * 核心域（portal）始终加载，业务域按需加载。
  */
 
+import { VITEDeploymentMode, isDev } from '@/config/env';
+
 export interface RemoteModuleConfig {
   /** 模块名（federation name） */
   name: string;
@@ -39,28 +41,47 @@ export interface RemoteModuleConfig {
 /**
  * 从环境变量或默认值获取 remote entry URL
  *
- * 开发模式（module-federation）下，使用 Vite 代理路径避免 CORS 问题
+ * V64 CORS 修复：
+ *   - 开发环境（DEV === true）：**无论何种 deployment mode**，一律走 Vite 代理
+ *     路径 `/remote/${name}/remoteEntry.js`，由 vite.config.ts 中 buildServiceProxies()
+ *     统一代理到 `http://localhost:${port}`，从根本上避免浏览器跨端口 CORS。
+ *   - 生产环境：先读 VITE_REMOTE_<NAME>_URL 完整 URL；static 模式返回空（不加载）；
+ *     module-federation / hybrid 模式走同源路径（由网关/Nginx 统一分发，不再写死端口）。
+ *
  * 生产环境通过 ENV 注入完整 URL：
- * VITE_REMOTE_TOPEMS_ERP=https://erp.topems.com/remoteEntry.js
+ *   VITE_REMOTE_TOPEMS_ERP=https://erp.topems.com/remoteEntry.js
  */
 function getRemoteEntry(name: string, port: number): string {
   const envKey = `VITE_REMOTE_${name.toUpperCase()}`;
   const envUrl = import.meta.env[envKey];
 
-  // 如果环境变量设置了完整 URL，直接使用（生产环境）
+  // 1. 显式环境变量（生产入口）优先级最高
   if (envUrl) {
     return envUrl;
   }
 
-  // 开发模式：使用 Vite 代理路径避免 CORS
-  // 主应用 (localhost:3000) 代理到远程模块 (localhost:{port})
-  const deploymentMode = import.meta.env.VITEDeploymentMode || 'static';
-  if (deploymentMode === 'module-federation') {
+  // 2. 部署模式判定（单一真相源）
+  const deploymentMode = VITEDeploymentMode();
+
+  // static 模式：**无论开发/生产**，所有远程模块一律不加载
+  // （主应用已将业务代码静态打包进本地 pages/ 目录，无需 MF 远程）
+  if (deploymentMode === 'static') {
+    return '';
+  }
+
+  // 3. module-federation / hybrid 模式：
+  //    - 开发环境：Vite 同源代理 /remote/<name> -> localhost:<port>
+  //    - 生产环境：  同源路径，由网关/Nginx 分发到对应子应用
+  //                  （如生产为独立子域名，用 VITE_REMOTE_<NAME> 环境变量覆盖）
+  if (isDev()) {
+    return `/remote/${name}/remoteEntry.js`;
+  }
+  if (deploymentMode === 'module-federation' || deploymentMode === 'hybrid') {
     return `/remote/${name}/remoteEntry.js`;
   }
 
-  // 默认：直接访问（可能会有 CORS 问题）
-  return `http://localhost:${port}/remoteEntry.js`;
+  // 其它/未识别模式：保守返回空
+  return '';
 }
 
 export const REMOTE_MODULES: RemoteModuleConfig[] = [

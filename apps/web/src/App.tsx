@@ -42,6 +42,7 @@ import {
   userBehaviorAnalytics,
   ObservabilityPanel,
 } from './microfrontend/observability';
+import { VITEDeploymentMode, isDev } from '@/config/env';
 
 const TemplateDemoPage = createSafeLazy(() =>
   import('./components/templates/index').then((m) => ({ default: m.TemplateDemoPage }))
@@ -54,11 +55,9 @@ const { lazy: PerformanceTestPage, preload: preloadPerformanceTest } = lazyWithP
 // DevTools 仅在开发模式按需加载，避免生产包体积膨胀
 const MicroFrontendDevTools = lazy(() => import('./dev-tools'));
 
-const IS_STATIC_MODE =
-  (typeof import.meta !== 'undefined' && import.meta.env?.VITEDeploymentMode) !==
-  'module-federation';
+const IS_STATIC_MODE = VITEDeploymentMode() !== 'module-federation';
 
-const IS_DEV = typeof import.meta !== 'undefined' && import.meta.env?.DEV === true;
+const IS_DEV = isDev();
 
 const PageLoader: React.FC = () => (
   <Box
@@ -234,9 +233,13 @@ const AppContent: React.FC = () => {
 
   // V35.0 Phase 7: 用户认证后，浏览器空闲时预加载非核心模块的远程入口
   // V37.0 Phase 7: 同时预缓存远程模块入口到 Service Worker
+  // V64 防御：static 模式下 entry 为空字符串，必须过滤掉，
+  // 否则会对空字符串执行 prefetch（等同请求当前页面），产生不必要的网络开销
   useEffect(() => {
     if (!isAuthenticated) return;
-    const lazyEntries = REMOTE_MODULES.filter((m) => !m.isCore).map((m) => m.entry);
+    const lazyEntries = REMOTE_MODULES
+      .filter((m) => !m.isCore && m.entry && m.entry.trim() !== '')
+      .map((m) => m.entry);
     if (lazyEntries.length > 0) {
       prefetchOnIdle(lazyEntries);
       // V37.0: 预缓存远程入口到 Service Worker（离线可用）
@@ -355,7 +358,7 @@ const AppContent: React.FC = () => {
                   <div style={{ padding: '20px' }}>
                     <h2>核心模块</h2>
                     <p>
-                      核心模块在静态模式下不可用。请设置 VITEDeploymentMode=module-federation 启用
+                      核心模块在静态模式下不可用。请设置 VITE_DEPLOYMENT_MODE=module-federation 启用
                       Module Federation。
                     </p>
                     <p>或者访问其他模块：</p>

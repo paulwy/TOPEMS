@@ -36,7 +36,17 @@ vi.mock('@/config/env', async (importOriginal) => {
     getEnv,
     isDev: () => getEnv<boolean>('DEV', true),
     isProd: () => getEnv<boolean>('PROD', false),
-    VITEDeploymentMode: () => getEnv('VITEDeploymentMode', 'static') as string,
+    // V64 CORS 修复：与真实 env.ts 的 VITEDeploymentMode 保持同策略
+    //   1) 优先读 VITE_DEPLOYMENT_MODE（Vite 标准命名）
+    //   2) 兼容旧键 VITEDeploymentMode（过渡）
+    //   3) fallback 到 'static'
+    VITEDeploymentMode: (): string => {
+      const standard = getEnv('VITE_DEPLOYMENT_MODE') as string | undefined;
+      if (standard) return standard;
+      const legacy = getEnv('VITEDeploymentMode') as string | undefined;
+      if (legacy) return legacy;
+      return 'static';
+    },
     VITEApiBaseUrl: () => getEnv('VITEApiBaseUrl', '/api') as string,
     VITEEnableDebugMode: () => getEnv<boolean>('VITEEnableDebugMode', false),
     VITELogLevel: () => getEnv('VITELogLevel', 'info') as string,

@@ -3,6 +3,7 @@ import { Box, Typography, Button, CircularProgress } from '@mui/material';
 import { AlertTriangle, RefreshCw } from 'lucide-react';
 import { logger } from '@/utils/logger';
 import { eventBus, ModuleEvents } from './EventBus';
+import { isDev, VITEDeploymentMode } from '@/config/env';
 
 export interface MicroFrontendLoaderProps {
   remoteName: string;
@@ -43,11 +44,32 @@ const loadRemoteEntry = async (remoteName: string): Promise<void> => {
       const envUrl = typeof import.meta !== 'undefined' ? import.meta.env?.[envKey] : undefined;
       if (envUrl) return envUrl;
       const port = remotePorts[name] ?? 3001;
-      return `http://localhost:${port}/remoteEntry.js`;
+      // V64 CORS 修复：
+      //   - 开发环境：一律走 Vite 同源代理 /remote/<name>/remoteEntry.js，
+      //     vite.config.ts 已为 /remote/<name> 配置代理到 localhost:<port>
+      //   - 生产环境：MF/hybrid 模式同源路径；static 模式不加载（返回空字符串）
+      if (isDev()) {
+        return `/remote/${name}/remoteEntry.js`;
+      }
+      const mode = VITEDeploymentMode();
+      if (mode === 'module-federation' || mode === 'hybrid') {
+        return `/remote/${name}/remoteEntry.js`;
+      }
+      // static 模式：返回空，由上层处理降级；不再直连跨端口
+      return '';
     };
 
     const script = document.createElement('script');
-    script.src = getRemoteUrl(remoteName);
+    const src = getRemoteUrl(remoteName);
+
+    // V64 防御：空 URL 说明 static 模式或无有效入口，直接 reject 不注入 script，
+    // 避免 <script src=""> 被浏览器解释为当前页面 URL，造成死循环/资源浪费
+    if (!src) {
+      reject(new Error(`No valid remote entry for ${remoteName} (deployment mode: static or missing config)`));
+      return;
+    }
+
+    script.src = src;
     script.type = 'module';
     script.async = true;
 

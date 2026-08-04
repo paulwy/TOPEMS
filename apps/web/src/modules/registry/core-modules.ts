@@ -1,26 +1,35 @@
 import type { ModuleConfig } from './index';
+import { VITEDeploymentMode, isDev } from '@/config/env';
 
-const DEPLOYMENT_MODE =
-  (typeof import.meta !== 'undefined' && import.meta.env?.VITEDeploymentMode) || 'static';
+const DEPLOYMENT_MODE = VITEDeploymentMode();
 const isMFMode = DEPLOYMENT_MODE !== 'static';
 
+/**
+ * V64 CORS 修复：与 microfrontend/config.ts 的 getRemoteEntry 保持同策略
+ *   - 开发环境：一律走 Vite 代理 /remote/<name>/remoteEntry.js，杜绝跨端口 CORS
+ *   - 生产环境：按 DEPLOYMENT_MODE 决定
+ */
 const getRemoteEntryUrl = (name: string, port: number): string | undefined => {
-  if (!isMFMode) return undefined;
+  // static 模式（无论开发/生产）：不加载任何远程入口
+  if (DEPLOYMENT_MODE === 'static') return undefined;
+
   const envKey = `VITE_${name.toUpperCase()}_REMOTE_ENTRY`;
   const envUrl = typeof import.meta !== 'undefined' ? import.meta.env?.[envKey] : undefined;
-
-  // 如果环境变量设置了完整 URL，直接使用（生产环境）
   if (envUrl) {
     return envUrl;
   }
 
-  // 开发模式：使用 Vite 代理路径避免 CORS
-  if (DEPLOYMENT_MODE === 'module-federation') {
+  // 开发环境：一律走 Vite 代理
+  if (isDev()) {
     return `/remote/${name}/remoteEntry.js`;
   }
 
-  // 默认：直接访问
-  return `http://localhost:${port}/remoteEntry.js`;
+  // 生产 MF / hybrid：同源路径（由网关分发）
+  if (DEPLOYMENT_MODE === 'module-federation' || DEPLOYMENT_MODE === 'hybrid') {
+    return `/remote/${name}/remoteEntry.js`;
+  }
+
+  return undefined;
 };
 
 export const CORE_MODULES_CONFIG: ModuleConfig[] = [

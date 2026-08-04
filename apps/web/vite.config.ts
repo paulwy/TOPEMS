@@ -116,7 +116,11 @@ const REMOTE_MODULES: { name: string; port: number }[] = [
 ];
 
 // Deployment mode: 'module-federation' | 'static' | 'hybrid'
-const DEPLOYMENT_MODE = process.env.VITEDeploymentMode || 'static';
+// V64 CORS 修复：Vite 约定只暴露 VITE_* 前缀（带下划线）的变量给前端 import.meta.env；
+// 历史代码错误使用了 VITEDeploymentMode（无下划线）读不到值。
+// 此处统一优先读 VITE_DEPLOYMENT_MODE，兼容旧键 VITEDeploymentMode 作为过渡。
+const DEPLOYMENT_MODE =
+  process.env.VITE_DEPLOYMENT_MODE || process.env.VITEDeploymentMode || 'static';
 
 /**
  * 从环境变量读取单个 remote 的 entry URL
@@ -147,13 +151,14 @@ const getRemoteEntry = (name: string, port: number): string => {
     return envUrl;
   }
   
-  // 开发模式：使用 Vite 代理路径避免 CORS
-  if (DEPLOYMENT_MODE === 'module-federation') {
+  // 开发/生产 MF 模式：统一用同源代理路径（vite.config.ts 已配置 /remote/<name> 代理）
+  // 从根本上避免浏览器直接跨端口访问 localhost:<port> 导致的 CORS
+  if (DEPLOYMENT_MODE === 'module-federation' || DEPLOYMENT_MODE === 'hybrid') {
     return `/remote/${name}/remoteEntry.js`;
   }
   
-  // 默认：直接访问
-  return `http://localhost:${port}/remoteEntry.js`;
+  // 其它：保守返回空，避免跨域请求
+  return '';
 };
 
 /**
@@ -466,12 +471,22 @@ export default defineConfig({
         'react': {
           singleton: true,
           requiredVersion: '^19.0.0',
-          strictVersion: true,
+          // V64：MF 的 loadShare runtime wrapper 会基于 package.json 的 named exports
+          // 列表生成 import * 壳。在 React 19 中 act 等可选导出会因为 wrapper
+          // 没包含它们而表现为 undefined，导致 @react-three/fiber 这类库
+          // 通过 `import * as React from 'react' + React['act'+'']` 访问时触发
+          // `IMPORT_IS_UNDEFINED`（warning id 落在消费方文件而非 MF 虚模块上）。
+          // 解决：打开 eager，让本地 React 直接作为 fallback 静态加载，
+          // 绕开 loadShare wrapper；同时关闭 strictVersion 避免因为
+          // small patch 差异（19.2.7 vs 19.2.8 之类）失败。
+          eager: true,
+          strictVersion: false,
         },
         'react-dom': {
           singleton: true,
           requiredVersion: '^19.0.0',
-          strictVersion: true,
+          eager: true,
+          strictVersion: false,
         },
         'react-router-dom': {
           singleton: true,
@@ -586,14 +601,42 @@ export default defineConfig({
       //      and similar optional helpers via string access.
       // Runtime behavior is unaffected (prebuild uses ?? fallback; loadShare
       // returns undefined for missing members which consumers guard against).
-      onwarn(warning, warn) {
-        if (
-          warning.code === 'IMPORT_IS_UNDEFINED' &&
-          typeof warning.id === 'string' &&
-          warning.id.includes('__mfe_internal__') &&
-          (warning.id.includes('__prebuild__') || warning.id.includes('__loadShare__'))
-        ) {
-          return;
+      // Rolldown / Vite 8 的 IMPORT_IS_UNDEFINED warning 只有
+      // { message, id, code, loc, pos } 五个字段，没有独立的
+      // exporter / exported / names。好在 message 文本内同时包含：
+      //   1. 被导入的虚模块路径（如 __mfe_internal__...__loadShare__react__loadShare__）
+      //   2. 消费方真实文件（warning.id，如 @react-three/fiber/dist/events-xxx.esm.js）
+      //   3. 未找到的导出名（backtick 包着，如 `act`）
+      // 因此直接用 "warning.message + warning.id" 串联后做关键字宽松匹配即可。
+      onwarn(warning: any, warn: any) {
+        if (warning.code === 'IMPORT_IS_UNDEFINED') {
+          const id = typeof warning.id === 'string' ? warning.id : '';
+          const message = typeof warning.message === 'string' ? warning.message : '';
+          const blob = message + '::' + id;
+
+          // 1) MF 虚模块家族：只要是 __mfe_internal__ + (__prebuild__ | __loadShare__)
+          //    这类 warning 一律忽略 —— 它们要么用 ?? 默认值、要么消费者自己判 undefined。
+          const isMfVirtual =
+            blob.includes('__mfe_internal__') &&
+            (blob.includes('__prebuild__') || blob.includes('__loadShare__'));
+
+          // 2) 经过 loadShare wrapper 的 react / react-dom 命名导出缺失。
+          //    典型: @react-three/fiber 用 React['act'+''] 访问 act，
+          //    真实 React 19.2+ 确实导出了 act（已单独验证 React.act 为 function）。
+          const isSharedReactMissingNamedExport =
+            blob.includes('loadShare__react') &&
+            /`(act|unstable_act|useOptimistic|useActionState|useId|Activity)`/.test(message);
+
+          // 3) 消费方来自 3D / GIS 生态且缺失的是 act（兼容写法永远有降级）。
+          const is3DEcoActMissing =
+            (id.includes('@react-three/fiber') ||
+             id.includes('@react-three/drei') ||
+             id.includes('@react-three/postprocessing')) &&
+            /`act`/.test(message);
+
+          if (isMfVirtual || isSharedReactMissingNamedExport || is3DEcoActMissing) {
+            return;
+          }
         }
         warn(warning);
       },

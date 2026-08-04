@@ -57,8 +57,9 @@ export interface ModuleRoute {
   children?: ModuleRoute[];
 }
 
-const isStaticMode =
-  (typeof import.meta !== 'undefined' && import.meta.env?.VITEDeploymentMode) === 'static';
+import { VITEDeploymentMode } from '@/config/env';
+
+const isStaticMode = VITEDeploymentMode() === 'static';
 
 export let CORE_MODULES: ModuleConfig[] = [];
 
