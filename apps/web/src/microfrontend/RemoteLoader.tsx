@@ -368,6 +368,8 @@ const prefetchedEntries = new Set<string>();
  * @param entryUrl 远程入口 URL
  */
 export function prefetchRemoteEntry(entryUrl: string): void {
+  // V64 防御：空 URL（static 模式）直接跳过，避免创建 <link href=""> 指向当前页面
+  if (!entryUrl || entryUrl.trim() === '') return;
   if (prefetchedEntries.has(entryUrl)) return;
   prefetchedEntries.add(entryUrl);
 

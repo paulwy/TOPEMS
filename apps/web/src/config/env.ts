@@ -53,8 +53,21 @@ export function isProd(): boolean {
   return getEnv<boolean>('PROD', false) ?? false;
 }
 
-/** Deployment mode: static | module-federation | standalone */
-export const VITEDeploymentMode = (): string => getEnv('VITEDeploymentMode', 'static') as string;
+/**
+ * Deployment mode: static | module-federation | hybrid | standalone
+ *
+ * V64 CORS 修复：
+ * - Vite 约定仅 VITE_*（带下划线）前缀的 env 会暴露给 import.meta.env
+ * - 历史代码错误使用了 VITEDeploymentMode（无下划线），永远读不到用户配置
+ * - 现在统一读取 VITE_DEPLOYMENT_MODE（标准），并兼容旧键作为过渡
+ */
+export const VITEDeploymentMode = (): string => {
+  const standard = getEnv('VITE_DEPLOYMENT_MODE');
+  if (standard) return standard as string;
+  const legacy = getEnv('VITEDeploymentMode');
+  if (legacy) return legacy as string;
+  return 'static';
+};
 
 /** Common quick getters (lazy evaluation via functions) */
 export const VITEApiBaseUrl = (): string => getEnv('VITEApiBaseUrl', '/api') as string;

@@ -36,9 +36,22 @@ export interface DeploymentConfig {
 
 /**
  * 从环境变量获取部署配置
+ *
+ * V64 配置维度修正：
+ *   - 部署形态（SaaS / On-Premise）使用 `VITE_DEPLOY_ENV`，值为 saas | on-premise
+ *   - 微前端打包模式（static / module-federation / hybrid）使用 `VITE_DEPLOYMENT_MODE`
+ *   二者为完全独立的维度，历史代码曾混用 `VITEDeploymentMode`，此处做兼容过渡。
  */
+function readDeployMode(): DeploymentMode {
+  const standard = getEnv('VITE_DEPLOY_ENV');
+  if (standard === 'saas' || standard === 'on-premise') return standard;
+  const legacy = getEnv('VITEDeploymentMode');
+  if (legacy === 'saas' || legacy === 'on-premise') return legacy;
+  return 'on-premise';
+}
+
 export const deploymentConfig: DeploymentConfig = {
-  mode: (getEnv('VITEDeploymentMode') as DeploymentMode) || 'on-premise',
+  mode: readDeployMode(),
   multiTenantEnabled: getEnv('VITE_MULTI_TENANT_ENABLED') === 'true',
   defaultTenantId: getEnv('VITE_DEFAULT_TENANT_ID') || '00000000-0000-0000-0000-000000000001',
   features: {
